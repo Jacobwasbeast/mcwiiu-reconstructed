@@ -78,7 +78,6 @@ public:
         EndCityPiece(StructureManager* structureManager, eMinecraftStructureTemplate templateType,
             const BlockPos& position, Rotation* rotation, bool overwrite);
         EndCityPiece();
-        virtual ~EndCityPiece();
 
         void loadTemplate(StructureManager* structureManager);
         virtual void addAdditionalSaveData(DataOutputStream* output);

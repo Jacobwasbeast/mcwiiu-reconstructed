@@ -71,9 +71,9 @@ void Guardian::addDataWalkers(DataFixerUpper* fixer)
     Mob::addDataWalkers(fixer, EntityType::GUARDIAN);
 }
 
-void Guardian::create(Level* level)
+Entity* Guardian::create(Level* level)
 {
-    new Guardian(level, true);
+    return new Guardian(level, true);
 }
 
 void Guardian::registerGoals()
@@ -518,11 +518,6 @@ void Guardian::GuardianAttackGoal::tick()
     {
         mGuardian->setTarget(boost::shared_ptr<LivingEntity>());
     }
-}
-
-std::wstring Guardian::GuardianAttackGoal::getName()
-{
-    return std::wstring(L"GuardianAttack");
 }
 
 Guardian::GuardianAttackSelector::GuardianAttackSelector(Guardian* guardian)

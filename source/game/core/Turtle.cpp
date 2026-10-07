@@ -48,8 +48,6 @@ const EntityDataAccessor<BlockPos>* Turtle::DATA_TRAVEL_POS = NULL;
 const EntityDataAccessor<bool>* Turtle::DATA_GOING_HOME = NULL;
 const EntityDataAccessor<bool>* Turtle::DATA_TRAVELLING = NULL;
 
-static Item* turtleTemptItem = NULL;
-static int turtleTemptItemInitialized = 0;
 Predicate<boost::shared_ptr<Entity> >* Turtle::BABY_ON_LAND_SELECTOR = new BabyOnLandSelector();
 
 void Turtle::staticCtor()
@@ -73,13 +71,9 @@ Turtle::Turtle(Level* level) : Animal(level)
     mMaxUpStep = 1.0f;
 }
 
-Turtle::~Turtle()
+Entity* Turtle::create(Level* level)
 {
-}
-
-void Turtle::create(Level* level)
-{
-    new Turtle(level);
+    return new Turtle(level);
 }
 
 void Turtle::setHomePos(const BlockPos& pos)
@@ -167,13 +161,8 @@ void Turtle::registerGoals()
     mGoalSelector.addGoal(1, new TurtleGoHomeGoal(this, 1.0), true);
     mGoalSelector.addGoal(1, new TurtleLayEggGoal(this, 1.0, 4.0), true);
     mGoalSelector.addGoal(2, new TurtleBreedGoal(this, 1.0), true);
-    if (!turtleTemptItemInitialized)
-    {
-        turtleTemptItemInitialized = 1;
-        turtleTemptItem = Item::byBlock(Blocks::sea_grass);
-    }
-    arrayWithLength<Item*> temptItems(&turtleTemptItem, 1);
-    mGoalSelector.addGoal(3, new TemptGoal(this, 1.1, temptItems, false, arrayWithLength<int>()), true);
+    static Item* temptItemsData[1] = { Item::byBlock(Blocks::sea_grass) };
+    mGoalSelector.addGoal(3, new TemptGoal(this, 1.1, arrayWithLength<Item*>(temptItemsData, 1), false, arrayWithLength<int>()), true);
     mGoalSelector.addGoal(4, new TurtleGoToWaterGoal(this, 1.0), true);
     mGoalSelector.addGoal(7, new TurtleTravelGoal(this, 1.0), true);
     mGoalSelector.addGoal(8, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
@@ -320,7 +309,7 @@ bool Turtle::breathesWater()
 MobGroupData* Turtle::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& dataString)
 {
     setHomePos(BlockPos(mX, mY, mZ));
-    setTravelPos(BlockPos());
+    setTravelPos(BlockPos::ZERO);
     return Mob::finalizeMobSpawn(difficulty, data, dataString);
 }
 

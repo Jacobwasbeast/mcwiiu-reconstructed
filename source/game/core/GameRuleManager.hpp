@@ -53,6 +53,8 @@ public:
     LevelRuleset* getDebugGameRuleDefinitions();
     void setDebugGameRuleDefinitions(LevelRuleset* ruleset);
 
+    static const wchar_t* sTagNames[ConsoleGameRules::eGameRuleType_Count];
+
 private:
     friend class CMinecraftApp;
 

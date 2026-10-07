@@ -7,8 +7,7 @@ Settings::Settings()
 
 Settings::~Settings()
 {
-    boost::unordered_map<EServerSetting, _SettingsValue*>::iterator it;
-    for (it = mSettings.begin(); it != mSettings.end(); ++it)
+    for (boost::unordered_map<EServerSetting, _SettingsValue*>::iterator it = mSettings.begin(); it != mSettings.end(); ++it)
     {
         delete it->second;
     }
@@ -43,8 +42,8 @@ bool Settings::getBoolean(EServerSetting setting, bool defaultValue)
     if (mSettings.find(setting) == mSettings.end())
     {
         _SettingsValue* value = new _SettingsValue();
-        value->mBooleanValue = defaultValue;
         value->mType = _SettingsValue::eSettingValueType_Boolean;
+        value->mBooleanValue = defaultValue;
         mSettings[setting] = value;
     }
     return mSettings[setting]->mBooleanValue;
@@ -59,7 +58,7 @@ void Settings::setBooleanAndSave(EServerSetting setting, bool value)
     }
 
     _SettingsValue* newValue = new _SettingsValue();
-    newValue->mBooleanValue = value;
     newValue->mType = _SettingsValue::eSettingValueType_Boolean;
+    newValue->mBooleanValue = value;
     mSettings[setting] = newValue;
 }

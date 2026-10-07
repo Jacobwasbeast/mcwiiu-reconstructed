@@ -22,9 +22,9 @@ Husk::Husk(Level* level)
     fjDerivedCtorCalls();
 }
 
-void Husk::create(Level* level)
+Entity* Husk::create(Level* level)
 {
-    new Husk(level);
+    return new Husk(level);
 }
 
 void Husk::addDataWalkers(DataFixerUpper* fixer)

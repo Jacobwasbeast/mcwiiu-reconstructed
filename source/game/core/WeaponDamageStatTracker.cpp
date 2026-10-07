@@ -11,10 +11,6 @@ WeaponDamageStatTracker::WeaponDamageStatTracker(const StatsUID& statsUID,
     mDamageByWeapon[mValue.GetKey()] = 0.0f;
 }
 
-WeaponDamageStatTracker::~WeaponDamageStatTracker()
-{
-}
-
 void WeaponDamageStatTracker::update(const DamageEvent* damageEvent)
 {
     const bool trackingDamage =
@@ -44,9 +40,7 @@ void WeaponDamageStatTracker::update(const DamageEvent* damageEvent)
     }
 
     const unsigned int trackedKey = mValue.GetKey();
-    float& trackedDamage = mDamageByWeapon[trackedKey];
-    float& weaponDamage = mDamageByWeapon[weaponKey];
-    if (weaponDamage >= trackedDamage)
+    if (mDamageByWeapon[trackedKey] <= mDamageByWeapon[weaponKey])
     {
         mValue = weapon;
     }

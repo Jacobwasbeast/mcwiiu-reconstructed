@@ -116,9 +116,9 @@ void ElderGuardian::customServerAiStep()
     }
 }
 
-void ElderGuardian::create(Level* level)
+Entity* ElderGuardian::create(Level* level)
 {
-    new ElderGuardian(level);
+    return new ElderGuardian(level);
 }
 
 unsigned long long ElderGuardian::GetType()

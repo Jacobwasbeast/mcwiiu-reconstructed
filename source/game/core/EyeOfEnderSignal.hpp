@@ -26,7 +26,7 @@ public:
     virtual float getBrightness();
     virtual int getLightColor();
     virtual bool isAttackable();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     virtual unsigned long long GetType();
 
 private:

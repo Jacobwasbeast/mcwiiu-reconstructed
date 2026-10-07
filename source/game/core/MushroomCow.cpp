@@ -28,13 +28,9 @@ MushroomCow::MushroomCow(Level* level)
     mSpawnableBlock = Blocks::mycelium;
 }
 
-MushroomCow::~MushroomCow()
+Entity* MushroomCow::create(Level* level)
 {
-}
-
-void MushroomCow::create(Level* level)
-{
-    new MushroomCow(level);
+    return new MushroomCow(level);
 }
 
 void MushroomCow::addDataWalkers(DataFixerUpper* fixer)

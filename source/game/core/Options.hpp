@@ -25,7 +25,6 @@ public:
     {
     public:
         Option(const std::wstring& captionId, bool progress, bool boolean);
-        ~Option();
 
         std::wstring getCaptionId() const;
         bool isProgress() const;

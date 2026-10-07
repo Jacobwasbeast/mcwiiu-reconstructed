@@ -16,9 +16,8 @@ class CaveSpider : public Spider
 {
 public:
     CaveSpider(Level* level);
-    virtual ~CaveSpider();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void registerAttributes();
     virtual bool doHurtTarget(boost::shared_ptr<Entity> target);

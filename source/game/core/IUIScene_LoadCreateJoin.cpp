@@ -69,32 +69,33 @@ struct LoadMenuSceneData
 }
 
 IUIScene_LoadCreateJoin::IUIScene_LoadCreateJoin()
-    : m_sessionListMode(true), m_currentTab(0)
 {
-    m_saveListDetails = NULL;
-    m_returnToHomeMenu = false;
-    m_saveDetails = NULL;
-    m_joinSceneData = NULL;
-    m_ignoreInput = false;
-    m_onlinePlayAllowed = false;
-    m_thumbnailRequested = false;
     m_saveInfoReady = false;
-    m_thumbnailsComplete = false;
+    m_friendSessions = NULL;
+    m_joinSceneData = NULL;
+    m_onlinePlayAllowed = false;
+    m_texturePackWorldCount = 0;
+    m_currentTab = 0;
+    m_buttonCount = 0;
+    m_sessionListMode = true;
+    m_pressedList = 0;
     m_closing = false;
+    m_saveListDetails = NULL;
+    m_ignoreInput = false;
+    m_saveDetails = NULL;
     m_partyGamesAvailable = false;
+    m_selectedSaveIndex = 0;
+    m_thumbnailsComplete = false;
+    m_thumbnailRequested = false;
     m_partyGamesOnly = false;
     m_miniGames = false;
-    m_matchmakingButtonCount = 0;
-    m_pendingAction = ePendingAction_None;
-    m_nextThumbnail = 0;
-    m_saveListRefreshState = 0;
-    m_buttonCount = 0;
-    m_texturePackWorldCount = 0;
-    m_selectedSaveIndex = 0;
     m_selectedGameIndex = 0;
+    m_pendingAction = ePendingAction_None;
+    m_returnToHomeMenu = false;
     m_selectedCreateIndex = 0;
-    m_pressedList = 0;
-    m_friendSessions = NULL;
+    m_saveListRefreshState = 0;
+    m_nextThumbnail = 0;
+    m_matchmakingButtonCount = 0;
     InitializeCriticalSection(&m_lock);
 }
 
@@ -102,8 +103,8 @@ IUIScene_LoadCreateJoin::~IUIScene_LoadCreateJoin()
 {
     if (m_friendSessions != NULL)
     {
-        for (std::vector<FriendSessionInfo*>::iterator it = m_friendSessions->begin();
-             it < m_friendSessions->end(); ++it)
+        std::vector<FriendSessionInfo*>::iterator it = m_friendSessions->begin();
+        for (; it < m_friendSessions->end(); ++it)
         {
             FriendSessionInfo* session = *it;
             if (session != NULL)
@@ -134,7 +135,7 @@ void IUIScene_LoadCreateJoin::UpdateGamesList()
     bool hadSelection = false;
     unsigned int selectedSessionId;
     memset(&selectedSessionId, 0, sizeof(selectedSessionId));
-    if (DoesGamesListHaveFocus() && GetJoinListSize() != 0)
+    if (DoesGamesListHaveFocus() && GetJoinListSize() > 0)
     {
         FriendSessionInfo* selected = m_friendSessions->at(GetJoinListSelection());
         if (selected != NULL)
@@ -165,15 +166,7 @@ void IUIScene_LoadCreateJoin::UpdateGamesList()
     GetJoinListSize();
     unsigned int sessionCount = static_cast<unsigned int>(m_friendSessions->size());
     bool gamesListHadFocus = DoesGamesListHaveFocus();
-    if (sessionCount == 0)
-    {
-        SetJoinListEnabled(false);
-        ShowNoGamesLabel(true);
-        ShowJoinListTimer(false);
-        if (gamesListHadFocus)
-            InitFocusJoinList(GetPad());
-    }
-    else
+    if (sessionCount != 0)
     {
         if (!IsJoinListEnabled())
         {
@@ -182,6 +175,14 @@ void IUIScene_LoadCreateJoin::UpdateGamesList()
         }
         ShowNoGamesLabel(false);
         ShowJoinListTimer(false);
+    }
+    else
+    {
+        SetJoinListEnabled(false);
+        ShowNoGamesLabel(true);
+        ShowJoinListTimer(false);
+        if (gamesListHadFocus)
+            InitFocusJoinList(GetPad());
     }
     ClearJoinList();
 
@@ -198,6 +199,8 @@ void IUIScene_LoadCreateJoin::UpdateGamesList()
                 continue;
 
             wchar_t gameIconName[64] = L"";
+            unsigned int gameIconSize = 0;
+            unsigned char* gameIconData = NULL;
             std::wstring gameIcon(L"");
             bool hasGameIcon;
             if (session->m_gameSessionData.m_gameModeId == GameType::SURVIVAL->getId())
@@ -223,34 +226,35 @@ void IUIScene_LoadCreateJoin::UpdateGamesList()
                 hasGameIcon = gApp.hasArchiveFile(gameIcon, false);
             }
 
-            arrayWithLength<unsigned char> gameIconFile;
             if (hasGameIcon)
             {
-                gameIconFile = gApp.getArchiveFile(gameIcon, false);
-                if (gameIconFile.data != NULL && gameIconFile.length != 0)
+                arrayWithLength<unsigned char> gameIconFile = gApp.getArchiveFile(gameIcon, false);
+                gameIconData = gameIconFile.data;
+                gameIconSize = gameIconFile.length;
+                if (gameIconSize != 0 && gameIconData != NULL)
                     std::swprintf(gameIconName, 64, L"gm%ls", session->m_displayName);
             }
 
             wchar_t packIconName[64] = L"";
             unsigned int packIconSize = 0;
             unsigned char* packIcon = NULL;
-            const unsigned int packId = session->m_gameSessionData.m_texturePackParentId;
-            if (packId != 0)
+            if (session->m_gameSessionData.m_texturePackParentId != 0)
             {
-                TexturePack* pack = Minecraft::GetInstance()->mTexturePackRepository->getTexturePackById(packId);
-                if (pack != NULL)
-                {
-                    packIcon = static_cast<unsigned char*>(const_cast<void*>(pack->getPackIcon(packIconSize)));
-                }
-                else
+                TexturePack* pack = Minecraft::GetInstance()->mTexturePackRepository->getTexturePackById(
+                    session->m_gameSessionData.m_texturePackParentId);
+                if (pack == NULL)
                 {
                     unsigned char* tpdData = NULL;
                     unsigned int tpdSize = 0;
-                    gApp.GetTPD(packId, &tpdData, &tpdSize);
+                    gApp.GetTPD(session->m_gameSessionData.m_texturePackParentId, &tpdData, &tpdSize);
                     gApp.GetFileFromTPD(eTPDFileType_Icon, tpdData, tpdSize, &packIcon, &packIconSize);
                 }
+                else
+                {
+                    packIcon = static_cast<unsigned char*>(const_cast<void*>(pack->getPackIcon(packIconSize)));
+                }
             }
-            if (packId == 0 || packIcon == NULL)
+            if (session->m_gameSessionData.m_texturePackParentId == 0 || packIcon == NULL)
             {
                 TexturePack* defaultPack = Minecraft::GetInstance()->mTexturePackRepository->getTexturePackByIndex(0);
                 packIcon = static_cast<unsigned char*>(const_cast<void*>(defaultPack->getPackIcon(packIconSize)));
@@ -259,9 +263,9 @@ void IUIScene_LoadCreateJoin::UpdateGamesList()
                 std::swprintf(packIconName, 64, L"tp%ls", session->m_displayName);
 
             AddJoinListButton(session->m_displayName, static_cast<int>(index), packIcon, packIconSize,
-                              packIconName, gameIconFile.data, gameIconFile.length, gameIconName);
-            int sessionMatch = memcmp(&selectedSessionId, &session->m_sessionId, sizeof(selectedSessionId));
-            if (hadSelection && sessionMatch == 0)
+                              packIconName, gameIconData, gameIconSize, gameIconName);
+            bool sessionMatch = memcmp(&selectedSessionId, &session->m_sessionId, sizeof(selectedSessionId)) == 0;
+            if (hadSelection && sessionMatch)
                 SetGamesListSelection(index);
         }
     }
@@ -281,14 +285,14 @@ void IUIScene_LoadCreateJoin::_init(bool miniGames)
 
     CMinecraftApp::PngTagData imageData;
     memset(&imageData, 0, sizeof(imageData));
+    imageData.extraData = 0;
     imageData.flags |= CMinecraftApp::PngTagData::eFlag_HostOptions | CMinecraftApp::PngTagData::eFlag_ExtraData;
     imageData.hostOptions = 0;
-    imageData.extraData = 0;
     gApp.SetCurrentImageTextData(&imageData);
-    if (gApp.StartInstallDLCProcess(GetPad()) == 0 && gApp.DLCInstallPending() == 0)
-        Initialise();
-    else
+    if (gApp.StartInstallDLCProcess(GetPad()) != 0 || gApp.DLCInstallPending() != 0)
         m_ignoreInput = true;
+    else
+        Initialise();
     UpdateGamesList();
     CGameNetworkManager::sInstance.SetSessionsUpdatedCallback(&IUIScene_LoadCreateJoin::UpdateGamesListCallback, this);
     m_joinSceneData = new JoinSceneData();
@@ -437,8 +441,8 @@ void IUIScene_LoadCreateJoin::GetSaveInfo()
 
     if (gApp.DebugSettingsOn() != 0 && gApp.GetLoadSavesFromFolderEnabled() != 0)
     {
-        File directory(gApp.GetDebugRootPath() + L"Saves");
         unsigned int fileCount = 0;
+        File directory(gApp.GetDebugRootPath() + L"Saves");
         if (directory.exists())
         {
             m_debugSaveFiles = directory.listFiles();
@@ -448,11 +452,10 @@ void IUIScene_LoadCreateJoin::GetSaveInfo()
         for (unsigned int i = 0; i < fileCount; ++i)
         {
             std::wstring fileName = m_debugSaveFiles->at(i)->getName();
-            unsigned int nameLength = fileName.length();
-            wchar_t* label = new wchar_t[nameLength + 1];
-            for (unsigned int c = 0; c < nameLength; ++c)
+            wchar_t* label = new wchar_t[fileName.length() + 1];
+            for (unsigned int c = 0; c < fileName.length(); ++c)
                 label[c] = fileName[c];
-            label[nameLength] = L'\0';
+            label[fileName.length()] = L'\0';
             AddLoadListButton(std::wstring(label), -1);
         }
         m_thumbnailsComplete = true;
@@ -480,21 +483,21 @@ void IUIScene_LoadCreateJoin::_tick()
     case ePendingAction_None:
         break;
     case ePendingAction_GetSaveInfo:
-        m_saveListRefreshState = 0;
-        m_nextThumbnail = 0;
         m_ignoreInput = false;
-        m_thumbnailsComplete = false;
         m_pendingAction = ePendingAction_None;
+        m_thumbnailsComplete = false;
         m_thumbnailRequested = false;
+        m_nextThumbnail = 0;
+        m_saveListRefreshState = 0;
         GetSaveInfo();
         break;
     case ePendingAction_RebuildSaveList:
-        m_saveInfoReady = false;
+        m_ignoreInput = false;
         m_nextThumbnail = 0;
+        m_saveListRefreshState = 0;
         m_thumbnailsComplete = false;
         m_thumbnailRequested = false;
-        m_saveListRefreshState = 0;
-        m_ignoreInput = false;
+        m_saveInfoReady = false;
         m_matchmakingButtonCount = 0;
         ClearLoadList();
         GetSaveInfo();
@@ -502,14 +505,14 @@ void IUIScene_LoadCreateJoin::_tick()
         break;
     case ePendingAction_ReloadSaveInfo:
     case ePendingAction_ReloadSaveInfoUnused:
-        m_saveListRefreshState = 0;
         m_ignoreInput = false;
-        m_thumbnailsComplete = false;
-        m_selectedSaveIndex = 0;
-        m_matchmakingButtonCount = 0;
         m_nextThumbnail = 0;
-        m_saveInfoReady = false;
+        m_saveListRefreshState = 0;
+        m_thumbnailsComplete = false;
         m_thumbnailRequested = false;
+        m_saveInfoReady = false;
+        m_matchmakingButtonCount = 0;
+        m_selectedSaveIndex = 0;
         ClearLoadList();
         gStorage->ClearSavesInfo();
         GetSaveInfo();
@@ -520,13 +523,13 @@ void IUIScene_LoadCreateJoin::_tick()
 
 void IUIScene_LoadCreateJoin::_updateTooltips()
 {
-    int partyTooltip = -1;
     int listTooltip = -1;
-    if (DoesGamesListHaveFocus() && GetJoinListSize() != 0)
+    int partyTooltip = -1;
+    if (DoesGamesListHaveFocus() && GetJoinListSize() > 0)
     {
         listTooltip = IDS_TOOLTIPS_VIEW_GAMERCARD;
     }
-    else if (!m_miniGames && DoesLoadListHaveFocus() && GetLoadListSize() != 0)
+    else if (!m_miniGames && DoesLoadListHaveFocus() && GetLoadListSize() > 0)
     {
         if (!gStorage->GetSaveDisabled() && gStorage->EnoughSpaceForAMinSaveGame())
             listTooltip = IDS_TOOLTIPS_SAVEOPTIONS;
@@ -606,7 +609,7 @@ bool IUIScene_LoadCreateJoin::handleKeyDown(int pad, int action, bool)
         handled = true;
         break;
     case EControllerActions_MenuY:
-        if (!m_miniGames && DoesLoadListHaveFocus() && GetLoadListSize() != 0)
+        if (!m_miniGames && DoesLoadListHaveFocus() && GetLoadListSize() > 0)
         {
             m_ignoreInput = true;
             if (gStorage->GetSaveDisabled())
@@ -694,6 +697,8 @@ void IUIScene_LoadCreateJoin::LoadLevelGen(LevelGenerationOptions* options)
     gStorage->ResetSaveData();
     gStorage->SetSaveTitle(options->getDefaultSaveName().c_str());
 
+    bool isClientSide = false;
+    bool isPrivate = false;
     unsigned int hostOption = gApp.GetGameHostOption(eGameHostOption_All);
     uint8_t tutorialMode;
     {
@@ -701,11 +706,13 @@ void IUIScene_LoadCreateJoin::LoadLevelGen(LevelGenerationOptions* options)
         tutorialMode = gApp.GetTutorialMode(player);
     }
     if (tutorialMode != 0)
+    {
+        isClientSide = false;
         hostOption = gApp.GetGameHostOption(eGameHostOption_Tutorial);
-    unsigned int hostOption6 =
-        gApp.GetGameHostOption(hostOption, eGameHostOption_GameType);
-    CGameNetworkManager::sInstance.HostGame(0, false, false,
-                                             static_cast<unsigned char>(hostOption6),
+    }
+    unsigned char gameType = static_cast<unsigned char>(
+        gApp.GetGameHostOption(hostOption, eGameHostOption_GameType));
+    CGameNetworkManager::sInstance.HostGame(0, isClientSide, isPrivate, gameType,
                                              eMiniGameId_Any, 0, 0);
 
     _NetworkGameInitData* initData = new _NetworkGameInitData();
@@ -713,7 +720,7 @@ void IUIScene_LoadCreateJoin::LoadLevelGen(LevelGenerationOptions* options)
     initData->m_saveData = 0;
     initData->m_hostOptions = hostOption;
     initData->m_levelGenerationOptions = options;
-    initData->m_gameType = static_cast<unsigned char>(hostOption6);
+    initData->m_gameType = gameType;
     initData->m_texturePackId = options->getTexturePackId();
     if (options->requiresTexturePack())
     {
@@ -727,13 +734,7 @@ void IUIScene_LoadCreateJoin::LoadLevelGen(LevelGenerationOptions* options)
     params->m_threadParam = initData;
 
     FullscreenProgressState* progressState = new FullscreenProgressState();
-    progressState->showConfirmation = false;
-    progressState->reservedFlag1 = true;
-    progressState->reservedFlag2 = true;
-    progressState->showTip = true;
-    progressState->closeMode = 3;
     progressState->playerId = 0;
-    progressState->backScene = EUIScene_None;
     params->m_completionData = progressState;
     gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress,
                                          params, EUILayer_Scene,
@@ -751,29 +752,26 @@ void IUIScene_LoadCreateJoin::LoadSaveFromDisk(File* file, ESavePlatform platfor
     input.read(fileData);
     input.close();
 
-    bool hostOnline = gProfile->IsSignedInLive(gProfile->GetPrimaryPad());
+    bool isPrivate = false;
+    bool isClientSide = gProfile->IsSignedInLive(gProfile->GetPrimaryPad());
     uint8_t tutorialMode;
     {
         boost::shared_ptr<Player> player;
         tutorialMode = gApp.GetTutorialMode(player);
     }
     if (tutorialMode != 0)
-        hostOnline = false;
+        isClientSide = false;
 
     gApp.SetGameHostOption(eGameHostOption_GameType, GameType::CREATIVE->getId());
     unsigned char gameType =
         static_cast<unsigned char>(gApp.GetGameHostOption(eGameHostOption_GameType));
-    CGameNetworkManager::sInstance.HostGame(0, hostOnline, false, gameType,
+    CGameNetworkManager::sInstance.HostGame(0, isClientSide, isPrivate, gameType,
                                             eMiniGameId_Any, 0, 0);
 
-    DiskSaveBuffer* saveBuffer;
-    {
-        std::wstring saveName = file->getName();
-        saveBuffer = new DiskSaveBuffer;
-        saveBuffer->length = fileLength;
-        saveBuffer->data = fileData.data;
-        saveBuffer->name = saveName;
-    }
+    DiskSaveBuffer* saveBuffer = new DiskSaveBuffer;
+    saveBuffer->data = fileData.data;
+    saveBuffer->length = fileLength;
+    saveBuffer->name = file->getName();
 
     _NetworkGameInitData* initData = new _NetworkGameInitData();
     initData->m_seed = 0;
@@ -792,13 +790,7 @@ void IUIScene_LoadCreateJoin::LoadSaveFromDisk(File* file, ESavePlatform platfor
     params->m_threadParam = initData;
 
     FullscreenProgressState* progressState = new FullscreenProgressState();
-    progressState->showConfirmation = false;
-    progressState->reservedFlag1 = true;
-    progressState->reservedFlag2 = true;
-    progressState->showTip = true;
-    progressState->closeMode = 3;
     progressState->playerId = 0;
-    progressState->backScene = EUIScene_None;
     params->m_completionData = progressState;
 
     gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress,
@@ -951,17 +943,17 @@ int IUIScene_LoadCreateJoin::TexturePackDialogReturned(void* context, int userIn
 
 void IUIScene_LoadCreateJoin::CheckAndJoinGame(int index)
 {
-    if (GetJoinListSize() == 0)
+    if (GetJoinListSize() <= 0)
         return;
     if (static_cast<unsigned int>(index) >= m_friendSessions->size())
         return;
 
     m_joinSceneData->userIndex = GetPad();
     FriendSessionInfo* session = m_friendSessions->at(index);
-    m_joinSceneData->miniGames = m_miniGames;
-    m_joinSceneData->session = session;
-
     unsigned int texturePackId = session->m_gameSessionData.m_texturePackParentId;
+    m_joinSceneData->session = session;
+    m_joinSceneData->miniGames = m_miniGames;
+
     if (texturePackId != 0)
     {
         int packCount = Minecraft::GetInstance()->mTexturePackRepository->getTexturePackCount();

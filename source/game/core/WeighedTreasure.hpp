@@ -13,7 +13,6 @@ class WeighedTreasure : public WeighedRandomItem
 public:
     WeighedTreasure(Item*, int, int, int, int);
     WeighedTreasure(not_null_ptr<ItemInstance>, int, int, int);
-    ~WeighedTreasure();
     not_null_ptr<ItemInstance> getItem();
     static void addChestItems(Random*, arrayWithLength<WeighedTreasure*>, boost::shared_ptr<Container>, int,
                               bool);

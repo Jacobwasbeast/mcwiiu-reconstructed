@@ -34,7 +34,7 @@ public:
     int durabilityToXp(int value);
     int getValue();
     unsigned char getIcon();
-    static void create(Level* level);
+    static Entity* create(Level* level);
 
 private:
     int mCount;

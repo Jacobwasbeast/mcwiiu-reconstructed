@@ -23,10 +23,6 @@ Donkey::Donkey(Level* level)
     fjDerivedCtorCalls();
 }
 
-Donkey::~Donkey()
-{
-}
-
 void Donkey::addDataWalkers(DataFixerUpper* fixer)
 {
     AbstractChestedHorse::addDataWalkers(fixer, EntityType::DONKEY);
@@ -173,7 +169,7 @@ unsigned long long Donkey::GetType()
     return EntityType::DONKEY;
 }
 
-void Donkey::create(Level* level)
+Entity* Donkey::create(Level* level)
 {
-    new Donkey(level);
+    return new Donkey(level);
 }

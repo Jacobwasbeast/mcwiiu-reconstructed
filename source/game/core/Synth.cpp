@@ -8,7 +8,7 @@ arrayWithLength<double> Synth::create(int width, int height)
     {
         for (int x = 0; x < width; x++)
         {
-            values.data[y * width + x] = getValue((double)x, (double)y);
+            values.data[(unsigned int)(x + y * width)] = getValue((double)x, (double)y);
         }
     }
 

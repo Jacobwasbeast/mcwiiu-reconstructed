@@ -30,7 +30,7 @@ AbstractProperty<int>* SeaPickle::COUNT = static_cast<AbstractProperty<int>*>(In
 AbstractProperty<int>* SeaPickle::FLANGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"flange", 0, 1));
 
 static const AABB* SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.5, 1.0);
-static const unsigned char LIGHT_EMISSION[4] = { 5, 9, 12, 15 };
+const unsigned char LIGHT_EMISSION[4] = { 5, 9, 12, 15 };
 
 SeaPickle::SeaPickle()
     : Bush(Material::REPLACEABLE_PLANT)

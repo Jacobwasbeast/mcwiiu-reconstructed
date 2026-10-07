@@ -9,7 +9,6 @@ class OverwritableWalker : public DataWalker
 {
 public:
     OverwritableWalker(unsigned long long type, const std::wstring& name);
-    virtual ~OverwritableWalker();
     virtual CompoundTag* walk(DataFixer* fixer, CompoundTag* tag, int version);
 
 private:

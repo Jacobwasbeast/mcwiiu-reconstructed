@@ -22,6 +22,8 @@ public:
         }
     };
 
+    static const char NO_VOTE = -1;
+
     Voteable(int voteableId, bool isServer, bool oneVotePerPlayer);
     ~Voteable();
     std::map<int, int> getVotesFromPlayer(int playerId);

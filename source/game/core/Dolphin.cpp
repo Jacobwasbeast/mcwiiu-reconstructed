@@ -313,4 +313,7 @@ const SoundEvent* Dolphin::getSwimSound() { return SoundEvents::DOLPHIN_SWIM; }
 const SoundEvent* Dolphin::getSwimSplashSound() { return SoundEvents::DOLPHIN_SPLASH; }
 bool Dolphin::generatesBubbles() { return false; }
 unsigned long long Dolphin::GetType() { return EntityType::DOLPHIN; }
-void Dolphin::create(Level* level) { new Dolphin(level); }
+Entity* Dolphin::create(Level* level)
+{
+    return new Dolphin(level);
+}

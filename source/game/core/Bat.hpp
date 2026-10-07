@@ -46,7 +46,7 @@ public:
 
     static void staticCtor();
     static void addDataWalkers(DataFixerUpper* fixer);
-    static void create(Level* level);
+    static Entity* create(Level* level);
 
 private:
     static const EntityDataAccessor<unsigned char>* DATA_ID_FLAGS;

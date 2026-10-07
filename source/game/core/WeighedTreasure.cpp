@@ -20,8 +20,6 @@ WeighedTreasure::WeighedTreasure(not_null_ptr<ItemInstance> item, int minCount, 
     mMaxCount = maxCount;
 }
 
-WeighedTreasure::~WeighedTreasure() {}
-
 not_null_ptr<ItemInstance> WeighedTreasure::getItem() { return mItem; }
 
 void WeighedTreasure::addChestItems(Random* random, arrayWithLength<WeighedTreasure*> treasures,

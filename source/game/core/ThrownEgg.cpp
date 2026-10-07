@@ -31,9 +31,9 @@ ThrownEgg::ThrownEgg(Level* level, double x, double y, double z)
     _init();
 }
 
-void ThrownEgg::create(Level* level)
+Entity* ThrownEgg::create(Level* level)
 {
-    new ThrownEgg(level);
+    return new ThrownEgg(level);
 }
 
 bool ThrownEgg::onHit(const HitResult* result)

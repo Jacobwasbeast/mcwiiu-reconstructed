@@ -20,9 +20,9 @@ HtmlString::HtmlString(const HtmlString& other)
 HtmlString::HtmlString(std::wstring text, eMinecraftColour colour, bool italic, bool indent, int fontSize)
 {
     mText = escapeXML(text);
+    mColour = colour;
     mItalic = italic;
     mIndent = indent;
-    mColour = colour;
     mFontSize = fontSize;
 }
 

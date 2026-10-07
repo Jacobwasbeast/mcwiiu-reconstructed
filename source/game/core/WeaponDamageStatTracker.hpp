@@ -18,7 +18,7 @@ public:
     };
 
     WeaponDamageStatTracker(const StatsUID& statsUID, ETrackingType trackingType);
-    virtual ~WeaponDamageStatTracker();
+    virtual ~WeaponDamageStatTracker() {}
     virtual void update(const DamageEvent* damageEvent);
 
 private:

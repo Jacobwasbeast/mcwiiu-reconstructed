@@ -26,13 +26,9 @@ CaveSpider::CaveSpider(Level* level)
     setSize(0.7f, 0.5f);
 }
 
-CaveSpider::~CaveSpider()
+Entity* CaveSpider::create(Level* level)
 {
-}
-
-void CaveSpider::create(Level* level)
-{
-    new CaveSpider(level);
+    return new CaveSpider(level);
 }
 
 void CaveSpider::addDataWalkers(DataFixerUpper* fixer)

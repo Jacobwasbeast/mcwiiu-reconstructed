@@ -118,7 +118,7 @@ public:
                                            const std::wstring& dataString);
 
     static void staticCtor();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     void _init();
     void registerGoals();
     using Entity::setSize;

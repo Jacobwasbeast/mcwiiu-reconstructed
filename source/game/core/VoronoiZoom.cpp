@@ -10,10 +10,6 @@ VoronoiZoom::VoronoiZoom(long long seed, boost::shared_ptr<Layer> parentLayer)
     parent = parentLayer;
 }
 
-VoronoiZoom::~VoronoiZoom()
-{
-}
-
 arrayWithLength<int> VoronoiZoom::getArea(int x, int z, int width, int height)
 {
     x -= 2;
@@ -32,8 +28,8 @@ arrayWithLength<int> VoronoiZoom::getArea(int x, int z, int width, int height)
 
     for (int row = 0; row < parentHeight - 1; row++)
     {
-        int upperLeft = parentArea.data[row * parentWidth];
-        int lowerLeft = parentArea.data[(row + 1) * parentWidth];
+        int upperLeft = parentArea[row * parentWidth];
+        int lowerLeft = parentArea[(row + 1) * parentWidth];
 
         for (int column = 0; column < parentWidth - 1; column++)
         {
@@ -50,8 +46,8 @@ arrayWithLength<int> VoronoiZoom::getArea(int x, int z, int width, int height)
             double lowerRightX = ((double)nextRandom(1024) / 1024.0 - 0.5) * 3.6 + 4.0;
             double lowerRightZ = ((double)nextRandom(1024) / 1024.0 - 0.5) * 3.6 + 4.0;
 
-            int upperRight = parentArea.data[column + 1 + row * parentWidth] & 0xff;
-            int lowerRight = parentArea.data[column + 1 + (row + 1) * parentWidth] & 0xff;
+            int upperRight = parentArea[column + 1 + row * parentWidth] & 0xff;
+            int lowerRight = parentArea[column + 1 + (row + 1) * parentWidth] & 0xff;
 
             for (int localZ = 0; localZ < 4; localZ++)
             {
@@ -71,21 +67,21 @@ arrayWithLength<int> VoronoiZoom::getArea(int x, int z, int width, int height)
                     if (upperLeftDistance < upperRightDistance && upperLeftDistance < lowerLeftDistance
                         && upperLeftDistance < lowerRightDistance)
                     {
-                        grid.data[index++] = upperLeft;
+                        grid[index++] = upperLeft;
                     }
                     else if (upperRightDistance < upperLeftDistance && upperRightDistance < lowerLeftDistance
                              && upperRightDistance < lowerRightDistance)
                     {
-                        grid.data[index++] = upperRight;
+                        grid[index++] = upperRight;
                     }
                     else if (lowerLeftDistance < upperLeftDistance && lowerLeftDistance < upperRightDistance
                              && lowerLeftDistance < lowerRightDistance)
                     {
-                        grid.data[index++] = lowerLeft;
+                        grid[index++] = lowerLeft;
                     }
                     else
                     {
-                        grid.data[index++] = lowerRight;
+                        grid[index++] = lowerRight;
                     }
                 }
             }

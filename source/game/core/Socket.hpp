@@ -93,7 +93,7 @@ public:
         int mIndex;
         Socket* mSocket;
     };
-    Socket(bool response);
+    Socket(bool response = false);
     Socket(INetworkPlayer* player, bool response, bool hostLocal);
     INetworkPlayer* getPlayer();
     void setPlayer(INetworkPlayer*);

@@ -17,7 +17,6 @@ public:
                Tutorial* tutorial, int descriptionId, bool preCompletionEnabled,
                std::vector<TutorialConstraint*>* constraints, bool showMinimumTime,
                bool allowFade, bool repeatMessage, MobEffect* effect);
-    virtual ~PickupTask();
 
     unsigned int hasPickedUpWoodBlock(not_null_ptr<ItemInstance> item);
     virtual void onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,

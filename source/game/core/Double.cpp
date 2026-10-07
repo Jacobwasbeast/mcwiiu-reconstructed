@@ -14,8 +14,10 @@ long long Double::doubleToLongBits(double value)
         nan.value = value;
         return nan.bits;
     }
-
-    DoubleBits converter;
-    converter.value = value;
-    return converter.bits;
+    else
+    {
+        DoubleBits converter;
+        converter.value = value;
+        return converter.bits;
+    }
 }

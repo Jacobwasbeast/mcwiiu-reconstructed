@@ -24,7 +24,6 @@ public:
                 Block* block, Achievement* parent);
     Achievement(int id, const std::wstring& name, int displayColumn, int displayRow,
                 not_null_ptr<ItemInstance> icon, Achievement* parent);
-    virtual ~Achievement();
 
     virtual Achievement* postConstruct(bool addToList);
     virtual bool isAchievement();

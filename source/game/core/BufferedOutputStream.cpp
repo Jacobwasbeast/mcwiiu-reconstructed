@@ -36,7 +36,7 @@ void BufferedOutputStream::write(arrayWithLength<unsigned char> b, unsigned int 
 
     for (unsigned int i = 0; i < len; i++)
     {
-        write(b.data[off + i]);
+        write(b[off + i]);
     }
 }
 
@@ -47,7 +47,7 @@ void BufferedOutputStream::write(arrayWithLength<unsigned char> b)
 
 void BufferedOutputStream::write(unsigned int b)
 {
-    buf.data[count++] = (unsigned char)b;
+    buf[count++] = (unsigned char)b;
 
     if (count == buf.length)
     {

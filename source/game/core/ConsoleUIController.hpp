@@ -90,7 +90,6 @@ public:
     };
 
     ConsoleUIController();
-    virtual ~ConsoleUIController();
 
     EUIGroup GetGroup(int playerId);
     void preInit(int width, int height);

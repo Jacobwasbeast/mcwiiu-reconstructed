@@ -72,7 +72,6 @@ const unsigned int BACK_FROM_THE_DEAD_RIVAL_WINS = 1;
 const int MOUNTAIN_TOP_LAYER = 0;
 const int WILL_LIKE_NO_OTHER_LAYER = 2;
 const unsigned int MEDAL_POOL_CAPACITY = 65;
-const int NO_VOTE = -1;
 }
 
 GameStats::GameStats()
@@ -80,7 +79,7 @@ GameStats::GameStats()
     mPlayerStats = StatsMap();
     mRoundStartTime = 0;
     mRoundEndTime = 0;
-    mRoundWinner.reset();
+    mRoundWinner = boost::shared_ptr<ServerPlayer>();
     mFarthestCheckpointReached = 0;
     mCurrentRound = 0;
     mLandingRecorded = false;
@@ -97,9 +96,9 @@ GameStats::~GameStats()
 PlayerStats* GameStats::GetPlayerStats(const StatsUID& uid)
 {
     StatsMap::iterator found = mPlayerStats.find(uid);
-    if (found == mPlayerStats.end())
-        return NULL;
-    return found->second;
+    if (found != mPlayerStats.end())
+        return found->second;
+    return NULL;
 }
 
 boost::shared_ptr<ServerPlayer> GameStats::GetFirstPlace()
@@ -126,8 +125,8 @@ GameStats::StatsMap* GameStats::GetPlayerStats()
 
 unsigned int GameStats::GetDeathCount(const StatsUID& uid)
 {
-    unsigned int deaths = 0;
     PlayerStats* stats = GetPlayerStats(uid);
+    unsigned int deaths = 0;
     if (stats != NULL)
         deaths = stats->getRoundStats(mCurrentRound)->mDeaths;
     return deaths;
@@ -512,13 +511,13 @@ void GameStats::CalculateStats(const std::vector<boost::shared_ptr<ServerPlayer>
         Voteable* themes = gameMode->mVoteables->getVoteable(Voteables::eVoteable_BuildOffTheme);
         if (themes != NULL)
         {
-            int winningVotes = NO_VOTE;
+            int winningVotes = Voteable::NO_VOTE;
             themes->getWinningVote(winningVotes);
             mWinningThemeChoice = gameMode->getThemeWordEnglish(gameMode->mChosenThemeWordId);
             for (std::vector<boost::shared_ptr<ServerPlayer> >::const_iterator it = players->begin(); it != players->end(); ++it)
             {
                 PlayerStats::RoundStats* round = GetPlayerStats((*it)->getSUID())->getRoundStats(mCurrentRound);
-                int themeVote = NO_VOTE;
+                int themeVote = Voteable::NO_VOTE;
                 themes->getOnlyVote((*it)->mPlayerIndex, &themeVote);
                 round->mThemeVote = gameMode->getThemeWordEnglish(themeVote);
             }
@@ -695,7 +694,8 @@ void GameStats::AddPlayerStats(const boost::shared_ptr<ServerPlayer>& player)
         stats->getRoundStats(mCurrentRound);
         stats->mName = player->getDisplayName();
         stats->mStatsUID = player->getSUID();
-        mPlayerStats[player->getSUID()] = stats;
+        PlayerStats*& slot = mPlayerStats[player->getSUID()];
+        slot = stats;
     }
 }
 
@@ -721,20 +721,20 @@ void GameStats::Clear()
     for (StatsMap::iterator it = mPlayerStats.begin(); it != mPlayerStats.end(); ++it)
         delete it->second;
     mPlayerStats.clear();
-    mFarthestCheckpointReached = 0;
     mRoundStartTime = 0;
     mRoundEndTime = 0;
-    mRoundWinner = boost::shared_ptr<ServerPlayer>();
     mRoundDeathCount = 0;
     mLandingRecorded = false;
+    mFarthestCheckpointReached = 0;
+    mRoundWinner = boost::shared_ptr<ServerPlayer>();
 }
 
 void GameStats::OnRoundStart()
 {
     mRoundStartTime = System::processTimeInMilliSecs();
     mRoundEndTime = 0;
-    mLandingRecorded = false;
     mRoundDeathCount = 0;
+    mLandingRecorded = false;
     mFarthestCheckpointReached = 0;
 
     if (gMinecraftServer->mMasterGameMode->GetLayerCount() <= 1)
@@ -753,16 +753,17 @@ void GameStats::OnRoundStart()
 void GameStats::OnRoundEnd()
 {
     ++mCurrentRound;
-    mRoundWinner.reset();
+    mRoundWinner = boost::shared_ptr<ServerPlayer>();
 
     std::vector<boost::shared_ptr<ServerPlayer> >* players = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayers();
     for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin(); it != players->end(); ++it)
     {
         boost::shared_ptr<ServerPlayer> player = *it;
-        if (GetPlayerStats(player->getSUID()) == NULL)
-            continue;
-        const unsigned int deathCount = GetDeathCount(player->getSUID());
-        player->getLevel()->GetServerScoreboard()->OnPlayerStatsChanged(player->getSUID(), deathCount);
+        if (GetPlayerStats(player->getSUID()) != NULL)
+        {
+            const unsigned int deathCount = GetDeathCount(player->getSUID());
+            player->getLevel()->GetServerScoreboard()->OnPlayerStatsChanged(player->getSUID(), deathCount);
+        }
     }
 }
 
@@ -779,25 +780,28 @@ void GameStats::OnGameEnd()
 unsigned int GameStats::GetDamageTakenThisRound(const StatsUID& uid)
 {
     PlayerStats* stats = GetPlayerStats(uid);
-    if (stats == NULL)
-        return 0;
-    return static_cast<unsigned int>(stats->getRoundStats(mCurrentRound)->mDamageReceived->getValue());
+    if (stats != NULL)
+    {
+        PlayerStats::RoundStats* round = stats->getRoundStats(mCurrentRound);
+        return static_cast<unsigned int>(round->mDamageReceived->getValue());
+    }
+    return 0;
 }
 
 unsigned int GameStats::GetKillsWithBowThisRound(const StatsUID& uid)
 {
     PlayerStats* stats = GetPlayerStats(uid);
-    if (stats == NULL)
-        return 0;
-    return stats->getRoundStats(mCurrentRound)->mKillsWithBow->getValue();
+    if (stats != NULL)
+        return stats->getRoundStats(mCurrentRound)->mKillsWithBow->getValue();
+    return 0;
 }
 
 unsigned int GameStats::GetMaxSnowballHitsOnAnyPlayer(const StatsUID& uid)
 {
     PlayerStats* stats = GetPlayerStats(uid);
-    if (stats == NULL)
-        return 0;
-    return stats->getRoundStats(mCurrentRound)->mMaxSnowballHits->getValue();
+    if (stats != NULL)
+        return stats->getRoundStats(mCurrentRound)->mMaxSnowballHits->getValue();
+    return 0;
 }
 
 void GameStats::RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entry, boost::shared_ptr<ClientboundChatPacket> deathMessage)
@@ -955,9 +959,9 @@ void GameStats::RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entr
 const DamageEvent* GameStats::GetPlayerFatalDamage(const StatsUID& uid)
 {
     PlayerStats* stats = GetPlayerStats(uid);
-    if (stats == NULL)
-        return NULL;
-    return stats->getRoundStats(mCurrentRound)->mLastPlayerFatalDamage->getValue();
+    if (stats != NULL)
+        return stats->getRoundStats(mCurrentRound)->mLastPlayerFatalDamage->getValue();
+    return NULL;
 }
 
 void GameStats::RecordDeath(boost::shared_ptr<Entity> entity)
@@ -988,26 +992,25 @@ void GameStats::RecordDeath(boost::shared_ptr<Entity> entity)
 
         if (gameMode->GetLayerCount() > 1)
         {
-            if (player->mFallStartPosition == NULL)
-            {
-                stats->getRoundStats(mCurrentRound)->mDeathLayer = PlayerStats::RoundStats::NO_LAYER;
-            }
-            else
+            if (player->mFallStartPosition != NULL)
             {
                 const double fallStartY = player->mFallStartPosition->y;
                 stats->getRoundStats(mCurrentRound)->mDeathLayer = gameMode->GetLayer(fallStartY);
+            }
+            else
+            {
+                stats->getRoundStats(mCurrentRound)->mDeathLayer = PlayerStats::RoundStats::NO_LAYER;
             }
         }
 
         stats->getRoundStats(mCurrentRound)->mDeathOrder = mRoundDeathCount;
 
-        const boost::shared_ptr<Entity>& killerEntity = fatalDamage->mAttackerEntity;
         bool killedByPlayer = false;
-        if (killerEntity != NULL)
-            killedByPlayer = killerEntity->GetType() == EntityType::SERVER_PLAYER;
+        if (fatalDamage->mAttackerEntity != NULL)
+            killedByPlayer = fatalDamage->mAttackerEntity->GetType() == EntityType::SERVER_PLAYER;
         if (killedByPlayer)
         {
-            boost::shared_ptr<ServerPlayer> killer = boost::static_pointer_cast<ServerPlayer>(killerEntity);
+            boost::shared_ptr<ServerPlayer> killer = boost::static_pointer_cast<ServerPlayer>(fatalDamage->mAttackerEntity);
             lifeStats->mKillerName = killer->getNetworkName();
             stats->getRoundStats(mCurrentRound)->mFatalWeapon = fatalDamage->mWeapon;
 
@@ -1058,8 +1061,8 @@ void GameStats::RecordContainer(const StatsUID& uid, int type, int x, int y, int
     if (stats == NULL)
         return;
 
-    PlayerStats::RoundStats* round = stats->getRoundStats(mCurrentRound);
-    for (std::vector<ContainerInfo*>::iterator it = round->mContainers.begin(); it != round->mContainers.end(); ++it)
+    std::vector<ContainerInfo*>& containers = stats->getRoundStats(mCurrentRound)->mContainers;
+    for (std::vector<ContainerInfo*>::iterator it = containers.begin(); it != containers.end(); ++it)
     {
         if ((*it)->mX == x && (*it)->mY == y && (*it)->mZ == z)
             return;
@@ -1070,7 +1073,7 @@ void GameStats::RecordContainer(const StatsUID& uid, int type, int x, int y, int
     container->mY = y;
     container->mZ = z;
     container->mType = type;
-    round->mContainers.push_back(container);
+    containers.push_back(container);
 
     unsigned int containerCount = 0;
     LevelRuleset* rules = gApp.getGameRuleDefinitions();
@@ -1093,7 +1096,7 @@ void GameStats::RecordContainer(const StatsUID& uid, int type, int x, int y, int
         }
     }
 
-    if (containerCount != round->mContainers.size())
+    if (containerCount != containers.size())
         return;
 
     boost::shared_ptr<ServerPlayer> player = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayerFromStatsUID(uid);
@@ -1180,7 +1183,10 @@ void GameStats::TakeTimestamp(const StatsUID& uid, eTimeSpentCategory category, 
 {
     PlayerStats* stats = GetPlayerStats(uid);
     if (stats != NULL)
-        stats->getRoundStats(mCurrentRound)->MedalTimestamp(category, start, System::processTimeInMilliSecs() - mRoundStartTime);
+    {
+        long long elapsed = System::processTimeInMilliSecs() - mRoundStartTime;
+        stats->getRoundStats(mCurrentRound)->MedalTimestamp(category, start, elapsed);
+    }
 }
 
 void GameStats::RecordUseItem(const StatsUID& uid, not_null_ptr<ItemInstance> item)
@@ -1304,8 +1310,8 @@ void GameStats::RecordLapCompleted(const StatsUID& uid)
 
 unsigned int GameStats::GetLapsCompleted(const StatsUID& uid)
 {
-    unsigned int laps = 0;
     PlayerStats* stats = GetPlayerStats(uid);
+    unsigned int laps = 0;
     if (stats != NULL)
         laps = stats->getRoundStats(mCurrentRound)->mLapsCompleted;
     return laps;
@@ -1313,8 +1319,8 @@ unsigned int GameStats::GetLapsCompleted(const StatsUID& uid)
 
 unsigned int GameStats::GetLastCheckpointID(const StatsUID& uid)
 {
-    unsigned int checkpoint = 0;
     PlayerStats* stats = GetPlayerStats(uid);
+    unsigned int checkpoint = 0;
     if (stats != NULL)
         checkpoint = stats->getRoundStats(mCurrentRound)->mLastCheckpointID;
     return checkpoint;
@@ -1322,8 +1328,8 @@ unsigned int GameStats::GetLastCheckpointID(const StatsUID& uid)
 
 unsigned int GameStats::GetLastCheckpointSequenceID(const StatsUID& uid)
 {
-    unsigned int sequence = 0;
     PlayerStats* stats = GetPlayerStats(uid);
+    unsigned int sequence = 0;
     if (stats != NULL)
         sequence = stats->getRoundStats(mCurrentRound)->mLastCheckpointSequenceID;
     return sequence;
@@ -1363,10 +1369,10 @@ void GameStats::RecordSpawnedAtCheckpoint(const StatsUID& uid, int checkpoint)
 
 void GameStats::RecordTimeSpentInPosition(bool pointsActive)
 {
+    double lowest = DBL_MAX;
+    double highest = 0.0;
     StatsUID leader = StatsUID::EMPTY_SUID();
     StatsUID trailer = StatsUID::EMPTY_SUID();
-    double highest = 0.0;
-    double lowest = DBL_MAX;
 
     for (StatsMap::iterator it = mPlayerStats.begin(); it != mPlayerStats.end(); ++it)
     {
@@ -1398,24 +1404,28 @@ void GameStats::RecordTimeSpentInPosition(bool pointsActive)
 bool GameStats::RecordEndZoneEntered(const StatsUID& uid)
 {
     PlayerStats* stats = GetPlayerStats(uid);
-    if (stats == NULL)
-        return false;
-
-    PlayerStats::RoundStats* round = stats->getRoundStats(mCurrentRound);
-    if (round->mReachedEnd)
-        return false;
-
-    round->mReachedEnd = true;
-    round->mProgress = END_ZONE_PROGRESS;
-    round->mLifeSpan = static_cast<int>(System::processTimeInMilliSecs() - mRoundStartTime);
-    return true;
+    if (stats != NULL)
+    {
+        PlayerStats::RoundStats* round = stats->getRoundStats(mCurrentRound);
+        if (!round->mReachedEnd)
+        {
+            round->mReachedEnd = true;
+            round->mProgress = END_ZONE_PROGRESS;
+            round->mLifeSpan = static_cast<int>(System::processTimeInMilliSecs() - mRoundStartTime);
+            return true;
+        }
+    }
+    return false;
 }
 
 bool GameStats::GetEndZoneEntered(const StatsUID& uid)
 {
     PlayerStats* stats = GetPlayerStats(uid);
     if (stats != NULL)
-        return stats->getRoundStats(mCurrentRound)->mReachedEnd;
+    {
+        PlayerStats::RoundStats* round = stats->getRoundStats(mCurrentRound);
+        return round->mReachedEnd;
+    }
     return false;
 }
 
@@ -1516,7 +1526,7 @@ unsigned int GameStats::GetMostBlocksDestroyed()
         if (it->second != NULL)
         {
             const unsigned int destroyed = it->second->getTotalBlocksDestroyed();
-            if (most < destroyed)
+            if (destroyed > most)
                 most = destroyed;
         }
     }
@@ -1547,15 +1557,16 @@ unsigned int GameStats::GetThirdMostBlocksDestroyed()
     unsigned int third = 0;
     for (StatsMap::iterator it = mPlayerStats.begin(); it != mPlayerStats.end(); ++it)
     {
-        if (it->second == NULL)
-            continue;
-        const unsigned int destroyed = it->second->getTotalBlocksDestroyed();
-        if (destroyed > most)
-            most = destroyed;
-        else if (destroyed > second && destroyed < most)
-            second = destroyed;
-        else if (destroyed > third && destroyed < second)
-            third = destroyed;
+        if (it->second != NULL)
+        {
+            const unsigned int destroyed = it->second->getTotalBlocksDestroyed();
+            if (destroyed > most)
+                most = destroyed;
+            else if (destroyed > second && destroyed < most)
+                second = destroyed;
+            else if (destroyed > third && destroyed < second)
+                third = destroyed;
+        }
     }
     return third;
 }
@@ -1564,21 +1575,17 @@ unsigned int GameStats::GetFastestPlayerTime()
 {
     unsigned int fastest = UINT_MAX;
     for (int round = 0; round <= static_cast<int>(mCurrentRound); ++round)
-    {
-        const unsigned int lifespan = GetShortestLifespan(round);
-        if (lifespan < fastest)
-            fastest = lifespan;
-    }
+        fastest = std::min(fastest, GetShortestLifespan(round));
     return fastest;
 }
 
 unsigned int GameStats::GetHighestScoringPlayerScore()
 {
     unsigned int highest = 0;
-    for (StatsMap::iterator it = mPlayerStats.begin(); it != mPlayerStats.end(); ++it)
+    for (StatsMap::iterator it = mPlayerStats.begin(), end = mPlayerStats.end(); it != end; it++)
     {
         const unsigned int points = it->second->getBestPoints(true, false);
-        if (highest < points)
+        if (points > highest)
             highest = points;
     }
     return highest;

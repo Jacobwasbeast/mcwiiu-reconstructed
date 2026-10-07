@@ -121,7 +121,6 @@ const int WALL_DISSOLVE_PASSES = 5;
 const int WALL_DISSOLVE_TICKS_PER_PASS = 15;
 const unsigned int PUMPKIN_SPECTATOR_TEXTURE_PACK_ID = 1029;
 const unsigned int CENTRAL_SPAWN_MAX_PLAYERS = 8;
-const char NO_VOTE = -1;
 const int ACHIEVEMENT_EXPLOIT_PLAYER_COUNT = 2;
 const int MAX_KICK_VOTES_REQUIRED = 3;
 const int SPAWN_LAYER_REMAINING_BLOCKS = 11;
@@ -2472,12 +2471,12 @@ void MasterGameMode::OnLeave(boost::shared_ptr<ServerPlayer> player)
     mPlayerReady[playerIndex] = false;
     ServerPlayers()->broadcastAll(boost::shared_ptr<Packet>(new PlayerReadyPacket(playerIndex, false)));
 
-    mVoteables->getVoteable(Voteables::eVoteable_Map)->setIncludedVotesAndSync(playerIndex, NO_VOTE);
-    mVoteables->getVoteable(Voteables::eVoteable_Kick)->setIncludedVotesAndSync(playerIndex, playerIndex, NO_VOTE);
+    mVoteables->getVoteable(Voteables::eVoteable_Map)->setIncludedVotesAndSync(playerIndex, Voteable::NO_VOTE);
+    mVoteables->getVoteable(Voteables::eVoteable_Kick)->setIncludedVotesAndSync(playerIndex, playerIndex, Voteable::NO_VOTE);
     if (Minecraft::InMiniGame(eMiniGameId_Build, true))
     {
-        mVoteables->getVoteable(Voteables::eVoteable_BuildOffScoring)->setIncludedVotesAndSync(playerIndex, playerIndex, NO_VOTE);
-        mVoteables->getVoteable(Voteables::eVoteable_BuildOffTheme)->setIncludedVotesAndSync(playerIndex, NO_VOTE);
+        mVoteables->getVoteable(Voteables::eVoteable_BuildOffScoring)->setIncludedVotesAndSync(playerIndex, playerIndex, Voteable::NO_VOTE);
+        mVoteables->getVoteable(Voteables::eVoteable_BuildOffTheme)->setIncludedVotesAndSync(playerIndex, Voteable::NO_VOTE);
     }
 
     mGameStats.RemovePlayerStats(player);
@@ -2563,7 +2562,7 @@ void MasterGameMode::OnKickReqested(int voterIndex, int targetIndex)
             StopAchievementExploit(target->GetOnlineName());
             gMinecraftServer->getPlayers()->kickPlayerByShortId(target->GetSmallId());
         }
-        mVoteables->getVoteable(Voteables::eVoteable_Kick)->setIncludedVotesAndSync(targetIndex, targetIndex, NO_VOTE);
+        mVoteables->getVoteable(Voteables::eVoteable_Kick)->setIncludedVotesAndSync(targetIndex, targetIndex, Voteable::NO_VOTE);
     }
 }
 

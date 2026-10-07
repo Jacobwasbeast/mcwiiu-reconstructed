@@ -20,7 +20,7 @@ public:
     MinecartChest(Level* level, double x, double y, double z);
     virtual ~MinecartChest();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     virtual unsigned int getContainerSize();
     virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory,
                                                boost::shared_ptr<Player> player);

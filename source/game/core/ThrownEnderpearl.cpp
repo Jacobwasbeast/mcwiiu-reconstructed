@@ -37,9 +37,9 @@ ThrownEnderpearl::ThrownEnderpearl(Level* level, double x, double y, double z)
     _init();
 }
 
-void ThrownEnderpearl::create(Level* level)
+Entity* ThrownEnderpearl::create(Level* level)
 {
-    new ThrownEnderpearl(level);
+    return new ThrownEnderpearl(level);
 }
 
 void ThrownEnderpearl::PlayTeleportSound()

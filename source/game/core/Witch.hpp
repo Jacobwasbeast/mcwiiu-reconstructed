@@ -13,7 +13,7 @@ class Witch : public Monster, public RangedAttackMob
 {
 public:
     explicit Witch(Level* level);
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void registerGoals();

@@ -25,7 +25,7 @@ public:
 
     Pufferfish(Level* level);
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     void setNextPuffedState(PuffedState state, int delay);
     void damageNearbyMobs();
     bool validatePuffedTypes(boost::shared_ptr<Entity> entity);

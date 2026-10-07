@@ -86,9 +86,9 @@ Parrot::~Parrot()
     }
 }
 
-void Parrot::create(Level* level)
+Entity* Parrot::create(Level* level)
 {
-    new Parrot(level);
+    return new Parrot(level);
 }
 
 bool Parrot::isFlying()

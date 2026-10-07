@@ -14,8 +14,7 @@ class MagmaCube : public Slime
 {
 public:
     MagmaCube(Level* level);
-    virtual ~MagmaCube();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void registerAttributes();
     virtual void defineSynchedData();

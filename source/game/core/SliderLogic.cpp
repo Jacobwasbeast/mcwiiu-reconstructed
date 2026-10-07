@@ -5,13 +5,21 @@
 #include "game/ui/UIString.hpp"
 
 SliderLogic::SliderLogic()
-    : mId(0), mLabel(0), mIncludeRandom(false), mOption(eCustomGameModeHostOption_NoSmallSkins), mMiniGameId(eMiniGameId_Lobby)
 {
+    mId = 0;
+    mLabel = 0;
+    mOption = eCustomGameModeHostOption_NoSmallSkins;
+    mMiniGameId = eMiniGameId_Lobby;
+    mIncludeRandom = false;
 }
 
 SliderLogic::SliderLogic(int id, int label, eCustomGameModeHostOption option, EMiniGameId miniGameId, bool includeRandom)
-    : mId(id), mLabel(label), mIncludeRandom(includeRandom), mOption(option), mMiniGameId(miniGameId)
 {
+    mId = id;
+    mLabel = label;
+    mOption = option;
+    mMiniGameId = miniGameId;
+    mIncludeRandom = includeRandom;
 }
 
 void SliderLogic::AddTo(UIControl_MultiList& list, int value) const

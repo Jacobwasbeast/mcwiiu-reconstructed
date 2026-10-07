@@ -11,9 +11,9 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-void MinecartSpawner::create(Level* level)
+Entity* MinecartSpawner::create(Level* level)
 {
-    new MinecartSpawner(level);
+    return new MinecartSpawner(level);
 }
 
 MinecartSpawner::MinecartSpawner(Level* level)
@@ -88,10 +88,6 @@ unsigned long long MinecartSpawner::GetType()
 
 MinecartSpawner::MinecartMobSpawner::MinecartMobSpawner(MinecartSpawner* minecart)
     : BaseMobSpawner(), mMinecart(minecart)
-{
-}
-
-MinecartSpawner::MinecartMobSpawner::~MinecartMobSpawner()
 {
 }
 

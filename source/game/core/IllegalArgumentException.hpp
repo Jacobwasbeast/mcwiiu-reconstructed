@@ -8,7 +8,6 @@ class IllegalArgumentException : public std::exception
 {
 public:
     IllegalArgumentException(const std::wstring& message);
-    ~IllegalArgumentException();
 
 private:
     std::wstring mMessage;

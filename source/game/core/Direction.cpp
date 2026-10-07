@@ -246,14 +246,14 @@ const Direction* Direction::getClockWise() const
     case 2:
         return EAST;
 
+    case 5:
+        return SOUTH;
+
     case 3:
         return WEST;
 
     case 4:
         return NORTH;
-
-    case 5:
-        return SOUTH;
     }
 
     return NULL;
@@ -266,14 +266,14 @@ const Direction* Direction::getCounterClockWise() const
     case 2:
         return WEST;
 
+    case 5:
+        return NORTH;
+
     case 3:
         return EAST;
 
     case 4:
         return SOUTH;
-
-    case 5:
-        return NORTH;
     }
 
     return NULL;
@@ -316,10 +316,6 @@ Direction::Axis::Axis(const std::wstring& name, Plane* plane, EAxis id)
     this->name = name;
     this->plane = plane;
     this->id = id;
-}
-
-Direction::Axis::~Axis()
-{
 }
 
 void Direction::Axis::staticCtor()

@@ -22,9 +22,9 @@ MinecartRideable::MinecartRideable(Level* level, double x, double y, double z)
     mCategories |= EntityCategory::eEntityCategory_Rideable;
 }
 
-void MinecartRideable::create(Level* level)
+Entity* MinecartRideable::create(Level* level)
 {
-    new MinecartRideable(level);
+    return new MinecartRideable(level);
 }
 
 void MinecartRideable::addDataWalkers(DataFixerUpper* dataFixerUpper)

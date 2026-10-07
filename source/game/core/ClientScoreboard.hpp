@@ -19,7 +19,6 @@ public:
                                  std::equal_to<StatsUID> > PlayerStatsMap;
 
     ClientScoreboard();
-    virtual ~ClientScoreboard();
 
     void SyncPlayerStats(const StatsUID& suid, PlayerStats* stats, int round);
     void UpdatePlayerStats(const StatsUID& suid, PlayerStats* stats,

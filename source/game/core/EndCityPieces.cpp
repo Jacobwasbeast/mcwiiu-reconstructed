@@ -134,19 +134,17 @@ void EndCityPieces::loadStatic()
 EndCityPieces::EndCityPiece::EndCityPiece(StructureManager* structureManager,
     eMinecraftStructureTemplate templateType, const BlockPos& position,
     Rotation* rotation, bool overwrite)
-    : TemplateStructurePiece(0), mTemplateType(templateType), mRotation(rotation), mOverwrite(overwrite)
+    : TemplateStructurePiece(0), mTemplateType(templateType)
 {
     mTemplatePosition = position;
+    mRotation = rotation;
+    mOverwrite = overwrite;
     loadTemplate(structureManager);
 }
 
 EndCityPieces::EndCityPiece::EndCityPiece()
     : TemplateStructurePiece(), mTemplateType(eMinecraftStructureTemplate_Count),
       mRotation(Rotation::NONE), mOverwrite(false)
-{
-}
-
-EndCityPieces::EndCityPiece::~EndCityPiece()
 {
 }
 
@@ -173,20 +171,24 @@ void EndCityPieces::EndCityPiece::readAdditionalSaveData(DataInputStream* input,
 void EndCityPieces::EndCityPiece::handleDataMarker(const std::wstring& marker,
     const BlockPos& position, Level* level, Random& random, BoundingBox* box)
 {
-    std::wstring chestMarker = L"Chest";
-    std::wstring sentryMarker = L"Sentry";
-    std::wstring elytraMarker = L"Elytra";
+    std::wstring chestMarker(L"Chest");
+    std::wstring sentryMarker(L"Sentry");
+    std::wstring elytraMarker(L"Elytra");
     if (marker.compare(0, chestMarker.length(), chestMarker) == 0)
     {
         BlockPos below = position.below();
         if (box->isInside(below))
         {
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(below);
-            if (blockEntity && blockEntity->GetType() == BlockEntityType::CHEST)
+            if (blockEntity)
             {
-                boost::shared_ptr<ChestBlockEntity> chest =
-                    boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
-                chest->setLootTable(&BuiltInLootTables::END_CITY_TREASURE, random.nextLong());
+                bool isChest = blockEntity->GetType() == BlockEntityType::CHEST;
+                if (isChest)
+                {
+                    boost::shared_ptr<ChestBlockEntity> chest =
+                        boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
+                    chest->setLootTable(&BuiltInLootTables::END_CITY_TREASURE, random.nextLong());
+                }
             }
         }
     }

@@ -12,7 +12,7 @@ struct Node;
 class NodeEvaluator;
 class Path;
 
-class PathFinder : public BinaryHeap
+class PathFinder
 {
 public:
     PathFinder(NodeEvaluator* nodeEvaluator);
@@ -29,6 +29,7 @@ public:
 private:
     friend class PathNavigationListener;
 
+    BinaryHeap openSet;
     arrayWithLength<Node*>* mNeighbors;
     NodeEvaluator* mNodeEvaluator;
 };

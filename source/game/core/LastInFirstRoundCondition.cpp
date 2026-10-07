@@ -15,12 +15,12 @@ LastInFirstRoundCondition::~LastInFirstRoundCondition()
 bool LastInFirstRoundCondition::canAward(const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const
 {
     PlayerStats* playerStats = gameStats->GetPlayerStats(uid);
-    if (playerStats != NULL && playerStats->getTotalRounds() != 0)
+    if (playerStats != NULL && playerStats->getTotalRounds() > 0u)
     {
         int finishPosition = playerStats->getRoundStats(0)->mFinishPosition;
-        PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(0);
-        if (roundStats->mFinishPlayerCount > 1)
-            return finishPosition == roundStats->mFinishPlayerCount - 1;
+        const int finishPlayerCount = playerStats->getRoundStats(0)->mFinishPlayerCount;
+        if (finishPlayerCount > 1)
+            return finishPosition == finishPlayerCount - 1;
     }
 
     return false;

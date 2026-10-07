@@ -17,19 +17,13 @@ Abilities::Abilities()
 
 bool Abilities::operator==(const Abilities& other) const
 {
-    bool equal = false;
-    if (mInvulnerable == other.mInvulnerable
+    return mInvulnerable == other.mInvulnerable
         && mFlying == other.mFlying
         && mMayfly == other.mMayfly
         && mInstabuild == other.mInstabuild
         && mMayBuild == other.mMayBuild
         && mFlyingSpeed == other.mFlyingSpeed
-        && mWalkingSpeed == other.mWalkingSpeed)
-    {
-        equal = true;
-    }
-
-    return equal;
+        && mWalkingSpeed == other.mWalkingSpeed;
 }
 
 void Abilities::addSaveData(CompoundTag* tag)

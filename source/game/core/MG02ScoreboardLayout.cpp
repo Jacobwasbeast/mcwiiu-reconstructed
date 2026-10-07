@@ -35,23 +35,23 @@ bool MG02ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
 {
     const MG02PlayerInfo* firstInfo = static_cast<const MG02PlayerInfo*>(first);
     const MG02PlayerInfo* secondInfo = static_cast<const MG02PlayerInfo*>(second);
-    if (firstInfo->priority != 0)
+    if (firstInfo->priority)
     {
-        if (secondInfo->priority == 0)
+        if (!secondInfo->priority)
         {
             return true;
         }
     }
-    else if (secondInfo->priority != 0)
+    else if (secondInfo->priority)
     {
         return false;
     }
 
-    if (secondInfo->deaths > firstInfo->deaths)
+    if (firstInfo->deaths < secondInfo->deaths)
     {
         return true;
     }
-    if (secondInfo->deaths < firstInfo->deaths)
+    if (firstInfo->deaths > secondInfo->deaths)
     {
         return false;
     }
@@ -78,7 +78,7 @@ bool MG02ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
     {
         return true;
     }
-    if (secondInfo->totalDistanceTravelled < firstInfo->totalDistanceTravelled)
+    if (firstInfo->totalDistanceTravelled > secondInfo->totalDistanceTravelled)
     {
         return false;
     }
@@ -103,7 +103,7 @@ void MG02ScoreboardLayout::Init(int value)
         INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerByIndex(index);
         if (networkPlayer != 0)
         {
-            PlayerInfo* info = new MG02PlayerInfo();
+            MG02PlayerInfo* info = new MG02PlayerInfo();
             BuildPlayerInfo(networkPlayer, info);
             m_players.push_back(info);
         }
@@ -188,17 +188,22 @@ unsigned int MG02ScoreboardLayout::getTitleIcon(int column, const EScoreboardTyp
 
 std::wstring MG02ScoreboardLayout::GetRowLabel(int row, const StatsUID& uid, const EScoreboardType&)
 {
-    if (row == 0)
+    switch (row)
+    {
+    case 0:
     {
         ClientScoreboard* scoreboard =
             Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
         return _toString<int>(scoreboard->GetRoundsWon(uid));
     }
-    if (row == 1 && (int)getNumberOfColumns() > 2)
-    {
-        ClientScoreboard* scoreboard =
-            Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
-        return _toString<int>(scoreboard->GetDeaths(uid, -1));
+    case 1:
+        if ((int)getNumberOfColumns() > 2)
+        {
+            ClientScoreboard* scoreboard =
+                Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
+            return _toString<int>(scoreboard->GetDeaths(uid, -1));
+        }
+        break;
     }
     return std::wstring(L"");
 }
@@ -210,19 +215,22 @@ not_null_ptr<ItemInstance> MG02ScoreboardLayout::getItemForSlot(int column, int,
         if (type == EScoreboardType_Scoreboard)
         {
             int auxValue = 3;
-            if (column == 1)
+            switch (column)
             {
-                if (getNumberOfColumns() > 2)
+            case 1:
+            {
+                const int columns = static_cast<int>(getNumberOfColumns());
+                if (columns > 2)
                     auxValue = 0;
             }
-            else if (column != 2)
-            {
-                return ItemInstance::EMPTY;
+            case 2:
+                return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, auxValue));
             }
-            return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, auxValue));
         }
-        if (getNumberOfColumns() > 2 && column == 1)
+        else if (static_cast<int>(getNumberOfColumns()) > 2 && column == 1)
+        {
             return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 0));
+        }
     }
     return ItemInstance::EMPTY;
 }
@@ -274,18 +282,14 @@ PlayerInfo* MG02ScoreboardLayout::CreatePlayerInfo()
 
 void MG02ScoreboardLayout::AddPlayer(unsigned char id)
 {
-    PlayerInfo* info = new MG02PlayerInfo();
+    MG02PlayerInfo* info = new MG02PlayerInfo();
     BuildPlayerInfo(CGameNetworkManager::sInstance.GetPlayerBySmallId(id), info);
     m_players.push_back(info);
 }
 
 void MG02ScoreboardLayout::UpdatePlayer(int index, PlayerInfo*, PlayerInfo* newInfo, bool)
 {
-    PlayerInfo* info = m_players[index];
-    info->voiceStatus = newInfo->voiceStatus;
-    info->smallId = newInfo->smallId;
-    info->colour = newInfo->colour;
-    info->name = newInfo->name;
+    *m_players[index] = *newInfo;
 }
 
 bool MG02ScoreboardLayout::showLifeSpanProgress()

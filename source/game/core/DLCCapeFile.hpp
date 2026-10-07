@@ -7,7 +7,6 @@ class DLCCapeFile : public DLCFile
 {
 public:
     DLCCapeFile(const std::wstring& path);
-    virtual ~DLCCapeFile();
 
     virtual void addData(unsigned char* data, unsigned int size);
 };

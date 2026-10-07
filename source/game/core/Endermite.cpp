@@ -54,8 +54,7 @@ void Endermite::registerGoals()
     mGoalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 1.0), true);
     mGoalSelector.addGoal(7, new LookAtPlayerGoal(this, typeid(Player), 8.0f), true);
     mGoalSelector.addGoal(8, new RandomLookAroundGoal(this), true);
-    arrayWithLength<unsigned long long> entityTypes;
-    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, entityTypes), true);
+    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, arrayWithLength<unsigned long long>()), true);
     mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
     mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(EnderMan), true, false, false), true);
 }
@@ -150,7 +149,7 @@ void Endermite::aiStep()
         {
             mLevel->addParticle(PARTICLE_ENDER,
                                 mX + (mRandom->nextDouble() - 0.5) * mBbWidth,
-                                mY + mRandom->nextDouble() * (double)mBbHeight,
+                                mY + mRandom->nextDouble() * mBbHeight,
                                 mZ + (mRandom->nextDouble() - 0.5) * mBbWidth,
                                 (mRandom->nextDouble() - 0.5) * 2.0,
                                 -mRandom->nextDouble(),
@@ -174,9 +173,12 @@ bool Endermite::isDarkEnoughToSpawn()
 
 bool Endermite::checkSpawnRules()
 {
-    if (!Monster::checkSpawnRules())
-        return false;
-    return !mLevel->getNearestPlayer(shared_from_this(), 5.0, -1.0);
+    if (Monster::checkSpawnRules())
+    {
+        boost::shared_ptr<Player> player = mLevel->getNearestPlayer(shared_from_this(), 5.0, -1.0);
+        return player == NULL;
+    }
+    return false;
 }
 
 EMobType Endermite::getMobType()
@@ -184,7 +186,7 @@ EMobType Endermite::getMobType()
     return MOB_TYPE_ARTHROPOD;
 }
 
-void Endermite::create(Level* level)
+Entity* Endermite::create(Level* level)
 {
-    new Endermite(level);
+    return new Endermite(level);
 }

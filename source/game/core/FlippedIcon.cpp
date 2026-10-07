@@ -39,7 +39,7 @@ float FlippedIcon::getU1(bool applyFrame) const
 float FlippedIcon::getU(double value) const
 {
     const float width = getU1(false) - getU0(false);
-    return width * (static_cast<float>(value) * 0.0625f) + getU0(false);
+    return getU0(false) + width * (static_cast<float>(value) * 0.0625f);
 }
 
 float FlippedIcon::getV0(bool applyFrame) const
@@ -55,7 +55,7 @@ float FlippedIcon::getV1(bool applyFrame) const
 float FlippedIcon::getV(double value) const
 {
     const float height = getV1(false) - getV0(false);
-    return height * (static_cast<float>(value) * 0.0625f) + getV0(false);
+    return getV0(false) + height * (static_cast<float>(value) * 0.0625f);
 }
 
 std::wstring FlippedIcon::getName() const

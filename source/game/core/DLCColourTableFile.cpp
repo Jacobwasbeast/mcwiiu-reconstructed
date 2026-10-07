@@ -20,5 +20,7 @@ DLCColourTableFile::~DLCColourTableFile()
 
 void DLCColourTableFile::addData(unsigned char* pData, unsigned int size)
 {
-    m_pColourTable = new ColourTable(Minecraft::GetInstance()->mTexturePackRepository->defaultTexturePack->getColourTable(), pData, size);
+    ColourTable* defaultColours = Minecraft::GetInstance()->mTexturePackRepository->defaultTexturePack->getColourTable();
+    ColourTable* table = new ColourTable(defaultColours, pData, size);
+    m_pColourTable = table;
 }

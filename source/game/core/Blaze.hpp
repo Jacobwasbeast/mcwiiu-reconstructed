@@ -55,7 +55,7 @@ public:
     virtual bool isDarkEnoughToSpawn();
     double getFollowDistance();
     virtual unsigned long long GetType();
-    static void create(Level* level);
+    static Entity* create(Level* level);
 
 private:
     float mHeightOffset;

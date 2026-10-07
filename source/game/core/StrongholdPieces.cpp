@@ -96,14 +96,14 @@ StrongholdPieces::StrongholdPiece::SmallDoorType StrongholdPieces::StrongholdPie
 {
     switch (random.nextInt(5))
     {
+    default:
+        return OPENING;
     case 2:
         return WOOD_DOOR;
     case 3:
         return GRATES;
     case 4:
         return IRON_DOOR;
-    default:
-        return OPENING;
     }
 }
 
@@ -264,10 +264,9 @@ void StrongholdPieces::resetPieces()
     sForcedPieceClass = ePieceClass_None;
 }
 
-unsigned long long StrongholdPieces::staticCtor()
+void StrongholdPieces::staticCtor()
 {
     sStrongholdStoneSelector = new SmoothStoneSelector();
-    return 0;
 }
 
 unsigned long long StrongholdPieces::loadStatic()
@@ -889,7 +888,9 @@ bool StrongholdPieces::Library::postProcess(Level* level, Random& random, Boundi
 {
     if (edgesLiquid(level, box))
         return false;
-    int height = mIsTall ? 11 : 6;
+    int height = 11;
+    if (!mIsTall)
+        height = 6;
     generateBox(level, box, 0, 0, 0, 13, height - 1, 14, true, random, sStrongholdStoneSelector);
     generateSmallDoor(level, random, box, mEntryDoor, 4, 1, 0);
     generateMaybeBox(level, box, random, 0.07f, 2, 1, 1, 11, 4, 13,

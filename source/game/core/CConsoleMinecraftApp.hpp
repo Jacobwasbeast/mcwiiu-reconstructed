@@ -20,9 +20,9 @@ public:
     cCommerceNintendoWiiU* GetCommerceInstance();
     static void RequestToBackground();
     static uint8_t ReadyToBackground();
-    uint8_t GetDRCIconEnabled();
+    bool GetDRCIconEnabled();
     void SetDRCOuputEnabled(bool);
-    uint8_t GetDRCOutputEnabled();
+    bool GetDRCOutputEnabled();
     uint8_t GetDRCCheckPlayerCountEnabled();
     void FatalLoadError(const wchar_t*, ...);
     void InitialiseDLCInfo();
@@ -103,8 +103,8 @@ private:
     int m_commerceCategory;
     int m_commerceInstanceState;
     unsigned char m_noSpaceForSaveQuota;
-    unsigned char m_drcIconEnabled;
-    unsigned char m_drcOutputEnabled;
+    bool m_drcIconEnabled;
+    bool m_drcOutputEnabled;
     unsigned char m_drcCheckPlayerCountEnabled;
     char m_productCode[12];
     int m_productSKU;

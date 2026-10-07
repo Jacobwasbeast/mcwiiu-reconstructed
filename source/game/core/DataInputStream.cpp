@@ -57,7 +57,7 @@ unsigned char DataInputStream::readUnsignedByte()
     return (unsigned char)mChildStream->read();
 }
 
-int DataInputStream::readUnsignedShort()
+unsigned short DataInputStream::readUnsignedShort()
 {
     int high = mChildStream->read();
     int low = mChildStream->read();

@@ -44,10 +44,6 @@ Coral::Coral()
     memset(mIcons, 0, sizeof(mIcons));
 }
 
-Coral::~Coral()
-{
-}
-
 int Coral::getColor(const BlockState* state)
 {
     return Blocks::grass->getColor(state);

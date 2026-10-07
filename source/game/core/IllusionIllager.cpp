@@ -33,6 +33,8 @@
 extern SpellcasterIllager::IllagerSpell* gSpell4;
 extern SpellcasterIllager::IllagerSpell* gSpell5;
 
+static ResourceLocation* sNoLootTable = NULL;
+
 IllusionIllager::IllusionIllager(Level* level)
     : SpellcasterIllager(level), RangedAttackMob()
 {
@@ -49,9 +51,10 @@ IllusionIllager::IllusionIllager(Level* level)
     mDisguisedPosition4O = Vec3::newPermanent(0.0, 0.0, 0.0);
 }
 
-IllusionIllager::~IllusionIllager() {}
-
-void IllusionIllager::create(Level* level) { new IllusionIllager(level); }
+Entity* IllusionIllager::create(Level* level)
+{
+    return new IllusionIllager(level);
+}
 bool IllusionIllager::isAggressive() { return getIllagerFlag(1); }
 void IllusionIllager::setAggressive(bool aggressive) { setIllagerFlag(1, aggressive); }
 
@@ -66,10 +69,9 @@ void IllusionIllager::registerGoals()
     mGoalSelector.addGoal(9, new LookAtPlayerGoal(this, typeid(Player), 3.0f, 1.0f), true);
     mGoalSelector.addGoal(10, new LookAtPlayerGoal(this, typeid(Mob), 8.0f), true);
 
-    unsigned long long* hurtByTargetTypes = new unsigned long long[1];
-    hurtByTargetTypes[0] = EntityType::ILLUSION_ILLAGER;
-    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true,
-        arrayWithLength<unsigned long long>(hurtByTargetTypes, 1)), true);
+    arrayWithLength<unsigned long long> hurtByTargetTypes(1, true);
+    hurtByTargetTypes.data[0] = EntityType::ILLUSION_ILLAGER;
+    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, hurtByTargetTypes), true);
     mTargetSelector.addGoal(2, (new NearestAttackableTargetGoal(this, typeid(Player), true, false, false))
         ->setUnseenMemoryTicks(300), true);
     mTargetSelector.addGoal(3, (new NearestAttackableTargetGoal(this, typeid(Villager), false, false, false))
@@ -92,7 +94,7 @@ MobGroupData* IllusionIllager::finalizeMobSpawn(const DifficultyInstance& diffic
     return Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 }
 void IllusionIllager::defineSynchedData() { SpellcasterIllager::defineSynchedData(); }
-ResourceLocation* IllusionIllager::getDefaultLootTable() { return NULL; }
+ResourceLocation* IllusionIllager::getDefaultLootTable() { return sNoLootTable; }
 AABB* IllusionIllager::getBoundingBoxForCulling() { return mBoundingBox->grow(3.0, 0.0, 3.0); }
 
 void IllusionIllager::aiStep()
@@ -112,37 +114,33 @@ void IllusionIllager::aiStep()
             mIllusionLevel = 3;
 
             int roll;
-            double x;
             double y;
-            double z;
             delete mDisguisedPosition;
             mDisguisedPosition = mDisguisedPositionO;
             roll = mRandom->nextInt(6) - 4;
-            y = roll > 0 ? (double)roll : 0.0;
-            z = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
-            x = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
-            mDisguisedPositionO = Vec3::newPermanent(x, y, z);
+            y = 0.0;
+            if (roll > 0)
+                y = roll;
+            mDisguisedPositionO = Vec3::newPermanent((-6.0f + (float)mRandom->nextInt(13)) * 0.5, y,
+                                    (-6.0f + (float)mRandom->nextInt(13)) * 0.5);
             delete mDisguisedPosition2;
             mDisguisedPosition2 = mDisguisedPosition2O;
             roll = mRandom->nextInt(6) - 4;
-            y = roll > 0 ? (double)roll : 0.0;
-            z = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
-            x = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
-            mDisguisedPosition2O = Vec3::newPermanent(x, y, z);
+            mDisguisedPosition2O = Vec3::newPermanent((-6.0f + (float)mRandom->nextInt(13)) * 0.5,
+                                    roll <= 0 ? 0.0 : (double)roll,
+                                    (-6.0f + (float)mRandom->nextInt(13)) * 0.5);
             delete mDisguisedPosition3;
             mDisguisedPosition3 = mDisguisedPosition3O;
             roll = mRandom->nextInt(6) - 4;
-            y = roll > 0 ? (double)roll : 0.0;
-            z = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
-            x = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
-            mDisguisedPosition3O = Vec3::newPermanent(x, y, z);
+            mDisguisedPosition3O = Vec3::newPermanent((-6.0f + (float)mRandom->nextInt(13)) * 0.5,
+                                    roll <= 0 ? 0.0 : (double)roll,
+                                    (-6.0f + (float)mRandom->nextInt(13)) * 0.5);
             delete mDisguisedPosition4;
             mDisguisedPosition4 = mDisguisedPosition4O;
             roll = mRandom->nextInt(6) - 4;
-            y = roll > 0 ? (double)roll : 0.0;
-            z = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
-            x = (-6.0f + (float)mRandom->nextInt(13)) * 0.5;
-            mDisguisedPosition4O = Vec3::newPermanent(x, y, z);
+            mDisguisedPosition4O = Vec3::newPermanent((-6.0f + (float)mRandom->nextInt(13)) * 0.5,
+                                    roll <= 0 ? 0.0 : (double)roll,
+                                    (-6.0f + (float)mRandom->nextInt(13)) * 0.5);
 
             for (int i = 0; i < 16; ++i)
             {
@@ -182,11 +180,11 @@ bool IllusionIllager::isAlliedTo(boost::shared_ptr<Entity> entity)
 {
     if (Entity::isAlliedTo(entity))
         return true;
-    int illager = (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
-        && boost::static_pointer_cast<LivingEntity>(entity)->getMobType() == MOB_TYPE_ILLAGER;
-    if (!illager)
-        return false;
-    return getTeam() == NULL && entity->getTeam() == NULL;
+    bool isLiving = (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
+    int illager = isLiving && boost::static_pointer_cast<LivingEntity>(entity)->getMobType() == MOB_TYPE_ILLAGER;
+    if (illager)
+        return getTeam() == NULL && entity->getTeam() == NULL;
+    return false;
 }
 const SoundEvent* IllusionIllager::getAmbientSound() { return SoundEvents::ILLUSION_ILLAGER_AMBIENT; }
 const SoundEvent* IllusionIllager::getDeathSound() { return SoundEvents::ILLUSION_ILLAGER_DEATH; }
@@ -259,23 +257,22 @@ void IllusionIllager::IllusionistBlindnessSpellGoal::start()
 }
 void IllusionIllager::IllusionistBlindnessSpellGoal::performSpellCasting()
 {
-    boost::shared_ptr<LivingEntity> target = mSpellcaster->getTarget();
-    target->addEffect(new MobEffectInstance(MobEffects::BLINDNESS, 400), boost::shared_ptr<Entity>());
+    mSpellcaster->getTarget()->addEffect(new MobEffectInstance(MobEffects::BLINDNESS, 400), boost::shared_ptr<Entity>());
 }
 int IllusionIllager::IllusionistBlindnessSpellGoal::getCastingTime() { return 20; }
 int IllusionIllager::IllusionistBlindnessSpellGoal::getCastingInterval() { return 180; }
 const SoundEvent* IllusionIllager::IllusionistBlindnessSpellGoal::getSpellPrepareSound() { return SoundEvents::ILLUSION_ILLAGER_PREPARE_BLINDNESS; }
 SpellcasterIllager::IllagerSpell* IllusionIllager::IllusionistBlindnessSpellGoal::getSpell() { return gSpell5; }
-std::wstring IllusionIllager::IllusionistBlindnessSpellGoal::getName() { return L"IllusionistBlindnessSpellGoal"; }
-
 IllusionIllager::IllusionistMirrorSpellGoal::IllusionistMirrorSpellGoal(IllusionIllager* illager)
     : SpellcasterUseSpellGoal(illager) {}
 IllusionIllager::IllusionistMirrorSpellGoal::~IllusionistMirrorSpellGoal() {}
 bool IllusionIllager::IllusionistMirrorSpellGoal::canUse()
 {
-    if (SpellcasterUseSpellGoal::canUse() && !mSpellcaster->hasEffect(MobEffects::INVISIBILITY))
-        return true;
-    return false;
+    if (!SpellcasterUseSpellGoal::canUse())
+        return false;
+    if (mSpellcaster->hasEffect(MobEffects::INVISIBILITY))
+        return false;
+    return true;
 }
 void IllusionIllager::IllusionistMirrorSpellGoal::performSpellCasting()
 {
@@ -285,4 +282,3 @@ int IllusionIllager::IllusionistMirrorSpellGoal::getCastingTime() { return 20; }
 int IllusionIllager::IllusionistMirrorSpellGoal::getCastingInterval() { return 340; }
 const SoundEvent* IllusionIllager::IllusionistMirrorSpellGoal::getSpellPrepareSound() { return SoundEvents::ILLUSION_ILLAGER_PREPARE_MIRROR; }
 SpellcasterIllager::IllagerSpell* IllusionIllager::IllusionistMirrorSpellGoal::getSpell() { return gSpell4; }
-std::wstring IllusionIllager::IllusionistMirrorSpellGoal::getName() { return L"IllusionistMirrorSpellGoal"; }

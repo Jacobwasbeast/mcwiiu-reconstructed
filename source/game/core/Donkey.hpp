@@ -17,7 +17,6 @@ class Donkey : public AbstractChestedHorse
 {
 public:
     Donkey(Level* level);
-    virtual ~Donkey();
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual ResourceLocation* getDefaultLootTable();
     virtual const SoundEvent* getAmbientSound();
@@ -28,7 +27,7 @@ public:
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
     virtual bool HideUseTooltips();
     virtual unsigned long long GetType();
-    static void create(Level* level);
+    static Entity* create(Level* level);
 };
 
 #endif

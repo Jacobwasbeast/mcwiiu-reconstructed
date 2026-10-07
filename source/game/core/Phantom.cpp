@@ -35,7 +35,10 @@ Phantom::Phantom(Level* level) : Monster(level)
     setNoGravity(true);
 }
 
-void Phantom::create(Level* level) { new Phantom(level); }
+Entity* Phantom::create(Level* level)
+{
+    return new Phantom(level);
+}
 
 void Phantom::tick()
 {

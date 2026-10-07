@@ -12,10 +12,6 @@ OverwritableWalker::OverwritableWalker(unsigned long long type, const std::wstri
 {
 }
 
-OverwritableWalker::~OverwritableWalker()
-{
-}
-
 CompoundTag* OverwritableWalker::walk(DataFixer* fixer, CompoundTag* tag, int version)
 {
     const std::wstring oldId(tag->getString(L"id"));

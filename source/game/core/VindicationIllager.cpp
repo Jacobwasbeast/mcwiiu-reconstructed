@@ -24,7 +24,10 @@ VindicationIllager::VindicationIllager(Level* level) : AbstractIllager(level)
     mJohnny = false;
     mCategories |= EntityCategory::eEntityCategory_Humanoid | EntityCategory::eEntityCategory_Monster;
 }
-VindicationIllager* VindicationIllager::create(Level* level) { return new VindicationIllager(level); }
+Entity* VindicationIllager::create(Level* level)
+{
+    return new VindicationIllager(level);
+}
 void VindicationIllager::addDataWalkers(DataFixerUpper* fixer)
 { Mob::addDataWalkers(fixer, EntityType::VINDICATION_ILLAGER); }
 void VindicationIllager::registerGoals()
@@ -125,9 +128,6 @@ bool VindicationIllager::LIVING_ENTITY_SELECTOR::apply(boost::shared_ptr<Entity>
 VindicationIllager::VindicatorJohnnyAttackGoal::VindicatorJohnnyAttackGoal(VindicationIllager* mob)
     : NearestAttackableTargetGoal(mob, typeid(Entity), 0, true, false,
                                   new LIVING_ENTITY_SELECTOR(), false, true) {}
-VindicationIllager::VindicatorJohnnyAttackGoal::~VindicatorJohnnyAttackGoal()
-{
-}
 bool VindicationIllager::VindicatorJohnnyAttackGoal::canUse()
 {
     VindicationIllager* illager = static_cast<VindicationIllager*>(mMob);

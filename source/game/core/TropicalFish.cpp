@@ -58,11 +58,11 @@ TropicalFish::TropicalFish(Level* level)
     fjDerivedCtorCalls();
     mLayeredTextureHashName = L"";
     mLayeredTextureLayers = arrayWithLength<int>(2, true);
+    mLayeredTextureLayers.data[0] = -1;
+    mLayeredTextureLayers.data[1] = -1;
     mSwimAmplitude = 0.01f;
     mSwimFrequency = 0.02f;
     mWaterValueC = 12.0f;
-    mLayeredTextureLayers.data[0] = -1;
-    mLayeredTextureLayers.data[1] = -1;
     setSize(0.4f, 0.4f);
 }
 
@@ -71,7 +71,10 @@ TropicalFish::~TropicalFish()
     delete[] mLayeredTextureLayers.data;
 }
 
-void TropicalFish::create(Level* level) { new TropicalFish(level); }
+Entity* TropicalFish::create(Level* level)
+{
+    return new TropicalFish(level);
+}
 
 void TropicalFish::staticCtor()
 {
@@ -115,10 +118,9 @@ void TropicalFish::rebuildLayeredTextureInfo()
 {
     mLayeredTextureHashName = L"fish/";
 
-    int* layer = mLayeredTextureLayers.data;
     for (unsigned int i = 0; i < mLayeredTextureLayers.length; i++)
     {
-        *layer++ = -1;
+        mLayeredTextureLayers.data[i] = -1;
     }
 
     int baseVariant = getBaseVariant();
@@ -133,7 +135,7 @@ void TropicalFish::rebuildLayeredTextureInfo()
         mLayeredTextureLayers.data[1] = TROPICAL_FISH_PATTERN_B_TEXTURES[markVariant];
     }
 
-    mLayeredTextureHashName = L"fish/" + TROPICAL_FISH_BASE_HASHES[baseVariant] + (baseVariant == 0 ? TROPICAL_FISH_PATTERN_A_HASHES : TROPICAL_FISH_PATTERN_B_HASHES)[markVariant];
+    mLayeredTextureHashName = L"fish/" + TROPICAL_FISH_BASE_HASHES[baseVariant] + (baseVariant == 0 ? TROPICAL_FISH_PATTERN_A_HASHES[markVariant] : TROPICAL_FISH_PATTERN_B_HASHES[markVariant]);
 }
 
 std::wstring TropicalFish::getLayeredTextureHashName()
@@ -186,36 +188,36 @@ void TropicalFish::readAdditionalSaveData(CompoundTag* tag)
 MobGroupData* TropicalFish::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name)
 {
     mRandom = new Random();
+    int baseVariant;
+    int markVariant;
+    int color1;
+    int color2;
     if (dynamic_cast<TropicalFishGroupData*>(data) != NULL)
     {
         TropicalFishGroupData* group = static_cast<TropicalFishGroupData*>(data);
-        int baseVariant = group->mBaseVariant;
-        int markVariant = group->mMarkVariant;
-        int color1 = group->mColor1;
-        int color2 = group->mColor2;
-        setVariant(baseVariant | (markVariant << 8));
-        setColor(color1 | (color2 << 8));
+        baseVariant = group->mBaseVariant;
+        markVariant = group->mMarkVariant;
+        color1 = group->mColor1;
+        color2 = group->mColor2;
     }
     else if (mRandom->nextFloat() < 0.9)
     {
         int index = mRandom->nextInt(22);
-        int baseVariant = TROPICAL_FISH_VARIANTS[index][0];
-        int markVariant = TROPICAL_FISH_VARIANTS[index][1];
-        int color1 = TROPICAL_FISH_VARIANTS[index][2];
-        int color2 = TROPICAL_FISH_VARIANTS[index][3];
+        baseVariant = TROPICAL_FISH_VARIANTS[index][0];
+        markVariant = TROPICAL_FISH_VARIANTS[index][1];
+        color1 = TROPICAL_FISH_VARIANTS[index][2];
+        color2 = TROPICAL_FISH_VARIANTS[index][3];
         data = new TropicalFishGroupData(baseVariant, markVariant, color1, color2);
-        setVariant(baseVariant | (markVariant << 8));
-        setColor(color1 | (color2 << 8));
     }
     else
     {
-        int baseVariant = mRandom->nextInt(2);
-        int markVariant = mRandom->nextInt(6);
-        int color1 = mRandom->nextInt(15);
-        int color2 = mRandom->nextInt(15);
-        setVariant(baseVariant | (markVariant << 8));
-        setColor(color1 | (color2 << 8));
+        baseVariant = mRandom->nextInt(2);
+        markVariant = mRandom->nextInt(6);
+        color1 = mRandom->nextInt(15);
+        color2 = mRandom->nextInt(15);
     }
+    setVariant(baseVariant | (markVariant << 8));
+    setColor(color1 | (color2 << 8));
     return Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 }
 

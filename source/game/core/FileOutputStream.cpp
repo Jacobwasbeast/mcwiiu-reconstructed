@@ -2,25 +2,12 @@
 
 #include "game/core/File.hpp"
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
-
-struct _OVERLAPPED
-{
-    unsigned int Internal;
-    unsigned int InternalHigh;
-    unsigned int Offset;
-    unsigned int OffsetHigh;
-    int hEvent;
-};
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
 char* wstringtofilename(const std::wstring& path, char (&filename)[256]);
 
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode, void* securityAttributes, unsigned int creationDisposition, unsigned int flagsAndAttributes, int templateFile);
 int WriteFile(int file, const void* buffer, unsigned int bytesToWrite, unsigned int* bytesWritten, _OVERLAPPED* overlapped);
-
-static const int INVALID_HANDLE_VALUE = -1;
-static const unsigned int GENERIC_WRITE = 0x40000000;
-static const unsigned int OPEN_ALWAYS = 4;
-static const unsigned int FILE_ATTRIBUTE_NORMAL = 0x80;
 
 FileOutputStream::FileOutputStream(const File& file)
 {
@@ -59,8 +46,9 @@ void FileOutputStream::write(arrayWithLength<unsigned char> data)
 void FileOutputStream::write(arrayWithLength<unsigned char> data, unsigned int offset, unsigned int length)
 {
     unsigned int bytesWritten;
+    unsigned char* buffer = data.data + offset;
 
-    WriteFile(mFile, data.data + offset, length, &bytesWritten, NULL);
+    WriteFile(mFile, buffer, length, &bytesWritten, NULL);
 }
 
 void FileOutputStream::close()

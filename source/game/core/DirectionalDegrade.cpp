@@ -30,10 +30,6 @@ DirectionalDegrade::DirectionalDegrade()
 {
 }
 
-DirectionalDegrade::~DirectionalDegrade()
-{
-}
-
 void DirectionalDegrade::writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount)
 {
     (void)saveInterface;

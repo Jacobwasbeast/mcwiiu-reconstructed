@@ -42,9 +42,9 @@ Pufferfish::Pufferfish(Level* level)
     fjDerivedCtorCalls();
 }
 
-void Pufferfish::create(Level* level)
+Entity* Pufferfish::create(Level* level)
 {
-    new Pufferfish(level);
+    return new Pufferfish(level);
 }
 
 void Pufferfish::setNextPuffedState(PuffedState state, int delay)

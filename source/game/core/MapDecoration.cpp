@@ -141,7 +141,11 @@ bool MapDecoration::renderOnFrame() const
 
 int MapDecoration::hashCode() const
 {
-    return ((this->type->getIcon() * 31 + this->x) * 31 + this->y) * 31 + this->rot;
+    int hash = this->type->getIcon();
+    hash = hash * 31 + this->x;
+    hash = hash * 31 + this->y;
+    hash = hash * 31 + this->rot;
+    return hash;
 }
 
 bool MapDecoration::equals(MapDecoration& other)

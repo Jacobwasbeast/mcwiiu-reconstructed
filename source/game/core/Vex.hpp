@@ -30,7 +30,7 @@ public:
     static const unsigned int WIIU_INSTANCE_SIZE = 1864;
     explicit Vex(Level* level);
     virtual ~Vex();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     virtual void move(MoverType operation, double x, double y, double z, bool force);
     virtual void tick();
@@ -80,7 +80,6 @@ public:
     {
     public:
         explicit VexCopyOwnerTargetGoal(PathfinderMob* owner);
-        virtual ~VexCopyOwnerTargetGoal();
         bool canUse();
         void start();
         std::wstring getName();

@@ -276,7 +276,7 @@ unsigned long long Bat::GetType()
     return EntityType::BAT;
 }
 
-void Bat::create(Level* level)
+Entity* Bat::create(Level* level)
 {
-    new Bat(level);
+    return new Bat(level);
 }

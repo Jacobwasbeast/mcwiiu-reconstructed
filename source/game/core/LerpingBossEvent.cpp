@@ -16,14 +16,10 @@ LerpingBossEvent::LerpingBossEvent(boost::shared_ptr<ClientboundBossEventPacket>
     setCreateWorldFog(packet->shouldCreateWorldFog());
 }
 
-LerpingBossEvent::~LerpingBossEvent()
-{
-}
-
 float LerpingBossEvent::getPercent()
 {
-    float delta = (float)(Minecraft::currentTimeMillis() - this->setTime) / 100.0f;
-    float t = Mth::clamp(delta, 0.0f, 1.0f);
+    long long elapsed = Minecraft::currentTimeMillis() - this->setTime;
+    float t = Mth::clamp((float)elapsed / 100.0f, 0.0f, 1.0f);
     return this->percent + (this->targetPercent - this->percent) * t;
 }
 
@@ -38,12 +34,12 @@ void LerpingBossEvent::update(boost::shared_ptr<ClientboundBossEventPacket> pack
 {
     switch (packet->getOperation())
     {
-    case ClientboundBossEventPacket::UPDATE_PROGRESS:
-        setPercent(packet->getPercent());
-        break;
-
     case ClientboundBossEventPacket::UPDATE_NAME:
         setName(packet->getName());
+        break;
+
+    case ClientboundBossEventPacket::UPDATE_PROGRESS:
+        setPercent(packet->getPercent());
         break;
 
     case ClientboundBossEventPacket::UPDATE_STYLE:

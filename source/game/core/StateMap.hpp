@@ -24,7 +24,6 @@ public:
 
     StateMap(const Property* nameProperty, const std::wstring& suffix,
         std::vector<const Property*> deletedProperties);
-    virtual ~StateMap();
     virtual ModelResourceLocation* getLocation(const BlockState* state);
 
 private:

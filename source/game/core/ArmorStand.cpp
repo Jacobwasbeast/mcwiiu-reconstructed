@@ -321,8 +321,7 @@ void ArmorStand::addAdditonalSaveData(CompoundTag* tag)
 {
     LivingEntity::addAdditonalSaveData(tag);
     ListTag* armorItems = new ListTag();
-    unsigned int index;
-    for (index = 0; index < 4; ++index)
+    for (unsigned int index = 0; index < 4; ++index)
     {
         CompoundTag* itemTag = new CompoundTag();
         if (!mArmorItems[index]->isEmpty())
@@ -334,7 +333,7 @@ void ArmorStand::addAdditonalSaveData(CompoundTag* tag)
     tag->put(L"ArmorItems", armorItems);
 
     ListTag* handItems = new ListTag();
-    for (index = 0; index < 2; ++index)
+    for (unsigned int index = 0; index < 2; ++index)
     {
         CompoundTag* itemTag = new CompoundTag();
         if (!mHandItems[index]->isEmpty())
@@ -668,8 +667,10 @@ void ArmorStand::showBreakingParticles()
         return;
     int blockData = Block::getIdWithData(Blocks::planks->defaultBlockState());
     arrayWithLength<int> data(&blockData, 1);
-    level->sendParticles(PARTICLE_BLOCK_DUST, mX, mY + mBbHeight / 1.5, mZ, 10, mBbWidth / 4.0f, mBbHeight / 4.0f,
-                         mBbWidth / 4.0f, 0.05, data);
+    double spreadX = mBbWidth / 4.0f;
+    double spreadY = mBbHeight / 4.0f;
+    level->sendParticles(PARTICLE_BLOCK_DUST, mX, mY + mBbHeight / 1.5, mZ, 10, spreadX, spreadY,
+                         spreadX, 0.05, data);
 }
 void ArmorStand::brokenByPlayer()
 {
@@ -823,8 +824,8 @@ bool ArmorStand::isPickable()
 const HumanoidArm* ArmorStand::getMainArm() { return HumanoidArm::RIGHT; }
 float ArmorStand::tickHeadTurn(float bodyRot, float headTurnDelta)
 {
-    mYBodyRot = mYRot;
     mYBodyRotO = mYRotO;
+    mYBodyRot = mYRot;
     return 0.0f;
 }
 double ArmorStand::getRidingHeight() { return isMarker() ? 0.0 : 0.1; }
@@ -848,8 +849,7 @@ void ArmorStand::setYHeadRot(float headRot)
 }
 bool ArmorStand::updatePoseForSignal(const BlockPos& pos, const Direction* direction)
 {
-    BlockPos inputPos = pos.relative(direction);
-    if (mLevel->hasSignal(inputPos, direction))
+    if (mLevel->hasSignal(pos.relative(direction), direction))
     {
         int signal = mLevel->getSignal(pos.relative(direction), direction);
         if (signal > 0)
@@ -857,9 +857,10 @@ bool ArmorStand::updatePoseForSignal(const BlockPos& pos, const Direction* direc
             if (signal != mLastSignal)
             {
                 int pose = signal > 13 ? 13 : signal;
-                if (getPoseIndex() != pose - 1)
+                int index = pose - 1;
+                if (index != getPoseIndex())
                 {
-                    setPoseIndex(pose - 1);
+                    setPoseIndex(index);
                 }
             }
             mLastSignal = signal;
@@ -921,25 +922,17 @@ void ArmorStand::setSize(float width, float height)
     double x = mX;
     double y = mY;
     double z = mZ;
-    if (isMarker())
-    {
-        Entity::setSize(width * 0.0f, height * 0.0f);
-    }
-    else if (isBaby())
-    {
-        Entity::setSize(width * 0.5f, height * 0.5f);
-    }
-    else
-    {
-        Entity::setSize(width * 1.0f, height * 1.0f);
-    }
+    float scale = isMarker() ? 0.0f : (isBaby() ? 0.5f : 1.0f);
+    Entity::setSize(width * scale, height * scale);
     setPos(x, y, z);
 }
 void ArmorStand::defineSynchedData()
 {
     LivingEntity::defineSynchedData();
-    mEntityData->createDateItem(DATA_FLAGS, static_cast<unsigned char>(0));
-    mEntityData->createDateItem(DATA_POSE, 0);
+    unsigned char flags = 0;
+    mEntityData->createDateItem(DATA_FLAGS, flags);
+    int pose = 0;
+    mEntityData->createDateItem(DATA_POSE, pose);
 }
 void ArmorStand::doPush(boost::shared_ptr<Entity>) {}
 void ArmorStand::pushEntities()
@@ -966,7 +959,10 @@ bool ArmorStand::generatesBubbles() { return false; }
 void ArmorStand::setAirSupply(int airSupply) {}
 unsigned long long ArmorStand::GetType() { return EntityType::ARMOR_STAND; }
 void ArmorStand::thunderHit(const LightningBolt*) {}
-void ArmorStand::create(Level* level) { new ArmorStand(level); }
+Entity* ArmorStand::create(Level* level)
+{
+    return new ArmorStand(level);
+}
 
 bool ArmorStand::RidableMinecartEntitySelector::apply(boost::shared_ptr<Entity> entity) const
 {

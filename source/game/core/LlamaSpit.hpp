@@ -21,7 +21,7 @@ public:
     LlamaSpit(Level* level);
     LlamaSpit(Level* level, double x, double y, double z, double xd, double yd, double zd);
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     void _init();
     virtual void shoot(double x, double y, double z, float velocity, float inaccuracy);
     virtual void shootFromRotation(boost::shared_ptr<Entity> entity, float xRot, float yRot,

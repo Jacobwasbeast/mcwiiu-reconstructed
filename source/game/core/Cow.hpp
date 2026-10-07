@@ -35,7 +35,7 @@ public:
     virtual bool mobInteract(const boost::shared_ptr<Player>& player,
                              InteractionHand::EInteractionHand hand);
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> parent);
-    static void create(Level* level);
+    static Entity* create(Level* level);
 };
 
 #endif

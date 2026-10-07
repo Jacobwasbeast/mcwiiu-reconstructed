@@ -1433,7 +1433,7 @@ boost::shared_ptr<ItemInstance> Minecraft::addCustomNbtData(boost::shared_ptr<It
     item->addTagElement(L"BlockEntityTag", data);
 
     CompoundTag* display = new CompoundTag();
-    ListTag* lore = new ListTag(0);
+    ListTag* lore = new ListTag();
     lore->add(new StringTag(L"(+NBT)"));
     display->put(L"Lore", lore);
     item->addTagElement(L"display", display);

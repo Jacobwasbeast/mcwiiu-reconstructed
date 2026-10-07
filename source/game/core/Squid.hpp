@@ -25,14 +25,14 @@ public:
         virtual ~SquidRandomMovementGoal();
         virtual bool canUse();
         virtual void tick();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"SquidRandomMovement"; }
 
     private:
         Squid* mSquid;
     };
 
     Squid(Level* level);
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     void _init();
     void registerGoals();

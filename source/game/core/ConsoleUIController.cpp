@@ -134,10 +134,6 @@ ConsoleUIController::ConsoleUIController()
     m_resolutionDisableFlags = 0;
 }
 
-ConsoleUIController::~ConsoleUIController()
-{
-}
-
 EUIGroup ConsoleUIController::GetGroup(int playerId)
 {
     if (playerId != 0xff && playerId >= 0)

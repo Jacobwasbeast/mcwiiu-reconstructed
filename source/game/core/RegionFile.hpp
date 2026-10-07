@@ -18,7 +18,6 @@ public:
             : ByteArrayOutputStream(THREAD_STORAGE_SIZE), mRegion(region), mX(x), mZ(z), mCompressed(compressed)
         {
         }
-        virtual ~ChunkBuffer();
         virtual void close();
 
     private:

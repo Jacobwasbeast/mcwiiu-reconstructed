@@ -93,7 +93,7 @@ public:
     };
 
     Shulker(Level* level);
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     virtual MobGroupData* finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name);
     virtual void registerGoals();

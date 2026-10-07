@@ -16,7 +16,6 @@ public:
     {
     public:
         explicit MinecartMobSpawner(MinecartSpawner* minecart);
-        virtual ~MinecartMobSpawner();
         virtual void broadcastEvent(int event);
         virtual Level* getLevel();
         virtual BlockPos getPos();
@@ -29,7 +28,7 @@ public:
     MinecartSpawner(Level* level, double x, double y, double z);
     virtual ~MinecartSpawner();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual const Minecart::Type* getType();
     virtual const BlockState* getDefaultDisplayBlockState();

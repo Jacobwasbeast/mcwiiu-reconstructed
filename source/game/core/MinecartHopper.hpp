@@ -24,7 +24,7 @@ public:
     MinecartHopper(Level* level, double x, double y, double z);
     virtual ~MinecartHopper();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     virtual unsigned int getContainerSize();
     virtual not_null_ptr<ItemInstance> getItem(unsigned int slot);
     virtual not_null_ptr<ItemInstance> removeItem(unsigned int slot, int count);

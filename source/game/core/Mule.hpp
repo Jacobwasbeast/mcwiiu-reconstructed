@@ -13,9 +13,8 @@ class Mule : public AbstractChestedHorse
 {
 public:
     Mule(Level* level);
-    virtual ~Mule();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual ResourceLocation* getDefaultLootTable();
     virtual const SoundEvent* getAmbientSound();

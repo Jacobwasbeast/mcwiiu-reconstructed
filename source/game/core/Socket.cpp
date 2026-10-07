@@ -12,11 +12,11 @@
 
 ServerConnection* Socket::sConnection = NULL;
 
-static OSFastMutex gLocalMutexes[2];
-static std::queue<unsigned char> gLocalQueues[2];
-static Socket::SocketOutputStreamLocal* gLocalOutputStreams[2];
-static Socket::SocketInputStreamLocal* gLocalInputStreams[2];
-static bool gLocalStreamsInitialised = false;
+OSFastMutex gLocalMutexes[2];
+std::queue<unsigned char> gLocalQueues[2];
+Socket::SocketOutputStreamLocal* gLocalOutputStreams[2];
+Socket::SocketInputStreamLocal* gLocalInputStreams[2];
+bool gLocalStreamsInitialised = false;
 
 Socket::SocketInputStreamLocal::SocketInputStreamLocal(int index)
     : mOpen(true), mIndex(index)
@@ -59,11 +59,11 @@ int Socket::SocketInputStreamLocal::read(arrayWithLength<unsigned char> buffer, 
     {
         if (TryEnterCriticalSection(&gLocalMutexes[mIndex]))
         {
-            if (length <= gLocalQueues[mIndex].size())
+            if (gLocalQueues[mIndex].size() >= length)
             {
                 for (unsigned int i = 0; i < length; ++i)
                 {
-                    buffer.data[offset + i] = gLocalQueues[mIndex].front();
+                    buffer.data[i + offset] = gLocalQueues[mIndex].front();
                     gLocalQueues[mIndex].pop();
                 }
                 LeaveCriticalSection(&gLocalMutexes[mIndex]);
@@ -133,11 +133,11 @@ int Socket::SocketInputStreamNetwork::read(arrayWithLength<unsigned char> buffer
     {
         if (TryEnterCriticalSection(&mSocket->mMutexes[mIndex]))
         {
-            if (length <= mSocket->mQueues[mIndex].size())
+            if (mSocket->mQueues[mIndex].size() >= length)
             {
                 for (unsigned int i = 0; i < length; ++i)
                 {
-                    buffer.data[offset + i] = mSocket->mQueues[mIndex].front();
+                    buffer.data[i + offset] = mSocket->mQueues[mIndex].front();
                     mSocket->mQueues[mIndex].pop();
                 }
                 LeaveCriticalSection(&mSocket->mMutexes[mIndex]);
@@ -224,8 +224,9 @@ void Socket::SocketOutputStreamLocal::flush()
 }
 
 Socket::SocketOutputStreamNetwork::SocketOutputStreamNetwork(Socket* socket, int index)
-    : mOpen(true), mIndex(index), mSocket(socket)
+    : mIndex(index), mSocket(socket)
 {
+    mOpen = true;
 }
 
 Socket::SocketOutputStreamNetwork::~SocketOutputStreamNetwork()
@@ -309,11 +310,14 @@ Socket::Socket(bool response)
         mClosed[0] = false;
         mClosed[1] = false;
     }
-    mOpen = true;
     mCloseEvent = NULL;
+    mOpen = true;
 
     INetworkPlayer* host = CGameNetworkManager::sInstance.GetHostPlayer();
-    mPlayerId = host != NULL ? host->GetSmallId() : 0;
+    if (host != NULL)
+        mPlayerId = host->GetSmallId();
+    else
+        mPlayerId = 0;
 }
 
 Socket::Socket(INetworkPlayer* player, bool response, bool hostLocal)
@@ -413,15 +417,17 @@ void Socket::addIncomingSocket(Socket* socket)
 
 InputStream* Socket::getInputStream(bool host)
 {
-    if (mLocal)
-        return gLocalInputStreams[mIndex];
-    if (mNetwork)
+    if (!mLocal)
     {
-        if (host)
-            return mInputStreams[1];
-        return mInputStreams[0];
+        if (mNetwork)
+        {
+            if (host)
+                return mInputStreams[1];
+            return mInputStreams[0];
+        }
+        return mInputStreams[mIndex];
     }
-    return mInputStreams[mIndex];
+    return gLocalInputStreams[mIndex];
 }
 
 void Socket::setSoTimeout(int)
@@ -434,42 +440,46 @@ void Socket::setTrafficClass(int)
 
 OutputStream* Socket::getOutputStream(bool host)
 {
-    if (mLocal)
-        return gLocalOutputStreams[1 - mIndex];
-    if (mNetwork)
+    if (!mLocal)
     {
-        if (host)
-            return mOutputStreams[1];
-        return mOutputStreams[0];
+        if (mNetwork)
+        {
+            if (host)
+                return mOutputStreams[1];
+            return mOutputStreams[0];
+        }
+        return mOutputStreams[mIndex];
     }
-    return mOutputStreams[mIndex];
+    return gLocalOutputStreams[1 - mIndex];
 }
 
 bool Socket::close(bool host)
 {
     bool result = false;
-    if (!mNetwork)
-    {
-        mClosed[mIndex] = true;
-    }
-    else
+    if (mNetwork)
     {
         bool otherClosed;
-        if (!host)
-        {
-            otherClosed = mClosed[1];
-            mClosed[0] = true;
-        }
-        else
+        if (host)
         {
             otherClosed = mClosed[0];
             mClosed[1] = true;
         }
+        else
+        {
+            otherClosed = mClosed[1];
+            mClosed[0] = true;
+        }
         if (!otherClosed)
             return result;
+
+        result = true;
+    }
+    else
+    {
+        result = true;
+        mClosed[mIndex] = result;
     }
 
-    result = true;
     if (mCloseEvent != NULL)
         mCloseEvent->Set();
     mOpen = false;

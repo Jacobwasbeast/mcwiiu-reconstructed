@@ -9,7 +9,6 @@ class VoronoiZoom : public Layer
 {
 public:
     VoronoiZoom(long long seed, boost::shared_ptr<Layer> parentLayer);
-    virtual ~VoronoiZoom();
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
 };
 

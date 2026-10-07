@@ -3,7 +3,6 @@
 
 #include <algorithm>
 #include <sstream>
-#include <fstream>
 #include <cstring>
 #include <wchar.h>
 
@@ -25,6 +24,10 @@ std::vector<std::wstring> g_dlcSkinNames;
 
 char* wstringtofilename(const std::wstring& text, char (&fileName)[256]);
 struct _OVERLAPPED;
+static const unsigned int GENERIC_READ = 0x80000000;
+static const unsigned int OPEN_EXISTING = 3;
+static const unsigned int FILE_ATTRIBUTE_NORMAL = 0x00000080;
+
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
                 void* securityAttributes, unsigned int creationDisposition,
                 unsigned int flagsAndAttributes, int templateFile);
@@ -33,7 +36,7 @@ unsigned int GetLastError();
 unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead,
                       unsigned int* bytesRead, _OVERLAPPED* overlapped);
 
-static const wchar_t* s_parameterNames[] =
+const wchar_t* s_parameterNames[] =
 {
     L"DISPLAYNAME",
     L"THEMENAME",
@@ -59,43 +62,7 @@ static const wchar_t* s_parameterNames[] =
     L"XMLVERSION"
 };
 
-static char s_dlcDataFileName[256];
-
-class DLCDataReader
-{
-public:
-    DLCDataReader(unsigned char* data, unsigned int size) : mData(data), mSize(size) {}
-
-    void read32(unsigned int offset, unsigned int& value) const
-    {
-        std::memcpy(&value, mData + offset, sizeof(value));
-    }
-
-    void read16(unsigned int offset, unsigned short& value) const
-    {
-        std::memcpy(&value, mData + offset, sizeof(value));
-    }
-
-    void readString(unsigned int offset, unsigned int characterCount, std::wstring& value) const
-    {
-        value.clear();
-        value.reserve(characterCount);
-        for (unsigned int i = 0; i < characterCount; ++i)
-        {
-            unsigned short character = 0;
-            read16(offset + i * 2, character);
-            value.push_back(static_cast<wchar_t>(character));
-        }
-    }
-
-    unsigned char* bytes(unsigned int offset, unsigned int length) const
-    {
-        return mData + offset;
-    }
-
-    unsigned char* mData;
-    unsigned int mSize;
-};
+char s_dlcDataFileName[256];
 
 DLCManager::DLCManager()
 {
@@ -112,35 +79,40 @@ DLCManager::~DLCManager()
 
 DLCManager::EDLCParameterType DLCManager::getParameterType(const std::wstring& name)
 {
+    EDLCParameterType result = eDLCParameterType_Invalid;
+
     for (int i = 0; i < eDLCParameterType_NumTypes; i++)
     {
-        if (name == s_parameterNames[i])
+        const wchar_t* parameterName = s_parameterNames[i];
+
+        if (name == parameterName)
         {
-            return (EDLCParameterType)i;
+            result = (EDLCParameterType)i;
+            break;
         }
     }
 
-    return eDLCParameterType_Invalid;
+    return result;
 }
 
 int DLCManager::getPackCount(EDLCType type)
 {
-    if (type == eDLCType_All)
+    if (type != eDLCType_All)
     {
-        return (int)m_packs.size();
-    }
+        int count = 0;
 
-    int count = 0;
-
-    for (std::vector<DLCPack*>::iterator it = m_packs.begin(); it != m_packs.end(); ++it)
-    {
-        if ((*it)->getDLCItemsCount(type) != 0)
+        for (std::vector<DLCPack*>::iterator it = m_packs.begin(); it != m_packs.end(); ++it)
         {
-            count++;
+            if ((*it)->getDLCItemsCount(type) > 0)
+            {
+                count++;
+            }
         }
+
+        return count;
     }
 
-    return count;
+    return m_packs.size();
 }
 
 void DLCManager::addPack(DLCPack* pPack)
@@ -167,7 +139,8 @@ void DLCManager::LanguageChanged()
 {
     for (std::vector<DLCPack*>::iterator it = m_packs.begin(); it != m_packs.end(); ++it)
     {
-        (*it)->UpdateLanguage();
+        DLCPack* pPack = *it;
+        pPack->UpdateLanguage();
     }
 }
 
@@ -192,7 +165,9 @@ DLCPack* DLCManager::getPack(const std::wstring& name)
 
 DLCPack* DLCManager::getPackFromPackID(int packID)
 {
-    for (std::vector<DLCPack*>::iterator it = m_packs.begin(), end = m_packs.end(); it != end; ++it)
+    std::vector<DLCPack*>::iterator it;
+    std::vector<DLCPack*>::iterator end;
+    for (it = m_packs.begin(), end = m_packs.end(); it != end; ++it)
     {
         DLCPack* pPack = *it;
 
@@ -207,14 +182,7 @@ DLCPack* DLCManager::getPackFromPackID(int packID)
 
 DLCPack* DLCManager::getPack(unsigned int index, EDLCType type)
 {
-    if (type == eDLCType_All)
-    {
-        if (index < m_packs.size())
-        {
-            return m_packs[index];
-        }
-    }
-    else
+    if (type != eDLCType_All)
     {
         unsigned int matchIndex = 0;
 
@@ -222,7 +190,7 @@ DLCPack* DLCManager::getPack(unsigned int index, EDLCType type)
         {
             DLCPack* pPack = *it;
 
-            if (pPack->getDLCItemsCount(type) != 0)
+            if (pPack->getDLCItemsCount(type) > 0)
             {
                 if (matchIndex == index)
                 {
@@ -233,38 +201,48 @@ DLCPack* DLCManager::getPack(unsigned int index, EDLCType type)
             }
         }
     }
+    else if (index < m_packs.size())
+    {
+        return m_packs[index];
+    }
 
     return NULL;
 }
 
 DLCFile* DLCManager::getSkinFile(const std::wstring& fileName)
 {
+    DLCFile* pFile = NULL;
+
     for (std::vector<DLCPack*>::iterator it = m_packs.begin(); it != m_packs.end(); ++it)
     {
-        DLCFile* pFile = (*it)->getSkinFile(fileName);
+        DLCPack* pPack = *it;
+        pFile = pPack->getSkinFile(fileName);
 
         if (pFile != NULL)
         {
-            return pFile;
+            break;
         }
     }
 
-    return NULL;
+    return pFile;
 }
 
 DLCPack* DLCManager::getPackContainingSkin(const std::wstring& fileName)
 {
+    DLCPack* pFound = NULL;
+
     for (std::vector<DLCPack*>::iterator it = m_packs.begin(); it != m_packs.end(); ++it)
     {
         DLCPack* pPack = *it;
 
-        if (pPack->getDLCItemsCount(eDLCType_Skin) != 0 && pPack->doesPackContainSkin(fileName))
+        if (pPack->getDLCItemsCount(eDLCType_Skin) > 0 && pPack->doesPackContainSkin(fileName))
         {
-            return pPack;
+            pFound = pPack;
+            break;
         }
     }
 
-    return NULL;
+    return pFound;
 }
 
 bool DLCManager::IsDlcPackTemporarilyFree(int packID)
@@ -274,9 +252,12 @@ bool DLCManager::IsDlcPackTemporarilyFree(int packID)
 
     boost::unordered_map<int, FreePackPeriod>::iterator it = m_freeDLCPackPeriods.find(packID);
 
-    if (it != m_freeDLCPackPeriods.end() && it->second.startTime <= now && now <= it->second.endTime)
+    if (it != m_freeDLCPackPeriods.end())
     {
-        bFree = true;
+        if (it->second.startTime <= now && it->second.endTime >= now)
+        {
+            bFree = true;
+        }
     }
 
     return bFree;
@@ -289,7 +270,7 @@ DLCFile* DLCManager::getSkinFile(int skinIndex, bool& bIsDefaultSkin, bool& bHas
     bIsDefaultSkin = false;
     bHasPurchasedPack = false;
 
-    if (skinIndex < 0)
+    if (((skinIndex >> 31) & 1) != 0)
     {
         wchar_t fileName[256];
 
@@ -317,7 +298,10 @@ int DLCManager::checkForCorruptDLCAndAlert(bool bShowMessage)
     int numCorruptPacks = m_numCorruptPacks;
     DLCPack* pFirstCorruptPack = NULL;
 
-    for (std::vector<DLCPack*>::iterator it = m_packs.begin(); it != m_packs.end(); ++it)
+    std::vector<DLCPack*>::iterator it;
+    std::vector<DLCPack*>::iterator end;
+
+    for (it = m_packs.begin(), end = m_packs.end(); it != end; ++it)
     {
         DLCPack* pPack = *it;
 
@@ -359,13 +343,11 @@ int DLCManager::checkForCorruptDLCAndAlert(bool bShowMessage)
 
 bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* pData, unsigned int size, DLCPack* pPack, bool bTakeDataOwnership)
 {
-    DLCDataReader reader(pData, size);
     boost::unordered_map<int, EDLCParameterType> parameterTypes;
     bool bHasXMLVersion = false;
+    unsigned int xmlVersion = 0;
 
-    unsigned int version = 0;
-    reader.read32(0, version);
-    if (version < 3)
+    if (*(unsigned int*)pData < 3)
     {
         delete[] pData;
         return false;
@@ -373,65 +355,51 @@ bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* 
 
     pPack->SetDataPointer(pData, bTakeDataOwnership);
 
-    unsigned int parameterCount = 0;
-    reader.read32(4, parameterCount);
+    unsigned int parameterCount = ((unsigned int*)pData)[1];
     unsigned int offset = 8;
-    unsigned int xmlVersion = 0;
+    unsigned int* pParameter = (unsigned int*)(pData + offset);
 
-    if (parameterCount != 0)
+    for (unsigned int i = 0; i < parameterCount; i++)
     {
-        for (unsigned int i = 0; i < parameterCount; i++)
+        std::wstring parameterName = char16towstring((wchar_t*)(pParameter + 2));
+        EDLCParameterType parameterType = getParameterType(parameterName);
+
+        if (parameterType != eDLCParameterType_Invalid)
         {
-            unsigned int parameterId = 0;
-            unsigned int parameterLength = 0;
-            reader.read32(offset, parameterId);
-            reader.read32(offset + 4, parameterLength);
-            std::wstring parameterName;
-            reader.readString(offset + 8, parameterLength, parameterName);
-            EDLCParameterType parameterType = getParameterType(parameterName);
-
-            if (parameterType != eDLCParameterType_Invalid)
-            {
-                parameterTypes[(int)parameterId] = parameterType;
-            }
-
-            offset += parameterLength * 2 + 12;
-
-            if (parameterType == eDLCParameterType_XMLVersion)
-            {
-                bHasXMLVersion = true;
-            }
+            parameterTypes[(int)pParameter[0]] = parameterType;
         }
 
-        if (bHasXMLVersion)
+        offset += pParameter[1] * 2 + 12;
+        pParameter = (unsigned int*)(pData + offset);
+
+        if (parameterType == eDLCParameterType_XMLVersion)
         {
-            reader.read32(offset, xmlVersion);
-            offset += 4;
+            bHasXMLVersion = true;
         }
     }
 
-    unsigned int itemCount = 0;
-    reader.read32(offset, itemCount);
+    if (bHasXMLVersion)
+    {
+        xmlVersion = *(unsigned int*)(pData + offset);
+        offset += 4;
+    }
+
+    unsigned int itemCount = *(unsigned int*)(pData + offset);
     offset += 4;
 
     unsigned int dataOffset = offset;
+    unsigned int* pItemData = (unsigned int*)(pData + dataOffset);
 
     for (unsigned int i = 0; i < itemCount; i++)
     {
-        unsigned int itemNameLength = 0;
-        reader.read32(dataOffset + 8, itemNameLength);
-        dataOffset += itemNameLength * 2 + 16;
+        dataOffset += pItemData[2] * 2 + 16;
+        pItemData = (unsigned int*)(pData + dataOffset);
     }
 
     while (itemCount != 0)
     {
-        unsigned int itemLength = 0;
-        unsigned int itemTypeValue = 0;
-        unsigned int itemNameLength = 0;
-        reader.read32(offset, itemLength);
-        reader.read32(offset + 4, itemTypeValue);
-        reader.read32(offset + 8, itemNameLength);
-        EDLCType itemType = (EDLCType)itemTypeValue;
+        unsigned int* pItemHeader = (unsigned int*)(pData + offset);
+        EDLCType itemType = (EDLCType)pItemHeader[1];
 
         DLCFile* pFile = NULL;
         DLCPack* pTexturePack = NULL;
@@ -447,9 +415,7 @@ bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* 
         }
         else if (itemType != eDLCType_Pack)
         {
-            std::wstring itemName;
-            reader.readString(offset + 12, itemNameLength, itemName);
-            pFile = pPack->addFile(itemType, itemName);
+            pFile = pPack->addFile(itemType, char16towstring((wchar_t*)(pItemHeader + 3)));
 
             if (itemType == eDLCType_Skin && bHasXMLVersion)
             {
@@ -461,55 +427,41 @@ bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* 
             }
         }
 
-        unsigned int itemParameterCount = 0;
-        reader.read32(dataOffset, itemParameterCount);
-        unsigned int parameterOffset = dataOffset + 4;
+        unsigned int itemParameterCount = pItemData[0];
+        pItemData++;
 
-        for (unsigned int i = 0; i < itemParameterCount; i++)
+        for (; itemParameterCount != 0; itemParameterCount--)
         {
-            unsigned int parameterId = 0;
-            unsigned int parameterLength = 0;
-            reader.read32(parameterOffset, parameterId);
-            reader.read32(parameterOffset + 4, parameterLength);
-            boost::unordered_map<int, EDLCParameterType>::iterator it = parameterTypes.find((int)parameterId);
+            boost::unordered_map<int, EDLCParameterType>::iterator it = parameterTypes.find((int)pItemData[0]);
 
             if (it != parameterTypes.end())
             {
                 if (itemType == eDLCType_Pack)
                 {
-                    std::wstring parameterValue;
-                    reader.readString(parameterOffset + 8, parameterLength, parameterValue);
-                    pPack->addParameter(it->second, parameterValue);
+                    pPack->addParameter(it->second, char16towstring((wchar_t*)(pItemData + 2)));
                     numItemsAdded++;
-                }
-                else if (pTexturePack != NULL)
-                {
-                    std::wstring parameterValue;
-                    reader.readString(parameterOffset + 8, parameterLength, parameterValue);
-                    pTexturePack->addParameter(it->second, parameterValue);
-                }
-                else if (pChildPack != NULL)
-                {
-                    std::wstring parameterValue;
-                    reader.readString(parameterOffset + 8, parameterLength, parameterValue);
-                    pChildPack->addParameter(it->second, parameterValue);
                 }
                 else if (pFile != NULL)
                 {
-                    std::wstring parameterValue;
-                    reader.readString(parameterOffset + 8, parameterLength, parameterValue);
-                    pFile->addParameter(it->second, parameterValue);
+                    pFile->addParameter(it->second, char16towstring((wchar_t*)(pItemData + 2)));
+                }
+                else if (pTexturePack != NULL)
+                {
+                    pTexturePack->addParameter(it->second, char16towstring((wchar_t*)(pItemData + 2)));
+                }
+                else if (pChildPack != NULL)
+                {
+                    pChildPack->addParameter(it->second, char16towstring((wchar_t*)(pItemData + 2)));
                 }
             }
 
-            parameterOffset += parameterLength * 2 + 12;
+            pItemData = (unsigned int*)((unsigned char*)pItemData + pItemData[1] * 2 + 12);
         }
 
         if (pTexturePack != NULL)
         {
             unsigned int numChildItemsAdded = 0;
-            unsigned char* childData = reader.bytes(parameterOffset, itemLength);
-            bool bLoaded = processDLCDataFile(numChildItemsAdded, childData, itemLength, pTexturePack, false);
+            bool bLoaded = processDLCDataFile(numChildItemsAdded, (unsigned char*)pItemData, pItemHeader[0], pTexturePack, false);
 
             pPack->SetDataPointer(NULL, false);
 
@@ -522,7 +474,7 @@ bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* 
             {
                 pPack->addChildPack(pTexturePack);
 
-                if (pTexturePack->getDLCItemsCount(eDLCType_Texture) != 0)
+                if (pTexturePack->getDLCItemsCount(eDLCType_Texture) > 0)
                 {
                     unsigned int packID = pTexturePack->GetPackId();
 
@@ -535,8 +487,7 @@ bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* 
         else if (pChildPack != NULL)
         {
             unsigned int numChildItemsAdded = 0;
-            unsigned char* childData = reader.bytes(parameterOffset, itemLength);
-            bool bLoaded = processDLCDataFile(numChildItemsAdded, childData, itemLength, pChildPack, false);
+            bool bLoaded = processDLCDataFile(numChildItemsAdded, (unsigned char*)pItemData, pItemHeader[0], pChildPack, false);
 
             pPack->SetDataPointer(NULL, false);
 
@@ -553,25 +504,22 @@ bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* 
         }
         else if (pFile != NULL)
         {
-            unsigned char* fileData = reader.bytes(parameterOffset, itemLength);
-            pFile->addData(fileData, itemLength);
+            pFile->addData((unsigned char*)pItemData, pItemHeader[0]);
 
-            if (itemType == eDLCType_Skin)
+            if (pItemHeader[1] == eDLCType_Skin)
             {
-                std::wstring skinName;
-                reader.readString(offset + 12, itemNameLength, skinName);
-                g_dlcSkinNames.push_back(skinName);
+                g_dlcSkinNames.push_back(char16towstring((wchar_t*)(pItemHeader + 3)));
             }
 
             numItemsAdded++;
         }
 
         itemCount--;
-        offset += itemNameLength * 2 + 16;
-        dataOffset = parameterOffset + itemLength;
+        offset += pItemHeader[2] * 2 + 16;
+        pItemData = (unsigned int*)((unsigned char*)pItemData + pItemHeader[0]);
     }
 
-    if (pPack->getDLCItemsCount(eDLCType_GameRules) != 0 || pPack->getDLCItemsCount(eDLCType_GameRulesHeader) != 0)
+    if (pPack->getDLCItemsCount(eDLCType_GameRules) > 0 || pPack->getDLCItemsCount(eDLCType_GameRulesHeader) > 0)
     {
         gApp.mGameRuleManager.loadGameRules(pPack);
     }
@@ -584,7 +532,7 @@ bool DLCManager::processDLCDataFile(unsigned int& numItemsAdded, unsigned char* 
 bool DLCManager::readDLCDataFile(unsigned int& numItemsAdded, const std::string& fileName, DLCPack* pPack, unsigned int packID, bool bTakeDataOwnership)
 {
     std::wstring wideFileName = convStringToWstring(fileName);
-    int file = CreateFileA(fileName.c_str(), 0x80000000, 0, NULL, 3, 0x80, 0);
+    int file = CreateFileA(fileName.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
     if (file == -1)
     {
         GetLastError();
@@ -598,14 +546,18 @@ bool DLCManager::readDLCDataFile(unsigned int& numItemsAdded, const std::string&
 
     const unsigned int fileSize = GetFileSize(file, NULL);
     unsigned char* pData = new unsigned char[fileSize];
-    unsigned int bytesRead = 0;
-    if (ReadFile(file, pData, fileSize, &bytesRead, NULL) == 0)
+    unsigned int bytesRead;
+    if (ReadFile(file, pData, fileSize, &bytesRead, NULL) != 0)
+    {
+        CloseHandle(file);
+    }
+    else
     {
         pPack->SetIsCorrupt(true);
         m_bCorruptDLCFound = true;
+
         return false;
     }
-    CloseHandle(file);
 
     return processDLCDataFile(numItemsAdded, pData, bytesRead, pPack, bTakeDataOwnership);
 }
@@ -613,104 +565,87 @@ bool DLCManager::readDLCDataFile(unsigned int& numItemsAdded, const std::string&
 bool DLCManager::readDLCDataFile(unsigned int& numItemsAdded, const std::wstring& fileName, DLCPack* pPack, unsigned int packID, bool bTakeDataOwnership)
 {
     std::string narrowFileName = wstringtofilename(fileName, s_dlcDataFileName);
+    bool result = readDLCDataFile(numItemsAdded, narrowFileName, pPack, packID, bTakeDataOwnership);
 
-    return readDLCDataFile(numItemsAdded, narrowFileName, pPack, packID, bTakeDataOwnership);
+    return result;
 }
 
 unsigned int DLCManager::retrievePackID(unsigned char* pData, unsigned int size)
 {
-    DLCDataReader reader(pData, size);
     unsigned int packID = 0;
     std::wstring packName = L"";
     boost::unordered_map<int, EDLCParameterType> parameterTypes;
     bool bHasXMLVersion = false;
 
-    unsigned int version = 0;
-    reader.read32(0, version);
-    if (version < 3)
+    if (*(unsigned int*)pData < 3)
     {
         return 0;
     }
 
-    unsigned int parameterCount = 0;
-    reader.read32(4, parameterCount);
+    unsigned int parameterCount = ((unsigned int*)pData)[1];
     unsigned int offset = 8;
+    unsigned int* pParameter = (unsigned int*)(pData + offset);
 
-    if (parameterCount != 0)
+    for (unsigned int i = 0; i < parameterCount; i++)
     {
-        for (unsigned int i = 0; i < parameterCount; i++)
+        std::wstring parameterName = char16towstring((wchar_t*)(pParameter + 2));
+        EDLCParameterType parameterType = getParameterType(parameterName);
+
+        if (parameterType != eDLCParameterType_Invalid)
         {
-            unsigned int nameLength = 0;
-            unsigned int parameterId = 0;
-            reader.read32(offset, parameterId);
-            reader.read32(offset + 4, nameLength);
-            std::wstring parameterName;
-            reader.readString(offset + 8, nameLength, parameterName);
-            EDLCParameterType parameterType = getParameterType(parameterName);
-
-            if (parameterType != eDLCParameterType_Invalid)
-            {
-                parameterTypes[(int)parameterId] = parameterType;
-            }
-
-            offset += nameLength * 2 + 12;
-
-            if (parameterType == eDLCParameterType_XMLVersion)
-            {
-                bHasXMLVersion = true;
-            }
+            parameterTypes[(int)pParameter[0]] = parameterType;
         }
 
-        if (bHasXMLVersion)
+        offset += pParameter[1] * 2 + 12;
+        pParameter = (unsigned int*)(pData + offset);
+
+        if (parameterType == eDLCParameterType_XMLVersion)
         {
-            offset += 4;
+            bHasXMLVersion = true;
         }
     }
 
-    unsigned int itemCount = 0;
-    reader.read32(offset, itemCount);
+    if (bHasXMLVersion)
+    {
+        offset += 4;
+    }
+
+    unsigned int itemCount = *(unsigned int*)(pData + offset);
     offset += 4;
 
     unsigned int dataOffset = offset;
+    unsigned int* pItemData = (unsigned int*)(pData + dataOffset);
 
     for (unsigned int i = 0; i < itemCount; i++)
     {
-        unsigned int itemLength = 0;
-        reader.read32(dataOffset + 8, itemLength);
-        dataOffset += itemLength * 2 + 16;
+        dataOffset += pItemData[2] * 2 + 16;
+        pItemData = (unsigned int*)(pData + dataOffset);
     }
 
     while (itemCount != 0)
     {
-        unsigned int itemLength = 0;
-        unsigned int itemTypeValue = 0;
-        unsigned int itemParameterCount = 0;
-        reader.read32(offset, itemLength);
-        reader.read32(offset + 4, itemTypeValue);
-        reader.read32(dataOffset, itemParameterCount);
-        const unsigned int itemType = itemTypeValue;
-        unsigned int parameterOffset = dataOffset + 4;
+        unsigned int* pItemHeader = (unsigned int*)(pData + offset);
+        unsigned int itemParameterCount = pItemData[0];
+        EDLCType itemType = (EDLCType)pItemHeader[1];
+        pItemData++;
 
-        for (unsigned int i = 0; i < itemParameterCount; i++)
+        for (; itemParameterCount != 0; itemParameterCount--)
         {
-            unsigned int parameterId = 0;
-            unsigned int valueLength = 0;
-            reader.read32(parameterOffset, parameterId);
-            reader.read32(parameterOffset + 4, valueLength);
-            boost::unordered_map<int, EDLCParameterType>::iterator it = parameterTypes.find((int)parameterId);
+            boost::unordered_map<int, EDLCParameterType>::iterator it = parameterTypes.find((int)pItemData[0]);
 
             if (it != parameterTypes.end())
             {
-                if (itemType == eDLCType_UIData)
+                if (itemType == eDLCType_Pack)
                 {
                     if (it->second == eDLCParameterType_PackID)
                     {
-                        std::wstring packIDText;
-                        reader.readString(parameterOffset + 8, valueLength, packIDText);
-                        std::wstringstream stream;
+                        {
+                            std::wstring packIDText = char16towstring((wchar_t*)(pItemData + 2));
+                            std::wstringstream stream;
 
-                        stream << std::dec << packIDText.c_str();
-                        stream >> packID;
+                            stream << std::dec << packIDText.c_str();
+                            stream >> packID;
+                        }
 
                         parameterTypes.clear();
 
@@ -719,16 +654,16 @@ unsigned int DLCManager::retrievePackID(unsigned char* pData, unsigned int size)
                 }
                 else if (itemType == eDLCType_Skin && packName.empty() && it->second == eDLCParameterType_DisplayName)
                 {
-                    reader.readString(parameterOffset + 8, valueLength, packName);
+                    packName = char16towstring((wchar_t*)(pItemData + 2));
                 }
             }
 
-            parameterOffset += valueLength * 2 + 12;
+            pItemData = (unsigned int*)((unsigned char*)pItemData + pItemData[1] * 2 + 12);
         }
 
         itemCount--;
-        offset += itemLength * 2 + 16;
-        dataOffset += itemLength;
+        offset += pItemHeader[2] * 2 + 16;
+        pItemData = (unsigned int*)((unsigned char*)pItemData + pItemHeader[0]);
     }
 
     parameterTypes.clear();
@@ -739,23 +674,20 @@ unsigned int DLCManager::retrievePackID(unsigned char* pData, unsigned int size)
 unsigned int DLCManager::retrievePackIDFromDLCDataFile(const std::string& fileName)
 {
     std::wstring wideFileName = convStringToWstring(fileName);
-
-    std::ifstream file(fileName.c_str(), std::ios::in | std::ios::binary);
-    if (!file)
+    int file = CreateFileA(fileName.c_str(), GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    if (file == -1)
     {
         return 0;
     }
 
-    file.seekg(0, std::ios::end);
-    const std::streamoff end = file.tellg();
-    if (end < 0)
-        return 0;
-    const unsigned int fileSize = static_cast<unsigned int>(end);
-    file.seekg(0, std::ios::beg);
+    const unsigned int fileSize = GetFileSize(file, NULL);
     unsigned char* pData = new unsigned char[fileSize];
-    file.read(reinterpret_cast<char*>(pData), fileSize);
-    const unsigned int bytesRead = static_cast<unsigned int>(file.gcount());
-    if (!file && !file.eof())
+    unsigned int bytesRead;
+    if (ReadFile(file, pData, fileSize, &bytesRead, NULL) != 0)
+    {
+        CloseHandle(file);
+    }
+    else
     {
         delete[] pData;
 
@@ -776,9 +708,12 @@ bool DLCManager::IsMiniGameTemporarilyFree(int miniGameID)
 
     boost::unordered_map<int, FreePackPeriod>::iterator it = m_freeMiniGamePeriods.find(miniGameID);
 
-    if (it != m_freeMiniGamePeriods.end() && it->second.startTime <= now && now <= it->second.endTime)
+    if (it != m_freeMiniGamePeriods.end())
     {
-        bFree = true;
+        if (it->second.startTime <= now && it->second.endTime >= now)
+        {
+            bFree = true;
+        }
     }
 
     return bFree;

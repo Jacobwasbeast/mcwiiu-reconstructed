@@ -27,9 +27,8 @@ public:
     ThrownTrident(Level* level, double x, double y, double z);
     ThrownTrident(Level* level, not_null_ptr<ItemInstance> item,
         double x, double y, double z);
-    virtual ~ThrownTrident();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     static void addDataWalkers(DataFixerUpper* fixer);
 

@@ -21,7 +21,7 @@ class SnowMan : public Golem, public RangedAttackMob
 public:
     SnowMan(Level* level);
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     virtual void performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor);
     virtual bool isAggressive();
     virtual void setAggressive(bool aggressive);

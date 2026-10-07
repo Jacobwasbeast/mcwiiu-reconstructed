@@ -115,7 +115,12 @@ bool ConsoleSchematicFile::CanPasteBlock(unsigned short element, bool includeAir
     }
     if (!includeSpecial)
     {
-        return canPaste && (element >> 4) != 9 && (element >> 4) != 8;
+        bool result = false;
+        if (canPaste && (element >> 4) != 9 && (element >> 4) != 8)
+        {
+            result = true;
+        }
+        return result;
     }
     return canPaste;
 }
@@ -823,8 +828,6 @@ void ConsoleSchematicFile::getElements(LevelChunk* chunk, arrayWithLength<unsign
     arrayWithLength<unsigned short> extraBuffer(0x10000, true);
     chunk->getElementRange(arrayWithLength<unsigned short>(elementsBuffer.data, elementsBuffer.length), arrayWithLength<unsigned short>(extraBuffer.data, extraBuffer.length), 0, 0x40);
 
-    int lowCount = lowYEnd - y0;
-    int highCount = highYEnd - highYStart;
     for (int x = x0; x < x1; ++x)
     {
         for (int z = z0; z < z1; ++z)
@@ -832,16 +835,16 @@ void ConsoleSchematicFile::getElements(LevelChunk* chunk, arrayWithLength<unsign
             if (hasLowY)
             {
                 unsigned int src = (unsigned int)((x << 11) | (z << 7) | y0);
-                System::arraycopy(elementsBuffer, src, elements, count, lowCount);
-                System::arraycopy(extraBuffer, src, extra, count, lowCount);
-                count += lowCount;
+                System::arraycopy(elementsBuffer, src, elements, count, lowYEnd - y0);
+                System::arraycopy(extraBuffer, src, extra, count, lowYEnd - y0);
+                count += lowYEnd - y0;
             }
             if (hasHighY)
             {
                 unsigned int src = (unsigned int)(((x << 11) | (z << 7) | highYStart) + 0x8000);
-                System::arraycopy(elementsBuffer, src, elements, count, highCount);
-                System::arraycopy(extraBuffer, src, extra, count, highCount);
-                count += highCount;
+                System::arraycopy(elementsBuffer, src, elements, count, highYEnd - highYStart);
+                System::arraycopy(extraBuffer, src, extra, count, highYEnd - highYStart);
+                count += highYEnd - highYStart;
             }
         }
     }
@@ -1380,7 +1383,8 @@ bool ConsoleSchematicFile::undoPrevious(Level* level)
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
     {
         boost::shared_ptr<Entity> entity = *it;
-        if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+        unsigned long long type = entity->GetType();
+        if ((type & EntityType::PLAYER) != EntityType::PLAYER)
         {
             level->removeEntity(entity);
         }
@@ -1392,6 +1396,7 @@ bool ConsoleSchematicFile::undoPrevious(Level* level)
     mCanUndo = false;
     return true;
 }
+
 long long ConsoleSchematicFile::writeSchematicIntoArrays(int chunkX, int chunkY, int chunkZ, int x0, int y0, int z0, int x1, int y1, int z1, PasteData* paste, arrayWithLength<unsigned short> elements, arrayWithLength<unsigned short> extraElements, arrayWithLength<unsigned char> data, arrayWithLength<unsigned char> extraData)
 {
     int volume = (x1 - x0) * (y1 - y0) * (z1 - z0);
@@ -1498,8 +1503,7 @@ void ConsoleSchematicFile::tick()
 std::vector<boost::shared_ptr<BlockEntity> >* ConsoleSchematicFile::getBlockEntitiesInRegion(LevelChunk* chunk, int x0, int y0, int z0, int x1, int y1, int z1)
 {
     std::vector<boost::shared_ptr<BlockEntity> >* result = new std::vector<boost::shared_ptr<BlockEntity> >();
-    LevelChunk::BlockEntityMap* blockEntities = chunk->getBlockEntities();
-    for (LevelChunk::BlockEntityMap::iterator it = blockEntities->begin(); it != blockEntities->end(); ++it)
+    for (LevelChunk::BlockEntityMap::iterator it = chunk->mBlockEntityMap.begin(); it != chunk->mBlockEntityMap.end(); ++it)
     {
         boost::shared_ptr<BlockEntity> blockEntity = it->second;
         BlockPos pos = blockEntity->getBlockPos();
@@ -1628,12 +1632,18 @@ bool ConsoleSchematicFile::generateSchematicFile(DataOutputStream* output, Level
     fillArraysFromLevel(level, x0, y0, z0, width, height, depth, &elements, &extraElements, 0, 0);
 
     arrayWithLength<unsigned char> compressed(elements.length * 2, true);
-    if (compression == Compression::eCompressionTypes_RLE)
-        Compression::getCompression()->CompressRLE(compressed.data, &compressed.length, elements.data, elements.length * 2);
-    else if (compression == Compression::eCompressionTypes_LZXRLE)
+    switch (compression)
+    {
+    case Compression::eCompressionTypes_LZXRLE:
         Compression::getCompression()->CompressLZXRLE(compressed.data, &compressed.length, elements.data, elements.length * 2, 0);
-    else
+        break;
+    case Compression::eCompressionTypes_RLE:
+        Compression::getCompression()->CompressRLE(compressed.data, &compressed.length, elements.data, elements.length * 2);
+        break;
+    default:
         std::memcpy(compressed.data, elements.data, elements.length * 2);
+        break;
+    }
     if (output != 0)
     {
         output->writeInt(compressed.length);
@@ -1642,12 +1652,18 @@ bool ConsoleSchematicFile::generateSchematicFile(DataOutputStream* output, Level
     delete[] compressed.data;
 
     arrayWithLength<unsigned char> extraCompressed(extraElements.length * 2, true);
-    if (compression == Compression::eCompressionTypes_RLE)
-        Compression::getCompression()->CompressRLE(extraCompressed.data, &extraCompressed.length, extraElements.data, extraElements.length * 2);
-    else if (compression == Compression::eCompressionTypes_LZXRLE)
+    switch (compression)
+    {
+    case Compression::eCompressionTypes_LZXRLE:
         Compression::getCompression()->CompressLZXRLE(extraCompressed.data, &extraCompressed.length, extraElements.data, extraElements.length * 2, 0);
-    else
+        break;
+    case Compression::eCompressionTypes_RLE:
+        Compression::getCompression()->CompressRLE(extraCompressed.data, &extraCompressed.length, extraElements.data, extraElements.length * 2);
+        break;
+    default:
         std::memcpy(extraCompressed.data, extraElements.data, extraElements.length * 2);
+        break;
+    }
     if (output != 0)
     {
         output->writeInt(extraCompressed.length);

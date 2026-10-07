@@ -14,7 +14,7 @@ public:
     ElderGuardian(Level* level);
 
     static void addDataWalkers(DataFixerUpper* fixer);
-    static void create(Level* level);
+    static Entity* create(Level* level);
 
     virtual void registerAttributes();
     virtual unsigned int getAttackDuration();

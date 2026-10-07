@@ -31,7 +31,6 @@ public:
     {
     public:
         PolarBearAttackPlayersGoal(PolarBear* polarBear);
-        virtual ~PolarBearAttackPlayersGoal();
         virtual bool canUse();
         virtual double getFollowDistance();
     };
@@ -48,7 +47,6 @@ public:
     {
     public:
         PolarBearHurtByTargetGoal(PolarBear* polarBear);
-        virtual ~PolarBearHurtByTargetGoal();
         virtual void start();
         virtual void alertOther(boost::shared_ptr<PathfinderMob> mob,
                                 boost::shared_ptr<LivingEntity> target);
@@ -58,7 +56,6 @@ public:
     {
     public:
         PolarBearMeleeAttackGoal(PolarBear* polarBear);
-        virtual ~PolarBearMeleeAttackGoal();
         virtual bool canUse();
         virtual void checkAndPerformAttack(boost::shared_ptr<LivingEntity> target, double distance);
         virtual void stop();
@@ -74,8 +71,7 @@ public:
     };
 
     PolarBear(Level* level);
-    virtual ~PolarBear();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     virtual boost::shared_ptr<AgableMob> getBreedOffspring(boost::shared_ptr<AgableMob> partner);
     virtual bool isFood(const not_null_ptr<ItemInstance>& itemInstance);

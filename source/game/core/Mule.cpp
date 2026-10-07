@@ -21,13 +21,9 @@ Mule::Mule(Level* level)
     fjDerivedCtorCalls();
 }
 
-Mule::~Mule()
+Entity* Mule::create(Level* level)
 {
-}
-
-void Mule::create(Level* level)
-{
-    new Mule(level);
+    return new Mule(level);
 }
 
 void Mule::addDataWalkers(DataFixerUpper* fixer)

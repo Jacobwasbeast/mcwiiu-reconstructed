@@ -221,9 +221,9 @@ bool EyeOfEnderSignal::isAttackable()
     return false;
 }
 
-void EyeOfEnderSignal::create(Level* level)
+Entity* EyeOfEnderSignal::create(Level* level)
 {
-    new EyeOfEnderSignal(level);
+    return new EyeOfEnderSignal(level);
 }
 
 unsigned long long EyeOfEnderSignal::GetType()

@@ -42,7 +42,10 @@ Vex::Vex(Level* level)
 }
 
 Vex::~Vex() { delete boundOrigin; }
-void Vex::create(Level* level) { new Vex(level); }
+Entity* Vex::create(Level* level)
+{
+    return new Vex(level);
+}
 void Vex::staticCtor()
 {
     DATA_FLAGS = SynchedEntityData::defineId<unsigned char>(EntityType::VEX, EntityType::MONSTER,
@@ -209,9 +212,6 @@ std::wstring Vex::VexChargeAttackGoal::getName() { return L"Vex Charging Attack"
 
 Vex::VexCopyOwnerTargetGoal::VexCopyOwnerTargetGoal(PathfinderMob* value)
     : TargetGoal(value, false) {}
-Vex::VexCopyOwnerTargetGoal::~VexCopyOwnerTargetGoal()
-{
-}
 bool Vex::VexCopyOwnerTargetGoal::canUse()
 {
     Vex* vex = static_cast<Vex*>(mMob);

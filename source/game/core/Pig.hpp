@@ -26,12 +26,11 @@ class Pig : public Animal
 {
 public:
     Pig(Level* level);
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     static void addDataWalkers(DataFixerUpper* fixer);
 
     virtual unsigned long long GetType();
-    virtual ~Pig();
     virtual void defineSynchedData();
     virtual void playStepSound(const BlockPos& pos, Block* block);
     virtual void causeFallDamage(float fallDistance, float damageMultiplier);

@@ -19,13 +19,9 @@ MagmaCube::MagmaCube(Level* level)
     mFireImmune = true;
 }
 
-MagmaCube::~MagmaCube()
+Entity* MagmaCube::create(Level* level)
 {
-}
-
-void MagmaCube::create(Level* level)
-{
-    new MagmaCube(level);
+    return new MagmaCube(level);
 }
 
 void MagmaCube::addDataWalkers(DataFixerUpper* fixer)

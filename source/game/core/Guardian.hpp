@@ -37,7 +37,7 @@ public:
         virtual void start();
         virtual void stop();
         virtual void tick();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"GuardianAttack"; }
 
     private:
         Guardian* mGuardian;
@@ -75,7 +75,7 @@ public:
 
     static void staticCtor();
     static void addDataWalkers(DataFixerUpper* fixer);
-    static void create(Level* level);
+    static Entity* create(Level* level);
 
     virtual void registerGoals();
     virtual void registerAttributes();

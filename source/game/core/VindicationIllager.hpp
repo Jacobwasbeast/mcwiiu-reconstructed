@@ -22,7 +22,7 @@ class VindicationIllager : public AbstractIllager
 {
 public:
     explicit VindicationIllager(Level* level);
-    static VindicationIllager* create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void registerGoals();
     virtual void registerAttributes();
@@ -56,7 +56,6 @@ public:
     {
     public:
         explicit VindicatorJohnnyAttackGoal(VindicationIllager* mob);
-        virtual ~VindicatorJohnnyAttackGoal();
         bool canUse();
     };
 

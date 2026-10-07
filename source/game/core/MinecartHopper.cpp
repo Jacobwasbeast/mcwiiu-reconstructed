@@ -43,9 +43,9 @@ MinecartHopper::~MinecartHopper()
 {
 }
 
-void MinecartHopper::create(Level* level)
+Entity* MinecartHopper::create(Level* level)
 {
-    new MinecartHopper(level);
+    return new MinecartHopper(level);
 }
 
 unsigned int MinecartHopper::getContainerSize()

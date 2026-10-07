@@ -10,30 +10,30 @@ int getSlotId(int iQuad);
 PlayerUID getPlayerUID(int iQuad, bool includeOffline);
 
 CAchievements::CAchievements(int iQuad)
-    : mPlayerUID(getPlayerUID(iQuad, false))
+    : mIsSystemPlayer(getSlotId(iQuad) != 0)
+    , mSlotId((unsigned char)getSlotId(iQuad))
+    , mPlayerUID(getPlayerUID(iQuad, false))
+    , mDirty(false)
 {
-    mIsSystemPlayer = getSlotId(iQuad) != 0;
-    mSlotId = (unsigned char)getSlotId(iQuad);
-    mDirty = false;
     std::memset(mAwarded, 0, sizeof(mAwarded));
     mState = 0;
     std::memset(mFilename, 0, sizeof(mFilename));
     mHasAchievementsFile = false;
 
-    if (!mIsSystemPlayer)
-    {
-        PlayerUID playerUID = getPlayerUID(iQuad, false);
-        const char* guest = (playerUID.flags & 0x20000000u) != 0 ? "True" : "False";
-        gProfile->DebugPrintf("<CAchievements> Non-system player quad %i, guest=%s.\n",
-                              iQuad, guest);
-    }
-    else
+    if (mIsSystemPlayer)
     {
         std::wstring uid = mPlayerUID.toString();
         gProfile->DebugPrintf("<CAchievements> Creating achievements for '%ls', iQuad=%i, slot=%i.\n",
                               uid.c_str(), iQuad, mSlotId);
         std::sprintf(mFilename, "ach_%ls", uid.c_str());
         StartRead();
+    }
+    else
+    {
+        PlayerUID playerUID = getPlayerUID(iQuad, false);
+        const char* guest = (playerUID.flags & 0x20000000u) != 0 ? "True" : "False";
+        gProfile->DebugPrintf("<CAchievements> Non-system player quad %i, guest=%s.\n",
+                              iQuad, guest);
     }
 }
 
@@ -44,29 +44,29 @@ bool CAchievements::IsIdle() const
 
 bool CAchievements::StartRead()
 {
-    if (!IsIdle())
+    if (IsIdle())
     {
-        return false;
-    }
-    if (!mIsSystemPlayer)
-    {
+        if (!mIsSystemPlayer)
+        {
+            return true;
+        }
+        mState = 1;
+        gProfile->AddAwardManagerTask(this);
         return true;
     }
-    mState = 1;
-    gProfile->AddAwardManagerTask(this);
-    return true;
+    return false;
 }
 
 void CAchievements::printAchievements() const
 {
-    std::wstring uid = mPlayerUID.toString();
-    gProfile->DebugPrintf("<CAwardManager> Achievements for %ls.", uid.c_str());
-    for (int first = 0; first < 128; first += 8)
+    gProfile->DebugPrintf("<CAwardManager> Achievements for %ls.", mPlayerUID.toString().c_str());
+    for (int i = 0; i < 128; i += 8)
     {
-        gProfile->DebugPrintf("\n0x%03x| ", first);
-        for (int bit = 0; bit < 8; ++bit)
+        gProfile->DebugPrintf("\n0x%03x| ", i);
+        for (int j = 0; j < 8; ++j)
         {
-            gProfile->DebugPrintf("%s", (mAwarded[(first + bit) >> 3] & (1 << ((first + bit) & 7))) ? "1" : "0");
+            int n = i + j;
+            gProfile->DebugPrintf((mAwarded[n >> 3] & (1 << (n & 7))) ? "1" : "0");
         }
     }
     gProfile->DebugPrintf("\n");
@@ -80,42 +80,40 @@ bool CAchievements::IsDirty() const
 bool CAchievements::SetAwardedBit(int achievementId, bool awarded)
 {
     int registrationId = gProfile->GetRegistrationId(achievementId);
-    if (registrationId < 0)
+    if (registrationId >= 0)
     {
-        return false;
+        unsigned char& value = mAwarded[registrationId >> 3];
+        unsigned char mask = (unsigned char)(1 << (registrationId & 7));
+        bool wasAwarded = (mask & value) != 0;
+        if (awarded)
+        {
+            value |= mask;
+        }
+        else
+        {
+            value &= ~mask;
+        }
+        bool dirty = true;
+        if (!mDirty && wasAwarded == awarded)
+        {
+            dirty = false;
+        }
+        mDirty = dirty;
+        return wasAwarded;
     }
-
-    unsigned char& value = mAwarded[registrationId >> 3];
-    unsigned char mask = (unsigned char)(1 << (registrationId & 7));
-    bool wasAwarded = (value & mask) != 0;
-    if (awarded)
-    {
-        value |= mask;
-    }
-    else
-    {
-        value &= (unsigned char)~mask;
-    }
-    if (!mDirty && wasAwarded == awarded)
-    {
-        mDirty = false;
-    }
-    else
-    {
-        mDirty = true;
-    }
-    return wasAwarded;
+    return false;
 }
 
 bool CAchievements::GetAwardedBit(int achievementId) const
 {
     int registrationId = gProfile->GetRegistrationId(achievementId);
-    if (registrationId < 0)
+    bool awarded = false;
+    if (registrationId >= 0)
     {
-        return false;
+        unsigned char mask = (unsigned char)(1 << (registrationId & 7));
+        awarded = (mask & mAwarded[registrationId >> 3]) != 0;
     }
-    unsigned char mask = (unsigned char)(1 << (registrationId & 7));
-    return (mAwarded[registrationId >> 3] & mask) != 0;
+    return awarded;
 }
 
 bool CAchievements::hasPendingAwards() const
@@ -137,7 +135,7 @@ void CAchievements::awardPending(std::set<int>& awardsNotRegistered)
 
     std::set<int> pendingAwards = mPendingAwards;
     mPendingAwards.clear();
-    for (std::set<int>::const_iterator it = pendingAwards.begin(); it != pendingAwards.end(); ++it)
+    for (std::set<int>::iterator it = pendingAwards.begin(); it != pendingAwards.end(); ++it)
     {
         if (!SetAwardedBit(*it, true))
         {
@@ -182,20 +180,17 @@ void CAchievements::ReadFrom(void* data, int size)
 
 bool CAchievements::StartWrite()
 {
-    if (!IsIdle())
+    bool result = IsIdle();
+    if (result && mDirty)
     {
-        return false;
-    }
-    if (!mDirty)
-    {
+        if (!mIsSystemPlayer)
+        {
+            mDirty = false;
+            return true;
+        }
+        mState = 2;
+        gProfile->AddAwardManagerTask(this);
         return true;
     }
-    if (!mIsSystemPlayer)
-    {
-        mDirty = false;
-        return true;
-    }
-    mState = 2;
-    gProfile->AddAwardManagerTask(this);
-    return true;
+    return result;
 }

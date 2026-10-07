@@ -24,7 +24,7 @@ unsigned char* DLCUIDataFile::getData(unsigned int& size)
 
 void DLCUIDataFile::addData(unsigned char* pData, unsigned int size, bool bTakeDataOwnership)
 {
+    m_pData = pData;
     m_dataSize = size;
     m_bTakeDataOwnership = bTakeDataOwnership;
-    m_pData = pData;
 }

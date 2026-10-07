@@ -338,12 +338,6 @@ Stat* CommonStats::get_achievement(eAward award)
     case 57: return Achievements::overpowered;
     case 58: return Achievements::theDyeOutfit;
     case 59: return Achievements::trampoline;
-    case 60: return Achievements::theStudent;
-    case 61: return Achievements::hasBecomeTheMaster;
-    case 62: return Achievements::tisButAScratch;
-    case 63: return Achievements::cupid;
-    case 64: return Achievements::youWontLikeMeWhenImHungry;
-    case 65: return Achievements::mine;
     case 66: return Achievements::theEndAgain;
     case 67: return Achievements::youNeedAMint;
     case 68: return Achievements::superSonic;
@@ -369,6 +363,12 @@ Stat* CommonStats::get_achievement(eAward award)
     case 88: return Achievements::soIGotThatGoingForMe;
     case 89: return Achievements::letItGo;
     case 90: return Achievements::feelingIll;
+    case 60: return Achievements::theStudent;
+    case 61: return Achievements::hasBecomeTheMaster;
+    case 62: return Achievements::tisButAScratch;
+    case 63: return Achievements::cupid;
+    case 64: return Achievements::youWontLikeMeWhenImHungry;
+    case 65: return Achievements::mine;
     case 91: return Achievements::_1234Pickle;
     case 92: return Achievements::alternativeFuel;
     case 93: return Achievements::moskstraumen;

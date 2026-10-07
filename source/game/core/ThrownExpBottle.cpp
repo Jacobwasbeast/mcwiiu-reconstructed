@@ -28,9 +28,9 @@ ThrownExpBottle::ThrownExpBottle(Level* level, double x, double y, double z)
     _init();
 }
 
-void ThrownExpBottle::create(Level* level)
+Entity* ThrownExpBottle::create(Level* level)
 {
-    new ThrownExpBottle(level);
+    return new ThrownExpBottle(level);
 }
 
 bool ThrownExpBottle::onHit(const HitResult* result)

@@ -12,10 +12,6 @@ WitherTargetHighestDamage::WitherTargetHighestDamage(WitherBoss* wither)
     setRequiredControlFlags(1);
 }
 
-WitherTargetHighestDamage::~WitherTargetHighestDamage()
-{
-}
-
 boost::shared_ptr<LivingEntity> WitherTargetHighestDamage::getHighestDamageTarget()
 {
     int highestDamage = 0;

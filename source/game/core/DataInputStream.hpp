@@ -30,7 +30,7 @@ public:
     virtual bool readBoolean();
     virtual unsigned char readByte();
     virtual unsigned char readUnsignedByte();
-    virtual int readUnsignedShort();
+    virtual unsigned short readUnsignedShort();
     virtual wchar_t readChar();
     virtual bool readFully(arrayWithLength<unsigned char> buffer);
     virtual bool readFully(arrayWithLength<char> buffer);

@@ -226,18 +226,28 @@ unsigned int IUIScene_StartGame::GetCustomGameModeID()
 unsigned int IUIScene_StartGame::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_mainPanel.setupControl(this, root, "MainPanel");
-    m_controls.push_back(&m_mainPanel);
+    {
+        fuiRenderNode* root = m_movie->getRootNode();
+        m_mainPanel.setupControl(this, root, std::string("MainPanel"));
+        m_controls.push_back(&m_mainPanel);
+    }
     fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
-    m_texturePackName.setupControl(this, panel, "TexturePackName");
-    m_controls.push_back(&m_texturePackName);
-    m_texturePackDescription.setupControl(this, panel, "TexturePackDescription");
-    m_controls.push_back(&m_texturePackDescription);
-    m_texturePackIcon.setupControl(this, panel, "Icon");
-    m_controls.push_back(&m_texturePackIcon);
-    m_texturePackComparison.setupControl(this, panel, "ComparisonPic");
-    m_controls.push_back(&m_texturePackComparison);
+    {
+        m_texturePackName.setupControl(this, panel, std::string("TexturePackName"));
+        m_controls.push_back(&m_texturePackName);
+    }
+    {
+        m_texturePackDescription.setupControl(this, panel, std::string("TexturePackDescription"));
+        m_controls.push_back(&m_texturePackDescription);
+    }
+    {
+        m_texturePackIcon.setupControl(this, panel, std::string("Icon"));
+        m_controls.push_back(&m_texturePackIcon);
+    }
+    {
+        m_texturePackComparison.setupControl(this, panel, std::string("ComparisonPic"));
+        m_controls.push_back(&m_texturePackComparison);
+    }
     return 1;
 }
 
@@ -356,26 +366,27 @@ void IUIScene_StartGame::_init()
         return;
     }
     m_actionPending = false;
-    if (m_levelGenerationOptions != NULL && m_levelGenerationOptions->isGameModeLobby())
+    if (m_levelGenerationOptions == NULL || !m_levelGenerationOptions->isGameModeLobby())
     {
-        UpdateTexturePackDescription(0);
+        OrganizeTexturePacks();
         return;
     }
-    OrganizeTexturePacks();
+    UpdateTexturePackDescription(0);
 }
 
 void IUIScene_StartGame::RequestPrivMessageBox()
 {
     int parameters[1];
     parameters[0] = IDS_CONFIRM_OK;
+    int pad = gProfile->GetPrimaryPad();
     if (m_launchData.mJoinMiniGame)
     {
-        gConsoleUIController.RequestAlertMessage(0x456F1349, 0x2FAC754A, parameters, 1,
-                                                 gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
+        gConsoleUIController.RequestAlertMessage(0x456F1349, 0x2FAC754A, parameters, 1, pad, NULL,
+                                                 NULL, NULL, true);
         return;
     }
-    gConsoleUIController.RequestAlertMessage(0x252AB13F, -0x3B844EA3, parameters, 1,
-                                             gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
+    gConsoleUIController.RequestAlertMessage(0x252AB13F, -0x3B844EA3, parameters, 1, pad, NULL,
+                                             NULL, NULL, true);
 }
 
 void IUIScene_StartGame::FindAndJoinGame(unsigned int playerMask)
@@ -399,19 +410,9 @@ void IUIScene_StartGame::FindAndJoinGame(unsigned int playerMask)
     delete values;
     delete ids;
     gApp.SetLiveLinkRequired(false);
-    if (result == 0)
+    switch (result)
     {
-        telemetryManagerInstance->PrepareMiniGameHostOptions(m_playerId, &m_launchData,
-                                                             eTelemetryJoinMethod_Matchmaking);
-        Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(false);
-    }
-    else if (result < 2)
-    {
-        gConsoleUIController.NavigateBack(m_playerId, false, EUIScene_None,
-                                          EUILayer_Count);
-        Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(false);
-    }
-    else if (result == 2)
+    case 2:
     {
         int parameters[1];
         parameters[0] = IDS_CONFIRM_OK;
@@ -419,8 +420,9 @@ void IUIScene_StartGame::FindAndJoinGame(unsigned int playerMask)
                                                  gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
         gConsoleUIController.NavigateToHomeMenu(false);
         Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(false);
+        break;
     }
-    else if (result < 4)
+    case 3:
     {
         int parameters[1];
         parameters[0] = IDS_CONFIRM_OK;
@@ -428,8 +430,9 @@ void IUIScene_StartGame::FindAndJoinGame(unsigned int playerMask)
                                                  gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
         gConsoleUIController.NavigateToHomeMenu(false);
         Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(false);
+        break;
     }
-    else if (result == 4)
+    case 4:
     {
         int parameters[1];
         parameters[0] = IDS_CONFIRM_OK;
@@ -437,12 +440,23 @@ void IUIScene_StartGame::FindAndJoinGame(unsigned int playerMask)
                                                  gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
         gConsoleUIController.NavigateToHomeMenu(false);
         Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(false);
+        break;
     }
-    else
-    {
+    case 1:
         gConsoleUIController.NavigateBack(m_playerId, false, EUIScene_None,
                                           EUILayer_Count);
         Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(false);
+        break;
+    case 0:
+        telemetryManagerInstance->PrepareMiniGameHostOptions(m_playerId, &m_launchData,
+                                                             eTelemetryJoinMethod_Matchmaking);
+        Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(false);
+        break;
+    default:
+        gConsoleUIController.NavigateBack(m_playerId, false, EUIScene_None,
+                                          EUILayer_Count);
+        Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(false);
+        break;
     }
 }
 
@@ -471,40 +485,15 @@ void IUIScene_StartGame::HostGame(unsigned int playerMask)
             gStorage->ResetSaveData();
             gStorage->SetSaveTitle(saveName.c_str());
             std::wstring seedText;
-            if (m_launchData.mSeed.size() == 0)
-            {
-                seedText.assign(L"", wcslen(L""));
-            }
-            else
+            if (m_launchData.mSeed.size() != 0)
             {
                 seedText.assign(m_launchData.mSeed, 0, std::wstring::npos);
             }
-            if (seedText.size() == 0)
-            {
-                if (m_launchData.mFindBalancedSeed)
-                {
-                    initData->m_findSeed = 1;
-                }
-                else
-                {
-                    Random* random = new Random(System::processTimeInNanoSecs());
-                    m_seed = random->nextLong();
-#if defined(RECON_NATIVE)
-                    const char* fixture = std::getenv("MC_WORLD_SEED");
-                    if (fixture != NULL && *fixture != '\0')
-                    {
-                        char* end = NULL;
-                        errno = 0;
-                        const long long fixtureSeed = std::strtoll(fixture, &end, 10);
-                        if (errno == 0 && end != fixture && *end == '\0')
-                            m_seed = fixtureSeed;
-                        else
-                            std::fprintf(stderr, "[native-world] invalid MC_WORLD_SEED: %s\n", fixture);
-                    }
-#endif
-                }
-            }
             else
+            {
+                seedText.assign(L"", wcslen(L""));
+            }
+            if (seedText.size() != 0)
             {
                 const unsigned int length = seedText.size();
                 bool numeric = length != 0;
@@ -531,6 +520,28 @@ void IUIScene_StartGame::HostGame(unsigned int playerMask)
                     }
                     m_seed = hash;
                 }
+            }
+            else if (m_launchData.mFindBalancedSeed)
+            {
+                initData->m_findSeed = 1;
+            }
+            else
+            {
+                Random* random = new Random(System::processTimeInNanoSecs());
+                m_seed = random->nextLong();
+#if defined(RECON_NATIVE)
+                const char* fixture = std::getenv("MC_WORLD_SEED");
+                if (fixture != NULL && *fixture != '\0')
+                {
+                    char* end = NULL;
+                    errno = 0;
+                    const long long fixtureSeed = std::strtoll(fixture, &end, 10);
+                    if (errno == 0 && end != fixture && *end == '\0')
+                        m_seed = fixtureSeed;
+                    else
+                        std::fprintf(stderr, "[native-world] invalid MC_WORLD_SEED: %s\n", fixture);
+                }
+#endif
             }
         }
         gApp.ClearTerrainFeaturePosition();
@@ -636,12 +647,6 @@ void IUIScene_StartGame::HostGame(unsigned int playerMask)
     }
     gApp.SetAutosaveTimerTime();
     FullscreenProgressState* state = new FullscreenProgressState;
-    state->showConfirmation = false;
-    state->backScene = EUIScene_None;
-    state->showTip = true;
-    state->reservedFlag1 = true;
-    state->reservedFlag2 = true;
-    state->closeMode = 3;
     params->m_completionData = state;
     state->playerId = 0;
     gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
@@ -769,30 +774,9 @@ void IUIScene_StartGame::handleSelectionChanged(int selection)
 
 void IUIScene_StartGame::handleSliderMove(int id, int value)
 {
-    if (id == 1)
+    switch (id)
     {
-        m_gameModeSlider.handleSliderMove(value);
-        if (value == 0)
-        {
-            m_gameModeSlider.setLabel(UIString(L10N::GetString(IDS_GAMEMODE_SURVIVAL)), false, false);
-            m_gameTypeId = GameType::SURVIVAL->getId();
-            m_isCreative = false;
-        }
-        else if (value == 1)
-        {
-            m_gameModeSlider.setLabel(UIString(L10N::GetString(IDS_GAMEMODE_CREATIVE)), false, false);
-            m_gameTypeId = GameType::CREATIVE->getId();
-            m_isCreative = true;
-        }
-        else if (value == 2)
-        {
-            m_gameModeSlider.setLabel(UIString(L10N::GetString(IDS_GAMEMODE_ADVENTURE)), false, false);
-            m_gameTypeId = GameType::ADVENTURE->getId();
-            m_isCreative = false;
-        }
-    }
-    else if (id == 2)
-    {
+    case 2:
         m_difficulty = value;
         m_difficultySlider.handleSliderMove(value);
         if (!m_customGame)
@@ -804,6 +788,28 @@ void IUIScene_StartGame::handleSliderMove(int id, int value)
         swprintf(buffer, 0x100, L"%ls: %ls", L10N::GetString(IDS_SLIDER_DIFFICULTY),
                  L10N::GetString(Difficulty::byId(value)->getKey()));
         m_difficultySlider.setLabel(UIString(buffer), false, false);
+        break;
+    case 1:
+        m_gameModeSlider.handleSliderMove(value);
+        switch (value)
+        {
+        case 0:
+            m_gameModeSlider.setLabel(UIString(L10N::GetString(IDS_GAMEMODE_SURVIVAL)), false, false);
+            m_gameTypeId = GameType::SURVIVAL->getId();
+            m_isCreative = false;
+            break;
+        case 1:
+            m_gameModeSlider.setLabel(UIString(L10N::GetString(IDS_GAMEMODE_CREATIVE)), false, false);
+            m_gameTypeId = GameType::CREATIVE->getId();
+            m_isCreative = true;
+            break;
+        case 2:
+            m_gameModeSlider.setLabel(UIString(L10N::GetString(IDS_GAMEMODE_ADVENTURE)), false, false);
+            m_gameTypeId = GameType::ADVENTURE->getId();
+            m_isCreative = false;
+            break;
+        }
+        break;
     }
 }
 
@@ -826,21 +832,11 @@ void IUIScene_StartGame::handleTimerComplete(int timerId)
                                 gProfile->AllowedToPlayMultiplayer(m_playerId);
         if (allowedOnline != m_onlineEnabled)
         {
-            if (!allowedOnline)
+            if (allowedOnline)
             {
-                m_launchData.mAllowFriendsOfFriends = false;
-                m_launchData.mInviteOnly = false;
-                m_launchData.mOnlineGame = false;
-                m_onlineGameCheckBox.SetEnable(allowedOnline);
-                m_onlineGameCheckBox.setChecked(m_launchData.mOnlineGame);
-                m_onlineEnabled = allowedOnline;
-            }
-            else
-            {
-                bool onlineSetting =
+                m_launchData.mOnlineGame =
                     GameSettings::GetGameSettings(m_playerId, eGameSetting_Online) != 0;
-                m_launchData.mOnlineGame = onlineSetting;
-                if (onlineSetting)
+                if (m_launchData.mOnlineGame)
                 {
                     m_launchData.mInviteOnly =
                         GameSettings::GetGameSettings(m_playerId, eGameSetting_InviteOnly) !=
@@ -860,6 +856,15 @@ void IUIScene_StartGame::handleTimerComplete(int timerId)
                     m_onlineGameCheckBox.setChecked(m_launchData.mOnlineGame);
                     m_onlineEnabled = allowedOnline;
                 }
+            }
+            else
+            {
+                m_launchData.mAllowFriendsOfFriends = false;
+                m_launchData.mInviteOnly = false;
+                m_launchData.mOnlineGame = false;
+                m_onlineGameCheckBox.SetEnable(allowedOnline);
+                m_onlineGameCheckBox.setChecked(m_launchData.mOnlineGame);
+                m_onlineEnabled = allowedOnline;
             }
         }
     }
@@ -951,18 +956,21 @@ int IUIScene_StartGame::TexturePackDialogReturned(void* context, int userIndex,
     IUIScene_StartGame* scene = static_cast<IUIScene_StartGame*>(context);
     if (result == C4JStorage::EMessageResult_Accept && gProfile->IsSignedIn(userIndex))
     {
-        if (!gProfile->IsSignedInLive(userIndex))
+        if (gProfile->IsSignedInLive(userIndex))
+        {
+            if (!gApp.GetCommerceInstance()->PurchaseDLCByPackID(scene->m_launchData.mTexturePackId))
+            {
+                int parameters[1];
+                parameters[0] = IDS_CONFIRM_OK;
+                gConsoleUIController.RequestErrorMessage(IDS_DLC_ALREADY_INSTALLED_TITLE, IDS_DLC_ALREADY_INSTALLED_TEXT, parameters, 1,
+                                                         userIndex, NULL, NULL, NULL, true);
+            }
+        }
+        else
         {
             int parameters[1];
             parameters[0] = IDS_CONFIRM_OK;
             gConsoleUIController.RequestErrorMessage(-0x75DE76B5, -0x3CB3F489, parameters, 1,
-                                                     userIndex, NULL, NULL, NULL, true);
-        }
-        else if (!gApp.GetCommerceInstance()->PurchaseDLCByPackID(scene->m_launchData.mTexturePackId))
-        {
-            int parameters[1];
-            parameters[0] = IDS_CONFIRM_OK;
-            gConsoleUIController.RequestErrorMessage(IDS_DLC_ALREADY_INSTALLED_TITLE, IDS_DLC_ALREADY_INSTALLED_TEXT, parameters, 1,
                                                      userIndex, NULL, NULL, NULL, true);
         }
     }
@@ -976,18 +984,21 @@ int IUIScene_StartGame::TexturePackDialogBattleMiniGameReturned(void* context, i
     IUIScene_StartGame* scene = static_cast<IUIScene_StartGame*>(context);
     if (result == C4JStorage::EMessageResult_Accept && gProfile->IsSignedIn(userIndex))
     {
-        if (!gProfile->IsSignedInLive(userIndex))
+        if (gProfile->IsSignedInLive(userIndex))
+        {
+            if (!gApp.GetCommerceInstance()->PurchaseDLCByPackID(scene->m_launchData.mTexturePackId))
+            {
+                int parameters[1];
+                parameters[0] = IDS_CONFIRM_OK;
+                gConsoleUIController.RequestErrorMessage(IDS_DLC_ALREADY_INSTALLED_TITLE, IDS_DLC_ALREADY_INSTALLED_TEXT, parameters, 1,
+                                                         userIndex, NULL, NULL, NULL, true);
+            }
+        }
+        else
         {
             int parameters[1];
             parameters[0] = IDS_CONFIRM_OK;
             gConsoleUIController.RequestErrorMessage(-0x75DE76B5, -0x3CB3F489, parameters, 1,
-                                                     userIndex, NULL, NULL, NULL, true);
-        }
-        else if (!gApp.GetCommerceInstance()->PurchaseDLCByPackID(scene->m_launchData.mTexturePackId))
-        {
-            int parameters[1];
-            parameters[0] = IDS_CONFIRM_OK;
-            gConsoleUIController.RequestErrorMessage(IDS_DLC_ALREADY_INSTALLED_TITLE, IDS_DLC_ALREADY_INSTALLED_TEXT, parameters, 1,
                                                      userIndex, NULL, NULL, NULL, true);
         }
     }
@@ -1000,11 +1011,7 @@ void IUIScene_StartGame::CheckPermissionsAndContinue(bool fromLoad)
     int primaryPad = gProfile->GetPrimaryPad();
     bool multiplayerBlocked = false;
     bool allSignedInLive = true;
-    bool onlineGame = false;
-    if ((m_launchData.mOnlineGame || m_launchData.mMatchmaking) && !m_launchData.mTimeTrial)
-    {
-        onlineGame = true;
-    }
+    bool onlineGame = (m_launchData.mOnlineGame || m_launchData.mMatchmaking) && !m_launchData.mTimeTrial;
     bool localMultiplayer = gApp.IsLocalMultiplayerAvailable();
     int index;
     for (index = 0; index < 4; ++index)
@@ -1055,17 +1062,17 @@ void IUIScene_StartGame::CheckPermissionsAndContinue(bool fromLoad)
             gConsoleUIController.RequestUGCMessageBox(-1, -1, -1, NULL, NULL);
             return;
         }
-        if (!gApp.IsDrcPreventingSplitscreen())
+        if (gApp.IsDrcPreventingSplitscreen())
         {
-            m_signInPending = true;
+            int parameters[2];
+            parameters[0] = 0x1A65D275;
+            parameters[1] = 0x7A458ED2;
+            gConsoleUIController.RequestAlertMessage(0x337F2CFC, 0x6F86265B, parameters, 2,
+                                                     gProfile->GetPrimaryPad(),
+                                                     WiiUDRCWarningReturned, this, NULL, true);
             return;
         }
-        int parameters[2];
-        parameters[0] = 0x1A65D275;
-        parameters[1] = 0x7A458ED2;
-        gConsoleUIController.RequestAlertMessage(0x337F2CFC, 0x6F86265B, parameters, 2,
-                                                 gProfile->GetPrimaryPad(), WiiUDRCWarningReturned,
-                                                 this, NULL, true);
+        m_signInPending = true;
         return;
     }
     if (onlineGame && allSignedInLive && (ugcRestricted || multiplayerBlocked))
@@ -1146,13 +1153,14 @@ void IUIScene_StartGame::StartSharedLaunchFlow()
                     gConsoleUIController.RequestAlertMessage(0x3BB3096E, -0x0AF6FB3A, parameters, 2,
                                                              m_playerId, TexturePackDialogReturned,
                                                              this, NULL, true);
-                    gApp.SetExtraGameData(eGameExtraData_TrialTexturePack, 1);
-                    return;
                 }
-                gConsoleUIController.RequestAlertMessage(0x3BB3096E, 0x1CFE436F, parameters, 2,
-                                                         m_playerId,
-                                                         TrialTexturePackWarningReturned, this,
-                                                         NULL, true);
+                else
+                {
+                    gConsoleUIController.RequestAlertMessage(0x3BB3096E, 0x1CFE436F, parameters, 2,
+                                                             m_playerId,
+                                                             TrialTexturePackWarningReturned, this,
+                                                             NULL, true);
+                }
                 gApp.SetExtraGameData(eGameExtraData_TrialTexturePack, 1);
                 return;
             }
@@ -1209,12 +1217,14 @@ int IUIScene_StartGame::LoadSaveDataReturned(void* context, bool corrupt, bool c
 {
     IUIScene_StartGame* scene = static_cast<IUIScene_StartGame*>(context);
     scene->m_saveCorrupt = corrupt;
-    if (!complete)
+    if (complete)
+    {
+        LoadDataComplete(context);
+    }
+    else
     {
         scene->m_actionPending = false;
-        return 0;
     }
-    LoadDataComplete(context);
     return 0;
 }
 
@@ -1224,23 +1234,26 @@ int IUIScene_StartGame::CheckCreativeReturned(void* context, int,
     IUIScene_StartGame* scene = static_cast<IUIScene_StartGame*>(context);
     if (result == C4JStorage::EMessageResult_Accept)
     {
-        if (scene->m_levelGenerationOptions == NULL)
+        if (scene->m_levelGenerationOptions != NULL)
         {
-            if (!scene->m_customGame || scene->m_launchData.mJoinMiniGame)
-            {
-                scene->CheckPermissionsAndContinue(true);
-                return 0;
-            }
+            scene->m_saveCorrupt = false;
+            LoadDataComplete(scene);
+        }
+        else if (scene->m_customGame && !scene->m_launchData.mJoinMiniGame)
+        {
             SAVE_DETAILS* details = gStorage->ReturnSavesInfo();
             gStorage->LoadSaveData(&details->saves[scene->m_saveIndex], LoadSaveDataReturned,
                                    scene);
-            return 0;
         }
-        scene->m_saveCorrupt = false;
-        LoadDataComplete(scene);
-        return 0;
+        else
+        {
+            scene->CheckPermissionsAndContinue(true);
+        }
     }
-    scene->m_actionPending = false;
+    else
+    {
+        scene->m_actionPending = false;
+    }
     return 0;
 }
 

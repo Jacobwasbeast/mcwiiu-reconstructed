@@ -72,15 +72,17 @@ void BinaryHeap::clear()
 
 void BinaryHeap::downHeap(int index)
 {
+    Node* node = mHeap.data[index];
     Node** heap = mHeap.data;
-    Node* node = heap[index];
-    int count = mSize;
     float cost = node->f;
+    int left;
+    int right;
+    int count = mSize;
 
     while (true)
     {
-        int left = index * 2 + 1;
-        int right = index * 2 + 2;
+        left = index * 2 + 1;
+        right = index * 2 + 2;
 
         if (left >= count)
         {
@@ -93,15 +95,15 @@ void BinaryHeap::downHeap(int index)
         Node* rightNode;
         float rightCost;
 
-        if (right < count)
-        {
-            rightNode = heap[right];
-            rightCost = rightNode->f;
-        }
-        else
+        if (right >= count)
         {
             rightNode = NULL;
             rightCost = 2139095040.0f;
+        }
+        else
+        {
+            rightNode = heap[right];
+            rightCost = rightNode->f;
         }
 
         if (leftCost < rightCost)

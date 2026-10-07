@@ -13,7 +13,6 @@ class DLCGameRulesHeader : public DLCGameRules, public GameRulesSource
 {
 public:
     DLCGameRulesHeader(const std::wstring& path);
-    virtual ~DLCGameRulesHeader();
 
     virtual bool requiresTexturePack();
     virtual unsigned int getTexturePackId();

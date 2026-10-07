@@ -7,10 +7,6 @@ DLCCapeFile::DLCCapeFile(const std::wstring& path)
 {
 }
 
-DLCCapeFile::~DLCCapeFile()
-{
-}
-
 void DLCCapeFile::addData(unsigned char* data, unsigned int size)
 {
     gApp.AddMemoryTextureFile(m_path, data, size);

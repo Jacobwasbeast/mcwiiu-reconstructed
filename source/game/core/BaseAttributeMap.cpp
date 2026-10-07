@@ -38,9 +38,11 @@ AttributeInstance* BaseAttributeMap::registerAttribute(Attribute* attribute)
     AttributeInstance* instance = createAttributeInstance(attribute);
     mAttributes[attribute->getId()] = instance;
 
-    for (Attribute* parent = attribute->getParentAttribute(); parent != NULL; parent = parent->getParentAttribute())
+    Attribute* parent = attribute->getParentAttribute();
+    while (parent != NULL)
     {
         mDescendantsByParent.insert(std::make_pair(parent, attribute));
+        parent = parent->getParentAttribute();
     }
 
     return instance;

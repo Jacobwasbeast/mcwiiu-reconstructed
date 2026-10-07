@@ -222,9 +222,9 @@ unsigned long long Blaze::GetType()
     return EntityType::BLAZE;
 }
 
-void Blaze::create(Level* level)
+Entity* Blaze::create(Level* level)
 {
-    new Blaze(level);
+    return new Blaze(level);
 }
 
 Blaze::BlazeAttackGoal::BlazeAttackGoal(Blaze* blaze)

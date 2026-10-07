@@ -19,11 +19,13 @@ int InputStreamReader::read()
 
 unsigned int InputStreamReader::read(wchar_t* buffer, unsigned int offset, unsigned int length)
 {
+    int character;
+    unsigned int index;
     unsigned int count = 0;
 
-    for (unsigned int index = offset; index < offset + length; index++)
+    for (index = offset; index < offset + length; index++)
     {
-        int character = mStream->readUTFChar();
+        character = mStream->readUTFChar();
 
         if (character == -1)
         {

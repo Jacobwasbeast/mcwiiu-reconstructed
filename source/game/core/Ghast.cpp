@@ -42,9 +42,9 @@ Ghast::Ghast(Level* level) : FlyingMob(level)
     mMoveControl = new GhastMoveControl(this);
 }
 
-void Ghast::create(Level* level)
+Entity* Ghast::create(Level* level)
 {
-    new Ghast(level);
+    return new Ghast(level);
 }
 
 void Ghast::staticCtor()
@@ -179,8 +179,6 @@ void Ghast::GhastLookGoal::tick()
         mGhast->mYBodyRot = mGhast->mYRot = -(float)std::atan2(target->mX - mGhast->mX, target->mZ - mGhast->mZ) * Mth::RAD_TO_DEG;
     }
 }
-std::wstring Ghast::GhastLookGoal::getName() { return L"GhastLook"; }
-
 Ghast::GhastMoveControl::GhastMoveControl(Ghast* ghast) : MoveControl(ghast), mGhast(ghast), mCountdown(0) {}
 Ghast::GhastMoveControl::~GhastMoveControl() {}
 bool Ghast::GhastMoveControl::canReach(double x, double y, double z, double distance)
@@ -262,8 +260,6 @@ void Ghast::GhastShootFireballGoal::tick()
     else
         mGhast->setCharging(mChargeTime > 10);
 }
-std::wstring Ghast::GhastShootFireballGoal::getName() { return L"GhastShootFireball"; }
-
 Ghast::RandomFloatAroundGoal::RandomFloatAroundGoal(Ghast* ghast) : Goal(), mGhast(ghast)
 {
     setRequiredControlFlags(1);
@@ -292,4 +288,3 @@ void Ghast::RandomFloatAroundGoal::start()
     double z = mGhast->mZ + (random->nextFloat() * 2.0f - 1.0f) * 16.0f;
     mGhast->getMoveControl()->setWantedPosition(x, y, z, 1.0);
 }
-std::wstring Ghast::RandomFloatAroundGoal::getName() { return L"RandomFloatAround"; }

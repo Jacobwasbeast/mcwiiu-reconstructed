@@ -59,14 +59,16 @@ GhostController::GhostRecord::GhostRecord(Vec3* pos) : samples(), hasRecording(f
 GhostController::GhostRecord::~GhostRecord() { delete startPos; }
 Vec3* GhostController::GhostRecord::GetPosAtIndex(unsigned int index)
 {
-    if (index >= samples.size())
-        return NULL;
-    const GhostRecordSample& sample = samples[index];
-    Vec3* position = Vec3::newTemp(startPos->x + (double)sample.x / 10.0,
-                                    startPos->y + (double)sample.y / 10.0,
-                                    startPos->z + (double)sample.z / 10.0);
-    return position;
+    if (index < samples.size())
+    {
+        double x = startPos->x + (double)samples[index].x / 10.0;
+        double y = startPos->y + (double)samples[index].y / 10.0;
+        double z = startPos->z + (double)samples[index].z / 10.0;
+        return Vec3::newTemp(x, y, z);
+    }
+    return NULL;
 }
+
 bool GhostController::GhostRecord::HasRecording() const { return hasRecording; }
 void GhostController::GhostRecord::ResetHasRecording() { hasRecording=false; }
 void GhostController::GhostRecord::AddSample(double a, double b, double c, float d, float e, float f) {
@@ -88,25 +90,25 @@ void GhostController::GhostRecord::WriteStartPos(DataOutputStream* stream) { str
 void GhostController::GhostRecord::WriteSampleAtIndex(unsigned int index, DataOutputStream* stream) { if (index < samples.size()) samples[index].write(stream); }
 Vec3* GhostController::GhostRecord::GetRotAtIndex(unsigned int index)
 {
-    if (index >= samples.size())
-        return NULL;
-    const GhostRecordSample& sample = samples[index];
-    Vec3* rotation = Vec3::newTemp((double)sample.rotX / 10.0,
-                                    (double)sample.rotY / 10.0,
-                                    (double)sample.rotZ / 10.0);
-    return rotation;
+    if (index < samples.size())
+    {
+        return Vec3::newTemp((double)samples[index].rotX / 10.0,
+                             (double)samples[index].rotY / 10.0,
+                             (double)samples[index].rotZ / 10.0);
+    }
+    return NULL;
 }
 
 float GhostController::GhostRecord::GetVelocityAtIndex(unsigned int index)
 {
-    if (index == 0 || index >= samples.size())
-        return 0.0f;
-    const GhostRecordSample& previous = samples[index - 1];
-    const GhostRecordSample& current = samples[index];
-    const float dx = (float)(current.x - previous.x) / 10.0f;
-    const float dy = (float)(current.y - previous.y) / 10.0f;
-    const float dz = (float)(current.z - previous.z) / 10.0f;
-    return std::sqrt(dx * dx + dy * dy + dz * dz);
+    if (index != 0 && index < samples.size())
+    {
+        const float dx = (samples[index].x - samples[index - 1].x) / 10.0f;
+        const float dy = (samples[index].y - samples[index - 1].y) / 10.0f;
+        const float dz = (samples[index].z - samples[index - 1].z) / 10.0f;
+        return std::sqrt(dx * dx + dy * dy + dz * dz);
+    }
+    return 0.0f;
 }
 
 short GhostController::Double1DPAsInt16(double value)
@@ -166,9 +168,9 @@ void GhostController::Initialise(int gameMode, const std::wstring& levelName, bo
 {
     mGameMode = gameMode;
     mLevelName = levelName;
+    mTimed = timed;
     mSavingDisabled = false;
     mAnyRecordingActive = false;
-    mTimed = timed;
     for (int track = 0; track < 4; ++track)
     {
         mRecordingActive[track] = false;
@@ -190,8 +192,8 @@ void GhostController::LoadGhostHeader(int track)
 
 void GhostController::reset(int gameMode, const std::wstring& levelName, bool timed)
 {
-    mSuspendedTime = 0;
     mAnyRecordingActive = false;
+    mSuspendedTime = 0;
     if (mGameMode != gameMode)
     {
         Initialise(gameMode, levelName, timed);
@@ -200,8 +202,8 @@ void GhostController::reset(int gameMode, const std::wstring& levelName, bool ti
     for (int track = 0; track < 4; ++track)
     {
         mRecordingActive[track] = false;
-        mPlaybackActive[track] = false;
         mRecordingPending[track] = false;
+        mPlaybackActive[track] = false;
         if (mRecording[track] != NULL)
         {
             delete mRecording[track];
@@ -308,10 +310,15 @@ void GhostController::setRecordingActive(int track, bool active)
 {
     mLastSampleTime = System::processTimeInMilliSecs();
     mRecordingActive[track] = active;
-    if (!mRecordingActive[0] && !mRecordingActive[1] && !mRecordingActive[2] && !mRecordingActive[3])
-        mAnyRecordingActive = false;
-    else
-        mAnyRecordingActive = true;
+    mAnyRecordingActive = false;
+    for (int i = 0; i < 4; ++i)
+    {
+        if (mRecordingActive[i])
+        {
+            mAnyRecordingActive = true;
+            break;
+        }
+    }
     if (active)
     {
         mRecordingPending[track] = true;
@@ -419,23 +426,21 @@ void GhostController::SetTrackHeader(int track, int key, unsigned int time, unsi
     {
         if (mTrackHeaders[track][key].time == 0 || time < mTrackHeaders[track][key].time)
         {
-            changed = true;
             mTrackHeaders[track][key].time = time;
-        }
-        if (mTrackHeaders[track][key].score < score)
-        {
             changed = true;
+        }
+        if (score > mTrackHeaders[track][key].score)
+        {
             mTrackHeaders[track][key].score = score;
+            changed = true;
         }
         if (timeRecorded && !mTrackHeaders[track][key].timeRecorded)
         {
-            changed = true;
-            mTrackHeaders[track][key].timeRecorded = true;
+            changed = mTrackHeaders[track][key].timeRecorded = true;
         }
         if (scoreRecorded && !mTrackHeaders[track][key].scoreRecorded)
         {
-            changed = true;
-            mTrackHeaders[track][key].scoreRecorded = true;
+            changed = mTrackHeaders[track][key].scoreRecorded = true;
         }
     }
     if (save && (changed || !mTrackHeaderSaved[track]))
@@ -516,7 +521,8 @@ void GhostController::AddGhostRecord(int track, GhostRecord* record, bool loaded
 
 void GhostController::AddLoadedGhostRecord(int track, void* data, unsigned int length)
 {
-    ByteArrayInputStream input(arrayWithLength<unsigned char>(static_cast<unsigned char*>(data), length));
+    arrayWithLength<unsigned char> buffer(static_cast<unsigned char*>(data), length);
+    ByteArrayInputStream input(buffer);
     DataInputStream stream(&input);
     if (stream.readUnsignedShort() == GHOST_RECORD_VERSION)
     {
@@ -525,8 +531,8 @@ void GhostController::AddLoadedGhostRecord(int track, void* data, unsigned int l
         const float startZ = stream.readFloat();
         GhostRecord* record = new GhostRecord(Vec3::newTemp(startX, startY, startZ));
         record->mElapsed = stream.readLong();
-        const unsigned int count = stream.readInt();
-        for (unsigned int i = 0; i < count; ++i)
+        int count = stream.readInt();
+        for (int i = 0; i < count; ++i)
             record->AddSample(GhostRecordSample(&stream));
         if (record->HasRecording())
         {
@@ -580,9 +586,8 @@ unsigned int GhostController::SaveGhostHeaderOp(int track)
     ByteArrayOutputStream byteStream;
     DataOutputStream stream(&byteStream);
     stream.writeUnsignedShort(GHOST_HEADER_VERSION);
-    const boost::unordered_map<int, TrackHeader>& headers = mTrackHeaders[track];
-    stream.writeUnsignedShort((unsigned short)headers.size());
-    for (boost::unordered_map<int, TrackHeader>::const_iterator it = headers.begin(); it != headers.end(); ++it)
+    stream.writeUnsignedShort((unsigned short)mTrackHeaders[track].size());
+    for (boost::unordered_map<int, TrackHeader>::const_iterator it = mTrackHeaders[track].begin(); it != mTrackHeaders[track].end(); ++it)
     {
         stream.writeUnsignedShort((unsigned short)it->first);
         stream.writeInt((int)it->second.time);
@@ -630,45 +635,49 @@ unsigned int GhostController::SaveGhostRecordOp(int track, GhostRecord* record)
 
 void GhostController::ProcessLoadSaveQueue()
 {
-    EnterCriticalSection(&mQueueLock);
+    OSFastMutex* lock = &mQueueLock;
+    EnterCriticalSection(lock);
     if (mCurrentOperation == NO_OPERATION && !mQueue.empty())
     {
         const GhostLoadSaveOperation operation = mQueue.front();
         mQueue.pop_front();
-        unsigned int started = 0;
         switch (operation.type)
         {
         case GhostLoadSaveOperation::LOAD_HEADER:
             mCurrentOperation = operation.type;
-            started = LoadGhostHeaderOp(operation.track);
+            if (LoadGhostHeaderOp(operation.track) == 0)
+                mCurrentOperation = NO_OPERATION;
             break;
         case GhostLoadSaveOperation::LOAD_RECORD:
             mCurrentOperation = operation.type;
             if ((mTimed && GetTrackHeader(operation.track, mGameMode).timeRecorded) ||
                 (!mTimed && GetTrackHeader(operation.track, mGameMode).scoreRecorded))
             {
-                started = LoadGhostRecordOp(operation.track);
+                if (LoadGhostRecordOp(operation.track) == 0)
+                    mCurrentOperation = NO_OPERATION;
             }
             else
             {
                 mPlaybackActive[operation.track] = false;
+                mCurrentOperation = NO_OPERATION;
             }
             break;
         case GhostLoadSaveOperation::SAVE_HEADER:
             mCurrentOperation = operation.type;
-            started = SaveGhostHeaderOp(operation.track);
+            if (SaveGhostHeaderOp(operation.track) == 0)
+                mCurrentOperation = NO_OPERATION;
             break;
         case GhostLoadSaveOperation::SAVE_RECORD:
             mCurrentOperation = operation.type;
-            started = SaveGhostRecordOp(operation.track, operation.record);
+            if (SaveGhostRecordOp(operation.track, operation.record) == 0)
+                mCurrentOperation = NO_OPERATION;
             break;
         default:
+            mCurrentOperation = NO_OPERATION;
             break;
         }
-        if (started == 0)
-            mCurrentOperation = NO_OPERATION;
     }
-    LeaveCriticalSection(&mQueueLock);
+    LeaveCriticalSection(lock);
 }
 
 void GhostController::tick()
@@ -676,7 +685,7 @@ void GhostController::tick()
     if (mAnyRecordingActive && !gApp.IsAppPaused())
     {
         const long long now = System::processTimeInMilliSecs();
-        if (mLastSampleTime + GHOST_SAMPLE_INTERVAL_MS <= now)
+        if (now >= mLastSampleTime + GHOST_SAMPLE_INTERVAL_MS)
         {
             for (int track = 0; track < 4; ++track)
             {
@@ -704,9 +713,18 @@ bool GhostController::finaliseRecording(int track, bool scoreMode)
 {
     setRecordingActive(track, false);
     GhostRecord* recording = mRecording[track];
-    GhostRecord* loaded = NULL;
+    GhostRecord* loaded;
     bool replaced = false;
-    if (!scoreMode || recording != NULL)
+    if (scoreMode && recording == NULL)
+    {
+        if (mLoaded[track] != NULL)
+        {
+            delete mLoaded[track];
+            mLoaded[track] = NULL;
+        }
+        loaded = NULL;
+    }
+    else
     {
         loaded = mLoaded[track];
         if (loaded == NULL || (recording != NULL && recording->mElapsed < loaded->mElapsed) || scoreMode)
@@ -724,14 +742,6 @@ bool GhostController::finaliseRecording(int track, bool scoreMode)
                 mRecording[track] = NULL;
                 return true;
             }
-        }
-    }
-    else
-    {
-        if (mLoaded[track] != NULL)
-        {
-            delete mLoaded[track];
-            mLoaded[track] = NULL;
         }
     }
     if (!mTrackHeaderSaved[track])
@@ -815,7 +825,7 @@ int GhostController::RecordScore(int track, int key, unsigned short score, unsig
     }
     else
     {
-        if (mTrackHeaders[track][key].score < score && score != 0)
+        if (score > mTrackHeaders[track][key].score && score != 0)
         {
             changed = 1;
             mTrackHeaders[track][key].score = score;
@@ -826,7 +836,7 @@ int GhostController::RecordScore(int track, int key, unsigned short score, unsig
             if (score == mTrackHeaders[track][key].score && score != 0)
             {
                 GhostRecord* loaded = mLoaded[track];
-                if (loaded == NULL || loaded->mElapsed > (long long)time)
+                if (loaded == NULL || (long long)time < loaded->mElapsed)
                 {
                     bool recorded = finaliseRecording(track, true);
                     changed = recorded;
@@ -846,3 +856,4 @@ int GhostController::RecordScore(int track, int key, unsigned short score, unsig
     mRecordingPending[track] = false;
     return changed;
 }
+

@@ -8,7 +8,7 @@
 class ServerPlayer;
 class Voteable;
 
-class Voteables : public boost::unordered_map<int, Voteable*>
+class Voteables
 {
 public:
     enum EVoteableId
@@ -26,6 +26,9 @@ public:
     void addVoteable(Voteable* voteable);
     void syncAllVoteablesToPlayer(boost::shared_ptr<ServerPlayer> player);
     void removeVoteable(int voteableId);
+
+private:
+    boost::unordered_map<int, Voteable*> mVoteables;
 };
 
 #endif

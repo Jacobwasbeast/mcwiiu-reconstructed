@@ -76,7 +76,10 @@ Wolf::Wolf(Level* level)
     mShakeAnimO = 0.0f;
     setSize(0.6f, 0.85f);
 }
-void Wolf::create(Level* level) { new Wolf(level); }
+Entity* Wolf::create(Level* level)
+{
+    return new Wolf(level);
+}
 void Wolf::staticCtor()
 {
     DATA_HEALTH_ID = SynchedEntityData::defineId<float>(EntityType::WOLF,
@@ -153,7 +156,11 @@ void Wolf::defineSynchedData()
 }
 void Wolf::playStepSound(const BlockPos&, Block*) { playSound(SoundEvents::WOLF_STEP, 0.15f, 1.0f); }
 bool Wolf::isAngry() { return (mEntityData->get(DATA_FLAGS) & WOLF_ANGRY_FLAG) != 0; }
-const DyeColor* Wolf::getCollarColor() { return DyeColor::byItemData(mEntityData->get(DATA_COLLAR_COLOR) & WOLF_COLLAR_COLOR_MASK); }
+const DyeColor* Wolf::getCollarColor()
+{
+    const DyeColor* color = DyeColor::byItemData(mEntityData->get(DATA_COLLAR_COLOR) & WOLF_COLLAR_COLOR_MASK);
+    return color;
+}
 void Wolf::addAdditonalSaveData(CompoundTag* tag)
 {
     TamableAnimal::addAdditonalSaveData(tag);
@@ -264,7 +271,7 @@ void Wolf::tick()
 
     PIXEndNamedEvent();
 }
-double Wolf::getBodyRollAngle(float partialTick, float bodyRotation)
+float Wolf::getBodyRollAngle(float partialTick, float bodyRotation)
 {
     float shake = (mShakeAnimO + (mShakeAnim - mShakeAnimO) * partialTick + bodyRotation) / 1.8f;
     if (shake < 0.0f)
@@ -277,9 +284,9 @@ double Wolf::getBodyRollAngle(float partialTick, float bodyRotation)
     }
     return Mth::sin(shake * WOLF_PI) * Mth::sin(shake * WOLF_PI * 11.0f) * 0.15f * WOLF_PI;
 }
-double Wolf::getHeadRollAngle(float partialTick)
+float Wolf::getHeadRollAngle(float partialTick)
 {
-    return static_cast<double>(((mInterestedAngle - mInterestedAngleO) * partialTick + mInterestedAngleO) * 0.15f * WOLF_PI);
+    return ((mInterestedAngle - mInterestedAngleO) * partialTick + mInterestedAngleO) * 0.15f * WOLF_PI;
 }
 float Wolf::getEyeHeight() { return static_cast<double>(mBbHeight * 0.8f); }
 int Wolf::getMaxHeadXRot() { return isSitting() ? 20 : Mob::getMaxHeadXRot(); }
@@ -288,10 +295,15 @@ bool Wolf::hurt(const DamageSource* source, float damage)
     if (isTame())
     {
         boost::shared_ptr<Entity> direct = source->getDirectEntity();
-        if (direct && (direct->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (direct)
         {
-            if (!boost::static_pointer_cast<Player>(direct)->canHarmPlayer(getOwnerUUID()))
-                return false;
+            bool isPlayer = (direct->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+            if (isPlayer)
+            {
+                boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(direct);
+                if (!player->canHarmPlayer(getOwnerUUID()))
+                    return false;
+            }
         }
     }
 
@@ -301,9 +313,16 @@ bool Wolf::hurt(const DamageSource* source, float damage)
     boost::shared_ptr<Entity> attacker = source->getEntity();
     if (mSitGoal != NULL)
         mSitGoal->wantToSit(false);
-    if (attacker && (attacker->GetType() & EntityType::PLAYER) != EntityType::PLAYER
-        && (attacker->GetType() & EntityType::ARROW) != EntityType::ARROW)
-        damage = (damage + 1.0f) * 0.5f;
+    if (attacker)
+    {
+        bool isPlayer = (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+        if (!isPlayer)
+        {
+            bool isArrow = (attacker->GetType() & EntityType::ARROW) == EntityType::ARROW;
+            if (!isArrow)
+                damage = (damage + 1.0f) * 0.5f;
+        }
+    }
     return Animal::hurt(source, damage);
 }
 bool Wolf::doHurtTarget(boost::shared_ptr<Entity> target)
@@ -437,7 +456,7 @@ void Wolf::handleEntityEvent(unsigned char event, int data)
     }
     TamableAnimal::handleEntityEvent(event, data);
 }
-double Wolf::getTailAngle()
+float Wolf::getTailAngle()
 {
     if (isAngry())
     {
@@ -453,14 +472,18 @@ double Wolf::getTailAngle()
 }
 bool Wolf::isFood(const not_null_ptr<ItemInstance>& item)
 {
-    if (dynamic_cast<FoodItem*>(item->getItem()) != NULL)
+    if (dynamic_cast<FoodItem*>(item->getItem()) == NULL)
     {
-        return dynamic_cast<FoodItem*>(item->getItem())->isMeat();
+        return false;
     }
 
-    return false;
+    return dynamic_cast<FoodItem*>(item->getItem())->isMeat();
 }
-int Wolf::GetSynchedHealth() { return static_cast<int>(getEntityData()->get(DATA_HEALTH_ID)); }
+int Wolf::GetSynchedHealth()
+{
+    int health = static_cast<int>(getEntityData()->get(DATA_HEALTH_ID));
+    return health;
+}
 unsigned int Wolf::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
     if (isLeashedToPlayer(tooltipData.m_pPlayer))
@@ -469,46 +492,60 @@ unsigned int Wolf::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData
     bool baby;
     switch (Item::getId(tooltipData.m_pItemInstance->getItem()))
     {
+    default:
+        baby = isBaby();
+        break;
+    case ItemId::SPAWN_EGG:
+    {
+        if (SpawnEggItem::fjGetType(tooltipData.m_pItemInstance) == EntityType::WOLF)
+            return IDS_TOOLTIPS_PLACE;
+        if (isOwnedBy(tooltipData.m_pPlayer) && !isInWater())
+            return isSitting() ? IDS_TOOLTIPS_FOLLOWME : IDS_TOOLTIPS_SIT;
+        return IDS_NONE;
+    }
+    case ItemId::NAME_TAG:
+    {
+        if (isPassenger())
+            return IDS_NONE;
+        if (tooltipData.m_pItemInstance->hasCustomHoverName())
+        {
+            if (!hasCustomName() || tooltipData.m_pItemInstance->getHoverName().compare(getCustomName()) != 0)
+                return IDS_TOOLTIPS_NAME;
+        }
+        if (isOwnedBy(tooltipData.m_pPlayer) && !isInWater())
+            return isSitting() ? IDS_TOOLTIPS_FOLLOWME : IDS_TOOLTIPS_SIT;
+        return IDS_NONE;
+    }
+    case ItemId::LEAD:
+    {
+        if (!isLeashed() && isOwnedBy(tooltipData.m_pPlayer))
+            return IDS_TOOLTIPS_LEASH;
+        return IDS_NONE;
+    }
+    case ItemId::BONE:
+    {
+        if (!isAngry() && !isTame())
+            return getPassengers()->empty() ? IDS_TOOLTIPS_TAME : IDS_NONE;
+        if (!isPassenger() && isOwnedBy(tooltipData.m_pPlayer) && !isInWater())
+            return isSitting() ? IDS_TOOLTIPS_FOLLOWME : IDS_TOOLTIPS_SIT;
+        return IDS_NONE;
+    }
+    case ItemId::ENDER_PEARL:
+    {
+        if (isOwnedBy(tooltipData.m_pPlayer) && !isInWater())
+            return isSitting() ? IDS_TOOLTIPS_FOLLOWME : IDS_TOOLTIPS_SIT;
+        return IDS_NONE;
+    }
     case ItemId::DYE:
+    {
         if (!isTame())
             return IDS_NONE;
         if (DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue()) != getCollarColor())
             return IDS_TOOLTIPS_DYECOLLAR;
-        if (!isOwnedBy(tooltipData.m_pPlayer) || isInWater())
-            return IDS_NONE;
-        return isSitting() ? IDS_TOOLTIPS_FOLLOWME : IDS_TOOLTIPS_SIT;
-    case ItemId::BONE:
-        if (!isAngry() && !isTame())
-            return getPassengers()->empty() ? IDS_TOOLTIPS_TAME : IDS_NONE;
-        if (isPassenger() || !isOwnedBy(tooltipData.m_pPlayer) || isInWater())
-            return IDS_NONE;
-        return isSitting() ? IDS_TOOLTIPS_FOLLOWME : IDS_TOOLTIPS_SIT;
-    case ItemId::ENDER_PEARL:
-        if (!isOwnedBy(tooltipData.m_pPlayer) || isInWater())
-            return IDS_NONE;
-        return isSitting() ? IDS_TOOLTIPS_FOLLOWME : IDS_TOOLTIPS_SIT;
-    case ItemId::SPAWN_EGG:
-        if (SpawnEggItem::fjGetType(tooltipData.m_pItemInstance) == EntityType::WOLF)
-            return IDS_TOOLTIPS_PLACE;
-        if (!isOwnedBy(tooltipData.m_pPlayer) || isInWater())
-            return IDS_NONE;
-        return isSitting() ? IDS_TOOLTIPS_FOLLOWME : IDS_TOOLTIPS_SIT;
-    case ItemId::LEAD:
-        if (isLeashed() || !isOwnedBy(tooltipData.m_pPlayer))
-            return IDS_NONE;
-        return IDS_TOOLTIPS_LEASH;
-    case ItemId::NAME_TAG:
-        if (isPassenger())
-            return IDS_NONE;
-        if (tooltipData.m_pItemInstance->hasCustomHoverName()
-            && (!hasCustomName() || tooltipData.m_pItemInstance->getHoverName().compare(getCustomName()) != 0))
-            return IDS_TOOLTIPS_NAME;
-        if (!isOwnedBy(tooltipData.m_pPlayer) || isInWater())
-            return IDS_NONE;
-        return isSitting() ? IDS_TOOLTIPS_FOLLOWME : IDS_TOOLTIPS_SIT;
-    default:
-        baby = isBaby();
-        break;
+        if (isOwnedBy(tooltipData.m_pPlayer) && !isInWater())
+            return isSitting() ? IDS_TOOLTIPS_FOLLOWME : IDS_TOOLTIPS_SIT;
+        return IDS_NONE;
+    }
     }
 
     if (baby && isFood(tooltipData.m_pItemInstance))
@@ -542,7 +579,7 @@ boost::shared_ptr<AgableMob> Wolf::getBreedOffspring(boost::shared_ptr<AgableMob
     }
     return offspring;
 }
-bool Wolf::setIsInterested(bool interested) { mEntityData->set(DATA_INTERESTED, interested, true); return interested; }
+void Wolf::setIsInterested(bool interested) { mEntityData->set(DATA_INTERESTED, interested, true); }
 bool Wolf::canMate(const boost::shared_ptr<Animal>& other)
 {
     if (other == shared_from_this())
@@ -600,18 +637,20 @@ int Wolf::getMaxSpawnClusterSize()
 
 Wolf::WolfAvoidEntityGoal::WolfAvoidEntityGoal(Wolf* wolf, const std::type_info& avoidType, float maxDistance, double walkSpeed, double sprintSpeed)
     : AvoidEntityGoal(wolf, avoidType, maxDistance, walkSpeed, sprintSpeed), mWolf(wolf) {}
-Wolf::WolfAvoidEntityGoal::~WolfAvoidEntityGoal() {}
 bool Wolf::WolfAvoidEntityGoal::avoidLlama(const boost::shared_ptr<Llama>& llama)
 {
     return llama->getStrength() >= mWolf->mRandom->nextInt(5);
 }
 bool Wolf::WolfAvoidEntityGoal::canUse()
 {
-    if (!AvoidEntityGoal::canUse())
-        return false;
-    boost::shared_ptr<Entity> target = mToAvoid.lock();
-    return target->GetType() == EntityType::LLAMA && !mWolf->isTame()
-        && avoidLlama(boost::static_pointer_cast<Llama>(target));
+    if (AvoidEntityGoal::canUse())
+    {
+        boost::shared_ptr<Entity> target = mToAvoid.lock();
+        bool isLlama = target->GetType() == EntityType::LLAMA;
+        if (isLlama)
+            return !mWolf->isTame() && avoidLlama(boost::static_pointer_cast<Llama>(target));
+    }
+    return false;
 }
 void Wolf::WolfAvoidEntityGoal::start()
 {

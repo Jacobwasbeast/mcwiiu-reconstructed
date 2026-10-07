@@ -16,7 +16,7 @@ class Stray : public AbstractSkeleton
 public:
     Stray(Level* level);
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual bool checkSpawnRules();
     virtual void registerGoals();

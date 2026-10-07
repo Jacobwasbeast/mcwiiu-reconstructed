@@ -12,7 +12,7 @@ class Giant : public Monster
 public:
     Giant(Level* level);
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual float getEyeHeight();
     virtual void registerAttributes();

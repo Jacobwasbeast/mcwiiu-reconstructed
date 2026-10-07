@@ -7,15 +7,15 @@
 
 EditBox::EditBox(Screen* screen, Font* font, int x, int y, int width, int height,
                  const std::wstring& value)
+    : mMaxLength(0)
+    , mTickCount(0)
 {
     mX = x;
     mFont = font;
-    mTickCount = 0;
+    mScreen = screen;
     mY = y;
     mWidth = width;
     mHeight = height;
-    mScreen = screen;
-    mMaxLength = 0;
     setValue(value);
 }
 
@@ -75,8 +75,8 @@ void EditBox::focus(bool focused)
 
 void EditBox::mouseClicked(int x, int y, int button)
 {
-    bool focused = mActive && mX <= x && x < mX + mWidth
-        && mY <= y && y < mY + mHeight;
+    bool focused = mActive && x >= mX && x < mX + mWidth
+        && y >= mY && y < mY + mHeight;
     focus(focused);
 }
 

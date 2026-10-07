@@ -15,9 +15,9 @@ Giant::Giant(Level* level)
     setSize(mBbWidth * 6.0f, mBbHeight * 6.0f);
 }
 
-void Giant::create(Level* level)
+Entity* Giant::create(Level* level)
 {
-    new Giant(level);
+    return new Giant(level);
 }
 
 void Giant::addDataWalkers(DataFixerUpper* fixer)

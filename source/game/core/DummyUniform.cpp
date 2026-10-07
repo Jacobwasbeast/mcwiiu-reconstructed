@@ -1,10 +1,5 @@
 #include "game/core/DummyUniform.hpp"
 
-DummyUniform::~DummyUniform()
-{
-    return;
-}
-
 void DummyUniform::set(float x)
 {
     return;

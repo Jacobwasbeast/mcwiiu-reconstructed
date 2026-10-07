@@ -35,9 +35,9 @@ Squid::Squid(Level* level) : WaterAnimal(level)
     mTentacleSpeed = 1.0f / (mRandom->nextFloat() + 1.0f) * 0.2f;
 }
 
-void Squid::create(Level* level)
+Entity* Squid::create(Level* level)
 {
-    new Squid(level);
+    return new Squid(level);
 }
 
 void Squid::addDataWalkers(DataFixerUpper* fixer)
@@ -333,7 +333,3 @@ void Squid::SquidRandomMovementGoal::tick()
     }
 }
 
-std::wstring Squid::SquidRandomMovementGoal::getName()
-{
-    return std::wstring(L"SquidRandomMovement");
-}

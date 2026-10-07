@@ -72,11 +72,11 @@ Boat::Boat(Level* level, double x, double y, double z) : Entity(level, true)
     const double clampedZ = Mth::clamp(z, bounds->mMinZ, bounds->mMaxZ);
     setPos(clampedX, y, clampedZ);
     mXo = clampedX;
-    mYo = y;
     mZo = clampedZ;
-    mXd = 0.0;
+    mYo = y;
     mYd = 0.0;
     mZd = 0.0;
+    mXd = 0.0;
 }
 
 void Boat::staticCtor()
@@ -182,6 +182,10 @@ Item* Boat::getDropItem()
 {
     switch (getType())
     {
+    case OAK:
+        return Items::boat;
+    default:
+        return Items::boat;
     case SPRUCE:
         return Items::spruceBoat;
     case BIRCH:
@@ -192,9 +196,6 @@ Item* Boat::getDropItem()
         return Items::acaciaBoat;
     case DARK_OAK:
         return Items::darkOakBoat;
-    case OAK:
-    default:
-        return Items::boat;
     }
 }
 
@@ -483,8 +484,8 @@ void Boat::tickLerp()
         const double x = mX + (mLerpX - mX) / mLerpSteps;
         const double y = mY + (mLerpY - mY) / mLerpSteps;
         const double z = mZ + (mLerpZ - mZ) / mLerpSteps;
-        const float steps = static_cast<float>(mLerpSteps);
         const double yRotDelta = Mth::wrapDegrees(mLerpYRot - mYRot);
+        const float steps = static_cast<float>(mLerpSteps);
         --mLerpSteps;
         mYRot += static_cast<float>(yRotDelta) / steps;
         mXRot += static_cast<float>(mLerpXRot - mXRot) / steps;
@@ -647,8 +648,8 @@ void Boat::controlBoat()
     if (mInputDown)
         acceleration -= 0.005f;
 
-    mXd += Mth::sin(-mYRot * 0.017453292f) * acceleration;
-    mZd += Mth::cos(mYRot * 0.017453292f) * acceleration;
+    mXd += Mth::sin(-mYRot * Mth::DEG_TO_RAD) * acceleration;
+    mZd += Mth::cos(mYRot * Mth::DEG_TO_RAD) * acceleration;
     setPaddleState((mInputRight && !mInputLeft) || mInputUp, (mInputLeft && !mInputRight) || mInputUp);
 }
 
@@ -823,10 +824,10 @@ void Boat::tick()
 
 float Boat::getRowingTime(int paddle, float partialTicks)
 {
-    if (!getPaddleState(paddle))
-        return 0.0f;
-    return static_cast<float>(Mth::clampedLerp(mPaddlePositions[paddle] - 3.1415927f / 8.0f,
-                                               mPaddlePositions[paddle], partialTicks));
+    if (getPaddleState(paddle))
+        return static_cast<float>(Mth::clampedLerp(mPaddlePositions[paddle] - 3.1415927f / 8.0f,
+                                                   mPaddlePositions[paddle], partialTicks));
+    return 0.0f;
 }
 
 void Boat::clampRotation(boost::shared_ptr<Entity> passenger)
@@ -851,7 +852,8 @@ void Boat::positionRider(const boost::shared_ptr<Entity>& passenger)
             offset = -0.6f;
         else
             offset = 0.2f;
-        if ((passenger->GetType() & EntityType::ANIMAL) == EntityType::ANIMAL)
+        const bool isAnimal = (passenger->GetType() & EntityType::ANIMAL) == EntityType::ANIMAL;
+        if (isAnimal)
             offset += 0.2f;
     }
 
@@ -861,7 +863,8 @@ void Boat::positionRider(const boost::shared_ptr<Entity>& passenger)
     passenger->setYHeadRot(passenger->getYHeadRot() + mDeltaRotation);
     clampRotation(passenger);
 
-    if ((passenger->GetType() & EntityType::ANIMAL) == EntityType::ANIMAL && getPassengers()->size() > 1)
+    const bool isAnimalPassenger = (passenger->GetType() & EntityType::ANIMAL) == EntityType::ANIMAL;
+    if (isAnimalPassenger && getPassengers()->size() > 1)
     {
         const int facing = (passenger->getId() & 1) == 0 ? 90 : 270;
         passenger->setYBodyRot(boost::static_pointer_cast<Animal>(passenger)->mYBodyRot + facing);
@@ -939,13 +942,13 @@ bool Boat::interact(const boost::shared_ptr<Player>& player, InteractionHand::EI
     if (player->isSneaking())
         return false;
 
-    if (!mLevel->mIsClientSide)
-    {
-        if (mOutOfControlTicks < 60 && !getIsSinking())
-            player->startRiding(shared_from_this());
+    if (!mLevel->mIsClientSide && mOutOfControlTicks < 60 && !getIsSinking())
+        player->startRiding(shared_from_this());
 
-        if (isLeashedToPlayer(player))
-            dropLeash(true, !player->mAbilities.mInstabuild);
+    if (!mLevel->mIsClientSide && isLeashedToPlayer(player))
+    {
+        dropLeash(true, !player->mAbilities.mInstabuild);
+        return true;
     }
 
     return true;
@@ -1114,7 +1117,7 @@ unsigned long long Boat::GetType()
     return EntityType::BOAT;
 }
 
-void Boat::create(Level* level)
+Entity* Boat::create(Level* level)
 {
-    new Boat(level);
+    return new Boat(level);
 }

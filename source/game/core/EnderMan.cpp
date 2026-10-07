@@ -108,26 +108,26 @@ void EnderMan::setTarget(boost::shared_ptr<LivingEntity> target)
 {
     Mob::setTarget(target);
     AttributeInstance* speed = getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED);
-    if (target)
+    if (!target)
+    {
+        mTargetChangeTime = 0;
+        mEntityData->set(DATA_CREEPY, false, true);
+        speed->removeModifier(SPEED_MODIFIER_ATTACKING);
+    }
+    else
     {
         mTargetChangeTime = mTickCount;
         mEntityData->set(DATA_CREEPY, true, true);
         if (!speed->hasModifier(SPEED_MODIFIER_ATTACKING))
             speed->addModifier(new AttributeModifier(*SPEED_MODIFIER_ATTACKING));
     }
-    else
-    {
-        mTargetChangeTime = 0;
-        mEntityData->set(DATA_CREEPY, false, true);
-        speed->removeModifier(SPEED_MODIFIER_ATTACKING);
-    }
 }
 
 void EnderMan::defineSynchedData()
 {
     Mob::defineSynchedData();
-    mEntityData->createDateItem(DATA_CARRIED_BLOCK, (const BlockState*)NULL);
-    mEntityData->createDateItem(DATA_CREEPY, false);
+    mEntityData->createDateItem<const BlockState*>(DATA_CARRIED_BLOCK, NULL);
+    mEntityData->createDateItem<bool>(DATA_CREEPY, false);
 }
 
 void EnderMan::playCreepySound()
@@ -184,12 +184,11 @@ void EnderMan::setCarryingBlock(const BlockState* state)
 void EnderMan::readAdditionalSaveData(CompoundTag* tag)
 {
     Mob::readAdditionalSaveData(tag);
-    bool hasStringId = tag->contains(L"carried", Tag::TAG_STRING);
     const BlockState* state;
-    if (!hasStringId)
-        state = Block::byId(tag->getShort(L"carried"))->getBlockState(tag->getShort(L"carriedData") & 0xffff);
-    else
+    if (tag->contains(L"carried", Tag::TAG_STRING))
         state = Block::byString(tag->getString(L"carried"))->getBlockState(tag->getShort(L"carriedData") & 0xffff);
+    else
+        state = Block::byId(tag->getShort(L"carried"))->getBlockState(tag->getShort(L"carriedData") & 0xffff);
     if (state == NULL || state->getBlock() == NULL || state->getMaterial() == Material::AIR)
         state = NULL;
     setCarryingBlock(state);
@@ -202,12 +201,14 @@ bool EnderMan::isLookingAtMe(boost::shared_ptr<Player> player)
         return false;
 
     Vec3* view = player->getViewVector(1.0f)->normalize();
-    Vec3* toEnderMan = Vec3::newTemp(mX - player->mX,
+    Vec3* delta = Vec3::newTemp(mX - player->mX,
                                      mBoundingBox->mMinY + getEyeHeight() - (player->mY + player->getEyeHeight()),
                                      mZ - player->mZ);
-    const double distance = toEnderMan->length();
-    toEnderMan = toEnderMan->normalize();
-    return view->dot(toEnderMan) > 1.0 - 0.025 / distance && player->canSee(shared_from_this());
+    const double distance = delta->length();
+    Vec3* toEnderMan = delta->normalize();
+    if (view->dot(toEnderMan) > 1.0 - 0.025 / distance)
+        return player->canSee(shared_from_this());
+    return false;
 }
 
 float EnderMan::getEyeHeight()
@@ -295,11 +296,10 @@ void EnderMan::dropEquipment(bool wasRecentlyHit, int lootingModifier)
     const BlockState* state = getCarryingBlock();
     if (state != NULL)
     {
-        Block* block = state->getBlock();
-        Item* item = Item::byBlock(block);
+        Item* item = Item::byBlock(state->getBlock());
         ItemInstance* stack;
         if (item->isStackedByData())
-            stack = new ItemInstance(item, 1, block->convertBlockStateToLegacyData(state));
+            stack = new ItemInstance(item, 1, state->getBlock()->convertBlockStateToLegacyData(state));
         else
             stack = new ItemInstance(item, 1, 0);
         spawnAtLocation(not_null_ptr<ItemInstance>(stack), 0.0f);
@@ -328,38 +328,36 @@ bool EnderMan::hurt(const DamageSource* source, float damage)
     return hurt;
 }
 
-void EnderMan::create(Level* level) { new EnderMan(level); }
+Entity* EnderMan::create(Level* level)
+{
+    return new EnderMan(level);
+}
 unsigned long long EnderMan::GetType() { return EntityType::ENDER_MAN; }
 
 EnderMan::EndermanLeaveBlockGoal::EndermanLeaveBlockGoal(EnderMan* enderMan) : mEnderMan(enderMan) { }
 EnderMan::EndermanLeaveBlockGoal::~EndermanLeaveBlockGoal() { }
 bool EnderMan::EndermanLeaveBlockGoal::canUse()
 {
-    if (mEnderMan->getCarryingBlock() != NULL)
-    {
-        if (mEnderMan->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
-        {
-            if (mEnderMan->getRandom()->nextInt(2000) == 0)
-                return true;
-        }
-    }
-    return false;
+    if (mEnderMan->getCarryingBlock() == NULL)
+        return false;
+    if (!mEnderMan->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
+        return false;
+    if (mEnderMan->getRandom()->nextInt(2000) != 0)
+        return false;
+    return true;
 }
 bool EnderMan::EndermanLeaveBlockGoal::canPlaceBlock(Level* level, const BlockPos& pos, Block* block,
                                                      const BlockState* oldState, const BlockState* newState)
 {
-    if (block->mayPlace(level, pos))
-    {
-        if (oldState->getMaterial() == Material::AIR)
-        {
-            if (newState->getMaterial() != Material::AIR)
-            {
-                if (newState->isCubeShaped())
-                    return true;
-            }
-        }
-    }
-    return false;
+    if (!block->mayPlace(level, pos))
+        return false;
+    if (oldState->getMaterial() != Material::AIR)
+        return false;
+    if (newState->getMaterial() == Material::AIR)
+        return false;
+    if (!newState->isCubeShaped())
+        return false;
+    return true;
 }
 
 void EnderMan::EndermanLeaveBlockGoal::tick()
@@ -380,24 +378,21 @@ void EnderMan::EndermanLeaveBlockGoal::tick()
         mEnderMan->setCarryingBlock(NULL);
     }
 }
-std::wstring EnderMan::EndermanLeaveBlockGoal::getName() { return L"EndermanLeaveBlock"; }
+std::wstring EnderMan::EndermanLeaveBlockGoal::getName() { return std::wstring(L"EndermanLeaveBlock"); }
 
 EnderMan::EndermanLookForPlayerGoal::EndermanLookForPlayerGoal(EnderMan* enderMan)
     : NearestAttackableTargetGoal(enderMan, typeid(Player), true, false, false), mEnderMan(enderMan)
 {
 }
 
-EnderMan::EndermanLookForPlayerGoal::~EndermanLookForPlayerGoal()
-{
-}
-
 bool EnderMan::EndermanLookForPlayerGoal::canUse()
 {
+    EnderMan* enderMan = mEnderMan;
     const double range = getFollowDistance();
     IsLookingAtMePredicate predicate;
-    predicate.mEnderMan = mEnderMan;
-    mPendingTarget = boost::static_pointer_cast<Player>(mEnderMan->mLevel->getNearestAttackablePlayer(
-        mEnderMan->mX, mEnderMan->mY, mEnderMan->mZ, range, range, NULL, &predicate));
+    predicate.mEnderMan = enderMan;
+    mPendingTarget = boost::static_pointer_cast<Player>(enderMan->mLevel->getNearestAttackablePlayer(
+        enderMan->mX, enderMan->mY, enderMan->mZ, range, range, NULL, &predicate));
     return mPendingTarget.get() != NULL;
 }
 
@@ -415,12 +410,14 @@ void EnderMan::EndermanLookForPlayerGoal::stop()
 
 bool EnderMan::EndermanLookForPlayerGoal::canContinueToUse()
 {
-    if (mPendingTarget == NULL)
-        return NearestAttackableTargetGoal::canContinueToUse();
-    if (!mEnderMan->isLookingAtMe(mPendingTarget))
-        return false;
-    mEnderMan->lookAt(boost::shared_ptr<Entity>(mPendingTarget), 10.0f, 10.0f);
-    return true;
+    if (mPendingTarget != NULL)
+    {
+        if (!mEnderMan->isLookingAtMe(mPendingTarget))
+            return false;
+        mEnderMan->lookAt(boost::shared_ptr<Entity>(mPendingTarget), 10.0f, 10.0f);
+        return true;
+    }
+    return NearestAttackableTargetGoal::canContinueToUse();
 }
 
 void EnderMan::EndermanLookForPlayerGoal::tick()
@@ -462,15 +459,13 @@ EnderMan::EndermanTakeBlockGoal::EndermanTakeBlockGoal(EnderMan* enderMan) : mEn
 EnderMan::EndermanTakeBlockGoal::~EndermanTakeBlockGoal() { }
 bool EnderMan::EndermanTakeBlockGoal::canUse()
 {
-    if (mEnderMan->getCarryingBlock() == NULL)
-    {
-        if (mEnderMan->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
-        {
-            if (mEnderMan->getRandom()->nextInt(20) == 0)
-                return true;
-        }
-    }
-    return false;
+    if (mEnderMan->getCarryingBlock() != NULL)
+        return false;
+    if (!mEnderMan->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
+        return false;
+    if (mEnderMan->getRandom()->nextInt(20) != 0)
+        return false;
+    return true;
 }
 void EnderMan::EndermanTakeBlockGoal::tick()
 {

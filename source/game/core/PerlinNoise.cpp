@@ -14,10 +14,7 @@ PerlinNoise::PerlinNoise(Random* random, int levels)
 }
 PerlinNoise::~PerlinNoise()
 {
-    if (levels > 0)
-    {
-        for (int i = 0; i < levels; ++i) delete noiseLevels[i];
-    }
+    for (int i = 0; i < levels; ++i) delete noiseLevels[i];
     delete[] noiseLevels;
 }
 void PerlinNoise::init(Random* random, int levels)

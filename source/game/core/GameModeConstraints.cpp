@@ -25,23 +25,26 @@ void GameModeConstraints::tick()
 {
     failedConstraintChanged = false;
     for (DelayedConstraintMap::iterator entry = delayedConstraints.begin();
-         entry != delayedConstraints.end(); ++entry)
+         entry != delayedConstraints.end(); entry++)
     {
         DelayedConstraintList::iterator delayed = entry->second.begin();
         while (delayed < entry->second.end())
         {
-            if (++delayed->second < 16)
+            delayed->second++;
+            if (delayed->second > 15)
+            {
+                TutorialConstraint* constraint = delayed->first;
+                ConstraintList& stateConstraints = constraints[entry->first];
+                stateConstraints.erase(std::find(stateConstraints.begin(), stateConstraints.end(), constraint));
+                constraint->removalPending = false;
+                delayed = entry->second.erase(delayed);
+                if (constraint->deleteWhenRemoved)
+                    delete constraint;
+            }
+            else
             {
                 ++delayed;
-                continue;
             }
-            TutorialConstraint* constraint = delayed->first;
-            ConstraintList& stateConstraints = constraints[entry->first];
-            stateConstraints.erase(std::find(stateConstraints.begin(), stateConstraints.end(), constraint));
-            constraint->removalPending = false;
-            delayed = entry->second.erase(delayed);
-            if (constraint->deleteWhenRemoved)
-                delete constraint;
         }
     }
     for (ConstraintList::iterator it = globalConstraints.begin(); it < globalConstraints.end(); ++it)
@@ -126,7 +129,7 @@ void GameModeConstraints::RemoveConstraint(TutorialConstraint* constraint, bool 
     if (delayed)
     {
         constraint->removalPending = true;
-        delayedConstraints[currentState].push_back(std::make_pair(constraint, (unsigned char)0));
+        delayedConstraints[currentState].push_back(DelayedConstraintList::value_type(constraint, 0));
         return;
     }
     for (DelayedConstraintList::iterator it = delayedConstraints[currentState].begin();
@@ -155,16 +158,18 @@ void GameModeConstraints::ClearAllAreaConstraints()
         while (it < constraints[state].end())
         {
             TutorialConstraint* constraint = *it;
-            if (constraint->getType() != 1)
+            if (constraint->getType() == 1)
+            {
+                FailedConstraintMap::iterator failed = failedConstraints.find(state);
+                if (failed != failedConstraints.end() && failed->second == constraint)
+                    failedConstraints[state] = NULL;
+                delete constraint;
+                it = constraints[state].erase(it);
+            }
+            else
             {
                 ++it;
-                continue;
             }
-            FailedConstraintMap::iterator failed = failedConstraints.find(state);
-            if (failed != failedConstraints.end() && failed->second == constraint)
-                failedConstraints[state] = NULL;
-            delete constraint;
-            it = constraints[state].erase(it);
         }
     }
     if (!ownedConstraints.empty())

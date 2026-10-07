@@ -31,10 +31,6 @@ EvocationFangs::EvocationFangs(Level* level, double x, double y, double z, float
     setPos(x, y, z);
 }
 
-EvocationFangs::~EvocationFangs()
-{
-}
-
 void EvocationFangs::_init()
 {
     fjDerivedCtorCalls();
@@ -175,9 +171,9 @@ float EvocationFangs::getAnimationProgress(float partialTicks) const
     return progress;
 }
 
-void EvocationFangs::create(Level* level)
+Entity* EvocationFangs::create(Level* level)
 {
-    new EvocationFangs(level);
+    return new EvocationFangs(level);
 }
 
 unsigned long long EvocationFangs::GetType()

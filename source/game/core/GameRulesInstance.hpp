@@ -18,8 +18,6 @@ public:
         : GameRule(definition, connection)
     {
     }
-
-    virtual ~GameRulesInstance();
 };
 
 #endif

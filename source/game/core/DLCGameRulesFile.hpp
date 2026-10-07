@@ -9,7 +9,6 @@ class DLCGameRulesFile : public DLCGameRules
 {
 public:
     DLCGameRulesFile(const std::wstring& path);
-    virtual ~DLCGameRulesFile();
 
     virtual void addData(unsigned char* pData, unsigned int size);
     virtual unsigned char* getData(unsigned int& size);

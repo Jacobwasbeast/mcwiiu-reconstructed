@@ -18,8 +18,7 @@ public:
 
     void reset()
     {
-        mBuffer.data = NULL;
-        mBuffer.length = 0;
+        mBuffer = arrayWithLength<unsigned char>();
         mCount = 0;
         mMark = 0;
         mPosition = 0;

@@ -16,7 +16,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-static Painting::Motive* paintingMotives[30] = {
+Painting::Motive* paintingMotives[30] = {
     new Painting::Motive(L"Kebab", 16, 16, 0, 0),
     new Painting::Motive(L"Aztec", 16, 16, 16, 0),
     new Painting::Motive(L"Alban", 16, 16, 32, 0),
@@ -87,9 +87,9 @@ Painting::Painting(Level* level, const BlockPos& pos, const Direction* direction
     setDirection(direction);
 }
 
-void Painting::create(Level* level)
+Entity* Painting::create(Level* level)
 {
-    new Painting(level);
+    return new Painting(level);
 }
 
 void Painting::_init(Level* level)

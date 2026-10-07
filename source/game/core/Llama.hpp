@@ -35,7 +35,6 @@ public:
     {
     public:
         LlamaDefendTargetGoal(Llama* llama);
-        virtual ~LlamaDefendTargetGoal();
         virtual bool canUse();
         virtual double getFollowDistance();
     };
@@ -52,13 +51,12 @@ public:
     {
     public:
         LlamaHurtByTargetGoal(Llama* llama);
-        virtual ~LlamaHurtByTargetGoal();
         virtual bool canContinueToUse();
     };
 
     Llama(Level* level);
     virtual ~Llama();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     const DyeColor* getSwag();
     virtual void containerChanged(Container* container);
     void spit(const boost::shared_ptr<LivingEntity>& target);

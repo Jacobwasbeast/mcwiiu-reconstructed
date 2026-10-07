@@ -19,7 +19,7 @@ public:
     virtual void tick();
     virtual bool onHit(const HitResult* result);
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     void PlayTeleportSound();
     static void addDataWalkers(DataFixerUpper* fixer);
     void _init();

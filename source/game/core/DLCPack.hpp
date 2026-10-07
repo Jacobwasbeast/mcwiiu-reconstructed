@@ -18,7 +18,7 @@ public:
     ~DLCPack();
 
     DLCFile* getFile(DLCManager::EDLCType type, unsigned int index, bool searchParent, bool searchChildren);
-    int getDLCItemsCount(DLCManager::EDLCType type);
+    unsigned int getDLCItemsCount(DLCManager::EDLCType type);
     DLCFile* getFile(DLCManager::EDLCType type, const std::wstring& name, bool searchParent, bool searchChildren);
     void UpdateLanguage();
     std::wstring getName();

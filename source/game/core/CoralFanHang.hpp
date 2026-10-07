@@ -17,7 +17,6 @@ class CoralFanHang : public CoralFan
 {
 public:
     CoralFanHang();
-    virtual ~CoralFanHang();
 
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);

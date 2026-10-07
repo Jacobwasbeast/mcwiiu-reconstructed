@@ -67,7 +67,7 @@ public:
     static const EntityDataAccessor<int>* DATA_POSE;
     static const RidableMinecartEntitySelector* IS_RIDEABLE_MINECART;
     static void addDataWalkers(DataFixerUpper* fixer);
-    static void create(Level* level);
+    static Entity* create(Level* level);
     void _init();
 
     unsigned char setBit(unsigned char value, int bit, bool enabled);

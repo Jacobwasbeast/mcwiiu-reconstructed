@@ -14,9 +14,8 @@ class MushroomCow : public Cow
 {
 public:
     explicit MushroomCow(Level* level);
-    virtual ~MushroomCow();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual bool mobInteract(const boost::shared_ptr<Player>& player,
                              InteractionHand::EInteractionHand hand);

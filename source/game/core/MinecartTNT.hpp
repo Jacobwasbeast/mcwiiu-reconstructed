@@ -17,7 +17,7 @@ public:
     MinecartTNT(Level* level);
     MinecartTNT(Level* level, double x, double y, double z);
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     void _init();
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual const Minecart::Type* getType();

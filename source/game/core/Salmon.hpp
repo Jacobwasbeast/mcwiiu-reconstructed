@@ -20,7 +20,7 @@ public:
 
     Salmon(Level* level);
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     static void addDataWalkers(DataFixerUpper* fixer);
 

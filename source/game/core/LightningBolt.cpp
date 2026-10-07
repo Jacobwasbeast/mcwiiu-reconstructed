@@ -66,10 +66,6 @@ LightningBolt::LightningBolt(Level* level, double x, double y, double z, bool vi
     }
 }
 
-LightningBolt::~LightningBolt()
-{
-}
-
 unsigned long long LightningBolt::GetType()
 {
     return EntityType::LIGHTNING_BOLT;

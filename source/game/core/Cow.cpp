@@ -143,7 +143,7 @@ unsigned long long Cow::GetType()
     return EntityType::COW;
 }
 
-void Cow::create(Level* level)
+Entity* Cow::create(Level* level)
 {
-    new Cow(level, true);
+    return new Cow(level, true);
 }

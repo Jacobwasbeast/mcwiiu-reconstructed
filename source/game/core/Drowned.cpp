@@ -59,9 +59,9 @@ Drowned::~Drowned()
     delete mRangedAttackGoal;
 }
 
-void Drowned::create(Level* level)
+Entity* Drowned::create(Level* level)
 {
-    new Drowned(level);
+    return new Drowned(level);
 }
 
 void Drowned::performRangedAttack(boost::shared_ptr<LivingEntity> target, float)

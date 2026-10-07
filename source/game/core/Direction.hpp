@@ -69,7 +69,6 @@ public:
         static Axis* VALUES[3];
 
         Axis(const std::wstring& name, Plane* plane, EAxis id);
-        virtual ~Axis();
 
         static void staticCtor();
         static Axis* byName(const std::wstring& name);

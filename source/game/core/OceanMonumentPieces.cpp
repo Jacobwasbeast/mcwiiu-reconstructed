@@ -63,8 +63,8 @@ void OceanMonumentPieces::loadStatic()
 
 OceanMonumentPieces::RoomDefinition::RoomDefinition(int index)
 {
-    mClaimed = false;
     mIndex = index;
+    mClaimed = false;
 }
 
 void OceanMonumentPieces::RoomDefinition::setConnection(const Direction* direction,
@@ -300,17 +300,8 @@ bool OceanMonumentPieces::OceanMonumentPiece::chunkIntersects(BoundingBox* box, 
     int worldZ0 = getWorldZ(x0, z0);
     int worldX1 = getWorldX(x1, z1);
     int worldZ1 = getWorldZ(x1, z1);
-    int minX = worldX0;
-    if (worldX1 < worldX0)
-        minX = worldX1;
-    int minZ = worldZ0;
-    if (worldZ1 < worldZ0)
-        minZ = worldZ1;
-    if (worldX0 < worldX1)
-        worldX0 = worldX1;
-    if (worldZ1 < worldZ0)
-        worldZ1 = worldZ0;
-    return box->intersects(minX, minZ, worldX0, worldZ1);
+    return box->intersects(std::min(worldX0, worldX1), std::min(worldZ0, worldZ1), std::max(worldX0, worldX1),
+                           std::max(worldZ1, worldZ0));
 }
 
 bool OceanMonumentPieces::OceanMonumentPiece::spawnElder(Level* level, BoundingBox* box, int x, int y, int z)
@@ -507,8 +498,10 @@ OceanMonumentPieces::MonumentBuilding::MonumentBuilding(Random& random, int x, i
 
     std::vector<boost::shared_ptr<RoomDefinition> >* rooms = generateRoomGraph(random);
     mSourceRoom->mClaimed = true;
-    mChildPieces.push_back(new OceanMonumentEntryRoom(direction, mSourceRoom));
-    mChildPieces.push_back(new OceanMonumentCoreRoom(direction, mCoreRoom, random));
+    OceanMonumentPiece* piece = new OceanMonumentEntryRoom(direction, mSourceRoom);
+    mChildPieces.push_back(piece);
+    piece = new OceanMonumentCoreRoom(direction, mCoreRoom, random);
+    mChildPieces.push_back(piece);
 
     std::vector<MonumentRoomFitter*> fitters;
     fitters.push_back(new FitDoubleXYRoom());
@@ -521,14 +514,16 @@ OceanMonumentPieces::MonumentBuilding::MonumentBuilding(Random& random, int x, i
 
     for (std::vector<boost::shared_ptr<RoomDefinition> >::iterator it = rooms->begin(); it != rooms->end(); ++it)
     {
-        if (!(*it)->mClaimed && !(*it)->isSpecial())
+        boost::shared_ptr<RoomDefinition>& room = *it;
+        if (!room->mClaimed && !room->isSpecial())
         {
-            for (std::vector<MonumentRoomFitter*>::iterator fitter = fitters.begin(); fitter != fitters.end();
-                 ++fitter)
+            for (std::vector<MonumentRoomFitter*>::iterator fitterIt = fitters.begin(); fitterIt != fitters.end();
+                 ++fitterIt)
             {
-                if ((*fitter)->fits(*it))
+                MonumentRoomFitter* fitter = *fitterIt;
+                if (fitter->fits(room))
                 {
-                    mChildPieces.push_back((*fitter)->create(direction, *it, random));
+                    mChildPieces.push_back(fitter->create(direction, room, random));
                     break;
                 }
             }

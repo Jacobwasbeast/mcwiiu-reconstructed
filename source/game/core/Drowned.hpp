@@ -22,7 +22,7 @@ public:
     explicit Drowned(Level* level);
     virtual ~Drowned();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
 
     virtual void performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor);

@@ -70,12 +70,17 @@ double SimplexNoise::dot(int* grad, double x, double y, double z)
 
 double SimplexNoise::getValue(double x, double y)
 {
+    double n0;
+    double n1;
+    double n2;
     double s = (x + y) * F2;
     int i = fastfloor(x + s);
     int j = fastfloor(y + s);
     double t = (i + j) * G2;
-    double x0 = x - (i - t);
-    double y0 = y - (j - t);
+    double X0 = i - t;
+    double Y0 = j - t;
+    double x0 = x - X0;
+    double y0 = y - Y0;
 
     int i1;
     int j1;
@@ -101,7 +106,6 @@ double SimplexNoise::getValue(double x, double y)
     int gi1 = p[ii + i1 + p[jj + j1]] % 12;
     int gi2 = p[ii + 1 + p[jj + 1]] % 12;
 
-    double n0;
     double t0 = 0.5 - x0 * x0 - y0 * y0;
     if (t0 < 0.0)
     {
@@ -113,7 +117,6 @@ double SimplexNoise::getValue(double x, double y)
         n0 = t0 * t0 * dot(grad3[gi0], x0, y0);
     }
 
-    double n1;
     double t1 = 0.5 - x1 * x1 - y1 * y1;
     if (t1 < 0.0)
     {
@@ -125,7 +128,6 @@ double SimplexNoise::getValue(double x, double y)
         n1 = t1 * t1 * dot(grad3[gi1], x1, y1);
     }
 
-    double n2;
     double t2 = 0.5 - x2 * x2 - y2 * y2;
     if (t2 < 0.0)
     {
@@ -330,7 +332,7 @@ void SimplexNoise::add(arrayWithLength<double> values, double x, double y, int x
                 n2 = t2 * t2 * dot(grad3[gi2], x2, y2);
             }
 
-            values.data[index++] += 70.0 * (n0 + n1 + n2) * noiseScale;
+            values[index++] += 70.0 * (n0 + n1 + n2) * noiseScale;
         }
     }
 }
@@ -347,7 +349,7 @@ void SimplexNoise::add(arrayWithLength<double> values, double x, double y, doubl
             for (int xx = 0; xx < xSize; ++xx)
             {
                 double xin = (x + xx) * xScale + xo;
-                values.data[index++] += getValue(xin, yin, zin) * noiseScale;
+                values[index++] += getValue(xin, yin, zin) * noiseScale;
             }
         }
     }

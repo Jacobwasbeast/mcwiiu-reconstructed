@@ -12,7 +12,7 @@ class Husk : public Zombie
 {
 public:
     explicit Husk(Level* level);
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual bool checkSpawnRules();
     virtual bool isSunSensitive() const;

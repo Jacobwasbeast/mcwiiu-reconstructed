@@ -411,8 +411,6 @@ NetherBridgePieces::BridgeEndFiller::BridgeEndFiller(int depth, Random& random, 
     mSelfSeed = random.nextInt();
 }
 
-NetherBridgePieces::BridgeEndFiller::~BridgeEndFiller() { }
-
 StructurePiece* NetherBridgePieces::BridgeEndFiller::createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                                                  int x, int y, int z, const Direction* direction, int depth)
 {
@@ -482,8 +480,6 @@ NetherBridgePieces::BridgeStraight::BridgeStraight(int depth, Random&, BoundingB
     mBoundingBox = box;
 }
 
-NetherBridgePieces::BridgeStraight::~BridgeStraight() { }
-
 StructurePiece* NetherBridgePieces::BridgeStraight::createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                                                 int x, int y, int z, const Direction* direction, int depth)
 {
@@ -543,8 +539,6 @@ NetherBridgePieces::CastleCorridorStairsPiece::CastleCorridorStairsPiece(int dep
     mBoundingBox = box;
 }
 
-NetherBridgePieces::CastleCorridorStairsPiece::~CastleCorridorStairsPiece() { }
-
 StructurePiece* NetherBridgePieces::CastleCorridorStairsPiece::createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                                                            int x, int y, int z, const Direction* direction, int depth)
 {
@@ -566,9 +560,7 @@ bool NetherBridgePieces::CastleCorridorStairsPiece::postProcess(Level* level, Ra
     for (int z = 0; z <= 9; ++z)
     {
         int floor = 7 - z < 1 ? 1 : 7 - z;
-        int ceiling = std::max(floor + 5, 14 - z);
-        if (ceiling > 13)
-            ceiling = 13;
+        int ceiling = std::min(std::max(floor + 5, 14 - z), 13);
         generateBox(level, box, 0, 0, z, 4, floor, z, Blocks::nether_brick->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
         generateBox(level, box, 1, floor + 1, z, 3, ceiling - 1, z, Blocks::air->defaultBlockState(), Blocks::air->defaultBlockState(), false);
         if (z <= 6)
@@ -605,8 +597,6 @@ NetherBridgePieces::CastleCorridorTBalconyPiece::CastleCorridorTBalconyPiece(int
     setOrientation(direction);
     mBoundingBox = box;
 }
-
-NetherBridgePieces::CastleCorridorTBalconyPiece::~CastleCorridorTBalconyPiece() { }
 
 StructurePiece* NetherBridgePieces::CastleCorridorTBalconyPiece::createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                                                              int x, int y, int z, const Direction* direction, int depth)
@@ -672,8 +662,6 @@ NetherBridgePieces::CastleEntrance::CastleEntrance(int depth, Random&, BoundingB
     setOrientation(direction);
     mBoundingBox = box;
 }
-
-NetherBridgePieces::CastleEntrance::~CastleEntrance() { }
 
 StructurePiece* NetherBridgePieces::CastleEntrance::createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                                                 int x, int y, int z, const Direction* direction, int depth)
@@ -777,8 +765,6 @@ NetherBridgePieces::CastleSmallCorridorCrossingPiece::CastleSmallCorridorCrossin
     mBoundingBox = box;
 }
 
-NetherBridgePieces::CastleSmallCorridorCrossingPiece::~CastleSmallCorridorCrossingPiece() { }
-
 StructurePiece* NetherBridgePieces::CastleSmallCorridorCrossingPiece::createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                                                                   int x, int y, int z, const Direction* direction, int depth)
 {
@@ -829,8 +815,6 @@ NetherBridgePieces::CastleSmallCorridorPiece::CastleSmallCorridorPiece(int depth
     mBoundingBox = box;
 }
 
-NetherBridgePieces::CastleSmallCorridorPiece::~CastleSmallCorridorPiece() { }
-
 StructurePiece* NetherBridgePieces::CastleSmallCorridorPiece::createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                                                           int x, int y, int z, const Direction* direction, int depth)
 {
@@ -879,8 +863,6 @@ NetherBridgePieces::CastleStalkRoom::CastleStalkRoom(int depth, Random&, Boundin
     setOrientation(direction);
     mBoundingBox = box;
 }
-
-NetherBridgePieces::CastleStalkRoom::~CastleStalkRoom() { }
 
 StructurePiece* NetherBridgePieces::CastleStalkRoom::createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                                                  int x, int y, int z, const Direction* direction, int depth)
@@ -1020,8 +1002,6 @@ NetherBridgePieces::RoomCrossing::RoomCrossing(int depth, Random&, BoundingBox* 
     mBoundingBox = box;
 }
 
-NetherBridgePieces::RoomCrossing::~RoomCrossing() { }
-
 StructurePiece* NetherBridgePieces::RoomCrossing::createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                                               int x, int y, int z, const Direction* direction, int depth)
 {
@@ -1082,8 +1062,6 @@ NetherBridgePieces::StairsRoom::StairsRoom(int depth, Random&, BoundingBox* box,
     setOrientation(direction);
     mBoundingBox = box;
 }
-
-NetherBridgePieces::StairsRoom::~StairsRoom() { }
 
 StructurePiece* NetherBridgePieces::StairsRoom::createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                                             int x, int y, int z, const Direction* direction, int depth)
@@ -1146,8 +1124,6 @@ NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::CastleSmallCorridorLeftTur
     mIsNeedingChest = random.nextInt(3) == 0;
 }
 
-NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::~CastleSmallCorridorLeftTurnPiece() { }
-
 StructurePiece* NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                                                                   int x, int y, int z, const Direction* direction, int depth)
 {
@@ -1186,7 +1162,7 @@ bool NetherBridgePieces::CastleSmallCorridorLeftTurnPiece::postProcess(Level* le
     generateBox(level, box, 3, 3, 4, 3, 4, 4, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
     if (mIsNeedingChest)
     {
-        BlockPos pos(getWorldX(3, 3), getWorldY(2), getWorldZ(3, 3));
+        const BlockPos& pos = BlockPos(getWorldX(3, 3), getWorldY(2), getWorldZ(3, 3));
         if (box->isInside(pos))
         {
             setDirty();
@@ -1219,8 +1195,6 @@ NetherBridgePieces::CastleSmallCorridorRightTurnPiece::CastleSmallCorridorRightT
     mBoundingBox = box;
     mIsNeedingChest = random.nextInt(3) == 0;
 }
-
-NetherBridgePieces::CastleSmallCorridorRightTurnPiece::~CastleSmallCorridorRightTurnPiece() { }
 
 StructurePiece* NetherBridgePieces::CastleSmallCorridorRightTurnPiece::createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                                                                    int x, int y, int z, const Direction* direction, int depth)
@@ -1260,7 +1234,7 @@ bool NetherBridgePieces::CastleSmallCorridorRightTurnPiece::postProcess(Level* l
     generateBox(level, box, 3, 3, 4, 3, 4, 4, Blocks::nether_brick_fence->defaultBlockState(), Blocks::nether_brick->defaultBlockState(), false);
     if (mIsNeedingChest)
     {
-        BlockPos pos(getWorldX(1, 3), getWorldY(2), getWorldZ(1, 3));
+        const BlockPos& pos = BlockPos(getWorldX(1, 3), getWorldY(2), getWorldZ(1, 3));
         if (box->isInside(pos))
         {
             setDirty();
@@ -1292,8 +1266,6 @@ NetherBridgePieces::MonsterThrone::MonsterThrone(int depth, Random&, BoundingBox
     mBoundingBox = box;
     mHasPlacedSpawner = false;
 }
-
-NetherBridgePieces::MonsterThrone::~MonsterThrone() { }
 
 StructurePiece* NetherBridgePieces::MonsterThrone::createPiece(std::vector<StructurePiece*>* pieces, Random& random,
                                                                int x, int y, int z, const Direction* direction, int depth)
@@ -1387,7 +1359,5 @@ NetherBridgePieces::StartPiece::StartPiece()
       mPendingChildren()
 {
 }
-
-NetherBridgePieces::StartPiece::~StartPiece() { }
 
 EStructurePiece NetherBridgePieces::StartPiece::GetType() { return eStructurePiece_NetherBridgeStartPiece; }

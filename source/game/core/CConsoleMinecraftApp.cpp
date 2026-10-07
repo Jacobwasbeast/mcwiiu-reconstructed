@@ -102,9 +102,9 @@ bool CConsoleMinecraftApp::IsAmericanSKU() { return m_productSKU == 1; }
 cCommerceNintendoWiiU* CConsoleMinecraftApp::GetCommerceInstance() { return m_commerce; }
 void CConsoleMinecraftApp::RequestToBackground() { s_requestBackground = 1; }
 uint8_t CConsoleMinecraftApp::ReadyToBackground() { return (uint8_t)(s_requestBackground ^ 1); }
-uint8_t CConsoleMinecraftApp::GetDRCIconEnabled() { return m_drcIconEnabled; }
+bool CConsoleMinecraftApp::GetDRCIconEnabled() { return m_drcIconEnabled; }
 void CConsoleMinecraftApp::SetDRCOuputEnabled(bool value) { m_drcOutputEnabled = value; }
-uint8_t CConsoleMinecraftApp::GetDRCOutputEnabled() { return m_drcOutputEnabled; }
+bool CConsoleMinecraftApp::GetDRCOutputEnabled() { return m_drcOutputEnabled; }
 uint8_t CConsoleMinecraftApp::GetDRCCheckPlayerCountEnabled() { return m_drcCheckPlayerCountEnabled; }
 #if defined(RECON_NATIVE)
 extern "C" void native_report_stack(const char* tag);

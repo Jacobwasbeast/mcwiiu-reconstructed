@@ -41,9 +41,9 @@ PrimedTnt::~PrimedTnt()
 {
 }
 
-void PrimedTnt::create(Level* level)
+Entity* PrimedTnt::create(Level* level)
 {
-    new PrimedTnt(level);
+    return new PrimedTnt(level);
 }
 
 void PrimedTnt::staticCtor()

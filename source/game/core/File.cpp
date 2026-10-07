@@ -55,13 +55,6 @@ int MoveFileA(const char* existingFileName, const char* newFileName);
 int CreateDirectoryA(const char* pathName, void* securityAttributes);
 void CloseHandle(int file);
 
-static const int INVALID_HANDLE_VALUE = -1;
-static const unsigned int INVALID_FILE_ATTRIBUTES = 0xFFFFFFFF;
-static const unsigned int FILE_ATTRIBUTE_DIRECTORY = 0x00000010;
-static const unsigned int FILE_ATTRIBUTE_NORMAL = 0x00000080;
-static const unsigned int GENERIC_READ = 0x80000000;
-static const unsigned int OPEN_EXISTING = 3;
-
 File::File()
 {
     mPath = L"";

@@ -32,7 +32,7 @@ int ProcedureCompoundTask::getDescriptionId()
 
     int result = -1;
 
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
+    for (std::vector<TutorialTask*>::iterator end = tasks.end(), it = tasks.begin(); it < end; ++it)
     {
         TutorialTask* task = *it;
         if (!task->isCompleted())
@@ -60,7 +60,7 @@ int ProcedureCompoundTask::getPromptId()
 
     int result = -1;
 
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
+    for (std::vector<TutorialTask*>::iterator end = tasks.end(), it = tasks.begin(); it < end; ++it)
     {
         TutorialTask* task = *it;
         if (!task->isCompleted())
@@ -78,31 +78,40 @@ bool ProcedureCompoundTask::isCompleted()
     bool result = true;
     bool pending = true;
 
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
+    for (std::vector<TutorialTask*>::iterator end = tasks.end(), it = tasks.begin(); it < end; ++it)
     {
         TutorialTask* task = *it;
-        if (!result)
+        if (result)
+        {
+            if (pending)
+            {
+                if (task->isCompleted())
+                {
+                    if (task->getCompletionAction() == eTutorial_CompletionAction_CompleteState)
+                    {
+                        result = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    task->setAsCurrentTask(true);
+                    result = false;
+                    pending = false;
+                }
+            }
+        }
+        else
         {
             task->setAsCurrentTask(false);
-        }
-        else if (pending)
-        {
-            if (!task->isCompleted())
-            {
-                task->setAsCurrentTask(true);
-                result = false;
-                pending = false;
-            }
-            else if (task->getCompletionAction() == eTutorial_CompletionAction_CompleteState)
-            {
-                break;
-            }
         }
     }
 
     if (result)
     {
-        for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
+        std::vector<TutorialTask*>::iterator it = tasks.begin();
+        std::vector<TutorialTask*>::iterator end = tasks.end();
+        for (; it < end; ++it)
         {
             (*it)->enableConstraints(false, false);
         }
@@ -114,15 +123,16 @@ bool ProcedureCompoundTask::isCompleted()
 
 void ProcedureCompoundTask::onCrafted(not_null_ptr<ItemInstance> item)
 {
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
+    for (std::vector<TutorialTask*>::iterator end = tasks.end(), it = tasks.begin(); it < end; ++it)
     {
-        (*it)->onCrafted(item);
+        TutorialTask* task = *it;
+        task->onCrafted(item);
     }
 }
 
 void ProcedureCompoundTask::handleUIInput(int input)
 {
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
+    for (std::vector<TutorialTask*>::iterator end = tasks.end(), it = tasks.begin(); it < end; ++it)
     {
         (*it)->handleUIInput(input);
     }
@@ -131,7 +141,7 @@ void ProcedureCompoundTask::handleUIInput(int input)
 void ProcedureCompoundTask::setAsCurrentTask(bool currentTask)
 {
     bool current = true;
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
+    for (std::vector<TutorialTask*>::iterator end = tasks.end(), it = tasks.begin(); it < end; ++it)
     {
         TutorialTask* task = *it;
         if (current)
@@ -158,7 +168,7 @@ bool ProcedureCompoundTask::ShowMinimumTime()
 
     bool result = false;
 
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
+    for (std::vector<TutorialTask*>::iterator end = tasks.end(), it = tasks.begin(); it < end; ++it)
     {
         TutorialTask* task = *it;
         if (!task->isCompleted())
@@ -180,7 +190,7 @@ bool ProcedureCompoundTask::hasBeenActivated()
 
     bool result = false;
 
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
+    for (std::vector<TutorialTask*>::iterator end = tasks.end(), it = tasks.begin(); it < end; ++it)
     {
         TutorialTask* task = *it;
         if (!task->isCompleted())
@@ -195,7 +205,7 @@ bool ProcedureCompoundTask::hasBeenActivated()
 
 void ProcedureCompoundTask::setShownForMinimumTime()
 {
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
+    for (std::vector<TutorialTask*>::iterator end = tasks.end(), it = tasks.begin(); it < end; ++it)
     {
         TutorialTask* task = *it;
         if (!task->isCompleted())
@@ -215,7 +225,7 @@ bool ProcedureCompoundTask::AllowFade()
 
     bool result = true;
 
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
+    for (std::vector<TutorialTask*>::iterator end = tasks.end(), it = tasks.begin(); it < end; ++it)
     {
         TutorialTask* task = *it;
         if (!task->isCompleted())
@@ -231,32 +241,35 @@ bool ProcedureCompoundTask::AllowFade()
 void ProcedureCompoundTask::useItemOn(Level* level, not_null_ptr<ItemInstance> item,
                                       const BlockPos& pos, bool cancelled)
 {
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
+    for (std::vector<TutorialTask*>::iterator end = tasks.end(), it = tasks.begin(); it < end; ++it)
     {
-        (*it)->useItemOn(level, item, pos, cancelled);
+        TutorialTask* task = *it;
+        task->useItemOn(level, item, pos, cancelled);
     }
 }
 
 void ProcedureCompoundTask::useItem(not_null_ptr<ItemInstance> item, bool cancelled)
 {
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
+    for (std::vector<TutorialTask*>::iterator end = tasks.end(), it = tasks.begin(); it < end; ++it)
     {
-        (*it)->useItem(item, cancelled);
+        TutorialTask* task = *it;
+        task->useItem(item, cancelled);
     }
 }
 
 void ProcedureCompoundTask::onTake(not_null_ptr<ItemInstance> item, unsigned int itemCount,
                                    unsigned int exactCount)
 {
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
+    for (std::vector<TutorialTask*>::iterator end = tasks.end(), it = tasks.begin(); it < end; ++it)
     {
-        (*it)->onTake(item, itemCount, exactCount);
+        TutorialTask* task = *it;
+        task->onTake(item, itemCount, exactCount);
     }
 }
 
 void ProcedureCompoundTask::onStateChange(eTutorial_State state)
 {
-    for (std::vector<TutorialTask*>::iterator it = tasks.begin(), end = tasks.end(); it < end; ++it)
+    for (std::vector<TutorialTask*>::iterator end = tasks.end(), it = tasks.begin(); it < end; ++it)
     {
         (*it)->onStateChange(state);
     }

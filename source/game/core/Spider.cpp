@@ -49,9 +49,9 @@ Spider::Spider(Level* level, bool callDerivedConstructor) : Monster(level)
     mCategories |= EntityCategory::eEntityCategory_Arthropod;
 }
 
-void Spider::create(Level* level)
+Entity* Spider::create(Level* level)
 {
-    new Spider(level);
+    return new Spider(level);
 }
 
 void Spider::staticCtor()
@@ -204,10 +204,6 @@ Spider::SpiderAttackGoal::SpiderAttackGoal(Spider* spider)
 {
 }
 
-Spider::SpiderAttackGoal::~SpiderAttackGoal()
-{
-}
-
 bool Spider::SpiderAttackGoal::canContinueToUse()
 {
     if (mMob->getBrightness() >= 0.5f && mMob->getRandom()->nextInt(100) == 0)
@@ -241,10 +237,6 @@ void Spider::SpiderEffectsGroupData::setRandomEffect(Random* random)
 
 Spider::SpiderTargetGoal::SpiderTargetGoal(Spider* spider, const std::type_info& targetType)
     : NearestAttackableTargetGoal(spider, targetType, true, false, false)
-{
-}
-
-Spider::SpiderTargetGoal::~SpiderTargetGoal()
 {
 }
 

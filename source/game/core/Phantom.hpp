@@ -28,7 +28,7 @@ public:
     };
 
     Phantom(Level* level);
-    static void create(Level* level);
+    static Entity* create(Level* level);
     virtual void tick();
     virtual bool checkSpawnRules();
     virtual void aiStep();

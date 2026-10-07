@@ -7,5 +7,5 @@ bool XmlValue::isString() const
 
 std::wstring XmlValue::asString() const
 {
-    return m_value;
+    return std::wstring(m_value, 0);
 }

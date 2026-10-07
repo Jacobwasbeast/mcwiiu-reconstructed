@@ -109,7 +109,7 @@ public:
     {
     public:
         BridgeStraight();
-        virtual ~BridgeStraight();
+        virtual ~BridgeStraight() {}
         BridgeStraight(int depth, Random& random, BoundingBox* box, const Direction* direction);
         static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
                                            const Direction* direction, int depth);
@@ -123,7 +123,7 @@ public:
     {
     public:
         CastleCorridorStairsPiece();
-        virtual ~CastleCorridorStairsPiece();
+        virtual ~CastleCorridorStairsPiece() {}
         CastleCorridorStairsPiece(int depth, Random& random, BoundingBox* box, const Direction* direction);
         static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
                                            const Direction* direction, int depth);
@@ -137,7 +137,7 @@ public:
     {
     public:
         CastleCorridorTBalconyPiece();
-        virtual ~CastleCorridorTBalconyPiece();
+        virtual ~CastleCorridorTBalconyPiece() {}
         CastleCorridorTBalconyPiece(int depth, Random& random, BoundingBox* box, const Direction* direction);
         static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
                                            const Direction* direction, int depth);
@@ -151,7 +151,7 @@ public:
     {
     public:
         CastleEntrance();
-        virtual ~CastleEntrance();
+        virtual ~CastleEntrance() {}
         CastleEntrance(int depth, Random& random, BoundingBox* box, const Direction* direction);
         static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
                                            const Direction* direction, int depth);
@@ -165,7 +165,7 @@ public:
     {
     public:
         CastleSmallCorridorCrossingPiece();
-        virtual ~CastleSmallCorridorCrossingPiece();
+        virtual ~CastleSmallCorridorCrossingPiece() {}
         CastleSmallCorridorCrossingPiece(int depth, Random& random, BoundingBox* box, const Direction* direction);
         static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
                                            const Direction* direction, int depth);
@@ -179,7 +179,7 @@ public:
     {
     public:
         CastleSmallCorridorPiece();
-        virtual ~CastleSmallCorridorPiece();
+        virtual ~CastleSmallCorridorPiece() {}
         CastleSmallCorridorPiece(int depth, Random& random, BoundingBox* box, const Direction* direction);
         static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
                                            const Direction* direction, int depth);
@@ -193,7 +193,7 @@ public:
     {
     public:
         CastleStalkRoom();
-        virtual ~CastleStalkRoom();
+        virtual ~CastleStalkRoom() {}
         CastleStalkRoom(int depth, Random& random, BoundingBox* box, const Direction* direction);
         static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
                                            const Direction* direction, int depth);
@@ -207,7 +207,7 @@ public:
     {
     public:
         RoomCrossing();
-        virtual ~RoomCrossing();
+        virtual ~RoomCrossing() {}
         RoomCrossing(int depth, Random& random, BoundingBox* box, const Direction* direction);
         static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
                                            const Direction* direction, int depth);
@@ -221,7 +221,7 @@ public:
     {
     public:
         StairsRoom();
-        virtual ~StairsRoom();
+        virtual ~StairsRoom() {}
         StairsRoom(int depth, Random& random, BoundingBox* box, const Direction* direction);
         static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
                                            const Direction* direction, int depth);
@@ -251,7 +251,7 @@ public:
     public:
         BridgeEndFiller();
         BridgeEndFiller(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~BridgeEndFiller();
+        virtual ~BridgeEndFiller() {}
         static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
                                            const Direction* direction, int depth);
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
@@ -267,7 +267,7 @@ public:
     public:
         CastleSmallCorridorLeftTurnPiece();
         CastleSmallCorridorLeftTurnPiece(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~CastleSmallCorridorLeftTurnPiece();
+        virtual ~CastleSmallCorridorLeftTurnPiece() {}
         static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
                                            const Direction* direction, int depth);
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
@@ -284,7 +284,7 @@ public:
     public:
         CastleSmallCorridorRightTurnPiece();
         CastleSmallCorridorRightTurnPiece(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~CastleSmallCorridorRightTurnPiece();
+        virtual ~CastleSmallCorridorRightTurnPiece() {}
         static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
                                            const Direction* direction, int depth);
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
@@ -301,7 +301,7 @@ public:
     public:
         MonsterThrone();
         MonsterThrone(int depth, Random& random, BoundingBox* box, const Direction* direction);
-        virtual ~MonsterThrone();
+        virtual ~MonsterThrone() {}
         static StructurePiece* createPiece(std::vector<StructurePiece*>* pieces, Random& random, int x, int y, int z,
                                            const Direction* direction, int depth);
         virtual void readAdditionalSaveData(DataInputStream* input, StructureManager* manager);
@@ -317,7 +317,7 @@ public:
     public:
         StartPiece(Random& random, int x, int z, Level* level);
         StartPiece();
-        virtual ~StartPiece();
+        virtual ~StartPiece() {}
         virtual EStructurePiece GetType();
         PieceWeight* mPreviousPiece;
         Level* mLevel;

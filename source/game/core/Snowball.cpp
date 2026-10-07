@@ -30,9 +30,9 @@ Snowball::Snowball(Level* level, double x, double y, double z)
     _init();
 }
 
-void Snowball::create(Level* level)
+Entity* Snowball::create(Level* level)
 {
-    new Snowball(level);
+    return new Snowball(level);
 }
 
 void Snowball::_init()

@@ -33,7 +33,7 @@ public:
     Painting(Level* level, const BlockPos& pos, const Direction* direction,
              const std::wstring& motiveName);
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     void _init(Level* level);
     void PaintingPostConstructor(const Direction* direction, int unused);
     virtual void addAdditonalSaveData(CompoundTag* tag);

@@ -18,8 +18,7 @@ ConditionConnective::ConditionConnective(const XmlObject& object)
 {
     m_type = parseType(object.mName).second;
 
-    const std::vector<XmlChild>& children = object.getChildrenRaw();
-    for (std::vector<XmlChild>::const_iterator child = children.begin(); child != children.end(); ++child)
+    for (std::vector<XmlChild>::const_iterator child = object.getChildrenRaw().begin(); child != object.getChildrenRaw().end(); ++child)
     {
         if (child->m_type == 1)
         {
@@ -84,14 +83,18 @@ GameCondition* ConditionConnective::FirstConditionWithValue(bool value, MasterGa
 
 bool ConditionConnective::IsSatisfied(MasterGameMode* gameMode) const
 {
-    if (m_type == 0)
-        return FirstConditionWithValue(false, gameMode) == NULL;
-
     bool satisfied;
-    if (m_type == 1)
+    switch (m_type)
+    {
+    case 0:
+        return FirstConditionWithValue(false, gameMode) == NULL;
+    case 1:
         satisfied = FirstConditionWithValue(true, gameMode) != NULL;
-    else
+        break;
+    default:
         satisfied = true;
+        break;
+    }
     return satisfied;
 }
 

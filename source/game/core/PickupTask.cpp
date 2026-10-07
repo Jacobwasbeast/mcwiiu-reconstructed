@@ -25,10 +25,6 @@ PickupTask::PickupTask(Item** items, unsigned int itemCount, unsigned int requir
     }
 }
 
-PickupTask::~PickupTask()
-{
-}
-
 unsigned int PickupTask::hasPickedUpWoodBlock(not_null_ptr<ItemInstance> item)
 {
     Item* pickedUpItem = item->getItem();

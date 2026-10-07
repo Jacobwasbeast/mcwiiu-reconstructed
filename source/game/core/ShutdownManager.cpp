@@ -5,9 +5,9 @@
 #include "game/core/CriticalSection.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 
-static int g_threadRunningCount[ShutdownManager::eThreadId_Count];
-static C4JEventArray* g_pThreadEventArray[ShutdownManager::eThreadId_Count];
-static bool g_threadShouldRun[ShutdownManager::eThreadId_Count];
+int g_threadRunningCount[ShutdownManager::eThreadId_Count];
+C4JEventArray* g_pThreadEventArray[ShutdownManager::eThreadId_Count];
+bool g_threadShouldRun[ShutdownManager::eThreadId_Count];
 static OSFastMutex g_shutdownLock;
 
 void ShutdownManager::Initialise()

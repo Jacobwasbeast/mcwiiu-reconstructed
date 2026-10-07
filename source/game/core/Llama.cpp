@@ -53,7 +53,6 @@ const EntityDataAccessor<int>* Llama::DATA_VARIANT = NULL;
 
 Llama::LlamaDefendTargetGoal::LlamaDefendTargetGoal(Llama* llama)
     : NearestAttackableTargetGoal(llama, typeid(Wolf), 16, false, true, NULL, false, false) { }
-Llama::LlamaDefendTargetGoal::~LlamaDefendTargetGoal() { }
 bool Llama::LlamaDefendTargetGoal::canUse()
 {
     boost::shared_ptr<LivingEntity> target = mTarget.lock();
@@ -70,7 +69,6 @@ Llama::LlamaGroupData::~LlamaGroupData() { }
 
 Llama::LlamaHurtByTargetGoal::LlamaHurtByTargetGoal(Llama* llama)
     : HurtByTargetGoal(llama, false, arrayWithLength<unsigned long long>()) { }
-Llama::LlamaHurtByTargetGoal::~LlamaHurtByTargetGoal() { }
 bool Llama::LlamaHurtByTargetGoal::canContinueToUse()
 {
     const bool isLlama = mMob->GetType() == EntityType::LLAMA;
@@ -92,7 +90,10 @@ Llama::Llama(Level* level)
     internalSetSize(1.0f);
 }
 Llama::~Llama() { }
-void Llama::create(Level* level) { new Llama(level); }
+Entity* Llama::create(Level* level)
+{
+    return new Llama(level);
+}
 const DyeColor* Llama::getSwag()
 {
     int blockData = mEntityData->get(DATA_SWAG);

@@ -21,11 +21,11 @@ ChoiceTask::ChoiceTask(Tutorial* tutorial, int descriptionId, int promptId, bool
     }
 
     this->firstInput = firstInput;
-    this->promptId = promptId;
-    this->completionAction = completionAction;
-    this->secondInput = secondInput;
-    firstChoice = false;
     secondChoice = false;
+    firstChoice = false;
+    this->secondInput = secondInput;
+    this->completionAction = completionAction;
+    this->promptId = promptId;
     tutorial->addMessage(promptId, false, 3);
     this->telemetryChallenge = telemetryChallenge;
 }
@@ -34,10 +34,13 @@ void ChoiceTask::sendTelemetry()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
 
+    if (telemetryChallenge == eTelemetryChallenges_None)
+    {
+        return;
+    }
+
     switch (telemetryChallenge)
     {
-    case eTelemetryChallenges_None:
-        return;
     case eTelemetryChallenges_TutorialStart:
         tutorial->getCompleted(386);
         tutorial->setCompleted(386);
@@ -79,13 +82,13 @@ bool ChoiceTask::isCompleted()
         }
 
         if (!firstChoice && g_pInput->GetValue(minecraft->mPlayer->mUserIndex,
-                                               static_cast<unsigned char>(firstInput), false))
+                                               static_cast<unsigned char>(firstInput), false) > 0)
         {
             firstChoice = true;
         }
 
         if (!secondChoice && g_pInput->GetValue(minecraft->mPlayer->mUserIndex,
-                                                static_cast<unsigned char>(secondInput), false))
+                                                static_cast<unsigned char>(secondInput), false) > 0)
         {
             secondChoice = true;
         }

@@ -5,6 +5,3 @@ IllegalArgumentException::IllegalArgumentException(const std::wstring& message)
 {
 }
 
-IllegalArgumentException::~IllegalArgumentException()
-{
-}

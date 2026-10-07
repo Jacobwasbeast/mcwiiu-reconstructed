@@ -14,9 +14,7 @@ DoorInfo::DoorInfo(const BlockPos& pos, const Direction* direction, int timeStam
 
 void DoorInfo::_init(const BlockPos& pos, const Direction* direction, int timeStamp)
 {
-    x = pos.x;
-    y = pos.y;
-    z = pos.z;
+    BlockPos::operator=(pos);
     this->direction = direction;
     indoorPos = pos.relative(direction, 2);
     this->timeStamp = timeStamp;
@@ -50,7 +48,9 @@ int DoorInfo::distanceToInsideSqr(const BlockPos& pos)
 
 bool DoorInfo::isInsideSide(const BlockPos& pos)
 {
-    return (pos.x - x) * direction->getStepX() + (pos.z - z) * direction->getStepZ() >= 0;
+    int dx = pos.x - x;
+    int dz = pos.z - z;
+    return dx * direction->getStepX() + dz * direction->getStepZ() >= 0;
 }
 
 void DoorInfo::resetBookingCount()

@@ -175,7 +175,7 @@ unsigned long long EnderCrystal::GetType()
     return EntityType::ENDER_CRYSTAL;
 }
 
-void EnderCrystal::create(Level* level)
+Entity* EnderCrystal::create(Level* level)
 {
-    new EnderCrystal(level);
+    return new EnderCrystal(level);
 }

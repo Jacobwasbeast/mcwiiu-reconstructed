@@ -26,9 +26,7 @@ KeyedDataWalker::KeyedDataWalker(unsigned long long type)
 
 CompoundTag* KeyedDataWalker::walk(DataFixer* fixer, CompoundTag* tag, int version)
 {
-    bool matches = ResourceLocation(tag->getString(std::wstring(L"id"))).equals(&mKey);
-
-    if (matches)
+    if (ResourceLocation(tag->getString(L"id")).equals(&mKey))
     {
         tag = doWalk(fixer, tag, version);
     }

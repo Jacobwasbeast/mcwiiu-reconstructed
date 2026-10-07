@@ -43,17 +43,13 @@ PolarBear::PolarBear(Level* level)
     fjDerivedCtorCalls();
     setSize(1.3f, 1.4f);
     mStandingScale = 0.0f;
-    mStandingScaleO = 0.0f;
     mWarningSoundTicks = 0;
+    mStandingScaleO = 0.0f;
 }
 
-PolarBear::~PolarBear()
+Entity* PolarBear::create(Level* level)
 {
-}
-
-void PolarBear::create(Level* level)
-{
-    new PolarBear(level);
+    return new PolarBear(level);
 }
 
 void PolarBear::staticCtor()
@@ -64,8 +60,7 @@ void PolarBear::staticCtor()
 
 boost::shared_ptr<AgableMob> PolarBear::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    boost::shared_ptr<PolarBear> offspring(new PolarBear(mLevel));
-    return offspring;
+    return boost::shared_ptr<PolarBear>(new PolarBear(mLevel));
 }
 
 bool PolarBear::isFood(const not_null_ptr<ItemInstance>&)
@@ -148,8 +143,8 @@ void PolarBear::tick()
     if (mLevel->mIsClientSide)
     {
         mStandingScaleO = mStandingScale;
-        if (!isStanding()) mStandingScale = Mth::clamp(mStandingScale - 1.0f, 0.0f, 6.0f);
-        else mStandingScale = Mth::clamp(mStandingScale + 1.0f, 0.0f, 6.0f);
+        if (isStanding()) mStandingScale = Mth::clamp(mStandingScale + 1.0f, 0.0f, 6.0f);
+        else mStandingScale = Mth::clamp(mStandingScale - 1.0f, 0.0f, 6.0f);
     }
     if (mWarningSoundTicks > 0) --mWarningSoundTicks;
 }
@@ -181,15 +176,18 @@ float PolarBear::getWaterSlowDown()
 
 MobGroupData* PolarBear::finalizeMobSpawn(const DifficultyInstance&, MobGroupData* data, const std::wstring&)
 {
-    if (data == NULL || dynamic_cast<PolarBearGroupData*>(data) == NULL)
+    if (data != NULL && dynamic_cast<PolarBearGroupData*>(data) != NULL)
+    {
+        if (static_cast<PolarBearGroupData*>(data)->mIsBaby)
+        {
+            setAge(-24000);
+        }
+    }
+    else
     {
         PolarBearGroupData* group = new PolarBearGroupData();
         data = group;
         group->mIsBaby = true;
-    }
-    else if (static_cast<PolarBearGroupData*>(data)->mIsBaby)
-    {
-        setAge(-24000);
     }
     return data;
 }
@@ -201,8 +199,11 @@ bool PolarBear::checkSpawnRules()
     int z = Mth::floor(mZ);
     BlockPos pos(x, y, z);
     Biome* biome = mLevel->getBiome(pos);
-    if (biome != Biome::FROZEN_OCEAN && biome != Biome::DEEP_FROZEN_OCEAN) return Animal::checkSpawnRules();
-    return mLevel->getRawBrightness(pos, false) > 8 && mLevel->getBlockState(pos.below())->getBlock() == Blocks::ice;
+    if (biome == Biome::FROZEN_OCEAN || biome == Biome::DEEP_FROZEN_OCEAN)
+    {
+        return mLevel->getRawBrightness(pos, false) > 8 && mLevel->getBlockState(pos.below())->getBlock() == Blocks::ice;
+    }
+    return Animal::checkSpawnRules();
 }
 
 unsigned long long PolarBear::GetType()
@@ -220,10 +221,6 @@ PolarBear::PolarBearGroupData::~PolarBearGroupData()
 
 PolarBear::PolarBearAttackPlayersGoal::PolarBearAttackPlayersGoal(PolarBear* polarBear)
     : NearestAttackableTargetGoal(polarBear, typeid(Player), 20, true, true, NULL, false, true)
-{
-}
-
-PolarBear::PolarBearAttackPlayersGoal::~PolarBearAttackPlayersGoal()
 {
 }
 
@@ -262,10 +259,6 @@ PolarBear::PolarBearHurtByTargetGoal::PolarBearHurtByTargetGoal(PolarBear* polar
 {
 }
 
-PolarBear::PolarBearHurtByTargetGoal::~PolarBearHurtByTargetGoal()
-{
-}
-
 void PolarBear::PolarBearHurtByTargetGoal::start()
 {
     HurtByTargetGoal::start();
@@ -294,16 +287,17 @@ PolarBear::PolarBearMeleeAttackGoal::PolarBearMeleeAttackGoal(PolarBear* polarBe
 {
 }
 
-PolarBear::PolarBearMeleeAttackGoal::~PolarBearMeleeAttackGoal()
-{
-}
-
 bool PolarBear::PolarBearMeleeAttackGoal::canUse()
 {
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();
-    if (mMob->mLevel->getDifficulty() == Difficulty::PEACEFUL && target &&
-        (target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-        return false;
+    if (mMob->mLevel->getDifficulty() == Difficulty::PEACEFUL)
+    {
+        if (target)
+        {
+            bool isPlayer = (target->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+            if (isPlayer) return false;
+        }
+    }
     return MeleeAttackGoal::canUse();
 }
 
@@ -317,12 +311,7 @@ void PolarBear::PolarBearMeleeAttackGoal::checkAndPerformAttack(boost::shared_pt
         mMob->doHurtTarget(target);
         static_cast<PolarBear*>(mMob)->setStanding(false);
     }
-    else if (reach + reach < distance)
-    {
-        mTicksUntilNextAttack = mAttackInterval;
-        static_cast<PolarBear*>(mMob)->setStanding(false);
-    }
-    else
+    else if (distance <= reach + reach)
     {
         if (mTicksUntilNextAttack < 1)
         {
@@ -334,6 +323,11 @@ void PolarBear::PolarBearMeleeAttackGoal::checkAndPerformAttack(boost::shared_pt
             static_cast<PolarBear*>(mMob)->setStanding(true);
             static_cast<PolarBear*>(mMob)->playWarningSound();
         }
+    }
+    else
+    {
+        mTicksUntilNextAttack = mAttackInterval;
+        static_cast<PolarBear*>(mMob)->setStanding(false);
     }
 }
 

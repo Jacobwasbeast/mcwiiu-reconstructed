@@ -36,7 +36,7 @@ public:
         virtual void start();
         virtual void stop();
         virtual void tick();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"SpellcasterUseSpellGoal"; }
         virtual void performSpellCasting() = 0;
         virtual int getCastWarmupTime();
         virtual int getCastingTime() = 0;

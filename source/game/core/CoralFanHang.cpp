@@ -45,10 +45,6 @@ CoralFanHang::CoralFanHang()
     registerDefaultState(state);
 }
 
-CoralFanHang::~CoralFanHang()
-{
-}
-
 Item* CoralFanHang::getResource(const BlockState* state, Random* random, int lootBonus)
 {
     return NULL;

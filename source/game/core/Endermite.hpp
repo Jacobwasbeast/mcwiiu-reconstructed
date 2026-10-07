@@ -36,7 +36,7 @@ public:
     virtual bool isDarkEnoughToSpawn();
 
     static void addDataWalkers(DataFixerUpper* fixer);
-    static void create(Level* level);
+    static Entity* create(Level* level);
     bool isPlayerSpawned();
     void setPlayerSpawned(bool playerSpawned);
 

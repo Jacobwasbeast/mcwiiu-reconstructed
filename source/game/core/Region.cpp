@@ -14,21 +14,20 @@
 #include "game/core/Direction.hpp"
 
 Region::Region(Level* level, const BlockPos& from, const BlockPos& to, int expansion)
-    : mMinChunkX((from.x - expansion) >> 4),
-      mMinChunkZ((from.z - expansion) >> 4),
-      mChunks(new array2DWithLength<LevelChunk*>(((to.x + expansion) >> 4) - mMinChunkX + 1,
-                                                   ((to.z + expansion) >> 4) - mMinChunkZ + 1)),
-      mLevel(level),
-      mAllEmpty(true)
 {
+    mLevel = level;
+    mMinChunkX = (from.x - expansion) >> 4;
+    mMinChunkZ = (from.z - expansion) >> 4;
     int maxX = (to.x + expansion) >> 4;
     int maxZ = (to.z + expansion) >> 4;
+    mChunks = new array2DWithLength<LevelChunk*>(maxX - mMinChunkX + 1, maxZ - mMinChunkZ + 1);
+    mAllEmpty = true;
     int x;
     for (x = mMinChunkX; x <= maxX; ++x)
     {
         int z;
         for (z = mMinChunkZ; z <= maxZ; ++z)
-            mChunks->data[x - mMinChunkX]->data[z - mMinChunkZ] = level->getChunk(x, z);
+            (*mChunks)[x - mMinChunkX]->data[z - mMinChunkZ] = level->getChunk(x, z);
     }
     for (x = from.x >> 4; x <= to.x >> 4; ++x)
     {
@@ -47,11 +46,11 @@ Region::Region(Level* level, const BlockPos& from, const BlockPos& to, int expan
 
 Region::~Region()
 {
-    unsigned int i;
-    for (i = 0; i < mChunks->length; ++i)
+    for (unsigned int i = 0; i < mChunks->length; i++)
     {
-        delete[] mChunks->data[i]->data;
-        delete mChunks->data[i];
+        arrayWithLength<LevelChunk*>* row = (*mChunks)[i];
+        delete[] row->data;
+        delete row;
     }
     delete[] mChunks->data;
     delete mChunks;
@@ -76,24 +75,26 @@ int Region::getRawBrightness(const BlockPos& pos, bool useNeighbourBrightness)
     if (useNeighbourBrightness && getBlockState(pos)->doesPropagate())
     {
         int brightest = 0;
-        for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
+        for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); it++)
         {
             int value = getRawBrightness(pos.relative(*it), false);
             if (value > brightest)
-            {
                 brightest = value;
-                if (brightest >= 15)
-                    return brightest;
-            }
+            if (brightest >= 15)
+                break;
         }
         return brightest;
     }
     if (pos.y < 0)
         return 0;
-    if (pos.y < 256)
-        return getLevelChunk(pos)->getRawBrightness(pos, mLevel->getSkyDarken());
-    int value = 15 - mLevel->getSkyDarken();
-    return value < 0 ? 0 : value;
+    if (pos.y >= 256)
+    {
+        int value = 15 - mLevel->getSkyDarken();
+        if (value < 0)
+            value = 0;
+        return value;
+    }
+    return getLevelChunk(pos)->getRawBrightness(pos, mLevel->getSkyDarken());
 }
 
 int Region::getRawBrightness(const BlockPos& pos)
@@ -118,20 +119,20 @@ int Region::getBrightnessPropagate(LightLayer::variety layer, const BlockPos& po
         target = BlockPos(target.x, 0, target.z);
     if (!mLevel->reallyHasChunkAt(target))
         return layer;
-    if (!getBlockState(target)->doesPropagate())
-        return getLevelChunk(target)->getBrightness(layer, target);
-    int brightest = 0;
-    for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
+    if (getBlockState(target)->doesPropagate())
     {
-        int value = getBrightness(layer, target.relative(*it));
-        if (value > brightest)
+        int brightest = 0;
+        for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
         {
-            brightest = value;
+            int value = getBrightness(layer, target.relative(*it));
+            if (value > brightest)
+                brightest = value;
             if (brightest >= 15)
-                return brightest;
+                break;
         }
+        return brightest;
     }
-    return brightest;
+    return getLevelChunk(target)->getBrightness(layer, target);
 }
 
 int Region::getLightColor(const BlockPos& pos, int lightValue, int cacheIndex)
@@ -157,14 +158,18 @@ const BlockState* Region::getBlockState(const BlockPos& pos)
         if (mCachedStates != NULL && chunkX == mCachedX && chunkZ == mCachedZ)
         {
             int yBase = mCachedY * 16 - 1;
-            if (pos.y >= yBase && pos.y < mCachedY * 16 + 17)
-                return mCachedStates[((pos.y - yBase) << 8) | ((pos.z & 15) << 4) | (pos.x & 15)];
+            int yEnd = mCachedY * 16 + 17;
+            if (pos.y >= yBase && pos.y < yEnd)
+            {
+                int index = (pos.x & 15) | ((pos.z & 15) << 4) | ((pos.y - yBase) << 8);
+                return mCachedStates[index];
+            }
         }
         chunkX -= mMinChunkX;
         chunkZ -= mMinChunkZ;
-        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)mChunks->data[chunkX]->length)
+        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)(*mChunks)[chunkX]->length)
         {
-            LevelChunk* chunk = mChunks->data[chunkX]->data[chunkZ];
+            LevelChunk* chunk = (*mChunks)[chunkX]->data[chunkZ];
             if (chunk != NULL)
                 return chunk->getBlockState(pos);
         }
@@ -197,17 +202,20 @@ int Region::getBlockId(int x, int y, int z)
 {
     if ((unsigned int)y < 256)
     {
-        if (mCachedStates != NULL && x >> 4 == mCachedX && z >> 4 == mCachedZ)
+        int chunkX = x >> 4;
+        int chunkZ = z >> 4;
+        if (mCachedStates != NULL && chunkX == mCachedX && chunkZ == mCachedZ)
         {
             int yBase = mCachedY * 16 - 1;
-            if (y >= yBase && y < mCachedY * 16 + 17)
-                return Block::getId(mCachedStates[((y - yBase) << 8) | ((z & 15) << 4) | (x & 15)]->getBlock());
+            int yEnd = mCachedY * 16 + 17;
+            if (y >= yBase && y < yEnd)
+                return Block::getId(mCachedStates[(x & 15) | ((z & 15) << 4) | ((y - yBase) << 8)]->getBlock());
         }
-        int chunkX = (x >> 4) - mMinChunkX;
-        int chunkZ = (z >> 4) - mMinChunkZ;
-        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)mChunks->data[chunkX]->length)
+        chunkX -= mMinChunkX;
+        chunkZ -= mMinChunkZ;
+        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)(*mChunks)[chunkX]->length)
         {
-            LevelChunk* chunk = mChunks->data[chunkX]->data[chunkZ];
+            LevelChunk* chunk = (*mChunks)[chunkX]->data[chunkZ];
             if (chunk != NULL)
                 return chunk->getBlockId(x, y, z);
         }
@@ -217,7 +225,7 @@ int Region::getBlockId(int x, int y, int z)
 
 int Region::getBlockId(EntityTickCache& tickCache, int x, int y, int z)
 {
-    int element = tickCache.getElement(x, y, z);
+    unsigned short element = tickCache.getElement(x, y, z);
     if (element == 0xffff)
         element = getElement(x, y, z);
     return element >> 4;
@@ -235,20 +243,23 @@ int Region::getBlockData(int x, int y, int z)
 {
     if ((unsigned int)y < 256)
     {
-        if (mCachedStates != NULL && x >> 4 == mCachedX && z >> 4 == mCachedZ)
+        int chunkX = x >> 4;
+        int chunkZ = z >> 4;
+        if (mCachedStates != NULL && chunkX == mCachedX && chunkZ == mCachedZ)
         {
             int yBase = mCachedY * 16 - 1;
-            if (y >= yBase && y < mCachedY * 16 + 17)
+            int yEnd = mCachedY * 16 + 17;
+            if (y >= yBase && y < yEnd)
             {
-                const BlockState* state = mCachedStates[((y - yBase) << 8) | ((z & 15) << 4) | (x & 15)];
-                return state->getBlock()->convertBlockStateToLegacyData(state);
+                int index = (x & 15) | ((z & 15) << 4) | ((y - yBase) << 8);
+                return mCachedStates[index]->getBlock()->convertBlockStateToLegacyData(mCachedStates[index]);
             }
         }
-        int chunkX = (x >> 4) - mMinChunkX;
-        int chunkZ = (z >> 4) - mMinChunkZ;
-        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)mChunks->data[chunkX]->length)
+        chunkX -= mMinChunkX;
+        chunkZ -= mMinChunkZ;
+        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)(*mChunks)[chunkX]->length)
         {
-            LevelChunk* chunk = mChunks->data[chunkX]->data[chunkZ];
+            LevelChunk* chunk = (*mChunks)[chunkX]->data[chunkZ];
             if (chunk != NULL)
                 return chunk->getData(x, y, z);
         }
@@ -260,11 +271,13 @@ unsigned short Region::getElement(int x, int y, int z)
 {
     if ((unsigned int)y < 256)
     {
-        int chunkX = (x >> 4) - mMinChunkX;
-        int chunkZ = (z >> 4) - mMinChunkZ;
-        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)mChunks->data[chunkX]->length)
+        int chunkX = x >> 4;
+        int chunkZ = z >> 4;
+        chunkX -= mMinChunkX;
+        chunkZ -= mMinChunkZ;
+        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)(*mChunks)[chunkX]->length)
         {
-            LevelChunk* chunk = mChunks->data[chunkX]->data[chunkZ];
+            LevelChunk* chunk = (*mChunks)[chunkX]->data[chunkZ];
             if (chunk != NULL)
                 return chunk->getElement(x, y, z);
         }
@@ -276,11 +289,13 @@ unsigned short Region::getExtraElement(int x, int y, int z)
 {
     if ((unsigned int)y < 256)
     {
-        int chunkX = (x >> 4) - mMinChunkX;
-        int chunkZ = (z >> 4) - mMinChunkZ;
-        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)mChunks->data[chunkX]->length)
+        int chunkX = x >> 4;
+        int chunkZ = z >> 4;
+        chunkX -= mMinChunkX;
+        chunkZ -= mMinChunkZ;
+        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)(*mChunks)[chunkX]->length)
         {
-            LevelChunk* chunk = mChunks->data[chunkX]->data[chunkZ];
+            LevelChunk* chunk = (*mChunks)[chunkX]->data[chunkZ];
             if (chunk != NULL)
                 return chunk->getExtraElement(x, y, z);
         }
@@ -292,11 +307,13 @@ void Region::getElementAndExtraElement(int x, int y, int z, unsigned short* elem
 {
     if ((unsigned int)y < 256)
     {
-        int chunkX = (x >> 4) - mMinChunkX;
-        int chunkZ = (z >> 4) - mMinChunkZ;
-        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)mChunks->data[chunkX]->length)
+        int chunkX = x >> 4;
+        int chunkZ = z >> 4;
+        chunkX -= mMinChunkX;
+        chunkZ -= mMinChunkZ;
+        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)(*mChunks)[chunkX]->length)
         {
-            LevelChunk* chunk = mChunks->data[chunkX]->data[chunkZ];
+            LevelChunk* chunk = (*mChunks)[chunkX]->data[chunkZ];
             if (chunk != NULL)
                 chunk->getElementAndExtraElement(x, y, z, element, extraElement);
         }
@@ -317,14 +334,15 @@ Block* Region::getBlock(const BlockPos& pos)
         if (mCachedStates != NULL && chunkX == mCachedX && chunkZ == mCachedZ)
         {
             int yBase = mCachedY * 16 - 1;
-            if (pos.y >= yBase && pos.y < mCachedY * 16 + 17)
-                return mCachedStates[((pos.y - yBase) << 8) | ((pos.z & 15) << 4) | (pos.x & 15)]->getBlock();
+            int yEnd = mCachedY * 16 + 17;
+            if (pos.y >= yBase && pos.y < yEnd)
+                return mCachedStates[(pos.x & 15) | ((pos.z & 15) << 4) | ((pos.y - yBase) << 8)]->getBlock();
         }
         chunkX -= mMinChunkX;
         chunkZ -= mMinChunkZ;
-        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)mChunks->data[chunkX]->length)
+        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)(*mChunks)[chunkX]->length)
         {
-            LevelChunk* chunk = mChunks->data[chunkX]->data[chunkZ];
+            LevelChunk* chunk = (*mChunks)[chunkX]->data[chunkZ];
             if (chunk != NULL)
                 return chunk->getBlock(pos);
         }
@@ -337,18 +355,20 @@ bool Region::isSolidRender(const BlockPos& pos)
     const BlockState* state = getBlockState(pos);
     if (state == NULL)
         return false;
-    if (!LeafBlock::isLeaves(state->getBlock()))
-        return state->getBlock()->isSolidRender(state);
-    int xOffsets[6] = { 1, -1, 0, 0, 0, 0 };
-    int yOffsets[6] = { 0, 0, 1, -1, 0, 0 };
-    int zOffsets[6] = { 0, 0, 0, 0, 1, -1 };
-    for (int i = 0; i < 6; ++i)
+    if (LeafBlock::isLeaves(state->getBlock()))
     {
-        const BlockState* neighbour = mLevel->getBlockState(pos.offset(xOffsets[i], yOffsets[i], zOffsets[i]));
-        if (!LeafBlock::isLeaves(neighbour->getBlock()) && !neighbour->isSolidRender())
-            return false;
+        int xOffsets[6] = { 1, -1, 0, 0, 0, 0 };
+        int yOffsets[6] = { 0, 0, 1, -1, 0, 0 };
+        int zOffsets[6] = { 0, 0, 0, 0, 1, -1 };
+        for (int i = 0; i < 6; ++i)
+        {
+            const BlockState* neighbour = mLevel->getBlockState(pos.offset(xOffsets[i], yOffsets[i], zOffsets[i]));
+            if (!LeafBlock::isLeaves(neighbour->getBlock()) && !neighbour->isSolidRender())
+                return false;
+        }
+        return true;
     }
-    return true;
+    return state->getBlock()->isSolidRender(state);
 }
 
 BiomeSource* Region::getBiomeSource()
@@ -387,11 +407,13 @@ Block* Region::getExtraBlock(const BlockPos& pos)
 {
     if ((unsigned int)pos.y < 256)
     {
-        int chunkX = (pos.x >> 4) - mMinChunkX;
-        int chunkZ = (pos.z >> 4) - mMinChunkZ;
-        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)mChunks->data[chunkX]->length)
+        int chunkX = pos.x >> 4;
+        int chunkZ = pos.z >> 4;
+        chunkX -= mMinChunkX;
+        chunkZ -= mMinChunkZ;
+        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)(*mChunks)[chunkX]->length)
         {
-            LevelChunk* chunk = mChunks->data[chunkX]->data[chunkZ];
+            LevelChunk* chunk = (*mChunks)[chunkX]->data[chunkZ];
             if (chunk != NULL)
                 return chunk->getExtraBlock(pos);
         }
@@ -419,11 +441,13 @@ const BlockState* Region::getExtraBlockState(const BlockPos& pos)
 {
     if ((unsigned int)pos.y < 256)
     {
-        int chunkX = (pos.x >> 4) - mMinChunkX;
-        int chunkZ = (pos.z >> 4) - mMinChunkZ;
-        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)mChunks->data[chunkX]->length)
+        int chunkX = pos.x >> 4;
+        int chunkZ = pos.z >> 4;
+        chunkX -= mMinChunkX;
+        chunkZ -= mMinChunkZ;
+        if (chunkX >= 0 && chunkX < (int)mChunks->length && chunkZ >= 0 && chunkZ < (int)(*mChunks)[chunkX]->length)
         {
-            LevelChunk* chunk = mChunks->data[chunkX]->data[chunkZ];
+            LevelChunk* chunk = (*mChunks)[chunkX]->data[chunkZ];
             if (chunk != NULL)
                 return chunk->getExtraBlockState(pos);
         }
@@ -475,44 +499,48 @@ unsigned int Region::elementToData(unsigned short element)
 
 void Region::setCachedBlocksAndData(unsigned short* elements, int x, int y, int z, const BlockState** states)
 {
-    mCachedStates = states;
-    mCachedZ = z;
-    mCachedY = y;
     mCachedX = x;
+    mCachedY = y;
+    mCachedZ = z;
+    mCachedStates = states;
 
     PIXBeginNamedEvent(0.0f, "Region::setCachedBlocksAndData");
 
-    int lastData = -1;
+    unsigned int lastBlockId = 0xffff;
+    unsigned char lastData = -1;
     const BlockState* lastState = NULL;
-    int lastBlockId = 0xffff;
     const BlockState* airState = Blocks::air->defaultBlockState();
     int yBase = y * 16 - 1;
 
     for (int yi = 0; yi < 18; ++yi)
     {
-        int worldY = yi + yBase;
         for (int xi = 0; xi < 16; ++xi)
         {
             for (int zi = 0; zi < 16; ++zi)
             {
-                const BlockState* state = airState;
+                int worldY = yi + yBase;
+                unsigned int blockId = BlockId::AIR;
+                unsigned char data = 0;
                 if ((unsigned int)worldY < 256)
                 {
                     unsigned short element = elements[((worldY << 8) & 0x8000) | (xi << 11) | (zi << 7) | (worldY & 0x7f)];
-                    int blockId = elementToBlockId(element);
-                    int data = elementToData(element);
-                    if (blockId != BlockId::AIR)
-                    {
-                        if (blockId != lastBlockId || data != lastData)
-                        {
-                            lastState = Block::byId(blockId)->getBlockState(data);
-                            lastBlockId = blockId;
-                            lastData = data;
-                        }
-                        state = lastState;
-                    }
+                    blockId = elementToBlockId(element);
+                    data = elementToData(element);
                 }
-                states[(yi << 8) | (zi << 4) | xi] = state;
+                if (blockId == BlockId::AIR)
+                {
+                    states[yi * 256 + zi * 16 + xi] = airState;
+                }
+                else
+                {
+                    if (blockId != lastBlockId || data != lastData)
+                    {
+                        lastState = Block::byId(blockId)->getBlockState(data);
+                        lastBlockId = blockId;
+                        lastData = data;
+                    }
+                    states[yi * 256 + zi * 16 + xi] = lastState;
+                }
             }
         }
     }

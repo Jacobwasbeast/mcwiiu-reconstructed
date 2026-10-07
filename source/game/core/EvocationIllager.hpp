@@ -68,7 +68,6 @@ public:
         virtual IllagerSpell* getSpell();
     };
     explicit EvocationIllager(Level* level);
-    virtual ~EvocationIllager();
     virtual void registerGoals();
     virtual void registerAttributes();
     virtual void defineSynchedData();
@@ -85,7 +84,7 @@ public:
     void setWololoTarget(const boost::shared_ptr<Sheep>& target);
     boost::shared_ptr<Sheep> getWololoTarget();
     virtual const SoundEvent* getCastingSoundEvent();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     virtual unsigned long long GetType();
 private:
     boost::weak_ptr<Sheep> mWololoTarget;

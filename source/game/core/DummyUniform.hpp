@@ -16,7 +16,7 @@ public:
     {
     }
 
-    virtual ~DummyUniform();
+    virtual ~DummyUniform() {}
 
     virtual void set(float x);
     virtual void set(float x, float y);

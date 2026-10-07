@@ -27,9 +27,8 @@ class Turtle : public Animal
 public:
     static Predicate<boost::shared_ptr<Entity> >* BABY_ON_LAND_SELECTOR;
     Turtle(Level* level);
-    virtual ~Turtle();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
 
     void setHomePos(const BlockPos& pos);

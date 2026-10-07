@@ -5,6 +5,3 @@ IOException::IOException(const std::wstring& message)
 {
 }
 
-IOException::~IOException()
-{
-}

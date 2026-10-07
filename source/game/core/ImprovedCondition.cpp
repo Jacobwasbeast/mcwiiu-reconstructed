@@ -15,5 +15,5 @@ ImprovedCondition::~ImprovedCondition()
 bool ImprovedCondition::canAward(const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const
 {
     PlayerStats* playerStats = gameStats->GetPlayerStats(uid);
-    return playerStats != NULL && mTarget < (float)playerStats->getImprovement();
+    return playerStats != NULL && (float)playerStats->getImprovement() > mTarget;
 }

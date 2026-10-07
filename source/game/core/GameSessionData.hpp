@@ -15,11 +15,6 @@ public:
     class Gamertag
     {
     public:
-        Gamertag(int fill = 0)
-        {
-            memset(m_name, fill, sizeof(m_name));
-        }
-
         char m_name[MAX_GAMERTAG_LENGTH];
     };
 

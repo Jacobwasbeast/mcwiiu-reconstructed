@@ -10,12 +10,12 @@
 #include <string>
 
 GameRules_IntAttribute::GameRules_IntAttribute(int* value)
-    : mValue(value),
-      mMin(0),
-      mMax(0)
+    : mValue(value)
 {
     mHasMin = false;
     mHasMax = false;
+    mMin = 0;
+    mMax = 0;
 }
 
 GameRules_IntAttribute::~GameRules_IntAttribute()

@@ -48,9 +48,9 @@ SnowMan::SnowMan(Level* level) : Golem(level)
     setSize(0.7f, 1.9f);
 }
 
-void SnowMan::create(Level* level)
+Entity* SnowMan::create(Level* level)
 {
-    new SnowMan(level);
+    return new SnowMan(level);
 }
 
 void SnowMan::performRangedAttack(boost::shared_ptr<LivingEntity> target, float)

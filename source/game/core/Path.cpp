@@ -18,8 +18,8 @@ Path::Path(arrayWithLength<Node*> nodes)
 
     for (int i = 0; i < size; i++)
     {
-        this->nodes.data[i] = new Node();
-        memcpy(this->nodes.data[i], nodes.data[i], sizeof(Node));
+        this->nodes[i] = new Node();
+        memcpy(this->nodes[i], nodes[i], sizeof(Node));
     }
 }
 

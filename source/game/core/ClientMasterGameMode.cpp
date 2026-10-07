@@ -345,13 +345,7 @@ void ClientMasterGameMode::OnStateChange(EGameModeState state)
             params->m_miniGameId = miniGame->GetId();
 
         FullscreenProgressState* progressState = new FullscreenProgressState();
-        progressState->showConfirmation = false;
-        progressState->reservedFlag1 = true;
-        progressState->reservedFlag2 = true;
-        progressState->showTip = true;
-        progressState->closeMode = 3;
         progressState->playerId = 0;
-        progressState->backScene = EUIScene_None;
         params->m_completionData = progressState;
 
         gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress,

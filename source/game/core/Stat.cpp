@@ -33,11 +33,11 @@ Stat::Stat(int id, const std::wstring& name)
 
 void Stat::_init()
 {
-    extended = false;
-    biomeStat = false;
     awardLocallyOnly = false;
-    armourStat = false;
     woolStat = false;
+    armourStat = false;
+    biomeStat = false;
+    extended = false;
 }
 
 Stat* Stat::postConstruct(bool addToList)
@@ -47,7 +47,8 @@ Stat* Stat::postConstruct(bool addToList)
         stats->push_back(this);
     }
 
-    statsById->emplace(std::pair<int, Stat*>(id, this));
+    std::pair<int, Stat*> entry(id, this);
+    statsById->emplace(entry);
 
     return this;
 }
@@ -173,8 +174,7 @@ Stat::DistanceFormatter::~DistanceFormatter()
 
 std::wstring Stat::DistanceFormatter::format(int value)
 {
-    double centimetres = (double)value;
-    double metres = centimetres / 100.0;
+    double metres = (double)value / 100.0;
     double kilometres = metres / 1000.0;
 
     if (kilometres > 0.5)

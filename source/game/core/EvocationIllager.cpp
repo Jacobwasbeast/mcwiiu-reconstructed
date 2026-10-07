@@ -41,7 +41,6 @@ EvocationIllager::EvocationIllager(Level* level) : SpellcasterIllager(level), mW
     mExperienceReward = 10;
     mCategories |= EntityCategory::eEntityCategory_Villager | EntityCategory::eEntityCategory_Humanoid | EntityCategory::eEntityCategory_Monster;
 }
-EvocationIllager::~EvocationIllager() {}
 void EvocationIllager::registerGoals()
 {
     Mob::registerGoals();
@@ -113,7 +112,10 @@ const SoundEvent* EvocationIllager::getHurtSound(const DamageSource*) { return S
 void EvocationIllager::setWololoTarget(const boost::shared_ptr<Sheep>& target) { mWololoTarget = target; }
 boost::shared_ptr<Sheep> EvocationIllager::getWololoTarget() { return mWololoTarget.lock(); }
 const SoundEvent* EvocationIllager::getCastingSoundEvent() { return SoundEvents::EVOCATION_ILLAGER_CAST_SPELL; }
-void EvocationIllager::create(Level* level) { new EvocationIllager(level); }
+Entity* EvocationIllager::create(Level* level)
+{
+    return new EvocationIllager(level);
+}
 unsigned long long EvocationIllager::GetType() { return EntityType::EVOCATION_ILLAGER; }
 
 EvocationIllager::EvokerAttackSpellGoal::EvokerAttackSpellGoal(EvocationIllager* evoker) : SpellcasterUseSpellGoal(evoker) {}

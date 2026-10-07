@@ -242,25 +242,22 @@ unsigned int CTelemetryManager::GetMode(unsigned int playerId)
     if (Minecraft::InMiniGame(eMiniGameId_Any, true))
         return 4;
 
-    if (playerId >= 4)
-        return 0;
+    if (playerId < 4 && minecraft->mLocalPlayers[playerId] != NULL)
+    {
+        const GameType* gameType = NULL;
+        if (minecraft->mLocalPlayers[playerId]->mLevel != NULL && minecraft->mLocalPlayers[playerId]->mLevel->getLevelData() != NULL)
+            gameType = minecraft->mLocalPlayers[playerId]->mLevel->getLevelData()->getGameType();
 
-    if (minecraft->mLocalPlayers[playerId] == NULL)
-        return 0;
+        if (gameType == NULL && gApp.GetGameHostOption(eGameHostOption_HostCanFly))
+            gameType = minecraft->mLocalPlayers[playerId]->GetGameType();
 
-    const GameType* gameType = NULL;
-    if (minecraft->mLocalPlayers[playerId]->mLevel != NULL && minecraft->mLocalPlayers[playerId]->mLevel->getLevelData() != NULL)
-        gameType = minecraft->mLocalPlayers[playerId]->mLevel->getLevelData()->getGameType();
-
-    if (gameType == NULL && gApp.GetGameHostOption(eGameHostOption_HostCanFly))
-        gameType = minecraft->mLocalPlayers[playerId]->GetGameType();
-
-    if (gameType == GameType::SURVIVAL)
-        return 1;
-    if (gameType == GameType::CREATIVE)
-        return 2;
-    if (gameType == GameType::ADVENTURE)
-        return 3;
+        if (gameType == GameType::SURVIVAL)
+            return 1;
+        if (gameType == GameType::CREATIVE)
+            return 2;
+        if (gameType == GameType::ADVENTURE)
+            return 3;
+    }
 
     return 0;
 }

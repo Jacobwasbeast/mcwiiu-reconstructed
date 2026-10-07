@@ -28,6 +28,10 @@ void LootPoolEntry::createItem(std::vector<not_null_ptr<ItemInstance> >* items,
 
 uint32_t LootPoolEntry::getWeight(float luck)
 {
-    int weight = Mth::floor((float)mWeight + (float)mQuality * luck);
-    return weight < 0 ? 0 : (uint32_t)weight;
+    int weight = Mth::floor(mWeight + mQuality * luck);
+    if (weight < 0)
+    {
+        weight = 0;
+    }
+    return weight;
 }

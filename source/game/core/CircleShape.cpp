@@ -6,12 +6,8 @@
 
 void CircleShape::GenerateShape(Random& random, Shape& shape) const
 {
-    int centreX = shape.width / 2;
-    int centreZ = shape.depth / 2;
-
-    Vec3i centre(centreX, 0, centreZ);
-    Vec3i edge(centreX, 0, 0);
-
+    Vec3i centre(shape.width / 2, 0, shape.depth / 2);
+    Vec3i edge(shape.width / 2, 0, 0);
     double radius = centre.dist(edge) - 1.0;
 
     for (unsigned int x = 0; x < shape.width; x++)

@@ -21,9 +21,8 @@ public:
     ShulkerBullet(Level* level, double x, double y, double z, double xd, double yd, double zd);
     ShulkerBullet(Level* level, boost::shared_ptr<LivingEntity> owner,
                   boost::shared_ptr<Entity> target, const Direction::Axis* axis);
-    virtual ~ShulkerBullet();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     void init();
     void setMoveDirection(const Direction* direction);
     const Direction* getMoveDirection();

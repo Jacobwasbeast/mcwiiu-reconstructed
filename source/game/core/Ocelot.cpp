@@ -73,9 +73,9 @@ Ocelot::~Ocelot()
     delete mTemptGoal;
 }
 
-void Ocelot::create(Level* level)
+Entity* Ocelot::create(Level* level)
 {
-    new Ocelot(level);
+    return new Ocelot(level);
 }
 
 void Ocelot::staticCtor()

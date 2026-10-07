@@ -169,8 +169,8 @@ void DataOutputStream::writeUTF(const std::wstring& text)
 
     arrayWithLength<unsigned char> bytes(utfLength + 2, true);
 
-    bytes.data[0] = (unsigned char)((utfLength >> 8) & 0xFF);
-    bytes.data[1] = (unsigned char)(utfLength & 0xFF);
+    bytes[0] = (unsigned char)((utfLength >> 8) & 0xFF);
+    bytes[1] = (unsigned char)(utfLength & 0xFF);
 
     int count = 2;
 
@@ -183,7 +183,7 @@ void DataOutputStream::writeUTF(const std::wstring& text)
             break;
         }
 
-        bytes.data[count++] = (unsigned char)c;
+        bytes[count++] = (unsigned char)c;
     }
 
     for (; i < textLength; i++)
@@ -192,18 +192,18 @@ void DataOutputStream::writeUTF(const std::wstring& text)
 
         if (c >= 0x0001 && c <= 0x007F)
         {
-            bytes.data[count++] = (unsigned char)c;
+            bytes[count++] = (unsigned char)c;
         }
         else if (c > 0x07FF)
         {
-            bytes.data[count++] = (unsigned char)(0xE0 | ((c >> 12) & 0x0F));
-            bytes.data[count++] = (unsigned char)(0x80 | ((c >> 6) & 0x3F));
-            bytes.data[count++] = (unsigned char)(0x80 | (c & 0x3F));
+            bytes[count++] = (unsigned char)(0xE0 | ((c >> 12) & 0x0F));
+            bytes[count++] = (unsigned char)(0x80 | ((c >> 6) & 0x3F));
+            bytes[count++] = (unsigned char)(0x80 | (c & 0x3F));
         }
         else
         {
-            bytes.data[count++] = (unsigned char)(0xC0 | ((c >> 6) & 0x1F));
-            bytes.data[count++] = (unsigned char)(0x80 | (c & 0x3F));
+            bytes[count++] = (unsigned char)(0xC0 | ((c >> 6) & 0x1F));
+            bytes[count++] = (unsigned char)(0x80 | (c & 0x3F));
         }
     }
 

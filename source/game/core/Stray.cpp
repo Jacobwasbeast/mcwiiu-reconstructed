@@ -23,9 +23,9 @@ Stray::Stray(Level* level)
     Mob::fjDerivedCtorCalls();
 }
 
-void Stray::create(Level* level)
+Entity* Stray::create(Level* level)
 {
-    new Stray(level);
+    return new Stray(level);
 }
 
 void Stray::addDataWalkers(DataFixerUpper* fixer)

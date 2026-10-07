@@ -110,7 +110,6 @@ unsigned int CMinecraftApp::sPreviousSignInUsersMask = 0;
 CConsoleMinecraftApp gApp;
 static Random* sTipRandom = new Random();
 static bool s_pendingDlcInstallTip = true;
-static const unsigned int PNG_CHUNK_TYPE_TEXT = 0x74455874U;
 
 struct BANNEDLISTDATA
 {
@@ -4074,13 +4073,8 @@ void CMinecraftApp::HandleXuiActions()
             params->m_threadProc = &UIScene_PauseMenu::SaveWorldThreadProc;
             params->m_waitForThreadToDelete = true;
             FullscreenProgressState* state = new FullscreenProgressState;
-            state->showConfirmation = false;
-            state->reservedFlag1 = true;
-            state->reservedFlag2 = true;
-            state->showTip = true;
             state->closeMode = 6;
             state->playerId = gProfile->GetPrimaryPad();
-            state->backScene = EUIScene_None;
             state->backScene = gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), EUIScene_EndPoem)
                 ? EUIScene_EndPoem
                 : EUIScene_PauseMenu;
@@ -4177,13 +4171,9 @@ void CMinecraftApp::HandleXuiActions()
             params->m_threadParam = param;
             params->m_threadProc = &UIScene_PauseMenu::ExitWorldThreadProc;
             FullscreenProgressState* completionData = new FullscreenProgressState;
-            completionData->showConfirmation = false;
-            completionData->reservedFlag1 = true;
-            completionData->reservedFlag2 = true;
             completionData->showTip = param == NULL;
             completionData->closeMode = 4;
             completionData->playerId = 0;
-            completionData->backScene = EUIScene_None;
             params->m_completionData = completionData;
             gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
                                                  EUILayer_Scene, EUIGroup_PlayerDefault);
@@ -4205,13 +4195,8 @@ void CMinecraftApp::HandleXuiActions()
             params->m_threadParam = param;
             params->m_threadProc = &UIScene_PauseMenu::ExitWorldThreadProc;
             FullscreenProgressState* completionData = new FullscreenProgressState;
-            completionData->showConfirmation = false;
-            completionData->reservedFlag1 = true;
-            completionData->reservedFlag2 = true;
-            completionData->showTip = true;
             completionData->closeMode = 4;
             completionData->playerId = 0;
-            completionData->backScene = EUIScene_None;
             params->m_completionData = completionData;
             gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
                                                  EUILayer_Scene, EUIGroup_PlayerDefault);
@@ -4422,13 +4407,8 @@ void CMinecraftApp::HandleXuiActions()
                 _LoadingInputParams* params = new _LoadingInputParams();
                 params->m_threadProc = &SignoutExitWorldThreadProc;
                 FullscreenProgressState* completionData = new FullscreenProgressState;
-                completionData->showConfirmation = false;
-                completionData->reservedFlag1 = true;
-                completionData->reservedFlag2 = true;
-                completionData->showTip = true;
                 completionData->closeMode = 4;
                 completionData->playerId = 0;
-                completionData->backScene = EUIScene_None;
                 params->m_completionData = completionData;
                 gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
                                                      EUILayer_Scene, EUIGroup_PlayerDefault);
@@ -4493,13 +4473,8 @@ void CMinecraftApp::HandleXuiActions()
             params->m_threadParam = &CGameNetworkManager::sInstance.m_pendingInviteUserIndex;
             params->m_threadProc = &CGameNetworkManager::ExitAndJoinFromInviteThreadProc;
             FullscreenProgressState* completionData = new FullscreenProgressState;
-            completionData->showConfirmation = false;
-            completionData->reservedFlag1 = true;
-            completionData->reservedFlag2 = true;
-            completionData->showTip = true;
             completionData->closeMode = 0;
             completionData->playerId = 0;
-            completionData->backScene = EUIScene_None;
             params->m_completionData = completionData;
             gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
                                                  EUILayer_Scene, EUIGroup_PlayerDefault);
@@ -4558,13 +4533,7 @@ void CMinecraftApp::HandleXuiActions()
             params->m_threadProc = &CGameNetworkManager::ChangeSessionTypeThreadProc;
             params->m_threadParam = NULL;
             FullscreenProgressState* state = new FullscreenProgressState;
-            state->showConfirmation = false;
-            state->reservedFlag1 = true;
-            state->reservedFlag2 = true;
-            state->showTip = true;
-            state->closeMode = 3;
             state->playerId = 0;
-            state->backScene = EUIScene_None;
             state->showConfirmation = true;
             if (gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), EUIScene_EndPoem))
             {
@@ -4597,18 +4566,12 @@ void CMinecraftApp::HandleXuiActions()
             params->m_threadProc = &RemoteSaveThreadProc;
             params->m_threadParam = NULL;
             FullscreenProgressState* state = new FullscreenProgressState;
-            state->showConfirmation = false;
-            state->reservedFlag1 = true;
-            state->reservedFlag2 = true;
-            state->showTip = true;
             state->closeMode = 1;
             state->playerId = 0;
-            state->backScene = EUIScene_None;
             if (!gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), EUIScene_ConnectingProgress))
             {
                 if (!gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), EUIScene_EndPoem))
                 {
-                    state->closeMode = 3;
                 }
                 else
                 {
@@ -4654,13 +4617,8 @@ void CMinecraftApp::HandleXuiActions()
             params->m_threadProc = &UIScene_PauseMenu::SaveWorldThreadProc;
             params->m_threadParam = reinterpret_cast<void*>(1);
             FullscreenProgressState* completionData = new FullscreenProgressState;
-            completionData->showConfirmation = false;
-            completionData->reservedFlag1 = true;
-            completionData->reservedFlag2 = true;
-            completionData->showTip = true;
             completionData->closeMode = 5;
             completionData->playerId = gProfile->GetPrimaryPad();
-            completionData->backScene = EUIScene_None;
             params->m_completionData = completionData;
             gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
                                                  EUILayer_Fullscreen, EUIGroup_Fullscreen);
@@ -4733,13 +4691,7 @@ void CMinecraftApp::HandleXuiActions()
             params->m_threadProc = &GameModeTransitionThreadProc;
             params->m_miniGameId = Minecraft::GetInstance()->GetMiniGame()->GetId();
             FullscreenProgressState* completionData = new FullscreenProgressState;
-            completionData->showConfirmation = false;
-            completionData->reservedFlag1 = true;
-            completionData->reservedFlag2 = true;
-            completionData->showTip = true;
-            completionData->closeMode = 3;
             completionData->playerId = gProfile->GetPrimaryPad();
-            completionData->backScene = EUIScene_None;
             params->m_completionData = completionData;
             params->m_completeFunc = &GameModeTransitionComplete;
             params->m_completeFuncParam = reinterpret_cast<void*>(static_cast<intptr_t>(static_cast<GameModeTransitionParams*>(param)->mReturningToLobby));

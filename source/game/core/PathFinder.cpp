@@ -12,7 +12,7 @@
 #include "game/world/block/BlockPos.hpp"
 
 PathFinder::PathFinder(NodeEvaluator* nodeEvaluator)
-    : BinaryHeap(), mNeighbors(new arrayWithLength<Node*>(32, true)), mNodeEvaluator(nodeEvaluator)
+    : openSet(), mNeighbors(new arrayWithLength<Node*>(32, true)), mNodeEvaluator(nodeEvaluator)
 {
 }
 
@@ -32,20 +32,18 @@ Path* PathFinder::reconstruct_path(Node* start, Node* end)
         node = node->cameFrom;
     }
 
-    Node** data = new Node*[length];
-    arrayWithLength<Node*>::zero(data, length);
+    arrayWithLength<Node*> nodes(length, true);
     unsigned int last = length - 1;
-    data[last] = end;
-    Node** slot = data + last;
+    nodes.data[last] = end;
+    Node** slot = nodes.data + last;
     for (node = end->cameFrom; node != NULL; node = node->cameFrom)
     {
         --slot;
         *slot = node;
     }
 
-    arrayWithLength<Node*> nodes(data, length);
     Path* path = new Path(nodes);
-    delete[] data;
+    delete[] nodes.data;
     return path;
 }
 
@@ -54,14 +52,14 @@ Path* PathFinder::findPath(Node* start, Node* end, float maxDistance)
     start->g = 0.0f;
     start->h = (float)start->distanceManhattan(end);
     start->f = start->h;
-    clear();
-    insert(start);
+    openSet.clear();
+    openSet.insert(start);
 
     Node* best = start;
     int iterations = 0;
-    while (!isEmpty() && ++iterations < 200)
+    while (!openSet.isEmpty() && ++iterations < 200)
     {
-        Node* current = pop();
+        Node* current = openSet.pop();
         if (current->equals(end))
         {
             best = end;
@@ -88,11 +86,11 @@ Path* PathFinder::findPath(Node* start, Node* end, float maxDistance)
                 if (!neighbor->inOpenSet())
                 {
                     neighbor->f = neighbor->g + neighbor->h;
-                    insert(neighbor);
+                    openSet.insert(neighbor);
                 }
                 else
                 {
-                    changeCost(neighbor, neighbor->f);
+                    openSet.changeCost(neighbor, neighbor->f);
                 }
             }
         }
@@ -107,7 +105,7 @@ Path* PathFinder::findPath(Node* start, Node* end, float maxDistance)
 
 Path* PathFinder::findPath(LevelSource* levelSource, Mob* mob, double x, double y, double z, float maxDistance)
 {
-    clear();
+    openSet.clear();
     mNodeEvaluator->prepare(levelSource, mob);
     Node* start = mNodeEvaluator->getStart();
     Block* block = levelSource->getBlock(BlockPos(mob->mX, mob->mY, mob->mZ));
@@ -141,7 +139,7 @@ Path* PathFinder::findPath(LevelSource* levelSource, Mob* mob, Entity* entity, f
 
 Path* PathFinder::findDirectPath(LevelSource* levelSource, Mob* mob, const BlockPos& pos, float maxDistance)
 {
-    clear();
+    openSet.clear();
     mNodeEvaluator->prepare(levelSource, mob);
     Node* start = mNodeEvaluator->getStart();
     Node* goal = mNodeEvaluator->getDirectGoal(pos);

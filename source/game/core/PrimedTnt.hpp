@@ -20,7 +20,7 @@ public:
     PrimedTnt(Level* level, double x, double y, double z, boost::shared_ptr<LivingEntity> owner);
     virtual ~PrimedTnt();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     void _init();
     void setFuse(int fuse);

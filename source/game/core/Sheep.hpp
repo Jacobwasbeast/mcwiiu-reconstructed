@@ -31,13 +31,12 @@ public:
     class SheepContainer : public AbstractContainerMenu
     {
     public:
-        virtual ~SheepContainer();
         virtual bool stillValid(boost::shared_ptr<Player> player);
     };
 
     Sheep(Level* level);
     virtual ~Sheep();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static arrayWithLength<const float> getColorArray(const DyeColor* color);
     static arrayWithLength<const float> createSheepColor(const DyeColor* color);
     static void staticCtor();

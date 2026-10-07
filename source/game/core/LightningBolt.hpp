@@ -15,7 +15,6 @@ public:
     LightningBolt(Level* level, double x, double y, double z, bool visualOnly);
 
     virtual unsigned long long GetType();
-    virtual ~LightningBolt();
     virtual void defineSynchedData();
     virtual void tick();
     virtual bool shouldRender(double distanceSqr);

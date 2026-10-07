@@ -21,7 +21,7 @@ class MinecartFurnace : public Minecart
 public:
     MinecartFurnace(Level* level);
     MinecartFurnace(Level* level, double x, double y, double z);
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     virtual unsigned int getContainerType();
     static void addDataWalkers(DataFixerUpper* dataFixerUpper);

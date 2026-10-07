@@ -298,4 +298,7 @@ bool Creeper::mobInteract(const boost::shared_ptr<Player>& player, InteractionHa
 
 unsigned long long Creeper::GetType() { return EntityType::CREEPER; }
 
-void Creeper::create(Level* level) { new Creeper(level); }
+Entity* Creeper::create(Level* level)
+{
+    return new Creeper(level);
+}

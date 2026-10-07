@@ -84,14 +84,7 @@ arrayWithLength<double> PerlinSimplexNoise::getRegion(arrayWithLength<double> va
     xScale /= 1.5;
     yScale /= 1.5;
 
-    if (values.data != NULL && (int)values.length >= xSize * ySize)
-    {
-        for (unsigned int i = 0; i < values.length; i++)
-        {
-            values.data[i] = 0.0;
-        }
-    }
-    else
+    if (values.data == NULL || (int)values.length < xSize * ySize)
     {
         if (values.data != NULL)
         {
@@ -100,16 +93,23 @@ arrayWithLength<double> PerlinSimplexNoise::getRegion(arrayWithLength<double> va
 
         values = arrayWithLength<double>(xSize * ySize, true);
     }
+    else
+    {
+        for (unsigned int i = 0; i < values.length; i++)
+        {
+            values.data[i] = 0.0;
+        }
+    }
 
-    double frequency = 1.0;
     double amplitude = 1.0;
+    double frequency = 1.0;
 
     for (int i = 0; i < levels; i++)
     {
         noiseLevels[i]->add(values, x, y, xSize, ySize, xScale * frequency, yScale * frequency, 0.55 / amplitude);
 
-        amplitude *= amplitudeScale;
         frequency *= frequencyScale;
+        amplitude *= amplitudeScale;
     }
 
     return values;

@@ -24,15 +24,15 @@ unsigned int Node::createHash(int x, int y, int z)
 
 void Node::_init()
 {
-    walkedDistance = 0.0f;
-    type = BlockPathTypes::BLOCKED;
-    acceptedNode = 0;
     heapIdx = -1;
     closed = false;
-    cost = 0.0f;
-    hasAcceptedNode = false;
     cameFrom = 0;
+    walkedDistance = 0.0f;
+    cost = 0.0f;
     costMalus = 0.0f;
+    type = BlockPathTypes::BLOCKED;
+    hasAcceptedNode = false;
+    acceptedNode = 0;
 }
 
 Node::Node(int xValue, int yValue, int zValue) : x(xValue), y(yValue), z(zValue), hash(createHash(xValue, yValue, zValue))
@@ -57,21 +57,19 @@ Node::Node(const Node& node)
 Node* Node::GetNodeFromPool(int xValue, int yValue, int zValue)
 {
     Node* node = NULL;
-    if (!usePool)
-        node = new Node(xValue, yValue, zValue);
-    else if (poolSize < 1024)
+    if (usePool)
     {
-        node = &pool[poolSize];
-        node->x = xValue;
-        node->y = yValue;
-        node->z = zValue;
-        node->hash = createHash(xValue, yValue, zValue);
-        node->_init();
-        ++poolSize;
-    }
-    else
-    {
-        if (poolSize - 1024 < allocated.size())
+        if (poolSize < 1024)
+        {
+            node = &pool[poolSize];
+            node->x = xValue;
+            node->y = yValue;
+            node->z = zValue;
+            node->hash = createHash(xValue, yValue, zValue);
+            node->_init();
+            ++poolSize;
+        }
+        else if (poolSize - 1024 < allocated.size())
         {
             node = allocated[poolSize - 1024];
             node->x = xValue;
@@ -93,12 +91,17 @@ Node* Node::GetNodeFromPool(int xValue, int yValue, int zValue)
             ++poolSize;
         }
     }
+    else
+    {
+        node = new Node(xValue, yValue, zValue);
+    }
     return node;
 }
 
 Node* Node::cloneMove(int xValue, int yValue, int zValue)
 {
     Node* node = GetNodeFromPool(xValue, yValue, zValue);
+    node->heapIdx = heapIdx;
     node->g = g;
     node->h = h;
     node->f = f;
@@ -108,13 +111,7 @@ Node* Node::cloneMove(int xValue, int yValue, int zValue)
     node->cost = cost;
     node->costMalus = costMalus;
     node->type = type;
-    node->heapIdx = heapIdx;
     return node;
-}
-
-const BlockPathTypes* Node::GetType()
-{
-    return type;
 }
 
 float Node::distanceTo(Node* node)

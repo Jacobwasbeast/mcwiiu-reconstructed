@@ -434,10 +434,6 @@ Options::Option::Option(const std::wstring& captionId, bool progress, bool boole
     mCaptionId.assign(captionId, 0, 0xffffffff);
 }
 
-Options::Option::~Option()
-{
-}
-
 std::wstring Options::Option::getCaptionId() const
 {
     return mCaptionId;

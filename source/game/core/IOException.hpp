@@ -8,7 +8,6 @@ class IOException : public std::exception
 {
 public:
     IOException(const std::wstring& message);
-    ~IOException();
 
 private:
     std::wstring mMessage;

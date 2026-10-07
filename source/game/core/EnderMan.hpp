@@ -44,7 +44,6 @@ public:
     {
     public:
         EndermanLookForPlayerGoal(EnderMan* enderMan);
-        virtual ~EndermanLookForPlayerGoal();
         virtual bool canUse();
         virtual void start();
         virtual void stop();
@@ -96,7 +95,7 @@ public:
     virtual void dropEquipment(bool wasRecentlyHit, int lootingModifier);
     virtual ResourceLocation* getDefaultLootTable();
     virtual bool hurt(const DamageSource* source, float damage);
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static AttributeModifier* SPEED_MODIFIER_ATTACKING;
     virtual unsigned long long GetType();
 

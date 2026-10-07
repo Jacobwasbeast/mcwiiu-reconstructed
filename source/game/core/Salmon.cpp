@@ -25,9 +25,9 @@ Salmon::Salmon(Level* level)
     mWaterValueC = 12.0f;
 }
 
-void Salmon::create(Level* level)
+Entity* Salmon::create(Level* level)
 {
-    new Salmon(level);
+    return new Salmon(level);
 }
 
 void Salmon::staticCtor()
@@ -49,9 +49,9 @@ void Salmon::SalmonWeightedRandomize()
         setSalmonScale(SMALL);
     else
     {
-        SalmonScale scale = MEDIUM;
-        if (value > 80)
-            scale = LARGE;
+        SalmonScale scale = LARGE;
+        if (value <= 80)
+            scale = MEDIUM;
         setSalmonScale(scale);
     }
 }
@@ -82,23 +82,23 @@ void Salmon::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
     {
     case SMALL:
         setSize(0.5f, 0.5f);
-        mSwimSpeed = 0.5f;
         mSwimFlag = true;
+        mSwimSpeed = 0.5f;
         mSwimTicks = 24;
         getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(2.0);
         break;
     case MEDIUM:
         setSize(1.0f, 1.0f);
-        mSwimTicks = 1;
         mSwimFlag = false;
         mSwimSpeed = 1.0f;
+        mSwimTicks = 1;
         getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(3.0);
         break;
     case LARGE:
         setSize(1.5f, 1.5f);
-        mSwimTicks = -7;
         mSwimFlag = true;
         mSwimSpeed = 1.5f;
+        mSwimTicks = -7;
         getAttribute(SharedMonsterAttributes::MAX_HEALTH)->setBaseValue(5.0);
         break;
     }

@@ -42,9 +42,9 @@ MinecartFurnace::MinecartFurnace(Level* level, double x, double y, double z)
     mPushZ = 0.0;
 }
 
-void MinecartFurnace::create(Level* level)
+Entity* MinecartFurnace::create(Level* level)
 {
-    new MinecartFurnace(level);
+    return new MinecartFurnace(level);
 }
 
 void MinecartFurnace::staticCtor()

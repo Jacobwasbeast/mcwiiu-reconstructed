@@ -52,9 +52,9 @@ LlamaSpit::LlamaSpit(Level* level, double x, double y, double z, double xd, doub
     mZd = zd;
 }
 
-void LlamaSpit::create(Level* level)
+Entity* LlamaSpit::create(Level* level)
 {
-    new LlamaSpit(level);
+    return new LlamaSpit(level);
 }
 
 void LlamaSpit::_init()

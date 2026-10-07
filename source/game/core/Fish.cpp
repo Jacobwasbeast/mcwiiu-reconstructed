@@ -163,7 +163,7 @@ unsigned long long Fish::GetType()
     return EntityType::FISH;
 }
 
-void Fish::create(Level* level)
+Entity* Fish::create(Level* level)
 {
-    new Fish(level, false);
+    return new Fish(level, false);
 }

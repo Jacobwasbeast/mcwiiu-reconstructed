@@ -57,9 +57,9 @@ Sheep::~Sheep()
     delete mContainer;
 }
 
-void Sheep::create(Level* level)
+Entity* Sheep::create(Level* level)
 {
-    new Sheep(level);
+    return new Sheep(level);
 }
 
 arrayWithLength<const float> Sheep::getColorArray(const DyeColor* color)
@@ -398,10 +398,6 @@ float Sheep::getEyeHeight()
 unsigned long long Sheep::GetType()
 {
     return EntityType::SHEEP;
-}
-
-Sheep::SheepContainer::~SheepContainer()
-{
 }
 
 bool Sheep::SheepContainer::stillValid(boost::shared_ptr<Player> player)

@@ -44,10 +44,6 @@ Chicken::Chicken(Level* level) : Animal(level)
     mTimeUntilNextEgg = mRandom->nextInt(6000) + 6000;
 }
 
-Chicken::~Chicken()
-{
-}
-
 void Chicken::addDataWalkers(DataFixerUpper* fixer)
 {
     Mob::addDataWalkers(fixer, EntityType::CHICKEN);
@@ -213,7 +209,7 @@ unsigned long long Chicken::GetType()
     return EntityType::CHICKEN;
 }
 
-void Chicken::create(Level* level)
+Entity* Chicken::create(Level* level)
 {
-    new Chicken(level);
+    return new Chicken(level);
 }

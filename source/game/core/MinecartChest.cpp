@@ -37,9 +37,9 @@ MinecartChest::~MinecartChest()
 {
 }
 
-void MinecartChest::create(Level* level)
+Entity* MinecartChest::create(Level* level)
 {
-    new MinecartChest(level);
+    return new MinecartChest(level);
 }
 
 unsigned int MinecartChest::getContainerSize()

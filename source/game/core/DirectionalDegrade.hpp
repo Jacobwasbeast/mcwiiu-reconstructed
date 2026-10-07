@@ -13,7 +13,6 @@ class DirectionalDegrade : public DegradationRuleDefinition
 {
 public:
     DirectionalDegrade();
-    virtual ~DirectionalDegrade();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual void writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount);

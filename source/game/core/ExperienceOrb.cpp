@@ -345,9 +345,9 @@ bool ExperienceOrb::shouldRender(double distanceSqr)
     return Entity::shouldRender(distanceSqr);
 }
 
-void ExperienceOrb::create(Level* level)
+Entity* ExperienceOrb::create(Level* level)
 {
-    new ExperienceOrb(level);
+    return new ExperienceOrb(level);
 }
 
 unsigned long long ExperienceOrb::GetType()

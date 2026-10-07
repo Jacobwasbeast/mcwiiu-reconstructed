@@ -25,7 +25,7 @@
 static unsigned int gGameRuleCRCTable[256];
 static bool gGameRuleCRCTableReady = false;
 
-static const wchar_t* gGameRuleTypeNames[77] = {
+const wchar_t* GameRuleManager::sTagNames[ConsoleGameRules::eGameRuleType_Count] = {
     L"", L"MapOptions", L"ApplySchematic", L"GenerateStructure", L"GenerateBox", L"PlaceBlock", L"PlaceContainer", L"PlaceSpawner",
     L"BiomeOverride", L"StartFeature", L"AddItem", L"AddEnchantment", L"WeighedTreasureItem", L"RandomItemSet", L"DistributeItems",
     L"WorldPosition", L"LevelRules", L"NamedArea", L"ActiveChunkArea", L"TargetArea", L"ScoreRing", L"ThermalArea", L"PlayerBoundsVolume",
@@ -274,7 +274,7 @@ unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsi
     {
         for (int name = 0; name < stringCount; ++name)
         {
-            if (names[name] == gGameRuleTypeNames[type])
+            if (names[name] == sTagNames[type])
             {
                 types[name] = static_cast<ConsoleGameRules::EGameRuleType>(type);
                 break;
@@ -414,7 +414,7 @@ void GameRuleManager::loadGameRules(LevelGenerationOptions* options, unsigned ch
 
 LevelGenerationOptions* GameRuleManager::loadGameRules(unsigned char* data, unsigned int size)
 {
-    LevelGenerationOptions* options = new LevelGenerationOptions(NULL);
+    LevelGenerationOptions* options = new LevelGenerationOptions();
     options->setGrSource(new GameRulesSource());
     options->setSrc(LevelGenerationOptions::eSrc_Save);
     loadGameRules(options, data, size);
@@ -444,7 +444,7 @@ void GameRuleManager::writeRuleFile(DataOutputStream* output)
         {
             if (tagTypes.find(type) != tagTypes.end())
             {
-                output->writeUTF(gGameRuleTypeNames[type]);
+                output->writeUTF(sTagNames[type]);
                 tags[type] = key++;
             }
         }

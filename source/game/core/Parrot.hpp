@@ -48,7 +48,7 @@ public:
 
     Parrot(Level* level);
     virtual ~Parrot();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     virtual bool isFlying();
     static const SoundEvent* getImitatedSound(unsigned long long type);
     static float getPitch(Random* random);

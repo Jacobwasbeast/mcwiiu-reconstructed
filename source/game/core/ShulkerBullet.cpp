@@ -60,13 +60,9 @@ ShulkerBullet::ShulkerBullet(Level* level, boost::shared_ptr<LivingEntity> owner
     selectNextMoveDirection(axis);
 }
 
-ShulkerBullet::~ShulkerBullet()
+Entity* ShulkerBullet::create(Level* level)
 {
-}
-
-void ShulkerBullet::create(Level* level)
-{
-    new ShulkerBullet(level);
+    return new ShulkerBullet(level);
 }
 
 void ShulkerBullet::init()

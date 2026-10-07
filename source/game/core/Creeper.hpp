@@ -37,7 +37,7 @@ public:
 
     static void staticCtor();
     static void addDataWalkers(DataFixerUpper* fixer);
-    static void create(Level* level);
+    static Entity* create(Level* level);
 
     void _init();
     bool isIgnited();

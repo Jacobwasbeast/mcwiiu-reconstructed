@@ -6,15 +6,7 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/FileInputStream.hpp"
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
-
-struct _OVERLAPPED
-{
-    unsigned int Internal;
-    unsigned int InternalHigh;
-    unsigned int Offset;
-    unsigned int OffsetHigh;
-    int hEvent;
-};
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
 char* wstringtofilename(const std::wstring& path, char (&filename)[256]);
 int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
@@ -24,11 +16,6 @@ unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead,
                       unsigned int* bytesRead, _OVERLAPPED* overlapped);
 int SetFilePointer(int file, long distanceToMove, int* distanceToMoveHigh,
                    unsigned int moveMethod);
-
-static const int INVALID_HANDLE_VALUE = -1;
-static const unsigned int GENERIC_READ = 0x80000000;
-static const unsigned int OPEN_EXISTING = 3;
-static const unsigned int FILE_ATTRIBUTE_NORMAL = 0x00000080;
 
 ArchiveFile::ArchiveFile(File file)
 {

@@ -62,7 +62,11 @@ public:
     void setCachedBlocksAndData(unsigned short* elements, int x, int y, int z, const BlockState** states);
     unsigned int elementToBlockId(unsigned short element);
     unsigned int elementToData(unsigned short element);
-    LevelChunk* getLevelChunk(const BlockPos& pos) { return mChunks->data[(pos.x >> 4) - mMinChunkX]->data[(pos.z >> 4) - mMinChunkZ]; }
+    LevelChunk* getLevelChunk(const BlockPos& pos)
+    {
+        int chunkX = (pos.x >> 4) - mMinChunkX;
+        return mChunks->data[chunkX]->data[(pos.z >> 4) - mMinChunkZ];
+    }
 
 private:
     int mMinChunkX;

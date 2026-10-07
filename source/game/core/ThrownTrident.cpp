@@ -60,13 +60,9 @@ ThrownTrident::ThrownTrident(Level* level, not_null_ptr<ItemInstance> item,
     mTridentItem = item->copy();
 }
 
-ThrownTrident::~ThrownTrident()
+Entity* ThrownTrident::create(Level* level)
 {
-}
-
-void ThrownTrident::create(Level* level)
-{
-    new ThrownTrident(level);
+    return new ThrownTrident(level);
 }
 
 void ThrownTrident::staticCtor()

@@ -4,16 +4,16 @@
 
 cProductInfo::cProductInfo()
 {
-    m_pName = NULL;
-    m_pProductIdString = NULL;
     m_pDescription = NULL;
+    m_pName = NULL;
     m_pPriceString = NULL;
-    m_pSKUId = NULL;
-    m_SortIndex = 0;
     m_bCanDownload = false;
+    m_bCanPurchase = false;
+    m_pProductIdString = NULL;
+    m_pSKUId = NULL;
     m_pBanner = NULL;
     m_PackID = 0;
-    m_bCanPurchase = false;
+    m_SortIndex = 0;
 }
 
 cProductInfo::~cProductInfo()
@@ -31,22 +31,22 @@ void cProductInfo::Init(bool canPurchase, bool canDownload, unsigned int price, 
     m_bCanDownload = canDownload;
     m_bCanPurchase = canPurchase;
 
-    unsigned int nameLength = strlen(pName);
-    m_pName = new char[nameLength + 1];
-    memset(m_pName, 0, nameLength + 1);
-    if (nameLength != 0)
+    unsigned int length = strlen(pName);
+    m_pName = new char[length + 1];
+    memset(m_pName, 0, length + 1);
+    if (length != 0)
     {
-        memcpy(m_pName, pName, nameLength);
+        memcpy(m_pName, pName, length);
     }
 
     m_Price = price;
 
-    unsigned int priceStringLength = strlen(pPriceString);
-    m_pPriceString = new char[priceStringLength + 1];
-    memset(m_pPriceString, 0, priceStringLength + 1);
-    if (priceStringLength != 0)
+    length = strlen(pPriceString);
+    m_pPriceString = new char[length + 1];
+    memset(m_pPriceString, 0, length + 1);
+    if (length != 0)
     {
-        memcpy(m_pPriceString, pPriceString, priceStringLength);
+        memcpy(m_pPriceString, pPriceString, length);
     }
 
     unsigned int productIdStringLength = strlen(pProductIdString);
@@ -55,20 +55,20 @@ void cProductInfo::Init(bool canPurchase, bool canDownload, unsigned int price, 
     {
         productIdPrefixLength = 20;
     }
-    unsigned int productIdLength = productIdStringLength - productIdPrefixLength;
-    m_pProductIdString = new char[productIdLength + 1];
-    memset(m_pProductIdString, 0, productIdLength + 1);
+    length = productIdStringLength - productIdPrefixLength;
+    m_pProductIdString = new char[length + 1];
+    memset(m_pProductIdString, 0, length + 1);
     if (productIdStringLength != 0)
     {
-        memcpy(m_pProductIdString, pProductIdString + productIdPrefixLength, productIdLength);
+        memcpy(m_pProductIdString, pProductIdString + productIdPrefixLength, length);
     }
 
-    unsigned int skuIdLength = strlen(pSKUId);
-    m_pSKUId = new char[skuIdLength + 1];
-    memset(m_pSKUId, 0, skuIdLength + 1);
-    if (skuIdLength != 0)
+    length = strlen(pSKUId);
+    m_pSKUId = new char[length + 1];
+    memset(m_pSKUId, 0, length + 1);
+    if (length != 0)
     {
-        memcpy(m_pSKUId, pSKUId, skuIdLength);
+        memcpy(m_pSKUId, pSKUId, length);
     }
 
     m_pDescription = new char[4001];

@@ -42,7 +42,7 @@ public:
     virtual bool canBeLeashed(const boost::shared_ptr<Player>& player);
     virtual unsigned long long GetType();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
 
 protected:

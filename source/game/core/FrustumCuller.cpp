@@ -6,12 +6,7 @@
 
 FrustumCuller::FrustumCuller(FrustumData* frustumData)
 {
-    if (frustumData == NULL)
-    {
-        frustumData = Frustum::getFrustum();
-    }
-
-    this->frustumData = frustumData;
+    this->frustumData = frustumData == NULL ? Frustum::getFrustum() : frustumData;
 }
 
 bool FrustumCuller::isVisible(AABB* boundingBox)

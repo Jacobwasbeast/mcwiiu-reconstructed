@@ -20,7 +20,6 @@ class Coral : public Bush
 {
 public:
     Coral();
-    virtual ~Coral();
 
     virtual int getColor(const BlockState* state);
     virtual int getColor(LevelSource* levelSource, const BlockPos& pos, const BlockState* state);

@@ -102,7 +102,7 @@ public:
     bool hasPlayerPassenger();
     virtual void tickLeash();
     virtual unsigned long long GetType();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     bool isOutOfControl();
 
 private:

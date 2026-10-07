@@ -303,9 +303,9 @@ void RegionFile::setTimestamp(int x, int z, int timestamp)
 
 void RegionFile::write(int x, int z, unsigned char* data, int length, bool compressed)
 {
+    unsigned char* buffer = NULL;
     unsigned int compressedLength = length + 0x800;
     bool ownsBuffer = false;
-    unsigned char* buffer = NULL;
 
     if (compressedLength < THREAD_STORAGE_SIZE)
     {
@@ -375,7 +375,16 @@ void RegionFile::write(int x, int z, unsigned char* data, int length, bool compr
         }
         PIXEndNamedEvent();
 
-        if (runLength < sectorsNeeded)
+        if (runLength >= sectorsNeeded)
+        {
+            sectorNumber = runStart;
+            setOffset(x, z, (sectorNumber << 8) | sectorsNeeded);
+            for (int i = 0; i < sectorsNeeded; ++i)
+            {
+                mUsedSectors->at(sectorNumber + i) = false;
+            }
+        }
+        else
         {
             PIXBeginNamedEvent(0.0f, "Expanding storage for %d sectors\n", sectorsNeeded);
             mSaveFile->setFilePointer(mFileEntry, 0, NULL, FILE_END);
@@ -394,13 +403,6 @@ void RegionFile::write(int x, int z, unsigned char* data, int length, bool compr
             setTimestamp(x, z, static_cast<int>(System::processTimeInSeconds()));
             mSaveFile->ReleaseSaveAccess();
             return;
-        }
-
-        sectorNumber = runStart;
-        setOffset(x, z, (sectorNumber << 8) | sectorsNeeded);
-        for (int i = 0; i < sectorsNeeded; ++i)
-        {
-            mUsedSectors->at(sectorNumber + i) = false;
         }
     }
 
@@ -477,10 +479,6 @@ void RegionFile::ReleaseThreadStorage()
         delete[] storage;
         TlsSetValue(sThreadStorageIndex, NULL);
     }
-}
-
-RegionFile::ChunkBuffer::~ChunkBuffer()
-{
 }
 
 void RegionFile::ChunkBuffer::close()

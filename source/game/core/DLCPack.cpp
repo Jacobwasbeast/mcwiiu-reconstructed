@@ -99,9 +99,9 @@ DLCFile* DLCPack::getFile(DLCManager::EDLCType type, unsigned int index, bool se
     return file;
 }
 
-int DLCPack::getDLCItemsCount(DLCManager::EDLCType type)
+unsigned int DLCPack::getDLCItemsCount(DLCManager::EDLCType type)
 {
-    int total;
+    unsigned int total;
     if (type == DLCManager::eDLCType_All)
     {
         total = 0;
@@ -111,7 +111,7 @@ int DLCPack::getDLCItemsCount(DLCManager::EDLCType type)
     }
     else
     {
-        total = static_cast<int>(m_files[type].size());
+        total = static_cast<unsigned int>(m_files[type].size());
         for (std::vector<DLCPack*>::iterator it = m_childPacks.begin(); it != m_childPacks.end(); ++it)
             total += (*it)->getDLCItemsCount(type);
     }

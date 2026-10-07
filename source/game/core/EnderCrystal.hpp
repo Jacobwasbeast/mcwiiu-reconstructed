@@ -37,7 +37,7 @@ public:
     virtual bool shouldRenderAtSqrDistance(double distanceSqr);
     virtual unsigned int GetInteractTooltip(const EntityTooltipDataHolder& tooltipData);
     virtual unsigned long long GetType();
-    static void create(Level* level);
+    static Entity* create(Level* level);
 
 private:
     static const EntityDataAccessor<BlockPos*>* DATA_BEAM_TARGET;

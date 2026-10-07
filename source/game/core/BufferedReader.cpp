@@ -28,7 +28,7 @@ void BufferedReader::bufferMore()
 {
     if (mCount - mPosition <= 32)
     {
-        if (mCount + 64 > mCapacity)
+        if (mCapacity < mCount + 64)
         {
             wchar_t* newBuffer = new wchar_t[mCapacity * 2];
 
@@ -46,8 +46,7 @@ void BufferedReader::bufferMore()
 
         while ((character = mReader->read()) != -1)
         {
-            mBuffer[mCount] = (wchar_t)character;
-            mCount++;
+            mBuffer[mCount++] = (wchar_t)character;
             buffered++;
 
             if (buffered >= 64)
@@ -69,8 +68,7 @@ int BufferedReader::read()
             return -1;
         }
 
-        mBuffer[mCount] = (wchar_t)character;
-        mCount++;
+        mBuffer[mCount++] = (wchar_t)character;
 
         bufferMore();
     }
@@ -80,7 +78,7 @@ int BufferedReader::read()
 
 unsigned int BufferedReader::read(wchar_t* buffer, unsigned int offset, unsigned int length)
 {
-    if (mCount + length > mCapacity)
+    if (mCapacity < mCount + length)
     {
         wchar_t* newBuffer = new wchar_t[mCapacity * 2];
 
@@ -97,8 +95,7 @@ unsigned int BufferedReader::read(wchar_t* buffer, unsigned int offset, unsigned
 
     while (count < length && mPosition <= mCount)
     {
-        buffer[offset + count] = mBuffer[mPosition];
-        mPosition++;
+        buffer[offset + count] = mBuffer[mPosition++];
         count++;
     }
 

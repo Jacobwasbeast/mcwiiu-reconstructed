@@ -68,70 +68,70 @@ void StatsCounter::setupStatBoards()
     statBoards[Stats::killsSlime][2] = eLeaderboard2;
     statBoards[Stats::killsSlime][3] = eLeaderboard3;
 
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::dirt)]][0] = eLeaderboard4;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::dirt)]][1] = eLeaderboard5;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::dirt)]][2] = eLeaderboard6;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::dirt)]][3] = eLeaderboard7;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::dirt)]][0] = eLeaderboard4;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::dirt)]][1] = eLeaderboard5;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::dirt)]][2] = eLeaderboard6;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::dirt)]][3] = eLeaderboard7;
 
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::cobblestone)]][0] = eLeaderboard4;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::cobblestone)]][1] = eLeaderboard5;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::cobblestone)]][2] = eLeaderboard6;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::cobblestone)]][3] = eLeaderboard7;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::cobblestone)]][0] = eLeaderboard4;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::cobblestone)]][1] = eLeaderboard5;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::cobblestone)]][2] = eLeaderboard6;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::cobblestone)]][3] = eLeaderboard7;
 
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::sand)]][0] = eLeaderboard4;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::sand)]][1] = eLeaderboard5;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::sand)]][2] = eLeaderboard6;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::sand)]][3] = eLeaderboard7;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::sand)]][0] = eLeaderboard4;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::sand)]][1] = eLeaderboard5;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::sand)]][2] = eLeaderboard6;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::sand)]][3] = eLeaderboard7;
 
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::stone)]][0] = eLeaderboard4;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::stone)]][1] = eLeaderboard5;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::stone)]][2] = eLeaderboard6;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::stone)]][3] = eLeaderboard7;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::stone)]][0] = eLeaderboard4;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::stone)]][1] = eLeaderboard5;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::stone)]][2] = eLeaderboard6;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::stone)]][3] = eLeaderboard7;
 
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::gravel)]][0] = eLeaderboard4;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::gravel)]][1] = eLeaderboard5;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::gravel)]][2] = eLeaderboard6;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::gravel)]][3] = eLeaderboard7;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::gravel)]][0] = eLeaderboard4;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::gravel)]][1] = eLeaderboard5;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::gravel)]][2] = eLeaderboard6;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::gravel)]][3] = eLeaderboard7;
 
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::clay)]][0] = eLeaderboard4;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::clay)]][1] = eLeaderboard5;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::clay)]][2] = eLeaderboard6;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::clay)]][3] = eLeaderboard7;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::clay)]][0] = eLeaderboard4;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::clay)]][1] = eLeaderboard5;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::clay)]][2] = eLeaderboard6;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::clay)]][3] = eLeaderboard7;
 
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::obsidian)]][0] = eLeaderboard4;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::obsidian)]][1] = eLeaderboard5;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::obsidian)]][2] = eLeaderboard6;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::obsidian)]][3] = eLeaderboard7;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::obsidian)]][0] = eLeaderboard4;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::obsidian)]][1] = eLeaderboard5;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::obsidian)]][2] = eLeaderboard6;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::obsidian)]][3] = eLeaderboard7;
 
-    statBoards[Stats::itemCollectedStats.data[Item::getId(Items::egg)]][0] = eLeaderboard12;
-    statBoards[Stats::itemCollectedStats.data[Item::getId(Items::egg)]][1] = eLeaderboard13;
-    statBoards[Stats::itemCollectedStats.data[Item::getId(Items::egg)]][2] = eLeaderboard14;
-    statBoards[Stats::itemCollectedStats.data[Item::getId(Items::egg)]][3] = eLeaderboard15;
+    statBoards[Stats::itemCollectedStats[Item::getId(Items::egg)]][0] = eLeaderboard12;
+    statBoards[Stats::itemCollectedStats[Item::getId(Items::egg)]][1] = eLeaderboard13;
+    statBoards[Stats::itemCollectedStats[Item::getId(Items::egg)]][2] = eLeaderboard14;
+    statBoards[Stats::itemCollectedStats[Item::getId(Items::egg)]][3] = eLeaderboard15;
 
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::wheat)]][0] = eLeaderboard12;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::wheat)]][1] = eLeaderboard13;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::wheat)]][2] = eLeaderboard14;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::wheat)]][3] = eLeaderboard15;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::wheat)]][0] = eLeaderboard12;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::wheat)]][1] = eLeaderboard13;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::wheat)]][2] = eLeaderboard14;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::wheat)]][3] = eLeaderboard15;
 
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::brown_mushroom)]][0] = eLeaderboard12;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::brown_mushroom)]][1] = eLeaderboard13;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::brown_mushroom)]][2] = eLeaderboard14;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::brown_mushroom)]][3] = eLeaderboard15;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::brown_mushroom)]][0] = eLeaderboard12;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::brown_mushroom)]][1] = eLeaderboard13;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::brown_mushroom)]][2] = eLeaderboard14;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::brown_mushroom)]][3] = eLeaderboard15;
 
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::reeds)]][0] = eLeaderboard12;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::reeds)]][1] = eLeaderboard13;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::reeds)]][2] = eLeaderboard14;
-    statBoards[Stats::blockMinedStats.data[Block::getId(Blocks::reeds)]][3] = eLeaderboard15;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::reeds)]][0] = eLeaderboard12;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::reeds)]][1] = eLeaderboard13;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::reeds)]][2] = eLeaderboard14;
+    statBoards[Stats::blockMinedStats[Block::getId(Blocks::reeds)]][3] = eLeaderboard15;
 
     statBoards[Stats::cowsMilked][0] = eLeaderboard12;
     statBoards[Stats::cowsMilked][1] = eLeaderboard13;
     statBoards[Stats::cowsMilked][2] = eLeaderboard14;
     statBoards[Stats::cowsMilked][3] = eLeaderboard15;
 
-    statBoards[Stats::itemCollectedStats.data[Block::getId(Blocks::pumpkin)]][0] = eLeaderboard12;
-    statBoards[Stats::itemCollectedStats.data[Block::getId(Blocks::pumpkin)]][1] = eLeaderboard13;
-    statBoards[Stats::itemCollectedStats.data[Block::getId(Blocks::pumpkin)]][2] = eLeaderboard14;
-    statBoards[Stats::itemCollectedStats.data[Block::getId(Blocks::pumpkin)]][3] = eLeaderboard15;
+    statBoards[Stats::itemCollectedStats[Block::getId(Blocks::pumpkin)]][0] = eLeaderboard12;
+    statBoards[Stats::itemCollectedStats[Block::getId(Blocks::pumpkin)]][1] = eLeaderboard13;
+    statBoards[Stats::itemCollectedStats[Block::getId(Blocks::pumpkin)]][2] = eLeaderboard14;
+    statBoards[Stats::itemCollectedStats[Block::getId(Blocks::pumpkin)]][3] = eLeaderboard15;
 
     statBoards[Stats::walkOneM][0] = eLeaderboard16;
     statBoards[Stats::walkOneM][1] = eLeaderboard17;

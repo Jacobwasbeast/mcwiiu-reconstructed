@@ -35,13 +35,9 @@ Silverfish::Silverfish(Level* level)
     setSize(0.4f, 0.3f);
 }
 
-Silverfish::~Silverfish()
+Entity* Silverfish::create(Level* level)
 {
-}
-
-void Silverfish::create(Level* level)
-{
-    new Silverfish(level);
+    return new Silverfish(level);
 }
 
 void Silverfish::addDataWalkers(DataFixerUpper* fixer)
@@ -228,11 +224,6 @@ void Silverfish::SilverfishMergeWithStoneGoal::start()
     }
 }
 
-std::wstring Silverfish::SilverfishMergeWithStoneGoal::getName()
-{
-    return std::wstring(L"SilverfishMergeWithStone");
-}
-
 Silverfish::SilverfishWakeUpFriendsGoal::SilverfishWakeUpFriendsGoal(Silverfish* silverfish)
     : Goal(), mSilverfish(silverfish)
 {
@@ -289,7 +280,3 @@ void Silverfish::SilverfishWakeUpFriendsGoal::tick()
     }
 }
 
-std::wstring Silverfish::SilverfishWakeUpFriendsGoal::getName()
-{
-    return std::wstring(L"SilverfishWakeUpFriends");
-}

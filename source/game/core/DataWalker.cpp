@@ -4,5 +4,7 @@
 
 bool DataWalker::CheckID(CompoundTag* tag, const std::wstring& id)
 {
-    return tag->getString(std::wstring(L"id")) == id;
+    std::wstring key(L"id");
+    std::wstring value = tag->getString(key);
+    return value == id;
 }

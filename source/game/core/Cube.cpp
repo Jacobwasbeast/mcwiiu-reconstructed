@@ -61,43 +61,43 @@ void Cube::_init(ModelPart* parent, int texU, int texV, float x, float y, float 
     Vertex* l2 = new Vertex(x1, y1, z1, 8.0f, 8.0f);
     Vertex* l3 = new Vertex(x0, y1, z1, 8.0f, 0.0f);
 
-    mVertices.data[0] = u0;
-    mVertices.data[1] = u1;
-    mVertices.data[2] = u2;
-    mVertices.data[3] = u3;
-    mVertices.data[4] = l0;
-    mVertices.data[5] = l1;
-    mVertices.data[6] = l2;
-    mVertices.data[7] = l3;
+    mVertices[0] = u0;
+    mVertices[1] = u1;
+    mVertices[2] = u2;
+    mVertices[3] = u3;
+    mVertices[4] = l0;
+    mVertices[5] = l1;
+    mVertices[6] = l2;
+    mVertices[7] = l3;
 
     unsigned int polygonCount = 0;
     if (faceMask & 1)
-        mPolygons.data[polygonCount++] = new _Polygon(VertexArray4(l1, u1, u2, l2), texU + depth + width, texV + depth, texU + depth + width + depth, texV + depth + height, parent->mTexWidth, parent->mTexHeight);
+        mPolygons[polygonCount++] = new _Polygon(VertexArray4(l1, u1, u2, l2), texU + depth + width, texV + depth, texU + depth + width + depth, texV + depth + height, parent->mTexWidth, parent->mTexHeight);
     if (faceMask & 2)
-        mPolygons.data[polygonCount++] = new _Polygon(VertexArray4(u0, l0, l3, u3), texU, texV + depth, texU + depth, texV + depth + height, parent->mTexWidth, parent->mTexHeight);
+        mPolygons[polygonCount++] = new _Polygon(VertexArray4(u0, l0, l3, u3), texU, texV + depth, texU + depth, texV + depth + height, parent->mTexWidth, parent->mTexHeight);
     if (faceMask & 4)
-        mPolygons.data[polygonCount++] = new _Polygon(VertexArray4(l1, l0, u0, u1), texU + depth, texV, texU + depth + width, texV + depth, parent->mTexWidth, parent->mTexHeight);
+        mPolygons[polygonCount++] = new _Polygon(VertexArray4(l1, l0, u0, u1), texU + depth, texV, texU + depth + width, texV + depth, parent->mTexWidth, parent->mTexHeight);
     if (!flip)
     {
         if (faceMask & 8)
-            mPolygons.data[polygonCount++] = new _Polygon(VertexArray4(u2, u3, l3, l2), texU + depth + width, texV + depth, texU + depth + width + width, texV, parent->mTexWidth, parent->mTexHeight);
+            mPolygons[polygonCount++] = new _Polygon(VertexArray4(u2, u3, l3, l2), texU + depth + width, texV + depth, texU + depth + width + width, texV, parent->mTexWidth, parent->mTexHeight);
     }
     else
     {
         if (faceMask & 8)
-            mPolygons.data[polygonCount++] = new _Polygon(VertexArray4(u2, u3, l3, l2), texU + depth + width, texV, texU + depth + width + width, texV + depth, parent->mTexWidth, parent->mTexHeight);
+            mPolygons[polygonCount++] = new _Polygon(VertexArray4(u2, u3, l3, l2), texU + depth + width, texV, texU + depth + width + width, texV + depth, parent->mTexWidth, parent->mTexHeight);
     }
     if (faceMask & 16)
-        mPolygons.data[polygonCount++] = new _Polygon(VertexArray4(u1, u0, u3, u2), texU + depth, texV + depth, texU + depth + width, texV + depth + height, parent->mTexWidth, parent->mTexHeight);
+        mPolygons[polygonCount++] = new _Polygon(VertexArray4(u1, u0, u3, u2), texU + depth, texV + depth, texU + depth + width, texV + depth + height, parent->mTexWidth, parent->mTexHeight);
     if (faceMask & 32)
-        mPolygons.data[polygonCount++] = new _Polygon(VertexArray4(l0, l1, l2, l3), texU + depth + depth + width, texV + depth, texU + depth + depth + width + width, texV + depth + height, parent->mTexWidth, parent->mTexHeight);
+        mPolygons[polygonCount++] = new _Polygon(VertexArray4(l0, l1, l2, l3), texU + depth + depth + width, texV + depth, texU + depth + depth + width + width, texV + depth + height, parent->mTexWidth, parent->mTexHeight);
     mPolygons.length = polygonCount;
 
     if (mirror)
     {
         for (unsigned int i = 0; i < mPolygons.length; ++i)
         {
-            mPolygons.data[i]->mirror();
+            mPolygons[i]->mirror();
         }
     }
 }

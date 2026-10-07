@@ -52,13 +52,9 @@ Pig::Pig(Level* level)
     setSize(0.9f, 0.9f);
 }
 
-Pig::~Pig()
+Entity* Pig::create(Level* level)
 {
-}
-
-void Pig::create(Level* level)
-{
-    new Pig(level);
+    return new Pig(level);
 }
 
 void Pig::staticCtor()

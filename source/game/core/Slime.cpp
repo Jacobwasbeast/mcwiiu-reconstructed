@@ -59,9 +59,9 @@ void Slime::staticCtor()
                                                      EntityDataSerializers::INT);
 }
 
-void Slime::create(Level* level)
+Entity* Slime::create(Level* level)
 {
-    new Slime(level);
+    return new Slime(level);
 }
 
 void Slime::_init()

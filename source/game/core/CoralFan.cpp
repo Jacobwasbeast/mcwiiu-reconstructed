@@ -178,29 +178,18 @@ int CoralFan::getDescriptionId(int auxValue)
     const BlockState* state = getBlockState(auxValue);
     bool dead = state->getBlock() == Blocks::coral_fan_dead;
 
-    int variant = state->getValue(CoralFan::VARIANT);
-
-    if (variant != 0)
+    switch (state->getValue(CoralFan::VARIANT))
     {
-        if (variant == 1)
-        {
-            return dead ? 0x49DEF5D4 : 0x54923487;
-        }
-
-        if (variant == 2)
-        {
-            return dead ? static_cast<int>(0x842794C6U) : 0x5C092885;
-        }
-
-        if (variant == 3)
-        {
-            return dead ? 0x4A67CEEB : 0x29A6A280;
-        }
-
-        if (variant == 4)
-        {
-            return dead ? static_cast<int>(0x93926B4CU) : 0x6932757F;
-        }
+    case 0:
+        return dead ? static_cast<int>(0xB34422EEU) : static_cast<int>(0xA1128C9DU);
+    case 1:
+        return dead ? 0x49DEF5D4 : 0x54923487;
+    case 2:
+        return dead ? static_cast<int>(0x842794C6U) : 0x5C092885;
+    case 3:
+        return dead ? 0x4A67CEEB : 0x29A6A280;
+    case 4:
+        return dead ? static_cast<int>(0x93926B4CU) : 0x6932757F;
     }
 
     return dead ? static_cast<int>(0xB34422EEU) : static_cast<int>(0xA1128C9DU);
@@ -213,9 +202,8 @@ bool CoralFan::mayReplaceWithPlace(LevelSource* levelSource, const BlockPos& pos
 
 not_null_ptr<ItemInstance> CoralFan::getSilkTouchItemInstance(const BlockState* state)
 {
-    const BlockState* upright = state->setValue(CoralFan::DIRECTION, 0);
-    int auxValue = convertBlockStateToLegacyData(upright);
-    return not_null_ptr<ItemInstance>(new ItemInstance(this, 1, auxValue));
+    state = state->setValue(CoralFan::DIRECTION, 0);
+    return not_null_ptr<ItemInstance>(new ItemInstance(this, 1, convertBlockStateToLegacyData(state)));
 }
 
 not_null_ptr<ItemInstance> CoralFan::getCloneItemInstance(Level* level, const BlockPos& pos,
@@ -281,10 +269,9 @@ void CoralFan::checkAlive(Level* level, const BlockPos& pos, const BlockState* s
     if (!level->isUnderWater(pos, 263, 0))
     {
         const BlockState* dead = Blocks::coral_fan_dead->defaultBlockState();
-        level->setBlock(pos,
-                        dead->setValue(CoralFan::VARIANT, state->getValue(CoralFan::VARIANT))
-                            ->setValue(CoralFan::DIRECTION, state->getValue(CoralFan::DIRECTION)),
-                        Block::UPDATE_ALL, false);
+        dead = dead->setValue(CoralFan::VARIANT, state->getValue(CoralFan::VARIANT))
+                   ->setValue(CoralFan::DIRECTION, state->getValue(CoralFan::DIRECTION));
+        level->setBlock(pos, dead, Block::UPDATE_ALL, false);
     }
 
     if (!level->isSolidBlockingBlock(pos.below()) && !level->getBlock(pos.below())->isSlabBlock())

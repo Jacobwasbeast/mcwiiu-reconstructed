@@ -297,7 +297,7 @@ public:
     };
 
     static void resetPieces();
-    static unsigned long long staticCtor();
+    static void staticCtor();
     static unsigned long long loadStatic();
     static bool updatePieceWeight();
     static StructurePiece* findAndCreatePieceFactory(EPieceClass pieceClass,

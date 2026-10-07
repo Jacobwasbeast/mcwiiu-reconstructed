@@ -65,9 +65,9 @@ bool Shulker::ShulkerAttackGoal::canUse()
     boost::shared_ptr<LivingEntity> target = mShulker->getTarget();
     if (target == NULL || !target->isAlive())
         return false;
-    if (mShulker->mLevel->getDifficulty() != Difficulty::PEACEFUL)
-        return true;
-    return false;
+    if (mShulker->mLevel->getDifficulty() == Difficulty::PEACEFUL)
+        return false;
+    return true;
 }
 
 void Shulker::ShulkerAttackGoal::start()
@@ -225,9 +225,9 @@ Shulker::Shulker(Level* level)
     mYRot = 180.0f;
 }
 
-void Shulker::create(Level* level)
+Entity* Shulker::create(Level* level)
 {
-    new Shulker(level);
+    return new Shulker(level);
 }
 
 void Shulker::staticCtor()
@@ -383,8 +383,7 @@ void Shulker::tick()
         const BlockState* state = mLevel->getBlockState(*attachPos);
         if (state->getMaterial() != Material::AIR)
         {
-            Block* block = state->getBlock();
-            if (block == Blocks::piston_extension)
+            if (state->getBlock() == Blocks::piston_extension)
             {
                 const Direction* facing = state->getValue<const Direction*>(PistonMagicBlock::FACING);
                 if (mLevel->isEmptyBlock(attachPos->relative(facing)))
@@ -397,7 +396,7 @@ void Shulker::tick()
                     teleportSomewhere();
                 }
             }
-            else if (block == Blocks::piston_head)
+            else if (state->getBlock() == Blocks::piston_head)
             {
                 const Direction* facing = state->getValue<const Direction*>(PistonHeadBlock::FACING);
                 if (mLevel->isEmptyBlock(attachPos->relative(facing)))
@@ -416,8 +415,7 @@ void Shulker::tick()
             }
         }
 
-        BlockPos adjacent = attachPos->relative(getAttachFace());
-        if (!mLevel->isSolidBlockingBlockInLoadedChunk(adjacent, false))
+        if (!mLevel->isSolidBlockingBlockInLoadedChunk(attachPos->relative(getAttachFace()), false))
         {
             bool attached = false;
             for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
@@ -433,8 +431,7 @@ void Shulker::tick()
             if (!attached) teleportSomewhere();
         }
 
-        BlockPos opposite = attachPos->relative(getAttachFace()->getOpposite());
-        if (mLevel->isSolidBlockingBlockInLoadedChunk(opposite, false))
+        if (mLevel->isSolidBlockingBlockInLoadedChunk(attachPos->relative(getAttachFace()->getOpposite()), false))
             teleportSomewhere();
     }
 
@@ -456,21 +453,18 @@ void Shulker::tick()
             mOldAttachPosition = attachPos;
     }
 
-    double x = attachPos->x + 0.5;
-    double y = attachPos->y;
-    double z = attachPos->z + 0.5;
-    mX = x;
-    mY = y;
-    mZ = z;
-    mXo = x;
-    mYo = y;
-    mZo = z;
-    mXOld = x;
-    mYOld = y;
-    mZOld = z;
+    mX = attachPos->x + 0.5;
+    mY = attachPos->y;
+    mZ = attachPos->z + 0.5;
+    mXo = mX;
+    mYo = mY;
+    mZo = mZ;
+    mXOld = mX;
+    mYOld = mY;
+    mZOld = mZ;
 
-    double peekOffset = 0.5 - Mth::sin((0.5f + mPeekAmount) * 3.1415927f) * 0.5;
-    double oldPeekOffset = 0.5 - Mth::sin(3.1415927f * (mOldPeekAmount + 0.5f)) * 0.5;
+    double peekOffset = 0.5 - Mth::sin((mPeekAmount + 0.5f) * 3.1415927f) * 0.5;
+    double oldPeekOffset = 0.5 - Mth::sin((mOldPeekAmount + 0.5f) * 3.1415927f) * 0.5;
     double pushAmount = peekOffset - oldPeekOffset;
     double pushX = 0.0;
     double pushY = 0.0;
@@ -507,11 +501,15 @@ void Shulker::tick()
     {
         std::vector<boost::shared_ptr<Entity> > entities;
         mLevel->getEntities(shared_from_this(), mBoundingBox, &entities);
-        for (unsigned int i = 0; i < entities.size(); ++i)
+        if (!entities.empty())
         {
-            boost::shared_ptr<Entity> entity = entities[i];
-            if (entity->GetType() != EntityType::SHULKER && !entity->mNoPhysics)
-                entity->move(eMoverType_Self, pushX, pushY, pushZ, false);
+            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
+            {
+                boost::shared_ptr<Entity> entity = *it;
+                bool isShulker = entity->GetType() == EntityType::SHULKER;
+                if (!isShulker && !entity->mNoPhysics)
+                    entity->move(eMoverType_Self, pushX, pushY, pushZ, false);
+            }
         }
     }
 }

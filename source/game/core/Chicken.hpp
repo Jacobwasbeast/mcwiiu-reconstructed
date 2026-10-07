@@ -26,7 +26,6 @@ public:
     static arrayWithLength<Item*> FOOD_ITEMS;
 
     Chicken(Level* level);
-    virtual ~Chicken();
     static void addDataWalkers(DataFixerUpper* fixer);
     void _init();
     virtual void registerGoals();
@@ -48,7 +47,7 @@ public:
     virtual bool removeWhenFarAway();
     virtual void positionRider(const boost::shared_ptr<Entity>& passenger);
     virtual unsigned long long GetType();
-    static void create(Level* level);
+    static Entity* create(Level* level);
 
 private:
     friend class ChickenRenderer;

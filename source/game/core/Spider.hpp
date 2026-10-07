@@ -30,7 +30,6 @@ public:
     {
     public:
         SpiderAttackGoal(Spider* spider);
-        virtual ~SpiderAttackGoal();
         virtual bool canContinueToUse();
         virtual double getAttackReachSqr(boost::shared_ptr<LivingEntity> target);
     };
@@ -48,14 +47,13 @@ public:
     {
     public:
         SpiderTargetGoal(Spider* spider, const std::type_info& targetType);
-        virtual ~SpiderTargetGoal();
         virtual bool canUse();
     };
 
     Spider(Level* level);
     Spider(Level* level, bool callDerivedConstructor);
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void registerGoals();

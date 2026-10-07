@@ -27,7 +27,7 @@ public:
         virtual ~GhastLookGoal();
         virtual bool canUse();
         virtual void tick();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"GhastLook"; }
     private:
         Ghast* mGhast;
     };
@@ -53,7 +53,7 @@ public:
         virtual void start();
         virtual void stop();
         virtual void tick();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"GhastShootFireball"; }
     private:
         Ghast* mGhast;
         int mChargeTime;
@@ -67,13 +67,13 @@ public:
         virtual bool canUse();
         virtual bool canContinueToUse();
         virtual void start();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"RandomFloatAround"; }
     private:
         Ghast* mGhast;
     };
 
     explicit Ghast(Level* level);
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     void _init();
     virtual void registerGoals();

@@ -27,7 +27,7 @@ public:
         virtual bool canUse();
         virtual bool canContinueToUse();
         virtual void start();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"SilverfishMergeWithStone"; }
 
     private:
         const Direction* mDirection;
@@ -41,7 +41,7 @@ public:
         void notifyHurt();
         virtual bool canUse();
         virtual void tick();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"SilverfishWakeUpFriends"; }
 
     private:
         Silverfish* mSilverfish;
@@ -49,8 +49,7 @@ public:
     };
 
     Silverfish(Level* level);
-    virtual ~Silverfish();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void registerGoals();
     virtual double getRidingHeight();

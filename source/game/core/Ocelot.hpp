@@ -28,7 +28,7 @@ class Ocelot : public TamableAnimal
 public:
     Ocelot(Level* level);
     virtual ~Ocelot();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     static void addDataWalkers(DataFixerUpper* fixer);
     void setSittingOnBlock(bool sitting);

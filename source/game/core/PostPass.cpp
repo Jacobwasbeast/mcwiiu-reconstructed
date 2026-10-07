@@ -46,17 +46,15 @@ Effect* PostPass::getEffect()
 
 void PostPass::process(float time)
 {
+    prepareState();
     const float outputWidth = static_cast<float>(mOutput->renderWidth);
     const float outputHeight = static_cast<float>(mOutput->renderHeight);
-
-    prepareState();
     GlStateManager::viewport(0, 0, static_cast<int>(outputWidth), static_cast<int>(outputHeight));
     mEffect->setSampler(L"DiffuseSampler", mInput);
     for (int i = 0; i < mAuxAssets.size(); ++i)
     {
         mEffect->setSampler(mAuxAssetNames.at(i), mAuxAssets.at(i));
-        Uniform* auxSize = mEffect->safeGetUniform(L"AuxSize" + _toString(i));
-        auxSize->set(static_cast<float>(mAuxWidths.at(i)), static_cast<float>(mAuxHeights.at(i)));
+        mEffect->safeGetUniform(L"AuxSize" + _toString(i))->set(static_cast<float>(mAuxWidths.at(i)), static_cast<float>(mAuxHeights.at(i)));
     }
     mEffect->safeGetUniform(L"ProjMat")->set(mOrthoMatrix);
     mEffect->safeGetUniform(L"InSize")->set(static_cast<float>(mInput->renderWidth), static_cast<float>(mInput->renderHeight));

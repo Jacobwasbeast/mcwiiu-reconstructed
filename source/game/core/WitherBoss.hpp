@@ -38,7 +38,7 @@ public:
         virtual ~WitherDoNothingGoal();
 
         virtual bool canUse();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"WitherDoNothing"; }
 
     private:
         WitherBoss* mWither;
@@ -48,7 +48,7 @@ public:
     WitherBoss(Level* level);
     virtual ~WitherBoss();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     static void staticCtor();
     static bool canDestroy(Block* block);

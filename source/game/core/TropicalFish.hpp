@@ -30,7 +30,7 @@ public:
     TropicalFish(Level* level);
     virtual ~TropicalFish();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     static void staticCtor();
 

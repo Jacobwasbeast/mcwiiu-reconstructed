@@ -44,7 +44,6 @@ public:
         MineShaftCorridor();
         MineShaftCorridor(int genDepth, Random& random, BoundingBox* box, const Direction* direction,
                           MineShaftFeature::MineShaftType type);
-        virtual ~MineShaftCorridor();
 
         static BoundingBox* findCorridorSize(std::vector<StructurePiece*>* pieces, Random& random,
                                              int x, int y, int z, const Direction* direction);
@@ -72,7 +71,6 @@ public:
         MineShaftCrossing();
         MineShaftCrossing(int genDepth, Random& random, BoundingBox* box, const Direction* direction,
                           MineShaftFeature::MineShaftType type);
-        virtual ~MineShaftCrossing();
 
         static BoundingBox* findCrossing(std::vector<StructurePiece*>* pieces, Random& random,
                                          int x, int y, int z, const Direction* direction);
@@ -113,7 +111,6 @@ public:
         MineShaftStairs();
         MineShaftStairs(int genDepth, Random& random, BoundingBox* box, const Direction* direction,
                         MineShaftFeature::MineShaftType type);
-        virtual ~MineShaftStairs();
         static BoundingBox* findStairs(std::vector<StructurePiece*>* pieces, Random& random,
                                        int x, int y, int z, const Direction* direction);
         virtual void addChildren(StructurePiece* startPiece, std::vector<StructurePiece*>* pieces, Random& random);

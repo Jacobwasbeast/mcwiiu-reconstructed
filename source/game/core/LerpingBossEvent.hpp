@@ -10,7 +10,6 @@ class LerpingBossEvent : public BossEvent
 {
 public:
     LerpingBossEvent(boost::shared_ptr<ClientboundBossEventPacket> packet);
-    virtual ~LerpingBossEvent();
 
     virtual float getPercent();
     virtual void setPercent(float percent);

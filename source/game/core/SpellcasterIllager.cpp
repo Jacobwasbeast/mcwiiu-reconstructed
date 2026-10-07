@@ -194,7 +194,3 @@ int SpellcasterIllager::SpellcasterUseSpellGoal::getCastWarmupTime()
     return 20;
 }
 
-std::wstring SpellcasterIllager::SpellcasterUseSpellGoal::getName()
-{
-    return L"SpellcasterUseSpellGoal";
-}

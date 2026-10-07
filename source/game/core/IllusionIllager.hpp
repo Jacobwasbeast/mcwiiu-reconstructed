@@ -29,7 +29,7 @@ public:
         virtual ~IllusionistBlindnessSpellGoal();
         virtual bool canUse();
         virtual void start();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"IllusionistBlindnessSpellGoal"; }
         virtual void performSpellCasting();
         virtual int getCastingTime();
         virtual int getCastingInterval();
@@ -44,7 +44,7 @@ public:
         IllusionistMirrorSpellGoal(IllusionIllager* illager);
         virtual ~IllusionistMirrorSpellGoal();
         virtual bool canUse();
-        virtual std::wstring getName();
+        virtual std::wstring getName() { return L"IllusionistMirrorSpellGoal"; }
         virtual void performSpellCasting();
         virtual int getCastingTime();
         virtual int getCastingInterval();
@@ -52,8 +52,7 @@ public:
         virtual IllagerSpell* getSpell();
     };
     explicit IllusionIllager(Level* level);
-    virtual ~IllusionIllager();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     virtual void performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor);
     virtual bool isAggressive();

@@ -8,7 +8,6 @@ class WitherTargetHighestDamage : public TargetGoal
 {
 public:
     explicit WitherTargetHighestDamage(WitherBoss*);
-    virtual ~WitherTargetHighestDamage();
     boost::shared_ptr<LivingEntity> getHighestDamageTarget();
     virtual bool canUse();
     virtual bool canContinueToUse();

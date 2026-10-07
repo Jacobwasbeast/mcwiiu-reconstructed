@@ -31,10 +31,6 @@ Achievement::Achievement(int id, const std::wstring& name, int displayColumn, in
 {
 }
 
-Achievement::~Achievement()
-{
-}
-
 Achievement* Achievement::postConstruct(bool addToList)
 {
     Stat::postConstruct(addToList);

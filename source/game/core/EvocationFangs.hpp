@@ -18,7 +18,6 @@ public:
     EvocationFangs(Level* level);
     EvocationFangs(Level* level, double x, double y, double z, float yRot, int warmupDelay,
                    const boost::shared_ptr<LivingEntity>& owner);
-    virtual ~EvocationFangs();
 
     void _init();
     void setOwner(const boost::shared_ptr<LivingEntity>& owner);
@@ -33,7 +32,7 @@ public:
     virtual void addAdditonalSaveData(CompoundTag* tag);
     virtual void handleEntityEvent(unsigned char event, int data);
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
 
 private:
     int mWarmupDelay;

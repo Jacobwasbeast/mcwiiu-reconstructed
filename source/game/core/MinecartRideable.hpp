@@ -17,7 +17,7 @@ public:
     MinecartRideable(Level* level);
     MinecartRideable(Level* level, double x, double y, double z);
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* dataFixerUpper);
     virtual bool interact(const boost::shared_ptr<Player>& player,
                           InteractionHand::EInteractionHand hand);

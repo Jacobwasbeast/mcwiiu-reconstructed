@@ -60,25 +60,6 @@ Rotation* Rotation::getRotated(Rotation* rotation)
     case eTYPE_None:
         return this;
 
-    case eTYPE_Clockwise90:
-        switch (type)
-        {
-        case eTYPE_None:
-            return CLOCKWISE_90;
-
-        case eTYPE_Clockwise90:
-            return CLOCKWISE_180;
-
-        case eTYPE_Clockwise180:
-            return COUNTERCLOCKWISE_90;
-
-        case eTYPE_CounterClockwise90:
-            return NONE;
-
-        default:
-            return this;
-        }
-
     case eTYPE_Clockwise180:
         switch (type)
         {
@@ -117,6 +98,25 @@ Rotation* Rotation::getRotated(Rotation* rotation)
             return this;
         }
 
+    case eTYPE_Clockwise90:
+        switch (type)
+        {
+        case eTYPE_None:
+            return CLOCKWISE_90;
+
+        case eTYPE_Clockwise90:
+            return CLOCKWISE_180;
+
+        case eTYPE_Clockwise180:
+            return COUNTERCLOCKWISE_90;
+
+        case eTYPE_CounterClockwise90:
+            return NONE;
+
+        default:
+            return this;
+        }
+
     default:
         return this;
     }
@@ -128,14 +128,14 @@ const Direction* Rotation::rotate(const Direction* direction) const
     {
         switch (type)
         {
-        case eTYPE_Clockwise90:
-            return direction->getClockWise();
-
         case eTYPE_Clockwise180:
             return direction->getOpposite();
 
         case eTYPE_CounterClockwise90:
             return direction->getCounterClockWise();
+
+        case eTYPE_Clockwise90:
+            return direction->getClockWise();
 
         default:
             break;

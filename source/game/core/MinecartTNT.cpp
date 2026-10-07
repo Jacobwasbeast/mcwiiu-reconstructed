@@ -29,9 +29,9 @@
 #include "game/world/generation/Player.hpp"
 
 
-void MinecartTNT::create(Level* level)
+Entity* MinecartTNT::create(Level* level)
 {
-    new MinecartTNT(level);
+    return new MinecartTNT(level);
 }
 
 MinecartTNT::MinecartTNT(Level* level)

@@ -15,10 +15,6 @@ DLCGameRulesHeader::DLCGameRulesHeader(const std::wstring& path)
     m_levelGenerationOptions = NULL;
 }
 
-DLCGameRulesHeader::~DLCGameRulesHeader()
-{
-}
-
 bool DLCGameRulesHeader::requiresTexturePack()
 {
     return m_requiresTexturePack;

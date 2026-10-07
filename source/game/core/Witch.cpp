@@ -43,7 +43,10 @@ Witch::Witch(Level* level) : Monster(level) {
     mUsingTime = 0;
     mCategories |= EntityCategory::eEntityCategory_Humanoid | EntityCategory::eEntityCategory_Monster;
 }
-void Witch::create(Level* level) { new Witch(level); }
+Entity* Witch::create(Level* level)
+{
+    return new Witch(level);
+}
 void Witch::staticCtor() { DATA_USING_ITEM = SynchedEntityData::defineId<bool>(EntityType::WITCH, EntityType::MONSTER, EntityDataSerializers::BOOLEAN); }
 void Witch::addDataWalkers(DataFixerUpper* fixer) { Mob::addDataWalkers(fixer, EntityType::WITCH); }
 void Witch::performRangedAttack(boost::shared_ptr<LivingEntity> target, float distanceFactor)
