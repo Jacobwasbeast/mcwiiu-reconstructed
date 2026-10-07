@@ -45,7 +45,7 @@ public:
         eSrc_Tutorial = 4
     };
 
-    LevelGenerationOptions(DLCPack* pack);
+    LevelGenerationOptions(DLCPack* pack = NULL);
     virtual ~LevelGenerationOptions();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();

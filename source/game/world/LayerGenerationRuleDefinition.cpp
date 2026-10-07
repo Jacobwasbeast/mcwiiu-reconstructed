@@ -15,19 +15,15 @@ template <class T>
 T* randomUsableElement(Random& random, std::vector<T*>& definitions,
                        const LayerMetadata& metadata)
 {
-    while (true)
+    T* definition;
+    do
     {
-        T* definition = static_cast<const std::vector<T*>&>(definitions).at(static_cast<unsigned int>(
-            random.nextInt(static_cast<int>(definitions.size()))));
-
+        int index = random.nextInt(definitions.size());
+        definition = static_cast<const std::vector<T*>&>(definitions).at(index);
         typename std::vector<T*>::iterator it = std::find(definitions.begin(), definitions.end(), definition);
-
         definitions.erase(it);
-        if (definition->CanUse(metadata))
-        {
-            return definition;
-        }
-    }
+    } while (!definition->CanUse(metadata));
+    return definition;
 }
 
 template LayerAttributeChildRuleDefinition<LayerSize*>*

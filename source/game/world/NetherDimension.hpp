@@ -26,7 +26,6 @@ public:
     {
     public:
         explicit NetherDimensionWorldBorder(Level* level);
-        virtual ~NetherDimensionWorldBorder();
         virtual double getCenterX();
         virtual double getCenterZ();
     };

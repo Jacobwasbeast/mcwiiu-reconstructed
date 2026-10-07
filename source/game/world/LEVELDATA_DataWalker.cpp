@@ -5,7 +5,7 @@
 #include "game/data/DataFixer.hpp"
 #include "game/data/ListTag.hpp"
 
-static const std::wstring RIDING_TAG(L"Riding");
+std::wstring RIDING_TAG(L"Riding");
 
 LEVELDATA_DataWalker::~LEVELDATA_DataWalker()
 {

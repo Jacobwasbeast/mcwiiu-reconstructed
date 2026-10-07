@@ -242,7 +242,7 @@ GameRuleDefinition* LevelRuleset::addChild(ConsoleGameRules::EGameRuleType type)
         }
     case ConsoleGameRules::eGameRuleType_Killbox:
         {
-            KillboxRuleDefinition* rule = new KillboxRuleDefinition(NULL);
+            KillboxRuleDefinition* rule = new KillboxRuleDefinition();
             mKillboxes.push_back(rule);
             return rule;
         }

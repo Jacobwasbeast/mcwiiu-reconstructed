@@ -18,8 +18,8 @@
 void NetherDimension::init()
 {
     mBiomeSource = new FixedBiomeSource(Biome::HELL, 0.0f);
-    mHasCeiling = 1;
     mUltraWarm = 1;
+    mHasCeiling = 1;
 }
 
 Vec3* NetherDimension::getFogColor(float celestialAngle, float timeOfDay)
@@ -29,14 +29,11 @@ Vec3* NetherDimension::getFogColor(float celestialAngle, float timeOfDay)
 
 void NetherDimension::updateLightRamp()
 {
-    const float base = 1.0f;
-    const float scale = 15.0f;
-    const float ambient = 3.0f;
-    float* ramp = mBrightnessRamp;
-    for (int i = 0; i < 16; ++i)
+    const float ambientLight = 0.1f;
+    for (int i = 0; i <= 15; ++i)
     {
-        float light = base - (float)i / scale;
-        ramp[i] = (base - light) / (light * ambient + base) * 0.9f + 0.1f;
+        float v = 1.0f - (float)i / 15.0f;
+        mBrightnessRamp[i] = ((1.0f - v) / (v * 3.0f + 1.0f)) * (1.0f - ambientLight) + ambientLight;
     }
 }
 
@@ -84,8 +81,10 @@ const DimensionType* NetherDimension::getType() const
 
 int NetherDimension::getXZSize()
 {
-    return static_cast<int>(ceilf(static_cast<float>(mLevel->getLevelData()->getXZSize()) /
-                                  static_cast<float>(mLevel->getLevelData()->getHellScale())));
+    float quotient = static_cast<float>(mLevel->getLevelData()->getXZSize()) /
+                     static_cast<float>(mLevel->getLevelData()->getHellScale());
+    float result = ceilf(quotient);
+    return static_cast<int>(result);
 }
 
 AABB* NetherDimension::getPlayerConstraints(const BlockPos& pos)
@@ -102,10 +101,6 @@ int NetherDimension::getBlockLightColour()
 
 NetherDimension::NetherDimensionWorldBorder::NetherDimensionWorldBorder(Level* level)
     : WorldBorder(level)
-{
-}
-
-NetherDimension::NetherDimensionWorldBorder::~NetherDimensionWorldBorder()
 {
 }
 

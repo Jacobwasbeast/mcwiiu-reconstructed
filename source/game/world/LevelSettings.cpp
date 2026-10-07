@@ -38,21 +38,21 @@ void LevelSettings::_init(long long seed, const GameType* gameType,
     bool modernEnd, unsigned char biomeScale, int biomeCentreXChunk,
     int biomeCentreZChunk)
 {
-    mSeed = seed;
-    mGameType = gameType;
     mGenerateMapFeatures = generateMapFeatures;
+    mGameType = gameType;
     mHardcore = hardcore;
     mCloudHeight = cloudHeight;
     mUseNewSeaLevel = allowCommands;
     mLevelType = levelType;
     mAllowCommands = false;
-    mStartingBonusItems = false;
-    mLevelTypeOptions = 0;
     mXZSize = xzSize;
+    mStartingBonusItems = false;
     mHellScale = hellScale;
-    mModernEnd = modernEnd;
     mBiomeScale = biomeScale;
+    mModernEnd = modernEnd;
+    mSeed = seed;
     mBiomeCentreXChunk = biomeCentreXChunk;
+    mLevelTypeOptions = 0;
     mBiomeCentreZChunk = biomeCentreZChunk;
 }
 
