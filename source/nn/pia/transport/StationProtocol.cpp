@@ -48,7 +48,9 @@ enum
     cResponseFlagOffset = 0x7a,
     cResponseBytesOffset = 0x7b,
     cResponseBytesLength = 0x40,
-    cResponsePrincipalOffset = 0xbb
+    cResponsePrincipalOffset = 0xbb,
+    cResponseFlagUnset = 0xff,
+    cTraceStationProtocol = 0x8000
 };
 
 }
@@ -109,7 +111,8 @@ void StationProtocol::SendAck(unsigned int value, StationIndex stationIndex)
         handler->AssignByStationIndex(protocolId, stationIndex, 8, false, false, true);
     if (writer)
     {
-        unsigned char message[8] = { cMessageTypeAck };
+        unsigned char message[8] = { 0 };
+        message[0] = cMessageTypeAck;
         common::serializeU32(message + 4, value);
         writer->SetPayload(message);
         reinterpret_cast<PacketHandler*>(mStationPacketHandler)->Commit();
@@ -124,7 +127,8 @@ void StationProtocol::SendAck(unsigned int value, const common::StationAddress& 
             protocolId, address, 8, false, false);
     if (writer)
     {
-        unsigned char message[8] = { cMessageTypeAck };
+        unsigned char message[8] = { 0 };
+        message[0] = cMessageTypeAck;
         common::serializeU32(message + 4, value);
         writer->SetPayload(message);
         reinterpret_cast<PacketHandler*>(mStationPacketHandler)->Commit();
@@ -146,22 +150,29 @@ void StationProtocol::ParseConnectionRequestCommon(const ReceivedMessageAccessor
         return;
     unsigned int ackId =
         g_piaResendingMessageManager->ExtractAckIdFromMessage(data, message.m_messageSize);
-    unsigned long long requestPrincipalId =
-        static_cast<unsigned long long>(data[4]) << 56 | static_cast<unsigned long long>(data[5]) << 48 |
-        static_cast<unsigned long long>(data[6]) << 40 | static_cast<unsigned long long>(data[7]) << 32 |
-        static_cast<unsigned long long>(data[8]) << 24 | static_cast<unsigned long long>(data[9]) << 16 |
-        static_cast<unsigned long long>(data[10]) << 8 | static_cast<unsigned long long>(data[11]);
-    if (requestPrincipalId != g_stationConnectionInfoTable->m_stationLocation.m_principalId)
+    unsigned long long principalId = 0;
+    principalId |= static_cast<unsigned long long>(data[4]) << 56;
+    principalId |= static_cast<unsigned long long>(data[5]) << 48;
+    principalId |= static_cast<unsigned long long>(data[6]) << 40;
+    principalId |= static_cast<unsigned long long>(data[7]) << 32;
+    principalId |= static_cast<unsigned long long>(data[8]) << 24;
+    principalId |= static_cast<unsigned long long>(data[9]) << 16;
+    principalId |= static_cast<unsigned long long>(data[10]) << 8;
+    principalId |= static_cast<unsigned long long>(data[11]);
+    if (principalId !=
+        g_stationConnectionInfoTable->m_localStationConnectionInfo.m_stationLocation.m_principalId)
         return;
     if (secure == 1 &&
         readU32(data + 12) !=
-            static_cast<unsigned int>(g_stationConnectionInfoTable->m_stationLocation.m_field18))
+            static_cast<unsigned int>(
+                g_stationConnectionInfoTable->m_localStationConnectionInfo.m_stationLocation.m_field18))
         return;
     unsigned char nonce = data[1];
     StationConnectionInfo info;
     info.Deserialize(data + cConnectionRequestHeaderSize);
+    const StationLocation& location = info.m_stationLocation;
     Station* station = g_stationConnectionInfoTable->GetStation(info);
-    bool matchedByIndex = false;
+    bool reconnected = false;
     if (station == 0)
     {
         Station* reconnecting = g_stationConnectionInfoTable->GetReconnectingStation(info);
@@ -172,70 +183,122 @@ void StationProtocol::ParseConnectionRequestCommon(const ReceivedMessageAccessor
         }
         if (!relay)
         {
-            if (info.m_stationLocation.m_stationAddress.InetAddress::IsValid() &&
-                !info.m_localStationLocation.m_stationAddress.InetAddress::IsValid() &&
-                g_stationConnectionInfoTable->GetStation(info.m_stationLocation.m_stationAddress) != 0)
+            if (location.m_stationAddress.m_inetAddress.IsValid() &&
+                !info.m_localStationLocation.m_stationAddress.m_inetAddress.IsValid() &&
+                g_stationConnectionInfoTable->GetStation(location.m_stationAddress) != 0)
             {
                 if (g_stationConnectionInfoTable->GetStation(
-                        static_cast<unsigned int>(info.m_stationLocation.m_field1c)) == 0)
+                        static_cast<unsigned int>(location.m_field1c)) == 0)
                 {
-                    info.m_stationLocation.Trace(0x8000);
+                    location.Trace(0x8000);
                     SendDenyingConnectionResponse(message.m_stationAddress, 1,
-                                                  info.m_stationLocation.m_principalId,
-                                                  info.m_stationLocation.m_field18);
+                                                  location.m_principalId,
+                                                  location.m_field18);
                     return;
                 }
                 if (g_stationConnectionInfoTable->GetStation(
-                        info.m_stationLocation.m_principalId) == 0)
+                        location.m_principalId) == 0)
                 {
-                    info.m_stationLocation.Trace(0x8000);
+                    location.Trace(0x8000);
                     SendDenyingConnectionResponse(message.m_stationAddress, 1,
-                                                  info.m_stationLocation.m_principalId,
-                                                  info.m_stationLocation.m_field18);
+                                                  location.m_principalId,
+                                                  location.m_field18);
                     return;
                 }
             }
-            Station* addressStation = g_piaStationManager->GetStation(message.m_stationAddress);
-            if (!info.m_stationLocation.m_stationAddress.IsValid())
-            {
-                station = addressStation;
-            }
-            else if (addressStation == 0)
+            station = g_piaStationManager->GetStation(message.m_stationAddress);
+            if (location.m_stationAddress.IsValid() && station == 0)
             {
                 station = g_stationConnectionInfoTable->GetStation(
-                    static_cast<unsigned int>(info.m_stationLocation.m_field1c));
-                matchedByIndex = station != 0;
-            }
-            else
-            {
-                station = addressStation;
+                    static_cast<unsigned int>(location.m_field1c));
+                if (station != 0)
+                {
+                    station->Trace(0x8008000);
+                    location.Trace(0x8008000);
+                    if (secure == 0)
+                    {
+                        station->m_field20 = 6;
+                        return;
+                    }
+                    common::StationAddress& stationAddress = station->m_stationAddress;
+                    const common::StationAddress& sourceAddress = message.m_stationAddress;
+                    stationAddress.Trace(0x8000);
+                    sourceAddress.Trace(0x8000);
+                    ++m_reconnectionCount;
+                    stationAddress = sourceAddress;
+                    reconnected = true;
+                }
             }
         }
     }
-    if (station != 0)
+    if (station == 0)
     {
-        if (matchedByIndex)
+        if (secure == 1)
+            return;
+        bool creatable = false;
+        unsigned long long uniqueId = 0;
+        if (g_piaStationManager->GetValidStationNum() < g_piaTransport->m_stationNum)
         {
-            station->Trace(0x8008000);
-            info.m_stationLocation.Trace(0x8008000);
-            if (secure == 0)
-            {
-                station->m_field20 = 6;
-                return;
-            }
-            station->m_stationAddress.Trace(0x8000);
-            message.m_stationAddress.Trace(0x8000);
-            ++m_reconnectionCount;
-            station->m_stationAddress = message.m_stationAddress;
+            if (location.m_principalId != 0)
+                uniqueId = location.m_principalId;
+            else if (info.m_localStationLocation.m_principalId != 0)
+                uniqueId = info.m_localStationLocation.m_principalId;
+            StationIdTable::Entry* entry = 0;
+            if (uniqueId != 0)
+                entry = g_piaTransport->m_stationIdTable->FindByUniqueIdCore(uniqueId);
+            StationIdTable* idTable = g_piaTransport->m_stationIdTable;
+            if (idTable->GetEntryNum() < idTable->m_availableEntryNum || entry != 0)
+                creatable = true;
         }
-        else if (secure == 0)
+        if (!creatable)
+        {
+            if (!relay)
+            {
+                SendDenyingConnectionResponse(message.m_stationAddress, 1,
+                                              location.m_principalId,
+                                              location.m_field18);
+            }
+            return;
+        }
+        if (uniqueId != 0)
+        {
+            for (Station** it = g_piaStationManager->m_stations.data;
+                 it != g_piaStationManager->m_stations.data + g_piaStationManager->m_stations.size;
+                 ++it)
+            {
+                if ((*it)->m_stationId == uniqueId)
+                {
+                    if ((*it)->m_field20 == 5)
+                        (*it)->m_field68 = 1;
+                    else
+                        (*it)->m_field20 = 6;
+                }
+            }
+        }
+        station = g_piaStationManager->CreateStation();
+        station->Startup(relay ? location.m_stationAddress : message.m_stationAddress);
+        station->m_field55 = nonce;
+        station->m_field20 = 3;
+        common::Time now;
+        now.SetNow();
+        station->m_field54 = static_cast<unsigned char>(now.m_tick % 0xfe + 2);
+        ConnectStationJob* connectJob = station->m_connectStationJob;
+        if (connectJob->GetState() != common::Job::cStateNotEntried &&
+            connectJob->GetState() != common::Job::cStateCompleted)
+        {
+            connectJob->Cleanup();
+            connectJob->Reset(true);
+        }
+    }
+    else
+    {
+        if (!reconnected && secure == 0)
         {
             station->Trace(0x8008000);
-            if (station->m_field55 != nonce)
-            {
-                station->Trace(0x8000000);
-                station->m_field20 = 6;
-            }
+            if (station->m_field55 == nonce)
+                return;
+            station->Trace(0x8000000);
+            station->m_field20 = 6;
             return;
         }
         if (data[16] != station->m_field54)
@@ -253,18 +316,18 @@ void StationProtocol::ParseConnectionRequestCommon(const ReceivedMessageAccessor
         }
         if (station->m_field20 != 2)
         {
-            if (!relay)
+            if (relay)
+            {
+                if (station->m_field10 != cStationIndexInvalid)
+                    SendAck(ackId, static_cast<StationIndex>(station->m_field10));
+            }
+            else
             {
                 SendAck(ackId, station->m_stationAddress);
             }
-            else if (station->m_field10 != cStationIndexInvalid)
-            {
-                SendAck(ackId, static_cast<StationIndex>(station->m_field10));
-            }
             if (static_cast<int>(station->m_field10) > StationManager::cStationNumMax - 1)
             {
-                station->m_field60 = static_cast<int>(g_piaTransport->m_time.m_tick >> 32);
-                station->m_field64 = static_cast<int>(g_piaTransport->m_time.m_tick);
+                station->m_lastReceiveTime = g_piaTransport->m_time;
             }
             return;
         }
@@ -274,102 +337,38 @@ void StationProtocol::ParseConnectionRequestCommon(const ReceivedMessageAccessor
              connectJob->GetState() != common::Job::cStateRunning))
             return;
     }
-    else
-    {
-        if (secure == 1)
-            return;
-        Station* created = 0;
-        if (g_piaStationManager->GetValidStationNum() < g_piaTransport->m_stationNum)
-        {
-            unsigned long long uniqueId = 0;
-            if (info.m_stationLocation.m_principalId != 0)
-                uniqueId = info.m_stationLocation.m_principalId;
-            else if (info.m_localStationLocation.m_principalId != 0)
-                uniqueId = info.m_localStationLocation.m_principalId;
-            StationIdTable::Entry* entry = 0;
-            if (uniqueId != 0)
-                entry = g_piaTransport->m_stationIdTable->FindByUniqueIdCore(uniqueId);
-            StationIdTable* idTable = g_piaTransport->m_stationIdTable;
-            if (idTable->GetEntryNum() < idTable->m_availableEntryNum || entry != 0)
-            {
-                if (uniqueId != 0)
-                {
-                    for (Station** it = g_piaStationManager->m_stations.data;
-                         it != g_piaStationManager->m_stations.data +
-                                   g_piaStationManager->m_stations.size;
-                         ++it)
-                    {
-                        if ((*it)->m_field18 == static_cast<unsigned int>(uniqueId >> 32) &&
-                            (*it)->m_field1c == static_cast<unsigned int>(uniqueId))
-                        {
-                            if ((*it)->m_field20 != 5)
-                                (*it)->m_field20 = 6;
-                            else
-                                (*it)->m_field68 = 1;
-                        }
-                    }
-                }
-                created = g_piaStationManager->CreateStation();
-                created->Startup(relay ? info.m_stationLocation.m_stationAddress
-                                       : message.m_stationAddress);
-                created->m_field55 = nonce;
-                created->m_field20 = 3;
-                common::Time now;
-                now.SetNow();
-                created->m_field54 = static_cast<unsigned char>(now.m_tick % 0xfe + 2);
-                ConnectStationJob* createdJob = created->m_connectStationJob;
-                if (createdJob->GetState() != common::Job::cStateNotEntried &&
-                    createdJob->GetState() != common::Job::cStateCompleted)
-                {
-                    createdJob->Cleanup();
-                    createdJob->Reset(true);
-                }
-            }
-        }
-        if (created == 0)
-        {
-            if (!relay)
-            {
-                SendDenyingConnectionResponse(message.m_stationAddress, 1,
-                                              info.m_stationLocation.m_principalId,
-                                              info.m_stationLocation.m_field18);
-            }
-            return;
-        }
-        station = created;
-    }
-    Result addResult = g_stationConnectionInfoTable->AddToTable(station, info);
-    if (addResult != 0)
+    if (g_stationConnectionInfoTable->AddToTable(station, info) != 0)
     {
         g_stationConnectionInfoTable->Trace(0x8000);
         return;
     }
     ProcessConnectionRequestJob* processJob = station->m_processConnectionRequestJob;
     unsigned int started;
-    if (!relay)
-        started = processJob->Startup(station, m_timeoutMsec, secure == 1);
-    else
+    if (relay)
         started = processJob->StartupRelayConnection(station, m_timeoutMsec, secure == 1);
-    if (started == 0)
+    else
+        started = processJob->Startup(station, m_timeoutMsec, secure == 1);
+    if (started != 0)
+    {
+        processJob->Ready(false);
+        if (relay)
+        {
+            if (static_cast<int>(station->m_field10) <= StationManager::cStationNumMax - 1)
+                SendAck(ackId, static_cast<StationIndex>(station->m_field10));
+        }
+        else
+        {
+            SendAck(ackId, station->m_stationAddress);
+        }
+        if (static_cast<int>(station->m_field10) > StationManager::cStationNumMax - 1)
+        {
+            station->m_lastReceiveTime = g_piaTransport->m_time;
+            station->m_lastSendTime = g_piaTransport->m_time;
+        }
+    }
+    else
     {
         g_stationConnectionInfoTable->EraseFromTable(station);
-        return;
-    }
-    processJob->Ready(false);
-    if (!relay)
-    {
-        SendAck(ackId, station->m_stationAddress);
-    }
-    else if (static_cast<int>(station->m_field10) <= StationManager::cStationNumMax - 1)
-    {
-        SendAck(ackId, static_cast<StationIndex>(station->m_field10));
-    }
-    if (static_cast<int>(station->m_field10) > StationManager::cStationNumMax - 1)
-    {
-        station->m_field60 = static_cast<int>(g_piaTransport->m_time.m_tick >> 32);
-        station->m_field64 = static_cast<int>(g_piaTransport->m_time.m_tick);
-        station->m_field58 = static_cast<int>(g_piaTransport->m_time.m_tick >> 32);
-        station->m_field5c = static_cast<int>(g_piaTransport->m_time.m_tick);
     }
 }
 
@@ -388,51 +387,65 @@ void StationProtocol::ParseConnectionResponseCommon(const ReceivedMessageAccesso
     unsigned char rejection = data[1];
     if (rejection != 2)
     {
-        if (readU32(data + 5) !=
-            static_cast<unsigned int>(g_stationConnectionInfoTable->m_stationLocation.m_principalId >> 32))
-            return;
-        if (readU32(data + 9) !=
-            static_cast<unsigned int>(g_stationConnectionInfoTable->m_stationLocation.m_principalId))
+        unsigned long long principalId = 0;
+        principalId |= static_cast<unsigned long long>(data[5]) << 56;
+        principalId |= static_cast<unsigned long long>(data[6]) << 48;
+        principalId |= static_cast<unsigned long long>(data[7]) << 40;
+        principalId |= static_cast<unsigned long long>(data[8]) << 32;
+        principalId |= static_cast<unsigned long long>(data[9]) << 24;
+        principalId |= static_cast<unsigned long long>(data[10]) << 16;
+        principalId |= static_cast<unsigned long long>(data[11]) << 8;
+        principalId |= static_cast<unsigned long long>(data[12]);
+        if (principalId !=
+            g_stationConnectionInfoTable->m_localStationConnectionInfo.m_stationLocation.m_principalId)
             return;
         if (readU32(data + 13) !=
-            static_cast<unsigned int>(g_stationConnectionInfoTable->m_stationLocation.m_field18))
+            static_cast<unsigned int>(
+                g_stationConnectionInfoTable->m_localStationConnectionInfo.m_stationLocation.m_field18))
             return;
     }
     Station* station = g_piaStationManager->GetStation(message.m_stationAddress);
     if (station == 0)
     {
-        station = g_piaStationManager->GetStationByStationIdWithoutConvert(message.m_sourceStationId);
-        if (!relay)
+        Station* candidate =
+            g_piaStationManager->GetStationByStationIdWithoutConvert(message.m_sourceStationId);
+        if (relay)
         {
-            if (station == 0)
+            station = candidate;
+        }
+        else
+        {
+            if (candidate == 0)
                 return;
-            station->Trace(0x8000000);
-            if (!station->m_stationAddress.IsPrivate() || message.m_stationAddress.IsPrivate())
+            candidate->Trace(0x8000000);
+            if (!candidate->m_stationAddress.m_inetAddress.IsPrivate() ||
+                message.m_stationAddress.m_inetAddress.IsPrivate())
             {
-                if (station->m_stationAddress.IsPrivate())
+                if (candidate->m_stationAddress.m_inetAddress.IsPrivate())
                     return;
-                if (!message.m_stationAddress.IsPrivate())
+                if (!message.m_stationAddress.m_inetAddress.IsPrivate())
                     return;
             }
             StationConnectionInfo info;
-            Station* matched = 0;
-            Result infoResult = g_stationConnectionInfoTable->GetStationConnectionInfo(station, &info);
+            Result infoResult =
+                g_stationConnectionInfoTable->GetStationConnectionInfo(candidate, &info);
             if (infoResult == 0)
             {
+                const common::StationAddress& sourceAddress = message.m_stationAddress;
+                common::StationAddress& candidateAddress = candidate->m_stationAddress;
                 info.Trace(0x8000000);
-                message.m_stationAddress.Trace(0x8000000);
-                if (info.m_stationLocation.m_stationAddress.m_address ==
-                        message.m_stationAddress.m_address ||
-                    info.m_localStationLocation.m_stationAddress.m_address ==
-                        message.m_stationAddress.m_address)
+                sourceAddress.Trace(0x8000000);
+                if (info.m_stationLocation.m_stationAddress.m_inetAddress.m_address ==
+                        sourceAddress.m_inetAddress.m_address ||
+                    info.m_localStationLocation.m_stationAddress.m_inetAddress.m_address ==
+                        sourceAddress.m_inetAddress.m_address)
                 {
-                    station->m_stationAddress.Trace(0x8000000);
-                    station->m_stationAddress = message.m_stationAddress;
-                    station->m_stationAddress.Trace(0x8000000);
-                    matched = station;
+                    candidateAddress.Trace(0x8000000);
+                    candidateAddress = sourceAddress;
+                    candidateAddress.Trace(0x8000000);
+                    station = candidate;
                 }
             }
-            station = matched;
         }
         if (station == 0)
             return;
@@ -447,17 +460,16 @@ void StationProtocol::ParseConnectionResponseCommon(const ReceivedMessageAccesso
         station->m_connectStationJob->m_connectionRejection = 2;
         return;
     }
-    station->m_field60 = static_cast<int>(g_piaTransport->m_time.m_tick >> 32);
-    station->m_field64 = static_cast<int>(g_piaTransport->m_time.m_tick);
-    station->m_field58 = static_cast<int>(g_piaTransport->m_time.m_tick >> 32);
-    station->m_field5c = static_cast<int>(g_piaTransport->m_time.m_tick);
-    if (!relay)
+    station->m_lastReceiveTime = g_piaTransport->m_time;
+    station->m_lastSendTime = g_piaTransport->m_time;
+    if (relay)
+    {
+        if (station->m_field10 != cStationIndexInvalid)
+            SendAck(ackId, static_cast<StationIndex>(station->m_field10));
+    }
+    else
     {
         SendAck(ackId, station->m_stationAddress);
-    }
-    else if (station->m_field10 != cStationIndexInvalid)
-    {
-        SendAck(ackId, static_cast<StationIndex>(station->m_field10));
     }
     if (station->m_field20 != 4)
     {
@@ -481,14 +493,16 @@ void StationProtocol::ParseConnectionResponseCommon(const ReceivedMessageAccesso
     unsigned int count = data[cResponseEntryCountOffset];
     if (count > 1)
         return;
-    unsigned int first = 0;
+    unsigned int first;
     int remaining;
     if (section == 0)
     {
+        first = 0;
         remaining = count;
     }
     else if (section == 1)
     {
+        first = 0;
         remaining = 2;
     }
     else
@@ -502,12 +516,12 @@ void StationProtocol::ParseConnectionResponseCommon(const ReceivedMessageAccesso
     unsigned long long* principals = info.m_principalId;
     for (unsigned int index = first; remaining > 0; --remaining, ++index)
     {
-        const unsigned char* entry = data + cResponseHeaderSize + (index - first) * cResponseEntrySize;
-        if (entry[cResponseNameEncodingOffset] == common::String::EncodingType_Utf16)
+        unsigned int offset = cResponseHeaderSize + (index - first) * cResponseEntrySize;
+        if (data[offset + cResponseNameEncodingOffset] == common::String::EncodingType_Utf16)
         {
             wchar_t text[cResponseWideNameLength + 1];
             for (unsigned int n = 0; n < cResponseWideNameLength; ++n)
-                text[n] = common::deserializeU16(entry + n * 2);
+                text[n] = common::deserializeU16(data + offset + n * 2);
             text[cResponseWideNameLength] = 0;
             info.m_field60[index].Copy(common::String(text));
         }
@@ -515,15 +529,15 @@ void StationProtocol::ParseConnectionResponseCommon(const ReceivedMessageAccesso
         {
             char text[cResponseNameLength + 1];
             for (unsigned int n = 0; n < cResponseNameLength; ++n)
-                text[n] = common::deserializeU8(entry + n);
+                text[n] = common::deserializeU8(data + offset + n);
             text[cResponseNameLength] = 0;
             info.m_field60[index].Copy(common::String(text));
         }
-        if (entry[cResponseSecondNameEncodingOffset] == common::String::EncodingType_Utf16)
+        if (data[offset + cResponseSecondNameEncodingOffset] == common::String::EncodingType_Utf16)
         {
             wchar_t text[cResponseSecondWideNameLength + 1];
             for (unsigned int n = 0; n < cResponseSecondWideNameLength; ++n)
-                text[n] = common::deserializeU16(entry + cResponseSecondNameOffset + n * 2);
+                text[n] = common::deserializeU16(data + offset + cResponseSecondNameOffset + n * 2);
             text[cResponseSecondWideNameLength] = 0;
             info.m_fieldC8[index].Copy(common::String(text));
         }
@@ -531,14 +545,14 @@ void StationProtocol::ParseConnectionResponseCommon(const ReceivedMessageAccesso
         {
             char text[cResponseSecondNameLength + 1];
             for (unsigned int n = 0; n < cResponseSecondNameLength; ++n)
-                text[n] = common::deserializeU8(entry + cResponseSecondNameOffset + n);
+                text[n] = common::deserializeU8(data + offset + cResponseSecondNameOffset + n);
             text[cResponseSecondNameLength] = 0;
             info.m_fieldC8[index].Copy(common::String(text));
         }
-        flags[index] = entry[cResponseFlagOffset];
+        flags[index] = data[offset + cResponseFlagOffset];
         for (unsigned int n = 0; n < cResponseBytesLength; ++n)
-            info.m_field20.m_bytes[index * cResponseBytesLength + n] = entry[cResponseBytesOffset + n];
-        principals[index] = common::deserializeU64(entry + cResponsePrincipalOffset);
+            info.m_field20.m_bytes[index * cResponseBytesLength + n] = data[offset + cResponseBytesOffset + n];
+        principals[index] = common::deserializeU64(data + offset + cResponsePrincipalOffset);
     }
     Result addResult = IdentificationInfoTable::GetInstance()->AddToTable(station, &info, section);
     if (addResult == 0)
@@ -565,14 +579,12 @@ unsigned int StationProtocol::SendSimpleMessage(unsigned char messageType,
     ProtocolMessageWriter* writer =
         reinterpret_cast<PacketHandler*>(mStationPacketHandler)->AssignByStationAddress(
             protocolId, address, 1, false, false);
-    if (writer)
-    {
-        writer->WriteU8(messageType, 0);
-        Result result = reinterpret_cast<PacketHandler*>(mStationPacketHandler)->Commit();
-        if (result == 0)
-            return 1;
-    }
-    return 0;
+    if (writer == 0)
+        return 0;
+    writer->WriteU8(messageType, 0);
+    if (reinterpret_cast<PacketHandler*>(mStationPacketHandler)->Commit() != 0)
+        return 0;
+    return 1;
 }
 
 void StationProtocol::SendDisconnectionResponse(const common::StationAddress& address)
@@ -629,8 +641,8 @@ void StationProtocol::ParseAck(const ReceivedMessageAccessor& message)
     g_piaResendingMessageManager->StopResending(ackId);
     if (static_cast<int>(station->m_field10) > StationManager::cStationNumMax - 1)
     {
-        station->m_field60 = static_cast<int>(g_piaTransport->m_time.m_tick >> 32);
-        station->m_field64 = static_cast<int>(g_piaTransport->m_time.m_tick);
+        const common::Time now = g_piaTransport->m_time;
+        station->m_lastReceiveTime = now;
     }
 }
 
@@ -681,9 +693,9 @@ Result StationProtocol::Dispatch()
 {
     ReceivedMessageAccessor message;
     ProtocolId protocolId = mProtocolId;
-    PacketHandler* handler = reinterpret_cast<PacketHandler*>(mStationPacketHandler);
-    PacketHandler::Iterator& iterator = handler->GetIterator(protocolId);
-    while (!handler->IsEndIteration())
+    PacketHandler::Iterator& iterator =
+        reinterpret_cast<PacketHandler*>(mStationPacketHandler)->GetIterator(protocolId);
+    while (!iterator.IsEndIteration())
     {
         ProtocolMessageReader* reader = iterator.GetMessageReader();
         message.m_message = reader->m_message + ProtocolMessageReader::cMessageHeaderSize;
@@ -694,7 +706,7 @@ Result StationProtocol::Dispatch()
         Result result = ParseHelper(message);
         if (result != 0)
             return result;
-        handler->NextIteration();
+        iterator.NextIteration();
     }
     return 0;
 }
@@ -707,14 +719,13 @@ unsigned int StationProtocol::SendSimpleMessage(unsigned char messageType,
         reinterpret_cast<StationPacketHandler*>(GetStationPacketHandler());
     ProtocolMessageWriter* writer =
         handler->AssignByStationIndex(protocolId, stationIndex, 1, relay, false, true);
-    if (writer)
-    {
-        writer->WriteU8(messageType, 0);
-        Result result = reinterpret_cast<PacketHandler*>(mStationPacketHandler)->Commit();
-        if (result == 0)
-            return 1;
-    }
-    return 0;
+    if (writer == 0)
+        return 0;
+    writer->WriteU8(messageType, 0);
+    Result result = reinterpret_cast<PacketHandler*>(mStationPacketHandler)->Commit();
+    if (result != 0)
+        return 0;
+    return 1;
 }
 
 void StationProtocol::SendDisconnectionRequest(StationIndex stationIndex, bool relay)
@@ -729,7 +740,8 @@ void StationProtocol::SendDisconnectionRequest(const common::StationAddress& add
 
 unsigned int StationProtocol::GetConnectionRequestDataSize() const
 {
-    return g_stationConnectionInfoTable->GetSerializedSize() + cConnectionRequestHeaderSize;
+    return g_stationConnectionInfoTable->GetLocalStationConnectionInfo().GetSerializedSize() +
+        cConnectionRequestHeaderSize;
 }
 
 void StationProtocol::MakeConnectionRequestData(unsigned char* buffer, unsigned char nonce,
@@ -756,10 +768,9 @@ void StationProtocol::MakeConnectionRequestData(unsigned char* buffer, unsigned 
     buffer[15] = static_cast<unsigned char>(infoField);
     buffer[16] = field55;
     unsigned int serializedSize;
-    g_stationConnectionInfoTable->Serialize(buffer + cConnectionRequestHeaderSize,
-                                            &serializedSize,
-                                            GetConnectionRequestDataSize() -
-                                                cConnectionRequestHeaderSize);
+    g_stationConnectionInfoTable->GetLocalStationConnectionInfo().Serialize(
+        buffer + cConnectionRequestHeaderSize, &serializedSize,
+        GetConnectionRequestDataSize() - cConnectionRequestHeaderSize);
 }
 
 void StationProtocol::MakeConnectionResponseData(unsigned char* buffer, unsigned char section,
@@ -789,8 +800,13 @@ void StationProtocol::MakeConnectionResponseData(unsigned char* buffer, unsigned
     common::serializeU32(buffer + cResponseInfoFieldOffset, info.m_field10c);
     buffer[cResponsePlayerCountOffset] = info.m_playerCount;
     buffer[cResponseParticipantCountOffset] = info.m_participantCount;
+    if (info.m_field108 == cResponseFlagUnset && info.m_field60[0].GetBytes() <= 0 &&
+        info.m_fieldC8[0].GetBytes() <= 0)
+    {
+        StationProtocol::Trace(cTraceStationProtocol);
+    }
     buffer[cResponseEntryCountOffset] = 1;
-    unsigned int first = 0;
+    unsigned int first = section == 2 ? 2 : 0;
     int remaining;
     if (section == 0)
     {
@@ -798,50 +814,49 @@ void StationProtocol::MakeConnectionResponseData(unsigned char* buffer, unsigned
     }
     else
     {
-        if (section == 2)
-            first = 2;
         remaining = 3 - section * 2;
         if (remaining > 2)
             remaining = 2;
     }
-    unsigned char* flags = &info.m_field108;
-    unsigned long long* principals = info.m_principalId;
+    const unsigned char* flags = &info.m_field108;
     for (unsigned int index = first; remaining > 0; --remaining, ++index)
     {
-        unsigned char* entry = buffer + cResponseHeaderSize + (index - first) * cResponseEntrySize;
+        unsigned int offset = cResponseHeaderSize + (index - first) * cResponseEntrySize;
         const common::String& name = info.m_field60[index];
         if (name.GetEncodingType() == common::String::EncodingType_Utf16)
         {
             const unsigned short* characters = static_cast<const unsigned short*>(name.GetBuffer());
-            for (unsigned int n = 0; n < cResponseNameLength / 2; ++n)
-                common::serializeU16(entry + n * 2, characters[n]);
+            for (int n = 0; n < cResponseNameLength / 2; ++n)
+                common::serializeU16(buffer + offset + n * 2, *characters++);
         }
         else
         {
             const char* characters = name.GetCharArray();
-            for (unsigned int n = 0; n < cResponseNameLength; ++n)
-                common::serializeU8(entry + n, characters[n]);
+            for (int n = 0; n < cResponseNameLength; ++n)
+                common::serializeU8(buffer + offset + n, *characters++);
         }
-        entry[cResponseNameEncodingOffset] = name.GetEncodingType();
+        offset += cResponseNameLength;
+        buffer[offset++] = name.GetEncodingType();
         const common::String& secondName = info.m_fieldC8[index];
         if (secondName.GetEncodingType() == common::String::EncodingType_Utf16)
         {
             const unsigned short* characters =
                 static_cast<const unsigned short*>(secondName.GetBuffer());
-            for (unsigned int n = 0; n < cResponseSecondNameLength / 2; ++n)
-                common::serializeU16(entry + cResponseSecondNameOffset + n * 2, characters[n]);
+            for (int n = 0; n < cResponseSecondNameLength / 2; ++n)
+                common::serializeU16(buffer + offset + n * 2, *characters++);
         }
         else
         {
             const char* characters = secondName.GetCharArray();
-            for (unsigned int n = 0; n < cResponseSecondNameLength; ++n)
-                common::serializeU8(entry + cResponseSecondNameOffset + n, characters[n]);
+            for (int n = 0; n < cResponseSecondNameLength; ++n)
+                common::serializeU8(buffer + offset + n, *characters++);
         }
-        entry[cResponseSecondNameEncodingOffset] = secondName.GetEncodingType();
-        entry[cResponseFlagOffset] = flags[index];
-        for (unsigned int n = 0; n < cResponseBytesLength; ++n)
-            entry[cResponseBytesOffset + n] = info.m_field20.m_bytes[index * cResponseBytesLength + n];
-        common::serializeU64(entry + cResponsePrincipalOffset, principals[index]);
+        offset += cResponseSecondNameLength;
+        buffer[offset++] = secondName.GetEncodingType();
+        buffer[offset++] = flags[index];
+        for (int n = 0; n < cResponseBytesLength; ++n)
+            buffer[offset++] = info.m_field20.m_bytes[index * cResponseBytesLength + n];
+        common::serializeU64(buffer + offset, info.m_principalId[index]);
     }
 }
 

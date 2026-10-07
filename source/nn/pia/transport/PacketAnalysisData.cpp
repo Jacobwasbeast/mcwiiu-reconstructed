@@ -14,7 +14,7 @@ void PacketAnalysisData::ClearExceptName()
     for (int i = 0; i < cEntryNumMax; ++i)
     {
         Entry& entry = m_entries[i];
-        entry.m_protocolId = ProtocolId(g_piaProtocolDefaultType);
+        entry.m_protocolId = g_piaProtocolDefaultType;
         entry.m_packetNum = 0;
         entry.m_packetSize = 0;
         entry.m_totalPacketNum = 0;
@@ -69,10 +69,9 @@ void PacketAnalysisData::Print(bool isDetail) const
 
 int PacketAnalysisData::GetIndex(ProtocolId protocolId) const
 {
-    const unsigned short value = static_cast<unsigned short>(protocolId);
     for (int i = 0; i < m_entryNum; ++i)
     {
-        if (static_cast<unsigned short>(m_entries[i].m_protocolId) == value)
+        if (m_entries[i].m_protocolId == protocolId)
             return i;
     }
     return -1;

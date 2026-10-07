@@ -90,33 +90,6 @@ public:
     unsigned char* m_originalRouteTable;
 };
 
-inline bool RelayRouteManager::IsRelayEnabled(unsigned int source, unsigned int relay,
-                                              unsigned int destination,
-                                              RelayFailureReason* failureReason)
-{
-    const unsigned int stationNum = g_piaTransport->m_stationNum;
-    const unsigned short sourceRtt = m_rttTable[source * stationNum + relay];
-    unsigned short relayRtt;
-    if (sourceRtt == 0 || (relayRtt = m_rttTable[relay * stationNum + destination]) == 0)
-    {
-        if (failureReason != 0)
-            *failureReason = cRelayFailureReasonNoRtt;
-    }
-    else if (m_rttMax < sourceRtt + relayRtt)
-    {
-        if (failureReason != 0)
-            *failureReason = cRelayFailureReasonRttTooLarge;
-    }
-    else
-    {
-        if (static_cast<unsigned short>(m_relayNumTable[relay] + 2) <= m_relayNumMax)
-            return true;
-        if (failureReason != 0)
-            *failureReason = cRelayFailureReasonRelayLimit;
-    }
-    return false;
-}
-
 }}}
 
 #endif

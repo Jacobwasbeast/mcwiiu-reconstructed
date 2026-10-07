@@ -564,7 +564,7 @@ void PacketHandler::EndDispatch(const common::Time&)
             {
                 ++*m_stationId;
                 for (unsigned int byte = 0; byte < 8; ++byte)
-                    packet->m_packetData.m_header.m_field10[byte] =
+                    packet->m_packetData.m_header.m_cryptoNonce[byte] =
                         static_cast<unsigned char>(*m_stationId >> (56 - byte * 8));
                 m_packetOutput->CalculateCryptoParameter(parameter, sizeof(parameter), packet);
             }

@@ -2,6 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_BANDWIDTH_CHECK_PROTOCOL_HPP
 
 #include "nn/pia.h"
+#include "nn/pia/common/ISerializable.hpp"
 #include "nn/pia/common/StationAddress.hpp"
 #include "nn/pia/common/Time.hpp"
 
@@ -10,7 +11,7 @@ namespace nn { namespace pia { namespace transport {
 class BandwidthCheckProtocol : public Protocol
 {
 public:
-    class Header
+    class Header : public common::ISerializable
     {
     public:
         unsigned int m_type;
@@ -54,10 +55,10 @@ public:
     unsigned int IsSetupParamValid(int, unsigned int, int) const;
     Result Activate(int, unsigned int, bool, int);
     void Inactivate();
-    unsigned int IsReady() const;
+    bool IsReady() const;
     Result StartSend(StationIndex);
     void CancelSend();
-    unsigned int IsCompleted() const;
+    bool IsCompleted() const;
     Result GetUplinkBitRate(int*) const;
     void SetBandwidthChecked(StationIndex);
     unsigned int getBulkPacketSize() const;
@@ -90,6 +91,7 @@ private:
     bool m_initialized;
     unsigned int m_stationNum;
     bool m_activated;
+    bool m_isServer;
     unsigned char* m_bulkBuffer;
     unsigned int m_activeStationBitmap;
     unsigned int m_bandwidthCheckedBitmap;
@@ -104,21 +106,20 @@ private:
     int m_uplinkBitRate;
     StationIndex m_senderStation;
     unsigned int m_bulkPacketSequence;
+    int m_measurementResult;
     bool m_cancelRequested;
     ReceiverState m_receiverState;
     common::Time m_receiverStartTime;
     common::Time m_bulkArrivalTime;
     common::Time m_responseSentTime;
-    common::Time m_ackSentTime;
     unsigned int m_receivedBytes;
     StationIndex m_receiverStation;
     common::StationAddress m_stationAddress;
     unsigned int m_receivedBulkPacketCount;
     int m_firstBulkPacketSequence;
     int m_lastBulkPacketSequence;
+    common::Time m_ackSentTime;
     bool m_receiverActive;
-    bool m_isServer;
-    int m_measurementResult;
 };
 
 }}}

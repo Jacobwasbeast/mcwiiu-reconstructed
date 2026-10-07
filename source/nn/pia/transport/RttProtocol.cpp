@@ -125,13 +125,13 @@ Result RttProtocol::StartupWithStationAddress(const common::StationAddress& addr
         return 0x10c08;
 
     m_stationIndex = static_cast<StationIndex>(station->m_field10);
-    if (station->m_field18 == 0 && station->m_field1c == 0)
+    if (station->m_stationId == 0)
         return 0x10c07;
     if (m_stationIdHigh != 0 || m_stationIdLow != 0)
         return 0x10c08;
 
-    m_stationIdHigh = station->m_field18;
-    m_stationIdLow = station->m_field1c;
+    m_stationIdHigh = static_cast<unsigned int>(station->m_stationId >> 32);
+    m_stationIdLow = static_cast<unsigned int>(station->m_stationId);
     m_isStarConnection = g_piaTransport->m_networkFactory->IsStarConnection();
     return 0;
 }

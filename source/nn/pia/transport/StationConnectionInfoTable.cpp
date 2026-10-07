@@ -21,7 +21,7 @@ unsigned long long PrincipalId(const StationConnectionInfo& info)
 }
 
 StationConnectionInfoTable::StationConnectionInfoTable()
-    : StationConnectionInfo(), m_hostStationConnectionInfo(), m_hostStationAddress(),
+    : m_localStationConnectionInfo(), m_hostStationConnectionInfo(), m_hostStationAddress(),
       m_infos(0), m_count(0), m_criticalSection(-1)
 {
 }
@@ -173,7 +173,8 @@ Station* StationConnectionInfoTable::GetStation(const common::StationAddress& ad
 {
     m_criticalSection.Lock();
     for (unsigned int i = 0; i < m_count; ++i)
-        if (m_infos[i].m_stationLocation.m_stationAddress.m_address == address.m_address)
+        if (m_infos[i].m_stationLocation.m_stationAddress.m_inetAddress.m_address ==
+            address.m_inetAddress.m_address)
         {
             m_infos[i].m_stationLocation.Trace(0x4008000);
             Station* station = m_stations[i];

@@ -4,10 +4,6 @@
 
 namespace nn { namespace pia { namespace transport {
 
-DispatchJob::~DispatchJob()
-{
-}
-
 DispatchJob::ExecuteResult DispatchJob::ExecuteCore()
 {
     g_piaTransport->dispatch();

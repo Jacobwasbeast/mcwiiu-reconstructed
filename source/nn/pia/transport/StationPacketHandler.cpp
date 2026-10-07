@@ -8,18 +8,11 @@
 
 namespace nn { namespace pia { namespace transport {
 
+const unsigned long long cStationIdUpperMask = 0xffffffff00000000ULL;
+const unsigned char cKeepAliveProtocolType = 8;
+
 StationPacketHandler::StationPacketHandler()
 {
-}
-
-bool StationPacketHandler::checkDerivedRuntimeTypeInfo(const pead::RuntimeTypeInfo::Interface* type) const
-{
-    return checkDerivedRuntimeTypeInfoStatic(type);
-}
-
-const pead::RuntimeTypeInfo::Interface* StationPacketHandler::getRuntimeTypeInfo() const
-{
-    return getRuntimeTypeInfoStatic();
 }
 
 StationPacketHandler::~StationPacketHandler()
@@ -36,7 +29,7 @@ Result StationPacketHandler::Initialize(unsigned int stationNum, bool isStarConn
         return result;
 
     m_isStarConnection = isStarConnection;
-    m_localStationIndex = 0xfd;
+    m_localStationIndex = ::nn::pia::cStationIndexInvalid;
     m_localStationId = 0;
     m_localStationBitmap = 0;
     m_stationNum = stationNum;
@@ -45,84 +38,131 @@ Result StationPacketHandler::Initialize(unsigned int stationNum, bool isStarConn
 
 void StationPacketHandler::Finalize()
 {
-    m_localStationIndex = 0xfd;
+    m_localStationIndex = ::nn::pia::cStationIndexInvalid;
     m_localStationId = 0;
     m_localStationBitmap = 0;
     PacketHandler::Finalize();
 }
 
+Result StationPacketHandler::Startup(PacketStream::Writer* writer,
+                                     PacketStream::Reader* reader,
+                                     common::IPacketInput* packetInput,
+                                     common::IPacketOutput* packetOutput,
+                                     unsigned long long* stationId,
+                                     const common::CryptoSetting* cryptoSetting)
+{
+    const Result result = PacketHandler::Startup(writer, reader, packetInput, packetOutput,
+                                                 stationId, cryptoSetting);
+    if (result != 0)
+        return result;
+
+    m_localStationIndex = ::nn::pia::cStationIndexInvalid;
+    m_localStationId = 0;
+    m_localStationBitmap = 0;
+    m_protocolMessageWriter.SetSource(0);
+    m_keepAliveStationBitmap = 0;
+    return 0;
+}
+
 void StationPacketHandler::Cleanup()
 {
-    m_localStationIndex = 0xfd;
+    m_localStationIndex = ::nn::pia::cStationIndexInvalid;
     m_localStationId = 0;
     m_localStationBitmap = 0;
     PacketHandler::Cleanup();
 }
 
-unsigned int StationPacketHandler::GenerateConnectionId() const
-{
-    common::Time time;
-    time.SetNow();
-    return static_cast<unsigned int>(time.m_tick);
-}
-
-void StationPacketHandler::Trace(unsigned long long value) const
-{
-}
-
-unsigned int StationPacketHandler::IsBroadcastSupported() const
-{
-    return m_isStarConnection;
-}
-
-unsigned int StationPacketHandler::CheckPacket(const common::Packet& packet)
-{
-    StationManager* manager = GetStationManager();
-    Station* station = manager->GetStation(packet.m_field608);
-    if (station == 0)
-        return packet.m_size;
-
-    const unsigned char passId = packet.m_packetData.m_header.m_field09;
-    const unsigned char receivingPassId = station->m_field55;
-    if (passId != 0 && passId != 1 && receivingPassId != 0 && passId != receivingPassId)
-        return 0;
-    if (m_localStationIndex < 32 &&
-        !station->m_sequenceIdController.CheckReceivedSequenceId(packet.m_packetData.m_header.m_field0a))
-        return 0;
-    if (m_localStationIndex != static_cast<unsigned int>(manager->m_invalidStationIndex) &&
-        station->m_field20 == 5 && station->m_field10 == 0xfd)
-        return 0;
-    return packet.m_size;
-}
-
-unsigned int StationPacketHandler::CheckMessage(const ProtocolMessageReader& reader)
-{
-    if ((reader.m_header.m_flags & 2) != 0)
-        return 0;
-    if ((reader.m_header.m_flags & 1) == 0)
-        return reader.GetDestination() == m_localStationId;
-    if ((reader.GetDestination() >> 32) != 0)
-        return 0;
-    if (IsBroadcastSupported() != 0 && m_localStationBitmap != 0 &&
-        reader.GetDestination() != 0 &&
-        (static_cast<unsigned int>(reader.GetDestination()) & m_localStationBitmap) == 0)
-        return 0;
-    return 1;
-}
-
-unsigned int StationPacketHandler::CheckReceive(const ProtocolMessageReader& reader)
-{
-    if ((reader.m_header.m_flags & 2) != 0)
-        return 0;
-    if ((reader.m_header.m_flags & 1) == 0)
-        return reader.GetDestination() == m_localStationId;
-    const unsigned int stationBitmap = static_cast<unsigned int>(reader.GetDestination());
-    return stationBitmap == 0 || (stationBitmap & m_localStationBitmap) != 0;
-}
-
 StationManager* StationPacketHandler::GetStationManager()
 {
     return g_piaStationManager;
+}
+
+Station* StationPacketHandler::GetStation(StationManager* manager,
+                                          const common::StationAddress& address)
+{
+    return manager->GetStation(address);
+}
+
+::nn::pia::StationIndex StationPacketHandler::GetStationIndex(const Station* station)
+{
+    return static_cast< ::nn::pia::StationIndex>(station->m_field10);
+}
+
+Station* StationPacketHandler::GetLocalStation(StationManager* manager)
+{
+    return manager->m_localStation;
+}
+
+unsigned long long StationPacketHandler::GetStationId(const Station* station)
+{
+    return station->m_stationId;
+}
+
+void StationPacketHandler::UpdateLocalStation()
+{
+    if (m_localStationIndex < 32)
+        return;
+    const Station* station = GetLocalStation(GetStationManager());
+    if (station == 0)
+        return;
+    m_localStationIndex = GetStationIndex(station);
+    if (m_localStationIndex < 32)
+    {
+        m_localStationId = GetStationId(station);
+        m_localStationBitmap = 1u << m_localStationIndex;
+        m_protocolMessageWriter.SetSource(m_localStationId);
+    }
+}
+
+void StationPacketHandler::BeginDispatch(const common::Time& time)
+{
+    UpdateLocalStation();
+    PacketHandler::BeginDispatch(time);
+    StationManager* manager = GetStationManager();
+    unsigned int stationBitmap = 0;
+    PacketStream::Reader* reader = m_reader;
+    unsigned int index = static_cast<unsigned int>(reader->m_field04);
+    while (index != static_cast<unsigned int>(reader->m_field08))
+    {
+        PacketStream* stream = reader->m_packetStream;
+        const common::Packet* packet = index < stream->m_packetNum ? &stream->m_packets[index] : 0;
+        if (packet->m_field614 != 0)
+        {
+            if (packet->m_packetData.m_header.m_passId != 1)
+            {
+                const Station* station = GetStation(manager, packet->m_field608);
+                if (station != 0)
+                {
+                    const unsigned int stationIndex = GetStationIndex(station);
+                    if (stationIndex < 32)
+                        stationBitmap |= 1u << stationIndex;
+                }
+            }
+            unsigned int offset = 0;
+            while (offset < packet->m_size - common::Packet::cHeaderSize)
+            {
+                m_protocolMessageReader.Attach(*packet, offset);
+                if (m_protocolMessageReader.m_message == 0)
+                    break;
+                if (m_protocolMessageReader.m_header.m_source != 0)
+                {
+                    const Station* station = manager->GetStation(m_protocolMessageReader.m_header.m_source);
+                    if (station != 0)
+                        stationBitmap |= 1u << station->m_field10;
+                }
+                offset += ((m_protocolMessageReader.m_messageSize + 23u) & ~3u) + 4u;
+            }
+        }
+        ++index;
+        if (static_cast<int>(index) >= static_cast<int>(reader->m_packetStream->m_packetNum))
+            index = 0;
+    }
+    m_keepAliveReceiver.Update(stationBitmap, time);
+}
+
+unsigned int StationPacketHandler::GetParticipatingStationBitmap(const StationManager* manager)
+{
+    return manager->GetParticipatingStationBitmap(false);
 }
 
 ProtocolMessageWriter* StationPacketHandler::AssignByStationBitmap(
@@ -140,7 +180,7 @@ void StationPacketHandler::EndDispatch(const common::Time& time)
     m_keepAliveStationBitmap = 0;
     if (stationBitmap != 0)
     {
-        const ProtocolId protocolId(0x0800);
+        const ProtocolId protocolId(cKeepAliveProtocolType, 0);
         if (AssignByStationBitmap(protocolId, stationBitmap, 0, false, false, true) != 0)
         {
             Commit();
@@ -154,92 +194,22 @@ void StationPacketHandler::EndDispatch(const common::Time& time)
     PacketHandler::EndDispatch(time);
 }
 
-void StationPacketHandler::UpdateLocalStation()
-{
-    if (m_localStationIndex < 32)
-        return;
-    const Station* station = GetStationManager()->m_localStation;
-    if (station == 0)
-        return;
-    m_localStationIndex = station->m_field10;
-    if (m_localStationIndex < 32)
-    {
-        m_localStationId = (static_cast<unsigned long long>(station->m_field18) << 32) |
-                           station->m_field1c;
-        m_localStationBitmap = 1u << m_localStationIndex;
-        m_protocolMessageWriter.SetSource(m_localStationId);
-    }
-}
-
-void StationPacketHandler::BeginDispatch(const common::Time& time)
-{
-    UpdateLocalStation();
-    PacketHandler::BeginDispatch(time);
-    StationManager* manager = GetStationManager();
-    unsigned int stationBitmap = 0;
-    unsigned int index = static_cast<unsigned int>(m_reader->m_field04);
-    while (index != static_cast<unsigned int>(m_reader->m_field08))
-    {
-        PacketStream* stream = m_reader->m_packetStream;
-        const common::Packet* packet = index < stream->m_packetNum ? &stream->m_packets[index] : 0;
-        if (packet->m_field614 != 0)
-        {
-            if (packet->m_packetData.m_header.m_field09 != 1)
-            {
-                const Station* station = manager->GetStation(packet->m_field608);
-                if (station != 0 && station->m_field10 < 32)
-                    stationBitmap |= 1u << station->m_field10;
-            }
-            unsigned int offset = 0;
-            while (offset < packet->m_size - common::Packet::cHeaderSize)
-            {
-                m_protocolMessageReader.Attach(*packet, offset);
-                if (m_protocolMessageReader.m_message == 0)
-                    break;
-                if (m_protocolMessageReader.m_header.m_source != 0)
-                {
-                    const Station* station = manager->GetStation(m_protocolMessageReader.m_header.m_source);
-                    if (station != 0)
-                    {
-                        const unsigned int shift = station->m_field10 & 63;
-                        if (shift < 32)
-                            stationBitmap |= 1u << shift;
-                    }
-                }
-                offset += ((m_protocolMessageReader.m_messageSize + 23u) & ~3u) + 4u;
-            }
-        }
-        ++index;
-        if (static_cast<int>(index) >= static_cast<int>(m_reader->m_packetStream->m_packetNum))
-            index = 0;
-    }
-    m_keepAliveReceiver.Update(stationBitmap, time);
-}
-
-Result StationPacketHandler::GetStationAddress(const StationManager* manager,
-                                               common::StationAddress* address,
-                                               ::nn::pia::StationIndex stationIndex)
-{
-    return manager->GetStationAddress(address, stationIndex);
-}
-
-unsigned int StationPacketHandler::GetParticipatingStationBitmap(const StationManager* manager)
-{
-    return manager->GetParticipatingStationBitmap(false);
-}
-
 ProtocolMessageWriter* StationPacketHandler::AssignByStationIndex(
     const ProtocolId& protocolId, ::nn::pia::StationIndex stationIndex,
     unsigned int size, bool isReliable, bool isPriority, bool isBroadcast)
 {
-    if (stationIndex == 0xff)
+    ProtocolMessageWriter* writer;
+    if (stationIndex == ::nn::pia::cStationIndexSentinelFF)
     {
         if (IsBroadcastSupported() != 0)
-            return AssignAll(protocolId, size, isReliable, isPriority, isBroadcast);
-        const unsigned int stationBitmap = GetParticipatingStationBitmap(GetStationManager());
-        return AssignMulti(protocolId, stationBitmap, size, isReliable, isPriority, isBroadcast);
+            writer = AssignAll(protocolId, size, isReliable, isPriority, isBroadcast);
+        else
+            writer = AssignMulti(protocolId, GetParticipatingStationBitmap(GetStationManager()),
+                                 size, isReliable, isPriority, isBroadcast);
     }
-    return AssignSingle(protocolId, stationIndex, size, isReliable, isPriority, isBroadcast);
+    else
+        writer = AssignSingle(protocolId, stationIndex, size, isReliable, isPriority, isBroadcast);
+    return writer;
 }
 
 ProtocolMessageWriter* StationPacketHandler::AssignByStationId(
@@ -247,10 +217,21 @@ ProtocolMessageWriter* StationPacketHandler::AssignByStationId(
     unsigned int size, bool isReliable, bool isPriority, bool isBroadcast)
 {
     Station* station = g_piaStationManager->GetStationByStationIdWithoutConvert(stationId);
-    if (station != 0 && station->m_field10 != 0xfd)
-        return AssignByStationIndex(protocolId, static_cast<StationIndex>(station->m_field10),
-                                    size, isReliable, isPriority, isBroadcast);
-    return 0;
+    if (station == 0 || station->m_field10 == ::nn::pia::cStationIndexInvalid)
+        return 0;
+    return AssignByStationIndex(protocolId, static_cast<StationIndex>(station->m_field10),
+                                size, isReliable, isPriority, isBroadcast);
+}
+
+unsigned int StationPacketHandler::GenerateConnectionId() const
+{
+    common::Time time;
+    time.SetNow();
+    return static_cast<unsigned int>(time.m_tick);
+}
+
+void StationPacketHandler::Trace(unsigned long long value) const
+{
 }
 
 StationConnectionInfoTable* StationPacketHandler::GetStationConnectionInfoTable()
@@ -258,24 +239,26 @@ StationConnectionInfoTable* StationPacketHandler::GetStationConnectionInfoTable(
     return g_stationConnectionInfoTable;
 }
 
-Result StationPacketHandler::Startup(PacketStream::Writer* writer,
-                                     PacketStream::Reader* reader,
-                                     common::IPacketInput* packetInput,
-                                     common::IPacketOutput* packetOutput,
-                                     unsigned long long* stationId,
-                                     const common::CryptoSetting* cryptoSetting)
+const common::StationAddress& StationPacketHandler::GetHostStationAddress(
+    const StationConnectionInfoTable* table)
 {
-    const Result result = PacketHandler::Startup(writer, reader, packetInput, packetOutput,
-                                                 stationId, cryptoSetting);
-    if (result != 0)
-        return result;
+    return table->m_hostStationAddress;
+}
 
-    m_localStationIndex = 0xfd;
-    m_localStationId = 0;
-    m_localStationBitmap = 0;
-    m_protocolMessageWriter.SetSource(0);
-    m_keepAliveStationBitmap = 0;
-    return 0;
+Station* StationPacketHandler::GetStation(StationManager* manager,
+                                          ::nn::pia::StationIndex stationIndex)
+{
+    return manager->GetStation(stationIndex);
+}
+
+unsigned char StationPacketHandler::GetSendingPassId(const Station* station)
+{
+    return station->m_field54;
+}
+
+unsigned short StationPacketHandler::GetNextSendSequenceId(Station* station)
+{
+    return station->m_sequenceIdController.GetNextSendSequenceId();
 }
 
 common::Packet* StationPacketHandler::AssignPacket(
@@ -288,10 +271,10 @@ common::Packet* StationPacketHandler::AssignPacket(
     {
         if (static_cast<unsigned int>(stationIndex) < 32)
         {
-            station = GetStationManager()->GetStation(stationIndex);
+            station = GetStation(GetStationManager(), stationIndex);
             if (station != 0 && field604)
             {
-                sendingPassId = station->m_field54;
+                sendingPassId = GetSendingPassId(station);
                 if (sendingPassId == 0)
                 {
                     station->Trace(0x8000);
@@ -307,10 +290,10 @@ common::Packet* StationPacketHandler::AssignPacket(
     if (packet == 0)
         return 0;
     const unsigned short sequenceId = station != 0 ?
-        station->m_sequenceIdController.GetNextSendSequenceId() : 0;
+        GetNextSendSequenceId(station) : 0;
     packet->m_stationBitmap = stationBitmap;
-    packet->m_packetData.m_header.m_field09 = sendingPassId;
-    packet->m_packetData.m_header.m_field0a = sequenceId;
+    packet->m_packetData.m_header.m_passId = sendingPassId;
+    packet->m_packetData.m_header.m_sequenceId = sequenceId;
     packet->m_stationIndex = stationIndex;
     m_keepAliveStationBitmap |= stationBitmap;
     return packet;
@@ -319,35 +302,44 @@ common::Packet* StationPacketHandler::AssignPacket(
 bool StationPacketHandler::AssignHostMessage(unsigned int size, unsigned int sizeLimit,
                                               bool isPriority, bool field602, bool field604)
 {
-    common::Packet* packet = 0;
     if (!isPriority)
     {
-        unsigned int index = static_cast<unsigned int>(m_writer->m_field04);
-        while (index != static_cast<unsigned int>(m_writer->m_field08))
+        PacketStream::Writer* writer = m_writer;
+        unsigned int index = static_cast<unsigned int>(writer->m_field04);
+        while (index != static_cast<unsigned int>(writer->m_field08))
         {
-            PacketStream* stream = m_writer->m_packetStream;
+            PacketStream* stream = writer->m_packetStream;
             common::Packet* candidate = index < stream->m_packetNum ? &stream->m_packets[index] : 0;
             if (IsBundleCandidate(candidate, field602, sizeLimit, field604) &&
-                candidate->m_stationIndex == 0xfe)
+                candidate->m_stationIndex == ::nn::pia::cStationIndexSentinelFE)
             {
-                packet = candidate;
-                break;
+                void* payload = AssignPacketPayload(candidate, size);
+                m_protocolMessageWriter.AddMessageBuffer(candidate, payload, 0, true, false);
+                return true;
             }
             ++index;
-            if (static_cast<int>(index) >= static_cast<int>(stream->m_packetNum))
+            if (static_cast<int>(index) >= static_cast<int>(writer->m_packetStream->m_packetNum))
                 index = 0;
         }
     }
-    if (packet == 0)
+    common::Packet* packet;
     {
-        const common::StationAddress address(GetStationConnectionInfoTable()->m_hostStationAddress);
-        packet = AssignPacket(static_cast< ::nn::pia::StationIndex>(0xfe), 0, address, isPriority, field602, field604);
+        const common::StationAddress address(GetHostStationAddress(GetStationConnectionInfoTable()));
+        packet = AssignPacket(::nn::pia::cStationIndexSentinelFE, 0, address, isPriority,
+                              field602, field604);
         if (packet == 0)
             return false;
     }
     void* payload = AssignPacketPayload(packet, size);
     m_protocolMessageWriter.AddMessageBuffer(packet, payload, 0, true, false);
     return true;
+}
+
+Result StationPacketHandler::GetStationAddress(const StationManager* manager,
+                                               common::StationAddress* address,
+                                               ::nn::pia::StationIndex stationIndex)
+{
+    return manager->GetStationAddress(address, stationIndex);
 }
 
 bool StationPacketHandler::AssignDirectMessage(unsigned int stationBitmap, unsigned int size,
@@ -357,12 +349,47 @@ bool StationPacketHandler::AssignDirectMessage(unsigned int stationBitmap, unsig
     if (stationBitmap == 0)
         return true;
     StationManager* manager = GetStationManager();
-    unsigned int index = static_cast<unsigned int>(isPriority ? m_writer->m_field08 : m_writer->m_field04);
+    PacketStream::Writer* writer = m_writer;
+    unsigned int index = static_cast<unsigned int>(isPriority ? writer->m_field08 : writer->m_field04);
     while (stationBitmap != 0)
     {
-        if (index != static_cast<unsigned int>(m_writer->m_field08))
+        if (index == static_cast<unsigned int>(writer->m_field08))
         {
-            PacketStream* stream = m_writer->m_packetStream;
+            const int bit = pead::BitFlagUtil::findOnBitFromRight(stationBitmap, m_stationNum);
+            const unsigned int selected = bit < 0 ? stationBitmap :
+                stationBitmap & ((1u << (bit + 1)) - 1u);
+            stationBitmap &= ~selected;
+            const int selectedNum = pead::BitFlagUtil::countOnBit(selected);
+            common::Packet* packet;
+            {
+                common::StationAddress address;
+                ::nn::pia::StationIndex stationIndex;
+                if (selectedNum == 1)
+                {
+                    stationIndex = static_cast< ::nn::pia::StationIndex>(
+                        pead::BitFlagUtil::countOnBit((selected & (0u - selected)) - 1u));
+                    if (GetStationAddress(manager, &address, stationIndex) != 0)
+                        continue;
+                }
+                else
+                {
+                    stationIndex = ::nn::pia::cStationIndexInvalid;
+                    address.Clear();
+                }
+                packet = AssignPacket(stationIndex, selected, address, isPriority, field602,
+                                      field604);
+                if (packet == 0)
+                    return false;
+                ++index;
+                if (static_cast<int>(index) >= static_cast<int>(writer->m_packetStream->m_packetNum))
+                    index = 0;
+            }
+            void* payload = AssignPacketPayload(packet, size);
+            m_protocolMessageWriter.AddMessageBuffer(packet, payload, selected, true, false);
+        }
+        else
+        {
+            PacketStream* stream = writer->m_packetStream;
             common::Packet* packet = index < stream->m_packetNum ? &stream->m_packets[index] : 0;
             ++index;
             if (static_cast<int>(index) >= static_cast<int>(stream->m_packetNum))
@@ -375,74 +402,8 @@ bool StationPacketHandler::AssignDirectMessage(unsigned int stationBitmap, unsig
             stationBitmap &= ~packetBitmap;
             void* payload = AssignPacketPayload(packet, size);
             m_protocolMessageWriter.AddMessageBuffer(packet, payload, packetBitmap, true, false);
-            continue;
-        }
-
-        const int bit = pead::BitFlagUtil::findOnBitFromRight(stationBitmap, m_stationNum);
-        const unsigned int selected = bit < 0 || bit == 31 ? stationBitmap :
-            stationBitmap & ((1u << (bit + 1)) - 1u);
-        stationBitmap &= ~selected;
-        common::Packet* packet;
-        {
-            common::StationAddress address;
-            ::nn::pia::StationIndex stationIndex = static_cast< ::nn::pia::StationIndex>(0xfd);
-            if (pead::BitFlagUtil::countOnBit(selected) == 1)
-            {
-                stationIndex = static_cast< ::nn::pia::StationIndex>(
-                    pead::BitFlagUtil::countOnBit((selected & (0u - selected)) - 1u));
-                if (GetStationAddress(manager, &address, stationIndex) != 0)
-                    continue;
-            }
-            else
-                address.Clear();
-            packet = AssignPacket(stationIndex, selected, address,
-                                                  isPriority, field602, field604);
-            if (packet == 0)
-                return false;
-            ++index;
-            if (static_cast<int>(index) >= static_cast<int>(m_writer->m_packetStream->m_packetNum))
-                index = 0;
-        }
-        void* payload = AssignPacketPayload(packet, size);
-        m_protocolMessageWriter.AddMessageBuffer(packet, payload, selected, true, false);
-    }
-    return true;
-}
-
-bool StationPacketHandler::AssignAllMessage(unsigned int stationBitmap, unsigned int size,
-                                             unsigned int sizeLimit, bool isPriority,
-                                             bool field602, bool field604)
-{
-    if (stationBitmap == 0)
-        return true;
-    common::Packet* packet = 0;
-    if (!isPriority)
-    {
-        unsigned int index = static_cast<unsigned int>(m_writer->m_field04);
-        while (index != static_cast<unsigned int>(m_writer->m_field08))
-        {
-            PacketStream* stream = m_writer->m_packetStream;
-            common::Packet* candidate = index < stream->m_packetNum ? &stream->m_packets[index] : 0;
-            if (IsBundleCandidate(candidate, field602, sizeLimit, field604) &&
-                candidate->m_stationIndex == 0xff)
-            {
-                packet = candidate;
-                break;
-            }
-            ++index;
-            if (static_cast<int>(index) >= static_cast<int>(stream->m_packetNum))
-                index = 0;
         }
     }
-    if (packet == 0)
-    {
-        common::StationAddress address;
-        packet = AssignPacket(static_cast< ::nn::pia::StationIndex>(0xff), stationBitmap, address, isPriority, field602, field604);
-        if (packet == 0)
-            return false;
-    }
-    void* payload = AssignPacketPayload(packet, size);
-    m_protocolMessageWriter.AddMessageBuffer(packet, payload, stationBitmap, true, false);
     return true;
 }
 
@@ -459,13 +420,52 @@ ProtocolMessageWriter* StationPacketHandler::AssignSingle(
     UpdateLocalStation();
     m_protocolMessageWriter.SetSource(m_localStationId);
     m_protocolMessageWriter.Reset(protocolId, size, false, isPriority);
-    if (stationIndex == 0xfe)
+    if (stationIndex == ::nn::pia::cStationIndexSentinelFE)
         AssignHostMessage(alignedSize, sizeLimit, isPriority, field602, field604);
-    else if (static_cast<unsigned int>(stationIndex) < 32 && m_localStationIndex != 0xfd)
+    else if (static_cast<unsigned int>(stationIndex) < 32 && m_localStationIndex != ::nn::pia::cStationIndexInvalid)
         AssignDirectMessage(1u << stationIndex, alignedSize, sizeLimit, isPriority, field602, field604);
     else
         return 0;
     return ReserveMessageWriter();
+}
+
+bool StationPacketHandler::AssignAllMessage(unsigned int stationBitmap, unsigned int size,
+                                             unsigned int sizeLimit, bool isPriority,
+                                             bool field602, bool field604)
+{
+    if (stationBitmap == 0)
+        return true;
+    if (!isPriority)
+    {
+        PacketStream::Writer* writer = m_writer;
+        unsigned int index = static_cast<unsigned int>(writer->m_field04);
+        while (index != static_cast<unsigned int>(writer->m_field08))
+        {
+            PacketStream* stream = writer->m_packetStream;
+            common::Packet* candidate = index < stream->m_packetNum ? &stream->m_packets[index] : 0;
+            if (IsBundleCandidate(candidate, field602, sizeLimit, field604) &&
+                candidate->m_stationIndex == ::nn::pia::cStationIndexSentinelFF)
+            {
+                void* payload = AssignPacketPayload(candidate, size);
+                m_protocolMessageWriter.AddMessageBuffer(candidate, payload, stationBitmap, true, false);
+                return true;
+            }
+            ++index;
+            if (static_cast<int>(index) >= static_cast<int>(writer->m_packetStream->m_packetNum))
+                index = 0;
+        }
+    }
+    common::Packet* packet;
+    {
+        common::StationAddress address;
+        packet = AssignPacket(::nn::pia::cStationIndexSentinelFF, stationBitmap, address,
+                              isPriority, field602, field604);
+    }
+    if (packet == 0)
+        return false;
+    void* payload = AssignPacketPayload(packet, size);
+    m_protocolMessageWriter.AddMessageBuffer(packet, payload, stationBitmap, true, false);
+    return true;
 }
 
 ProtocolMessageWriter* StationPacketHandler::AssignAll(
@@ -478,7 +478,7 @@ ProtocolMessageWriter* StationPacketHandler::AssignAll(
         return 0;
     const unsigned int sizeLimit = m_packetSize - alignedSize;
     UpdateLocalStation();
-    if (m_localStationIndex == 0xfd)
+    if (m_localStationIndex == ::nn::pia::cStationIndexInvalid)
         return 0;
     const unsigned int stationBitmap = GetParticipatingStationBitmap(GetStationManager());
     if (stationBitmap == 0)
@@ -500,7 +500,7 @@ ProtocolMessageWriter* StationPacketHandler::AssignMulti(
         return 0;
     const unsigned int sizeLimit = m_packetSize - alignedSize;
     UpdateLocalStation();
-    if (m_localStationIndex == 0xfd)
+    if (m_localStationIndex == ::nn::pia::cStationIndexInvalid)
         return 0;
     m_protocolMessageWriter.SetSource(sourceId);
     m_protocolMessageWriter.Reset(protocolId, size, false, isPriority);
@@ -514,6 +514,88 @@ ProtocolMessageWriter* StationPacketHandler::AssignMulti(
 {
     return AssignMulti(protocolId, stationBitmap, size, isPriority, field602,
                        m_localStationId, field604);
+}
+
+unsigned char StationPacketHandler::GetReceivingPassId(const Station* station)
+{
+    return station->m_field55;
+}
+
+bool StationPacketHandler::CheckReceivedSequenceId(Station* station, unsigned short sequenceId)
+{
+    return station->m_sequenceIdController.CheckReceivedSequenceId(sequenceId);
+}
+
+unsigned int StationPacketHandler::CheckPacket(const common::Packet& packet)
+{
+    StationManager* manager = GetStationManager();
+    Station* station = GetStation(manager, packet.m_field608);
+    if (station == 0)
+        return packet.m_size;
+
+    const unsigned char passId = packet.m_packetData.m_header.m_passId;
+    const unsigned char receivingPassId = GetReceivingPassId(station);
+    if (passId != 0 && passId != 1 && receivingPassId != 0 && passId != receivingPassId)
+        return 0;
+    if (m_localStationIndex < 32 &&
+        !CheckReceivedSequenceId(station, packet.m_packetData.m_header.m_sequenceId))
+        return 0;
+    if (m_localStationIndex != static_cast<unsigned int>(manager->m_invalidStationIndex) &&
+        station->m_field20 == 5 && station->m_field10 == ::nn::pia::cStationIndexInvalid)
+        return 0;
+    return packet.m_size;
+}
+
+unsigned int StationPacketHandler::CheckMessage(const ProtocolMessageReader& reader)
+{
+    if (((reader.m_header.m_flags >> 1) & 1) != 0)
+        return 0;
+    if ((reader.m_header.m_flags & 1) != 0)
+    {
+        if ((reader.GetDestination() & cStationIdUpperMask) != 0)
+            return 0;
+        if (IsBroadcastSupported() == 0 || m_localStationBitmap == 0 ||
+            reader.GetDestination() == 0 ||
+            (static_cast<unsigned int>(reader.GetDestination()) & m_localStationBitmap) != 0)
+            return 1;
+        return 0;
+    }
+    if (reader.GetDestination() == m_localStationId)
+        return 1;
+    return 0;
+}
+
+unsigned int StationPacketHandler::CheckReceive(const ProtocolMessageReader& reader)
+{
+    if (((reader.m_header.m_flags >> 1) & 1) != 0)
+        return 0;
+    if ((reader.m_header.m_flags & 1) != 0)
+    {
+        const unsigned int stationBitmap = static_cast<unsigned int>(reader.GetDestination());
+        if (stationBitmap == 0)
+            return 1;
+        if ((stationBitmap & m_localStationBitmap) != 0)
+            return 1;
+        return 0;
+    }
+    if (reader.GetDestination() == m_localStationId)
+        return 1;
+    return 0;
+}
+
+bool StationPacketHandler::checkDerivedRuntimeTypeInfo(const pead::RuntimeTypeInfo::Interface* type) const
+{
+    return checkDerivedRuntimeTypeInfoStatic(type);
+}
+
+const pead::RuntimeTypeInfo::Interface* StationPacketHandler::getRuntimeTypeInfo() const
+{
+    return getRuntimeTypeInfoStatic();
+}
+
+unsigned int StationPacketHandler::IsBroadcastSupported() const
+{
+    return m_isStarConnection;
 }
 
 }}}

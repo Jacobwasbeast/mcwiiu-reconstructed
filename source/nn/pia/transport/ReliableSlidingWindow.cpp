@@ -17,8 +17,6 @@
 
 namespace nn { namespace pia { namespace transport {
 
-unsigned short g_reliableSlidingWindowGeneration = 0;
-
 float ReliableSlidingWindow::s_retransmissionTimeOutRate = 1.25f;
 unsigned int ReliableSlidingWindow::s_rttSamplingNum = 8;
 int (*ReliableSlidingWindow::s_resendTimeCallback)(int, int) = 0;
@@ -163,7 +161,7 @@ ReliableSlidingWindow::ReceiveData* ReliableSlidingWindow::ReceiveBuffer::Assign
 }
 
 ReliableSlidingWindow::ReliableSlidingWindow()
-    : m_generation(g_reliableSlidingWindowGeneration), m_localStationId(0), m_remoteStationId(0),
+    : m_protocolId(g_piaProtocolDefaultType), m_localStationId(0), m_remoteStationId(0),
       m_payloadLimit(0), m_byteCount(0), m_profileStart(0)
 {
 }
@@ -194,7 +192,7 @@ Result ReliableSlidingWindow::Initialize(unsigned int sendCapacity, unsigned int
     return 0;
 }
 
-Result ReliableSlidingWindow::Startup(StationPacketHandler* handler, unsigned short generation,
+Result ReliableSlidingWindow::Startup(StationPacketHandler* handler, unsigned short protocolId,
                                       unsigned long long localStationId,
                                       unsigned long long remoteStationId)
 {
@@ -202,11 +200,11 @@ Result ReliableSlidingWindow::Startup(StationPacketHandler* handler, unsigned sh
         return cResultNotInitialized;
     if (IsInCommunication())
         return cResultInvalidState;
-    if (generation == g_reliableSlidingWindowGeneration || localStationId == 0 ||
+    if (protocolId == g_piaProtocolDefaultType || localStationId == 0 ||
         remoteStationId == 0 || localStationId == remoteStationId)
         return cResultInvalidArgument;
     m_localStationId = localStationId;
-    m_generation = generation;
+    m_protocolId = protocolId;
     m_remoteStationId = remoteStationId;
     m_payloadLimit = (handler->m_payloadSize & ~7u) - cHeaderSize;
     m_sendBuffer.Clear();
@@ -222,9 +220,9 @@ Result ReliableSlidingWindow::Startup(StationPacketHandler* handler, unsigned sh
 
 void ReliableSlidingWindow::Cleanup()
 {
-    if (m_generation == g_reliableSlidingWindowGeneration)
+    if (m_protocolId == g_piaProtocolDefaultType)
         return;
-    m_generation = g_reliableSlidingWindowGeneration;
+    m_protocolId = g_piaProtocolDefaultType;
     m_payloadLimit = 0;
     m_remoteStationId = 0;
     m_localStationId = 0;
@@ -232,7 +230,7 @@ void ReliableSlidingWindow::Cleanup()
 
 bool ReliableSlidingWindow::IsInCommunication() const
 {
-    return m_generation != g_reliableSlidingWindowGeneration;
+    return m_protocolId != g_piaProtocolDefaultType;
 }
 
 unsigned int ReliableSlidingWindow::CanPushData(unsigned int size)
@@ -465,7 +463,7 @@ Result ReliableSlidingWindow::Dispatch(StationPacketHandler* handler, unsigned i
             return 0;
         }
         ProtocolMessageWriter* writer = handler->AssignByStationId(
-            ProtocolId(m_generation), m_remoteStationId, fragment->m_size, false, false, true);
+            ProtocolId(m_protocolId), m_remoteStationId, fragment->m_size, false, false, true);
         if (writer == 0)
         {
             if (size != 0)
@@ -504,7 +502,7 @@ Result ReliableSlidingWindow::Dispatch(StationPacketHandler* handler, unsigned i
             return 0;
         }
         ProtocolMessageWriter* writer = handler->AssignByStationId(
-            ProtocolId(m_generation), m_remoteStationId, cHeaderSize, false, false, true);
+            ProtocolId(m_protocolId), m_remoteStationId, cHeaderSize, false, false, true);
         if (writer == 0)
         {
             if (size != 0)

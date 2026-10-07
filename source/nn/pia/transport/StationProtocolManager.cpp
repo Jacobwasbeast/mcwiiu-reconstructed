@@ -74,7 +74,7 @@ Result StationProtocolManager::Initialize(unsigned short stationNum, int initial
         StationProtocol* stationProtocol = storage != 0
             ? new (static_cast<void*>(storage)) StationProtocol() : 0;
         const ProtocolId stationId = manager.CreateProtocolImpl(
-            stationProtocol, ProtocolId(cStationProtocolType << 8));
+            stationProtocol, ProtocolId(cStationProtocolType, 0));
         m_stationProtocolId = stationId;
         if (stationId != 0)
         {
@@ -86,7 +86,7 @@ Result StationProtocolManager::Initialize(unsigned short stationNum, int initial
                 RttProtocol* rttProtocol = rttStorage != 0
                     ? new (static_cast<void*>(rttStorage)) RttProtocol() : 0;
                 const ProtocolId rttId = manager.CreateProtocolImpl(
-                    rttProtocol, ProtocolId(cRttProtocolType << 8));
+                    rttProtocol, ProtocolId(cRttProtocolType, 0));
                 m_rttProtocolId = rttId;
                 if (rttId != 0)
                 {

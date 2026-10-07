@@ -164,12 +164,12 @@ public:
     Result PopData(void* buffer, unsigned int* size, unsigned int bufferSize);
     Result PushData(const void* data, unsigned int size);
     unsigned int CanPushData(unsigned int size);
-    Result Startup(StationPacketHandler* handler, unsigned short generation,
+    Result Startup(StationPacketHandler* handler, unsigned short protocolId,
                    unsigned long long localStationId, unsigned long long remoteStationId);
     Result AnalyzeProtocolMessage(const ProtocolMessageReader& reader);
     Result Dispatch(StationPacketHandler* handler, unsigned int* size, unsigned int limit);
 
-    unsigned short m_generation;
+    unsigned short m_protocolId;
     unsigned long long m_localStationId;
     unsigned long long m_remoteStationId;
     SendBuffer m_sendBuffer;
@@ -189,7 +189,6 @@ private:
     static int (*s_resendTimeCallback)(int, int);
 };
 
-extern unsigned short g_reliableSlidingWindowGeneration;
 
 }}}
 

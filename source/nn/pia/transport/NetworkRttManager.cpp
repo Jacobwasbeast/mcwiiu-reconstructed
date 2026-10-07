@@ -9,6 +9,8 @@
 
 namespace nn { namespace pia { namespace transport {
 
+static const unsigned long long cTraceCategoryRtt = 0x8000;
+
 namespace
 {
 enum
@@ -26,13 +28,13 @@ common::StationAddress& packetSource(common::Packet& packet)
 const common::StationAddress& packetSource(const common::Packet& packet)
 { return packet.m_field608; }
 unsigned short& packetResponseFlag(common::Packet& packet)
-{ return packet.m_packetData.m_header.m_field0c; }
+{ return packet.m_packetData.m_header.m_rttResponseFlag; }
 unsigned short& packetMeasurement(common::Packet& packet)
-{ return packet.m_packetData.m_header.m_field0e; }
+{ return packet.m_packetData.m_header.m_rttMeasurement; }
 unsigned short packetResponseFlag(const common::Packet& packet)
-{ return packet.m_packetData.m_header.m_field0c; }
+{ return packet.m_packetData.m_header.m_rttResponseFlag; }
 unsigned short packetMeasurement(const common::Packet& packet)
-{ return packet.m_packetData.m_header.m_field0e; }
+{ return packet.m_packetData.m_header.m_rttMeasurement; }
 }
 
 NetworkRttManager* NetworkRttManager::sInstance = 0;
@@ -160,6 +162,11 @@ void NetworkRttManager::StatUnit::AddValue(unsigned int value)
     ++count;
 }
 
+NetworkRttManager::MeasurementData::MeasurementData() : reserved(0)
+{
+    Clear();
+}
+
 void NetworkRttManager::MeasurementData::Clear()
 {
     for (unsigned int i = 0; i < 16; ++i)
@@ -173,21 +180,25 @@ unsigned int NetworkRttManager::MeasurementData::UpdateTime(unsigned int now)
     const unsigned int previous = time >> 8;
     if (current != previous)
     {
-        if (current - previous > 15)
+        if (current - previous >= 16)
         {
             Clear();
-            time = 0;
+            time = now;
             return current;
+        }
+        const unsigned int slot = current & 15;
+        const unsigned int previousSlot = previous & 15;
+        if (slot < previousSlot)
+        {
+            for (unsigned int i = 0; i <= slot; ++i)
+                values[i].Clear();
+            for (unsigned int i = previousSlot + 1; i < 16; ++i)
+                values[i].Clear();
         }
         else
         {
-            unsigned int slot = previous & 15;
-            const unsigned int target = current & 15;
-            while (slot != target)
-            {
-                slot = (slot + 1) & 15;
-                values[slot].Clear();
-            }
+            for (unsigned int i = previousSlot + 1; i <= slot; ++i)
+                values[i].Clear();
         }
     }
     time = now;
@@ -204,8 +215,15 @@ unsigned int NetworkRttManager::MeasurementData::GetAverage() const
 {
     unsigned int total = 0;
     unsigned int count = 0;
-    for (unsigned int i = 0; i < 16; ++i) { total += values[i].total; count += values[i].count; }
-    return count == 0 ? 0 : static_cast<unsigned int>(total / count);
+    const StatUnit* unit = values;
+    for (unsigned int i = 0; i < 16; ++i, ++unit)
+    {
+        total += unit->total;
+        count += unit->count;
+    }
+    unsigned int average = 0;
+    if (count != 0) average = total / count;
+    return average;
 }
 
 int NetworkRttManager::MeasurementData::GetStdDev() const
@@ -213,11 +231,20 @@ int NetworkRttManager::MeasurementData::GetStdDev() const
     unsigned int total = 0;
     unsigned long long squares = 0;
     unsigned int count = 0;
-    for (unsigned int i = 0; i < 16; ++i) { total += values[i].total; squares += values[i].squares; count += values[i].count; }
-    if (count == 0) return 0;
-    const double mean = static_cast<double>(total) / count;
-    const double variance = std::max(0.0, static_cast<double>(squares) / count - mean * mean);
-    return static_cast<int>(std::sqrt(variance));
+    const StatUnit* unit = values;
+    for (unsigned int i = 0; i < 16; ++i, ++unit)
+    {
+        total += unit->total;
+        squares += unit->squares;
+        count += unit->count;
+    }
+    if (count != 0)
+    {
+        const float mean = static_cast<float>(total) / count;
+        const float variance = static_cast<float>(squares) / count - mean * mean;
+        if (variance > 0.0f) return static_cast<unsigned int>(std::sqrt(variance));
+    }
+    return 0;
 }
 
 int NetworkRttManager::MeasurementData::GetCount() const
@@ -228,10 +255,13 @@ int NetworkRttManager::MeasurementData::GetCount() const
 unsigned int NetworkRttManager::MeasurementData::GetLatest() const
 {
     const unsigned int current = (time >> 8) & 15;
-    for (unsigned int n = 0; n < 16; ++n)
+    for (int i = current; i >= 0; --i)
     {
-        const StatUnit& unit = values[(current + 16 - n) & 15];
-        if (unit.count != 0) return unit.latest;
+        if (values[i].count != 0) return values[i].latest;
+    }
+    for (int i = 15; i > static_cast<int>(current); --i)
+    {
+        if (values[i].count != 0) return values[i].latest;
     }
     return 0;
 }
@@ -344,10 +374,14 @@ unsigned int NetworkRttManager::GetAverage(const common::StationAddress& address
 {
     mMeasurements.Lock();
     MeasurementData* value = mMeasurements.Get(address);
-    common::Time now; now.SetNow();
-    const unsigned int elapsed = static_cast<unsigned int>((now.m_tick - mStartTime.m_tick) / common::TimeSpan::GetTicksPerMSec().m_tick);
-    if (value) value->UpdateTime(elapsed);
-    unsigned int result = value ? value->GetAverage() : 0;
+    if (!value)
+    {
+        address.Trace(cTraceCategoryRtt);
+        mMeasurements.Unlock();
+        return 0;
+    }
+    value->UpdateTime(GetElapsedMilliseconds());
+    unsigned int result = value->GetAverage();
     mMeasurements.Unlock();
     return result;
 }
@@ -355,10 +389,14 @@ int NetworkRttManager::GetStdDev(const common::StationAddress& address)
 {
     mMeasurements.Lock();
     MeasurementData* value = mMeasurements.Get(address);
-    common::Time now; now.SetNow();
-    const unsigned int elapsed = static_cast<unsigned int>((now.m_tick - mStartTime.m_tick) / common::TimeSpan::GetTicksPerMSec().m_tick);
-    if (value) value->UpdateTime(elapsed);
-    int result = value ? value->GetStdDev() : 0;
+    if (!value)
+    {
+        address.Trace(cTraceCategoryRtt);
+        mMeasurements.Unlock();
+        return 0;
+    }
+    value->UpdateTime(GetElapsedMilliseconds());
+    int result = value->GetStdDev();
     mMeasurements.Unlock();
     return result;
 }
@@ -366,10 +404,14 @@ int NetworkRttManager::GetCount(const common::StationAddress& address)
 {
     mMeasurements.Lock();
     MeasurementData* value = mMeasurements.Get(address);
-    common::Time now; now.SetNow();
-    const unsigned int elapsed = static_cast<unsigned int>((now.m_tick - mStartTime.m_tick) / common::TimeSpan::GetTicksPerMSec().m_tick);
-    if (value) value->UpdateTime(elapsed);
-    int result = value ? value->GetCount() : 0;
+    if (!value)
+    {
+        address.Trace(cTraceCategoryRtt);
+        mMeasurements.Unlock();
+        return 0;
+    }
+    value->UpdateTime(GetElapsedMilliseconds());
+    int result = value->GetCount();
     mMeasurements.Unlock();
     return result;
 }
@@ -377,10 +419,14 @@ unsigned int NetworkRttManager::GetLatest(const common::StationAddress& address)
 {
     mMeasurements.Lock();
     MeasurementData* value = mMeasurements.Get(address);
-    common::Time now; now.SetNow();
-    const unsigned int elapsed = static_cast<unsigned int>((now.m_tick - mStartTime.m_tick) / common::TimeSpan::GetTicksPerMSec().m_tick);
-    if (value) value->UpdateTime(elapsed);
-    unsigned int result = value ? value->GetLatest() : 0;
+    if (!value)
+    {
+        address.Trace(cTraceCategoryRtt);
+        mMeasurements.Unlock();
+        return 0;
+    }
+    value->UpdateTime(GetElapsedMilliseconds());
+    unsigned int result = value->GetLatest();
     mMeasurements.Unlock();
     return result;
 }

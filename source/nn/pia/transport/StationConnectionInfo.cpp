@@ -90,11 +90,11 @@ Result StationConnectionInfo::StreamlinedSerialize(unsigned char* buffer, unsign
         return 0x4c0d;
 
     unsigned int written = 0;
-    Result result = static_cast<const common::InetAddress&>(m_stationLocation.m_stationAddress)
+    Result result = m_stationLocation.m_stationAddress.m_inetAddress
                         .Serialize(buffer, &written, common::InetAddress::cSerializedSize);
     if (result != 0)
         return result;
-    result = static_cast<const common::InetAddress&>(m_localStationLocation.m_stationAddress)
+    result = m_localStationLocation.m_stationAddress.m_inetAddress
                  .Serialize(buffer + common::InetAddress::cSerializedSize, &written,
                             common::InetAddress::cSerializedSize);
     if (result != 0)

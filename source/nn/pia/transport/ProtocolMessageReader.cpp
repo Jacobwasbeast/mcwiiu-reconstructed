@@ -43,7 +43,7 @@ void ProtocolMessageReader::Attach(const common::Packet& packet, unsigned int of
             if ((m_header.m_flags & 4) == 0)
             {
                 m_stationAddress = packet.m_field608;
-                m_sendingPassId = packet.m_packetData.m_header.m_field09;
+                m_sendingPassId = packet.m_packetData.m_header.m_passId;
                 m_field39 = packet.m_field600;
                 m_field3a = packet.m_field603;
             }

@@ -11,6 +11,15 @@
 #include <cstring>
 
 namespace nn { namespace pia { namespace transport {
+namespace {
+typedef common::Job::ExecuteResult (ConnectStationJob::*Step)();
+
+inline void SelectStep(common::StepSequenceJob::Step& slot, Step function, const char* name)
+{
+    const common::StepSequenceJob::Step step(static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+    slot = step;
+}
+}
 
 ConnectStationJob::ConnectStationJob()
     : m_connectionDeadline(), m_timeoutMsec(10000), m_requestAckId(0),
@@ -22,43 +31,40 @@ ConnectStationJob::~ConnectStationJob()
 {
 }
 
-int ConnectStationJob::Startup(common::CallContext* context, Station* station,
+Result ConnectStationJob::Startup(common::CallContext* context, Station* station,
     const StationConnectionInfo& info, bool secure, int timeoutMsec)
 {
     m_timeoutMsec = timeoutMsec;
     return StartupImpl(context, station, info, secure);
 }
 
-int ConnectStationJob::StartupRelayConnection(common::CallContext* context, Station* station,
+Result ConnectStationJob::StartupRelayConnection(common::CallContext* context, Station* station,
     const StationConnectionInfo& info, bool secure, int timeoutMsec)
 {
     m_timeoutMsec = timeoutMsec;
-    const int result = StartupImpl(context, station, info, secure);
-    if (result == 0)
-    {
-        m_station->m_field56 = 0;
-        m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-            &ConnectStationJob::SendRelayConnectionRequest);
-        m_currentStep.m_name = "ConnectStationJob::SendRelayConnectionRequest";
-    }
-    return result;
+    const Result result = StartupImpl(context, station, info, secure);
+    if (result != 0)
+        return result;
+    m_station->m_field56 = 0;
+    SelectStep(m_currentStep, &ConnectStationJob::SendRelayConnectionRequest, "ConnectStationJob::SendRelayConnectionRequest");
+    return 0;
 }
 
-int ConnectStationJob::StartupImpl(common::CallContext* context, Station* station,
+Result ConnectStationJob::StartupImpl(common::CallContext* context, Station* station,
     const StationConnectionInfo& info, bool secure)
 {
     if (!station)
-        return 0x10c07;
+        return cResultInvalidArgument;
     station->Trace(0x08000000);
     if (m_station)
         m_station->Trace(0x08000000);
     if (GetState() != cStateNotEntried && GetState() != cStateCompleted)
     {
         Trace(0x8000);
-        return 0x10c08;
+        return cResultInvalidState;
     }
     if (!context)
-        return 0x10c07;
+        return cResultInvalidArgument;
     m_context = context;
     context->InitiateCall();
     m_station = station;
@@ -66,9 +72,7 @@ int ConnectStationJob::StartupImpl(common::CallContext* context, Station* statio
     m_secure = secure;
     Reset(true);
     m_station->m_field56 = 1;
-    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-        &ConnectStationJob::SendConnectionRequest);
-    m_currentStep.m_name = "ConnectStationJob::SendConnectionRequest";
+    SelectStep(m_currentStep, &ConnectStationJob::SendConnectionRequest, "ConnectStationJob::SendConnectionRequest");
     return 0;
 }
 
@@ -152,20 +156,15 @@ ConnectStationJob::ExecuteResult ConnectStationJob::SendConnectionRequest()
     {
         if (m_station->m_field10 > 0x1f)
         {
-            m_station->m_field58 = static_cast<int>(g_piaTransport->m_time.m_tick >> 32);
-            m_station->m_field5c = static_cast<int>(g_piaTransport->m_time.m_tick);
+            m_station->m_lastSendTime = g_piaTransport->m_time;
         }
         m_connectionRejection = 0;
         m_connectionDeadline.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick +
             common::TimeSpan::GetTicksPerMSec().m_tick * m_timeoutMsec;
-        m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-            &ConnectStationJob::WaitRequestAck);
-        m_currentStep.m_name = "ConnectStationJob::WaitRequestAck";
+        SelectStep(m_currentStep, &ConnectStationJob::WaitRequestAck, "ConnectStationJob::WaitRequestAck");
         return MakeExecuteResult(cExecuteKindNextStep);
     }
-    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-        &ConnectStationJob::ConnectionFailed);
-    m_currentStep.m_name = "ConnectStationJob::ConnectionFailed";
+    SelectStep(m_currentStep, &ConnectStationJob::ConnectionFailed, "ConnectStationJob::ConnectionFailed");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -173,9 +172,7 @@ ConnectStationJob::ExecuteResult ConnectStationJob::WaitRequestAck()
 {
     if (!g_piaResendingMessageManager->CheckNowResending(m_requestAckId))
     {
-        m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-            &ConnectStationJob::WaitForConnection);
-        m_currentStep.m_name = "ConnectStationJob::WaitForConnection";
+        SelectStep(m_currentStep, &ConnectStationJob::WaitForConnection, "ConnectStationJob::WaitForConnection");
         m_requestAckId = 0;
         return MakeExecuteResult(cExecuteKindContinue);
     }
@@ -191,18 +188,14 @@ ConnectStationJob::ExecuteResult ConnectStationJob::WaitRequestAck()
     {
         g_piaResendingMessageManager->StopResending(m_requestAckId);
         m_requestAckId = 0;
-        m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-            &ConnectStationJob::ConnectionFailed);
-        m_currentStep.m_name = "ConnectStationJob::ConnectionFailed";
+        SelectStep(m_currentStep, &ConnectStationJob::ConnectionFailed, "ConnectStationJob::ConnectionFailed");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (m_station->m_field20 == 5)
     {
         g_piaResendingMessageManager->StopResending(m_requestAckId);
         m_requestAckId = 0;
-        m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-            &ConnectStationJob::ConnectionSucceeded);
-        m_currentStep.m_name = "ConnectStationJob::ConnectionSucceeded";
+        SelectStep(m_currentStep, &ConnectStationJob::ConnectionSucceeded, "ConnectStationJob::ConnectionSucceeded");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (m_connectionRejection)
@@ -227,9 +220,7 @@ ConnectStationJob::ExecuteResult ConnectStationJob::WaitForConnection()
 {
     if (m_station->m_field20 == 5)
     {
-        m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-            &ConnectStationJob::ConnectionSucceeded);
-        m_currentStep.m_name = "ConnectStationJob::ConnectionSucceeded";
+        SelectStep(m_currentStep, &ConnectStationJob::ConnectionSucceeded, "ConnectStationJob::ConnectionSucceeded");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (CheckContextCallCancelled())
@@ -240,9 +231,7 @@ ConnectStationJob::ExecuteResult ConnectStationJob::WaitForConnection()
     }
     if (!CheckTimeout() && !CheckErrorOccurred())
         return MakeExecuteResult(cExecuteKindNextStep);
-    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-        &ConnectStationJob::ConnectionFailed);
-    m_currentStep.m_name = "ConnectStationJob::ConnectionFailed";
+    SelectStep(m_currentStep, &ConnectStationJob::ConnectionFailed, "ConnectStationJob::ConnectionFailed");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -262,9 +251,7 @@ ConnectStationJob::ExecuteResult ConnectStationJob::ConnectionSucceeded()
         return MakeExecuteResult(cExecuteKindFinished);
     if (CheckErrorOccurred())
     {
-        m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-            &ConnectStationJob::ConnectionFailed);
-        m_currentStep.m_name = "ConnectStationJob::ConnectionFailed";
+        SelectStep(m_currentStep, &ConnectStationJob::ConnectionFailed, "ConnectStationJob::ConnectionFailed");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (static_cast<int>(m_station->m_field10) < 32)
@@ -288,9 +275,7 @@ ConnectStationJob::ExecuteResult ConnectStationJob::SendRelayConnectionRequest()
         m_connectionRejection = 0;
         m_connectionDeadline.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick +
             common::TimeSpan::GetTicksPerMSec().m_tick * m_timeoutMsec;
-        m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-            &ConnectStationJob::WaitRequestAck);
-        m_currentStep.m_name = "ConnectStationJob::WaitRequestAck";
+        SelectStep(m_currentStep, &ConnectStationJob::WaitRequestAck, "ConnectStationJob::WaitRequestAck");
     }
     return MakeExecuteResult(cExecuteKindNextStep);
 }

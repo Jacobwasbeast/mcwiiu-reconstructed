@@ -1,6 +1,7 @@
 #include "nn/pia/Reconstruction.hpp"
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/HeapManager.hpp"
+#include "nn/pia/transport/ProtocolEvent.hpp"
 #include "nn/pia/transport/ReliableSlidingWindow.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 #include "platform/wiiu/pead.hpp"
@@ -54,11 +55,11 @@ void ReliableProtocol::Finalize()
     m_field1c = 0;
     m_field20 = 0;
     m_field2c = 0;
-    unsigned char* array = m_field24;
     m_field30 = 0;
     m_field18 = 0;
-    if (array != 0)
+    if (m_field24 != 0)
     {
+        unsigned char* array = m_field24;
         unsigned int count = pead::getArraySize(array) / sizeof(ReliableSlidingWindow);
         ReliableSlidingWindow* p = reinterpret_cast<ReliableSlidingWindow*>(array);
         for (; count != 0; --count)
@@ -140,7 +141,7 @@ Result ReliableProtocol::StartupWithStationAddress(const common::StationAddress&
 
     const unsigned char* raw = reinterpret_cast<const unsigned char*>(station);
     int stationIndex = *reinterpret_cast<const int*>(raw + 0x10);
-    if (stationIndex < 0 || m_field20 <= static_cast<unsigned int>(stationIndex))
+    if (stationIndex < 0 || stationIndex >= static_cast<int>(m_field20))
         return 0x10c07;
 
     m_field14 = stationIndex;
@@ -158,23 +159,15 @@ void ReliableProtocol::CleanupWithStationAddress()
 {
     if (m_field14 != 0xfd)
     {
-        m_field30 = 0;
         int count = static_cast<int>(m_field20) - 1;
         m_field14 = 0xfd;
         m_field1c = 0;
         m_field18 = 0;
-        if (count != 0)
+        m_field30 = 0;
+        for (int i = 0; i != count; ++i)
         {
-            int windowIndex = 0;
-            do
-            {
-                ReliableSlidingWindow* window =
-                    (reinterpret_cast<ReliableSlidingWindow*>(m_field24) + windowIndex);
-                if (window->IsInCommunication())
-                    window->Cleanup();
-                --count;
-                ++windowIndex;
-            } while (count != 0);
+            if (reinterpret_cast<ReliableSlidingWindow*>(m_field24)[i].IsInCommunication())
+                reinterpret_cast<ReliableSlidingWindow*>(m_field24)[i].Cleanup();
         }
     }
 }
@@ -184,21 +177,19 @@ Result ReliableProtocol::UpdateProtocolEvent(const ProtocolEvent& event)
     if (m_field14 == 0xfd)
         return 0x10c08;
 
-    const unsigned char* eventRaw = reinterpret_cast<const unsigned char*>(&event);
-    const common::StationAddress& address =
-        *reinterpret_cast<const common::StationAddress*>(eventRaw + 4);
-    void* station = g_piaStationManager->GetStation(address);
+    void* station = g_piaStationManager->GetStation(event.m_stationAddress);
     const unsigned char* stationRaw = reinterpret_cast<const unsigned char*>(station);
     int stationIndex = *reinterpret_cast<const int*>(stationRaw + 0x10);
 
-    if (stationIndex < 0 || m_field20 <= static_cast<unsigned int>(stationIndex))
+    if (stationIndex < 0 || stationIndex >= static_cast<int>(m_field20))
         return 0x10c07;
     if (stationIndex == m_field14)
         return 0x10c07;
 
     ReliableSlidingWindow* window = GetSlidingWindow(static_cast<StationIndex>(stationIndex));
-    int eventType = *reinterpret_cast<const int*>(eventRaw);
-    if (eventType == 0)
+    switch (event.m_type)
+    {
+    case 0:
     {
         unsigned short protocolIdValue = mProtocolId;
         unsigned int remoteHi = *reinterpret_cast<const unsigned int*>(stationRaw + 0x18);
@@ -210,8 +201,7 @@ Result ReliableProtocol::UpdateProtocolEvent(const ProtocolEvent& event)
         return window->Startup(reinterpret_cast<StationPacketHandler*>(GetStationPacketHandler()),
                                 protocolIdValue, localStationId, remoteStationId);
     }
-    if (eventType == 1)
-    {
+    case 1:
         window->Cleanup();
         return 0;
     }
@@ -221,7 +211,7 @@ Result ReliableProtocol::UpdateProtocolEvent(const ProtocolEvent& event)
 ReliableSlidingWindow* ReliableProtocol::GetSlidingWindow(StationIndex stationIndex)
 {
     int index = stationIndex;
-    if (m_field14 <= index)
+    if (index >= m_field14)
         index = index - 1;
     return reinterpret_cast<ReliableSlidingWindow*>(m_field24) + index;
 }
@@ -229,7 +219,7 @@ ReliableSlidingWindow* ReliableProtocol::GetSlidingWindow(StationIndex stationIn
 const ReliableSlidingWindow* ReliableProtocol::GetSlidingWindow(StationIndex stationIndex) const
 {
     int index = stationIndex;
-    if (m_field14 <= index)
+    if (index >= m_field14)
         index = index - 1;
     return reinterpret_cast<const ReliableSlidingWindow*>(m_field24) + index;
 }
@@ -378,12 +368,10 @@ Result ReliableProtocol::Receive(unsigned long long* stationId, void* buffer, un
 
 bool ReliableProtocol::IsInCommunication(StationIndex stationIndex) const
 {
-    if (m_field14 != 0xfd && stationIndex >= 0 &&
-        stationIndex < static_cast<int>(m_field20) && stationIndex != m_field14)
-    {
-        return GetSlidingWindow(stationIndex)->IsInCommunication();
-    }
-    return false;
+    if (m_field14 == 0xfd || stationIndex < 0 || stationIndex >= static_cast<int>(m_field20) ||
+        stationIndex == m_field14)
+        return false;
+    return GetSlidingWindow(stationIndex)->IsInCommunication();
 }
 
 bool ReliableProtocol::IsInCommunication(unsigned long long stationId) const

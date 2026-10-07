@@ -253,8 +253,7 @@ Result UnreliableProtocol::Dispatch()
 Result UnreliableProtocol::UpdateProtocolEvent(const ProtocolEvent& event)
 {
     Station* station = g_piaStationManager->GetStation(event.m_stationAddress);
-    unsigned long long stationId =
-        (static_cast<unsigned long long>(station->m_field18) << 32) | station->m_field1c;
+    unsigned long long stationId = station->m_stationId;
     ReceivedDataContainer* container = m_receivedDataContainer;
     if (event.m_type > 1 || container->m_list.GetNodeNum() == 0 || container->m_list.Sentinel()->next == 0)
         return 0;

@@ -41,9 +41,11 @@ public:
     struct MeasurementData
     {
         common::StationAddress address;
+        unsigned int reserved;
         StatUnit values[16];
         unsigned int time;
 
+        MeasurementData();
         void Clear();
         unsigned int UpdateTime(unsigned int now);
         void AddValue(unsigned int now, unsigned int value);
@@ -130,6 +132,12 @@ public:
 
 private:
     friend class Transport;
+    unsigned int GetElapsedMilliseconds() const
+    {
+        common::Time now;
+        now.SetNow();
+        return static_cast<unsigned int>(static_cast<long long>(now.m_tick - mStartTime.m_tick) / common::TimeSpan::GetTicksPerMSec().m_tick);
+    }
     DataBuffer<ResponseData> mResponses;
     DataBuffer<MeasurementData> mMeasurements;
     common::Time mStartTime;

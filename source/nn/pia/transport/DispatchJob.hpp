@@ -8,7 +8,7 @@ namespace nn { namespace pia { namespace transport {
 class DispatchJob : public common::Job
 {
 public:
-    virtual ~DispatchJob();
+    virtual ~DispatchJob() {}
     virtual ExecuteResult ExecuteCore();
 };
 

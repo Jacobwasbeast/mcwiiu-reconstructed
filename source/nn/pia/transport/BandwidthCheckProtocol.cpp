@@ -19,6 +19,8 @@ namespace nn { namespace pia { namespace transport {
 namespace
 {
 const unsigned int cBulkBufferSize = 0x584;
+const int cPacketOverheadSize = 0x58;
+const unsigned long long cTraceCategoryBandwidth = 0x8000;
 
 long long elapsedMilliseconds(const common::Time& start)
 {
@@ -83,18 +85,11 @@ BandwidthCheckProtocol::Header::~Header()
 
 BandwidthCheckProtocol::BandwidthCheckProtocol()
     : Protocol(),
-      m_initialized(false), m_stationNum(0), m_activated(false), m_bulkBuffer(0),
-      m_activeStationBitmap(0), m_bandwidthCheckedBitmap(0),
-      m_measurementTime(static_cast<unsigned int>(-1)),
-      m_bulkPacketSize(0), m_completionTimeout(0), m_measurementCount(0),
-      m_senderState(SenderState_None), m_senderStartTime(), m_ackReceived(false),
-      m_bulkStartTime(), m_uplinkBitRate(0), m_senderStation(static_cast<StationIndex>(0xfd)),
-      m_bulkPacketSequence(0), m_cancelRequested(false), m_receiverState(ReceiverState_None),
-      m_receiverStartTime(), m_bulkArrivalTime(), m_responseSentTime(), m_ackSentTime(),
-      m_receivedBytes(0),
-      m_receiverStation(static_cast<StationIndex>(0xfd)), m_stationAddress(), m_receivedBulkPacketCount(0),
-      m_firstBulkPacketSequence(-1), m_lastBulkPacketSequence(-1), m_receiverActive(false),
-      m_isServer(false), m_measurementResult(0)
+      m_initialized(false), m_stationNum(0), m_activated(false), m_isServer(false),
+      m_bulkBuffer(0), m_activeStationBitmap(0), m_bandwidthCheckedBitmap(0),
+      m_completionTimeout(0), m_measurementCount(0), m_senderStartTime(), m_bulkStartTime(),
+      m_receiverStartTime(), m_bulkArrivalTime(), m_responseSentTime(), m_stationAddress(),
+      m_ackSentTime()
 {
 }
 
@@ -118,17 +113,17 @@ void BandwidthCheckProtocol::initSender()
 void BandwidthCheckProtocol::initReceiver()
 {
     m_receiverState = ReceiverState_None;
-    m_receiverStation = static_cast<StationIndex>(0xfd);
-    m_receivedBytes = 0;
-    m_bulkArrivalTime.m_tick = 0;
     m_receiverStartTime.m_tick = 0;
+    m_bulkArrivalTime.m_tick = 0;
     m_responseSentTime.m_tick = 0;
-    m_ackSentTime.m_tick = 0;
-    m_receivedBulkPacketCount = 0;
-    m_firstBulkPacketSequence = -1;
-    m_lastBulkPacketSequence = -1;
-    m_receiverActive = false;
+    m_receivedBytes = 0;
+    m_receiverStation = static_cast<StationIndex>(0xfd);
     m_stationAddress.Clear();
+    m_ackSentTime.m_tick = 0;
+    m_receiverActive = false;
+    m_firstBulkPacketSequence = -1;
+    m_receivedBulkPacketCount = 0;
+    m_lastBulkPacketSequence = -1;
 }
 
 Result BandwidthCheckProtocol::Initialize()
@@ -235,12 +230,14 @@ void BandwidthCheckProtocol::Inactivate()
     initReceiver();
 }
 
-unsigned int BandwidthCheckProtocol::IsReady() const
+bool BandwidthCheckProtocol::IsReady() const
 {
-    return m_initialized && m_activated &&
-           (m_senderState == SenderState_None ||
-            m_senderState == SenderState_Completed ||
-            m_senderState == SenderState_Canceled);
+    if (m_initialized && m_activated &&
+        (m_senderState == SenderState_None ||
+         m_senderState == SenderState_Completed ||
+         m_senderState == SenderState_Canceled))
+        return true;
+    return false;
 }
 
 Result BandwidthCheckProtocol::StartSend(StationIndex stationIndex)
@@ -258,16 +255,18 @@ Result BandwidthCheckProtocol::StartSend(StationIndex stationIndex)
 
 void BandwidthCheckProtocol::CancelSend()
 {
-    if (m_senderState >= SenderState_WaitingForAck &&
-        m_senderState <= SenderState_Measuring)
+    if (static_cast<unsigned int>(m_senderState) - SenderState_WaitingForAck <=
+        SenderState_WaitingForResponse - SenderState_WaitingForAck)
         m_cancelRequested = true;
 }
 
-unsigned int BandwidthCheckProtocol::IsCompleted() const
+bool BandwidthCheckProtocol::IsCompleted() const
 {
-    return m_initialized &&
-           (m_senderState == SenderState_Completed ||
-            m_senderState == SenderState_Canceled);
+    if (m_initialized &&
+        (m_senderState == SenderState_Completed ||
+         m_senderState == SenderState_Canceled))
+        return true;
+    return false;
 }
 
 Result BandwidthCheckProtocol::GetUplinkBitRate(int* result) const
@@ -278,7 +277,16 @@ Result BandwidthCheckProtocol::GetUplinkBitRate(int* result) const
         return 0x10c0c;
     if (!IsCompleted())
         return 0x10c08;
-    *result = m_senderState == SenderState_Completed ? m_uplinkBitRate : -1;
+    int bitRate;
+    if (m_senderState == SenderState_Completed)
+        bitRate = m_uplinkBitRate;
+    else
+    {
+        bitRate = -1;
+        if (m_senderState != SenderState_Canceled)
+            Trace(cTraceCategoryBandwidth);
+    }
+    *result = bitRate;
     return 0;
 }
 
@@ -341,30 +349,31 @@ Result BandwidthCheckProtocol::send(StationIndex stationIndex,
 }
 
 Result BandwidthCheckProtocol::sendHeaderOnlyPacket(StationIndex stationIndex,
-                                                    unsigned int sequence,
-                                                    int packetKind, int packetValue,
-                                                    int packetExtra)
+                                                    unsigned int type,
+                                                    int sequence, int offset,
+                                                    int flags)
 {
     Header header;
-    header.m_type = static_cast<unsigned int>(packetKind);
-    header.m_sequence = static_cast<unsigned int>(packetValue);
-    header.m_offset = static_cast<unsigned int>(packetExtra);
-    header.m_flags = sequence;
+    header.m_type = type;
+    header.m_sequence = static_cast<unsigned int>(sequence);
+    header.m_offset = static_cast<unsigned int>(offset);
+    header.m_flags = static_cast<unsigned int>(flags);
     unsigned char bytes[16];
     unsigned int size = 0;
     header.Serialize(bytes, &size);
-    return send(stationIndex, bytes, size);
+    return send(stationIndex, bytes, sizeof(bytes));
 }
 
 Result BandwidthCheckProtocol::sendSynPacket()
 {
-    return sendHeaderOnlyPacket(m_senderStation, 0xffffffffu, 3, -1, -1);
+    return sendHeaderOnlyPacket(m_senderStation, 3, -1, -1, -1);
 }
 
 int BandwidthCheckProtocol::getPayloadSize(unsigned int ipPacketSize) const
 {
-    return static_cast<int>(ipPacketSize) -
-           static_cast<int>(common::g_payloadSizeManager->m_minMtuSize + 0x58);
+    const int headerSize =
+        static_cast<int>(common::g_payloadSizeManager->m_signatureSize) + cPacketOverheadSize;
+    return static_cast<int>(ipPacketSize) - headerSize;
 }
 
 Result BandwidthCheckProtocol::sendBulkPacket()
@@ -398,17 +407,14 @@ Result BandwidthCheckProtocol::sendBulkPacket()
 
 Result BandwidthCheckProtocol::sendAckPacket()
 {
-    return sendHeaderOnlyPacket(m_receiverStation, 0xffffffffu, 4, -1, -1);
+    return sendHeaderOnlyPacket(m_receiverStation, 4, -1, -1, -1);
 }
 
 Result BandwidthCheckProtocol::sendResponse()
 {
-    const float measuredBitRateFloat =
-        (static_cast<float>(static_cast<int>(m_receivedBytes)) * 8.0f * 1000.0f) /
-        static_cast<float>(static_cast<int>(m_measurementCount));
-    const int measuredBitRate = static_cast<int>(measuredBitRateFloat);
-    return sendHeaderOnlyPacket(m_receiverStation, m_receivedBulkPacketCount, 2,
-                                measuredBitRate, -1);
+    const float bits = static_cast<float>(static_cast<int>(m_receivedBytes)) * 8.0f;
+    const int rate = static_cast<int>(bits * 1000.0f / static_cast<float>(static_cast<int>(m_measurementCount)));
+    return sendHeaderOnlyPacket(m_receiverStation, 2, rate, -1, m_receivedBulkPacketCount);
 }
 
 void BandwidthCheckProtocol::processSend()
@@ -450,8 +456,8 @@ void BandwidthCheckProtocol::processSend()
 
 int BandwidthCheckProtocol::getIpPacketSize(unsigned int payloadSize) const
 {
-    return static_cast<int>(payloadSize) +
-           static_cast<int>(common::g_payloadSizeManager->m_minMtuSize + 0x58);
+    const int signatureSize = static_cast<int>(common::g_payloadSizeManager->m_signatureSize);
+    return static_cast<int>(payloadSize) + signatureSize + cPacketOverheadSize;
 }
 
 int BandwidthCheckProtocol::getSendPacketNumInMeasuringTime() const
@@ -560,7 +566,7 @@ void BandwidthCheckProtocol::processReceive()
                         m_receiverStation = stationIndex;
                         m_stationAddress = reader.m_stationAddress;
                         m_receiverActive = true;
-                        Trace(0x8000);
+                        Trace(cTraceCategoryBandwidth);
                     }
                 }
                 else if (header.m_type == 1)
@@ -583,7 +589,7 @@ void BandwidthCheckProtocol::processReceive()
                     else
                     {
                         Station* station = g_piaStationManager->GetStation(reader.m_stationAddress);
-                        station->Trace(0x8000);
+                        station->Trace(cTraceCategoryBandwidth);
                     }
                 }
                 else if (header.m_type == 2)
@@ -605,12 +611,12 @@ void BandwidthCheckProtocol::processReceive()
                         m_senderStation == stationIndex)
                     {
                         m_ackReceived = true;
-                        Trace(0x8000);
+                        Trace(cTraceCategoryBandwidth);
                     }
                     else
                     {
                         Station* station = g_piaStationManager->GetStation(reader.m_stationAddress);
-                        station->Trace(0x8000);
+                        station->Trace(cTraceCategoryBandwidth);
                     }
                 }
             }

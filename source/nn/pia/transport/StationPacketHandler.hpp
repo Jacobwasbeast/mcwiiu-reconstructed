@@ -7,6 +7,7 @@
 
 namespace nn { namespace pia { namespace transport {
 
+class Station;
 class StationConnectionInfoTable;
 class StationManager;
 
@@ -89,7 +90,18 @@ public:
                                     common::StationAddress* address,
                                     ::nn::pia::StationIndex stationIndex);
     static unsigned int GetParticipatingStationBitmap(const StationManager* manager);
-    static StationConnectionInfoTable* GetStationConnectionInfoTable();
+    StationConnectionInfoTable* GetStationConnectionInfoTable();
+    static Station* GetStation(StationManager* manager, const common::StationAddress& address);
+    static ::nn::pia::StationIndex GetStationIndex(const Station* station);
+    static Station* GetLocalStation(StationManager* manager);
+    static unsigned long long GetStationId(const Station* station);
+    static const common::StationAddress& GetHostStationAddress(
+        const StationConnectionInfoTable* table);
+    static Station* GetStation(StationManager* manager, ::nn::pia::StationIndex stationIndex);
+    static unsigned char GetSendingPassId(const Station* station);
+    static unsigned short GetNextSendSequenceId(Station* station);
+    static unsigned char GetReceivingPassId(const Station* station);
+    static bool CheckReceivedSequenceId(Station* station, unsigned short sequenceId);
 
     unsigned int m_localStationIndex;
     unsigned long long m_localStationId;

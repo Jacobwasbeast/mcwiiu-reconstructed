@@ -3,6 +3,7 @@
 
 #include "nn/pia/Common.hpp"
 #include "nn/pia/common/StationAddress.hpp"
+#include "nn/pia/common/Time.hpp"
 #include "nn/pia/String.hpp"
 #include "nn/pia/transport/SequenceIdController.hpp"
 
@@ -61,8 +62,7 @@ public:
     common::StationAddress m_stationAddress;
     unsigned int m_field10;
     unsigned int m_field14;
-    unsigned int m_field18;
-    unsigned int m_field1c;
+    unsigned long long m_stationId;
     unsigned int m_field20;
     ReliableSlidingWindow* m_reliableSlidingWindow;
     StationProtocol* m_field28;
@@ -74,10 +74,8 @@ public:
     unsigned char m_field54;
     unsigned char m_field55;
     unsigned char m_field56;
-    int m_field58;
-    int m_field5c;
-    int m_field60;
-    int m_field64;
+    common::Time m_lastSendTime;
+    common::Time m_lastReceiveTime;
     unsigned char m_field68;
     virtual void Trace(unsigned long long value) const;
 };

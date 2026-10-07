@@ -7,8 +7,7 @@
 
 namespace nn { namespace pia { namespace transport {
 
-#pragma pack(push, 1)
-class StationConnectionInfoTable : public StationConnectionInfo
+class StationConnectionInfoTable
 {
 public:
     StationConnectionInfoTable();
@@ -31,7 +30,9 @@ public:
     void EraseFromTable(const Station* station);
     void ClearTable();
     void Trace(unsigned long long value) const;
+    StationConnectionInfo& GetLocalStationConnectionInfo() { return m_localStationConnectionInfo; }
 
+    StationConnectionInfo m_localStationConnectionInfo;
     StationConnectionInfo m_hostStationConnectionInfo;
     common::StationAddress m_hostStationAddress;
 
@@ -41,7 +42,6 @@ private:
     unsigned int m_count;
     mutable common::CriticalSection m_criticalSection;
 };
-#pragma pack(pop)
 
 extern StationConnectionInfoTable* g_stationConnectionInfoTable;
 
