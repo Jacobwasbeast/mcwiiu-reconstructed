@@ -15,13 +15,9 @@ static ResourceLocation LLAMA_TEXTURES[4] = {
 };
 
 LlamaRenderer::LlamaRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new LlamaModel(0.0F, ModelDefinition()), 0.7F)
+    : MobRenderer(dispatcher, new LlamaModel(0.0F), 0.7F)
 {
     addLayer(new LlamaDecorLayer(this));
-}
-
-LlamaRenderer::~LlamaRenderer()
-{
 }
 
 const ResourceLocation* LlamaRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)

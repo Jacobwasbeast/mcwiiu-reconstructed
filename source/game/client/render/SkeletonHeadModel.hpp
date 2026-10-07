@@ -6,14 +6,14 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
-class ModelDefinition;
 
 class SkeletonHeadModel : public Model
 {
 public:
-    SkeletonHeadModel(const ModelDefinition& modelDefinition);
-    SkeletonHeadModel(int xTexOffs, int yTexOffs, int texWidth, int texHeight, const ModelDefinition& modelDefinition);
+    SkeletonHeadModel(const ModelDefinition& modelDefinition = ModelDefinition());
+    SkeletonHeadModel(int xTexOffs, int yTexOffs, int texWidth, int texHeight, const ModelDefinition& modelDefinition = ModelDefinition());
 
     virtual ~SkeletonHeadModel() {}
 

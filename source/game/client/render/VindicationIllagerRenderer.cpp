@@ -14,7 +14,7 @@
 static ResourceLocation vindicationIllagerLocation(TN_MOB_ILLAGER_VINDICATOR);
 
 VindicationIllagerRenderer::VindicationIllagerRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new IllagerModel(0.0f, 0.0f, 64, 64, ModelDefinition()), 0.5f)
+    : MobRenderer(dispatcher, new IllagerModel(0.0f, 0.0f, 64, 64), 0.5f)
 {
     class AnonymousItemInHandLayer : public ItemInHandLayer
     {
@@ -41,15 +41,12 @@ VindicationIllagerRenderer::VindicationIllagerRenderer(EntityRenderDispatcher* d
         virtual void translateToHand(const HumanoidArm* arm)
         {
             IllagerModel* model = static_cast<IllagerModel*>(mLivingEntityRenderer->getModel());
-            model->getArm(arm)->translateTo(0.0625f);
+            ModelPart* part = model->getArm(arm);
+            part->translateTo(0.0625f);
         }
     };
 
     addLayer(new AnonymousItemInHandLayer(this));
-}
-
-VindicationIllagerRenderer::~VindicationIllagerRenderer()
-{
 }
 
 void VindicationIllagerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,

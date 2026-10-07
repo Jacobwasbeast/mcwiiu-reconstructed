@@ -23,7 +23,7 @@ EntityBlockRenderer* EntityBlockRenderer::instance = NULL;
 
 EntityBlockRenderer::EntityBlockRenderer()
 {
-    mChestBlockEntity = boost::shared_ptr<ChestBlockEntity>(new ChestBlockEntity(false));
+    mChestBlockEntity = boost::shared_ptr<ChestBlockEntity>(new ChestBlockEntity());
     mTrappedChestBlockEntity = boost::shared_ptr<ChestBlockEntity>(new ChestBlockEntity(ChestBlock::TYPE_SINGLE, false));
     mEnderChestBlockEntity = boost::shared_ptr<EnderChestBlockEntity>(new EnderChestBlockEntity());
     mBannerBlockEntity = boost::shared_ptr<BannerBlockEntity>(new BannerBlockEntity());

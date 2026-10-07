@@ -24,16 +24,12 @@ static ResourceLocation ENDER_DRAGON_LOCATION(TN_MOB_ENDERDRAGON_ENDER);
 static float beamRotation;
 
 EnderDragonRenderer::EnderDragonRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new DragonModel(ModelDefinition()), 0.5f)
+    : MobRenderer(dispatcher, new DragonModel(), 0.5f)
 {
     mDragonModel = static_cast<DragonModel*>(mModel);
     mEyesLayer = new EnderDragonEyesLayer(this);
     addLayer(mEyesLayer);
     addLayer(new EnderDragonDeathLayer());
-}
-
-EnderDragonRenderer::~EnderDragonRenderer()
-{
 }
 
 void EnderDragonRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float, float, float partialTicks)

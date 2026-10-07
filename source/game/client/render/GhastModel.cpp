@@ -11,7 +11,8 @@
 
 GhastModel::GhastModel(const ModelDefinition& modelDefinition)
 {
-    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    Tesselator* tesselator = Tesselator::getInstance();
+    BufferBuilder* builder = tesselator->getBuilder();
 
     if (modelDefinition.DoesOverrideModel())
     {
@@ -59,11 +60,6 @@ GhastModel::GhastModel(const ModelDefinition& modelDefinition)
 
         builder->useDefaultShaders();
     }
-}
-
-GhastModel::~GhastModel()
-{
-    return;
 }
 
 void GhastModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)

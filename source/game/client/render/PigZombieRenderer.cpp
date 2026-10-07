@@ -12,13 +12,9 @@
 static ResourceLocation PIG_ZOMBIE_LOCATION(TN_MOB_PIGZOMBIE);
 
 PigZombieRenderer::PigZombieRenderer(EntityRenderDispatcher* dispatcher)
-    : HumanoidMobRenderer(dispatcher, new PigZombieModel(ModelDefinition()), 0.5F)
+    : HumanoidMobRenderer(dispatcher, new PigZombieModel(), 0.5F)
 {
     addLayer(new ZombieArmorLayer(this, EntityType::PIG_ZOMBIE));
-}
-
-PigZombieRenderer::~PigZombieRenderer()
-{
 }
 
 const ResourceLocation* PigZombieRenderer::getTextureLocation(boost::shared_ptr<Entity>&)

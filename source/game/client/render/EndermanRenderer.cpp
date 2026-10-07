@@ -19,15 +19,11 @@
 static ResourceLocation ENDERMAN_LOCATION(TN_MOB_ENDERMAN);
 
 EndermanRenderer::EndermanRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new EndermanModel(0.0F, ModelDefinition()), 0.5F)
+    : MobRenderer(dispatcher, new EndermanModel(0.0F), 0.5F)
 {
     mEyesLayer = new EnderEyesLayer(this);
     addLayer(mEyesLayer);
     addLayer(new CarriedBlockLayer(this));
-}
-
-EndermanRenderer::~EndermanRenderer()
-{
 }
 
 void EndermanRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,

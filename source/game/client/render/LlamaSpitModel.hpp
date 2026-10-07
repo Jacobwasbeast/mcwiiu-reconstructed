@@ -4,14 +4,14 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
-class ModelDefinition;
 
 class LlamaSpitModel : public Model
 {
 public:
-    LlamaSpitModel(const ModelDefinition& modelDefinition);
-    LlamaSpitModel(float delta, const ModelDefinition& modelDefinition);
+    LlamaSpitModel(const ModelDefinition& modelDefinition = ModelDefinition());
+    LlamaSpitModel(float delta, const ModelDefinition& modelDefinition = ModelDefinition());
 
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,

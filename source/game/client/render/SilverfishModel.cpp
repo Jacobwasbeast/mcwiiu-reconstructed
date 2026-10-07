@@ -140,7 +140,3 @@ void SilverfishModel::setupAnim(float limbSwing, float limbSwingAmount, float ag
     mBodyLayers.data[2]->mX = mBodyParts.data[1]->mX;
 }
 
-std::wstring SilverfishModel::getName()
-{
-    return L"silverfish";
-}

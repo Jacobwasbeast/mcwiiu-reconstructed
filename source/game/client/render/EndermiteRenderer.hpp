@@ -16,7 +16,6 @@ class EndermiteRenderer : public MobRenderer
 {
 public:
     EndermiteRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~EndermiteRenderer();
 
     virtual float getFlipDegrees(boost::shared_ptr<LivingEntity>& entity);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);

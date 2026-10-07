@@ -33,7 +33,6 @@ public:
         {
             addStringAttribute(ConsoleGameRules::eGameRuleAttr_colour, &mColours);
         }
-        virtual ~IndexedBlockDef();
         virtual void getStack(TextureTheme::BlockStack& stack);
     };
 
@@ -41,7 +40,6 @@ public:
     {
     public:
         LayerTexture();
-        virtual ~LayerTexture();
         virtual ConsoleGameRules::EGameRuleType getActionType();
         std::wstring mFilename;
         int mMinimumWidth;
@@ -55,7 +53,6 @@ public:
         {
             addStringAttribute(ConsoleGameRules::eGameRuleAttr_colour, &mColours);
         }
-        virtual ~MaskedShaftsThemeRuleDefinition();
         virtual void getStack(TextureTheme::BlockStack& stack);
     };
 

@@ -16,7 +16,6 @@ class GiantMobRenderer : public MobRenderer
 {
 public:
     GiantMobRenderer(EntityRenderDispatcher* dispatcher, float shadowRadius);
-    virtual ~GiantMobRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);

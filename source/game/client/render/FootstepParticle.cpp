@@ -9,7 +9,7 @@
 #include "game/client/render/Textures.hpp"
 #include "game/client/render/Tesselator.hpp"
 #include "game/util/ResourceLocation.hpp"
-#include "game/world/LevelSource.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 
 static ResourceLocation FOOTPRINT_LOCATION(TN_MISC_FOOTPRINT);
@@ -24,11 +24,6 @@ FootstepParticle::FootstepParticle(Textures* textures, Level* level, double x, d
     lifetime = 200;
 }
 
-FootstepParticle::~FootstepParticle()
-{
-    return;
-}
-
 void FootstepParticle::render(BufferBuilder* buffer,
                               const boost::shared_ptr<Entity>& camera,
                               float partialTicks,
@@ -40,17 +35,17 @@ void FootstepParticle::render(BufferBuilder* buffer,
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
     progress *= progress;
-    float fade = 2.0f - progress * 2.0f;
-    if (1.0f < fade)
-        fade = 1.0f;
-    float alpha = fade * 0.2f;
+    float alpha = 2.0f - progress * 2.0f;
+    if (alpha > 1.0f)
+        alpha = 1.0f;
+    alpha *= 0.2f;
 
     GlStateManager::disableLighting();
 
     float px = (float)(x - Particle::xOff);
     float py = (float)(y - Particle::yOff);
     float pz = (float)(z - Particle::zOff);
-    float brightness = ((LevelSource*)level)->getBrightness(BlockPos(x, y, z));
+    float brightness = level->getBrightness(BlockPos(x, y, z));
 
     textures->bindTexture(&FOOTPRINT_LOCATION);
     GlStateManager::enableBlend();
@@ -60,12 +55,10 @@ void FootstepParticle::render(BufferBuilder* buffer,
     buffer->color(brightness, brightness, brightness, alpha);
 
     const float scale = 0.125f;
-    const float u0 = 0.0f;
-    const float u1 = 1.0f;
-    buffer->vertexUV(px - scale, py, pz + scale, u0, u1);
-    buffer->vertexUV(px + scale, py, pz + scale, u1, u1);
-    buffer->vertexUV(px + scale, py, pz - scale, u1, u0);
-    buffer->vertexUV(px - scale, py, pz - scale, u0, u0);
+    buffer->vertexUV(px - scale, py, pz + scale, 0.0f, 1.0f);
+    buffer->vertexUV(px + scale, py, pz + scale, 1.0f, 1.0f);
+    buffer->vertexUV(px + scale, py, pz - scale, 1.0f, 0.0f);
+    buffer->vertexUV(px - scale, py, pz - scale, 0.0f, 0.0f);
 
     Tesselator::getInstance()->end();
     GlStateManager::disableBlend();

@@ -7,11 +7,7 @@
 static ResourceLocation SILVERFISH_LOCATION(TN_MOB_SILVERFISH);
 
 SilverfishRenderer::SilverfishRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new SilverfishModel(ModelDefinition()), 0.3F)
-{
-}
-
-SilverfishRenderer::~SilverfishRenderer()
+    : MobRenderer(dispatcher, new SilverfishModel(), 0.3F)
 {
 }
 

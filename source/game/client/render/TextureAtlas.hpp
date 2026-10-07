@@ -17,7 +17,6 @@ class TextureAtlas : public IconRegister
 public:
     TextureAtlas(int iconType, const std::wstring& name, const std::wstring& path,
                  BufferedImage* image, bool singleImage);
-    virtual ~TextureAtlas();
 
     void addIcon(bool singleImage, int x, int y, const std::wstring& name);
     void addIconWithName(bool singleImage, int x, int y, const std::wstring& name,

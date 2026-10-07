@@ -11,11 +11,7 @@ static ResourceLocation DONKEY_LOCATION(TN_MOB_HORSE_DONKEY);
 static ResourceLocation MULE_LOCATION(TN_MOB_HORSE_MULE);
 
 ChestedHorseRenderer::ChestedHorseRenderer(EntityRenderDispatcher* dispatcher, float shadowRadius)
-    : AbstractHorseRenderer(dispatcher, new ChestedHorseModel(ModelDefinition()), shadowRadius)
-{
-}
-
-ChestedHorseRenderer::~ChestedHorseRenderer()
+    : AbstractHorseRenderer(dispatcher, new ChestedHorseModel(), shadowRadius)
 {
 }
 

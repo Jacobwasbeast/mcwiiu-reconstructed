@@ -9,13 +9,9 @@
 static ResourceLocation* DOLPHIN_LOCATION = new ResourceLocation(TN_MOB_DOLPHIN);
 
 DolphinRenderer::DolphinRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new DolphinModel(ModelDefinition()), 0.7F)
+    : MobRenderer(dispatcher, new DolphinModel(), 0.7F)
 {
     addLayer(new DolphinCarryingItemLayer(this));
-}
-
-DolphinRenderer::~DolphinRenderer()
-{
 }
 
 const ResourceLocation* DolphinRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)

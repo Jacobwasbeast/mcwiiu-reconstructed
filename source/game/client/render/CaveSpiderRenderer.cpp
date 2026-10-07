@@ -11,10 +11,6 @@ CaveSpiderRenderer::CaveSpiderRenderer(EntityRenderDispatcher* dispatcher)
     mShadowRadius *= 0.7F;
 }
 
-CaveSpiderRenderer::~CaveSpiderRenderer()
-{
-}
-
 void CaveSpiderRenderer::scale(boost::shared_ptr<LivingEntity>&, float)
 {
     GlStateManager::scalef(0.7F, 0.7F, 0.7F);

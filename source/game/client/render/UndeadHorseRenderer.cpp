@@ -11,11 +11,7 @@ static ResourceLocation ZOMBIE_HORSE_LOCATION(TN_MOB_HORSE_HORSE_ZOMBIE);
 static ResourceLocation SKELETON_HORSE_LOCATION(TN_MOB_HORSE_HORSE_SKELETON);
 
 UndeadHorseRenderer::UndeadHorseRenderer(EntityRenderDispatcher* dispatcher)
-    : AbstractHorseRenderer(dispatcher, new AbstractHorseModel(true, ModelDefinition()), 1.0F)
-{
-}
-
-UndeadHorseRenderer::~UndeadHorseRenderer()
+    : AbstractHorseRenderer(dispatcher, new AbstractHorseModel(), 1.0F)
 {
 }
 

@@ -13,13 +13,9 @@ static ResourceLocation VEX_LOCATION(TN_MOB_ILLAGER_VEX);
 static ResourceLocation VEX_CHARGING_LOCATION(TN_MOB_ILLAGER_VEX_CHARGING);
 
 VexRenderer::VexRenderer(EntityRenderDispatcher* dispatcher)
-    : HumanoidMobRenderer(dispatcher, new VexModel(ModelDefinition()), 0.3F)
+    : HumanoidMobRenderer(dispatcher, new VexModel(), 0.3F)
 {
     mModelVersion = static_cast<VexModel*>(mModel)->getModelVersion();
-}
-
-VexRenderer::~VexRenderer()
-{
 }
 
 const ResourceLocation* VexRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
@@ -44,7 +40,7 @@ void VexRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, 
     if (modelVersion != mModelVersion)
     {
         delete mModel;
-        mModel = new VexModel(ModelDefinition());
+        mModel = new VexModel();
         mModelVersion = modelVersion;
     }
 

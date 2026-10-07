@@ -7,10 +7,6 @@ SpitParticle::SpitParticle(Level* level, double x, double y, double z, double xa
     gravity = 0.5f;
 }
 
-SpitParticle::~SpitParticle()
-{
-}
-
 uint64_t SpitParticle::GetType()
 {
     return ParticleKind::SPIT;

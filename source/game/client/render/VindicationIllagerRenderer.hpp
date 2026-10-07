@@ -17,7 +17,6 @@ class VindicationIllagerRenderer : public MobRenderer
 {
 public:
     VindicationIllagerRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~VindicationIllagerRenderer();
 
     virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                         float yaw, float partialTick);

@@ -43,10 +43,6 @@ PlayerRenderer::PlayerRenderer(EntityRenderDispatcher* dispatcher, bool slimArms
     _init();
 }
 
-PlayerRenderer::~PlayerRenderer()
-{
-}
-
 void PlayerRenderer::_init()
 {
     addLayer(new HumanoidArmorLayer(this));

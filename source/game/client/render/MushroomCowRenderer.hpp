@@ -15,7 +15,6 @@ class MushroomCowRenderer : public MobRenderer
 {
 public:
     MushroomCowRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~MushroomCowRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);

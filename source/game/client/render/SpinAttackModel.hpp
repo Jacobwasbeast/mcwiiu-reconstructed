@@ -4,15 +4,15 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
 class Entity;
-class ModelDefinition;
 class ModelPartSkin;
 
 class SpinAttackModel : public Model
 {
 public:
-    SpinAttackModel(const ModelDefinition& modelDefinition);
+    SpinAttackModel(const ModelDefinition& modelDefinition = ModelDefinition());
 
 
     void renderSpin(boost::shared_ptr<Entity> entity, float ageInTicks, float scale, bool useDisplayList);

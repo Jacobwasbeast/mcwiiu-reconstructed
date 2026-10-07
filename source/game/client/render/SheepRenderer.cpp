@@ -15,14 +15,11 @@
 static ResourceLocation SHEEP_LOCATION(TN_MOB_SHEEP);
 
 SheepRenderer::SheepRenderer(EntityRenderDispatcher* dispatcher, Model*, Model*, float)
-    : MobRenderer(dispatcher, new SheepModel(ModelDefinition()), 0.7F),
-      mFurModel(new SheepFurModel(ModelDefinition())), mOriginalFurModel(mFurModel)
+    : MobRenderer(dispatcher, new SheepModel(), 0.7F)
 {
+    mFurModel = new SheepFurModel();
+    mOriginalFurModel = mFurModel;
     addLayer(new SheepFurLayer(this));
-}
-
-SheepRenderer::~SheepRenderer()
-{
 }
 
 Model* SheepRenderer::getModel(boost::shared_ptr<LivingEntity>& entity)

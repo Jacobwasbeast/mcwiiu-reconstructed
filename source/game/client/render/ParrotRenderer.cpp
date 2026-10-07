@@ -21,11 +21,7 @@ ResourceLocation PARROT_LOCATIONS[5] = {
 };
 
 ParrotRenderer::ParrotRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new ParrotModel(ModelDefinition()), 0.3F)
-{
-}
-
-ParrotRenderer::~ParrotRenderer()
+    : MobRenderer(dispatcher, new ParrotModel(), 0.3F)
 {
 }
 

@@ -11,10 +11,6 @@ CowRenderer::CowRenderer(EntityRenderDispatcher* dispatcher, Model* model, float
 {
 }
 
-CowRenderer::~CowRenderer()
-{
-}
-
 const ResourceLocation* CowRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
     return &COW_LOCATION;

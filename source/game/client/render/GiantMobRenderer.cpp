@@ -11,15 +11,11 @@
 static ResourceLocation GIANT_LOCATION(TN_ITEM_ARROWS);
 
 GiantMobRenderer::GiantMobRenderer(EntityRenderDispatcher* dispatcher, float shadowRadius)
-    : MobRenderer(dispatcher, new ZombieModel(ModelDefinition()), shadowRadius * 0.5F)
+    : MobRenderer(dispatcher, new ZombieModel(), shadowRadius * 0.5F)
 {
     mScale = shadowRadius;
     addLayer(new ItemInHandLayer(this));
     addLayer(new ZombieArmorLayer(this, EntityType::ZOMBIE));
-}
-
-GiantMobRenderer::~GiantMobRenderer()
-{
 }
 
 void GiantMobRenderer::translateWeaponItem()

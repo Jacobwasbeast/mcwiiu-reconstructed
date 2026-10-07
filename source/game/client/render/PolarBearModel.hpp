@@ -5,15 +5,15 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/QuadrupedModel.hpp"
 
 class Entity;
-class ModelDefinition;
 
 class PolarBearModel : public QuadrupedModel
 {
 public:
-    PolarBearModel(const ModelDefinition& modelDefinition);
+    PolarBearModel(const ModelDefinition& modelDefinition = ModelDefinition());
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                         float ageInTicks, float netHeadYaw, float headPitch, float scale,

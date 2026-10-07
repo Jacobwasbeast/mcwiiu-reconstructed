@@ -16,13 +16,9 @@ static ResourceLocation ZOMBIE_VILLAGER_SMITH_LOCATION(TN_MOB_ZOMBIE_VILLAGER_ZO
 static ResourceLocation ZOMBIE_VILLAGER_BUTCHER_LOCATION(TN_MOB_ZOMBIE_VILLAGER_ZOMBIE_BUTCHER);
 
 ZombieVillagerRenderer::ZombieVillagerRenderer(EntityRenderDispatcher* dispatcher)
-    : HumanoidMobRenderer(dispatcher, new VillagerZombieModel(ModelDefinition()), 0.5F)
+    : HumanoidMobRenderer(dispatcher, new VillagerZombieModel(), 0.5F)
 {
     addLayer(new VillagerArmorLayer(this));
-}
-
-ZombieVillagerRenderer::~ZombieVillagerRenderer()
-{
 }
 
 const ResourceLocation* ZombieVillagerRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)

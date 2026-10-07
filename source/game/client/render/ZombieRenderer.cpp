@@ -15,7 +15,7 @@
 static ResourceLocation sZombieLocation(TN_MOB_ZOMBIE);
 
 ZombieRenderer::ZombieRenderer(EntityRenderDispatcher* dispatcher)
-    : HumanoidMobRenderer(dispatcher, new ZombieModel(ModelDefinition()), 0.5F)
+    : HumanoidMobRenderer(dispatcher, new ZombieModel(), 0.5F)
 {
     addLayer(new ZombieArmorLayer(this, EntityType::ZOMBIE));
 }

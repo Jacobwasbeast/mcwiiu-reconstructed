@@ -2,6 +2,7 @@
 #include "game/client/render/ModelPart.hpp"
 #include "game/client/render/ModelPartCubeDefinition.hpp"
 #include "game/core/DataInputStream.hpp"
+#include "game/core/Mth.hpp"
 
 ModelPartDefinition::ModelPartDefinition()
     : mX(0.0f), mY(0.0f), mZ(0.0f), mXRot(0.0f), mYRot(0.0f), mZRot(0.0f),
@@ -35,13 +36,12 @@ void ModelPartDefinition::SetPartRotation(ModelPart* part) const
 
 void ModelPartDefinition::AddCubes(ModelPart* part, float scale) const
 {
-    int i;
-    for (i = 0; i < mCubeCount; ++i)
+    for (int i = 0; i < mCubeCount; ++i)
     {
         const ModelPartCubeDefinition& cube = mCubes[i];
+        float delta = cube.inflate + scale;
         part->addBoxMapTex(cube.x, cube.y, cube.z, cube.width, cube.height, cube.depth,
-                           static_cast<int>(cube.texU), static_cast<int>(cube.texV),
-                           cube.mirror, cube.inflate + scale);
+                           static_cast<int>(cube.texU), static_cast<int>(cube.texV), cube.mirror, delta);
     }
 }
 
@@ -56,18 +56,17 @@ void ModelPartDefinition::SetupModelPart(ModelPart* part, ModelPart* parent, flo
 
 void ModelPartDefinition::readModelPart(DataInputStream* input, int hasCubeRotation)
 {
-    const float degreesToRadians = 0.017453292f;
     mX = input->readFloat();
     mY = input->readFloat();
     mZ = input->readFloat();
-    mXRot = input->readFloat() * degreesToRadians;
-    mYRot = input->readFloat() * degreesToRadians;
-    mZRot = input->readFloat() * degreesToRadians;
+    mXRot = input->readFloat() * Mth::DEG_TO_RAD;
+    mYRot = input->readFloat() * Mth::DEG_TO_RAD;
+    mZRot = input->readFloat() * Mth::DEG_TO_RAD;
     if (hasCubeRotation > 0)
     {
-        mCubeXRot = input->readFloat() * degreesToRadians;
-        mCubeYRot = input->readFloat() * degreesToRadians;
-        mCubeZRot = input->readFloat() * degreesToRadians;
+        mCubeXRot = input->readFloat() * Mth::DEG_TO_RAD;
+        mCubeYRot = input->readFloat() * Mth::DEG_TO_RAD;
+        mCubeZRot = input->readFloat() * Mth::DEG_TO_RAD;
     }
     mCubeCount = input->readInt();
     mCubes = new ModelPartCubeDefinition[mCubeCount];

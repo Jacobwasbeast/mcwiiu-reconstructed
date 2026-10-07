@@ -46,6 +46,3 @@ PlayerModelPart::Internal::Internal(int bit, const std::wstring& id)
 {
 }
 
-PlayerModelPart::Internal::~Internal()
-{
-}

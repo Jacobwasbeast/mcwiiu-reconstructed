@@ -16,7 +16,6 @@ class SilverfishRenderer : public MobRenderer
 {
 public:
     SilverfishRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~SilverfishRenderer();
 
     virtual float getFlipDegrees(boost::shared_ptr<LivingEntity>& entity);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);

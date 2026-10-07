@@ -17,7 +17,6 @@ class PigZombieRenderer : public HumanoidMobRenderer
 {
 public:
     PigZombieRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~PigZombieRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual std::wstring getModelName();

@@ -12,11 +12,7 @@
 static ResourceLocation BAT_LOCATION(TN_MOB_BAT);
 
 BatRenderer::BatRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new BatModel(ModelDefinition()), 0.25F)
-{
-}
-
-BatRenderer::~BatRenderer()
+    : MobRenderer(dispatcher, new BatModel(), 0.25F)
 {
 }
 

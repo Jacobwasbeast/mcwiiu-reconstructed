@@ -8,13 +8,9 @@
 static ResourceLocation MUSHROOM_COW_LOCATION(TN_MOB_REDCOW);
 
 MushroomCowRenderer::MushroomCowRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new CowModel(ModelDefinition()), 0.7f)
+    : MobRenderer(dispatcher, new CowModel(), 0.7f)
 {
     addLayer(new MushroomCowMushroomLayer(this));
-}
-
-MushroomCowRenderer::~MushroomCowRenderer()
-{
 }
 
 const ResourceLocation* MushroomCowRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)

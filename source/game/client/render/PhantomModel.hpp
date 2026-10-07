@@ -6,16 +6,16 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPartsSkinned.hpp"
 
 class Entity;
-class ModelDefinition;
 class ModelPartSkin;
 
 class PhantomModel : public Model
 {
 public:
-    PhantomModel(const ModelDefinition& modelDefinition);
+    PhantomModel(const ModelDefinition& modelDefinition = ModelDefinition());
     virtual ~PhantomModel();
 
     void createModelParts(const ModelDefinition& modelDefinition);

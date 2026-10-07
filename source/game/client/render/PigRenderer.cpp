@@ -14,14 +14,10 @@
 static ResourceLocation PIG_LOCATION(TN_MOB_PIG);
 
 PigRenderer::PigRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new PigModel(ModelDefinition()), 0.7F)
+    : MobRenderer(dispatcher, new PigModel(), 0.7F)
 {
     mSaddleLayer = new PigSaddleLayer(this);
     addLayer(mSaddleLayer);
-}
-
-PigRenderer::~PigRenderer()
-{
 }
 
 const ResourceLocation* PigRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)

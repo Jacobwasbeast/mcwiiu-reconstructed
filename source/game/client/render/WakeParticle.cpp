@@ -16,10 +16,10 @@ WakeParticle::WakeParticle(Level* level, double x, double y, double z,
     setMiscTex(19);
     setSize(0.01f, 0.01f);
     lifetime = (int)(8.0 / (random.nextDouble() * 0.8 + 0.2));
+    gravity = 0.0f;
     xd = xa;
     yd = ya;
     zd = za;
-    gravity = 0.0f;
 }
 
 void WakeParticle::tick()

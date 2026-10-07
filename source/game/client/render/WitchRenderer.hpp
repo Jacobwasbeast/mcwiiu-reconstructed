@@ -16,7 +16,6 @@ class WitchRenderer : public MobRenderer
 {
 public:
     WitchRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~WitchRenderer();
 
     virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                         float yaw, float partialTick);

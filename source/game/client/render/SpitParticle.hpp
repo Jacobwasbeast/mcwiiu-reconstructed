@@ -9,7 +9,6 @@ class SpitParticle : public ExplodeParticle
 {
 public:
     SpitParticle(Level* level, double x, double y, double z, double xa, double ya, double za);
-    virtual ~SpitParticle();
     virtual uint64_t GetType();
     virtual void tick();
 

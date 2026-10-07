@@ -54,7 +54,8 @@ const TextureTheme::BlockStack& TextureTheme::getStack(BufferedImage* image, int
     if (x > 0 && y > 0 && x < (int)image->getWidth() && y < (int)image->getHeight())
     {
         int key = image->getData()[(x * image->getWidth() + y)] & 0xFFFFFF;
-        if (mStacks.find(key) != mStacks.end())
+        boost::unordered_map<int, BlockStack>::const_iterator it = mStacks.find(key);
+        if (it != mStacks.end())
             return mStacks.at(key);
         static BlockStack defaultStack;
         return defaultStack;
@@ -73,8 +74,7 @@ void TextureTheme::Apply(Random&, BlockTransaction* transaction, int&, int&) con
 {
     const int width = transaction->mSize.x;
     const int depth = transaction->mSize.z;
-    unsigned int size = width < depth ? depth : width;
-    BufferedImage* image = getAssetForSize(size);
+    BufferedImage* image = getAssetForSize(width < depth ? depth : width);
     int xOffset = ((int)image->getWidth() - width) / 2;
     int zOffset = ((int)image->getHeight() - depth) / 2;
     for (int x = 0; x < width; ++x)

@@ -31,10 +31,6 @@ TextureAtlas::TextureAtlas(int iconType, const std::wstring& name,
     mMissingIcon = TextureAtlasSprite::create(MISSING_ICON_NAME);
 }
 
-TextureAtlas::~TextureAtlas()
-{
-}
-
 void TextureAtlas::addIcon(bool singleImage, int x, int y,
                                            const std::wstring& name)
 {

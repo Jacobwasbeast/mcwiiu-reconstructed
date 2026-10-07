@@ -18,7 +18,6 @@ class WitherSkeletonRenderer : public SkeletonRenderer
 {
 public:
     WitherSkeletonRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~WitherSkeletonRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual std::wstring getModelName();

@@ -15,7 +15,6 @@ class SnowManRenderer : public MobRenderer
 {
 public:
     SnowManRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~SnowManRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* getModel();

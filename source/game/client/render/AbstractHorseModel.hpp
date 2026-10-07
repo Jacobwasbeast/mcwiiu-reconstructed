@@ -6,16 +6,16 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
 class Entity;
 class LivingEntity;
-class ModelDefinition;
 class ModelPart;
 
 class AbstractHorseModel : public Model
 {
 public:
-    AbstractHorseModel(bool horse, const ModelDefinition& modelDefinition);
+    AbstractHorseModel(bool horse = true, const ModelDefinition& modelDefinition = ModelDefinition());
 
     virtual ~AbstractHorseModel() {}
 

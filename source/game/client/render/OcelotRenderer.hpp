@@ -16,7 +16,6 @@ class OcelotRenderer : public MobRenderer
 {
 public:
     OcelotRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~OcelotRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks);

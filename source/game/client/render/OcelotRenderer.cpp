@@ -17,10 +17,6 @@ OcelotRenderer::OcelotRenderer(EntityRenderDispatcher* dispatcher)
 {
 }
 
-OcelotRenderer::~OcelotRenderer()
-{
-}
-
 const ResourceLocation* OcelotRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
     boost::shared_ptr<Ocelot> ocelot = boost::static_pointer_cast<Ocelot>(entity);

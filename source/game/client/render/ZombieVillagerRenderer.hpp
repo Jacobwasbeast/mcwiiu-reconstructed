@@ -16,7 +16,6 @@ class ZombieVillagerRenderer : public HumanoidMobRenderer
 {
 public:
     ZombieVillagerRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~ZombieVillagerRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);

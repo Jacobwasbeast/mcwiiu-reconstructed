@@ -10,10 +10,6 @@ ElderGuardianRenderer::ElderGuardianRenderer(EntityRenderDispatcher* dispatcher)
 {
 }
 
-ElderGuardianRenderer::~ElderGuardianRenderer()
-{
-}
-
 void ElderGuardianRenderer::scale(boost::shared_ptr<LivingEntity>&, float)
 {
     GlStateManager::scalef(2.35F, 2.35F, 2.35F);

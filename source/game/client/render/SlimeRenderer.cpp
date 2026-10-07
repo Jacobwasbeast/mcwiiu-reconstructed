@@ -13,13 +13,9 @@
 static ResourceLocation SLIME_LOCATION(TN_MOB_SLIME);
 
 SlimeRenderer::SlimeRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new SlimeModel(16, ModelDefinition()), 0.25f)
+    : MobRenderer(dispatcher, new SlimeModel(16), 0.25f)
 {
     addLayer(new SlimeOuterLayer(this));
-}
-
-SlimeRenderer::~SlimeRenderer()
-{
 }
 
 const ResourceLocation* SlimeRenderer::getTextureLocation(boost::shared_ptr<Entity>&)

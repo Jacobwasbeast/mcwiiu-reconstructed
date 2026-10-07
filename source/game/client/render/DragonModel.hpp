@@ -6,13 +6,13 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
-class ModelDefinition;
 
 class DragonModel : public Model
 {
 public:
-    DragonModel(const ModelDefinition& modelDefinition);
+    DragonModel(const ModelDefinition& modelDefinition = ModelDefinition());
 
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);

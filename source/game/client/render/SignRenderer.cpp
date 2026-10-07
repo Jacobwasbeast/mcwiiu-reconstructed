@@ -24,7 +24,7 @@ static ResourceLocation SIGN_LOCATION(TN_ITEM_SIGN);
 
 SignRenderer::SignRenderer()
 {
-    mModel = new SignModel(ModelDefinition());
+    mModel = new SignModel();
     mTextDisplayLists = gRenderer->CBuffCreate(200);
     for (int i = 0; i < 200; ++i)
         mTextCache[i].uniqueId = -1;

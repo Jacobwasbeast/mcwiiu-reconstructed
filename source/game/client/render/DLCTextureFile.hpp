@@ -11,7 +11,6 @@ class DLCTextureFile : public DLCFile
 {
 public:
     DLCTextureFile(const std::wstring& path);
-    virtual ~DLCTextureFile();
 
     virtual void addData(unsigned char* pData, unsigned int size);
     virtual unsigned char* getData(unsigned int& size);

@@ -19,7 +19,6 @@ class StrayRenderer : public SkeletonRenderer
 {
 public:
     StrayRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~StrayRenderer();
 
     virtual std::wstring getModelName();
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);

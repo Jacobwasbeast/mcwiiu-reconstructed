@@ -16,7 +16,6 @@ class WitherBossRenderer : public MobRenderer
 {
 public:
     WitherBossRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~WitherBossRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);

@@ -6,17 +6,17 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
-class ModelDefinition;
 class ModelPart;
 
 class CreeperModel : public Model
 {
 public:
-    CreeperModel(const ModelDefinition& modelDefinition);
-    CreeperModel(float delta, const ModelDefinition& modelDefinition);
+    CreeperModel(const ModelDefinition& modelDefinition = ModelDefinition());
+    CreeperModel(float delta, const ModelDefinition& modelDefinition = ModelDefinition());
 
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);

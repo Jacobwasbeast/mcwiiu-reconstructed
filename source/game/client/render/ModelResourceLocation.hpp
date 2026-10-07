@@ -9,7 +9,6 @@
 class ModelResourceLocation : public ResourceLocation {
 public:
     ModelResourceLocation(int dummy, arrayWithLength<std::wstring> parts);
-    virtual ~ModelResourceLocation();
 
     static ModelResourceLocation* Make(const std::wstring& location, const std::wstring& variant);
     static ModelResourceLocation* Make(const ResourceLocation& location, const std::wstring& variant);

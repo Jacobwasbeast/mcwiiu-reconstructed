@@ -16,7 +16,6 @@ class HuskRenderer : public ZombieRenderer
 {
 public:
     HuskRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~HuskRenderer();
 
     virtual std::wstring getModelName();
     virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTick);

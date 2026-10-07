@@ -13,13 +13,9 @@
 static ResourceLocation sTextureLocation(TN_MOB_VILLAGER_GOLEM);
 
 VillagerGolemRenderer::VillagerGolemRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new VillagerGolemModel(0.0F, -7.0F, ModelDefinition()), 0.5F)
+    : MobRenderer(dispatcher, new VillagerGolemModel(), 0.5F)
 {
     addLayer(new VillagerGolemFlowerLayer(this));
-}
-
-VillagerGolemRenderer::~VillagerGolemRenderer()
-{
 }
 
 const ResourceLocation* VillagerGolemRenderer::getTextureLocation(boost::shared_ptr<Entity>&)

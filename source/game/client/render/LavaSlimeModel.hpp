@@ -6,16 +6,16 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
 class Entity;
 class LivingEntity;
-class ModelDefinition;
 class ModelPart;
 
 class LavaSlimeModel : public Model
 {
 public:
-    LavaSlimeModel(const ModelDefinition& modelDefinition);
+    LavaSlimeModel(const ModelDefinition& modelDefinition = ModelDefinition());
 
     virtual ~LavaSlimeModel() {}
 

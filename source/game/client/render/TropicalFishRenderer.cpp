@@ -29,10 +29,6 @@ TropicalFishRenderer::TropicalFishRenderer(EntityRenderDispatcher* dispatcher)
     mModel2 = new FishModel(ModelDefinition(), FISH_TYPE_TROPICAL_FISH, 1);
 }
 
-TropicalFishRenderer::~TropicalFishRenderer()
-{
-}
-
 void TropicalFishRenderer::getRGB(int color, float& red, float& green, float& blue)
 {
     const arrayWithLength<const float> colors = DyeColor::byBlockData(color)->getTextureDiffuseColors();

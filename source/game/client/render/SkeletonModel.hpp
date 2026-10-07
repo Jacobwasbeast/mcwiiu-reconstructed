@@ -6,11 +6,11 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/HumanoidModel.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
 class Entity;
 class HumanoidArm;
 class LivingEntity;
-class ModelDefinition;
 
 class SkeletonModel : public HumanoidModel
 {
@@ -22,9 +22,9 @@ public:
         eSkeletonType_WitherSkeleton = 3
     };
 
-    SkeletonModel(const ModelDefinition& definition);
-    SkeletonModel(float scale, bool armourModel, const ModelDefinition& definition);
-    SkeletonModel(SkeletonType skeletonType, const ModelDefinition& definition);
+    SkeletonModel(const ModelDefinition& definition = ModelDefinition());
+    SkeletonModel(float scale, bool armourModel, const ModelDefinition& definition = ModelDefinition());
+    SkeletonModel(SkeletonType skeletonType, const ModelDefinition& definition = ModelDefinition());
 
 
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);

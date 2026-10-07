@@ -112,7 +112,7 @@ arrayWithLength<int> TextureUtil::anaglyph(arrayWithLength<int> pixels)
 
     for (unsigned int i = 0; i < pixels.length; i++)
     {
-        converted.data[i] = anaglyph(pixels.data[i]);
+        converted[i] = anaglyph(pixels[i]);
     }
 
     return converted;

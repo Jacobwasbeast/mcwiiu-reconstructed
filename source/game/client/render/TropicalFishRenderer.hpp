@@ -17,7 +17,6 @@ class TropicalFishRenderer : public FishRenderer
 {
 public:
     TropicalFishRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~TropicalFishRenderer();
 
     virtual void bindTexture(const ResourceLocation* location);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);

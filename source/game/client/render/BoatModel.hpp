@@ -6,18 +6,18 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/TwoPassModel.hpp"
 
 class Boat;
 class Entity;
-class ModelDefinition;
 class ModelPart;
 class ModelPartSkin;
 
 class BoatModel : public Model, public TwoPassModel
 {
 public:
-    BoatModel(const ModelDefinition& definition);
+    BoatModel(const ModelDefinition& definition = ModelDefinition());
 
 
     virtual void render(boost::shared_ptr<Entity>& entity, float partialTicks, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);

@@ -11,10 +11,6 @@ HuskRenderer::HuskRenderer(EntityRenderDispatcher* dispatcher)
 {
 }
 
-HuskRenderer::~HuskRenderer()
-{
-}
-
 std::wstring HuskRenderer::getModelName()
 {
     return L"zombie.husk";

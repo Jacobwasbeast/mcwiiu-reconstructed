@@ -6,13 +6,13 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
-class ModelDefinition;
 
 class CreeperHeadModel : public Model
 {
 public:
-    CreeperHeadModel(float delta, const ModelDefinition& modelDefinition);
+    CreeperHeadModel(float delta, const ModelDefinition& modelDefinition = ModelDefinition());
 
     virtual ~CreeperHeadModel() {}
 

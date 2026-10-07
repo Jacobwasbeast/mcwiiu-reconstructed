@@ -5,19 +5,19 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ZombieModel.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
 class LivingEntity;
-class ModelDefinition;
 class ModelPart;
 
 class DrownedModel : public ZombieModel
 {
 public:
-    DrownedModel(const ModelDefinition& definition);
-    DrownedModel(float scale, const ModelDefinition& definition);
+    DrownedModel(const ModelDefinition& definition = ModelDefinition());
+    DrownedModel(float scale, const ModelDefinition& definition = ModelDefinition());
 
 
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);

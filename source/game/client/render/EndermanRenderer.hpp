@@ -19,7 +19,6 @@ class EndermanRenderer : public MobRenderer
 {
 public:
     EndermanRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~EndermanRenderer();
 
     virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                         float yaw, float partialTick);

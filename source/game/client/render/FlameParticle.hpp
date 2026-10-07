@@ -8,7 +8,6 @@ class FlameParticle : public Particle
 {
 public:
     FlameParticle(Level* level, double x, double y, double z, double xa, double ya, double za);
-    virtual ~FlameParticle();
     virtual void move(double xa, double ya, double za);
     virtual void render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
                         float partialTicks, float xa, float ya, float za,

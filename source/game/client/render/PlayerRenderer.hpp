@@ -22,7 +22,6 @@ public:
     using EntityRenderer::bindTexture;
 
     PlayerRenderer(EntityRenderDispatcher* dispatcher, bool slimArms, bool is64x64);
-    virtual ~PlayerRenderer();
 
     void _init();
     static unsigned int getNametagColour(int colour);

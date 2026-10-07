@@ -6,16 +6,16 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/HumanoidModel.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
-class ModelDefinition;
 
 class VillagerZombieModel : public HumanoidModel
 {
 public:
-    VillagerZombieModel(const ModelDefinition& definition);
-    VillagerZombieModel(float scale, float yOffset, bool armourModel, const ModelDefinition& definition);
+    VillagerZombieModel(const ModelDefinition& definition = ModelDefinition());
+    VillagerZombieModel(float scale, float yOffset, bool armourModel, const ModelDefinition& definition = ModelDefinition());
 
 
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);

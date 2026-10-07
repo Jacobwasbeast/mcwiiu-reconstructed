@@ -15,7 +15,6 @@ class LlamaRenderer : public MobRenderer
 {
 public:
     LlamaRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~LlamaRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);

@@ -5,14 +5,14 @@
 #include <string>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
-class ModelDefinition;
 class ModelPartSkin;
 
 class BedModel : public Model
 {
 public:
-    BedModel(const ModelDefinition& modelDefinition);
+    BedModel(const ModelDefinition& modelDefinition = ModelDefinition());
 
     virtual ~BedModel() {}
 

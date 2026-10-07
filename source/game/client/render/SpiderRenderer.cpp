@@ -16,7 +16,7 @@
 static ResourceLocation SPIDER_LOCATION(TN_MOB_SPIDER);
 
 SpiderRenderer::SpiderRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new SpiderModel(ModelDefinition()), 1.0F)
+    : MobRenderer(dispatcher, new SpiderModel(), 1.0F)
 {
     mSpiderEyesLayer = new SpiderEyesLayer(this);
     addLayer(mSpiderEyesLayer);

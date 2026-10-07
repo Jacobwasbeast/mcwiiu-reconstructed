@@ -12,16 +12,17 @@ SimpleAnimatedParticle::SimpleAnimatedParticle(Level* level, double x, double y,
 
 void SimpleAnimatedParticle::setColor(int color)
 {
-    Particle::setColor((float)((color >> 16) & 0xff) / 255.0f,
-             (float)((color >> 8) & 0xff) / 255.0f,
-             (float)(color & 0xff) / 255.0f);
+    float red = (float)((color >> 16) & 0xff) / 255.0f;
+    float green = (float)((color >> 8) & 0xff) / 255.0f;
+    float blue = (float)(color & 0xff) / 255.0f;
+    Particle::setColor(red, green, blue);
 }
 
 void SimpleAnimatedParticle::setFadeColor(int color)
 {
-    fadeRed = (float)((color >> 16) & 0xff) / 255.0f;
-    fadeGreen = (float)((color >> 8) & 0xff) / 255.0f;
-    fadeBlue = (float)(color & 0xff) / 255.0f;
+    fadeRed = (float)(int)((color >> 16) & 0xff) / 255.0f;
+    fadeGreen = (float)(int)((color >> 8) & 0xff) / 255.0f;
+    fadeBlue = (float)(int)(color & 0xff) / 255.0f;
     fading = true;
 }
 
@@ -32,21 +33,18 @@ bool SimpleAnimatedParticle::isTransparent()
 
 void SimpleAnimatedParticle::tick()
 {
-    int oldAge = age;
-    ++age;
     xo = x;
     yo = y;
     zo = z;
 
-    if (lifetime <= oldAge)
+    if (age++ >= lifetime)
     {
         remove();
     }
 
-    int fadeStart = lifetime / 2;
-    if (fadeStart < age)
+    if (age > lifetime / 2)
     {
-        setAlpha(1.0f - ((float)age - (float)fadeStart) / (float)lifetime);
+        setAlpha(1.0f - ((float)age - (float)(lifetime / 2)) / (float)lifetime);
         if (fading)
         {
             rCol += (fadeRed - rCol) * 0.2f;

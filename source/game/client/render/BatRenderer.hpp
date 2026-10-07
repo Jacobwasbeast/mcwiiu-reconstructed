@@ -16,7 +16,6 @@ class BatRenderer : public MobRenderer
 {
 public:
     BatRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~BatRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);

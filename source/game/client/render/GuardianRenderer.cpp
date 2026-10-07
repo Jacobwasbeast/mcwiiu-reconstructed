@@ -21,7 +21,7 @@ static ResourceLocation GUARDIAN_LOCATION(TN_MOB_GUARDIAN);
 static ResourceLocation GUARDIAN_BEAM_LOCATION(TN_MOB_GUARDIAN_BEAM);
 
 GuardianRenderer::GuardianRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new GuardianModel(ModelDefinition()), 0.5f)
+    : MobRenderer(dispatcher, new GuardianModel(), 0.5f)
 {
 }
 

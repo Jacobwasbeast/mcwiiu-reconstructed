@@ -9,11 +9,7 @@
 static ResourceLocation BLAZE_LOCATION(TN_MOB_FIRE);
 
 BlazeRenderer::BlazeRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new BlazeModel(ModelDefinition()), 0.5F)
-{
-}
-
-BlazeRenderer::~BlazeRenderer()
+    : MobRenderer(dispatcher, new BlazeModel(), 0.5F)
 {
 }
 
@@ -28,8 +24,9 @@ void BlazeRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y
     if (mModel->hasOverriddenParts() && !entity->isOnFire())
     {
         int lightColor = Entity::GetLightColor(entity.get());
-        GlStateManager::multiTexCoord2f((float)(lightColor % 65536),
-                                        (float)(lightColor / 65536));
+        int u = lightColor % 65536;
+        int v = lightColor / 65536;
+        GlStateManager::multiTexCoord2f((float)u, (float)v);
     }
     MobRenderer::render(entity, x, y, z, yaw, partialTick);
 }

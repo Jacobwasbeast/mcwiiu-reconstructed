@@ -11,11 +11,7 @@
 static ResourceLocation TURTLE_LOCATION(TN_MOB_SEA_TURTLE);
 
 TurtleRenderer::TurtleRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new TurtleModel(0.0f, ModelDefinition()), 0.35f)
-{
-}
-
-TurtleRenderer::~TurtleRenderer()
+    : MobRenderer(dispatcher, new TurtleModel(0.0f), 0.35f)
 {
 }
 

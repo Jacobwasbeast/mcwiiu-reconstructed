@@ -5,17 +5,17 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPartsSkinned.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
-class ModelDefinition;
 class ModelPartSkin;
 
 class SpiderModel : public Model
 {
 public:
-    SpiderModel(const ModelDefinition& modelDefinition);
+    SpiderModel(const ModelDefinition& modelDefinition = ModelDefinition());
     virtual ~SpiderModel();
 
     void createModelParts(const ModelDefinition& modelDefinition);

@@ -2,12 +2,12 @@
 
 void GuiParticle::preTick()
 {
-    xo = x;
+    zo = z;
     extra0o = extra0;
     extra1o = extra1;
-    yo = y;
-    zo = z;
     alphao = alpha;
+    xo = x;
+    yo = y;
 }
 
 void GuiParticle::remove()
@@ -28,7 +28,8 @@ void GuiParticle::tick(GuiParticles*)
         remove();
     }
 
-    double progress = (2.0 - 2.0 * ((double)age / (double)lifetime));
+    double progress = (double)age / (double)lifetime;
+    progress = 2.0 - progress * 2.0;
     if (progress > 1.0)
     {
         progress = 1.0;

@@ -30,7 +30,6 @@ public:
     };
 
     EvocationIllagerRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~EvocationIllagerRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks);

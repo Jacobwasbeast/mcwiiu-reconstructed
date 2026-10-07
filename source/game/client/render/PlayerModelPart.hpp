@@ -25,7 +25,6 @@ private:
     {
     public:
         Internal(int bit, const std::wstring& id);
-        ~Internal();
 
         int bit;
         int mask;

@@ -19,7 +19,6 @@ class SheepRenderer : public MobRenderer
 {
 public:
     SheepRenderer(EntityRenderDispatcher* dispatcher, Model* model, Model* furModel, float shadowRadius);
-    virtual ~SheepRenderer();
 
     virtual Model* getModel(boost::shared_ptr<LivingEntity>& entity);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);

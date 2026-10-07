@@ -14,13 +14,9 @@
 static ResourceLocation CREEPER_LOCATION(TN_MOB_CREEPER);
 
 CreeperRenderer::CreeperRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new CreeperModel(ModelDefinition()), 0.5F)
+    : MobRenderer(dispatcher, new CreeperModel(), 0.5F)
 {
     addLayer(new CreeperPowerLayer(this));
-}
-
-CreeperRenderer::~CreeperRenderer()
-{
 }
 
 void CreeperRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks)

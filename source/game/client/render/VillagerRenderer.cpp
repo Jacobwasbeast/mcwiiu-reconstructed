@@ -30,13 +30,9 @@ static ResourceLocation SMITH_LOCATION(TN_MOB_VILLAGER_SMITH);
 static ResourceLocation BUTCHER_LOCATION(TN_MOB_VILLAGER_BUTCHER);
 
 VillagerRenderer::VillagerRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new VillagerModel(0.0F, ModelDefinition()), 0.5F)
+    : MobRenderer(dispatcher, new VillagerModel(0.0F), 0.5F)
 {
     addLayer(new CustomHeadLayer(static_cast<VillagerModel*>(getModel())->mHead));
-}
-
-VillagerRenderer::~VillagerRenderer()
-{
 }
 
 Model* VillagerRenderer::getModel()

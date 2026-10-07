@@ -3,15 +3,15 @@
 
 #include <string>
 
+#include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/QuadrupedModel.hpp"
 
-class ModelDefinition;
 class ModelPartSkin;
 
 class LlamaModel : public QuadrupedModel
 {
 public:
-    LlamaModel(float scale, const ModelDefinition& modelDefinition);
+    LlamaModel(float scale, const ModelDefinition& modelDefinition = ModelDefinition());
     virtual ~LlamaModel();
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,

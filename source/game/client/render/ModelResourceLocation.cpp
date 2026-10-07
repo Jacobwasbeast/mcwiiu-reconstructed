@@ -8,9 +8,6 @@ ModelResourceLocation::ModelResourceLocation(int dummy, arrayWithLength<std::wst
     : ResourceLocation(parts.data[0], parts.data[1]), variant(parts.data[2].length() == 0 ? DEFAULT_VARIANT : toLower(parts.data[2])) {
 }
 
-ModelResourceLocation::~ModelResourceLocation() {
-}
-
 arrayWithLength<std::wstring> ModelResourceLocation::decompose(const std::wstring& name) {
     arrayWithLength<std::wstring> parts(3, true);
 

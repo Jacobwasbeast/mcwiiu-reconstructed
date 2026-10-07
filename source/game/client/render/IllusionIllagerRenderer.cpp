@@ -18,13 +18,9 @@
 static ResourceLocation ILLUSION_ILLAGER_LOCATION(TN_MOB_ILLAGER_ILLUSIONIST);
 
 IllusionIllagerRenderer::IllusionIllagerRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new IllagerModel(0.0f, 0.0f, 64, 64, ModelDefinition()), 0.5f)
+    : MobRenderer(dispatcher, new IllagerModel(0.0f, 0.0f, 64, 64), 0.5f)
 {
     addLayer(new IllusionIllagerRenderer_ItemInHandLayer(this));
-}
-
-IllusionIllagerRenderer::~IllusionIllagerRenderer()
-{
 }
 
 const ResourceLocation* IllusionIllagerRenderer::getTextureLocation(boost::shared_ptr<Entity>&)

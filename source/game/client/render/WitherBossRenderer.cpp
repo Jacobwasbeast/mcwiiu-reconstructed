@@ -14,13 +14,9 @@ static ResourceLocation WITHER_LOCATION(TN_MOB_WITHER_WITHER);
 static ResourceLocation WITHER_INVULNERABLE_LOCATION(TN_MOB_WITHER_WITHER_INVULNERABLE);
 
 WitherBossRenderer::WitherBossRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new WitherBossModel(0.0F, ModelDefinition()), 1.0F)
+    : MobRenderer(dispatcher, new WitherBossModel(0.0F), 1.0F)
 {
     addLayer(new WitherArmorLayer(this));
-}
-
-WitherBossRenderer::~WitherBossRenderer()
-{
 }
 
 const ResourceLocation* WitherBossRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)

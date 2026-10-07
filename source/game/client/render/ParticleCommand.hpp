@@ -12,7 +12,6 @@
 class ParticleCommand : public Command
 {
 public:
-    virtual ~ParticleCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

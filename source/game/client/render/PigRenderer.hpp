@@ -17,7 +17,6 @@ class PigRenderer : public MobRenderer
 {
 public:
     PigRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~PigRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual void setupForTexturePack(TexturePack* pack);

@@ -16,7 +16,6 @@ class DolphinRenderer : public MobRenderer
 {
 public:
     DolphinRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~DolphinRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks);

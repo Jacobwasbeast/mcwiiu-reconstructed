@@ -16,7 +16,6 @@ class ChickenRenderer : public MobRenderer
 {
 public:
     ChickenRenderer(EntityRenderDispatcher* dispatcher, Model* model, float shadowRadius);
-    virtual ~ChickenRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual float getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks);

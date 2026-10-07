@@ -15,7 +15,6 @@ class RabbitRenderer : public MobRenderer
 {
 public:
     RabbitRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~RabbitRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);

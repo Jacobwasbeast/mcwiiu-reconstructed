@@ -16,7 +16,6 @@ class VillagerRenderer : public MobRenderer
 {
 public:
     VillagerRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~VillagerRenderer();
 
     virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                         float yaw, float partialTick);

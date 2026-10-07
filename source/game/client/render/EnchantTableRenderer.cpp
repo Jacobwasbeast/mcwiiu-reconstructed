@@ -12,8 +12,8 @@
 static ResourceLocation BOOK_TEXTURE(TN_ITEM_XPORB);
 
 EnchantTableRenderer::EnchantTableRenderer()
-    : mBookModel(new BookModel(ModelDefinition()))
 {
+    mBookModel = new BookModel();
 }
 
 EnchantTableRenderer::~EnchantTableRenderer()

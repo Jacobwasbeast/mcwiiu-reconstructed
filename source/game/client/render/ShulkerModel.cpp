@@ -137,7 +137,3 @@ void ShulkerModel::renderWhenInvisible(boost::shared_ptr<Entity>& entity, float 
     }
 }
 
-std::wstring ShulkerModel::getName()
-{
-    return L"shulker";
-}

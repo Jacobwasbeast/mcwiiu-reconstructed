@@ -16,7 +16,6 @@ class LavaSlimeRenderer : public MobRenderer
 {
 public:
     LavaSlimeRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~LavaSlimeRenderer();
 
     virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                         float yaw, float partialTick);

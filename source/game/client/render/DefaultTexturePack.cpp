@@ -25,10 +25,6 @@ DefaultTexturePack::DefaultTexturePack()
     loadCustomModels();
 }
 
-DefaultTexturePack::~DefaultTexturePack()
-{
-}
-
 void DefaultTexturePack::loadIcon()
 {
     if (gApp.hasArchiveFile(std::wstring(L"Graphics\\TexturePackIcon.png"), false))

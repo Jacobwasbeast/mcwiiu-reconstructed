@@ -13,13 +13,9 @@ PufferfishRenderer::PufferfishRenderer(EntityRenderDispatcher* dispatcher)
 {
     mModelMedium = new FishModel(ModelDefinition(), FISH_TYPE_PUFFERFISH, 1);
     mModelLarge = new FishModel(ModelDefinition(), FISH_TYPE_PUFFERFISH, 2);
-    mPuffState = Pufferfish::PUFFED_STATE_SMALL;
     mOriginalModelMedium = mModelMedium;
     mOriginalModelLarge = mModelLarge;
-}
-
-PufferfishRenderer::~PufferfishRenderer()
-{
+    mPuffState = Pufferfish::PUFFED_STATE_SMALL;
 }
 
 void PufferfishRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
@@ -32,11 +28,15 @@ void PufferfishRenderer::render(boost::shared_ptr<Entity>& entity, double x, dou
 
 Model* PufferfishRenderer::getModel(boost::shared_ptr<LivingEntity>&)
 {
-    if (mPuffState == Pufferfish::PUFFED_STATE_MEDIUM)
+    switch (mPuffState)
+    {
+    case Pufferfish::PUFFED_STATE_MEDIUM:
         return mModelMedium;
-    if (mPuffState != Pufferfish::PUFFED_STATE_LARGE)
+    case Pufferfish::PUFFED_STATE_LARGE:
+        return mModelLarge;
+    default:
         return mModel;
-    return mModelLarge;
+    }
 }
 
 void PufferfishRenderer::setupForTexturePack(TexturePack* pack)
@@ -45,11 +45,11 @@ void PufferfishRenderer::setupForTexturePack(TexturePack* pack)
 
     if (mModelMedium != mOriginalModelMedium)
     {
-        if (mModelMedium != NULL)
-            delete mModelMedium;
+        delete mModelMedium;
         mModelMedium = NULL;
     }
-    if (pack->HasCustomModel(mOriginalModelMedium->getName()))
+    bool hasMedium = pack->HasCustomModel(mOriginalModelMedium->getName());
+    if (hasMedium)
     {
         mModelMedium = new FishModel(*pack->GetCustomModel(mOriginalModelMedium->getName()), FISH_TYPE_PUFFERFISH, 1);
     }
@@ -60,11 +60,11 @@ void PufferfishRenderer::setupForTexturePack(TexturePack* pack)
 
     if (mModelLarge != mOriginalModelLarge)
     {
-        if (mModelLarge != NULL)
-            delete mModelLarge;
+        delete mModelLarge;
         mModelLarge = NULL;
     }
-    if (pack->HasCustomModel(mOriginalModelLarge->getName()))
+    bool hasLarge = pack->HasCustomModel(mOriginalModelLarge->getName());
+    if (hasLarge)
     {
         mModelLarge = new FishModel(*pack->GetCustomModel(mOriginalModelLarge->getName()), FISH_TYPE_PUFFERFISH, 2);
     }

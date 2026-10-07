@@ -18,17 +18,13 @@ ProgressRenderer::ProgressRenderer(Minecraft* minecraft)
     : mStatus(false, -1, std::wstring(L"")), mTitle(false, -1, std::wstring(L""))
 {
     mStartTime = static_cast<unsigned long long>(System::processTimeInMilliSecs());
-    mMinecraft = minecraft;
     mNoAbort = false;
-}
-
-ProgressRenderer::~ProgressRenderer()
-{
+    mMinecraft = minecraft;
 }
 
 void ProgressRenderer::internalProgressStart(const TextField& field)
 {
-    if (mMinecraft->mAppPaused || !mNoAbort)
+    if (mMinecraft->mRunning || !mNoAbort)
     {
         EnterCriticalSection(&sProgressRendererMutex);
         mPercent = 0;
@@ -79,7 +75,7 @@ void ProgressRenderer::progressStart(const std::wstring& text)
 
 void ProgressRenderer::progressStage(int id)
 {
-    if (mMinecraft->mAppPaused || !mNoAbort)
+    if (mMinecraft->mRunning || !mNoAbort)
     {
         mStartTime = 0;
         EnterCriticalSection(&sProgressRendererMutex);
@@ -92,7 +88,7 @@ void ProgressRenderer::progressStage(int id)
 
 void ProgressRenderer::progressStage(const std::wstring& text)
 {
-    if (mMinecraft->mAppPaused || !mNoAbort)
+    if (mMinecraft->mRunning || !mNoAbort)
     {
         mStartTime = 0;
         EnterCriticalSection(&sProgressRendererMutex);

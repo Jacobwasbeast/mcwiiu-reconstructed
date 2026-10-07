@@ -5,10 +5,6 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 
-ParticleCommand::~ParticleCommand()
-{
-}
-
 EGameCommand ParticleCommand::getId()
 {
     return eGameCommand_Particle;

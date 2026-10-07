@@ -16,7 +16,6 @@ class PufferfishRenderer : public FishRenderer
 {
 public:
     PufferfishRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~PufferfishRenderer();
 
     virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                         float yaw, float partialTick);

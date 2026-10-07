@@ -5,16 +5,16 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
 class Entity;
-class ModelDefinition;
 class ModelPart;
 class ModelPartsSkinned;
 
 class ShulkerModel : public Model
 {
 public:
-    ShulkerModel(const ModelDefinition& modelDefinition);
+    ShulkerModel(const ModelDefinition& modelDefinition = ModelDefinition());
     virtual ~ShulkerModel();
     void renderWhenInvisible(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                              float ageInTicks, float netHeadYaw, float headPitch, float scale,
@@ -24,7 +24,7 @@ public:
                            _SkinAdjustments skinAdjustments);
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                         float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"shulker"; }
 
     ModelPart* mBase;
     ModelPart* mLid;

@@ -21,8 +21,7 @@ MinecartRenderer::MinecartRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
 {
     mShadowRadius = 0.5F;
-    ModelDefinition definition;
-    mModel = new MinecartModel(definition);
+    mModel = new MinecartModel();
 }
 
 void MinecartRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,

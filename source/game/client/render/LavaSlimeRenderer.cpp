@@ -10,11 +10,7 @@
 static ResourceLocation LAVA_SLIME_LOCATION(TN_MOB_LAVA);
 
 LavaSlimeRenderer::LavaSlimeRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new LavaSlimeModel(ModelDefinition()), 0.25F)
-{
-}
-
-LavaSlimeRenderer::~LavaSlimeRenderer()
+    : MobRenderer(dispatcher, new LavaSlimeModel(), 0.25F)
 {
 }
 

@@ -8,11 +8,7 @@
 static ResourceLocation POLAR_BEAR_LOCATION(TN_MOB_BEAR_POLARBEAR);
 
 PolarBearRenderer::PolarBearRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new PolarBearModel(ModelDefinition()), 0.7F)
-{
-}
-
-PolarBearRenderer::~PolarBearRenderer()
+    : MobRenderer(dispatcher, new PolarBearModel(), 0.7F)
 {
 }
 

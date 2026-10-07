@@ -9,7 +9,6 @@ class DefaultTexturePack : public AbstractTexturePack
 {
 public:
     DefaultTexturePack();
-    virtual ~DefaultTexturePack();
 
     virtual bool hasData();
     virtual bool hasValidData();

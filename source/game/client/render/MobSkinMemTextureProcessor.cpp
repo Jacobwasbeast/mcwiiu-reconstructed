@@ -16,7 +16,7 @@ void MobSkinMemTextureProcessor::setNoAlpha(int x0, int y0, int x1, int y1)
     }
 }
 
-uint32_t MobSkinMemTextureProcessor::hasAlpha(int x0, int y0, int x1, int y1)
+bool MobSkinMemTextureProcessor::hasAlpha(int x0, int y0, int x1, int y1)
 {
     int x;
     for (x = x0; x < x1; ++x)
@@ -24,23 +24,24 @@ uint32_t MobSkinMemTextureProcessor::hasAlpha(int x0, int y0, int x1, int y1)
         int y;
         for (y = y0; y < y1; ++y)
         {
-            if (((m_data[x + y * m_width] >> 24) & 0xff) < 128)
-                return 1;
+            int pixel = m_data[x + y * m_width];
+            if (((pixel >> 24) & 0xff) < 128)
+                return true;
         }
     }
-    return 0;
+    return false;
 }
 
 void MobSkinMemTextureProcessor::setForceAlpha(int x0, int y0, int x1, int y1)
 {
-    if (hasAlpha(x0, y0, x1, y1) == 0)
+    if (!hasAlpha(x0, y0, x1, y1))
     {
         int x;
         for (x = x0; x < x1; ++x)
         {
             int y;
             for (y = y0; y < y1; ++y)
-                m_data[x + y * m_width] &= (int)0x00ffffffu;
+                m_data[y * m_width + x] &= 0x00ffffff;
         }
     }
 }
@@ -49,8 +50,8 @@ BufferedImage* MobSkinMemTextureProcessor::process(BufferedImage* image)
 {
     if (image == NULL)
         return NULL;
-    m_height = 0x20;
     m_width = 0x40;
+    m_height = 0x20;
     BufferedImage* result = new BufferedImage(m_width, m_height, 0);
     result->getGraphics();
     m_data = result->getData();

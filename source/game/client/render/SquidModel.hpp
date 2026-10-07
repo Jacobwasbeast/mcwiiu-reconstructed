@@ -2,14 +2,14 @@
 #define GAME_CLIENT_RENDER_SQUIDMODEL_HPP
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
-class ModelDefinition;
 class ModelPartSkin;
 
 class SquidModel : public Model
 {
 public:
-    explicit SquidModel(const ModelDefinition& definition);
+    explicit SquidModel(const ModelDefinition& definition = ModelDefinition());
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
                            float headPitch, float scale, boost::shared_ptr<Entity> entity,
                            _SkinAdjustments skinAdjustments);

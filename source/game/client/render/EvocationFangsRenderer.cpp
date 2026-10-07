@@ -10,9 +10,8 @@
 static ResourceLocation FANGS_LOCATION(TN_MOB_ILLAGER_FANGS);
 
 EvocationFangsRenderer::EvocationFangsRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher)
+    : EntityRenderer(dispatcher), mFangsModel(new EvocationFangsModel())
 {
-    mFangsModel = new EvocationFangsModel(ModelDefinition());
 }
 
 EvocationFangsRenderer::~EvocationFangsRenderer()

@@ -25,7 +25,6 @@ public:
     };
 
     ProgressRenderer(Minecraft* minecraft);
-    virtual ~ProgressRenderer();
 
     void internalProgressStart(const TextField& field);
     virtual void progressStagePercentage(int percentage);

@@ -15,7 +15,6 @@ class UndeadHorseRenderer : public AbstractHorseRenderer
 {
 public:
     UndeadHorseRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~UndeadHorseRenderer();
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);
 };

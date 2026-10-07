@@ -16,7 +16,6 @@ class SquidRenderer : public MobRenderer
 {
 public:
     SquidRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~SquidRenderer();
 
     virtual void setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks,
                                 float rotationYaw, float partialTicks);

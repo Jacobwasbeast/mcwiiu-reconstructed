@@ -63,7 +63,7 @@ BlockEntityRenderDispatcher::BlockEntityRenderDispatcher()
     (*this)[BlockEntityType::BEACON] = new BeaconRenderer();
     (*this)[BlockEntityType::BANNER] = new BannerRenderer();
     (*this)[BlockEntityType::SHULKER_BOX] =
-        new ShulkerBoxRenderer(new ShulkerModel(ModelDefinition()));
+        new ShulkerBoxRenderer(new ShulkerModel());
     (*this)[BlockEntityType::BED] = new BedRenderer();
     (*this)[BlockEntityType::CONDUIT] = new ConduitRenderer();
 

@@ -6,15 +6,15 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPartSkin.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
-class ModelDefinition;
 class BlazeModel : public Model
 {
 public:
-    BlazeModel(const ModelDefinition& modelDefinition);
+    BlazeModel(const ModelDefinition& modelDefinition = ModelDefinition());
 
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,

@@ -21,7 +21,6 @@ class ParrotRenderer : public MobRenderer
 {
 public:
     ParrotRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~ParrotRenderer();
 
     const ResourceLocation* getSpectateTextureLocation(boost::shared_ptr<MultiplayerLocalPlayer> player);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);

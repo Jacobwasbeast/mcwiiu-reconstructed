@@ -6,17 +6,17 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 #include "game/core/HumanoidArm.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
-class ModelDefinition;
 class ModelPart;
 
 class IllagerModel : public Model
 {
 public:
-    IllagerModel(float scale, float yOffset, int texWidth, int texHeight, const ModelDefinition& modelDefinition);
+    IllagerModel(float scale, float yOffset, int texWidth, int texHeight, const ModelDefinition& modelDefinition = ModelDefinition());
 
     virtual ~IllagerModel();
 

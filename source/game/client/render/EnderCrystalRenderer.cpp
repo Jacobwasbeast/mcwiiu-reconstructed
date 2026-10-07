@@ -14,8 +14,8 @@ static ResourceLocation ENDER_CRYSTAL_LOCATION(TN_MOB_ENDERDRAGON_CRYSTAL);
 EnderCrystalRenderer::EnderCrystalRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
 {
-    mModelBase = new EnderCrystalModel(0.0F, true, ModelDefinition());
-    mModelNoBase = new EnderCrystalModel(0.0F, false, ModelDefinition());
+    mModelBase = new EnderCrystalModel(0.0F, true);
+    mModelNoBase = new EnderCrystalModel(0.0F, false);
     mShadowRadius = 0.5F;
 }
 

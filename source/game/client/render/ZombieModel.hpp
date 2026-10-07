@@ -7,17 +7,17 @@
 
 #include "game/client/render/C4JRender.hpp"
 #include "game/client/render/HumanoidModel.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
-class ModelDefinition;
 
 class ZombieModel : public HumanoidModel
 {
 public:
-    ZombieModel(const ModelDefinition& definition);
-    ZombieModel(float scale, bool armourModel, const ModelDefinition& definition);
-    ZombieModel(float scale, float yOffset, int texWidth, int texHeight, const ModelDefinition& definition);
+    ZombieModel(const ModelDefinition& definition = ModelDefinition());
+    ZombieModel(float scale, bool armourModel, const ModelDefinition& definition = ModelDefinition());
+    ZombieModel(float scale, float yOffset, int texWidth, int texHeight, const ModelDefinition& definition = ModelDefinition());
     ZombieModel(C4JRender::eVertexType vertexType, C4JRender::ePixelShaderType pixelShaderType, const ModelDefinition& definition, float scale, float yOffset, int texWidth, int texHeight, bool armourModel, bool createParts, bool skinned);
 
     virtual ~ZombieModel() {}

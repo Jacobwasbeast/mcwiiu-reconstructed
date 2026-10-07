@@ -21,14 +21,10 @@
 static ResourceLocation STRAY_LOCATION(TN_MOB_SKELETON_STRAY);
 
 StrayRenderer::StrayRenderer(EntityRenderDispatcher* dispatcher)
-    : SkeletonRenderer(dispatcher, new SkeletonModel(SkeletonModel::eSkeletonType_Stray, ModelDefinition()))
+    : SkeletonRenderer(dispatcher, new SkeletonModel(SkeletonModel::eSkeletonType_Stray))
 {
     mStrayClothingLayer = new StrayClothingLayer(this);
     addLayer(mStrayClothingLayer);
-}
-
-StrayRenderer::~StrayRenderer()
-{
 }
 
 std::wstring StrayRenderer::getModelName()

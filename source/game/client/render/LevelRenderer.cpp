@@ -801,8 +801,8 @@ void LevelRenderer::setLevel(int dimension, MultiPlayerLevel* level)
         {
             for (unsigned int index = 0; index < mClipChunks[dimension].length; ++index)
             {
-                mClipChunks[dimension].data[index].mChunk->_delete();
-                delete mClipChunks[dimension].data[index].mChunk;
+                mClipChunks[dimension][index].mChunk->_delete();
+                delete mClipChunks[dimension][index].mChunk;
             }
 
             delete mClipChunks[dimension].data;
@@ -845,8 +845,8 @@ void LevelRenderer::allChanged(int dimension)
     {
         for (unsigned int index = 0; index < mClipChunks[dimension].length; ++index)
         {
-            mClipChunks[dimension].data[index].mChunk->_delete();
-            delete mClipChunks[dimension].data[index].mChunk;
+            mClipChunks[dimension][index].mChunk->_delete();
+            delete mClipChunks[dimension][index].mChunk;
         }
 
         delete mClipChunks[dimension].data;
@@ -857,7 +857,7 @@ void LevelRenderer::allChanged(int dimension)
 
     for (unsigned int index = 0; index < mClipChunks[dimension].length; ++index)
     {
-        mClipChunks[dimension].data[index].mChunk = 0;
+        mClipChunks[dimension][index].mChunk = 0;
     }
 
     mMinChunkX = 0;
@@ -942,7 +942,8 @@ void LevelRenderer::clear()
 
 void LevelRenderer::allChanged()
 {
-    allChanged(mMinecraft->mPlayer->mUserIndex);
+    int userIndex = mMinecraft->mPlayer->mUserIndex;
+    allChanged(userIndex);
 }
 
 bool LevelRenderer::sortEntDisFunc(std::pair<int, double> first, std::pair<int, double> second)
@@ -959,17 +960,29 @@ bool LevelRenderer::isGlobalIndexInSameDimension(int index, Level* level)
 {
     int dimensionIndex = getDimensionIndexFromId(level->mDimension->getType()->getId());
 
+    bool sameDimension;
+
     if (index < gChunkDimensionBases[1])
     {
-        return dimensionIndex == 0;
+        sameDimension = dimensionIndex == 0;
     }
-
-    if (index < gChunkDimensionBases[2])
+    else if (index < gChunkDimensionBases[2])
     {
-        return dimensionIndex == 1;
+        sameDimension = dimensionIndex == 1;
+    }
+    else
+    {
+        int otherDimensionIndex = 2;
+
+        if (index >= gChunkDimensionBases[3])
+        {
+            otherDimensionIndex = -1;
+        }
+
+        sameDimension = dimensionIndex == otherDimensionIndex;
     }
 
-    return dimensionIndex == (index < gChunkDimensionBases[3] ? 2 : -1);
+    return sameDimension;
 }
 
 bool LevelRenderer::shouldEntityGlow(boost::shared_ptr<Entity> entity, boost::shared_ptr<Entity> camera, Culler* culler)
@@ -1305,7 +1318,7 @@ unsigned int LevelRenderer::getBucketMask(double x, double y, double z, ClipChun
 {
     unsigned int mask = 1;
 
-    if (x <= (double)chunk->mMaxX)
+    if ((double)chunk->mMaxX >= x)
     {
         mask = 0x21;
     }
@@ -1320,12 +1333,12 @@ unsigned int LevelRenderer::getBucketMask(double x, double y, double z, ClipChun
         mask |= 0x10;
     }
 
-    if (z <= (double)chunk->mMaxZ)
+    if ((double)chunk->mMaxZ >= z)
     {
         mask |= 4;
     }
 
-    if (y <= (double)chunk->mMaxY)
+    if ((double)chunk->mMaxY >= y)
     {
         mask |= 0x40;
     }
@@ -1358,7 +1371,9 @@ void LevelRenderer::setupCameraInsideAreas(boost::shared_ptr<Entity> camera)
 
         for (unsigned int index = 0; index < areas.size(); ++index)
         {
-            if (areas[index]->insideXZ(position))
+            AABB* area = areas[index];
+
+            if (area->insideXZ(position))
             {
                 mCameraInsideAreas.push_back(areas[index]);
             }
@@ -1376,21 +1391,26 @@ unsigned int LevelRenderer::clippedByCameraInsideAreas(ClipChunk* chunk)
 
         unsigned int areaCount = mCameraInsideAreas.size();
 
-        if (areaCount == 0)
-        {
-            clipped = 0;
-        }
-        else
+        if (areaCount != 0)
         {
             Vec3* position = Vec3::newTemp((double)(chunk->mX / 16), (double)(chunk->mY / 16), (double)(chunk->mZ / 16));
 
-            for (unsigned int index = 0; index < areaCount; ++index)
+            unsigned int index = 0;
+
+            do
             {
                 if (mCameraInsideAreas[index]->insideXZ(position))
                 {
                     clipped = 0;
                 }
+
+                ++index;
             }
+            while (index < areaCount);
+        }
+        else
+        {
+            clipped = 0;
         }
     }
 
@@ -2745,12 +2765,16 @@ void LevelRenderer::renderDebugVolume(boost::shared_ptr<Entity> entity, const st
     GlStateManager::disableTexture();
 
     int alpha = 0x3f;
-    float width = 2.0f;
+    float width;
 
     if (thickLines)
     {
-        alpha = 0x7f;
         width = 4.0f;
+        alpha = 0x7f;
+    }
+    else
+    {
+        width = 2.0f;
     }
 
     GlStateManager::lineWidth(width);
@@ -2799,12 +2823,16 @@ void LevelRenderer::renderFancyTextDebugVolume(boost::shared_ptr<Entity> entity,
     GlStateManager::disableTexture();
 
     int alpha = 0x3f;
-    float width = 2.0f;
+    float width;
 
     if (thickLines)
     {
-        alpha = 0x7f;
         width = 4.0f;
+        alpha = 0x7f;
+    }
+    else
+    {
+        width = 2.0f;
     }
 
     GlStateManager::lineWidth(width);
@@ -2907,12 +2935,18 @@ void LevelRenderer::setDirty(int minX, int minY, int minZ, int maxX, int maxY, i
 
 void LevelRenderer::blockChanged(Level* level, const BlockPos& pos, const BlockState* oldState, const BlockState* newState, int flags, bool immediate)
 {
-    setDirty(pos.x - 1, pos.y - 1, pos.z - 1, pos.x + 1, pos.y + 1, pos.z + 1, 0);
+    int x = pos.x;
+    int y = pos.y;
+    int z = pos.z;
+    setDirty(x - 1, y - 1, z - 1, x + 1, y + 1, z + 1, 0);
 }
 
 void LevelRenderer::blockLightChanged(const BlockPos& pos)
 {
-    setDirty(pos.x - 1, pos.y - 1, pos.z - 1, pos.x + 1, pos.y + 1, pos.z + 1, 0);
+    int x = pos.x;
+    int y = pos.y;
+    int z = pos.z;
+    setDirty(x - 1, y - 1, z - 1, x + 1, y + 1, z + 1, 0);
 }
 
 void LevelRenderer::setBlocksDirty(int minX, int minY, int minZ, int maxX, int maxY, int maxZ, Level* level)
@@ -2922,20 +2956,16 @@ void LevelRenderer::setBlocksDirty(int minX, int minY, int minZ, int maxX, int m
 
 void LevelRenderer::notifyNearbyEntities(Level* level, const BlockPos& pos, bool playing)
 {
-    const AABB* box = AABB::newTemp(pos)->grow(3.0);
-    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(LivingEntity), box);
+    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(LivingEntity), AABB::newTemp(pos)->grow(3.0));
 
-    if (entities != NULL)
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
-        {
-            boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(*it);
+        boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(*it);
 
-            livingEntity->setRecordPlayingNearby(pos, playing);
-        }
-
-        delete entities;
+        livingEntity->setRecordPlayingNearby(pos, playing);
     }
+
+    delete entities;
 }
 
 void LevelRenderer::cull(Culler* culler, float partialTick)
@@ -3104,7 +3134,8 @@ void LevelRenderer::fullyFlagRenderableBlockEntitiesToBeRemoved()
 
 int LevelRenderer::getGlobalIndexForChunk(int x, int y, int z, int dimension)
 {
-    return getChunkIndex(getDimensionIndexFromId(dimension), x >> 4, y >> 4, z >> 4);
+    int dimensionIndex = getDimensionIndexFromId(dimension);
+    return getChunkIndex(dimensionIndex, x >> 4, y >> 4, z >> 4);
 }
 
 void LevelRenderer::setGlobalChunkFlag(int x, int y, int z, Level* level, unsigned char mask, unsigned char shift)
@@ -3158,9 +3189,11 @@ unsigned char LevelRenderer::incGlobalChunkRefCount(int x, int y, int z, Level* 
     if (index != -1)
     {
         unsigned char flags = mGlobalChunkFlags[index];
-        unsigned char count = ((flags >> 5) & 7) + 1;
-
-        mGlobalChunkFlags[index] = (flags & 0x1f) | count * 32;
+        unsigned char count = (flags >> 5) & 7;
+        count++;
+        flags &= 0x1f;
+        flags |= count << 5;
+        mGlobalChunkFlags[index] = flags;
 
         return count;
     }
@@ -3175,9 +3208,11 @@ unsigned char LevelRenderer::decGlobalChunkRefCount(int x, int y, int z, Level* 
     if (index != -1)
     {
         unsigned char flags = mGlobalChunkFlags[index];
-        unsigned char count = ((flags >> 5) & 7) - 1;
-
-        mGlobalChunkFlags[index] = (flags & 0x1f) | count * 32;
+        unsigned char count = (flags >> 5) & 7;
+        count--;
+        flags &= 0x1f;
+        flags |= count << 5;
+        mGlobalChunkFlags[index] = flags;
 
         return count;
     }
@@ -3306,7 +3341,9 @@ void LevelRenderer::entityAdded(boost::shared_ptr<Entity> entity)
 
 void LevelRenderer::entityRemoved(boost::shared_ptr<Entity> entity)
 {
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    bool isPlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+
+    if (isPlayer)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
 

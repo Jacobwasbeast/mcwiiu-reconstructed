@@ -15,7 +15,6 @@ class CowRenderer : public MobRenderer
 {
 public:
     CowRenderer(EntityRenderDispatcher* dispatcher, Model* model, float shadowRadius);
-    virtual ~CowRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);

@@ -18,7 +18,6 @@ class WolfRenderer : public MobRenderer
 {
 public:
     WolfRenderer(EntityRenderDispatcher* dispatcher, Model* model, float shadowRadius);
-    virtual ~WolfRenderer();
 
     virtual void render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                         float yaw, float partialTick);

@@ -19,8 +19,8 @@ void CritParticle::render(BufferBuilder* buffer,
                           float xa2,
                           float za2)
 {
-    float fade = Mth::clamp(((float)age + partialTicks) / (float)lifetime * 32.0f,
-                            0.0f, 1.0f);
+    float fade = ((float)age + partialTicks) / (float)lifetime * 32.0f;
+    fade = Mth::clamp(fade, 0.0f, 1.0f);
     size = sizeMultiplier * fade;
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
@@ -36,11 +36,12 @@ void CritParticle::tick()
 
     move(xd, yd, zd);
 
-    xd *= 0.7f;
-    zd *= 0.7f;
     gCol *= 0.96f;
     bCol *= 0.9f;
-    yd = yd * 0.7f - 0.02f;
+    xd *= 0.7f;
+    yd *= 0.7f;
+    zd *= 0.7f;
+    yd -= 0.02f;
 
     if (onGround)
     {
@@ -52,9 +53,12 @@ void CritParticle::tick()
 void CritParticle::_init(Level* level, double x, double y, double z,
                          double xa, double ya, double za, float scale)
 {
-    xd = xd * 0.1f + xa * 0.4;
-    yd = yd * 0.1f + ya * 0.4;
-    zd = zd * 0.1f + za * 0.4;
+    xd *= 0.1f;
+    yd *= 0.1f;
+    zd *= 0.1f;
+    xd += xa * 0.4;
+    yd += ya * 0.4;
+    zd += za * 0.4;
 
     float color = (float)(random.nextDouble() * 0.3f + 0.6f);
     rCol = color;

@@ -95,8 +95,10 @@ static double WALL_POST_HEIGHT = 1.0;
 static float PISTON_PLATFORM_THICKNESS = 0.25f;
 
 BlockRenderer::BlockRenderer(BlockColors* blockColors)
-    : mBlockColors(blockColors), mLevelSource(NULL), mBrightnessCache()
+    : mBrightnessCache()
 {
+    mLevelSource = NULL;
+    mBlockColors = blockColors;
     _init();
 }
 
@@ -117,8 +119,10 @@ BlockRenderer::BlockRenderer(LevelSource* levelSource, int x, int y, int z, unsi
 }
 
 BlockRenderer::BlockRenderer(LevelSource* levelSource)
-    : mBlockColors(Minecraft::GetInstance()->getBlockColors()), mLevelSource(levelSource), mBrightnessCache()
+    : mBrightnessCache()
 {
+    mBlockColors = Minecraft::GetInstance()->getBlockColors();
+    mLevelSource = levelSource;
     _init();
 }
 
@@ -196,7 +200,7 @@ TextureAtlasSprite* BlockRenderer::getTextureOrMissing(TextureAtlasSprite* textu
 {
     if (texture != NULL)
         return texture;
-    return mMinecraft->getTextureManager()->getMissingIcon(0);
+    return mMinecraft->mTextures->getMissingIcon(0);
 }
 
 TextureAtlasSprite* BlockRenderer::getTexture(const BlockState* state, const Direction* direction)
@@ -237,12 +241,12 @@ void BlockRenderer::setShape(float x0, float y0, float z0, float x1, float y1, f
 {
     if (mFixedShape)
         return;
-    mMinX = x0;
     mMinY = y0;
-    mMinZ = z0;
     mMaxX = x1;
-    mMaxY = y1;
     mMaxZ = z1;
+    mMinZ = z0;
+    mMinX = x0;
+    mMaxY = y1;
     bool outside = true;
     if (x0 <= 0.0f && x1 >= 1.0f && y0 <= 0.0f && y1 >= 1.0f && z0 <= 0.0f && z1 >= 1.0f)
         outside = false;
@@ -2328,7 +2332,8 @@ bool BlockRenderer::tesselateBlockInWorld(const BlockState* state, const BlockPo
         green = anaglyphGreen;
         blue = anaglyphBlue;
     }
-    if (state->getBlock()->defaultBlockState()->getLightEmission() == 0)
+    Block* block = state->getBlock();
+    if (block->defaultBlockState()->getLightEmission() == 0)
         return tesselateBlockInWorldWithAmbienceOcclusionTexLighting(state, pos, red, green, blue, 0, mShapeOutside);
     return tesselateBlockInWorld(state, pos, red, green, blue);
 }
@@ -2348,7 +2353,8 @@ bool BlockRenderer::tesselateBlockInWorld(const BlockState* state, const BlockPo
         green = anaglyphGreen;
         blue = anaglyphBlue;
     }
-    if (state->getBlock()->defaultBlockState()->getLightEmission() == 0 && !hasLightOverride())
+    Block* block = state->getBlock();
+    if (block->defaultBlockState()->getLightEmission() == 0 && !hasLightOverride())
         return tesselateBlockInWorldWithAmbienceOcclusionTexLighting(state, pos, red, green, blue, faces, mShapeOutside);
     return tesselateBlockInWorld(state, pos, red, green, blue);
 }
@@ -3638,9 +3644,9 @@ bool BlockRenderer::tesselateTreeInWorld(const BlockState* state, const BlockPos
         mFaceRotation3 = 1;
     }
     bool rendered = tesselateBlockInWorld(state, pos);
+    mFaceRotation2 = 0;
     mFaceRotation0 = 0;
     mFaceRotation1 = 0;
-    mFaceRotation2 = 0;
     mFaceRotation3 = 0;
     mFaceRotation4 = 0;
     mFaceRotation5 = 0;
@@ -3663,12 +3669,12 @@ bool BlockRenderer::tesselateQuartzInWorld(const BlockState* state, const BlockP
         mFaceRotation3 = 1;
     }
     bool rendered = tesselateBlockInWorld(state, pos);
-    mFaceRotation3 = 0;
-    mFaceRotation1 = 0;
+    mFaceRotation2 = 0;
     mFaceRotation0 = 0;
+    mFaceRotation1 = 0;
+    mFaceRotation3 = 0;
     mFaceRotation4 = 0;
     mFaceRotation5 = 0;
-    mFaceRotation2 = 0;
     return rendered;
 }
 

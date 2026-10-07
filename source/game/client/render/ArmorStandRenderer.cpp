@@ -17,16 +17,12 @@
 static ResourceLocation ARMOR_STAND_LOCATION(TN_ITEM_ARMORSTAND_WOOD);
 
 ArmorStandRenderer::ArmorStandRenderer(EntityRenderDispatcher* dispatcher)
-    : LivingEntityRenderer(dispatcher, new ArmorStandModel(0.0f, ModelDefinition()), 0.0f)
+    : LivingEntityRenderer(dispatcher, new ArmorStandModel(), 0.0f)
 {
     addLayer(new ArmorStandArmorLayer(this));
     addLayer(new ItemInHandLayer(this));
     addLayer(new ElytraLayer(this));
     addLayer(new CustomHeadLayer(static_cast<ArmorStandModel*>(getModel())->mHead));
-}
-
-ArmorStandRenderer::~ArmorStandRenderer()
-{
 }
 
 void ArmorStandRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick)
@@ -91,6 +87,6 @@ void ArmorStandRenderer::ArmorStandArmorLayer::createArmorModels()
     {
         delete mModelArmor;
     }
-    mModelArmorInner = new ArmorStandArmorModel(0.25f, 64, 32, ModelDefinition());
-    mModelArmor = new ArmorStandArmorModel(0.5f, 64, 32, ModelDefinition());
+    mModelArmorInner = new ArmorStandArmorModel(0.25f, 64, 32);
+    mModelArmor = new ArmorStandArmorModel(0.5f, 64, 32);
 }

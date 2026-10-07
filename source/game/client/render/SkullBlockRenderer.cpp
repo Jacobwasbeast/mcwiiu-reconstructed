@@ -24,18 +24,18 @@ SkullBlockRenderer* SkullBlockRenderer::instance = NULL;
 
 SkullBlockRenderer::SkullBlockRenderer()
 {
-    mActiveSkeletonModels[0] = new SkeletonHeadModel(0, 0, 64, 32, ModelDefinition());
-    mActiveSkeletonModels[1] = new SkeletonHeadModel(0, 0, 64, 32, ModelDefinition());
-    mActiveSkeletonModels[2] = new SkeletonHeadModel(0, 0, 64, 32, ModelDefinition());
-    mActiveSkeletonModels[3] = new SkeletonHeadModel(0, 0, 64, 64, ModelDefinition());
-    mActiveCreeperModel = new CreeperHeadModel(0.0F, ModelDefinition());
-    mActiveDragonModel = new DragonHeadModel(0.0F, ModelDefinition());
+    mActiveSkeletonModels[0] = new SkeletonHeadModel(0, 0, 64, 32);
+    mActiveSkeletonModels[1] = new SkeletonHeadModel(0, 0, 64, 32);
+    mActiveSkeletonModels[2] = new SkeletonHeadModel(0, 0, 64, 32);
+    mActiveSkeletonModels[3] = new SkeletonHeadModel(0, 0, 64, 64);
+    mActiveCreeperModel = new CreeperHeadModel(0.0F);
+    mActiveDragonModel = new DragonHeadModel(0.0F);
+    mDragonModel = mActiveDragonModel;
     mCreeperModel = mActiveCreeperModel;
-    mSkeletonModels[3] = mActiveSkeletonModels[3];
     mSkeletonModels[0] = mActiveSkeletonModels[0];
     mSkeletonModels[1] = mActiveSkeletonModels[1];
-    mDragonModel = mActiveDragonModel;
     mSkeletonModels[2] = mActiveSkeletonModels[2];
+    mSkeletonModels[3] = mActiveSkeletonModels[3];
 }
 
 SkullBlockRenderer::~SkullBlockRenderer()

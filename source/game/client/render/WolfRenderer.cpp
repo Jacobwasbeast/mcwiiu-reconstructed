@@ -25,10 +25,6 @@ WolfRenderer::WolfRenderer(EntityRenderDispatcher* dispatcher, Model* model, flo
     addLayer(mCollarLayer);
 }
 
-WolfRenderer::~WolfRenderer()
-{
-}
-
 float WolfRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
 {
     boost::shared_ptr<Wolf> wolf = boost::static_pointer_cast<Wolf>(entity);

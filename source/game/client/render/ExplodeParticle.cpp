@@ -33,10 +33,11 @@ uint64_t ExplodeParticle::GetType()
 void ExplodeParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
                              float partialTicks, float xa, float ya, float za, float xa2, float za2)
 {
-    const float px = (float)((x - xo) * partialTicks + xo - Particle::xOff);
-    const float py = (float)((y - yo) * partialTicks + yo - Particle::yOff);
-    const float pz = (float)((z - zo) * partialTicks + zo - Particle::zOff);
-    if (px * px + py * py + pz * pz >= 9.0f)
+    float px = (float)((x - xo) * partialTicks + xo - Particle::xOff);
+    float py = (float)((y - yo) * partialTicks + yo - Particle::yOff);
+    float pz = (float)((z - zo) * partialTicks + zo - Particle::zOff);
+    float distSq = px * px + py * py + pz * pz;
+    if (distSq >= 9.0f)
     {
         Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
     }

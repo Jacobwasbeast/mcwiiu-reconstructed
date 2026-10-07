@@ -3,15 +3,15 @@
 
 #include <string>
 
+#include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/QuadrupedModel.hpp"
 
-class ModelDefinition;
 
 class PigModel : public QuadrupedModel
 {
 public:
-    PigModel(const ModelDefinition& modelDefinition);
-    PigModel(float scale, const ModelDefinition& modelDefinition);
+    PigModel(const ModelDefinition& modelDefinition = ModelDefinition());
+    PigModel(float scale, const ModelDefinition& modelDefinition = ModelDefinition());
 
 
     virtual std::wstring getName() { return L"pig"; }

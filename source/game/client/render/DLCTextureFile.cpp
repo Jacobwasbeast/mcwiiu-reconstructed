@@ -16,10 +16,6 @@ DLCTextureFile::DLCTextureFile(const std::wstring& path)
     m_hasAnimation = false;
 }
 
-DLCTextureFile::~DLCTextureFile()
-{
-}
-
 void DLCTextureFile::addData(unsigned char* pData, unsigned int size)
 {
     m_pData = pData;

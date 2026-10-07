@@ -34,9 +34,8 @@ void SmokeParticle::init(Level* level, double x, double y, double z, double xa, 
     gCol = green * randomScale;
     bCol = blue * randomScale;
 
-    const float particleSize = Particle::size * 0.75f * scale;
-    Particle::size = particleSize;
-    size = particleSize;
+    Particle::size = Particle::size * 0.75f * scale;
+    size = Particle::size;
     lifetime = (int)((float)(int)floor(8.0 / (random.nextDouble() * 0.8 + 0.2)) * scale);
     setMiscTex(7);
 }
@@ -44,7 +43,8 @@ void SmokeParticle::init(Level* level, double x, double y, double z, double xa, 
 void SmokeParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
                            float partialTicks, float xa, float ya, float za, float xa2, float za2)
 {
-    const float progress = Mth::clamp((float)(age + partialTicks) / (float)lifetime * 32.0f, 0.0f, 1.0f);
+    float progress = ((float)age + partialTicks) / (float)lifetime * 32.0f;
+    progress = Mth::clamp(progress, 0.0f, 1.0f);
     Particle::size = size * progress;
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }

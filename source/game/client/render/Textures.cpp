@@ -204,7 +204,7 @@ arrayWithLength<int> Textures::anaglyph(arrayWithLength<int> pixels)
     unsigned int i;
     for (i = 0; i < pixels.length; ++i)
     {
-        unsigned int value = (unsigned int)pixels.data[i];
+        unsigned int value = (unsigned int)pixels[i];
         int alpha = (int)((value >> 24) & 255);
         int red = (int)((value >> 16) & 255);
         int green = (int)((value >> 8) & 255);
@@ -212,7 +212,7 @@ arrayWithLength<int> Textures::anaglyph(arrayWithLength<int> pixels)
         int newRed = (red * 30 + green * 59 + blue * 11) / 100;
         int newGreen = (red * 30 + green * 70) / 100;
         int newBlue = (red * 30 + blue * 70) / 100;
-        result.data[i] = (alpha << 24) | (newRed << 16) | (newGreen << 8) | newBlue;
+        result[i] = (alpha << 24) | (newRed << 16) | (newGreen << 8) | newBlue;
     }
     delete[] pixels.data;
     return result;

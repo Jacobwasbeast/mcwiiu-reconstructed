@@ -10,7 +10,7 @@ static ResourceLocation LEASH_KNOT_LOCATION(TN_ITEM_LEAD_KNOT);
 LeashKnotRenderer::LeashKnotRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
 {
-    mKnotModel = new LeashKnotModel(ModelDefinition());
+    mKnotModel = new LeashKnotModel();
 }
 
 LeashKnotRenderer::~LeashKnotRenderer()

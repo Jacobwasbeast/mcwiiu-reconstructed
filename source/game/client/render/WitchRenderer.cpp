@@ -13,13 +13,9 @@
 static ResourceLocation WITCH_LOCATION(TN_MOB_WITCH);
 
 WitchRenderer::WitchRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new WitchModel(0.0F, ModelDefinition()), 0.5F)
+    : MobRenderer(dispatcher, new WitchModel(0.0F), 0.5F)
 {
     addLayer(new WitchItemLayer(this));
-}
-
-WitchRenderer::~WitchRenderer()
-{
 }
 
 void WitchRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,

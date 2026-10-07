@@ -6,17 +6,17 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
 class LivingEntity;
-class ModelDefinition;
 class ModelPart;
 
 class ParrotModel : public Model
 {
 public:
-    ParrotModel(const ModelDefinition& modelDefinition);
+    ParrotModel(const ModelDefinition& modelDefinition = ModelDefinition());
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                         float ageInTicks, float netHeadYaw, float headPitch, float scale,

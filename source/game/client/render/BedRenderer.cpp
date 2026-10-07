@@ -15,7 +15,7 @@ static ResourceLocation BED_TEXTURE(TN_ITEM_BED);
 
 BedRenderer::BedRenderer()
 {
-    mModel = new BedModel(ModelDefinition());
+    mModel = new BedModel();
     mModelVersion = mModel->modelVersion();
     mDefaultModel = NULL;
 }
@@ -31,7 +31,7 @@ void BedRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, d
     if (mModel->modelVersion() != mModelVersion)
     {
         delete mModel;
-        mModel = new BedModel(ModelDefinition());
+        mModel = new BedModel();
         mModelVersion = mModel->modelVersion();
     }
 

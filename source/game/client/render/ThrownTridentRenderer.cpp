@@ -22,7 +22,7 @@ static ResourceLocation TRIDENT_LOCATION(TN_ITEM_TRIDENT);
 ThrownTridentRenderer::ThrownTridentRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
 {
-    mModel = new TridentModel(ModelDefinition());
+    mModel = new TridentModel();
 }
 
 ThrownTridentRenderer::~ThrownTridentRenderer()

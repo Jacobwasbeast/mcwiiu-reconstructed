@@ -36,7 +36,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-static ResourceLocation MAP_BACKGROUND_LOCATION(TN_MISC_MAPBG);
+ResourceLocation ItemFrameRenderer::MAP_BACKGROUND_LOCATION(TN_MISC_MAPBG);
 
 ItemFrameRenderer::ItemFrameRenderer(EntityRenderDispatcher* dispatcher, ItemRenderer* itemRenderer)
     : EntityRenderer(dispatcher),

@@ -89,10 +89,10 @@ void FireworksParticles::FireworksStarter::createParticle(double px, double py, 
         new FireworksParticles::FireworksSparkParticle(level, px, py, pz, xa, ya, za, particleEngine);
     particle->setTrail(trail);
     particle->setFlicker(flicker);
-    particle->setColor(colors.data[random.nextInt(colors.length)]);
+    particle->setColor(colors[random.nextInt(colors.length)]);
     if (fadeColors.length != 0)
     {
-        particle->setFadeColor(fadeColors.data[random.nextInt(fadeColors.length)]);
+        particle->setFadeColor(fadeColors[random.nextInt(fadeColors.length)]);
     }
     particleEngine->add(particle);
 }

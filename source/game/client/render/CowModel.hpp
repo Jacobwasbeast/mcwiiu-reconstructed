@@ -3,14 +3,14 @@
 
 #include <string>
 
+#include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/QuadrupedModel.hpp"
 
-class ModelDefinition;
 
 class CowModel : public QuadrupedModel
 {
 public:
-    CowModel(const ModelDefinition& modelDefinition);
+    CowModel(const ModelDefinition& modelDefinition = ModelDefinition());
 
     virtual std::wstring getName() { return L"cow"; }
 };

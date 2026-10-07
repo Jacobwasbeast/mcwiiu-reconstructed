@@ -189,10 +189,10 @@ void Texture::transferFromImage(BufferedImage* image)
         for (int x = 0; x < m_width; ++x)
         {
             int index = (y * m_width + x) * 4;
-            bytes.data[index + order[0]] = (unsigned char)((unsigned int)pixels.data[y * m_width + x] >> 24);
-            bytes.data[index + order[1]] = (unsigned char)((unsigned int)pixels.data[y * m_width + x] >> 16);
-            bytes.data[index + order[2]] = (unsigned char)((unsigned int)pixels.data[y * m_width + x] >> 8);
-            bytes.data[index + order[3]] = (unsigned char)pixels.data[y * m_width + x];
+            bytes[index + order[0]] = (unsigned char)((unsigned int)pixels[y * m_width + x] >> 24);
+            bytes[index + order[1]] = (unsigned char)((unsigned int)pixels[y * m_width + x] >> 16);
+            bytes[index + order[2]] = (unsigned char)((unsigned int)pixels[y * m_width + x] >> 8);
+            bytes[index + order[3]] = (unsigned char)pixels[y * m_width + x];
         }
     }
 
@@ -259,10 +259,10 @@ void Texture::transferFromImage(BufferedImage* image)
                             packed = (unsigned int)((alpha << 24) | (red << 16) | (green << 8) | blue);
                         }
                         int destination = (y * levelWidth + x) * 4;
-                        levelBytes.data[destination + order[0]] = (unsigned char)(packed >> 24);
-                        levelBytes.data[destination + order[1]] = (unsigned char)(packed >> 16);
-                        levelBytes.data[destination + order[2]] = (unsigned char)(packed >> 8);
-                        levelBytes.data[destination + order[3]] = (unsigned char)packed;
+                        levelBytes[destination + order[0]] = (unsigned char)(packed >> 24);
+                        levelBytes[destination + order[1]] = (unsigned char)(packed >> 16);
+                        levelBytes[destination + order[2]] = (unsigned char)(packed >> 8);
+                        levelBytes[destination + order[3]] = (unsigned char)packed;
                     }
                 }
             }
@@ -274,10 +274,10 @@ void Texture::transferFromImage(BufferedImage* image)
                     for (int x = 0; x < levelWidth; ++x)
                     {
                         int destination = (y * levelWidth + x) * 4;
-                        levelBytes.data[destination + order[0]] = (unsigned char)((unsigned int)levelPixels[y * levelWidth + x] >> 24);
-                        levelBytes.data[destination + order[1]] = (unsigned char)((unsigned int)levelPixels[y * levelWidth + x] >> 16);
-                        levelBytes.data[destination + order[2]] = (unsigned char)((unsigned int)levelPixels[y * levelWidth + x] >> 8);
-                        levelBytes.data[destination + order[3]] = (unsigned char)levelPixels[y * levelWidth + x];
+                        levelBytes[destination + order[0]] = (unsigned char)((unsigned int)levelPixels[y * levelWidth + x] >> 24);
+                        levelBytes[destination + order[1]] = (unsigned char)((unsigned int)levelPixels[y * levelWidth + x] >> 16);
+                        levelBytes[destination + order[2]] = (unsigned char)((unsigned int)levelPixels[y * levelWidth + x] >> 8);
+                        levelBytes[destination + order[3]] = (unsigned char)levelPixels[y * levelWidth + x];
                     }
                 }
             }

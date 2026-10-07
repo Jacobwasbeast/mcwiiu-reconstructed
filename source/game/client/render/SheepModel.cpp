@@ -54,7 +54,3 @@ void SheepModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTi
     mHead->mXRot = mHeadEatAngleScale;
 }
 
-std::wstring SheepModel::getName()
-{
-    return std::wstring(L"sheep.sheared");
-}

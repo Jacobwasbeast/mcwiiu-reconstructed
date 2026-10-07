@@ -15,7 +15,7 @@
 static ResourceLocation DROWNED_LOCATION(TN_MOB_ZOMBIE_DROWNED);
 
 DrownedRenderer::DrownedRenderer(EntityRenderDispatcher* dispatcher)
-    : HumanoidMobRenderer(dispatcher, new DrownedModel(ModelDefinition()), 0.5F)
+    : HumanoidMobRenderer(dispatcher, new DrownedModel(), 0.5F)
 {
     mArmorLayer = new ZombieArmorLayer(this, EntityType::DROWNED);
     addLayer(mArmorLayer);

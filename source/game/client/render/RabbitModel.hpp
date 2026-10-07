@@ -6,17 +6,17 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
 class LivingEntity;
-class ModelDefinition;
 class ModelPartSkin;
 
 class RabbitModel : public Model
 {
 public:
-    RabbitModel(const ModelDefinition& modelDefinition);
+    RabbitModel(const ModelDefinition& modelDefinition = ModelDefinition());
 
     virtual ~RabbitModel();
 
@@ -27,7 +27,7 @@ public:
                            _SkinAdjustments skinAdjustments);
     virtual void prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,
                                  float partialTicks);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"rabbit"; }
 
     void render(RabbitModel* model, float scale, bool useDisplayList);
     void setRotation(ModelPartSkin* part, float x, float y, float z);

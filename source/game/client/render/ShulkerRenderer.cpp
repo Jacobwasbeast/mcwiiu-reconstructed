@@ -19,13 +19,9 @@
 static ResourceLocation SHULKER_LOCATION(TN_MOB_SHULKER_ENDERGOLEM);
 
 ShulkerRenderer::ShulkerRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new ShulkerModel(ModelDefinition()), 0.0F)
+    : MobRenderer(dispatcher, new ShulkerModel(), 0.0F)
 {
     addLayer(new ShulkerHeadLayer(this));
-}
-
-ShulkerRenderer::~ShulkerRenderer()
-{
 }
 
 void ShulkerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw, float partialTick)

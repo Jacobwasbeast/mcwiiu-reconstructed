@@ -227,7 +227,3 @@ void RabbitModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
     mJumpRotation = Mth::sin(rabbit->getJumpCompletion(partialTicks) * Mth::PI);
 }
 
-std::wstring RabbitModel::getName()
-{
-    return L"rabbit";
-}

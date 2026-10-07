@@ -4,13 +4,13 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
-class ModelDefinition;
 
 class LeashKnotModel : public Model
 {
 public:
-    LeashKnotModel(const ModelDefinition& modelDefinition);
+    LeashKnotModel(const ModelDefinition& modelDefinition = ModelDefinition());
     LeashKnotModel(int xTexOffs, int yTexOffs, int texWidth, int texHeight);
 
 

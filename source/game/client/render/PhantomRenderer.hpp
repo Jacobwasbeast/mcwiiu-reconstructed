@@ -16,7 +16,6 @@ class PhantomRenderer : public MobRenderer
 {
 public:
     PhantomRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~PhantomRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);

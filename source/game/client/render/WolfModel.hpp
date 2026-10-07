@@ -3,14 +3,14 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 class Entity;
 class LivingEntity;
-class ModelDefinition;
 class ModelPart;
 class WolfModel : public Model
 {
 public:
-    WolfModel(const ModelDefinition& modelDefinition);
+    WolfModel(const ModelDefinition& modelDefinition = ModelDefinition());
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                         float ageInTicks, float netHeadYaw, float headPitch, float scale,
                         bool useDisplayList);

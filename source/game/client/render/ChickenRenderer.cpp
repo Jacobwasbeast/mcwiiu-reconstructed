@@ -13,10 +13,6 @@ ChickenRenderer::ChickenRenderer(EntityRenderDispatcher* dispatcher, Model* mode
 {
 }
 
-ChickenRenderer::~ChickenRenderer()
-{
-}
-
 const ResourceLocation* ChickenRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
     return &CHICKEN_LOCATION;

@@ -22,21 +22,21 @@ void DragonBreathParticle::init(Level* level, double x, double y, double z,
 
     unsigned int start = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_DragonBreathMin);
     unsigned int end = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Particle_DragonBreathMax);
-    double startRed = ((double)((start >> 16) & 0xff)) / 255.0;
-    double startGreen = ((double)((start >> 8) & 0xff)) / 255.0;
-    double startBlue = ((double)(start & 0xff)) / 255.0;
-    double endRed = ((double)((end >> 16) & 0xff)) / 255.0;
-    double endGreen = ((double)((end >> 8) & 0xff)) / 255.0;
-    double endBlue = ((double)(end & 0xff)) / 255.0;
+    double startRed = (double)((start >> 16) & 0xff) / 255.0;
+    double startGreen = (double)((start >> 8) & 0xff) / 255.0;
+    double startBlue = (double)(start & 0xff) / 255.0;
+    double endRed = (double)((end >> 16) & 0xff) / 255.0;
+    double endBlue = (double)(end & 0xff) / 255.0;
+    double endGreen = (double)((end >> 8) & 0xff) / 255.0;
 
     rCol = (float)((endRed - startRed) * Math::random() + startRed);
     gCol = (float)((endGreen - startGreen) * Math::random() + startGreen);
     bCol = (float)((endBlue - startBlue) * Math::random() + startBlue);
-    baseSize = size * 0.75f * scale;
-    size = baseSize;
+    size = size * 0.75f * scale;
+    baseSize = size;
     lifetime = (int)((float)(int)(20.0 / (random.nextDouble() * 0.8 + 0.2)) * scale);
-    hasPhysics = true;
     hasHitGround = false;
+    hasPhysics = true;
 }
 
 void DragonBreathParticle::render(BufferBuilder* buffer,
@@ -76,15 +76,13 @@ void DragonBreathParticle::tick()
         yd += 0.002;
     move(xd, yd, zd);
 
-    double motionX = xd;
-    double motionZ = zd;
     if (y == yo)
     {
-        motionX *= 1.1;
-        motionZ *= 1.1;
+        xd *= 1.1;
+        zd *= 1.1;
     }
-    xd = motionX * 0.96f;
-    zd = motionZ * 0.96f;
+    xd *= 0.96f;
+    zd *= 0.96f;
     if (hasHitGround)
         yd *= 0.96f;
 }

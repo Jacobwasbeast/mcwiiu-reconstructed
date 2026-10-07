@@ -117,7 +117,7 @@ int BubbleParticle::getLightColor(float partialTicks)
 
     int brightness = getRawBr();
     cachedLightPos = key;
-    cachedLightColor = brightness << 4 | brightness << 20;
+    cachedLightColor = brightness << 20 | brightness << 4;
     return cachedLightColor;
 }
 
@@ -136,8 +136,5 @@ Particle* BubbleParticle::Provider::createParticle(ePARTICLE_TYPE type,
                                                    double za,
                                                    arrayWithLength<int> params)
 {
-    arrayWithLength<int> localParams;
-    localParams.data = params.data;
-    localParams.length = params.length;
-    return new BubbleParticle(level, x, y, z, xa, ya, za, localParams);
+    return new BubbleParticle(level, x, y, z, xa, ya, za, params);
 }

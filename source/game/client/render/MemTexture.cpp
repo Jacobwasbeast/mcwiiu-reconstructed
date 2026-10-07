@@ -5,9 +5,9 @@ MemTexture::MemTexture(const std::wstring& name, unsigned char* data, unsigned i
 {
     m_referenceCount = 1;
     m_textureId = -1;
-    m_textureReady = false;
     m_loaded = false;
     m_textureFormat = 0;
+    m_textureReady = false;
     m_image = new BufferedImage(data, length);
     (void)name;
     (void)processor;

@@ -30,16 +30,16 @@ AbstractTexturePack::AbstractTexturePack(unsigned int id,
     : m_id(id)
     , m_packName(packName)
 {
+    m_pColourTable = NULL;
+    m_iconTextureId = -1;
+    m_pMaterialTable = NULL;
+    m_pStructureManager = NULL;
     m_pFile = pFile;
+    m_pParentPack = pParentPack;
     m_pIconData = NULL;
     m_iconSize = 0;
     m_pComparisonData = NULL;
     m_comparisonSize = 0;
-    m_pParentPack = pParentPack;
-    m_pMaterialTable = NULL;
-    m_pColourTable = NULL;
-    m_pStructureManager = NULL;
-    m_iconTextureId = -1;
 }
 
 void AbstractTexturePack::unload(Textures* pTextures)
@@ -190,11 +190,7 @@ void AbstractTexturePack::loadDefaultColourTable()
 {
     File file(TexturePack::getPath(true, NULL).append(L"res/colours.col"));
 
-    if (!file.exists())
-    {
-        gApp.FatalLoadError(L"<AbstractTexturePack@%d> Failed to load default colours table", __LINE__);
-    }
-    else
+    if (file.exists())
     {
         unsigned int length = (unsigned int)file.length();
         arrayWithLength<unsigned char> colourData(length, true);
@@ -208,6 +204,10 @@ void AbstractTexturePack::loadDefaultColourTable()
         m_pColourTable = new ColourTable(colourData.data, length);
 
         delete[] colourData.data;
+    }
+    else
+    {
+        gApp.FatalLoadError(L"<AbstractTexturePack@%d> Failed to load default colours table", __LINE__);
     }
 }
 
@@ -311,10 +311,10 @@ bool AbstractTexturePack::HasCustomModel(const std::wstring& modelName)
 
 ModelDefinition* AbstractTexturePack::GetCustomModel(const std::wstring& modelName)
 {
-    if (!HasCustomModel(modelName))
-        return &s_emptyModelDefinition;
+    if (HasCustomModel(modelName))
+        return &m_customModels.find(modelName)->second;
 
-    return &m_customModels.find(modelName)->second;
+    return &s_emptyModelDefinition;
 }
 
 ColourTable* AbstractTexturePack::getColourTable()

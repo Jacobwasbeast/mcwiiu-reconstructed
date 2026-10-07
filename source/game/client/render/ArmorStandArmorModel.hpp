@@ -4,15 +4,15 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/HumanoidModel.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
-class ModelDefinition;
 
 class ArmorStandArmorModel : public HumanoidModel
 {
 public:
-    ArmorStandArmorModel(float scale, int texWidth, int texHeight, const ModelDefinition& definition);
+    ArmorStandArmorModel(float scale, int texWidth, int texHeight, const ModelDefinition& definition = ModelDefinition());
 
     virtual ~ArmorStandArmorModel();
 

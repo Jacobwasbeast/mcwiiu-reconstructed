@@ -11,7 +11,6 @@ class FootstepParticle : public Particle
 {
 public:
     FootstepParticle(Textures* textures, Level* level, double x, double y, double z);
-    virtual ~FootstepParticle();
     virtual void tick();
     virtual void render(BufferBuilder* buffer,
                         const boost::shared_ptr<Entity>& camera,

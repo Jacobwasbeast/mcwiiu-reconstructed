@@ -5,16 +5,16 @@ SuspendedTownParticle::SuspendedTownParticle(Level* level, double x, double y, d
                                              double xa, double ya, double za)
     : Particle(level, x, y, z, xa, ya, za)
 {
-    rCol = random.nextFloat() * 0.1f + 0.2f;
-    gCol = rCol;
-    bCol = rCol;
+    float brightness = random.nextFloat() * 0.1f + 0.2f;
+    rCol = brightness;
+    gCol = brightness;
+    bCol = brightness;
     setMiscTex(0);
     setSize(0.02f, 0.02f);
     size *= random.nextFloat() * 0.6f + 0.5f;
-    double velocityScale = 0.02;
-    xd *= velocityScale;
-    yd *= velocityScale;
-    zd *= velocityScale;
+    xd *= 0.02;
+    yd *= 0.02;
+    zd *= 0.02;
     lifetime = (int)(20.0 / (random.nextDouble() * 0.8 + 0.2));
 }
 

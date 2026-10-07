@@ -13,7 +13,6 @@ class FireworksParticles::FireworksOverlayParticle : public Particle
 {
 public:
     FireworksOverlayParticle(Level* level, double x, double y, double z);
-    virtual ~FireworksOverlayParticle();
     virtual void render(BufferBuilder* buffer,
                         const boost::shared_ptr<Entity>& camera,
                         float partialTicks,

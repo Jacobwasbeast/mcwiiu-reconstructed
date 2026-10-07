@@ -10,9 +10,8 @@ static ResourceLocation WITHER_SKULL_LOCATION(TN_MOB_WITHER_WITHER);
 static ResourceLocation WITHER_SKULL_INVULNERABLE_LOCATION(TN_MOB_WITHER_WITHER_INVULNERABLE);
 
 WitherSkullRenderer::WitherSkullRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher)
+    : EntityRenderer(dispatcher), mWitherSkullModel(new SkeletonHeadModel())
 {
-    mWitherSkullModel = new SkeletonHeadModel(ModelDefinition());
 }
 
 WitherSkullRenderer::~WitherSkullRenderer()

@@ -9,13 +9,9 @@
 static ResourceLocation SNOWMAN_LOCATION(TN_MOB_SNOWMAN);
 
 SnowManRenderer::SnowManRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new SnowManModel(ModelDefinition()), 0.5f)
+    : MobRenderer(dispatcher, new SnowManModel(), 0.5f)
 {
     addLayer(new SnowManHeadLayer(this));
-}
-
-SnowManRenderer::~SnowManRenderer()
-{
 }
 
 const ResourceLocation* SnowManRenderer::getTextureLocation(boost::shared_ptr<Entity>&)

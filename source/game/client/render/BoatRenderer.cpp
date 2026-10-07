@@ -30,7 +30,7 @@ BoatRenderer::BoatRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
 {
     mShadowRadius = 0.5F;
-    mModel = new BoatModel(ModelDefinition());
+    mModel = new BoatModel();
 }
 
 BoatRenderer::~BoatRenderer()

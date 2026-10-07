@@ -38,18 +38,18 @@ void BubblePopParticle::tick()
     }
 
     int frame = age * 5 / lifetime;
-    if (frame > 4)
-        return;
-
-    int frameX = frame % 16;
-    int frameY = frame / 16;
-    uvs = TextureUVCoordinateSet(frameX * 0.0625f + 0.375f,
-                                 frameY * 0.0625f - 0.625f,
-                                 (frameX + 2.0f) * 0.0625f + 0.375f,
-                                 (frameY + 2.0f) * 0.0625f - 0.625f,
-                                 16,
-                                 16,
-                                 1.0f);
+    if (frame <= 4)
+    {
+        float frameX = frame % 16;
+        float frameY = frame / 16;
+        uvs = TextureUVCoordinateSet(frameX * 0.0625f + 0.375f,
+                                     frameY * 0.0625f - 0.625f,
+                                     (frameX + 2.0f) * 0.0625f + 0.375f,
+                                     (frameY + 2.0f) * 0.0625f - 0.625f,
+                                     16,
+                                     16,
+                                     1.0f);
+    }
 }
 
 uint64_t BubblePopParticle::GetType()

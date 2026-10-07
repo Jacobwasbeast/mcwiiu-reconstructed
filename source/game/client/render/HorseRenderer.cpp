@@ -21,7 +21,7 @@
 static std::map<std::wstring, ResourceLocation*> LAYERED_LOCATION_CACHE;
 
 HorseRenderer::HorseRenderer(EntityRenderDispatcher* dispatcher)
-    : AbstractHorseRenderer(dispatcher, new AbstractHorseModel(true, ModelDefinition()), 1.1F)
+    : AbstractHorseRenderer(dispatcher, new AbstractHorseModel(), 1.1F)
 {
 }
 

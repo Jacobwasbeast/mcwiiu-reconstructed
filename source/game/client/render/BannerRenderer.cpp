@@ -23,8 +23,9 @@ static ResourceLocation* BANNER_PATTERN_LOCATION =
     new ResourceLocation(arrayWithLength<int>(BANNER_PATTERN_TEXTURES, 2));
 
 BannerRenderer::BannerRenderer()
-    : BlockEntityRenderer(), mModel(new BannerModel(ModelDefinition()))
+    : BlockEntityRenderer()
 {
+    mModel = new BannerModel();
 }
 
 BannerRenderer::~BannerRenderer()

@@ -6,11 +6,11 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/HumanoidModel.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPartsSkinned.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
-class ModelDefinition;
 class ModelPart;
 
 class EndermanModel : public HumanoidModel
@@ -39,7 +39,7 @@ public:
         eModelPart_Count = 18
     };
 
-    EndermanModel(float scale, const ModelDefinition& definition);
+    EndermanModel(float scale, const ModelDefinition& definition = ModelDefinition());
 
     virtual ~EndermanModel();
 

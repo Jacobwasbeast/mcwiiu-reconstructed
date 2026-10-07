@@ -2,15 +2,15 @@
 #define GAME_CLIENT_RENDER_ARMORSTANDMODEL_HPP
 
 #include "game/client/render/ArmorStandArmorModel.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
 class ModelPartSkin;
-class ModelDefinition;
 class HumanoidArm;
 
 class ArmorStandModel : public ArmorStandArmorModel
 {
 public:
-    ArmorStandModel(float scale, const ModelDefinition& definition);
+    ArmorStandModel(float scale = 0.0f, const ModelDefinition& definition = ModelDefinition());
 
     virtual ~ArmorStandModel();
 

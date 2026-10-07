@@ -2,14 +2,14 @@
 #define GAME_CLIENT_RENDER_SIGNMODEL_HPP
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
-class ModelDefinition;
 class ModelPartSkin;
 
 class SignModel : public Model
 {
 public:
-    SignModel(const ModelDefinition& modelDefinition);
+    SignModel(const ModelDefinition& modelDefinition = ModelDefinition());
 
 
     void render(bool useDisplayList);

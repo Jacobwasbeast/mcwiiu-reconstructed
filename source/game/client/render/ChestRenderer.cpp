@@ -14,8 +14,8 @@ static ResourceLocation LARGE_TRAPPED_CHEST_LOCATION(TN_MOB_SNOWMAN);
 ChestRenderer::ChestRenderer()
     : BlockEntityRenderer()
 {
-    mChestModel = new ChestModel(ModelDefinition());
-    mLargeChestModel = new LargeChestModel(ModelDefinition());
+    mChestModel = new ChestModel();
+    mLargeChestModel = new LargeChestModel();
 }
 
 ChestRenderer::~ChestRenderer()

@@ -16,7 +16,6 @@ class VillagerGolemRenderer : public MobRenderer
 {
 public:
     VillagerGolemRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~VillagerGolemRenderer();
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);

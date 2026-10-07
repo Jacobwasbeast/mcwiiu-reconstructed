@@ -6,17 +6,17 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/HumanoidModel.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
-class ModelDefinition;
 class ModelPart;
 
 class VexModel : public HumanoidModel
 {
 public:
-    VexModel(const ModelDefinition& modelDefinition);
-    VexModel(float scale, const ModelDefinition& modelDefinition);
+    VexModel(const ModelDefinition& modelDefinition = ModelDefinition());
+    VexModel(float scale, const ModelDefinition& modelDefinition = ModelDefinition());
 
     virtual ~VexModel();
 

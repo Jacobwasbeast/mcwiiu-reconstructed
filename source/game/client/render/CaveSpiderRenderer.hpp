@@ -14,7 +14,6 @@ class CaveSpiderRenderer : public SpiderRenderer
 {
 public:
     CaveSpiderRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~CaveSpiderRenderer();
 
     virtual void scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);

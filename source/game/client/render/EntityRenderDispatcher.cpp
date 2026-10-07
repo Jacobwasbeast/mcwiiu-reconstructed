@@ -128,11 +128,11 @@ EntityRenderDispatcher::EntityRenderDispatcher(Textures* textures, ItemRenderer*
     (*this)[EntityType::SPIDER] = new SpiderRenderer(this);
     (*this)[EntityType::CAVE_SPIDER] = new CaveSpiderRenderer(this);
     (*this)[EntityType::PIG] = new PigRenderer(this);
-    (*this)[EntityType::SHEEP] = new SheepRenderer(this, new SheepModel(ModelDefinition()), new SheepFurModel(ModelDefinition()), 0.7F);
-    (*this)[EntityType::COW] = new CowRenderer(this, new CowModel(ModelDefinition()), 0.7F);
+    (*this)[EntityType::SHEEP] = new SheepRenderer(this, new SheepModel(), new SheepFurModel(), 0.7F);
+    (*this)[EntityType::COW] = new CowRenderer(this, new CowModel(), 0.7F);
     (*this)[EntityType::MUSHROOM_COW] = new MushroomCowRenderer(this);
-    (*this)[EntityType::WOLF] = new WolfRenderer(this, new WolfModel(ModelDefinition()), 0.5F);
-    (*this)[EntityType::CHICKEN] = new ChickenRenderer(this, new ChickenModel(ModelDefinition()), 0.3F);
+    (*this)[EntityType::WOLF] = new WolfRenderer(this, new WolfModel(), 0.5F);
+    (*this)[EntityType::CHICKEN] = new ChickenRenderer(this, new ChickenModel(), 0.3F);
     (*this)[EntityType::OCELOT] = new OcelotRenderer(this);
     (*this)[EntityType::RABBIT] = new RabbitRenderer(this);
     (*this)[EntityType::PARROT] = new ParrotRenderer(this);

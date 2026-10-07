@@ -2,13 +2,13 @@
 #define GAME_CLIENT_RENDER_CHESTMODEL_HPP
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
-class ModelDefinition;
 
 class ChestModel : public Model
 {
 public:
-    ChestModel(const ModelDefinition& modelDefinition);
+    ChestModel(const ModelDefinition& modelDefinition = ModelDefinition());
 
     virtual ~ChestModel() {}
 

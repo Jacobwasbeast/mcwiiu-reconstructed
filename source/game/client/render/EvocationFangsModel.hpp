@@ -4,14 +4,14 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 
-class ModelDefinition;
 class ModelPartSkin;
 
 class EvocationFangsModel : public Model
 {
 public:
-    EvocationFangsModel(const ModelDefinition& modelDefinition);
+    EvocationFangsModel(const ModelDefinition& modelDefinition = ModelDefinition());
 
     virtual ~EvocationFangsModel();
 

@@ -9,9 +9,8 @@
 static ResourceLocation LLAMA_SPIT_LOCATION(TN_MOB_LLAMA_SPIT);
 
 LlamaSpitRenderer::LlamaSpitRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher)
+    : EntityRenderer(dispatcher), mSpitModel(new LlamaSpitModel())
 {
-    mSpitModel = new LlamaSpitModel(ModelDefinition());
 }
 
 LlamaSpitRenderer::~LlamaSpitRenderer()

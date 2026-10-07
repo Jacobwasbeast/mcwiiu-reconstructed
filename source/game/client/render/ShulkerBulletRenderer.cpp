@@ -12,9 +12,8 @@
 static ResourceLocation SHULKER_BULLET_LOCATION(TN_MOB_SHULKER_SPARK);
 
 ShulkerBulletRenderer::ShulkerBulletRenderer(EntityRenderDispatcher* dispatcher)
-    : EntityRenderer(dispatcher)
+    : EntityRenderer(dispatcher), mBulletModel(new ShulkerBulletModel())
 {
-    mBulletModel = new ShulkerBulletModel(ModelDefinition());
 }
 
 ShulkerBulletRenderer::~ShulkerBulletRenderer()

@@ -10,6 +10,7 @@ class IconRegister;
 class ItemFrame;
 class ItemRenderer;
 class Minecraft;
+class ResourceLocation;
 class TextureAtlasSprite;
 
 class ItemFrameRenderer : public EntityRenderer
@@ -26,6 +27,8 @@ public:
     virtual void renderName(boost::shared_ptr<Entity>& entity, double x, double y, double z);
 
 private:
+    static ResourceLocation MAP_BACKGROUND_LOCATION;
+
     TextureAtlasSprite* mFrameIcon;
     Minecraft* mMinecraft;
     ItemRenderer* mItemRenderer;

@@ -6,16 +6,16 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/Model.hpp"
+#include "game/client/render/ModelDefinition.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
-class ModelDefinition;
 class ModelPart;
 
 class EndermiteModel : public Model
 {
 public:
-    EndermiteModel(const ModelDefinition& modelDefinition);
+    EndermiteModel(const ModelDefinition& modelDefinition = ModelDefinition());
 
     virtual ~EndermiteModel();
 

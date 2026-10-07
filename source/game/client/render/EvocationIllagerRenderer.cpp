@@ -13,13 +13,9 @@
 static ResourceLocation evokerLocation(TN_MOB_ILLAGER_EVOKER);
 
 EvocationIllagerRenderer::EvocationIllagerRenderer(EntityRenderDispatcher* dispatcher)
-    : MobRenderer(dispatcher, new IllagerModel(0.0f, 0.0f, 64, 64, ModelDefinition()), 0.5f)
+    : MobRenderer(dispatcher, new IllagerModel(0.0f, 0.0f, 64, 64), 0.5f)
 {
     addLayer(new EvocationIllagerRenderer_ItemInHandLayer(this));
-}
-
-EvocationIllagerRenderer::~EvocationIllagerRenderer()
-{
 }
 
 const ResourceLocation* EvocationIllagerRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
@@ -66,5 +62,6 @@ void EvocationIllagerRenderer::EvocationIllagerRenderer_ItemInHandLayer::render(
 void EvocationIllagerRenderer::EvocationIllagerRenderer_ItemInHandLayer::translateToHand(const HumanoidArm* arm)
 {
     IllagerModel* model = static_cast<IllagerModel*>(mLivingEntityRenderer->getModel());
-    model->getArm(arm)->translateTo(0.0625f);
+    ModelPart* hand = model->getArm(arm);
+    hand->translateTo(0.0625f);
 }
