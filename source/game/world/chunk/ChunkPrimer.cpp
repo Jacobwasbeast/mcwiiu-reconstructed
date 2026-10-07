@@ -124,7 +124,7 @@ int ChunkPrimer::getHighestNonAirPos(int x, int z)
 
     for (int y = 127; y >= 0; y--)
     {
-        if (Block::byId(mElementIds.data[columnTop + y] >> 4) != Blocks::air)
+        if (Block::byId(mElementIds[columnTop + y] >> 4) != Blocks::air)
         {
             return y;
         }
@@ -139,7 +139,7 @@ int ChunkPrimer::getHighestSolidPos(int x, int z)
 
     for (int y = 127; y >= 0; y--)
     {
-        Block* block = Block::byId(mElementIds.data[columnTop + y] >> 4);
+        Block* block = Block::byId(mElementIds[columnTop + y] >> 4);
 
         if (block->mMaterial->blocksMotion() && block->mMaterial != Material::LEAVES)
         {

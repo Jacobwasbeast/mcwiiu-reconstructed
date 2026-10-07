@@ -100,10 +100,6 @@ OldChunkStorage::OldChunkStorage(File file, bool createValue)
     create = createValue;
 }
 
-OldChunkStorage::~OldChunkStorage()
-{
-}
-
 File OldChunkStorage::getFile(int x, int z)
 {
     wchar_t xRadix36[256];

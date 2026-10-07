@@ -38,7 +38,9 @@ LevelChunk* ReadOnlyChunkCache::load(int x, int z)
 
 LevelChunk* ReadOnlyChunkCache::getChunk(int x, int z)
 {
-    const unsigned int chunkIndex = (x & 15) | ((z & 15) << 4);
+    int xx = x & 15;
+    int zz = z & 15;
+    int chunkIndex = xx | (zz << 4);
     LevelChunk* chunk;
     if (hasChunk(x, z))
     {

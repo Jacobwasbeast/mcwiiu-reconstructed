@@ -602,7 +602,7 @@ void LevelChunk::init(Level* level, int x, int z)
     mPostProcessFlags = 0;
     mBiomes = arrayWithLength<unsigned char>(256, true);
     for (int i = 0; i < 256; ++i)
-        mBiomes.data[i] = 255;
+        mBiomes[i] = 255;
     mOwnsBiomes = false;
     EnterCriticalSection(&m_csEntities);
     mEntitySections = new std::vector<boost::shared_ptr<Entity> >*[mEntitySectionCount]();

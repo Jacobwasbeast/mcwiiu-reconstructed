@@ -46,6 +46,7 @@ public:
     friend class ServerChunkCache;
     friend class ClientChunkCache;
     friend class Level;
+    friend class ConsoleSchematicFile;
 
     typedef boost::unordered_map<BlockPos, boost::shared_ptr<BlockEntity>, boost::hash<const BlockPos>, std::equal_to<const BlockPos> > BlockEntityMap;
     enum EntityCreationType { IMMEDIATE, QUEUED, NO_CREATE };

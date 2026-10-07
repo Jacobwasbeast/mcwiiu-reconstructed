@@ -34,7 +34,6 @@ public:
     };
 
     OldChunkStorage(File file, bool create);
-    virtual ~OldChunkStorage();
 
     static void CreateNewThreadStorage();
     static void UseDefaultThreadStorage();

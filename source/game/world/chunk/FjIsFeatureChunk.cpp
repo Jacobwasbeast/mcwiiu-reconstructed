@@ -25,12 +25,12 @@ ChunkPos FjIsFeatureChunk::getCenterChunk(int chunkX, int chunkZ) const
 {
     if (chunkX < 0)
     {
-        chunkX += 1 - mSpacing;
+        chunkX = chunkX - (mSpacing - 1);
     }
 
     if (chunkZ < 0)
     {
-        chunkZ += 1 - mSpacing;
+        chunkZ = chunkZ - (mSpacing - 1);
     }
 
     return ChunkPos((chunkX / mSpacing) * mSpacing, (chunkZ / mSpacing) * mSpacing);
@@ -40,8 +40,8 @@ bool FjIsFeatureChunk::couldSpawnInChunk(BiomeSource* biomeSource, int sizeInChu
 {
     int borderInChunks = sizeInChunks / 2 - 3;
 
-    return chunkX >= -borderInChunks && chunkX < borderInChunks &&
-           chunkZ >= -borderInChunks && chunkZ < borderInChunks &&
+    return -borderInChunks <= chunkX && chunkX < borderInChunks &&
+           -borderInChunks <= chunkZ && chunkZ < borderInChunks &&
            biomeSource->fjCouldSpawn(mBiomeRequirements, chunkX, chunkZ);
 }
 
@@ -49,40 +49,34 @@ bool FjIsFeatureChunk::isFeatureChunk(Random& random, BiomeSource* biomeSource, 
 {
     int range = mSpacing - mSeparation;
 
-    unsigned int maxAttempts = (unsigned int)(range * range);
-    if (mMaxAttempts < maxAttempts)
+    unsigned int maxAttempts = mMaxAttempts < (unsigned int)(range * range) ? mMaxAttempts : (unsigned int)(range * range);
+
+    if (couldSpawnInChunk(biomeSource, sizeInChunks, chunkX, chunkZ))
     {
-        maxAttempts = mMaxAttempts;
-    }
+        ChunkPos centerChunk = getCenterChunk(chunkX, chunkZ);
 
-    if (!couldSpawnInChunk(biomeSource, sizeInChunks, chunkX, chunkZ))
-    {
-        return false;
-    }
+        boost::unordered_set<ChunkPos, ChunkPosKeyHash, ChunkPosKeyEq> attemptedChunks(11);
 
-    ChunkPos centerChunk = getCenterChunk(chunkX, chunkZ);
-
-    boost::unordered_set<ChunkPos, ChunkPosKeyHash, ChunkPosKeyEq> attemptedChunks(11);
-
-    while (attemptedChunks.size() < maxAttempts)
-    {
-        ChunkPos attemptedChunk = centerChunk;
-        attemptedChunk.x += random.nextInt(range);
-        attemptedChunk.z += random.nextInt(range);
-
-        if (!attemptedChunks.insert(attemptedChunk).second)
+        while (attemptedChunks.size() < maxAttempts)
         {
-            continue;
-        }
+            ChunkPos attemptedChunk = centerChunk;
+            attemptedChunk.x += random.nextInt(range);
+            attemptedChunk.z += random.nextInt(range);
 
-        if (attemptedChunk.x == chunkX && attemptedChunk.z == chunkZ)
-        {
-            return true;
-        }
+            bool inserted = attemptedChunks.insert(attemptedChunk).second;
 
-        if (couldSpawnInChunk(biomeSource, sizeInChunks, attemptedChunk.x, attemptedChunk.z))
-        {
-            return false;
+            if (inserted)
+            {
+                if (chunkX == attemptedChunk.x && chunkZ == attemptedChunk.z)
+                {
+                    return true;
+                }
+
+                if (couldSpawnInChunk(biomeSource, sizeInChunks, attemptedChunk.x, attemptedChunk.z))
+                {
+                    return false;
+                }
+            }
         }
     }
 

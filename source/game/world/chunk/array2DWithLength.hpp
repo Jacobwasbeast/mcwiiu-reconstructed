@@ -11,6 +11,7 @@ public:
     unsigned int length;
 
     array2DWithLength(unsigned int width, unsigned int height);
+    arrayWithLength<T>*& operator[](unsigned int i) { return data[i]; }
 };
 
 template <class T>
