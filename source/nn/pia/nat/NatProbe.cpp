@@ -19,8 +19,8 @@ NatProbe::NatProbe(const transport::StationLocation& location, const common::Tim
       m_deadline(), m_received(0), m_sent(0),
       m_replied(0), m_rtt(-1), m_timeout(timeout), m_probeCount(0),
       m_probeLimit(sprayCount),
-      m_firstPort(static_cast<short>(m_stationLocation.m_stationAddress.m_port)),
-      m_lastPort(static_cast<short>(m_stationLocation.m_stationAddress.m_port)),
+      m_firstPort(static_cast<short>(m_stationLocation.m_stationAddress.m_inetAddress.m_port)),
+      m_lastPort(static_cast<short>(m_stationLocation.m_stationAddress.m_inetAddress.m_port)),
       m_ticksPerTimeout(0)
 {
     m_ticksPerTimeout =
@@ -32,12 +32,12 @@ NatProbe::NatProbe(const transport::StationLocation& location, const common::Tim
 
     if (location.m_field22 == cInvalidIndex)
     {
-        common::InetAddress adjusted(location.m_stationAddress.m_address,
-                                     static_cast<unsigned short>(location.m_stationAddress.m_port + 10));
+        common::InetAddress adjusted(location.m_stationAddress.m_inetAddress.m_address,
+                                     static_cast<unsigned short>(location.m_stationAddress.m_inetAddress.m_port + 10));
         m_stationLocation.m_stationAddress.SetInetAddress(adjusted);
     }
 
-    m_firstPort = static_cast<short>(m_stationLocation.m_stationAddress.m_port);
+    m_firstPort = static_cast<short>(m_stationLocation.m_stationAddress.m_inetAddress.m_port);
     m_lastPort = static_cast<short>(m_firstPort + sprayRange);
     if (static_cast<unsigned short>(m_lastPort) < static_cast<unsigned short>(m_firstPort))
         m_lastPort = static_cast<short>(cPortMax);
@@ -45,8 +45,8 @@ NatProbe::NatProbe(const transport::StationLocation& location, const common::Tim
 
 bool NatProbe::UpdateTargetAddress(const transport::StationLocation& location)
 {
-    const bool thisPrivate = m_stationLocation.m_stationAddress.IsPrivate() != 0;
-    const bool targetPrivate = location.m_stationAddress.IsPrivate() != 0;
+    const bool thisPrivate = m_stationLocation.m_stationAddress.m_inetAddress.IsPrivate() != 0;
+    const bool targetPrivate = location.m_stationAddress.m_inetAddress.IsPrivate() != 0;
 
     if (thisPrivate && !targetPrivate)
     {
@@ -80,11 +80,11 @@ bool NatProbe::UpdateTargetAddress(const transport::StationLocation& location)
             ++s_targetAddressUpdateCount;
     }
 
-    const unsigned long long oldKey = m_stationLocation.m_stationAddress.GetKey();
-    m_stationLocation.m_stationAddress.SetInetAddress(location.m_stationAddress);
-    m_firstPort = static_cast<short>(location.m_stationAddress.m_port);
+    const unsigned long long oldKey = m_stationLocation.m_stationAddress.m_inetAddress.GetKey();
+    m_stationLocation.m_stationAddress.SetInetAddress(location.m_stationAddress.m_inetAddress);
+    m_firstPort = static_cast<short>(location.m_stationAddress.m_inetAddress.m_port);
     m_lastPort = m_firstPort;
-    if (m_stationLocation.m_stationAddress.GetKey() != oldKey)
+    if (m_stationLocation.m_stationAddress.m_inetAddress.GetKey() != oldKey)
         m_probeCount = 0;
     return true;
 }
@@ -93,9 +93,9 @@ void NatProbe::UpdateTargetPort(const transport::StationLocation& location)
 {
     if (m_startTime.m_tick != 0 && m_stationLocation.m_field26 == 0)
         return;
-    const unsigned short oldPort = m_stationLocation.m_stationAddress.m_port;
-    m_stationLocation.m_stationAddress.m_port = location.m_stationAddress.m_port;
-    if (oldPort != m_stationLocation.m_stationAddress.m_port)
+    const unsigned short oldPort = m_stationLocation.m_stationAddress.m_inetAddress.m_port;
+    m_stationLocation.m_stationAddress.m_inetAddress.m_port = location.m_stationAddress.m_inetAddress.m_port;
+    if (oldPort != m_stationLocation.m_stationAddress.m_inetAddress.m_port)
         m_probeCount = 0;
 }
 
@@ -127,12 +127,12 @@ void NatProbe::SprayTargetPort()
         return;
     const unsigned short counter16 = static_cast<unsigned short>(m_probeCount);
     const unsigned short offset = counter16 % count;
-    m_stationLocation.m_stationAddress.m_port = static_cast<unsigned short>(m_firstPort + offset);
+    m_stationLocation.m_stationAddress.m_inetAddress.m_port = static_cast<unsigned short>(m_firstPort + offset);
 }
 
 short NatProbe::GetPortSprayCount()
 {
-    return static_cast<short>(m_stationLocation.m_stationAddress.m_port - m_firstPort);
+    return static_cast<short>(m_stationLocation.m_stationAddress.m_inetAddress.m_port - m_firstPort);
 }
 
 void NatProbe::Trace(unsigned long long) const

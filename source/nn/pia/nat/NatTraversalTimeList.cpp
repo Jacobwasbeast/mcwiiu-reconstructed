@@ -32,7 +32,7 @@ NatTraversalTime* NatTraversalTimeList::Find(const transport::StationLocation& l
         if (value->m_location.m_field1c == location.m_field1c)
             return value;
         if (value->m_location.m_field1c != location.m_field1c &&
-            location.m_stationAddress.GetKey() == value->m_location.m_stationAddress.GetKey())
+            location.m_stationAddress.m_inetAddress.GetKey() == value->m_location.m_stationAddress.m_inetAddress.GetKey())
             return value;
     }
     return 0;
@@ -74,7 +74,7 @@ void NatTraversalTimeList::Remove(const transport::StationLocation& location)
         NatTraversalTime* value = ValueOf(node);
         if (value->m_location.m_field1c == location.m_field1c ||
             (value->m_location.m_field1c != location.m_field1c &&
-             location.m_stationAddress.GetKey() == value->m_location.m_stationAddress.GetKey()))
+             location.m_stationAddress.m_inetAddress.GetKey() == value->m_location.m_stationAddress.m_inetAddress.GetKey()))
         {
             value->m_location.Trace(cTraceBrief);
             value->~NatTraversalTime();

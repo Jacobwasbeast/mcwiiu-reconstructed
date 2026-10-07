@@ -480,7 +480,7 @@ common::Result NatTraverser::CreateProtocols()
         if (storage != 0)
             protocol = new (static_cast<void*>(storage)) NatTraversalProtocol();
         m_protocolId = transport->m_protocolManager.CreateProtocolImpl(
-            protocol, transport::ProtocolId(NatTraversalProtocol::cProtocolType << 8));
+            protocol, transport::ProtocolId(NatTraversalProtocol::cProtocolType, 0));
         m_protocol = static_cast<NatTraversalProtocol*>(transport->m_protocolManager.SearchProtocol(
             transport::ProtocolId(m_protocolId), NatTraversalProtocol::cProtocolType));
     }

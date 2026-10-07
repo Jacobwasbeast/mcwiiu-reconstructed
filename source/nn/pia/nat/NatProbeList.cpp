@@ -69,8 +69,8 @@ NatProbeList::~NatProbeList()
 bool NatProbeList::IsSameAddressPortAndConnectionId(
     const transport::StationLocation& a, const transport::StationLocation& b)
 {
-    const unsigned long long bKey = b.m_stationAddress.GetKey();
-    const unsigned long long aKey = a.m_stationAddress.GetKey();
+    const unsigned long long bKey = b.m_stationAddress.m_inetAddress.GetKey();
+    const unsigned long long aKey = a.m_stationAddress.m_inetAddress.GetKey();
     return bKey == aKey &&
            a.m_field1c == b.m_field1c;
 }
@@ -78,7 +78,7 @@ bool NatProbeList::IsSameAddressPortAndConnectionId(
 bool NatProbeList::IsDifferentPortSameAddressAndConnectionId(
     const transport::StationLocation& a, const transport::StationLocation& b)
 {
-    return a.m_stationAddress.m_address == b.m_stationAddress.m_address &&
+    return a.m_stationAddress.m_inetAddress.m_address == b.m_stationAddress.m_inetAddress.m_address &&
            a.m_field1c == b.m_field1c;
 }
 
@@ -146,8 +146,8 @@ void NatProbeList::RemoveDifferentConnectionIdAndSameAddressPortProbes(
         NatProbe* probe = record->Probe();
         if (probe->m_stationLocation.m_field1c != location.m_field1c)
         {
-            const unsigned long long locationKey = location.m_stationAddress.GetKey();
-            const unsigned long long probeKey = probe->m_stationLocation.m_stationAddress.GetKey();
+            const unsigned long long locationKey = location.m_stationAddress.m_inetAddress.GetKey();
+            const unsigned long long probeKey = probe->m_stationLocation.m_stationAddress.m_inetAddress.GetKey();
             if (locationKey == probeKey)
                 Retire(record);
         }
@@ -185,8 +185,8 @@ bool NatProbeList::AddProbe(const NatProbe& probe)
             NatProbe* sameConnection = FindByConnectionId(
                 static_cast<unsigned int>(probe.m_stationLocation.m_field1c));
             if (sameConnection != 0 && sameConnection->m_rtt != -1 &&
-                sameConnection->m_stationLocation.m_stationAddress.IsPrivate() != 0 &&
-                probe.m_stationLocation.m_stationAddress.IsPrivate() == 0)
+                sameConnection->m_stationLocation.m_stationAddress.m_inetAddress.IsPrivate() != 0 &&
+                probe.m_stationLocation.m_stationAddress.m_inetAddress.IsPrivate() == 0)
                 return true;
         }
         else
