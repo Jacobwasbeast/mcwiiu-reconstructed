@@ -17,7 +17,6 @@ class LayerGenerationRuleDefinition : public GameRuleDefinition
 {
 public:
     LayerGenerationRuleDefinition();
-    virtual ~LayerGenerationRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual void getChildren(std::vector<GameRuleDefinition*>* children);

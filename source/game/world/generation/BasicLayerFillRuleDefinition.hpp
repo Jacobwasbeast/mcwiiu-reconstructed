@@ -11,7 +11,6 @@ class BasicLayerFillRuleDefinition : public LayerAttributeChildRuleDefinition<La
 {
 public:
     BasicLayerFillRuleDefinition();
-    virtual ~BasicLayerFillRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
 

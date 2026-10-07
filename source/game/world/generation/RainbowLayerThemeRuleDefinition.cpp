@@ -4,10 +4,6 @@
 
 #include "game/world/generation/RainbowLayerTheme.hpp"
 
-RainbowLayerThemeRuleDefinition::~RainbowLayerThemeRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType RainbowLayerThemeRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_RainbowTheme;

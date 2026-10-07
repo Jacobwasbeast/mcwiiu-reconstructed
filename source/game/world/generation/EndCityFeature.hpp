@@ -19,8 +19,6 @@ public:
     public:
         EndCityStart(Level* level, TheEndLevelSource* source, Random& random,
                      int chunkX, int chunkZ);
-        EndCityStart();
-        virtual ~EndCityStart();
         void create(Level* level, TheEndLevelSource* source, Random& random,
                     int chunkX, int chunkZ);
         virtual bool isValid();

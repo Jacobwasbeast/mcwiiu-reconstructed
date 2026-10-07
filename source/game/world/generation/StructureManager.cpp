@@ -227,11 +227,13 @@ std::wstring StructureManager::fjGetStructureTemplatePath(eMinecraftStructureTem
 void StructureManager::readStructure(eMinecraftStructureTemplate type, ByteArrayInputStream* input)
 {
     CompoundTag* tag = NbtIo::readCompressed(input);
-    if (!tag->contains(DATA_VERSION_TAG, Tag::TAG_ANY_NUMERIC))
+    bool hasDataVersion = tag->contains(DATA_VERSION_TAG, Tag::TAG_ANY_NUMERIC);
+    if (!hasDataVersion)
         tag->putInt(DATA_VERSION_TAG, 500);
 
     StructureTemplate* structureTemplate = new StructureTemplate();
-    structureTemplate->load(fixerUpper->updateData(DataFixTypes::eDataFixTypes_Structure, tag));
+    CompoundTag* fixedTag = fixerUpper->updateData(DataFixTypes::eDataFixTypes_Structure, tag);
+    structureTemplate->load(fixedTag);
     delete tag;
 
     boost::unordered_map<int, const StructureTemplate*>::iterator it = templates.find(type);

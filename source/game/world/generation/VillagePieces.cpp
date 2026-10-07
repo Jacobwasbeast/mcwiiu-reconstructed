@@ -259,9 +259,9 @@ VillagePieces::VillagePiece::VillagePiece()
       mFirstBools(),
       mSecondBools(),
       mFirstInts(),
-      mSecondInts(),
-      mStartPiece(NULL)
+      mSecondInts()
 {
+    mStartPiece = NULL;
     mAverageGroundHeight = -1;
     mVillagerCount = 0;
     mType = 0;
@@ -366,7 +366,8 @@ int VillagePieces::VillagePiece::getAverageGroundHeight(Level* level, BoundingBo
             pos = BlockPos(x, 64, z);
             if (box->isInside(pos))
             {
-                total += Math::_max(level->getTopSolidBlockPos(pos).y, level->mDimension->getSpawnYPosition() - 1);
+                int height = Math::_max(level->getTopSolidBlockPos(pos).y, level->mDimension->getSpawnYPosition() - 1);
+                total += height;
                 ++count;
             }
         }
@@ -428,15 +429,11 @@ const BlockState* VillagePieces::VillagePiece::biomeBlock(const BlockState* stat
             return Blocks::sandstone->getBlockState(SandStoneBlock::SMOOTH->getData());
         if (state->getBlock() == Blocks::oak_stairs)
         {
-            const BlockState* stairs = Blocks::sandstone_stairs->defaultBlockState();
-            DirectionProperty* facing = StairBlock::FACING;
-            return stairs->setValue(facing, state->getValue(facing));
+            return Blocks::sandstone_stairs->defaultBlockState()->setValue(StairBlock::FACING, state->getValue(StairBlock::FACING));
         }
         if (state->getBlock() == Blocks::stone_stairs)
         {
-            const BlockState* stairs = Blocks::sandstone_stairs->defaultBlockState();
-            DirectionProperty* facing = StairBlock::FACING;
-            return stairs->setValue(facing, state->getValue(facing));
+            return Blocks::sandstone_stairs->defaultBlockState()->setValue(StairBlock::FACING, state->getValue(StairBlock::FACING));
         }
         if (state->getBlock() == Blocks::grass_path)
             return Blocks::sandstone->defaultBlockState();
@@ -642,8 +639,7 @@ VillagePieces::StartPiece::StartPiece(BiomeSource* source, int depth, Random& ra
 
 VillagePieces::StartPiece::~StartPiece()
 {
-    std::list<PieceWeight*>::iterator it;
-    for (it = mPieceWeights->begin(); it != mPieceWeights->end(); ++it)
+    for (std::list<PieceWeight*>::iterator it = mPieceWeights->begin(); it != mPieceWeights->end(); ++it)
     {
         delete *it;
     }
@@ -974,7 +970,7 @@ void VillagePieces::SimpleHouse::readAdditionalSaveData(DataInputStream* input, 
 {
     VillagePiece::readAdditionalSaveData(input, manager);
     if (StructureFeatureIO::getVersion() == 1)
-        mIsRoofAccessible = mSecondBools.empty() ? false : mSecondBools[0];
+        mIsRoofAccessible = !mSecondBools.empty() ? mSecondBools[0] : false;
     else
         mIsRoofAccessible = input->readBoolean();
 }
@@ -1413,8 +1409,9 @@ void VillagePieces::SmallHut::readAdditionalSaveData(DataInputStream* input, Str
     VillagePiece::readAdditionalSaveData(input, manager);
     if (StructureFeatureIO::getVersion() == 1)
     {
-        mTablePosition = mFirstInts.empty() ? 0 : mFirstInts[0];
-        mIsTallHouse = mSecondBools.empty() ? false : mSecondBools[0];
+        std::vector<int>::iterator first = mFirstInts.begin();
+        mTablePosition = &*first != NULL && static_cast<unsigned int>(mFirstInts.end() - first) > 0 ? first[0] : 0;
+        mIsTallHouse = !mSecondBools.empty() ? mSecondBools[0] : false;
     }
     else
     {
@@ -1940,9 +1937,8 @@ Block* VillagePieces::Farmland::selectCrops(Random& random)
         return Blocks::potatoes;
     case 4:
         return Blocks::beetroots;
-    default:
-        return Blocks::wheat;
     }
+    return Blocks::wheat;
 }
 
 StructurePiece* VillagePieces::Farmland::createPiece(StartPiece* startPiece, std::vector<StructurePiece*>* pieces,
@@ -2089,9 +2085,8 @@ Block* VillagePieces::DoubleFarmland::selectCrops(Random& random)
         return Blocks::potatoes;
     case 4:
         return Blocks::beetroots;
-    default:
-        return Blocks::wheat;
     }
+    return Blocks::wheat;
 }
 
 StructurePiece* VillagePieces::DoubleFarmland::createPiece(StartPiece* startPiece, std::vector<StructurePiece*>* pieces,

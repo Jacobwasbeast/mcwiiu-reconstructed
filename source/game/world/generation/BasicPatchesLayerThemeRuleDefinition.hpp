@@ -10,7 +10,6 @@ class BasicPatchesLayerThemeRuleDefinition : public GenericMultiBlockThemeRuleDe
 public:
     BasicPatchesLayerThemeRuleDefinition();
 
-    virtual ~BasicPatchesLayerThemeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
 

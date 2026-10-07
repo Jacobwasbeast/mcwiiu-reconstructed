@@ -36,13 +36,9 @@ ZombieVillager::ZombieVillager(Level* level)
     mCategories |= EntityCategory::eEntityCategory_Undead | EntityCategory::eEntityCategory_Monster;
 }
 
-ZombieVillager::~ZombieVillager()
+Entity* ZombieVillager::create(Level* level)
 {
-}
-
-void ZombieVillager::create(Level* level)
-{
-    new ZombieVillager(level);
+    return new ZombieVillager(level);
 }
 
 void ZombieVillager::setProfession(int profession)

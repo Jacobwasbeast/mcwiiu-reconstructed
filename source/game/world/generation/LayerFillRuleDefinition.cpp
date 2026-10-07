@@ -9,10 +9,6 @@ LayerFillRuleDefinition::LayerFillRuleDefinition()
 {
 }
 
-LayerFillRuleDefinition::~LayerFillRuleDefinition()
-{
-}
-
 LayerAttributeChildRuleDefinition<LayerFill*>* LayerFillRuleDefinition::CreateFuncImpl(ConsoleGameRules::EGameRuleType type)
 {
     switch (type)

@@ -25,7 +25,6 @@ public:
                              GenericOverworldLevelSource* source, Random& random,
                              int chunkX, int chunkZ);
         WoodlandMansionStart();
-        virtual ~WoodlandMansionStart();
 
         static StructureStart* Create();
         void create(Level* level, GenericOverworldLevelSource* source, Random& random,

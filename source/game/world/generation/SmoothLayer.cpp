@@ -24,11 +24,11 @@ arrayWithLength<int> SmoothLayer::getArea(int x, int z, int width, int height)
     {
         for (int j = 0; j < width; j++)
         {
-            int west = parentArea.data[j + (i + 1) * parentWidth];
-            int east = parentArea.data[j + 2 + (i + 1) * parentWidth];
-            int north = parentArea.data[j + 1 + i * parentWidth];
-            int south = parentArea.data[j + 1 + (i + 2) * parentWidth];
-            int centre = parentArea.data[j + 1 + (i + 1) * parentWidth];
+            int west = parentArea[j + (i + 1) * parentWidth];
+            int east = parentArea[j + 2 + (i + 1) * parentWidth];
+            int north = parentArea[j + 1 + i * parentWidth];
+            int south = parentArea[j + 1 + (i + 2) * parentWidth];
+            int centre = parentArea[j + 1 + (i + 1) * parentWidth];
 
             if (west == east && north == south)
             {
@@ -56,7 +56,7 @@ arrayWithLength<int> SmoothLayer::getArea(int x, int z, int width, int height)
                 }
             }
 
-            area.data[j + i * width] = centre;
+            area[j + i * width] = centre;
         }
     }
 

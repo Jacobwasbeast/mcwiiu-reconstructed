@@ -20,10 +20,6 @@ EndPodiumFeature::EndPodiumFeature(bool active)
 {
 }
 
-EndPodiumFeature::~EndPodiumFeature()
-{
-}
-
 bool EndPodiumFeature::place(Level* level, Random&, const BlockPos& origin)
 {
     Iterator<MutableBlockPos*>* positions =

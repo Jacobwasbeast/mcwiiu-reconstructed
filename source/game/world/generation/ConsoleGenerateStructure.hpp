@@ -20,7 +20,6 @@ class ConsoleGenerateStructure : public GameRuleDefinition, public StructurePiec
 {
 public:
     ConsoleGenerateStructure();
-    virtual ~ConsoleGenerateStructure();
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual void writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount);
     virtual void getChildren(std::vector<GameRuleDefinition*>* children);

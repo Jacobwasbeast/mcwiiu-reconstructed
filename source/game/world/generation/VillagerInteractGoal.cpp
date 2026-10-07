@@ -19,10 +19,6 @@ VillagerInteractGoal::VillagerInteractGoal(Villager* villager)
 {
 }
 
-VillagerInteractGoal::~VillagerInteractGoal()
-{
-}
-
 void VillagerInteractGoal::start()
 {
     InteractGoal::start();
@@ -94,7 +90,3 @@ void VillagerInteractGoal::tick()
     }
 }
 
-std::wstring VillagerInteractGoal::getName()
-{
-    return std::wstring(L"VillagerInteract");
-}

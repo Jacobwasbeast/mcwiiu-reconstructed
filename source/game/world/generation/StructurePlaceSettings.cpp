@@ -15,8 +15,6 @@
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/generation/StructureFeatureIO.hpp"
 
-#include <stdint.h>
-
 StructurePlaceSettings::StructurePlaceSettings()
 {
     mMirror = Mirror::NONE;
@@ -136,23 +134,18 @@ Random* StructurePlaceSettings::getRandom(const BlockPos* position, bool& genera
     }
 
     generated = true;
-    if (mSeed < 0)
+    if (mSeed >= 0)
     {
-        if (position != NULL)
-        {
-            uint32_t x = static_cast<uint32_t>(position->x);
-            uint32_t z = static_cast<uint32_t>(position->z);
-            uint32_t seed = x * x * 0x4c1906U + x * 0x5ac0dbU
-                + z * z * 0x4307a7U + z * 0x5f24fU;
-            int32_t signedSeed = static_cast<int32_t>(seed ^ 0x3ad8025fU);
-            return new Random(static_cast<long long>(signedSeed));
-        }
+        return mSeed == 0 ? new Random(System::processTimeInMilliSecs()) : new Random(mSeed);
     }
-    else if (mSeed != 0)
+    if (position == NULL)
     {
-        return new Random(mSeed);
+        return new Random(System::processTimeInMilliSecs());
     }
-    return new Random(System::processTimeInMilliSecs());
+    int x = position->x;
+    int z = position->z;
+    return new Random(static_cast<int>(x * x * 4987142 + x * 5947611 + z * z * 4392871 + z * 389711
+        ^ 987234911));
 }
 
 float StructurePlaceSettings::getIntegrity() { return mIntegrity; }
@@ -204,144 +197,144 @@ const BlockState* StructurePlaceSettings::getSwappedBlock(const BlockState* stat
         || blockId == BlockId::JUNGLE_STAIRS || blockId == BlockId::QUARTZ_STAIRS
         || blockId == BlockId::ACACIA_STAIRS || blockId == BlockId::DARK_OAK_STAIRS
         || blockId == BlockId::RED_SANDSTONE_STAIRS || blockId == BlockId::PURPUR_STAIRS;
-    bool isTrapdoor = blockId == BlockId::TRAPDOOR
-        || (blockId >= BlockId::SPRUCE_TRAPDOOR && blockId <= BlockId::DARK_OAK_TRAPDOOR);
-
-    boost::unordered_map<int, int>::const_iterator entry;
-    int data;
-    int key;
+    bool isTrapdoor = blockId == BlockId::TRAPDOOR || blockId == BlockId::SPRUCE_TRAPDOOR
+        || blockId == BlockId::BIRCH_TRAPDOOR || blockId == BlockId::JUNGLE_TRAPDOOR
+        || blockId == BlockId::ACACIA_TRAPDOOR || blockId == BlockId::DARK_OAK_TRAPDOOR;
 
     if (blockId == BlockId::LOG || blockId == BlockId::LOG2)
     {
-        data = block->convertBlockStateToLegacyData(state);
-        key = data & 3;
+        int data = block->convertBlockStateToLegacyData(state);
+        int key = data & 3;
         if (blockId == BlockId::LOG2)
             key += 4;
-        entry = mSwapAuxValues.find(key);
-        if (entry == mSwapAuxValues.end())
+        if (mSwapAuxValues.find(key) == mSwapAuxValues.end())
             return state;
         int replacement = mSwapAuxValues.at(key);
         if (replacement < 4)
-            return Blocks::log->getBlockState((data & 0xc) | replacement);
-        return Blocks::log2->getBlockState((data & 0xc) | (replacement - 4));
+            state = Blocks::log->getBlockState((data & 0xc) | replacement);
+        else
+            state = Blocks::log2->getBlockState((data & 0xc) | (replacement - 4));
     }
+    else if (isStairs || block->mIsDoor || block->mIsFence || block->mIsFenceGate
+        || isTrapdoor || isStrippedLog)
+    {
+        Block* stairs = Blocks::oak_stairs;
+        Block* door = Blocks::wooden_door;
+        Block* fence = Blocks::fence;
+        Block* trapdoor = Blocks::trapdoor;
+        Block* fenceGate = Blocks::fence_gate;
+        Block* strippedLog = Blocks::stripped_log_oak;
 
-    if (!isStairs && !block->mIsDoor && !block->mIsFence && !block->mIsFenceGate
-        && !isTrapdoor && !isStrippedLog)
+        int key = 0;
+        if (blockId == BlockId::SPRUCE_STAIRS || blockId == BlockId::SPRUCE_FENCE_GATE
+            || blockId == BlockId::SPRUCE_FENCE || blockId == BlockId::SPRUCE_DOOR
+            || blockId == BlockId::SPRUCE_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_SPRUCE)
+            key = 1;
+        else if (blockId == BlockId::BIRCH_STAIRS || blockId == BlockId::BIRCH_FENCE_GATE
+            || blockId == BlockId::BIRCH_FENCE || blockId == BlockId::BIRCH_DOOR
+            || blockId == BlockId::BIRCH_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_BIRCH)
+            key = 2;
+        else if (blockId == BlockId::JUNGLE_STAIRS || blockId == BlockId::JUNGLE_FENCE_GATE
+            || blockId == BlockId::JUNGLE_FENCE || blockId == BlockId::JUNGLE_DOOR
+            || blockId == BlockId::JUNGLE_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_JUNGLE)
+            key = 3;
+        else if (blockId == BlockId::ACACIA_STAIRS || blockId == BlockId::ACACIA_FENCE_GATE
+            || blockId == BlockId::ACACIA_FENCE || blockId == BlockId::ACACIA_DOOR
+            || blockId == BlockId::ACACIA_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_ACACIA)
+            key = 4;
+        else if (blockId == BlockId::DARK_OAK_STAIRS || blockId == BlockId::DARK_OAK_FENCE_GATE
+            || blockId == BlockId::DARK_OAK_FENCE || blockId == BlockId::DARK_OAK_DOOR
+            || blockId == BlockId::DARK_OAK_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_DARK_OAK)
+            key = 5;
+
+        if (mSwapAuxValues.find(key) == mSwapAuxValues.end())
+            return state;
+        int replacement = mSwapAuxValues.at(key);
+        int data = block->convertBlockStateToLegacyData(state);
+        switch (replacement)
+        {
+        case 1:
+            door = Blocks::spruce_door;
+            fence = Blocks::spruce_fence;
+            fenceGate = Blocks::spruce_fence_gate;
+            stairs = Blocks::spruce_stairs;
+            trapdoor = Blocks::spruce_trapdoor;
+            strippedLog = Blocks::stripped_log_spruce;
+            break;
+        case 2:
+            door = Blocks::birch_door;
+            fence = Blocks::birch_fence;
+            fenceGate = Blocks::birch_fence_gate;
+            stairs = Blocks::birch_stairs;
+            trapdoor = Blocks::birch_trapdoor;
+            strippedLog = Blocks::stripped_log_birch;
+            break;
+        case 3:
+            door = Blocks::jungle_door;
+            fence = Blocks::jungle_fence;
+            fenceGate = Blocks::jungle_fence_gate;
+            stairs = Blocks::jungle_stairs;
+            trapdoor = Blocks::jungle_trapdoor;
+            strippedLog = Blocks::stripped_log_jungle;
+            break;
+        case 4:
+            door = Blocks::acacia_door;
+            fence = Blocks::acacia_fence;
+            fenceGate = Blocks::acacia_fence_gate;
+            stairs = Blocks::acacia_stairs;
+            trapdoor = Blocks::acacia_trapdoor;
+            strippedLog = Blocks::stripped_log_acacia;
+            break;
+        case 5:
+            door = Blocks::dark_oak_door;
+            fence = Blocks::dark_oak_fence;
+            fenceGate = Blocks::dark_oak_fence_gate;
+            stairs = Blocks::dark_oak_stairs;
+            trapdoor = Blocks::dark_oak_trapdoor;
+            strippedLog = Blocks::stripped_log_dark_oak;
+            break;
+        }
+
+        if (isStairs)
+            state = stairs->getBlockState(data);
+        else if (block->mIsDoor)
+            state = door->getBlockState(data);
+        else if (block->mIsFence)
+            state = fence->getBlockState(data);
+        else if (block->mIsFenceGate)
+            state = fenceGate->getBlockState(data);
+        else if (isTrapdoor)
+            state = trapdoor->getBlockState(data);
+        else
+        {
+            if (isStrippedLog)
+                block = strippedLog;
+            state = block->getBlockState(data);
+        }
+    }
+    else
     {
         if (block == Blocks::wooden_slab || block == Blocks::double_wooden_slab)
         {
-            data = block->convertBlockStateToLegacyData(state);
-            key = data & 7;
-            entry = mSwapAuxValues.find(key);
-            if (entry == mSwapAuxValues.end())
-                return state;
-            return block->getBlockState((data & 8) | mSwapAuxValues.at(key));
+            int data = block->convertBlockStateToLegacyData(state);
+            int key = data & 7;
+            if (mSwapAuxValues.find(key) != mSwapAuxValues.end())
+            {
+                int replacement = mSwapAuxValues.at(key);
+                state = block->getBlockState((data & 8) | replacement);
+            }
         }
-        if (block != Blocks::planks)
-            return state;
-        key = block->convertBlockStateToLegacyData(state);
-        entry = mSwapAuxValues.find(key);
-        if (entry == mSwapAuxValues.end())
-            return state;
-        return block->getBlockState(mSwapAuxValues.at(key));
+        else if (block == Blocks::planks)
+        {
+            int key = block->convertBlockStateToLegacyData(state);
+            if (mSwapAuxValues.find(key) != mSwapAuxValues.end())
+            {
+                int replacement = mSwapAuxValues.at(key);
+                state = block->getBlockState(replacement);
+            }
+        }
     }
-
-    if (blockId == BlockId::SPRUCE_STAIRS || blockId == BlockId::SPRUCE_FENCE_GATE
-        || blockId == BlockId::SPRUCE_FENCE || blockId == BlockId::SPRUCE_DOOR
-        || blockId == BlockId::SPRUCE_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_SPRUCE)
-        key = 1;
-    else if (blockId == BlockId::BIRCH_STAIRS || blockId == BlockId::BIRCH_FENCE_GATE
-        || blockId == BlockId::BIRCH_FENCE || blockId == BlockId::BIRCH_DOOR
-        || blockId == BlockId::BIRCH_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_BIRCH)
-        key = 2;
-    else if (blockId == BlockId::JUNGLE_STAIRS || blockId == BlockId::JUNGLE_FENCE_GATE
-        || blockId == BlockId::JUNGLE_FENCE || blockId == BlockId::JUNGLE_DOOR
-        || blockId == BlockId::JUNGLE_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_JUNGLE)
-        key = 3;
-    else if (blockId == BlockId::ACACIA_STAIRS || blockId == BlockId::ACACIA_FENCE_GATE
-        || blockId == BlockId::ACACIA_FENCE || blockId == BlockId::ACACIA_DOOR
-        || blockId == BlockId::ACACIA_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_ACACIA)
-        key = 4;
-    else if (blockId == BlockId::DARK_OAK_STAIRS || blockId == BlockId::DARK_OAK_FENCE_GATE
-        || blockId == BlockId::DARK_OAK_FENCE || blockId == BlockId::DARK_OAK_DOOR
-        || blockId == BlockId::DARK_OAK_TRAPDOOR || blockId == BlockId::STRIPPED_LOG_DARK_OAK)
-        key = 5;
-    else
-        key = 0;
-
-    entry = mSwapAuxValues.find(key);
-    if (entry == mSwapAuxValues.end())
-        return state;
-
-    int replacement = mSwapAuxValues.at(key);
-    Block* door = Blocks::wooden_door;
-    Block* fence = Blocks::fence;
-    Block* fenceGate = Blocks::fence_gate;
-    Block* stairs = Blocks::oak_stairs;
-    Block* trapdoor = Blocks::trapdoor;
-    Block* strippedLog = Blocks::stripped_log_oak;
-
-    if (replacement == 1)
-    {
-        door = Blocks::spruce_door;
-        fence = Blocks::spruce_fence;
-        fenceGate = Blocks::spruce_fence_gate;
-        stairs = Blocks::spruce_stairs;
-        trapdoor = Blocks::spruce_trapdoor;
-        strippedLog = Blocks::stripped_log_spruce;
-    }
-    else if (replacement == 2)
-    {
-        door = Blocks::birch_door;
-        fence = Blocks::birch_fence;
-        fenceGate = Blocks::birch_fence_gate;
-        stairs = Blocks::birch_stairs;
-        trapdoor = Blocks::birch_trapdoor;
-        strippedLog = Blocks::stripped_log_birch;
-    }
-    else if (replacement == 3)
-    {
-        door = Blocks::jungle_door;
-        fence = Blocks::jungle_fence;
-        fenceGate = Blocks::jungle_fence_gate;
-        stairs = Blocks::jungle_stairs;
-        trapdoor = Blocks::jungle_trapdoor;
-        strippedLog = Blocks::stripped_log_jungle;
-    }
-    else if (replacement == 4)
-    {
-        door = Blocks::acacia_door;
-        fence = Blocks::acacia_fence;
-        fenceGate = Blocks::acacia_fence_gate;
-        stairs = Blocks::acacia_stairs;
-        trapdoor = Blocks::acacia_trapdoor;
-        strippedLog = Blocks::stripped_log_acacia;
-    }
-    else if (replacement == 5)
-    {
-        door = Blocks::dark_oak_door;
-        fence = Blocks::dark_oak_fence;
-        fenceGate = Blocks::dark_oak_fence_gate;
-        stairs = Blocks::dark_oak_stairs;
-        trapdoor = Blocks::dark_oak_trapdoor;
-        strippedLog = Blocks::stripped_log_dark_oak;
-    }
-
-    data = block->convertBlockStateToLegacyData(state);
-    if (isStairs)
-        return stairs->getBlockState(data);
-    if (block->mIsDoor)
-        return door->getBlockState(data);
-    if (block->mIsFence)
-        return fence->getBlockState(data);
-    if (block->mIsFenceGate)
-        return fenceGate->getBlockState(data);
-    if (isTrapdoor)
-        return trapdoor->getBlockState(data);
-    if (isStrippedLog)
-        return strippedLog->getBlockState(data);
-    return block->getBlockState(data);
+    return state;
 }
 
 void StructurePlaceSettings::placeWaterBelowSeaLevel(bool placeWater) { mPlaceWaterBelowSeaLevel = placeWater; }

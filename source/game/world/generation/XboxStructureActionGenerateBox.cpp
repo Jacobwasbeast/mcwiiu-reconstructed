@@ -12,10 +12,10 @@ XboxStructureActionGenerateBox::XboxStructureActionGenerateBox()
     mOuterBlock = NULL;
     mStartZ = 0;
     mEndZ = 0;
-    mStartX = 0;
+    mStartY = 0;
     mInnerBlock = NULL;
     mExistingOnly = false;
-    mStartY = 0;
+    mStartX = 0;
 
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_x0, &mStartX);
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_y0, &mStartY);
@@ -30,10 +30,8 @@ XboxStructureActionGenerateBox::XboxStructureActionGenerateBox()
 
 uint32_t XboxStructureActionGenerateBox::generateBoxInLevel(StructurePiece* structurePiece, Level* level, BoundingBox* box)
 {
-    const BlockState* outerState = mOuterBlock->defaultBlockState();
-    const BlockState* innerState = mInnerBlock->defaultBlockState();
     structurePiece->generateBox(level, box, mStartX, mStartY, mStartZ, mEndX, mEndY, mEndZ,
-                                outerState, innerState, mExistingOnly);
+                                mOuterBlock->defaultBlockState(), mInnerBlock->defaultBlockState(), mExistingOnly);
     return 1;
 }
 

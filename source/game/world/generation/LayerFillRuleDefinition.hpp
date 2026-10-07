@@ -10,7 +10,6 @@ class LayerFillRuleDefinition : public LayerAttributeRuleDefinition<LayerFill*>
 {
 public:
     LayerFillRuleDefinition();
-    virtual ~LayerFillRuleDefinition();
 
 private:
     static LayerAttributeChildRuleDefinition<LayerFill*>* CreateFuncImpl(ConsoleGameRules::EGameRuleType type);

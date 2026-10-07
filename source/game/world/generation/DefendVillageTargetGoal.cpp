@@ -15,10 +15,6 @@ DefendVillageTargetGoal::DefendVillageTargetGoal(VillagerGolem* golem)
     setRequiredControlFlags(1);
 }
 
-DefendVillageTargetGoal::~DefendVillageTargetGoal()
-{
-}
-
 bool DefendVillageTargetGoal::canUse()
 {
     boost::shared_ptr<Village> village = mGolem->getVillage();
@@ -51,7 +47,3 @@ void DefendVillageTargetGoal::start()
     TargetGoal::start();
 }
 
-std::wstring DefendVillageTargetGoal::getName()
-{
-    return std::wstring(L"DefendVillageTarget");
-}

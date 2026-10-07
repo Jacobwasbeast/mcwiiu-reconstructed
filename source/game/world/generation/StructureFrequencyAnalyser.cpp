@@ -1,6 +1,7 @@
 #include "game/world/generation/StructureFrequencyAnalyser.hpp"
 
 #include "game/core/IntCache.hpp"
+#include "game/world/LevelType.hpp"
 #include "game/world/biome/BiomeSource.hpp"
 #include "game/world/generation/OceanMonumentFeature.hpp"
 #include "game/world/generation/ShipwreckFeature.hpp"
@@ -17,14 +18,15 @@ int countFeaturesInArea(char (*isFeatureChunk)(BiomeSource*, long long, int, int
                         long long seed,
                         int sizeInChunks)
 {
-    int halfSizeInChunks = sizeInChunks / 2;
     int featureCount = 0;
+    int halfSizeInChunks = sizeInChunks / 2;
 
     for (int chunkX = -halfSizeInChunks; chunkX <= halfSizeInChunks; ++chunkX)
     {
         for (int chunkZ = -halfSizeInChunks; chunkZ <= halfSizeInChunks; ++chunkZ)
         {
-            if (isFeatureChunk(biomeSource, seed, sizeInChunks, chunkX, chunkZ))
+            bool isFeature = isFeatureChunk(biomeSource, seed, chunkX, chunkZ, sizeInChunks) > 0;
+            if (isFeature)
                 ++featureCount;
         }
     }
@@ -36,9 +38,12 @@ static int _standardTests(void*)
 {
     IntCache::CreateNewThreadStorage();
 
-    StructureFrequencyAnalyser analysers[1] = {StructureFrequencyAnalyser(54, false, false)};
-    analysers[0].run(1000);
-    analysers[0].print();
+    StructureFrequencyAnalyser analysers[] = {StructureFrequencyAnalyser(54, false, false)};
+    for (unsigned int i = 0; i < sizeof(analysers) / sizeof(analysers[0]); ++i)
+    {
+        analysers[i].run(1000);
+        analysers[i].print();
+    }
 
     IntCache::ReleaseThreadStorage();
     return 0;
@@ -49,10 +54,6 @@ StructureFrequencyAnalyser::StructureFrequencyAnalyser(int sizeInChunks,
                                                        bool printAverages)
     : mSizeInChunks(sizeInChunks), mAreaInChunks(sizeInChunks * sizeInChunks),
       mPrintResults(printResults), mPrintAverages(printAverages)
-{
-}
-
-StructureFrequencyAnalyser::~StructureFrequencyAnalyser()
 {
 }
 
@@ -70,7 +71,7 @@ void StructureFrequencyAnalyser::run(unsigned int seedCount)
         Results results;
         results.seed = layerOverrideSettings.GetSeed();
 
-        BiomeSource biomeSource(results.seed, NULL, NULL, &layerOverrideSettings);
+        BiomeSource biomeSource(results.seed, LevelType::DEFAULT, NULL, &layerOverrideSettings);
         biomeSource.getBiomeBlock(biomes,
                                   -halfWidthInBlocks,
                                   -halfWidthInBlocks,
@@ -105,7 +106,7 @@ void StructureFrequencyAnalyser::print() const
 
 void StructureFrequencyAnalyser::runTests()
 {
-    static C4JThreadImpl* testThread = new C4JThreadImpl(_standardTests, NULL, "StructureFrequencyAnalyser", 0);
+    static C4JThread* testThread = new C4JThreadImpl(_standardTests, NULL, "StructureFrequencyAnalyser", 0);
 
     if (!testThread->isRunning())
     {

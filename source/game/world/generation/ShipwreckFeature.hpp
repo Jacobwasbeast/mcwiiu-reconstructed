@@ -27,7 +27,6 @@ public:
         ShipwreckStart(Level* level, GenericOverworldLevelSource* source, Random& random,
                        int chunkX, int chunkZ);
         ShipwreckStart();
-        virtual ~ShipwreckStart();
 
         void create(Level* level, GenericOverworldLevelSource* source, Random& random,
                     int chunkX, int chunkZ);

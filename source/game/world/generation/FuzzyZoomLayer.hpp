@@ -11,7 +11,6 @@ public:
     static boost::shared_ptr<Layer> zoom(long long seed, boost::shared_ptr<Layer> parent, int count);
 
     FuzzyZoomLayer(long long seed, boost::shared_ptr<Layer> parent);
-    virtual ~FuzzyZoomLayer();
 
     virtual int modeOrRandom(int upperLeft, int upperRight, int lowerLeft, int lowerRight);
 };

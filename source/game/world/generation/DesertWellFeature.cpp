@@ -62,7 +62,8 @@ bool DesertWellFeature::place(Level* level, Random& random, const BlockPos& orig
 
     level->setBlock(pos, mWaterState, Block::UPDATE_CLIENTS, false);
     arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
-    for (unsigned int i = 0; i < directions.length; ++i)
+    const unsigned int directionCount = directions.length;
+    for (unsigned int i = 0; i < directionCount; ++i)
         level->setBlock(pos.relative(directions.data[i]), mWaterState, Block::UPDATE_CLIENTS, false);
 
     for (int x = -2; x <= 2; ++x)

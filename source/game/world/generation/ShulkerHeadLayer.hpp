@@ -6,6 +6,7 @@
 #include "game/client/render/RenderLayer.hpp"
 
 class LivingEntity;
+class ResourceLocation;
 class ShulkerRenderer;
 
 class ShulkerHeadLayer : public RenderLayer
@@ -20,6 +21,8 @@ public:
     virtual bool colorsOnDamage();
 
 private:
+    static ResourceLocation SHULKER_LOCATION;
+
     ShulkerRenderer* mRenderer;
 };
 

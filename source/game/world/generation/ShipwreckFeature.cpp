@@ -1,5 +1,6 @@
 #include "game/world/generation/ShipwreckFeature.hpp"
 
+#include <algorithm>
 #include <vector>
 
 #include "game/core/CConsoleMinecraftApp.hpp"
@@ -94,11 +95,8 @@ ShipwreckFeature::ShipwreckFeature(GenericOverworldLevelSource* source,
     if (separation < 5)
         separation = 5;
     mSeparation = separation;
-    int spacing = info.getShipwreckSpacing();
-    int minimumSpacing = separation + 1;
-    if (minimumSpacing < spacing)
-        minimumSpacing = spacing;
-    mSpacing = minimumSpacing;
+    int spacing = std::max(info.getShipwreckSpacing(), separation + 1);
+    mSpacing = spacing;
     mFeatureChunk = FjIsFeatureChunk(GetFJBiomeRequirements(), 20, mSpacing, mSeparation);
     mReducedFeatureChunk = FjIsFeatureChunk::CreateReduced(mFeatureChunk);
 }
@@ -154,6 +152,8 @@ bool ShipwreckFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
 void ShipwreckFeature::ShipwreckStart::create(Level* level, GenericOverworldLevelSource* source,
                                                 Random& random, int chunkX, int chunkZ)
 {
+    int x = chunkX * 16 - 2;
+    int z = chunkZ * 16 - 2;
     const Direction* direction = Direction::SOUTH;
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     if (options != NULL)
@@ -163,8 +163,7 @@ void ShipwreckFeature::ShipwreckStart::create(Level* level, GenericOverworldLeve
             && featureDirection != NULL)
             direction = featureDirection;
     }
-    push_back(new ShipwreckPiece(level, source, chunkX * 16 - 2, chunkZ * 16 - 2,
-                                 random, direction));
+    mPieces.push_back(new ShipwreckPiece(level, source, x, z, random, direction));
     calculateBoundingBox();
 }
 
@@ -177,10 +176,6 @@ ShipwreckFeature::ShipwreckStart::ShipwreckStart(Level* level, GenericOverworldL
 
 ShipwreckFeature::ShipwreckStart::ShipwreckStart()
     : StructureStart(0, 0)
-{
-}
-
-ShipwreckFeature::ShipwreckStart::~ShipwreckStart()
 {
 }
 

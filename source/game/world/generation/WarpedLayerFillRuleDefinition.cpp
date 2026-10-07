@@ -14,10 +14,6 @@ WarpedLayerFillRuleDefinition::WarpedLayerFillRuleDefinition()
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_thickness, &mThickness)->setMin(1)->setMax(9);
 }
 
-WarpedLayerFillRuleDefinition::~WarpedLayerFillRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType WarpedLayerFillRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_WarpedLayerFill;

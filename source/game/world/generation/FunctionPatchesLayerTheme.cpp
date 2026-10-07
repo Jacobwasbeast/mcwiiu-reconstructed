@@ -28,11 +28,11 @@ const BlockState* FunctionPatchesLayerTheme::GRASS_PATCHES(Random&, float noise,
     if (heightAboveSurface == ABOVE_SURFACE(1) || heightAboveSurface == ABOVE_SURFACE(2))
     {
         DoublePlantBlock::Half* plantHalf = heightAboveSurface == ABOVE_SURFACE(2)
-            ? DoublePlantBlock::HALVES[DoublePlantBlock::Half::UPPER]
-            : DoublePlantBlock::HALVES[DoublePlantBlock::Half::LOWER];
-        const BlockState* state = Blocks::double_plant->defaultBlockState();
-        state = state->setValue(DoublePlantBlock::VARIANT, DoublePlantBlock::VARIANTS[2]);
-        return state->setValue(DoublePlantBlock::HALF, plantHalf);
+            ? DoublePlantBlock::UPPER_HALF
+            : DoublePlantBlock::LOWER_HALF;
+        return Blocks::double_plant->defaultBlockState()
+            ->setValue(DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::GRASS)
+            ->setValue(DoublePlantBlock::HALF, plantHalf);
     }
 
     if (heightAboveSurface == 0)
@@ -48,14 +48,16 @@ const BlockState* FunctionPatchesLayerTheme::HELLFIRE_PATCHES(Random&, float noi
 {
     if (noise >= 0.5)
     {
-        if (!isAir && heightAboveSurface == 0)
+        if (isAir)
+        {
+            if (heightAboveSurface == ABOVE_SURFACE(1))
+            {
+                return Blocks::fire->defaultBlockState();
+            }
+        }
+        else if (heightAboveSurface == 0)
         {
             return Blocks::netherrack->defaultBlockState();
-        }
-
-        if (isAir && heightAboveSurface == ABOVE_SURFACE(1))
-        {
-            return Blocks::fire->defaultBlockState();
         }
     }
 
@@ -66,9 +68,11 @@ const BlockState* FunctionPatchesLayerTheme::SNOWLAYER_PATCHES(Random&, float no
 {
     if (noise > 0.4 && heightAboveSurface == ABOVE_SURFACE(1))
     {
-        int layers = static_cast<int>((5.0 * (static_cast<double>(noise) - 0.4)) / 0.6) + 1;
+        double excess = noise - 0.4;
+        double scaled = 5.0 * excess;
+        int layers = static_cast<int>(scaled / 0.6);
         const BlockState* state = Blocks::snow_layer->defaultBlockState();
-        return state->setValue(SnowLayerBlock::LAYERS, layers);
+        return state->setValue(SnowLayerBlock::LAYERS, layers + 1);
     }
 
     return NULL;
@@ -79,27 +83,25 @@ const BlockState* FunctionPatchesLayerTheme::TNT_TRAPS(Random&, float noise, int
     if (noise >= 0.6)
     {
         int aboveSurface = ABOVE_SURFACE(1);
-        if (heightAboveSurface >= aboveSurface)
+        if (heightAboveSurface < aboveSurface)
         {
-            if (heightAboveSurface == aboveSurface)
+            if (heightAboveSurface == 0)
             {
-                return Blocks::stone_pressure_plate->defaultBlockState();
+                return Blocks::gravel->defaultBlockState();
             }
 
-            return NULL;
+            if (heightAboveSurface == BELOW_SURFACE(1))
+            {
+                return Blocks::tnt->defaultBlockState();
+            }
+
+            return Blocks::air->defaultBlockState();
         }
 
-        if (heightAboveSurface == 0)
+        if (heightAboveSurface <= aboveSurface)
         {
-            return Blocks::gravel->defaultBlockState();
+            return Blocks::stone_pressure_plate->defaultBlockState();
         }
-
-        if (heightAboveSurface == BELOW_SURFACE(1))
-        {
-            return Blocks::tnt->defaultBlockState();
-        }
-
-        return Blocks::air->defaultBlockState();
     }
 
     return NULL;

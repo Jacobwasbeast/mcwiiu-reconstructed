@@ -15,7 +15,6 @@ class PlayerTeam : public Team
 {
 public:
     PlayerTeam(Scoreboard* pScoreboard, const std::wstring& name, unsigned int teamIndex);
-    virtual ~PlayerTeam();
 
     virtual std::wstring getName();
     virtual std::wstring getFormattedName(const std::wstring& name);

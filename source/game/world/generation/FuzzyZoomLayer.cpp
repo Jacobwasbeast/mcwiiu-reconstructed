@@ -8,10 +8,6 @@ FuzzyZoomLayer::FuzzyZoomLayer(long long seed, boost::shared_ptr<Layer> parent)
     this->parent = parent;
 }
 
-FuzzyZoomLayer::~FuzzyZoomLayer()
-{
-}
-
 int FuzzyZoomLayer::modeOrRandom(int upperLeft, int upperRight, int lowerLeft, int lowerRight)
 {
     return random(upperLeft, upperRight, lowerLeft, lowerRight);

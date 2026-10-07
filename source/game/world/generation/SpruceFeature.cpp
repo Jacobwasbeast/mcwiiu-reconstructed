@@ -26,10 +26,6 @@ SpruceFeature::SpruceFeature(bool doBlockNotify)
 {
 }
 
-SpruceFeature::~SpruceFeature()
-{
-}
-
 void SpruceFeature::staticCtor()
 {
     const BlockState* trunkState = Blocks::log->defaultBlockState();
@@ -45,7 +41,7 @@ void SpruceFeature::staticCtor()
     }
     {
         TypedBoxed<bool> decayable(false);
-        leafState = leafState->setBoxedValue(LeafBlock::DECAYABLE, &decayable);
+        leafState = leafState->setBoxedValue(LeafBlock::CHECK_DECAY, &decayable);
     }
     spruceLeafState = leafState;
 }

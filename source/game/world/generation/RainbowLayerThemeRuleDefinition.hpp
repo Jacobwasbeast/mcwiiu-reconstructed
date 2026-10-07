@@ -7,7 +7,6 @@
 class RainbowLayerThemeRuleDefinition : public GenericMultiBlockThemeRuleDefinition
 {
 public:
-    virtual ~RainbowLayerThemeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
 

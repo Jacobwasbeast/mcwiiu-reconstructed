@@ -22,7 +22,3 @@ bool LookAtTradingPlayerGoal::canUse()
     return true;
 }
 
-std::wstring LookAtTradingPlayerGoal::getName()
-{
-    return std::wstring(L"LookAtTradingPlayer");
-}

@@ -11,7 +11,6 @@ class BirchFeature : public AbstractTreeFeature
 {
 public:
     BirchFeature(bool doBlockNotify, bool tallBirch);
-    virtual ~BirchFeature();
 
     static void staticCtor();
     virtual bool place(Level* level, Random& random, const BlockPos& origin);

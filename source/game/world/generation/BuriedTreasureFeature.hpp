@@ -22,7 +22,6 @@ public:
     {
     public:
         BuriedTreasurePiece(int x, int z);
-        virtual ~BuriedTreasurePiece();
 
         virtual bool postProcess(Level* level, Random& random, BoundingBox* box);
         virtual void handleDataMarker(const std::wstring& marker, const BlockPos& position,
@@ -36,7 +35,6 @@ public:
         BuriedTreasureStart(BuriedTreasureFeature* feature, Level* level, Random& random,
                             int chunkX, int chunkZ);
         BuriedTreasureStart();
-        virtual ~BuriedTreasureStart();
 
         virtual EStructureStart GetType();
         static StructureStart* Create();

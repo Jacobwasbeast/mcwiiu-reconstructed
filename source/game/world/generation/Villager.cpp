@@ -256,9 +256,9 @@ Villager::~Villager()
     delete mOffers;
 }
 
-void Villager::create(Level* level)
+Entity* Villager::create(Level* level)
 {
-    new Villager(level);
+    return new Villager(level);
 }
 
 void Villager::_init(int profession)

@@ -14,7 +14,6 @@ class MaxSnowballHitsWithSnowballOnPlayerStatTracker : public StatTracker<unsign
 {
 public:
     MaxSnowballHitsWithSnowballOnPlayerStatTracker(const StatsUID& statsUID);
-    virtual ~MaxSnowballHitsWithSnowballOnPlayerStatTracker();
     virtual void update(const DamageEvent* damageEvent);
 
 private:

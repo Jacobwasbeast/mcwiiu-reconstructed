@@ -11,7 +11,6 @@ class PlayersEnteredVolumeCondition : public IntegerCondition
 public:
     PlayersEnteredVolumeCondition(const XmlObject& object);
     PlayersEnteredVolumeCondition(int threshold, EOperator op, const std::wstring& volumeName, bool useTargetAreas);
-    virtual ~PlayersEnteredVolumeCondition();
 
     virtual int GetValue(MasterGameMode* gameMode) const;
     int GetThresholdPlayerOverride(MasterGameMode* gameMode, int playerCount) const;

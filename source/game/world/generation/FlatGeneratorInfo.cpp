@@ -302,7 +302,7 @@ int FlatGeneratorInfo::getWoodlandMansionSeparation() { return core()->maybeOpti
 std::wstring FlatGeneratorInfo::generateDescription()
 {
     std::wstring description = L"";
-    description += formatwstr(L"%ls: %ls<br /><br />", L10N::GetString(IDS_BIOME), Biome::getBiomes()[getBiome()]->getName(false).c_str());
+    description += formatwstr(L"%ls: %ls<br /><br />", L10N::GetString(IDS_BIOME), Biome::biomes[getBiome()]->getName(false).c_str());
     std::vector<FlatLayerInfo> layers;
     getLayers(layers);
     description += formatwstr(L"%ls:<br />", L10N::GetString(IDS_LAYERS));

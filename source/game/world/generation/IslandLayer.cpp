@@ -18,15 +18,15 @@ arrayWithLength<int> IslandLayer::getArea(int x, int z, int width, int height)
     {
         for (int j = 0; j < width; j++)
         {
-            initRandom((long long)(j + x), (long long)(i + z));
+            initRandom((long long)(x + j), (long long)(z + i));
 
-            area.data[j + i * width] = nextRandom(10) == 0 ? 1 : 0;
+            area[j + i * width] = nextRandom(10) == 0 ? 1 : 0;
         }
     }
 
     if (x > -width && x <= 0 && z > -height && z <= 0)
     {
-        area.data[-x + -z * width] = 1;
+        area[-x + -z * width] = 1;
     }
 
     PIXEndNamedEvent();

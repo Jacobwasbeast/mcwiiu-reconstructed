@@ -25,12 +25,12 @@ arrayWithLength<int> AddSnowLayer::getArea(int x, int z, int width, int height)
         for (int j = 0; j < width; j++)
         {
             int index = j + 1 + (i + 1) * parentWidth;
-            int centre = parentArea.data[index];
+            int centre = parentArea[index];
             initRandom((long long)(x + j), (long long)(z + i));
 
             if (isShallowOcean(centre))
             {
-                area.data[j + i * width] = centre;
+                area[j + i * width] = centre;
             }
             else
             {
@@ -48,7 +48,7 @@ arrayWithLength<int> AddSnowLayer::getArea(int x, int z, int width, int height)
                         snow = 3;
                     }
                 }
-                area.data[j + i * width] = snow;
+                area[j + i * width] = snow;
             }
         }
     }

@@ -11,7 +11,7 @@ public:
     LookAtTradingPlayerGoal(Villager* villager);
     virtual ~LookAtTradingPlayerGoal() {}
     virtual bool canUse();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"LookAtTradingPlayer"; }
 
 private:
     Villager* mVillager;

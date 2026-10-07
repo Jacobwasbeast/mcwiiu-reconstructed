@@ -21,12 +21,12 @@ RandomScatteredLargeFeature::RandomScatteredLargeFeature()
 }
 
 RandomScatteredLargeFeature::RandomScatteredLargeFeature(SuperflatConfig* config)
-    : StructureFeature()
+    : StructureFeature(), mSwamphutEnemies()
 {
     _init();
     int spacing = (int)config->maybeOption(0x21, 0, (unsigned char)mSpacing);
     int minimum = mSeparation + 1;
-    if (minimum < spacing)
+    if (spacing > minimum)
     {
         minimum = spacing;
     }
@@ -35,8 +35,8 @@ RandomScatteredLargeFeature::RandomScatteredLargeFeature(SuperflatConfig* config
 
 RandomScatteredLargeFeature::~RandomScatteredLargeFeature()
 {
-    for (std::vector<Biome::MobSpawnerData*>::iterator it = mSwamphutEnemies.begin(), last = mSwamphutEnemies.end();
-         it != last; ++it)
+    std::vector<Biome::MobSpawnerData*>::iterator last = mSwamphutEnemies.end();
+    for (std::vector<Biome::MobSpawnerData*>::iterator it = mSwamphutEnemies.begin(); it != last; ++it)
     {
         delete *it;
     }
@@ -68,33 +68,37 @@ std::wstring RandomScatteredLargeFeature::getFeatureName()
 bool RandomScatteredLargeFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
 {
     int spacing;
-    if (!flatWorld)
+    if (flatWorld)
+    {
+        spacing = mSpacing;
+    }
+    else
     {
         mSpacing = 0x10;
         spacing = 0x10;
     }
-    else
-    {
-        spacing = mSpacing;
-    }
-    int regionX = chunkX;
+    int originalX = chunkX;
+    int originalZ = chunkZ;
     if (chunkX < 0)
     {
-        regionX = chunkX + (1 - spacing);
+        chunkX -= spacing - 1;
     }
-    int regionZ = chunkZ;
     if (chunkZ < 0)
     {
-        regionZ = chunkZ + (1 - spacing);
+        chunkZ -= spacing - 1;
     }
-    Random& random = *level->getRandomFor(regionX / spacing, regionZ / spacing, 0xDB1471);
-    int cellSpacing = mSpacing;
-    int offsetX = random.nextInt(cellSpacing - mSeparation);
-    int offsetZ = random.nextInt(mSpacing - mSeparation);
+    int regionX = chunkX / spacing;
+    int regionZ = chunkZ / spacing;
+    Random* random = level->getRandomFor(regionX, regionZ, 0xDB1471);
+    regionX *= mSpacing;
+    regionZ *= mSpacing;
+    regionX += random->nextInt(mSpacing - mSeparation);
+    regionZ += random->nextInt(mSpacing - mSeparation);
+    chunkX = originalX;
+    chunkZ = originalZ;
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     if ((options != NULL && options->isFeatureChunk(chunkX, chunkZ, eFeatureType_ScatteredFeature, NULL)) ||
-        (chunkX == regionX / spacing * cellSpacing + offsetX &&
-         chunkZ == regionZ / spacing * cellSpacing + offsetZ))
+        (chunkX == regionX && chunkZ == regionZ))
     {
         Biome* biome = level->getBiomeSource()->getBiome(BlockPos(chunkX * 16 + 8, 0, chunkZ * 16 + 8));
         for (std::vector<Biome*>::const_iterator it = gRandomScatteredLargeFeatureBiomes.begin();
@@ -128,12 +132,12 @@ StructureStart* RandomScatteredLargeFeature::createStructureStart(int chunkX, in
 bool RandomScatteredLargeFeature::isSwamphut(const BlockPos& pos)
 {
     StructureStart* start = getStructureAt(pos);
-    if (start == NULL || dynamic_cast<ScatteredFeatureStart*>(start) == NULL || start->empty())
+    if (start == NULL || dynamic_cast<ScatteredFeatureStart*>(start) == NULL || start->mPieces.empty())
     {
         return false;
     }
-    StructureStart::iterator first = start->begin();
-    ScatteredFeaturePieces::SwamplandHut* hut = first != start->end() && *first != NULL
+    std::vector<StructurePiece*>::iterator first = start->mPieces.begin();
+    ScatteredFeaturePieces::SwamplandHut* hut = first != start->mPieces.end() && *first != NULL
         ? dynamic_cast<ScatteredFeaturePieces::SwamplandHut*>(*first) : NULL;
     return hut != NULL;
 }
@@ -154,29 +158,25 @@ RandomScatteredLargeFeature::ScatteredFeatureStart::ScatteredFeatureStart(Level*
     int z = chunkZ * 16;
     if (biome == Biome::JUNGLE || biome == Biome::JUNGLE_HILLS)
     {
-        push_back(new ScatteredFeaturePieces::JunglePyramidPiece(levelIn, randomIn, x, z));
+        mPieces.push_back(new ScatteredFeaturePieces::JunglePyramidPiece(levelIn, randomIn, x, z));
     }
     else if (biome == Biome::SWAMPLAND)
     {
-        push_back(new ScatteredFeaturePieces::SwamplandHut(levelIn, randomIn, x, z));
+        mPieces.push_back(new ScatteredFeaturePieces::SwamplandHut(levelIn, randomIn, x, z));
     }
     else if (biome == Biome::DESERT || biome == Biome::DESERT_HILLS)
     {
-        push_back(new ScatteredFeaturePieces::DesertPyramidPiece(levelIn, randomIn, x, z));
+        mPieces.push_back(new ScatteredFeaturePieces::DesertPyramidPiece(levelIn, randomIn, x, z));
     }
     else if (biome == Biome::ICE_PLAINS || biome == Biome::COLD_TAIGA)
     {
-        push_back(new ScatteredFeaturePieces::Igloo(levelIn, randomIn, x, z));
+        mPieces.push_back(new ScatteredFeaturePieces::Igloo(levelIn, randomIn, x, z));
     }
     calculateBoundingBox();
 }
 
 RandomScatteredLargeFeature::ScatteredFeatureStart::ScatteredFeatureStart()
     : StructureStart()
-{
-}
-
-RandomScatteredLargeFeature::ScatteredFeatureStart::~ScatteredFeatureStart()
 {
 }
 

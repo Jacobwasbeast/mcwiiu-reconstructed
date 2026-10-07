@@ -9,7 +9,6 @@ class GroundBushFeature : public TreeFeature
 {
 public:
     GroundBushFeature(const BlockState* trunkState, const BlockState* leafState);
-    virtual ~GroundBushFeature();
     virtual bool place(Level* level, Random& random, const BlockPos& pos);
 
 private:

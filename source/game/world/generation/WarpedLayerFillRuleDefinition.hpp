@@ -9,7 +9,6 @@ class WarpedLayerFillRuleDefinition : public LayerAttributeChildRuleDefinition<L
 {
 public:
     WarpedLayerFillRuleDefinition();
-    virtual ~WarpedLayerFillRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual LayerFill* Generate() const;

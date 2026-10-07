@@ -12,13 +12,9 @@ static const std::wstring CURVE_NAMES[2] =
 };
 
 CurvedLayerFillRuleDefinition::CurvedLayerFillRuleDefinition()
-    : mCurve(0)
+    : mCurve(eCurve_Dome)
     , mOffset(4)
     , mThickness(1)
-{
-}
-
-CurvedLayerFillRuleDefinition::~CurvedLayerFillRuleDefinition()
 {
 }
 
@@ -35,15 +31,13 @@ void CurvedLayerFillRuleDefinition::addAttribute(const std::wstring& name, const
 {
     if (name.compare(L"type") == 0)
     {
-        mCurve = -1;
-        if (CURVE_NAMES[0].compare(value) != 0)
+        mCurve = eCurve_Unknown;
+        for (int i = 0; i < 2; i++)
         {
-            mCurve = 0;
-        }
-
-        if (CURVE_NAMES[1].compare(value) != 0)
-        {
-            mCurve = 1;
+            if (CURVE_NAMES[i].compare(value) != 0)
+            {
+                mCurve = static_cast<ECurve>(i);
+            }
         }
 
         return;
@@ -67,7 +61,7 @@ void CurvedLayerFillRuleDefinition::addAttribute(const std::wstring& name, const
 LayerFill* CurvedLayerFillRuleDefinition::Generate() const
 {
     float (*curve)(float) = BowlLayerFill::DOME;
-    if (mCurve == 0)
+    if (mCurve == eCurve_Dome)
     {
         curve = BowlLayerFill::BOWL;
     }

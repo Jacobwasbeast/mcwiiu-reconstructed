@@ -119,27 +119,30 @@ StructureStart* StructureFeatureIO::loadStaticStart(ByteArrayTag* tag, Level* le
             bool discard = false;
             if (version == 0)
             {
-                EStructureStart type = start->GetType();
-                discard = type == eStructureStart_Village || type == eStructureStart_ScatteredFeature;
+                switch (start->GetType())
+                {
+                case eStructureStart_Village:
+                case eStructureStart_ScatteredFeature:
+                    discard = true;
+                    break;
+                default:
+                    break;
+                }
             }
 
-            if (discard)
+            if (!discard)
+            {
+                start->load(level, &input);
+            }
+            else
             {
                 delete start;
                 start = NULL;
             }
-            else
-            {
-                start->load(level, &input);
-            }
         }
     }
 
-    buffer.mBuffer.data = NULL;
-    buffer.mBuffer.length = 0;
-    buffer.mCount = 0;
-    buffer.mMark = 0;
-    buffer.mPosition = 0;
+    buffer.reset();
     return start;
 }
 

@@ -29,10 +29,6 @@ PlayersEnteredVolumeCondition::PlayersEnteredVolumeCondition(const XmlObject& ob
 {
 }
 
-PlayersEnteredVolumeCondition::~PlayersEnteredVolumeCondition()
-{
-}
-
 int PlayersEnteredVolumeCondition::GetValue(MasterGameMode* gameMode) const
 {
     int entered = 0;

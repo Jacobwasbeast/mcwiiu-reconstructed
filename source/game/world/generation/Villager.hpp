@@ -122,7 +122,7 @@ public:
     Villager(Level* level, int profession);
     virtual ~Villager();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     static void addDataWalkers(DataFixerUpper* fixer);
 

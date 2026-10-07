@@ -15,13 +15,9 @@ bool CactusFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
     for (int attempt = 0; attempt < 10; ++attempt)
     {
-        const int x0 = random.nextInt(8);
-        const int x1 = random.nextInt(8);
-        const int y0 = random.nextInt(4);
-        const int y1 = random.nextInt(4);
-        const int z0 = random.nextInt(8);
-        const int z1 = random.nextInt(8);
-        const BlockPos position = origin.offset(x0 - x1, y0 - y1, z0 - z1);
+        const BlockPos position =
+            origin.offset(random.nextInt(8) - random.nextInt(8), random.nextInt(4) - random.nextInt(4),
+                          random.nextInt(8) - random.nextInt(8));
         if (level->isEmptyBlock(position))
         {
             const int height = random.nextInt(random.nextInt(3) + 1) + 1;

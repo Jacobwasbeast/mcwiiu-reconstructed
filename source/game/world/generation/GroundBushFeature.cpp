@@ -13,14 +13,10 @@
 
 GroundBushFeature::GroundBushFeature(const BlockState* trunkState,
                                      const BlockState* leafState)
-    : TreeFeature(false),
-      mLeafState(leafState),
-      mTrunkState(trunkState)
+    : TreeFeature(false)
 {
-}
-
-GroundBushFeature::~GroundBushFeature()
-{
+    mTrunkState = trunkState;
+    mLeafState = leafState;
 }
 
 bool GroundBushFeature::place(Level* level, Random& random, const BlockPos& origin)
@@ -48,13 +44,14 @@ bool GroundBushFeature::place(Level* level, Random& random, const BlockPos& orig
             const int radius = 2 - (y - position.y);
             for (int x = position.x - radius; x <= position.x + radius; ++x)
             {
+                const int dx = std::abs(x - position.x);
                 for (int z = position.z - radius; z <= position.z + radius; ++z)
                 {
-                    if (std::abs(x - position.x) != radius ||
+                    if (dx != radius ||
                         std::abs(z - position.z) != radius ||
                         random.nextInt(2) != 0)
                     {
-                        BlockPos leafPos(x, y, z);
+                        const BlockPos& leafPos = BlockPos(x, y, z);
                         const Material* material = level->getBlockState(leafPos)->getMaterial();
                         if (material == Material::AIR || material == Material::LEAVES)
                         {

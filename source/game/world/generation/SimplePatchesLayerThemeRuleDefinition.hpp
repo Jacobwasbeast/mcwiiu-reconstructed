@@ -8,7 +8,6 @@ class SimplePatchesLayerThemeRuleDefinition : public LayerAttributeChildRuleDefi
 {
 public:
     SimplePatchesLayerThemeRuleDefinition();
-    virtual ~SimplePatchesLayerThemeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual LayerTheme* Generate() const;

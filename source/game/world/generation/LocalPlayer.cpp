@@ -127,54 +127,50 @@
 static const float DEGREES_TO_RADIANS = 0.017453292f;
 
 LocalPlayer::LocalPlayer(Minecraft* minecraft, Level* level, User* user, int dimension)
-    : AbstractClientPlayer(level, user->name),
-      mPermissionLevel(0),
-      mLastSentX(0.0),
-      mLastSentY(0.0),
-      mLastSentZ(0.0),
-      mLastSentYRot(0.0f),
-      mLastSentXRot(0.0f),
-      mPreviousOnGround(false),
-      mWasSneaking(false),
-      mWasSprinting(false),
-      mWasSwimming(false),
-      mWasDamagingNearbyMobs(false),
-      mPositionSendCounter(0),
-      mHealthInitialized(false),
-      mMinecraft(minecraft),
-      mSprintDelay(0),
-      mSprintPending(false),
-      mFlyTogglePending(false),
-      mRightClickDelay(0),
-      mIdleTicks(0),
-      mSprinting(0),
-      mThirdPersonViewTimer(0),
-      mViewYRot(0.0f),
-      mViewXRot(0.0f),
-      mViewYRotO(0.0f),
-      mViewXRotO(0.0f),
-      mPortalEffectIntensity(0.0f),
-      mPortalEffectIntensityO(0.0f),
-      mFallFlyYaw(0.0f),
-      mFallFlyYawOld(0.0f),
-      mFallFlyingAlignment(0.0f),
-      mFallFlyingAlignmentO(0.0f),
-      mItemUsePending(false),
-      mUsedItemHand(InteractionHand::eInteractionHand_MainHand),
-      mHandsBusy(false),
-      mAutoJumpEnabled(true),
-      mAutoJumpTime(0),
-      mFlyMotionX(0.0f),
-      mFlyMotionY(0.0f),
-      mFlyMotionZ(0.0f),
-      mRideJumpTicks(0),
-      mRideJumpScale(0.0f),
-      mViewBob(),
-      mViewBobPrev(),
-      mViewBobAmount(),
-      mAdditionalModelParts()
+    : AbstractClientPlayer(level, user->name)
 {
     std::memset(mAwardedAchievements, 0, sizeof(mAwardedAchievements));
+    mFlyTogglePending = false;
+    mRightClickDelay = 0;
+    mHealthInitialized = false;
+    mFallFlyingAlignmentO = 0.0f;
+    mViewYRot = 0.0f;
+    mViewXRot = 0.0f;
+    mFlyMotionY = 0.0f;
+    mWasSprinting = false;
+    mAutoJumpEnabled = true;
+    mIdleTicks = 0;
+    mMinecraft = minecraft;
+    mFallFlyYaw = 0.0f;
+    mFlyMotionX = 0.0f;
+    mPortalEffectIntensity = 0.0f;
+    mLastSentYRot = 0.0f;
+    mWasSwimming = false;
+    mPermissionLevel = 0;
+    mPortalEffectIntensityO = 0.0f;
+    mUsedItemHand = InteractionHand::eInteractionHand_MainHand;
+    mFallFlyYawOld = 0.0f;
+    mLastSentY = 0.0;
+    mPreviousOnGround = false;
+    mFlyMotionZ = 0.0f;
+    mViewYRotO = 0.0f;
+    mHandsBusy = false;
+    mThirdPersonViewTimer = 0;
+    mLastSentXRot = 0.0f;
+    mWasSneaking = false;
+    mPositionSendCounter = 0;
+    mSprinting = 0;
+    mSprintDelay = 0;
+    mAutoJumpTime = 0;
+    mViewXRotO = 0.0f;
+    mSprintPending = false;
+    mLastSentZ = 0.0;
+    mWasDamagingNearbyMobs = false;
+    mFallFlyingAlignment = 0.0f;
+    mLastSentX = 0.0;
+    mItemUsePending = false;
+    mRideJumpTicks = 0;
+    mRideJumpScale = 0.0f;
     mDimension = dimension;
     if (user != NULL)
     {
@@ -599,21 +595,20 @@ int LocalPlayer::startBlockInteraction(InteractionObject& interaction)
 
 void LocalPlayer::openItemInstanceGui(not_null_ptr<ItemInstance> item, InteractionHand::EInteractionHand hand)
 {
+    bool opened = false;
     Item* book = item->getItem();
     if (book == Items::writtenBook)
     {
-        if (!gApp.LoadWritingBookMenu(mUserIndex, item, false))
-            return;
+        opened = gApp.LoadWritingBookMenu(mUserIndex, item, false);
     }
     else if (book == Items::writableBook)
     {
         gApp.LoadWritingBookMenu(mUserIndex, item, true);
+        opened = true;
     }
-    else
-    {
-        return;
-    }
-    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+
+    if (opened)
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
 }
 
 void LocalPlayer::crit(boost::shared_ptr<Entity> entity)
@@ -632,15 +627,9 @@ void LocalPlayer::serverAiStep()
     if (isControlledCamera())
     {
         float movement;
-        if (!mAbilities.mFlying || !mAbilities.mMayfly ||
+        if (mAbilities.mFlying && mAbilities.mMayfly &&
             (movement = std::sqrt(mInput->mMoveStrafe * mInput->mMoveStrafe +
-                                  mInput->mMoveForward * mInput->mMoveForward)) < 0.1f)
-        {
-            mXxa = mInput->mMoveStrafe;
-            mZza = mInput->mMoveForward;
-            mJumping = mInput->mJumping;
-        }
-        else
+                                  mInput->mMoveForward * mInput->mMoveForward)) >= 0.1f)
         {
             const float angle = std::atan2(mInput->mMoveForward, mInput->mMoveStrafe) * 57.295776f;
             const float heading = angle + mYRot;
@@ -648,32 +637,38 @@ void LocalPlayer::serverAiStep()
             const float radians = snapped * 0.017453292f;
             mXxa = std::cos(radians) * movement;
             mZza = std::sin(radians) * movement;
-            mJumping = mInput->mJumping;
         }
-        mViewYRotO = mViewYRot;
+        else
+        {
+            mXxa = mInput->mMoveStrafe;
+            mZza = mInput->mMoveForward;
+        }
+        mJumping = mInput->mJumping;
         mViewXRotO = mViewXRot;
-        mViewYRot += (mYRot - mViewYRot) * 0.5f;
+        mViewYRotO = mViewYRot;
         mViewXRot += (mXRot - mViewXRot) * 0.5f;
+        mViewYRot += (mYRot - mViewYRot) * 0.5f;
     }
 }
 
 float LocalPlayer::tickHeadTurn(float yRot, float xRot)
 {
-    if (!isFallFlying())
-        return LivingEntity::tickHeadTurn(yRot, xRot);
-
-    float bodyTurn = Mth::wrapDegrees(yRot - mYBodyRot);
-    mYBodyRot = bodyTurn * 0.3f + mYBodyRot;
-    float headDiff = Mth::wrapDegrees(mYRot - mYBodyRot);
-    bool backwards = headDiff < -90.0f || headDiff >= 90.0f;
-    if (headDiff < -50.0f)
-        headDiff = -50.0f;
-    if (headDiff >= 50.0f)
-        headDiff = 50.0f;
-    mYBodyRot = mYRot - headDiff;
-    if (backwards)
-        xRot = -xRot;
-    return xRot;
+    if (isFallFlying())
+    {
+        float bodyTurn = Mth::wrapDegrees(yRot - mYBodyRot);
+        mYBodyRot = bodyTurn * 0.3f + mYBodyRot;
+        float headDiff = Mth::wrapDegrees(mYRot - mYBodyRot);
+        bool backwards = headDiff < -90.0f || headDiff >= 90.0f;
+        if (headDiff < -50.0f)
+            headDiff = -50.0f;
+        else if (headDiff >= 50.0f)
+            headDiff = 50.0f;
+        mYBodyRot = mYRot - headDiff;
+        if (backwards)
+            xRot = -xRot;
+        return xRot;
+    }
+    return LivingEntity::tickHeadTurn(yRot, xRot);
 }
 
 void LocalPlayer::aiStep()
@@ -1455,7 +1450,8 @@ bool LocalPlayer::IsWaitingForScoreboard()
 bool LocalPlayer::doesLevelAllowBlockToBreak(const BlockPos& pos)
 {
     const bool outsideNether = mLevel->mDimension->getType() != DimensionType::NETHER;
-    return (mLevel->mDimension->getType() == DimensionType::THE_END || pos.y > 0) && (outsideNether || pos.y < 127);
+    const bool inEnd = mLevel->mDimension->getType() == DimensionType::THE_END;
+    return (inEnd || pos.y > 0) && (outsideNether || pos.y < 127);
 }
 
 unsigned int LocalPlayer::pickBlock(bool select)
@@ -2011,16 +2007,16 @@ bool LocalPlayer::isInvisible()
 
 bool LocalPlayer::canMoveOrBeMovedFromTo(double a, double b, double c, double d, double e, double f, Vec3* result)
 {
-    MultiPlayerGameMode* gameMode = mMinecraft->mGameModes[mUserIndex];
-    GameModeConstraints* constraints = gameMode->getGameModeConstraints();
-    if (constraints->canMoveToPosition(a, b, c, d, e, f, result))
-        return false;
-    if (!gApp.DebugDevToolsOn() && mLevel->mIsClientSide)
+    if (!mMinecraft->mGameModes[mUserIndex]->getGameModeConstraints()->canMoveToPosition(a, b, c, d, e, f, result))
     {
-        if (!mLevel->reallyHasChunk(Mth::floor(d * 0.0625), Mth::floor(f * 0.0625)))
-            return false;
+        if (!gApp.DebugDevToolsOn() && mLevel->mIsClientSide)
+        {
+            if (!mLevel->reallyHasChunk(Mth::floor(d * 0.0625), Mth::floor(f * 0.0625)))
+                return false;
+        }
+        return true;
     }
-    return true;
+    return false;
 }
 
 int LocalPlayer::getIndicatorSegment(float x, float z)
@@ -2720,8 +2716,12 @@ void LocalPlayer::OnTakeFromAnvil(not_null_ptr<ItemInstance> item)
 
 double LocalPlayer::getUnderwaterVisionClarity()
 {
-    float clarity = mWaterVisionClarityTarget;
-    if (mWaterVisionClarity != mWaterVisionClarityO)
+    float clarity;
+    if (mWaterVisionClarity == mWaterVisionClarityO)
+    {
+        clarity = mWaterVisionClarityTarget;
+    }
+    else
     {
         clarity = 1.0f;
         mWaterVisionClarityTarget = clarity;

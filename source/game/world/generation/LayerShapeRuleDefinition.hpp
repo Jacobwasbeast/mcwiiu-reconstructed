@@ -8,7 +8,6 @@ class LayerShapeRuleDefinition : public LayerAttributeRuleDefinition<LayerShape*
 {
 public:
     LayerShapeRuleDefinition();
-    virtual ~LayerShapeRuleDefinition();
 
     static LayerAttributeChildRuleDefinition<LayerShape*>* CreateFuncImpl(ConsoleGameRules::EGameRuleType type);
 };

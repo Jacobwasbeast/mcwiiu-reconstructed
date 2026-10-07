@@ -14,10 +14,6 @@ PlayerTeam::PlayerTeam(Scoreboard* pScoreboard, const std::wstring& name, unsign
     mAllowFriendlyFire = true;
 }
 
-PlayerTeam::~PlayerTeam()
-{
-}
-
 Scoreboard* PlayerTeam::GetScoreboard()
 {
     return mScoreboard;

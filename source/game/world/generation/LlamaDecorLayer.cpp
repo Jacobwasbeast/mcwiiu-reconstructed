@@ -31,7 +31,7 @@ static ResourceLocation LLAMA_DECOR_TEXTURES[16] = {
 };
 
 LlamaDecorLayer::LlamaDecorLayer(LlamaRenderer* renderer)
-    : mModel(new LlamaModel(0.5f, ModelDefinition()))
+    : mModel(new LlamaModel(0.5f))
 {
     mRenderer = renderer;
 }
@@ -82,6 +82,6 @@ void LlamaDecorLayer::setupForTexturePack(TexturePack* texturePack)
     }
     else
     {
-        mModel = new LlamaModel(0.5f, ModelDefinition());
+        mModel = new LlamaModel(0.5f);
     }
 }

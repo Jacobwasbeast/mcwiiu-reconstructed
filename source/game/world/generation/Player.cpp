@@ -131,10 +131,6 @@ Player::PreventsMeFromSleeping::PreventsMeFromSleeping(boost::shared_ptr<Player>
     mPlayer = player;
 }
 
-Player::PreventsMeFromSleeping::~PreventsMeFromSleeping()
-{
-}
-
 bool Player::PreventsMeFromSleeping::apply(boost::shared_ptr<Entity> entity) const
 {
     boost::shared_ptr<Monster> monster = boost::dynamic_pointer_cast<Monster>(entity);
@@ -2433,7 +2429,7 @@ void Player::addAdditonalSaveData(CompoundTag* tag)
     LivingEntity::addAdditonalSaveData(tag);
     tag->putInt(L"DataVersion", 0x39a);
 
-    tag->put(L"Inventory", mInventory->save(new ListTag(0)));
+    tag->put(L"Inventory", mInventory->save(new ListTag()));
     tag->putInt(L"SelectedItemSlot", mInventory->m_selected);
 
     tag->putBoolean(L"Sleeping", mSleeping != 0);

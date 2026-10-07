@@ -54,7 +54,3 @@ void TradeWithPlayerGoal::stop()
     mVillager->setTradingPlayer(boost::shared_ptr<Player>());
 }
 
-std::wstring TradeWithPlayerGoal::getName()
-{
-    return std::wstring(L"TradeWithPlayer");
-}

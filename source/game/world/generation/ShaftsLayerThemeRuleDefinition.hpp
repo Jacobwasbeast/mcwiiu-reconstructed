@@ -7,7 +7,6 @@ class ShaftsLayerThemeRuleDefinition : public GenericMultiBlockThemeRuleDefiniti
 {
 public:
     ShaftsLayerThemeRuleDefinition();
-    virtual ~ShaftsLayerThemeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual LayerTheme* Generate() const;

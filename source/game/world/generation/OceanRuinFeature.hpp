@@ -37,7 +37,6 @@ public:
         OceanRuinStart();
         OceanRuinStart(Level* level, Random& random, int chunkX, int chunkZ,
                        const OceanRuinConfiguration& configuration);
-        virtual ~OceanRuinStart();
 
         std::vector<BlockPos>* allPositions(Random& random, int x, int z);
         void addClusterRuins(Random& random, const Direction* direction, int x, int z,

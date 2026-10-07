@@ -12,7 +12,6 @@ class SwampTreeFeature : public AbstractTreeFeature
 {
 public:
     SwampTreeFeature();
-    virtual ~SwampTreeFeature();
     static void staticCtor();
     void addVine(Level* level, const BlockPos& pos, const BooleanProperty* property);
     virtual bool place(Level* level, Random& random, const BlockPos& pos);

@@ -149,7 +149,3 @@ void MoveThroughVillageGoal::stop()
         mVisited.push_back(mDoorInfo);
 }
 
-std::wstring MoveThroughVillageGoal::getName()
-{
-    return std::wstring(L"MoveThroughVillage");
-}

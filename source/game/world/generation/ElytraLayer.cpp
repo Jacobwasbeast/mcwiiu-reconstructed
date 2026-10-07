@@ -21,8 +21,9 @@
 static ResourceLocation ELYTRA_LOCATION(TN_ITEM_ELYTRA);
 
 ElytraLayer::ElytraLayer(LivingEntityRenderer* renderer)
-    : mRenderer(renderer), mElytraModel(new ElytraModel(ModelDefinition()))
+    : mRenderer(renderer)
 {
+    mElytraModel = new ElytraModel();
 }
 
 ElytraLayer::~ElytraLayer()

@@ -26,10 +26,6 @@ SimplePatchesLayerThemeRuleDefinition::SimplePatchesLayerThemeRuleDefinition()
     thresholdAttribute->setMax(1.0f);
 }
 
-SimplePatchesLayerThemeRuleDefinition::~SimplePatchesLayerThemeRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType SimplePatchesLayerThemeRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_SimplePatchesTheme;

@@ -21,23 +21,15 @@ float TimeSpentOnLayerMedal::GetScore(PlayerStats* playerStats) const
         layer = static_cast<unsigned int>(gMinecraftServer->mMasterGameMode->GetLayerCount() - 1);
     }
 
-    unsigned int round = 0;
-    unsigned int totalRounds = static_cast<unsigned int>(playerStats->getTotalRounds());
-    if (totalRounds != 0)
+    for (unsigned int round = 0; round < playerStats->getTotalRounds(); ++round)
     {
-        do
+        PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
+        if (roundStats->mDeathLayer != PlayerStats::RoundStats::LAYERS_UNUSED
+            && layer < roundStats->mTimeOnLayer.size())
         {
-            PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
-            if (roundStats->mDeathLayer != PlayerStats::RoundStats::LAYERS_UNUSED
-                && layer < roundStats->mTimeOnLayer.size())
-            {
-                total += roundStats->mTimeOnLayer.at(layer);
-            }
-
-            ++round;
-            totalRounds = static_cast<unsigned int>(playerStats->getTotalRounds());
+            unsigned int time = roundStats->mTimeOnLayer.at(layer);
+            total += time;
         }
-        while (round < totalRounds);
     }
 
     return static_cast<float>(static_cast<int>(total));

@@ -18,18 +18,20 @@ SimplePatchesLayerTheme::SimplePatchesLayerTheme(unsigned int uSeed,
 
 const BlockState* SimplePatchesLayerTheme::BlockAt(Random& random, float fNoise, int iHeightAboveSurface, bool bIsAir) const
 {
-    if (fNoise < m_fPatchThreshold)
+    if (fNoise >= m_fPatchThreshold)
     {
-        if (iHeightAboveSurface > 0)
-        {
-            return Blocks::air->defaultBlockState();
-        }
-
-        if (!bIsAir)
-        {
-            return m_pPatchBlock;
-        }
+        return NULL;
     }
 
-    return NULL;
+    if (iHeightAboveSurface <= 0)
+    {
+        if (bIsAir)
+        {
+            return NULL;
+        }
+
+        return m_pPatchBlock;
+    }
+
+    return Blocks::air->defaultBlockState();
 }

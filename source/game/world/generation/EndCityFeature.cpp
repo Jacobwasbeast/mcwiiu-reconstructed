@@ -1,6 +1,7 @@
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/world/generation/EndCityFeature.hpp"
 
+#include <algorithm>
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
@@ -37,46 +38,39 @@ bool EndCityFeature::isFeatureChunk(int chunkX, int chunkZ, bool)
     {
         return false;
     }
-    Random& chunkRandom = *level->getRandomFor(area->x, area->z, 0x9E7F71);
+    Random& chunkRandom = *level->getRandomFor(area->x, area->z, 10387313);
     return chunkX == area->x && chunkZ == area->z && chunkRandom.nextDouble() < 0.33;
 }
 
 int EndCityFeature::getYPositionForFeature(int chunkX, int chunkZ,
                                            TheEndLevelSource* source)
 {
-    Random random(chunkX + chunkZ * 10387313);
+    int seed = chunkX + chunkZ * 10387313;
+    Random random(seed);
     Rotation* rotation = Rotation::VALUES[random.nextInt(4)];
     arrayWithLength<unsigned short> elements(65536, true);
     ChunkPrimer primer(true, elements);
     source->prepareHeights(chunkX, chunkZ, &primer);
-    int offset = 5;
-    int heights[4];
+    int xOffset = 5;
+    int zOffset = 5;
     if (rotation == Rotation::CLOCKWISE_90)
     {
-        heights[0] = primer.getHighestNonAirPos(7, 7);
-        heights[1] = primer.getHighestNonAirPos(7, 12);
-        heights[2] = primer.getHighestNonAirPos(2, 7);
-        heights[3] = primer.getHighestNonAirPos(2, 12);
+        xOffset = -5;
     }
     else if (rotation == Rotation::CLOCKWISE_180)
     {
-        heights[0] = primer.getHighestNonAirPos(7, 7);
-        heights[1] = primer.getHighestNonAirPos(7, 2);
-        heights[2] = primer.getHighestNonAirPos(2, 7);
-        heights[3] = primer.getHighestNonAirPos(2, 2);
+        xOffset = -5;
+        zOffset = -5;
     }
-    else
+    else if (rotation == Rotation::COUNTERCLOCKWISE_90)
     {
-        if (rotation == Rotation::COUNTERCLOCKWISE_90)
-            offset = -5;
-        heights[0] = primer.getHighestNonAirPos(7, 7);
-        heights[1] = primer.getHighestNonAirPos(7, offset + 7);
-        heights[2] = primer.getHighestNonAirPos(12, 7);
-        heights[3] = primer.getHighestNonAirPos(12, offset + 7);
+        zOffset = -5;
     }
-    int minimum = heights[0] < heights[1] ? heights[0] : heights[1];
-    int otherMinimum = heights[2] < heights[3] ? heights[2] : heights[3];
-    return minimum < otherMinimum ? minimum : otherMinimum;
+    int height0 = primer.getHighestNonAirPos(7, 7);
+    int height1 = primer.getHighestNonAirPos(7, zOffset + 7);
+    int height2 = primer.getHighestNonAirPos(xOffset + 7, 7);
+    int height3 = primer.getHighestNonAirPos(xOffset + 7, zOffset + 7);
+    return std::min(std::min(height0, height1), std::min(height2, height3));
 }
 
 StructureStart* EndCityFeature::createStructureStart(int chunkX, int chunkZ)
@@ -89,7 +83,7 @@ BlockPos* EndCityFeature::getNearestGeneratedFeature(Level* levelIn, const Block
 {
     level = levelIn;
     return StructureFeature::findNearestFeaturePositionBySpacing(
-        levelIn, this, pos, 10, 4, 0x9E7F71, true, 100, skipExistingChunks);
+        levelIn, this, pos, 10, 4, 10387313, true, 100, skipExistingChunks);
 }
 
 EndCityFeature::EndCityStart::EndCityStart(Level* levelIn, TheEndLevelSource* source,
@@ -102,24 +96,14 @@ EndCityFeature::EndCityStart::EndCityStart(Level* levelIn, TheEndLevelSource* so
     create(levelIn, source, random, chunkX, chunkZ);
 }
 
-EndCityFeature::EndCityStart::EndCityStart()
-    : StructureStart()
-{
-}
-
-EndCityFeature::EndCityStart::~EndCityStart()
-{
-}
-
 void EndCityFeature::EndCityStart::create(Level* levelIn, TheEndLevelSource* source,
                                           Random& random, int chunkX, int chunkZ)
 {
     Rotation* rotation = Rotation::getRandom(random);
     int y = EndCityFeature::getYPositionForFeature(chunkX, chunkZ, source);
     BlockPos position(chunkX * 16 + 8, y, chunkZ * 16 + 8);
-    LevelStorage* storage = levelIn->getLevelStorage();
-    EndCityPieces::startHouseTower(storage->getStructureManager(), position, rotation,
-                                    *this, random);
+    EndCityPieces::startHouseTower(levelIn->getLevelStorage()->getStructureManager(), position,
+                                    rotation, mPieces, random);
     calculateBoundingBox();
     mValid = true;
 }

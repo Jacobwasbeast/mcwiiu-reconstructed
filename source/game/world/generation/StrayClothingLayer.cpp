@@ -18,7 +18,7 @@
 static ResourceLocation STRAY_CLOTHING_LOCATION(TN_MOB_SKELETON_STRAY_OVERLAY);
 
 StrayClothingLayer::StrayClothingLayer(LivingEntityRenderer* renderer)
-    : mModel(new SkeletonModel(0.25f, true, ModelDefinition()))
+    : mModel(new SkeletonModel(0.25f, true))
     , mOriginalModel(NULL)
 {
     mRenderer = renderer;

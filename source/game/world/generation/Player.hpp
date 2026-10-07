@@ -140,7 +140,6 @@ public:
     public:
         PreventsMeFromSleeping(boost::shared_ptr<Player> player);
         bool apply(boost::shared_ptr<Entity> entity) const;
-        virtual ~PreventsMeFromSleeping();
     private:
         boost::shared_ptr<Player> mPlayer;
     };

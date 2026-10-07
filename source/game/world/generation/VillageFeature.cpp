@@ -108,8 +108,8 @@ VillageFeature::VillageStart::VillageStart(Level* levelIn, Random& random, int c
     VillagePieces::StartPiece* startPiece = new VillagePieces::StartPiece(
         levelIn->getBiomeSource(), 0, random, chunkX * 16 + 2, chunkZ * 16 + 2,
         pieceSet, size, levelIn);
-    push_back(startPiece);
-    startPiece->addChildren(startPiece, this, random);
+    mPieces.push_back(startPiece);
+    startPiece->addChildren(startPiece, &mPieces, random);
 
     while (!startPiece->mRoadPieces.empty() || !startPiece->mPendingPieces.empty())
     {
@@ -118,20 +118,20 @@ VillageFeature::VillageStart::VillageStart(Level* levelIn, Random& random, int c
             int index = random.nextInt((int)startPiece->mPendingPieces.size());
             StructurePiece* piece = startPiece->mPendingPieces[index];
             startPiece->mPendingPieces.erase(startPiece->mPendingPieces.begin() + index);
-            piece->addChildren(startPiece, this, random);
+            piece->addChildren(startPiece, &mPieces, random);
         }
         else
         {
             int index = random.nextInt((int)startPiece->mRoadPieces.size());
             StructurePiece* piece = startPiece->mRoadPieces[index];
             startPiece->mRoadPieces.erase(startPiece->mRoadPieces.begin() + index);
-            piece->addChildren(startPiece, this, random);
+            piece->addChildren(startPiece, &mPieces, random);
         }
     }
 
     calculateBoundingBox();
     int nonRoadCount = 0;
-    for (std::vector<StructurePiece*>::iterator it = begin(); it != end(); ++it)
+    for (std::vector<StructurePiece*>::iterator it = mPieces.begin(); it != mPieces.end(); ++it)
     {
         if (dynamic_cast<VillagePieces::VillageRoadPiece*>(*it) == NULL)
             ++nonRoadCount;
@@ -141,10 +141,6 @@ VillageFeature::VillageStart::VillageStart(Level* levelIn, Random& random, int c
 
 VillageFeature::VillageStart::VillageStart()
     : StructureStart(), mValid(false), mDistance(0)
-{
-}
-
-VillageFeature::VillageStart::~VillageStart()
 {
 }
 

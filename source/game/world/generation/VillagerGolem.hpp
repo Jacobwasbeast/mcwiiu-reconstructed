@@ -23,9 +23,8 @@ class VillagerGolem : public Golem
 {
 public:
     VillagerGolem(Level* level);
-    virtual ~VillagerGolem();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     static void staticCtor();
 

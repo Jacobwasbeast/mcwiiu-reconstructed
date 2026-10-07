@@ -11,37 +11,29 @@ MaxSnowballHitsWithSnowballOnPlayerStatTracker::MaxSnowballHitsWithSnowballOnPla
     mSnowballHits[mPlayerUID] = 0;
 }
 
-MaxSnowballHitsWithSnowballOnPlayerStatTracker::~MaxSnowballHitsWithSnowballOnPlayerStatTracker()
-{
-}
-
 void MaxSnowballHitsWithSnowballOnPlayerStatTracker::update(const DamageEvent* damageEvent)
 {
-    if (isTracking(damageEvent->mAttacker) && Item::getId(Items::snowball) == damageEvent->mWeapon.mItemId)
+    const StatsUID& victim = damageEvent->mVictim;
+    if (isTracking(damageEvent->mAttacker) && damageEvent->mWeapon.mItemId == Item::getId(Items::snowball))
     {
         StatsUID emptyPlayerUID;
-        if (damageEvent->mVictim != emptyPlayerUID)
+        if (victim != emptyPlayerUID)
         {
-            boost::unordered_map<StatsUID, unsigned int, boost::hash<StatsUID>, std::equal_to<StatsUID> >::iterator found = mSnowballHits.find(damageEvent->mVictim);
-            if (found == mSnowballHits.end())
+            boost::unordered_map<StatsUID, unsigned int, boost::hash<StatsUID>, std::equal_to<StatsUID> >::iterator found = mSnowballHits.find(victim);
+            if (found != mSnowballHits.end())
             {
-                mSnowballHits[damageEvent->mVictim] = 1;
-                unsigned int& best = mSnowballHits[mPlayerUID];
-                unsigned int& hits = mSnowballHits[damageEvent->mVictim];
-                if (hits < best)
-                    return;
+                ++mSnowballHits[victim];
             }
             else
             {
-                ++mSnowballHits[damageEvent->mVictim];
-                unsigned int& best = mSnowballHits[mPlayerUID];
-                unsigned int& hits = mSnowballHits[damageEvent->mVictim];
-                if (hits < best)
-                    return;
+                mSnowballHits[victim] = 1;
             }
 
-            mValue = mSnowballHits[damageEvent->mVictim];
-            mPlayerUID = damageEvent->mVictim;
+            if (mSnowballHits[mPlayerUID] <= mSnowballHits[victim])
+            {
+                mValue = mSnowballHits[victim];
+                mPlayerUID = victim;
+            }
         }
     }
 }

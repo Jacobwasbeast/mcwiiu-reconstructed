@@ -161,10 +161,6 @@ WoodlandMansionFeature::WoodlandMansionStart::WoodlandMansionStart()
 {
 }
 
-WoodlandMansionFeature::WoodlandMansionStart::~WoodlandMansionStart()
-{
-}
-
 StructureStart* WoodlandMansionFeature::WoodlandMansionStart::Create()
 {
     return new WoodlandMansionStart();
@@ -219,7 +215,7 @@ void WoodlandMansionFeature::WoodlandMansionStart::create(
     std::vector<WoodlandMansionPieces::WoodlandMansionPiece*> pieces;
     WoodlandMansionPieces::generateMansion(
         levelIn->getLevelStorage()->getStructureManager(), origin, rotation, pieces, randomIn);
-    insert(empty() ? begin() : end() - 1, pieces.begin(), pieces.end());
+    mPieces.insert(mPieces.empty() ? mPieces.begin() : mPieces.end() - 1, pieces.begin(), pieces.end());
     calculateBoundingBox();
     mValid = true;
 }
@@ -237,7 +233,7 @@ void WoodlandMansionFeature::WoodlandMansionStart::postProcess(Level* levelIn, R
             if (levelIn->isEmptyBlock(pos) || !getBoundingBox()->isInside(pos))
                 continue;
 
-            for (std::vector<StructurePiece*>::iterator it = begin(); it != end(); ++it)
+            for (std::vector<StructurePiece*>::iterator it = mPieces.begin(); it != mPieces.end(); ++it)
             {
                 if (!(*it)->getBoundingBox()->isInside(pos))
                     continue;

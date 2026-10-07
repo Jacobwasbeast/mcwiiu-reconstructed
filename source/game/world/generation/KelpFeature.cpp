@@ -13,8 +13,7 @@
 KelpFeature::KelpFeature()
     : Feature(false)
 {
-    int age;
-    for (age = 0; age < 16; ++age)
+    for (int age = 0; age < 16; ++age)
     {
         mStates[age] = Blocks::kelp->defaultBlockState()->setValue(KelpBlock::AGE, age);
     }
@@ -67,18 +66,23 @@ bool KelpFeature::place(Level* level, Random& random, const BlockPos& origin)
                     if (height >= 3)
                     {
                         int growth = random.nextInt(3, height);
+                        int age = 15 - growth;
                         if (Blocks::kelp->mayPlace(level, candidate))
                         {
                             int y;
-                            setBlock(level, candidate, mStates[15 - growth], Block::UPDATE_NO_OBSERVERS | Block::UPDATE_LIGHT_IF_CHANGED);
+                            setBlock(level, candidate, mStates[age], Block::UPDATE_NO_OBSERVERS | Block::UPDATE_LIGHT_IF_CHANGED);
                             for (y = 1; y < growth; ++y)
                             {
-                                if (!level->isEmptyWaterBlock(candidate.above(y))
-                                    || !Blocks::kelp->mayPlace(level, candidate.above(y)))
+                                if (level->isEmptyWaterBlock(candidate.above(y))
+                                    && Blocks::kelp->mayPlace(level, candidate.above(y)))
+                                {
+                                    const BlockState* state = mStates[age + y];
+                                    setBlock(level, candidate.above(y), state, Block::UPDATE_NO_OBSERVERS | Block::UPDATE_LIGHT_IF_CHANGED);
+                                }
+                                else
                                 {
                                     break;
                                 }
-                                setBlock(level, candidate.above(y), mStates[15 - growth + y], Block::UPDATE_NO_OBSERVERS | Block::UPDATE_LIGHT_IF_CHANGED);
                             }
                         }
                     }

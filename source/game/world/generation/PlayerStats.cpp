@@ -185,7 +185,7 @@ void PlayerStats::updateTrackedStats(int round, const DamageEvent* damageEvent)
         (*tracker)->update(damageEvent);
 }
 
-int PlayerStats::getTotalRounds()
+unsigned int PlayerStats::getTotalRounds()
 {
     if (mRoundStats.empty())
         return 1;

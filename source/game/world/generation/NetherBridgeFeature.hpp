@@ -21,7 +21,6 @@ public:
     public:
         NetherBridgeStart(Level* level, Random& random, int chunkX, int chunkZ);
         NetherBridgeStart();
-        virtual ~NetherBridgeStart();
         virtual EStructureStart GetType();
         static StructureStart* Create();
     };

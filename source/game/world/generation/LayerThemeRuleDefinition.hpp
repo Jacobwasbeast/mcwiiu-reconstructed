@@ -11,7 +11,6 @@ class LayerThemeRuleDefinition : public LayerAttributeRuleDefinition<LayerTheme*
 {
 public:
     LayerThemeRuleDefinition();
-    virtual ~LayerThemeRuleDefinition();
 
     virtual void writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount);
     virtual void addAttribute(const std::wstring& name, const std::wstring& value);

@@ -225,14 +225,14 @@ StrongholdFeature::StrongholdStart::StrongholdStart(Level* sourceLevel, Random& 
     StrongholdPieces::resetPieces();
     StrongholdPieces::StartPiece* piece = new StrongholdPieces::StartPiece(
         0, sourceRandom, chunkX * 16 + 2, chunkZ * 16 + 2, sourceLevel);
-    push_back(piece);
-    piece->addChildren(piece, this, sourceRandom);
+    mPieces.push_back(piece);
+    piece->addChildren(piece, &mPieces, sourceRandom);
     while (!piece->mPendingChildren.empty())
     {
         int index = sourceRandom.nextInt(static_cast<int>(piece->mPendingChildren.size()));
         StructurePiece* child = piece->mPendingChildren[index];
         piece->mPendingChildren.erase(piece->mPendingChildren.begin() + index);
-        child->addChildren(piece, this, sourceRandom);
+        child->addChildren(piece, &mPieces, sourceRandom);
     }
     calculateBoundingBox();
     moveBelowSeaLevel(sourceLevel, sourceRandom, 10);
@@ -240,10 +240,6 @@ StrongholdFeature::StrongholdStart::StrongholdStart(Level* sourceLevel, Random& 
 
 StrongholdFeature::StrongholdStart::StrongholdStart()
     : StructureStart()
-{
-}
-
-StrongholdFeature::StrongholdStart::~StrongholdStart()
 {
 }
 

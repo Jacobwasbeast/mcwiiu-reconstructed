@@ -16,16 +16,9 @@ SkeletonArmorLayer::~SkeletonArmorLayer()
 
 void SkeletonArmorLayer::createArmorModels()
 {
-    if (mModelArmorInner != NULL)
-    {
-        delete mModelArmorInner;
-    }
+    delete mModelArmorInner;
+    delete mModelArmor;
 
-    if (mModelArmor != NULL)
-    {
-        delete mModelArmor;
-    }
-
-    mModelArmorInner = new SkeletonModel(0.5f, true, ModelDefinition());
-    mModelArmor = new SkeletonModel(1.0f, true, ModelDefinition());
+    mModelArmorInner = new SkeletonModel(0.5f, true);
+    mModelArmor = new SkeletonModel(1.0f, true);
 }

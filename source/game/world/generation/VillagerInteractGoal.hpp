@@ -9,10 +9,9 @@ class VillagerInteractGoal : public InteractGoal
 {
 public:
     explicit VillagerInteractGoal(Villager* villager);
-    virtual ~VillagerInteractGoal();
     virtual void start();
     virtual void tick();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"VillagerInteract"; }
 
 private:
     int mInteractionDelay;

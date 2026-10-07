@@ -28,10 +28,6 @@ Villages::Villages(Level* level)
     mTick = 0;
 }
 
-Villages::~Villages()
-{
-}
-
 void Villages::setLevel(Level* level)
 {
     mLevel = level;

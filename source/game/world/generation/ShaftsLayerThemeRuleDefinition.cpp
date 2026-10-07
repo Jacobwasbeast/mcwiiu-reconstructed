@@ -6,15 +6,10 @@
 #include "game/world/generation/ShaftsLayerTheme.hpp"
 
 ShaftsLayerThemeRuleDefinition::ShaftsLayerThemeRuleDefinition()
-    : mHeightOffset(0)
+    : GenericMultiBlockThemeRuleDefinition()
+    , mHeightOffset(0)
 {
-    GameRules_IntAttribute* heightOffsetAttribute = addIntAttribute(ConsoleGameRules::eGameRuleAttr_startHeight, &mHeightOffset);
-    heightOffsetAttribute->setMin(-9);
-    heightOffsetAttribute->setMax(9);
-}
-
-ShaftsLayerThemeRuleDefinition::~ShaftsLayerThemeRuleDefinition()
-{
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_startHeight, &mHeightOffset)->setMin(-9)->setMax(9);
 }
 
 ConsoleGameRules::EGameRuleType ShaftsLayerThemeRuleDefinition::getActionType()

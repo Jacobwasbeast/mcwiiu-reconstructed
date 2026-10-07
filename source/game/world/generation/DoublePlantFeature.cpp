@@ -26,14 +26,8 @@ bool DoublePlantFeature::place(Level* level, Random& random, const BlockPos& ori
 
     for (int attempt = 0; attempt < 64; ++attempt)
     {
-        const int xOffsetStart = random.nextInt(8);
-        const int xOffsetEnd = random.nextInt(8);
-        const int yOffsetStart = random.nextInt(4);
-        const int yOffsetEnd = random.nextInt(4);
-        const int zOffsetStart = random.nextInt(8);
-        const int zOffsetEnd = random.nextInt(8);
-        const BlockPos pos = origin.offset(xOffsetStart - xOffsetEnd, yOffsetStart - yOffsetEnd,
-                                           zOffsetStart - zOffsetEnd);
+        const BlockPos pos = origin.offset(random.nextInt(8) - random.nextInt(8), random.nextInt(4) - random.nextInt(4),
+                                           random.nextInt(8) - random.nextInt(8));
         if (level->isEmptyBlock(pos)
             && ((!level->mDimension->isHasCeiling()) || pos.y < 126)
             && static_cast<DoublePlantBlock*>(Blocks::double_plant)->mayPlace(level, pos))

@@ -31,15 +31,18 @@ BlockPos CoralCrustFeature::getOffsetFromRot(Rotation* rotation, int type) const
         {
             return BlockPos(6, 0, 6);
         }
-        if (rotation == Rotation::CLOCKWISE_90)
+        else if (rotation == Rotation::CLOCKWISE_90)
         {
             return BlockPos(-7, 0, 6);
         }
-        if (rotation == Rotation::CLOCKWISE_180)
+        else if (rotation == Rotation::CLOCKWISE_180)
         {
             return BlockPos(-7, 0, -7);
         }
-        return BlockPos(6, 0, -7);
+        else
+        {
+            return BlockPos(6, 0, -7);
+        }
     }
     if (type == 1)
     {
@@ -47,15 +50,18 @@ BlockPos CoralCrustFeature::getOffsetFromRot(Rotation* rotation, int type) const
         {
             return BlockPos(6, 0, 6);
         }
-        if (rotation == Rotation::CLOCKWISE_90)
+        else if (rotation == Rotation::CLOCKWISE_90)
         {
             return BlockPos(-6, 0, 6);
         }
-        if (rotation == Rotation::CLOCKWISE_180)
+        else if (rotation == Rotation::CLOCKWISE_180)
         {
             return BlockPos(-7, 0, -7);
         }
-        return BlockPos(6, 0, -7);
+        else
+        {
+            return BlockPos(6, 0, -7);
+        }
     }
     if (type < 4)
     {
@@ -63,29 +69,38 @@ BlockPos CoralCrustFeature::getOffsetFromRot(Rotation* rotation, int type) const
         {
             return BlockPos(4, 0, 4);
         }
-        if (rotation == Rotation::CLOCKWISE_90)
+        else if (rotation == Rotation::CLOCKWISE_90)
         {
             return BlockPos(-4, 0, 4);
         }
-        if (rotation == Rotation::CLOCKWISE_180)
+        else if (rotation == Rotation::CLOCKWISE_180)
         {
             return BlockPos(-4, 0, -4);
         }
-        return BlockPos(4, 0, -4);
+        else
+        {
+            return BlockPos(4, 0, -4);
+        }
     }
-    if (rotation == Rotation::NONE)
+    else
     {
-        return BlockPos(3, 0, 6);
+        if (rotation == Rotation::NONE)
+        {
+            return BlockPos(3, 0, 6);
+        }
+        else if (rotation == Rotation::CLOCKWISE_90)
+        {
+            return BlockPos(-7, 0, 3);
+        }
+        else if (rotation == Rotation::CLOCKWISE_180)
+        {
+            return BlockPos(-2, 0, -7);
+        }
+        else
+        {
+            return BlockPos(7, 0, -3);
+        }
     }
-    if (rotation == Rotation::CLOCKWISE_90)
-    {
-        return BlockPos(-7, 0, 3);
-    }
-    if (rotation == Rotation::CLOCKWISE_180)
-    {
-        return BlockPos(-2, 0, -7);
-    }
-    return BlockPos(7, 0, -3);
 }
 
 BlockPos CoralCrustFeature::getCropOffsetFromRot(Rotation* rotation, int type) const
@@ -96,15 +111,18 @@ BlockPos CoralCrustFeature::getCropOffsetFromRot(Rotation* rotation, int type) c
         {
             return BlockPos(-5, 0, -2);
         }
-        if (rotation == Rotation::CLOCKWISE_90)
+        else if (rotation == Rotation::CLOCKWISE_90)
         {
             return BlockPos(3, 0, -5);
         }
-        if (rotation == Rotation::CLOCKWISE_180)
+        else if (rotation == Rotation::CLOCKWISE_180)
         {
             return BlockPos(5, 0, 2);
         }
-        return BlockPos(-2, 0, 5);
+        else
+        {
+            return BlockPos(-2, 0, 5);
+        }
     }
     if (type == 1)
     {
@@ -112,15 +130,18 @@ BlockPos CoralCrustFeature::getCropOffsetFromRot(Rotation* rotation, int type) c
         {
             return BlockPos(-7, -2, -3);
         }
-        if (rotation == Rotation::CLOCKWISE_90)
+        else if (rotation == Rotation::CLOCKWISE_90)
         {
             return BlockPos(3, -2, -6);
         }
-        if (rotation == Rotation::CLOCKWISE_180)
+        else if (rotation == Rotation::CLOCKWISE_180)
         {
             return BlockPos(6, -2, 3);
         }
-        return BlockPos(-2, -2, 5);
+        else
+        {
+            return BlockPos(-2, -2, 5);
+        }
     }
     if (type == 2)
     {
@@ -128,15 +149,18 @@ BlockPos CoralCrustFeature::getCropOffsetFromRot(Rotation* rotation, int type) c
         {
             return BlockPos(-4, 0, -3);
         }
-        if (rotation == Rotation::CLOCKWISE_90)
+        else if (rotation == Rotation::CLOCKWISE_90)
         {
             return BlockPos(3, 0, -4);
         }
-        if (rotation == Rotation::CLOCKWISE_180)
+        else if (rotation == Rotation::CLOCKWISE_180)
         {
             return BlockPos(4, 0, 3);
         }
-        return BlockPos(-3, 0, 4);
+        else
+        {
+            return BlockPos(-3, 0, 4);
+        }
     }
     if (type == 3)
     {
@@ -144,15 +168,18 @@ BlockPos CoralCrustFeature::getCropOffsetFromRot(Rotation* rotation, int type) c
         {
             return BlockPos(-3, 0, -3);
         }
-        if (rotation == Rotation::CLOCKWISE_90)
+        else if (rotation == Rotation::CLOCKWISE_90)
         {
             return BlockPos(3, 0, -3);
         }
-        if (rotation == Rotation::CLOCKWISE_180)
+        else if (rotation == Rotation::CLOCKWISE_180)
         {
             return BlockPos(3, 0, 3);
         }
-        return BlockPos(-3, 0, 3);
+        else
+        {
+            return BlockPos(-3, 0, 3);
+        }
     }
     if (type == 4)
     {
@@ -160,15 +187,18 @@ BlockPos CoralCrustFeature::getCropOffsetFromRot(Rotation* rotation, int type) c
         {
             return BlockPos(-2, 0, -2);
         }
-        if (rotation == Rotation::CLOCKWISE_90)
+        else if (rotation == Rotation::CLOCKWISE_90)
         {
             return BlockPos(2, 0, -2);
         }
-        if (rotation == Rotation::CLOCKWISE_180)
+        else if (rotation == Rotation::CLOCKWISE_180)
         {
             return BlockPos(2, 0, 2);
         }
-        return BlockPos(-2, 0, 2);
+        else
+        {
+            return BlockPos(-2, 0, 2);
+        }
     }
     if (type != 5)
     {
@@ -313,7 +343,8 @@ void CoralCrustFeature::placeTopDecorations(Level* level, const BlockPos& pos, R
 
     const BlockState* state = Blocks::coral_fan->defaultBlockState();
     state = state->setValue(CoralFan::VARIANT, random.nextInt(CoralFan::VARIANT->getValueCount()));
-    state = state->setValue(CoralFan::DIRECTION, random.nextInt(CoralFan::DIRECTION->getValueCount()));
+    AbstractProperty<int>* direction = CoralFan::DIRECTION;
+    state = state->setValue(direction, random.nextInt(direction->getValueCount()));
     setBlock(level, pos, state, Block::UPDATE_NONE);
 }
 
@@ -374,19 +405,17 @@ int CoralCrustFeature::turnFacingIntoint(const Direction* direction) const
 const BlockState* CoralCrustFeature::setCoralHangData(int facing, int variant, int type) const
 {
     const BlockState* state;
-    if (type == 0)
+    switch (type)
     {
-        state = Blocks::coral_fan_hang->defaultBlockState();
-        state = state->setValue(CoralFanHang::VARIANT, variant);
-    }
-    else if (type == 1)
-    {
-        state = Blocks::coral_fan_hang2->defaultBlockState();
-        state = state->setValue(CoralFanHang::VARIANT, variant);
-    }
-    else
-    {
+    case 0:
+        state = Blocks::coral_fan_hang->defaultBlockState()->setValue(CoralFanHang::VARIANT, variant);
+        break;
+    case 1:
+        state = Blocks::coral_fan_hang2->defaultBlockState()->setValue(CoralFanHang::VARIANT, variant);
+        break;
+    default:
         state = Blocks::coral_fan_hang3->defaultBlockState();
+        break;
     }
 
     return state->setValue(CoralFanHang::DIRECTION, facing);
@@ -410,7 +439,8 @@ void CoralCrustFeature::placeSideDecorations(Level* level, const BlockPos& pos, 
     const int variant = random.nextInt(2);
     const int type = random.nextInt(3);
     const BlockState* state = setCoralHangData(facing, variant, type);
-    setBlock(level, pos.relative(side), state, Block::UPDATE_NONE);
+    const BlockPos placePos = pos.relative(side);
+    setBlock(level, placePos, state, Block::UPDATE_NONE);
 }
 
 void CoralCrustFeature::placeCoralBase(Level* level, const BlockPos& pos, Random& random,
@@ -502,50 +532,54 @@ bool CoralCrustFeature::place(Level* level, Random& random, const BlockPos& orig
 
     positions.push_back(position - getOffsetFromRot(rotations[0], types[0]));
 
-    if (random.nextInt(4) == 0)
+    if (random.nextInt(4) != 0)
     {
-        const int cropType = random.nextInt(6);
-        Rotation* cropRotation = rotations[0];
-        settings.setRotation(cropRotation);
-        const StructureTemplate* structure =
-            level->getLevelStorage()->getStructureManager()->getOrCreate(cropTemplates[cropType]);
-        structure->placeInWorld(level, position + getCropOffsetFromRot(cropRotation, cropType), &settings);
-        placeCoralBase(level, position + getCropOffsetFromRot(cropRotation, cropType), random, structure,
-                       settings);
-        return true;
-    }
+        int count = random.nextInt(4, 9) + 1;
+        for (int i = 1; i < count; ++i)
+        {
+            int crustType = random.nextInt(5);
+            Rotation* crustRotation = Rotation::getRandom(random);
+            int x = random.nextInt(3, 12);
+            if (random.nextBoolean())
+            {
+                x = -x;
+            }
+            int z = random.nextInt(3, 12);
+            if (random.nextBoolean())
+            {
+                z = -z;
+            }
 
-    int count = random.nextInt(4, 9);
-    for (int i = 1; i < count + 1; ++i)
-    {
-        type = random.nextInt(5);
-        rotation = Rotation::getRandom(random);
-        int x = random.nextInt(3, 12);
-        if (random.nextBoolean())
-        {
-            x = -x;
-        }
-        int z = random.nextInt(3, 12);
-        if (random.nextBoolean())
-        {
-            z = -z;
-        }
-
-        const BlockPos candidate = position + BlockPos(x, 0, z) + getOffsetFromRot(rotation, type);
-        if (level->isSolidBlockingBlock(candidate.below()))
-        {
-            const BlockPos start = candidate - getOffsetFromRot(rotation, type);
-            types.push_back(type);
-            rotations.push_back(rotation);
+            const BlockPos spread(x, 0, z);
+            const BlockPos candidate = position + spread + getOffsetFromRot(crustRotation, crustType);
+            if (!level->isSolidBlockingBlock(candidate.below()))
+            {
+                continue;
+            }
+            const BlockPos start = candidate - getOffsetFromRot(crustRotation, crustType);
+            types.push_back(crustType);
+            rotations.push_back(crustRotation);
             positions.push_back(start);
         }
-    }
 
-    if (positions.size() == 1)
+        if (positions.size() == 1)
+        {
+            Rotation* cropRotation = rotations[0];
+            settings.setRotation(cropRotation);
+            const int cropType = random.nextInt(6);
+            const StructureTemplate* structure =
+                level->getLevelStorage()->getStructureManager()->getOrCreate(cropTemplates[cropType]);
+            structure->placeInWorld(level, position + getCropOffsetFromRot(cropRotation, cropType), &settings);
+            placeCoralBase(level, position + getCropOffsetFromRot(cropRotation, cropType), random, structure,
+                           settings);
+            return true;
+        }
+    }
+    else
     {
+        const int cropType = random.nextInt(6);
         Rotation* cropRotation = rotations[0];
         settings.setRotation(cropRotation);
-        const int cropType = random.nextInt(6);
         const StructureTemplate* structure =
             level->getLevelStorage()->getStructureManager()->getOrCreate(cropTemplates[cropType]);
         structure->placeInWorld(level, position + getCropOffsetFromRot(cropRotation, cropType), &settings);

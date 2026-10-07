@@ -36,7 +36,6 @@ public:
     public:
         StrongholdStart(Level* level, Random& random, int chunkX, int chunkZ);
         StrongholdStart();
-        virtual ~StrongholdStart();
         virtual EStructureStart GetType();
         static StructureStart* Create();
     };

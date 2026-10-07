@@ -26,7 +26,6 @@ public:
     public:
         VillageStart(Level* level, Random& random, int chunkX, int chunkZ, int size, int distance);
         VillageStart();
-        virtual ~VillageStart();
 
         static StructureStart* Create();
         virtual bool isValid();

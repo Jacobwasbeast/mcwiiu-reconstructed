@@ -49,7 +49,7 @@ void TreeFeature::staticCtor()
     treeTrunkState = Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::OAK);
     treeLeafState = Blocks::leaves->defaultBlockState()
                         ->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::OAK)
-                        ->setValue(LeafBlock::DECAYABLE, false);
+                        ->setValue(LeafBlock::CHECK_DECAY, false);
 }
 
 int TreeFeature::prepareSpawn(Level* level, const BlockPos& pos, int height)

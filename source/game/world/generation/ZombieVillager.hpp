@@ -18,9 +18,8 @@ class ZombieVillager : public Zombie
 {
 public:
     ZombieVillager(Level* level);
-    virtual ~ZombieVillager();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     virtual void defineSynchedData();
     void setProfession(int profession);

@@ -61,8 +61,8 @@ bool FossilFeature::place(Level* level, Random& random, const BlockPos& origin)
     {
         for (int z = 0; z < size.x; ++z)
         {
-            const int columnHeight = level->getHeightmapHeight(origin.x + xOffset + x,
-                                                                origin.z + zOffset + z);
+            const int columnHeight = level->getHeightmapHeight(origin.x + x + xOffset,
+                                                                origin.z + z + zOffset);
             if (columnHeight < height)
             {
                 height = columnHeight;

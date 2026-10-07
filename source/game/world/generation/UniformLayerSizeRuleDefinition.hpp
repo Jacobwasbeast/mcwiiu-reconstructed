@@ -9,7 +9,6 @@ class UniformLayerSizeRuleDefinition : public LayerAttributeChildRuleDefinition<
 {
 public:
     UniformLayerSizeRuleDefinition();
-    virtual ~UniformLayerSizeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual LayerSize* Generate() const;

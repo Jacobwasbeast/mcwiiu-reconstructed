@@ -118,7 +118,6 @@ public:
         WoodlandMansionPiece(StructureManager* manager, eMinecraftStructureTemplate type,
             const BlockPos& position, Rotation* rotation, Mirror* mirror);
         WoodlandMansionPiece();
-        virtual ~WoodlandMansionPiece();
         void loadTemplate(StructureManager* manager);
         void _init(StructureManager* manager, eMinecraftStructureTemplate type,
             const BlockPos& position, Rotation* rotation, Mirror* mirror);

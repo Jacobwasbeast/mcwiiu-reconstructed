@@ -16,73 +16,78 @@ BlueIceFeature::~BlueIceFeature()
 
 bool BlueIceFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    if (origin.y <= level->getSeaLevel() - 1
-        && (level->getBlockId(origin.x, origin.y, origin.z) == BlockId::WATER
-            || level->getBlockId(origin.x, origin.y - 1, origin.z) == BlockId::WATER))
+    if (origin.y > level->getSeaLevel() - 1)
     {
-        for (std::vector<const Direction*>::iterator direction = Direction::VALUES.begin();
-             direction != Direction::VALUES.end(); ++direction)
+        return false;
+    }
+
+    if (level->getBlockId(origin.x, origin.y, origin.z) != BlockId::WATER
+        && level->getBlockId(origin.x, origin.y - 1, origin.z) != BlockId::WATER)
+    {
+        return false;
+    }
+
+    bool touchesPackedIce = false;
+    for (std::vector<const Direction*>::iterator direction = Direction::VALUES.begin();
+         direction != Direction::VALUES.end(); ++direction)
+    {
+        if (*direction != Direction::DOWN
+            && level->getBlockState(origin.relative(*direction))->getBlock() == Blocks::packed_ice)
         {
-            if (*direction != Direction::DOWN
-                && level->getBlockState(origin.relative(*direction))->getBlock() == Blocks::packed_ice)
+            touchesPackedIce = true;
+            break;
+        }
+    }
+
+    if (!touchesPackedIce)
+    {
+        return false;
+    }
+
+    level->setBlock(origin, Blocks::blue_ice->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+
+    for (int i = 0; i < 200; ++i)
+    {
+        const int verticalOffset = random.nextInt(5) - random.nextInt(6);
+        int spread = 3;
+        if (verticalOffset < 2)
+        {
+            spread += verticalOffset / 2;
+        }
+
+        if (spread >= 1)
+        {
+            const BlockPos position = origin.offset(random.nextInt(spread) - random.nextInt(spread),
+                                                    verticalOffset,
+                                                    random.nextInt(spread) - random.nextInt(spread));
+            const BlockState* state = level->getBlockState(position);
+            Block* block = state->getBlock();
+            if (state->getMaterial() == Material::AIR
+                || block == Blocks::water
+                || block == Blocks::packed_ice
+                || block == Blocks::ice)
             {
-                level->setBlock(origin, Blocks::blue_ice->defaultBlockState(), Block::UPDATE_CLIENTS, false);
-
-                for (int i = 0; i < 200; ++i)
+                int blueIceCount = 0;
+                for (std::vector<const Direction*>::iterator adjacent = Direction::VALUES.begin();
+                     adjacent != Direction::VALUES.end(); ++adjacent)
                 {
-                    const int verticalOffsetStart = random.nextInt(5);
-                    const int verticalOffsetEnd = random.nextInt(6);
-                    const int verticalOffset = verticalOffsetStart - verticalOffsetEnd;
-                    int spread = 3;
-                    if (verticalOffset <= 1)
+                    if (level->getBlockState(position.relative(*adjacent))->getBlock() == Blocks::blue_ice)
                     {
-                        spread = verticalOffset / 2 + 3;
-                    }
-
-                    if (spread > 0)
-                    {
-                        const int xOffsetStart = random.nextInt(spread);
-                        const int xOffsetEnd = random.nextInt(spread);
-                        const int zOffsetStart = random.nextInt(spread);
-                        const int zOffsetEnd = random.nextInt(spread);
-                        const BlockPos position = origin.offset(
-                            xOffsetStart - xOffsetEnd,
-                            verticalOffset,
-                            zOffsetStart - zOffsetEnd);
-                        const BlockState* state = level->getBlockState(position);
-                        Block* block = state->getBlock();
-                        if (state->getMaterial() == Material::AIR
-                            || block == Blocks::water
-                            || block == Blocks::packed_ice
-                            || block == Blocks::ice)
+                        ++blueIceCount;
+                        if (blueIceCount > 4)
                         {
-                            int blueIceCount = 0;
-                            for (std::vector<const Direction*>::iterator adjacent = Direction::VALUES.begin();
-                                 adjacent != Direction::VALUES.end(); ++adjacent)
-                            {
-                                if (level->getBlockState(position.relative(*adjacent))->getBlock()
-                                    == Blocks::blue_ice)
-                                {
-                                    ++blueIceCount;
-                                    if (blueIceCount > 4)
-                                    {
-                                        break;
-                                    }
-                                }
-                            }
-
-                            if (blueIceCount > 0 && blueIceCount <= 4)
-                            {
-                                level->setBlock(position, Blocks::blue_ice->defaultBlockState(), Block::UPDATE_CLIENTS, false);
-                            }
+                            break;
                         }
                     }
                 }
 
-                return true;
+                if (blueIceCount <= 4 && blueIceCount != 0)
+                {
+                    level->setBlock(position, Blocks::blue_ice->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                }
             }
         }
     }
 
-    return false;
+    return true;
 }

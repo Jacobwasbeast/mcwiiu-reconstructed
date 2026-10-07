@@ -14,11 +14,10 @@ class DefendVillageTargetGoal : public TargetGoal
 {
 public:
     DefendVillageTargetGoal(VillagerGolem* golem);
-    virtual ~DefendVillageTargetGoal();
 
     virtual bool canUse();
     virtual void start();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"DefendVillageTarget"; }
 
 private:
     VillagerGolem* mGolem;

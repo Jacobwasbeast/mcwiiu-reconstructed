@@ -17,14 +17,13 @@ class MobNearestPlayerTargetGoal : public Goal
 {
 public:
     MobNearestPlayerTargetGoal(Mob* mob);
-    virtual ~MobNearestPlayerTargetGoal();
 
     double getFollowDistance();
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual void start();
     virtual void stop();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"MobNearestPlayerTarget"; }
 
     Mob* mMob;
 

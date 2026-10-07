@@ -31,9 +31,9 @@ BigTreeFeature::BigTreeFeature(bool doBlockNotify)
                           Blocks::leaves->defaultBlockState(), false),
       mRandom(), mBasePos(), mFoliageCoords()
 {
-    mBasePos = BlockPos::ZERO;
     mHeightLimit = 0;
     mHeight = 0;
+    mBasePos = BlockPos::ZERO;
     mHeightAttenuation = 0.618;
     mBranchSlope = 0.381;
     mScaleWidth = 1.0;
@@ -49,13 +49,11 @@ BigTreeFeature::~BigTreeFeature()
 
 float BigTreeFeature::treeShape(int height)
 {
-    float heightLimit = (float)mHeightLimit;
-    float y = (float)height;
-    if (y < heightLimit * 0.3f)
+    if ((float)height < (float)mHeightLimit * 0.3f)
         return -1.0f;
 
-    float half = heightLimit * 0.5f;
-    float offset = half - y;
+    float half = (float)mHeightLimit * 0.5f;
+    float offset = half - (float)height;
     float width = sqrtf(half * half - offset * offset);
     float shape = 0.0f;
     if (offset == 0.0f)
@@ -163,9 +161,9 @@ float BigTreeFeature::foliageShape(int layer)
 {
     if (layer < 0 || layer >= mLeafDistanceLimit)
         return -1.0f;
-    if (layer != 0 && layer != mLeafDistanceLimit - 1)
-        return 3.0f;
-    return 2.0f;
+    if (layer == 0 || layer == mLeafDistanceLimit - 1)
+        return 2.0f;
+    return 3.0f;
 }
 
 void BigTreeFeature::foliageCluster(const BlockPos& pos)
@@ -173,7 +171,7 @@ void BigTreeFeature::foliageCluster(const BlockPos& pos)
     for (int layer = 0; layer < mLeafDistanceLimit; ++layer)
     {
         BlockPos target = pos.above(layer);
-        const BlockState* leaves = Blocks::leaves->defaultBlockState()->setValue(LeafBlock::DECAYABLE, false);
+        const BlockState* leaves = Blocks::leaves->defaultBlockState()->setValue(LeafBlock::CHECK_DECAY, false);
         crossection(target, foliageShape(layer), leaves);
     }
 }
@@ -225,14 +223,15 @@ bool BigTreeFeature::trimBranches(int branchBase)
 
 void BigTreeFeature::makeTrunk()
 {
-    BlockPos top = mBasePos.above(mHeight);
+    const BlockPos& base = mBasePos;
+    BlockPos top = base.above(mHeight);
     Block* log = Blocks::log;
-    limb(mBasePos, top, log);
+    limb(base, top, log);
     if (mTrunkSize == 2)
     {
-        limb(mBasePos.east(), top.east(), log);
-        limb(mBasePos.east().south(), top.east().south(), log);
-        limb(mBasePos.south(), top.south(), log);
+        limb(base.east(), top.east(), log);
+        limb(base.east().south(), top.east().south(), log);
+        limb(base.south(), top.south(), log);
     }
 }
 

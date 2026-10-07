@@ -34,19 +34,19 @@ arrayWithLength<int> RiverLayer::getArea(int x, int z, int width, int height)
     {
         for (int j = 0; j < width; j++)
         {
-            int left = riverFilter(parentArea.data[j + 0 + (i + 1) * parentWidth]);
-            int right = riverFilter(parentArea.data[j + 2 + (i + 1) * parentWidth]);
-            int upper = riverFilter(parentArea.data[j + 1 + (i + 0) * parentWidth]);
-            int lower = riverFilter(parentArea.data[j + 1 + (i + 2) * parentWidth]);
-            int centre = riverFilter(parentArea.data[j + 1 + (i + 1) * parentWidth]);
+            int left = riverFilter(parentArea[j + 0 + (i + 1) * parentWidth]);
+            int right = riverFilter(parentArea[j + 2 + (i + 1) * parentWidth]);
+            int upper = riverFilter(parentArea[j + 1 + (i + 0) * parentWidth]);
+            int lower = riverFilter(parentArea[j + 1 + (i + 2) * parentWidth]);
+            int centre = riverFilter(parentArea[j + 1 + (i + 1) * parentWidth]);
 
             if (left == centre && upper == centre && right == centre && lower == centre)
             {
-                area.data[j + i * width] = -1;
+                area[j + i * width] = -1;
             }
             else
             {
-                area.data[j + i * width] = Biome::RIVER->id;
+                area[j + i * width] = Biome::RIVER->id;
             }
         }
     }

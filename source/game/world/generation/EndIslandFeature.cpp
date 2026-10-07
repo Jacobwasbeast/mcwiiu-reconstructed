@@ -14,7 +14,7 @@ bool EndIslandFeature::place(Level* level, Random& random, const BlockPos& origi
     float radius = (float)random.nextInt(3) + 4.0f;
     int y = 0;
 
-    while (radius > 0.5f)
+    for (; radius > 0.5f; radius -= (float)random.nextInt(2) + 0.5f, --y)
     {
         for (int x = (int)floorf(-radius); x <= (int)ceilf(radius); ++x)
         {
@@ -22,14 +22,10 @@ bool EndIslandFeature::place(Level* level, Random& random, const BlockPos& origi
             {
                 if ((float)(x * x + z * z) <= (radius + 1.0f) * (radius + 1.0f))
                 {
-                    const BlockPos position = origin.offset(x, y, z);
-                    setBlock(level, position, Blocks::end_stone->defaultBlockState(), Block::UPDATE_NONE);
+                    setBlock(level, origin.offset(x, y, z), Blocks::end_stone->defaultBlockState(), Block::UPDATE_NONE);
                 }
             }
         }
-
-        radius -= (float)random.nextInt(2) + 0.5f;
-        --y;
     }
 
     return true;

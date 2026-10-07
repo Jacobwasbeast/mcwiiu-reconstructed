@@ -22,7 +22,6 @@ class Villages : public SavedData
 public:
     Villages(const std::wstring& id);
     Villages(Level* level);
-    virtual ~Villages();
 
     void setLevel(Level* level);
     bool hasQuery(const BlockPos& pos);

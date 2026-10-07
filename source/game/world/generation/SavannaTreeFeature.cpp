@@ -35,7 +35,7 @@ void SavannaTreeFeature::staticCtor()
     savannaTrunkState = Blocks::log2->defaultBlockState()->setValue(NewLogBlock::VARIANT, PlanksBlock::Variant::ACACIA);
     savannaLeafState = Blocks::leaves2->defaultBlockState()
                            ->setValue(NewLeafBlock::VARIANT, PlanksBlock::Variant::ACACIA)
-                           ->setValue(LeafBlock::DECAYABLE, false);
+                           ->setValue(LeafBlock::CHECK_DECAY, false);
 }
 
 void SavannaTreeFeature::placeLogAt(Level* level, const BlockPos& pos)

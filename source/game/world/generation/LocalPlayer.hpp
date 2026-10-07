@@ -224,7 +224,7 @@ private:
     bool mAutoJumpEnabled;
     int mAutoJumpTime;
 public:
-    int mViewport;
+    unsigned int mViewport;
 
 private:
     unsigned char mReserved0x90c[4];

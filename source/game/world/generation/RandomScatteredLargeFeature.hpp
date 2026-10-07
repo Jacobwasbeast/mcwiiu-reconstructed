@@ -21,7 +21,6 @@ public:
     public:
         ScatteredFeatureStart(Level* level, Random& random, int chunkX, int chunkZ);
         ScatteredFeatureStart();
-        virtual ~ScatteredFeatureStart();
         virtual EStructureStart GetType();
         static StructureStart* Create();
     };

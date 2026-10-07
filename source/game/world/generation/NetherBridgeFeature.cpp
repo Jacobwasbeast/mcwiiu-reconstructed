@@ -51,18 +51,18 @@ bool NetherBridgeFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
         random.setSeed(seed);
         random.nextInt();
         int index = random.nextInt(49);
-        mCachedChunk = new ChunkPos(index % 7, index / 7);
+        int x = index % 7;
+        int z = index / 7;
+        mCachedChunk = new ChunkPos(x, z);
         mCachedBuildings = true;
     }
 
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-    if ((options == NULL || !options->isFeatureChunk(chunkX, chunkZ,
-                                                      eFeatureType_NetherBridge, NULL)) &&
-        (chunkX != mCachedChunk->x || chunkZ != mCachedChunk->z))
-    {
-        return false;
-    }
-    return true;
+    if (options != NULL && options->isFeatureChunk(chunkX, chunkZ, eFeatureType_NetherBridge, NULL))
+        return true;
+    if (chunkX == mCachedChunk->x && chunkZ == mCachedChunk->z)
+        return true;
+    return false;
 }
 
 StructureStart* NetherBridgeFeature::createStructureStart(int chunkX, int chunkZ)
@@ -75,9 +75,7 @@ BlockPos* NetherBridgeFeature::getNearestGeneratedFeature(Level* levelIn, const 
 {
     int chunkX = pos.x >> 4;
     int chunkZ = pos.z >> 4;
-    int remaining = 1001;
-
-    for (int radius = 0; ; ++radius)
+    for (int radius = 0; radius < 1001; ++radius)
     {
         for (int offsetX = -radius; offsetX <= radius; ++offsetX)
         {
@@ -95,11 +93,9 @@ BlockPos* NetherBridgeFeature::getNearestGeneratedFeature(Level* levelIn, const 
                 }
             }
         }
-
-        --remaining;
-        if (remaining == 0)
-            return NULL;
     }
+
+    return NULL;
 }
 
 NetherBridgeFeature::NetherBridgeStart::NetherBridgeStart(Level* levelIn, Random& random,
@@ -108,15 +104,17 @@ NetherBridgeFeature::NetherBridgeStart::NetherBridgeStart(Level* levelIn, Random
 {
     NetherBridgePieces::StartPiece* startPiece = new NetherBridgePieces::StartPiece(
         random, chunkX * 16 + 2, chunkZ * 16 + 2, levelIn);
-    push_back(startPiece);
-    startPiece->addChildren(startPiece, this, random);
+    mPieces.push_back(startPiece);
+    startPiece->addChildren(startPiece, &mPieces, random);
 
-    while (!startPiece->mPendingChildren.empty())
+    std::vector<StructurePiece*>& pendingChildren = startPiece->mPendingChildren;
+    while (!pendingChildren.empty())
     {
-        int index = random.nextInt((int)startPiece->mPendingChildren.size());
-        StructurePiece* piece = startPiece->mPendingChildren[index];
-        startPiece->mPendingChildren.erase(startPiece->mPendingChildren.begin() + index);
-        piece->addChildren(startPiece, this, random);
+        int index = random.nextInt((int)pendingChildren.size());
+        std::vector<StructurePiece*>::iterator it = pendingChildren.begin() + index;
+        StructurePiece* piece = *it;
+        pendingChildren.erase(it);
+        piece->addChildren(startPiece, &mPieces, random);
     }
 
     calculateBoundingBox();
@@ -125,10 +123,6 @@ NetherBridgeFeature::NetherBridgeStart::NetherBridgeStart(Level* levelIn, Random
 
 NetherBridgeFeature::NetherBridgeStart::NetherBridgeStart()
     : StructureStart()
-{
-}
-
-NetherBridgeFeature::NetherBridgeStart::~NetherBridgeStart()
 {
 }
 

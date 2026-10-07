@@ -10,18 +10,24 @@
 #include "game/world/generation/StructureFeatureIO.hpp"
 
 StructureStart::StructureStart()
-    : mBoundingBox(NULL), mChunkX(0), mChunkZ(0), mDirty(true)
 {
+    mChunkZ = 0;
+    mChunkX = 0;
+    mBoundingBox = NULL;
+    mDirty = true;
 }
 
 StructureStart::StructureStart(int chunkX, int chunkZ)
-    : mBoundingBox(NULL), mChunkX(chunkX), mChunkZ(chunkZ), mDirty(true)
 {
+    mChunkX = chunkX;
+    mChunkZ = chunkZ;
+    mBoundingBox = NULL;
+    mDirty = true;
 }
 
 StructureStart::~StructureStart()
 {
-    for (std::vector<StructurePiece*>::iterator it = begin(); it != end(); ++it)
+    for (std::vector<StructurePiece*>::iterator it = mPieces.begin(); it != mPieces.end(); ++it)
     {
         delete *it;
     }
@@ -50,7 +56,7 @@ unsigned int StructureStart::getChunkZ()
 
 std::vector<StructurePiece*>* StructureStart::getPieces()
 {
-    return this;
+    return &mPieces;
 }
 
 void StructureStart::clearDirty()
@@ -65,11 +71,15 @@ void StructureStart::setDirty()
 
 void StructureStart::postProcess(Level* level, Random& random, BoundingBox* box)
 {
-    std::vector<StructurePiece*>::iterator it = begin();
-    while (it != end())
+    std::vector<StructurePiece*>::iterator it = mPieces.begin();
+    while (it != mPieces.end())
     {
         StructurePiece* piece = *it;
-        if (!piece->getBoundingBox()->intersects(box) || piece->postProcess(level, random, box))
+        if (piece->getBoundingBox()->intersects(box) && !piece->postProcess(level, random, box))
+        {
+            it = mPieces.erase(it);
+        }
+        else
         {
             if (piece->isDirty())
             {
@@ -78,17 +88,13 @@ void StructureStart::postProcess(Level* level, Random& random, BoundingBox* box)
             }
             ++it;
         }
-        else
-        {
-            it = erase(it);
-        }
     }
 }
 
 void StructureStart::calculateBoundingBox()
 {
     mBoundingBox = BoundingBox::getUnknownBox();
-    for (std::vector<StructurePiece*>::iterator it = begin(); it != end(); ++it)
+    for (std::vector<StructurePiece*>::iterator it = mPieces.begin(); it != mPieces.end(); ++it)
     {
         mBoundingBox->expand((*it)->getBoundingBox());
     }
@@ -103,8 +109,8 @@ arrayWithLength<unsigned char> StructureStart::createTag(int chunkX, int chunkZ)
     output.writeInt(chunkX);
     output.writeInt(chunkZ);
     mBoundingBox->write(&output);
-    output.writeInt((int)size());
-    for (std::vector<StructurePiece*>::iterator it = begin(); it != end(); ++it)
+    output.writeInt((int)mPieces.size());
+    for (std::vector<StructurePiece*>::iterator it = mPieces.begin(); it != mPieces.end(); ++it)
     {
         (*it)->write(&output);
     }
@@ -128,7 +134,7 @@ void StructureStart::load(Level* level, DataInputStream* input)
         StructurePiece* piece = StructureFeatureIO::loadStaticPiece(input, level);
         if (piece != NULL)
         {
-            push_back(piece);
+            mPieces.push_back(piece);
         }
     }
     readAdditionalSaveData(input);
@@ -140,15 +146,15 @@ void StructureStart::readAdditionalSaveData(DataInputStream* input)
 
 void StructureStart::moveBelowSeaLevel(Level* level, Random& random, int offset)
 {
-    int seaLevel = level->getSeaLevel();
+    int limit = level->getSeaLevel() - offset;
     int y = mBoundingBox->getYSpan() + 1;
-    if (y < seaLevel - offset)
+    if (y < limit)
     {
-        y += random.nextInt(seaLevel - offset - y);
+        y += random.nextInt(limit - y);
     }
     int delta = y - mBoundingBox->y1;
     mBoundingBox->move(0, delta, 0);
-    for (std::vector<StructurePiece*>::iterator it = begin(); it != end(); ++it)
+    for (std::vector<StructurePiece*>::iterator it = mPieces.begin(); it != mPieces.end(); ++it)
     {
         (*it)->move(0, delta, 0);
     }
@@ -156,18 +162,18 @@ void StructureStart::moveBelowSeaLevel(Level* level, Random& random, int offset)
 
 void StructureStart::moveInsideHeights(Level* level, Random& random, int minHeight, int maxHeight)
 {
-    int span = mBoundingBox->getYSpan();
+    int spare = maxHeight - minHeight + 1 - mBoundingBox->getYSpan();
     int delta;
-    if (maxHeight - minHeight + 1 - span > 1)
+    if (spare > 1)
     {
-        delta = minHeight + random.nextInt(maxHeight - minHeight + 1 - span) - mBoundingBox->y0;
+        delta = minHeight + random.nextInt(spare) - mBoundingBox->y0;
     }
     else
     {
         delta = minHeight - mBoundingBox->y0;
     }
     mBoundingBox->move(0, delta, 0);
-    for (std::vector<StructurePiece*>::iterator it = begin(); it != end(); ++it)
+    for (std::vector<StructurePiece*>::iterator it = mPieces.begin(); it != mPieces.end(); ++it)
     {
         (*it)->move(0, delta, 0);
     }

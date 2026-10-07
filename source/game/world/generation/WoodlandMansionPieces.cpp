@@ -485,8 +485,6 @@ WoodlandMansionPieces::WoodlandMansionPiece::WoodlandMansionPiece(StructureManag
 
 WoodlandMansionPieces::WoodlandMansionPiece::WoodlandMansionPiece() : TemplateStructurePiece() { }
 
-WoodlandMansionPieces::WoodlandMansionPiece::~WoodlandMansionPiece() { }
-
 void WoodlandMansionPieces::WoodlandMansionPiece::loadTemplate(StructureManager* structureManager)
 {
     const StructureTemplate* structureTemplate = structureManager->getOrCreate(mTemplateType);

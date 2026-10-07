@@ -11,7 +11,6 @@ class CurvedLayerFillRuleDefinition : public LayerAttributeChildRuleDefinition<L
 {
 public:
     CurvedLayerFillRuleDefinition();
-    virtual ~CurvedLayerFillRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual void writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount);
@@ -19,7 +18,14 @@ public:
     virtual LayerFill* Generate() const;
 
 private:
-    int mCurve;
+    enum ECurve
+    {
+        eCurve_Unknown = -1,
+        eCurve_Dome,
+        eCurve_Bowl
+    };
+
+    ECurve mCurve;
     int mOffset;
     int mThickness;
 };

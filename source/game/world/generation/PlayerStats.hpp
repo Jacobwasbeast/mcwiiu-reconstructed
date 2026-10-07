@@ -126,7 +126,7 @@ public:
         int mPoints;
         int mUnbankedPoints;
         int mLastBankedPoints;
-        int mLastPointsAdded;
+        unsigned int mLastPointsAdded;
         double mTopSpeed;
         std::vector<std::wstring> mBankedTargets;
         std::vector<std::wstring> mUnbankedTargets;
@@ -165,7 +165,7 @@ public:
 
     RoundStats* getRoundStats(unsigned int round);
     void updateTrackedStats(int round, const DamageEvent* damageEvent);
-    int getTotalRounds();
+    unsigned int getTotalRounds();
     float getDamageDealt(int round);
     float getDamageTaken(int round);
     int getTotalDistanceMoved(unsigned int round);

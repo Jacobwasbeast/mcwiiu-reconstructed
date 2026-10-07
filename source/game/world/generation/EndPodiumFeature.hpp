@@ -10,7 +10,6 @@ public:
     static const BlockPos END_PODIUM_LOCATION;
 
     EndPodiumFeature(bool active);
-    virtual ~EndPodiumFeature();
 
     virtual bool place(Level* level, Random& random, const BlockPos& origin);
 

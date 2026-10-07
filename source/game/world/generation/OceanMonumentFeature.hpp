@@ -28,7 +28,6 @@ public:
     public:
         OceanMonumentStart(Level* level, Random& random, int chunkX, int chunkZ);
         OceanMonumentStart();
-        virtual ~OceanMonumentStart();
 
         void Init();
         void create(Level* level, Random& random, int chunkX, int chunkZ);

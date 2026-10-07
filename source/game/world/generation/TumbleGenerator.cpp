@@ -25,7 +25,8 @@ TumbleGenerator::TumbleGenerator(Random random, std::vector<LayerGenerator*>& la
 
 TumbleGenerator::~TumbleGenerator()
 {
-    for (std::vector<LayerGenerator*>::iterator layer = mLayers.begin(), end = mLayers.end(); layer != end; ++layer)
+    std::vector<LayerGenerator*>::iterator end = mLayers.end();
+    for (std::vector<LayerGenerator*>::iterator layer = mLayers.begin(); layer != end; ++layer)
     {
         delete *layer;
     }
@@ -51,14 +52,15 @@ void TumbleGenerator::StartGeneration(Level* level)
     std::vector<std::pair<LayerGenerator*, BlockTransaction*> > transactions;
     std::wstring(L"mapgen_perf.pix3");
 
-    for (std::vector<LayerGenerator*>::iterator layer = mLayers.begin(), end = mLayers.end(); layer != end; ++layer)
+    std::vector<LayerGenerator*>::iterator end = mLayers.end();
+    for (std::vector<LayerGenerator*>::iterator layer = mLayers.begin(); layer != end; ++layer)
     {
         LayerGenerator* generator = *layer;
         BlockTransaction* transaction = generator->Generate(mRandom, level);
 
         AABB* area = AABB::newPermanent(generator->getArea());
-        area->mMinY += static_cast<float>(totalOffset);
         area->mMaxY += static_cast<float>(totalOffset);
+        area->mMinY += static_cast<float>(totalOffset);
         generator->updateArea(area);
 
         unsigned int layerCount = static_cast<unsigned int>(mLayers.size());
@@ -68,21 +70,22 @@ void TumbleGenerator::StartGeneration(Level* level)
             layerCount = 9;
         }
 
-        totalOffset += transaction->getMin().y - minimumLayerHeights[layerCount];
+        Vec3i minimum = transaction->getMin();
+        totalOffset += minimum.y - minimumLayerHeights[layerCount];
         transactions.push_back(std::make_pair(generator, transaction));
         mBlockCounts.push_back(0);
     }
 
-    const float centreOffset = static_cast<float>(totalOffset / 2);
+    const int centreOffset = totalOffset / 2;
     unsigned int layerIndex = 0;
-    std::vector<std::pair<LayerGenerator*, BlockTransaction*> >::iterator transaction = transactions.begin();
-    while (transaction != transactions.end())
+    for (std::vector<std::pair<LayerGenerator*, BlockTransaction*> >::iterator transaction = transactions.begin(),
+         transactionsEnd = transactions.end(); transaction != transactionsEnd; ++transaction)
     {
         LayerGenerator* generator = transaction->first;
         BlockTransaction* blockTransaction = transaction->second;
         AABB* area = AABB::newPermanent(generator->getArea());
-        area->mMinY -= centreOffset;
-        area->mMaxY -= centreOffset;
+        area->mMaxY -= static_cast<float>(centreOffset);
+        area->mMinY -= static_cast<float>(centreOffset);
         generator->updateArea(area);
 
         Vec3i originPosition(static_cast<int>(area->mMinX), static_cast<int>(area->mMinY),
@@ -90,7 +93,6 @@ void TumbleGenerator::StartGeneration(Level* level)
         mGenerationWriteTasks.push_back(
             new GenerationWriteTask(level, blockTransaction, BlockPos(originPosition), &mBlockCounts[layerIndex]));
 
-        ++transaction;
         ++layerIndex;
     }
 
@@ -107,7 +109,8 @@ void TumbleGenerator::CleanUp(Level* level)
     std::wstring(L"cleanup_perf.pix3");
     boost::unordered_set<LevelChunk*> dirtyChunks;
 
-    for (std::vector<LayerGenerator*>::iterator layer = mLayers.begin(), end = mLayers.end(); layer != end; ++layer)
+    std::vector<LayerGenerator*>::iterator end = mLayers.end();
+    for (std::vector<LayerGenerator*>::iterator layer = mLayers.begin(); layer != end; ++layer)
     {
         AABB* area = (*layer)->getArea();
         if (area != NULL)
@@ -131,9 +134,9 @@ void TumbleGenerator::CleanUp(Level* level)
 
     for (unsigned int index = 0; index < mAdditionalBlocks.size(); ++index)
     {
-        BlockPos* additional = &mAdditionalBlocks[index];
-        level->setBlockAndData(additional->x, additional->y, additional->z, BlockId::AIR, 0, Block::UPDATE_CLIENTS | Block::UPDATE_LIGHT_IF_CHANGED);
-        dirtyChunks.insert(level->getChunkAt(additional->x, additional->z));
+        BlockPos& additional = mAdditionalBlocks[index];
+        level->setBlockAndData(additional.x, additional.y, additional.z, BlockId::AIR, 0, Block::UPDATE_CLIENTS | Block::UPDATE_LIGHT_IF_CHANGED);
+        dirtyChunks.insert(level->getChunkAt(additional.x, additional.z));
     }
     mAdditionalBlocks.clear();
 
@@ -141,8 +144,9 @@ void TumbleGenerator::CleanUp(Level* level)
     boost::unordered_set<LevelChunk*>::iterator chunk = dirtyChunks.begin();
     while (chunk != dirtyChunks.end())
     {
-        (*chunk)->recalcHeightmapOnly();
-        (*chunk)->lightLava();
+        LevelChunk* levelChunk = *chunk;
+        levelChunk->recalcHeightmapOnly();
+        levelChunk->lightLava();
         ++chunk;
     }
     PIXEndNamedEvent();
@@ -168,16 +172,16 @@ void TumbleGenerator::GetLayerExtents(unsigned int layer, float* minimum, float*
     {
         return;
     }
-    std::vector<LayerGenerator*>::iterator generator = mLayers.begin() + layer;
-    *minimum = static_cast<float>((*generator)->getCoreWorldMinY());
-    *maximum = static_cast<float>((*generator)->getCoreWorldMaxY());
+    LayerGenerator*& generator = mLayers[layer];
+    *minimum = static_cast<float>(generator->getCoreWorldMinY());
+    *maximum = static_cast<float>(generator->getCoreWorldMaxY());
 }
 
 unsigned int TumbleGenerator::GetBlockCountOnLayer(unsigned int layer)
 {
-    if (layer < mBlockCounts.size())
+    if (layer >= mBlockCounts.size())
     {
-        return mBlockCounts[layer];
+        return 0;
     }
-    return 0;
+    return mBlockCounts[layer];
 }

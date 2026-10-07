@@ -17,7 +17,7 @@ class DataOutputStream;
 class Level;
 class Random;
 
-class StructureStart : public std::vector<StructurePiece*>
+class StructureStart
 {
 public:
     StructureStart();
@@ -42,6 +42,9 @@ public:
     virtual bool isValidForPostProcess(ChunkPos* chunkPos);
     virtual void notifyPostProcessAt(ChunkPos* chunkPos);
     virtual EStructureStart GetType() = 0;
+
+public:
+    std::vector<StructurePiece*> mPieces;
 
 protected:
     BoundingBox* mBoundingBox;

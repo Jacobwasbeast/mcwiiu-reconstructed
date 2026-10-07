@@ -16,7 +16,7 @@ static ResourceLocation PIG_SADDLE_LOCATION(TN_MOB_SADDLE);
 PigSaddleLayer::PigSaddleLayer(PigRenderer* renderer)
 {
     mRenderer = renderer;
-    mModel = new PigModel(0.5f, ModelDefinition());
+    mModel = new PigModel(0.5f);
 }
 
 PigSaddleLayer::~PigSaddleLayer()

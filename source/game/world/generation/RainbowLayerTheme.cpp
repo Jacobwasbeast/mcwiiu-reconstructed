@@ -10,9 +10,9 @@ const BlockState* RainbowLayerTheme::BlockAt(Random&, float noise, int heightAbo
 {
     if (heightAboveSurface < 1 && !isAir)
     {
-        const float shifted = noise + 1.0f;
-        const double scaledIndex = (static_cast<double>(static_cast<int>(mBlocks.size())) * 0.5) * shifted;
-        return mBlocks.at(static_cast<int>(std::floor(scaledIndex)));
+        const int count = static_cast<int>(mBlocks.size());
+        const int index = static_cast<int>(std::floor(count * 0.5 * (noise + 1.0f)));
+        return mBlocks.at(index);
     }
     return NULL;
 }

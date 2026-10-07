@@ -27,7 +27,7 @@ public:
     virtual bool canContinueToUse();
     virtual void start();
     virtual void stop();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"MoveThroughVillage"; }
 
 private:
     PathfinderMob* mMob;

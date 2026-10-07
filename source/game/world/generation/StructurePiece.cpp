@@ -55,13 +55,13 @@ StructurePiece::StructurePiece()
 }
 
 StructurePiece::StructurePiece(int genDepth)
-    : mBoundingBox(NULL),
-      mOrientation(NULL),
-      mMirror(Mirror::NONE),
-      mRotation(Rotation::NONE),
-      mGenDepth(genDepth),
-      mDirty(true)
+    : mGenDepth(genDepth)
 {
+    mBoundingBox = NULL;
+    mOrientation = NULL;
+    mMirror = Mirror::NONE;
+    mRotation = Rotation::NONE;
+    mDirty = true;
 }
 
 StructurePiece::~StructurePiece()
@@ -456,13 +456,13 @@ void StructurePiece::generateMaybeBox(Level* level, BoundingBox* box, Random& ra
                     continue;
                 }
 
-                if (y != y0 && y != y1 && x != x0 && x != x1 && z != z0 && z != z1)
+                if (y == y0 || y == y1 || x == x0 || x == x1 || z == z0 || z == z1)
                 {
-                    placeBlock(level, innerState, x, y, z, box);
+                    placeBlock(level, outerState, x, y, z, box);
                 }
                 else
                 {
-                    placeBlock(level, outerState, x, y, z, box);
+                    placeBlock(level, innerState, x, y, z, box);
                 }
             }
         }
@@ -481,11 +481,11 @@ void StructurePiece::maybeGenerateBlock(Level* level, BoundingBox* box, Random& 
 void StructurePiece::generateUpperHalfSphere(Level* level, BoundingBox* box, int x0, int y0, int z0,
     int x1, int y1, int z1, const BlockState* state, bool excludeAir)
 {
-    float xSpan = (float)(x1 - x0 + 1);
+    float zRadius = (float)(z1 - z0 + 1) * 0.5f;
+    float zCentre = (float)z0 + zRadius;
+    float xRadius = (float)(x1 - x0 + 1) * 0.5f;
+    float xCentre = (float)x0 + xRadius;
     float ySpan = (float)(y1 - y0 + 1);
-    float zSpan = (float)(z1 - z0 + 1);
-    float xCentre = (float)x0 + xSpan / 2.0f;
-    float zCentre = (float)z0 + zSpan / 2.0f;
 
     for (int y = y0; y <= y1; ++y)
     {
@@ -493,11 +493,11 @@ void StructurePiece::generateUpperHalfSphere(Level* level, BoundingBox* box, int
 
         for (int x = x0; x <= x1; ++x)
         {
-            float dx = ((float)x - xCentre) / (xSpan / 2.0f);
+            float dx = ((float)x - xCentre) / xRadius;
 
             for (int z = z0; z <= z1; ++z)
             {
-                float dz = ((float)z - zCentre) / (zSpan / 2.0f);
+                float dz = ((float)z - zCentre) / zRadius;
 
                 if (excludeAir
                     && getBlock(level, x, y, z, box)->getBlock()->mMaterial == Material::AIR)
@@ -531,9 +531,12 @@ void StructurePiece::generateFullSphere(Level* level, BoundingBox* box, int cent
                 float dx = (float)abs(x - centreX) + 0.5f;
                 float dy = (float)abs(y - centreY) + 0.5f;
                 float dz = (float)abs(z - centreZ) + 0.5f;
-                float distance = sqrtf(dx * dx + dy * dy + dz * dz);
+                float sum = dx * dx + dy * dy;
+                sum += dz * dz;
+                float distance = sqrtf(sum);
 
-                if (fabsf(distance - (float)radius) <= 0.5f)
+                float delta = distance - (float)radius;
+                if (fabsf(delta) <= 0.5f)
                 {
                     placeBlock(level, shellState, x, y, z, box);
                 }
@@ -616,48 +619,53 @@ bool StructurePiece::createChest(Level* level, BoundingBox* box, Random& random,
 bool StructurePiece::createChest(Level* level, BoundingBox* box, Random& random, const BlockPos& pos,
     ResourceLocation* lootTable, const BlockState* state)
 {
-    if (!box->isInside(pos) || level->getBlockState(pos)->getBlock() == Blocks::chest)
+    if (box->isInside(pos) && level->getBlockState(pos)->getBlock() != Blocks::chest)
     {
-        return false;
+        if (state == NULL)
+        {
+            state = static_cast<ChestBlock*>(Blocks::chest)->reorient(level, pos, Blocks::chest->defaultBlockState());
+        }
+
+        level->setBlock(pos, state, Block::UPDATE_CLIENTS, false);
+
+        boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+        if (blockEntity)
+        {
+            bool isChest = blockEntity->GetType() == BlockEntityType::CHEST;
+            if (isChest)
+            {
+                boost::shared_ptr<ChestBlockEntity> chest = boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
+                chest->setLootTable(lootTable, random.nextLong());
+            }
+        }
+
+        return true;
     }
 
-    if (state == NULL)
-    {
-        state = static_cast<ChestBlock*>(Blocks::chest)->reorient(level, pos, Blocks::chest->defaultBlockState());
-    }
-
-    level->setBlock(pos, state, Block::UPDATE_CLIENTS, false);
-
-    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity && blockEntity->GetType() == BlockEntityType::CHEST)
-    {
-        boost::shared_ptr<ChestBlockEntity> chest = boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
-        chest->setLootTable(lootTable, random.nextLong());
-    }
-
-    return true;
+    return false;
 }
 
 bool StructurePiece::createDispenser(Level* level, BoundingBox* box, Random& random, int x, int y, int z,
     const Direction* facing, ResourceLocation* lootTable)
 {
     const BlockPos& pos = BlockPos(getWorldX(x, z), getWorldY(y), getWorldZ(x, z));
-    if (!box->isInside(pos) || level->getBlockState(pos)->getBlock() == Blocks::dispenser)
+    if (box->isInside(pos) && level->getBlockState(pos)->getBlock() != Blocks::dispenser)
     {
-        return false;
+        placeBlock(level, Blocks::dispenser->defaultBlockState()->setValue(DispenserBlock::FACING, facing), x, y, z, box);
+
+        boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+        bool isDispenser = (blockEntity->GetType() & BlockEntityType::DISPENSER) == BlockEntityType::DISPENSER;
+        if (isDispenser)
+        {
+            boost::shared_ptr<DispenserBlockEntity> dispenser =
+                boost::static_pointer_cast<DispenserBlockEntity>(blockEntity);
+            dispenser->setLootTable(lootTable, random.nextInt());
+        }
+
+        return true;
     }
 
-    placeBlock(level, Blocks::dispenser->defaultBlockState()->setValue(DispenserBlock::FACING, facing), x, y, z, box);
-
-    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if ((blockEntity->GetType() & BlockEntityType::DISPENSER) == BlockEntityType::DISPENSER)
-    {
-        boost::shared_ptr<DispenserBlockEntity> dispenser =
-            boost::static_pointer_cast<DispenserBlockEntity>(blockEntity);
-        dispenser->setLootTable(lootTable, random.nextInt());
-    }
-
-    return true;
+    return false;
 }
 
 void StructurePiece::addStructurePieceSaveData(DataOutputStream* output, std::vector<bool> firstBools,
@@ -682,7 +690,7 @@ void StructurePiece::addBoolSaveData(DataOutputStream* output, std::vector<bool>
 {
     std::wstring text = L"";
 
-    for (unsigned int i = 0; i < values.size(); ++i)
+    for (int i = 0; i < values.size(); ++i)
     {
         text += _toString<bool>(values[i]);
 
@@ -705,7 +713,7 @@ std::vector<bool> StructurePiece::readBoolSaveData(DataInputStream* input)
         std::vector<std::wstring> parts;
         parts = stringSplit(text, L',');
 
-        for (unsigned int i = 0; i < parts.size(); ++i)
+        for (int i = 0; i < parts.size(); ++i)
         {
             values.push_back(_fromString<bool>(parts[i]));
         }
@@ -718,7 +726,7 @@ void StructurePiece::addIntSaveData(DataOutputStream* output, std::vector<int> v
 {
     std::wstring text = L"";
 
-    for (unsigned int i = 0; i < values.size(); ++i)
+    for (int i = 0; i < values.size(); ++i)
     {
         text += _toString<int>(values[i]);
 
@@ -741,7 +749,7 @@ std::vector<int> StructurePiece::readIntSaveData(DataInputStream* input)
         std::vector<std::wstring> parts;
         parts = stringSplit(text, L',');
 
-        for (unsigned int i = 0; i < parts.size(); ++i)
+        for (int i = 0; i < parts.size(); ++i)
         {
             values.push_back(_fromString<int>(parts[i]));
         }

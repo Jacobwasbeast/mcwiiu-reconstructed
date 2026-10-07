@@ -80,13 +80,13 @@ StructureStart* BuriedTreasureFeature::createStructureStart(int chunkX, int chun
 
 bool BuriedTreasureFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
 {
-    const int sizeInChunks = level->getLevelData()->getXZSize();
+    int sizeInChunks = level->getLevelData()->getXZSize();
     FjIsFeatureChunk* featureChunk = FjIsFeatureChunk::UseReducedSpacing(sizeInChunks, flatWorld)
         ? &mReducedFeatureChunk : &mFeatureChunk;
     ChunkPos center = featureChunk->getCenterChunk(chunkX, chunkZ);
-    Random& chunkRandom = *level->getRandomFor(center.x, center.z, BURIED_TREASURE_SALT);
-    bool result = featureChunk->isFeatureChunk(chunkRandom, level->getBiomeSource(),
-                                               sizeInChunks, chunkX, chunkZ);
+    bool result = featureChunk->isFeatureChunk(
+        *level->getRandomFor(center.x, center.z, BURIED_TREASURE_SALT), level->getBiomeSource(),
+        sizeInChunks, chunkX, chunkZ);
     result = canPlaceFeatureInChunk(result, eFeatureType_BuriedTreasure, chunkX, chunkZ);
     if (result)
         gApp.AddTerrainFeaturePosition(
@@ -101,16 +101,12 @@ BuriedTreasureFeature::BuriedTreasurePiece::BuriedTreasurePiece(int x, int z)
     mBoundingBox = new BoundingBox(x, 64, z, x + 1, 73, z + 1);
 }
 
-BuriedTreasureFeature::BuriedTreasurePiece::~BuriedTreasurePiece()
-{
-}
-
 bool BuriedTreasureFeature::BuriedTreasurePiece::postProcess(Level* levelIn,
                                                                Random& randomIn,
                                                                BoundingBox* box)
 {
     BlockPos origin(getWorldX(0, 0), getWorldY(1), getWorldZ(0, 0));
-    if (!box->isInside(Vec3i(origin.x, origin.y, origin.z)))
+    if (!box->isInside(origin))
         return false;
 
     origin = BlockPos(origin.x, levelIn->getTopSolidBlockPos(origin).y, origin.z);
@@ -187,16 +183,12 @@ BuriedTreasureFeature::BuriedTreasureStart::BuriedTreasureStart(
 {
     BlockPos position(chunkX * 16 + 8, 0, chunkZ * 16 + 8);
     if (levelIn->getBiome(position) != NULL)
-        push_back(new BuriedTreasurePiece(chunkX * 16 + 8, chunkZ * 16 + 8));
+        mPieces.push_back(new BuriedTreasurePiece(chunkX * 16 + 8, chunkZ * 16 + 8));
     calculateBoundingBox();
 }
 
 BuriedTreasureFeature::BuriedTreasureStart::BuriedTreasureStart()
     : StructureStart(0, 0)
-{
-}
-
-BuriedTreasureFeature::BuriedTreasureStart::~BuriedTreasureStart()
 {
 }
 

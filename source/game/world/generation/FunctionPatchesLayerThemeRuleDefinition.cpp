@@ -35,10 +35,6 @@ FunctionPatchesLayerThemeRuleDefinition::FunctionPatchesLayerThemeRuleDefinition
 {
 }
 
-FunctionPatchesLayerThemeRuleDefinition::~FunctionPatchesLayerThemeRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType FunctionPatchesLayerThemeRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_FunctionPatchesTheme;

@@ -10,10 +10,6 @@ UniformLayerSizeRuleDefinition::UniformLayerSizeRuleDefinition()
     size->setMin(0)->setMax(254);
 }
 
-UniformLayerSizeRuleDefinition::~UniformLayerSizeRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType UniformLayerSizeRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_UniformSize;

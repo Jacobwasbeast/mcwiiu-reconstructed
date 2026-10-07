@@ -14,7 +14,7 @@ static ResourceLocation SPIN_ATTACK_LOCATION(TN_ITEM_TRIDENT_RIPTIDE);
 SpinAttackLayer::SpinAttackLayer(LivingEntityRenderer* renderer)
     : mRenderer(renderer)
 {
-    mModel = new SpinAttackModel(ModelDefinition());
+    mModel = new SpinAttackModel();
 }
 
 SpinAttackLayer::~SpinAttackLayer()

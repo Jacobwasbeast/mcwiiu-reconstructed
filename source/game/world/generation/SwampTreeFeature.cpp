@@ -31,16 +31,12 @@ SwampTreeFeature::SwampTreeFeature()
 {
 }
 
-SwampTreeFeature::~SwampTreeFeature()
-{
-}
-
 void SwampTreeFeature::staticCtor()
 {
     swampTrunkState = Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::OAK);
     swampLeafState = Blocks::leaves->defaultBlockState()
                          ->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::OAK)
-                         ->setValue(LeafBlock::DECAYABLE, false);
+                         ->setValue(LeafBlock::CHECK_DECAY, false);
 }
 
 void SwampTreeFeature::addVine(Level* level, const BlockPos& pos,

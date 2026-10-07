@@ -8,7 +8,6 @@ class FunctionPatchesLayerThemeRuleDefinition : public LayerAttributeChildRuleDe
 {
 public:
     FunctionPatchesLayerThemeRuleDefinition();
-    virtual ~FunctionPatchesLayerThemeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual void writeAttributes(GameRuleSaveInterface* saveInterface, unsigned int extraAttributeCount);

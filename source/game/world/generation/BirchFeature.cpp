@@ -28,16 +28,12 @@ BirchFeature::BirchFeature(bool doBlockNotify, bool tallBirch)
 {
 }
 
-BirchFeature::~BirchFeature()
-{
-}
-
 void BirchFeature::staticCtor()
 {
     birchTrunkState = Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::BIRCH);
     birchLeafState = Blocks::leaves->defaultBlockState()
                          ->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::BIRCH)
-                         ->setValue(LeafBlock::DECAYABLE, false);
+                         ->setValue(LeafBlock::CHECK_DECAY, false);
 }
 
 bool BirchFeature::place(Level* level, Random& random, const BlockPos& origin)

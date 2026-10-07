@@ -24,10 +24,6 @@ BasicPatchesLayerThemeRuleDefinition::BasicPatchesLayerThemeRuleDefinition()
     scaleAttribute->setMax(1000.0);
 }
 
-BasicPatchesLayerThemeRuleDefinition::~BasicPatchesLayerThemeRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType BasicPatchesLayerThemeRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_BasicPatchesTheme;

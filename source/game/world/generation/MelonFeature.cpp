@@ -20,13 +20,9 @@ bool MelonFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
     for (int i = 0; i < 64; ++i)
     {
-        const int xOffsetStart = random.nextInt(8);
-        const int dx = xOffsetStart - random.nextInt(8);
-        const int yOffsetStart = random.nextInt(4);
-        const int dy = yOffsetStart - random.nextInt(4);
-        const int zOffsetStart = random.nextInt(8);
-        const int dz = zOffsetStart - random.nextInt(8);
-        const BlockPos position = origin.offset(dx, dy, dz);
+        BlockPos position = origin.offset(random.nextInt(8) - random.nextInt(8),
+                                          random.nextInt(4) - random.nextInt(4),
+                                          random.nextInt(8) - random.nextInt(8));
         if (Blocks::melon_block->mayPlace(level, position)
             && level->getBlockState(position.below())->getBlock() == Blocks::grass)
         {

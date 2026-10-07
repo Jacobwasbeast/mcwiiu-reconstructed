@@ -20,7 +20,7 @@ static ResourceLocation WITHER_ARMOR_LOCATION(TN_MOB_WITHER_WITHER_ARMOR);
 WitherArmorLayer::WitherArmorLayer(WitherBossRenderer* renderer)
     : mRenderer(renderer)
 {
-    mModel = new WitherBossModel(0.5f, ModelDefinition());
+    mModel = new WitherBossModel(0.5f);
     mOriginalModel = mModel;
 }
 

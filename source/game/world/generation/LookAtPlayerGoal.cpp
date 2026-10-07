@@ -104,11 +104,6 @@ void LookAtPlayerGoal::tick()
     --mLookTime;
 }
 
-std::wstring LookAtPlayerGoal::getName()
-{
-    return std::wstring(L"LookAtPlayer");
-}
-
 bool LookAtPlayerGoal::LookAtPlayerGoalEntitySelector::apply(boost::shared_ptr<Entity> entity) const
 {
     return EntitySelector::NO_SPECTATORS->apply(entity) && EntitySelector::ENTITY_STILL_ALIVE->apply(entity);

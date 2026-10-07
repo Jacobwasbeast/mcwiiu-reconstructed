@@ -20,7 +20,7 @@ static ResourceLocation CREEPER_ARMOR_LOCATION(TN_ARMOR_POWER);
 CreeperPowerLayer::CreeperPowerLayer(CreeperRenderer* renderer)
     : mRenderer(renderer), mOriginalModel(NULL)
 {
-    mModel = new CreeperModel(2.0f, ModelDefinition());
+    mModel = new CreeperModel(2.0f);
 }
 
 CreeperPowerLayer::~CreeperPowerLayer()

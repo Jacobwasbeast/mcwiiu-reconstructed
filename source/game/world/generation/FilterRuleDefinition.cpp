@@ -15,20 +15,6 @@
 #include "game/world/generation/LayerTheme.hpp"
 
 template <class T>
-FilterRuleDefinition<T>::FilterRuleDefinition(CreateChildFunc createChild)
-    : mCreateChild(createChild)
-    , mChild(NULL)
-    , mVariant(-1)
-    , mFilter(LayerMetadata::eFilter_AnyLayer)
-{
-}
-
-template <class T>
-FilterRuleDefinition<T>::~FilterRuleDefinition()
-{
-}
-
-template <class T>
 ConsoleGameRules::EGameRuleType FilterRuleDefinition<T>::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_FilterTheme;
@@ -73,15 +59,16 @@ void FilterRuleDefinition<T>::addAttribute(const std::wstring& name, const std::
     if (name.compare(L"variant") == 0)
     {
         mVariant = _fromString<int>(value);
+        return;
     }
-    else if (name.compare(L"type") == 0)
+
+    if (name.compare(L"type") == 0)
     {
         mFilter = LayerMetadata::fromStringFilter(value);
+        return;
     }
-    else
-    {
-        GameRuleDefinition::addAttribute(name, value);
-    }
+
+    GameRuleDefinition::addAttribute(name, value);
 }
 
 template <class T>
@@ -93,24 +80,21 @@ T FilterRuleDefinition<T>::Generate() const
 template <class T>
 bool FilterRuleDefinition<T>::CanUse(const LayerMetadata& metadata) const
 {
-    bool canUse = false;
+    int canUse = 0;
 
     if (mVariant == -1 || mVariant == metadata.m_uGameVariant)
     {
         LayerMetadata::FilterFunc filter = LayerMetadata::getFilter(mFilter);
         if (filter(metadata))
         {
-            canUse = true;
+            canUse = 1;
         }
     }
 
     return canUse;
 }
 
-template FilterRuleDefinition<LayerShape*>::FilterRuleDefinition(
-    FilterRuleDefinition<LayerShape*>::CreateChildFunc);
-template FilterRuleDefinition<LayerSize*>::FilterRuleDefinition(
-    FilterRuleDefinition<LayerSize*>::CreateChildFunc);
-template FilterRuleDefinition<LayerTheme*>::FilterRuleDefinition(
-    FilterRuleDefinition<LayerTheme*>::CreateChildFunc);
+template class FilterRuleDefinition<LayerShape*>;
+template class FilterRuleDefinition<LayerSize*>;
+template class FilterRuleDefinition<LayerTheme*>;
 template class FilterRuleDefinition<LayerFill*>;

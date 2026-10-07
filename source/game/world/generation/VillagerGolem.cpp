@@ -71,13 +71,9 @@ VillagerGolem::VillagerGolem(Level* level)
     setSize(1.4f, 2.7f);
 }
 
-VillagerGolem::~VillagerGolem()
+Entity* VillagerGolem::create(Level* level)
 {
-}
-
-void VillagerGolem::create(Level* level)
-{
-    new VillagerGolem(level);
+    return new VillagerGolem(level);
 }
 
 void VillagerGolem::addDataWalkers(DataFixerUpper* fixer)

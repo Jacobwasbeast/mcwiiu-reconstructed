@@ -14,7 +14,7 @@
 SlimeOuterLayer::SlimeOuterLayer(SlimeRenderer* renderer)
     : mRenderer(renderer)
 {
-    SlimeModel* model = new SlimeModel(0, ModelDefinition());
+    SlimeModel* model = new SlimeModel(0);
     mModel = model;
     mOriginalModel = NULL;
 }

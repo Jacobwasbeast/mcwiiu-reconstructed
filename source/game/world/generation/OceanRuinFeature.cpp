@@ -66,31 +66,31 @@ StructureStart* OceanRuinFeature::createStructureStart(int chunkX, int chunkZ)
 
 bool OceanRuinFeature::isFeatureChunk(int chunkX, int chunkZ, bool)
 {
-    int regionX = chunkX;
-    int regionZ = chunkZ;
+    int originalX = chunkX;
+    int originalZ = chunkZ;
     if (chunkX < 0)
     {
-        regionX += 1 - mSpacing;
+        chunkX -= mSpacing - 1;
     }
     if (chunkZ < 0)
     {
-        regionZ += 1 - mSpacing;
+        chunkZ -= mSpacing - 1;
     }
 
-    regionX /= mSpacing;
-    regionZ /= mSpacing;
-    Random& chunkRandom = *level->getRandomFor(regionX, regionZ, 0xdb1471);
-    int featureX = regionX * mSpacing;
-    int featureZ = regionZ * mSpacing;
-    featureX += chunkRandom.nextInt(mSpacing - mSeparation);
-    featureZ += chunkRandom.nextInt(mSpacing - mSeparation);
-    bool featureChunk = chunkX == featureX && chunkZ == featureZ;
+    int regionX = chunkX / mSpacing;
+    int regionZ = chunkZ / mSpacing;
+    Random* chunkRandom = level->getRandomFor(regionX, regionZ, 0xdb1471);
+    regionX *= mSpacing;
+    regionZ *= mSpacing;
+    regionX += chunkRandom->nextInt(mSpacing - mSeparation);
+    regionZ += chunkRandom->nextInt(mSpacing - mSeparation);
+    bool featureChunk = originalX == regionX && originalZ == regionZ;
 
-    if (!canPlaceFeatureInChunk(featureChunk, eFeatureType_OceanRuin, chunkX, chunkZ))
+    if (canPlaceFeatureInChunk(featureChunk, eFeatureType_OceanRuin, originalX, originalZ))
     {
-        return false;
+        return IsValidSpawnArea(level, originalX * 16 + 8, originalZ * 16 + 8, 8);
     }
-    return IsValidSpawnArea(level, chunkX * 16 + 8, chunkZ * 16 + 8, 8);
+    return false;
 }
 
 OceanRuinFeature::OceanRuinStart::OceanRuinStart(
@@ -101,35 +101,26 @@ OceanRuinFeature::OceanRuinStart::OceanRuinStart(
     create(random, chunkX, chunkZ, configuration);
 }
 
-OceanRuinFeature::OceanRuinStart::~OceanRuinStart()
-{
-}
-
 std::vector<BlockPos>* OceanRuinFeature::OceanRuinStart::allPositions(
     Random& random, int x, int z)
 {
     std::vector<BlockPos>* positions = new std::vector<BlockPos>;
-    int west = x - 16;
-    int east = x + 16;
-    int north = z - 16;
-    int south = z + 16;
-
-    positions->push_back(BlockPos(west + Mth::nextInt(&random, 1, 8), 0,
-                                  south + Mth::nextInt(&random, 1, 7)));
-    positions->push_back(BlockPos(west + Mth::nextInt(&random, 1, 8), 0,
+    positions->push_back(BlockPos(x - 16 + Mth::nextInt(&random, 1, 8), 0,
+                                  z + 16 + Mth::nextInt(&random, 1, 7)));
+    positions->push_back(BlockPos(x - 16 + Mth::nextInt(&random, 1, 8), 0,
                                   z + Mth::nextInt(&random, 1, 7)));
-    positions->push_back(BlockPos(west + Mth::nextInt(&random, 1, 8), 0,
-                                  north + Mth::nextInt(&random, 4, 8)));
+    positions->push_back(BlockPos(x - 16 + Mth::nextInt(&random, 1, 8), 0,
+                                  z - 16 + Mth::nextInt(&random, 4, 8)));
     positions->push_back(BlockPos(x + Mth::nextInt(&random, 1, 7), 0,
-                                  south + Mth::nextInt(&random, 1, 7)));
+                                  z + 16 + Mth::nextInt(&random, 1, 7)));
     positions->push_back(BlockPos(x + Mth::nextInt(&random, 1, 7), 0,
-                                  north + Mth::nextInt(&random, 4, 6)));
-    positions->push_back(BlockPos(east + Mth::nextInt(&random, 1, 7), 0,
-                                  south + Mth::nextInt(&random, 3, 8)));
-    positions->push_back(BlockPos(east + Mth::nextInt(&random, 1, 7), 0,
+                                  z - 16 + Mth::nextInt(&random, 4, 6)));
+    positions->push_back(BlockPos(x + 16 + Mth::nextInt(&random, 1, 7), 0,
+                                  z + 16 + Mth::nextInt(&random, 3, 8)));
+    positions->push_back(BlockPos(x + 16 + Mth::nextInt(&random, 1, 7), 0,
                                   z + Mth::nextInt(&random, 1, 7)));
-    positions->push_back(BlockPos(east + Mth::nextInt(&random, 1, 7), 0,
-                                  north + Mth::nextInt(&random, 4, 8)));
+    positions->push_back(BlockPos(x + 16 + Mth::nextInt(&random, 1, 7), 0,
+                                  z - 16 + Mth::nextInt(&random, 4, 8)));
     return positions;
 }
 
@@ -183,21 +174,21 @@ void OceanRuinFeature::OceanRuinStart::create(
     bool warm = configuration.biomeType == OceanRuin::eRuinType_Warm;
     bool large = random.nextFloat() <= configuration.smallProbability;
 
-    OceanRuin* ruin;
+    StructurePiece* ruin;
     if (!large)
     {
-        ruin = new OceanRuin(mLevel, random, x, z, 7, 7, 7, warm, false);
+        ruin = new OceanRuin(mLevel, random, x, z, 7, 7, 7, warm, large);
     }
     else
     {
-        ruin = new OceanRuin(mLevel, random, x, z, 16, 16, 16, warm, true);
+        ruin = new OceanRuin(mLevel, random, x, z, 16, 16, 16, warm, large);
     }
-    push_back(ruin);
+    mPieces.push_back(ruin);
 
     if (large && random.nextFloat() <= configuration.clusterProbability)
     {
         addClusterRuins(random, Direction::Plane::HORIZONTAL->getRandomDirection(random),
-                        x, z, warm, *this);
+                        x, z, warm, mPieces);
     }
 
     calculateBoundingBox();

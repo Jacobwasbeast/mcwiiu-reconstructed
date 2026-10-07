@@ -28,10 +28,6 @@ LayerThemeRuleDefinition::LayerThemeRuleDefinition()
 {
 }
 
-LayerThemeRuleDefinition::~LayerThemeRuleDefinition()
-{
-}
-
 unsigned int LayerThemeRuleDefinition::GetPassId() const
 {
     return mPassId;
@@ -84,9 +80,6 @@ LayerAttributeChildRuleDefinition<LayerTheme*>* LayerThemeRuleDefinition::Create
     case ConsoleGameRules::eGameRuleType_ShaftsTheme:
         return new ShaftsLayerThemeRuleDefinition();
 
-    case ConsoleGameRules::eGameRuleType_BasicPatchesTheme:
-        return new BasicPatchesLayerThemeRuleDefinition();
-
     case ConsoleGameRules::eGameRuleType_BlockStackTheme:
         return new BlockStackLayerThemeRuleDefinition();
 
@@ -95,6 +88,9 @@ LayerAttributeChildRuleDefinition<LayerTheme*>* LayerThemeRuleDefinition::Create
 
     case ConsoleGameRules::eGameRuleType_TerracottaTheme:
         return new TerracottaLayerThemeRuleDefinition();
+
+    case ConsoleGameRules::eGameRuleType_BasicPatchesTheme:
+        return new BasicPatchesLayerThemeRuleDefinition();
 
     case ConsoleGameRules::eGameRuleType_FunctionPatchesTheme:
         return new FunctionPatchesLayerThemeRuleDefinition();

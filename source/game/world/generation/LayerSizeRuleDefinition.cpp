@@ -9,10 +9,6 @@ LayerSizeRuleDefinition::LayerSizeRuleDefinition()
 {
 }
 
-LayerSizeRuleDefinition::~LayerSizeRuleDefinition()
-{
-}
-
 LayerAttributeChildRuleDefinition<LayerSize*>* LayerSizeRuleDefinition::CreateFuncImpl(ConsoleGameRules::EGameRuleType type)
 {
     switch (type)

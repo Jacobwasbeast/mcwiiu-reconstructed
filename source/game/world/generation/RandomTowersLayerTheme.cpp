@@ -14,7 +14,7 @@ RandomTowersLayerTheme::RandomTowersLayerTheme(unsigned int uSeed,
 
 const BlockState* RandomTowersLayerTheme::BlockAt(Random& random, float fNoise, int iHeightAboveSurface, bool bIsAir) const
 {
-    if (fNoise < m_dTowerThreshold && iHeightAboveSurface < 2)
+    if (fNoise < m_dTowerThreshold && iHeightAboveSurface <= 1)
     {
         unsigned int uIndex = 1 - iHeightAboveSurface;
         if (uIndex < m_apTowerBlocks.size())

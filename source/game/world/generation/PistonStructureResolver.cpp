@@ -44,18 +44,22 @@ void PistonStructureResolver::reorderListAtCollision(int collisionIndex, int dis
 
 bool PistonStructureResolver::addBranchingBlocks(const BlockPos& pos)
 {
-    std::vector<const Direction*>::const_iterator direction = Direction::VALUES.begin();
-    while (direction != Direction::VALUES.end())
+    std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin();
+    if (it != Direction::VALUES.end())
     {
-        const Direction* side = *direction;
-        if (side->getAxis() != mMoveDirection->getAxis())
+        do
         {
-            if (!addBlockLine(pos.relative(side), side))
+            const Direction* side = *it;
+            if (side->getAxis() != mMoveDirection->getAxis())
             {
-                return false;
+                if (!addBlockLine(pos.relative(side), side))
+                {
+                    return false;
+                }
             }
+            it++;
         }
-        ++direction;
+        while (it != Direction::VALUES.end());
     }
     return true;
 }
@@ -171,13 +175,15 @@ bool PistonStructureResolver::resolve()
     {
         return false;
     }
-    for (std::size_t index = 0; index < mToPush.size(); ++index)
+    unsigned int index = 0;
+    while (index < mToPush.size())
     {
         const BlockPos moved = mToPush.at(index);
         if (mLevel->getBlockState(moved)->getBlock() == Blocks::slime && !addBranchingBlocks(moved))
         {
             return false;
         }
+        ++index;
     }
     return true;
 }

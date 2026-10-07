@@ -11,10 +11,6 @@ LayerShapeRuleDefinition::LayerShapeRuleDefinition()
 {
 }
 
-LayerShapeRuleDefinition::~LayerShapeRuleDefinition()
-{
-}
-
 LayerAttributeChildRuleDefinition<LayerShape*>* LayerShapeRuleDefinition::CreateFuncImpl(ConsoleGameRules::EGameRuleType type)
 {
     switch (type)

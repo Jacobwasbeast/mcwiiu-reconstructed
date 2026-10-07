@@ -15,7 +15,6 @@ public:
     };
 
     StructureFrequencyAnalyser(int sizeInChunks, bool printResults, bool printAverages);
-    ~StructureFrequencyAnalyser();
 
     void run(unsigned int seedCount);
     void print() const;

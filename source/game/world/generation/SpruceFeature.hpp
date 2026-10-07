@@ -11,7 +11,6 @@ class SpruceFeature : public AbstractTreeFeature
 {
 public:
     SpruceFeature(bool doBlockNotify);
-    virtual ~SpruceFeature();
 
     static void staticCtor();
     virtual bool place(Level* level, Random& random, const BlockPos& pos);

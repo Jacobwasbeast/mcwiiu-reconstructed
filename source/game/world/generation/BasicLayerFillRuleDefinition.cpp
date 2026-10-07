@@ -17,10 +17,6 @@ BasicLayerFillRuleDefinition::BasicLayerFillRuleDefinition()
     addStringAttribute(BasicLayerFillRuleDefinitionConstants::LayerFillTypeAttribute, &mType);
 }
 
-BasicLayerFillRuleDefinition::~BasicLayerFillRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType BasicLayerFillRuleDefinition::getActionType()
 {
     return BasicLayerFillRuleDefinitionConstants::BasicLayerFillActionType;
@@ -32,11 +28,12 @@ LayerFill* BasicLayerFillRuleDefinition::Generate() const
     {
         return new FunctionLayerFill(FunctionLayerFill::ISLAND);
     }
-
-    if (mType.compare(L"Uniform1") == 0)
+    else if (mType.compare(L"Uniform1") == 0)
     {
         return new FunctionLayerFill(FunctionLayerFill::UNIFORM);
     }
-
-    return BasicLayerFillRuleDefinitionConstants::NoGeneratedLayerFill;
+    else
+    {
+        return NULL;
+    }
 }

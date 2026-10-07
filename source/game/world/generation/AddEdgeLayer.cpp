@@ -36,11 +36,11 @@ arrayWithLength<int> AddEdgeLayer::coolWarm(int x, int z, int width, int height)
         for (int column = 0; column < width; ++column)
         {
             initRandom((long long)(x + column), (long long)(z + row));
-            int north = source.data[column + 1 + row * parentWidth];
-            int west = source.data[column + (row + 1) * parentWidth];
-            int center = source.data[column + 1 + (row + 1) * parentWidth];
-            int east = source.data[column + 2 + (row + 1) * parentWidth];
-            int south = source.data[column + 1 + (row + 2) * parentWidth];
+            int north = source[column + 1 + row * parentWidth];
+            int west = source[column + (row + 1) * parentWidth];
+            int center = source[column + 1 + (row + 1) * parentWidth];
+            int east = source[column + 2 + (row + 1) * parentWidth];
+            int south = source[column + 1 + (row + 2) * parentWidth];
             if (center == 1)
             {
                 bool nearCold = north == 3 || east == 3 || west == 3 || south == 3;
@@ -50,7 +50,7 @@ arrayWithLength<int> AddEdgeLayer::coolWarm(int x, int z, int width, int height)
                     center = 2;
                 }
             }
-            result.data[column + row * width] = center;
+            result[column + row * width] = center;
         }
     }
     PIXEndNamedEvent();
@@ -66,11 +66,11 @@ arrayWithLength<int> AddEdgeLayer::heatIce(int x, int z, int width, int height)
     {
         for (int column = 0; column < width; ++column)
         {
-            int north = source.data[column + 1 + row * parentWidth];
-            int west = source.data[column + (row + 1) * parentWidth];
-            int center = source.data[column + 1 + (row + 1) * parentWidth];
-            int east = source.data[column + 2 + (row + 1) * parentWidth];
-            int south = source.data[column + 1 + (row + 2) * parentWidth];
+            int north = source[column + 1 + row * parentWidth];
+            int west = source[column + (row + 1) * parentWidth];
+            int center = source[column + 1 + (row + 1) * parentWidth];
+            int east = source[column + 2 + (row + 1) * parentWidth];
+            int south = source[column + 1 + (row + 2) * parentWidth];
             if (center == 4)
             {
                 bool nearTemperate = north == 2 || east == 2 || west == 2 || south == 2;
@@ -79,7 +79,7 @@ arrayWithLength<int> AddEdgeLayer::heatIce(int x, int z, int width, int height)
                     center = 3;
                 }
             }
-            result.data[column + row * width] = center;
+            result[column + row * width] = center;
         }
     }
     return result;

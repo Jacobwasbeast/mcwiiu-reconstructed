@@ -11,12 +11,12 @@ RemotePlayer::RemotePlayer(Level* level, const std::wstring& name)
     : AbstractClientPlayer(level, name)
 {
     fjDerivedCtorCalls();
-    mBedOffsetY = 0.25f;
-    mNoPhysics = true;
-    mMaxUpStep = 1.0f;
-    sViewScale = 10.0;
-    mField0x878 = 0;
     mField0x880 = 0.0f;
+    mField0x878 = 0;
+    mMaxUpStep = 1.0f;
+    mNoPhysics = true;
+    mBedOffsetY = 0.25f;
+    sViewScale = 10.0;
 }
 
 bool RemotePlayer::hasPermission(EGameCommand)
@@ -42,32 +42,30 @@ void RemotePlayer::tick()
     AbstractClientPlayer::tick();
 
     mAnimationSpeedOld = mAnimationSpeed;
-    float horizontalDistance = Mth::sqrt((mX - mXo) * (mX - mXo)
-        + (mZ - mZo) * (mZ - mZo));
-    float targetSpeed = horizontalDistance * 4.0f;
-    if (targetSpeed > 1.0f)
-        targetSpeed = 1.0f;
-    mAnimationSpeed = mAnimationSpeed
-        + (targetSpeed - mAnimationSpeed) * 0.4f;
-    mAnimationPosition = mAnimationPosition + mAnimationSpeed;
+    double xd = mX - mXo;
+    double zd = mZ - mZo;
+    float speed = Mth::sqrt(xd * xd + zd * zd) * 4.0f;
+    if (speed > 1.0f)
+        speed = 1.0f;
+    mAnimationSpeed += (speed - mAnimationSpeed) * 0.4f;
+    mAnimationPosition += mAnimationSpeed;
 }
 
 void RemotePlayer::aiStep()
 {
     if (mLerpSteps > 0)
     {
-        double steps = (double)mLerpSteps;
-        double lerpX = mX + (mLerpX - mX) / steps;
-        double lerpY = mY + (mLerpY - mY) / steps;
-        double lerpZ = mZ + (mLerpZ - mZ) / steps;
-        double yRotDelta = mLerpYRot - (double)mYRot;
-        while (yRotDelta < -180.0)
-            yRotDelta += 360.0;
-        while (yRotDelta >= 180.0)
-            yRotDelta -= 360.0;
-        mYRot = mYRot + (float)(yRotDelta / steps);
-        mXRot = mXRot + (float)((mLerpXRot - (double)mXRot) / steps);
-        --mLerpSteps;
+        double lerpX = mX + (mLerpX - mX) / mLerpSteps;
+        double lerpY = mY + (mLerpY - mY) / mLerpSteps;
+        double lerpZ = mZ + (mLerpZ - mZ) / mLerpSteps;
+        double yRotDelta = mLerpYRot - mYRot;
+        while (yRotDelta < -180)
+            yRotDelta += 360;
+        while (yRotDelta >= 180)
+            yRotDelta -= 360;
+        mYRot += (float)(yRotDelta / mLerpSteps);
+        mXRot += (float)((mLerpXRot - mXRot) / mLerpSteps);
+        mLerpSteps--;
         setPos(lerpX, lerpY, lerpZ);
         setRot(mYRot, mXRot);
         mYBodyRot = mYRot;
@@ -76,14 +74,15 @@ void RemotePlayer::aiStep()
     mPrevCameraYaw = mCameraYaw;
     updateSwingTime();
     float horizontalSpeed = Mth::sqrt(mXd * mXd + mZd * mZd);
-    float verticalAngle = static_cast<float>(std::atan(-(mYd * 0.20000000298023224))) * 15.0f;
+    float verticalAngle = static_cast<float>(std::atan(-mYd * 0.2f)) * 15.0f;
     if (horizontalSpeed > 0.1f)
         horizontalSpeed = 0.1f;
-    float cameraYawTarget = (mOnGround && getHealth() > 0.0f) ? horizontalSpeed : 0.0f;
+    if (!mOnGround || getHealth() <= 0.0f)
+        horizontalSpeed = 0.0f;
     if (mOnGround || getHealth() <= 0.0f)
         verticalAngle = 0.0f;
-    mBob = (verticalAngle - mBob) * 0.8f + mBob;
-    mCameraYaw = (cameraYawTarget - mCameraYaw) * 0.4f + mCameraYaw;
+    mCameraYaw += (horizontalSpeed - mCameraYaw) * 0.4f;
+    mBob += (verticalAngle - mBob) * 0.8f;
     calculateFlapping();
 }
 

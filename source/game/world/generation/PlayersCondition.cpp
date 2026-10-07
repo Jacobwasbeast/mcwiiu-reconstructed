@@ -25,12 +25,18 @@ int PlayersCondition::GetValue(MasterGameMode* gameMode) const
 
 void PlayersCondition::AddIntParams(MasterGameMode* gameMode, std::vector<int>* params) const
 {
-    const int threshold = GetThreshold(gameMode);
+    int threshold = GetThreshold(gameMode);
     params->push_back(threshold);
-    params->push_back(IDS_MG_PLAYERS);
+    int stringId = IDS_MG_PLAYERS;
+    params->push_back(stringId);
 }
 
 bool PlayersCondition::IsSatisfied(MasterGameMode* gameMode) const
 {
-    return Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0 || IntegerCondition::IsSatisfied(gameMode);
+    bool satisfied = true;
+    if (Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) == 0 && !IntegerCondition::IsSatisfied(gameMode))
+    {
+        satisfied = false;
+    }
+    return satisfied != false;
 }

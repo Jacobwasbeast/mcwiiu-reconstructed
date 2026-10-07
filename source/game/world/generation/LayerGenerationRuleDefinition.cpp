@@ -24,10 +24,6 @@ LayerGenerationRuleDefinition::LayerGenerationRuleDefinition()
 {
 }
 
-LayerGenerationRuleDefinition::~LayerGenerationRuleDefinition()
-{
-}
-
 void LayerGenerationRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* children)
 {
     if (mDefinition != NULL)

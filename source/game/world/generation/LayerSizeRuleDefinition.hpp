@@ -8,7 +8,6 @@ class LayerSizeRuleDefinition : public LayerAttributeRuleDefinition<LayerSize*>
 {
 public:
     LayerSizeRuleDefinition();
-    virtual ~LayerSizeRuleDefinition();
 
 private:
     static LayerAttributeChildRuleDefinition<LayerSize*>* CreateFuncImpl(ConsoleGameRules::EGameRuleType type);

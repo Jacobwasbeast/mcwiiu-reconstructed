@@ -28,16 +28,12 @@ PineFeature::PineFeature()
 {
 }
 
-PineFeature::~PineFeature()
-{
-}
-
 void PineFeature::staticCtor()
 {
     pineTrunkState = Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
     pineLeafState = Blocks::leaves->defaultBlockState()
                         ->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::SPRUCE)
-                        ->setValue(LeafBlock::DECAYABLE, false);
+                        ->setValue(LeafBlock::CHECK_DECAY, false);
 }
 
 bool PineFeature::place(Level* level, Random& random, const BlockPos& pos)
