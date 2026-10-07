@@ -8,10 +8,8 @@
 #include <math.h>
 #include <stddef.h>
 
-static const int TEMP_POOL_SIZE = 1024;
-
-static unsigned int sThreadStorageTlsIndex;
-static Vec3::ThreadStorage* sDefaultThreadStorage;
+unsigned int Vec3::sThreadStorageTlsIndex = 0;
+Vec3::ThreadStorage* Vec3::sDefaultThreadStorage = NULL;
 
 static Vec3* ZERO = new Vec3(0.0, 0.0, 0.0);
 

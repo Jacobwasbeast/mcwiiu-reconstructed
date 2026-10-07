@@ -44,6 +44,12 @@ public:
     double lengthSquared();
     Vec2* negated();
     double distanceToSqr(Vec2* other);
+
+private:
+    static const int TEMP_POOL_SIZE = 1024;
+
+    static unsigned int sThreadStorageTlsIndex;
+    static ThreadStorage* sDefaultThreadStorage;
 };
 
 }

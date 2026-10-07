@@ -56,10 +56,6 @@ Rabbit::EvilRabbitAttackGoal::EvilRabbitAttackGoal(Rabbit* rabbit)
 {
 }
 
-Rabbit::EvilRabbitAttackGoal::~EvilRabbitAttackGoal()
-{
-}
-
 double Rabbit::EvilRabbitAttackGoal::getAttackReachSqr(boost::shared_ptr<LivingEntity> target)
 {
     return target->mBbWidth + 4.0f;
@@ -70,10 +66,6 @@ Rabbit::RabbitAvoidEntityGoal::RabbitAvoidEntityGoal(Rabbit* rabbit, const std::
                                                      double sprintSpeedModifier)
     : AvoidEntityGoal(rabbit, avoidType, maxDistance, walkSpeedModifier, sprintSpeedModifier),
       mRabbit(rabbit)
-{
-}
-
-Rabbit::RabbitAvoidEntityGoal::~RabbitAvoidEntityGoal()
 {
 }
 
@@ -249,15 +241,15 @@ Rabbit::Rabbit(Level* level)
     : Animal(level)
 {
     fjDerivedCtorCalls();
-    mJumping = false;
-    mJumpTicks = 0;
-    mSnowLayerBlock = Blocks::snow_layer;
-    mGrassBlock = Blocks::grass;
-    mJumpDelayTicks = 0;
     mMoreCarrotTicks = 0;
-    mSnowBlock = Blocks::snow;
+    mGrassBlock = Blocks::grass;
+    mJumpTicks = 0;
     mJumpDuration = 0;
+    mSnowLayerBlock = Blocks::snow_layer;
     mSandBlock = Blocks::sand;
+    mSnowBlock = Blocks::snow;
+    mJumping = false;
+    mJumpDelayTicks = 0;
     setSize(0.4f, 0.5f);
     delete mJumpControl;
     mJumpControl = new RabbitJumpControl(this);
@@ -266,13 +258,9 @@ Rabbit::Rabbit(Level* level)
     setSpeedModifier(0.0);
 }
 
-Rabbit::~Rabbit()
+Entity* Rabbit::create(Level* level)
 {
-}
-
-void Rabbit::create(Level* level)
-{
-    new Rabbit(level);
+    return new Rabbit(level);
 }
 
 void Rabbit::staticCtor()
@@ -314,19 +302,16 @@ void Rabbit::registerGoals()
 
 float Rabbit::getJumpPower()
 {
-    if (!mHorizontalCollision
-        && (!mMoveControl->hasWanted() || mMoveControl->getWantedY() <= mY + 0.5))
+    if (mHorizontalCollision || (mMoveControl->hasWanted() && mMoveControl->getWantedY() > mY + 0.5))
+        return 0.5f;
+    Path* path = mNavigation->getPath();
+    if (path != NULL && path->getIndex() < path->getSize())
     {
-        Path* path = mNavigation->getPath();
-        if (path != NULL && path->getIndex() < path->getSize())
-        {
-            Vec3* pos = path->currentPos(shared_from_this());
-            if (pos->y > mY + 0.5)
-                return 0.5f;
-        }
-        return mMoveControl->getSpeedModifier() > 0.6 ? 0.3f : 0.2f;
+        Vec3* pos = path->currentPos(shared_from_this());
+        if (pos->y > mY + 0.5)
+            return 0.5f;
     }
-    return 0.5f;
+    return mMoveControl->getSpeedModifier() <= 0.6 ? 0.2f : 0.3f;
 }
 
 void Rabbit::jumpFromGround()

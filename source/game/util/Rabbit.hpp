@@ -35,7 +35,6 @@ public:
     {
     public:
         EvilRabbitAttackGoal(Rabbit* rabbit);
-        virtual ~EvilRabbitAttackGoal();
         virtual double getAttackReachSqr(boost::shared_ptr<LivingEntity> target);
     };
 
@@ -45,7 +44,6 @@ public:
         RabbitAvoidEntityGoal(Rabbit* rabbit, const std::type_info& avoidType,
                               float maxDistance, double walkSpeedModifier,
                               double sprintSpeedModifier);
-        virtual ~RabbitAvoidEntityGoal();
         virtual bool canUse();
     private:
         Rabbit* mRabbit;
@@ -111,8 +109,7 @@ public:
     };
 
     Rabbit(Level* level);
-    virtual ~Rabbit();
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void staticCtor();
     void setSpeedModifier(double speedModifier);
     virtual void registerGoals();

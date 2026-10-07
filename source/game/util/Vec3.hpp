@@ -98,6 +98,11 @@ public:
 
 private:
     void _init(double x, double y, double z);
+
+    static const int TEMP_POOL_SIZE = 1024;
+
+    static unsigned int sThreadStorageTlsIndex;
+    static ThreadStorage* sDefaultThreadStorage;
 };
 
 #endif

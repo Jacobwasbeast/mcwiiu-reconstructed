@@ -5,10 +5,8 @@
 
 #include <math.h>
 
-static const int TEMP_POOL_SIZE = 1024;
-
-static unsigned int sThreadStorageTlsIndex;
-static phys::Vec2::ThreadStorage* sDefaultThreadStorage;
+unsigned int phys::Vec2::sThreadStorageTlsIndex = 0;
+phys::Vec2::ThreadStorage* phys::Vec2::sDefaultThreadStorage = NULL;
 
 phys::Vec2::ThreadStorage::ThreadStorage()
 {
