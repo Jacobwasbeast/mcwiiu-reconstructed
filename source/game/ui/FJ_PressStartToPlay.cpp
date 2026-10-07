@@ -164,10 +164,10 @@ void FJ_PressStartToPlay::ShowController(int controller, bool show)
         else
             m_mainPanel->getChildByName("ControllerQuadrant")->getChildAt(0)->getChildByName("Controller4")->setVisible(true);
 
-        if (!show)
-            m_mainPanel->getChildByName("ControllerQuadrant")->getChildAt(0)->gotoAndPlay("Play");
-        else
+        if (show)
             m_mainPanel->getChildByName("ControllerQuadrant")->getChildAt(0)->gotoAndStop("Stop");
+        else
+            m_mainPanel->getChildByName("ControllerQuadrant")->getChildAt(0)->gotoAndPlay("Play");
 
         m_mainPanel->getChildByName("PressStartLabel")
             ->setY(Math::round((m_mainPanel->getChildByName("BackgroundPanel")->getChildAt(0)->getHeight() -
@@ -186,15 +186,15 @@ void FJ_PressStartToPlay::ShowChestRefillAnimation(bool left, int yOffset)
 {
     FJ_FuiNode* animation = getChildByName("ChestRefillAnimation");
     FJ_FuiNode::asMovieClip(animation->getChildAt(0))->setVisible(true);
-    if (!left)
-    {
-        animation->setX(getStage()->getStageWidth() - animation->getWidth() - getISafeZoneRight() - 15.0f);
-        animation->setY(getISafeZoneTop() + 15 + yOffset);
-    }
-    else
+    if (left)
     {
         animation->setX(getStage()->getStageWidth() * 0.5f - animation->getWidth() * 0.5f);
         animation->setY(getStage()->getStageHeight() * 0.5f - animation->getHeight() * 0.5f);
+    }
+    else
+    {
+        animation->setX(getStage()->getStageWidth() - animation->getWidth() - getISafeZoneRight() - 15.0f);
+        animation->setY(getISafeZoneTop() + 15 + yOffset);
     }
     FJ_FuiNode::asMovieClip(animation->getChildAt(0))->gotoAndPlay(2);
 }

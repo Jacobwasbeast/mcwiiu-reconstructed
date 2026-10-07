@@ -11,7 +11,6 @@ class FJ_List_ListButtonAchievement : public FJ_List2D
 {
 public:
     explicit FJ_List_ListButtonAchievement(fuiRenderNode* renderNode);
-    virtual ~FJ_List_ListButtonAchievement();
 
     void addNewItem(int id, const std::wstring& textureName);
     static FJ_List2D* Create(fuiRenderNode* renderNode);

@@ -30,7 +30,6 @@ public:
     };
 
     UIScene_CraftingMenu(int type, void* data, UILayer* layer);
-    virtual ~UIScene_CraftingMenu();
     virtual std::wstring getMoviePath();
     virtual unsigned int mapElementsAndNames();
     virtual int getSceneType();

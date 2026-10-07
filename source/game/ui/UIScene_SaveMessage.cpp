@@ -119,7 +119,7 @@ bool UIScene_SaveMessage::hasFocus(int sceneType)
     return m_hasFocus;
 }
 
-unsigned int UIScene_SaveMessage::getDefaultGtcButtons()
+unsigned long long UIScene_SaveMessage::getDefaultGtcButtons()
 {
     return 0;
 }

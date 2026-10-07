@@ -32,16 +32,16 @@ UIComponent_TutorialPopup::UIComponent_TutorialPopup(int sceneType, void*, UILay
       m_descriptionLabel(), m_titleLabel(), m_iconHolderControl(), m_exitScreenshotControl()
 {
     initialiseMovie();
-    m_previousInteractScene = 0;
-    m_showTitleTimer = false;
-    m_interactScenePosition = false;
-    m_showExitScreenshot = false;
     m_interactScene = 0;
+    m_previousInteractScene = 0;
+    m_interactScenePosition = false;
+    m_showTitleTimer = false;
+    m_showExitScreenshot = false;
     m_icon = ItemInstance::EMPTY;
-    m_splitScreen = false;
     m_showIcon = false;
-    m_iconHolder = EIcons_None;
     m_containerMenuDisplayed = false;
+    m_splitScreen = false;
+    m_iconHolder = EIcons_None;
     m_descriptionLabel.init(UIString(L""));
 }
 
@@ -283,57 +283,41 @@ void UIComponent_TutorialPopup::_SetDescription(UIScene* scene, const std::wstri
 
     SetVisible(true);
     addTimer(1, 500);
-    if (!showTitle)
-    {
-        killTimer(0);
-        m_showTitleTimer = showTitle;
-        m_showExitScreenshot = showExitScreenshot;
-    }
-    else
-    {
+    if (showTitle)
         addTimer(0, displayTime < 0 ? gTutorialVisibleTime : displayTime);
-        m_showTitleTimer = showTitle;
-        m_showExitScreenshot = showExitScreenshot;
-    }
+    else
+        killTimer(0);
+    m_showTitleTimer = showTitle;
+    m_showExitScreenshot = showExitScreenshot;
 
-    if (!showExitScreenshot)
+    if (showExitScreenshot)
     {
-        {
-            std::wstring titleText;
-            titleText = title;
-            stripWhitespaceForHtml(titleText, true);
+        std::wstring titleText = L10N::GetString(IDS_TUTORIAL_REMINDER);
+        titleText += title;
+        stripWhitespaceForHtml(titleText, true);
 
-            wchar_t colorTag[40];
-            swprintf(colorTag, 40, L"<font color=\"#%08x\">", gApp.GetHTMLColour(eMinecraftColour_HTMLColor_White));
-            titleText = colorTag + titleText;
+        wchar_t colorTag[40];
+        swprintf(colorTag, 40, L"<font color=\"#%08x\">", gApp.GetHTMLColour(eMinecraftColour_HTMLColor_White));
+        titleText = colorTag + titleText;
 
-            m_descriptionLabel.setLabel(UIString(titleText), true, false);
-        }
-        m_titleLabel.setLabel(UIString(description), true, false);
-        m_titleLabel.setVisible(!description.empty());
-
-        m_splitScreen = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0;
+        m_descriptionLabel.setLabel(UIString(titleText), true, false);
     }
     else
     {
-        {
-            std::wstring titleText;
-            titleText = L10N::GetString(IDS_TUTORIAL_REMINDER);
-            titleText += title;
-            stripWhitespaceForHtml(titleText, true);
+        std::wstring titleText = title;
+        stripWhitespaceForHtml(titleText, true);
 
-            wchar_t colorTag[40];
-            swprintf(colorTag, 40, L"<font color=\"#%08x\">", gApp.GetHTMLColour(eMinecraftColour_HTMLColor_White));
-            titleText = colorTag + titleText;
+        wchar_t colorTag[40];
+        swprintf(colorTag, 40, L"<font color=\"#%08x\">", gApp.GetHTMLColour(eMinecraftColour_HTMLColor_White));
+        titleText = colorTag + titleText;
 
-            m_descriptionLabel.setLabel(UIString(titleText), true, false);
-        }
-        m_titleLabel.setLabel(UIString(description), true, false);
-        m_titleLabel.setVisible(!description.empty());
-
-        m_splitScreen = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0;
+        m_descriptionLabel.setLabel(UIString(titleText), true, false);
     }
 
+    m_titleLabel.setLabel(UIString(description), true, false);
+    m_titleLabel.setVisible(!description.empty());
+
+    m_splitScreen = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_SplitscreenNicknames) != 0;
     bool adjustLayout = m_splitScreen && !m_containerMenuDisplayed;
     static_cast<FJ_TutorialPopup*>(m_movie->getRootNode()->getFuiNode())->AdjustLayout(adjustLayout);
 }
@@ -376,23 +360,41 @@ unsigned int UIComponent_TutorialPopup::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
-    m_titleLabel.setupControl(this, root, "Title");
-    m_controls.push_back(&m_titleLabel);
-    m_descriptionLabel.setupControl(this, root, "Description");
-    m_controls.push_back(&m_descriptionLabel);
-    m_iconHolderControl.setupControl(this, root, "IconHolder");
-    m_controls.push_back(&m_iconHolderControl);
-    m_exitScreenshotControl.setupControl(this, root, "ExitScreenShot");
-    m_controls.push_back(&m_exitScreenshotControl);
+    {
+        m_titleLabel.setupControl(this, root, std::string("Title"));
+        m_controls.push_back(&m_titleLabel);
+    }
+    {
+        m_descriptionLabel.setupControl(this, root, std::string("Description"));
+        m_controls.push_back(&m_descriptionLabel);
+    }
+    {
+        m_iconHolderControl.setupControl(this, root, std::string("IconHolder"));
+        m_controls.push_back(&m_iconHolderControl);
+    }
+    {
+        m_exitScreenshotControl.setupControl(this, root, std::string("ExitScreenShot"));
+        m_controls.push_back(&m_exitScreenshotControl);
+    }
     return 1;
 }
 
 std::wstring UIComponent_TutorialPopup::getMoviePath()
 {
-    unsigned int viewport = m_layer->getViewport();
-    if (viewport == C4JRender::eViewportType_FullScreen || viewport > C4JRender::eViewportType_BottomRightQuarter)
+    switch (m_layer->getViewport())
+    {
+    case C4JRender::eViewportType_TopHalf:
+    case C4JRender::eViewportType_BottomHalf:
+    case C4JRender::eViewportType_LeftHalf:
+    case C4JRender::eViewportType_RightHalf:
+    case C4JRender::eViewportType_TopLeftQuarter:
+    case C4JRender::eViewportType_TopRightQuarter:
+    case C4JRender::eViewportType_BottomLeftQuarter:
+    case C4JRender::eViewportType_BottomRightQuarter:
+        return L"TutorialPopupSplit";
+    default:
         return L"TutorialPopup";
-    return L"TutorialPopupSplit";
+    }
 }
 
 void UIComponent_TutorialPopup::handleReload()
@@ -420,62 +422,63 @@ void UIComponent_TutorialPopup::handleReload()
 
 void UIComponent_TutorialPopup::render(int width, int height, C4JRender::eViewportType viewport)
 {
-    if (viewport == C4JRender::eViewportType_FullScreen)
+    if (viewport != C4JRender::eViewportType_FullScreen)
+    {
+        int x = 0;
+        int y = 0;
+        switch (viewport)
+        {
+        case C4JRender::eViewportType_BottomLeftQuarter:
+            y = static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f);
+            break;
+        case C4JRender::eViewportType_TopHalf:
+        case C4JRender::eViewportType_RightHalf:
+        case C4JRender::eViewportType_TopRightQuarter:
+            x = static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f);
+            break;
+        case C4JRender::eViewportType_BottomHalf:
+        case C4JRender::eViewportType_BottomRightQuarter:
+            x = static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f);
+            y = static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f);
+            break;
+        default:
+            break;
+        }
+
+        switch (viewport)
+        {
+        case C4JRender::eViewportType_TopHalf:
+        case C4JRender::eViewportType_LeftHalf:
+        case C4JRender::eViewportType_RightHalf:
+        case C4JRender::eViewportType_TopLeftQuarter:
+        case C4JRender::eViewportType_TopRightQuarter:
+            y += static_cast<int>(getSafeZoneHalfHeight());
+            break;
+        default:
+            break;
+        }
+
+        switch (viewport)
+        {
+        case C4JRender::eViewportType_TopHalf:
+        case C4JRender::eViewportType_BottomHalf:
+        case C4JRender::eViewportType_RightHalf:
+        case C4JRender::eViewportType_TopRightQuarter:
+        case C4JRender::eViewportType_BottomRightQuarter:
+            x -= static_cast<int>(getSafeZoneHalfWidth());
+            break;
+        default:
+            break;
+        }
+
+        gConsoleUIController.setupRenderPosition(x, y);
+
+        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
+    }
+    else
     {
         UIScene::render(width, height, viewport);
-        return;
     }
-
-    int x = 0;
-    int y = 0;
-    switch (viewport)
-    {
-    case C4JRender::eViewportType_TopHalf:
-    case C4JRender::eViewportType_RightHalf:
-    case C4JRender::eViewportType_TopRightQuarter:
-        x = static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f);
-        break;
-    case C4JRender::eViewportType_BottomHalf:
-    case C4JRender::eViewportType_BottomRightQuarter:
-        x = static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f);
-        y = static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f);
-        break;
-    case C4JRender::eViewportType_BottomLeftQuarter:
-        y = static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f);
-        break;
-    default:
-        break;
-    }
-
-    switch (viewport)
-    {
-    case C4JRender::eViewportType_TopHalf:
-    case C4JRender::eViewportType_LeftHalf:
-    case C4JRender::eViewportType_RightHalf:
-    case C4JRender::eViewportType_TopLeftQuarter:
-    case C4JRender::eViewportType_TopRightQuarter:
-        y += static_cast<int>(getSafeZoneHalfHeight());
-        break;
-    default:
-        break;
-    }
-
-    switch (viewport)
-    {
-    case C4JRender::eViewportType_TopHalf:
-    case C4JRender::eViewportType_BottomHalf:
-    case C4JRender::eViewportType_RightHalf:
-    case C4JRender::eViewportType_TopRightQuarter:
-    case C4JRender::eViewportType_BottomRightQuarter:
-        x -= static_cast<int>(getSafeZoneHalfWidth());
-        break;
-    default:
-        break;
-    }
-
-    gConsoleUIController.setupRenderPosition(x, y);
-
-    gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
 }
 
 void UIComponent_TutorialPopup::customDraw(const char*, fuiRect* rect)
@@ -497,30 +500,34 @@ void UIComponent_TutorialPopup::UpdateInteractScenePosition(bool visible)
         || m_interactScene->getSceneType() == EUIScene_CraftingMenu;
     bool creativeMenu = m_interactScene->getSceneType() == EUIScene_CreativeMenu;
     bool tradingMenu = m_interactScene->getSceneType() == EUIScene_TradingMenu;
-    if (Minecraft::GetInstance()->mLocalPlayers[m_playerId]->mViewport >= C4JRender::eViewportType_LeftHalf
+    if (Minecraft::GetInstance()->mLocalPlayers[m_playerId]->mViewport > C4JRender::eViewportType_BottomHalf
         && (craftingMenu || creativeMenu || tradingMenu))
         return;
 
-    if (m_previousInteractScene == m_interactScene)
+    if (m_previousInteractScene != m_interactScene)
     {
-        if (m_interactScenePosition == visible)
-            return;
-        if (!visible)
+        if (visible)
         {
-            m_interactScene->slideRight();
-            m_interactScenePosition = false;
+            m_interactScene->slideLeft();
+            m_interactScenePosition = visible;
             m_previousInteractScene = m_interactScene;
-            return;
         }
     }
-    else if (!visible)
+    else if (m_interactScenePosition != visible)
     {
-        return;
+        if (visible)
+        {
+            m_interactScene->slideLeft();
+            m_interactScenePosition = visible;
+            m_previousInteractScene = m_interactScene;
+        }
+        else
+        {
+            m_interactScene->slideRight();
+            m_interactScenePosition = visible;
+            m_previousInteractScene = m_interactScene;
+        }
     }
-
-    m_interactScene->slideLeft();
-    m_interactScenePosition = visible;
-    m_previousInteractScene = m_interactScene;
 }
 
 void UIComponent_TutorialPopup::handleTimerComplete(int timerId)

@@ -16,7 +16,6 @@ class FJ_TexturePackList : public FJ_Base
     friend class fuiRenderNodeTimeline;
 public:
     explicit FJ_TexturePackList(fuiRenderNode* renderNode);
-    virtual ~FJ_TexturePackList();
 
     void ChangeState(int state);
     void focusInHandler(FJ_Event* event);

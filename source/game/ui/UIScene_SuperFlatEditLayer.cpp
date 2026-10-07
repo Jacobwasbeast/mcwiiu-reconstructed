@@ -29,37 +29,6 @@
 
 extern CInput* g_pInput;
 
-UIScene_SuperFlatEditLayer::UIScene_SuperFlatEditLayer(int sceneType, void* data, UILayer* layer)
-    : UIScene(sceneType, layer), m_layer(1, Blocks::air),
-      m_generator(static_cast<SuperflatConfig*>(0)), m_cursor(), m_title(), m_heightSlider(),
-      m_confirmButton(), m_heightLabel(), m_typeLabel(), m_slotList(), m_sliderTouch(),
-      m_listTouch(), m_mainPanel()
-{
-    m_pendingSnap = ESnap_None;
-    m_scrollPage = 0;
-    m_moveTicks = 0;
-    m_focusedControl = 0;
-    struct LayerData
-    {
-        bool newLayer;
-        int index;
-        SuperflatConfig* config;
-    };
-    m_customBlocks = new SuperflatMenu::CustomSuperflatBlocks();
-    initialiseMovie();
-    LayerData* values = static_cast<LayerData*>(data);
-    m_newLayer = values->newLayer;
-    m_layerIndex = values->index;
-    m_generator = FlatGeneratorInfo(values->config);
-    m_confirmButton.init(UIString(IDS_OK), 2);
-    m_title.init(UIString(m_newLayer ? IDS_SUPERFLAT_ADD_LAYER : IDS_SUPERFLAT_EDIT_LAYER));
-    _init();
-}
-
-UIScene_SuperFlatEditLayer::~UIScene_SuperFlatEditLayer()
-{
-}
-
 unsigned int UIScene_SuperFlatEditLayer::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
@@ -90,22 +59,23 @@ unsigned int UIScene_SuperFlatEditLayer::mapElementsAndNames()
 void UIScene_SuperFlatEditLayer::updateLayerButtons()
 {
     m_typeLabel.setLabel(UIString(m_layer.getNameText()), false, false);
-    if (SuperflatMenu::CustomSuperflatBlocks::hasRestrictedPlacement(m_layer.getId()))
+    bool restricted = SuperflatMenu::CustomSuperflatBlocks::hasRestrictedPlacement(m_layer.getId());
+    if (restricted)
     {
         m_heightSlider.SetSliderValue(1);
         m_heightLabel.setLabel(UIString(L"1x"), false, false);
-        return;
     }
-    m_heightSlider.SetSliderValue(static_cast<int>(m_layer.getHeight()));
-    m_heightLabel.setLabel(UIString(m_layer.getHeightText()), false, false);
+    else
+    {
+        m_heightSlider.SetSliderValue(static_cast<int>(m_layer.getHeight()));
+        m_heightLabel.setLabel(UIString(m_layer.getHeightText()), false, false);
+    }
 }
 
 void UIScene_SuperFlatEditLayer::updateScrollCurrentPage(int page)
 {
     fuiRenderNode* root = m_movie->getRootNode();
-    if (page > 5)
-        page = 5;
-    static_cast<FJ_SuperFlatEditLayerMenu*>(root->getFuiNode())->SetScrollBar(5, page);
+    static_cast<FJ_SuperFlatEditLayerMenu*>(root->getFuiNode())->SetScrollBar(5, std::min(page, 5));
 }
 
 int UIScene_SuperFlatEditLayer::getSlotId(int column, int row)
@@ -115,12 +85,10 @@ int UIScene_SuperFlatEditLayer::getSlotId(int column, int row)
 
 int UIScene_SuperFlatEditLayer::getSlotId(float x, float y)
 {
-    float left = m_slotList.getXPos();
-    float width = m_slotList.getWidth();
-    float top = m_slotList.getYPos();
-    float height = m_slotList.getHeight();
-    return getSlotId(static_cast<int>(std::floor((x - left) / (width + 0.01f) * 10.0f)),
-                     static_cast<int>(std::floor((y - top) / (height + 0.01f) * 5.0f)));
+    float column = (x - m_slotList.getXPos()) / (m_slotList.getWidth() + 0.01f);
+    float row = (y - m_slotList.getYPos()) / (m_slotList.getHeight() + 0.01f);
+    return getSlotId(static_cast<int>(std::floor(column * 10.0f)),
+                     static_cast<int>(std::floor(row * 5.0f)));
 }
 
 void UIScene_SuperFlatEditLayer::componentExtents(UIControl& control, float& left, float& right, float& top, float& bottom)
@@ -138,7 +106,7 @@ bool UIScene_SuperFlatEditLayer::isOverComponent(UIControl& control, float x, fl
     float top = 0.0f;
     float bottom = 0.0f;
     componentExtents(control, left, right, top, bottom);
-    return x >= left && x <= right && y >= top && y <= bottom;
+    return left <= x && x <= right && top <= y && y <= bottom;
 }
 
 int UIScene_SuperFlatEditLayer::getComponentByLocation(float x, float y)
@@ -161,7 +129,7 @@ int UIScene_SuperFlatEditLayer::getSlotId(const _UIVec2D& point)
 
 void UIScene_SuperFlatEditLayer::SetPointerText(not_null_ptr<ItemInstance> item)
 {
-    if (item->isEmpty())
+    if (item.get()->isEmpty())
     {
         m_cursor.setLabel(UIString(L""), false, false);
         return;
@@ -170,18 +138,18 @@ void UIScene_SuperFlatEditLayer::SetPointerText(not_null_ptr<ItemInstance> item)
     m_cursor.setLabel(UIString(IDS_SUPERFLAT_DESC_AIR_LAYER), false, false);
 
     std::vector<HtmlString>* lines;
-    if (Item::getId(item->getItem()) == 0)
+    if (Item::getId(item.get()->getItem()) == 0)
     {
         lines = new std::vector<HtmlString>();
         lines->push_back(HtmlString(L10N::GetString(IDS_SUPERFLAT_AIR_LAYER), eMinecraftColour_NOTSET, false, false, 0));
     }
     else
     {
-        lines = item->getTooltipLines(boost::shared_ptr<Player>(), false);
-        if (lines != NULL && !lines->empty())
+        lines = item.get()->getTooltipLines(boost::shared_ptr<Player>(), false);
+        if (!lines->empty())
         {
-            lines->at(0).mColour = item->getRarity()->colour;
-            if (item->hasCustomHoverName())
+            lines->at(0).mColour = item.get()->getRarity()->colour;
+            if (item.get()->hasCustomHoverName())
                 lines->at(0).mColour = eMinecraftColour_Color_RenamedItemTitle;
         }
     }
@@ -191,18 +159,23 @@ void UIScene_SuperFlatEditLayer::SetPointerText(not_null_ptr<ItemInstance> item)
 
 unsigned int UIScene_SuperFlatEditLayer::switchFocus(UIControl* control)
 {
-    if (m_focusedControl == control) return 0;
-    if (control != 0) control->setFocus(true);
-    if (m_focusedControl != 0) m_focusedControl->setFocus(false);
-    m_focusedControl = control;
-    return 1;
+    if (m_focusedControl != control)
+    {
+        if (control != 0) control->setFocus(true);
+        if (m_focusedControl != 0) m_focusedControl->setFocus(false);
+        m_focusedControl = control;
+        return 1;
+    }
+    return 0;
 }
 
 void UIScene_SuperFlatEditLayer::setNewPointerPos(float x, float y)
 {
-    bool changed = false;
+    unsigned int changed = 0;
     int component = getComponentByLocation(x, y);
-    if (component == 0)
+    switch (component)
+    {
+    case 0:
     {
         int slotId = getSlotId(x, y);
         if (getComponentByLocation(m_pointerPosition) != 0 || slotId != getSlotId(m_pointerPosition))
@@ -210,28 +183,33 @@ void UIScene_SuperFlatEditLayer::setNewPointerPos(float x, float y)
             m_slotList.setHighlightSlot(slotId % 50);
             SetPointerText(m_customBlocks->item(slotId));
             switchFocus(0);
-            changed = true;
+            changed = 1;
         }
         m_cursor.setVisible(true);
+        break;
     }
-    else if (component == 1)
+    case 2:
     {
         SetPointerText(ItemInstance::EMPTY);
-        changed = switchFocus(&m_heightSlider) != 0;
+        changed = switchFocus(&m_confirmButton);
         m_cursor.setVisible(false);
+        break;
     }
-    else if (component == 2)
+    case 1:
     {
         SetPointerText(ItemInstance::EMPTY);
-        changed = switchFocus(&m_confirmButton) != 0;
+        changed = switchFocus(&m_heightSlider);
         m_cursor.setVisible(false);
+        break;
     }
-    else
+    default:
     {
         SetPointerText(ItemInstance::EMPTY);
         switchFocus(0);
         m_cursor.setVisible(false);
-        changed = true;
+        changed = 1;
+        break;
+    }
     }
     m_pointerPosition.x = x;
     m_pointerPosition.y = y;
@@ -263,16 +241,21 @@ void UIScene_SuperFlatEditLayer::_init()
     m_typeLabel.init(UIString(L""));
     updateLayerButtons();
 
-    float left = static_cast<float>(m_slotList.getXPos());
-    float top = static_cast<float>(m_slotList.getYPos());
+    UIControl& list = m_slotList;
+    float listWidth = list.getWidth();
+    float listHeight = list.getHeight();
+    float left = list.getXPos();
+    float top = list.getYPos();
+    float right = left + listWidth;
+    float bottom = top + listHeight;
     m_listLeft = left;
-    m_listRight = left + static_cast<float>(m_slotList.getWidth());
+    m_listRight = right;
     m_listTop = top;
-    m_listBottom = top + static_cast<float>(m_slotList.getHeight());
+    m_listBottom = bottom;
     m_pointerOffset.x = 0.0f;
     m_pointerOffset.y = 0.0f;
-    m_pointerPosition.x = (m_listRight - m_listLeft) * 0.5f;
-    m_pointerPosition.y = (m_listBottom - m_listTop) * 0.5f;
+    m_pointerPosition.x = (right - left) * 0.5f;
+    m_pointerPosition.y = (bottom - top) * 0.5f;
     m_slotList.addSlots(0, 50);
     updateScrollCurrentPage(0);
     setNewPointerPos(m_pointerPosition);
@@ -281,12 +264,43 @@ void UIScene_SuperFlatEditLayer::_init()
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
+UIScene_SuperFlatEditLayer::UIScene_SuperFlatEditLayer(int sceneType, void* data, UILayer* layer)
+    : UIScene(sceneType, layer), m_layer(1, Blocks::air),
+      m_generator(static_cast<SuperflatConfig*>(0)), m_cursor(), m_title(), m_heightSlider(),
+      m_confirmButton(), m_heightLabel(), m_typeLabel(), m_slotList(), m_sliderTouch(),
+      m_listTouch(), m_mainPanel()
+{
+    m_focusedControl = 0;
+    m_scrollPage = 0;
+    m_pendingSnap = ESnap_None;
+    m_moveTicks = 0;
+    struct LayerData
+    {
+        bool newLayer;
+        int index;
+        SuperflatConfig* config;
+    };
+    m_customBlocks = new SuperflatMenu::CustomSuperflatBlocks();
+    initialiseMovie();
+    LayerData* values = static_cast<LayerData*>(data);
+    m_layerIndex = values->index;
+    m_newLayer = values->newLayer;
+    m_generator = FlatGeneratorInfo(values->config);
+    m_confirmButton.init(UIString(IDS_OK), 2);
+    m_title.init(UIString(m_newLayer ? IDS_SUPERFLAT_ADD_LAYER : IDS_SUPERFLAT_EDIT_LAYER));
+    _init();
+}
+
 void UIScene_SuperFlatEditLayer::updateTooltips()
 {
-    int component = getComponentByLocation(m_pointerPosition);
     int select = -1;
-    if (component == 0 || component == 2)
+    switch (getComponentByLocation(m_pointerPosition))
+    {
+    case 0:
+    case 2:
         select = IDS_TOOLTIPS_SELECT;
+        break;
+    }
     gConsoleUIController.SetTooltips(0, select, IDS_TOOLTIPS_CANCEL, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, false, false);
 }
@@ -297,9 +311,9 @@ void UIScene_SuperFlatEditLayer::updateComponents()
 
 UIScene_SuperFlatEditLayer::ESnap UIScene_SuperFlatEditLayer::getSnap(float x, float y) const
 {
-    if (y > 0.0f) return ESnap_Up;
+    if (0.0f < y) return ESnap_Up;
     if (y < 0.0f) return ESnap_Down;
-    if (x > 0.0f) return ESnap_Right;
+    if (0.0f < x) return ESnap_Right;
     if (x < 0.0f) return ESnap_Left;
     return ESnap_None;
 }
@@ -314,32 +328,25 @@ void UIScene_SuperFlatEditLayer::dmouse(float& moveX, float& moveY, float& direc
         directionX = 0.0f;
     else
         directionX = moveX / std::fabs(moveX);
-    if (std::fabs(moveY) < 0.01f)
-        directionY = 0.0f;
-    else
-        directionY = moveY / std::fabs(moveY);
+    float result = 0.0f;
+    if (std::fabs(moveY) >= 0.01f)
+        result = moveY / std::fabs(moveY);
+    directionY = result;
 }
 
 void UIScene_SuperFlatEditLayer::componentCentre(UIControl& control, float& x, float& y)
 {
-    float left = control.getXPos();
-    float width = control.getWidth();
-    x = width * 0.5f + left;
-    float top = control.getYPos();
-    float height = control.getHeight();
-    y = height * 0.5f + top;
+    x = control.getXPos() + control.getWidth() * 0.5f;
+    y = control.getYPos() + control.getHeight() * 0.5f;
 }
 
 void UIScene_SuperFlatEditLayer::slotCentre(int slot, float& x, float& y)
 {
-    float column = static_cast<float>((slot % 50) % 10) / 10.0f + 0.05f;
-    float row = static_cast<float>((slot % 50) / 10) / 5.0f + 0.1f;
-    float left = m_slotList.getXPos();
-    float width = m_slotList.getWidth();
-    x = width * column + left;
-    float top = m_slotList.getYPos();
-    float height = m_slotList.getHeight();
-    y = height * row + top;
+    int cell = slot % 50;
+    float column = static_cast<float>(cell % 10) / 10.0f + 0.05f;
+    float row = static_cast<float>(cell / 10) / 5.0f + 0.1f;
+    x = m_slotList.getXPos() + m_slotList.getWidth() * column;
+    y = m_slotList.getYPos() + m_slotList.getHeight() * row;
 }
 
 bool UIScene_SuperFlatEditLayer::onRow(int slot, int row)
@@ -458,11 +465,8 @@ void UIScene_SuperFlatEditLayer::setNewPointerPos(UIControl* control)
 {
     if (control != 0)
     {
-        float left = control->getXPos();
-        float width = control->getWidth();
-        float top = control->getYPos();
-        float height = control->getHeight();
-        setNewPointerPos(width * 0.5f + left, height * 0.5f + top);
+        setNewPointerPos(control->getXPos() + control->getWidth() * 0.5f,
+                         control->getYPos() + control->getHeight() * 0.5f);
     }
 }
 
@@ -569,8 +573,8 @@ void UIScene_SuperFlatEditLayer::tick()
 {
     UIScene::tick();
     onMouseTick();
-    int width = 0;
-    int height = 0;
+    int width;
+    int height;
     UIScene::m_layer->getRenderDimensions(width, height);
     if (width == 1280 && height == 480)
         width = 640;
@@ -689,7 +693,7 @@ void UIScene_SuperFlatEditLayer::handleSliderMove(int id, int value)
 {
     if (id != 1)
         return;
-    int height = std::min(m_maxLayerHeight, value);
+    int height = std::min(value, m_maxLayerHeight);
     if (height < 1)
         height = 1;
     m_heightSlider.handleSliderMove(height);
@@ -777,22 +781,17 @@ UIControl* UIScene_SuperFlatEditLayer::GetMainPanel()
 
 void UIScene_SuperFlatEditLayer::SetFocusToElement(int focus)
 {
-    UIControl* control;
-    if (focus == 1)
-        control = &m_heightSlider;
-    else if (focus == 2)
-        control = &m_confirmButton;
-    else
-        return;
-    setNewPointerPos(control);
+    switch (focus)
+    {
+    case 2:
+        setNewPointerPos(&m_confirmButton);
+        break;
+    case 1:
+        setNewPointerPos(&m_heightSlider);
+        break;
+    }
 }
 
-std::wstring UIScene_SuperFlatEditLayer::getMoviePath()
+UIScene_SuperFlatEditLayer::~UIScene_SuperFlatEditLayer()
 {
-    return L"SuperFlatEditLayerMenu";
-}
-
-int UIScene_SuperFlatEditLayer::getSceneType()
-{
-    return EUIScene_SuperFlatEditLayer;
 }

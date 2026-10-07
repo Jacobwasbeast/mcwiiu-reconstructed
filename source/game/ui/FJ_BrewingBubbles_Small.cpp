@@ -8,10 +8,6 @@ FJ_BrewingBubbles_Small::FJ_BrewingBubbles_Small(fuiRenderNode* renderNode)
     initFiller();
 }
 
-FJ_BrewingBubbles_Small::~FJ_BrewingBubbles_Small()
-{
-}
-
 void FJ_BrewingBubbles_Small::InitBarType()
 {
     m_barType = false;

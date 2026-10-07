@@ -118,35 +118,29 @@ unsigned int UIScene_WritableBookMenu::mapElementsAndNames()
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
     {
-        std::string name("PageLabel");
-        m_pageLabel.setupControl(this, root, name);
+        m_pageLabel.setupControl(this, root, std::string("PageLabel"));
+        m_controls.push_back(&m_pageLabel);
     }
-    m_controls.push_back(&m_pageLabel);
     {
-        std::string name("ButtonSign");
-        m_signButton.setupControl(this, root, name);
+        m_signButton.setupControl(this, root, std::string("ButtonSign"));
+        m_controls.push_back(&m_signButton);
     }
-    m_controls.push_back(&m_signButton);
     {
-        std::string name("ButtonClose");
-        m_doneButton.setupControl(this, root, name);
+        m_doneButton.setupControl(this, root, std::string("ButtonClose"));
+        m_controls.push_back(&m_doneButton);
     }
-    m_controls.push_back(&m_doneButton);
     {
-        std::string name("TouchControlBook");
-        m_bookTouch.setupControl(this, root, name);
+        m_bookTouch.setupControl(this, root, std::string("TouchControlBook"));
+        m_controls.push_back(&m_bookTouch);
     }
-    m_controls.push_back(&m_bookTouch);
     {
-        std::string name("TouchControlScrollLeft");
-        m_leftTouch.setupControl(this, root, name);
+        m_leftTouch.setupControl(this, root, std::string("TouchControlScrollLeft"));
+        m_controls.push_back(&m_leftTouch);
     }
-    m_controls.push_back(&m_leftTouch);
     {
-        std::string name("TouchControlScrollRight");
-        m_rightTouch.setupControl(this, root, name);
+        m_rightTouch.setupControl(this, root, std::string("TouchControlScrollRight"));
+        m_controls.push_back(&m_rightTouch);
     }
-    m_controls.push_back(&m_rightTouch);
     return 1;
 }
 
@@ -218,8 +212,9 @@ void UIScene_WritableBookMenu::Init()
         }
 
         bool chatCensored = gApp.IsConsoleChatCensored();
-        bool createdByRestrictedPlayer =
-            tag->contains(TAG_CREATED_BY_RESTRICTED_PLAYER) && tag->getByte(TAG_CREATED_BY_RESTRICTED_PLAYER) != 0;
+        bool createdByRestrictedPlayer = false;
+        if (tag->contains(TAG_CREATED_BY_RESTRICTED_PLAYER) && tag->getByte(TAG_CREATED_BY_RESTRICTED_PLAYER) != 0)
+            createdByRestrictedPlayer = true;
         bool createdByHost = true;
         if (tag->contains(TAG_CREATED_BY_HOST) && tag->getByte(TAG_CREATED_BY_HOST) == 0)
             createdByHost = false;

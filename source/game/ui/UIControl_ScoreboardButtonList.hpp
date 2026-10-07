@@ -16,7 +16,6 @@ public:
     public:
         PendingAddItem(UIControl_ScoreboardButtonList* list, int type, std::wstring label,
                        int playerIcon, int voipIcon);
-        virtual ~PendingAddItem();
         virtual unsigned int OnTick();
 
     private:
@@ -30,11 +29,11 @@ public:
     public:
         PendingSetSlotTextureName(UIControl_ScoreboardButtonList* list, int item, int slot,
                                   std::wstring textureName)
-            : UIControl_List::PendingUpdate<UIControl_ScoreboardButtonList>(list, item), m_slot(slot),
-              m_textureName(textureName)
+            : UIControl_List::PendingUpdate<UIControl_ScoreboardButtonList>(list, item)
         {
+            m_slot = slot;
+            m_textureName = textureName;
         }
-        virtual ~PendingSetSlotTextureName();
         virtual unsigned int OnTick();
 
     private:

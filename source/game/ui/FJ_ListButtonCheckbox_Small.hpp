@@ -11,7 +11,6 @@ class FJ_ListButtonCheckbox_Small : public FJ_ListButtonCheckbox
 {
 public:
     explicit FJ_ListButtonCheckbox_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonCheckbox_Small();
     static FJ_ListButtonCheckbox* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
 };

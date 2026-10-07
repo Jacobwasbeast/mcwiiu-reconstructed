@@ -7,6 +7,13 @@
 
 class INetworkPlayer;
 
+struct InGamePlayerOptionsData
+{
+    int playerId;
+    unsigned char smallId;
+    unsigned int privileges;
+};
+
 class UIScene_InGamePlayerOptionsMenu : public UIScene
 {
 public:

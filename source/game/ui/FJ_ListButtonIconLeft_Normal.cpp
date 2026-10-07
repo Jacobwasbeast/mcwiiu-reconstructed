@@ -10,10 +10,6 @@ FJ_ListButtonIconLeft* FJ_ListButtonIconLeft_Normal::Create(fuiRenderNode* rende
     return new FJ_ListButtonIconLeft_Normal(renderNode);
 }
 
-FJ_ListButtonIconLeft_Normal::~FJ_ListButtonIconLeft_Normal()
-{
-}
-
 unsigned int FJ_ListButtonIconLeft_Normal::getType()
 {
     return 0x8016;

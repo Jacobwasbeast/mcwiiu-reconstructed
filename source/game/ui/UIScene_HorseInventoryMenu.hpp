@@ -22,7 +22,6 @@ class UIScene_HorseInventoryMenu : public UIScene_AbstractContainerMenu,
 
 public:
     UIScene_HorseInventoryMenu(int player, void* data, UILayer* layer);
-    virtual ~UIScene_HorseInventoryMenu();
 
     virtual unsigned int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);

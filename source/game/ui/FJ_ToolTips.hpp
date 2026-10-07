@@ -15,7 +15,6 @@ class FJ_ToolTips : public FJ_Document
 {
 public:
     FJ_ToolTips(fuiRenderNode* renderNode);
-    virtual ~FJ_ToolTips();
 
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

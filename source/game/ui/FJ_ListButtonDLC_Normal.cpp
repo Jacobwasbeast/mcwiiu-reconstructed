@@ -5,10 +5,6 @@ FJ_ListButtonDLC_Normal::FJ_ListButtonDLC_Normal(fuiRenderNode* renderNode)
 {
 }
 
-FJ_ListButtonDLC_Normal::~FJ_ListButtonDLC_Normal()
-{
-}
-
 FJ_ListButtonDLC* FJ_ListButtonDLC_Normal::Create(fuiRenderNode* renderNode)
 {
     return new FJ_ListButtonDLC_Normal(renderNode);

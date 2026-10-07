@@ -11,7 +11,6 @@ class FJ_ListButtonScoreBoard_Small : public FJ_ListButtonScoreBoard
 {
 public:
     explicit FJ_ListButtonScoreBoard_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonScoreBoard_Small();
 
     static FJ_ListButtonScoreBoard* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();

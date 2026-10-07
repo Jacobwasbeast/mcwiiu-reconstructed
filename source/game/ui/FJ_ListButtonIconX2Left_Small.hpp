@@ -9,7 +9,6 @@ class FJ_ListButtonIconX2Left_Small : public FJ_ListButtonIconLeft
 {
 public:
     explicit FJ_ListButtonIconX2Left_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonIconX2Left_Small();
     static FJ_ListButtonIconLeft* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

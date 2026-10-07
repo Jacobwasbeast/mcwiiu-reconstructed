@@ -5,10 +5,6 @@ FJ_ListButtonIconLeft_Small::FJ_ListButtonIconLeft_Small(fuiRenderNode* renderNo
 {
 }
 
-FJ_ListButtonIconLeft_Small::~FJ_ListButtonIconLeft_Small()
-{
-}
-
 FJ_ListButtonIconLeft* FJ_ListButtonIconLeft_Small::Create(fuiRenderNode* renderNode)
 {
     return new FJ_ListButtonIconLeft_Small(renderNode);

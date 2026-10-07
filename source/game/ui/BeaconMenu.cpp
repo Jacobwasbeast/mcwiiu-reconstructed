@@ -116,10 +116,6 @@ BeaconMenu::PaymentSlot::PaymentSlot(boost::shared_ptr<Container> container,
 {
 }
 
-BeaconMenu::PaymentSlot::~PaymentSlot()
-{
-}
-
 bool BeaconMenu::PaymentSlot::mayPlace(not_null_ptr<ItemInstance> item)
 {
     Item* type = item->getItem();

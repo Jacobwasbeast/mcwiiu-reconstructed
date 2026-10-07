@@ -15,10 +15,6 @@ BrewingStandMenu::PotionSlot::PotionSlot(boost::shared_ptr<Container> container,
 {
 }
 
-BrewingStandMenu::PotionSlot::~PotionSlot()
-{
-}
-
 bool BrewingStandMenu::PotionSlot::mayPlaceItem(not_null_ptr<ItemInstance> item)
 {
     Item* type = item->getItem();
@@ -59,10 +55,6 @@ BrewingStandMenu::IngredientsSlot::IngredientsSlot(boost::shared_ptr<Container> 
 {
 }
 
-BrewingStandMenu::IngredientsSlot::~IngredientsSlot()
-{
-}
-
 bool BrewingStandMenu::IngredientsSlot::mayPlace(not_null_ptr<ItemInstance> item)
 {
     return PotionBrewing::isIngredient(item);
@@ -80,10 +72,6 @@ bool BrewingStandMenu::IngredientsSlot::mayCombine(not_null_ptr<ItemInstance> it
 
 BrewingStandMenu::FuelSlot::FuelSlot(boost::shared_ptr<Container> container, int index, int x, int y)
     : Slot(container, index, x, y)
-{
-}
-
-BrewingStandMenu::FuelSlot::~FuelSlot()
 {
 }
 

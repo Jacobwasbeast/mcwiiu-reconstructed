@@ -16,6 +16,3 @@ uint32_t FJ_ListButtonScoreBoard_Normal::getType()
     return 0x802a;
 }
 
-FJ_ListButtonScoreBoard_Normal::~FJ_ListButtonScoreBoard_Normal()
-{
-}

@@ -903,13 +903,8 @@ int UIScene_LoadCreateJoinMenu::CopySaveDialogReturned(void* context, int pad, C
     params->m_threadProc = &CopySaveThreadProc;
     FullscreenProgressState* progressState = new FullscreenProgressState;
     params->m_completionData = progressState;
-    progressState->showConfirmation = false;
-    progressState->reservedFlag1 = true;
-    progressState->reservedFlag2 = true;
-    progressState->showTip = true;
     progressState->closeMode = 6;
     progressState->playerId = 0;
-    progressState->backScene = EUIScene_None;
     gConsoleUIController.NavigateToScene(pad, EUIScene_FullscreenProgress, params, EUILayer_Scene,
                                          EUIGroup_PlayerDefault);
     return 0;
@@ -1099,13 +1094,8 @@ void UIScene_LoadCreateJoinMenu::LaunchSaveUpload()
     params->m_cancelFunc = &CancelSaveUploadCallback;
     params->m_cancelFuncParam = this;
     params->m_completionData = progressState;
-    progressState->showConfirmation = false;
-    progressState->reservedFlag1 = true;
-    progressState->reservedFlag2 = true;
-    progressState->showTip = true;
     progressState->closeMode = 6;
     progressState->playerId = 0;
-    progressState->backScene = EUIScene_None;
     gConsoleUIController.NavigateToScene(m_playerId, EUIScene_FullscreenProgress, params, EUILayer_Scene,
                                          EUIGroup_PlayerDefault);
 }

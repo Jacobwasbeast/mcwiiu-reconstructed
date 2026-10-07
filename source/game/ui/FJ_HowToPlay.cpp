@@ -20,10 +20,6 @@ FJ_HowToPlay::FJ_HowToPlay(fuiRenderNode* pRenderNode)
     InitScene();
 }
 
-FJ_HowToPlay::~FJ_HowToPlay()
-{
-}
-
 void FJ_HowToPlay::_init(FJ_FuiNode* pNode, FJ_Event* pEvent)
 {
 }

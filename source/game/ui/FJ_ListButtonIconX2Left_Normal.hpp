@@ -11,7 +11,6 @@ class FJ_ListButtonIconX2Left_Normal : public FJ_ListButtonIconLeft
 {
 public:
     explicit FJ_ListButtonIconX2Left_Normal(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonIconX2Left_Normal();
 
     static FJ_ListButtonIconLeft* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();

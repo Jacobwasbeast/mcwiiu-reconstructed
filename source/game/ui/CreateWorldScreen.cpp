@@ -24,10 +24,6 @@ CreateWorldScreen::CreateWorldScreen(Screen* parentScreen)
 {
 }
 
-CreateWorldScreen::~CreateWorldScreen()
-{
-}
-
 void CreateWorldScreen::tick()
 {
     mNameEdit->tick();

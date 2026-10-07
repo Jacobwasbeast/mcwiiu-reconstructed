@@ -50,10 +50,14 @@ UIScene_EULA::~UIScene_EULA()
 unsigned int UIScene_EULA::mapElementsAndNames()
 {
     fuiRenderNode* root = m_movie->getRootNode();
-    m_acceptButton.setupControl(this, root, std::string("AcceptButton"));
-    m_controls.push_back(&m_acceptButton);
-    m_eulaText.setupControl(this, root, std::string("EULAtext"));
-    m_controls.push_back(&m_eulaText);
+    {
+        m_acceptButton.setupControl(this, root, std::string("AcceptButton"));
+        m_controls.push_back(&m_acceptButton);
+    }
+    {
+        m_eulaText.setupControl(this, root, std::string("EULAtext"));
+        m_controls.push_back(&m_eulaText);
+    }
     return 1;
 }
 
@@ -108,7 +112,7 @@ bool UIScene_EULA::hasFocus(int controller)
     return m_hasFocus;
 }
 
-unsigned int UIScene_EULA::getDefaultGtcButtons()
+unsigned long long UIScene_EULA::getDefaultGtcButtons()
 {
     return 0;
 }

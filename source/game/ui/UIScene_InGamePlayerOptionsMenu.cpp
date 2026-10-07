@@ -35,13 +35,6 @@
 
 extern ConsoleUIController gConsoleUIController;
 
-struct InGamePlayerOptionsData
-{
-    int playerId;
-    unsigned char smallId;
-    unsigned int privileges;
-};
-
 UIScene_InGamePlayerOptionsMenu::UIScene_InGamePlayerOptionsMenu(int sceneType, void* data, UILayer* layer)
     : UIScene(sceneType, layer)
 {

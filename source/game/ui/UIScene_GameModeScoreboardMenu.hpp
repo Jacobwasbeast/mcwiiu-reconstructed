@@ -58,7 +58,7 @@ public:
     bool CanKickPlayer(INetworkPlayer* player);
     void setScoreboardType(int type);
     void initNumColumns(int columns);
-    uint64_t CheckReloadMovie();
+    void CheckReloadMovie();
     int getScoreboardType();
     void SetTitleSlotText(int index, const std::wstring& text);
     void ShowTitleSlot(int index, bool show);

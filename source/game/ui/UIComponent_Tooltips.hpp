@@ -25,7 +25,6 @@ public:
         EControllerActions m_button;
 
         _TooltipValues();
-        ~_TooltipValues();
     };
 
     UIComponent_Tooltips(int sceneType, void* data, UILayer* layer);
@@ -72,7 +71,7 @@ public:
 private:
     bool m_splitTooltips;
     _TooltipValues m_tooltipValues[16];
-    int m_controllerType;
+    unsigned int m_controllerType;
     UIControl_Touch m_touchControls[16];
     bool m_overrideSFX[4][23];
 };

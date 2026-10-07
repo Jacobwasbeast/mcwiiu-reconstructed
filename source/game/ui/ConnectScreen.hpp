@@ -13,7 +13,6 @@ class ConnectScreen : public Screen
 {
 public:
     ConnectScreen(Minecraft* minecraft, const std::wstring& address, int port);
-    virtual ~ConnectScreen();
 
     virtual void render(int x, int y, float partialTick);
     virtual void keyPressed(wchar_t key, int action);

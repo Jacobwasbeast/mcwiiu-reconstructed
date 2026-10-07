@@ -11,26 +11,23 @@ FJ_List_ListButtonAchievement::FJ_List_ListButtonAchievement(fuiRenderNode* rend
 {
 }
 
-FJ_List_ListButtonAchievement::~FJ_List_ListButtonAchievement()
-{
-}
-
 void FJ_List_ListButtonAchievement::addNewItem(int id, const std::wstring& textureName)
 {
+    FJ_ListButtonAchievement* item;
     char name[64];
     std::sprintf(name, "AchievementButton_%d", id);
 
-    if (!m_outline)
+    if (m_outline)
     {
-        FJ_ListButtonAchievement* item = static_cast<FJ_ListButtonAchievement*>(
-            FJ_Factory::createObject("fourj.Buttons.FJ_ListButtonAchievement_Normal", m_pRenderNode, true, name));
+        item = static_cast<FJ_ListButtonAchievement*>(
+            FJ_Factory::createObject("fourj.Buttons.FJ_ListButtonAchievement_Small", m_pRenderNode, true, name));
         addNewListItem(item, id);
         item->Init(id, textureName);
     }
     else
     {
-        FJ_ListButtonAchievement* item = static_cast<FJ_ListButtonAchievement*>(
-            FJ_Factory::createObject("fourj.Buttons.FJ_ListButtonAchievement_Small", m_pRenderNode, true, name));
+        item = static_cast<FJ_ListButtonAchievement*>(
+            FJ_Factory::createObject("fourj.Buttons.FJ_ListButtonAchievement_Normal", m_pRenderNode, true, name));
         addNewListItem(item, id);
         item->Init(id, textureName);
     }

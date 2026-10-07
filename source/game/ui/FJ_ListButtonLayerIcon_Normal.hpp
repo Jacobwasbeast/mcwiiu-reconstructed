@@ -9,7 +9,6 @@ class FJ_ListButtonLayerIcon_Normal : public FJ_ListButtonLayerIcon
 {
 public:
     explicit FJ_ListButtonLayerIcon_Normal(fuiRenderNode* pRenderNode);
-    virtual ~FJ_ListButtonLayerIcon_Normal();
     static FJ_ListButtonLayerIcon* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

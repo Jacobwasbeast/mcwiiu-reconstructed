@@ -31,7 +31,6 @@ public:
     static const int PRELOADED_CREDIT_COUNT = 20;
 
     UIScene_Credits(int type, void* data, UILayer* layer);
-    virtual ~UIScene_Credits();
 
     bool AlreadySeenCreditText(const std::wstring& text);
     void AddCreditText(const wchar_t* text);

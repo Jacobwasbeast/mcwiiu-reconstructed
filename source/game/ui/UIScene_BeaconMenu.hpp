@@ -17,7 +17,6 @@ class UIScene_BeaconMenu : public UIScene_AbstractContainerMenu
 {
 public:
     UIScene_BeaconMenu(int type, void* data, UILayer* layer);
-    virtual ~UIScene_BeaconMenu();
 
     virtual std::wstring getMoviePath();
     virtual unsigned int mapElementsAndNames();
@@ -50,7 +49,7 @@ public:
     unsigned int GetPowerButtonId(IUIScene_AbstractContainerMenu::ESceneSection section);
     unsigned int GetPowerButtonTier(IUIScene_AbstractContainerMenu::ESceneSection section);
     MobEffect* GetPowerButtonEffect(IUIScene_AbstractContainerMenu::ESceneSection section);
-    bool IsPowerButtonSelected(IUIScene_AbstractContainerMenu::ESceneSection section);
+    unsigned char IsPowerButtonSelected(IUIScene_AbstractContainerMenu::ESceneSection section);
     void SetPowerButtonSelected(IUIScene_AbstractContainerMenu::ESceneSection section);
     void AddPowerButton(int id, int icon, int tier, int column, bool active, bool selected);
     void SetConfirmButtonEnabled(bool enabled);

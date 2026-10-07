@@ -9,7 +9,6 @@ class FJ_ListButtonController_Small : public FJ_ListButtonController
 {
 public:
     explicit FJ_ListButtonController_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonController_Small();
     static FJ_ListButtonController* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
 };

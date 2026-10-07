@@ -41,10 +41,6 @@ UIScene_SuperFlatMenu::UIScene_SuperFlatMenu(int sceneType, void* data, UILayer*
       m_layersTouch(),
       m_biomesTouch(),
       m_propertiesTouch(),
-      m_layersTab(), m_layersPanel(), m_layersList(), m_layersHelpTitle(), m_layersHelp(), m_layersTimer(),
-      m_biomesTab(), m_biomesPanel(), m_biomesList(), m_biomesHelpTitle(), m_biomesHelp(), m_biomesTimer(),
-      m_propertiesTab(), m_propertiesPanel(), m_propertiesList(), m_propertiesHelpTitle(), m_propertiesHelp(),
-      m_propertiesTimer(),
       m_paramMappings(),
       m_generatorInfo(NULL)
 {
@@ -76,46 +72,46 @@ unsigned int UIScene_SuperFlatMenu::mapElementsAndNames()
 
     {
         std::string name("LayersTabTitle");
-        m_layersTab.setupControl(this, root, name);
+        m_layers.tab.setupControl(this, root, name);
     }
-    m_controls.push_back(&m_layersTab);
+    m_controls.push_back(&m_layers.tab);
     {
         std::string name("BiomesTabTitle");
-        m_biomesTab.setupControl(this, root, name);
+        m_biomes.tab.setupControl(this, root, name);
     }
-    m_controls.push_back(&m_biomesTab);
+    m_controls.push_back(&m_biomes.tab);
     {
         std::string name("PropertiesTabTitle");
-        m_propertiesTab.setupControl(this, root, name);
+        m_properties.tab.setupControl(this, root, name);
     }
-    m_controls.push_back(&m_propertiesTab);
+    m_controls.push_back(&m_properties.tab);
 
     {
         std::string name("Layers");
-        m_layersPanel.setupControl(this, root, name);
+        m_layers.panel.setupControl(this, root, name);
     }
-    m_controls.push_back(&m_layersPanel);
-    fuiRenderNode* panel = m_layersPanel.getFuiRenderNode();
+    m_controls.push_back(&m_layers.panel);
+    fuiRenderNode* panel = m_layers.panel.getFuiRenderNode();
     {
         std::string name("LayersList");
-        m_layersList.setupControl(this, panel, name);
+        m_layers.list.setupControl(this, panel, name);
     }
-    m_controls.push_back(&m_layersList);
+    m_controls.push_back(&m_layers.list);
     {
         std::string name("LayersHelpTitle");
-        m_layersHelpTitle.setupControl(this, panel, name);
+        m_layers.helpTitle.setupControl(this, panel, name);
     }
-    m_controls.push_back(&m_layersHelpTitle);
+    m_controls.push_back(&m_layers.helpTitle);
     {
         std::string name("LayersHelpHtml");
-        m_layersHelp.setupControl(this, panel, name);
+        m_layers.help.setupControl(this, panel, name);
     }
-    m_controls.push_back(&m_layersHelp);
+    m_controls.push_back(&m_layers.help);
     {
         std::string name("LayersTimer");
-        m_layersTimer.setupControl(this, panel, name);
+        m_layers.timer.setupControl(this, panel, name);
     }
-    m_controls.push_back(&m_layersTimer);
+    m_controls.push_back(&m_layers.timer);
     {
         std::string name("TouchTabLayers");
         m_layersTouch.setupControl(this, panel, name);
@@ -124,30 +120,30 @@ unsigned int UIScene_SuperFlatMenu::mapElementsAndNames()
 
     {
         std::string name("Biomes");
-        m_biomesPanel.setupControl(this, root, name);
+        m_biomes.panel.setupControl(this, root, name);
     }
-    m_controls.push_back(&m_biomesPanel);
-    panel = m_biomesPanel.getFuiRenderNode();
+    m_controls.push_back(&m_biomes.panel);
+    panel = m_biomes.panel.getFuiRenderNode();
     {
         std::string name("BiomesList");
-        m_biomesList.setupControl(this, panel, name);
+        m_biomes.list.setupControl(this, panel, name);
     }
-    m_controls.push_back(&m_biomesList);
+    m_controls.push_back(&m_biomes.list);
     {
         std::string name("BiomesHelpTitle");
-        m_biomesHelpTitle.setupControl(this, panel, name);
+        m_biomes.helpTitle.setupControl(this, panel, name);
     }
-    m_controls.push_back(&m_biomesHelpTitle);
+    m_controls.push_back(&m_biomes.helpTitle);
     {
         std::string name("BiomesHelpHtml");
-        m_biomesHelp.setupControl(this, panel, name);
+        m_biomes.help.setupControl(this, panel, name);
     }
-    m_controls.push_back(&m_biomesHelp);
+    m_controls.push_back(&m_biomes.help);
     {
         std::string name("BiomesTimer");
-        m_biomesTimer.setupControl(this, panel, name);
+        m_biomes.timer.setupControl(this, panel, name);
     }
-    m_controls.push_back(&m_biomesTimer);
+    m_controls.push_back(&m_biomes.timer);
     {
         std::string name("TouchTabBiomes");
         m_biomesTouch.setupControl(this, panel, name);
@@ -156,30 +152,30 @@ unsigned int UIScene_SuperFlatMenu::mapElementsAndNames()
 
     {
         std::string name("Properties");
-        m_propertiesPanel.setupControl(this, root, name);
+        m_properties.panel.setupControl(this, root, name);
     }
-    m_controls.push_back(&m_propertiesPanel);
-    panel = m_propertiesPanel.getFuiRenderNode();
+    m_controls.push_back(&m_properties.panel);
+    panel = m_properties.panel.getFuiRenderNode();
     {
         std::string name("PropertiesList");
-        m_propertiesList.setupControl(this, panel, name);
+        m_properties.list.setupControl(this, panel, name);
     }
-    m_controls.push_back(&m_propertiesList);
+    m_controls.push_back(&m_properties.list);
     {
         std::string name("PropertiesHelpTitle");
-        m_propertiesHelpTitle.setupControl(this, panel, name);
+        m_properties.helpTitle.setupControl(this, panel, name);
     }
-    m_controls.push_back(&m_propertiesHelpTitle);
+    m_controls.push_back(&m_properties.helpTitle);
     {
         std::string name("PropertiesHelpHtml");
-        m_propertiesHelp.setupControl(this, panel, name);
+        m_properties.help.setupControl(this, panel, name);
     }
-    m_controls.push_back(&m_propertiesHelp);
+    m_controls.push_back(&m_properties.help);
     {
         std::string name("PropertiesTimer");
-        m_propertiesTimer.setupControl(this, panel, name);
+        m_properties.timer.setupControl(this, panel, name);
     }
-    m_controls.push_back(&m_propertiesTimer);
+    m_controls.push_back(&m_properties.timer);
     {
         std::string name("TouchTabProperties");
         m_propertiesTouch.setupControl(this, panel, name);
@@ -194,7 +190,7 @@ void UIScene_SuperFlatMenu::PopulateBiomesList()
     SuperflatMenu::BiomeInfo* biomes = SuperflatMenu::getBiomeInfoA();
     int index = 0;
     for (int i = 0; biomes[i].mBiome >= 0; ++i, ++index)
-        m_biomesList.AddNewItem(biomes[i].getName(), index, false, L"");
+        m_biomes.list.AddNewItem(biomes[i].getName(), index, false, L"");
 }
 
 int UIScene_SuperFlatMenu::ParentParam(int index)
@@ -213,7 +209,7 @@ void UIScene_SuperFlatMenu::CreateParamMappings()
     {
         SuperflatMenu::Param* param = &SuperflatMenu::params[i];
         if (param->isParent())
-            m_paramMappings[i] = param->getFunc()(i, &m_propertiesList);
+            m_paramMappings[i] = param->getFunc()(i, &m_properties.list);
         else
             m_paramMappings[i] = m_paramMappings[ParentParam(i)];
     }
@@ -226,11 +222,11 @@ void UIScene_SuperFlatMenu::PopulateParamsList()
     {
         if (param->isParent())
         {
-            m_propertiesList.AddNewCheckbox(L10N::GetString(param->getName()), index, false);
+            m_properties.list.AddNewCheckbox(L10N::GetString(param->getName()), index, false);
         }
         else if (param->isChild())
         {
-            m_propertiesList.AddNewSlider(L"", index, param->getMinValue(), param->getMaxValue(), param->getMinValue(),
+            m_properties.list.AddNewSlider(L"", index, param->getMinValue(), param->getMaxValue(), param->getMinValue(),
                                           false, 7, 3);
         }
     }
@@ -239,28 +235,28 @@ void UIScene_SuperFlatMenu::PopulateParamsList()
 void UIScene_SuperFlatMenu::_init()
 {
     {
-        m_layersTab.init(UIString(IDS_LAYERS));
-        m_layersHelpTitle.init(UIString(L" "));
-        m_layersList.init(0);
-        m_layersList.UseIggyIcons();
+        m_layers.tab.init(UIString(IDS_LAYERS));
+        m_layers.helpTitle.init(UIString(L" "));
+        m_layers.list.init(0);
+        m_layers.list.UseIggyIcons();
     }
     {
-        m_biomesTab.init(UIString(IDS_BIOMES));
-        m_biomesHelpTitle.init(UIString(IDS_ACHIEVEMENTS));
-        m_biomesList.init(1);
-        m_biomesList.UseIggyIcons();
+        m_biomes.tab.init(UIString(IDS_BIOMES));
+        m_biomes.helpTitle.init(UIString(IDS_ACHIEVEMENTS));
+        m_biomes.list.init(1);
+        m_biomes.list.UseIggyIcons();
         PopulateBiomesList();
     }
     {
-        m_propertiesTab.init(UIString(IDS_PROPERTIES));
-        m_propertiesHelpTitle.init(UIString(IDS_ACHIEVEMENTS));
-        m_propertiesList.init(2);
+        m_properties.tab.init(UIString(IDS_PROPERTIES));
+        m_properties.helpTitle.init(UIString(IDS_ACHIEVEMENTS));
+        m_properties.list.init(2);
         CreateParamMappings();
         PopulateParamsList();
     }
-    m_layersTimer.setVisible(false);
-    m_biomesTimer.setVisible(false);
-    m_propertiesTimer.setVisible(false);
+    m_layers.timer.setVisible(false);
+    m_biomes.timer.setVisible(false);
+    m_properties.timer.setVisible(false);
     m_layersTouch.init(3);
     m_biomesTouch.init(4);
     m_propertiesTouch.init(5);
@@ -269,13 +265,13 @@ void UIScene_SuperFlatMenu::_init()
 
 void UIScene_SuperFlatMenu::setLayerButton(int index, const FlatLayerInfo& layer)
 {
-    unsigned int count = m_layersList.getItemCount();
+    unsigned int count = m_layers.list.getItemCount();
     if (index <= (int)count)
     {
         if (index >= (int)count)
-            m_layersList.AddNewItem(layer.getNameText(), layer.getHeightText(), index, L"");
+            m_layers.list.AddNewItem(layer.getNameText(), layer.getHeightText(), index, L"");
         else
-            m_layersList.SetItem(index, layer.getNameText(), layer.getHeightText(), L"");
+            m_layers.list.SetItem(index, layer.getNameText(), layer.getHeightText(), L"");
     }
 }
 
@@ -283,7 +279,7 @@ void UIScene_SuperFlatMenu::PopulateLayersList()
 {
     std::vector<FlatLayerInfo> layers;
     m_generatorInfo.getLayers(layers);
-    m_layersList.clearList();
+    m_layers.list.clearList();
     int index = 0;
     for (std::vector<FlatLayerInfo>::reverse_iterator it = layers.rbegin(); it != layers.rend(); ++it)
     {
@@ -307,7 +303,7 @@ void UIScene_SuperFlatMenu::UpdateBiomesList()
                     checked = true;
             }
         }
-        m_biomesList.SetCheckbox(index, checked);
+        m_biomes.list.SetCheckbox(index, checked);
         ++biome;
         ++index;
     }
@@ -368,59 +364,64 @@ UIControl* UIScene_SuperFlatMenu::GetMainPanel()
     switch (m_activeTab)
     {
     case eTabBiomes:
-        return &m_biomesPanel;
+        return &m_biomes.panel;
     case eTabProperties:
-        return &m_propertiesPanel;
+        return &m_properties.panel;
     default:
-        return &m_layersPanel;
+        return &m_layers.panel;
     }
 }
 
 void UIScene_SuperFlatMenu::updateTooltips()
 {
-    int tooltipIdForPrimaryAction = -1;
-    int tooltipIdForSecondaryAction = -1;
-    int tooltipIdForLayerAction = -1;
-    int tooltipIdForDisabledAction = -1;
+    int primaryAction = -1;
+    int moveLayerAction = -1;
+    int secondaryAction = -1;
+    int pageUpAction = -1;
+    int pageDownAction = -1;
+    int disabledAction = -1;
+    int layerAction = -1;
+    int moveUpDownAction = -1;
     if (!m_editingLayer)
     {
-        tooltipIdForDisabledAction = -2;
-        tooltipIdForLayerAction = IDS_TOOLTIPS_CHANGE_TAB;
-        tooltipIdForSecondaryAction = IDS_TOOLTIPS_PRESETS;
+        disabledAction = -2;
+        layerAction = IDS_TOOLTIPS_CHANGE_TAB;
+        secondaryAction = IDS_TOOLTIPS_PRESETS;
     }
-    if (m_activeTab == eTabLayers)
+    switch (m_activeTab)
     {
-        if (controlHasFocus(m_layersList.getId()))
+    case eTabLayers:
+        if (controlHasFocus(m_layers.list.getId()))
         {
-            unsigned int selection = m_layersList.getCurrentSelection();
-            unsigned int count = m_layersList.getItemCount();
+            unsigned int selection = m_layers.list.getCurrentSelection();
+            unsigned int count = m_layers.list.getItemCount();
+            bool lastLayer = selection == count - 1;
             if (m_editingLayer)
             {
-                gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_PLACE, IDS_TOOLTIPS_BACK, -1, tooltipIdForSecondaryAction, IDS_TOOLTIPS_PAGE_UP,
-                    IDS_TOOLTIPS_PAGE_DOWN, tooltipIdForDisabledAction, tooltipIdForLayerAction, -1, -1, -1, -1, -1, -1, -1, IDS_TOOLTIPS_MOVE_UPDOWN, false, false);
-                return;
+                primaryAction = IDS_TOOLTIPS_PLACE;
+                pageUpAction = IDS_TOOLTIPS_PAGE_UP;
+                pageDownAction = IDS_TOOLTIPS_PAGE_DOWN;
+                moveUpDownAction = IDS_TOOLTIPS_MOVE_UPDOWN;
             }
-            tooltipIdForPrimaryAction = IDS_SUPERFLAT_ADD_LAYER;
-            if (selection != count - 1)
+            else
             {
-                gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_LAYER_OPTIONS, IDS_TOOLTIPS_BACK, IDS_SUPERFLAT_MOVE_LAYER, tooltipIdForSecondaryAction, -1, -1,
-                    tooltipIdForDisabledAction, tooltipIdForLayerAction, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
-                return;
+                primaryAction = IDS_SUPERFLAT_ADD_LAYER;
+                if (!lastLayer)
+                {
+                    primaryAction = IDS_TOOLTIPS_LAYER_OPTIONS;
+                    moveLayerAction = IDS_SUPERFLAT_MOVE_LAYER;
+                }
             }
         }
+        break;
+    case eTabBiomes:
+    case eTabProperties:
+        primaryAction = IDS_TOOLTIPS_SELECT;
+        break;
     }
-    else
-    {
-        if (m_activeTab > eTabProperties)
-        {
-            gConsoleUIController.SetTooltips(0, -1, IDS_TOOLTIPS_BACK, -1, tooltipIdForSecondaryAction, -1, -1, tooltipIdForDisabledAction, tooltipIdForLayerAction, -1,
-                -1, -1, -1, -1, -1, -1, -1, false, false);
-            return;
-        }
-        tooltipIdForPrimaryAction = IDS_TOOLTIPS_SELECT;
-    }
-    gConsoleUIController.SetTooltips(0, tooltipIdForPrimaryAction, IDS_TOOLTIPS_BACK, -1, tooltipIdForSecondaryAction, -1, -1, tooltipIdForDisabledAction, tooltipIdForLayerAction, -1, -1,
-        -1, -1, -1, -1, -1, -1, false, false);
+    gConsoleUIController.SetTooltips(0, primaryAction, IDS_TOOLTIPS_BACK, moveLayerAction, secondaryAction,
+        pageUpAction, pageDownAction, disabledAction, layerAction, -1, -1, -1, -1, -1, -1, -1,
+        moveUpDownAction, false, false);
 }
 
 void UIScene_SuperFlatMenu::updateComponents()
@@ -448,37 +449,39 @@ int UIScene_SuperFlatMenu::GetLayerIndex(int index)
 
 void UIScene_SuperFlatMenu::UpdateLayersHelpText()
 {
-    int index = GetLayerIndex(m_layersList.getCurrentSelection());
+    int index = GetLayerIndex(m_layers.list.getCurrentSelection());
     FlatLayerInfo layer = m_generatorInfo.getLayer(index);
-    m_layersHelpTitle.setLabel(UIString(layer.getNameText()), false, false);
-    m_layersHelp.setLabel(UIString(layer.getDescriptionText()), false, false);
+    m_layers.helpTitle.setLabel(UIString(layer.getNameText()), false, false);
+    m_layers.help.setLabel(UIString(layer.getDescriptionText()), false, false);
 }
 
 void UIScene_SuperFlatMenu::UpdateBiomeHelpText()
 {
     SuperflatMenu::BiomeInfo* biomes = SuperflatMenu::getBiomeInfoA();
-    SuperflatMenu::BiomeInfo& biome = biomes[m_biomesList.getCurrentSelection()];
-    m_biomesHelpTitle.setLabel(UIString(biome.getName()), false, false);
+    SuperflatMenu::BiomeInfo& biome = biomes[m_biomes.list.getCurrentSelection()];
+    m_biomes.helpTitle.setLabel(UIString(biome.getName()), false, false);
     std::wstring description(L10N::GetString(biome.mDescription));
-    m_biomesHelp.setLabel(UIString(description.c_str()), false, false);
+    m_biomes.help.setLabel(UIString(description.c_str()), false, false);
 }
 
 void UIScene_SuperFlatMenu::UpdateParamHelpText()
 {
-    const int selection = m_propertiesList.getCurrentSelection();
+    const int selection = m_properties.list.getCurrentSelection();
     const int parent = ParentParam(selection);
-    m_propertiesHelpTitle.setLabel(UIString(SuperflatMenu::params[parent].getName()), false, false);
+    const SuperflatMenu::Param& parentParam = SuperflatMenu::params[parent];
+    const SuperflatMenu::Param& selectedParam = SuperflatMenu::params[selection];
+    m_properties.helpTitle.setLabel(UIString(parentParam.getName()), false, false);
 
     std::wstring text(L"");
-    text.append(L10N::GetString(SuperflatMenu::params[parent].getDesc()));
+    text.append(L10N::GetString(parentParam.getDesc()));
     if (parent != selection)
     {
         text.append(L"\n\n");
-        text.append(L10N::GetString(SuperflatMenu::params[selection].getName()));
+        text.append(L10N::GetString(selectedParam.getName()));
         text.append(L"\n\n");
-        text.append(L10N::GetString(SuperflatMenu::params[selection].getDesc()));
+        text.append(L10N::GetString(selectedParam.getDesc()));
     }
-    m_propertiesHelp.setLabel(UIString(text), false, false);
+    m_properties.help.setLabel(UIString(text), false, false);
 }
 
 void UIScene_SuperFlatMenu::handleReload()
@@ -493,15 +496,15 @@ void UIScene_SuperFlatMenu::handleReload()
     switch (m_activeTab)
     {
     case eTabLayers:
-        m_layersList.setCurrentSelection(m_pendingSelection, false, true);
+        m_layers.list.setCurrentSelection(m_pendingSelection, false, true);
         UpdateLayersHelpText();
         break;
     case eTabBiomes:
-        m_biomesList.setCurrentSelection(m_pendingSelection, false, true);
+        m_biomes.list.setCurrentSelection(m_pendingSelection, false, true);
         UpdateBiomeHelpText();
         break;
     case eTabProperties:
-        m_propertiesList.setCurrentSelection(m_pendingSelection, false, true);
+        m_properties.list.setCurrentSelection(m_pendingSelection, false, true);
         UpdateParamHelpText();
         break;
     }
@@ -517,7 +520,7 @@ void UIScene_SuperFlatMenu::MoveCurrentLayer(int amount)
     if (amount == 0)
         return;
     int direction = (amount > 0) ? -1 : 1;
-    int selection = m_layersList.getCurrentSelection();
+    int selection = m_layers.list.getCurrentSelection();
     int moved = selection + direction * std::abs(amount);
     int layers = m_generatorInfo.numLayers();
     int maxIndex = layers - 1;
@@ -527,6 +530,8 @@ void UIScene_SuperFlatMenu::MoveCurrentLayer(int amount)
     target = (target < 1) ? 1 : target;
     limit = (maxIndex < limit) ? maxIndex : limit;
     limit = (limit < 1) ? 1 : limit;
+    direction = -direction;
+    int selectedLayer = (layers - target) - 1;
     if (target == limit || limit == 0)
     {
         ExecuteOnTick<const SoundEvent*>(&UIScene_SuperFlatMenu::PlaySound, SoundEvents::UI_CRAFT_FAIL);
@@ -534,12 +539,11 @@ void UIScene_SuperFlatMenu::MoveCurrentLayer(int amount)
     }
     ExecuteOnTick<const SoundEvent*>(&UIScene_SuperFlatMenu::PlaySound, SoundEvents::UI_PRESS);
     FlatLayerInfo moving = m_generatorInfo.getLayer(limit);
-    int step = -direction;
-    for (int i = limit; i != target; i += step)
-        m_generatorInfo.setLayer(i, m_generatorInfo.getLayer(i + step));
+    for (int i = limit; i != target; i += direction)
+        m_generatorInfo.setLayer(i, m_generatorInfo.getLayer(i + direction));
     m_generatorInfo.setLayer(target, moving);
     ExecuteOnTick(&UIScene_SuperFlatMenu::PopulateLayersList);
-    ExecuteOnTick<int>(&UIScene_SuperFlatMenu::SetSelectedLayer, (layers - target) - 1);
+    ExecuteOnTick<int>(&UIScene_SuperFlatMenu::SetSelectedLayer, selectedLayer);
 }
 
 void UIScene_SuperFlatMenu::NavActiveTab(int direction)
@@ -617,8 +621,8 @@ void UIScene_SuperFlatMenu::handleInput(int playerId, int action, bool repeat, b
         break;
     case EControllerActions_MenuX:
         {
-            bool last = m_layersList.getCurrentSelection() == m_layersList.getItemCount() - 1;
-            if (!last && !m_editingLayer && m_layersList.hasFocus() && pressed)
+            bool last = m_layers.list.getCurrentSelection() == m_layers.list.getItemCount() - 1;
+            if (!last && !m_editingLayer && m_layers.list.hasFocus() && pressed)
             {
                 m_editingLayer = true;
                 updateTooltips();
@@ -740,7 +744,7 @@ void UIScene_SuperFlatMenu::handlePress(int controlId, int childId)
     case 0:
         if (!m_editingLayer)
         {
-            bool last = m_layersList.getCurrentSelection() == m_layersList.getItemCount() - 1;
+            bool last = m_layers.list.getCurrentSelection() == m_layers.list.getItemCount() - 1;
             if (last)
             {
                 if (m_generatorInfo.getHeight() < 0x80)
@@ -788,7 +792,7 @@ void UIScene_SuperFlatMenu::handleSelectionChanged(int selection)
     if (m_activeTab == eTabBiomes)
     {
         SuperflatMenu::BiomeInfo* biomes = SuperflatMenu::getBiomeInfoA();
-        m_biomesHelp.setLabel(UIString(biomes[selection].mDescription), false, false);
+        m_biomes.help.setLabel(UIString(biomes[selection].mDescription), false, false);
         return;
     }
     if (m_activeTab == eTabProperties)
@@ -796,31 +800,34 @@ void UIScene_SuperFlatMenu::handleSelectionChanged(int selection)
         SuperflatMenu::Param* param = &SuperflatMenu::params[selection];
         if (param->isParent())
         {
-            m_propertiesHelp.setLabel(UIString(param->getDesc()), false, false);
+            m_properties.help.setLabel(UIString(param->getDesc()), false, false);
             return;
         }
         std::wstring text = std::wstring(L10N::GetString(SuperflatMenu::params[ParentParam(selection)].getDesc())) +
                             L"<br/>" + std::wstring(L10N::GetString(param->getDesc()));
-        m_propertiesHelp.setLabel(UIString(text), false, false);
+        m_properties.help.setLabel(UIString(text), false, false);
         return;
     }
     if (m_activeTab == eTabLayers)
-        controlHasFocus(&m_layersList);
+        controlHasFocus(&m_layers.list);
 }
 
 void UIScene_SuperFlatMenu::handleFocusChange(int focus, int childFocus)
 {
-    UIControl_List* list = NULL;
+    UIControl_List* list;
     switch (focus)
     {
     case eTabLayers:
-        list = &m_layersList;
+        list = &m_layers.list;
         break;
     case eTabBiomes:
-        list = &m_biomesList;
+        list = &m_biomes.list;
         break;
     case eTabProperties:
-        list = &m_propertiesList;
+        list = &m_properties.list;
+        break;
+    default:
+        list = NULL;
         break;
     }
     if (list != NULL)
@@ -886,13 +893,13 @@ void UIScene_SuperFlatMenu::customDraw(const char* name, fuiRect* rect)
 
 void UIScene_SuperFlatMenu::SetSelectedLayer(int index)
 {
-    if (m_layersList.hasFocus() && (int)m_layersList.getItemCount() > index)
-        m_layersList.setCurrentSelection(index, false, true);
+    if (m_layers.list.hasFocus() && (int)m_layers.list.getItemCount() > index)
+        m_layers.list.setCurrentSelection(index, false, true);
 }
 
 void UIScene_SuperFlatMenu::DeleteLayer()
 {
-    int index = GetLayerIndex(m_layersList.getCurrentSelection());
+    int index = GetLayerIndex(m_layers.list.getCurrentSelection());
     m_generatorInfo.remLayer(index);
     PopulateLayersList();
 }
@@ -923,7 +930,7 @@ void UIScene_SuperFlatMenu::OpenEditLayerDialog(bool insert)
     EditLayerData* data = new EditLayerData();
     data->config = m_config;
     data->insert = insert;
-    data->index = (m_generatorInfo.numLayers() - 1) - m_layersList.getCurrentSelection();
+    data->index = (m_generatorInfo.numLayers() - 1) - m_layers.list.getCurrentSelection();
     gConsoleUIController.NavigateToScene(m_playerId, EUIScene_SuperFlatEditLayer, data,
         EUILayer_Scene, EUIGroup_PlayerDefault);
 }

@@ -9,6 +9,7 @@
 #include "game/network/CGameNetworkManager.hpp"
 #include "game/network/INetworkPlayer.hpp"
 #include "game/ui/UIControl_PlayerButtonList.hpp"
+#include "game/ui/UIScene_InGamePlayerOptionsMenu.hpp"
 #include "game/ui/UIString.hpp"
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
@@ -22,14 +23,6 @@
 #include "game/world/generation/PlayerUID.hpp"
 
 extern ConsoleUIController gConsoleUIController;
-
-struct InGamePlayerOptionsData
-{
-    int playerId;
-    unsigned char smallId;
-    unsigned int privileges;
-};
-
 
 UIScene_InGameInfoMenu::UIScene_InGameInfoMenu(int type, void* data, UILayer* layer)
     : UIScene(type, layer), IUIScene_PlayerList(), m_players()

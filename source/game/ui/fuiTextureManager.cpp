@@ -5,9 +5,15 @@
 #include "game/ui/fuiBitmap.hpp"
 
 fuiTextureManager::fuiTextureManager()
-    : textureCount(0), textures(0), managedTextureCount(0), managedTextureMemory(0),
-      peakTextureCount(0), peakTextureMemory(0), tickCount(0), initialised(false)
 {
+    tickCount = 0;
+    textures = 0;
+    peakTextureCount = 0;
+    peakTextureMemory = 0;
+    managedTextureMemory = 0;
+    textureCount = 0;
+    managedTextureCount = 0;
+    initialised = false;
     InitializeCriticalSection(&mutex);
 }
 

@@ -6,10 +6,6 @@ FJ_KeyboardButtons_Controls_Normal::FJ_KeyboardButtons_Controls_Normal(fuiRender
     m_keyboardOffset = 3;
 }
 
-FJ_KeyboardButtons_Controls_Normal::~FJ_KeyboardButtons_Controls_Normal()
-{
-}
-
 FJ_KeyboardButtons* FJ_KeyboardButtons_Controls_Normal::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_KeyboardButtons_Controls_Normal(pRenderNode);

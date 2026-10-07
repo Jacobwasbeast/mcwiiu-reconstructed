@@ -5,10 +5,6 @@ FJ_ListButtonPlayerList_Small::FJ_ListButtonPlayerList_Small(fuiRenderNode* rend
 {
 }
 
-FJ_ListButtonPlayerList_Small::~FJ_ListButtonPlayerList_Small()
-{
-}
-
 FJ_ListButtonPlayerList* FJ_ListButtonPlayerList_Small::Create(fuiRenderNode* renderNode)
 {
     return new FJ_ListButtonPlayerList_Small(renderNode);

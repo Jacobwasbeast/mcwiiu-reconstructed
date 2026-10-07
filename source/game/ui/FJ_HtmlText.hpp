@@ -46,7 +46,7 @@ public:
     FJ_HtmlText(fuiRenderNode* renderNode);
     virtual ~FJ_HtmlText();
     static FJ_FuiNode* Create(fuiRenderNode* renderNode);
-    unsigned int CanScroll(bool up);
+    bool CanScroll(bool up);
     void HandleScrollListArrows(bool positionArrows);
     void UpdateScrolling(FJ_Event* event);
     static void _UpdateScrolling(FJ_FuiNode* node, FJ_Event* event);

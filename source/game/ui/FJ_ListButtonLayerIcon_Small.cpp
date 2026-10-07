@@ -5,10 +5,6 @@ FJ_ListButtonLayerIcon_Small::FJ_ListButtonLayerIcon_Small(fuiRenderNode* render
 {
 }
 
-FJ_ListButtonLayerIcon_Small::~FJ_ListButtonLayerIcon_Small()
-{
-}
-
 FJ_ListButtonLayerIcon* FJ_ListButtonLayerIcon_Small::Create(fuiRenderNode* renderNode)
 {
     return new FJ_ListButtonLayerIcon_Small(renderNode);

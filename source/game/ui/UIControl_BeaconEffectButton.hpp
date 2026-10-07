@@ -15,7 +15,6 @@ private:
 
 public:
     UIControl_BeaconEffectButton();
-    virtual ~UIControl_BeaconEffectButton();
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void SetIcon(int icon);
     void UpdateButtonState();

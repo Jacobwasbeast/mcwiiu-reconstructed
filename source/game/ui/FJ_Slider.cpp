@@ -255,8 +255,8 @@ void FJ_Slider::ASConstructor()
     m_sliderMask = NULL;
     m_tintActiveMask = NULL;
     m_tintInactiveMask = NULL;
-    m_keyPressTicks = 0;
     m_keyPressDelta = 0;
+    m_keyPressTicks = 0;
     m_repeat = false;
     m_repeatDelay = 10;
     m_repeatStep = 1;
@@ -276,13 +276,13 @@ void FJ_Slider::Init(const std::wstring& name, int id, int minValue, int maxValu
         InitSliderMask();
     SetLabelAlignment(2);
     InitBase(name, id);
+    m_minValue = minValue;
     m_maxValue = maxValue;
     m_sliderCurrent = value;
-    m_minValue = minValue;
     SetSlider(value);
-    m_repeatStep = repeatStep;
     m_repeat = repeat;
     m_repeatDelay = repeatDelay;
+    m_repeatStep = repeatStep;
 }
 
 void FJ_Slider::SetRelativeSliderPos(float position)
@@ -312,9 +312,9 @@ void FJ_Slider::SetRelativeSliderPos(float position)
     }
 }
 
-double FJ_Slider::GetRealWidth()
+float FJ_Slider::GetRealWidth()
 {
-    return (double)(float)m_wrapWidth;
+    return m_wrapWidth;
 }
 
 void FJ_Slider::SetSliderValue(int value)
@@ -354,7 +354,7 @@ void FJ_Slider::GetLabelTooWide(fuiRenderNodeEditText* textField)
 
 void FJ_Slider::SetNewObjectWidth(int width)
 {
-    if (m_wrapWidth < width)
+    if (width > m_wrapWidth)
     {
         SetTextOnly(std::wstring(L" "));
         setWidth(getWidth() + (float)(width - m_wrapWidth) / getScaleX());

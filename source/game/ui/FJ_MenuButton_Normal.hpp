@@ -9,7 +9,6 @@ class FJ_MenuButton_Normal : public FJ_MenuButton
 {
 public:
     explicit FJ_MenuButton_Normal(fuiRenderNode* renderNode);
-    virtual ~FJ_MenuButton_Normal();
 
     static FJ_MenuButton* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();

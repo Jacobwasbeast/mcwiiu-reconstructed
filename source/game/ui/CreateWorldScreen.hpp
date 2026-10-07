@@ -12,7 +12,6 @@ class CreateWorldScreen : public Screen
 {
 public:
     CreateWorldScreen(Screen* parentScreen);
-    virtual ~CreateWorldScreen();
 
     virtual void render(int x, int y, float partialTick);
     virtual void keyPressed(wchar_t key, int action);

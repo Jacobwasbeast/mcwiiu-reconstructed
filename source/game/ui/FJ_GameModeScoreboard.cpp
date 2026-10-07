@@ -21,11 +21,9 @@ FJ_GameModeScoreboard::FJ_GameModeScoreboard(fuiRenderNode* renderNode)
     m_statIconHolders.push_back(getChildByName(std::string("PanelAward.Stat3Icon")));
     m_statIconHolders.push_back(getChildByName(std::string("PanelAward.Stat4Icon")));
     m_statIconHolders.push_back(getChildByName(std::string("PanelAward.Stat5Icon")));
-    int i;
-    for (i = 0; i < 5; ++i)
+    for (int i = 0; i < 5; ++i)
     {
-        FJ_IconSlot* icon = m_statIconHolders[i]->asFJ_IconSlot();
-        icon->SetParams(0, false);
+        m_statIconHolders[i]->asFJ_IconSlot()->SetParams(0, false);
     }
     m_root = getChildByName(std::string("PanelScoreboard"));
 
@@ -33,10 +31,6 @@ FJ_GameModeScoreboard::FJ_GameModeScoreboard(fuiRenderNode* renderNode)
 
     m_killedByLabelY = static_cast<int>(getChildByName(std::string("PanelAward.KilledByLabel"))->getY());
     m_killedByLabelHeight = static_cast<int>(getChildByName(std::string("PanelAward.KilledByLabel"))->getHeight());
-}
-
-FJ_GameModeScoreboard::~FJ_GameModeScoreboard()
-{
 }
 
 FJ_GameModeScoreboard* FJ_GameModeScoreboard::Create(fuiRenderNode* renderNode)
@@ -51,8 +45,7 @@ unsigned int FJ_GameModeScoreboard::getType()
 
 void FJ_GameModeScoreboard::SetupStatIconHolders()
 {
-    int i;
-    for (i = 0; i < 5; ++i)
+    for (int i = 0; i < 5; ++i)
     {
         m_statIconHolders[i]->asFJ_IconSlot()->setWidth(m_statIconHolders[i]->getWidth());
         m_statIconHolders[i]->asFJ_IconSlot()->Init(std::wstring(L""));
@@ -98,18 +91,15 @@ void FJ_GameModeScoreboard::handlePress(FJ_Event* event)
 void FJ_GameModeScoreboard::InitNumColumns(int numColumns)
 {
     FJ_FuiNode* panel = getChildByName(std::string("PanelScoreboard"));
-    FJ_FuiNode* listNode = getChildByName(std::string("PanelScoreboard.Scoreboard"));
-    FJ_List_ListButtonScoreBoard* list = static_cast<FJ_List_ListButtonScoreBoard*>(listNode);
-    int i;
-    for (i = 0; i < numColumns; ++i)
+    FJ_List_ListButtonScoreBoard* list = static_cast<FJ_List_ListButtonScoreBoard*>(getChildByName(std::string("PanelScoreboard.Scoreboard")));
+    for (int i = 0; i < numColumns; ++i)
     {
         FJ_IconSlot* icon = static_cast<FJ_IconSlot*>(FJ_Factory::createObject("fourj.listClasses.FJ_IconSlot", m_pRenderNode, true, 0));
         icon->SetParams(list->GetButtonHeight(), list->m_checkboxTick);
         icon->ShowSlotHolder(false);
         icon->Init(std::wstring(L""));
-        const float listRight = listNode->getX() + listNode->getWidth();
-        icon->setX(-(icon->getWidth() * static_cast<float>(numColumns - i) - listRight) - static_cast<float>((numColumns - i - 1) * 2));
-        icon->setY(listNode->getY() - static_cast<float>(static_cast<int>(icon->getHeight() * 1.1f)));
+        icon->setX(list->getX() + list->getWidth() - icon->getWidth() * static_cast<float>(numColumns - i) - static_cast<float>((numColumns - i - 1) * 2));
+        icon->setY(list->getY() - static_cast<float>(static_cast<int>(icon->getHeight() * 1.1f)));
         m_titleSlots.push_back(icon);
         panel->addChild(icon);
         icon->SetSlotID(std::string("header"), i);
@@ -148,13 +138,13 @@ void FJ_GameModeScoreboard::SetHasPlayerBeenKilled(bool killed)
         FJ_FuiNode* gamertag = award->getChildByName(std::string("GamertagLabel"));
         FJ_FuiNode* icon = award->getChildByName(std::string("Stat5Icon"));
         FJ_FuiNode* label = award->getChildByName(std::string("Stat5Label"));
-        if (!killed)
+        if (killed)
         {
-            killedBy->setY(block->getY() + block->getHeight() * 0.5f - static_cast<float>(m_killedByLabelHeight / 2));
+            killedBy->setY(static_cast<float>(m_killedByLabelY));
         }
         else
         {
-            killedBy->setY(static_cast<float>(m_killedByLabelY));
+            killedBy->setY(block->getY() + block->getHeight() * 0.5f - static_cast<float>(m_killedByLabelHeight / 2));
         }
         gamertag->setVisible(killed);
         icon->setVisible(killed);

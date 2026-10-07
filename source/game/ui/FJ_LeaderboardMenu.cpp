@@ -4,6 +4,7 @@
 
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_KeyboardEvent.hpp"
 #include "game/ui/FJ_Label.hpp"
 #include "game/ui/FJ_LeaderboardList.hpp"
 #include "game/ui/fuiRenderNode.hpp"
@@ -39,22 +40,23 @@ void FJ_LeaderboardMenu::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
 
 void FJ_LeaderboardMenu::keyDownHandler(FJ_Event* event)
 {
+    FJ_KeyboardEvent* keyEvent = static_cast<FJ_KeyboardEvent*>(event);
     FJ_FuiNode* gamersNode = getChildByName("Gamers");
     FJ_LeaderboardList* leaderboardList = static_cast<FJ_LeaderboardList*>(gamersNode);
 
-    if (event->m_eType == eFJEventType_FocusOut)
+    if (keyEvent->m_iKeyCode == 3)
     {
         leaderboardList->NavigateLeaderboard(true, false);
     }
-    else if (event->m_eType == eFJEventType_FocusChangeInit)
+    else if (keyEvent->m_iKeyCode == 4)
     {
         leaderboardList->NavigateLeaderboard(false, false);
     }
-    else if (event->m_eType == eFJEventType_KeyDown)
+    else if (keyEvent->m_iKeyCode == 1)
     {
         leaderboardList->NavigateLeaderboard(true, true);
     }
-    else if (event->m_eType == eFJEventType_FocusIn)
+    else if (keyEvent->m_iKeyCode == 2)
     {
         leaderboardList->NavigateLeaderboard(false, true);
     }

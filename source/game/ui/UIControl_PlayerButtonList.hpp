@@ -16,7 +16,6 @@ public:
     public:
         PendingAddItem(UIControl_PlayerButtonList* list, int type, std::wstring label,
                        int playerIcon, int voipIcon);
-        virtual ~PendingAddItem();
         virtual unsigned int OnTick();
 
     private:

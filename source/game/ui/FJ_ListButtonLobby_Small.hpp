@@ -11,7 +11,6 @@ class FJ_ListButtonLobby_Small : public FJ_ListButtonLobby
 {
 public:
     explicit FJ_ListButtonLobby_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonLobby_Small();
     static FJ_ListButtonLobby* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
 };

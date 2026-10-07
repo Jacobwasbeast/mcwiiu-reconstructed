@@ -90,10 +90,6 @@ UIScene_HorseInventoryMenu::UIScene_HorseInventoryMenu(int player, void* data, U
     m_ignoreInput = false;
 }
 
-UIScene_HorseInventoryMenu::~UIScene_HorseInventoryMenu()
-{
-}
-
 bool UIScene_HorseInventoryMenu::IsSectionSlotList(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {

@@ -16,10 +16,6 @@ VideoSettingsScreen::VideoSettingsScreen(Screen* parentScreen, Options* options)
     mOptions = options;
 }
 
-VideoSettingsScreen::~VideoSettingsScreen()
-{
-}
-
 void VideoSettingsScreen::init()
 {
     Language* language = Language::getInstance();

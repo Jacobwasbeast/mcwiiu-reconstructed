@@ -32,8 +32,7 @@ unsigned int FJ_InventoryMenu::getType()
 void FJ_InventoryMenu::InitEffectsGroup()
 {
     char name[64];
-    int index;
-    for (index = 0; index < 27; ++index)
+    for (int index = 0; index < 27; ++index)
     {
         std::sprintf(name, "EffectsGroup.Effect%d", index + 1);
         m_effectNodes[index] = getChildByName(std::string(name));
@@ -79,8 +78,7 @@ void FJ_InventoryMenu::RepositionEffects()
     int y = m_effectTopY;
     int spacing = m_effectTopY - m_effectNextY;
     int active = 0;
-    int index;
-    for (index = 0; index < 27; ++index)
+    for (int index = 0; index < 27; ++index)
     {
         if (m_effectActive[index] != 0)
         {
@@ -88,11 +86,11 @@ void FJ_InventoryMenu::RepositionEffects()
         }
     }
     const int visibleLimit = m_inventoryHidden ? 4 : 7;
-    if (visibleLimit < active)
+    if (active > visibleLimit)
     {
         spacing = Math::round(static_cast<float>(m_effectTopY - m_effectBottomY) / static_cast<float>(active - 1));
     }
-    for (index = 0; index < 27; ++index)
+    for (int index = 0; index < 27; ++index)
     {
         if (m_effectActive[index] != 0)
         {
@@ -106,12 +104,12 @@ void FJ_InventoryMenu::HideInventory()
 {
     FJ_FuiNode* mainPanel = getChildByName(std::string("MainPanel"))->asMovieClip();
     FJ_FuiNode* backgroundPanel = mainPanel->getChildByName(std::string("BackgroundPanel"))->asMovieClip();
-    const int oldHeight = static_cast<int>(backgroundPanel->getChildAt(0)->getHeight());
+    int oldHeight = static_cast<int>(backgroundPanel->getChildAt(0)->getHeight());
     FJ_AbstractContainerDocument::HideInventory();
-    const int newHeight = static_cast<int>(backgroundPanel->getChildAt(0)->getHeight());
-    m_inventoryHidden = true;
+    int newHeight = static_cast<int>(backgroundPanel->getChildAt(0)->getHeight());
     m_effectTopY += newHeight - oldHeight;
     m_effectNextY += newHeight - oldHeight;
+    m_inventoryHidden = true;
     RepositionEffects();
 }
 
@@ -157,33 +155,31 @@ void FJ_InventoryMenu::AddEffect(int effect, const std::wstring& name, int durat
 unsigned int FJ_InventoryMenu::UpdateEffects(int count, int* effects)
 {
     unsigned int changed = 0;
-    int index;
-    if (count >= 2)
+    if (count > 0)
     {
-        for (index = 0; index + 1 < count; index += 2)
+        for (int index = 0; index + 1 < count; index += 2)
         {
             const int slot = s_effectSlots[effects[index]];
-            m_effectNodes[slot]->asFJ_MobEffect()->SetDuration(effects[index + 1]);
-            m_effectRefreshed[slot] = 1;
+            const int duration = effects[index + 1];
+            m_effectNodes[slot]->asFJ_MobEffect()->SetDuration(duration);
             changed = 1;
+            m_effectRefreshed[slot] = 1;
         }
     }
-    for (index = 0; index < 27; ++index)
+    for (unsigned int index = 0; index < 27; ++index)
     {
         if (m_effectActive[index] != 0 && m_effectRefreshed[index] == 0)
         {
-            FJ_MobEffect* effect = m_effectNodes[index]->asFJ_MobEffect();
-            const int timeLeft = static_cast<int>(effect->getTimeLeft());
-            if (timeLeft > 0)
-            {
-                effect->SetDuration(timeLeft - 1);
-                changed = 1;
-            }
-            else
+            if (static_cast<int>(m_effectNodes[index]->asFJ_MobEffect()->getTimeLeft()) <= 0)
             {
                 m_effectNodes[index]->setVisible(false);
                 m_effectActive[index] = 0;
                 RepositionEffects();
+            }
+            else
+            {
+                m_effectNodes[index]->asFJ_MobEffect()->SetDuration(static_cast<int>(m_effectNodes[index]->asFJ_MobEffect()->getTimeLeft()) - 1);
+                changed = 1;
             }
         }
         m_effectRefreshed[index] = 0;

@@ -36,7 +36,7 @@ public:
     void Init(const std::wstring& name, int id, int minValue, int maxValue,
               int value, bool repeat, int repeatDelay, int repeatStep);
     void SetRelativeSliderPos(float position);
-    double GetRealWidth();
+    float GetRealWidth();
     void SetSliderValue(int value);
     void EnableSlider(bool enabled);
     virtual void GetLabelTooWide(fuiRenderNodeEditText* textField);

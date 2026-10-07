@@ -18,10 +18,17 @@ const int DRC_SCREEN_HEIGHT = 480;
 }
 
 UIGroup::UIGroup(EUIGroup group, int player)
-    : m_viewportType(0), m_group(group), m_player(player), m_menuDisplayed(false),
-      m_pauseMenuDisplayed(false), m_containerMenuDisplayed(false), m_ignoreAutosaveMenuDisplayed(false),
-      m_ignorePlayerJoinMenuDisplayed(false), m_updateFocusStateCountdown(0)
 {
+    m_group = group;
+    m_player = player;
+    m_containerMenuDisplayed = false;
+    m_menuDisplayed = false;
+    m_pauseMenuDisplayed = false;
+    m_ignoreAutosaveMenuDisplayed = false;
+    m_ignorePlayerJoinMenuDisplayed = false;
+    m_updateFocusStateCountdown = 0;
+    m_viewportType = 0;
+
     for (int i = 0; i < EUILayer_Count; ++i)
     {
         m_layers[i] = new UILayer(this);
@@ -41,14 +48,14 @@ UIGroup::UIGroup(EUIGroup group, int player)
     {
         m_drc = static_cast<UIComponent_WiiUDRC*>(m_layers[EUILayer_Fullscreen]->addComponent(m_player, EUIScene_WiiUDRC, NULL));
     }
-    else if (m_group == EUIGroup_Fullscreen)
-    {
-        m_pressStartToPlay = static_cast<UIComponent_PressStartToPlay*>(m_layers[EUILayer_Tooltips]->addComponent(0, EUIScene_PressStartToPlay, NULL));
-    }
-    else
+    else if (m_group != EUIGroup_Fullscreen)
     {
         m_tutorialPopup = static_cast<UIComponent_TutorialPopup*>(m_layers[EUILayer_Tutorial]->addComponent(m_player, EUIScene_TutorialPopup, NULL));
         m_hud = static_cast<UIScene_HUD*>(m_layers[EUILayer_HUD]->addComponent(m_player, EUIScene_HUD, NULL));
+    }
+    else
+    {
+        m_pressStartToPlay = static_cast<UIComponent_PressStartToPlay*>(m_layers[EUILayer_Tooltips]->addComponent(0, EUIScene_PressStartToPlay, NULL));
     }
     m_commandBufferList = MemoryTracker::genLists(1);
 }
@@ -104,19 +111,18 @@ void UIGroup::DestroyAll()
 
 void UIGroup::ReloadAll()
 {
-    int lastLayer = EUILayer_Count;
     int i;
 
     for (i = 0; i < EUILayer_Count; ++i)
     {
         if (m_layers[i]->hidesLowerScenes())
-        {
-            lastLayer = i < EUILayer_Fullscreen ? EUILayer_Fullscreen : i;
             break;
-        }
     }
 
-    for (i = lastLayer; i >= 0; --i)
+    if (i < EUILayer_Fullscreen)
+        i = EUILayer_Fullscreen;
+
+    for (; i >= 0; --i)
     {
         if (i < EUILayer_Count)
             m_layers[i]->ReloadAll(i != EUILayer_Fullscreen);
@@ -144,38 +150,35 @@ void UIGroup::render()
 {
     int width;
     int height;
-    int layer;
-    int firstLayer;
 
-    if (m_player >= 0 && !gProfile->IsSignedIn(m_player))
+    if (m_player < 0 || gProfile->IsSignedIn(m_player))
     {
-        return;
-    }
-
-    if (m_group == EUIGroup_DRC)
-    {
-        width = DRC_SCREEN_WIDTH;
-        height = DRC_SCREEN_HEIGHT;
-    }
-    else
-    {
-        width = 0;
-        height = 0;
-        gConsoleUIController.getRenderDimensions(
-            static_cast<C4JRender::eViewportType>(m_viewportType), width, height);
-    }
-
-    for (firstLayer = 0; firstLayer < EUILayer_Count; ++firstLayer)
-    {
-        if (m_layers[firstLayer]->hidesLowerScenes())
-            break;
-    }
-
-    for (layer = firstLayer; layer >= 0; --layer)
-    {
-        if (layer < EUILayer_Count)
+        if (m_group == EUIGroup_DRC)
         {
-            m_layers[layer]->render(width, height, (C4JRender::eViewportType)m_viewportType);
+            width = DRC_SCREEN_WIDTH;
+            height = DRC_SCREEN_HEIGHT;
+        }
+        else
+        {
+            height = 0;
+            width = 0;
+            gConsoleUIController.getRenderDimensions(
+                static_cast<C4JRender::eViewportType>(m_viewportType), width, height);
+        }
+
+        int i;
+        for (i = 0; i < EUILayer_Count; ++i)
+        {
+            if (m_layers[i]->hidesLowerScenes())
+                break;
+        }
+
+        for (; i >= 0; --i)
+        {
+            if (i < EUILayer_Count)
+            {
+                m_layers[i]->render(width, height, (C4JRender::eViewportType)m_viewportType);
+            }
         }
     }
 }
@@ -194,10 +197,10 @@ int UIGroup::hidesLowerScenes()
 void UIGroup::updateStackStates()
 {
     bool menuDisplayed = false;
-    bool pauseMenuDisplayed = false;
     bool containerMenuDisplayed = false;
     bool ignoreAutosaveMenuDisplayed = false;
     bool ignorePlayerJoinMenuDisplayed = false;
+    bool pauseMenuDisplayed = false;
 
     for (int i = 0; i < EUILayer_Count; ++i)
     {
@@ -208,11 +211,11 @@ void UIGroup::updateStackStates()
         ignorePlayerJoinMenuDisplayed = ignorePlayerJoinMenuDisplayed || m_layers[i]->m_ignorePlayerJoinMenuDisplayed;
     }
 
-    m_menuDisplayed = menuDisplayed;
     m_pauseMenuDisplayed = pauseMenuDisplayed;
+    m_ignorePlayerJoinMenuDisplayed = ignorePlayerJoinMenuDisplayed;
     m_containerMenuDisplayed = containerMenuDisplayed;
     m_ignoreAutosaveMenuDisplayed = ignoreAutosaveMenuDisplayed;
-    m_ignorePlayerJoinMenuDisplayed = ignorePlayerJoinMenuDisplayed;
+    m_menuDisplayed = menuDisplayed;
 }
 
 bool UIGroup::NavigateToScene(int player, EUIScene scene, void* data, EUILayer layer)
@@ -242,7 +245,8 @@ void UIGroup::closeAllScenes()
     Minecraft* mc = Minecraft::GetInstance();
     if (m_player >= 0 && mc != 0 && mc->mGameModes[m_player] != 0)
     {
-        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[m_player]->getTutorial();
+        MultiPlayerGameMode* gameMode = Minecraft::GetInstance()->mGameModes[m_player];
+        Tutorial* tutorial = gameMode->getTutorial();
         if (tutorial != 0)
             tutorial->showTutorialPopup(true);
     }

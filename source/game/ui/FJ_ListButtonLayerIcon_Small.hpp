@@ -9,7 +9,6 @@ class FJ_ListButtonLayerIcon_Small : public FJ_ListButtonLayerIcon
 {
 public:
     explicit FJ_ListButtonLayerIcon_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonLayerIcon_Small();
     static FJ_ListButtonLayerIcon* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
 };

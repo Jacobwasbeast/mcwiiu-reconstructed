@@ -15,6 +15,3 @@ unsigned int FJ_ListButtonLobby_Normal::getType()
     return 0x8026;
 }
 
-FJ_ListButtonLobby_Normal::~FJ_ListButtonLobby_Normal()
-{
-}

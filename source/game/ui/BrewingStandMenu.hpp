@@ -14,7 +14,6 @@ public:
     {
     public:
         PotionSlot(boost::shared_ptr<Container> container, int index, int x, int y);
-        virtual ~PotionSlot();
         static bool mayPlaceItem(not_null_ptr<ItemInstance> item);
         virtual bool mayPlace(not_null_ptr<ItemInstance> item);
         virtual int getMaxStackSize();
@@ -27,7 +26,6 @@ public:
     {
     public:
         IngredientsSlot(boost::shared_ptr<Container> container, int index, int x, int y);
-        virtual ~IngredientsSlot();
         virtual bool mayPlace(not_null_ptr<ItemInstance> item);
         virtual int getMaxStackSize();
         virtual bool mayCombine(not_null_ptr<ItemInstance> item);
@@ -37,7 +35,6 @@ public:
     {
     public:
         FuelSlot(boost::shared_ptr<Container> container, int index, int x, int y);
-        virtual ~FuelSlot();
         static bool mayPlaceItem(not_null_ptr<ItemInstance> item);
         virtual bool mayPlace(not_null_ptr<ItemInstance> item);
         virtual int getMaxStackSize();

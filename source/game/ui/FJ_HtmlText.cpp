@@ -50,27 +50,27 @@ FJ_HtmlText::~FJ_HtmlText()
         m_pDownArrow->getParent()->removeChild(m_pDownArrow, true);
 }
 
-unsigned int FJ_HtmlText::CanScroll(bool up)
+bool FJ_HtmlText::CanScroll(bool up)
 {
     if (m_pText != NULL && m_bScrollingEnabled)
     {
         float top = m_fScrollTop;
-        float textHeight = m_pText->getTextHeight();
         float visibleHeight = m_fScrollBottom - top;
-        if (visibleHeight <= textHeight)
+        float textHeight = m_pText->getTextHeight();
+        if (textHeight >= visibleHeight)
         {
-            if (!up)
+            if (up)
             {
-                if (top < textHeight - visibleHeight)
-                    return 1;
+                if (top > 0.0f)
+                    return true;
             }
-            else if (top > 0.0f)
+            else if (top < textHeight - visibleHeight)
             {
-                return 1;
+                return true;
             }
         }
     }
-    return 0;
+    return false;
 }
 
 void FJ_HtmlText::HandleScrollListArrows(bool positionArrows)
@@ -228,11 +228,11 @@ void FJ_HtmlText::keyDownHandler(FJ_Event* event)
     if (!m_bScrollingEnabled)
         return;
 
-    m_iFocusDirection = getStage()->getFocus() != this;
-    int key = static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode;
     bool scrollUp = false;
     bool scrollDown = false;
     bool page = false;
+    m_iFocusDirection = getStage()->getFocus() != this;
+    int key = static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode;
     if (key == s_scrollUpKeys[m_iFocusDirection])
         scrollUp = true;
     else if (key == s_scrollDownKeys[m_iFocusDirection])
@@ -255,8 +255,7 @@ void FJ_HtmlText::keyDownHandler(FJ_Event* event)
         if (!m_bScrollingUp && CanScroll(true))
         {
             m_bScrollingUp = true;
-            m_iScrollDelay = page ? 0 : 30;
-            m_iFlickDelay = page ? 0 : 30;
+            m_iFlickDelay = m_iScrollDelay = page ? 0 : 30;
             getStage()->addEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling, false);
             if (isVisible())
             {
@@ -273,8 +272,7 @@ void FJ_HtmlText::keyDownHandler(FJ_Event* event)
         if (!m_bScrollingDown && CanScroll(false))
         {
             m_bScrollingDown = true;
-            m_iScrollDelay = page ? 0 : 30;
-            m_iFlickDelay = page ? 0 : 30;
+            m_iFlickDelay = m_iScrollDelay = page ? 0 : 30;
             getStage()->addEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling, false);
             if (isVisible())
             {
@@ -301,7 +299,22 @@ void FJ_HtmlText::GetScrollTarget(bool page)
     int lastLine = Math::round(m_pText->getHeight() - (m_fScrollBottom - m_fScrollTop));
     int position = Math::round(m_fScrollTop);
     int target;
-    if (!m_bScrollingUp)
+    if (m_bScrollingUp)
+    {
+        target = lastLine;
+        if (page)
+            position -= Math::round((m_fScrollBottom - m_fScrollTop) - m_iCharacterHeight * 3);
+        do
+        {
+            target -= m_iCharacterHeight;
+        } while (target > position);
+        if (target - m_iCharacterHeight < 0)
+        {
+            m_iTargetScroll = 0;
+            return;
+        }
+    }
+    else
     {
         if (!m_bScrollingDown)
             return;
@@ -312,23 +325,8 @@ void FJ_HtmlText::GetScrollTarget(bool page)
         {
             target += m_iCharacterHeight;
         } while (target < position);
-        if (lastLine < target + m_iCharacterHeight)
+        if (target + m_iCharacterHeight > lastLine)
             target = lastLine;
-    }
-    else
-    {
-        if (page)
-            position -= Math::round((m_fScrollBottom - m_fScrollTop) - m_iCharacterHeight * 3);
-        do
-        {
-            lastLine -= m_iCharacterHeight;
-        } while (position < lastLine);
-        target = lastLine;
-        if (lastLine - m_iCharacterHeight < 0)
-        {
-            m_iTargetScroll = 0;
-            return;
-        }
     }
     m_iTargetScroll = target;
 }
@@ -338,19 +336,21 @@ void FJ_HtmlText::keyUpHandler(FJ_Event* event)
     int key = static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode;
     bool scrollUp = false;
     bool scrollDown = false;
+    bool page = false;
     if (key == s_scrollUpKeys[m_iFocusDirection])
         scrollUp = true;
     if (key == s_scrollDownKeys[m_iFocusDirection])
         scrollDown = true;
     if (key == 1 || key == 2)
     {
+        page = true;
         m_bStopAtTarget = true;
-        GetScrollTarget(true);
+        GetScrollTarget(page);
     }
     else if (scrollUp || scrollDown)
     {
         m_bStopAtTarget = true;
-        GetScrollTarget(false);
+        GetScrollTarget(page);
     }
 }
 
@@ -420,11 +420,11 @@ void FJ_HtmlText::setX(float x)
 
 void FJ_HtmlText::setY(float y)
 {
-    float oldY = FJ_FuiNode::getY();
+    float delta = y - FJ_FuiNode::getY();
     FJ_FuiNode::setY(y);
     if (m_pText != NULL)
     {
-        m_pText->setY(m_pText->getY() + (y - oldY));
+        m_pText->setY(m_pText->getY() + delta);
         UpdateScrollListArrows();
     }
 }
@@ -496,11 +496,11 @@ void FJ_HtmlText::Init(const std::wstring& label)
 
 void FJ_HtmlText::GetScrollDistance()
 {
-    m_iCharacterHeight = 0;
     int samples = 0;
+    fuiRenderNodeEditText* text = m_pText;
     int total = 0;
     unsigned int i = 0;
-    fuiRenderNodeEditText* text = m_pText;
+    m_iCharacterHeight = 0;
     while (i < text->getText().length())
     {
         fuiRect boundaries = text->getCharBoundaries(i);
@@ -559,21 +559,26 @@ int FJ_HtmlText::GetOptimalHeight(int lines)
     {
         lines = GetNumberOfLines();
         if (lines < 3)
-            return (m_iCharacterHeight + 2) * 3 + arrowHeight;
+        {
+            int lineHeight = m_iCharacterHeight + 2;
+            return lineHeight * 3 + arrowHeight;
+        }
         if (lines > 8)
         {
-            int height = (m_iCharacterHeight + 2) * lines + arrowHeight;
+            int lineHeight = m_iCharacterHeight + 2;
+            int height = lineHeight * lines + arrowHeight;
             do
             {
                 if (height <= m_fScrollBottom - m_fScrollTop)
                     return height;
                 --lines;
-                height = (m_iCharacterHeight + 2) * lines + arrowHeight;
+                height = lineHeight * lines + arrowHeight;
             } while (lines > 8);
             return height;
         }
     }
-    return (m_iCharacterHeight + 2) * lines + arrowHeight;
+    int lineHeight = m_iCharacterHeight + 2;
+    return lineHeight * lines + arrowHeight;
 }
 
 float FJ_HtmlText::GetRealWidth()
@@ -588,7 +593,73 @@ float FJ_HtmlText::GetRealHeight()
 
 void FJ_HtmlText::TouchScroll(int position, bool active)
 {
-    if (!active)
+    if (active)
+    {
+        m_iTouchPosition = position;
+        if (!m_bTouchScrolling)
+        {
+            m_iTouchStart = position;
+            m_bTouchScrolling = true;
+            m_iTouchTarget = m_fScrollTop;
+            m_iTouchScroll = m_fScrollTop;
+            return;
+        }
+        int movement = position - m_iTouchStart;
+        if (movement > 0)
+        {
+            m_bStopAtTarget = false;
+            m_bScrollingDown = false;
+            if (m_bScrollingUp || !CanScroll(true))
+            {
+                m_iTouchTarget = m_iTouchScroll - movement;
+            }
+            else
+            {
+                m_iScrollDelay = 30;
+                m_iFlickDelay = 30;
+                m_bScrollingUp = true;
+                getStage()->addEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling, false);
+                if (isVisible())
+                {
+                    static_cast<FJ_ScrollArrow*>(m_pUpArrow)->ChangeState(2);
+                    m_pDownArrow->ChangeState(3);
+                }
+                m_iTouchScroll = m_fScrollTop;
+                m_iTouchTarget = static_cast<int>(m_fScrollTop) - movement;
+            }
+            HandleScrollListArrows(false);
+        }
+        else if (movement < 0)
+        {
+            m_bStopAtTarget = false;
+            m_bScrollingUp = false;
+            if (m_bScrollingDown || !CanScroll(false))
+            {
+                m_iTouchTarget = m_iTouchScroll - movement;
+            }
+            else
+            {
+                m_iScrollDelay = 30;
+                m_iFlickDelay = 30;
+                m_bScrollingDown = true;
+                getStage()->addEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling, false);
+                if (isVisible())
+                {
+                    m_pDownArrow->ChangeState(5);
+                    static_cast<FJ_ScrollArrow*>(m_pUpArrow)->ChangeState(0);
+                }
+                m_iTouchScroll = m_fScrollTop;
+                m_iTouchTarget = static_cast<int>(m_fScrollTop) - movement;
+            }
+            HandleScrollListArrows(false);
+            if (m_pScrollingCompleteDelegate != NULL && !CanScroll(false))
+            {
+                m_pScrollingCompleteDelegate();
+                m_pScrollingCompleteDelegate = NULL;
+            }
+        }
+    }
+    else
     {
         m_bScrollingDown = false;
         m_iTouchStart = 0;
@@ -599,73 +670,5 @@ void FJ_HtmlText::TouchScroll(int position, bool active)
         m_iTouchScroll = 0;
         m_iTouchTarget = m_fScrollTop;
         m_iTargetScroll = m_fScrollTop;
-    }
-    else
-    {
-        m_iTouchPosition = position;
-        if (!m_bTouchScrolling)
-        {
-            m_iTouchStart = position;
-            m_bTouchScrolling = true;
-            m_iTouchTarget = m_fScrollTop;
-            m_iTouchScroll = m_fScrollTop;
-        }
-        else
-        {
-            int movement = position - m_iTouchStart;
-            if (movement < 0)
-            {
-                m_bStopAtTarget = false;
-                m_bScrollingUp = false;
-                if (!m_bScrollingDown && CanScroll(false))
-                {
-                    m_iScrollDelay = 30;
-                    m_iFlickDelay = 30;
-                    m_bScrollingDown = true;
-                    getStage()->addEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling, false);
-                    if (isVisible())
-                    {
-                        m_pDownArrow->ChangeState(5);
-                        static_cast<FJ_ScrollArrow*>(m_pUpArrow)->ChangeState(0);
-                    }
-                    m_iTouchScroll = m_fScrollTop;
-                    m_iTouchTarget = static_cast<int>(m_fScrollTop) - movement;
-                }
-                else
-                {
-                    m_iTouchTarget = m_iTouchScroll - movement;
-                }
-                HandleScrollListArrows(false);
-                if (m_pScrollingCompleteDelegate != NULL && !CanScroll(false))
-                {
-                    m_pScrollingCompleteDelegate();
-                    m_pScrollingCompleteDelegate = NULL;
-                }
-            }
-            else if (movement > 0)
-            {
-                m_bStopAtTarget = false;
-                m_bScrollingDown = false;
-                if (!m_bScrollingUp && CanScroll(true))
-                {
-                    m_iScrollDelay = 30;
-                    m_iFlickDelay = 30;
-                    m_bScrollingUp = true;
-                    getStage()->addEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling, false);
-                    if (isVisible())
-                    {
-                        static_cast<FJ_ScrollArrow*>(m_pUpArrow)->ChangeState(2);
-                        m_pDownArrow->ChangeState(3);
-                    }
-                    m_iTouchScroll = m_fScrollTop;
-                    m_iTouchTarget = static_cast<int>(m_fScrollTop) - movement;
-                }
-                else
-                {
-                    m_iTouchTarget = m_iTouchScroll - movement;
-                }
-                HandleScrollListArrows(false);
-            }
-        }
     }
 }

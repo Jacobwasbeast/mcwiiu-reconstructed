@@ -24,30 +24,29 @@ public:
     class PendingUpdate : public GenericPendingUpdate
     {
     public:
-        PendingUpdate(int value) : GenericPendingUpdate(value) {}
+        PendingUpdate(T* list, int value) : GenericPendingUpdate(value), m_list(list) {}
         virtual ~PendingUpdate() {}
+    protected:
+        T* m_list;
     };
 
     class PendingSetCurrentSelection : public PendingUpdate<UIControl_GridList>
     {
     public:
         PendingSetCurrentSelection(UIControl_GridList* list, int selection)
-            : PendingUpdate<UIControl_GridList>(selection), m_list(list) {}
+            : PendingUpdate<UIControl_GridList>(list, selection) {}
         virtual ~PendingSetCurrentSelection();
         virtual unsigned int OnTick();
-    private:
-        UIControl_GridList* m_list;
     };
 
     class PendingSetEnable : public PendingUpdate<UIControl_GridList>
     {
     public:
         PendingSetEnable(UIControl_GridList* list, int item, bool enabled)
-            : PendingUpdate<UIControl_GridList>(item), m_list(list), m_enabled(enabled) {}
+            : PendingUpdate<UIControl_GridList>(list, item), m_enabled(enabled) {}
         virtual ~PendingSetEnable();
         virtual unsigned int OnTick();
     private:
-        UIControl_GridList* m_list;
         bool m_enabled;
     };
 

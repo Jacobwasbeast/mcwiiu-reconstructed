@@ -22,7 +22,7 @@ public:
     virtual void handlePress(int controlId, int childId);
     virtual int getSceneType();
     virtual bool hasFocus(int sceneType);
-    virtual unsigned int getDefaultGtcButtons();
+    virtual unsigned long long getDefaultGtcButtons();
 
 private:
     bool m_ignoreInput;

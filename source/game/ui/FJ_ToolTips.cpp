@@ -18,12 +18,8 @@ static std::string s_toolTipNames[16] = {
 FJ_ToolTips::FJ_ToolTips(fuiRenderNode* renderNode)
     : FJ_Document(renderNode)
 {
-    m_touchControlsAvailable = false;
     m_useTouchControls = 0;
-}
-
-FJ_ToolTips::~FJ_ToolTips()
-{
+    m_touchControlsAvailable = false;
 }
 
 FJ_Document* FJ_ToolTips::Create(fuiRenderNode* renderNode)
@@ -87,21 +83,6 @@ void FJ_ToolTips::keyDownHandler(FJ_Event* event)
         if (static_cast<FJ_ToolTip*>(m_toolTipNodes[0])->IsSingleButtonToolTip())
             static_cast<FJ_ToolTip*>(m_toolTipNodes[0])->Animate();
         break;
-    case 1:
-        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[4])->IsSingleButtonToolTip())
-            static_cast<FJ_ToolTip*>(m_toolTipNodes[4])->Animate();
-        break;
-    case 2:
-        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[5])->IsSingleButtonToolTip())
-            static_cast<FJ_ToolTip*>(m_toolTipNodes[5])->Animate();
-        break;
-    case 3:
-    case 4:
-    case 5:
-    case 6:
-        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[15])->IsSingleButtonToolTip())
-            static_cast<FJ_ToolTip*>(m_toolTipNodes[15])->Animate();
-        break;
     case 7:
         if (static_cast<FJ_ToolTip*>(m_toolTipNodes[1])->IsSingleButtonToolTip())
             static_cast<FJ_ToolTip*>(m_toolTipNodes[1])->Animate();
@@ -113,6 +94,21 @@ void FJ_ToolTips::keyDownHandler(FJ_Event* event)
     case 9:
         if (static_cast<FJ_ToolTip*>(m_toolTipNodes[3])->IsSingleButtonToolTip())
             static_cast<FJ_ToolTip*>(m_toolTipNodes[3])->Animate();
+        break;
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[15])->IsSingleButtonToolTip())
+            static_cast<FJ_ToolTip*>(m_toolTipNodes[15])->Animate();
+        break;
+    case 1:
+        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[4])->IsSingleButtonToolTip())
+            static_cast<FJ_ToolTip*>(m_toolTipNodes[4])->Animate();
+        break;
+    case 2:
+        if (static_cast<FJ_ToolTip*>(m_toolTipNodes[5])->IsSingleButtonToolTip())
+            static_cast<FJ_ToolTip*>(m_toolTipNodes[5])->Animate();
         break;
     case 10:
         if (static_cast<FJ_ToolTip*>(m_toolTipNodes[7])->IsSingleButtonToolTip())

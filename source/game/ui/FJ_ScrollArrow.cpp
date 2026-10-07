@@ -29,10 +29,10 @@ FJ_FuiNode* FJ_ScrollArrow::Create(fuiRenderNode* pRenderNode)
 void FJ_ScrollArrow::ChangeState(int iState)
 {
     const std::string& state = g_scrollArrowStates[iState];
-    if (state.compare("Visible_A") != 0 && state.compare("Visible_B") != 0)
-        gotoAndPlay(state);
-    else
+    if (state.compare("Visible_A") == 0 || state.compare("Visible_B") == 0)
         gotoAndStop(state);
+    else
+        gotoAndPlay(state);
     m_iState = iState;
 }
 

@@ -70,8 +70,8 @@ void UIScene_ReinstallMenu::updateTooltips()
 
 void UIScene_ReinstallMenu::updateComponents()
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mLevel == NULL)
+    bool noLevel = Minecraft::GetInstance()->mLevel == NULL;
+    if (noLevel)
     {
         m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
         m_layer->showComponent(m_playerId, EUIScene_Logo, true);

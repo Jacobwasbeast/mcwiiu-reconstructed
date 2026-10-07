@@ -11,7 +11,6 @@ class ControlsScreen : public Screen
 {
 public:
     ControlsScreen(Screen* parent, Options* options);
-    virtual ~ControlsScreen();
 
     int getLeftScreenPosition();
     virtual void init();

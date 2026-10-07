@@ -15,6 +15,3 @@ uint32_t FJ_ListButtonCheckbox_Small::getType()
     return 0x8021;
 }
 
-FJ_ListButtonCheckbox_Small::~FJ_ListButtonCheckbox_Small()
-{
-}

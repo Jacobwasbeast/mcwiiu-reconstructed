@@ -70,7 +70,7 @@ public:
         {
             m_label = label;
         }
-        virtual ~PendingSetLabel();
+        virtual ~PendingSetLabel() {}
         virtual unsigned int OnTick();
     private:
         UIString m_label;

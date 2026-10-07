@@ -10,7 +10,6 @@ class ReceivingLevelScreen : public Screen
 {
 public:
     ReceivingLevelScreen(ClientPacketListener* connection);
-    virtual ~ReceivingLevelScreen();
 
     virtual void keyPressed(char key, int action);
     virtual void init();

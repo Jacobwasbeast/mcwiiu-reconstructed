@@ -16,11 +16,11 @@ fuiRenderNodeCodeGenRect::fuiRenderNodeCodeGenRect(fuiRenderNode* parent, fuiRec
 {
     m_bounds = *rect;
     std::strncpy(m_name, name, sizeof(m_name));
-    mTextureWidth = textureWidth;
     mTextureId = textureId;
-    mTextureAlpha = textureAlpha;
     mCustomTexture = customTexture;
+    mTextureWidth = textureWidth;
     mTextureHeight = textureHeight;
+    mTextureAlpha = textureAlpha;
 }
 
 fuiRenderNodeCodeGenRect::fuiRenderNodeCodeGenRect(fuiRenderNode* parent, fuiRect* rect, const char* name)
@@ -28,10 +28,10 @@ fuiRenderNodeCodeGenRect::fuiRenderNodeCodeGenRect(fuiRenderNode* parent, fuiRec
 {
     m_bounds = *rect;
     std::strncpy(m_name, name, sizeof(m_name));
-    mTextureHeight = 0;
+    mCustomTexture = 0;
     mTextureWidth = 0;
     mTextureId = -1;
-    mCustomTexture = 0;
+    mTextureHeight = 0;
 }
 
 fuiRenderNodeCodeGenRect::~fuiRenderNodeCodeGenRect()
@@ -63,8 +63,6 @@ void fuiRenderNodeCodeGenRect::preRender()
 
 void fuiRenderNodeCodeGenRect::render(fuiRect* bounds, fuiMatrix* matrix)
 {
-    (void)bounds;
-    (void)matrix;
     if (!isVisible())
         return;
 
@@ -95,8 +93,8 @@ void fuiRenderNodeCodeGenRect::render(fuiRect* bounds, fuiMatrix* matrix)
     pushMatrix();
     pushColor();
     pushFilterFlags();
-    const float right = m_bounds.xMin + (m_bounds.xMax - m_bounds.xMin);
     const float bottom = m_bounds.yMin + (m_bounds.yMax - m_bounds.yMin);
+    const float right = m_bounds.xMin + (m_bounds.xMax - m_bounds.xMin);
     float vertices[12] =
     {
         m_bounds.xMin, m_bounds.yMin,
@@ -162,8 +160,8 @@ void fuiRenderNodeCodeGenRect::setTexture(unsigned int textureWidth, unsigned in
             gRenderer->TextureFree(mTextureId);
         }
     }
+    mTextureId = textureId;
     mTextureWidth = textureWidth;
     mTextureHeight = textureHeight;
-    mTextureId = textureId;
     mTextureAlpha = textureAlpha;
 }

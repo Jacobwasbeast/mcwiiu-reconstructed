@@ -18,10 +18,6 @@ OptionsScreen::OptionsScreen(Screen* parentScreen, Options* options)
     mOptions = options;
 }
 
-OptionsScreen::~OptionsScreen()
-{
-}
-
 void OptionsScreen::init()
 {
     Language* language = Language::getInstance();
@@ -34,24 +30,25 @@ void OptionsScreen::init()
         Options::Option::sensitivity,
         Options::Option::difficulty
     };
-    int index;
+    int position = 0;
 
-    for (index = 0; index < 5; ++index)
+    for (int index = 0; index < 5; ++index)
     {
         const Options::Option* option = options[index];
-        if (option->isProgress())
+        if (!option->isProgress())
         {
-            std::wstring message = mOptions->getMessage(option);
-            int id = option->getId();
-            double value = mOptions->getProgressValue(option);
-            mButtons.push_back(new SlideButton(id, mWidth / 2 - 155 + (index % 2) * 160, mHeight / 6 + (index / 2) * 24, option, message, (float)value));
+            mButtons.push_back(new SmallButton(option->getId(), mWidth / 2 - 155 + position % 2 * 160,
+                                               mHeight / 6 + 24 * (position >> 1), option,
+                                               mOptions->getMessage(option)));
         }
         else
         {
-            std::wstring message = mOptions->getMessage(option);
-            int id = option->getId();
-            mButtons.push_back(new SmallButton(id, mWidth / 2 - 155 + (index % 2) * 160, mHeight / 6 + (index / 2) * 24, option, message));
+            mButtons.push_back(new SlideButton(option->getId(), mWidth / 2 - 155 + position % 2 * 160,
+                                               mHeight / 6 + 24 * (position >> 1), option,
+                                               mOptions->getMessage(option),
+                                               mOptions->getProgressValue(option)));
         }
+        ++position;
     }
 
     mButtons.push_back(new Button(101, mWidth / 2 - 100, mHeight / 6 + 108,
@@ -67,13 +64,10 @@ void OptionsScreen::buttonClicked(Button* button)
     if (!button->mActive)
         return;
 
-    if (button->mId < 100)
+    if (button->mId < 100 && dynamic_cast<SmallButton*>(button) != NULL)
     {
-        if (dynamic_cast<SmallButton*>(button) != NULL)
-        {
-            mOptions->toggle(static_cast<SmallButton*>(button)->getOption(), 1);
-            button->mMessage = mOptions->getMessage(Options::Option::getItem(button->mId));
-        }
+        mOptions->toggle(static_cast<SmallButton*>(button)->getOption(), 1);
+        button->mMessage = mOptions->getMessage(Options::Option::getItem(button->mId));
     }
 
     if (button->mId == 101)

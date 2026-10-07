@@ -24,7 +24,6 @@ private:
 
 public:
     FJ_SlotList(fuiRenderNode* pRenderNode);
-    virtual ~FJ_SlotList();
 
     static FJ_FuiNode* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();

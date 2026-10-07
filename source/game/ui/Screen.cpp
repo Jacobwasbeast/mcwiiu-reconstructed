@@ -65,11 +65,11 @@ void Screen::buttonClicked(Button* button)
 void Screen::init(Minecraft* minecraft, int width, int height)
 {
     mGuiParticles = new GuiParticles(minecraft);
-    mButtons.clear();
     mMinecraft = minecraft;
     mWidth = width;
-    mHeight = height;
     mFont = minecraft->mFont;
+    mHeight = height;
+    mButtons.clear();
     init();
 }
 

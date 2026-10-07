@@ -16,10 +16,6 @@ FJ_BookAndQuillMenu::FJ_BookAndQuillMenu(fuiRenderNode* renderNode)
 {
 }
 
-FJ_BookAndQuillMenu::~FJ_BookAndQuillMenu()
-{
-}
-
 FJ_Document* FJ_BookAndQuillMenu::Create(fuiRenderNode* renderNode)
 {
     return new FJ_BookAndQuillMenu(renderNode);
@@ -69,10 +65,10 @@ void FJ_BookAndQuillMenu::ChangePage(int page, int pageCount)
             left->gotoAndStop("ArrowNone");
         else
             left->gotoAndStop("ArrowNormal");
-        if (pageCount < 1 || pageCount <= page)
-            right->gotoAndStop("ArrowNone");
-        else
+        if (pageCount > 0 && page < pageCount)
             right->gotoAndStop("ArrowNormal");
+        else
+            right->gotoAndStop("ArrowNone");
     }
     m_currentPage = page;
 }
@@ -86,7 +82,7 @@ int FJ_BookAndQuillMenu::GetCaretOffset(int position)
         for (unsigned int i = 0; i < m_label->m_lineWidths.size(); ++i)
         {
             length += m_label->m_lineWidths[i];
-            if (length < position)
+            if (position > length)
                 ++offset;
         }
     }
@@ -101,12 +97,7 @@ void FJ_BookAndQuillMenu::SetCaretPosition(int position, bool atEnd, bool force)
     m_cursorAtLineEnd = atEnd;
     m_caret->SetLabel(m_caretVisible ? (m_cursorAtLineEnd ? s_caretLineEnd : s_caret) : L" ");
 
-    if (m_label->GetLabel().empty())
-    {
-        m_caret->setX(m_label->getX());
-        m_caret->setY(m_label->getY());
-    }
-    else
+    if (!m_label->GetLabel().empty())
     {
         int offset = 0;
         if (!force)
@@ -145,8 +136,13 @@ void FJ_BookAndQuillMenu::SetCaretPosition(int position, bool atEnd, bool force)
             m_caret->setY(m_label->getY() + bounds.yMin - start.yMin);
         }
     }
+    else
+    {
+        m_caret->setX(m_label->getX());
+        m_caret->setY(m_label->getY());
+    }
     m_caretVisible = true;
-    m_caret->SetLabel(m_caretVisible ? (m_cursorAtLineEnd ? s_caretLineEnd : s_caret) : L" ");
+    m_caret->SetLabel(m_cursorAtLineEnd ? s_caretLineEnd : s_caret);
 }
 
 void FJ_BookAndQuillMenu::UpdateBookAndQuill()
@@ -169,10 +165,10 @@ void FJ_BookAndQuillMenu::ASConstructor()
 {
     m_label = static_cast<FJ_Label*>(getChildByName("BookAndQuillLabel"));
     m_caret = static_cast<FJ_Label*>(getChildByName("Caret"));
-    m_caretVisible = false;
     m_updateCounter = 0;
-    m_bookIsSigned = false;
+    m_caretVisible = false;
     m_cursorAtLineEnd = false;
+    m_bookIsSigned = false;
     SetBookFocus(true);
     m_pageText = L"";
     m_currentPage = 0;
@@ -249,15 +245,15 @@ void FJ_BookAndQuillMenu::SetFocusToBook(bool focus)
     if (m_bookIsSigned)
         return;
 
-    if (!focus)
-    {
-        SetBookFocus(false);
-    }
-    else
+    if (focus)
     {
         getStage()->setFocus(m_label);
         FJ_Document::OnFocusChange(true);
         SetBookFocus(true);
+    }
+    else
+    {
+        SetBookFocus(false);
     }
 }
 
@@ -276,8 +272,8 @@ void FJ_BookAndQuillMenu::DoHorizontalResizeCheck()
 {
     FJ_FuiNode* signButton = getChildByName("ButtonSign");
     FJ_FuiNode* closeButton = getChildByName("ButtonClose");
-    int signWidth = 0;
     int signX = 0;
+    int signWidth = 0;
     int closeX = 0;
     if (signButton != NULL && closeButton != NULL)
     {

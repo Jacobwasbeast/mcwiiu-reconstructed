@@ -115,7 +115,6 @@ namespace SuperflatMenu
         MapCanyons(int control, UIControl_MultiList* list);
         virtual void write(FlatGeneratorInfo& info);
         virtual void read(FlatGeneratorInfo& info);
-        virtual ~MapCanyons();
     };
     class MapCaves : public Mapping
     {
@@ -123,7 +122,6 @@ namespace SuperflatMenu
         MapCaves(int control, UIControl_MultiList* list);
         virtual void write(FlatGeneratorInfo& info);
         virtual void read(FlatGeneratorInfo& info);
-        virtual ~MapCaves();
     };
     class MapDecorations : public Mapping
     {
@@ -131,7 +129,6 @@ namespace SuperflatMenu
         MapDecorations(int control, UIControl_MultiList* list);
         virtual void write(FlatGeneratorInfo& info);
         virtual void read(FlatGeneratorInfo& info);
-        virtual ~MapDecorations();
     };
     class MapDungeon : public Mapping
     {
@@ -139,7 +136,6 @@ namespace SuperflatMenu
         MapDungeon(int control, UIControl_MultiList* list);
         virtual void write(FlatGeneratorInfo& info);
         virtual void read(FlatGeneratorInfo& info);
-        virtual ~MapDungeon();
     };
     class MapLake : public Mapping
     {
@@ -147,7 +143,6 @@ namespace SuperflatMenu
         MapLake(int control, UIControl_MultiList* list);
         virtual void write(FlatGeneratorInfo& info);
         virtual void read(FlatGeneratorInfo& info);
-        virtual ~MapLake();
     };
     class MapLavaLake : public Mapping
     {
@@ -155,7 +150,6 @@ namespace SuperflatMenu
         MapLavaLake(int control, UIControl_MultiList* list);
         virtual void write(FlatGeneratorInfo& info);
         virtual void read(FlatGeneratorInfo& info);
-        virtual ~MapLavaLake();
     };
     class MapBiomeSpecific : public Mapping
     {
@@ -163,7 +157,6 @@ namespace SuperflatMenu
         MapBiomeSpecific(int control, UIControl_MultiList* list);
         virtual void write(FlatGeneratorInfo& info);
         virtual void read(FlatGeneratorInfo& info);
-        virtual ~MapBiomeSpecific();
         Mapping::Sub mSub;
     };
     class MapMineshaft : public Mapping
@@ -172,7 +165,6 @@ namespace SuperflatMenu
         MapMineshaft(int control, UIControl_MultiList* list);
         virtual void write(FlatGeneratorInfo& info);
         virtual void read(FlatGeneratorInfo& info);
-        virtual ~MapMineshaft();
         Mapping::Sub mSub;
     };
     class MapOceanMonument : public Mapping
@@ -181,7 +173,6 @@ namespace SuperflatMenu
         MapOceanMonument(int control, UIControl_MultiList* list);
         virtual void write(FlatGeneratorInfo& info);
         virtual void read(FlatGeneratorInfo& info);
-        virtual ~MapOceanMonument();
         Mapping::Sub mSub;
         Mapping::Sub mSub2;
     };
@@ -191,7 +182,6 @@ namespace SuperflatMenu
         MapShipwrecks(int control, UIControl_MultiList* list);
         virtual void write(FlatGeneratorInfo& info);
         virtual void read(FlatGeneratorInfo& info);
-        virtual ~MapShipwrecks();
         Mapping::Sub mSub;
         Mapping::Sub mSub2;
     };
@@ -201,7 +191,6 @@ namespace SuperflatMenu
         MapStronghold(int control, UIControl_MultiList* list);
         virtual void write(FlatGeneratorInfo& info);
         virtual void read(FlatGeneratorInfo& info);
-        virtual ~MapStronghold();
         Mapping::Sub mSub;
         Mapping::Sub mSub2;
     };
@@ -211,7 +200,6 @@ namespace SuperflatMenu
         MapVillage(int control, UIControl_MultiList* list);
         virtual void write(FlatGeneratorInfo& info);
         virtual void read(FlatGeneratorInfo& info);
-        virtual ~MapVillage();
         Mapping::Sub mSub;
         Mapping::Sub mSub2;
     };
@@ -221,7 +209,6 @@ namespace SuperflatMenu
         MapWoodlandMansion(int control, UIControl_MultiList* list);
         virtual void write(FlatGeneratorInfo& info);
         virtual void read(FlatGeneratorInfo& info);
-        virtual ~MapWoodlandMansion();
         Mapping::Sub mSub;
         Mapping::Sub mSub2;
     };
@@ -229,7 +216,6 @@ namespace SuperflatMenu
     {
     public:
         std::wstring getName() const;
-        ~BiomeInfo();
         int mBiome;
         int mDescription;
         not_null_ptr<ItemInstance> mItem;

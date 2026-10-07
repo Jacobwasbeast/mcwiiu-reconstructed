@@ -18,9 +18,8 @@ void UIControl_AchievementsList::AddNewItem(int id, const std::wstring& textureN
 {
     {
         std::wstring itemTextureName(textureName.c_str());
-        FJ_List_ListButtonAchievement* list = static_cast<FJ_List_ListButtonAchievement*>(
-            m_fuiRenderNode->getFuiNode());
-        list->addNewItem(id, itemTextureName);
+        static_cast<FJ_List_ListButtonAchievement*>(m_fuiRenderNode->getFuiNode())
+            ->addNewItem(id, itemTextureName);
     }
     addElement(UIControl::eUIControlType_Button, -1);
 }

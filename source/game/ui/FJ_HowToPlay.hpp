@@ -19,7 +19,6 @@ class FJ_HowToPlay : public FJ_FuiNode
 
 public:
     FJ_HowToPlay(fuiRenderNode* pRenderNode);
-    virtual ~FJ_HowToPlay();
 
     static void _init(FJ_FuiNode* pNode, FJ_Event* pEvent);
     void init(FJ_Event* pEvent);

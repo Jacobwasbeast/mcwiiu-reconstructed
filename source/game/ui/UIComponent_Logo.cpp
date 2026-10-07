@@ -17,10 +17,21 @@ void UIComponent_Logo::setLogoLanguage(int language)
 }
 std::wstring UIComponent_Logo::getMoviePath()
 {
-    unsigned int viewport = m_layer->getViewport();
-    if (viewport == 0 || viewport > 8)
+    C4JRender::eViewportType viewport = m_layer->getViewport();
+    switch (viewport)
+    {
+    case C4JRender::eViewportType_TopHalf:
+    case C4JRender::eViewportType_BottomHalf:
+    case C4JRender::eViewportType_LeftHalf:
+    case C4JRender::eViewportType_RightHalf:
+    case C4JRender::eViewportType_TopLeftQuarter:
+    case C4JRender::eViewportType_TopRightQuarter:
+    case C4JRender::eViewportType_BottomLeftQuarter:
+    case C4JRender::eViewportType_BottomRightQuarter:
+        return L"ComponentLogoSplit";
+    default:
         return L"ComponentLogo";
-    return L"ComponentLogoSplit";
+    }
 }
 void UIComponent_Logo::handleReload() { setLogoLanguage(0); }
 int UIComponent_Logo::getSceneType() { return EUIScene_Logo; }

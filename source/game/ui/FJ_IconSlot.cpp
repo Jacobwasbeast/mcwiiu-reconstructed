@@ -39,15 +39,15 @@ void FJ_IconSlot::SetParams(int iWidth, bool bUseSmallText)
     m_pIconHolder = getChildByName("IconHolder")->asMovieClip();
     m_pBitmapIcon = getChildByName("BitmapIcon")->asFJ_BitmapIcon();
 
-    if (!bUseSmallText)
-    {
-        removeChild(getChildByName("SmallTextContainer"), true);
-    }
-    else
+    if (bUseSmallText)
     {
         removeChild(getChildByName("FJ_TextContainer"), true);
         FJ_FuiNode* smallText = FJ_FuiNode::asMovieClip(getChildByName("SmallTextContainer"))->getChildAt(0)->asMovieClip();
         addChild(smallText);
+        removeChild(getChildByName("SmallTextContainer"), true);
+    }
+    else
+    {
         removeChild(getChildByName("SmallTextContainer"), true);
     }
 
@@ -68,7 +68,7 @@ void FJ_IconSlot::Init(const std::wstring& label)
 void FJ_IconSlot::SetLabel(const std::wstring& label)
 {
     SetLabelAlignment(2);
-    m_isLabel = true;
+    m_initialised = true;
     FJ_Base::SetLabel(label);
 }
 
@@ -76,35 +76,28 @@ void FJ_IconSlot::SetSlotID(const std::string& slotName, int iSlotId)
 {
     m_iSlotId = iSlotId;
     FJ_FuiNode* oldControl = m_pIconHolder->getChildByName("SlotControl");
-    if (oldControl == NULL)
-        return;
+    if (oldControl != NULL)
+    {
+        fuiRect rect;
+        int roundedScale = Math::round(getScaleX());
+        rect.xMin = (float)Math::round((float)roundedScale / getScaleX());
+        rect.xMax = rect.xMin + (float)Math::round(getWidth() - (float)(roundedScale * 2)) / getScaleX();
+        rect.yMin = rect.xMin;
+        rect.yMax = rect.xMax;
 
-    int roundedScale = Math::round(getScaleX());
-    float offset = (float)Math::round((float)roundedScale / getScaleX());
-    float extent = offset + (float)Math::round(getWidth() - (float)(roundedScale * 2)) / getScaleX();
-    fuiRect rect;
-    rect.xMin = offset;
-    rect.yMin = offset;
-    rect.xMax = extent;
-    rect.yMax = extent;
-
-    char name[64];
-    std::sprintf(name, "iggy_slot_%s_%d", slotName.c_str(), iSlotId);
-    fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-        getStage()->m_pRenderNode, &rect, name);
-    renderNode->setAlpha(0.25f);
-    m_pIconHolder->removeChild(oldControl, true);
-    FJ_FuiNode* slotNode = new FJ_FuiNode(renderNode);
-    renderNode->setFuiNode(slotNode);
-    addChild(slotNode);
+        char name[64];
+        std::sprintf(name, "iggy_slot_%s_%d", slotName.c_str(), iSlotId);
+        fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
+            getStage()->m_pRenderNode, &rect, name);
+        renderNode->setAlpha(0.25f);
+        m_pIconHolder->removeChild(oldControl, true);
+        FJ_FuiNode* slotNode = new FJ_FuiNode(renderNode);
+        renderNode->setFuiNode(slotNode);
+        addChild(slotNode);
+    }
 }
 
 void FJ_IconSlot::SetTextureName(const std::wstring& textureName)
 {
     m_pBitmapIcon->SetTextureName(textureName);
-}
-
-int FJ_IconSlot::getSlotId()
-{
-    return m_iSlotId;
 }

@@ -7,10 +7,6 @@
 #include "game/network/ClientPacketListener.hpp"
 #include "game/network/ClientboundKeepAlivePacket.hpp"
 
-ReceivingLevelScreen::~ReceivingLevelScreen()
-{
-}
-
 void ReceivingLevelScreen::keyPressed(char key, int action)
 {
 }
@@ -26,7 +22,7 @@ void ReceivingLevelScreen::tick()
 
     if (mTickCount % 20 == 0)
     {
-        boost::shared_ptr<Packet> packet(new ClientboundKeepAlivePacket());
+        boost::shared_ptr<ClientboundKeepAlivePacket> packet(new ClientboundKeepAlivePacket());
         mConnection->send(packet);
     }
 
@@ -44,12 +40,8 @@ void ReceivingLevelScreen::render(int x, int y, float partialTick)
 {
     renderDirtBackground(0);
 
-    {
-        Language* language = Language::getInstance();
-        std::wstring key(L"multiplayer.downloadingTerrain");
-        std::wstring message = language->getElement(key);
-        drawCenteredString(mFont, message, mWidth / 2, mHeight / 2 - 50, 0xffffff);
-    }
+    Language* language = Language::getInstance();
+    drawCenteredString(mFont, language->getElement(L"multiplayer.downloadingTerrain"), mWidth / 2, mHeight / 2 - 50, 0xffffff);
 
     Screen::render(x, y, partialTick);
 }

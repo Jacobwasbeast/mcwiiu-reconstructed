@@ -1,4 +1,5 @@
 #include "game/ui/UIScene_BeaconMenu.hpp"
+#include "game/world/block/BeaconBlockEntity.hpp"
 
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
@@ -39,11 +40,11 @@ UIScene_BeaconMenu::UIScene_BeaconMenu(int type, void* data, UILayer* layer)
     : UIScene_AbstractContainerMenu(type, layer), m_activatorSlot(), m_activatorList(),
       m_primaryPowerLabel(), m_secondaryPowerLabel(), m_powerButtons(), m_confirmButton()
 {
+    BeaconMenuData* sceneData = static_cast<BeaconMenuData*>(data);
     m_beaconContainer = boost::shared_ptr<Container>();
     m_primaryEffect = -1;
     m_beaconLevel = -1;
     m_secondaryEffect = -1;
-    BeaconMenuData* sceneData = static_cast<BeaconMenuData*>(data);
     initialiseMovie();
     m_primaryPowerLabel.init(UIString(0xb3c82373));
     m_secondaryPowerLabel.init(UIString(0x7b8c1d5d));
@@ -65,12 +66,10 @@ UIScene_BeaconMenu::UIScene_BeaconMenu(int type, void* data, UILayer* layer)
                IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar,
                IUIScene_AbstractContainerMenu::ESceneSection_BeaconMax, false);
     m_activatorSlot.addSlots(0, 1);
-    m_activatorList.addSlots(static_cast<unsigned int>(m_menu->m_slots.size()), 4);
+    AbstractContainerMenu* currentMenu = m_menu;
+    unsigned int slotCount = currentMenu->m_slots.size();
+    m_activatorList.addSlots(slotCount, 4);
     delete sceneData;
-}
-
-UIScene_BeaconMenu::~UIScene_BeaconMenu()
-{
 }
 
 bool UIScene_BeaconMenu::IsSectionSlotList(IUIScene_AbstractContainerMenu::ESceneSection section)
@@ -88,10 +87,25 @@ bool UIScene_BeaconMenu::IsSectionSlotList(IUIScene_AbstractContainerMenu::EScen
 
 unsigned int UIScene_BeaconMenu::GetPowerButtonId(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1 ||
-        section > IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2)
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1:
+        return m_powerButtons[0].GetData();
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary2:
+        return m_powerButtons[1].GetData();
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary3:
+        return m_powerButtons[2].GetData();
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary4:
+        return m_powerButtons[3].GetData();
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary5:
+        return m_powerButtons[4].GetData();
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1:
+        return m_powerButtons[5].GetData();
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2:
+        return m_powerButtons[6].GetData();
+    default:
         return 0;
-    return m_powerButtons[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1].GetData();
+    }
 }
 
 unsigned int UIScene_BeaconMenu::IsVisible(IUIScene_AbstractContainerMenu::ESceneSection section)
@@ -310,79 +324,125 @@ unsigned int UIScene_BeaconMenu::GetSectionAndSlotInDirection(
 
 void UIScene_BeaconMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
 {
-    UIControl* control = getSection(section);
-    if (control != 0)
+    switch (section)
     {
-        position->x = static_cast<float>(control->getXPos());
-        position->y = static_cast<float>(control->getYPos());
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator:
+        position->x = static_cast<float>(m_activatorSlot.getXPos());
+        position->y = static_cast<float>(m_activatorSlot.getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconInventory:
+        position->x = static_cast<float>(m_inventoryList.getXPos());
+        position->y = static_cast<float>(m_inventoryList.getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar:
+        position->x = static_cast<float>(m_hotbarList.getXPos());
+        position->y = static_cast<float>(m_hotbarList.getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1:
+        position->x = static_cast<float>(m_powerButtons[0].getXPos());
+        position->y = static_cast<float>(m_powerButtons[0].getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary2:
+        position->x = static_cast<float>(m_powerButtons[1].getXPos());
+        position->y = static_cast<float>(m_powerButtons[1].getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary3:
+        position->x = static_cast<float>(m_powerButtons[2].getXPos());
+        position->y = static_cast<float>(m_powerButtons[2].getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary4:
+        position->x = static_cast<float>(m_powerButtons[3].getXPos());
+        position->y = static_cast<float>(m_powerButtons[3].getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary5:
+        position->x = static_cast<float>(m_powerButtons[4].getXPos());
+        position->y = static_cast<float>(m_powerButtons[4].getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1:
+        position->x = static_cast<float>(m_powerButtons[5].getXPos());
+        position->y = static_cast<float>(m_powerButtons[5].getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2:
+        position->x = static_cast<float>(m_powerButtons[6].getXPos());
+        position->y = static_cast<float>(m_powerButtons[6].getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconConfirm:
+        position->x = static_cast<float>(m_confirmButton.getXPos());
+        position->y = static_cast<float>(m_confirmButton.getYPos());
+        break;
     }
 }
 
 void UIScene_BeaconMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
                                             _UIVec2D* position, _UIVec2D* size)
 {
-    float width;
-    float height;
+    _UIVec2D extent;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar:
-        width = m_hotbarList.getWidth();
-        height = m_hotbarList.getHeight();
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator:
+        extent.x = m_activatorSlot.getWidth();
+        extent.y = m_activatorSlot.getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_BeaconInventory:
-        width = m_inventoryList.getWidth();
-        height = m_inventoryList.getHeight();
+        extent.x = m_inventoryList.getWidth();
+        extent.y = m_inventoryList.getHeight();
         break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator:
-        width = m_activatorSlot.getWidth();
-        height = m_activatorSlot.getHeight();
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar:
+        extent.x = m_hotbarList.getWidth();
+        extent.y = m_hotbarList.getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1:
-        width = m_powerButtons[0].getWidth();
-        height = m_powerButtons[0].getHeight();
+        extent.x = m_powerButtons[0].getWidth();
+        extent.y = m_powerButtons[0].getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary2:
-        width = m_powerButtons[1].getWidth();
-        height = m_powerButtons[1].getHeight();
+        extent.x = m_powerButtons[1].getWidth();
+        extent.y = m_powerButtons[1].getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary3:
-        width = m_powerButtons[2].getWidth();
-        height = m_powerButtons[2].getHeight();
+        extent.x = m_powerButtons[2].getWidth();
+        extent.y = m_powerButtons[2].getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary4:
-        width = m_powerButtons[3].getWidth();
-        height = m_powerButtons[3].getHeight();
+        extent.x = m_powerButtons[3].getWidth();
+        extent.y = m_powerButtons[3].getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary5:
-        width = m_powerButtons[4].getWidth();
-        height = m_powerButtons[4].getHeight();
+        extent.x = m_powerButtons[4].getWidth();
+        extent.y = m_powerButtons[4].getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1:
-        width = m_powerButtons[5].getWidth();
-        height = m_powerButtons[5].getHeight();
+        extent.x = m_powerButtons[5].getWidth();
+        extent.y = m_powerButtons[5].getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2:
-        width = m_powerButtons[6].getWidth();
-        height = m_powerButtons[6].getHeight();
+        extent.x = m_powerButtons[6].getWidth();
+        extent.y = m_powerButtons[6].getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_BeaconConfirm:
-        width = m_confirmButton.getWidth();
-        height = m_confirmButton.getHeight();
+        extent.x = m_confirmButton.getWidth();
+        extent.y = m_confirmButton.getHeight();
         break;
     }
-    if (!IsSectionSlotList(section))
+    if (IsSectionSlotList(section))
+    {
+        int rows = getSectionRows(section);
+        int columns = getSectionColumns(section);
+        float cellWidth = extent.x / columns;
+        float cellHeight = extent.y / rows;
+        int column = slot % columns;
+        int row = slot / columns;
+        size->y = cellHeight;
+        size->x = cellWidth;
+        position->x = static_cast<float>(column) * cellWidth;
+        position->y = static_cast<float>(row) * cellHeight;
+    }
+    else
     {
         GetPositionOfSection(section, position);
-        size->x = width;
-        size->y = height;
-        return;
+        size->x = extent.x;
+        size->y = extent.y;
     }
-    int rows = getSectionRows(section);
-    int columns = getSectionColumns(section);
-    size->y = height / rows;
-    size->x = width / columns;
-    position->x = static_cast<float>(slot % columns) * size->x;
-    position->y = static_cast<float>(slot / columns) * size->y;
 }
 
 unsigned int UIScene_BeaconMenu::GetPowerButtonTier(IUIScene_AbstractContainerMenu::ESceneSection section)
@@ -404,37 +464,91 @@ unsigned int UIScene_BeaconMenu::GetPowerButtonTier(IUIScene_AbstractContainerMe
 
 MobEffect* UIScene_BeaconMenu::GetPowerButtonEffect(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1) return MobEffects::MOVEMENT_SPEED;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary2) return MobEffects::DIG_SPEED;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary3) return MobEffects::DAMAGE_RESISTANCE;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary4) return MobEffects::JUMP;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary5) return MobEffects::DAMAGE_BOOST;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1) return MobEffects::REGENERATION;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2 && m_beaconContainer)
+    static const unsigned char powerButtonColumns[7] = {0, 1, 0, 1, 0, 0, 0};
+    int column = 0;
+    int tier = GetPowerButtonTier(section);
+    if (section >= IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1 &&
+        section <= IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2)
+        column = powerButtonColumns[section - IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1];
+    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2)
         return MobEffect::byId(m_beaconContainer->getContainerData(1));
-    return 0;
+    return BeaconBlockEntity::sBeaconEffects[tier][column];
 }
 
-bool UIScene_BeaconMenu::IsPowerButtonSelected(IUIScene_AbstractContainerMenu::ESceneSection section)
+unsigned char UIScene_BeaconMenu::IsPowerButtonSelected(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section < IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1 ||
-        section > IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2)
-        return false;
-    return m_powerButtons[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1].IsButtonSelected() != 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1:
+        return m_powerButtons[0].IsButtonSelected();
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary2:
+        return m_powerButtons[1].IsButtonSelected();
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary3:
+        return m_powerButtons[2].IsButtonSelected();
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary4:
+        return m_powerButtons[3].IsButtonSelected();
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary5:
+        return m_powerButtons[4].IsButtonSelected();
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1:
+        return m_powerButtons[5].IsButtonSelected();
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2:
+        return m_powerButtons[6].IsButtonSelected();
+    default:
+        return 0;
+    }
 }
 
 void UIScene_BeaconMenu::SetPowerButtonSelected(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    int i;
-    if (section >= IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1 &&
-        section < IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1)
-        for (i = 0; i < 5; ++i) m_powerButtons[i].SetButtonSelected(false);
-    else if (section >= IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1 &&
-             section < IUIScene_AbstractContainerMenu::ESceneSection_BeaconConfirm)
-        for (i = 5; i < 7; ++i) m_powerButtons[i].SetButtonSelected(false);
-    if (section >= IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1 &&
-        section <= IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2)
-        m_powerButtons[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1].SetButtonSelected(true);
+    UIControl_BeaconEffectButton* button;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1:
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary2:
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary3:
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary4:
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary5:
+        button = m_powerButtons;
+        button[0].SetButtonSelected(false);
+        button[1].SetButtonSelected(false);
+        button[2].SetButtonSelected(false);
+        button[3].SetButtonSelected(false);
+        button[4].SetButtonSelected(false);
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1:
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2:
+        m_powerButtons[5].SetButtonSelected(false);
+        m_powerButtons[6].SetButtonSelected(false);
+        break;
+    default:
+        break;
+    }
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1:
+        m_powerButtons[0].SetButtonSelected(true);
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary2:
+        m_powerButtons[1].SetButtonSelected(true);
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary3:
+        m_powerButtons[2].SetButtonSelected(true);
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary4:
+        m_powerButtons[3].SetButtonSelected(true);
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary5:
+        m_powerButtons[4].SetButtonSelected(true);
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1:
+        m_powerButtons[5].SetButtonSelected(true);
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2:
+        m_powerButtons[6].SetButtonSelected(true);
+        break;
+    default:
+        break;
+    }
 }
 
 void UIScene_BeaconMenu::AddPowerButton(int id, int icon, int tier, int column, bool active, bool selected)
@@ -583,14 +697,19 @@ void UIScene_BeaconMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::
     int columns = static_cast<int>(getSectionColumns(section));
     int index = direction * columns + slot;
     UIControl_SlotList* list = 0;
-    if (section >= IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar)
+    switch (section)
     {
-        if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar)
-            list = &m_hotbarList;
-        else if (section < IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator)
-            list = &m_inventoryList;
-        else if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator)
-            list = &m_activatorSlot;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator:
+        list = &m_activatorSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconInventory:
+        list = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar:
+        list = &m_hotbarList;
+        break;
+    default:
+        break;
     }
     if (wrap)
         list->setHighlightSlot(index);
@@ -634,65 +753,53 @@ unsigned int UIScene_BeaconMenu::mapElementsAndNames()
     m_movie->getRootNode();
     fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
     {
-        std::string name("ActivatorSlot");
-        m_activatorSlot.setupControl(this, panel, name);
+        m_activatorSlot.setupControl(this, panel, std::string("ActivatorSlot"));
+        m_controls.push_back(&m_activatorSlot);
     }
-    m_controls.push_back(&m_activatorSlot);
     {
-        std::string name("ActivatorList");
-        m_activatorList.setupControl(this, panel, name);
+        m_activatorList.setupControl(this, panel, std::string("ActivatorList"));
+        m_controls.push_back(&m_activatorList);
     }
-    m_controls.push_back(&m_activatorList);
     {
-        std::string name("Primary_Slot_01");
-        m_powerButtons[0].setupControl(this, panel, name);
+        m_powerButtons[0].setupControl(this, panel, std::string("Primary_Slot_01"));
+        m_controls.push_back(&m_powerButtons[0]);
     }
-    m_controls.push_back(&m_powerButtons[0]);
     {
-        std::string name("Primary_Slot_02");
-        m_powerButtons[1].setupControl(this, panel, name);
+        m_powerButtons[1].setupControl(this, panel, std::string("Primary_Slot_02"));
+        m_controls.push_back(&m_powerButtons[1]);
     }
-    m_controls.push_back(&m_powerButtons[1]);
     {
-        std::string name("Primary_Slot_03");
-        m_powerButtons[2].setupControl(this, panel, name);
+        m_powerButtons[2].setupControl(this, panel, std::string("Primary_Slot_03"));
+        m_controls.push_back(&m_powerButtons[2]);
     }
-    m_controls.push_back(&m_powerButtons[2]);
     {
-        std::string name("Primary_Slot_04");
-        m_powerButtons[3].setupControl(this, panel, name);
+        m_powerButtons[3].setupControl(this, panel, std::string("Primary_Slot_04"));
+        m_controls.push_back(&m_powerButtons[3]);
     }
-    m_controls.push_back(&m_powerButtons[3]);
     {
-        std::string name("Primary_Slot_05");
-        m_powerButtons[4].setupControl(this, panel, name);
+        m_powerButtons[4].setupControl(this, panel, std::string("Primary_Slot_05"));
+        m_controls.push_back(&m_powerButtons[4]);
     }
-    m_controls.push_back(&m_powerButtons[4]);
     {
-        std::string name("Secondary_Slot_01");
-        m_powerButtons[5].setupControl(this, panel, name);
+        m_powerButtons[5].setupControl(this, panel, std::string("Secondary_Slot_01"));
+        m_controls.push_back(&m_powerButtons[5]);
     }
-    m_controls.push_back(&m_powerButtons[5]);
     {
-        std::string name("Secondary_Slot_02");
-        m_powerButtons[6].setupControl(this, panel, name);
+        m_powerButtons[6].setupControl(this, panel, std::string("Secondary_Slot_02"));
+        m_controls.push_back(&m_powerButtons[6]);
     }
-    m_controls.push_back(&m_powerButtons[6]);
     {
-        std::string name("ConfirmButton");
-        m_confirmButton.setupControl(this, panel, name);
+        m_confirmButton.setupControl(this, panel, std::string("ConfirmButton"));
+        m_controls.push_back(&m_confirmButton);
     }
-    m_controls.push_back(&m_confirmButton);
     {
-        std::string name("PrimaryPowerLabel");
-        m_primaryPowerLabel.setupControl(this, panel, name);
+        m_primaryPowerLabel.setupControl(this, panel, std::string("PrimaryPowerLabel"));
+        m_controls.push_back(&m_primaryPowerLabel);
     }
-    m_controls.push_back(&m_primaryPowerLabel);
     {
-        std::string name("SecondaryPowerLabel");
-        m_secondaryPowerLabel.setupControl(this, panel, name);
+        m_secondaryPowerLabel.setupControl(this, panel, std::string("SecondaryPowerLabel"));
+        m_controls.push_back(&m_secondaryPowerLabel);
     }
-    m_controls.push_back(&m_secondaryPowerLabel);
     return 1;
 }
 
@@ -709,7 +816,8 @@ void UIScene_BeaconMenu::handleReload()
                IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar,
                IUIScene_AbstractContainerMenu::ESceneSection_BeaconMax, false);
     m_activatorSlot.addSlots(0, 1);
-    m_activatorList.addSlots(static_cast<unsigned int>(m_menu->m_slots.size()), 4);
+    unsigned int slotCount = m_menu->m_slots.size();
+    m_activatorList.addSlots(slotCount, 4);
 }
 
 void UIScene_BeaconMenu::SetConfirmButtonEnabled(bool enabled)
@@ -772,14 +880,33 @@ void UIScene_BeaconMenu::tick()
 
 UIControl* UIScene_BeaconMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar) return &m_hotbarList;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconInventory) return &m_inventoryList;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator) return &m_activatorSlot;
-    if (section >= IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1 &&
-        section <= IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2)
-        return &m_powerButtons[static_cast<int>(section) - IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1];
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_BeaconConfirm) return &m_confirmButton;
-    return 0;
+    UIControl* control = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconActivator:
+        return &m_activatorSlot;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconInventory:
+        return &m_inventoryList;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconHotbar:
+        return &m_hotbarList;
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary1:
+        return &m_powerButtons[0];
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary2:
+        return &m_powerButtons[1];
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary3:
+        return &m_powerButtons[2];
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary4:
+        return &m_powerButtons[3];
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconPrimary5:
+        return &m_powerButtons[4];
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary1:
+        return &m_powerButtons[5];
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconSecondary2:
+        return &m_powerButtons[6];
+    case IUIScene_AbstractContainerMenu::ESceneSection_BeaconConfirm:
+        control = &m_confirmButton;
+    }
+    return control;
 }
 
 void UIScene_BeaconMenu::customDraw(const char* name, fuiRect* rect)

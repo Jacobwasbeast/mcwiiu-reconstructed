@@ -10,7 +10,6 @@ class Minecraft;
 class DeathScreen : public Screen
 {
 public:
-    virtual ~DeathScreen();
 
     virtual void init();
     virtual void keyPressed(wchar_t key, int action);

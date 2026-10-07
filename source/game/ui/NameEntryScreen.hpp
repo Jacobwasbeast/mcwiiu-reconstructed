@@ -11,7 +11,6 @@ class NameEntryScreen : public Screen
 {
 public:
     NameEntryScreen(Screen* parent, const std::wstring& name, int buttonId);
-    virtual ~NameEntryScreen();
 
     virtual void render(int x, int y, float partialTick);
     virtual void keyPressed(wchar_t key, int action);

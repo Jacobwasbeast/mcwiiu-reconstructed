@@ -11,18 +11,10 @@ UIControl_ScoreboardButtonList::PendingAddItem::PendingAddItem(
 {
 }
 
-UIControl_ScoreboardButtonList::PendingAddItem::~PendingAddItem()
-{
-}
-
 unsigned int UIControl_ScoreboardButtonList::PendingAddItem::OnTick()
 {
     m_list->addItem(m_label, m_playerIcon, m_voipIcon, true);
     return 1;
-}
-
-UIControl_ScoreboardButtonList::PendingSetSlotTextureName::~PendingSetSlotTextureName()
-{
 }
 
 unsigned int UIControl_ScoreboardButtonList::PendingSetSlotTextureName::OnTick()

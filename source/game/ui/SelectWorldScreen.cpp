@@ -13,6 +13,7 @@
 #include "game/client/render/Tesselator.hpp"
 #include "game/world/LevelSummary.hpp"
 #include "platform/wiiu/CProfile.hpp"
+#include "platform/wiiu/PlatformTiming.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
 
 template <typename T> std::wstring _toString(T value);
@@ -21,7 +22,6 @@ SelectWorldScreen::SelectWorldScreen(Screen* parent)
     : Screen()
 {
     mTitle = L"Select world";
-    mParent = parent;
     mSelecting = false;
     mSelectedWorld = 0;
     mWorldSelectionList = NULL;
@@ -29,10 +29,7 @@ SelectWorldScreen::SelectWorldScreen(Screen* parent)
     mRenameButton = NULL;
     mSelectButton = NULL;
     mDeleteButton = NULL;
-}
-
-SelectWorldScreen::~SelectWorldScreen()
-{
+    mParent = parent;
 }
 
 void SelectWorldScreen::loadLevelList()
@@ -246,9 +243,10 @@ void SelectWorldScreen::WorldSelectionList::renderItem(int index, int x, int y, 
     std::wstring id = summary->getLevelId();
     FILETIME fileTime;
     SYSTEMTIME systemTime;
-    long long lastPlayed = summary->getLastPlayed() * 10000;
-    fileTime.dwLowDateTime = (unsigned int)lastPlayed;
-    fileTime.dwHighDateTime = (unsigned int)(lastPlayed >> 32);
+    _LARGE_INTEGER lastPlayed;
+    lastPlayed.QuadPart = summary->getLastPlayed() * 10000;
+    fileTime.dwHighDateTime = lastPlayed.u.HighPart;
+    fileTime.dwLowDateTime = lastPlayed.u.LowPart;
     FileTimeToSystemTime(&fileTime, &systemTime);
     wchar_t date[20];
     swprintf(date, 20, L"%d/%d/%d %d:%02d", systemTime.day, systemTime.month,

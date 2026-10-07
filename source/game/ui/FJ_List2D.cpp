@@ -14,13 +14,21 @@
 #include "game/util/Math.hpp"
 
 FJ_List2D::FJ_List2D(fuiRenderNode* renderNode)
-    : FJ_Base(renderNode), m_items(), m_activeItem(0),
-      m_visibleRows(1), m_itemsPerRow(1), m_activeRow(0), m_activeColumn(0),
-      m_firstVisibleRow(0), m_touchY(0), m_touchX(0), m_touchRow(0), m_touchFocus(false),
-      m_scrollDelegate(0)
+    : FJ_Base(renderNode), m_items()
 {
+    m_activeItem = 0;
+    m_firstVisibleRow = 0;
+    m_activeRow = 0;
+    m_activeColumn = 0;
     m_outline = false;
     m_itemSpacing = 0;
+    m_visibleRows = 1;
+    m_itemsPerRow = 1;
+    m_touchY = 0;
+    m_touchFocus = false;
+    m_touchX = 0;
+    m_touchRow = 0;
+    m_scrollDelegate = 0;
     m_upArrow = static_cast<FJ_ScrollArrow*>(
         FJ_Factory::createObject("fourj.FJ_ScrollArrow", renderNode, true, NULL));
     m_downArrow = static_cast<FJ_ScrollArrow*>(
@@ -52,7 +60,7 @@ void FJ_List2D::HandlePageUpDownNavigation(bool up)
 {
     if (up)
     {
-        if (m_firstVisibleRow < m_activeRow)
+        if (m_activeRow > m_firstVisibleRow)
             HighlightItem(m_firstVisibleRow * m_itemsPerRow + m_activeColumn);
         else
         {
@@ -80,9 +88,9 @@ void FJ_List2D::HandlePageUpDownNavigation(bool up)
 
 FJ_FuiNode* FJ_List2D::getActiveItem()
 {
-    if (m_items.empty())
-        return 0;
-    return m_items[m_activeRow][m_activeColumn];
+    if (m_items.size() != 0)
+        return m_items[m_activeRow][m_activeColumn];
+    return 0;
 }
 
 void FJ_List2D::SetListFocus()
@@ -247,10 +255,10 @@ void FJ_List2D::ScrollList(bool up, bool initial, bool immediate)
             {
                 visibleHeight += m_items[r][0]->getHeight();
                 m_visibleRows = static_cast<int>(r) - m_firstVisibleRow;
-                if (visibleHeight <= static_cast<float>(m_listHeight))
-                    visibleHeight += static_cast<float>(m_itemSpacing);
-                else
+                if (visibleHeight > static_cast<float>(m_listHeight))
                     reachedLimit = true;
+                else
+                    visibleHeight += static_cast<float>(m_itemSpacing);
             }
         }
         if (!reachedLimit)
@@ -261,15 +269,13 @@ void FJ_List2D::ScrollList(bool up, bool initial, bool immediate)
         {
             FJ_FuiNode* itemX = m_items[row][column];
             fuiRect rect = itemX->getRect(itemX);
-            float x = static_cast<float>(Math::round(getX() +
+            itemX->setX(static_cast<float>(Math::round(getX() +
                 static_cast<float>(static_cast<int>(column)) * m_items[0][0]->getWidth() +
-                static_cast<float>(static_cast<int>(column) * m_itemSpacing) - rect.xMin));
-            itemX->setX(x);
+                static_cast<float>(static_cast<int>(column) * m_itemSpacing) - rect.xMin)));
             FJ_FuiNode* itemY = m_items[row][column];
             rect = itemY->getRect(itemY);
-            float y = static_cast<float>(Math::round(getY() + heightBeforeRow - rect.yMin -
-                heightBeforeFirstVisible));
-            itemY->setY(y);
+            itemY->setY(static_cast<float>(Math::round(getY() + heightBeforeRow - rect.yMin -
+                heightBeforeFirstVisible)));
             if (m_items[row][column]->isFJ_Base())
             {
                 unsigned int object;
@@ -315,11 +321,14 @@ void FJ_List2D::ScrollList(bool up, bool initial, bool immediate)
 
 void FJ_List2D::ItemFocusInHandler(FJ_Event* event)
 {
-    bool up = static_cast<int>(event->m_pTarget->asFJ_Base()->getListId()) < m_activeItem;
+    int listId = static_cast<int>(event->m_pTarget->asFJ_Base()->getListId());
+    int previousItem = m_activeItem;
+    bool up = listId < previousItem;
     int activeItem = static_cast<int>(event->m_pTarget->asFJ_Base()->getListId());
-    m_activeRow = activeItem / m_itemsPerRow;
+    int row = activeItem / m_itemsPerRow;
+    m_activeRow = row;
     m_activeItem = activeItem;
-    m_activeColumn = activeItem - m_itemsPerRow * m_activeRow;
+    m_activeColumn = activeItem - m_itemsPerRow * row;
     ScrollList(up, false, false);
 }
 
@@ -330,8 +339,10 @@ void FJ_List2D::_ItemFocusInHandler(FJ_FuiNode* node, FJ_Event* event)
 
 void FJ_List2D::SetNewObjectWidth(int width)
 {
-    if (getWidth() < static_cast<float>(width))
-        setWidth(static_cast<float>(width));
+    float newWidth = static_cast<float>(width);
+    float currentWidth = getWidth();
+    if (newWidth > currentWidth)
+        setWidth(newWidth);
 }
 
 void FJ_List2D::addNewListItem(FJ_Base* item, int id)
@@ -352,10 +363,9 @@ void FJ_List2D::addNewListItem(FJ_Base* item, int id)
     int itemWidth = static_cast<int>(item->getWidth());
     int itemSpacing = m_itemSpacing;
     int cellWidth = itemWidth + itemSpacing;
-    int availableWidth = Math::round(getWidth());
     int row;
     int rowStart;
-    if (availableWidth < cellWidth * newCount - itemSpacing)
+    if (cellWidth * newCount - itemSpacing > Math::round(getWidth()))
     {
         row = index / m_itemsPerRow;
         rowStart = m_itemsPerRow * row;
@@ -391,7 +401,7 @@ void FJ_List2D::addNewListItem(FJ_Base* item, int id)
         m_items[row][column - 1]->asFJ_Base()->m_navRightName = item->getName();
     }
 
-    if (row >= 1)
+    if (row > 0)
     {
         unsigned int col;
         for (col = 0; col < m_items[row - 1].size(); ++col)
@@ -415,26 +425,24 @@ void FJ_List2D::addNewListItem(FJ_Base* item, int id)
 void FJ_List2D::removeAllItems()
 {
     bool hadFocus = false;
-    unsigned int row;
-    for (row = 0; row < m_items.size(); ++row)
+    for (unsigned int row = 0; row < m_items.size(); ++row)
     {
-        unsigned int column;
-        for (column = 0; column < m_items[row].size(); ++column)
+        for (unsigned int column = 0; column < m_items[row].size(); ++column)
         {
-            FJ_FuiNode* node = m_items[row][column];
-            if (getStage()->getFocus() == node)
+            if (getStage()->getFocus() == m_items[row][column])
                 hadFocus = true;
-            if (node->isFJ_Base())
+            if (m_items[row][column]->isFJ_Base())
             {
-                for (unsigned int i = 0; i < node->asFJ_Base()->m_objects.size(); ++i)
-                    getParent()->removeChild(node->asFJ_Base()->m_objects[i], true);
+                for (unsigned int i = 0; i < m_items[row][column]->asFJ_Base()->m_objects.size(); ++i)
+                    getParent()->removeChild(m_items[row][column]->asFJ_Base()->m_objects[i], true);
             }
-            getParent()->removeChild(node, true);
+            getParent()->removeChild(m_items[row][column], true);
         }
+        m_items[row].clear();
     }
     m_items.clear();
-    m_firstVisibleRow = 0;
     m_activeItem = 0;
+    m_firstVisibleRow = 0;
     HandleScrollListArrows(false);
     if (hadFocus)
         getStage()->setFocus(this);
@@ -442,9 +450,10 @@ void FJ_List2D::removeAllItems()
 
 void FJ_List2D::EnableItem(int index, bool enabled)
 {
-    unsigned int row = index / m_itemsPerRow;
-    unsigned int column = index - m_itemsPerRow * row;
-    if (row < m_items.size() && column < m_items[row].size())
+    int row = index / m_itemsPerRow;
+    int column = index - m_itemsPerRow * row;
+    if (static_cast<unsigned int>(row) < m_items.size() &&
+        static_cast<unsigned int>(column) < m_items[row].size())
     {
         if (m_items[row][column]->isFJ_ListButtonAchievement())
             m_items[row][column]->asFJ_ListButtonAchievement()->EnableButton(enabled);
@@ -453,50 +462,7 @@ void FJ_List2D::EnableItem(int index, bool enabled)
 
 void FJ_List2D::SetTouchFocus(int x, int y, bool focus)
 {
-    if (focus)
-    {
-        if (!m_items.empty() && static_cast<unsigned int>(m_visibleRows) < m_items.size())
-        {
-            if (m_touchY < y)
-            {
-                int rows = (y - m_touchY) /
-                    (static_cast<int>(m_items[0][0]->getHeight()) + m_itemSpacing);
-                if (rows > 0)
-                {
-                    m_firstVisibleRow -= rows;
-                    m_touchFocus = true;
-                    if (m_firstVisibleRow < 0)
-                        m_firstVisibleRow = 0;
-                    ScrollList(true, false, true);
-                    m_touchY = y;
-                    if (m_upArrow != 0)
-                        m_upArrow->ChangeState(1);
-                    int lastVisibleRow = m_firstVisibleRow + m_visibleRows - 1;
-                    if (lastVisibleRow < m_activeRow)
-                        HighlightItem(lastVisibleRow * m_itemsPerRow + m_activeColumn);
-                }
-            }
-            else if (y < m_touchY)
-            {
-                int rows = (m_touchY - y) /
-                    (static_cast<int>(m_items[0][0]->getHeight()) + m_itemSpacing);
-                if (rows > 0)
-                {
-                    m_firstVisibleRow += rows;
-                    m_touchFocus = true;
-                    if (static_cast<unsigned int>(m_firstVisibleRow + m_visibleRows) >= m_items.size())
-                        m_firstVisibleRow = static_cast<int>(m_items.size()) - m_visibleRows;
-                    ScrollList(false, false, true);
-                    m_touchY = y;
-                    if (m_downArrow != 0)
-                        m_downArrow->ChangeState(4);
-                    if (m_activeRow < m_firstVisibleRow)
-                        HighlightItem(m_firstVisibleRow * m_itemsPerRow + m_activeColumn);
-                }
-            }
-        }
-    }
-    else
+    if (!focus)
     {
         unsigned int row;
         for (row = 0; row < m_items.size(); ++row)
@@ -504,11 +470,10 @@ void FJ_List2D::SetTouchFocus(int x, int y, bool focus)
             unsigned int column;
             for (column = 0; column < m_items[row].size(); ++column)
             {
-                FJ_FuiNode* item = m_items[row][column];
-                if (item->getY() < static_cast<float>(y) &&
-                    static_cast<float>(y) < item->getY() + item->getHeight() &&
-                    item->getX() < static_cast<float>(x) &&
-                    static_cast<float>(x) < item->getX() + item->getWidth())
+                if (m_items[row][column]->getY() < static_cast<float>(y) &&
+                    static_cast<float>(y) < m_items[row][column]->getY() + m_items[row][column]->getHeight() &&
+                    m_items[row][column]->getX() < static_cast<float>(x) &&
+                    static_cast<float>(x) < m_items[row][column]->getX() + m_items[row][column]->getWidth())
                 {
                     m_touchRow = static_cast<int>(row);
                     m_touchFocus = false;
@@ -519,6 +484,52 @@ void FJ_List2D::SetTouchFocus(int x, int y, bool focus)
         }
         m_touchY = y;
         m_touchX = x;
+    }
+    else
+    {
+        if (!m_items.empty() && static_cast<unsigned int>(m_visibleRows) < m_items.size())
+        {
+            if (y < m_touchY)
+            {
+                int rows = (m_touchY - y) /
+                    (static_cast<int>(m_items[0][0]->getHeight()) + m_itemSpacing);
+                if (rows > 0)
+                {
+                    int firstVisibleRow = m_firstVisibleRow + rows;
+                    m_touchFocus = true;
+                    if (static_cast<unsigned int>(firstVisibleRow + m_visibleRows) < m_items.size())
+                        m_firstVisibleRow = firstVisibleRow;
+                    else
+                        m_firstVisibleRow = static_cast<int>(m_items.size()) - m_visibleRows;
+                    ScrollList(false, false, true);
+                    m_touchY = y;
+                    if (m_downArrow != 0)
+                        m_downArrow->ChangeState(4);
+                    if (m_activeRow < m_firstVisibleRow)
+                        HighlightItem(m_firstVisibleRow * m_itemsPerRow + m_activeColumn);
+                }
+            }
+            else if (m_touchY < y)
+            {
+                int rows = (y - m_touchY) /
+                    (static_cast<int>(m_items[0][0]->getHeight()) + m_itemSpacing);
+                if (rows > 0)
+                {
+                    int firstVisibleRow = m_firstVisibleRow - rows;
+                    m_touchFocus = true;
+                    if (firstVisibleRow < 0)
+                        firstVisibleRow = 0;
+                    m_firstVisibleRow = firstVisibleRow;
+                    ScrollList(true, false, true);
+                    m_touchY = y;
+                    if (m_upArrow != 0)
+                        m_upArrow->ChangeState(1);
+                    int lastVisibleRow = m_firstVisibleRow + m_visibleRows - 1;
+                    if (lastVisibleRow < m_activeRow)
+                        HighlightItem(lastVisibleRow * m_itemsPerRow + m_activeColumn);
+                }
+            }
+        }
     }
 }
 
@@ -535,10 +546,10 @@ uint32_t FJ_List2D::CanTouchTrigger(int x, int y)
         unsigned int column;
         for (column = 0; column < m_items[row].size(); ++column)
         {
-            if (m_items[row][column]->getY() < static_cast<float>(y) &&
+            if (static_cast<float>(y) > m_items[row][column]->getY() &&
                 static_cast<float>(y) <
                     m_items[row][column]->getY() + m_items[row][column]->getHeight() &&
-                m_items[row][column]->getX() < static_cast<float>(x) &&
+                static_cast<float>(x) > m_items[row][column]->getX() &&
                 static_cast<float>(x) <
                     m_items[row][column]->getX() + m_items[row][column]->getWidth() &&
                 !m_touchFocus && m_touchRow == row)

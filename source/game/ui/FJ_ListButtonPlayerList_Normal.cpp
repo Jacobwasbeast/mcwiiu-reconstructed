@@ -15,6 +15,3 @@ uint32_t FJ_ListButtonPlayerList_Normal::getType()
     return 0x8028;
 }
 
-FJ_ListButtonPlayerList_Normal::~FJ_ListButtonPlayerList_Normal()
-{
-}

@@ -31,10 +31,6 @@ UIComponent_Tooltips::_TooltipValues::_TooltipValues()
     m_button = EControllerActions_Jump;
 }
 
-UIComponent_Tooltips::_TooltipValues::~_TooltipValues()
-{
-}
-
 UIComponent_Tooltips::UIComponent_Tooltips(int sceneType, void* data, UILayer* layer)
     : UIScene(sceneType, layer)
 {
@@ -58,38 +54,70 @@ unsigned int UIComponent_Tooltips::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
-    m_touchControls[0].setupControl(this, root, "Touch_0");
-    m_controls.push_back(&m_touchControls[0]);
-    m_touchControls[1].setupControl(this, root, "Touch_1");
-    m_controls.push_back(&m_touchControls[1]);
-    m_touchControls[2].setupControl(this, root, "Touch_2");
-    m_controls.push_back(&m_touchControls[2]);
-    m_touchControls[3].setupControl(this, root, "Touch_3");
-    m_controls.push_back(&m_touchControls[3]);
-    m_touchControls[4].setupControl(this, root, "Touch_4");
-    m_controls.push_back(&m_touchControls[4]);
-    m_touchControls[5].setupControl(this, root, "Touch_5");
-    m_controls.push_back(&m_touchControls[5]);
-    m_touchControls[6].setupControl(this, root, "Touch_6");
-    m_controls.push_back(&m_touchControls[6]);
-    m_touchControls[7].setupControl(this, root, "Touch_7");
-    m_controls.push_back(&m_touchControls[7]);
-    m_touchControls[8].setupControl(this, root, "Touch_8");
-    m_controls.push_back(&m_touchControls[8]);
-    m_touchControls[9].setupControl(this, root, "Touch_9");
-    m_controls.push_back(&m_touchControls[9]);
-    m_touchControls[10].setupControl(this, root, "Touch_10");
-    m_controls.push_back(&m_touchControls[10]);
-    m_touchControls[11].setupControl(this, root, "Touch_11");
-    m_controls.push_back(&m_touchControls[11]);
-    m_touchControls[12].setupControl(this, root, "Touch_12");
-    m_controls.push_back(&m_touchControls[12]);
-    m_touchControls[13].setupControl(this, root, "Touch_13");
-    m_controls.push_back(&m_touchControls[13]);
-    m_touchControls[14].setupControl(this, root, "Touch_14");
-    m_controls.push_back(&m_touchControls[14]);
-    m_touchControls[15].setupControl(this, root, "Touch_15");
-    m_controls.push_back(&m_touchControls[15]);
+    {
+        m_touchControls[0].setupControl(this, root, std::string("Touch_0"));
+        m_controls.push_back(&m_touchControls[0]);
+    }
+    {
+        m_touchControls[1].setupControl(this, root, std::string("Touch_1"));
+        m_controls.push_back(&m_touchControls[1]);
+    }
+    {
+        m_touchControls[2].setupControl(this, root, std::string("Touch_2"));
+        m_controls.push_back(&m_touchControls[2]);
+    }
+    {
+        m_touchControls[3].setupControl(this, root, std::string("Touch_3"));
+        m_controls.push_back(&m_touchControls[3]);
+    }
+    {
+        m_touchControls[4].setupControl(this, root, std::string("Touch_4"));
+        m_controls.push_back(&m_touchControls[4]);
+    }
+    {
+        m_touchControls[5].setupControl(this, root, std::string("Touch_5"));
+        m_controls.push_back(&m_touchControls[5]);
+    }
+    {
+        m_touchControls[6].setupControl(this, root, std::string("Touch_6"));
+        m_controls.push_back(&m_touchControls[6]);
+    }
+    {
+        m_touchControls[7].setupControl(this, root, std::string("Touch_7"));
+        m_controls.push_back(&m_touchControls[7]);
+    }
+    {
+        m_touchControls[8].setupControl(this, root, std::string("Touch_8"));
+        m_controls.push_back(&m_touchControls[8]);
+    }
+    {
+        m_touchControls[9].setupControl(this, root, std::string("Touch_9"));
+        m_controls.push_back(&m_touchControls[9]);
+    }
+    {
+        m_touchControls[10].setupControl(this, root, std::string("Touch_10"));
+        m_controls.push_back(&m_touchControls[10]);
+    }
+    {
+        m_touchControls[11].setupControl(this, root, std::string("Touch_11"));
+        m_controls.push_back(&m_touchControls[11]);
+    }
+    {
+        m_touchControls[12].setupControl(this, root, std::string("Touch_12"));
+        m_controls.push_back(&m_touchControls[12]);
+    }
+    {
+        m_touchControls[13].setupControl(this, root, std::string("Touch_13"));
+        m_controls.push_back(&m_touchControls[13]);
+    }
+    {
+        m_touchControls[14].setupControl(this, root, std::string("Touch_14"));
+        m_controls.push_back(&m_touchControls[14]);
+    }
+    {
+        m_touchControls[15].setupControl(this, root, std::string("Touch_15"));
+        m_controls.push_back(&m_touchControls[15]);
+    }
     return 1;
 }
 
@@ -126,34 +154,49 @@ double UIComponent_Tooltips::getSafeZoneHalfWidth()
 
 void UIComponent_Tooltips::updateSafeZone()
 {
+    double top = 0.0;
+    double bottom = 0.0;
+    double left = 0.0;
+    double right = 0.0;
+
     switch (m_layer->getViewport())
     {
-    default:
-    case 0:
-        setSafeZone(getSafeZoneHalfHeight(), getSafeZoneHalfHeight(),
-                   getSafeZoneHalfWidth(), getSafeZoneHalfWidth());
+    case 3:
+        left = getSafeZoneHalfWidth();
+        bottom = getSafeZoneHalfHeight();
+        break;
+    case 4:
+        right = getSafeZoneHalfWidth();
+        bottom = getSafeZoneHalfHeight();
         break;
     case 1:
     case 5:
-        setSafeZone(getSafeZoneHalfHeight(), 0.0, getSafeZoneHalfWidth(), 0.0);
+        top = getSafeZoneHalfHeight();
+        left = getSafeZoneHalfWidth();
+        break;
+    case 6:
+        top = getSafeZoneHalfHeight();
+        right = getSafeZoneHalfWidth();
         break;
     case 2:
     case 7:
-        setSafeZone(0.0, getSafeZoneHalfHeight(), getSafeZoneHalfWidth(), 0.0);
-        break;
-    case 3:
-        setSafeZone(0.0, getSafeZoneHalfHeight(), getSafeZoneHalfWidth(), 0.0);
-        break;
-    case 4:
-        setSafeZone(0.0, getSafeZoneHalfHeight(), 0.0, getSafeZoneHalfWidth());
-        break;
-    case 6:
-        setSafeZone(getSafeZoneHalfHeight(), 0.0, 0.0, getSafeZoneHalfWidth());
+        bottom = getSafeZoneHalfHeight();
+        left = getSafeZoneHalfWidth();
         break;
     case 8:
-        setSafeZone(0.0, getSafeZoneHalfHeight(), 0.0, getSafeZoneHalfWidth());
+        bottom = getSafeZoneHalfHeight();
+        right = getSafeZoneHalfWidth();
+        break;
+    default:
+    case 0:
+        top = getSafeZoneHalfHeight();
+        bottom = getSafeZoneHalfHeight();
+        left = getSafeZoneHalfWidth();
+        right = getSafeZoneHalfWidth();
         break;
     }
+
+    setSafeZone(top, bottom, left, right);
 }
 
 void UIComponent_Tooltips::_SetTooltip(unsigned int index, int type, int subtype,
@@ -203,7 +246,7 @@ void UIComponent_Tooltips::tick()
             }
             else if (timer < 10)
             {
-                float fade = -((10.0f - (float)timer) * ((80.0f - (float)level) / 10.0f) - 80.0f);
+                float fade = 80.0f - (10.0f - (float)timer) * ((80.0f - (float)level) / 10.0f);
                 setOpacity(0.01f * fade);
             }
             else
@@ -316,8 +359,8 @@ void UIComponent_Tooltips::updateViewportTouchOffset()
         x = (int)(gConsoleUIController.getScreenWidth() * 0.5f);
         break;
     case C4JRender::eViewportType_TopRightQuarter:
-        x = (int)(gConsoleUIController.getScreenWidth() * 0.5f);
         y = -(int)(gConsoleUIController.getScreenHeight() * 0.5f);
+        x = (int)(gConsoleUIController.getScreenWidth() * 0.5f);
         break;
     }
     gConsoleUIController.updateViewportTouchOffset(x, y);
@@ -380,9 +423,9 @@ unsigned int UIComponent_Tooltips::GetToolTipButton(unsigned int button)
     switch (button)
     {
     case 1: return 0; case 2: return 1; case 4: return 2; case 8: return 3;
-    case 0x80: return 6; case 0x40: return 7; case 0x100: return 9; case 0x200: return 8;
-    case 0x400: return 13; case 0x800: return 14; case 0x1000: return 11;
-    case 0x2000: return 12; case 0x400000: return 5; case 0x800000: return 4;
+    case 0x1000: return 11; case 0x2000: return 12; case 0x400: return 13; case 0x800: return 14;
+    case 0x40: return 7; case 0x80: return 6; case 0x400000: return 5; case 0x800000: return 4;
+    case 0x100: return 9; case 0x200: return 8;
     default: return 0xffffffff;
     }
 }
@@ -402,10 +445,10 @@ unsigned int UIComponent_Tooltips::_SetTooltip(unsigned int index, int type, int
         if (value.m_textId != textId || !value.m_enabled)
         {
             value.m_type = type;
+            result = 1;
             value.m_subtype = subtype;
             value.m_dynamic = true;
             value.m_textId = textId;
-            result = 1;
             _SetTooltip(index, type, subtype, UIString(textId), true, false);
         }
     }
@@ -439,20 +482,20 @@ unsigned int UIComponent_Tooltips::HandleToolTipButton(unsigned int player,
 
 void UIComponent_Tooltips::UpdateControllerType(int controllerType)
 {
-    const int previousType = m_controllerType;
+    unsigned int previousType = m_controllerType;
 
     if (g_pInput->IsPadConnected(4) == 0)
     {
-        if (g_pInput->IsPadClassicController(controllerType) == 0)
+        if (g_pInput->IsPadClassicController(controllerType) != 0)
         {
-            m_controllerType = 0;
-            if (previousType == 0)
+            m_controllerType = 2;
+            if (previousType == 2)
                 return;
         }
         else
         {
-            m_controllerType = 2;
-            if (previousType == 2)
+            m_controllerType = 0;
+            if (previousType == 0)
                 return;
         }
     }
@@ -462,16 +505,16 @@ void UIComponent_Tooltips::UpdateControllerType(int controllerType)
         if (previousType == 1)
             return;
     }
-    else if (g_pInput->IsPadClassicController(controllerType) == 0)
+    else if (g_pInput->IsPadClassicController(controllerType) != 0)
     {
-        m_controllerType = 0;
-        if (previousType == 0)
+        m_controllerType = 2;
+        if (previousType == 2)
             return;
     }
     else
     {
-        m_controllerType = 2;
-        if (previousType == 2)
+        m_controllerType = 0;
+        if (previousType == 0)
             return;
     }
 
@@ -582,10 +625,12 @@ void UIComponent_Tooltips::EnableTooltip(unsigned int player, bool enabled)
 
 bool UIComponent_Tooltips::IsToolTipDynamic(unsigned int player, EControllerActions& action)
 {
-    if (player >= 16)
-        return false;
-    action = m_tooltipValues[player].m_button;
-    return m_tooltipValues[player].m_dynamic;
+    if (player < 16)
+    {
+        action = m_tooltipValues[player].m_button;
+        return m_tooltipValues[player].m_dynamic;
+    }
+    return false;
 }
 
 void UIComponent_Tooltips::handleReload()
@@ -640,7 +685,7 @@ void UIComponent_Tooltips::handleTouchInput(unsigned int playerId, int touchX, i
     if (!released)
         return;
 
-    EControllerActions dynamicAction = EControllerActions_MenuA;
+    EControllerActions dynamicAction;
     if (gConsoleUIController.IsToolTipDynamic((unsigned int)player, (unsigned int)touchBox,
                                               dynamicAction))
     {

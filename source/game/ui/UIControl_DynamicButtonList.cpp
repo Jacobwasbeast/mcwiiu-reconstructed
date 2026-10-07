@@ -4,12 +4,11 @@ void UIControl_DynamicButtonList::tick()
 {
     UIControl_List::tick();
 
-    std::vector<UIString>::iterator label = m_labels.begin();
     int index = 0;
+    std::vector<UIString>::iterator label = m_labels.begin();
     while (label != m_labels.end()) {
         if (label->needsUpdating() != 0) {
-            const std::wstring& value = label->getString();
-            setButtonLabel(index, value);
+            setButtonLabel(index, label->getString());
             label->setUpdated();
         }
         ++label;
@@ -23,8 +22,7 @@ void UIControl_DynamicButtonList::addItem(UIString label, int index)
         index = m_itemIndex;
     }
     m_labels.push_back(label);
-    const std::wstring& value = label.getString();
-    UIControl_ButtonList::addItem(value, index);
+    UIControl_ButtonList::addItem(label.getString(), index);
 }
 
 void UIControl_DynamicButtonList::removeItem(int index, bool removeNow)

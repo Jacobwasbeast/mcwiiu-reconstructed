@@ -25,7 +25,6 @@ public:
               const BlockPos& position, boost::shared_ptr<Player> player);
     AnvilMenu(boost::shared_ptr<Inventory> inventory, Level* level,
               boost::shared_ptr<Player> player);
-    virtual ~AnvilMenu();
 
     void _init(boost::shared_ptr<Inventory> inventory, Level* level,
                const BlockPos& position, boost::shared_ptr<Player> player);

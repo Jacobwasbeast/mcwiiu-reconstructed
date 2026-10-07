@@ -15,6 +15,3 @@ uint32_t FJ_CheckBox_Normal::getType()
     return 0x8003;
 }
 
-FJ_CheckBox_Normal::~FJ_CheckBox_Normal()
-{
-}

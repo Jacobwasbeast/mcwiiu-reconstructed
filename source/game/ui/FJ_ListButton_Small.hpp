@@ -9,7 +9,6 @@ class FJ_ListButton_Small : public FJ_ListButton
 {
 public:
     explicit FJ_ListButton_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButton_Small();
     static FJ_ListButton* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

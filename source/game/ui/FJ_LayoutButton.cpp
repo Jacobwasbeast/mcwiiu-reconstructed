@@ -8,10 +8,6 @@ FJ_LayoutButton::FJ_LayoutButton(fuiRenderNode* renderNode)
 {
 }
 
-FJ_LayoutButton::~FJ_LayoutButton()
-{
-}
-
 FJ_Button* FJ_LayoutButton::Create(fuiRenderNode* renderNode)
 {
     return new FJ_LayoutButton(renderNode);

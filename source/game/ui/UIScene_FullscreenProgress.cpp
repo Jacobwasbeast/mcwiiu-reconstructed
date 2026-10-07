@@ -435,7 +435,7 @@ int UIScene_FullscreenProgress::getSceneType()
     return EUIScene_FullscreenProgress;
 }
 
-unsigned int UIScene_FullscreenProgress::getDefaultGtcButtons()
+unsigned long long UIScene_FullscreenProgress::getDefaultGtcButtons()
 {
     return 0;
 }

@@ -16,7 +16,6 @@ public:
     };
 
     UIControl_TexturePackList();
-    virtual ~UIControl_TexturePackList();
     virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     virtual void ReInit();
     virtual void setEnabled(bool enabled);

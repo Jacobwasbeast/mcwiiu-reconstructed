@@ -8,10 +8,6 @@ FJ_BrewingPlate_Small::FJ_BrewingPlate_Small(fuiRenderNode* renderNode)
     FJ_ProgressBar::initFiller();
 }
 
-FJ_BrewingPlate_Small::~FJ_BrewingPlate_Small()
-{
-}
-
 void FJ_BrewingPlate_Small::InitBarType()
 {
     m_barType = true;

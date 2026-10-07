@@ -8,10 +8,6 @@ FJ_BrewingPlate::FJ_BrewingPlate(fuiRenderNode* renderNode)
     initFiller();
 }
 
-FJ_BrewingPlate::~FJ_BrewingPlate()
-{
-}
-
 void FJ_BrewingPlate::InitBarType()
 {
     m_barType = true;

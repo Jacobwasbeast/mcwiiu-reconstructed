@@ -5,17 +5,13 @@
 
 UIControl_BeaconEffectButton::UIControl_BeaconEffectButton()
     : UIControl()
-    , m_state(0)
-    , m_data(0)
-    , m_icon(0)
-    , m_selected(false)
-    , m_active(false)
-    , m_focused(false)
 {
-}
-
-UIControl_BeaconEffectButton::~UIControl_BeaconEffectButton()
-{
+    m_icon = 0;
+    m_state = 0;
+    m_data = 0;
+    m_active = false;
+    m_focused = false;
+    m_selected = false;
 }
 
 void UIControl_BeaconEffectButton::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
@@ -41,7 +37,7 @@ void UIControl_BeaconEffectButton::UpdateButtonState()
         if (m_selected)
         {
             state = 3;
-            if (m_state == 3)
+            if (state == m_state)
             {
                 return;
             }
@@ -72,8 +68,8 @@ void UIControl_BeaconEffectButton::ReInit()
 void UIControl_BeaconEffectButton::SetData(int data, int icon, bool active, bool selected)
 {
     m_data = data;
-    m_selected = selected;
     m_active = active;
+    m_selected = selected;
     SetIcon(icon);
     UpdateButtonState();
 }

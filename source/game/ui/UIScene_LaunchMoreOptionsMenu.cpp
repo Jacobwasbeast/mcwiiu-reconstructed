@@ -29,6 +29,17 @@
 
 extern ConsoleUIController gConsoleUIController;
 
+static int descriptionIds[] = {
+    0x1a93e279, 0x0f7151d3, 0x7b994768, 0x2df040b0, 0x2bdbddba, 0xf2e6dbcb,
+    0xc85a085b, 0x8f41adb5, 0xa112a17c, 0xcb6d8de1, 0x30f1cb60, 0xc61e984d,
+    0xe0163d88, 0xcf045afa, 0x03d32989, 0x544ad58e, 0xaf1fca77, 0x33b6226b,
+    0x80e6ea53, 0x2bd798a9, 0xc36b9de0, 0x6d6eba08, 0xa6874a79, 0x8f88ae9a,
+    IDS_DESC_BIOME_SCALE, 0x814065bc, 0x4f8bedac, 0x75cf2428, 0x4c17ef92, IDS_MASHUP_CHOOSE_BETWEEN_SEVERAL_VARIANTS_SAME_CORE_GAME_TEXT,
+    0xfe516d5e, 0xbe68971f, 0, 0, IDS_MG_LIVES_PER_ROUND_DESC, 0x5e1bb988, 0x2a5c55c8,
+    0xb66f0561, 0xf7c16b2c, 0xe7ba74fc, 0xe8f6de23, 0xbfd9bf09, 0xa541f7ca,
+    0x0d7dae19, 0x35ef3122
+};
+
 static float arenaSizeTable[] = { 0.5f, 0.625f, 0.75f, 0.875f, 1.0f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f };
 
 UIScene_LaunchMoreOptionsMenu::UIScene_LaunchMoreOptionsMenu(int sceneType, void* data, UILayer* layer)
@@ -44,8 +55,8 @@ UIScene_LaunchMoreOptionsMenu::UIScene_LaunchMoreOptionsMenu(int sceneType, void
     bool online = false;
     if (gProfile->IsSignedInLive(m_initData->mPad) && gProfile->AllowedToPlayMultiplayer(m_initData->mPad))
         online = true;
-    m_updateCheats = false;
     m_online = online;
+    m_updateCheats = false;
     m_menuType = static_cast<int>(m_initData->mNewWorld);
     _init();
     addTimer(0, 100);
@@ -59,16 +70,14 @@ UIScene_LaunchMoreOptionsMenu::~UIScene_LaunchMoreOptionsMenu()
 
 void UIScene_LaunchMoreOptionsMenu::EnableCustomOptions(bool enabled)
 {
-    EMiniGameId miniGameId = m_initData->mMiniGameId;
-    if (miniGameId != eMiniGameId_Battle && miniGameId != eMiniGameId_Tumble)
+    if (m_initData->mMiniGameId != eMiniGameId_Battle && m_initData->mMiniGameId != eMiniGameId_Tumble)
         return;
     if (m_initData->mHostMiniGame)
     {
         m_gameOptionsList.EnableItem(0x22, enabled, true);
         m_gameOptionsList.EnableItem(0x1e, enabled, true);
-        miniGameId = m_initData->mMiniGameId;
     }
-    if (miniGameId == eMiniGameId_Battle)
+    if (m_initData->mMiniGameId == eMiniGameId_Battle)
     {
         if (!m_initData->mJoinMiniGame && m_initData->mHostMiniGame)
         {
@@ -81,15 +90,14 @@ void UIScene_LaunchMoreOptionsMenu::EnableCustomOptions(bool enabled)
             m_gameOptionsList.EnableItem(0x27, enabled, true);
             m_gameOptionsList.EnableItem(0x28, enabled, true);
             m_gameOptionsList.EnableItem(0x29, enabled, true);
-            unsigned int noSmallSkins = m_initData->mPlayerSettings.mHostOptions.Get(eCustomGameModeHostOption_NoSmallSkins);
-            m_gameOptionsList.SetCheckboxValue(0x1f, noSmallSkins == 0, true);
+            m_gameOptionsList.SetCheckboxValue(0x1f, m_initData->mPlayerSettings.mHostOptions.Get(eCustomGameModeHostOption_NoSmallSkins) == 0, true);
             m_gameOptionsList.SetCheckboxValue(0x25, m_initData->mPlayerSettings.mNaturalRegeneration, true);
             m_gameOptionsList.SetCheckboxValue(0x27, m_initData->mPlayerSettings.mSmallInventoryEnabled, true);
             m_gameOptionsList.SetCheckboxValue(0x28, m_initData->mPlayerSettings.mTakeEverythingEnabled, true);
             m_gameOptionsList.SetCheckboxValue(0x29, m_initData->mPlayerSettings.mChestRefillEnabled, true);
         }
     }
-    else if (miniGameId == eMiniGameId_Tumble && !m_initData->mJoinMiniGame && m_initData->mHostMiniGame)
+    else if (m_initData->mMiniGameId == eMiniGameId_Tumble && !m_initData->mJoinMiniGame && m_initData->mHostMiniGame)
     {
         m_gameOptionsList.EnableItem(0x20, enabled, true);
         m_gameOptionsList.EnableItem(0x2b, enabled, true);
@@ -112,8 +120,8 @@ void UIScene_LaunchMoreOptionsMenu::UpdateCheats()
     }
     if (!cheatsEnabled)
     {
-        m_initData->mDoMobSpawning = true;
         m_initData->mMobGriefing = true;
+        m_initData->mDoMobSpawning = true;
         m_initData->mKeepInventory = false;
         m_initData->mDoDaylightCycle = true;
         m_initData->mDoWeatherCycle = true;
@@ -133,16 +141,6 @@ void UIScene_LaunchMoreOptionsMenu::UpdateDescriptionText()
     if (m_focusedItemId == -1)
         return;
 
-    static int descriptionIds[] = {
-        0x1a93e279, 0x0f7151d3, 0x7b994768, 0x2df040b0, 0x2bdbddba, 0xf2e6dbcb,
-        0xc85a085b, 0x8f41adb5, 0xa112a17c, 0xcb6d8de1, 0x30f1cb60, 0xc61e984d,
-        0xe0163d88, 0xcf045afa, 0x03d32989, 0x544ad58e, 0xaf1fca77, 0x33b6226b,
-        0x80e6ea53, 0x2bd798a9, 0xc36b9de0, 0x6d6eba08, 0xa6874a79, 0x8f88ae9a,
-        IDS_DESC_BIOME_SCALE, 0x814065bc, 0x4f8bedac, 0x75cf2428, 0x4c17ef92, IDS_MASHUP_CHOOSE_BETWEEN_SEVERAL_VARIANTS_SAME_CORE_GAME_TEXT,
-        0xfe516d5e, 0xbe68971f, 0, 0, IDS_MG_LIVES_PER_ROUND_DESC, 0x5e1bb988, 0x2a5c55c8,
-        0xb66f0561, 0xf7c16b2c, 0xe7ba74fc, 0xe8f6de23, 0xbfd9bf09, 0xa541f7ca,
-        0x0d7dae19, 0x35ef3122
-    };
     int descriptionId = descriptionIds[m_focusedItemId];
     std::wstring description(L"");
     bool hiDef;
@@ -503,15 +501,16 @@ unsigned int UIScene_LaunchMoreOptionsMenu::mapElementsAndNames()
 
 void UIScene_LaunchMoreOptionsMenu::updateTooltips()
 {
-    if (!m_initData->mHostMiniGame && !m_initData->mJoinMiniGame)
-    {
-        const int tabLabel = m_menuType == 0 ? IDS_WORLD_OPTIONS : IDS_GAME_OPTIONS;
-        gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -2, tabLabel, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
-    }
-    else
+    if (m_initData->mHostMiniGame || m_initData->mJoinMiniGame)
     {
         gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1,
                                          -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+    }
+    else
+    {
+        int tabLabel = m_menuType == 0 ? IDS_WORLD_OPTIONS : IDS_GAME_OPTIONS;
+        gConsoleUIController.SetTooltips(0, IDS_TOOLTIPS_SELECT, IDS_TOOLTIPS_BACK, -1, -1, -1, -1,
+                                         -2, tabLabel, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
     }
 }
 
@@ -542,7 +541,7 @@ int UIScene_LaunchMoreOptionsMenu::KeyboardCompleteSeedCallback(void* data, bool
     return 0;
 }
 
-int UIScene_LaunchMoreOptionsMenu::HandleRequestKeyboard()
+void UIScene_LaunchMoreOptionsMenu::HandleRequestKeyboard()
 {
     m_keyboardActive = true;
     m_seed.assign(m_initData->mSeed);
@@ -551,7 +550,6 @@ int UIScene_LaunchMoreOptionsMenu::HandleRequestKeyboard()
     g_pInput->RequestKeyboard(L10N::GetString(IDS_CREATE_NEW_WORLD_SEED), m_seed.c_str(), 0, 0x3c,
                               KeyboardCompleteSeedCallback, this,
                               C_4JInput::EKeyboardMode_0);
-    return 0;
 }
 
 void UIScene_LaunchMoreOptionsMenu::UpdateOnline()
@@ -609,13 +607,15 @@ void UIScene_LaunchMoreOptionsMenu::handleReload()
     m_focusedItemId = savedItemId;
     if (m_menuType == 0)
     {
-        int selection = m_gameOptionsList.getListIndex(savedItemId);
-        m_gameOptionsList.setCurrentSelection(selection, false, true);
+        UIControl_List* list = &m_gameOptionsList;
+        int selection = list->getListIndex(savedItemId);
+        list->setCurrentSelection(selection, false, true);
     }
     else
     {
-        int selection = m_worldOptionsList.getListIndex(savedItemId);
-        m_worldOptionsList.setCurrentSelection(selection, false, true);
+        UIControl_List* list = &m_worldOptionsList;
+        int selection = list->getListIndex(savedItemId);
+        list->setCurrentSelection(selection, false, true);
     }
 }
 
@@ -666,8 +666,8 @@ void UIScene_LaunchMoreOptionsMenu::handleInput(int, int action, bool repeat, bo
 
 void UIScene_LaunchMoreOptionsMenu::handleFocusChange(int focus, int childFocus)
 {
-    m_focusedItemId = childFocus;
     m_focusedControlId = focus;
+    m_focusedItemId = childFocus;
     UpdateDescriptionText();
 }
 

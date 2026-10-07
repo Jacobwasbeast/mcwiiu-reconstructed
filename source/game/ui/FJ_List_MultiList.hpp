@@ -13,7 +13,6 @@ class FJ_List_MultiList : public FJ_List
 {
 public:
     explicit FJ_List_MultiList(fuiRenderNode* renderNode);
-    virtual ~FJ_List_MultiList();
 
     static FJ_List* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();

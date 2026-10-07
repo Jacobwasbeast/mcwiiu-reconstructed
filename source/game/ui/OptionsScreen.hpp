@@ -11,7 +11,6 @@ class OptionsScreen : public Screen
 {
 public:
     OptionsScreen(Screen* parentScreen, Options* options);
-    virtual ~OptionsScreen();
 
     virtual void init();
     virtual void buttonClicked(Button* button);

@@ -5,10 +5,6 @@ FJ_MenuButton_Small::FJ_MenuButton_Small(fuiRenderNode* renderNode)
 {
 }
 
-FJ_MenuButton_Small::~FJ_MenuButton_Small()
-{
-}
-
 FJ_MenuButton* FJ_MenuButton_Small::Create(fuiRenderNode* renderNode)
 {
     return new FJ_MenuButton_Small(renderNode);

@@ -31,7 +31,6 @@ public:
     };
 
     SelectWorldScreen(Screen* parent);
-    virtual ~SelectWorldScreen();
 
     virtual void render(int x, int y, float partialTick);
     virtual void buttonClicked(Button* button);

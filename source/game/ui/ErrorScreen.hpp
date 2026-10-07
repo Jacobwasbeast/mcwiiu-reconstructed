@@ -9,7 +9,6 @@ class ErrorScreen : public Screen
 {
 public:
     ErrorScreen(const std::wstring& title, const std::wstring& message);
-    virtual ~ErrorScreen();
 
     virtual void render(int x, int y, float partialTick);
     virtual void keyPressed(wchar_t key, int action);

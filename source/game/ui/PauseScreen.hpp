@@ -9,7 +9,6 @@ class PauseScreen : public Screen
 {
 public:
     PauseScreen();
-    virtual ~PauseScreen();
 
     virtual void render(int x, int y, float partialTick);
     void buttonClicked(Button button);

@@ -3,10 +3,6 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-UIControl_LobbyButtonList::~UIControl_LobbyButtonList()
-{
-}
-
 void UIControl_LobbyButtonList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_LobbyButtonList;

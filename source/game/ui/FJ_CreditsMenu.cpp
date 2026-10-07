@@ -104,7 +104,7 @@ void FJ_CreditsMenu::init(FJ_Event*)
     char name[64];
     for (int i = 0; i < 25; ++i)
     {
-        std::sprintf(name, "CreditsText_S_%d", i);
+        std::sprintf(name, "CreditsText_S_%d", i + 1);
         m_smallLabels[i] = m_creditsContent->getChildByName(std::string(name))->asFJ_LabelOutline();
         m_smallLabels[i]->setX(static_cast<float>(Math::round(
             getRect(this).xMin + (getWidth() * 0.5f - m_smallLabels[i]->getWidth() * 0.5f))));
@@ -198,7 +198,8 @@ void FJ_CreditsMenu::AddImage(int image, bool requestNext)
         }
         else
         {
-            m_scrollingNodes[m_scrollingNodes.size() - 1]->setY(
+            FJ_FuiNode* node = m_scrollingNodes[m_scrollingNodes.size() - 1];
+            node->setY(
                 m_scrollingNodes[m_scrollingNodes.size() - 2]->getY() +
                 m_scrollingNodes[m_scrollingNodes.size() - 2]->getHeight());
         }
@@ -212,55 +213,14 @@ void FJ_CreditsMenu::SetLogoLanguage(int language)
 
 unsigned int FJ_CreditsMenu::SetNextLabel(std::wstring label, int type, bool requestNext)
 {
+    bool added = false;
     m_requestingLabel = requestNext;
     if (label.size() == 0)
         label = L" ";
 
-    bool added = false;
-    if (type == 0)
+    switch (type)
     {
-        for (int i = 0; i < 8; ++i)
-        {
-            if (!m_extraLargeLabels[i]->isVisible())
-            {
-                m_extraLargeLabels[i]->setVisible(true);
-                m_extraLargeLabels[i]->SetLabel(label);
-                m_scrollingNodes.push_back(m_extraLargeLabels[i]);
-                added = true;
-                break;
-            }
-        }
-    }
-    else if (type == 1)
-    {
-        for (int i = 0; i < 20; ++i)
-        {
-            if (!m_largeLabels[i]->isVisible())
-            {
-                m_largeLabels[i]->setVisible(true);
-                m_largeLabels[i]->SetLabel(label);
-                m_scrollingNodes.push_back(m_largeLabels[i]);
-                added = true;
-                break;
-            }
-        }
-    }
-    else if (static_cast<unsigned int>(type) < 3)
-    {
-        for (int i = 0; i < 12; ++i)
-        {
-            if (!m_mediumLabels[i]->isVisible())
-            {
-                m_mediumLabels[i]->setVisible(true);
-                m_mediumLabels[i]->SetLabel(label);
-                m_scrollingNodes.push_back(m_mediumLabels[i]);
-                added = true;
-                break;
-            }
-        }
-    }
-    else if (type == 3)
-    {
+    case 3:
         for (int i = 0; i < 25; ++i)
         {
             if (!m_smallLabels[i]->isVisible())
@@ -272,6 +232,46 @@ unsigned int FJ_CreditsMenu::SetNextLabel(std::wstring label, int type, bool req
                 break;
             }
         }
+        break;
+    case 2:
+        for (int i = 0; i < 12; ++i)
+        {
+            if (!m_mediumLabels[i]->isVisible())
+            {
+                m_mediumLabels[i]->setVisible(true);
+                m_mediumLabels[i]->SetLabel(label);
+                m_scrollingNodes.push_back(m_mediumLabels[i]);
+                added = true;
+                break;
+            }
+        }
+        break;
+    case 1:
+        for (int i = 0; i < 20; ++i)
+        {
+            if (!m_largeLabels[i]->isVisible())
+            {
+                m_largeLabels[i]->setVisible(true);
+                m_largeLabels[i]->SetLabel(label);
+                m_scrollingNodes.push_back(m_largeLabels[i]);
+                added = true;
+                break;
+            }
+        }
+        break;
+    case 0:
+        for (int i = 0; i < 8; ++i)
+        {
+            if (!m_extraLargeLabels[i]->isVisible())
+            {
+                m_extraLargeLabels[i]->setVisible(true);
+                m_extraLargeLabels[i]->SetLabel(label);
+                m_scrollingNodes.push_back(m_extraLargeLabels[i]);
+                added = true;
+                break;
+            }
+        }
+        break;
     }
 
     if (added)
@@ -284,7 +284,8 @@ unsigned int FJ_CreditsMenu::SetNextLabel(std::wstring label, int type, bool req
             }
             else
             {
-                m_scrollingNodes[m_scrollingNodes.size() - 1]->setY(
+                FJ_FuiNode* node = m_scrollingNodes[m_scrollingNodes.size() - 1];
+                node->setY(
                     m_scrollingNodes[m_scrollingNodes.size() - 2]->getY() +
                     m_scrollingNodes[m_scrollingNodes.size() - 2]->getHeight());
             }

@@ -4,21 +4,18 @@
 
 #include "game/core/Button.hpp"
 #include "game/core/Minecraft.hpp"
-#include "game/core/SharedConstants.hpp"
 #include "game/core/GuiComponent.hpp"
 #include "game/core/StringUtils.hpp"
 
-NameEntryScreen::~NameEntryScreen()
-{
-}
+static std::wstring ALLOWED_CHARACTERS(L"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 ,.:-_'*!\"#%/()=+?[]{}<>");
 
 void NameEntryScreen::init()
 {
     mButtons.clear();
     mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 120,
-                                  std::wstring(L"Save")));
+                                  L"Save"));
     mButtons.push_back(new Button(1, mWidth / 2 - 100, mHeight / 4 + 144,
-                                  std::wstring(L"Cancel")));
+                                  L"Cancel"));
 
     mButtons[0]->mActive = trimString(mName).size() > 1;
 }

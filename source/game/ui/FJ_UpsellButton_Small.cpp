@@ -5,10 +5,6 @@ FJ_UpsellButton_Small::FJ_UpsellButton_Small(fuiRenderNode* renderNode)
 {
 }
 
-FJ_UpsellButton_Small::~FJ_UpsellButton_Small()
-{
-}
-
 FJ_UpsellButton* FJ_UpsellButton_Small::Create(fuiRenderNode* renderNode)
 {
     return new FJ_UpsellButton_Small(renderNode);

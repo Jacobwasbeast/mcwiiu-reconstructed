@@ -13,10 +13,6 @@ FJ_SlotList::FJ_SlotList(fuiRenderNode* pRenderNode)
     m_loaded = false;
 }
 
-FJ_SlotList::~FJ_SlotList()
-{
-}
-
 FJ_FuiNode* FJ_SlotList::Create(fuiRenderNode* pRenderNode)
 {
     return new FJ_SlotList(pRenderNode);
@@ -60,7 +56,8 @@ void FJ_SlotList::Clear()
         {
             FJ_SlotList_Slot*& slot = m_slots[i];
             FJ_FuiNode* parent = FJ_FuiNode::asMovieClip(slot)->getParent();
-            FJ_FuiNode::asMovieClip(slot)->getParent()->getParent()->removeChild(parent, true);
+            FJ_FuiNode* grandParent = FJ_FuiNode::asMovieClip(slot)->getParent()->getParent();
+            grandParent->removeChild(parent, true);
         }
     }
     m_slots.clear();
@@ -81,8 +78,10 @@ void FJ_SlotList::addSlot(int slot, bool highlighted, bool visible)
     FJ_SlotList_Slot* slotNode = static_cast<FJ_SlotList_Slot*>(FJ_Factory::createObject(
         "fourj.listClasses.FJ_SlotList_Slot", m_pRenderNode, true, NULL));
     slotNode->SetParams(m_slotSize, m_slotVisible);
-    container->setX(getX() + (float)(int)(m_slots.size() % (unsigned int)m_columns * m_slotSize));
-    container->setY(getY() + (float)(int)(m_slots.size() / (unsigned int)m_columns * m_slotSize));
+    unsigned int row = m_slots.size() / (unsigned int)m_columns;
+    unsigned int column = m_slots.size() % (unsigned int)m_columns;
+    container->setX(getX() + (float)(int)(column * m_slotSize));
+    container->setY(getY() + (float)(int)(row * m_slotSize));
     container->addChild(slotNode);
     slotNode->SetSlotID(slot);
     m_slots.push_back(slotNode);
@@ -92,20 +91,24 @@ void FJ_SlotList::addSlot(int slot, bool highlighted, bool visible)
 
 bool FJ_SlotList::SetSlotRedBox(int slot, bool show)
 {
-    if (m_slots.empty() || slot < 0 || (unsigned int)slot >= m_slots.size() ||
-        m_slots[slot] == NULL)
-        return false;
-    m_slots[slot]->SetRedBoxActive(show);
-    return true;
+    if (!m_slots.empty() && slot >= 0 && (unsigned int)slot < m_slots.size() &&
+        m_slots[slot] != NULL)
+    {
+        m_slots[slot]->SetRedBoxActive(show);
+        return true;
+    }
+    return false;
 }
 
 bool FJ_SlotList::SetSlotHighlight(int slot, bool highlighted)
 {
-    if (m_slots.empty() || slot < 0 || (unsigned int)slot >= m_slots.size() ||
-        m_slots[slot] == NULL)
-        return false;
-    m_slots[slot]->SetHighlightActive(highlighted);
-    return true;
+    if (!m_slots.empty() && slot >= 0 && (unsigned int)slot < m_slots.size() &&
+        m_slots[slot] != NULL)
+    {
+        m_slots[slot]->SetHighlightActive(highlighted);
+        return true;
+    }
+    return false;
 }
 
 void FJ_SlotList::setVisible(bool visible)
@@ -117,7 +120,8 @@ void FJ_SlotList::setVisible(bool visible)
     }
     for (unsigned int i = 0; i < m_slots.size(); ++i)
     {
-        if (m_slots[i]->getParent() != NULL)
+        FJ_SlotList_Slot* slot = m_slots[i];
+        if (slot->getParent() != NULL)
             m_slots[i]->getParent()->setVisible(visible);
     }
 }

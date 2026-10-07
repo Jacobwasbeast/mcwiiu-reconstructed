@@ -683,10 +683,6 @@ UIScene_Credits::UIScene_Credits(int type, void*, UILayer* layer)
     }
 }
 
-UIScene_Credits::~UIScene_Credits()
-{
-}
-
 bool UIScene_Credits::AlreadySeenCreditText(const std::wstring& text)
 {
     for (unsigned int index = 0; index < m_seenCreditText.size(); ++index)

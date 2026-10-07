@@ -1,9 +1,10 @@
 #include "game/ui/FJ_ListButton.hpp"
 
 FJ_ListButton::FJ_ListButton(fuiRenderNode* renderNode)
-    : FJ_Button(renderNode), m_listButtonFlag(false), m_labelAlignment(1)
+    : FJ_Button(renderNode), m_listButtonFlag(false)
 {
     m_textOnly = true;
+    m_labelAlignment = 1;
 }
 
 void FJ_ListButton::Init(const std::wstring& name, int id)

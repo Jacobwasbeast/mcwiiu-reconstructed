@@ -35,20 +35,25 @@ UIScene_DispenserMenu::UIScene_DispenserMenu(int type, void* data, UILayer* laye
     initialiseMovie();
 
     DispenserMenuArgs* args = static_cast<DispenserMenuArgs*>(data);
-    if (args->container->getName().empty())
-    {
-        boost::shared_ptr<InteractionObject> interaction =
-            boost::dynamic_pointer_cast<InteractionObject>(args->container);
-        m_dispenserLabel.init(UIString(L10N::GetString(
-            interaction && interaction->getTypeId(false) == ClientboundContainerOpenPacket::DROPPER ? IDS_CONTAINER_DROPPER : IDS_DISPENSER)));
-    }
-    else
+    if (!args->container->getName().empty())
     {
         m_dispenserLabel.init(UIString(args->container->getName()));
     }
+    else
+    {
+        boost::shared_ptr<InteractionObject> interaction =
+            boost::dynamic_pointer_cast<InteractionObject>(args->container);
+        if (interaction && interaction->getTypeId(false) == ClientboundContainerOpenPacket::DROPPER)
+        {
+            m_dispenserLabel.init(UIString(L10N::GetString(IDS_CONTAINER_DROPPER)));
+        }
+        else
+        {
+            m_dispenserLabel.init(UIString(L10N::GetString(IDS_DISPENSER)));
+        }
+    }
 
-    Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mGameModes[args->player] != 0)
+    if (Minecraft::GetInstance()->mGameModes[args->player] != 0)
     {
         Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[type]->getTutorial();
         if (tutorial != 0)
@@ -97,14 +102,14 @@ unsigned int UIScene_DispenserMenu::getSectionRows(
     unsigned int rows = 0;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar:
-        rows = 1;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots:
+        rows = 3;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory:
         rows = IUIScene_AbstractContainerMenu::GetInventoryRows();
         break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots:
-        rows = 3;
+    case IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar:
+        rows = 1;
         break;
     default:
         break;
@@ -189,33 +194,32 @@ void UIScene_DispenserMenu::GetItemScreenData(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
     _UIVec2D* position, _UIVec2D* size)
 {
-    float width;
-    float height;
+    _UIVec2D controlSize;
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots:
-        width = m_dispenserSlot.getWidth();
-        height = m_dispenserSlot.getHeight();
+        controlSize.x = m_dispenserSlot.getWidth();
+        controlSize.y = m_dispenserSlot.getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory:
-        width = m_inventoryList.getWidth();
-        height = m_inventoryList.getHeight();
+        controlSize.x = m_inventoryList.getWidth();
+        controlSize.y = m_inventoryList.getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar:
-        width = m_hotbarList.getWidth();
-        height = m_hotbarList.getHeight();
+        controlSize.x = m_hotbarList.getWidth();
+        controlSize.y = m_hotbarList.getHeight();
         break;
     default:
         break;
     }
-    const int rows = static_cast<int>(getSectionRows(section));
-    const int columns = static_cast<int>(getSectionColumns(section));
-    const float cellHeight = height / static_cast<float>(rows);
-    const float cellWidth = width / static_cast<float>(columns);
-    size->y = cellHeight;
-    size->x = cellWidth;
-    position->x = static_cast<float>(slot % columns) * cellWidth;
-    position->y = static_cast<float>(slot / columns) * cellHeight;
+    const int rows = getSectionRows(section);
+    const int columns = getSectionColumns(section);
+    size->x = controlSize.x / static_cast<float>(columns);
+    size->y = controlSize.y / static_cast<float>(rows);
+    int column = slot % columns;
+    int row = slot / columns;
+    position->x = static_cast<float>(column) * size->x;
+    position->y = static_cast<float>(row) * size->y;
 }
 
 int UIScene_DispenserMenu::getSectionStartOffset(
@@ -225,13 +229,13 @@ int UIScene_DispenserMenu::getSectionStartOffset(
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar:
-        offset = 0;
+        offset = 36;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_DispenserInventory:
         offset = 9;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots:
-        offset = 36;
+        offset = 0;
         break;
     default:
         break;
@@ -242,7 +246,7 @@ int UIScene_DispenserMenu::getSectionStartOffset(
 void UIScene_DispenserMenu::setSectionSelectedSlot(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
 {
-    const int columns = static_cast<int>(getSectionColumns(section));
+    const int highlightSlot = direction * getSectionColumns(section) + slot;
     UIControl_SlotList* list = 0;
     switch (section)
     {
@@ -259,7 +263,7 @@ void UIScene_DispenserMenu::setSectionSelectedSlot(
         break;
     }
     if (wrap)
-        list->setHighlightSlot(slot + direction * columns);
+        list->setHighlightSlot(highlightSlot);
 }
 
 unsigned int UIScene_DispenserMenu::mapElementsAndNames()
@@ -268,15 +272,13 @@ unsigned int UIScene_DispenserMenu::mapElementsAndNames()
     m_movie->getRootNode();
     fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
     {
-        std::string name("Trap");
-        m_dispenserSlot.setupControl(this, panel, name);
+        m_dispenserSlot.setupControl(this, panel, std::string("Trap"));
+        m_controls.push_back(&m_dispenserSlot);
     }
-    m_controls.push_back(&m_dispenserSlot);
     {
-        std::string name("dispenserLabel");
-        m_dispenserLabel.setupControl(this, panel, name);
+        m_dispenserLabel.setupControl(this, panel, std::string("dispenserLabel"));
+        m_controls.push_back(&m_dispenserLabel);
     }
-    m_controls.push_back(&m_dispenserLabel);
     return 1;
 }
 

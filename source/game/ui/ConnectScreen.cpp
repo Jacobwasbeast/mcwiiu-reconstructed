@@ -14,10 +14,6 @@ ConnectScreen::ConnectScreen(Minecraft* minecraft, const std::wstring&, int)
     minecraft->setLevel(NULL, -1, boost::shared_ptr<Player>(), true, false);
 }
 
-ConnectScreen::~ConnectScreen()
-{
-}
-
 void ConnectScreen::tick()
 {
     if (mConnection != NULL)

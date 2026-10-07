@@ -19,10 +19,6 @@ JoinMultiplayerScreen::JoinMultiplayerScreen(Screen* parentScreen)
 {
 }
 
-JoinMultiplayerScreen::~JoinMultiplayerScreen()
-{
-}
-
 void JoinMultiplayerScreen::tick()
 {
     mEditBox->tick();
@@ -63,8 +59,7 @@ void JoinMultiplayerScreen::buttonClicked(Button* button)
     if (button->mId == 0)
     {
         std::wstring value = trimString(mEditBox->getValue());
-        std::wstring& lastServer = mMinecraft->mOptions->mLastServer;
-        lastServer = replaceAll(value, L":", L"_");
+        mMinecraft->mOptions->mLastServer = replaceAll(value, L":", L"_");
         mMinecraft->mOptions->save();
 
         std::vector<std::wstring> parts = stringSplit(value, L'L');
@@ -74,7 +69,8 @@ void JoinMultiplayerScreen::buttonClicked(Button* button)
             if (close != std::wstring::npos)
             {
                 std::wstring address = value.substr(1, close);
-                std::wstring port = trimString(value.substr(close + 1));
+                std::wstring::size_type portStart = close + 1;
+                std::wstring port = trimString(value.substr(portStart));
                 if (port[0] == L':' && !port.empty())
                 {
                     port = port.substr(1);

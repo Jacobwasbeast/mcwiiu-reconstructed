@@ -50,8 +50,7 @@ void FJ_InGamePlayerOptions::InitMenu()
     FJ_FuiNode* playerIcon = getChildByName(std::string("PlayerIcon"));
 
     const int backgroundHeight = static_cast<int>(background->getChildAt(0)->getHeight());
-    const float listHeight = static_cast<float>(list->asFJ_List_MultiList()->GetListHeight());
-    if (listHeight < list->getHeight())
+    if (static_cast<float>(list->asFJ_List_MultiList()->GetListHeight()) < list->getHeight())
     {
         FJ_FuiNode* backgroundItem = background->getChildAt(0);
         backgroundItem->setHeight(static_cast<float>(list->asFJ_List_MultiList()->GetListHeight()) +
@@ -84,7 +83,8 @@ void FJ_InGamePlayerOptions::SetSafeZone(int top, int bottom, int left, int righ
 void FJ_InGamePlayerOptions::SetPlayerIcon(int icon)
 {
     FJ_FuiNode* playerIcon = getChildByName(std::string("PlayerIcon"));
+    const int frame = icon + 1;
     FJ_FuiNode* movieClip = FJ_FuiNode::asMovieClip(playerIcon->getChildAt(0));
-    movieClip->gotoAndStop(icon + 1);
+    movieClip->gotoAndStop(frame);
 }
 

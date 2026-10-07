@@ -15,10 +15,6 @@ ControlsScreen::ControlsScreen(Screen* parent, Options* options)
     mSelectedKey = -1;
 }
 
-ControlsScreen::~ControlsScreen()
-{
-}
-
 int ControlsScreen::getLeftScreenPosition()
 {
     return mWidth / 2 - 155;

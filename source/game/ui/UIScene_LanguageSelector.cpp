@@ -23,10 +23,6 @@ UIScene_LanguageSelector::UIScene_LanguageSelector(int sceneType, void*, UILayer
         m_languageList.addItem(UIString(languageNames[i]), i);
 }
 
-UIScene_LanguageSelector::~UIScene_LanguageSelector()
-{
-}
-
 void UIScene_LanguageSelector::updateTooltips()
 {
     gConsoleUIController.SetTooltips(static_cast<unsigned int>(m_playerId), IDS_TOOLTIPS_SELECT,

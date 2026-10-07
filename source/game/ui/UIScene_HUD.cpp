@@ -102,9 +102,8 @@ UIScene_HUD::UIScene_HUD(int sceneType, void*, UILayer* layer)
 
 FJ_Hud* UIScene_HUD::getFJ_Hud()
 {
-    if (m_movie == 0)
-        return 0;
-    return m_movie->getRootNode()->getFuiNode()->asFJ_Hud();
+    if (m_movie != 0)
+        return m_movie->getRootNode()->getFuiNode()->asFJ_Hud();
 }
 
 void UIScene_HUD::SetSelectedLabel(const std::wstring& label)
@@ -307,15 +306,13 @@ void UIScene_HUD::tick()
 
         updateEffectsDisplay();
 
+        int index = 0;
         boost::unordered_map<std::wstring, LerpingBossEvent*> bossEvents =
             minecraft->mGui->getBossOverlay(m_playerId)->mBossEvents;
         SetNumBossBars(bossEvents.size() > 5 ? 5 : static_cast<int>(bossEvents.size()));
-        if (bossEvents.size() == 0)
-            return;
 
-        int index = 0;
         for (boost::unordered_map<std::wstring, LerpingBossEvent*>::iterator it = bossEvents.begin();
-             it != bossEvents.end(); ++it, ++index)
+             it != bossEvents.end(); ++it)
         {
             if (index < 5)
             {
@@ -325,6 +322,7 @@ void UIScene_HUD::tick()
                     name = bossEvent->getName();
                 SetBossBar(index, bossEvent->getPercent(), name);
             }
+            ++index;
         }
     }
     else
@@ -482,12 +480,16 @@ void UIScene_HUD::repositionHud()
     int height = 0;
     m_layer->getRenderDimensions(width, height);
     const unsigned int viewport = m_layer->getViewport();
-    if (viewport != C4JRender::eViewportType_FullScreen)
+    switch (viewport)
     {
-        if (viewport < C4JRender::eViewportType_LeftHalf)
-            width = static_cast<int>(gConsoleUIController.m_screenWidth);
-        else if (viewport < C4JRender::eViewportType_TopLeftQuarter)
-            height = static_cast<int>(gConsoleUIController.m_screenHeight);
+    case C4JRender::eViewportType_LeftHalf:
+    case C4JRender::eViewportType_RightHalf:
+        height = static_cast<int>(gConsoleUIController.m_screenHeight);
+        break;
+    case C4JRender::eViewportType_TopHalf:
+    case C4JRender::eViewportType_BottomHalf:
+        width = static_cast<int>(gConsoleUIController.m_screenWidth);
+        break;
     }
 
     if (getFJ_Hud() != 0)
@@ -511,42 +513,42 @@ void UIScene_HUD::ShowHealth(bool visible)
 {
     if (HideMainHUD())
         visible = false;
-    const bool shown = ShowHudComponent(m_healthVisible, visible);
-    m_healthVisible = shown;
+    visible = ShowHudComponent(m_healthVisible, visible);
+    m_healthVisible = visible;
     if (getFJ_Hud() != 0)
-        getFJ_Hud()->ShowHealth(shown);
+        getFJ_Hud()->ShowHealth(visible);
 }
 void UIScene_HUD::ShowFood(bool visible)
 {
     if (HideMainHUD())
         visible = false;
-    const bool shown = ShowHudComponent(m_foodVisible, visible);
-    m_foodVisible = shown;
+    visible = ShowHudComponent(m_foodVisible, visible);
+    m_foodVisible = visible;
     if (getFJ_Hud() != 0)
-        getFJ_Hud()->ShowFood(shown);
+        getFJ_Hud()->ShowFood(visible);
 }
 void UIScene_HUD::ShowArmour(bool visible)
 {
     if (HideMainHUD())
         visible = false;
-    const bool shown = ShowHudComponent(m_armourVisible, visible);
-    m_armourVisible = shown;
+    visible = ShowHudComponent(m_armourVisible, visible);
+    m_armourVisible = visible;
     if (getFJ_Hud() != 0)
-        getFJ_Hud()->ShowArmour(shown);
+        getFJ_Hud()->ShowArmour(visible);
 }
 void UIScene_HUD::ShowArmorBar(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowArmorBar(visible); }
 void UIScene_HUD::ShowQuickSelect(bool visible)
 {
     if (HideMainHUD())
         visible = false;
-    bool quickSelectVisible = ShowHudComponent(m_quickSelectVisible, visible);
+    visible = ShowHudComponent(m_quickSelectVisible, visible);
     bool showArmorBar = false;
     if (Minecraft::InMiniGame(eMiniGameId_Battle, false))
-        showArmorBar = quickSelectVisible;
+        showArmorBar = visible;
     ShowArmorBar(showArmorBar);
-    m_quickSelectVisible = quickSelectVisible;
+    m_quickSelectVisible = visible;
     if (getFJ_Hud() != 0)
-        getFJ_Hud()->ShowQuickSelect(quickSelectVisible);
+        getFJ_Hud()->ShowQuickSelect(visible);
 }
 
 void UIScene_HUD::ShowExpBar(bool visible) { if (getFJ_Hud() != 0) getFJ_Hud()->ShowExpBar(visible); }
@@ -555,10 +557,10 @@ void UIScene_HUD::ShowAir(bool visible)
 {
     if (HideMainHUD())
         visible = false;
-    const bool shown = ShowHudComponent(m_airVisible, visible);
-    m_airVisible = shown;
+    visible = ShowHudComponent(m_airVisible, visible);
+    m_airVisible = visible;
     if (getFJ_Hud() != 0)
-        getFJ_Hud()->ShowAir(shown);
+        getFJ_Hud()->ShowAir(visible);
 }
 void UIScene_HUD::SetRidingHorse(bool riding, bool showJump, int health)
 {
@@ -667,7 +669,7 @@ void UIScene_HUD::SetActiveSlot(int slot) { if (getFJ_Hud() != 0) getFJ_Hud()->S
 void UIScene_HUD::SetGlideHealth(int health) { if (getFJ_Hud() != 0) getFJ_Hud()->SetGlideHealth(health); }
 void UIScene_HUD::SetHealth(int health, int minimumHealth, bool highlight, bool hardcore, bool hide)
 {
-    if (health < minimumHealth)
+    if (minimumHealth > health)
         health = minimumHealth;
 
     if (getFJ_Hud() != 0)
@@ -762,16 +764,16 @@ void UIScene_HUD::SetAnimatedSplashIcon(int icon)
         found = gApp.hasArchiveFile(texture, false);
     }
 
-    if (!found)
-    {
-        SetAnimatedSplashTexture(L"");
-    }
-    else
+    if (found)
     {
         arrayWithLength<unsigned char> file = gApp.getArchiveFile(texture, false);
         if (file.length != 0 && file.data != NULL)
             registerSubstitutionTexture(texture, file.data, file.length, true);
         SetAnimatedSplashTexture(texture);
+    }
+    else
+    {
+        SetAnimatedSplashTexture(L"");
     }
 }
 void UIScene_HUD::ShowAnimatedSplash(const std::wstring& label, bool visible, int icon)
@@ -1052,11 +1054,11 @@ void UIScene_HUD::ClearGlideHUD(int player)
     if (m_checkpointsInitialised)
     {
         ClearCheckpointPositions();
-        m_lastCheckpointIds[3] = 0;
         m_lastCheckpointIds[0] = 0;
+        m_checkpointsInitialised = false;
         m_lastCheckpointIds[2] = 0;
         m_lastCheckpointIds[1] = 0;
-        m_checkpointsInitialised = false;
+        m_lastCheckpointIds[3] = 0;
     }
 }
 void UIScene_HUD::showTimedSplash(const std::wstring& label, unsigned int duration, int icon)

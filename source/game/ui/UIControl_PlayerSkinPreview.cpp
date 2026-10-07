@@ -56,10 +56,6 @@ UIControl_PlayerSkinPreview::UIControl_PlayerSkinPreview()
     mRotateBackward = false;
 }
 
-UIControl_PlayerSkinPreview::~UIControl_PlayerSkinPreview()
-{
-}
-
 void UIControl_PlayerSkinPreview::tick()
 {
     if (mAnimating)

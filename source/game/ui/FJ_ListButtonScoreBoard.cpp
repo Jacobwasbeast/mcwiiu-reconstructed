@@ -11,8 +11,8 @@ FJ_ListButtonScoreBoard::FJ_ListButtonScoreBoard(fuiRenderNode* renderNode)
 {
     m_playerIcons = getChildByName("PlayerIcons")->asMovieClip();
     m_voipIcon = getChildByName("VOIP")->asMovieClip();
-    m_externalHighlight = NULL;
     m_numIcons = 0;
+    m_externalHighlight = NULL;
 }
 
 void FJ_ListButtonScoreBoard::Init(const std::wstring& name, int id)
@@ -31,15 +31,14 @@ void FJ_ListButtonScoreBoard::SetNumIcons(int numIcons, int width, int highlight
 {
     setWidth(getWidth() - numIcons * getHeight() - numIcons * 2);
 
-    int i;
-    for (i = 0; i < numIcons; ++i)
+    for (int i = 0; i < numIcons; ++i)
     {
         FJ_IconSlot* slot = static_cast<FJ_IconSlot*>(FJ_Factory::createObject(
             "fourj.listClasses.FJ_IconSlot", m_pRenderNode, true, NULL));
         slot->SetParams(getHeight(), m_small);
         slot->Init(std::wstring(L""));
         slot->ShowSlotHolder(false);
-        slot->setX((getX() + getWidth()) + i * slot->getWidth() + (i * 2 + 2));
+        slot->setX(getX() + getWidth() + i * slot->getWidth() + (i * 2 + 2));
         slot->setY(getY());
         m_objects.push_back(slot);
         getParent()->addChild(slot);

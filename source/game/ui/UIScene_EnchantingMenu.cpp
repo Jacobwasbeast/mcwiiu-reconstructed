@@ -63,7 +63,7 @@ UIScene_EnchantingMenu::UIScene_EnchantingMenu(int pad, void* data, UILayer* lay
     }
     EnchantmentMenu* menu = new EnchantmentMenu(sceneData->inventory, sceneData->level,
                                                   BlockPos(sceneData->x, sceneData->y, sceneData->z));
-    static_cast<IUIScene_AbstractContainerMenu*>(this)->Initialize(false, sceneData->playerIndex, menu, true, 2,
+    Initialize(false, sceneData->playerIndex, menu, true, 2,
                                  IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar,
                                  IUIScene_AbstractContainerMenu::ESceneSection_EnchantMax, false);
     m_ingredientSlot.addSlots(0, 1);
@@ -114,13 +114,13 @@ unsigned int UIScene_EnchantingMenu::getSectionRows(IUIScene_AbstractContainerMe
     unsigned int rows = 0;
     switch (section)
     {
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
+        rows = GetInventoryRows();
+        break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem:
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis:
         rows = 1;
-        break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
-        rows = GetInventoryRows();
         break;
     default:
         break;
@@ -243,87 +243,96 @@ unsigned int UIScene_EnchantingMenu::GetSectionAndSlotInDirection(
 void UIScene_EnchantingMenu::GetPositionOfSection(
     IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
 {
-    UIControl* control = NULL;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
-        control = &m_hotbarList;
-        break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
-        control = &m_inventoryList;
-        break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem:
-        control = &m_ingredientSlot;
+        position->x = static_cast<float>(m_ingredientSlot.getXPos());
+        position->y = static_cast<float>(m_ingredientSlot.getYPos());
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis:
-        control = &m_lapisSlot;
+        position->x = static_cast<float>(m_lapisSlot.getXPos());
+        position->y = static_cast<float>(m_lapisSlot.getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
+        position->x = static_cast<float>(m_inventoryList.getXPos());
+        position->y = static_cast<float>(m_inventoryList.getYPos());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
+        position->x = static_cast<float>(m_hotbarList.getXPos());
+        position->y = static_cast<float>(m_hotbarList.getYPos());
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1:
-        control = &m_enchantmentButtons[0];
+        position->x = static_cast<float>(m_enchantmentButtons[0].getXPos());
+        position->y = static_cast<float>(m_enchantmentButtons[0].getYPos());
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton2:
-        control = &m_enchantmentButtons[1];
+        position->x = static_cast<float>(m_enchantmentButtons[1].getXPos());
+        position->y = static_cast<float>(m_enchantmentButtons[1].getYPos());
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3:
-        control = &m_enchantmentButtons[2];
+        position->x = static_cast<float>(m_enchantmentButtons[2].getXPos());
+        position->y = static_cast<float>(m_enchantmentButtons[2].getYPos());
         break;
     default:
         break;
     }
-    if (control == NULL)
-        return;
-    position->x = static_cast<float>(control->getXPos());
-    position->y = static_cast<float>(control->getYPos());
 }
 
 void UIScene_EnchantingMenu::GetItemScreenData(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
     _UIVec2D* position, _UIVec2D* size)
 {
-    UIControl* control = NULL;
+    _UIVec2D extent;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
-        control = &m_hotbarList;
-        break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
-        control = &m_inventoryList;
-        break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem:
-        control = &m_ingredientSlot;
+        extent.x = static_cast<float>(m_ingredientSlot.getWidth());
+        extent.y = static_cast<float>(m_ingredientSlot.getHeight());
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis:
-        control = &m_lapisSlot;
+        extent.x = static_cast<float>(m_lapisSlot.getWidth());
+        extent.y = static_cast<float>(m_lapisSlot.getHeight());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
+        extent.x = static_cast<float>(m_inventoryList.getWidth());
+        extent.y = static_cast<float>(m_inventoryList.getHeight());
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
+        extent.x = static_cast<float>(m_hotbarList.getWidth());
+        extent.y = static_cast<float>(m_hotbarList.getHeight());
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1:
-        control = &m_enchantmentButtons[0];
+        extent.x = static_cast<float>(m_enchantmentButtons[0].getWidth());
+        extent.y = static_cast<float>(m_enchantmentButtons[0].getHeight());
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton2:
-        control = &m_enchantmentButtons[1];
+        extent.x = static_cast<float>(m_enchantmentButtons[1].getWidth());
+        extent.y = static_cast<float>(m_enchantmentButtons[1].getHeight());
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3:
-        control = &m_enchantmentButtons[2];
+        extent.x = static_cast<float>(m_enchantmentButtons[2].getWidth());
+        extent.y = static_cast<float>(m_enchantmentButtons[2].getHeight());
         break;
     default:
         break;
     }
-    if (control == NULL)
-        return;
-    const float width = static_cast<float>(control->getWidth());
-    const float height = static_cast<float>(control->getHeight());
-    if (!IsSectionSlotList(section))
+    if (IsSectionSlotList(section))
+    {
+        const int rows = static_cast<int>(getSectionRows(section));
+        const int columns = static_cast<int>(getSectionColumns(section));
+        const float cellWidth = extent.x / static_cast<float>(columns);
+        const float cellHeight = extent.y / static_cast<float>(rows);
+        size->x = cellWidth;
+        size->y = cellHeight;
+        position->x = static_cast<float>(slot % columns) * cellWidth;
+        position->y = static_cast<float>(slot / columns) * cellHeight;
+    }
+    else
     {
         GetPositionOfSection(section, position);
-        size->x = width;
-        size->y = height;
-        return;
+        size->x = extent.x;
+        size->y = extent.y;
     }
-    const int rows = static_cast<int>(getSectionRows(section));
-    const int columns = static_cast<int>(getSectionColumns(section));
-    size->x = width / static_cast<float>(columns);
-    size->y = height / static_cast<float>(rows);
-    position->x = static_cast<float>(slot % columns) * size->x;
-    position->y = static_cast<float>(slot / columns) * size->y;
 }
 
 void UIScene_EnchantingMenu::handleOtherClicked(int pad,
@@ -425,39 +434,52 @@ std::vector<HtmlString>* UIScene_EnchantingMenu::GetSectionHoverText(
     Enchantment* enchantment = Enchantment::byId(getMenu()->mEnchantmentIds[index]);
     const int level = getMenu()->mEnchantmentLevels[index];
     const int lapisCost = index + 1;
-    if (cost < 1 || level < 0 || enchantment == NULL)
-        return NULL;
-
-    std::vector<HtmlString>* result = new std::vector<HtmlString>();
-    result->push_back(HtmlString(enchantment->getFullname(level).mText + L"...?", eMinecraftColour_HTMLColor_White, true,
-                                 false, 0));
-    if (instabuild)
-        return result;
-
-    result->push_back(HtmlString(L"", static_cast<eMinecraftColour>(0), false, false, 0));
-    if (Minecraft::GetInstance()->mLocalPlayers[getPad()]->mExperienceLevel < cost)
+    if (cost > 0 && level >= 0 && enchantment != NULL)
     {
-        std::wstring requirement =
-            replaceAll(L10N::GetString(IDS_ENCHANT_LEVEL_REQUIREMENT), L"{*LEVEL*}", _toString(cost));
-        result->push_back(HtmlString(requirement, eMinecraftColour_HTMLColor_c, false, false, 0));
+        std::vector<HtmlString>* result = new std::vector<HtmlString>();
+        result->push_back(HtmlString(enchantment->getFullname(level).mText + L"...?", eMinecraftColour_HTMLColor_White, true,
+                                     false, 0));
+        if (!instabuild)
+        {
+            result->push_back(HtmlString(L"", static_cast<eMinecraftColour>(0), false, false, 0));
+            if (Minecraft::GetInstance()->mLocalPlayers[getPad()]->mExperienceLevel < cost)
+            {
+                std::wstring requirement = L10N::GetString(IDS_ENCHANT_LEVEL_REQUIREMENT);
+                requirement = replaceAll(requirement, L"{*LEVEL*}", _toString(cost));
+                result->push_back(HtmlString(requirement, eMinecraftColour_HTMLColor_c, false, false, 0));
+            }
+            else
+            {
+                std::wstring text = L"";
+                if (lapisCost == 1)
+                {
+                    text = L10N::GetString(IDS_ENCHANT_LAPIS_ONE);
+                }
+                else
+                {
+                    text = L10N::GetString(IDS_ENCHANT_LAPIS_MANY);
+                    text = replaceAll(text, L"{*COST*}", _toString(lapisCost));
+                }
+                if (lapisCount >= lapisCost)
+                    result->push_back(HtmlString(text, eMinecraftColour_HTMLColor_7, false, false, 0));
+                else
+                    result->push_back(HtmlString(text, eMinecraftColour_HTMLColor_c, false, false, 0));
+
+                if (lapisCost == 1)
+                {
+                    text = L10N::GetString(IDS_ENCHANT_LEVEL_ONE);
+                }
+                else
+                {
+                    text = L10N::GetString(IDS_ENCHANT_LEVEL_MANY);
+                    text = replaceAll(text, L"{*COST*}", _toString(lapisCost));
+                }
+                result->push_back(HtmlString(text, eMinecraftColour_HTMLColor_7, false, false, 0));
+            }
+        }
         return result;
     }
-
-    std::wstring text(L"");
-    if (lapisCost == 1)
-        text = L10N::GetString(IDS_ENCHANT_LAPIS_ONE);
-    else
-        text = replaceAll(L10N::GetString(IDS_ENCHANT_LAPIS_MANY), L"{*COST*}", _toString(lapisCost));
-    result->push_back(HtmlString(text,
-                                 lapisCount < lapisCost ? eMinecraftColour_HTMLColor_c : eMinecraftColour_HTMLColor_7,
-                                 false, false, 0));
-
-    if (lapisCost == 1)
-        text = L10N::GetString(IDS_ENCHANT_LEVEL_ONE);
-    else
-        text = replaceAll(L10N::GetString(IDS_ENCHANT_LEVEL_MANY), L"{*COST*}", _toString(lapisCost));
-    result->push_back(HtmlString(text, eMinecraftColour_HTMLColor_7, false, false, 0));
-    return result;
+    return NULL;
 }
 
 bool UIScene_EnchantingMenu::IsActiveButton(IUIScene_AbstractContainerMenu::ESceneSection section)
@@ -482,12 +504,13 @@ unsigned int UIScene_EnchantingMenu::overrideTooltips(
     bool, int, EToolTipItem& first, EToolTipItem&, EToolTipItem&, EToolTipItem&, EToolTipItem&,
     EToolTipItem&, EToolTipItem&)
 {
+    unsigned int count = 0;
     if (IsActiveButton(section))
     {
+        count = 1;
         first = eToolTipSelect;
-        return 1;
     }
-    return 0;
+    return count;
 }
 
 unsigned int UIScene_EnchantingMenu::mapElementsAndNames()
@@ -496,40 +519,33 @@ unsigned int UIScene_EnchantingMenu::mapElementsAndNames()
     m_movie->getRootNode();
     fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
     {
-        std::string name("ingredient");
-        m_ingredientSlot.setupControl(this, panel, name);
+        m_ingredientSlot.setupControl(this, panel, std::string("ingredient"));
+        m_controls.push_back(&m_ingredientSlot);
     }
-    m_controls.push_back(&m_ingredientSlot);
     {
-        std::string name("lapis");
-        m_lapisSlot.setupControl(this, panel, name);
+        m_lapisSlot.setupControl(this, panel, std::string("lapis"));
+        m_controls.push_back(&m_lapisSlot);
     }
-    m_controls.push_back(&m_lapisSlot);
     {
-        std::string name("Button1");
-        m_enchantmentButtons[0].setupControl(this, panel, name);
+        m_enchantmentButtons[0].setupControl(this, panel, std::string("Button1"));
+        m_controls.push_back(&m_enchantmentButtons[0]);
     }
-    m_controls.push_back(&m_enchantmentButtons[0]);
     {
-        std::string name("Button2");
-        m_enchantmentButtons[1].setupControl(this, panel, name);
+        m_enchantmentButtons[1].setupControl(this, panel, std::string("Button2"));
+        m_controls.push_back(&m_enchantmentButtons[1]);
     }
-    m_controls.push_back(&m_enchantmentButtons[1]);
     {
-        std::string name("Button3");
-        m_enchantmentButtons[2].setupControl(this, panel, name);
+        m_enchantmentButtons[2].setupControl(this, panel, std::string("Button3"));
+        m_controls.push_back(&m_enchantmentButtons[2]);
     }
-    m_controls.push_back(&m_enchantmentButtons[2]);
     {
-        std::string name("enchantLabel");
-        m_enchantLabel.setupControl(this, panel, name);
+        m_enchantLabel.setupControl(this, panel, std::string("enchantLabel"));
+        m_controls.push_back(&m_enchantLabel);
     }
-    m_controls.push_back(&m_enchantLabel);
     {
-        std::string name("iggy_EnchantmentBook");
-        m_enchantmentBook.setupControl(this, panel, name);
+        m_enchantmentBook.setupControl(this, panel, std::string("iggy_EnchantmentBook"));
+        m_controls.push_back(&m_enchantmentBook);
     }
-    m_controls.push_back(&m_enchantmentBook);
     return 1;
 }
 
@@ -556,17 +572,17 @@ UIControl* UIScene_EnchantingMenu::getSection(IUIScene_AbstractContainerMenu::ES
     UIControl* control = NULL;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
-        control = &m_hotbarList;
-        break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
-        control = &m_inventoryList;
-        break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem:
         control = &m_ingredientSlot;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis:
         control = &m_lapisSlot;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
+        control = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
+        control = &m_hotbarList;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1:
         control = &m_enchantmentButtons[0];

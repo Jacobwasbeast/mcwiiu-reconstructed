@@ -17,12 +17,12 @@ FJ_LaunchMoreOptionsMenu::FJ_LaunchMoreOptionsMenu(fuiRenderNode* renderNode)
     : FJ_Document(renderNode)
 {
     addEventListener(eFJEventType_CheckboxToggled, this, _handleCheckboxToggled, false);
-    m_activeTab = 0;
-    m_worldOptionsFocus = -1;
     m_worldTabHidden = false;
-    m_gameOptionsFocus = -1;
-    m_descriptionUpdated = false;
     m_previousTab = -1;
+    m_activeTab = 0;
+    m_gameOptionsFocus = -1;
+    m_worldOptionsFocus = -1;
+    m_descriptionUpdated = false;
     m_menuType = 0;
 }
 
@@ -119,24 +119,18 @@ void FJ_LaunchMoreOptionsMenu::SetActiveTab(int tab, bool resize)
         m_descriptionUpdated = true;
     }
 
-    if (tab == 0)
+    m_root = tab == 0 ? gameOptions : worldOptions;
+
+    if (tab == 1)
     {
-        m_root = gameOptions;
-    }
-    else
-    {
-        m_root = worldOptions;
-        if (tab == 1)
-        {
-            SetFocus(m_worldOptionsFocus);
-            if (m_worldOptionsFocus >= 0)
-                OnFocusChange(true);
-            textPanel->getChildAt(0)->setHeight(worldBackground->getChildAt(0)->getHeight() +
-                                                (worldOptions->getY() + worldBackground->getY() - textPanel->getY()) * 2);
-            m_activeTab = 1;
-            m_previousTab = 1;
-            return;
-        }
+        SetFocus(m_worldOptionsFocus);
+        if (m_worldOptionsFocus >= 0)
+            OnFocusChange(true);
+        textPanel->getChildAt(0)->setHeight(worldBackground->getChildAt(0)->getHeight() +
+                                            (worldOptions->getY() + worldBackground->getY() - textPanel->getY()) * 2);
+        m_activeTab = tab;
+        m_previousTab = tab;
+        return;
     }
 
     SetFocus(m_gameOptionsFocus);

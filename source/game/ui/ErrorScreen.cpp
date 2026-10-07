@@ -2,10 +2,6 @@
 
 #include "game/core/GuiComponent.hpp"
 
-ErrorScreen::~ErrorScreen()
-{
-}
-
 void ErrorScreen::render(int x, int y, float partialTick)
 {
     fillGradient(0, 0, mWidth, mHeight, 0xff402020, 0xff501010);

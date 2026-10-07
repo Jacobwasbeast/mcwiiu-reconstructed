@@ -57,35 +57,29 @@ unsigned int UIScene_SettingsMenu::mapElementsAndNames()
     fuiRenderNode* root = m_movie->getRootNode();
 
     {
-        std::string name("Button1");
-        m_buttons[0].setupControl(this, root, name);
+        m_buttons[0].setupControl(this, root, std::string("Button1"));
+        m_controls.push_back(&m_buttons[0]);
     }
-    m_controls.push_back(&m_buttons[0]);
     {
-        std::string name("Button2");
-        m_buttons[1].setupControl(this, root, name);
+        m_buttons[1].setupControl(this, root, std::string("Button2"));
+        m_controls.push_back(&m_buttons[1]);
     }
-    m_controls.push_back(&m_buttons[1]);
     {
-        std::string name("Button3");
-        m_buttons[2].setupControl(this, root, name);
+        m_buttons[2].setupControl(this, root, std::string("Button3"));
+        m_controls.push_back(&m_buttons[2]);
     }
-    m_controls.push_back(&m_buttons[2]);
     {
-        std::string name("Button4");
-        m_buttons[4].setupControl(this, root, name);
+        m_buttons[4].setupControl(this, root, std::string("Button4"));
+        m_controls.push_back(&m_buttons[4]);
     }
-    m_controls.push_back(&m_buttons[4]);
     {
-        std::string name("Button5");
-        m_buttons[5].setupControl(this, root, name);
+        m_buttons[5].setupControl(this, root, std::string("Button5"));
+        m_controls.push_back(&m_buttons[5]);
     }
-    m_controls.push_back(&m_buttons[5]);
     {
-        std::string name("Button6");
-        m_buttons[6].setupControl(this, root, name);
+        m_buttons[6].setupControl(this, root, std::string("Button6"));
+        m_controls.push_back(&m_buttons[6]);
     }
-    m_controls.push_back(&m_buttons[6]);
 
     return 1;
 }
@@ -99,15 +93,19 @@ void UIScene_SettingsMenu::updateTooltips()
 
 void UIScene_SettingsMenu::updateComponents()
 {
-    bool showComponents = true;
-    if (Minecraft::GetInstance()->mLevel != NULL)
+    bool showComponents;
+    bool noLevel = Minecraft::GetInstance()->mLevel == NULL;
+    if (noLevel)
     {
-        m_layer->showComponent(m_playerId, EUIScene_Panorama, false);
-        showComponents = gApp.GetLocalPlayerCount() == 1;
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
+        showComponents = true;
     }
     else
     {
-        m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, false);
+        showComponents = false;
+        if (gApp.GetLocalPlayerCount() == 1)
+            showComponents = true;
     }
     m_layer->showComponent(m_playerId, EUIScene_Logo, showComponents);
 }
@@ -142,18 +140,20 @@ void UIScene_SettingsMenu::handleInput(int playerId, int action, bool repeat, bo
                                        bool released, bool& handled)
 {
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
-    unsigned int controllerAction = action;
-    if (controllerAction >= EControllerActions_MenuUp)
+    switch (action)
     {
-        if (controllerAction <= EControllerActions_MenuDown || controllerAction == EControllerActions_MenuOk)
-        {
-            sendInputToMovie(controllerAction, repeat, pressed, released);
-        }
-        else if (controllerAction == EControllerActions_MenuCancel && pressed)
+    case EControllerActions_MenuCancel:
+        if (pressed)
         {
             GameSettings::CheckGameSettingsChanged(true, playerId);
             navigateBack();
         }
+        break;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuOk:
+        sendInputToMovie(action, repeat, pressed, released);
+        break;
     }
 }
 
@@ -194,8 +194,8 @@ void UIScene_SettingsMenu::handlePress(int controlId, int)
     case 0:
     {
         ListMenuInitData* data = new ListMenuInitData();
-        data->playerId = m_playerId;
         data->mode = 0;
+        data->playerId = m_playerId;
         gConsoleUIController.NavigateToScene(m_playerId, EUIScene_SettingsListMenu, data,
                                              EUILayer_Scene, EUIGroup_PlayerDefault);
         resetHorizontalResizeCheck();
@@ -204,8 +204,8 @@ void UIScene_SettingsMenu::handlePress(int controlId, int)
     case 1:
     {
         ListMenuInitData* data = new ListMenuInitData();
-        data->playerId = m_playerId;
         data->mode = 1;
+        data->playerId = m_playerId;
         gConsoleUIController.NavigateToScene(m_playerId, EUIScene_SettingsListMenu, data,
                                              EUILayer_Scene, EUIGroup_PlayerDefault);
         break;
@@ -213,8 +213,8 @@ void UIScene_SettingsMenu::handlePress(int controlId, int)
     case 4:
     {
         ListMenuInitData* data = new ListMenuInitData();
-        data->playerId = m_playerId;
         data->mode = 2;
+        data->playerId = m_playerId;
         gConsoleUIController.NavigateToScene(m_playerId, EUIScene_SettingsListMenu, data,
                                              EUILayer_Scene, EUIGroup_PlayerDefault);
         break;
@@ -222,8 +222,8 @@ void UIScene_SettingsMenu::handlePress(int controlId, int)
     case 5:
     {
         ListMenuInitData* data = new ListMenuInitData();
-        data->playerId = m_playerId;
         data->mode = 3;
+        data->playerId = m_playerId;
         gConsoleUIController.NavigateToScene(m_playerId, EUIScene_SettingsListMenu, data,
                                              EUILayer_Scene, EUIGroup_PlayerDefault);
         break;

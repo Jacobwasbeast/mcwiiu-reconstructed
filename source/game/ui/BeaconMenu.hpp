@@ -22,7 +22,6 @@ public:
     {
     public:
         PaymentSlot(boost::shared_ptr<Container> container, int index, int x, int y);
-        virtual ~PaymentSlot();
 
         virtual bool mayPlace(not_null_ptr<ItemInstance> item);
         virtual int getMaxStackSize();

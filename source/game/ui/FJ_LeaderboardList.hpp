@@ -27,7 +27,6 @@ public:
     };
 
     FJ_LeaderboardList(fuiRenderNode* renderNode);
-    virtual ~FJ_LeaderboardList();
 
     void SetupPleaseWait(FJ_Label* label);
     void UpdateLeaderboardCache(bool forward);

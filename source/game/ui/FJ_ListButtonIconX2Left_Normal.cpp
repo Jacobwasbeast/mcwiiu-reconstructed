@@ -7,10 +7,6 @@ FJ_ListButtonIconX2Left_Normal::FJ_ListButtonIconX2Left_Normal(fuiRenderNode* re
 {
 }
 
-FJ_ListButtonIconX2Left_Normal::~FJ_ListButtonIconX2Left_Normal()
-{
-}
-
 FJ_ListButtonIconLeft* FJ_ListButtonIconX2Left_Normal::Create(fuiRenderNode* renderNode)
 {
     return new FJ_ListButtonIconX2Left_Normal(renderNode);

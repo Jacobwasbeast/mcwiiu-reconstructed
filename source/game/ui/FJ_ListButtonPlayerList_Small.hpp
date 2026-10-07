@@ -9,7 +9,6 @@ class FJ_ListButtonPlayerList_Small : public FJ_ListButtonPlayerList
 {
 public:
     explicit FJ_ListButtonPlayerList_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonPlayerList_Small();
     static FJ_ListButtonPlayerList* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
 };

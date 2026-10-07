@@ -18,15 +18,15 @@ void FJ_BeaconEffectButton::ChangeState(int state)
 
 void FJ_BeaconEffectButton::SetIcon(int icon)
 {
-    if (icon < 1)
-    {
-        FJ_FuiNode::asMovieClip(getChildByName(std::string("Icon")))->gotoAndStop(1);
-        FJ_FuiNode::asMovieClip(getChildByName(std::string("BeaconEffectTick")))->setVisible(true);
-    }
-    else
+    if (icon > 0)
     {
         int frame = s_iconFrames[icon];
         FJ_FuiNode::asMovieClip(getChildByName(std::string("Icon")))->gotoAndStop(frame + 2);
         FJ_FuiNode::asMovieClip(getChildByName(std::string("BeaconEffectTick")))->setVisible(false);
+    }
+    else
+    {
+        FJ_FuiNode::asMovieClip(getChildByName(std::string("Icon")))->gotoAndStop(1);
+        FJ_FuiNode::asMovieClip(getChildByName(std::string("BeaconEffectTick")))->setVisible(true);
     }
 }

@@ -9,7 +9,6 @@ class FJ_BrewingBubbles_Small : public FJ_ProgressBar
 {
 public:
     FJ_BrewingBubbles_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_BrewingBubbles_Small();
     static FJ_BrewingBubbles_Small* Create(fuiRenderNode* renderNode);
     virtual void InitBarType();
     virtual uint32_t getType();

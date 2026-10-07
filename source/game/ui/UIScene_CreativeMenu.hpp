@@ -89,7 +89,6 @@ public:
     public:
         ItemPickerMenu(boost::shared_ptr<SimpleContainer> container,
                        boost::shared_ptr<Inventory> inventory);
-        virtual ~ItemPickerMenu();
         virtual bool stillValid(boost::shared_ptr<Player> player);
         virtual bool isOverrideResultClick(int slot, int button);
         virtual bool doQuickMoveLoop();

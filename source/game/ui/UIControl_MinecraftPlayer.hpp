@@ -9,7 +9,6 @@ class UIControl_MinecraftPlayer : public UIControl
 {
 public:
     UIControl_MinecraftPlayer();
-    virtual ~UIControl_MinecraftPlayer();
     void render(fuiRect* rect);
 
 private:

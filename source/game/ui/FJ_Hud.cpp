@@ -154,8 +154,7 @@ void FJ_Hud::SetArmour(int armour)
 {
     for (int i = 1; i <= 10; ++i)
     {
-        int threshold = i * 2;
-        int state = armour >= threshold ? 2 : armour >= threshold - 1 ? 1 : 0;
+        int state = armour >= i * 2 ? 2 : armour >= i * 2 - 1 ? 1 : 0;
         m_armourIcons[i - 1]->gotoAndStop(s_armourFrames[state]);
     }
     m_armour = armour;
@@ -176,15 +175,15 @@ void FJ_Hud::SetJukeBoxLabelPos()
                                                     getChildByName("SelectedLabel")->getHeight() * 0.5f -
                                                     m_jukeboxHeight * 0.5f));
     }
-    else if (m_viewportWidth == -1 || m_viewportHeight == -1)
-    {
-        getChildByName("Jukebox")->setY(m_safeZoneTop);
-    }
-    else
+    else if (m_viewportWidth != -1 && m_viewportHeight != -1)
     {
         getChildByName("Jukebox")->setY(m_safeZoneTop + (getStage()->getStageHeight() - m_viewportHeight));
         if (m_gamertagLabel != NULL)
             getChildByName("Jukebox")->incY(m_gamertagLabel->getHeight());
+    }
+    else
+    {
+        getChildByName("Jukebox")->setY(m_safeZoneTop);
     }
 }
 
@@ -233,10 +232,10 @@ void FJ_Hud::SetHealthAbsorb(bool visible, int health)
         else
             m_healthAbsorbIcons[i]->gotoAndStop(0);
     }
-    if (!visible || health < 1)
-        m_armourBar->setY(0.0f);
-    else
+    if (visible && health > 0)
         m_armourBar->setY(-m_healthBar->getY());
+    else
+        m_armourBar->setY(0.0f);
     m_healthAbsorb = health;
     m_healthAbsorbVisible = visible;
     SetSelectedLabel(L"", false);
@@ -287,7 +286,7 @@ void FJ_Hud::SetHorseHealth(int health, bool highlight)
 
     for (int i = 0; i < 30; ++i)
     {
-        if (m_horseMaxHealth < health)
+        if (health > m_horseMaxHealth)
         {
             if (i * 2 >= health)
                 m_horseHealthIcons[i]->setVisible(false);
@@ -296,12 +295,11 @@ void FJ_Hud::SetHorseHealth(int health, bool highlight)
         }
         if (m_horseHealthIcons[i]->isVisible())
         {
-            int threshold = (i + 1) * 2;
-            int state = health >= threshold ? 2 : health >= threshold - 1 ? 1 : 0;
+            int state = health >= (i + 1) * 2 ? 2 : health >= (i + 1) * 2 - 1 ? 1 : 0;
             m_horseHealthIcons[i]->gotoAndStop(s_healthFrames[highlight * 3 + state]);
         }
     }
-    if (m_horseMaxHealth < health)
+    if (health > m_horseMaxHealth)
         m_horseMaxHealth = health;
     m_horseHealth = health;
 }
@@ -601,41 +599,42 @@ void FJ_Hud::ShowAnimatedSplash(const std::wstring& label, bool visible)
     m_animatedSplashText->setVisible(visible);
     m_animatedSplashVisible = visible;
     m_animatedSplashLabel = label;
-    if (!visible)
+    if (visible)
     {
+        m_animatedSplashFrames = 5;
+        ShowPulser(false);
+        addEventListener(eFJEventType_ShowAnimatedLogoText, this, _ShowAnimatedLogoText, false);
         m_animatedSplash->gotoAndStop(1);
+        m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->setScaleX(1.0f);
+        m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->setScaleY(1.0f);
+        if (m_viewportWidth != -1 && m_viewportHeight != -1)
+        {
+            m_animatedSplash->setX(Math::round(m_viewportWidth * 0.5f));
+            m_animatedSplash->setY((getChildByName("Jukebox")->getY() + getChildByName("Jukebox")->getHeight()) +
+                                   m_animatedSplashHeight * 0.5f);
+            m_animatedSplashText->setX(Math::round((m_viewportWidth - m_animatedSplashTextWidth) * 0.5f));
+            FJ_FuiNode* panel = m_animatedSplash->getChildByName("TextPanel")->getChildAt(0);
+            panel->setHeight(Math::round(m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->getHeight() * 1.2f));
+        }
+        else
+        {
+            m_animatedSplash->setX(Math::round(getStage()->getStageWidth() * 0.5f));
+            m_animatedSplash->setY((getChildByName("Jukebox")->getY() + getChildByName("Jukebox")->getHeight()) +
+                                   m_animatedSplashHeight * 0.5f);
+        }
         m_animatedSplashText->SetLabel(label);
-        return;
-    }
+        m_animatedSplashText->setAlpha(0.0f);
 
-    m_animatedSplashFrames = 5;
-    ShowPulser(false);
-    addEventListener(eFJEventType_ShowAnimatedLogoText, this, _ShowAnimatedLogoText, false);
-    m_animatedSplash->gotoAndStop(1);
-    m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->setScaleX(1.0f);
-    m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->setScaleY(1.0f);
-    if (m_viewportWidth != -1 && m_viewportHeight != -1)
-    {
-        m_animatedSplash->setX(Math::round(m_viewportWidth * 0.5f));
-        m_animatedSplash->setY(m_animatedSplashHeight * 0.5f +
-                               (getChildByName("Jukebox")->getY() + getChildByName("Jukebox")->getHeight()));
-        m_animatedSplashText->setX(Math::round((m_viewportWidth - m_animatedSplashTextWidth) * 0.5f));
-        FJ_FuiNode* panel = m_animatedSplash->getChildByName("TextPanel")->getChildAt(0);
-        panel->setHeight(Math::round(m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->getHeight() * 1.2f));
+        int padding = (int)(m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->getWidth() * 0.25f);
+        m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->setWidth(
+            (float)Math::round(m_animatedSplashText->getWidth() / m_animatedSplash->getScaleX()) + (float)padding);
+        m_animatedSplash->gotoAndPlay(2);
     }
     else
     {
-        m_animatedSplash->setX(Math::round(getStage()->getStageWidth() * 0.5f));
-        m_animatedSplash->setY(m_animatedSplashHeight * 0.5f +
-                               (getChildByName("Jukebox")->getY() + getChildByName("Jukebox")->getHeight()));
+        m_animatedSplash->gotoAndStop(1);
+        m_animatedSplashText->SetLabel(label);
     }
-    m_animatedSplashText->SetLabel(label);
-    m_animatedSplashText->setAlpha(0.0f);
-
-    int padding = (int)(m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->getWidth() * 0.25f);
-    m_animatedSplash->getChildByName("TextPanel")->getChildAt(0)->setWidth(
-        (float)Math::round(m_animatedSplashText->getWidth() / m_animatedSplash->getScaleX()) + (float)padding);
-    m_animatedSplash->gotoAndPlay(2);
 }
 
 void FJ_Hud::UpdateOffsets(FJ_Event* event)
@@ -893,7 +892,7 @@ void FJ_Hud::LoadHud(int hudSize)
     m_hudLoading = true;
     m_hudSize = hudSize;
     setVisible(false);
-    if (m_loadedHudSize == m_hudSize)
+    if (m_hudSize == m_loadedHudSize)
     {
         setVisible(true);
         addEventListener(eFJEventType_EnterFrame, this, _UpdateOffsets, false);
@@ -1297,15 +1296,16 @@ void FJ_Hud::SetPosition(int position, const std::wstring& label, bool visible)
 
 void FJ_Hud::SetSpeedometer(int speed)
 {
+    FJ_FuiNode* icon = m_speedIcon;
     if (speed <= 0)
     {
-        m_speedIcon->getChildAt(0)->gotoAndStop(1);
+        icon->getChildAt(0)->gotoAndStop(1);
     }
     else
     {
         if (speed > 12)
             speed = 12;
-        m_speedIcon->getChildAt(0)->gotoAndStop(speed);
+        icon->getChildAt(0)->gotoAndStop(speed);
     }
 }
 
@@ -1314,10 +1314,10 @@ void FJ_Hud::SetTimerIcon(int minutes, int seconds)
     FJ_FuiNode* clock = m_timeIcon->getChildAt(0)->asMovieClip();
     FJ_FuiNode* minuteHand = clock->getChildByName("minutes")->asMovieClip();
     FJ_FuiNode* secondHand = clock->getChildByName("seconds")->asMovieClip();
-    int minuteFrame = (int)(minutes / 60.0f * 12.0f) + 1;
-    int secondFrame = (int)(seconds / 60.0f * 12.0f) + 1;
-    minuteHand->gotoAndStop(minuteFrame);
-    secondHand->gotoAndStop(secondFrame);
+    int minuteFrame = (int)(minutes / 60.0f * 12.0f);
+    int secondFrame = (int)(seconds / 60.0f * 12.0f);
+    minuteHand->gotoAndStop(minuteFrame + 1);
+    secondHand->gotoAndStop(secondFrame + 1);
 }
 
 void FJ_Hud::SetScoreIcon(int score)
@@ -1483,31 +1483,31 @@ void FJ_Hud::UpdateStatusEffectTile(int count, int index, int effect, bool ambie
         }
 
         float x;
-        if (!m_statusEffectAmbient[i])
+        if (m_statusEffectAmbient[i])
+        {
+            x = ambientColumn * m_statusEffectTiles[i]->getWidth();
+            ++ambientColumn;
+        }
+        else
         {
             x = column * m_statusEffectTiles[i]->getWidth();
             y += m_statusEffectTiles[i]->getHeight();
             ++column;
         }
-        else
-        {
-            x = ambientColumn * m_statusEffectTiles[i]->getWidth();
-            ++ambientColumn;
-        }
 
-        if (m_viewportWidth == -1 || m_viewportHeight == -1)
+        if (m_viewportWidth != -1 && m_viewportHeight != -1)
+        {
+            m_statusEffectTiles[i]->setX(m_viewportWidth - m_safeZoneRight - m_statusEffectTiles[i]->getWidth() - x);
+            m_statusEffectTiles[i]->setY(y + m_safeZoneTop + (getStage()->getStageHeight() - m_viewportHeight));
+        }
+        else
         {
             m_statusEffectTiles[i]->setX(Math::round(getStage()->getStageWidth() - m_safeZoneRight -
                                                      m_statusEffectTiles[i]->getWidth() - x));
             m_statusEffectTiles[i]->setY(Math::round(y + m_safeZoneTop));
             int bottom = Math::round(y + m_safeZoneTop) + (int)m_statusEffectTiles[i]->getHeight();
-            if (m_statusEffectsYOffset < bottom)
+            if (bottom > m_statusEffectsYOffset)
                 m_statusEffectsYOffset = bottom;
-        }
-        else
-        {
-            m_statusEffectTiles[i]->setX(m_viewportWidth - m_safeZoneRight - m_statusEffectTiles[i]->getWidth() - x);
-            m_statusEffectTiles[i]->setY(y + m_safeZoneTop + (getStage()->getStageHeight() - m_viewportHeight));
         }
     }
 }
@@ -1532,15 +1532,15 @@ void FJ_Hud::SetBossBar(int index, float progress, const std::wstring& name)
         FJ_DragonHealth* bar = NULL;
         if (getStage()->getStageHeight() == 1080.0f || getStage()->getStageHeight() == 720.0f)
         {
-            if (m_viewportWidth == -1 || m_viewportHeight == -1)
+            if (m_viewportWidth != -1 && m_viewportHeight != -1)
             {
                 bar = static_cast<FJ_DragonHealth*>(
-                    FJ_Factory::createObject("fourj.ProgressBars.FJ_DragonHealth_03", m_pRenderNode, true, NULL));
+                    FJ_Factory::createObject("fourj.ProgressBars.FJ_DragonHealth_01", m_pRenderNode, true, NULL));
             }
             else
             {
                 bar = static_cast<FJ_DragonHealth*>(
-                    FJ_Factory::createObject("fourj.ProgressBars.FJ_DragonHealth_01", m_pRenderNode, true, NULL));
+                    FJ_Factory::createObject("fourj.ProgressBars.FJ_DragonHealth_03", m_pRenderNode, true, NULL));
             }
         }
         else if (getStage()->getStageHeight() == 480.0f || getStage()->getStageHeight() == 408.0f)

@@ -333,10 +333,6 @@ InventoryMenu::OffhandSlot::OffhandSlot(boost::shared_ptr<Container> container, 
 {
 }
 
-InventoryMenu::OffhandSlot::~OffhandSlot()
-{
-}
-
 bool InventoryMenu::OffhandSlot::mayPlace(not_null_ptr<ItemInstance> item)
 {
     if (item->isEmpty())

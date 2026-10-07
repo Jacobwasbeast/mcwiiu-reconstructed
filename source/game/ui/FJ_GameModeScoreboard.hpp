@@ -22,7 +22,6 @@ private:
 
 public:
     FJ_GameModeScoreboard(fuiRenderNode* renderNode);
-    virtual ~FJ_GameModeScoreboard();
 
     static FJ_GameModeScoreboard* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

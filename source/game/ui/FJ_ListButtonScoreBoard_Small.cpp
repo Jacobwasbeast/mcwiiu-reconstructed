@@ -9,10 +9,6 @@ FJ_ListButtonScoreBoard_Small::FJ_ListButtonScoreBoard_Small(fuiRenderNode* rend
     m_small = true;
 }
 
-FJ_ListButtonScoreBoard_Small::~FJ_ListButtonScoreBoard_Small()
-{
-}
-
 FJ_ListButtonScoreBoard* FJ_ListButtonScoreBoard_Small::Create(fuiRenderNode* renderNode)
 {
     return new FJ_ListButtonScoreBoard_Small(renderNode);

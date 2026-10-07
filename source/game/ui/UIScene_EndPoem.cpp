@@ -69,10 +69,6 @@ UIScene_EndPoem::UIScene_EndPoem(int type, void*, UILayer* layer)
     m_currentLabel = 0;
 }
 
-UIScene_EndPoem::~UIScene_EndPoem()
-{
-}
-
 void UIScene_EndPoem::updateNoise()
 {
     Minecraft* minecraft = Minecraft::GetInstance();

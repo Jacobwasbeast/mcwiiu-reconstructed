@@ -76,14 +76,7 @@ UIScene_SkinSelectMenu::UIScene_SkinSelectMenu(int player, void* data, UILayer* 
     m_labelPackType.init(UIString(L""));
     m_touchCharacters.init(10);
 
-    if (gApp.StartInstallDLCProcess(m_playerId) == 0)
-    {
-        m_controlTimer.setVisible(false);
-        GameSettings::ValidateFavoriteSkins(m_playerId);
-        setActivePackIndex();
-        handlePackIndexChanged();
-    }
-    else
+    if (gApp.StartInstallDLCProcess(m_playerId) != 0)
     {
         m_purchasePending = true;
         m_controlTimer.setVisible(true);
@@ -92,6 +85,13 @@ UIScene_SkinSelectMenu::UIScene_SkinSelectMenu(int player, void* data, UILayer* 
         setCharacterSelected(false);
         setCharacterFavourite(false);
         setCharacterBlocked(false);
+    }
+    else
+    {
+        m_controlTimer.setVisible(false);
+        GameSettings::ValidateFavoriteSkins(m_playerId);
+        setActivePackIndex();
+        handlePackIndexChanged();
     }
 }
 
@@ -252,7 +252,7 @@ unsigned int UIScene_SkinSelectMenu::getNextSkinIndex(unsigned int index)
         if (next >= GameSettings::GetPlayerFavoriteSkinsCount(m_playerId))
             next = 0;
     }
-    else if (m_packIndex == 0 && static_cast<int>(next) > 0x12)
+    else if (m_packIndex == 0 && static_cast<int>(next) >= 0x13)
     {
         next = 0;
     }
@@ -266,29 +266,28 @@ unsigned int UIScene_SkinSelectMenu::getNextSkinIndex(unsigned int index)
 
 int UIScene_SkinSelectMenu::getPreviousSkinIndex(unsigned int index)
 {
-    int result;
-    if (index == 0)
+    unsigned int previous = index;
+    if (previous == 0)
     {
         if (m_packIndex == 1)
         {
-            result = static_cast<int>(GameSettings::GetPlayerFavoriteSkinsCount(m_playerId)) - 1;
+            previous = GameSettings::GetPlayerFavoriteSkinsCount(m_playerId) - 1;
         }
         else if (m_packIndex == 0)
         {
-            result = 0x12;
+            previous = 0x12;
         }
         else
         {
-            result = 0;
             if (m_pack != NULL)
-                result = m_pack->getSkinCount() - 1;
+                previous = m_pack->getSkinCount() - 1;
         }
     }
     else
     {
-        result = static_cast<int>(index) - 1;
+        previous = previous - 1;
     }
-    return result;
+    return previous;
 }
 
 void UIScene_SkinSelectMenu::handleSkinIndexChanged()
@@ -617,15 +616,17 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
 
 unsigned char UIScene_SkinSelectMenu::IsTrialDiscontinuedPack(int packId)
 {
-    if (packId < 2)
-        return 0;
-
-    DLCPack* pack = gApp.mDLCManager.getPackFromPackID(packId);
-    DLC_INFO* info = gApp.GetDLCInfoInstance()->GetDLCInfoForPackID(static_cast<unsigned int>(packId));
-    if (info == NULL || info->PackType != 4 ||
-        GameSettings::IsDebugSettingEnabled(static_cast<eDebugSetting>(2), -1) != 0)
-        return 0;
-    return pack != NULL && !pack->hasPurchasedPack();
+    if (packId >= 2)
+    {
+        DLCPack* pack = gApp.mDLCManager.getPackFromPackID(packId);
+        DLC_INFO* info = gApp.GetDLCInfoInstance()->GetDLCInfoForPackID(static_cast<unsigned int>(packId));
+        if (info != NULL && info->PackType == 4 &&
+            GameSettings::IsDebugSettingEnabled(static_cast<eDebugSetting>(2), -1) == 0)
+        {
+            return pack != NULL && !pack->hasPurchasedPack();
+        }
+    }
+    return 0;
 }
 
 unsigned int UIScene_SkinSelectMenu::GetIsNewPack(int packId)
@@ -669,7 +670,9 @@ void UIScene_SkinSelectMenu::SetSkinPackButtonList()
 
     DLCPack* texturePackSkinPack = NULL;
     const unsigned int packIndex = m_packIndex;
-    if (Minecraft::GetInstance()->mTexturePackRepository->getSelected() != TexturePackRepository::defaultTexturePack)
+    const bool usingDefaultPack =
+        Minecraft::GetInstance()->mTexturePackRepository->getSelected() == TexturePackRepository::defaultTexturePack;
+    if (!usingDefaultPack)
     {
         texturePackSkinPack = static_cast<DLCTexturePack*>(
             Minecraft::GetInstance()->mTexturePackRepository->getSelected())->getDLCInfoParentPack();
@@ -679,10 +682,10 @@ void UIScene_SkinSelectMenu::SetSkinPackButtonList()
     m_packList.AddNewButton(L10N::GetString(IDS_NO_SKIN_PACK), 0, true);
     m_packList.AddNewButton(L10N::GetString(0x70a431bd), 1, true);
 
-    if (texturePackSkinPack != NULL && texturePackSkinPack->GetPackId() > 0x3ff)
+    if (texturePackSkinPack != NULL && texturePackSkinPack->GetPackId() >= 0x400)
     {
         std::wstring texturePackName = texturePackSkinPack->getLocalisedDisplayName();
-        if (texturePackSkinPack->getSkinCount() != 0)
+        if (texturePackSkinPack->getSkinCount() > 0)
             m_hasTexturePackSkinPack = true;
     }
 
@@ -703,7 +706,7 @@ void UIScene_SkinSelectMenu::SetSkinPackButtonList()
         if (IsTrialDiscontinuedPack(static_cast<int>(pack->GetPackId())) == 0)
         {
             if (m_hasTexturePackSkinPack && texturePackSkinPack != NULL &&
-                texturePackSkinPack->GetPackId() > 0x3ff &&
+                texturePackSkinPack->GetPackId() >= 0x400 &&
                 texturePackSkinPack->GetPackId() == pack->GetPackId())
             {
                 m_texturePackSkinPackId = static_cast<int>(texturePackSkinPack->GetPackId());
@@ -1309,18 +1312,18 @@ void UIScene_SkinSelectMenu::customDraw(const char* name, fuiRect* rect)
 {
     if (m_skinUpdatePending)
     {
-        int frame;
+        bool frameIsOne;
         {
             std::string charactersName("IggyCharacters");
-            frame = m_movie->getRootNode()->getFuiNode()->getChildByName(charactersName)->currentFrame();
+            frameIsOne = m_movie->getRootNode()->getFuiNode()->getChildByName(charactersName)->currentFrame() == 1;
         }
-        if (frame == 1)
+        if (frameIsOne)
         {
             m_characters[eCharacter_Current].SetFacing(UIControl_PlayerSkinPreview::eFacingFront, false);
             m_characters[eCharacter_Next1].SetFacing(UIControl_PlayerSkinPreview::eFacingRight, false);
             m_characters[eCharacter_Previous1].SetFacing(UIControl_PlayerSkinPreview::eFacingLeft, false);
-            m_skinUpdatePending = false;
             m_skinSliding = false;
+            m_skinUpdatePending = false;
             handleSkinIndexChanged();
         }
     }
@@ -1418,13 +1421,13 @@ void UIScene_SkinSelectMenu::handleReload()
     m_labelSkinName.init(UIString(L""));
     m_labelSkinOrigin.init(UIString(L""));
     m_skinAnimating = false;
-    m_packListDirty = true;
+    m_skinUpdatePending = true;
     m_texturePackSkinPackId = 0;
     const unsigned int packIndex = m_packIndex;
-    m_skinUpdatePending = true;
+    m_packListDirty = true;
     m_hasTexturePackSkinPack = false;
 
-    if (gApp.mDLCManager.getPackCount(DLCManager::eDLCType_Skin) != 0)
+    if (static_cast<unsigned int>(gApp.mDLCManager.getPackCount(DLCManager::eDLCType_Skin)) > 0)
     {
         m_pack = gApp.mDLCManager.getPackContainingSkin(m_currentSkinPath);
         m_selectedPackId = 0;
@@ -1433,7 +1436,7 @@ void UIScene_SkinSelectMenu::handleReload()
     }
 
     GameSettings::ValidateFavoriteSkins(m_playerId);
-    if (GameSettings::GetPlayerFavoriteSkinsCount(m_playerId) != 0)
+    if (static_cast<unsigned int>(GameSettings::GetPlayerFavoriteSkinsCount(m_playerId)) > 0)
         m_packIndex = 1;
 
     handlePackIndexChanged();

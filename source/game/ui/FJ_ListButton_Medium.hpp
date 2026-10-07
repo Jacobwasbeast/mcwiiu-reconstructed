@@ -10,7 +10,6 @@ class FJ_ListButton_Medium : public FJ_ListButton
 {
 public:
     explicit FJ_ListButton_Medium(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButton_Medium();
     static FJ_ListButton* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
 };

@@ -12,7 +12,6 @@ class UIScene_EndPoem : public UIScene
 {
 public:
     UIScene_EndPoem(int type, void* data, UILayer* layer);
-    virtual ~UIScene_EndPoem();
 
     void updateNoise();
     virtual void updateTooltips();

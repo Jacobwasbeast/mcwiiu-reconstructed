@@ -10,7 +10,6 @@ class FJ_ListButtonController_Normal : public FJ_ListButtonController
 {
 public:
     explicit FJ_ListButtonController_Normal(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonController_Normal();
     static FJ_ListButtonController* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
 

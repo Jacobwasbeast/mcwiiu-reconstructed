@@ -10,10 +10,6 @@ UIScene_Timer::UIScene_Timer(int type, void* data, UILayer* layer)
         m_control.setVisible(false);
 }
 
-UIScene_Timer::~UIScene_Timer()
-{
-}
-
 void UIScene_Timer::reloadMovie(bool)
 {
 }
@@ -32,7 +28,7 @@ unsigned int UIScene_Timer::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
-    m_control.setupControl(this, root, std::string("Background"));
+    m_control.setupControl(this, root, "Background");
     m_controls.push_back(&m_control);
     return 1;
 }

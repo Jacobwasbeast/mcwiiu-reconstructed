@@ -11,7 +11,6 @@ class FJ_ListButtonCheckbox_Normal : public FJ_ListButtonCheckbox
 {
 public:
     explicit FJ_ListButtonCheckbox_Normal(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonCheckbox_Normal();
     static FJ_ListButtonCheckbox* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
 };

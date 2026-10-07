@@ -54,15 +54,13 @@ unsigned int UIScene_NewUpdateMessage::mapElementsAndNames()
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
     {
-        std::string name("AcceptButton");
-        m_acceptButton.setupControl(this, root, name);
+        m_acceptButton.setupControl(this, root, std::string("AcceptButton"));
+        m_controls.push_back(&m_acceptButton);
     }
-    m_controls.push_back(&m_acceptButton);
     {
-        std::string name("EULAtext");
-        m_eulaText.setupControl(this, root, name);
+        m_eulaText.setupControl(this, root, std::string("EULAtext"));
+        m_controls.push_back(&m_eulaText);
     }
-    m_controls.push_back(&m_eulaText);
     return 1;
 }
 
@@ -135,7 +133,7 @@ bool UIScene_NewUpdateMessage::hasFocus(int)
     return m_hasFocus;
 }
 
-unsigned int UIScene_NewUpdateMessage::getDefaultGtcButtons()
+unsigned long long UIScene_NewUpdateMessage::getDefaultGtcButtons()
 {
     return 0;
 }

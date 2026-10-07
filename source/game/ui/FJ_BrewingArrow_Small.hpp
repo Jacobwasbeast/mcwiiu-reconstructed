@@ -9,7 +9,6 @@ class FJ_BrewingArrow_Small : public FJ_ProgressBar
 {
 public:
     explicit FJ_BrewingArrow_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_BrewingArrow_Small();
     virtual void InitBarType();
     static FJ_BrewingArrow_Small* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

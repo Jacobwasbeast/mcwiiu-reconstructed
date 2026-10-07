@@ -35,10 +35,10 @@ UIScene_FurnaceMenu::UIScene_FurnaceMenu(int type, void* data, UILayer* layer)
 
     m_container = input->container;
     m_furnaceLabel.init(UIString(m_container->getName()));
-    if (m_container->getName().empty())
-        m_furnaceLabel.init(UIString(L10N::GetString(IDS_TILE_FURNACE)));
-    else
+    if (!m_container->getName().empty())
         m_furnaceLabel.init(UIString(m_container->getName()));
+    else
+        m_furnaceLabel.init(UIString(L10N::GetString(IDS_TILE_FURNACE)));
 
     m_ingredientLabel.init(UIString(L10N::GetString(IDS_INGREDIENT)));
     m_fuelLabel.init(UIString(L10N::GetString(IDS_FUEL)));
@@ -233,8 +233,10 @@ void UIScene_FurnaceMenu::GetItemScreenData(
     const int columns = getSectionColumns(section);
     size->x = controlSize.x / static_cast<float>(columns);
     size->y = controlSize.y / static_cast<float>(rows);
-    position->x = static_cast<float>(slot % columns) * size->x;
-    position->y = static_cast<float>(slot / columns) * size->y;
+    int column = slot % columns;
+    int row = slot / columns;
+    position->x = static_cast<float>(column) * size->x;
+    position->y = static_cast<float>(row) * size->y;
 }
 
 int UIScene_FurnaceMenu::getSectionStartOffset(

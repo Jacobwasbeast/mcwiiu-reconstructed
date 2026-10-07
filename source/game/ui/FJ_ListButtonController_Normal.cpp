@@ -5,10 +5,6 @@ FJ_ListButtonController_Normal::FJ_ListButtonController_Normal(fuiRenderNode* re
 {
 }
 
-FJ_ListButtonController_Normal::~FJ_ListButtonController_Normal()
-{
-}
-
 FJ_ListButtonController* FJ_ListButtonController_Normal::Create(fuiRenderNode* renderNode)
 {
     return new FJ_ListButtonController_Normal(renderNode);

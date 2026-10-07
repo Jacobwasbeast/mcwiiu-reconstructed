@@ -212,10 +212,6 @@ UIScene_CreativeMenu::ItemPickerMenu::ItemPickerMenu(boost::shared_ptr<SimpleCon
     m_containerId = -2;
 }
 
-UIScene_CreativeMenu::ItemPickerMenu::~ItemPickerMenu()
-{
-}
-
 bool UIScene_CreativeMenu::ItemPickerMenu::stillValid(boost::shared_ptr<Player>)
 {
     return true;
@@ -223,7 +219,7 @@ bool UIScene_CreativeMenu::ItemPickerMenu::stillValid(boost::shared_ptr<Player>)
 
 bool UIScene_CreativeMenu::ItemPickerMenu::isOverrideResultClick(int slot, int button)
 {
-    return slot < 9 && button == 0;
+    return slot >= 0 && slot < 9 && button == 0;
 }
 
 bool UIScene_CreativeMenu::ItemPickerMenu::doQuickMoveLoop()
@@ -303,16 +299,32 @@ unsigned int UIScene_CreativeMenu::CanHaveFocus(IUIScene_AbstractContainerMenu::
 
 unsigned int UIScene_CreativeMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar) return 9;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector) return 10;
-    return 0;
+    unsigned int columns = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector:
+        columns = 10;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar:
+        columns = 9;
+        break;
+    }
+    return columns;
 }
 
 unsigned int UIScene_CreativeMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar) return 1;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector) return 5;
-    return 0;
+    unsigned int rows = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector:
+        rows = 5;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar:
+        rows = 1;
+        break;
+    }
+    return rows;
 }
 
 unsigned int UIScene_CreativeMenu::GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
@@ -426,22 +438,22 @@ void UIScene_CreativeMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ESc
 
 unsigned int UIScene_CreativeMenu::handleValidKeyPress(int key, int value, int)
 {
-    if (value != 1)
-        return 0;
-
-    Minecraft* minecraft = Minecraft::GetInstance();
-    for (int index = 50; index < 59; ++index)
+    if (value == 1)
     {
-        not_null_ptr<ItemInstance> item = m_menu->getSlot(index)->getItem();
-        if (!item->isEmpty())
+        Minecraft* minecraft = Minecraft::GetInstance();
+        for (int index = 50; index < 59; ++index)
         {
-            m_menu->getSlot(index)->set(ItemInstance::EMPTY);
-            const int itemsSize = static_cast<int>(m_menu->m_slots.size());
-            minecraft->mGameModes[key]->handleCreativeModeItemAdd(
-                ItemInstance::EMPTY, (index - itemsSize) + Inventory::INVENTORY_SIZE + 9);
+            not_null_ptr<ItemInstance> item = m_menu->getSlot(index)->getItem();
+            if (!item->isEmpty())
+            {
+                m_menu->getSlot(index)->set(ItemInstance::EMPTY);
+                minecraft->mGameModes[key]->handleCreativeModeItemAdd(
+                    ItemInstance::EMPTY, (index - static_cast<int>(m_menu->m_slots.size())) + Inventory::INVENTORY_SIZE + 9);
+            }
         }
+        return 1;
     }
-    return 1;
+    return 0;
 }
 
 void UIScene_CreativeMenu::handleOutsideClicked(int playerId, int, int button)
@@ -723,9 +735,17 @@ void UIScene_CreativeMenu::handleSlotListClicked(IUIScene_AbstractContainerMenu:
 
 int UIScene_CreativeMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar) return 50;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector) return 0;
-    return 0;
+    int offset = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector:
+        offset = 0;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar:
+        offset = 50;
+        break;
+    }
+    return offset;
 }
 
 void UIScene_CreativeMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slotX, int slotY, bool pointer)
@@ -795,7 +815,7 @@ void MenuBuilder::FIREWORK(unsigned char type, int colour, int flight, bool flic
 
     CompoundTag* tag = new CompoundTag();
     CompoundTag* fireworks = new CompoundTag();
-    ListTag* explosions = new ListTag(0);
+    ListTag* explosions = new ListTag();
     explosions->add(explosion);
     fireworks->put(FireworksItem::TAG_EXPLOSIONS, explosions);
     fireworks->putByte(FireworksItem::TAG_FLIGHT, static_cast<unsigned char>(flight));
@@ -1765,53 +1785,83 @@ unsigned int UIScene_CreativeMenu::mapElementsAndNames()
         std::string name("TouchPanel_0");
         m_touchPanels[0].setupControl(this, mainNode, name);
     }
-    m_controls.push_back(&m_touchPanels[0]);
+    {
+        UIControl* control = &m_touchPanels[0];
+        m_controls.push_back(control);
+    }
     {
         std::string name("TouchPanel_1");
         m_touchPanels[1].setupControl(this, mainNode, name);
     }
-    m_controls.push_back(&m_touchPanels[1]);
+    {
+        UIControl* control = &m_touchPanels[1];
+        m_controls.push_back(control);
+    }
     {
         std::string name("TouchPanel_2");
         m_touchPanels[2].setupControl(this, mainNode, name);
     }
-    m_controls.push_back(&m_touchPanels[2]);
+    {
+        UIControl* control = &m_touchPanels[2];
+        m_controls.push_back(control);
+    }
     {
         std::string name("TouchPanel_3");
         m_touchPanels[3].setupControl(this, mainNode, name);
     }
-    m_controls.push_back(&m_touchPanels[3]);
+    {
+        UIControl* control = &m_touchPanels[3];
+        m_controls.push_back(control);
+    }
     {
         std::string name("TouchPanel_4");
         m_touchPanels[4].setupControl(this, mainNode, name);
     }
-    m_controls.push_back(&m_touchPanels[4]);
+    {
+        UIControl* control = &m_touchPanels[4];
+        m_controls.push_back(control);
+    }
     {
         std::string name("TouchPanel_5");
         m_touchPanels[5].setupControl(this, mainNode, name);
     }
-    m_controls.push_back(&m_touchPanels[5]);
+    {
+        UIControl* control = &m_touchPanels[5];
+        m_controls.push_back(control);
+    }
     {
         std::string name("TouchPanel_6");
         m_touchPanels[6].setupControl(this, mainNode, name);
     }
-    m_controls.push_back(&m_touchPanels[6]);
+    {
+        UIControl* control = &m_touchPanels[6];
+        m_controls.push_back(control);
+    }
     {
         std::string name("TouchPanel_7");
         m_touchPanels[7].setupControl(this, mainNode, name);
     }
-    m_controls.push_back(&m_touchPanels[7]);
+    {
+        UIControl* control = &m_touchPanels[7];
+        m_controls.push_back(control);
+    }
     {
         std::string name("TouchPanel_Slider");
         m_touchPanels[8].setupControl(this, mainNode, name);
     }
-    m_controls.push_back(&m_touchPanels[8]);
+    {
+        UIControl* control = &m_touchPanels[8];
+        m_controls.push_back(control);
+    }
 
     {
         std::string name("containerList");
         m_containerList.setupControl(this, mainNode, name);
     }
-    m_controls.push_back(&m_containerList);
+    {
+        UIControl* control = &m_containerList;
+        m_controls.push_back(control);
+    }
 
     return 1;
 }
@@ -1902,9 +1952,8 @@ void UIScene_CreativeMenu::handleTouchInput(unsigned int, int, int touchY, int t
                 fraction = 1.0f;
             else if (fraction < 0.0f)
                 fraction = 0.0f;
-            const unsigned int pageCount = s_tabSpecs[m_currentTab]->getPageCount();
-            const int page = Math::round(fraction * static_cast<float>(pageCount - 1));
-            m_tabCurrentPages[m_currentTab] = page;
+            m_tabCurrentPages[m_currentTab] =
+                Math::round(fraction * static_cast<float>(s_tabSpecs[m_currentTab]->getPageCount() - 1));
             switchTab(static_cast<ECreativeInventoryTabs>(m_currentTab));
         }
     }

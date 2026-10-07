@@ -5,6 +5,7 @@
 #include <string>
 
 #include "game/ui/UIScene.hpp"
+#include "game/ui/UILayer.hpp"
 #include "game/world/generation/FlatGeneratorInfo.hpp"
 #include "game/world/generation/FlatLayerInfo.hpp"
 #include "game/ui/UIControl.hpp"
@@ -80,8 +81,8 @@ public:
                                   bool pressed, bool repeat, bool released);
     virtual UIControl* GetMainPanel();
     virtual void SetFocusToElement(int focus);
-    virtual std::wstring getMoviePath();
-    virtual int getSceneType();
+    virtual std::wstring getMoviePath() { return L"SuperFlatEditLayerMenu"; }
+    virtual int getSceneType() { return EUIScene_SuperFlatEditLayer; }
 
 private:
     ESnap m_pendingSnap;

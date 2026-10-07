@@ -145,7 +145,7 @@ void UIControl_EnchantmentBook::render(fuiRect* rect)
         if (tableRenderer != NULL)
             mBookModel = tableRenderer->mBookModel;
         else
-            mBookModel = new BookModel(ModelDefinition());
+            mBookModel = new BookModel();
     }
     boost::shared_ptr<Entity> entity;
     mBookModel->render(entity, 0.0F, spread, spread2, rotation, 0.0F, 0.0625F, true);

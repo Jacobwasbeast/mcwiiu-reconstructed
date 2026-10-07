@@ -11,7 +11,6 @@ class TitleScreen : public Screen
 {
 public:
     TitleScreen();
-    virtual ~TitleScreen();
 
     virtual void render(int x, int y, float partialTick);
     virtual void keyPressed(wchar_t key, int action);

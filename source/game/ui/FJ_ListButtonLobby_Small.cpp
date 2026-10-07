@@ -15,6 +15,3 @@ uint32_t FJ_ListButtonLobby_Small::getType()
     return 0x8027;
 }
 
-FJ_ListButtonLobby_Small::~FJ_ListButtonLobby_Small()
-{
-}

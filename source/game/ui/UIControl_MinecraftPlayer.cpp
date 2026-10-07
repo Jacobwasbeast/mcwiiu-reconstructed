@@ -27,10 +27,6 @@ UIControl_MinecraftPlayer::UIControl_MinecraftPlayer()
     mScaledHeight = (float)calculator.mHeightScale;
 }
 
-UIControl_MinecraftPlayer::~UIControl_MinecraftPlayer()
-{
-}
-
 void UIControl_MinecraftPlayer::render(fuiRect* rect)
 {
     Minecraft* minecraft = Minecraft::GetInstance();

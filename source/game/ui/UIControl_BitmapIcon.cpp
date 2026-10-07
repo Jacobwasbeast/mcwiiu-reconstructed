@@ -5,9 +5,9 @@
 #include "game/ui/fuiRenderNode.hpp"
 
 UIControl_BitmapIcon::UIControl_BitmapIcon()
-    : m_textureNamePending(false)
-    , m_textureName()
+    : m_textureName()
 {
+    m_textureNamePending = false;
     m_textureName = L"";
 }
 
@@ -16,8 +16,9 @@ void UIControl_BitmapIcon::setTextureName(const std::wstring& textureName, bool 
     m_textureName.assign(textureName, 0, std::wstring::npos);
     if (immediate) {
         m_textureNamePending = false;
-        if (m_fuiRenderNode != 0) {
-            static_cast<FJ_BitmapIcon*>(m_fuiRenderNode->getFuiNode())->SetTextureName(textureName);
+        fuiRenderNode* node = m_fuiRenderNode;
+        if (node != 0) {
+            static_cast<FJ_BitmapIcon*>(node->getFuiNode())->SetTextureName(textureName);
         }
     } else {
         m_textureNamePending = true;

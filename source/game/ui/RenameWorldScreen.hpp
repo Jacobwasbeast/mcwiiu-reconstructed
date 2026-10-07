@@ -12,7 +12,6 @@ class RenameWorldScreen : public Screen
 {
 public:
     RenameWorldScreen(Screen* parentScreen, const std::wstring& levelId);
-    virtual ~RenameWorldScreen();
 
     virtual void render(int x, int y, float partialTick);
     virtual void keyPressed(wchar_t key, int action);

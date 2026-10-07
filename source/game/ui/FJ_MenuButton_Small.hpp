@@ -11,7 +11,6 @@ class FJ_MenuButton_Small : public FJ_MenuButton
 {
 public:
     explicit FJ_MenuButton_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_MenuButton_Small();
 
     static FJ_MenuButton* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();

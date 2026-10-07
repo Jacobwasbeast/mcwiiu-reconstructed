@@ -9,7 +9,6 @@ class FJ_UpsellButton_Normal : public FJ_UpsellButton
 {
 public:
     explicit FJ_UpsellButton_Normal(fuiRenderNode* renderNode);
-    virtual ~FJ_UpsellButton_Normal();
     static FJ_UpsellButton* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

@@ -60,7 +60,7 @@ public:
     virtual void handleGainFocus(bool hadFocus);
     virtual bool hasFocus(int sceneType);
     virtual int getSceneType();
-    virtual unsigned int getDefaultGtcButtons();
+    virtual unsigned long long getDefaultGtcButtons();
 
 private:
     UIControl_Button m_buttons[8];

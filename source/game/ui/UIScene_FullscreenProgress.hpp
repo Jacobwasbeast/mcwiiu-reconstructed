@@ -24,6 +24,12 @@ struct FullscreenProgressState
     int closeMode;
     int playerId;
     EUIScene backScene;
+
+    FullscreenProgressState()
+        : showConfirmation(false), reservedFlag1(true), reservedFlag2(true), showTip(true),
+          closeMode(3), backScene(EUIScene_None)
+    {
+    }
 };
 
 class UIScene_FullscreenProgress : public UIScene
@@ -49,7 +55,7 @@ public:
     void SetWasCancelled(bool cancelled);
     virtual bool isReadyToDelete();
     virtual int getSceneType();
-    virtual unsigned int getDefaultGtcButtons();
+    virtual unsigned long long getDefaultGtcButtons();
 
 private:
     C4JThreadImpl* m_thread;

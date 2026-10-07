@@ -76,8 +76,10 @@ void fuiBitmapFont::getGlyphTexPos(unsigned short codepoint, float& texX, float&
     int column = 0;
     m_bitmapFont.getFontData()->getPos(glyphId, row, column);
 
-    texX = static_cast<float>(column * m_sFontData->glyphWidth) / static_cast<float>(m_sFontData->imageWidth);
-    texY = static_cast<float>(row * m_sFontData->glyphHeight) / static_cast<float>(m_sFontData->imageHeight);
+    const float x = static_cast<float>(column * m_sFontData->glyphWidth) / static_cast<float>(m_sFontData->imageWidth);
+    const float y = static_cast<float>(row * m_sFontData->glyphHeight) / static_cast<float>(m_sFontData->imageHeight);
+    texX = x;
+    texY = y;
 }
 
 void fuiBitmapFont::getGlyphWidthHeight(float& texWidth, float& texHeight)

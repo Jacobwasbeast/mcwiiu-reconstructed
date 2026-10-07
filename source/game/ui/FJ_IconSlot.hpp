@@ -28,7 +28,7 @@ public:
     virtual void SetLabel(const std::wstring& label);
     void SetSlotID(const std::string& slotName, int iSlotId);
     void SetTextureName(const std::wstring& textureName);
-    int getSlotId();
+    int getSlotId() { return m_iSlotId; }
 };
 
 #endif

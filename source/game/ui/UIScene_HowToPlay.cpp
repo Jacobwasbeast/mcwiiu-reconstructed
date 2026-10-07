@@ -148,10 +148,6 @@ UIScene_HowToPlay::UIScene_HowToPlay(int playerId, void* data, UILayer* layer)
     StartPage(static_cast<EHowToPlayPage>((reinterpret_cast<unsigned int>(data) >> 0x10) & 0xfff));
 }
 
-UIScene_HowToPlay::~UIScene_HowToPlay()
-{
-}
-
 namespace
 {
     struct HowToPlayTitle

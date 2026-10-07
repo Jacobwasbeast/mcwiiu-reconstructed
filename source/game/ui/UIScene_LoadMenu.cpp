@@ -200,23 +200,18 @@ UIScene_LoadMenu::UIScene_LoadMenu(int sceneType, void* data, UILayer* layer)
     m_updateInProgress = false;
 }
 
-UIScene_LoadMenu::~UIScene_LoadMenu()
-{
-}
-
 void UIScene_LoadMenu::AddVariantButtons(bool alternate)
 {
-    if (!alternate)
-    {
-        unsigned int label = GetVariantPlayLabel(0, false);
-        m_list.AddNewButton(std::wstring(L10N::GetString(static_cast<int>(label))), 0x11, true);
-    }
-    else
+    if (alternate)
     {
         unsigned int label = GetVariantPlayLabel(1, alternate);
         m_list.AddNewButton(std::wstring(L10N::GetString(static_cast<int>(label))), 0x12, true);
     }
-
+    else
+    {
+        unsigned int label = GetVariantPlayLabel(0, false);
+        m_list.AddNewButton(std::wstring(L10N::GetString(static_cast<int>(label))), 0x11, true);
+    }
 }
 
 void UIScene_LoadMenu::UpdateIfPublicGamesAllowed()
@@ -473,19 +468,22 @@ int UIScene_LoadMenu::LoadSaveDataThumbnailReturned(void* context, unsigned char
 {
     UIScene_LoadMenu* scene = static_cast<UIScene_LoadMenu*>(
         gConsoleUIController.GetSceneFromCallbackId(static_cast<unsigned int>(reinterpret_cast<uintptr_t>(context))));
-    if (scene == NULL)
-        return 0;
-    if (data == NULL || size == 0)
+    if (scene != NULL)
     {
-        scene->m_thumbnailFailed = true;
-        scene->m_thumbnailPending = false;
-        return 0;
+        if (data != NULL && size != 0)
+        {
+            scene->registerSubstitutionTexture(scene->m_thumbnailName, data, size, false);
+            scene->m_thumbnailData = data;
+            scene->m_thumbnailSize = size;
+            scene->m_thumbnailLoaded = true;
+            scene->m_thumbnailPending = false;
+        }
+        else
+        {
+            scene->m_thumbnailFailed = true;
+            scene->m_thumbnailPending = false;
+        }
     }
-    scene->registerSubstitutionTexture(scene->m_thumbnailName, data, size, false);
-    scene->m_thumbnailData = data;
-    scene->m_thumbnailSize = size;
-    scene->m_thumbnailLoaded = true;
-    scene->m_thumbnailPending = false;
     return 0;
 }
 
@@ -494,66 +492,54 @@ unsigned int UIScene_LoadMenu::mapElementsAndNames()
     IUIScene_StartGame::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
     {
-        std::string name("MainPanel");
-        m_mainPanel.setupControl(this, root, name);
+        m_mainPanel.setupControl(this, root, std::string("MainPanel"));
+        m_controls.push_back(&m_mainPanel);
     }
-    m_controls.push_back(&m_mainPanel);
     fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
     {
-        std::string name("GameName");
-        m_gameName.setupControl(this, panel, name);
+        m_gameName.setupControl(this, panel, std::string("GameName"));
+        m_controls.push_back(&m_gameName);
     }
-    m_controls.push_back(&m_gameName);
     {
-        std::string name("CreatedMode");
-        m_createdMode.setupControl(this, panel, name);
+        m_createdMode.setupControl(this, panel, std::string("CreatedMode"));
+        m_controls.push_back(&m_createdMode);
     }
-    m_controls.push_back(&m_createdMode);
     {
-        std::string name("Seed");
-        m_description.setupControl(this, panel, name);
+        m_description.setupControl(this, panel, std::string("Seed"));
+        m_controls.push_back(&m_description);
     }
-    m_controls.push_back(&m_description);
     {
-        std::string name("TexturePackSelector");
-        m_texturePackList.setupControl(this, panel, name);
+        m_texturePackList.setupControl(this, panel, std::string("TexturePackSelector"));
+        m_controls.push_back(&m_texturePackList);
     }
-    m_controls.push_back(&m_texturePackList);
     {
-        std::string name("GameModeToggle");
-        m_gameModeSlider.setupControl(this, panel, name);
+        m_gameModeSlider.setupControl(this, panel, std::string("GameModeToggle"));
+        m_controls.push_back(&m_gameModeSlider);
     }
-    m_controls.push_back(&m_gameModeSlider);
     {
-        std::string name("CheckboxOnline");
-        m_onlineGameCheckBox.setupControl(this, panel, name);
+        m_onlineGameCheckBox.setupControl(this, panel, std::string("CheckboxOnline"));
+        m_controls.push_back(&m_onlineGameCheckBox);
     }
-    m_controls.push_back(&m_onlineGameCheckBox);
     {
-        std::string name("MoreOptions");
-        m_playButton.setupControl(this, panel, name);
+        m_playButton.setupControl(this, panel, std::string("MoreOptions"));
+        m_controls.push_back(&m_playButton);
     }
-    m_controls.push_back(&m_playButton);
     {
-        std::string name("LoadSettings");
-        m_loadSettings.setupControl(this, panel, name);
+        m_loadSettings.setupControl(this, panel, std::string("LoadSettings"));
+        m_controls.push_back(&m_loadSettings);
     }
-    m_controls.push_back(&m_loadSettings);
     {
-        std::string name("Difficulty");
-        m_difficultySlider.setupControl(this, panel, name);
+        m_difficultySlider.setupControl(this, panel, std::string("Difficulty"));
+        m_controls.push_back(&m_difficultySlider);
     }
-    m_controls.push_back(&m_difficultySlider);
     {
-        std::string name("LevelIcon");
-        m_levelIcon.setupControl(this, panel, name);
+        m_levelIcon.setupControl(this, panel, std::string("LevelIcon"));
+        m_controls.push_back(&m_levelIcon);
     }
-    m_controls.push_back(&m_levelIcon);
     {
-        std::string name("MultiList");
-        m_list.setupControl(this, panel, name);
+        m_list.setupControl(this, panel, std::string("MultiList"));
+        m_controls.push_back(&m_list);
     }
-    m_controls.push_back(&m_list);
     return 1;
 }
 
@@ -567,14 +553,17 @@ void UIScene_LoadMenu::updateTooltips()
 void UIScene_LoadMenu::updateComponents()
 {
     m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
-    m_layer->showComponent(m_playerId, EUIScene_Logo, gRenderer->IsWidescreen());
+    bool widescreen = false;
+    if (gRenderer->IsWidescreen())
+        widescreen = true;
+    m_layer->showComponent(m_playerId, EUIScene_Logo, widescreen);
 }
 
 unsigned int UIScene_LoadMenu::getSubSceneType() const
 {
-    if (m_launchData.mMiniGameId == eMiniGameId_Any)
-        return static_cast<unsigned int>(m_state62C);
-    return m_launchData.mJoinMiniGame ? 3 : 2;
+    if (m_launchData.mMiniGameId != eMiniGameId_Any)
+        return m_launchData.mJoinMiniGame ? 3 : 2;
+    return static_cast<unsigned int>(m_state62C);
 }
 
 void UIScene_LoadMenu::tick()
@@ -757,7 +746,7 @@ void UIScene_LoadMenu::handleInput(int, int action, bool repeat, bool pressed,
         sendInputToMovie(action, repeat, pressed, released);
         if (!m_launchData.mHostMiniGame && !m_launchData.mJoinMiniGame)
         {
-            bool checked = m_onlineGameCheckBox.IsChecked();
+            unsigned int checked = m_onlineGameCheckBox.IsChecked();
             if (m_launchData.mOnlineGame != checked)
             {
                 m_launchData.mOnlineGame = checked;
@@ -907,30 +896,6 @@ void UIScene_LoadMenu::handleCheckboxElementToggled(int, int second, bool checke
     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
     switch (second)
     {
-    case 5:
-    {
-        m_launchData.mOnlineGame = checked;
-        m_list.EnableItem(10, checked && m_publicGamesAllowed, false);
-        if (GetMiniGame()->HasMultipleMaps())
-            m_list.EnableItem(0xd, true, false);
-
-        bool allowOnline = m_launchData.mOnlineGame && m_onlineEnabled;
-        if (!gProfile->IsSignedInLive(m_playerId))
-            allowOnline = false;
-        if (m_launchData.mOnlineSettingChangedBySystem)
-            allowOnline = false;
-        m_list.EnableItem(0xb, allowOnline && checked && !m_launchData.mMatchmaking, false);
-        m_list.SetCheckboxValue(10, checked && m_launchData.mMatchmaking && m_publicGamesAllowed, false);
-        m_list.SetCheckboxValue(0xb, checked && !m_launchData.mMatchmaking && m_launchData.mAllowFriendsOfFriends,
-                                false);
-        return;
-    }
-    case 8:
-        m_launchData.mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_CentreSpawn, checked);
-        return;
-    case 9:
-        m_launchData.mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_IsTeams, checked);
-        return;
     case 10:
     {
         m_launchData.mMatchmaking = checked;
@@ -958,8 +923,32 @@ void UIScene_LoadMenu::handleCheckboxElementToggled(int, int second, bool checke
                                 false);
         return;
     }
+    case 5:
+    {
+        m_launchData.mOnlineGame = checked;
+        m_list.EnableItem(10, checked && m_publicGamesAllowed, false);
+        if (GetMiniGame()->HasMultipleMaps())
+            m_list.EnableItem(0xd, true, false);
+
+        bool allowOnline = m_launchData.mOnlineGame && m_onlineEnabled;
+        if (!gProfile->IsSignedInLive(m_playerId))
+            allowOnline = false;
+        if (m_launchData.mOnlineSettingChangedBySystem)
+            allowOnline = false;
+        m_list.EnableItem(0xb, allowOnline && checked && !m_launchData.mMatchmaking, false);
+        m_list.SetCheckboxValue(10, checked && m_launchData.mMatchmaking && m_publicGamesAllowed, false);
+        m_list.SetCheckboxValue(0xb, checked && !m_launchData.mMatchmaking && m_launchData.mAllowFriendsOfFriends,
+                                false);
+        return;
+    }
     case 0xb:
         m_launchData.mAllowFriendsOfFriends = checked;
+        return;
+    case 8:
+        m_launchData.mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_CentreSpawn, checked);
+        return;
+    case 9:
+        m_launchData.mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_IsTeams, checked);
         return;
     case 0x15:
     {
@@ -997,9 +986,7 @@ void UIScene_LoadMenu::handleSliderElementMove(int, int second, int value)
     case 0x10:
     {
         m_launchData.mMatchmakingFilters[1] = value;
-        int variant = value - 1;
-        if (variant < 0)
-            variant = 0;
+        int variant = value - 1 < 0 ? 0 : value - 1;
         m_launchData.mPlayerSettings.mHostOptions.Set(eCustomGameModeHostOption_GameVariant, variant);
         m_sizeLogic.Update(m_list, value);
         UpdateDescriptionText();
@@ -1010,24 +997,23 @@ void UIScene_LoadMenu::handleSliderElementMove(int, int second, int value)
 
 void UIScene_LoadMenu::handleGainFocus(bool hadFocus)
 {
-    LaunchMoreOptionsMenuInitData* initData = &m_launchData;
-    if (hadFocus && !initData->mHostMiniGame)
-        m_onlineGameCheckBox.setChecked(initData->mOnlineGame);
-    if (!initData->mHostMiniGame && !initData->mJoinMiniGame)
+    if (hadFocus && !m_launchData.mHostMiniGame)
+        m_onlineGameCheckBox.setChecked(m_launchData.mOnlineGame);
+    if (!m_launchData.mHostMiniGame && !m_launchData.mJoinMiniGame)
         return;
     UpdateIfPublicGamesAllowed();
-    if (initData->mHostMiniGame)
+    if (m_launchData.mHostMiniGame)
     {
-        bool allowOnlineExtras = initData->mOnlineGame && m_onlineEnabled;
+        bool allowOnlineExtras = m_launchData.mOnlineGame && m_onlineEnabled;
         if (!gProfile->IsSignedInLive(m_playerId))
             allowOnlineExtras = false;
-        if (initData->mOnlineSettingChangedBySystem)
+        if (m_launchData.mOnlineSettingChangedBySystem)
             allowOnlineExtras = false;
-        if (!initData->mTimeTrial)
+        if (!m_launchData.mTimeTrial)
         {
             m_list.EnableItem(10, allowOnlineExtras && m_publicGamesAllowed, true);
             m_list.SetCheckboxValue(
-                10, initData->mOnlineGame && initData->mMatchmaking && m_publicGamesAllowed, true);
+                10, m_launchData.mOnlineGame && m_launchData.mMatchmaking && m_publicGamesAllowed, true);
         }
     }
 }
@@ -1146,9 +1132,7 @@ UIControl* UIScene_LoadMenu::GetMainPanel()
 
 void UIScene_LoadMenu::SetEnablePlayGameButton(bool enabled)
 {
-    if (!m_launchData.mHostMiniGame && !m_launchData.mJoinMiniGame)
-        m_loadSettings.setEnable(enabled, true);
-    else
+    if (m_launchData.mHostMiniGame || m_launchData.mJoinMiniGame)
     {
         if (m_list.CheckElementExists(0x11))
             m_list.EnableItem(0x11, enabled, true);
@@ -1157,6 +1141,8 @@ void UIScene_LoadMenu::SetEnablePlayGameButton(bool enabled)
         if (m_list.CheckElementExists(0x13))
             m_list.EnableItem(0x13, enabled, true);
     }
+    else
+        m_loadSettings.setEnable(enabled, true);
 }
 
 void UIScene_LoadMenu::HandleSaveDeviceRemoved(int)

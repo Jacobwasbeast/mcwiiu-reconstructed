@@ -9,7 +9,6 @@ class UIScene_Timer : public UIScene
 {
 public:
     UIScene_Timer(int type, void* data, UILayer* layer);
-    virtual ~UIScene_Timer();
     virtual void reloadMovie(bool value);
     virtual bool needsReloaded();
     virtual std::wstring getMoviePath();

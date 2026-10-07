@@ -47,12 +47,15 @@ void UIControl_LeaderboardList::setupTitles(const std::wstring& title,
 
 void UIControl_LeaderboardList::initLeaderboard(int focusRank, int totalEntries, int numColumns)
 {
-    FJ_LeaderboardList* list = m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList();
-    list->InitLeaderboard(focusRank, totalEntries, numColumns);
+    m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->InitLeaderboard(focusRank, totalEntries,
+                                                                            numColumns);
     if (!m_touchBoxAdded) {
-        int layerId = m_scene->m_layer->m_layerId;
-        if (layerId == 4 || layerId == 6)
+        switch (m_scene->m_layer->m_layerId) {
+        case EUILayer_Fullscreen:
+        case EUILayer_Scene:
             gConsoleUIController.TouchBoxAdd(this, m_scene);
+            break;
+        }
         m_touchBoxAdded = true;
     }
 }
@@ -75,30 +78,25 @@ void UIControl_LeaderboardList::addDataSet(bool loading, int rank, int value,
                                             const std::wstring& sixthColumnText,
                                             const std::wstring& seventhColumnText)
 {
-    const std::wstring* firstColumn = 0;
+    const std::wstring* columns[7];
+    for (int i = 0; i < 7; ++i)
+        columns[i] = NULL;
     if (!firstColumnText.empty())
-        firstColumn = &firstColumnText;
-    const std::wstring* secondColumn = 0;
+        columns[0] = &firstColumnText;
     if (!secondColumnText.empty())
-        secondColumn = &secondColumnText;
-    const std::wstring* thirdColumn = 0;
+        columns[1] = &secondColumnText;
     if (!thirdColumnText.empty())
-        thirdColumn = &thirdColumnText;
-    const std::wstring* fourthColumn = 0;
+        columns[2] = &thirdColumnText;
     if (!fourthColumnText.empty())
-        fourthColumn = &fourthColumnText;
-    const std::wstring* fifthColumn = 0;
+        columns[3] = &fourthColumnText;
     if (!fifthColumnText.empty())
-        fifthColumn = &fifthColumnText;
-    const std::wstring* sixthColumn = 0;
+        columns[4] = &fifthColumnText;
     if (!sixthColumnText.empty())
-        sixthColumn = &sixthColumnText;
-    const std::wstring* seventhColumn = 0;
+        columns[5] = &sixthColumnText;
     if (!seventhColumnText.empty())
-        seventhColumn = &seventhColumnText;
+        columns[6] = &seventhColumnText;
     m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->AddDataSet(loading, rank, value, gamertag,
-        complete, firstColumn, secondColumn, thirdColumn, fourthColumn, fifthColumn,
-        sixthColumn, seventhColumn);
+        complete, columns[0], columns[1], columns[2], columns[3], columns[4], columns[5], columns[6]);
 }
 
 void UIControl_LeaderboardList::SetTouchFocus(int x, int y, bool focus)

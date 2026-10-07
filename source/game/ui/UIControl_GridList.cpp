@@ -9,8 +9,8 @@
 
 UIControl_GridList::UIControl_GridList()
 {
-    m_currentSelection = 0;
     m_itemIndex = 0;
+    m_currentSelection = 0;
 }
 
 UIControl_GridList::~UIControl_GridList()
@@ -25,22 +25,25 @@ UIControl_GridList::~UIControl_GridList()
 unsigned int UIControl_GridList::CanTouchFocus(int x, int y)
 {
     unsigned int result = 0;
-    if (m_fuiRenderNode->getFuiNode()->isFJ_List2D())
-        result = m_fuiRenderNode->getFuiNode()->asFJ_List2D()->CanTouchFocus(x, y);
+    if (!m_fuiRenderNode->getFuiNode()->isFJ_List2D())
+        return result;
+    result = m_fuiRenderNode->getFuiNode()->asFJ_List2D()->CanTouchFocus(x, y);
     return result;
 }
 
 void UIControl_GridList::SetTouchFocus(int x, int y, bool focus)
 {
-    if (m_fuiRenderNode->getFuiNode()->isFJ_List2D())
-        m_fuiRenderNode->getFuiNode()->asFJ_List2D()->SetTouchFocus(x, y, focus);
+    if (!m_fuiRenderNode->getFuiNode()->isFJ_List2D())
+        return;
+    m_fuiRenderNode->getFuiNode()->asFJ_List2D()->SetTouchFocus(x, y, focus);
 }
 
 unsigned int UIControl_GridList::CanTouchTrigger(int x, int y)
 {
     unsigned int result = 0;
-    if (m_fuiRenderNode->getFuiNode()->isFJ_List2D())
-        result = m_fuiRenderNode->getFuiNode()->asFJ_List2D()->CanTouchTrigger(x, y);
+    if (!m_fuiRenderNode->getFuiNode()->isFJ_List2D())
+        return result;
+    result = m_fuiRenderNode->getFuiNode()->asFJ_List2D()->CanTouchTrigger(x, y);
     return result;
 }
 
@@ -56,8 +59,8 @@ void UIControl_GridList::addElement(UIControl::eUIControlType type, int index)
 
 void UIControl_GridList::clearElements()
 {
-    m_itemIndex = 0;
     m_currentSelection = 0;
+    m_itemIndex = 0;
     m_elementTypes.clear();
     m_elementEnabled.clear();
     m_elements.clear();
@@ -66,14 +69,15 @@ void UIControl_GridList::clearElements()
 int UIControl_GridList::getListIndex(int index)
 {
     std::vector<int>::iterator element = m_elements.begin();
+    std::vector<int>::iterator end = m_elements.end();
     int listIndex = 0;
-    while (element != m_elements.end()) {
-        if (*element == index)
-            return listIndex;
+    while (element != end && *element != index) {
         ++element;
         ++listIndex;
     }
-    return -1;
+    if (element == end)
+        return -1;
+    return listIndex;
 }
 
 void UIControl_GridList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)

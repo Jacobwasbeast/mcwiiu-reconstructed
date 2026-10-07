@@ -35,7 +35,12 @@ int FJ_DynamicHtmlText::getActiveLabelHeight() const
 {
     int height = m_iTopMargin * 2 + m_iLabelSpacing;
     if (!m_labels.empty())
-        height += (int)m_labels.back()->getY() + (int)m_labels.back()->getHeight();
+    {
+        std::vector<FJ_Label*>::const_iterator last = m_labels.end();
+        --last;
+        height += (int)(*last)->getY();
+        height += (int)(*last)->getHeight();
+    }
     return height;
 }
 
@@ -57,8 +62,8 @@ void FJ_DynamicHtmlText::UpdateTouchFlickScrolling()
         if (m_pUpArrow->isVisible())
         {
             m_iScrollDirection = -1;
-            m_iTouchScroll = -1;
             m_iTargetDirection = -1;
+            m_iTouchScroll = -1;
             return;
         }
         m_iScrollDirection = 0;
@@ -77,8 +82,8 @@ void FJ_DynamicHtmlText::UpdateTouchFlickScrolling()
         if (m_pDownArrow->isVisible())
         {
             m_iScrollDirection = 1;
-            m_iTouchScroll = 1;
             m_iTargetDirection = 1;
+            m_iTouchScroll = 1;
             return;
         }
         m_iScrollDirection = 0;
@@ -86,10 +91,10 @@ void FJ_DynamicHtmlText::UpdateTouchFlickScrolling()
     }
     else
     {
-        m_iScrollDirection = 0;
-        m_iTouchStart = 0;
-        m_iCurrentTouchPosition = 0;
         m_bTouchFlick = false;
+        m_iCurrentTouchPosition = 0;
+        m_iTouchStart = 0;
+        m_iScrollDirection = 0;
         m_pUpArrow->ChangeState(0);
         m_pDownArrow->ChangeState(3);
     }
@@ -388,16 +393,16 @@ void FJ_DynamicHtmlText::Init()
 void FJ_DynamicHtmlText::ASConstructor()
 {
     m_bTouchScrolling = false;
+    m_iCurrentTouchPosition = 0;
     m_iLabelSpacing = 10;
     m_iTopMargin = 20;
-    m_bTouchFlick = false;
-    m_iScrollDirection = 0;
     m_iTargetDirection = 0;
     m_iTouchScroll = 0;
-    m_iCurrentTouchPosition = 0;
     m_bKeyboardScroll = false;
+    m_iScrollDirection = 0;
     m_iTouchStart = 0;
     m_iCharacterHeight = 0;
+    m_bTouchFlick = false;
     m_iFlickOffset = 0;
     m_pUpArrow = static_cast<FJ_ScrollArrow*>(FJ_Factory::createObject("fourj.FJ_ScrollArrow", m_pRenderNode, true, NULL));
     m_pDownArrow = static_cast<FJ_ScrollArrow*>(FJ_Factory::createObject("fourj.FJ_ScrollArrow", m_pRenderNode, true, NULL));
@@ -424,8 +429,8 @@ void FJ_DynamicHtmlText::keyDownHandler(FJ_Event* event)
                 m_bKeyboardScroll = true;
             }
             if (m_pUpArrow->isVisible()) {
-                m_iTargetDirection = -1;
                 m_iScrollDirection = -1;
+                m_iTargetDirection = -1;
             }
         }
         if (keyEvent->m_iKeyCode == 4 || keyEvent->m_iKeyCode == 18 || keyEvent->m_iKeyCode == 2) {
@@ -439,8 +444,8 @@ void FJ_DynamicHtmlText::keyDownHandler(FJ_Event* event)
                 m_bKeyboardScroll = true;
             }
             if (m_pDownArrow->isVisible()) {
-                m_iTargetDirection = 1;
                 m_iScrollDirection = 1;
+                m_iTargetDirection = 1;
             }
         }
     }
@@ -453,8 +458,8 @@ void FJ_DynamicHtmlText::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
 
 void FJ_DynamicHtmlText::keyUpHandler(FJ_Event* event)
 {
-    m_iScrollDirection = 0;
     m_bKeyboardScroll = false;
+    m_iScrollDirection = 0;
     m_pUpArrow->ChangeState(0);
     m_pDownArrow->ChangeState(3);
 }
@@ -536,14 +541,14 @@ void FJ_DynamicHtmlText::SetupList()
     bool exhausted = false;
     do
     {
-        if (added < m_text.size())
+        if (added >= m_text.size())
         {
-            SetNextLabel(m_labels.size(), true);
-            ++added;
+            exhausted = true;
         }
         else
         {
-            exhausted = true;
+            SetNextLabel(m_labels.size(), true);
+            ++added;
         }
     } while (m_labels[m_labels.size() - 1]->getY() + m_labels[m_labels.size() - 1]->getHeight() + m_iTopMargin * 2 < m_fRealHeight && !exhausted);
     m_bListReady = true;
@@ -557,7 +562,8 @@ void FJ_DynamicHtmlText::AddText(const std::wstring& text, bool setup)
         addEventListener(eFJEventType_EnterFrame, this, _UpdateScrolling, false);
         SetupList();
         HandleScrollListArrows(true);
-        if (!m_labels.empty()) m_iCharacterHeight = m_labels.front()->GetAverageCharHeight();
+        if (m_labels.size() != 0)
+            m_iCharacterHeight = m_labels[0]->GetAverageCharHeight();
     }
 }
 
@@ -573,52 +579,53 @@ float FJ_DynamicHtmlText::GetRealHeight()
 
 void FJ_DynamicHtmlText::TouchScroll(int offset, bool active)
 {
-    if (!active) {
-        if (m_iFlickOffset != 0) m_bTouchFlick = true;
-        m_iScrollDirection = 0;
-        m_iTouchStart = 0;
-        m_iCurrentTouchPosition = 0;
-        m_bTouchScrolling = false;
-        m_pUpArrow->ChangeState(0);
-        m_pDownArrow->ChangeState(3);
-        return;
-    }
-    m_iTouchStart = offset;
-    if (!m_bTouchScrolling) {
-        m_iCurrentTouchPosition = offset;
-        m_bTouchFlick = false;
-        m_bTouchScrolling = true;
-        return;
-    }
-    int movement = offset - m_iCurrentTouchPosition;
-    if (movement > 0) {
-        if (m_iScrollDirection != -1) {
-            m_pUpArrow->ChangeState(2);
-            m_pDownArrow->ChangeState(3);
-        }
-        if (m_pUpArrow->isVisible()) {
-            m_iScrollDirection = -1;
-            m_iTouchScroll = -1;
-            m_iTargetDirection = -1;
+    if (active) {
+        m_iTouchStart = offset;
+        if (!m_bTouchScrolling) {
+            m_iCurrentTouchPosition = offset;
+            m_bTouchFlick = false;
+            m_bTouchScrolling = true;
             return;
         }
-    } else if (movement < 0) {
-        if (m_iScrollDirection != 1) {
-            m_pDownArrow->ChangeState(5);
+        offset -= m_iCurrentTouchPosition;
+        if (offset > 0) {
+            if (m_iScrollDirection != -1) {
+                m_pUpArrow->ChangeState(2);
+                m_pDownArrow->ChangeState(3);
+            }
+            if (m_pUpArrow->isVisible()) {
+                m_iScrollDirection = -1;
+                m_iTargetDirection = -1;
+                m_iTouchScroll = -1;
+                return;
+            }
+        } else if (offset < 0) {
+            if (m_iScrollDirection != 1) {
+                m_pDownArrow->ChangeState(5);
+                m_pUpArrow->ChangeState(0);
+            }
+            if (m_pDownArrow->isVisible()) {
+                m_iScrollDirection = 1;
+                m_iTargetDirection = 1;
+                m_iTouchScroll = 1;
+                return;
+            }
+        } else {
+            m_iScrollDirection = 0;
             m_pUpArrow->ChangeState(0);
-        }
-        if (m_pDownArrow->isVisible()) {
-            m_iScrollDirection = 1;
-            m_iTouchScroll = 1;
-            m_iTargetDirection = 1;
+            m_pDownArrow->ChangeState(3);
             return;
         }
+        m_iScrollDirection = 0;
+        m_iCurrentTouchPosition = m_iTouchStart;
     } else {
+        if (m_iFlickOffset != 0)
+            m_bTouchFlick = true;
+        m_bTouchScrolling = false;
+        m_iCurrentTouchPosition = 0;
+        m_iTouchStart = 0;
         m_iScrollDirection = 0;
         m_pUpArrow->ChangeState(0);
         m_pDownArrow->ChangeState(3);
-        return;
     }
-    m_iScrollDirection = 0;
-    m_iCurrentTouchPosition = m_iTouchStart;
 }

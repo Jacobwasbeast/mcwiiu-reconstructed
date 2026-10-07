@@ -11,7 +11,6 @@ class JoinMultiplayerScreen : public Screen
 {
 public:
     JoinMultiplayerScreen(Screen* parentScreen);
-    virtual ~JoinMultiplayerScreen();
 
     virtual void render(int x, int y, float partialTick);
     virtual void keyPressed(wchar_t key, int action);

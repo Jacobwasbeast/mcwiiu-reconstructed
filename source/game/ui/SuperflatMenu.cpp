@@ -70,7 +70,8 @@ int SuperflatMenu::CategoricalLabelBehaviour::getLength(int* labels)
 
 std::wstring SuperflatMenu::CategoricalLabelBehaviour::GetLabel(int value)
 {
-    std::wstring result = L10N::GetString(mName);
+    std::wstring result;
+    result = L10N::GetString(mName);
     result.append(labelSeparator);
     result.append(L10N::GetString(mLabels[value]));
     return result;
@@ -245,9 +246,6 @@ SuperflatMenu::MapCanyons::MapCanyons(int control, UIControl_MultiList* list)
     : Mapping(control, list)
 {
 }
-SuperflatMenu::MapCanyons::~MapCanyons()
-{
-}
 void SuperflatMenu::MapCanyons::write(FlatGeneratorInfo& info)
 {
     info.setCanyons(isChecked());
@@ -259,9 +257,6 @@ void SuperflatMenu::MapCanyons::read(FlatGeneratorInfo& info)
 
 SuperflatMenu::MapCaves::MapCaves(int control, UIControl_MultiList* list)
     : Mapping(control, list)
-{
-}
-SuperflatMenu::MapCaves::~MapCaves()
 {
 }
 void SuperflatMenu::MapCaves::write(FlatGeneratorInfo& info)
@@ -277,9 +272,6 @@ SuperflatMenu::MapDecorations::MapDecorations(int control, UIControl_MultiList* 
     : Mapping(control, list)
 {
 }
-SuperflatMenu::MapDecorations::~MapDecorations()
-{
-}
 void SuperflatMenu::MapDecorations::write(FlatGeneratorInfo& info)
 {
     info.setDecorations(isChecked());
@@ -291,9 +283,6 @@ void SuperflatMenu::MapDecorations::read(FlatGeneratorInfo& info)
 
 SuperflatMenu::MapDungeon::MapDungeon(int control, UIControl_MultiList* list)
     : Mapping(control, list)
-{
-}
-SuperflatMenu::MapDungeon::~MapDungeon()
 {
 }
 void SuperflatMenu::MapDungeon::write(FlatGeneratorInfo& info)
@@ -309,9 +298,6 @@ SuperflatMenu::MapLake::MapLake(int control, UIControl_MultiList* list)
     : Mapping(control, list)
 {
 }
-SuperflatMenu::MapLake::~MapLake()
-{
-}
 void SuperflatMenu::MapLake::write(FlatGeneratorInfo& info)
 {
     info.setLakes(isChecked());
@@ -325,9 +311,6 @@ SuperflatMenu::MapLavaLake::MapLavaLake(int control, UIControl_MultiList* list)
     : Mapping(control, list)
 {
 }
-SuperflatMenu::MapLavaLake::~MapLavaLake()
-{
-}
 void SuperflatMenu::MapLavaLake::write(FlatGeneratorInfo& info)
 {
     info.setLavaLakes(isChecked());
@@ -339,9 +322,6 @@ void SuperflatMenu::MapLavaLake::read(FlatGeneratorInfo& info)
 
 SuperflatMenu::MapBiomeSpecific::MapBiomeSpecific(int control, UIControl_MultiList* list)
     : Mapping(control, list), mSub(this)
-{
-}
-SuperflatMenu::MapBiomeSpecific::~MapBiomeSpecific()
 {
 }
 void SuperflatMenu::MapBiomeSpecific::write(FlatGeneratorInfo& info)
@@ -361,9 +341,6 @@ SuperflatMenu::MapMineshaft::MapMineshaft(int control, UIControl_MultiList* list
     : Mapping(control, list), mSub(this)
 {
 }
-SuperflatMenu::MapMineshaft::~MapMineshaft()
-{
-}
 void SuperflatMenu::MapMineshaft::write(FlatGeneratorInfo& info)
 {
     if (isChecked())
@@ -379,9 +356,6 @@ void SuperflatMenu::MapMineshaft::read(FlatGeneratorInfo& info)
 
 SuperflatMenu::MapVillage::MapVillage(int control, UIControl_MultiList* list)
     : Mapping(control, list), mSub(this), mSub2(this)
-{
-}
-SuperflatMenu::MapVillage::~MapVillage()
 {
 }
 void SuperflatMenu::MapVillage::write(FlatGeneratorInfo& info)
@@ -400,9 +374,6 @@ SuperflatMenu::MapStronghold::MapStronghold(int control, UIControl_MultiList* li
     : Mapping(control, list), mSub(this), mSub2(this)
 {
 }
-SuperflatMenu::MapStronghold::~MapStronghold()
-{
-}
 void SuperflatMenu::MapStronghold::write(FlatGeneratorInfo& info)
 {
     if (isChecked()) info.setStronghold(mSub2.getPosition(), mSub.getPosition());
@@ -410,16 +381,13 @@ void SuperflatMenu::MapStronghold::write(FlatGeneratorInfo& info)
 }
 void SuperflatMenu::MapStronghold::read(FlatGeneratorInfo& info)
 {
-    mSub.setPosition(info.getStrongholdCount());
     mSub2.setPosition(info.getStrongholdDistance());
+    mSub.setPosition(info.getStrongholdCount());
     setChecked(info.hasStronghold());
 }
 
 SuperflatMenu::MapOceanMonument::MapOceanMonument(int control, UIControl_MultiList* list)
     : Mapping(control, list), mSub(this), mSub2(this)
-{
-}
-SuperflatMenu::MapOceanMonument::~MapOceanMonument()
 {
 }
 void SuperflatMenu::MapOceanMonument::write(FlatGeneratorInfo& info)
@@ -437,16 +405,15 @@ void SuperflatMenu::MapOceanMonument::write(FlatGeneratorInfo& info)
 }
 void SuperflatMenu::MapOceanMonument::read(FlatGeneratorInfo& info)
 {
-    mSub.setPosition(info.getOceanMonumentSpacing());
-    mSub2.setPosition(info.getOceanMonuemntSeparation());
+    int spacing = info.getOceanMonumentSpacing();
+    int separation = info.getOceanMonuemntSeparation();
+    mSub.setPosition(spacing);
+    mSub2.setPosition(separation * 100 / (spacing * 5));
     setChecked(info.hasOceanMonument());
 }
 
 SuperflatMenu::MapShipwrecks::MapShipwrecks(int control, UIControl_MultiList* list)
     : Mapping(control, list), mSub(this), mSub2(this)
-{
-}
-SuperflatMenu::MapShipwrecks::~MapShipwrecks()
 {
 }
 void SuperflatMenu::MapShipwrecks::write(FlatGeneratorInfo& info)
@@ -464,16 +431,15 @@ void SuperflatMenu::MapShipwrecks::write(FlatGeneratorInfo& info)
 }
 void SuperflatMenu::MapShipwrecks::read(FlatGeneratorInfo& info)
 {
-    mSub.setPosition(info.getShipwreckSpacing());
-    mSub2.setPosition(info.getShipwreckSeparation());
+    int spacing = info.getShipwreckSpacing();
+    int separation = info.getShipwreckSeparation();
+    mSub.setPosition(spacing);
+    mSub2.setPosition(separation * 100 / (spacing * 5));
     setChecked(info.hasShipwrecks());
 }
 
 SuperflatMenu::MapWoodlandMansion::MapWoodlandMansion(int control, UIControl_MultiList* list)
     : Mapping(control, list), mSub(this), mSub2(this)
-{
-}
-SuperflatMenu::MapWoodlandMansion::~MapWoodlandMansion()
 {
 }
 void SuperflatMenu::MapWoodlandMansion::write(FlatGeneratorInfo& info)
@@ -498,11 +464,7 @@ void SuperflatMenu::MapWoodlandMansion::read(FlatGeneratorInfo& info)
 
 std::wstring SuperflatMenu::BiomeInfo::getName() const
 {
-    return Biome::byId(mBiome)->getName(false);
-}
-
-SuperflatMenu::BiomeInfo::~BiomeInfo()
-{
+    return Biome::biomes[mBiome]->getName(false);
 }
 
 SuperflatMenu::CustomSuperflatBlocks::CustomSuperflatBlocks()

@@ -12,10 +12,6 @@ UIControl_PlayerButtonList::PendingAddItem::PendingAddItem(
 {
 }
 
-UIControl_PlayerButtonList::PendingAddItem::~PendingAddItem()
-{
-}
-
 unsigned int UIControl_PlayerButtonList::PendingAddItem::OnTick()
 {
     m_list->addItem(m_label, m_playerIcon, m_voipIcon, true);
@@ -27,7 +23,8 @@ void UIControl_PlayerButtonList::setVOIPIcon(int item, int icon)
     if (m_scene->m_movie == NULL)
         return;
 
-    static_cast<FJ_List_ListButtonPlayerList*>(m_fuiRenderNode->getFuiNode())->SetVOIPIcon(item, icon + 1);
+    FJ_List_ListButtonPlayerList* list = static_cast<FJ_List_ListButtonPlayerList*>(m_fuiRenderNode->getFuiNode());
+    list->SetVOIPIcon(item, icon + 1);
 }
 
 void UIControl_PlayerButtonList::addItem(const std::wstring& label, int playerIcon,
@@ -59,5 +56,6 @@ void UIControl_PlayerButtonList::setPlayerIcon(int item, int icon)
     if (m_scene->m_movie == NULL)
         return;
 
-    static_cast<FJ_List_ListButtonPlayerList*>(m_fuiRenderNode->getFuiNode())->SetPlayerIcon(item, icon + 1);
+    FJ_List_ListButtonPlayerList* list = static_cast<FJ_List_ListButtonPlayerList*>(m_fuiRenderNode->getFuiNode());
+    list->SetPlayerIcon(item, icon + 1);
 }

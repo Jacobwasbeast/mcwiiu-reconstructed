@@ -5,10 +5,6 @@ FJ_ListButton_Medium::FJ_ListButton_Medium(fuiRenderNode* renderNode)
 {
 }
 
-FJ_ListButton_Medium::~FJ_ListButton_Medium()
-{
-}
-
 FJ_ListButton* FJ_ListButton_Medium::Create(fuiRenderNode* renderNode)
 {
     return new FJ_ListButton_Medium(renderNode);

@@ -9,7 +9,6 @@ class FJ_LayoutButton_Small : public FJ_Button
 {
 public:
     explicit FJ_LayoutButton_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_LayoutButton_Small();
 
     static FJ_Button* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();

@@ -9,10 +9,6 @@ UIControl_TexturePackList::UIControl_TexturePackList()
 {
 }
 
-UIControl_TexturePackList::~UIControl_TexturePackList()
-{
-}
-
 void UIControl_TexturePackList::init(const std::wstring& label, int id)
 {
     m_label = UIString(label);

@@ -20,7 +20,6 @@ public:
     {
     public:
         OffhandSlot(boost::shared_ptr<Container> container, int index, int x, int y);
-        virtual ~OffhandSlot();
         virtual bool mayPlace(not_null_ptr<ItemInstance> item);
     };
 

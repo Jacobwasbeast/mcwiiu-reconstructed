@@ -15,6 +15,3 @@ unsigned int FJ_ListButtonDLC_Small::getType()
     return 0x8023;
 }
 
-FJ_ListButtonDLC_Small::~FJ_ListButtonDLC_Small()
-{
-}

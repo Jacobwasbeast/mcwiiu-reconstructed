@@ -6,22 +6,7 @@
 #include <boost/unordered_map.hpp>
 
 #include "game/ui/fuiFontSet.hpp"
-
-struct stbtt_fontinfo
-{
-    void* userdata;
-    unsigned char* data;
-    int fontstart;
-    int numGlyphs;
-    int loca;
-    int head;
-    int glyf;
-    int hhea;
-    int hmtx;
-    int kern;
-    int index_map;
-    int indexToLocFormat;
-};
+#include "vendor/stb_truetype.hpp"
 
 class fuiTTFFontSet : public fuiFontSet
 {

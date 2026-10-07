@@ -38,18 +38,18 @@ UIScene_HopperMenu::UIScene_HopperMenu(int type, void* data, UILayer* layer)
     initialiseMovie();
 
     HopperMenuSceneData* sceneData = static_cast<HopperMenuSceneData*>(data);
-    if (sceneData->container->getName().empty())
+    if (!sceneData->container->getName().empty())
     {
-        boost::shared_ptr<InteractionObject> interaction =
-            boost::dynamic_pointer_cast<InteractionObject>(sceneData->container);
-        if (interaction == 0 || interaction->getTypeId(false) != ClientboundContainerOpenPacket::MINECART_HOPPER)
-            m_hopperLabel.init(UIString(L10N::GetString(IDS_CONTAINER_HOPPER)));
-        else
-            m_hopperLabel.init(UIString(L10N::GetString(IDS_CONTAINER_MINECART)));
+        m_hopperLabel.init(UIString(sceneData->container->getName()));
     }
     else
     {
-        m_hopperLabel.init(UIString(sceneData->container->getName()));
+        boost::shared_ptr<InteractionObject> interaction =
+            boost::dynamic_pointer_cast<InteractionObject>(sceneData->container);
+        if (interaction != 0 && interaction->getTypeId(false) == ClientboundContainerOpenPacket::MINECART_HOPPER)
+            m_hopperLabel.init(UIString(L10N::GetString(IDS_CONTAINER_MINECART)));
+        else
+            m_hopperLabel.init(UIString(L10N::GetString(IDS_CONTAINER_HOPPER)));
     }
 
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -204,8 +204,10 @@ void UIScene_HopperMenu::GetItemScreenData(
     const int columns = getSectionColumns(section);
     size->x = controlSize.x / static_cast<float>(columns);
     size->y = controlSize.y / static_cast<float>(rows);
-    position->x = static_cast<float>(slot % columns) * size->x;
-    position->y = static_cast<float>(slot / columns) * size->y;
+    const int row = slot / columns;
+    const int column = slot % columns;
+    position->x = static_cast<float>(column) * size->x;
+    position->y = static_cast<float>(row) * size->y;
 }
 
 void UIScene_HopperMenu::setSectionSelectedSlot(

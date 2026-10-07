@@ -58,10 +58,10 @@ fuiRenderNodeTimeline::fuiRenderNodeTimeline(fuiRenderNode* stage, fuiRenderNode
     : fuiRenderNode(stage, parent, object, symbolIndex, eFuiObjectType_Timeline, depth, color,
                     clipDepth, visible, file)
 {
-    m_mask = 0;
+    m_flags |= 4;
     m_currentFrame = -1;
     m_previousFrame = 0;
-    m_flags |= 4;
+    m_mask = 0;
     if (object != 0)
     {
         fuiTimeline* timeline = static_cast<fuiTimeline*>(object);
@@ -92,11 +92,9 @@ void fuiRenderNodeTimeline::setPlaying(bool playing)
 
 void fuiRenderNodeTimeline::setFrame(unsigned int frame)
 {
-    unsigned int target = static_cast<fuiTimeline*>(m_object)->timelineFrameCount - 1;
-    if (frame - 1 < target)
-        target = frame - 1;
+    unsigned int last = static_cast<fuiTimeline*>(m_object)->timelineFrameCount - 1;
     m_flags |= 0x12;
-    m_previousFrame = static_cast<int>(target);
+    m_previousFrame = std::min(frame - 1, last);
 }
 
 void fuiRenderNodeTimeline::addFrameAction(int frame, eFrameActionType type,
@@ -149,31 +147,34 @@ void fuiRenderNodeTimeline::shutdown()
 
 fuiObject* fuiRenderNodeTimeline::getReferencedObject(fuiObject* object)
 {
-    do
+    fuiReference* reference = static_cast<fuiReference*>(object);
+    fui* gui = gFui;
+    for (;;)
     {
-        fuiReference* reference = static_cast<fuiReference*>(object);
-        fuiFile* file = reinterpret_cast<fuiFile*>(gFui->getFuiFileFromIndex(reference->index));
-        for (;;)
+        fuiFile* file = reinterpret_cast<fuiFile*>(gui->getFuiFileFromIndex(reference->index));
+        fuiSymbol* symbol;
+        do
         {
             while (static_cast<int>(reference->symbolIndex) == -1)
             {
             }
-            fuiSymbol* symbol = &file->symbolData[reference->symbolIndex];
-            if (symbol->objectType == eFuiObjectType_Shape)
-                return &file->shapeData[symbol->objectIndex];
-            if (symbol->objectType == eFuiObjectType_Timeline)
-                return &file->timelineData[symbol->objectIndex];
-            if (symbol->objectType == eFuiObjectType_Bitmap)
-                return &file->bitmaps[symbol->objectIndex];
-            if (symbol->objectType == eFuiObjectType_Reference)
+            symbol = &file->symbolData[reference->symbolIndex];
+            switch (symbol->objectType)
             {
-                object = &file->referenceData[symbol->objectIndex];
+            case eFuiObjectType_Shape:
+                return &file->shapeData[symbol->objectIndex];
+            case eFuiObjectType_Timeline:
+                return &file->timelineData[symbol->objectIndex];
+            case eFuiObjectType_Bitmap:
+                return &file->bitmaps[symbol->objectIndex];
+            case eFuiObjectType_EditText:
+                return &file->editTextData[symbol->objectIndex];
+            default:
                 break;
             }
-            if (symbol->objectType == eFuiObjectType_EditText)
-                return &file->editTextData[symbol->objectIndex];
-        }
-    } while (true);
+        } while (symbol->objectType != eFuiObjectType_Reference);
+        reference = &file->referenceData[symbol->objectIndex];
+    }
 }
 
 fuiRenderNode* fuiRenderNodeTimeline::createReferencedNode(fuiObject* object, unsigned int depth,
@@ -184,32 +185,35 @@ fuiRenderNode* fuiRenderNodeTimeline::createReferencedNode(fuiObject* object, un
     {
         fuiReference* reference = static_cast<fuiReference*>(object);
         int symbolIndex = reference->symbolIndex;
-        for (;;)
+        fuiFile* file;
+        fuiSymbol* symbol;
+        do
         {
             if (symbolIndex == -1)
                 return 0;
-            fuiFile* file = reinterpret_cast<fuiFile*>(gFui->getFuiFileFromIndex(reference->index));
-            fuiSymbol* symbol = &file->symbolData[symbolIndex];
-            if (symbol->objectType == eFuiObjectType_Shape)
+            file = reinterpret_cast<fuiFile*>(gFui->getFuiFileFromIndex(reference->index));
+            symbol = &file->symbolData[symbolIndex];
+            switch (symbol->objectType)
+            {
+            case eFuiObjectType_Shape:
                 return new fuiRenderNodeShape(m_stage, this, &file->shapeData[symbol->objectIndex],
                                               depth, renderFlags, color, clipDepth, visible, file);
-            if (symbol->objectType == eFuiObjectType_Timeline)
+            case eFuiObjectType_Timeline:
                 return new fuiRenderNodeTimeline(m_stage, this,
                                                  &file->timelineData[symbol->objectIndex], depth,
                                                  renderFlags, color, clipDepth, visible, file);
-            if (symbol->objectType == eFuiObjectType_Bitmap)
+            case eFuiObjectType_Bitmap:
                 return new fuiRenderNodeBitmap(m_stage, this, &file->bitmaps[symbol->objectIndex],
                                                depth, renderFlags, color, clipDepth, visible, file);
-            if (symbol->objectType == eFuiObjectType_Reference)
-            {
-                object = &file->referenceData[symbol->objectIndex];
-                break;
-            }
-            if (symbol->objectType == eFuiObjectType_EditText)
+            case eFuiObjectType_EditText:
                 return new fuiRenderNodeEditText(m_stage, this,
                                                  &file->editTextData[symbol->objectIndex], depth,
                                                  renderFlags, color, clipDepth, visible, file);
-        }
+            default:
+                break;
+            }
+        } while (symbol->objectType != eFuiObjectType_Reference);
+        object = &file->referenceData[symbol->objectIndex];
     }
 }
 
@@ -226,62 +230,47 @@ void fuiRenderNodeTimeline::depthSort()
 void fuiRenderNodeTimeline::handleConstruction()
 {
     FJ_FuiNode* created;
-    if (static_cast<int>(m_object->symbolIndex) == -1)
-    {
-        created = FJ_Factory::createObject("", this, false, 0);
-    }
-    else
+    if (static_cast<int>(m_object->symbolIndex) != -1)
     {
         created = FJ_Factory::createObject(
             m_file->symbolData[static_cast<int>(m_object->symbolIndex)].name, this, false, 0);
+    }
+    else
+    {
+        created = FJ_Factory::createObject("", this, false, 0);
     }
 
     fuiTimeline* timeline = static_cast<fuiTimeline*>(m_object);
     fuiTimelineAction* action = m_file->timelineActionData + timeline->timelineActionIndex;
     m_node = created;
 
-    if (timeline->timelineActionCount == 0)
-        return;
-
-    unsigned int index = 0;
-    do
+    for (unsigned int index = 0; index < timeline->timelineActionCount; ++index, ++action)
     {
-        unsigned char type = action->actionType;
-        fuiRenderNode* target = 0;
-        if (type > 0x1d)
+        switch (action->actionType)
         {
-            if (type == 0x1e)
-            {
-                addFrameAction(action->frameIndex, eFrameActionType_Stop, "");
-            }
-            else if (type < 0x20)
-            {
-                addFrameAction(action->frameIndex, eFrameActionType_GotoAndStopLabel, action->actionValue);
-            }
-            else if (type == 0x20)
-            {
-                addFrameAction(action->frameIndex, eFrameActionType_GotoAndPlay, action->actionValue);
-            }
-            else if (type == 0x21)
-            {
-                addFrameAction(action->frameIndex, eFrameActionType_GotoAndStop, action->actionValue);
-            }
-            else
-            {
-                target = findNode(action->targetName);
-            }
-        }
-        else
-        {
-            target = findNode(action->targetName);
+        case 0x1e:
+            addFrameAction(action->frameIndex, eFrameActionType_Stop, "");
+            continue;
+        case 0x1f:
+            addFrameAction(action->frameIndex, eFrameActionType_GotoAndStopLabel, action->actionValue);
+            continue;
+        case 0x20:
+            addFrameAction(action->frameIndex, eFrameActionType_GotoAndPlay, action->actionValue);
+            continue;
+        case 0x21:
+            addFrameAction(action->frameIndex, eFrameActionType_GotoAndStop, action->actionValue);
+            continue;
+        default:
+            break;
         }
 
+        fuiRenderNode* target = findNode(action->targetName);
         if (target != 0)
         {
             FJ_FuiNode* node = target->getFuiNode();
             if (node != 0)
             {
-                switch (type)
+                switch (action->actionType)
                 {
                 case 0:
                 {
@@ -332,16 +321,16 @@ void fuiRenderNodeTimeline::handleConstruction()
                         {
                             FJ_Label_Blink* blink = node->asFJ_Label_Blink();
                             if (blink != 0)
-                                blink->setAction(type, action->actionValue);
+                                blink->setAction(action->actionType, action->actionValue);
                         }
                         else
                         {
-                            menuButton->setAction(type, action->actionValue);
+                            menuButton->setAction(action->actionType, action->actionValue);
                         }
                     }
                     else
                     {
-                        label->setAction(type, action->actionValue);
+                        label->setAction(action->actionType, action->actionValue);
                     }
                     break;
                 }
@@ -353,10 +342,10 @@ void fuiRenderNodeTimeline::handleConstruction()
                 {
                     FJ_List* list = node->asFJ_List();
                     if (list != 0)
-                        list->setAction(type, action->actionValue);
+                        list->setAction(action->actionType, action->actionValue);
                     FJ_List2D* list2d = node->asFJ_List2D();
                     if (list2d != 0)
-                        list2d->setAction(type, action->actionValue);
+                        list2d->setAction(action->actionType, action->actionValue);
                     break;
                 }
                 case 0xe:
@@ -397,8 +386,7 @@ void fuiRenderNodeTimeline::handleConstruction()
                 }
                 case 0x12:
                 {
-                    unsigned int listButtonType = node->getType();
-                    if (listButtonType == 0x8013 || listButtonType == 0x8014 || listButtonType == 0x8015)
+                    if (node->getType() == 0x8013 || node->getType() == 0x8014 || node->getType() == 0x8015)
                     {
                         FJ_ListButton* listButton = static_cast<FJ_ListButton*>(node);
                         listButton->m_listButtonFlag = std::strcmp(action->actionValue, "true") == 0;
@@ -467,15 +455,12 @@ void fuiRenderNodeTimeline::handleConstruction()
                 }
                 case 0x18:
                 {
-                    FJ_Label_HUD_Splash* splash = node->asFJ_Label_HUD_Splash();
-                    if (splash != 0)
-                        splash->m_animated = std::strcmp(action->actionValue, "true") == 0;
-                    FJ_Label_HUD_SplashBig* splashBig = node->asFJ_Label_HUD_SplashBig();
-                    if (splashBig != 0)
-                        splashBig->m_animated = std::strcmp(action->actionValue, "true") == 0;
-                    FJ_Label_HUD_SplashVita* splashVita = node->asFJ_Label_HUD_SplashVita();
-                    if (splashVita != 0)
-                        splashVita->m_animated = std::strcmp(action->actionValue, "true") == 0;
+                    if (node->asFJ_Label_HUD_Splash() != 0)
+                        node->asFJ_Label_HUD_Splash()->m_animated = std::strcmp(action->actionValue, "true") == 0;
+                    if (node->asFJ_Label_HUD_SplashBig() != 0)
+                        node->asFJ_Label_HUD_SplashBig()->m_animated = std::strcmp(action->actionValue, "true") == 0;
+                    if (node->asFJ_Label_HUD_SplashVita() != 0)
+                        node->asFJ_Label_HUD_SplashVita()->m_animated = std::strcmp(action->actionValue, "true") == 0;
                     break;
                 }
                 case 0x19:
@@ -520,9 +505,7 @@ void fuiRenderNodeTimeline::handleConstruction()
             }
         }
 
-        ++index;
-        ++action;
-    } while (index < timeline->timelineActionCount);
+    }
 }
 
 int fuiRenderNodeTimeline::getFrame(const char* name)
@@ -546,39 +529,40 @@ void fuiRenderNodeTimeline::handleFrameTransition(int frame)
 {
     for (unsigned int i = 0; i < m_frameActions.size(); ++i)
     {
-        frameAction& action = m_frameActions[i];
-        if (action.frame == frame)
+        if (m_frameActions[i].frame == frame)
         {
-            if (action.type == eFrameActionType_GotoAndStop)
+            switch (m_frameActions[i].type)
             {
-                if (action.value.compare("handleAnimationStep") == 0)
+            case eFrameActionType_GotoAndStop:
+                if (m_frameActions[i].value.compare("handleAnimationStep") == 0)
                     m_node->dispatchEvent(new FJ_Event(eFJEventType_AnimationStep, false, false));
-                else if (action.value.compare("UpdateLabel") == 0)
+                else if (m_frameActions[i].value.compare("UpdateLabel") == 0)
                     m_node->dispatchEvent(new FJ_Event(eFJEventType_UpdateLabel, false, false));
-                else if (action.value.compare("InitHud") == 0)
+                else if (m_frameActions[i].value.compare("InitHud") == 0)
                     m_node->dispatchEvent(new FJ_Event(eFJEventType_InitHud, false, false));
-                else if (action.value.compare("AnimationEnd") == 0)
+                else if (m_frameActions[i].value.compare("AnimationEnd") == 0)
                     m_node->dispatchEvent(new FJ_Event(eFJEventType_AnimationEnd, false, false));
-                else if (action.value.compare("ShowTimerAnimation") == 0)
+                else if (m_frameActions[i].value.compare("ShowTimerAnimation") == 0)
                     m_node->dispatchEvent(new FJ_Event(eFJEventType_ShowTimerAnimation, false, false));
-                else if (action.value.compare("SlideComplete") == 0)
+                else if (m_frameActions[i].value.compare("SlideComplete") == 0)
                     m_node->dispatchEvent(new FJ_Event(eFJEventType_SlideComplete, false, false));
-                else if (action.value.compare("ShowAnimatedLogoText") == 0)
+                else if (m_frameActions[i].value.compare("ShowAnimatedLogoText") == 0)
                     m_node->dispatchEvent(new FJ_Event(eFJEventType_ShowAnimatedLogoText, true, false));
-            }
-            else if (action.type == eFrameActionType_Stop)
-            {
+                break;
+            case eFrameActionType_Stop:
                 setPlaying(false);
-            }
-            else if (action.type < eFrameActionType_GotoAndPlay)
-            {
-                setFrame(action.value.c_str());
+                break;
+            case eFrameActionType_GotoAndStopLabel:
+                {
+                    const std::string& label = m_frameActions[i].value;
+                    setFrame(label.c_str());
+                }
                 setPlaying(false);
-            }
-            else if (action.type == eFrameActionType_GotoAndPlay)
-            {
-                setFrame(action.value.c_str());
+                break;
+            case eFrameActionType_GotoAndPlay:
+                setFrame(m_frameActions[i].value.c_str());
                 setPlaying(true);
+                break;
             }
         }
     }
@@ -593,8 +577,8 @@ void fuiRenderNodeTimeline::gather(bool force)
     if (m_object != 0 && (flags & 2) != 0)
     {
         fuiTimeline* timeline = static_cast<fuiTimeline*>(m_object);
+        int frame = enteredOnFrame + 1;
         std::vector<fuiRenderNode*> removed;
-        int frame = m_currentFrame + 1;
 
         if (m_previousFrame < m_currentFrame)
         {
@@ -783,43 +767,43 @@ void fuiRenderNodeTimeline::gather(bool force)
                 bool reused = false;
                 for (unsigned int c = 0; c < m_children.size(); ++c)
                 {
-                    fuiRenderNode* node = removed[survivor];
-                    fuiRenderNode* created = m_children[c];
-                    if (created->m_symbolIndex != node->m_symbolIndex)
+                    if (m_children[c]->m_symbolIndex != removed[survivor]->m_symbolIndex)
                         continue;
-                    if (created->m_object != node->m_object)
+                    if (m_children[c]->m_object != removed[survivor]->m_object)
                         continue;
-                    if (std::strcmp(created->m_name, node->m_name) != 0)
+                    if (std::strcmp(m_children[c]->m_name, removed[survivor]->m_name) != 0)
                         continue;
 
+                    fuiRenderNode* node = removed[survivor];
+                    fuiRenderNode* created = m_children[c];
                     m_children[c] = node;
                     unsigned char filterFlags = node->m_filterFlags;
                     if ((filterFlags & 0x80) != 0)
                     {
-                        node->m_localMatrix.translateX = created->m_localMatrix.translateX;
-                        node->m_localMatrix.translateY = created->m_localMatrix.translateY;
+                        m_children[c]->m_localMatrix.translateX = created->m_localMatrix.translateX;
+                        m_children[c]->m_localMatrix.translateY = created->m_localMatrix.translateY;
                     }
                     if ((filterFlags & 0x20) != 0)
                     {
-                        node->m_localMatrix.scaleX = created->m_localMatrix.scaleX;
-                        node->m_localMatrix.scaleY = created->m_localMatrix.scaleY;
+                        m_children[c]->m_localMatrix.scaleX = created->m_localMatrix.scaleX;
+                        m_children[c]->m_localMatrix.scaleY = created->m_localMatrix.scaleY;
                     }
-                    if ((filterFlags & 0x40) != 0)
+                    if ((m_children[c]->m_filterFlags & 0x40) != 0)
                     {
-                        node->m_localMatrix.rotateSkew0 = created->m_localMatrix.rotateSkew0;
-                        node->m_localMatrix.rotateSkew1 = created->m_localMatrix.rotateSkew1;
+                        m_children[c]->m_localMatrix.rotateSkew0 = created->m_localMatrix.rotateSkew0;
+                        m_children[c]->m_localMatrix.rotateSkew1 = created->m_localMatrix.rotateSkew1;
                     }
-                    node->m_globalMatrix = created->m_globalMatrix;
-                    if ((filterFlags & 0x10) != 0)
+                    m_children[c]->m_globalMatrix = created->m_globalMatrix;
+                    if ((m_children[c]->m_filterFlags & 0x10) != 0)
                     {
-                        node->m_redAdd = created->m_redAdd;
-                        node->m_greenAdd = created->m_greenAdd;
-                        node->m_blueAdd = created->m_blueAdd;
-                        node->m_alphaAdd = created->m_alphaAdd;
-                        node->m_redMultiply = created->m_redMultiply;
-                        node->m_greenMultiply = created->m_greenMultiply;
-                        node->m_blueMultiply = created->m_blueMultiply;
-                        node->m_alpha = created->m_alpha;
+                        m_children[c]->m_redAdd = created->m_redAdd;
+                        m_children[c]->m_greenAdd = created->m_greenAdd;
+                        m_children[c]->m_blueAdd = created->m_blueAdd;
+                        m_children[c]->m_alphaAdd = created->m_alphaAdd;
+                        m_children[c]->m_redMultiply = created->m_redMultiply;
+                        m_children[c]->m_greenMultiply = created->m_greenMultiply;
+                        m_children[c]->m_blueMultiply = created->m_blueMultiply;
+                        m_children[c]->m_alpha = created->m_alpha;
                     }
 
                     removed[survivor] = removed[removed.size() - 1];
@@ -909,10 +893,9 @@ void fuiRenderNodeTimeline::render(fuiRect* bounds, fuiMatrix* matrix)
     setScrollRectViewport();
 
     fuiRect* childBounds = 0;
-    fuiMatrix* childMatrix = matrix;
     if ((m_flags & 0x20) != 0)
     {
-        childMatrix = &m_localMatrix;
+        matrix = &m_localMatrix;
         childBounds = &static_cast<fuiTimeline*>(m_object)->bounds;
     }
 
@@ -920,7 +903,7 @@ void fuiRenderNodeTimeline::render(fuiRect* bounds, fuiMatrix* matrix)
     {
         gFui->incrementStencilMask();
         gRenderer->StateSetStencil(7, gFui->getCurrentStencilMask(), 0, 255);
-        m_mask->render(childBounds, childMatrix);
+        m_mask->render(childBounds, matrix);
         gRenderer->StateSetStencil(2, gFui->getCurrentStencilMask(), 255, 0);
     }
 
@@ -935,16 +918,16 @@ void fuiRenderNodeTimeline::render(fuiRect* bounds, fuiMatrix* matrix)
             gFui->incrementStencilMask();
             gRenderer->StateSetStencil(7, gFui->getCurrentStencilMask(), 0, 255);
             gRenderer->StateSetBlendFunc(0, 1);
-            m_children[i]->render(childBounds, childMatrix);
+            m_children[i]->render(childBounds, matrix);
             gRenderer->StateSetStencil(2, gFui->getCurrentStencilMask(), 255, 0);
             gRenderer->StateSetBlendFunc(1, 5);
             clipDepth = m_children[i]->m_frame;
         }
         else
         {
-            m_children[i]->render(childBounds, childMatrix);
+            m_children[i]->render(childBounds, matrix);
         }
-        if (clipDepth != 0 && clipDepth < m_children[i]->m_symbolIndex)
+        if (clipDepth != 0 && m_children[i]->m_symbolIndex > clipDepth)
         {
             gRenderer->StateSetStencil(7, 0, 0, 0);
             clipDepth = 0;
@@ -984,14 +967,10 @@ fuiRenderNode* fuiRenderNodeTimeline::findNode(const char* name)
 fuiRenderNode* fuiRenderNodeTimeline::getNodeFromPath(const char* path)
 {
     const char* separator = path;
+    while (*separator != 0 && *separator != '.')
+        ++separator;
     if (*separator == 0)
         return fuiRenderNode::getNodeFromPath(path);
-    while (*separator != '.')
-    {
-        ++separator;
-        if (*separator == 0)
-            return fuiRenderNode::getNodeFromPath(path);
-    }
     if (std::strncmp(m_name, path, separator - path) == 0)
     {
         for (unsigned int i = 0; i < m_children.size(); ++i)
@@ -1007,7 +986,8 @@ fuiRenderNode* fuiRenderNodeTimeline::getNodeFromPath(const char* path)
 std::string fuiRenderNodeTimeline::currentLabel()
 {
     fuiTimeline* timeline = static_cast<fuiTimeline*>(m_object);
-    return std::string(m_file->frameData[timeline->timelineFrameIndex + m_currentFrame].name);
+    const char* name = m_file->frameData[timeline->timelineFrameIndex + m_currentFrame].name;
+    return std::string(name);
 }
 
 int fuiRenderNodeTimeline::currentFrame()
@@ -1034,8 +1014,9 @@ void fuiRenderNodeTimeline::removeChild(fuiRenderNode* child, bool destroy)
 
 void fuiRenderNodeTimeline::removeChildAt(int index, bool destroy)
 {
-    fuiRenderNode* child = m_children[index];
-    m_children.erase(m_children.begin() + index);
+    std::vector<fuiRenderNode*>::iterator it = m_children.begin() + index;
+    fuiRenderNode* child = *it;
+    m_children.erase(it);
     m_removedChildren.push_back(fuiRenderNodeRemoved(child->m_symbolIndex, child->m_object));
     if (destroy)
         delete child;
@@ -1052,7 +1033,7 @@ void fuiRenderNodeTimeline::addChild(fuiRenderNode* child)
 {
     unsigned int depth = 0;
     for (std::vector<fuiRenderNode*>::iterator it = m_children.begin(); it != m_children.end(); ++it)
-        if (depth < (*it)->m_symbolIndex)
+        if ((*it)->m_symbolIndex > depth)
             depth = (*it)->m_symbolIndex;
 
     fuiRenderNode* node = child;
@@ -1073,13 +1054,13 @@ void fuiRenderNodeTimeline::addChildAt(fuiRenderNode* child, int index)
     m_children.insert(m_children.begin() + index, child);
 
     int previousDepth = 0;
+    int nextDepth = 0x7fffffff;
     if (index > 0)
         previousDepth = static_cast<int>(m_children[index - 1]->m_symbolIndex);
-    int nextDepth = 0x7fffffff;
     if (static_cast<unsigned int>(index) < m_children.size() - 1)
         nextDepth = static_cast<int>(m_children[index + 1]->m_symbolIndex);
     int depth = previousDepth + 1;
-    if (nextDepth < depth)
+    if (depth > nextDepth)
         depth = nextDepth;
 
     child->m_parent = this;
@@ -1101,7 +1082,7 @@ unsigned int fuiRenderNodeTimeline::getChildIndex(fuiRenderNode* child)
 void fuiRenderNodeTimeline::generateGlobalMatrix()
 {
     fuiRenderNode::generateGlobalMatrix();
-    for (unsigned int i = 0; i < m_children.size(); ++i)
+    for (unsigned int i = 0; i < getNumChildren(); ++i)
         m_children[i]->generateGlobalMatrix();
 }
 

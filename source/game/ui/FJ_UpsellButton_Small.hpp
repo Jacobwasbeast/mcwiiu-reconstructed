@@ -9,7 +9,6 @@ class FJ_UpsellButton_Small : public FJ_UpsellButton
 {
 public:
     explicit FJ_UpsellButton_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_UpsellButton_Small();
     static FJ_UpsellButton* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
 };

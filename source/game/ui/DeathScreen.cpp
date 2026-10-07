@@ -15,10 +15,6 @@ std::wstring _toString(T value);
 
 static int s_deathScreenTicks = 0;
 
-DeathScreen::~DeathScreen()
-{
-}
-
 void DeathScreen::init()
 {
     mButtons.clear();

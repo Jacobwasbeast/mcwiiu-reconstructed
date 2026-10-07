@@ -168,8 +168,7 @@ void FJ_LoadCreateJoinMenu::handlePress(FJ_Event* event)
     FJ_Button* button = event->m_pTarget->asFJ_Button();
     if (button != NULL)
     {
-        FJ_FuiNode* parent = button->FJ_Base::getObjListParent();
-        static_cast<UIScene_LoadCreateJoinMenu*>(m_pCallbackScene)->handlePress(parent->asFJ_List()->getId(), button->getId());
+        static_cast<UIScene_LoadCreateJoinMenu*>(m_pCallbackScene)->handlePress(button->FJ_Base::getObjListParent()->asFJ_List()->getId(), button->getId());
         button->setButtonPressed(false);
     }
 }
@@ -191,7 +190,16 @@ void FJ_LoadCreateJoinMenu::ShowSaveSizeBar(bool show)
     if (getChildByName("LoadGame")->getChildByName("SaveSizeBar") != NULL)
     {
         getChildByName("LoadGame")->getChildByName("SaveSizeBar")->setVisible(show);
-        if (!show)
+        if (show)
+        {
+            if (getChildByName("LoadGame.LoadGameList") != NULL)
+                getChildByName("LoadGame.LoadGameList")->setHeight(static_cast<float>(m_loadListHeight));
+            if (getChildByName("LoadGame.LoadGameListRecessPanel") != NULL)
+                getChildByName("LoadGame.LoadGameListRecessPanel")->getChildAt(0)->setHeight(static_cast<float>(m_loadListRecessHeight));
+            if (getChildByName("LoadGame.LoadGameList") != NULL)
+                getChildByName("LoadGame.LoadGameTimer")->setY(static_cast<float>(m_loadTimerY));
+        }
+        else
         {
             if (getChildByName("LoadGame.LoadGameList") != NULL)
                 getChildByName("LoadGame.LoadGameList")->setHeight(getChildByName("NewGame.NewGameList")->getHeight());
@@ -200,15 +208,6 @@ void FJ_LoadCreateJoinMenu::ShowSaveSizeBar(bool show)
                     getChildByName("NewGame.NewGameListRecessPanel")->getChildAt(0)->getHeight());
             if (getChildByName("LoadGame.LoadGameList") != NULL)
                 getChildByName("LoadGame.LoadGameTimer")->setY(getChildByName("NewGame.NewGameTimer")->getY());
-        }
-        else
-        {
-            if (getChildByName("LoadGame.LoadGameList") != NULL)
-                getChildByName("LoadGame.LoadGameList")->setHeight(static_cast<float>(m_loadListHeight));
-            if (getChildByName("LoadGame.LoadGameListRecessPanel") != NULL)
-                getChildByName("LoadGame.LoadGameListRecessPanel")->getChildAt(0)->setHeight(static_cast<float>(m_loadListRecessHeight));
-            if (getChildByName("LoadGame.LoadGameList") != NULL)
-                getChildByName("LoadGame.LoadGameTimer")->setY(static_cast<float>(m_loadTimerY));
         }
     }
 }
@@ -243,8 +242,8 @@ void FJ_LoadCreateJoinMenu::HideLoadTab()
         getChildByName("JoinGame.TabRight")->setX(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
         getChildByName("JoinGame.TabRight")->getChildAt(0)->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
 
-        FJ_FuiNode* touchLoadTab = getChildByName("LoadGame.TouchTabLoad");
-        if (touchLoadTab != NULL)
+        bool hasTouchLoadTab = getChildByName("LoadGame.TouchTabLoad") != NULL;
+        if (hasTouchLoadTab)
         {
             getChildByName("JoinGame.TouchTabJoin")->setX(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);
             getChildByName("JoinGame.TouchTabJoin")->setWidth(getChildByName("LoadGame")->getChildAt(0)->getWidth() * 0.5f);

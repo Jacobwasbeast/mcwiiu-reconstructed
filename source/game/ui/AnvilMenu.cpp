@@ -35,10 +35,6 @@ AnvilMenu::AnvilMenu(boost::shared_ptr<Inventory> inventory, Level* level,
     _init(inventory, level, BlockPos::ZERO, player);
 }
 
-AnvilMenu::~AnvilMenu()
-{
-}
-
 void AnvilMenu::_init(boost::shared_ptr<Inventory> inventory, Level* level,
                       const BlockPos& position, boost::shared_ptr<Player> player)
 {

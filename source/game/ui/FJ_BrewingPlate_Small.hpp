@@ -7,7 +7,6 @@ class FJ_BrewingPlate_Small : public FJ_ProgressBar
 {
 public:
     explicit FJ_BrewingPlate_Small(fuiRenderNode* renderNode);
-    virtual ~FJ_BrewingPlate_Small();
     virtual void InitBarType();
     static FJ_BrewingPlate_Small* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

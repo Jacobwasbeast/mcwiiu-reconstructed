@@ -11,7 +11,6 @@ class VideoSettingsScreen : public Screen
 {
 public:
     VideoSettingsScreen(Screen* parentScreen, Options* options);
-    virtual ~VideoSettingsScreen();
 
     virtual void init();
     virtual void buttonClicked(Button* button);

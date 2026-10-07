@@ -12,7 +12,6 @@ class UIScene_LanguageSelector : public UIScene
 {
 public:
     UIScene_LanguageSelector(int sceneType, void* data, UILayer* layer);
-    virtual ~UIScene_LanguageSelector();
     virtual std::wstring getMoviePath();
     virtual unsigned int mapElementsAndNames();
     virtual int getSceneType();

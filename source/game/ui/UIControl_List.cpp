@@ -8,8 +8,8 @@
 
 UIControl_List::UIControl_List()
 {
-    m_currentSelection = 0;
     m_itemIndex = 0;
+    m_currentSelection = 0;
 }
 
 UIControl_List::~UIControl_List()
@@ -70,9 +70,13 @@ void UIControl_List::init(int controlId)
     m_controlId = controlId;
     FJ_List* list = m_fuiRenderNode->getFuiNode()->asFJ_List();
     list->Init(controlId);
-    unsigned int layerId = m_scene->m_layer->m_layerId;
-    if (layerId == 4 || (5 < layerId && layerId < 8))
+    switch (m_scene->m_layer->m_layerId) {
+    case EUILayer_Fullscreen:
+    case EUILayer_Scene:
+    case EUILayer_HUD:
         gConsoleUIController.TouchBoxAdd(this, m_scene);
+        break;
+    }
 }
 
 int UIControl_List::getListIndex(int index)
@@ -110,8 +114,8 @@ bool UIControl_List::istype(UIControl::eUIControlType type, int index)
 
 void UIControl_List::clearElements()
 {
-    m_itemIndex = 0;
     m_currentSelection = 0;
+    m_itemIndex = 0;
     m_elementTypes.clear();
     m_elementEnabled.clear();
     m_elements.clear();
@@ -128,12 +132,11 @@ void UIControl_List::SetItemLabel(int item, UIString label, bool immediate)
     FJ_List* list = static_cast<FJ_List*>(m_fuiRenderNode->getFuiNode());
     if (list == NULL)
         return;
-    if (!immediate) {
+    if (immediate) {
+        if (m_scene->m_movie != NULL)
+            list->SetItemLabel(getListIndex(item), label.getString());
+    } else {
         m_pendingUpdates.push_back(new PendingSetLabel(this, item, label));
-        return;
-    }
-    if (m_scene->hasMovie()) {
-        list->SetItemLabel(getListIndex(item), label.getString());
     }
 }
 
@@ -199,8 +202,11 @@ int UIControl_List::GetActiveItem()
 
 void UIControl_List::UpdateControl()
 {
-    if (m_fuiRenderNode->getFuiNode()->isFJ_List())
-        m_fuiRenderNode->getFuiNode()->asFJ_List()->UpdateTouchSize();
+    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
+    if (node->isFJ_List()) {
+        node = m_fuiRenderNode->getFuiNode();
+        node->asFJ_List()->UpdateTouchSize();
+    }
     UIControl::UpdateControl();
 }
 
@@ -254,10 +260,6 @@ unsigned int UIControl_List::PendingSetEnable::OnTick()
 {
     m_list->EnableItem(m_item, m_enabled, true);
     return 1;
-}
-
-UIControl_List::PendingSetLabel::~PendingSetLabel()
-{
 }
 
 unsigned int UIControl_List::PendingSetLabel::OnTick()

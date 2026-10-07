@@ -7,21 +7,6 @@
 #include "game/client/render/Renderer.hpp"
 #include "game/util/Math.hpp"
 
-
-extern "C"
-{
-    int stbtt_InitFont(stbtt_fontinfo* info, const unsigned char* data, int offset);
-    void stbtt_GetFontVMetrics(const stbtt_fontinfo* info, int* ascent, int* descent, int* lineGap);
-    int stbtt_FindGlyphIndex(const stbtt_fontinfo* info, int unicodeCodepoint);
-    float stbtt_ScaleForPixelHeight(const stbtt_fontinfo* info, float pixels);
-    void stbtt_GetCodepointHMetrics(const stbtt_fontinfo* info, int codepoint, int* advanceWidth,
-                                    int* leftSideBearing);
-    void stbtt_GetCodepointBitmapBoxSubpixel(const stbtt_fontinfo* info, int codepoint, float scaleX, float scaleY,
-                                             float shiftX, float shiftY, int* x0, int* y0, int* x1, int* y1);
-    void stbtt_MakeCodepointBitmap(const stbtt_fontinfo* info, unsigned char* output, int outWidth, int outHeight,
-                                   int outStride, float scaleX, float scaleY, int codepoint);
-}
-
 fuiTTFFontSet::fuiTTFFontSet(const char* name, const void* ttfData, unsigned short missingGlyphChar)
     : fuiFontSet(name)
 {
@@ -169,9 +154,10 @@ float fuiTTFFontSet::getRenderedGlyphHeight(unsigned short codepoint, float font
 
     float glyphScale = getGlyphScale(fontSize);
     FontSizeData* fontSizeData = getFontSizeData(fontSize, ttfIndex);
-    fuiTTFFont& font = m_fonts[ttfIndex];
+    const fuiTTFFont& font = m_fonts[ttfIndex];
+    float height = (float)(font.m_ascent - font.m_descent + font.m_lineGap);
 
-    return (float)(font.m_ascent - font.m_descent + font.m_lineGap) * fontSizeData->m_scale * glyphScale;
+    return height * fontSizeData->m_scale * glyphScale;
 }
 
 bool fuiTTFFontSet::isBitmapFont()
@@ -244,7 +230,8 @@ fuiTTFFontSet::FontSizeData::FontSizeData(float fontSize, fuiTTFFontSet* fontSet
     m_scale = stbtt_ScaleForPixelHeight(&font.m_info, fontSize);
     m_ascent = (int)((float)font.m_ascent * m_scale);
 
-    m_glyphWidth = Math::roundUpToPowerOf2((int)((float)(font.m_ascent - font.m_descent) * m_scale));
+    m_glyphWidth = Math::roundUpToPowerOf2(
+        (int)((float)(fontSet->m_fonts[ttfIndex].m_ascent - fontSet->m_fonts[ttfIndex].m_descent) * m_scale));
     m_glyphHeight = m_glyphWidth;
     m_glyphsPerRow = 20;
     m_glyphsPerColumn = 20;
@@ -365,9 +352,11 @@ void fuiTTFFontSet::FontSizeData::getGlyphTexPos(unsigned short codepoint, float
 {
     GlyphInfo* glyph = getGlyphInfo(codepoint);
 
-    int row = glyph->m_slot / m_glyphsPerRow;
+    int slot = glyph->m_slot;
+    int row = slot / m_glyphsPerRow;
+    int column = slot - row * m_glyphsPerRow;
 
-    texX = (float)((glyph->m_slot - row * m_glyphsPerRow) * m_glyphWidth) / (float)m_textureWidth;
+    texX = (float)(column * m_glyphWidth) / (float)m_textureWidth;
     texY = (float)(row * m_glyphHeight) / (float)m_textureHeight;
 }
 

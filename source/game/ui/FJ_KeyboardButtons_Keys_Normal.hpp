@@ -10,7 +10,6 @@ class FJ_KeyboardButtons_Keys_Normal : public FJ_KeyboardButtons
 {
 public:
     explicit FJ_KeyboardButtons_Keys_Normal(fuiRenderNode* renderNode);
-    virtual ~FJ_KeyboardButtons_Keys_Normal();
     static FJ_KeyboardButtons* Create(fuiRenderNode* renderNode);
     virtual uint32_t getType();
 };

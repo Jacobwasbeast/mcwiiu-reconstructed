@@ -17,8 +17,8 @@ UIScene_Intro::UIScene_Intro(int sceneType, void*, UILayer* layer)
     : UIScene(sceneType, layer)
 {
     initialiseMovie();
-    m_introFocus = false;
     m_inputHandled = false;
+    m_introFocus = false;
     setIntroPlatform();
     m_touchControl.init(0);
 }
@@ -46,14 +46,10 @@ void UIScene_Intro::handleInput(int playerId, int action, bool repeat, bool pres
     if (gApp.HasNoSpaceForSaveQuota() == 0)
     {
         uint32_t optionsStatus = gApp.GetOptionsCallbackStatus(gProfile->GetPrimaryPad());
-        if (optionsStatus == 0)
+        switch (optionsStatus)
         {
-            m_inputHandled = false;
-            g_introRunning = 1;
-            return;
-        }
-        if (optionsStatus == 4 || optionsStatus == 6)
-        {
+        case 4:
+        case 6:
             if (GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_EULAAccepted) == 0)
             {
                 gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_EULA, NULL,
@@ -65,9 +61,15 @@ void UIScene_Intro::handleInput(int playerId, int action, bool repeat, bool pres
                                                   EUILayer_Scene, EUIGroup_PlayerDefault);
             g_introRunning = 1;
             return;
+        case 0:
+            m_inputHandled = false;
+            g_introRunning = 1;
+            return;
+        default:
+            gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_EULA, NULL,
+                                                  EUILayer_Scene, EUIGroup_PlayerDefault);
+            break;
         }
-        gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_EULA, NULL,
-                                              EUILayer_Scene, EUIGroup_PlayerDefault);
     }
     g_introRunning = 1;
 }
@@ -83,13 +85,10 @@ void UIScene_Intro::handleAnimationEnd()
         return;
 
     uint32_t optionsStatus = gApp.GetOptionsCallbackStatus(gProfile->GetPrimaryPad());
-    if (optionsStatus == 0)
+    switch (optionsStatus)
     {
-        gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_SaveMessage, NULL,
-                                              EUILayer_Scene, EUIGroup_PlayerDefault);
-        return;
-    }
-    if (optionsStatus == 4 || optionsStatus == 6)
+    case 4:
+    case 6:
     {
         int eulaAccepted = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_EULAAccepted);
         int primaryPlayer = gProfile->GetPrimaryPad();
@@ -103,8 +102,15 @@ void UIScene_Intro::handleAnimationEnd()
                                               EUILayer_Scene, EUIGroup_PlayerDefault);
         return;
     }
-    gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_EULA, NULL,
-                                          EUILayer_Scene, EUIGroup_PlayerDefault);
+    case 0:
+        gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_SaveMessage, NULL,
+                                              EUILayer_Scene, EUIGroup_PlayerDefault);
+        return;
+    default:
+        gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_EULA, NULL,
+                                              EUILayer_Scene, EUIGroup_PlayerDefault);
+        return;
+    }
 }
 
 void UIScene_Intro::handleGainFocus(bool)

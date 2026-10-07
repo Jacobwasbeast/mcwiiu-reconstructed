@@ -11,7 +11,6 @@ class UIComponent_DebugUIConsole : public UIScene
 {
 public:
     UIComponent_DebugUIConsole(int sceneType, void* data, UILayer* layer);
-    virtual ~UIComponent_DebugUIConsole();
 
     virtual unsigned int mapElementsAndNames();
     virtual void tick();

@@ -9,7 +9,6 @@ class FJ_ListButtonLobby_Normal : public FJ_ListButtonLobby
 {
 public:
     explicit FJ_ListButtonLobby_Normal(fuiRenderNode* renderNode);
-    virtual ~FJ_ListButtonLobby_Normal();
     static FJ_ListButtonLobby* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();
 };

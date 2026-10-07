@@ -9,7 +9,6 @@ class FJ_CheckBox_Small : public FJ_CheckBox
 {
 public:
     FJ_CheckBox_Small(fuiRenderNode* pRenderNode);
-    virtual ~FJ_CheckBox_Small();
     static FJ_CheckBox* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
 };

@@ -32,16 +32,11 @@ UIControl_EnchantmentButton::EnchantmentNames::EnchantmentNames()
               std::back_inserter(m_names));
 }
 
-UIControl_EnchantmentButton::EnchantmentNames::~EnchantmentNames()
-{
-}
-
 std::wstring UIControl_EnchantmentButton::EnchantmentNames::getRandomName()
 {
     const int count = nextInt(2) + 3;
     std::wstring result(L"");
-    int i;
-    for (i = 0; i < count; ++i)
+    for (int i = 0; i < count; ++i)
     {
         if (i > 0)
         {
@@ -53,20 +48,17 @@ std::wstring UIControl_EnchantmentButton::EnchantmentNames::getRandomName()
 }
 
 UIControl_EnchantmentButton::UIControl_EnchantmentButton()
-    : UIControl_Button(), m_state(0), m_level(0), m_index(0), m_name(L""),
-      m_focus(false),
-      m_colour((int)(gApp.GetHTMLColour(eMinecraftColour_Color_EnchantText) |
-                     0xff000000)),
-      m_focusColour((int)(gApp.GetHTMLColour(eMinecraftColour_Color_EnchantTextFocus) |
-                          0xff000000)),
-      m_inactiveColour((int)(gApp.GetHTMLColour(
-                                 eMinecraftColour_Color_EnchantTextDisabled) |
-                             0xff000000))
+    : UIControl_Button()
 {
-}
-
-UIControl_EnchantmentButton::~UIControl_EnchantmentButton()
-{
+    m_state = 0;
+    m_level = 0;
+    m_index = 0;
+    m_name = L"";
+    m_focus = false;
+    m_colour = (int)(gApp.GetHTMLColour(eMinecraftColour_Color_EnchantText) | 0xff000000);
+    m_focusColour = (int)(gApp.GetHTMLColour(eMinecraftColour_Color_EnchantTextFocus) | 0xff000000);
+    m_inactiveColour = (int)(gApp.GetHTMLColour(eMinecraftColour_Color_EnchantTextDisabled) |
+                             0xff000000);
 }
 
 void UIControl_EnchantmentButton::setupControl(UIScene* scene, fuiRenderNode* node,
@@ -107,8 +99,8 @@ void UIControl_EnchantmentButton::updateState()
     }
     if (enchantment == NULL || level == 0)
     {
-        setLabel(UIString(L""), false, false);
         state = 0;
+        setLabel(UIString(L""), false, false);
     }
     if (state != m_state)
     {
@@ -133,9 +125,9 @@ void UIControl_EnchantmentButton::init(int index)
 void UIControl_EnchantmentButton::ReInit()
 {
     UIControl_Button::ReInit();
-    m_focus = false;
     m_state = 0;
     m_level = 0;
+    m_focus = false;
     updateState();
 }
 

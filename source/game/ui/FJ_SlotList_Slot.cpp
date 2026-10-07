@@ -62,17 +62,19 @@ void FJ_SlotList_Slot::SetHighlightActive(bool bActive)
 
 void FJ_SlotList_Slot::SetRedBoxActive(bool bActive)
 {
-    if (!bActive)
+    if (bActive)
     {
-        if (m_pRedBox->getParent() != NULL)
-            getParent()->removeChild(m_pRedBox, false);
+        if (m_pRedBox->getParent() == NULL)
+        {
+            FJ_FuiNode* parent = getParent();
+            parent->addChild(m_pRedBox);
+            m_pRedBox->setX(getX() + Math::round(getScaleX()));
+            m_pRedBox->setY(getY() + Math::round(getScaleY()));
+        }
     }
-    else if (m_pRedBox->getParent() == NULL)
+    else if (m_pRedBox->getParent() != NULL)
     {
-        FJ_FuiNode* parent = getParent();
-        parent->addChild(m_pRedBox);
-        m_pRedBox->setX(getX() + (float)Math::round(getScaleX()));
-        m_pRedBox->setY(getY() + (float)Math::round(getScaleY()));
+        getParent()->removeChild(m_pRedBox, false);
     }
     m_pRedBox->setVisible(bActive);
     m_pSlotControl->gotoAndStop(bActive ? "SlotRed" : "SlotNormal");

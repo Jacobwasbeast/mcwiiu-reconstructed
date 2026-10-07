@@ -25,7 +25,6 @@ private:
 
 public:
     FJ_BookAndQuillMenu(fuiRenderNode* renderNode);
-    virtual ~FJ_BookAndQuillMenu();
 
     static FJ_Document* Create(fuiRenderNode* renderNode);
     virtual unsigned int getType();

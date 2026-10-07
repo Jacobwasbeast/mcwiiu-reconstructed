@@ -29,7 +29,7 @@ public:
     virtual void updateComponents();
     virtual std::wstring getMoviePath();
     static int KeyboardCompleteSeedCallback(void* data, bool accepted);
-    int HandleRequestKeyboard();
+    void HandleRequestKeyboard();
     void UpdateOnline();
     virtual void tick();
     virtual void handleDestroy();

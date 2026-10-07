@@ -7,10 +7,6 @@ FJ_MenuButton_Normal::FJ_MenuButton_Normal(fuiRenderNode* renderNode)
 {
 }
 
-FJ_MenuButton_Normal::~FJ_MenuButton_Normal()
-{
-}
-
 FJ_MenuButton* FJ_MenuButton_Normal::Create(fuiRenderNode* renderNode)
 {
     return new FJ_MenuButton_Normal(renderNode);

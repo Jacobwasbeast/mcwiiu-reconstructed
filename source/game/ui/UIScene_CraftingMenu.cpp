@@ -150,10 +150,6 @@ UIScene_CraftingMenu::UIScene_CraftingMenu(int type, void* data, UILayer* layer)
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
-UIScene_CraftingMenu::~UIScene_CraftingMenu()
-{
-}
-
 std::wstring UIScene_CraftingMenu::getMoviePath()
 {
     if (gApp.GetLocalPlayerCount() > 1)

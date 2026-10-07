@@ -36,15 +36,15 @@ UIScene_InGameSaveManagementMenu::UIScene_InGameSaveManagementMenu(int playerId,
     m_saveListTitle.init(UIString(L10N::GetString(IDS_SAVE_INCOMPLETE_DELETE_SAVES)));
     m_saveTimer.setVisible(true);
     m_saveSizeBar.init(UIString(L""), 1, 0, SAVE_DATA_QUOTA);
-    m_closing = false;
-    m_thumbnailsComplete = false;
-    m_saveDetails = NULL;
-    m_saveListDetails = NULL;
-    m_saveInfoReady = false;
     m_selectionChanged = false;
+    m_thumbnailsComplete = false;
     m_thumbnailRequested = false;
-    m_saveDetailsCount = 0;
     m_thumbnailReturned = false;
+    m_closing = false;
+    m_saveDetails = NULL;
+    m_saveInfoReady = false;
+    m_saveListDetails = NULL;
+    m_saveDetailsCount = 0;
     gStorage->ClearSavesInfo();
     if (gApp.StartInstallDLCProcess(m_playerId) != 0 || gApp.DLCInstallPending() != 0)
     {
@@ -102,22 +102,26 @@ unsigned int UIScene_InGameSaveManagementMenu::mapElementsAndNames()
         std::string name("SavesList");
         m_saveList.setupControl(this, root, name);
     }
-    m_controls.push_back(&m_saveList);
+    UIControl* saveList = &m_saveList;
+    m_controls.push_back(saveList);
     {
         std::string name("SavesListTitle");
         m_saveListTitle.setupControl(this, root, name);
     }
-    m_controls.push_back(&m_saveListTitle);
+    UIControl* saveListTitle = &m_saveListTitle;
+    m_controls.push_back(saveListTitle);
     {
         std::string name("SavesTimer");
         m_saveTimer.setupControl(this, root, name);
     }
-    m_controls.push_back(&m_saveTimer);
+    UIControl* saveTimer = &m_saveTimer;
+    m_controls.push_back(saveTimer);
     {
         std::string name("SaveSizeBar");
         m_saveSizeBar.setupControl(this, root, name);
     }
-    m_controls.push_back(&m_saveSizeBar);
+    UIControl* saveSizeBar = &m_saveSizeBar;
+    m_controls.push_back(saveSizeBar);
     return 1;
 }
 
@@ -132,12 +136,12 @@ void UIScene_InGameSaveManagementMenu::updateTooltips()
 
 void UIScene_InGameSaveManagementMenu::handleReload()
 {
-    m_saveListRefreshState = 0;
-    m_nextThumbnail = 0;
-    m_saveInfoReady = false;
-    m_thumbnailRequested = false;
-    m_thumbnailsComplete = false;
     m_ignoreInput = false;
+    m_nextThumbnail = 0;
+    m_thumbnailsComplete = false;
+    m_thumbnailRequested = false;
+    m_saveInfoReady = false;
+    m_saveListRefreshState = 0;
 }
 
 void UIScene_InGameSaveManagementMenu::handleGainFocus(bool navigatedBack)
@@ -205,8 +209,8 @@ int UIScene_InGameSaveManagementMenu::LoadSaveDataThumbnailReturned(void* contex
     {
         menu->m_thumbnailReturned = true;
         _SaveListDetails& details = menu->m_saveListDetails[menu->m_nextThumbnail];
-        details.m_thumbnailSize = 0;
         details.m_thumbnail = NULL;
+        details.m_thumbnailSize = 0;
     }
     return 0;
 }
@@ -245,12 +249,13 @@ void UIScene_InGameSaveManagementMenu::tick()
                 m_saveDetailsCount = m_saveDetails->count;
                 for (int i = 0; i < m_saveDetails->count; ++i)
                 {
-                    SAVE_INFO& save = m_saveDetails->saves[i];
-                    m_saveSizeBar.addSave(save.nandSize);
-                    m_saveList.addItem(std::wstring(save.title), L"");
+                    m_saveSizeBar.addSave(m_saveDetails->saves[i].nandSize);
+                    m_saveList.addItem(std::wstring(m_saveDetails->saves[i].title), L"");
                     m_saveListDetails[i].m_saveIndex = i;
-                    std::memcpy(m_saveListDetails[i].m_title, save.title, sizeof(save.title));
-                    std::memcpy(m_saveListDetails[i].m_filename, save.filename, sizeof(save.filename));
+                    std::memcpy(m_saveListDetails[i].m_title, m_saveDetails->saves[i].title,
+                                sizeof(m_saveDetails->saves[i].title));
+                    std::memcpy(m_saveListDetails[i].m_filename, m_saveDetails->saves[i].filename,
+                                sizeof(m_saveDetails->saves[i].filename));
                 }
                 m_saveTimer.setVisible(false);
             }
@@ -365,7 +370,9 @@ void UIScene_InGameSaveManagementMenu::handlePress(int controlId, int)
     if (controlId != 0)
         return;
     m_ignoreInput = true;
-    int options[2] = { IDS_CONFIRM_CANCEL, IDS_CONFIRM_OK };
+    int options[2];
+    options[0] = IDS_CONFIRM_CANCEL;
+    options[1] = IDS_CONFIRM_OK;
     gConsoleUIController.RequestErrorMessage(IDS_TOOLTIPS_DELETESAVE, IDS_TEXT_DELETE_SAVE, options, 2, m_playerId,
                                              &DeleteSaveDialogReturned, this, NULL, true);
     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);

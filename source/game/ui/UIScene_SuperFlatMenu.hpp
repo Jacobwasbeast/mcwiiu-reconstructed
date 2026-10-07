@@ -66,6 +66,17 @@ public:
         T m_value;
     };
 
+    template<class List> class TabControls
+    {
+    public:
+        UIControl_Label tab;
+        UIControl panel;
+        List list;
+        UIControl_Label helpTitle;
+        UIControl_HTMLLabel help;
+        UIControl timer;
+    };
+
     UIScene_SuperFlatMenu(int sceneType, void* data, UILayer* layer);
     virtual ~UIScene_SuperFlatMenu();
     virtual unsigned int mapElementsAndNames();
@@ -127,24 +138,9 @@ private:
     UIControl_Touch m_biomesTouch;
     UIControl_Touch m_propertiesTouch;
     unsigned int m_activeTab;
-    UIControl_Label m_layersTab;
-    UIControl m_layersPanel;
-    UIControl_LayerIconButtonList m_layersList;
-    UIControl_Label m_layersHelpTitle;
-    UIControl_HTMLLabel m_layersHelp;
-    UIControl m_layersTimer;
-    UIControl_Label m_biomesTab;
-    UIControl m_biomesPanel;
-    UIControl_CheckboxButtonList m_biomesList;
-    UIControl_Label m_biomesHelpTitle;
-    UIControl_HTMLLabel m_biomesHelp;
-    UIControl m_biomesTimer;
-    UIControl_Label m_propertiesTab;
-    UIControl m_propertiesPanel;
-    UIControl_MultiList m_propertiesList;
-    UIControl_Label m_propertiesHelpTitle;
-    UIControl_HTMLLabel m_propertiesHelp;
-    UIControl m_propertiesTimer;
+    TabControls<UIControl_LayerIconButtonList> m_layers;
+    TabControls<UIControl_CheckboxButtonList> m_biomes;
+    TabControls<UIControl_MultiList> m_properties;
     bool m_generating;
     bool m_editingLayer;
     int m_pendingSelection;

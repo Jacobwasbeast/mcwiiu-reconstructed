@@ -78,7 +78,6 @@ public:
     };
 
     UIScene_HowToPlay(int playerId, void* data, UILayer* layer);
-    virtual ~UIScene_HowToPlay();
 
     void StartPage(EHowToPlayPage page);
     virtual unsigned int mapElementsAndNames();

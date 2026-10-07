@@ -27,7 +27,6 @@ public:
     };
 
     UIControl_PlayerSkinPreview();
-    virtual ~UIControl_PlayerSkinPreview();
 
     virtual void tick();
     unsigned int bindTexture(const std::wstring& name, int texture);

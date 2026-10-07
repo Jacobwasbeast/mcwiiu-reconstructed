@@ -10,12 +10,11 @@
 #include "game/core/StringUtils.hpp"
 
 RenameWorldScreen::RenameWorldScreen(Screen* parentScreen, const std::wstring& levelId)
-    : Screen(), mParentScreen(parentScreen), mEditBox(NULL), mLevelId(levelId)
+    : Screen()
 {
-}
-
-RenameWorldScreen::~RenameWorldScreen()
-{
+    mEditBox = NULL;
+    mParentScreen = parentScreen;
+    mLevelId = levelId;
 }
 
 void RenameWorldScreen::tick()
@@ -68,9 +67,9 @@ void RenameWorldScreen::render(int x, int y, float partialTick)
 {
     Language* language = Language::getInstance();
     renderBackground();
-    drawCenteredString(mFont, language->getElement(std::wstring(L"selectWorld.renameTitle")),
+    drawCenteredString(mFont, language->getElement(L"selectWorld.renameTitle"),
                        mWidth / 2, mHeight / 4 - 40, 0xffffff);
-    drawString(mFont, language->getElement(std::wstring(L"selectWorld.enterName")),
+    drawString(mFont, language->getElement(L"selectWorld.enterName"),
                mWidth / 2 - 100, 47, 0xa0a0a0);
     mEditBox->render();
     Screen::render(x, y, partialTick);

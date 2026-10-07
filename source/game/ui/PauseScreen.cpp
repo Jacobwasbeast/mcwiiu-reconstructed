@@ -12,10 +12,6 @@
 #include "game/world/generation/MultiPlayerGameMode.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 
-PauseScreen::~PauseScreen()
-{
-}
-
 void PauseScreen::init()
 {
     mButtonListState = 0;

@@ -19,7 +19,6 @@ class UIScene_LoadMenu : public IUIScene_StartGame, public virtual IUIScene_Mini
 {
 public:
     UIScene_LoadMenu(int sceneType, void* data, UILayer* layer);
-    virtual ~UIScene_LoadMenu();
 
     virtual void AddVariantButtons(bool alternate);
     void UpdateIfPublicGamesAllowed();
