@@ -15,10 +15,6 @@ OwnerHurtTargetGoal::OwnerHurtTargetGoal(TamableAnimal* tamable)
     mTimestamp = 0;
 }
 
-OwnerHurtTargetGoal::~OwnerHurtTargetGoal()
-{
-}
-
 bool OwnerHurtTargetGoal::canUse()
 {
     if (!mTamable->isTame())

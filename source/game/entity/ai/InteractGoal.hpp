@@ -14,7 +14,7 @@ public:
     InteractGoal(Mob* mob, const std::type_info& lookAtType, float lookDistance);
     InteractGoal(Mob* mob, const std::type_info& lookAtType, float lookDistance, float probability);
     virtual ~InteractGoal() {}
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"Interact"; }
 };
 
 #endif

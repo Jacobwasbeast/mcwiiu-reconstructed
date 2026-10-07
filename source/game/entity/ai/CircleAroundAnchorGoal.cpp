@@ -212,7 +212,3 @@ void CircleAroundAnchorGoal::tick()
     }
 }
 
-std::wstring CircleAroundAnchorGoal::getName()
-{
-    return std::wstring(L"CircleAroundAnchorGoal");
-}

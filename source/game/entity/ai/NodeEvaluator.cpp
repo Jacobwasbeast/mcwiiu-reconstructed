@@ -9,11 +9,11 @@
 NodeEvaluator::NodeEvaluator()
 {
     mNodeMap = boost::unordered_map<int, Node*, IntKeyHash2, IntKeyEq>();
-    mMob = 0;
     mCanPassDoors = false;
     mCanOpenDoors = false;
     mCanFloat = false;
     mCanSinkInWaterWalk = false;
+    mMob = 0;
 }
 
 NodeEvaluator::~NodeEvaluator()
@@ -39,17 +39,17 @@ void NodeEvaluator::done()
 
 Node* NodeEvaluator::getNode(int x, int y, int z)
 {
-    int hash = static_cast<int>(Node::createHash(x, y, z));
+    int hash = Node::createHash(x, y, z);
     boost::unordered_map<int, Node*, IntKeyHash2, IntKeyEq>::iterator it = mNodeMap.find(hash);
     Node* node;
-    if (it == mNodeMap.end())
+    if (it != mNodeMap.end())
     {
-        node = Node::GetNodeFromPool(x, y, z);
-        mNodeMap.insert(std::pair<const int, Node*>(hash, node));
+        node = it->second;
     }
     else
     {
-        node = it->second;
+        node = Node::GetNodeFromPool(x, y, z);
+        mNodeMap.insert(std::make_pair(hash, node));
     }
     return node;
 }

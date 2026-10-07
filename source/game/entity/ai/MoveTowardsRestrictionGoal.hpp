@@ -15,7 +15,7 @@ public:
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual void start();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"MoveTowardsRestriction"; }
 
 protected:
     PathfinderMob* mMob;

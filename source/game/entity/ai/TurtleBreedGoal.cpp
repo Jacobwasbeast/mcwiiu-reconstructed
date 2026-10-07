@@ -50,7 +50,3 @@ void TurtleBreedGoal::breed()
     }
 }
 
-std::wstring TurtleBreedGoal::getName()
-{
-    return std::wstring(L"Turtle Breed");
-}

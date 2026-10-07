@@ -14,7 +14,7 @@ GoalSelector::GoalSelector()
 GoalSelector::~GoalSelector()
 {
     std::vector<InternalGoal*>::iterator it;
-    for (it = mAvailableGoals.begin(); it != mAvailableGoals.end(); ++it)
+    for (it = mAvailableGoals.begin(); it != mAvailableGoals.end(); it++)
     {
         delete *it;
     }
@@ -22,8 +22,11 @@ GoalSelector::~GoalSelector()
 }
 
 GoalSelector::InternalGoal::InternalGoal(int priority, Goal* goal, bool ownsGoal)
-    : mGoal(goal), mPriority(priority), mIsRunning(false), mOwnsGoal(ownsGoal)
 {
+    mPriority = priority;
+    mGoal = goal;
+    mOwnsGoal = ownsGoal;
+    mIsRunning = false;
 }
 
 GoalSelector::InternalGoal::~InternalGoal()
@@ -116,24 +119,20 @@ void GoalSelector::tick()
         for (available = mAvailableGoals.begin(); available != mAvailableGoals.end(); ++available)
         {
             InternalGoal* goal = *available;
-            if (!goal->mIsRunning)
+            if (goal->mIsRunning)
             {
-                if (canUseInSystem(goal) && goal->mGoal->canUse())
+                if (!canUseInSystem(goal) || !canContinueToUse(goal))
                 {
-                    goal->mIsRunning = true;
-                    goal->mGoal->start();
-                    mGoals.push_back(goal);
+                    goal->mIsRunning = false;
+                    goal->mGoal->stop();
+                    mGoals.erase(std::find(mGoals.begin(), mGoals.end(), goal));
                 }
             }
-            else if (!canUseInSystem(goal) || !canContinueToUse(goal))
+            else if (canUseInSystem(goal) && goal->mGoal->canUse())
             {
-                goal->mIsRunning = false;
-                goal->mGoal->stop();
-                std::vector<InternalGoal*>::iterator running = std::find(mGoals.begin(), mGoals.end(), goal);
-                if (running != mGoals.end())
-                {
-                    mGoals.erase(running);
-                }
+                goal->mIsRunning = true;
+                goal->mGoal->start();
+                mGoals.push_back(goal);
             }
         }
         PIXEndNamedEvent();
@@ -141,8 +140,7 @@ void GoalSelector::tick()
     else
     {
         PIXBeginNamedEvent(0.0f, "Checking current goals");
-        std::vector<InternalGoal*>::iterator running = mGoals.begin();
-        while (running != mGoals.end())
+        for (std::vector<InternalGoal*>::iterator running = mGoals.begin(); running != mGoals.end();)
         {
             InternalGoal* goal = *running;
             if (!goal->mGoal->canContinueToUse())
@@ -159,10 +157,12 @@ void GoalSelector::tick()
         PIXEndNamedEvent();
     }
     PIXBeginNamedEvent(0.0f, "Tick using goals");
-    std::vector<InternalGoal*>::iterator running;
-    for (running = mGoals.begin(); running != mGoals.end(); ++running)
+    if (!mGoals.empty())
     {
-        (*running)->mGoal->tick();
+        for (unsigned int i = 0; i < mGoals.size(); i++)
+        {
+            mGoals.at(i)->mGoal->tick();
+        }
     }
     PIXEndNamedEvent();
 }
@@ -208,8 +208,9 @@ void GoalSelector::setControlFlag(int controlFlag, bool enabled)
 void GoalSelector::setLevel(Level* level)
 {
     std::vector<InternalGoal*>::iterator it;
-    for (it = mAvailableGoals.begin(); it != mAvailableGoals.end(); ++it)
+    for (it = mAvailableGoals.begin(); it != mAvailableGoals.end(); it++)
     {
-        (*it)->mGoal->setLevel(level);
+        InternalGoal* goal = *it;
+        goal->mGoal->setLevel(level);
     }
 }

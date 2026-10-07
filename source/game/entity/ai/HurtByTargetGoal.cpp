@@ -101,7 +101,3 @@ void HurtByTargetGoal::alertOther(boost::shared_ptr<PathfinderMob> mob,
     mob->setTarget(target);
 }
 
-std::wstring HurtByTargetGoal::getName()
-{
-    return std::wstring(L"HurtByTarget");
-}

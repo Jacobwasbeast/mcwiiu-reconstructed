@@ -35,10 +35,6 @@ void RangedAttackGoal::_init(RangedAttackMob* rangedAttackMob, Mob* mob, double 
     mAttackTime = -1;
 }
 
-RangedAttackGoal::~RangedAttackGoal()
-{
-}
-
 bool RangedAttackGoal::canUse()
 {
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();

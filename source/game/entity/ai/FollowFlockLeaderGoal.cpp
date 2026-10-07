@@ -153,7 +153,3 @@ void FollowFlockLeaderGoal::tick()
     self->getNavigation()->moveTo((double)target.x, (double)target.y, (double)target.z, 1.0);
 }
 
-std::wstring FollowFlockLeaderGoal::getName()
-{
-    return std::wstring(L"FollowFlock");
-}

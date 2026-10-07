@@ -88,7 +88,3 @@ void RandomStrollGoal::setInterval(int interval)
     mInterval = interval;
 }
 
-std::wstring RandomStrollGoal::getName()
-{
-    return std::wstring(L"RandomStroll");
-}

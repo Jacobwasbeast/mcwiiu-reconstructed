@@ -13,14 +13,13 @@ class OfferFlowerGoal : public Goal
 {
 public:
     explicit OfferFlowerGoal(VillagerGolem* golem);
-    virtual ~OfferFlowerGoal();
 
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual void start();
     virtual void stop();
     virtual void tick();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"OfferFlower"; }
 
 private:
     VillagerGolem* mGolem;

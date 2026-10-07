@@ -13,7 +13,6 @@ class PlayGoal : public Goal
 {
 public:
     PlayGoal(Villager* villager, double speedModifier);
-    virtual ~PlayGoal();
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual void start();

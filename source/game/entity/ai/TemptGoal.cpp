@@ -155,7 +155,3 @@ bool TemptGoal::isRunning()
     return mRunning;
 }
 
-std::wstring TemptGoal::getName()
-{
-    return std::wstring(L"Tempt");
-}

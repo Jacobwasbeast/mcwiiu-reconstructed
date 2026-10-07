@@ -166,7 +166,3 @@ void BreedGoal::setLevel(Level* level)
     mLevel = level;
 }
 
-std::wstring BreedGoal::getName()
-{
-    return std::wstring(L"Breed");
-}

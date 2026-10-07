@@ -120,7 +120,3 @@ bool RandomSwimmingGoal::canUse()
     return RandomStrollGoal::canUse();
 }
 
-std::wstring RandomSwimmingGoal::getName()
-{
-    return std::wstring(L"RandomSwimming");
-}

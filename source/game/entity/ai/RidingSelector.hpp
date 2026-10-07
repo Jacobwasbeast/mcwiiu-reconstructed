@@ -16,7 +16,6 @@ public:
     }
 
     virtual bool apply(boost::shared_ptr<Entity> entity) const;
-    virtual ~RidingSelector();
 
     boost::shared_ptr<Entity> vehicle;
     bool riding;

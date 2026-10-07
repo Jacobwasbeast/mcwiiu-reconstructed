@@ -21,7 +21,7 @@ public:
     virtual void start();
     virtual void alertOther(boost::shared_ptr<PathfinderMob> mob,
                             boost::shared_ptr<LivingEntity> target);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"HurtByTarget"; }
 
 protected:
     bool mAlertSameType;

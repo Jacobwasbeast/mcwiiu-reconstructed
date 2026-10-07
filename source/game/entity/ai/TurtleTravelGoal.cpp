@@ -121,7 +121,3 @@ void TurtleTravelGoal::stop()
     Goal::stop();
 }
 
-std::wstring TurtleTravelGoal::getName()
-{
-    return std::wstring(L"Turtle Travel");
-}

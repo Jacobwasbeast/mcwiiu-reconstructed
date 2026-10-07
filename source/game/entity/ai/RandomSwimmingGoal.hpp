@@ -17,7 +17,7 @@ public:
 
     virtual bool canUse();
     virtual bool canContinueToUse();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"RandomSwimming"; }
     virtual Vec3* getPosition();
 
     void getWaterHeights(MutableBlockPos pos, int& topY, float& waterY, float& minY, float& maxY);

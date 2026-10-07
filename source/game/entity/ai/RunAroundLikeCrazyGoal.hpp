@@ -16,7 +16,7 @@ public:
     virtual void start();
     virtual bool canContinueToUse();
     virtual void tick();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"RunAroundLikeCrazy"; }
 
 private:
     AbstractHorse* mHorse;

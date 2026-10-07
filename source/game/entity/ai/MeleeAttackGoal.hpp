@@ -24,7 +24,7 @@ public:
     virtual void stop();
     virtual void tick();
     virtual void setLevel(Level* level);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"MeleeAttack"; }
     virtual void checkAndPerformAttack(boost::shared_ptr<LivingEntity> target, double distance);
     virtual double getAttackReachSqr(boost::shared_ptr<LivingEntity> target);
 

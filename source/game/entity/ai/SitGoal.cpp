@@ -58,7 +58,3 @@ void SitGoal::wantToSit(bool wantToSit)
     mWantToSit = wantToSit;
 }
 
-std::wstring SitGoal::getName()
-{
-    return std::wstring(L"Sit");
-}

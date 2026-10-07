@@ -13,7 +13,6 @@ class OwnerHurtTargetGoal : public TargetGoal
 {
 public:
     OwnerHurtTargetGoal(TamableAnimal* tamable);
-    virtual ~OwnerHurtTargetGoal();
     virtual bool canUse();
     virtual void start();
     virtual std::wstring getName() { return L"OwnerHurtTargetGoal"; }

@@ -20,10 +20,6 @@ OcelotAttackGoal::OcelotAttackGoal(Mob* mob)
     setRequiredControlFlags(3);
 }
 
-OcelotAttackGoal::~OcelotAttackGoal()
-{
-}
-
 bool OcelotAttackGoal::canUse()
 {
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();
@@ -84,7 +80,3 @@ void OcelotAttackGoal::setLevel(Level* level)
     mLevel = level;
 }
 
-std::wstring OcelotAttackGoal::getName()
-{
-    return std::wstring(L"OcelotAttack");
-}

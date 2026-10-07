@@ -90,7 +90,3 @@ void TakeFlowerGoal::tick()
     }
 }
 
-std::wstring TakeFlowerGoal::getName()
-{
-    return L"TakeFlower";
-}

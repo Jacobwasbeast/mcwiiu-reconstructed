@@ -102,7 +102,3 @@ bool PanicGoal::canContinueToUse()
     return !mMob->getNavigation()->isDone();
 }
 
-std::wstring PanicGoal::getName()
-{
-    return std::wstring(L"PanicGoal");
-}

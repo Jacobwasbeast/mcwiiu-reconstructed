@@ -90,7 +90,3 @@ void SkeletonTrapGoal::tick()
     }
 }
 
-std::wstring SkeletonTrapGoal::getName()
-{
-    return std::wstring(L"SkeletonTrap");
-}

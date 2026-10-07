@@ -25,10 +25,6 @@ MoveIndoorsGoal::MoveIndoorsGoal(PathfinderMob* mob)
     setRequiredControlFlags(1);
 }
 
-MoveIndoorsGoal::~MoveIndoorsGoal()
-{
-}
-
 bool MoveIndoorsGoal::canUse()
 {
     BlockPos pos(mMob->shared_from_this());
@@ -115,7 +111,3 @@ void MoveIndoorsGoal::stop()
     mDoorInfo = boost::weak_ptr<DoorInfo>();
 }
 
-std::wstring MoveIndoorsGoal::getName()
-{
-    return std::wstring(L"MoveIndoors");
-}

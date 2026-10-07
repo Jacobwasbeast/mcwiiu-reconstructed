@@ -14,7 +14,7 @@ public:
     virtual ~TurtlePanicGoal();
 
     virtual bool canUse();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"Turtle Panic"; }
 };
 
 #endif

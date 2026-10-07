@@ -16,6 +16,8 @@ namespace EntitySelector
 {
     extern Predicate<boost::shared_ptr<Entity> >* NO_SPECTATORS;
     extern Predicate<boost::shared_ptr<Entity> >* NO_CREATIVE_OR_SPECTATOR;
+    extern Predicate<boost::shared_ptr<Entity> >* CONTAINER_ENTITY_SELECTOR;
+    extern Predicate<boost::shared_ptr<Entity> >* NOT_BEING_RIDDEN_ENTITY_SELECTOR;
     extern Predicate<boost::shared_ptr<Entity> >* ENTITY_STILL_ALIVE;
     extern Predicate<boost::shared_ptr<Entity> >* ENEMY_SELECTOR;
     extern Predicate<boost::shared_ptr<Entity> >* VISIBLE_ENEMY_SELECTOR;

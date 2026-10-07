@@ -14,14 +14,13 @@ class OcelotAttackGoal : public Goal
 {
 public:
     OcelotAttackGoal(Mob* mob);
-    virtual ~OcelotAttackGoal();
 
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual void stop();
     virtual void tick();
     virtual void setLevel(Level* level);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"OcelotAttack"; }
 
 protected:
     Level* mLevel;

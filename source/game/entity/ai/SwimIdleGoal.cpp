@@ -14,8 +14,10 @@
 #include "game/entity/mob/WaterAnimal.hpp"
 
 SwimIdleGoal::SwimIdleGoal(Mob* mob)
-    : Goal(), mMob(mob), mTicks(0), mStartPos(NULL)
+    : Goal(), mMob(mob)
 {
+    mStartPos = NULL;
+    mTicks = 0;
     setRequiredControlFlags(1);
 }
 
@@ -25,28 +27,17 @@ SwimIdleGoal::~SwimIdleGoal()
 
 bool SwimIdleGoal::canUse()
 {
-    if (mMob->followsLeader())
+    if (!mMob->followsLeader() && !mMob->getNavigation()->isRiverFollowing() && mMob->getNavigation()->isDone())
     {
-        return false;
+        bool result = false;
+        if (mMob->isInWater() && mMob->getRandom()->nextInt(10) == 0)
+        {
+            result = true;
+        }
+        return result;
     }
 
-    if (mMob->getNavigation()->isRiverFollowing())
-    {
-        return false;
-    }
-
-    if (!mMob->getNavigation()->isDone())
-    {
-        return false;
-    }
-
-    bool result = false;
-    if (mMob->isInWater() && mMob->getRandom()->nextInt(10) == 0)
-    {
-        result = true;
-    }
-
-    return result;
+    return false;
 }
 
 bool SwimIdleGoal::canContinueToUse()
@@ -70,8 +61,12 @@ void SwimIdleGoal::tick()
     mMob->mYd = 0.0;
     mMob->mZd = 0.0;
 
-    if ((mMob->GetType() & EntityType::WATER_ANIMAL) == EntityType::WATER_ANIMAL
-        || (mMob->GetType() & EntityType::AGABLE_WATER_ANIMAL) == EntityType::AGABLE_WATER_ANIMAL)
+    bool isWaterAnimal = (mMob->GetType() & EntityType::WATER_ANIMAL) == EntityType::WATER_ANIMAL;
+    if (!isWaterAnimal)
+    {
+        isWaterAnimal = (mMob->GetType() & EntityType::AGABLE_WATER_ANIMAL) == EntityType::AGABLE_WATER_ANIMAL;
+    }
+    if (isWaterAnimal)
     {
         boost::shared_ptr<WaterAnimal> waterAnimal =
             boost::static_pointer_cast<WaterAnimal>(mMob->shared_from_this());
@@ -81,9 +76,8 @@ void SwimIdleGoal::tick()
             const float phase = static_cast<float>(std::abs(id) % 100);
             const float swim = Mth::sin((static_cast<float>(mMob->mTickCount) + phase) * waterAnimal->mSwimFrequency)
                 * waterAnimal->mSwimAmplitude;
-            const float yaw = mMob->mYRot * 0.017453292f;
-            const float cosYaw = Mth::cos(yaw);
-            const float sinYaw = Mth::sin(yaw);
+            const float cosYaw = Mth::cos(mMob->mYRot * 0.017453292f);
+            const float sinYaw = Mth::sin(mMob->mYRot * 0.017453292f);
 
             mMob->mXd += static_cast<double>(swim * cosYaw);
             mMob->mZd += static_cast<double>(swim * sinYaw);
@@ -96,7 +90,3 @@ void SwimIdleGoal::tick()
     }
 }
 
-std::wstring SwimIdleGoal::getName()
-{
-    return std::wstring(L"swim_idle");
-}

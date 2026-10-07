@@ -28,7 +28,7 @@ public:
     virtual void stop();
     virtual void tick();
     bool isRunning();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"Tempt"; }
 
 private:
     PathfinderMob* mMob;

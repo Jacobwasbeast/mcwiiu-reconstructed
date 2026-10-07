@@ -19,7 +19,7 @@ public:
     virtual ~SkeletonTrapGoal() {}
     virtual bool canUse();
     virtual void tick();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"SkeletonTrap"; }
 
 private:
     boost::shared_ptr<Skeleton> createSkeleton(const DifficultyInstance& difficulty,

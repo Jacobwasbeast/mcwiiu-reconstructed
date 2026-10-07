@@ -50,7 +50,3 @@ void LandOnOwnersShoulderGoal::tick()
     }
 }
 
-std::wstring LandOnOwnersShoulderGoal::getName()
-{
-    return std::wstring(L"LandOnOwnersShoulderGoal");
-}

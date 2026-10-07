@@ -116,9 +116,8 @@ void JumpGoal::tick()
     double speed = Mth::sqrt(mMob->mXd * mMob->mXd + verticalSpeed + mMob->mZd * mMob->mZd);
     double horizontalSpeed = Mth::sqrt(mMob->mXd * mMob->mXd + mMob->mZd * mMob->mZd);
     double fallSpeed = -mMob->mYd;
-    int sign = (0.0 < fallSpeed) - (fallSpeed < 0.0);
-    double pitch = std::acos(Mth::clamp(horizontalSpeed / speed, -1.0, 1.0));
-    mMob->mXRot = static_cast<float>(static_cast<double>(sign) * pitch * Mth::RAD_TO_DEG);
+    double direction = static_cast<double>((0.0 < fallSpeed) - (fallSpeed < 0.0));
+    mMob->mXRot = static_cast<float>(direction * std::acos(Mth::clamp(horizontalSpeed / speed, -1.0, 1.0)) * Mth::RAD_TO_DEG);
 }
 
 std::wstring JumpGoal::getName()

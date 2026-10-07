@@ -25,10 +25,6 @@ FindMountGoal::FindMountGoal(Mob& mob, float targetDistance, int startDelay,
     setRequiredControlFlags(3);
 }
 
-FindMountGoal::~FindMountGoal()
-{
-}
-
 bool FindMountGoal::canUse()
 {
     if (!static_cast<Zombie*>(mMob)->isJockey())

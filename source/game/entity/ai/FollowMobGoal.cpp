@@ -125,7 +125,3 @@ void FollowMobGoal::tick()
     }
 }
 
-std::wstring FollowMobGoal::getName()
-{
-    return std::wstring(L"FollowMobGoal");
-}

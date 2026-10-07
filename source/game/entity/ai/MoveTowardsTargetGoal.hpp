@@ -15,13 +15,12 @@ class MoveTowardsTargetGoal : public Goal
 {
 public:
     MoveTowardsTargetGoal(PathfinderMob* mob, double speedModifier, float within);
-    virtual ~MoveTowardsTargetGoal();
 
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual void start();
     virtual void stop();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"MoveTowardsTarget"; }
 
 private:
     PathfinderMob* mMob;

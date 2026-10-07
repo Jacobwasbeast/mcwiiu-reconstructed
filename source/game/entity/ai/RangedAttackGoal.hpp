@@ -16,7 +16,6 @@ class RangedAttackGoal : public Goal
 public:
     RangedAttackGoal(RangedAttackMob* rangedAttackMob, Mob* mob, double speedModifier, int attackInterval, float attackRadius);
     RangedAttackGoal(RangedAttackMob* rangedAttackMob, Mob* mob, double speedModifier, int attackIntervalMin, int attackIntervalMax, float attackRadius);
-    virtual ~RangedAttackGoal();
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual void stop();

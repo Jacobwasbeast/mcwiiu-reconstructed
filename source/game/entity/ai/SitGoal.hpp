@@ -16,7 +16,7 @@ public:
     virtual void start();
     virtual void stop();
     void wantToSit(bool wantToSit);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"Sit"; }
 
 private:
     TamableAnimal* mMob;

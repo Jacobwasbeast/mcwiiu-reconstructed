@@ -1,5 +1,7 @@
 #include "game/entity/ai/DoorInteractGoal.hpp"
 
+#include <algorithm>
+
 #include "game/core/Node.hpp"
 #include "game/core/Path.hpp"
 #include "game/entity/ai/GroundPathNavigation.hpp"
@@ -13,15 +15,13 @@
 #include "game/world/block/Material.hpp"
 
 DoorInteractGoal::DoorInteractGoal(Mob* mob)
-    : Goal(),
-      mDoorPos(),
-      mDoorBlock(NULL),
-      mHasDoor(false),
-      mDoorX(0.0f),
-      mDoorZ(0.0f)
 {
     mDoorPos = BlockPos::ZERO;
     mMob = mob;
+    mDoorBlock = NULL;
+    mHasDoor = false;
+    mDoorZ = 0.0f;
+    mDoorX = 0.0f;
 }
 
 Block* DoorInteractGoal::getDoorBlock(const BlockPos& pos)
@@ -38,40 +38,26 @@ bool DoorInteractGoal::canUse()
     if (!mMob->mHorizontalCollision)
         return false;
 
-    PathNavigation* navigation = mMob->getNavigation();
+    GroundPathNavigation* navigation = static_cast<GroundPathNavigation*>(mMob->getNavigation());
     Path* path = navigation->getPath();
-    GroundPathNavigation* groundNavigation = static_cast<GroundPathNavigation*>(navigation);
-    if (path != NULL && !path->isDone() && groundNavigation->canOpenDoors())
+    if (path == NULL || path->isDone() || !navigation->canOpenDoors())
+        return false;
+
+    for (int i = 0; i < std::min(path->getIndex() + 2, path->getSize()); ++i)
     {
-        int index = 0;
-        int limit = path->getIndex() + 2;
-        int size = path->getSize();
-        if (size < limit)
-            limit = size;
-
-        while (index < limit)
+        Node* node = path->get(i);
+        mDoorPos = BlockPos(node->x, node->y + 1, node->z);
+        if (mMob->distanceToSqr((double)mDoorPos.x, mMob->mY, (double)mDoorPos.z) <= 2.25)
         {
-            Node* node = path->get(index);
-            mDoorPos = BlockPos(node->x, node->y + 1, node->z);
-            if (mMob->distanceToSqr((double)mDoorPos.x, mMob->mY, (double)mDoorPos.z) <= 2.25)
-            {
-                mDoorBlock = getDoorBlock(mDoorPos);
-                if (mDoorBlock != NULL)
-                    return true;
-            }
-            ++index;
-            limit = path->getIndex() + 2;
-            size = path->getSize();
-            if (size < limit)
-                limit = size;
+            mDoorBlock = getDoorBlock(mDoorPos);
+            if (mDoorBlock != NULL)
+                return true;
         }
-
-        mDoorPos = BlockPos(mMob->shared_from_this()).above();
-        mDoorBlock = getDoorBlock(mDoorPos);
-        return mDoorBlock != NULL;
     }
 
-    return false;
+    mDoorPos = BlockPos(mMob->shared_from_this()).above();
+    mDoorBlock = getDoorBlock(mDoorPos);
+    return mDoorBlock != NULL;
 }
 
 bool DoorInteractGoal::canContinueToUse()
@@ -94,7 +80,3 @@ void DoorInteractGoal::tick()
         mHasDoor = true;
 }
 
-std::wstring DoorInteractGoal::getName()
-{
-    return std::wstring(L"DoorInteract");
-}

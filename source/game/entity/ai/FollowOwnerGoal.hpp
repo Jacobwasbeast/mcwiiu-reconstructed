@@ -21,7 +21,7 @@ public:
     virtual void stop();
     virtual void tick();
     virtual void setLevel(Level* level);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"FollowOwner"; }
     virtual bool isTeleportFriendlyBlock(int x, int z, int y, int dx, int dz);
 
 private:

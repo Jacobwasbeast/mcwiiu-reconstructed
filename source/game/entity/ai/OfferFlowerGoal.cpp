@@ -19,10 +19,6 @@ OfferFlowerGoal::OfferFlowerGoal(VillagerGolem* golem)
     setRequiredControlFlags(3);
 }
 
-OfferFlowerGoal::~OfferFlowerGoal()
-{
-}
-
 bool OfferFlowerGoal::canUse()
 {
     if (!mGolem->mLevel->isDay())
@@ -59,7 +55,3 @@ void OfferFlowerGoal::tick()
     --mTicks;
 }
 
-std::wstring OfferFlowerGoal::getName()
-{
-    return L"OfferFlower";
-}

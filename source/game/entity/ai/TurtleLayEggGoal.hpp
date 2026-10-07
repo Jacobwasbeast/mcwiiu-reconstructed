@@ -21,7 +21,7 @@ public:
     virtual void start();
     virtual bool isValidTarget(Level* level, const BlockPos& pos);
     virtual int GetNextStartTick(PathfinderMob* mob);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"Turtle Lay Egg"; }
 
 private:
     Turtle* mTurtle;

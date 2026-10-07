@@ -64,7 +64,8 @@ void BreathAirGoal::tick()
 {
     if (mDolphin->getNavigation()->isDone())
     {
-        if (mDolphin->mLevel->getBlockState(BlockPos(mDolphin))->getMaterial() != Material::AIR)
+        Material* material = mDolphin->mLevel->getBlockState(BlockPos(mDolphin))->getMaterial();
+        if (material != Material::AIR)
             findAirPosition();
     }
 

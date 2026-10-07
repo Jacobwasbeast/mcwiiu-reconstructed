@@ -18,7 +18,7 @@ public:
     virtual void start();
     virtual void stop();
     virtual void tick();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"FollowParentGoal"; }
 
 private:
     Animal* mAnimal;

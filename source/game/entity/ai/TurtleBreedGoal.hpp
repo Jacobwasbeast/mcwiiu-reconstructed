@@ -12,7 +12,7 @@ class TurtleBreedGoal : public BreedGoal
 public:
     TurtleBreedGoal(Turtle* turtle, double speedModifier);
     virtual bool canUse();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"Turtle Breed"; }
     virtual void breed();
 
 private:

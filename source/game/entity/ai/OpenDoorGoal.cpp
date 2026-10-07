@@ -5,10 +5,10 @@
 
 OpenDoorGoal::OpenDoorGoal(Mob* mob, bool closeDoor)
     : DoorInteractGoal(mob),
-      mCloseDoor(closeDoor),
       mCloseDoorTimer(0)
 {
     mMob = mob;
+    mCloseDoor = closeDoor;
 }
 
 OpenDoorGoal::~OpenDoorGoal()
@@ -40,7 +40,3 @@ void OpenDoorGoal::tick()
     DoorInteractGoal::tick();
 }
 
-std::wstring OpenDoorGoal::getName()
-{
-    return std::wstring(L"OpenDoor");
-}

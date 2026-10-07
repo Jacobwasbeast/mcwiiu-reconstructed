@@ -95,7 +95,3 @@ void BegGoal::setLevel(Level* level)
     mLevel = level;
 }
 
-std::wstring BegGoal::getName()
-{
-    return std::wstring(L"Beg");
-}

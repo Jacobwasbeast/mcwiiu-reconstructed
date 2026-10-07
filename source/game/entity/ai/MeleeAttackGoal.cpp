@@ -167,7 +167,3 @@ void MeleeAttackGoal::setLevel(Level* level)
     mLevel = level;
 }
 
-std::wstring MeleeAttackGoal::getName()
-{
-    return std::wstring(L"MeleeAttack");
-}

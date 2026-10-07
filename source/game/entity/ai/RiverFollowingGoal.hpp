@@ -20,7 +20,7 @@ public:
     void determineSteerDirection();
     virtual void tick();
     virtual bool canContinueToUse();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"RiverFollowing"; }
 
 private:
     Mob* mMob;

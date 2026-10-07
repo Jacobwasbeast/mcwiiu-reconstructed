@@ -25,10 +25,6 @@ MobNearestMobTargetGoal::MobNearestMobTargetGoal(Mob* mob,
     mMob = mob;
 }
 
-MobNearestMobTargetGoal::~MobNearestMobTargetGoal()
-{
-}
-
 double MobNearestMobTargetGoal::getFollowDistance()
 {
     AttributeInstance* attribute = mMob->getAttribute(SharedMonsterAttributes::FOLLOW_RANGE);
@@ -93,7 +89,3 @@ void MobNearestMobTargetGoal::stop()
     Goal::start();
 }
 
-std::wstring MobNearestMobTargetGoal::getName()
-{
-    return std::wstring(L"MobNearestMobTarget");
-}

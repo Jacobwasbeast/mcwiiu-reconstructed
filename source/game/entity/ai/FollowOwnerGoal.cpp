@@ -175,11 +175,6 @@ void FollowOwnerGoal::setLevel(Level* level)
     mLevel = level;
 }
 
-std::wstring FollowOwnerGoal::getName()
-{
-    return std::wstring(L"FollowOwner");
-}
-
 bool FollowOwnerGoal::isTeleportFriendlyBlock(int x, int z, int y, int dx, int dz)
 {
     BlockPos blockPos(x + dx, y - 1, z + dz);

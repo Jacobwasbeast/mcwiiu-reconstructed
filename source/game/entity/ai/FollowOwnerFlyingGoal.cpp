@@ -20,7 +20,3 @@ bool FollowOwnerFlyingGoal::isTeleportFriendlyBlock(int x, int z, int y, int dx,
         && mLevel->isEmptyBlock(BlockPos(x + dx, y + 1, z + dz));
 }
 
-std::wstring FollowOwnerFlyingGoal::getName()
-{
-    return std::wstring(L"FollowOwnerFlyingGoal");
-}

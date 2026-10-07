@@ -11,11 +11,11 @@
 
 MoveTowardsRestrictionGoal::MoveTowardsRestrictionGoal(PathfinderMob* mob, double speedModifier)
     : mMob(mob),
-      mWantedX(0.0),
-      mWantedY(0.0),
-      mWantedZ(0.0),
       mSpeedModifier(speedModifier)
 {
+    mWantedZ = 0.0;
+    mWantedY = 0.0;
+    mWantedX = 0.0;
     setRequiredControlFlags(1);
 }
 
@@ -31,12 +31,11 @@ bool MoveTowardsRestrictionGoal::canUse()
     }
 
     BlockPos restrictionCenter = mMob->getRestrictCenter();
-    boost::shared_ptr<PathfinderMob> mob =
-        boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this());
-    Vec3* target = Vec3::newTemp((double)restrictionCenter.x,
-                                  (double)restrictionCenter.y,
-                                  (double)restrictionCenter.z);
-    Vec3* position = RandomPos::getPosTowards(mob, 16, 7, target);
+    Vec3* position = RandomPos::getPosTowards(
+        boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this()),
+        16,
+        7,
+        Vec3::newTemp((double)restrictionCenter.x, (double)restrictionCenter.y, (double)restrictionCenter.z));
     if (position == NULL)
     {
         return false;
@@ -58,7 +57,3 @@ void MoveTowardsRestrictionGoal::start()
     mMob->getNavigation()->moveTo(mWantedX, mWantedY, mWantedZ, mSpeedModifier);
 }
 
-std::wstring MoveTowardsRestrictionGoal::getName()
-{
-    return std::wstring(L"MoveTowardsRestriction");
-}

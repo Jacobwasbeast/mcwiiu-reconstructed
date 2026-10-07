@@ -20,7 +20,7 @@ public:
     virtual bool canContinueToUse();
     virtual void start();
     virtual void setLevel(Level* level);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"FleeSun"; }
 
 private:
     PathfinderMob* mMob;

@@ -24,7 +24,7 @@ public:
     virtual void tick();
     virtual void breed();
     virtual void setLevel(Level* level);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"Breed"; }
 
 protected:
     Animal* mAnimal;

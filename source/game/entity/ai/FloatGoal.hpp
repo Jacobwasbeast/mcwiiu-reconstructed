@@ -14,7 +14,7 @@ public:
     virtual ~FloatGoal();
     virtual bool canUse();
     virtual void tick();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"Float"; }
 
 private:
     Mob* mMob;

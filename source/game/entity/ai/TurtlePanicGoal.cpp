@@ -42,7 +42,3 @@ bool TurtlePanicGoal::canUse()
     return findRandomPosition();
 }
 
-std::wstring TurtlePanicGoal::getName()
-{
-    return std::wstring(L"Turtle Panic");
-}

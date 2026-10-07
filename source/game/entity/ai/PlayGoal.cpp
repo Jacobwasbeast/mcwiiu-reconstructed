@@ -25,10 +25,6 @@ PlayGoal::PlayGoal(Villager* villager, double speedModifier)
     setRequiredControlFlags(1);
 }
 
-PlayGoal::~PlayGoal()
-{
-}
-
 bool PlayGoal::canUse()
 {
     if (mVillager->getAge() >= 0)

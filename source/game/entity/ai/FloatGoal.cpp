@@ -43,8 +43,3 @@ void FloatGoal::tick()
         static_cast<JumpControl*>(mMob->getJumpControl())->jump();
     }
 }
-
-std::wstring FloatGoal::getName()
-{
-    return std::wstring(L"Float");
-}

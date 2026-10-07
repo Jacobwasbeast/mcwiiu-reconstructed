@@ -16,9 +16,9 @@
 RiverFollowingGoal::RiverFollowingGoal(Mob* mob, float distance, float speed)
     : Goal()
 {
-    mSpeed = speed;
     mMob = mob;
     mDistance = distance;
+    mSpeed = speed;
     setRequiredControlFlags(3);
 }
 
@@ -28,13 +28,13 @@ RiverFollowingGoal::~RiverFollowingGoal()
 
 bool RiverFollowingGoal::canUse()
 {
-    if (mMob->getNavigation() != NULL && !mMob->followsLeader())
-    {
-        if (mMob->mLevel->getBiome(BlockPos(mMob->getPos(0.0f)))->getBiomeType() != Biome::eBiomeType_Ocean
-            && mMob->isInWater())
-            return true;
-    }
-
+    if (mMob->getNavigation() == NULL || mMob->followsLeader())
+        return false;
+    Biome* biome = mMob->mLevel->getBiome(BlockPos(mMob->getPos(0.0f)));
+    if (biome->getBiomeType() == Biome::eBiomeType_Ocean)
+        return false;
+    if (mMob->isInWater())
+        return true;
     return false;
 }
 
@@ -136,10 +136,10 @@ void RiverFollowingGoal::determineSteerDirection()
             }
         }
 
-        if (chosen == unchosen)
-            mSteerDirection = lookAngle->multiply(-1.0, -1.0, -1.0);
-        else
+        if (chosen != unchosen)
             mSteerDirection = chosen->multiply(2.0);
+        else
+            mSteerDirection = lookAngle->multiply(-1.0, -1.0, -1.0);
     }
 
     Vec3* turnLeft = Vec3::newTemp(lookAngle->x, 0.0, lookAngle->z)->yRot(45.0f);
@@ -193,8 +193,8 @@ void RiverFollowingGoal::tick()
     {
         mSteerDirection = mSteerDirection->normalize()->multiply(mSpeed);
         float rotation = -(float)std::atan2(mSteerDirection->x, mSteerDirection->z);
-        float yRot = Mth::clampRotateDegrees(mMob->mYRot, rotation * 57.295776f, 45.0f);
-        mMob->mYRot = yRot;
+        float yRot = mMob->mYRot;
+        mMob->mYRot = Mth::clampRotateDegrees(yRot, rotation * 57.295776f, 45.0f);
         if (mMob->isUnderLiquid(Material::WATER))
             mMob->mYd = 0.0;
 
@@ -209,10 +209,7 @@ bool RiverFollowingGoal::canContinueToUse()
     if (mMob->followsLeader())
         return false;
 
-    return mMob->mLevel->getBiome(BlockPos(mMob->getPos(0.0f)))->getBiomeType() != Biome::eBiomeType_Ocean;
+    Biome* biome = mMob->mLevel->getBiome(BlockPos(mMob->getPos(0.0f)));
+    return biome->getBiomeType() != Biome::eBiomeType_Ocean;
 }
 
-std::wstring RiverFollowingGoal::getName()
-{
-    return L"RiverFollowing";
-}

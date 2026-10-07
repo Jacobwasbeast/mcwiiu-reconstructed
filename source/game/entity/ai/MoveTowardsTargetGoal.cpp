@@ -21,10 +21,6 @@ MoveTowardsTargetGoal::MoveTowardsTargetGoal(PathfinderMob* mob, double speedMod
     setRequiredControlFlags(1);
 }
 
-MoveTowardsTargetGoal::~MoveTowardsTargetGoal()
-{
-}
-
 bool MoveTowardsTargetGoal::canUse()
 {
     mTarget = boost::weak_ptr<LivingEntity>(mMob->getTarget());
@@ -69,7 +65,3 @@ void MoveTowardsTargetGoal::stop()
     mTarget = boost::weak_ptr<Mob>();
 }
 
-std::wstring MoveTowardsTargetGoal::getName()
-{
-    return std::wstring(L"MoveTowardsTarget");
-}

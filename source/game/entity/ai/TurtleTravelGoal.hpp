@@ -17,7 +17,7 @@ public:
     virtual void tick();
     virtual bool canContinueToUse();
     virtual void stop();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"Turtle Travel"; }
 
 private:
     Turtle* mTurtle;

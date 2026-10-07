@@ -11,7 +11,7 @@ public:
     TurtleRandomStrollGoal(Turtle* turtle, double speedModifier, int interval);
     virtual ~TurtleRandomStrollGoal();
     virtual bool canUse();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"Turtle Random Stroll"; }
 };
 
 #endif

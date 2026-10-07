@@ -68,7 +68,3 @@ void RestrictOpenDoorGoal::tick()
         doorInfo->incBookingCount();
 }
 
-std::wstring RestrictOpenDoorGoal::getName()
-{
-    return std::wstring(L"RestrictOpenDoor");
-}

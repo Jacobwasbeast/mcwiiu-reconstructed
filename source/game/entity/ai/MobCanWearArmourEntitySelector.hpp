@@ -14,7 +14,6 @@ class MobCanWearArmourEntitySelector : public Predicate<boost::shared_ptr<Entity
 public:
     MobCanWearArmourEntitySelector(not_null_ptr<ItemInstance> itemInstance);
     virtual bool apply(boost::shared_ptr<Entity> entity) const;
-    virtual ~MobCanWearArmourEntitySelector();
 
 private:
     not_null_ptr<ItemInstance> mItemInstance;

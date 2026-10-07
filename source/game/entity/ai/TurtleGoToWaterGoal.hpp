@@ -15,7 +15,7 @@ public:
 
     virtual bool canUse();
     virtual bool canContinueToUse();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"Turtle Goto Water"; }
     virtual bool isValidTarget(Level* level, const BlockPos& pos);
 
 private:

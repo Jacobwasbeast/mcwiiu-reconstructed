@@ -69,8 +69,3 @@ void BreakDoorGoal::tick()
         mMob->mLevel->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, mDoorPos, Block::getId(mDoorBlock));
     }
 }
-
-std::wstring BreakDoorGoal::getName()
-{
-    return std::wstring(L"BreakDoor");
-}

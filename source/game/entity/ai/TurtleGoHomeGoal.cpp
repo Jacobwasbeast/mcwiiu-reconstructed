@@ -47,8 +47,8 @@ bool TurtleGoHomeGoal::canUse()
 void TurtleGoHomeGoal::start()
 {
     mTurtle->setGoingHome(true);
-    mTravelTime = 0;
     mReachedHome = false;
+    mTravelTime = 0;
 }
 
 void TurtleGoHomeGoal::stop()
@@ -103,7 +103,3 @@ void TurtleGoHomeGoal::tick()
     mTurtle->getNavigation()->moveTo(position->x, position->y, position->z, mSpeedModifier);
 }
 
-std::wstring TurtleGoHomeGoal::getName()
-{
-    return std::wstring(L"Turtle Go Home");
-}

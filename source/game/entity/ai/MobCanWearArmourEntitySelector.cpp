@@ -59,6 +59,3 @@ bool MobCanWearArmourEntitySelector::apply(boost::shared_ptr<Entity> entity) con
     return true;
 }
 
-MobCanWearArmourEntitySelector::~MobCanWearArmourEntitySelector()
-{
-}

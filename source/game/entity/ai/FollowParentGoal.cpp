@@ -100,7 +100,3 @@ void FollowParentGoal::tick()
     }
 }
 
-std::wstring FollowParentGoal::getName()
-{
-    return std::wstring(L"FollowParentGoal");
-}

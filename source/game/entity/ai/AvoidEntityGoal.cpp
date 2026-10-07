@@ -135,7 +135,3 @@ void AvoidEntityGoal::tick()
     }
 }
 
-std::wstring AvoidEntityGoal::getName()
-{
-    return std::wstring(L"AvoidEntity");
-}

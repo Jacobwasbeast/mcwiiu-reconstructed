@@ -20,10 +20,6 @@ LeapAtTargetGoal::LeapAtTargetGoal(Mob* mob, float yd)
     setRequiredControlFlags(5);
 }
 
-LeapAtTargetGoal::~LeapAtTargetGoal()
-{
-}
-
 bool LeapAtTargetGoal::canUse()
 {
     mTarget = boost::weak_ptr<LivingEntity>(mMob->getTarget());
@@ -67,7 +63,3 @@ void LeapAtTargetGoal::start()
     mMob->mYd = static_cast<double>(mYd);
 }
 
-std::wstring LeapAtTargetGoal::getName()
-{
-    return std::wstring(L"LeapAtTarget");
-}

@@ -24,7 +24,7 @@ public:
     virtual void stop();
     virtual void tick();
     virtual void setLevel(Level* level);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"Beg"; }
 
 private:
     Wolf* mWolf;

@@ -12,6 +12,3 @@ bool RidingSelector::apply(boost::shared_ptr<Entity> entity) const
     return entity->getVehicle() != vehicle;
 }
 
-RidingSelector::~RidingSelector()
-{
-}

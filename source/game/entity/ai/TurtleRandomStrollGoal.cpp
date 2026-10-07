@@ -23,7 +23,3 @@ bool TurtleRandomStrollGoal::canUse()
     return false;
 }
 
-std::wstring TurtleRandomStrollGoal::getName()
-{
-    return std::wstring(L"Turtle Random Stroll");
-}

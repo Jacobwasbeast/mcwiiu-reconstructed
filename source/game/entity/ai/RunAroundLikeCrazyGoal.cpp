@@ -89,7 +89,3 @@ void RunAroundLikeCrazyGoal::tick()
     mHorse->mLevel->broadcastEntityEvent(mHorse->shared_from_this(), EntityEvent::TAMING_FAILED, 0);
 }
 
-std::wstring RunAroundLikeCrazyGoal::getName()
-{
-    return std::wstring(L"RunAroundLikeCrazy");
-}

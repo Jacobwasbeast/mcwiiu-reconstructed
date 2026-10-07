@@ -29,8 +29,3 @@ void ZombieAttackGoal::tick()
         mZombie->setAggressive(false);
     }
 }
-
-std::wstring ZombieAttackGoal::getName()
-{
-    return std::wstring(L"ZombieAttack");
-}

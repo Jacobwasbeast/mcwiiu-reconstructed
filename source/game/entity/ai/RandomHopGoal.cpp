@@ -62,7 +62,3 @@ void RandomHopGoal::start()
     mMob->getNavigation()->moveTo(mWantedX, mWantedY, mWantedZ, mSpeedModifier);
 }
 
-std::wstring RandomHopGoal::getName()
-{
-    return std::wstring(L"RandomHop");
-}

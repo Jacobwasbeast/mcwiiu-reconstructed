@@ -5,6 +5,8 @@
 #include "game/entity/ai/NoSpectatorsSelector.hpp"
 #include "game/entity/ai/NoCreativeOrSpectatorSelector.hpp"
 #include "game/entity/ai/AliveEntitySelector.hpp"
+#include "game/entity/ai/NotBeingRiddenEntitySelector.hpp"
+#include "game/entity/ai/ContainerEntitySelector.hpp"
 #include "game/core/EntityType.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/world/block/Predicates.hpp"
@@ -32,6 +34,8 @@ bool visibleEnemySelectorFunc(boost::shared_ptr<Entity> entity)
 namespace EntitySelector
 {
     Predicate<boost::shared_ptr<Entity> >* ENTITY_STILL_ALIVE = new AliveEntitySelector();
+    Predicate<boost::shared_ptr<Entity> >* NOT_BEING_RIDDEN_ENTITY_SELECTOR = new NotBeingRiddenEntitySelector();
+    Predicate<boost::shared_ptr<Entity> >* CONTAINER_ENTITY_SELECTOR = new ContainerEntitySelector();
     Predicate<boost::shared_ptr<Entity> >* NO_CREATIVE_OR_SPECTATOR = new NoCreativeOrSpectatorSelector();
     Predicate<boost::shared_ptr<Entity> >* NO_SPECTATORS = new NoSpectatorsSelector();
     Predicate<boost::shared_ptr<Entity> >* ENEMY_SELECTOR =

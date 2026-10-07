@@ -28,10 +28,6 @@ MakeLoveGoal::MakeLoveGoal(Villager* villager)
     setRequiredControlFlags(3);
 }
 
-MakeLoveGoal::~MakeLoveGoal()
-{
-}
-
 bool MakeLoveGoal::villageNeedsMoreVillagers()
 {
     boost::shared_ptr<Village> village = mVillage.lock();
@@ -133,7 +129,3 @@ void MakeLoveGoal::setLevel(Level* level)
     mLevel = level;
 }
 
-std::wstring MakeLoveGoal::getName()
-{
-    return std::wstring(L"MakeLove");
-}

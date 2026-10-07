@@ -15,7 +15,6 @@ class MakeLoveGoal : public Goal
 {
 public:
     MakeLoveGoal(Villager* villager);
-    virtual ~MakeLoveGoal();
 
     bool villageNeedsMoreVillagers();
     virtual bool canUse();
@@ -25,7 +24,7 @@ public:
     void breed();
     virtual void tick();
     virtual void setLevel(Level* level);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"MakeLove"; }
 
 private:
     Villager* mVillager;

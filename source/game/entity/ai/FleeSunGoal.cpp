@@ -49,7 +49,8 @@ bool FleeSunGoal::canUse()
     if (!mLevel->isDay() || !mMob->isOnFire() || mMob->isUnderLiquid(Material::WATER))
         return false;
 
-    if (!mLevel->canSeeSky(BlockPos(mMob->mX, mMob->mBoundingBox->mMinY, mMob->mZ)))
+    const BlockPos& pos = BlockPos(mMob->mX, mMob->mBoundingBox->mMinY, mMob->mZ);
+    if (!mLevel->canSeeSky(pos))
         return false;
 
     if (!mMob->getItemSlot(EquipmentSlot::HEAD)->isEmpty())
@@ -80,7 +81,3 @@ void FleeSunGoal::setLevel(Level* level)
     mLevel = level;
 }
 
-std::wstring FleeSunGoal::getName()
-{
-    return std::wstring(L"FleeSun");
-}

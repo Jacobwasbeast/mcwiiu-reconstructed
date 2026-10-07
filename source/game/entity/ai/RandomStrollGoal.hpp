@@ -21,7 +21,7 @@ public:
     virtual Vec3* getPosition();
     void trigger();
     virtual void setInterval(int interval);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"RandomStroll"; }
 
 protected:
     PathfinderMob* mMob;

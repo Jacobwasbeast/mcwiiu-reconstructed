@@ -19,7 +19,7 @@ public:
     virtual void stop();
     BlockPos GetTargetPosition(boost::shared_ptr<Mob> leader);
     virtual void tick();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"FollowFlock"; }
 
 private:
     int mInterval;

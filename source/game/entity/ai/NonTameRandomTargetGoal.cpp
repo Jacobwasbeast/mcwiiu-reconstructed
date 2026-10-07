@@ -21,10 +21,11 @@ bool NonTameRandomTargetGoal::canUse()
 
 bool NonTameRandomTargetGoal::canContinueToUse()
 {
-    return !mTamableAnimal->isTame() && NearestAttackableTargetGoal::canContinueToUse();
+    bool result = false;
+    if (!mTamableAnimal->isTame())
+    {
+        result = NearestAttackableTargetGoal::canContinueToUse();
+    }
+    return result;
 }
 
-std::wstring NonTameRandomTargetGoal::getName()
-{
-    return std::wstring(L"NonTameRandomTarget");
-}

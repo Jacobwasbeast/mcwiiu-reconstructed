@@ -21,7 +21,7 @@ public:
     virtual bool canUse();
     virtual void start();
     virtual bool canContinueToUse();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"PanicGoal"; }
 
 protected:
     PathfinderMob* mMob;

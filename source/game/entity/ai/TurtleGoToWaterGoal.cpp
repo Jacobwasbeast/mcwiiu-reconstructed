@@ -22,17 +22,13 @@ TurtleGoToWaterGoal::~TurtleGoToWaterGoal()
 
 bool TurtleGoToWaterGoal::canUse()
 {
-    if (mTurtle->isBaby() && !mTurtle->isInWater())
+    if ((mTurtle->isBaby() && !mTurtle->isInWater()) ||
+        (!mTurtle->isGoingHome() && !mTurtle->isInWater()))
     {
         return MoveToBlockGoal::canUse();
     }
 
-    if (mTurtle->isGoingHome() || mTurtle->isInWater())
-    {
-        return false;
-    }
-
-    return MoveToBlockGoal::canUse();
+    return false;
 }
 
 bool TurtleGoToWaterGoal::canContinueToUse()
@@ -48,7 +44,3 @@ bool TurtleGoToWaterGoal::isValidTarget(Level* level, const BlockPos& pos)
     return block == Blocks::water || block == Blocks::flowing_water;
 }
 
-std::wstring TurtleGoToWaterGoal::getName()
-{
-    return std::wstring(L"Turtle Goto Water");
-}

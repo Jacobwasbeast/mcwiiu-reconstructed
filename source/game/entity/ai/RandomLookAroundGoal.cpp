@@ -7,8 +7,11 @@
 #include "game/util/Random.hpp"
 
 RandomLookAroundGoal::RandomLookAroundGoal(Mob* mob)
-    : mMob(mob), mLookAtX(0.0), mLookAtZ(0.0), mLookTime(0)
 {
+    mLookAtZ = 0.0;
+    mLookAtX = 0.0;
+    mLookTime = 0;
+    mMob = mob;
     setRequiredControlFlags(3);
 }
 
@@ -45,7 +48,3 @@ void RandomLookAroundGoal::tick()
         mMob->getMaxHeadXRot());
 }
 
-std::wstring RandomLookAroundGoal::getName()
-{
-    return std::wstring(L"RandomLookAround");
-}

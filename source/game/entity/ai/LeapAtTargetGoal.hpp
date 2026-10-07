@@ -14,11 +14,10 @@ class LeapAtTargetGoal : public Goal
 {
 public:
     LeapAtTargetGoal(Mob* mob, float yd);
-    virtual ~LeapAtTargetGoal();
     virtual bool canUse();
     virtual bool canContinueToUse();
     virtual void start();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"LeapAtTarget"; }
 
 private:
     Mob* mMob;
