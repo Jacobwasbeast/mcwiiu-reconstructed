@@ -5,7 +5,7 @@
 
 namespace nn { namespace pia { namespace common {
 
-class StationAddress : public InetAddress
+class StationAddress
 {
 public:
     StationAddress();
@@ -24,6 +24,8 @@ public:
     void GetAddressString(String* string) const;
     virtual void Trace(unsigned long long value) const;
     unsigned int GetSerializedSize() const;
+
+    InetAddress m_inetAddress;
 };
 
 }}}

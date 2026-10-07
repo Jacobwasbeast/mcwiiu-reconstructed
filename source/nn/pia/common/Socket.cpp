@@ -67,11 +67,6 @@ Result convertCommonSocketErrorToResult(int error)
 {
     switch (error)
     {
-    case 1:
-    case 0x12:
-    case 0x2b:
-    case 0x33:
-        return cResultInvalidState;
     case 2:
     case 8:
     case 9:
@@ -86,6 +81,11 @@ Result convertCommonSocketErrorToResult(int error)
     case 0x20:
     case 0x31:
         return cResultInvalidArgument;
+    case 1:
+    case 0x12:
+    case 0x2b:
+    case 0x33:
+        return cResultInvalidState;
     case 0x14:
         return cResultSocketUnknown;
     case 0x2c:
@@ -115,6 +115,8 @@ Result convertRecvSocketErrorToResult(int error)
     case 0x2c:
     case 0x32:
         return cResultNoData;
+    case 0x2b:
+        return cResultInvalidState;
     default:
         return cResultInvalidState;
     }
@@ -137,8 +139,18 @@ Result convertSendSocketErrorToResult(int error)
     case 0x15:
     case 0x18:
     case 0x20:
+    case 0x2d:
+    case 0x2e:
+    case 0x2f:
+    case 0x30:
     case 0x31:
         return cResultInvalidArgument;
+    case 0x27:
+    case 0x28:
+    case 0x29:
+    case 0x2a:
+    case 0x2b:
+        return cResultInvalidState;
     case 1:
     case 6:
     case 0x12:
@@ -154,8 +166,8 @@ Socket::Socket() : m_address()
 {
     m_handle = -1;
     m_openCount = 0;
-    m_address.m_port = 0;
     m_address.m_address = 0;
+    m_address.m_port = 0;
 }
 
 Socket::~Socket()
@@ -199,9 +211,9 @@ Result Socket::Close()
         const int error = GetSocketLastError();
         if (error == cErrorBadDescriptor)
             return 0;
-        if (error != cErrorClosed)
-            return convertCommonSocketErrorToResult(error);
-        return cResultInvalidState;
+        if (error == cErrorClosed)
+            return cResultInvalidState;
+        return convertCommonSocketErrorToResult(error);
     }
     return 0;
 }
@@ -237,13 +249,14 @@ Result Socket::Bind(const InetAddress& address, bool reuseAddress)
     if (bind(handle, socketAddress.GetSockAddrInPointer(), cSockAddrInSize) < 0)
     {
         const int error = GetSocketLastError();
-        if (!IsClosedSocketError(error))
-            return convertCommonSocketErrorToResult(error);
-        if (m_handle < 0)
-            return cResultDisconnected;
-        if (handle != m_handle)
-            return convertCommonSocketErrorToResult(error);
-        return cResultDisconnected;
+        if (IsClosedSocketError(error))
+        {
+            if (m_handle < 0)
+                return cResultDisconnected;
+            if (handle == m_handle)
+                return cResultDisconnected;
+        }
+        return convertCommonSocketErrorToResult(error);
     }
     return 0;
 }
@@ -271,21 +284,23 @@ Result Socket::RecvFrom(unsigned char* buffer, int size, InetAddress* address,
                                      ancillary, cReceiveAncillarySize);
     if (received < 1)
     {
-        if (received >= 0)
-            return cResultNoData;
-
-        const int error = GetSocketLastError();
-        if (IsClosedSocketError(error))
+        if (received < 0)
         {
-            if (m_handle < 0)
+            const int error = GetSocketLastError();
+            if (IsClosedSocketError(error))
+            {
+                if (m_handle < 0)
+                    return cResultDisconnected;
+                if (handle != m_handle)
+                    return cResultNoData;
                 return cResultDisconnected;
-            if (handle == m_handle)
+            }
+            if (error == cErrorNoBuffer)
                 return cResultDisconnected;
-            return cResultNoData;
+            const Result result = convertRecvSocketErrorToResult(error);
+            return result;
         }
-        if (error == cErrorNoBuffer)
-            return cResultDisconnected;
-        return convertRecvSocketErrorToResult(error);
+        return cResultNoData;
     }
 
     if (address != 0)
@@ -309,37 +324,37 @@ Result Socket::SendTo(const void* buffer, int size, const InetAddress& address, 
 
     const int sent = sendto(handle, buffer, size, 0, socketAddress.GetSockAddrInPointer(),
                             cSockAddrInSize);
-    if (sent >= 0)
+    if (sent < 0)
     {
-        if (sentSize != 0)
-            *sentSize = sent;
-        return 0;
+        const unsigned int error = GetSocketLastError();
+        switch (error)
+        {
+        case cErrorClosed:
+        case cErrorConnectionReset:
+            if (m_handle < 0)
+                return cResultDisconnected;
+            if (handle != m_handle)
+                return cResultBufferFull;
+            return cResultDisconnected;
+        case cErrorSendClosed:
+            return cResultDisconnected;
+        case cErrorSendAborted:
+        case 0x2d:
+        case 0x2e:
+        case 0x2f:
+            return cResultDisconnected;
+        case cErrorNoBuffer:
+            return cResultBufferFull;
+        default:
+            break;
+        }
+        const Result result = convertSendSocketErrorToResult(static_cast<int>(error));
+        return result;
     }
 
-    const unsigned int error = GetSocketLastError();
-    if (error == cErrorNoBuffer)
-        return cResultBufferFull;
-    if (error == cErrorClosed || error == cErrorConnectionReset)
-    {
-        if (m_handle < 0)
-            return cResultDisconnected;
-        if (handle == m_handle)
-            return cResultDisconnected;
-        return cResultBufferFull;
-    }
-    if (error < 0x1d)
-    {
-        if (error == cErrorSendClosed)
-            return cResultDisconnected;
-    }
-    else
-    {
-        if (error == cErrorSendAborted)
-            return cResultDisconnected;
-        if (error > 0x2c && error < 0x30)
-            return cResultDisconnected;
-    }
-    return convertSendSocketErrorToResult(static_cast<int>(error));
+    if (sentSize != 0)
+        *sentSize = sent;
+    return 0;
 }
 
 Result Socket::SendToMulti(const void* buffer, int size, const SockAddrIn* addresses, int count,
@@ -352,37 +367,37 @@ Result Socket::SendToMulti(const void* buffer, int size, const SockAddrIn* addre
         return cResultInvalidArgument;
 
     const int sent = sendto_multi(handle, buffer, size, 0, addresses, count);
-    if (sent >= 0)
+    if (sent < 0)
     {
-        if (sentSize != 0)
-            *sentSize = sent;
-        return 0;
+        const unsigned int error = GetSocketLastError();
+        switch (error)
+        {
+        case cErrorClosed:
+        case cErrorConnectionReset:
+            if (m_handle < 0)
+                return cResultDisconnected;
+            if (handle != m_handle)
+                return cResultBufferFull;
+            return cResultDisconnected;
+        case cErrorSendClosed:
+            return cResultDisconnected;
+        case cErrorSendAborted:
+        case 0x2d:
+        case 0x2e:
+        case 0x2f:
+            return cResultDisconnected;
+        case cErrorNoBuffer:
+            return cResultBufferFull;
+        default:
+            break;
+        }
+        const Result result = convertSendSocketErrorToResult(static_cast<int>(error));
+        return result;
     }
 
-    const unsigned int error = GetSocketLastError();
-    if (error == cErrorNoBuffer)
-        return cResultBufferFull;
-    if (error == cErrorClosed || error == cErrorConnectionReset)
-    {
-        if (m_handle < 0)
-            return cResultDisconnected;
-        if (handle == m_handle)
-            return cResultDisconnected;
-        return cResultBufferFull;
-    }
-    if (error < 0x1d)
-    {
-        if (error == cErrorSendClosed)
-            return cResultDisconnected;
-    }
-    else
-    {
-        if (error == cErrorSendAborted)
-            return cResultDisconnected;
-        if (error > 0x2c && error < 0x30)
-            return cResultDisconnected;
-    }
-    return convertSendSocketErrorToResult(static_cast<int>(error));
+    if (sentSize != 0)
+        *sentSize = sent;
+    return 0;
 }
 
 Result Socket::SetTtl(unsigned char ttl)
@@ -395,13 +410,14 @@ Result Socket::SetTtl(unsigned char ttl)
     if (setsockopt(handle, cLevelIp, cOptionIpTtl, &value, sizeof(value)) < 0)
     {
         const int error = GetSocketLastError();
-        if (!IsClosedSocketError(error))
-            return convertCommonSocketErrorToResult(error);
-        if (m_handle < 0)
-            return cResultDisconnected;
-        if (handle != m_handle)
-            return convertCommonSocketErrorToResult(error);
-        return cResultDisconnected;
+        if (IsClosedSocketError(error))
+        {
+            if (m_handle < 0)
+                return cResultDisconnected;
+            if (handle == m_handle)
+                return cResultDisconnected;
+        }
+        return convertCommonSocketErrorToResult(error);
     }
     return 0;
 }
@@ -412,10 +428,12 @@ Result Socket::InetAtoH(const char* text, InetAddress* address)
         return cResultInvalidArgument;
 
     unsigned int value[2];
-    if (inet_aton(text, value) == 0)
-        return cResultInvalidArgument;
-    address->m_address = value[0];
-    return 0;
+    if (inet_aton(text, value) != 0)
+    {
+        address->m_address = value[0];
+        return 0;
+    }
+    return cResultInvalidArgument;
 }
 
 }}}

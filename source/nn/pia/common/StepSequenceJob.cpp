@@ -3,10 +3,6 @@
 
 namespace nn { namespace pia { namespace common {
 
-StepSequenceJob::Step::~Step()
-{
-}
-
 void StepSequenceJob::Step::Trace(unsigned long long value) const
 {
 }

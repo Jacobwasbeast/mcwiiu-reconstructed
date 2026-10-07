@@ -58,30 +58,32 @@ SockAddrIn SocketAddress::GetSockAddrIn()
 
 bool SocketAddress::GetAddressInfo(const char* host, const char* service, const AddrInfo* hints)
 {
+    bool success = false;
     AddrInfo* result;
     int error;
-    if (hints == 0)
+    if (hints != 0)
+    {
+        error = getaddrinfo(host, service, hints, &result);
+    }
+    else
     {
         AddrInfo defaultHints;
         OSBlockSet(&defaultHints, 0, sizeof(defaultHints));
         defaultHints.family = cFamilyInet;
         error = getaddrinfo(host, service, &defaultHints, &result);
     }
-    else
-    {
-        error = getaddrinfo(host, service, hints, &result);
-    }
     if (error == 0)
     {
         *reinterpret_cast<unsigned int*>(m_pointer->bytes + cAddressOffset) =
             *reinterpret_cast<const unsigned int*>(result->address->bytes + cAddressOffset);
         freeaddrinfo(result);
+        success = true;
     }
     else
     {
         gai_strerror(error);
     }
-    return error == 0;
+    return success;
 }
 
 void SocketAddress::Trace(unsigned long long value) const

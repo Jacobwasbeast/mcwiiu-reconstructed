@@ -2,6 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_PACKET_HPP
 
 #include "nn/pia/common/Crypto.hpp"
+#include "nn/pia/common/ISerializable.hpp"
 #include "nn/pia/common/StationAddress.hpp"
 
 namespace nn { namespace pia { namespace common {
@@ -17,7 +18,7 @@ public:
         cSignature = 0x32ab9864
     };
 
-    class Header
+    class Header : public ISerializable
     {
     public:
         enum { cSerializedSize = 36 };
@@ -29,12 +30,12 @@ public:
 
         unsigned int m_signature;
         unsigned char m_version;
-        unsigned char m_field09;
-        unsigned short m_field0a;
-        unsigned short m_field0c;
-        unsigned short m_field0e;
-        unsigned char m_field10[8];
-        unsigned char m_field18[16];
+        unsigned char m_passId;
+        unsigned short m_sequenceId;
+        unsigned short m_rttResponseFlag;
+        unsigned short m_rttMeasurement;
+        unsigned char m_cryptoNonce[8];
+        unsigned char m_cryptoSignature[16];
     };
 
     class PacketData

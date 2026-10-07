@@ -43,6 +43,7 @@ public:
 private:
     SockAddrIn* m_pointer;
     SockAddrIn m_address;
+    unsigned int m_unknownTail[5];
 };
 
 }}}

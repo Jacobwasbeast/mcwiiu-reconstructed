@@ -12,8 +12,9 @@ public:
     {
     public:
         Step() : m_function(0), m_name(0) {}
+        Step(ExecuteResult (StepSequenceJob::*function)(), const char* name) : m_function(function), m_name(name) {}
 
-        virtual ~Step();
+        virtual ~Step() {}
         virtual void Trace(unsigned long long value) const;
 
         ExecuteResult (StepSequenceJob::*m_function)();

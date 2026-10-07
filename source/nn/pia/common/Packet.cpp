@@ -32,18 +32,18 @@ Result Packet::Header::Serialize(unsigned char* buffer, unsigned int* size) cons
     buffer[2] = static_cast<unsigned char>(m_signature >> 8);
     buffer[3] = static_cast<unsigned char>(m_signature);
     buffer[4] = m_version;
-    buffer[5] = m_field09;
-    buffer[6] = static_cast<unsigned char>(m_field0a >> 8);
-    buffer[7] = static_cast<unsigned char>(m_field0a);
-    buffer[8] = static_cast<unsigned char>(m_field0c >> 8);
-    buffer[9] = static_cast<unsigned char>(m_field0c);
-    buffer[10] = static_cast<unsigned char>(m_field0e >> 8);
-    buffer[11] = static_cast<unsigned char>(m_field0e);
+    buffer[5] = m_passId;
+    buffer[6] = static_cast<unsigned char>(m_sequenceId >> 8);
+    buffer[7] = static_cast<unsigned char>(m_sequenceId);
+    buffer[8] = static_cast<unsigned char>(m_rttResponseFlag >> 8);
+    buffer[9] = static_cast<unsigned char>(m_rttResponseFlag);
+    buffer[10] = static_cast<unsigned char>(m_rttMeasurement >> 8);
+    buffer[11] = static_cast<unsigned char>(m_rttMeasurement);
     unsigned int index;
-    for (index = 0; index < sizeof(m_field10); ++index)
-        buffer[12 + index] = m_field10[index];
-    for (index = 0; index < sizeof(m_field18); ++index)
-        buffer[20 + index] = m_field18[index];
+    for (index = 0; index < sizeof(m_cryptoNonce); ++index)
+        buffer[12 + index] = m_cryptoNonce[index];
+    for (index = 0; index < sizeof(m_cryptoSignature); ++index)
+        buffer[20 + index] = m_cryptoSignature[index];
 
     *size = cSerializedSize;
     return 0;
@@ -58,18 +58,18 @@ Result Packet::Header::Deserialize(const unsigned char* buffer)
                   (static_cast<unsigned int>(buffer[1]) << 16) |
                   (static_cast<unsigned int>(buffer[2]) << 8) | buffer[3];
     m_version = buffer[4];
-    m_field09 = buffer[5];
-    m_field0a = static_cast<unsigned short>(
+    m_passId = buffer[5];
+    m_sequenceId = static_cast<unsigned short>(
         (static_cast<unsigned int>(buffer[6]) << 8) | buffer[7]);
-    m_field0c = static_cast<unsigned short>(
+    m_rttResponseFlag = static_cast<unsigned short>(
         (static_cast<unsigned int>(buffer[8]) << 8) | buffer[9]);
-    m_field0e = static_cast<unsigned short>(
+    m_rttMeasurement = static_cast<unsigned short>(
         (static_cast<unsigned int>(buffer[10]) << 8) | buffer[11]);
     unsigned int index;
-    for (index = 0; index < sizeof(m_field10); ++index)
-        m_field10[index] = buffer[12 + index];
-    for (index = 0; index < sizeof(m_field18); ++index)
-        m_field18[index] = buffer[20 + index];
+    for (index = 0; index < sizeof(m_cryptoNonce); ++index)
+        m_cryptoNonce[index] = buffer[12 + index];
+    for (index = 0; index < sizeof(m_cryptoSignature); ++index)
+        m_cryptoSignature[index] = buffer[20 + index];
 
     return 0;
 }
@@ -83,13 +83,13 @@ void Packet::PacketData::Copy(const PacketData& packetData)
 {
     m_header.m_signature = packetData.m_header.m_signature;
     m_header.m_version = packetData.m_header.m_version;
-    m_header.m_field09 = packetData.m_header.m_field09;
-    m_header.m_field0a = packetData.m_header.m_field0a;
-    m_header.m_field0c = packetData.m_header.m_field0c;
-    m_header.m_field0e = packetData.m_header.m_field0e;
+    m_header.m_passId = packetData.m_header.m_passId;
+    m_header.m_sequenceId = packetData.m_header.m_sequenceId;
+    m_header.m_rttResponseFlag = packetData.m_header.m_rttResponseFlag;
+    m_header.m_rttMeasurement = packetData.m_header.m_rttMeasurement;
     unsigned int index;
-    for (index = 0; index < sizeof(m_header.m_field10); ++index)
-        m_header.m_field10[index] = packetData.m_header.m_field10[index];
+    for (index = 0; index < sizeof(m_header.m_cryptoNonce); ++index)
+        m_header.m_cryptoNonce[index] = packetData.m_header.m_cryptoNonce[index];
 
     OSBlockMove(m_data, packetData.m_data, cDataSizeMax, FALSE);
 }
@@ -133,12 +133,12 @@ void Packet::Reset()
 {
     m_packetData.m_header.m_signature = cSignature;
     m_packetData.m_header.m_version = 1;
-    m_packetData.m_header.m_field09 = 0;
-    m_packetData.m_header.m_field0a = 0;
-    m_packetData.m_header.m_field0c = 0;
-    m_packetData.m_header.m_field0e = 0;
-    OSBlockSet(m_packetData.m_header.m_field10, 0, sizeof(m_packetData.m_header.m_field10));
-    OSBlockSet(m_packetData.m_header.m_field18, 0, sizeof(m_packetData.m_header.m_field18));
+    m_packetData.m_header.m_passId = 0;
+    m_packetData.m_header.m_sequenceId = 0;
+    m_packetData.m_header.m_rttResponseFlag = 0;
+    m_packetData.m_header.m_rttMeasurement = 0;
+    OSBlockSet(m_packetData.m_header.m_cryptoNonce, 0, sizeof(m_packetData.m_header.m_cryptoNonce));
+    OSBlockSet(m_packetData.m_header.m_cryptoSignature, 0, sizeof(m_packetData.m_header.m_cryptoSignature));
 
     m_size = cHeaderSize;
     m_stationIndex = 0xfd;
@@ -218,7 +218,7 @@ Result Packet::Encrypt(const Crypto::Setting& setting)
 
     const Result result = Crypto::Encrypt(
         m_packetData.GetPayload(), source, encryptedSize,
-        m_packetData.m_header.m_field18, sizeof(m_packetData.m_header.m_field18), setting);
+        m_packetData.m_header.m_cryptoSignature, sizeof(m_packetData.m_header.m_cryptoSignature), setting);
     if (result != 0)
         return result;
 
@@ -252,7 +252,7 @@ Result Packet::Decrypt(const Crypto::Setting& setting)
     unsigned char destination[cPayloadSizeMax];
     const Result result = Crypto::Decrypt(
         destination, m_packetData.GetPayload(), encryptedSize,
-        m_packetData.m_header.m_field18, sizeof(m_packetData.m_header.m_field18), setting);
+        m_packetData.m_header.m_cryptoSignature, sizeof(m_packetData.m_header.m_cryptoSignature), setting);
     if (result != 0)
         return result;
 
