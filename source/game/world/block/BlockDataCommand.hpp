@@ -12,7 +12,6 @@
 class BlockDataCommand : public Command
 {
 public:
-    virtual ~BlockDataCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

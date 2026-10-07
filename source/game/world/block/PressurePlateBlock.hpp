@@ -20,7 +20,6 @@ public:
     static AbstractProperty<bool>* POWERED;
 
     PressurePlateBlock(const std::wstring& name, Material* material, Sensitivity sensitivity);
-    virtual ~PressurePlateBlock();
     virtual int getSignalForState(const BlockState* state);
     virtual const BlockState* setSignalForState(const BlockState* state, int signal);
     virtual void playOnSound(Level* level, const BlockPos& pos);

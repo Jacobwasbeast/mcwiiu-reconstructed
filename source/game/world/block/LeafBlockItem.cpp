@@ -10,10 +10,6 @@ LeafBlockItem::LeafBlockItem(LeafBlock* block)
     setStackedByData(true);
 }
 
-LeafBlockItem::~LeafBlockItem()
-{
-}
-
 int LeafBlockItem::getLevelDataForAuxValue(int auxValue)
 {
     return auxValue | 4;

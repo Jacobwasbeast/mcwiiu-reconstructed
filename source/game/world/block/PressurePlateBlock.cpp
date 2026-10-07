@@ -31,8 +31,6 @@ PressurePlateBlock::PressurePlateBlock(const std::wstring& name, Material* mater
     registerDefaultState(state->setBoxedValue(POWERED, &powered));
 }
 
-PressurePlateBlock::~PressurePlateBlock() {}
-
 int PressurePlateBlock::getSignalForState(const BlockState* state)
 {
     return state->getValue(POWERED) ? 15 : 0;

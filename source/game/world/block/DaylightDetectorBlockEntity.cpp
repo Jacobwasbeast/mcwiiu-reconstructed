@@ -9,10 +9,6 @@ DaylightDetectorBlockEntity::DaylightDetectorBlockEntity()
 {
 }
 
-DaylightDetectorBlockEntity::~DaylightDetectorBlockEntity()
-{
-}
-
 BlockEntity* DaylightDetectorBlockEntity::create()
 {
     return new DaylightDetectorBlockEntity();

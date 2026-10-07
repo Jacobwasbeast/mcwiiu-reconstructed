@@ -20,7 +20,7 @@ public:
     virtual void stop();
     virtual void tick();
     virtual bool isValidTarget(Level* level, const BlockPos& pos);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"OcelotSitOnBlock"; }
 
 private:
     Ocelot* mOcelot;

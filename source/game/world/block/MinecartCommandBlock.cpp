@@ -99,10 +99,6 @@ MinecartCommandBlock::MinecartBaseCommandBlock::MinecartBaseCommandBlock(const b
 {
 }
 
-MinecartCommandBlock::MinecartBaseCommandBlock::~MinecartBaseCommandBlock()
-{
-}
-
 void MinecartCommandBlock::MinecartBaseCommandBlock::onUpdated()
 {
     boost::shared_ptr<MinecartCommandBlock> minecart(mMinecart.lock());

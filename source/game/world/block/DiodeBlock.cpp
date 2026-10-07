@@ -68,7 +68,7 @@ int DiodeBlock::getSignal(const BlockState* state, LevelSource* levelSource, con
 {
     if (isOn(state) && direction == state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY))
         return getOutputSignal(levelSource, pos, state);
-    return 0;
+    return Block::SIGNAL_NONE;
 }
 
 void DiodeBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
@@ -106,7 +106,7 @@ int DiodeBlock::getInputSignal(Level* level, const BlockPos& pos, const BlockSta
     const Direction* direction = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
     BlockPos inputPos = pos.relative(direction);
     int signal = level->getSignal(inputPos, direction);
-    if (signal < 15)
+    if (signal < Block::SIGNAL_MAX)
     {
         const BlockState* inputState = level->getBlockState(inputPos);
         if (inputState->getBlock() == Blocks::redstone_wire)
@@ -114,9 +114,9 @@ int DiodeBlock::getInputSignal(Level* level, const BlockPos& pos, const BlockSta
             int wireSignal = inputState->getValue(RedStoneWireBlock::POWER);
             if (signal < wireSignal) signal = wireSignal;
         }
-        else if (signal < 0)
+        else if (signal < Block::SIGNAL_NONE)
         {
-            signal = 0;
+            signal = Block::SIGNAL_NONE;
         }
     }
     return signal;
@@ -136,8 +136,8 @@ int DiodeBlock::getAlternateSignalAt(LevelSource* levelSource, const BlockPos& p
 {
     const BlockState* state = levelSource->getBlockState(pos);
     Block* block = state->getBlock();
-    if (!isAlternateInput(state)) return 0;
-    if (block == Blocks::redstone_block) return 15;
+    if (!isAlternateInput(state)) return Block::SIGNAL_NONE;
+    if (block == Blocks::redstone_block) return Block::SIGNAL_MAX;
     if (block == Blocks::redstone_wire) return state->getValue(RedStoneWireBlock::POWER);
     return levelSource->getDirectSignal(pos, direction);
 }
@@ -183,7 +183,7 @@ void DiodeBlock::destroy(Level* level, const BlockPos& pos, const BlockState* st
 
 bool DiodeBlock::isSolidRender(const BlockState*) const { return false; }
 bool DiodeBlock::isAlternateInput(const BlockState* state) { return state->isSignalSource(); }
-int DiodeBlock::getOutputSignal(LevelSource*, const BlockPos&, const BlockState*) { return 15; }
+int DiodeBlock::getOutputSignal(LevelSource*, const BlockPos&, const BlockState*) { return Block::SIGNAL_MAX; }
 
 bool DiodeBlock::isDiode(const BlockState* state)
 {

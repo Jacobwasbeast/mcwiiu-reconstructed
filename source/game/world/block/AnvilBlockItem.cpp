@@ -17,10 +17,6 @@ AnvilBlockItem::AnvilBlockItem(Block* block)
 {
 }
 
-AnvilBlockItem::~AnvilBlockItem()
-{
-}
-
 int AnvilBlockItem::AnvilBlockNameResolver(int damage)
 {
     return ANVIL_BLOCK_NAME_IDS[Blocks::anvil->getBlockState(damage)->getValue(AnvilBlock::DAMAGE)];
@@ -28,7 +24,8 @@ int AnvilBlockItem::AnvilBlockNameResolver(int damage)
 
 int AnvilBlockItem::AnvilBlockNameResolver(not_null_ptr<ItemInstance> itemInstance)
 {
-    return AnvilBlockNameResolver(itemInstance->getAuxValue());
+    int auxValue = itemInstance->getAuxValue();
+    return AnvilBlockNameResolver(auxValue);
 }
 
 int AnvilBlockItem::getLevelDataForAuxValue(int auxValue)

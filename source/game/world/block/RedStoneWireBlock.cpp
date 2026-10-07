@@ -68,13 +68,14 @@ RedStoneWireBlock::ConnectingSide* RedStoneWireBlock::SIDE =
     new RedStoneWireBlock::ConnectingSide(L"side");
 RedStoneWireBlock::ConnectingSide* RedStoneWireBlock::NONE =
     new RedStoneWireBlock::ConnectingSide(L"none");
-static RedStoneWireBlock::ConnectingSide* gRedStoneWireConnectingSides[] =
-    { RedStoneWireBlock::UP, RedStoneWireBlock::SIDE, RedStoneWireBlock::NONE };
 
 AbstractProperty<RedStoneWireBlock::ConnectingSide*>* RedStoneWireBlock::NORTH = NULL;
 AbstractProperty<RedStoneWireBlock::ConnectingSide*>* RedStoneWireBlock::EAST = NULL;
 AbstractProperty<RedStoneWireBlock::ConnectingSide*>* RedStoneWireBlock::SOUTH = NULL;
 AbstractProperty<RedStoneWireBlock::ConnectingSide*>* RedStoneWireBlock::WEST = NULL;
+
+static RedStoneWireBlock::ConnectingSide* gRedStoneWireConnectingSides[] =
+    { RedStoneWireBlock::UP, RedStoneWireBlock::SIDE, RedStoneWireBlock::NONE };
 
 RedStoneWireBlock::ConnectingSide::ConnectingSide(const std::wstring& name)
     : mName(name)
@@ -96,44 +97,30 @@ RedStoneWireBlock::RedStoneWireBlock()
 {
     Block::DerivedInit();
     mSignalSource = true;
-    const BlockState* state = mStateDefinition->any()->setValue(NORTH, NONE);
-    state = state->setValue(EAST, NONE);
-    state = state->setValue(SOUTH, NONE);
-    state = state->setValue(WEST, NONE);
-    registerDefaultState(state->setValue(POWER, 0));
+    registerDefaultState(mStateDefinition->any()
+        ->setValue(NORTH, NONE)
+        ->setValue(EAST, NONE)
+        ->setValue(SOUTH, NONE)
+        ->setValue(WEST, NONE)
+        ->setValue(POWER, 0));
     setThickness(0.07f);
+}
+
+static inline AbstractProperty<RedStoneWireBlock::ConnectingSide*>* createConnectingSideProperty(const std::wstring& name)
+{
+    const Predicate<RedStoneWireBlock::ConnectingSide*>* filter = Predicates<RedStoneWireBlock::ConnectingSide*>::alwaysTrue;
+    boost::unordered_set<RedStoneWireBlock::ConnectingSide*> values;
+    for (int i = 0; i < 3; ++i) values.insert(gRedStoneWireConnectingSides[i]);
+    return EnumProperty<RedStoneWireBlock::ConnectingSide*>::create(name, typeid(RedStoneWireBlock::ConnectingSide*), values,
+                                                                    filter);
 }
 
 void RedStoneWireBlock::blockStaticCtor()
 {
-    {
-        std::wstring name(L"north");
-        boost::unordered_set<ConnectingSide*> values;
-        for (int i = 0; i < 3; ++i) values.insert(gRedStoneWireConnectingSides[i]);
-        NORTH = EnumProperty<ConnectingSide*>::create(name, typeid(ConnectingSide*), values,
-                                                   Predicates<ConnectingSide*>::alwaysTrue);
-    }
-    {
-        std::wstring name(L"east");
-        boost::unordered_set<ConnectingSide*> values;
-        for (int i = 0; i < 3; ++i) values.insert(gRedStoneWireConnectingSides[i]);
-        EAST = EnumProperty<ConnectingSide*>::create(name, typeid(ConnectingSide*), values,
-                                                   Predicates<ConnectingSide*>::alwaysTrue);
-    }
-    {
-        std::wstring name(L"south");
-        boost::unordered_set<ConnectingSide*> values;
-        for (int i = 0; i < 3; ++i) values.insert(gRedStoneWireConnectingSides[i]);
-        SOUTH = EnumProperty<ConnectingSide*>::create(name, typeid(ConnectingSide*), values,
-                                                   Predicates<ConnectingSide*>::alwaysTrue);
-    }
-    {
-        std::wstring name(L"west");
-        boost::unordered_set<ConnectingSide*> values;
-        for (int i = 0; i < 3; ++i) values.insert(gRedStoneWireConnectingSides[i]);
-        WEST = EnumProperty<ConnectingSide*>::create(name, typeid(ConnectingSide*), values,
-                                                   Predicates<ConnectingSide*>::alwaysTrue);
-    }
+    NORTH = createConnectingSideProperty(L"north");
+    EAST = createConnectingSideProperty(L"east");
+    SOUTH = createConnectingSideProperty(L"south");
+    WEST = createConnectingSideProperty(L"west");
 }
 
 int RedStoneWireBlock::getAABBIndex(const BlockState* state)
@@ -195,12 +182,9 @@ RedStoneWireBlock::ConnectingSide* RedStoneWireBlock::getConnectingSide(LevelSou
 {
     BlockPos neighbourPos = pos.relative(direction);
     const BlockState* neighbour = levelSource->getBlockState(pos.relative(direction));
-    if (shouldConnectTo(levelSource->getBlockState(neighbourPos), direction))
-    {
-        return RedStoneWireBlock::SIDE;
-    }
-    if (!neighbour->isSolidBlockingCubeAndNotSignalSource()
-        && shouldConnectTo(levelSource->getBlockState(neighbourPos.below())))
+    if (shouldConnectTo(levelSource->getBlockState(neighbourPos), direction)
+        || (!neighbour->isSolidBlockingCubeAndNotSignalSource()
+            && shouldConnectTo(levelSource->getBlockState(neighbourPos.below()))))
     {
         return RedStoneWireBlock::SIDE;
     }
@@ -229,7 +213,7 @@ const BlockState* RedStoneWireBlock::fillVirtualBlockStateProperties(const Block
 
 const AABB* RedStoneWireBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return NULL_AABB;
 }
 
 bool RedStoneWireBlock::isSolidRender(const BlockState*) const
@@ -261,8 +245,9 @@ bool RedStoneWireBlock::canContainLiquid(const BlockState*) const
 
 int RedStoneWireBlock::checkTarget(Level* level, const BlockPos& pos, int strength)
 {
+    const BlockState* state = level->getBlockState(pos);
     int data;
-    if (level->getBlockState(pos)->getBlock() != this
+    if (state->getBlock() != this
         || (data = level->getBlockData(pos.x, pos.y, pos.z)) <= strength)
     {
         data = strength;
@@ -352,7 +337,7 @@ const BlockState* RedStoneWireBlock::updatePowerStrength(Level* level, const Blo
     state = updatePowerStrength(level, pos, pos, state);
     std::vector<BlockPos> positions(mUpdatedPositions.begin(), mUpdatedPositions.end());
     mUpdatedPositions.clear();
-    for (std::vector<BlockPos>::const_iterator it = positions.begin(); it != positions.end(); ++it)
+    for (std::vector<BlockPos>::const_iterator it = positions.begin(), end = positions.end(); it != end; ++it)
     {
         level->updateNeighborsAt(*it, this, false);
     }
@@ -568,38 +553,36 @@ int RedStoneWireBlock::getColorForData(int data)
     {
         blue = 0.0f;
     }
-    return Mth::clamp((int)(red * 255.0f), 0, 255) << 16 | 0xff000000
-        | Mth::clamp((int)(green * 255.0f), 0, 255) << 8
-        | Mth::clamp((int)(blue * 255.0f), 0, 255);
+    int r = Mth::clamp((int)(red * 255.0f), 0, 255);
+    int g = Mth::clamp((int)(green * 255.0f), 0, 255);
+    int b = Mth::clamp((int)(blue * 255.0f), 0, 255);
+    return r << 16 | 0xff000000 | g << 8 | b;
 }
 
 void RedStoneWireBlock::animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random)
 {
     int power = state->getValue(POWER);
-    if (power == 0)
+    if (power != 0)
     {
-        return;
-    }
+        double x = (double)pos.x + 0.5 + ((double)random->nextFloat() - 0.5) * 0.2;
+        double y = (double)((float)pos.y + 0.0625f);
+        double z = (double)pos.z + ((double)random->nextFloat() - 0.5) * 0.2 + 0.5;
 
-    double x = (double)pos.x + 0.5 + ((double)random->nextFloat() - 0.5) * 0.2;
-    double y = (double)((float)pos.y + 0.0625f);
-    double z = (double)pos.z + 0.5 + ((double)random->nextFloat() - 0.5) * 0.2;
+        float value = (float)power / 15.0f;
+        float green = value * value * 0.7f - 0.5f;
+        float blue = value * value * 0.6f - 0.7f;
+        if (green < 0.0f)
+        {
+            green = 0.0f;
+        }
+        if (blue < 0.0f)
+        {
+            blue = 0.0f;
+        }
 
-    float value = (float)power / 15.0f;
-    float red = value * 0.6f + 0.4f;
-    float green = value * value * 0.7f - 0.5f;
-    float blue = value * value * 0.6f - 0.7f;
-    if (green < 0.0f)
-    {
-        green = 0.0f;
+        level->addParticle(PARTICLE_RED_DUST, x, y, z, (double)(value * 0.6f + 0.4f), (double)green, (double)blue,
+                           arrayWithLength<int>());
     }
-    if (blue < 0.0f)
-    {
-        blue = 0.0f;
-    }
-
-    level->addParticle(PARTICLE_RED_DUST, x, y, z, (double)red, (double)green, (double)blue,
-                       arrayWithLength<int>());
 }
 
 not_null_ptr<ItemInstance> RedStoneWireBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)
@@ -614,10 +597,7 @@ int RedStoneWireBlock::getRenderLayer()
 
 const BlockState* RedStoneWireBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    AbstractProperty<int>* property = POWER;
-    TypedBoxed<int> power(data);
-    return state->setBoxedValue(property, &power);
+    return defaultBlockState()->setValue(POWER, data);
 }
 
 int RedStoneWireBlock::convertBlockStateToLegacyData(const BlockState* state)

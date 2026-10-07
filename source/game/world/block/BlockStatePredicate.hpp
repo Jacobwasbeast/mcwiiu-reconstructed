@@ -31,7 +31,6 @@ public:
     };
 
     explicit BlockStatePredicate(BlockStateDefinition* definition);
-    virtual ~BlockStatePredicate();
     static BlockStatePredicate* forBlock(Block* block);
     static BlockStatePredicate* forDefinition(BlockStateDefinition* definition);
     virtual bool apply(const BlockState* state) const;

@@ -43,7 +43,6 @@ public:
     };
 
     PortalBlock();
-    virtual ~PortalBlock();
 
     static EnumProperty<Direction::Axis*>* AXIS;
 

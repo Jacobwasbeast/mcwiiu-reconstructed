@@ -8,10 +8,6 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
 
-SpiralBlockRemover::~SpiralBlockRemover()
-{
-}
-
 void SpiralBlockRemover::Tick()
 {
     BlockRemover::Tick();

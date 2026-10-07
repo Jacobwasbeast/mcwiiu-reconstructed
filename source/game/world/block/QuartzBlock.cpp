@@ -25,7 +25,7 @@ static const std::wstring gQuartzTopTexture = L"top";
 static const std::wstring gQuartzChiseledTopTexture = L"chiseled_top";
 static const std::wstring gQuartzLinesTopTexture = L"lines_top";
 static const std::wstring gQuartzBottomTexture = L"bottom";
-static const std::wstring gQuartzVariantTextures[5] = {
+const std::wstring gQuartzVariantTextures[5] = {
     L"side",
     L"chiseled",
     L"lines",
@@ -44,7 +44,7 @@ QuartzBlock::Variant* QuartzBlock::Variant::LINES_X =
 QuartzBlock::Variant* QuartzBlock::Variant::LINES_Z =
     new QuartzBlock::Variant(4, L"lines_z", L"linesz");
 
-static QuartzBlock::Variant* gQuartzVariants[5] = {
+QuartzBlock::Variant* gQuartzVariants[5] = {
     QuartzBlock::Variant::DEFAULT,
     QuartzBlock::Variant::CHISELED,
     QuartzBlock::Variant::LINES_Y,
@@ -91,14 +91,14 @@ void QuartzBlock::blockStaticCtor()
     std::wstring name = L"variant";
     EnumProperty<Variant*>* property;
     {
+        const Predicate<Variant*>* filter = Predicates<Variant*>::alwaysTrue;
         boost::unordered_set<Variant*> values;
         for (int i = 0; i < 5; ++i)
         {
             values.insert(gQuartzVariants[i]);
         }
 
-        property = EnumProperty<Variant*>::create(name, typeid(Variant*), values,
-                                                  Predicates<Variant*>::alwaysTrue);
+        property = EnumProperty<Variant*>::create(name, typeid(Variant), values, filter);
     }
 
     VARIANT = property;
@@ -117,18 +117,17 @@ const BlockState* QuartzBlock::getStateForPlacement(Level*, const BlockPos&, con
 {
     if (auxValue == Variant::LINES_Y->getData())
     {
-        int axis = direction->getAxis()->getId();
+        Direction::Axis::EAxis axis = direction->getAxis()->getId();
         const BlockState* state = defaultBlockState();
-        if (axis == Direction::Axis::eAxis_X)
+        switch (axis)
         {
-            return state->setValue(VARIANT, Variant::LINES_X);
-        }
-        if (axis == Direction::Axis::eAxis_Z)
-        {
+        case Direction::Axis::eAxis_Z:
             return state->setValue(VARIANT, Variant::LINES_Z);
+        case Direction::Axis::eAxis_X:
+            return state->setValue(VARIANT, Variant::LINES_X);
+        default:
+            return state->setValue(VARIANT, Variant::LINES_Y);
         }
-
-        return state->setValue(VARIANT, Variant::LINES_Y);
     }
 
     int chiseledData = Variant::CHISELED->getData();
@@ -144,12 +143,12 @@ const BlockState* QuartzBlock::getStateForPlacement(Level*, const BlockPos&, con
 int QuartzBlock::getSpawnResourcesAuxValue(const BlockState* state)
 {
     Variant* variant = state->getValue(VARIANT);
-    if (variant != Variant::LINES_X && variant != Variant::LINES_Z)
+    if (variant == Variant::LINES_X || variant == Variant::LINES_Z)
     {
-        return variant->getData();
+        return Variant::LINES_Y->getData();
     }
 
-    return Variant::LINES_Y->getData();
+    return variant->getData();
 }
 
 not_null_ptr<ItemInstance> QuartzBlock::getSilkTouchItemInstance(const BlockState* state)
@@ -181,16 +180,16 @@ int QuartzBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* QuartzBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    if (rotation->getType() == Rotation::eTYPE_Clockwise90
-        || rotation->getType() == Rotation::eTYPE_CounterClockwise90)
+    switch (rotation->getType())
     {
-        int data = state->getValue(VARIANT)->getData();
-        if (data == LINES_X_DATA)
+    case Rotation::eTYPE_Clockwise90:
+    case Rotation::eTYPE_CounterClockwise90:
+        Variant* variant = state->getValue(VARIANT);
+        switch (variant->getData())
         {
+        case LINES_X_DATA:
             return state->setValue(VARIANT, Variant::LINES_Z);
-        }
-        if (data == LINES_Z_DATA)
-        {
+        case LINES_Z_DATA:
             return state->setValue(VARIANT, Variant::LINES_X);
         }
     }
@@ -207,27 +206,26 @@ BlockStateDefinition* QuartzBlock::createBlockStateDefinition()
 TextureAtlasSprite* QuartzBlock::getTexture(const Direction* direction, const BlockState* state)
 {
     Variant* variant = state->getValue(VARIANT);
-    if (variant == Variant::LINES_Y
-        && (direction == Direction::UP || direction == Direction::DOWN))
+    if (variant == Variant::LINES_Y || variant == Variant::LINES_X || variant == Variant::LINES_Z)
     {
-        return mTextures[6];
+        if (variant == Variant::LINES_Y && (direction == Direction::UP || direction == Direction::DOWN))
+        {
+            return mTextures[6];
+        }
+        if (variant == Variant::LINES_X && (direction == Direction::EAST || direction == Direction::WEST))
+        {
+            return mTextures[6];
+        }
+        if (variant == Variant::LINES_Z && (direction == Direction::NORTH || direction == Direction::SOUTH))
+        {
+            return mTextures[6];
+        }
     }
-    if (variant == Variant::LINES_X
-        && (direction == Direction::EAST || direction == Direction::WEST))
-    {
-        return mTextures[6];
-    }
-    if (variant == Variant::LINES_Z
-        && (direction == Direction::NORTH || direction == Direction::SOUTH))
-    {
-        return mTextures[6];
-    }
-
-    if (variant != Variant::LINES_Y && variant != Variant::LINES_X && variant != Variant::LINES_Z)
+    else
     {
         if (direction == Direction::UP)
         {
-            return variant == Variant::CHISELED ? mTextures[5] : mTextures[7];
+            return variant != Variant::CHISELED ? mTextures[7] : mTextures[5];
         }
         if (direction == Direction::DOWN)
         {

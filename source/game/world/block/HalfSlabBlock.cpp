@@ -109,9 +109,7 @@ const AABB* HalfSlabBlock::getShape(const BlockState* state, LevelSource* levelS
 
 bool HalfSlabBlock::isTopSolidBlocking(const BlockState* state)
 {
-    HalfSlabBlock* block = (HalfSlabBlock*)state->getBlock();
-
-    return block->isFullSize() || state->getValue(TYPE) == TOP;
+    return static_cast<HalfSlabBlock*>(state->getBlock())->isFullSize() || state->getValue(TYPE) == TOP;
 }
 
 EBlockFaceShape HalfSlabBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos, const Direction* direction)
@@ -143,20 +141,11 @@ bool HalfSlabBlock::isSolidRender(const BlockState* state) const
 
 const BlockState* HalfSlabBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer)
 {
-    const BlockState* state = Block::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer);
-
-    AbstractProperty<Half*>* property = TYPE;
-    {
-        TypedBoxed<Half*> bottom(BOTTOM);
-        state = state->setBoxedValue(property, &bottom);
-    }
+    const BlockState* state = Block::getStateForPlacement(level, pos, direction, hitX, hitY, hitZ, auxValue, placer)->setValue(TYPE, BOTTOM);
 
     if (!isFullSize() && (direction == Direction::DOWN || (direction != Direction::UP && hitY > 0.5)))
     {
-        AbstractProperty<Half*>* topProperty = TYPE;
-        TypedBoxed<Half*> top(TOP);
-
-        return state->setBoxedValue(topProperty, &top);
+        return state->setValue(TYPE, TOP);
     }
 
     return state;

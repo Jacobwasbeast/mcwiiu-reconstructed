@@ -49,6 +49,12 @@ public:
     static BlockEntity* create();
     const DyeColor* getBaseColor();
     static bool fjCanAddPatternsToItem(const not_null_ptr<ItemInstance>& item);
+
+    static const std::wstring TAG_BASE;
+    static const std::wstring TAG_PATTERNS;
+    static const std::wstring TAG_PATTERN;
+    static const std::wstring TAG_COLOR;
+
 private:
     std::wstring mName;
     const DyeColor* mBaseColor;

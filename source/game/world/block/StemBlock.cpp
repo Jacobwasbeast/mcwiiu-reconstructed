@@ -31,7 +31,7 @@
 
 static const std::wstring STEM_BENT_ICON_NAME = L"stem_bent";
 AbstractProperty<int>* StemBlock::AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 7));
-static const AABB* STEM_SHAPES[8] =
+const AABB* STEM_SHAPES[8] =
 {
     AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.125, 0.625),
     AABB::newPermanent(0.375, 0.0, 0.375, 0.625, 0.25, 0.625),

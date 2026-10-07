@@ -34,10 +34,7 @@ public:
     class LogAxis : public StringRepresentable
     {
     public:
-        static LogAxis* X;
-        static LogAxis* Y;
-        static LogAxis* Z;
-        static LogAxis* NONE;
+        static LogAxis* values[4];
 
         LogAxis(const std::wstring& name);
 
@@ -72,6 +69,8 @@ public:
     virtual int getWoodType(const BlockState* state) = 0;
 
 private:
+    static std::wstring TEXTURE_NAMES[6];
+
     TextureAtlasSprite* mTypeTextures[6];
     TextureAtlasSprite* mTopTextures[6];
 };

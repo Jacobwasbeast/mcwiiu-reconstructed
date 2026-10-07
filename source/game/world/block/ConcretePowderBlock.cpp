@@ -33,36 +33,33 @@ ConcretePowderBlock::ConcretePowderBlock()
     registerDefaultState(mStateDefinition->any()->setValue(COLOR, DyeColor::WHITE));
 }
 
-ConcretePowderBlock::~ConcretePowderBlock()
-{
-}
-
 void ConcretePowderBlock::onLand(Level* level, const BlockPos& pos, const BlockState* state, const BlockState* replacedState)
 {
     if (replacedState->getMaterial()->isLiquid())
     {
-        const BlockState* concreteState = Blocks::concrete->defaultBlockState();
-        level->setBlock(pos, concreteState->setValue(ColoredBlock::COLOR, state->getValue(COLOR)), Block::UPDATE_ALL, false);
+        level->setBlock(pos, Blocks::concrete->defaultBlockState()->setValue(ColoredBlock::COLOR, state->getValue(COLOR)), Block::UPDATE_ALL, false);
     }
 }
 
 unsigned int ConcretePowderBlock::tryTouchWater(Level* level, const BlockPos& pos, const BlockState* state)
 {
     unsigned int touched = 0;
-    for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
+    for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
     {
         const Direction* direction = *it;
-        if (direction == Direction::DOWN)
-            continue;
-
-        BlockPos neighbor = pos.relative(direction);
-        if (level->getBlockState(neighbor)->getMaterial() == Material::WATER)
+        if (direction != Direction::DOWN)
         {
-            const BlockState* concreteState = Blocks::concrete->defaultBlockState();
-            level->setBlock(pos, concreteState->setValue(ColoredBlock::COLOR, state->getValue(COLOR)), Block::UPDATE_ALL, false);
-            touched = 1;
-            break;
+            BlockPos neighbor = pos.relative(direction);
+            if (level->getBlockState(neighbor)->getMaterial() == Material::WATER)
+            {
+                touched = 1;
+                break;
+            }
         }
+    }
+    if (touched)
+    {
+        level->setBlock(pos, Blocks::concrete->defaultBlockState()->setValue(ColoredBlock::COLOR, state->getValue(COLOR)), Block::UPDATE_ALL, false);
     }
     return touched;
 }

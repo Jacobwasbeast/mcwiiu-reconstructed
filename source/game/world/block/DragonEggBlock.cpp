@@ -19,10 +19,6 @@ DragonEggBlock::DragonEggBlock() : Block(Material::EGG, MaterialColor::COLOR_BLA
     DerivedInit();
 }
 
-DragonEggBlock::~DragonEggBlock()
-{
-}
-
 const AABB* DragonEggBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
     return gDragonEggShape;

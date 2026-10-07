@@ -80,17 +80,17 @@ LeverBlock::LeverDirection* LeverBlock::LeverDirection::fromFacing(
     switch (face->get3DDataValue())
     {
     case 0:
-    {
-        int axis = direction->getAxis()->getId();
-        if (axis == Direction::Axis::eAxis_X) return DOWN_X;
-        if (axis == Direction::Axis::eAxis_Z) return DOWN_Z;
-    }
+        switch (direction->getAxis()->getId())
+        {
+        case Direction::Axis::eAxis_X: return DOWN_X;
+        case Direction::Axis::eAxis_Z: return DOWN_Z;
+        }
     case 1:
-    {
-        int axis = direction->getAxis()->getId();
-        if (axis == Direction::Axis::eAxis_X) return UP_X;
-        if (axis == Direction::Axis::eAxis_Z) return UP_Z;
-    }
+        switch (direction->getAxis()->getId())
+        {
+        case Direction::Axis::eAxis_X: return UP_X;
+        case Direction::Axis::eAxis_Z: return UP_Z;
+        }
     case 2: return NORTH;
     case 3: return SOUTH;
     case 4: return WEST;
@@ -147,7 +147,7 @@ void LeverBlock::blockStaticCtor()
 
 const AABB* LeverBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return NULL_AABB;
 }
 
 bool LeverBlock::isSolidRender(const BlockState*) const
@@ -172,10 +172,10 @@ bool LeverBlock::mayPlace(Level* level, const BlockPos& pos, const Direction* di
 
 bool LeverBlock::mayPlace(Level* level, const BlockPos& pos)
 {
-    for (std::vector<const Direction*>::const_iterator direction = Direction::VALUES.begin();
-         direction != Direction::VALUES.end(); ++direction)
+    for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
     {
-        if (canAttachTo(level, pos, *direction)) return true;
+        const Direction* direction = *it;
+        if (canAttachTo(level, pos, direction)) return true;
     }
     return false;
 }
@@ -257,14 +257,15 @@ const AABB* LeverBlock::getShape(const BlockState* state, LevelSource*, const Bl
 {
     switch (state->getValue(FACING)->getData())
     {
-    case 0:
-    case 7: return AABB_DOWN;
     case 1: return AABB_EAST;
     case 2: return AABB_WEST;
     case 3: return AABB_SOUTH;
     case 5:
     case 6: return AABB_UP;
+    case 0:
+    case 7: return AABB_DOWN;
     default: return AABB_NORTH;
+    case 4: return AABB_NORTH;
     }
 }
 
@@ -280,25 +281,22 @@ bool LeverBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
     if (clientSide)
     {
         const BlockState* toggledState = state->cycle(ButtonBlock::POWERED);
-        bool powered = toggledState->getValue(ButtonBlock::POWERED);
-        float pitch = powered ? 0.6f : 0.5f;
         level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::LEVER_CLICK,
-                         SoundSource::eSoundSource_Blocks, 0.3f, pitch, 16.0f);
+                         SoundSource::eSoundSource_Blocks, 0.3f,
+                         toggledState->getValue(ButtonBlock::POWERED) ? 0.6f : 0.5f, 16.0f);
         return false;
     }
     if (level->mIsClientSide)
     {
         const BlockState* toggledState = state->cycle(ButtonBlock::POWERED);
-        bool powered = toggledState->getValue(ButtonBlock::POWERED);
-        float pitch = powered ? 0.6f : 0.5f;
         level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::LEVER_CLICK,
-                         SoundSource::eSoundSource_Blocks, 0.3f, pitch, 16.0f);
+                         SoundSource::eSoundSource_Blocks, 0.3f,
+                         toggledState->getValue(ButtonBlock::POWERED) ? 0.6f : 0.5f, 16.0f);
         return true;
     }
     const BlockState* toggledState = state->cycle(ButtonBlock::POWERED);
-    bool powered = toggledState->getValue(ButtonBlock::POWERED);
-    float pitch = powered ? 0.6f : 0.5f;
     level->setBlock(pos, toggledState, Block::UPDATE_ALL, false);
+    float pitch = toggledState->getValue(ButtonBlock::POWERED) ? 0.6f : 0.5f;
     level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::LEVER_CLICK,
                      SoundSource::eSoundSource_Blocks, 0.3f, pitch, 16.0f);
     level->updateNeighborsAt(pos, this, false);
@@ -309,7 +307,8 @@ bool LeverBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
 
 void LeverBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (state->getValue(ButtonBlock::POWERED))
+    bool powered = state->getValue(ButtonBlock::POWERED);
+    if (powered)
     {
         level->updateNeighborsAt(pos, this, false);
         const Direction* facing = state->getValue(FACING)->getDirection();
@@ -320,15 +319,15 @@ void LeverBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* s
 
 int LeverBlock::getSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction*)
 {
-    return state->getValue(ButtonBlock::POWERED) ? 15 : 0;
+    return state->getValue(ButtonBlock::POWERED) ? SIGNAL_MAX : SIGNAL_NONE;
 }
 
 int LeverBlock::getDirectSignal(const BlockState* state, LevelSource*, const BlockPos&,
                                 const Direction* direction)
 {
     if (state->getValue(ButtonBlock::POWERED) &&
-        direction == state->getValue(FACING)->getDirection()) return 15;
-    return 0;
+        state->getValue(FACING)->getDirection() == direction) return SIGNAL_MAX;
+    return SIGNAL_NONE;
 }
 
 bool LeverBlock::isSignalSource(const BlockState*)
@@ -339,7 +338,7 @@ bool LeverBlock::isSignalSource(const BlockState*)
 const BlockState* LeverBlock::getBlockState(int data)
 {
     return defaultBlockState()->setValue(FACING, LeverDirection::byData(data & 7))
-                             ->setValue(ButtonBlock::POWERED, (data & 8) != 0);
+                             ->setValue(ButtonBlock::POWERED, (data & 8) > 0);
 }
 
 int LeverBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -378,25 +377,25 @@ const BlockState* LeverBlock::rotate(const BlockState* state, Rotation* rotation
     case Rotation::eTYPE_CounterClockwise90:
         switch (state->getValue(FACING)->getData())
         {
-        case 0: return state->setValue(FACING, LeverDirection::DOWN_Z);
         case 1: return state->setValue(FACING, LeverDirection::NORTH);
         case 2: return state->setValue(FACING, LeverDirection::SOUTH);
         case 3: return state->setValue(FACING, LeverDirection::EAST);
         case 4: return state->setValue(FACING, LeverDirection::WEST);
         case 5: return state->setValue(FACING, LeverDirection::UP_X);
         case 6: return state->setValue(FACING, LeverDirection::UP_Z);
+        case 0: return state->setValue(FACING, LeverDirection::DOWN_Z);
         case 7: return state->setValue(FACING, LeverDirection::DOWN_X);
         }
     case Rotation::eTYPE_Clockwise90:
         switch (state->getValue(FACING)->getData())
         {
-        case 0: return state->setValue(FACING, LeverDirection::DOWN_Z);
         case 1: return state->setValue(FACING, LeverDirection::SOUTH);
         case 2: return state->setValue(FACING, LeverDirection::NORTH);
         case 3: return state->setValue(FACING, LeverDirection::WEST);
         case 4: return state->setValue(FACING, LeverDirection::EAST);
         case 5: return state->setValue(FACING, LeverDirection::UP_X);
         case 6: return state->setValue(FACING, LeverDirection::UP_Z);
+        case 0: return state->setValue(FACING, LeverDirection::DOWN_Z);
         case 7: return state->setValue(FACING, LeverDirection::DOWN_X);
         }
     default:

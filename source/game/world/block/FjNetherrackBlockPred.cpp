@@ -5,9 +5,10 @@
 
 bool FjNetherrackBlockPred::apply(const Biome::BlockPair& blockPair) const
 {
-    static const int netherrackId = Block::getId(Blocks::netherrack);
+    static int netherrackId = Block::getId(Blocks::netherrack);
 
-    return blockPair.blockId == netherrackId;
+    bool result = blockPair.blockId == netherrackId;
+    return result;
 }
 
 FjNetherrackBlockPred::~FjNetherrackBlockPred()

@@ -20,7 +20,7 @@ public:
     virtual bool canContinueToUse();
     virtual void start();
     virtual void tick();
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"MoveToBlock"; }
     virtual int GetNextStartTick(PathfinderMob* mob);
     virtual bool canReach(const BlockPos& pos);
     virtual bool isValidTarget(Level* level, const BlockPos& pos) = 0;

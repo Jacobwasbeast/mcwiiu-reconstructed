@@ -21,11 +21,11 @@ RemoveBlockGoal::RemoveBlockGoal(Block* block, PathfinderMob* mob,
                                  const SoundEvent* endSound)
     : MoveToBlockGoal(mob, speedModifier, searchRange, verticalSearchStart,
                       maxStayDistance),
-      mBlock(block),
-      mMob(mob),
       mStartSound(startSound),
       mEndSound(endSound)
 {
+    mBlock = block;
+    mMob = mob;
 }
 
 RemoveBlockGoal::~RemoveBlockGoal()
@@ -34,12 +34,12 @@ RemoveBlockGoal::~RemoveBlockGoal()
 
 bool RemoveBlockGoal::canUse()
 {
-    if (mMob->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING) &&
-        mMob->getRandom()->nextInt(20) == 0)
+    if (!mMob->mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING) ||
+        mMob->getRandom()->nextInt(20) != 0)
     {
-        return MoveToBlockGoal::canUse();
+        return false;
     }
-    return false;
+    return MoveToBlockGoal::canUse();
 }
 
 int RemoveBlockGoal::GetNextStartTick(PathfinderMob*)
@@ -118,11 +118,10 @@ void RemoveBlockGoal::tick()
                     {
                         mMob->playSound(mStartSound, 0.65f, 1.0f);
                     }
-                    double xDist = (random->nextFloat() - 0.5) * 0.08;
-                    double yDist = (random->nextFloat() - 0.5) * 0.08;
-                    double zDist = (random->nextFloat() - 0.5) * 0.08;
                     static_cast<ServerLevel*>(level)->sendParticles(PARTICLE_ICON_CRACK, position->x + 0.5, position->y + 0.7,
-                                                                    position->z + 0.5, 3, xDist, yDist, zDist, 0.15f,
+                                                                    position->z + 0.5, 3, (random->nextFloat() - 0.5) * 0.08,
+                                                                    (random->nextFloat() - 0.5) * 0.08,
+                                                                    (random->nextFloat() - 0.5) * 0.08, 0.15f,
                                                                     arrayWithLength<int>(params, 2));
                 }
 

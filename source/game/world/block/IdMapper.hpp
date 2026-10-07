@@ -12,6 +12,8 @@ class BlockState;
 template<class T> class IdMapper : public IdMap<T>
 {
 public:
+    IdMapper() {}
+
     virtual int getId(T value)
     {
         typename boost::unordered_map<T, int>::iterator found = mIds.find(value);
@@ -41,7 +43,7 @@ template<class T> void IdMapper<T>::addMapping(T value, int id)
 {
     mIds[value] = id;
 
-    while (id >= (int)mObjects.size())
+    while ((int)mObjects.size() <= id)
     {
         mObjects.push_back(T());
     }

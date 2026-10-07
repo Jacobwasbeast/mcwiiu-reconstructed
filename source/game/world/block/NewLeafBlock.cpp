@@ -57,11 +57,11 @@ NewLeafBlock::NewLeafBlock()
 
 void NewLeafBlock::dropExtraLoot(Level* level, const BlockPos& pos, const BlockState* state, int lootBonus)
 {
-    if (state->getValue(VARIANT) != PlanksBlock::Variant::DARK_OAK)
-        return;
-    if (level->mRandom->nextInt(lootBonus) != 0)
-        return;
-    Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Items::apple, 1, 0)));
+    if (state->getValue(VARIANT) == PlanksBlock::Variant::DARK_OAK)
+    {
+        if (level->mRandom->nextInt(lootBonus) == 0)
+            Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Items::apple, 1, 0)));
+    }
 }
 
 int NewLeafBlock::getSpawnResourcesAuxValue(const BlockState* state)
@@ -86,15 +86,17 @@ const BlockState* NewLeafBlock::getBlockState(int data)
     const BlockState* state = defaultBlockState();
     return state->setValue(VARIANT, getWoodVariantForData(data))
         ->setValue(DECAYABLE, (data & 4) == 0)
-        ->setValue(CHECK_DECAY, (data & 8) != 0);
+        ->setValue(CHECK_DECAY, (data & 8) > 0);
 }
 
 int NewLeafBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
     int data = state->getValue(VARIANT)->getData() - 4;
-    if (!state->getValue(DECAYABLE))
+    bool decayable = state->getValue(DECAYABLE);
+    if (!decayable)
         data |= 4;
-    if (state->getValue(CHECK_DECAY))
+    bool checkDecay = state->getValue(CHECK_DECAY);
+    if (checkDecay)
         data |= 8;
     return data;
 }
@@ -114,14 +116,18 @@ void NewLeafBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player,
                                  const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
                                  not_null_ptr<ItemInstance> tool)
 {
-    if (level->mIsClientSide || tool->getItem() != Items::shears)
+    if (!level->mIsClientSide && tool->getItem() == Items::shears)
+    {
+        Player* miner = player.operator->();
+        Stat* stat = gStats->get_blocksMined(Block::getId(this));
+        miner->awardStat(stat, GenericStats::param_blocksMined(state, 1));
+        Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
+            state->getValue(VARIANT)->getData() - 4)));
+    }
+    else
     {
         Block::playerDestroy(level, player, pos, state, blockEntity, tool);
-        return;
     }
-    player->awardStat(gStats->get_blocksMined(Block::getId(this)), GenericStats::param_blocksMined(state, 1));
-    Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
-        state->getValue(VARIANT)->getData() - 4)));
 }
 
 int NewLeafBlock::getWoodType(const BlockState* state)

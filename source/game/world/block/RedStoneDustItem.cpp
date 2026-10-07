@@ -14,10 +14,6 @@ RedStoneDustItem::RedStoneDustItem()
 {
 }
 
-RedStoneDustItem::~RedStoneDustItem()
-{
-}
-
 InteractionResult::EInteractionResult RedStoneDustItem::useOn(boost::shared_ptr<Player> player,
                                                                Level* level,
                                                                const BlockPos& pos,

@@ -23,6 +23,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockEntity.hpp"
+#include "game/world/block/BlockItem.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
@@ -35,8 +36,6 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
-
-static const std::wstring BLOCK_ENTITY_TAG = L"BlockEntityTag";
 
 ShulkerBoxBlock::ShulkerBoxBlock(const DyeColor* color)
     : BaseEntityBlock(Material::STONE, MaterialColor::NONE)
@@ -165,7 +164,7 @@ void ShulkerBoxBlock::onRemove(Level* level, const BlockPos& pos, const BlockSta
             not_null_ptr<ItemInstance> item(new ItemInstance(Item::byBlock(this)));
             CompoundTag* rootTag = new CompoundTag();
             CompoundTag* entityTag = new CompoundTag();
-            rootTag->put(BLOCK_ENTITY_TAG, box->saveToTag(entityTag));
+            rootTag->put(BlockItem::BLOCK_ENTITY_TAG, box->saveToTag(entityTag));
             item->setTag(rootTag);
             if (box->hasCustomName())
             {
@@ -186,10 +185,10 @@ void ShulkerBoxBlock::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
     Block::appendHoverText(itemInstance, player, lines, advanced);
 
     CompoundTag* tag = itemInstance->getTag();
-    if (tag == NULL || !tag->contains(BLOCK_ENTITY_TAG, Tag::TAG_COMPOUND))
+    if (tag == NULL || !tag->contains(BlockItem::BLOCK_ENTITY_TAG, Tag::TAG_COMPOUND))
         return;
 
-    CompoundTag* blockEntityTag = tag->getCompound(BLOCK_ENTITY_TAG);
+    CompoundTag* blockEntityTag = tag->getCompound(BlockItem::BLOCK_ENTITY_TAG);
     if (blockEntityTag->contains(L"LootTable", Tag::TAG_STRING))
     {
         lines->push_back(HtmlString(L"???????",
@@ -257,7 +256,7 @@ not_null_ptr<ItemInstance> ShulkerBoxBlock::getCloneItemInstance(Level* level, c
     boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(level->getBlockEntity(pos));
     CompoundTag* tag = box->saveToTag(new CompoundTag());
     if (!tag->isEmpty())
-        item->addTagElement(BLOCK_ENTITY_TAG, tag);
+        item->addTagElement(BlockItem::BLOCK_ENTITY_TAG, tag);
     return item;
 }
 
@@ -293,6 +292,9 @@ Block* ShulkerBoxBlock::getBlockByColor(const DyeColor* color)
         return Blocks::silver_shulker_box;
     case 9:
         return Blocks::cyan_shulker_box;
+    case 10:
+    default:
+        return Blocks::purple_shulker_box;
     case 11:
         return Blocks::blue_shulker_box;
     case 12:
@@ -303,8 +305,6 @@ Block* ShulkerBoxBlock::getBlockByColor(const DyeColor* color)
         return Blocks::red_shulker_box;
     case 15:
         return Blocks::black_shulker_box;
-    default:
-        return Blocks::purple_shulker_box;
     }
 }
 

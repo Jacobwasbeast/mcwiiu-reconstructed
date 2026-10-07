@@ -87,153 +87,69 @@ const BlockState* RailBlock::rotate(const BlockState* state, Rotation* rotation)
         switch (state->getValue(RailBlock::SHAPE)->getData())
         {
         case 2:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_WEST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::ASCENDING_WEST);
         case 3:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_EAST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::ASCENDING_EAST);
         case 4:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_SOUTH);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::ASCENDING_SOUTH);
         case 5:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_NORTH);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::ASCENDING_NORTH);
         case 6:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_WEST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::NORTH_WEST);
         case 7:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_EAST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::NORTH_EAST);
         case 8:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_EAST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::SOUTH_EAST);
         case 9:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_WEST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::SOUTH_WEST);
         }
     case Rotation::eTYPE_CounterClockwise90:
         switch (state->getValue(RailBlock::SHAPE)->getData())
         {
         case 0:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::EAST_WEST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::EAST_WEST);
         case 1:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_SOUTH);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::NORTH_SOUTH);
         case 2:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_NORTH);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::ASCENDING_NORTH);
         case 3:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_SOUTH);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::ASCENDING_SOUTH);
         case 4:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_WEST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::ASCENDING_WEST);
         case 5:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_EAST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::ASCENDING_EAST);
         case 6:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_EAST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::NORTH_EAST);
         case 7:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_EAST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::SOUTH_EAST);
         case 8:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_WEST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::SOUTH_WEST);
         case 9:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_WEST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::NORTH_WEST);
         }
     case Rotation::eTYPE_Clockwise90:
         switch (state->getValue(RailBlock::SHAPE)->getData())
         {
         case 0:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::EAST_WEST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::EAST_WEST);
         case 1:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_SOUTH);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::NORTH_SOUTH);
         case 2:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_SOUTH);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::ASCENDING_SOUTH);
         case 3:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_NORTH);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::ASCENDING_NORTH);
         case 4:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_EAST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::ASCENDING_EAST);
         case 5:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::ASCENDING_WEST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::ASCENDING_WEST);
         case 6:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_WEST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::SOUTH_WEST);
         case 7:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_WEST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::NORTH_WEST);
         case 8:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::NORTH_EAST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::NORTH_EAST);
         case 9:
-        {
-            TypedBoxed<BaseRailBlock::RailShape*> shape(RailShape::SOUTH_EAST);
-            return state->setBoxedValue(RailBlock::SHAPE, &shape);
-        }
+            return state->setValue(RailBlock::SHAPE, RailShape::SOUTH_EAST);
         }
     default:
         break;
@@ -294,12 +210,12 @@ BlockStateDefinition* RailBlock::createBlockStateDefinition()
 
 TextureAtlasSprite* RailBlock::getTexture(const Direction*, const BlockState* state)
 {
-    if (state->getValue(RailBlock::SHAPE)->getData() < 6)
+    if (state->getValue(RailBlock::SHAPE)->getData() >= 6)
     {
-        return mIcon;
+        return mTurnedTexture;
     }
 
-    return mTurnedTexture;
+    return mIcon;
 }
 
 void RailBlock::registerIcons(IconRegister* iconRegister)

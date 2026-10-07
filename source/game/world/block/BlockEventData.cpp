@@ -2,9 +2,12 @@
 #include "game/world/block/Block.hpp"
 
 BlockEventData::BlockEventData(const BlockPos& pos, Block* blockValue, int eventIdValue, int eventParamValue)
-    : BlockPos(), block(blockValue), eventId(eventIdValue), eventParam(eventParamValue)
+    : BlockPos()
 {
     Vec3i::operator=(pos);
+    eventId = eventIdValue;
+    eventParam = eventParamValue;
+    block = blockValue;
 }
 
 BlockPos BlockEventData::getPos()

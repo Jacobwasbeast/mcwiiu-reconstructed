@@ -57,20 +57,16 @@ FenceBlock::FenceBlock(const std::wstring& name, Material* material, const Mater
     _init();
 }
 
-FenceBlock::~FenceBlock()
-{
-}
-
 void FenceBlock::_init()
 {
-    mBlockType = EBLOCK_TYPE_FENCE;
     mIsFence = true;
+    mBlockType = EBLOCK_TYPE_FENCE;
     DerivedInit();
-    const BlockState* state = mStateDefinition->any();
-    state = state->setValue(NORTH, false);
-    state = state->setValue(EAST, false);
-    state = state->setValue(SOUTH, false);
-    registerDefaultState(state->setValue(WEST, false));
+    registerDefaultState(mStateDefinition->any()
+        ->setValue(NORTH, false)
+        ->setValue(EAST, false)
+        ->setValue(SOUTH, false)
+        ->setValue(WEST, false));
 }
 
 unsigned int FenceBlock::getAABBIndex(const BlockState* state)
@@ -139,38 +135,43 @@ bool FenceBlock::canProvideSupport(const BlockState*, const Direction* direction
 bool FenceBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<Player> player,
                      InteractionHand::EInteractionHand, const Direction*, float, float, float, bool)
 {
-    if (!level->mIsClientSide) return LeadItem::bindPlayerMobs(player, level, pos);
-    return LeadItem::bindPlayerMobsTest(player, level, pos);
+    if (level->mIsClientSide)
+    {
+        return LeadItem::bindPlayerMobsTest(player, level, pos);
+    }
+    else
+    {
+        return LeadItem::bindPlayerMobs(player, level, pos);
+    }
 }
 
 const BlockState* FenceBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    state = state->setValue(NORTH, connectsTo(levelSource, pos.north(), Direction::SOUTH));
-    state = state->setValue(EAST, connectsTo(levelSource, pos.east(), Direction::WEST));
-    state = state->setValue(SOUTH, connectsTo(levelSource, pos.south(), Direction::NORTH));
-    return state->setValue(WEST, connectsTo(levelSource, pos.west(), Direction::EAST));
+    return state->setValue(NORTH, connectsTo(levelSource, pos.north(), Direction::SOUTH))
+        ->setValue(EAST, connectsTo(levelSource, pos.east(), Direction::WEST))
+        ->setValue(SOUTH, connectsTo(levelSource, pos.south(), Direction::NORTH))
+        ->setValue(WEST, connectsTo(levelSource, pos.west(), Direction::EAST));
 }
 
 const BlockState* FenceBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    const BlockState* result;
     switch (rotation->getType())
     {
     case Rotation::eTYPE_Clockwise180:
-        result = state->setValue(NORTH, state->getValue(SOUTH));
-        result = result->setValue(EAST, state->getValue(WEST));
-        result = result->setValue(SOUTH, state->getValue(NORTH));
-        return result->setValue(WEST, state->getValue(EAST));
+        return state->setValue(NORTH, state->getValue(SOUTH))
+            ->setValue(EAST, state->getValue(WEST))
+            ->setValue(SOUTH, state->getValue(NORTH))
+            ->setValue(WEST, state->getValue(EAST));
     case Rotation::eTYPE_CounterClockwise90:
-        result = state->setValue(NORTH, state->getValue(EAST));
-        result = result->setValue(EAST, state->getValue(SOUTH));
-        result = result->setValue(SOUTH, state->getValue(WEST));
-        return result->setValue(WEST, state->getValue(NORTH));
+        return state->setValue(NORTH, state->getValue(EAST))
+            ->setValue(EAST, state->getValue(SOUTH))
+            ->setValue(SOUTH, state->getValue(WEST))
+            ->setValue(WEST, state->getValue(NORTH));
     case Rotation::eTYPE_Clockwise90:
-        result = state->setValue(NORTH, state->getValue(WEST));
-        result = result->setValue(EAST, state->getValue(NORTH));
-        result = result->setValue(SOUTH, state->getValue(EAST));
-        return result->setValue(WEST, state->getValue(SOUTH));
+        return state->setValue(NORTH, state->getValue(WEST))
+            ->setValue(EAST, state->getValue(NORTH))
+            ->setValue(SOUTH, state->getValue(EAST))
+            ->setValue(WEST, state->getValue(SOUTH));
     default:
         return state;
     }
@@ -178,15 +179,12 @@ const BlockState* FenceBlock::rotate(const BlockState* state, Rotation* rotation
 
 const BlockState* FenceBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    const BlockState* result;
     switch (mirror->getType())
     {
     case Mirror::eTYPE_LeftRight:
-        result = state->setValue(NORTH, state->getValue(SOUTH));
-        return result->setValue(SOUTH, state->getValue(NORTH));
+        return state->setValue(NORTH, state->getValue(SOUTH))->setValue(SOUTH, state->getValue(NORTH));
     case Mirror::eTYPE_FrontBack:
-        result = state->setValue(EAST, state->getValue(WEST));
-        return result->setValue(WEST, state->getValue(EAST));
+        return state->setValue(EAST, state->getValue(WEST))->setValue(WEST, state->getValue(EAST));
     default:
         return Block::mirror(state, mirror);
     }

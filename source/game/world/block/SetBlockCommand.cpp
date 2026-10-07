@@ -5,10 +5,6 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 
-SetBlockCommand::~SetBlockCommand()
-{
-}
-
 EGameCommand SetBlockCommand::getId()
 {
     return eGameCommand_SetBlock;

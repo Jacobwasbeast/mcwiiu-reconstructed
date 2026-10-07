@@ -6,10 +6,6 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-BlockDataCommand::~BlockDataCommand()
-{
-}
-
 EGameCommand BlockDataCommand::getId()
 {
     return eGameCommand_BlockData;

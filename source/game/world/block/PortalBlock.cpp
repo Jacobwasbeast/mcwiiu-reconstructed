@@ -50,13 +50,8 @@ PortalBlock::PortalBlock()
     : HalfTransparentBlock(L"portal", Material::PORTAL, false)
 {
     DerivedInit();
-    TypedBoxed<Direction::Axis*> axis(Direction::Axis::X);
-    registerDefaultState(mStateDefinition->any()->setBoxedValue(AXIS, &axis));
+    registerDefaultState(mStateDefinition->any()->setValue(AXIS, Direction::Axis::X));
     setTicking(true);
-}
-
-PortalBlock::~PortalBlock()
-{
 }
 
 void PortalBlock::blockStaticCtor()
@@ -101,10 +96,10 @@ BlockPattern::BlockPatternMatch* PortalBlock::getPortalShape(Level* level, const
     for (int i = 0; i < 2; ++i)
     {
         Direction::AxisDirection* axisDirection = Direction::AxisDirection::VALUES[i];
-        BlockPos frontTopLeft = facing->getAxisDirection() == axisDirection
-                                    ? topLeft
-                                    : topLeft.relative(shape.mRightDir, shape.getWidth() - 1);
-        BlockPattern::BlockPatternMatch match(frontTopLeft, Direction::get(axisDirection, axis),
+        BlockPattern::BlockPatternMatch match(facing->getAxisDirection() == axisDirection
+                                                  ? topLeft
+                                                  : topLeft.relative(shape.mRightDir, shape.getWidth() - 1),
+                                              Direction::get(axisDirection, axis),
                                               Direction::UP, cache,
                                               shape.getWidth(), shape.getHeight(), 1);
 
@@ -125,27 +120,29 @@ BlockPattern::BlockPatternMatch* PortalBlock::getPortalShape(Level* level, const
     Direction::AxisDirection* best = Direction::AxisDirection::POSITIVE;
     for (int i = 0; i < 2; ++i)
     {
-        if (filled[Direction::AxisDirection::VALUES[i]->getOrdinal()] < filled[best->getOrdinal()])
-            best = Direction::AxisDirection::VALUES[i];
+        Direction::AxisDirection* candidate = Direction::AxisDirection::VALUES[i];
+        if (filled[candidate->getOrdinal()] < filled[best->getOrdinal()])
+            best = candidate;
     }
 
-    BlockPos frontTopLeft = facing->getAxisDirection() == best
-                                ? topLeft
-                                : topLeft.relative(shape.mRightDir, shape.getWidth() - 1);
-    return new BlockPattern::BlockPatternMatch(frontTopLeft, Direction::get(best, axis),
+    return new BlockPattern::BlockPatternMatch(facing->getAxisDirection() == best
+                                                   ? topLeft
+                                                   : topLeft.relative(shape.mRightDir, shape.getWidth() - 1),
+                                               Direction::get(best, axis),
                                                Direction::UP, cache,
                                                shape.getWidth(), shape.getHeight(), 1);
 }
 
 const AABB* PortalBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    Direction::Axis* axis = state->getValue(AXIS);
-    Direction::Axis::EAxis id = axis->getId();
-    if (id == Direction::Axis::eAxis_X)
-        return gPortalShapeX;
-    if (id == Direction::Axis::eAxis_Z)
+    unsigned int id = state->getValue(AXIS)->getId();
+    if (id != Direction::Axis::eAxis_X)
+    {
+        if (id != Direction::Axis::eAxis_Z)
+            return gPortalShapeY;
         return gPortalShapeZ;
-    return gPortalShapeY;
+    }
+    return gPortalShapeX;
 }
 
 void PortalBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
@@ -180,7 +177,7 @@ void PortalBlock::tick(Level* level, const BlockPos& pos, const BlockState* stat
 
 const AABB* PortalBlock::getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    return NULL;
+    return NULL_AABB;
 }
 
 int PortalBlock::getDataForAxis(Direction::Axis* axis)
@@ -255,58 +252,26 @@ bool PortalBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSo
         }
     }
 
-    bool westOpen = false;
-    if (levelSource->getBlockState(neighbourPos.west())->getBlock() == this)
-    {
-        if (levelSource->getBlockState(neighbourPos.west(2))->getBlock() != this)
-        {
-            westOpen = true;
-        }
-    }
+    bool westOpen = levelSource->getBlockState(neighbourPos.west())->getBlock() == this
+                  && levelSource->getBlockState(neighbourPos.west(2))->getBlock() != this;
 
-    bool eastOpen = false;
-    if (levelSource->getBlockState(neighbourPos.east())->getBlock() == this)
-    {
-        if (levelSource->getBlockState(neighbourPos.east(2))->getBlock() != this)
-        {
-            eastOpen = true;
-        }
-    }
+    bool eastOpen = levelSource->getBlockState(neighbourPos.east())->getBlock() == this
+                  && levelSource->getBlockState(neighbourPos.east(2))->getBlock() != this;
 
-    bool northOpen = false;
-    if (levelSource->getBlockState(neighbourPos.north())->getBlock() == this)
-    {
-        if (levelSource->getBlockState(neighbourPos.north(2))->getBlock() != this)
-        {
-            northOpen = true;
-        }
-    }
+    bool northOpen = levelSource->getBlockState(neighbourPos.north())->getBlock() == this
+                  && levelSource->getBlockState(neighbourPos.north(2))->getBlock() != this;
 
-    bool southOpen = false;
-    if (levelSource->getBlockState(neighbourPos.south())->getBlock() == this)
-    {
-        if (levelSource->getBlockState(neighbourPos.south(2))->getBlock() != this)
-        {
-            southOpen = true;
-        }
-    }
+    bool southOpen = levelSource->getBlockState(neighbourPos.south())->getBlock() == this
+                  && levelSource->getBlockState(neighbourPos.south(2))->getBlock() != this;
 
-    bool westEastAllowed = true;
-    if (!westOpen && !eastOpen && axis != Direction::Axis::X)
+    bool westEastAllowed = westOpen || eastOpen || axis == Direction::Axis::X;
+    bool northSouthAllowed = northOpen || southOpen || axis == Direction::Axis::Z;
+    if ((westEastAllowed && (direction == Direction::WEST || direction == Direction::EAST))
+        || (northSouthAllowed && (direction == Direction::NORTH || direction == Direction::SOUTH)))
     {
-        westEastAllowed = false;
+        return true;
     }
-    bool northSouthAllowed = true;
-    if (!northOpen && !southOpen && axis != Direction::Axis::Z)
-    {
-        northSouthAllowed = false;
-    }
-    if ((!westEastAllowed || (direction != Direction::WEST && direction != Direction::EAST))
-        && (!northSouthAllowed || (direction != Direction::NORTH && direction != Direction::SOUTH)))
-    {
-        return false;
-    }
-    return true;
+    return false;
 }
 
 int PortalBlock::getResourceCount(Random* random) { return 0; }
@@ -319,7 +284,8 @@ void PortalBlock::entityInside(Level*, const BlockPos& pos, const BlockState*, c
     if (entity->isPassenger() || entity->isVehicle() || !entity->canChangeDimensions())
         return;
 
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    bool isPlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+    if (isPlayer)
     {
         if (Minecraft::GetInstance()->mGameMode == NULL)
             return;
@@ -386,16 +352,18 @@ int PortalBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* PortalBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    if (rotation->getType() != Rotation::eTYPE_Clockwise90 && rotation->getType() != Rotation::eTYPE_CounterClockwise90)
-        return state;
-    Direction::Axis::EAxis id = state->getValue(AXIS)->getId();
-    if (id == Direction::Axis::eAxis_X)
+    switch (rotation->getType())
     {
-        return state->setValue(AXIS, Direction::Axis::Z);
-    }
-    if (id == Direction::Axis::eAxis_Z)
-    {
-        return state->setValue(AXIS, Direction::Axis::X);
+    case Rotation::eTYPE_Clockwise90:
+    case Rotation::eTYPE_CounterClockwise90:
+        Direction::Axis* axis = state->getValue(AXIS);
+        switch (axis->getId())
+        {
+        case Direction::Axis::eAxis_X:
+            return state->setValue(AXIS, Direction::Axis::Z);
+        case Direction::Axis::eAxis_Z:
+            return state->setValue(AXIS, Direction::Axis::X);
+        }
     }
     return state;
 }
@@ -465,41 +433,18 @@ bool PortalBlock::PortalShape::isEmptyBlock(Block* block)
 
 int PortalBlock::PortalShape::getDistanceUntilEdge(const BlockPos& pos, const Direction* direction)
 {
-    int base = 0;
-    int distance = 0;
-    int steps = 11;
-    do
+    int i;
+    for (i = 0; i < 22; ++i)
     {
-        distance = base;
-        BlockPos at = pos.relative(direction, base);
+        BlockPos at = pos.relative(direction, i);
         if (!isEmptyBlock(mLevel->getBlockState(at)->getBlock()))
-        {
             break;
-        }
         if (mLevel->getBlockState(at.below())->getBlock() != Blocks::obsidian)
-        {
             break;
-        }
-        distance = base + 1;
-        at = pos.relative(direction, distance);
-        if (!isEmptyBlock(mLevel->getBlockState(at)->getBlock()))
-        {
-            break;
-        }
-        if (mLevel->getBlockState(at.below())->getBlock() != Blocks::obsidian)
-        {
-            break;
-        }
-        --steps;
-        base += 2;
-        distance = base;
-    } while (steps != 0);
-
-    if (mLevel->getBlockState(pos.relative(direction, distance))->getBlock() == Blocks::obsidian)
-    {
-        return distance;
     }
-    return 0;
+
+    Block* block = mLevel->getBlockState(pos.relative(direction, i))->getBlock();
+    return block == Blocks::obsidian ? i : 0;
 }
 
 int PortalBlock::PortalShape::calculatePortalHeight()
@@ -545,8 +490,7 @@ int PortalBlock::PortalShape::calculatePortalHeight()
 
     for (int width = 0; width < mWidth; ++width)
     {
-        BlockPos at = mBottomLeft->relative(mRightDir, width).above(mHeight);
-        if (mLevel->getBlockState(at)->getBlock() != Blocks::obsidian)
+        if (mLevel->getBlockState(mBottomLeft->relative(mRightDir, width).above(mHeight))->getBlock() != Blocks::obsidian)
         {
             mBottomLeft = NULL;
             mHeight = 0;

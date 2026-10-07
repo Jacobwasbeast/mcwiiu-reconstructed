@@ -57,7 +57,7 @@ DispenserBlock::DispenserBlock()
 
 boost::shared_ptr<BlockEntity> DispenserBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<DispenserBlockEntity> entity(new DispenserBlockEntity());
+    boost::shared_ptr<BlockEntity> entity = boost::shared_ptr<DispenserBlockEntity>(new DispenserBlockEntity());
     entity->setLevel(level);
     return entity;
 }
@@ -125,7 +125,7 @@ bool DispenserBlock::use(Level* level, const BlockPos& pos, const BlockState*,
     if (!level->mIsClientSide)
     {
         boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-        if ((entity->GetType() & BlockEntityType::DISPENSER) == BlockEntityType::DISPENSER)
+        if (eTYPE_DERIVED_FROM(BlockEntityType::DISPENSER, entity->GetType()))
         {
             player->openContainer(boost::static_pointer_cast<DispenserBlockEntity>(entity));
         }
@@ -189,9 +189,8 @@ const BlockState* DispenserBlock::getStateForPlacement(Level*, const BlockPos& p
                                                        float, float, float, int,
                                                        boost::shared_ptr<LivingEntity> placer)
 {
-    const BlockState* state = defaultBlockState();
-    state = state->setValue(FACING, Direction::getDirectionFromLivingEntity(pos, placer));
-    return state->setValue(TRIGGERED, false);
+    return defaultBlockState()->setValue(FACING, Direction::getDirectionFromLivingEntity(pos, placer))
+        ->setValue(TRIGGERED, false);
 }
 
 void DispenserBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
@@ -202,7 +201,7 @@ void DispenserBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockS
     if (itemInstance->hasCustomHoverName())
     {
         boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-        if ((entity->GetType() & BlockEntityType::DISPENSER) == BlockEntityType::DISPENSER)
+        if (eTYPE_DERIVED_FROM(BlockEntityType::DISPENSER, entity->GetType()))
         {
             boost::shared_ptr<DispenserBlockEntity> dispenser =
                 boost::static_pointer_cast<DispenserBlockEntity>(entity);
@@ -215,7 +214,7 @@ void DispenserBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockS
 void DispenserBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
     boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-    if (entity && (entity->GetType() & BlockEntityType::DISPENSER) == BlockEntityType::DISPENSER)
+    if (entity && eTYPE_DERIVED_FROM(BlockEntityType::DISPENSER, entity->GetType()))
     {
         Containers::dropContents(level, pos, boost::static_pointer_cast<DispenserBlockEntity>(entity));
         level->updateNeighbourForOutputSignal(pos, this);
@@ -240,7 +239,7 @@ EBlockRenderShape DispenserBlock::getRenderShape(const BlockState*)
 
 const BlockState* DispenserBlock::getBlockState(int data)
 {
-    return defaultBlockState()->setValue(FACING, Direction::from3DDataValue(data & 7))->setValue(TRIGGERED, (data & 8) != 0);
+    return defaultBlockState()->setValue(FACING, Direction::from3DDataValue(data & 7))->setValue(TRIGGERED, (data & 8) > 0);
 }
 
 int DispenserBlock::convertBlockStateToLegacyData(const BlockState* state)

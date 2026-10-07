@@ -2,6 +2,8 @@
 #include "game/entity/mob/EntityEvent.hpp"
 #include "game/world/LevelEvent.hpp"
 
+#include <algorithm>
+
 #include <boost/shared_ptr.hpp>
 
 #include "game/core/Boxed.hpp"
@@ -29,8 +31,10 @@ bool tallGrassPredicate(Boxed* value)
 }
 
 EatBlockGoal::EatBlockGoal(Mob* mob)
-    : Goal(), mMob(mob), mLevel(mob->mLevel), mEatAnimationTick(0)
 {
+    mEatAnimationTick = 0;
+    mMob = mob;
+    mLevel = mob->mLevel;
     setRequiredControlFlags(7);
 }
 
@@ -50,12 +54,11 @@ bool EatBlockGoal::canUse()
         return false;
 
     BlockPos pos(mMob->mX, mMob->mY, mMob->mZ);
-    if (!sTallGrassPredicate->apply(mLevel->getBlockState(pos)))
-    {
-        if (mLevel->getBlockState(pos.below())->getBlock() != Blocks::grass)
-            return false;
-    }
-    return true;
+    if (sTallGrassPredicate->apply(mLevel->getBlockState(pos)))
+        return true;
+    if (mLevel->getBlockState(pos.below())->getBlock() == Blocks::grass)
+        return true;
+    return false;
 }
 
 void EatBlockGoal::start()
@@ -82,31 +85,33 @@ int EatBlockGoal::getEatAnimationTick()
 
 void EatBlockGoal::tick()
 {
-    int remaining = mEatAnimationTick - 1;
-    if (remaining < 0)
-        remaining = 0;
-    mEatAnimationTick = remaining;
+    mEatAnimationTick = std::max(0, mEatAnimationTick - 1);
 
-    if (mEatAnimationTick != 4)
-        return;
-
-    BlockPos pos(mMob->mX, mMob->mY, mMob->mZ);
-    if (sTallGrassPredicate->apply(mLevel->getBlockState(pos)))
+    if (mEatAnimationTick == 4)
     {
-        if (mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
-            mLevel->destroyBlock(pos, false);
-        mMob->ate();
-        return;
+        BlockPos pos(mMob->mX, mMob->mY, mMob->mZ);
+        if (sTallGrassPredicate->apply(mLevel->getBlockState(pos)))
+        {
+            if (mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
+            {
+                mLevel->destroyBlock(pos, false);
+            }
+            mMob->ate();
+        }
+        else
+        {
+            BlockPos below = pos.below();
+            if (mLevel->getBlockState(below)->getBlock() == Blocks::grass)
+            {
+                if (mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
+                {
+                    mLevel->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, below, Block::getId(Blocks::grass));
+                    mLevel->setBlock(below, Blocks::dirt->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                }
+            }
+            mMob->ate();
+        }
     }
-
-    BlockPos below = pos.below();
-    if (mLevel->getBlockState(below)->getBlock() == Blocks::grass &&
-        mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
-    {
-        mLevel->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, below, Block::getId(Blocks::grass));
-        mLevel->setBlock(below, Blocks::dirt->defaultBlockState(), Block::UPDATE_CLIENTS, false);
-    }
-    mMob->ate();
 }
 
 void EatBlockGoal::setLevel(Level* level)
@@ -114,7 +119,3 @@ void EatBlockGoal::setLevel(Level* level)
     mLevel = level;
 }
 
-std::wstring EatBlockGoal::getName()
-{
-    return std::wstring(L"EatBlock");
-}

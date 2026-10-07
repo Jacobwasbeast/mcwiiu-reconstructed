@@ -31,8 +31,8 @@ public:
     public:
         enum EHalf
         {
-            LOWER = 0,
-            UPPER = 1
+            UPPER = 0,
+            LOWER = 1
         };
 
         explicit Half(int id);
@@ -128,6 +128,8 @@ public:
     static AbstractProperty<Half*>* HALF;
     static AbstractProperty<const Direction*>* FACING;
     static Variant* VARIANTS[6];
+    static Half* UPPER_HALF;
+    static Half* LOWER_HALF;
     static Half* HALVES[2];
 };
 

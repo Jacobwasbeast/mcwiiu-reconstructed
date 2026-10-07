@@ -106,10 +106,6 @@ MobSpawnerBlockEntity::BlockEntityMobSpawner::BlockEntityMobSpawner(MobSpawnerBl
 {
 }
 
-MobSpawnerBlockEntity::BlockEntityMobSpawner::~BlockEntityMobSpawner()
-{
-}
-
 void MobSpawnerBlockEntity::BlockEntityMobSpawner::broadcastEvent(int event)
 {
     mBlockEntity->mLevel->blockEvent(mBlockEntity->mPos, Blocks::mob_spawner, event, 0);

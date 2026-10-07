@@ -19,7 +19,6 @@ public:
     {
     public:
         explicit AnonymousCommandBlock(CommandBlockEntity* entity);
-        virtual ~AnonymousCommandBlock();
 
         virtual BlockPos getCommandSenderBlockPosition();
         virtual Vec3* getCommandSenderWorldPosition();
@@ -35,7 +34,6 @@ public:
 
     CommandBlockEntity();
     explicit CommandBlockEntity(CommandBlock::Mode mode);
-    virtual ~CommandBlockEntity();
 
     static BlockEntity* create();
     BaseCommandBlock* getCommandBlock();

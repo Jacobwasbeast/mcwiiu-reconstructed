@@ -240,6 +240,9 @@ static const ResourceLocation* AIR_LOCATION = new ResourceLocation(L"air");
 DefaultedMappedRegistry<ResourceLocation, Block*>* const Block::blockRegistry =
     new DefaultedMappedRegistry<ResourceLocation, Block*>(*AIR_LOCATION);
 IdMapper<const BlockState*>* Block::blockStateRegistry = new IdMapper<const BlockState*>();
+const AABB* const Block::NULL_AABB = NULL;
+const int Block::SIGNAL_MAX = 15;
+const int Block::SIGNAL_NONE = 0;
 const AABB* Block::FULL_BLOCK_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 1.0, 1.0);
 float Block::INDESTRUCTIBLE = std::numeric_limits<float>::max();
 unsigned int THREAD_STORAGE_INDEX = TlsAlloc();
@@ -1371,11 +1374,11 @@ void Block::playerDestroy(Level* level, boost::shared_ptr<Player> player, const 
 
     if (minedBlock != Blocks::wheat && minedBlock != Blocks::carrots && minedBlock != Blocks::potatoes)
     {
-        player->awardStat(Stats::blockMinedStats.data[getId(this)], GenericStats::param_blocksMined(state, 1));
+        player->awardStat(Stats::blockMinedStats[getId(this)], GenericStats::param_blocksMined(state, 1));
     }
     else if (minedBlock->getResource(state, NULL, 0) != NULL)
     {
-        player->awardStat(Stats::blockMinedStats.data[getId(this)], GenericStats::param_blocksMined(state, 1));
+        player->awardStat(Stats::blockMinedStats[getId(this)], GenericStats::param_blocksMined(state, 1));
     }
 
     player->awardStat(GenericStats::mineBlock(), GenericStats::param_noArgs());

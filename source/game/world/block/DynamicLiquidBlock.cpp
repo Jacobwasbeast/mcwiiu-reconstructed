@@ -22,12 +22,8 @@ DynamicLiquidBlock::DynamicLiquidBlock(Material* material)
     : LiquidBlock(material), mTickQueue()
 {
     LiquidBlock::DerivedInit();
-    mProcessingTicks = false;
     mAdjacentSources = 0;
-}
-
-DynamicLiquidBlock::~DynamicLiquidBlock()
-{
+    mProcessingTicks = false;
 }
 
 void DynamicLiquidBlock::setStatic(Level* level, const BlockPos& pos, bool extraLayer)
@@ -277,13 +273,8 @@ void DynamicLiquidBlock::maintick(Level* level, const BlockPos& pos, const Block
     int tickDelay = getTickDelay(level);
 
     bool placeStatic = false;
-    if (depth < 1)
-    {
-        PIXBeginNamedEvent(0.0F, "Tick setStatic");
-        setStatic(level, pos, extraLayer);
-        PIXEndNamedEvent();
-    }
-    else
+    bool lowDepth = depth < 1;
+    if (!lowDepth)
     {
         PIXBeginNamedEvent(0.0F, "Tick depth != 0");
         int highest = -100;
@@ -298,7 +289,12 @@ void DynamicLiquidBlock::maintick(Level* level, const BlockPos& pos, const Block
 
         int aboveDepth = getDepth(level, pos.above());
         if (aboveDepth >= 0)
-            newDepth = aboveDepth < 8 ? aboveDepth + 8 : aboveDepth;
+        {
+            if (aboveDepth >= 8)
+                newDepth = aboveDepth;
+            else
+                newDepth = aboveDepth + 8;
+        }
 
         if (mAdjacentSources == 1 && getDepth(level, pos.above()) == 0)
             ++mAdjacentSources;
@@ -319,12 +315,7 @@ void DynamicLiquidBlock::maintick(Level* level, const BlockPos& pos, const Block
         if (mMaterial == Material::LAVA && depth < 8 && newDepth < 8 && newDepth > depth && random->nextInt(4) != 0)
             tickDelay *= 4;
 
-        if (newDepth == depth)
-        {
-            placeStatic = true;
-            PIXEndNamedEvent();
-        }
-        else
+        if (newDepth != depth)
         {
             depth = newDepth;
             if (newDepth < 0)
@@ -336,35 +327,29 @@ void DynamicLiquidBlock::maintick(Level* level, const BlockPos& pos, const Block
             }
             else
             {
-                const BlockState* newState;
-                {
-                    TypedBoxed<int> levelValue(newDepth);
-                    newState = state->setBoxedValue(LEVEL, &levelValue);
-                }
+                state = state->setValue(LEVEL, depth);
                 if (mMaterial == Material::LAVA)
-                {
                     extraLayer = false;
-                    level->setBlock(pos, newState, Block::UPDATE_CLIENTS, false);
-                }
-                else if (extraLayer)
-                {
-                    level->setExtraBlock(pos, newState, Block::UPDATE_CLIENTS, false);
-                }
+                if (extraLayer)
+                    level->setExtraBlock(pos, state, Block::UPDATE_CLIENTS, false);
                 else
-                {
-                    level->setBlock(pos, newState, Block::UPDATE_CLIENTS, false);
-                }
+                    level->setBlock(pos, state, Block::UPDATE_CLIENTS, false);
                 level->addToTickNextTick(pos, this, tickDelay);
                 level->updateNeighborsAt(pos, this, false);
             }
             PIXEndNamedEvent();
         }
-        if (placeStatic)
+        else
         {
-            PIXBeginNamedEvent(0.0F, "Tick setStatic");
-            setStatic(level, pos, extraLayer);
+            placeStatic = true;
             PIXEndNamedEvent();
         }
+    }
+    if (lowDepth || placeStatic)
+    {
+        PIXBeginNamedEvent(0.0F, "Tick setStatic");
+        setStatic(level, pos, extraLayer);
+        PIXEndNamedEvent();
     }
 
     PIXBeginNamedEvent(0.0F, "Check for flow and spread");
@@ -385,10 +370,10 @@ void DynamicLiquidBlock::maintick(Level* level, const BlockPos& pos, const Block
                 return;
             }
         }
-        if (depth < 8)
-            _trySpreadTo(level, pos.below(), pos, Direction::UP, depth + 8);
-        else
+        if (depth >= 8)
             _trySpreadTo(level, pos.below(), pos, Direction::UP, depth);
+        else
+            _trySpreadTo(level, pos.below(), pos, Direction::UP, depth + 8);
         PIXEndNamedEvent();
     }
     else if (depth >= 0 && (depth == 0 || _isWaterBlocking(level, pos.below(), pos, Direction::UP)))

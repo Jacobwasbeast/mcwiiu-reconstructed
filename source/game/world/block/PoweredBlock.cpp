@@ -15,7 +15,7 @@ PoweredBlock::PoweredBlock(Material* material, const MaterialColor* materialColo
 
 int PoweredBlock::getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
-    return 15;
+    return Block::SIGNAL_MAX;
 }
 
 bool PoweredBlock::isSignalSource(const BlockState* state)

@@ -19,7 +19,6 @@ class DropperBlock : public DispenserBlock
 public:
     DropperBlock();
     virtual unsigned int GetInteractTooltip(const BlockTooltipDataHolder& tooltipData);
-    virtual ~DropperBlock();
 
     virtual void registerIcons(IconRegister* iconRegister);
     virtual void dispenseFrom(Level* level, const BlockPos& pos);

@@ -11,7 +11,6 @@ class FenceGateBlock : public HorizontalDirectionalBlock
 {
 public:
     FenceGateBlock(const std::wstring& name, PlanksBlock::Variant* variant);
-    virtual ~FenceGateBlock();
 
     static AbstractProperty<bool>* OPEN;
     static AbstractProperty<bool>* POWERED;

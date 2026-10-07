@@ -7,6 +7,3 @@ StrippedLogBlock::StrippedLogBlock()
 {
 }
 
-StrippedLogBlock::~StrippedLogBlock()
-{
-}

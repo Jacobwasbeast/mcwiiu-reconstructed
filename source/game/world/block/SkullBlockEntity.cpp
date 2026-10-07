@@ -19,10 +19,6 @@ SkullBlockEntity::SkullBlockEntity()
 {
 }
 
-SkullBlockEntity::~SkullBlockEntity()
-{
-}
-
 BlockEntity* SkullBlockEntity::create()
 {
     return new SkullBlockEntity();

@@ -16,7 +16,6 @@ class CoralFanBlockItem : public BlockItem
 {
 public:
     explicit CoralFanBlockItem(Block* block);
-    virtual ~CoralFanBlockItem();
     virtual int getDescriptionId(not_null_ptr<ItemInstance> itemInstance);
     virtual int getUseDescriptionId(not_null_ptr<ItemInstance> itemInstance);
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,

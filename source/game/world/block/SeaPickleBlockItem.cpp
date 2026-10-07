@@ -25,10 +25,6 @@ SeaPickleBlockItem::SeaPickleBlockItem(Block* block)
     Item::setStackedByData(true);
 }
 
-SeaPickleBlockItem::~SeaPickleBlockItem()
-{
-}
-
 int SeaPickleBlockItem::getLevelDataForAuxValue(int auxValue)
 {
     return auxValue;

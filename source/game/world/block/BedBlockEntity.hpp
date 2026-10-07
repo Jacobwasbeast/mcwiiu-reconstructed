@@ -14,7 +14,6 @@ class BedBlockEntity : public BlockEntity
 {
 public:
     BedBlockEntity();
-    virtual ~BedBlockEntity();
 
     void setColor(const DyeColor* color);
     void setItemValues(not_null_ptr<ItemInstance> item);

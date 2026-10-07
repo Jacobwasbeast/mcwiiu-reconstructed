@@ -39,7 +39,6 @@ public:
     static AbstractProperty<bool>* CONDITIONAL;
 
     CommandBlock(const MaterialColor* materialColor, Mode mode);
-    virtual ~CommandBlock();
     unsigned int getMode();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     static void blockStaticCtor();

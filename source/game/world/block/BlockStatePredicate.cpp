@@ -14,10 +14,6 @@ BlockStatePredicate::BlockStatePredicate(BlockStateDefinition* definition)
 {
 }
 
-BlockStatePredicate::~BlockStatePredicate()
-{
-}
-
 BlockStatePredicate* BlockStatePredicate::forBlock(Block* block)
 {
     return new BlockStatePredicate(block->getBlockStateDefinition());

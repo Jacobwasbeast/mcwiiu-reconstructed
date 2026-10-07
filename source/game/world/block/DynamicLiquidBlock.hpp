@@ -31,7 +31,6 @@ public:
     };
 
     DynamicLiquidBlock(Material* material);
-    virtual ~DynamicLiquidBlock();
 
     void setStatic(Level* level, const BlockPos& pos, bool extraLayer);
     int getHighest(Level* level, const BlockPos& pos, int currentHighest);

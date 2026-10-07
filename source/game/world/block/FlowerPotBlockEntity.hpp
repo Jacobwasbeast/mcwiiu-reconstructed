@@ -16,7 +16,6 @@ class FlowerPotBlockEntity : public BlockEntity
 public:
     FlowerPotBlockEntity(Item* item, int data);
     FlowerPotBlockEntity();
-    virtual ~FlowerPotBlockEntity();
 
     static BlockEntity* create();
     Item* getPlantItem();

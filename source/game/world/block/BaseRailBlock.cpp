@@ -56,8 +56,9 @@ bool railpredicate(BaseRailBlock::RailShape* shape)
 static const AABB* gRailClipAABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0);
 
 BaseRailBlock::RailShape::RailShape(int data, const std::wstring& name)
-    : mData(data), mName(name)
 {
+    mData = data;
+    mName = name;
 }
 
 bool BaseRailBlock::RailShape::isAscending()
@@ -209,8 +210,7 @@ const BlockState* BaseRailBlock::updateDir(Level* level, const BlockPos& pos, co
 {
     if (!level->mIsClientSide)
     {
-        bool powered = level->hasNeighborSignal(pos);
-        state = Rail(level, pos, state).place(powered, forceUpdate)->getState();
+        state = Rail(level, pos, state).place(level->hasNeighborSignal(pos), forceUpdate)->getState();
     }
     return state;
 }
@@ -327,7 +327,9 @@ BaseRailBlock::Rail* BaseRailBlock::Rail::getRail(const BlockPos& pos)
 
 bool BaseRailBlock::Rail::hasConnection(const BlockPos& pos)
 {
-    for (std::vector<BlockPos>::const_iterator it = mConnections.begin(); it != mConnections.end(); ++it)
+    std::vector<BlockPos>::iterator end;
+    std::vector<BlockPos>::iterator it;
+    for (end = mConnections.end(), it = mConnections.begin(); it != end; ++it)
         if (it->x == pos.x && it->z == pos.z)
             return true;
     return false;
@@ -348,14 +350,14 @@ void BaseRailBlock::Rail::removeSoftConnections()
     for (unsigned int i = 0; i < mConnections.size(); ++i)
     {
         Rail* rail = getRail(mConnections[i]);
-        if (rail != NULL && rail->connectsTo(this))
-        {
-            mConnections[i] = rail->mPos;
-        }
-        else
+        if (rail == NULL || !rail->connectsTo(this))
         {
             mConnections.erase(mConnections.begin() + i);
             --i;
+        }
+        else
+        {
+            mConnections[i] = rail->mPos;
         }
         delete rail;
     }

@@ -9,7 +9,6 @@ class ShulkerBoxBlockItem : public BlockItem
 {
 public:
     explicit ShulkerBoxBlockItem(Block* block);
-    virtual ~ShulkerBoxBlockItem();
 };
 
 #endif

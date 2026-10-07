@@ -32,10 +32,6 @@ WeightedPressurePlateBlock::WeightedPressurePlateBlock(const std::wstring& name,
     mMaxWeight = maxWeight;
 }
 
-WeightedPressurePlateBlock::~WeightedPressurePlateBlock()
-{
-}
-
 int WeightedPressurePlateBlock::getSignalStrength(Level* level, const BlockPos& pos)
 {
     std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(Entity), getSensitiveAABB(pos));

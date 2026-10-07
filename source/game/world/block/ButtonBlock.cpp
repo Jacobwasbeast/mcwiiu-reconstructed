@@ -75,14 +75,10 @@ bool ButtonBlock::canAttachTo(Level* level, const BlockPos& pos, const Direction
     Block* support = supportState->getBlock();
     if (direction == Direction::UP)
     {
-        bool canAttach = true;
-        if (support != Blocks::hopper && (Block::isExceptionBlockForAttaching(support) || !solidFace) &&
-            !Block::isExceptionForPistonAttaching(support) && !support->mIsFence) canAttach = false;
-        return canAttach;
+        return support == Blocks::hopper || (!Block::isExceptionBlockForAttaching(support) && solidFace) ||
+            Block::isExceptionForPistonAttaching(support) || support->mIsFence;
     }
-    bool canAttach = true;
-    if ((Block::isExceptionBlockForAttaching(support) || !solidFace) && !Block::isExceptionForPistonAttaching(support)) canAttach = false;
-    return canAttach;
+    return (!Block::isExceptionBlockForAttaching(support) && solidFace) || Block::isExceptionForPistonAttaching(support);
 }
 
 bool ButtonBlock::mayPlace(Level* level, const BlockPos& pos, const Direction* direction)
@@ -93,7 +89,10 @@ bool ButtonBlock::mayPlace(Level* level, const BlockPos& pos, const Direction* d
 bool ButtonBlock::mayPlace(Level* level, const BlockPos& pos)
 {
     for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
-        if (canAttachTo(level, pos, *it)) return true;
+    {
+        const Direction* direction = *it;
+        if (canAttachTo(level, pos, direction)) return true;
+    }
     return false;
 }
 
@@ -175,14 +174,14 @@ void ButtonBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* 
 
 int ButtonBlock::getSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction*)
 {
-    if (state->getValue(POWERED)) return 15;
-    return 0;
+    if (state->getValue(POWERED)) return SIGNAL_MAX;
+    return SIGNAL_NONE;
 }
 
 int ButtonBlock::getDirectSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction* direction)
 {
-    if (state->getValue(POWERED) && direction == state->getValue(FACING)) return 15;
-    return 0;
+    if (state->getValue(POWERED) && direction == state->getValue(FACING)) return SIGNAL_MAX;
+    return SIGNAL_NONE;
 }
 
 bool ButtonBlock::isSignalSource(const BlockState*) { return true; }
@@ -200,24 +199,21 @@ void ButtonBlock::checkPressed(const BlockState* state, Level* level, const Bloc
     delete arrows;
     delete tridents;
 
-    if (pressed)
+    if (pressed && !powered)
     {
-        if (!powered)
-        {
-            level->setBlockAndUpdate(pos, state->setValue(POWERED, true));
-            updateNeighbours(level, pos, state->getValue(FACING));
-            level->setBlocksDirty(pos, pos);
-            playOnSound(boost::shared_ptr<Player>(), level, pos);
-        }
-        level->addToTickNextTick(pos, this, getTickDelay(level));
+        level->setBlockAndUpdate(pos, state->setValue(POWERED, true));
+        updateNeighbours(level, pos, state->getValue(FACING));
+        level->setBlocksDirty(pos, pos);
+        playOnSound(boost::shared_ptr<Player>(), level, pos);
     }
-    else if (powered)
+    if (!pressed && powered)
     {
         level->setBlockAndUpdate(pos, state->setValue(POWERED, false));
         updateNeighbours(level, pos, state->getValue(FACING));
         level->setBlocksDirty(pos, pos);
         playOffSound(level, pos);
     }
+    if (pressed) level->addToTickNextTick(pos, this, getTickDelay(level));
 }
 
 void ButtonBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
@@ -264,7 +260,7 @@ const BlockState* ButtonBlock::getBlockState(int data)
         direction = Direction::UP;
         break;
     }
-    return defaultBlockState()->setValue(FACING, direction)->setValue(POWERED, (data & 8) != 0);
+    return defaultBlockState()->setValue(FACING, direction)->setValue(POWERED, (data & 8) > 0);
 }
 
 int ButtonBlock::convertBlockStateToLegacyData(const BlockState* state)

@@ -14,12 +14,9 @@ TransparentBlock::TransparentBlock(Material* material, bool ignoreSimilarity)
 
 bool TransparentBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
-    if (!mIgnoreSimilarity)
+    if (!mIgnoreSimilarity && levelSource->getBlockState(pos)->getBlock() == this)
     {
-        if (levelSource->getBlockState(pos)->getBlock() == this)
-        {
-            return false;
-        }
+        return false;
     }
 
     return defaultBlockState()->shouldRenderFace(levelSource, pos, direction);

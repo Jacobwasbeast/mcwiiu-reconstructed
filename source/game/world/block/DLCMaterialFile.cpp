@@ -19,8 +19,7 @@ DLCMaterialFile::~DLCMaterialFile()
 
 void DLCMaterialFile::addData(unsigned char* pData, unsigned int size)
 {
-    Minecraft::GetInstance();
-
-    MaterialTable* pDefaultMaterialTable = TexturePackRepository::defaultTexturePack->getMaterialTable();
-    m_pMaterialTable = new MaterialTable(*pDefaultMaterialTable, pData, size);
+    MaterialTable* defaultMaterials = Minecraft::GetInstance()->mTexturePackRepository->defaultTexturePack->getMaterialTable();
+    MaterialTable* table = new MaterialTable(*defaultMaterials, pData, size);
+    m_pMaterialTable = table;
 }

@@ -87,6 +87,7 @@ public:
     void applyEffects();
     void checkValidity();
     virtual boost::shared_ptr<BlockEntity> clone();
+    static MobEffect* sBeaconEffects[4][3];
     static void AddEffect(int level, int slot, MobEffect* effect);
     static void staticCtor();
     virtual void tick();

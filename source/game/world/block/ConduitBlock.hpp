@@ -22,7 +22,6 @@ class ConduitBlock : public BaseEntityBlock
 {
 public:
     ConduitBlock();
-    virtual ~ConduitBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     virtual bool mayPlace(Level* level, const BlockPos& pos, const Direction* direction);
     virtual bool isCubeShaped(const BlockState* state);

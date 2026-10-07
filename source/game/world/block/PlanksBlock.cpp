@@ -33,7 +33,7 @@ std::wstring PlanksBlock::TEXTURE_NAMES[6] = {
     std::wstring(L"big_oak")
 };
 
-static const int gPlankTranslationKeys[6] = {
+const int gPlankTranslationKeys[6] = {
     PlanksBlock::Variant::eTranslationKeyOak,
     PlanksBlock::Variant::eTranslationKeySpruce,
     PlanksBlock::Variant::eTranslationKeyBirch,

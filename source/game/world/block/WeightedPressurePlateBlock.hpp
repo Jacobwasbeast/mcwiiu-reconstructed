@@ -20,7 +20,6 @@ public:
 
     WeightedPressurePlateBlock(const std::wstring& name, Material* material, int maxWeight,
                                const MaterialColor* materialColor);
-    virtual ~WeightedPressurePlateBlock();
 
     virtual int getSignalStrength(Level* level, const BlockPos& pos);
     virtual void playOnSound(Level* level, const BlockPos& pos);

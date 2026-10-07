@@ -43,7 +43,7 @@ bool EndGatewayBlock::shouldRenderFace(const BlockState*, LevelSource* levelSour
 
 const AABB* EndGatewayBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return NULL_AABB;
 }
 
 bool EndGatewayBlock::isSolidRender(const BlockState*) const

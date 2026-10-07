@@ -21,8 +21,8 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 EnumProperty<const DyeColor*>* StainedGlassPaneBlock::COLOR = NULL;
-static TextureAtlasSprite* gStainedGlassPaneIcons[16];
-static TextureAtlasSprite* gStainedGlassPaneEdges[16];
+TextureAtlasSprite* gStainedGlassPaneIcons[16];
+TextureAtlasSprite* gStainedGlassPaneEdges[16];
 
 void StainedGlassPaneBlock::blockStaticCtor()
 {
@@ -40,10 +40,6 @@ StainedGlassPaneBlock::StainedGlassPaneBlock()
         ->setValue(THIN_FENCE_SOUTH, false)
         ->setValue(THIN_FENCE_WEST, false)
         ->setValue(COLOR, DyeColor::WHITE));
-}
-
-StainedGlassPaneBlock::~StainedGlassPaneBlock()
-{
 }
 
 int StainedGlassPaneBlock::getSpawnResourcesAuxValue(const BlockState* state)

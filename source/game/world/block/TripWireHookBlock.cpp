@@ -33,12 +33,7 @@ const AABB* TripWireHookBlock::AABB_EAST = AABB::newPermanent(0.0, 0.0, 0.3125, 
 TripWireHookBlock::TripWireHookBlock() : Block(Material::DECORATION)
 {
     DerivedInit();
-    const BlockState* state = mStateDefinition->any();
-    state = state->setValue(FACING, Direction::NORTH);
-    state = state->setValue(POWERED, false);
-    state = state->setValue(ATTACHED, false);
-    state = state->setValue(SUSPENDED, false);
-    registerDefaultState(state);
+    registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::NORTH)->setValue(POWERED, false)->setValue(ATTACHED, false)->setValue(SUSPENDED, false));
     setTicking(true);
 }
 
@@ -51,14 +46,14 @@ const AABB* TripWireHookBlock::getShape(const BlockState* state, LevelSource*, c
 {
     switch (state->getValue(FACING)->get3DDataValue())
     {
-    case 2: return AABB_NORTH;
-    case 3: return AABB_SOUTH;
-    case 4: return AABB_WEST;
     default: return AABB_EAST;
+    case 4: return AABB_WEST;
+    case 3: return AABB_SOUTH;
+    case 2: return AABB_NORTH;
     }
 }
 
-const AABB* TripWireHookBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&) { return NULL; }
+const AABB* TripWireHookBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&) { return NULL_AABB; }
 bool TripWireHookBlock::isSolidRender(const BlockState*) const { return false; }
 bool TripWireHookBlock::isCubeShaped(const BlockState*) { return false; }
 
@@ -86,9 +81,7 @@ bool TripWireHookBlock::mayPlace(Level* level, const BlockPos& pos)
 
 const BlockState* TripWireHookBlock::getStateForPlacement(Level*, const BlockPos&, const Direction* direction, float, float, float, int, boost::shared_ptr<LivingEntity>)
 {
-    const BlockState* state = defaultBlockState();
-    state = state->setValue(POWERED, false);
-    state = state->setValue(ATTACHED, false);
+    const BlockState* state = defaultBlockState()->setValue(POWERED, false)->setValue(ATTACHED, false);
     if (direction->getAxis()->isHorizontal())
     {
         state = state->setValue(FACING, direction);
@@ -104,31 +97,31 @@ void TripWireHookBlock::notifyNeighbors(Level* level, const BlockPos& pos, const
 
 void TripWireHookBlock::playSound(Level* level, const BlockPos& pos, bool attached, bool powered, bool oldAttached, bool oldPowered)
 {
-    if (!powered)
+    if (powered)
     {
-        if (oldPowered)
+        if (!oldPowered)
         {
-            level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::TRIPWIRE_CLICK_OFF, SoundSource::eSoundSource_Blocks, 0.4f, 0.5f, 16.0f);
+            level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::TRIPWIRE_CLICK_ON, SoundSource::eSoundSource_Blocks, 0.4f, 0.6f, 16.0f);
             return;
         }
     }
-    else if (!oldPowered)
+    else if (oldPowered)
     {
-        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::TRIPWIRE_CLICK_ON, SoundSource::eSoundSource_Blocks, 0.4f, 0.6f, 16.0f);
+        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::TRIPWIRE_CLICK_OFF, SoundSource::eSoundSource_Blocks, 0.4f, 0.5f, 16.0f);
         return;
     }
 
-    if (!attached)
+    if (attached)
     {
-        if (oldAttached)
+        if (!oldAttached)
         {
-            level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::TRIPWIRE_DETACH, SoundSource::eSoundSource_Blocks, 0.4f, 1.2f / (level->mRandom->nextFloat() * 0.2f + 0.9f), 16.0f);
+            level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::TRIPWIRE_ATTACH, SoundSource::eSoundSource_Blocks, 0.4f, 0.7f, 16.0f);
             return;
         }
     }
-    else if (!oldAttached)
+    else if (oldAttached)
     {
-        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::TRIPWIRE_ATTACH, SoundSource::eSoundSource_Blocks, 0.4f, 0.7f, 16.0f);
+        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::TRIPWIRE_DETACH, SoundSource::eSoundSource_Blocks, 0.4f, 1.2f / (level->mRandom->nextFloat() * 0.2f + 0.9f), 16.0f);
         return;
     }
 }
@@ -220,10 +213,13 @@ void TripWireHookBlock::setPlacedBy(Level* level, const BlockPos& pos, const Blo
 
 bool TripWireHookBlock::checkCanSurvive(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (mayPlace(level, pos)) return true;
-    spawnResources(level, pos, state, 0);
-    level->removeBlock(pos);
-    return false;
+    if (!mayPlace(level, pos))
+    {
+        spawnResources(level, pos, state, 0);
+        level->removeBlock(pos);
+        return false;
+    }
+    return true;
 }
 
 void TripWireHookBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos&)
@@ -263,20 +259,16 @@ void TripWireHookBlock::onRemove(Level* level, const BlockPos& pos, const BlockS
 
 int TripWireHookBlock::getSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction*) 
 {
-    if (state->getValue(POWERED)) return 15;
-    return 0;
+    if (state->getValue(POWERED)) return Block::SIGNAL_MAX;
+    return Block::SIGNAL_NONE;
 }
-int TripWireHookBlock::getDirectSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction* direction) { return state->getValue(POWERED) && direction == state->getValue(FACING) ? 15 : 0; }
+int TripWireHookBlock::getDirectSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction* direction) { return state->getValue(POWERED) && direction == state->getValue(FACING) ? Block::SIGNAL_MAX : Block::SIGNAL_NONE; }
 bool TripWireHookBlock::isSignalSource(const BlockState*) { return true; }
 int TripWireHookBlock::getRenderLayer() { return 0; }
 
 const BlockState* TripWireHookBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    state = state->setValue(FACING, Direction::from2DDataValue(data & 3));
-    state = state->setValue(POWERED, (data & 8) > 0);
-    state = state->setValue(ATTACHED, (data & 4) > 0);
-    return state;
+    return defaultBlockState()->setValue(FACING, Direction::from2DDataValue(data & 3))->setValue(POWERED, (data & 8) > 0)->setValue(ATTACHED, (data & 4) > 0);
 }
 
 int TripWireHookBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -289,8 +281,7 @@ int TripWireHookBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* TripWireHookBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    DirectionProperty* facing = FACING;
-    return state->setValue(facing, rotation->rotate(state->getValue(facing)));
+    return state->setValue(FACING, rotation->rotate(state->getValue(FACING)));
 }
 
 const BlockState* TripWireHookBlock::mirror(const BlockState* state, Mirror* mirror)

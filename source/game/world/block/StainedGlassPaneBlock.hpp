@@ -24,7 +24,6 @@ public:
     static EnumProperty<const DyeColor*>* COLOR;
 
     StainedGlassPaneBlock();
-    virtual ~StainedGlassPaneBlock();
 
     static void blockStaticCtor();
     virtual int getSpawnResourcesAuxValue(const BlockState* state);

@@ -26,10 +26,6 @@ CoralFanBlockItem::CoralFanBlockItem(Block* block)
     setMaxDamage(0);
 }
 
-CoralFanBlockItem::~CoralFanBlockItem()
-{
-}
-
 int CoralFanBlockItem::getDescriptionId(not_null_ptr<ItemInstance> itemInstance)
 {
     int auxValue = itemInstance->getAuxValue();

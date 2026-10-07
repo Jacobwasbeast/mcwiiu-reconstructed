@@ -30,9 +30,12 @@ static std::wstring ICON_NAMES[10] = {
     L"coral_blue_dead", L"coral_pink_dead", L"coral_purple_dead", L"coral_red_dead", L"coral_yellow_dead"
 };
 
-static const unsigned int DESCRIPTION_IDS[9] = {
-    0x3513E921U, 0xF7EF6A83U, 0x259DE196U, 0x919D90B9U, 0x323B09A8U,
-    0xE8C04B12U, 0xCDCA46E0U, 0x30F2646DU, 0xEE954CBAU
+static const unsigned int LIVE_DESCRIPTION_IDS[4] = {
+    0x3513E921U, 0xF7EF6A83U, 0x259DE196U, 0x919D90B9U
+};
+
+static const int DEAD_DESCRIPTION_IDS[5] = {
+    0x323B09A8U, 0xE8C04B12U, 0xCDCA46E0U, 0x30F2646DU, 0xEE954CBAU
 };
 
 CoralBlock::CoralBlock()
@@ -41,13 +44,8 @@ CoralBlock::CoralBlock()
     DerivedInit();
     memset(mIcons, 0, sizeof(mIcons));
 
-    const BlockState* state = mStateDefinition->any()->setValue(VARIANT, 0);
-    registerDefaultState(state->setValue(DEAD, false));
+    registerDefaultState(mStateDefinition->any()->setValue(VARIANT, 0)->setValue(DEAD, false));
     setTicking(true);
-}
-
-CoralBlock::~CoralBlock()
-{
 }
 
 Item* CoralBlock::getResource(const BlockState*, Random*, int)
@@ -94,7 +92,7 @@ TextureAtlasSprite* CoralBlock::getTexture(const Direction*, const BlockState* s
 
 void CoralBlock::registerIcons(IconRegister* iconRegister)
 {
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < 10; i++)
     {
         mIcons[i] = iconRegister->registerIcon(ICON_NAMES[i]);
     }
@@ -121,28 +119,26 @@ const BlockState* CoralBlock::setPropertyValueFromString(const BlockState* state
 {
     if (property == VARIANT && value.compare(L"dead_coral") == 0)
     {
-        const BlockState* deadState = state->setValue(DEAD, true);
-        return deadState->setValue(VARIANT, Math::randomInt(5));
+        return state->setValue(DEAD, true)->setValue(VARIANT, Math::randomInt(5));
     }
     return Block::setPropertyValueFromString(state, property, value);
 }
 
 int CoralBlock::getDescriptionId(int auxValue)
 {
-    unsigned int aux = auxValue;
-    switch (aux)
+    switch (auxValue)
     {
     case 1:
     case 2:
     case 3:
     case 4:
-        return DESCRIPTION_IDS[aux - 1];
+        return LIVE_DESCRIPTION_IDS[auxValue - 1];
     case 8:
     case 9:
     case 10:
     case 11:
     case 12:
-        return DESCRIPTION_IDS[aux - 4];
+        return DEAD_DESCRIPTION_IDS[auxValue - 8];
     default:
         return IDS_TILE_CORAL_BLOCK_BLUE;
     }

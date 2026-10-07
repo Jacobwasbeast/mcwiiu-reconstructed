@@ -20,10 +20,6 @@ FlowerPotBlockEntity::FlowerPotBlockEntity()
 {
 }
 
-FlowerPotBlockEntity::~FlowerPotBlockEntity()
-{
-}
-
 BlockEntity* FlowerPotBlockEntity::create()
 {
     return new FlowerPotBlockEntity();

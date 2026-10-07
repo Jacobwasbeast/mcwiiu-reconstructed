@@ -60,7 +60,7 @@ void TntBlock::wasExploded(Level* level, const BlockPos& pos, Explosion* explosi
     if (level->mIsClientSide || !level->newPrimedTntAllowed() || !gApp.GetGameHostOption(eGameHostOption_TNT))
         return;
 
-    boost::shared_ptr<PrimedTnt> primedTnt(new PrimedTnt(level, static_cast<float>(pos.x) + 0.5f, pos.y, static_cast<float>(pos.z) + 0.5f,
+    boost::shared_ptr<PrimedTnt> primedTnt(new PrimedTnt(level, pos.x + 0.5f, pos.y, pos.z + 0.5f,
         explosion->getSourceMob()));
     primedTnt->setFuse(level->mRandom->nextInt(primedTnt->getLife() / 4) + primedTnt->getLife() / 8);
     level->addEntity(primedTnt);
@@ -79,7 +79,7 @@ void TntBlock::destroy(Level* level, const BlockPos& pos, const BlockState* stat
     if ((state->getValue(EXPLODE) || Minecraft::InMiniGame(eMiniGameId_Tumble, true))
         && level->newPrimedTntAllowed() && gApp.GetGameHostOption(eGameHostOption_TNT))
     {
-        boost::shared_ptr<PrimedTnt> primedTnt(new PrimedTnt(level, static_cast<float>(pos.x) + 0.5f, pos.y, static_cast<float>(pos.z) + 0.5f,
+        boost::shared_ptr<PrimedTnt> primedTnt(new PrimedTnt(level, pos.x + 0.5f, pos.y, pos.z + 0.5f,
             entity));
         level->addEntity(primedTnt);
         level->playSound(boost::shared_ptr<Player>(), primedTnt->mX, primedTnt->mY, primedTnt->mZ,
@@ -102,12 +102,12 @@ bool TntBlock::use(Level* level, const BlockPos& pos, const BlockState* state, b
             level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
             if (held == Items::flintAndSteel)
                 item->hurtAndBreak(1, player);
-            else if (!player->isCreative())
+            else if (!player->mAbilities.mInstabuild)
                 item->shrink(1);
             return true;
         }
     }
-    return Block::use(level, pos, state, player, hand, direction, hitX, hitY, hitZ, clientSide);
+    return Block::use(level, pos, state, player, hand, direction, hitX, hitY, hitZ, false);
 }
 
 void TntBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state, const boost::shared_ptr<Entity>& entity)
@@ -115,23 +115,23 @@ void TntBlock::entityInside(Level* level, const BlockPos& pos, const BlockState*
     if (Minecraft::InMiniGame(eMiniGameId_Battle, true) || level->mIsClientSide)
         return;
 
-    if ((entity->GetType() & EntityType::ARROW) != EntityType::ARROW || !entity->isOnFire())
-        return;
-
-    boost::shared_ptr<Arrow> arrow = boost::dynamic_pointer_cast<Arrow>(entity);
-    if (arrow->mOwner == NULL)
+    if ((entity->GetType() & EntityType::ARROW) == EntityType::ARROW && entity->isOnFire())
     {
-        destroy(level, pos, level->getBlockState(pos)->setValue(EXPLODE, true), boost::shared_ptr<LivingEntity>());
-    }
-    else
-    {
-        const BlockState* primedState = level->getBlockState(pos)->setValue(EXPLODE, true);
-        if ((arrow->mOwner->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
-            destroy(level, pos, primedState, boost::dynamic_pointer_cast<LivingEntity>(arrow->mOwner));
+        boost::shared_ptr<Arrow> arrow = boost::dynamic_pointer_cast<Arrow>(entity);
+        if (arrow->mOwner == NULL)
+        {
+            destroy(level, pos, level->getBlockState(pos)->setValue(EXPLODE, true), boost::shared_ptr<LivingEntity>());
+        }
         else
-            destroy(level, pos, primedState, boost::shared_ptr<LivingEntity>());
+        {
+            const BlockState* primedState = level->getBlockState(pos)->setValue(EXPLODE, true);
+            destroy(level, pos, primedState,
+                (arrow->mOwner->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+                    ? boost::dynamic_pointer_cast<LivingEntity>(arrow->mOwner)
+                    : boost::shared_ptr<LivingEntity>());
+        }
+        level->removeBlock(pos);
     }
-    level->removeBlock(pos);
 }
 
 bool TntBlock::dropFromExplosion(Explosion*)
@@ -151,7 +151,7 @@ void TntBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* 
 
 const BlockState* TntBlock::getBlockState(int data)
 {
-    return defaultBlockState()->setValue(EXPLODE, (data & 1) != 0);
+    return defaultBlockState()->setValue(EXPLODE, (data & 1) > 0);
 }
 
 int TntBlock::convertBlockStateToLegacyData(const BlockState* state)

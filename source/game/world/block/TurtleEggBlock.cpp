@@ -45,15 +45,14 @@ static const AABB* TWO_EGG_SHAPE = AABB::newPermanent(0.0625, 0.0, 0.25, 0.625, 
 static const AABB* THREE_EGG_SHAPE = AABB::newPermanent(0.0625, 0.0, 0.25, 0.875, 0.4375, 0.6875);
 static const AABB* FOUR_EGG_SHAPE = AABB::newPermanent(0.0625, 0.0, 0.25, 0.875, 0.4375, 0.8125);
 
-static std::wstring TEXTURE_NAMES[3] = { L"turtle_egg_hatch_0", L"turtle_egg_hatch_1", L"turtle_egg_hatch_2" };
-static TextureAtlasSprite* TEXTURES[3];
+std::wstring TEXTURE_NAMES[3] = { L"turtle_egg_hatch_0", L"turtle_egg_hatch_1", L"turtle_egg_hatch_2" };
+TextureAtlasSprite* TEXTURES[3];
 
 TurtleEggBlock::TurtleEggBlock()
     : Block(Material::EGG, MaterialColor::COLOR_SILVER)
 {
     DerivedInit();
-    const BlockState* state = defaultBlockState()->setValue(EGG_COUNT, 0);
-    registerDefaultState(state->setValue(HATCH_LEVEL, 0));
+    registerDefaultState(defaultBlockState()->setValue(EGG_COUNT, 0)->setValue(HATCH_LEVEL, 0));
     setTicking(true);
 }
 
@@ -68,12 +67,12 @@ bool TurtleEggBlock::shouldUpdateHatchLevel(Level* level)
 void TurtleEggBlock::_decreaseEggs(Level* level, const BlockPos& pos, int eggCount, bool crack, bool jump) const
 {
     SoundEvent* sound;
-    if (crack && jump)
-        sound = SoundEvents::TURTLE_EGG_HATCH;
-    else if (crack)
-        sound = SoundEvents::TURTLE_EGG_CRACK;
-    else
+    if (!crack)
         sound = SoundEvents::TURTLE_EGG_BREAK;
+    else if (jump)
+        sound = SoundEvents::TURTLE_EGG_HATCH;
+    else
+        sound = SoundEvents::TURTLE_EGG_CRACK;
     level->playSound(boost::shared_ptr<Player>(), pos, sound, SoundSource::eSoundSource_Blocks, 0.7f,
                      level->mRandom->nextFloat() * 0.2f + 0.9f, 16.0f);
 
@@ -107,7 +106,8 @@ void TurtleEggBlock::stepOn(Level* level, const BlockPos& pos, boost::shared_ptr
 
 void TurtleEggBlock::fallOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity, float fallDistance)
 {
-    if ((entity->GetType() & EntityType::ZOMBIE) != EntityType::ZOMBIE)
+    bool isZombie = (entity->GetType() & EntityType::ZOMBIE) == EntityType::ZOMBIE;
+    if (!isZombie)
     {
         _destroyEgg(level, pos, entity, 3, false, true);
     }
@@ -125,36 +125,38 @@ void TurtleEggBlock::tick(Level* level, const BlockPos& pos, const BlockState* s
                              SoundSource::eSoundSource_Blocks, 0.7f, level->mRandom->nextFloat() * 0.2f + 0.9f,
                              16.0f);
             level->setBlock(pos, state->setValue(HATCH_LEVEL, hatchLevel + 1), Block::UPDATE_CLIENTS, false);
-            level->addToTickNextTick(pos, this, level->mRandom->nextInt(750, 1500));
-            return;
         }
-
-        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::TURTLE_EGG_HATCHED,
-                         SoundSource::eSoundSource_Blocks, 0.7f, level->mRandom->nextFloat() * 0.2f + 0.9f, 16.0f);
-        if (!level->mIsClientSide)
+        else
         {
-            for (int i = 0; i <= state->getValue(EGG_COUNT); ++i)
+            level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::TURTLE_EGG_HATCHED,
+                             SoundSource::eSoundSource_Blocks, 0.7f, level->mRandom->nextFloat() * 0.2f + 0.9f,
+                             16.0f);
+            if (!level->mIsClientSide)
             {
-                level->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getId(state->getBlock()));
-                boost::shared_ptr<Turtle> turtle(new Turtle(level));
-                turtle->setAge(-24000);
-                turtle->setHomePos(pos);
-                turtle->moveTo((double)pos.x + (double)i * 0.2 + 0.3, (double)pos.y, (double)pos.z + 0.3, 0.0f,
-                               0.0f);
-                level->addEntity(turtle);
+                for (int i = 0; i <= state->getValue(EGG_COUNT); ++i)
+                {
+                    level->levelEvent(LevelEvent::PARTICLES_DESTROY_BLOCK, pos, Block::getId(state->getBlock()));
+                    boost::shared_ptr<Turtle> turtle(new Turtle(level));
+                    turtle->setAge(-24000);
+                    turtle->setHomePos(pos);
+                    turtle->moveTo((double)pos.x + (double)i * 0.2 + 0.3, (double)pos.y, (double)pos.z + 0.3,
+                                   0.0f, 0.0f);
+                    level->addEntity(turtle);
+                }
             }
+            level->removeBlock(pos);
         }
-        level->removeBlock(pos);
     }
-    level->addToTickNextTick(pos, this, level->mRandom->nextInt(750, 1500));
+    int delay = level->mRandom->nextInt(750, 1500);
+    level->addToTickNextTick(pos, this, delay);
 }
 
 bool TurtleEggBlock::playerWillDestroy(Level* level, const BlockPos& pos, const BlockState* state,
                                        boost::shared_ptr<Player> player)
 {
     int eggCount = state->getValue(EGG_COUNT);
-    int silkTouch = EnchantmentHelper::getItemEnchantmentLevel(Enchantments::SILK_TOUCH, player->getMainHandItem());
-    _decreaseEggs(level, pos, eggCount, silkTouch > 0, false);
+    bool silkTouch = EnchantmentHelper::getItemEnchantmentLevel(Enchantments::SILK_TOUCH, player->getMainHandItem()) > 0;
+    _decreaseEggs(level, pos, eggCount, silkTouch, false);
     return true;
 }
 
@@ -169,39 +171,42 @@ bool TurtleEggBlock::mayPlace(Level* level, const BlockPos& pos)
         return true;
     const BlockState* below = level->getBlockState(pos.below());
     Block* block = below->getBlock();
-    if (!below->canProvideSupport(Direction::UP, BLOCK_SUPPORT_CENTER) || Block::getId(block) == BlockId::MAGMA
-        || block->mIsFence)
-        return false;
-    return true;
+    if (below->canProvideSupport(Direction::UP, BLOCK_SUPPORT_CENTER) && Block::getId(block) != BlockId::MAGMA
+        && !block->mIsFence)
+        return true;
+    return false;
 }
 
 bool TurtleEggBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
                          InteractionHand::EInteractionHand, const Direction*, float, float, float, bool)
 {
     not_null_ptr<ItemInstance> item = player->getMainHandItem();
-    if (item->isEmpty() || item->getItem() != Item::byBlock(Blocks::turtle_egg))
-        return false;
-    if (level->mIsClientSide)
-        return true;
-
-    const BlockState* current = level->getBlockState(pos);
-    if (current->getBlock() != Blocks::turtle_egg)
-        return false;
-    int eggCount = current->getValue(EGG_COUNT);
-    if (eggCount >= 3)
-        return false;
-
-    const BlockState* newState = current->setValue(EGG_COUNT, eggCount + 1);
-    if (!player->mAbilities.mInstabuild)
-        item->shrink(1);
-    if (level->setBlock(pos, newState, Block::UPDATE_ALL, false))
+    if (!item->isEmpty() && item->getItem() == Item::byBlock(Blocks::turtle_egg))
     {
-        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::TURTLE_LAY_EGG,
-                         SoundSource::eSoundSource_Players, 0.5f, level->mRandom->nextFloat() * 0.2f + 0.9f, 16.0f);
-        if (level->getBlock(pos.below()) == Blocks::sand)
-            level->levelEvent(LevelEvent::PARTICLES_PLANT_GROWTH, pos, 15);
+        if (level->mIsClientSide)
+            return true;
+
+        const BlockState* current = level->getBlockState(pos);
+        if (current->getBlock() != Blocks::turtle_egg)
+            return false;
+        int eggCount = current->getValue(EGG_COUNT);
+        if (eggCount < 3)
+        {
+            const BlockState* newState = current->setValue(EGG_COUNT, eggCount + 1);
+            if (!player->mAbilities.mInstabuild)
+                item->shrink(1);
+            if (level->setBlock(pos, newState, Block::UPDATE_ALL, false))
+            {
+                level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::TURTLE_LAY_EGG,
+                                 SoundSource::eSoundSource_Players, 0.5f,
+                                 level->mRandom->nextFloat() * 0.2f + 0.9f, 16.0f);
+                if (level->getBlock(pos.below()) == Blocks::sand)
+                    level->levelEvent(LevelEvent::PARTICLES_PLANT_GROWTH, pos, 15);
+            }
+            return true;
+        }
     }
-    return true;
+    return false;
 }
 
 bool TurtleEggBlock::TestUse(Level*, const BlockPos&, const BlockState* state, boost::shared_ptr<Player> player)
@@ -236,15 +241,17 @@ void TurtleEggBlock::addCollisionAABBs(const BlockState* state, Level*, const Bl
 
 const AABB* TurtleEggBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    int eggCount = state->getValue(EGG_COUNT);
-    if (eggCount == 0)
+    switch (state->getValue(EGG_COUNT))
+    {
+    case 0:
         return ONE_EGG_SHAPE;
-    if (eggCount == 1)
+    case 1:
         return TWO_EGG_SHAPE;
-    const AABB* shape = THREE_EGG_SHAPE;
-    if (eggCount != 2)
-        shape = FOUR_EGG_SHAPE;
-    return shape;
+    case 2:
+        return THREE_EGG_SHAPE;
+    default:
+        return FOUR_EGG_SHAPE;
+    }
 }
 
 EBlockRenderShape TurtleEggBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_TURTLE_EGG; }
@@ -269,8 +276,7 @@ int TurtleEggBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* TurtleEggBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState()->setValue(EGG_COUNT, data & 3);
-    return state->setValue(HATCH_LEVEL, data >> 2 & 3);
+    return defaultBlockState()->setValue(EGG_COUNT, data & 3)->setValue(HATCH_LEVEL, data >> 2 & 3);
 }
 
 TextureAtlasSprite* TurtleEggBlock::getTexture(const Direction*, const BlockState* state)
@@ -280,9 +286,8 @@ TextureAtlasSprite* TurtleEggBlock::getTexture(const Direction*, const BlockStat
 
 void TurtleEggBlock::registerIcons(IconRegister* iconRegister)
 {
-    TEXTURES[0] = iconRegister->registerIcon(TEXTURE_NAMES[0]);
-    TEXTURES[1] = iconRegister->registerIcon(TEXTURE_NAMES[1]);
-    TEXTURES[2] = iconRegister->registerIcon(TEXTURE_NAMES[2]);
+    for (int i = 0; i < 3; i++)
+        TEXTURES[i] = iconRegister->registerIcon(TEXTURE_NAMES[i]);
 }
 
 BlockStateDefinition* TurtleEggBlock::createBlockStateDefinition()

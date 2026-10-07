@@ -18,7 +18,6 @@ class SkullBlockEntity : public BlockEntity
 {
 public:
     SkullBlockEntity();
-    virtual ~SkullBlockEntity();
 
     static BlockEntity* create();
     int getSkullType();

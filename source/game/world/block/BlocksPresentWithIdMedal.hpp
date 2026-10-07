@@ -15,7 +15,6 @@ public:
                              float (&scoreFunction)(int, int), float value,
                              GameMedal::EOperator op);
 
-    virtual ~BlocksPresentWithIdMedal();
 
     virtual float GetScore(PlayerStats* playerStats) const;
 

@@ -20,7 +20,8 @@ const BlockState* IdMapper<const BlockState*>::byId(int id)
     const BlockState* state = mBlockStates[id];
     if (state == NULL)
     {
-        state = Block::byId(id >> 4)->getBlockState(id & 0xF);
+        int data = id & 0xF;
+        state = Block::byId(id >> 4)->getBlockState(data);
     }
 
     return state;

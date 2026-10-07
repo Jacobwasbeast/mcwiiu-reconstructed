@@ -20,6 +20,7 @@
 
 EnumProperty<const DyeColor*>* gWoolCarpetColorProperty = NULL;
 static const AABB* WOOL_CARPET_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.0625, 1.0);
+static const AABB* WOOL_CARPET_COLLISION_SHAPE = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.0, 1.0);
 
 void WoolCarpetBlock::blockStaticCtor()
 {
@@ -39,9 +40,8 @@ WoolCarpetBlock::WoolCarpetBlock()
 void WoolCarpetBlock::addCollisionAABB(const BlockPos& pos, const AABB* entityBox,
                                        std::vector<AABB*>* collidingBoxes, const AABB* blockBox)
 {
-    AABB* movedBox = WOOL_CARPET_SHAPE->move(pos);
-    if (entityBox->intersects(movedBox->mMinX, movedBox->mMinY, movedBox->mMinZ,
-                              movedBox->mMaxX, movedBox->mMaxY, movedBox->mMaxZ))
+    AABB* movedBox = WOOL_CARPET_COLLISION_SHAPE->move(pos);
+    if (entityBox->intersects(movedBox))
     {
         collidingBoxes->push_back(movedBox);
     }
@@ -97,15 +97,16 @@ bool WoolCarpetBlock::canSurvive(Level* level, const BlockPos& pos, const BlockS
 bool WoolCarpetBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource,
                                        const BlockPos& pos, const Direction* direction)
 {
-    if (direction != Direction::UP)
+    if (direction == Direction::UP)
     {
-        Block* neighbour = levelSource->getBlockState(pos.relative(direction))->getBlock();
-        if (neighbour != this)
-        {
-            return Block::shouldRenderFace(state, levelSource, pos, direction);
-        }
+        return true;
     }
-    return true;
+    Block* neighbour = levelSource->getBlockState(pos.relative(direction))->getBlock();
+    if (neighbour == this)
+    {
+        return true;
+    }
+    return Block::shouldRenderFace(state, levelSource, pos, direction);
 }
 
 int WoolCarpetBlock::getSpawnResourcesAuxValue(const BlockState* state)

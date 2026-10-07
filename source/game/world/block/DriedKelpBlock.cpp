@@ -13,12 +13,7 @@ DriedKelpBlock::DriedKelpBlock(Material* material)
 {
     DerivedInit();
     setTicking(true);
-    mSideIcon = NULL;
-    mFlippedSideIcon = NULL;
-}
-
-DriedKelpBlock::~DriedKelpBlock()
-{
+    memset(mSideIcons, 0, sizeof(mSideIcons));
 }
 
 void DriedKelpBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos&)
@@ -44,19 +39,19 @@ TextureAtlasSprite* DriedKelpBlock::getTexture(const Direction* direction, const
 {
     if (direction == Direction::NORTH || direction == Direction::WEST)
     {
-        return mSideIcon;
+        return mSideIcons[0];
     }
     if (direction == Direction::SOUTH || direction == Direction::EAST)
     {
-        return mFlippedSideIcon;
+        return mSideIcons[1];
     }
     return mTopIcon;
 }
 
 void DriedKelpBlock::registerIcons(IconRegister* iconRegister)
 {
-    mSideIcon = iconRegister->registerIcon(L"dried_kelp_side");
+    mSideIcons[0] = iconRegister->registerIcon(L"dried_kelp_side");
     mTopIcon = iconRegister->registerIcon(L"dried_kelp_top");
-    delete mFlippedSideIcon;
-    mFlippedSideIcon = new FlippedIcon(mSideIcon, true, false);
+    delete mSideIcons[1];
+    mSideIcons[1] = new FlippedIcon(mSideIcons[0], true, false);
 }

@@ -37,6 +37,7 @@ const AABB* TrapDoorBlock::BOTTOM_AABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 
 const AABB* TrapDoorBlock::TOP_AABB = AABB::newPermanent(0.0, 0.8125, 0.0, 1.0, 1.0, 1.0);
 TrapDoorBlock::Half* TrapDoorBlock::TOP = new TrapDoorBlock::Half(L"top");
 TrapDoorBlock::Half* TrapDoorBlock::BOTTOM = new TrapDoorBlock::Half(L"bottom");
+TrapDoorBlock::Half* TrapDoorBlock::HALVES[2] = { TrapDoorBlock::TOP, TrapDoorBlock::BOTTOM };
 
 std::wstring TrapDoorBlock::Half::toString() const { return mName; }
 std::wstring TrapDoorBlock::Half::getSerializedName() const { return mName; }
@@ -56,13 +57,17 @@ TrapDoorBlock::TrapDoorBlock(Material* material, const MaterialColor* materialCo
 void TrapDoorBlock::blockStaticCtor()
 {
     FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
-    std::wstring name(L"half");
+    std::wstring name;
+    name = L"half";
     EnumProperty<Half*>* half;
     {
+        Predicate<Half*>* filter = Predicates<Half*>::alwaysTrue;
         boost::unordered_set<Half*> halves;
-        halves.insert(TOP);
-        halves.insert(BOTTOM);
-        half = EnumProperty<Half*>::create(name, typeid(Half*), halves, Predicates<Half*>::alwaysTrue);
+        for (int i = 0; i < 2; ++i)
+        {
+            halves.insert(HALVES[i]);
+        }
+        half = EnumProperty<Half*>::create(name, typeid(Half*), halves, filter);
     }
     HALF = half;
 }
@@ -72,9 +77,11 @@ const AABB* TrapDoorBlock::getShape(const BlockState* state, LevelSource*, const
     const AABB* shape;
     if (state->getValue(OPEN))
     {
-        const Direction* facing = state->getValue(FACING);
-        switch (facing->get3DDataValue())
+        switch (state->getValue(FACING)->get3DDataValue())
         {
+        default:
+            shape = NORTH_OPEN_AABB;
+            break;
         case 3:
             shape = SOUTH_OPEN_AABB;
             break;
@@ -83,9 +90,6 @@ const AABB* TrapDoorBlock::getShape(const BlockState* state, LevelSource*, const
             break;
         case 5:
             shape = EAST_OPEN_AABB;
-            break;
-        default:
-            shape = NORTH_OPEN_AABB;
             break;
         }
     }
@@ -103,34 +107,32 @@ bool TrapDoorBlock::TestUse() { return mMaterial != Material::METAL; }
 
 void TrapDoorBlock::playSound(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, bool open)
 {
-    if (!open)
+    if (open)
     {
-        int sound = LevelEvent::SOUND_CLOSE_WOODEN_TRAP_DOOR;
-        if (mMaterial == Material::METAL) sound = LevelEvent::SOUND_CLOSE_IRON_TRAP_DOOR;
+        int sound = LevelEvent::SOUND_OPEN_WOODEN_TRAP_DOOR;
+        if (mMaterial == Material::METAL) sound = LevelEvent::SOUND_OPEN_IRON_TRAP_DOOR;
         level->levelEvent(player, sound, pos, 0);
     }
     else
     {
-        int sound = LevelEvent::SOUND_OPEN_WOODEN_TRAP_DOOR;
-        if (mMaterial == Material::METAL) sound = LevelEvent::SOUND_OPEN_IRON_TRAP_DOOR;
+        int sound = LevelEvent::SOUND_CLOSE_WOODEN_TRAP_DOOR;
+        if (mMaterial == Material::METAL) sound = LevelEvent::SOUND_CLOSE_IRON_TRAP_DOOR;
         level->levelEvent(player, sound, pos, 0);
     }
 }
 
 bool TrapDoorBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
 {
-    if (mMaterial != Material::METAL)
+    if (mMaterial == Material::METAL) return false;
+    if (clientSide)
     {
-        if (!clientSide)
-        {
-            state = state->cycle(OPEN);
-            level->setBlock(pos, state, Block::UPDATE_ALL, false);
-            playSound(player, level, pos, state->getValue(OPEN));
-            return true;
-        }
         playSound(player, level, pos, state->getValue(OPEN));
+        return false;
     }
-    return false;
+    state = state->cycle(OPEN);
+    level->setBlock(pos, state, Block::UPDATE_ALL, false);
+    playSound(player, level, pos, state->getValue(OPEN));
+    return true;
 }
 
 void TrapDoorBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos&)
@@ -139,7 +141,7 @@ void TrapDoorBlock::neighborChanged(const BlockState* state, Level* level, const
     bool powered = level->hasNeighborSignal(pos);
     if (!powered && !block->defaultBlockState()->isSignalSource())
         return;
-    if (powered != state->getValue(OPEN))
+    if (state->getValue(OPEN) != powered)
     {
         level->setBlock(pos, state->setValue(OPEN, powered), Block::UPDATE_ALL, false);
         playSound(boost::shared_ptr<Player>(), level, pos, powered);
@@ -151,19 +153,11 @@ const BlockState* TrapDoorBlock::getStateForPlacement(Level* level, const BlockP
     const BlockState* state = defaultBlockState();
     if (direction->getAxis()->isHorizontal())
     {
-        state = state->setValue(FACING, direction)->setValue(OPEN, false);
-        if (hitY > 0.5f)
-            state = state->setValue(HALF, TOP);
-        else
-            state = state->setValue(HALF, BOTTOM);
+        state = state->setValue(FACING, direction)->setValue(OPEN, false)->setValue(HALF, hitY > 0.5f ? TOP : BOTTOM);
     }
     else
     {
-        state = state->setValue(FACING, placer->getDirection()->getOpposite())->setValue(OPEN, false);
-        if (direction == Direction::UP)
-            state = state->setValue(HALF, BOTTOM);
-        else
-            state = state->setValue(HALF, TOP);
+        state = state->setValue(FACING, placer->getDirection()->getOpposite())->setValue(OPEN, false)->setValue(HALF, direction == Direction::UP ? BOTTOM : TOP);
     }
     if (level->hasNeighborSignal(pos)) state = state->setValue(OPEN, true);
     return state;
@@ -223,8 +217,7 @@ unsigned int TrapDoorBlock::GetInteractTooltip(const BlockTooltipDataHolder& too
 
 const BlockState* TrapDoorBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    AbstractProperty<const Direction*>* property = FACING;
-    return state->setValue(property, rotation->rotate(state->getValue(property)));
+    return state->setValue(FACING, rotation->rotate(state->getValue(FACING)));
 }
 
 const BlockState* TrapDoorBlock::mirror(const BlockState* state, Mirror* mirror)

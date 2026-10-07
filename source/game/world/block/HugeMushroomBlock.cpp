@@ -74,18 +74,14 @@ int getMushroomDataValue(HugeMushroomBlock::Variant* variant)
 }
 
 HugeMushroomBlock::Variant::Variant(int data, const std::wstring& name)
-    : mData(data), mName(name)
 {
+    mData = data;
+    mName = name;
 }
 
 int HugeMushroomBlock::Variant::getData()
 {
     return mData;
-}
-
-std::wstring HugeMushroomBlock::Variant::getName()
-{
-    return mName;
 }
 
 HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::byData(int data)
@@ -94,14 +90,16 @@ HugeMushroomBlock::Variant* HugeMushroomBlock::Variant::byData(int data)
     {
         data = 0;
     }
+    Variant* result = NULL;
     for (int i = 0; i < 13; ++i)
     {
         if (VALUES[i]->getData() == data)
         {
-            return VALUES[i];
+            result = VALUES[i];
+            break;
         }
     }
-    return NULL;
+    return result;
 }
 
 std::wstring HugeMushroomBlock::Variant::toString() const
@@ -118,14 +116,20 @@ template std::wstring _toString<HugeMushroomBlock::Variant>(HugeMushroomBlock::V
 
 void HugeMushroomBlock::blockStaticCtor()
 {
-    std::wstring name = L"variant";
-    boost::unordered_set<Variant*> values;
-    for (int i = 0; i < 13; ++i)
+    std::wstring name;
+    name = L"variant";
+    EnumProperty<Variant*>* variant;
+    Predicate<Variant*>* filter = Predicates<Variant*>::alwaysTrue;
     {
-        values.insert(Variant::VALUES[i]);
+        boost::unordered_set<Variant*> values;
+        for (int i = 0; i < 13; ++i)
+        {
+            values.insert(Variant::VALUES[i]);
+        }
+
+        variant = EnumProperty<Variant*>::create(name, typeid(Variant*), values, filter);
     }
-    VARIANT = EnumProperty<Variant*>::create(
-        name, typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
+    VARIANT = variant;
 }
 
 HugeMushroomBlock::HugeMushroomBlock(Material* material, const MaterialColor* materialColor, Block* otherBlock)
@@ -146,16 +150,16 @@ int HugeMushroomBlock::getResourceCount(Random* random)
 
 const MaterialColor* HugeMushroomBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    int data = state->getValue(VARIANT)->getData();
-    if (data != 0 && data != 10)
+    switch (state->getValue(VARIANT)->getData())
     {
-        if (data == 12)
-        {
-            return MaterialColor::CLOTH;
-        }
+    case 12:
+        return MaterialColor::CLOTH;
+    case 0:
+    case 10:
+        return MaterialColor::SAND;
+    default:
         return Block::getMapColor(state, levelSource, pos);
     }
-    return MaterialColor::SAND;
 }
 
 Item* HugeMushroomBlock::getResource(const BlockState*, Random*, int)
@@ -231,6 +235,8 @@ const BlockState* HugeMushroomBlock::rotate(const BlockState* state, Rotation* r
             return state->setValue(VARIANT, Variant::EAST);
         case 9:
             return state->setValue(VARIANT, Variant::NORTH_EAST);
+        case 10:
+            break;
         default:
             return state;
         }
@@ -328,14 +334,18 @@ TextureAtlasSprite* HugeMushroomBlock::getTexture(const Direction* direction, co
     if (mIsOtherBlock == -1)
         mIsOtherBlock = mOtherBlock == Blocks::red_mushroom;
 
-    if ((data >= 1 && data <= 9 && direction == Direction::UP) ||
-        (data >= 1 && data <= 3 && direction == Direction::NORTH) ||
-        (data >= 7 && data <= 9 && direction == Direction::SOUTH) ||
-        ((data == 1 || data == 4 || data == 7) && direction == Direction::WEST) ||
-        ((data == 3 || data == 6 || data == 9) && direction == Direction::EAST) ||
-        data == 11)
+    if (data >= 1 && data <= 9 && direction == Direction::UP)
         return mTextures[mIsOtherBlock];
-
+    if (data >= 1 && data <= 3 && direction == Direction::NORTH)
+        return mTextures[mIsOtherBlock];
+    if (data >= 7 && data <= 9 && direction == Direction::SOUTH)
+        return mTextures[mIsOtherBlock];
+    if ((data == 1 || data == 4 || data == 7) && direction == Direction::WEST)
+        return mTextures[mIsOtherBlock];
+    if ((data == 3 || data == 6 || data == 9) && direction == Direction::EAST)
+        return mTextures[mIsOtherBlock];
+    if (data == 11)
+        return mTextures[mIsOtherBlock];
     if (data == 12)
         return mStemTexture;
     return mInsideTexture;

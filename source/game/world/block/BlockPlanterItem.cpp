@@ -19,10 +19,6 @@ BlockPlanterItem::BlockPlanterItem(Block* block)
 {
 }
 
-BlockPlanterItem::~BlockPlanterItem()
-{
-}
-
 InteractionResult::EInteractionResult BlockPlanterItem::useOn(boost::shared_ptr<Player> player,
                                                              Level* level,
                                                              const BlockPos& pos,

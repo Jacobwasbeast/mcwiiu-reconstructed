@@ -35,9 +35,10 @@
 #include "game/world/block/StainedGlassBlock.hpp"
 #include "game/world/block/StainedGlassPaneBlock.hpp"
 
+MobEffect* BeaconBlockEntity::sBeaconEffects[4][3];
+
 namespace
 {
-MobEffect* sBeaconEffects[12] = {0};
 MobEffect* sBeaconEffectOrder[6] = {0};
 int sBeaconEffectCount = 0;
 }
@@ -567,13 +568,16 @@ boost::shared_ptr<BlockEntity> BeaconBlockEntity::clone()
 
 void BeaconBlockEntity::AddEffect(int level, int slot, MobEffect* effect)
 {
-    sBeaconEffects[level * 3 + slot] = effect;
+    sBeaconEffects[level][slot] = effect;
     sBeaconEffectOrder[sBeaconEffectCount++] = effect;
 }
 
 void BeaconBlockEntity::staticCtor()
 {
-    for (int i = 0; i < 12; ++i) sBeaconEffects[i] = NULL;
+    for (int level = 0; level < 4; ++level)
+    {
+        for (int slot = 0; slot < 3; ++slot) sBeaconEffects[level][slot] = NULL;
+    }
     AddEffect(0, 0, MobEffects::MOVEMENT_SPEED);
     AddEffect(0, 1, MobEffects::DIG_SPEED);
     AddEffect(1, 0, MobEffects::DAMAGE_RESISTANCE);

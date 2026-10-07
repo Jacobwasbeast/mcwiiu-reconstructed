@@ -26,8 +26,8 @@ EnumProperty<PrismarineSlabBlock::Variant*>* PrismarineSlabBlock::VARIANT = NULL
 
 PrismarineSlabBlock::Variant::Variant(int data, const std::wstring& name, int nameId,
                                       int descriptionId, const std::wstring& serializedName)
-    : mData(data)
 {
+    mData = data;
     mName = name;
     mNameId = nameId;
     mDescriptionId = descriptionId;
@@ -77,12 +77,17 @@ void PrismarineSlabBlock::blockStaticCtor()
     gPrismarineSlabVariants[1] = Variant::BRICKS;
     gPrismarineSlabVariants[2] = Variant::DARK;
 
-    boost::unordered_set<Variant*> values;
-    values.insert(gPrismarineSlabVariants[0]);
-    values.insert(gPrismarineSlabVariants[1]);
-    values.insert(gPrismarineSlabVariants[2]);
-    VARIANT = EnumProperty<Variant*>::create(L"variant", typeid(Variant*), values,
-                                              Predicates<Variant*>::alwaysTrue);
+    std::wstring name(L"variant");
+    EnumProperty<Variant*>* variant;
+    Predicate<Variant*>* filter = Predicates<Variant*>::alwaysTrue;
+    {
+        boost::unordered_set<Variant*> values;
+        values.insert(gPrismarineSlabVariants[0]);
+        values.insert(gPrismarineSlabVariants[1]);
+        values.insert(gPrismarineSlabVariants[2]);
+        variant = EnumProperty<Variant*>::create(name, typeid(Variant), values, filter);
+    }
+    VARIANT = variant;
 }
 
 PrismarineSlabBlock::PrismarineSlabBlock()
@@ -124,25 +129,18 @@ not_null_ptr<ItemInstance> PrismarineSlabBlock::getCloneItemInstance(Level*, con
 
 const BlockState* PrismarineSlabBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    state = state->setValue(VARIANT, Variant::byData(data & 7));
+    const BlockState* state = defaultBlockState()->setValue(VARIANT, Variant::byData(data & 7));
     if (!isFullSize())
     {
-        if ((data & 8) == 0)
-        {
-            state = state->setValue(TYPE, BOTTOM);
-        }
-        else
-        {
-            state = state->setValue(TYPE, TOP);
-        }
+        state = state->setValue(TYPE, (data & 8) == 0 ? BOTTOM : TOP);
     }
     return state;
 }
 
 int PrismarineSlabBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    int data = state->getValue(VARIANT)->getData();
+    Variant* variant = state->getValue(VARIANT);
+    int data = variant->getData();
     if (!isFullSize() && state->getValue(TYPE) == TOP)
     {
         data |= 8;
@@ -180,13 +178,14 @@ BlockStateDefinition* PrismarineSlabBlock::createBlockStateDefinition()
 TextureAtlasSprite* PrismarineSlabBlock::getTexture(const Direction* direction, const BlockState* state)
 {
     Variant* variant = state->getValue(VARIANT);
-    Block* prismarine = Blocks::prismarine;
-    return prismarine->getTexture(direction, prismarine->getBlockState(variant->getData()));
+    return Blocks::prismarine->getTexture(direction, Blocks::prismarine->getBlockState(variant->getData()));
 }
 
 void PrismarineSlabBlock::registerIcons(IconRegister* iconRegister)
 {
-    gPrismarineSlabVariants[0]->registerIcons(iconRegister);
-    gPrismarineSlabVariants[1]->registerIcons(iconRegister);
-    gPrismarineSlabVariants[2]->registerIcons(iconRegister);
+    for (int i = 0; i < 3; ++i)
+    {
+        Variant* variant = gPrismarineSlabVariants[i];
+        variant->registerIcons(iconRegister);
+    }
 }

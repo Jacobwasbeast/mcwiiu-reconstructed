@@ -9,7 +9,6 @@ class MushroomBlockThemeRuleDefinition : public LayerAttributeChildRuleDefinitio
 public:
     MushroomBlockThemeRuleDefinition();
 
-    virtual ~MushroomBlockThemeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
     virtual LayerTheme* Generate() const;

@@ -17,10 +17,6 @@ SlimeBlock::SlimeBlock()
     mParticleGravity = 0.8f;
 }
 
-SlimeBlock::~SlimeBlock()
-{
-}
-
 int SlimeBlock::getRenderLayer()
 {
     return 1;

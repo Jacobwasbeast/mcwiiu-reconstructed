@@ -27,7 +27,6 @@ class ThinFenceBlock : public Block
 {
 public:
     ThinFenceBlock(const std::wstring& name = L"", const std::wstring& edgeTexture = L"", Material* material = Material::METAL, bool extraBlock = false);
-    virtual ~ThinFenceBlock();
 
     static int indexFor(const Direction* direction);
     virtual void addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos, const AABB* entityBox,

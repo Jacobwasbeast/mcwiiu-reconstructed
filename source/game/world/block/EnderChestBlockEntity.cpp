@@ -16,10 +16,6 @@ EnderChestBlockEntity::EnderChestBlockEntity()
     mName = boost::shared_ptr<CensoredString>(new CensoredString());
 }
 
-EnderChestBlockEntity::~EnderChestBlockEntity()
-{
-}
-
 BlockEntity* EnderChestBlockEntity::create()
 {
     return new EnderChestBlockEntity();

@@ -14,17 +14,17 @@
 MoveToBlockGoal::MoveToBlockGoal(PathfinderMob* mob, double speedModifier,
                                  int searchRange, int verticalSearchStart,
                                  double maxStayDistance)
-    : mMob(mob),
-      mNextStartTick(0),
-      mTicksStayingStill(0),
-      mMaxStayDuration(0),
-      mBlockPos(BlockPos::ZERO),
-      mReachedTarget(false),
-      mSearchRange(searchRange),
-      mVerticalSearchStart(verticalSearchStart),
-      mSpeedModifierSquared(maxStayDistance * maxStayDistance),
-      mSpeedModifier(speedModifier)
+    : mBlockPos(BlockPos::ZERO)
 {
+    mMaxStayDuration = 0;
+    mNextStartTick = 0;
+    mTicksStayingStill = 0;
+    mSpeedModifierSquared = maxStayDistance * maxStayDistance;
+    mMob = mob;
+    mSpeedModifier = speedModifier;
+    mReachedTarget = false;
+    mSearchRange = searchRange;
+    mVerticalSearchStart = verticalSearchStart;
     setRequiredControlFlags(5);
 }
 
@@ -36,7 +36,7 @@ bool MoveToBlockGoal::findNearestBlock()
     BlockPos minPos = origin.offset(-range, -(vertical + 1), -range);
     BlockPos maxPos = origin.offset(range, vertical, range);
 
-    if (!isValidTargetArea(mMob->mLevel, minPos, maxPos) || vertical < 0)
+    if (!isValidTargetArea(mMob->mLevel, minPos, maxPos))
     {
         return false;
     }
@@ -148,19 +148,12 @@ bool MoveToBlockGoal::canReach(const BlockPos& pos)
         return false;
     }
 
-    double halfWidth = (double)(mMob->mBbWidth * 0.5f);
-    double x = target->x + 0.5 - halfWidth;
-    double z = target->z + 0.5 - halfWidth;
-    int dx = last->x - Mth::floor(x);
-    int dz = last->z - Mth::floor(z);
+    float halfWidth = mMob->mBbWidth * 0.5f;
+    int dx = last->x - Mth::floor(target->x + 0.5 - halfWidth);
+    int dz = last->z - Mth::floor(target->z + 0.5 - halfWidth);
     bool result = dx * dx + dz * dz <= 1 && (double)last->y == target->y;
     delete path;
     return result;
-}
-
-std::wstring MoveToBlockGoal::getName()
-{
-    return std::wstring(L"MoveToBlock");
 }
 
 bool MoveToBlockGoal::isValidTargetArea(Level*, const BlockPos&, const BlockPos&)

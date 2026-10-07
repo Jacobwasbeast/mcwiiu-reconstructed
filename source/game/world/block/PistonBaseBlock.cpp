@@ -151,34 +151,31 @@ int PistonBaseBlock::isPushable(const BlockState* state, Level* level, const Blo
 
     int minXZ = -(level->mDimension->getXZSize() * 16) / 2;
     int maxXZ = ((level->mDimension->getXZSize() << 4) / 2) - 1;
-    if (!(minXZ < pos.x && pos.x < maxXZ && minXZ < pos.z && pos.z < maxXZ))
+    if (!(pos.x > minXZ && pos.x < maxXZ && pos.z > minXZ && pos.z < maxXZ))
         return false;
 
     if (block == Blocks::piston || block == Blocks::sticky_piston)
     {
-        if (!level->getBlockState(pos)->getValue(EXTENDED))
-            return true;
+        if (level->getBlockState(pos)->getValue(EXTENDED))
+            return false;
     }
     else
     {
         if (Block::getId(block) == BlockId::CHEST || block == Blocks::trapped_chest)
             return block->mayPlace(level, pos.relative(direction));
-        if (state->getDestroySpeed(level, pos) != Block::INDESTRUCTIBLE)
+        if (state->getDestroySpeed(level, pos) == Block::INDESTRUCTIBLE)
+            return false;
+        switch (state->getPistonPushReaction())
         {
-            switch (state->getPistonPushReaction())
-            {
-            case PISTON_PUSH_DESTROY:
-                return allowDestroy;
-            case PISTON_PUSH_BLOCK:
-                return false;
-            case PISTON_PUSH_PUSH_ONLY:
-                return direction == motionDirection;
-            default:
-                return true;
-            }
+        case PISTON_PUSH_DESTROY:
+            return allowDestroy;
+        case PISTON_PUSH_BLOCK:
+            return false;
+        case PISTON_PUSH_PUSH_ONLY:
+            return direction == motionDirection;
         }
     }
-    return false;
+    return true;
 }
 
 void PistonBaseBlock::checkIfExtend(Level* level, const BlockPos& pos, const BlockState* state)
@@ -223,18 +220,14 @@ void PistonBaseBlock::onPlace(Level* level, const BlockPos& pos, const BlockStat
 
 const Direction* PistonBaseBlock::getFacingFromPlayer(Level*, const BlockPos& pos, boost::shared_ptr<LivingEntity> placer)
 {
-    float xDistance = Mth::abs(static_cast<float>(placer->mX) - (static_cast<float>(pos.x) + 0.5f));
-    if (xDistance < 2.5f)
+    if (Mth::abs(static_cast<float>(placer->mX) - (static_cast<float>(pos.x) + 0.5f)) < 2.5f &&
+        Mth::abs(static_cast<float>(placer->mZ) - (static_cast<float>(pos.z) + 0.5f)) < 2.5f)
     {
-        float zDistance = Mth::abs(static_cast<float>(placer->mZ) - (static_cast<float>(pos.z) + 0.5f));
-        if (zDistance < 2.5f)
-        {
-            double eyeY = placer->mY + placer->getEyeHeight();
-            if (eyeY - static_cast<double>(pos.y) > 2.0)
-                return Direction::UP;
-            if (static_cast<double>(pos.y) - eyeY > 0.0)
-                return Direction::DOWN;
-        }
+        double eyeY = placer->mY + placer->getEyeHeight();
+        if (eyeY - static_cast<double>(pos.y) > 2.0)
+            return Direction::UP;
+        if (static_cast<double>(pos.y) - eyeY > 0.0)
+            return Direction::DOWN;
     }
     return placer->getDirection()->getOpposite();
 }
@@ -440,7 +433,7 @@ const Direction* PistonBaseBlock::getFacing(int data)
 
 const BlockState* PistonBaseBlock::getBlockState(int data)
 {
-    return defaultBlockState()->setValue(FACING, getFacing(data))->setValue(EXTENDED, (data & 8) != 0);
+    return defaultBlockState()->setValue(FACING, getFacing(data))->setValue(EXTENDED, (data & 8) > 0);
 }
 
 const BlockState* PistonBaseBlock::rotate(const BlockState* state, Rotation* rotation)
@@ -470,29 +463,29 @@ BlockStateDefinition* PistonBaseBlock::createBlockStateDefinition()
 EBlockFaceShape PistonBaseBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
                                                     const BlockPos& pos, const Direction* direction)
 {
-    const BlockState* virtualState = fillVirtualBlockStateProperties(state, levelSource, pos);
-    if (virtualState->getValue(FACING) != direction->getOpposite() && virtualState->getValue(EXTENDED))
+    state = fillVirtualBlockStateProperties(state, levelSource, pos);
+    if (state->getValue(FACING) == direction->getOpposite() || !state->getValue(EXTENDED))
     {
-        return BLOCK_FACE_UNDEFINED;
+        return BLOCK_FACE_SOLID;
     }
-    return BLOCK_FACE_SOLID;
+    return BLOCK_FACE_UNDEFINED;
 }
 
 TextureAtlasSprite* PistonBaseBlock::getTexture(const Direction* direction, const BlockState* state)
 {
     const Direction* facing = state->getValue(FACING);
-    if (direction != facing)
+    if (direction == facing)
     {
-        if (direction == facing->getOpposite())
-            return mBottomIcon;
-        return mIcon;
+        const AABB* shape = getShape(state, NULL, BlockPos());
+        if (state->getValue(EXTENDED) || shape->mMinX > 0.0 || shape->mMinY > 0.0 || shape->mMinZ > 0.0 ||
+            shape->mMaxX < 1.0 || shape->mMaxY < 1.0 || shape->mMaxZ < 1.0)
+            return mInnerTopIcon;
+        return mTopIcon;
     }
 
-    const AABB* shape = getShape(state, NULL, BlockPos());
-    if (!state->getValue(EXTENDED) && shape->mMinX <= 0.0 && shape->mMinY <= 0.0 && shape->mMinZ <= 0.0 &&
-        shape->mMaxX >= 1.0 && shape->mMaxY >= 1.0 && shape->mMaxZ >= 1.0)
-        return mTopIcon;
-    return mInnerTopIcon;
+    if (direction == facing->getOpposite())
+        return mBottomIcon;
+    return mIcon;
 }
 
 TextureAtlasSprite* PistonBaseBlock::getTexture(const std::wstring& name)

@@ -17,7 +17,7 @@ inline std::wstring _toString(T* value)
     const StringRepresentable* representable = value;
     if (representable == NULL)
     {
-        return std::wstring(L"NULL");
+        return L"NULL";
     }
 
     return representable->toString();
@@ -32,39 +32,27 @@ public:
 
     const T& getValue() const { return this->mValue; }
 
-    virtual unsigned int hashOf() const;
-    virtual bool operator==(const Boxed* other) const;
-    virtual void setValue(const Boxed* other);
-    virtual std::wstring toString() const;
+    virtual unsigned int hashOf() const
+    {
+        T value = this->mValue;
+        return boost::hash_value(value);
+    }
+    virtual bool operator==(const Boxed* other) const
+    {
+        return other->isA(this->mValueClass) && this->mValue == (other->isA(typeid(T)) ? static_cast<const TypedBoxed<T>*>(other) : NULL)->mValue;
+    }
+    virtual void setValue(const Boxed* other)
+    {
+        const TypedBoxed<T>* boxed = other->isA(typeid(T)) ? static_cast<const TypedBoxed<T>*>(other) : NULL;
+        this->mValue = boxed->mValue;
+    }
+    virtual std::wstring toString() const
+    {
+        return _toString(this->mValue);
+    }
 
 private:
     T mValue;
 };
-
-template <class T>
-unsigned int TypedBoxed<T>::hashOf() const
-{
-    T value = this->mValue;
-    return boost::hash_value(value);
-}
-
-template <class T>
-bool TypedBoxed<T>::operator==(const Boxed* other) const
-{
-    return other->isA(this->mValueClass) && this->mValue == (other->isA(typeid(T)) ? static_cast<const TypedBoxed<T>*>(other) : NULL)->mValue;
-}
-
-template <class T>
-void TypedBoxed<T>::setValue(const Boxed* other)
-{
-    const TypedBoxed<T>* boxed = other->isA(typeid(T)) ? static_cast<const TypedBoxed<T>*>(other) : NULL;
-    this->mValue = boxed->mValue;
-}
-
-template <class T>
-std::wstring TypedBoxed<T>::toString() const
-{
-    return _toString(this->mValue);
-}
 
 #endif

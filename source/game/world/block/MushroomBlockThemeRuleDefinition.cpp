@@ -12,10 +12,6 @@ MushroomBlockThemeRuleDefinition::MushroomBlockThemeRuleDefinition()
     addBlockAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mBlock);
 }
 
-MushroomBlockThemeRuleDefinition::~MushroomBlockThemeRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType MushroomBlockThemeRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_MushroomBlockTheme;
@@ -24,11 +20,5 @@ ConsoleGameRules::EGameRuleType MushroomBlockThemeRuleDefinition::getActionType(
 LayerTheme* MushroomBlockThemeRuleDefinition::Generate() const
 {
     HugeMushroomBlock* mushroomBlock = dynamic_cast<HugeMushroomBlock*>(mBlock);
-
-    if (mushroomBlock == NULL)
-    {
-        mushroomBlock = static_cast<HugeMushroomBlock*>(sDefaultMushroomBlock);
-    }
-
-    return new MushroomBlockLayerTheme(mushroomBlock);
+    return new MushroomBlockLayerTheme(mushroomBlock != NULL ? mushroomBlock : static_cast<HugeMushroomBlock*>(sDefaultMushroomBlock));
 }

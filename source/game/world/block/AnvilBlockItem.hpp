@@ -11,7 +11,6 @@ class AnvilBlockItem : public MultiBlockItem
 {
 public:
     explicit AnvilBlockItem(Block* block);
-    virtual ~AnvilBlockItem();
 
     static int AnvilBlockNameResolver(int damage);
     static int AnvilBlockNameResolver(not_null_ptr<ItemInstance> itemInstance);

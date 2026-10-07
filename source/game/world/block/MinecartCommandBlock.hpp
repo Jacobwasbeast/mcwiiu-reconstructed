@@ -22,7 +22,6 @@ public:
     {
     public:
         MinecartBaseCommandBlock(const boost::shared_ptr<MinecartCommandBlock>& minecart);
-        virtual ~MinecartBaseCommandBlock();
         virtual void onUpdated();
         virtual unsigned int getType();
         virtual void writeCoordinates(DataOutputStream* output);

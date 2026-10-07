@@ -399,9 +399,9 @@ bool FallingBlockEntity::onlyOpCanSetNbt()
     return true;
 }
 
-void FallingBlockEntity::create(Level* level)
+Entity* FallingBlockEntity::create(Level* level)
 {
-    new FallingBlockEntity(level);
+    return new FallingBlockEntity(level);
 }
 
 unsigned long long FallingBlockEntity::GetType()

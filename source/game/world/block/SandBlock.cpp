@@ -32,9 +32,13 @@ AbstractProperty<SandBlock::Variant*>* SandBlock::TYPE = NULL;
 
 SandBlock::Variant::Variant(int data, const std::wstring& name, int nameId, int descriptionId,
                             const MaterialColor* materialColor, int dustColor)
-    : mData(data), mName(name), mMaterialColor(materialColor), mNameId(nameId),
-      mDescriptionId(descriptionId), mDustColor(dustColor)
 {
+    mData = data;
+    mName = name;
+    mMaterialColor = materialColor;
+    mNameId = nameId;
+    mDescriptionId = descriptionId;
+    mDustColor = dustColor;
 }
 
 const MaterialColor* SandBlock::Variant::getMaterialColor()
@@ -119,17 +123,12 @@ void SandBlock::blockStaticCtor()
                                     MaterialColor::COLOR_ORANGE, -5679071);
     gSandVariants[0] = Variant::SAND;
     gSandVariants[1] = Variant::RED_SAND;
-
     std::wstring name(L"variant");
-    EnumProperty<Variant*>* type;
-    {
-        boost::unordered_set<Variant*> variants;
-        variants.insert(gSandVariants[0]);
-        variants.insert(gSandVariants[1]);
-        type = EnumProperty<Variant*>::create(name, typeid(Variant), variants,
-                                              Predicates<Variant*>::alwaysTrue);
-    }
-    TYPE = type;
+    boost::unordered_set<Variant*> variants;
+    variants.insert(gSandVariants[0]);
+    variants.insert(gSandVariants[1]);
+    TYPE = EnumProperty<Variant*>::create(name, typeid(Variant), variants,
+                                          Predicates<Variant*>::alwaysTrue);
 }
 
 int SandBlock::getSpawnResourcesAuxValue(const BlockState* state)

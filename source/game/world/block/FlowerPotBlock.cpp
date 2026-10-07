@@ -126,24 +126,14 @@ FlowerPotBlock::FlowerPotBlock()
     : BaseEntityBlock(Material::DECORATION)
 {
     DerivedInit();
-    const BlockState* state = mStateDefinition->any();
-    {
-        EnumProperty<const Contents*>* property = CONTENTS;
-        TypedBoxed<const Contents*> contents(Contents::EMPTY);
-        state = state->setBoxedValue(property, &contents);
-    }
-    {
-        AbstractProperty<int>* property = LEGACY_DATA;
-        TypedBoxed<int> legacyData(0);
-        state = state->setBoxedValue(property, &legacyData);
-    }
-    registerDefaultState(state);
+    registerDefaultState(mStateDefinition->any()->setValue<const Contents*>(CONTENTS, Contents::EMPTY)->setValue(LEGACY_DATA, 0));
     sendBlockData(15);
 }
 
 void FlowerPotBlock::blockStaticCtor()
 {
     std::wstring name(L"contents");
+    const Predicate<const Contents*>* filter = Predicates<const Contents*>::alwaysTrue;
     EnumProperty<const Contents*>* property;
     {
         boost::unordered_set<const Contents*> values;
@@ -151,9 +141,9 @@ void FlowerPotBlock::blockStaticCtor()
         {
             values.insert(Contents::VALUES[i]);
         }
-        property = EnumProperty<const Contents*>::create(name, typeid(Contents), values,
-                                                          Predicates<const Contents*>::alwaysTrue);
+        property = EnumProperty<const Contents*>::create(name, typeid(Contents), values, filter);
     }
+
     CONTENTS = property;
 }
 
@@ -186,6 +176,14 @@ boost::shared_ptr<BlockEntity> FlowerPotBlock::newBlockEntity(Level* level, int 
         block = Blocks::sapling;
         itemData = PlanksBlock::Variant::JUNGLE->getData();
         break;
+    case 12:
+        block = Blocks::sapling;
+        itemData = PlanksBlock::Variant::ACACIA->getData();
+        break;
+    case 13:
+        block = Blocks::sapling;
+        itemData = PlanksBlock::Variant::DARK_OAK->getData();
+        break;
     case 7:
         block = Blocks::red_mushroom;
         break;
@@ -202,18 +200,10 @@ boost::shared_ptr<BlockEntity> FlowerPotBlock::newBlockEntity(Level* level, int 
         block = Blocks::tallgrass;
         itemData = TallGrassBlock::Variant::FERN->getData();
         break;
-    case 12:
-        block = Blocks::sapling;
-        itemData = PlanksBlock::Variant::ACACIA->getData();
-        break;
-    case 13:
-        block = Blocks::sapling;
-        itemData = PlanksBlock::Variant::DARK_OAK->getData();
-        break;
     default:
         break;
     }
-    boost::shared_ptr<BlockEntity> blockEntity(new FlowerPotBlockEntity(Item::byBlock(block), itemData));
+    boost::shared_ptr<BlockEntity> blockEntity = boost::shared_ptr<FlowerPotBlockEntity>(new FlowerPotBlockEntity(Item::byBlock(block), itemData));
     blockEntity->setLevel(level);
     return blockEntity;
 }
@@ -291,22 +281,7 @@ bool FlowerPotBlock::use(Level* level, const BlockPos& pos, const BlockState* st
         return false;
     }
     not_null_ptr<ItemInstance> plant = entity->getPlantItemInstance();
-    if (!plant->isEmpty())
-    {
-        if (!item->isEmpty())
-        {
-            if (!player->addItem(plant))
-            {
-                player->drop(plant, false);
-            }
-        }
-        else
-        {
-            player->setItemInHand(hand, plant);
-        }
-        entity->setItemInstance(ItemInstance::EMPTY);
-    }
-    else
+    if (plant->isEmpty())
     {
         if (!canBePotted(item))
         {
@@ -317,6 +292,21 @@ bool FlowerPotBlock::use(Level* level, const BlockPos& pos, const BlockState* st
         {
             item->shrink(1);
         }
+    }
+    else
+    {
+        if (item->isEmpty())
+        {
+            player->setItemInHand(hand, plant);
+        }
+        else
+        {
+            if (!player->addItem(plant))
+            {
+                player->drop(plant, false);
+            }
+        }
+        entity->setItemInstance(ItemInstance::EMPTY);
     }
     entity->setChanged();
     level->sendBlockUpdated(pos, state, state, 3, true);
@@ -398,76 +388,79 @@ const BlockState* FlowerPotBlock::fillVirtualBlockStateProperties(const BlockSta
 {
     const Contents* contents = Contents::EMPTY;
     boost::shared_ptr<BlockEntity> blockEntity = levelSource->getBlockEntity(pos);
-    if (blockEntity != NULL && blockEntity->GetType() == BlockEntityType::FLOWER_POT)
+    if (blockEntity != NULL)
     {
-        boost::shared_ptr<FlowerPotBlockEntity> pot = boost::static_pointer_cast<FlowerPotBlockEntity>(blockEntity);
-        Item* item = pot->getPlantItem();
-        if (item != NULL && dynamic_cast<BlockItem*>(item) != NULL)
+        bool isFlowerPot = blockEntity->GetType() == BlockEntityType::FLOWER_POT;
+        if (isFlowerPot)
         {
-            int itemData = pot->getItemData();
-            Block* block = Block::byItem(item);
-            if (block == Blocks::sapling)
+            boost::shared_ptr<FlowerPotBlockEntity> pot = boost::static_pointer_cast<FlowerPotBlockEntity>(blockEntity);
+            Item* item = pot->getPlantItem();
+            if (item != NULL && dynamic_cast<BlockItem*>(item) != NULL)
             {
-                switch (PlanksBlock::Variant::byData(itemData)->getData())
+                int itemData = pot->getItemData();
+                Block* block = Block::byItem(item);
+                if (block == Blocks::sapling)
                 {
-                case PlanksBlock::Variant::eDataOak: contents = Contents::OAK_SAPLING; break;
-                case PlanksBlock::Variant::eDataSpruce: contents = Contents::SPRUCE_SAPLING; break;
-                case PlanksBlock::Variant::eDataBirch: contents = Contents::BIRCH_SAPLING; break;
-                case PlanksBlock::Variant::eDataJungle: contents = Contents::JUNGLE_SAPLING; break;
-                case PlanksBlock::Variant::eDataAcacia: contents = Contents::ACACIA_SAPLING; break;
-                case PlanksBlock::Variant::eDataDarkOak: contents = Contents::DARK_OAK_SAPLING; break;
-                default: contents = Contents::EMPTY; break;
+                    switch (PlanksBlock::Variant::byData(itemData)->getData())
+                    {
+                    case PlanksBlock::Variant::eDataOak: contents = Contents::OAK_SAPLING; break;
+                    case PlanksBlock::Variant::eDataSpruce: contents = Contents::SPRUCE_SAPLING; break;
+                    case PlanksBlock::Variant::eDataBirch: contents = Contents::BIRCH_SAPLING; break;
+                    case PlanksBlock::Variant::eDataJungle: contents = Contents::JUNGLE_SAPLING; break;
+                    case PlanksBlock::Variant::eDataAcacia: contents = Contents::ACACIA_SAPLING; break;
+                    case PlanksBlock::Variant::eDataDarkOak: contents = Contents::DARK_OAK_SAPLING; break;
+                    default: contents = Contents::EMPTY; break;
+                    }
                 }
-            }
-            else if (block == Blocks::tallgrass)
-            {
-                switch (itemData)
+                else if (block == Blocks::tallgrass)
                 {
-                case 0: contents = Contents::DEAD_BUSH; break;
-                case 2: contents = Contents::FERN; break;
-                default: contents = Contents::EMPTY; break;
+                    switch (itemData)
+                    {
+                    case 0: contents = Contents::DEAD_BUSH; break;
+                    case 2: contents = Contents::FERN; break;
+                    default: contents = Contents::EMPTY; break;
+                    }
                 }
-            }
-            else if (block == Blocks::yellow_flower)
-            {
-                contents = Contents::DANDELION;
-            }
-            else if (block == Blocks::red_flower)
-            {
-                switch (FlowerBlock::Flower::byData(FlowerBlock::FlowerCategory::RED, itemData)->getId())
+                else if (block == Blocks::yellow_flower)
                 {
-                case FlowerBlock::Flower::FLOWER_POPPY: contents = Contents::POPPY; break;
-                case FlowerBlock::Flower::FLOWER_BLUE_ORCHID: contents = Contents::BLUE_ORCHID; break;
-                case FlowerBlock::Flower::FLOWER_ALLIUM: contents = Contents::ALLIUM; break;
-                case FlowerBlock::Flower::FLOWER_HOUSTONIA: contents = Contents::HOUSTONIA; break;
-                case FlowerBlock::Flower::FLOWER_RED_TULIP: contents = Contents::RED_TULIP; break;
-                case FlowerBlock::Flower::FLOWER_ORANGE_TULIP: contents = Contents::ORANGE_TULIP; break;
-                case FlowerBlock::Flower::FLOWER_WHITE_TULIP: contents = Contents::WHITE_TULIP; break;
-                case FlowerBlock::Flower::FLOWER_PINK_TULIP: contents = Contents::PINK_TULIP; break;
-                case FlowerBlock::Flower::FLOWER_OXEYE_DAISY: contents = Contents::OXEYE_DAISY; break;
-                default: contents = Contents::EMPTY; break;
+                    contents = Contents::DANDELION;
                 }
-            }
-            else if (block == Blocks::red_mushroom)
-            {
-                contents = Contents::MUSHROOM_RED;
-            }
-            else if (block == Blocks::brown_mushroom)
-            {
-                contents = Contents::MUSHROOM_BROWN;
-            }
-            else if (block == Blocks::deadbush)
-            {
-                contents = Contents::DEAD_BUSH;
-            }
-            else if (block == Blocks::cactus)
-            {
-                contents = Contents::CACTUS;
+                else if (block == Blocks::red_flower)
+                {
+                    switch (FlowerBlock::Flower::byData(FlowerBlock::FlowerCategory::RED, itemData)->getId())
+                    {
+                    case FlowerBlock::Flower::FLOWER_POPPY: contents = Contents::POPPY; break;
+                    case FlowerBlock::Flower::FLOWER_BLUE_ORCHID: contents = Contents::BLUE_ORCHID; break;
+                    case FlowerBlock::Flower::FLOWER_ALLIUM: contents = Contents::ALLIUM; break;
+                    case FlowerBlock::Flower::FLOWER_HOUSTONIA: contents = Contents::HOUSTONIA; break;
+                    case FlowerBlock::Flower::FLOWER_RED_TULIP: contents = Contents::RED_TULIP; break;
+                    case FlowerBlock::Flower::FLOWER_ORANGE_TULIP: contents = Contents::ORANGE_TULIP; break;
+                    case FlowerBlock::Flower::FLOWER_WHITE_TULIP: contents = Contents::WHITE_TULIP; break;
+                    case FlowerBlock::Flower::FLOWER_PINK_TULIP: contents = Contents::PINK_TULIP; break;
+                    case FlowerBlock::Flower::FLOWER_OXEYE_DAISY: contents = Contents::OXEYE_DAISY; break;
+                    default: contents = Contents::EMPTY; break;
+                    }
+                }
+                else if (block == Blocks::red_mushroom)
+                {
+                    contents = Contents::MUSHROOM_RED;
+                }
+                else if (block == Blocks::brown_mushroom)
+                {
+                    contents = Contents::MUSHROOM_BROWN;
+                }
+                else if (block == Blocks::deadbush)
+                {
+                    contents = Contents::DEAD_BUSH;
+                }
+                else if (block == Blocks::cactus)
+                {
+                    contents = Contents::CACTUS;
+                }
             }
         }
     }
-    TypedBoxed<const Contents*> boxed(contents);
-    return state->setBoxedValue(CONTENTS, &boxed);
+    return state->setValue<const Contents*>(CONTENTS, contents);
 }
 
 int FlowerPotBlock::getRenderLayer() { return 0; }
@@ -476,15 +469,15 @@ EBlockRenderShape FlowerPotBlock::getRenderShape(const BlockState*) { return BLO
 
 unsigned int FlowerPotBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    bool plantEmpty = false;
     boost::shared_ptr<BlockEntity> blockEntity = tooltipData.m_pLevel->getBlockEntity(tooltipData.m_blockPos);
+    bool plantEmpty = false;
     if (blockEntity != NULL)
     {
         bool isFlowerPot = blockEntity->GetType() == BlockEntityType::FLOWER_POT;
         if (isFlowerPot)
         {
-            boost::shared_ptr<FlowerPotBlockEntity> pot = boost::dynamic_pointer_cast<FlowerPotBlockEntity>(blockEntity);
-            plantEmpty = pot->getPlantItemInstance()->isEmpty();
+            not_null_ptr<ItemInstance> plant = boost::dynamic_pointer_cast<FlowerPotBlockEntity>(blockEntity)->getPlantItemInstance();
+            plantEmpty = plant->isEmpty();
         }
     }
 
@@ -497,9 +490,6 @@ unsigned int FlowerPotBlock::GetInteractTooltip(const BlockTooltipDataHolder& to
         {
             switch (id)
             {
-            case 31:
-                if (tooltipData.m_pItemInstance->getAuxValue() == TallGrassBlock::Variant::GRASS->getData())
-                    break;
             case 6:
             case 32:
             case 37:
@@ -510,15 +500,21 @@ unsigned int FlowerPotBlock::GetInteractTooltip(const BlockTooltipDataHolder& to
                 if (plantEmpty)
                     return IDS_TOOLTIPS_PLANT;
                 return IDS_TOOLTIPS_PICKUP_GENERIC;
-            default:
+            case 31:
+                if (tooltipData.m_pItemInstance->getAuxValue() != TallGrassBlock::Variant::GRASS->getData())
+                {
+                    if (plantEmpty)
+                        return IDS_TOOLTIPS_PLANT;
+                    return IDS_TOOLTIPS_PICKUP_GENERIC;
+                }
                 break;
             }
         }
-        return Block::GetInteractTooltip(tooltipData);
     }
-
-    if (tooltipData.m_pItemInstance->isEmpty() && !plantEmpty)
+    else if (tooltipData.m_pItemInstance->isEmpty() && !plantEmpty)
+    {
         return IDS_TOOLTIPS_PICKUP_GENERIC;
+    }
     return Block::GetInteractTooltip(tooltipData);
 }
 

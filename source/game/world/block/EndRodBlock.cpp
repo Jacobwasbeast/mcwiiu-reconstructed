@@ -64,10 +64,16 @@ const BlockState* EndRodBlock::mirror(const BlockState* state, Mirror* mirror)
 
 const AABB* EndRodBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    int axis = state->getValue(DirectionalBlock::FACING_PROPERTY)->getAxis()->getId();
-    if (axis == Direction::Axis::eAxis_Y) return END_ROD_SHAPE_Y;
-    if (axis == Direction::Axis::eAxis_Z) return END_ROD_SHAPE_Z;
-    return END_ROD_SHAPE_X;
+    switch (state->getValue(DirectionalBlock::FACING_PROPERTY)->getAxis()->getId())
+    {
+    case Direction::Axis::eAxis_X:
+    default:
+        return END_ROD_SHAPE_X;
+    case Direction::Axis::eAxis_Z:
+        return END_ROD_SHAPE_Z;
+    case Direction::Axis::eAxis_Y:
+        return END_ROD_SHAPE_Y;
+    }
 }
 
 bool EndRodBlock::isSolidRender(const BlockState*) const { return false; }
@@ -78,9 +84,13 @@ const BlockState* EndRodBlock::getStateForPlacement(Level* level, const BlockPos
                                                      float, float, float, int, boost::shared_ptr<LivingEntity>)
 {
     const BlockState* neighbor = level->getBlockState(pos.relative(direction->getOpposite()));
-    if (neighbor->getBlock() == Blocks::end_rod && neighbor->getValue(DirectionalBlock::FACING_PROPERTY) == direction)
+    if (neighbor->getBlock() == Blocks::end_rod)
     {
-        return defaultBlockState()->setValue(DirectionalBlock::FACING_PROPERTY, direction->getOpposite());
+        const Direction* neighborFacing = neighbor->getValue(DirectionalBlock::FACING_PROPERTY);
+        if (neighborFacing == direction)
+        {
+            return defaultBlockState()->setValue(DirectionalBlock::FACING_PROPERTY, direction->getOpposite());
+        }
     }
     return defaultBlockState()->setValue(DirectionalBlock::FACING_PROPERTY, direction);
 }
@@ -126,12 +136,13 @@ const AABB* EndRodBlock::getShapeRod(const BlockState* state)
 {
     switch (state->getValue(DirectionalBlock::FACING_PROPERTY)->get3DDataValue())
     {
+    case Direction::eDirection_Up: return END_ROD_UP_ROD;
+    default: return END_ROD_UP_ROD;
     case Direction::eDirection_Down: return END_ROD_DOWN_ROD;
+    case Direction::eDirection_East: return END_ROD_EAST_ROD;
+    case Direction::eDirection_West: return END_ROD_WEST_ROD;
     case Direction::eDirection_North: return END_ROD_NORTH_ROD;
     case Direction::eDirection_South: return END_ROD_SOUTH_ROD;
-    case Direction::eDirection_West: return END_ROD_WEST_ROD;
-    case Direction::eDirection_East: return END_ROD_EAST_ROD;
-    default: return END_ROD_UP_ROD;
     }
 }
 
@@ -139,12 +150,13 @@ const AABB* EndRodBlock::getShapeBase(const BlockState* state)
 {
     switch (state->getValue(DirectionalBlock::FACING_PROPERTY)->get3DDataValue())
     {
+    case Direction::eDirection_Up: return END_ROD_UP_BASE;
+    default: return END_ROD_UP_BASE;
     case Direction::eDirection_Down: return END_ROD_DOWN_BASE;
+    case Direction::eDirection_East: return END_ROD_EAST_BASE;
+    case Direction::eDirection_West: return END_ROD_WEST_BASE;
     case Direction::eDirection_North: return END_ROD_NORTH_BASE;
     case Direction::eDirection_South: return END_ROD_SOUTH_BASE;
-    case Direction::eDirection_West: return END_ROD_WEST_BASE;
-    case Direction::eDirection_East: return END_ROD_EAST_BASE;
-    default: return END_ROD_UP_BASE;
     }
 }
 

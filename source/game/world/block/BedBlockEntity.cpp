@@ -18,10 +18,6 @@ BedBlockEntity::BedBlockEntity()
 {
 }
 
-BedBlockEntity::~BedBlockEntity()
-{
-}
-
 void BedBlockEntity::setColor(const DyeColor* color)
 {
     mColor = color;

@@ -38,8 +38,8 @@ int PrismarineBlock::DARK_DATA;
 
 PrismarineBlock::Variant::Variant(int data, const std::wstring& name, int nameId,
                                   int descriptionId, const std::wstring& serializedName)
-    : mData(data)
 {
+    mData = data;
     mName = name;
     mNameId = nameId;
     mDescriptionId = descriptionId;
@@ -95,19 +95,23 @@ void PrismarineBlock::blockStaticCtor()
 {
     {
         std::wstring name = L"variant";
+        const Predicate<Variant*>* filter = gPrismarineVariantPredicate;
         EnumProperty<Variant*>* variant;
         {
             boost::unordered_set<Variant*> values;
-            values.insert(gPrismarineVariants[0]);
-            values.insert(gPrismarineVariants[1]);
-            values.insert(gPrismarineVariants[2]);
-            variant = EnumProperty<Variant*>::create(name, typeid(Variant), values, gPrismarineVariantPredicate);
+            int i = 0;
+            do
+            {
+                values.insert(gPrismarineVariants[i]);
+                ++i;
+            } while (i < 3);
+            variant = EnumProperty<Variant*>::create(name, typeid(Variant), values, filter);
         }
         VARIANT = variant;
     }
-    ROUGH_DATA = gPrismarineVariants[0]->getData();
-    BRICKS_DATA = gPrismarineVariants[1]->getData();
-    DARK_DATA = gPrismarineVariants[2]->getData();
+    ROUGH_DATA = Variant::ROUGH->getData();
+    BRICKS_DATA = Variant::BRICKS->getData();
+    DARK_DATA = Variant::DARK->getData();
 }
 
 PrismarineBlock::PrismarineBlock()

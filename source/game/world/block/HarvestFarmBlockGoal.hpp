@@ -21,7 +21,7 @@ public:
     int findInventorySlotForFarmSeeds();
     virtual void tick();
     virtual bool isValidTarget(Level* level, const BlockPos& pos);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"HarvestFarmBlock"; }
 
 private:
     Villager* mVillager;

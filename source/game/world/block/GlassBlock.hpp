@@ -11,7 +11,6 @@ class GlassBlock : public HalfTransparentBlock
 {
 public:
     GlassBlock(Material* material, bool ignoreSimilarity);
-    virtual ~GlassBlock();
     virtual int getResourceCount(Random* random);
     virtual int getRenderLayer();
     virtual bool isCubeShaped(const BlockState* state);

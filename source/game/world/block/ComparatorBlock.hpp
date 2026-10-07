@@ -62,7 +62,6 @@ public:
     static EnumProperty<ComparatorMode*>* MODE;
 
     ComparatorBlock(bool on);
-    virtual ~ComparatorBlock();
     virtual int calculateOutputSignal(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void refreshOutputState(Level* level, const BlockPos& pos, const BlockState* state);
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int type);

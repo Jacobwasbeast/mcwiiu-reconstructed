@@ -13,7 +13,6 @@ class SpiralBlockRemover : public BlockRemover
 {
 public:
     SpiralBlockRemover(Level* level, std::vector<AABB*>& areas);
-    virtual ~SpiralBlockRemover();
 
     virtual void Tick();
     virtual bool RemoveBlocks(int areaIndex, int maxBlocks);

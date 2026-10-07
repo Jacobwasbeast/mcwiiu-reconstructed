@@ -1,6 +1,7 @@
 #include "game/world/block/GrassBlock.hpp"
 #include "game/core/StringIds.hpp"
 
+#include <algorithm>
 #include <string>
 
 #include "game/core/DyeColor.hpp"
@@ -80,13 +81,8 @@ void GrassBlock::performBonemeal(Level* level, Random* random, const BlockPos& p
             FlowerBlock::Flower* flower = level->getBiome(candidate)->getRandomFlower(*random, candidate);
             Block* block = flower->getCategory()->getBlock();
 
-            const BlockState* baseState = block->defaultBlockState();
-            const Property* flowerProperty = static_cast<FlowerBlock*>(block)->getFlowerProperty();
-            const BlockState* generatedState;
-            {
-                TypedBoxed<FlowerBlock::Flower*> boxedFlower(flower);
-                generatedState = baseState->setBoxedValue(flowerProperty, &boxedFlower);
-            }
+            const BlockState* generatedState = block->defaultBlockState()->setValue(
+                static_cast<FlowerBlock*>(block)->getFlowerProperty(), flower);
             if (block->canSurvive(level, candidate, generatedState))
             {
                 level->setBlock(candidate, generatedState, Block::UPDATE_ALL, false);
@@ -133,10 +129,8 @@ void GrassBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Rand
     int brightness = level->getRawBrightness(above);
     if (brightness < 4)
     {
-        int lightBlock = level->getBlockState(above)->getLightBlock();
-        int extraLightBlock = level->getExtraBlockState(above)->getLightBlock();
-        if (lightBlock < extraLightBlock)
-            lightBlock = extraLightBlock;
+        int lightBlock = std::max(level->getBlockState(above)->getLightBlock(),
+                                  level->getExtraBlockState(above)->getLightBlock());
         if (lightBlock > 2)
             level->setBlock(pos, Blocks::dirt->defaultBlockState(), Block::UPDATE_CLIENTS, false);
         return;
@@ -146,7 +140,10 @@ void GrassBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Rand
 
     for (int i = 0; i < 4; ++i)
     {
-        BlockPos target(pos.x + random->nextInt(3) - 1, pos.y + random->nextInt(2), pos.z + random->nextInt(3) - 1);
+        int targetZ = pos.z + random->nextInt(3) - 1;
+        int targetY = pos.y + random->nextInt(2);
+        int targetX = pos.x + random->nextInt(3) - 1;
+        BlockPos target(targetX, targetY, targetZ);
         Block* block = level->getBlock(target);
         if (target.y >= 0 && target.y < 256 && !level->hasChunkAt(target))
             return;
@@ -164,10 +161,7 @@ void GrassBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Rand
         Block* aboveExtraBlock = aboveExtraState->getBlock();
         Material* aboveMaterial = aboveBlock->mMaterial;
         Material* aboveExtraMaterial = aboveExtraBlock->mMaterial;
-        int lightBlock = aboveState->getLightBlock();
-        int extraLightBlock = aboveExtraState->getLightBlock();
-        if (lightBlock < extraLightBlock)
-            lightBlock = extraLightBlock;
+        int lightBlock = std::max(aboveState->getLightBlock(), aboveExtraState->getLightBlock());
         if (level->getRawBrightness(target.above()) >= 4 && !aboveState->isSolid() && !aboveMaterial->isLiquid()
             && !aboveExtraMaterial->isLiquid() && lightBlock <= 2)
         {
@@ -197,14 +191,6 @@ unsigned int GrassBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolti
 {
     switch (Item::getId(tooltipData.m_pItemInstance->getItem()))
     {
-    case 256:
-    case 269:
-    case 273:
-    case 277:
-    case 284:
-        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && tooltipData.m_bCanPlace)
-            return IDS_TOOLTIPS_DIG_PATH;
-        break;
     case 290:
     case 291:
     case 292:
@@ -212,6 +198,14 @@ unsigned int GrassBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolti
     case 294:
         if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && tooltipData.m_bCanPlace)
             return IDS_TOOLTIPS_TILL;
+        break;
+    case 256:
+    case 269:
+    case 273:
+    case 277:
+    case 284:
+        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success && tooltipData.m_bCanPlace)
+            return IDS_TOOLTIPS_DIG_PATH;
         break;
     case 351:
         if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
@@ -237,14 +231,10 @@ BlockStateDefinition* GrassBlock::createBlockStateDefinition()
 
 bool GrassBlock::shouldBlockTick(Level* level, const BlockPos& pos, const BlockState*)
 {
-    int lightBlock = level->getBlockState(pos.above())->getLightBlock();
-    {
-        int extraLightBlock = level->getExtraBlockState(pos.above())->getLightBlock();
-        if (extraLightBlock > lightBlock)
-            lightBlock = extraLightBlock;
-        if (lightBlock > 2 && level->getRawBrightness(pos.above()) < 4)
-            return true;
-    }
+    int lightBlock = std::max(level->getBlockState(pos.above())->getLightBlock(),
+                              level->getExtraBlockState(pos.above())->getLightBlock());
+    if (lightBlock > 2 && level->getRawBrightness(pos.above()) < 4)
+        return true;
     if (level->getRawBrightness(pos.above()) >= 9)
         return true;
     return false;
@@ -266,10 +256,11 @@ TextureAtlasSprite* GrassBlock::getTexture(LevelSource* levelSource, const Block
         return mTopIcon;
     if (direction == Direction::DOWN)
         return Blocks::dirt->getTexture(direction);
-    Material* aboveMaterial = levelSource->getBlockState(pos.above())->getBlock()->mMaterial;
-    if (aboveMaterial != Material::TOP_SNOW && aboveMaterial != Material::SNOW)
-        return mIcon;
-    return mSnowSideIcon;
+    Block* aboveBlock = levelSource->getBlockState(pos.above())->getBlock();
+    Material* aboveMaterial = aboveBlock->mMaterial;
+    if (aboveMaterial == Material::TOP_SNOW || aboveMaterial == Material::SNOW)
+        return mSnowSideIcon;
+    return mIcon;
 }
 
 void GrassBlock::registerIcons(IconRegister* iconRegister)

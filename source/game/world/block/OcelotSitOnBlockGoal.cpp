@@ -84,7 +84,3 @@ bool OcelotSitOnBlockGoal::isValidTarget(Level* level, const BlockPos& pos)
     return false;
 }
 
-std::wstring OcelotSitOnBlockGoal::getName()
-{
-    return std::wstring(L"OcelotSitOnBlock");
-}

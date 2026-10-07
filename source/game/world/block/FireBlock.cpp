@@ -134,7 +134,7 @@ void FireBlock::staticCtor()
 
 const AABB* FireBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return NULL_AABB;
 }
 
 bool FireBlock::isSolidRender(const BlockState*) const { return false; }

@@ -5,10 +5,6 @@
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
 
-TestForBlockCommand::~TestForBlockCommand()
-{
-}
-
 EGameCommand TestForBlockCommand::getId()
 {
     return eGameCommand_TestForBlock;

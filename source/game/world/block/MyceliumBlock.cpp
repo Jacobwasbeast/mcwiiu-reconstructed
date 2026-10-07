@@ -28,8 +28,7 @@ MyceliumBlock::MyceliumBlock()
 
 const BlockState* MyceliumBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    const BlockState* above = levelSource->getBlockState(pos.above());
-    Block* aboveBlock = above->getBlock();
+    Block* aboveBlock = levelSource->getBlockState(pos.above())->getBlock();
     return state->setValue(GrassBlock::SNOWY, aboveBlock == Blocks::snow || aboveBlock == Blocks::snow_layer);
 }
 
@@ -42,36 +41,28 @@ void MyceliumBlock::tick(Level* level, const BlockPos& pos, const BlockState*, R
 
     int lightBlock = level->getBlockState(pos.above())->getLightBlock();
     int extraLightBlock = level->getExtraBlockState(pos.above())->getLightBlock();
-    if (lightBlock < extraLightBlock)
-    {
-        lightBlock = extraLightBlock;
-    }
+    lightBlock = lightBlock < extraLightBlock ? extraLightBlock : lightBlock;
 
-    int brightness = level->getRawBrightness(pos.above());
-    if (brightness < 4 && lightBlock > 2)
+    if (level->getRawBrightness(pos.above()) < 4 && lightBlock > 2)
     {
         level->setBlockAndUpdate(pos, Blocks::dirt->defaultBlockState()->setValue(DirtBlock::VARIANT, DirtBlock::Variant::DIRT));
         return;
     }
 
-    brightness = level->getRawBrightness(pos.above());
-    if (brightness > 8)
+    int brightness = level->getRawBrightness(pos.above());
+    if (brightness >= 9)
     {
         for (int i = 0; i < 4; ++i)
         {
             BlockPos target = pos.offset(random->nextInt(3) - 1, random->nextInt(5) - 3, random->nextInt(3) - 1);
             const BlockState* targetState = level->getBlockState(target);
-            BlockPos aboveBase = pos.above();
-            int targetLightBlock = level->getBlockState(aboveBase)->getLightBlock();
+            int targetLightBlock = level->getBlockState(pos.above())->getLightBlock();
             int targetExtraLightBlock = level->getExtraBlockState(pos.above())->getLightBlock();
-            if (targetLightBlock < targetExtraLightBlock)
-            {
-                targetLightBlock = targetExtraLightBlock;
-            }
+            targetLightBlock = targetLightBlock < targetExtraLightBlock ? targetExtraLightBlock : targetLightBlock;
             if (targetState->getBlock() == Blocks::dirt
                 && targetState->getValue(DirtBlock::VARIANT) == DirtBlock::Variant::DIRT)
             {
-                if (level->getRawBrightness(target.above()) > 3 && targetLightBlock < 3)
+                if (level->getRawBrightness(target.above()) >= 4 && targetLightBlock <= 2)
                 {
                     level->setBlockAndUpdate(target, defaultBlockState());
                 }
@@ -133,12 +124,13 @@ TextureAtlasSprite* MyceliumBlock::getTexture(LevelSource* levelSource, const Bl
     {
         return Blocks::dirt->getTexture(direction);
     }
-    Material* aboveMaterial = levelSource->getBlockState(pos.above())->getBlock()->mMaterial;
-    if (aboveMaterial != Material::TOP_SNOW && aboveMaterial != Material::SNOW)
+    Block* aboveBlock = levelSource->getBlockState(pos.above())->getBlock();
+    Material* material = aboveBlock->mMaterial;
+    if (material == Material::TOP_SNOW || material == Material::SNOW)
     {
-        return mIcon;
+        return mSnowIcon;
     }
-    return mSnowIcon;
+    return mIcon;
 }
 
 void MyceliumBlock::registerIcons(IconRegister* iconRegister)

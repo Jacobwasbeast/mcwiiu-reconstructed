@@ -24,17 +24,17 @@
 
 static AbstractProperty<int>* CHORUS_AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 5));
 
-static inline AABB* createChorusShape(double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
+static inline AABB* createFlowerShape(double minX, double minY, double minZ, double maxX, double maxY, double maxZ)
 {
     return AABB::newPermanent(minX, minY, minZ, maxX, maxY, maxZ)->divideInternalsBy(16.0);
 }
 
-static const AABB* CHORUS_UP_SHAPE = createChorusShape(2.0, 14.0, 2.0, 14.0, 16.0, 14.0);
-static const AABB* CHORUS_DOWN_SHAPE = createChorusShape(2.0, 0.0, 2.0, 14.0, 14.0, 14.0);
-static const AABB* CHORUS_SOUTH_SHAPE = createChorusShape(2.0, 2.0, 14.0, 14.0, 14.0, 16.0);
-static const AABB* CHORUS_NORTH_SHAPE = createChorusShape(2.0, 2.0, 0.0, 14.0, 14.0, 2.0);
-static const AABB* CHORUS_WEST_SHAPE = createChorusShape(0.0, 2.0, 2.0, 2.0, 14.0, 14.0);
-static const AABB* CHORUS_EAST_SHAPE = createChorusShape(14.0, 2.0, 2.0, 16.0, 14.0, 14.0);
+static const AABB* FLOWER_UP_SHAPE = createFlowerShape(2.0, 14.0, 2.0, 14.0, 16.0, 14.0);
+static const AABB* FLOWER_DOWN_SHAPE = createFlowerShape(2.0, 0.0, 2.0, 14.0, 14.0, 14.0);
+static const AABB* FLOWER_SOUTH_SHAPE = createFlowerShape(2.0, 2.0, 14.0, 14.0, 14.0, 16.0);
+static const AABB* FLOWER_NORTH_SHAPE = createFlowerShape(2.0, 2.0, 0.0, 14.0, 14.0, 2.0);
+static const AABB* FLOWER_WEST_SHAPE = createFlowerShape(0.0, 2.0, 2.0, 2.0, 14.0, 14.0);
+static const AABB* FLOWER_EAST_SHAPE = createFlowerShape(14.0, 2.0, 2.0, 16.0, 14.0, 14.0);
 
 ChorusFlowerBlock::ChorusFlowerBlock()
     : Block(Material::PLANT, MaterialColor::COLOR_PURPLE)
@@ -42,12 +42,12 @@ ChorusFlowerBlock::ChorusFlowerBlock()
     DerivedInit();
 }
 
-const AABB* ChorusFlowerBlock::getUpShape() { return CHORUS_UP_SHAPE; }
-const AABB* ChorusFlowerBlock::getDownShape() { return CHORUS_DOWN_SHAPE; }
-const AABB* ChorusFlowerBlock::getSouthShape() { return CHORUS_SOUTH_SHAPE; }
-const AABB* ChorusFlowerBlock::getNorthShape() { return CHORUS_NORTH_SHAPE; }
-const AABB* ChorusFlowerBlock::getEastShape() { return CHORUS_EAST_SHAPE; }
-const AABB* ChorusFlowerBlock::getWestShape() { return CHORUS_WEST_SHAPE; }
+const AABB* ChorusFlowerBlock::getUpShape() { return FLOWER_UP_SHAPE; }
+const AABB* ChorusFlowerBlock::getDownShape() { return FLOWER_DOWN_SHAPE; }
+const AABB* ChorusFlowerBlock::getSouthShape() { return FLOWER_SOUTH_SHAPE; }
+const AABB* ChorusFlowerBlock::getNorthShape() { return FLOWER_NORTH_SHAPE; }
+const AABB* ChorusFlowerBlock::getEastShape() { return FLOWER_EAST_SHAPE; }
+const AABB* ChorusFlowerBlock::getWestShape() { return FLOWER_WEST_SHAPE; }
 
 void ChorusFlowerBlock::DerivedInit()
 {

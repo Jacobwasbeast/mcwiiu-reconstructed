@@ -212,7 +212,6 @@ BlockStateDefinition* JukeboxBlock::createBlockStateDefinition()
 TextureAtlasSprite* JukeboxBlock::getTexture(const Direction* direction, const BlockState*) { return direction == Direction::UP ? mTopIcon : mIcon; }
 void JukeboxBlock::registerIcons(IconRegister* iconRegister) { mIcon = iconRegister->registerIcon(getIconName() + L"_side"); mTopIcon = iconRegister->registerIcon(getIconName() + L"_top"); }
 JukeboxBlock::Entity::Entity() : BlockEntity(), mRecord() { mRecord = ItemInstance::EMPTY; }
-JukeboxBlock::Entity::~Entity() {}
 BlockEntity* JukeboxBlock::Entity::create() { return new Entity(); }
 void JukeboxBlock::Entity::load(CompoundTag* tag)
 {

@@ -23,7 +23,6 @@ public:
     {
     public:
         Entity();
-        virtual ~Entity();
         static BlockEntity* create();
         virtual void load(CompoundTag* tag);
         virtual CompoundTag* save(CompoundTag* tag);

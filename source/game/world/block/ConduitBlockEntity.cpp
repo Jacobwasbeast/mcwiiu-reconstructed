@@ -47,10 +47,6 @@ ConduitBlockEntity::ConduitBlockEntity()
     mBlocks.reserve(42);
 }
 
-ConduitBlockEntity::~ConduitBlockEntity()
-{
-}
-
 BlockEntity* ConduitBlockEntity::create()
 {
     return new ConduitBlockEntity();

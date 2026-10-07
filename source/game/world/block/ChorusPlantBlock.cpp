@@ -47,13 +47,7 @@ ChorusPlantBlock::ChorusPlantBlock()
 void ChorusPlantBlock::DerivedInit()
 {
     Block::DerivedInit();
-    const BlockState* state = mStateDefinition->any();
-    state = state->setValue(NORTH_PROPERTY, false);
-    state = state->setValue(EAST_PROPERTY, false);
-    state = state->setValue(SOUTH_PROPERTY, false);
-    state = state->setValue(WEST_PROPERTY, false);
-    state = state->setValue(UP_PROPERTY, false);
-    registerDefaultState(state->setValue(DOWN_PROPERTY, false));
+    registerDefaultState(mStateDefinition->any()->setValue(NORTH_PROPERTY, false)->setValue(EAST_PROPERTY, false)->setValue(SOUTH_PROPERTY, false)->setValue(WEST_PROPERTY, false)->setValue(UP_PROPERTY, false)->setValue(DOWN_PROPERTY, false));
 }
 
 const BlockState* ChorusPlantBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
@@ -74,13 +68,14 @@ const BlockState* ChorusPlantBlock::fillVirtualBlockStateProperties(const BlockS
 
 const AABB* ChorusPlantBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    const BlockState* actual = levelSource == NULL ? state : state->fillVirtualBlockStateProperties(levelSource, pos);
-    float minX = actual->getValue(WEST_PROPERTY) ? 0.0f : 0.1875f;
-    float minY = actual->getValue(DOWN_PROPERTY) ? 0.0f : 0.1875f;
-    float minZ = actual->getValue(NORTH_PROPERTY) ? 0.0f : 0.1875f;
-    float maxX = actual->getValue(EAST_PROPERTY) ? 1.0f : 0.8125f;
-    float maxY = actual->getValue(UP_PROPERTY) ? 1.0f : 0.8125f;
-    float maxZ = actual->getValue(SOUTH_PROPERTY) ? 1.0f : 0.8125f;
+    if (levelSource != NULL)
+        state = state->fillVirtualBlockStateProperties(levelSource, pos);
+    float minX = state->getValue(WEST_PROPERTY) ? 0.0f : 0.1875f;
+    float minY = state->getValue(DOWN_PROPERTY) ? 0.0f : 0.1875f;
+    float minZ = state->getValue(NORTH_PROPERTY) ? 0.0f : 0.1875f;
+    float maxX = state->getValue(EAST_PROPERTY) ? 1.0f : 0.8125f;
+    float maxY = state->getValue(UP_PROPERTY) ? 1.0f : 0.8125f;
+    float maxZ = state->getValue(SOUTH_PROPERTY) ? 1.0f : 0.8125f;
     return AABB::newTemp(minX, minY, minZ, maxX, maxY, maxZ);
 }
 
@@ -112,9 +107,9 @@ bool ChorusPlantBlock::isSolidRender(const BlockState*) const { return false; }
 
 bool ChorusPlantBlock::mayPlace(Level* level, const BlockPos& pos)
 {
-    if (!Block::mayPlace(level, pos))
-        return false;
-    return canSurvive(level, pos, NULL);
+    if (Block::mayPlace(level, pos))
+        return canSurvive(level, pos, NULL);
+    return false;
 }
 
 void ChorusPlantBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos&)

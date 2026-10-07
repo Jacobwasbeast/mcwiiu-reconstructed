@@ -82,9 +82,7 @@ const BlockState* EndPortalFrameBlock::getStateForPlacement(Level* level, const 
                                                              float hitZ, int auxValue,
                                                              boost::shared_ptr<LivingEntity> placer)
 {
-    const BlockState* state = defaultBlockState();
-    state = state->setValue(FACING, placer->getDirection()->getOpposite());
-    return state->setValue(EYE, false);
+    return defaultBlockState()->setValue(FACING, placer->getDirection()->getOpposite())->setValue(EYE, false);
 }
 
 bool EndPortalFrameBlock::hasAnalogOutputSignal(const BlockState* state)
@@ -94,11 +92,7 @@ bool EndPortalFrameBlock::hasAnalogOutputSignal(const BlockState* state)
 
 int EndPortalFrameBlock::getAnalogOutputSignal(const BlockState* state, Level* level, const BlockPos& pos)
 {
-    if (state->getValue(EYE))
-    {
-        return 15;
-    }
-    return 0;
+    return state->getValue(EYE) ? SIGNAL_MAX : SIGNAL_NONE;
 }
 
 const BlockState* EndPortalFrameBlock::getBlockState(int data)

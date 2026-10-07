@@ -97,11 +97,14 @@ void WallBlock::blockStaticCtor()
 {
     std::wstring name(L"variant");
     EnumProperty<Variant*>* variant;
+    const Predicate<Variant*>* filter = Predicates<Variant*>::alwaysTrue;
     {
         boost::unordered_set<Variant*> values;
-        values.insert(Variant::VALUES[0]);
-        values.insert(Variant::VALUES[1]);
-        variant = EnumProperty<Variant*>::create(name, typeid(Variant), values, Predicates<Variant*>::alwaysTrue);
+        for (int i = 0; i < 2; ++i)
+        {
+            values.insert(Variant::VALUES[i]);
+        }
+        variant = EnumProperty<Variant*>::create(name, typeid(Variant), values, filter);
     }
     VARIANT = variant;
 }
@@ -109,15 +112,16 @@ void WallBlock::blockStaticCtor()
 WallBlock::WallBlock(Block* block)
     : Block(block->mMaterial)
 {
-    mBlockType = EBLOCK_TYPE_WALL;
     mIsWall = true;
+    mBlockType = EBLOCK_TYPE_WALL;
     DerivedInit();
-    const BlockState* state = mStateDefinition->any()->setValue(UP, false);
-    state = state->setValue(NORTH, false);
-    state = state->setValue(EAST, false);
-    state = state->setValue(SOUTH, false);
-    state = state->setValue(WEST, false);
-    registerDefaultState(state->setValue(VARIANT, Variant::COBBLESTONE));
+    registerDefaultState(mStateDefinition->any()
+                             ->setValue(UP, false)
+                             ->setValue(NORTH, false)
+                             ->setValue(EAST, false)
+                             ->setValue(SOUTH, false)
+                             ->setValue(WEST, false)
+                             ->setValue(VARIANT, Variant::COBBLESTONE));
     setDestroyTime(block->mDestroyTime);
     setExplodeable(block->mExplosionResistance / 3.0f);
     setSoundType(block->mSoundType);
@@ -205,12 +209,11 @@ const BlockState* WallBlock::fillVirtualBlockStateProperties(const BlockState* s
     bool south = connectsTo(levelSource, pos.south(), Direction::NORTH);
     bool west = connectsTo(levelSource, pos.west(), Direction::EAST);
     bool straight = (north && !east && south && !west) || (!north && east && !south && west);
-    bool up = !straight || !levelSource->isEmptyBlock(pos.above());
-    state = state->setValue(UP, up);
-    state = state->setValue(NORTH, north);
-    state = state->setValue(EAST, east);
-    state = state->setValue(SOUTH, south);
-    return state->setValue(WEST, west);
+    return state->setValue(UP, !straight || !levelSource->isEmptyBlock(pos.above()))
+        ->setValue(NORTH, north)
+        ->setValue(EAST, east)
+        ->setValue(SOUTH, south)
+        ->setValue(WEST, west);
 }
 
 BlockStateDefinition* WallBlock::createBlockStateDefinition()

@@ -55,6 +55,8 @@ public:
                                            const BlockPos& pos, not_null_ptr<ItemInstance> itemInstance);
     static boost::shared_ptr<Player> fjGetCurrentlyPlacingBlockPlayer();
 
+    static const std::wstring BLOCK_ENTITY_TAG;
+
 protected:
     Block* mBlock;
 

@@ -22,8 +22,8 @@ PurpurSlabBlock::Variant* PurpurSlabBlock::Variant::DEFAULT = new PurpurSlabBloc
 static PurpurSlabBlock::Variant* gPurpurSlabVariants[1] = { PurpurSlabBlock::Variant::DEFAULT };
 
 PurpurSlabBlock::Variant::Variant(std::wstring name)
-    : mName(name)
 {
+    mName = name;
 }
 
 std::wstring PurpurSlabBlock::Variant::toString() const

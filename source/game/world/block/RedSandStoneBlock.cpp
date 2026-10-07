@@ -29,17 +29,19 @@ static RedSandStoneBlock::Variant* gRedSandStoneVariants[3] = {
 };
 EnumProperty<RedSandStoneBlock::Variant*>* RedSandStoneBlock::TYPE = NULL;
 
-static Predicate<RedSandStoneBlock::Variant*>* gRedSandStoneTypePredicate =
-    new Predicates<RedSandStoneBlock::Variant*>::ConstantPredicate(true);
 static std::wstring gRedSandStoneTopTexture = L"red_sandstone_top";
 static std::wstring gRedSandStoneBottomTexture = L"red_sandstone_bottom";
-static std::wstring gRedSandStoneNormalTexture = L"red_sandstone_normal";
-static std::wstring gRedSandStoneCarvedTexture = L"red_sandstone_carved";
-static std::wstring gRedSandStoneSmoothTexture = L"red_sandstone_smooth";
+static std::wstring gRedSandStoneSideTextures[3] = {
+    L"red_sandstone_normal",
+    L"red_sandstone_carved",
+    L"red_sandstone_smooth"
+};
 
 RedSandStoneBlock::Variant::Variant(int data, const std::wstring& name, int translationKey)
-    : mData(data), mName(name), mTranslationKey(translationKey)
 {
+    mData = data;
+    mName = name;
+    mTranslationKey = translationKey;
 }
 
 int RedSandStoneBlock::Variant::getData()
@@ -74,14 +76,16 @@ int RedSandStoneBlock::Variant::getTranslationKey()
 void RedSandStoneBlock::blockStaticCtor()
 {
     std::wstring name = L"type";
+    Predicate<Variant*>* predicate = Predicates<Variant*>::alwaysTrue;
     EnumProperty<Variant*>* type;
     {
         boost::unordered_set<Variant*> values;
-        values.insert(gRedSandStoneVariants[0]);
-        values.insert(gRedSandStoneVariants[1]);
-        values.insert(gRedSandStoneVariants[2]);
+        for (int i = 0; i < 3; i++)
+        {
+            values.insert(gRedSandStoneVariants[i]);
+        }
         type = EnumProperty<Variant*>::create(
-            name, typeid(Variant), values, gRedSandStoneTypePredicate);
+            name, typeid(Variant), values, predicate);
     }
     TYPE = type;
 }
@@ -118,23 +122,26 @@ BlockStateDefinition* RedSandStoneBlock::createBlockStateDefinition()
 TextureAtlasSprite* RedSandStoneBlock::getTexture(const Direction* direction, const BlockState* state)
 {
     Variant* variant = state->getValue(TYPE);
-    if (direction != Direction::UP && direction == Direction::DOWN &&
-        variant != Variant::CHISELED && variant != Variant::SMOOTH)
-    {
-        return mBottomTexture;
-    }
-    if (direction == Direction::UP || direction == Direction::DOWN)
+    if (direction == Direction::UP)
     {
         return mTopTexture;
+    }
+    if (direction == Direction::DOWN)
+    {
+        if (variant == Variant::CHISELED || variant == Variant::SMOOTH)
+        {
+            return mTopTexture;
+        }
+        return mBottomTexture;
     }
     return mTextures[variant->getData()];
 }
 
 void RedSandStoneBlock::registerIcons(IconRegister* iconRegister)
 {
-    mTextures[0] = iconRegister->registerIcon(gRedSandStoneNormalTexture);
-    mTextures[1] = iconRegister->registerIcon(gRedSandStoneCarvedTexture);
-    mTextures[2] = iconRegister->registerIcon(gRedSandStoneSmoothTexture);
+    mTextures[0] = iconRegister->registerIcon(gRedSandStoneSideTextures[0]);
+    mTextures[1] = iconRegister->registerIcon(gRedSandStoneSideTextures[1]);
+    mTextures[2] = iconRegister->registerIcon(gRedSandStoneSideTextures[2]);
     mTopTexture = iconRegister->registerIcon(gRedSandStoneTopTexture);
     mBottomTexture = iconRegister->registerIcon(gRedSandStoneBottomTexture);
 }

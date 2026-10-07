@@ -4,10 +4,6 @@
 
 #include "game/world/block/BlockStackLayerTheme.hpp"
 
-BlockStackLayerThemeRuleDefinition::~BlockStackLayerThemeRuleDefinition()
-{
-}
-
 ConsoleGameRules::EGameRuleType BlockStackLayerThemeRuleDefinition::getActionType()
 {
     return ConsoleGameRules::eGameRuleType_BlockStackTheme;

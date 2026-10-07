@@ -74,10 +74,6 @@ CocoaBlock::CocoaBlock()
     memset(mIcons, 0, sizeof(mIcons));
 }
 
-CocoaBlock::~CocoaBlock()
-{
-}
-
 bool CocoaBlock::isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state, bool)
 {
     int age = state->getValue(AGE);
@@ -120,7 +116,8 @@ void CocoaBlock::tick(Level* level, const BlockPos& pos, const BlockState* state
 bool CocoaBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState* state)
 {
     const Direction* facing = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
-    const BlockState* support = level->getBlockState(pos.relative(facing));
+    BlockPos supportPos = pos.relative(facing);
+    const BlockState* support = level->getBlockState(supportPos);
     return support->getBlock() == Blocks::log
         && support->getValue(OldLogBlock::VARIANT) == PlanksBlock::Variant::JUNGLE;
 }
@@ -135,8 +132,9 @@ const AABB* CocoaBlock::getShape(const BlockState* state, LevelSource*, const Bl
     {
     case Direction::eDirection_South: return COCOA_SOUTH_SHAPES[age];
     case Direction::eDirection_West: return COCOA_WEST_SHAPES[age];
-    case Direction::eDirection_East: return COCOA_EAST_SHAPES[age];
+    case Direction::eDirection_North:
     default: return COCOA_NORTH_SHAPES[age];
+    case Direction::eDirection_East: return COCOA_EAST_SHAPES[age];
     }
 }
 
@@ -175,7 +173,7 @@ void CocoaBlock::neighborChanged(const BlockState* state, Level* level, const Bl
 
 void CocoaBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state, float, int)
 {
-    int count = state->getValue(AGE) < 2 ? 1 : 3;
+    int count = state->getValue(AGE) >= 2 ? 3 : 1;
     for (int i = 0; i < count; ++i)
         Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Items::dye, 1, DyeColor::BROWN->getItemData())));
 }

@@ -13,7 +13,6 @@ class CommandSender;
 class TestForBlockCommand : public Command
 {
 public:
-    virtual ~TestForBlockCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

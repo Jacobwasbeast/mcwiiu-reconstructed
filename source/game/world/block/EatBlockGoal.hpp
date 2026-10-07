@@ -22,7 +22,7 @@ public:
     int getEatAnimationTick();
     virtual void tick();
     virtual void setLevel(Level* level);
-    virtual std::wstring getName();
+    virtual std::wstring getName() { return L"EatBlock"; }
 
 private:
     Mob* mMob;

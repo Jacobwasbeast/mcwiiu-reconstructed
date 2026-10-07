@@ -19,7 +19,6 @@ class ConcretePowderBlock : public FallingBlock
 {
 public:
     ConcretePowderBlock();
-    virtual ~ConcretePowderBlock();
     static void blockStaticCtor();
 
     static EnumProperty<const DyeColor*>* COLOR;

@@ -39,9 +39,14 @@ public:
     template <typename T>
     T getValue(const AbstractProperty<T>* property) const
     {
+        return getTypedBoxed<T>(property)->getValue();
+    }
+
+    template <typename T>
+    TypedBoxed<T>* getTypedBoxed(const AbstractProperty<T>* property) const
+    {
         TypedBoxed<T>* boxed = static_cast<TypedBoxed<T>*>(getBoxedValue(property));
-        TypedBoxed<T>* value = boxed->isA(typeid(T)) ? boxed : NULL;
-        return value->getValue();
+        return boxed->isA(typeid(T)) ? boxed : NULL;
     }
 
     template <typename T>

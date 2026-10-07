@@ -20,7 +20,6 @@ class DeadBushBlock : public Bush
 {
 public:
     DeadBushBlock();
-    virtual ~DeadBushBlock();
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual const MaterialColor* getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual bool mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* state);

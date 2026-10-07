@@ -32,7 +32,6 @@ class DetectorRailBlock : public BaseRailBlock
 {
 public:
     DetectorRailBlock();
-    virtual ~DetectorRailBlock();
     static void blockStaticCtor();
     virtual int getTickDelay(Level* level);
     virtual bool isSignalSource(const BlockState* state);
@@ -66,8 +65,7 @@ public:
     static BooleanProperty* POWERED;
 
 private:
-    TextureAtlasSprite* mIconOff;
-    TextureAtlasSprite* mIconOn;
+    TextureAtlasSprite* mIcons[2];
 };
 
 #endif

@@ -6,6 +6,3 @@ ShulkerBoxBlockItem::ShulkerBoxBlockItem(Block* block)
     setMaxStackSize(1);
 }
 
-ShulkerBoxBlockItem::~ShulkerBoxBlockItem()
-{
-}

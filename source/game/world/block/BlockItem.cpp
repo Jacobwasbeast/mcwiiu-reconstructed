@@ -18,7 +18,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/core/IconRegister.hpp"
 
-static const std::wstring BLOCK_ENTITY_TAG = L"BlockEntityTag";
+const std::wstring BlockItem::BLOCK_ENTITY_TAG = L"BlockEntityTag";
 static boost::shared_ptr<Player> currentlyPlacingBlockPlayer;
 
 BlockItem::BlockItem(Block* block)

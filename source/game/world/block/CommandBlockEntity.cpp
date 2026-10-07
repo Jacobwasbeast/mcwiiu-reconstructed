@@ -16,10 +16,6 @@ CommandBlockEntity::AnonymousCommandBlock::AnonymousCommandBlock(CommandBlockEnt
 {
 }
 
-CommandBlockEntity::AnonymousCommandBlock::~AnonymousCommandBlock()
-{
-}
-
 BlockPos CommandBlockEntity::AnonymousCommandBlock::getCommandSenderBlockPosition()
 {
     return mEntity->mPos;
@@ -74,10 +70,6 @@ CommandBlockEntity::CommandBlockEntity(CommandBlock::Mode mode)
       mAutomatic(mode == CommandBlock::CHAIN),
       mConditionMet(false),
       mCommandBlock(new AnonymousCommandBlock(this))
-{
-}
-
-CommandBlockEntity::~CommandBlockEntity()
 {
 }
 

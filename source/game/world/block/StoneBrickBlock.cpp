@@ -78,6 +78,7 @@ void StoneBrickBlock::blockStaticCtor()
 {
     {
         std::wstring name(L"variant");
+        const Predicate<Variant*>* filter = Predicates<Variant*>::alwaysTrue;
         EnumProperty<Variant*>* variant;
         {
             boost::unordered_set<Variant*> values;
@@ -85,7 +86,7 @@ void StoneBrickBlock::blockStaticCtor()
             {
                 values.insert(Variant::BY_DATA[i]);
             }
-            variant = EnumProperty<Variant*>::create(name, typeid(Variant), values, Predicates<Variant*>::alwaysTrue);
+            variant = EnumProperty<Variant*>::create(name, typeid(Variant), values, filter);
         }
         VARIANT = variant;
     }
@@ -136,8 +137,7 @@ void StoneBrickBlock::registerIcons(IconRegister* iconRegister)
         std::wstring name = getIconName();
         if (!TEXTURE_NAMES[i].empty())
         {
-            std::wstring suffix = std::wstring(L"_").append(TEXTURE_NAMES[i]);
-            name.append(suffix);
+            name += L"_" + TEXTURE_NAMES[i];
         }
         mTextures[i] = iconRegister->registerIcon(name);
     }

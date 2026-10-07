@@ -21,10 +21,6 @@ ConduitBlock::ConduitBlock()
     setDestroyTime(3.0f);
 }
 
-ConduitBlock::~ConduitBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> ConduitBlock::newBlockEntity(Level* level, int)
 {
     boost::shared_ptr<BlockEntity> blockEntity = boost::shared_ptr<ConduitBlockEntity>(new ConduitBlockEntity());

@@ -26,7 +26,6 @@ class CocoaBlock : public HorizontalDirectionalBlock, public BonemealableBlock
 public:
     static AbstractProperty<int>* AGE;
     CocoaBlock();
-    virtual ~CocoaBlock();
     virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state, bool isClientSide);
     virtual bool isBonemealSuccess(Level* level, Random* random, const BlockPos& pos, const BlockState* state);
     virtual void performBonemeal(Level* level, Random* random, const BlockPos& pos, const BlockState* state);

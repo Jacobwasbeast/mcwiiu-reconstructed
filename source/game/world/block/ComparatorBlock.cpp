@@ -63,19 +63,14 @@ ComparatorBlock::ComparatorBlock(bool on) : DiodeBlock(on)
 {
     DerivedInit();
 
-    const BlockState* state = mStateDefinition->any();
-    state = state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::NORTH);
-    state = state->setValue(sPoweredProperty, false);
-    state = state->setValue(MODE, ComparatorMode::COMPARE);
+    const BlockState* state = mStateDefinition->any()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::NORTH)->setValue(sPoweredProperty, false)->setValue(MODE, ComparatorMode::COMPARE);
     registerDefaultState(state);
 
     mBlockEntity = true;
 }
-ComparatorBlock::~ComparatorBlock() {}
-
 boost::shared_ptr<BlockEntity> ComparatorBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<ComparatorBlockEntity> blockEntity(new ComparatorBlockEntity());
+    boost::shared_ptr<BlockEntity> blockEntity = boost::shared_ptr<ComparatorBlockEntity>(new ComparatorBlockEntity());
     blockEntity->setLevel(level);
     return blockEntity;
 }
@@ -84,11 +79,11 @@ void ComparatorBlock::blockStaticCtor()
 {
     std::wstring name(L"mode");
     EnumProperty<ComparatorMode*>* mode;
+    const Predicate<ComparatorMode*>* filter = Predicates<ComparatorMode*>::alwaysTrue;
     {
         boost::unordered_set<ComparatorMode*> values;
         for (int i = 0; i < 2; ++i) values.insert(sModes[i]);
-        mode = EnumProperty<ComparatorMode*>::create(name, typeid(ComparatorMode*), values,
-                                                     Predicates<ComparatorMode*>::alwaysTrue);
+        mode = EnumProperty<ComparatorMode*>::create(name, typeid(ComparatorMode*), values, filter);
     }
     MODE = mode;
 }
@@ -121,16 +116,15 @@ bool ComparatorBlock::isOn(const BlockState* state)
 
 int ComparatorBlock::getOutputSignal(LevelSource* levelSource, const BlockPos& pos, const BlockState* state)
 {
-    int signal = 0;
     boost::shared_ptr<BlockEntity> blockEntity = levelSource->getBlockEntity(pos);
     bool isComparator = blockEntity->GetType() == BlockEntityType::COMPARATOR;
     if (isComparator)
     {
         boost::shared_ptr<ComparatorBlockEntity> comparator =
             boost::dynamic_pointer_cast<ComparatorBlockEntity>(blockEntity);
-        signal = comparator->getOutputSignal();
+        return comparator->getOutputSignal();
     }
-    return signal;
+    return SIGNAL_NONE;
 }
 
 int ComparatorBlock::calculateOutputSignal(Level* level, const BlockPos& pos, const BlockState* state)
@@ -138,7 +132,7 @@ int ComparatorBlock::calculateOutputSignal(Level* level, const BlockPos& pos, co
     if (state->getValue(MODE) == ComparatorMode::SUBTRACT)
     {
         int output = getInputSignal(level, pos, state) - getAlternateSignal(level, pos, state);
-        if (output < 0) output = 0;
+        if (SIGNAL_NONE > output) output = SIGNAL_NONE;
         return output;
     }
     return getInputSignal(level, pos, state);
@@ -147,10 +141,10 @@ int ComparatorBlock::calculateOutputSignal(Level* level, const BlockPos& pos, co
 bool ComparatorBlock::shouldTurnOn(Level* level, const BlockPos& pos, const BlockState* state)
 {
     int input = getInputSignal(level, pos, state);
-    if (input >= 15) return true;
-    if (input == 0) return false;
+    if (input >= SIGNAL_MAX) return true;
+    if (input == SIGNAL_NONE) return false;
     int alternate = getAlternateSignal(level, pos, state);
-    if (alternate == 0) return true;
+    if (alternate == SIGNAL_NONE) return true;
     return input >= alternate;
 }
 
@@ -179,7 +173,7 @@ int ComparatorBlock::getInputSignal(Level* level, const BlockPos& pos, const Blo
     {
         signal = inputState->getAnalogOutputSignal(level, inputPos);
     }
-    else if (signal < 15 && inputState->isSolidBlockingCubeAndNotSignalSource())
+    else if (signal < SIGNAL_MAX && inputState->isSolidBlockingCubeAndNotSignalSource())
     {
         inputPos = inputPos.relative(direction);
         inputState = level->getBlockState(inputPos);
@@ -223,25 +217,28 @@ void ComparatorBlock::checkTickOnNeighbor(Level* level, const BlockPos& pos, con
 {
     if (level->isBlockToBeTickedAt(pos, this)) return;
     int newOutput = calculateOutputSignal(level, pos, state);
-    int oldOutput = 0;
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     bool isComparator = blockEntity->GetType() == BlockEntityType::COMPARATOR;
-    if (isComparator)
+    int oldOutput = isComparator ? boost::dynamic_pointer_cast<ComparatorBlockEntity>(blockEntity)->getOutputSignal() : SIGNAL_NONE;
+    if (!(newOutput == oldOutput && isOn(state) == shouldTurnOn(level, pos, state)))
     {
-        boost::shared_ptr<ComparatorBlockEntity> comparator =
-            boost::dynamic_pointer_cast<ComparatorBlockEntity>(blockEntity);
-        oldOutput = comparator->getOutputSignal();
+        if (shouldPrioritize(level, pos, state))
+        {
+            level->addToTickNextTick(pos, this, 2, -1);
+        }
+        else
+        {
+            level->addToTickNextTick(pos, this, 2, 0);
+        }
     }
-    if (newOutput == oldOutput && isOn(state) == shouldTurnOn(level, pos, state)) return;
-    level->addToTickNextTick(pos, this, 2, shouldPrioritize(level, pos, state) ? -1 : 0);
 }
 
 void ComparatorBlock::refreshOutputState(Level* level, const BlockPos& pos, const BlockState* state)
 {
     int output = calculateOutputSignal(level, pos, state);
-    int oldOutput = 0;
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     bool isComparator = blockEntity->GetType() == BlockEntityType::COMPARATOR;
+    int oldOutput = SIGNAL_NONE;
     if (isComparator)
     {
         boost::shared_ptr<ComparatorBlockEntity> comparator =
@@ -249,20 +246,21 @@ void ComparatorBlock::refreshOutputState(Level* level, const BlockPos& pos, cons
         oldOutput = comparator->getOutputSignal();
         comparator->setOutputSignal(output);
     }
-    if (oldOutput == output && state->getValue(MODE) != ComparatorMode::COMPARE) return;
-
-    bool shouldOn = shouldTurnOn(level, pos, state);
-    bool currentOn = isOn(state);
-    int flags = gApp.GetGameHostOption(eGameHostOption_MiniGame) ? 0x24 : 2;
-    if (currentOn && !shouldOn)
+    if (!(oldOutput == output && state->getValue(MODE) != ComparatorMode::COMPARE))
     {
-        level->setBlock(pos, state->setValue(sPoweredProperty, false), flags, false);
+        bool shouldOn = shouldTurnOn(level, pos, state);
+        bool currentOn = isOn(state);
+        int flags = gApp.GetGameHostOption(eGameHostOption_MiniGame) ? 0x24 : 2;
+        if (currentOn && !shouldOn)
+        {
+            level->setBlock(pos, state->setValue(sPoweredProperty, false), flags, false);
+        }
+        else if (!currentOn && shouldOn)
+        {
+            level->setBlock(pos, state->setValue(sPoweredProperty, true), flags, false);
+        }
+        updateNeighborsInFront(level, pos, state);
     }
-    else if (!currentOn && shouldOn)
-    {
-        level->setBlock(pos, state->setValue(sPoweredProperty, true), flags, false);
-    }
-    updateNeighborsInFront(level, pos, state);
 }
 
 void ComparatorBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
@@ -300,18 +298,7 @@ bool ComparatorBlock::triggerEvent(const BlockState* state, Level* level, const 
 
 const BlockState* ComparatorBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    state = state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::from2DDataValue(data));
-    state = state->setValue(sPoweredProperty, (data & 8) != 0);
-    if ((data & 4) == 0)
-    {
-        state = state->setValue(MODE, ComparatorMode::COMPARE);
-    }
-    else
-    {
-        state = state->setValue(MODE, ComparatorMode::SUBTRACT);
-    }
-    return state;
+    return defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::from2DDataValue(data))->setValue(sPoweredProperty, (data & 8) > 0)->setValue(MODE, (data & 4) > 0 ? ComparatorMode::SUBTRACT : ComparatorMode::COMPARE);
 }
 
 int ComparatorBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -330,8 +317,7 @@ unsigned int ComparatorBlock::GetInteractTooltip(const BlockTooltipDataHolder& t
 
 const BlockState* ComparatorBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    DirectionProperty* const facing = HorizontalDirectionalBlock::FACING_PROPERTY;
-    return state->setValue(facing, rotation->rotate(state->getValue(facing)));
+    return state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
 }
 
 const BlockState* ComparatorBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -348,11 +334,7 @@ BlockStateDefinition* ComparatorBlock::createBlockStateDefinition()
 
 const BlockState* ComparatorBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction* direction, float hitX, float hitY, float hitZ, int auxValue, boost::shared_ptr<LivingEntity> placer)
 {
-    const BlockState* state = defaultBlockState();
-    DirectionProperty* facing = HorizontalDirectionalBlock::FACING_PROPERTY;
-    state = state->setValue(facing, placer->getDirection()->getOpposite());
-    state = state->setValue(sPoweredProperty, false);
-    return state->setValue(MODE, ComparatorMode::COMPARE);
+    return defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, placer->getDirection()->getOpposite())->setValue(sPoweredProperty, false)->setValue(MODE, ComparatorMode::COMPARE);
 }
 
 EBlockRenderShape ComparatorBlock::getRenderShape(const BlockState*)
@@ -366,17 +348,13 @@ bool ComparatorBlock::TestUse()
 }
 TextureAtlasSprite* ComparatorBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    if (direction != Direction::DOWN)
+    if (direction == Direction::DOWN)
     {
-        if (direction == Direction::UP)
-        {
-            return mIcon;
-        }
-        return Blocks::stone_slab->getTexture(Direction::UP);
+        return state->getValue(sPoweredProperty) ? Blocks::redstone_torch->getTexture(direction) : Blocks::unlit_redstone_torch->getTexture(direction);
     }
-    if (state->getValue(sPoweredProperty))
+    if (direction == Direction::UP)
     {
-        return Blocks::redstone_torch->getTexture(direction);
+        return mIcon;
     }
-    return Blocks::unlit_redstone_torch->getTexture(direction);
+    return Blocks::stone_slab->getTexture(Direction::UP);
 }

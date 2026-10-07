@@ -13,7 +13,6 @@ class WaterLilyBlockItem : public TintedBlockItem
 {
 public:
     explicit WaterLilyBlockItem(Block* block);
-    virtual ~WaterLilyBlockItem();
 
     virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);

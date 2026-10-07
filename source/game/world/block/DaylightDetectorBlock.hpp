@@ -23,7 +23,6 @@ class DaylightDetectorBlock : public BaseEntityBlock
 {
 public:
     DaylightDetectorBlock(bool inverted);
-    virtual ~DaylightDetectorBlock();
 
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual int getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,

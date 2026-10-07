@@ -8,10 +8,6 @@ GlassBlock::GlassBlock(Material* material, bool ignoreSimilarity)
     DerivedInit();
 }
 
-GlassBlock::~GlassBlock()
-{
-}
-
 int GlassBlock::getResourceCount(Random*)
 {
     return 0;

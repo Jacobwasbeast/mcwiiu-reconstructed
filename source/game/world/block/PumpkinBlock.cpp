@@ -57,10 +57,10 @@ BlockPattern* PumpkinBlock::getOrCreateSnowGolemFull()
     if (mSnowGolemFullPattern == NULL)
     {
         static std::wstring rows[3] = { L"^", L"#", L"#" };
-        BlockPatternBuilder* builder = BlockPatternBuilder::start()->aisle(rows);
-        builder = builder->where(L'^', BlockInWorld::hasState(sPumpkinsPredicate));
-        builder = builder->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::snow)));
-        mSnowGolemFullPattern = builder->build(NULL, NULL);
+        mSnowGolemFullPattern = BlockPatternBuilder::start()->aisle(rows)
+            ->where(L'^', BlockInWorld::hasState(sPumpkinsPredicate))
+            ->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::snow)))
+            ->build(NULL, NULL);
     }
     return mSnowGolemFullPattern;
 }
@@ -78,10 +78,11 @@ BlockPattern* PumpkinBlock::getOrCreateIronGolemFull()
     if (mIronGolemFullPattern == NULL)
     {
         static std::wstring rows[3] = { L"~^~", L"###", L"~#~" };
-        BlockPatternBuilder* builder = BlockPatternBuilder::start()->aisle(rows);
-        builder = builder->where(L'^', BlockInWorld::hasState(sPumpkinsPredicate));
-        builder = builder->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::iron_block)));
-        mIronGolemFullPattern = builder->where(L'~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::AIR)))->build(NULL, NULL);
+        mIronGolemFullPattern = BlockPatternBuilder::start()->aisle(rows)
+            ->where(L'^', BlockInWorld::hasState(sPumpkinsPredicate))
+            ->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::iron_block)))
+            ->where(L'~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::AIR)))
+            ->build(NULL, NULL);
     }
     return mIronGolemFullPattern;
 }
@@ -91,9 +92,9 @@ BlockPattern* PumpkinBlock::getOrCreateSnowGolemBase()
     if (mSnowGolemBasePattern == NULL)
     {
         static std::wstring rows[3] = { L" ", L"#", L"#" };
-        BlockPatternBuilder* builder = BlockPatternBuilder::start()->aisle(rows);
-        builder = builder->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::snow)));
-        mSnowGolemBasePattern = builder->build(NULL, NULL);
+        mSnowGolemBasePattern = BlockPatternBuilder::start()->aisle(rows)
+            ->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::snow)))
+            ->build(NULL, NULL);
     }
     return mSnowGolemBasePattern;
 }
@@ -103,10 +104,10 @@ BlockPattern* PumpkinBlock::getOrCreateIronGolemBase()
     if (mIronGolemBasePattern == NULL)
     {
         static std::wstring rows[3] = { L"~ ~", L"###", L"~#~" };
-        BlockPatternBuilder* builder = BlockPatternBuilder::start()->aisle(rows);
-        builder = builder->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::iron_block)));
-        builder = builder->where(L'~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::AIR)));
-        mIronGolemBasePattern = builder->build(NULL, NULL);
+        mIronGolemBasePattern = BlockPatternBuilder::start()->aisle(rows)
+            ->where(L'#', BlockInWorld::hasState(BlockStatePredicate::forBlock(Blocks::iron_block)))
+            ->where(L'~', BlockInWorld::hasState(BlockMaterialPredicate::forMaterial(Material::AIR)))
+            ->build(NULL, NULL);
     }
     return mIronGolemBasePattern;
 }
@@ -216,15 +217,14 @@ void PumpkinBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* 
 bool PumpkinBlock::mayPlace(Level* level, const BlockPos& pos)
 {
     const BlockState* below = level->getBlockState(pos.below());
-    const BlockState* current = level->getBlockState(pos);
-    return (current->getBlock()->mMaterial->isReplaceable() || level->getBlockState(pos)->getBlock() == Blocks::air)
+    return (level->getBlockState(pos)->getBlock()->mMaterial->isReplaceable() || level->getBlockState(pos)->getBlock() == Blocks::air)
         && below->canProvideSupport(Direction::UP, BLOCK_SUPPORT_ANY);
 }
 
 const BlockState* PumpkinBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    DirectionProperty* property = HorizontalDirectionalBlock::FACING_PROPERTY;
-    return state->setValue(property, rotation->rotate(state->getValue(property)));
+    return state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY,
+                           rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
 }
 
 const BlockState* PumpkinBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -234,9 +234,7 @@ const BlockState* PumpkinBlock::mirror(const BlockState* state, Mirror* mirror)
 
 const BlockState* PumpkinBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float, float, int, boost::shared_ptr<LivingEntity> placer)
 {
-    const BlockState* state = defaultBlockState();
-    DirectionProperty* property = HorizontalDirectionalBlock::FACING_PROPERTY;
-    return state->setValue(property, placer->getDirection()->getOpposite());
+    return defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, placer->getDirection()->getOpposite());
 }
 
 const BlockState* PumpkinBlock::getBlockState(int data)
@@ -260,13 +258,11 @@ TextureAtlasSprite* PumpkinBlock::getTexture(const Direction* direction, const B
 {
     const Direction* facing = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
     bool isFaceBlock = this == Blocks::lit_pumpkin || this == Blocks::carved_pumpkin;
-    if (direction != Direction::UP && direction != Direction::DOWN)
-    {
-        if (facing == direction && isFaceBlock)
-            return mFaceIcon;
-        return mIcon;
-    }
-    return mTopIcon;
+    if (direction == Direction::UP || direction == Direction::DOWN)
+        return mTopIcon;
+    if (facing == direction && isFaceBlock)
+        return mFaceIcon;
+    return mIcon;
 }
 
 void PumpkinBlock::registerIcons(IconRegister* iconRegister)

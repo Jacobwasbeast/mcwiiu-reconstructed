@@ -9,7 +9,6 @@ class PistonBlockItem : public BlockItem
 {
 public:
     explicit PistonBlockItem(Block* block);
-    virtual ~PistonBlockItem();
 
     virtual int getLevelDataForAuxValue(int auxValue);
 };

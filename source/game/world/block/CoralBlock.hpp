@@ -18,7 +18,6 @@ class CoralBlock : public Block
 {
 public:
     CoralBlock();
-    virtual ~CoralBlock();
 
     virtual Item* getResource(const BlockState* state, Random* random, int lootBonus);
     virtual not_null_ptr<ItemInstance> getCloneItemInstance(Level* level, const BlockPos& pos,

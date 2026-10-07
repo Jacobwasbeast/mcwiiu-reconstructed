@@ -44,10 +44,6 @@ CommandBlock::CommandBlock(const MaterialColor* materialColor, Mode mode)
     registerDefaultState(state->setBoxedValue(CONDITIONAL, &conditional));
 }
 
-CommandBlock::~CommandBlock()
-{
-}
-
 unsigned int CommandBlock::getMode()
 {
     return static_cast<unsigned int>(mMode);

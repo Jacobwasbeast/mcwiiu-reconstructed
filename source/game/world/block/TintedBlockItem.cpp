@@ -12,10 +12,6 @@ TintedBlockItem::TintedBlockItem(Block* block, bool stackedByData)
     }
 }
 
-TintedBlockItem::~TintedBlockItem()
-{
-}
-
 int TintedBlockItem::getLevelDataForAuxValue(int auxValue)
 {
     return auxValue;

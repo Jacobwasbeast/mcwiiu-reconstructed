@@ -43,22 +43,18 @@ FenceGateBlock::FenceGateBlock(const std::wstring& name, PlanksBlock::Variant* v
     mTextureName = name;
 }
 
-FenceGateBlock::~FenceGateBlock()
-{
-}
-
 const AABB* FenceGateBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     state = fillVirtualBlockStateProperties(state, levelSource, pos);
-    if (!state->getValue(IN_WALL))
+    if (state->getValue(IN_WALL))
     {
         return state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->getAxis() == Direction::Axis::X
-                   ? X_AXIS_AABB
-                   : Z_AXIS_AABB;
+                   ? X_AXIS_IN_WALL_AABB
+                   : Z_AXIS_IN_WALL_AABB;
     }
     return state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->getAxis() == Direction::Axis::X
-               ? X_AXIS_IN_WALL_AABB
-               : Z_AXIS_IN_WALL_AABB;
+               ? X_AXIS_AABB
+               : Z_AXIS_AABB;
 }
 
 const BlockState* FenceGateBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource,
@@ -79,8 +75,8 @@ const BlockState* FenceGateBlock::fillVirtualBlockStateProperties(const BlockSta
 
 const BlockState* FenceGateBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    const AbstractProperty<const Direction*>* facingProperty = HorizontalDirectionalBlock::FACING_PROPERTY;
-    return state->setValue(facingProperty, rotation->rotate(state->getValue(facingProperty)));
+    return state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY,
+                           rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
 }
 
 const BlockState* FenceGateBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -96,7 +92,7 @@ bool FenceGateBlock::mayPlace(Level* level, const BlockPos& pos)
 
 const AABB* FenceGateBlock::getClipAABB(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    if (state->getValue(OPEN)) return NULL;
+    if (state->getValue(OPEN)) return NULL_AABB;
     return state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->getAxis() == Direction::Axis::Z
                ? Z_AXIS_COLLISION_AABB
                : X_AXIS_COLLISION_AABB;
@@ -106,16 +102,16 @@ bool FenceGateBlock::isSolidRender(const BlockState*) const { return false; }
 bool FenceGateBlock::isCubeShaped(const BlockState*) { return false; }
 bool FenceGateBlock::isPathfindable(LevelSource* levelSource, const BlockPos& pos)
 {
-    return levelSource->getBlockState(pos)->getValue(OPEN);
+    LevelSource& source = *levelSource;
+    return source.getBlockState(pos)->getValue(OPEN);
 }
 
 const BlockState* FenceGateBlock::getStateForPlacement(Level* level, const BlockPos& pos, const Direction*, float, float,
                                                        float, int, boost::shared_ptr<LivingEntity> placer)
 {
     bool powered = level->hasNeighborSignal(pos);
-    const BlockState* state = defaultBlockState();
-    const AbstractProperty<const Direction*>* facingProperty = HorizontalDirectionalBlock::FACING_PROPERTY;
-    return state->setValue(facingProperty, placer->getDirection())
+    return defaultBlockState()
+        ->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, placer->getDirection())
         ->setValue(OPEN, powered)
         ->setValue(POWERED, powered)
         ->setValue(IN_WALL, false);
@@ -124,27 +120,28 @@ const BlockState* FenceGateBlock::getStateForPlacement(Level* level, const Block
 bool FenceGateBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player,
                          InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
 {
-    if (!clientSide)
+    if (clientSide)
     {
-        if (!state->getValue(OPEN))
-        {
-            const Direction* facing = Direction::fromYRot((double)player->mYRot);
-            if (state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY) == facing->getOpposite())
-            {
-                state = state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facing);
-            }
-            state = state->setValue(OPEN, true);
-        }
-        else
-        {
-            state = state->setValue(OPEN, false);
-        }
-        level->setBlock(pos, state, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
         level->levelEvent(player, state->getValue(OPEN) ? LevelEvent::SOUND_OPEN_FENCE_GATE : LevelEvent::SOUND_CLOSE_FENCE_GATE, pos, 0);
-        return true;
+        return false;
+    }
+    if (state->getValue(OPEN))
+    {
+        state = state->setValue(OPEN, false);
+        level->setBlock(pos, state, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+    }
+    else
+    {
+        const Direction* facing = Direction::fromYRot((double)player->mYRot);
+        if (state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY) == facing->getOpposite())
+        {
+            state = state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facing);
+        }
+        state = state->setValue(OPEN, true);
+        level->setBlock(pos, state, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
     }
     level->levelEvent(player, state->getValue(OPEN) ? LevelEvent::SOUND_OPEN_FENCE_GATE : LevelEvent::SOUND_CLOSE_FENCE_GATE, pos, 0);
-    return false;
+    return true;
 }
 
 void FenceGateBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
@@ -203,7 +200,8 @@ BlockStateDefinition* FenceGateBlock::createBlockStateDefinition()
 EBlockFaceShape FenceGateBlock::getBlockFaceShape(LevelSource*, const BlockState* state, const BlockPos&, const Direction* direction)
 {
     if (direction == Direction::UP || direction == Direction::DOWN) return BLOCK_FACE_UNDEFINED;
-    return state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->getAxis() == direction->getClockWise()->getAxis() ? BLOCK_FACE_MIDDLE_POLE : BLOCK_FACE_UNDEFINED;
+    const BlockState& blockState = *state;
+    return blockState.getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->getAxis() == direction->getClockWise()->getAxis() ? BLOCK_FACE_MIDDLE_POLE : BLOCK_FACE_UNDEFINED;
 }
 
 bool FenceGateBlock::isFenceGate(Block* block)

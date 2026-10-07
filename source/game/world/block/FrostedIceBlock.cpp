@@ -33,10 +33,6 @@ FrostedIceBlock::FrostedIceBlock()
     mIcon3 = NULL;
 }
 
-FrostedIceBlock::~FrostedIceBlock()
-{
-}
-
 int FrostedIceBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
     return state->getValue(AGE);

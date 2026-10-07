@@ -15,7 +15,6 @@ class EnderChestBlockEntity : public BlockEntity
 {
 public:
     EnderChestBlockEntity();
-    virtual ~EnderChestBlockEntity();
 
     static BlockEntity* create();
     void setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored, bool uuidLocal);

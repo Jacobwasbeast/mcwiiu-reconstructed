@@ -22,7 +22,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 EnumProperty<PlanksBlock::Variant*>* WoodSlabBlock::VARIANT = NULL;
-static const int gWoodSlabDescriptionIds[6] = {
+const int gWoodSlabDescriptionIds[6] = {
     (int)IDS_TILE_STONESLAB_OAK, (int)IDS_TILE_STONESLAB_SPRUCE, (int)IDS_TILE_STONESLAB_BIRCH,
     (int)IDS_TILE_STONESLAB_JUNGLE, (int)IDS_TILE_STONESLAB_ACACIA, (int)IDS_TILE_STONESLAB_DARK_OAK
 };

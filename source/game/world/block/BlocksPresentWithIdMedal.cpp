@@ -2,10 +2,6 @@
 
 #include "game/world/generation/PlayerStats.hpp"
 
-BlocksPresentWithIdMedal::~BlocksPresentWithIdMedal()
-{
-}
-
 float BlocksPresentWithIdMedal::GetScore(PlayerStats* playerStats) const
 {
     float score = 0.0f;

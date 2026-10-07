@@ -45,14 +45,14 @@ boost::unordered_map<const BlockState*, ModelResourceLocation*>* BlockStateMappe
         bool temporary = false;
         StateMapper* stateMapper;
 
-        if (stateMappers.find(block) == stateMappers.end())
+        if (stateMappers.find(block) != stateMappers.end())
         {
-            temporary = true;
-            stateMapper = new DefaultStateMapper();
+            stateMapper = stateMappers[block];
         }
         else
         {
-            stateMapper = stateMappers[block];
+            temporary = true;
+            stateMapper = new DefaultStateMapper();
         }
 
         boost::unordered_map<const BlockState*, ModelResourceLocation*>* states = stateMapper->mapStates(block);

@@ -11,15 +11,15 @@
 
 HalfTransparentBlock::HalfTransparentBlock(const std::wstring& iconName, Material* material, bool ignoreSimilarity)
     : Block(material, material->getColor())
-    , mIgnoreSimilarity(ignoreSimilarity)
 {
+    mIgnoreSimilarity = ignoreSimilarity;
     mTextureName = iconName;
 }
 
 HalfTransparentBlock::HalfTransparentBlock(const std::wstring& iconName, Material* material, bool ignoreSimilarity, const MaterialColor* materialColor)
     : Block(material, materialColor)
-    , mIgnoreSimilarity(ignoreSimilarity)
 {
+    mIgnoreSimilarity = ignoreSimilarity;
     mTextureName = iconName;
 }
 

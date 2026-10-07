@@ -32,10 +32,6 @@ DropperBlock::DropperBlock()
     mDropperBehavior = new DefaultDispenseItemBehavior();
 }
 
-DropperBlock::~DropperBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> DropperBlock::newBlockEntity(Level* level, int)
 {
     boost::shared_ptr<DropperBlockEntity> entity(new DropperBlockEntity());

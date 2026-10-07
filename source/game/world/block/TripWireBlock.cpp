@@ -41,20 +41,22 @@ static const AABB* TRIPWIRE_DETACHED = AABB::newPermanent(0.0, 0.0625, 0.0, 1.0,
 TripWireBlock::TripWireBlock() : Block(Material::DECORATION)
 {
     DerivedInit();
-    const BlockState* state = mStateDefinition->any();
-    state = state->setValue(POWERED, false);
-    state = state->setValue(ATTACHED, false);
-    state = state->setValue(DISARMED, false);
-    state = state->setValue(NORTH, false);
-    state = state->setValue(EAST, false);
-    state = state->setValue(SOUTH, false);
-    registerDefaultState(state->setValue(WEST, false));
+    registerDefaultState(mStateDefinition->any()
+                             ->setValue(POWERED, false)
+                             ->setValue(ATTACHED, false)
+                             ->setValue(DISARMED, false)
+                             ->setValue(NORTH, false)
+                             ->setValue(EAST, false)
+                             ->setValue(SOUTH, false)
+                             ->setValue(WEST, false));
     setTicking(true);
 }
 
 const AABB* TripWireBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    return state->getValue(ATTACHED) ? TRIPWIRE_ATTACHED : TRIPWIRE_DETACHED;
+    if (!state->getValue(ATTACHED))
+        return TRIPWIRE_DETACHED;
+    return TRIPWIRE_ATTACHED;
 }
 
 bool TripWireBlock::shouldConnectTo(LevelSource* levelSource, const BlockPos& pos, const BlockState*, const Direction* direction)
@@ -72,10 +74,10 @@ bool TripWireBlock::shouldConnectTo(LevelSource* levelSource, const BlockPos& po
 
 const BlockState* TripWireBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    const BlockState* result = state->setValue(NORTH, shouldConnectTo(levelSource, pos, state, Direction::NORTH));
-    result = result->setValue(EAST, shouldConnectTo(levelSource, pos, state, Direction::EAST));
-    result = result->setValue(SOUTH, shouldConnectTo(levelSource, pos, state, Direction::SOUTH));
-    return result->setValue(WEST, shouldConnectTo(levelSource, pos, state, Direction::WEST));
+    return state->setValue(NORTH, shouldConnectTo(levelSource, pos, state, Direction::NORTH))
+        ->setValue(EAST, shouldConnectTo(levelSource, pos, state, Direction::EAST))
+        ->setValue(SOUTH, shouldConnectTo(levelSource, pos, state, Direction::SOUTH))
+        ->setValue(WEST, shouldConnectTo(levelSource, pos, state, Direction::WEST));
 }
 
 const AABB* TripWireBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&) { return NULL; }
@@ -125,12 +127,7 @@ bool TripWireBlock::playerWillDestroy(Level* level, const BlockPos& pos, const B
 {
     if (!level->mIsClientSide)
     {
-        bool wasShears = false;
         if (!player->getMainHandItem()->isEmpty() && player->getMainHandItem()->getItem() == Items::shears)
-        {
-            wasShears = true;
-        }
-        if (wasShears)
         {
             level->setBlock(pos, state->setValue(DISARMED, true), Block::UPDATE_INVISIBLE, false);
         }
@@ -184,10 +181,10 @@ void TripWireBlock::tick(Level* level, const BlockPos& pos, const BlockState* st
 
 const BlockState* TripWireBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    state = state->setValue(POWERED, (data & 1) != 0);
-    state = state->setValue(ATTACHED, (data & 4) != 0);
-    return state->setValue(DISARMED, (data & 8) != 0);
+    return defaultBlockState()
+        ->setValue(POWERED, (data & 1) > 0)
+        ->setValue(ATTACHED, (data & 4) > 0)
+        ->setValue(DISARMED, (data & 8) > 0);
 }
 
 int TripWireBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -228,13 +225,9 @@ const BlockState* TripWireBlock::mirror(const BlockState* state, Mirror* mirror)
     switch (mirror->getType())
     {
     case Mirror::eTYPE_LeftRight:
-    {
         return state->setValue(NORTH, state->getValue(SOUTH))->setValue(SOUTH, state->getValue(NORTH));
-    }
     case Mirror::eTYPE_FrontBack:
-    {
         return state->setValue(EAST, state->getValue(WEST))->setValue(WEST, state->getValue(EAST));
-    }
     default:
         return Block::mirror(state, mirror);
     }

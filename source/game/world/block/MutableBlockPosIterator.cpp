@@ -5,13 +5,13 @@
 
 MutableBlockPosIterator::MutableBlockPosIterator(int minX, int minY, int minZ, int maxX, int maxY, int maxZ)
 {
-    this->currentPos = NULL;
     this->minX = minX;
     this->minY = minY;
     this->minZ = minZ;
     this->maxX = maxX;
     this->maxY = maxY;
     this->maxZ = maxZ;
+    this->currentPos = NULL;
 }
 
 MutableBlockPosIterator::~MutableBlockPosIterator()
@@ -21,12 +21,7 @@ MutableBlockPosIterator::~MutableBlockPosIterator()
 
 bool MutableBlockPosIterator::hasNext()
 {
-    bool result = true;
-    if (this->currentPos != NULL && this->currentPos->equals(BlockPos(this->maxX, this->maxY, this->maxZ)))
-    {
-        result = false;
-    }
-    return result;
+    return this->currentPos == NULL || !this->currentPos->equals(BlockPos(this->maxX, this->maxY, this->maxZ));
 }
 
 MutableBlockPos* MutableBlockPosIterator::next()

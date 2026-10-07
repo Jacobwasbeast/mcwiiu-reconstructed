@@ -18,7 +18,6 @@ class BlockPlanterItem : public Item
 public:
     BlockPlanterItem(Block* block);
 
-    virtual ~BlockPlanterItem();
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                        Level* level,
                                                        const BlockPos& pos,

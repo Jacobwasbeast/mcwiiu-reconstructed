@@ -70,7 +70,8 @@ void NewStoneSlabBlock::DerivedInit()
     HalfSlabBlock::DerivedInit();
 
     const BlockState* state = mStateDefinition->any();
-    if (isFullSize())
+    bool fullSize = isFullSize();
+    if (fullSize)
     {
         state = state->setValue(static_cast<const AbstractProperty<bool>*>(gNewStoneSlabSeamlessProperty), false);
     }
@@ -88,13 +89,10 @@ void NewStoneSlabBlock::blockStaticCtor()
         0, L"red_sandstone", IDS_TILE_STONESLAB_REDSANDSTONE, SandBlock::Variant::RED_SAND->getMaterialColor());
     Variant::RED_SANDSTONE = gDefaultVariant;
 
-    {
-        std::wstring propertyName(L"variant");
-        boost::unordered_set<Variant*> values;
-        values.insert(Variant::RED_SANDSTONE);
-        VARIANT = EnumProperty<Variant*>::create(
-            propertyName, typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
-    }
+    std::wstring propertyName(L"variant");
+    boost::unordered_set<Variant*> values;
+    values.insert(Variant::RED_SANDSTONE);
+    VARIANT = EnumProperty<Variant*>::create(propertyName, typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
 }
 
 std::wstring NewStoneSlabBlock::getName()
@@ -131,20 +129,13 @@ const BlockState* NewStoneSlabBlock::getBlockState(int data)
 {
     const BlockState* state = defaultBlockState()->setValue(VARIANT, Variant::byData(data & 7));
 
-    if (!isFullSize())
+    if (isFullSize())
     {
-        if ((data & 8) == 0)
-        {
-            state = state->setValue(TYPE, BOTTOM);
-        }
-        else
-        {
-            state = state->setValue(TYPE, TOP);
-        }
+        state = state->setValue(static_cast<const AbstractProperty<bool>*>(gNewStoneSlabSeamlessProperty), (data & 8) != 0);
     }
     else
     {
-        state = state->setValue(static_cast<const AbstractProperty<bool>*>(gNewStoneSlabSeamlessProperty), (data & 8) != 0);
+        state = state->setValue(TYPE, (data & 8) == 0 ? BOTTOM : TOP);
     }
 
     return state;
@@ -156,17 +147,17 @@ int NewStoneSlabBlock::convertBlockStateToLegacyData(const BlockState* state)
 
     if (isFullSize())
     {
-        if (!state->getValue(static_cast<const AbstractProperty<bool>*>(gNewStoneSlabSeamlessProperty)))
+        if (state->getValue(static_cast<const AbstractProperty<bool>*>(gNewStoneSlabSeamlessProperty)))
         {
-            return data;
+            data |= 8;
         }
     }
-    else if (state->getValue(TYPE) != TOP)
+    else if (state->getValue(TYPE) == TOP)
     {
-        return data;
+        data |= 8;
     }
 
-    return data | 8;
+    return data;
 }
 
 BlockStateDefinition* NewStoneSlabBlock::createBlockStateDefinition()
@@ -193,12 +184,12 @@ int NewStoneSlabBlock::getSpawnResourcesAuxValue(const BlockState* state)
 
 TextureAtlasSprite* NewStoneSlabBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    if (direction != Direction::UP && direction != Direction::DOWN)
+    if (direction == Direction::UP || direction == Direction::DOWN)
     {
-        return mSideTexture;
+        return mIcon;
     }
 
-    return mIcon;
+    return mSideTexture;
 }
 
 void NewStoneSlabBlock::registerIcons(IconRegister* iconRegister)

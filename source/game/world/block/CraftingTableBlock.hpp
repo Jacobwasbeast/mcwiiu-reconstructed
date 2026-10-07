@@ -33,7 +33,6 @@ public:
     };
 
     CraftingTableBlock();
-    virtual ~CraftingTableBlock();
     virtual bool TestUse();
     virtual bool use(Level* level, const BlockPos& pos, const BlockState* state,
                      boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,

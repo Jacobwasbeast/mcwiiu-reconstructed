@@ -10,7 +10,6 @@ class LeafBlockItem : public BlockItem
 {
 public:
     explicit LeafBlockItem(LeafBlock* block);
-    virtual ~LeafBlockItem();
 
     virtual int getLevelDataForAuxValue(int auxValue);
     virtual int getDescriptionId(not_null_ptr<ItemInstance> itemInstance);

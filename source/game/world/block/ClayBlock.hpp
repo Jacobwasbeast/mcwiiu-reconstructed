@@ -14,7 +14,6 @@ class ClayBlock : public Block, public BonemealableBlock
 {
 public:
     ClayBlock();
-    virtual ~ClayBlock();
 
     virtual bool isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState* state,
                                        bool isClientSide);

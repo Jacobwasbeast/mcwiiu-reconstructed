@@ -20,10 +20,6 @@ WaterLilyBlockItem::WaterLilyBlockItem(Block* block)
 {
 }
 
-WaterLilyBlockItem::~WaterLilyBlockItem()
-{
-}
-
 bool WaterLilyBlockItem::TestUse(Level* level, boost::shared_ptr<Player> player,
                                  InteractionHand::EInteractionHand hand)
 {

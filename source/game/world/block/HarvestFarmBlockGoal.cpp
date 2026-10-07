@@ -191,7 +191,3 @@ bool HarvestFarmBlockGoal::isValidTarget(Level* level, const BlockPos& pos)
     return false;
 }
 
-std::wstring HarvestFarmBlockGoal::getName()
-{
-    return std::wstring(L"HarvestFarmBlock");
-}

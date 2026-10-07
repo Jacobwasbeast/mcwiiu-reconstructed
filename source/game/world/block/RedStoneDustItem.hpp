@@ -14,7 +14,6 @@ class RedStoneDustItem : public Item
 {
 public:
     RedStoneDustItem();
-    virtual ~RedStoneDustItem();
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                         Level* level,
                                                         const BlockPos& pos,

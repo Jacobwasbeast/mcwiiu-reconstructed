@@ -83,21 +83,20 @@ DoorBlock::DoorBlock(Material* material)
     memset(mLowerIcons, 0, sizeof(mLowerIcons));
 }
 
-DoorBlock::~DoorBlock() {}
-
 void DoorBlock::blockStaticCtor()
 {
     FACING = HorizontalDirectionalBlock::FACING_PROPERTY;
-    std::wstring name;
-    name = L"hinge";
     {
+        std::wstring name;
+        name = L"hinge";
         boost::unordered_set<HingeSide*> hinges;
         hinges.insert(LEFT);
         hinges.insert(RIGHT);
         HINGE = EnumProperty<HingeSide*>::create(name, typeid(HingeSide*), hinges, Predicates<HingeSide*>::alwaysTrue);
     }
-    name = L"half";
     {
+        std::wstring name;
+        name = L"half";
         boost::unordered_set<DoorHalf*> halves;
         halves.insert(LOWER);
         halves.insert(UPPER);
@@ -137,17 +136,11 @@ int DoorBlock::getCompositeData(LevelSource* levelSource, const BlockPos& pos)
     int data = state->getBlock()->convertBlockStateToLegacyData(state);
     bool upper = isUpperFromData(data);
     const BlockState* lowerState = levelSource->getBlockState(pos.below());
-    int lowerData = lowerState->getBlock()->convertBlockStateToLegacyData(lowerState);
+    int belowData = lowerState->getBlock()->convertBlockStateToLegacyData(lowerState);
+    int lowerData = upper ? belowData : data;
     const BlockState* upperState = levelSource->getBlockState(pos.above());
-    int upperData = upperState->getBlock()->convertBlockStateToLegacyData(upperState);
-    if (upper)
-    {
-        upperData = data;
-    }
-    else
-    {
-        lowerData = data;
-    }
+    int aboveData = upperState->getBlock()->convertBlockStateToLegacyData(upperState);
+    int upperData = upper ? data : aboveData;
     return getLowerData(lowerData) | (upper ? 8 : 0) | ((upperData & 1) ? 16 : 0) | ((upperData & 2) ? 32 : 0);
 }
 
@@ -199,7 +192,7 @@ void DoorBlock::setOpen(Level* level, const BlockPos& pos, bool open)
 {
     const BlockState* state = level->getBlockState(pos);
     if (state->getBlock() != this) return;
-    BlockPos lowerPos = state->getValue(HALF) == UPPER ? pos.below() : pos;
+    BlockPos lowerPos = state->getValue(HALF) == LOWER ? pos : pos.below();
     const BlockState* lowerState = state;
     if (!(pos == lowerPos)) lowerState = level->getBlockState(lowerPos);
     if (lowerState->getBlock() != this) return;
@@ -297,8 +290,7 @@ const BlockState* DoorBlock::fillVirtualBlockStateProperties(const BlockState* s
         const BlockState* upperState = levelSource->getBlockState(pos.above());
         if (upperState->getBlock() == this)
         {
-            state = state->setValue(HINGE, upperState->getValue(HINGE));
-            state = state->setValue(POWERED, upperState->getValue(POWERED));
+            state = state->setValue(HINGE, upperState->getValue(HINGE))->setValue(POWERED, upperState->getValue(POWERED));
         }
     }
     else
@@ -306,24 +298,23 @@ const BlockState* DoorBlock::fillVirtualBlockStateProperties(const BlockState* s
         const BlockState* lowerState = levelSource->getBlockState(pos.below());
         if (lowerState->getBlock() == this)
         {
-            state = state->setValue(FACING, lowerState->getValue(FACING));
-            state = state->setValue(OPEN, lowerState->getValue(OPEN));
+            state = state->setValue(FACING, lowerState->getValue(FACING))->setValue(OPEN, lowerState->getValue(OPEN));
         }
     }
     return state;
 }
 const BlockState* DoorBlock::getBlockState(int data)
 {
+    int upper = data & 8;
     const BlockState* state = defaultBlockState();
-    if ((data & 8) == 0)
+    if (upper != 0)
     {
-        state = state->setValue(HALF, LOWER);
-        state = state->setValue(FACING, Direction::from2DDataValue(data & 3)->getCounterClockWise());
-        return state->setValue(OPEN, (data & 4) != 0);
+        state = state->setValue(HALF, UPPER);
+        return state->setValue(HINGE, (data & 1) > 0 ? RIGHT : LEFT)->setValue(POWERED, (data & 2) > 0);
     }
-    state = state->setValue(HALF, UPPER);
-    state = state->setValue(HINGE, (data & 1) != 0 ? RIGHT : LEFT);
-    return state->setValue(POWERED, (data & 2) != 0);
+    state = state->setValue(HALF, LOWER);
+    state = state->setValue(FACING, Direction::from2DDataValue(data & 3)->getCounterClockWise());
+    return state->setValue(OPEN, (data & 4) > 0);
 }
 int DoorBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
@@ -355,8 +346,12 @@ unsigned int DoorBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 }
 const BlockState* DoorBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    if (state->getValue(HALF) == UPPER) return state;
-    return state->setValue(FACING, rotation->rotate(state->getValue(FACING)));
+    if (state->getValue(HALF) == LOWER)
+    {
+        const AbstractProperty<const Direction*>* facingProperty = FACING;
+        state = state->setValue(facingProperty, rotation->rotate(state->getValue(facingProperty)));
+    }
+    return state;
 }
 const BlockState* DoorBlock::mirror(const BlockState* state, Mirror* mirror)
 {
@@ -379,9 +374,19 @@ TextureAtlasSprite* DoorBlock::getTexture(LevelSource* levelSource, const BlockP
     state = fillVirtualBlockStateProperties(state, levelSource, pos);
     const Direction* facing = state->getValue(FACING)->getClockWise();
     bool open = state->getValue(OPEN);
-    bool lower = state->getValue(HALF) != UPPER;
     int flip = 0;
-    if (!open)
+    bool upper = state->getValue(HALF) == UPPER;
+    if (open)
+    {
+        if ((facing == Direction::SOUTH && direction == Direction::NORTH) ||
+            (facing == Direction::WEST && direction == Direction::EAST) ||
+            (facing == Direction::NORTH && direction == Direction::SOUTH) ||
+            (facing == Direction::EAST && direction == Direction::WEST))
+        {
+            flip ^= 1;
+        }
+    }
+    else
     {
         if ((facing == Direction::SOUTH && direction == Direction::EAST) ||
             (facing == Direction::WEST && direction == Direction::SOUTH) ||
@@ -392,15 +397,8 @@ TextureAtlasSprite* DoorBlock::getTexture(LevelSource* levelSource, const BlockP
         }
         if (state->getValue(HINGE) == RIGHT) flip ^= 1;
     }
-    else if ((facing == Direction::SOUTH && direction == Direction::NORTH) ||
-             (facing == Direction::WEST && direction == Direction::EAST) ||
-             (facing == Direction::NORTH && direction == Direction::SOUTH) ||
-             (facing == Direction::EAST && direction == Direction::WEST))
-    {
-        flip ^= 1;
-    }
-    if (lower) return mLowerIcons[flip];
-    return mUpperIcons[flip];
+    if (upper) return mUpperIcons[flip];
+    return mLowerIcons[flip];
 }
 void DoorBlock::registerIcons(IconRegister* iconRegister)
 {

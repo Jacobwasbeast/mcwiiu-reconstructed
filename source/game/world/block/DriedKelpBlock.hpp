@@ -7,7 +7,6 @@ class DriedKelpBlock : public Block
 {
 public:
     DriedKelpBlock(Material* material);
-    virtual ~DriedKelpBlock();
     virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);
     virtual EPistonPushReaction getPistonPushReaction(const BlockState* state);
@@ -16,8 +15,7 @@ public:
 
 private:
     TextureAtlasSprite* mTopIcon;
-    TextureAtlasSprite* mSideIcon;
-    TextureAtlasSprite* mFlippedSideIcon;
+    TextureAtlasSprite* mSideIcons[2];
 };
 
 #endif

@@ -24,16 +24,7 @@
 #include "game/world/block/Predicates.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-LogBlock::LogAxis* LogBlock::X = new LogBlock::LogAxis(L"x");
-LogBlock::LogAxis* LogBlock::Y = new LogBlock::LogAxis(L"y");
-LogBlock::LogAxis* LogBlock::Z = new LogBlock::LogAxis(L"z");
-LogBlock::LogAxis* LogBlock::NONE = new LogBlock::LogAxis(L"none");
-LogBlock::LogAxis* LogBlock::LogAxis::X = LogBlock::X;
-LogBlock::LogAxis* LogBlock::LogAxis::Y = LogBlock::Y;
-LogBlock::LogAxis* LogBlock::LogAxis::Z = LogBlock::Z;
-LogBlock::LogAxis* LogBlock::LogAxis::NONE = LogBlock::NONE;
-EnumProperty<LogBlock::LogAxis*>* LogBlock::AXIS = NULL;
-static std::wstring TEXTURE_NAMES[6] = {
+std::wstring LogBlock::TEXTURE_NAMES[6] = {
     std::wstring(L"oak"),
     std::wstring(L"spruce"),
     std::wstring(L"birch"),
@@ -41,6 +32,17 @@ static std::wstring TEXTURE_NAMES[6] = {
     std::wstring(L"acacia"),
     std::wstring(L"big_oak")
 };
+LogBlock::LogAxis* LogBlock::LogAxis::values[4] = {
+    new LogBlock::LogAxis(L"x"),
+    new LogBlock::LogAxis(L"y"),
+    new LogBlock::LogAxis(L"z"),
+    new LogBlock::LogAxis(L"none")
+};
+LogBlock::LogAxis* LogBlock::X = LogBlock::LogAxis::values[0];
+LogBlock::LogAxis* LogBlock::Y = LogBlock::LogAxis::values[1];
+LogBlock::LogAxis* LogBlock::Z = LogBlock::LogAxis::values[2];
+LogBlock::LogAxis* LogBlock::NONE = LogBlock::LogAxis::values[3];
+EnumProperty<LogBlock::LogAxis*>* LogBlock::AXIS = NULL;
 static const int gLogDescriptionIds[4] = { IDS_TILE_LOG_OAK, (int)IDS_TILE_LOG_SPRUCE, (int)IDS_TILE_LOG_BIRCH, IDS_TILE_LOG_JUNGLE };
 
 LogBlock::LogAxis::LogAxis(const std::wstring& name)
@@ -50,19 +52,27 @@ LogBlock::LogAxis::LogAxis(const std::wstring& name)
 
 unsigned int LogBlock::LogAxis::getId() const
 {
-    if (this == X) return 0;
-    if (this == Y) return 1;
-    if (this == Z) return 2;
+    for (unsigned int i = 0; i < 3; ++i)
+    {
+        if (values[i] == this)
+            return i;
+    }
     return 3;
 }
 
 Direction::Axis* LogBlock::LogAxis::getAxis()
 {
-    unsigned int id = getId();
-    if (id == 0) return Direction::Axis::X;
-    if (id == 1) return Direction::Axis::Y;
-    if (id == 2) return Direction::Axis::Z;
-    return NULL;
+    switch (getId())
+    {
+    case 0:
+        return Direction::Axis::X;
+    case 1:
+        return Direction::Axis::Y;
+    case 2:
+        return Direction::Axis::Z;
+    default:
+        return NULL;
+    }
 }
 
 std::wstring LogBlock::LogAxis::toString() const
@@ -77,25 +87,29 @@ std::wstring LogBlock::LogAxis::getSerializedName() const
 
 LogBlock::LogAxis* LogBlock::LogAxis::fromAxis(Direction::Axis* axis)
 {
-    Direction::Axis::EAxis id = axis->getId();
-    if (id == Direction::Axis::eAxis_X) return LogBlock::X;
-    if (id == Direction::Axis::eAxis_Y) return LogBlock::Y;
-    LogAxis* result = LogBlock::Z;
-    if (id != Direction::Axis::eAxis_Z) result = LogBlock::NONE;
-    return result;
+    switch (axis->getId())
+    {
+    case Direction::Axis::eAxis_X:
+        return LogBlock::X;
+    case Direction::Axis::eAxis_Y:
+        return LogBlock::Y;
+    case Direction::Axis::eAxis_Z:
+        return LogBlock::Z;
+    default:
+        return LogBlock::NONE;
+    }
 }
 
 void LogBlock::blockStaticCtor()
 {
     std::wstring name(L"axis");
+    const Predicate<LogAxis*>* filter = Predicates<LogAxis*>::alwaysTrue;
     EnumProperty<LogAxis*>* axis;
     {
         boost::unordered_set<LogAxis*> values;
-        values.insert(LogAxis::X);
-        values.insert(LogAxis::Y);
-        values.insert(LogAxis::Z);
-        values.insert(LogAxis::NONE);
-        axis = EnumProperty<LogAxis*>::create(name, typeid(LogAxis*), values, Predicates<LogAxis*>::alwaysTrue);
+        for (unsigned int i = 0; i < 4; ++i)
+            values.insert(LogAxis::values[i]);
+        axis = EnumProperty<LogAxis*>::create(name, typeid(LogAxis*), values, filter);
     }
     AXIS = axis;
 }
@@ -115,7 +129,7 @@ void LogBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* sta
     Iterator<BlockPos*>* positions = BlockPos::between(pos.offset(-4, -4, -4), pos.offset(4, 4, 4));
     while (positions->hasNext())
     {
-        BlockPos neighbour = *positions->next();
+        const BlockPos neighbour = *positions->next();
         const BlockState* neighbourState = level->getBlockState(neighbour);
         if (neighbourState->getBlock()->mMaterial == Material::LEAVES && !neighbourState->getValue(LeafBlock::CHECK_DECAY))
         {
@@ -132,13 +146,20 @@ const BlockState* LogBlock::getStateForPlacement(Level* level, const BlockPos& p
 
 const BlockState* LogBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    if (rotation->getType() == Rotation::eTYPE_Clockwise90 || rotation->getType() == Rotation::eTYPE_CounterClockwise90)
+    switch (rotation->getType())
+    {
+    case Rotation::eTYPE_Clockwise90:
+    case Rotation::eTYPE_CounterClockwise90:
     {
         LogAxis* axis = state->getValue(AXIS);
-        if (axis->getId() == 0)
+        switch (axis->getId())
+        {
+        case 0:
             return state->setValue(AXIS, Z);
-        if (axis->getId() == 2)
+        case 2:
             return state->setValue(AXIS, X);
+        }
+    }
     }
     return state;
 }
@@ -156,31 +177,41 @@ bool LogBlock::isStrippable()
 
 const BlockState* LogBlock::getStrippedBlock(const BlockState* state)
 {
-    unsigned int woodType = getWoodType(state);
     const BlockState* stripped = NULL;
-    if (woodType == 0)
-        stripped = Blocks::stripped_log_oak->defaultBlockState();
-    else if (woodType == 1)
-        stripped = Blocks::stripped_log_spruce->defaultBlockState();
-    else if (woodType < 3)
-        stripped = Blocks::stripped_log_birch->defaultBlockState();
-    else if (woodType == 3)
-        stripped = Blocks::stripped_log_jungle->defaultBlockState();
-    if (stripped == NULL)
-        return state;
-
-    unsigned int axisId = state->getValue(AXIS)->getId();
-    if (axisId == 0)
-        stripped = stripped->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::X);
-    else if (axisId == 1)
-        stripped = stripped->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::Y);
-    else
+    switch (getWoodType(state))
     {
-        if (axisId != 2)
-            return stripped;
-        stripped = stripped->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::Z);
+    case 0:
+        stripped = Blocks::stripped_log_oak->defaultBlockState();
+        break;
+    case 1:
+        stripped = Blocks::stripped_log_spruce->defaultBlockState();
+        break;
+    case 2:
+        stripped = Blocks::stripped_log_birch->defaultBlockState();
+        break;
+    case 3:
+        stripped = Blocks::stripped_log_jungle->defaultBlockState();
+        break;
     }
-    return stripped;
+    if (stripped != NULL)
+    {
+        switch (state->getValue(AXIS)->getId())
+        {
+        case 0:
+            stripped = stripped->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::X);
+            break;
+        case 1:
+            stripped = stripped->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::Y);
+            break;
+        case 2:
+            stripped = stripped->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::Z);
+            break;
+        default:
+            return stripped;
+        }
+        return stripped;
+    }
+    return state;
 }
 
 unsigned int LogBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)

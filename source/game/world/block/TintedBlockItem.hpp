@@ -12,7 +12,6 @@ class TintedBlockItem : public BlockItem
 {
 public:
     TintedBlockItem(Block* block, bool stackedByData);
-    virtual ~TintedBlockItem();
 
     virtual int getLevelDataForAuxValue(int auxValue);
     TintedBlockItem* setDescriptionPostfixes(arrayWithLength<int> postfixes);

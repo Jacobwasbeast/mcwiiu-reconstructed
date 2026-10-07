@@ -8,18 +8,18 @@
 #include "game/world/block/MaterialColor.hpp"
 
 DissolveBlockRemover::DissolveBlockRemover(Level* level, std::vector<AABB*>& areas, int passCount, int ticksPerRemoval)
-    : BlockRemover(level, areas),
-      mPassCount(passCount)
+    : BlockRemover(level, areas)
 {
-    mTicksPerRemoval = ticksPerRemoval;
+    mPassCount = passCount;
     mBlocksPerRemoval = 1;
+    mTicksPerRemoval = ticksPerRemoval;
 }
 
 void DissolveBlockRemover::Tick()
 {
     BlockRemover::Tick();
 
-    if (mPassCount <= mRemovalCount)
+    if (mRemovalCount >= mPassCount)
     {
         mFinished = true;
     }

@@ -14,7 +14,6 @@ class ConduitBlockEntity : public BlockEntity
 {
 public:
     ConduitBlockEntity();
-    virtual ~ConduitBlockEntity();
 
     static BlockEntity* create();
     virtual boost::shared_ptr<BlockEntity> clone();

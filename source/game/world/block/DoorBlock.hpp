@@ -60,7 +60,6 @@ public:
     virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual const BlockState* rotate(const BlockState* state, Rotation* rotation);
     virtual const BlockState* mirror(const BlockState* state, Mirror* mirror);
-    virtual ~DoorBlock();
     virtual bool isCubeShaped(const BlockState* state);
     virtual bool isPathfindable(LevelSource* levelSource, const BlockPos& pos);
     virtual EBlockRenderShape getRenderShape(const BlockState* state);

@@ -30,13 +30,13 @@ void StaticLiquidBlock::neighborChanged(const BlockState* state, Level* level, c
 
 void StaticLiquidBlock::setDynamic(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    const BlockState* currentState = level->getBlockState(pos);
-    const bool remove = currentState->getMaterial() != getCraftingMaterial();
+    const bool remove = level->getBlockState(pos)->getMaterial() != getCraftingMaterial();
     const unsigned short elementId = LiquidBlock::getLiquidElement(level, pos);
     LiquidBlock::setLiquidElement(level, pos,
                                   static_cast<unsigned short>(LiquidBlock::getDynamicLiquidElementId(elementId)),
                                   remove, 18);
-    level->addToTickNextTick(pos, LiquidBlock::getDynamicLiquid(getCraftingMaterial()), getTickDelay(level));
+    LiquidBlock* dynamicLiquid = LiquidBlock::getDynamicLiquid(getCraftingMaterial());
+    level->addToTickNextTick(pos, dynamicLiquid, getTickDelay(level));
 }
 
 void StaticLiquidBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)

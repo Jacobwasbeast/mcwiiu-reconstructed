@@ -9,7 +9,6 @@ class DaylightDetectorBlockEntity : public BlockEntity
 {
 public:
     DaylightDetectorBlockEntity();
-    virtual ~DaylightDetectorBlockEntity();
 
     static BlockEntity* create();
     virtual boost::shared_ptr<BlockEntity> clone();

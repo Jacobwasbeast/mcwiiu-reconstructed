@@ -17,7 +17,6 @@ class SeaPickleBlockItem : public BlockItem
 {
 public:
     explicit SeaPickleBlockItem(Block* block);
-    virtual ~SeaPickleBlockItem();
 
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                         Level* level,

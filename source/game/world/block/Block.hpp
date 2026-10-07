@@ -144,6 +144,9 @@ public:
     static IdMapper<const BlockState*>* blockStateRegistry;
     static float INDESTRUCTIBLE;
     static const AABB* FULL_BLOCK_SHAPE;
+    static const AABB* const NULL_AABB;
+    static const int SIGNAL_MAX;
+    static const int SIGNAL_NONE;
 
     class ThreadStorage
     {

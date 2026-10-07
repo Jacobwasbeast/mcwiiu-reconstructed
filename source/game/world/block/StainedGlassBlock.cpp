@@ -18,7 +18,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 
 EnumProperty<const DyeColor*>* StainedGlassBlock::COLOR = NULL;
-static TextureAtlasSprite* gStainedGlassBlockIcons[16] = { NULL };
+TextureAtlasSprite* gStainedGlassBlockIcons[16] = { NULL };
 
 void StainedGlassBlock::blockStaticCtor()
 {
@@ -31,10 +31,6 @@ StainedGlassBlock::StainedGlassBlock(Material* material)
 {
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(COLOR, DyeColor::WHITE));
-}
-
-StainedGlassBlock::~StainedGlassBlock()
-{
 }
 
 int StainedGlassBlock::getSpawnResourcesAuxValue(const BlockState* state)

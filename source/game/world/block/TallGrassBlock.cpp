@@ -107,10 +107,10 @@ bool TallGrassBlock::isBonemealSuccess(Level*, Random*, const BlockPos&, const B
 
 void TallGrassBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, const BlockState* state)
 {
-    DoublePlantBlock::Variant* variant = DoublePlantBlock::Variant::GRASS;
+    DoublePlantBlock::Variant* variant = gDoublePlantGrass;
     if (state->getValue(VARIANT) == Variant::FERN)
     {
-        variant = DoublePlantBlock::Variant::FERN;
+        variant = gDoublePlantFern;
     }
     if (Blocks::double_plant->mayPlace(level, pos))
     {

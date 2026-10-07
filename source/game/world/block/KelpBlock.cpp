@@ -263,7 +263,7 @@ bool KelpBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState*)
 
 const AABB* KelpBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return NULL_AABB;
 }
 
 Item* KelpBlock::getResource(const BlockState*, Random*, int)

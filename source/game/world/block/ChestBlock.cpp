@@ -498,7 +498,7 @@ int ChestBlock::getSignal(const BlockState* state, LevelSource* levelSource, con
 {
     if (!state->isSignalSource())
     {
-        return 0;
+        return Block::SIGNAL_NONE;
     }
     int openCount = 0;
     boost::shared_ptr<BlockEntity> blockEntity = levelSource->getBlockEntity(pos);
@@ -509,7 +509,7 @@ int ChestBlock::getSignal(const BlockState* state, LevelSource* levelSource, con
             boost::dynamic_pointer_cast<ChestBlockEntity>(blockEntity);
         openCount = chest->mOpenCount;
     }
-    return Mth::clamp(openCount, 0, 15);
+    return Mth::clamp(openCount, Block::SIGNAL_NONE, Block::SIGNAL_MAX);
 }
 
 int ChestBlock::getDirectSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos,
@@ -519,7 +519,7 @@ int ChestBlock::getDirectSignal(const BlockState* state, LevelSource* levelSourc
     {
         return getSignal(state, levelSource, pos, direction);
     }
-    return 0;
+    return Block::SIGNAL_NONE;
 }
 
 bool ChestBlock::hasAnalogOutputSignal(const BlockState*)

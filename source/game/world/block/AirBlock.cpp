@@ -21,7 +21,7 @@ EBlockRenderShape AirBlock::getRenderShape(const BlockState*)
 
 const AABB* AirBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return NULL_AABB;
 }
 
 bool AirBlock::isSolidRender(const BlockState*) const

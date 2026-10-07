@@ -5,10 +5,6 @@ PistonBlockItem::PistonBlockItem(Block* block)
 {
 }
 
-PistonBlockItem::~PistonBlockItem()
-{
-}
-
 int PistonBlockItem::getLevelDataForAuxValue(int)
 {
     return 7;

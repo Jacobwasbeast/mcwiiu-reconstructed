@@ -45,10 +45,6 @@ DaylightDetectorBlock::DaylightDetectorBlock(bool inverted)
     setSoundType(SoundType::WOOD);
 }
 
-DaylightDetectorBlock::~DaylightDetectorBlock()
-{
-}
-
 boost::shared_ptr<BlockEntity> DaylightDetectorBlock::newBlockEntity(Level* level, int)
 {
     boost::shared_ptr<BlockEntity> blockEntity = boost::shared_ptr<DaylightDetectorBlockEntity>(new DaylightDetectorBlockEntity());
@@ -84,7 +80,7 @@ void DaylightDetectorBlock::updateSignalStrength(Level* level, const BlockPos& p
                 target = 0.0f;
             strength = Math::round((float)strength * Mth::cos((target - sunAngle) * 0.2f + sunAngle));
         }
-        int value = Mth::clamp(strength, 0, 15);
+        int value = Mth::clamp(strength, 0, Block::SIGNAL_MAX);
         if (oldState->getValue(gDaylightDetectorPower) != value)
         {
             const BlockState* state;

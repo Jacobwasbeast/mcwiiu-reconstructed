@@ -60,6 +60,3 @@ unsigned int ClayBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
     return Block::GetInteractTooltip(tooltipData);
 }
 
-ClayBlock::~ClayBlock()
-{
-}

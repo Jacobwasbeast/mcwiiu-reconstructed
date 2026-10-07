@@ -62,10 +62,6 @@ ThinFenceBlock::ThinFenceBlock(const std::wstring& name, const std::wstring& edg
     mName = name;
 }
 
-ThinFenceBlock::~ThinFenceBlock()
-{
-}
-
 int ThinFenceBlock::indexFor(const Direction* direction)
 {
     return 1 << (direction->get2DDataValue() & 0x3f);
@@ -101,8 +97,8 @@ const AABB* ThinFenceBlock::getShape(const BlockState* state, LevelSource* level
 
 bool ThinFenceBlock::isExceptionBlockForAttachingPlusPiston(Block* block)
 {
-    return block == NULL || dynamic_cast<ShulkerBoxBlock*>(block) != NULL
-        || dynamic_cast<LeafBlock*>(block) != NULL
+    return (block != NULL && (dynamic_cast<ShulkerBoxBlock*>(block) != NULL
+            || dynamic_cast<LeafBlock*>(block) != NULL))
         || block == Blocks::beacon || block == Blocks::cauldron
         || block == Blocks::glowstone || block == Blocks::ice
         || block == Blocks::sea_lantern || block == Blocks::piston

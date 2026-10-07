@@ -47,7 +47,8 @@ const BlockState* GlazedTerracottaBlock::getStateForPlacement(Level*, const Bloc
 
 int GlazedTerracottaBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->get2DDataValue();
+    DirectionProperty* facingProperty = HorizontalDirectionalBlock::FACING_PROPERTY;
+    return state->getValue(facingProperty)->get2DDataValue();
 }
 
 const BlockState* GlazedTerracottaBlock::getBlockState(int data)

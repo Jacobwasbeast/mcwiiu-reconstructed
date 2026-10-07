@@ -12,7 +12,6 @@ class SlimeBlock : public HalfTransparentBlock
 {
 public:
     SlimeBlock();
-    virtual ~SlimeBlock();
     virtual int getRenderLayer();
     virtual void fallOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity, float fallDistance);
     virtual void updateEntityAfterFallOn(Level* level, boost::shared_ptr<Entity> entity);

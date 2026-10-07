@@ -165,7 +165,7 @@ int BasePressurePlateBlock::getDirectSignal(const BlockState* state, LevelSource
 {
     if (direction == Direction::UP)
         return getSignalForState(state);
-    return 0;
+    return Block::SIGNAL_NONE;
 }
 
 bool BasePressurePlateBlock::isSignalSource(const BlockState*)

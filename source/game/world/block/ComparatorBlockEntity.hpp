@@ -8,7 +8,6 @@
 class ComparatorBlockEntity : public BlockEntity
 {
 public:
-    virtual ~ComparatorBlockEntity();
 
     static BlockEntity* create();
     virtual unsigned long long GetType();

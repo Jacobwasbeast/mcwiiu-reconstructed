@@ -33,7 +33,6 @@ public:
 
     FenceBlock(const std::wstring& name, Material* material, const MaterialColor* materialColor);
     FenceBlock(const std::wstring& name, Material* material);
-    virtual ~FenceBlock();
 
     void _init();
     virtual void addCollisionAABBs(const BlockState* state, Level* level, const BlockPos& pos, const AABB* entityBox,

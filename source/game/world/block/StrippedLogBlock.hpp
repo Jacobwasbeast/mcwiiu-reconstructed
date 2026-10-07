@@ -7,7 +7,6 @@ class StrippedLogBlock : public RotatedPillarBlockImpl
 {
 public:
     StrippedLogBlock();
-    virtual ~StrippedLogBlock();
 };
 
 #endif

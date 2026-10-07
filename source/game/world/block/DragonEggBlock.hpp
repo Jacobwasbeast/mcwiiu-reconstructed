@@ -17,7 +17,6 @@ class DragonEggBlock : public Block
 {
 public:
     DragonEggBlock();
-    virtual ~DragonEggBlock();
     virtual const AABB* getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual void onPlace(Level* level, const BlockPos& pos, const BlockState* state);
     virtual void neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block* block, const BlockPos& fromPos);

@@ -1,12 +1,13 @@
 #include "game/world/block/DetectorRailBlock.hpp"
 
+#include <cstring>
 #include <boost/unordered_set.hpp>
 
 #include "game/core/IconRegister.hpp"
 #include "game/core/Minecart.hpp"
 #include "game/core/Mirror.hpp"
 #include "game/core/Rotation.hpp"
-#include "game/entity/ai/ContainerEntitySelector.hpp"
+#include "game/entity/ai/EntitySelector.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/item/Container.hpp"
 #include "game/ui/AbstractContainerMenu.hpp"
@@ -28,7 +29,8 @@ BooleanProperty* DetectorRailBlock::POWERED = static_cast<BooleanProperty*>(Bool
 
 void DetectorRailBlock::blockStaticCtor()
 {
-    std::wstring name(L"shape");
+    std::wstring name;
+    name = L"shape";
     Predicates<BaseRailBlock::RailShape*>::FunctionPredicate* filter =
         new Predicates<BaseRailBlock::RailShape*>::FunctionPredicate(railpredicate);
     EnumProperty<BaseRailBlock::RailShape*>* shape;
@@ -50,12 +52,7 @@ DetectorRailBlock::DetectorRailBlock()
     registerDefaultState(mStateDefinition->any()
                              ->setValue(DetectorRailBlock::POWERED, false)
                              ->setValue(DetectorRailBlock::SHAPE, BaseRailBlock::RailShape::NORTH_SOUTH));
-    mIconOff = NULL;
-    mIconOn = NULL;
-}
-
-DetectorRailBlock::~DetectorRailBlock()
-{
+    memset(mIcons, 0, sizeof(mIcons));
 }
 
 int DetectorRailBlock::getTickDelay(Level*) { return 20; }
@@ -65,8 +62,11 @@ bool DetectorRailBlock::isSignalSource(const BlockState*) { return true; }
 void DetectorRailBlock::entityInside(Level* level, const BlockPos& pos, const BlockState* state,
                                      const boost::shared_ptr<Entity>&)
 {
-    if (!level->mIsClientSide && !state->getValue(DetectorRailBlock::POWERED))
-        checkPressed(level, pos, state);
+    if (!level->mIsClientSide)
+    {
+        if (!state->getValue(DetectorRailBlock::POWERED))
+            checkPressed(level, pos, state);
+    }
 }
 
 void DetectorRailBlock::randomTick(Level*, const BlockPos&, const BlockState*, Random*)
@@ -75,19 +75,23 @@ void DetectorRailBlock::randomTick(Level*, const BlockPos&, const BlockState*, R
 
 void DetectorRailBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
-    if (!level->mIsClientSide && state->getValue(DetectorRailBlock::POWERED))
-        checkPressed(level, pos, state);
+    if (!level->mIsClientSide)
+    {
+        if (state->getValue(DetectorRailBlock::POWERED) == true)
+            checkPressed(level, pos, state);
+    }
 }
 
 int DetectorRailBlock::getSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction*)
 {
-    return state->getValue(DetectorRailBlock::POWERED) ? 15 : 0;
+    return state->getValue(DetectorRailBlock::POWERED) ? Block::SIGNAL_MAX : Block::SIGNAL_NONE;
 }
 
 AABB* DetectorRailBlock::getSearchBB(const BlockPos& pos)
 {
-    return AABB::newTemp(pos.x + 0.2f, pos.y, pos.z + 0.2f,
-                         pos.x + 1 - 0.2f, pos.y + 1 - 0.2f, pos.z + 1 - 0.2f);
+    float inset = 0.2f;
+    return AABB::newTemp(pos.x + inset, pos.y, pos.z + inset,
+                         pos.x + 1 - inset, pos.y + 1 - inset, pos.z + 1 - inset);
 }
 
 std::vector<boost::shared_ptr<Entity> >* DetectorRailBlock::getInteractingMinecartOfType(
@@ -142,7 +146,7 @@ void DetectorRailBlock::updatePowerToConnected(Level* level, const BlockPos& pos
 int DetectorRailBlock::getDirectSignal(const BlockState* state, LevelSource*, const BlockPos&,
                                        const Direction* direction)
 {
-    return state->getValue(DetectorRailBlock::POWERED) && direction == Direction::UP ? 15 : 0;
+    return state->getValue(DetectorRailBlock::POWERED) && direction == Direction::UP ? Block::SIGNAL_MAX : Block::SIGNAL_NONE;
 }
 
 void DetectorRailBlock::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
@@ -162,21 +166,25 @@ int DetectorRailBlock::getAnalogOutputSignal(const BlockState* state, Level* lev
 {
     const BlockState* railState = level->getBlockState(pos);
     if (!railState->getValue(DetectorRailBlock::POWERED))
-        return 0;
+        return Block::SIGNAL_NONE;
+
     std::vector<boost::shared_ptr<Entity> >* commandCarts =
         getInteractingMinecartOfType(level, pos, typeid(MinecartCommandBlock), NULL);
     if (!commandCarts->empty())
     {
-        boost::shared_ptr<MinecartCommandBlock> commandCart =
-            boost::static_pointer_cast<MinecartCommandBlock>(commandCarts->at(0));
-        int successCount = commandCart->getCommandBlock()->getSuccessCount();
+        int successCount;
+        {
+            boost::shared_ptr<MinecartCommandBlock> commandCart =
+                boost::static_pointer_cast<MinecartCommandBlock>(commandCarts->at(0));
+            successCount = commandCart->getCommandBlock()->getSuccessCount();
+        }
         delete commandCarts;
         return successCount;
     }
     delete commandCarts;
-    ContainerEntitySelector selector;
+
     std::vector<boost::shared_ptr<Entity> >* containerCarts =
-        getInteractingMinecartOfType(level, pos, typeid(Container), &selector);
+        getInteractingMinecartOfType(level, pos, typeid(Minecart), EntitySelector::CONTAINER_ENTITY_SELECTOR);
     if (!containerCarts->empty())
     {
         boost::shared_ptr<Entity> containerCart = containerCarts->at(0);
@@ -185,14 +193,14 @@ int DetectorRailBlock::getAnalogOutputSignal(const BlockState* state, Level* lev
             boost::dynamic_pointer_cast<Container>(containerCart));
     }
     delete containerCarts;
-    return 0;
+    return Block::SIGNAL_NONE;
 }
 
 const BlockState* DetectorRailBlock::getBlockState(int data)
 {
     return defaultBlockState()
         ->setValue(DetectorRailBlock::SHAPE, BaseRailBlock::RailShape::byData(data & 7))
-        ->setValue(DetectorRailBlock::POWERED, (data & 8) != 0);
+        ->setValue(DetectorRailBlock::POWERED, (data & 8) > 0);
 }
 
 int DetectorRailBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -285,8 +293,9 @@ const BlockState* DetectorRailBlock::rotate(const BlockState* state, Rotation* r
 const BlockState* DetectorRailBlock::mirror(const BlockState* state, Mirror* mirror)
 {
     BaseRailBlock::RailShape* currentShape = state->getValue(DetectorRailBlock::SHAPE);
-    if (mirror->getType() == Mirror::eTYPE_LeftRight)
+    switch (mirror->getType())
     {
+    case Mirror::eTYPE_LeftRight:
         switch (currentShape->getData())
         {
         case 4:
@@ -301,10 +310,10 @@ const BlockState* DetectorRailBlock::mirror(const BlockState* state, Mirror* mir
             return state->setValue(DetectorRailBlock::SHAPE, RailShape::SOUTH_WEST);
         case 9:
             return state->setValue(DetectorRailBlock::SHAPE, RailShape::SOUTH_EAST);
+        default:
+            return Block::mirror(state, mirror);
         }
-    }
-    else if (mirror->getType() == Mirror::eTYPE_FrontBack)
-    {
+    case Mirror::eTYPE_FrontBack:
         switch (currentShape->getData())
         {
         case 2:
@@ -319,10 +328,12 @@ const BlockState* DetectorRailBlock::mirror(const BlockState* state, Mirror* mir
             return state->setValue(DetectorRailBlock::SHAPE, RailShape::NORTH_EAST);
         case 9:
             return state->setValue(DetectorRailBlock::SHAPE, RailShape::NORTH_WEST);
+        default:
+            return Block::mirror(state, mirror);
         }
+    default:
+        return Block::mirror(state, mirror);
     }
-
-    return Block::mirror(state, mirror);
 }
 
 BlockStateDefinition* DetectorRailBlock::createBlockStateDefinition()
@@ -333,11 +344,11 @@ BlockStateDefinition* DetectorRailBlock::createBlockStateDefinition()
 
 TextureAtlasSprite* DetectorRailBlock::getTexture(const Direction*, const BlockState* state)
 {
-    return state->getValue(DetectorRailBlock::POWERED) ? mIconOn : mIconOff;
+    return state->getValue(DetectorRailBlock::POWERED) ? mIcons[1] : mIcons[0];
 }
 
 void DetectorRailBlock::registerIcons(IconRegister* iconRegister)
 {
-    mIconOff = iconRegister->registerIcon(L"detectorRail");
-    mIconOn = iconRegister->registerIcon(L"detectorRail_on");
+    mIcons[0] = iconRegister->registerIcon(L"detectorRail");
+    mIcons[1] = iconRegister->registerIcon(L"detectorRail_on");
 }

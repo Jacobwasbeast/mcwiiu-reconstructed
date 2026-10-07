@@ -24,7 +24,6 @@ public:
     static EnumProperty<const DyeColor*>* COLOR;
 
     StainedGlassBlock(Material* material);
-    virtual ~StainedGlassBlock();
 
     static void blockStaticCtor();
 

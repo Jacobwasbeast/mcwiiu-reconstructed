@@ -33,26 +33,25 @@ CactusBlock::CactusBlock()
 void CactusBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
     BlockPos abovePos = pos.above();
-    if (level->isEmptyBlock(abovePos))
+    if (!level->isEmptyBlock(abovePos))
+        return;
+    int age;
+    int height = 1;
+    while (level->getBlockState(pos.below(height))->getBlock() == this)
+        ++height;
+    if (height >= 3)
+        return;
+    age = state->getValue(AGE);
+    if (age == 15)
     {
-        int height = 1;
-        while (level->getBlockState(pos.below(height))->getBlock() == this)
-            ++height;
-        if (height < 3)
-        {
-            int age = state->getValue(AGE);
-            if (age == 15)
-            {
-                level->setBlockAndUpdate(abovePos, defaultBlockState());
-                const BlockState* resetState = state->setValue(AGE, 0);
-                level->setBlock(pos, resetState, Block::UPDATE_INVISIBLE, false);
-                resetState->neighborChanged(level, abovePos, this, pos);
-            }
-            else
-            {
-                level->setBlock(pos, state->setValue(AGE, age + 1), Block::UPDATE_INVISIBLE, false);
-            }
-        }
+        level->setBlockAndUpdate(abovePos, defaultBlockState());
+        const BlockState* resetState = state->setValue(AGE, 0);
+        level->setBlock(pos, resetState, Block::UPDATE_INVISIBLE, false);
+        resetState->neighborChanged(level, abovePos, this, pos);
+    }
+    else
+    {
+        level->setBlock(pos, state->setValue(AGE, age + 1), Block::UPDATE_INVISIBLE, false);
     }
 }
 

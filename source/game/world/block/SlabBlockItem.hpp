@@ -19,7 +19,6 @@ class SlabBlockItem : public BlockItem
 {
 public:
     SlabBlockItem(Block* block, HalfSlabBlock* halfSlab, HalfSlabBlock* fullSlab);
-    virtual ~SlabBlockItem();
 
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                         Level* level,

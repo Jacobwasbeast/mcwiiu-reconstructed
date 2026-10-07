@@ -7,7 +7,6 @@
 class BlockStackLayerThemeRuleDefinition : public GenericMultiBlockThemeRuleDefinition
 {
 public:
-    virtual ~BlockStackLayerThemeRuleDefinition();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
 

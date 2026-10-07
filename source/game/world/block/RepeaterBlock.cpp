@@ -38,8 +38,7 @@ static const eGameHostOption REPEATER_INTERACTION_HOST_OPTION = eGameHostOption_
 RepeaterBlock::RepeaterBlock(bool on) : DiodeBlock(on)
 {
     DerivedInit();
-    const BlockState* state = mStateDefinition->any();
-    registerDefaultState(state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::NORTH)
+    registerDefaultState(mStateDefinition->any()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, Direction::NORTH)
                               ->setValue(DELAY, 1)
                               ->setValue(LOCKED, false));
 }
@@ -70,15 +69,15 @@ const BlockState* RepeaterBlock::mirror(const BlockState* state, Mirror* mirror)
 
 bool RepeaterBlock::use(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand, const Direction*, float, float, float, bool clientSide)
 {
-    if (!clientSide && player->mAbilities.mMayBuild)
-    {
-        int priority = 3;
-        if (gApp.GetGameHostOption(REPEATER_INTERACTION_HOST_OPTION) != 0)
-            priority = 0x25;
-        level->setBlock(pos, state->cycle(DELAY), priority, false);
-        return true;
-    }
-    return false;
+    if (clientSide)
+        return false;
+    if (!player->mAbilities.mMayBuild)
+        return false;
+    int priority = 3;
+    if (gApp.GetGameHostOption(REPEATER_INTERACTION_HOST_OPTION) != 0)
+        priority = 0x25;
+    level->setBlock(pos, state->cycle(DELAY), priority, false);
+    return true;
 }
 
 int RepeaterBlock::getTurnOnDelay(const BlockState* state)
@@ -91,8 +90,7 @@ const BlockState* RepeaterBlock::getOnBlock(const BlockState* state)
     int delayValue = state->getValue(DELAY);
     bool lockedValue = state->getValue(LOCKED);
     const Direction* facingValue = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
-    const BlockState* result = Blocks::powered_repeater->defaultBlockState();
-    return result->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facingValue)
+    return Blocks::powered_repeater->defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facingValue)
         ->setValue(DELAY, delayValue)
         ->setValue(LOCKED, lockedValue);
 }
@@ -102,8 +100,7 @@ const BlockState* RepeaterBlock::getOffBlock(const BlockState* state)
     int delayValue = state->getValue(DELAY);
     bool lockedValue = state->getValue(LOCKED);
     const Direction* facingValue = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
-    const BlockState* result = Blocks::unpowered_repeater->defaultBlockState();
-    return result->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facingValue)
+    return Blocks::unpowered_repeater->defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, facingValue)
         ->setValue(DELAY, delayValue)
         ->setValue(LOCKED, lockedValue);
 }
@@ -130,21 +127,22 @@ bool RepeaterBlock::isAlternateInput(const BlockState* state)
 
 void RepeaterBlock::animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random)
 {
-    if (!mOn)
-        return;
-    const Direction* facing = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
-    double x = (double)((float)pos.x + 0.5f) + (double)(random->nextFloat() - 0.5f) * 0.2;
-    double y = (double)((float)pos.y + 0.4f) + (double)(random->nextFloat() - 0.5f) * 0.2;
-    double z = (double)((float)pos.z + 0.5f) + (double)(random->nextFloat() - 0.5f) * 0.2;
-    float offset = -5.0f;
-    if (random->nextBoolean())
+    if (mOn)
     {
-        float delay = (float)state->getValue(DELAY);
-        offset = (delay + delay) - 1.0f;
+        const Direction* facing = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
+        double x = (double)((float)pos.x + 0.5f) + (double)(random->nextFloat() - 0.5f) * 0.2;
+        double y = (double)((float)pos.y + 0.4f) + (double)(random->nextFloat() - 0.5f) * 0.2;
+        double z = (double)((float)pos.z + 0.5f) + (double)(random->nextFloat() - 0.5f) * 0.2;
+        float offset = -5.0f;
+        if (random->nextBoolean())
+        {
+            float delay = (float)state->getValue(DELAY);
+            offset = (delay + delay) - 1.0f;
+        }
+        double xOffset = (double)(offset * 0.0625f * (float)facing->getStepX());
+        double zOffset = (double)(offset * 0.0625f * (float)facing->getStepZ());
+        level->addParticle(PARTICLE_RED_DUST, x + xOffset, y, z + zOffset, 0.0, 0.0, 0.0, arrayWithLength<int>());
     }
-    double xOffset = (double)(offset * 0.0625f * (float)facing->getStepX());
-    double zOffset = (double)(offset * 0.0625f * (float)facing->getStepZ());
-    level->addParticle(PARTICLE_RED_DUST, x + xOffset, y, z + zOffset, 0.0, 0.0, 0.0, arrayWithLength<int>());
 }
 
 void RepeaterBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)

@@ -12,7 +12,6 @@
 class SetBlockCommand : public Command
 {
 public:
-    virtual ~SetBlockCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

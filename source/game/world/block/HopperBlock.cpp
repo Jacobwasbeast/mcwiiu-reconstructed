@@ -45,10 +45,7 @@ HopperBlock::HopperBlock()
 {
     mBlockType = EBLOCK_TYPE_HOPPER;
     DerivedInit();
-    const BlockState* defaultState = mStateDefinition->any();
-    defaultState = defaultState->setValue(FACING, Direction::DOWN);
-    defaultState = defaultState->setValue(static_cast<const AbstractProperty<bool>*>(ENABLED), true);
-    registerDefaultState(defaultState);
+    registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::DOWN)->setValue(static_cast<const AbstractProperty<bool>*>(ENABLED), true));
 }
 
 boost::shared_ptr<BlockEntity> HopperBlock::newBlockEntity(Level* level, int data)
@@ -89,10 +86,7 @@ const BlockState* HopperBlock::getStateForPlacement(Level* level, const BlockPos
     {
         attached = Direction::DOWN;
     }
-    const BlockState* result = defaultBlockState();
-    result = result->setValue(FACING, attached);
-    result = result->setValue(static_cast<const AbstractProperty<bool>*>(ENABLED), true);
-    return result;
+    return defaultBlockState()->setValue(FACING, attached)->setValue(static_cast<const AbstractProperty<bool>*>(ENABLED), true);
 }
 
 void HopperBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
@@ -195,10 +189,7 @@ int HopperBlock::getRenderLayer() { return 0; }
 
 const BlockState* HopperBlock::getBlockState(int data)
 {
-    const BlockState* result = defaultBlockState();
-    result = result->setValue(FACING, getAttachedFace(data));
-    result = result->setValue(static_cast<const AbstractProperty<bool>*>(ENABLED), isTurnedOn(data));
-    return result;
+    return defaultBlockState()->setValue(FACING, getAttachedFace(data))->setValue(static_cast<const AbstractProperty<bool>*>(ENABLED), isTurnedOn(data));
 }
 
 int HopperBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -222,13 +213,13 @@ unsigned int HopperBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolt
 
 const BlockState* HopperBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    DirectionProperty* facing = FACING;
-    return state->setValue(facing, rotation->rotate(state->getValue(facing)));
+    return state->setValue(FACING, rotation->rotate(state->getValue(FACING)));
 }
 
 const BlockState* HopperBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(static_cast<const AbstractProperty<const Direction*>*>(FACING))));
+    DirectionProperty* facing = FACING;
+    return rotate(state, mirror->getRotation(state->getValue(facing)));
 }
 
 BlockStateDefinition* HopperBlock::createBlockStateDefinition()

@@ -28,13 +28,13 @@ WallBannerBlock::WallBannerBlock()
 
 const BlockState* WallBannerBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    DirectionProperty* facing = BannerBlock::FACING;
-    return state->setValue(facing, rotation->rotate(state->getValue(facing)));
+    return state->setValue(FACING, rotation->rotate(state->getValue(FACING)));
 }
 
 const BlockState* WallBannerBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(BannerBlock::FACING)));
+    DirectionProperty* facing = BannerBlock::FACING;
+    return rotate(state, mirror->getRotation(state->getValue(facing)));
 }
 
 const AABB* WallBannerBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
@@ -42,16 +42,16 @@ const AABB* WallBannerBlock::getShape(const BlockState* state, LevelSource*, con
     const Direction* direction = state->getValue(BannerBlock::FACING);
     switch (direction->get3DDataValue())
     {
+    case 2:
+    default:
+        return WALL_BANNER_SHAPE_NORTH;
     case 3:
         return WALL_BANNER_SHAPE_SOUTH;
     case 4:
         return WALL_BANNER_SHAPE_WEST;
     case 5:
         return WALL_BANNER_SHAPE_EAST;
-    default:
-        break;
     }
-    return WALL_BANNER_SHAPE_NORTH;
 }
 
 void WallBannerBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,

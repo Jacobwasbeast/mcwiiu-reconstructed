@@ -61,14 +61,15 @@ EBlockFaceShape SnowLayerBlock::getBlockFaceShape(LevelSource*, const BlockState
 
 const AABB* SnowLayerBlock::getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    int layers = state->getValue(LAYERS);
+    int layers = state->getValue(LAYERS) - 1;
     const AABB* shape = state->getShape(levelSource, pos);
-    return AABB::newTemp(shape->mMinX, shape->mMinY, shape->mMinZ, shape->mMaxX, (float)(layers - 1) * 0.125f, shape->mMaxZ);
+    return AABB::newTemp(shape->mMinX, shape->mMinY, shape->mMinZ, shape->mMaxX, (float)layers * 0.125f, shape->mMaxZ);
 }
 
 double SnowLayerBlock::getHeight(Level* level, int x, int y, int z)
 {
-    return (float)(level->getBlockState(BlockPos(x, y, z))->getValue(LAYERS) * 2 + 2) * 0.0625f;
+    float height = (float)(level->getBlockState(BlockPos(x, y, z))->getValue(LAYERS) * 2 + 2);
+    return height * 0.0625f;
 }
 
 bool SnowLayerBlock::isSolidRender(const BlockState*) const { return false; }
@@ -120,7 +121,7 @@ int SnowLayerBlock::melt(Level* level, const BlockPos& pos, int amount)
     {
         const BlockState* state = level->getBlockState(pos);
         int layers = state->getValue(LAYERS);
-        if (layers + 1 <= amount)
+        if (amount >= layers + 1)
         {
             level->removeBlock(pos);
             return 1;
@@ -152,18 +153,15 @@ void SnowLayerBlock::tick(Level* level, const BlockPos& pos, const BlockState* s
     int blockLight = level->getBrightness(LightLayer::BLOCK, pos);
     if (blockLight > 11)
     {
-        int meltAmount = std::min(blockLight - 11, 8);
-        if (amount < meltAmount)
-            amount = meltAmount;
+        amount = std::max(amount, std::min(blockLight - 11, 8));
     }
 
-    if (melt(level, pos, amount) != 0)
-        return;
-
-    Block* below = level->getBlock(pos.below());
-    if (below != Blocks::air && below->defaultBlockState()->getMaterial() != Material::WATER)
-        return;
-    FallingBlock::tick(level, pos, state, random);
+    if (melt(level, pos, amount) == 0)
+    {
+        Block* below = level->getBlock(pos.below());
+        if (below == Blocks::air || below->defaultBlockState()->getMaterial() == Material::WATER)
+            FallingBlock::tick(level, pos, state, random);
+    }
 }
 
 bool SnowLayerBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)

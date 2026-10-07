@@ -21,10 +21,6 @@ SlabBlockItem::SlabBlockItem(Block* block, HalfSlabBlock* halfSlab, HalfSlabBloc
     setStackedByData(true);
 }
 
-SlabBlockItem::~SlabBlockItem()
-{
-}
-
 int SlabBlockItem::getLevelDataForAuxValue(int auxValue)
 {
     return auxValue;

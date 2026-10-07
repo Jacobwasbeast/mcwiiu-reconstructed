@@ -23,10 +23,6 @@ DeadBushBlock::DeadBushBlock()
     DerivedInit();
 }
 
-DeadBushBlock::~DeadBushBlock()
-{
-}
-
 const AABB* DeadBushBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
 {
     return gDeadBushShape;

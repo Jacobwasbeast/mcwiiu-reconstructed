@@ -35,8 +35,9 @@ static AbstractProperty<bool>* gStoneSlabSeamlessProperty =
     static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"seamless"));
 
 StoneSlabBlock::Variant::Variant(int data, const MaterialColor* materialColor, const std::wstring& name, int translationKey)
-    : mData(data), mColor(materialColor)
 {
+    mColor = materialColor;
+    mData = data;
     mName = name;
     mTranslationKey = translationKey;
 }
@@ -77,14 +78,13 @@ void StoneSlabBlock::blockStaticCtor()
     gStoneSlabVariants[6] = Variant::NETHERBRICK;
     gStoneSlabVariants[7] = Variant::QUARTZ;
 
-    std::wstring variantName(L"variant");
     boost::unordered_set<Variant*> values;
     for (int i = 0; i < 8; ++i)
     {
         values.insert(gStoneSlabVariants[i]);
     }
     VARIANT = EnumProperty<Variant*>::create(
-        variantName, typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
+        L"variant", typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
 }
 
 StoneSlabBlock::StoneSlabBlock()
@@ -136,24 +136,14 @@ Boxed* StoneSlabBlock::getTypeForItem(not_null_ptr<ItemInstance> itemInstance)
 
 const BlockState* StoneSlabBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    state = state->setValue(VARIANT, Variant::byData(data & 7));
-    if (!isFullSize())
+    const BlockState* state = defaultBlockState()->setValue(VARIANT, Variant::byData(data & 7));
+    if (isFullSize())
     {
-        if ((data & 8) == 0)
-        {
-            TypedBoxed<Half*> half(BOTTOM);
-            state = state->setBoxedValue(TYPE, &half);
-        }
-        else
-        {
-            TypedBoxed<Half*> half(TOP);
-            state = state->setBoxedValue(TYPE, &half);
-        }
+        state = state->setValue(gStoneSlabSeamlessProperty, (data & 8) != 0);
     }
     else
     {
-        state = state->setValue(gStoneSlabSeamlessProperty, (data & 8) != 0);
+        state = state->setValue(TYPE, (data & 8) == 0 ? BOTTOM : TOP);
     }
     return state;
 }
@@ -199,12 +189,14 @@ const MaterialColor* StoneSlabBlock::getMapColor(const BlockState* state, LevelS
 TextureAtlasSprite* StoneSlabBlock::getTexture(const Direction* direction, const BlockState* state)
 {
     StoneSlabBlock::Variant* variant = state->getValue(VARIANT);
-    if (variant->getData() == 0)
-    {
-        return direction == Direction::UP || direction == Direction::DOWN ? mIcon : mSideTexture;
-    }
     switch (variant->getData())
     {
+    case 0:
+        if (direction != Direction::UP && direction != Direction::DOWN)
+        {
+            return mSideTexture;
+        }
+        break;
     case 1:
         return Blocks::sandstone->getTexture(direction);
     case 2:

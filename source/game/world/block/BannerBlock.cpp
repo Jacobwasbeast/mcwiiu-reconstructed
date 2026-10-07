@@ -43,7 +43,7 @@ std::wstring BannerBlock::getName()
 
 const AABB* BannerBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return NULL_AABB;
 }
 
 bool BannerBlock::isCubeShaped(const BlockState*)

@@ -20,7 +20,6 @@ public:
     {
     public:
         explicit BlockEntityMobSpawner(MobSpawnerBlockEntity* blockEntity);
-        virtual ~BlockEntityMobSpawner();
         virtual void setNextSpawnData(SpawnData* data);
         virtual void broadcastEvent(int event);
         virtual Level* getLevel();

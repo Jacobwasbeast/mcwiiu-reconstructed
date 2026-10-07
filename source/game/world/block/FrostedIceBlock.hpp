@@ -17,7 +17,6 @@ class FrostedIceBlock : public IceBlock
 {
 public:
     FrostedIceBlock();
-    virtual ~FrostedIceBlock();
 
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual const BlockState* getBlockState(int data);

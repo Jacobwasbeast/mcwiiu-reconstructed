@@ -30,7 +30,7 @@ public:
 
     static void staticCtor();
     static void addDataWalkers(DataFixerUpper* dataFixerUpper);
-    static void create(Level* level);
+    static Entity* create(Level* level);
 
     Level* getLevel();
     void setHurtsEntities(bool hurtsEntities);

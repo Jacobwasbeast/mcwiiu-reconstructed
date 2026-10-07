@@ -19,10 +19,6 @@ CraftingTableBlock::CraftingTableBlock()
     mFrontTexture = NULL;
 }
 
-CraftingTableBlock::~CraftingTableBlock()
-{
-}
-
 bool CraftingTableBlock::TestUse()
 {
     return true;
