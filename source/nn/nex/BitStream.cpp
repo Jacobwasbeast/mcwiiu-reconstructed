@@ -9,7 +9,7 @@ namespace nex
 
 BitStream::BitStream()
 {
-    m_pBuffer = new Buffer(Buffer::GetDefaultBufferSize(), 0);
+    m_pBuffer = new Buffer();
     Init();
 }
 
@@ -74,17 +74,19 @@ void BitStream::PrepareAppend(unsigned int uiBits)
 
 void BitStream::AppendByteImpl(unsigned char uiByte)
 {
-    if (m_uiBitPosition == 7)
-    {
-        (*m_pBuffer)[m_uiBytePosition] = uiByte;
-    }
-    else
+    if (m_uiBitPosition != 7)
     {
         unsigned int uiShift = m_uiBitPosition + 1;
         unsigned char uiRightShift = 8 - uiShift;
+        unsigned char uiHigh = uiByte >> uiRightShift;
+        unsigned char uiLow = uiByte << uiShift;
 
-        (*m_pBuffer)[m_uiBytePosition] = (*m_pBuffer)[m_uiBytePosition] | (uiByte >> uiRightShift);
-        (*m_pBuffer)[m_uiBytePosition + 1] = uiByte << uiShift;
+        (*m_pBuffer)[m_uiBytePosition] = (*m_pBuffer)[m_uiBytePosition] | uiHigh;
+        (*m_pBuffer)[m_uiBytePosition + 1] = uiLow;
+    }
+    else
+    {
+        (*m_pBuffer)[m_uiBytePosition] = uiByte;
     }
 
     ++m_uiBytePosition;

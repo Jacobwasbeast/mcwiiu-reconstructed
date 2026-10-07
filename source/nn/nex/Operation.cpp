@@ -3,8 +3,9 @@
 namespace nn { namespace nex {
 
 Operation::Operation(unsigned int flags)
-    : QEvent(), m_signalState(false), m_userContext(), m_flags(flags)
+    : m_userContext(), m_flags(flags)
 {
+    m_signalState = false;
 }
 
 unsigned short Operation::GetSignal() const

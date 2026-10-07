@@ -46,8 +46,8 @@ void GlobalVariables::AcquireInstance()
 
     if (g_globalVariables == 0)
     {
-        g_threadVariableList = new ThreadVariableList();
-        g_globalVariables = new GlobalVariables();
+        g_threadVariableList = new ThreadVariableList;
+        g_globalVariables = new GlobalVariables;
     }
     else
     {

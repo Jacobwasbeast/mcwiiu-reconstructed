@@ -15,8 +15,6 @@ public:
         : _DDL_LoginData()
     {
     }
-
-    virtual ~LoginData();
 };
 
 }

@@ -26,8 +26,7 @@ public:
     typedef AnyObjectHolder<Data, String> DataHolder;
     typedef qList<DataHolder> DataHolderList;
 
-    explicit AccountManagementProtocolClient(unsigned short uiProtocolID);
-    virtual ~AccountManagementProtocolClient();
+    explicit AccountManagementProtocolClient(unsigned short uiProtocolID = 0);
 
     virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
     virtual Protocol* CreateResponder() const;

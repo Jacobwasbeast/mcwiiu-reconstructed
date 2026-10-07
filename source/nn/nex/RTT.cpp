@@ -9,8 +9,8 @@ RTT::RTT(unsigned int uiInitialRTT)
     : m_uiLastRTT(uiInitialRTT)
     , m_bFirstSample(true)
 {
-    m_uiRTTVariation = 0;
     m_uiSmoothedRTT = uiInitialRTT << 3;
+    m_uiRTTVariation = 0;
 }
 
 RTT::~RTT()

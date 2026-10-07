@@ -5,9 +5,5 @@ namespace nn
 namespace nex
 {
 
-LoginData::~LoginData()
-{
-}
-
 }
 }

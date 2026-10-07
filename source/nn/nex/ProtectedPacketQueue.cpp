@@ -13,7 +13,8 @@ ProtectedPacketQueue::~ProtectedPacketQueue()
 
 void ProtectedPacketQueue::Purge()
 {
-    ScopedCS lock(m_pLock);
+    CriticalSection* pLock = m_pLock;
+    ScopedCS lock(pLock);
     PacketQueue::Purge();
 }
 

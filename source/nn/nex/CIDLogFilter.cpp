@@ -11,7 +11,7 @@ bool CIDLogFilter::OutputCurrentTrace()
 {
     unsigned int current;
     if (g_protocolCurrentCID != 0 && (current = g_protocolCurrentCID()) < m_upperBound &&
-        m_lowerBound < current)
+        current > m_lowerBound)
         return true;
     return false;
 }

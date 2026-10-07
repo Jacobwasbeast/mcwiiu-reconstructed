@@ -32,6 +32,7 @@ private:
     EventHandler* m_pEventHandler;
     unsigned int m_type;
     unsigned int m_context;
+    void* m_pPlatformEvent;
 };
 
 }

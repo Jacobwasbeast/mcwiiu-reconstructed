@@ -58,18 +58,17 @@ Buffer* TransportBuffer::AllocateBuffer(unsigned int uiSize)
     Buffer* pBuffer = 0;
     CriticalSection* pLock = &m_criticalSection;
     pLock->Enter();
-    if (m_pBuffers->empty())
+    if (!m_pBuffers->empty())
     {
-        ++m_uiEmptyDropCount;
-        pLock->Leave();
+        pBuffer = m_pBuffers->front();
+        pBuffer->Clear();
+        m_pBuffers->pop();
     }
     else
     {
-        pBuffer = m_pBuffers->front();
-        m_pBuffers->pop();
-        pBuffer->Clear();
-        pLock->Leave();
+        ++m_uiEmptyDropCount;
     }
+    pLock->Leave();
     return pBuffer;
 }
 

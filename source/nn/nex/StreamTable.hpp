@@ -22,9 +22,7 @@ public:
         StreamList;
 
     StreamTable();
-    virtual ~StreamTable()
-    {
-    }
+    virtual ~StreamTable();
 
     ConnectionOrientedStream* FindStream(const StationURL* pStationURL);
     ConnectionOrientedStream* FindStream(wchar_t* pType);

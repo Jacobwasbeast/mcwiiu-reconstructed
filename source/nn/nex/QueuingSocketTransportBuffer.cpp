@@ -17,11 +17,11 @@ QueuingSocketTransportBuffer::QueuingSocketTransportBuffer(unsigned int uiTraffi
       m_recvSet(pTransportBuffer, g_transportBufferCount),
       m_sendSet(pTransportBuffer, g_transportBufferCount)
 {
-    m_uiSendCount = uiSendCount;
-    m_uiRecvCount = uiRecvCount;
     m_pCondition = pCondition;
     m_sendSet.m_uiBufferSize = m_uiMTU;
     m_recvSet.m_uiBufferSize = m_uiMTU;
+    m_uiSendCount = uiSendCount;
+    m_uiRecvCount = uiRecvCount;
     m_pRecvBuffer = new Buffer(m_uiMTU, 0);
 }
 
@@ -34,7 +34,8 @@ QueuingSocketTransportBuffer::~QueuingSocketTransportBuffer()
 
 bool QueuingSocketTransportBuffer::IsRecvDataExists() const
 {
-    if (m_inputEmulator.GetDevice()->IsEnabled())
+    bool bEnabled = m_inputEmulator.GetDevice()->IsEnabled();
+    if (bEnabled)
         return true;
     return m_recvSet.m_bHasUse;
 }
@@ -42,14 +43,12 @@ bool QueuingSocketTransportBuffer::IsRecvDataExists() const
 int QueuingSocketTransportBuffer::RecvBuffer(Buffer* pBuffer, InetAddress* pAddress)
 {
     TransportBufferInfo* pInfo = m_recvSet.PopNewUseInfo();
-    if (pInfo != 0 && pInfo->m_pBuffer != 0)
-    {
-        *pBuffer = *pInfo->m_pBuffer;
-        *pAddress = pInfo->m_address;
-        m_recvSet.FreeOneBuffer(pInfo);
-        return 0;
-    }
-    return -1;
+    if (pInfo == 0 || pInfo->m_pBuffer == 0)
+        return -1;
+    *pBuffer = *pInfo->m_pBuffer;
+    *pAddress = pInfo->m_address;
+    m_recvSet.FreeOneBuffer(pInfo);
+    return 0;
 }
 
 int QueuingSocketTransportBuffer::SendBuffer(const Buffer& rBuffer, const InetAddress& rAddress)
@@ -59,18 +58,20 @@ int QueuingSocketTransportBuffer::SendBuffer(const Buffer& rBuffer, const InetAd
         CriticalSection* pLock = &m_sendSet.m_criticalSection;
         pLock->Enter();
         TransportBufferInfo* pInfo = m_sendSet.PopNewSetInfo();
-        if (pInfo != 0 && pInfo->m_pBuffer != 0)
+        bool bFailed = pInfo == 0 || pInfo->m_pBuffer == 0;
+        if (bFailed)
         {
-            *pInfo->m_pBuffer = rBuffer;
-            pInfo->m_address = rAddress;
             if (m_pCondition != 0)
                 m_pCondition->Notify();
             pLock->Leave();
-            return 0;
+            return -1;
         }
+        *pInfo->m_pBuffer = rBuffer;
+        pInfo->m_address = rAddress;
         if (m_pCondition != 0)
             m_pCondition->Notify();
         pLock->Leave();
+        return 0;
     }
     return -1;
 }
@@ -90,7 +91,8 @@ void QueuingSocketTransportBuffer::PushRecvBuffer(Buffer* pBuffer, const InetAdd
 
 bool QueuingSocketTransportBuffer::RecvCoreSingle(bool bNonBlock)
 {
-    if (!m_recvSet.m_bFull && m_bConnected)
+    bool bReceivable = !m_recvSet.m_bFull;
+    if (bReceivable && m_bConnected)
     {
         InetAddress address;
         m_pRecvBuffer->Clear();
@@ -120,17 +122,15 @@ bool QueuingSocketTransportBuffer::RecvCore(bool bNonBlock)
 
 bool QueuingSocketTransportBuffer::SendBufferCoreSingle()
 {
-    if (m_sendSet.m_bHasUse && m_bConnected)
-    {
-        TransportBufferInfo* pInfo = m_sendSet.PopNewUseInfo();
-        if (pInfo != 0 && pInfo->m_pBuffer != 0)
-        {
-            int iResult = Socket::Send(*pInfo->m_pBuffer, pInfo->m_address);
-            m_sendSet.FreeOneBuffer(pInfo);
-            return iResult == 0;
-        }
-    }
-    return false;
+    bool bSendable = m_sendSet.m_bHasUse && m_bConnected;
+    if (!bSendable)
+        return false;
+    TransportBufferInfo* pInfo = m_sendSet.PopNewUseInfo();
+    if (pInfo == 0 || pInfo->m_pBuffer == 0)
+        return false;
+    int iResult = Socket::Send(*pInfo->m_pBuffer, pInfo->m_address);
+    m_sendSet.FreeOneBuffer(pInfo);
+    return iResult == 0;
 }
 
 bool QueuingSocketTransportBuffer::SendBufferCore()

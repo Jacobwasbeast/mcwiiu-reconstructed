@@ -55,7 +55,7 @@ StationURL::StationURL()
     , m_bStrValid(false)
     , m_bValid(true)
 {
-    m_pAddress = new InetAddress();
+    m_pAddress = new InetAddress;
     SetURLType(Prudp);
 }
 
@@ -65,7 +65,7 @@ StationURL::StationURL(const StationURL& rStationURL)
     , m_bStrValid(false)
     , m_bValid(false)
 {
-    m_pAddress = new InetAddress();
+    m_pAddress = new InetAddress;
     Copy(rStationURL);
 }
 
@@ -75,7 +75,7 @@ StationURL::StationURL(const String& rURL)
     , m_bStrValid(true)
     , m_bValid(false)
 {
-    m_pAddress = new InetAddress();
+    m_pAddress = new InetAddress;
     SetURL(rURL);
 }
 
@@ -85,7 +85,7 @@ StationURL::StationURL(const wchar_t* pURL)
     , m_bStrValid(true)
     , m_bValid(false)
 {
-    m_pAddress = new InetAddress();
+    m_pAddress = new InetAddress;
     SetURL(pURL);
 }
 

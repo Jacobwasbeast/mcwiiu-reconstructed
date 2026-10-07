@@ -51,11 +51,7 @@ SecureConnectionProtocolClient::SecureConnectionProtocolClient(unsigned short ui
         return;
     SetProtocolID(uiProtocolID);
     RVClientCore::AcquireInstance()->GetProtocolRegistry()->RegisterProtocol(
-        uiProtocolID, new SecureConnectionProtocolClient(0));
-}
-
-SecureConnectionProtocolClient::~SecureConnectionProtocolClient()
-{
+        uiProtocolID, new SecureConnectionProtocolClient());
 }
 
 void SecureConnectionProtocolClient::ExtractCallSpecificResults(Message* pMessage,
@@ -74,7 +70,7 @@ void SecureConnectionProtocolClient::ExtractCallSpecificResults(Message* pMessag
 
 Protocol* SecureConnectionProtocolClient::CreateResponder() const
 {
-    return new SecureConnectionProtocolClient(0);
+    return new SecureConnectionProtocolClient();
 }
 
 bool SecureConnectionProtocolClient::CallRegister(ProtocolCallContext* pCallContext, qResult* pResult, const qList<StationURL>& rURLs, unsigned int* pConnectionID, StationURL* pPublicURL)

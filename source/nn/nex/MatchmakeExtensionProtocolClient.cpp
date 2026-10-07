@@ -105,11 +105,7 @@ MatchmakeExtensionProtocolClient::MatchmakeExtensionProtocolClient(unsigned shor
         return;
     SetProtocolID(uiProtocolID);
     RVClientCore::AcquireInstance()->GetProtocolRegistry()->RegisterProtocol(
-        uiProtocolID, new MatchmakeExtensionProtocolClient(0));
-}
-
-MatchmakeExtensionProtocolClient::~MatchmakeExtensionProtocolClient()
-{
+        uiProtocolID, new MatchmakeExtensionProtocolClient());
 }
 
 void MatchmakeExtensionProtocolClient::ExtractCallSpecificResults(Message* pMessage,
@@ -128,7 +124,7 @@ void MatchmakeExtensionProtocolClient::ExtractCallSpecificResults(Message* pMess
 
 Protocol* MatchmakeExtensionProtocolClient::CreateResponder() const
 {
-    return new MatchmakeExtensionProtocolClient(0);
+    return new MatchmakeExtensionProtocolClient();
 }
 
 bool MatchmakeExtensionProtocolClient::CallCloseParticipation(ProtocolCallContext* pCallContext,
@@ -2361,10 +2357,10 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_AutoMatchmake_Postpone(Messag
 void MatchmakeExtensionProtocolClient::ProtoReturn_BrowseMatchmakeSession(Message* pMessage,
                                                                           ProtocolCallContext* pCallContext)
 {
-    GatheringHolderList* pList = static_cast<GatheringHolderList*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_qlist<GatheringAny>::Extract(pMessage, pList);
+        _Type_qlist<GatheringAny>::Extract(pMessage, static_cast<GatheringHolderList*>(pReturn));
         return;
     }
     GatheringHolderList discarded[1];
@@ -2375,16 +2371,16 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_BrowseMatchmakeSessionWithHos
                                                                                       ProtocolCallContext* pCallContext)
 {
     GatheringHolderList* pFirstList = static_cast<GatheringHolderList*>(pCallContext->GetReturnValuePtr(0));
-    if (pFirstList == 0)
+    if (pFirstList != 0)
     {
-        GatheringHolderList discarded[1];
-        _Type_qlist<GatheringAny>::Extract(pMessage, &discarded[0]);
+        _Type_qlist<GatheringAny>::Extract(pMessage, pFirstList);
         if (pMessage->HasError())
             return;
     }
     else
     {
-        _Type_qlist<GatheringAny>::Extract(pMessage, pFirstList);
+        GatheringHolderList discarded[1];
+        _Type_qlist<GatheringAny>::Extract(pMessage, &discarded[0]);
         if (pMessage->HasError())
             return;
     }
@@ -2444,10 +2440,10 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_UpdateNotificationData(Messag
 void MatchmakeExtensionProtocolClient::ProtoReturn_GetFriendNotificationData(Message* pMessage,
                                                                              ProtocolCallContext* pCallContext)
 {
-    qList<NotificationEvent>* pList = static_cast<qList<NotificationEvent>*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_qlist<DDLClassMetaType<NotificationEvent> >::Extract(pMessage, pList);
+        _Type_qlist<DDLClassMetaType<NotificationEvent> >::Extract(pMessage, static_cast<qList<NotificationEvent>*>(pReturn));
         return;
     }
     qList<NotificationEvent> discarded[1];
@@ -2467,10 +2463,10 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_UpdateMatchmakeSessionAttribu
 void MatchmakeExtensionProtocolClient::ProtoReturn_GetlstFriendNotificationData(Message* pMessage,
                                                                                 ProtocolCallContext* pCallContext)
 {
-    qList<NotificationEvent>* pList = static_cast<qList<NotificationEvent>*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_qlist<DDLClassMetaType<NotificationEvent> >::Extract(pMessage, pList);
+        _Type_qlist<DDLClassMetaType<NotificationEvent> >::Extract(pMessage, static_cast<qList<NotificationEvent>*>(pReturn));
         return;
     }
     qList<NotificationEvent> discarded[1];
@@ -2498,10 +2494,10 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_AutoMatchmakeWithSearchCriter
 void MatchmakeExtensionProtocolClient::ProtoReturn_GetPlayingSession(Message* pMessage,
                                                                      ProtocolCallContext* pCallContext)
 {
-    qList<PlayingSession>* pList = static_cast<qList<PlayingSession>*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_qlist<DDLClassMetaType<PlayingSession> >::Extract(pMessage, pList);
+        _Type_qlist<DDLClassMetaType<PlayingSession> >::Extract(pMessage, static_cast<qList<PlayingSession>*>(pReturn));
         return;
     }
     qList<PlayingSession> discarded[1];
@@ -2513,9 +2509,10 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_CreateCommunity(Message* pMes
 {
     unsigned int uiDiscardedValue;
     unsigned int* pValue = static_cast<unsigned int*>(pCallContext->GetReturnValuePtr(0));
-    if (pValue == 0)
-        pValue = &uiDiscardedValue;
-    _Type_uint32::Extract(pMessage, pValue);
+    unsigned int* pDestination = &uiDiscardedValue;
+    if (pValue != 0)
+        pDestination = pValue;
+    _Type_uint32::Extract(pMessage, pDestination);
 }
 
 void MatchmakeExtensionProtocolClient::ProtoReturn_UpdateCommunity(Message*,
@@ -2531,10 +2528,10 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_JoinCommunity(Message*,
 void MatchmakeExtensionProtocolClient::ProtoReturn_FindCommunityByGatheringId(Message* pMessage,
                                                                               ProtocolCallContext* pCallContext)
 {
-    qList<PersistentGathering>* pList = static_cast<qList<PersistentGathering>*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_qlist<DDLClassMetaType<PersistentGathering> >::Extract(pMessage, pList);
+        _Type_qlist<DDLClassMetaType<PersistentGathering> >::Extract(pMessage, static_cast<qList<PersistentGathering>*>(pReturn));
         return;
     }
     qList<PersistentGathering> discarded[1];
@@ -2544,10 +2541,10 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_FindCommunityByGatheringId(Me
 void MatchmakeExtensionProtocolClient::ProtoReturn_FindOfficialCommunity(Message* pMessage,
                                                                          ProtocolCallContext* pCallContext)
 {
-    qList<PersistentGathering>* pList = static_cast<qList<PersistentGathering>*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_qlist<DDLClassMetaType<PersistentGathering> >::Extract(pMessage, pList);
+        _Type_qlist<DDLClassMetaType<PersistentGathering> >::Extract(pMessage, static_cast<qList<PersistentGathering>*>(pReturn));
         return;
     }
     qList<PersistentGathering> discarded[1];
@@ -2557,10 +2554,10 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_FindOfficialCommunity(Message
 void MatchmakeExtensionProtocolClient::ProtoReturn_FindCommunityByParticipant(Message* pMessage,
                                                                               ProtocolCallContext* pCallContext)
 {
-    qList<PersistentGathering>* pList = static_cast<qList<PersistentGathering>*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_qlist<DDLClassMetaType<PersistentGathering> >::Extract(pMessage, pList);
+        _Type_qlist<DDLClassMetaType<PersistentGathering> >::Extract(pMessage, static_cast<qList<PersistentGathering>*>(pReturn));
         return;
     }
     qList<PersistentGathering> discarded[1];
@@ -2575,10 +2572,10 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_UpdatePrivacySetting(Message*
 void MatchmakeExtensionProtocolClient::ProtoReturn_GetMyBlackList(Message* pMessage,
                                                                   ProtocolCallContext* pCallContext)
 {
-    qList<unsigned int>* pList = static_cast<qList<unsigned int>*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_qlist<_Type_uint32>::Extract(pMessage, pList);
+        _Type_qlist<_Type_uint32>::Extract(pMessage, static_cast<qList<unsigned int>*>(pReturn));
         return;
     }
     qList<unsigned int> discarded[1];
@@ -2610,16 +2607,18 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_IsViolationUser(Message* pMes
 {
     bool bDiscardedViolationUser;
     bool* pViolationUser = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pViolationUser == 0)
-        pViolationUser = &bDiscardedViolationUser;
-    *pMessage >> *pViolationUser;
+    bool* pViolationDestination = &bDiscardedViolationUser;
+    if (pViolationUser != 0)
+        pViolationDestination = pViolationUser;
+    *pMessage >> *pViolationDestination;
     if (!pMessage->HasError())
     {
         unsigned int uiDiscardedScore;
         unsigned int* pScore = static_cast<unsigned int*>(pCallContext->GetReturnValuePtr(1));
-        if (pScore == 0)
-            pScore = &uiDiscardedScore;
-        _Type_uint32::Extract(pMessage, pScore);
+        unsigned int* pScoreDestination = &uiDiscardedScore;
+        if (pScore != 0)
+            pScoreDestination = pScore;
+        _Type_uint32::Extract(pMessage, pScoreDestination);
     }
 }
 
@@ -2639,10 +2638,10 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_JoinMatchmakeSessionEx(Messag
 void MatchmakeExtensionProtocolClient::ProtoReturn_GetSimplePlayingSession(Message* pMessage,
                                                                            ProtocolCallContext* pCallContext)
 {
-    qList<SimplePlayingSession>* pList = static_cast<qList<SimplePlayingSession>*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_qlist<DDLClassMetaType<SimplePlayingSession> >::Extract(pMessage, pList);
+        _Type_qlist<DDLClassMetaType<SimplePlayingSession> >::Extract(pMessage, static_cast<qList<SimplePlayingSession>*>(pReturn));
         return;
     }
     qList<SimplePlayingSession> discarded[1];
@@ -2652,10 +2651,10 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_GetSimplePlayingSession(Messa
 void MatchmakeExtensionProtocolClient::ProtoReturn_GetSimpleCommunity(Message* pMessage,
                                                                       ProtocolCallContext* pCallContext)
 {
-    qList<SimpleCommunity>* pList = static_cast<qList<SimpleCommunity>*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_qlist<DDLClassMetaType<SimpleCommunity> >::Extract(pMessage, pList);
+        _Type_qlist<DDLClassMetaType<SimpleCommunity> >::Extract(pMessage, static_cast<qList<SimpleCommunity>*>(pReturn));
         return;
     }
     qList<SimpleCommunity> discarded[1];
@@ -2758,10 +2757,10 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_FindMatchmakeSessionByGatheri
 void MatchmakeExtensionProtocolClient::ProtoReturn_BrowseMatchmakeSessionNoHolder(Message* pMessage,
                                                                                   ProtocolCallContext* pCallContext)
 {
-    qList<MatchmakeSession>* pList = static_cast<qList<MatchmakeSession>*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_qlist<DDLClassMetaType<MatchmakeSession> >::Extract(pMessage, pList);
+        _Type_qlist<DDLClassMetaType<MatchmakeSession> >::Extract(pMessage, static_cast<qList<MatchmakeSession>*>(pReturn));
         return;
     }
     qList<MatchmakeSession> discarded[1];
@@ -2772,16 +2771,16 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_BrowseMatchmakeSessionWithHos
                                                                                               ProtocolCallContext* pCallContext)
 {
     qList<MatchmakeSession>* pFirstList = static_cast<qList<MatchmakeSession>*>(pCallContext->GetReturnValuePtr(0));
-    if (pFirstList == 0)
+    if (pFirstList != 0)
     {
-        qList<MatchmakeSession> discarded[1];
-        _Type_qlist<DDLClassMetaType<MatchmakeSession> >::Extract(pMessage, &discarded[0]);
+        _Type_qlist<DDLClassMetaType<MatchmakeSession> >::Extract(pMessage, pFirstList);
         if (pMessage->HasError())
             return;
     }
     else
     {
-        _Type_qlist<DDLClassMetaType<MatchmakeSession> >::Extract(pMessage, pFirstList);
+        qList<MatchmakeSession> discarded[1];
+        _Type_qlist<DDLClassMetaType<MatchmakeSession> >::Extract(pMessage, &discarded[0]);
         if (pMessage->HasError())
             return;
     }

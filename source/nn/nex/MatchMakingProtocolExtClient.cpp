@@ -24,10 +24,6 @@ MatchMakingProtocolExtClient::MatchMakingProtocolExtClient(unsigned short protoc
         SetProtocolID(protocol_id);
 }
 
-MatchMakingProtocolExtClient::~MatchMakingProtocolExtClient()
-{
-}
-
 void MatchMakingProtocolExtClient::ExtractCallSpecificResults(Message* pMessage,
                                                               ProtocolCallContext* pCallContext)
 {
@@ -45,7 +41,7 @@ void MatchMakingProtocolExtClient::ExtractCallSpecificResults(Message* pMessage,
 
 Protocol* MatchMakingProtocolExtClient::CreateResponder() const
 {
-    return new MatchMakingProtocolExtClient(0);
+    return new MatchMakingProtocolExtClient();
 }
 
 }}

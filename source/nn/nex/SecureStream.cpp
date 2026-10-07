@@ -28,11 +28,11 @@ enum
 
 SecureStream::SecureStream()
     : ConnectionOrientedStream(Stream::RendezVousSecure, 0)
-    , m_pAuthenticationClient(new AuthenticationClient())
-    , m_pSecureConnectionClient(new SecureConnectionClient())
-    , m_pCredentials(0)
+    , m_pAuthenticationClient(new AuthenticationClient)
+    , m_pSecureConnectionClient(new SecureConnectionClient)
 {
     m_pAssociatedStream = 0;
+    m_pCredentials = 0;
 }
 
 SecureStream::~SecureStream()

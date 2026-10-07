@@ -11,7 +11,6 @@ namespace nex
 class Invitation : public _DDL_Invitation
 {
 public:
-    virtual ~Invitation();
 };
 
 }

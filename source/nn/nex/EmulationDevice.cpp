@@ -13,10 +13,6 @@ EmulationDevice::EmulationDevice()
 {
 }
 
-EmulationDevice::~EmulationDevice()
-{
-}
-
 void EmulationDevice::Enable()
 {
     m_enabled = true;

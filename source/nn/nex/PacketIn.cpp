@@ -16,9 +16,5 @@ PacketIn::PacketIn()
     SetPayload(new Buffer(Buffer::GetDefaultBufferSize(), 0));
 }
 
-PacketIn::~PacketIn()
-{
-}
-
 }
 }

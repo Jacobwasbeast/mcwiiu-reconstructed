@@ -80,11 +80,7 @@ AccountManagementProtocolClient::AccountManagementProtocolClient(unsigned short 
         return;
     SetProtocolID(uiProtocolID);
     RVClientCore::AcquireInstance()->GetProtocolRegistry()->RegisterProtocol(
-        uiProtocolID, new AccountManagementProtocolClient(0));
-}
-
-AccountManagementProtocolClient::~AccountManagementProtocolClient()
-{
+        uiProtocolID, new AccountManagementProtocolClient());
 }
 
 void AccountManagementProtocolClient::ExtractCallSpecificResults(Message* pMessage,
@@ -103,7 +99,7 @@ void AccountManagementProtocolClient::ExtractCallSpecificResults(Message* pMessa
 
 Protocol* AccountManagementProtocolClient::CreateResponder() const
 {
-    return new AccountManagementProtocolClient(0);
+    return new AccountManagementProtocolClient();
 }
 
 void AccountManagementProtocolClient::ProtoReturn_CreateAccount(Message* pMessage, ProtocolCallContext* pCallContext)
@@ -284,9 +280,10 @@ void AccountManagementProtocolClient::ProtoReturn_ChangePassword(Message* pMessa
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 bool AccountManagementProtocolClient::CallChangePassword(ProtocolCallContext* pCallContext, bool* pSuccess, const String& rNewKey)
@@ -341,9 +338,10 @@ void AccountManagementProtocolClient::ProtoReturn_TestCapability(Message* pMessa
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 bool AccountManagementProtocolClient::CallTestCapability(ProtocolCallContext* pCallContext, bool* pSuccess, const unsigned int& rCapability)
@@ -396,10 +394,10 @@ bool AccountManagementProtocolClient::TestCapability_PrepareRequest(ProtocolCall
 
 void AccountManagementProtocolClient::ProtoReturn_GetName(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    String* pName = static_cast<String*>(pCallContext->GetReturnValuePtr(0));
+    void* pName = pCallContext->GetReturnValuePtr(0);
     if (pName != 0)
     {
-        _Type_string::Extract(pMessage, pName);
+        _Type_string::Extract(pMessage, static_cast<String*>(pName));
         return;
     }
     String discardedString[1];
@@ -527,9 +525,10 @@ void AccountManagementProtocolClient::ProtoReturn_GetPrivateData(Message* pMessa
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
     if (pMessage->HasError())
         return;
     DataHolder* pData = static_cast<DataHolder*>(pCallContext->GetReturnValuePtr(1));
@@ -594,9 +593,10 @@ void AccountManagementProtocolClient::ProtoReturn_GetPublicData(Message* pMessag
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
     if (pMessage->HasError())
         return;
     DataHolder* pData = static_cast<DataHolder*>(pCallContext->GetReturnValuePtr(1));
@@ -909,10 +909,10 @@ bool AccountManagementProtocolClient::UpdateCustomData_PrepareRequest(ProtocolCa
 
 void AccountManagementProtocolClient::ProtoReturn_FindByNameRegex(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    qList<BasicAccountInfo>* pAccountInfos = static_cast<qList<BasicAccountInfo>*>(pCallContext->GetReturnValuePtr(0));
+    void* pAccountInfos = pCallContext->GetReturnValuePtr(0);
     if (pAccountInfos != 0)
     {
-        _Type_std_list<DDLClassMetaType<BasicAccountInfo> >::Extract(pMessage, pAccountInfos);
+        _Type_std_list<DDLClassMetaType<BasicAccountInfo> >::Extract(pMessage, static_cast<qList<BasicAccountInfo>*>(pAccountInfos));
         return;
     }
     qList<BasicAccountInfo> discardedAccountInfos[1];
@@ -1117,10 +1117,10 @@ bool AccountManagementProtocolClient::UpdateStatus_PrepareRequest(ProtocolCallCo
 
 void AccountManagementProtocolClient::ProtoReturn_GetStatus(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    String* pStatus = static_cast<String*>(pCallContext->GetReturnValuePtr(0));
+    void* pStatus = pCallContext->GetReturnValuePtr(0);
     if (pStatus != 0)
     {
-        _Type_string::Extract(pMessage, pStatus);
+        _Type_string::Extract(pMessage, static_cast<String*>(pStatus));
         return;
     }
     String discardedString[1];
@@ -1178,50 +1178,50 @@ bool AccountManagementProtocolClient::GetStatus_PrepareRequest(ProtocolCallConte
 void AccountManagementProtocolClient::ProtoReturn_GetLastConnectionStats(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     DateTime* pDate1 = static_cast<DateTime*>(pCallContext->GetReturnValuePtr(0));
-    if (pDate1 == 0)
-    {
-        DateTime discardedDate[1];
-        unsigned long long uiDiscardedDate;
-        pMessage->ExtractPrimitive(&uiDiscardedDate);
-        discardedDate[0] = DateTime(uiDiscardedDate);
-    }
-    else
+    if (pDate1 != 0)
     {
         unsigned long long uiDate;
         pMessage->ExtractPrimitive(&uiDate);
         *pDate1 = DateTime(uiDate);
     }
-    if (pMessage->HasError())
-        return;
-    DateTime* pDate2 = static_cast<DateTime*>(pCallContext->GetReturnValuePtr(1));
-    if (pDate2 == 0)
+    else
     {
         DateTime discardedDate[1];
         unsigned long long uiDiscardedDate;
         pMessage->ExtractPrimitive(&uiDiscardedDate);
         discardedDate[0] = DateTime(uiDiscardedDate);
     }
-    else
+    if (pMessage->HasError())
+        return;
+    DateTime* pDate2 = static_cast<DateTime*>(pCallContext->GetReturnValuePtr(1));
+    if (pDate2 != 0)
     {
         unsigned long long uiDate;
         pMessage->ExtractPrimitive(&uiDate);
         *pDate2 = DateTime(uiDate);
     }
-    if (pMessage->HasError())
-        return;
-    DateTime* pDate3 = static_cast<DateTime*>(pCallContext->GetReturnValuePtr(2));
-    if (pDate3 == 0)
+    else
     {
         DateTime discardedDate[1];
         unsigned long long uiDiscardedDate;
         pMessage->ExtractPrimitive(&uiDiscardedDate);
         discardedDate[0] = DateTime(uiDiscardedDate);
     }
-    else
+    if (pMessage->HasError())
+        return;
+    DateTime* pDate3 = static_cast<DateTime*>(pCallContext->GetReturnValuePtr(2));
+    if (pDate3 != 0)
     {
         unsigned long long uiDate;
         pMessage->ExtractPrimitive(&uiDate);
         *pDate3 = DateTime(uiDate);
+    }
+    else
+    {
+        DateTime discardedDate[1];
+        unsigned long long uiDiscardedDate;
+        pMessage->ExtractPrimitive(&uiDiscardedDate);
+        discardedDate[0] = DateTime(uiDiscardedDate);
     }
 }
 
@@ -1281,9 +1281,10 @@ void AccountManagementProtocolClient::ProtoReturn_ResetPassword(Message* pMessag
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 bool AccountManagementProtocolClient::CallResetPassword(ProtocolCallContext* pCallContext, bool* pSuccess)
@@ -1389,29 +1390,33 @@ bool AccountManagementProtocolClient::CreateAccountWithCustomData_PrepareRequest
 void AccountManagementProtocolClient::ProtoReturn_RetrieveAccount(Message* pMessage, ProtocolCallContext* pCallContext)
 {
     AccountData* pAccountData = static_cast<AccountData*>(pCallContext->GetReturnValuePtr(0));
-    if (pAccountData == 0)
+    if (pAccountData != 0)
+    {
+        _DDL_AccountData::Extract(pMessage, pAccountData);
+        if (pMessage->HasError())
+            return;
+    }
+    else
     {
         AccountData discardedAccountData[1];
         _DDL_AccountData::Extract(pMessage, &discardedAccountData[0]);
+        if (pMessage->HasError())
+            return;
+    }
+    DataHolder* pPublicData = static_cast<DataHolder*>(pCallContext->GetReturnValuePtr(1));
+    if (pPublicData != 0)
+    {
+        DataAny::Extract(pMessage, pPublicData);
+        if (pMessage->HasError())
+            return;
     }
     else
-    {
-        _DDL_AccountData::Extract(pMessage, pAccountData);
-    }
-    if (pMessage->HasError())
-        return;
-    DataHolder* pPublicData = static_cast<DataHolder*>(pCallContext->GetReturnValuePtr(1));
-    if (pPublicData == 0)
     {
         DataHolder discardedData[1];
         DataAny::Extract(pMessage, &discardedData[0]);
+        if (pMessage->HasError())
+            return;
     }
-    else
-    {
-        DataAny::Extract(pMessage, pPublicData);
-    }
-    if (pMessage->HasError())
-        return;
     DataHolder* pPrivateData = static_cast<DataHolder*>(pCallContext->GetReturnValuePtr(2));
     if (pPrivateData != 0)
     {
@@ -1572,10 +1577,10 @@ bool AccountManagementProtocolClient::ChangePasswordByGuest_PrepareRequest(Proto
 
 void AccountManagementProtocolClient::ProtoReturn_FindByNameLike(Message* pMessage, ProtocolCallContext* pCallContext)
 {
-    qList<BasicAccountInfo>* pAccountInfos = static_cast<qList<BasicAccountInfo>*>(pCallContext->GetReturnValuePtr(0));
+    void* pAccountInfos = pCallContext->GetReturnValuePtr(0);
     if (pAccountInfos != 0)
     {
-        _Type_std_list<DDLClassMetaType<BasicAccountInfo> >::Extract(pMessage, pAccountInfos);
+        _Type_std_list<DDLClassMetaType<BasicAccountInfo> >::Extract(pMessage, static_cast<qList<BasicAccountInfo>*>(pAccountInfos));
         return;
     }
     qList<BasicAccountInfo> discardedAccountInfos[1];
@@ -1638,9 +1643,10 @@ void AccountManagementProtocolClient::ProtoReturn_CustomCreateAccount(Message* p
 {
     unsigned int uiDiscardedPrincipalID;
     unsigned int* pPrincipalID = static_cast<unsigned int*>(pCallContext->GetReturnValuePtr(0));
-    if (pPrincipalID == 0)
-        pPrincipalID = &uiDiscardedPrincipalID;
-    pMessage->ExtractPrimitive(pPrincipalID);
+    unsigned int* pDestination = &uiDiscardedPrincipalID;
+    if (pPrincipalID != 0)
+        pDestination = pPrincipalID;
+    pMessage->ExtractPrimitive(pDestination);
 }
 
 bool AccountManagementProtocolClient::CallCustomCreateAccount(ProtocolCallContext* pCallContext, const String& rName, const String& rKey, const unsigned int& rGroups, const String& rEmail, const DataHolder& rData, unsigned int* pPrincipalID)
@@ -1780,9 +1786,10 @@ void AccountManagementProtocolClient::ProtoReturn_LookupOrCreateAccount(Message*
 {
     unsigned int uiDiscardedPrincipalID;
     unsigned int* pPrincipalID = static_cast<unsigned int*>(pCallContext->GetReturnValuePtr(0));
-    if (pPrincipalID == 0)
-        pPrincipalID = &uiDiscardedPrincipalID;
-    pMessage->ExtractPrimitive(pPrincipalID);
+    unsigned int* pDestination = &uiDiscardedPrincipalID;
+    if (pPrincipalID != 0)
+        pDestination = pPrincipalID;
+    pMessage->ExtractPrimitive(pDestination);
 }
 
 bool AccountManagementProtocolClient::CallLookupOrCreateAccount(ProtocolCallContext* pCallContext, const String& rName, const String& rKey, const unsigned int& rGroups, const String& rEmail, const DataHolder& rData, unsigned int* pPrincipalID)
@@ -1845,9 +1852,10 @@ void AccountManagementProtocolClient::ProtoReturn_DisconnectPrincipal(Message* p
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 bool AccountManagementProtocolClient::CallDisconnectPrincipal(ProtocolCallContext* pCallContext, bool* pSuccess, const unsigned int& rPrincipalID)
@@ -1902,9 +1910,10 @@ void AccountManagementProtocolClient::ProtoReturn_DisconnectAllPrincipals(Messag
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 bool AccountManagementProtocolClient::CallDisconnectAllPrincipals(ProtocolCallContext* pCallContext, bool* pSuccess)

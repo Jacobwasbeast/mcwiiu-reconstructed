@@ -395,7 +395,7 @@ StreamManager* BackEndServices::CreateStreamManager() const
 {
     StreamManager* pStreamManager;
     if (m_pStreamManagerFactory == 0)
-        pStreamManager = new ClientStreamManager(Stream::RendezVousSecure);
+        pStreamManager = new ClientStreamManager();
     else
         pStreamManager = m_pStreamManagerFactory();
 

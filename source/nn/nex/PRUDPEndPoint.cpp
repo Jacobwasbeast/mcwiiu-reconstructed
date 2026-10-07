@@ -116,7 +116,7 @@ enum Limit
     DEFAULT_CONNECT_TIMEOUT = 10000000,
     INFINITE_TIMEOUT = -1,
     RETRANSMISSION_RESEND_LIMIT = 5,
-    MINIMUM_RETRANSMIT_MARGIN = 0x20,
+    MINIMUM_RETRANSMIT_MARGIN = 0x21,
     RTT_VARIATION_MASK = 0xFFFFFFFC,
     MAX_RESENDS_PER_ACK = 2
 };
@@ -292,9 +292,9 @@ unsigned int PRUDPEndPoint::GetRTTAverage() const
 
 void PRUDPEndPoint::AnalyzeRttRto(unsigned int uiRTO)
 {
-    if (m_endPointInfo.m_uiMaxRTO < uiRTO)
+    if (uiRTO > m_endPointInfo.m_uiMaxRTO)
         m_endPointInfo.m_uiMaxRTO = uiRTO;
-    if (m_endPointInfo.m_uiMinRTO > uiRTO)
+    if (uiRTO < m_endPointInfo.m_uiMinRTO)
         m_endPointInfo.m_uiMinRTO = uiRTO;
 }
 
@@ -355,9 +355,13 @@ PRUDPMessageInterface::SignatureMethod PRUDPEndPoint::DecideSignatureMethod(
 {
     if ((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_CONNECT)
     {
-        if (m_uiVersion == 1 &&
-            (GetSupportedFunctionsFlags() & FUNCTION_CONNECTION_SIGNATURE_NEGOTIATION) == 0)
-            return PRUDPMessageInterface::SIGNATURE_METHOD_4;
+        if (m_uiVersion == 1)
+        {
+            bool bNegotiationSupported =
+                (GetSupportedFunctionsFlags() & FUNCTION_CONNECTION_SIGNATURE_NEGOTIATION) != 0;
+            if (!bNegotiationSupported)
+                return PRUDPMessageInterface::SIGNATURE_METHOD_4;
+        }
     }
     return m_pMessageSelector->DecideSignatureMethod(pPacket, type, bFlag);
 }
@@ -398,7 +402,7 @@ bool PRUDPEndPoint::Defrag(PacketIn* pPacket)
             }
             else
             {
-                if (!m_defragBuffers[uiSubStreamID]->AttemptExpand(uiLength))
+                if (!m_defragBuffers[uiSubStreamID]->AttemptExpand(pPayload->GetLength()))
                     return false;
                 *m_defragBuffers[uiSubStreamID] += *pPayload;
             }
@@ -473,50 +477,53 @@ bool PRUDPEndPoint::IsDuplicateReorderingPacket(PacketIn* pPacket)
         return false;
     if ((uiFlags & PACKET_FLAG_RELIABLE) != 0)
         return false;
-    if ((uiFlags & PACKET_FLAG_ACK) == 0)
+    if ((uiFlags & PACKET_FLAG_ACK) != 0)
     {
-        if ((uiFlags & PACKET_FLAG_AGGREGATE_ACK) != 0)
+        if (pPacket->m_uiSubStreamID > m_uiMaxSubStreamID)
             return false;
-        if ((uiFlags & PACKET_FLAG_ALTERNATE_KEY_A) == 0 &&
-            (uiFlags & PACKET_FLAG_ALTERNATE_KEY_B) == 0)
-        {
-            if (m_expectedUnreliableSequence - pPacket->m_sequenceID <= 0)
-                return false;
-        }
-        else
-        {
-            if (m_uiBroadcastSessionID == 0)
-                return false;
-            if (m_expectedBroadcastSequence - pPacket->m_sequenceID <= 0)
-                return false;
-        }
+        return m_slidingWindows[pPacket->m_uiSubStreamID]->GetOldestUnacknowledged() >
+            pPacket->m_sequenceID ? true : false;
+    }
+    if ((uiFlags & PACKET_FLAG_AGGREGATE_ACK) != 0)
+        return false;
+    bool bLate;
+    if ((uiFlags & PACKET_FLAG_ALTERNATE_KEY_A) == 0 &&
+        (uiFlags & PACKET_FLAG_ALTERNATE_KEY_B) == 0)
+    {
+        bLate = m_expectedUnreliableSequence > pPacket->m_sequenceID;
+    }
+    else
+    {
+        if (m_uiBroadcastSessionID == 0)
+            return false;
+        bLate = m_expectedBroadcastSequence > pPacket->m_sequenceID;
+    }
+    if (bLate)
+    {
         ++m_endPointInfo.m_uiLatePackets;
         return true;
     }
-    if (m_uiMaxSubStreamID < pPacket->m_uiSubStreamID)
-        return false;
-    return m_slidingWindows[pPacket->m_uiSubStreamID]->GetOldestUnacknowledged() -
-        pPacket->m_sequenceID > 0;
+    return false;
 }
 
 bool PRUDPEndPoint::IsNegotiationConnectionSignatureVersion(const Packet* pPacket)
 {
-    if (pPacket->m_uiVersion != 0 &&
-        (pPacket->m_uiVersion != 1 || static_cast<unsigned char>(pPacket->m_unknown90) >= 2))
-        return true;
-    return false;
+    if (pPacket->m_uiVersion == 0 ||
+        (pPacket->m_uiVersion == 1 && static_cast<unsigned char>(pPacket->m_unknown90) < 2))
+        return false;
+    return true;
 }
 
 bool PRUDPEndPoint::IsSendAggregateACK()
 {
-    if (m_uiVersion != 0 && (m_uiSupportedFunctionsFlags & FUNCTION_AGGREGATE_ACK) != 0)
-        return true;
-    return false;
+    if (m_uiVersion == 0 || (m_uiSupportedFunctionsFlags & FUNCTION_AGGREGATE_ACK) == 0)
+        return false;
+    return true;
 }
 
 void PRUDPEndPoint::SetSupportedFunctionsFlags()
 {
-    unsigned int uiFunctions = 0;
+    unsigned long long uiFunctions = 0;
     unsigned int uiVersion = m_uiNegotiatedFlags & NEGOTIATED_VERSION_MASK;
     if (uiVersion != 0)
     {
@@ -549,8 +556,13 @@ bool PRUDPEndPoint::IsAnyPacketProcessed()
 
 int PRUDPEndPoint::GetMaxPacketSize()
 {
-    int iSize = RootTransport::GetInstance()->GetBufferSize() - Packet::GetOverhead();
-    if (!RootTransport::GetInstance()->GetRelay()->IsEnabled())
+    int iSize = RootTransport::GetInstance()->GetBufferSize();
+    iSize -= Packet::GetOverhead();
+    if (RootTransport::GetInstance()->GetRelay()->IsEnabled())
+    {
+        iSize -= MAX_UNRELIABLE_PAYLOAD_RESERVE_V1;
+    }
+    else
     {
         if (RootTransport::GetInstance()->GetRouter()->IsEnabled() == false && m_uiVersion != 0)
         {
@@ -560,10 +572,6 @@ int PRUDPEndPoint::GetMaxPacketSize()
                 return iSize;
         }
         iSize -= MAX_UNRELIABLE_PAYLOAD_RESERVE;
-    }
-    else
-    {
-        iSize -= MAX_UNRELIABLE_PAYLOAD_RESERVE_V1;
     }
     return iSize;
 }
@@ -703,9 +711,10 @@ void PRUDPEndPoint::SendACK(PacketIn* pPacket)
 
 void PRUDPEndPoint::SendResetDisconnectPacket()
 {
+    PacketOut* pPacket;
     for (int i = 0; i < 2; ++i)
     {
-        PacketOut* pPacket = new PacketOut(this, PACKET_TYPE_DISCONNECT, 0, 0, 0);
+        pPacket = new PacketOut(this, PACKET_TYPE_DISCONNECT, 0, 0, 0);
         pPacket->m_uiVersion = m_uiVersion;
         SendPacket(pPacket);
         pPacket->ReleaseRef();
@@ -714,6 +723,7 @@ void PRUDPEndPoint::SendResetDisconnectPacket()
 
 void PRUDPEndPoint::StartPing()
 {
+    Timeout* pTimeout;
     if (m_pPingPacket == 0)
     {
         m_pPingPacket = new PacketOut(this, PACKET_TYPE_PING, PACKET_FLAG_NEED_ACK, 0, 0);
@@ -726,7 +736,8 @@ void PRUDPEndPoint::StartPing()
         }
         else
         {
-            m_pPingPacket->m_pTimeout->SetRTO(GetKeepAliveTimeout());
+            pTimeout = m_pPingPacket->m_pTimeout;
+            pTimeout->SetRTO(GetKeepAliveTimeout());
             static_cast<PRUDPStream*>(m_pStream)->GetTimeoutManager().SchedulePacketTimeout(
                 m_pPingPacket);
         }
@@ -755,17 +766,17 @@ void PRUDPEndPoint::SetKeepAliveTimeout(unsigned int uiTimeout)
 
 void PRUDPEndPoint::SignalFaultEvent(unsigned int uiError, bool bProcessNow)
 {
-    if (!m_bFaultIgnored)
+    if (m_bFaultIgnored)
     {
-        if (!bProcessNow)
-            m_uiSignaledFaultError = uiError;
-        else
-            ProcessFaultEvent(uiError);
-        if (uiError != NET_FAULT_KEEP_ALIVE_TIMEOUT)
-            m_uiFaultReason = uiError;
+        m_bFaultIgnored = false;
         return;
     }
-    m_bFaultIgnored = false;
+    if (bProcessNow)
+        ProcessFaultEvent(uiError);
+    else
+        m_uiSignaledFaultError = uiError;
+    if (uiError != NET_FAULT_KEEP_ALIVE_TIMEOUT)
+        m_uiFaultReason = uiError;
 }
 
 bool PRUDPEndPoint::SetConnectionState(_ConnectionState state)
@@ -779,25 +790,22 @@ bool PRUDPEndPoint::SetConnectionState(_ConnectionState state)
         qResult result(RESULT_CONNECTION_FAILED);
         if (previousState == Connecting)
         {
-            if (state == Connected)
-                result = qResult(RESULT_SUCCESS);
-            else
-                result = qResult(RESULT_CONNECTION_FAILED);
+            result = state == Connected ? qResult(RESULT_SUCCESS) :
+                                          qResult(RESULT_CONNECTION_FAILED);
         }
         if (previousState == Disconnecting)
         {
-            if (state == NotConnected)
-                result = qResult(RESULT_SUCCESS);
-            else
-                result = qResult(RESULT_CONNECTION_FAILED);
+            result = state == NotConnected ? qResult(RESULT_SUCCESS) :
+                                             qResult(RESULT_CONNECTION_FAILED);
         }
+        qResult callbackResult = result;
         ConnectionCallback pCallback = m_ioRequest.m_pCallback;
         if (m_ioRequest.m_pRequest != 0)
             m_ioRequest.m_pRequest->ReleaseRef();
         m_ioRequest.m_pResponse = 0;
         m_ioRequest.m_pRequest = 0;
         m_ioRequest.m_pCallback = 0;
-        pCallback(this, result, &m_ioRequest.m_userContext);
+        pCallback(this, callbackResult, &m_ioRequest.m_userContext);
     }
     return true;
 }
@@ -807,12 +815,13 @@ bool PRUDPEndPoint::CompleteIO(qResult result)
     ConnectionCallback pCallback = m_ioRequest.m_pCallback;
     if (pCallback != 0)
     {
+        qResult callbackResult = result;
         if (m_ioRequest.m_pRequest != 0)
             m_ioRequest.m_pRequest->ReleaseRef();
-        m_ioRequest.m_pResponse = 0;
         m_ioRequest.m_pRequest = 0;
         m_ioRequest.m_pCallback = 0;
-        pCallback(this, result, &m_ioRequest.m_userContext);
+        m_ioRequest.m_pResponse = 0;
+        pCallback(this, callbackResult, &m_ioRequest.m_userContext);
         if (m_ioRequest.m_pRequest != 0)
             m_ioRequest.m_pRequest->ReleaseRef();
         m_ioRequest.m_pResponse = 0;

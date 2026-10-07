@@ -20,9 +20,8 @@ IORequestContext::~IORequestContext()
     if (m_pRequest != 0)
         m_pRequest->ReleaseRef();
 
+    m_pResponse = m_pRequest = 0;
     m_pCallback = 0;
-    m_pRequest = 0;
-    m_pResponse = 0;
 }
 
 }

@@ -41,10 +41,6 @@ NotificationEvent::NotificationEvent(const NotificationEvent& other)
 {
 }
 
-NotificationEvent::~NotificationEvent()
-{
-}
-
 uint32_t NotificationEvent::GetType() const
 {
     return m_uiType;

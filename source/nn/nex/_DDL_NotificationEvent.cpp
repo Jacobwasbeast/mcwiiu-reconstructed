@@ -13,10 +13,6 @@ _DDL_NotificationEvent::_DDL_NotificationEvent()
 {
 }
 
-_DDL_NotificationEvent::~_DDL_NotificationEvent()
-{
-}
-
 _DDL_NotificationEvent& _DDL_NotificationEvent::operator=(const _DDL_NotificationEvent& rSource)
 {
     m_uiValue = rSource.m_uiValue;

@@ -86,10 +86,6 @@ MatchMakingProtocolClient::MatchMakingProtocolClient(unsigned short protocol_id)
         SetProtocolID(protocol_id);
 }
 
-MatchMakingProtocolClient::~MatchMakingProtocolClient()
-{
-}
-
 void MatchMakingProtocolClient::ExtractCallSpecificResults(Message* pMessage,
                                                            ProtocolCallContext* pCallContext)
 {
@@ -106,7 +102,7 @@ void MatchMakingProtocolClient::ExtractCallSpecificResults(Message* pMessage,
 
 Protocol* MatchMakingProtocolClient::CreateResponder() const
 {
-    return new MatchMakingProtocolClient(0);
+    return new MatchMakingProtocolClient();
 }
 
 bool MatchMakingProtocolClient::CallRegisterGathering(ProtocolCallContext* pCallContext,
@@ -2302,9 +2298,10 @@ void MatchMakingProtocolClient::ProtoReturn_RegisterGathering(Message* pMessage,
 {
     unsigned int uiDiscardedGatheringID;
     unsigned int* pGatheringID = static_cast<unsigned int*>(pCallContext->GetReturnValuePtr(0));
-    if (pGatheringID == 0)
-        pGatheringID = &uiDiscardedGatheringID;
-    _Type_uint32::Extract(pMessage, pGatheringID);
+    unsigned int* pDestination = &uiDiscardedGatheringID;
+    if (pGatheringID != 0)
+        pDestination = pGatheringID;
+    _Type_uint32::Extract(pMessage, pDestination);
 }
 
 void MatchMakingProtocolClient::ProtoReturn_UnregisterGathering(Message* pMessage,
@@ -2312,9 +2309,10 @@ void MatchMakingProtocolClient::ProtoReturn_UnregisterGathering(Message* pMessag
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_UnregisterGatherings(Message* pMessage,
@@ -2322,9 +2320,10 @@ void MatchMakingProtocolClient::ProtoReturn_UnregisterGatherings(Message* pMessa
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_UpdateGathering(Message* pMessage,
@@ -2332,9 +2331,10 @@ void MatchMakingProtocolClient::ProtoReturn_UpdateGathering(Message* pMessage,
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_Invite(Message* pMessage,
@@ -2342,9 +2342,10 @@ void MatchMakingProtocolClient::ProtoReturn_Invite(Message* pMessage,
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_AcceptInvitation(Message* pMessage,
@@ -2352,9 +2353,10 @@ void MatchMakingProtocolClient::ProtoReturn_AcceptInvitation(Message* pMessage,
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_DeclineInvitation(Message* pMessage,
@@ -2362,9 +2364,10 @@ void MatchMakingProtocolClient::ProtoReturn_DeclineInvitation(Message* pMessage,
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_CancelInvitation(Message* pMessage,
@@ -2372,18 +2375,19 @@ void MatchMakingProtocolClient::ProtoReturn_CancelInvitation(Message* pMessage,
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_GetInvitationsSent(Message* pMessage,
                                                                ProtocolCallContext* pCallContext)
 {
-    qList<Invitation>* pList = static_cast<qList<Invitation>*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_std_list<DDLClassMetaType<Invitation> >::Extract(pMessage, pList);
+        _Type_std_list<DDLClassMetaType<Invitation> >::Extract(pMessage, static_cast<qList<Invitation>*>(pReturn));
         return;
     }
     qList<Invitation> discarded[1];
@@ -2393,10 +2397,10 @@ void MatchMakingProtocolClient::ProtoReturn_GetInvitationsSent(Message* pMessage
 void MatchMakingProtocolClient::ProtoReturn_GetInvitationsReceived(Message* pMessage,
                                                                    ProtocolCallContext* pCallContext)
 {
-    qList<Invitation>* pList = static_cast<qList<Invitation>*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_std_list<DDLClassMetaType<Invitation> >::Extract(pMessage, pList);
+        _Type_std_list<DDLClassMetaType<Invitation> >::Extract(pMessage, static_cast<qList<Invitation>*>(pReturn));
         return;
     }
     qList<Invitation> discarded[1];
@@ -2408,9 +2412,10 @@ void MatchMakingProtocolClient::ProtoReturn_Participate(Message* pMessage,
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_CancelParticipation(Message* pMessage,
@@ -2418,9 +2423,10 @@ void MatchMakingProtocolClient::ProtoReturn_CancelParticipation(Message* pMessag
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_GetParticipants(Message* pMessage,
@@ -2441,9 +2447,10 @@ void MatchMakingProtocolClient::ProtoReturn_AddParticipants(Message* pMessage,
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_GetDetailedParticipants(Message* pMessage,
@@ -2475,10 +2482,10 @@ void MatchMakingProtocolClient::ProtoReturn_GetParticipantsURLs(Message* pMessag
 void MatchMakingProtocolClient::ProtoReturn_FindByType(Message* pMessage,
                                                        ProtocolCallContext* pCallContext)
 {
-    GatheringHolderList* pList = static_cast<GatheringHolderList*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_std_list<GatheringAny>::Extract(pMessage, pList);
+        _Type_std_list<GatheringAny>::Extract(pMessage, static_cast<GatheringHolderList*>(pReturn));
         return;
     }
     GatheringHolderList discarded[1];
@@ -2488,10 +2495,10 @@ void MatchMakingProtocolClient::ProtoReturn_FindByType(Message* pMessage,
 void MatchMakingProtocolClient::ProtoReturn_FindByDescription(Message* pMessage,
                                                               ProtocolCallContext* pCallContext)
 {
-    GatheringHolderList* pList = static_cast<GatheringHolderList*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_std_list<GatheringAny>::Extract(pMessage, pList);
+        _Type_std_list<GatheringAny>::Extract(pMessage, static_cast<GatheringHolderList*>(pReturn));
         return;
     }
     GatheringHolderList discarded[1];
@@ -2501,10 +2508,10 @@ void MatchMakingProtocolClient::ProtoReturn_FindByDescription(Message* pMessage,
 void MatchMakingProtocolClient::ProtoReturn_FindByDescriptionRegex(Message* pMessage,
                                                                    ProtocolCallContext* pCallContext)
 {
-    GatheringHolderList* pList = static_cast<GatheringHolderList*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_std_list<GatheringAny>::Extract(pMessage, pList);
+        _Type_std_list<GatheringAny>::Extract(pMessage, static_cast<GatheringHolderList*>(pReturn));
         return;
     }
     GatheringHolderList discarded[1];
@@ -2514,10 +2521,10 @@ void MatchMakingProtocolClient::ProtoReturn_FindByDescriptionRegex(Message* pMes
 void MatchMakingProtocolClient::ProtoReturn_FindByID(Message* pMessage,
                                                      ProtocolCallContext* pCallContext)
 {
-    GatheringHolderList* pList = static_cast<GatheringHolderList*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_std_list<GatheringAny>::Extract(pMessage, pList);
+        _Type_std_list<GatheringAny>::Extract(pMessage, static_cast<GatheringHolderList*>(pReturn));
         return;
     }
     GatheringHolderList discarded[1];
@@ -2529,9 +2536,10 @@ void MatchMakingProtocolClient::ProtoReturn_FindBySingleID(Message* pMessage,
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
     if (pMessage->HasError())
         return;
     GatheringHolder* pGathering = static_cast<GatheringHolder*>(pCallContext->GetReturnValuePtr(1));
@@ -2547,10 +2555,10 @@ void MatchMakingProtocolClient::ProtoReturn_FindBySingleID(Message* pMessage,
 void MatchMakingProtocolClient::ProtoReturn_FindByOwner(Message* pMessage,
                                                         ProtocolCallContext* pCallContext)
 {
-    GatheringHolderList* pList = static_cast<GatheringHolderList*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_std_list<GatheringAny>::Extract(pMessage, pList);
+        _Type_std_list<GatheringAny>::Extract(pMessage, static_cast<GatheringHolderList*>(pReturn));
         return;
     }
     GatheringHolderList discarded[1];
@@ -2560,10 +2568,10 @@ void MatchMakingProtocolClient::ProtoReturn_FindByOwner(Message* pMessage,
 void MatchMakingProtocolClient::ProtoReturn_FindByParticipants(Message* pMessage,
                                                                ProtocolCallContext* pCallContext)
 {
-    GatheringHolderList* pList = static_cast<GatheringHolderList*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_std_list<GatheringAny>::Extract(pMessage, pList);
+        _Type_std_list<GatheringAny>::Extract(pMessage, static_cast<GatheringHolderList*>(pReturn));
         return;
     }
     GatheringHolderList discarded[1];
@@ -2573,10 +2581,10 @@ void MatchMakingProtocolClient::ProtoReturn_FindByParticipants(Message* pMessage
 void MatchMakingProtocolClient::ProtoReturn_FindInvitations(Message* pMessage,
                                                             ProtocolCallContext* pCallContext)
 {
-    GatheringHolderList* pList = static_cast<GatheringHolderList*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_std_list<GatheringAny>::Extract(pMessage, pList);
+        _Type_std_list<GatheringAny>::Extract(pMessage, static_cast<GatheringHolderList*>(pReturn));
         return;
     }
     GatheringHolderList discarded[1];
@@ -2586,10 +2594,10 @@ void MatchMakingProtocolClient::ProtoReturn_FindInvitations(Message* pMessage,
 void MatchMakingProtocolClient::ProtoReturn_FindBySQLQuery(Message* pMessage,
                                                            ProtocolCallContext* pCallContext)
 {
-    GatheringHolderList* pList = static_cast<GatheringHolderList*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_std_list<GatheringAny>::Extract(pMessage, pList);
+        _Type_std_list<GatheringAny>::Extract(pMessage, static_cast<GatheringHolderList*>(pReturn));
         return;
     }
     GatheringHolderList discarded[1];
@@ -2601,9 +2609,10 @@ void MatchMakingProtocolClient::ProtoReturn_LaunchSession(Message* pMessage,
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_UpdateSessionURL(Message* pMessage,
@@ -2611,9 +2620,10 @@ void MatchMakingProtocolClient::ProtoReturn_UpdateSessionURL(Message* pMessage,
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_GetSessionURL(Message* pMessage,
@@ -2640,18 +2650,19 @@ void MatchMakingProtocolClient::ProtoReturn_GetState(Message* pMessage,
                                                      ProtocolCallContext* pCallContext)
 {
     bool bDiscardedSuccess;
-    bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
+    unsigned int uiDiscardedState;
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    bool* pSuccess = &bDiscardedSuccess;
+    if (pReturn != 0)
+        pSuccess = static_cast<bool*>(pReturn);
     *pMessage >> *pSuccess;
-    if (!pMessage->HasError())
-    {
-        unsigned int uiDiscardedState;
-        unsigned int* pState = static_cast<unsigned int*>(pCallContext->GetReturnValuePtr(1));
-        if (pState == 0)
-            pState = &uiDiscardedState;
-        _Type_uint32::Extract(pMessage, pState);
-    }
+    if (pMessage->HasError())
+        return;
+    pReturn = pCallContext->GetReturnValuePtr(1);
+    unsigned int* pState = &uiDiscardedState;
+    if (pReturn != 0)
+        pState = static_cast<unsigned int*>(pReturn);
+    _Type_uint32::Extract(pMessage, pState);
 }
 
 void MatchMakingProtocolClient::ProtoReturn_SetState(Message* pMessage,
@@ -2659,9 +2670,10 @@ void MatchMakingProtocolClient::ProtoReturn_SetState(Message* pMessage,
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_ReportStats(Message* pMessage,
@@ -2669,9 +2681,10 @@ void MatchMakingProtocolClient::ProtoReturn_ReportStats(Message* pMessage,
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_GetStats(Message* pMessage,
@@ -2699,9 +2712,10 @@ void MatchMakingProtocolClient::ProtoReturn_DeleteGathering(Message* pMessage,
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_GetPendingDeletions(Message* pMessage,
@@ -2709,15 +2723,16 @@ void MatchMakingProtocolClient::ProtoReturn_GetPendingDeletions(Message* pMessag
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
     if (pMessage->HasError())
         return;
-    qList<DeletionEntry>* pList = static_cast<qList<DeletionEntry>*>(pCallContext->GetReturnValuePtr(1));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(1);
+    if (pReturn != 0)
     {
-        _Type_std_list<DDLClassMetaType<DeletionEntry> >::Extract(pMessage, pList);
+        _Type_std_list<DDLClassMetaType<DeletionEntry> >::Extract(pMessage, static_cast<qList<DeletionEntry>*>(pReturn));
         return;
     }
     qList<DeletionEntry> discarded[1];
@@ -2729,9 +2744,10 @@ void MatchMakingProtocolClient::ProtoReturn_DeleteFromDeletions(Message* pMessag
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_MigrateGatheringOwnershipV1(Message* pMessage,
@@ -2739,18 +2755,19 @@ void MatchMakingProtocolClient::ProtoReturn_MigrateGatheringOwnershipV1(Message*
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
 }
 
 void MatchMakingProtocolClient::ProtoReturn_FindByDescriptionLike(Message* pMessage,
                                                                   ProtocolCallContext* pCallContext)
 {
-    GatheringHolderList* pList = static_cast<GatheringHolderList*>(pCallContext->GetReturnValuePtr(0));
-    if (pList != 0)
+    void* pReturn = pCallContext->GetReturnValuePtr(0);
+    if (pReturn != 0)
     {
-        _Type_std_list<GatheringAny>::Extract(pMessage, pList);
+        _Type_std_list<GatheringAny>::Extract(pMessage, static_cast<GatheringHolderList*>(pReturn));
         return;
     }
     GatheringHolderList discarded[1];

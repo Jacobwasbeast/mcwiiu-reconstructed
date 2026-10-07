@@ -20,8 +20,7 @@ class qResult;
 class TicketGrantingProtocolClient : public ClientProtocol
 {
 public:
-    explicit TicketGrantingProtocolClient(unsigned short uiProtocolID);
-    virtual ~TicketGrantingProtocolClient();
+    explicit TicketGrantingProtocolClient(unsigned short uiProtocolID = 0);
 
     virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
     virtual Protocol* CreateResponder() const;

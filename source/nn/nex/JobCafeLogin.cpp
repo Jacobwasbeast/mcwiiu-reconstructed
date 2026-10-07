@@ -78,8 +78,11 @@ JobCafeLogin::~JobCafeLogin()
         if (m_pAuthenticationThread->IsLaunched() && !m_pAuthenticationThread->IsFinished())
             m_pAuthenticationThread->Wait(AUTHENTICATION_THREAD_WAIT_FOREVER);
 
-        delete m_pAuthenticationThread;
-        m_pAuthenticationThread = 0;
+        if (m_pAuthenticationThread != 0)
+        {
+            delete m_pAuthenticationThread;
+            m_pAuthenticationThread = 0;
+        }
     }
 }
 

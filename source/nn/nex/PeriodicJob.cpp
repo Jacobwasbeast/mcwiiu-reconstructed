@@ -12,10 +12,6 @@ PeriodicJob::PeriodicJob(JobType jobType, const DebugString& rDebugString)
     SetToWaiting(m_waitContext);
 }
 
-PeriodicJob::~PeriodicJob()
-{
-}
-
 void PeriodicJob::SetDefaultPostExecutionState()
 {
     if (m_iPeriod > 0)

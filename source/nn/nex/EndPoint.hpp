@@ -118,6 +118,7 @@ public:
 
 protected:
     friend class Protocol;
+    friend class NATTraversalRelayClient;
     friend class SecureEndPoint;
     friend class ConnectionManager;
 

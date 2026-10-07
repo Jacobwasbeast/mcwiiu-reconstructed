@@ -17,7 +17,9 @@ public:
     {
     }
 
-    virtual ~DynamicGathering();
+    virtual ~DynamicGathering()
+    {
+    }
 
     virtual String GetGatheringType() const;
 

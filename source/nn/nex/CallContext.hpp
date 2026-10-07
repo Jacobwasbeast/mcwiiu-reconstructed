@@ -90,6 +90,7 @@ protected:
 private:
     friend class CallContextRegister;
     friend class ClientProtocol;
+    friend class JobCallContextCallback;
     friend class JobConnectEndPoint;
     friend class JobPerformNATCheck;
     friend class ConnectionManager;

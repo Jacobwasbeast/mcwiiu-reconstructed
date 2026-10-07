@@ -15,7 +15,7 @@ class EndPoint;
 class ClientStreamManager : public StreamManager
 {
 public:
-    explicit ClientStreamManager(Stream::Type type);
+    explicit ClientStreamManager(Stream::Type type = Stream::RendezVousSecure);
     virtual ~ClientStreamManager();
 
     virtual void Receive(EndPoint* pEndPoint, Buffer* pBuffer, unsigned char ucParameter);

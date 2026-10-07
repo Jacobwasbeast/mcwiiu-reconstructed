@@ -10,8 +10,6 @@ namespace nex
 
 class DeletionEntry : public _DDL_DeletionEntry
 {
-public:
-    virtual ~DeletionEntry();
 };
 
 }

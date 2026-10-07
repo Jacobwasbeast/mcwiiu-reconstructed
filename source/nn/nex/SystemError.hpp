@@ -1,12 +1,14 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_SYSTEMERROR_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_SYSTEMERROR_HPP
 
+#include "nn/nex/RootObject.hpp"
+
 namespace nn
 {
 namespace nex
 {
 
-class SystemError
+class SystemError : public RootObject
 {
 public:
     SystemError(wchar_t* file, unsigned int line);

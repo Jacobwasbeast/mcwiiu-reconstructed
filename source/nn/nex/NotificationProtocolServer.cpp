@@ -8,10 +8,6 @@ namespace nn
 namespace nex
 {
 
-_Proto_NotificationProtocolServer::~_Proto_NotificationProtocolServer()
-{
-}
-
 void _Proto_NotificationProtocolServer::DispatchProtocolMessage(
     Message* pRequest, Message* pResponse, bool* pResponseRequired, EndPoint*)
 {

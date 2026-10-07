@@ -13,6 +13,7 @@
 #include "nn/nex/Socket.hpp"
 #include "nn/nex/StationURL.hpp"
 #include "nn/nex/StepSequenceJob.hpp"
+#include "nn/nex/RootObject.hpp"
 
 namespace nn
 {
@@ -126,6 +127,21 @@ private:
     NATProperties m_natProperties;
     RecvNATCheckMessage m_aReceived[RECEIVED_MESSAGE_COUNT];
     bool m_bRelayProbe;
+};
+
+class NATCheckClient : public RootObject
+{
+public:
+    explicit NATCheckClient(const InetAddress& rAddress);
+    ~NATCheckClient();
+
+    bool DetectFullNATProperties(CallContext* pCallContext);
+    bool DetectSimplifiedNATProperties(CallContext* pCallContext);
+    bool DetectNATCurrentPortMapping(CallContext* pCallContext, bool bRelayProbe);
+
+private:
+    uint32_t m_unknown0;
+    InetAddress m_address;
 };
 
 }

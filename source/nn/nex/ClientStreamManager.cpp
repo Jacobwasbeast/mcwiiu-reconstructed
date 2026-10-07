@@ -13,7 +13,7 @@ ClientStreamManager::ClientStreamManager(Stream::Type type)
     : StreamManager(type, RootTransport::GetInstance())
     , m_pCredentials(0)
 {
-    m_pProtocolRequestBroker = new ClientProtocolRequestBroker();
+    m_pProtocolRequestBroker = new ClientProtocolRequestBroker;
 }
 
 ClientStreamManager::~ClientStreamManager()

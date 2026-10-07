@@ -191,7 +191,7 @@ StreamManager* JobBackEndServicesLogin::CreateStreamManager() const
 
     if (m_pStreamManagerFactory == 0)
     {
-        pStreamManager = new ClientStreamManager(Stream::RendezVousSecure);
+        pStreamManager = new ClientStreamManager();
         bInitialized = pStreamManager->Initialize(m_pBackEndServices->m_uiPort,
             m_pBackEndServices->m_uiStreamFlags, m_pBackEndServices->m_uiStreamParameter);
     }
@@ -213,7 +213,7 @@ StreamManager* JobBackEndServicesLogin::CreateStreamManager() const
     }
     else
     {
-        SecureStream* pSecureStream = new SecureStream;
+        SecureStream* pSecureStream = new SecureStream();
         pSecureStream->SetAssociatedStream(pStreamManager->GetStream());
         pStreamManager->AssociateSecureStream(pSecureStream, SecureStreamConnectionFilter);
     }

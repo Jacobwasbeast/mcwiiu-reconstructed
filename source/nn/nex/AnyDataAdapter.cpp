@@ -28,10 +28,15 @@ AnyDataAdapter::~AnyDataAdapter()
 
 Data* AnyDataAdapter::FindPrototype(const String& rType) const
 {
-    for (PrototypeList::iterator it = s_pPrototypes->begin(); it != s_pPrototypes->end(); ++it)
+    PrototypeList::iterator it = s_pPrototypes->begin();
+    if (it != s_pPrototypes->end())
     {
-        if (String::IsEqual((*it)->GetDataType(), rType))
-            return *it;
+        do
+        {
+            if (String::IsEqual((*it)->GetDataType(), rType))
+                return *it;
+            ++it;
+        } while (it != s_pPrototypes->end());
     }
     return 0;
 }
@@ -64,8 +69,9 @@ bool AnyDataAdapter::UnregisterPrototype(const String& rType)
 
 void AnyDataAdapter::UnregisterAllPrototypes()
 {
-    while (s_pPrototypes->begin() != s_pPrototypes->end())
-        UnregisterPrototype((*s_pPrototypes->begin())->GetDataType());
+    PrototypeList::iterator it;
+    while ((it = s_pPrototypes->begin()) != s_pPrototypes->end())
+        UnregisterPrototype((*it)->GetDataType());
 }
 
 Data* AnyDataAdapter::CreateObject(const String& rType, bool bCompactFormat) const

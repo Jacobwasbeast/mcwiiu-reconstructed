@@ -18,8 +18,8 @@ CompressionAlgorithm::CompressionAlgorithm()
     : m_criticalSection(0x20000000), m_compressionProfile(L"Compression", 0, L""),
       m_decompressionProfile(L"Decompression", 0, L"")
 {
-    m_uiTotalDestinationLength = 0;
     m_uiTotalSourceLength = 0;
+    m_uiTotalDestinationLength = 0;
 }
 
 CompressionAlgorithm::~CompressionAlgorithm()

@@ -14,9 +14,13 @@ StreamTable::StreamTable()
 {
 }
 
+StreamTable::~StreamTable()
+{
+}
+
 ConnectionOrientedStream* StreamTable::FindStream(const StationURL* pStationURL)
 {
-    for (StreamList::iterator it = m_streams.begin(); it != m_streams.end(); ++it)
+    for (StreamList::const_iterator it = m_streams.begin(); it != m_streams.end(); ++it)
     {
         if ((*it)->ResponsibleForURL(pStationURL))
             return *it;
@@ -26,7 +30,7 @@ ConnectionOrientedStream* StreamTable::FindStream(const StationURL* pStationURL)
 
 ConnectionOrientedStream* StreamTable::FindStream(wchar_t* pType)
 {
-    for (StreamList::iterator it = m_streams.begin(); it != m_streams.end(); ++it)
+    for (StreamList::const_iterator it = m_streams.begin(); it != m_streams.end(); ++it)
     {
         if (std::wcscmp((*it)->GetURLType(), pType) == 0)
             return *it;

@@ -33,6 +33,7 @@ private:
     friend class JobBackEndServicesLogin;
     friend class JobBackEndServicesLoginWithData;
     friend class JobBackEndServicesLogout;
+    friend class NATTraversalRelayClient;
     friend class SecureConnectionClient;
     friend class SecureStream;
     friend class KerberosAuthentication;

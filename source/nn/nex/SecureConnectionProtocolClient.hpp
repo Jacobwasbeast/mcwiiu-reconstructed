@@ -22,8 +22,7 @@ class qResult;
 class SecureConnectionProtocolClient : public ClientProtocol
 {
 public:
-    explicit SecureConnectionProtocolClient(unsigned short uiProtocolID);
-    virtual ~SecureConnectionProtocolClient();
+    explicit SecureConnectionProtocolClient(unsigned short uiProtocolID = 0);
 
     virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
     virtual Protocol* CreateResponder() const;

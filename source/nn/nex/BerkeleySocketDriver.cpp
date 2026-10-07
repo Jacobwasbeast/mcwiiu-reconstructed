@@ -140,7 +140,12 @@ void BerkeleySocketDriver::BerkeleySocket::Close()
 
 bool BerkeleySocketDriver::BerkeleySocket::Shutdown()
 {
-    return shutdown(m_iHandle, SHUT_RDWR) < 0;
+    int iResult = shutdown(m_iHandle, SHUT_RDWR);
+    bool bFailed = false;
+    if (iResult < 0)
+        bFailed = true;
+
+    return bFailed;
 }
 
 bool BerkeleySocketDriver::BerkeleySocket::Bind(unsigned short& rPort)
@@ -188,13 +193,15 @@ SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::LastSocketErrorToRes
     const wchar_t* pContext, int iResult)
 {
     unsigned int uiError = GetLastSocketError(iResult);
-    if (uiError == SOCKET_ERROR_WOULD_BLOCK)
+    switch (uiError)
+    {
+    case SOCKET_ERROR_WOULD_BLOCK:
         return RESULT_WOULD_BLOCK;
-
-    if (uiError == SOCKET_ERROR_CLOSED)
+    case SOCKET_ERROR_CLOSED:
         return RESULT_CLOSED;
-
-    return RESULT_FAILURE;
+    default:
+        return RESULT_FAILURE;
+    }
 }
 
 SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::RecvFrom(unsigned char* pBuffer,
@@ -266,19 +273,15 @@ SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::Connect(
     to.sin_addr.s_addr = htonl(rAddress.m_uiAddress);
     to.sin_port = htons(rAddress.m_uiPort);
     int iResult = connect(m_iHandle, reinterpret_cast<const sockaddr*>(&to), SOCKET_ADDRESS_SIZE);
-    _Result result;
     if (iResult < 0)
     {
-        result = RESULT_FAILURE;
         if (GetLastSocketError(iResult) == SOCKET_ERROR_IN_PROGRESS)
             return RESULT_IN_PROGRESS;
-    }
-    else
-    {
-        result = RESULT_SUCCESS;
+
+        return RESULT_FAILURE;
     }
 
-    return result;
+    return RESULT_SUCCESS;
 }
 
 SocketDriver::_Result BerkeleySocketDriver::BerkeleySocket::Recv(unsigned char* pBuffer,

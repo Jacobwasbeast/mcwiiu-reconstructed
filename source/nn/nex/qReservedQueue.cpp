@@ -9,7 +9,7 @@ template <>
 void qReservedQueue<unsigned char>::push(const unsigned char* pElements, unsigned int uiCount)
 {
     unsigned int uiRoom = m_uiCapacity - m_uiBack;
-    if (uiCount < uiRoom)
+    if (uiRoom > uiCount)
     {
         memcpy(&m_elements[0] + m_uiBack, pElements, uiCount);
         m_iSize += uiCount;

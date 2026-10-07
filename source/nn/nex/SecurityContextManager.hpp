@@ -10,7 +10,7 @@ namespace nn
 namespace nex
 {
 
-class SecurityContext
+class SecurityContext : public RootObject
 {
 public:
     SecurityContext(unsigned int uiPID, unsigned int uiCID, unsigned int uiAddress)

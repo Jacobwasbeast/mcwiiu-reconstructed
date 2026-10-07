@@ -8,8 +8,7 @@ namespace nn { namespace nex {
 class MatchMakingProtocolExtClient : public ClientProtocol
 {
 public:
-    explicit MatchMakingProtocolExtClient(unsigned short protocol_id);
-    virtual ~MatchMakingProtocolExtClient();
+    explicit MatchMakingProtocolExtClient(unsigned short protocol_id = 0);
 
     virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
     virtual Protocol* CreateResponder() const;

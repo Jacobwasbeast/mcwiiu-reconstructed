@@ -31,13 +31,13 @@ AuthenticationClient::AuthenticationClient()
 {
     m_pKerberosEncryption = new KerberosEncryption;
     m_pTicketManager = new TicketManager(this);
-    m_pTicketGrantingProtocolClient = new TicketGrantingProtocolClient(0);
+    m_pTicketGrantingProtocolClient = new TicketGrantingProtocolClient();
     m_pTicketGrantingProtocolClient->SetProtocolID(TICKET_GRANTING_PROTOCOL_ID);
     m_uiPrincipalID = 0;
     m_loginDeadline = Time(Time::ConvertTimeoutToDeadline(LOGIN_TIMEOUT));
     AnyDataAdapter::Register();
     GetProtocolRegistry()->RegisterProtocol(TICKET_GRANTING_PROTOCOL_ID,
-        new TicketGrantingProtocolClient(0));
+        new TicketGrantingProtocolClient());
 }
 
 AuthenticationClient::~AuthenticationClient()

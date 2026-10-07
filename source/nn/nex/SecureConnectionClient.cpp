@@ -40,7 +40,7 @@ SecureConnectionClient::SecureConnectionClient()
 {
     AnyDataAdapter::Register();
     m_protocolClient.SetProtocolID(SECURE_CONNECTION_PROTOCOL_ID);
-    SecureConnectionProtocolClient* pProtocolClient = new SecureConnectionProtocolClient(0);
+    SecureConnectionProtocolClient* pProtocolClient = new SecureConnectionProtocolClient();
     GetProtocolRegistry()->RegisterProtocol(SECURE_CONNECTION_PROTOCOL_ID, pProtocolClient);
 }
 

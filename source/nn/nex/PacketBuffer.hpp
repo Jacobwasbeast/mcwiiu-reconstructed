@@ -15,8 +15,6 @@ public:
         : Buffer(uiRealSize, uiFlags)
     {
     }
-
-    virtual ~PacketBuffer();
 };
 
 }

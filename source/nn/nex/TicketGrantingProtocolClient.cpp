@@ -267,11 +267,7 @@ TicketGrantingProtocolClient::TicketGrantingProtocolClient(unsigned short uiProt
         return;
     SetProtocolID(uiProtocolID);
     RVClientCore::AcquireInstance()->GetProtocolRegistry()->RegisterProtocol(
-        uiProtocolID, new TicketGrantingProtocolClient(0));
-}
-
-TicketGrantingProtocolClient::~TicketGrantingProtocolClient()
-{
+        uiProtocolID, new TicketGrantingProtocolClient());
 }
 
 void TicketGrantingProtocolClient::ExtractCallSpecificResults(Message* pMessage,
@@ -290,7 +286,7 @@ void TicketGrantingProtocolClient::ExtractCallSpecificResults(Message* pMessage,
 
 Protocol* TicketGrantingProtocolClient::CreateResponder() const
 {
-    return new TicketGrantingProtocolClient(0);
+    return new TicketGrantingProtocolClient();
 }
 
 bool TicketGrantingProtocolClient::CallLogin(ProtocolCallContext* pCallContext, qResult* pResult, const String& rUserName, unsigned int* pPrincipalID, Buffer* pTicket, RVConnectionData* pConnectionData, String* pReturnMessage)

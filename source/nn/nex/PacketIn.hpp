@@ -13,7 +13,6 @@ class PacketIn : public Packet
 public:
     PacketIn();
     explicit PacketIn(int);
-    virtual ~PacketIn();
 };
 
 }

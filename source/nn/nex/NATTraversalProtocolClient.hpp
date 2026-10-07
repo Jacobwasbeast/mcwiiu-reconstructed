@@ -15,8 +15,8 @@ namespace nex
 class NATTraversalProtocolClient : public ClientProtocol
 {
 public:
-    explicit NATTraversalProtocolClient(unsigned short uiProtocolID);
-    virtual ~NATTraversalProtocolClient();
+    friend class NATTraversalRelayClient;
+    explicit NATTraversalProtocolClient(unsigned short uiProtocolID = 0);
 
     virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
     virtual Protocol* CreateResponder() const;

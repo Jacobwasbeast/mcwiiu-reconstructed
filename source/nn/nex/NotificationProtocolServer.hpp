@@ -23,7 +23,6 @@ public:
     {
     }
 
-    virtual ~_Proto_NotificationProtocolServer();
 
     virtual void DispatchProtocolMessage(Message* pRequest, Message* pResponse,
                                          bool* pResponseRequired, EndPoint* pEndPoint);

@@ -17,7 +17,7 @@ public:
     {
     }
 
-    virtual ~PacketBufferPacketOut();
+    virtual ~PacketBufferPacketOut() {}
 };
 
 }

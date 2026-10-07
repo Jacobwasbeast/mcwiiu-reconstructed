@@ -42,11 +42,7 @@ NATTraversalProtocolClient::NATTraversalProtocolClient(unsigned short uiProtocol
         return;
     SetProtocolID(uiProtocolID);
     RVClientCore::AcquireInstance()->GetProtocolRegistry()->RegisterProtocol(
-        uiProtocolID, new NATTraversalProtocolClient(0));
-}
-
-NATTraversalProtocolClient::~NATTraversalProtocolClient()
-{
+        uiProtocolID, new NATTraversalProtocolClient());
 }
 
 void NATTraversalProtocolClient::ExtractCallSpecificResults(Message* pMessage,
@@ -65,7 +61,7 @@ void NATTraversalProtocolClient::ExtractCallSpecificResults(Message* pMessage,
 
 Protocol* NATTraversalProtocolClient::CreateResponder() const
 {
-    return new NATTraversalProtocolClient(0);
+    return new NATTraversalProtocolClient();
 }
 
 bool NATTraversalProtocolClient::CallRequestProbeInitiation(ProtocolCallContext* pCallContext,

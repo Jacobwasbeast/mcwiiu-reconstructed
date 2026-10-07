@@ -54,8 +54,7 @@ class DataStoreTouchObjectParam;
 class DataStoreProtocolClient : public ClientProtocol
 {
 public:
-    explicit DataStoreProtocolClient(unsigned short uiProtocolID);
-    virtual ~DataStoreProtocolClient();
+    explicit DataStoreProtocolClient(unsigned short uiProtocolID = 0);
 
     virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
     virtual Protocol* CreateResponder() const;

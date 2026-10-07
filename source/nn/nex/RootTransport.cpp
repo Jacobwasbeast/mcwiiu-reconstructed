@@ -28,7 +28,7 @@ const int RESULT_NOT_IMPLEMENTED = static_cast<int>(0x80010002u);
 const unsigned int DEFAULT_BUFFER_SIZE = 1364;
 const unsigned int NAT_CHECK_SERVER_COUNT = 4;
 const unsigned int INVALID_ADDRESS = 0xFFFFFFFFu;
-const unsigned int ADDRESS_TEXT_LENGTH = 256;
+const unsigned int ADDRESS_TEXT_LENGTH = 128;
 const unsigned short NAT_CHECK_SERVER_PORT = 10025;
 const unsigned short NAT_CHECK_SERVER_REPLY_PORT = 10125;
 const unsigned short RELAY_SERVER_PORT = 12525;
@@ -42,10 +42,10 @@ const wchar_t* s_pSecondaryNATCheckServer = L"nncs2.app.nintendowifi.net";
 
 std::vector<unsigned int, MemAllocator<unsigned int> > g_blockedAddresses;
 
-unsigned short* RootTransport::s_pWellKnownPortNumbers = 0;
-unsigned short RootTransport::s_uiWellKnownPortNumber = 0;
-wchar_t** RootTransport::s_pInterfaceAddresses = 0;
-wchar_t* RootTransport::s_pInterfaceAddress = 0;
+unsigned short* RootTransport::s_pWellKnownPortNumbers;
+unsigned short RootTransport::s_uiWellKnownPortNumber;
+wchar_t** RootTransport::s_pInterfaceAddresses;
+wchar_t* RootTransport::s_pInterfaceAddress;
 
 RootTransport::RootTransport()
     : m_criticalSection(0x20000000), m_recognizerCriticalSection(0x20000000),
@@ -65,7 +65,7 @@ RootTransport::RootTransport()
 
 RootTransport::~RootTransport()
 {
-    for (unsigned int i = 0; i < NAT_CHECK_SERVER_COUNT; ++i)
+    for (int i = 0; i < static_cast<int>(NAT_CHECK_SERVER_COUNT); ++i)
         delete m_natCheckServerAddresses[i];
 
     delete m_pInetAddressSet;
@@ -220,14 +220,14 @@ bool RootTransport::SetPrimaryNATCheckServer(const wchar_t* pAddress, unsigned s
 
     wchar_t text[ADDRESS_TEXT_LENGTH];
     text[0] = 0;
-    address.GetAddress(text, ADDRESS_TEXT_LENGTH);
+    address.GetAddress(text, sizeof(text));
     m_natCheckServerAddresses[0]->Clear();
     (*m_natCheckServerAddresses[0] << L"prudp:/address=" << text << L";port=").StreamNumber(
         static_cast<int>(uiFirstPort));
 
     address.SetPortNumber(uiSecondPort);
     text[0] = 0;
-    address.GetAddress(text, ADDRESS_TEXT_LENGTH);
+    address.GetAddress(text, sizeof(text));
     m_natCheckServerAddresses[1]->Clear();
     (*m_natCheckServerAddresses[1] << L"prudp:/address=" << text << L";port=").StreamNumber(
         static_cast<int>(uiSecondPort));
@@ -246,14 +246,14 @@ bool RootTransport::SetSecondaryNATCheckServer(const wchar_t* pAddress, unsigned
 
     wchar_t text[ADDRESS_TEXT_LENGTH];
     text[0] = 0;
-    address.GetAddress(text, ADDRESS_TEXT_LENGTH);
+    address.GetAddress(text, sizeof(text));
     m_natCheckServerAddresses[2]->Clear();
     (*m_natCheckServerAddresses[2] << L"prudp:/address=" << text << L";port=").StreamNumber(
         static_cast<int>(uiFirstPort));
 
     address.SetPortNumber(uiSecondPort);
     text[0] = 0;
-    address.GetAddress(text, ADDRESS_TEXT_LENGTH);
+    address.GetAddress(text, sizeof(text));
     m_natCheckServerAddresses[3]->Clear();
     (*m_natCheckServerAddresses[3] << L"prudp:/address=" << text << L";port=").StreamNumber(
         static_cast<int>(uiSecondPort));
@@ -267,10 +267,9 @@ const qVector<StringStream*>& RootTransport::GetNATCheckServerAddresses() const
 
 void RootTransport::SetIsNATCheckServerAddressesSet()
 {
-    if (m_natCheckServerAddresses[0]->GetLength() == 0 ||
-        m_natCheckServerAddresses[1]->GetLength() == 0 ||
-        m_natCheckServerAddresses[2]->GetLength() == 0 ||
-        m_natCheckServerAddresses[3]->GetLength() == 0)
+    StringStream** addresses = &m_natCheckServerAddresses[0];
+    if (addresses[0]->GetLength() == 0 || addresses[1]->GetLength() == 0 ||
+        addresses[2]->GetLength() == 0 || addresses[3]->GetLength() == 0)
     {
         m_bNATCheckServerAddressesSet = false;
     }
@@ -285,16 +284,16 @@ bool RootTransport::SetUpDefaultNATCheckServerInternal()
     if (m_bNATCheckServerAddressesSet)
         return true;
 
-    if (SetPrimaryNATCheckServer(s_pPrimaryNATCheckServer, NAT_CHECK_SERVER_PORT,
-            NAT_CHECK_SERVER_REPLY_PORT) &&
-        SetSecondaryNATCheckServer(s_pSecondaryNATCheckServer, NAT_CHECK_SERVER_PORT,
+    if (!SetPrimaryNATCheckServer(s_pPrimaryNATCheckServer, NAT_CHECK_SERVER_PORT,
             NAT_CHECK_SERVER_REPLY_PORT))
-    {
-        SetIsNATCheckServerAddressesSet();
-        return true;
-    }
+        return false;
 
-    return false;
+    if (!SetSecondaryNATCheckServer(s_pSecondaryNATCheckServer, NAT_CHECK_SERVER_PORT,
+            NAT_CHECK_SERVER_REPLY_PORT))
+        return false;
+
+    SetIsNATCheckServerAddressesSet();
+    return true;
 }
 
 NATProperties RootTransport::GetNATProperties() const
@@ -321,18 +320,16 @@ bool RootTransport::GetRelayServerAddress(const wchar_t* pAddress)
 
 bool RootTransport::SetUpRelayServer()
 {
-    if (GetRelay()->IsEnabled() && !m_bRelayAddressSet)
-    {
-        if (m_relayName.GetLength() == 0 || GetRelayServerAddress(m_relayName))
-        {
-            m_bRelayAddressSet = m_relayAddress.GetAddress() != 0;
-            return true;
-        }
+    if (!GetRelay()->IsEnabled() || m_bRelayAddressSet)
+        return true;
 
-        return false;
+    if (m_relayName.GetLength() <= 0 || GetRelayServerAddress(m_relayName))
+    {
+        m_bRelayAddressSet = m_relayAddress.GetAddress() != 0;
+        return true;
     }
 
-    return true;
+    return false;
 }
 
 void RootTransport::SetRelayNameAddress(String& rName)
@@ -343,10 +340,11 @@ void RootTransport::SetRelayNameAddress(String& rName)
 bool RootTransport::ExistsRelayTable()
 {
     RootTransport* pTransport = GetInstance();
-    if (pTransport != 0 && pTransport->GetRelay()->IsEnabled())
-        return pTransport->GetRelay()->Exists();
+    bool exists = false;
+    if (pTransport != 0 && pTransport->GetRelay()->IsEnabled() && pTransport->GetRelay()->Exists())
+        exists = true;
 
-    return false;
+    return exists;
 }
 
 }

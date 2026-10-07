@@ -46,11 +46,7 @@ bool _DDL_LoginData::IsA(const String& rType) const
 
 bool _DDL_LoginData::IsAKindOf(const String& rType) const
 {
-    bool bResult = true;
-    if (!String::IsEqual(rType, L"LoginData") && !_DDL_Data::IsAKindOf(rType))
-        bResult = false;
-
-    return bResult;
+    return String::IsEqual(rType, L"LoginData") || _DDL_Data::IsAKindOf(rType);
 }
 
 void _DDL_LoginData::StreamIn(Message* pMessage) const

@@ -16,7 +16,9 @@ class PeriodicJob : public Job
 {
 public:
     PeriodicJob(JobType jobType, const DebugString& rDebugString);
-    virtual ~PeriodicJob();
+    virtual ~PeriodicJob()
+    {
+    }
 
     virtual void SetDefaultPostExecutionState();
     virtual uint32_t SkipWaitDelayAtTermination();

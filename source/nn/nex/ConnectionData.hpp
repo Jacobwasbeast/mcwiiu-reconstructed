@@ -11,7 +11,6 @@ namespace nex
 class ConnectionData : public _DDL_ConnectionData
 {
 public:
-    virtual ~ConnectionData();
 };
 
 }

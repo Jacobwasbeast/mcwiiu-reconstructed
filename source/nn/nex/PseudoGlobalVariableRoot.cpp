@@ -14,10 +14,6 @@ PseudoGlobalVariableRoot::PseudoGlobalVariableRoot()
 {
 }
 
-PseudoGlobalVariableRoot::~PseudoGlobalVariableRoot()
-{
-}
-
 void PseudoGlobalVariableRoot::ResetContextForAllVariables(unsigned int uiContextId)
 {
     g_pseudoGlobalVariableList.ResetContextForAllVariables(uiContextId);

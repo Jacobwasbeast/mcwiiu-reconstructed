@@ -5,10 +5,6 @@ namespace nn
 namespace nex
 {
 
-DynamicGathering::~DynamicGathering()
-{
-}
-
 String DynamicGathering::GetGatheringType() const
 {
     return m_Type;

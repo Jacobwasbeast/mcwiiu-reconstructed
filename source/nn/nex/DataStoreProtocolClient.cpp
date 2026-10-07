@@ -84,11 +84,7 @@ DataStoreProtocolClient::DataStoreProtocolClient(unsigned short uiProtocolID)
         return;
     SetProtocolID(uiProtocolID);
     RVClientCore::AcquireInstance()->GetProtocolRegistry()->RegisterProtocol(
-        uiProtocolID, new DataStoreProtocolClient(0));
-}
-
-DataStoreProtocolClient::~DataStoreProtocolClient()
-{
+        uiProtocolID, new DataStoreProtocolClient());
 }
 
 void DataStoreProtocolClient::ExtractCallSpecificResults(Message* pMessage,
@@ -107,7 +103,7 @@ void DataStoreProtocolClient::ExtractCallSpecificResults(Message* pMessage,
 
 Protocol* DataStoreProtocolClient::CreateResponder() const
 {
-    return new DataStoreProtocolClient(0);
+    return new DataStoreProtocolClient();
 }
 
 bool DataStoreProtocolClient::CallCompletePostObjects(ProtocolCallContext* pCallContext,

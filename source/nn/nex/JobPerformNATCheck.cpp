@@ -434,7 +434,7 @@ void JobPerformNATCheck::StepRecv()
         MessageReceived(m_recvMessage);
         return;
     }
-    uint64_t now = Time::GetTime();
+    Time now(Time::GetTime());
     if (now > m_deadline)
     {
         ++m_uiTimeoutCount;
@@ -609,7 +609,7 @@ void JobPerformNATCheck::StepRun()
         {
             bSent = SendNextQueuedMessage();
         } while (bSent);
-        unsigned int uiReceived;
+        unsigned int uiReceived = 0;
         if (m_socket.RecvNonBlock(reinterpret_cast<unsigned char*>(&m_recvMessage),
                 sizeof(NATCheckMessage), &uiReceived, &m_receivedFrom) == 0 &&
             uiReceived == sizeof(NATCheckMessage))
@@ -621,22 +621,17 @@ void JobPerformNATCheck::StepRun()
                 m_aReceived[uiIndex].m_message = m_recvMessage;
                 ++m_aReceived[uiIndex].m_uiCount;
             }
-            bool bComplete;
             if (m_mode == CHECK_MODE_PORT_MAPPING)
             {
-                bComplete = m_aReceived[0].m_uiCount != 0;
+                if (m_aReceived[0].m_uiCount != 0)
+                    m_bResponsesReceived = true;
             }
-            else if (m_mode == CHECK_MODE_SIMPLIFIED && m_aReceived[0].m_uiCount != 0 &&
-                     m_aReceived[1].m_uiCount != 0)
+            else if (m_mode == CHECK_MODE_SIMPLIFIED)
             {
-                bComplete = m_aReceived[2].m_uiCount != 0;
+                if (m_aReceived[0].m_uiCount != 0 && m_aReceived[1].m_uiCount != 0 &&
+                    m_aReceived[2].m_uiCount != 0)
+                    m_bResponsesReceived = true;
             }
-            else
-            {
-                bComplete = false;
-            }
-            if (bComplete)
-                m_bResponsesReceived = true;
         }
         SetToWaiting(RUN_WAIT);
         return;
@@ -757,6 +752,16 @@ void JobPerformNATCheck::StepEnd()
         pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT),
             false);
     SetToComplete();
+}
+
+NATCheckClient::NATCheckClient(const InetAddress& rAddress)
+    : m_address()
+{
+    m_address = rAddress;
+}
+
+NATCheckClient::~NATCheckClient()
+{
 }
 
 }

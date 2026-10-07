@@ -35,8 +35,7 @@ public:
     typedef AnyObjectHolder<Gathering, String> GatheringHolder;
     typedef qList<GatheringHolder> GatheringHolderList;
 
-    explicit MatchmakeExtensionProtocolClient(unsigned short uiProtocolID);
-    virtual ~MatchmakeExtensionProtocolClient();
+    explicit MatchmakeExtensionProtocolClient(unsigned short uiProtocolID = 0);
 
     virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
     virtual Protocol* CreateResponder() const;

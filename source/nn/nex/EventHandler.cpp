@@ -41,7 +41,7 @@ EventHandler::~EventHandler()
 {
     SpecialDeleteArray(m_pEvents);
     SpecialDeleteArray(*m_ppSignaled);
-    delete m_ppSignaled;
+    RootObject::operator delete(m_ppSignaled);
 }
 
 unsigned int EventHandler::GetEventIndex(Event* pEvent) const

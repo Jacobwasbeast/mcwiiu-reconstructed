@@ -1,6 +1,7 @@
 #include "nn/nex/SecureEndPoint.hpp"
 
 #include "nn/nex/Core.hpp"
+#include "nn/nex/CriticalSection.hpp"
 #include "nn/nex/JobConnectSecureEndPoint.hpp"
 #include "nn/nex/Key.hpp"
 #include "nn/nex/Scheduler.hpp"
@@ -25,10 +26,10 @@ enum ConnectResult
 
 SecureEndPoint::SecureEndPoint(ConnectionOrientedStream* pStream, const StationURL* pStationURL)
     : EndPoint(pStream, pStationURL)
-    , m_pAssociatedEndPoint(0)
-    , m_pDisconnectCallback(0)
     , m_disconnectContext()
 {
+    m_pAssociatedEndPoint = 0;
+    m_pDisconnectCallback = 0;
 }
 
 SecureEndPoint::~SecureEndPoint()
@@ -77,58 +78,58 @@ qResult SecureEndPoint::RegisterEventHandler(EndPointEventHandler* pEventHandler
 
 bool SecureEndPoint::IsNotConnected()
 {
-    if (m_pAssociatedEndPoint == 0)
-        return true;
+    if (m_pAssociatedEndPoint != 0)
+        return m_pAssociatedEndPoint->IsNotConnected();
 
-    return m_pAssociatedEndPoint->IsNotConnected();
+    return true;
 }
 
 bool SecureEndPoint::IsConnecting()
 {
-    if (m_pAssociatedEndPoint == 0)
-        return false;
+    if (m_pAssociatedEndPoint != 0)
+        return m_pAssociatedEndPoint->IsConnecting();
 
-    return m_pAssociatedEndPoint->IsConnecting();
+    return false;
 }
 
 bool SecureEndPoint::IsDisconnecting()
 {
-    if (m_pAssociatedEndPoint == 0)
-        return false;
+    if (m_pAssociatedEndPoint != 0)
+        return m_pAssociatedEndPoint->IsDisconnecting();
 
-    return m_pAssociatedEndPoint->IsDisconnecting();
+    return false;
 }
 
 bool SecureEndPoint::IsFaulty()
 {
-    if (m_pAssociatedEndPoint == 0)
-        return false;
+    if (m_pAssociatedEndPoint != 0)
+        return m_pAssociatedEndPoint->IsFaulty();
 
-    return m_pAssociatedEndPoint->IsFaulty();
+    return false;
 }
 
 bool SecureEndPoint::IsConnected()
 {
-    if (m_pAssociatedEndPoint == 0)
-        return false;
+    if (m_pAssociatedEndPoint != 0)
+        return m_pAssociatedEndPoint->IsConnected();
 
-    return m_pAssociatedEndPoint->IsConnected();
+    return false;
 }
 
 bool SecureEndPoint::PeerIsConnected()
 {
-    if (m_pAssociatedEndPoint == 0)
-        return false;
+    if (m_pAssociatedEndPoint != 0)
+        return m_pAssociatedEndPoint->PeerIsConnected();
 
-    return m_pAssociatedEndPoint->PeerIsConnected();
+    return false;
 }
 
 bool SecureEndPoint::PeerIsDisconnected()
 {
-    if (m_pAssociatedEndPoint == 0)
-        return true;
+    if (m_pAssociatedEndPoint != 0)
+        return m_pAssociatedEndPoint->PeerIsDisconnected();
 
-    return m_pAssociatedEndPoint->PeerIsDisconnected();
+    return true;
 }
 
 void SecureEndPoint::SetPeerConnected()
@@ -189,10 +190,10 @@ unsigned int SecureEndPoint::GetMaxSilenceTime()
 
 bool SecureEndPoint::IsAnyPacketProcessed()
 {
-    if (m_pAssociatedEndPoint == 0)
-        return false;
+    if (m_pAssociatedEndPoint != 0)
+        return m_pAssociatedEndPoint->IsAnyPacketProcessed();
 
-    return m_pAssociatedEndPoint->IsAnyPacketProcessed();
+    return false;
 }
 
 unsigned int SecureEndPoint::GetSignaledFaultError() const
@@ -239,42 +240,36 @@ qResult SecureEndPoint::_Connect(Buffer* pRequestData, Buffer* pResponseData,
     pJob->AddRef();
     Core::GetInstance()->GetScheduler()->Queue(pJob, false);
 
-    if (pCallback != 0)
+    if (pCallback == 0)
     {
-        pJob->ReleaseRef();
-        return qResult(static_cast<int>(CONNECT_PENDING_RESULT));
-    }
+        qResult result(static_cast<int>(CONNECT_TIMEOUT_RESULT));
+        pJob->WaitForCompletion(uiTimeout);
+        if (pJob->GetState() != Job::Complete)
+            result = qResult(static_cast<int>(CONNECT_INCOMPLETE_RESULT));
+        else
+            result = pJob->GetResult();
 
-    qResult result(static_cast<int>(CONNECT_TIMEOUT_RESULT));
-    pJob->WaitForCompletion(uiTimeout);
-    if (pJob->GetState() != Job::Complete)
-    {
-        result = qResult(static_cast<int>(CONNECT_INCOMPLETE_RESULT));
         pJob->ReleaseRef();
         return result;
     }
 
-    result = pJob->GetResult();
     pJob->ReleaseRef();
-    return result;
+    return qResult(static_cast<int>(CONNECT_PENDING_RESULT));
 }
 
 void SecureEndPoint::DisconnectCallback(EndPoint* pEndPoint, qResult result,
     const UserContext*)
 {
-    CriticalSection& csScheduler = Core::GetInstance()->GetScheduler()->GetCriticalSection();
-    csScheduler.Enter();
+    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
 
     SecureEndPoint* pSecureEndPoint = pEndPoint->m_pSecureEndPoint;
-    if (pSecureEndPoint != 0)
-    {
-        pSecureEndPoint->CompleteDisconnect();
-        ConnectionCallback pCallback = pSecureEndPoint->m_pDisconnectCallback;
-        pSecureEndPoint->m_pDisconnectCallback = 0;
-        pCallback(pSecureEndPoint, result, &pSecureEndPoint->m_disconnectContext);
-    }
+    if (pSecureEndPoint == 0)
+        return;
 
-    csScheduler.Leave();
+    pSecureEndPoint->CompleteDisconnect();
+    ConnectionCallback pCallback = pSecureEndPoint->m_pDisconnectCallback;
+    pSecureEndPoint->m_pDisconnectCallback = 0;
+    pCallback(pSecureEndPoint, result, &pSecureEndPoint->m_disconnectContext);
 }
 
 qResult SecureEndPoint::_Disconnect(ConnectionCallback pCallback, const UserContext& rUserContext,
@@ -285,13 +280,15 @@ qResult SecureEndPoint::_Disconnect(ConnectionCallback pCallback, const UserCont
     {
         result = m_pAssociatedEndPoint->_Disconnect(0, rUserContext, uiTimeout);
         CompleteDisconnect();
-        return result;
+    }
+    else
+    {
+        UserContext context(this);
+        m_pDisconnectCallback = pCallback;
+        m_disconnectContext = rUserContext;
+        result = m_pAssociatedEndPoint->_Disconnect(DisconnectCallback, context, uiTimeout);
     }
 
-    m_pDisconnectCallback = pCallback;
-    m_disconnectContext = rUserContext;
-    UserContext context(this);
-    result = m_pAssociatedEndPoint->_Disconnect(DisconnectCallback, context, uiTimeout);
     return result;
 }
 
@@ -309,10 +306,10 @@ qResult SecureEndPoint::_Send(Buffer* pBuffer, unsigned int uiSize, bool bReliab
 
 unsigned long long SecureEndPoint::GetSupportedFunctionsFlags() const
 {
-    if (m_pAssociatedEndPoint == 0)
-        return 0;
+    if (m_pAssociatedEndPoint != 0)
+        return m_pAssociatedEndPoint->GetSupportedFunctionsFlags();
 
-    return m_pAssociatedEndPoint->GetSupportedFunctionsFlags();
+    return 0;
 }
 
 void SecureEndPoint::SignalFaultEvent(unsigned int uiError, bool bDisconnected)

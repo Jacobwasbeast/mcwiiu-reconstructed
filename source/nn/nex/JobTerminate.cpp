@@ -27,8 +27,8 @@ JobTerminate::JobTerminate(unsigned int uiCallId, NgsFacade* pNgsFacade)
     : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
     , m_callContext()
 {
-    m_uiCallId = uiCallId;
     m_pNgsFacade = pNgsFacade;
+    m_uiCallId = uiCallId;
     m_traceData = TRACE_TERMINATE;
     SetStep(Step(static_cast<Step::Function>(&JobTerminate::StepWaitOnPendingJobs), L""));
 }

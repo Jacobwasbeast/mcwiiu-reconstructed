@@ -13,9 +13,5 @@ PacketBufferPacketIn::PacketBufferPacketIn(unsigned int uiBufferSize)
     SetPayload(new (RootObject::TARGET_POOL_PACKET_MANAGEMENT) PacketBuffer(uiBufferSize, 4));
 }
 
-PacketBufferPacketIn::~PacketBufferPacketIn()
-{
-}
-
 }
 }

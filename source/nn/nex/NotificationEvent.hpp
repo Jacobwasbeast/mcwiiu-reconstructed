@@ -17,7 +17,6 @@ class NotificationEvent : public _DDL_NotificationEvent
 public:
     NotificationEvent();
     NotificationEvent(const NotificationEvent& other);
-    virtual ~NotificationEvent();
 
     uint32_t GetType() const;
     uint32_t GetParam1() const;

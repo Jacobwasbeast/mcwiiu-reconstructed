@@ -11,7 +11,7 @@ bool PIDLogFilter::OutputCurrentTrace()
 {
     unsigned int current;
     if (g_protocolCurrentPID != 0 && (current = g_protocolCurrentPID()) < m_upperBound &&
-        m_lowerBound < current)
+        current > m_lowerBound)
         return true;
     return false;
 }

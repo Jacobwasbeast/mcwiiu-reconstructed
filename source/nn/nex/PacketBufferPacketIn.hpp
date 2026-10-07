@@ -12,7 +12,6 @@ class PacketBufferPacketIn : public PacketIn
 {
 public:
     explicit PacketBufferPacketIn(unsigned int uiBufferSize);
-    virtual ~PacketBufferPacketIn();
 };
 
 }

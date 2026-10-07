@@ -50,7 +50,7 @@ public:
         Scheduler* m_pScheduler;
     };
 
-    Scheduler(unsigned int uiTraceMask, SchedulerWorkerThread* pWorkerThreads);
+    Scheduler(unsigned int uiTraceMask = 8, SchedulerWorkerThread* pWorkerThreads = 0);
     virtual ~Scheduler();
 
     CriticalSection& GetCriticalSection()

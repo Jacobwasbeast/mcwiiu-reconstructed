@@ -13,7 +13,9 @@ class EmulationDevice : public RootObject
 {
 public:
     EmulationDevice();
-    virtual ~EmulationDevice();
+    virtual ~EmulationDevice()
+    {
+    }
     virtual void Enable();
 
     unsigned int GetBandwidth();

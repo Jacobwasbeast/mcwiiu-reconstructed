@@ -22,8 +22,7 @@ public:
     typedef AnyObjectHolder<Gathering, String> GatheringHolder;
     typedef qList<GatheringHolder> GatheringHolderList;
 
-    explicit MatchMakingProtocolClient(unsigned short protocol_id);
-    virtual ~MatchMakingProtocolClient();
+    explicit MatchMakingProtocolClient(unsigned short protocol_id = 0);
 
     virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
     virtual Protocol* CreateResponder() const;

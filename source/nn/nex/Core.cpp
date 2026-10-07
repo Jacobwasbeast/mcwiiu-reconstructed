@@ -46,7 +46,7 @@ Core::Core()
 
     m_instanceControl.SetDelegatorInstance(this);
 
-    m_pScheduler = new Scheduler(8, 0);
+    m_pScheduler = new Scheduler();
     if (g_dispatcherThreadEnabled)
         m_pScheduler->StartDispatcherThread();
 
@@ -92,7 +92,7 @@ void Core::AcquireInstance()
     GlobalVariables::AcquireInstance();
 
     if (GetInstance() == 0)
-        new Core();
+        new Core;
     else
         GetInstance()->AddRef();
 

@@ -35,7 +35,7 @@ RVClientCore::~RVClientCore()
 RVClientCore* RVClientCore::AcquireInstance()
 {
     if (s_pInstance == 0)
-        s_pInstance = new RVClientCore();
+        s_pInstance = new RVClientCore;
     return s_pInstance;
 }
 

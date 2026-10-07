@@ -45,7 +45,7 @@ PRUDPUserProtocol::~PRUDPUserProtocol()
 void PRUDPUserProtocol::AcquireInstance()
 {
     if (GetInstance() == 0)
-        new PRUDPUserProtocol;
+        new PRUDPUserProtocol();
     else
         GetInstance()->AddRef();
 }
