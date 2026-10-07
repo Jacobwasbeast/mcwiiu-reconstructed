@@ -1,6 +1,8 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_STATION_ID_STATUS_TABLE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_STATION_ID_STATUS_TABLE_HPP
 
+#include <cstddef>
+
 #include "nn/pia.h"
 #include "nn/pia/ListBase.hpp"
 
@@ -98,21 +100,7 @@ public:
 private:
     static Entry* entryOf(common::ListNode* node) { return reinterpret_cast<Entry*>(node); }
     static const Entry* entryOf(const common::ListNode* node) { return reinterpret_cast<const Entry*>(node); }
-
-    void releaseAllEntries()
-    {
-        common::ListNode* head = m_usedList.Sentinel();
-        common::ListNode* node = head->next;
-        while (node != head)
-        {
-            common::ListNode* next = node->next;
-            node->prev = 0;
-            node->next = 0;
-            m_freeList.InsertAfterNode(m_freeList.Sentinel(), node);
-            node = next;
-        }
-        m_usedList.Init();
-    }
+    static Entry* entryOf(Element* element) { return reinterpret_cast<Entry*>(reinterpret_cast<char*>(element) - offsetof(Entry, element)); }
 
     Entry* findMutable(unsigned long long stationId)
     {
@@ -143,7 +131,7 @@ private:
     unsigned int m_freeNodeOffset;
     Entry* m_entries;
     unsigned int m_entryNum;
-    Entry* m_storage;
+    unsigned long long* m_storage;
 };
 
 }}}

@@ -35,7 +35,8 @@ Result ClearMatchmakeSystemPasswordJob::Startup(common::CallContext* callerConte
 
 ClearMatchmakeSystemPasswordJob::ExecuteResult ClearMatchmakeSystemPasswordJob::CompleteProcess()
 {
-    m_callerContext->SignalSuccess(0);
+    Result result = 0;
+    m_callerContext->SignalSuccess(result);
     m_callerContext = 0;
     return MakeExecuteResult(cExecuteKindFinished);
 }
@@ -50,10 +51,12 @@ ClearMatchmakeSystemPasswordJob::ExecuteResult ClearMatchmakeSystemPasswordJob::
 
 void ClearMatchmakeSystemPasswordJob::Cleanup()
 {
-    if (m_callerContext != 0 &&
-        m_callerContext->m_state == common::CallContext::cStateInProgress)
-        m_callerContext->SignalCancel();
-    m_callerContext = 0;
+    if (m_callerContext != 0)
+    {
+        if (m_callerContext->m_state == common::CallContext::cStateInProgress)
+            m_callerContext->SignalCancel();
+        m_callerContext = 0;
+    }
     if (m_callContext.m_state == common::CallContext::cStateInProgress)
         m_callContext.SignalCancel();
     m_callContext.Reset();

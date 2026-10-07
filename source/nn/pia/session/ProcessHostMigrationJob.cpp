@@ -708,7 +708,7 @@ void ProcessHostMigrationJob::DisconnectStation(StationIndex station)
     }
 }
 
-unsigned char ProcessHostMigrationJob::GetStationIndexByPrincipalID(unsigned long long principalId)
+StationIndex ProcessHostMigrationJob::GetStationIndexByPrincipalID(unsigned long long principalId)
 {
     return g_piaMesh->m_processUpdateMeshJob->GetStationIndexByPrincipalID(principalId);
 }

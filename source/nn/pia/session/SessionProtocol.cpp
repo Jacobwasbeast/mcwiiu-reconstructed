@@ -170,7 +170,7 @@ Result SessionProtocol::StartupWithStationAddress(const common::StationAddress& 
     if (stationIndex < 0 || stationIndex > m_windowNum)
         return cResultInvalidArgument;
 
-    m_stationId = (static_cast<unsigned long long>(station->m_field18) << 32) | station->m_field1c;
+    m_stationId = station->m_stationId;
     m_dispatchWindowIndex = 0;
     m_stationIndex = stationIndex;
     return 0;
@@ -1032,8 +1032,7 @@ Result SessionProtocol::UpdateProtocolEvent(const transport::ProtocolEvent& even
         unsigned int protocolType = GetProtocolType();
         Result result = window->Startup(handlerOf(GetStationPacketHandler()),
                                         ((protocolType & 0xff) << 8) | 1, m_stationId,
-                                        (static_cast<unsigned long long>(station->m_field18) << 32) |
-                                            station->m_field1c);
+                                        station->m_stationId);
         return result;
     }
     if (event.m_type == 1)
@@ -1051,8 +1050,7 @@ Result SessionProtocol::Dispatch()
 
     transport::ReceivedMessageAccessor message;
     transport::StationPacketHandler* handler = handlerOf(mStationPacketHandler);
-    transport::ProtocolId protocolId(
-        static_cast<unsigned short>(((GetProtocolType() & 0xff) << 8) | 1));
+    transport::ProtocolId protocolId(static_cast<unsigned char>(GetProtocolType()), 1);
     transport::PacketHandler::Iterator& iterator = handler->GetIterator(protocolId);
     iterator.BeginIteration();
     for (; !iterator.IsEndIteration(); iterator.NextIteration())
@@ -1093,8 +1091,7 @@ Result SessionProtocol::Dispatch()
                 break;
             message.m_message = m_messageBuffer;
             message.m_messageSize = size;
-            message.m_sourceStationId =
-                (static_cast<unsigned long long>(station->m_field18) << 32) | station->m_field1c;
+            message.m_sourceStationId = station->m_stationId;
             common::StationAddress stationAddress(station->m_stationAddress);
             message.m_stationAddress = stationAddress;
             message.m_field1c = 0;

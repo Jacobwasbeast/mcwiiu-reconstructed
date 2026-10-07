@@ -163,7 +163,7 @@ public:
     void SetDenyJoinRequestByInvalidState(bool deny);
     void SetDenyJoinRequestBySessionIsFull(bool deny);
     Result SetupLocalPlayerInfo();
-    void SetupProtocols();
+    Result SetupProtocols();
     void StartUse(StationIndex index);
     void FixConnectedId(StationIndex index);
     void JoinResponseComplete(StationIndex index);

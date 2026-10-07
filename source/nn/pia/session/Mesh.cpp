@@ -70,10 +70,8 @@ enum
     cMonitoringSessionBeginReport = 1,
     cMonitoringBeginDataType = 0,
     cMiiNameBufferSize = 11,
-    cMeshProtocolId = 0x1800,
-    cSyncClockProtocolId = 0x1c00,
-    cBandwidthCheckProtocolId = 0x5402,
     cBandwidthCheckProtocolType = 0x54,
+    cBandwidthCheckProtocolPort = 2,
     cNetworkTopologyRelay = 1,
     cRelayRttMax = 500,
     cHostMigrationModeSingle = 1,
@@ -286,7 +284,7 @@ Result Mesh::Initialize(const Setting& setting, bool isHost)
         if (storage != 0)
             protocol = new (storage) MeshProtocol();
         m_meshProtocolId = transport->m_protocolManager.CreateProtocolImpl(
-            protocol, transport::ProtocolId(cMeshProtocolId));
+            protocol, transport::ProtocolId(MeshProtocol::cProtocolType, 0));
     }
     else
     {
@@ -304,7 +302,7 @@ Result Mesh::Initialize(const Setting& setting, bool isHost)
         if (storage != 0)
             protocol = new (storage) SyncClockProtocol();
         m_syncClockProtocolId = transport->m_protocolManager.CreateProtocolImpl(
-            protocol, transport::ProtocolId(cSyncClockProtocolId));
+            protocol, transport::ProtocolId(SyncClockProtocol::cProtocolType, 0));
     }
     else
     {
@@ -324,7 +322,8 @@ Result Mesh::Initialize(const Setting& setting, bool isHost)
             if (storage != 0)
                 protocol = new (storage) transport::BandwidthCheckProtocol();
             m_bandwidthCheckProtocolId = transport->m_protocolManager.CreateProtocolImpl(
-                protocol, transport::ProtocolId(cBandwidthCheckProtocolId));
+                protocol,
+                transport::ProtocolId(cBandwidthCheckProtocolType, cBandwidthCheckProtocolPort));
         }
         else
         {
@@ -1332,14 +1331,11 @@ Result Mesh::LeaveMesh(common::CallContext* callerContext)
     }
     if (m_unknown5c == static_cast<StationIndex>(0xfd) || m_unknown5c == m_unknown58)
         return static_cast<Result>(0x10c08);
-    if (m_leaveMeshJob->Startup(callerContext) == 0)
-    {
-        if ((!m_kickoutManageJob->IsRunning() || !m_kickoutManageJob->AssociateKickoutWith(callerContext)) &&
-            m_leaveMeshJob->RegisterExtraCallback(callerContext) == 0)
-            return static_cast<Result>(0x10c08);
-    }
-    else
+    if (m_leaveMeshJob->Startup(callerContext))
         m_leaveMeshJob->Ready(false);
+    else if ((!m_kickoutManageJob->IsRunning() || !m_kickoutManageJob->AssociateKickoutWith(callerContext)) &&
+             m_leaveMeshJob->RegisterExtraCallback(callerContext) == 0)
+        return static_cast<Result>(0x10c08);
     return 0;
 }
 
@@ -1478,9 +1474,9 @@ bool Mesh::IsBandwidthCheckProtocolSetupParamValid(int measurementTime,
     return m_bandwidthCheckProtocol->IsSetupParamValid(measurementTime, ipPacketSize, measurementCount);
 }
 
-void Mesh::SetupProtocols()
+Result Mesh::SetupProtocols()
 {
-    m_meshProtocol->StartupNative();
+    return m_meshProtocol->StartupNative();
 }
 
 void Mesh::SetupSendReport()

@@ -1,59 +1,205 @@
 #include "nn/pia/session/LeaveMeshJob.hpp"
-#include "nn/pia/session/Mesh.hpp"
-#include "nn/pia/transport/DisconnectStationJob.hpp"
+
+#include "nn/pia/common/Scheduler.hpp"
 #include "nn/pia/common/TimeSpan.hpp"
-
-namespace {
-using nn::pia::common::CallContext;
-using nn::pia::session::Mesh;
-using nn::pia::transport::DisconnectStationJob;
-
-static unsigned int* stationCount(Mesh* mesh) {
-    return reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(mesh) + 0x28);
-}
-static unsigned char* stationArray(Mesh* mesh) {
-    return reinterpret_cast<unsigned char*>(mesh) + 0x2c;
-}
-static unsigned char* localStation(Mesh* mesh) {
-    return *reinterpret_cast<unsigned char**>(reinterpret_cast<unsigned char*>(mesh) + 0x138);
-}
-static CallContext** contextAt(void* self, unsigned int offset) {
-    return reinterpret_cast<CallContext**>(reinterpret_cast<unsigned char*>(self) + offset);
-}
-static unsigned int nowHigh() { nn::pia::common::Time now; now.SetNow(); return static_cast<unsigned int>(now.m_tick >> 32); }
-static unsigned int nowLow() { nn::pia::common::Time now; now.SetNow(); return static_cast<unsigned int>(now.m_tick); }
-static bool before(unsigned int ah, unsigned int al, unsigned int bh, unsigned int bl) {
-    return ah < bh || (ah == bh && al < bl);
-}
-}
+#include "nn/pia/session/Mesh.hpp"
+#include "nn/pia/session/MeshProtocol.hpp"
+#include "nn/pia/session/ProcessHostMigrationJob.hpp"
+#include "nn/pia/session/ProcessUpdateMeshJob.hpp"
+#include "nn/pia/transport/DisconnectStationJob.hpp"
+#include "nn/pia/transport/Station.hpp"
+#include "nn/pia/transport/StationManager.hpp"
 
 namespace nn { namespace pia { namespace session {
-LeaveMeshJob::LeaveMeshJob() : common::StepSequenceJob(), m_deadlineHigh(0), m_deadlineLow(0), m_timeout(5000), m_callerContext(0), m_extraContext(0), m_disconnectStarted(false) {}
-LeaveMeshJob::~LeaveMeshJob() {}
-Result LeaveMeshJob::Startup(common::CallContext* context) {
-    const common::Job::State state = GetState();
-    if (state == common::Job::cStateRunning || state == common::Job::cStateWaiting || state == common::Job::cStateReady) return 0;
-    if (context != 0) { m_callerContext = context; context->InitiateCall(); }
-    const unsigned long long deadline = static_cast<unsigned long long>(nowHigh()) << 32 | nowLow();
-    const unsigned long long ticks = static_cast<unsigned long long>(common::TimeSpan::GetTicksPerMSec().m_tick) * m_timeout;
-    const unsigned long long end = deadline + ticks;
-    m_deadlineHigh = static_cast<unsigned int>(end >> 32); m_deadlineLow = static_cast<unsigned int>(end);
-    m_disconnectStarted = false;
-    g_piaMesh->ProcessingAtMeshEnd(static_cast<Mesh::DisconnectReason>(2));
+
+namespace
+{
+enum
+{
+    cDisconnectReasonLeave = 2,
+    cConnectedStationState = 5,
+    cTraceStationLevel = 0x10000000
+};
+
+inline void SelectStep(common::StepSequenceJob::Step& slot, LeaveMeshJob::ExecuteResult (LeaveMeshJob::*function)(), const char* name)
+{
+    const common::StepSequenceJob::Step step(static_cast<LeaveMeshJob::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+    slot = step;
+}
+}
+
+LeaveMeshJob::LeaveMeshJob()
+    : common::StepSequenceJob(), m_deadline(), m_timeoutMsec(cLeaveResponseTimeoutMsec), m_callerContext(0),
+      m_extraContext(0), m_disconnectStarted(false)
+{
+}
+
+LeaveMeshJob::~LeaveMeshJob()
+{
+}
+
+bool LeaveMeshJob::Startup(common::CallContext* callerContext)
+{
+    if (GetState() == cStateRunning || GetState() == cStateWaiting || GetState() == cStateReady)
+        return false;
+    if (callerContext != 0)
+    {
+        m_callerContext = callerContext;
+        callerContext->InitiateCall();
+    }
+    const int timeoutMsec = m_timeoutMsec;
+    const common::TimeSpan& ticksPerMSec = common::TimeSpan::GetTicksPerMSec();
+    m_deadline.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick + ticksPerMSec.m_tick * timeoutMsec;
+    g_piaMesh->ProcessingAtMeshEnd(static_cast<Mesh::DisconnectReason>(cDisconnectReasonLeave));
     Reset(true);
-    union { common::Job::ExecuteResult (LeaveMeshJob::*derived)(); common::Job::ExecuteResult (common::StepSequenceJob::*base)(); } step;
-    step.derived=&LeaveMeshJob::SendLeaveRequest; m_currentStep.m_function=step.base; return 1;
+    SelectStep(m_currentStep, &LeaveMeshJob::SendLeaveRequest, "LeaveMeshJob::SendLeaveRequest");
+    ProcessUpdateMeshJob* processUpdateMeshJob = g_piaMesh->m_processUpdateMeshJob;
+    if (processUpdateMeshJob->m_started)
+    {
+        processUpdateMeshJob->Cleanup();
+        processUpdateMeshJob->m_cancelRequested = true;
+    }
+    ProcessHostMigrationJob* processHostMigrationJob = g_piaMesh->m_processHostMigrationJob;
+    if (processHostMigrationJob != 0 && processHostMigrationJob->m_started)
+    {
+        processHostMigrationJob->Cleanup();
+        processHostMigrationJob->m_cancelRequested = true;
+    }
+    return true;
 }
-LeaveMeshJob::ExecuteResult LeaveMeshJob::SendLeaveRequest() { m_disconnectStarted = true; union { common::Job::ExecuteResult (LeaveMeshJob::*derived)(); common::Job::ExecuteResult (common::StepSequenceJob::*base)(); } step; step.derived=&LeaveMeshJob::WaitLeaveResponse; m_currentStep.m_function=step.base; return MakeExecuteResult(cExecuteKindNextStep); }
-LeaveMeshJob::ExecuteResult LeaveMeshJob::WaitLeaveResponse() { if (!m_disconnectStarted || !before(nowHigh(), nowLow(), m_deadlineHigh, m_deadlineLow)) m_disconnectStarted=false; union { common::Job::ExecuteResult (LeaveMeshJob::*derived)(); common::Job::ExecuteResult (common::StepSequenceJob::*base)(); } step; step.derived=&LeaveMeshJob::StartDisconnectStations; m_currentStep.m_function=step.base; return m_disconnectStarted ? MakeExecuteResult(cExecuteKindWait) : MakeExecuteResult(cExecuteKindNextStep); }
-LeaveMeshJob::ExecuteResult LeaveMeshJob::StartDisconnectStations() {
-    Mesh* mesh = g_piaMesh; unsigned char* local = localStation(mesh); const unsigned int count = *stationCount(mesh); unsigned char* stations = stationArray(mesh);
-    for (unsigned int i=0; i<count; ++i) { unsigned char* station = *reinterpret_cast<unsigned char**>(stations + i*4); if (!station || station == local) continue; const StationIndex index = *reinterpret_cast<StationIndex*>(station+0x10); if (mesh->IsValidStationIndex(index)) mesh->UnfixDisconnectedId(index); DisconnectStationJob* job = *reinterpret_cast<DisconnectStationJob**>(station+0x34); if (job) { job->Startup(reinterpret_cast<transport::Station*>(station)); job->Ready(false); } }
-    union { common::Job::ExecuteResult (LeaveMeshJob::*derived)(); common::Job::ExecuteResult (common::StepSequenceJob::*base)(); } step; step.derived=&LeaveMeshJob::WaitLeavingProcess; m_currentStep.m_function=step.base; return MakeExecuteResult(cExecuteKindNextStep);
+
+LeaveMeshJob::ExecuteResult LeaveMeshJob::SendLeaveRequest()
+{
+    g_piaMesh->GetMeshProtocol()->SendLeaveRequest();
+    g_piaMesh->GetMeshProtocol()->SetWaitingLeaveResponseJob(this);
+    m_disconnectStarted = true;
+    SelectStep(m_currentStep, &LeaveMeshJob::WaitLeaveResponse, "LeaveMeshJob::WaitLeaveResponse");
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
-LeaveMeshJob::ExecuteResult LeaveMeshJob::WaitLeavingProcess() { Mesh* mesh=g_piaMesh; unsigned char* local=localStation(mesh); unsigned char* stations=stationArray(mesh); const unsigned int count=*stationCount(mesh); for(unsigned int i=0;i<count;++i){ unsigned char* station=*reinterpret_cast<unsigned char**>(stations+i*4); if(station && station!=local && *reinterpret_cast<unsigned int*>(station+0x20)==5) return MakeExecuteResult(cExecuteKindWait); } union { common::Job::ExecuteResult (LeaveMeshJob::*derived)(); common::Job::ExecuteResult (common::StepSequenceJob::*base)(); } step; step.derived=&LeaveMeshJob::LeaveSuccess; m_currentStep.m_function=step.base; return MakeExecuteResult(cExecuteKindNextStep); }
-LeaveMeshJob::ExecuteResult LeaveMeshJob::LeaveSuccess() { g_piaMesh->CleanupStationsJobs(); g_piaMesh->SetMeshState(Mesh::cStateStarted); g_piaMesh->CleanupStatus(); if(m_callerContext){m_callerContext->SignalSuccess(0);m_callerContext=0;} if(m_extraContext){m_extraContext->SignalSuccess(0);m_extraContext=0;} return MakeExecuteResult(cExecuteKindFinished); }
-void LeaveMeshJob::Cleanup() { m_deadlineHigh=0; m_deadlineLow=0; m_disconnectStarted=false; if(m_callerContext){if(m_callerContext->m_state==common::CallContext::cStateInProgress)m_callerContext->SignalSuccess(0);m_callerContext=0;} if(m_extraContext){if(m_extraContext->m_state==common::CallContext::cStateInProgress)m_extraContext->SignalSuccess(0);m_extraContext=0;} }
-unsigned int LeaveMeshJob::RegisterExtraCallback(common::CallContext* context) { if(m_extraContext!=0)return 0; m_extraContext=context; if(context)context->InitiateCall(); return 1; }
-void LeaveMeshJob::Trace(unsigned long long) const {}
+
+LeaveMeshJob::ExecuteResult LeaveMeshJob::WaitLeaveResponse()
+{
+    if (m_disconnectStarted)
+    {
+        if (m_deadline <= common::g_piaJobScheduler->m_dispatchTime)
+        {
+            const int timeoutMsec = m_timeoutMsec;
+            const common::TimeSpan& ticksPerMSec = common::TimeSpan::GetTicksPerMSec();
+            m_disconnectStarted = false;
+            m_deadline.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick + ticksPerMSec.m_tick * timeoutMsec;
+        }
+        else
+        {
+            if (transport::g_piaStationManager->m_localStation != 0)
+                return MakeExecuteResult(cExecuteKindNextStep);
+            m_disconnectStarted = false;
+        }
+    }
+    SelectStep(m_currentStep, &LeaveMeshJob::StartDisconnectStations, "LeaveMeshJob::StartDisconnectStations");
+    return MakeExecuteResult(cExecuteKindContinue);
+}
+
+LeaveMeshJob::ExecuteResult LeaveMeshJob::StartDisconnectStations()
+{
+    transport::Station* localStation = transport::g_piaStationManager->m_localStation;
+    if (localStation == 0)
+    {
+        SelectStep(m_currentStep, &LeaveMeshJob::LeaveSuccess, "LeaveMeshJob::LeaveSuccess");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    transport::Station** station = transport::g_piaStationManager->m_stations.data;
+    if (station != station + transport::g_piaStationManager->m_stations.size)
+    {
+        do
+        {
+            if (*station != localStation)
+            {
+                if (g_piaMesh->IsValidStationIndex(static_cast<StationIndex>((*station)->m_field10)))
+                    g_piaMesh->UnfixDisconnectedId(static_cast<StationIndex>((*station)->m_field10));
+                transport::DisconnectStationJob* disconnectJob = (*station)->m_disconnectStationJob;
+                if (disconnectJob != 0 && disconnectJob->Startup(*station) == 0)
+                    disconnectJob->Ready(false);
+                else
+                    (*station)->Trace(cTraceStationLevel);
+            }
+            ++station;
+        } while (station != transport::g_piaStationManager->m_stations.data + transport::g_piaStationManager->m_stations.size);
+    }
+    SelectStep(m_currentStep, &LeaveMeshJob::WaitLeavingProcess, "LeaveMeshJob::WaitLeavingProcess");
+    return MakeExecuteResult(cExecuteKindContinue);
+}
+
+LeaveMeshJob::ExecuteResult LeaveMeshJob::WaitLeavingProcess()
+{
+    bool connected = false;
+    for (transport::Station** station = transport::g_piaStationManager->m_stations.data;
+         station != transport::g_piaStationManager->m_stations.data + transport::g_piaStationManager->m_stations.size; ++station)
+    {
+        if ((*station)->m_field20 == cConnectedStationState && *station != transport::g_piaStationManager->m_localStation)
+        {
+            connected = true;
+            break;
+        }
+    }
+    if (connected && !(m_deadline <= common::g_piaJobScheduler->m_dispatchTime))
+        return MakeExecuteResult(cExecuteKindNextStep);
+    SelectStep(m_currentStep, &LeaveMeshJob::LeaveSuccess, "LeaveMeshJob::LeaveSuccess");
+    return MakeExecuteResult(cExecuteKindContinue);
+}
+
+LeaveMeshJob::ExecuteResult LeaveMeshJob::LeaveSuccess()
+{
+    for (transport::Station** station = transport::g_piaStationManager->m_stations.data;
+         station != transport::g_piaStationManager->m_stations.data + transport::g_piaStationManager->m_stations.size; ++station)
+        (*station)->m_disconnectStationJob->ProcessDisconnection(*station);
+    g_piaMesh->CleanupStationsJobs();
+    g_piaMesh->m_disconnectReason = cDisconnectReasonLeave;
+    g_piaMesh->CleanupStatus();
+    if (m_callerContext != 0)
+    {
+        if (m_callerContext->m_state == common::CallContext::cStateInProgress)
+            m_callerContext->SignalSuccess(Result(0));
+        m_callerContext = 0;
+    }
+    if (m_extraContext != 0)
+    {
+        if (m_extraContext->m_state == common::CallContext::cStateInProgress)
+            m_extraContext->SignalSuccess(Result(0));
+        m_extraContext = 0;
+    }
+    return MakeExecuteResult(cExecuteKindFinished);
+}
+
+void LeaveMeshJob::Cleanup()
+{
+    common::CallContext* callerContext = m_callerContext;
+    m_disconnectStarted = false;
+    m_deadline = common::Time();
+    if (callerContext != 0)
+    {
+        if (callerContext->m_state == common::CallContext::cStateInProgress)
+            callerContext->SignalSuccess(Result(0));
+        m_callerContext = 0;
+    }
+    if (m_extraContext != 0)
+    {
+        if (m_extraContext->m_state == common::CallContext::cStateInProgress)
+            m_extraContext->SignalSuccess(Result(0));
+        m_extraContext = 0;
+    }
+}
+
+unsigned int LeaveMeshJob::RegisterExtraCallback(common::CallContext* callContext)
+{
+    if (m_extraContext != 0)
+        return 0;
+    m_extraContext = callContext;
+    callContext->InitiateCall();
+    return 1;
+}
+
+void LeaveMeshJob::Trace(unsigned long long) const
+{
+}
+
 }}}

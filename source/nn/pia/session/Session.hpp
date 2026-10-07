@@ -158,7 +158,12 @@ public:
     unsigned long long GetJointSessionHostStationId() const;
     void NotifyOwnershipChange(unsigned int sessionId, unsigned long long stationId);
     void CancelJoinProcessByFatalError();
+    bool IsPostponeNotice() const;
     void invalidateStationId(unsigned long long stationId);
+    bool RemoveStationId(unsigned long long stationId, StationIndex stationIndex,
+                         unsigned long long uniqueId, unsigned int);
+    void JoinNotice(unsigned long long stationId);
+    void validateStationId(unsigned long long stationId);
     void UpdateSessionStationInfo();
     void ChangeStationIdConvertEnableFlag(bool enable);
     unsigned int GetJointSessionStateForDebug() const;

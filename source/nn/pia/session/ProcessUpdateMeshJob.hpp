@@ -27,9 +27,9 @@ public:
     void CalcTimeLimit(bool relay);
     unsigned char GetContextIndex(StationIndex stationIndex) const;
     void ClearContextIndex(StationIndex stationIndex);
-    unsigned short GetUsableContextIndex() const;
+    unsigned char GetUsableContextIndex() const;
     void SetContextIndex(StationIndex stationIndex, unsigned char contextIndex);
-    unsigned int UpdateMesh();
+    bool UpdateMesh();
     int Startup(const unsigned char* data, unsigned int size, bool relay);
     void UpdateJoinMeshFailureResult(StationIndex stationIndex, unsigned char failure, bool relay);
     ExecuteResult WaitDirectConnection();
@@ -45,7 +45,7 @@ public:
     void UpdateDataTakeover(unsigned short stationCount);
     int UpdateStationDataList(const unsigned char* data, unsigned int size, bool relay);
     void Cleanup();
-    unsigned char GetStationIndexByPrincipalID(unsigned long long principalId) const;
+    StationIndex GetStationIndexByPrincipalID(unsigned long long principalId) const;
     bool CheckEdmByStationIndex(StationIndex stationIndex) const;
     void SetConnectionFailureNotice(StationIndex stationIndex, unsigned char failure);
     void InitializeMonitoringDataVar();
@@ -53,18 +53,6 @@ public:
     void ClearStationIndex(StationIndex stationIndex);
     void GetStepSequence() const;
     void CheckDuplicationDataInUpdateMeshDataList() const;
-
-    void setStep(ExecuteResult (ProcessUpdateMeshJob::*function)(), const char* name)
-    {
-        union
-        {
-            ExecuteResult (ProcessUpdateMeshJob::*derived)();
-            ExecuteResult (common::StepSequenceJob::*base)();
-        } step;
-        step.derived = function;
-        m_currentStep.m_function = step.base;
-        m_currentStep.m_name = name;
-    }
 
     common::Time m_updateDeadline;
     int m_updateTimeLimitMsec;

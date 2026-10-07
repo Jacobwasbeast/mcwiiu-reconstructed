@@ -15,9 +15,9 @@ JoinSessionSetting::~JoinSessionSetting()
 
 void JoinSessionSetting::Reset()
 {
-    m_sessionInfo = 0;
     m_sessionId = 0;
     m_maxParticipantNum = 0;
+    m_sessionInfo = 0;
 }
 
 const ISessionInfo* JoinSessionSetting::GetSessionInfoPtr() const

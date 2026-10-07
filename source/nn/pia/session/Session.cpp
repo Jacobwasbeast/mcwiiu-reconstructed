@@ -1,5 +1,7 @@
 #include "nn/pia/session/Session.hpp"
 
+#include <new>
+
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 #include "nn/pia/transport/StationConnectionInfoTable.hpp"
@@ -553,6 +555,11 @@ void Session::CancelJoinProcessByFatalError()
         m_joinSessionJob->m_sessionInvalidated = true;
 }
 
+bool Session::IsPostponeNotice() const
+{
+    return m_postponeNotice;
+}
+
 void Session::invalidateStationId(unsigned long long stationId)
 {
     common::ListNode* sentinel = m_validStationIdList.Sentinel();
@@ -567,6 +574,70 @@ void Session::invalidateStationId(unsigned long long stationId)
                     reinterpret_cast<char*>(node) + m_stationIdNodeOffset));
             break;
         }
+    }
+    UpdateSessionStationInfo();
+}
+
+bool Session::RemoveStationId(unsigned long long stationId, StationIndex stationIndex,
+                              unsigned long long uniqueId, unsigned int)
+{
+    if (uniqueId != 0)
+    {
+        transport::StationIdTable::Entry entry;
+        if (transport::g_piaTransport->m_stationIdTable->FindByUniqueId(&entry, uniqueId) != 0)
+            return false;
+        stationId = entry.stationId;
+        if (stationId == 0)
+            return false;
+    }
+    else if (stationId == 0)
+    {
+        if (stationIndex == cStationIndexInvalid)
+            return false;
+        transport::StationIdTable::Entry entry;
+        if (transport::g_piaTransport->m_stationIdTable->FindByStationIndex(&entry, stationIndex) != 0)
+            return false;
+        stationId = entry.stationId;
+        if (stationId == 0)
+            return false;
+    }
+
+    if (IsPostponeNotice())
+    {
+        m_stationIdStatusTable->SetConnect(stationId, false);
+        return true;
+    }
+
+    if (m_stationIdStatusTable->CheckEventNotifiedStatus(stationId))
+    {
+        if (m_sessionEventCallback != 0)
+            m_sessionEventCallback(cEventTypeLeave, stationId, m_sessionEventCallbackParam);
+        invalidateStationId(stationId);
+    }
+    transport::g_piaTransport->m_stationIdTable->RemoveByStationId(stationId);
+    Result result = m_stationIdStatusTable->RemoveElement(stationId);
+    return result == 0;
+}
+
+void Session::JoinNotice(unsigned long long stationId)
+{
+    if (m_sessionEventCallback != 0)
+        m_sessionEventCallback(cEventTypeJoin, stationId, m_sessionEventCallbackParam);
+    transport::g_piaTransport->m_stationIdTable->SetJoinEventNotifiedByStationId(stationId, true);
+}
+
+void Session::validateStationId(unsigned long long stationId)
+{
+    if (m_validStationIdFreeList.GetNodeNum() != 0)
+    {
+        common::ListNode* freeNode = m_validStationIdFreeList.PopBackNode();
+        if (freeNode != 0)
+            freeNode = reinterpret_cast<common::ListNode*>(
+                reinterpret_cast<char*>(freeNode) - m_stationIdNodeOffset);
+        StationIdEntry* entry = reinterpret_cast<StationIdEntry*>(freeNode);
+        new (&entry->m_stationId) unsigned long long(0);
+        m_validStationIdList.InsertBeforeNode(m_validStationIdList.Sentinel(), &entry->m_node);
+        new (&entry->m_stationId) unsigned long long(stationId);
     }
     UpdateSessionStationInfo();
 }

@@ -55,18 +55,6 @@ public:
     virtual ExecuteResult SetNextStepAfterWaitAllConnection();
     void CleanupInternalContexts();
 
-    void setStep(ExecuteResult (JoinMeshJob::*function)(), const char* name)
-    {
-        union
-        {
-            ExecuteResult (JoinMeshJob::*derived)();
-            ExecuteResult (common::StepSequenceJob::*base)();
-        } step;
-        step.derived = function;
-        m_currentStep.m_function = step.base;
-        m_currentStep.m_name = name;
-    }
-
     common::CallContext* m_callerContext;
     common::CallContext* m_internalContext;
     unsigned int m_requestAckId;

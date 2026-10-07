@@ -3,6 +3,16 @@
 
 namespace nn { namespace pia { namespace session {
 
+namespace
+{
+enum
+{
+    cResultDisconnectedSession = 0x8c56,
+    cResultInvalidArgument = 0x10c07,
+    cResultInvalidState = 0x10c08
+};
+}
+
 GenerateMatchmakeSystemPasswordJob::GenerateMatchmakeSystemPasswordJob()
     : common::StepSequenceJob(), m_sessionId(0), m_callerContext(0), m_callContext()
 {
@@ -17,9 +27,10 @@ Result GenerateMatchmakeSystemPasswordJob::Startup(common::CallContext* callerCo
                                                     IMatchmakeSession* session)
 {
     if (callerContext == 0 || session == 0)
-        return 0x10c07;
-    if (!session->IsMatchmakeOwner())
-        return 0x10c08;
+        return cResultInvalidArgument;
+    const bool isOwner = session->IsMatchmakeOwner();
+    if (!isOwner)
+        return cResultInvalidState;
 
     const Result operationResult = GenerateMatchmakeSystemPassword();
     if (operationResult != 0)
@@ -41,7 +52,7 @@ GenerateMatchmakeSystemPasswordJob::ExecuteResult GenerateMatchmakeSystemPasswor
 
 GenerateMatchmakeSystemPasswordJob::ExecuteResult GenerateMatchmakeSystemPasswordJob::FailureProcess()
 {
-    if (m_callerContext->m_result == static_cast<Result>(0x8c56))
+    if (m_callerContext->m_result == static_cast<Result>(cResultDisconnectedSession))
         g_piaSession->ChangeStatusToDisconnectedSession();
     m_callerContext = 0;
     return MakeExecuteResult(cExecuteKindFinished);

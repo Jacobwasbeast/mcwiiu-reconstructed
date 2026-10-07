@@ -53,10 +53,6 @@ SyncClockProtocol::SyncClockProtocol()
 {
 }
 
-SyncClockProtocol::~SyncClockProtocol()
-{
-}
-
 unsigned short SyncClockProtocol::GetProtocolType() const
 {
     return cProtocolType;

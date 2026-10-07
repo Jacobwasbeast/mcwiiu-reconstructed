@@ -18,7 +18,6 @@ public:
     enum { cProtocolType = 0x1c };
 
     SyncClockProtocol();
-    virtual ~SyncClockProtocol();
     virtual unsigned short GetProtocolType() const;
     virtual Result StartupWithStationAddress(const common::StationAddress& address);
     virtual void CleanupWithStationAddress();

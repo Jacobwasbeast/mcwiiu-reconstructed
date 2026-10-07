@@ -22,9 +22,9 @@ nn::pia::common::Result SessionSearchCriteria::SetResultRange(unsigned int offse
 
 void SessionSearchCriteria::Reset()
 {
-    m_resultRangeOffset = 0;
-    m_resultRangeSize = 20;
     m_keyType = cKeyTypeDefault;
+    m_resultRangeSize = 20;
+    m_resultRangeOffset = 0;
 }
 
 void SessionSearchCriteria::Copy(const SessionSearchCriteria& other)

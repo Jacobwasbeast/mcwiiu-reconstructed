@@ -64,7 +64,7 @@ public:
     void SetRankDecision(StationIndex station, bool value);
     void InitializeMonitoringDataVar();
     void SetMonitoringData();
-    unsigned char GetStationIndexByPrincipalID(unsigned long long principalId);
+    StationIndex GetStationIndexByPrincipalID(unsigned long long principalId);
 
     unsigned int GetHostMigrationSequence() const
     {

@@ -4,7 +4,11 @@
 
 #include "nn/pia/HeapManager.hpp"
 #include "nn/pia/session/JointSessionJob.hpp"
+#include "nn/pia/StationIdTable.hpp"
+#include "nn/pia/Transport.hpp"
 #include "nn/pia/session/Session.hpp"
+#include "nn/pia/transport/Station.hpp"
+#include "nn/pia/transport/StationManager.hpp"
 #include "platform/wiiu/pead.hpp"
 
 namespace nn { namespace pia { namespace session {
@@ -15,6 +19,8 @@ const unsigned short s_maxStationNum = 0x20;
 const unsigned int s_maxSessionIdNum = 0x20;
 
 enum StationIndexValue { cStationIndexReserved = 0xfe };
+
+enum StationStateValue { cConnectedStationState = 5 };
 
 struct DisconnectedStation
 {
@@ -32,12 +38,19 @@ void StationIdStatusTable::Finalize()
     if (m_storage != 0)
     {
         if (m_entries != 0)
-            releaseAllEntries();
-        if (m_storage != 0)
         {
-            pead::getArraySize(m_storage);
-            pead::freeToSeadHeap(m_storage);
+            common::ListNode* node = m_usedList.Sentinel()->next;
+            while (node != m_usedList.Sentinel())
+            {
+                common::ListNode* entry = node;
+                node = node->next;
+                entry->prev = 0;
+                entry->next = 0;
+                m_freeList.InsertAfterNode(m_freeList.Sentinel(), reinterpret_cast<common::ListNode*>(reinterpret_cast<char*>(entry) + m_freeNodeOffset));
+            }
+            m_usedList.Init();
         }
+        pead::DeleteArray(m_storage);
         m_storage = 0;
     }
 }
@@ -50,11 +63,11 @@ Result StationIdStatusTable::Initialize(unsigned short stationNum)
     if (m_storage == 0)
     {
         pead::Heap* heap = common::HeapManager::GetHeap();
-        m_storage = static_cast<Entry*>(pead::allocateFromSeadHeap(sizeof(Entry) * stationNum, heap));
+        m_storage = static_cast<unsigned long long*>(pead::allocateFromSeadHeap(sizeof(Entry) * stationNum, heap));
         if (m_storage != 0)
         {
             std::memset(m_storage, 0, sizeof(Entry) * stationNum);
-            m_entries = m_storage;
+            m_entries = reinterpret_cast<Entry*>(m_storage);
             m_entryNum = stationNum;
             for (unsigned short i = 0; i < stationNum; ++i)
                 m_freeList.InsertBeforeNode(m_freeList.Sentinel(), &m_entries[i].node);
@@ -65,7 +78,17 @@ Result StationIdStatusTable::Initialize(unsigned short stationNum)
 
 void StationIdStatusTable::ClearAllElements()
 {
-    releaseAllEntries();
+    common::ListNode* end = m_usedList.Sentinel();
+    common::ListNode* node = end->next;
+    while (node != end)
+    {
+        common::ListNode* entry = node;
+        node = node->next;
+        entry->prev = 0;
+        entry->next = 0;
+        m_freeList.InsertAfterNode(m_freeList.Sentinel(), reinterpret_cast<common::ListNode*>(reinterpret_cast<char*>(entry) + m_freeNodeOffset));
+    }
+    m_usedList.Init();
 }
 
 Result StationIdStatusTable::AddElement(unsigned long long stationId, unsigned int sessionId, PrepareStatus status, bool eventNotified)
@@ -90,21 +113,22 @@ Result StationIdStatusTable::RemoveElement(unsigned long long stationId)
     common::ListNode* head = m_usedList.Sentinel();
     for (common::ListNode* node = head->next; node != head; node = node->next)
     {
-        Entry* entry = entryOf(node);
-        if (entry->element.stationId == stationId)
+        Element* element = &entryOf(node)->element;
+        if (element->stationId == stationId)
         {
-            entry->element.answer = cAnswerStatusNone;
-            entry->element.stationIndex = static_cast<StationIndex>(cStationIndexInvalid);
-            entry->element.sessionId = 0;
-            entry->element.prepare = cPrepareStatusNone;
-            entry->element.migration = false;
-            entry->element.invitation = false;
-            entry->element.host = false;
-            entry->element.stationId = 0;
-            entry->element.eventNotified = false;
-            entry->element.connect = false;
-            m_usedList.EraseNode(node);
-            m_freeList.InsertAfterNode(m_freeList.Sentinel(), node);
+            element->stationIndex = static_cast<StationIndex>(cStationIndexInvalid);
+            element->prepare = cPrepareStatusNone;
+            element->stationId = 0;
+            element->migration = false;
+            element->invitation = false;
+            element->host = false;
+            element->connect = false;
+            element->sessionId = 0;
+            element->eventNotified = false;
+            element->answer = cAnswerStatusNone;
+            common::ListNode* entryNode = &entryOf(element)->node;
+            m_usedList.EraseNode(entryNode);
+            m_freeList.InsertAfterNode(m_freeList.Sentinel(), reinterpret_cast<common::ListNode*>(reinterpret_cast<char*>(entryNode) + m_freeNodeOffset));
             return 0;
         }
     }
@@ -113,8 +137,7 @@ Result StationIdStatusTable::RemoveElement(unsigned long long stationId)
 
 StationIdStatusTable::Element* StationIdStatusTable::FindElement(unsigned long long stationId)
 {
-    common::ListNode* head = m_usedList.Sentinel();
-    for (common::ListNode* node = head->next; node != head; node = node->next)
+    for (common::ListNode* node = m_usedList.Sentinel()->next; node != m_usedList.Sentinel(); node = node->next)
     {
         Element* element = &entryOf(node)->element;
         if (element->stationId == stationId)
@@ -132,30 +155,42 @@ void StationIdStatusTable::ClearAllPrepareStatus()
 
 void StationIdStatusTable::SetPrepareStatus(unsigned long long stationId, bool value)
 {
-    Entry* entry = findMutable(stationId);
-    if (entry != 0)
-        entry->element.prepare = value ? cPrepareStatusPrepared : cPrepareStatusNotPrepared;
+    common::ListNode* head = m_usedList.Sentinel();
+    for (common::ListNode* node = head->next; node != head; node = node->next)
+    {
+        Element* element = &entryOf(node)->element;
+        if (element->stationId == stationId)
+        {
+            element->prepare = value ? cPrepareStatusPrepared : cPrepareStatusNotPrepared;
+            return;
+        }
+    }
 }
 
 StationIdStatusTable::PrepareCheck StationIdStatusTable::CheckAllPrepareStatus(unsigned long long* stationIds, unsigned short count) const
 {
-    bool filtered = stationIds != 0 && count != 0;
+    bool filtered = false;
+    if (stationIds != 0 && count != 0)
+        filtered = true;
     PrepareCheck result = cPrepareCheckComplete;
     const common::ListNode* head = m_usedList.Sentinel();
     for (const common::ListNode* node = head->next; node != head; node = node->next)
     {
-        const Element& element = entryOf(node)->element;
+        const Entry* entry = entryOf(node);
         if (filtered)
         {
-            unsigned short i = 0;
-            while (i < count && stationIds[i] != element.stationId)
-                ++i;
+            int i = 0;
+            for (; i < count; ++i)
+            {
+                if (entry->element.stationId == stationIds[i])
+                    break;
+            }
             if (i == count)
                 continue;
         }
-        if (element.prepare == cPrepareStatusNotPrepared)
+        if (entry->element.prepare == cPrepareStatusNotPrepared)
             return cPrepareCheckNotPrepared;
-        if (element.prepare == cPrepareStatusNone)
+        if (entry->element.prepare == cPrepareStatusNone)
             result = cPrepareCheckPending;
     }
     return result;
@@ -163,10 +198,13 @@ StationIdStatusTable::PrepareCheck StationIdStatusTable::CheckAllPrepareStatus(u
 
 StationIdStatusTable::PrepareStatus StationIdStatusTable::CheckPrepareStatus(unsigned long long stationId) const
 {
-    const Entry* entry = find(stationId);
-    if (entry == 0)
-        return cPrepareStatusNone;
-    return entry->element.prepare;
+    for (const common::ListNode* node = m_usedList.Sentinel()->next; node != m_usedList.Sentinel(); node = node->next)
+    {
+        const Entry* entry = entryOf(node);
+        if (entry->element.stationId == stationId)
+            return entry->element.prepare;
+    }
+    return cPrepareStatusNone;
 }
 
 void StationIdStatusTable::ClearAllConnectStatus()
@@ -181,9 +219,9 @@ void StationIdStatusTable::SetConnect(unsigned long long stationId, bool value)
     const common::ListNode* head = m_usedList.Sentinel();
     for (common::ListNode* node = head->next; node != head; node = node->next)
     {
-        Entry* entry = entryOf(node);
-        if (entry->element.stationId == stationId)
-            entry->element.connect = value;
+        Element* element = &entryOf(node)->element;
+        if (element->stationId == stationId)
+            element->connect = value;
     }
 }
 
@@ -192,43 +230,56 @@ bool StationIdStatusTable::CheckAllConnectStatus(unsigned long long* stationIds,
     const common::ListNode* head = m_usedList.Sentinel();
     for (const common::ListNode* node = head->next; node != head; node = node->next)
     {
-        const Element& element = entryOf(node)->element;
+        const Entry* entry = entryOf(node);
+        bool found = false;
         for (unsigned short i = 0; i < count; ++i)
         {
-            if (stationIds[i] == element.stationId)
+            if (entry->element.stationId == stationIds[i])
             {
-                if (!element.connect)
-                    return false;
+                found = true;
                 break;
             }
         }
+        if (found && !entry->element.connect)
+            return false;
     }
     return true;
 }
 
 bool StationIdStatusTable::CheckConnectStatus(unsigned long long stationId) const
 {
-    const Entry* entry = find(stationId);
-    if (entry == 0)
-        return false;
-    return entry->element.connect;
+    for (const common::ListNode* node = m_usedList.Sentinel()->next; node != m_usedList.Sentinel(); node = node->next)
+    {
+        const Entry* entry = entryOf(node);
+        if (entry->element.stationId == stationId)
+            return entry->element.connect;
+    }
+    return false;
 }
 
 bool StationIdStatusTable::SetAnswer(unsigned long long stationId, bool value)
 {
-    Entry* entry = findMutable(stationId);
-    if (entry == 0)
-        return false;
-    entry->element.answer = value ? cAnswerStatusTrue : cAnswerStatusFalse;
-    return true;
+    for (common::ListNode* node = m_usedList.Sentinel()->next; node != m_usedList.Sentinel(); node = node->next)
+    {
+        Element* element = &entryOf(node)->element;
+        if (element->stationId == stationId)
+        {
+            element->answer = value ? cAnswerStatusTrue : cAnswerStatusFalse;
+            return true;
+        }
+    }
+    return false;
 }
 
 StationIdStatusTable::AnswerStatus StationIdStatusTable::CheckAnswerStatus(unsigned long long stationId)
 {
-    Entry* entry = findMutable(stationId);
-    if (entry == 0)
-        return cAnswerStatusNone;
-    return entry->element.answer;
+    for (common::ListNode* node = m_usedList.Sentinel()->next; node != m_usedList.Sentinel(); node = node->next)
+    {
+        Entry* entry = entryOf(node);
+        if (entry->element.stationId == stationId)
+            return entry->element.answer;
+    }
+    return cAnswerStatusNone;
 }
 
 void StationIdStatusTable::ClearAllAnswerStatus()
@@ -240,19 +291,27 @@ void StationIdStatusTable::ClearAllAnswerStatus()
 
 bool StationIdStatusTable::SetSendInvitationStatus(unsigned long long stationId, bool value)
 {
-    Entry* entry = findMutable(stationId);
-    if (entry == 0)
-        return false;
-    entry->element.invitation = value;
-    return true;
+    for (common::ListNode* node = m_usedList.Sentinel()->next; node != m_usedList.Sentinel(); node = node->next)
+    {
+        Element* element = &entryOf(node)->element;
+        if (element->stationId == stationId)
+        {
+            element->invitation = value;
+            return true;
+        }
+    }
+    return false;
 }
 
 bool StationIdStatusTable::CheckSendInvitationStatus(unsigned long long stationId) const
 {
-    const Entry* entry = find(stationId);
-    if (entry == 0)
-        return false;
-    return entry->element.invitation;
+    for (const common::ListNode* node = m_usedList.Sentinel()->next; node != m_usedList.Sentinel(); node = node->next)
+    {
+        const Entry* entry = entryOf(node);
+        if (entry->element.stationId == stationId)
+            return entry->element.invitation;
+    }
+    return false;
 }
 
 void StationIdStatusTable::ClearAllSendInvitationStatus()
@@ -264,19 +323,27 @@ void StationIdStatusTable::ClearAllSendInvitationStatus()
 
 bool StationIdStatusTable::SetMigrationCompleteStatus(unsigned long long stationId, bool value)
 {
-    Entry* entry = findMutable(stationId);
-    if (entry == 0)
-        return false;
-    entry->element.migration = value;
-    return true;
+    for (common::ListNode* node = m_usedList.Sentinel()->next; node != m_usedList.Sentinel(); node = node->next)
+    {
+        Element* element = &entryOf(node)->element;
+        if (element->stationId == stationId)
+        {
+            element->migration = value;
+            return true;
+        }
+    }
+    return false;
 }
 
 bool StationIdStatusTable::CheckMigrationCompleteStatus(unsigned long long stationId) const
 {
-    const Entry* entry = find(stationId);
-    if (entry == 0)
-        return false;
-    return entry->element.migration;
+    for (const common::ListNode* node = m_usedList.Sentinel()->next; node != m_usedList.Sentinel(); node = node->next)
+    {
+        const Entry* entry = entryOf(node);
+        if (entry->element.stationId == stationId)
+            return entry->element.migration;
+    }
+    return false;
 }
 
 void StationIdStatusTable::ClearAllMigrationCompleteStatus()
@@ -291,38 +358,86 @@ void StationIdStatusTable::SetEventNotifiedStatus(unsigned long long stationId, 
     const common::ListNode* head = m_usedList.Sentinel();
     for (common::ListNode* node = head->next; node != head; node = node->next)
     {
-        Entry* entry = entryOf(node);
-        if (entry->element.stationId == stationId)
-            entry->element.eventNotified = value;
+        Element* element = &entryOf(node)->element;
+        if (element->stationId == stationId)
+            element->eventNotified = value;
     }
 }
 
 bool StationIdStatusTable::CheckEventNotifiedStatus(unsigned long long stationId) const
 {
-    const Entry* entry = find(stationId);
-    if (entry == 0)
-        return false;
-    return entry->element.eventNotified;
+    for (const common::ListNode* node = m_usedList.Sentinel()->next; node != m_usedList.Sentinel(); node = node->next)
+    {
+        const Entry* entry = entryOf(node);
+        if (entry->element.stationId == stationId)
+            return entry->element.eventNotified;
+    }
+    return false;
 }
 
 void StationIdStatusTable::CallJoinEventNotYetNotified()
 {
-    const common::ListNode* head = m_usedList.Sentinel();
+    Session* session = g_piaSession;
+    const unsigned long long localStationId = session->m_localStationId;
+    if (!CheckEventNotifiedStatus(localStationId))
+    {
+        session->validateStationId(localStationId);
+        session->JoinNotice(localStationId);
+        SetEventNotifiedStatus(localStationId, true);
+    }
+
+    const unsigned long long hostStationId = session->m_hostStationId;
+    if (!CheckEventNotifiedStatus(hostStationId) && CheckConnectStatus(hostStationId))
+    {
+        session->validateStationId(hostStationId);
+        session->JoinNotice(hostStationId);
+        SetEventNotifiedStatus(hostStationId, true);
+    }
+
+    common::ListNode* head = m_usedList.Sentinel();
     for (common::ListNode* node = head->next; node != head; node = node->next)
-        entryOf(node)->element.eventNotified = true;
+    {
+        Element* element = &entryOf(node)->element;
+        if (!element->eventNotified)
+        {
+            session->validateStationId(element->stationId);
+            session->JoinNotice(element->stationId);
+            element->eventNotified = true;
+        }
+    }
 }
 
 void StationIdStatusTable::ClearDisconnectedStationId()
 {
+    Session* session = g_piaSession;
+    unsigned long long disconnectedStationIds[s_maxStationNum];
+    unsigned short disconnectedNum = 0;
+    bool localDisconnected = false;
+    const unsigned long long localStationId = session->m_localStationId;
+
     common::ListNode* head = m_usedList.Sentinel();
-    common::ListNode* node = head->next;
-    while (node != head)
+    for (common::ListNode* node = head->next; node != head; node = node->next)
     {
-        common::ListNode* next = node->next;
-        if (entryOf(node)->element.stationIndex == static_cast<StationIndex>(cStationIndexInvalid))
-            RemoveElement(entryOf(node)->element.stationId);
-        node = next;
+        Element* element = &entryOf(node)->element;
+        const transport::Station* station = transport::g_piaStationManager->GetStation(element->stationId);
+        if (station != 0 && station->m_field20 == cConnectedStationState && element->connect)
+            continue;
+
+        if (element->stationId == localStationId)
+            localDisconnected = true;
+        else
+            disconnectedStationIds[disconnectedNum++] = element->stationId;
+
+        transport::StationIdTable::Entry* entry =
+            transport::g_piaTransport->m_stationIdTable->FindByStationIdCore(element->stationId);
+        if (entry != 0 && entry->stationIndex == cStationIndexInvalid)
+            entry->stationIndex = element->stationIndex;
     }
+    if (localDisconnected)
+        disconnectedStationIds[disconnectedNum++] = localStationId;
+
+    for (unsigned int i = 0; i < disconnectedNum; ++i)
+        session->RemoveStationId(disconnectedStationIds[i], static_cast<StationIndex>(cStationIndexInvalid), 0, 0);
 }
 
 bool StationIdStatusTable::DisconnectionEventListenerForJointSession(void* event) const
@@ -330,49 +445,71 @@ bool StationIdStatusTable::DisconnectionEventListenerForJointSession(void* event
     const DisconnectedStation* station = static_cast<const DisconnectedStation*>(event);
     if (station == 0 || station->stationIndex == static_cast<StationIndex>(cStationIndexReserved))
         return false;
-    if (g_piaSession->m_fieldc0 == 0)
+    const Session* session = g_piaSession;
+    if (session->m_fieldc0 == 0)
         return false;
 
     const Entry* entry = find(station->stationId);
     if (entry == 0)
         return false;
 
-    const JointSessionJob* jointSessionJob = g_piaSession->m_jointSessionJob;
+    const JointSessionJob* jointSessionJob = session->m_jointSessionJob;
     if (jointSessionJob == 0)
         return false;
-    return !jointSessionJob->IsMigrateSessionToJointSession() || entry->element.prepare == cPrepareStatusPrepared;
+    if ((jointSessionJob->m_processType == Session::cProcessTypeCreateJointSession ||
+         jointSessionJob->m_processType == Session::cProcessTypeJoinJointSession ||
+         jointSessionJob->m_processType == Session::cProcessTypeJoinRandomJointSession) &&
+        entry->element.prepare != cPrepareStatusPrepared)
+        return false;
+    return true;
 }
 
 bool StationIdStatusTable::GetSessionId(unsigned long long stationId, unsigned int* sessionId) const
 {
-    const Entry* entry = find(stationId);
-    if (entry == 0)
-        return false;
-    *sessionId = entry->element.sessionId;
-    return true;
+    for (const common::ListNode* node = m_usedList.Sentinel()->next; node != m_usedList.Sentinel(); node = node->next)
+    {
+        const Element* element = &entryOf(node)->element;
+        if (element->stationId == stationId)
+        {
+            *sessionId = element->sessionId;
+            return true;
+        }
+    }
+    return false;
 }
 
 void StationIdStatusTable::SetSessionHost(unsigned long long stationId, bool value)
 {
-    Entry* entry = findMutable(stationId);
-    if (entry != 0)
-        entry->element.host = value;
+    common::ListNode* head = m_usedList.Sentinel();
+    for (common::ListNode* node = head->next; node != head; node = node->next)
+    {
+        Element* element = &entryOf(node)->element;
+        if (element->stationId == stationId)
+        {
+            element->host = value;
+            return;
+        }
+    }
 }
 
 bool StationIdStatusTable::GetSessionHost(unsigned long long stationId, bool* value) const
 {
-    const Entry* entry = find(stationId);
-    if (entry == 0)
-        return false;
-    *value = entry->element.host;
-    return true;
+    for (const common::ListNode* node = m_usedList.Sentinel()->next; node != m_usedList.Sentinel(); node = node->next)
+    {
+        const Element* element = &entryOf(node)->element;
+        if (element->stationId == stationId)
+        {
+            *value = element->host;
+            return true;
+        }
+    }
+    return false;
 }
 
 unsigned short StationIdStatusTable::GetStationIdNum(unsigned int sessionId) const
 {
     unsigned short num = 0;
-    const common::ListNode* head = m_usedList.Sentinel();
-    for (const common::ListNode* node = head->next; node != head; node = node->next)
+    for (const common::ListNode* node = m_usedList.Sentinel()->next; node != m_usedList.Sentinel(); node = node->next)
     {
         if (entryOf(node)->element.sessionId == sessionId)
             ++num;
@@ -387,12 +524,18 @@ unsigned char StationIdStatusTable::GetSessionIdRank(unsigned int sessionId) con
     const common::ListNode* head = m_usedList.Sentinel();
     for (const common::ListNode* node = head->next; node != head; node = node->next)
     {
-        unsigned int id = entryOf(node)->element.sessionId;
-        unsigned char i = 0;
-        while (i < num && sessionIds[i] != id)
-            ++i;
-        if (i == num)
-            sessionIds[num++] = id;
+        const Element* element = &entryOf(node)->element;
+        bool found = false;
+        for (int i = 0; i < num; ++i)
+        {
+            if (sessionIds[i] == entryOf(node)->element.sessionId)
+            {
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+            sessionIds[num++] = element->sessionId;
     }
 
     unsigned char rank = 1;
@@ -410,30 +553,48 @@ unsigned char StationIdStatusTable::GetSessionIdArray(unsigned int* sessionIds) 
     const common::ListNode* head = m_usedList.Sentinel();
     for (const common::ListNode* node = head->next; node != head; node = node->next)
     {
-        unsigned int id = entryOf(node)->element.sessionId;
-        unsigned char i = 0;
-        while (i < num && sessionIds[i] != id)
-            ++i;
-        if (i == num)
-            sessionIds[num++] = id;
+        const Element* element = &entryOf(node)->element;
+        bool found = false;
+        for (unsigned char i = 0; i < num; ++i)
+        {
+            if (sessionIds[i] == entryOf(node)->element.sessionId)
+            {
+                found = true;
+                break;
+            }
+        }
+        if (!found)
+            sessionIds[num++] = element->sessionId;
     }
     return num;
 }
 
 void StationIdStatusTable::SetStationIndex(unsigned long long stationId, StationIndex index)
 {
-    Entry* entry = findMutable(stationId);
-    if (entry != 0)
-        entry->element.stationIndex = index;
+    common::ListNode* head = m_usedList.Sentinel();
+    for (common::ListNode* node = head->next; node != head; node = node->next)
+    {
+        Element* element = &entryOf(node)->element;
+        if (element->stationId == stationId)
+        {
+            element->stationIndex = index;
+            return;
+        }
+    }
 }
 
 bool StationIdStatusTable::GetStationIndex(unsigned long long stationId, StationIndex* index) const
 {
-    const Entry* entry = find(stationId);
-    if (entry == 0)
-        return false;
-    *index = entry->element.stationIndex;
-    return true;
+    for (const common::ListNode* node = m_usedList.Sentinel()->next; node != m_usedList.Sentinel(); node = node->next)
+    {
+        const Element* element = &entryOf(node)->element;
+        if (element->stationId == stationId)
+        {
+            *index = element->stationIndex;
+            return true;
+        }
+    }
+    return false;
 }
 
 void StationIdStatusTable::Trace(unsigned long long) const {}

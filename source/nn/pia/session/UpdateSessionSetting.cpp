@@ -7,10 +7,6 @@ UpdateSessionSetting::UpdateSessionSetting()
 {
 }
 
-UpdateSessionSetting::~UpdateSessionSetting()
-{
-}
-
 void UpdateSessionSetting::Reset()
 {
     m_modificationFlag = 0;
