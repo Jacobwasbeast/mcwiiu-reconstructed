@@ -72,7 +72,7 @@ public:
     Potion* getPotion();
     std::vector<MobEffectInstance*>& getEffects();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
 
 private:
     static const EntityDataAccessor<float>* DATA_RADIUS;

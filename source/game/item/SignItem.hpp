@@ -17,7 +17,6 @@ class SignItem : public Item
 public:
     SignItem();
 
-    virtual ~SignItem();
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                         Level* level,
                                                         const BlockPos& pos,

@@ -3,10 +3,6 @@
 #include "game/core/ByteArrayInputStream.hpp"
 #include "game/core/DataInputStream.hpp"
 
-EffectCommand::~EffectCommand()
-{
-}
-
 EGameCommand EffectCommand::getId()
 {
     return eGameCommand_Effect;

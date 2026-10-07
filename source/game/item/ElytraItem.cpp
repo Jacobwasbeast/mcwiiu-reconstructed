@@ -22,10 +22,6 @@ ElytraItem::ElytraItem()
     DispenserBlock::DISPENSER_REGISTRY.add(this, new ArmorDispenseItemBehavior());
 }
 
-ElytraItem::~ElytraItem()
-{
-}
-
 int ElytraItem::GetArmorType()
 {
     return 2;

@@ -19,7 +19,6 @@ class Player;
 class SplashPotionItem : public PotionItem
 {
 public:
-    virtual ~SplashPotionItem();
     virtual unsigned int getPotionType() const;
     virtual std::wstring getName(not_null_ptr<ItemInstance> itemInstance);
     virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance,

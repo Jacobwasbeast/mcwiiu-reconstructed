@@ -649,14 +649,15 @@ void ItemTransforms::apply(ItemTransform* transform, bool leftHand)
     GlStateManager::translatef(static_cast<float>(side) * (offsetTranslateX + transform->translation.x),
                                offsetTranslateY + transform->translation.y,
                                offsetTranslateZ + transform->translation.z);
+    float rotationX = offsetRotationX + transform->rotation.x;
     float rotationY = offsetRotationY + transform->rotation.y;
     float rotationZ = offsetRotationZ + transform->rotation.z;
     if (leftHand)
     {
-        rotationZ = -rotationZ;
         rotationY = -rotationY;
+        rotationZ = -rotationZ;
     }
-    GlStateManager::rotatef(offsetRotationX + transform->rotation.x, 1.0f, 0.0f, 0.0f);
+    GlStateManager::rotatef(rotationX, 1.0f, 0.0f, 0.0f);
     GlStateManager::rotatef(rotationY, 0.0f, 1.0f, 0.0f);
     GlStateManager::rotatef(rotationZ, 0.0f, 0.0f, 1.0f);
     GlStateManager::scalef(offsetScaleX + transform->scale.x, offsetScaleY + transform->scale.y,

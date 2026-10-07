@@ -13,10 +13,6 @@ EmptyMapItem::EmptyMapItem()
 {
 }
 
-EmptyMapItem::~EmptyMapItem()
-{
-}
-
 InteractionResultHolder EmptyMapItem::use(Level* level,
                                           boost::shared_ptr<Player> player,
                                           InteractionHand::EInteractionHand hand)

@@ -27,7 +27,6 @@ public:
     static const std::wstring TAG_CREATED_BY_HOST;
 
     WrittenBookItem();
-    virtual ~WrittenBookItem();
 
     static bool makeSureTagIsValid(CompoundTag* tag);
     static int getGeneration(not_null_ptr<ItemInstance> itemInstance);

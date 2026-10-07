@@ -13,10 +13,6 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-MilkBucketItem::~MilkBucketItem()
-{
-}
-
 not_null_ptr<ItemInstance> MilkBucketItem::finishUsingItem(not_null_ptr<ItemInstance> itemInstance,
                                                            Level* level,
                                                            boost::shared_ptr<LivingEntity> entity)

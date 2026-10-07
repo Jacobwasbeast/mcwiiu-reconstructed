@@ -73,13 +73,9 @@ ThrownPotion::ThrownPotion(Level* level, double x, double y, double z, not_null_
     }
 }
 
-ThrownPotion::~ThrownPotion()
+Entity* ThrownPotion::create(Level* level)
 {
-}
-
-void ThrownPotion::create(Level* level)
-{
-    new ThrownPotion(level);
+    return new ThrownPotion(level);
 }
 
 not_null_ptr<ItemInstance> ThrownPotion::getItem()

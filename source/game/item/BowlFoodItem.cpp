@@ -10,10 +10,6 @@ BowlFoodItem::BowlFoodItem(int nutrition)
     setMaxStackSize(1);
 }
 
-BowlFoodItem::~BowlFoodItem()
-{
-}
-
 not_null_ptr<ItemInstance> BowlFoodItem::finishUsingItem(not_null_ptr<ItemInstance> itemInstance,
                                                          Level* level,
                                                          boost::shared_ptr<LivingEntity> entity)

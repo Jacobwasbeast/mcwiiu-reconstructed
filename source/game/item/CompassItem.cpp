@@ -34,10 +34,6 @@ CompassItem::CompassItem()
     addProperty(ResourceLocation(L"angle"), new CompassItem_ItemPropertyFunction());
 }
 
-CompassItem::~CompassItem()
-{
-}
-
 TextureAtlasSprite* CompassItem::getIcon(int auxValue)
 {
     TextureAtlasSprite* icon = Item::getIcon(auxValue);

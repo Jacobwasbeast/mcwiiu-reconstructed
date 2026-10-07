@@ -13,7 +13,6 @@ class WeighedTreasureItemRuleDefinition : public AddItemRuleDefinition
 {
 public:
     WeighedTreasureItemRuleDefinition();
-    virtual ~WeighedTreasureItemRuleDefinition();
 
     WeighedTreasure* getItem();
     virtual ConsoleGameRules::EGameRuleType getActionType();

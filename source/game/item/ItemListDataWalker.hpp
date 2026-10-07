@@ -14,7 +14,6 @@ class ItemListDataWalker : public KeyedDataWalker
 public:
     ItemListDataWalker(unsigned long long type, const std::wstring& itemName);
     ItemListDataWalker(unsigned long long type, const std::vector<std::wstring>& itemNames);
-    virtual ~ItemListDataWalker();
 
 protected:
     virtual CompoundTag* doWalk(DataFixer* fixer, CompoundTag* tag, int version);

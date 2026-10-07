@@ -15,7 +15,6 @@ class ShovelItem : public DiggerItem
 {
 public:
     ShovelItem(const Item::Tier* tier);
-    virtual ~ShovelItem();
 
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                          Level* level,

@@ -7,7 +7,6 @@ class SimpleFoiledItem : public Item
 {
 public:
     SimpleFoiledItem();
-    virtual ~SimpleFoiledItem();
     virtual bool isFoil(not_null_ptr<ItemInstance> itemInstance);
 };
 

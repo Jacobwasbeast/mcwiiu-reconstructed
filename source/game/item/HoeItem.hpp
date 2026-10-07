@@ -22,7 +22,6 @@ class HoeItem : public Item
 {
 public:
     HoeItem(const Item::Tier* tier);
-    virtual ~HoeItem();
 
     void setBlock(not_null_ptr<ItemInstance> itemInstance,
                   boost::shared_ptr<Player> player,

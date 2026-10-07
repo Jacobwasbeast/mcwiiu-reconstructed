@@ -42,10 +42,6 @@ MapItem::MapItem()
     setStackedByData(true);
 }
 
-MapItem::~MapItem()
-{
-}
-
 not_null_ptr<ItemInstance> MapItem::setupNewMap(PlayerUID uid, Level* level, int dimension,
                                                 double x, double z, unsigned char scale,
                                                 bool trackingPosition, bool unlimitedTracking)
@@ -304,7 +300,7 @@ void MapItem::renderBiomePreviewMap(Level* level, const not_null_ptr<ItemInstanc
         {
             if (!level->isWithinLevelBounds(worldX + dx, worldZ + dz))
             {
-                biomes.data[dz * size + dx] = Biome::DEEP_OCEAN;
+                biomes[dz * size + dx] = Biome::DEEP_OCEAN;
             }
         }
     }
@@ -326,38 +322,38 @@ void MapItem::renderBiomePreviewMap(Level* level, const not_null_ptr<ItemInstanc
             int sampleColLeft = sampleColMid - scale * size;
             int sampleColRight = sampleColMid + scale * size;
 
-            Biome* center = biomes.data[sampleRow + sampleColMid];
+            Biome* center = biomes[sampleRow + sampleColMid];
 
             int votes = 8;
-            if (biomes.data[sampleRowAbove + sampleColLeft]->getDepth() >= 0.0f)
+            if (biomes[sampleRowAbove + sampleColLeft]->getDepth() >= 0.0f)
             {
                 votes = 7;
             }
-            if (biomes.data[sampleRowAbove + sampleColRight]->getDepth() >= 0.0f)
+            if (biomes[sampleRowAbove + sampleColRight]->getDepth() >= 0.0f)
             {
                 --votes;
             }
-            if (biomes.data[sampleRowAbove + sampleColMid]->getDepth() >= 0.0f)
+            if (biomes[sampleRowAbove + sampleColMid]->getDepth() >= 0.0f)
             {
                 --votes;
             }
-            if (biomes.data[sampleRowBelow + sampleColLeft]->getDepth() >= 0.0f)
+            if (biomes[sampleRowBelow + sampleColLeft]->getDepth() >= 0.0f)
             {
                 --votes;
             }
-            if (biomes.data[sampleRowBelow + sampleColRight]->getDepth() >= 0.0f)
+            if (biomes[sampleRowBelow + sampleColRight]->getDepth() >= 0.0f)
             {
                 --votes;
             }
-            if (biomes.data[sampleRowBelow + sampleColMid]->getDepth() >= 0.0f)
+            if (biomes[sampleRowBelow + sampleColMid]->getDepth() >= 0.0f)
             {
                 --votes;
             }
-            if (biomes.data[sampleRow + sampleColLeft]->getDepth() >= 0.0f)
+            if (biomes[sampleRow + sampleColLeft]->getDepth() >= 0.0f)
             {
                 --votes;
             }
-            if (biomes.data[sampleRow + sampleColRight]->getDepth() >= 0.0f)
+            if (biomes[sampleRow + sampleColRight]->getDepth() >= 0.0f)
             {
                 --votes;
             }
@@ -409,9 +405,9 @@ void MapItem::renderBiomePreviewMap(Level* level, const not_null_ptr<ItemInstanc
             if (color != MaterialColor::NONE)
             {
                 int index = mapX + mapZ * 128;
-                if (data->mColors.data[index] == 0)
+                if (data->mColors[index] == 0)
                 {
-                    data->mColors.data[index] = static_cast<unsigned char>(color->id * 4 + shade);
+                    data->mColors[index] = static_cast<unsigned char>(color->id * 4 + shade);
                     data->setDirty(mapX, mapZ);
                 }
             }

@@ -13,10 +13,6 @@ SeedFoodItem::SeedFoodItem(int nutrition, float saturationModifier, Block* cropB
 {
 }
 
-SeedFoodItem::~SeedFoodItem()
-{
-}
-
 InteractionResult::EInteractionResult SeedFoodItem::useOn(boost::shared_ptr<Player> player,
                                                            Level* level,
                                                            const BlockPos& pos,

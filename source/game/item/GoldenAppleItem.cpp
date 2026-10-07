@@ -16,10 +16,6 @@ GoldenAppleItem::GoldenAppleItem(int nutrition, float saturationModifier, bool i
     setStackedByData(true);
 }
 
-GoldenAppleItem::~GoldenAppleItem()
-{
-}
-
 bool GoldenAppleItem::isFoil(not_null_ptr<ItemInstance> itemInstance)
 {
     return Item::isFoil(itemInstance) || itemInstance->getAuxValue() > 0;

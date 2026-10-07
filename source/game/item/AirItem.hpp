@@ -18,7 +18,6 @@ class AirItem : public Item
 public:
     AirItem(Block* block);
 
-    virtual ~AirItem();
     virtual int getDescriptionId(not_null_ptr<ItemInstance> itemInstance);
     virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance,
                                  boost::shared_ptr<Player> player,

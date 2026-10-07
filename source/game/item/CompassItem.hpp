@@ -35,7 +35,6 @@ public:
     };
 
     CompassItem();
-    virtual ~CompassItem();
     virtual TextureAtlasSprite* getIcon(int auxValue);
     virtual void registerIcons(IconRegister* iconRegister);
 

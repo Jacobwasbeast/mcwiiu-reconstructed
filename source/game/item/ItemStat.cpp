@@ -6,10 +6,6 @@ ItemStat::ItemStat(int id, const std::wstring& name, int itemId)
 {
 }
 
-ItemStat::~ItemStat()
-{
-}
-
 uint32_t ItemStat::getItemId()
 {
     return this->itemId;

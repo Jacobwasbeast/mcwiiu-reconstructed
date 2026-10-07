@@ -32,9 +32,8 @@ public:
     ThrownPotion(Level* level);
     ThrownPotion(Level* level, boost::shared_ptr<LivingEntity> owner, not_null_ptr<ItemInstance> item);
     ThrownPotion(Level* level, double x, double y, double z, not_null_ptr<ItemInstance> item);
-    virtual ~ThrownPotion();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     not_null_ptr<ItemInstance> getItem();
     void dowseFire(const BlockPos& pos, const Direction* direction);
     static bool isWaterSensitiveEntity(const boost::shared_ptr<Entity>& entity);

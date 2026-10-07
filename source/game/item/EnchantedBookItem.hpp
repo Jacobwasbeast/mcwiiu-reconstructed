@@ -31,7 +31,6 @@ public:
     static not_null_ptr<ItemInstance> createForEnchantment(EnchantmentInstance* instance);
     static void createForEnchantment(Enchantment* enchantment,
                                      std::vector<not_null_ptr<ItemInstance> >* items);
-    virtual ~EnchantedBookItem();
 };
 
 #endif

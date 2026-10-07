@@ -12,26 +12,25 @@ TakeItemHint::~TakeItemHint()
 
 unsigned int TakeItemHint::onTake(not_null_ptr<ItemInstance> item)
 {
-    if (!item->isEmpty() && mItemCount != 0)
+    if (!item->isEmpty())
     {
+        bool itemFound = false;
         for (unsigned int i = 0; i < mItemCount; ++i)
         {
             if (Item::VALIDgetId(item->getItem()) == mItemIds[i])
             {
-                Tutorial::PopupMessageDetails* details = new Tutorial::PopupMessageDetails();
-                if (descriptionId == -1)
-                {
-                    details->titleId = item->getUseDescriptionId();
-                }
-                else
-                {
-                    details->titleId = descriptionId;
-                }
-                details->itemDescriptionId = item->getDescriptionId(-1);
-                details->itemId = Item::VALIDgetId(item->getItem());
-                details->isItem = true;
-                return tutorial->setMessage(this, details);
+                itemFound = true;
+                break;
             }
+        }
+        if (itemFound)
+        {
+            Tutorial::PopupMessageDetails* details = new Tutorial::PopupMessageDetails();
+            details->titleId = (descriptionId != -1) ? descriptionId : item->getUseDescriptionId();
+            details->itemDescriptionId = item->getDescriptionId(-1);
+            details->itemId = Item::VALIDgetId(item->getItem());
+            details->isItem = true;
+            return tutorial->setMessage(this, details);
         }
     }
     return 0;

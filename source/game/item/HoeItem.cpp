@@ -33,10 +33,6 @@ HoeItem::HoeItem(const Item::Tier* tier)
     mAttackDamage = 1.0f + tier->getAttackDamageBonus();
 }
 
-HoeItem::~HoeItem()
-{
-}
-
 void HoeItem::setBlock(not_null_ptr<ItemInstance> itemInstance,
                        boost::shared_ptr<Player> player,
                        Level* level,

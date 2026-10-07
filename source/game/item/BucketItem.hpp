@@ -38,7 +38,6 @@ public:
     };
 
     explicit BucketItem(BucketFillType fillType);
-    virtual ~BucketItem();
 
     static int getSchoolName(int a, int b, int c, int d);
     bool isFishBucket();

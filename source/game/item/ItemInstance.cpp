@@ -163,7 +163,11 @@ ItemInstance& ItemInstance::operator=(const ItemInstance& other)
 
 bool ItemInstance::isEmpty() const
 {
-    return this == EMPTY.get() || mItem == NULL || mItem == Items::air || mCount <= 0;
+    if (this == EMPTY.get() || mItem == NULL || mItem == Items::air || mCount <= 0)
+    {
+        return true;
+    }
+    return false;
 }
 
 int ItemInstance::getCount()
@@ -1089,7 +1093,7 @@ void ItemInstance::enchant(Enchantment* enchantment, int level)
     if (mTag == 0)
         setTag(new CompoundTag());
     if (!mTag->contains(L"ench"))
-        mTag->put(L"ench", new ListTag(Tag::TAG_END));
+        mTag->put(L"ench", new ListTag());
 
     ListTag* enchantments = mTag->getList(TAG_ENCH, Tag::TAG_COMPOUND);
     CompoundTag* entry = new CompoundTag();

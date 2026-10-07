@@ -17,7 +17,6 @@ class SeedFoodItem : public FoodItem
 {
 public:
     SeedFoodItem(int nutrition, float saturationModifier, Block* cropBlock, Block* soilBlock);
-    virtual ~SeedFoodItem();
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                         Level* level,
                                                         const BlockPos& pos,

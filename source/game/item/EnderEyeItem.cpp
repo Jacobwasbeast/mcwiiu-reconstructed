@@ -34,10 +34,6 @@ EnderEyeItem::EnderEyeItem() : Item()
 {
 }
 
-EnderEyeItem::~EnderEyeItem()
-{
-}
-
 InteractionResult::EInteractionResult EnderEyeItem::useOn(boost::shared_ptr<Player> player, Level* level,
                                                             const BlockPos& pos, InteractionHand::EInteractionHand hand,
                                                             const Direction* direction, float hitX, float hitY,

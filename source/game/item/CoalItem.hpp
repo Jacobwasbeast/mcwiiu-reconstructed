@@ -11,7 +11,6 @@ class CoalItem : public Item
 {
 public:
     CoalItem();
-    virtual ~CoalItem();
     virtual int getDescriptionId(not_null_ptr<ItemInstance> itemInstance);
     virtual TextureAtlasSprite* getIcon(int auxValue);
     virtual void registerIcons(IconRegister* iconRegister);

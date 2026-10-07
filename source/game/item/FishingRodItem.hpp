@@ -26,7 +26,6 @@ public:
     };
 
     FishingRodItem();
-    virtual ~FishingRodItem();
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
     virtual InteractionResultHolder use(Level* level,
                                         boost::shared_ptr<Player> player,

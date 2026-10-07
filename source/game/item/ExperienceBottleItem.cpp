@@ -19,10 +19,6 @@ ExperienceBottleItem::ExperienceBottleItem() : Item()
 {
 }
 
-ExperienceBottleItem::~ExperienceBottleItem()
-{
-}
-
 bool ExperienceBottleItem::isFoil(not_null_ptr<ItemInstance>)
 {
     return true;

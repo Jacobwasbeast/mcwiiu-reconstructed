@@ -16,10 +16,6 @@ WeighedTreasureItemRuleDefinition::WeighedTreasureItemRuleDefinition()
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_weight, &mWeight);
 }
 
-WeighedTreasureItemRuleDefinition::~WeighedTreasureItemRuleDefinition()
-{
-}
-
 WeighedTreasure* WeighedTreasureItemRuleDefinition::getItem()
 {
     WeighedTreasure* treasure = new WeighedTreasure(Item::byId(mItemId), mData, mMinCount, mMaxCount, mWeight);

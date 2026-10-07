@@ -9,7 +9,6 @@ class EmptyMapItem : public ComplexItem
 {
 public:
     EmptyMapItem();
-    virtual ~EmptyMapItem();
 
     virtual InteractionResultHolder use(Level* level,
                                         boost::shared_ptr<Player> player,

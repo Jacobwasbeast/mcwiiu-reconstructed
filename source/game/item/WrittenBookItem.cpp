@@ -39,10 +39,6 @@ WrittenBookItem::WrittenBookItem()
     setMaxStackSize(1);
 }
 
-WrittenBookItem::~WrittenBookItem()
-{
-}
-
 bool WrittenBookItem::makeSureTagIsValid(CompoundTag* tag)
 {
     if (!WritableBookItem::makeSureTagIsValid(tag))

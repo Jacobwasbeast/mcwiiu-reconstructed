@@ -36,10 +36,6 @@ SkullItem::SkullItem()
     setStackedByData(true);
 }
 
-SkullItem::~SkullItem()
-{
-}
-
 InteractionResult::EInteractionResult SkullItem::useOn(boost::shared_ptr<Player> player,
                                                         Level* level,
                                                         const BlockPos& pos,

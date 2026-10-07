@@ -573,7 +573,7 @@ unsigned long long AreaEffectCloud::GetType()
     return EntityType::AREA_EFFECT_CLOUD;
 }
 
-void AreaEffectCloud::create(Level* level)
+Entity* AreaEffectCloud::create(Level* level)
 {
-    new AreaEffectCloud(level);
+    return new AreaEffectCloud(level);
 }

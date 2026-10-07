@@ -7,7 +7,6 @@ class ShearsItem : public Item
 {
 public:
     ShearsItem();
-    virtual ~ShearsItem();
     virtual bool mineBlock(not_null_ptr<ItemInstance> itemInstance, Level* level, const BlockState* state, const BlockPos& pos, boost::shared_ptr<LivingEntity> entity);
     virtual bool canDestroySpecial(const BlockState* state);
     virtual float getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const BlockState* state);

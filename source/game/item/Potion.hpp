@@ -38,6 +38,7 @@ public:
     static DefaultedMappedRegistry<ResourceLocation, Potion*>* potionRegistry;
 
 private:
+    static MobEffectInstance* effectWithId(MobEffectInstance* effect, int id);
     int mNameId;
     int mSplashNameId;
     int mLingeringNameId;

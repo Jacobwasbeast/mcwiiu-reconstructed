@@ -11,7 +11,6 @@ class RecordItem : public Item
 {
 public:
     RecordItem(const std::wstring& name, int recordId, const SoundEvent* sound);
-    virtual ~RecordItem();
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos, InteractionHand::EInteractionHand hand, const Direction* direction, float x, float y, float z, bool flag);
     virtual void appendHoverText(not_null_ptr<ItemInstance> item, boost::shared_ptr<Player> player, std::vector<HtmlString>* lines, bool advanced);
     std::wstring getDisplayName();

@@ -13,10 +13,6 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/server/ServerPlayer.hpp"
 
-EnchantItemCommand::~EnchantItemCommand()
-{
-}
-
 EGameCommand EnchantItemCommand::getId()
 {
     return eGameCommand_EnchantItem;

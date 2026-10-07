@@ -8,12 +8,11 @@ CompleteUsingItemTask::CompleteUsingItemTask(Tutorial* tutorial, int description
                                              bool preCompletionEnabled)
     : TutorialTask(tutorial, descriptionId, preCompletionEnabled, NULL, false, true, true)
 {
-    Item** copy = new Item*[itemCount];
-    this->items = copy;
+    this->items = new Item*[itemCount];
 
     for (unsigned int index = 0; index < itemCount; ++index)
     {
-        copy[index] = items[index];
+        this->items[index] = items[index];
     }
 
     this->itemCount = itemCount;
@@ -31,17 +30,15 @@ bool CompleteUsingItemTask::isCompleted()
 
 void CompleteUsingItemTask::completeUsingItem(not_null_ptr<ItemInstance> item)
 {
-    if ((hasBeenActivated() || isPreCompletionEnabled()) && itemCount > 0)
+    if (hasBeenActivated() || isPreCompletionEnabled())
     {
-        int index = 0;
-        while (index < itemCount)
+        for (int index = 0; index < itemCount; ++index)
         {
             if (item->getItem() == items[index])
             {
                 completed = true;
                 return;
             }
-            ++index;
         }
     }
 }

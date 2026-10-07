@@ -25,10 +25,6 @@ SwordItem::SwordItem(const Item::Tier* tier)
     mAttackDamage = 4.0f + tier->getAttackDamageBonus();
 }
 
-SwordItem::~SwordItem()
-{
-}
-
 unsigned int SwordItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
     return IDS_TOOLTIPS_BLOCK;

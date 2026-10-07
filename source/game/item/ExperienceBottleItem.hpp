@@ -16,7 +16,6 @@ class ExperienceBottleItem : public Item
 {
 public:
     ExperienceBottleItem();
-    virtual ~ExperienceBottleItem();
     virtual bool isFoil(not_null_ptr<ItemInstance> itemInstance);
     virtual InteractionResultHolder use(Level* level,
                                         boost::shared_ptr<Player> player,

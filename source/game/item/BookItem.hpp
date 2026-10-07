@@ -7,7 +7,6 @@ class BookItem : public Item
 {
 public:
     BookItem();
-    virtual ~BookItem();
     virtual bool isEnchantable(not_null_ptr<ItemInstance> itemInstance);
     virtual int getEnchantmentValue();
 };

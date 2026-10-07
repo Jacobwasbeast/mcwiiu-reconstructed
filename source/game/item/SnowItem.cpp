@@ -22,10 +22,6 @@ SnowItem::SnowItem(Block* block)
     setStackedByData(true);
 }
 
-SnowItem::~SnowItem()
-{
-}
-
 InteractionResult::EInteractionResult SnowItem::useOn(boost::shared_ptr<Player> player,
                                                         Level* level,
                                                         const BlockPos& pos,

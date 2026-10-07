@@ -11,7 +11,6 @@ class CarrotOnAStickItem : public Item
 {
 public:
     CarrotOnAStickItem();
-    virtual ~CarrotOnAStickItem();
     virtual bool TestUse(Level* level,
                          boost::shared_ptr<Player> player,
                          InteractionHand::EInteractionHand hand);

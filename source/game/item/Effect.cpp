@@ -18,12 +18,13 @@ void Effect::destroy()
 
 void Effect::clear()
 {
-    sCurrentEffect = 0;
     sCurrentProgram = -1;
+    sCurrentEffect = 0;
     sLastCull = true;
     for (unsigned int i = 0; i < mSamplerLocations.size(); ++i)
     {
-        if (mSamplers[mSamplerNames[i]] != 0)
+        RenderTarget* target = mSamplers[mSamplerNames[i]];
+        if (target != 0)
         {
             GlStateManager::activeTexture(i);
             GlStateManager::bindTexture(0);

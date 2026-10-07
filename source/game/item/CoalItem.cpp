@@ -11,10 +11,6 @@ CoalItem::CoalItem()
     setMaxDamage(0);
 }
 
-CoalItem::~CoalItem()
-{
-}
-
 int CoalItem::getDescriptionId(not_null_ptr<ItemInstance> itemInstance)
 {
     if (itemInstance->getAuxValue() == 1)

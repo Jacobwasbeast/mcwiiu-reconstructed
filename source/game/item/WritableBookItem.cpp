@@ -14,10 +14,6 @@ WritableBookItem::WritableBookItem()
     setMaxStackSize(1);
 }
 
-WritableBookItem::~WritableBookItem()
-{
-}
-
 InteractionResultHolder WritableBookItem::use(Level* level,
                                               boost::shared_ptr<Player> player,
                                               InteractionHand::EInteractionHand hand)

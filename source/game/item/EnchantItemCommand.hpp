@@ -13,7 +13,6 @@ class Player;
 class EnchantItemCommand : public Command
 {
 public:
-    virtual ~EnchantItemCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

@@ -32,10 +32,6 @@ DebugFourjItem::DebugFourjItem()
     mLootTables[21] = BuiltInLootTables::WOODLAND_MANSION;
 }
 
-DebugFourjItem::~DebugFourjItem()
-{
-}
-
 bool DebugFourjItem::interactEnemy(not_null_ptr<ItemInstance>,
                                    boost::shared_ptr<Player> player,
                                    boost::shared_ptr<LivingEntity> target,

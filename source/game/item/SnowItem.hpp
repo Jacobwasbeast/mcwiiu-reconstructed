@@ -11,7 +11,6 @@ class SnowItem : public BlockItem
 {
 public:
     explicit SnowItem(Block* block);
-    virtual ~SnowItem();
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                         Level* level,
                                                         const BlockPos& pos,

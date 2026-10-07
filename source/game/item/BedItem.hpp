@@ -20,7 +20,6 @@ class BedItem : public Item
 {
 public:
     BedItem();
-    virtual ~BedItem();
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                         Level* level,
                                                         const BlockPos& pos,

@@ -30,10 +30,6 @@ FireworkChargeItem::FireworkChargeItem()
 {
 }
 
-FireworkChargeItem::~FireworkChargeItem()
-{
-}
-
 Tag* FireworkChargeItem::getExplosionTagField(not_null_ptr<ItemInstance> item, const std::wstring& name)
 {
     if (item->hasTag())

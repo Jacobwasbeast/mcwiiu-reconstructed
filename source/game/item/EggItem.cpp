@@ -20,10 +20,6 @@ EggItem::EggItem() : Item()
     mMaxStackSize = 16;
 }
 
-EggItem::~EggItem()
-{
-}
-
 InteractionResultHolder EggItem::use(Level* level,
                                      boost::shared_ptr<Player> player,
                                      InteractionHand::EInteractionHand hand)

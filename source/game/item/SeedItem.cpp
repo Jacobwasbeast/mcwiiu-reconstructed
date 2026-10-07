@@ -12,10 +12,6 @@ SeedItem::SeedItem(Block* cropBlock, Block* soilBlock)
 {
 }
 
-SeedItem::~SeedItem()
-{
-}
-
 InteractionResult::EInteractionResult SeedItem::useOn(boost::shared_ptr<Player> player,
                                                        Level* level,
                                                        const BlockPos& pos,

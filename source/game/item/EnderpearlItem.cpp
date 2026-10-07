@@ -17,10 +17,6 @@ EnderpearlItem::EnderpearlItem() : Item()
     mMaxStackSize = 16;
 }
 
-EnderpearlItem::~EnderpearlItem()
-{
-}
-
 InteractionResultHolder EnderpearlItem::use(Level* level,
                                              boost::shared_ptr<Player> player,
                                              InteractionHand::EInteractionHand hand)

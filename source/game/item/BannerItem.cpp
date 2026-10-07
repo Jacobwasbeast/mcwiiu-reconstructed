@@ -26,12 +26,6 @@
 #include "game/world/block/WallBannerBlock.hpp"
 #include "game/world/generation/Player.hpp"
 
-static const std::wstring TAG_BLOCK_ENTITY = L"BlockEntityTag";
-static const std::wstring TAG_PATTERNS = L"Patterns";
-static const std::wstring TAG_PATTERN = L"Pattern";
-static const std::wstring TAG_COLOR = L"Color";
-static const std::wstring TAG_BASE = L"Base";
-
 BannerItem::BannerItem()
     : BlockItem(Blocks::standing_banner)
 {
@@ -136,18 +130,18 @@ std::wstring BannerItem::getName(not_null_ptr<ItemInstance> itemInstance)
 void BannerItem::appendHoverTextFromBannerBlockEntityTag(not_null_ptr<ItemInstance> itemInstance,
                                                           std::vector<HtmlString>* lines)
 {
-    CompoundTag* tag = static_cast<CompoundTag*>(itemInstance->getTagElement(TAG_BLOCK_ENTITY));
-    if (tag == NULL || !tag->contains(TAG_PATTERNS))
+    CompoundTag* tag = static_cast<CompoundTag*>(itemInstance->getTagElement(BLOCK_ENTITY_TAG));
+    if (tag == NULL || !tag->contains(BannerBlockEntity::TAG_PATTERNS))
     {
         return;
     }
 
-    ListTag* patterns = tag->getList(TAG_PATTERNS, Tag::TAG_COMPOUND);
+    ListTag* patterns = tag->getList(BannerBlockEntity::TAG_PATTERNS, Tag::TAG_COMPOUND);
     for (int i = 0; i < patterns->size() && i < 6; ++i)
     {
         CompoundTag* patternTag = patterns->getCompound(i);
-        const DyeColor* color = DyeColor::byItemData(patternTag->getInt(TAG_COLOR));
-        BannerPattern* pattern = BannerPattern::byHash(patternTag->getString(TAG_PATTERN));
+        const DyeColor* color = DyeColor::byItemData(patternTag->getInt(BannerBlockEntity::TAG_COLOR));
+        BannerPattern* pattern = BannerPattern::byHash(patternTag->getString(BannerBlockEntity::TAG_PATTERN));
         if (pattern != NULL)
         {
             const wchar_t* text = L10N::GetString(pattern->getDisplayName(color->getBlockData()));
@@ -170,8 +164,8 @@ ItemInstance* BannerItem::makeBanner(const DyeColor* color, ListTag* patterns)
     if (patterns != NULL && !patterns->isEmpty())
     {
         ListTag* copiedPatterns = patterns->copy();
-        CompoundTag* tag = static_cast<CompoundTag*>(item->getOrCreateTagElement(TAG_BLOCK_ENTITY));
-        tag->put(TAG_PATTERNS, copiedPatterns);
+        CompoundTag* tag = static_cast<CompoundTag*>(item->getOrCreateTagElement(BLOCK_ENTITY_TAG));
+        tag->put(BannerBlockEntity::TAG_PATTERNS, copiedPatterns);
     }
     return item;
 }
@@ -188,17 +182,17 @@ int BannerItem::getColor(not_null_ptr<ItemInstance> itemInstance, int layer)
 
 int BannerItem::getFirstPatternName(not_null_ptr<ItemInstance> itemInstance)
 {
-    CompoundTag* tag = static_cast<CompoundTag*>(itemInstance->getTagElement(TAG_BLOCK_ENTITY));
+    CompoundTag* tag = static_cast<CompoundTag*>(itemInstance->getTagElement(BLOCK_ENTITY_TAG));
     if (tag != NULL)
     {
-        if (tag->contains(TAG_PATTERNS))
+        if (tag->contains(BannerBlockEntity::TAG_PATTERNS))
         {
-            ListTag* patterns = tag->getList(TAG_PATTERNS, Tag::TAG_COMPOUND);
+            ListTag* patterns = tag->getList(BannerBlockEntity::TAG_PATTERNS, Tag::TAG_COMPOUND);
             if (patterns->size() != 0)
             {
                 CompoundTag* patternTag = patterns->getCompound(0);
-                const DyeColor* color = DyeColor::byItemData(patternTag->getInt(TAG_COLOR));
-                BannerPattern* pattern = BannerPattern::byHash(patternTag->getString(TAG_PATTERN));
+                const DyeColor* color = DyeColor::byItemData(patternTag->getInt(BannerBlockEntity::TAG_COLOR));
+                BannerPattern* pattern = BannerPattern::byHash(patternTag->getString(BannerBlockEntity::TAG_PATTERN));
                 if (pattern != NULL)
                     return pattern->getDisplayName(color->getBlockData());
             }
@@ -206,9 +200,9 @@ int BannerItem::getFirstPatternName(not_null_ptr<ItemInstance> itemInstance)
     }
 
     const DyeColor* color;
-    if (tag != NULL && tag->contains(TAG_BASE))
+    if (tag != NULL && tag->contains(BannerBlockEntity::TAG_BASE))
     {
-        color = DyeColor::byItemData(tag->getInt(TAG_BASE));
+        color = DyeColor::byItemData(tag->getInt(BannerBlockEntity::TAG_BASE));
     }
     else
     {

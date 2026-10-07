@@ -12,10 +12,6 @@
 #include "game/world/Level.hpp"
 #include "game/world/generation/Player.hpp"
 
-SplashPotionItem::~SplashPotionItem()
-{
-}
-
 unsigned int SplashPotionItem::getPotionType() const
 {
     return 1;

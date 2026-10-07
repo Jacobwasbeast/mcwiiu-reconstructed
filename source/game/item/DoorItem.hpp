@@ -13,7 +13,6 @@ class DoorItem : public Item
 {
 public:
     DoorItem(Block* block);
-    virtual ~DoorItem();
     static void place(Level* level, const BlockPos& pos, const Direction* direction, Block* block, bool hingeRight);
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player, Level* level,
         const BlockPos& pos, InteractionHand::EInteractionHand hand, const Direction* direction,

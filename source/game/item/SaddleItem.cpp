@@ -13,10 +13,6 @@ SaddleItem::SaddleItem()
     mMaxStackSize = 1;
 }
 
-SaddleItem::~SaddleItem()
-{
-}
-
 bool SaddleItem::interactEnemy(not_null_ptr<ItemInstance> itemInstance,
                                boost::shared_ptr<Player> player,
                                boost::shared_ptr<LivingEntity> target,

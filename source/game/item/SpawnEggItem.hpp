@@ -25,7 +25,6 @@ class SpawnEggItem : public Item
 {
 public:
     SpawnEggItem();
-    virtual ~SpawnEggItem();
 
     static ResourceLocation getNamedIdFrom(not_null_ptr<ItemInstance> itemInstance);
     virtual std::wstring getName(not_null_ptr<ItemInstance> itemInstance);

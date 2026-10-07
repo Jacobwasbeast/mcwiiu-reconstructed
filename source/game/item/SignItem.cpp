@@ -27,10 +27,6 @@ SignItem::SignItem()
     mMaxStackSize = 16;
 }
 
-SignItem::~SignItem()
-{
-}
-
 InteractionResult::EInteractionResult SignItem::useOn(boost::shared_ptr<Player> player,
                                                       Level* level,
                                                       const BlockPos& pos,

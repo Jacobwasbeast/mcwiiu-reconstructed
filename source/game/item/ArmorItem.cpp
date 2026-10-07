@@ -204,10 +204,6 @@ ArmorItem::ArmorItem(const ArmorMaterial* material, int renderIndex, const Equip
     DispenserBlock::DISPENSER_REGISTRY.add(this, new ArmorDispenseItemBehavior());
 }
 
-ArmorItem::~ArmorItem()
-{
-}
-
 int ArmorItem::getEnchantmentValue()
 {
     return mMaterial->getEnchantmentValue();

@@ -7,7 +7,6 @@ class PickaxeItem : public DiggerItem
 {
 public:
     PickaxeItem(const Item::Tier* tier);
-    virtual ~PickaxeItem();
 
     virtual bool canDestroySpecial(const BlockState* state);
     virtual float getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const BlockState* state);

@@ -14,7 +14,6 @@ class FireworkChargeItem : public Item
 {
 public:
     FireworkChargeItem();
-    virtual ~FireworkChargeItem();
     static Tag* getExplosionTagField(not_null_ptr<ItemInstance> item, const std::wstring& name);
     static void appendHoverText(CompoundTag* tag, std::vector<HtmlString>* lines);
     virtual void appendHoverText(not_null_ptr<ItemInstance> item, boost::shared_ptr<Player> player, std::vector<HtmlString>* lines, bool advanced);

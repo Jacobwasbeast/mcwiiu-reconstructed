@@ -24,7 +24,7 @@ public:
     ItemFrame(Level* level, const BlockPos& pos, const Direction* direction);
     virtual ~ItemFrame();
 
-    static void create(Level* level);
+    static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
     static unsigned long long staticCtor();
     void _init();

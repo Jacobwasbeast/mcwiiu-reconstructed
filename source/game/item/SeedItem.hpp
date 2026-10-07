@@ -17,7 +17,6 @@ class SeedItem : public Item
 {
 public:
     SeedItem(Block* cropBlock, Block* soilBlock);
-    virtual ~SeedItem();
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                         Level* level,
                                                         const BlockPos& pos,

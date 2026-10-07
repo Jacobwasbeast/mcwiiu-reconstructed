@@ -40,10 +40,6 @@ TridentItem::TridentItem()
     addProperty(ResourceLocation(std::wstring(L"throwing")), new TridentItem_Throwing_ItemPropertyFunction());
 }
 
-TridentItem::~TridentItem()
-{
-}
-
 int TridentItem::getUseAnimation(not_null_ptr<const ItemInstance> itemInstance) const
 {
     return UseAnim_spear;

@@ -20,10 +20,6 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/PlayerUID.hpp"
 
-GiveItemCommand::~GiveItemCommand()
-{
-}
-
 EGameCommand GiveItemCommand::getId()
 {
     return eGameCommand_GiveItem;

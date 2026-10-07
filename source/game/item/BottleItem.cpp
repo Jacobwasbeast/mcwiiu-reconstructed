@@ -31,10 +31,6 @@ BottleItem::BottleItem()
 {
 }
 
-BottleItem::~BottleItem()
-{
-}
-
 not_null_ptr<ItemInstance> BottleItem::turnBottleIntoItem(not_null_ptr<ItemInstance> itemInstance,
                                     boost::shared_ptr<Player> player,
                                     not_null_ptr<ItemInstance> result)

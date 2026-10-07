@@ -16,7 +16,6 @@ class EndCrystalItem : public Item
 {
 public:
     EndCrystalItem();
-    virtual ~EndCrystalItem();
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                         Level* level,
                                                         const BlockPos& pos,

@@ -50,10 +50,6 @@ BowItem::BowItem()
     addProperty(ResourceLocation(std::wstring(L"pulling")), new BowItem_Pulling_ItemPropertyFunction());
 }
 
-BowItem::~BowItem()
-{
-}
-
 bool BowItem::isValidProjectile(not_null_ptr<ItemInstance> itemInstance)
 {
     bool valid = false;

@@ -27,10 +27,6 @@ MinecartItem::MinecartItem(const Minecart::Type* type)
     DispenserBlock::DISPENSER_REGISTRY.add(this, new MinecartDispenseBehavior());
 }
 
-MinecartItem::~MinecartItem()
-{
-}
-
 InteractionResult::EInteractionResult MinecartItem::useOn(boost::shared_ptr<Player> player,
                                                            Level* level,
                                                            const BlockPos& pos,

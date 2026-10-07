@@ -5,10 +5,6 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/block/Blocks.hpp"
 
-ShieldItem::~ShieldItem()
-{
-}
-
 void ShieldItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
                                  boost::shared_ptr<Player> player,
                                  std::vector<HtmlString>* lines,

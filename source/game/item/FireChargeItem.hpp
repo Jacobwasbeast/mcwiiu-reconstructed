@@ -10,7 +10,6 @@ class FireChargeItem : public Item
 {
 public:
     FireChargeItem();
-    virtual ~FireChargeItem();
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                         Level* level,
                                                         const BlockPos& pos,

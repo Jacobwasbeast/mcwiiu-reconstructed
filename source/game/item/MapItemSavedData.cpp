@@ -23,15 +23,16 @@
 #include "game/world/generation/Player.hpp"
 
 static const wchar_t* TAG_DISPLAY = L"display";
+static const int STRONGHOLD_DECORATION_ID = -1;
 
 MapItemSavedData::MapItemSavedData(const std::wstring& id)
     : SavedData(id)
 {
     mZCenter = 0;
-    mTrackingPosition = true;
     mScale = 0;
-    mDimension = 0;
     mXCenter = 0;
+    mDimension = 0;
+    mTrackingPosition = true;
     mColors = arrayWithLength<unsigned char>(16384, true);
     mLastUpdateTime = 0;
 }
@@ -95,16 +96,16 @@ void MapItemSavedData::addDecoration(const MapDecoration::Type* type, Level* lev
     float scale = (float)(1 << (mScale & 0x3f));
     float mapX = (float)(x - (double)mXCenter) / scale;
     float mapZ = (float)(z - (double)mZCenter) / scale;
-    char imageX = (char)(int)((double)(mapX * 2.0f) + 0.5);
-    char imageZ = (char)(int)((double)(mapZ * 2.0f) + 0.5);
-    char rot = 0;
+    char imageX = (char)((double)(mapX * 2.0f) + 0.5);
+    char imageZ = (char)((double)(mapZ * 2.0f) + 0.5);
+    char rot;
     bool isPlayerType = type->isPlayer();
     boost::unordered_map<int, MapDecoration>* decorations = isPlayerType ? &mDecorations : &mDecorationsById;
 
     if (mapX >= -63.0f && mapZ >= -63.0f && mapX <= 63.0f && mapZ <= 63.0f)
     {
         rotation += rotation < 0.0 ? -8.0 : 8.0;
-        rot = (char)(int)(rotation * 16.0 / 360.0);
+        rot = (char)(rotation * 16.0 / 360.0);
         if (mDimension < 0)
         {
             int time = (int)(level->getLevelData()->getDayTime() / 10);
@@ -113,24 +114,25 @@ void MapItemSavedData::addDecoration(const MapDecoration::Type* type, Level* lev
     }
     else
     {
-        if (!isPlayerType)
+        if (isPlayerType)
         {
-            if (type != &MapDecoration::Type::TYPES[4])
+            if (std::abs(mapX) < 320.0f && std::abs(mapZ) < 320.0f)
+            {
+                type = &MapDecoration::Type::TYPES[16 + type->getIcon()];
+            }
+            else if (!mUnlimitedTracking)
             {
                 decorations->erase(id);
                 return;
             }
         }
-        else if (std::abs(mapX) < 320.0f && std::abs(mapZ) < 320.0f)
-        {
-            type = &MapDecoration::Type::TYPES[16 + type->getIcon()];
-        }
-        else if (!mUnlimitedTracking)
+        else if (type != &MapDecoration::Type::TYPES[4])
         {
             decorations->erase(id);
             return;
         }
 
+        rot = 0;
         if (mapX <= -63.0f) imageX = -128;
         if (mapZ <= -63.0f) imageZ = -128;
         if (mapX >= 63.0f) imageX = 127;
@@ -158,99 +160,109 @@ void MapItemSavedData::tickCarriedBy(boost::shared_ptr<Player> player, not_null_
     std::vector<boost::shared_ptr<HoldingPlayer> >::iterator it = mHoldingPlayers.begin();
     while (it != mHoldingPlayers.end())
     {
-        boost::shared_ptr<Player> holder = (*it)->mPlayer;
-        if (holder->mRemoved)
+        boost::shared_ptr<HoldingPlayer> holding = *it;
+        if (holding->mPlayer->mRemoved)
         {
-            mCarriedBy.erase(holder);
+            boost::unordered_map<boost::shared_ptr<Player>, boost::shared_ptr<HoldingPlayer>, _PlayerKeyHash, _PlayerKeyEq>::iterator carried = mCarriedBy.find(holding->mPlayer);
+            if (carried != mCarriedBy.end())
+                mCarriedBy.erase(carried);
             it = mHoldingPlayers.erase(it);
-            continue;
         }
-
-        Level* level = holder->mLevel;
-        if (!level->mIsClientSide && holder->mDimension == 0
-            && (level->getLevelData()->getHasStrongholdEndPortal() || level->getLevelData()->getHasStronghold()))
+        else
         {
-            bool playerInEnd = false;
-            std::vector<boost::shared_ptr<ServerPlayer> >* players = &gMinecraftServer->getPlayers()->mPlayers;
-            for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator player = players->begin();
-                 player != players->end(); ++player)
+            Level* level = holding->mPlayer->mLevel;
+            if (!level->mIsClientSide && holding->mPlayer->mDimension == 0
+                && (level->getLevelData()->getHasStrongholdEndPortal() || level->getLevelData()->getHasStronghold()))
             {
-                if ((*player)->mDimension == 1)
+                bool playerInEnd = false;
+                PlayerList* playerList = gMinecraftServer != NULL ? gMinecraftServer->mPlayers : NULL;
+                for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator other = playerList->mPlayers.begin();
+                     other != playerList->mPlayers.end(); ++other)
                 {
-                    playerInEnd = true;
-                    break;
+                    boost::shared_ptr<ServerPlayer> serverPlayer = *other;
+                    if (serverPlayer->mDimension == 1)
+                    {
+                        playerInEnd = true;
+                        break;
+                    }
                 }
-            }
 
-            boost::unordered_map<int, MapDecoration>::iterator marker = mDecorationsById.find(-1);
-            if (marker == mDecorationsById.end())
-            {
-                if (playerInEnd)
+                boost::unordered_map<int, MapDecoration>::iterator marker = mDecorationsById.find(STRONGHOLD_DECORATION_ID);
+                if (marker == mDecorationsById.end())
                 {
-                    int markerX;
-                    int markerZ;
-                    if (!level->getLevelData()->getHasStrongholdEndPortal())
+                    if (playerInEnd)
                     {
-                        markerX = level->getLevelData()->getXStronghold() << 4;
-                        markerZ = level->getLevelData()->getZStronghold() << 4;
+                        int markerX;
+                        int markerZ;
+                        if (level->getLevelData()->getHasStrongholdEndPortal())
+                        {
+                            markerX = level->getLevelData()->getXStrongholdEndPortal();
+                            markerZ = level->getLevelData()->getZStrongholdEndPortal();
+                        }
+                        else
+                        {
+                            markerX = level->getLevelData()->getXStronghold() << 4;
+                            markerZ = level->getLevelData()->getZStronghold() << 4;
+                        }
+                        addDecoration(&MapDecoration::Type::TYPES[4], holding->mPlayer->mLevel, STRONGHOLD_DECORATION_ID, (double)markerX, 0.0,
+                                      (double)markerZ, 0.0, true);
                     }
-                    else
-                    {
-                        markerX = level->getLevelData()->getXStrongholdEndPortal();
-                        markerZ = level->getLevelData()->getZStrongholdEndPortal();
-                    }
-                    addDecoration(&MapDecoration::Type::TYPES[4], holder->mLevel, -1, (double)markerX, 0.0,
-                                  (double)markerZ, 0.0, true);
+                }
+                else if (!playerInEnd)
+                {
+                    mDecorationsById.erase(marker);
                 }
             }
-            else if (!playerInEnd)
-            {
-                mDecorationsById.erase(marker);
-            }
+            ++it;
         }
-        ++it;
     }
 
-    std::vector<boost::shared_ptr<ServerPlayer> >* players = &gMinecraftServer->getPlayers()->mPlayers;
-    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator other = players->begin(); other != players->end();
-         ++other)
+    PlayerList* playerList = gMinecraftServer != NULL ? gMinecraftServer->mPlayers : NULL;
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator other = playerList->mPlayers.begin();
+         other != playerList->mPlayers.end(); ++other)
     {
         boost::shared_ptr<ServerPlayer> target = *other;
-        if (target == NULL || target->mDimension != mDimension || !mTrackingPosition)
-            continue;
-
-        bool visible = true;
-        if (target != player)
-            visible = target->mShowOnMaps && target->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_Invisible) == 0;
-
-        const MapDecoration::Type* type = &MapDecoration::Type::TYPES[0];
-        switch (target->mPlayerIndex)
+        if (target != NULL && target->mDimension == mDimension && mTrackingPosition)
         {
-        case 0:
-            break;
-        case 1:
-            type = &MapDecoration::Type::TYPES[1];
-            break;
-        case 2:
-            type = &MapDecoration::Type::TYPES[2];
-            break;
-        case 3:
-            type = &MapDecoration::Type::TYPES[3];
-            break;
-        case 4:
-            type = &MapDecoration::Type::TYPES[8];
-            break;
-        case 5:
-            type = &MapDecoration::Type::TYPES[9];
-            break;
-        case 6:
-            type = &MapDecoration::Type::TYPES[10];
-            break;
-        case 7:
-            type = &MapDecoration::Type::TYPES[11];
-            break;
+            bool visible = true;
+            if (target != player)
+            {
+                bool shown = target->mShowOnMaps && target->getPlayerGamePrivilege(Player::ePlayerGamePrivilege_Invisible) == 0;
+                if (!shown)
+                    visible = false;
+            }
+
+            const MapDecoration::Type* type;
+            switch (target->mPlayerIndex)
+            {
+            case 0:
+            default:
+                type = &MapDecoration::Type::TYPES[0];
+                break;
+            case 1:
+                type = &MapDecoration::Type::TYPES[1];
+                break;
+            case 2:
+                type = &MapDecoration::Type::TYPES[2];
+                break;
+            case 3:
+                type = &MapDecoration::Type::TYPES[3];
+                break;
+            case 4:
+                type = &MapDecoration::Type::TYPES[8];
+                break;
+            case 5:
+                type = &MapDecoration::Type::TYPES[9];
+                break;
+            case 6:
+                type = &MapDecoration::Type::TYPES[10];
+                break;
+            case 7:
+                type = &MapDecoration::Type::TYPES[11];
+                break;
+            }
+            addDecoration(type, target->mLevel, target->getId(), target->mX, target->mY, target->mZ, target->mYRot, visible);
         }
-        addDecoration(type, target->mLevel, target->getId(), target->mX, target->mY, target->mZ, target->mYRot, visible);
     }
 
     if (item->isFramed() && mTrackingPosition)
@@ -258,7 +270,7 @@ void MapItemSavedData::tickCarriedBy(boost::shared_ptr<Player> player, not_null_
         boost::shared_ptr<ItemFrame> frame = item->getFrame();
         BlockPos pos = frame->getPos();
         addDecoration(&MapDecoration::Type::TYPES[7], player->mLevel, frame->getId(), (double)pos.x, (double)pos.y,
-                      (double)pos.z, (double)(frame->getDirection()->get2DDataValue() * 90), true);
+                      (double)pos.z, (double)(frame->mDirection->get2DDataValue() * 90), true);
     }
 
     if (item->hasTag() && item->getTag()->contains(L"Decorations", Tag::TAG_LIST))
@@ -316,13 +328,13 @@ void MapItemSavedData::load(CompoundTag* tag)
     mZCenter = tag->getInt(L"zCenter");
     mScale = tag->getByte(L"scale");
     mScale = (unsigned char)Mth::clamp(mScale, 0, 4);
-    if (tag->contains(L"trackingPosition", Tag::TAG_BYTE))
+    if (!tag->contains(L"trackingPosition", Tag::TAG_BYTE))
     {
-        mTrackingPosition = tag->getBoolean(L"trackingPosition");
+        mTrackingPosition = true;
     }
     else
     {
-        mTrackingPosition = true;
+        mTrackingPosition = tag->getBoolean(L"trackingPosition");
     }
     mUnlimitedTracking = tag->getBoolean(L"unlimitedTracking");
     int width = tag->getShort(L"width");

@@ -17,10 +17,6 @@ EnchantedBookItem::EnchantedBookItem()
 {
 }
 
-EnchantedBookItem::~EnchantedBookItem()
-{
-}
-
 bool EnchantedBookItem::isFoil(not_null_ptr<ItemInstance> itemInstance)
 {
     return true;

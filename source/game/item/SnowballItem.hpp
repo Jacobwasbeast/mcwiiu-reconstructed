@@ -9,7 +9,6 @@ public:
     SnowballItem();
     virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
-    virtual ~SnowballItem();
 };
 
 #endif

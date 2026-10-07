@@ -7,7 +7,6 @@ class NameTagItem : public Item
 {
 public:
     NameTagItem();
-    virtual ~NameTagItem();
     virtual bool interactEnemy(not_null_ptr<ItemInstance> itemInstance,
                                 boost::shared_ptr<Player> player,
                                 boost::shared_ptr<LivingEntity> target,

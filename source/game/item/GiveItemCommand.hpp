@@ -15,7 +15,6 @@ class Player;
 class GiveItemCommand : public Command
 {
 public:
-    virtual ~GiveItemCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

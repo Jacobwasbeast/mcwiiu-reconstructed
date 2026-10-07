@@ -10,7 +10,6 @@ class ItemStat : public Stat
 {
 public:
     ItemStat(int id, const std::wstring& name, int itemId);
-    virtual ~ItemStat();
 
     uint32_t getItemId();
 

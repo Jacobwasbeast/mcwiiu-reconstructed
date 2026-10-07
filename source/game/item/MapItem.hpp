@@ -20,7 +20,6 @@ class MapItem : public ComplexItem
 {
 public:
     MapItem();
-    virtual ~MapItem();
 
     static not_null_ptr<ItemInstance> setupNewMap(PlayerUID uid, Level* level, int dimension,
                                                   double x, double z, unsigned char scale,

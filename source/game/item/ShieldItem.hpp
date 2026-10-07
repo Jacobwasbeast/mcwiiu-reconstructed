@@ -18,7 +18,6 @@ class ShieldItem : public Item
 public:
     ShieldItem();
 
-    virtual ~ShieldItem();
     virtual void appendHoverText(not_null_ptr<ItemInstance> itemInstance,
                                  boost::shared_ptr<Player> player,
                                  std::vector<HtmlString>* lines,

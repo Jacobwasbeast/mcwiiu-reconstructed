@@ -22,7 +22,7 @@ static const int FIREWORK_DEFAULT_COLOR = 0x8a8a8a;
 
 ItemColors::ItemColors()
 {
-    mItemColorIds = new IdMapper<ItemColor*>;
+    mItemColorIds = new IdMapper<ItemColor*>();
 }
 
 void ItemColors::registerColor(ItemColor* color, arrayWithLength<Item*> items)

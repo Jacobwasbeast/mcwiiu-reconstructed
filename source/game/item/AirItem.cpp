@@ -9,10 +9,6 @@ AirItem::AirItem(Block* block)
 {
 }
 
-AirItem::~AirItem()
-{
-}
-
 int AirItem::getDescriptionId(not_null_ptr<ItemInstance> itemInstance)
 {
     return mBlock->getDescriptionId(-1);

@@ -26,7 +26,6 @@ public:
     SwordItem(const Item::Tier* tier);
 
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
-    virtual ~SwordItem();
     virtual float getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const BlockState* state);
     virtual InteractionResultHolder use(Level* level,
                                         boost::shared_ptr<Player> player,

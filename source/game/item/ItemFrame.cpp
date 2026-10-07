@@ -48,9 +48,9 @@ ItemFrame::~ItemFrame()
 {
 }
 
-void ItemFrame::create(Level* level)
+Entity* ItemFrame::create(Level* level)
 {
-    new ItemFrame(level);
+    return new ItemFrame(level);
 }
 
 void ItemFrame::addDataWalkers(DataFixerUpper* fixer)

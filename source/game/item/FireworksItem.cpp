@@ -35,10 +35,6 @@ FireworksItem::FireworksItem()
 {
 }
 
-FireworksItem::~FireworksItem()
-{
-}
-
 InteractionResult::EInteractionResult FireworksItem::useOn(boost::shared_ptr<Player> player,
                                                             Level* level,
                                                             const BlockPos& pos,

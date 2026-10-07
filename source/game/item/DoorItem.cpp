@@ -20,10 +20,6 @@ DoorItem::DoorItem(Block* block)
 {
 }
 
-DoorItem::~DoorItem()
-{
-}
-
 void DoorItem::place(Level* level, const BlockPos& pos, const Direction* direction, Block* block, bool hingeRight)
 {
     BlockPos clockwise = pos.relative(direction->getClockWise());

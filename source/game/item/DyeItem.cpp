@@ -41,10 +41,6 @@ DyeItem::DyeItem()
     memset(mIcons, 0, sizeof(mIcons));
 }
 
-DyeItem::~DyeItem()
-{
-}
-
 int DyeItem::getDescriptionId(not_null_ptr<ItemInstance> itemInstance)
 {
     return DyeColor::byItemData(itemInstance->getAuxValue())->getName();

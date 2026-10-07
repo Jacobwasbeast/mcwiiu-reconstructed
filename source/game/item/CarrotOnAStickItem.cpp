@@ -20,10 +20,6 @@ CarrotOnAStickItem::CarrotOnAStickItem()
     setMaxDamage(0x19);
 }
 
-CarrotOnAStickItem::~CarrotOnAStickItem()
-{
-}
-
 bool CarrotOnAStickItem::isHandEquipped()
 {
     return true;

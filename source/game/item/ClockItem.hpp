@@ -10,7 +10,6 @@ class ClockItem : public Item
 {
 public:
     ClockItem();
-    virtual ~ClockItem();
     virtual TextureAtlasSprite* getIcon(int auxValue);
     virtual void registerIcons(IconRegister* iconRegister);
 

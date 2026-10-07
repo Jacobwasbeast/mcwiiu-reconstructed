@@ -21,10 +21,6 @@ ShearsItem::ShearsItem()
     setMaxDamage(238);
 }
 
-ShearsItem::~ShearsItem()
-{
-}
-
 bool ShearsItem::mineBlock(not_null_ptr<ItemInstance> itemInstance, Level* level, const BlockState* state, const BlockPos& pos, boost::shared_ptr<LivingEntity> entity)
 {
     if (!level->mIsClientSide)

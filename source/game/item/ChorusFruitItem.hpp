@@ -13,7 +13,6 @@ class ChorusFruitItem : public FoodItem
 {
 public:
     ChorusFruitItem(int nutrition, float saturationModifier);
-    virtual ~ChorusFruitItem();
     virtual not_null_ptr<ItemInstance> finishUsingItem(not_null_ptr<ItemInstance> itemInstance,
                                                        Level* level,
                                                        boost::shared_ptr<LivingEntity> entity);

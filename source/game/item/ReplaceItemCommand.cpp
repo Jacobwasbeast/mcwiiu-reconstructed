@@ -6,10 +6,6 @@
 #include "game/core/DataOutputStream.hpp"
 #include "game/network/GameCommandPacket.hpp"
 
-ReplaceItemCommand::~ReplaceItemCommand()
-{
-}
-
 EGameCommand ReplaceItemCommand::getId()
 {
     return eGameCommand_ReplaceItem;

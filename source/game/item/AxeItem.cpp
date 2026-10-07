@@ -46,10 +46,6 @@ AxeItem::AxeItem(const Item::Tier* tier)
     mAttackDamage = 3.0f + tier->getAttackDamageBonus();
 }
 
-AxeItem::~AxeItem()
-{
-}
-
 float AxeItem::getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const BlockState* state)
 {
     Material* material = state->getMaterial();

@@ -18,7 +18,6 @@ class SkullItem : public Item
 public:
     SkullItem();
 
-    virtual ~SkullItem();
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                         Level* level,
                                                         const BlockPos& pos,

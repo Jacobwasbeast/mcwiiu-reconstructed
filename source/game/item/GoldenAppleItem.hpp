@@ -15,7 +15,6 @@ class GoldenAppleItem : public FoodItem
 {
 public:
     GoldenAppleItem(int nutrition, float saturationModifier, bool isMeat);
-    virtual ~GoldenAppleItem();
     virtual bool isFoil(not_null_ptr<ItemInstance> itemInstance);
     virtual const Rarity* getRarity(not_null_ptr<ItemInstance> itemInstance);
     virtual int getUseDescriptionId(int auxValue);

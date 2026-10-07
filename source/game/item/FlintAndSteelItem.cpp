@@ -21,10 +21,6 @@ FlintAndSteelItem::FlintAndSteelItem()
     setMaxDamage(0x40);
 }
 
-FlintAndSteelItem::~FlintAndSteelItem()
-{
-}
-
 InteractionResult::EInteractionResult FlintAndSteelItem::useOn(boost::shared_ptr<Player> player,
                                                                 Level* level,
                                                                 const BlockPos& pos,

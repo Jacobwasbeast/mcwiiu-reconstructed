@@ -24,7 +24,6 @@ public:
     };
 
     MinecartItem(const Minecart::Type* type);
-    virtual ~MinecartItem();
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                         Level* level,
                                                         const BlockPos& pos,

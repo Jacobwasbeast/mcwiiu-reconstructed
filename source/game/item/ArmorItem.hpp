@@ -64,7 +64,6 @@ public:
     ArmorItem(const ArmorMaterial* material, int renderIndex, const EquipmentSlot* slot);
 
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
-    virtual ~ArmorItem();
     virtual bool TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
     virtual InteractionResultHolder use(Level* level,
                                         boost::shared_ptr<Player> player,

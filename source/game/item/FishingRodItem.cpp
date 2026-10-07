@@ -24,10 +24,6 @@ FishingRodItem::FishingRodItem()
     addProperty(ResourceLocation(L"cast"), new FishingRodItem_ItemPropertyFunction());
 }
 
-FishingRodItem::~FishingRodItem()
-{
-}
-
 unsigned int FishingRodItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
     return IDS_TOOLTIPS_USE;

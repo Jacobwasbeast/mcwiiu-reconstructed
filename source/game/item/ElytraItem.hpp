@@ -19,7 +19,6 @@ class ElytraItem : public Item
 {
 public:
     ElytraItem();
-    virtual ~ElytraItem();
 
     virtual InteractionResultHolder use(Level* level,
                                         boost::shared_ptr<Player> player,

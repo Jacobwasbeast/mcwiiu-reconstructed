@@ -14,10 +14,6 @@ ChorusFruitItem::ChorusFruitItem(int nutrition, float saturationModifier)
 {
 }
 
-ChorusFruitItem::~ChorusFruitItem()
-{
-}
-
 not_null_ptr<ItemInstance> ChorusFruitItem::finishUsingItem(not_null_ptr<ItemInstance> itemInstance,
                                                             Level* level,
                                                             boost::shared_ptr<LivingEntity> entity)

@@ -23,10 +23,6 @@ ClockItem::ClockItem()
     memset(mIcons, 0, sizeof(mIcons));
 }
 
-ClockItem::~ClockItem()
-{
-}
-
 TextureAtlasSprite* ClockItem::getIcon(int auxValue)
 {
     TextureAtlasSprite* icon = Item::getIcon(auxValue);
@@ -39,8 +35,6 @@ TextureAtlasSprite* ClockItem::getIcon(int auxValue)
 void ClockItem::registerIcons(IconRegister* iconRegister)
 {
     Item::registerIcons(iconRegister);
-    mIcons[0] = iconRegister->registerIcon(CLOCK_ICON_NAMES[0]);
-    mIcons[1] = iconRegister->registerIcon(CLOCK_ICON_NAMES[1]);
-    mIcons[2] = iconRegister->registerIcon(CLOCK_ICON_NAMES[2]);
-    mIcons[3] = iconRegister->registerIcon(CLOCK_ICON_NAMES[3]);
+    for (int i = 0; i < 4; ++i)
+        mIcons[i] = iconRegister->registerIcon(CLOCK_ICON_NAMES[i]);
 }

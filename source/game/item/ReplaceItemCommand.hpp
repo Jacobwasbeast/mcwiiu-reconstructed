@@ -13,7 +13,6 @@ class ReplaceItemCommand : public Command
 {
 public:
     ReplaceItemCommand();
-    virtual ~ReplaceItemCommand();
 
     virtual EGameCommand getId();
     virtual int getPermissionLevel();

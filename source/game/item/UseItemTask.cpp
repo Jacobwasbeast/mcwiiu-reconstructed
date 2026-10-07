@@ -41,17 +41,18 @@ bool UseItemTask::isCompleted()
 
 void UseItemTask::useItem(not_null_ptr<ItemInstance> item, bool cancelled)
 {
-    if (cancelled || item->isEmpty() || itemCount <= 0)
+    if (!cancelled)
     {
-        return;
-    }
-
-    for (int i = 0; i < itemCount; ++i)
-    {
-        if (items[i] == item->getItem())
+        if (!item->isEmpty())
         {
-            completed = true;
-            return;
+            for (int i = 0; i < itemCount; ++i)
+            {
+                if (items[i] == item->getItem())
+                {
+                    completed = true;
+                    break;
+                }
+            }
         }
     }
 }

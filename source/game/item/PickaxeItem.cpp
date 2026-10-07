@@ -43,10 +43,6 @@ PickaxeItem::PickaxeItem(const Item::Tier* tier)
 {
 }
 
-PickaxeItem::~PickaxeItem()
-{
-}
-
 bool PickaxeItem::canDestroySpecial(const BlockState* state)
 {
     Block* block = state->getBlock();

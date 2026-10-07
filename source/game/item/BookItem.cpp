@@ -6,10 +6,6 @@ BookItem::BookItem()
 {
 }
 
-BookItem::~BookItem()
-{
-}
-
 bool BookItem::isEnchantable(not_null_ptr<ItemInstance> itemInstance)
 {
     return itemInstance->getCount() == 1;

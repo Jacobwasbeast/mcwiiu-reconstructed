@@ -28,10 +28,6 @@ BoatItem::BoatItem(Boat::Type type) : Item(), mType(type)
     mMaxStackSize = 1;
 }
 
-BoatItem::~BoatItem()
-{
-}
-
 bool BoatItem::TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);

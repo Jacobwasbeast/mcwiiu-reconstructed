@@ -20,7 +20,6 @@ class LingeringPotionItem : public PotionItem
 {
 public:
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
-    virtual ~LingeringPotionItem();
     virtual InteractionResultHolder use(Level* level,
                                         boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);

@@ -7,7 +7,6 @@ class FlintAndSteelItem : public Item
 {
 public:
     FlintAndSteelItem();
-    virtual ~FlintAndSteelItem();
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                         Level* level,
                                                         const BlockPos& pos,

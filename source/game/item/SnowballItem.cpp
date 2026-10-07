@@ -20,10 +20,6 @@ SnowballItem::SnowballItem() : Item()
     mMaxStackSize = 16;
 }
 
-SnowballItem::~SnowballItem()
-{
-}
-
 InteractionResultHolder SnowballItem::use(Level* level,
                                            boost::shared_ptr<Player> player,
                                            InteractionHand::EInteractionHand hand)

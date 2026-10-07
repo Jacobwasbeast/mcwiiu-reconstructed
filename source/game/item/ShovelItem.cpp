@@ -36,10 +36,6 @@ ShovelItem::ShovelItem(const Item::Tier* tier)
 {
 }
 
-ShovelItem::~ShovelItem()
-{
-}
-
 bool ShovelItem::canDestroySpecial(const BlockState* state)
 {
     Block* block = state->getBlock();

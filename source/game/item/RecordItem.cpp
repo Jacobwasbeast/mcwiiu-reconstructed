@@ -24,10 +24,6 @@ RecordItem::RecordItem(const std::wstring& name, int recordId, const SoundEvent*
     sBySound[sound] = this;
 }
 
-RecordItem::~RecordItem()
-{
-}
-
 InteractionResult::EInteractionResult RecordItem::useOn(boost::shared_ptr<Player> player,
                                                         Level* level,
                                                         const BlockPos& pos,

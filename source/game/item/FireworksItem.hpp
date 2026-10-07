@@ -34,7 +34,6 @@ public:
     static const std::wstring TAG_E_FADECOLORS;
 
     FireworksItem();
-    virtual ~FireworksItem();
 
     virtual InteractionResult::EInteractionResult useOn(boost::shared_ptr<Player> player,
                                                          Level* level,

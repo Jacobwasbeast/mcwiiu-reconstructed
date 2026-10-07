@@ -13,7 +13,6 @@ class WritableBookItem : public Item
 {
 public:
     WritableBookItem();
-    virtual ~WritableBookItem();
 
     virtual InteractionResultHolder use(Level* level,
                                         boost::shared_ptr<Player> player,

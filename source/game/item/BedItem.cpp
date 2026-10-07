@@ -39,10 +39,6 @@ BedItem::BedItem()
     setStackedByData(true);
 }
 
-BedItem::~BedItem()
-{
-}
-
 InteractionResult::EInteractionResult BedItem::useOn(boost::shared_ptr<Player> player,
                                                        Level* level,
                                                        const BlockPos& pos,

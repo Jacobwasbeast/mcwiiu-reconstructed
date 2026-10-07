@@ -111,10 +111,6 @@ BucketItem::BucketItem(BucketFillType fillType)
     }
 }
 
-BucketItem::~BucketItem()
-{
-}
-
 bool BucketItem::isFishBucket()
 {
     return mFillType >= FISH && mFillType <= PUFFER;

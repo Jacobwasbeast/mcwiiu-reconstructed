@@ -9,7 +9,6 @@ class BoatItem : public Item
 public:
     explicit BoatItem(Boat::Type type);
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);
-    virtual ~BoatItem();
     virtual bool TestUse(Level* level, boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand);
     virtual InteractionResultHolder use(Level* level, boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);

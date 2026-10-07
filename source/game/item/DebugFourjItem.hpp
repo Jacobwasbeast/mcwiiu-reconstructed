@@ -16,7 +16,6 @@ class DebugFourjItem : public Item
 {
 public:
     DebugFourjItem();
-    virtual ~DebugFourjItem();
 
     virtual bool interactEnemy(not_null_ptr<ItemInstance> itemInstance,
                                boost::shared_ptr<Player> player,

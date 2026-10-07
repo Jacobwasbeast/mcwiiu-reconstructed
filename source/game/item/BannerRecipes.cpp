@@ -14,12 +14,8 @@
 #include "game/item/Items.hpp"
 #include "game/item/Recipes.hpp"
 #include "game/world/block/BannerBlockEntity.hpp"
+#include "game/world/block/BlockItem.hpp"
 #include "game/world/block/Blocks.hpp"
-
-static const std::wstring TAG_PATTERNS = L"Patterns";
-static const std::wstring TAG_PATTERN = L"Pattern";
-static const std::wstring TAG_COLOR = L"Color";
-static const std::wstring TAG_BLOCK_ENTITY = L"BlockEntityTag";
 
 BannerRecipes::BannerDuplicateRecipe* BannerRecipes::mDuplicateRecipe = NULL;
 BannerRecipes::BannerAddPatternRecipe* BannerRecipes::mAddPatternRecipe = NULL;
@@ -31,20 +27,20 @@ BannerRecipes::BannerRecipes()
 ItemInstance* BannerRecipes::createOutputItem(int color, const std::wstring& pattern)
 {
     ItemInstance* result = new ItemInstance(Items::banner, 1, DyeColor::WHITE->getItemData());
-    CompoundTag* tag = static_cast<CompoundTag*>(result->getOrCreateTagElement(TAG_BLOCK_ENTITY));
+    CompoundTag* tag = static_cast<CompoundTag*>(result->getOrCreateTagElement(BlockItem::BLOCK_ENTITY_TAG));
     ListTag* patterns;
-    if (tag->contains(TAG_PATTERNS, Tag::TAG_LIST))
+    if (tag->contains(BannerBlockEntity::TAG_PATTERNS, Tag::TAG_LIST))
     {
-        patterns = tag->getList(TAG_PATTERNS, Tag::TAG_COMPOUND);
+        patterns = tag->getList(BannerBlockEntity::TAG_PATTERNS, Tag::TAG_COMPOUND);
     }
     else
     {
         patterns = new ListTag();
-        tag->put(TAG_PATTERNS, patterns);
+        tag->put(BannerBlockEntity::TAG_PATTERNS, patterns);
     }
     CompoundTag* entry = new CompoundTag();
-    entry->putString(TAG_PATTERN, pattern);
-    entry->putInt(TAG_COLOR, color);
+    entry->putString(BannerBlockEntity::TAG_PATTERN, pattern);
+    entry->putInt(BannerBlockEntity::TAG_COLOR, color);
     patterns->add(entry);
     return result;
 }
@@ -255,20 +251,20 @@ not_null_ptr<ItemInstance> BannerRecipes::BannerAddPatternRecipe::assemble(boost
                 break;
             }
         }
-        CompoundTag* tag = static_cast<CompoundTag*>(result->getOrCreateTagElement(TAG_BLOCK_ENTITY));
+        CompoundTag* tag = static_cast<CompoundTag*>(result->getOrCreateTagElement(BlockItem::BLOCK_ENTITY_TAG));
         ListTag* patterns;
-        if (tag->contains(TAG_PATTERNS, Tag::TAG_LIST))
+        if (tag->contains(BannerBlockEntity::TAG_PATTERNS, Tag::TAG_LIST))
         {
-            patterns = tag->getList(TAG_PATTERNS, Tag::TAG_COMPOUND);
+            patterns = tag->getList(BannerBlockEntity::TAG_PATTERNS, Tag::TAG_COMPOUND);
         }
         else
         {
             patterns = new ListTag();
-            tag->put(TAG_PATTERNS, patterns);
+            tag->put(BannerBlockEntity::TAG_PATTERNS, patterns);
         }
         CompoundTag* entry = new CompoundTag();
-        entry->putString(TAG_PATTERN, pattern->getHashname());
-        entry->putInt(TAG_COLOR, color);
+        entry->putString(BannerBlockEntity::TAG_PATTERN, pattern->getHashname());
+        entry->putInt(BannerBlockEntity::TAG_COLOR, color);
         patterns->add(entry);
     }
     return result;

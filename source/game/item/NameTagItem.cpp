@@ -9,10 +9,6 @@ NameTagItem::NameTagItem()
 {
 }
 
-NameTagItem::~NameTagItem()
-{
-}
-
 bool NameTagItem::interactEnemy(not_null_ptr<ItemInstance> itemInstance,
                                 boost::shared_ptr<Player> player,
                                 boost::shared_ptr<LivingEntity> target,

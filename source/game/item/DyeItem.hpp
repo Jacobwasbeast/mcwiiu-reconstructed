@@ -15,7 +15,6 @@ public:
     static const int DYE_COLORS[16];
 
     DyeItem();
-    virtual ~DyeItem();
 
     virtual int getDescriptionId(not_null_ptr<ItemInstance> itemInstance);
     virtual int getUseDescriptionId(not_null_ptr<ItemInstance> itemInstance);

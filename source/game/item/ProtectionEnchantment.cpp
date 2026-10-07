@@ -103,17 +103,16 @@ bool ProtectionEnchantment::checkCompatibility(const Enchantment* other) const
 {
     const ProtectionEnchantment* protection =
         dynamic_cast<const ProtectionEnchantment*>(other);
-    if (protection == NULL)
+    if (protection != NULL)
     {
-        return Enchantment::checkCompatibility(other);
+        if (protection->mType != mType &&
+            (mType == Type::FALL || protection->mType == Type::FALL))
+        {
+            return true;
+        }
+        return false;
     }
-
-    if (protection->mType != mType &&
-        (mType == Type::FALL || protection->mType == Type::FALL))
-    {
-        return true;
-    }
-    return false;
+    return Enchantment::checkCompatibility(other);
 }
 
 int ProtectionEnchantment::getFireAfterDampener(

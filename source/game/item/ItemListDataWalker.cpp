@@ -16,10 +16,6 @@ ItemListDataWalker::ItemListDataWalker(unsigned long long type, const std::vecto
     mItemNames = itemNames;
 }
 
-ItemListDataWalker::~ItemListDataWalker()
-{
-}
-
 CompoundTag* ItemListDataWalker::doWalk(DataFixer* fixer, CompoundTag* tag, int version)
 {
     for (std::vector<std::wstring>::iterator it = mItemNames.begin(); it != mItemNames.end(); ++it)

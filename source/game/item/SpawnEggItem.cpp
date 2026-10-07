@@ -40,10 +40,6 @@ SpawnEggItem::SpawnEggItem()
     mOverlayIcon = NULL;
 }
 
-SpawnEggItem::~SpawnEggItem()
-{
-}
-
 ResourceLocation SpawnEggItem::getNamedIdFrom(not_null_ptr<ItemInstance> itemInstance)
 {
     CompoundTag* tag = itemInstance->getTag();

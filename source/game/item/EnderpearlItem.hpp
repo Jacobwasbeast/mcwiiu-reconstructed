@@ -16,7 +16,6 @@ class EnderpearlItem : public Item
 {
 public:
     EnderpearlItem();
-    virtual ~EnderpearlItem();
     virtual InteractionResultHolder use(Level* level,
                                         boost::shared_ptr<Player> player,
                                         InteractionHand::EInteractionHand hand);

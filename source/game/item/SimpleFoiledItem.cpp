@@ -5,10 +5,6 @@ SimpleFoiledItem::SimpleFoiledItem()
 {
 }
 
-SimpleFoiledItem::~SimpleFoiledItem()
-{
-}
-
 bool SimpleFoiledItem::isFoil(not_null_ptr<ItemInstance>)
 {
     return true;
