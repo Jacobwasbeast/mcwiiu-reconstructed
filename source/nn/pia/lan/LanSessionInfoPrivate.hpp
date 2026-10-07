@@ -8,7 +8,7 @@ namespace nn { namespace pia { namespace lan {
 class LanSessionInfoPrivate : public LanSessionInfo
 {
 public:
-    virtual ~LanSessionInfoPrivate();
+    virtual ~LanSessionInfoPrivate() {}
 };
 
 }}}

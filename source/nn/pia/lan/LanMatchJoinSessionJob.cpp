@@ -45,14 +45,9 @@ inline void setStep(common::StepSequenceJob::Step& slot,
                     common::Job::ExecuteResult (T::*function)(),
                     const char* name)
 {
-    union
-    {
-        common::Job::ExecuteResult (T::*derived)();
-        common::Job::ExecuteResult (common::StepSequenceJob::*base)();
-    } step;
-    step.derived = function;
-    slot.m_function = step.base;
-    slot.m_name = name;
+    const common::StepSequenceJob::Step step(
+        static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+    slot = step;
 }
 
 inline common::Time makeRetryTime()
@@ -292,8 +287,8 @@ LanMatchJoinSessionJob::ExecuteResult LanMatchJoinSessionJob::WaitRequestSession
 void LanMatchJoinSessionJob::Cleanup()
 {
     session::JoinSessionJob::Cleanup();
-    m_startupResult = 0;
     m_matchmakeSession = 0;
+    m_startupResult = 0;
 }
 
 void LanMatchJoinSessionJob::NoticeOwnerChangeEvent(unsigned int sessionId, unsigned long long ownerId)
@@ -328,9 +323,9 @@ void LanMatchJoinSessionJob::SetNextStepAtWaitJoinMesh()
 {
     if (m_callContext.m_state == common::CallContext::cStateInProgress)
     {
+        m_result = cResultJoinFailed;
         setStep(m_currentStep, &session::JoinSessionJob::LeaveMesh,
                 "LanMatchJoinSessionJob::LeaveMesh");
-        m_result = cResultJoinFailed;
     }
     else if (session::g_piaSession->GetStatus() == cStatusDisconnectedSession)
     {
@@ -342,16 +337,16 @@ void LanMatchJoinSessionJob::SetNextStepAtWaitJoinMesh()
     else
     {
         const Result result = m_matchmakeSession->RequestSessionInfo(&m_callContext, m_sessionId);
-        if (result == 0)
+        if (result != 0)
         {
-            setStep(m_currentStep, &LanMatchJoinSessionJob::WaitRequestSessionInfo,
-                    "LanMatchJoinSessionJob::WaitRequestSessionInfo");
+            m_result = cResultJoinFailed;
+            setStep(m_currentStep, &session::JoinSessionJob::LeaveMesh,
+                    "LanMatchJoinSessionJob::LeaveMesh");
         }
         else
         {
-            setStep(m_currentStep, &session::JoinSessionJob::LeaveMesh,
-                    "LanMatchJoinSessionJob::LeaveMesh");
-            m_result = cResultJoinFailed;
+            setStep(m_currentStep, &LanMatchJoinSessionJob::WaitRequestSessionInfo,
+                    "LanMatchJoinSessionJob::WaitRequestSessionInfo");
         }
     }
 }

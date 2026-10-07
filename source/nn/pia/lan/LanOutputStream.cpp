@@ -30,7 +30,7 @@ void LanOutputStream::OnStationConnectionEvent()
             continue;
         common::SocketAddress address;
         address.Init();
-        address.SetInetAddress(station->m_stationAddress);
+        address.SetInetAddress(station->m_stationAddress.m_inetAddress);
         address.GetSockAddrIn();
         std::memcpy(m_stationAddresses + station->m_field10 * sizeof(common::SockAddrIn),
                     address.GetSockAddrInPointer(), sizeof(common::SockAddrIn));
@@ -44,8 +44,8 @@ Result LanOutputStream::CalculateCryptoParameter(unsigned char* output, unsigned
         return 0x10c07;
     const unsigned int protocolId = m_protocol == 0 ? 0 : m_protocol->GetProtocolIdentifier();
     common::serializeU32(output, protocolId);
-    std::memcpy(output + 4, packet->m_packetData.m_header.m_field10, 8);
-    output[4] = packet->m_packetData.m_header.m_field09;
+    std::memcpy(output + 4, packet->m_packetData.m_header.m_cryptoNonce, 8);
+    output[4] = packet->m_packetData.m_header.m_passId;
     return 0;
 }
 
@@ -137,7 +137,7 @@ Result LanOutputStream::Write(const common::Packet& packet)
         return 0;
     common::InetAddress address;
     if (packet.m_stationIndex != 0xff)
-        address = packet.m_field5f4;
+        address = packet.m_field5f4.m_inetAddress;
     if (address.IsValid())
     {
         return TraceSendResult(packet, SendTo(packet.m_packetData.m_data, packet.m_size, address, packet.m_field600));

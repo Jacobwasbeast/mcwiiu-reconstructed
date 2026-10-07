@@ -22,6 +22,12 @@ class LanOutputStream;
 class LanPayload
 {
 public:
+    LanPayload() {}
+    LanPayload(const unsigned char* data, unsigned short size, unsigned int type)
+        : m_data(data), m_size(size), m_type(type)
+    {
+    }
+
     const unsigned char* m_data;
     unsigned short m_size;
     unsigned int m_type;

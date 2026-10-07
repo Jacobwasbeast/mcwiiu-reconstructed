@@ -14,7 +14,7 @@ LanConnectStationJob::~LanConnectStationJob()
 {
 }
 
-int LanConnectStationJob::StartupImpl(common::CallContext* context,
+Result LanConnectStationJob::StartupImpl(common::CallContext* context,
     transport::Station* station, const transport::StationConnectionInfo& info, bool secure)
 {
     m_station = station;
@@ -36,7 +36,7 @@ int LanConnectStationJob::StartupImpl(common::CallContext* context,
     }
     transport::StationConnectionInfo currentInfo;
     currentInfo.m_stationLocation.SetStationLocation(m_currentLocation);
-    const int result = transport::ConnectStationJob::StartupImpl(context, station, currentInfo, secure);
+    const Result result = transport::ConnectStationJob::StartupImpl(context, station, currentInfo, secure);
     if (result != 0)
         return result;
     m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(

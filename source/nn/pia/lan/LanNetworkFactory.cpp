@@ -73,7 +73,7 @@ Result LanNetworkFactory::CreateProtocols()
         LanProtocol* protocol = storage != 0
             ? new (static_cast<void*>(storage)) LanProtocol() : 0;
         transport->m_protocolManager.CreateProtocolImpl(
-            protocol, transport::ProtocolId(LanProtocol::cProtocolId));
+            protocol, transport::ProtocolId(LanProtocol::cProtocolType, 0));
     }
     return 0;
 }

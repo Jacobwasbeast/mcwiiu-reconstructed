@@ -10,7 +10,6 @@ class LanStationInfo : public session::SessionStationInfo
 {
 public:
     LanStationInfo();
-    ~LanStationInfo();
 
     void Clear();
     const common::FixedString<10>& GetUserName() const;

@@ -111,9 +111,9 @@ Result LanInputStream::CalculateCryptoParameter(unsigned char* parameter, unsign
 {
     if (size < 12)
         return 0x10c07;
-    common::serializeU32(parameter, packet->m_field608.m_address);
-    std::memcpy(parameter + 4, packet->m_packetData.m_header.m_field10, 8);
-    parameter[4] = packet->m_packetData.m_header.m_field09;
+    common::serializeU32(parameter, packet->m_field608.m_inetAddress.m_address);
+    std::memcpy(parameter + 4, packet->m_packetData.m_header.m_cryptoNonce, 8);
+    parameter[4] = packet->m_packetData.m_header.m_passId;
     return 0;
 }
 

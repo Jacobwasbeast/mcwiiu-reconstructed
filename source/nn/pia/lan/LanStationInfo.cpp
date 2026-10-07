@@ -8,10 +8,6 @@ LanStationInfo::LanStationInfo()
 {
 }
 
-LanStationInfo::~LanStationInfo()
-{
-}
-
 void LanStationInfo::Clear()
 {
     session::SessionStationInfo::Clear();

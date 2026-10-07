@@ -11,8 +11,8 @@ class LanConnectStationJob : public transport::ConnectStationJob
 public:
     LanConnectStationJob();
     ~LanConnectStationJob();
-    int StartupImpl(common::CallContext* context, transport::Station* station,
-                    const transport::StationConnectionInfo& info, bool secure);
+    Result StartupImpl(common::CallContext* context, transport::Station* station,
+                       const transport::StationConnectionInfo& info, bool secure);
     void Trace(unsigned long long value) const;
     ExecuteResult TryCurrentAddress();
 
