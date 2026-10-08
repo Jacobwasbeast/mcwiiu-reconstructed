@@ -45,6 +45,7 @@
   },
   "shader_files": [
     {"output": "MiiIconDefaultShader.inc", "address": "0x10460060", "size": 4912},
-    {"output": "MiiIconExtShader.inc", "address": "0x10461594", "size": 2312}
+    {"output": "MiiIconExtShader.inc", "address": "0x10461594", "size": 2312},
+    {"output": "MonitoringCryptoKeys.inc", "address": "0x1047B3A0", "size": 256}
   ]
 }
