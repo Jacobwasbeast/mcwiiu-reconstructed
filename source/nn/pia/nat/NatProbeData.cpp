@@ -20,10 +20,15 @@ common::Result NatProbeData::Serialize(unsigned char* buffer, unsigned int* size
         return cResultInvalidArgument;
 
     common::serializeU32(buffer, m_connectionId);
-    buffer[4] = m_type;
-    for (unsigned int i = 0; i < 3; ++i)
-        buffer[5 + i] = m_extra[i];
-    common::serializeU64(buffer + 8, m_time.m_tick);
+    unsigned char* p = buffer + sizeof(m_connectionId);
+    p[0] = m_type;
+    ++p;
+    for (unsigned int i = 0; i < sizeof(m_extra); ++i)
+    {
+        *p = m_extra[i];
+        ++p;
+    }
+    common::serializeU64(p, m_time.m_tick);
     *size = cProbeMessageSize;
     return 0;
 }
@@ -36,11 +41,17 @@ common::Result NatProbeData::Deserialize(const unsigned char* buffer, unsigned i
         return cResultInvalidArgument;
 
     m_connectionId = common::deserializeU32(buffer);
-    m_type = buffer[4];
-    for (unsigned int i = 0; i < 3; ++i)
-        m_extra[i] = buffer[5 + i];
-    m_time.m_tick = common::deserializeU64(buffer + 8);
-    return 0;
+    const unsigned char* p = buffer + sizeof(m_connectionId);
+    m_type = p[0];
+    ++p;
+    for (unsigned int i = 0; i < sizeof(m_extra); ++i)
+    {
+        m_extra[i] = *p;
+        ++p;
+    }
+    m_time.m_tick = common::deserializeU64(p);
+    const common::Result success = 0;
+    return success;
 }
 
 void NatProbeData::Trace(uint64_t) const

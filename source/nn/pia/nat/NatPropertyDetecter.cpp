@@ -47,16 +47,18 @@ Result NatPropertyDetecter::Startup(NatTraverser* traverser, common::CallContext
     Result result = NatDetecter::Startup(traverser, context, address);
     if (result != 0)
         return result;
-    return m_detectionJob.Startup(context, this, traverser);
+    result = m_detectionJob.Startup(context, this, traverser);
+    if (result != 0)
+        return result;
+    return 0;
 }
 
 void NatPropertyDetecter::Cleanup()
 {
     common::Time now;
     now.SetNow();
-    const long long elapsed = now.m_tick - m_startTime.m_tick;
     s_lastDetectionMilliseconds = static_cast<unsigned short>(
-        elapsed / common::TimeSpan::GetTicksPerMSec().m_tick);
+        (now - m_startTime).m_tick / common::TimeSpan::GetTicksPerMSec().m_tick);
     NatDetecter::Cleanup();
 }
 
@@ -64,19 +66,18 @@ void NatPropertyDetecter::SendNatPropertyDetectionProbes()
 {
     common::InetAddress* primary = GetPrimaryServerPrimaryPortAddress();
 
-    NatCheckProbe first = { common::InetAddress(*primary), { cProbeRequestFirst, 0, 0, 0 } };
-    AddNatCheckProbe(first, cProbeRepeatCount);
+    AddNatCheckProbe(NatCheckProbe(*primary, cProbeRequestFirst), cProbeRepeatCount);
+    AddNatCheckProbe(NatCheckProbe(*primary, cProbeRequestSecond), cProbeRepeatCount);
 
-    NatCheckProbe second = { common::InetAddress(*primary), { cProbeRequestSecond, 0, 0, 0 } };
-    AddNatCheckProbe(second, cProbeRepeatCount);
-
-    for (unsigned int index = 1; index < m_traverser->m_servers.size; ++index)
+    common::SimpleContainer<common::InetAddress, 4>::iterator it = m_traverser->m_servers.begin();
+    common::SimpleContainer<common::InetAddress, 4>::iterator end = m_traverser->m_servers.end();
+    if (it == end)
+        return;
+    for (++it; it != end; ++it)
     {
-        const common::InetAddress& server = m_traverser->m_servers.data[index];
-        if (server.m_address != primary->m_address && server.m_port == primary->m_port)
+        if (it->m_address != primary->m_address && it->m_port == primary->m_port)
         {
-            NatCheckProbe third = { common::InetAddress(server), { cProbeRequestThird, 0, 0, 0 } };
-            AddNatCheckProbe(third, cProbeRepeatCount);
+            AddNatCheckProbe(NatCheckProbe(*it, cProbeRequestThird), cProbeRepeatCount);
             return;
         }
     }

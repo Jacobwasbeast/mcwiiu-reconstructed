@@ -2,14 +2,10 @@
 #include "nn/pia/nat/NatProbe.hpp"
 
 #include "nn/pia/common/InetAddress.hpp"
+#include "nn/pia/common/SessionBeginMonitoringContent.hpp"
 #include "nn/pia/session/Mesh.hpp"
 
 namespace nn { namespace pia { namespace nat {
-
-namespace
-{
-unsigned short s_targetAddressUpdateCount = cCounterMax;
-}
 
 NatProbe::NatProbe(const transport::StationLocation& location, const common::Time& start,
                    const common::TimeSpan& duration, unsigned char timeout,
@@ -18,13 +14,9 @@ NatProbe::NatProbe(const transport::StationLocation& location, const common::Tim
       m_startTime(start),
       m_deadline(), m_received(0), m_sent(0),
       m_replied(0), m_rtt(-1), m_timeout(timeout), m_probeCount(0),
-      m_probeLimit(sprayCount),
-      m_firstPort(static_cast<short>(m_stationLocation.m_stationAddress.m_inetAddress.m_port)),
-      m_lastPort(static_cast<short>(m_stationLocation.m_stationAddress.m_inetAddress.m_port)),
-      m_ticksPerTimeout(0)
+      m_probeLimit(sprayCount)
 {
-    m_ticksPerTimeout =
-        static_cast<unsigned long long>(common::TimeSpan::GetTicksPerMSec().m_tick) * 90000ULL;
+    m_updateInterval = common::TimeSpan::FromMSec(90000).m_tick;
 
     common::Time now;
     now.SetNow();
@@ -37,54 +29,50 @@ NatProbe::NatProbe(const transport::StationLocation& location, const common::Tim
         m_stationLocation.m_stationAddress.SetInetAddress(adjusted);
     }
 
-    m_firstPort = static_cast<short>(m_stationLocation.m_stationAddress.m_inetAddress.m_port);
-    m_lastPort = static_cast<short>(m_firstPort + sprayRange);
-    if (static_cast<unsigned short>(m_lastPort) < static_cast<unsigned short>(m_firstPort))
-        m_lastPort = static_cast<short>(cPortMax);
+    m_firstPort = m_stationLocation.m_stationAddress.m_inetAddress.m_port;
+    m_lastPort = static_cast<unsigned short>(m_firstPort + sprayRange);
+    if (m_lastPort < m_firstPort)
+        m_lastPort = cPortMax;
 }
 
 bool NatProbe::UpdateTargetAddress(const transport::StationLocation& location)
 {
-    const bool thisPrivate = m_stationLocation.m_stationAddress.m_inetAddress.IsPrivate() != 0;
-    const bool targetPrivate = location.m_stationAddress.m_inetAddress.IsPrivate() != 0;
-
-    if (thisPrivate && !targetPrivate)
+    if (m_stationLocation.m_stationAddress.m_inetAddress.IsPrivate() &&
+        !location.m_stationAddress.m_inetAddress.IsPrivate())
     {
         if (session::g_piaMesh == 0 || !session::g_piaMesh->IsProcessedAtMeshBegin())
         {
-            if (s_targetAddressUpdateCount == cCounterMax)
-                s_targetAddressUpdateCount = 1;
+            unsigned short& addressChangeCount = common::g_sessionBeginMonitoringContent.m_metric150;
+            if (addressChangeCount == cCounterMax)
+                addressChangeCount = 1;
             else
-                ++s_targetAddressUpdateCount;
+                ++addressChangeCount;
         }
         if (m_rtt != -1 || m_startTime.m_tick != 0)
             return false;
     }
-    else if (thisPrivate && targetPrivate)
+    else if (!m_stationLocation.m_stationAddress.m_inetAddress.IsPrivate() &&
+             location.m_stationAddress.m_inetAddress.IsPrivate())
     {
-        if (m_startTime.m_tick != 0 &&
-             !(m_stationLocation.m_stationAddress == location.m_stationAddress))
-            return false;
+        if (session::g_piaMesh == 0 || !session::g_piaMesh->IsProcessedAtMeshBegin())
+        {
+            unsigned short& addressChangeCount = common::g_sessionBeginMonitoringContent.m_metric150;
+            if (addressChangeCount == cCounterMax)
+                addressChangeCount = 1;
+            else
+                ++addressChangeCount;
+        }
     }
-    else if (!thisPrivate && !targetPrivate)
+    else if (m_startTime.m_tick != 0 && m_stationLocation.m_stationAddress != location.m_stationAddress)
     {
-        if (m_startTime.m_tick != 0 &&
-             !(m_stationLocation.m_stationAddress == location.m_stationAddress))
-            return false;
-    }
-    else if (session::g_piaMesh == 0 || !session::g_piaMesh->IsProcessedAtMeshBegin())
-    {
-        if (s_targetAddressUpdateCount == cCounterMax)
-            s_targetAddressUpdateCount = 1;
-        else
-            ++s_targetAddressUpdateCount;
+        return false;
     }
 
-    const unsigned long long oldKey = m_stationLocation.m_stationAddress.m_inetAddress.GetKey();
+    common::InetAddress oldAddress(m_stationLocation.m_stationAddress.m_inetAddress);
     m_stationLocation.m_stationAddress.SetInetAddress(location.m_stationAddress.m_inetAddress);
-    m_firstPort = static_cast<short>(location.m_stationAddress.m_inetAddress.m_port);
-    m_lastPort = m_firstPort;
-    if (m_stationLocation.m_stationAddress.m_inetAddress.GetKey() != oldKey)
+    m_firstPort = location.m_stationAddress.m_inetAddress.m_port;
+    m_lastPort = location.m_stationAddress.m_inetAddress.m_port;
+    if (!(oldAddress == location.m_stationAddress.m_inetAddress))
         m_probeCount = 0;
     return true;
 }
@@ -95,44 +83,38 @@ void NatProbe::UpdateTargetPort(const transport::StationLocation& location)
         return;
     const unsigned short oldPort = m_stationLocation.m_stationAddress.m_inetAddress.m_port;
     m_stationLocation.m_stationAddress.m_inetAddress.m_port = location.m_stationAddress.m_inetAddress.m_port;
-    if (oldPort != m_stationLocation.m_stationAddress.m_inetAddress.m_port)
+    if (oldPort != location.m_stationAddress.m_inetAddress.m_port)
         m_probeCount = 0;
 }
 
-unsigned long long NatProbe::UpdateRtt(const common::Time& sent, const common::Time& received)
+void NatProbe::UpdateRtt(const common::Time& sent, const common::Time& received)
 {
-    const unsigned long long elapsed = sent.m_tick - received.m_tick;
-    const unsigned long long ticksPerMSec =
-        static_cast<unsigned long long>(common::TimeSpan::GetTicksPerMSec().m_tick);
-    const unsigned long long rtt = elapsed / ticksPerMSec;
-    m_rtt = static_cast<int>(rtt);
-    return rtt;
+    const common::TimeSpan elapsed = sent - received;
+    m_rtt = static_cast<int>(elapsed.m_tick / common::TimeSpan::GetTicksPerMSec().m_tick);
 }
 
 bool NatProbe::UpdateIsNeeded(common::Time now) const
 {
     if (m_rtt != -1)
     {
-        const unsigned long long current = now.m_tick - m_startTime.m_tick;
-        return current > m_ticksPerTimeout;
+        const common::TimeSpan elapsed = now - m_startTime;
+        return elapsed.m_tick > m_updateInterval;
     }
     return m_probeCount < m_probeLimit;
 }
 
 void NatProbe::SprayTargetPort()
 {
-    const unsigned short count = static_cast<unsigned short>(
-        static_cast<unsigned short>(m_lastPort) - static_cast<unsigned short>(m_firstPort) + 1);
+    const unsigned short count = static_cast<unsigned short>(m_lastPort - m_firstPort + 1);
     if (count == 1)
         return;
-    const unsigned short counter16 = static_cast<unsigned short>(m_probeCount);
-    const unsigned short offset = counter16 % count;
-    m_stationLocation.m_stationAddress.m_inetAddress.m_port = static_cast<unsigned short>(m_firstPort + offset);
+    m_stationLocation.m_stationAddress.m_inetAddress.m_port =
+        static_cast<unsigned short>(m_firstPort + static_cast<unsigned short>(m_probeCount) % count);
 }
 
-short NatProbe::GetPortSprayCount()
+unsigned short NatProbe::GetPortSprayCount()
 {
-    return static_cast<short>(m_stationLocation.m_stationAddress.m_inetAddress.m_port - m_firstPort);
+    return static_cast<unsigned short>(m_stationLocation.m_stationAddress.m_inetAddress.m_port - m_firstPort);
 }
 
 void NatProbe::Trace(unsigned long long) const

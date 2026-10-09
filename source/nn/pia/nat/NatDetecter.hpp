@@ -3,7 +3,7 @@
 
 #include "nn/pia/common/Socket.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
-#include "nn/pia/ListBase.hpp"
+#include "nn/pia/common/PooledList.hpp"
 #include "nn/pia/nat/NatCheckReply.hpp"
 #include "nn/pia/nat/NatDetectionJob.hpp"
 #include "nn/pia/nat/NatTraverser.hpp"
@@ -16,17 +16,31 @@ class NatDetecter;
 
 struct NatCheckProbe
 {
+    NatCheckProbe() : destination(), message()
+    {
+        destination.m_address = 0;
+        destination.m_port = 0;
+        message.type = 0;
+        message.portWord = 0;
+        message.address = 0;
+        message.payload = 0;
+    }
+
+    NatCheckProbe(common::InetAddress address, int type) : destination(address), message()
+    {
+        message.type = type;
+    }
+
     common::InetAddress destination;
-    unsigned int payload[4];
+    NatCheckReply::Body message;
 };
 
-class NatDetecter : public common::Socket
+class NatDetecter
 {
 public:
     enum
     {
         cProbeQueueSize = 20,
-        cProbePayloadWords = 4,
         cReplyTypeCount = 3
     };
 
@@ -66,78 +80,24 @@ public:
     virtual void CancelDetectionJob();
 
 protected:
-    struct ProbeNode
-    {
-        ProbeNode()
-            : destination()
-        {
-            payload[0] = 0;
-            payload[1] = 0;
-            payload[2] = 0;
-            payload[3] = 0;
-        }
+    friend class NatDetectionJob;
 
-        common::ListNode node;
-        common::InetAddress destination;
-        unsigned int payload[cProbePayloadWords];
-    };
-
-    struct ProbeQueue
-    {
-        ProbeQueue()
-            : m_activeList(), m_freeList()
-        {
-            m_nodeOffset = 0;
-            m_nodes = static_cast<ProbeNode*>(static_cast<void*>(m_storage));
-            m_nodeCount = cProbeQueueSize;
-            for (int index = 0; index < cProbeQueueSize; ++index)
-            {
-                ProbeNode* probe = static_cast<ProbeNode*>(static_cast<void*>(m_storage[index]));
-                probe->node.prev = 0;
-                probe->node.next = 0;
-                m_freeList.InsertBeforeNode(m_freeList.Sentinel(),
-                                            reinterpret_cast<common::ListNode*>(
-                                                reinterpret_cast<char*>(probe) + m_nodeOffset));
-            }
-        }
-
-        void ReleaseAll()
-        {
-            common::ListNode* sentinel = m_activeList.Sentinel();
-            common::ListNode* node = sentinel->next;
-            while (node != sentinel)
-            {
-                common::ListNode* next = node->next;
-                node->prev = 0;
-                node->next = 0;
-                m_freeList.InsertAfterNode(m_freeList.Sentinel(),
-                                           reinterpret_cast<common::ListNode*>(
-                                               reinterpret_cast<char*>(node) + m_nodeOffset));
-                node = next;
-            }
-            m_activeList.Init();
-        }
-
-        common::ListBase m_activeList;
-        common::ListBase m_freeList;
-        int m_nodeOffset;
-        ProbeNode* m_nodes;
-        int m_nodeCount;
-        unsigned int m_storage[cProbeQueueSize][sizeof(ProbeNode) / sizeof(unsigned int)];
-    };
+    typedef common::FixedPooledList<NatCheckProbe, cProbeQueueSize> ProbeQueue;
 
     static unsigned short s_currentPort;
     static unsigned short s_randomPortStart;
     static unsigned short s_randomPortRange;
     static unsigned short s_reservedPort;
+    common::Socket m_socket;
     unsigned int m_retryCount;
     common::InetAddress m_primaryAddress;
     common::InetAddress m_senderAddress;
-    unsigned int m_sendPayload[cProbePayloadWords];
-    unsigned int m_receivePayload[cProbePayloadWords];
+    NatCheckReply::Body m_sendMessage;
+    NatCheckReply::Body m_receiveMessage;
     ProbeQueue m_probes;
     NatCheckReply m_replies[cReplyTypeCount];
-    unsigned char m_padding324[12];
+    unsigned int m_firstReplyMsec;
+    unsigned char m_padding328[8];
     NatDetectionJob m_detectionJob;
     NatTraverser* m_traverser;
 };

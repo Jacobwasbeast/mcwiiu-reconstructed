@@ -72,6 +72,7 @@ public:
     void StopServerKeepAlive();
     virtual void Trace(unsigned long long value) const;
     NatProbe* GetNatProbe(const transport::StationLocation& location);
+    NatProbeList* GetNatProbeList() { return &m_probeList; }
     void ResetProbeStatus(const transport::StationLocation& location, bool relay);
     void ResetNextProbeTime();
     virtual unsigned short GetProtocolType() const;

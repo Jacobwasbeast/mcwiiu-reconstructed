@@ -2,20 +2,20 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_NAT_NATPROBELIST_HPP
 
 #include <stdint.h>
-#include <boost/type_traits/aligned_storage.hpp>
-#include <boost/type_traits/alignment_of.hpp>
 
 #include "nn/pia/nat/Api.hpp"
-#include "nn/pia/ListBase.hpp"
+#include "nn/pia/common/PooledList.hpp"
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/nat/NatProbe.hpp"
 #include "nn/pia/transport/StationLocation.hpp"
 
 namespace nn { namespace pia { namespace nat {
 
-class NatProbeList
+class NatProbeList : public common::PooledList<NatProbe>
 {
 public:
+    typedef common::PooledList<NatProbe> ProbeList;
+
     NatProbeList();
     virtual ~NatProbeList();
 
@@ -38,61 +38,31 @@ public:
 
     common::ListNode* Begin()
     {
-        return m_active.Sentinel()->next;
+        return Sentinel()->next;
     }
 
     common::ListNode* End()
     {
-        return m_active.Sentinel();
+        return Sentinel();
     }
 
     static NatProbe* ProbeOf(common::ListNode* node)
     {
-        return reinterpret_cast<ProbeRecord*>(node)->Probe();
+        return ProbeList::ValueOf(node);
     }
 
-    void Release(common::ListNode* node)
+    void Release(NatProbe* probe)
     {
-        ProbeOf(node)->~NatProbe();
-        m_active.EraseNode(node);
-        m_free.InsertAfterNode(m_free.Sentinel(),
-            reinterpret_cast<common::ListNode*>(reinterpret_cast<unsigned char*>(node) + m_nodeOffset));
+        Destroy(probe);
     }
 
-    void Clear()
+    void ReleaseAll()
     {
-        while (m_active.GetNodeNum() != 0)
-            Release(m_active.Sentinel()->prev);
+        while (GetNodeNum() != 0)
+            Release(Back());
     }
 
 private:
-    struct ProbeRecord
-    {
-        common::ListNode node;
-        boost::aligned_storage<sizeof(NatProbe), boost::alignment_of<NatProbe>::value>::type probeStorage;
-
-        NatProbe* Probe()
-        {
-            return reinterpret_cast<NatProbe*>(&probeStorage);
-        }
-    };
-
-    static ProbeRecord* RecordFromNode(common::ListNode* node)
-    {
-        return reinterpret_cast<ProbeRecord*>(node);
-    }
-
-    void Retire(ProbeRecord* record)
-    {
-        record->Probe()->Trace(cTraceBrief);
-        Release(&record->node);
-    }
-
-    common::ListBase m_active;
-    common::ListBase m_free;
-    int m_nodeOffset;
-    ProbeRecord* m_storage;
-    unsigned int m_storageCount;
     unsigned char* m_allocation;
 };
 

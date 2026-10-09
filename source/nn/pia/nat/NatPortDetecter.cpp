@@ -4,6 +4,15 @@
 
 namespace nn { namespace pia { namespace nat {
 
+namespace
+{
+enum
+{
+    cProbeRepeatCount = 5,
+    cMappingTypeDifferent = 2
+};
+}
+
 NatPortDetecter::NatPortDetecter()
     : NatDetecter(), m_primaryStation(), m_secondaryStation(), m_relay(false), m_startTime()
 {
@@ -43,14 +52,11 @@ void NatPortDetecter::Cleanup()
 void NatPortDetecter::SendNatPortDetectionProbes()
 {
     common::InetAddress* secondary = GetPrimaryServerSecondaryPortAddress();
-    NatCheckProbe probe = {};
-    common::InetAddress* primary = GetPrimaryServerPrimaryPortAddress();
-    if (secondary == 0 || primary == 0)
-        return;
-
-    probe.destination = *primary;
-    probe.payload[0] = cPortDetectionProbeRequest;
-    AddNatCheckProbe(probe, 5);
+    if (secondary != 0 && m_traverser->m_natProperty.m_mappingType == cMappingTypeDifferent)
+        AddNatCheckProbe(NatCheckProbe(*secondary, cPortDetectionProbeRequest), cProbeRepeatCount);
+    else
+        AddNatCheckProbe(NatCheckProbe(*GetPrimaryServerPrimaryPortAddress(), cPortDetectionProbeRequest),
+                         cProbeRepeatCount);
 }
 
 void NatPortDetecter::StartSendingNatCheckProbe()

@@ -17,14 +17,14 @@ public:
 
     bool UpdateTargetAddress(const transport::StationLocation& location);
     void UpdateTargetPort(const transport::StationLocation& location);
-    unsigned long long UpdateRtt(const common::Time& sent, const common::Time& received);
+    void UpdateRtt(const common::Time& sent, const common::Time& received);
     bool UpdateIsNeeded(common::Time now) const;
     void SprayTargetPort();
-    short GetPortSprayCount();
+    unsigned short GetPortSprayCount();
     virtual void Trace(unsigned long long value) const;
 
     NatProbe()
-        : m_stationLocation(), m_startTime(), m_deadline(), m_ticksPerTimeout(0)
+        : m_stationLocation(), m_startTime(), m_deadline(), m_updateInterval(0)
     {
     }
 
@@ -38,9 +38,9 @@ public:
     unsigned char m_timeout;
     unsigned int m_probeCount;
     unsigned int m_probeLimit;
-    short m_firstPort;
-    short m_lastPort;
-    unsigned long long m_ticksPerTimeout;
+    unsigned short m_firstPort;
+    unsigned short m_lastPort;
+    long long m_updateInterval;
 };
 
 }}}

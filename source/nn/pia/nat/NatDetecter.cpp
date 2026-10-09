@@ -11,11 +11,9 @@ namespace
 {
 enum
 {
-    cResultInvalidArgument = 0x10c07,
     cResultInvalidState = 0x10c08,
     cReplyTypeFirst = 0x65,
     cProbeReceiveSize = 0x10,
-    cAncillarySize = 4,
     cRandomPortAttempts = 100,
     cBindRetryCount = 4,
     cTraceBindFailure = 0x800,
@@ -34,16 +32,9 @@ unsigned short NatDetecter::s_randomPortRange = 0;
 unsigned short NatDetecter::s_reservedPort = 0;
 
 NatDetecter::NatDetecter()
-    : common::Socket(), m_primaryAddress(), m_senderAddress(), m_probes(), m_detectionJob()
+    : m_socket(), m_primaryAddress(), m_senderAddress(), m_sendMessage(), m_receiveMessage(),
+      m_probes(), m_detectionJob()
 {
-    m_sendPayload[0] = 0;
-    m_sendPayload[1] = 0;
-    m_sendPayload[2] = 0;
-    m_sendPayload[3] = 0;
-    m_receivePayload[0] = 0;
-    m_receivePayload[1] = 0;
-    m_receivePayload[2] = 0;
-    m_receivePayload[3] = 0;
 }
 
 NatDetecter::~NatDetecter()
@@ -75,21 +66,20 @@ void NatDetecter::SetRandomPortRange(unsigned short first, unsigned short last)
 
 unsigned int NatDetecter::GetRandomPortNumber()
 {
-    int attempt = cRandomPortAttempts;
-    unsigned int port;
-    for (;;)
+    unsigned int port = 0;
+    for (int attempt = cRandomPortAttempts; attempt != 0; --attempt)
     {
-        const unsigned int end = s_randomPortRange;
-        const unsigned int start = s_randomPortStart;
+        const unsigned short end = s_randomPortRange;
+        const unsigned short start = s_randomPortStart;
+        const unsigned int range = end - start;
         const unsigned int random = s_natRandom.getU32();
-        port = (static_cast<unsigned int>(
-                    (static_cast<unsigned long long>(random) * (end - start)) >> 32) +
-                start) & 0xffff;
-        if (port != s_reservedPort && port != 0)
+        const unsigned int candidate = static_cast<unsigned short>(
+            ((static_cast<unsigned long long>(random) * range) >> 32) + start);
+        if (candidate != s_reservedPort && candidate != 0)
+        {
+            port = candidate;
             break;
-        --attempt;
-        if (attempt == 0)
-            return 0;
+        }
     }
     return port;
 }
@@ -98,7 +88,7 @@ Result NatDetecter::Startup(NatTraverser* traverser, common::CallContext* contex
                             const common::InetAddress& address)
 {
     if (traverser == 0)
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
 
     m_retryCount = 0;
     m_primaryAddress = address;
@@ -106,24 +96,24 @@ Result NatDetecter::Startup(NatTraverser* traverser, common::CallContext* contex
         return cResultInvalidState;
 
     m_traverser = traverser;
-    m_probes.ReleaseAll();
+    m_probes.Clear();
     return 0;
 }
 
 Result NatDetecter::CloseSocket()
 {
-    if (m_openCount < 1)
+    if (m_socket.m_openCount < 1)
         return cResultInvalidState;
 
-    const Result result = common::Socket::Close();
-    if (result == 0)
-        return 0;
-    return result;
+    const int result = m_socket.Close();
+    if (result != 0)
+        return result;
+    return 0;
 }
 
 void NatDetecter::Cleanup()
 {
-    m_probes.ReleaseAll();
+    m_probes.Clear();
     CloseSocket();
     m_traverser = 0;
 }
@@ -131,7 +121,7 @@ void NatDetecter::Cleanup()
 void NatDetecter::Retry()
 {
     ++m_retryCount;
-    m_probes.ReleaseAll();
+    m_probes.Clear();
 }
 
 void NatDetecter::TraceNatCheckReplyArray(unsigned long long)
@@ -143,69 +133,68 @@ unsigned int NatDetecter::BindRandomPort()
     for (int attempt = 0; attempt <= cBindRetryCount; ++attempt)
     {
         m_primaryAddress.m_port = static_cast<unsigned short>(GetRandomPortNumber());
-        if (common::Socket::Bind(m_primaryAddress, false) == 0)
+        const int result = m_socket.Bind(m_primaryAddress, false);
+        if (result != 0)
+        {
+            m_primaryAddress.Trace(cTraceBindFailure);
+        }
+        else
+        {
             return 1;
-        m_primaryAddress.Trace(cTraceBindFailure);
+        }
     }
     return 0;
 }
 
 Result NatDetecter::OpenSocket()
 {
-    const Result openResult = common::Socket::Open();
-    if (openResult != 0)
-        return openResult;
-    if ((m_primaryAddress.m_port == 0 || common::Socket::Bind(m_primaryAddress, false) != 0) &&
+    Result result;
+    result = m_socket.Open();
+    if (result != 0)
+        return result;
+    if ((m_primaryAddress.m_port == 0 || m_socket.Bind(m_primaryAddress, false) != 0) &&
         BindRandomPort() == 0)
     {
         m_primaryAddress.Trace(cTraceBindFailure);
-        common::Socket::Close();
-        return cResultInvalidState;
+        m_socket.Close();
+        return ResultInvalidState();
     }
     return 0;
 }
 
 Result NatDetecter::RetryBind()
 {
-    Result result = common::Socket::Close();
+    int result = m_socket.Close();
     if (result != 0)
         return result;
-    result = common::Socket::Open();
+    result = m_socket.Open();
     if (result != 0)
         return result;
     if (BindRandomPort() == 0)
-        return cResultInvalidState;
+        return ResultInvalidState();
     return 0;
 }
 
 unsigned int NatDetecter::SendNextQueuedProbe()
 {
-    if (m_probes.m_activeList.GetNodeNum() == 0)
-        return 0;
-
-    ProbeNode* probe = reinterpret_cast<ProbeNode*>(
-        reinterpret_cast<char*>(m_probes.m_activeList.Sentinel()->next) - m_probes.m_nodeOffset);
+    NatCheckProbe* probe = m_probes.Front();
+    Result result;
     int sentSize = 0;
-    m_sendPayload[0] = probe->payload[0];
-    m_sendPayload[1] = probe->payload[1];
-    m_sendPayload[2] = probe->payload[2];
-    m_sendPayload[3] = probe->payload[3];
-    const Result result =
-        common::Socket::SendTo(m_sendPayload, cProbeReceiveSize, probe->destination, &sentSize);
+    m_sendMessage.type = probe->message.type;
+    m_sendMessage.portWord = probe->message.portWord;
+    m_sendMessage.address = probe->message.address;
+    m_sendMessage.payload = probe->message.payload;
+    result = m_socket.SendTo(&m_sendMessage, cProbeReceiveSize, probe->destination, &sentSize);
     if (result != 0)
         return 0;
 
-    probe->destination.~InetAddress();
-    m_probes.m_activeList.EraseNode(&probe->node);
-    m_probes.m_freeList.InsertAfterNode(m_probes.m_freeList.Sentinel(),
-                                        reinterpret_cast<common::ListNode*>(
-                                            reinterpret_cast<char*>(probe) + m_probes.m_nodeOffset));
+    m_probes.Destroy(probe);
     return 1;
 }
 
 unsigned int NatDetecter::SendAllQueuedProbe()
 {
-    while (m_probes.m_activeList.GetNodeNum() != 0)
+    while (m_probes.GetNodeNum() != 0)
     {
         if (SendNextQueuedProbe() == 0)
             return 0;
@@ -215,26 +204,21 @@ unsigned int NatDetecter::SendAllQueuedProbe()
 
 unsigned int NatDetecter::ReceiveNatCheckReply()
 {
+    unsigned char ancillary = 0;
     int receivedSize = 0;
-    unsigned char ancillary[cAncillarySize] = {0};
-    const Result result = common::Socket::RecvFrom(
-        reinterpret_cast<unsigned char*>(m_receivePayload), cProbeReceiveSize, &m_senderAddress,
-        ancillary, &receivedSize);
-    if (result == 0 && receivedSize == cProbeReceiveSize)
+    const int result = m_socket.RecvFrom(
+        reinterpret_cast<unsigned char*>(&m_receiveMessage), cProbeReceiveSize, &m_senderAddress,
+        &ancillary, &receivedSize);
+    if (result != 0 || receivedSize != cProbeReceiveSize)
+        return 0;
+
+    const unsigned int index = m_receiveMessage.type - cReplyTypeFirst;
+    if (index < cReplyTypeCount)
     {
-        const unsigned int index = m_receivePayload[0] - cReplyTypeFirst;
-        if (index < cReplyTypeCount)
-        {
-            NatCheckReply& reply = m_replies[index];
-            reply.body.type = m_receivePayload[0];
-            reply.body.portWord = m_receivePayload[1];
-            reply.body.address = m_receivePayload[2];
-            reply.body.payload = m_receivePayload[3];
-            ++reply.count;
-        }
-        return 1;
+        m_replies[index].body = m_receiveMessage;
+        ++m_replies[index].count;
     }
-    return 0;
+    return 1;
 }
 
 void NatDetecter::PredictPort(common::InetAddress* address)
@@ -244,9 +228,8 @@ void NatDetecter::PredictPort(common::InetAddress* address)
     unsigned short delta = static_cast<unsigned short>(m_traverser->m_natProperty.m_portDelta);
     if (delta > cPortDeltaMax)
         delta = cPortDeltaMax;
-    predicted.m_port = static_cast<unsigned short>(predicted.m_port + delta);
-    if (s_randomPortRange < predicted.m_port)
-        predicted.m_port = s_randomPortStart;
+    const unsigned short port = static_cast<unsigned short>(predicted.m_port + delta);
+    predicted.m_port = port > s_randomPortRange ? s_randomPortStart : port;
     if (address != 0)
         *address = predicted;
 }
@@ -257,50 +240,40 @@ void NatDetecter::InitializeNatCheckReply()
     {
         m_replies[index].count = 0;
         m_replies[index].body.type = 0;
-        m_replies[index].body.payload = 0;
         m_replies[index].body.portWord = 0;
         m_replies[index].body.address = 0;
+        m_replies[index].body.payload = 0;
     }
 }
 
 void NatDetecter::AddNatCheckProbe(const NatCheckProbe& probe, unsigned short count)
 {
-    for (; count != 0; --count)
+    for (int i = 0; i != count; ++i)
     {
-        if (m_probes.m_freeList.GetNodeNum() != 0)
-        {
-            common::ListNode* freeNode = m_probes.m_freeList.PopBackNode();
-            ProbeNode* storage = 0;
-            if (freeNode != 0)
-                storage = reinterpret_cast<ProbeNode*>(
-                    reinterpret_cast<char*>(freeNode) - m_probes.m_nodeOffset);
-            ProbeNode* entry = new (storage) ProbeNode();
-            m_probes.m_activeList.InsertBeforeNode(m_probes.m_activeList.Sentinel(),
-                                                   reinterpret_cast<common::ListNode*>(entry));
-            if (entry != 0)
-            {
-                entry->destination = probe.destination;
-                entry->payload[0] = probe.payload[0];
-                entry->payload[1] = probe.payload[1];
-                entry->payload[2] = probe.payload[2];
-                entry->payload[3] = probe.payload[3];
-            }
-        }
+        NatCheckProbe* entry = m_probes.Alloc();
+        if (entry != 0)
+            *entry = probe;
     }
 }
 
 common::InetAddress* NatDetecter::GetPrimaryServerPrimaryPortAddress()
 {
-    if (m_traverser->m_servers.size != 0)
-        return &m_traverser->m_servers.data[0];
-    return 0;
+    common::SimpleContainer<common::InetAddress, 4>::iterator it = m_traverser->m_servers.begin();
+    if (it == m_traverser->m_servers.end())
+        return 0;
+    return it;
 }
 
 common::InetAddress* NatDetecter::GetPrimaryServerSecondaryPortAddress()
 {
-    if (m_traverser->m_servers.size > 1)
-        return &m_traverser->m_servers.data[1];
-    return 0;
+    common::SimpleContainer<common::InetAddress, 4>::iterator it = m_traverser->m_servers.begin();
+    common::SimpleContainer<common::InetAddress, 4>::iterator end = m_traverser->m_servers.end();
+    if (it == end)
+        return 0;
+    ++it;
+    if (it == end)
+        return 0;
+    return it;
 }
 
 unsigned short NatDetecter::GetPerceivedPort()
@@ -317,13 +290,7 @@ void NatDetecter::SendDummyProbe()
 {
     common::InetAddress* primary = GetPrimaryServerPrimaryPortAddress();
     common::InetAddress destination(primary->m_address, cDummyProbePort);
-    NatCheckProbe probe;
-    probe.destination = destination;
-    probe.payload[0] = 0;
-    probe.payload[1] = 0;
-    probe.payload[2] = 0;
-    probe.payload[3] = 0;
-    AddNatCheckProbe(probe, cDummyProbeCount);
+    AddNatCheckProbe(NatCheckProbe(destination, 0), cDummyProbeCount);
 }
 
 unsigned int NatDetecter::CheckRetry()

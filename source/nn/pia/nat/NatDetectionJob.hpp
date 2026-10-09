@@ -3,6 +3,7 @@
 
 #include "nn/pia/Common.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
+#include "nn/pia/common/Time.hpp"
 
 namespace nn { namespace pia { namespace common { class CallContext; } namespace nat {
 
@@ -31,15 +32,12 @@ private:
     common::CallContext* m_context;
     NatDetecter* m_detecter;
     NatTraverser* m_traverser;
-    unsigned int m_field4c;
-    unsigned long long m_endTime;
-    unsigned long long m_waitTime;
+    common::Time m_endTime;
+    common::Time m_waitTime;
     bool m_sendStarted;
     bool m_receivedFirstReply;
-    unsigned char m_padding62[6];
-    unsigned long long m_firstSendTime;
-    bool m_success;
-    unsigned char m_padding71[7];
+    common::Time m_firstSendTime;
+    bool m_closeSocketFailed;
 };
 
 }}}

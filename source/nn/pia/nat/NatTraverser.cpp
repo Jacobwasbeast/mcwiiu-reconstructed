@@ -5,6 +5,8 @@
 #include "nn/pia/HeapManager.hpp"
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/common/CallContext.hpp"
+#include "nn/pia/common/Memory.hpp"
+#include "nn/pia/common/SessionBeginMonitoringContent.hpp"
 #include "nn/pia/common/TimeSpan.hpp"
 #include "nn/pia/inet/IFacade.hpp"
 #include "nn/pia/nat/Api.hpp"
@@ -19,24 +21,11 @@
 
 namespace nn { namespace pia { namespace nat {
 
-NatMonitoringData g_natMonitoringData;
 unsigned int g_natLocalConnectionId;
 int g_natClearProbeDelayMsec = 90000;
 int g_natProbeDurationMsec = 90000;
 unsigned char g_natProbeSprayCount = 50;
 int g_natDispatchIntervalMsec = 300;
-
-namespace {
-
-inline void setDeadline(common::Time& deadline, int msec)
-{
-    const long long span = common::TimeSpan::GetTicksPerMSec().m_tick * msec;
-    common::Time now;
-    now.SetNow();
-    deadline.m_tick = now.m_tick + span;
-}
-
-}
 
 static void NatPropertyDetectionCompletionCallback(common::Result result, void* param);
 static void NatPortDetectionCompletionCallback(common::Result result, void* param);
@@ -63,14 +52,12 @@ NatTraverser::~NatTraverser()
 {
     if (m_natPortDetecter != 0)
     {
-        m_natPortDetecter->~NatPortDetecter();
-        pead::freeToSeadHeap(m_natPortDetecter);
+        common::DeleteObj(m_natPortDetecter);
         m_natPortDetecter = 0;
     }
     if (m_natPropertyDetecter != 0)
     {
-        m_natPropertyDetecter->~NatPropertyDetecter();
-        pead::freeToSeadHeap(m_natPropertyDetecter);
+        common::DeleteObj(m_natPropertyDetecter);
         m_natPropertyDetecter = 0;
     }
     m_protocol = 0;
@@ -135,7 +122,12 @@ void NatTraverser::CompleteNatDetectionCommon()
 {
     if (m_callContext == 0)
         return;
-    if (!m_callContext->m_cancelRequested)
+    if (m_callContext->m_cancelRequested)
+    {
+        m_callContext->SignalCancel();
+        m_callContext = 0;
+    }
+    else
     {
         if (m_natProperty.m_privatePort != 0 && m_natProperty.m_mappingType != 2)
             m_publicPort = m_natProperty.m_privatePort;
@@ -154,11 +146,6 @@ void NatTraverser::CompleteNatDetectionCommon()
             m_callContext = 0;
         }
     }
-    else
-    {
-        m_callContext->SignalCancel();
-        m_callContext = 0;
-    }
 }
 
 void NatTraverser::CompletedNatPropertyDetection(bool success)
@@ -172,17 +159,12 @@ void NatTraverser::CompletedNatPropertyDetection(bool success)
             m_propertyContext.Reset();
             return;
         }
-        common::Result result = m_propertyContext.m_result;
-        if (result != 0)
+        if (m_propertyContext.m_result != 0)
         {
-            if (result == cResultCancelled)
-            {
+            if (m_propertyContext.m_result == cResultCancelled)
                 m_callContext->SignalCancel();
-                m_callContext = 0;
-                m_propertyContext.Reset();
-                return;
-            }
-            m_callContext->SignalFailure(result);
+            else
+                m_callContext->SignalFailure(m_propertyContext.m_result);
             m_callContext = 0;
             m_propertyContext.Reset();
             return;
@@ -195,10 +177,11 @@ common::Result NatTraverser::StartNatPropertyDetection()
 {
     if (m_facade->IsBeginMonitoringDataAvailable())
     {
-        if (g_natMonitoringData.propertyDetectionCount == cCounterMax)
-            g_natMonitoringData.propertyDetectionCount = 1;
+        unsigned short& propertyDetectionCount = common::g_sessionBeginMonitoringContent.m_metric137;
+        if (propertyDetectionCount == cCounterMax)
+            propertyDetectionCount = 1;
         else
-            ++g_natMonitoringData.propertyDetectionCount;
+            ++propertyDetectionCount;
     }
 
     common::InetAddress address;
@@ -227,17 +210,12 @@ void NatTraverser::CompletedNatPortDetection(bool success)
             m_portContext.Reset();
             return;
         }
-        common::Result result = m_portContext.m_result;
-        if (result != 0)
+        if (m_portContext.m_result != 0)
         {
-            if (result == cResultCancelled)
-            {
+            if (m_portContext.m_result == cResultCancelled)
                 m_callContext->SignalCancel();
-                m_callContext = 0;
-                m_portContext.Reset();
-                return;
-            }
-            m_callContext->SignalFailure(result);
+            else
+                m_callContext->SignalFailure(m_portContext.m_result);
             m_callContext = 0;
             m_portContext.Reset();
             return;
@@ -250,10 +228,11 @@ common::Result NatTraverser::StartNatPortDetection()
 {
     if (m_facade->IsBeginMonitoringDataAvailable())
     {
-        if (g_natMonitoringData.portDetectionCount == cCounterMax)
-            g_natMonitoringData.portDetectionCount = 1;
+        unsigned short& portDetectionCount = common::g_sessionBeginMonitoringContent.m_metric138;
+        if (portDetectionCount == cCounterMax)
+            portDetectionCount = 1;
         else
-            ++g_natMonitoringData.portDetectionCount;
+            ++portDetectionCount;
     }
 
     NatDetecter::SetRandomPortRange(m_facade->GetRandomPortRangeMin(),
@@ -285,26 +264,41 @@ common::Result NatTraverser::StartNatPortDetection()
 unsigned int NatTraverser::GetNatMonitoringDataIndex(const transport::StationLocation& location)
 {
     unsigned int connectionId = location.m_field1c;
+    unsigned int result = cInvalidIndex;
     if (m_facade->IsBeginMonitoringDataAvailable())
     {
         for (unsigned int index = 0; index < cNatMonitoringEntryNum; ++index)
-            if (g_natMonitoringData.connectionIds[index] == connectionId)
-                return index;
-        for (unsigned int index = 0; index < cNatMonitoringEntryNum; ++index)
-            if (g_natMonitoringData.connectionIds[index] == cInvalidId)
-                return index;
+        {
+            if (connectionId == common::g_sessionBeginMonitoringContent.m_metric139[index])
+            {
+                result = index;
+                break;
+            }
+        }
+        if (result == cInvalidIndex)
+        {
+            for (unsigned int index = 0; index < cNatMonitoringEntryNum; ++index)
+            {
+                if (common::g_sessionBeginMonitoringContent.m_metric139[index] == cInvalidId)
+                {
+                    result = index;
+                    break;
+                }
+            }
+        }
     }
-    return cInvalidIndex;
+    return result;
 }
 
 void NatTraverser::IncrementNatTraversalSuccessCount(unsigned int)
 {
     if (m_facade->IsBeginMonitoringDataAvailable())
     {
-        if (g_natMonitoringData.successCount == cCounterMax)
-            g_natMonitoringData.successCount = 1;
+        unsigned short& successCount = common::g_sessionBeginMonitoringContent.m_metric151;
+        if (successCount == cCounterMax)
+            successCount = 1;
         else
-            ++g_natMonitoringData.successCount;
+            ++successCount;
     }
 }
 
@@ -312,10 +306,11 @@ void NatTraverser::IncrementNatTraversalFailureCount(unsigned int)
 {
     if (m_facade->IsBeginMonitoringDataAvailable())
     {
-        if (g_natMonitoringData.failureCount == cCounterMax)
-            g_natMonitoringData.failureCount = 1;
+        unsigned short& failureCount = common::g_sessionBeginMonitoringContent.m_metric152;
+        if (failureCount == cCounterMax)
+            failureCount = 1;
         else
-            ++g_natMonitoringData.failureCount;
+            ++failureCount;
     }
 }
 
@@ -353,20 +348,20 @@ void NatTraverser::ReportNatTraversalResult(const transport::StationLocation& lo
                 common::TimeSpan::GetTicksPerMSec().m_tick);
         }
     }
-    if (result != 0)
+    if (result == 0)
     {
-        IncrementNatTraversalFailureCount(location.m_field1c);
+        IncrementNatTraversalSuccessCount(location.m_field1c);
         index = GetNatMonitoringDataIndex(location);
     }
     else
     {
-        IncrementNatTraversalSuccessCount(location.m_field1c);
+        IncrementNatTraversalFailureCount(location.m_field1c);
         index = GetNatMonitoringDataIndex(location);
     }
 
     if (index < cNatMonitoringEntryNum)
     {
-        char probeFlag = 0;
+        unsigned char probeFlag = 0;
         unsigned int elapsedTime = cInvalidId;
         unsigned char sprayCount = 0;
         unsigned char probeTimeout = 0;
@@ -374,19 +369,14 @@ void NatTraverser::ReportNatTraversalResult(const transport::StationLocation& lo
         NatProbe* probe = m_protocol->GetNatProbe(location);
         if (probe != 0)
         {
-            probeFlag = static_cast<char>(probe->m_probeCount);
+            probeFlag = static_cast<unsigned char>(probe->m_probeCount);
             sprayCount = static_cast<unsigned char>(probe->GetPortSprayCount());
             probeTimeout = probe->m_timeout;
         }
         traversalTime = m_protocol->m_traversalTimes.Find(location);
         if (traversalTime != 0)
         {
-            if (probeFlag == 0)
-            {
-                attemptCount = traversalTime->m_count;
-                elapsedTime = 0;
-            }
-            else
+            if (probeFlag != 0)
             {
                 common::Time now;
                 now.SetNow();
@@ -395,17 +385,21 @@ void NatTraverser::ReportNatTraversalResult(const transport::StationLocation& lo
                     common::TimeSpan::GetTicksPerMSec().m_tick);
                 attemptCount = traversalTime->m_count;
             }
+            else
+            {
+                attemptCount = traversalTime->m_count;
+                elapsedTime = 0;
+            }
         }
-        g_natMonitoringData.connectionIds[index] = location.m_field1c;
-        unsigned int principalIdHash = common::hashWithMd5(location.m_principalId);
-        g_natMonitoringData.elapsedTimes[index] = elapsedTime;
-        g_natMonitoringData.attemptCounts[index] = attemptCount;
-        g_natMonitoringData.principalIdHashes[index] = principalIdHash;
-        g_natMonitoringData.results[index] = result;
-        g_natMonitoringData.probeFlags[index] = probeFlag;
-        g_natMonitoringData.sprayCounts[index] = sprayCount;
-        g_natMonitoringData.probeTimeouts[index] = probeTimeout;
-        g_natMonitoringData.remoteMappingFlags[index] =
+        common::g_sessionBeginMonitoringContent.m_metric139[index] = location.m_field1c;
+        common::g_sessionBeginMonitoringContent.m_metric140[index] = common::hashWithMd5(location.m_principalId);
+        common::g_sessionBeginMonitoringContent.m_metric141[index] = elapsedTime;
+        common::g_sessionBeginMonitoringContent.m_metric142[index] = attemptCount;
+        common::g_sessionBeginMonitoringContent.m_metric143[index] = result;
+        common::g_sessionBeginMonitoringContent.m_metric144[index] = probeFlag;
+        common::g_sessionBeginMonitoringContent.m_metric145[index] = sprayCount;
+        common::g_sessionBeginMonitoringContent.m_metric146[index] = probeTimeout;
+        common::g_sessionBeginMonitoringContent.m_metric155[index] =
             location.m_inetAddress.m_address != 0 ? 1 : 0;
     }
     m_protocol->m_traversalTimes.Remove(location);
@@ -418,30 +412,43 @@ bool NatTraverser::PrepareNatTraversal(const transport::StationLocation& locatio
                                        common::CallContext* context, bool relay, bool passive,
                                        bool force)
 {
-    if (!relay)
-        return m_protocol->PrepareNatTraversal(location, connection, context, passive, force);
-
-    context->InitiateCall();
-    m_protocol->m_probeList.Trace(cTraceVerbose);
-    NatProbe* probe = m_protocol->m_probeList.FindByAddressPortAndConnectionId(location);
-    if (probe == 0 || probe->m_rtt == -1)
+    bool result = true;
+    if (relay)
     {
-        probe = m_protocol->m_probeList.FindByAddressAndConnectionId(location);
-        if (probe == 0)
-            return true;
-        if (!probe->m_sent)
-            return true;
+        context->InitiateCall();
+        m_protocol->GetNatProbeList()->Trace(cTraceVerbose);
+        NatProbe* probe = m_protocol->GetNatProbeList()->FindByAddressPortAndConnectionId(location);
+        bool reset = false;
+        if (probe != 0 && probe->m_rtt != -1)
+        {
+            reset = true;
+        }
+        else
+        {
+            probe = m_protocol->GetNatProbeList()->FindByAddressAndConnectionId(location);
+            if (probe != 0 && probe->m_sent)
+                reset = true;
+        }
+        if (reset)
+        {
+            result = false;
+            if (probe->m_sent)
+            {
+                const common::TimeSpan duration = common::TimeSpan::FromMSec(g_natProbeDurationMsec);
+                common::Time now;
+                now.SetNow();
+                probe->m_deadline = now + duration;
+                probe->m_probeCount = 0;
+                probe->m_sent = 0;
+                location.Trace(cTraceVerbose);
+            }
+        }
     }
-
-    bool prepared = false;
-    if (probe->m_sent)
+    else
     {
-        probe->m_probeCount = 0;
-        probe->m_sent = 0;
-        setDeadline(probe->m_deadline, g_natProbeDurationMsec);
-        location.Trace(cTraceVerbose);
+        result = m_protocol->PrepareNatTraversal(location, connection, context, passive, force);
     }
-    return prepared;
+    return result;
 }
 
 void NatTraverser::ClearNatTraversal(const transport::StationLocation& location, bool relay)
@@ -472,24 +479,8 @@ common::Result NatTraverser::CreateProtocols()
     transport::Transport* transport = transport::g_piaTransport;
     if (transport == 0)
         return cResultInvalidState;
-    if (!transport->m_protocolManager.m_started)
-    {
-        transport::UnreliableProtocol* storage =
-            transport->m_protocolManager.AllocProtocol(sizeof(NatTraversalProtocol));
-        NatTraversalProtocol* protocol = 0;
-        if (storage != 0)
-            protocol = new (static_cast<void*>(storage)) NatTraversalProtocol();
-        m_protocolId = transport->m_protocolManager.CreateProtocolImpl(
-            protocol, transport::ProtocolId(NatTraversalProtocol::cProtocolType, 0));
-        m_protocol = static_cast<NatTraversalProtocol*>(transport->m_protocolManager.SearchProtocol(
-            transport::ProtocolId(m_protocolId), NatTraversalProtocol::cProtocolType));
-    }
-    else
-    {
-        m_protocolId = 0;
-        m_protocol = static_cast<NatTraversalProtocol*>(transport->m_protocolManager.SearchProtocol(
-            transport::ProtocolId(m_protocolId), NatTraversalProtocol::cProtocolType));
-    }
+    m_protocolId = transport->m_protocolManager.CreateProtocol<NatTraversalProtocol>(0);
+    m_protocol = transport->m_protocolManager.GetProtocol<NatTraversalProtocol>(m_protocolId);
     return 0;
 }
 
@@ -498,15 +489,15 @@ void NatTraverser::ClearNatMonitoringData(const transport::StationLocation& loca
     unsigned int index = GetNatMonitoringDataIndex(location);
     if (index < cNatMonitoringEntryNum && m_facade->IsBeginMonitoringDataAvailable())
     {
-        g_natMonitoringData.principalIdHashes[index] = cInvalidId;
-        g_natMonitoringData.elapsedTimes[index] = cInvalidId;
-        g_natMonitoringData.attemptCounts[index] = cInvalidId;
-        g_natMonitoringData.results[index] = cInvalidId;
-        g_natMonitoringData.connectionIds[index] = cInvalidId;
-        g_natMonitoringData.traversalStates[index] = cInvalidIndex;
-        g_natMonitoringData.sprayCounts[index] = cInvalidIndex;
-        g_natMonitoringData.probeFlags[index] = cInvalidIndex;
-        g_natMonitoringData.probeTimeouts[index] = cInvalidIndex;
+        common::g_sessionBeginMonitoringContent.m_metric139[index] = cInvalidId;
+        common::g_sessionBeginMonitoringContent.m_metric140[index] = cInvalidId;
+        common::g_sessionBeginMonitoringContent.m_metric141[index] = cInvalidId;
+        common::g_sessionBeginMonitoringContent.m_metric142[index] = cInvalidId;
+        common::g_sessionBeginMonitoringContent.m_metric143[index] = cInvalidId;
+        common::g_sessionBeginMonitoringContent.m_metric144[index] = cInvalidIndex;
+        common::g_sessionBeginMonitoringContent.m_metric145[index] = cInvalidIndex;
+        common::g_sessionBeginMonitoringContent.m_metric146[index] = cInvalidIndex;
+        common::g_sessionBeginMonitoringContent.m_metric147[index] = cInvalidIndex;
     }
 }
 
@@ -589,12 +580,12 @@ unsigned int NatTraverser::GetLocalServiceConnectionId() const
     return m_facade->GetLocalServiceConnectionId();
 }
 
-unsigned short NatTraverser::GetRandomPortRangeMin() const
+unsigned int NatTraverser::GetRandomPortRangeMin() const
 {
     return m_facade->GetRandomPortRangeMin();
 }
 
-unsigned short NatTraverser::GetRandomPortRangeMax() const
+unsigned int NatTraverser::GetRandomPortRangeMax() const
 {
     return m_facade->GetRandomPortRangeMax();
 }

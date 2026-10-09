@@ -50,8 +50,8 @@ public:
     void SetLocalPublicLocation(const transport::StationLocation& location);
     NatPortDetecter* GetNatPortDetecter();
     unsigned int GetLocalServiceConnectionId() const;
-    unsigned short GetRandomPortRangeMin() const;
-    unsigned short GetRandomPortRangeMax() const;
+    unsigned int GetRandomPortRangeMin() const;
+    unsigned int GetRandomPortRangeMax() const;
     bool IsNatDetectionCompleted() const;
     void ResetProbeStatus(const transport::StationLocation& location, bool relay);
     void UpdateRelayTable();
