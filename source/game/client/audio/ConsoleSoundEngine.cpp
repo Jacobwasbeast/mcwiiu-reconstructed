@@ -3,20 +3,20 @@
 #include <algorithm>
 
 ConsoleSoundEngine::ConsoleSoundEngine()
-    : isPlayingStreamingCDMusic(false)
-    , isPlayingStreamingGameMusic(false)
-    , isPlayingEndMusic(false)
-    , isPlayingNetherMusic(false)
-    , systemMusicPlaying(0)
-    , masterMusicVolume(1.0f)
-    , masterSoundEffectVolume(1.0f)
-    , musicVolumeLimited(false)
-    , musicVolumeFading(false)
-    , musicVolumeFadingUp(false)
-    , unlimitedMusicVolume(100)
-    , targetMusicVolume(100)
-    , musicVolumeFadeStep(0)
 {
+    this->isPlayingEndMusic = false;
+    this->musicVolumeFading = false;
+    this->isPlayingNetherMusic = false;
+    this->isPlayingStreamingCDMusic = false;
+    this->isPlayingStreamingGameMusic = false;
+    this->musicVolumeLimited = false;
+    this->systemMusicPlaying = 0;
+    this->unlimitedMusicVolume = 100;
+    this->musicVolumeFadingUp = false;
+    this->masterSoundEffectVolume = 1.0f;
+    this->targetMusicVolume = 100;
+    this->musicVolumeFadeStep = 0;
+    this->masterMusicVolume = 1.0f;
     InitializeCriticalSection(&this->criticalSection);
 }
 
@@ -56,13 +56,12 @@ void ConsoleSoundEngine::setMasterSoundEffectVolume(float volume)
 
 void ConsoleSoundEngine::LimitMusicVolume()
 {
-    unsigned int volume = (unsigned int)(this->getMasterMusicVolume() * 100.0f);
-    this->unlimitedMusicVolume = volume;
-    if (volume > 20)
+    this->unlimitedMusicVolume = (unsigned int)(this->getMasterMusicVolume() * 100.0f);
+    if (this->unlimitedMusicVolume > 20)
     {
         this->targetMusicVolume = 20;
 
-        unsigned int step = (volume - 20) / 20;
+        unsigned int step = (this->unlimitedMusicVolume - 20) / 20;
         if (step == 0)
         {
             step = 1;
@@ -147,8 +146,9 @@ void ConsoleSoundEngine::playInstance(SoundInstance* sound)
     this->play(sound->getSound(), sound->getX(), sound->getY(), sound->getZ(), sound->getVolume(), sound->getPitch(),
                sound);
 
-    this->playingSoundsStopTime[sound] = this->playTime + 20;
-    this->playingSounds[sound] = sound;
+    SoundInstance* key = sound;
+    this->playingSoundsStopTime[key] = this->playTime + 20;
+    this->playingSounds[key] = sound;
 
     TickableSoundInstance* tickable = dynamic_cast<TickableSoundInstance*>(sound);
     if (tickable != NULL)
@@ -195,75 +195,70 @@ void ConsoleSoundEngine::tick()
     boost::unordered_map<SoundInstance*, SoundInstance*>::iterator playingIt = this->playingSounds.begin();
     while (playingIt != this->playingSounds.end())
     {
+        SoundInstance* key = playingIt->first;
         SoundInstance* sound = playingIt->second;
 
         if (sound->isPending())
         {
             if (sound->pendingTicks == 60)
             {
-                TickableSoundInstance* pendingTickable = dynamic_cast<TickableSoundInstance*>(sound);
+                SoundInstance* expired = sound;
+                TickableSoundInstance* pendingTickable = dynamic_cast<TickableSoundInstance*>(expired);
                 playingIt = this->playingSounds.erase(playingIt);
                 if (pendingTickable != NULL)
                 {
                     this->tickableSounds.erase(
                         std::find(this->tickableSounds.begin(), this->tickableSounds.end(), pendingTickable));
                 }
-                delete sound;
+                delete expired;
             }
             else
             {
                 sound->pendingTicks++;
                 ++playingIt;
             }
-            continue;
         }
-
-        if (!sound->isComplete())
+        else if (sound->isComplete() && this->playingSoundsStopTime[key] <= this->playTime)
         {
-            ++playingIt;
-            continue;
-        }
+            TickableSoundInstance* tickable = dynamic_cast<TickableSoundInstance*>(sound);
+            bool looping = sound->isLooping();
+            int delay = sound->getDelay();
+            SoundInstance* finished = sound;
 
-        if (this->playTime < this->playingSoundsStopTime[playingIt->first])
-        {
-            ++playingIt;
-            continue;
-        }
+            if (looping && tickable != NULL && delay > 0 && !tickable->isStopped())
+            {
+                this->delayedSounds[sound] = this->playTime + delay;
+                finished = NULL;
+                playingIt = this->playingSounds.erase(playingIt);
+            }
+            else if (looping && tickable != NULL && !tickable->isStopped())
+            {
+                sound->pendingTicks = 0;
+                this->play(sound->getSound(), sound->getX(), sound->getY(), sound->getZ(), sound->getVolume(),
+                           sound->getPitch(), sound);
+                this->playingSoundsStopTime[sound] = this->playTime + 20;
+                ++playingIt;
+                continue;
+            }
+            else
+            {
+                playingIt = this->playingSounds.erase(playingIt);
+            }
 
-        TickableSoundInstance* tickable = dynamic_cast<TickableSoundInstance*>(sound);
-        bool looping = sound->isLooping();
-        int delay = sound->getDelay();
-        SoundInstance* finished = sound;
+            if (tickable != NULL)
+            {
+                this->tickableSounds.erase(
+                    std::find(this->tickableSounds.begin(), this->tickableSounds.end(), tickable));
+            }
 
-        if (looping && tickable != NULL && delay > 0 && !tickable->isStopped())
-        {
-            this->delayedSounds[sound] = this->playTime + delay;
-            finished = NULL;
-            playingIt = this->playingSounds.erase(playingIt);
-        }
-        else if (looping && tickable != NULL && !tickable->isStopped())
-        {
-            sound->pendingTicks = 0;
-            this->play(sound->getSound(), sound->getX(), sound->getY(), sound->getZ(), sound->getVolume(),
-                       sound->getPitch(), sound);
-            this->playingSoundsStopTime[sound] = this->playTime + 20;
-            ++playingIt;
-            continue;
+            if (finished != NULL)
+            {
+                delete finished;
+            }
         }
         else
         {
-            playingIt = this->playingSounds.erase(playingIt);
-        }
-
-        if (tickable != NULL)
-        {
-            this->tickableSounds.erase(
-                std::find(this->tickableSounds.begin(), this->tickableSounds.end(), tickable));
-        }
-
-        if (finished != NULL)
-        {
-            delete finished;
+            ++playingIt;
         }
     }
 

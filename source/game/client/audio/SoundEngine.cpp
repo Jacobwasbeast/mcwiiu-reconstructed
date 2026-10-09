@@ -14,6 +14,7 @@
 #include "game/core/DLCPack.hpp"
 #include "game/core/Gui.hpp"
 #include "game/core/Minecraft.hpp"
+#include "game/core/Mth.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 #include "game/util/Random.hpp"
@@ -36,6 +37,7 @@ const int STREAM_TYPE_CD = 2;
 const int FADE_OUT_TICKS = 200;
 const int MINIGAME_MUSIC_DELAY = 60;
 const unsigned int SHORT_MUSIC_DELAY_TEXTURE_PACK_ID = 1036;
+const float PI = 3.1415927f;
 
 }
 
@@ -146,19 +148,19 @@ const char* SoundEngine::m_szStreamFileA[SoundEngine::STREAM_COUNT] = {
 SoundEngine::SoundEngine()
 {
     m_random = new Random();
-    m_musicDelay = 0;
-    m_tracks = NULL;
-    m_waitingForMusicStartEvent = false;
-    m_trackPlayed = NULL;
     m_streamState = eMusicStreamState_Idle;
+    m_musicDelay = 0;
+    m_waitingForMusicStartEvent = false;
     m_validListenerCount = 0;
+    m_trackPlayed = NULL;
+    m_tracks = NULL;
     SetStreamingSounds(0, 11, 12, 15, 16, 17, 18, 23, 24, 27, 28, 31, 32, 41, 42, 42, 62, 68, STREAM_FIRST_CD);
     SetMusicID(eMusicType_Menu);
-    m_streamingAudioInfo.instance = NULL;
-    m_streamingAudioInfo.is3D = false;
     m_streamingAudioInfo.volume = 1.0f;
     m_fadeOutTicks = 0;
+    m_streamingAudioInfo.is3D = false;
     m_streamingAudioInfo.pitch = 1.0f;
+    m_streamingAudioInfo.instance = NULL;
     m_streamingAudioInfo.y = 0.0f;
     m_streamingAudioInfo.x = 0.0f;
     m_streamingAudioInfo.z = 0.0f;
@@ -176,8 +178,7 @@ void SoundEngine::BuildTrackList(int first, int last, bool keepFirstTrack)
     for (int track = first; track <= last; ++track)
     {
         m_trackPlayed[track] = 0;
-        const int sortKey = m_random->nextInt(100000);
-        m_tracks[track].sortKey = sortKey;
+        m_tracks[track].sortKey = m_random->nextInt(100000);
         m_tracks[track].trackIndex = track;
     }
 
@@ -249,22 +250,25 @@ void SoundEngine::SetStreamingSounds(int overworldFirst, int overworldLast, int 
 
 int SoundEngine::GetNextTrack(int first, int last)
 {
-    const unsigned int rangeSize = (last - first) + 1;
     unsigned int playedCount = 0;
-    bool picked = false;
+    unsigned int rangeSize = (last - first) + 1;
     int chosen = m_tracks[first].trackIndex;
+    bool picked = false;
 
     for (int track = last; track >= first; --track)
     {
-        if (m_trackPlayed[track] != 0)
+        if (m_trackPlayed[track] == 0)
+        {
+            if (!picked)
+            {
+                picked = true;
+                chosen = m_tracks[track].trackIndex;
+                m_trackPlayed[track] = 1;
+            }
+        }
+        else
         {
             ++playedCount;
-        }
-        else if (!picked)
-        {
-            picked = true;
-            chosen = m_tracks[track].trackIndex;
-            m_trackPlayed[track] = 1;
         }
     }
 
@@ -282,49 +286,82 @@ int SoundEngine::GetNextTrack(int first, int last)
 void SoundEngine::SetMusicID(eMusicType type)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    const bool defaultPack = minecraft == NULL
-                             || minecraft->mTexturePackRepository->getSelected() == TexturePackRepository::defaultTexturePack;
-
-    switch (type)
+    bool defaultPack = true;
+    if (minecraft != NULL)
     {
-    case eMusicType_Nether:
-        m_musicID = GetNextTrack(m_netherFirst, m_netherLast);
-        return;
-    case eMusicType_Menu:
-        m_musicID = GetNextTrack(m_menuFirst, m_menuLast);
-        return;
-    case eMusicType_End:
-        if (defaultPack)
+        defaultPack = minecraft->mTexturePackRepository->getSelected() == TexturePackRepository::defaultTexturePack;
+    }
+
+    if (defaultPack)
+    {
+        switch (type)
+        {
+        case eMusicType_Nether:
+            m_musicID = GetNextTrack(m_netherFirst, m_netherLast);
+            return;
+        case eMusicType_Menu:
+            m_musicID = GetNextTrack(m_menuFirst, m_menuLast);
+            return;
+        case eMusicType_End:
         {
             Minecraft* instance = Minecraft::GetInstance();
             BossHealthOverlay* overlay = instance->mGui->getBossOverlay(instance->mPlayer->mUserIndex);
-            if (overlay->shouldPlayMusic())
-                m_musicID = m_endFirst;
-            else
+            if (!overlay->shouldPlayMusic())
                 m_musicID = m_endLast;
+            else
+                m_musicID = m_endFirst;
+            return;
         }
-        else
+        case eMusicType_Creative:
+            m_musicID = GetNextTrack(m_creativeFirst, m_creativeLast);
+            return;
+        case eMusicType_Battle:
+            m_musicID = GetNextTrack(m_battleFirst, m_battleLast);
+            return;
+        case eMusicType_Tumble:
+            m_musicID = GetNextTrack(m_tumbleFirst, m_tumbleLast);
+            return;
+        case eMusicType_Glide:
+            m_musicID = GetNextTrack(m_glideFirst, m_glideLast);
+            return;
+        case eMusicType_Build:
+            m_musicID = GetNextTrack(m_buildFirst, m_buildLast);
+            return;
+        default:
+            break;
+        }
+    }
+    else
+    {
+        switch (type)
         {
+        case eMusicType_Nether:
+            m_musicID = GetNextTrack(m_netherFirst, m_netherLast);
+            return;
+        case eMusicType_Menu:
+            m_musicID = GetNextTrack(m_menuFirst, m_menuLast);
+            return;
+        case eMusicType_End:
             m_musicID = GetNextTrack(m_endFirst, m_endLast);
+            return;
+        case eMusicType_Creative:
+            m_musicID = GetNextTrack(m_creativeFirst, m_creativeLast);
+            return;
+        case eMusicType_Battle:
+            m_musicID = GetNextTrack(m_battleFirst, m_battleLast);
+            return;
+        case eMusicType_Tumble:
+            m_musicID = GetNextTrack(m_tumbleFirst, m_tumbleLast);
+            return;
+        case eMusicType_Glide:
+            m_musicID = GetNextTrack(m_glideFirst, m_glideLast);
+            return;
+        case eMusicType_Build:
+            m_musicID = GetNextTrack(m_buildFirst, m_buildLast);
+            return;
+        default:
+            break;
         }
-        return;
-    case eMusicType_Creative:
-        m_musicID = GetNextTrack(m_creativeFirst, m_creativeLast);
-        return;
-    case eMusicType_Battle:
-        m_musicID = GetNextTrack(m_battleFirst, m_battleLast);
-        return;
-    case eMusicType_Tumble:
-        m_musicID = GetNextTrack(m_tumbleFirst, m_tumbleLast);
-        return;
-    case eMusicType_Glide:
-        m_musicID = GetNextTrack(m_glideFirst, m_glideLast);
-        return;
-    case eMusicType_Build:
-        m_musicID = GetNextTrack(m_buildFirst, m_buildLast);
-        return;
-    default:
-        break;
     }
 
     m_musicID = GetNextTrack(m_overworldFirst, m_overworldLast);
@@ -345,19 +382,20 @@ void SoundEngine::play(const SoundEvent* sound, float x, float y, float z, float
     if (sound == NULL)
         return;
 
-    char eventName[272];
-    std::wstring soundName = sound->getName();
+    char eventName[256];
     std::strcpy(eventName, "Minecraft/");
+    std::wstring soundName = sound->getName();
     std::strcat(eventName, ConvertSoundPathToName(soundName, false));
 
     AudioInfo info;
-    info.is3D = true;
+    info.x = x;
+    info.y = y;
+    info.z = z;
     info.volume = volume;
     info.pitch = pitch;
-    info.y = y;
-    info.x = x;
-    info.z = z;
     info.soundEvent = sound;
+    info.is3D = true;
+    info.isUI = false;
     info.instance = instance;
 
     if (instance != NULL)
@@ -379,6 +417,7 @@ void SoundEngine::play(const SoundEvent* sound, float x, float y, float z, float
 SoundEngine::eMusicType SoundEngine::GetMusicToPlay()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
+    eMusicType musicType;
     bool playerInEnd = false;
     bool playerInNether = false;
     bool noPlayers = true;
@@ -398,49 +437,67 @@ SoundEngine::eMusicType SoundEngine::GetMusicToPlay()
     }
 
     if (playerInEnd)
-        return eMusicType_End;
-    if (playerInNether)
-        return eMusicType_Nether;
-    if (noPlayers)
+    {
+        musicType = eMusicType_End;
+    }
+    else if (playerInNether)
+    {
+        musicType = eMusicType_Nether;
+    }
+    else if (noPlayers)
     {
         if (gApp.GetGameHostOption(eGameHostOption_MiniGame) != 0)
-            return eMusicType_Battle;
-        return eMusicType_Menu;
+            musicType = eMusicType_Battle;
+        else
+            musicType = eMusicType_Menu;
     }
-
-    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[lastPlayer];
-    if (player != NULL && player->mAbilities.mInstabuild && player->mAbilities.mMayfly)
-        return eMusicType_Creative;
-
-    switch (minecraft->GetMiniGame()->GetId())
+    else
     {
-    case eMiniGameId_Battle:
-        return eMusicType_Battle;
-    case eMiniGameId_Tumble:
-        return eMusicType_Tumble;
-    case eMiniGameId_Glide:
-        return eMusicType_Glide;
-    case eMiniGameId_Build:
-        return eMusicType_Build;
-    default:
-        return eMusicType_Overworld;
+        boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[lastPlayer];
+        if (player != NULL && player->mAbilities.mInstabuild && player->mAbilities.mMayfly)
+        {
+            musicType = eMusicType_Creative;
+        }
+        else
+        {
+            switch (minecraft->GetMiniGame()->GetId())
+            {
+            case eMiniGameId_Battle:
+                musicType = eMusicType_Battle;
+                break;
+            case eMiniGameId_Tumble:
+                musicType = eMusicType_Tumble;
+                break;
+            case eMiniGameId_Glide:
+                musicType = eMusicType_Glide;
+                break;
+            case eMiniGameId_Build:
+                musicType = eMusicType_Build;
+                break;
+            default:
+                musicType = eMusicType_Overworld;
+                break;
+            }
+        }
     }
+    return musicType;
 }
 
 void SoundEngine::SetMusicID(const std::wstring& name)
 {
+    int musicID = 0;
     char* soundName = ConvertSoundPathToName(name, true);
 
     for (int i = 0; i < STREAM_COUNT - STREAM_FIRST_CD; ++i)
     {
         if (std::strcmp(soundName, m_szStreamFileA[STREAM_FIRST_CD + i]) == 0)
         {
-            m_musicID = i + m_firstCDTrack;
-            return;
+            musicID = i;
+            break;
         }
     }
 
-    m_musicID = m_firstCDTrack;
+    m_musicID = musicID + m_firstCDTrack;
 }
 
 void SoundEngine::playStreaming(const SoundEvent* sound, float x, float y, float z, float volume, float pitch,
@@ -451,11 +508,11 @@ void SoundEngine::playStreaming(const SoundEvent* sound, float x, float y, float
         && (m_streamingAudioInfo.x != x || m_streamingAudioInfo.y != y || m_streamingAudioInfo.z != z))
         return;
 
+    m_streamingAudioInfo.x = x;
+    m_streamingAudioInfo.y = y;
+    m_streamingAudioInfo.z = z;
     m_streamingAudioInfo.volume = volume;
     m_streamingAudioInfo.pitch = pitch;
-    m_streamingAudioInfo.y = y;
-    m_streamingAudioInfo.x = x;
-    m_streamingAudioInfo.z = z;
 
     if (m_streamState == eMusicStreamState_Playing)
     {
@@ -467,55 +524,56 @@ void SoundEngine::playStreaming(const SoundEvent* sound, float x, float y, float
         m_streamState = eMusicStreamState_OpeningCancel;
     }
 
-    if (sound != NULL)
+    if (sound == NULL)
+    {
+        m_streamingAudioInfo.is3D = false;
+        switch (delayType)
+        {
+        case ConsoleSoundEngine::eAudioDelayType_None:
+            m_musicDelay = 0;
+            break;
+        case ConsoleSoundEngine::eAudioDelayType_Random:
+            m_musicDelay = m_random->nextInt(3600) + 600;
+            break;
+        case ConsoleSoundEngine::eAudioDelayType_Short:
+        case ConsoleSoundEngine::eAudioDelayType_ShortMenu:
+        case ConsoleSoundEngine::eAudioDelayType_ShortLobby:
+        case ConsoleSoundEngine::eAudioDelayType_ShortRound:
+            m_musicDelay = 60;
+            break;
+        default:
+            break;
+        }
+
+        m_waitingForMusicStartEvent = waitForMusicStartEvent;
+        SetMusicID(GetMusicToPlay());
+    }
+    else
     {
         m_streamingAudioInfo.is3D = true;
         SetMusicID(sound->getName());
         m_musicDelay = 0;
-        return;
     }
-
-    m_streamingAudioInfo.is3D = false;
-    switch (delayType)
-    {
-    case ConsoleSoundEngine::eAudioDelayType_None:
-        m_musicDelay = 0;
-        break;
-    case ConsoleSoundEngine::eAudioDelayType_Random:
-        m_musicDelay = m_random->nextInt(3600) + 600;
-        break;
-    case ConsoleSoundEngine::eAudioDelayType_Short:
-    case ConsoleSoundEngine::eAudioDelayType_ShortMenu:
-    case ConsoleSoundEngine::eAudioDelayType_ShortLobby:
-    case ConsoleSoundEngine::eAudioDelayType_ShortRound:
-        m_musicDelay = 60;
-        break;
-    default:
-        break;
-    }
-
-    m_waitingForMusicStartEvent = waitForMusicStartEvent;
-    SetMusicID(GetMusicToPlay());
 }
 
 void SoundEngine::playUI(const SoundEvent* sound, float volume, float pitch)
 {
-    char eventName[272];
+    char eventName[256];
     std::wstring soundName;
-    if (sound->isSFX())
-        std::strcpy(eventName, "Minecraft/UI/");
-    else
+    if (!sound->isSFX())
         std::strcpy(eventName, "Minecraft/");
+    else
+        std::strcpy(eventName, "Minecraft/UI/");
     soundName = sound->getName();
     std::strcat(eventName, ConvertSoundPathToName(soundName, false));
 
     AudioInfo info;
     std::memset(&info, 0, sizeof(AudioInfo));
     info.volume = volume;
-    info.routeToDRC = true;
     info.pitch = pitch;
-    info.isUI = true;
     info.soundEvent = sound;
+    info.isUI = true;
+    info.routeToDRC = true;
     m_platformSoundEngine->startSound(&info, sizeof(AudioInfo), eventName);
     info.routeToDRC = false;
     m_platformSoundEngine->startSound(&info, sizeof(AudioInfo), eventName);
@@ -548,78 +606,80 @@ void SoundEngine::UpdateSound(void* userData, void* soundData, bool* is3D, int s
 {
     SoundEngine* engine = static_cast<SoundEngine*>(userData);
     AudioInfo* info = static_cast<AudioInfo*>(soundData);
-    const bool isStream = info == NULL;
-    if (isStream)
-        info = &engine->m_streamingAudioInfo;
-
-    SoundInstance* instance = info->instance;
-    if (instance != NULL)
+    bool isStream = false;
+    if (info == NULL)
     {
-        if (soundState == 0)
+        isStream = true;
+        info = &engine->m_streamingAudioInfo;
+    }
+
+    if (info->instance != NULL)
+    {
+        switch (soundState)
         {
-            instance->setSIState(SoundInstance::eSoundState_Starting);
-        }
-        else if (soundState == 1)
-        {
-            instance->setSIState(SoundInstance::eSoundState_Playing);
+        case 0:
+            info->instance->setSIState(SoundInstance::eSoundState_Starting);
+            break;
+        case 2:
+            info->instance->setSIState(SoundInstance::eSoundState_Complete);
+            break;
+        case 1:
+            info->instance->setSIState(SoundInstance::eSoundState_Playing);
             info->x = info->instance->getX();
             info->y = info->instance->getY();
             info->z = info->instance->getZ();
             info->volume = info->instance->getVolume();
             info->pitch = info->instance->getPitch();
-        }
-        else if (soundState == 2)
-        {
-            instance->setSIState(SoundInstance::eSoundState_Complete);
+            break;
         }
     }
 
     if (info->volume > 1.0f)
         info->volume = 1.0f;
 
-    if (!isStream)
-        *volume = info->volume * engine->getMasterSoundEffectVolume();
-    else
+    if (isStream)
         *volume = info->volume * engine->getMasterMusicVolume();
+    else
+        *volume = info->volume * engine->getMasterSoundEffectVolume();
 
     *is3D = info->is3D;
-    if (!info->is3D)
-        return;
-
-    if (engine->m_validListenerCount > 1)
+    if (info->is3D)
     {
-        float nearest = 10000.0f;
-        float nearestX = 0.0f;
-        float nearestY = 0.0f;
-        float nearestZ = 0.0f;
-        for (int i = 0; i < MAX_LISTENERS; ++i)
+        if (engine->m_validListenerCount > 1)
         {
-            const ListenerInfo& listener = engine->m_listeners[i];
-            if (!listener.valid)
-                continue;
-
-            const float dx = fabsf(listener.x - info->x);
-            const float dy = fabsf(listener.y - info->y);
-            const float dz = fabsf(listener.z - info->z);
-            const float distance = dx + dy + dz;
-            if (distance < nearest)
+            float nearest = 10000.0f;
+            float nearestX = 0.0f;
+            float nearestY = 0.0f;
+            float nearestZ = 0.0f;
+            for (int i = 0; i < MAX_LISTENERS; ++i)
             {
-                nearest = distance;
-                nearestX = dx;
-                nearestY = dy;
-                nearestZ = dz;
+                if (engine->m_listeners[i].valid)
+                {
+                    float dx = fabs(engine->m_listeners[i].x - info->x);
+                    float dy = fabs(engine->m_listeners[i].y - info->y);
+                    float dz = fabs(engine->m_listeners[i].z - info->z);
+                    float distance = dx + dy + dz;
+                    if (distance < nearest)
+                    {
+                        nearest = distance;
+                        nearestX = dx;
+                        nearestY = dy;
+                        nearestZ = dz;
+                    }
+                }
             }
-        }
 
-        *x = 0.0f;
-        *y = 0.0f;
-        *z = sqrtf(nearestZ * nearestZ + nearestX * nearestX + nearestY * nearestY);
-    }
-    else
-    {
-        *x = info->x;
-        *y = info->y;
-        *z = -info->z;
+            float distance = sqrtf(nearestX * nearestX + nearestY * nearestY + nearestZ * nearestZ);
+            *x = 0.0f;
+            *y = 0.0f;
+            *z = distance;
+        }
+        else
+        {
+            *x = info->x;
+            *y = info->y;
+            *z = -info->z;
+        }
     }
 }
 
@@ -628,25 +688,26 @@ void SoundEngine::ConfigureSound(void* userData, void* soundData, bool* is3D, fl
 {
     SoundEngine* engine = static_cast<SoundEngine*>(userData);
 
-    if (soundData == NULL)
+    if (soundData != NULL)
     {
-        *minDistance = 64.0f;
-        *pitch = engine->m_streamingAudioInfo.pitch;
-        UpdateSound(userData, NULL, is3D, 0, x, y, z, volume);
-        return;
-    }
-
-    AudioInfo* info = static_cast<AudioInfo*>(soundData);
-    *minDistance = engine->getDistanceScaler(info);
-    if (!info->isUI)
-    {
-        *pitch = info->pitch;
-        UpdateSound(userData, soundData, is3D, 0, x, y, z, volume);
+        *minDistance = engine->getDistanceScaler(static_cast<AudioInfo*>(soundData));
+        AudioInfo* info = static_cast<AudioInfo*>(soundData);
+        if (!info->isUI)
+        {
+            *pitch = info->pitch;
+            UpdateSound(engine, info, is3D, 0, x, y, z, volume);
+        }
+        else
+        {
+            *pitch = 0.0f;
+            UpdateSound(engine, info, is3D, 0, x, y, z, volume);
+        }
     }
     else
     {
-        *pitch = 0.0f;
-        UpdateSound(userData, soundData, is3D, 0, x, y, z, volume);
+        *minDistance = 64.0f;
+        *pitch = engine->m_streamingAudioInfo.pitch;
+        UpdateSound(engine, NULL, is3D, 0, x, y, z, volume);
     }
 }
 
@@ -667,28 +728,31 @@ void SoundEngine::playMusicUpdate()
         const unsigned int target = targetMusicVolume;
         if (musicVolumeFadingUp)
         {
-            if (current < target)
-            {
-                updateMusicVolume(static_cast<float>(current + musicVolumeFadeStep) / 100.0f);
-            }
-            else
+            if (current >= target)
             {
                 musicVolumeFading = false;
                 if (current > target)
                     updateMusicVolume(static_cast<float>(target) / 100.0f);
                 musicVolumeLimited = !musicVolumeLimited;
             }
-        }
-        else if (current > target)
-        {
-            updateMusicVolume(static_cast<float>(current - musicVolumeFadeStep) / 100.0f);
+            else
+            {
+                updateMusicVolume(static_cast<float>(current + musicVolumeFadeStep) / 100.0f);
+            }
         }
         else
         {
-            musicVolumeFading = false;
-            if (current < target)
-                updateMusicVolume(static_cast<float>(target) / 100.0f);
-            musicVolumeLimited = !musicVolumeLimited;
+            if (current <= target)
+            {
+                musicVolumeFading = false;
+                if (current < target)
+                    updateMusicVolume(static_cast<float>(target) / 100.0f);
+                musicVolumeLimited = !musicVolumeLimited;
+            }
+            else
+            {
+                updateMusicVolume(static_cast<float>(current - musicVolumeFadeStep) / 100.0f);
+            }
         }
     }
 
@@ -723,11 +787,8 @@ void SoundEngine::playMusicUpdate()
                     m_streamingAudioInfo.is3D = false;
 
                     char fileName[255];
-                    std::wstring& soundName = audioFile->GetSoundName(m_musicID);
-                    std::wcstombs(fileName, soundName.c_str(), 255);
-                    std::string file(fileName);
-                    std::string path = std::string("TPACK:\\Data\\").append(file);
-                    std::string streamPath = path + ".binka";
+                    std::wcstombs(fileName, audioFile->GetSoundName(m_musicID).c_str(), 255);
+                    std::string streamPath = "TPACK:\\Data\\" + std::string(fileName) + ".binka";
                     std::string mountedPath = gStorage->GetMountedPath(streamPath);
                     std::strcpy(m_streamName, mountedPath.c_str());
                 }
@@ -775,22 +836,6 @@ void SoundEngine::playMusicUpdate()
         }
         break;
 
-    case eMusicStreamState_Stop:
-        if (m_fadeOutTicks != 0)
-        {
-            --m_fadeOutTicks;
-            const float fade = static_cast<float>(m_fadeOutTicks) / 200.0f;
-            m_platformSoundEngine->setStreamVol(m_streamingAudioInfo.volume * getMasterMusicVolume() * fade);
-        }
-        else
-        {
-            m_platformSoundEngine->stopStream();
-            SetIsPlayingStreamingCDMusic(false);
-            SetIsPlayingStreamingGameMusic(false);
-            m_streamState = eMusicStreamState_Idle;
-        }
-        break;
-
     case eMusicStreamState_Opening:
         if (!m_openStreamThread->isRunning())
         {
@@ -817,6 +862,22 @@ void SoundEngine::playMusicUpdate()
             delete m_openStreamThread;
             m_streamState = eMusicStreamState_Stop;
             m_openStreamThread = NULL;
+        }
+        break;
+
+    case eMusicStreamState_Stop:
+        if (m_fadeOutTicks != 0)
+        {
+            --m_fadeOutTicks;
+            const float fade = static_cast<float>(m_fadeOutTicks) / 200.0f;
+            m_platformSoundEngine->setStreamVol(m_streamingAudioInfo.volume * getMasterMusicVolume() * fade);
+        }
+        else
+        {
+            m_platformSoundEngine->stopStream();
+            SetIsPlayingStreamingCDMusic(false);
+            SetIsPlayingStreamingGameMusic(false);
+            m_streamState = eMusicStreamState_Idle;
         }
         break;
 
@@ -860,38 +921,39 @@ void SoundEngine::playMusicUpdate()
                     SetIsPlayingEndMusic(false);
                     SetIsPlayingNetherMusic(true);
                 }
-                else if (noPlayers)
-                {
-                    SetMusicID(eMusicType_Menu);
-                    SetIsPlayingEndMusic(false);
-                    SetIsPlayingNetherMusic(false);
-                }
                 else
                 {
-                    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[lastPlayer];
-                    if (player != NULL && player->mAbilities.mInstabuild && player->mAbilities.mMayfly)
+                    if (noPlayers)
                     {
-                        SetMusicID(eMusicType_Creative);
+                        SetMusicID(eMusicType_Menu);
                     }
                     else
                     {
-                        switch (minecraft->GetMiniGame()->GetId())
+                        boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[lastPlayer];
+                        if (player != NULL && player->mAbilities.mInstabuild && player->mAbilities.mMayfly)
                         {
-                        case eMiniGameId_Battle:
-                            SetMusicID(eMusicType_Battle);
-                            break;
-                        case eMiniGameId_Tumble:
-                            SetMusicID(eMusicType_Tumble);
-                            break;
-                        case eMiniGameId_Glide:
-                            SetMusicID(eMusicType_Glide);
-                            break;
-                        case eMiniGameId_Build:
-                            SetMusicID(eMusicType_Build);
-                            break;
-                        default:
-                            SetMusicID(eMusicType_Overworld);
-                            break;
+                            SetMusicID(eMusicType_Creative);
+                        }
+                        else
+                        {
+                            switch (minecraft->GetMiniGame()->GetId())
+                            {
+                            case eMiniGameId_Battle:
+                                SetMusicID(eMusicType_Battle);
+                                break;
+                            case eMiniGameId_Tumble:
+                                SetMusicID(eMusicType_Tumble);
+                                break;
+                            case eMiniGameId_Glide:
+                                SetMusicID(eMusicType_Glide);
+                                break;
+                            case eMiniGameId_Build:
+                                SetMusicID(eMusicType_Build);
+                                break;
+                            default:
+                                SetMusicID(eMusicType_Overworld);
+                                break;
+                            }
                         }
                     }
                     SetIsPlayingEndMusic(false);
@@ -916,38 +978,39 @@ void SoundEngine::playMusicUpdate()
                     SetIsPlayingNetherMusic(false);
                     SetIsPlayingEndMusic(true);
                 }
-                else if (noPlayers)
-                {
-                    SetMusicID(eMusicType_Menu);
-                    SetIsPlayingNetherMusic(false);
-                    SetIsPlayingEndMusic(false);
-                }
                 else
                 {
-                    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[lastPlayer];
-                    if (player != NULL && player->mAbilities.mInstabuild && player->mAbilities.mMayfly)
+                    if (noPlayers)
                     {
-                        SetMusicID(eMusicType_Creative);
+                        SetMusicID(eMusicType_Menu);
                     }
                     else
                     {
-                        switch (minecraft->GetMiniGame()->GetId())
+                        boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[lastPlayer];
+                        if (player != NULL && player->mAbilities.mInstabuild && player->mAbilities.mMayfly)
                         {
-                        case eMiniGameId_Battle:
-                            SetMusicID(eMusicType_Battle);
-                            break;
-                        case eMiniGameId_Tumble:
-                            SetMusicID(eMusicType_Tumble);
-                            break;
-                        case eMiniGameId_Glide:
-                            SetMusicID(eMusicType_Glide);
-                            break;
-                        case eMiniGameId_Build:
-                            SetMusicID(eMusicType_Build);
-                            break;
-                        default:
-                            SetMusicID(eMusicType_Overworld);
-                            break;
+                            SetMusicID(eMusicType_Creative);
+                        }
+                        else
+                        {
+                            switch (minecraft->GetMiniGame()->GetId())
+                            {
+                            case eMiniGameId_Battle:
+                                SetMusicID(eMusicType_Battle);
+                                break;
+                            case eMiniGameId_Tumble:
+                                SetMusicID(eMusicType_Tumble);
+                                break;
+                            case eMiniGameId_Glide:
+                                SetMusicID(eMusicType_Glide);
+                                break;
+                            case eMiniGameId_Build:
+                                SetMusicID(eMusicType_Build);
+                                break;
+                            default:
+                                SetMusicID(eMusicType_Overworld);
+                                break;
+                            }
                         }
                     }
                     SetIsPlayingNetherMusic(false);
@@ -960,10 +1023,13 @@ void SoundEngine::playMusicUpdate()
             m_platformSoundEngine->updateStreamPos(this, UpdateSound);
         }
 
-        if (s_musicVolume != getMasterMusicVolume())
         {
-            s_musicVolume = getMasterMusicVolume();
-            m_platformSoundEngine->setStreamVol(s_musicVolume);
+            float musicVolume = getMasterMusicVolume();
+            if (s_musicVolume != musicVolume)
+            {
+                s_musicVolume = musicVolume;
+                m_platformSoundEngine->setStreamVol(s_musicVolume);
+            }
         }
         break;
 
@@ -1002,49 +1068,50 @@ void SoundEngine::playMusicUpdate()
             SetIsPlayingNetherMusic(true);
             SetIsPlayingEndMusic(false);
         }
-        else if (noPlayers)
-        {
-            if (Minecraft::GetInstance()->mTexturePackRepository->getSelected()->getId()
-                == SHORT_MUSIC_DELAY_TEXTURE_PACK_ID)
-                SetMusicID(eMusicType_Overworld);
-            else
-                SetMusicID(eMusicType_Menu);
-            SetIsPlayingNetherMusic(false);
-            SetIsPlayingEndMusic(false);
-        }
         else
         {
-            boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[lastPlayer];
-            if (player != NULL && player->mAbilities.mInstabuild && player->mAbilities.mMayfly)
+            if (noPlayers)
             {
-                SetMusicID(eMusicType_Creative);
+                if (Minecraft::GetInstance()->mTexturePackRepository->getSelected()->getId()
+                    == SHORT_MUSIC_DELAY_TEXTURE_PACK_ID)
+                    SetMusicID(eMusicType_Overworld);
+                else
+                    SetMusicID(eMusicType_Menu);
             }
             else
             {
-                switch (minecraft->GetMiniGame()->GetId())
+                boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[lastPlayer];
+                if (player != NULL && player->mAbilities.mInstabuild && player->mAbilities.mMayfly)
                 {
-                case eMiniGameId_Lobby:
-                    SetMusicID(eMusicType_Overworld);
-                    break;
-                case eMiniGameId_Battle:
-                    SetMusicID(eMusicType_Battle);
-                    m_musicDelay = MINIGAME_MUSIC_DELAY;
-                    break;
-                case eMiniGameId_Tumble:
-                    SetMusicID(eMusicType_Tumble);
-                    m_musicDelay = MINIGAME_MUSIC_DELAY;
-                    break;
-                case eMiniGameId_Glide:
-                    SetMusicID(eMusicType_Glide);
-                    m_musicDelay = MINIGAME_MUSIC_DELAY;
-                    break;
-                case eMiniGameId_Build:
-                    SetMusicID(eMusicType_Build);
-                    m_musicDelay = MINIGAME_MUSIC_DELAY;
-                    break;
-                default:
-                    SetMusicID(eMusicType_Overworld);
-                    break;
+                    SetMusicID(eMusicType_Creative);
+                }
+                else
+                {
+                    switch (minecraft->GetMiniGame()->GetId())
+                    {
+                    case eMiniGameId_Lobby:
+                        SetMusicID(eMusicType_Overworld);
+                        break;
+                    case eMiniGameId_Battle:
+                        SetMusicID(eMusicType_Battle);
+                        m_musicDelay = MINIGAME_MUSIC_DELAY;
+                        break;
+                    case eMiniGameId_Tumble:
+                        SetMusicID(eMusicType_Tumble);
+                        m_musicDelay = MINIGAME_MUSIC_DELAY;
+                        break;
+                    case eMiniGameId_Glide:
+                        SetMusicID(eMusicType_Glide);
+                        m_musicDelay = MINIGAME_MUSIC_DELAY;
+                        break;
+                    case eMiniGameId_Build:
+                        SetMusicID(eMusicType_Build);
+                        m_musicDelay = MINIGAME_MUSIC_DELAY;
+                        break;
+                    default:
+                        SetMusicID(eMusicType_Overworld);
+                        break;
+                    }
                 }
             }
             SetIsPlayingNetherMusic(false);
@@ -1089,25 +1156,32 @@ bool SoundEngine::RouteToDRC(void*, void* soundData)
 
 void SoundEngine::updateMiles()
 {
-    bool systemMusicPlaying;
+    float x = 0.0f;
+    float y = 0.0f;
+    float z = 0.0f;
+    float forwardX = 0.0f;
+    float forwardY = 0.0f;
+    float forwardZ = 1.0f;
 
     if (m_validListenerCount == 1)
     {
         for (int i = 0; i < MAX_LISTENERS; ++i)
         {
-            const ListenerInfo& listener = m_listeners[i];
-            if (listener.valid)
+            if (m_listeners[i].valid)
             {
-                m_platformSoundEngine->tick(this, listener.x, listener.y, -listener.z, -listener.forwardX,
-                                            listener.forwardY, listener.forwardZ, ConfigureSound, UpdateSound,
-                                            RouteToDRC, &systemMusicPlaying);
-                updateSystemMusicPlaying(systemMusicPlaying);
-                return;
+                x = m_listeners[i].x;
+                y = m_listeners[i].y;
+                z = -m_listeners[i].z;
+                forwardX = -m_listeners[i].forwardX;
+                forwardY = m_listeners[i].forwardY;
+                forwardZ = m_listeners[i].forwardZ;
+                break;
             }
         }
     }
 
-    m_platformSoundEngine->tick(this, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f, ConfigureSound, UpdateSound, RouteToDRC,
+    bool systemMusicPlaying;
+    m_platformSoundEngine->tick(this, x, y, z, forwardX, forwardY, forwardZ, ConfigureSound, UpdateSound, RouteToDRC,
                                 &systemMusicPlaying);
     updateSystemMusicPlaying(systemMusicPlaying);
 }
@@ -1131,23 +1205,28 @@ void SoundEngine::tick(boost::shared_ptr<Mob>* mobs, float partialTicks)
     {
         for (int i = 0; i < MAX_LISTENERS; ++i)
         {
-            if (mobs[i] == NULL)
+            if (mobs[i] != NULL)
+            {
+                m_listeners[i].valid = true;
+                float x = static_cast<float>(mobs[i]->mXo + (mobs[i]->mX - mobs[i]->mXo) * partialTicks);
+                float y = static_cast<float>(mobs[i]->mYo + (mobs[i]->mY - mobs[i]->mYo) * partialTicks);
+                float z = static_cast<float>(mobs[i]->mZo + (mobs[i]->mZ - mobs[i]->mZo) * partialTicks);
+                float yRot = mobs[i]->mYRotO + (mobs[i]->mYRot - mobs[i]->mYRotO) * partialTicks;
+                float angle = -(yRot * Mth::DEG_TO_RAD) - PI;
+                float forwardZ = cosf(angle);
+                float forwardX = sinf(angle);
+                m_listeners[i].x = x;
+                m_listeners[i].y = y;
+                m_listeners[i].z = z;
+                m_listeners[i].forwardX = forwardX;
+                m_listeners[i].forwardY = 0.0f;
+                m_listeners[i].forwardZ = forwardZ;
+                ++validListeners;
+            }
+            else
             {
                 m_listeners[i].valid = false;
-                continue;
             }
-
-            m_listeners[i].valid = true;
-            m_listeners[i].x = static_cast<float>((mobs[i]->mX - mobs[i]->mXo) * partialTicks + mobs[i]->mXo);
-            m_listeners[i].y = static_cast<float>((mobs[i]->mY - mobs[i]->mYo) * partialTicks + mobs[i]->mYo);
-            m_listeners[i].z = static_cast<float>((mobs[i]->mZ - mobs[i]->mZo) * partialTicks + mobs[i]->mZo);
-
-            const float yRot = (mobs[i]->mYRot - mobs[i]->mYRotO) * partialTicks + mobs[i]->mYRotO;
-            const float angle = -yRot * 0.017453292f - 3.1415927f;
-            m_listeners[i].forwardX = sinf(angle);
-            m_listeners[i].forwardY = 0.0f;
-            m_listeners[i].forwardZ = cosf(angle);
-            ++validListeners;
         }
 
         if (validListeners == 0)

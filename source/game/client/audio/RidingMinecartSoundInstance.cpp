@@ -13,8 +13,8 @@ RidingMinecartSoundInstance::RidingMinecartSoundInstance(boost::shared_ptr<Playe
     this->player = player;
     this->minecart = minecart;
     this->delay = 0;
-    this->looping = true;
     this->attenuation = SoundInstance::DEFAULT_ATTENUATION;
+    this->looping = true;
 }
 
 RidingMinecartSoundInstance::RidingMinecartSoundInstance(const RidingMinecartSoundInstance& other)

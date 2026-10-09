@@ -3,7 +3,8 @@
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/Guardian.hpp"
 
-static const float ATTACK_VOLUME_SCALE = 1.0f;
+static const float MAX_ATTACK_VOLUME = 1.0f;
+static const float ATTACK_VOLUME_SCALE = MAX_ATTACK_VOLUME;
 
 GuardianAttackSoundInstance::GuardianAttackSoundInstance(boost::shared_ptr<Guardian> guardian)
     : AbstractTickableSoundInstance(SoundEvents::GUARDIAN_ATTACK, SoundSource::eSoundSource_Hostile)

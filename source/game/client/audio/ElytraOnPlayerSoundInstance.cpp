@@ -14,11 +14,11 @@ ElytraOnPlayerSoundInstance::ElytraOnPlayerSoundInstance(boost::shared_ptr<Playe
     : AbstractTickableSoundInstance(SoundEvents::ELYTRA_FLYING, SoundSource::eSoundSource_Players)
 {
     this->player = player;
-    this->volume = 1.0f;
     this->looping = true;
     this->delay = 0;
-    this->warningSoundDelay = 0;
+    this->volume = 1.0f;
     this->ticks = 0;
+    this->warningSoundDelay = 0;
     this->warning = false;
 }
 
@@ -65,8 +65,8 @@ void ElytraOnPlayerSoundInstance::tick()
     float speed = 0.0f;
     if (!this->player->PositionLocked())
     {
-        speed = Mth::sqrt(this->player->mZd * this->player->mZd +
-                          this->player->mXd * this->player->mXd +
+        speed = Mth::sqrt(this->player->mXd * this->player->mXd +
+                          this->player->mZd * this->player->mZd +
                           this->player->mYd * this->player->mYd);
     }
 
@@ -85,7 +85,8 @@ void ElytraOnPlayerSoundInstance::tick()
     }
     else if (this->warningSoundDelay > 0)
     {
-        scaledSpeed = scaledSpeed * (static_cast<float>(this->warningSoundDelay / 10.0) + 1.0f);
+        float warningScale = static_cast<float>(this->warningSoundDelay / 10.0) + 1.0f;
+        scaledSpeed = scaledSpeed * warningScale;
         --this->warningSoundDelay;
     }
 
@@ -105,13 +106,13 @@ void ElytraOnPlayerSoundInstance::tick()
             newVolume = newVolume * static_cast<float>((this->ticks - 20) / 20.0);
 
         this->volume = newVolume;
-        if (this->volume > maxVolume)
-            this->pitch = (this->volume - maxVolume) + 1.0f;
+        if (newVolume > maxVolume)
+            this->pitch = (newVolume - maxVolume) + 1.0f;
         else
             this->pitch = 1.0f;
     }
 
-    if (this->player->GetType() == EntityType::LOCAL_PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::LOCAL_PLAYER, this->player->GetType()))
     {
         boost::shared_ptr<LocalPlayer> localPlayer = boost::static_pointer_cast<LocalPlayer>(this->player);
         if (Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0)

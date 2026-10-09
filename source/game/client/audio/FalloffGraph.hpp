@@ -19,16 +19,6 @@ struct QueueBuffer
     unsigned char bytes[QUEUE_BUFFER_SIZE];
 };
 
-struct EventQueue
-{
-    Handle storage;
-    unsigned int capacity;
-    volatile unsigned int tokens;
-    QueueBuffer buffers[QUEUE_BUFFER_COUNT];
-};
-
-extern EventQueue g_eventQueue;
-
 struct _MSSSTRINGC
 {
     const char* text;
@@ -508,11 +498,7 @@ struct _SAMPLE
     float coneOuter;
     float coneOuterVolume;
     int coneEnabled;
-    union
-    {
-        int falloffMode;
-        float maximumDistance;
-    };
+    float maximumDistance;
     float minimumDistance;
     int distancesChanged;
     int automaticWetAttenuation;
@@ -539,7 +525,7 @@ struct _SAMPLE
 struct FalloffGraph
 {
     int reserved;
-    int mode;
+    float maximumDistance;
     int volumePointCount;
     int exclusionPointCount;
     int lowpassPointCount;
@@ -568,6 +554,7 @@ QueuedEvent* Queue_EnumNext(unsigned long long* cursor, QueuedEvent* event);
 void Queue_EnumClose(unsigned long long start, unsigned long long end);
 QueuedEvent* Queue_Add(int size);
 void Queue_Commit(QueuedEvent* event);
+void ClearQueueToken(int token);
 extern "C" unsigned long long MilesEnqueueEventByNameInternal(const char* pEventName);
 
 extern "C" unsigned int AIL_enqueue_event_start();
