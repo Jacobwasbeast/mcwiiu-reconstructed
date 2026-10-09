@@ -27,9 +27,8 @@ void BlockPatternBuilder::ensureAllCharactersMatched()
 {
     std::vector<wchar_t> unmatchedCharacters;
 
-    for (boost::unordered_map<wchar_t, Predicate<BlockInWorld*>*>::iterator it = mLookup.begin();
-         it != mLookup.end();
-         ++it)
+    boost::unordered_map<wchar_t, Predicate<BlockInWorld*>*>::iterator it;
+    for (it = mLookup.begin(); it != mLookup.end(); ++it)
     {
         if (it->second == NULL)
         {
@@ -50,9 +49,7 @@ array3DWithLength<Predicate<BlockInWorld*>*> BlockPatternBuilder::createPattern(
         {
             for (int k = 0; k < mWidth; k++)
             {
-                const std::wstring& row = mPattern.at(i).data[j];
-                wchar_t symbol = row.at(k);
-                pattern.data[i]->data[j]->data[k] = mLookup[symbol];
+                pattern.data[i]->data[j]->data[k] = mLookup[mPattern.at(i).data[j].at(k)];
             }
         }
     }

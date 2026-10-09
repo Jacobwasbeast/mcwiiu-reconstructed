@@ -48,6 +48,9 @@ bool BlockStatePredicate::apply(const BlockState* state) const
 BlockStatePredicate* BlockStatePredicate::where(Property* property,
                                                 const Predicate<Boxed*>* predicate)
 {
+    const std::vector<const Property*>& properties = mDefinition->getProperties();
+    std::vector<const Property*>::const_iterator found = std::find(properties.begin(), properties.end(), property);
+    assert(found != properties.end());
     mPredicates[property] = predicate;
     return this;
 }

@@ -34,28 +34,23 @@ ReedsBlock::ReedsBlock()
 
 bool ReedsBlock::isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState*, bool)
 {
-    int y = pos.y;
-    int bottom = y;
-    int lower = y - 4;
-    for (;;)
+    int bottom = pos.y;
+    int top = bottom + 1;
+    int lower = bottom - 4;
+    while (--bottom > lower && bottom > 0 && level->getBlockId(pos.x, bottom, pos.z) == BlockId::REEDS)
     {
-        int next = bottom - 1;
-        if (!(lower < next && next > 0 && level->getBlockId(pos.x, next, pos.z) == BlockId::REEDS))
-        {
-            break;
-        }
         --lower;
-        bottom = next;
     }
 
-    int upper = y + 4;
-    int top = y;
-    while (top + 1 < upper && top + 1 < level->getMaxBuildHeight() && level->getBlockId(pos.x, top + 1, pos.z) == BlockId::REEDS)
+    int upper = top + 3;
+    while (top < upper && top < level->getMaxBuildHeight() && level->getBlockId(pos.x, top, pos.z) == BlockId::REEDS)
     {
-        ++upper;
         ++top;
+        ++upper;
     }
 
+    ++bottom;
+    --top;
     return 2 - (top - bottom) > 0;
 }
 
@@ -66,38 +61,36 @@ bool ReedsBlock::isBonemealSuccess(Level*, Random*, const BlockPos&, const Block
 
 void ReedsBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, const BlockState*)
 {
-    int y = pos.y;
-    int bottom = y;
-    int lower = y - 4;
-    for (;;)
+    int bottom = pos.y;
+    int top = bottom + 1;
+    int lower = bottom - 4;
+    while (--bottom > lower && bottom > 0 && level->getBlockId(pos.x, bottom, pos.z) == BlockId::REEDS)
     {
-        int next = bottom - 1;
-        if (!(lower < next && next > 0 && level->getBlockId(pos.x, next, pos.z) == BlockId::REEDS))
-        {
-            break;
-        }
         --lower;
-        bottom = next;
     }
 
-    int upper = y + 4;
-    int top = y;
-    while (top + 1 < upper && top + 1 < level->getMaxBuildHeight()
-           && level->getBlockId(pos.x, top + 1, pos.z) == BlockId::REEDS)
+    int upper = top + 3;
+    while (top < upper && top < level->getMaxBuildHeight() && level->getBlockId(pos.x, top, pos.z) == BlockId::REEDS)
     {
-        ++upper;
         ++top;
+        ++upper;
     }
 
-    int targetTop = top + (2 - (top - bottom));
-    for (int placeY = top + 1; placeY <= targetTop; ++placeY)
+    ++bottom;
+    --top;
+    int grow = 2 - (top - bottom);
+    if (grow > 0)
     {
-        BlockPos placement(pos.x, placeY, pos.z);
-        if (!level->isEmptyBlock(placement))
+        int targetTop = top + grow;
+        for (int placeY = top + 1; placeY <= targetTop; ++placeY)
         {
-            return;
+            BlockPos placement(pos.x, placeY, pos.z);
+            if (!level->isEmptyBlock(placement))
+            {
+                return;
+            }
+            level->setBlockAndData(pos.x, placeY, pos.z, BlockId::REEDS, 0, Block::UPDATE_ALL);
         }
-        level->setBlockAndData(pos.x, placeY, pos.z, BlockId::REEDS, 0, Block::UPDATE_ALL);
     }
 }
 
@@ -170,8 +163,9 @@ bool ReedsBlock::mayPlace(Level* level, const BlockPos& pos)
     arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
     for (unsigned int i = 0; i < directions.length; ++i)
     {
-        const BlockState* adjacentState = level->getBlockState(belowPos.relative(directions.data[i]));
-        const BlockState* extraState = level->getExtraBlockState(belowPos.relative(directions.data[i]));
+        const Direction* direction = directions.data[i];
+        const BlockState* adjacentState = level->getBlockState(belowPos.relative(direction));
+        const BlockState* extraState = level->getExtraBlockState(belowPos.relative(direction));
         if (adjacentState->getMaterial() == Material::WATER || extraState->getMaterial() == Material::WATER
             || adjacentState->getBlock() == Blocks::frosted_ice)
         {
@@ -194,7 +188,7 @@ bool ReedsBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState*
 
 const AABB* ReedsBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return NULL_AABB;
 }
 
 Item* ReedsBlock::getResource(const BlockState*, Random*, int)

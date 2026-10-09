@@ -114,8 +114,7 @@ const BlockState* ChestBlock::getStateForPlacement(Level*, const BlockPos&, cons
                                                    float, float, float, int,
                                                    boost::shared_ptr<LivingEntity> placer)
 {
-    const BlockState* state = defaultBlockState();
-    return state->setValue(FACING, placer->getDirection());
+    return defaultBlockState()->setValue(FACING, placer->getDirection());
 }
 
 const BlockState* ChestBlock::recalcLockDir(Level* level, const BlockPos& pos, const BlockState* state)
@@ -174,8 +173,8 @@ const BlockState* ChestBlock::recalcLockDir(Level* level, const BlockPos& pos, c
         }
     }
 
-    const BlockState* placed = state->setValue(FACING, facing);
-    level->setBlock(pos, placed, Block::UPDATE_ALL, false);
+    state = state->setValue(FACING, facing);
+    level->setBlock(pos, state, Block::UPDATE_ALL, false);
     if (north->getBlock() == this)
     {
         level->setBlock(pos.north(), north->setValue(FACING, facing), Block::UPDATE_ALL, false);
@@ -192,7 +191,7 @@ const BlockState* ChestBlock::recalcLockDir(Level* level, const BlockPos& pos, c
     {
         level->setBlock(pos.west(), west->setValue(FACING, facing), Block::UPDATE_ALL, false);
     }
-    return placed;
+    return state;
 }
 
 void ChestBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
@@ -200,54 +199,57 @@ void ChestBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState
 {
     const Direction* facing =
         Direction::from2DDataValue(Mth::absFloor((double)(placer->mYRot * 4.0f / 360.0f) + 0.5) & 3)->getOpposite();
-    const BlockState* placed = state->setValue(FACING, facing);
+    state = state->setValue(FACING, facing);
 
     BlockPos north = pos.north();
     BlockPos south = pos.south();
     BlockPos west = pos.west();
     BlockPos east = pos.east();
-    bool northIsChest = level->getBlockState(north)->getBlock() == this;
-    bool southIsChest = level->getBlockState(south)->getBlock() == this;
-    bool westIsChest = level->getBlockState(west)->getBlock() == this;
-    bool eastIsChest = level->getBlockState(east)->getBlock() == this;
+    bool northIsChest = this == level->getBlockState(north)->getBlock();
+    bool southIsChest = this == level->getBlockState(south)->getBlock();
+    bool westIsChest = this == level->getBlockState(west)->getBlock();
+    bool eastIsChest = this == level->getBlockState(east)->getBlock();
 
-    if (!northIsChest && !southIsChest && !westIsChest && !eastIsChest)
+    if (northIsChest || southIsChest || westIsChest || eastIsChest)
     {
-        level->setBlock(pos, placed, Block::UPDATE_ALL, false);
-    }
-    else if (facing->getAxis() == Direction::Axis::X && (northIsChest || southIsChest))
-    {
-        if (northIsChest)
+        if (facing->getAxis() == Direction::Axis::X && (northIsChest || southIsChest))
         {
-            level->setBlock(north, placed, Block::UPDATE_ALL, false);
+            if (northIsChest)
+            {
+                level->setBlock(north, state, Block::UPDATE_ALL, false);
+            }
+            else
+            {
+                level->setBlock(south, state, Block::UPDATE_ALL, false);
+            }
+            level->setBlock(pos, state, Block::UPDATE_ALL, false);
+        }
+        else if (facing->getAxis() == Direction::Axis::Z && (westIsChest || eastIsChest))
+        {
+            if (westIsChest)
+            {
+                level->setBlock(west, state, Block::UPDATE_ALL, false);
+            }
+            else
+            {
+                level->setBlock(east, state, Block::UPDATE_ALL, false);
+            }
+            level->setBlock(pos, state, Block::UPDATE_ALL, false);
         }
         else
         {
-            level->setBlock(south, placed, Block::UPDATE_ALL, false);
+            recalcLockDir(level, pos, state);
         }
-        level->setBlock(pos, placed, Block::UPDATE_ALL, false);
-    }
-    else if (facing->getAxis() == Direction::Axis::Z && (westIsChest || eastIsChest))
-    {
-        if (westIsChest)
-        {
-            level->setBlock(west, placed, Block::UPDATE_ALL, false);
-        }
-        else
-        {
-            level->setBlock(east, placed, Block::UPDATE_ALL, false);
-        }
-        level->setBlock(pos, placed, Block::UPDATE_ALL, false);
     }
     else
     {
-        recalcLockDir(level, pos, placed);
+        level->setBlock(pos, state, Block::UPDATE_ALL, false);
     }
 
     if (itemInstance->hasCustomHoverName())
     {
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-        bool isChest = blockEntity->GetType() == BlockEntityType::CHEST;
+        bool isChest = eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType());
         if (isChest)
         {
             boost::shared_ptr<ChestBlockEntity> chest =
@@ -311,7 +313,8 @@ bool ChestBlock::isFullChest(Level* level, const BlockPos& pos)
     arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
     for (unsigned int i = 0; i < directions.length; ++i)
     {
-        if (level->getBlockState(pos.relative(directions.data[i]))->getBlock() == this)
+        const Direction* direction = directions.data[i];
+        if (level->getBlockState(pos.relative(direction))->getBlock() == this)
         {
             return true;
         }
@@ -367,7 +370,7 @@ void ChestBlock::neighborChanged(const BlockState* state, Level* level, const Bl
 {
     Block::neighborChanged(state, level, pos, block, fromPos);
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    bool isChest = blockEntity->GetType() == BlockEntityType::CHEST;
+    bool isChest = eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType());
     if (isChest)
     {
         blockEntity->clearCache();
@@ -377,7 +380,7 @@ void ChestBlock::neighborChanged(const BlockState* state, Level* level, const Bl
 void ChestBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity.get() != NULL && (blockEntity->GetType() & BlockEntityType::CONTAINER) == BlockEntityType::CONTAINER)
+    if (blockEntity.get() != NULL && eTYPE_DERIVED_FROM(BlockEntityType::CONTAINER, blockEntity->GetType()))
     {
         Containers::dropContents(level, pos, boost::dynamic_pointer_cast<Container>(blockEntity));
         level->updateNeighbourForOutputSignal(pos, this);
@@ -398,15 +401,15 @@ bool ChestBlock::isBlockedChestByBlock(Level* level, const BlockPos& pos)
 bool ChestBlock::isEntityOnChest(Level* level, const BlockPos& pos)
 {
     Block* block = level->getBlock(pos);
-    if (block != Blocks::chest && block != Blocks::ender_chest && block != Blocks::trapped_chest)
+    if (block == Blocks::chest || block == Blocks::ender_chest || block == Blocks::trapped_chest)
     {
-        return false;
+        std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(
+            typeid(LivingEntity), block->getShape(level->getBlockState(pos), level, pos)->move(pos.above()));
+        bool occupied = !entities->empty();
+        delete entities;
+        return occupied;
     }
-    const AABB* box = block->getShape(level->getBlockState(pos), level, pos)->move(pos.above());
-    std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(LivingEntity), box);
-    bool occupied = !entities->empty();
-    delete entities;
-    return occupied;
+    return false;
 }
 
 bool ChestBlock::isChestBlockedAt(Level* level, const BlockPos& pos)
@@ -417,7 +420,7 @@ bool ChestBlock::isChestBlockedAt(Level* level, const BlockPos& pos)
 boost::shared_ptr<LockableContainer> ChestBlock::getContainer(Level* level, const BlockPos& pos, bool force)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    bool isChest = blockEntity->GetType() == BlockEntityType::CHEST;
+    bool isChest = eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType());
     if (!isChest)
     {
         return boost::shared_ptr<LockableContainer>();
@@ -435,29 +438,27 @@ boost::shared_ptr<LockableContainer> ChestBlock::getContainer(Level* level, cons
     {
         const Direction* direction = directions.data[i];
         BlockPos neighbourPos = pos.relative(direction);
-        if (level->getBlockState(neighbourPos)->getBlock() != this)
+        Block* block = level->getBlockState(neighbourPos)->getBlock();
+        if (block == this)
         {
-            continue;
-        }
-        if (isChestBlockedAt(level, neighbourPos))
-        {
-            return boost::shared_ptr<LockableContainer>();
-        }
-        boost::shared_ptr<BlockEntity> neighbourEntity = level->getBlockEntity(neighbourPos);
-        bool neighbourIsChest = neighbourEntity->GetType() == BlockEntityType::CHEST;
-        if (!neighbourIsChest)
-        {
-            continue;
-        }
-        if (direction == Direction::WEST || direction == Direction::NORTH)
-        {
-            container = boost::shared_ptr<LockableContainer>(
-                new CompoundContainer(-1, boost::static_pointer_cast<ChestBlockEntity>(neighbourEntity), container));
-        }
-        else
-        {
-            container = boost::shared_ptr<LockableContainer>(
-                new CompoundContainer(-1, container, boost::static_pointer_cast<ChestBlockEntity>(neighbourEntity)));
+            if (isChestBlockedAt(level, neighbourPos))
+            {
+                return boost::shared_ptr<LockableContainer>();
+            }
+            boost::shared_ptr<BlockEntity> neighbourEntity = level->getBlockEntity(neighbourPos);
+            if (eTYPE_DERIVED_FROM(BlockEntityType::CHEST, neighbourEntity->GetType()))
+            {
+                if (direction == Direction::WEST || direction == Direction::NORTH)
+                {
+                    container = boost::shared_ptr<LockableContainer>(
+                        new CompoundContainer(-1, boost::static_pointer_cast<ChestBlockEntity>(neighbourEntity), container));
+                }
+                else
+                {
+                    container = boost::shared_ptr<LockableContainer>(
+                        new CompoundContainer(-1, container, boost::static_pointer_cast<ChestBlockEntity>(neighbourEntity)));
+                }
+            }
         }
     }
     return container;
@@ -502,12 +503,9 @@ int ChestBlock::getSignal(const BlockState* state, LevelSource* levelSource, con
     }
     int openCount = 0;
     boost::shared_ptr<BlockEntity> blockEntity = levelSource->getBlockEntity(pos);
-    bool isChest = blockEntity->GetType() == BlockEntityType::CHEST;
-    if (isChest)
+    if (eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType()))
     {
-        boost::shared_ptr<ChestBlockEntity> chest =
-            boost::dynamic_pointer_cast<ChestBlockEntity>(blockEntity);
-        openCount = chest->mOpenCount;
+        openCount = boost::dynamic_pointer_cast<ChestBlockEntity>(blockEntity)->mOpenCount;
     }
     return Mth::clamp(openCount, Block::SIGNAL_NONE, Block::SIGNAL_MAX);
 }
@@ -558,12 +556,14 @@ unsigned int ChestBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolti
 
 const BlockState* ChestBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    return state->setValue(FACING, rotation->rotate(state->getValue(FACING)));
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 const BlockState* ChestBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(FACING)));
+    DirectionProperty* facing = FACING;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 BlockStateDefinition* ChestBlock::createBlockStateDefinition()

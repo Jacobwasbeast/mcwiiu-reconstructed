@@ -122,7 +122,7 @@ void MonsterEggBlock::blockStaticCtor()
         {
             values.insert(Variant::VALUES[i]);
         }
-        property = EnumProperty<Variant*>::create(name, typeid(Variant*), values, filter);
+        property = EnumProperty<Variant*>::create(name, typeid(Variant), values, filter);
     }
     VARIANT = property;
 }

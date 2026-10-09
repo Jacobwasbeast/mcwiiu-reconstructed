@@ -24,12 +24,12 @@
 #include "game/ui/BlockTooltipDataHolder.hpp"
 #include "game/core/InteractionResult.hpp"
 #include <boost/pointer_cast.hpp>
-static AbstractProperty<bool>* gJukeboxHasRecord = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"has_record"));
+AbstractProperty<bool>* JukeboxBlock::HAS_RECORD = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"has_record"));
 JukeboxBlock::JukeboxBlock()
     : BaseEntityBlock(Material::WOOD, MaterialColor::DIRT)
 {
     DerivedInit();
-    registerDefaultState(mStateDefinition->any()->setValue(gJukeboxHasRecord, false));
+    registerDefaultState(mStateDefinition->any()->setValue(HAS_RECORD, false));
 }
 
 boost::shared_ptr<BlockEntity> JukeboxBlock::newBlockEntity(Level* level, int)
@@ -47,7 +47,7 @@ void JukeboxBlock::addDataWalkers(DataFixerUpper* fixer)
 
 bool JukeboxBlock::TestUse(Level*, const BlockPos&, const BlockState* state, boost::shared_ptr<Player>)
 {
-    return state->getValue(gJukeboxHasRecord);
+    return state->getValue(HAS_RECORD);
 }
 void JukeboxBlock::dropRecording(Level* level, const BlockPos& pos, const BlockState*)
 {
@@ -63,7 +63,7 @@ void JukeboxBlock::dropRecording(Level* level, const BlockPos& pos, const BlockS
         return;
     }
 
-    bool isJukebox = blockEntity->GetType() == BlockEntityType::JUKEBOX;
+    bool isJukebox = eTYPE_DERIVED_FROM(BlockEntityType::JUKEBOX, blockEntity->GetType());
 
     if (!isJukebox)
     {
@@ -98,10 +98,11 @@ bool JukeboxBlock::use(Level* level, const BlockPos& pos, const BlockState* stat
                        boost::shared_ptr<Player> player, InteractionHand::EInteractionHand,
                        const Direction*, float, float, float, bool clientSide)
 {
-    if (!clientSide && state->getValue(gJukeboxHasRecord))
+    if (!clientSide && state->getValue(HAS_RECORD))
     {
         dropRecording(level, pos, state);
-        level->setBlock(pos, state->setValue(gJukeboxHasRecord, false), Block::UPDATE_CLIENTS, false);
+        state = state->setValue(HAS_RECORD, false);
+        level->setBlock(pos, state, Block::UPDATE_CLIENTS, false);
         return true;
     }
 
@@ -113,23 +114,20 @@ void JukeboxBlock::setRecord(Level* level, const BlockPos& pos, const BlockState
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
 
-    if (blockEntity.get() != NULL)
+    if (blockEntity.get() == NULL || !eTYPE_DERIVED_FROM(BlockEntityType::JUKEBOX, blockEntity->GetType()))
     {
-        bool isJukebox = blockEntity->GetType() == BlockEntityType::JUKEBOX;
-
-        if (isJukebox)
-        {
-            not_null_ptr<ItemInstance> stored(new ItemInstance(record->getItem(), 1, record->getAuxValue()));
-
-            if (record->hasTag())
-            {
-                stored->setTag(record->getTag()->copy());
-            }
-
-            boost::static_pointer_cast<Entity>(blockEntity)->setRecord(stored);
-            level->setBlock(pos, state->setValue(gJukeboxHasRecord, true), Block::UPDATE_CLIENTS, false);
-        }
+        return;
     }
+
+    not_null_ptr<ItemInstance> stored(new ItemInstance(record->getItem(), 1, record->getAuxValue()));
+
+    if (record->hasTag())
+    {
+        stored->setTag(record->getTag()->copy());
+    }
+
+    boost::static_pointer_cast<Entity>(blockEntity)->setRecord(stored);
+    level->setBlock(pos, state->setValue(HAS_RECORD, true), Block::UPDATE_CLIENTS, false);
 }
 
 void JukeboxBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
@@ -149,9 +147,7 @@ int JukeboxBlock::getAnalogOutputSignal(const BlockState*, Level* level, const B
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
 
-    bool isJukebox = blockEntity->GetType() == BlockEntityType::JUKEBOX;
-
-    if (isJukebox)
+    if (eTYPE_DERIVED_FROM(BlockEntityType::JUKEBOX, blockEntity->GetType()))
     {
         not_null_ptr<ItemInstance> record = boost::static_pointer_cast<Entity>(blockEntity)->getRecord();
 
@@ -161,7 +157,7 @@ int JukeboxBlock::getAnalogOutputSignal(const BlockState*, Level* level, const B
         }
     }
 
-    return 0;
+    return SIGNAL_NONE;
 }
 EBlockRenderShape JukeboxBlock::getRenderShape(const BlockState*)
 {
@@ -170,21 +166,20 @@ EBlockRenderShape JukeboxBlock::getRenderShape(const BlockState*)
 
 const BlockState* JukeboxBlock::getBlockState(int data)
 {
-    return defaultBlockState()->setValue(gJukeboxHasRecord, data > 0);
+    return defaultBlockState()->setValue(HAS_RECORD, data > 0);
 }
 
 int JukeboxBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(gJukeboxHasRecord) ? 1 : 0;
+    return state->getValue(HAS_RECORD) ? 1 : 0;
 }
 unsigned int JukeboxBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Fail)
     {
-        const not_null_ptr<ItemInstance>& heldItem = tooltipData.m_pItemInstance;
-        if (!heldItem->isEmpty())
+        if (!tooltipData.m_pItemInstance->isEmpty())
         {
-            int id = Item::VALIDgetId(heldItem->getItem());
+            int id = Item::VALIDgetId(tooltipData.m_pItemInstance->getItem());
 
             if (id >= 2256 && id < 2268 && tooltipData.m_bUseBlock && tooltipData.m_bCanPlace)
             {
@@ -195,7 +190,7 @@ unsigned int JukeboxBlock::GetInteractTooltip(const BlockTooltipDataHolder& tool
         }
     }
 
-    if (tooltipData.m_pBlockState->getValue(gJukeboxHasRecord) && tooltipData.m_bCanPlace)
+    if (tooltipData.m_pBlockState->getValue(HAS_RECORD) && tooltipData.m_bCanPlace)
     {
         return IDS_TOOLTIPS_EJECT;
     }
@@ -205,7 +200,7 @@ unsigned int JukeboxBlock::GetInteractTooltip(const BlockTooltipDataHolder& tool
 
 BlockStateDefinition* JukeboxBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { gJukeboxHasRecord };
+    static const Property* properties[] = { HAS_RECORD };
     return new BlockStateDefinition(this, properties, 1);
 }
 

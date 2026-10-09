@@ -226,7 +226,7 @@ int FlowerPotBlock::getColor(LevelSource* levelSource, const BlockPos& pos, int 
     boost::shared_ptr<BlockEntity> blockEntity = levelSource->getBlockEntity(pos);
     if (blockEntity != NULL)
     {
-        bool isFlowerPot = blockEntity->GetType() == BlockEntityType::FLOWER_POT;
+        bool isFlowerPot = eTYPE_DERIVED_FROM(BlockEntityType::FLOWER_POT, blockEntity->GetType());
         if (isFlowerPot)
         {
             Item* item = boost::static_pointer_cast<FlowerPotBlockEntity>(blockEntity)->getPlantItem();
@@ -244,7 +244,7 @@ boost::shared_ptr<FlowerPotBlockEntity> FlowerPotBlock::getFlowerPotEntity(Level
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     if (blockEntity != NULL)
     {
-        bool isFlowerPot = blockEntity->GetType() == BlockEntityType::FLOWER_POT;
+        bool isFlowerPot = eTYPE_DERIVED_FROM(BlockEntityType::FLOWER_POT, blockEntity->GetType());
         if (isFlowerPot)
         {
             return boost::dynamic_pointer_cast<FlowerPotBlockEntity>(blockEntity);
@@ -390,7 +390,7 @@ const BlockState* FlowerPotBlock::fillVirtualBlockStateProperties(const BlockSta
     boost::shared_ptr<BlockEntity> blockEntity = levelSource->getBlockEntity(pos);
     if (blockEntity != NULL)
     {
-        bool isFlowerPot = blockEntity->GetType() == BlockEntityType::FLOWER_POT;
+        bool isFlowerPot = eTYPE_DERIVED_FROM(BlockEntityType::FLOWER_POT, blockEntity->GetType());
         if (isFlowerPot)
         {
             boost::shared_ptr<FlowerPotBlockEntity> pot = boost::static_pointer_cast<FlowerPotBlockEntity>(blockEntity);
@@ -473,7 +473,7 @@ unsigned int FlowerPotBlock::GetInteractTooltip(const BlockTooltipDataHolder& to
     bool plantEmpty = false;
     if (blockEntity != NULL)
     {
-        bool isFlowerPot = blockEntity->GetType() == BlockEntityType::FLOWER_POT;
+        bool isFlowerPot = eTYPE_DERIVED_FROM(BlockEntityType::FLOWER_POT, blockEntity->GetType());
         if (isFlowerPot)
         {
             not_null_ptr<ItemInstance> plant = boost::dynamic_pointer_cast<FlowerPotBlockEntity>(blockEntity)->getPlantItemInstance();

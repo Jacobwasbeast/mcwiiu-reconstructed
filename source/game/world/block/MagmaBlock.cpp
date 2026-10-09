@@ -35,7 +35,7 @@ const MaterialColor* MagmaBlock::getMapColor(const BlockState*, LevelSource*, co
 void MagmaBlock::stepOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity)
 {
     if (!entity->isFireImmune()
-        && (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+        && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
         && !EnchantmentHelper::hasFrostWalker(boost::static_pointer_cast<LivingEntity>(entity)))
     {
         entity->hurt(DamageSource::HOT_FLOOR, 1.0f);
@@ -83,12 +83,16 @@ void MagmaBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Rand
 void MagmaBlock::neighborChanged(const BlockState*, Level* level, const BlockPos& pos,
                                  Block*, const BlockPos& fromPos)
 {
-    if (fromPos == pos.above() && level->isEmptyWaterBlock(pos.above()))
-        level->addToTickNextTick(pos, this, level->mRandom->nextInt(2, 3));
+    if (fromPos == pos.above())
+    {
+        if (level->isEmptyWaterBlock(pos.above()))
+            level->addToTickNextTick(pos, this, level->mRandom->nextInt(2, 3));
+    }
 
     Block* block = level->getBlock(fromPos);
+    bool ice = block == Blocks::ice;
     if (block == Blocks::water || block == Blocks::flowing_water
-        || block == Blocks::snow_layer || block == Blocks::ice)
+        || block == Blocks::snow_layer || ice)
         addToTickQueue(level, pos, level->mRandom);
 }
 
@@ -100,16 +104,16 @@ int MagmaBlock::getTickDelay(Level*)
 void MagmaBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*)
 {
     Block* blockAbove = level->getBlock(pos.above().above());
-    bool emptyWater = level->isEmptyWaterBlock(pos.above());
-    if (emptyWater && blockAbove == Blocks::air)
+    if (level->isEmptyWaterBlock(pos.above()) && blockAbove == Blocks::air)
     {
         int liquidLevel = level->getLiquidBlockState(pos.above())->getValue(LiquidBlock::LEVEL);
-        if (!level->isEmptyWaterBlock(pos.above()) || liquidLevel != 0)
+        if (!level->isEmptyWaterBlock(pos.above()))
+            return;
+        if (liquidLevel != 0)
             return;
     }
 
-    BubbleColumnSegment* bubbleColumnSegment = static_cast<BubbleColumnSegment*>(Blocks::bubble_column_segment);
-    bubbleColumnSegment->addBubbleColumnSegment(level, pos);
+    static_cast<BubbleColumnSegment*>(Blocks::bubble_column_segment)->addBubbleColumnSegment(level, pos);
 }
 
 bool MagmaBlock::isValidSpawn(const BlockState*, boost::shared_ptr<Entity> entity)

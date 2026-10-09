@@ -52,14 +52,12 @@ void EndRodBlock::DerivedInit()
 
 const BlockState* EndRodBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    DirectionProperty* property = DirectionalBlock::FACING_PROPERTY;
-    return state->setValue(property, rotation->rotate(state->getValue(property)));
+    return state->setValue(DirectionalBlock::FACING_PROPERTY, rotation->rotate(state->getTypedBoxed(DirectionalBlock::FACING_PROPERTY)->getValue()));
 }
 
 const BlockState* EndRodBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    DirectionProperty* property = DirectionalBlock::FACING_PROPERTY;
-    return state->setValue(property, mirror->mirror(state->getValue(property)));
+    return state->setValue(DirectionalBlock::FACING_PROPERTY, mirror->mirror(state->getTypedBoxed(DirectionalBlock::FACING_PROPERTY)->getValue()));
 }
 
 const AABB* EndRodBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)

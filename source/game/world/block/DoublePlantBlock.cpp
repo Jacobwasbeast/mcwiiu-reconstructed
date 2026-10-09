@@ -139,7 +139,7 @@ void DoublePlantBlock::blockStaticCtor()
             {
                 variants.insert(VARIANTS[i]);
             }
-            variantProperty = EnumProperty<Variant*>::create(name, typeid(Variant*), variants,
+            variantProperty = EnumProperty<Variant*>::create(name, typeid(Variant), variants,
                                                              Predicates<Variant*>::alwaysTrue);
         }
         VARIANT = variantProperty;
@@ -149,7 +149,7 @@ void DoublePlantBlock::blockStaticCtor()
         boost::unordered_set<Half*> halves;
         halves.insert(HALVES[0]);
         halves.insert(HALVES[1]);
-        HALF = EnumProperty<Half*>::create(name, typeid(Half*), halves,
+        HALF = EnumProperty<Half*>::create(name, typeid(Half), halves,
                                            Predicates<Half*>::alwaysTrue);
     }
     FACING = HorizontalDirectionalBlock::FACING_PROPERTY;

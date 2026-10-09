@@ -40,7 +40,7 @@ ChestBlockEntity::ChestBlockEntity(ChestBlock::Type type, bool isBonusChest)
 
 ChestBlockEntity::~ChestBlockEntity()
 {
-    delete[] mItems.items;
+    delete[] mItems.items.data;
 }
 
 BlockEntity* ChestBlockEntity::create()
@@ -52,14 +52,14 @@ void ChestBlockEntity::_init(bool isBonusChest)
 {
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(27, ItemInstance::EMPTY);
     mIsBonusChest = isBonusChest;
-    mRefilledAnimationTicks = -1;
-    mOpen = 0.0F;
-    mOpenOld = 0.0F;
-    mOpenCount = 0;
-    mTickCount = 0;
-    mNeighborsChecked = false;
-    mCachedType = -1;
     mNeighbourRemoved = false;
+    mOpen = 0.0F;
+    mNeighborsChecked = false;
+    mTickCount = 0;
+    mOpenOld = 0.0F;
+    mCachedType = -1;
+    mRefilledAnimationTicks = -1;
+    mOpenCount = 0;
 }
 
 std::wstring ChestBlockEntity::getName()
@@ -116,35 +116,33 @@ bool ChestBlockEntity::stillValid(boost::shared_ptr<Player> player)
 
 void ChestBlockEntity::startOpen(boost::shared_ptr<Player> player)
 {
-    if (player->isSpectator())
+    if (!player->isSpectator())
     {
-        return;
-    }
-    if (mOpenCount < 0)
-    {
-        mOpenCount = 0;
-    }
-    ++mOpenCount;
-    mLevel->blockEvent(mPos, getBlock(), 1, mOpenCount);
-    mLevel->updateNeighborsAt(mPos, getBlock(), false);
-    if (getType() != 1)
-    {
-        mLevel->updateNeighborsAt(mPos.below(), getBlock(), false);
+        if (mOpenCount < 0)
+        {
+            mOpenCount = 0;
+        }
+        ++mOpenCount;
+        mLevel->blockEvent(mPos, getBlock(), 1, mOpenCount);
+        mLevel->updateNeighborsAt(mPos, getBlock(), false);
+        if (getType() != 1)
+        {
+            mLevel->updateNeighborsAt(mPos.below(), getBlock(), false);
+        }
     }
 }
 
 void ChestBlockEntity::stopOpen(boost::shared_ptr<Player> player)
 {
-    if (player->isSpectator() || dynamic_cast<ChestBlock*>(getBlock()) == NULL)
+    if (!player->isSpectator() && dynamic_cast<ChestBlock*>(getBlock()) != NULL)
     {
-        return;
-    }
-    --mOpenCount;
-    mLevel->blockEvent(mPos, getBlock(), 1, mOpenCount);
-    mLevel->updateNeighborsAt(mPos, getBlock(), false);
-    if (getType() != 1)
-    {
-        mLevel->updateNeighborsAt(mPos.below(), getBlock(), false);
+        --mOpenCount;
+        mLevel->blockEvent(mPos, getBlock(), 1, mOpenCount);
+        mLevel->updateNeighborsAt(mPos, getBlock(), false);
+        if (getType() != 1)
+        {
+            mLevel->updateNeighborsAt(mPos.below(), getBlock(), false);
+        }
     }
 }
 
@@ -178,7 +176,7 @@ void ChestBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
     mCustomName->loadFromTag(tag);
-    delete[] mItems.items;
+    delete[] mItems.items.data;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     if (!tryLoadLootTable(tag))
     {
@@ -362,57 +360,27 @@ void ChestBlockEntity::tick()
         {
             boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(*it);
             ChestMenu* menu = dynamic_cast<ChestMenu*>(player->mContainerMenu);
-            if (menu == NULL)
+            if (menu != NULL)
             {
-                continue;
-            }
-            boost::shared_ptr<Container> container = menu->getContainer();
-            boost::shared_ptr<Container> self =
-                boost::dynamic_pointer_cast<Container>(shared_from_this());
-            boost::shared_ptr<CompoundContainer> compound =
-                boost::dynamic_pointer_cast<CompoundContainer>(container);
-            if (container == self || (compound.get() != NULL && compound->contains(self)))
-            {
-                ++mOpenCount;
+                boost::shared_ptr<Container> container = menu->getContainer();
+                boost::shared_ptr<Container> self =
+                    boost::dynamic_pointer_cast<Container>(shared_from_this());
+                boost::shared_ptr<CompoundContainer> compound =
+                    boost::dynamic_pointer_cast<CompoundContainer>(container);
+                if (container == self || (compound.get() != NULL && compound->contains(self)))
+                {
+                    ++mOpenCount;
+                }
             }
         }
         delete entities;
     }
 
     mOpenOld = mOpen;
-    if (mOpenCount > 0 && mOpen == 0.0f && !mNorthNeighbour.lock() && !mWestNeighbour.lock())
+    float speed = 0.1f;
+    if (mOpenCount > 0 && mOpen == 0.0f)
     {
-        double soundX = (double)x + 0.5;
-        double soundZ = (double)z + 0.5;
-        if (mSouthNeighbour.lock())
-        {
-            soundZ += 0.5;
-        }
-        if (mEastNeighbour.lock())
-        {
-            soundX += 0.5;
-        }
-        mLevel->playSound(boost::shared_ptr<Player>(), soundX, (double)y + 0.5, soundZ,
-                          SoundEvents::CHEST_OPEN, SoundSource::eSoundSource_Blocks, 0.2f,
-                          mLevel->mRandom->nextFloat() * 0.1f + 0.9f, 16.0f);
-    }
-
-    if ((mOpenCount == 0 && mOpen > 0.0f) || (mOpenCount > 0 && mOpen < 1.0f))
-    {
-        float previous = mOpen;
-        if (mOpenCount > 0)
-        {
-            mOpen += 0.1f;
-        }
-        else
-        {
-            mOpen -= 0.1f;
-        }
-        if (mOpen > 1.0f)
-        {
-            mOpen = 1.0f;
-        }
-        if (mOpen < 0.5f && previous >= 0.5f && !mNorthNeighbour.lock() && !mWestNeighbour.lock())
+        if (!mNorthNeighbour.lock() && !mWestNeighbour.lock())
         {
             double soundX = (double)x + 0.5;
             double soundZ = (double)z + 0.5;
@@ -425,8 +393,44 @@ void ChestBlockEntity::tick()
                 soundX += 0.5;
             }
             mLevel->playSound(boost::shared_ptr<Player>(), soundX, (double)y + 0.5, soundZ,
-                              SoundEvents::CHEST_CLOSE, SoundSource::eSoundSource_Blocks, 0.2f,
+                              SoundEvents::CHEST_OPEN, SoundSource::eSoundSource_Blocks, 0.2f,
                               mLevel->mRandom->nextFloat() * 0.1f + 0.9f, 16.0f);
+        }
+    }
+
+    if ((mOpenCount == 0 && mOpen > 0.0f) || (mOpenCount > 0 && mOpen < 1.0f))
+    {
+        float previous = mOpen;
+        if (mOpenCount > 0)
+        {
+            mOpen += speed;
+        }
+        else
+        {
+            mOpen -= speed;
+        }
+        if (mOpen > 1.0f)
+        {
+            mOpen = 1.0f;
+        }
+        if (mOpen < 0.5f && previous >= 0.5f)
+        {
+            if (!mNorthNeighbour.lock() && !mWestNeighbour.lock())
+            {
+                double soundX = (double)x + 0.5;
+                double soundZ = (double)z + 0.5;
+                if (mSouthNeighbour.lock())
+                {
+                    soundZ += 0.5;
+                }
+                if (mEastNeighbour.lock())
+                {
+                    soundX += 0.5;
+                }
+                mLevel->playSound(boost::shared_ptr<Player>(), soundX, (double)y + 0.5, soundZ,
+                                  SoundEvents::CHEST_CLOSE, SoundSource::eSoundSource_Blocks, 0.2f,
+                                  mLevel->mRandom->nextFloat() * 0.1f + 0.9f, 16.0f);
+            }
         }
         if (mOpen < 0.0f)
         {
@@ -461,11 +465,14 @@ int ChestBlockEntity::getType()
 {
     if (mCachedType == -1)
     {
-        if (mLevel == NULL || dynamic_cast<ChestBlock*>(getBlock()) == NULL)
+        if (mLevel != NULL && dynamic_cast<ChestBlock*>(getBlock()) != NULL)
+        {
+            mCachedType = ((ChestBlock*)getBlock())->mType;
+        }
+        else
         {
             return 0;
         }
-        mCachedType = ((ChestBlock*)getBlock())->mType;
     }
     return mCachedType;
 }
@@ -477,7 +484,7 @@ NonNullList<not_null_ptr<ItemInstance> > ChestBlockEntity::getItems()
 
 void ChestBlockEntity::setItems(NonNullList<not_null_ptr<ItemInstance> > items)
 {
-    delete[] mItems.items;
+    delete[] mItems.items.data;
     mItems = items;
 }
 
@@ -502,10 +509,7 @@ CompoundTag* ChestBlockEntity::getUpdateTagForPistonMovement()
 {
     CompoundTag* tag = new CompoundTag();
     save(tag);
-    for (unsigned int i = 0; i < mItems.size(); ++i)
-    {
-        mItems[i] = mItems.defaultValue;
-    }
+    mItems.clear();
     return tag;
 }
 

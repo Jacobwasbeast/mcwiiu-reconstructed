@@ -115,7 +115,7 @@ void TntBlock::entityInside(Level* level, const BlockPos& pos, const BlockState*
     if (Minecraft::InMiniGame(eMiniGameId_Battle, true) || level->mIsClientSide)
         return;
 
-    if ((entity->GetType() & EntityType::ARROW) == EntityType::ARROW && entity->isOnFire())
+    if (eTYPE_DERIVED_FROM(EntityType::ARROW, entity->GetType()) && entity->isOnFire())
     {
         boost::shared_ptr<Arrow> arrow = boost::dynamic_pointer_cast<Arrow>(entity);
         if (arrow->mOwner == NULL)
@@ -126,7 +126,7 @@ void TntBlock::entityInside(Level* level, const BlockPos& pos, const BlockState*
         {
             const BlockState* primedState = level->getBlockState(pos)->setValue(EXPLODE, true);
             destroy(level, pos, primedState,
-                (arrow->mOwner->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+                eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, arrow->mOwner->GetType())
                     ? boost::dynamic_pointer_cast<LivingEntity>(arrow->mOwner)
                     : boost::shared_ptr<LivingEntity>());
         }

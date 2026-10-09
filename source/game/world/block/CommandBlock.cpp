@@ -30,18 +30,11 @@ void CommandBlock::blockStaticCtor()
 }
 
 CommandBlock::CommandBlock(const MaterialColor* materialColor, Mode mode)
-    : BaseEntityBlock(Material::METAL, materialColor),
-      mFrontIcon(NULL),
-      mBackIcon(NULL),
-      mConditionalIcon(NULL),
-      mMode(mode)
+    : BaseEntityBlock(Material::METAL, materialColor)
 {
     DerivedInit();
-    TypedBoxed<const Direction*> facing(Direction::NORTH);
-    TypedBoxed<bool> conditional(false);
-    const BlockState* state = mStateDefinition->any();
-    state = state->setBoxedValue(FACING, &facing);
-    registerDefaultState(state->setBoxedValue(CONDITIONAL, &conditional));
+    registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::NORTH)->setValue(CONDITIONAL, false));
+    mMode = mode;
 }
 
 unsigned int CommandBlock::getMode()
@@ -92,22 +85,17 @@ bool CommandBlock::hasAnalogOutputSignal(const BlockState*)
 int CommandBlock::getAnalogOutputSignal(const BlockState*, Level* level, const BlockPos& pos)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity)
+    if (blockEntity != NULL && eTYPE_DERIVED_FROM(BlockEntityType::COMMAND, blockEntity->GetType()))
     {
-        bool isCommandBlock = blockEntity->GetType() == BlockEntityType::COMMAND;
-        if (isCommandBlock)
-        {
-            boost::shared_ptr<CommandBlockEntity> commandBlockEntity = boost::dynamic_pointer_cast<CommandBlockEntity>(blockEntity);
-            return static_cast<int>(commandBlockEntity->getCommandBlock()->getSuccessCount());
-        }
+        return static_cast<int>(boost::dynamic_pointer_cast<CommandBlockEntity>(blockEntity)->getCommandBlock()->getSuccessCount());
     }
-    return 0;
+    return Block::SIGNAL_NONE;
 }
 
 void CommandBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState*, boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance> itemInstance)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    bool isCommandBlock = blockEntity->GetType() == BlockEntityType::COMMAND;
+    bool isCommandBlock = eTYPE_DERIVED_FROM(BlockEntityType::COMMAND, blockEntity->GetType());
     if (!isCommandBlock)
     {
         return;
@@ -133,7 +121,7 @@ const BlockState* CommandBlock::getBlockState(int data)
 {
     return defaultBlockState()
         ->setValue(FACING, Direction::from3DDataValue(data & 7))
-        ->setValue(CONDITIONAL, (data & 8) != 0);
+        ->setValue(CONDITIONAL, (data & 8) > 0);
 }
 
 int CommandBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -148,14 +136,14 @@ int CommandBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* CommandBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    AbstractProperty<const Direction*>* property = FACING;
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(property)));
-    return state->setBoxedValue(property, &facing);
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 const BlockState* CommandBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(FACING)));
+    AbstractProperty<const Direction*>* facing = FACING;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 BlockStateDefinition* CommandBlock::createBlockStateDefinition()
@@ -184,15 +172,15 @@ TextureAtlasSprite* CommandBlock::getTexture(const Direction* direction, const B
     {
         return mBackIcon;
     }
-    if (direction == facing->getOpposite())
+    if (direction != facing->getOpposite())
     {
-        return mFrontIcon;
+        if (state->getValue(CONDITIONAL))
+        {
+            return mConditionalIcon;
+        }
+        return mIcon;
     }
-    if (state->getValue(CONDITIONAL))
-    {
-        return mConditionalIcon;
-    }
-    return mIcon;
+    return mFrontIcon;
 }
 
 void CommandBlock::registerIcons(IconRegister* iconRegister)

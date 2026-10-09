@@ -27,11 +27,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/item/ItemId.hpp"
 
-static const std::wstring ICON_NAME_D(L"kelp_d");
-static const std::wstring ICON_NAME_C(L"kelp_c");
-static const std::wstring ICON_NAME_A(L"kelp_a");
-static const std::wstring ICON_NAME_B(L"kelp_b");
-static const std::wstring ICON_NAME_TOP_A(L"kelp_top_a");
+static const std::wstring KELP_ICON_NAMES[5] = { L"kelp_d", L"kelp_c", L"kelp_a", L"kelp_b", L"kelp_top_a" };
 
 AbstractProperty<int>* KelpBlock::AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 15));
 static const AABB* KELP_SHAPE = AABB::newPermanent(0.125, 0.0, 0.125, 0.875, 1.0, 0.875);
@@ -42,36 +38,25 @@ KelpBlock::KelpBlock()
     DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(AGE, 0));
     setTicking(true);
-    mIcons[0] = NULL;
-    mIcons[1] = NULL;
-    mIcons[2] = NULL;
-    mIcons[3] = NULL;
-    mIcons[4] = NULL;
+    mFullBlock = false;
+    memset(mIcons, 0, sizeof(mIcons));
 }
 
 bool KelpBlock::isValidBonemealTarget(Level* level, const BlockPos& pos, const BlockState*, bool)
 {
-    int top = pos.y;
-    int bottom = top;
-    int lower = top - 4;
-    int above = top + 1;
-    int below = bottom - 1;
-    while (lower < below && below > 0 && level->getBlockId(pos.x, below, pos.z) == BlockId::KELP)
-    {
+    int bottom = pos.y;
+    int lower = bottom - 4;
+    int top = bottom + 1;
+    while (--bottom > lower && bottom > 0 && level->getBlockId(pos.x, bottom, pos.z) == BlockId::KELP)
         --lower;
-        bottom = below;
-        below = bottom - 1;
-    }
 
-    int upper = top + 4;
-    while (above < upper && above < level->getMaxBuildHeight()
-           && level->getBlockId(pos.x, above, pos.z) == BlockId::KELP)
-    {
+    for (int upper = top + 3;
+         top < upper && top < level->getMaxBuildHeight() && level->getBlockId(pos.x, top, pos.z) == BlockId::KELP;
+         ++top)
         ++upper;
-        ++above;
-    }
 
-    top = above - 1;
+    ++bottom;
+    --top;
     int growth = 14 - (top - bottom);
     return growth > 0;
 }
@@ -83,39 +68,32 @@ bool KelpBlock::isBonemealSuccess(Level*, Random*, const BlockPos&, const BlockS
 
 void KelpBlock::performBonemeal(Level* level, Random*, const BlockPos& pos, const BlockState*)
 {
-    int top = pos.y;
-    int bottom = top;
-    int lower = top - 4;
-    int above = top + 1;
-    int below = bottom - 1;
-    while (lower < below && below > 0 && level->getBlockId(pos.x, below, pos.z) == BlockId::KELP)
-    {
+    int bottom = pos.y;
+    int lower = bottom - 4;
+    int top = bottom + 1;
+    while (--bottom > lower && bottom > 0 && level->getBlockId(pos.x, bottom, pos.z) == BlockId::KELP)
         --lower;
-        bottom = below;
-        below = bottom - 1;
-    }
 
-    int upper = top + 4;
-    while (above < upper && above < level->getMaxBuildHeight()
-           && level->getBlockId(pos.x, above, pos.z) == BlockId::KELP)
-    {
+    for (int upper = top + 3;
+         top < upper && top < level->getMaxBuildHeight() && level->getBlockId(pos.x, top, pos.z) == BlockId::KELP;
+         ++top)
         ++upper;
-        ++above;
-    }
-    top = above - 1;
 
+    ++bottom;
+    --top;
     int growth = 14 - (top - bottom);
-    if (growth <= 0)
-        return;
-    if (growth > 2)
-        growth = 2;
-
-    for (int y = top + 1; y <= top + growth; ++y)
+    if (growth > 0)
     {
-        BlockPos target(pos.x, y, pos.z);
-        if (!mayPlace(level, target))
-            return;
-        level->setBlockAndData(pos.x, y, pos.z, BlockId::KELP, 0, Block::UPDATE_ALL);
+        if (growth > 2)
+            growth = 2;
+
+        for (int y = top + 1; y <= top + growth; ++y)
+        {
+            BlockPos target(pos.x, y, pos.z);
+            if (!mayPlace(level, target))
+                return;
+            level->setBlockAndData(pos.x, y, pos.z, BlockId::KELP, 0, Block::UPDATE_ALL);
+        }
     }
 }
 
@@ -188,7 +166,7 @@ void KelpBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
         int height = 1;
         while (level->getBlockId(pos.x, pos.y - height, pos.z) == BlockId::KELP)
             ++height;
-        if (height <= 14)
+        if (height < 15)
         {
             int age = level->getBlockData(pos.x, pos.y, pos.z);
             if (age == 15)
@@ -203,8 +181,12 @@ void KelpBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
         }
     }
 
-    if (shouldGrow(level, pos) && !level->mIsClientSide && !canSurvive(level, pos, state))
-        level->addToTickNextTick(pos, this, 1);
+    if (shouldGrow(level, pos))
+    {
+        bool clientSide = level->mIsClientSide;
+        if (!clientSide && !canSurvive(level, pos, state))
+            level->addToTickNextTick(pos, this, 1);
+    }
 }
 
 void KelpBlock::onPlace(Level* level, const BlockPos& pos, const BlockState*)
@@ -242,12 +224,15 @@ bool KelpBlock::mayPlace(Level* level, const BlockPos& pos)
         if (HalfSlabBlock::isBottomSlab(below->convertBlockStateToLegacyData(belowState)))
             return false;
     }
-    return level->isUnderWater(pos, 0x102, 0);
+    if (level->isUnderWater(pos, BlockId::KELP, 0))
+        return true;
+    return false;
 }
 
 void KelpBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos, Block*, const BlockPos&)
 {
-    if (!level->mIsClientSide && !canSurvive(level, pos, state))
+    bool clientSide = level->mIsClientSide;
+    if (!clientSide && !canSurvive(level, pos, state))
         level->addToTickNextTick(pos, this, 1);
 }
 
@@ -330,9 +315,6 @@ TextureAtlasSprite* KelpBlock::getTexture(const Direction* direction, const Bloc
 
 void KelpBlock::registerIcons(IconRegister* iconRegister)
 {
-    mIcons[0] = iconRegister->registerIcon(ICON_NAME_D);
-    mIcons[1] = iconRegister->registerIcon(ICON_NAME_C);
-    mIcons[2] = iconRegister->registerIcon(ICON_NAME_A);
-    mIcons[3] = iconRegister->registerIcon(ICON_NAME_B);
-    mIcons[4] = iconRegister->registerIcon(ICON_NAME_TOP_A);
+    for (int i = 0; i < 5; ++i)
+        mIcons[i] = iconRegister->registerIcon(KELP_ICON_NAMES[i]);
 }

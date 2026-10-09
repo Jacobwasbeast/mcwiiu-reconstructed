@@ -1,6 +1,7 @@
 #include "game/world/block/FallingBlockEntity.hpp"
 #include "game/core/EntityType.hpp"
 
+#include <algorithm>
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
@@ -94,7 +95,7 @@ void FallingBlockEntity::setStartPos(const BlockPos& pos)
 
 void FallingBlockEntity::defineSynchedData()
 {
-    mEntityData->createDateItem(DATA_START_POS, BlockPos::ZERO);
+    mEntityData->define(DATA_START_POS, BlockPos::ZERO);
 }
 
 bool FallingBlockEntity::isAttackable()
@@ -160,7 +161,8 @@ void FallingBlockEntity::tick()
         BlockPos pos(shared_from_this());
         bool concretePowder = mBlockState->getBlock() == Blocks::concrete_powder;
         bool inWater = concretePowder && mLevel->getBlockState(pos)->getMaterial() == Material::WATER;
-        if (concretePowder && mXd * mXd + mYd * mYd + mZd * mZd > 1.0)
+        double speedSq = mXd * mXd + mYd * mYd + mZd * mZd;
+        if (concretePowder && speedSq > 1.0)
         {
             HitResult* hitResult = mLevel->clip(Vec3::newTemp(mXo, mYo, mZo), Vec3::newTemp(mX, mY, mZ), true);
             if (hitResult != NULL)
@@ -174,19 +176,7 @@ void FallingBlockEntity::tick()
             }
         }
 
-        if (!mOnGround && !inWater)
-        {
-            if (mTime > 100 && !mLevel->mIsClientSide && (pos.y < 1 || pos.y > 256))
-            {
-                if (mDropItem && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
-                {
-                    not_null_ptr<ItemInstance> dropped(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(mBlockState)));
-                    spawnAtLocation(dropped, 0.0f);
-                }
-                remove();
-            }
-        }
-        else
+        if (mOnGround || inWater)
         {
             const BlockState* landedOn = mLevel->getBlockState(pos);
             if (!inWater && FallingBlock::isFree(mLevel->getBlockState(BlockPos(mX, mY - 0.01, mZ))))
@@ -222,10 +212,11 @@ void FallingBlockEntity::tick()
                                 boost::unordered_map<std::wstring, Tag*>* tags = mBlockEntityData->getAllTagsMap();
                                 for (boost::unordered_map<std::wstring, Tag*>::iterator it = tags->begin(); it != tags->end(); ++it)
                                 {
+                                    Tag* tag = it->second;
                                     if (it->first.compare(L"x") != 0 && it->first.compare(L"y") != 0
                                         && it->first.compare(L"z") != 0)
                                     {
-                                        blockEntityTag->put(it->first, it->second->copy());
+                                        blockEntityTag->put(it->first, tag->copy());
                                     }
                                 }
                                 delete tags;
@@ -236,18 +227,24 @@ void FallingBlockEntity::tick()
                     }
                     else if (mDropItem && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
                     {
-                        not_null_ptr<ItemInstance> dropped(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(mBlockState)));
-                        spawnAtLocation(dropped, 0.0f);
+                        spawnAtLocation(boost::shared_ptr<ItemInstance>(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(mBlockState))), 0.0f);
                     }
                 }
-                else
+                else if (dynamic_cast<FallingBlock*>(block) != NULL)
                 {
-                    FallingBlock* fallingBlock = dynamic_cast<FallingBlock*>(block);
-                    if (fallingBlock != NULL)
-                    {
-                        fallingBlock->onBroken(mLevel, pos);
-                    }
+                    static_cast<FallingBlock*>(block)->onBroken(mLevel, pos);
                 }
+            }
+        }
+        else
+        {
+            if (mTime > 100 && !mLevel->mIsClientSide && (pos.y < 1 || pos.y > 256))
+            {
+                if (mDropItem && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
+                {
+                    spawnAtLocation(boost::shared_ptr<ItemInstance>(new ItemInstance(block, 1, block->getSpawnResourcesAuxValue(mBlockState))), 0.0f);
+                }
+                remove();
             }
         }
     }
@@ -283,8 +280,7 @@ void FallingBlockEntity::causeFallDamage(float fallDistance, float damageMultipl
     const DamageSource* damageSource = anvil ? DamageSource::ANVIL : DamageSource::FALLING_BLOCK;
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
-        int damage = Mth::floor((float)distance * mFallHurtAmount);
-        (*it)->hurt(damageSource, (float)(damage > mFallHurtMax ? mFallHurtMax : damage));
+        (*it)->hurt(damageSource, (float)std::min(Mth::floor((float)distance * mFallHurtAmount), mFallHurtMax));
     }
     delete entities;
 
@@ -297,12 +293,7 @@ void FallingBlockEntity::causeFallDamage(float fallDistance, float damageMultipl
         }
         else
         {
-            const BlockState* damagedState;
-            {
-                TypedBoxed<int> boxedDamage(anvilDamage);
-                damagedState = mBlockState->setBoxedValue(AnvilBlock::DAMAGE, &boxedDamage);
-            }
-            mBlockState = damagedState;
+            mBlockState = mBlockState->setValue(AnvilBlock::DAMAGE, anvilDamage);
         }
     }
 }
@@ -313,7 +304,7 @@ void FallingBlockEntity::addDataWalkers(DataFixerUpper*)
 
 void FallingBlockEntity::addAdditonalSaveData(CompoundTag* tag)
 {
-    Block* block = mBlockState == NULL ? Blocks::air : mBlockState->getBlock();
+    Block* block = mBlockState != NULL ? mBlockState->getBlock() : Blocks::air;
     ResourceLocation location = Block::blockRegistry->getKey(block);
     tag->putString(L"Block", location.toString());
     tag->putByte(L"Data", (unsigned char)block->convertBlockStateToLegacyData(mBlockState));
@@ -344,7 +335,7 @@ void FallingBlockEntity::readAdditionalSaveData(CompoundTag* tag)
         mBlockState = Block::byId(tag->getByte(std::wstring(L"Tile")))->getBlockState(data);
     }
 
-    mTime = (unsigned char)tag->getInt(std::wstring(L"Time"));
+    mTime = tag->getInt(std::wstring(L"Time")) & 0xff;
 
     Block* block = mBlockState->getBlock();
     if (tag->contains(std::wstring(L"HurtEntities"), 99))

@@ -68,17 +68,18 @@ bool OcelotSitOnBlockGoal::isValidTarget(Level* level, const BlockPos& pos)
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
         boost::shared_ptr<ChestBlockEntity> chest =
             boost::dynamic_pointer_cast<ChestBlockEntity>(level->getBlockEntity(pos));
-        return chest && chest->mOpenCount < 1;
+        if (chest != NULL && chest->mOpenCount < 1)
+        {
+            return true;
+        }
     }
-
-    if (block == Blocks::lit_furnace)
+    else if (block == Blocks::lit_furnace)
     {
         return true;
     }
-
-    if (block == Blocks::bed)
+    else if (block == Blocks::bed && state->getValue(BedBlock::PART) != &gBedHead)
     {
-        return state->getValue(BedBlock::PART) != &gBedHead;
+        return true;
     }
 
     return false;

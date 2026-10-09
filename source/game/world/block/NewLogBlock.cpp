@@ -32,13 +32,11 @@ void NewLogBlock::blockStaticCtor()
     EnumProperty<PlanksBlock::Variant*>* variant;
     {
         boost::unordered_set<PlanksBlock::Variant*> values;
-        values.insert(PlanksBlock::Variant::OAK);
-        values.insert(PlanksBlock::Variant::SPRUCE);
-        values.insert(PlanksBlock::Variant::BIRCH);
-        values.insert(PlanksBlock::Variant::JUNGLE);
-        values.insert(PlanksBlock::Variant::ACACIA);
-        values.insert(PlanksBlock::Variant::DARK_OAK);
-        variant = EnumProperty<PlanksBlock::Variant*>::create(name, typeid(PlanksBlock::Variant*), values, filter);
+        for (int i = 0; i < 6; ++i)
+        {
+            values.insert(PlanksBlock::Variant::BY_DATA[i]);
+        }
+        variant = EnumProperty<PlanksBlock::Variant*>::create(name, typeid(PlanksBlock::Variant), values, filter);
     }
     VARIANT = variant;
 }
@@ -53,15 +51,18 @@ NewLogBlock::NewLogBlock()
 const MaterialColor* NewLogBlock::getMapColor(const BlockState* state, LevelSource*, const BlockPos&)
 {
     PlanksBlock::Variant* variant = state->getValue(VARIANT);
-    if (state->getValue(AXIS)->getId() == 1)
+    LogBlock::LogAxis* axis = state->getValue(AXIS);
+    if (axis->getId() != 1)
     {
-        return variant->getMaterialColor();
+        switch (variant->getData())
+        {
+        default:
+            return MaterialColor::STONE;
+        case 5:
+            return PlanksBlock::Variant::DARK_OAK->getMaterialColor();
+        }
     }
-    if (variant->getData() == 5)
-    {
-        return PlanksBlock::Variant::DARK_OAK->getMaterialColor();
-    }
-    return MaterialColor::STONE;
+    return variant->getMaterialColor();
 }
 
 const BlockState* NewLogBlock::getBlockState(int data)
@@ -70,31 +71,36 @@ const BlockState* NewLogBlock::getBlockState(int data)
     switch (data & 0xC)
     {
     case 0:
-        return state->setValue(AXIS, Y);
+        state = state->setValue(AXIS, Y);
+        break;
     case 4:
-        return state->setValue(AXIS, X);
+        state = state->setValue(AXIS, X);
+        break;
     case 8:
-        return state->setValue(AXIS, Z);
+        state = state->setValue(AXIS, Z);
+        break;
     default:
-        return state->setValue(AXIS, NONE);
+        state = state->setValue(AXIS, NONE);
     }
+    return state;
 }
 
 int NewLogBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    int data = state->getValue(VARIANT)->getData() - 4;
-    unsigned int axis = state->getValue(AXIS)->getId();
-    if (axis == 0)
+    int data = state->getValue(VARIANT)->getData();
+    data -= 4;
+    LogBlock::LogAxis* axis = state->getValue(AXIS);
+    switch (axis->getId())
     {
+    case 0:
         data |= 4;
-    }
-    else if (axis == 2)
-    {
+        break;
+    case 2:
         data |= 8;
-    }
-    else if (axis == 3)
-    {
+        break;
+    case 3:
         data |= 12;
+        break;
     }
     return data;
 }
@@ -128,36 +134,32 @@ bool NewLogBlock::isStrippable()
 
 const BlockState* NewLogBlock::getStrippedBlock(const BlockState* state)
 {
-    const BlockState* stripped;
-    int woodType = getWoodType(state);
-    if (woodType == 4)
+    const BlockState* stripped = NULL;
+    switch (getWoodType(state))
     {
+    case 4:
         stripped = Blocks::stripped_log_acacia->defaultBlockState();
-    }
-    else
-    {
-        if (woodType != 5)
-        {
-            return state;
-        }
+        break;
+    case 5:
         stripped = Blocks::stripped_log_dark_oak->defaultBlockState();
+        break;
     }
-    if (stripped == NULL)
+    if (stripped != NULL)
     {
-        return state;
+        LogBlock::LogAxis* axis = state->getValue(AXIS);
+        switch (axis->getId())
+        {
+        case 0:
+            stripped = stripped->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::X);
+            break;
+        case 2:
+            stripped = stripped->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::Z);
+            break;
+        case 1:
+            stripped = stripped->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::Y);
+            break;
+        }
+        return stripped;
     }
-    unsigned int axisId = state->getValue(AXIS)->getId();
-    if (axisId == 0)
-    {
-        stripped = stripped->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::X);
-    }
-    else if (axisId == 1)
-    {
-        stripped = stripped->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::Y);
-    }
-    else if (axisId == 2)
-    {
-        stripped = stripped->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::Z);
-    }
-    return stripped;
+    return state;
 }

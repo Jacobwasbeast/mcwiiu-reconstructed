@@ -27,9 +27,7 @@ WallSignBlock::WallSignBlock()
     : SignBlock()
 {
     DerivedInit();
-    const BlockState* state = mStateDefinition->any();
-    TypedBoxed<const Direction*> facing(Direction::NORTH);
-    registerDefaultState(state->setBoxedValue(FACING, &facing));
+    registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::NORTH));
 }
 
 void WallSignBlock::blockStaticCtor()
@@ -41,10 +39,12 @@ const AABB* WallSignBlock::getShape(const BlockState* state, LevelSource*, const
 {
     switch (state->getValue(FACING)->get3DDataValue())
     {
-    case 3: return WALL_SIGN_SHAPE_SOUTH;
-    case 4: return WALL_SIGN_SHAPE_WEST;
-    case 5: return WALL_SIGN_SHAPE_EAST;
-    default: return WALL_SIGN_SHAPE_NORTH;
+    case Direction::eDirection_North:
+    default:
+        return WALL_SIGN_SHAPE_NORTH;
+    case Direction::eDirection_South: return WALL_SIGN_SHAPE_SOUTH;
+    case Direction::eDirection_West: return WALL_SIGN_SHAPE_WEST;
+    case Direction::eDirection_East: return WALL_SIGN_SHAPE_EAST;
     }
 }
 
@@ -66,9 +66,7 @@ const BlockState* WallSignBlock::getBlockState(int data)
     const Direction* facing = Direction::from3DDataValue(data);
     if (facing->getAxis() == Direction::Axis::Y)
         facing = Direction::NORTH;
-    const BlockState* state = defaultBlockState();
-    TypedBoxed<const Direction*> boxedFacing(facing);
-    return state->setBoxedValue(FACING, &boxedFacing);
+    return defaultBlockState()->setValue(FACING, facing);
 }
 
 int WallSignBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -78,23 +76,18 @@ int WallSignBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* WallSignBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(FACING)));
-    return state->setBoxedValue(FACING, &facing);
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 const BlockState* WallSignBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(FACING)));
+    DirectionProperty* facing = FACING;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 BlockStateDefinition* WallSignBlock::createBlockStateDefinition()
 {
-    static const Property* properties[1];
-    static bool initialized = false;
-    if (!initialized)
-    {
-        initialized = true;
-        properties[0] = FACING;
-    }
+    static const Property* properties[] = { FACING };
     return new BlockStateDefinition(this, properties, 1);
 }

@@ -98,97 +98,97 @@ void ChorusFlowerBlock::tick(Level* level, const BlockPos& pos, const BlockState
     if (!canSurvive(level, pos, NULL))
     {
         level->destroyBlock(pos, true);
-        return;
     }
-
-    BlockPos above = pos.above();
-    if (!level->isEmptyBlock(above) || above.y >= 256)
+    else
     {
-        return;
-    }
-
-    int age = state->getValue(CHORUS_AGE);
-    if (isDead(age) || random->nextInt(1) != 0)
-    {
-        return;
-    }
-
-    bool rooted = false;
-    const BlockState* belowState = level->getBlockState(pos.below());
-    Block* belowBlock = belowState->getBlock();
-    bool growUp = true;
-
-    if (belowBlock != Blocks::end_stone)
-    {
-        if (belowBlock == Blocks::chorus_plant)
+        BlockPos above = pos.above();
+        if (level->isEmptyBlock(above) && above.y < 256)
         {
-            int stemHeight = 1;
-            Block* support = NULL;
-            for (int i = 0; i < 4; ++i)
+            int age = state->getValue(CHORUS_AGE);
+            if (!isDead(age) && random->nextInt(1) == 0)
             {
-                support = level->getBlock(pos.below(stemHeight + 1));
-                if (support != Blocks::chorus_plant)
+                bool growUp = false;
+                bool rooted = false;
+                const BlockState* belowState = level->getBlockState(pos.below());
+                Block* belowBlock = belowState->getBlock();
+                if (belowBlock == Blocks::end_stone)
                 {
-                    break;
+                    growUp = true;
                 }
-                ++stemHeight;
-            }
-            if (support == Blocks::end_stone)
-            {
-                rooted = true;
-            }
-
-            int limit = 4;
-            if (rooted)
-            {
-                ++limit;
-            }
-            if (stemHeight > 1 && random->nextInt(limit) < stemHeight)
-            {
-                growUp = false;
-            }
-        }
-        else if (belowState->getMaterial() != Material::AIR)
-        {
-            growUp = false;
-        }
-    }
-
-    if (growUp && allNeighborsEmpty(level, above, NULL) && level->isEmptyBlock(pos.above(2)))
-    {
-        level->setBlock(pos, Blocks::chorus_plant->defaultBlockState(), Block::UPDATE_CLIENTS, false);
-        placeGrownFlower(level, above, age);
-        return;
-    }
-
-    if (age <= 4)
-    {
-        if (age < 4)
-        {
-            int branches = random->nextInt(4);
-            if (rooted)
-            {
-                ++branches;
-            }
-            bool grew = false;
-            for (int i = 0; i < branches; ++i)
-            {
-                const Direction* direction = Direction::Plane::HORIZONTAL->getRandomDirection(*random);
-                BlockPos branch = pos.relative(direction);
-                if (level->isEmptyBlock(branch) && level->isEmptyBlock(branch.below())
-                    && allNeighborsEmpty(level, branch, direction->getOpposite()))
+                else if (belowBlock == Blocks::chorus_plant)
                 {
-                    placeGrownFlower(level, branch, age + 1);
-                    grew = true;
+                    int stemHeight = 1;
+                    for (int i = 0; i < 4; ++i)
+                    {
+                        Block* support = level->getBlock(pos.below(stemHeight + 1));
+                        if (support == Blocks::chorus_plant)
+                        {
+                            ++stemHeight;
+                        }
+                        else
+                        {
+                            if (support == Blocks::end_stone)
+                            {
+                                rooted = true;
+                            }
+                            break;
+                        }
+                    }
+
+                    int limit = 4;
+                    if (rooted)
+                    {
+                        ++limit;
+                    }
+                    if (stemHeight < 2 || random->nextInt(limit) >= stemHeight)
+                    {
+                        growUp = true;
+                    }
+                }
+                else if (belowState->getMaterial() == Material::AIR)
+                {
+                    growUp = true;
+                }
+
+                if (growUp && allNeighborsEmpty(level, above, NULL) && level->isEmptyBlock(pos.above(2)))
+                {
+                    level->setBlock(pos, Blocks::chorus_plant->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                    placeGrownFlower(level, above, age);
+                }
+                else if (age < 4)
+                {
+                    int branches = random->nextInt(4);
+                    bool grew = false;
+                    if (rooted)
+                    {
+                        ++branches;
+                    }
+                    for (int i = 0; i < branches; ++i)
+                    {
+                        const Direction* direction = Direction::Plane::HORIZONTAL->getRandomDirection(*random);
+                        BlockPos branch = pos.relative(direction);
+                        if (level->isEmptyBlock(branch) && level->isEmptyBlock(branch.below())
+                            && allNeighborsEmpty(level, branch, direction->getOpposite()))
+                        {
+                            placeGrownFlower(level, branch, age + 1);
+                            grew = true;
+                        }
+                    }
+                    if (grew)
+                    {
+                        level->setBlock(pos, Blocks::chorus_plant->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                    }
+                    else
+                    {
+                        placeDeadFlower(level, pos);
+                    }
+                }
+                else if (age == 4)
+                {
+                    placeDeadFlower(level, pos);
                 }
             }
-            if (grew)
-            {
-                level->setBlock(pos, Blocks::chorus_plant->defaultBlockState(), Block::UPDATE_CLIENTS, false);
-                return;
-            }
         }
-        placeDeadFlower(level, pos);
     }
 }
 
@@ -216,27 +216,26 @@ bool ChorusFlowerBlock::canSurvive(Level* level, const BlockPos& pos, const Bloc
     {
         return true;
     }
-    if (below->getMaterial() != Material::AIR)
+    if (below->getMaterial() == Material::AIR)
     {
-        return false;
-    }
-
-    arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
-    const Direction** end = directions.data + directions.length;
-    int neighbors = 0;
-    for (const Direction** it = directions.data; it != end; ++it)
-    {
-        const BlockState* neighbor = level->getBlockState(pos.relative(*it));
-        if (neighbor->getBlock() == Blocks::chorus_plant)
+        int neighbors = 0;
+        arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+        const Direction** end = directions.data + directions.length;
+        for (const Direction** it = directions.data; it != end; ++it)
         {
-            ++neighbors;
+            const BlockState* neighbor = level->getBlockState(pos.relative(*it));
+            if (neighbor->getBlock() == Blocks::chorus_plant)
+            {
+                ++neighbors;
+            }
+            else if (neighbor->getMaterial() != Material::AIR)
+            {
+                return false;
+            }
         }
-        else if (neighbor->getMaterial() != Material::AIR)
-        {
-            return false;
-        }
+        return neighbors == 1;
     }
-    return neighbors == 1;
+    return false;
 }
 
 void ChorusFlowerBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, const BlockPos& pos,
@@ -293,17 +292,16 @@ void ChorusFlowerBlock::growTreeRecursive(Level* level, const BlockPos& pos, Ran
                 && level->isEmptyBlock(branch) && level->isEmptyBlock(branch.below())
                 && allNeighborsEmpty(level, branch, direction->getOpposite()))
             {
+                grew = true;
                 level->setBlock(branch, Blocks::chorus_plant->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                 growTreeRecursive(level, branch, random, origin, radius, depth + 1);
-                grew = true;
             }
         }
-        if (grew)
-        {
-            return;
-        }
     }
-    level->setBlock(pos.above(height), Blocks::chorus_flower->defaultBlockState()->setValue(CHORUS_AGE, 5), Block::UPDATE_CLIENTS, false);
+    if (!grew)
+    {
+        level->setBlock(pos.above(height), Blocks::chorus_flower->defaultBlockState()->setValue(CHORUS_AGE, 5), Block::UPDATE_CLIENTS, false);
+    }
 }
 
 void ChorusFlowerBlock::generatePlant(Level* level, BlockPos pos, Random* random, int radius)

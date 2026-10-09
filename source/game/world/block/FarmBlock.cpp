@@ -74,10 +74,15 @@ void FarmBlock::fallOn(Level* level, const BlockPos& pos, boost::shared_ptr<Enti
 {
     if (!level->mIsClientSide && level->mRandom->nextFloat() < fallDistance - 0.5f)
     {
-        if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
-            && ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER || level->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
-            && entity->mBbWidth * entity->mBbWidth * entity->mBbHeight > 0.512f)
-            turnToDirt(level, pos);
+        bool isLiving = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType());
+        if (isLiving)
+        {
+            bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType());
+            if (isPlayer || level->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
+            {
+                if (entity->mBbWidth * entity->mBbWidth * entity->mBbHeight > 0.512f) turnToDirt(level, pos);
+            }
+        }
     }
     Block::fallOn(level, pos, entity, fallDistance);
 }
@@ -85,7 +90,7 @@ void FarmBlock::fallOn(Level* level, const BlockPos& pos, boost::shared_ptr<Enti
 bool FarmBlock::isUnderCrops(Level* level, const BlockPos& pos)
 {
     Block* block = level->getBlockState(pos.above())->getBlock();
-    return block != NULL && (dynamic_cast<CropBlock*>(block) != NULL || dynamic_cast<StemBlock*>(block) != NULL);
+    return dynamic_cast<CropBlock*>(block) != NULL || dynamic_cast<StemBlock*>(block) != NULL;
 }
 
 bool FarmBlock::isNearWater(Level* level, const BlockPos& pos)
@@ -170,8 +175,8 @@ EBlockFaceShape FarmBlock::getBlockFaceShape(LevelSource*, const BlockState*, co
 
 TextureAtlasSprite* FarmBlock::getTexture(const Direction* direction, const BlockState* state)
 {
-    if (direction != Direction::UP) return Blocks::dirt->getTexture(direction);
-    return state->getValue(MOISTURE) > 0 ? mWetIcon : mDryIcon;
+    if (direction == Direction::UP) return state->getValue(MOISTURE) > 0 ? mWetIcon : mDryIcon;
+    return Blocks::dirt->getTexture(direction);
 }
 
 void FarmBlock::registerIcons(IconRegister* iconRegister)

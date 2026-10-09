@@ -12,6 +12,7 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/entity/mob/Entity.hpp"
 
+#include <algorithm>
 #include <typeinfo>
 #include <vector>
 
@@ -22,28 +23,22 @@ WeightedPressurePlateBlock::WeightedPressurePlateBlock(const std::wstring& name,
     : BasePressurePlateBlock(name, material, materialColor != NULL ? materialColor : material->getColor())
 {
     DerivedInit();
-    const BlockState* state = mStateDefinition->any();
-    const BlockState* defaultState;
-    {
-        TypedBoxed<int> power(0);
-        defaultState = state->setBoxedValue(POWER, &power);
-    }
-    registerDefaultState(defaultState);
+    registerDefaultState(mStateDefinition->any()->setValue(POWER, 0));
     mMaxWeight = maxWeight;
 }
 
 int WeightedPressurePlateBlock::getSignalStrength(Level* level, const BlockPos& pos)
 {
     std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(Entity), getSensitiveAABB(pos));
-    int count = static_cast<int>(entities->size());
-    if (count > mMaxWeight)
-        count = mMaxWeight;
+    int count = std::min(static_cast<int>(entities->size()), mMaxWeight);
     delete entities;
 
-    if (count <= 0)
-        return 0;
-
-    return Mth::ceil(static_cast<float>(count) / static_cast<float>(mMaxWeight) * 15.0f);
+    if (count > 0)
+    {
+        float weight = static_cast<float>(std::min(mMaxWeight, count)) / static_cast<float>(mMaxWeight);
+        return Mth::ceil(weight * static_cast<float>(SIGNAL_MAX));
+    }
+    return 0;
 }
 
 void WeightedPressurePlateBlock::playOnSound(Level* level, const BlockPos& pos)
@@ -65,8 +60,7 @@ int WeightedPressurePlateBlock::getSignalForState(const BlockState* state)
 
 const BlockState* WeightedPressurePlateBlock::setSignalForState(const BlockState* state, int signal)
 {
-    TypedBoxed<int> power(signal);
-    return state->setBoxedValue(POWER, &power);
+    return state->setValue(POWER, signal);
 }
 
 int WeightedPressurePlateBlock::getTickDelay(Level*)
@@ -76,9 +70,7 @@ int WeightedPressurePlateBlock::getTickDelay(Level*)
 
 const BlockState* WeightedPressurePlateBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    TypedBoxed<int> power(data);
-    return state->setBoxedValue(POWER, &power);
+    return defaultBlockState()->setValue(POWER, data);
 }
 
 int WeightedPressurePlateBlock::convertBlockStateToLegacyData(const BlockState* state)

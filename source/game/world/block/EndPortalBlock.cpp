@@ -91,7 +91,7 @@ void EndPortalBlock::entityInside(Level* level, const BlockPos& pos, const Block
         return;
 
     AABB* portalBox;
-    if ((entity->GetType() & EntityType::ARROW) == EntityType::ARROW)
+    if (eTYPE_DERIVED_FROM(EntityType::ARROW, entity->GetType()))
     {
         portalBox = AABB::newTemp(pos.x, pos.y, pos.z, pos.x + 1.0, pos.y + 1.0, pos.z + 1.0);
     }
@@ -107,7 +107,7 @@ void EndPortalBlock::entityInside(Level* level, const BlockPos& pos, const Block
                                           portalBox->mMaxX, portalBox->mMaxY, portalBox->mMaxZ))
         return;
 
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         int x = 0;
         int z = 0;

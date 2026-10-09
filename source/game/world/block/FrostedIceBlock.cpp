@@ -20,14 +20,7 @@ FrostedIceBlock::FrostedIceBlock()
     : IceBlock(true)
 {
     Block::DerivedInit();
-    const BlockState* state = mStateDefinition->any();
-    const BlockState* defaultState;
-    {
-        AbstractProperty<int>* property = AGE;
-        TypedBoxed<int> age(0);
-        defaultState = state->setBoxedValue(property, &age);
-    }
-    registerDefaultState(defaultState);
+    registerDefaultState(mStateDefinition->any()->setValue(AGE, 0));
     mIcon1 = NULL;
     mIcon2 = NULL;
     mIcon3 = NULL;

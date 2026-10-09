@@ -37,7 +37,7 @@ void NoteBlock::neighborChanged(const BlockState*, Level* level, const BlockPos&
 {
     bool powered = level->hasNeighborSignal(pos);
     boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-    if (entity->GetType() == BlockEntityType::MUSIC)
+    if (eTYPE_DERIVED_FROM(BlockEntityType::MUSIC, entity->GetType()))
     {
         boost::shared_ptr<MusicBlockEntity> music = boost::dynamic_pointer_cast<MusicBlockEntity>(entity);
         if (music->mPowered != powered)
@@ -66,7 +66,7 @@ bool NoteBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost:
     if (!level->mIsClientSide)
     {
         boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-        if (entity->GetType() == BlockEntityType::MUSIC)
+        if (eTYPE_DERIVED_FROM(BlockEntityType::MUSIC, entity->GetType()))
         {
             boost::shared_ptr<MusicBlockEntity> music = boost::dynamic_pointer_cast<MusicBlockEntity>(entity);
             music->tune();
@@ -81,7 +81,7 @@ void NoteBlock::attack(Level* level, const BlockPos& pos, boost::shared_ptr<Play
     if (!level->mIsClientSide)
     {
         boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-        if (entity->GetType() == BlockEntityType::MUSIC)
+        if (eTYPE_DERIVED_FROM(BlockEntityType::MUSIC, entity->GetType()))
         {
             boost::shared_ptr<MusicBlockEntity> music = boost::dynamic_pointer_cast<MusicBlockEntity>(entity);
             music->playNote(level, BlockPos(pos));
@@ -101,16 +101,19 @@ unsigned int NoteBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 unsigned int NoteBlock::GetHitTooltip(const BlockTooltipDataHolder& tooltipData)
 {
     MultiplayerLocalPlayer* player = tooltipData.m_pPlayer.operator->();
-    if (!tooltipData.m_bCanDestroy)
+    if (tooltipData.m_bCanDestroy)
     {
-        if (!Minecraft::InMiniGame(eMiniGameId_Lobby, true))
-            return IDS_NONE;
+        if (player->mAbilities.mInstabuild)
+        {
+            return IDS_TOOLTIPS_MINE;
+        }
+        return IDS_TOOLTIPS_PLAY;
     }
-    else if (player->mAbilities.mInstabuild)
+    if (Minecraft::InMiniGame(eMiniGameId_Lobby, true))
     {
-        return IDS_TOOLTIPS_MINE;
+        return IDS_TOOLTIPS_PLAY;
     }
-    return IDS_TOOLTIPS_PLAY;
+    return IDS_NONE;
 }
 
 const SoundEvent* NoteBlock::getInstrument(int instrument)
@@ -124,12 +127,11 @@ const SoundEvent* NoteBlock::getInstrument(int instrument)
 
 bool NoteBlock::triggerEvent(const BlockState*, Level* level, const BlockPos& pos, int instrument, int eventParam)
 {
-    double pitch = std::pow(2.0, (double)(eventParam - 12) / 12.0);
+    float pitch = (float)std::pow(2.0, (double)(eventParam - 12) / 12.0);
     level->playSound(boost::shared_ptr<Player>(), pos, getInstrument(instrument), SoundSource::eSoundSource_Records,
-                                 3.0f, (float)pitch, 64.0f);
-    arrayWithLength<int> params;
+                     3.0f, pitch, 64.0f);
     level->addParticle(PARTICLE_NOTE, (double)pos.x + 0.5, (double)pos.y + 1.2,
-                       (double)pos.z + 0.5, (double)eventParam / 24.0, 0.0, 0.0, params);
+                       (double)pos.z + 0.5, (double)eventParam / 24.0, 0.0, 0.0, arrayWithLength<int>());
     return true;
 }
 
@@ -152,5 +154,6 @@ void NoteBlock::blockStaticCtor()
         SoundEvents::NOTE_CHIME,
         SoundEvents::NOTE_XYLOPHONE
     };
-    noteBlockInstruments = std::vector<const SoundEvent*>(instruments, instruments + sizeof(instruments) / sizeof(instruments[0]));
+    std::vector<const SoundEvent*> instrumentList(instruments, instruments + sizeof(instruments) / sizeof(instruments[0]));
+    noteBlockInstruments = instrumentList;
 }

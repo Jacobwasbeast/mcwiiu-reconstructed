@@ -127,7 +127,7 @@ void HugeMushroomBlock::blockStaticCtor()
             values.insert(Variant::VALUES[i]);
         }
 
-        variant = EnumProperty<Variant*>::create(name, typeid(Variant*), values, filter);
+        variant = EnumProperty<Variant*>::create(name, typeid(Variant), values, filter);
     }
     VARIANT = variant;
 }

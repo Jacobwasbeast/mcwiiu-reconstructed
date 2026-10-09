@@ -140,13 +140,14 @@ const AABB* CocoaBlock::getShape(const BlockState* state, LevelSource*, const Bl
 
 const BlockState* CocoaBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    DirectionProperty* property = HorizontalDirectionalBlock::FACING_PROPERTY;
-    return state->setValue(property, rotation->rotate(state->getValue(property)));
+    return state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, rotation->rotate(state->getTypedBoxed(HorizontalDirectionalBlock::FACING_PROPERTY)->getValue()));
 }
 
 const BlockState* CocoaBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
+    DirectionProperty* facing = HorizontalDirectionalBlock::FACING_PROPERTY;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 void CocoaBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,

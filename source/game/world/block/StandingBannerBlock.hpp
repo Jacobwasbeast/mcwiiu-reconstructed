@@ -25,6 +25,8 @@ public:
     virtual const BlockState* getBlockState(int data);
     virtual int convertBlockStateToLegacyData(const BlockState* state);
     virtual BlockStateDefinition* createBlockStateDefinition();
+
+    static AbstractProperty<int>* ROTATION;
 };
 
 #endif

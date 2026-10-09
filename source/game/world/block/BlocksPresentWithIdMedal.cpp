@@ -16,8 +16,8 @@ float BlocksPresentWithIdMedal::GetScore(PlayerStats* playerStats) const
         PlayerStats::RoundStats* roundStats = playerStats->getRoundStats(round);
         int blockCount = 0;
 
-        std::set<int>::const_iterator it = mBlockIds.begin();
-        for (; it != mBlockIds.end(); ++it)
+        std::set<int>::const_iterator end = mBlockIds.end();
+        for (std::set<int>::const_iterator it = mBlockIds.begin(); it != end; ++it)
         {
             blockCount += roundStats->mBlocksPresent.mByBlock[*it];
         }

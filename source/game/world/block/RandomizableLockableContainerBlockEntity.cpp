@@ -118,11 +118,7 @@ int RandomizableLockableContainerBlockEntity::getContainerDataCount()
 void RandomizableLockableContainerBlockEntity::clearContent()
 {
     unpackLootTable(boost::shared_ptr<Player>());
-    NonNullList<not_null_ptr<ItemInstance> > items = getItems();
-    for (unsigned int slot = 0; slot < items.size(); ++slot)
-    {
-        items[slot] = items.defaultValue;
-    }
+    getItems().clear();
 }
 
 InteractionObject::NameData RandomizableLockableContainerBlockEntity::GetNetworkNameData()
@@ -153,10 +149,10 @@ void RandomizableLockableContainerBlockEntity::unpackLootTable(const boost::shar
     Random* random = mLootTableSeed == 0 ? new Random() : new Random(mLootTableSeed);
 
     LootTableContext::Builder* builder = new LootTableContext::Builder(static_cast<ServerLevel*>(mLevel));
-    builder->mThisEntity = boost::weak_ptr<Entity>(player);
+    builder->withLootedEntity(player);
     if (player)
     {
-        builder->mLuck = player->getLuck();
+        builder->withLuck(player->getLuck());
     }
     LootTableContext context = builder->build();
     lootTable->fill(this, random, context);

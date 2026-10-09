@@ -30,14 +30,7 @@ TorchBlock::TorchBlock()
     : Block(Material::DECORATION)
 {
     DerivedInit();
-    const BlockState* state = mStateDefinition->any();
-    DirectionProperty* property = FACING;
-    const BlockState* defaultState;
-    {
-        TypedBoxed<const Direction*> facing(Direction::UP);
-        defaultState = state->setBoxedValue(property, &facing);
-    }
-    registerDefaultState(defaultState);
+    registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::UP));
     setTicking(true);
 }
 
@@ -52,15 +45,15 @@ const AABB* TorchBlock::getShape(const BlockState* state, LevelSource*, const Bl
 {
     switch (state->getValue(FACING)->get3DDataValue())
     {
-    case 2: return TORCH_SHAPE_NORTH;
-    case 3: return TORCH_SHAPE_SOUTH;
-    case 4: return TORCH_SHAPE_WEST;
     case 5: return TORCH_SHAPE_EAST;
+    case 4: return TORCH_SHAPE_WEST;
+    case 3: return TORCH_SHAPE_SOUTH;
+    case 2: return TORCH_SHAPE_NORTH;
     default: return TORCH_SHAPE;
     }
 }
 
-const AABB* TorchBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&) { return NULL; }
+const AABB* TorchBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&) { return NULL_AABB; }
 bool TorchBlock::isSolidRender(const BlockState*) const { return false; }
 bool TorchBlock::isCubeShaped(const BlockState*) { return false; }
 bool TorchBlock::waterSpreadCausesSpawn() { return true; }
@@ -133,16 +126,15 @@ bool TorchBlock::checkDoPop(Level* level, const BlockPos& pos, const BlockState*
     const Direction* direction = state->getValue(FACING);
     Direction::Axis* axis = direction->getAxis();
     BlockPos supportPos = pos.relative(direction->getOpposite());
-    bool pop = false;
-    if (axis->isHorizontal() &&
-        level->getBlockState(supportPos)->getBlockFaceShape(level, supportPos, direction) != BLOCK_FACE_SOLID)
-        pop = true;
-    else if (axis->isVertical() && !canStandOn(level, supportPos))
-        pop = true;
-    if (!pop) return false;
-    spawnResources(level, pos, state, 0);
-    level->removeBlock(pos);
-    return true;
+    if ((axis->isHorizontal() &&
+         level->getBlockState(supportPos)->getBlockFaceShape(level, supportPos, direction) != BLOCK_FACE_SOLID) ||
+        (axis->isVertical() && !canStandOn(level, supportPos)))
+    {
+        spawnResources(level, pos, state, 0);
+        level->removeBlock(pos);
+        return true;
+    }
+    return false;
 }
 
 bool TorchBlock::checkCanSurvive(Level* level, const BlockPos& pos, const BlockState* state)
@@ -162,16 +154,19 @@ void TorchBlock::animateTick(const BlockState* state, Level* level, const BlockP
     double x = pos.x + 0.5;
     double y = pos.y + 0.7;
     double z = pos.z + 0.5;
+    double heightOffset = 0.22;
+    double wallOffset = 0.27;
     if (direction->getAxis()->isHorizontal())
     {
         const Direction* opposite = direction->getOpposite();
-        y += 0.22;
-        level->addParticle(PARTICLE_SMOKE, x + 0.27 * opposite->getStepX(), y, z + 0.27 * opposite->getStepZ(), 0.0, 0.0, 0.0, arrayWithLength<int>());
-        level->addParticle(PARTICLE_FLAME, x + 0.27 * opposite->getStepX(), y, z + 0.27 * opposite->getStepZ(), 0.0, 0.0, 0.0, arrayWithLength<int>());
-        return;
+        level->addParticle(PARTICLE_SMOKE, x + wallOffset * opposite->getStepX(), y + heightOffset, z + wallOffset * opposite->getStepZ(), 0.0, 0.0, 0.0, arrayWithLength<int>());
+        level->addParticle(PARTICLE_FLAME, x + wallOffset * opposite->getStepX(), y + heightOffset, z + wallOffset * opposite->getStepZ(), 0.0, 0.0, 0.0, arrayWithLength<int>());
     }
-    level->addParticle(PARTICLE_SMOKE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
-    level->addParticle(PARTICLE_FLAME, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
+    else
+    {
+        level->addParticle(PARTICLE_SMOKE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        level->addParticle(PARTICLE_FLAME, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
+    }
 }
 
 int TorchBlock::getRenderLayer() { return 0; }
@@ -181,18 +176,20 @@ const BlockState* TorchBlock::getBlockState(int data)
     const BlockState* state = defaultBlockState();
     switch (data)
     {
-    case 1: return state->setValue(FACING, Direction::EAST);
-    case 2: return state->setValue(FACING, Direction::WEST);
-    case 3: return state->setValue(FACING, Direction::SOUTH);
-    case 4: return state->setValue(FACING, Direction::NORTH);
-    default: return state->setValue(FACING, Direction::UP);
+    case 1: state = state->setValue(FACING, Direction::EAST); break;
+    case 2: state = state->setValue(FACING, Direction::WEST); break;
+    case 3: state = state->setValue(FACING, Direction::SOUTH); break;
+    case 4: state = state->setValue(FACING, Direction::NORTH); break;
+    default: state = state->setValue(FACING, Direction::UP); break;
     }
+    return state;
 }
 
 int TorchBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
+    const Direction* direction = state->getValue(FACING);
     int data;
-    switch (state->getValue(FACING)->get3DDataValue())
+    switch (direction->get3DDataValue())
     {
     case 2: data = 4; break;
     case 3: data = 3; break;
@@ -205,14 +202,14 @@ int TorchBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* TorchBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    DirectionProperty* property = FACING;
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(property)));
-    return state->setBoxedValue(property, &facing);
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 const BlockState* TorchBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(FACING)));
+    DirectionProperty* facing = FACING;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 BlockStateDefinition* TorchBlock::createBlockStateDefinition()

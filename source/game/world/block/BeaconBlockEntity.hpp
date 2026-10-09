@@ -92,7 +92,7 @@ public:
     static void staticCtor();
     virtual void tick();
     std::vector<BeaconBeamSection>* getBeamSections();
-    double getAndUpdateClientSideScale();
+    float getAndUpdateClientSideScale();
     virtual boost::shared_ptr<Packet> getUpdatePacket();
     virtual CompoundTag* getUpdateTag();
     virtual double getViewDistance();

@@ -24,8 +24,7 @@ void MinecartCommandBlock::staticCtor()
 
 void MinecartCommandBlock::addDataWalkers(DataFixerUpper* dataFixerUpper)
 {
-    std::wstring name(L"Control");
-    dataFixerUpper->addWalker(DataFixTypes::eDataFixTypes_Entity, new OverwritableWalker(EntityType::MINECART_COMMAND_BLOCK, name));
+    dataFixerUpper->addWalker(DataFixTypes::eDataFixTypes_Entity, new OverwritableWalker(EntityType::MINECART_COMMAND_BLOCK, L"Control"));
 }
 
 void MinecartCommandBlock::defineSynchedData()
@@ -130,8 +129,7 @@ Vec3* MinecartCommandBlock::MinecartBaseCommandBlock::getCommandSenderWorldPosit
 
 Level* MinecartCommandBlock::MinecartBaseCommandBlock::getCommandSenderWorld()
 {
-    boost::shared_ptr<MinecartCommandBlock> minecart(mMinecart.lock());
-    return minecart->mLevel;
+    return mMinecart.lock()->mLevel;
 }
 
 boost::shared_ptr<Entity> MinecartCommandBlock::MinecartBaseCommandBlock::getCommandSenderEntity()
@@ -142,6 +140,5 @@ boost::shared_ptr<Entity> MinecartCommandBlock::MinecartBaseCommandBlock::getCom
 
 MinecraftServer* MinecartCommandBlock::MinecartBaseCommandBlock::getServer()
 {
-    boost::shared_ptr<MinecartCommandBlock> minecart(mMinecart.lock());
-    return minecart->mLevel->getServer();
+    return mMinecart.lock()->mLevel->getServer();
 }

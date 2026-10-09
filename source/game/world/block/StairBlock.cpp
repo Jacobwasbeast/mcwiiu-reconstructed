@@ -705,7 +705,7 @@ bool StairBlock::isStairs(int data)
 
 const BlockState* StairBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    return state->setValue(FACING, rotation->rotate(state->getValue(FACING)));
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 const BlockState* StairBlock::mirror(const BlockState* state, Mirror* mirror)

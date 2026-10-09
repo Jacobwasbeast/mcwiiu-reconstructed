@@ -97,11 +97,7 @@ void MaterialTable::loadMaterialData(unsigned char* materialData, unsigned int m
 
         mMaterialShaders[material] = getMaterialShadersFromDataName(materialName);
     }
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
+    byteStream.reset();
 }
 
 MaterialTable::MaterialTable(const MaterialTable& materialTable, unsigned char* materialData, unsigned int materialDataLength)

@@ -17,7 +17,10 @@
 #include "game/util/Random.hpp"
 #include "game/world/block/BlockEntity.hpp"
 
-static Random gDispenserRandom;
+namespace
+{
+Random gDispenserRandom;
+}
 
 DispenserBlockEntity::DispenserBlockEntity()
     : mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(9, ItemInstance::EMPTY))
@@ -26,7 +29,7 @@ DispenserBlockEntity::DispenserBlockEntity()
 
 DispenserBlockEntity::~DispenserBlockEntity()
 {
-    delete[] mItems.items;
+    delete[] mItems.items.data;
 }
 
 BlockEntity* DispenserBlockEntity::create()
@@ -99,16 +102,13 @@ int DispenserBlockEntity::getRandomSlot()
         unpackLootTable(player);
     }
 
-    int count = 1;
     int selected = -1;
+    int count = 1;
     for (unsigned int slot = 0; slot < mItems.size(); ++slot)
     {
-        if (!mItems[slot]->isEmpty())
+        if (!mItems[slot]->isEmpty() && gDispenserRandom.nextInt(count++) == 0)
         {
-            if (gDispenserRandom.nextInt(count++) == 0)
-            {
-                selected = static_cast<int>(slot);
-            }
+            selected = static_cast<int>(slot);
         }
     }
     return selected;
@@ -136,7 +136,7 @@ void DispenserBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 void DispenserBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
-    delete[] mItems.items;
+    delete[] mItems.items.data;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     if (!tryLoadLootTable(tag))
     {
@@ -163,7 +163,7 @@ NonNullList<not_null_ptr<ItemInstance> > DispenserBlockEntity::getItems()
 
 void DispenserBlockEntity::setItems(NonNullList<not_null_ptr<ItemInstance> > items)
 {
-    delete[] mItems.items;
+    delete[] mItems.items.data;
     mItems = items;
 }
 
@@ -176,7 +176,7 @@ boost::shared_ptr<BlockEntity> DispenserBlockEntity::clone()
     {
         if (!mItems[slot]->isEmpty())
         {
-            result->mItems[slot] = mItems[slot]->copy();
+            result->mItems.set(slot, mItems[slot]->copy());
         }
     }
     return result;

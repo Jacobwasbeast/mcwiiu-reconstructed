@@ -126,8 +126,7 @@ void MobSpawnerBlockEntity::BlockEntityMobSpawner::setNextSpawnData(SpawnData* d
     BaseMobSpawner::setNextSpawnData(data);
     if (getLevel() != NULL)
     {
-        Level* level = mBlockEntity->getLevel();
-        const BlockState* state = level->getBlockState(getPos());
+        const BlockState* state = mBlockEntity->getLevel()->getBlockState(getPos());
         getLevel()->sendBlockUpdated(mBlockEntity->mPos, state, state, 4, true);
     }
 }

@@ -30,7 +30,7 @@ CauldronBlockEntity::CauldronBlockEntity()
 
 CauldronBlockEntity::~CauldronBlockEntity()
 {
-    delete[] mItems.items;
+    delete[] mItems.items.data;
 }
 
 BlockEntity* CauldronBlockEntity::create()
@@ -163,10 +163,7 @@ int CauldronBlockEntity::getContainerDataCount()
 
 void CauldronBlockEntity::clearContent()
 {
-    for (unsigned int i = 0; i < mItems.size(); ++i)
-    {
-        mItems[i] = mItems.defaultValue;
-    }
+    mItems.clear();
 }
 
 std::wstring CauldronBlockEntity::getPotionId() const { return mPotionId; }
@@ -253,7 +250,7 @@ void CauldronBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
     mCustomName->loadFromTag(tag);
-    delete[] mItems.items;
+    delete[] mItems.items.data;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     ContainerHelper::loadAllItems(tag, mItems);
     mPotionId = tag->getString(L"PotionId");

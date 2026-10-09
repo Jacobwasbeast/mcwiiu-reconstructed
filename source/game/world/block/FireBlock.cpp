@@ -30,6 +30,9 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
+const std::wstring FireBlock::TEXTURE_FIRST = L"fire_0";
+const std::wstring FireBlock::TEXTURE_SECOND = L"fire_1";
+
 AbstractProperty<int>* FireBlock::AGE = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"age", 0, 15));
 AbstractProperty<bool>* FireBlock::NORTH = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"north"));
 AbstractProperty<bool>* FireBlock::EAST = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"east"));
@@ -76,11 +79,10 @@ const BlockState* FireBlock::fillVirtualBlockStateProperties(const BlockState* s
         ->setValue(UP, canBurn(levelSource, pos.above()));
 }
 
-FireBlock* FireBlock::setFlammable(Block* block, int flameOdds, int burnOdds)
+void FireBlock::setFlammable(Block* block, int flameOdds, int burnOdds)
 {
     mFlameOdds[block] = flameOdds;
     mBurnOdds[block] = burnOdds;
-    return this;
 }
 
 void FireBlock::staticCtor()
@@ -149,9 +151,7 @@ int FireBlock::getFireOdds(Level* level, const BlockPos& pos)
     int odds = 0;
     for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
     {
-        int flameOdds = getFlameOdds(level->getBlockState(pos.relative(*it))->getBlock());
-        if (odds < flameOdds)
-            odds = flameOdds;
+        odds = std::max(getFlameOdds(level->getBlockState(pos.relative(*it))->getBlock()), odds);
     }
     return odds;
 }
@@ -328,61 +328,72 @@ void FireBlock::animateTick(const BlockState*, Level* level, const BlockPos& pos
                               SoundSource::eSoundSource_Blocks, 1.0f + random->nextFloat(),
                               random->nextFloat() * 0.7f + 0.3f, false, 16.0f);
 
-    if (!level->getBlockState(pos.below())->isTopSolidBlocking()
-        && !static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.below()))
+    if (level->getBlockState(pos.below())->isTopSolidBlocking()
+        || static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.below()))
     {
-        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.west()))
+        for (int i = 0; i < 3; ++i)
         {
-            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble() * 0.1f,
-                               pos.y + random->nextDouble(), pos.z + random->nextDouble(),
-                               0.0, 0.0, 0.0, arrayWithLength<int>());
-            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble() * 0.1f,
-                               pos.y + random->nextDouble(), pos.z + random->nextDouble(),
-                               0.0, 0.0, 0.0, arrayWithLength<int>());
-        }
-        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.east()))
-        {
-            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + 1 - random->nextDouble() * 0.1f,
-                               pos.y + random->nextDouble(), pos.z + random->nextDouble(),
-                               0.0, 0.0, 0.0, arrayWithLength<int>());
-            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + 1 - random->nextDouble() * 0.1f,
-                               pos.y + random->nextDouble(), pos.z + random->nextDouble(),
-                               0.0, 0.0, 0.0, arrayWithLength<int>());
-        }
-        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.north()))
-        {
-            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
-                               pos.y + random->nextDouble(), pos.z + random->nextDouble() * 0.1f,
-                               0.0, 0.0, 0.0, arrayWithLength<int>());
-            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
-                               pos.y + random->nextDouble(), pos.z + random->nextDouble() * 0.1f,
-                               0.0, 0.0, 0.0, arrayWithLength<int>());
-        }
-        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.south()))
-        {
-            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
-                               pos.y + random->nextDouble(), pos.z + 1 - random->nextDouble() * 0.1f,
-                               0.0, 0.0, 0.0, arrayWithLength<int>());
-            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
-                               pos.y + random->nextDouble(), pos.z + 1 - random->nextDouble() * 0.1f,
-                               0.0, 0.0, 0.0, arrayWithLength<int>());
-        }
-        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.above()))
-        {
-            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
-                               pos.y + 1 - random->nextDouble() * 0.1f, pos.z + random->nextDouble(),
-                               0.0, 0.0, 0.0, arrayWithLength<int>());
-            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(),
-                               pos.y + 1 - random->nextDouble() * 0.1f, pos.z + random->nextDouble(),
-                               0.0, 0.0, 0.0, arrayWithLength<int>());
+            double x = pos.x + random->nextDouble();
+            double y = pos.y + random->nextDouble() * 0.5 + 0.5;
+            double z = pos.z + random->nextDouble();
+            level->addParticle(PARTICLE_LARGE_SMOKE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
         }
     }
     else
     {
-        for (int i = 0; i < 3; ++i)
+        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.west()))
         {
-            level->addParticle(PARTICLE_LARGE_SMOKE, pos.x + random->nextDouble(), pos.y + random->nextDouble() * 0.5 + 0.5,
-                               pos.z + random->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>());
+            for (int i = 0; i < 2; ++i)
+            {
+                double x = pos.x + random->nextDouble() * 0.1f;
+                double y = pos.y + random->nextDouble();
+                double z = pos.z + random->nextDouble();
+                level->addParticle(PARTICLE_LARGE_SMOKE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
+            }
+        }
+
+        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.east()))
+        {
+            for (int i = 0; i < 2; ++i)
+            {
+                double x = pos.x + 1 - random->nextDouble() * 0.1f;
+                double y = pos.y + random->nextDouble();
+                double z = pos.z + random->nextDouble();
+                level->addParticle(PARTICLE_LARGE_SMOKE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
+            }
+        }
+
+        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.north()))
+        {
+            for (int i = 0; i < 2; ++i)
+            {
+                double x = pos.x + random->nextDouble();
+                double y = pos.y + random->nextDouble();
+                double z = pos.z + random->nextDouble() * 0.1f;
+                level->addParticle(PARTICLE_LARGE_SMOKE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
+            }
+        }
+
+        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.south()))
+        {
+            for (int i = 0; i < 2; ++i)
+            {
+                double x = pos.x + random->nextDouble();
+                double y = pos.y + random->nextDouble();
+                double z = pos.z + 1 - random->nextDouble() * 0.1f;
+                level->addParticle(PARTICLE_LARGE_SMOKE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
+            }
+        }
+
+        if (static_cast<FireBlock*>(Blocks::fire)->canBurn(level, pos.above()))
+        {
+            for (int i = 0; i < 2; ++i)
+            {
+                double x = pos.x + random->nextDouble();
+                double y = pos.y + 1 - random->nextDouble() * 0.1f;
+                double z = pos.z + random->nextDouble();
+                level->addParticle(PARTICLE_LARGE_SMOKE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
+            }
         }
     }
 }
@@ -416,8 +427,8 @@ TextureAtlasSprite* FireBlock::getTextureLayer(int layer) { return mFireIcons[la
 
 void FireBlock::registerIcons(IconRegister* iconRegister)
 {
-    mFireIcons[0] = iconRegister->registerIcon(L"fire_0");
-    mFireIcons[1] = iconRegister->registerIcon(L"fire_1");
+    mFireIcons[0] = iconRegister->registerIcon(TEXTURE_FIRST);
+    mFireIcons[1] = iconRegister->registerIcon(TEXTURE_SECOND);
 }
 
 EBlockRenderShape FireBlock::getRenderShape(const BlockState*) { return BLOCK_RENDER_FIRE; }

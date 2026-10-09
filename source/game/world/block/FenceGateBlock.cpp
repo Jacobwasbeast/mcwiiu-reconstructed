@@ -75,13 +75,14 @@ const BlockState* FenceGateBlock::fillVirtualBlockStateProperties(const BlockSta
 
 const BlockState* FenceGateBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    return state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY,
-                           rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
+    return state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, rotation->rotate(state->getTypedBoxed(HorizontalDirectionalBlock::FACING_PROPERTY)->getValue()));
 }
 
 const BlockState* FenceGateBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
+    DirectionProperty* facing = HorizontalDirectionalBlock::FACING_PROPERTY;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 bool FenceGateBlock::mayPlace(Level* level, const BlockPos& pos)

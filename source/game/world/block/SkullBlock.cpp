@@ -43,14 +43,9 @@ bool isWitherSkull(BlockInWorld* block);
 
 bool isWitherSkull(BlockInWorld* block)
 {
-    bool result = false;
-    if (block->getState() != NULL && block->getState()->getBlock() == Blocks::skull)
-    {
-        if (block->getEntity()->GetType() == BlockEntityType::SKULL
-            && boost::dynamic_pointer_cast<SkullBlockEntity>(block->getEntity())->getSkullType() == 1)
-            result = true;
-    }
-    return result;
+    return block->getState() != NULL && block->getState()->getBlock() == Blocks::skull
+        && eTYPE_DERIVED_FROM(BlockEntityType::SKULL, block->getEntity()->GetType())
+        && boost::dynamic_pointer_cast<SkullBlockEntity>(block->getEntity())->getSkullType() == 1;
 }
 
 DirectionProperty* SkullBlock::FACING = NULL;
@@ -67,16 +62,14 @@ SkullBlock::SkullBlock()
     : BaseEntityBlock(Material::DECORATION)
 {
     Block::DerivedInit();
-    const BlockState* state = mStateDefinition->any();
-    state = state->setValue(FACING, Direction::NORTH);
-    registerDefaultState(state->setValue(NODROP, false));
+    registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::NORTH)->setValue(NODROP, false));
     mWitherBase = NULL;
     mWitherFull = NULL;
 }
 
 boost::shared_ptr<BlockEntity> SkullBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<SkullBlockEntity> entity = boost::shared_ptr<SkullBlockEntity>(new SkullBlockEntity());
+    boost::shared_ptr<BlockEntity> entity = boost::shared_ptr<SkullBlockEntity>(new SkullBlockEntity());
     entity->setLevel(level);
     return entity;
 }
@@ -110,21 +103,18 @@ const AABB* SkullBlock::getShape(const BlockState* state, LevelSource*, const Bl
 {
     switch (state->getValue(FACING)->get3DDataValue())
     {
+    default: return SKULL_AABB;
     case 2: return SKULL_NORTH_AABB;
     case 3: return SKULL_SOUTH_AABB;
     case 4: return SKULL_WEST_AABB;
     case 5: return SKULL_EAST_AABB;
-    default: return SKULL_AABB;
     }
 }
 
 const BlockState* SkullBlock::getStateForPlacement(Level*, const BlockPos& pos, const Direction*, float, float,
                                                     float, int, boost::shared_ptr<LivingEntity> placer)
 {
-    const BlockState* state = defaultBlockState();
-    DirectionProperty* facing = FACING;
-    state = state->setValue(facing, placer->getDirection());
-    return state->setValue(NODROP, false);
+    return defaultBlockState()->setValue(FACING, placer->getDirection())->setValue(NODROP, false);
 }
 
 not_null_ptr<ItemInstance> SkullBlock::getCloneItemInstance(Level* level, const BlockPos& pos,
@@ -132,8 +122,7 @@ not_null_ptr<ItemInstance> SkullBlock::getCloneItemInstance(Level* level, const 
 {
     int skullType = 0;
     boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-    bool isSkull = entity->GetType() == BlockEntityType::SKULL;
-    if (isSkull)
+    if (eTYPE_DERIVED_FROM(BlockEntityType::SKULL, entity->GetType()))
         skullType = boost::dynamic_pointer_cast<SkullBlockEntity>(entity)->getSkullType();
     return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, skullType));
 }
@@ -159,14 +148,15 @@ void SkullBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* s
     if (!level->mIsClientSide && !state->getValue(NODROP))
     {
         boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
-        bool isSkull = false;
-        if (entity.get() != NULL)
-            isSkull = entity->GetType() == BlockEntityType::SKULL;
-        if (isSkull)
+        if (entity != NULL)
         {
-            boost::shared_ptr<SkullBlockEntity> skull = boost::dynamic_pointer_cast<SkullBlockEntity>(entity);
-            not_null_ptr<ItemInstance> item = getCloneItemInstance(level, pos, state);
-            Block::popResource(level, pos, item);
+            bool isSkull = eTYPE_DERIVED_FROM(BlockEntityType::SKULL, entity->GetType());
+            if (isSkull)
+            {
+                boost::shared_ptr<SkullBlockEntity> skull = boost::dynamic_pointer_cast<SkullBlockEntity>(entity);
+                not_null_ptr<ItemInstance> item = getCloneItemInstance(level, pos, state);
+                Block::popResource(level, pos, item);
+            }
         }
     }
     BaseEntityBlock::onRemove(level, pos, state);
@@ -206,13 +196,15 @@ BlockPattern* SkullBlock::getOrCreateWitherFull()
 
 bool SkullBlock::canSpawnMob(Level* level, const BlockPos& pos, not_null_ptr<ItemInstance> item)
 {
-    if (item->getAuxValue() != 1 || pos.y < 2 || level->getDifficulty() == Difficulty::PEACEFUL
-        || level->mIsClientSide)
-        return false;
-    BlockPattern::BlockPatternMatch* match = getOrCreateWitherBase()->find(level, pos);
-    bool found = match != NULL;
-    delete match;
-    return found;
+    if (item->getAuxValue() == 1 && pos.y >= 2 && level->getDifficulty() != Difficulty::PEACEFUL
+        && !level->mIsClientSide)
+    {
+        BlockPattern::BlockPatternMatch* match = getOrCreateWitherBase()->find(level, pos);
+        bool found = match != NULL;
+        delete match;
+        return found;
+    }
+    return false;
 }
 
 void SkullBlock::checkMobSpawn(Level* level, const BlockPos& pos,
@@ -237,10 +229,10 @@ void SkullBlock::checkMobSpawn(Level* level, const BlockPos& pos,
         for (int i = 0; i < 3; ++i)
         {
             BlockInWorld* block = match->getBlock(i, 0, 0);
-            if (canCreate)
-                level->setBlock(block->getPos(), block->getState()->setValue(NODROP, true), Block::UPDATE_CLIENTS, false);
-            else
+            if (!canCreate)
                 level->setBlock(block->getPos(), block->getState(), Block::UPDATE_CLIENTS, false);
+            else
+                level->setBlock(block->getPos(), block->getState()->setValue(NODROP, true), Block::UPDATE_CLIENTS, false);
         }
 
         for (int x = 0; x < static_cast<int>(pattern->getWidth()); ++x)
@@ -277,10 +269,9 @@ void SkullBlock::checkMobSpawn(Level* level, const BlockPos& pos,
         for (int i = 0; i < 120; ++i)
         {
             BlockPos particlePos = match->getBlock(1, 0, 0)->getPos();
-            double x = particlePos.x + level->mRandom->nextDouble();
-            double y = (particlePos.y - 2) + level->mRandom->nextDouble() * 3.9;
-            double z = particlePos.z + level->mRandom->nextDouble();
-            level->addParticle(PARTICLE_SNOWBALL_POOF, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
+            level->addParticle(PARTICLE_SNOWBALL_POOF, particlePos.x + level->mRandom->nextDouble(),
+                               (particlePos.y - 2) + level->mRandom->nextDouble() * 3.9,
+                               particlePos.z + level->mRandom->nextDouble(), 0.0, 0.0, 0.0, arrayWithLength<int>());
         }
 
         for (int x = 0; x < static_cast<int>(pattern->getWidth()); ++x)
@@ -295,8 +286,8 @@ void SkullBlock::checkMobSpawn(Level* level, const BlockPos& pos,
 
 const BlockState* SkullBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState()->setValue(FACING, Direction::from3DDataValue(data & 7));
-    return state->setValue(NODROP, (data & 8) != 0);
+    return defaultBlockState()->setValue(FACING, Direction::from3DDataValue(data & 7))
+        ->setValue(NODROP, (data & 8) > 0);
 }
 
 int SkullBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -319,13 +310,14 @@ bool SkullBlock::canContainLiquid(const BlockState*) const
 
 const BlockState* SkullBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    DirectionProperty* facing = FACING;
-    return state->setValue(facing, rotation->rotate(state->getValue(facing)));
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 const BlockState* SkullBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(FACING)));
+    DirectionProperty* facing = FACING;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 BlockStateDefinition* SkullBlock::createBlockStateDefinition()

@@ -70,23 +70,23 @@ unsigned int BeaconBlockEntity::BeaconBeamSection::getHeight()
 
 BeaconBlockEntity::BeaconBlockEntity()
 {
+    mNextClientSideUpdate = 0;
+    mClientSideScale = 0.0F;
+    mLevels = -1;
+    mActive = false;
     mPrimaryPower = NULL;
     mSecondaryPower = NULL;
-    mNextClientSideUpdate = 0;
-    mLevels = -1;
-    mClientSideScale = 0.0F;
-    mActive = false;
     mItem = ItemInstance::EMPTY;
     mName = boost::shared_ptr<CensoredString>(new CensoredString());
     mBeamSections = std::vector<BeaconBeamSection>();
     mBeamDirection = 0;
     mBeamLength = 0;
     mLastBeamBlockCount = -1;
-    mBeamRebuildTicks = 15;
     for (int i = 0; i < 16; ++i)
     {
         mBeamColorCounts[i] = 0;
     }
+    mBeamRebuildTicks = 15;
     mTickCount = 0;
 }
 
@@ -144,8 +144,7 @@ not_null_ptr<ItemInstance> BeaconBlockEntity::removeItem(unsigned int slot, int 
 {
     if (slot == 0 && !mItem->isEmpty())
     {
-        int stackCount = mItem->getCount();
-        if (stackCount <= count)
+        if (count >= mItem->getCount())
         {
             not_null_ptr<ItemInstance> result = mItem;
             mItem = ItemInstance::EMPTY;
@@ -191,11 +190,11 @@ bool BeaconBlockEntity::stillValid(boost::shared_ptr<Player> player)
     {
         return false;
     }
-    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25f)
+    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) > 30.25f)
     {
-        return true;
+        return false;
     }
-    return false;
+    return true;
 }
 
 void BeaconBlockEntity::startOpen(boost::shared_ptr<Player> player)
@@ -313,43 +312,51 @@ void BeaconBlockEntity::updateShapeForGlide()
     mLevels = 0;
     mBeamSections.clear();
     mActive = true;
-    if (getBeamDirection() != eBEAM_DIRECTION_NONE)
+    if (getBeamDirection() == eBEAM_DIRECTION_NONE)
     {
-        float color[3] = { 1.0F, 1.0F, 1.0F };
-        mBeamSections.push_back(BeaconBeamSection(arrayWithLength<float>(color, 3)));
-        BeaconBeamSection& section = mBeamSections[mBeamSections.size() - 1];
-        if (getBeamDirection() != eBEAM_DIRECTION_NEGATIVE_Y)
-        {
-            section.setHeight(mBeamLength);
-        }
-        else
-        {
-            section.setHeight(-mBeamLength);
-        }
+        mActive = false;
+        return;
+    }
+    float color[3] = { 1.0F, 1.0F, 1.0F };
+    arrayWithLength<float> colors(color, 3);
+    mBeamSections.push_back(BeaconBeamSection(colors));
+    BeaconBeamSection& section = mBeamSections[mBeamSections.size() - 1];
+    if (getBeamDirection() == eBEAM_DIRECTION_NEGATIVE_Y)
+    {
+        section.setHeight(-mBeamLength);
     }
     else
     {
-        mActive = false;
+        section.setHeight(mBeamLength);
     }
 }
 
 bool BeaconBlockEntity::NeedsRebuild()
 {
-    short colorCounts[16] = {0};
     short blockCount = 0;
+    short colorCounts[16] = {0};
     int x = mPos.x;
     int z = mPos.z;
     for (int y = mPos.y + 1; y < mLevel->getHeight(); ++y)
     {
         BlockPos pos(x, y, z);
         const BlockState* state = mLevel->getBlockState(pos);
-        if (state->getBlock() == Blocks::air || state->getBlock() == Blocks::water)
-            continue;
-        ++blockCount;
-        if (state->getBlock() == Blocks::stained_glass)
-            ++colorCounts[state->getValue(StainedGlassBlock::COLOR)->getBlockData()];
-        else if (state->getBlock() == Blocks::stained_glass_pane)
-            ++colorCounts[state->getValue(StainedGlassPaneBlock::COLOR)->getBlockData()];
+        if (state->getBlock() != Blocks::air && state->getBlock() != Blocks::water)
+        {
+            ++blockCount;
+            if (state->getBlock() == Blocks::stained_glass)
+            {
+                const DyeColor* color = state->getValue(StainedGlassBlock::COLOR);
+                int index = color->getBlockData();
+                ++colorCounts[index];
+            }
+            else if (state->getBlock() == Blocks::stained_glass_pane)
+            {
+                const DyeColor* color = state->getValue(StainedGlassPaneBlock::COLOR);
+                int index = color->getBlockData();
+                ++colorCounts[index];
+            }
+        }
     }
 
     bool unchanged = true;
@@ -362,12 +369,12 @@ bool BeaconBlockEntity::NeedsRebuild()
         }
     }
 
-    if (blockCount != mLastBeamBlockCount)
+    if (blockCount == mLastBeamBlockCount)
     {
-        mLastBeamBlockCount = blockCount;
-        return true;
+        return !unchanged;
     }
-    return !unchanged;
+    mLastBeamBlockCount = blockCount;
+    return true;
 }
 
 void BeaconBlockEntity::updateShape()
@@ -394,7 +401,8 @@ void BeaconBlockEntity::updateShape()
         {
             for (int layerZ = z - layer; layerZ <= z + layer; ++layerZ)
             {
-                Block* block = mLevel->getBlockState(BlockPos(layerX, layerY, layerZ))->getBlock();
+                BlockPos pos(layerX, layerY, layerZ);
+                Block* block = mLevel->getBlockState(pos)->getBlock();
                 if (block != Blocks::emerald_block && block != Blocks::gold_block && block != Blocks::diamond_block
                     && block != Blocks::iron_block)
                 {
@@ -406,7 +414,7 @@ void BeaconBlockEntity::updateShape()
         if (!complete)
             break;
     }
-    mActive = mLevels > 0;
+    mActive = mLevels != 0;
 
     if (mActive)
     {
@@ -416,9 +424,10 @@ void BeaconBlockEntity::updateShape()
             mBeamRebuildTicks = 15;
 
             float color[3] = {1.0F, 1.0F, 1.0F};
+            arrayWithLength<float> colors(color, 3);
             arrayWithLength<const float> white = DyeColor::WHITE->getTextureDiffuseColors();
             memcpy(color, white.data, sizeof(color));
-            mBeamSections.push_back(BeaconBeamSection(arrayWithLength<float>(color, 3)));
+            mBeamSections.push_back(BeaconBeamSection(colors));
             BeaconBeamSection* section = &mBeamSections[mBeamSections.size() - 1];
 
             bool first = true;
@@ -431,14 +440,17 @@ void BeaconBlockEntity::updateShape()
                 if (lightBlock < extraLightBlock)
                     lightBlock = extraLightBlock;
 
-                arrayWithLength<const float> glassColor;
                 if (state->getBlock() == Blocks::stained_glass)
                 {
-                    glassColor = state->getValue(StainedGlassBlock::COLOR)->getTextureDiffuseColors();
+                    arrayWithLength<const float> glassColor =
+                        state->getValue(StainedGlassBlock::COLOR)->getTextureDiffuseColors();
+                    memcpy(color, glassColor.data, sizeof(color));
                 }
                 else if (state->getBlock() == Blocks::stained_glass_pane)
                 {
-                    glassColor = state->getValue(StainedGlassPaneBlock::COLOR)->getTextureDiffuseColors();
+                    arrayWithLength<const float> paneColor =
+                        state->getValue(StainedGlassPaneBlock::COLOR)->getTextureDiffuseColors();
+                    memcpy(color, paneColor.data, sizeof(color));
                 }
                 else
                 {
@@ -448,10 +460,10 @@ void BeaconBlockEntity::updateShape()
                         continue;
                     }
                     mActive = false;
+                    mBeamSections.clear();
                     break;
                 }
 
-                memcpy(color, glassColor.data, sizeof(color));
                 if (!first)
                 {
                     color[0] = (section->getColor()[0] + color[0]) * 0.5F;
@@ -465,7 +477,7 @@ void BeaconBlockEntity::updateShape()
                 }
                 else
                 {
-                    mBeamSections.push_back(BeaconBeamSection(arrayWithLength<float>(color, 3)));
+                    mBeamSections.push_back(BeaconBeamSection(colors));
                     section = &mBeamSections[mBeamSections.size() - 1];
                 }
                 first = false;
@@ -497,19 +509,50 @@ void BeaconBlockEntity::updateShape()
 
 void BeaconBlockEntity::applyEffects()
 {
-    if (!mActive || mLevels <= 0 || mLevel->mIsClientSide)
-        return;
-
-    if (mPrimaryPower == NULL)
+    if (mActive && mLevels > 0 && !mLevel->mIsClientSide)
     {
-        if (mLevels >= 4 && mSecondaryPower != NULL)
+        if (mPrimaryPower != NULL)
         {
             double range = mLevels * 10 + 10;
-            int duration = mLevels * 40 + 180;
-            int height = mLevel->getMaxBuildHeight();
-            AABB* area = AABB::newTemp(mPos.x, mPos.y, mPos.z, mPos.x + 1, mPos.y + 1, mPos.z + 1)
+            int amplifier = 0;
+            if (mLevels >= 4 && mPrimaryPower == mSecondaryPower)
+                amplifier = 1;
+            int duration = (9 + mLevels * 2) * 20;
+            int x = mPos.x;
+            int y = mPos.y;
+            int z = mPos.z;
+            AABB* area = AABB::newTemp(x, y, z, x + 1, y + 1, z + 1)
                              ->grow(range, range, range)
-                             ->expand(0.0, height, 0.0);
+                             ->expand(0.0, mLevel->getMaxBuildHeight(), 0.0);
+            std::vector<boost::shared_ptr<Entity> >* players = mLevel->getEntitiesOfClass(typeid(Player), area);
+            for (std::vector<boost::shared_ptr<Entity> >::iterator it = players->begin(); it != players->end(); ++it)
+            {
+                boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(*it);
+                player->addEffect(new MobEffectInstance(mPrimaryPower, duration, amplifier, true, true),
+                                  boost::shared_ptr<Entity>());
+            }
+            if (mLevels >= 4 && mPrimaryPower != mSecondaryPower && mSecondaryPower != NULL)
+            {
+                for (std::vector<boost::shared_ptr<Entity> >::iterator it = players->begin(); it != players->end();
+                     ++it)
+                {
+                    boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(*it);
+                    player->addEffect(new MobEffectInstance(mSecondaryPower, duration, 0, true, true),
+                                      boost::shared_ptr<Entity>());
+                }
+            }
+            delete players;
+        }
+        else if (mLevels >= 4 && mSecondaryPower != NULL)
+        {
+            double range = mLevels * 10 + 10;
+            int duration = (9 + mLevels * 2) * 20;
+            int x = mPos.x;
+            int y = mPos.y;
+            int z = mPos.z;
+            AABB* area = AABB::newTemp(x, y, z, x + 1, y + 1, z + 1)
+                             ->grow(range, range, range)
+                             ->expand(0.0, mLevel->getMaxBuildHeight(), 0.0);
             std::vector<boost::shared_ptr<Entity> >* players = mLevel->getEntitiesOfClass(typeid(Player), area);
             for (std::vector<boost::shared_ptr<Entity> >::iterator it = players->begin(); it != players->end(); ++it)
             {
@@ -519,33 +562,7 @@ void BeaconBlockEntity::applyEffects()
             }
             delete players;
         }
-        return;
     }
-
-    double range = mLevels * 10 + 10;
-    int amplifier = mLevels >= 4 && mPrimaryPower == mSecondaryPower ? 1 : 0;
-    int duration = mLevels * 40 + 180;
-    int height = mLevel->getMaxBuildHeight();
-    AABB* area = AABB::newTemp(mPos.x, mPos.y, mPos.z, mPos.x + 1, mPos.y + 1, mPos.z + 1)
-                     ->grow(range, range, range)
-                     ->expand(0.0, height, 0.0);
-    std::vector<boost::shared_ptr<Entity> >* players = mLevel->getEntitiesOfClass(typeid(Player), area);
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = players->begin(); it != players->end(); ++it)
-    {
-        boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(*it);
-        player->addEffect(new MobEffectInstance(mPrimaryPower, duration, amplifier, true, true),
-                          boost::shared_ptr<Entity>());
-    }
-    if (mLevels >= 4 && mPrimaryPower != mSecondaryPower && mSecondaryPower != NULL)
-    {
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = players->begin(); it != players->end(); ++it)
-        {
-            boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(*it);
-            player->addEffect(new MobEffectInstance(mSecondaryPower, duration, 0, true, true),
-                              boost::shared_ptr<Entity>());
-        }
-    }
-    delete players;
 }
 
 void BeaconBlockEntity::checkValidity()
@@ -562,14 +579,15 @@ boost::shared_ptr<BlockEntity> BeaconBlockEntity::clone()
     copy->mPrimaryPower = mPrimaryPower;
     copy->mSecondaryPower = mSecondaryPower;
     copy->mLevels = mLevels;
-    copy->mName->set(mName->raw(), mName->getUUID(), mName->isChatCensored(), mName->isUUIDLocal());
+    copy->mName->set(mName->raw(), std::wstring(mName->getUUID()), mName->isChatCensored(), mName->isUUIDLocal());
     return copy;
 }
 
 void BeaconBlockEntity::AddEffect(int level, int slot, MobEffect* effect)
 {
     sBeaconEffects[level][slot] = effect;
-    sBeaconEffectOrder[sBeaconEffectCount++] = effect;
+    sBeaconEffectOrder[sBeaconEffectCount] = effect;
+    ++sBeaconEffectCount;
 }
 
 void BeaconBlockEntity::staticCtor()
@@ -601,8 +619,7 @@ void BeaconBlockEntity::tick()
     BlockPos pos = getBlockPos();
     long long seed = pos.hashCode();
     Random random(seed);
-    int phase = mTickCount + random.nextInt(9001);
-    if (phase % 80 == 0 && mActive)
+    if ((mTickCount + random.nextInt(9001)) % 80 == 0 && mActive)
     {
         mLevel->playLocalSound(getBlockPos().x, getBlockPos().y, getBlockPos().z, SoundEvents::BEACON_AMBIENT,
                                SoundSource::eSoundSource_Blocks, 0.5F, 1.0F, false, 16.0F);
@@ -621,35 +638,28 @@ std::vector<BeaconBlockEntity::BeaconBeamSection>* BeaconBlockEntity::getBeamSec
     return &mBeamSections;
 }
 
-double BeaconBlockEntity::getAndUpdateClientSideScale()
+float BeaconBlockEntity::getAndUpdateClientSideScale()
 {
-    float zero = 0.0F;
     if (!mActive)
     {
-        return zero;
+        return 0.0F;
     }
     int elapsed = (int)(mLevel->getGameTime() - mNextClientSideUpdate);
     mNextClientSideUpdate = mLevel->getGameTime();
-    float scale;
     if (elapsed > 1)
     {
-        float decayed = mClientSideScale - (float)elapsed / 40.0F;
-        if (decayed < zero)
+        mClientSideScale -= (float)elapsed / 40.0F;
+        if (mClientSideScale < 0.0F)
         {
-            decayed = zero;
+            mClientSideScale = 0.0F;
         }
-        scale = decayed + 0.025F;
     }
-    else
+    mClientSideScale += 0.025F;
+    if (mClientSideScale > 1.0F)
     {
-        scale = mClientSideScale + 0.025F;
+        mClientSideScale = 1.0F;
     }
-    if (scale > 1.0F)
-    {
-        scale = 1.0F;
-    }
-    mClientSideScale = scale;
-    return scale;
+    return mClientSideScale;
 }
 
 boost::shared_ptr<Packet> BeaconBlockEntity::getUpdatePacket()

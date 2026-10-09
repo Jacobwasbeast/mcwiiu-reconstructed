@@ -97,7 +97,7 @@ void HopperBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockStat
     if (itemInstance->hasCustomHoverName())
     {
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-        bool isHopper = blockEntity->GetType() == BlockEntityType::HOPPER;
+        bool isHopper = eTYPE_DERIVED_FROM(BlockEntityType::HOPPER, blockEntity->GetType());
         if (isHopper)
         {
             boost::shared_ptr<HopperBlockEntity> hopper = boost::dynamic_pointer_cast<HopperBlockEntity>(blockEntity);
@@ -134,7 +134,7 @@ bool HopperBlock::use(Level* level, const BlockPos& pos, const BlockState* state
     if (!level->mIsClientSide)
     {
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-        bool isHopper = blockEntity->GetType() == BlockEntityType::HOPPER;
+        bool isHopper = eTYPE_DERIVED_FROM(BlockEntityType::HOPPER, blockEntity->GetType());
         if (isHopper)
         {
             player->openContainer(boost::dynamic_pointer_cast<HopperBlockEntity>(blockEntity));
@@ -154,7 +154,7 @@ void HopperBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* 
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     if (blockEntity != NULL)
     {
-        bool isHopper = blockEntity->GetType() == BlockEntityType::HOPPER;
+        bool isHopper = eTYPE_DERIVED_FROM(BlockEntityType::HOPPER, blockEntity->GetType());
         if (isHopper)
         {
             Containers::dropContents(level, pos, boost::dynamic_pointer_cast<HopperBlockEntity>(blockEntity));
@@ -213,13 +213,14 @@ unsigned int HopperBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolt
 
 const BlockState* HopperBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    return state->setValue(FACING, rotation->rotate(state->getValue(FACING)));
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 const BlockState* HopperBlock::mirror(const BlockState* state, Mirror* mirror)
 {
     DirectionProperty* facing = FACING;
-    return rotate(state, mirror->getRotation(state->getValue(facing)));
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 BlockStateDefinition* HopperBlock::createBlockStateDefinition()

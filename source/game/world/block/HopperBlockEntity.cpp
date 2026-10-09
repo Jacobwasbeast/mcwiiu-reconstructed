@@ -31,7 +31,7 @@ HopperBlockEntity::HopperBlockEntity()
 
 HopperBlockEntity::~HopperBlockEntity()
 {
-    delete[] mItems.items;
+    delete[] mItems.items.data;
 }
 
 BlockEntity* HopperBlockEntity::create()
@@ -146,7 +146,7 @@ boost::shared_ptr<BlockEntity> HopperBlockEntity::clone()
 void HopperBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
-    delete[] mItems.items;
+    delete[] mItems.items.data;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     if (!tryLoadLootTable(tag))
         ContainerHelper::loadAllItems(tag, mItems);
@@ -190,8 +190,8 @@ bool HopperBlockEntity::inventoryFull()
 
 std::vector<boost::shared_ptr<Entity> >* HopperBlockEntity::getItemsAtAndAbove(Level* level, double x, double y, double z)
 {
-    AABB* box = AABB::newTemp(x - 0.5, y, z - 0.5, x + 0.5, y + 1.5, z + 0.5);
-    return level->getEntitiesOfClass(typeid(ItemEntity), box, EntitySelector::ENTITY_STILL_ALIVE, false);
+    return level->getEntitiesOfClass(typeid(ItemEntity),
+        AABB::newTemp(x - 0.5, y, z - 0.5, x + 0.5, y + 1.5, z + 0.5), EntitySelector::ENTITY_STILL_ALIVE, false);
 }
 
 boost::shared_ptr<Container> HopperBlockEntity::getContainerAt(Level* level, double x, double y, double z)
@@ -271,15 +271,15 @@ bool HopperBlockEntity::canPlaceItemInContainer(Container* container, not_null_p
 
 bool HopperBlockEntity::canMergeItems(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second)
 {
-    if (first->getItem() == second->getItem())
-    {
-        if (first->getAuxValue() == second->getAuxValue())
-        {
-            if (first->getCount() <= first->getMaxStackSize() && ItemInstance::tagMatches(first, second))
-                return true;
-        }
-    }
-    return false;
+    if (first->getItem() != second->getItem())
+        return false;
+    if (first->getAuxValue() != second->getAuxValue())
+        return false;
+    if (first->getCount() > first->getMaxStackSize())
+        return false;
+    if (!ItemInstance::tagMatches(first, second))
+        return false;
+    return true;
 }
 
 not_null_ptr<ItemInstance> HopperBlockEntity::tryMoveInItem(Container* source, Container* destination,
@@ -525,7 +525,7 @@ NonNullList<not_null_ptr<ItemInstance> > HopperBlockEntity::getItems()
 
 void HopperBlockEntity::setItems(NonNullList<not_null_ptr<ItemInstance> > items)
 {
-    delete[] mItems.items;
+    delete[] mItems.items.data;
     mItems = items;
 }
 

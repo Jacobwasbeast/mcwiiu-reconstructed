@@ -18,10 +18,5 @@ BlockPredicate::~BlockPredicate()
 
 bool BlockPredicate::apply(const BlockState* state) const
 {
-    if (state != NULL && state->getBlock() == mBlock)
-    {
-        return true;
-    }
-
-    return false;
+    return state != NULL && state->getBlock() == mBlock;
 }

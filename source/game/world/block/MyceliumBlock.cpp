@@ -13,23 +13,24 @@
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/DirtBlock.hpp"
 #include "game/world/block/EnumProperty.hpp"
-#include "game/world/block/GrassBlock.hpp"
 #include "game/world/block/Material.hpp"
 #include "game/world/block/MaterialColor.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+
+AbstractProperty<bool>* MyceliumBlock::SNOWY = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"snowy"));
 
 MyceliumBlock::MyceliumBlock()
     : Block(Material::GRASS, MaterialColor::COLOR_PURPLE)
 {
     DerivedInit();
-    registerDefaultState(mStateDefinition->any()->setValue(GrassBlock::SNOWY, false));
+    registerDefaultState(mStateDefinition->any()->setValue(SNOWY, false));
     setTicking(true);
 }
 
 const BlockState* MyceliumBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
     Block* aboveBlock = levelSource->getBlockState(pos.above())->getBlock();
-    return state->setValue(GrassBlock::SNOWY, aboveBlock == Blocks::snow || aboveBlock == Blocks::snow_layer);
+    return state->setValue(SNOWY, aboveBlock == Blocks::snow || aboveBlock == Blocks::snow_layer);
 }
 
 void MyceliumBlock::tick(Level* level, const BlockPos& pos, const BlockState*, Random* random)
@@ -97,7 +98,7 @@ int MyceliumBlock::convertBlockStateToLegacyData(const BlockState*)
 
 BlockStateDefinition* MyceliumBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { GrassBlock::SNOWY };
+    static const Property* properties[] = { SNOWY };
     return new BlockStateDefinition(this, properties, 1);
 }
 

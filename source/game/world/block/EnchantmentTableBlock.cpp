@@ -60,30 +60,24 @@ void EnchantmentTableBlock::animateTick(const BlockState* state, Level* level, c
                 z = 2;
             }
 
-            if (random->nextInt(16) != 0)
+            if (random->nextInt(16) == 0)
             {
-                continue;
-            }
-
-            for (int y = 0; y <= 1; ++y)
-            {
-                BlockPos bookPos = pos.offset(x, y, z);
-                if (level->getBlockState(bookPos)->getBlock() != Blocks::bookshelf)
+                for (int y = 0; y <= 1; ++y)
                 {
-                    continue;
-                }
+                    BlockPos bookPos = pos.offset(x, y, z);
+                    if (level->getBlockState(bookPos)->getBlock() == Blocks::bookshelf)
+                    {
+                        if (!level->isEmptyBlock(pos.offset(x / 2, 0, z / 2)))
+                        {
+                            break;
+                        }
 
-                if (!level->isEmptyBlock(pos.offset(x / 2, 0, z / 2)))
-                {
-                    break;
+                        level->addParticle(PARTICLE_ENCHANTMENT_TABLE, (double)pos.x + 0.5, (double)pos.y + 2.0,
+                                           (double)pos.z + 0.5, (double)((float)x + random->nextFloat()) - 0.5,
+                                           (double)((float)y - random->nextFloat() - 1.0f),
+                                           (double)((float)z + random->nextFloat()) - 0.5, arrayWithLength<int>());
+                    }
                 }
-
-                const float xa = (float)x + random->nextFloat();
-                const float ya = (float)y - random->nextFloat() - 1.0f;
-                const float za = (float)z + random->nextFloat();
-                level->addParticle(PARTICLE_ENCHANTMENT_TABLE, (double)pos.x + 0.5, (double)pos.y + 2.0,
-                                   (double)pos.z + 0.5, (double)xa - 0.5, (double)ya, (double)za - 0.5,
-                                   arrayWithLength<int>());
             }
         }
     }
@@ -111,7 +105,7 @@ bool EnchantmentTableBlock::use(Level* level, const BlockPos& pos, const BlockSt
     if (!level->mIsClientSide)
     {
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-        bool isTable = blockEntity->GetType() == BlockEntityType::ENCHANTMENT_TABLE_ENTITY;
+        bool isTable = eTYPE_DERIVED_FROM(BlockEntityType::ENCHANTMENT_TABLE_ENTITY, blockEntity->GetType());
         if (isTable)
         {
             EnchantmentTableEntity& table =
@@ -130,7 +124,7 @@ void EnchantmentTableBlock::setPlacedBy(Level* level, const BlockPos& pos, const
     if (itemInstance->hasCustomHoverName())
     {
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-        bool isTable = blockEntity->GetType() == BlockEntityType::ENCHANTMENT_TABLE_ENTITY;
+        bool isTable = eTYPE_DERIVED_FROM(BlockEntityType::ENCHANTMENT_TABLE_ENTITY, blockEntity->GetType());
         if (isTable)
         {
             boost::shared_ptr<EnchantmentTableEntity> table =

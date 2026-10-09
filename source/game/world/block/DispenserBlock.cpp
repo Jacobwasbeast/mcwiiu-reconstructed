@@ -260,13 +260,14 @@ unsigned int DispenserBlock::GetInteractTooltip(const BlockTooltipDataHolder& to
 
 const BlockState* DispenserBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    DirectionProperty* property = FACING;
-    return state->setValue(property, rotation->rotate(state->getValue(property)));
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 const BlockState* DispenserBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(FACING)));
+    DirectionProperty* facing = FACING;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 BlockStateDefinition* DispenserBlock::createBlockStateDefinition()

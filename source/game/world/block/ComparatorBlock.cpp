@@ -117,7 +117,7 @@ bool ComparatorBlock::isOn(const BlockState* state)
 int ComparatorBlock::getOutputSignal(LevelSource* levelSource, const BlockPos& pos, const BlockState* state)
 {
     boost::shared_ptr<BlockEntity> blockEntity = levelSource->getBlockEntity(pos);
-    bool isComparator = blockEntity->GetType() == BlockEntityType::COMPARATOR;
+    bool isComparator = eTYPE_DERIVED_FROM(BlockEntityType::COMPARATOR, blockEntity->GetType());
     if (isComparator)
     {
         boost::shared_ptr<ComparatorBlockEntity> comparator =
@@ -218,7 +218,7 @@ void ComparatorBlock::checkTickOnNeighbor(Level* level, const BlockPos& pos, con
     if (level->isBlockToBeTickedAt(pos, this)) return;
     int newOutput = calculateOutputSignal(level, pos, state);
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    bool isComparator = blockEntity->GetType() == BlockEntityType::COMPARATOR;
+    bool isComparator = eTYPE_DERIVED_FROM(BlockEntityType::COMPARATOR, blockEntity->GetType());
     int oldOutput = isComparator ? boost::dynamic_pointer_cast<ComparatorBlockEntity>(blockEntity)->getOutputSignal() : SIGNAL_NONE;
     if (!(newOutput == oldOutput && isOn(state) == shouldTurnOn(level, pos, state)))
     {
@@ -237,7 +237,7 @@ void ComparatorBlock::refreshOutputState(Level* level, const BlockPos& pos, cons
 {
     int output = calculateOutputSignal(level, pos, state);
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    bool isComparator = blockEntity->GetType() == BlockEntityType::COMPARATOR;
+    bool isComparator = eTYPE_DERIVED_FROM(BlockEntityType::COMPARATOR, blockEntity->GetType());
     int oldOutput = SIGNAL_NONE;
     if (isComparator)
     {
@@ -317,12 +317,14 @@ unsigned int ComparatorBlock::GetInteractTooltip(const BlockTooltipDataHolder& t
 
 const BlockState* ComparatorBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    return state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
+    return state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, rotation->rotate(state->getTypedBoxed(HorizontalDirectionalBlock::FACING_PROPERTY)->getValue()));
 }
 
 const BlockState* ComparatorBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
+    DirectionProperty* facing = HorizontalDirectionalBlock::FACING_PROPERTY;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 BlockStateDefinition* ComparatorBlock::createBlockStateDefinition()

@@ -11,8 +11,12 @@
 #include "game/world/generation/Player.hpp"
 
 EnderChestBlockEntity::EnderChestBlockEntity()
-    : BlockEntity(), mOpen(0.0F), mOpenOld(0.0F), mOpenCount(0), mTickCount(0)
+    : BlockEntity()
 {
+    mOpen = 0.0F;
+    mOpenOld = 0.0F;
+    mOpenCount = 0;
+    mTickCount = 0;
     mName = boost::shared_ptr<CensoredString>(new CensoredString());
 }
 

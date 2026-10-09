@@ -52,6 +52,7 @@ public:
     };
 
     static AbstractProperty<LeverDirection*>* FACING;
+    static AbstractProperty<bool>* POWERED;
     static const AABB* AABB_NORTH;
     static const AABB* AABB_SOUTH;
     static const AABB* AABB_WEST;

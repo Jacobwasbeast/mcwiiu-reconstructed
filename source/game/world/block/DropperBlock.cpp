@@ -34,7 +34,7 @@ DropperBlock::DropperBlock()
 
 boost::shared_ptr<BlockEntity> DropperBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<DropperBlockEntity> entity(new DropperBlockEntity());
+    boost::shared_ptr<BlockEntity> entity = boost::shared_ptr<DropperBlockEntity>(new DropperBlockEntity());
     entity->setLevel(level);
     return entity;
 }

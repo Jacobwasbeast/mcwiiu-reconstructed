@@ -97,15 +97,11 @@ const BlockState* StainedGlassPaneBlock::mirror(const BlockState* state, Mirror*
     switch (mirror->getType())
     {
     case Mirror::eTYPE_LeftRight:
-    {
-        const BlockState* mirrored = state->setValue(THIN_FENCE_NORTH, state->getValue(THIN_FENCE_SOUTH));
-        return mirrored->setValue(THIN_FENCE_SOUTH, state->getValue(THIN_FENCE_NORTH));
-    }
+        return state->setValue(THIN_FENCE_NORTH, state->getValue(THIN_FENCE_SOUTH))
+            ->setValue(THIN_FENCE_SOUTH, state->getValue(THIN_FENCE_NORTH));
     case Mirror::eTYPE_FrontBack:
-    {
-        const BlockState* mirrored = state->setValue(THIN_FENCE_EAST, state->getValue(THIN_FENCE_WEST));
-        return mirrored->setValue(THIN_FENCE_WEST, state->getValue(THIN_FENCE_EAST));
-    }
+        return state->setValue(THIN_FENCE_EAST, state->getValue(THIN_FENCE_WEST))
+            ->setValue(THIN_FENCE_WEST, state->getValue(THIN_FENCE_EAST));
     default:
         return ThinFenceBlock::mirror(state, mirror);
     }

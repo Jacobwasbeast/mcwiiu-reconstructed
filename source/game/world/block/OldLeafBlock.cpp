@@ -49,8 +49,8 @@ OldLeafBlock::OldLeafBlock()
     DerivedInit();
     registerDefaultState(mStateDefinition->any()
                              ->setValue(VARIANT, PlanksBlock::Variant::OAK)
-                             ->setValue(DECAYABLE, true)
-                             ->setValue(CHECK_DECAY, true));
+                             ->setValue(CHECK_DECAY, true)
+                             ->setValue(DECAYABLE, true));
 }
 
 int OldLeafBlock::getColor(const BlockState* state)
@@ -97,10 +97,9 @@ not_null_ptr<ItemInstance> OldLeafBlock::getSilkTouchItemInstance(const BlockSta
 
 const BlockState* OldLeafBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    return state->setValue(VARIANT, getWoodVariantForData(data))
+    return defaultBlockState()->setValue(VARIANT, getWoodVariantForData(data))
         ->setValue(DECAYABLE, (data & 4) == 0)
-        ->setValue(CHECK_DECAY, (data & 8) != 0);
+        ->setValue(CHECK_DECAY, (data & 8) > 0);
 }
 
 int OldLeafBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -131,16 +130,17 @@ void OldLeafBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player,
                                   const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
                                   not_null_ptr<ItemInstance> tool)
 {
-    if (level->mIsClientSide || tool->getItem() != Items::shears)
+    if (!level->mIsClientSide && tool->getItem() == Items::shears)
+    {
+        Stat* stat = gStats->get_blocksMined(Block::getId(this));
+        player->awardStat(stat, GenericStats::param_blocksMined(state, 1));
+        Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
+            state->getValue(VARIANT)->getData())));
+    }
+    else
     {
         Block::playerDestroy(level, player, pos, state, blockEntity, tool);
-        return;
     }
-    Player* attacker = player.operator->();
-    Stat* stat = gStats->get_blocksMined(Block::getId(this));
-    attacker->awardStat(stat, GenericStats::param_blocksMined(state, 1));
-    Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(this), 1,
-        state->getValue(VARIANT)->getData())));
 }
 
 int OldLeafBlock::getWoodType(const BlockState* state)

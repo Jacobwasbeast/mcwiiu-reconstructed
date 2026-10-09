@@ -21,11 +21,7 @@ void BlockDataCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWit
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
     BlockPos pos;
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
+    byteStream.reset();
 }
 
 boost::shared_ptr<GameCommandPacket> BlockDataCommand::preparePacket(unsigned char mode)

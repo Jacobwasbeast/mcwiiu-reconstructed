@@ -38,8 +38,7 @@ int PressurePlateBlock::getSignalForState(const BlockState* state)
 
 const BlockState* PressurePlateBlock::setSignalForState(const BlockState* state, int signal)
 {
-    TypedBoxed<bool> powered(signal > 0);
-    return state->setBoxedValue(POWERED, &powered);
+    return state->setValue(POWERED, signal > 0);
 }
 
 void PressurePlateBlock::playOnSound(Level* level, const BlockPos& pos)
@@ -60,12 +59,17 @@ void PressurePlateBlock::playOffSound(Level* level, const BlockPos& pos)
 
 int PressurePlateBlock::getSignalStrength(Level* level, const BlockPos& pos)
 {
-    const AABB* box = getSensitiveAABB(pos);
     std::vector<boost::shared_ptr<Entity> >* entities = NULL;
-    if (mSensitivity == EVERYTHING)
+    const AABB* box = getSensitiveAABB(pos);
+    switch (mSensitivity)
+    {
+    case EVERYTHING:
         entities = level->getEntities(boost::shared_ptr<Entity>(), box, NULL);
-    else if (mSensitivity == MOBS)
+        break;
+    case MOBS:
         entities = level->getEntitiesOfClass(typeid(LivingEntity), box);
+        break;
+    }
     if (entities != NULL && !entities->empty())
     {
         for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
@@ -84,9 +88,7 @@ int PressurePlateBlock::getSignalStrength(Level* level, const BlockPos& pos)
 
 const BlockState* PressurePlateBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    TypedBoxed<bool> powered(data == 1);
-    return state->setBoxedValue(POWERED, &powered);
+    return defaultBlockState()->setValue(POWERED, data == 1);
 }
 
 int PressurePlateBlock::convertBlockStateToLegacyData(const BlockState* state)

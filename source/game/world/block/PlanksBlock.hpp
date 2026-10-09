@@ -35,7 +35,7 @@ public:
 
         enum TranslationKey
         {
-            eTranslationKeyOak = 0x13035FA5,
+            eTranslationKeyOak = IDS_TILE_OAKWOOD_PLANKS,
             eTranslationKeySpruce = 0x7A4DF272,
             eTranslationKeyBirch = 0x9BC6104A,
             eTranslationKeyJungle = IDS_TILE_JUNGLE_PLANKS,

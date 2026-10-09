@@ -9,10 +9,7 @@ float ItemPropertyFunction_Cooldown::call(not_null_ptr<ItemInstance> itemInstanc
                                           Level*,
                                           boost::shared_ptr<LivingEntity> entity)
 {
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-    {
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-        return player->getCooldowns()->getCooldownPercent(itemInstance->getItem(), 0.0f);
-    }
-    return 0.0f;
+    return eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
+               ? boost::static_pointer_cast<Player>(entity)->getCooldowns()->getCooldownPercent(itemInstance->getItem(), 0.0f)
+               : 0.0f;
 }

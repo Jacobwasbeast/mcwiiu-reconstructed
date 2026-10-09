@@ -84,7 +84,7 @@ void StoneBlock::blockStaticCtor()
     {
         boost::unordered_set<Variant*> values;
         for (int i = 0; i < 7; ++i) values.insert(Variant::BY_DATA[i]);
-        variant = EnumProperty<Variant*>::create(name, typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
+        variant = EnumProperty<Variant*>::create(name, typeid(Variant), values, Predicates<Variant*>::alwaysTrue);
     }
     VARIANT = variant;
 }

@@ -32,7 +32,7 @@ Item* FlowerPotBlockEntity::getPlantItem()
 
 not_null_ptr<ItemInstance> FlowerPotBlockEntity::getPlantItemInstance()
 {
-    return mPlantItem == NULL ? ItemInstance::EMPTY : not_null_ptr<ItemInstance>(boost::shared_ptr<ItemInstance>(new ItemInstance(mPlantItem, 1, mItemData)));
+    return mPlantItem == NULL ? not_null_ptr<ItemInstance>(ItemInstance::EMPTY) : not_null_ptr<ItemInstance>(boost::shared_ptr<ItemInstance>(new ItemInstance(mPlantItem, 1, mItemData)));
 }
 
 void FlowerPotBlockEntity::setItemInstance(const not_null_ptr<ItemInstance>& item)

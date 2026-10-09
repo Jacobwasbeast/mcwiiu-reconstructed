@@ -26,9 +26,9 @@ BeaconBlock::BeaconBlock()
 
 boost::shared_ptr<BlockEntity> BeaconBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<BeaconBlockEntity> entity(new BeaconBlockEntity());
-    entity->setLevel(level);
-    return entity;
+    boost::shared_ptr<BlockEntity> blockEntity = boost::shared_ptr<BeaconBlockEntity>(new BeaconBlockEntity());
+    blockEntity->setLevel(level);
+    return blockEntity;
 }
 
 bool BeaconBlock::use(Level* level, const BlockPos& pos, const BlockState*,
@@ -108,7 +108,8 @@ void BeaconBlock::updateValidityWithinBeam(Level* level, const BlockPos& pos)
         BlockPos beamPos(pos.x, y, pos.z);
         if (!level->canSeeSky(pos))
             return;
-        if (level->getBlockState(beamPos)->getBlock() == Blocks::beacon)
+        const BlockState* state = level->getBlockState(beamPos);
+        if (state->getBlock() == Blocks::beacon)
         {
             static_cast<BeaconBlock*>(Blocks::beacon)->updateEntity(level, beamPos);
             return;

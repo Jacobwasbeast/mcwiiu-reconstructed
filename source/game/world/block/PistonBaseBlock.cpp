@@ -252,12 +252,8 @@ int PistonBaseBlock::moveBlocks(Level* level, const BlockPos& pos, const Directi
         return false;
 
     BlockPos headPos = pos.relative(direction);
-    bool headInWater = true;
-    if (level->getLiquidBlockState(headPos)->getMaterial() != Material::WATER
-        && level->getLiquidBlockState(headPos.above())->getMaterial() != Material::WATER)
-    {
-        headInWater = false;
-    }
+    bool headInWater = level->getLiquidBlockState(headPos)->getMaterial() == Material::WATER
+                       || level->getLiquidBlockState(headPos.above())->getMaterial() == Material::WATER;
 
     std::vector<BlockPos>& toPush = resolver.getToPush();
     std::vector<const BlockState*> pushStates;
@@ -438,12 +434,14 @@ const BlockState* PistonBaseBlock::getBlockState(int data)
 
 const BlockState* PistonBaseBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    return state->setValue(FACING, rotation->rotate(state->getValue(FACING)));
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 const BlockState* PistonBaseBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(FACING)));
+    AbstractProperty<const Direction*>* facing = FACING;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 int PistonBaseBlock::convertBlockStateToLegacyData(const BlockState* state)

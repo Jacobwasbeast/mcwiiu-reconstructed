@@ -53,8 +53,6 @@ bool railpredicate(BaseRailBlock::RailShape* shape)
            shape != BaseRailBlock::RailShape::SOUTH_EAST && shape != BaseRailBlock::RailShape::SOUTH_WEST;
 }
 
-static const AABB* gRailClipAABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.125, 1.0);
-
 BaseRailBlock::RailShape::RailShape(int data, const std::wstring& name)
 {
     mData = data;
@@ -63,8 +61,8 @@ BaseRailBlock::RailShape::RailShape(int data, const std::wstring& name)
 
 bool BaseRailBlock::RailShape::isAscending()
 {
-    return this == RailShape::ASCENDING_EAST || this == RailShape::ASCENDING_WEST ||
-           this == RailShape::ASCENDING_NORTH || this == RailShape::ASCENDING_SOUTH;
+    return this == RailShape::ASCENDING_NORTH || this == RailShape::ASCENDING_EAST ||
+           this == RailShape::ASCENDING_SOUTH || this == RailShape::ASCENDING_WEST;
 }
 
 int BaseRailBlock::RailShape::getData()
@@ -115,7 +113,7 @@ bool BaseRailBlock::isRail(const BlockState* state)
 
 const AABB* BaseRailBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return gRailClipAABB;
+    return NULL_AABB;
 }
 
 bool BaseRailBlock::isSolidRender(const BlockState*) const

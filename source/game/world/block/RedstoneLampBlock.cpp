@@ -82,12 +82,12 @@ not_null_ptr<ItemInstance> RedstoneLampBlock::getSilkTouchItemInstance(const Blo
 
 void RedstoneLampBlock::registerIcons(IconRegister* iconRegister)
 {
-    if (!mLit)
+    if (mLit)
     {
-        mIcon = iconRegister->registerIcon(L"redstoneLight");
+        mIcon = iconRegister->registerIcon(L"redstoneLight_lit");
     }
     else
     {
-        mIcon = iconRegister->registerIcon(L"redstoneLight_lit");
+        mIcon = iconRegister->registerIcon(L"redstoneLight");
     }
 }

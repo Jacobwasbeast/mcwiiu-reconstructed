@@ -84,7 +84,7 @@ void StoneSlabBlock::blockStaticCtor()
         values.insert(gStoneSlabVariants[i]);
     }
     VARIANT = EnumProperty<Variant*>::create(
-        L"variant", typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
+        L"variant", typeid(Variant), values, Predicates<Variant*>::alwaysTrue);
 }
 
 StoneSlabBlock::StoneSlabBlock()

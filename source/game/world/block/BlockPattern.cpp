@@ -48,15 +48,16 @@ BlockPattern::BlockLoadingCache* BlockPattern::createLevelCache(Level* level, bo
 BlockPos BlockPattern::translateAndRotate(const BlockPos& pos, const Direction* forwards,
                                            const Direction* up, int x, int y, int z)
 {
-    const Direction* adjustedUp = forwards != up ? up->getOpposite() : up;
-
+    if (forwards != up && forwards != up->getOpposite())
+    {
+    }
     Vec3i forward(forwards->getStepX(), forwards->getStepY(), forwards->getStepZ());
-    Vec3i upVector(adjustedUp->getStepX(), adjustedUp->getStepY(), adjustedUp->getStepZ());
-    Vec3i cross = forward.cross(upVector);
+    Vec3i upVector(up->getStepX(), up->getStepY(), up->getStepZ());
+    Vec3i left = forward.cross(upVector);
 
-    return pos.offset(cross.x * x - upVector.x * y + forward.x * z,
-                      cross.y * x - upVector.y * y + forward.y * z,
-                      cross.z * x - upVector.z * y + forward.z * z);
+    return pos.offset(left.x * x - upVector.x * y + forward.x * z,
+                      left.y * x - upVector.y * y + forward.y * z,
+                      left.z * x - upVector.z * y + forward.z * z);
 }
 
 BlockPattern::BlockPatternMatch* BlockPattern::matches(
@@ -93,12 +94,7 @@ BlockPattern::BlockPatternMatch* BlockPattern::matches(Level* level, const Block
 BlockPattern::BlockPatternMatch* BlockPattern::find(Level* level, const BlockPos& pos)
 {
     boost::shared_ptr<BlockLoadingCache> cache(createLevelCache(level, false));
-    const int& longestSide = std::max(mWidth, mHeight);
-    int size = mDepth;
-    if (size < longestSide)
-    {
-        size = longestSide;
-    }
+    int size = std::max(mDepth, std::max(mHeight, mWidth));
 
     const Direction* upDirection = getUpRelativeToPattern();
     std::vector<const Direction*>* ups = &Direction::VALUES;
@@ -175,14 +171,14 @@ BlockInWorld* BlockPattern::BlockLoadingCache::getUnchecked(const BlockPos& pos)
 {
     BlockCache::iterator it = mCache.find(pos);
     BlockInWorld* block;
-    if (it == mCache.end())
+    if (it != mCache.end())
     {
-        block = new BlockInWorld(mLevel, pos, mLoadChunks);
-        mCache[pos] = block;
+        block = it->second;
     }
     else
     {
-        block = it->second;
+        block = new BlockInWorld(mLevel, pos, mLoadChunks);
+        mCache[pos] = block;
     }
     return block;
 }

@@ -92,9 +92,7 @@ bool EnderChestBlock::isSilkTouchable()
 const BlockState* EnderChestBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float,
                                                          float, int, boost::shared_ptr<LivingEntity> placer)
 {
-    const BlockState* state = defaultBlockState();
-    DirectionProperty* facing = FACING;
-    return state->setValue(facing, placer->getDirection()->getOpposite());
+    return defaultBlockState()->setValue(FACING, placer->getDirection()->getOpposite());
 }
 
 void EnderChestBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state,
@@ -121,20 +119,15 @@ bool EnderChestBlock::use(Level* level, const BlockPos& pos, const BlockState*, 
 {
     boost::shared_ptr<PlayerEnderChestContainer> inventory = player->getEnderChestInventory();
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (inventory)
-    {
-        if (blockEntity->GetType() == BlockEntityType::ENDER_CHEST)
-        {
-            if (level->getBlockState(pos.above())->isSolidBlockingCubeAndNotSignalSource()
-                || ChestBlock::isChestBlockedAt(level, pos))
-                return true;
-            if (level->mIsClientSide)
-                return true;
-            inventory->setActiveChest(boost::dynamic_pointer_cast<EnderChestBlockEntity>(blockEntity));
-            player->openContainer(inventory);
-            return true;
-        }
-    }
+    if (!inventory || !eTYPE_DERIVED_FROM(BlockEntityType::ENDER_CHEST, blockEntity->GetType()))
+        return true;
+    if (level->getBlockState(pos.above())->isSolidBlockingCubeAndNotSignalSource()
+        || ChestBlock::isChestBlockedAt(level, pos))
+        return true;
+    if (level->mIsClientSide)
+        return true;
+    inventory->setActiveChest(boost::dynamic_pointer_cast<EnderChestBlockEntity>(blockEntity));
+    player->openContainer(inventory);
     return true;
 }
 
@@ -180,13 +173,14 @@ unsigned int EnderChestBlock::GetInteractTooltip(const BlockTooltipDataHolder& t
 
 const BlockState* EnderChestBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    DirectionProperty* facing = FACING;
-    return state->setValue(facing, rotation->rotate(state->getValue(facing)));
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 const BlockState* EnderChestBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(FACING)));
+    DirectionProperty* facing = FACING;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 BlockStateDefinition* EnderChestBlock::createBlockStateDefinition()

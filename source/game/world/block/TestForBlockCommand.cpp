@@ -19,11 +19,7 @@ void TestForBlockCommand::execute(boost::shared_ptr<CommandSender> sender, array
 {
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
+    byteStream.reset();
 }
 
 boost::shared_ptr<GameCommandPacket> TestForBlockCommand::preparePacket(unsigned char mode)

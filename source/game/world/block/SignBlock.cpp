@@ -85,7 +85,7 @@ bool SignBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost:
         return true;
 
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    bool isSign = blockEntity->GetType() == BlockEntityType::SIGN;
+    bool isSign = eTYPE_DERIVED_FROM(BlockEntityType::SIGN, blockEntity->GetType());
     if (!isSign)
         return false;
 

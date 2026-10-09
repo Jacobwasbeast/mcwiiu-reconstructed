@@ -1,4 +1,7 @@
 #include "game/world/block/DiodeBlock.hpp"
+
+#include <algorithm>
+
 #include "game/core/Direction.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/item/not_null_ptr.hpp"
@@ -23,7 +26,11 @@ bool DiodeBlock::isCubeShaped(const BlockState*) { return false; }
 
 bool DiodeBlock::mayPlace(Level* level, const BlockPos& pos)
 {
-    return level->getBlockState(pos.below())->isTopSolidBlocking() && Block::mayPlace(level, pos);
+    if (level->getBlockState(pos.below())->isTopSolidBlocking())
+    {
+        return Block::mayPlace(level, pos);
+    }
+    return false;
 }
 
 bool DiodeBlock::canSurvive(Level* level, const BlockPos& pos, const BlockState*)
@@ -35,20 +42,21 @@ void DiodeBlock::randomTick(Level*, const BlockPos&, const BlockState*, Random*)
 
 void DiodeBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random*)
 {
-    if (isLocked(level, pos, state)) return;
-    bool turnOn = shouldTurnOn(level, pos, state);
-    if (!mOn)
+    if (!isLocked(level, pos, state))
     {
-        const BlockState* onState = getOnBlock(state);
-        level->setBlock(pos, onState, Block::UPDATE_CLIENTS, false);
-        if (!turnOn)
+        bool turnOn = shouldTurnOn(level, pos, state);
+        if (mOn && !turnOn)
         {
-            level->addToTickNextTick(pos, onState->getBlock(), getTurnOffDelay(state), -1);
+            level->setBlock(pos, getOffBlock(state), Block::UPDATE_CLIENTS, false);
         }
-    }
-    else if (!turnOn)
-    {
-        level->setBlock(pos, getOffBlock(state), Block::UPDATE_CLIENTS, false);
+        else if (!mOn)
+        {
+            level->setBlock(pos, getOnBlock(state), Block::UPDATE_CLIENTS, false);
+            if (!turnOn)
+            {
+                level->addToTickNextTick(pos, getOnBlock(state)->getBlock(), getTurnOffDelay(state), -1);
+            }
+        }
     }
 }
 
@@ -66,7 +74,7 @@ int DiodeBlock::getDirectSignal(const BlockState* state, LevelSource* levelSourc
 
 int DiodeBlock::getSignal(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
-    if (isOn(state) && direction == state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY))
+    if (isOn(state) && state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY) == direction)
         return getOutputSignal(levelSource, pos, state);
     return Block::SIGNAL_NONE;
 }
@@ -76,29 +84,44 @@ void DiodeBlock::neighborChanged(const BlockState* state, Level* level, const Bl
     if (canSurvive(level, pos, NULL))
     {
         checkTickOnNeighbor(level, pos, state);
-        return;
     }
-    spawnResources(level, pos, state, 0);
-    level->removeBlock(pos);
-    for (std::vector<const Direction*>::const_iterator direction = Direction::VALUES.begin(); direction != Direction::VALUES.end(); ++direction)
+    else
     {
-        level->updateNeighborsAt(pos.relative(*direction), this, false);
+        spawnResources(level, pos, state, 0);
+        level->removeBlock(pos);
+        for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
+        {
+            level->updateNeighborsAt(pos.relative(*it), this, false);
+        }
     }
 }
 
 void DiodeBlock::checkTickOnNeighbor(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (isLocked(level, pos, state) || shouldTurnOn(level, pos, state) == mOn || level->isBlockToBeTickedAt(pos, this)) return;
-    int priority = -1;
-    if (shouldPrioritize(level, pos, state)) priority = -3;
-    else if (mOn) priority = -2;
-    level->addToTickNextTick(pos, this, getTurnOnDelay(state), priority);
+    if (isLocked(level, pos, state))
+    {
+        return;
+    }
+    bool turnOn = shouldTurnOn(level, pos, state);
+    if (mOn != turnOn && !level->isBlockToBeTickedAt(pos, this))
+    {
+        int priority = -1;
+        if (shouldPrioritize(level, pos, state))
+        {
+            priority = -3;
+        }
+        else if (mOn)
+        {
+            priority = -2;
+        }
+        level->addToTickNextTick(pos, this, getTurnOnDelay(state), priority);
+    }
 }
 
 bool DiodeBlock::isLocked(LevelSource*, const BlockPos&, const BlockState*) { return false; }
 bool DiodeBlock::shouldTurnOn(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    return getInputSignal(level, pos, state) > 0;
+    return getInputSignal(level, pos, state) > Block::SIGNAL_NONE;
 }
 
 int DiodeBlock::getInputSignal(Level* level, const BlockPos& pos, const BlockState* state)
@@ -106,20 +129,12 @@ int DiodeBlock::getInputSignal(Level* level, const BlockPos& pos, const BlockSta
     const Direction* direction = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
     BlockPos inputPos = pos.relative(direction);
     int signal = level->getSignal(inputPos, direction);
-    if (signal < Block::SIGNAL_MAX)
+    if (signal >= Block::SIGNAL_MAX)
     {
-        const BlockState* inputState = level->getBlockState(inputPos);
-        if (inputState->getBlock() == Blocks::redstone_wire)
-        {
-            int wireSignal = inputState->getValue(RedStoneWireBlock::POWER);
-            if (signal < wireSignal) signal = wireSignal;
-        }
-        else if (signal < Block::SIGNAL_NONE)
-        {
-            signal = Block::SIGNAL_NONE;
-        }
+        return signal;
     }
-    return signal;
+    const BlockState* inputState = level->getBlockState(inputPos);
+    return std::max(signal, inputState->getBlock() == Blocks::redstone_wire ? inputState->getValue(RedStoneWireBlock::POWER) : Block::SIGNAL_NONE);
 }
 
 int DiodeBlock::getAlternateSignal(LevelSource* levelSource, const BlockPos& pos, const BlockState* state)
@@ -127,28 +142,33 @@ int DiodeBlock::getAlternateSignal(LevelSource* levelSource, const BlockPos& pos
     const Direction* direction = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
     const Direction* clockWise = direction->getClockWise();
     const Direction* counterClockWise = direction->getCounterClockWise();
-    int first = getAlternateSignalAt(levelSource, pos.relative(clockWise), clockWise);
-    int second = getAlternateSignalAt(levelSource, pos.relative(counterClockWise), counterClockWise);
-    return first > second ? first : second;
+    return std::max(getAlternateSignalAt(levelSource, pos.relative(clockWise), clockWise), getAlternateSignalAt(levelSource, pos.relative(counterClockWise), counterClockWise));
 }
 
 int DiodeBlock::getAlternateSignalAt(LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
     const BlockState* state = levelSource->getBlockState(pos);
     Block* block = state->getBlock();
-    if (!isAlternateInput(state)) return Block::SIGNAL_NONE;
-    if (block == Blocks::redstone_block) return Block::SIGNAL_MAX;
-    if (block == Blocks::redstone_wire) return state->getValue(RedStoneWireBlock::POWER);
-    return levelSource->getDirectSignal(pos, direction);
+    if (isAlternateInput(state))
+    {
+        if (block == Blocks::redstone_block)
+        {
+            return Block::SIGNAL_MAX;
+        }
+        if (block == Blocks::redstone_wire)
+        {
+            return state->getValue(RedStoneWireBlock::POWER);
+        }
+        return levelSource->getDirectSignal(pos, direction);
+    }
+    return Block::SIGNAL_NONE;
 }
 
 bool DiodeBlock::isSignalSource(const BlockState*) { return true; }
 
 const BlockState* DiodeBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float, float, int, boost::shared_ptr<LivingEntity> placer)
 {
-    const Direction* direction = placer->getDirection();
-    TypedBoxed<const Direction*> facing(direction->getOpposite());
-    return defaultBlockState()->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing);
+    return defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, placer->getDirection()->getOpposite());
 }
 
 void DiodeBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockState* state, boost::shared_ptr<LivingEntity>, not_null_ptr<ItemInstance>)
@@ -173,9 +193,9 @@ void DiodeBlock::destroy(Level* level, const BlockPos& pos, const BlockState* st
 {
     if (mOn)
     {
-        for (std::vector<const Direction*>::const_iterator direction = Direction::VALUES.begin(); direction != Direction::VALUES.end(); ++direction)
+        for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
         {
-            level->updateNeighborsAt(pos.relative(*direction), this, false);
+            level->updateNeighborsAt(pos.relative(*it), this, false);
         }
     }
     Block::destroy(level, pos, state);
@@ -193,15 +213,20 @@ bool DiodeBlock::isDiode(const BlockState* state)
 
 bool DiodeBlock::isSameDiode(const BlockState* state)
 {
-    const BlockState* defaultState = defaultBlockState();
-    return state->getBlock() == getOnBlock(defaultState)->getBlock() || state->getBlock() == getOffBlock(defaultState)->getBlock();
+    Block* block = state->getBlock();
+    return block == getOnBlock(defaultBlockState())->getBlock() || block == getOffBlock(defaultBlockState())->getBlock();
 }
 
 bool DiodeBlock::shouldPrioritize(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    const Direction* direction = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)->getOpposite();
-    const BlockState* neighbor = level->getBlockState(pos.relative(direction));
-    return isDiode(neighbor) && neighbor->getValue(HorizontalDirectionalBlock::FACING_PROPERTY) != direction;
+    const Direction* facing = state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY);
+    const Direction* direction = facing->getOpposite();
+    BlockPos neighborPos = pos.relative(direction);
+    if (isDiode(level->getBlockState(neighborPos)))
+    {
+        return level->getBlockState(neighborPos)->getValue(HorizontalDirectionalBlock::FACING_PROPERTY) != direction;
+    }
+    return false;
 }
 
 int DiodeBlock::getTurnOffDelay(const BlockState* state) { return getTurnOnDelay(state); }
@@ -221,7 +246,16 @@ EBlockRenderShape DiodeBlock::getRenderShape(const BlockState*)
 TextureAtlasSprite* DiodeBlock::getTexture(const Direction* direction, const BlockState*)
 {
     if (direction == Direction::DOWN)
-        return (mOn ? Blocks::redstone_torch : Blocks::unlit_redstone_torch)->getTexture(direction);
-    if (direction == Direction::UP) return mIcon;
+    {
+        if (mOn)
+        {
+            return Blocks::redstone_torch->getTexture(direction);
+        }
+        return Blocks::unlit_redstone_torch->getTexture(direction);
+    }
+    if (direction == Direction::UP)
+    {
+        return mIcon;
+    }
     return Blocks::stone_slab->getTexture(Direction::UP);
 }

@@ -55,13 +55,15 @@ void DeadBushBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player
                                   const BlockState* state, boost::shared_ptr<BlockEntity> blockEntity,
                                   not_null_ptr<ItemInstance> tool)
 {
-    if (!level->mIsClientSide && tool->getItem() == Items::shears)
+    if (level->mIsClientSide || tool->getItem() != Items::shears)
     {
-        player->awardStat(gStats->get_blocksMined(Block::getId(this)),
-                          GenericStats::param_blocksMined(state, 1));
-        Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::deadbush, 1, 0)));
-        return;
+        Block::playerDestroy(level, player, pos, state, blockEntity, tool);
     }
-
-    Block::playerDestroy(level, player, pos, state, blockEntity, tool);
+    else
+    {
+        Player* awardee = player.operator->();
+        Stat* stat = gStats->get_blocksMined(Block::getId(this));
+        awardee->awardStat(stat, GenericStats::param_blocksMined(state, 1));
+        Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::deadbush, 1, 0)));
+    }
 }

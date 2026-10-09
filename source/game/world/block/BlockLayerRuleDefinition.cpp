@@ -7,9 +7,7 @@ BlockLayerRuleDefinition::BlockLayerRuleDefinition()
 {
     mBlockId = 0;
 
-    GameRules_IntAttribute* blockId = addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mBlockId);
-    blockId->setMin(0);
-    blockId->setMax(255);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mBlockId)->setMin(0)->setMax(255);
 }
 
 BlockLayerRuleDefinition::~BlockLayerRuleDefinition()

@@ -101,8 +101,7 @@ void RedStoneOreBlock::spawnParticles(Level* level, const BlockPos& pos)
             || y < 0.0 || y > (double)(pos.y + 1)
             || z < (double)pos.z || z > (double)(pos.z + 1))
         {
-            arrayWithLength<int> params;
-            level->addParticle(PARTICLE_RED_DUST, x, y, z, 0.0, 0.0, 0.0, params);
+            level->addParticle(PARTICLE_RED_DUST, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
         }
     }
 }

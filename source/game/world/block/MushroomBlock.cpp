@@ -72,47 +72,40 @@ const AABB* MushroomBlock::getShape(const BlockState*, LevelSource*, const Block
 void MushroomBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
     Bush::tick(level, pos, state, random);
-    if (random->nextInt(25) != 0)
-        return;
-
     BlockPos currentPos = pos;
-    int count = 5;
-    Iterator<MutableBlockPos*>* positions = BlockPos::mutablesBetween(currentPos.offset(-4, -1, -4),
-                                                                       currentPos.offset(4, 1, 4));
-    while (positions->hasNext())
+    if (random->nextInt(25) == 0)
     {
-        MutableBlockPos* current = positions->next();
-        if (level->getBlockState(BlockPos(*current))->getBlock() == this)
+        int count = 5;
+        Iterator<MutableBlockPos*>* positions = BlockPos::mutablesBetween(currentPos.offset(-4, -1, -4),
+                                                                           currentPos.offset(4, 1, 4));
+        while (positions->hasNext())
         {
-            --count;
-            if (count < 1)
+            BlockPos current = *positions->next();
+            if (level->getBlockState(current)->getBlock() == this)
             {
-                delete positions;
-                return;
+                --count;
+                if (count < 1)
+                {
+                    delete positions;
+                    return;
+                }
             }
         }
-    }
-    delete positions;
+        delete positions;
 
-    BlockPos target = currentPos;
-    for (int attempt = 0; attempt < 4; ++attempt)
-    {
-        int dx = random->nextInt(3) - 1;
-        int dy1 = random->nextInt(2);
-        int dy2 = random->nextInt(2);
-        int dz = random->nextInt(3) - 1;
-        target = currentPos.offset(dx, dy1 - dy2, dz);
+        BlockPos target = currentPos.offset(random->nextInt(3) - 1, random->nextInt(2) - random->nextInt(2),
+                                            random->nextInt(3) - 1);
+        for (int attempt = 0; attempt < 4; ++attempt)
+        {
+            if (level->isEmptyBlock(target) && canSurvive(level, target, defaultBlockState()))
+                currentPos = target;
+            target = currentPos.offset(random->nextInt(3) - 1, random->nextInt(2) - random->nextInt(2),
+                                       random->nextInt(3) - 1);
+        }
+
         if (level->isEmptyBlock(target) && canSurvive(level, target, defaultBlockState()))
-            currentPos = target;
+            level->setBlock(target, defaultBlockState(), Block::UPDATE_CLIENTS, false);
     }
-
-    int dx = random->nextInt(3) - 1;
-    int dy1 = random->nextInt(2);
-    int dy2 = random->nextInt(2);
-    int dz = random->nextInt(3) - 1;
-    target = currentPos.offset(dx, dy1 - dy2, dz);
-    if (level->isEmptyBlock(target) && canSurvive(level, target, defaultBlockState()))
-        level->setBlock(target, defaultBlockState(), Block::UPDATE_CLIENTS, false);
 }
 
 bool MushroomBlock::mayPlace(Level* level, const BlockPos& pos)

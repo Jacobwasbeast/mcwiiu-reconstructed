@@ -9,15 +9,15 @@ float BowItem_Pull_ItemPropertyFunction::call(not_null_ptr<ItemInstance> itemIns
                                                Level*,
                                                boost::shared_ptr<LivingEntity> entity)
 {
-    if (entity != NULL)
+    if (entity == NULL)
     {
-        if (entity->getUseItem()->getItem() != Items::bow)
-        {
-            return 0.0f;
-        }
-
-        return (float)(itemInstance->getUseDuration() - entity->getUseItemRemainingTicks()) / (float)BowItem::GetMaxBowDuration();
+        return 0.0f;
     }
 
-    return 0.0f;
+    if (entity->getUseItem()->getItem() != Items::bow)
+    {
+        return 0.0f;
+    }
+
+    return (float)(itemInstance->getUseDuration() - entity->getUseItemRemainingTicks()) / (float)BowItem::GetMaxBowDuration();
 }

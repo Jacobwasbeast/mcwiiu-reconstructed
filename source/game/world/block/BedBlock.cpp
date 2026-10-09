@@ -99,7 +99,7 @@ const MaterialColor* BedBlock::getMapColor(const BlockState* state, LevelSource*
         boost::shared_ptr<BlockEntity> blockEntity = levelSource->getBlockEntity(pos);
         if (blockEntity.get() != NULL)
         {
-            bool isBed = blockEntity->GetType() == BlockEntityType::BED;
+            bool isBed = eTYPE_DERIVED_FROM(BlockEntityType::BED, blockEntity->GetType());
             if (isBed)
             {
                 const DyeColor* color;
@@ -230,7 +230,7 @@ void BedBlock::updateEntityAfterFallOn(Level* level, boost::shared_ptr<Entity> e
     else if (entity->mYd < 0.0)
     {
         entity->mYd = -entity->mYd * 0.66f;
-        bool isLiving = (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
+        bool isLiving = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType());
         if (!isLiving)
         {
             entity->mYd *= 0.8;
@@ -335,7 +335,7 @@ void BedBlock::spawnResources(Level* level, const BlockPos& pos, const BlockStat
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
         if (blockEntity.get() != NULL)
         {
-            bool isBed = blockEntity->GetType() == BlockEntityType::BED;
+            bool isBed = eTYPE_DERIVED_FROM(BlockEntityType::BED, blockEntity->GetType());
             if (isBed)
             {
                 boost::shared_ptr<BedBlockEntity> bedEntity = boost::static_pointer_cast<BedBlockEntity>(blockEntity);
@@ -373,7 +373,7 @@ not_null_ptr<ItemInstance> BedBlock::getCloneItemInstance(Level* level, const Bl
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(targetPos);
     if (blockEntity.get() != NULL)
     {
-        bool isBed = blockEntity->GetType() == BlockEntityType::BED;
+        bool isBed = eTYPE_DERIVED_FROM(BlockEntityType::BED, blockEntity->GetType());
         if (isBed)
         {
             boost::shared_ptr<BedBlockEntity> bedEntity = boost::static_pointer_cast<BedBlockEntity>(blockEntity);
@@ -401,7 +401,7 @@ void BedBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, con
 {
     if (state->getValue(PART) == &gBedHead)
     {
-        bool isBed = blockEntity->GetType() == BlockEntityType::BED;
+        bool isBed = eTYPE_DERIVED_FROM(BlockEntityType::BED, blockEntity->GetType());
         if (isBed)
         {
             boost::shared_ptr<BedBlockEntity> bedEntity = boost::static_pointer_cast<BedBlockEntity>(blockEntity);
@@ -485,14 +485,14 @@ unsigned int BedBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipD
 
 const BlockState* BedBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    DirectionProperty* property = HorizontalDirectionalBlock::FACING_PROPERTY;
-    return state->setValue<const Direction*>(property, rotation->rotate(state->getValue(property)));
+    return state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, rotation->rotate(state->getTypedBoxed(HorizontalDirectionalBlock::FACING_PROPERTY)->getValue()));
 }
 
 const BlockState* BedBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    DirectionProperty* property = HorizontalDirectionalBlock::FACING_PROPERTY;
-    return rotate(state, mirror->getRotation(state->getValue(property)));
+    DirectionProperty* facing = HorizontalDirectionalBlock::FACING_PROPERTY;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 BlockStateDefinition* BedBlock::createBlockStateDefinition()

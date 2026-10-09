@@ -70,8 +70,7 @@ CompoundTag* BedBlockEntity::getUpdateTag()
 
 boost::shared_ptr<Packet> BedBlockEntity::getUpdatePacket()
 {
-    boost::shared_ptr<ClientboundBlockEntityDataPacket> packet(new ClientboundBlockEntityDataPacket(mPos, 11, mLevel->mDimension->getType()->getId(), getUpdateTag()));
-    return packet;
+    return boost::shared_ptr<ClientboundBlockEntityDataPacket>(new ClientboundBlockEntityDataPacket(mPos, 11, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 bool BedBlockEntity::isHeadPiece()

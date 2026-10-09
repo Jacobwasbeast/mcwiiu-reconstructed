@@ -15,7 +15,7 @@
 #include "game/world/block/Material.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-static AbstractProperty<int>* gStandingBannerRotation =
+AbstractProperty<int>* StandingBannerBlock::ROTATION =
     static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"rotation", 0, 15));
 static const AABB* gStandingBannerShape = AABB::newPermanent(0.25, 0.0, 0.25, 0.75, 1.0, 0.75);
 
@@ -23,7 +23,7 @@ StandingBannerBlock::StandingBannerBlock()
     : BannerBlock()
 {
     DerivedInit();
-    registerDefaultState(mStateDefinition->any()->setValue(gStandingBannerRotation, 0));
+    registerDefaultState(mStateDefinition->any()->setValue(ROTATION, 0));
 }
 
 const AABB* StandingBannerBlock::getShape(const BlockState*, LevelSource*, const BlockPos&)
@@ -33,13 +33,14 @@ const AABB* StandingBannerBlock::getShape(const BlockState*, LevelSource*, const
 
 const BlockState* StandingBannerBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    DirectionProperty* facing = BannerBlock::FACING;
-    return state->setValue(facing, rotation->rotate(state->getValue(facing)));
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 const BlockState* StandingBannerBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(BannerBlock::FACING)));
+    DirectionProperty* facing = BannerBlock::FACING;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 void StandingBannerBlock::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
@@ -56,16 +57,16 @@ void StandingBannerBlock::neighborChanged(const BlockState* state, Level* level,
 
 const BlockState* StandingBannerBlock::getBlockState(int data)
 {
-    return defaultBlockState()->setValue(gStandingBannerRotation, data);
+    return defaultBlockState()->setValue(ROTATION, data);
 }
 
 int StandingBannerBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return state->getValue(gStandingBannerRotation);
+    return state->getValue(ROTATION);
 }
 
 BlockStateDefinition* StandingBannerBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { gStandingBannerRotation };
+    static const Property* properties[] = { ROTATION };
     return new BlockStateDefinition(this, properties, 1);
 }

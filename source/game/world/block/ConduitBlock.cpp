@@ -30,11 +30,11 @@ boost::shared_ptr<BlockEntity> ConduitBlock::newBlockEntity(Level* level, int)
 
 bool ConduitBlock::mayPlace(Level* level, const BlockPos& pos, const Direction* direction)
 {
-    if (direction == Direction::UP && level->getBlock(pos.below())->mMaterial->isSolid())
+    if (direction != Direction::UP || !level->getBlock(pos.below())->getCraftingMaterial()->isSolid())
     {
-        return Block::mayPlace(level, pos);
+        return false;
     }
-    return false;
+    return Block::mayPlace(level, pos);
 }
 
 bool ConduitBlock::isCubeShaped(const BlockState* state)

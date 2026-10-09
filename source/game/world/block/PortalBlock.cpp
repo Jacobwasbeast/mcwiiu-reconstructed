@@ -279,12 +279,12 @@ int PortalBlock::getRenderLayer() { return 1; }
 
 void PortalBlock::entityInside(Level*, const BlockPos& pos, const BlockState*, const boost::shared_ptr<Entity>& entity)
 {
-    if (entity->GetType() == EntityType::EXPERIENCE_ORB)
+    if (eTYPE_DERIVED_FROM(EntityType::EXPERIENCE_ORB, entity->GetType()))
         return;
     if (entity->isPassenger() || entity->isVehicle() || !entity->canChangeDimensions())
         return;
 
-    bool isPlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+    bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType());
     if (isPlayer)
     {
         if (Minecraft::GetInstance()->mGameMode == NULL)

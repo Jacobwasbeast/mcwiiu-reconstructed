@@ -26,14 +26,7 @@ SpongeBlock::SpongeBlock()
     : Block(Material::SPONGE)
 {
     DerivedInit();
-    const BlockState* defaultState;
-    {
-        const BlockState* anyState = mStateDefinition->any();
-        AbstractProperty<bool>* wetProperty = WET;
-        TypedBoxed<bool> wet(false);
-        defaultState = anyState->setBoxedValue(wetProperty, &wet);
-    }
-    registerDefaultState(defaultState);
+    registerDefaultState(mStateDefinition->any()->setValue(WET, false));
     mWetIcon = NULL;
 }
 
@@ -52,15 +45,17 @@ int SpongeBlock::removeWaterBreadthFirstSearch(Level* level, const BlockPos& pos
     std::deque<std::pair<BlockPos, int> > queue;
     std::pair<BlockPos, int> start(pos, 0);
     queue.push_back(start);
-    int removed = 0;
     const BlockState* air = Blocks::air->defaultBlockState();
+    int removed = 0;
     while (!queue.empty())
     {
-        std::pair<BlockPos, int> current = queue.front();
+        const std::pair<BlockPos, int>& front = queue.front();
+        BlockPos currentPos = front.first;
+        int distance = front.second;
         queue.pop_front();
         for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
         {
-            BlockPos adjacent = current.first.relative(*it);
+            BlockPos adjacent = currentPos.relative(*it);
             const BlockState* adjacentState = level->getBlockState(adjacent);
             Block* extraBlock = level->getExtraBlock(adjacent);
             if (adjacentState->getMaterial() == Material::WATER)
@@ -81,9 +76,9 @@ int SpongeBlock::removeWaterBreadthFirstSearch(Level* level, const BlockPos& pos
                 continue;
             }
             ++removed;
-            if (current.second < 6)
+            if (distance < 6)
             {
-                std::pair<BlockPos, int> next(adjacent, current.second + 1);
+                std::pair<BlockPos, int> next(adjacent, distance + 1);
                 queue.push_back(next);
             }
         }
@@ -117,10 +112,7 @@ void SpongeBlock::neighborChanged(const BlockState* state, Level* level, const B
 
 const BlockState* SpongeBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    AbstractProperty<bool>* wetProperty = WET;
-    TypedBoxed<bool> wet((data & 1) != 0);
-    return state->setBoxedValue(wetProperty, &wet);
+    return defaultBlockState()->setValue(WET, (data & 1) != 0);
 }
 
 int SpongeBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -161,12 +153,26 @@ void SpongeBlock::animateTick(const BlockState* state, Level* level, const Block
         if (direction->getAxis() == Direction::Axis::X)
         {
             z += random->nextDouble();
-            x += direction == Direction::EAST ? 1.1 : 0.05;
+            if (direction == Direction::EAST)
+            {
+                x += 1.1;
+            }
+            else
+            {
+                x += 0.05;
+            }
         }
         else
         {
             x += random->nextDouble();
-            z += direction == Direction::SOUTH ? 1.1 : 0.05;
+            if (direction == Direction::SOUTH)
+            {
+                z += 1.1;
+            }
+            else
+            {
+                z += 0.05;
+            }
         }
     }
 

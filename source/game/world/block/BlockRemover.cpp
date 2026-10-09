@@ -25,9 +25,9 @@ BlockRemover::BlockRemover(Level* level, std::vector<AABB*>& areas)
     mLevel = level;
     mFinished = false;
     mTicks = 0;
-    mRemovalCount = 0;
     mBlocksPerRemoval = 5;
     mTicksPerRemoval = 20;
+    mRemovalCount = 0;
 }
 
 BlockRemover::~BlockRemover()
@@ -67,19 +67,10 @@ void BlockRemover::Tick()
 
 void BlockRemover::CreateParticles(const BlockPos& pos, int colour)
 {
-    arrayWithLength<int> params;
+    float red = ((colour >> 16) & 0xFF) / 255.0f;
+    float green = ((colour >> 8) & 0xFF) / 255.0f;
+    float blue = (colour & 0xFF) / 255.0f;
 
-    static_cast<ServerLevel*>(mLevel)->sendParticles(PARTICLE_MOB_SPELL,
-                                                     pos.x,
-                                                     pos.y,
-                                                     pos.z,
-                                                     5,
-                                                     3.0f,
-                                                     3.0f,
-                                                     3.0f,
-                                                     0.2f,
-                                                     params,
-                                                     ((colour >> 16) & 0xFF) / 255.0f,
-                                                     ((colour >> 8) & 0xFF) / 255.0f,
-                                                     (colour & 0xFF) / 255.0f);
+    static_cast<ServerLevel*>(mLevel)->sendParticles(PARTICLE_MOB_SPELL, pos.x, pos.y, pos.z, 5, 3.0f, 3.0f, 3.0f, 0.2f,
+                                                     arrayWithLength<int>(), red, green, blue);
 }

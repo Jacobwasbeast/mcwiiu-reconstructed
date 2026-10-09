@@ -22,10 +22,10 @@
 #include "game/world/block/SandBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
 
-NewStoneSlabBlock::Variant* NewStoneSlabBlock::Variant::RED_SANDSTONE;
 EnumProperty<NewStoneSlabBlock::Variant*>* NewStoneSlabBlock::VARIANT = NULL;
-static NewStoneSlabBlock::Variant* gDefaultVariant = NULL;
+NewStoneSlabBlock::Variant* NewStoneSlabBlock::Variant::RED_SANDSTONE = NULL;
 static Property* gNewStoneSlabSeamlessProperty = BooleanProperty::create(L"seamless");
+static NewStoneSlabBlock::Variant* gDefaultVariant;
 
 NewStoneSlabBlock::Variant::Variant(int data, const std::wstring& name, int translationKey, const MaterialColor* materialColor)
     : mData(data),
@@ -37,7 +37,7 @@ NewStoneSlabBlock::Variant::Variant(int data, const std::wstring& name, int tran
 
 NewStoneSlabBlock::Variant* NewStoneSlabBlock::Variant::byData(int data)
 {
-    return Variant::RED_SANDSTONE;
+    return gDefaultVariant;
 }
 
 int NewStoneSlabBlock::Variant::getData()
@@ -92,7 +92,7 @@ void NewStoneSlabBlock::blockStaticCtor()
     std::wstring propertyName(L"variant");
     boost::unordered_set<Variant*> values;
     values.insert(Variant::RED_SANDSTONE);
-    VARIANT = EnumProperty<Variant*>::create(propertyName, typeid(Variant*), values, Predicates<Variant*>::alwaysTrue);
+    VARIANT = EnumProperty<Variant*>::create(propertyName, typeid(Variant), values, Predicates<Variant*>::alwaysTrue);
 }
 
 std::wstring NewStoneSlabBlock::getName()

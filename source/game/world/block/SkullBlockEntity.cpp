@@ -14,9 +14,13 @@
 #include "game/world/block/SkullBlock.hpp"
 
 SkullBlockEntity::SkullBlockEntity()
-    : BlockEntity(), mSkullType(-1), mRotation(0), mExtraType(L""),
-      mMouthAnimation(0), mPowered(false)
+    : BlockEntity()
 {
+    mSkullType = -1;
+    mRotation = 0;
+    mExtraType = L"";
+    mMouthAnimation = 0;
+    mPowered = false;
 }
 
 BlockEntity* SkullBlockEntity::create()
@@ -48,8 +52,8 @@ void SkullBlockEntity::setRotation(int rotation)
 CompoundTag* SkullBlockEntity::save(CompoundTag* tag)
 {
     BlockEntity::save(tag);
-    tag->putByte(L"SkullType", (unsigned char)mSkullType);
-    tag->putByte(L"Rot", (unsigned char)mRotation);
+    tag->putByte(L"SkullType", (unsigned char)(mSkullType & 255));
+    tag->putByte(L"Rot", (unsigned char)(mRotation & 255));
     tag->putString(L"ExtraType", mExtraType);
     return tag;
 }
@@ -98,8 +102,7 @@ float SkullBlockEntity::getMouthAnimation(float partialTick)
 
 boost::shared_ptr<Packet> SkullBlockEntity::getUpdatePacket()
 {
-    boost::shared_ptr<ClientboundBlockEntityDataPacket> packet(new ClientboundBlockEntityDataPacket(mPos, 4, mLevel->mDimension->getType()->getId(), getUpdateTag()));
-    return packet;
+    return boost::shared_ptr<ClientboundBlockEntityDataPacket>(new ClientboundBlockEntityDataPacket(mPos, 4, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 CompoundTag* SkullBlockEntity::getUpdateTag()
@@ -119,25 +122,25 @@ int SkullBlockEntity::getRotation()
 
 void SkullBlockEntity::rotate(Rotation* rotation)
 {
-    if (mLevel != NULL)
+    if (mLevel == NULL)
+        return;
+
+    const BlockState* state = mLevel->getBlockState(getBlockPos());
+    if (state->getValue(SkullBlock::FACING) == Direction::UP)
     {
-        const BlockState* state = mLevel->getBlockState(getBlockPos());
-        if (state->getValue(SkullBlock::FACING) == Direction::UP)
-        {
-            mRotation = rotation->rotate(mRotation, 16);
-        }
+        mRotation = rotation->rotate(mRotation, 16);
     }
 }
 
 void SkullBlockEntity::mirror(Mirror* mirror)
 {
-    if (mLevel != NULL)
+    if (mLevel == NULL)
+        return;
+
+    const BlockState* state = mLevel->getBlockState(getBlockPos());
+    if (state->getValue(SkullBlock::FACING) == Direction::UP)
     {
-        const BlockState* state = mLevel->getBlockState(getBlockPos());
-        if (state->getValue(SkullBlock::FACING) == Direction::UP)
-        {
-            mRotation = mirror->mirror(mRotation, 16);
-        }
+        mRotation = mirror->mirror(mRotation, 16);
     }
 }
 

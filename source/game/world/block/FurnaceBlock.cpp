@@ -87,6 +87,7 @@ void FurnaceBlock::animateTick(const BlockState* state, Level* level, const Bloc
     const double x = pos.x + 0.5;
     const double y = pos.y + random->nextDouble() * 6.0 / 16.0;
     const double z = pos.z + 0.5;
+    const double offset = 0.52;
     const double side = random->nextDouble() * 0.6 - 0.3;
     if (random->nextDouble() < 0.1)
     {
@@ -95,21 +96,21 @@ void FurnaceBlock::animateTick(const BlockState* state, Level* level, const Bloc
     }
     switch (facing->get3DDataValue())
     {
-    case Direction::eDirection_North:
-        level->addParticle(PARTICLE_SMOKE, x + side, y, z - 0.52, 0.0, 0.0, 0.0, arrayWithLength<int>());
-        level->addParticle(PARTICLE_FLAME, x + side, y, z - 0.52, 0.0, 0.0, 0.0, arrayWithLength<int>());
-        break;
     case Direction::eDirection_West:
-        level->addParticle(PARTICLE_SMOKE, x - 0.52, y, z + side, 0.0, 0.0, 0.0, arrayWithLength<int>());
-        level->addParticle(PARTICLE_FLAME, x - 0.52, y, z + side, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        level->addParticle(PARTICLE_SMOKE, x - offset, y, z + side, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        level->addParticle(PARTICLE_FLAME, x - offset, y, z + side, 0.0, 0.0, 0.0, arrayWithLength<int>());
         break;
     case Direction::eDirection_East:
-        level->addParticle(PARTICLE_SMOKE, x + 0.52, y, z + side, 0.0, 0.0, 0.0, arrayWithLength<int>());
-        level->addParticle(PARTICLE_FLAME, x + 0.52, y, z + side, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        level->addParticle(PARTICLE_SMOKE, x + offset, y, z + side, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        level->addParticle(PARTICLE_FLAME, x + offset, y, z + side, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        break;
+    case Direction::eDirection_North:
+        level->addParticle(PARTICLE_SMOKE, x + side, y, z - offset, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        level->addParticle(PARTICLE_FLAME, x + side, y, z - offset, 0.0, 0.0, 0.0, arrayWithLength<int>());
         break;
     case Direction::eDirection_South:
-        level->addParticle(PARTICLE_SMOKE, x + side, y, z + 0.52, 0.0, 0.0, 0.0, arrayWithLength<int>());
-        level->addParticle(PARTICLE_FLAME, x + side, y, z + 0.52, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        level->addParticle(PARTICLE_SMOKE, x + side, y, z + offset, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        level->addParticle(PARTICLE_FLAME, x + side, y, z + offset, 0.0, 0.0, 0.0, arrayWithLength<int>());
         break;
     default:
         break;
@@ -128,7 +129,7 @@ bool FurnaceBlock::use(Level* level, const BlockPos& pos, const BlockState* stat
     if (!level->mIsClientSide)
     {
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-        bool isFurnace = blockEntity->GetType() == BlockEntityType::FURNACE;
+        bool isFurnace = eTYPE_DERIVED_FROM(BlockEntityType::FURNACE, blockEntity->GetType());
         if (isFurnace)
             player->openContainer(boost::static_pointer_cast<FurnaceBlockEntity>(blockEntity));
     }
@@ -139,17 +140,16 @@ void FurnaceBlock::setLit(bool lit, Level* level, const BlockPos& pos)
 {
     const BlockState* state = level->getBlockState(pos);
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    DirectionProperty* property = FACING;
     sKeepInventory = true;
-    if (!lit)
+    if (lit)
     {
-        level->setBlock(pos, Blocks::furnace->defaultBlockState()->setValue(property, state->getValue(property)), Block::UPDATE_ALL, false);
-        level->setBlock(pos, Blocks::furnace->defaultBlockState()->setValue(property, state->getValue(property)), Block::UPDATE_ALL, false);
+        level->setBlock(pos, Blocks::lit_furnace->defaultBlockState()->setValue(FACING, state->getValue(FACING)), Block::UPDATE_ALL, false);
+        level->setBlock(pos, Blocks::lit_furnace->defaultBlockState()->setValue(FACING, state->getValue(FACING)), Block::UPDATE_ALL, false);
     }
     else
     {
-        level->setBlock(pos, Blocks::lit_furnace->defaultBlockState()->setValue(property, state->getValue(property)), Block::UPDATE_ALL, false);
-        level->setBlock(pos, Blocks::lit_furnace->defaultBlockState()->setValue(property, state->getValue(property)), Block::UPDATE_ALL, false);
+        level->setBlock(pos, Blocks::furnace->defaultBlockState()->setValue(FACING, state->getValue(FACING)), Block::UPDATE_ALL, false);
+        level->setBlock(pos, Blocks::furnace->defaultBlockState()->setValue(FACING, state->getValue(FACING)), Block::UPDATE_ALL, false);
     }
     sKeepInventory = false;
     if (blockEntity != NULL)
@@ -167,7 +167,7 @@ void FurnaceBlock::setPlacedBy(Level* level, const BlockPos& pos, const BlockSta
     if (itemInstance->hasCustomHoverName())
     {
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-        bool isFurnace = blockEntity->GetType() == BlockEntityType::FURNACE;
+        bool isFurnace = eTYPE_DERIVED_FROM(BlockEntityType::FURNACE, blockEntity->GetType());
         if (isFurnace)
         {
             boost::shared_ptr<FurnaceBlockEntity> furnace = boost::dynamic_pointer_cast<FurnaceBlockEntity>(blockEntity);
@@ -183,7 +183,7 @@ void FurnaceBlock::onRemove(Level* level, const BlockPos& pos, const BlockState*
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
         if (blockEntity.get() != NULL)
         {
-            bool isFurnace = blockEntity->GetType() == BlockEntityType::FURNACE;
+            bool isFurnace = eTYPE_DERIVED_FROM(BlockEntityType::FURNACE, blockEntity->GetType());
             if (isFurnace)
             {
                 Containers::dropContents(level, pos, boost::dynamic_pointer_cast<FurnaceBlockEntity>(blockEntity));
@@ -239,13 +239,14 @@ unsigned int FurnaceBlock::GetInteractTooltip(const BlockTooltipDataHolder& tool
 
 const BlockState* FurnaceBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    DirectionProperty* property = FACING;
-    return state->setValue(property, rotation->rotate(state->getValue(property)));
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 const BlockState* FurnaceBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(FACING)));
+    DirectionProperty* facing = FACING;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 BlockStateDefinition* FurnaceBlock::createBlockStateDefinition()
@@ -257,7 +258,7 @@ BlockStateDefinition* FurnaceBlock::createBlockStateDefinition()
 TextureAtlasSprite* FurnaceBlock::getTexture(const Direction* direction, const BlockState* state)
 {
     if (direction == Direction::UP || direction == Direction::DOWN) return mTopIcon;
-    return direction == state->getValue(FACING) ? mFrontIcon : mIcon;
+    return direction != state->getValue(FACING) ? mIcon : mFrontIcon;
 }
 
 void FurnaceBlock::registerIcons(IconRegister* iconRegister)

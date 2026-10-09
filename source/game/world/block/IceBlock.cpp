@@ -41,7 +41,11 @@ void IceBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, con
     awardee->awardStat(stat, GenericStats::param_blocksMined(state, 1));
     player->causeFoodExhaustion((float)FoodConstants::ExhaustionMine());
 
-    if (!isSilkTouchable() || EnchantmentHelper::getItemEnchantmentLevel(Enchantments::SILK_TOUCH, tool) < 1)
+    if (isSilkTouchable() && EnchantmentHelper::getItemEnchantmentLevel(Enchantments::SILK_TOUCH, tool) > 0)
+    {
+        Block::popResource(level, pos, getSilkTouchItemInstance(state));
+    }
+    else
     {
         if (level->mDimension->isUltraWarm())
         {
@@ -49,17 +53,13 @@ void IceBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, con
             return;
         }
 
-        spawnResources(level, pos, state,
-                       EnchantmentHelper::getItemEnchantmentLevel(Enchantments::BLOCK_FORTUNE, tool));
+        int fortune = EnchantmentHelper::getItemEnchantmentLevel(Enchantments::BLOCK_FORTUNE, tool);
+        spawnResources(level, pos, state, fortune);
         Material* material = level->getBlockState(pos.below())->getBlock()->getCraftingMaterial();
         if (material->blocksMotion() || material->isLiquid())
         {
             level->setBlockAndUpdate(pos, Blocks::flowing_water->defaultBlockState());
         }
-    }
-    else
-    {
-        Block::popResource(level, pos, getSilkTouchItemInstance(state));
     }
 }
 

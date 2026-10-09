@@ -16,6 +16,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/BlockStateDefinition.hpp"
+#include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/ButtonBlock.hpp"
 #include "game/world/block/EnumProperty.hpp"
 #include "game/world/block/Material.hpp"
@@ -36,6 +37,7 @@ LeverBlock::LeverDirection* LeverBlock::LeverDirection::BY_DATA[8] =
 };
 
 AbstractProperty<LeverBlock::LeverDirection*>* LeverBlock::FACING = NULL;
+AbstractProperty<bool>* LeverBlock::POWERED = static_cast<AbstractProperty<bool>*>(BooleanProperty::create(L"powered"));
 const AABB* LeverBlock::AABB_NORTH = AABB::newPermanent(0.25, 0.2, 0.4, 0.75, 0.8, 1.0);
 const AABB* LeverBlock::AABB_SOUTH = AABB::newPermanent(0.25, 0.2, 0.0, 0.75, 0.8, 0.6);
 const AABB* LeverBlock::AABB_WEST = AABB::newPermanent(0.4, 0.2, 0.25, 1.0, 0.8, 0.75);
@@ -125,7 +127,7 @@ LeverBlock::LeverBlock()
 {
     Block::DerivedInit();
     registerDefaultState(mStateDefinition->any()->setValue(FACING, LeverDirection::NORTH)
-                             ->setValue(ButtonBlock::POWERED, false));
+                             ->setValue(POWERED, false));
 }
 
 void LeverBlock::blockStaticCtor()
@@ -184,7 +186,7 @@ const BlockState* LeverBlock::getStateForPlacement(
     Level* level, const BlockPos& pos, const Direction* direction, float, float, float, int,
     boost::shared_ptr<LivingEntity> placer)
 {
-    const BlockState* state = defaultBlockState()->setValue(ButtonBlock::POWERED, false);
+    const BlockState* state = defaultBlockState()->setValue(POWERED, false);
     if (canAttachTo(level, pos, direction))
     {
         TypedBoxed<LeverDirection*> facing(
@@ -280,23 +282,23 @@ bool LeverBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
 {
     if (clientSide)
     {
-        const BlockState* toggledState = state->cycle(ButtonBlock::POWERED);
+        const BlockState* toggledState = state->cycle(POWERED);
         level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::LEVER_CLICK,
                          SoundSource::eSoundSource_Blocks, 0.3f,
-                         toggledState->getValue(ButtonBlock::POWERED) ? 0.6f : 0.5f, 16.0f);
+                         toggledState->getValue(POWERED) ? 0.6f : 0.5f, 16.0f);
         return false;
     }
     if (level->mIsClientSide)
     {
-        const BlockState* toggledState = state->cycle(ButtonBlock::POWERED);
+        const BlockState* toggledState = state->cycle(POWERED);
         level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::LEVER_CLICK,
                          SoundSource::eSoundSource_Blocks, 0.3f,
-                         toggledState->getValue(ButtonBlock::POWERED) ? 0.6f : 0.5f, 16.0f);
+                         toggledState->getValue(POWERED) ? 0.6f : 0.5f, 16.0f);
         return true;
     }
-    const BlockState* toggledState = state->cycle(ButtonBlock::POWERED);
+    const BlockState* toggledState = state->cycle(POWERED);
     level->setBlock(pos, toggledState, Block::UPDATE_ALL, false);
-    float pitch = toggledState->getValue(ButtonBlock::POWERED) ? 0.6f : 0.5f;
+    float pitch = toggledState->getValue(POWERED) ? 0.6f : 0.5f;
     level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::LEVER_CLICK,
                      SoundSource::eSoundSource_Blocks, 0.3f, pitch, 16.0f);
     level->updateNeighborsAt(pos, this, false);
@@ -307,7 +309,7 @@ bool LeverBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
 
 void LeverBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    bool powered = state->getValue(ButtonBlock::POWERED);
+    bool powered = state->getValue(POWERED);
     if (powered)
     {
         level->updateNeighborsAt(pos, this, false);
@@ -319,13 +321,13 @@ void LeverBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* s
 
 int LeverBlock::getSignal(const BlockState* state, LevelSource*, const BlockPos&, const Direction*)
 {
-    return state->getValue(ButtonBlock::POWERED) ? SIGNAL_MAX : SIGNAL_NONE;
+    return state->getValue(POWERED) ? SIGNAL_MAX : SIGNAL_NONE;
 }
 
 int LeverBlock::getDirectSignal(const BlockState* state, LevelSource*, const BlockPos&,
                                 const Direction* direction)
 {
-    if (state->getValue(ButtonBlock::POWERED) &&
+    if (state->getValue(POWERED) &&
         state->getValue(FACING)->getDirection() == direction) return SIGNAL_MAX;
     return SIGNAL_NONE;
 }
@@ -338,13 +340,13 @@ bool LeverBlock::isSignalSource(const BlockState*)
 const BlockState* LeverBlock::getBlockState(int data)
 {
     return defaultBlockState()->setValue(FACING, LeverDirection::byData(data & 7))
-                             ->setValue(ButtonBlock::POWERED, (data & 8) > 0);
+                             ->setValue(POWERED, (data & 8) > 0);
 }
 
 int LeverBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
     int data = state->getValue(FACING)->getData();
-    if (state->getValue(ButtonBlock::POWERED)) data |= 8;
+    if (state->getValue(POWERED)) data |= 8;
     return data;
 }
 
@@ -357,7 +359,9 @@ unsigned int LeverBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolti
 
 const BlockState* LeverBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(FACING)->getDirection()));
+    AbstractProperty<LeverDirection*>* facing = FACING;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)->getDirection()));
+    return result;
 }
 
 const BlockState* LeverBlock::rotate(const BlockState* state, Rotation* rotation)
@@ -405,7 +409,7 @@ const BlockState* LeverBlock::rotate(const BlockState* state, Rotation* rotation
 
 BlockStateDefinition* LeverBlock::createBlockStateDefinition()
 {
-    static const Property* properties[] = { FACING, ButtonBlock::POWERED };
+    static const Property* properties[] = { FACING, POWERED };
     return new BlockStateDefinition(this, properties, 2);
 }
 

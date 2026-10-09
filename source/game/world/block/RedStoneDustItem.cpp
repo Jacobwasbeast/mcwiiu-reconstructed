@@ -39,7 +39,7 @@ InteractionResult::EInteractionResult RedStoneDustItem::useOn(boost::shared_ptr<
 
     if (!simulate)
     {
-        player->awardStat(gStats->get_blocksPlaced(Block::getId(Blocks::redstone_wire)),
+        player->awardStat(GenericStats::blocksPlaced(Blocks::redstone_wire),
                           GenericStats::param_blocksPlaced(Blocks::redstone_wire->defaultBlockState(), 1));
         itemInstance->shrink(1);
         level->setBlockAndUpdate(placePos, Blocks::redstone_wire->defaultBlockState());

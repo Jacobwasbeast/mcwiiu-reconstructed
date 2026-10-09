@@ -28,22 +28,22 @@ GrassPathBlock::GrassPathBlock()
 
 bool GrassPathBlock::shouldRenderFace(const BlockState* state, LevelSource* levelSource, const BlockPos& pos, const Direction* direction)
 {
-    unsigned int dataValue = direction->get3DDataValue();
-    if (dataValue == Direction::eDirection_Down)
+    switch (direction->get3DDataValue())
     {
-        return Block::shouldRenderFace(state, levelSource, pos, direction);
-    }
-    if (dataValue == Direction::eDirection_Up)
-    {
+    case Direction::eDirection_Up:
         return true;
-    }
-    if (dataValue < 6)
+    case Direction::eDirection_North:
+    case Direction::eDirection_South:
+    case Direction::eDirection_West:
+    case Direction::eDirection_East:
     {
         const BlockState* neighbourState = levelSource->getBlockState(pos.relative(direction));
         Block* neighbour = neighbourState->getBlock();
         return !(neighbourState->isSolidRender() || neighbour == Blocks::farmland || neighbour == Blocks::grass_path);
     }
-    return Block::shouldRenderFace(state, levelSource, pos, direction);
+    default:
+        return Block::shouldRenderFace(state, levelSource, pos, direction);
+    }
 }
 
 void GrassPathBlock::updateBlockState(Level* level, const BlockPos& pos)
@@ -104,12 +104,19 @@ EBlockFaceShape GrassPathBlock::getBlockFaceShape(LevelSource*, const BlockState
 
 unsigned int GrassPathBlock::GetInteractTooltip(const BlockTooltipDataHolder& tooltipData)
 {
-    unsigned int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
-    if (itemId >= ItemId::WOODEN_HOE && itemId <= ItemId::GOLDEN_HOE
-        && tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success
-        && tooltipData.m_bCanPlace)
+    switch (Item::getId(tooltipData.m_pItemInstance->getItem()))
     {
-        return IDS_TOOLTIPS_TILL;
+    case ItemId::WOODEN_HOE:
+    case ItemId::STONE_HOE:
+    case ItemId::IRON_HOE:
+    case ItemId::DIAMOND_HOE:
+    case ItemId::GOLDEN_HOE:
+        if (tooltipData.m_eInteractionResult == InteractionResult::eInteractionResult_Success
+            && tooltipData.m_bCanPlace)
+        {
+            return IDS_TOOLTIPS_TILL;
+        }
+        break;
     }
     return Block::GetInteractTooltip(tooltipData);
 }

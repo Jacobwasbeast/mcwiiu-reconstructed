@@ -65,24 +65,27 @@ int HarvestFarmBlockGoal::findInventorySlotForFarmSeeds()
     for (int slot = 0; slot < size; ++slot)
     {
         not_null_ptr<ItemInstance> item = inventory->getItem(slot);
-        Item* itemType = item->isEmpty() ? NULL : item->getItem();
-        if (itemType != NULL)
+        if (!item->isEmpty())
         {
-            if (itemType == Items::wheatSeeds)
+            Item* itemType = item->getItem();
+            if (itemType != NULL)
             {
-                return slot;
-            }
-            if (itemType == Items::potato)
-            {
-                return slot;
-            }
-            if (itemType == Items::carrot)
-            {
-                return slot;
-            }
-            if (itemType == Items::beetrootSeeds)
-            {
-                return slot;
+                if (itemType == Items::wheatSeeds)
+                {
+                    return slot;
+                }
+                if (itemType == Items::potato)
+                {
+                    return slot;
+                }
+                if (itemType == Items::carrot)
+                {
+                    return slot;
+                }
+                if (itemType == Items::beetrootSeeds)
+                {
+                    return slot;
+                }
             }
         }
     }
@@ -109,21 +112,13 @@ void HarvestFarmBlockGoal::tick()
     if (mTargetType == 0 && crop != NULL && crop->isMaxAge(state))
     {
         level->destroyBlock(above, true);
-        mTargetType = -1;
-        mNextStartTick = 10;
-        return;
     }
-    if (mTargetType == 1 && state->getMaterial() == Material::AIR)
+    else if (mTargetType == 1 && state->getMaterial() == Material::AIR)
     {
         int slot = findInventorySlotForFarmSeeds();
-        if (slot < 0)
+        if (slot >= 0)
         {
-            mTargetType = -1;
-            mNextStartTick = 0;
-            return;
-        }
-        SimpleContainer* inventory = mVillager->getInventory();
-        {
+            SimpleContainer* inventory = mVillager->getInventory();
             not_null_ptr<ItemInstance> item = inventory->getItem(slot);
             if (!item->isEmpty())
             {
@@ -154,6 +149,12 @@ void HarvestFarmBlockGoal::tick()
                 inventory->setItem(slot, ItemInstance::EMPTY);
             }
         }
+        else
+        {
+            mTargetType = -1;
+            mNextStartTick = 0;
+            return;
+        }
         if (fjGetNextFarmTarget())
         {
             start();
@@ -167,26 +168,22 @@ void HarvestFarmBlockGoal::tick()
 
 bool HarvestFarmBlockGoal::isValidTarget(Level* level, const BlockPos& pos)
 {
-    const BlockState* farmlandState = level->getBlockState(pos);
-    if (farmlandState->getBlock() != Blocks::farmland)
+    BlockPos target = pos;
+    if (level->getBlockState(pos)->getBlock() == Blocks::farmland)
     {
-        return false;
-    }
-
-    BlockPos above = pos.above();
-    const BlockState* aboveState = level->getBlockState(above);
-    CropBlock* aboveCrop = dynamic_cast<CropBlock*>(aboveState->getBlock());
-    if (mHasFarmSeeds && aboveState->getMaterial() == Material::AIR)
-    {
-        mTargetType = 1;
-        return true;
-    }
-    if (mWantsMoreFood && aboveCrop != NULL &&
-        (mTargetType == 0 || mTargetType == -1) &&
-        aboveCrop->isMaxAge(aboveState))
-    {
-        mTargetType = 0;
-        return true;
+        target = target.above();
+        const BlockState* state = level->getBlockState(target);
+        CropBlock* crop = dynamic_cast<CropBlock*>(state->getBlock());
+        if (mHasFarmSeeds && state->getMaterial() == Material::AIR)
+        {
+            mTargetType = 1;
+            return true;
+        }
+        if (mWantsMoreFood && crop != NULL && (mTargetType == 0 || mTargetType == -1) && crop->isMaxAge(state))
+        {
+            mTargetType = 0;
+            return true;
+        }
     }
     return false;
 }

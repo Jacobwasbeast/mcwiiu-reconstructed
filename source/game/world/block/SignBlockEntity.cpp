@@ -184,8 +184,7 @@ void SignBlockEntity::load(CompoundTag* tag)
 
 boost::shared_ptr<Packet> SignBlockEntity::getUpdatePacket()
 {
-    boost::shared_ptr<ClientboundBlockEntityDataPacket> packet(new ClientboundBlockEntityDataPacket(mPos, 9, mLevel->mDimension->getType()->getId(), getUpdateTag()));
-    return packet;
+    return boost::shared_ptr<ClientboundBlockEntityDataPacket>(new ClientboundBlockEntityDataPacket(mPos, 9, mLevel->mDimension->getType()->getId(), getUpdateTag()));
 }
 
 CompoundTag* SignBlockEntity::getUpdateTag()
@@ -210,13 +209,12 @@ std::wstring SignBlockEntity::getCreatedPlayerUUID()
 
 unsigned int SignBlockEntity::StringVerifyCallback(void* context, _STRING_VERIFY_RESPONSE* response)
 {
-    boost::weak_ptr<SignBlockEntity>* weakSign = static_cast<boost::weak_ptr<SignBlockEntity>*>(context);
-    boost::shared_ptr<SignBlockEntity> sign = weakSign->lock();
+    boost::shared_ptr<SignBlockEntity> sign = static_cast<boost::weak_ptr<SignBlockEntity>*>(context)->lock();
     if (sign)
     {
         sign->mVerified = true;
         sign->mCensored = false;
-        for (unsigned int i = 0; i < response->count; ++i)
+        for (int i = 0; i < response->count; ++i)
         {
             if (response->results[i] != 0)
             {
@@ -234,10 +232,7 @@ unsigned int SignBlockEntity::StringVerifyCallback(void* context, _STRING_VERIFY
         }
         sign->setUniqueId();
     }
-    if (context != NULL)
-    {
-        delete weakSign;
-    }
+    delete static_cast<boost::weak_ptr<SignBlockEntity>*>(context);
     return 0;
 }
 

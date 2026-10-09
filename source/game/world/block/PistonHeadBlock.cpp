@@ -219,12 +219,14 @@ bool PistonHeadBlock::canContainLiquid(const BlockState*) const { return true; }
 
 const BlockState* PistonHeadBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    return state->setValue<const Direction*>(FACING, rotation->rotate(state->getValue(FACING)));
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 const BlockState* PistonHeadBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(FACING)));
+    AbstractProperty<const Direction*>* facing = FACING;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 BlockStateDefinition* PistonHeadBlock::createBlockStateDefinition()

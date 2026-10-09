@@ -69,13 +69,9 @@ void DragonEggBlock::teleport(Level* level, const BlockPos& pos)
         return;
     for (int attempt = 0; attempt < 1000; ++attempt)
     {
-        int x0 = level->mRandom->nextInt(16);
-        int x1 = level->mRandom->nextInt(16);
-        int y0 = level->mRandom->nextInt(8);
-        int y1 = level->mRandom->nextInt(8);
-        int z0 = level->mRandom->nextInt(16);
-        int z1 = level->mRandom->nextInt(16);
-        BlockPos target = pos.offset(x0 - x1, y0 - y1, z0 - z1);
+        BlockPos target = pos.offset(level->mRandom->nextInt(16) - level->mRandom->nextInt(16),
+                                     level->mRandom->nextInt(8) - level->mRandom->nextInt(8),
+                                     level->mRandom->nextInt(16) - level->mRandom->nextInt(16));
         if (level->getBlockState(target)->getBlock()->mMaterial == Material::AIR)
         {
             if (level->mIsClientSide)

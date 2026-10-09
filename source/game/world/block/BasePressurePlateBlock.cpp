@@ -12,7 +12,6 @@
 
 static const AABB* PRESSED_AABB = AABB::newPermanent(0.0625, 0.0, 0.0625, 0.9375, 0.03125, 0.9375);
 static const AABB* UNPRESSED_AABB = AABB::newPermanent(0.0625, 0.0, 0.0625, 0.9375, 0.0625, 0.9375);
-static const AABB* CLIP_AABB = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.0625, 1.0);
 
 BasePressurePlateBlock::BasePressurePlateBlock(const std::wstring& name, Material* material)
     : Block(material), mTextureName(name)
@@ -28,9 +27,8 @@ BasePressurePlateBlock::BasePressurePlateBlock(const std::wstring& name, Materia
 
 const AABB* BasePressurePlateBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)
 {
-    if (getSignalForState(state) > 0)
-        return PRESSED_AABB;
-    return UNPRESSED_AABB;
+    bool pressed = getSignalForState(state) > Block::SIGNAL_NONE;
+    return pressed ? PRESSED_AABB : UNPRESSED_AABB;
 }
 
 int BasePressurePlateBlock::getTickDelay(Level*)
@@ -40,7 +38,7 @@ int BasePressurePlateBlock::getTickDelay(Level*)
 
 const AABB* BasePressurePlateBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return CLIP_AABB;
+    return NULL_AABB;
 }
 
 bool BasePressurePlateBlock::isSolidRender(const BlockState*) const
@@ -98,7 +96,7 @@ void BasePressurePlateBlock::tick(Level* level, const BlockPos& pos, const Block
     if (!level->mIsClientSide)
     {
         int signal = getSignalForState(state);
-        if (signal > 0)
+        if (signal > Block::SIGNAL_NONE)
             checkPressed(level, pos, state, signal);
     }
 }
@@ -108,7 +106,7 @@ void BasePressurePlateBlock::entityInside(Level* level, const BlockPos& pos, con
     if (!level->mIsClientSide)
     {
         int signal = getSignalForState(state);
-        if (signal == 0)
+        if (signal == Block::SIGNAL_NONE)
             checkPressed(level, pos, state, signal);
     }
 }
@@ -116,8 +114,8 @@ void BasePressurePlateBlock::entityInside(Level* level, const BlockPos& pos, con
 void BasePressurePlateBlock::checkPressed(Level* level, const BlockPos& pos, const BlockState* state, int signal)
 {
     int sensedSignal = getSignalStrength(level, pos);
-    bool wasPressed = signal > 0;
-    bool isPressed = sensedSignal > 0;
+    bool wasPressed = signal > Block::SIGNAL_NONE;
+    bool isPressed = sensedSignal > Block::SIGNAL_NONE;
     if (signal != sensedSignal)
     {
         const BlockState* newState = setSignalForState(state, sensedSignal);
@@ -125,15 +123,17 @@ void BasePressurePlateBlock::checkPressed(Level* level, const BlockPos& pos, con
         updateNeighbours(level, pos);
         level->setBlocksDirty(pos, pos);
     }
-    if (isPressed)
-    {
-        if (!wasPressed)
-            playOnSound(level, pos);
-        level->addToTickNextTick(pos, this, getTickDelay(level));
-    }
-    else if (wasPressed)
+    if (!isPressed && wasPressed)
     {
         playOffSound(level, pos);
+    }
+    else if (isPressed && !wasPressed)
+    {
+        playOnSound(level, pos);
+    }
+    if (isPressed)
+    {
+        level->addToTickNextTick(pos, this, getTickDelay(level));
     }
 }
 
@@ -145,7 +145,7 @@ const AABB* BasePressurePlateBlock::getSensitiveAABB(const BlockPos& pos)
 
 void BasePressurePlateBlock::onRemove(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (getSignalForState(state) > 0)
+    if (getSignalForState(state) > Block::SIGNAL_NONE)
         updateNeighbours(level, pos);
     Block::onRemove(level, pos, state);
 }

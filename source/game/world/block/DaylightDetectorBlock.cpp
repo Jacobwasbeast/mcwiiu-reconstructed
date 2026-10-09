@@ -35,12 +35,7 @@ DaylightDetectorBlock::DaylightDetectorBlock(bool inverted)
 {
     DerivedInit();
     mInverted = inverted;
-    const BlockState* state = mStateDefinition->any();
-    {
-        TypedBoxed<int> boxed(0);
-        state = state->setBoxedValue(gDaylightDetectorPower, &boxed);
-    }
-    registerDefaultState(state);
+    registerDefaultState(mStateDefinition->any()->setValue(gDaylightDetectorPower, 0));
     setDestroyTime(0.2f);
     setSoundType(SoundType::WOOD);
 }
@@ -67,28 +62,21 @@ void DaylightDetectorBlock::updateSignalStrength(Level* level, const BlockPos& p
     if (level->mDimension->isHasSkyLight())
     {
         const BlockState* oldState = level->getBlockState(pos);
-        int brightness = level->getBrightness(LightLayer::SKY, pos);
-        int darken = level->getSkyDarken();
-        int strength = brightness - darken;
+        int strength = level->getBrightness(LightLayer::SKY, pos) - level->getSkyDarken();
         float sunAngle = level->getSunAngle(1.0f);
         if (mInverted)
             strength = 15 - strength;
         if (strength > 0 && !mInverted)
         {
-            float target = 6.2831855f;
-            if (sunAngle < 3.1415927f)
-                target = 0.0f;
-            strength = Math::round((float)strength * Mth::cos((target - sunAngle) * 0.2f + sunAngle));
+            float target = sunAngle < 3.1415927f ? 0.0f : 6.2831855f;
+            sunAngle += (target - sunAngle) * 0.2f;
+            strength = Math::round((float)strength * Mth::cos(sunAngle));
         }
         int value = Mth::clamp(strength, 0, Block::SIGNAL_MAX);
         if (oldState->getValue(gDaylightDetectorPower) != value)
         {
-            const BlockState* state;
-            {
-                TypedBoxed<int> boxed(value);
-                state = oldState->setBoxedValue(gDaylightDetectorPower, &boxed);
-            }
-            level->setBlock(pos, state, Block::UPDATE_ALL | Block::UPDATE_NO_OBSERVERS, false);
+            level->setBlock(pos, oldState->setValue(gDaylightDetectorPower, value),
+                            Block::UPDATE_ALL | Block::UPDATE_NO_OBSERVERS, false);
         }
     }
 }
@@ -97,38 +85,28 @@ bool DaylightDetectorBlock::use(Level* level, const BlockPos& pos, const BlockSt
                                 boost::shared_ptr<Player> player, InteractionHand::EInteractionHand hand,
                                 const Direction* direction, float hitX, float hitY, float hitZ, bool clientSide)
 {
-    if (!player->mayBuild())
+    if (player->mayBuild())
     {
-        return Block::use(level, pos, state, player, hand, direction, hitX, hitY, hitZ, false);
-    }
-
-    if (!level->mIsClientSide)
-    {
-        if (mInverted)
+        if (!level->mIsClientSide)
         {
-            Block* block = Blocks::daylight_detector;
-            const BlockState* newState = block->defaultBlockState();
-            int power = state->getValue(gDaylightDetectorPower);
+            if (mInverted)
             {
-                TypedBoxed<int> boxed(power);
-                newState = newState->setBoxedValue(gDaylightDetectorPower, &boxed);
+                level->setBlock(pos, Blocks::daylight_detector->defaultBlockState()->setValue(gDaylightDetectorPower,
+                                    state->getValue(gDaylightDetectorPower)),
+                                Block::UPDATE_INVISIBLE, false);
+                static_cast<DaylightDetectorBlock*>(Blocks::daylight_detector)->updateSignalStrength(level, pos);
             }
-            level->setBlock(pos, newState, Block::UPDATE_INVISIBLE, false);
-            static_cast<DaylightDetectorBlock*>(block)->updateSignalStrength(level, pos);
-            return true;
+            else
+            {
+                level->setBlock(pos, Blocks::daylight_detector_inverted->defaultBlockState()->setValue(
+                                    gDaylightDetectorPower, state->getValue(gDaylightDetectorPower)),
+                                Block::UPDATE_INVISIBLE, false);
+                static_cast<DaylightDetectorBlock*>(Blocks::daylight_detector_inverted)->updateSignalStrength(level, pos);
+            }
         }
-
-        Block* block = Blocks::daylight_detector_inverted;
-        const BlockState* newState = block->defaultBlockState();
-        int power = state->getValue(gDaylightDetectorPower);
-        {
-            TypedBoxed<int> boxed(power);
-            newState = newState->setBoxedValue(gDaylightDetectorPower, &boxed);
-        }
-        level->setBlock(pos, newState, Block::UPDATE_INVISIBLE, false);
-        static_cast<DaylightDetectorBlock*>(block)->updateSignalStrength(level, pos);
+        return true;
     }
-    return true;
+    return Block::use(level, pos, state, player, hand, direction, hitX, hitY, hitZ, false);
 }
 
 Item* DaylightDetectorBlock::getResource(const BlockState*, Random*, int)
@@ -168,9 +146,7 @@ bool DaylightDetectorBlock::isSignalSource(const BlockState*)
 
 const BlockState* DaylightDetectorBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    TypedBoxed<int> boxed(data);
-    return state->setBoxedValue(gDaylightDetectorPower, &boxed);
+    return defaultBlockState()->setValue(gDaylightDetectorPower, data);
 }
 
 int DaylightDetectorBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -215,9 +191,9 @@ EBlockFaceShape DaylightDetectorBlock::getBlockFaceShape(LevelSource*, const Blo
 
 TextureAtlasSprite* DaylightDetectorBlock::getTexture(const Direction* direction, const BlockState*)
 {
-    if (direction != Direction::UP)
-        return mSideIcon;
-    return mInverted ? mInvertedTopIcon : mTopIcon;
+    if (direction == Direction::UP)
+        return mInverted ? mInvertedTopIcon : mTopIcon;
+    return mSideIcon;
 }
 
 void DaylightDetectorBlock::registerIcons(IconRegister* iconRegister)

@@ -27,6 +27,7 @@
 #include "game/world/block/TorchBlock.hpp"
 #include "game/item/ItemId.hpp"
 
+#include <algorithm>
 #include <string>
 
 static const std::wstring STEM_BENT_ICON_NAME = L"stem_bent";
@@ -87,9 +88,10 @@ const BlockState* StemBlock::fillVirtualBlockStateProperties(const BlockState* s
     arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
     for (unsigned int i = 0; i < directions.length; ++i)
     {
-        if (levelSource->getBlockState(pos.relative(directions.data[i]))->getBlock() == mFruitType && age == 7)
+        const Direction* direction = directions.data[i];
+        if (levelSource->getBlockState(pos.relative(direction))->getBlock() == mFruitType && age == 7)
         {
-            state = state->setValue(FACING, directions.data[i]);
+            state = state->setValue(FACING, direction);
             break;
         }
     }
@@ -106,43 +108,42 @@ void StemBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
     BlockPos stemPos = pos;
     Block::tick(level, stemPos, state, random);
     BlockPos abovePos = stemPos.above();
-    if (level->getRawBrightness(abovePos) < 9)
-        return;
-
-    int chance = static_cast<int>(25.0f / CropBlock::getGrowthSpeed(this, level, stemPos));
-    if (random->nextInt(chance + 1) != 0)
-        return;
-
-    int age = state->getValue(AGE);
-    if (age < 7)
+    if (level->getRawBrightness(abovePos) >= 9)
     {
-        const BlockState* grown = state->setValue(AGE, age + 1);
-        level->setBlock(stemPos, grown, Block::UPDATE_CLIENTS, false);
-        return;
-    }
+        float growthSpeed = CropBlock::getGrowthSpeed(this, level, stemPos);
+        if (random->nextInt(static_cast<int>(25.0f / growthSpeed) + 1) == 0)
+        {
+            int age = state->getValue(AGE);
+            if (age < 7)
+            {
+                state = state->setValue(AGE, age + 1);
+                level->setBlock(stemPos, state, Block::UPDATE_CLIENTS, false);
+            }
+            else
+            {
+                arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+                for (unsigned int i = 0; i < directions.length; ++i)
+                {
+                    if (level->getBlockState(stemPos.relative(directions.data[i]))->getBlock() == mFruitType)
+                        return;
+                }
 
-    arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
-    for (unsigned int i = 0; i < directions.length; ++i)
-    {
-        if (level->getBlockState(stemPos.relative(directions.data[i]))->getBlock() == mFruitType)
-            return;
-    }
-
-    stemPos = stemPos.relative(Direction::Plane::HORIZONTAL->getRandomDirection(*random));
-    Block* below = level->getBlockState(stemPos.below())->getBlock();
-    if (level->getBlockState(stemPos)->getBlock()->mMaterial == Material::AIR
-        && (below == Blocks::farmland || below == Blocks::dirt || below == Blocks::grass))
-    {
-        level->setBlockAndUpdate(stemPos, mFruitType->defaultBlockState());
+                stemPos = stemPos.relative(Direction::Plane::HORIZONTAL->getRandomDirection(*random));
+                Block* below = level->getBlockState(stemPos.below())->getBlock();
+                if (level->getBlockState(stemPos)->getBlock()->mMaterial == Material::AIR
+                    && (below == Blocks::farmland || below == Blocks::dirt || below == Blocks::grass))
+                {
+                    level->setBlockAndUpdate(stemPos, mFruitType->defaultBlockState());
+                }
+            }
+        }
     }
 }
 
 void StemBlock::growCrops(Level* level, const BlockPos& pos, const BlockState* state)
 {
     int age = state->getValue(AGE) + Mth::nextInt(level->mRandom, 2, 5);
-    if (age > 7)
-        age = 7;
-    level->setBlock(pos, state->setValue(AGE, age), Block::UPDATE_CLIENTS, false);
+    level->setBlock(pos, state->setValue(AGE, std::min(age, 7)), Block::UPDATE_CLIENTS, false);
 }
 
 int StemBlock::getColor(const BlockState* state)
@@ -150,7 +151,10 @@ int StemBlock::getColor(const BlockState* state)
     if (state->getBlock() != this)
         return Block::getColor(state);
     int age = state->getValue(AGE);
-    return (age << 21) | (0xff00 - (age << 11)) | (age << 2);
+    int red = age * 32;
+    int green = 255 - age * 8;
+    int blue = age * 4;
+    return (red << 16) | (green << 8) | blue;
 }
 
 int StemBlock::getColor(LevelSource* levelSource, const BlockPos& pos)
@@ -202,9 +206,8 @@ Item* StemBlock::getResource(const BlockState*, Random*, int)
 not_null_ptr<ItemInstance> StemBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)
 {
     Item* seed = getSeedItem();
-    if (seed == NULL)
-        return ItemInstance::EMPTY;
-    return not_null_ptr<ItemInstance>(new ItemInstance(seed));
+    return seed == NULL ? not_null_ptr<ItemInstance>(ItemInstance::EMPTY)
+                        : not_null_ptr<ItemInstance>(boost::shared_ptr<ItemInstance>(new ItemInstance(seed)));
 }
 
 const BlockState* StemBlock::getBlockState(int data)

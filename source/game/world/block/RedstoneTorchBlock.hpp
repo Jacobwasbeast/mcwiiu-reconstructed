@@ -18,6 +18,12 @@ public:
     class Toggle
     {
     public:
+        Toggle(const BlockPos& pos, long long time)
+        {
+            this->pos = pos;
+            this->time = time;
+        }
+
         BlockPos pos;
         long long time;
     };

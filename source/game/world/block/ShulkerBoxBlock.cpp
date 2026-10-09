@@ -64,9 +64,9 @@ EBlockRenderShape ShulkerBoxBlock::getRenderShape(const BlockState*)
 bool ShulkerBoxBlock::isEntityOnChest(Level* level, const AABB* box)
 {
     std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(LivingEntity), box);
-    size_t count = entities->size();
+    bool onChest = entities->size() != 0;
     delete entities;
-    return count != 0;
+    return onChest;
 }
 
 bool ShulkerBoxBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
@@ -125,7 +125,10 @@ bool ShulkerBoxBlock::playerWillDestroy(Level* level, const BlockPos& pos, const
     boost::shared_ptr<BlockEntity> entity = level->getBlockEntity(pos);
     bool isShulkerBox = false;
     if (entity != NULL)
-        isShulkerBox = entity->GetType() == BlockEntityType::SHULKER_BOX;
+    {
+        unsigned long long type = entity->GetType();
+        isShulkerBox = type == BlockEntityType::SHULKER_BOX;
+    }
     if (isShulkerBox)
     {
         boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::static_pointer_cast<ShulkerBoxBlockEntity>(entity);
@@ -185,50 +188,48 @@ void ShulkerBoxBlock::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
     Block::appendHoverText(itemInstance, player, lines, advanced);
 
     CompoundTag* tag = itemInstance->getTag();
-    if (tag == NULL || !tag->contains(BlockItem::BLOCK_ENTITY_TAG, Tag::TAG_COMPOUND))
-        return;
-
-    CompoundTag* blockEntityTag = tag->getCompound(BlockItem::BLOCK_ENTITY_TAG);
-    if (blockEntityTag->contains(L"LootTable", Tag::TAG_STRING))
+    if (tag != NULL && tag->contains(BlockItem::BLOCK_ENTITY_TAG, Tag::TAG_COMPOUND))
     {
-        lines->push_back(HtmlString(L"???????",
-                                    eMinecraftColour_NOTSET, false, false, 0));
-    }
-
-    if (!blockEntityTag->contains(L"Items", Tag::TAG_LIST))
-        return;
-
-    NonNullList<not_null_ptr<ItemInstance> > items =
-        NonNullList<not_null_ptr<ItemInstance> >::withSize(27, ItemInstance::EMPTY);
-    ContainerHelper::loadAllItems(blockEntityTag, items);
-
-    int displayedItems = 0;
-    int totalItems = 0;
-    for (unsigned int index = 0; index < items.size(); ++index)
-    {
-        not_null_ptr<ItemInstance> item = items[index];
-        if (!item->isEmpty())
+        CompoundTag* blockEntityTag = tag->getCompound(BlockItem::BLOCK_ENTITY_TAG);
+        if (blockEntityTag->contains(L"LootTable", Tag::TAG_STRING))
         {
-            ++totalItems;
-            if (displayedItems < 5)
+            lines->push_back(HtmlString(L"???????", eMinecraftColour_NOTSET, false, false, 0));
+        }
+
+        if (blockEntityTag->contains(L"Items", Tag::TAG_LIST))
+        {
+            NonNullList<not_null_ptr<ItemInstance> > items =
+                NonNullList<not_null_ptr<ItemInstance> >::withSize(27, ItemInstance::EMPTY);
+            ContainerHelper::loadAllItems(blockEntityTag, items);
+
+            int displayedItems = 0;
+            int totalItems = 0;
+            for (unsigned int index = 0; index < items.size(); ++index)
             {
-                ++displayedItems;
-                lines->push_back(HtmlString(formatwstr(L"%ls x%d", item->getHoverName().c_str(),
-                                                       item->getCount()),
-                                            eMinecraftColour_NOTSET, false, false, 0));
+                not_null_ptr<ItemInstance> item = items[index];
+                if (!item->isEmpty())
+                {
+                    ++totalItems;
+                    if (displayedItems > 4)
+                        continue;
+                    ++displayedItems;
+                    lines->push_back(HtmlString(formatwstr(L"%ls x%d", item->getHoverName().c_str(),
+                                                           item->getCount()),
+                                                eMinecraftColour_NOTSET, false, false, 0));
+                }
+            }
+
+            delete[] items.items.data;
+
+            if (totalItems - displayedItems > 0)
+            {
+                std::wstring moreText = L10N::GetString(IDS_SHULKER_BOX_MORE);
+                moreText = replaceAll(moreText, L"%s", L"%d");
+                HtmlString moreLine(formatwstr(moreText.c_str(), totalItems - displayedItems),
+                                    eMinecraftColour_NOTSET, true, false, 0);
+                lines->push_back(moreLine);
             }
         }
-    }
-
-    delete[] items.items;
-
-    if (totalItems - displayedItems > 0)
-    {
-        std::wstring moreText = L10N::GetString(IDS_SHULKER_BOX_MORE);
-        moreText = replaceAll(moreText, L"%s", L"%d");
-        HtmlString moreLine(formatwstr(moreText.c_str(), totalItems - displayedItems),
-                            eMinecraftColour_NOTSET, true, false, 0);
-        lines->push_back(moreLine);
     }
 }
 
@@ -265,7 +266,9 @@ const DyeColor* ShulkerBoxBlock::getDyeColor() { return mColor; }
 const DyeColor* ShulkerBoxBlock::getColorFromBlock(Block* block)
 {
     ShulkerBoxBlock* shulker = dynamic_cast<ShulkerBoxBlock*>(block);
-    return shulker == NULL ? DyeColor::PURPLE : shulker->getDyeColor();
+    if (shulker != NULL)
+        return shulker->getDyeColor();
+    return DyeColor::PURPLE;
 }
 
 Block* ShulkerBoxBlock::getBlockByColor(const DyeColor* color)
@@ -315,9 +318,7 @@ not_null_ptr<ItemInstance> ShulkerBoxBlock::getColoredItemInstance(const DyeColo
 
 const BlockState* ShulkerBoxBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    DirectionProperty* property = DirectionalBlock::FACING;
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(property)));
-    return state->setBoxedValue(property, &facing);
+    return state->setValue(DirectionalBlock::FACING, rotation->rotate(state->getTypedBoxed(DirectionalBlock::FACING)->getValue()));
 }
 
 const BlockState* ShulkerBoxBlock::mirror(const BlockState* state, Mirror* mirror)
@@ -328,8 +329,8 @@ const BlockState* ShulkerBoxBlock::mirror(const BlockState* state, Mirror* mirro
 EBlockFaceShape ShulkerBoxBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state,
                                                    const BlockPos& pos, const Direction* direction)
 {
-    const BlockState* virtualState = fillVirtualBlockStateProperties(state, levelSource, pos);
-    const Direction* facing = virtualState->getValue(DirectionalBlock::FACING);
+    state = fillVirtualBlockStateProperties(state, levelSource, pos);
+    const Direction* facing = state->getValue(DirectionalBlock::FACING);
     boost::shared_ptr<ShulkerBoxBlockEntity> box = boost::dynamic_pointer_cast<ShulkerBoxBlockEntity>(levelSource->getBlockEntity(pos));
     if (box.get() != NULL)
     {

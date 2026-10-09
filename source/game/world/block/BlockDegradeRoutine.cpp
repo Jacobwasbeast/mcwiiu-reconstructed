@@ -31,13 +31,9 @@ BlockDegradeRoutine::BlockDegradeRoutine(ServerLevel* level, DegradationSequence
 
     for (std::vector<GameRuleDefinition*>::iterator it = children.begin(); it != children.end(); ++it)
     {
-        DegradationRuleDefinition* rule = dynamic_cast<DegradationRuleDefinition*>(*it);
-        const std::wstring& targetLayer = rule->getTargetLayer();
-        LayerCache* cache = getCacheFor(targetLayer);
-
         Info info;
-        info.rule = rule;
-        info.cache = cache;
+        info.rule = dynamic_cast<DegradationRuleDefinition*>(*it);
+        info.cache = getCacheFor(info.rule->getTargetLayer());
         mActions.push_back(info);
     }
 }
@@ -50,48 +46,49 @@ void BlockDegradeRoutine::setNextAction(Action action, long long nextActionTime)
 
 void BlockDegradeRoutine::Action_Wait(long long time, long long ticks)
 {
-    if (mActions.empty())
-        return;
-
-    AABB* bounds = AABB::newTemp(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    bounds->set(mActions.front().cache->getCurrentBounds());
-    bounds->mMaxY += 2.0;
-
-    std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Player), bounds);
-    unsigned int entityCount = entities->size();
-    delete entities;
-
-    if (entityCount != 0)
+    if (!mActions.empty())
     {
-        setNextAction(&BlockDegradeRoutine::Action_Wait, time + 400);
-        return;
-    }
+        AABB* bounds = AABB::newTemp(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+        bounds->set(mActions.front().cache->getCurrentBounds());
+        bounds->mMaxY += 2.0;
 
-    LayerCache* currentCache = mActions.front().cache;
-    DegradationRuleDefinition* rule = mActions.front().rule;
-    mActions.pop_front();
+        std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Player), bounds);
+        unsigned int entityCount = entities->size();
+        delete entities;
 
-    {
-        AABB* area = currentCache->getCurrentBounds();
-        BlockPos from(area->mMinX, area->mMinY, area->mMinZ);
-        BlockPos to(area->mMaxX, area->mMaxY, area->mMaxZ);
-        std::vector<BlockPos> positions;
-        Iterator<BlockPos*>* it = currentCache->iterator();
-        BlockPos* pos = it->next();
-        while (it->hasNext())
+        if (entityCount == 0)
         {
-            if (currentCache->inLayer(*pos))
-                positions.push_back(*pos);
-            it->next();
-        }
-        mBlocks = arrayWithLength<BlockPos>(positions);
-        delete it;
-    }
-    delete currentCache;
-    rule->ClearCaches();
+            LayerCache* currentCache = mActions.front().cache;
+            DegradationRuleDefinition* rule = mActions.front().rule;
+            mActions.pop_front();
 
-    mProgress = 11;
-    setNextAction(&BlockDegradeRoutine::Action_Break, time + 500);
+            {
+                AABB* area = currentCache->getCurrentBounds();
+                BlockPos from(area->mMinX, area->mMinY, area->mMinZ);
+                BlockPos to(area->mMaxX, area->mMaxY, area->mMaxZ);
+                std::vector<BlockPos> positions;
+                Iterator<BlockPos*>* it = currentCache->iterator();
+                BlockPos* pos = it->next();
+                while (it->hasNext())
+                {
+                    if (currentCache->inLayer(*pos))
+                        positions.push_back(*pos);
+                    it->next();
+                }
+                mBlocks = arrayWithLength<BlockPos>(positions);
+                delete it;
+            }
+            delete currentCache;
+            rule->ClearCaches();
+
+            mProgress = 11;
+            setNextAction(&BlockDegradeRoutine::Action_Break, time + 500);
+        }
+        else
+        {
+            setNextAction(&BlockDegradeRoutine::Action_Wait, time + 400);
+        }
+    }
 }
 
 void BlockDegradeRoutine::Action_Break(long long time, long long ticks)
@@ -99,43 +96,47 @@ void BlockDegradeRoutine::Action_Break(long long time, long long ticks)
     if (mProgress < 10)
     {
         Random random(0);
+        int id = -1;
         for (int i = 0; i < (int)mBlocks.length; ++i)
         {
-            BlockPos& pos = mBlocks.data[i];
-            int progress = Mth::clamp(mProgress + random.nextInt(5) - 1, 0, 9);
-            mLevel->destroyBlockProgress(-1 - i, pos, progress);
+            BlockPos& pos = mBlocks[i];
+            mLevel->destroyBlockProgress(id, pos, Mth::clamp(mProgress + random.nextInt(5) - 1, 0, 9));
+            --id;
         }
 
-        ++mProgress;
-        if (mProgress > 10)
-            mProgress = 10;
+        int progress = mProgress + 1;
+        if (progress > 10)
+            progress = 10;
+        mProgress = progress;
 
         setNextAction(&BlockDegradeRoutine::Action_Break, time + 400);
-        return;
     }
-
-    for (unsigned int i = 0; i < mBlocks.length; ++i)
+    else
     {
-        BlockPos& pos = mBlocks.data[i];
-        mLevel->destroyBlockProgress(-1 - (int)i, pos, -1);
-        mLevel->setBlockAndData(pos.x, pos.y, pos.z, BlockId::AIR, 0, Block::UPDATE_CLIENTS);
-    }
+        int id = -1;
+        for (unsigned int i = 0; i < mBlocks.length; ++i)
+        {
+            BlockPos& pos = mBlocks[i];
+            mLevel->destroyBlockProgress(id, pos, -1);
+            mLevel->setBlockAndData(pos.x, pos.y, pos.z, BlockId::AIR, 0, Block::UPDATE_CLIENTS);
+            --id;
+        }
 
-    mProgress = 1;
-    setNextAction(&BlockDegradeRoutine::Action_Wait, time + 100);
+        mProgress = 1;
+        setNextAction(&BlockDegradeRoutine::Action_Wait, time + 100);
+    }
 }
 
 BlockDegradeRoutine::LayerCache* BlockDegradeRoutine::getCacheFor(const std::wstring& name) const
 {
     LevelRuleset* ruleset = gApp.getGameRuleDefinitions();
-    if (ruleset == NULL)
-        return NULL;
-
-    NamedAreaRuleDefinition* area = ruleset->getNamedAreaRule(name);
-    if (area == NULL)
-        return NULL;
-
-    return new LayerCache(mLevel, area);
+    if (ruleset != NULL)
+    {
+        NamedAreaRuleDefinition* area = ruleset->getNamedAreaRule(name);
+        if (area != NULL)
+            return new LayerCache(mLevel, area);
+    }
+    return NULL;
 }
 
 BlockDegradeRoutine::LayerCache::LayerCache(ServerLevel* level, NamedAreaRuleDefinition* rule)
@@ -180,11 +181,5 @@ bool BlockDegradeRoutine::LayerCache::isBroken(const BlockPos& pos)
 
 bool BlockDegradeRoutine::LayerCache::inLayer(const BlockPos& pos)
 {
-    bool inside = false;
-    if (!isBroken(pos))
-    {
-        if (mRule->containsBlock(Block::getId(mLevel->getBlock(pos)), pos))
-            inside = true;
-    }
-    return inside;
+    return !isBroken(pos) && mRule->containsBlock(Block::getId(mLevel->getBlock(pos)), pos);
 }

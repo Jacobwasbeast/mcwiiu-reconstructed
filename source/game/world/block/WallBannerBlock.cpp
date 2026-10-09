@@ -28,13 +28,14 @@ WallBannerBlock::WallBannerBlock()
 
 const BlockState* WallBannerBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    return state->setValue(FACING, rotation->rotate(state->getValue(FACING)));
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 const BlockState* WallBannerBlock::mirror(const BlockState* state, Mirror* mirror)
 {
     DirectionProperty* facing = BannerBlock::FACING;
-    return rotate(state, mirror->getRotation(state->getValue(facing)));
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 const AABB* WallBannerBlock::getShape(const BlockState* state, LevelSource*, const BlockPos&)

@@ -84,7 +84,9 @@ void AbstractProperty<T>::getUnboxedPossibleValues(boost::unordered_set<T>& valu
     const std::vector<Boxed*>& possibleValues = getPossibleValues();
     for (typename std::vector<Boxed*>::const_iterator it = possibleValues.begin(); it != possibleValues.end(); ++it)
     {
-        const TypedBoxed<T>* boxed = (*it)->isA(typeid(T)) ? static_cast<const TypedBoxed<T>*>(*it) : NULL;
+        const TypedBoxed<T>* boxed = static_cast<const TypedBoxed<T>*>(*it);
+        if (!boxed->isA(typeid(T)))
+            boxed = NULL;
         values.insert(boxed->getValue());
     }
 }

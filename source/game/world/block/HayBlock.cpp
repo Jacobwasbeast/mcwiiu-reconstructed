@@ -17,14 +17,7 @@ HayBlock::HayBlock()
 {
     DerivedInit();
 
-    BlockState* state = mStateDefinition->any();
-    const BlockState* defaultState;
-    {
-        const Property* axisProperty = gRotatedPillarBlockAxisProperty;
-        TypedBoxed<Direction::Axis*> value(Direction::Axis::Y);
-        defaultState = state->setBoxedValue(axisProperty, &value);
-    }
-    registerDefaultState(defaultState);
+    registerDefaultState(mStateDefinition->any()->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::Y));
 }
 
 void HayBlock::fallOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity, float fallDistance)

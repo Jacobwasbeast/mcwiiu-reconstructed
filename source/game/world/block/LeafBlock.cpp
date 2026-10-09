@@ -76,23 +76,25 @@ int LeafBlock::getColor(LevelSource* levelSource, const BlockPos& pos, const Blo
 
 void LeafBlock::onRemove(Level* level, const BlockPos& pos, const BlockState*)
 {
+    int r = 1;
+    int r2 = r + 1;
     int px = pos.x;
     int py = pos.y;
     int pz = pos.z;
-    if (!level->hasChunksAt(BlockPos(px - 2, py - 2, pz - 2), BlockPos(px + 2, py + 2, pz + 2)))
-        return;
-
-    for (int x = -1; x <= 1; ++x)
+    if (level->hasChunksAt(BlockPos(px - r2, py - r2, pz - r2), BlockPos(px + r2, py + r2, pz + r2)))
     {
-        for (int y = -1; y <= 1; ++y)
+        for (int xo = -r; xo <= r; xo++)
         {
-            for (int z = -1; z <= 1; ++z)
+            for (int yo = -r; yo <= r; yo++)
             {
-                BlockPos neighborPos = pos.offset(x, y, z);
-                const BlockState* neighborState = level->getBlockState(neighborPos);
-                if (neighborState->getMaterial() == Material::LEAVES && !neighborState->getValue(CHECK_DECAY))
+                for (int zo = -r; zo <= r; zo++)
                 {
-                    level->setBlock(neighborPos, neighborState->setValue(CHECK_DECAY, true), Block::UPDATE_INVISIBLE, false);
+                    BlockPos neighborPos = pos.offset(xo, yo, zo);
+                    const BlockState* neighborState = level->getBlockState(neighborPos);
+                    if (neighborState->getMaterial() == Material::LEAVES && !neighborState->getValue(CHECK_DECAY))
+                    {
+                        level->setBlock(neighborPos, neighborState->setValue(CHECK_DECAY, true), Block::UPDATE_INVISIBLE, false);
+                    }
                 }
             }
         }
@@ -111,76 +113,72 @@ void LeafBlock::tick(Level* level, const BlockPos& pos, const BlockState* state,
     if (level->mIsClientSide || !state->getValue(CHECK_DECAY) || !state->getValue(DECAYABLE))
         return;
 
+    int r = 4;
+    int r2 = r + 1;
     int px = pos.x;
     int pz = pos.z;
     int py = pos.y;
 
+    int W = 32;
+    int WW = W * W;
+    int WO = W / 2;
     if (mLeafDistance == NULL)
-        mLeafDistance = new int[32768];
+        mLeafDistance = new int[W * W * W];
 
-    int x;
-    int y;
-    int z;
-    int distance;
-    const int center = 16 * 1024 + 16 * 32 + 16;
-
-    if (level->hasChunksAt(BlockPos(px - 5, py - 5, pz - 5), BlockPos(px + 5, py + 5, pz + 5)))
+    if (level->hasChunksAt(BlockPos(px - r2, py - r2, pz - r2), BlockPos(px + r2, py + r2, pz + r2)))
     {
         BlockPos checkPos(0, 0, 0);
-        for (x = -4; x <= 4; ++x)
+        for (int xo = -r; xo <= r; xo++)
         {
-            for (z = -4; z <= 4; ++z)
+            for (int zo = -r; zo <= r; zo++)
             {
-                for (y = -4; y <= 4; ++y)
+                for (int yo = -r; yo <= r; yo++)
                 {
-                    checkPos.x = px + x;
-                    checkPos.y = py + y;
-                    checkPos.z = pz + z;
+                    checkPos.x = px + xo;
+                    checkPos.y = py + yo;
+                    checkPos.z = pz + zo;
                     const BlockState* nearbyState = level->getBlockState(checkPos);
                     Block* nearbyBlock = nearbyState->getBlock();
-                    int index = (x + 16) * 1024 + (y + 16) * 32 + z + 16;
                     if (nearbyBlock == Blocks::log || nearbyBlock == Blocks::log2)
-                        mLeafDistance[index] = 0;
+                        mLeafDistance[(xo + WO) * WW + (yo + WO) * W + zo + WO] = 0;
                     else if (nearbyState->getMaterial() == Material::LEAVES)
-                        mLeafDistance[index] = -2;
+                        mLeafDistance[(xo + WO) * WW + (yo + WO) * W + zo + WO] = -2;
                     else
-                        mLeafDistance[index] = -1;
+                        mLeafDistance[(xo + WO) * WW + (yo + WO) * W + zo + WO] = -1;
                 }
             }
         }
     }
 
-    int* leafDistance = mLeafDistance;
-    for (distance = 1; distance <= 4; ++distance)
+    for (int i = 1; i <= 4; i++)
     {
-        for (x = -4; x <= 4; ++x)
+        for (int xo = -r; xo <= r; xo++)
         {
-            for (y = -4; y <= 4; ++y)
+            for (int yo = -r; yo <= r; yo++)
             {
-                for (z = -4; z <= 4; ++z)
+                for (int zo = -r; zo <= r; zo++)
                 {
-                    int index = (x + 16) * 1024 + (y + 16) * 32 + z + 16;
-                    if (leafDistance[index] == distance - 1)
+                    if (mLeafDistance[(xo + WO) * WW + (yo + WO) * W + zo + WO] == i - 1)
                     {
-                        if (leafDistance[index - 1024] == -2)
-                            leafDistance[index - 1024] = distance;
-                        if (leafDistance[index + 1024] == -2)
-                            leafDistance[index + 1024] = distance;
-                        if (leafDistance[index - 32] == -2)
-                            leafDistance[index - 32] = distance;
-                        if (leafDistance[index + 32] == -2)
-                            leafDistance[index + 32] = distance;
-                        if (leafDistance[index - 1] == -2)
-                            leafDistance[index - 1] = distance;
-                        if (leafDistance[index + 1] == -2)
-                            leafDistance[index + 1] = distance;
+                        if (mLeafDistance[(xo + WO - 1) * WW + (yo + WO) * W + zo + WO] == -2)
+                            mLeafDistance[(xo + WO - 1) * WW + (yo + WO) * W + zo + WO] = i;
+                        if (mLeafDistance[(xo + WO + 1) * WW + (yo + WO) * W + zo + WO] == -2)
+                            mLeafDistance[(xo + WO + 1) * WW + (yo + WO) * W + zo + WO] = i;
+                        if (mLeafDistance[(xo + WO) * WW + (yo + WO - 1) * W + zo + WO] == -2)
+                            mLeafDistance[(xo + WO) * WW + (yo + WO - 1) * W + zo + WO] = i;
+                        if (mLeafDistance[(xo + WO) * WW + (yo + WO + 1) * W + zo + WO] == -2)
+                            mLeafDistance[(xo + WO) * WW + (yo + WO + 1) * W + zo + WO] = i;
+                        if (mLeafDistance[(xo + WO) * WW + (yo + WO) * W + (zo + WO - 1)] == -2)
+                            mLeafDistance[(xo + WO) * WW + (yo + WO) * W + (zo + WO - 1)] = i;
+                        if (mLeafDistance[(xo + WO) * WW + (yo + WO) * W + (zo + WO + 1)] == -2)
+                            mLeafDistance[(xo + WO) * WW + (yo + WO) * W + (zo + WO + 1)] = i;
                     }
                 }
             }
         }
     }
 
-    if (leafDistance[center] >= 0)
+    if (mLeafDistance[WO * WW + WO * W + WO] >= 0)
     {
         level->setBlock(pos, state->setValue(CHECK_DECAY, false), Block::UPDATE_INVISIBLE, false);
     }
@@ -195,9 +193,10 @@ void LeafBlock::animateTick(const BlockState* state, Level* level, const BlockPo
     if (level->isRainingAt(pos.above()) && !level->getBlockState(pos.below())->isTopSolidBlocking()
         && random->nextInt(15) == 1)
     {
-        arrayWithLength<int> parameters;
-        level->addParticle(PARTICLE_DRIP_WATER, pos.x + random->nextFloat(), pos.y - 0.05,
-                           pos.z + random->nextFloat(), 0.0, 0.0, 0.0, parameters);
+        double x = pos.x + random->nextFloat();
+        double y = pos.y - 0.05;
+        double z = pos.z + random->nextFloat();
+        level->addParticle(PARTICLE_DRIP_WATER, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
     }
 }
 
@@ -221,29 +220,29 @@ void LeafBlock::spawnResources(Level* level, const BlockPos& pos, const BlockSta
     if (level->mIsClientSide)
         return;
 
-    int saplingChance = getLootDropChance(state);
+    int dropChance = getLootDropChance(state);
     if (lootBonus > 0)
     {
-        saplingChance -= 2 << lootBonus;
-        if (saplingChance < 10)
-            saplingChance = 10;
+        dropChance -= 2 << lootBonus;
+        if (dropChance < 10)
+            dropChance = 10;
     }
 
-    if (level->mRandom->nextInt(saplingChance) == 0)
+    if (level->mRandom->nextInt(dropChance) == 0)
     {
         Item* item = getResource(state, level->mRandom, lootBonus);
         int auxValue = getSpawnResourcesAuxValue(state);
         Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(item, 1, auxValue)));
     }
 
-    int extraChance = 200;
+    dropChance = 200;
     if (lootBonus > 0)
     {
-        extraChance -= 10 << lootBonus;
-        if (extraChance < 40)
-            extraChance = 40;
+        dropChance -= 10 << lootBonus;
+        if (dropChance < 40)
+            dropChance = 40;
     }
-    dropExtraLoot(level, pos, state, extraChance);
+    dropExtraLoot(level, pos, state, dropChance);
 }
 
 void LeafBlock::dropExtraLoot(Level* level, const BlockPos& pos, const BlockState* state, int lootBonus)

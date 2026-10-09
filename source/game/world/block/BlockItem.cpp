@@ -53,34 +53,30 @@ bool BlockItem::updateCustomBlockEntityTag(Level* level, boost::shared_ptr<Playe
     }
 
     CompoundTag* tag = (CompoundTag*)itemInstance->getTagElement(BLOCK_ENTITY_TAG);
-    if (tag == NULL)
+    if (tag != NULL)
     {
-        return true;
-    }
+        boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+        if (blockEntity != NULL)
+        {
+            if (!level->mIsClientSide && blockEntity->onlyOpCanSetNbt()
+                && (player == NULL || !player->canUseCommandBlocks()))
+            {
+                return false;
+            }
 
-    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity.get() != NULL && !level->mIsClientSide && blockEntity->onlyOpCanSetNbt()
-        && (player.get() == NULL || !player->canUseCommandBlocks()))
-    {
-        return false;
-    }
-
-    if (blockEntity.get() == NULL)
-    {
-        return true;
-    }
-
-    CompoundTag* entityTag = new CompoundTag();
-    CompoundTag* savedTag = blockEntity->save(entityTag);
-    CompoundTag* originalTag = savedTag->copy();
-    entityTag->merge(tag);
-    entityTag->putInt(L"x", pos.x);
-    entityTag->putInt(L"y", pos.y);
-    entityTag->putInt(L"z", pos.z);
-    if (!entityTag->equals(originalTag))
-    {
-        blockEntity->load(entityTag);
-        blockEntity->setChanged();
+            CompoundTag* entityTag = blockEntity->save(new CompoundTag());
+            CompoundTag* originalTag = entityTag->copy();
+            entityTag->merge(tag);
+            entityTag->putInt(L"x", pos.x);
+            entityTag->putInt(L"y", pos.y);
+            entityTag->putInt(L"z", pos.z);
+            if (!entityTag->equals(originalTag))
+            {
+                blockEntity->load(entityTag);
+                blockEntity->setChanged();
+                return true;
+            }
+        }
     }
     return true;
 }
@@ -143,7 +139,7 @@ InteractionResult::EInteractionResult BlockItem::useOn(boost::shared_ptr<Player>
         }
         else
         {
-            player->awardStat(gStats->get_blocksPlaced(Block::getId(block)),
+            player->awardStat(GenericStats::blocksPlaced(block),
                               GenericStats::param_blocksPlaced(state, 1));
             player->swing(InteractionHand::eInteractionHand_MainHand);
 
@@ -155,7 +151,7 @@ InteractionResult::EInteractionResult BlockItem::useOn(boost::shared_ptr<Player>
             }
 
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(placePos);
-            if (blockEntity != NULL && blockEntity->GetType() == BlockEntityType::CONDUIT)
+            if (blockEntity != NULL && eTYPE_DERIVED_FROM(BlockEntityType::CONDUIT, blockEntity->GetType()))
             {
                 boost::shared_ptr<ConduitBlockEntity> conduit =
                     boost::static_pointer_cast<ConduitBlockEntity>(blockEntity);

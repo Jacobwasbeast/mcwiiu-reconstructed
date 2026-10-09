@@ -16,6 +16,7 @@ class IconRegister;
 class Level;
 class Player;
 class TextureAtlasSprite;
+template <class T> class AbstractProperty;
 class JukeboxBlock : public BaseEntityBlock
 {
 public:
@@ -34,6 +35,8 @@ public:
     private:
         not_null_ptr<ItemInstance> mRecord;
     };
+    static AbstractProperty<bool>* HAS_RECORD;
+
     JukeboxBlock();
     virtual boost::shared_ptr<BlockEntity> newBlockEntity(Level* level, int data);
     static void addDataWalkers(DataFixerUpper* fixer);

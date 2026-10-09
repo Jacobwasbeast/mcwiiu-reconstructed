@@ -23,7 +23,7 @@ BlockPos CommandBlockEntity::AnonymousCommandBlock::getCommandSenderBlockPositio
 
 Vec3* CommandBlockEntity::AnonymousCommandBlock::getCommandSenderWorldPosition()
 {
-    return Vec3::newTemp((double)mEntity->mPos.x + 0.5, (double)mEntity->mPos.y + 0.5, (double)mEntity->mPos.z + 0.5);
+    return Vec3::newTemp((double)mEntity->mPos.getX() + 0.5, (double)mEntity->mPos.getY() + 0.5, (double)mEntity->mPos.getZ() + 0.5);
 }
 
 Level* CommandBlockEntity::AnonymousCommandBlock::getCommandSenderWorld()
@@ -50,9 +50,9 @@ unsigned int CommandBlockEntity::AnonymousCommandBlock::getType()
 
 void CommandBlockEntity::AnonymousCommandBlock::writeCoordinates(DataOutputStream* output)
 {
-    output->writeInt(mEntity->mPos.x);
-    output->writeInt(mEntity->mPos.y);
-    output->writeInt(mEntity->mPos.z);
+    output->writeInt(mEntity->mPos.getX());
+    output->writeInt(mEntity->mPos.getY());
+    output->writeInt(mEntity->mPos.getZ());
 }
 
 CommandBlockEntity::CommandBlockEntity()
@@ -125,9 +125,7 @@ void CommandBlockEntity::load(CompoundTag* tag)
 boost::shared_ptr<Packet> CommandBlockEntity::getUpdatePacket()
 {
     CompoundTag* tag = save(new CompoundTag());
-    int dimension = mLevel->mDimension->getType()->getId();
-    boost::shared_ptr<ClientboundBlockEntityDataPacket> packet(new ClientboundBlockEntityDataPacket(mPos, 2, dimension, tag));
-    return packet;
+    return boost::shared_ptr<ClientboundBlockEntityDataPacket>(new ClientboundBlockEntityDataPacket(mPos, 2, mLevel->mDimension->getType()->getId(), tag));
 }
 
 bool CommandBlockEntity::onlyOpCanSetNbt()
@@ -155,11 +153,12 @@ unsigned int CommandBlockEntity::getMode()
 unsigned char CommandBlockEntity::isConditional()
 {
     const BlockState* state = mLevel->getBlockState(getBlockPos());
-    if (!CommandBlock::isCommandBlock(state->getBlock()))
+    Block* block = state->getBlock();
+    if (CommandBlock::isCommandBlock(block))
     {
-        return 0;
+        return state->getValue(CommandBlock::CONDITIONAL);
     }
-    return state->getValue(CommandBlock::CONDITIONAL);
+    return 0;
 }
 
 void CommandBlockEntity::clearRemoved()

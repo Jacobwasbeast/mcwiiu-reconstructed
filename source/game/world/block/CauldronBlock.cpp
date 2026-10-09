@@ -39,6 +39,8 @@
 #include "game/world/block/TypedBoxed.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 
+#include <algorithm>
+
 const std::wstring CauldronBlock::TEXTURE_INNER = L"cauldron_inner";
 const std::wstring CauldronBlock::TEXTURE_BOTTOM = L"cauldron_bottom";
 const std::wstring CauldronBlock::TEXTURE_WATER = L"cauldron_water";
@@ -124,7 +126,7 @@ void CauldronBlock::spawnCauldronEvent(Level* level, const BlockState*, const Bl
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     bool isCauldron = false;
     if (blockEntity != NULL)
-        isCauldron = blockEntity->GetType() == BlockEntityType::CAULDRON;
+        isCauldron = eTYPE_DERIVED_FROM(BlockEntityType::CAULDRON, blockEntity->GetType());
     if (!isCauldron)
         return;
     boost::shared_ptr<CauldronBlockEntity> cauldron = boost::static_pointer_cast<CauldronBlockEntity>(blockEntity);
@@ -146,7 +148,10 @@ bool CauldronBlock::use(Level* level, const BlockPos& pos, const BlockState* sta
                         InteractionHand::EInteractionHand hand, const Direction*, float, float, float, bool clientSide)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    if (blockEntity == NULL || blockEntity->GetType() != BlockEntityType::CAULDRON)
+    bool isCauldron = false;
+    if (blockEntity != NULL)
+        isCauldron = eTYPE_DERIVED_FROM(BlockEntityType::CAULDRON, blockEntity->GetType());
+    if (!isCauldron)
         return false;
     boost::shared_ptr<CauldronBlockEntity> cauldron = boost::static_pointer_cast<CauldronBlockEntity>(blockEntity);
     if (clientSide)
@@ -157,7 +162,7 @@ bool CauldronBlock::use(Level* level, const BlockPos& pos, const BlockState* sta
         return true;
 
     int waterLevel = state->getValue(LEVEL);
-    bool full = waterLevel > 5;
+    bool full = waterLevel >= 6;
     bool empty = waterLevel == 0;
     bool hasPotion = !empty && cauldron->getPotionId().compare(L"") != 0;
     bool hasWater = !empty && !hasPotion;
@@ -169,16 +174,21 @@ bool CauldronBlock::use(Level* level, const BlockPos& pos, const BlockState* sta
     {
         if (hasWater || empty)
         {
-            if (full && hasClearWater)
+            if (!full || !hasClearWater)
+            {
+                if (!player->mAbilities.mInstabuild)
+                    useInventory(player, itemInstance, not_null_ptr<ItemInstance>(new ItemInstance(Items::bucket)), 1);
+                cauldron->setPotionId(L"");
+                cauldron->setCustomColor(0);
+                setWaterLevel(level, pos, state, 5);
+                setWaterLevel(level, pos, state, 6);
+                spawnCauldronEvent(level, state, pos, LevelEvent::CAULDRON_FILL_WATER);
+                used = true;
+            }
+            else
+            {
                 return true;
-            if (!player->mAbilities.mInstabuild)
-                useInventory(player, itemInstance, not_null_ptr<ItemInstance>(new ItemInstance(Items::bucket)), 1);
-            cauldron->setPotionId(L"");
-            cauldron->setCustomColor(0);
-            setWaterLevel(level, pos, state, 5);
-            setWaterLevel(level, pos, state, 6);
-            spawnCauldronEvent(level, state, pos, LevelEvent::CAULDRON_FILL_WATER);
-            used = true;
+            }
         }
         else if (hasPotion)
         {
@@ -187,10 +197,8 @@ bool CauldronBlock::use(Level* level, const BlockPos& pos, const BlockState* sta
             explodeCauldronContents(level, state, pos);
             used = true;
         }
-        return used;
     }
-
-    if (item == Items::bucket)
+    else if (item == Items::bucket)
     {
         if (full && hasWater)
         {
@@ -201,10 +209,8 @@ bool CauldronBlock::use(Level* level, const BlockPos& pos, const BlockState* sta
             spawnCauldronEvent(level, state, pos, LevelEvent::CAULDRON_TAKE_WATER);
             used = true;
         }
-        return used;
     }
-
-    if (item == Items::glassBottle && waterLevel > 1)
+    else if (item == Items::glassBottle && waterLevel >= 2)
     {
         if (hasWater)
         {
@@ -220,42 +226,35 @@ bool CauldronBlock::use(Level* level, const BlockPos& pos, const BlockState* sta
             useInventory(player, itemInstance, potion, 1);
             spawnCauldronEvent(level, state, pos, LevelEvent::CAULDRON_TAKE_POTION);
         }
-        if (waterLevel < 3)
+        bool drained = waterLevel <= 2;
+        if (drained)
         {
             cauldron->setPotionId(L"");
             cauldron->setCustomColor(0);
         }
         setWaterLevel(level, pos, state, waterLevel - 2);
-        return true;
+        used = true;
     }
-
-    if (item == Items::arrow && itemInstance->getAuxValue() == 0 && !empty && hasPotion
-        && cauldron->getPotionId().compare(L"") != 0 && cauldron->getPotionId().compare(L"empty") != 0
-        && cauldron->getPotionId().compare(L"water") != 0 && cauldron->getPotionId().compare(L"mundane") != 0
-        && cauldron->getPotionId().compare(L"thick") != 0 && cauldron->getPotionId().compare(L"awkward") != 0)
+    else if (item == Items::arrow && itemInstance->getAuxValue() == 0 && !empty && hasPotion
+             && cauldron->getPotionId().compare(L"") != 0 && cauldron->getPotionId().compare(L"empty") != 0
+             && cauldron->getPotionId().compare(L"water") != 0 && cauldron->getPotionId().compare(L"mundane") != 0
+             && cauldron->getPotionId().compare(L"thick") != 0 && cauldron->getPotionId().compare(L"awkward") != 0)
     {
-        int stacks = 1;
-        if (waterLevel > 2)
-            stacks = waterLevel - 2;
-        if (stacks < 0)
-            stacks = 0;
-        int count = stacks * 16;
-        if (itemInstance->getCount() < count)
-            count = itemInstance->getCount();
-        waterLevel -= (count + 15) / 16;
+        int stacks = std::max(waterLevel > 2 ? waterLevel - 2 : 1, 0);
+        int count = std::min(stacks * 16, itemInstance->getCount());
+        int remaining = waterLevel - (count + 15) / 16;
 
         not_null_ptr<ItemInstance> tippedArrows(new ItemInstance(Items::tippedArrow, count));
         PotionUtils::setPotion(tippedArrows, Potion::byName(cauldron->getPotionId()));
         useInventory(player, itemInstance, tippedArrows, count);
-        if (waterLevel < 3)
+        if (remaining <= 2)
             cauldron->setPotionId(L"");
-        if (waterLevel < 3)
-            waterLevel = 0;
-        setWaterLevel(level, pos, state, waterLevel);
-        return true;
+        if (remaining <= 2)
+            remaining = 0;
+        setWaterLevel(level, pos, state, remaining);
+        used = true;
     }
-
-    if (item == Items::potion || item == Items::splashPotion || item == Items::lingeringPotion)
+    else if (item == Items::potion || item == Items::splashPotion || item == Items::lingeringPotion)
     {
         std::wstring potionId = PotionUtils::getPotionID(itemInstance);
         if (potionId.compare(L"water") == 0)
@@ -308,115 +307,105 @@ bool CauldronBlock::use(Level* level, const BlockPos& pos, const BlockState* sta
                 used = true;
             }
         }
-        return used;
     }
-
-    if (empty || hasPotion)
-        return false;
-
-    ArmorItem* armor = dynamic_cast<ArmorItem*>(item);
-    if (armor != NULL)
+    else if (!empty && hasWater)
     {
-        if (armor->getMaterial() == ArmorItem::ArmorMaterial::LEATHER && armor->mRenderIndex == 0)
+        ArmorItem* armor = dynamic_cast<ArmorItem*>(item);
+        if (armor != NULL)
         {
-            if (hasClearWater)
+            if (armor->getMaterial() == ArmorItem::ArmorMaterial::LEATHER && armor->mRenderIndex == 0)
             {
                 bool drained = false;
-                if (armor->hasCustomColor(itemInstance))
+                if (!hasClearWater)
+                {
+                    armor->setColor(itemInstance, cauldron->getCustomColor());
+                    setWaterLevel(level, pos, state, waterLevel - 1);
+                    drained = waterLevel <= 1;
+                    spawnCauldronEvent(level, state, pos, LevelEvent::CAULDRON_DYE_ARMOR);
+                    used = true;
+                    player->awardStat(gStats->get_armourDyed(Item::VALIDgetId(item)), GenericStats::param_noArgs());
+                }
+                else if (armor->hasCustomColor(itemInstance))
                 {
                     armor->clearColor(itemInstance);
                     setWaterLevel(level, pos, state, waterLevel - 1);
-                    drained = waterLevel < 2;
+                    drained = waterLevel <= 1;
                     spawnCauldronEvent(level, state, pos, LevelEvent::CAULDRON_CLEAN_ARMOR);
                     used = true;
                 }
-                if (!drained)
-                    return used;
+                if (drained)
+                {
+                    cauldron->setPotionId(L"");
+                    cauldron->setCustomColor(0);
+                }
             }
-            else
+        }
+        else if (Item::getId(item) == ItemId::LEATHER_HORSE_ARMOR)
+        {
+            HorseArmorItem* horseArmor = static_cast<HorseArmorItem*>(item);
+            bool drained = false;
+            if (!hasClearWater)
             {
-                armor->setColor(itemInstance, cauldron->getCustomColor());
+                horseArmor->setColor(itemInstance, cauldron->getCustomColor());
                 setWaterLevel(level, pos, state, waterLevel - 1);
+                drained = waterLevel <= 1;
                 spawnCauldronEvent(level, state, pos, LevelEvent::CAULDRON_DYE_ARMOR);
                 used = true;
-                player->awardStat(gStats->get_armourDyed(Item::VALIDgetId(item)), GenericStats::param_noArgs());
-                if (waterLevel > 1)
-                    return used;
             }
-            cauldron->setPotionId(L"");
-            cauldron->setCustomColor(0);
+            else if (horseArmor->hasCustomColor(itemInstance))
+            {
+                horseArmor->clearColor(itemInstance);
+                setWaterLevel(level, pos, state, waterLevel - 1);
+                drained = waterLevel <= 1;
+                spawnCauldronEvent(level, state, pos, LevelEvent::CAULDRON_CLEAN_ARMOR);
+                used = true;
+            }
+            if (drained)
+            {
+                cauldron->setPotionId(L"");
+                cauldron->setCustomColor(0);
+            }
         }
-        return used;
-    }
-
-    if (Item::getId(item) == ItemId::LEATHER_HORSE_ARMOR)
-    {
-        HorseArmorItem* horseArmor = static_cast<HorseArmorItem*>(item);
-        if (hasClearWater)
+        else if (item == Items::dye)
         {
-            if (!horseArmor->hasCustomColor(itemInstance))
-                return false;
-            horseArmor->clearColor(itemInstance);
+            not_null_ptr<ItemInstance> dye = itemInstance->copy();
+            dye->setCount(1);
+            if (!player->isCreative())
+                decrementStack(itemInstance);
+            cauldron->setItem(2, dye);
+            cauldron->mixDyes();
             setWaterLevel(level, pos, state, waterLevel - 1);
-            spawnCauldronEvent(level, state, pos, LevelEvent::CAULDRON_CLEAN_ARMOR);
+            setWaterLevel(level, pos, state, waterLevel);
+            spawnCauldronEvent(level, state, pos, LevelEvent::CAULDRON_ADD_DYE);
+            used = true;
         }
-        else
+        else if (item == Items::banner && BannerBlockEntity::getPatternCount(itemInstance) > 0 && !level->mIsClientSide)
         {
-            horseArmor->setColor(itemInstance, cauldron->getCustomColor());
-            setWaterLevel(level, pos, state, waterLevel - 1);
-            spawnCauldronEvent(level, state, pos, LevelEvent::CAULDRON_DYE_ARMOR);
-        }
-        if (waterLevel < 2)
-        {
-            cauldron->setPotionId(L"");
-            cauldron->setCustomColor(0);
-        }
-        return true;
-    }
-
-    if (item == Items::dye)
-    {
-        not_null_ptr<ItemInstance> dye = itemInstance->copy();
-        dye->setCount(1);
-        if (!player->isCreative())
-            decrementStack(itemInstance);
-        cauldron->setItem(2, dye);
-        cauldron->mixDyes();
-        setWaterLevel(level, pos, state, waterLevel - 1);
-        setWaterLevel(level, pos, state, waterLevel);
-        spawnCauldronEvent(level, state, pos, LevelEvent::CAULDRON_ADD_DYE);
-        return true;
-    }
-
-    if (item != Items::banner || BannerBlockEntity::getPatternCount(itemInstance) <= 0 || level->mIsClientSide)
-        return false;
-
-    not_null_ptr<ItemInstance> banner = itemInstance->copy();
-    banner->setCount(1);
-    BannerBlockEntity::removeLastPattern(banner);
-    if (!player->mAbilities.mInstabuild)
-    {
-        itemInstance->shrink(1);
-        setWaterLevel(level, pos, state, waterLevel - 1);
-    }
-    if (!itemInstance->isEmpty())
-    {
-        if (player->mInventory->add(banner))
-        {
-            if (player->GetType() == EntityType::SERVER_PLAYER)
+            not_null_ptr<ItemInstance> banner = itemInstance->copy();
+            banner->setCount(1);
+            BannerBlockEntity::removeLastPattern(banner);
+            if (!player->mAbilities.mInstabuild)
+            {
+                itemInstance->shrink(1);
+                setWaterLevel(level, pos, state, waterLevel - 1);
+            }
+            if (itemInstance->isEmpty())
+            {
+                player->setItemInHand(hand, banner);
+            }
+            else if (!player->mInventory->add(banner))
+            {
+                player->drop(banner, false);
+            }
+            else if (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, player->GetType()))
+            {
                 boost::static_pointer_cast<ServerPlayer>(player)->refreshContainer(player->mInventoryMenu);
-        }
-        else
-        {
-            player->drop(banner, false);
+            }
+            spawnCauldronEvent(level, state, pos, LevelEvent::CAULDRON_CLEAN_BANNER);
+            used = true;
         }
     }
-    else
-    {
-        player->setItemInHand(hand, banner);
-    }
-    spawnCauldronEvent(level, state, pos, LevelEvent::CAULDRON_CLEAN_BANNER);
-    return true;
+    return used;
 }
 
 void CauldronBlock::setWaterLevel(Level* level, const BlockPos& pos, const BlockState* state, int value)
@@ -475,57 +464,22 @@ unsigned int CauldronBlock::GetInteractTooltip(const BlockTooltipDataHolder& dat
     boost::shared_ptr<BlockEntity> blockEntity = data.m_pLevel->getBlockEntity(data.m_blockPos);
     bool isCauldron = false;
     if (blockEntity != NULL)
-        isCauldron = blockEntity->GetType() == BlockEntityType::CAULDRON;
+        isCauldron = eTYPE_DERIVED_FROM(BlockEntityType::CAULDRON, blockEntity->GetType());
     if (!isCauldron)
         return IDS_NONE;
 
     boost::shared_ptr<CauldronBlockEntity> cauldron = boost::static_pointer_cast<CauldronBlockEntity>(blockEntity);
     int waterLevel = data.m_pBlockState->getValue(LEVEL);
-    bool full = waterLevel > 5;
+    bool full = waterLevel >= 6;
     bool empty = waterLevel == 0;
     bool hasPotion = !empty && cauldron->getPotionId().compare(L"") != 0;
     bool hasWater = !empty && !hasPotion;
     bool hasClearWater = hasWater && !cauldron->mHasCustomColor;
-    unsigned int defaultTooltip = Block::GetInteractTooltip(data);
+    int defaultTooltip = Block::GetInteractTooltip(data);
 
     switch (Item::getId(data.m_pItemInstance->getItem()))
     {
-    case 262:
-    {
-        bool canTip = false;
-        if (data.m_bUseBlock && data.m_bCanPlace && data.m_pItemInstance->getAuxValue() == 0 && !empty && hasPotion
-            && cauldron->getPotionId().compare(L"") != 0 && cauldron->getPotionId().compare(L"empty") != 0
-            && cauldron->getPotionId().compare(L"water") != 0 && cauldron->getPotionId().compare(L"mundane") != 0
-            && cauldron->getPotionId().compare(L"thick") != 0 && cauldron->getPotionId().compare(L"awkward") != 0)
-        {
-            canTip = true;
-        }
-        if (!canTip)
-            return IDS_NONE;
-        if (data.m_pItemInstance->getCount() == 1)
-            return IDS_TOOLTIPS_TIP_ARROW_SINGLE;
-        return IDS_TOOLTIPS_TIP_ARROW_MULTIPLE;
-    }
-    case 298:
-    case 299:
-    case 300:
-    case 301:
-        if (data.m_bUseBlock && data.m_bCanPlace && !empty && hasWater)
-        {
-            ArmorItem* armor = static_cast<ArmorItem*>(data.m_pItemInstance->getItem());
-            if (armor->mRenderIndex != 0)
-                return IDS_NONE;
-            if (!hasClearWater)
-                return IDS_TOOLTIPS_DYE;
-            if (armor->hasCustomColor(data.m_pItemInstance))
-                return IDS_TOOLTIPS_CLEAN;
-        }
-        return IDS_NONE;
-    case 325:
-        if (data.m_bUseBlock && data.m_bCanPlace && full && hasWater)
-            return IDS_TOOLTIPS_COLLECT;
-        return IDS_NONE;
-    case 326:
+    case ItemId::WATER_BUCKET:
         if (!data.m_bUseBlock || !data.m_bCanPlace
             || data.m_eInteractionResult == InteractionResult::eInteractionResult_Fail || defaultTooltip != IDS_TOOLTIPS_EMPTY)
         {
@@ -543,39 +497,38 @@ unsigned int CauldronBlock::GetInteractTooltip(const BlockTooltipDataHolder& dat
             return IDS_TOOLTIPS_MIX;
         }
         return IDS_NONE;
-    case 351:
-        if (data.m_bUseBlock && data.m_bCanPlace && !empty && hasWater)
-            return IDS_TOOLTIPS_MIX;
+    case ItemId::BUCKET:
+        if (data.m_bUseBlock && data.m_bCanPlace && full && hasWater)
+            return IDS_TOOLTIPS_COLLECT;
         return IDS_NONE;
-    case 374:
+    case ItemId::FISH_BUCKET:
+    case ItemId::SALMON_BUCKET:
+    case ItemId::PUFFER_BUCKET:
+    case ItemId::TROPICAL_BUCKET:
+        return IDS_NONE;
+    case ItemId::GLASS_BOTTLE:
         if (data.m_bUseBlock && data.m_bCanPlace && waterLevel >= 2)
             return IDS_TOOLTIPS_COLLECT;
         return IDS_NONE;
-    case 425:
-        if (data.m_bUseBlock && data.m_bCanPlace && !empty && hasWater
-            && BannerBlockEntity::getPatternCount(data.m_pItemInstance) >= 1)
+    case ItemId::ARROW:
+    {
+        bool canTip = false;
+        if (data.m_bUseBlock && data.m_bCanPlace && data.m_pItemInstance->getAuxValue() == 0 && !empty && hasPotion
+            && cauldron->getPotionId().compare(L"") != 0 && cauldron->getPotionId().compare(L"empty") != 0
+            && cauldron->getPotionId().compare(L"water") != 0 && cauldron->getPotionId().compare(L"mundane") != 0
+            && cauldron->getPotionId().compare(L"thick") != 0 && cauldron->getPotionId().compare(L"awkward") != 0)
         {
-            return IDS_TOOLTIPS_CLEAN;
+            canTip = true;
         }
-        return defaultTooltip;
-    case 453:
-        if (data.m_bUseBlock && data.m_bCanPlace && !empty && hasWater)
-        {
-            HorseArmorItem* horseArmor = static_cast<HorseArmorItem*>(data.m_pItemInstance->getItem());
-            if (!hasClearWater)
-                return IDS_TOOLTIPS_DYE;
-            if (horseArmor->hasCustomColor(data.m_pItemInstance))
-                return IDS_TOOLTIPS_CLEAN;
-        }
-        return IDS_NONE;
-    case 459:
-    case 460:
-    case 461:
-    case 462:
-        return IDS_NONE;
-    case 373:
-    case 438:
-    case 441:
+        if (!canTip)
+            return IDS_NONE;
+        if (data.m_pItemInstance->getCount() == 1)
+            return IDS_TOOLTIPS_TIP_ARROW_SINGLE;
+        return IDS_TOOLTIPS_TIP_ARROW_MULTIPLE;
+    }
+    case ItemId::POTION:
+    case ItemId::SPLASH_POTION:
+    case ItemId::LINGERING_POTION:
     {
         if (!data.m_bUseBlock || !data.m_bCanPlace)
             return IDS_NONE;
@@ -608,6 +561,42 @@ unsigned int CauldronBlock::GetInteractTooltip(const BlockTooltipDataHolder& dat
         }
         return IDS_NONE;
     }
+    case ItemId::LEATHER_HELMET:
+    case ItemId::LEATHER_CHESTPLATE:
+    case ItemId::LEATHER_LEGGINGS:
+    case ItemId::LEATHER_BOOTS:
+        if (data.m_bUseBlock && data.m_bCanPlace && !empty && hasWater)
+        {
+            ArmorItem* armor = static_cast<ArmorItem*>(data.m_pItemInstance->getItem());
+            if (armor->mRenderIndex != 0)
+                return IDS_NONE;
+            if (!hasClearWater)
+                return IDS_TOOLTIPS_DYE;
+            if (armor->hasCustomColor(data.m_pItemInstance))
+                return IDS_TOOLTIPS_CLEAN;
+        }
+        return IDS_NONE;
+    case ItemId::LEATHER_HORSE_ARMOR:
+        if (data.m_bUseBlock && data.m_bCanPlace && !empty && hasWater)
+        {
+            HorseArmorItem* horseArmor = static_cast<HorseArmorItem*>(data.m_pItemInstance->getItem());
+            if (!hasClearWater)
+                return IDS_TOOLTIPS_DYE;
+            if (horseArmor->hasCustomColor(data.m_pItemInstance))
+                return IDS_TOOLTIPS_CLEAN;
+        }
+        return IDS_NONE;
+    case ItemId::DYE:
+        if (data.m_bUseBlock && data.m_bCanPlace && !empty && hasWater)
+            return IDS_TOOLTIPS_MIX;
+        return IDS_NONE;
+    case ItemId::BANNER:
+        if (data.m_bUseBlock && data.m_bCanPlace && !empty && hasWater
+            && BannerBlockEntity::getPatternCount(data.m_pItemInstance) >= 1)
+        {
+            return IDS_TOOLTIPS_CLEAN;
+        }
+        return defaultTooltip;
     default:
         return defaultTooltip;
     }
@@ -684,7 +673,7 @@ void CauldronBlock::animateTick(const BlockState* state, Level* level, const Blo
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     bool isCauldron = false;
     if (blockEntity != NULL)
-        isCauldron = blockEntity->GetType() == BlockEntityType::CAULDRON;
+        isCauldron = eTYPE_DERIVED_FROM(BlockEntityType::CAULDRON, blockEntity->GetType());
     if (!isCauldron)
         return;
     int waterLevel = state->getValue(LEVEL);
@@ -724,10 +713,10 @@ void CauldronBlock::spawnBubbleParticles(Level* level, double x, double y, doubl
     const double surfaceHeight = (state->getValue(LEVEL) * 2.0 + 6.0) / 16.0;
     for (int i = 0; i < count; ++i)
     {
-        const double particleX = x + 0.5 + (random->nextDouble() - 0.5) * 0.7;
-        const double particleZ = z + 0.5 + (random->nextDouble() - 0.5) * 0.7;
-        level->addParticle(PARTICLE_BUBBLE, particleX, y + surfaceHeight - 0.15, particleZ, 0.0, 0.0, 0.0,
-                           arrayWithLength<int>());
+        const double offsetX = random->nextDouble() - 0.5;
+        const double offsetZ = random->nextDouble() - 0.5;
+        level->addParticle(PARTICLE_BUBBLE, x + 0.5 + offsetX * 0.7, y + surfaceHeight - 0.15, z + 0.5 + offsetZ * 0.7,
+                           0.0, 0.0, 0.0, arrayWithLength<int>());
     }
 }
 
@@ -739,15 +728,9 @@ void CauldronBlock::spawnExplosionParticles(Level* level, double x, double y, do
         return;
     const double surfaceHeight = (state->getValue(LEVEL) * 2.0 + 6.0) / 16.0;
     for (int i = 0; i < count; ++i)
-    {
-        const double particleX = x + random->nextDouble();
-        const double particleZ = z + random->nextDouble();
-        const double xa = random->nextDouble() * 0.02;
-        const double ya = random->nextDouble() * 0.02;
-        const double za = random->nextDouble() * 0.02;
-        level->addParticle(PARTICLE_EXPLODE, particleX, y + surfaceHeight, particleZ, xa, ya, za,
+        level->addParticle(PARTICLE_EXPLODE, x + random->nextDouble(), y + surfaceHeight, z + random->nextDouble(),
+                           random->nextDouble() * 0.02, random->nextDouble() * 0.02, random->nextDouble() * 0.02,
                            arrayWithLength<int>());
-    }
 }
 EPistonPushReaction CauldronBlock::getPistonPushReaction(const BlockState*) { return PISTON_PUSH_NORMAL; }
 bool CauldronBlock::ParticlesSurviveWithin() { return true; }

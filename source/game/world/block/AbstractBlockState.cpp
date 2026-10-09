@@ -60,11 +60,10 @@ std::wstring AbstractBlockState::toString() const
 
     std::vector<std::wstring> propertyStrings;
 
-    boost::unordered_map<const Property*, Boxed*>* values = getValues();
+    const boost::unordered_map<const Property*, Boxed*>* values = getValues();
 
-    boost::unordered_map<const Property*, Boxed*>::const_iterator iterator;
-
-    for (iterator = values->begin(); iterator != values->end(); ++iterator)
+    for (boost::unordered_map<const Property*, Boxed*>::const_iterator iterator = values->begin();
+         iterator != values->end(); ++iterator)
     {
         propertyStrings.push_back(PROPERTY_ENTRY_TO_STRING_FUNCTION(&iterator));
     }

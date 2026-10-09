@@ -47,13 +47,7 @@ bool RedstoneTorchBlock::isToggledTooFrequently(Level* level, const BlockPos& po
     if (sToggleLists.find(level) == sToggleLists.end())
         sToggleLists[level] = new std::deque<Toggle>;
     if (addToggle)
-    {
-        long long gameTime = level->getGameTime();
-        Toggle toggle;
-        toggle.pos = pos;
-        toggle.time = gameTime;
-        sToggleLists[level]->push_back(toggle);
-    }
+        sToggleLists[level]->push_back(Toggle(pos, level->getGameTime()));
     int count = 0;
     std::deque<Toggle>::const_iterator end = sToggleLists[level]->end();
     for (std::deque<Toggle>::const_iterator it = sToggleLists[level]->begin(); it != end; ++it)
@@ -103,36 +97,37 @@ void RedstoneTorchBlock::tick(Level* level, const BlockPos& pos, const BlockStat
     if (sToggleLists.find(level) != sToggleLists.end())
     {
         std::deque<Toggle>* toggles = sToggleLists[level];
-        while (!toggles->empty() && level->getGameTime() - toggles->front().time >= 61)
+        while (!toggles->empty() && level->getGameTime() - toggles->front().time > 60)
             toggles->pop_front();
     }
 
     int flags = gApp.GetGameHostOption(eGameHostOption_MiniGame) ? 0x25 : 3;
-    if (!mLit)
+    if (mLit)
     {
-        if (!powered && !isToggledTooFrequently(level, pos, false))
-            level->setBlock(pos, Blocks::redstone_torch->defaultBlockState()->setValue(FACING, state->getValue(FACING)), flags, false);
-    }
-    else if (powered)
-    {
-        level->setBlock(pos, Blocks::unlit_redstone_torch->defaultBlockState()->setValue(FACING, state->getValue(FACING)), flags, false);
-        if (isToggledTooFrequently(level, pos, true))
+        if (powered)
         {
-            boost::shared_ptr<Player> player;
-            level->playSound(player, pos, SoundEvents::REDSTONE_TORCH_BURNOUT,
-                             SoundSource::eSoundSource_Blocks, 0.5f,
-                             (level->mRandom->nextFloat() - level->mRandom->nextFloat()) * 0.8f + 2.6f, 16.0f);
-
-            for (int i = 0; i < 5; ++i)
+            level->setBlock(pos, Blocks::unlit_redstone_torch->defaultBlockState()->setValue(FACING, state->getValue(FACING)), flags, false);
+            if (isToggledTooFrequently(level, pos, true))
             {
-                double x = pos.x + random->nextDouble() * 0.6 + 0.2;
-                double y = pos.y + random->nextDouble() * 0.6 + 0.2;
-                double z = pos.z + random->nextDouble() * 0.6 + 0.2;
-                level->addParticle(PARTICLE_SMOKE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
-            }
+                level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::REDSTONE_TORCH_BURNOUT,
+                                 SoundSource::eSoundSource_Blocks, 0.5f,
+                                 2.6f + (level->mRandom->nextFloat() - level->mRandom->nextFloat()) * 0.8f, 16.0f);
 
-            level->addToTickNextTick(pos, level->getBlockState(pos)->getBlock(), 0xA0);
+                for (int i = 0; i < 5; ++i)
+                {
+                    double x = pos.x + random->nextDouble() * 0.6 + 0.2;
+                    double y = pos.y + random->nextDouble() * 0.6 + 0.2;
+                    double z = pos.z + random->nextDouble() * 0.6 + 0.2;
+                    level->addParticle(PARTICLE_SMOKE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
+                }
+
+                level->addToTickNextTick(pos, level->getBlockState(pos)->getBlock(), 0xA0);
+            }
         }
+    }
+    else if (!powered && !isToggledTooFrequently(level, pos, false))
+    {
+        level->setBlock(pos, Blocks::redstone_torch->defaultBlockState()->setValue(FACING, state->getValue(FACING)), flags, false);
     }
 }
 
@@ -168,9 +163,10 @@ void RedstoneTorchBlock::animateTick(const BlockState* state, Level* level, cons
     if (facing->getAxis()->isHorizontal())
     {
         const Direction* opposite = facing->getOpposite();
-        x += 0.27 * opposite->getStepX();
-        z += 0.27 * opposite->getStepZ();
+        const double offset = 0.27;
+        x += offset * opposite->getStepX();
         y += 0.22;
+        z += offset * opposite->getStepZ();
     }
     level->addParticle(PARTICLE_RED_DUST, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
 }

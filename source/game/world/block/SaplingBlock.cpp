@@ -83,133 +83,122 @@ void SaplingBlock::growTree(Level* level, const BlockPos& pos, const BlockState*
     bool mega = false;
     switch (state->getValue(TYPE)->getData())
     {
-    case 1:
-    {
-        bool found;
-        if (!bonemeal)
+    case PlanksBlock::Variant::eDataSpruce:
+        if (bonemeal)
         {
-            found = isTwoByTwoSaplingOfType(level, pos, 0, 0, PlanksBlock::Variant::SPRUCE);
-            if (!found)
+            if (random->nextBoolean())
             {
-                dz = -1;
-                found = isTwoByTwoSaplingOfType(level, pos, 0, -1, PlanksBlock::Variant::SPRUCE);
-            }
-            if (!found)
-            {
-                dz = 0;
-                dx = -1;
-                found = isTwoByTwoSaplingOfType(level, pos, -1, 0, PlanksBlock::Variant::SPRUCE);
-            }
-            if (!found)
-            {
-                dz = -1;
-                found = isTwoByTwoSaplingOfType(level, pos, -1, -1, PlanksBlock::Variant::SPRUCE);
+                delete feature;
+                feature = new MegaPineTreeFeature(false, random->nextBoolean());
+                mega = true;
             }
         }
         else
         {
-            found = random->nextBoolean();
+            for (dx = 0; dx >= -1; --dx)
+            {
+                for (dz = 0; dz >= -1; --dz)
+                {
+                    if (isTwoByTwoSaplingOfType(level, pos, dx, dz, PlanksBlock::Variant::SPRUCE))
+                    {
+                        delete feature;
+                        feature = new MegaPineTreeFeature(false, random->nextBoolean());
+                        mega = true;
+                        break;
+                    }
+                }
+                if (mega) break;
+            }
         }
-        delete feature;
-        if (found)
+        if (!mega)
         {
-            feature = new MegaPineTreeFeature(false, random->nextBoolean());
-            mega = true;
-        }
-        else
-        {
+            dx = 0;
+            dz = 0;
+            delete feature;
             feature = new SpruceFeature(true);
         }
         break;
-    }
-    case 2:
+    case PlanksBlock::Variant::eDataBirch:
         delete feature;
         feature = new BirchFeature(true, false);
         break;
-    case 3:
+    case PlanksBlock::Variant::eDataJungle:
     {
-        TypedBoxed<PlanksBlock::Variant*> logVariant(PlanksBlock::Variant::JUNGLE);
-        const BlockState* logState = Blocks::log->defaultBlockState()->setBoxedValue(OldLogBlock::VARIANT, &logVariant);
-        TypedBoxed<PlanksBlock::Variant*> leafVariant(PlanksBlock::Variant::JUNGLE);
-        TypedBoxed<bool> checkDecay(false);
+        const BlockState* logState = Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::JUNGLE);
         const BlockState* leavesState = Blocks::leaves->defaultBlockState()
-                                            ->setBoxedValue(OldLeafBlock::VARIANT, &leafVariant)
-                                            ->setBoxedValue(LeafBlock::CHECK_DECAY, &checkDecay);
-        bool found;
-        if (!bonemeal)
+                                            ->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::JUNGLE)
+                                            ->setValue(LeafBlock::CHECK_DECAY, false);
+        if (bonemeal)
         {
-            found = isTwoByTwoSaplingOfType(level, pos, 0, 0, PlanksBlock::Variant::JUNGLE);
-            if (!found)
+            if (random->nextBoolean())
             {
-                dz = -1;
-                found = isTwoByTwoSaplingOfType(level, pos, 0, -1, PlanksBlock::Variant::JUNGLE);
-            }
-            if (!found)
-            {
-                dz = 0;
-                dx = -1;
-                found = isTwoByTwoSaplingOfType(level, pos, -1, 0, PlanksBlock::Variant::JUNGLE);
-            }
-            if (!found)
-            {
-                dz = -1;
-                found = isTwoByTwoSaplingOfType(level, pos, -1, -1, PlanksBlock::Variant::JUNGLE);
+                delete feature;
+                feature = new MegaJungleTreeFeature(true, 10, 20, logState, leavesState);
+                mega = true;
             }
         }
         else
         {
-            found = random->nextBoolean();
+            for (dx = 0; dx >= -1; --dx)
+            {
+                for (dz = 0; dz >= -1; --dz)
+                {
+                    if (isTwoByTwoSaplingOfType(level, pos, dx, dz, PlanksBlock::Variant::JUNGLE))
+                    {
+                        delete feature;
+                        feature = new MegaJungleTreeFeature(true, 10, 20, logState, leavesState);
+                        mega = true;
+                        break;
+                    }
+                }
+                if (mega) break;
+            }
         }
-        delete feature;
-        if (found)
+        if (!mega)
         {
-            feature = new MegaJungleTreeFeature(true, 10, 20, logState, leavesState);
-            mega = true;
-        }
-        else
-        {
+            dx = 0;
+            dz = 0;
+            delete feature;
             feature = new TreeFeature(true, random->nextInt(7) + 4, logState, leavesState, false);
         }
         break;
     }
-    case 4:
+    case PlanksBlock::Variant::eDataAcacia:
         delete feature;
         feature = new SavannaTreeFeature(true);
         break;
-    case 5:
-        if (!bonemeal)
+    case PlanksBlock::Variant::eDataDarkOak:
+        if (bonemeal)
         {
-            bool found = false;
+            delete feature;
+            feature = new RoofTreeFeature(true);
+            mega = true;
+        }
+        else
+        {
             for (dx = 0; dx >= -1; --dx)
             {
-                dz = 0;
-                if (isSapling(level, pos.offset(dx, 0, dz), PlanksBlock::Variant::DARK_OAK)
-                    && isSapling(level, pos.offset(dx + 1, 0, dz), PlanksBlock::Variant::DARK_OAK)
-                    && isSapling(level, pos.offset(dx, 0, dz + 1), PlanksBlock::Variant::DARK_OAK)
-                    && isSapling(level, pos.offset(dx + 1, 0, dz + 1), PlanksBlock::Variant::DARK_OAK))
+                for (dz = 0; dz >= -1; --dz)
                 {
-                    found = true;
-                    break;
+                    if (isSapling(level, pos.offset(dx, 0, dz), PlanksBlock::Variant::DARK_OAK)
+                        && isSapling(level, pos.offset(dx + 1, 0, dz), PlanksBlock::Variant::DARK_OAK)
+                        && isSapling(level, pos.offset(dx, 0, dz + 1), PlanksBlock::Variant::DARK_OAK)
+                        && isSapling(level, pos.offset(dx + 1, 0, dz + 1), PlanksBlock::Variant::DARK_OAK))
+                    {
+                        delete feature;
+                        feature = new RoofTreeFeature(true);
+                        mega = true;
+                        break;
+                    }
                 }
-                dz = -1;
-                if (isSapling(level, pos.offset(dx, 0, dz), PlanksBlock::Variant::DARK_OAK)
-                    && isSapling(level, pos.offset(dx + 1, 0, dz), PlanksBlock::Variant::DARK_OAK)
-                    && isSapling(level, pos.offset(dx, 0, dz + 1), PlanksBlock::Variant::DARK_OAK)
-                    && isSapling(level, pos.offset(dx + 1, 0, dz + 1), PlanksBlock::Variant::DARK_OAK))
-                {
-                    found = true;
-                    break;
-                }
+                if (mega) break;
             }
-            if (!found)
+            if (!mega)
             {
                 delete feature;
                 return;
             }
         }
-        delete feature;
-        feature = new RoofTreeFeature(true);
-        mega = true;
         break;
     }
 
@@ -226,7 +215,8 @@ void SaplingBlock::growTree(Level* level, const BlockPos& pos, const BlockState*
         level->setBlock(pos, air, Block::UPDATE_INVISIBLE, false);
     }
 
-    if (!feature->place(level, *random, pos.offset(dx, 0, dz)))
+    bool placed = feature->place(level, *random, pos.offset(dx, 0, dz));
+    if (!placed)
     {
         if (mega)
         {
@@ -253,10 +243,11 @@ void SaplingBlock::blockStaticCtor()
 {
     std::wstring name(L"type");
     EnumProperty<PlanksBlock::Variant*>* type;
+    const Predicate<PlanksBlock::Variant*>* filter = Predicates<PlanksBlock::Variant*>::alwaysTrue;
     {
         boost::unordered_set<PlanksBlock::Variant*> values;
         for (int i = 0; i < 6; ++i) values.insert(PlanksBlock::Variant::BY_DATA[i]);
-        type = EnumProperty<PlanksBlock::Variant*>::create(name, typeid(PlanksBlock::Variant), values, Predicates<PlanksBlock::Variant*>::alwaysTrue);
+        type = EnumProperty<PlanksBlock::Variant*>::create(name, typeid(PlanksBlock::Variant), values, filter);
     }
     TYPE = type;
 }
@@ -310,12 +301,16 @@ TextureAtlasSprite* SaplingBlock::getTexture(const Direction*, const BlockState*
 
 void SaplingBlock::registerIcons(IconRegister* iconRegister)
 {
-    for (int i = 0; i < 6; ++i)
+    for (int i = 0; i < 6; i++)
+    {
         mIcons[i] = iconRegister->registerIcon(SAPLING_ICON_NAMES[i]);
+    }
 }
 
 int SaplingBlock::getDescriptionId(int auxValue)
 {
-    int data = getBlockState(auxValue)->getValue(TYPE)->getData();
-    return SAPLING_DESCRIPTION_IDS[data < 0 ? 0 : data];
+    const BlockState* state = getBlockState(auxValue);
+    int data = state->getValue(TYPE)->getData();
+    if (data < 0) data = 0;
+    return SAPLING_DESCRIPTION_IDS[data];
 }

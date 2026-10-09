@@ -13,9 +13,13 @@ class LevelSource;
 class Random;
 class TextureAtlasSprite;
 
+template <class T> class AbstractProperty;
+
 class MyceliumBlock : public Block
 {
 public:
+    static AbstractProperty<bool>* SNOWY;
+
     MyceliumBlock();
     virtual const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual void tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random);

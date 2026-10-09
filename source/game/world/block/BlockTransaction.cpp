@@ -1,5 +1,7 @@
 #include "game/world/block/BlockTransaction.hpp"
 
+#include <algorithm>
+
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
@@ -8,7 +10,7 @@ BlockTransaction::Element g_emptyBlockElement;
 
 BlockTransaction::BlockTransaction(const BlockPos& min, const BlockPos& max, const Vec3i& size,
                                    Element* elements, unsigned int elementCount)
-    : mSize(size), mElementCount(elementCount), mMin(min), mMax(0, 0, 0), mElements(elements)
+    : mSize(size), mElementCount(elementCount), mMin(size), mMax(0, 0, 0), mElements(elements)
 {
 }
 
@@ -28,20 +30,24 @@ BlockTransaction* BlockTransaction::CreateTransaction(const BlockPos& min, const
 
 void BlockTransaction::updateMinMax(const Vec3i& position)
 {
-    if (position.x < mMin.x) mMin.x = position.x;
-    if (position.y < mMin.y) mMin.y = position.y;
-    if (position.z < mMin.z) mMin.z = position.z;
-    if (position.x + 1 > mMax.x) mMax.x = position.x + 1;
-    if (position.y + 1 > mMax.y) mMax.y = position.y + 1;
-    if (position.z + 1 > mMax.z) mMax.z = position.z + 1;
+    int x = position.x;
+    mMin.x = std::min(mMin.x, x);
+    int y = position.y;
+    mMin.y = std::min(mMin.y, y);
+    int z = position.z;
+    mMin.z = std::min(mMin.z, z);
+    mMax.x = std::max(mMax.x, x + 1);
+    mMax.y = std::max(mMax.y, y + 1);
+    mMax.z = std::max(mMax.z, z + 1);
 }
 
 BlockTransaction::Element* BlockTransaction::at(const Vec3i& position) const
 {
+    Element* element = &g_emptyBlockElement;
     unsigned int index = position.y + mSize.y * position.x + mSize.y * mSize.x * position.z;
-    if (index >= mElementCount)
-        return &g_emptyBlockElement;
-    return mElements + index;
+    if (index < mElementCount)
+        element = &mElements[index];
+    return element;
 }
 
 bool BlockTransaction::inBounds(const Vec3i& position) const
@@ -76,13 +82,15 @@ std::deque<ChunkPos>* BlockTransaction::getAffectedChunks(Level*, const Vec3i& p
 
 void BlockTransaction::setBlock(const Vec3i& position, int block, int data)
 {
-    at(position)->value = (unsigned short)((block << 4) | data);
+    Element* target = at(position);
+    target->value = (unsigned short)((block << 4) | data);
     if (block != 0) updateMinMax(position);
 }
 
 void BlockTransaction::setElement(const Vec3i& position, unsigned short element)
 {
-    at(position)->value = element;
+    Element* target = at(position);
+    target->value = element;
     if (element != 0) updateMinMax(position);
 }
 
@@ -90,8 +98,8 @@ void BlockTransaction::setBlock(const Vec3i& position, const BlockState* state)
 {
     Block* block = state->getBlock();
     int id = Block::getId(block);
-    int data = block->convertBlockStateToLegacyData(state) & 0xf;
-    setBlock(position, id, data);
+    int data = block->convertBlockStateToLegacyData(state);
+    setBlock(position, id, data & 0xf);
 }
 
 int BlockTransaction::getBlock(const Vec3i& position) const
@@ -111,14 +119,18 @@ bool BlockTransaction::isEmpty(const Vec3i& position) const
 
 void BlockTransaction::reduceMinMax()
 {
-    Vec3i min = mMin;
-    Vec3i max = mMax;
+    int minX = mMin.x;
+    int maxX = mMax.x;
+    int minY = mMin.y;
+    int maxY = mMax.y;
+    int minZ = mMin.z;
+    int maxZ = mMax.z;
     mMin = mMax;
-    for (int x = min.x; x < max.x; ++x)
+    for (int x = minX; x < maxX; ++x)
     {
-        for (int y = min.y; y < max.y; ++y)
+        for (int y = minY; y < maxY; ++y)
         {
-            for (int z = min.z; z < max.z; ++z)
+            for (int z = minZ; z < maxZ; ++z)
             {
                 Vec3i position(x, y, z);
                 if (!isEmpty(position)) updateMinMax(position);
@@ -129,10 +141,10 @@ void BlockTransaction::reduceMinMax()
 
 Vec3i BlockTransaction::getMin() const
 {
-    return mMin;
+    return Vec3i(mMin.x, mMin.y, mMin.z);
 }
 
 Vec3i BlockTransaction::getMax() const
 {
-    return mMax;
+    return Vec3i(mMax.x, mMax.y, mMax.z);
 }

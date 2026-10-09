@@ -34,19 +34,19 @@ arrayWithLength<int> BrewingStandBlockEntity::SLOTS_FOR_SIDES(brewingSideSlots, 
 
 BrewingStandBlockEntity::BrewingStandBlockEntity()
     : mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(5, ItemInstance::EMPTY)),
-      mLastPotionBits(),
-      mLastIngredientItem(NULL),
-      mFuel(0)
+      mLastPotionBits()
 {
-    mBrewTime = 0;
     mLastPotionBits = arrayWithLength<unsigned char>();
+    mLastIngredientItem = NULL;
+    mBrewTime = 0;
+    mFuel = 0;
     mCustomName = boost::shared_ptr<CensoredString>(new CensoredString());
 }
 
 BrewingStandBlockEntity::~BrewingStandBlockEntity()
 {
     delete[] mLastPotionBits.data;
-    delete[] mItems.items;
+    delete[] mItems.items.data;
 }
 
 std::wstring BrewingStandBlockEntity::getName()
@@ -96,11 +96,11 @@ bool BrewingStandBlockEntity::isEmpty()
 
 not_null_ptr<ItemInstance> BrewingStandBlockEntity::getItem(unsigned int slot)
 {
-    if (slot >= mItems.size())
+    if (slot < mItems.size())
     {
-        return ItemInstance::EMPTY;
+        return mItems[slot];
     }
-    return mItems[slot];
+    return ItemInstance::EMPTY;
 }
 
 not_null_ptr<ItemInstance> BrewingStandBlockEntity::removeItem(unsigned int slot, int count)
@@ -196,10 +196,7 @@ int BrewingStandBlockEntity::getContainerDataCount()
 
 void BrewingStandBlockEntity::clearContent()
 {
-    for (unsigned int i = 0; i < mItems.size(); ++i)
-    {
-        mItems[i] = mItems.defaultValue;
-    }
+    mItems.clear();
 }
 
 AbstractContainerMenu* BrewingStandBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player)
@@ -391,7 +388,7 @@ void BrewingStandBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
     mCustomName->loadFromTag(tag);
-    delete[] mItems.items;
+    delete[] mItems.items.data;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     ContainerHelper::loadAllItems(tag, mItems);
     mBrewTime = tag->getShort(L"BrewTime");

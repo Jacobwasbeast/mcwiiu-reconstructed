@@ -34,7 +34,7 @@ void WaterlilyBlock::entityInside(Level* level, const BlockPos& pos, const Block
                                   const boost::shared_ptr<Entity>& entity)
 {
     Block::entityInside(level, pos, state, entity);
-    if (entity->GetType() == EntityType::BOAT)
+    if (eTYPE_DERIVED_FROM(EntityType::BOAT, entity->GetType()))
     {
         level->destroyBlock(pos, true);
     }

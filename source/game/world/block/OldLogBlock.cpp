@@ -28,13 +28,11 @@ void OldLogBlock::blockStaticCtor()
     EnumProperty<PlanksBlock::Variant*>* variant;
     {
         boost::unordered_set<PlanksBlock::Variant*> values;
-        values.insert(PlanksBlock::Variant::OAK);
-        values.insert(PlanksBlock::Variant::SPRUCE);
-        values.insert(PlanksBlock::Variant::BIRCH);
-        values.insert(PlanksBlock::Variant::JUNGLE);
-        values.insert(PlanksBlock::Variant::ACACIA);
-        values.insert(PlanksBlock::Variant::DARK_OAK);
-        variant = EnumProperty<PlanksBlock::Variant*>::create(name, typeid(PlanksBlock::Variant*), values, filter);
+        for (int i = 0; i < 6; ++i)
+        {
+            values.insert(PlanksBlock::Variant::BY_DATA[i]);
+        }
+        variant = EnumProperty<PlanksBlock::Variant*>::create(name, typeid(PlanksBlock::Variant), values, filter);
     }
     VARIANT = variant;
 }
@@ -49,53 +47,57 @@ OldLogBlock::OldLogBlock()
 const MaterialColor* OldLogBlock::getMapColor(const BlockState* state, LevelSource*, const BlockPos&)
 {
     PlanksBlock::Variant* variant = state->getValue(VARIANT);
-    if (state->getValue(AXIS)->getId() == 1)
+    LogBlock::LogAxis* axis = state->getValue(AXIS);
+    if (axis->getId() != 1)
     {
-        return variant->getMaterialColor();
+        switch (variant->getData())
+        {
+        case 1:
+            return PlanksBlock::Variant::DARK_OAK->getMaterialColor();
+        case 2:
+            return MaterialColor::QUARTZ;
+        default:
+            return PlanksBlock::Variant::SPRUCE->getMaterialColor();
+        }
     }
-    int data = variant->getData();
-    if (data == 1)
-    {
-        return PlanksBlock::Variant::DARK_OAK->getMaterialColor();
-    }
-    if (data != 2)
-    {
-        return PlanksBlock::Variant::SPRUCE->getMaterialColor();
-    }
-    return MaterialColor::QUARTZ;
+    return variant->getMaterialColor();
 }
 
 const BlockState* OldLogBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState()->setValue(VARIANT, PlanksBlock::Variant::byData(data & 3));
+    const BlockState* state = defaultBlockState()->setValue(VARIANT, PlanksBlock::Variant::byData((data & 3) % 4));
     switch (data & 0xC)
     {
     case 0:
-        return state->setValue(AXIS, Y);
+        state = state->setValue(AXIS, Y);
+        break;
     case 4:
-        return state->setValue(AXIS, X);
+        state = state->setValue(AXIS, X);
+        break;
     case 8:
-        return state->setValue(AXIS, Z);
+        state = state->setValue(AXIS, Z);
+        break;
     default:
-        return state->setValue(AXIS, NONE);
+        state = state->setValue(AXIS, NONE);
     }
+    return state;
 }
 
 int OldLogBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
     int data = state->getValue(VARIANT)->getData();
-    unsigned int axis = state->getValue(AXIS)->getId();
-    if (axis == 0)
+    LogBlock::LogAxis* axis = state->getValue(AXIS);
+    switch (axis->getId())
     {
+    case 0:
         data |= 4;
-    }
-    else if (axis == 2)
-    {
+        break;
+    case 2:
         data |= 8;
-    }
-    else if (axis == 3)
-    {
+        break;
+    case 3:
         data |= 12;
+        break;
     }
     return data;
 }

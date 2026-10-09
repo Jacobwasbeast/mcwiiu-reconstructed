@@ -23,13 +23,18 @@ EnumProperty<Direction::Axis*>* gRotatedPillarBlockAxisProperty = NULL;
 
 void RotatedPillarBlock::blockStaticCtor()
 {
-    std::wstring name(L"axis");
+    std::wstring name = L"axis";
+    Predicate<Direction::Axis*>* filter = Predicates<Direction::Axis*>::alwaysTrue;
+
     EnumProperty<Direction::Axis*>* property;
     {
         boost::unordered_set<Direction::Axis*> values;
-        for (int i = 0; i < 3; ++i) values.insert(Direction::Axis::VALUES[i]);
-        property = EnumProperty<Direction::Axis*>::create(
-            name, typeid(Direction::Axis), values, Predicates<Direction::Axis*>::alwaysTrue);
+        for (int i = 0; i < 3; ++i)
+        {
+            values.insert(Direction::Axis::VALUES[i]);
+        }
+
+        property = EnumProperty<Direction::Axis*>::create(name, typeid(Direction::Axis), values, filter);
     }
     gRotatedPillarBlockAxisProperty = property;
 }
@@ -46,21 +51,23 @@ RotatedPillarBlock::RotatedPillarBlock(Material* material, const MaterialColor* 
 
 const BlockState* RotatedPillarBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    if (rotation->getType() == Rotation::eTYPE_Clockwise90 ||
-        rotation->getType() == Rotation::eTYPE_CounterClockwise90)
+    Rotation::eTYPE type = rotation->getType();
+    switch (type)
     {
-        int axis = state->getValue(gRotatedPillarBlockAxisProperty)->getId();
-        if (axis == Direction::Axis::eAxis_X)
+    case Rotation::eTYPE_CounterClockwise90:
+    case Rotation::eTYPE_Clockwise90:
+        switch (state->getValue(gRotatedPillarBlockAxisProperty)->getId())
         {
+        case Direction::Axis::eAxis_X:
             return state->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::Z);
-        }
-        if (axis == Direction::Axis::eAxis_Z)
-        {
+        case Direction::Axis::eAxis_Z:
             return state->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::X);
+        default:
+            return state;
         }
+    default:
+        return state;
     }
-
-    return state;
 }
 
 const BlockState* RotatedPillarBlock::getBlockState(int data)

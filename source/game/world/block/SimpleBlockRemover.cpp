@@ -25,21 +25,13 @@ bool SimpleBlockRemover::RemoveBlocks(int areaIndex, int maxBlocks)
 
                     if (removed >= maxBlocks)
                     {
-                        break;
+                        return true;
                     }
                 }
             }
-
-            if (removed >= maxBlocks)
-            {
-                break;
-            }
         }
 
-        if (removed < maxBlocks)
-        {
-            --area.mY;
-        }
+        --area.mY;
     }
 
     return removed >= maxBlocks;

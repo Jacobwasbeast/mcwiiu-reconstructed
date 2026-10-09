@@ -10,7 +10,7 @@ BlockEntity* TheEndPortalBlockEntity::create()
 
 boost::shared_ptr<BlockEntity> TheEndPortalBlockEntity::clone()
 {
-    boost::shared_ptr<BlockEntity> result(new TheEndPortalBlockEntity());
+    boost::shared_ptr<TheEndPortalBlockEntity> result(new TheEndPortalBlockEntity());
     BlockEntity::clone(result);
     return result;
 }

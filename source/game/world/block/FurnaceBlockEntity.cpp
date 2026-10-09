@@ -33,15 +33,19 @@ arrayWithLength<int> FurnaceBlockEntity::SLOTS_FOR_SIDES(furnaceSideSlots, 1);
 FurnaceBlockEntity::FurnaceBlockEntity()
     : LockableContainerBlockEntity(), WorldlyContainer(),
       mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(3, ItemInstance::EMPTY)),
-      mOpenersThisTick(), mOpeners(), mLitTime(0), mLitDuration(0),
-      mCookingProgress(0), mCookingTotalTime(0),
-      mName(new CensoredString()), mCharcoalUsed(false)
+      mOpenersThisTick(), mOpeners()
 {
+    mLitTime = 0;
+    mLitDuration = 0;
+    mCookingProgress = 0;
+    mCookingTotalTime = 0;
+    mCharcoalUsed = false;
+    mName = boost::shared_ptr<CensoredString>(new CensoredString());
 }
 
 FurnaceBlockEntity::~FurnaceBlockEntity()
 {
-    delete[] mItems.items;
+    delete[] mItems.items.data;
 }
 
 BlockEntity* FurnaceBlockEntity::create()
@@ -204,9 +208,12 @@ bool FurnaceBlockEntity::isFuel(not_null_ptr<ItemInstance> item)
 bool FurnaceBlockEntity::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
 {
     if (slot == 2) return false;
-    if (slot != 1) return true;
-    not_null_ptr<ItemInstance> fuel = mItems[1];
-    return isFuel(item) || (FurnaceFuelSlot::isBucket(item) && fuel->getItem() != Items::bucket);
+    if (slot == 1)
+    {
+        not_null_ptr<ItemInstance> fuel = mItems[1];
+        return isFuel(item) || (FurnaceFuelSlot::isBucket(item) && fuel->getItem() != Items::bucket);
+    }
+    return true;
 }
 
 int FurnaceBlockEntity::getContainerData(int id)
@@ -253,7 +260,7 @@ int FurnaceBlockEntity::getContainerDataCount()
 
 void FurnaceBlockEntity::clearContent()
 {
-    for (unsigned int i = 0; i < mItems.size(); ++i) mItems[i] = mItems.defaultValue;
+    mItems.clear();
 }
 
 AbstractContainerMenu* FurnaceBlockEntity::createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player)
@@ -313,14 +320,13 @@ void FurnaceBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 void FurnaceBlockEntity::load(CompoundTag* tag)
 {
     BlockEntity::load(tag);
-    delete[] mItems.items;
+    delete[] mItems.items.data;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     ContainerHelper::loadAllItems(tag, mItems);
     mLitTime = tag->getShort(L"BurnTime");
     mCookingProgress = tag->getShort(L"CookTime");
     mCookingTotalTime = tag->getShort(L"CookTimeTotal");
-    int burnDuration = getBurnDuration(mItems[0]);
-    mLitDuration = mLitTime < burnDuration ? burnDuration : mLitTime;
+    mLitDuration = std::max(mLitTime, getBurnDuration(mItems[1]));
     mName->loadFromTag(tag);
     mCharcoalUsed = tag->getBoolean(L"CharcoalUsed");
 }

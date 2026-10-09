@@ -32,9 +32,7 @@ PistonMagicBlock::PistonMagicBlock()
     : BaseEntityBlock(Material::PISTON)
 {
     DerivedInit();
-    const BlockState* state = mStateDefinition->any();
-    state = state->setValue(FACING, Direction::NORTH);
-    registerDefaultState(state->setValue(TYPE, pistonTypeNormal));
+    registerDefaultState(mStateDefinition->any()->setValue(FACING, Direction::NORTH)->setValue(TYPE, pistonTypeNormal));
     setDestroyTime(Block::INDESTRUCTIBLE);
 }
 
@@ -83,14 +81,13 @@ bool PistonMagicBlock::mayPlace(Level*, const BlockPos&, const Direction*)
 
 void PistonMagicBlock::destroy(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    const Direction* direction = state->getValue(FACING);
-    BlockPos adjacent = pos.relative(direction->getOpposite());
+    BlockPos adjacent = pos.relative(state->getValue(FACING)->getOpposite());
     const BlockState* adjacentState = level->getBlockState(adjacent);
     Block* adjacentBlock = adjacentState->getBlock();
-    if (adjacentBlock != NULL && dynamic_cast<PistonBaseBlock*>(adjacentBlock) != NULL)
+    if (adjacentBlock != NULL && dynamic_cast<PistonBaseBlock*>(adjacentBlock) != NULL
+        && adjacentState->getValue(PistonBaseBlock::EXTENDED))
     {
-        if (adjacentState->getValue(PistonBaseBlock::EXTENDED))
-            level->removeBlock(adjacent);
+        level->removeBlock(adjacent);
     }
 }
 
@@ -198,9 +195,7 @@ not_null_ptr<ItemInstance> PistonMagicBlock::getCloneItemInstance(Level*, const 
 
 const BlockState* PistonMagicBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    state = state->setValue(FACING, PistonHeadBlock::getFacing(data));
-    return state->setValue(TYPE, (data & 8) > 0 ? pistonTypeSticky : pistonTypeNormal);
+    return defaultBlockState()->setValue(FACING, PistonHeadBlock::getFacing(data))->setValue(TYPE, (data & 8) > 0 ? pistonTypeSticky : pistonTypeNormal);
 }
 
 int PistonMagicBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -213,13 +208,14 @@ int PistonMagicBlock::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* PistonMagicBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    AbstractProperty<const Direction*>* property = FACING;
-    return state->setValue(property, rotation->rotate(state->getValue(property)));
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 const BlockState* PistonMagicBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(FACING)));
+    AbstractProperty<const Direction*>* facing = FACING;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 BlockStateDefinition* PistonMagicBlock::createBlockStateDefinition()

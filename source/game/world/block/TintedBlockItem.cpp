@@ -20,11 +20,10 @@ int TintedBlockItem::getLevelDataForAuxValue(int auxValue)
 TintedBlockItem* TintedBlockItem::setDescriptionPostfixes(arrayWithLength<int> postfixes)
 {
     mDescriptionPostfixes = arrayWithLength<int>(postfixes.length, true);
-    int* copy = mDescriptionPostfixes.data;
 
     for (unsigned int i = 0; i < postfixes.length; ++i)
     {
-        copy[i] = postfixes.data[i];
+        mDescriptionPostfixes[i] = postfixes[i];
     }
 
     return this;

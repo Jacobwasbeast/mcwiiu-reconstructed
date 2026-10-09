@@ -328,7 +328,7 @@ void PistonMovingBlockEntity::moveCollidedEntities(float progress)
                 double amount = movement - distance < 0.0 ? movement : distance;
                 amount += 0.01;
                 NOCLIP_set(direction);
-                bool minecart = (entity->GetType() & EntityType::MINECART) == EntityType::MINECART;
+                bool minecart = eTYPE_DERIVED_FROM(EntityType::MINECART, entity->GetType());
                 int moves = minecart ? 2 : 1;
                 for (int n = 0; n < moves; ++n)
                 {

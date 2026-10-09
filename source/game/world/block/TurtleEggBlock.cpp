@@ -91,7 +91,7 @@ void TurtleEggBlock::_destroyEgg(Level* level, const BlockPos& pos, boost::share
 {
     if (entity == NULL)
         return;
-    bool isTurtle = entity->GetType() == EntityType::TURTLE;
+    bool isTurtle = eTYPE_DERIVED_FROM(EntityType::TURTLE, entity->GetType());
     if (!isTurtle && !level->mIsClientSide && level->mRandom->nextInt(chance) == 0)
     {
         _decreaseEggs(level, pos, level->getBlockState(pos)->getValue(EGG_COUNT), crack, jump);
@@ -106,7 +106,7 @@ void TurtleEggBlock::stepOn(Level* level, const BlockPos& pos, boost::shared_ptr
 
 void TurtleEggBlock::fallOn(Level* level, const BlockPos& pos, boost::shared_ptr<Entity> entity, float fallDistance)
 {
-    bool isZombie = (entity->GetType() & EntityType::ZOMBIE) == EntityType::ZOMBIE;
+    bool isZombie = eTYPE_DERIVED_FROM(EntityType::ZOMBIE, entity->GetType());
     if (!isZombie)
     {
         _destroyEgg(level, pos, entity, 3, false, true);

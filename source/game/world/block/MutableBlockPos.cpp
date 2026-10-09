@@ -3,11 +3,6 @@
 #include "game/core/Direction.hpp"
 #include "game/util/Vec3i.hpp"
 
-MutableBlockPos::MutableBlockPos()
-    : BlockPos(0, 0, 0)
-{
-}
-
 MutableBlockPos::MutableBlockPos(int x, int y, int z)
     : BlockPos(x, y, z)
 {

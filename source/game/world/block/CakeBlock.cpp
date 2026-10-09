@@ -1,6 +1,7 @@
 #include "game/world/block/CakeBlock.hpp"
 #include "game/core/StringIds.hpp"
 
+#include "game/core/FoodConstants.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/core/Direction.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -52,7 +53,7 @@ bool CakeBlock::eat(Level* level, const BlockPos& pos, const BlockState* state,
 {
     if (!player->canEat(false))
         return false;
-    player->getFoodData()->eat(2, 0.1f);
+    player->getFoodData()->eat(2, FoodConstants::FOOD_SATURATION_POOR);
     int bites = state->getValue(BITES);
     if (bites < 6)
     {
@@ -72,10 +73,7 @@ bool CakeBlock::use(Level* level, const BlockPos& pos, const BlockState* state,
     if (level->mIsClientSide)
     {
         not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
-        bool result = true;
-        if (!eat(level, pos, state, player) && !item->isEmpty())
-            result = false;
-        return result;
+        return eat(level, pos, state, player) || item->isEmpty();
     }
     return eat(level, pos, state, player);
 }

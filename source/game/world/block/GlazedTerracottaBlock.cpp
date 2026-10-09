@@ -24,9 +24,7 @@ GlazedTerracottaBlock::GlazedTerracottaBlock(const DyeColor* dyeColor)
 
 const BlockState* GlazedTerracottaBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    DirectionProperty* facingProperty = HorizontalDirectionalBlock::FACING_PROPERTY;
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(facingProperty)));
-    return state->setBoxedValue(facingProperty, &facing);
+    return state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, rotation->rotate(state->getTypedBoxed(HorizontalDirectionalBlock::FACING_PROPERTY)->getValue()));
 }
 
 const BlockState* GlazedTerracottaBlock::mirror(const BlockState* state, Mirror* mirror)

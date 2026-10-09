@@ -38,18 +38,13 @@ const AABB* VineBlock::SOUTH_AABB = AABB::newPermanent(0.0, 0.0, 0.9375, 1.0, 1.
 VineBlock::VineBlock() : Block(Material::REPLACEABLE_PLANT)
 {
     DerivedInit();
-    const BlockState* state = mStateDefinition->any()->setValue(UP, false);
-    state = state->setValue(NORTH, false);
-    state = state->setValue(EAST, false);
-    state = state->setValue(SOUTH, false);
-    state = state->setValue(WEST, false);
-    registerDefaultState(state);
+    registerDefaultState(mStateDefinition->any()->setValue(UP, false)->setValue(NORTH, false)->setValue(EAST, false)->setValue(SOUTH, false)->setValue(WEST, false));
     setTicking(true);
 }
 
 const AABB* VineBlock::getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    return NULL;
+    return NULL_AABB;
 }
 
 const AABB* VineBlock::getShape(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
@@ -176,23 +171,29 @@ int VineBlock::countFaces(const BlockState* state)
 
 bool VineBlock::updateSurvival(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    const BlockState* newState = state;
+    const BlockState* oldState = state;
     arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
     for (unsigned int i = 0; i < directions.length; ++i)
     {
         const Direction* direction = directions.data[i];
         AbstractProperty<bool>* property = getPropertyForFace(direction);
-        if (!newState->getValue(property) || canAttachTo(level, pos, direction->getOpposite()))
-            continue;
-        const BlockState* aboveState = level->getBlockState(pos.above());
-        if (aboveState->getBlock() == this && aboveState->getValue(property))
-            continue;
-        newState = newState->setValue(property, false);
+        if (state->getValue(property) && !canAttachTo(level, pos, direction->getOpposite()))
+        {
+            const BlockState* aboveState = level->getBlockState(pos.above());
+            if (aboveState->getBlock() != this || !aboveState->getValue(property))
+            {
+                state = state->setValue(property, false);
+            }
+        }
     }
-    if (countFaces(newState) == 0)
+    if (countFaces(state) == 0)
+    {
         return false;
-    if (state != newState)
-        level->setBlock(pos, newState, Block::UPDATE_CLIENTS, false);
+    }
+    if (oldState != state)
+    {
+        level->setBlock(pos, state, Block::UPDATE_CLIENTS, false);
+    }
     return true;
 }
 
@@ -228,125 +229,146 @@ void VineBlock::neighborChanged(const BlockState* state, Level* level, const Blo
 
 void VineBlock::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
-    if (level->mIsClientSide || level->mRandom->nextInt(4) != 0)
-        return;
-
-    int remaining = 5;
-    bool crowded = false;
-    for (int dx = -4; dx <= 4 && !crowded; ++dx)
+    if (!level->mIsClientSide && level->mRandom->nextInt(4) == 0)
     {
-        for (int dz = -4; dz <= 4 && !crowded; ++dz)
+        int range = 4;
+        int remaining = 5;
+        bool crowded = false;
+        for (int dx = -range; dx <= range; ++dx)
         {
-            for (int dy = -1; dy <= 1; ++dy)
+            for (int dz = -range; dz <= range; ++dz)
             {
-                if (level->getBlockState(pos.offset(dx, dy, dz))->getBlock() == this && --remaining <= 0)
+                for (int dy = -1; dy <= 1; ++dy)
                 {
-                    crowded = true;
+                    if (level->getBlockState(pos.offset(dx, dy, dz))->getBlock() == this)
+                    {
+                        --remaining;
+                        if (remaining <= 0)
+                        {
+                            crowded = true;
+                            break;
+                        }
+                    }
+                }
+                if (crowded)
                     break;
+            }
+            if (crowded)
+                break;
+        }
+
+        const Direction* direction = Direction::getRandomDirection(*random);
+        BlockPos above = pos.above();
+        if (direction == Direction::UP && pos.y < 255 && level->isEmptyBlock(above))
+        {
+            const BlockState* newState = state;
+            arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+            for (unsigned int i = 0; i < directions.length; ++i)
+            {
+                const Direction* face = directions.data[i];
+                if (random->nextBoolean() && canAttachTo(level, above, face->getOpposite()))
+                {
+                    newState = newState->setValue(getPropertyForFace(face), true);
+                }
+                else
+                {
+                    newState = newState->setValue(getPropertyForFace(face), false);
+                }
+            }
+            if (newState->getValue(NORTH) || newState->getValue(EAST) || newState->getValue(SOUTH)
+                || newState->getValue(WEST))
+            {
+                level->setBlock(above, newState, Block::UPDATE_CLIENTS, false);
+            }
+        }
+        else if (direction->getAxis()->isHorizontal() && !state->getValue(getPropertyForFace(direction)))
+        {
+            if (!crowded)
+            {
+                BlockPos target = pos.relative(direction);
+                const BlockState* targetState = level->getBlockState(target);
+                if (targetState->getBlock()->getCraftingMaterial() == Material::AIR)
+                {
+                    const Direction* clockWise = direction->getClockWise();
+                    const Direction* counterClockWise = direction->getCounterClockWise();
+                    bool hasClockWise = state->getValue(getPropertyForFace(clockWise));
+                    bool hasCounterClockWise = state->getValue(getPropertyForFace(counterClockWise));
+                    BlockPos clockWisePos = target.relative(clockWise);
+                    BlockPos counterClockWisePos = target.relative(counterClockWise);
+                    if (hasClockWise && canAttachTo(level, clockWisePos.relative(clockWise), clockWise))
+                    {
+                        level->setBlock(target, defaultBlockState()->setValue(getPropertyForFace(clockWise), true),
+                                        Block::UPDATE_CLIENTS, false);
+                    }
+                    else if (hasCounterClockWise
+                             && canAttachTo(level, counterClockWisePos.relative(counterClockWise), counterClockWise))
+                    {
+                        level->setBlock(target,
+                                        defaultBlockState()->setValue(getPropertyForFace(counterClockWise), true),
+                                        Block::UPDATE_CLIENTS, false);
+                    }
+                    else if (hasClockWise && level->isEmptyBlock(clockWisePos)
+                             && canAttachTo(level, clockWisePos, direction))
+                    {
+                        level->setBlock(clockWisePos,
+                                        defaultBlockState()->setValue(getPropertyForFace(direction->getOpposite()), true),
+                                        Block::UPDATE_CLIENTS, false);
+                    }
+                    else if (hasCounterClockWise && level->isEmptyBlock(counterClockWisePos)
+                             && canAttachTo(level, counterClockWisePos, direction))
+                    {
+                        level->setBlock(counterClockWisePos,
+                                        defaultBlockState()->setValue(getPropertyForFace(direction->getOpposite()), true),
+                                        Block::UPDATE_CLIENTS, false);
+                    }
+                }
+                else if (targetState->getBlockFaceShape(level, target, direction) == BLOCK_FACE_SOLID)
+                {
+                    level->setBlock(pos, state->setValue(getPropertyForFace(direction), true), Block::UPDATE_CLIENTS,
+                                    false);
                 }
             }
         }
-    }
-
-    const Direction* direction = Direction::getRandomDirection(*random);
-    BlockPos above = pos.above();
-    if (direction == Direction::UP && pos.y < 255 && level->isEmptyBlock(above))
-    {
-        const BlockState* newState = state;
-        arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
-        for (unsigned int i = 0; i < directions.length; ++i)
+        else if (pos.y > 1)
         {
-            const Direction* face = directions.data[i];
-            newState = newState->setValue(getPropertyForFace(face), random->nextBoolean() && canAttachTo(level, above, face->getOpposite()));
-        }
-        if (newState->getValue(NORTH) || newState->getValue(EAST) || newState->getValue(SOUTH)
-            || newState->getValue(WEST))
-            level->setBlock(above, newState, Block::UPDATE_CLIENTS, false);
-        return;
-    }
-
-    if (direction->getAxis()->isHorizontal() && !state->getValue(getPropertyForFace(direction)))
-    {
-        if (crowded)
-            return;
-        BlockPos target = pos.relative(direction);
-        const BlockState* targetState = level->getBlockState(target);
-        if (targetState->getBlock()->getCraftingMaterial() == Material::AIR)
-        {
-            const Direction* clockWise = direction->getClockWise();
-            const Direction* counterClockWise = direction->getCounterClockWise();
-            bool hasClockWise = state->getValue(getPropertyForFace(clockWise));
-            bool hasCounterClockWise = state->getValue(getPropertyForFace(counterClockWise));
-            BlockPos clockWisePos = target.relative(clockWise);
-            BlockPos counterClockWisePos = target.relative(counterClockWise);
-            if (hasClockWise && canAttachTo(level, clockWisePos.relative(clockWise), clockWise))
+            BlockPos below = pos.below();
+            const BlockState* belowState = level->getBlockState(below);
+            Block* belowBlock = belowState->getBlock();
+            if (belowBlock->getCraftingMaterial() == Material::AIR)
             {
-                level->setBlock(target, defaultBlockState()->setValue(getPropertyForFace(clockWise), true), Block::UPDATE_CLIENTS,
-                                false);
+                arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->getFaces();
+                for (unsigned int i = 0; i < directions.length; ++i)
+                {
+                    if (random->nextBoolean())
+                    {
+                        state = state->setValue(getPropertyForFace(directions.data[i]), false);
+                    }
+                }
+                if (state->getValue(NORTH) || state->getValue(EAST) || state->getValue(SOUTH)
+                    || state->getValue(WEST))
+                {
+                    level->setBlock(below, state, Block::UPDATE_CLIENTS, false);
+                }
             }
-            else if (hasCounterClockWise
-                     && canAttachTo(level, counterClockWisePos.relative(counterClockWise), counterClockWise))
+            else if (belowBlock == this)
             {
-                level->setBlock(target,
-                                defaultBlockState()->setValue(getPropertyForFace(counterClockWise), true), Block::UPDATE_CLIENTS,
-                                false);
-            }
-            else if (hasClockWise && level->isEmptyBlock(clockWisePos) && canAttachTo(level, clockWisePos, direction))
-            {
-                level->setBlock(clockWisePos,
-                                defaultBlockState()->setValue(getPropertyForFace(direction->getOpposite()), true),
-                                Block::UPDATE_CLIENTS, false);
-            }
-            else if (hasCounterClockWise && level->isEmptyBlock(counterClockWisePos)
-                     && canAttachTo(level, counterClockWisePos, direction))
-            {
-                level->setBlock(counterClockWisePos,
-                                defaultBlockState()->setValue(getPropertyForFace(direction->getOpposite()), true),
-                                Block::UPDATE_CLIENTS, false);
+                const BlockState* newState = belowState;
+                arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
+                for (unsigned int i = 0; i < directions.length; ++i)
+                {
+                    AbstractProperty<bool>* property = getPropertyForFace(directions.data[i]);
+                    if (random->nextBoolean() && state->getValue(property))
+                    {
+                        newState = newState->setValue(property, true);
+                    }
+                }
+                if (newState->getValue(NORTH) || newState->getValue(EAST) || newState->getValue(SOUTH)
+                    || newState->getValue(WEST))
+                {
+                    level->setBlock(below, newState, Block::UPDATE_CLIENTS, false);
+                }
             }
         }
-        else if (targetState->getBlockFaceShape(level, target, direction) == BLOCK_FACE_SOLID)
-        {
-            level->setBlock(pos, state->setValue(getPropertyForFace(direction), true), Block::UPDATE_CLIENTS, false);
-        }
-        return;
-    }
-
-    if (pos.y <= 1)
-        return;
-    BlockPos below = pos.below();
-    const BlockState* belowState = level->getBlockState(below);
-    Block* belowBlock = belowState->getBlock();
-    if (belowBlock->getCraftingMaterial() == Material::AIR)
-    {
-        const BlockState* newState = state;
-        arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->getFaces();
-        for (unsigned int i = 0; i < directions.length; ++i)
-        {
-            if (random->nextBoolean())
-            {
-                newState = newState->setValue(getPropertyForFace(directions.data[i]), false);
-            }
-        }
-        if (newState->getValue(NORTH) || newState->getValue(EAST) || newState->getValue(SOUTH)
-            || newState->getValue(WEST))
-            level->setBlock(below, newState, Block::UPDATE_CLIENTS, false);
-    }
-    else if (belowBlock == this)
-    {
-        const BlockState* newState = belowState;
-        arrayWithLength<const Direction*> directions = Direction::Plane::HORIZONTAL->iterator();
-        for (unsigned int i = 0; i < directions.length; ++i)
-        {
-            AbstractProperty<bool>* property = getPropertyForFace(directions.data[i]);
-            if (random->nextBoolean() && state->getValue(property))
-            {
-                newState = newState->setValue(property, true);
-            }
-        }
-        if (newState->getValue(NORTH) || newState->getValue(EAST) || newState->getValue(SOUTH)
-            || newState->getValue(WEST))
-            level->setBlock(below, newState, Block::UPDATE_CLIENTS, false);
     }
 }
 
@@ -354,11 +376,12 @@ const BlockState* VineBlock::getStateForPlacement(Level* level, const BlockPos& 
                                                   float hitX, float hitY, float hitZ, int auxValue,
                                                   boost::shared_ptr<LivingEntity> placer)
 {
-    const BlockState* state = defaultBlockState()->setValue(UP, false);
-    state = state->setValue(NORTH, false);
-    state = state->setValue(EAST, false);
-    state = state->setValue(SOUTH, false);
-    state = state->setValue(WEST, false);
+    const BlockState* state = defaultBlockState()
+                                  ->setValue(UP, false)
+                                  ->setValue(NORTH, false)
+                                  ->setValue(EAST, false)
+                                  ->setValue(SOUTH, false)
+                                  ->setValue(WEST, false);
     if (direction->getAxis()->isHorizontal())
     {
         return state->setValue(getPropertyForFace(direction->getOpposite()), true);
@@ -382,9 +405,7 @@ void VineBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, co
 {
     if (!level->mIsClientSide && tool->getItem() == Items::shears)
     {
-        Player* awardee = player.operator->();
-        Stat* stat = gStats->get_blocksMined(Block::getId(this));
-        awardee->awardStat(stat, GenericStats::param_blocksMined(state, 1));
+        player->awardStat(GenericStats::blocksMined(this), GenericStats::param_blocksMined(state, 1));
         Block::popResource(level, pos, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::vine, 1, 0)));
         return;
     }
@@ -398,22 +419,23 @@ int VineBlock::getRenderLayer()
 
 const BlockState* VineBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState()->setValue(SOUTH, (data & 1) != 0);
-    state = state->setValue(WEST, (data & 2) != 0);
-    state = state->setValue(NORTH, (data & 4) != 0);
-    return state->setValue(EAST, (data & 8) != 0);
+    return defaultBlockState()
+        ->setValue(SOUTH, (data & 1) > 0)
+        ->setValue(WEST, (data & 2) > 0)
+        ->setValue(NORTH, (data & 4) > 0)
+        ->setValue(EAST, (data & 8) > 0);
 }
 
 int VineBlock::convertBlockStateToLegacyData(const BlockState* state)
 {
     int data = 0;
-    if (state->getValue(SOUTH))
+    if (state->getValue(VineBlock::SOUTH))
         data |= 1;
-    if (state->getValue(WEST))
+    if (state->getValue(VineBlock::WEST))
         data |= 2;
-    if (state->getValue(NORTH))
+    if (state->getValue(VineBlock::NORTH))
         data |= 4;
-    if (state->getValue(EAST))
+    if (state->getValue(VineBlock::EAST))
         data |= 8;
     return data;
 }
@@ -428,27 +450,21 @@ const BlockState* VineBlock::rotate(const BlockState* state, Rotation* rotation)
 {
     switch (rotation->getType())
     {
-    case Rotation::eTYPE_Clockwise90:
-    {
-        const BlockState* result = state->setValue(NORTH, state->getValue(WEST));
-        result = result->setValue(EAST, state->getValue(NORTH));
-        result = result->setValue(SOUTH, state->getValue(EAST));
-        return result->setValue(WEST, state->getValue(SOUTH));
-    }
     case Rotation::eTYPE_Clockwise180:
-    {
-        const BlockState* result = state->setValue(NORTH, state->getValue(SOUTH));
-        result = result->setValue(EAST, state->getValue(WEST));
-        result = result->setValue(SOUTH, state->getValue(NORTH));
-        return result->setValue(WEST, state->getValue(EAST));
-    }
+        return state->setValue(NORTH, state->getValue(SOUTH))
+            ->setValue(EAST, state->getValue(WEST))
+            ->setValue(SOUTH, state->getValue(NORTH))
+            ->setValue(WEST, state->getValue(EAST));
     case Rotation::eTYPE_CounterClockwise90:
-    {
-        const BlockState* result = state->setValue(NORTH, state->getValue(EAST));
-        result = result->setValue(EAST, state->getValue(SOUTH));
-        result = result->setValue(SOUTH, state->getValue(WEST));
-        return result->setValue(WEST, state->getValue(NORTH));
-    }
+        return state->setValue(NORTH, state->getValue(EAST))
+            ->setValue(EAST, state->getValue(SOUTH))
+            ->setValue(SOUTH, state->getValue(WEST))
+            ->setValue(WEST, state->getValue(NORTH));
+    case Rotation::eTYPE_Clockwise90:
+        return state->setValue(NORTH, state->getValue(WEST))
+            ->setValue(EAST, state->getValue(NORTH))
+            ->setValue(SOUTH, state->getValue(EAST))
+            ->setValue(WEST, state->getValue(SOUTH));
     default:
         return state;
     }
@@ -456,17 +472,15 @@ const BlockState* VineBlock::rotate(const BlockState* state, Rotation* rotation)
 
 const BlockState* VineBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    if (mirror->getType() == Mirror::eTYPE_LeftRight)
+    switch (mirror->getType())
     {
-        const BlockState* result = state->setValue(NORTH, state->getValue(SOUTH));
-        return result->setValue(SOUTH, state->getValue(NORTH));
+    case Mirror::eTYPE_LeftRight:
+        return state->setValue(NORTH, state->getValue(SOUTH))->setValue(SOUTH, state->getValue(NORTH));
+    case Mirror::eTYPE_FrontBack:
+        return state->setValue(EAST, state->getValue(WEST))->setValue(WEST, state->getValue(EAST));
+    default:
+        return Block::mirror(state, mirror);
     }
-    if (mirror->getType() == Mirror::eTYPE_FrontBack)
-    {
-        const BlockState* result = state->setValue(EAST, state->getValue(WEST));
-        return result->setValue(WEST, state->getValue(EAST));
-    }
-    return Block::mirror(state, mirror);
 }
 
 EBlockFaceShape VineBlock::getBlockFaceShape(LevelSource* levelSource, const BlockState* state, const BlockPos& pos,

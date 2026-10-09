@@ -14,7 +14,7 @@ SlimeBlock::SlimeBlock()
     : HalfTransparentBlock(L"slime", Material::CLAY, false, MaterialColor::GRASS)
 {
     DerivedInit();
-    mParticleGravity = 0.8f;
+    mFriction = 0.8f;
 }
 
 int SlimeBlock::getRenderLayer()
@@ -42,7 +42,7 @@ void SlimeBlock::updateEntityAfterFallOn(Level* level, boost::shared_ptr<Entity>
     }
     else if (entity->mYd < 0.0)
     {
-        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         {
             boost::shared_ptr<MultiplayerLocalPlayer> localPlayer =
                 boost::dynamic_pointer_cast<MultiplayerLocalPlayer>(entity);
@@ -53,7 +53,7 @@ void SlimeBlock::updateEntityAfterFallOn(Level* level, boost::shared_ptr<Entity>
         }
 
         entity->mYd = -entity->mYd;
-        if ((entity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
+        if (!eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
         {
             entity->mYd *= 0.8;
         }

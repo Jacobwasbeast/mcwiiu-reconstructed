@@ -44,18 +44,27 @@ bool FallingBlock::isFree(const BlockState* state)
 
 void FallingBlock::checkSlide(Level* level, const BlockPos& pos)
 {
-    if (!isFree(level->getBlockState(pos.below())) || pos.y < 0)
+    if (isFree(level->getBlockState(pos.below())) && pos.y >= 0)
     {
-        return;
-    }
+        if (fallInstantly || !level->hasChunksAt(pos.offset(-32, -32, -32), pos.offset(32, 32, 32)))
+        {
+            level->removeBlock(pos);
+            BlockPos target = pos.below();
+            while (isFree(level->getBlockState(target)) && target.y > 0)
+            {
+                target = target.below();
+            }
 
-    if (!fallInstantly && level->hasChunksAt(pos.offset(-32, -32, -32), pos.offset(32, 32, 32)))
-    {
-        if (!level->mIsClientSide)
+            if (target.y > 0)
+            {
+                level->setBlockAndUpdate(target.above(), defaultBlockState());
+            }
+        }
+        else if (!level->mIsClientSide)
         {
             if (!level->newFallingBlockAllowed())
             {
-                level->addToTickNextTick(pos, this, getTickDelay(level), 0);
+                level->forceAddBlockTick(pos, this, getTickDelay(level), 0);
                 return;
             }
 
@@ -65,23 +74,6 @@ void FallingBlock::checkSlide(Level* level, const BlockPos& pos)
             falling(entity);
             level->addEntity(entity);
         }
-        return;
-    }
-
-    level->removeBlock(pos);
-    BlockPos target = pos.below();
-    while (isFree(level->getBlockState(target)))
-    {
-        if (target.y < 1)
-        {
-            return;
-        }
-        target = target.below();
-    }
-
-    if (target.y > 0)
-    {
-        level->setBlockAndUpdate(target.above(), defaultBlockState());
     }
 }
 
@@ -118,9 +110,9 @@ void FallingBlock::animateTick(const BlockState* state, Level* level, const Bloc
         BlockPos below = pos.below();
         if (isFree(level->getBlockState(below)))
         {
-            float x = (float)pos.x + random->nextFloat();
-            double y = (double)pos.y - 0.05;
-            float z = (float)pos.z + random->nextFloat();
+            double x = pos.x + random->nextFloat();
+            double y = pos.y - 0.05;
+            double z = pos.z + random->nextFloat();
             arrayWithLength<int> params(1, true);
             params.data[0] = Block::getIdWithData(state);
             level->addParticle(PARTICLE_FALLING_DUST, x, y, z, 0.0, 0.0, 0.0, params);

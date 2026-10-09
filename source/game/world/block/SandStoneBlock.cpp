@@ -21,8 +21,6 @@ SandStoneBlock::Variant* SandStoneBlock::SMOOTH = new SandStoneBlock::Variant(2,
 static SandStoneBlock::Variant* gSandStoneVariants[3] = {
     SandStoneBlock::SANDSTONE, SandStoneBlock::CHISELED, SandStoneBlock::SMOOTH
 };
-static const MaterialColor* gSandStoneMapColor = NULL;
-
 static std::wstring gSandStoneTopTexture = L"sandstone_top";
 static std::wstring gSandStoneBottomTexture = L"sandstone_bottom";
 static std::wstring gSandStoneSideTextures[3] = {
@@ -99,7 +97,7 @@ int SandStoneBlock::getSpawnResourcesAuxValue(const BlockState* state)
 
 const MaterialColor* SandStoneBlock::getMapColor(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    return gSandStoneMapColor;
+    return MaterialColor::SAND;
 }
 
 const BlockState* SandStoneBlock::getBlockState(int data)

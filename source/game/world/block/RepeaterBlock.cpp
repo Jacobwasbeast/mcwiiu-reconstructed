@@ -57,9 +57,7 @@ const BlockState* RepeaterBlock::fillVirtualBlockStateProperties(const BlockStat
 
 const BlockState* RepeaterBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    const Property* facingProperty = HorizontalDirectionalBlock::FACING_PROPERTY;
-    TypedBoxed<const Direction*> facing(rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
-    return state->setBoxedValue(facingProperty, &facing);
+    return state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, rotation->rotate(state->getTypedBoxed(HorizontalDirectionalBlock::FACING_PROPERTY)->getValue()));
 }
 
 const BlockState* RepeaterBlock::mirror(const BlockState* state, Mirror* mirror)

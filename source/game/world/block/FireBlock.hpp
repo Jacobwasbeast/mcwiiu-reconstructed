@@ -17,12 +17,15 @@ public:
     static AbstractProperty<bool>* WEST;
     static AbstractProperty<bool>* UP;
 
+    static const std::wstring TEXTURE_FIRST;
+    static const std::wstring TEXTURE_SECOND;
+
     FireBlock();
 
     int getFlameOdds(Block* block);
     bool canBurn(LevelSource* levelSource, const BlockPos& pos);
     const BlockState* fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
-    FireBlock* setFlammable(Block* block, int flameOdds, int burnOdds);
+    void setFlammable(Block* block, int flameOdds, int burnOdds);
     static void staticCtor();
     virtual const AABB* getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos);
     virtual bool isSolidRender(const BlockState* state) const;

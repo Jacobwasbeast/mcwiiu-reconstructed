@@ -31,19 +31,18 @@
 #include "game/world/generation/PlayerList.hpp"
 
 ConduitBlockEntity::ConduitBlockEntity()
-    : BlockEntity(),
-      mActive(false),
-      mHunting(false),
-      mCheckTime(0),
-      mNextAmbientSoundActivation(0LL),
-      mTickCount(0),
-      mAnimationValue(0.0f),
-      mActiveRotation(0.0f),
-      mRotationTick(0),
-      mWindLevel(0),
-      mTargetId(-1),
-      mBlocks()
+    : BlockEntity()
 {
+    mActive = false;
+    mHunting = false;
+    mCheckTime = 0;
+    mNextAmbientSoundActivation = 0;
+    mTickCount = 0;
+    mAnimationValue = 0.0f;
+    mActiveRotation = 0.0f;
+    mRotationTick = 0;
+    mWindLevel = 0;
+    mTargetId = -1;
     mBlocks.reserve(42);
 }
 
@@ -54,7 +53,7 @@ BlockEntity* ConduitBlockEntity::create()
 
 boost::shared_ptr<BlockEntity> ConduitBlockEntity::clone()
 {
-    boost::shared_ptr<BlockEntity> result(new ConduitBlockEntity());
+    boost::shared_ptr<ConduitBlockEntity> result(new ConduitBlockEntity());
     BlockEntity::clone(result);
     return result;
 }
@@ -71,7 +70,7 @@ void ConduitBlockEntity::_animateTick()
 
     if (mActive)
     {
-        for (std::vector<BlockPos>::iterator it = mBlocks.begin(); it != mBlocks.end(); ++it)
+        for (std::vector<BlockPos>::iterator it = mBlocks.begin(), end = mBlocks.end(); it != end; ++it)
         {
             if (mLevel->mRandom->nextInt(5) == 0)
             {
@@ -87,11 +86,11 @@ void ConduitBlockEntity::_animateTick()
     boost::shared_ptr<Entity> target = mLevel->getEntity(mTargetId);
     if (target)
     {
-        for (int i = 0; i < 6; ++i)
+        for (int i = 0; i <= 5; ++i)
         {
-            float xa = (mLevel->mRandom->nextFloat() + -0.5f) * (target->mBbWidth + 3.0f);
-            float ya = mLevel->mRandom->nextFloat() * target->mBbHeight + -1.0f;
-            float za = (mLevel->mRandom->nextFloat() + -0.5f) * (target->mBbWidth + 3.0f);
+            double xa = (mLevel->mRandom->nextFloat() + -0.5f) * (target->mBbWidth + 3.0f);
+            double ya = mLevel->mRandom->nextFloat() * target->mBbHeight + -1.0f;
+            double za = (mLevel->mRandom->nextFloat() + -0.5f) * (target->mBbWidth + 3.0f);
             mLevel->addParticle(PARTICLE_CONDUIT, x, y, z, xa, ya, za, arrayWithLength<int>());
         }
     }
@@ -226,11 +225,12 @@ void ConduitBlockEntity::_applyEffects()
 {
     if (mActive && !mLevel->mIsClientSide)
     {
-        double maxBuildHeight = mLevel->getMaxBuildHeight();
-        AABB* area = AABB::newTemp((double)mPos.x, (double)mPos.y, (double)mPos.z,
-                                    (double)(mPos.x + 1), (double)(mPos.y + 1), (double)(mPos.z + 1));
-        area = area->grow((double)mEffectRange);
-        area = area->expand(0.0, maxBuildHeight, 0.0);
+        int x = mPos.x;
+        int y = mPos.y;
+        int z = mPos.z;
+        const AABB* area = AABB::newTemp(x, y, z, x + 1, y + 1, z + 1)
+                               ->grow(mEffectRange)
+                               ->expand(0.0, mLevel->getMaxBuildHeight(), 0.0);
         std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntitiesOfClass(typeid(Player), area);
         for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
         {
@@ -255,37 +255,34 @@ void ConduitBlockEntity::_updateTarget()
         mTargetId = -1;
 
     boost::shared_ptr<Entity> target = mLevel->getEntity(mTargetId);
-    if (target)
+    if (target != NULL)
     {
         if (target->isAlive() && target->isInWaterOrRain() && target->distanceToSqr(getBlockPos()) < 64.0)
         {
             mLevel->playSound(boost::shared_ptr<Player>(), getBlockPos(), SoundEvents::CONDUIT_ATTACK,
                               SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, 16.0f);
             target->hurt(DamageSource::MAGIC, 4.0f);
-            if (mTargetId != previousTarget)
-                BlockEntity::setChanged();
         }
         else
         {
             mTargetId = -1;
-            if (previousTarget != -1)
-                BlockEntity::setChanged();
         }
-        return;
     }
-
-    if (mHunting)
+    else if (mHunting)
     {
         std::vector<boost::shared_ptr<Entity> > candidates;
-        double maxBuildHeight = mLevel->getMaxBuildHeight();
-        const AABB* area = AABB::newTemp(mPos.x, mPos.y, mPos.z, mPos.x + 1, mPos.y + 1, mPos.z + 1)
+        int x = mPos.x;
+        int y = mPos.y;
+        int z = mPos.z;
+        const AABB* area = AABB::newTemp(x, y, z, x + 1, y + 1, z + 1)
                                ->grow(8.0)
-                               ->expand(0.0, maxBuildHeight, 0.0);
+                               ->expand(0.0, mLevel->getMaxBuildHeight(), 0.0);
         std::vector<boost::shared_ptr<Entity> >* monsters = mLevel->getEntitiesOfClass(typeid(Monster), area);
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = monsters->begin(); it != monsters->end(); ++it)
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = monsters->begin(), end = monsters->end();
+             it != end; ++it)
         {
             boost::shared_ptr<Entity> monster = *it;
-            if (monster && monster->isAlive() && monster->isInWaterOrRain())
+            if (monster != NULL && monster->isAlive() && monster->isInWaterOrRain())
                 candidates.push_back(monster);
         }
         delete monsters;
@@ -357,9 +354,8 @@ CompoundTag* ConduitBlockEntity::save(CompoundTag* tag)
 
 boost::shared_ptr<Packet> ConduitBlockEntity::getUpdatePacket()
 {
-    boost::shared_ptr<ClientboundBlockEntityDataPacket> packet(new ClientboundBlockEntityDataPacket(
+    return boost::shared_ptr<ClientboundBlockEntityDataPacket>(new ClientboundBlockEntityDataPacket(
         mPos, 13, mLevel->mDimension->getType()->getId(), getUpdateTag()));
-    return packet;
 }
 
 CompoundTag* ConduitBlockEntity::getUpdateTag()

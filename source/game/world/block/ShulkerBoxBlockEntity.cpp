@@ -51,7 +51,7 @@ ShulkerBoxBlockEntity::ShulkerBoxBlockEntity()
 
 ShulkerBoxBlockEntity::~ShulkerBoxBlockEntity()
 {
-    delete[] mItems.items;
+    delete[] mItems.items.data;
 }
 
 BlockEntity* ShulkerBoxBlockEntity::create()
@@ -63,11 +63,11 @@ void ShulkerBoxBlockEntity::_init(const DyeColor* color)
 {
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(27, ItemInstance::EMPTY);
     mColor = color;
-    mCleared = false;
-    mOpenCount = 0;
     mAnimationStatus = 0;
     mProgress = 0.0f;
     mProgressOld = 0.0f;
+    mCleared = false;
+    mOpenCount = 0;
     mDestroyedByCreativePlayer = false;
 }
 
@@ -236,9 +236,8 @@ float ShulkerBoxBlockEntity::getProgress(float partialTick)
 
 AABB* ShulkerBoxBlockEntity::getBoundingBox(const Direction* direction)
 {
-    float offset = 0.5f * getProgress(1.0f);
-    return Block::FULL_BLOCK_SHAPE->expand(offset * direction->getStepX(), offset * direction->getStepY(),
-                                           offset * direction->getStepZ());
+    return Block::FULL_BLOCK_SHAPE->expand(0.5f * getProgress(1.0f) * direction->getStepX(), 0.5f * getProgress(1.0f) * direction->getStepY(),
+                                           0.5f * getProgress(1.0f) * direction->getStepZ());
 }
 
 AABB* ShulkerBoxBlockEntity::getBoundingBox(const BlockState* state)
@@ -264,58 +263,57 @@ void ShulkerBoxBlockEntity::moveCollidedEntities()
     const Direction* direction = state->getValue(DirectionalBlock::FACING);
     AABB* box = getTopBoundingBox(direction)->move(mPos);
     const std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(boost::shared_ptr<Entity>(), box, NULL);
-    const double offset = 0.01;
     if (!entities->empty())
     {
         for (unsigned int i = 0; i < entities->size(); ++i)
         {
             boost::shared_ptr<Entity> entity = entities->at(i);
-            if (entity->getPistonPushReaction() != 3)
+            if (entity->getPistonPushReaction() == 3)
             {
-                AABB* entityBox = entity->mBoundingBox;
-                double dx = 0.0;
-                double dy = 0.0;
-                double dz = 0.0;
-                int axisId = direction->getAxis()->getId();
-                if (axisId == Direction::Axis::eAxis_X)
-                {
-                    if (direction->getAxisDirection() == Direction::AxisDirection::POSITIVE)
-                    {
-                        dx = box->mMaxX - entityBox->mMinX;
-                    }
-                    else
-                    {
-                        dx = entityBox->mMaxX - box->mMinX;
-                    }
-                    dx += offset;
-                }
-                else if (axisId == Direction::Axis::eAxis_Y)
-                {
-                    if (direction->getAxisDirection() == Direction::AxisDirection::POSITIVE)
-                    {
-                        dy = box->mMaxY - entityBox->mMinY;
-                    }
-                    else
-                    {
-                        dy = entityBox->mMaxY - box->mMinY;
-                    }
-                    dy += offset;
-                }
-                else if (axisId == Direction::Axis::eAxis_Z)
-                {
-                    if (direction->getAxisDirection() == Direction::AxisDirection::POSITIVE)
-                    {
-                        dz = box->mMaxZ - entityBox->mMinZ;
-                    }
-                    else
-                    {
-                        dz = entityBox->mMaxZ - box->mMinZ;
-                    }
-                    dz += offset;
-                }
-                entity->move(eMoverType_ShulkerBox, dx * direction->getStepX(), dy * direction->getStepY(),
-                             dz * direction->getStepZ(), false);
+                continue;
             }
+            double dx = 0.0;
+            double dy = 0.0;
+            double dz = 0.0;
+            AABB* entityBox = entity->mBoundingBox;
+            switch (direction->getAxis()->getId())
+            {
+            case Direction::Axis::eAxis_X:
+                if (direction->getAxisDirection() == Direction::AxisDirection::POSITIVE)
+                {
+                    dx = box->mMaxX - entityBox->mMinX;
+                }
+                else
+                {
+                    dx = entityBox->mMaxX - box->mMinX;
+                }
+                dx += 0.01;
+                break;
+            case Direction::Axis::eAxis_Y:
+                if (direction->getAxisDirection() == Direction::AxisDirection::POSITIVE)
+                {
+                    dy = box->mMaxY - entityBox->mMinY;
+                }
+                else
+                {
+                    dy = entityBox->mMaxY - box->mMinY;
+                }
+                dy += 0.01;
+                break;
+            case Direction::Axis::eAxis_Z:
+                if (direction->getAxisDirection() == Direction::AxisDirection::POSITIVE)
+                {
+                    dz = box->mMaxZ - entityBox->mMinZ;
+                }
+                else
+                {
+                    dz = entityBox->mMaxZ - box->mMinZ;
+                }
+                dz += 0.01;
+                break;
+            }
+            entity->move(eMoverType_ShulkerBox, dx * direction->getStepX(), dy * direction->getStepY(),
+                         dz * direction->getStepZ(), false);
         }
     }
 }
@@ -333,23 +331,20 @@ void ShulkerBoxBlockEntity::updateAnimation()
         if (mProgress >= 1.0f)
         {
             moveCollidedEntities();
-            mProgress = 1.0f;
             mAnimationStatus = ANIMATION_OPENED;
+            mProgress = 1.0f;
+        }
+        break;
+    case ANIMATION_CLOSING:
+        mProgress -= 0.1f;
+        if (mProgress <= 0.0f)
+        {
+            mAnimationStatus = ANIMATION_CLOSED;
+            mProgress = 0.0f;
         }
         break;
     case ANIMATION_OPENED:
         mProgress = 1.0f;
-        break;
-    case ANIMATION_CLOSING:
-        if (mProgress - 0.1f > 0.0f)
-        {
-            mProgress -= 0.1f;
-        }
-        else
-        {
-            mProgress = 0.0f;
-            mAnimationStatus = ANIMATION_CLOSED;
-        }
         break;
     }
 }
@@ -389,7 +384,7 @@ void ShulkerBoxBlockEntity::addDataWalkers(DataFixerUpper* fixer)
 
 void ShulkerBoxBlockEntity::loadFromTag(CompoundTag* tag)
 {
-    delete[] mItems.items;
+    delete[] mItems.items.data;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     if (!tryLoadLootTable(tag))
     {
@@ -441,7 +436,7 @@ boost::shared_ptr<BlockEntity> ShulkerBoxBlockEntity::clone()
     BlockEntity::clone(result);
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        result->mItems[i] = mItems[i]->copy();
+        result->mItems.set(i, mItems[i]->copy());
     }
     result->mCleared = mCleared;
     result->mOpenCount = mOpenCount;

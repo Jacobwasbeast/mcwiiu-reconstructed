@@ -48,10 +48,9 @@ AnvilBlock::AnvilBlock()
     : FallingBlock(Material::HEAVY_METAL)
 {
     Block::DerivedInit();
-    const BlockState* state = mStateDefinition->any();
-    state = state->setValue(FACING, Direction::NORTH);
-    state = state->setValue(DAMAGE, 0);
-    registerDefaultState(state);
+    registerDefaultState(mStateDefinition->any()
+                             ->setValue(FACING, Direction::NORTH)
+                             ->setValue(DAMAGE, 0));
     mTextureType = 0;
     setLightBlock(0);
     memset(mTopIcons, 0, sizeof(mTopIcons));
@@ -135,9 +134,9 @@ bool AnvilBlock::shouldRenderFace(const BlockState*, LevelSource*, const BlockPo
 
 const BlockState* AnvilBlock::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    state = state->setValue(FACING, Direction::from2DDataValue(data & 3));
-    return state->setValue(DAMAGE, (data & 0xf) >> 2);
+    return defaultBlockState()
+        ->setValue(FACING, Direction::from2DDataValue(data & 3))
+        ->setValue(DAMAGE, (data & 0xf) >> 2);
 }
 
 int AnvilBlock::convertBlockStateToLegacyData(const BlockState* state)
@@ -155,12 +154,11 @@ unsigned int AnvilBlock::GetInteractTooltip(const BlockTooltipDataHolder& toolti
 
 const BlockState* AnvilBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    if (state->getBlock() == this)
+    if (state->getBlock() != this)
     {
-        const AbstractProperty<const Direction*>* facingProperty = FACING;
-        state = state->setValue(facingProperty, rotation->rotate(state->getValue(facingProperty)));
+        return state;
     }
-    return state;
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 BlockStateDefinition* AnvilBlock::createBlockStateDefinition()
@@ -179,9 +177,10 @@ TextureAtlasSprite* AnvilBlock::getTexture(const Direction* direction, const Blo
 void AnvilBlock::registerIcons(IconRegister* iconRegister)
 {
     mIcon = iconRegister->registerIcon(L"anvil_base");
-    mTopIcons[0] = iconRegister->registerIcon(gAnvilTopIconNames[0]);
-    mTopIcons[1] = iconRegister->registerIcon(gAnvilTopIconNames[1]);
-    mTopIcons[2] = iconRegister->registerIcon(gAnvilTopIconNames[2]);
+    for (int i = 0; i < 3; i++)
+    {
+        mTopIcons[i] = iconRegister->registerIcon(gAnvilTopIconNames[i]);
+    }
 }
 
 EBlockRenderShape AnvilBlock::getRenderShape(const BlockState*)

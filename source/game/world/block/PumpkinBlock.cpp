@@ -69,7 +69,7 @@ void PumpkinBlock::fjAwardCraftedGolemStat(unsigned long long craftedEntity)
 {
     boost::shared_ptr<Player> player = BlockItem::fjGetCurrentlyPlacingBlockPlayer();
     if (player)
-        player->awardStat(gStats->get_craftedEntity(craftedEntity),
+        player->awardStat(GenericStats::craftedEntity(craftedEntity),
                           GenericStats::param_craftedEntity(craftedEntity));
 }
 
@@ -223,13 +223,14 @@ bool PumpkinBlock::mayPlace(Level* level, const BlockPos& pos)
 
 const BlockState* PumpkinBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    return state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY,
-                           rotation->rotate(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
+    return state->setValue(HorizontalDirectionalBlock::FACING_PROPERTY, rotation->rotate(state->getTypedBoxed(HorizontalDirectionalBlock::FACING_PROPERTY)->getValue()));
 }
 
 const BlockState* PumpkinBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(HorizontalDirectionalBlock::FACING_PROPERTY)));
+    DirectionProperty* facing = HorizontalDirectionalBlock::FACING_PROPERTY;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 const BlockState* PumpkinBlock::getStateForPlacement(Level*, const BlockPos&, const Direction*, float, float, float, int, boost::shared_ptr<LivingEntity> placer)

@@ -64,7 +64,7 @@ int EndGatewayBlock::getResourceCount(Random*)
 void EndGatewayBlock::animateTick(const BlockState*, Level* level, const BlockPos& pos, Random* random)
 {
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    bool isGateway = blockEntity->GetType() == BlockEntityType::THE_END_GATEWAY_ENTITY;
+    bool isGateway = eTYPE_DERIVED_FROM(BlockEntityType::THE_END_GATEWAY_ENTITY, blockEntity->GetType());
     if (!isGateway)
         return;
 

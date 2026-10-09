@@ -71,12 +71,26 @@ void ThinFenceBlock::addCollisionAABBs(const BlockState* state, Level* level, co
                                        std::vector<AABB*>* collidingBoxes, boost::shared_ptr<Entity> entity, bool isActualState)
 {
     if (!isActualState)
+    {
         state = fillVirtualBlockStateProperties(state, level, pos);
+    }
     addCollisionAABB(pos, entityBox, collidingBoxes, thinFenceShapes[0]);
-    if (state->getValue(THIN_FENCE_NORTH)) addCollisionAABB(pos, entityBox, collidingBoxes, thinFenceShapes[indexFor(Direction::NORTH)]);
-    if (state->getValue(THIN_FENCE_SOUTH)) addCollisionAABB(pos, entityBox, collidingBoxes, thinFenceShapes[indexFor(Direction::SOUTH)]);
-    if (state->getValue(THIN_FENCE_EAST)) addCollisionAABB(pos, entityBox, collidingBoxes, thinFenceShapes[indexFor(Direction::EAST)]);
-    if (state->getValue(THIN_FENCE_WEST)) addCollisionAABB(pos, entityBox, collidingBoxes, thinFenceShapes[indexFor(Direction::WEST)]);
+    if (state->getValue(THIN_FENCE_NORTH))
+    {
+        addCollisionAABB(pos, entityBox, collidingBoxes, thinFenceShapes[indexFor(Direction::NORTH)]);
+    }
+    if (state->getValue(THIN_FENCE_SOUTH))
+    {
+        addCollisionAABB(pos, entityBox, collidingBoxes, thinFenceShapes[indexFor(Direction::SOUTH)]);
+    }
+    if (state->getValue(THIN_FENCE_EAST))
+    {
+        addCollisionAABB(pos, entityBox, collidingBoxes, thinFenceShapes[indexFor(Direction::EAST)]);
+    }
+    if (state->getValue(THIN_FENCE_WEST))
+    {
+        addCollisionAABB(pos, entityBox, collidingBoxes, thinFenceShapes[indexFor(Direction::WEST)]);
+    }
 }
 
 int ThinFenceBlock::getAABBIndex(const BlockState* state)
@@ -117,19 +131,19 @@ bool ThinFenceBlock::attachsTo(LevelSource* levelSource, const BlockState* state
 
 const BlockState* ThinFenceBlock::fillVirtualBlockStateProperties(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    TypedBoxed<bool> north(attachsTo(levelSource, levelSource->getBlockState(pos.north()), pos.north(), Direction::SOUTH));
-    TypedBoxed<bool> south(attachsTo(levelSource, levelSource->getBlockState(pos.south()), pos.south(), Direction::NORTH));
-    TypedBoxed<bool> west(attachsTo(levelSource, levelSource->getBlockState(pos.west()), pos.west(), Direction::EAST));
-    TypedBoxed<bool> east(attachsTo(levelSource, levelSource->getBlockState(pos.east()), pos.east(), Direction::WEST));
-    const BlockState* result = state->setBoxedValue(THIN_FENCE_NORTH, &north);
-    result = result->setBoxedValue(THIN_FENCE_SOUTH, &south);
-    result = result->setBoxedValue(THIN_FENCE_WEST, &west);
-    return result->setBoxedValue(THIN_FENCE_EAST, &east);
+    return state->setValue(THIN_FENCE_NORTH, attachsTo(levelSource, levelSource->getBlockState(pos.north()), pos.north(), Direction::SOUTH))
+        ->setValue(THIN_FENCE_SOUTH, attachsTo(levelSource, levelSource->getBlockState(pos.south()), pos.south(), Direction::NORTH))
+        ->setValue(THIN_FENCE_WEST, attachsTo(levelSource, levelSource->getBlockState(pos.west()), pos.west(), Direction::EAST))
+        ->setValue(THIN_FENCE_EAST, attachsTo(levelSource, levelSource->getBlockState(pos.east()), pos.east(), Direction::WEST));
 }
 
 Item* ThinFenceBlock::getResource(const BlockState* state, Random* random, int lootBonus)
 {
-    return mDropsOnBreak ? Block::getResource(state, random, lootBonus) : Items::air;
+    if (!mDropsOnBreak)
+    {
+        return Items::air;
+    }
+    return Block::getResource(state, random, lootBonus);
 }
 
 bool ThinFenceBlock::isSolidRender(const BlockState*) const { return false; }
@@ -152,38 +166,20 @@ const BlockState* ThinFenceBlock::rotate(const BlockState* state, Rotation* rota
     switch (rotation->getType())
     {
     case Rotation::eTYPE_Clockwise180:
-    {
-        TypedBoxed<bool> north(state->getValue(THIN_FENCE_SOUTH));
-        TypedBoxed<bool> east(state->getValue(THIN_FENCE_WEST));
-        TypedBoxed<bool> south(state->getValue(THIN_FENCE_NORTH));
-        TypedBoxed<bool> west(state->getValue(THIN_FENCE_EAST));
-        return state->setBoxedValue(THIN_FENCE_NORTH, &north)
-            ->setBoxedValue(THIN_FENCE_EAST, &east)
-            ->setBoxedValue(THIN_FENCE_SOUTH, &south)
-            ->setBoxedValue(THIN_FENCE_WEST, &west);
-    }
+        return state->setValue(THIN_FENCE_NORTH, state->getValue(THIN_FENCE_SOUTH))
+            ->setValue(THIN_FENCE_EAST, state->getValue(THIN_FENCE_WEST))
+            ->setValue(THIN_FENCE_SOUTH, state->getValue(THIN_FENCE_NORTH))
+            ->setValue(THIN_FENCE_WEST, state->getValue(THIN_FENCE_EAST));
     case Rotation::eTYPE_CounterClockwise90:
-    {
-        TypedBoxed<bool> north(state->getValue(THIN_FENCE_EAST));
-        TypedBoxed<bool> east(state->getValue(THIN_FENCE_SOUTH));
-        TypedBoxed<bool> south(state->getValue(THIN_FENCE_WEST));
-        TypedBoxed<bool> west(state->getValue(THIN_FENCE_NORTH));
-        return state->setBoxedValue(THIN_FENCE_NORTH, &north)
-            ->setBoxedValue(THIN_FENCE_EAST, &east)
-            ->setBoxedValue(THIN_FENCE_SOUTH, &south)
-            ->setBoxedValue(THIN_FENCE_WEST, &west);
-    }
+        return state->setValue(THIN_FENCE_NORTH, state->getValue(THIN_FENCE_EAST))
+            ->setValue(THIN_FENCE_EAST, state->getValue(THIN_FENCE_SOUTH))
+            ->setValue(THIN_FENCE_SOUTH, state->getValue(THIN_FENCE_WEST))
+            ->setValue(THIN_FENCE_WEST, state->getValue(THIN_FENCE_NORTH));
     case Rotation::eTYPE_Clockwise90:
-    {
-        TypedBoxed<bool> north(state->getValue(THIN_FENCE_WEST));
-        TypedBoxed<bool> east(state->getValue(THIN_FENCE_NORTH));
-        TypedBoxed<bool> south(state->getValue(THIN_FENCE_EAST));
-        TypedBoxed<bool> west(state->getValue(THIN_FENCE_SOUTH));
-        return state->setBoxedValue(THIN_FENCE_NORTH, &north)
-            ->setBoxedValue(THIN_FENCE_EAST, &east)
-            ->setBoxedValue(THIN_FENCE_SOUTH, &south)
-            ->setBoxedValue(THIN_FENCE_WEST, &west);
-    }
+        return state->setValue(THIN_FENCE_NORTH, state->getValue(THIN_FENCE_WEST))
+            ->setValue(THIN_FENCE_EAST, state->getValue(THIN_FENCE_NORTH))
+            ->setValue(THIN_FENCE_SOUTH, state->getValue(THIN_FENCE_EAST))
+            ->setValue(THIN_FENCE_WEST, state->getValue(THIN_FENCE_SOUTH));
     default:
         return state;
     }
@@ -194,17 +190,11 @@ const BlockState* ThinFenceBlock::mirror(const BlockState* state, Mirror* mirror
     switch (mirror->getType())
     {
     case Mirror::eTYPE_LeftRight:
-    {
-        TypedBoxed<bool> north(state->getValue(THIN_FENCE_SOUTH));
-        TypedBoxed<bool> south(state->getValue(THIN_FENCE_NORTH));
-        return state->setBoxedValue(THIN_FENCE_NORTH, &north)->setBoxedValue(THIN_FENCE_SOUTH, &south);
-    }
+        return state->setValue(THIN_FENCE_NORTH, state->getValue(THIN_FENCE_SOUTH))
+            ->setValue(THIN_FENCE_SOUTH, state->getValue(THIN_FENCE_NORTH));
     case Mirror::eTYPE_FrontBack:
-    {
-        TypedBoxed<bool> east(state->getValue(THIN_FENCE_WEST));
-        TypedBoxed<bool> west(state->getValue(THIN_FENCE_EAST));
-        return state->setBoxedValue(THIN_FENCE_EAST, &east)->setBoxedValue(THIN_FENCE_WEST, &west);
-    }
+        return state->setValue(THIN_FENCE_EAST, state->getValue(THIN_FENCE_WEST))
+            ->setValue(THIN_FENCE_WEST, state->getValue(THIN_FENCE_EAST));
     default:
         return Block::mirror(state, mirror);
     }
@@ -212,7 +202,7 @@ const BlockState* ThinFenceBlock::mirror(const BlockState* state, Mirror* mirror
 
 BlockStateDefinition* ThinFenceBlock::createBlockStateDefinition()
 {
-    const Property* properties[4] = { THIN_FENCE_NORTH, THIN_FENCE_EAST, THIN_FENCE_SOUTH, THIN_FENCE_WEST };
+    static const Property* properties[] = { THIN_FENCE_NORTH, THIN_FENCE_EAST, THIN_FENCE_WEST, THIN_FENCE_SOUTH };
     return new BlockStateDefinition(this, properties, 4);
 }
 

@@ -111,7 +111,7 @@ BlockStateDefinition* StainedGlassBlock::createBlockStateDefinition()
 
 TextureAtlasSprite* StainedGlassBlock::getTexture(const Direction*, const BlockState* state)
 {
-    return gStainedGlassBlockIcons[state->getValue(COLOR)->getBlockData()];
+    return gStainedGlassBlockIcons[state->getValue(COLOR)->blockData];
 }
 
 void StainedGlassBlock::registerIcons(IconRegister* iconRegister)

@@ -28,7 +28,7 @@ public:
     static const DyeColor* getColor(const not_null_ptr<ItemInstance>& item);
     void setCustomName(const std::wstring& name, const std::wstring& uuid, bool chatCensored, bool uuidLocal);
     void setItemValues(not_null_ptr<ItemInstance> item, bool useBannerItemColor);
-    static ItemInstance* addTags(ItemInstance* item, int color, ListTag* patterns);
+    static void addTags(ItemInstance* item, int color, ListTag* patterns);
     static void addTags(not_null_ptr<ItemInstance> item, int color, ListTag* patterns);
     not_null_ptr<ItemInstance> getItem();
     virtual CompoundTag* save(CompoundTag* tag);

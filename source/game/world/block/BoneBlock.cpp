@@ -16,14 +16,7 @@ BoneBlock::BoneBlock()
 {
     DerivedInit();
 
-    BlockState* state = mStateDefinition->any();
-    const BlockState* defaultState;
-    {
-        const Property* axisProperty = gRotatedPillarBlockAxisProperty;
-        TypedBoxed<Direction::Axis*> value(Direction::Axis::Y);
-        defaultState = state->setBoxedValue(axisProperty, &value);
-    }
-    registerDefaultState(defaultState);
+    registerDefaultState(mStateDefinition->any()->setValue(gRotatedPillarBlockAxisProperty, Direction::Axis::Y));
     setDestroyTime(2.0f);
     setSoundType(SoundType::STONE);
 }

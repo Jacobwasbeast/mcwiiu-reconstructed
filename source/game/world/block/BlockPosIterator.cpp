@@ -6,39 +6,11 @@
 
 BlockPosIterator::BlockPosIterator(const BlockPos& from, const BlockPos& to)
 {
-    int minX = from.x;
-    int minY = from.y;
-    int minZ = from.z;
-    if (to.x < minX)
-    {
-        minX = to.x;
-    }
-    if (to.y < minY)
-    {
-        minY = to.y;
-    }
-    if (to.z < minZ)
-    {
-        minZ = to.z;
-    }
     this->currentPos = NULL;
-    this->minPos = new BlockPos(minX, minY, minZ);
-    int maxX = from.x;
-    int maxY = to.y;
-    int maxZ = to.z;
-    if (maxX < to.x)
-    {
-        maxX = to.x;
-    }
-    if (to.y < from.y)
-    {
-        maxY = from.y;
-    }
-    if (to.z < from.z)
-    {
-        maxZ = from.z;
-    }
-    this->maxPos = new BlockPos(maxX, maxY, maxZ);
+    this->minPos = new BlockPos(std::min(from.x, to.x), std::min(from.y, to.y),
+                                std::min(from.z, to.z));
+    this->maxPos = new BlockPos(std::max(from.x, to.x), std::max(from.y, to.y),
+                                std::max(from.z, to.z));
 }
 
 BlockPosIterator::~BlockPosIterator()

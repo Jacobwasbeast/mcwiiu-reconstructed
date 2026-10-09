@@ -11,15 +11,15 @@
 
 double ClockItem_ItemPropertyFunction::wobble(Level* level, double value)
 {
-    long long gameTime = level->getGameTime();
-    if (gameTime == mLastUpdate)
-        return mRotation;
-
-    mLastUpdate = level->getGameTime();
-    double delta = Mth::positiveModulo(value - mRotation + 0.5, 1.0);
-    mWobble = (delta - 0.5) * 0.1 + mWobble;
-    mWobble *= 0.9;
-    mRotation = Mth::positiveModulo(mRotation + mWobble, 1.0);
+    if (level->getGameTime() != mLastUpdate)
+    {
+        mLastUpdate = level->getGameTime();
+        double delta = value - mRotation;
+        delta = Mth::positiveModulo(delta + 0.5, 1.0) - 0.5;
+        mWobble += delta * 0.1;
+        mWobble *= 0.9;
+        mRotation = Mth::positiveModulo(mRotation + mWobble, 1.0);
+    }
     return mRotation;
 }
 

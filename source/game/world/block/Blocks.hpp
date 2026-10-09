@@ -3,6 +3,36 @@
 
 #include <string>
 
+#include "game/core/Bush.hpp"
+#include "game/world/block/BeaconBlock.hpp"
+#include "game/world/block/CactusBlock.hpp"
+#include "game/world/block/CauldronBlock.hpp"
+#include "game/world/block/ChestBlock.hpp"
+#include "game/world/block/ComparatorBlock.hpp"
+#include "game/world/block/DaylightDetectorBlock.hpp"
+#include "game/world/block/DoublePlantBlock.hpp"
+#include "game/world/block/DynamicLiquidBlock.hpp"
+#include "game/world/block/FlowerBlock.hpp"
+#include "game/world/block/GrassBlock.hpp"
+#include "game/world/block/HalfSlabBlock.hpp"
+#include "game/world/block/HopperBlock.hpp"
+#include "game/world/block/LeafBlock.hpp"
+#include "game/world/block/MyceliumBlock.hpp"
+#include "game/world/block/PistonBaseBlock.hpp"
+#include "game/world/block/PistonHeadBlock.hpp"
+#include "game/world/block/PistonMagicBlock.hpp"
+#include "game/world/block/PortalBlock.hpp"
+#include "game/world/block/RedStoneWireBlock.hpp"
+#include "game/world/block/ReedsBlock.hpp"
+#include "game/world/block/RepeaterBlock.hpp"
+#include "game/world/block/SandBlock.hpp"
+#include "game/world/block/SkullBlock.hpp"
+#include "game/world/block/StainedGlassBlock.hpp"
+#include "game/world/block/StainedGlassPaneBlock.hpp"
+#include "game/world/block/StaticLiquidBlock.hpp"
+#include "game/world/block/TallGrassBlock.hpp"
+#include "game/world/block/TripWireHookBlock.hpp"
+
 class Block;
 
 class Blocks {
@@ -11,25 +41,25 @@ public:
 
     static Block* air;
     static Block* stone;
-    static Block* grass;
+    static GrassBlock* grass;
     static Block* dirt;
     static Block* cobblestone;
     static Block* planks;
     static Block* sapling;
     static Block* bedrock;
-    static Block* flowing_water;
-    static Block* water;
-    static Block* flowing_lava;
-    static Block* lava;
-    static Block* sand;
+    static DynamicLiquidBlock* flowing_water;
+    static StaticLiquidBlock* water;
+    static DynamicLiquidBlock* flowing_lava;
+    static StaticLiquidBlock* lava;
+    static SandBlock* sand;
     static Block* gravel;
     static Block* gold_ore;
     static Block* iron_ore;
     static Block* coal_ore;
     static Block* log;
     static Block* log2;
-    static Block* leaves;
-    static Block* leaves2;
+    static LeafBlock* leaves;
+    static LeafBlock* leaves2;
     static Block* sponge;
     static Block* glass;
     static Block* lapis_ore;
@@ -40,22 +70,22 @@ public:
     static Block* bed;
     static Block* golden_rail;
     static Block* detector_rail;
-    static Block* sticky_piston;
+    static PistonBaseBlock* sticky_piston;
     static Block* web;
-    static Block* tallgrass;
+    static TallGrassBlock* tallgrass;
     static Block* deadbush;
-    static Block* piston;
-    static Block* piston_head;
+    static PistonBaseBlock* piston;
+    static PistonHeadBlock* piston_head;
     static Block* wool;
-    static Block* piston_extension;
-    static Block* yellow_flower;
-    static Block* red_flower;
-    static Block* brown_mushroom;
-    static Block* red_mushroom;
+    static PistonMagicBlock* piston_extension;
+    static FlowerBlock* yellow_flower;
+    static FlowerBlock* red_flower;
+    static Bush* brown_mushroom;
+    static Bush* red_mushroom;
     static Block* gold_block;
     static Block* iron_block;
-    static Block* double_stone_slab;
-    static Block* stone_slab;
+    static HalfSlabBlock* double_stone_slab;
+    static HalfSlabBlock* stone_slab;
     static Block* brick_block;
     static Block* tnt;
     static Block* bookshelf;
@@ -65,8 +95,8 @@ public:
     static Block* fire;
     static Block* mob_spawner;
     static Block* oak_stairs;
-    static Block* chest;
-    static Block* redstone_wire;
+    static ChestBlock* chest;
+    static RedStoneWireBlock* redstone_wire;
     static Block* diamond_ore;
     static Block* diamond_block;
     static Block* crafting_table;
@@ -97,9 +127,9 @@ public:
     static Block* snow_layer;
     static Block* ice;
     static Block* snow;
-    static Block* cactus;
+    static CactusBlock* cactus;
     static Block* clay;
-    static Block* reeds;
+    static ReedsBlock* reeds;
     static Block* jukebox;
     static Block* fence;
     static Block* spruce_fence;
@@ -112,11 +142,11 @@ public:
     static Block* netherrack;
     static Block* soul_sand;
     static Block* glowstone;
-    static Block* portal;
+    static PortalBlock* portal;
     static Block* lit_pumpkin;
     static Block* cake;
-    static Block* unpowered_repeater;
-    static Block* powered_repeater;
+    static RepeaterBlock* unpowered_repeater;
+    static RepeaterBlock* powered_repeater;
     static Block* trapdoor;
     static Block* monster_egg;
     static Block* stonebrick;
@@ -136,7 +166,7 @@ public:
     static Block* acacia_fence_gate;
     static Block* brick_stairs;
     static Block* stone_brick_stairs;
-    static Block* mycelium;
+    static MyceliumBlock* mycelium;
     static Block* waterlily;
     static Block* nether_brick;
     static Block* nether_brick_fence;
@@ -144,44 +174,44 @@ public:
     static Block* nether_wart;
     static Block* enchanting_table;
     static Block* brewing_stand;
-    static Block* cauldron;
+    static CauldronBlock* cauldron;
     static Block* end_portal;
     static Block* end_portal_frame;
     static Block* end_stone;
     static Block* dragon_egg;
     static Block* redstone_lamp;
     static Block* lit_redstone_lamp;
-    static Block* double_wooden_slab;
-    static Block* wooden_slab;
+    static HalfSlabBlock* double_wooden_slab;
+    static HalfSlabBlock* wooden_slab;
     static Block* cocoa;
     static Block* sandstone_stairs;
     static Block* emerald_ore;
     static Block* ender_chest;
-    static Block* tripwire_hook;
+    static TripWireHookBlock* tripwire_hook;
     static Block* tripwire;
     static Block* emerald_block;
     static Block* spruce_stairs;
     static Block* birch_stairs;
     static Block* jungle_stairs;
     static Block* command_block;
-    static Block* beacon;
+    static BeaconBlock* beacon;
     static Block* cobblestone_wall;
     static Block* flower_pot;
     static Block* carrots;
     static Block* potatoes;
     static Block* wooden_button;
-    static Block* skull;
+    static SkullBlock* skull;
     static Block* anvil;
-    static Block* trapped_chest;
+    static ChestBlock* trapped_chest;
     static Block* light_weighted_pressure_plate;
     static Block* heavy_weighted_pressure_plate;
-    static Block* unpowered_comparator;
-    static Block* powered_comparator;
-    static Block* daylight_detector;
-    static Block* daylight_detector_inverted;
+    static ComparatorBlock* unpowered_comparator;
+    static ComparatorBlock* powered_comparator;
+    static DaylightDetectorBlock* daylight_detector;
+    static DaylightDetectorBlock* daylight_detector_inverted;
     static Block* redstone_block;
     static Block* quartz_ore;
-    static Block* hopper;
+    static HopperBlock* hopper;
     static Block* quartz_block;
     static Block* quartz_stairs;
     static Block* activator_rail;
@@ -197,25 +227,25 @@ public:
     static Block* acacia_stairs;
     static Block* dark_oak_stairs;
     static Block* slime;
-    static Block* double_plant;
-    static Block* stained_glass;
-    static Block* stained_glass_pane;
+    static DoublePlantBlock* double_plant;
+    static StainedGlassBlock* stained_glass;
+    static StainedGlassPaneBlock* stained_glass_pane;
     static Block* prismarine;
     static Block* sea_lantern;
     static Block* standing_banner;
     static Block* wall_banner;
     static Block* red_sandstone;
     static Block* red_sandstone_stairs;
-    static Block* double_stone_slab2;
-    static Block* stone_slab2;
+    static HalfSlabBlock* double_stone_slab2;
+    static HalfSlabBlock* stone_slab2;
     static Block* end_rod;
     static Block* chorus_plant;
     static Block* chorus_flower;
     static Block* purpur_block;
     static Block* purpur_pillar;
     static Block* purpur_stairs;
-    static Block* purpur_double_slab;
-    static Block* purpur_slab;
+    static HalfSlabBlock* purpur_double_slab;
+    static HalfSlabBlock* purpur_slab;
     static Block* end_bricks;
     static Block* beetroots;
     static Block* grass_path;

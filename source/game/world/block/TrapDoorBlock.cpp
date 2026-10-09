@@ -217,12 +217,14 @@ unsigned int TrapDoorBlock::GetInteractTooltip(const BlockTooltipDataHolder& too
 
 const BlockState* TrapDoorBlock::rotate(const BlockState* state, Rotation* rotation)
 {
-    return state->setValue(FACING, rotation->rotate(state->getValue(FACING)));
+    return state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
 }
 
 const BlockState* TrapDoorBlock::mirror(const BlockState* state, Mirror* mirror)
 {
-    return rotate(state, mirror->getRotation(state->getValue(FACING)));
+    AbstractProperty<const Direction*>* facing = FACING;
+    const BlockState* result = rotate(state, mirror->getRotation(state->getValue(facing)));
+    return result;
 }
 
 BlockStateDefinition* TrapDoorBlock::createBlockStateDefinition()

@@ -348,8 +348,7 @@ const BlockState* DoorBlock::rotate(const BlockState* state, Rotation* rotation)
 {
     if (state->getValue(HALF) == LOWER)
     {
-        const AbstractProperty<const Direction*>* facingProperty = FACING;
-        state = state->setValue(facingProperty, rotation->rotate(state->getValue(facingProperty)));
+        state = state->setValue(FACING, rotation->rotate(state->getTypedBoxed(FACING)->getValue()));
     }
     return state;
 }
