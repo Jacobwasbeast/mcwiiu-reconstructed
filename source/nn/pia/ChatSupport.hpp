@@ -23,13 +23,6 @@ unsigned char IsInitialized();
 unsigned char IsInSetupMode();
 void EmbedModuleInfo();
 
-class ChatApi
-{
-public:
-    static void createSystemSingletons();
-    static void destroySystemSingletons();
-};
-
 }
 }
 }

@@ -65,7 +65,7 @@ void Transport::OutputStreamUpdateEvent()
 void Transport::SetMonitoringNetworkRtt(bool isSessionBegin)
 {
     NetworkRttManager* rttManager = NetworkRttManager::sInstance;
-    StationManager* stationManager = g_piaStationManager;
+    StationManager* stationManager = StationManager::s_pInstance;
     if (!rttManager || !stationManager)
         return;
 
@@ -320,7 +320,7 @@ Result Transport::initialize(const Setting& setting)
     m_stationNum = stationNum;
     m_protocolManager.Initialize(m_networkFactory);
     g_piaStationProtocolManager->Initialize(stationNum, factory->GetDefaultRttInitialPulseInterval());
-    result = g_piaStationManager->Initialize(factory, stationNum,
+    result = StationManager::s_pInstance->Initialize(factory, stationNum,
                                              g_piaStationProtocolManager->GetStationProtocol(),
                                              g_piaStationProtocolManager->GetRttProtocol());
     if (result != 0)
@@ -411,7 +411,7 @@ void Transport::finalize()
         m_networkFactory->DeletePacketHandler(m_packetHandler);
         m_packetHandler = 0;
     }
-    g_piaStationManager->Finalize();
+    StationManager::s_pInstance->Finalize();
     NetworkRttManager::sInstance->Finalize();
     if (m_networkFactory != 0)
     {
@@ -535,22 +535,19 @@ Result Transport::dispatch()
 
 void Transport::updateTransportAnalyzer()
 {
-    if (!m_startedUp || m_analysisInterval == 0 || g_piaTransportAnalyzer == 0)
+    if (!m_startedUp || m_analysisInterval == 0)
+        return;
+    TransportAnalyzer* const analyzer = g_piaTransportAnalyzer;
+    if (analyzer == 0)
         return;
     const int elapsedSeconds = static_cast<int>(
         static_cast<long long>(m_time.m_tick - m_lastAnalysisTime.m_tick) /
         common::TimeSpan::GetTicksPerSec().m_tick);
-    if (elapsedSeconds < m_analysisInterval || g_piaTransportAnalyzer->Update() != 0)
+    if (elapsedSeconds < m_analysisInterval || analyzer->Update() != 0)
         return;
 
     m_lastAnalysisTime = m_time;
-    TransportAnalysisData data;
-    data.m_packetAnalysisData = g_piaTransportAnalyzer->m_packetAnalysisData[0];
-    data.m_receivedPacketAnalysisData = g_piaTransportAnalyzer->m_packetAnalysisData[1];
-    data.m_sentPacketAnalysisData = g_piaTransportAnalyzer->m_packetAnalysisData[2];
-    data.m_retransmittedPacketAnalysisData = g_piaTransportAnalyzer->m_packetAnalysisData[3];
-    data.m_connectionAnalysisData = g_piaTransportAnalyzer->m_connectionAnalysisData;
-    data.m_dispatchCount = g_piaTransportAnalyzer->m_field110c;
+    TransportAnalysisData data = analyzer->m_analysisData;
     data.Print(m_keepAliveEnabled, m_monitoringEnabled);
 }
 

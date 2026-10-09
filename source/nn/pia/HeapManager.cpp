@@ -5,8 +5,10 @@ namespace nn { namespace pia { namespace common {
 
 namespace
 {
-pead::Heap* g_heaps[21] = {};
+pead::Arena g_arena;
 unsigned int g_currentHeap = 20;
+bool g_initialized = false;
+pead::Heap* g_heaps[21] = {};
 }
 
 unsigned int HeapManager::convert(ModuleType moduleType)
@@ -44,10 +46,8 @@ void HeapManager::Setup(ModuleType moduleType, unsigned int size,
                         const pead::SafeStringBase<char>& name)
 {
     const unsigned int heapIndex = convert(moduleType);
-    pead::Heap* parent = pead::HeapMgr::instance()
-        ? pead::HeapMgr::instance()->getCurrentHeap() : 0;
-    g_heaps[heapIndex] = pead::ExpHeap::create(size, name, parent,
-                                                pead::Heap::cHeapDirection_Forward, false);
+    pead::Heap* parent = pead::HeapMgr::getRootHeap(0);
+    g_heaps[heapIndex] = pead::ExpHeap::create(size, name, parent, pead::Heap::cHeapDirection_Forward, false);
 }
 
 void HeapManager::Cleanup(ModuleType moduleType)
@@ -60,14 +60,29 @@ void HeapManager::Cleanup(ModuleType moduleType)
     g_heaps[heapIndex] = 0;
 }
 
-void HeapManager::Initialize(void* memory, unsigned int size)
+bool HeapManager::Initialize(void* memory, unsigned int size)
 {
-    (void)memory;
-    (void)size;
+    if (g_initialized)
+        return false;
+    g_arena.mStart = static_cast<unsigned char*>(memory);
+    g_arena.mSize = size;
+    pead::HeapMgr::initialize(&g_arena);
+    pead::Heap* rootHeap = pead::HeapMgr::getRootHeap(0);
+    pead::ThreadMgr::createInstance(rootHeap);
+    pead::ThreadMgr::instance()->initialize(rootHeap);
+    g_currentHeap = 20;
+    g_initialized = true;
+    return true;
 }
 
 void HeapManager::Finalize()
 {
+    if (!g_initialized)
+        return;
+    g_initialized = false;
+    pead::ThreadMgr::instance()->destroy();
+    pead::ThreadMgr::deleteInstance();
+    pead::HeapMgr::destroy();
 }
 
 }}}

@@ -8,6 +8,14 @@ namespace nn { namespace pia { namespace common {
 
 struct ListNode
 {
+    ListNode() { Reset(); }
+
+    void Reset()
+    {
+        prev = 0;
+        next = 0;
+    }
+
     ListNode* prev;
     ListNode* next;
 };

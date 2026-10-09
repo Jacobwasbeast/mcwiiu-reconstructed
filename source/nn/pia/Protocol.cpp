@@ -7,28 +7,11 @@
 
 namespace nn { namespace pia { namespace transport {
 
-
-unsigned char g_piaTransportInitialized = 0;
-unsigned char g_piaTransportInSetupMode = 0;
-ProtocolId g_piaProtocolDefaultType;
 ProtocolManager* g_piaProtocolManager = 0;
 
-unsigned char IsInitialized()
-{
-    return g_piaTransportInitialized;
-}
-
-unsigned char IsInSetupMode()
-{
-    return g_piaTransportInSetupMode;
-}
-
-
 Protocol::Protocol()
-    : mProtocolId(g_piaProtocolDefaultType)
+    : mProtocolId(ProtocolId::INVALID)
 {
-    prev = 0;
-    next = 0;
 }
 
 Protocol::~Protocol()
@@ -59,7 +42,7 @@ void Protocol::SetPort(unsigned char port)
     mProtocolId = ProtocolId(static_cast<unsigned char>(GetProtocolType()), port);
 }
 
-unsigned int Protocol::GetStationPacketHandler()
+PacketHandler* Protocol::GetStationPacketHandler()
 {
     return mStationPacketHandler;
 }

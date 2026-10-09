@@ -36,7 +36,7 @@ template <typename T> inline T* CreateObject()
     void* storage = pead::allocateFromSeadHeap(sizeof(T), common::HeapManager::GetHeap());
     if (storage == 0)
         return 0;
-    return new (storage) T();
+    return ::new (storage) T();
 }
 
 template <typename T> inline void DestroyObject(T* object)

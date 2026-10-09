@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "nn/pia/Common.hpp"
-#include "nn/pia/ListBase.hpp"
+#include "nn/pia/common/PooledList.hpp"
 
 namespace nn { namespace pia { namespace transport {
 
@@ -20,11 +20,7 @@ public:
         uint8_t joinEventNotified;
     };
 
-    struct Element
-    {
-        common::ListNode node;
-        Entry entry;
-    };
+    typedef common::PooledList<Entry> EntryList;
 
     StationIdTable();
     ~StationIdTable();
@@ -56,12 +52,8 @@ private:
     Result Copy(Entry*, const Entry*) const;
 
 public:
-    common::ListBase m_entries;
-    common::ListBase m_availableEntries;
-    int m_entryOffset;
-    Element* m_elements;
-    uint32_t m_elementNum;
-    Element* m_storage;
+    EntryList m_entries;
+    unsigned long long* m_storage;
     uint32_t m_availableEntryNum;
 };
 

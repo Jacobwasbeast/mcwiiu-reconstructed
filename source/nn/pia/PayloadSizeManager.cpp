@@ -1,5 +1,6 @@
 #include "nn/pia/PayloadSizeManager.hpp"
 #include "nn/pia/HeapManager.hpp"
+#include "nn/pia/common/Memory.hpp"
 #include "platform/wiiu/pead.hpp"
 
 #include <new>
@@ -16,7 +17,16 @@ PayloadSizeManager* g_payloadSizeManager = 0;
 
 namespace
 {
-void* g_payloadSizeManagerStorage = 0;
+enum
+{
+    cResultAllocationFailed = 0x10c01,
+    cResultInvalidArgument = 0x10c07,
+    cResultInvalidState = 0x10c08,
+    cResultNotInitialized = 0x10c0c,
+    cResultAlreadyCreated = 0x10c0f
+};
+
+unsigned char* g_payloadSizeManagerStorage = 0;
 }
 
 PayloadSizeManager::PayloadSizeManager()
@@ -35,17 +45,15 @@ PayloadSizeManager::~PayloadSizeManager()
 Result PayloadSizeManager::CreateInstance()
 {
     if (IsInitialized() == 0)
-        return 0x10c0c;
+        return cResultNotInitialized;
     if (IsInSetupMode() == 0)
-        return 0x10c08;
+        return cResultInvalidState;
     if (g_payloadSizeManager != 0)
-        return 0x10c0f;
+        return cResultAlreadyCreated;
 
-    pead::Heap* heap = HeapManager::GetHeap();
-    g_payloadSizeManagerStorage = pead::allocateFromSeadHeap(
-        sizeof(PayloadSizeManager), heap, 8);
+    g_payloadSizeManagerStorage = NewArray<unsigned char>(sizeof(PayloadSizeManager), 8);
     if (g_payloadSizeManagerStorage == 0)
-        return 0x10c01;
+        return cResultAllocationFailed;
 
     g_payloadSizeManager = new (g_payloadSizeManagerStorage) PayloadSizeManager();
     return 0;
@@ -60,16 +68,17 @@ void PayloadSizeManager::DestroyInstance()
     }
     if (g_payloadSizeManagerStorage != 0)
     {
-        pead::getArraySize(g_payloadSizeManagerStorage);
-        pead::freeToSeadHeap(g_payloadSizeManagerStorage);
+        DeleteArray(g_payloadSizeManagerStorage);
         g_payloadSizeManagerStorage = 0;
     }
 }
 
 Result PayloadSizeManager::SetMtuSize(unsigned int mtuSize)
 {
-    if (mtuSize < m_minMtuSize || mtuSize > m_maxMtuSize)
-        return 0x10c07;
+    if (mtuSize < m_minMtuSize)
+        return cResultInvalidArgument;
+    if (mtuSize > m_maxMtuSize)
+        return cResultInvalidArgument;
     m_mtuSize = mtuSize;
     return 0;
 }

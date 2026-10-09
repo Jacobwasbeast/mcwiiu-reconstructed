@@ -22,6 +22,30 @@ public:
     int m_code;
 };
 
+class ResultAlreadyInitialized : public Result
+{
+public:
+    ResultAlreadyInitialized() : Result(0x10c02) {}
+};
+
+class ResultInvalidArgument : public Result
+{
+public:
+    ResultInvalidArgument() : Result(0x10c07) {}
+};
+
+class ResultInvalidState : public Result
+{
+public:
+    ResultInvalidState() : Result(0x10c08) {}
+};
+
+class ResultNotInitialized : public Result
+{
+public:
+    ResultNotInitialized() : Result(0x10c0c) {}
+};
+
 enum StationIndex
 {
     cStationIndexInvalid = 0xfd,

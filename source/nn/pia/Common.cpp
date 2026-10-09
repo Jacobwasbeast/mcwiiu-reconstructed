@@ -38,12 +38,13 @@ Result Initialize(void* workMemory, unsigned int workMemorySize)
     if (g_commonInitialized != 0)
         return 0x10c02;
 
+    HeapManager::Initialize(workMemory, workMemorySize);
     pead::SafeStringBase<char> heapName("pia common heap");
-    HeapManager::Setup(static_cast<ModuleType>(2), workMemorySize, heapName);
+    HeapManager::Setup(cModuleType_Common, 0, heapName);
     pead::CoreInfo::configure();
     g_commonApi.registerInternalPrintCallback();
     g_commonInitialized = 1;
-    ModuleStackChecker::Register(static_cast<ModuleType>(2));
+    ModuleStackChecker::Register(cModuleType_Common);
     return 0;
 }
 
@@ -54,7 +55,7 @@ Result BeginSetup()
     if (g_commonInSetup != 0)
         return 0x10c08;
 
-    HeapManager::SetCurrentHeap(static_cast<ModuleType>(2));
+    HeapManager::SetCurrentHeap(cModuleType_Common);
     g_commonInSetup = 1;
     g_commonApi.createSystemSingletons();
     return 0;
@@ -67,9 +68,7 @@ Result EndSetup()
     if (g_commonInSetup == 0)
         return 0x10c08;
 
-    pead::Heap* heap = HeapManager::GetHeap();
-    if (heap != 0)
-        heap->freeAll();
+    HeapManager::GetHeap()->adjust();
     HeapManager::ClearCurrentHeap();
     g_commonInSetup = 0;
     return 0;
@@ -84,10 +83,10 @@ void Finalize()
         EndSetup();
     g_commonApi.unregisterInternalPrintCallback();
     g_commonApi.destroySystemSingletons();
-    HeapManager::Cleanup(static_cast<ModuleType>(2));
-    HeapManager::ClearCurrentHeap();
+    HeapManager::Cleanup(cModuleType_Common);
+    HeapManager::Finalize();
     g_commonInitialized = 0;
-    ModuleStackChecker::Unregister(static_cast<ModuleType>(2));
+    ModuleStackChecker::Unregister(cModuleType_Common);
 }
 
 unsigned char IsInitialized()

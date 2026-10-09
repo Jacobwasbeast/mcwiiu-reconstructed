@@ -2,6 +2,18 @@
 #include "nn/pia/transport/StationPacketHandler.hpp"
 #include "nn/pia/transport/ConnectStationJob.hpp"
 #include "nn/pia/transport/DisconnectStationJob.hpp"
+#include "nn/pia/Reconstruction.hpp"
+#include "nn/pia/inet/MonitoringDataProtocol.hpp"
+#include "nn/pia/lan/LanProtocol.hpp"
+#include "nn/pia/nat/NatTraversalProtocol.hpp"
+#include "nn/pia/session/MeshProtocol.hpp"
+#include "nn/pia/session/SessionProtocol.hpp"
+#include "nn/pia/session/SyncClockProtocol.hpp"
+#include "nn/pia/transport/BandwidthCheckProtocol.hpp"
+#include "nn/pia/transport/RttProtocol.hpp"
+#include "nn/pia/transport/StationProtocol.hpp"
+#include "nn/pia/transport/UnreliableProtocol.hpp"
+#include "vendor/__N_22_chat_VoiceProtocol_cpp_bf22a0fe.hpp"
 
 namespace nn
 
@@ -89,33 +101,33 @@ bool NetworkFactory::IsBitRateCheckPermitted() const
 
 unsigned int NetworkFactory::IsSupportedProtocol(unsigned char protocolType) const
 {
-    if (protocolType < 100)
+    switch (protocolType)
     {
-        if (protocolType < 0x24)
-        {
-            return protocolType == 8 || protocolType == 0x14 ||
-                   protocolType == 0x18 || protocolType == 0x1c;
-        }
-        if (protocolType < 0x44)
-        {
-            return protocolType == 0x24 || protocolType == 0x28 ||
-                   protocolType == 0x2c || protocolType == 0x34;
-        }
-        return protocolType == 0x44 || protocolType == 0x54 ||
-               protocolType == 0x58;
+    case 0x08:
+    case StationProtocol::cProtocolType:
+    case session::MeshProtocol::cProtocolType:
+    case session::SyncClockProtocol::cProtocolType:
+    case 0x24:
+    case 0x28:
+    case 0x2c:
+    case nat::NatTraversalProtocol::cProtocolType:
+    case lan::LanProtocol::cProtocolType:
+    case BandwidthCheckProtocol::cProtocolType:
+    case RttProtocol::cProtocolType:
+    case 0x64:
+    case UnreliableProtocol::cProtocolType:
+    case 0x6c:
+    case 0x74:
+    case chat::VoiceProtocol::cProtocolType:
+    case ReliableProtocol::cProtocolType:
+    case 0x84:
+    case session::SessionProtocol::cProtocolType:
+    case inet::MonitoringDataProtocol::cProtocolType:
+    case 0xa8:
+        return true;
+    default:
+        return false;
     }
-    if (protocolType < 0x74)
-    {
-        return protocolType == 100 || protocolType == 0x68 ||
-               protocolType == 0x6c;
-    }
-    if (protocolType < 0x84)
-    {
-        return protocolType == 0x74 || protocolType == 0x78 ||
-               protocolType == 0x7c;
-    }
-    return protocolType == 0x84 || protocolType == 0x94 ||
-           protocolType == 0xa4 || protocolType == 0xa8;
 }
 
 }

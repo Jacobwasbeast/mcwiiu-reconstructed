@@ -33,7 +33,7 @@ public:
         unsigned char m_port;
     };
 
-    ProtocolId() { m_value = 0; }
+    ProtocolId();
     ProtocolId(unsigned char protocolType, unsigned char port)
     {
         m_element.m_protocolType = protocolType;
@@ -45,6 +45,8 @@ public:
     unsigned char GetProtocolType() const { return m_element.m_protocolType; }
     unsigned char GetPort() const { return m_element.m_port; }
 
+    static const ProtocolId INVALID;
+
     union
     {
         Element m_element;
@@ -52,9 +54,12 @@ public:
     };
 };
 
-extern ProtocolId g_piaProtocolDefaultType;
+inline ProtocolId::ProtocolId()
+{
+    m_value = INVALID.m_value;
+}
 
-class Protocol : public common::ListNode
+class Protocol
 {
 public:
     Protocol();
@@ -69,12 +74,13 @@ public:
     virtual Result UpdateProtocolEvent(const ProtocolEvent& event);
     virtual unsigned int IsProtocolFilteringEnabled() const;
     void SetPort(unsigned char port);
-    unsigned int GetStationPacketHandler();
+    PacketHandler* GetStationPacketHandler();
     ProtocolId GetProtocolId() const { return mProtocolId; }
 protected:
     friend class ProtocolManager;
+    common::ListNode m_listNode;
     ProtocolId mProtocolId;
-    unsigned int mStationPacketHandler;
+    PacketHandler* mStationPacketHandler;
 };
 
 class ReceivedDataContainer;
@@ -83,8 +89,6 @@ class UnreliableProtocol;
 
 class ReliableSlidingWindow;
 class StationManager;
-
-extern StationManager* g_piaStationManager;
 
 class ReliableProtocol : public Protocol
 {
@@ -114,8 +118,7 @@ public:
 
 private:
     int m_field14;
-    unsigned int m_field18;
-    unsigned int m_field1c;
+    unsigned long long m_localStationId;
     unsigned int m_field20;
     unsigned char* m_field24;
     unsigned int m_field28;

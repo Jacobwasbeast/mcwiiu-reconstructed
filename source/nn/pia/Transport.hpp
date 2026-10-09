@@ -13,7 +13,11 @@ enum TransportResultCode
     cResultTransportUnavailable = 0x4c11,
     cResultWindowOverflow = 0x4c0d,
     cResultDataSizeInvalid = 0x2c03,
-    cResultDataNotReady = 0x2c09
+    cResultDataNotReady = 0x2c09,
+    cResultTimeout = 0x6c0e,
+    cResultConnectionFailed = 0xc23,
+    cResultConnectionRefused = 0xc24,
+    cResultConnectionFailed10c25 = 0x10c25
 };
 
 enum TransportStationIndex

@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <cstdio>
+#include <cstring>
 
 namespace nn { namespace pia { namespace common {
 
@@ -31,8 +32,8 @@ Result String::SetString(const void* text, unsigned int, EncodingType encoding)
     m_encoding = encoding;
     if (encoding == EncodingType_Ascii)
     {
-        const char* value = static_cast<const char*>(text);
-        while (*value != '\0')
+        const unsigned char* value = static_cast<const unsigned char*>(text);
+        while (*value != 0)
         {
             ++value;
             ++bytes;
@@ -83,7 +84,7 @@ int String::FormatV(const char* format, va_list args)
 
     int written = ::vsnprintf(buffer, m_bufferSize, format, args);
     m_encoding = EncodingType_Ascii;
-    if (written < 0 || static_cast<int>(m_bufferSize) <= written)
+    if (written < 0 || written >= static_cast<int>(m_bufferSize))
     {
         buffer[m_bufferSize - 1] = '\0';
         written = static_cast<int>(m_bufferSize) - 1;
@@ -91,13 +92,13 @@ int String::FormatV(const char* format, va_list args)
     m_bytes = static_cast<unsigned int>(written);
 
     unsigned int length = GetStringLength();
-    if ((m_bufferSize >> 2) <= length)
+    if (length >= (m_bufferSize >> 2))
     {
-        unsigned int index = 0;
         length = 0;
-        while (length < (m_bufferSize >> 2) - 1 && buffer[index] != '\0')
+        unsigned int index = 0;
+        unsigned int code;
+        while (length < (m_bufferSize >> 2) - 1 && (code = static_cast<unsigned char>(buffer[index])) != 0)
         {
-            unsigned int code = static_cast<unsigned char>(buffer[index]);
             if (code - 1 < 0x7f)
             {
                 ++length;
@@ -145,22 +146,23 @@ unsigned int String::CalcBytes(const void* text, EncodingType encoding)
         return 0;
 
     unsigned int bytes = 0;
-    if (encoding != EncodingType_Utf16)
+    if (encoding == EncodingType_Utf16)
     {
-        const char* value = static_cast<const char*>(text);
-        while (*value != '\0')
+        const uint16_t* value = static_cast<const uint16_t*>(text);
+        while (*value != 0)
+        {
+            ++value;
+            bytes += 2;
+        }
+    }
+    else
+    {
+        const unsigned char* value = static_cast<const unsigned char*>(text);
+        while (*value != 0)
         {
             ++value;
             ++bytes;
         }
-        return bytes;
-    }
-
-    const uint16_t* value = static_cast<const uint16_t*>(text);
-    while (*value != 0)
-    {
-        ++value;
-        bytes += 2;
     }
     return bytes;
 }
@@ -187,9 +189,8 @@ String::EncodingType String::GetEncodingType() const
 
 unsigned int String::GetStringLength() const
 {
-    const unsigned char* text = static_cast<const unsigned char*>(m_text);
     unsigned int length = 0;
-    if (text != 0 && m_bytes != 0 && m_encoding != 0)
+    if (m_text != 0 && m_bytes != 0 && m_encoding != 0)
     {
         if (m_encoding == EncodingType_Utf16)
         {
@@ -197,8 +198,8 @@ unsigned int String::GetStringLength() const
         }
         else if (m_encoding == EncodingType_Ascii)
         {
-            const unsigned char* value = text;
-            while (*value != 0 && static_cast<unsigned int>(value - text) < m_bytes)
+            const unsigned char* value = static_cast<const unsigned char*>(m_text);
+            while (*value != 0 && static_cast<int>(value - static_cast<const unsigned char*>(m_text)) < static_cast<int>(m_bytes))
             {
                 unsigned int code = *value;
                 if (code - 1 < 0x7f)
@@ -243,35 +244,27 @@ unsigned int String::GetStringLength() const
 
 bool String::IsSameString(const String& other) const
 {
-    const char* text = static_cast<const char*>(m_text);
-    const char* otherText = static_cast<const char*>(other.m_text);
-    if (text == 0)
+    if (m_text == 0)
     {
-        if (otherText != 0)
+        if (other.m_text != 0)
             return false;
     }
-    else if (otherText == 0)
+    else if (other.m_text == 0)
     {
         return false;
     }
 
-    if (m_encoding == other.m_encoding)
-    {
-        unsigned int bytes = m_bytes;
-        if (bytes == other.GetBytes())
-        {
-            while (bytes != 0)
-            {
-                if (*text != *otherText)
-                    return false;
-                ++text;
-                ++otherText;
-                --bytes;
-            }
-            return true;
-        }
-    }
-    return false;
+    if (m_encoding != other.m_encoding)
+        return false;
+
+    unsigned int bytes = m_bytes;
+    if (bytes != other.GetBytes())
+        return false;
+
+    if (::memcmp(m_text, other.m_text, bytes) != 0)
+        return false;
+
+    return true;
 }
 
 void String::Trace(unsigned long long) const
