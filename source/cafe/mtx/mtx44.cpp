@@ -787,17 +787,17 @@ void C_MTXOrtho(Mtx44 m, f32 t, f32 b, f32 l, f32 r, f32 n, f32 f)
     m[0][0] = 2 * tmp;
     m[0][1] = 0;
     m[0][2] = 0;
-    m[0][3] = (tmp * -(r + l));
+    m[0][3] = -(r + l) * tmp;
     tmp = 1 / (t - b);
     m[1][0] = 0;
     m[1][1] = 2 * tmp;
     m[1][2] = 0;
-    m[1][3] = (tmp * -(t + b));
+    m[1][3] = -(t + b) * tmp;
     m[2][0] = 0;
     m[2][1] = 0;
     tmp = 1 / (f - n);
     m[2][2] = (-2 * tmp);
-    m[2][3] = (tmp * -(f + n));
+    m[2][3] = -(f + n) * tmp;
     m[3][0] = 0;
     m[3][1] = 0;
     m[3][2] = 0;
@@ -810,7 +810,7 @@ void C_MTXPerspective(Mtx44 m, f32 fovY, f32 aspect, f32 n, f32 f)
     f32 cot;
     f32 tmp;
 
-    angle = (0.5f * fovY);
+    angle = fovY * 0.5f;
     angle = (angle * 0.01745329252f);
     cot = 1 / tanf(angle);
     m[0][0] = (cot / aspect);
@@ -824,8 +824,8 @@ void C_MTXPerspective(Mtx44 m, f32 fovY, f32 aspect, f32 n, f32 f)
     m[2][0] = 0;
     m[2][1] = 0;
     tmp = 1 / (f - n);
-    m[2][2] = (-(n + f) * tmp);
-    m[2][3] = (tmp * -(n * (f + f)));
+    m[2][2] = -(f + n) * tmp;
+    m[2][3] = -(2 * f * n) * tmp;
     m[3][0] = 0;
     m[3][1] = 0;
     m[3][2] = -1;

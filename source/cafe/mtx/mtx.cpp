@@ -674,10 +674,10 @@ void C_MTXLookAt(Mtx m, const Vec* camPos, const Vec* camUp, const Vec* target)
     vLook.x = camPos->x - target->x;
     vLook.y = camPos->y - target->y;
     vLook.z = camPos->z - target->z;
-    C_VECNormalize(&vLook, &vLook);
-    C_VECCrossProduct(camUp, &vLook, &vRight);
-    C_VECNormalize(&vRight, &vRight);
-    C_VECCrossProduct(&vLook, &vRight, &vUp);
+    ASM_VECNormalize(&vLook, &vLook);
+    ASM_VECCrossProduct(camUp, &vLook, &vRight);
+    ASM_VECNormalize(&vRight, &vRight);
+    ASM_VECCrossProduct(&vLook, &vRight, &vUp);
     m[0][0] = vRight.x;
     m[0][1] = vRight.y;
     m[0][2] = vRight.z;
