@@ -17,9 +17,14 @@ public:
     {
     }
 
-    virtual ~DynamicData();
+    virtual ~DynamicData()
+    {
+    }
 
-    virtual String GetDataType() const;
+    virtual String GetDataType() const
+    {
+        return m_Type;
+    }
 
     String m_Type;
     bool m_bCompactFormat;

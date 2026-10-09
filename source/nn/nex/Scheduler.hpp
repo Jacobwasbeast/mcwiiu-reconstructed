@@ -1,6 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_SCHEDULER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_SCHEDULER_HPP
 
+#include "nn/nex/Core.hpp"
 #include "nn/nex/CriticalSection.hpp"
 #include "nn/nex/EventHandler.hpp"
 #include "nn/nex/Job.hpp"
@@ -52,6 +53,15 @@ public:
 
     Scheduler(unsigned int uiTraceMask = 8, SchedulerWorkerThread* pWorkerThreads = 0);
     virtual ~Scheduler();
+
+    static Scheduler* GetInstance()
+    {
+        Core* pCore = Core::GetInstance();
+        if (pCore == 0)
+            return 0;
+
+        return pCore->GetScheduler();
+    }
 
     CriticalSection& GetCriticalSection()
     {

@@ -10,7 +10,11 @@ namespace nex
 namespace
 {
 
-const int MESSAGE_INITIAL_RESULT = 0x00010001;
+enum
+{
+    MESSAGE_INITIAL_RESULT = 0x00010001
+};
+
 const unsigned int MESSAGE_SIZE_FIELD_LENGTH = 4;
 
 }
@@ -19,9 +23,8 @@ Message::Message()
     : ByteStream(),
       m_Result()
 {
+    m_uiBufferState = 0;
     m_uiCommonStateC = 0;
-    m_uiBufferStateA = 0;
-    m_uiBufferStateB = 0;
 
     InitCommon();
     InitBuffer();
@@ -32,14 +35,12 @@ Message::Message(Buffer* pBuffer)
     : ByteStream(pBuffer),
       m_Result()
 {
+    m_uiBufferState = 0;
     m_uiCommonStateC = 0;
-    m_uiBufferStateA = 0;
-    m_uiBufferStateB = 0;
 
     InitCommon();
 
-    m_uiBufferStateA = 0;
-    m_uiBufferStateB = 0;
+    m_uiBufferState = 0;
     m_uiBufferFlag = 0;
 
     SetToBegining();
@@ -55,12 +56,12 @@ Message::~Message()
 
 void Message::InitCommon()
 {
-    m_pSourceEndPoint = 0;
-    m_bCompactFormat = 0;
-    m_uiCommonStateB = 0;
-    m_uiCommonStateA = 0;
-    m_uiCommonStateD = 0;
     m_uiCommonFlag = 0;
+    m_bCompactFormat = 0;
+    m_uiCommonStateD = 0;
+    m_uiCommonStateA = 0;
+    m_uiCommonStateB = 0;
+    m_pSourceEndPoint = 0;
 }
 
 void Message::InitBuffer()
@@ -68,13 +69,12 @@ void Message::InitBuffer()
     Clear();
 
     m_uiBufferFlag = 0;
-    m_uiBufferStateA = 0;
-    m_uiBufferStateB = 0;
+    m_uiBufferState = 0;
 
     SetLength(MESSAGE_SIZE_FIELD_LENGTH);
     SetSize();
 
-    if (m_pBuffer->GetLength() > MESSAGE_SIZE_FIELD_LENGTH - 1)
+    if (m_pBuffer->GetLength() >= MESSAGE_SIZE_FIELD_LENGTH)
     {
         m_uiPosition = MESSAGE_SIZE_FIELD_LENGTH;
     }
@@ -102,7 +102,7 @@ void Message::SetToBegining()
 {
     m_Result = qResult(MESSAGE_INITIAL_RESULT);
 
-    if (m_pBuffer->GetLength() > MESSAGE_SIZE_FIELD_LENGTH - 1)
+    if (m_pBuffer->GetLength() >= MESSAGE_SIZE_FIELD_LENGTH)
     {
         m_uiPosition = MESSAGE_SIZE_FIELD_LENGTH;
     }

@@ -36,7 +36,7 @@ inline bool IsSameStation(const StationURL& rLeft, const StationURL& rRight)
 
 NATTraversalEngine::NATTraversalEngine()
     : m_unsupportedNATReferee(), m_pRelay(0), m_pEcho(0), m_pStream(0), m_pTransportAdapter(0),
-      m_pendingURLs(), m_activeProbes(), m_completedProbes(), m_nextProbeTime(),
+      m_activeProbes(), m_completedProbes(), m_nextProbeTime(),
       m_pCheckAndRelayJob(0), m_callContext(), m_bSendingDummyPackets(false),
       m_nextDummyPacketTime(), m_uiProbeRequestCount(0), m_probeRequests(),
       m_relayServerAddress(L""), m_uiRelayServerPort(0), m_bUseRelayServer(false)
@@ -49,7 +49,7 @@ NATTraversalEngine::~NATTraversalEngine()
 
 bool NATTraversalEngine::RegisterEcho(NATEchoInterface* pEcho)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_pEcho != 0)
         return false;
 
@@ -59,7 +59,7 @@ bool NATTraversalEngine::RegisterEcho(NATEchoInterface* pEcho)
 
 bool NATTraversalEngine::UnregisterEcho()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_pEcho == 0)
         return false;
 
@@ -114,7 +114,7 @@ bool NATTraversalEngine::ShouldUseRelay(const StationURL& rStationURL, bool bChe
 
 bool NATTraversalEngine::PrepareNATTraversal(StationURL stationURL)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_pRelay == 0)
         return false;
 
@@ -151,7 +151,7 @@ bool NATTraversalEngine::PrepareNATTraversal(StationURL stationURL)
 bool NATTraversalEngine::PrepareNATTraversal(const qList<StationURL>& rStationURLs)
 {
     {
-        ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
         if (m_pRelay == 0)
             return false;
     }
@@ -186,7 +186,7 @@ void NATTraversalEngine::ReportNATProperties(NATProperties::MappingProperties ma
 
 void NATTraversalEngine::TimeoutProbeRequest(const Time& rTime)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     ProbeRequestMap::iterator it = m_probeRequests.begin();
     while (it != m_probeRequests.end())
     {
@@ -196,7 +196,7 @@ void NATTraversalEngine::TimeoutProbeRequest(const Time& rTime)
         }
         else
         {
-            m_completedProbes.m_probes.push_back(
+            m_completedProbes.push_back(
                 URLProbe(it->second.second, s_iProbeTimeout, PROBE_INTERVAL, PROBE_MAX_COUNT));
             ProbeRequestMap::iterator expired = it;
             ++it;
@@ -207,12 +207,12 @@ void NATTraversalEngine::TimeoutProbeRequest(const Time& rTime)
 
 void NATTraversalEngine::StopProbes()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     std::list<unsigned int, MemAllocator<unsigned int> > completedIDs;
     std::list<StationURL, MemAllocator<StationURL> > relayURLs;
 
-    URLProbeList::ProbeList::iterator probe = m_activeProbes.m_probes.begin();
-    while (probe != m_activeProbes.m_probes.end())
+    URLProbeList::iterator probe = m_activeProbes.begin();
+    while (probe != m_activeProbes.end())
     {
         if (probe->UpdateIsNeeded(Time(Time::GetTime())) && probe->m_iPingTime == -1)
         {
@@ -225,7 +225,7 @@ void NATTraversalEngine::StopProbes()
         {
             if (!CanUseRelay(probe->m_stationURL, true) ||
                 probe->m_stationURL.GetProbeRequestInitiation())
-                m_completedProbes.m_probes.push_back(*probe);
+                m_completedProbes.push_back(*probe);
             else
                 relayURLs.push_back(probe->m_stationURL);
 
@@ -257,8 +257,8 @@ void NATTraversalEngine::StopProbes()
                 }
             }
 
-            URLProbeList::ProbeList::iterator failed = probe;
-            probe = m_activeProbes.m_probes.erase(failed);
+            URLProbeList::iterator failed = probe;
+            probe = m_activeProbes.erase(failed);
         }
         else
         {
@@ -278,22 +278,22 @@ void NATTraversalEngine::StopProbes()
             }
 
             completedIDs.push_back(uiConnectionID);
-            m_completedProbes.m_probes.push_back(*probe);
-            URLProbeList::ProbeList::iterator succeeded = probe;
-            probe = m_activeProbes.m_probes.erase(succeeded);
+            m_completedProbes.push_back(*probe);
+            URLProbeList::iterator succeeded = probe;
+            probe = m_activeProbes.erase(succeeded);
         }
     }
 
-    probe = m_activeProbes.m_probes.begin();
-    while (!completedIDs.empty() && probe != m_activeProbes.m_probes.end())
+    probe = m_activeProbes.begin();
+    while (!completedIDs.empty() && probe != m_activeProbes.end())
     {
         if (std::find(completedIDs.begin(), completedIDs.end(),
                 probe->m_stationURL.GetRVConnectionID()) != completedIDs.end())
         {
             probe->Trace(TRACE_NAT_PROBE);
-            m_completedProbes.m_probes.push_back(*probe);
-            URLProbeList::ProbeList::iterator moved = probe;
-            probe = m_activeProbes.m_probes.erase(moved);
+            m_completedProbes.push_back(*probe);
+            URLProbeList::iterator moved = probe;
+            probe = m_activeProbes.erase(moved);
         }
         else
         {
@@ -301,8 +301,8 @@ void NATTraversalEngine::StopProbes()
         }
     }
 
-    probe = m_completedProbes.m_probes.begin();
-    while (probe != m_completedProbes.m_probes.end())
+    probe = m_completedProbes.begin();
+    while (probe != m_completedProbes.end())
     {
         if (Time::GetTime() <= probe->m_expirationTime)
         {
@@ -311,8 +311,8 @@ void NATTraversalEngine::StopProbes()
         else
         {
             probe->Trace(TRACE_NAT_PROBE);
-            URLProbeList::ProbeList::iterator expired = probe;
-            probe = m_completedProbes.m_probes.erase(expired);
+            URLProbeList::iterator expired = probe;
+            probe = m_completedProbes.erase(expired);
         }
     }
 
@@ -358,8 +358,8 @@ void NATTraversalEngine::StopSendDummyPacket()
 int NATTraversalEngine::GetNumOfSendingProbes()
 {
     int iCount = 0;
-    for (URLProbeList::ProbeList::iterator it = m_activeProbes.m_probes.begin();
-         it != m_activeProbes.m_probes.end(); ++it)
+    for (URLProbeList::iterator it = m_activeProbes.begin();
+         it != m_activeProbes.end(); ++it)
     {
         if ((it->m_stationURL.GetType() >> STATION_URL_TYPE_BIT) & 1)
             ++iCount;
@@ -369,14 +369,14 @@ int NATTraversalEngine::GetNumOfSendingProbes()
 
 void NATTraversalEngine::ClearProbeList()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
-    m_activeProbes.m_probes.clear();
-    m_completedProbes.m_probes.clear();
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+    m_activeProbes.clear();
+    m_completedProbes.clear();
 }
 
 int NATTraversalEngine::GetURLPingTime(const StationURL& rStationURL)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     URLProbe* pProbe = m_completedProbes.FindProbe(rStationURL);
     if (pProbe != 0)
         return pProbe->m_iPingTime;
@@ -386,7 +386,7 @@ int NATTraversalEngine::GetURLPingTime(const StationURL& rStationURL)
 
 int NATTraversalEngine::GetCIDPingTime(unsigned int uiConnectionID)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     URLProbe* pProbe = m_completedProbes.FindProbe(uiConnectionID);
     if (pProbe != 0)
         return pProbe->m_iPingTime;
@@ -396,7 +396,7 @@ int NATTraversalEngine::GetCIDPingTime(unsigned int uiConnectionID)
 
 bool NATTraversalEngine::GetUpdatedURL(const StationURL& rStationURL, StationURL* pUpdatedURL)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     URLProbe* pProbe = m_completedProbes.FindProbe(rStationURL);
     if (pProbe != 0 && pProbe->m_stationURL != rStationURL)
     {
@@ -409,7 +409,7 @@ bool NATTraversalEngine::GetUpdatedURL(const StationURL& rStationURL, StationURL
 
 bool NATTraversalEngine::GetProbeFailed(const StationURL& rStationURL)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     URLProbe* pProbe = m_completedProbes.FindProbe(rStationURL);
     if (pProbe != 0)
         return pProbe->m_iPingTime == -1;
@@ -434,7 +434,7 @@ bool NATTraversalEngine::GetProbeFailed(const StationURL& rStationURL)
 
 NATTraversalResult NATTraversalEngine::GetNATTraversalResult(unsigned int uiConnectionID)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     URLProbe* pProbe = m_completedProbes.FindProbe(uiConnectionID);
     if (pProbe == 0)
         return NAT_TRAVERSAL_UNKNOWN;

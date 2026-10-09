@@ -103,30 +103,28 @@ bool Router::RouteMessage(Buffer* pBuffer, const InetAddress* pAddress, unsigned
     InetAddress route;
     m_pRoutingStream->m_routingTable.Find(*pAddress, route);
     PacketOut* pPacket = RoutingStream::BuildRoutingPacket(pBuffer, ROUTING_PACKET_TYPE, *pAddress);
-    if (pPacket != 0)
+    if (pPacket == 0)
+        return false;
+    if (!pPacket->IsValid())
     {
-        if (pPacket->IsValid())
-        {
-            pPacket->m_address = route;
-            RoutingStream* pStream = m_pRoutingStream;
-            const bool bSent = pStream->m_pTransport->Send(uiPort, pStream->m_Type,
-                ROUTING_STREAM_ID, ROUTING_STREAM_ID, pPacket, true);
-            pPacket->ReleaseRef();
-            return bSent;
-        }
         delete pPacket;
+        return false;
     }
-    return false;
+    pPacket->m_address = route;
+    RoutingStream* pStream = m_pRoutingStream;
+    const bool bSent = pStream->m_pTransport->Send(uiPort, pStream->m_Type,
+        ROUTING_STREAM_ID, ROUTING_STREAM_ID, pPacket, true);
+    pPacket->ReleaseRef();
+    return bSent;
 }
 
 void Router::Clean()
 {
-    CriticalSection& csScheduler = Core::GetInstance()->GetScheduler()->GetCriticalSection();
-    csScheduler.Enter();
-    m_pRoutingStream->m_routingTable.Clean();
-    m_pRoutingStream->m_history.clear();
-    m_pRoutingStream->m_denied.clear();
-    csScheduler.Leave();
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+    RoutingStream* pStream = m_pRoutingStream;
+    pStream->m_routingTable.Clean();
+    pStream->m_history.clear();
+    pStream->m_denied.clear();
 }
 
 unsigned int Router::GetRoutingIPAddressTemplate()

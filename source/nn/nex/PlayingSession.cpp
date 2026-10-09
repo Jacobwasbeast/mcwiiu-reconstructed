@@ -13,9 +13,8 @@ PlayingSession::~PlayingSession()
 
 MatchmakeSession* PlayingSession::GetMatchmakeSession() const
 {
-    Gathering* pGathering = m_Gathering.GetObject();
-    if (pGathering != 0 && pGathering->IsAKindOf(String(L"MatchmakeSession")))
-        return static_cast<MatchmakeSession*>(pGathering);
+    if (m_Gathering.GetObject() != 0 && m_Gathering.GetObject()->IsAKindOf(String(L"MatchmakeSession")))
+        return static_cast<MatchmakeSession*>(m_Gathering.GetObject());
     return 0;
 }
 

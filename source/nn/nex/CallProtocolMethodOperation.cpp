@@ -2,14 +2,17 @@
 
 namespace nn { namespace nex {
 
-CallProtocolMethodOperation::CallProtocolMethodOperation()
-    : Operation(0), m_attemptCount(0), m_postponed(false), m_callUserContext(),
-      m_postponementDelay(0), m_result()
+enum
 {
-}
+    CALL_RESULT_SUCCESS = 0x00010001
+};
 
-CallProtocolMethodOperation::~CallProtocolMethodOperation()
+CallProtocolMethodOperation::CallProtocolMethodOperation()
+    : Operation(0)
 {
+    m_attemptCount = 0;
+    m_postponed = false;
+    m_postponementDelay = 0;
 }
 
 unsigned int CallProtocolMethodOperation::GetType() const
@@ -34,14 +37,24 @@ void CallProtocolMethodOperation::PostponeOperation(int delay)
 
 void CallProtocolMethodOperation::InitializeForNewCallAttempt()
 {
-    m_postponed = false;
     ++m_attemptCount;
-    m_result = qResult(0x10001);
+    m_postponed = false;
+    m_result = qResult(CALL_RESULT_SUCCESS);
 }
 
 unsigned int CallProtocolMethodOperation::GetAttemptCount()
 {
     return m_attemptCount;
+}
+
+void CallProtocolMethodOperation::AttachUserContext(const UserContext& context)
+{
+    m_callUserContext = context;
+}
+
+UserContext CallProtocolMethodOperation::GetUserContext()
+{
+    return m_callUserContext;
 }
 
 }}

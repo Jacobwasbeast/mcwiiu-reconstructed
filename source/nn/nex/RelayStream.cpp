@@ -17,7 +17,6 @@ namespace
 
 const unsigned char RELAY_OUTGOING_BYTE = 0xD0;
 const unsigned int RELAY_TYPE_MASK = 0xF;
-const unsigned int RELAY_INVALID_ID = 0xFFFFFFFFu;
 const unsigned int RELAY_ROUTING_TIMEOUT_FACTOR = 3;
 const PacketType RELAY_PACKET_TYPE = static_cast<PacketType>(0xF);
 

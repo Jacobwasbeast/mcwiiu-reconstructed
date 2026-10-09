@@ -18,11 +18,10 @@ const unsigned int TRACE_MASK = 0x100000;
 }
 
 TransportBufferSet::TransportBufferSet(TransportBuffer* pTransportBuffer, int iCount)
-    : m_useInfos(iCount), m_freeInfos(iCount), m_uiBufferSize(DEFAULT_BUFFER_SIZE),
-      m_criticalSection(TRACE_MASK), m_uiEmptyDropCount(0), m_pTransportBuffer(pTransportBuffer)
+    : m_bHasUse(false), m_bFull(false), m_useInfos(iCount), m_freeInfos(iCount),
+      m_uiBufferSize(DEFAULT_BUFFER_SIZE), m_criticalSection(TRACE_MASK), m_uiEmptyDropCount(0),
+      m_pTransportBuffer(pTransportBuffer)
 {
-    m_bHasUse = false;
-    m_bFull = false;
     for (int i = 0; i < iCount; ++i)
         m_freeInfos.push(SpecialNew<TransportBufferInfo>(0, 0));
 }
@@ -44,16 +43,14 @@ TransportBufferInfo* TransportBufferSet::PopNewSetInfo()
         return 0;
     }
     Buffer* pBuffer;
-    if (m_pTransportBuffer == 0)
-        pBuffer = new Buffer(m_uiBufferSize, 0);
-    else
+    if (m_pTransportBuffer != 0)
         pBuffer = m_pTransportBuffer->AllocateBuffer(m_uiBufferSize);
-    if (pBuffer != 0)
-    {
-        m_bHasUse = true;
-        return CreateInfo_(pBuffer);
-    }
-    return 0;
+    else
+        pBuffer = new Buffer(m_uiBufferSize, 0);
+    if (pBuffer == 0)
+        return 0;
+    m_bHasUse = true;
+    return CreateInfo_(pBuffer);
 }
 
 TransportBufferInfo* TransportBufferSet::CreateInfo_(Buffer* pBuffer)
@@ -67,19 +64,15 @@ TransportBufferInfo* TransportBufferSet::CreateInfo_(Buffer* pBuffer)
 
 TransportBufferInfo* TransportBufferSet::PopNewUseInfo()
 {
-    CriticalSection* pLock = &m_criticalSection;
-    pLock->Enter();
+    ScopedCS cs(&m_criticalSection);
     TransportBufferInfo* pInfo = 0;
     if (!m_useInfos.empty())
     {
         pInfo = m_useInfos.front();
         m_useInfos.pop();
     }
-    bool bHasUse = m_useInfos.size() != 0;
-    bool bFull = m_useInfos.size() == static_cast<int>(m_useInfos.capacity());
-    m_bHasUse = bHasUse;
-    m_bFull = bFull;
-    pLock->Leave();
+    m_bHasUse = !m_useInfos.empty();
+    m_bFull = m_useInfos.size() == static_cast<int>(m_useInfos.capacity());
     return pInfo;
 }
 

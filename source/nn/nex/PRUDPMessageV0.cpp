@@ -119,12 +119,12 @@ void PRUDPMessageV0::CalcSignatureHelper(const Packet* pPacket, SignatureMethod 
     StoreSignature(rResult, uiSignature);
 }
 
-int PRUDPMessageV0::CalcSignature(PacketOut* pPacket, SignatureMethod method, const Key* pKey,
+bool PRUDPMessageV0::CalcSignature(PacketOut* pPacket, SignatureMethod method, const Key* pKey,
     Stream::Type type, TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
     SignatureBytes& rResult)
 {
     CalcSignatureHelper(pPacket, method, pKey, type, pGenerator, rResult);
-    return 1;
+    return true;
 }
 
 void PRUDPMessageV0::CalcSignature(Packet* pPacket, SignatureMethod method, const Key* pKey,
@@ -176,7 +176,7 @@ int PRUDPMessageV0::CalcExpectedSignature(const Packet* pPacket, SignatureMethod
     if (method == SIGNATURE_METHOD_9)
         return 3;
 
-    CalcSignatureHelper(pPacket, method, pKey, static_cast<Stream::Type>(pPacket->m_uiSource >> 4),
+    CalcSignatureHelper(pPacket, method, pKey, VirtualPort(pPacket->m_uiSource).GetType(),
         pGenerator, rResult);
     return 0;
 }
@@ -241,7 +241,7 @@ bool PRUDPMessageV0::Unpack(ByteStream* pStream, PacketIn* pPacket, unsigned int
             return false;
     }
 
-    int iStreamType = pPacket->m_uiSource >> 4;
+    int iStreamType = VirtualPort(pPacket->m_uiSource).GetType();
     pBuffer->SetLength(uiPacketLength);
     if (iStreamType > MAX_STREAM_TYPE)
         return false;
@@ -349,7 +349,7 @@ bool PRUDPMessageV0::FastUnpack(ByteStream* pStream, PacketIn* pPacket, unsigned
                         iConsumed = ((uiPayloadLength + uiPacketOffset) - uiStart) + 1;
                     }
 
-                    if ((uiSource >> 4) <= MAX_STREAM_TYPE)
+                    if (VirtualPort(uiSource).GetType() <= MAX_STREAM_TYPE)
                     {
                         uiPosition = uiPacketOffset + uiPayloadLength + 1;
                         if (uiPosition <= pStream->GetBuffer()->GetLength())
@@ -436,7 +436,7 @@ bool PRUDPMessageV0::Pack(PacketOut* pPacket, ByteStream* pStream)
     }
 
     Buffer* pBuffer = pStream->GetBuffer();
-    int iStreamType = pPacket->m_uiSource >> 4;
+    int iStreamType = VirtualPort(pPacket->m_uiSource).GetType();
     if (pPacket->m_pPayload != 0)
     {
         CompressionAlgorithm* pCompression =

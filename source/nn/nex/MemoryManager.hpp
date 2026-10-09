@@ -16,7 +16,11 @@ public:
     typedef void* (*Allocator)(unsigned int);
     typedef void (*Deallocator)(void*);
 
-    static void SetCallbacks(Allocator allocator, Deallocator deallocator);
+    static void SetCallbacks(Allocator allocator, Deallocator deallocator)
+    {
+        s_allocator = allocator;
+        s_deallocator = deallocator;
+    }
 
     virtual ~MemoryManager();
 
@@ -31,6 +35,9 @@ public:
     void EndProtection();
 
 private:
+    static Allocator s_allocator;
+    static Deallocator s_deallocator;
+
     unsigned int m_memoryUsage;
 };
 

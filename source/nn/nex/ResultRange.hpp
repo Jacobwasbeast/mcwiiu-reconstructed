@@ -13,7 +13,12 @@ namespace nex
 class ResultRange : public _DDL_ResultRange
 {
 public:
-    ResultRange(uint32_t uiOffset = 0, uint32_t uiSize = 20);
+    ResultRange(uint32_t uiOffset = 0, uint32_t uiSize = 20)
+    {
+        m_uiOffset = uiOffset;
+        m_uiSize = uiSize;
+    }
+
     virtual ~ResultRange();
 
     virtual uint32_t GetOffset() const;

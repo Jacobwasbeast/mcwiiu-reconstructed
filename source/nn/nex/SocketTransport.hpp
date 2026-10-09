@@ -61,7 +61,6 @@ private:
     {
     public:
         explicit TransportJob(SocketTransport* pTransport);
-        virtual ~TransportJob();
 
         virtual void Execute();
 

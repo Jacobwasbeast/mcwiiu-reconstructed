@@ -11,6 +11,11 @@ namespace nex
 class AutoMatchmakeParam : public _DDL_AutoMatchmakeParam
 {
 public:
+    enum
+    {
+        DEFAULT_PARTICIPATION_COUNT = 1
+    };
+
     virtual ~AutoMatchmakeParam();
 
     void Reset();

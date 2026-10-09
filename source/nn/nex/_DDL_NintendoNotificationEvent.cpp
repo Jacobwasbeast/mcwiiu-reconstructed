@@ -1,6 +1,8 @@
 #include "nn/nex/_DDL_NintendoNotificationEvent.hpp"
 
 #include "nn/nex/DDLClassMetaType.hpp"
+#include <algorithm>
+
 #include "nn/nex/DDLSerialization.hpp"
 #include "nn/nex/Message.hpp"
 
@@ -31,14 +33,14 @@ _DDL_NintendoNotificationEvent& _DDL_NintendoNotificationEvent::operator=(
 void _DDL_NintendoNotificationEvent::Add(Message* pMessage,
                                          const _DDL_NintendoNotificationEvent& rSource)
 {
-    const bool bCompactFormat = pMessage->IsCompactFormat();
     unsigned int uiSizePosition = 0;
+    const bool bCompactFormat = pMessage->IsCompactFormat();
 
     if (!bCompactFormat)
     {
-        const uint8_t uiVersion = rSource.m_uiStructureVersion;
-        const uint8_t uiMaxVersion = NINTENDO_NOTIFICATION_EVENT_MAX_STRUCTURE_VERSION;
-        pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
+        uint8_t uiVersion = rSource.m_uiStructureVersion;
+        uint8_t uiMaxVersion = NINTENDO_NOTIFICATION_EVENT_MAX_STRUCTURE_VERSION;
+        _Type_byte::Add(pMessage, std::min(uiVersion, uiMaxVersion));
         uiSizePosition = pMessage->GetLength();
 
         const uint32_t uiSize = 0;
@@ -54,8 +56,7 @@ void _DDL_NintendoNotificationEvent::Add(Message* pMessage,
         const unsigned int uiEndPosition = pMessage->GetLength();
         pMessage->SetLength(uiSizePosition);
 
-        const uint32_t uiSize = uiEndPosition - uiSizePosition - sizeof(uint32_t);
-        _Type_uint32::Add(pMessage, uiSize);
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }

@@ -1,5 +1,7 @@
 #include "nn/nex/_DDL_MatchmakeSession.hpp"
 
+#include <algorithm>
+
 #include "nn/nex/DDLSerialization.hpp"
 #include "nn/nex/DateTime.hpp"
 #include "nn/nex/Message.hpp"
@@ -67,13 +69,13 @@ _DDL_MatchmakeSession& _DDL_MatchmakeSession::operator=(const _DDL_MatchmakeSess
 void _DDL_MatchmakeSession::Add(Message* pMessage, const _DDL_MatchmakeSession& rSource)
 {
     _DDL_Gathering::Add(pMessage, rSource);
-    const bool bCompactFormat = pMessage->IsCompactFormat();
     unsigned int uiSizePosition = 0;
+    const bool bCompactFormat = pMessage->IsCompactFormat();
     if (!bCompactFormat)
     {
-        const uint8_t uiVersion = rSource.m_uiStructureVersion;
-        const uint8_t uiMaxVersion = MAX_STRUCTURE_VERSION;
-        pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
+        uint8_t uiVersion = rSource.m_uiStructureVersion;
+        uint8_t uiMaxVersion = MAX_STRUCTURE_VERSION;
+        _Type_byte::Add(pMessage, std::min(uiVersion, uiMaxVersion));
         uiSizePosition = pMessage->GetLength();
         const uint32_t uiSize = 0;
         _Type_uint32::Add(pMessage, uiSize);
@@ -94,10 +96,10 @@ void _DDL_MatchmakeSession::Add(Message* pMessage, const _DDL_MatchmakeSession& 
             _DDL_MatchmakeParam::Add(pMessage, rSource.m_MatchmakeParam);
             const unsigned long long uiStartedTime = rSource.m_StartedTime;
             _Type_uint64::Add(pMessage, uiStartedTime);
-            if (rSource.m_uiStructureVersion > 1)
+            if (rSource.m_uiStructureVersion >= 2)
             {
                 _Type_string::Add(pMessage, rSource.m_strUserPassword);
-                if (rSource.m_uiStructureVersion > 2)
+                if (rSource.m_uiStructureVersion >= 3)
                 {
                     _Type_uint32::Add(pMessage, rSource.m_uiReferGatheringID);
                     *pMessage << rSource.m_bUserPasswordEnabled;
@@ -107,8 +109,7 @@ void _DDL_MatchmakeSession::Add(Message* pMessage, const _DDL_MatchmakeSession& 
         }
         const unsigned int uiEndPosition = pMessage->GetLength();
         pMessage->SetLength(uiSizePosition);
-        const uint32_t uiSize = uiEndPosition - uiSizePosition - sizeof(uint32_t);
-        _Type_uint32::Add(pMessage, uiSize);
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }
@@ -170,12 +171,12 @@ void _DDL_MatchmakeSession::Extract(Message* pMessage, _DDL_MatchmakeSession* pD
         pDestination->m_StartedTime = DateTime(uiStartedTime);
         if (pMessage->HasError())
             return;
-        if (pDestination->m_uiStructureVersion > 1)
+        if (pDestination->m_uiStructureVersion >= 2)
         {
             _Type_string::Extract(pMessage, &pDestination->m_strUserPassword);
             if (pMessage->HasError())
                 return;
-            if (pDestination->m_uiStructureVersion > 2)
+            if (pDestination->m_uiStructureVersion >= 3)
             {
                 _Type_uint32::Extract(pMessage, &pDestination->m_uiReferGatheringID);
                 if (pMessage->HasError())

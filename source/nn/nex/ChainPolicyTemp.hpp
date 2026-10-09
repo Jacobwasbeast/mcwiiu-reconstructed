@@ -12,12 +12,12 @@ class ChainPolicyTemp
 public:
     static T& Next(T element)
     {
-        return element->m_pTempNext;
+        return element->m_tempLink.m_pNext;
     }
 
     static T& Previous(T element)
     {
-        return element->m_pTempPrevious;
+        return element->m_tempLink.m_pPrevious;
     }
 };
 

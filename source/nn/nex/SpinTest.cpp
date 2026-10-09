@@ -21,10 +21,6 @@ SpinTest::SpinTest(uint32_t sleepInterval, uint32_t timeout)
 {
 }
 
-SpinTest::~SpinTest()
-{
-}
-
 void SpinTest::LeaveOnTimeout()
 {
     m_state = 2;

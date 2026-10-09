@@ -231,7 +231,7 @@ Packet* QueuingSocket::ExtractIncomingPacket(TransportStreamManager* pStreamMana
 void QueuingSocket::RetransmitFromHistoryPacketQueue(PacketQueue* pQueue, HistoryChain* pHistory,
     unsigned short uiPort)
 {
-    unsigned long long uiNow = Time::GetTime();
+    Time now = Time::GetTime();
     HistoryChain::iterator position = pHistory->begin();
     while (position != pHistory->end())
     {
@@ -244,7 +244,7 @@ void QueuingSocket::RetransmitFromHistoryPacketQueue(PacketQueue* pQueue, Histor
         {
             if (pPacket->m_unknown130 == 0)
             {
-                if (uiNow < pPacket->m_unknown138)
+                if (now < pPacket->m_unknown138)
                 {
                     ++position;
                 }
@@ -261,13 +261,13 @@ void QueuingSocket::RetransmitFromHistoryPacketQueue(PacketQueue* pQueue, Histor
             }
             else if (pPacket->m_unknown130 < 3)
             {
-                if (pPacket->m_unknown138 <= uiNow)
+                if (pPacket->m_unknown138 <= now)
                     pPacket->m_unknown130 = 3;
                 ++position;
             }
-            else
+            else if (pPacket->m_unknown130 == 3)
             {
-                break;
+                position = pHistory->end();
             }
         }
         else

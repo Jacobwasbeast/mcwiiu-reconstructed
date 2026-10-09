@@ -202,20 +202,17 @@ StreamManager* JobBackEndServicesLogin::CreateStreamManager() const
             m_pBackEndServices->m_uiStreamFlags, m_pBackEndServices->m_uiStreamParameter);
     }
 
-    if (!bInitialized)
-    {
-        if (m_pStreamManagerFactory == 0)
-        {
-            pStreamManager->Terminate();
-            delete pStreamManager;
-            pStreamManager = 0;
-        }
-    }
-    else
+    if (bInitialized)
     {
         SecureStream* pSecureStream = new SecureStream();
         pSecureStream->SetAssociatedStream(pStreamManager->GetStream());
         pStreamManager->AssociateSecureStream(pSecureStream, SecureStreamConnectionFilter);
+    }
+    else if (m_pStreamManagerFactory == 0)
+    {
+        pStreamManager->Terminate();
+        delete pStreamManager;
+        pStreamManager = 0;
     }
 
     return pStreamManager;

@@ -1,36 +1,13 @@
 #include "nn/nex/OperationManager.hpp"
 
+#include <algorithm>
+
+#include "nn/nex/CriticalSection.hpp"
+#include "nn/nex/Scheduler.hpp"
+
 namespace nn { namespace nex {
 
-namespace
-{
-
-typedef void (*OperationCallbackMethod)(OperationCallback*, Operation*);
-
-struct OperationCallbackLayout
-{
-    int priority;
-    void** virtualTable;
-};
-
-int CallbackPriority(OperationCallback* callback)
-{
-    return static_cast<OperationCallbackLayout*>(static_cast<void*>(callback))->priority;
-}
-
-void InvokeOperationCallback(OperationCallback* callback, Operation* operation)
-{
-    OperationCallbackLayout* layout =
-        static_cast<OperationCallbackLayout*>(static_cast<void*>(callback));
-    OperationCallbackMethod method =
-        reinterpret_cast<OperationCallbackMethod>(layout->virtualTable[5]);
-    method(callback, operation);
-}
-
-}
-
 OperationManager::OperationManager()
-    : m_callbacks(), m_operations()
 {
 }
 
@@ -40,7 +17,10 @@ OperationManager::~OperationManager()
 
 Operation* OperationManager::GetCurrentOperation() const
 {
-    return m_operations.empty() ? 0 : m_operations.back();
+    if (m_operations.empty())
+        return 0;
+
+    return m_operations.back();
 }
 
 void OperationManager::TraceOperationStack(unsigned long long)
@@ -52,15 +32,15 @@ void OperationManager::TraceOperationStack(unsigned long long)
 
 void OperationManager::InvokeCallbacks(int firstPriority, int lastPriority, Operation* operation)
 {
-    for (CallbackList::const_iterator it = m_callbacks.begin(); it != m_callbacks.end(); ++it)
+    for (CallbackList::iterator it = m_callbacks.begin(); it != m_callbacks.end(); ++it)
     {
-        int priority = CallbackPriority(*it);
-        if (firstPriority <= priority)
+        OperationCallback* callback = *it;
+        if (callback->GetPriority() >= firstPriority)
         {
-            if (lastPriority < priority)
+            if (callback->GetPriority() > lastPriority)
                 return;
 
-            InvokeOperationCallback(*it, operation);
+            callback->CallMethod(operation);
         }
     }
 }
@@ -73,8 +53,7 @@ void OperationManager::OperationBegins(Operation* operation)
 
 void OperationManager::PopOperation(Operation*)
 {
-    if (!m_operations.empty())
-        m_operations.pop_back();
+    m_operations.pop_back();
 }
 
 void OperationManager::OperationEnds(Operation* operation)
@@ -85,30 +64,31 @@ void OperationManager::OperationEnds(Operation* operation)
 
 void OperationManager::RegisterCallback(OperationCallback* callback)
 {
-    CallbackList::iterator position = m_callbacks.end();
-    int priority = CallbackPriority(callback);
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
 
-    for (CallbackList::iterator it = m_callbacks.begin(); it != m_callbacks.end(); ++it)
+    CallbackList::iterator it = m_callbacks.begin();
+    while (it != m_callbacks.end())
     {
-        if (priority < CallbackPriority(*it))
+        if (callback->GetPriority() < (*it)->GetPriority())
         {
-            position = it;
-            break;
+            m_callbacks.insert(it, callback);
+            return;
         }
+        ++it;
     }
 
-    m_callbacks.insert(position, callback);
+    m_callbacks.insert(it, callback);
 }
 
 bool OperationManager::UnregisterCallback(OperationCallback* callback)
 {
-    for (CallbackList::iterator it = m_callbacks.begin(); it != m_callbacks.end(); ++it)
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+
+    CallbackList::iterator it = std::find(m_callbacks.begin(), m_callbacks.end(), callback);
+    if (it != m_callbacks.end())
     {
-        if (*it == callback)
-        {
-            m_callbacks.erase(it);
-            return true;
-        }
+        m_callbacks.erase(it);
+        return true;
     }
 
     return false;

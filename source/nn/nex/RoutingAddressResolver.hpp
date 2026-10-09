@@ -26,6 +26,8 @@ public:
         AddressToIdMap;
 
     void AddMapping(unsigned short uiID, const InetAddress& rAddress);
+    bool RemoveMappingFromID(unsigned short uiID);
+    bool RemoveMappingFromAddress(const InetAddress& rAddress);
     bool ResolveToID(const InetAddress& rAddress, unsigned short* pID) const;
     bool ResolveToAddress(unsigned short uiID, InetAddress* pAddress) const;
     void Trace(unsigned long long uiFilter) const;

@@ -14,14 +14,13 @@ CriticalSection g_profilingUnitCriticalSection(0);
 unsigned int g_nextProfilingUnitID = 0;
 
 ProfilingUnit::ProfilingUnit(const wchar_t* pName, unsigned int uiTraceMask, const wchar_t*)
-    : m_pNext(0)
-    , m_pPrevious(0)
+    : m_link()
     , m_lastResetTime()
     , m_name(pName)
     , m_lastActivity()
     , m_maxTimeActivity()
 {
-    Reset(Time(Time::GetTime()));
+    Reset(Time::GetTime());
 
     m_reserved = 0;
     m_traceMask = uiTraceMask;
@@ -32,8 +31,7 @@ ProfilingUnit::ProfilingUnit(const wchar_t* pName, unsigned int uiTraceMask, con
     CS().Enter();
 
     GetList().push_back(this);
-    m_id = g_nextProfilingUnitID;
-    ++g_nextProfilingUnitID;
+    m_id = g_nextProfilingUnitID++;
 
     CS().Leave();
 }
@@ -52,12 +50,12 @@ ProfilingUnit::~ProfilingUnit()
 
 void ProfilingUnit::Reset(Time time)
 {
-    m_lastTime = 0;
+    m_nbOccurences = 0;
+    m_totalTime = 0;
+    m_totalSquaredTime = 0;
     m_minTime = 0xffffffffffffffffull;
     m_maxTime = 0;
-    m_totalSquaredTime = 0;
-    m_totalTime = 0;
-    m_nbOccurences = 0;
+    m_lastTime = 0;
     m_lastResetTime = time;
     m_nbLogs = 0;
 }

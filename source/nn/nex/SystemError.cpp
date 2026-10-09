@@ -14,15 +14,14 @@ SystemError::~SystemError()
 void SystemError::SignalError(wchar_t*, unsigned int, unsigned int errorCode,
                               unsigned int errorDetail)
 {
-    GlobalVariables::GetInstancePtr()->GetErrorCode().GetRef() = errorCode;
-    GlobalVariables::GetInstancePtr()->GetErrorDetail().GetRef() = errorDetail;
+    GlobalVariables::GetInstancePtr()->GetErrorCode().SetValue(errorCode);
+    GlobalVariables::GetInstancePtr()->GetErrorDetail().SetValue(errorDetail);
 }
 
 void SystemError::EraseErrorElements(unsigned int threadId)
 {
-    GlobalVariables* globals = GlobalVariables::GetInstancePtr();
-    globals->GetErrorCode().ClearValue(threadId);
-    globals->GetErrorDetail().ClearValue(threadId);
+    g_globalVariables->m_errorCode.ClearValue(threadId);
+    g_globalVariables->m_errorDetail.ClearValue(threadId);
 }
 
 }

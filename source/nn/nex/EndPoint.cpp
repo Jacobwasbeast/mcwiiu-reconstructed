@@ -11,19 +11,11 @@ namespace nex
 namespace
 {
 
-const wchar_t* const s_pConnectionStateStrings[] =
+enum
 {
-    L"NotConnected",
-    L"Connecting",
-    L"Connected",
-    L"Disconnecting",
-    L"Faulty"
+    ENDPOINT_RESULT_SUCCESS = 0x00010001,
+    ENDPOINT_RESULT_ALREADY_REGISTERED = static_cast<int>(0x8001000Eu)
 };
-
-const unsigned int CONNECTION_STATE_STRING_COUNT = 5;
-
-const int ENDPOINT_RESULT_SUCCESS = 0x00010001;
-const int ENDPOINT_RESULT_ALREADY_REGISTERED = 0x8001000E;
 
 const unsigned int KEEP_ALIVE_DISABLED = 0xFFFFFFFF;
 
@@ -34,16 +26,16 @@ EndPointInfoInterface::~EndPointInfoInterface()
 }
 
 EndPoint::EndPoint(ConnectionOrientedStream* pStream, const StationURL* pStationURL)
-    : m_pStream(pStream)
-    , m_stationURL(*pStationURL)
-    , m_pEventHandler(0)
-    , m_pSecureEndPoint(0)
-    , m_uiConnectionID(0)
-    , m_uiPrincipalID(0)
-    , m_iOpenCount(0)
-    , m_BroadcastState(BroadcastDisabled)
-    , m_uiCtorFlag(0)
+    : m_stationURL(*pStationURL)
 {
+    m_pStream = pStream;
+    m_uiCtorFlag = 0;
+    m_pSecureEndPoint = 0;
+    m_pEventHandler = 0;
+    m_uiPrincipalID = 0;
+    m_uiConnectionID = 0;
+    m_iOpenCount = 0;
+    m_BroadcastState = BroadcastDisabled;
 }
 
 EndPoint::~EndPoint()
@@ -60,13 +52,13 @@ void EndPoint::DisableKeepAlive()
 
 qResult EndPoint::RegisterEventHandler(EndPointEventHandler* pEventHandler)
 {
-    if (m_pEventHandler != 0)
+    if (m_pEventHandler == 0)
     {
-        return qResult(ENDPOINT_RESULT_ALREADY_REGISTERED);
+        m_pEventHandler = pEventHandler;
+        return qResult(ENDPOINT_RESULT_SUCCESS);
     }
 
-    m_pEventHandler = pEventHandler;
-    return qResult(ENDPOINT_RESULT_SUCCESS);
+    return qResult(ENDPOINT_RESULT_ALREADY_REGISTERED);
 }
 
 void EndPoint::SetErrorHolder(FirstErrorHolder* pErrorHolder)
@@ -104,7 +96,7 @@ void EndPoint::SetConnectionID(unsigned int uiConnectionID)
 
         if (uiConnectionID != 0)
         {
-            m_pStream->AddCIDEndPointAssociation(uiConnectionID, this);
+            GetStream()->AddCIDEndPointAssociation(uiConnectionID, this);
         }
     }
 
@@ -122,7 +114,7 @@ void EndPoint::SetPrincipalID(unsigned int uiPrincipalID)
 
         if (uiPrincipalID != 0)
         {
-            m_pStream->AddPIDEndPointAssociation(uiPrincipalID, this);
+            GetStream()->AddPIDEndPointAssociation(uiPrincipalID, this);
         }
     }
 
@@ -144,16 +136,31 @@ void EndPoint::SetBroadcastState(_BroadcastState state)
     m_BroadcastState = state;
 }
 
+EndPointGroup::EndPointGroup()
+{
+}
+
+EndPointGroup::~EndPointGroup()
+{
+}
+
 const wchar_t* EndPoint::GetConnectionStateString() const
 {
-    const unsigned int uiState = static_cast<unsigned int>(GetConnectionState());
-
-    if (uiState < CONNECTION_STATE_STRING_COUNT)
+    switch (GetConnectionState())
     {
-        return s_pConnectionStateStrings[uiState];
+    case NotConnected:
+        return L"NotConnected";
+    case Connecting:
+        return L"Connecting";
+    case Connected:
+        return L"Connected";
+    case Disconnecting:
+        return L"Disconnecting";
+    case Faulty:
+        return L"Faulty";
+    default:
+        return L"Unknown state";
     }
-
-    return L"Unknown state";
 }
 
 }

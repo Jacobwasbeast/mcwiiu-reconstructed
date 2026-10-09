@@ -331,11 +331,6 @@ String Buffer::ToString() const
     return result;
 }
 
-unsigned int Buffer::GetDefaultBufferSize()
-{
-    return s_uiDefaultBufferSize;
-}
-
 unsigned int Buffer::GetAllocateSize(unsigned int uiCurrentSize, unsigned int uiRequiredSize)
 {
     if (uiRequiredSize <= uiCurrentSize)

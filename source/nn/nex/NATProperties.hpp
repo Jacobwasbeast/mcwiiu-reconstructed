@@ -69,6 +69,7 @@ public:
 
 private:
     friend class JobPerformNATCheck;
+    friend class JobCheckNATProperties;
 
     PortIncreaseProperties m_portIncrease;
     String m_interfaceAddress;

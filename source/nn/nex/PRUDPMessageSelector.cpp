@@ -6,13 +6,7 @@
 #include "nn/nex/PacketIn.hpp"
 #include "nn/nex/PacketOut.hpp"
 #include "nn/nex/SignatureBytes.hpp"
-
-namespace __N_19_OnlineCore_Blob_cpp_9428d484
-{
-int PRUDPVersionCheck(const nn::nex::ByteStream* pStream);
-bool PRUDPUnpackCheck(const nn::nex::ByteStream* pStream, unsigned int* pConsumed);
-unsigned int RelayProtocolCheck(const nn::nex::ByteStream* pStream);
-}
+#include "vendor/__N_19_OnlineCore_Blob_cpp_9428d484.hpp"
 
 namespace nn
 {
@@ -34,7 +28,7 @@ PRUDPMessageSelector::~PRUDPMessageSelector()
     delete m_pRelayMessage;
 }
 
-int PRUDPMessageSelector::CalcSignature(PacketOut* pPacket, SignatureMethod method,
+bool PRUDPMessageSelector::CalcSignature(PacketOut* pPacket, SignatureMethod method,
     const Key* pKey, Stream::Type type, TransportSignatureGenerator* pGenerator,
     const SignatureBytes* pSignature, SignatureBytes& rResult)
 {
@@ -64,45 +58,6 @@ int PRUDPMessageSelector::CalcExpectedSignature(const Packet* pPacket, Signature
         pPacket, method, pKey, pGenerator, pSignature, rResult);
 }
 
-bool PRUDPMessageSelector::Unpack(ByteStream* pStream, PacketIn* pPacket, unsigned int* pConsumed)
-{
-    if (__N_19_OnlineCore_Blob_cpp_9428d484::PRUDPUnpackCheck(pStream, pConsumed))
-    {
-        if (__N_19_OnlineCore_Blob_cpp_9428d484::RelayProtocolCheck(pStream))
-            return m_pRelayMessage->Unpack(pStream, pPacket, pConsumed);
-
-        int iVersion = __N_19_OnlineCore_Blob_cpp_9428d484::PRUDPVersionCheck(pStream);
-        if (iVersion >= 0)
-            return m_messages[iVersion]->Unpack(pStream, pPacket, pConsumed);
-    }
-
-    return false;
-}
-
-bool PRUDPMessageSelector::FastUnpack(ByteStream* pStream, PacketIn* pPacket,
-    unsigned int* pConsumed)
-{
-    if (__N_19_OnlineCore_Blob_cpp_9428d484::PRUDPUnpackCheck(pStream, pConsumed))
-    {
-        if (__N_19_OnlineCore_Blob_cpp_9428d484::RelayProtocolCheck(pStream))
-            return m_pRelayMessage->FastUnpack(pStream, pPacket, pConsumed);
-
-        int iVersion = __N_19_OnlineCore_Blob_cpp_9428d484::PRUDPVersionCheck(pStream);
-        if (iVersion >= 0)
-            return m_messages[iVersion]->FastUnpack(pStream, pPacket, pConsumed);
-    }
-
-    return false;
-}
-
-bool PRUDPMessageSelector::Pack(PacketOut* pPacket, ByteStream* pStream)
-{
-    if (pPacket->m_uiSource >> 4 == Stream::Relay)
-        return m_pRelayMessage->Pack(pPacket, pStream);
-
-    return m_messages[pPacket->m_uiVersion]->Pack(pPacket, pStream);
-}
-
 }
 }
 
@@ -124,11 +79,11 @@ const int PRUDP_VERSION_ZERO_MAGIC = -256;
 
 int PRUDPVersionCheck(const nn::nex::ByteStream* pStream)
 {
-    const nn::nex::Buffer* pBuffer = pStream->GetBuffer();
-    if (pBuffer->GetData()[0] != PRUDP_MAGIC_FIRST && pBuffer->GetData()[1] != PRUDP_MAGIC_SECOND)
+    if (pStream->GetBuffer()->GetData()[0] != PRUDP_MAGIC_FIRST
+        && pStream->GetBuffer()->GetData()[1] != PRUDP_MAGIC_SECOND)
         return 0;
 
-    int iVersion = pBuffer->GetData()[2];
+    int iVersion = pStream->GetBuffer()->GetData()[2];
     if (iVersion == 0)
         return PRUDP_VERSION_ZERO_MAGIC;
 
@@ -143,16 +98,64 @@ bool PRUDPUnpackCheck(const nn::nex::ByteStream* pStream, unsigned int* pConsume
     if (pConsumed != 0)
         *pConsumed = 0;
 
-    return pStream->GetBuffer()->GetLength() >= PRUDP_MIN_LENGTH;
+    unsigned int uiLength = pStream->GetBuffer()->GetLength();
+    return uiLength >= PRUDP_MIN_LENGTH;
 }
 
 unsigned int RelayProtocolCheck(const nn::nex::ByteStream* pStream)
 {
-    const nn::nex::Buffer* pBuffer = pStream->GetBuffer();
-    if (pBuffer->GetData()[0] == RELAY_MAGIC_FIRST && pBuffer->GetData()[1] == RELAY_MAGIC_SECOND)
+    if (pStream->GetBuffer()->GetData()[0] == RELAY_MAGIC_FIRST
+        && pStream->GetBuffer()->GetData()[1] == RELAY_MAGIC_SECOND)
         return 1;
 
     return 0;
 }
 
+}
+
+namespace nn
+{
+namespace nex
+{
+
+bool PRUDPMessageSelector::Unpack(ByteStream* pStream, PacketIn* pPacket, unsigned int* pConsumed)
+{
+    if (!__N_19_OnlineCore_Blob_cpp_9428d484::PRUDPUnpackCheck(pStream, pConsumed))
+        return false;
+
+    if (__N_19_OnlineCore_Blob_cpp_9428d484::RelayProtocolCheck(pStream))
+        return m_pRelayMessage->Unpack(pStream, pPacket, pConsumed);
+
+    int iVersion = __N_19_OnlineCore_Blob_cpp_9428d484::PRUDPVersionCheck(pStream);
+    if (iVersion < 0)
+        return false;
+
+    return m_messages[iVersion]->Unpack(pStream, pPacket, pConsumed);
+}
+
+bool PRUDPMessageSelector::FastUnpack(ByteStream* pStream, PacketIn* pPacket,
+    unsigned int* pConsumed)
+{
+    if (!__N_19_OnlineCore_Blob_cpp_9428d484::PRUDPUnpackCheck(pStream, pConsumed))
+        return false;
+
+    if (__N_19_OnlineCore_Blob_cpp_9428d484::RelayProtocolCheck(pStream))
+        return m_pRelayMessage->FastUnpack(pStream, pPacket, pConsumed);
+
+    int iVersion = __N_19_OnlineCore_Blob_cpp_9428d484::PRUDPVersionCheck(pStream);
+    if (iVersion < 0)
+        return false;
+
+    return m_messages[iVersion]->FastUnpack(pStream, pPacket, pConsumed);
+}
+
+bool PRUDPMessageSelector::Pack(PacketOut* pPacket, ByteStream* pStream)
+{
+    if (VirtualPort(pPacket->m_uiSource).GetType() == Stream::Relay)
+        return m_pRelayMessage->Pack(pPacket, pStream);
+
+    return m_messages[pPacket->m_uiVersion]->Pack(pPacket, pStream);
+}
+
+}
 }

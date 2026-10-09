@@ -49,7 +49,7 @@ enum
 
 void CallOperationOnCompletion(CallContext*, const UserContext*)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
 }
 
 }
@@ -82,16 +82,16 @@ BackEndServices::BackEndServices()
     Network::AcquireInstance();
     RVClientCore::AcquireInstance();
     m_uiPort = RootTransport::GetWellKnownPortNumber();
-    m_pTerminateContext = 0;
     m_uiStreamFlags = 0;
     m_uiStreamParameter = 1;
+    m_reserved0 = false;
     m_pNotificationEventManager = 0;
     m_pNintendoNotificationEventManager = 0;
-    m_reserved0 = false;
     m_pStreamManagerFactory = 0;
     m_pLoginJob = 0;
     m_pLogoutJob = 0;
     m_pTerminateJob = 0;
+    m_pTerminateContext = 0;
     m_pNotificationEventManager = new NotificationEventManager(0);
     m_pNotificationEventManager->SetProtocolID(NOTIFICATION_EVENT_PROTOCOL_ID);
     m_pNotificationEventManager->SetFlag(NOTIFICATION_PROTOCOL_FLAG);
@@ -151,7 +151,7 @@ bool BackEndServices::TerminateJobIsInProgress() const
 
 bool BackEndServices::TerminateImpl()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (TerminateJobIsInProgress())
         return false;
 
@@ -163,7 +163,7 @@ bool BackEndServices::TerminateImpl()
 
     m_pTerminateJob = new JobBackEndServicesTerminate(m_pTerminateContext->m_uiCallId, this);
     m_pTerminateJob->AddRef();
-    Core::GetInstance()->GetScheduler()->Queue(m_pTerminateJob, false);
+    Scheduler::GetInstance()->Queue(m_pTerminateJob, false);
     return true;
 }
 
@@ -209,20 +209,19 @@ SecureStream* BackEndServices::GetSecureStream() const
 SecureConnectionClient* BackEndServices::GetSecureConnectionClient() const
 {
     SecureStream* pSecureStream = GetSecureStream();
-    SecureConnectionClient* pClient = 0;
-    if (pSecureStream != 0)
-    {
-        pClient = pSecureStream->GetSecureConnectionClient();
-        if (pClient != 0)
-            pClient->SetDefaultCredentials(m_pCredentials);
-    }
+    if (pSecureStream == 0)
+        return 0;
+
+    SecureConnectionClient* pClient = pSecureStream->GetSecureConnectionClient();
+    if (pClient != 0)
+        pClient->SetDefaultCredentials(m_pCredentials);
 
     return pClient;
 }
 
 qResult BackEndServices::IsConnected() const
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_pLogoutJob != 0 && m_pLogoutJob->GetState() != Job::Complete)
         return qResult(NOT_CONNECTED_RESULT);
 
@@ -244,7 +243,7 @@ qResult BackEndServices::IsConnected() const
 
 bool BackEndServices::Disconnect(CallContext* pCallContext)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     Platform::WarnObsoleteMethod(L"BackEndServices::Disconnect(CallContext*)",
                                  L"BackEndServices::Logout(CallContext*, Credentials*)");
     if (!pCallContext->InitiateCall())
@@ -259,14 +258,14 @@ void BackEndServices::RegisterOperationOnCallContext(CallContext& rCallContext,
 {
     rCallContext.RegisterCompletionCallback(CallOperationOnCompletion, UserContext(&rOperation),
                                             false);
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
 }
 
 void BackEndServices::OnLogoutStart(CallContext& rCallContext)
 {
     if (m_pLogoutOperation == 0)
     {
-        ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
         if (m_pLogoutOperation == 0)
             m_pLogoutOperation = new RendezVousLogoutOperation(*this);
     }
@@ -296,13 +295,13 @@ bool BackEndServices::LogoutImpl(CallContext* pCallContext, Credentials* pCreden
 
     m_pLogoutJob = new JobBackEndServicesLogout(pCallContext->m_uiCallId, this, pCredentials);
     m_pLogoutJob->AddRef();
-    Core::GetInstance()->GetScheduler()->Queue(m_pLogoutJob, false);
+    Scheduler::GetInstance()->Queue(m_pLogoutJob, false);
     return true;
 }
 
 bool BackEndServices::Logout_(CallContext* pCallContext, Credentials* pCredentials)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_pTerminateJob != 0)
     {
         if (m_pTerminateJob->GetState() != Job::Complete)
@@ -364,13 +363,12 @@ void BackEndServices::UnregisterServerProtocols()
 AuthenticationClient* BackEndServices::GetAuthenticationClient() const
 {
     SecureStream* pSecureStream = GetSecureStream();
-    AuthenticationClient* pClient = 0;
-    if (pSecureStream != 0)
-    {
-        pClient = pSecureStream->GetAuthenticationClient();
-        if (pClient != 0)
-            pClient->SetDefaultCredentials(m_pCredentials);
-    }
+    if (pSecureStream == 0)
+        return 0;
+
+    AuthenticationClient* pClient = pSecureStream->GetAuthenticationClient();
+    if (pClient != 0)
+        pClient->SetDefaultCredentials(m_pCredentials);
 
     return pClient;
 }
@@ -443,7 +441,7 @@ bool BackEndServices::LoginImpl(CallContext* pCallContext, qResult* pResult,
                                 AnyObjectHolder<Data, String>* pExtraData)
 {
     Core::GetInstance()->SetTerminateImmediately(false);
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_pTerminateJob != 0)
     {
         if (m_pTerminateJob->GetState() != Job::Complete)
@@ -485,7 +483,7 @@ bool BackEndServices::LoginImpl(CallContext* pCallContext, qResult* pResult,
                                               ppCredentials, pErrorMessage, pExtraData,
                                               m_effectiveLoginTimeout, m_pStreamManagerFactory);
     m_pLoginJob->AddRef();
-    Core::GetInstance()->GetScheduler()->Queue(m_pLoginJob, false);
+    Scheduler::GetInstance()->Queue(m_pLoginJob, false);
     return true;
 }
 
@@ -496,7 +494,7 @@ bool BackEndServices::LoginImplWithData(CallContext* pCallContext, qResult* pRes
                                         const AnyObjectHolder<Data, String>& rExtraData,
                                         Credentials** ppCredentials)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_pTerminateJob != 0)
     {
         if (m_pTerminateJob->GetState() != Job::Complete)
@@ -543,7 +541,7 @@ bool BackEndServices::LoginImplWithData(CallContext* pCallContext, qResult* pRes
                                                       rExtraData, ppCredentials,
                                                       m_effectiveLoginTimeout);
     m_pLoginJob->AddRef();
-    Core::GetInstance()->GetScheduler()->Queue(m_pLoginJob, false);
+    Scheduler::GetInstance()->Queue(m_pLoginJob, false);
     return true;
 }
 
@@ -551,7 +549,7 @@ void BackEndServices::OnLoginStart(CallContext& rCallContext)
 {
     if (m_pLoginOperation == 0)
     {
-        ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
         if (m_pLoginOperation == 0)
             m_pLoginOperation = new RendezVousLoginOperation(*this);
     }

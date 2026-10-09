@@ -11,7 +11,6 @@ namespace
 {
 
 const unsigned int PACKET_OVERHEAD = 0x40;
-const unsigned int SOURCE_PORT_SHIFT = 4;
 const unsigned int HISTORY_BUNDLE_PORT = 1;
 
 bool s_historyBundleReliableEnabled = true;
@@ -29,12 +28,9 @@ int g_historyBundleAge = 182;
 unsigned int g_bundleBufferSize = 1364;
 
 Packet::Packet()
-    : m_pNext(0)
-    , m_pPrevious(0)
-    , m_pTempNext(0)
-    , m_pTempPrevious(0)
-    , m_pHistoryNext(0)
-    , m_pHistoryPrevious(0)
+    : m_link()
+    , m_tempLink()
+    , m_historyLink()
     , m_uiVersion(0)
     , m_uiSource(0)
     , m_uiDestination(0)
@@ -83,7 +79,7 @@ bool Packet::CanHistoryBundle() const
 {
     const unsigned short flags = m_uiTypeAndFlags;
     if ((flags & PACKET_TYPE_MASK) != PACKET_TYPE_DATA ||
-        (m_uiSource >> SOURCE_PORT_SHIFT) != HISTORY_BUNDLE_PORT)
+        VirtualPort(m_uiSource).GetType() != HISTORY_BUNDLE_PORT)
     {
         return false;
     }

@@ -1,5 +1,7 @@
 #include "nn/nex/_DDL_LoginData.hpp"
 
+#include <algorithm>
+
 #include "nn/nex/DDLSerialization.hpp"
 #include "nn/nex/LoginData.hpp"
 #include "nn/nex/Message.hpp"
@@ -63,21 +65,20 @@ void _DDL_LoginData::Add(Message* pMessage, const _DDL_LoginData& rSource)
 {
     _DDL_Data::Add(pMessage, rSource);
 
-    const bool bCompactFormat = pMessage->IsCompactFormat();
     unsigned int uiSizePosition = 0;
+    const bool bCompactFormat = pMessage->IsCompactFormat();
 
     if (!bCompactFormat)
     {
-        const uint8_t uiVersion = rSource.m_uiStructureVersion;
-        const uint8_t uiMaxVersion = LOGIN_DATA_MAX_STRUCTURE_VERSION;
+        uint8_t uiVersion = rSource.m_uiStructureVersion;
+        uint8_t uiMaxVersion = LOGIN_DATA_MAX_STRUCTURE_VERSION;
 
-        pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
+        _Type_byte::Add(pMessage, std::min(uiVersion, uiMaxVersion));
 
         uiSizePosition = pMessage->GetLength();
 
         const uint32_t uiSize = 0;
-
-        pMessage->Append(reinterpret_cast<const unsigned char*>(&uiSize), SIZE_FIELD_LENGTH, 1);
+        _Type_uint32::Add(pMessage, uiSize);
     }
 
     pMessage->Append(reinterpret_cast<const unsigned char*>(&rSource.m_iValue), 1, 1);
@@ -125,6 +126,8 @@ void _DDL_LoginData::Extract(Message* pMessage, _DDL_LoginData* pDestination)
     }
 
     const unsigned int uiStartPosition = pMessage->GetPosition();
+    if (pMessage->HasError())
+        return;
 
     pMessage->ExtractPrimitive(&pDestination->m_iValue);
 

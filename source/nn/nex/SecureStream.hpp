@@ -40,7 +40,7 @@ public:
     virtual unsigned int GetEndPointNumber();
     virtual EndPoint* FindEndPointByCID(unsigned int uiConnectionID);
     virtual qVector<unsigned int> GetAllConnectionIDs() const;
-    virtual bool CloseEndPoint(EndPoint* pEndPoint);
+    virtual void CloseEndPoint(EndPoint* pEndPoint);
     virtual void LockEndPointMap();
     virtual void UnlockEndPointMap();
     virtual bool IsCapable(unsigned int uiCapability);
@@ -58,10 +58,7 @@ public:
     bool FilterIncomingConnection(Buffer* pRequest, Buffer* pResponse, EndPoint* pEndPoint);
     void SetCredentials(Credentials* pCredentials);
 
-    void SetAssociatedStream(ConnectionOrientedStream* pAssociatedStream)
-    {
-        m_pAssociatedStream = pAssociatedStream;
-    }
+    void SetAssociatedStream(ConnectionOrientedStream* pAssociatedStream);
 
     ConnectionOrientedStream* GetAssociatedStream() const
     {
@@ -81,6 +78,7 @@ public:
 protected:
     friend class JobBackEndServicesLogin;
     friend class JobBackEndServicesLoginWithData;
+    friend class JobConnectSecureEndPoint;
     ConnectionOrientedStream* m_pAssociatedStream;
     AuthenticationClient* m_pAuthenticationClient;
     SecureConnectionClient* m_pSecureConnectionClient;

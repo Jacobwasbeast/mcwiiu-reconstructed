@@ -21,6 +21,15 @@ public:
     {
     }
 
+    explicit VirtualPort(unsigned char uiValue)
+        : m_uiValue(uiValue)
+    {
+    }
+
+    ~VirtualPort()
+    {
+    }
+
     Stream::Type GetType() const
     {
         return static_cast<Stream::Type>(m_uiValue >> 4);
@@ -36,7 +45,6 @@ public:
         return m_uiValue < rPort.m_uiValue;
     }
 
-private:
     unsigned char m_uiValue;
 };
 

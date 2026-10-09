@@ -2,7 +2,9 @@
 
 #include <stdint.h>
 #include <cwchar>
+#include <netinet/in.h>
 
+#include "nn/nex/BerkeleySocketDriver.hpp"
 #include "nn/nex/GlobalVariables.hpp"
 
 namespace nn
@@ -25,10 +27,23 @@ EventLog* EventLog::GetInstance()
 
 const wchar_t* EventLog::LogLevelToString(LogLevel level)
 {
-    static const wchar_t* const names[] = {L"Debug", L"Info", L"Warning", L"Error", L"Fatal", L"Always"};
-    if (level != Unknown && static_cast<unsigned int>(level) <= Always)
-        return names[level - Debug];
-    return L"Unknown";
+    switch (level)
+    {
+    case Debug:
+        return L"Debug";
+    case Info:
+        return L"Info";
+    case Warning:
+        return L"Warning";
+    case Error:
+        return L"Error";
+    case Fatal:
+        return L"Fatal";
+    case Always:
+        return L"Always";
+    default:
+        return L"Unknown";
+    }
 }
 
 void EventLog::SetLogLevel(LogLevel level)
@@ -48,4 +63,13 @@ void EventLog::AddCustomPrefix(wchar_t* buffer, int capacity, void* context)
 }
 
 }
+}
+
+in_addr_t inet_addr(const char* cp)
+{
+    in_addr address;
+    int result = inet_pton(AF_INET, cp, &address);
+    if (result > 0)
+        return address.s_addr;
+    return INADDR_NONE;
 }

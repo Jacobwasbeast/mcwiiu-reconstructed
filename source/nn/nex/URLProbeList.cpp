@@ -15,23 +15,23 @@ URLProbeList::~URLProbeList()
 
 URLProbe* URLProbeList::FindProbe(const StationURL& rStationURL)
 {
-    for (ProbeList::iterator it = m_probes.begin(); it != m_probes.end(); ++it)
+    for (iterator it = begin(); it != end(); ++it)
     {
-        if (String::IsEqual(it->m_stationURL.GetAddress(), rStationURL.GetAddress()) &&
-            it->m_stationURL.GetRVConnectionID() == rStationURL.GetRVConnectionID())
-            return &*it;
+        URLProbe* pProbe = &*it;
+        if (String::IsEqual(pProbe->m_stationURL.GetAddress(), rStationURL.GetAddress()) &&
+            pProbe->m_stationURL.GetRVConnectionID() == rStationURL.GetRVConnectionID())
+            return pProbe;
     }
     return 0;
 }
 
 URLProbe* URLProbeList::FindProbe(unsigned int uiConnectionID)
 {
-    ProbeList::iterator it = m_probes.begin();
-    while (it != m_probes.end())
+    for (iterator it = begin(); it != end(); ++it)
     {
-        if (it->m_stationURL.GetRVConnectionID() == uiConnectionID)
-            return &*it;
-        ++it;
+        URLProbe* pProbe = &*it;
+        if (pProbe->m_stationURL.GetRVConnectionID() == uiConnectionID)
+            return pProbe;
     }
     return 0;
 }

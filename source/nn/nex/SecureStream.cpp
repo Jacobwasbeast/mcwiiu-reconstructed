@@ -35,6 +35,11 @@ SecureStream::SecureStream()
     m_pCredentials = 0;
 }
 
+void SecureStream::SetAssociatedStream(ConnectionOrientedStream* pAssociatedStream)
+{
+    m_pAssociatedStream = pAssociatedStream;
+}
+
 SecureStream::~SecureStream()
 {
     delete m_pSecureConnectionClient;
@@ -106,7 +111,7 @@ EndPoint* SecureStream::CreateEndPoint(const StationURL* pStationURL)
     return new SecureEndPoint(this, pStationURL);
 }
 
-bool SecureStream::CloseEndPoint(EndPoint* pEndPoint)
+void SecureStream::CloseEndPoint(EndPoint* pEndPoint)
 {
     SecureEndPoint* pSecureEndPoint = static_cast<SecureEndPoint*>(pEndPoint);
     if (pSecureEndPoint->GetAssociatedEndPoint() != 0)

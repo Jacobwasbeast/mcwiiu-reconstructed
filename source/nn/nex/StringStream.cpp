@@ -22,11 +22,11 @@ StringStream::StringStream()
 {
     m_pBuffer = m_aInlineBuffer;
     m_uiCapacity = INLINE_BUFFER_LENGTH;
-    m_bTextualBool = true;
+    m_pCursor = m_aInlineBuffer;
+    m_aInlineBuffer[0] = 0;
     m_bHex = false;
     m_bAddBase = true;
-    m_aInlineBuffer[0] = 0;
-    m_pCursor = m_aInlineBuffer;
+    m_bTextualBool = true;
 }
 
 StringStream::~StringStream()
@@ -58,12 +58,11 @@ void StringStream::ResizeBuffer(unsigned int uiCapacity)
 {
     const int iLength = GetLength();
     wchar_t* pOldBuffer = m_pBuffer;
-    wchar_t* pNewBuffer = SpecialNewArray<wchar_t>(uiCapacity, L"", 0);
 
+    m_pBuffer = SpecialNewArray<wchar_t>(uiCapacity, L"", 0);
     m_uiCapacity = uiCapacity;
-    m_pBuffer = pNewBuffer;
 
-    std::memcpy(pNewBuffer, pOldBuffer, iLength * sizeof(wchar_t) + sizeof(wchar_t));
+    std::memcpy(m_pBuffer, pOldBuffer, iLength * sizeof(wchar_t) + sizeof(wchar_t));
 
     m_pCursor = m_pBuffer + iLength;
 
@@ -72,14 +71,15 @@ void StringStream::ResizeBuffer(unsigned int uiCapacity)
 
 void StringStream::TestFreeRoom(unsigned int uiCount)
 {
-    const unsigned int uiRequired = static_cast<unsigned int>(GetLength()) + uiCount;
-    unsigned int uiCapacity = m_uiCapacity;
+    const unsigned int uiRequired = GetLength() + uiCount;
 
-    if (uiCapacity < uiRequired)
+    if (uiRequired > m_uiCapacity)
     {
+        unsigned int uiCapacity = m_uiCapacity;
+
         while (uiCapacity < uiRequired)
         {
-            uiCapacity = uiCapacity + (uiCapacity >> 1);
+            uiCapacity += uiCapacity / 2;
         }
 
         ResizeBuffer(uiCapacity);
@@ -100,9 +100,9 @@ void StringStream::Clear()
     FreeBuffer();
 
     m_pBuffer = m_aInlineBuffer;
+    m_uiCapacity = INLINE_BUFFER_LENGTH;
     m_pCursor = m_aInlineBuffer;
     m_aInlineBuffer[0] = 0;
-    m_uiCapacity = INLINE_BUFFER_LENGTH;
 }
 
 StringStream& StringStream::operator<<(const wchar_t* pString)
@@ -134,17 +134,17 @@ StringStream& StringStream::operator<<(const void* pPointer)
 
 StringStream& StringStream::operator<<(bool bValue)
 {
-    if (!m_bTextualBool)
+    if (m_bTextualBool)
     {
-        return StreamNumber(static_cast<int>(bValue));
+        if (bValue)
+        {
+            return *this << L"true";
+        }
+
+        return *this << L"false";
     }
 
-    if (bValue)
-    {
-        return *this << L"true";
-    }
-
-    return *this << L"false";
+    return StreamNumber(static_cast<int>(bValue));
 }
 
 StringStream& StringStream::operator<<(unsigned long long uiValue)
@@ -153,29 +153,17 @@ StringStream& StringStream::operator<<(unsigned long long uiValue)
 
     const wchar_t* pFormat;
 
-    if (!m_bHex)
+    if (m_bHex)
     {
-        pFormat = L"%llu";
+        AddBaseIfRequired();
+        pFormat = m_bZeroPadded ? L"%016llx" : L"%llx";
     }
     else
     {
-        AddBaseIfRequired();
-
-        if (m_bZeroPadded)
-        {
-            wchar_t* pPadded = m_pCursor;
-
-            m_pCursor = pPadded
-                + std::swprintf(pPadded, NUMBER_FIELD_LENGTH, L"%016llx", uiValue);
-            return *this;
-        }
-
-        pFormat = L"%llx";
+        pFormat = L"%llu";
     }
 
-    wchar_t* pCursor = m_pCursor;
-
-    m_pCursor = pCursor + std::swprintf(pCursor, NUMBER_FIELD_LENGTH, pFormat, uiValue);
+    m_pCursor += std::swprintf(m_pCursor, NUMBER_FIELD_LENGTH, pFormat, uiValue);
     return *this;
 }
 
@@ -185,28 +173,17 @@ StringStream& StringStream::StreamNumber(int iValue)
 
     const wchar_t* pFormat;
 
-    if (!m_bHex)
+    if (m_bHex)
     {
-        pFormat = L"%d";
+        AddBaseIfRequired();
+        pFormat = m_bZeroPadded ? L"%08x" : L"%x";
     }
     else
     {
-        AddBaseIfRequired();
-
-        if (m_bZeroPadded)
-        {
-            wchar_t* pPadded = m_pCursor;
-
-            m_pCursor = pPadded + std::swprintf(pPadded, NUMBER_FIELD_LENGTH, L"%08x", iValue);
-            return *this;
-        }
-
-        pFormat = L"%x";
+        pFormat = L"%d";
     }
 
-    wchar_t* pCursor = m_pCursor;
-
-    m_pCursor = pCursor + std::swprintf(pCursor, NUMBER_FIELD_LENGTH, pFormat, iValue);
+    m_pCursor += std::swprintf(m_pCursor, NUMBER_FIELD_LENGTH, pFormat, iValue);
     return *this;
 }
 
@@ -216,28 +193,17 @@ StringStream& StringStream::StreamNumber(unsigned int uiValue)
 
     const wchar_t* pFormat;
 
-    if (!m_bHex)
+    if (m_bHex)
     {
-        pFormat = L"%u";
+        AddBaseIfRequired();
+        pFormat = m_bZeroPadded ? L"%08x" : L"%x";
     }
     else
     {
-        AddBaseIfRequired();
-
-        if (m_bZeroPadded)
-        {
-            wchar_t* pPadded = m_pCursor;
-
-            m_pCursor = pPadded + std::swprintf(pPadded, NUMBER_FIELD_LENGTH, L"%08x", uiValue);
-            return *this;
-        }
-
-        pFormat = L"%x";
+        pFormat = L"%u";
     }
 
-    wchar_t* pCursor = m_pCursor;
-
-    m_pCursor = pCursor + std::swprintf(pCursor, NUMBER_FIELD_LENGTH, pFormat, uiValue);
+    m_pCursor += std::swprintf(m_pCursor, NUMBER_FIELD_LENGTH, pFormat, uiValue);
     return *this;
 }
 
@@ -247,28 +213,17 @@ StringStream& StringStream::StreamNumber(unsigned char uiValue)
 
     const wchar_t* pFormat;
 
-    if (!m_bHex)
+    if (m_bHex)
     {
-        pFormat = L"%u";
+        AddBaseIfRequired();
+        pFormat = m_bZeroPadded ? L"%02x" : L"%x";
     }
     else
     {
-        AddBaseIfRequired();
-
-        if (m_bZeroPadded)
-        {
-            wchar_t* pPadded = m_pCursor;
-
-            m_pCursor = pPadded + std::swprintf(pPadded, NUMBER_FIELD_LENGTH, L"%02x", uiValue);
-            return *this;
-        }
-
-        pFormat = L"%x";
+        pFormat = L"%u";
     }
 
-    wchar_t* pCursor = m_pCursor;
-
-    m_pCursor = pCursor + std::swprintf(pCursor, NUMBER_FIELD_LENGTH, pFormat, uiValue);
+    m_pCursor += std::swprintf(m_pCursor, NUMBER_FIELD_LENGTH, pFormat, uiValue);
     return *this;
 }
 
@@ -276,6 +231,13 @@ void zerohex(StringStream& rStream)
 {
     rStream.m_bHex = true;
     rStream.m_bZeroPadded = true;
+}
+
+StringStream& hex(StringStream& rStream)
+{
+    rStream.m_bHex = true;
+    rStream.m_bZeroPadded = false;
+    return rStream;
 }
 
 StringStream& noshowbase(StringStream& rStream)

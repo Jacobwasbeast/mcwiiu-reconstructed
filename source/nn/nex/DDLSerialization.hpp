@@ -204,8 +204,8 @@ public:
 
         pMessage->Append(reinterpret_cast<const unsigned char*>(&uiCount), sizeof(uiCount), 1);
 
-        for (typename qVector<CPPType>::const_iterator it = rSource.begin();
-            it != rSource.end(); ++it)
+        const typename qVector<CPPType>::const_iterator itEnd = rSource.end();
+        for (typename qVector<CPPType>::const_iterator it = rSource.begin(); it != itEnd; ++it)
         {
             Type::Add(pMessage, *it);
         }

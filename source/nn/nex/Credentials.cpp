@@ -10,7 +10,7 @@ Credentials::Credentials()
     , m_value(0)
     , m_state(0)
     , m_name()
-    , m_description()
+    , m_description("")
     , m_streamManager(0)
     , m_authenticationConnection(0)
     , m_secureConnection(0)
@@ -22,7 +22,7 @@ Credentials::Credentials(uint32_t value, StreamManager* streamManager)
     , m_value(value)
     , m_state(0)
     , m_name()
-    , m_description()
+    , m_description("")
     , m_streamManager(streamManager)
     , m_authenticationConnection(0)
     , m_secureConnection(0)
@@ -31,13 +31,14 @@ Credentials::Credentials(uint32_t value, StreamManager* streamManager)
 
 void Credentials::Logout()
 {
-    m_streamManager = 0;
+    if (m_streamManager != 0)
+        m_streamManager = 0;
     m_value = 0;
-    m_authenticationConnection = 0;
     m_state = 0;
+    m_authenticationConnection = 0;
     m_secureConnection = 0;
-    m_name = L"";
-    m_description = L"";
+    m_name = "";
+    m_description = "";
 }
 
 Credentials::~Credentials()
@@ -59,11 +60,15 @@ void Credentials::SetStreamManager(StreamManager* streamManager)
 
 EndPoint* Credentials::GetConnection(unsigned short connectionType) const
 {
-    if (connectionType == 0)
-        return 0;
-    if (connectionType == 10)
+    switch (connectionType)
+    {
+    case 10:
         return m_authenticationConnection;
-    return m_secureConnection;
+    case 0:
+        return 0;
+    default:
+        return m_secureConnection;
+    }
 }
 
 void Credentials::SetAuthenticationConnection(EndPoint* connection)

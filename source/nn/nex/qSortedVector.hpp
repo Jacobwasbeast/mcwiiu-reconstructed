@@ -74,8 +74,8 @@ public:
     iterator find(const K& rKey)
     {
         iterator position = std::lower_bound(m_elements.begin(), m_elements.end(), rKey, KeyLess());
-        if (position != m_elements.end() && rKey < position->first)
-            position = m_elements.end();
+        if (position != end() && rKey < (*position).first)
+            position = end();
 
         return position;
     }
@@ -93,15 +93,7 @@ public:
         return std::pair<iterator, bool>(position, false);
     }
 
-    size_type erase(const K& rKey)
-    {
-        iterator position = find(rKey);
-        if (position == m_elements.end())
-            return 0;
-
-        m_elements.erase(position);
-        return 1;
-    }
+    size_type erase(const K& rKey);
 
 private:
     struct KeyLess
@@ -114,6 +106,19 @@ private:
 
     VectorType m_elements;
 };
+
+template <typename K, typename V>
+typename qSortedVector<K, V>::size_type qSortedVector<K, V>::erase(const K& rKey)
+{
+    iterator position = find(rKey);
+    if (position != m_elements.end())
+    {
+        m_elements.erase(position);
+        return 1;
+    }
+
+    return 0;
+}
 
 }
 }

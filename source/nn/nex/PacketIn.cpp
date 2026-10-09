@@ -13,7 +13,8 @@ PacketIn::PacketIn(int)
 
 PacketIn::PacketIn()
 {
-    SetPayload(new Buffer(Buffer::GetDefaultBufferSize(), 0));
+    Buffer* pPayload = new Buffer;
+    SetPayload(pPayload);
 }
 
 }

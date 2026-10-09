@@ -16,10 +16,25 @@ public:
     explicit ClientProtocol(unsigned int uiFlags);
     virtual ~ClientProtocol();
 
-    virtual const wchar_t* GetType() const;
-    virtual bool IsAKindOf(const wchar_t* pType) const;
-    virtual void EnforceDeclareSysComponentMacro();
-    virtual _Type GetProtocolType() const;
+    virtual const wchar_t* GetType() const
+    {
+        return L"ClientProtocol";
+    }
+
+    virtual bool IsAKindOf(const wchar_t* pType) const
+    {
+        return std::wcscmp(L"ClientProtocol", pType) == 0 || Protocol::IsAKindOf(pType);
+    }
+
+    virtual void EnforceDeclareSysComponentMacro()
+    {
+    }
+
+    virtual _Type GetProtocolType() const
+    {
+        return TYPE_CLIENT;
+    }
+
     virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext) = 0;
     virtual Protocol* CreateResponder() const = 0;
     virtual void SetDefaultCredentials(Credentials* pCredentials);

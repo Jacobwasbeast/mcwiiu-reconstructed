@@ -1,6 +1,5 @@
 #include "nn/nex/BerkeleySocketDriver.hpp"
 
-#include <arpa/inet.h>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/time.h>

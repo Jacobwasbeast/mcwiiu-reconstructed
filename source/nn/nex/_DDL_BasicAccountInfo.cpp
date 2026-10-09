@@ -1,5 +1,7 @@
 #include "nn/nex/_DDL_BasicAccountInfo.hpp"
 
+#include <algorithm>
+
 #include "nn/nex/DDLSerialization.hpp"
 #include "nn/nex/Message.hpp"
 
@@ -31,16 +33,16 @@ bool _DDL_BasicAccountInfo::operator==(const _DDL_BasicAccountInfo& rSource) con
 
 void _DDL_BasicAccountInfo::Add(Message* pMessage, const _DDL_BasicAccountInfo& rSource)
 {
-    const bool bCompactFormat = pMessage->IsCompactFormat();
     unsigned int uiSizePosition = 0;
+    const bool bCompactFormat = pMessage->IsCompactFormat();
     if (!bCompactFormat)
     {
-        const uint8_t uiVersion = rSource.m_uiStructureVersion;
-        const uint8_t uiMaxVersion = BASIC_ACCOUNT_INFO_MAX_STRUCTURE_VERSION;
-        pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
+        uint8_t uiVersion = rSource.m_uiStructureVersion;
+        uint8_t uiMaxVersion = BASIC_ACCOUNT_INFO_MAX_STRUCTURE_VERSION;
+        _Type_byte::Add(pMessage, std::min(uiVersion, uiMaxVersion));
         uiSizePosition = pMessage->GetLength();
         const uint32_t uiSize = 0;
-        pMessage->Append(reinterpret_cast<const unsigned char*>(&uiSize), SIZE_FIELD_LENGTH, 1);
+        _Type_uint32::Add(pMessage, uiSize);
     }
     pMessage->Append(reinterpret_cast<const unsigned char*>(&rSource.m_uiPid), 4, 1);
     _Type_string::Add(pMessage, rSource.m_Name);
@@ -48,9 +50,7 @@ void _DDL_BasicAccountInfo::Add(Message* pMessage, const _DDL_BasicAccountInfo& 
     {
         const unsigned int uiEndPosition = pMessage->GetLength();
         pMessage->SetLength(uiSizePosition);
-        const int32_t iSize =
-            static_cast<int32_t>(uiEndPosition - uiSizePosition - SIZE_FIELD_LENGTH);
-        pMessage->Append(reinterpret_cast<const unsigned char*>(&iSize), SIZE_FIELD_LENGTH, 1);
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }
@@ -66,6 +66,8 @@ void _DDL_BasicAccountInfo::Extract(Message* pMessage, _DDL_BasicAccountInfo* pD
         if (pMessage->HasError())
             return;
         pMessage->ExtractPrimitive(&uiSize);
+        if (pMessage->HasError())
+            return;
     }
     const unsigned int uiStartPosition = pMessage->GetPosition();
     if (pMessage->HasError())

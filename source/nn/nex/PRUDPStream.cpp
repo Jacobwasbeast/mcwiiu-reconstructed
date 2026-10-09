@@ -50,11 +50,9 @@ const int CHECK_REJECTED = 2;
 const int CHECK_DROPPED = 3;
 
 const unsigned int CRITICAL_SECTION_TRACE_MASK = 0x4000;
-const unsigned int DO_WORK_INTERVAL = 26;
+const unsigned int DO_WORK_INTERVAL = 25;
 const unsigned int INFINITE_SILENCE_TIME = 0xFFFFFFFFu;
 const unsigned int RANDOM_SEQUENCE_LIMIT = 0xFFFF;
-const unsigned char STREAM_ID_MASK = 0xF;
-const unsigned char STREAM_TYPE_SHIFT = 4;
 const unsigned char NEGOTIATION_SIGNATURE_VERSION = 1;
 const unsigned int FLAGS_SHIFT = 8;
 const unsigned int FLAGS_WITHOUT_SECURE_MODE = 0xFFFFFE;
@@ -86,24 +84,32 @@ PRUDPStream::PRUDPStream(Stream::Type type, RootTransport* pTransport)
     , m_connectionIDs()
     , m_endPointMapLock(CRITICAL_SECTION_TRACE_MASK)
 {
-    m_lastWorkTime = Time();
+    m_lastWorkTime = 0;
     m_bDestroying = false;
-    unsigned int uiContextId = 0;
+    unsigned int uiContextId = g_usingInstantiationContext;
     if (g_usingInstantiationContext)
         uiContextId = g_instantiationContextVariable->GetRef();
 
     m_uiPreferredPort = 0;
     m_uiContextId = uiContextId;
     m_pTransport = pTransport;
-    m_clock = Time::GetTime() + Platform::GetRandomNumber(RANDOM_SEQUENCE_LIMIT);
+    m_clock = static_cast<unsigned long long>(Time::GetTime()) + Platform::GetRandomNumber(RANDOM_SEQUENCE_LIMIT);
     Core::GetInstance()->SetTerminateImmediatelyCallback(
         PRUDPStreamCoreTerminateImmediatelyCallback, this);
     m_pMessageSelector = &Network::GetInstance()->GetMessageSelector();
-    m_uiVersion = 0;
-    if (type != 0 &&
-        (type < 3 || type == STREAM_TYPE_4 || type == STREAM_TYPE_6 || (type > 8 && type < 11)))
+    switch (type)
     {
+    case Stream::Unknown1:
+    case Stream::RendezVous:
+    case STREAM_TYPE_4:
+    case STREAM_TYPE_6:
+    case Stream::Unknown9:
+    case Stream::RendezVousSecure:
         m_uiVersion = s_uiDefaultVersion;
+        break;
+    default:
+        m_uiVersion = 0;
+        break;
     }
 }
 
@@ -114,10 +120,10 @@ PRUDPStream::~PRUDPStream()
         StopListen();
 
     m_bDestroying = true;
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     LockEndPointMap();
-    for (EndPointMap::iterator endPoint = m_endPoints.begin(); endPoint != m_endPoints.end();
-         ++endPoint)
+    EndPointMap::iterator endPoint;
+    for (endPoint = m_endPoints.begin(); endPoint != m_endPoints.end(); ++endPoint)
     {
         delete endPoint->second;
     }
@@ -135,12 +141,12 @@ void PRUDPStream::OnSetTerminateImmediately()
 bool PRUDPStream::StopListen()
 {
     ConnectionOrientedStream::StopListen();
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     LockEndPointMap();
-    for (EndPointMap::iterator endPoint = m_endPoints.begin(); endPoint != m_endPoints.end();
-         ++endPoint)
+    EndPointMap::iterator endPoint;
+    for (endPoint = m_endPoints.begin(); endPoint != m_endPoints.end();)
     {
-        endPoint->second->SetConnectionState(EndPoint::Faulty);
+        (endPoint++)->second->SetConnectionState(EndPoint::Faulty);
     }
 
     UnlockEndPointMap();
@@ -161,7 +167,7 @@ void PRUDPStream::PurgeDeletedEndPoints(bool bForce)
 {
     if (g_threadSafetyEnabled)
     {
-        ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
         PurgeDeletedEndPointsImpl(bForce);
     }
     else
@@ -176,22 +182,15 @@ void PRUDPStream::PurgeDeletedEndPointsImpl(bool bForce)
     while (endPoint != m_deletedEndPoints.end())
     {
         PRUDPEndPoint* pEndPoint = *endPoint;
-        if (bForce)
-        {
-            if (pEndPoint != 0)
-                delete pEndPoint;
-
-            endPoint = m_deletedEndPoints.erase(endPoint);
-        }
-        else if (pEndPoint->m_uiCtorFlag == 0)
-        {
-            delete pEndPoint;
-            endPoint = m_deletedEndPoints.erase(endPoint);
-        }
-        else
+        if (!bForce && pEndPoint->m_uiCtorFlag != 0)
         {
             pEndPoint->CompleteIO(qResult(RESULT_CONNECTION_FAILED));
             ++endPoint;
+        }
+        else
+        {
+            delete pEndPoint;
+            endPoint = m_deletedEndPoints.erase(endPoint);
         }
     }
 }
@@ -219,7 +218,7 @@ PRUDPEndPoint* PRUDPStream::CreateEndPoint(const StationURL* pStationURL,
     unsigned short uiPortNumber, bool)
 {
     PRUDPEndPoint* pEndPoint = 0;
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     InetAddress address;
     if (pStationURL->IsValid())
     {
@@ -251,7 +250,7 @@ unsigned short PRUDPStream::GetPreferredPortNumber()
 
 EndPoint* PRUDPStream::OpenEndPoint(const StationURL* pStationURL)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     PRUDPEndPoint* pEndPoint = CreateEndPoint(pStationURL, GetPreferredPortNumber(), true);
     if (pEndPoint != 0)
         pEndPoint->_Open();
@@ -270,35 +269,34 @@ EndPoint* PRUDPStream::OpenEndPoint(unsigned int uiConnectionID)
 
 bool PRUDPStream::OpenEndPoint(EndPoint* pEndPoint)
 {
-    if (!g_threadSafetyEnabled)
+    if (g_threadSafetyEnabled)
     {
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
         pEndPoint->_Open();
         return true;
     }
 
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
     pEndPoint->_Open();
     return true;
 }
 
-bool PRUDPStream::CloseEndPoint(EndPoint* pEndPoint)
+void PRUDPStream::CloseEndPoint(EndPoint* pEndPoint)
 {
     PRUDPEndPoint* pPRUDPEndPoint = static_cast<PRUDPEndPoint*>(pEndPoint);
     if (g_threadSafetyEnabled)
     {
-        ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
         if (pPRUDPEndPoint->m_iOpenCount != 0)
             pPRUDPEndPoint->_Close();
 
         ReleaseEndPoint(pPRUDPEndPoint);
-        return true;
+        return;
     }
 
     if (pPRUDPEndPoint->m_iOpenCount != 0)
         pPRUDPEndPoint->_Close();
 
     ReleaseEndPoint(pPRUDPEndPoint);
-    return true;
 }
 
 void PRUDPStream::ForceCompleteIO()
@@ -306,25 +304,29 @@ void PRUDPStream::ForceCompleteIO()
     {
         EndPointList endPoints;
         LockEndPointMap();
-        for (EndPointMap::iterator endPoint = m_endPoints.begin(); endPoint != m_endPoints.end();
-             ++endPoint)
+        EndPointMap::iterator endPoint;
+        for (endPoint = m_endPoints.begin(); endPoint != m_endPoints.end(); ++endPoint)
         {
-            endPoints.push_back(endPoint->second);
+            PRUDPEndPoint* pEndPoint = endPoint->second;
+            endPoints.push_back(pEndPoint);
         }
 
         UnlockEndPointMap();
-        for (EndPointList::iterator endPoint = endPoints.begin(); endPoint != endPoints.end();
-             ++endPoint)
+        EndPointList::iterator listedEndPoint;
+        for (listedEndPoint = endPoints.begin(); listedEndPoint != endPoints.end();
+             ++listedEndPoint)
         {
-            (*endPoint)->CompleteIO(qResult(RESULT_CONNECTION_FAILED));
+            PRUDPEndPoint* pEndPoint = *listedEndPoint;
+            pEndPoint->CompleteIO(qResult(RESULT_CONNECTION_FAILED));
         }
     }
 
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     for (EndPointList::iterator endPoint = m_deletedEndPoints.begin();
          endPoint != m_deletedEndPoints.end(); ++endPoint)
     {
-        (*endPoint)->CompleteIO(qResult(RESULT_CONNECTION_FAILED));
+        PRUDPEndPoint* pEndPoint = *endPoint;
+        pEndPoint->CompleteIO(qResult(RESULT_CONNECTION_FAILED));
     }
 }
 
@@ -346,12 +348,12 @@ bool PRUDPStream::IsCapable(unsigned int uiCapability)
 
 EndPoint* PRUDPStream::FindEndPointByPID(unsigned int uiPrincipalID)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     EndPointAssociationMap::iterator association = m_pidEndPoints.find(uiPrincipalID);
-    if (association == m_pidEndPoints.end())
-        return 0;
+    if (association != m_pidEndPoints.end())
+        return association->second;
 
-    return association->second;
+    return 0;
 }
 
 unsigned int PRUDPStream::GetEndPointNumber()
@@ -361,17 +363,17 @@ unsigned int PRUDPStream::GetEndPointNumber()
 
 EndPoint* PRUDPStream::FindEndPointByCID(unsigned int uiConnectionID)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     EndPointAssociationMap::iterator association = m_cidEndPoints.find(uiConnectionID);
-    if (association == m_cidEndPoints.end())
-        return 0;
+    if (association != m_cidEndPoints.end())
+        return association->second;
 
-    return association->second;
+    return 0;
 }
 
 qVector<unsigned int> PRUDPStream::GetAllConnectionIDs() const
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     return qVector<unsigned int>(m_connectionIDs);
 }
 
@@ -393,25 +395,29 @@ qResult PRUDPStream::Send(StationURL* pStationURL, Buffer* pBuffer)
     if (!pStationURL->IsValid())
         return qResult(RESULT_INVALID_URL);
 
-    if (pBuffer == 0)
+    if (pBuffer != 0)
+    {
+        PacketOut* pPacket = new PacketOut(0, PACKET_TYPE_USER, 0, pBuffer, 0);
+        pPacket->m_address = *pStationURL->GetInetAddress();
+        bool bSent = Send(GetPreferredPortNumber(), m_uiStreamID, pPacket, 0);
+        pPacket->ReleaseRef();
+        if (!bSent)
+            return qResult(RESULT_CONNECTION_FAILED);
+    }
+    else
+    {
         return qResult(RESULT_INVALID_BUFFER);
-
-    PacketOut* pPacket = new PacketOut(0, PACKET_TYPE_USER, 0, pBuffer, 0);
-    pPacket->m_address = *pStationURL->GetInetAddress();
-    bool bSent = Send(GetPreferredPortNumber(), m_uiStreamID, pPacket, 0);
-    pPacket->ReleaseRef();
-    if (!bSent)
-        return qResult(RESULT_CONNECTION_FAILED);
+    }
 
     return qResult(RESULT_SUCCESS);
 }
 
 void PRUDPStream::SetMaxSilenceTimeAll(unsigned int uiSilenceTime)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     LockEndPointMap();
-    for (EndPointMap::iterator endPoint = m_endPoints.begin(); endPoint != m_endPoints.end();
-         ++endPoint)
+    EndPointMap::iterator endPoint;
+    for (endPoint = m_endPoints.begin(); endPoint != m_endPoints.end(); ++endPoint)
     {
         PRUDPEndPoint* pEndPoint = endPoint->second;
         if (pEndPoint->GetMaxSilenceTime() != INFINITE_SILENCE_TIME)
@@ -423,13 +429,13 @@ void PRUDPStream::SetMaxSilenceTimeAll(unsigned int uiSilenceTime)
 
 void PRUDPStream::AddPIDEndPointAssociation(unsigned int uiPrincipalID, EndPoint* pEndPoint)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_pidEndPoints.insert(std::pair<const unsigned int, EndPoint*>(uiPrincipalID, pEndPoint));
 }
 
 bool PRUDPStream::RemovePIDEndPointAssociation(unsigned int uiPrincipalID, EndPoint* pEndPoint)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     EndPointAssociationMap::iterator association = m_pidEndPoints.find(uiPrincipalID);
     while (association != m_pidEndPoints.end() && association->first == uiPrincipalID)
     {
@@ -447,14 +453,14 @@ bool PRUDPStream::RemovePIDEndPointAssociation(unsigned int uiPrincipalID, EndPo
 
 void PRUDPStream::AddCIDEndPointAssociation(unsigned int uiConnectionID, EndPoint* pEndPoint)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_cidEndPoints.insert(std::pair<const unsigned int, EndPoint*>(uiConnectionID, pEndPoint));
     m_connectionIDs.push_back(uiConnectionID);
 }
 
 bool PRUDPStream::RemoveCIDEndPointAssociation(unsigned int uiConnectionID, EndPoint* pEndPoint)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     EndPointAssociationMap::iterator association = m_cidEndPoints.find(uiConnectionID);
     while (association != m_cidEndPoints.end() && association->first == uiConnectionID)
     {
@@ -482,12 +488,12 @@ PRUDPEndPoint* PRUDPStream::ServiceConnectionRequest(InetAddress* pAddress, Buff
     if (m_pEventHandler != 0)
     {
         bool bAccepted;
-        if (pBuffer->GetLength() == 0)
-            bAccepted = m_pEventHandler->ConnectionRequest(this, &pEndPoint->m_stationURL, 0,
-                pEndPoint);
-        else
+        if (pBuffer->GetLength() != 0)
             bAccepted = m_pEventHandler->ConnectionRequest(this, &pEndPoint->m_stationURL,
                 pBuffer, pEndPoint);
+        else
+            bAccepted = m_pEventHandler->ConnectionRequest(this, &pEndPoint->m_stationURL, 0,
+                pEndPoint);
 
         if (!bAccepted)
         {
@@ -505,10 +511,10 @@ void PRUDPStream::ServiceUserMsg(InetAddress* pAddress, Buffer* pBuffer)
     {
         StationURL stationURL;
         stationURL.SetInetAddress(pAddress);
-        if (pBuffer->GetLength() == 0)
-            m_pEventHandler->Receive(this, 0, &stationURL);
-        else
+        if (pBuffer->GetLength() != 0)
             m_pEventHandler->Receive(this, pBuffer, &stationURL);
+        else
+            m_pEventHandler->Receive(this, 0, &stationURL);
     }
 }
 
@@ -516,7 +522,7 @@ void PRUDPStream::ReleaseEndPoint(PRUDPEndPoint* pEndPoint)
 {
     if (g_threadSafetyEnabled)
     {
-        ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
         ReleaseEndPointImpl(pEndPoint);
     }
     else
@@ -550,26 +556,22 @@ void PRUDPStream::ReleaseEndPointImpl(PRUDPEndPoint* pEndPoint)
 
 void PRUDPStream::DoWork()
 {
+    Time currentTime(g_lastTime);
     if (m_lastWorkTime == 0)
     {
-        m_lastWorkTime = Time(g_lastTime);
+        m_lastWorkTime = currentTime;
         PurgeDeletedEndPoints(false);
         return;
     }
 
-    if (static_cast<long long>(g_lastTime - m_lastWorkTime) < DO_WORK_INTERVAL)
+    if (static_cast<long long>(currentTime - m_lastWorkTime) > DO_WORK_INTERVAL)
     {
-        PurgeDeletedEndPoints(false);
-        return;
-    }
-
-    m_lastWorkTime = Time(g_lastTime);
-    m_timeoutManager.ServicePacketTimeouts();
-    {
-        ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+        m_lastWorkTime = currentTime;
+        m_timeoutManager.ServicePacketTimeouts();
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
         LockEndPointMap();
-        for (EndPointMap::iterator endPoint = m_endPoints.begin(); endPoint != m_endPoints.end();
-             ++endPoint)
+        EndPointMap::iterator endPoint;
+        for (endPoint = m_endPoints.begin(); endPoint != m_endPoints.end(); ++endPoint)
         {
             endPoint->second->SendAggregateACK();
         }
@@ -585,15 +587,16 @@ int PRUDPStream::CheckSignature(InetAddress* pAddress, unsigned short uiPort,
     PRUDPMessageInterface::SignatureMethod method)
 {
     SignatureBytes expectedSignature;
-    expectedSignature.m_uiLength = 0;
     int iResult = m_pMessageSelector->CalcExpectedSignature(pPacket, method, pKey,
         &m_signatureGenerator, pSignature, expectedSignature);
     if (iResult != CHECK_DROPPED)
     {
-        if ((expectedSignature.m_uiLength != pPacket->m_uiSignatureSize ||
-                memcmp(expectedSignature.m_bytes, pPacket->m_aSignature,
-                    pPacket->m_uiSignatureSize) != 0) &&
-            (pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) != PACKET_TYPE_USER)
+        bool bValid = false;
+        if (expectedSignature.m_uiLength == pPacket->m_uiSignatureSize)
+            bValid = memcmp(expectedSignature.m_bytes, pPacket->m_aSignature,
+                pPacket->m_uiSignatureSize) == 0;
+
+        if (!bValid && (pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) != PACKET_TYPE_USER)
         {
             return CHECK_REJECTED;
         }
@@ -682,7 +685,7 @@ bool PRUDPStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiS
             SignatureBytes signature;
             signature.m_uiLength = 0;
             m_pMessageSelector->CalcSignature(pPacket, PRUDPMessageInterface::SIGNATURE_METHOD_1,
-                0, static_cast<Stream::Type>(pPacket->m_uiSource >> STREAM_TYPE_SHIFT),
+                0, VirtualPort(pPacket->m_uiSource).GetType(),
                 &m_signatureGenerator, 0, signature);
             PacketOut* pReply = new PacketOut(0, PACKET_TYPE_SYN, PACKET_FLAG_ACK, 0, 0);
             pReply->m_sequenceID = pPacket->m_sequenceID.GetValue();
@@ -759,7 +762,7 @@ bool PRUDPStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiS
         SignatureBytes signature;
         signature.m_uiLength = 0;
         m_pMessageSelector->CalcSignature(pPacket, PRUDPMessageInterface::SIGNATURE_METHOD_1, 0,
-            static_cast<Stream::Type>(pPacket->m_uiSource >> STREAM_TYPE_SHIFT),
+            VirtualPort(pPacket->m_uiSource).GetType(),
             &m_signatureGenerator, 0, signature);
         PRUDPMessageInterface::SignatureMethod method =
             DecideSignatureMethod(pPacket, m_Type, false);
@@ -805,10 +808,10 @@ bool PRUDPStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiS
 
 bool PRUDPStream::IsDuplicateReorderingPacket(Packet* pPacket)
 {
-    unsigned char uiSource = pPacket->m_uiSource;
+    unsigned char uiStreamID = VirtualPort(pPacket->m_uiSource).GetStreamID();
     LockEndPointMap();
     EndPointMap::iterator endPoint =
-        m_endPoints.find(EndPointUniqueID(pPacket->m_address, uiSource & STREAM_ID_MASK));
+        m_endPoints.find(EndPointUniqueID(pPacket->m_address, uiStreamID));
     PRUDPEndPoint* pEndPoint = 0;
     if (endPoint != m_endPoints.end())
         pEndPoint = endPoint->second;
@@ -828,9 +831,8 @@ const wchar_t* PRUDPStream::GetURLType()
 bool PRUDPStream::Send(unsigned short uiPort, unsigned char uiStreamID, PacketOut* pPacket,
     Key* pKey)
 {
-    unsigned int uiSourceType = m_Type << STREAM_TYPE_SHIFT;
-    pPacket->m_uiSource = uiSourceType | m_uiStreamID;
-    pPacket->m_uiDestination = uiSourceType | uiStreamID;
+    pPacket->m_uiSource = VirtualPort(m_Type, m_uiStreamID).m_uiValue;
+    pPacket->m_uiDestination = VirtualPort(m_Type, uiStreamID).m_uiValue;
     LockEndPointMap();
     EndPointMap::iterator endPoint =
         m_endPoints.find(EndPointUniqueID(pPacket->m_address, uiStreamID));
@@ -840,23 +842,20 @@ bool PRUDPStream::Send(unsigned short uiPort, unsigned char uiStreamID, PacketOu
 
     UnlockEndPointMap();
     PRUDPMessageInterface::SignatureMethod method;
-    if (pEndPoint == 0)
-    {
-        method = m_pMessageSelector->DecideSignatureMethod(pPacket, m_Type, pKey != 0);
-    }
-    else
+    if (pEndPoint != 0)
     {
         pPacket->m_uiVersion = pEndPoint->m_uiVersion;
         method = pEndPoint->DecideSignatureMethod(pPacket, m_Type, pKey != 0);
+    }
+    else
+    {
+        method = m_pMessageSelector->DecideSignatureMethod(pPacket, m_Type, pKey != 0);
     }
 
     if (method != PRUDPMessageInterface::SIGNATURE_METHOD_1)
     {
         SignatureBytes signature;
-        signature.m_uiLength = 0;
-        SignatureBytes* pSignature = 0;
-        if (pEndPoint != 0)
-            pSignature = &pEndPoint->m_negotiationSignature;
+        SignatureBytes* pSignature = pEndPoint != 0 ? &pEndPoint->m_negotiationSignature : 0;
 
         if (!m_pMessageSelector->CalcSignature(pPacket, method, pKey, m_Type,
                 &m_signatureGenerator, pSignature, signature))

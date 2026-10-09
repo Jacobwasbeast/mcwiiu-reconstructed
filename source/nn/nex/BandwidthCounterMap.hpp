@@ -15,7 +15,6 @@ public:
     {
     public:
         explicit IOBandwidthCounter(const String& name);
-        virtual ~IOBandwidthCounter();
 
         BandwidthCounter m_incoming;
         BandwidthCounter m_outgoing;

@@ -1,6 +1,7 @@
 #include "nn/nex/InstanceControl.hpp"
 
 #include "nn/nex/InstanceTable.hpp"
+#include "nn/nex/PseudoGlobalVariableRoot.hpp"
 
 namespace nn
 {
@@ -14,14 +15,13 @@ InstanceControl::InstanceControl(unsigned int classId, unsigned int contextId)
     ScopedCS lock(&g_instanceTableCriticalSection);
 
     m_registered = false;
-    if (g_instanceTable.AddInstance(this, classId, contextId))
-    {
-        m_classId = classId;
-        m_contextId = contextId;
-        m_delegatorInstance = 0;
-        m_registered = true;
-    }
+    if (!g_instanceTable.AddInstance(this, classId, contextId))
+        return;
 
+    m_contextId = contextId;
+    m_classId = classId;
+    m_delegatorInstance = 0;
+    m_registered = true;
 }
 
 InstanceControl::~InstanceControl()
@@ -49,8 +49,7 @@ int InstanceControl::GetHighestID()
 bool InstanceControl::ContextIsValid(unsigned int contextId)
 {
     ScopedCS lock(&g_instanceTableCriticalSection);
-    bool valid = g_instanceTable.ContextIsValid(contextId);
-    return valid;
+    return g_instanceTable.ContextIsValid(contextId);
 }
 
 void InstanceControl::AllocateExtraContexts(unsigned int contextCount)
@@ -65,11 +64,20 @@ void InstanceControl::FreeExtraContexts()
     g_instanceTable.FreeExtraContexts();
 }
 
+unsigned int InstanceControl::CreateContext()
+{
+    ScopedCS lock(&g_instanceTableCriticalSection);
+    unsigned int contextId = g_instanceTable.CreateContext();
+    PseudoGlobalVariableRoot::ResetContextForAllVariables(contextId);
+    return contextId;
+}
+
 bool InstanceControl::DeleteContext(unsigned int contextId)
 {
     ScopedCS lock(&g_instanceTableCriticalSection);
-    bool deleted = g_instanceTable.DeleteContext(contextId);
-    return deleted;
+    if (!g_instanceTable.DeleteContext(contextId))
+        return false;
+    return true;
 }
 
 unsigned int InstanceControl::FindInstanceContext(InstanceControl* instance, unsigned int classId)

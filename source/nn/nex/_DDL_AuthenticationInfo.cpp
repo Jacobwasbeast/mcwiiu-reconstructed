@@ -1,5 +1,7 @@
 #include "nn/nex/_DDL_AuthenticationInfo.hpp"
 
+#include <algorithm>
+
 #include "nn/nex/AuthenticationInfo.hpp"
 #include "nn/nex/DDLSerialization.hpp"
 #include "nn/nex/Message.hpp"
@@ -47,11 +49,7 @@ bool _DDL_AuthenticationInfo::IsA(const String& rType) const
 
 bool _DDL_AuthenticationInfo::IsAKindOf(const String& rType) const
 {
-    bool bResult = true;
-    if (!String::IsEqual(rType, L"AuthenticationInfo") && !_DDL_Data::IsAKindOf(rType))
-        bResult = false;
-
-    return bResult;
+    return String::IsEqual(rType, L"AuthenticationInfo") || _DDL_Data::IsAKindOf(rType);
 }
 
 void _DDL_AuthenticationInfo::StreamIn(Message* pMessage) const
@@ -68,21 +66,20 @@ void _DDL_AuthenticationInfo::Add(Message* pMessage, const _DDL_AuthenticationIn
 {
     _DDL_Data::Add(pMessage, rSource);
 
-    const bool bCompactFormat = pMessage->IsCompactFormat();
     unsigned int uiSizePosition = 0;
+    const bool bCompactFormat = pMessage->IsCompactFormat();
 
     if (!bCompactFormat)
     {
-        const uint8_t uiVersion = rSource.m_uiStructureVersion;
-        const uint8_t uiMaxVersion = AUTHENTICATION_INFO_MAX_STRUCTURE_VERSION;
+        uint8_t uiVersion = rSource.m_uiStructureVersion;
+        uint8_t uiMaxVersion = AUTHENTICATION_INFO_MAX_STRUCTURE_VERSION;
 
-        pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
+        _Type_byte::Add(pMessage, std::min(uiVersion, uiMaxVersion));
 
         uiSizePosition = pMessage->GetLength();
 
         const uint32_t uiSize = 0;
-
-        pMessage->Append(reinterpret_cast<const unsigned char*>(&uiSize), SIZE_FIELD_LENGTH, 1);
+        _Type_uint32::Add(pMessage, uiSize);
     }
 
     _Type_string::Add(pMessage, rSource.m_Name);
@@ -96,10 +93,7 @@ void _DDL_AuthenticationInfo::Add(Message* pMessage, const _DDL_AuthenticationIn
 
         pMessage->SetLength(uiSizePosition);
 
-        const int32_t iSize =
-            static_cast<int32_t>(uiEndPosition - uiSizePosition - SIZE_FIELD_LENGTH);
-
-        pMessage->Append(reinterpret_cast<const unsigned char*>(&iSize), SIZE_FIELD_LENGTH, 1);
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }
@@ -130,6 +124,8 @@ void _DDL_AuthenticationInfo::Extract(Message* pMessage, _DDL_AuthenticationInfo
     }
 
     const unsigned int uiStartPosition = pMessage->GetPosition();
+    if (pMessage->HasError())
+        return;
 
     _Type_string::Extract(pMessage, &pDestination->m_Name);
 

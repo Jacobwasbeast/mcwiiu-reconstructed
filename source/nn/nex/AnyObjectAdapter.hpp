@@ -12,6 +12,10 @@ template <typename T, typename KeyType>
 class AnyObjectAdapter
 {
 public:
+    AnyObjectAdapter()
+    {
+    }
+
     virtual ~AnyObjectAdapter()
     {
     }

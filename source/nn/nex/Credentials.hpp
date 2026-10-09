@@ -28,15 +28,23 @@ public:
     void SetAuthenticationConnection(EndPoint* connection);
     void SetSecureConnection(EndPoint* connection);
 
+    uint32_t GetPrincipalID() const
+    {
+        return m_value;
+    }
+
 private:
     friend class BackEndServices;
     friend class JobBackEndServicesLogin;
     friend class JobBackEndServicesLoginWithData;
     friend class JobBackEndServicesLogout;
+    friend class JobConnectSecureEndPoint;
     friend class NATTraversalRelayClient;
     friend class SecureConnectionClient;
     friend class SecureStream;
     friend class KerberosAuthentication;
+    friend class GlobalNotificationEventManager;
+    friend class JobWaitForNotification;
     uint32_t m_value;
     uint32_t m_state;
     String m_name;

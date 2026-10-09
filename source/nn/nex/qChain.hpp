@@ -13,17 +13,31 @@ namespace nex
 {
 
 template<class T>
+class qChainLink
+{
+public:
+    qChainLink()
+        : m_pNext(0)
+        , m_pPrevious(0)
+    {
+    }
+
+    T m_pNext;
+    T m_pPrevious;
+};
+
+template<class T>
 class DefaultChainPolicy
 {
 public:
     static T& Next(T element)
     {
-        return element->m_pNext;
+        return element->m_link.m_pNext;
     }
 
     static T& Previous(T element)
     {
-        return element->m_pPrevious;
+        return element->m_link.m_pPrevious;
     }
 };
 
@@ -53,6 +67,12 @@ public:
         iterator(const iterator& other)
             : m_element(other.m_element)
         {
+        }
+
+        iterator& operator=(const iterator& other)
+        {
+            m_element = other.m_element;
+            return *this;
         }
 
         T& operator*()
@@ -85,19 +105,14 @@ public:
         T m_element;
     };
 
-    qChain()
-        : m_pFirst(0)
-        , m_pLast(0)
-        , m_pEnd(0)
-        , m_size(0)
-    {
-    }
+    qChain();
 
     virtual ~qChain()
     {
+        iterator last = end();
         iterator position = begin();
 
-        while (position != end())
+        while (position != last)
             position = erase(position);
     }
 
@@ -149,34 +164,36 @@ public:
 
     void push_back(const T& element)
     {
-        if (m_pFirst == m_pEnd)
+        if (m_pFirst != m_pEnd)
+        {
+            TPolicy::Next(m_pLast) = element;
+            TPolicy::Previous(element) = m_pLast;
+            m_pLast = element;
+            ++m_size;
+        }
+        else
         {
             m_pFirst = element;
             m_pLast = element;
             ++m_size;
-            return;
         }
-
-        TPolicy::Next(m_pLast) = element;
-        TPolicy::Previous(element) = m_pLast;
-        m_pLast = element;
-        ++m_size;
     }
 
     void push_front(const T& element)
     {
-        if (m_pFirst == m_pEnd)
+        if (m_pFirst != m_pEnd)
+        {
+            TPolicy::Next(element) = m_pFirst;
+            TPolicy::Previous(m_pFirst) = element;
+            m_pFirst = element;
+            ++m_size;
+        }
+        else
         {
             m_pFirst = element;
             m_pLast = element;
             ++m_size;
-            return;
         }
-
-        TPolicy::Next(element) = m_pFirst;
-        TPolicy::Previous(m_pFirst) = element;
-        m_pFirst = element;
-        ++m_size;
     }
 
     iterator erase(iterator position)
@@ -227,6 +244,15 @@ private:
     T m_pEnd;
     unsigned int m_size;
 };
+
+template<class T, class TPolicy>
+qChain<T, TPolicy>::qChain()
+    : m_pFirst(0)
+    , m_pLast(0)
+    , m_pEnd(0)
+    , m_size(0)
+{
+}
 
 }
 }

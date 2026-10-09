@@ -1,10 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_URLPROBELIST_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_URLPROBELIST_HPP
 
-#include <list>
-
-#include "nn/nex/MemAllocator.hpp"
-#include "nn/nex/RootObject.hpp"
+#include "nn/nex/qList.hpp"
 #include "nn/nex/URLProbe.hpp"
 
 namespace nn
@@ -12,18 +9,14 @@ namespace nn
 namespace nex
 {
 
-class URLProbeList : public RootObject
+class URLProbeList : public qList<URLProbe>
 {
 public:
-    typedef std::list<URLProbe, MemAllocator<URLProbe> > ProbeList;
-
     URLProbeList();
     virtual ~URLProbeList();
 
     URLProbe* FindProbe(const StationURL& rStationURL);
     URLProbe* FindProbe(unsigned int uiConnectionID);
-
-    ProbeList m_probes;
 };
 
 }

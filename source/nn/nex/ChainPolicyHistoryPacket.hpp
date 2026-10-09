@@ -12,12 +12,12 @@ class ChainPolicyHistoryPacket
 public:
     static T& Next(T element)
     {
-        return element->m_pHistoryNext;
+        return element->m_historyLink.m_pNext;
     }
 
     static T& Previous(T element)
     {
-        return element->m_pHistoryPrevious;
+        return element->m_historyLink.m_pPrevious;
     }
 };
 

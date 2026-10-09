@@ -1,5 +1,7 @@
 #include "nn/nex/_DDL_DataStoreSearchParam.hpp"
 
+#include <algorithm>
+
 #include "nn/nex/DDLSerialization.hpp"
 #include "nn/nex/Message.hpp"
 
@@ -36,21 +38,20 @@ _DDL_DataStoreSearchParam::~_DDL_DataStoreSearchParam()
 
 void _DDL_DataStoreSearchParam::Add(Message* pMessage, const _DDL_DataStoreSearchParam& rSource)
 {
-    const bool bCompactFormat = pMessage->IsCompactFormat();
     unsigned int uiSizePosition = 0;
+    const bool bCompactFormat = pMessage->IsCompactFormat();
 
     if (!bCompactFormat)
     {
-        const uint8_t uiVersion = rSource.m_uiStructureVersion;
-        const uint8_t uiMaxVersion = SEARCH_PARAM_MAX_STRUCTURE_VERSION;
+        uint8_t uiVersion = rSource.m_uiStructureVersion;
+        uint8_t uiMaxVersion = SEARCH_PARAM_MAX_STRUCTURE_VERSION;
 
-        pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
+        _Type_byte::Add(pMessage, std::min(uiVersion, uiMaxVersion));
 
         uiSizePosition = pMessage->GetLength();
 
         const uint32_t uiSize = 0;
-
-        pMessage->Append(reinterpret_cast<const unsigned char*>(&uiSize), SIZE_FIELD_LENGTH, 1);
+        _Type_uint32::Add(pMessage, uiSize);
     }
 
     pMessage->Append(&rSource.m_uiSearchTarget, 1, 1);
@@ -84,35 +85,30 @@ void _DDL_DataStoreSearchParam::Add(Message* pMessage, const _DDL_DataStoreSearc
     pMessage->Append(
         reinterpret_cast<const unsigned char*>(&rSource.m_uiMinimalRatingFrequency), 4, 1);
 
-    if (bCompactFormat)
+    if (!bCompactFormat)
     {
-        return;
-    }
-
-    if (rSource.m_uiStructureVersion != 0)
-    {
-        *pMessage << rSource.m_bUseCache;
-
-        if (rSource.m_uiStructureVersion > 1)
+        if (rSource.m_uiStructureVersion >= 1)
         {
-            *pMessage << rSource.m_bTotalCountEnabled;
+            *pMessage << rSource.m_bUseCache;
 
-            if (rSource.m_uiStructureVersion > 2)
+            if (rSource.m_uiStructureVersion >= 2)
             {
-                _Type_qvector<_Type_uint16>::Add(pMessage, rSource.m_DataTypes);
+                *pMessage << rSource.m_bTotalCountEnabled;
+
+                if (rSource.m_uiStructureVersion >= 3)
+                {
+                    _Type_qvector<_Type_uint16>::Add(pMessage, rSource.m_DataTypes);
+                }
             }
         }
+
+        const unsigned int uiEndPosition = pMessage->GetLength();
+
+        pMessage->SetLength(uiSizePosition);
+
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - SIZE_FIELD_LENGTH);
+        pMessage->SetLength(uiEndPosition);
     }
-
-    const unsigned int uiEndPosition = pMessage->GetLength();
-
-    pMessage->SetLength(uiSizePosition);
-
-    const int32_t iSize =
-        static_cast<int32_t>(uiEndPosition - uiSizePosition - SIZE_FIELD_LENGTH);
-
-    pMessage->Append(reinterpret_cast<const unsigned char*>(&iSize), SIZE_FIELD_LENGTH, 1);
-    pMessage->SetLength(uiEndPosition);
 }
 
 void _DDL_DataStoreSearchParam::Extract(Message* pMessage,
@@ -182,40 +178,44 @@ void _DDL_DataStoreSearchParam::Extract(Message* pMessage,
         return;
     }
 
-    uint64_t uiCreatedAfter = 0;
+    uint64_t uiCreatedAfter;
 
     pMessage->ExtractPrimitive(&uiCreatedAfter);
-    pDestination->m_CreatedAfter = DateTime(uiCreatedAfter);
+    const DateTime createdAfter(uiCreatedAfter);
+    pDestination->m_CreatedAfter = createdAfter;
 
     if (pMessage->HasError())
     {
         return;
     }
 
-    uint64_t uiCreatedBefore = 0;
+    uint64_t uiCreatedBefore;
 
     pMessage->ExtractPrimitive(&uiCreatedBefore);
-    pDestination->m_CreatedBefore = DateTime(uiCreatedBefore);
+    const DateTime createdBefore(uiCreatedBefore);
+    pDestination->m_CreatedBefore = createdBefore;
 
     if (pMessage->HasError())
     {
         return;
     }
 
-    uint64_t uiUpdatedAfter = 0;
+    uint64_t uiUpdatedAfter;
 
     pMessage->ExtractPrimitive(&uiUpdatedAfter);
-    pDestination->m_UpdatedAfter = DateTime(uiUpdatedAfter);
+    const DateTime updatedAfter(uiUpdatedAfter);
+    pDestination->m_UpdatedAfter = updatedAfter;
 
     if (pMessage->HasError())
     {
         return;
     }
 
-    uint64_t uiUpdatedBefore = 0;
+    uint64_t uiUpdatedBefore;
 
     pMessage->ExtractPrimitive(&uiUpdatedBefore);
-    pDestination->m_UpdatedBefore = DateTime(uiUpdatedBefore);
+    const DateTime updatedBefore(uiUpdatedBefore);
+    pDestination->m_UpdatedBefore = updatedBefore;
 
     if (pMessage->HasError())
     {

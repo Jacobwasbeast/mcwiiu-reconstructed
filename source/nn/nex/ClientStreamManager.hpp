@@ -24,6 +24,8 @@ public:
     virtual void SetCredentials(Credentials* pCredentials);
 
 protected:
+    friend class GlobalNotificationEventManager;
+
     Credentials* m_pCredentials;
 };
 

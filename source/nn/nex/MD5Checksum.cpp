@@ -20,6 +20,10 @@ MD5Checksum::MD5Checksum()
 {
 }
 
+MD5Checksum::~MD5Checksum()
+{
+}
+
 void MD5Checksum::ChecksumComputeHelper(const unsigned char** ppData,
     const unsigned int* pLengths, int iCount, MD5& rMd5)
 {
@@ -61,7 +65,7 @@ unsigned int MD5Checksum::ComputeChecksumForTransportArray(const unsigned char**
     return uiChecksum;
 }
 
-unsigned int MD5Checksum::GetChecksumLength()
+unsigned char MD5Checksum::GetChecksumLength()
 {
     return MD5::DigestSize;
 }

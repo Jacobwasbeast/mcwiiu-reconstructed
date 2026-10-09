@@ -26,7 +26,7 @@ public:
 
     Buffer()
     {
-        Initialize(s_uiDefaultBufferSize, 0);
+        Initialize(GetDefaultBufferSize(), 0);
     }
 
     Buffer(unsigned int uiRealSize, unsigned char uiFlags)
@@ -61,7 +61,10 @@ public:
 
     static unsigned int s_uiDefaultBufferSize;
 
-    static unsigned int GetDefaultBufferSize();
+    static unsigned int GetDefaultBufferSize()
+    {
+        return s_uiDefaultBufferSize;
+    }
     static void SetDefaultBufferSize(unsigned int uiSize);
     static unsigned int GetAllocateSize(unsigned int uiCurrentSize, unsigned int uiRequiredSize);
 

@@ -17,21 +17,21 @@ NetworkEmulator::NetworkEmulator(EmulationDevice* pDevice)
 void NetworkEmulator::Queue(Buffer* pBuffer, const InetAddress& rAddress)
 {
     NetworkPacket packet(pBuffer, rAddress);
-    m_modem.Queue(packet, Time(Time::GetTime()));
+    m_modem.Queue(packet, Time::GetTime());
 }
 
 bool NetworkEmulator::GetHead(Buffer** ppBuffer, InetAddress* pAddress)
 {
-    while (m_modem.Ready(Time(Time::GetTime())))
+    while (m_modem.Ready(Time::GetTime()))
     {
-        NetworkPacket packet = m_modem.GetHead(Time(Time::GetTime()));
-        m_internet.Queue(packet, Time(Time::GetTime()));
-        m_modem.Dequeue(m_modem.GetHead(Time(Time::GetTime())));
+        NetworkPacket packet = m_modem.GetHead(Time::GetTime());
+        m_internet.Queue(packet, Time::GetTime());
+        m_modem.Dequeue(m_modem.GetHead(Time::GetTime()));
     }
 
-    if (m_internet.Ready(Time(Time::GetTime())))
+    if (m_internet.Ready(Time::GetTime()))
     {
-        NetworkPacket packet = m_internet.GetHead(Time(Time::GetTime()));
+        NetworkPacket packet = m_internet.GetHead(Time::GetTime());
         if (ppBuffer != 0)
             *ppBuffer = packet.m_pBuffer;
 
@@ -46,7 +46,7 @@ bool NetworkEmulator::GetHead(Buffer** ppBuffer, InetAddress* pAddress)
 
 void NetworkEmulator::Dequeue(Buffer* pBuffer)
 {
-    NetworkPacket packet = m_internet.GetHead(Time(Time::GetTime()));
+    NetworkPacket packet = m_internet.GetHead(Time::GetTime());
     m_internet.Dequeue(packet);
 }
 

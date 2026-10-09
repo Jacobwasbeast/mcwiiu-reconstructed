@@ -17,7 +17,9 @@ class _DDL_DataStorePermission : public RootObject
 {
 public:
     _DDL_DataStorePermission();
-    virtual ~_DDL_DataStorePermission();
+    virtual ~_DDL_DataStorePermission()
+    {
+    }
 
     _DDL_DataStorePermission& operator=(const _DDL_DataStorePermission& rSource);
     bool operator==(const _DDL_DataStorePermission& rSource) const;

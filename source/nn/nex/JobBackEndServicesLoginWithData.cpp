@@ -161,7 +161,8 @@ void JobBackEndServicesLoginWithData::CompleteJob(qResult result)
 
 void JobBackEndServicesLoginWithData::ValidateArguments()
 {
-    if (m_loginData.GetObject()->m_Name.GetLength() == 0)
+    LoginData* pLoginData = m_loginData.GetObject();
+    if (pLoginData->m_Name.GetLength() == 0)
     {
         CompleteJob(qResult(LOGIN_INVALID_ARGUMENT_RESULT));
         return;

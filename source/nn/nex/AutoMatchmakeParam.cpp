@@ -5,13 +5,6 @@ namespace nn
 namespace nex
 {
 
-namespace
-{
-
-const unsigned short DEFAULT_PARTICIPATION_COUNT = 1;
-
-}
-
 AutoMatchmakeParam::~AutoMatchmakeParam()
 {
 }

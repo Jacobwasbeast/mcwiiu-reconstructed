@@ -15,7 +15,7 @@ const unsigned int DECOMPRESS_SCRATCH_SIZE = 2000;
 }
 
 CompressionAlgorithm::CompressionAlgorithm()
-    : m_criticalSection(0x20000000), m_compressionProfile(L"Compression", 0, L""),
+    : m_compressionProfile(L"Compression", 0, L""),
       m_decompressionProfile(L"Decompression", 0, L"")
 {
     m_uiTotalSourceLength = 0;

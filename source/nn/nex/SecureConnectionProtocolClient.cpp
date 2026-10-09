@@ -27,6 +27,10 @@ typedef void (*ProtoReturnFunction)(Message* pMessage, ProtocolCallContext* pCal
 typedef _Type_any<DDLClassMetaType<Data>, _Type_string> CustomDataAny;
 
 const unsigned int METHOD_ID_MASK = 0x7FFF;
+enum
+{
+    RESULT_NOT_IMPLEMENTED = static_cast<int>(0x80010002u)
+};
 const unsigned int METHOD_ID_COUNT = 9;
 const unsigned int PROTOCOL_FLAG_UNLOCK_BEFORE_SEND = 0x10;
 enum MethodId
@@ -60,8 +64,7 @@ void SecureConnectionProtocolClient::ExtractCallSpecificResults(Message* pMessag
     const unsigned int uiMethodID = Protocol::ExtractMethodID(pMessage) & METHOD_ID_MASK;
     if (uiMethodID - 1 >= METHOD_ID_COUNT - 1)
     {
-        const int iCallError = static_cast<int>(0x80010002u);
-        ClientProtocol::SetCallError(qResult(iCallError));
+        ClientProtocol::SetCallError(qResult(RESULT_NOT_IMPLEMENTED));
         return;
     }
     if (s_ProtoReturn[uiMethodID] != 0)
@@ -76,7 +79,7 @@ Protocol* SecureConnectionProtocolClient::CreateResponder() const
 bool SecureConnectionProtocolClient::CallRegister(ProtocolCallContext* pCallContext, qResult* pResult, const qList<StationURL>& rURLs, unsigned int* pConnectionID, StationURL* pPublicURL)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -105,7 +108,7 @@ bool SecureConnectionProtocolClient::CallRegister(ProtocolCallContext* pCallCont
 
 bool SecureConnectionProtocolClient::Register_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const qList<StationURL>& rURLs, unsigned int* pConnectionID, StationURL* pPublicURL)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -128,7 +131,7 @@ bool SecureConnectionProtocolClient::Register_PrepareRequest(ProtocolCallContext
 bool SecureConnectionProtocolClient::CallRequestConnectionData(ProtocolCallContext* pCallContext, bool* pSuccess, const unsigned int& rConnectionID, const unsigned int& rPrincipalID, qList<ConnectionData>* pConnectionData)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -157,7 +160,7 @@ bool SecureConnectionProtocolClient::CallRequestConnectionData(ProtocolCallConte
 
 bool SecureConnectionProtocolClient::RequestConnectionData_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess, const unsigned int& rConnectionID, const unsigned int& rPrincipalID, qList<ConnectionData>* pConnectionData)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -180,7 +183,7 @@ bool SecureConnectionProtocolClient::RequestConnectionData_PrepareRequest(Protoc
 bool SecureConnectionProtocolClient::CallRequestURLs(ProtocolCallContext* pCallContext, bool* pSuccess, const unsigned int& rConnectionID, const unsigned int& rPrincipalID, qList<StationURL>* pURLs)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -209,7 +212,7 @@ bool SecureConnectionProtocolClient::CallRequestURLs(ProtocolCallContext* pCallC
 
 bool SecureConnectionProtocolClient::RequestURLs_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, bool* pSuccess, const unsigned int& rConnectionID, const unsigned int& rPrincipalID, qList<StationURL>* pURLs)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -232,7 +235,7 @@ bool SecureConnectionProtocolClient::RequestURLs_PrepareRequest(ProtocolCallCont
 bool SecureConnectionProtocolClient::CallRegisterEx(ProtocolCallContext* pCallContext, qResult* pResult, const qList<StationURL>& rURLs, unsigned int* pConnectionID, StationURL* pPublicURL, const AnyObjectHolder<Data, String>& rCustomData)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -262,7 +265,7 @@ bool SecureConnectionProtocolClient::CallRegisterEx(ProtocolCallContext* pCallCo
 
 bool SecureConnectionProtocolClient::RegisterEx_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, qResult* pResult, const qList<StationURL>& rURLs, unsigned int* pConnectionID, StationURL* pPublicURL, const AnyObjectHolder<Data, String>& rCustomData)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -286,7 +289,7 @@ bool SecureConnectionProtocolClient::RegisterEx_PrepareRequest(ProtocolCallConte
 bool SecureConnectionProtocolClient::CallTestConnectivity(ProtocolCallContext* pCallContext)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -308,7 +311,7 @@ bool SecureConnectionProtocolClient::CallTestConnectivity(ProtocolCallContext* p
 
 bool SecureConnectionProtocolClient::TestConnectivity_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -324,7 +327,7 @@ bool SecureConnectionProtocolClient::TestConnectivity_PrepareRequest(ProtocolCal
 bool SecureConnectionProtocolClient::CallUpdateURLs(ProtocolCallContext* pCallContext, const qList<StationURL>& rURLs)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -347,7 +350,7 @@ bool SecureConnectionProtocolClient::CallUpdateURLs(ProtocolCallContext* pCallCo
 
 bool SecureConnectionProtocolClient::UpdateURLs_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const qList<StationURL>& rURLs)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -364,7 +367,7 @@ bool SecureConnectionProtocolClient::UpdateURLs_PrepareRequest(ProtocolCallConte
 bool SecureConnectionProtocolClient::CallReplaceURL(ProtocolCallContext* pCallContext, const StationURL& rTarget, const StationURL& rReplacement)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -388,7 +391,7 @@ bool SecureConnectionProtocolClient::CallReplaceURL(ProtocolCallContext* pCallCo
 
 bool SecureConnectionProtocolClient::ReplaceURL_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const StationURL& rTarget, const StationURL& rReplacement)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -406,7 +409,7 @@ bool SecureConnectionProtocolClient::ReplaceURL_PrepareRequest(ProtocolCallConte
 bool SecureConnectionProtocolClient::CallSendReport(ProtocolCallContext* pCallContext, const unsigned int& rReportID, const qBuffer& rReport)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -430,7 +433,7 @@ bool SecureConnectionProtocolClient::CallSendReport(ProtocolCallContext* pCallCo
 
 bool SecureConnectionProtocolClient::SendReport_PrepareRequest(ProtocolCallContext* pCallContext, Message* pMessage, const unsigned int& rReportID, const qBuffer& rReport)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -449,64 +452,64 @@ void SecureConnectionProtocolClient::ProtoReturn_Register(Message* pMessage,
                                                           ProtocolCallContext* pCallContext)
 {
     qResult* pResult = static_cast<qResult*>(pCallContext->GetReturnValuePtr(0));
-    if (pResult != 0)
-    {
-        _Type_qresult::Extract(pMessage, pResult);
-    }
-    else
+    if (pResult == 0)
     {
         qResult discardedResult[1];
-        _Type_qresult::Extract(pMessage, &discardedResult[0]);
+        pResult = &discardedResult[0];
     }
+    _Type_qresult::Extract(pMessage, pResult);
     if (pMessage->HasError())
         return;
     unsigned int uiDiscardedConnectionID;
     unsigned int* pConnectionID = static_cast<unsigned int*>(pCallContext->GetReturnValuePtr(1));
-    if (pConnectionID == 0)
-        pConnectionID = &uiDiscardedConnectionID;
-    pMessage->ExtractPrimitive(pConnectionID);
+    unsigned int* pDestination = &uiDiscardedConnectionID;
+    if (pConnectionID != 0)
+        pDestination = pConnectionID;
+    pMessage->ExtractPrimitive(pDestination);
     if (pMessage->HasError())
         return;
     StationURL* pPublicURL = static_cast<StationURL*>(pCallContext->GetReturnValuePtr(2));
     if (pPublicURL != 0)
     {
         _Type_stationurl::Extract(pMessage, pPublicURL);
-        return;
     }
-    StationURL discardedPublicURL[1];
-    _Type_stationurl::Extract(pMessage, &discardedPublicURL[0]);
+    else
+    {
+        StationURL discardedPublicURL[1];
+        _Type_stationurl::Extract(pMessage, &discardedPublicURL[0]);
+    }
 }
 
 void SecureConnectionProtocolClient::ProtoReturn_RegisterEx(Message* pMessage,
                                                             ProtocolCallContext* pCallContext)
 {
     qResult* pResult = static_cast<qResult*>(pCallContext->GetReturnValuePtr(0));
-    if (pResult != 0)
-    {
-        _Type_qresult::Extract(pMessage, pResult);
-    }
-    else
+    if (pResult == 0)
     {
         qResult discardedResult[1];
-        _Type_qresult::Extract(pMessage, &discardedResult[0]);
+        pResult = &discardedResult[0];
     }
+    _Type_qresult::Extract(pMessage, pResult);
     if (pMessage->HasError())
         return;
     unsigned int uiDiscardedConnectionID;
     unsigned int* pConnectionID = static_cast<unsigned int*>(pCallContext->GetReturnValuePtr(1));
-    if (pConnectionID == 0)
-        pConnectionID = &uiDiscardedConnectionID;
-    pMessage->ExtractPrimitive(pConnectionID);
+    unsigned int* pDestination = &uiDiscardedConnectionID;
+    if (pConnectionID != 0)
+        pDestination = pConnectionID;
+    pMessage->ExtractPrimitive(pDestination);
     if (pMessage->HasError())
         return;
     StationURL* pPublicURL = static_cast<StationURL*>(pCallContext->GetReturnValuePtr(2));
     if (pPublicURL != 0)
     {
         _Type_stationurl::Extract(pMessage, pPublicURL);
-        return;
     }
-    StationURL discardedPublicURL[1];
-    _Type_stationurl::Extract(pMessage, &discardedPublicURL[0]);
+    else
+    {
+        StationURL discardedPublicURL[1];
+        _Type_stationurl::Extract(pMessage, &discardedPublicURL[0]);
+    }
 }
 
 void SecureConnectionProtocolClient::ProtoReturn_RequestConnectionData(Message* pMessage,
@@ -514,9 +517,10 @@ void SecureConnectionProtocolClient::ProtoReturn_RequestConnectionData(Message* 
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
     if (pMessage->HasError())
         return;
     qList<ConnectionData>* pConnectionData =
@@ -535,9 +539,10 @@ void SecureConnectionProtocolClient::ProtoReturn_RequestURLs(Message* pMessage,
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
     if (pMessage->HasError())
         return;
     qList<StationURL>* pURLs = static_cast<qList<StationURL>*>(pCallContext->GetReturnValuePtr(1));

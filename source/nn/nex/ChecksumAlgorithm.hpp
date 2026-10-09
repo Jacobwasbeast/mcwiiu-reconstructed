@@ -35,7 +35,7 @@ public:
     }
     virtual unsigned int ComputeChecksumForTransportArray(const unsigned char** ppData,
         const unsigned int* pLengths, int iCount) = 0;
-    virtual unsigned int GetChecksumLength() = 0;
+    virtual unsigned char GetChecksumLength() = 0;
 
     unsigned char ReduceChecksumLength(unsigned char uiLength);
     void CompressChecksum(Buffer* pChecksum);

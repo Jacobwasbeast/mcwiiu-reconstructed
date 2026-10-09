@@ -26,10 +26,6 @@ Gathering* _DDL_MatchmakeSession::Clone() const
     return new MatchmakeSession;
 }
 
-MatchmakeSession::~MatchmakeSession()
-{
-}
-
 void MatchmakeSession::SetMatchmakeSystemType(MatchmakeSystemType type, unsigned int uiPolicyArgument)
 {
     m_uiMatchmakeSystemType = type;

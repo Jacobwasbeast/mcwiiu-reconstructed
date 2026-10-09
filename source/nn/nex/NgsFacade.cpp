@@ -65,7 +65,7 @@ NgsFacade::NgsFacade()
 {
     RootTransport::GetInstance()->EnableUPnPSupport(false);
     RegisterPreTerminateCallback(OnTerminate, UserContext(this));
-    m_authenticationInfo = CustomDataHolder<AuthenticationInfo>(new AuthenticationInfo);
+    m_authenticationInfo = CustomDataHolder<AuthenticationInfo>(new AuthenticationInfo());
     m_pNgsBridge = new NgsBridgeImp(this);
 }
 
@@ -108,7 +108,7 @@ bool NgsFacade::TerminateJobIsInProgress() const
 
 void NgsFacade::TerminateImpl(CallContext* pCallContext)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!pCallContext->InitiateCall())
         return;
 
@@ -123,7 +123,7 @@ void NgsFacade::TerminateImpl(CallContext* pCallContext)
 
     m_pTerminateJob = new JobTerminate(pCallContext->m_uiCallId, this);
     m_pTerminateJob->AddRef();
-    Core::GetInstance()->GetScheduler()->Queue(m_pTerminateJob, false);
+    Scheduler::GetInstance()->Queue(m_pTerminateJob, false);
 }
 
 void NgsFacade::OnTerminate(CallContext* pCallContext, const UserContext* pUserContext)
@@ -203,7 +203,7 @@ qResult NgsFacade::LoginAndRequestAuthenticationTokenImpl(ProtocolCallContext* p
     }
 
     m_pLoginJob->AddRef();
-    Core::GetInstance()->GetScheduler()->Queue(m_pLoginJob, false);
+    Scheduler::GetInstance()->Queue(m_pLoginJob, false);
     return qResult(SUCCESS_RESULT);
 }
 

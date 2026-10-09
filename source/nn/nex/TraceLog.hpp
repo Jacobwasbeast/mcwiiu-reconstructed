@@ -11,10 +11,20 @@ namespace nex
 class TraceLog : public Log
 {
 public:
+    enum
+    {
+        TRACE_ALWAYS = 1
+    };
+
     TraceLog();
     virtual ~TraceLog();
 
     static TraceLog* GetInstance();
+
+    void SetFlag(unsigned int uiFlag)
+    {
+        m_uiFlags |= uiFlag;
+    }
 
     void SetFlag(const wchar_t*)
     {
@@ -22,7 +32,7 @@ public:
 
 private:
     unsigned int m_field10;
-    unsigned int m_field14;
+    unsigned int m_uiFlags;
 };
 
 }

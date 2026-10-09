@@ -31,8 +31,7 @@ public:
 
 private:
     friend class DefaultChainPolicy<BandwidthCounter*>;
-    BandwidthCounter* m_pNext;
-    BandwidthCounter* m_pPrevious;
+    qChainLink<BandwidthCounter*> m_link;
     String m_name;
     unsigned int m_minimum;
     unsigned int m_maximum;

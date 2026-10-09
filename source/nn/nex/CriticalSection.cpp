@@ -23,22 +23,6 @@ CriticalSection::~CriticalSection()
 {
 }
 
-void CriticalSection::Enter()
-{
-    if (g_criticalSectionDisabled)
-        return;
-
-    m_mutex.Lock();
-}
-
-void CriticalSection::Leave()
-{
-    if (g_criticalSectionDisabled)
-        return;
-
-    m_mutex.Unlock();
-}
-
 bool CriticalSection::IsForce() const
 {
     return false;

@@ -48,8 +48,7 @@ wchar_t** RootTransport::s_pInterfaceAddresses;
 wchar_t* RootTransport::s_pInterfaceAddress;
 
 RootTransport::RootTransport()
-    : m_criticalSection(0x20000000), m_recognizerCriticalSection(0x20000000),
-      m_uiBufferSize(DEFAULT_BUFFER_SIZE), m_reserved0(false), m_pVirtualNATDevice(0),
+    : m_uiBufferSize(DEFAULT_BUFFER_SIZE), m_reserved0(false), m_pVirtualNATDevice(0),
       m_uiPortNumber(0), m_bNATCheckEnabled(true), m_bUPnPSupported(false), m_reserved2(false),
       m_reserved3(false), m_bNATCheckServerAddressesSet(false), m_bRelayAddressSet(false),
       m_reserved4(false)
@@ -147,7 +146,7 @@ void RootTransport::SetInterfaceAddress(wchar_t* pAddress)
 
 void RootTransport::SetBlockedAddresses(const qList<InetAddress>& rAddresses)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     for (qList<InetAddress>::const_iterator address = rAddresses.begin();
          address != rAddresses.end(); ++address)
     {
@@ -157,19 +156,19 @@ void RootTransport::SetBlockedAddresses(const qList<InetAddress>& rAddresses)
 
 void RootTransport::AttachVNATDevice(VirtualNATDevice* pDevice)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_pVirtualNATDevice = pDevice;
 }
 
 void RootTransport::DetachVNATDevice(VirtualNATDevice* pDevice)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_pVirtualNATDevice = 0;
 }
 
 bool RootTransport::RegisterPacketRecognizer(PacketRecognizer* pRecognizer)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (std::find(m_packetRecognizers.begin(), m_packetRecognizers.end(), pRecognizer) !=
         m_packetRecognizers.end())
     {
@@ -182,7 +181,7 @@ bool RootTransport::RegisterPacketRecognizer(PacketRecognizer* pRecognizer)
 
 bool RootTransport::UnregisterPacketRecognizer(PacketRecognizer* pRecognizer)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     std::list<PacketRecognizer*, MemAllocator<PacketRecognizer*> >::iterator recognizer =
         std::find(m_packetRecognizers.begin(), m_packetRecognizers.end(), pRecognizer);
     if (recognizer == m_packetRecognizers.end())
@@ -194,7 +193,7 @@ bool RootTransport::UnregisterPacketRecognizer(PacketRecognizer* pRecognizer)
 
 bool RootTransport::RejectPacket(Buffer* pBuffer, const InetAddress* pAddress)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     for (std::list<PacketRecognizer*, MemAllocator<PacketRecognizer*> >::iterator recognizer =
              m_packetRecognizers.begin();
          recognizer != m_packetRecognizers.end(); ++recognizer)

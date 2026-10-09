@@ -45,8 +45,7 @@ protected:
     friend class AnyDataAdapter;
 
     qResult m_Result;
-    unsigned int m_uiBufferStateA;
-    unsigned int m_uiBufferStateB;
+    unsigned long long m_uiBufferState;
     unsigned int m_uiCommonStateA;
     unsigned int m_uiCommonStateB;
     unsigned int m_uiCommonStateC;

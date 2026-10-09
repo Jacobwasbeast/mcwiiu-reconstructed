@@ -16,9 +16,12 @@ Log::Log()
 
 Log::~Log()
 {
-    delete m_outputFormat;
-    delete m_logDevice;
-    delete m_logFilter;
+    if (m_outputFormat != 0)
+        delete m_outputFormat;
+    if (m_logDevice != 0)
+        delete m_logDevice;
+    if (m_logFilter != 0)
+        delete m_logFilter;
 }
 
 void Log::SetLogDevice(LogDevice* device, bool deleteOld)
@@ -48,13 +51,12 @@ OutputFormat* Log::GetOutputFormat()
 
 void Log::PrepareOutput(wchar_t* buffer, unsigned int capacity, void* context)
 {
-    capacity -= 2;
-    m_outputFormat->StartString(buffer, capacity);
-    m_outputFormat->StartPrefixes(buffer, capacity);
-    AddCustomPrefix(buffer, capacity, context);
-    m_outputFormat->AddPrefixes(buffer, capacity);
-    m_outputFormat->EndPrefixes(buffer, capacity);
-    m_outputFormat->AddIndent(buffer, capacity);
+    m_outputFormat->StartString(buffer, capacity - 2);
+    m_outputFormat->StartPrefixes(buffer, capacity - 2);
+    AddCustomPrefix(buffer, capacity - 2, context);
+    m_outputFormat->AddPrefixes(buffer, capacity - 2);
+    m_outputFormat->EndPrefixes(buffer, capacity - 2);
+    m_outputFormat->AddIndent(buffer, capacity - 2);
 }
 
 void Log::OutputImpl(const wchar_t* format, va_list arguments, void* context)

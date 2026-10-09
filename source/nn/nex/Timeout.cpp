@@ -27,7 +27,7 @@ void Timeout::SetRTO(unsigned int uiRTO)
 
 void Timeout::Start()
 {
-    m_awaitedTime = Time(Time::GetTime()) + static_cast<int>(m_uiRTO);
+    m_awaitedTime = Time::GetTime() + static_cast<int>(m_uiRTO);
 }
 
 void Timeout::SetExpirationTime(Time expirationTime)
@@ -42,30 +42,21 @@ Time Timeout::GetAwaitedTime()
 
 void Timeout::SetRelativeExpirationTime(int iRelativeExpirationTime)
 {
-    long long relativeExpirationTime = iRelativeExpirationTime;
-    SetExpirationTime(Time(Time::GetTime()) + iRelativeExpirationTime);
-    m_relativeExpirationTime = relativeExpirationTime;
+    SetExpirationTime(Time::GetTime() + iRelativeExpirationTime);
+    m_relativeExpirationTime = iRelativeExpirationTime;
 }
 
 bool Timeout::IsAwaited() const
 {
-    return static_cast<long long>(m_awaitedTime) < static_cast<long long>(g_lastTime);
+    return static_cast<long long>(m_awaitedTime) < static_cast<long long>(Time(g_lastTime));
 }
 
 bool Timeout::IsExpired() const
 {
-    if (static_cast<long long>(m_expirationTime) != 0
-        && static_cast<long long>(Time::GetTime()) > static_cast<long long>(m_expirationTime))
-        return true;
-
-    if (m_pCore->m_bTerminateImmediately)
-    {
-        long long terminateTime = static_cast<long long>(m_pCore->m_terminateImmediatelyTime);
-        if (static_cast<long long>(Time::GetTime()) > terminateTime)
-            return true;
-    }
-
-    return false;
+    return (static_cast<long long>(m_expirationTime) != 0
+            && static_cast<long long>(m_expirationTime) < static_cast<long long>(Time::GetTime()))
+        || (m_pCore->GetTerminateImmediately()
+            && static_cast<long long>(m_pCore->GetTerminateImmediatelyTime()) < static_cast<long long>(Time::GetTime()));
 }
 
 }

@@ -16,7 +16,9 @@ public:
         m_Parameters.clear();
     }
 
-    virtual ~MatchmakeParam();
+    virtual ~MatchmakeParam()
+    {
+    }
 };
 
 }

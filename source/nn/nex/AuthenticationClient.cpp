@@ -34,7 +34,7 @@ AuthenticationClient::AuthenticationClient()
     m_pTicketGrantingProtocolClient = new TicketGrantingProtocolClient();
     m_pTicketGrantingProtocolClient->SetProtocolID(TICKET_GRANTING_PROTOCOL_ID);
     m_uiPrincipalID = 0;
-    m_loginDeadline = Time(Time::ConvertTimeoutToDeadline(LOGIN_TIMEOUT));
+    m_loginDeadline = Time::ConvertTimeoutToDeadline(LOGIN_TIMEOUT);
     AnyDataAdapter::Register();
     GetProtocolRegistry()->RegisterProtocol(TICKET_GRANTING_PROTOCOL_ID,
         new TicketGrantingProtocolClient());

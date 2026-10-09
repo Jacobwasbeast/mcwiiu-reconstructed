@@ -23,7 +23,6 @@ namespace
 
 const unsigned char RELAY_STREAM_ID = 0xF;
 const unsigned char RELAY_PING_HEADER_TYPE_2 = 2;
-const unsigned int RELAY_INVALID_ID = 0xFFFFFFFFu;
 
 }
 
@@ -46,14 +45,11 @@ void Relay::SetTransport(RootTransport* pTransport)
 {
     UnregisterStream();
 
-    const bool bEnabled = m_bEnabled;
-    RelayStream* pStream = m_pStream;
+    m_pStream->m_pTransport = pTransport;
 
-    pStream->m_pTransport = pTransport;
-
-    if (bEnabled)
+    if (m_bEnabled)
     {
-        m_bRegistered = pTransport->m_streamManager.RegisterStream(pStream, RELAY_STREAM_ID, 0);
+        m_bRegistered = pTransport->m_streamManager.RegisterStream(m_pStream, RELAY_STREAM_ID, 0);
     }
 }
 
@@ -75,22 +71,26 @@ void Relay::UnregisterStream()
 
 void Relay::Clean()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
 
     m_pStream->m_routingTable.Clean();
     SetRelayGatheringID(RELAY_INVALID_ID);
     SetGameServerID(RELAY_INVALID_ID);
 
-    if (Network::GetInstance()->GetNATTraversalEngine() != 0)
+    if (Network::GetInstance() != 0)
     {
-        Network::GetInstance()->GetNATTraversalEngine()->m_relayServerAddress = String("");
-        Network::GetInstance()->GetNATTraversalEngine()->m_uiRelayServerPort = 0;
-    }
+        if (Network::GetInstance()->GetNATTraversalEngine() != 0)
+        {
+            NATTraversalEngine* pEngine = Network::GetInstance()->GetNATTraversalEngine();
+            pEngine->m_relayServerAddress = String("");
+            Network::GetInstance()->GetNATTraversalEngine()->m_uiRelayServerPort = 0;
+        }
 
-    if (&Network::GetInstance()->GetMessageSelector() != 0)
-    {
-        Network::GetInstance()->GetMessageSelector().GetRelayMessage()
-            ->ClearRelayDataPacketSignatureKey();
+        if (&Network::GetInstance()->GetMessageSelector() != 0)
+        {
+            Network::GetInstance()->GetMessageSelector().GetRelayMessage()
+                ->ClearRelayDataPacketSignatureKey();
+        }
     }
 }
 
@@ -98,33 +98,35 @@ void Relay::EnableRelay(bool bEnable)
 {
     m_bEnabled = bEnable;
 
-    if (!bEnable)
+    if (bEnable)
+    {
+        RootTransport* pTransport = m_pStream->m_pTransport;
+
+        if (pTransport != 0)
+        {
+            m_bRegistered = pTransport->m_streamManager.RegisterStream(m_pStream, RELAY_STREAM_ID, 0);
+        }
+
+        m_pNetwork = Network::GetInstance();
+    }
+    else
     {
         UnregisterStream();
-        return;
     }
-
-    RootTransport* pTransport = m_pStream->m_pTransport;
-
-    if (pTransport != 0)
-    {
-        m_bRegistered = pTransport->m_streamManager.RegisterStream(m_pStream, RELAY_STREAM_ID, 0);
-    }
-
-    m_pNetwork = Network::GetInstance();
 }
 
 bool Relay::Exists()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     return m_pStream->m_routingTable.GetSize() != 0;
 }
 
 bool Relay::HasRelay(const InetAddress* pAddress, const InetAddress* pRelay)
 {
     InetAddress found;
+    bool bFound = m_pStream->m_routingTable.Find(*pAddress, found);
 
-    if (m_pStream->m_routingTable.Find(*pAddress, found))
+    if (bFound)
     {
         if (pAddress->GetAddress() == found.GetAddress()
             && pAddress->GetPortNumber() == found.GetPortNumber())
@@ -164,31 +166,31 @@ bool Relay::RelayMessage(Buffer* pPayload, const InetAddress* pDestination, unsi
 
     PacketOut* pPacket = RelayStream::BuildRelayPacket(pPayload, RELAY_TYPE_DATA);
 
-    if (pPacket != 0)
+    if (pPacket == 0)
     {
-        if (pPacket->IsValid())
-        {
-            pPacket->m_address = route;
-            pPacket->m_unknown128 = true;
-            pPacket->GetRelayHeader().m_uiSourceAddress = m_address.GetAddress();
-            pPacket->GetRelayHeader().m_uiSourcePort = m_address.GetPortNumber();
-            pPacket->GetRelayHeader().m_uiGameServerID = GetGameServerID();
-            pPacket->GetRelayHeader().m_uiGatheringID = GetRelayGatheringID();
-            pPacket->GetRelayHeader().m_uiDestinationAddress = pDestination->GetAddress();
-            pPacket->GetRelayHeader().m_uiDestinationPort = pDestination->GetPortNumber();
-
-            RelayStream* pStream = m_pStream;
-            const bool bSent = pStream->m_pTransport->Send(uiPort, pStream->GetType(),
-                RELAY_STREAM_ID, RELAY_STREAM_ID, pPacket, true);
-
-            pPacket->ReleaseRef();
-            return bSent;
-        }
-
-        delete pPacket;
+        return false;
     }
 
-    return false;
+    if (!pPacket->IsValid())
+    {
+        delete pPacket;
+        return false;
+    }
+
+    pPacket->m_address = route;
+    pPacket->m_unknown128 = true;
+    pPacket->GetRelayHeader().m_uiSourceAddress = m_address.GetAddress();
+    pPacket->GetRelayHeader().m_uiSourcePort = m_address.GetPortNumber();
+    pPacket->GetRelayHeader().m_uiGameServerID = GetGameServerID();
+    pPacket->GetRelayHeader().m_uiGatheringID = GetRelayGatheringID();
+    pPacket->GetRelayHeader().m_uiDestinationAddress = pDestination->GetAddress();
+    pPacket->GetRelayHeader().m_uiDestinationPort = pDestination->GetPortNumber();
+
+    const bool bSent = m_pStream->m_pTransport->Send(uiPort, m_pStream->GetType(),
+        RELAY_STREAM_ID, RELAY_STREAM_ID, pPacket, true);
+
+    pPacket->ReleaseRef();
+    return bSent;
 }
 
 bool Relay::PingMessage(Buffer* pPayload, const RelayPingProtocolHeader* pHeader,
@@ -196,58 +198,55 @@ bool Relay::PingMessage(Buffer* pPayload, const RelayPingProtocolHeader* pHeader
 {
     PacketOut* pPacket = RelayStream::BuildRelayPacket(pPayload, RELAY_TYPE_PING);
 
-    if (pPacket != 0)
+    if (pPacket == 0)
     {
-        if (pPacket->IsValid())
-        {
-            memset(&pPacket->GetRelayPingHeader(), 0, sizeof(RelayPingProtocolHeader));
-            bool bSent;
-
-            if (pHeader->m_unknown0 == RELAY_PING_HEADER_TYPE_2)
-            {
-                InetAddress route;
-
-                m_pStream->m_routingTable.Find(*pDestination, route);
-                pPacket->m_address = route;
-                pPacket->GetRelayHeader().m_uiSourceAddress = m_address.GetAddress();
-                pPacket->GetRelayHeader().m_uiSourcePort = m_address.GetPortNumber();
-                pPacket->GetRelayHeader().m_uiGameServerID = GetGameServerID();
-                pPacket->GetRelayHeader().m_uiGatheringID = GetRelayGatheringID();
-                pPacket->GetRelayHeader().m_uiDestinationAddress = pDestination->GetAddress();
-                pPacket->GetRelayHeader().m_uiDestinationPort = pDestination->GetPortNumber();
-                pPacket->GetRelayPingHeader().m_unknown0 = pHeader->m_unknown0;
-                pPacket->GetRelayPingHeader().m_unknown4 = pHeader->m_unknown4;
-                pPacket->GetRelayPingHeader().m_unknown8 = pHeader->m_unknown8;
-
-                RelayStream* pStream = m_pStream;
-                pPacket->m_unknown128 = true;
-                bSent = pStream->m_pTransport->Send(uiPort, pStream->GetType(), RELAY_STREAM_ID,
-                    RELAY_STREAM_ID, pPacket, true);
-                pPacket->ReleaseRef();
-            }
-            else
-            {
-                pPacket->m_address = *pDestination;
-                pPacket->GetRelayHeader().m_uiGameServerID = GetGameServerID();
-                pPacket->GetRelayHeader().m_uiGatheringID = GetRelayGatheringID();
-                pPacket->GetRelayPingHeader().m_unknown0 = pHeader->m_unknown0;
-                pPacket->GetRelayPingHeader().m_unknown4 = pHeader->m_unknown4;
-                pPacket->GetRelayPingHeader().m_unknown8 = pHeader->m_unknown8;
-
-                RelayStream* pStream = m_pStream;
-                pPacket->m_unknown128 = true;
-                bSent = pStream->m_pTransport->Send(uiPort, pStream->GetType(), RELAY_STREAM_ID,
-                    RELAY_STREAM_ID, pPacket, true);
-                pPacket->ReleaseRef();
-            }
-
-            return bSent;
-        }
-
-        delete pPacket;
+        return false;
     }
 
-    return false;
+    if (!pPacket->IsValid())
+    {
+        delete pPacket;
+        return false;
+    }
+
+    memset(&pPacket->GetRelayPingHeader(), 0, sizeof(RelayPingProtocolHeader));
+    bool bSent;
+
+    if (pHeader->m_unknown0 == RELAY_PING_HEADER_TYPE_2)
+    {
+        InetAddress route;
+
+        m_pStream->m_routingTable.Find(*pDestination, route);
+        pPacket->m_address = route;
+        pPacket->GetRelayHeader().m_uiSourceAddress = m_address.GetAddress();
+        pPacket->GetRelayHeader().m_uiSourcePort = m_address.GetPortNumber();
+        pPacket->GetRelayHeader().m_uiGameServerID = GetGameServerID();
+        pPacket->GetRelayHeader().m_uiGatheringID = GetRelayGatheringID();
+        pPacket->GetRelayHeader().m_uiDestinationAddress = pDestination->GetAddress();
+        pPacket->GetRelayHeader().m_uiDestinationPort = pDestination->GetPortNumber();
+        pPacket->GetRelayPingHeader().m_unknown0 = pHeader->m_unknown0;
+        pPacket->GetRelayPingHeader().m_unknown4 = pHeader->m_unknown4;
+        pPacket->GetRelayPingHeader().m_unknown8 = pHeader->m_unknown8;
+        pPacket->m_unknown128 = true;
+        bSent = m_pStream->m_pTransport->Send(uiPort, m_pStream->GetType(), RELAY_STREAM_ID,
+            RELAY_STREAM_ID, pPacket, true);
+        pPacket->ReleaseRef();
+    }
+    else
+    {
+        pPacket->m_address = *pDestination;
+        pPacket->GetRelayHeader().m_uiGameServerID = GetGameServerID();
+        pPacket->GetRelayHeader().m_uiGatheringID = GetRelayGatheringID();
+        pPacket->GetRelayPingHeader().m_unknown0 = pHeader->m_unknown0;
+        pPacket->GetRelayPingHeader().m_unknown4 = pHeader->m_unknown4;
+        pPacket->GetRelayPingHeader().m_unknown8 = pHeader->m_unknown8;
+        pPacket->m_unknown128 = true;
+        bSent = m_pStream->m_pTransport->Send(uiPort, m_pStream->GetType(), RELAY_STREAM_ID,
+            RELAY_STREAM_ID, pPacket, true);
+        pPacket->ReleaseRef();
+    }
+
+    return bSent;
 }
 
 void Relay::SetRelayGatheringID(unsigned int uiID)

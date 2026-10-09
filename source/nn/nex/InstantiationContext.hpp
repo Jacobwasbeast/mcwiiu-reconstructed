@@ -28,13 +28,15 @@ public:
 
     InstanceControl* GetInstance(unsigned int classId) const
     {
-        if (classId < NumInstances)
-            return m_instances[classId];
+        if (classId >= NumInstances)
+        {
+            SystemError::SignalError(
+                L"D:\\WiiU\\Cafe_SDK_2.13.01\\SDK\\nex\\include\\OnlineCore/src/Core/InstantiationContext.h",
+                0x53, 0xE0000003, 0);
+            return reinterpret_cast<InstanceControl*>(0xFFFFFFFF);
+        }
 
-        SystemError::SignalError(
-            L"D:\\WiiU\\Cafe_SDK_2.13.01\\SDK\\nex\\include\\OnlineCore/src/Core/InstantiationContext.h",
-            0x53, 0xE0000003, 0);
-        return reinterpret_cast<InstanceControl*>(0xFFFFFFFF);
+        return m_instances[classId];
     }
 
 private:

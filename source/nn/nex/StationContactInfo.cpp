@@ -27,8 +27,8 @@ StationContactInfo::StationContactInfo()
 }
 
 StationContactInfo::StationContactInfo(const qList<StationURL>& rURLs)
-    : m_uiConnectionID(0)
 {
+    m_uiConnectionID = 0;
     for (qList<StationURL>::const_iterator url = rURLs.begin(); url != rURLs.end(); ++url)
     {
         AddURL(*url);
@@ -37,14 +37,17 @@ StationContactInfo::StationContactInfo(const qList<StationURL>& rURLs)
 
 StationContactInfo::~StationContactInfo()
 {
+    m_urls.clear();
 }
 
 bool StationContactInfo::SetConnectionID(unsigned int uiConnectionID)
 {
-    if (m_uiConnectionID != 0 && uiConnectionID != m_uiConnectionID)
-        return false;
-    m_uiConnectionID = uiConnectionID;
-    return true;
+    if (m_uiConnectionID == 0 || uiConnectionID == m_uiConnectionID)
+    {
+        m_uiConnectionID = uiConnectionID;
+        return true;
+    }
+    return false;
 }
 
 unsigned int StationContactInfo::GetConnectionID() const
@@ -59,10 +62,12 @@ bool StationContactInfo::AddURL(const StationURL& rStationURL)
         m_urls.push_back(rStationURL);
         return true;
     }
-    if (!SetConnectionID(rStationURL.GetRVConnectionID()))
-        return false;
-    m_urls.push_back(rStationURL);
-    return true;
+    if (SetConnectionID(rStationURL.GetRVConnectionID()))
+    {
+        m_urls.push_back(rStationURL);
+        return true;
+    }
+    return false;
 }
 
 void StationContactInfo::SortAndFilterTarget(StationContactInfo& rTarget) const

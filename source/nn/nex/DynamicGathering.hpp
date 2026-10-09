@@ -21,7 +21,10 @@ public:
     {
     }
 
-    virtual String GetGatheringType() const;
+    virtual String GetGatheringType() const
+    {
+        return m_Type;
+    }
 
     String m_Type;
 };

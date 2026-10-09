@@ -7,7 +7,7 @@ namespace nn
 namespace nex
 {
 
-TraceLog::TraceLog() : m_field10(0), m_field14(1)
+TraceLog::TraceLog() : m_field10(0), m_uiFlags(TRACE_ALWAYS)
 {
 }
 

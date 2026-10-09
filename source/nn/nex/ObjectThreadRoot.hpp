@@ -64,6 +64,8 @@ protected:
     virtual void CallObjectMethod() = 0;
 
 private:
+    friend class ThreadScrambler;
+
     struct ThreadData : public RootObject
     {
         ThreadData();

@@ -1,71 +1,76 @@
 #include "nn/nex/MyNotificationEventHandler.hpp"
 
-namespace nn { namespace nex {
+#include <algorithm>
 
-MyNotificationEventHandler::MyNotificationEventHandler(uint32_t eventGroup, uint32_t eventType)
-    : m_eventReady(false)
-    , m_hasParam1(false)
-    , m_hasUInt64Param1(false)
-    , m_eventGroup(eventGroup)
-    , m_eventType(eventType)
-    , m_param1(0)
-    , m_uint64Param1(0)
-    , m_pendingEvents()
-    , m_event()
+namespace nn
 {
-}
-
-MyNotificationEventHandler::~MyNotificationEventHandler()
+namespace nex
 {
-}
 
-void MyNotificationEventHandler::SetEventParam1(uint32_t value)
+void MyNotificationEventHandler::ProcessNotificationEvent(const NotificationEvent& rEvent)
 {
-    m_param1 = value;
-    m_hasParam1 = true;
-    m_eventReady = false;
-    m_pendingEvents.clear();
-}
-
-void MyNotificationEventHandler::SetEventUInt64Param1(uint64_t value)
-{
-    m_uint64Param1 = value;
-    m_hasUInt64Param1 = true;
-    m_eventReady = false;
-    m_pendingEvents.clear();
-}
-
-void MyNotificationEventHandler::ProcessNotificationEvent(const NotificationEvent& event)
-{
-    if (event.GetType() / 1000 != m_eventGroup || event.GetType() % 1000 != m_eventType)
-        return;
-
-    if (!m_hasParam1 && !m_hasUInt64Param1)
+    uint32_t uiType = rEvent.GetType();
+    if (uiType / 1000 != m_uiEventType)
     {
-        m_pendingEvents.push_back(event);
-        if (m_pendingEvents.size() > 16)
-            m_pendingEvents.erase(m_pendingEvents.begin());
         return;
     }
 
-    if (m_hasParam1 && event.GetParam1() != m_param1)
-        return;
-    if (m_hasUInt64Param1 && (event.GetParam2() != static_cast<uint32_t>(m_uint64Param1 >> 32) ||
-                              event.GetParam3() != static_cast<uint32_t>(m_uint64Param1)))
-        return;
-
-    m_event = event;
-    m_eventReady = true;
+    if (m_bUseParam1)
+    {
+        if (uiType % 1000 == m_uiEventSubType && rEvent.GetParam1() == m_uiParam1)
+        {
+            *m_pEvent = rEvent;
+            m_bEventReceived = true;
+        }
+    }
+    else if (m_bUseUInt64Param1)
+    {
+        if (uiType % 1000 == m_uiEventSubType
+            && ((static_cast<uint64_t>(rEvent.GetParam1()) << 32) | rEvent.GetParam2()) == m_ui64Param1)
+        {
+            *m_pEvent = rEvent;
+            m_bEventReceived = true;
+        }
+    }
+    else if (uiType % 1000 == m_uiEventSubType)
+    {
+        m_pendingEvents.push_back(rEvent);
+        if (m_pendingEvents.size() > 16)
+        {
+            m_pendingEvents.erase(m_pendingEvents.begin());
+        }
+    }
 }
 
-bool MyNotificationEventHandler::HasEvent() const
+void MyNotificationEventHandler::SetEventParam1(uint32_t uiParam1)
 {
-    return m_eventReady;
+    m_uiParam1 = uiParam1;
+    m_bUseParam1 = true;
+
+    EventList::iterator it =
+        std::find_if(m_pendingEvents.begin(), m_pendingEvents.end(), NotificationEventEqualParam1(uiParam1));
+    if (it != m_pendingEvents.end())
+    {
+        *m_pEvent = *it;
+        m_bEventReceived = true;
+    }
+    m_pendingEvents.clear();
 }
 
-const NotificationEvent& MyNotificationEventHandler::GetEvent() const
+void MyNotificationEventHandler::SetEventUInt64Param1(uint64_t ui64Param1)
 {
-    return m_event;
+    m_ui64Param1 = ui64Param1;
+    m_bUseUInt64Param1 = true;
+
+    EventList::iterator it = std::find_if(m_pendingEvents.begin(), m_pendingEvents.end(),
+                                          NotificationEventEqualUInt64Param1(ui64Param1));
+    if (it != m_pendingEvents.end())
+    {
+        *m_pEvent = *it;
+        m_bEventReceived = true;
+    }
+    m_pendingEvents.clear();
 }
 
-}}
+}
+}

@@ -11,8 +11,13 @@ namespace nex
 class DataStoreRatingInfo : public _DDL_DataStoreRatingInfo
 {
 public:
-    DataStoreRatingInfo();
-    virtual ~DataStoreRatingInfo();
+    DataStoreRatingInfo()
+    {
+    }
+
+    virtual ~DataStoreRatingInfo()
+    {
+    }
 };
 
 }

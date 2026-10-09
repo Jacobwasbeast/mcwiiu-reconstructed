@@ -41,22 +41,19 @@ IOCompletionContext* IOCompletionNotifier::CreateIOCompletionContext()
 {
     ScopedCS lock(&m_criticalSection);
     unsigned int i = 0;
-    while (m_aContexts[i] != 0 && ++i < MAX_CONTEXTS)
-    {
-    }
+    while (i < MAX_CONTEXTS && m_aContexts[i] != 0)
+        ++i;
 
-    IOCompletionContext* pContext = new IOCompletionContext();
-    m_aContexts[i] = pContext;
-    return pContext;
+    m_aContexts[i] = new IOCompletionContext();
+    return m_aContexts[i];
 }
 
 void IOCompletionNotifier::DeleteIOCompletionContext(IOCompletionContext* pContext)
 {
     ScopedCS lock(&m_criticalSection);
     unsigned int i = 0;
-    while (m_aContexts[i] != pContext && ++i < MAX_CONTEXTS)
-    {
-    }
+    while (i < MAX_CONTEXTS && m_aContexts[i] != pContext)
+        ++i;
 
     delete m_aContexts[i];
     m_aContexts[i] = 0;

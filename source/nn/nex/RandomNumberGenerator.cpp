@@ -26,8 +26,8 @@ const float REAL_RANDOM_SCALE = 1.0f / 65536.0f;
 RandomNumberGenerator::RandomNumberGenerator()
 {
     m_aMagic[0] = 0;
-    m_uiIndex = STATE_UNSEEDED_INDEX;
     m_aMagic[1] = MATRIX_A;
+    m_uiIndex = STATE_UNSEEDED_INDEX;
     SetRandomNumberSeed(1);
 }
 

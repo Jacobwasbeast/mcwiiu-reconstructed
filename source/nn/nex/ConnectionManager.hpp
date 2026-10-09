@@ -56,6 +56,8 @@ public:
         return m_streamTable;
     }
 
+    static unsigned int s_uiDisconnectTimeout;
+
 private:
     friend class StreamManager;
     unsigned int m_uiContextId;

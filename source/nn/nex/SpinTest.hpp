@@ -14,7 +14,9 @@ class SpinTest : public RootObject
 {
 public:
     SpinTest(uint32_t sleepInterval, uint32_t timeout);
-    virtual ~SpinTest();
+    virtual ~SpinTest()
+    {
+    }
 
     void SetTrace(uint32_t trace, uint64_t flags);
     void AssertOnTimeout();

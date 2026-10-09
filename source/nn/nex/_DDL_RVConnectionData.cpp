@@ -1,5 +1,7 @@
 #include "nn/nex/_DDL_RVConnectionData.hpp"
 
+#include <algorithm>
+
 #include "nn/nex/DDLSerialization.hpp"
 #include "nn/nex/Message.hpp"
 
@@ -18,21 +20,20 @@ const unsigned int SIZE_FIELD_LENGTH = 4;
 
 void _DDL_RVConnectionData::Add(Message* pMessage, const _DDL_RVConnectionData& rSource)
 {
-    const bool bCompactFormat = pMessage->IsCompactFormat();
     unsigned int uiSizePosition = 0;
+    const bool bCompactFormat = pMessage->IsCompactFormat();
 
     if (!bCompactFormat)
     {
-        const uint8_t uiVersion = rSource.m_uiStructureVersion;
-        const uint8_t uiMaxVersion = RV_CONNECTION_DATA_MAX_STRUCTURE_VERSION;
+        uint8_t uiVersion = rSource.m_uiStructureVersion;
+        uint8_t uiMaxVersion = RV_CONNECTION_DATA_MAX_STRUCTURE_VERSION;
 
-        pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
+        _Type_byte::Add(pMessage, std::min(uiVersion, uiMaxVersion));
 
         uiSizePosition = pMessage->GetLength();
 
         const uint32_t uiSize = 0;
-
-        pMessage->Append(reinterpret_cast<const unsigned char*>(&uiSize), SIZE_FIELD_LENGTH, 1);
+        _Type_uint32::Add(pMessage, uiSize);
     }
 
     _Type_stationurl::Add(pMessage, rSource.m_RegularProtocolsURL);
@@ -52,10 +53,7 @@ void _DDL_RVConnectionData::Add(Message* pMessage, const _DDL_RVConnectionData& 
 
         pMessage->SetLength(uiSizePosition);
 
-        const int32_t iSize =
-            static_cast<int32_t>(uiEndPosition - uiSizePosition - SIZE_FIELD_LENGTH);
-
-        pMessage->Append(reinterpret_cast<const unsigned char*>(&iSize), SIZE_FIELD_LENGTH, 1);
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }

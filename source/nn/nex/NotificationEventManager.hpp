@@ -14,7 +14,7 @@ namespace nn { namespace nex {
 class NotificationEventManager : public _Proto_NotificationProtocolServer
 {
 public:
-    explicit NotificationEventManager(NotificationEventManager* pParent);
+    explicit NotificationEventManager(NotificationEventManager* pParent = 0);
     virtual ~NotificationEventManager();
 
     virtual NotificationEventManager* Clone() const;
@@ -28,6 +28,7 @@ public:
 
 private:
     friend class BackEndServices;
+    friend class JobWaitForNotification;
     std::set<NotificationEventHandler*> m_handlers;
     NotificationEventManager* m_pParent;
     std::list<NotificationEvent> m_events;

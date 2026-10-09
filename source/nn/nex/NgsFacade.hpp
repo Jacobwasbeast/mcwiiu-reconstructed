@@ -3,6 +3,7 @@
 
 #include "nn/nex/AuthenticationInfo.hpp"
 #include "nn/nex/CustomDataHolder.hpp"
+#include "nn/nex/NgsBridgeImp.hpp"
 #include "nn/nex/RendezVous.hpp"
 #include "nn/nex/qResult.hpp"
 
@@ -15,7 +16,6 @@ class Job;
 class JobCafeLogin;
 class JobLogin;
 class JobNNIDLogin;
-class NgsBridgeImp;
 class ProtocolCallContext;
 class UserContext;
 
@@ -56,6 +56,11 @@ public:
     int GetHttpStatusCode() const
     {
         return m_iHttpStatusCode;
+    }
+
+    NgsBridgeInterface* GetNgsBridge()
+    {
+        return m_pNgsBridge;
     }
 
 private:

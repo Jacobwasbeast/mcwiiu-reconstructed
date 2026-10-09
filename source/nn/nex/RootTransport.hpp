@@ -134,6 +134,9 @@ public:
 private:
     friend class BackEndServices;
     friend class ConnectionOrientedStream;
+    friend class JobCheckCurrentPort;
+    friend class JobCheckNATProperties;
+    friend class JobNATCheckBase;
     friend class JobPerformNATCheck;
     friend class Relay;
     friend class Router;

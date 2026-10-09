@@ -46,25 +46,9 @@ public:
         FreeExtraContexts();
     }
 
-    virtual void AllocateExtraContexts()
-    {
-        unsigned int uiCount = GetNbOfExtraContexts();
-        m_pExtraContexts = static_cast<T*>(MemoryManager::Allocate(uiCount * sizeof(T)));
-        for (unsigned int i = 0; i < uiCount; ++i)
-            ::new (static_cast<void*>(&m_pExtraContexts[i])) T(m_initialValue);
-    }
+    virtual void AllocateExtraContexts();
 
-    virtual void FreeExtraContexts()
-    {
-        if (m_pExtraContexts != 0)
-        {
-            for (unsigned int i = 0; i < GetNbOfExtraContexts(); ++i)
-                m_pExtraContexts[i].~T();
-
-            MemoryManager::Free(m_pExtraContexts);
-            m_pExtraContexts = 0;
-        }
-    }
+    virtual void FreeExtraContexts();
 
     virtual void ResetContext(unsigned int uiContextId)
     {
@@ -83,14 +67,14 @@ public:
 
     T& Get()
     {
+        unsigned int uiContextId = 0;
         if (g_usingInstantiationContext)
-        {
-            unsigned int uiContextId = g_instantiationContextVariable->GetRef();
-            if (uiContextId != 0)
-                return m_pExtraContexts[uiContextId];
-        }
+            uiContextId = g_instantiationContextVariable->GetRef();
 
-        return m_value;
+        if (uiContextId == 0)
+            return m_value;
+
+        return m_pExtraContexts[uiContextId];
     }
 
 private:
@@ -98,6 +82,27 @@ private:
     T m_value;
     T m_initialValue;
 };
+
+template <typename T>
+void PseudoGlobalVariable<T>::AllocateExtraContexts()
+{
+    m_pExtraContexts = static_cast<T*>(MemoryManager::Allocate(GetNbOfExtraContexts() * sizeof(T)));
+    for (unsigned int i = 0; i < GetNbOfExtraContexts(); ++i)
+        ::new (static_cast<void*>(&m_pExtraContexts[i])) T(m_initialValue);
+}
+
+template <typename T>
+void PseudoGlobalVariable<T>::FreeExtraContexts()
+{
+    if (m_pExtraContexts != 0)
+    {
+        for (unsigned int i = 0; i < GetNbOfExtraContexts(); ++i)
+            m_pExtraContexts[i].~T();
+
+        MemoryManager::Free(m_pExtraContexts);
+        m_pExtraContexts = 0;
+    }
+}
 
 }
 }

@@ -49,7 +49,7 @@ public:
     typedef qList<SecurityContext> SecurityContextList;
 
     SecurityContextManager();
-    virtual ~SecurityContextManager();
+    virtual ~SecurityContextManager() {}
 
     static SecurityContextManager* GetInstance();
 

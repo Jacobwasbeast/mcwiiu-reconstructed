@@ -24,8 +24,6 @@ class StationURL;
 class JobConnectEndPoint : public StepSequenceJob
 {
 public:
-    typedef std::list<StationURL, MemAllocator<StationURL> > URLList;
-
     JobConnectEndPoint(Job::JobType jobType, ConnectionManager* pConnectionManager,
         unsigned int uiContextId, Buffer* pRequestBuffer, Buffer* pResponseBuffer,
         const qList<StationURL>& rURLs, EndPoint** ppEndPoint, unsigned int uiTimeout,
@@ -63,6 +61,7 @@ public:
     void ConnectionSucceeded();
 
 private:
+    friend class JobConnectSecureEndPoint;
     SystemComponent::Use m_componentUse;
     EndPoint* m_pEndPoint;
     qResult m_result;
@@ -78,10 +77,10 @@ private:
     Buffer* m_pResponseBuffer;
     EndPoint** m_ppEndPointOutput;
     uint64_t m_natTraversalDeadline;
-    URLList m_urls;
+    qList<StationURL> m_urls;
     bool m_isRouting;
     unsigned short m_originalPort;
-    URLList::iterator m_currentURL;
+    qList<StationURL>::iterator m_currentURL;
     bool m_flag194;
     bool m_cancelRequested;
     Job* m_pCancelTarget;

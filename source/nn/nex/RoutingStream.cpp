@@ -5,6 +5,7 @@
 #include "nn/nex/PacketBuffer.hpp"
 #include "nn/nex/PacketBufferPacketOut.hpp"
 #include "nn/nex/PacketOut.hpp"
+#include "nn/nex/StreamSettings.hpp"
 
 namespace nn
 {
@@ -15,10 +16,23 @@ namespace
 {
 
 const unsigned int ROUTING_HEADER_SIZE = 6;
+const unsigned int ROUTING_CRITICAL_SECTION_TRACE_MASK = 1;
+const unsigned int ROUTING_TABLE_TIMEOUT_FACTOR = 3;
 
 unsigned int s_uiHistoryCleaningPeriod = 0;
 unsigned int s_uiHistoryLifetime = 10000;
 
+}
+
+RoutingStream::RoutingStream()
+    : Stream(Routing)
+    , m_criticalSection(ROUTING_CRITICAL_SECTION_TRACE_MASK)
+    , m_routingTable(g_streamSettings[Unknown1].Get().GetMaxSilenceTime()
+          * ROUTING_TABLE_TIMEOUT_FACTOR)
+    , m_pTransport(0)
+    , m_pFilter(0)
+{
+    m_lastCleaning = Time(0);
 }
 
 RoutingStream::~RoutingStream()

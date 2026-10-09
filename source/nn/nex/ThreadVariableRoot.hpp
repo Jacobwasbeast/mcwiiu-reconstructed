@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "nn/nex/RootObject.hpp"
+#include "nn/nex/qChain.hpp"
 
 namespace nn
 {
@@ -22,11 +23,7 @@ public:
     virtual void ClearValue();
     virtual void ClearValue(uint32_t threadId);
 
-protected:
-    friend class ThreadVariableList;
-
-    ThreadVariableRoot* m_next;
-    ThreadVariableRoot* m_previous;
+    qChainLink<ThreadVariableRoot*> m_link;
 };
 
 }

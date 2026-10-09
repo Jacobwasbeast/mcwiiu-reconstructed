@@ -56,21 +56,24 @@ void JobNNIDLogin::StepGameLogin()
     m_protocolContext.Reset();
     m_pNgsFacade->m_iDefaultLoginTimeout = m_iTimeout;
     m_authenticationInfo = CustomDataHolder<AuthenticationInfo>(new AuthenticationInfo);
-    m_authenticationInfo.GetObject()->m_Name = String(pToken->token);
-    StringStream userName;
-    userName.StreamNumber(m_uiPrincipalId);
-    String host(pToken->host);
-    if (m_pNgsFacade->m_reserved1)
-        m_authenticationInfo.GetObject()->m_uiValue3 = AUTHENTICATION_VALUE_UNLIMITED;
-
-    unsigned short uiPort = pToken->port;
-    m_authenticationInfo.GetObject()->m_uiValue2 = true;
-    if (!m_pNgsFacade->RendezVous::Login(&m_protocolContext, userName.GetBuffer(),
-                                         pToken->password, host, uiPort, m_authenticationInfo,
-                                         &m_pCredentials, 0))
+    AuthenticationInfo* pInfo = m_authenticationInfo.GetObject();
+    pInfo->m_Name = String(pToken->token);
     {
-        Complete(qResult(LOGIN_CALL_FAILED_RESULT));
-        return;
+        StringStream userName;
+        userName.StreamNumber(m_uiPrincipalId);
+        String host(pToken->host);
+        if (m_pNgsFacade->m_reserved1)
+            m_authenticationInfo.GetObject()->m_uiValue3 = AUTHENTICATION_VALUE_UNLIMITED;
+
+        unsigned short uiPort = pToken->port;
+        m_authenticationInfo.GetObject()->m_uiValue2 = true;
+        if (!m_pNgsFacade->RendezVous::Login(&m_protocolContext, userName.GetBuffer(),
+                                             pToken->password, host, uiPort, m_authenticationInfo,
+                                             &m_pCredentials, 0))
+        {
+            Complete(qResult(LOGIN_CALL_FAILED_RESULT));
+            return;
+        }
     }
 
     SetStep(Step(static_cast<Step::Function>(&JobNNIDLogin::StepWaitingForGameLogin), L""));
@@ -94,7 +97,8 @@ void JobNNIDLogin::StepWaitingForGameLogin()
         return;
     }
 
-    Complete(m_protocolContext.GetResult());
+    qResult result = m_protocolContext.GetResult();
+    Complete(result);
 }
 
 }

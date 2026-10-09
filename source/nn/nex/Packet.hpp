@@ -9,6 +9,8 @@
 #include "nn/nex/RelayProtocolHeader.hpp"
 #include "nn/nex/Stream.hpp"
 #include "nn/nex/Time.hpp"
+#include "nn/nex/VirtualPort.hpp"
+#include "nn/nex/qChain.hpp"
 
 namespace nn
 {
@@ -76,7 +78,7 @@ public:
 
     Stream::Type GetStreamType() const
     {
-        return static_cast<Stream::Type>(m_uiDestination >> 4);
+        return VirtualPort(m_uiDestination).GetType();
     }
 
     RelayProtocolHeader& GetRelayHeader()
@@ -89,12 +91,9 @@ public:
         return *reinterpret_cast<RelayPingProtocolHeader*>(&GetRelayHeader() + 1);
     }
 
-    Packet* m_pNext;
-    Packet* m_pPrevious;
-    Packet* m_pTempNext;
-    Packet* m_pTempPrevious;
-    Packet* m_pHistoryNext;
-    Packet* m_pHistoryPrevious;
+    qChainLink<Packet*> m_link;
+    qChainLink<Packet*> m_tempLink;
+    qChainLink<Packet*> m_historyLink;
     unsigned char m_uiVersion;
     unsigned char m_uiSource;
     unsigned char m_uiDestination;
@@ -121,7 +120,7 @@ public:
     Buffer* m_pPayload;
     InetAddress m_address;
     unsigned long long m_unknownF8;
-    unsigned long long m_queueTime;
+    Time m_queueTime;
     unsigned long long m_historyTime;
 };
 

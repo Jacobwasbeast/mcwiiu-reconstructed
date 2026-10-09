@@ -8,8 +8,7 @@ namespace nex
 {
 
 WorkerThreads::WorkerThreads()
-    : m_criticalSection(0x20000000)
-    , m_state(STATE_STOPPED)
+    : m_state(STATE_STOPPED)
 {
 }
 

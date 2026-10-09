@@ -1,15 +1,27 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_OPERATIONMANAGER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_OPERATIONMANAGER_HPP
 
-#include <list>
-
-#include "nn/nex/MemAllocator.hpp"
 #include "nn/nex/RootObject.hpp"
+#include "nn/nex/qList.hpp"
 
 namespace nn { namespace nex {
 
 class Operation;
-class OperationCallback;
+
+class OperationCallback : public RootObject
+{
+public:
+    virtual ~OperationCallback() {}
+    virtual void CallMethod(Operation* operation) = 0;
+
+    int GetPriority() const
+    {
+        return m_priority;
+    }
+
+protected:
+    int m_priority;
+};
 
 class OperationManager : public RootObject
 {
@@ -27,8 +39,8 @@ public:
     bool UnregisterCallback(OperationCallback* callback);
 
 private:
-    typedef std::list<OperationCallback*, MemAllocator<OperationCallback*> > CallbackList;
-    typedef std::list<Operation*, MemAllocator<Operation*> > OperationList;
+    typedef qList<OperationCallback*> CallbackList;
+    typedef qList<Operation*> OperationList;
 
     CallbackList m_callbacks;
     OperationList m_operations;

@@ -51,6 +51,11 @@ public:
     unsigned int GetHistoryCount(const InetAddress* pAddress);
     void SetDenyForAddress(const InetAddress* pAddress);
 
+    RoutingTable* GetRoutingTable()
+    {
+        return &m_routingTable;
+    }
+
 private:
     friend class Router;
 

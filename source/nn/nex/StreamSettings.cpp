@@ -146,7 +146,9 @@ unsigned int StreamSettings::GetRTTRetransmit() const
 
 bool StreamSettings::IgnoreChangeSettings()
 {
-    return !m_bChangeSettingsAllowed;
+    if (m_bChangeSettingsAllowed)
+        return false;
+    return true;
 }
 
 void StreamSettings::SetKey(const String& rKey)

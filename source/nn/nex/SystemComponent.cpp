@@ -31,41 +31,12 @@ const wchar_t* SystemComponent::GetType() const
     return L"SystemComponent";
 }
 
-bool SystemComponent::IsAKindOf(const wchar_t* pType) const
-{
-    return std::wcscmp(L"SystemComponent", pType) == 0;
-}
-
-void SystemComponent::StateTransition(_State)
-{
-}
-
-void SystemComponent::OnInitialize()
-{
-    TestState();
-}
-
-void SystemComponent::OnTerminate()
-{
-    TestState();
-}
-
 bool SystemComponent::BeginInitialization()
 {
     return true;
 }
 
-bool SystemComponent::EndInitialization()
-{
-    return true;
-}
-
 bool SystemComponent::BeginTermination()
-{
-    return true;
-}
-
-bool SystemComponent::EndTermination()
 {
     return true;
 }
@@ -102,15 +73,6 @@ bool SystemComponent::ValidTransition(_State state)
 bool SystemComponent::UseIsAllowed()
 {
     return m_uiState == STATE_READY || m_uiState == STATE_IN_USE;
-}
-
-SystemComponent::_State SystemComponent::TestState()
-{
-    return static_cast<_State>(m_uiState);
-}
-
-void SystemComponent::DoWork()
-{
 }
 
 void SystemComponent::SetParent(SystemComponent* pParent)

@@ -37,7 +37,8 @@ JobLogin::JobLogin()
 
 JobLogin::~JobLogin()
 {
-    g_registerURLsExtraData = AnyObjectHolder<Data, String>();
+    AnyObjectHolder<Data, String> emptyData;
+    g_registerURLsExtraData = emptyData;
 }
 
 void JobLogin::Initialize(unsigned int uiCallId, unsigned int uiLoginParam,
@@ -46,9 +47,9 @@ void JobLogin::Initialize(unsigned int uiCallId, unsigned int uiLoginParam,
 {
     m_uiCallId = uiCallId;
     m_uiLoginParam = uiLoginParam;
-    m_pNgsFacade = pNgsFacade;
     m_pFirstString = pFirstString;
     m_pSecondString = pSecondString;
+    m_pNgsFacade = pNgsFacade;
     m_iTimeout = iTimeout;
     m_startTime = Time(Time::GetTime());
     SetStep(Step(static_cast<Step::Function>(&JobLogin::StepFirst), L""));
@@ -75,8 +76,8 @@ bool JobLogin::Wait()
 {
     if (m_iTimeout != WAIT_FOREVER)
     {
-        int iElapsed = static_cast<int>(Time::GetTime() - m_startTime);
-        if (m_iTimeout <= iElapsed)
+        int64_t elapsed = Time::GetTime() - m_startTime;
+        if (static_cast<int>(elapsed) >= m_iTimeout)
             return false;
     }
 

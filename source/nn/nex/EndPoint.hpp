@@ -3,8 +3,10 @@
 
 #include <stdint.h>
 
+#include "nn/nex/CriticalSection.hpp"
 #include "nn/nex/RootObject.hpp"
 #include "nn/nex/StationURL.hpp"
+#include "nn/nex/qList.hpp"
 #include "nn/nex/qResult.hpp"
 #include "nn/nex/qVector.hpp"
 
@@ -121,6 +123,7 @@ protected:
     friend class NATTraversalRelayClient;
     friend class SecureEndPoint;
     friend class ConnectionManager;
+    friend class GlobalNotificationEventManager;
 
     ConnectionOrientedStream* m_pStream;
     StationURL m_stationURL;
@@ -132,6 +135,18 @@ protected:
     _BroadcastState m_BroadcastState;
     FirstErrorHolder* m_pErrorHolder;
     unsigned char m_uiCtorFlag;
+};
+
+class EndPointGroup : public RootObject
+{
+public:
+    EndPointGroup();
+    ~EndPointGroup();
+
+private:
+    qList<EndPoint*> m_lstEndPoints;
+    qList<EndPointGroup*> m_lstEndPointGroups;
+    CriticalSection m_csGroup;
 };
 
 }

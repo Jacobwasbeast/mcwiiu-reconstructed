@@ -1,7 +1,9 @@
 #include "nn/nex/DataStoreProtocolClient.hpp"
 
 #include "nn/nex/Core.hpp"
+#include "nn/nex/DDLClassMetaType.hpp"
 #include "nn/nex/DDLSerialization.hpp"
+#include "nn/nex/DataStorePasswordInfo.hpp"
 #include "nn/nex/Message.hpp"
 #include "nn/nex/ProtocolCallContext.hpp"
 #include "nn/nex/ProtocolRegistry.hpp"
@@ -9,9 +11,11 @@
 #include "nn/nex/RVClientCore.hpp"
 #include "nn/nex/Scheduler.hpp"
 #include "nn/nex/_DDL_DataStoreMetaInfo.hpp"
+#include "nn/nex/_DDL_DataStorePasswordInfo.hpp"
 #include "nn/nex/_DDL_DataStoreRatingInfo.hpp"
 #include "nn/nex/_DDL_DataStoreSearchParam.hpp"
 #include "nn/nex/_DDL_DataStoreSearchResult.hpp"
+#include "nn/nex/_Type_qresult.hpp"
 
 namespace nn
 {
@@ -23,6 +27,10 @@ namespace
 
 typedef void (*ProtoReturnFunction)(Message* pMessage, ProtocolCallContext* pCallContext);
 const unsigned int METHOD_ID_MASK = 0x7FFF;
+enum
+{
+    RESULT_NOT_IMPLEMENTED = static_cast<int>(0x80010002u)
+};
 const unsigned int METHOD_ID_COUNT = 47;
 enum MethodId
 {
@@ -93,8 +101,7 @@ void DataStoreProtocolClient::ExtractCallSpecificResults(Message* pMessage,
     const unsigned int uiMethodID = Protocol::ExtractMethodID(pMessage) & METHOD_ID_MASK;
     if (uiMethodID - 1 >= METHOD_ID_COUNT - 1)
     {
-        const int iCallError = static_cast<int>(0x80010002u);
-        ClientProtocol::SetCallError(qResult(iCallError));
+        ClientProtocol::SetCallError(qResult(RESULT_NOT_IMPLEMENTED));
         return;
     }
     if (s_ProtoReturn[uiMethodID] != 0)
@@ -110,7 +117,7 @@ bool DataStoreProtocolClient::CallCompletePostObjects(ProtocolCallContext* pCall
                                                       const qVector<unsigned long long>& rDataIds)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -135,7 +142,7 @@ bool DataStoreProtocolClient::CompletePostObjects_PrepareRequest(ProtocolCallCon
                                                                  Message* pMessage,
                                                                  const qVector<unsigned long long>& rDataIds)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -155,7 +162,7 @@ bool DataStoreProtocolClient::CallGetObjectInfos(ProtocolCallContext* pCallConte
                                                  qVector<qResult>* pResults)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -187,7 +194,7 @@ bool DataStoreProtocolClient::GetObjectInfos_PrepareRequest(ProtocolCallContext*
                                                             qVector<DataStoreReqGetInfo>* pReqGetInfos,
                                                             qVector<qResult>* pResults)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -211,7 +218,7 @@ bool DataStoreProtocolClient::CallGetPasswordInfo(ProtocolCallContext* pCallCont
                                                   DataStorePasswordInfo* pPasswordInfo)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -241,7 +248,7 @@ bool DataStoreProtocolClient::GetPasswordInfo_PrepareRequest(ProtocolCallContext
                                                              const unsigned long long& rDataId,
                                                              DataStorePasswordInfo* pPasswordInfo)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -265,7 +272,7 @@ bool DataStoreProtocolClient::CallGetPasswordInfos(ProtocolCallContext* pCallCon
                                                    qVector<qResult>* pResults)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -297,7 +304,7 @@ bool DataStoreProtocolClient::GetPasswordInfos_PrepareRequest(ProtocolCallContex
                                                               qVector<DataStorePasswordInfo>* pPasswordInfos,
                                                               qVector<qResult>* pResults)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -322,7 +329,7 @@ bool DataStoreProtocolClient::CallGetPersistenceInfo(ProtocolCallContext* pCallC
                                                      DataStorePersistenceInfo* pPersistenceInfo)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -354,7 +361,7 @@ bool DataStoreProtocolClient::GetPersistenceInfo_PrepareRequest(ProtocolCallCont
                                                                 const unsigned short& rSlot,
                                                                 DataStorePersistenceInfo* pPersistenceInfo)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -380,7 +387,7 @@ bool DataStoreProtocolClient::CallGetPersistenceInfos(ProtocolCallContext* pCall
                                                       qVector<qResult>* pResults)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -414,7 +421,7 @@ bool DataStoreProtocolClient::GetPersistenceInfos_PrepareRequest(ProtocolCallCon
                                                                  qVector<DataStorePersistenceInfo>* pPersistenceInfos,
                                                                  qVector<qResult>* pResults)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -441,7 +448,7 @@ bool DataStoreProtocolClient::CallGetRatings(ProtocolCallContext* pCallContext,
                                              const unsigned long long& rDataId)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -475,7 +482,7 @@ bool DataStoreProtocolClient::GetRatings_PrepareRequest(ProtocolCallContext* pCa
                                                         qVector<qResult>* pResults,
                                                         const unsigned long long& rDataId)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -501,7 +508,7 @@ bool DataStoreProtocolClient::CallPerpetuateObject(ProtocolCallContext* pCallCon
                                                    const bool& rFlag)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -530,7 +537,7 @@ bool DataStoreProtocolClient::PerpetuateObject_PrepareRequest(ProtocolCallContex
                                                               const unsigned long long& rDataId,
                                                               const bool& rFlag)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -552,7 +559,7 @@ bool DataStoreProtocolClient::CallResetRatings(ProtocolCallContext* pCallContext
                                                qVector<qResult>* pResults)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -584,7 +591,7 @@ bool DataStoreProtocolClient::ResetRatings_PrepareRequest(ProtocolCallContext* p
                                                           const bool& rFlag,
                                                           qVector<qResult>* pResults)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -608,7 +615,7 @@ bool DataStoreProtocolClient::CallSearchObject(ProtocolCallContext* pCallContext
                                                DataStoreSearchResult* pSearchResult)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -638,7 +645,7 @@ bool DataStoreProtocolClient::SearchObject_PrepareRequest(ProtocolCallContext* p
                                                           const DataStoreSearchParam& rSearchParam,
                                                           DataStoreSearchResult* pSearchResult)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -661,7 +668,7 @@ bool DataStoreProtocolClient::CallSearchObjectLight(ProtocolCallContext* pCallCo
                                                     DataStoreSearchResult* pSearchResult)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -691,7 +698,7 @@ bool DataStoreProtocolClient::SearchObjectLight_PrepareRequest(ProtocolCallConte
                                                                const DataStoreSearchParam& rSearchParam,
                                                                DataStoreSearchResult* pSearchResult)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -714,7 +721,7 @@ bool DataStoreProtocolClient::CallUnperpetuateObject(ProtocolCallContext* pCallC
                                                      const bool& rFlag)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -741,7 +748,7 @@ bool DataStoreProtocolClient::UnperpetuateObject_PrepareRequest(ProtocolCallCont
                                                                 const unsigned short& rSlot,
                                                                 const bool& rFlag)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -798,6 +805,53 @@ void DataStoreProtocolClient::ProtoReturn_GetMeta(Message* pMessage,
     _DDL_DataStoreMetaInfo::Extract(pMessage, discarded);
 }
 
+void DataStoreProtocolClient::ProtoReturn_GetPasswordInfo(Message* pMessage,
+                                                          ProtocolCallContext* pCallContext)
+{
+    DataStorePasswordInfo* pPasswordInfo =
+        static_cast<DataStorePasswordInfo*>(pCallContext->GetReturnValuePtr(0));
+    if (pPasswordInfo != 0)
+    {
+        _DDL_DataStorePasswordInfo::Extract(pMessage, pPasswordInfo);
+        return;
+    }
+    DataStorePasswordInfo discarded[1];
+    _DDL_DataStorePasswordInfo::Extract(pMessage, discarded);
+}
+
+void DataStoreProtocolClient::ProtoReturn_GetPasswordInfos(Message* pMessage,
+                                                           ProtocolCallContext* pCallContext)
+{
+    qVector<DataStorePasswordInfo>* pPasswordInfos =
+        static_cast<qVector<DataStorePasswordInfo>*>(pCallContext->GetReturnValuePtr(0));
+    if (pPasswordInfos != 0)
+    {
+        _Type_qvector<DDLClassMetaType<DataStorePasswordInfo> >::Extract(pMessage, pPasswordInfos);
+        if (pMessage->HasError())
+        {
+            return;
+        }
+    }
+    else
+    {
+        qVector<DataStorePasswordInfo> discarded[1];
+        _Type_qvector<DDLClassMetaType<DataStorePasswordInfo> >::Extract(pMessage, discarded);
+        if (pMessage->HasError())
+        {
+            return;
+        }
+    }
+
+    qVector<qResult>* pResults = static_cast<qVector<qResult>*>(pCallContext->GetReturnValuePtr(1));
+    if (pResults != 0)
+    {
+        _Type_qvector<_Type_qresult>::Extract(pMessage, pResults);
+        return;
+    }
+    qVector<qResult> discarded[1];
+    _Type_qvector<_Type_qresult>::Extract(pMessage, discarded);
+}
+
 void DataStoreProtocolClient::ProtoReturn_GetRating(Message* pMessage,
                                                     ProtocolCallContext* pCallContext)
 {
@@ -846,9 +900,10 @@ void DataStoreProtocolClient::ProtoReturn_PostMetaBinary(Message* pMessage,
     unsigned long long discarded;
     unsigned long long* pDataId =
         static_cast<unsigned long long*>(pCallContext->GetReturnValuePtr(0));
-    if (pDataId == 0)
-        pDataId = &discarded;
-    pMessage->ExtractPrimitive(pDataId);
+    unsigned long long* pDestination = &discarded;
+    if (pDataId != 0)
+        pDestination = pDataId;
+    pMessage->ExtractPrimitive(pDestination);
 }
 
 void DataStoreProtocolClient::ProtoReturn_CompletePostObject(Message*, ProtocolCallContext*)

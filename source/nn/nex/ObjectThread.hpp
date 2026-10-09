@@ -43,8 +43,8 @@ public:
 protected:
     virtual void CallObjectMethod()
     {
-        Method method = m_method;
         TObject* pObject = m_pObject;
+        Method method = m_method;
         TParam param = m_param;
         ReadyToRun();
         (pObject->*method)(param);

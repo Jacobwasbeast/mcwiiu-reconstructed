@@ -14,7 +14,7 @@ namespace nex
 AnyDataAdapter AnyDataAdapter::s_instance;
 unsigned int AnyDataAdapter::s_uiUseCount = 0;
 AnyDataAdapter::PrototypeList* AnyDataAdapter::s_pPrototypes = 0;
-CriticalSection AnyDataAdapter::s_criticalSection(0x20000000);
+CriticalSection AnyDataAdapter::s_criticalSection;
 
 AnyDataAdapter::AnyDataAdapter()
 {

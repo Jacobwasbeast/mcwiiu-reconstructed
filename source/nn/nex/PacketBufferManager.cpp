@@ -15,7 +15,7 @@ namespace nex
 namespace
 {
 
-CriticalSection s_criticalSection(0x20000000);
+CriticalSection s_criticalSection;
 
 const unsigned int PACKET_MANAGEMENT_OBJECT_SIZES[3] = { 40, 36, 328 };
 

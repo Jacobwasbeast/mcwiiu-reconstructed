@@ -50,7 +50,7 @@ int EncryptionAlgorithm::Decrypt(Buffer* pBuffer)
 bool EncryptionAlgorithm::GetErrorString(unsigned int uiError, wchar_t* pString,
     unsigned int uiLength)
 {
-    if (uiLength <= wcslen(L"Encryption Error"))
+    if (wcslen(L"Encryption Error") >= uiLength)
         return false;
 
     wcscpy(pString, L"Encryption Error");
@@ -60,7 +60,7 @@ bool EncryptionAlgorithm::GetErrorString(unsigned int uiError, wchar_t* pString,
 bool EncryptionAlgorithm::SetKey(const Key& rKey)
 {
     unsigned int uiLength = rKey.GetLength();
-    if (m_uiMinKeyLength <= uiLength && uiLength <= m_uiMaxKeyLength)
+    if (uiLength >= m_uiMinKeyLength && uiLength <= m_uiMaxKeyLength)
     {
         m_key = rKey;
         KeyHasChanged();

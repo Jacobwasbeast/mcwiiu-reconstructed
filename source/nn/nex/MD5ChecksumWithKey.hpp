@@ -25,7 +25,7 @@ public:
     }
     virtual unsigned int ComputeChecksumForTransportArray(const unsigned char** ppData,
         const unsigned int* pLengths, int iCount);
-    virtual unsigned int GetChecksumLength()
+    virtual unsigned char GetChecksumLength()
     {
         return 16;
     }

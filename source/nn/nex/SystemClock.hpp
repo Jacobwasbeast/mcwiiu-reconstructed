@@ -22,9 +22,9 @@ public:
     virtual ~SystemClock();
 
     static void ApplyCorrection(Time reference, Time corrected);
-    static uint64_t GetTimeImplCorrectless();
-    static uint64_t GetTimeImpl(bool allowRetry);
-    static uint64_t ProtectedGetTime();
+    static Time GetTimeImplCorrectless();
+    static Time GetTimeImpl(bool allowRetry);
+    static Time ProtectedGetTime();
     static void RegisterTimeProvider(TimeProvider* provider, bool applyCorrection);
     static void Reset();
 };

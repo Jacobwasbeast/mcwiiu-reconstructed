@@ -16,7 +16,9 @@ class DataStorePermission : public _DDL_DataStorePermission
 public:
     DataStorePermission(uint8_t uiPermission = 3,
                         const qVector<uint32_t>& rRecipientIds = qVector<uint32_t>());
-    virtual ~DataStorePermission();
+    virtual ~DataStorePermission()
+    {
+    }
 };
 
 }

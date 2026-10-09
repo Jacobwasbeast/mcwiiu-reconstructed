@@ -24,7 +24,7 @@ TransportStreamManager::~TransportStreamManager()
 
 int TransportStreamManager::GetNbStream()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     return static_cast<int>(m_streams.size());
 }
 
@@ -42,13 +42,13 @@ Stream* TransportStreamManager::GetStream(VirtualPort port)
     if (!g_transportThreadEnabled)
         return GetStreamImpl(port);
 
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     return GetStreamImpl(port);
 }
 
 bool TransportStreamManager::UnregisterStream(Stream::Type type, unsigned char uiStreamID)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     VirtualPort port(type, uiStreamID);
     if (GetStream(port) == 0)
         return false;

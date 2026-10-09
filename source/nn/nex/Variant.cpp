@@ -1,6 +1,9 @@
 #include "nn/nex/Variant.hpp"
 
+#include <cwchar>
+
 #include "nn/nex/SpecialArray.hpp"
+#include "nn/nex/StringStream.hpp"
 
 namespace nn
 {
@@ -87,10 +90,17 @@ Variant& Variant::operator=(const Variant& other)
 
     switch (other.GetType())
     {
-    case TYPE_NONE:
+    case TYPE_STRING:
+        {
+            String text = other.GetStringValue();
+            CopyString(&m_text, static_cast<const wchar_t*>(text));
+        }
         break;
     case TYPE_INTEGER:
         m_integer = other.GetInt64Value();
+        break;
+    case TYPE_UNSIGNED_INTEGER:
+        m_unsignedInteger = other.GetUInt64Value();
         break;
     case TYPE_DOUBLE:
         m_double = other.GetDoubleValue();
@@ -98,17 +108,10 @@ Variant& Variant::operator=(const Variant& other)
     case TYPE_BOOL:
         m_bool = other.GetBoolValue();
         break;
-    case TYPE_STRING:
-        {
-            String text = other.GetStringValue();
-            CopyString(&m_text, static_cast<const wchar_t*>(text));
-        }
-        break;
     case TYPE_DATE_TIME:
         m_unsignedInteger = other.m_unsignedInteger;
         break;
-    case TYPE_UNSIGNED_INTEGER:
-        m_unsignedInteger = other.GetUInt64Value();
+    default:
         break;
     }
 
@@ -190,10 +193,19 @@ unsigned int Variant::GetUInt32Value() const
 
 DateTime Variant::GetDateTimeValue() const
 {
-    if (GetType() == TYPE_DATE_TIME)
-        return DateTime(static_cast<uint64_t>(m_unsignedInteger));
+    if (GetType() != TYPE_DATE_TIME)
+        return DateTime();
 
-    return DateTime();
+    return DateTime(static_cast<uint64_t>(m_unsignedInteger));
+}
+
+StringStream& operator<<(StringStream& rStream, const DateTime& rDateTime)
+{
+    wchar_t buffer[24];
+    std::swprintf(buffer, 24, L"%04d-%02d-%02d %02d:%02d:%02d", rDateTime.GetYear(), rDateTime.GetMonth(),
+                  rDateTime.GetDay(), rDateTime.GetHour(), rDateTime.GetMinute(), rDateTime.GetSecond());
+    rStream << buffer;
+    return rStream;
 }
 
 void Variant::Trace(unsigned int) const

@@ -4,6 +4,7 @@
 
 #include "nn/nex/CallContext.hpp"
 #include "nn/nex/Core.hpp"
+#include "nn/nex/CriticalSection.hpp"
 #include "nn/nex/DebugString.hpp"
 #include "nn/nex/Job.hpp"
 #include "nn/nex/MethodCallJob.hpp"
@@ -37,11 +38,9 @@ CallContextRegister::~CallContextRegister()
     {
         qResult result;
 
-        for (CallContextMap::iterator callContext = m_callContexts.begin();
-             callContext != m_callContexts.end(); ++callContext)
-        {
-            callContext->second->SetStateImpl(CallContext::CallCanceled, result, true);
-        }
+        CallContextMap::iterator callContext = m_callContexts.begin();
+        while (callContext != m_callContexts.end())
+            (callContext++)->second->SetStateImpl(CallContext::CallCanceled, result, true);
     }
 }
 
@@ -52,10 +51,7 @@ const wchar_t* CallContextRegister::GetType() const
 
 bool CallContextRegister::IsAKindOf(const wchar_t* pType) const
 {
-    if (std::wcscmp(L"CallContextRegister", pType) == 0)
-        return true;
-
-    return SystemComponent::IsAKindOf(pType);
+    return std::wcscmp(L"CallContextRegister", pType) == 0 || SystemComponent::IsAKindOf(pType);
 }
 
 void CallContextRegister::EnforceDeclareSysComponentMacro()
@@ -76,7 +72,8 @@ bool CallContextRegister::BeginTermination()
 
 unsigned int CallContextRegister::Register(CallContext* pCallContext)
 {
-    unsigned int uiCallId = m_uiNextCallId++;
+    unsigned int uiCallId = m_uiNextCallId;
+    m_uiNextCallId++;
     if (m_uiNextCallId == 0)
         m_uiNextCallId = 1;
 
@@ -86,9 +83,11 @@ unsigned int CallContextRegister::Register(CallContext* pCallContext)
 
 void CallContextRegister::Unregister(unsigned int uiCallId)
 {
-    m_callContexts.erase(m_callContexts.find(uiCallId));
-    m_associatedIds.erase(m_associatedIds.lower_bound(uiCallId),
-        m_associatedIds.upper_bound(uiCallId));
+    CallContextMap::iterator callContext = m_callContexts.find(uiCallId);
+    m_callContexts.erase(callContext);
+    std::pair<AssociatedIdMap::iterator, AssociatedIdMap::iterator> associatedIds =
+        m_associatedIds.equal_range(uiCallId);
+    m_associatedIds.erase(associatedIds.first, associatedIds.second);
 }
 
 CallContext* CallContextRegister::GetCallContext(unsigned int uiCallId)
@@ -110,10 +109,10 @@ void CallContextRegister::GetAssociatedId(unsigned int uiCallId,
 {
     pAssociatedIds->clear();
 
-    AssociatedIdMap::iterator associatedId = m_associatedIds.lower_bound(uiCallId);
-    AssociatedIdMap::iterator last = m_associatedIds.upper_bound(uiCallId);
-    for (; associatedId != last; ++associatedId)
-        pAssociatedIds->push_back(associatedId->second);
+    std::pair<AssociatedIdMap::iterator, AssociatedIdMap::iterator> associatedIds =
+        m_associatedIds.equal_range(uiCallId);
+    for (; associatedIds.first != associatedIds.second; ++associatedIds.first)
+        pAssociatedIds->push_back(associatedIds.first->second);
 }
 
 void CallContextRegister::CancelCallContexts(void* pConnection, unsigned int uiConnectionId)
@@ -203,15 +202,12 @@ void CallContextRegister::CheckExpiredCalls(int)
 
 void CallContextRegister::Trace(unsigned long long)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
-    pScheduler->GetCriticalSection().Enter();
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
 
     for (CallContextMap::iterator callContext = m_callContexts.begin();
          callContext != m_callContexts.end(); ++callContext)
     {
     }
-
-    pScheduler->GetCriticalSection().Leave();
 }
 
 void CallContextRegister::Start()
@@ -223,12 +219,12 @@ void CallContextRegister::Start()
     m_pCheckExpiredCallsJob->SetPeriod(g_checkExpiredCallsPeriod);
     m_pCheckExpiredCallsJob->AddRef();
 
-    Core::GetInstance()->GetScheduler()->Queue(m_pCheckExpiredCallsJob, false);
+    Scheduler::GetInstance()->Queue(m_pCheckExpiredCallsJob, false);
 }
 
 void CallContextRegister::Stop()
 {
-    if (!Core::GetInstance()->GetScheduler()->Cancel(m_pCheckExpiredCallsJob))
+    if (!Scheduler::GetInstance()->Cancel(m_pCheckExpiredCallsJob))
         m_pCheckExpiredCallsJob->SetToCancel();
 
     m_pCheckExpiredCallsJob->ReleaseRef();

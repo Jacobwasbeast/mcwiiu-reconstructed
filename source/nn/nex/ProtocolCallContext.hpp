@@ -15,7 +15,7 @@ class Credentials;
 class ProtocolCallContext : public CallContext
 {
 public:
-    explicit ProtocolCallContext(Credentials* pCredentials);
+    explicit ProtocolCallContext(Credentials* pCredentials = 0);
     virtual ~ProtocolCallContext();
 
     void SetCredentials(Credentials* pCredentials);

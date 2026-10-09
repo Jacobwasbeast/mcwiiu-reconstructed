@@ -1,5 +1,7 @@
 #include "nn/nex/_DDL_MatchmakeSessionSearchCriteria.hpp"
 
+#include <algorithm>
+
 #include "nn/nex/DDLSerialization.hpp"
 #include "nn/nex/Message.hpp"
 #include "nn/nex/_DDL_MatchmakeParam.hpp"
@@ -38,13 +40,13 @@ _DDL_MatchmakeSessionSearchCriteria& _DDL_MatchmakeSessionSearchCriteria::operat
 
 void _DDL_MatchmakeSessionSearchCriteria::Add(Message* pMessage, const _DDL_MatchmakeSessionSearchCriteria& rSource)
 {
-    const bool bCompactFormat = pMessage->IsCompactFormat();
     unsigned int uiSizePosition = 0;
+    const bool bCompactFormat = pMessage->IsCompactFormat();
     if (!bCompactFormat)
     {
-        const uint8_t uiVersion = rSource.m_uiStructureVersion;
-        const uint8_t uiMaxVersion = MAX_STRUCTURE_VERSION;
-        pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
+        uint8_t uiVersion = rSource.m_uiStructureVersion;
+        uint8_t uiMaxVersion = MAX_STRUCTURE_VERSION;
+        _Type_byte::Add(pMessage, std::min(uiVersion, uiMaxVersion));
         uiSizePosition = pMessage->GetLength();
         const uint32_t uiSize = 0;
         _Type_uint32::Add(pMessage, uiSize);
@@ -64,11 +66,11 @@ void _DDL_MatchmakeSessionSearchCriteria::Add(Message* pMessage, const _DDL_Matc
         if (rSource.m_uiStructureVersion != 0)
         {
             _DDL_MatchmakeParam::Add(pMessage, rSource.m_MatchmakeParam);
-            if (rSource.m_uiStructureVersion > 1)
+            if (rSource.m_uiStructureVersion >= 2)
             {
                 *pMessage << rSource.m_bExcludeUserPasswordSet;
                 *pMessage << rSource.m_bExcludeSystemPasswordSet;
-                if (rSource.m_uiStructureVersion > 2)
+                if (rSource.m_uiStructureVersion >= 3)
                 {
                     _Type_uint32::Add(pMessage, rSource.m_uiReferGatheringID);
                 }
@@ -76,8 +78,7 @@ void _DDL_MatchmakeSessionSearchCriteria::Add(Message* pMessage, const _DDL_Matc
         }
         const unsigned int uiEndPosition = pMessage->GetLength();
         pMessage->SetLength(uiSizePosition);
-        const uint32_t uiSize = uiEndPosition - uiSizePosition - sizeof(uint32_t);
-        _Type_uint32::Add(pMessage, uiSize);
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }
@@ -134,7 +135,7 @@ void _DDL_MatchmakeSessionSearchCriteria::Extract(Message* pMessage, _DDL_Matchm
         _DDL_MatchmakeParam::Extract(pMessage, &pDestination->m_MatchmakeParam);
         if (pMessage->HasError())
             return;
-        if (pDestination->m_uiStructureVersion > 1)
+        if (pDestination->m_uiStructureVersion >= 2)
         {
             *pMessage >> pDestination->m_bExcludeUserPasswordSet;
             if (pMessage->HasError())
@@ -142,7 +143,7 @@ void _DDL_MatchmakeSessionSearchCriteria::Extract(Message* pMessage, _DDL_Matchm
             *pMessage >> pDestination->m_bExcludeSystemPasswordSet;
             if (pMessage->HasError())
                 return;
-            if (pDestination->m_uiStructureVersion > 2)
+            if (pDestination->m_uiStructureVersion >= 3)
             {
                 _Type_uint32::Extract(pMessage, &pDestination->m_uiReferGatheringID);
                 if (pMessage->HasError())

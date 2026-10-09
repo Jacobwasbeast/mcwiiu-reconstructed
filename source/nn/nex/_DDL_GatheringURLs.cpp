@@ -1,5 +1,7 @@
 #include "nn/nex/_DDL_GatheringURLs.hpp"
 
+#include <algorithm>
+
 #include "nn/nex/DDLSerialization.hpp"
 #include "nn/nex/Message.hpp"
 #include "nn/nex/StationURL.hpp"
@@ -26,13 +28,13 @@ _DDL_GatheringURLs& _DDL_GatheringURLs::operator=(const _DDL_GatheringURLs& rSou
 
 void _DDL_GatheringURLs::Add(Message* pMessage, const _DDL_GatheringURLs& rSource)
 {
-    const bool bCompactFormat = pMessage->IsCompactFormat();
     unsigned int uiSizePosition = 0;
+    const bool bCompactFormat = pMessage->IsCompactFormat();
     if (!bCompactFormat)
     {
-        const uint8_t uiVersion = rSource.m_uiStructureVersion;
-        const uint8_t uiMaxVersion = MAX_STRUCTURE_VERSION;
-        pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
+        uint8_t uiVersion = rSource.m_uiStructureVersion;
+        uint8_t uiMaxVersion = MAX_STRUCTURE_VERSION;
+        _Type_byte::Add(pMessage, std::min(uiVersion, uiMaxVersion));
         uiSizePosition = pMessage->GetLength();
         const uint32_t uiSize = 0;
         _Type_uint32::Add(pMessage, uiSize);

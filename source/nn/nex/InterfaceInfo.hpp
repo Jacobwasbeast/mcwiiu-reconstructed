@@ -28,13 +28,13 @@ public:
 
     bool Addr2Str(unsigned int uiAddress, wchar_t* pBuffer, unsigned int uiSize);
 
-    unsigned int GetAddress() const;
+    unsigned int GetAddress();
     bool GetAddress(wchar_t* pBuffer, unsigned int uiSize);
-    unsigned int GetBroadcastAddress() const;
+    unsigned int GetBroadcastAddress();
     bool GetBroadcastAddress(wchar_t* pBuffer, unsigned int uiSize);
     bool GetMask(wchar_t* pBuffer, unsigned int uiSize);
     bool GetName(wchar_t* pBuffer, unsigned int uiSize);
-    unsigned int GetFlags() const;
+    unsigned int GetFlags();
     bool GetFlags(wchar_t* pBuffer, unsigned int uiSize);
 
     void Trace(unsigned long long uiFilter);

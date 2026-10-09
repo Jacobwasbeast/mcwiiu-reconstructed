@@ -39,8 +39,8 @@ void PacketHistoryChainPurge(PacketHistoryChain* pChain)
 void PacketHistoryChainQueueFront(PacketHistoryChain* pChain, PacketOut* pPacket)
 {
     pPacket->AddRef();
-    if (pPacket->m_pHistoryPrevious != 0 || pPacket->m_pHistoryNext != 0 ||
-        pChain->front() == pPacket)
+    if (pPacket->m_historyLink.m_pPrevious != 0 || pPacket->m_historyLink.m_pNext != 0 ||
+        pChain->begin() == PacketHistoryChain::iterator(pPacket))
         PacketHistoryChainDequeue(pChain, PacketHistoryChain::iterator(pPacket));
     pChain->push_front(pPacket);
     pPacket->m_historyTime = Time::GetTime();
@@ -52,24 +52,23 @@ void InsertToHistoryPacketQueue(PacketHistoryChain* pChain, PacketQueue* pQueue)
     while (position != pQueue->end())
     {
         PacketOut* pPacket = static_cast<PacketOut*>(*position);
-        if (g_historyBundlingEnabled && pPacket->CanHistoryBundle() &&
-            (g_historyBundleWithoutFlag || (pPacket->m_uiTypeAndFlags & PACKET_FLAG_HISTORY_BUNDLE)) &&
-            !pPacket->m_unknown129)
-        {
-            pPacket->AddRef();
-            position = pQueue->Dequeue(position);
-            if (pPacket->m_unknown130 != 2)
-                pPacket->m_unknown130 = 0;
-            pPacket->m_unknown138 = Time(Time::GetTime()) + g_historyBundleDelay;
-            PacketHistoryChainQueueFront(pChain, pPacket);
-            if (pChain->size() > g_historyPacketLimit)
-                PacketHistoryChainDequeue(pChain, PacketHistoryChain::iterator(pChain->back()));
-            pPacket->ReleaseRef();
-        }
-        else
+        if (!g_historyBundlingEnabled || !pPacket->CanHistoryBundle() ||
+            (!g_historyBundleWithoutFlag && !(pPacket->m_uiTypeAndFlags & PACKET_FLAG_HISTORY_BUNDLE)) ||
+            pPacket->m_unknown129)
         {
             position = pQueue->Dequeue(position);
+            continue;
         }
+
+        pPacket->AddRef();
+        position = pQueue->Dequeue(position);
+        if (pPacket->m_unknown130 != 2)
+            pPacket->m_unknown130 = 0;
+        pPacket->m_unknown138 = Time(Time::GetTime()) + g_historyBundleDelay;
+        PacketHistoryChainQueueFront(pChain, pPacket);
+        if (pChain->size() > g_historyPacketLimit)
+            PacketHistoryChainDequeue(pChain, PacketHistoryChain::iterator(pChain->back()));
+        pPacket->ReleaseRef();
     }
 }
 

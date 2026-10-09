@@ -30,23 +30,26 @@ MD5KeyDerivation::~MD5KeyDerivation()
 
 Key MD5KeyDerivation::CreateKey(unsigned int uiPrincipalID, const char* pPassword)
 {
+    const unsigned int uiIterations =
+        m_uiClientSideIterations + uiPrincipalID % m_uiPrincipalIdModulo;
     MD5Checksum checksum;
-    return checksum.DeriveKey(pPassword,
-        m_uiClientSideIterations + uiPrincipalID % m_uiPrincipalIdModulo);
+    return checksum.DeriveKey(pPassword, uiIterations);
 }
 
 Key MD5KeyDerivation::InitializeKey(const char* pPassword)
 {
+    const unsigned int uiIterations = m_uiClientSideIterations;
     MD5Checksum checksum;
-    return checksum.DeriveKey(pPassword, m_uiClientSideIterations);
+    return checksum.DeriveKey(pPassword, uiIterations);
 }
 
 Key MD5KeyDerivation::FinalizeKey(unsigned int uiPrincipalID, const Key& rKey)
 {
     Buffer buffer;
     buffer.AppendData(rKey.GetContentPtr(), rKey.GetLength(), 0xFFFFFFFF);
+    const unsigned int uiIterations = uiPrincipalID % m_uiPrincipalIdModulo;
     MD5Checksum checksum;
-    return checksum.DeriveKey(buffer, uiPrincipalID % m_uiPrincipalIdModulo);
+    return checksum.DeriveKey(buffer, uiIterations);
 }
 
 bool MD5KeyDerivation::CreateKey(CallContext* pCallContext, unsigned int uiPrincipalID,

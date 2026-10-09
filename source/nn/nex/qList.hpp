@@ -19,14 +19,6 @@ public:
     typedef typename _Base::size_type size_type;
     typedef typename _Base::value_type value_type;
 
-    qList() : _Base() {}
-
-    qList(const qList<T>& other) : _Base(other) {}
-
-    qList(const _Base& other) : _Base(other) {}
-
-    ~qList() {}
-
     qList<T>& operator=(const qList<T>& other)
     {
         _Base::operator=(other);

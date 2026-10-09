@@ -34,7 +34,7 @@ public:
     virtual unsigned int GetEndPointNumber();
     virtual EndPoint* FindEndPointByCID(unsigned int uiConnectionID);
     virtual qVector<unsigned int> GetAllConnectionIDs() const;
-    virtual bool CloseEndPoint(EndPoint* pEndPoint) = 0;
+    virtual void CloseEndPoint(EndPoint* pEndPoint) = 0;
     virtual void LockEndPointMap();
     virtual void UnlockEndPointMap();
     virtual qResult Initialize();

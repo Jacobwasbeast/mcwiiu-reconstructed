@@ -15,6 +15,12 @@ namespace nn
 namespace nex
 {
 
+struct ProtocolKey
+{
+    unsigned char m_uiCommand : 1;
+    unsigned char m_uiProtocolID : 7;
+};
+
 Protocol::Protocol(unsigned int uiFlags)
     : SystemComponent(String(L"<unknown>"))
     , m_uiProtocolID(0)
@@ -37,26 +43,8 @@ const wchar_t* Protocol::GetType() const
     return L"Protocol";
 }
 
-bool Protocol::IsAKindOf(const wchar_t* pType) const
-{
-    return std::wcscmp(L"Protocol", pType) == 0 || std::wcscmp(L"SystemComponent", pType) == 0;
-}
-
 void Protocol::EnforceDeclareSysComponentMacro()
 {
-}
-
-void Protocol::EndPointDisconnected(EndPoint*)
-{
-}
-
-void Protocol::FaultDetected(EndPoint*, unsigned int)
-{
-}
-
-Protocol* Protocol::Clone() const
-{
-    return 0;
 }
 
 bool Protocol::FlagIsSet(unsigned int uiFlag) const
@@ -153,20 +141,19 @@ void Protocol::AddProtocolKey(Message* pMessage, _Command command, unsigned shor
 {
     if (uiProtocolID < 0x7F)
     {
-        unsigned char uiKey = static_cast<unsigned char>(uiProtocolID & 0x7F);
-        if (command != COMMAND_RESPONSE)
-            uiKey |= 0x80;
-        pMessage->Append(&uiKey, 1, 1);
-        return;
+        ProtocolKey key;
+        key.m_uiCommand = command;
+        key.m_uiProtocolID = uiProtocolID;
+        pMessage->Append(reinterpret_cast<const unsigned char*>(&key), 1, 1);
     }
-
-    unsigned char uiKey = 0x7F;
-    if (command != COMMAND_RESPONSE)
-        uiKey |= 0x80;
-    pMessage->Append(&uiKey, 1, 1);
-
-    unsigned short uiExtendedProtocolID = uiProtocolID;
-    pMessage->Append(reinterpret_cast<const unsigned char*>(&uiExtendedProtocolID), 2, 1);
+    else
+    {
+        ProtocolKey key;
+        key.m_uiCommand = command;
+        key.m_uiProtocolID = 0x7F;
+        pMessage->Append(reinterpret_cast<const unsigned char*>(&key), 1, 1);
+        pMessage->Append(reinterpret_cast<const unsigned char*>(&uiProtocolID), 2, 1);
+    }
 }
 
 void Protocol::AddCallOutcome(Message* pMessage, qResult result)
@@ -192,21 +179,20 @@ void Protocol::AddCallContextID(Message* pMessage, unsigned int uiCallContextID)
 void Protocol::AddCallResponse(Message* pMessage, CallProtocolMethodOperation* pOperation,
                                unsigned int uiCallContextID, const Message& rResponse)
 {
-    const qResult& result = *reinterpret_cast<const qResult*>(
-        reinterpret_cast<const unsigned char*>(pOperation) + 0x24);
+    qResult result = pOperation->m_result;
     AddCallOutcome(pMessage, result);
     AddCallContextID(pMessage, uiCallContextID);
-    if (static_cast<bool>(result))
+    if (result)
         pMessage->AddDataFromMessage(rResponse);
 }
 
 void Protocol::ExtractProtocolKey(Message* pMessage, _Command& rCommand,
                                   unsigned short& rProtocolID)
 {
-    unsigned char key = 0;
-    pMessage->ExtractPrimitive(&key);
-    rProtocolID = static_cast<unsigned short>(key & 0x7F);
-    rCommand = static_cast<_Command>(key >> 7);
+    ProtocolKey key;
+    pMessage->ExtractPrimitive(reinterpret_cast<unsigned char*>(&key));
+    rProtocolID = key.m_uiProtocolID;
+    rCommand = static_cast<_Command>(key.m_uiCommand);
     if (rProtocolID == 0x7F)
         pMessage->ExtractPrimitive(&rProtocolID);
 }
@@ -217,9 +203,10 @@ void Protocol::ExtractCallOutcome(Message* pMessage, qResult* pResult)
     pMessage->ExtractPrimitive(&state);
     if (state == 0)
     {
-        int code = 0;
+        int code;
         pMessage->ExtractPrimitive(&code);
-        *pResult = qResult(code);
+        qResult result(code);
+        *pResult = result;
     }
     else if (state == 1)
         *pResult = qResult(0x10001);
@@ -232,13 +219,13 @@ bool Protocol::RegisterCallContext(Message* pMessage, ProtocolCallContext* pCall
     CallContext* pContext = reinterpret_cast<CallContext*>(pCallContext);
     if (!pContext->InitiateCall())
         return false;
-    AddCallContextID(pMessage, *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(pContext) + 0x40));
+    AddCallContextID(pMessage, pContext->m_uiCallId);
     return true;
 }
 
 unsigned int Protocol::ExtractCallContextID(Message* pMessage)
 {
-    unsigned int id = 0;
+    unsigned int id;
     pMessage->ExtractPrimitive(&id);
     return id;
 }
@@ -246,20 +233,20 @@ unsigned int Protocol::ExtractCallContextID(Message* pMessage)
 ProtocolCallContext* Protocol::RetrieveCallContext(Message* pMessage)
 {
     const unsigned int id = ExtractCallContextID(pMessage);
-    Core* pCore = Core::GetInstance();
-    if (pCore == 0 || pCore->GetCallContextRegister() == 0)
-        return 0;
     return reinterpret_cast<ProtocolCallContext*>(
-        pCore->GetCallContextRegister()->GetCallContext(id));
+        Core::GetInstance()->GetCallContextRegister()->GetCallContext(id));
 }
 
 bool Protocol::IsOldRVDDLVersion(EndPoint* pEndPoint)
 {
-    if (pEndPoint == 0)
-        return false;
-    if (pEndPoint->m_uiPrincipalID - 0x6E < 10)
-        return true;
-    return (pEndPoint->GetSupportedFunctionsFlags() & 0x08000000u) == 0;
+    bool bIsOldVersion = false;
+    if (pEndPoint != 0)
+    {
+        if (pEndPoint->m_uiPrincipalID - 0x6E < 10
+            || (pEndPoint->GetSupportedFunctionsFlags() & 0x08000000u) == 0)
+            bIsOldVersion = true;
+    }
+    return bIsOldVersion;
 }
 
 unsigned int Protocol::ExtractMethodID(Message* pMessage)

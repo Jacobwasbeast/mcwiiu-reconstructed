@@ -1,11 +1,11 @@
 #include "nn/nex/InetAddress.hpp"
 
-#include <arpa/inet.h>
 #include <netdb.h>
 
 #include <cstring>
 #include <cwchar>
 
+#include "nn/nex/BerkeleySocketDriver.hpp"
 #include "nn/nex/StringConversion.hpp"
 #include "nn/nex/StringStream.hpp"
 

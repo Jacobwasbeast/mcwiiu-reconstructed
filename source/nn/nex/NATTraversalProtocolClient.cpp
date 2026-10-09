@@ -19,6 +19,10 @@ namespace
 
 typedef void (*ProtoReturnFunction)(Message* pMessage, ProtocolCallContext* pCallContext);
 const unsigned int METHOD_ID_MASK = 0x7FFF;
+enum
+{
+    RESULT_NOT_IMPLEMENTED = static_cast<int>(0x80010002u)
+};
 const unsigned int METHOD_ID_COUNT = 8;
 const unsigned int PROTOCOL_FLAG_UNLOCK_BEFORE_SEND = 0x10;
 enum MethodId
@@ -51,8 +55,7 @@ void NATTraversalProtocolClient::ExtractCallSpecificResults(Message* pMessage,
     const unsigned int uiMethodID = Protocol::ExtractMethodID(pMessage) & METHOD_ID_MASK;
     if (uiMethodID - 1 >= METHOD_ID_COUNT - 1)
     {
-        const int iCallError = static_cast<int>(0x80010002u);
-        ClientProtocol::SetCallError(qResult(iCallError));
+        ClientProtocol::SetCallError(qResult(RESULT_NOT_IMPLEMENTED));
         return;
     }
     if (s_ProtoReturn[uiMethodID] != 0)
@@ -68,7 +71,7 @@ bool NATTraversalProtocolClient::CallRequestProbeInitiation(ProtocolCallContext*
                                                             const qList<StationURL>& rTargetList)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -93,7 +96,7 @@ bool NATTraversalProtocolClient::RequestProbeInitiation_PrepareRequest(ProtocolC
                                                                        Message* pMessage,
                                                                        const qList<StationURL>& rTargetList)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -111,7 +114,7 @@ bool NATTraversalProtocolClient::CallInitiateProbe(ProtocolCallContext* pCallCon
                                                    const StationURL& rStationToProbe)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -136,7 +139,7 @@ bool NATTraversalProtocolClient::InitiateProbe_PrepareRequest(ProtocolCallContex
                                                               Message* pMessage,
                                                               const StationURL& rStationToProbe)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -155,7 +158,7 @@ bool NATTraversalProtocolClient::CallRequestProbeInitiationExt(ProtocolCallConte
                                                                const StationURL& rStationToProbe)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -182,7 +185,7 @@ bool NATTraversalProtocolClient::RequestProbeInitiationExt_PrepareRequest(Protoc
                                                                           const qList<StationURL>& rTargetList,
                                                                           const StationURL& rStationToProbe)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -203,7 +206,7 @@ bool NATTraversalProtocolClient::CallReportNATTraversalResult(ProtocolCallContex
                                                               const unsigned int& rRTT)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -232,7 +235,7 @@ bool NATTraversalProtocolClient::ReportNATTraversalResult_PrepareRequest(Protoco
                                                                          const bool& rResult,
                                                                          const unsigned int& rRTT)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -254,7 +257,7 @@ bool NATTraversalProtocolClient::CallReportNATProperties(ProtocolCallContext* pC
                                                          const unsigned int& rRTT)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -283,7 +286,7 @@ bool NATTraversalProtocolClient::ReportNATProperties_PrepareRequest(ProtocolCall
                                                                     const unsigned int& rNATFiltering,
                                                                     const unsigned int& rRTT)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -308,7 +311,7 @@ bool NATTraversalProtocolClient::CallGetRelaySignatureKey(ProtocolCallContext* p
                                                           unsigned int* pGameServerID)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -346,7 +349,7 @@ bool NATTraversalProtocolClient::GetRelaySignatureKey_PrepareRequest(ProtocolCal
                                                                      int* pRelayAddressType,
                                                                      unsigned int* pGameServerID)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -375,7 +378,7 @@ bool NATTraversalProtocolClient::CallReportNATTraversalResultDetail(ProtocolCall
                                                                     const unsigned int& rRTT)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -406,7 +409,7 @@ bool NATTraversalProtocolClient::ReportNATTraversalResultDetail_PrepareRequest(P
                                                                                const int& rConnectionType,
                                                                                const unsigned int& rRTT)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -452,23 +455,26 @@ void NATTraversalProtocolClient::ProtoReturn_GetRelaySignatureKey(Message* pMess
 {
     int iDiscardedRelayMode;
     int* pRelayMode = static_cast<int*>(pCallContext->GetReturnValuePtr(0));
-    if (pRelayMode == 0)
-        pRelayMode = &iDiscardedRelayMode;
-    pMessage->ExtractPrimitive(pRelayMode);
+    int* pRelayModeDestination = &iDiscardedRelayMode;
+    if (pRelayMode != 0)
+        pRelayModeDestination = pRelayMode;
+    pMessage->ExtractPrimitive(pRelayModeDestination);
     if (pMessage->HasError())
         return;
-    uint64_t uiCurrentUTCTime;
     DateTime* pCurrentUTCTime = static_cast<DateTime*>(pCallContext->GetReturnValuePtr(1));
     if (pCurrentUTCTime != 0)
     {
+        uint64_t uiCurrentUTCTime;
         pMessage->ExtractPrimitive(&uiCurrentUTCTime);
         *pCurrentUTCTime = DateTime(uiCurrentUTCTime);
     }
     else
     {
         DateTime discardedCurrentUTCTime[1];
+        uint64_t uiCurrentUTCTime;
         pMessage->ExtractPrimitive(&uiCurrentUTCTime);
-        discardedCurrentUTCTime[0] = DateTime(uiCurrentUTCTime);
+        DateTime currentUTCTime(uiCurrentUTCTime);
+        discardedCurrentUTCTime[0] = currentUTCTime;
     }
     if (pMessage->HasError())
         return;
@@ -488,23 +494,28 @@ void NATTraversalProtocolClient::ProtoReturn_GetRelaySignatureKey(Message* pMess
     }
     unsigned short usDiscardedRelayPort;
     unsigned short* pRelayPort = static_cast<unsigned short*>(pCallContext->GetReturnValuePtr(3));
-    if (pRelayPort == 0)
-        pRelayPort = &usDiscardedRelayPort;
-    pMessage->ExtractPrimitive(pRelayPort);
+    unsigned short* pRelayPortDestination = &usDiscardedRelayPort;
+    if (pRelayPort != 0)
+        pRelayPortDestination = pRelayPort;
+    pMessage->ExtractPrimitive(pRelayPortDestination);
     if (pMessage->HasError())
         return;
     int iDiscardedRelayAddressType;
     int* pRelayAddressType = static_cast<int*>(pCallContext->GetReturnValuePtr(4));
-    if (pRelayAddressType == 0)
-        pRelayAddressType = &iDiscardedRelayAddressType;
-    pMessage->ExtractPrimitive(pRelayAddressType);
+    int* pRelayAddressTypeDestination = &iDiscardedRelayAddressType;
+    if (pRelayAddressType != 0)
+        pRelayAddressTypeDestination = pRelayAddressType;
+    pMessage->ExtractPrimitive(pRelayAddressTypeDestination);
     if (pMessage->HasError())
         return;
-    unsigned int uiDiscardedGameServerID;
     unsigned int* pGameServerID = static_cast<unsigned int*>(pCallContext->GetReturnValuePtr(5));
-    if (pGameServerID == 0)
-        pGameServerID = &uiDiscardedGameServerID;
-    pMessage->ExtractPrimitive(pGameServerID);
+    if (pGameServerID != 0)
+    {
+        pMessage->ExtractPrimitive(pGameServerID);
+        return;
+    }
+    unsigned int uiDiscardedGameServerID;
+    pMessage->ExtractPrimitive(&uiDiscardedGameServerID);
 }
 
 }

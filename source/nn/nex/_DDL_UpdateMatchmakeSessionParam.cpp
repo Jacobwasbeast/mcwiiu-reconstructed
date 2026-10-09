@@ -1,5 +1,7 @@
 #include "nn/nex/_DDL_UpdateMatchmakeSessionParam.hpp"
 
+#include <algorithm>
+
 #include "nn/nex/DDLSerialization.hpp"
 #include "nn/nex/DateTime.hpp"
 #include "nn/nex/Message.hpp"
@@ -41,13 +43,13 @@ _DDL_UpdateMatchmakeSessionParam& _DDL_UpdateMatchmakeSessionParam::operator=(co
 
 void _DDL_UpdateMatchmakeSessionParam::Add(Message* pMessage, const _DDL_UpdateMatchmakeSessionParam& rSource)
 {
-    const bool bCompactFormat = pMessage->IsCompactFormat();
     unsigned int uiSizePosition = 0;
+    const bool bCompactFormat = pMessage->IsCompactFormat();
     if (!bCompactFormat)
     {
-        const uint8_t uiVersion = rSource.m_uiStructureVersion;
-        const uint8_t uiMaxVersion = MAX_STRUCTURE_VERSION;
-        pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
+        uint8_t uiVersion = rSource.m_uiStructureVersion;
+        uint8_t uiMaxVersion = MAX_STRUCTURE_VERSION;
+        _Type_byte::Add(pMessage, std::min(uiVersion, uiMaxVersion));
         uiSizePosition = pMessage->GetLength();
         const uint32_t uiSize = 0;
         _Type_uint32::Add(pMessage, uiSize);

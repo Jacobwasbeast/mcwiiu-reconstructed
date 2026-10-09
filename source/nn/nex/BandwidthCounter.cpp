@@ -12,12 +12,12 @@ namespace
 
 typedef BandwidthCounter::CounterList CounterChain;
 CounterChain g_bandwidthCounters;
-CriticalSection g_bandwidthCounterLock(0x20000000);
+CriticalSection g_bandwidthCounterLock;
 
 }
 
 BandwidthCounter::BandwidthCounter(const String& name)
-    : m_pNext(0), m_pPrevious(0), m_name(name), m_minimum(0xffffffff),
+    : m_link(), m_name(name), m_minimum(0xffffffff),
       m_maximum(0), m_total(0), m_count(0)
 {
     ScopedCS lock(&g_bandwidthCounterLock);

@@ -21,6 +21,11 @@ Credentials* NgsBridgeImp::GetCredentials()
     return m_pNgsFacade->GetCredentials();
 }
 
+unsigned int NgsBridgeImp::GetPrincipalID()
+{
+    return GetCredentials()->GetPrincipalID();
+}
+
 bool NgsBridgeImp::RegisterNotificationEventHandler(NotificationEventHandler* pHandler)
 {
     return m_pNgsFacade->RegisterNotificationEventHandler(pHandler);

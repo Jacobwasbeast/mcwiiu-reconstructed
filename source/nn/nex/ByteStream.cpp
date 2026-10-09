@@ -8,26 +8,16 @@ namespace nn
 namespace nex
 {
 
-namespace
-{
-
-const unsigned int APPEND_AT_END = 0xFFFFFFFFu;
-
-}
-
 void SetUnalignedNexNetworkOrder64(uint64_t uiValue, unsigned char* pDestination)
 {
-    const uint32_t uiLow = static_cast<uint32_t>(uiValue);
-    const uint32_t uiHigh = static_cast<uint32_t>(uiValue >> 32);
-
-    pDestination[0] = static_cast<unsigned char>(uiLow);
-    pDestination[1] = static_cast<unsigned char>(uiLow >> 8);
-    pDestination[2] = static_cast<unsigned char>(uiLow >> 16);
-    pDestination[3] = static_cast<unsigned char>(uiLow >> 24);
-    pDestination[4] = static_cast<unsigned char>(uiHigh);
-    pDestination[5] = static_cast<unsigned char>(uiHigh >> 8);
-    pDestination[6] = static_cast<unsigned char>(uiHigh >> 16);
-    pDestination[7] = static_cast<unsigned char>(uiHigh >> 24);
+    pDestination[0] = static_cast<unsigned char>(uiValue & 0x00000000000000FFULL);
+    pDestination[1] = static_cast<unsigned char>((uiValue & 0x000000000000FF00ULL) >> 8);
+    pDestination[2] = static_cast<unsigned char>((uiValue & 0x0000000000FF0000ULL) >> 16);
+    pDestination[3] = static_cast<unsigned char>((uiValue & 0x00000000FF000000ULL) >> 24);
+    pDestination[4] = static_cast<unsigned char>((uiValue & 0x000000FF00000000ULL) >> 32);
+    pDestination[5] = static_cast<unsigned char>((uiValue & 0x0000FF0000000000ULL) >> 40);
+    pDestination[6] = static_cast<unsigned char>((uiValue & 0x00FF000000000000ULL) >> 48);
+    pDestination[7] = static_cast<unsigned char>((uiValue & 0xFF00000000000000ULL) >> 56);
 }
 
 ByteStream::ByteStream()
@@ -45,7 +35,7 @@ ByteStream::ByteStream(unsigned int uiSize)
 ByteStream::ByteStream(Buffer* pBuffer)
 {
     m_pBuffer = pBuffer;
-    m_pBuffer->AddRef();
+    pBuffer->AddRef();
     Init();
 }
 
@@ -69,7 +59,7 @@ void ByteStream::Clear()
 
 bool ByteStream::SetLength(unsigned int uiLength)
 {
-    if (m_pBuffer->GetRealSize() - m_pBuffer->GetHeadShiftSize() < uiLength)
+    if (uiLength > m_pBuffer->GetRealSize() - m_pBuffer->GetHeadShiftSize())
     {
         return false;
     }
@@ -80,12 +70,12 @@ bool ByteStream::SetLength(unsigned int uiLength)
 
 bool ByteStream::ValidateBufferLimit(unsigned int uiSize)
 {
-    if (uiSize <= m_pBuffer->GetLength() - m_uiPosition)
+    if (GetLength() - GetPosition() >= uiSize)
     {
         return true;
     }
 
-    m_bError = true;
+    SetError();
     return false;
 }
 
@@ -118,17 +108,23 @@ bool ByteStream::Append(const Time* pTime)
 
 bool ByteStream::ExtractRaw(unsigned char* pData, unsigned int uiSize)
 {
-    const bool bComplete = ValidateBufferLimit(uiSize);
+    bool bComplete = true;
+    unsigned int uiExtractSize;
 
-    if (!bComplete)
+    if (!ValidateBufferLimit(uiSize))
     {
-        uiSize = m_pBuffer->GetLength() - m_uiPosition;
+        uiExtractSize = m_pBuffer->GetLength() - m_uiPosition;
+        bComplete = false;
+    }
+    else
+    {
+        uiExtractSize = uiSize;
     }
 
-    if (uiSize != 0)
+    if (uiExtractSize != 0)
     {
-        m_pBuffer->CopyContent(pData, uiSize, m_uiPosition);
-        m_uiPosition += uiSize;
+        m_pBuffer->CopyContent(pData, uiExtractSize, m_uiPosition);
+        m_uiPosition += uiExtractSize;
     }
 
     return bComplete;
@@ -156,11 +152,11 @@ bool ByteStream::Extract(unsigned char* pData, unsigned int uiSize, unsigned int
 
 void ByteStream::Extract(Time* pTime)
 {
-    uint64_t uiValue = 0;
+    uint64_t uiValue;
 
     if (ExtractPrimitive(&uiValue))
     {
-        *pTime = Time(uiValue);
+        *pTime = uiValue;
     }
 }
 
@@ -180,7 +176,7 @@ ByteStream& ByteStream::operator<<(const bool& rValue)
 
 ByteStream& ByteStream::operator>>(bool& rValue)
 {
-    signed char cValue = 0;
+    signed char cValue;
 
     ExtractPrimitive(&cValue);
     rValue = cValue != 0;
@@ -189,11 +185,12 @@ ByteStream& ByteStream::operator>>(bool& rValue)
 
 void ByteStream::TraceBytes(uint64_t uiFilter, unsigned char* pData, unsigned int uiSize)
 {
+    unsigned int uiIndex = 0;
     StringStream stream;
 
     zerohex(stream);
 
-    for (unsigned int uiIndex = 0; uiIndex < uiSize; ++uiIndex)
+    for (; uiIndex < uiSize; ++uiIndex)
     {
         if (uiIndex != 0 && ((uiIndex + 1) & 7) == 0)
         {
@@ -214,7 +211,7 @@ void ByteStream::Trace(uint64_t uiFilter, bool bDumpContents)
         return;
     }
 
-    TraceBytes(uiFilter, m_pBuffer->GetData(), m_pBuffer->GetLength());
+    TraceBytes(uiFilter, m_pBuffer->GetData(), GetBuffer()->GetLength());
 }
 
 }

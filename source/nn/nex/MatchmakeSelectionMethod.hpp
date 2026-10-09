@@ -10,7 +10,9 @@ enum MatchmakeSelectionMethod
 {
     cMatchmakeSelectionMethod_0 = 0,
     cMatchmakeSelectionMethod_1 = 1,
-    cMatchmakeSelectionMethod_2 = 2
+    cMatchmakeSelectionMethod_2 = 2,
+    cMatchmakeSelectionMethod_4 = 4,
+    cMatchmakeSelectionMethod_5 = 5
 };
 
 }

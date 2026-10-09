@@ -15,14 +15,33 @@ extern bool g_criticalSectionDisabled;
 class CriticalSection : public RootObject
 {
 public:
-    explicit CriticalSection(unsigned int traceMask);
+    enum
+    {
+        DEFAULT_TRACE_MASK = 0x20000000
+    };
+
+    explicit CriticalSection(unsigned int traceMask = DEFAULT_TRACE_MASK);
     CriticalSection(const CriticalSection& other);
     virtual ~CriticalSection();
 
     CriticalSection& operator=(const CriticalSection& other);
 
-    virtual void Enter();
-    virtual void Leave();
+    virtual void Enter()
+    {
+        if (g_criticalSectionDisabled)
+            return;
+
+        m_mutex.Lock();
+    }
+
+    virtual void Leave()
+    {
+        if (g_criticalSectionDisabled)
+            return;
+
+        m_mutex.Unlock();
+    }
+
     virtual bool IsForce() const;
 
     void ValidateOwnership(bool owned) const;

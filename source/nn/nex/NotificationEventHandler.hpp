@@ -10,7 +10,10 @@ class NotificationEvent;
 class NotificationEventHandler : public RootObject
 {
 public:
-    virtual ~NotificationEventHandler();
+    virtual ~NotificationEventHandler()
+    {
+    }
+
     virtual void ProcessNotificationEvent(const NotificationEvent& event) = 0;
 };
 

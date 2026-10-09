@@ -14,10 +14,7 @@ const wchar_t* ComponentState::GetType() const
 
 bool ComponentState::IsAKindOf(const wchar_t* pType) const
 {
-    bool bKind = true;
-    if (std::wcscmp(L"ComponentState", pType) != 0)
-        bKind = std::wcscmp(L"SystemComponent", pType) == 0;
-    return bKind;
+    return std::wcscmp(L"ComponentState", pType) == 0 || SystemComponent::IsAKindOf(pType);
 }
 
 void ComponentState::EnforceDeclareSysComponentMacro()

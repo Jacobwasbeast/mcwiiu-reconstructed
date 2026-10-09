@@ -72,7 +72,8 @@ public:
     void push(const T& rElement)
     {
         m_elements[m_uiBack] = rElement;
-        m_uiBack = (m_uiBack + 1) % m_uiCapacity;
+        ++m_uiBack;
+        m_uiBack %= m_uiCapacity;
         ++m_iSize;
     }
 
@@ -81,7 +82,8 @@ public:
 
     void pop()
     {
-        m_uiFront = (m_uiFront + 1) % m_uiCapacity;
+        ++m_uiFront;
+        m_uiFront %= m_uiCapacity;
         --m_iSize;
     }
 

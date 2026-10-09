@@ -7,10 +7,6 @@ BandwidthCounterMap::IOBandwidthCounter::IOBandwidthCounter(const String& name)
 {
 }
 
-BandwidthCounterMap::IOBandwidthCounter::~IOBandwidthCounter()
-{
-}
-
 BandwidthCounterMap::BandwidthCounterMap(const String& name)
     : m_name(name), m_counters()
 {

@@ -1,5 +1,8 @@
 #include "nn/nex/ClientProtocolRequestBroker.hpp"
 #include "nn/nex/ProtocolRegistry.hpp"
+#include "nn/nex/RVClientCore.hpp"
+#include "nn/nex/Scheduler.hpp"
+#include "nn/nex/CriticalSection.hpp"
 
 #include "nn/nex/CallProtocolMethodOperation.hpp"
 #include "nn/nex/ClientProtocol.hpp"
@@ -10,42 +13,31 @@
 #include "nn/nex/ServerProtocol.hpp"
 #include "nn/nex/CallContextRegister.hpp"
 #include "nn/nex/Core.hpp"
-#include "nn/nex/SecurityContextManager.hpp"
-
-#include <map>
 
 namespace nn { namespace nex {
 
 namespace
 {
-typedef std::map<const ClientProtocolRequestBroker*, ProtocolRegistry*> BrokerRegistryMap;
-BrokerRegistryMap g_brokerRegistries;
-
-ProtocolRegistry* RegistryFor(const ClientProtocolRequestBroker* broker)
+enum
 {
-    BrokerRegistryMap::iterator it = g_brokerRegistries.find(broker);
-    return it == g_brokerRegistries.end() ? 0 : it->second;
-}
+    RESULT_NOT_IMPLEMENTED = static_cast<int>(0x80010002u)
+};
+
+enum
+{
+    NO_RESPONSE_PROTOCOL_ID = 1
+};
 }
 
 ClientProtocolRequestBroker::ClientProtocolRequestBroker()
-    : ProtocolRequestBrokerInterface(), m_serverTree(0), m_field48(0), m_field4c(0),
-      m_currentEndPoint(0),
-      m_callPolicy()
+    : ProtocolRequestBrokerInterface(), m_serverProtocols(), m_callPolicy()
 {
-    mVTable = 0x104B41E4u;
-    g_brokerRegistries[this] = new ProtocolRegistry();
+    m_pCurrentEndPoint = 0;
     m_callPolicy.SetMaximumRecursionLevel(3);
 }
 
 ClientProtocolRequestBroker::~ClientProtocolRequestBroker()
 {
-    BrokerRegistryMap::iterator it = g_brokerRegistries.find(this);
-    if (it != g_brokerRegistries.end())
-    {
-        delete it->second;
-        g_brokerRegistries.erase(it);
-    }
 }
 
 Operation* ClientProtocolRequestBroker::GetCurrentOperation()
@@ -56,9 +48,9 @@ Operation* ClientProtocolRequestBroker::GetCurrentOperation()
 void ClientProtocolRequestBroker::ProcessMessage(CallProtocolMethodOperation* operation,
                                                   EndPoint* endPoint, Buffer* buffer)
 {
-    m_currentEndPoint = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(endPoint));
+    m_pCurrentEndPoint = endPoint;
     ProcessMessageCore(operation, endPoint, buffer);
-    m_currentEndPoint = 0;
+    m_pCurrentEndPoint = 0;
 }
 
 void ClientProtocolRequestBroker::ProcessMessageCore(CallProtocolMethodOperation* operation,
@@ -101,39 +93,47 @@ void ClientProtocolRequestBroker::ProcessCallRequest(unsigned short protocolId, 
                                                       Message* response, bool* responseRequired,
                                                       EndPoint* endPoint)
 {
-    ServerProtocol* server = GetServerProtocol(protocolId);
-    ProtocolCallContext* context = request == 0 ? 0 : Protocol::RetrieveCallContext(request);
-    if (server == 0 || context == 0)
+    ServerProtocol* server = RVClientCore::GetInstance()->GetServerProtocol(protocolId);
+    if (server == 0)
     {
-        if (responseRequired != 0)
-            *responseRequired = false;
-        if (response != 0)
-            Protocol::AddCallOutcome(response, qResult(static_cast<int>(0x80010002u)));
-        return;
-    }
-    DispatchCallToProtocol(server, request, response, responseRequired, endPoint);
-    if (response != 0 && responseRequired != 0 && *responseRequired)
-    {
-        Operation* operation = m_operationManager.GetCurrentOperation();
-        if (operation != 0)
+        server = GetServerProtocol(protocolId);
+        if (server == 0 && protocolId == NO_RESPONSE_PROTOCOL_ID)
         {
-            CallProtocolMethodOperation* call = static_cast<CallProtocolMethodOperation*>(operation);
-            const unsigned int contextId = *reinterpret_cast<unsigned int*>(
-                reinterpret_cast<unsigned char*>(context) + 0x40);
-            Message payload;
-            payload.AddDataFromMessage(*response);
-            response->Clear();
-            Protocol::AddCallResponse(response, call, contextId, payload);
+            *responseRequired = false;
+            return;
         }
+    }
+
+    unsigned int callContextId = Protocol::ExtractCallContextID(request);
+    Message payload;
+    *responseRequired = false;
+    if (server == 0)
+    {
+        *responseRequired = true;
+        CallProtocolMethodOperation* operation =
+            static_cast<CallProtocolMethodOperation*>(GetCurrentOperation());
+        operation->m_result = qResult(RESULT_NOT_IMPLEMENTED);
+    }
+    else
+    {
+        DispatchCallToProtocol(server, request, &payload, responseRequired, endPoint);
+    }
+
+    if (*responseRequired)
+    {
+        Protocol::AddProtocolKey(response, Protocol::COMMAND_RESPONSE, protocolId);
+        Protocol::AddCallResponse(response,
+                                  static_cast<CallProtocolMethodOperation*>(GetCurrentOperation()),
+                                  callContextId, payload);
     }
 }
 
 void ClientProtocolRequestBroker::ProcessCallResponse(unsigned short protocolId, Message* response,
                                                        EndPoint* endPoint)
 {
-    ProtocolRegistry* registry = RegistryFor(this);
-    ClientProtocol* client = registry == 0 ? 0 : static_cast<ClientProtocol*>(registry->GetProtocol(
-        protocolId, Protocol::TYPE_CLIENT));
+    ClientProtocol* client = static_cast<ClientProtocol*>(
+        RVClientCore::GetInstance()->GetProtocolRegistry()->GetProtocol(protocolId,
+                                                                        Protocol::TYPE_CLIENT));
     if (client != 0)
         client->ProcessResponse(response, endPoint);
 }
@@ -162,51 +162,35 @@ bool ClientProtocolRequestBroker::CloneProtocols()
 bool ClientProtocolRequestBroker::RegisterServerProtocol(unsigned short protocolId,
                                                           ServerProtocol* protocol)
 {
-    if (protocol == 0)
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+    if (m_serverProtocols.find(protocolId) != m_serverProtocols.end())
         return false;
-    ProtocolRegistry* registry = RegistryFor(this);
-    if (registry == 0)
-        return false;
-    registry->RegisterProtocol(protocolId, protocol);
+    m_serverProtocols[protocolId] = protocol;
     return true;
 }
 
 bool ClientProtocolRequestBroker::UnregisterServerProtocol(unsigned short protocolId)
 {
-    ServerProtocol* protocol = GetServerProtocol(protocolId);
-    if (protocol == 0)
-        return false;
-    ProtocolRegistry* registry = RegistryFor(this);
-    if (registry != 0)
-        registry->UnregisterProtocol(protocol);
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+    ServerProtocolMap::iterator entry = m_serverProtocols.find(protocolId);
+    if (entry != m_serverProtocols.end())
+        m_serverProtocols.erase(entry);
     return true;
 }
 
 ServerProtocol* ClientProtocolRequestBroker::GetServerProtocol(unsigned short protocolId)
 {
-    ProtocolRegistry* registry = RegistryFor(this);
-    return registry == 0 ? 0 : static_cast<ServerProtocol*>(registry->GetServerProtocol(protocolId));
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+    ServerProtocolMap::iterator entry = m_serverProtocols.find(protocolId);
+    if (entry == m_serverProtocols.end())
+        return 0;
+    return entry->second;
 }
 
 qResult ClientProtocolRequestBroker::DispatchLocalRMC(Message* message, ClientProtocol* client,
                                                        ServerProtocol* server, EndPoint* endPoint)
 {
-    m_callPolicy.BeginCallImpl();
-    Message response;
-    bool responseRequired = true;
-    if (server == 0 || client == 0)
-    {
-        m_callPolicy.EndCallImpl();
-        return qResult(static_cast<int>(0x80010002u));
-    }
-    CallProtocolMethodOperation operation;
-    m_operationManager.OperationBegins(&operation);
-    DispatchCallToProtocol(server, message, &response, &responseRequired, endPoint);
-    if (responseRequired)
-        client->ProcessResponse(&response, endPoint);
-    m_operationManager.OperationEnds(&operation);
-    m_callPolicy.EndCallImpl();
-    return qResult(static_cast<int>(0x10001));
+    return qResult(RESULT_NOT_IMPLEMENTED);
 }
 
 qResult ClientProtocolRequestBroker::DispatchBlockingLocalRMC(Message* message,
@@ -214,7 +198,7 @@ qResult ClientProtocolRequestBroker::DispatchBlockingLocalRMC(Message* message,
                                                                ServerProtocol* server,
                                                                EndPoint* endPoint)
 {
-    return DispatchLocalRMC(message, client, server, endPoint);
+    return qResult(RESULT_NOT_IMPLEMENTED);
 }
 
 qResult ClientProtocolRequestBroker::DispatchThreadSafeLocalRMC(Message* message,
@@ -222,60 +206,34 @@ qResult ClientProtocolRequestBroker::DispatchThreadSafeLocalRMC(Message* message
                                                                  ServerProtocol* server,
                                                                  EndPoint* endPoint)
 {
-    return DispatchLocalRMC(message, client, server, endPoint);
+    return qResult(RESULT_NOT_IMPLEMENTED);
 }
 
 void ClientProtocolRequestBroker::PeerDisconnected(EndPoint* endPoint)
 {
-    SecurityContextManager* security = SecurityContextManager::GetInstance();
-    if (security != 0 && endPoint != 0)
-        security->Push(g_protocolCurrentPID == 0 ? 0 : g_protocolCurrentPID(),
-                       g_protocolCurrentCID == 0 ? 0 : g_protocolCurrentCID(),
-                       *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(endPoint) + 0x4C));
-    if (Core::GetInstance() != 0 && Core::GetInstance()->GetCallContextRegister() != 0 &&
-        endPoint != 0)
-    {
-        const unsigned int connectionId = *reinterpret_cast<unsigned int*>(
-            reinterpret_cast<unsigned char*>(endPoint) + 0x48);
-        Core::GetInstance()->GetCallContextRegister()->CancelCallContexts(endPoint, connectionId);
-    }
-    if (security != 0 && endPoint != 0)
-        security->Pop();
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+    Core::GetInstance()->GetCallContextRegister()->CancelCallContexts(endPoint,
+                                                                     endPoint->GetConnectionID());
 }
 
 void ClientProtocolRequestBroker::FaultDetection(EndPoint* endPoint, unsigned int reason)
 {
-    (void)reason;
-    SecurityContextManager* security = SecurityContextManager::GetInstance();
-    if (security != 0 && endPoint != 0)
-        security->Push(g_protocolCurrentPID == 0 ? 0 : g_protocolCurrentPID(),
-                       g_protocolCurrentCID == 0 ? 0 : g_protocolCurrentCID(),
-                       *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(endPoint) + 0x4C));
-    if (Core::GetInstance() != 0 && Core::GetInstance()->GetCallContextRegister() != 0 &&
-        endPoint != 0)
-    {
-        const unsigned int connectionId = *reinterpret_cast<unsigned int*>(
-            reinterpret_cast<unsigned char*>(endPoint) + 0x48);
-        Core::GetInstance()->GetCallContextRegister()->CancelCallContexts(endPoint, connectionId);
-    }
-    if (security != 0 && endPoint != 0)
-        security->Pop();
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+    Core::GetInstance()->GetCallContextRegister()->CancelCallContexts(endPoint,
+                                                                     endPoint->GetConnectionID());
 }
 
 void ClientProtocolRequestBroker::DispatchCallToProtocol(ServerProtocol* protocol, Message* request,
                                                           Message* response, bool* responseRequired,
                                                           EndPoint* endPoint)
 {
-    if (protocol != 0)
-    {
-        unsigned int attemptCount = 0;
-        Operation* current = m_operationManager.GetCurrentOperation();
-        if (current != 0)
-            attemptCount = static_cast<CallProtocolMethodOperation*>(current)->GetAttemptCount();
-        protocol->DispatchCallRequest(attemptCount, request, response, responseRequired, 0,
-                                      endPoint);
-    }
+    CallPolicy& policy = m_callPolicy;
+    policy.BeginCallImpl();
+    int attempt = 0;
+    protocol->DispatchCallRequest(
+        static_cast<CallProtocolMethodOperation*>(GetCurrentOperation())->GetAttemptCount(),
+        request, response, responseRequired, &attempt, endPoint);
+    policy.EndCallImpl();
 }
-
 
 }}

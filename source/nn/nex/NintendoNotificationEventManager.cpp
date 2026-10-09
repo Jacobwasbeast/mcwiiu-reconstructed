@@ -33,7 +33,7 @@ NintendoNotificationEventManager* NintendoNotificationEventManager::Clone() cons
 uint32_t NintendoNotificationEventManager::RegisterNintendoNotificationEventHandler(
     NintendoNotificationEventHandler* pHandler)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_handlers.find(pHandler) != m_handlers.end())
         return 0;
 
@@ -44,7 +44,7 @@ uint32_t NintendoNotificationEventManager::RegisterNintendoNotificationEventHand
 uint32_t NintendoNotificationEventManager::UnregisterNintendoNotificationEventHandler(
     NintendoNotificationEventHandler* pHandler)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     HandlerSet::iterator it = m_handlers.find(pHandler);
     if (it == m_handlers.end())
         return 0;

@@ -37,14 +37,28 @@ public:
     virtual ~Protocol();
 
     virtual const wchar_t* GetType() const;
-    virtual bool IsAKindOf(const wchar_t* pType) const;
+    virtual bool IsAKindOf(const wchar_t* pType) const
+    {
+        return std::wcscmp(L"Protocol", pType) == 0 || SystemComponent::IsAKindOf(pType);
+    }
+
     virtual void EnforceDeclareSysComponentMacro();
     virtual bool BeginInitialization();
     virtual bool BeginTermination();
     virtual _Type GetProtocolType() const = 0;
-    virtual void EndPointDisconnected(EndPoint* pEndPoint);
-    virtual void FaultDetected(EndPoint* pEndPoint, unsigned int uiReason);
-    virtual Protocol* Clone() const;
+    virtual void EndPointDisconnected(EndPoint* pEndPoint)
+    {
+    }
+
+    virtual void FaultDetected(EndPoint* pEndPoint, unsigned int uiReason)
+    {
+    }
+
+    virtual Protocol* Clone() const
+    {
+        return 0;
+    }
+
 
     bool FlagIsSet(unsigned int uiFlag) const;
     void SetFlag(unsigned int uiFlag);

@@ -1,5 +1,7 @@
 #include "nn/nex/_DDL_MatchmakeParam.hpp"
 
+#include <algorithm>
+
 #include "nn/nex/DDLSerialization.hpp"
 #include "nn/nex/Message.hpp"
 #include "nn/nex/String.hpp"
@@ -28,13 +30,13 @@ _DDL_MatchmakeParam& _DDL_MatchmakeParam::operator=(const _DDL_MatchmakeParam& r
 
 void _DDL_MatchmakeParam::Add(Message* pMessage, const _DDL_MatchmakeParam& rSource)
 {
-    const bool bCompactFormat = pMessage->IsCompactFormat();
     unsigned int uiSizePosition = 0;
+    const bool bCompactFormat = pMessage->IsCompactFormat();
     if (!bCompactFormat)
     {
-        const uint8_t uiVersion = rSource.m_uiStructureVersion;
-        const uint8_t uiMaxVersion = MAX_STRUCTURE_VERSION;
-        pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
+        uint8_t uiVersion = rSource.m_uiStructureVersion;
+        uint8_t uiMaxVersion = MAX_STRUCTURE_VERSION;
+        _Type_byte::Add(pMessage, std::min(uiVersion, uiMaxVersion));
         uiSizePosition = pMessage->GetLength();
         const uint32_t uiSize = 0;
         _Type_uint32::Add(pMessage, uiSize);
@@ -44,8 +46,7 @@ void _DDL_MatchmakeParam::Add(Message* pMessage, const _DDL_MatchmakeParam& rSou
     {
         const unsigned int uiEndPosition = pMessage->GetLength();
         pMessage->SetLength(uiSizePosition);
-        const uint32_t uiSize = uiEndPosition - uiSizePosition - sizeof(uint32_t);
-        _Type_uint32::Add(pMessage, uiSize);
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }

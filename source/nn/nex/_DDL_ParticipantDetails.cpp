@@ -1,5 +1,7 @@
 #include "nn/nex/_DDL_ParticipantDetails.hpp"
 
+#include <algorithm>
+
 #include "nn/nex/DDLSerialization.hpp"
 #include "nn/nex/Message.hpp"
 
@@ -10,13 +12,14 @@ namespace nex
 
 void _DDL_ParticipantDetails::Add(Message* pMessage, const _DDL_ParticipantDetails& rSource)
 {
-    const bool bCompactFormat = pMessage->IsCompactFormat();
     unsigned int uiSizePosition = 0;
+    const bool bCompactFormat = pMessage->IsCompactFormat();
 
     if (!bCompactFormat)
     {
-        const uint8_t uiVersion = 0;
-        _Type_byte::Add(pMessage, uiVersion);
+        uint8_t uiVersion = rSource.m_uiStructureVersion;
+        uint8_t uiMaxVersion = 0;
+        _Type_byte::Add(pMessage, std::min(uiVersion, uiMaxVersion));
         uiSizePosition = pMessage->GetLength();
 
         const uint32_t uiSize = 0;
@@ -33,8 +36,7 @@ void _DDL_ParticipantDetails::Add(Message* pMessage, const _DDL_ParticipantDetai
         const unsigned int uiEndPosition = pMessage->GetLength();
         pMessage->SetLength(uiSizePosition);
 
-        const uint32_t uiSize = uiEndPosition - uiSizePosition - sizeof(uint32_t);
-        _Type_uint32::Add(pMessage, uiSize);
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - sizeof(uint32_t));
         pMessage->SetLength(uiEndPosition);
     }
 }

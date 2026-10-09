@@ -1,5 +1,8 @@
 #include "nn/nex/_DDL_DataStoreRatingInfoWithSlot.hpp"
 
+#include <algorithm>
+
+#include "nn/nex/DDLSerialization.hpp"
 #include "nn/nex/Message.hpp"
 
 namespace nn
@@ -15,16 +18,6 @@ const unsigned int SIZE_FIELD_LENGTH = 4;
 
 }
 
-_DDL_DataStoreRatingInfoWithSlot::_DDL_DataStoreRatingInfoWithSlot()
-    : m_Rating()
-{
-    m_uiStructureVersion = 0;
-}
-
-_DDL_DataStoreRatingInfoWithSlot::~_DDL_DataStoreRatingInfoWithSlot()
-{
-}
-
 _DDL_DataStoreRatingInfoWithSlot& _DDL_DataStoreRatingInfoWithSlot::operator=(
     const _DDL_DataStoreRatingInfoWithSlot& rSource)
 {
@@ -37,21 +30,20 @@ _DDL_DataStoreRatingInfoWithSlot& _DDL_DataStoreRatingInfoWithSlot::operator=(
 void _DDL_DataStoreRatingInfoWithSlot::Add(Message* pMessage,
     const _DDL_DataStoreRatingInfoWithSlot& rSource)
 {
-    const bool bCompactFormat = pMessage->IsCompactFormat();
     unsigned int uiSizePosition = 0;
+    const bool bCompactFormat = pMessage->IsCompactFormat();
 
     if (!bCompactFormat)
     {
-        const uint8_t uiVersion = rSource.m_uiStructureVersion;
-        const uint8_t uiMaxVersion = RATING_INFO_WITH_SLOT_MAX_STRUCTURE_VERSION;
+        uint8_t uiVersion = rSource.m_uiStructureVersion;
+        uint8_t uiMaxVersion = RATING_INFO_WITH_SLOT_MAX_STRUCTURE_VERSION;
 
-        pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
+        _Type_byte::Add(pMessage, std::min(uiVersion, uiMaxVersion));
 
         uiSizePosition = pMessage->GetLength();
 
         const uint32_t uiSize = 0;
-
-        pMessage->Append(reinterpret_cast<const unsigned char*>(&uiSize), SIZE_FIELD_LENGTH, 1);
+        _Type_uint32::Add(pMessage, uiSize);
     }
 
     pMessage->Append(reinterpret_cast<const unsigned char*>(&rSource.m_iSlot), 1, 1);
@@ -63,10 +55,7 @@ void _DDL_DataStoreRatingInfoWithSlot::Add(Message* pMessage,
 
         pMessage->SetLength(uiSizePosition);
 
-        const int32_t iSize =
-            static_cast<int32_t>(uiEndPosition - uiSizePosition - SIZE_FIELD_LENGTH);
-
-        pMessage->Append(reinterpret_cast<const unsigned char*>(&iSize), SIZE_FIELD_LENGTH, 1);
+        _Type_uint32::Add(pMessage, uiEndPosition - uiSizePosition - SIZE_FIELD_LENGTH);
         pMessage->SetLength(uiEndPosition);
     }
 }

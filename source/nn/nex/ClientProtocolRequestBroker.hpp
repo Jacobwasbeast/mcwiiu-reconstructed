@@ -1,6 +1,11 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_CLIENTPROTOCOLREQUESTBROKER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_CLIENTPROTOCOLREQUESTBROKER_HPP
 
+#include <functional>
+#include <map>
+#include <utility>
+
+#include "nn/nex/MemAllocator.hpp"
 #include "nn/nex/ProtocolRequestBrokerInterface.hpp"
 #include "nn/nex/SingleThreadCallPolicy.hpp"
 
@@ -34,10 +39,12 @@ private:
     void ProcessMessageCore(CallProtocolMethodOperation*, EndPoint*, Buffer*);
     void DispatchCallToProtocol(ServerProtocol*, Message*, Message*, bool*, EndPoint*);
     void ProcessLocalCallRequest(ServerProtocol*, Message*, Message*, bool*, EndPoint*);
-    uint32_t m_serverTree;
-    uint32_t m_field48;
-    uint32_t m_field4c;
-    uint32_t m_currentEndPoint;
+    typedef std::pair<const unsigned short, ServerProtocol*> ServerProtocolEntry;
+    typedef std::map<unsigned short, ServerProtocol*, std::less<unsigned short>,
+                     MemAllocator<ServerProtocolEntry> > ServerProtocolMap;
+
+    ServerProtocolMap m_serverProtocols;
+    EndPoint* m_pCurrentEndPoint;
     SingleThreadCallPolicy m_callPolicy;
 };
 

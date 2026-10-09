@@ -26,10 +26,7 @@ bool _DDL_DynamicGathering::IsA(const String& rType) const
 
 bool _DDL_DynamicGathering::IsAKindOf(const String& rType) const
 {
-    if (String::IsEqual(rType, L"DynamicGathering"))
-        return true;
-
-    return _DDL_Gathering::IsAKindOf(rType);
+    return String::IsEqual(rType, L"DynamicGathering") || _DDL_Gathering::IsAKindOf(rType);
 }
 
 void _DDL_DynamicGathering::StreamIn(Message* pMessage) const

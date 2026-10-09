@@ -15,7 +15,11 @@ class Message;
 class _DDL_ResultRange : public RootObject
 {
 public:
-    _DDL_ResultRange();
+    _DDL_ResultRange()
+    {
+        m_uiStructureVersion = 0;
+    }
+
     virtual ~_DDL_ResultRange();
 
     _DDL_ResultRange& operator=(const _DDL_ResultRange& rSource);

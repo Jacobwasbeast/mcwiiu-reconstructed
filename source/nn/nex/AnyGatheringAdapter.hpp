@@ -31,6 +31,8 @@ public:
     static unsigned int UnregisterUse();
 
 private:
+    friend class MatchMakingClient;
+
     typedef qList<Gathering*> PrototypeList;
 
     unsigned int m_uiUseCount;

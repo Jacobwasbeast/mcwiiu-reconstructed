@@ -12,9 +12,5 @@ DataStorePermission::DataStorePermission(uint8_t uiPermission,
     m_RecipientIds = rRecipientIds;
 }
 
-DataStorePermission::~DataStorePermission()
-{
-}
-
 }
 }

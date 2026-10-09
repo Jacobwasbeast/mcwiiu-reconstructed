@@ -44,10 +44,10 @@ public:
             uiContextId = g_instantiationContextVariable->GetRef();
 
         InstanceControl* pInstanceControl = g_instanceTable.FindInstance(ClassID, uiContextId);
-        if (pInstanceControl == 0)
-            return 0;
+        if (pInstanceControl != 0)
+            return static_cast<PRUDPUserProtocol*>(pInstanceControl->GetDelegatorInstance());
 
-        return static_cast<PRUDPUserProtocol*>(pInstanceControl->GetDelegatorInstance());
+        return 0;
     }
 
     static void AcquireInstance();

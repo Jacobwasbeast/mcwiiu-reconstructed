@@ -59,8 +59,7 @@ public:
 private:
     friend class DefaultChainPolicy<ProfilingUnit*>;
 
-    ProfilingUnit* m_pNext;
-    ProfilingUnit* m_pPrevious;
+    qChainLink<ProfilingUnit*> m_link;
     unsigned long long m_totalTime;
     unsigned long long m_totalSquaredTime;
     unsigned long long m_minTime;

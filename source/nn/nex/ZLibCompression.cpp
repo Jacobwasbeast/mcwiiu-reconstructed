@@ -19,7 +19,7 @@ const unsigned char STORED_MARKER = 0;
 const unsigned char UNKNOWN_RATIO_MARKER = 0xFF;
 const float MAX_RATIO_MARKER = 255.0f;
 const unsigned int UNKNOWN_RATIO_EXPANSION = 0x41A;
-const unsigned int MAX_GROW_ATTEMPTS = 1;
+const unsigned int MAX_INFLATE_ATTEMPTS = 2;
 const int DECOMPRESS_STATUS_OK = 0;
 const int DECOMPRESS_STATUS_FAILED = 1;
 const int DECOMPRESS_STATUS_TRUNCATED = 2;
@@ -33,13 +33,8 @@ ZLibCompression::ZLibCompression()
 
 ZLibCompression::ZLibCompression(int iWindowBits, int iMemLevel)
 {
-    if (iWindowBits == USE_DEFAULT)
-        iWindowBits = DEFAULT_WINDOW_BITS;
-
-    if (iMemLevel == USE_DEFAULT)
-        iMemLevel = DEFAULT_MEM_LEVEL;
-
-    Initialize(iWindowBits, iMemLevel);
+    Initialize(iWindowBits == USE_DEFAULT ? DEFAULT_WINDOW_BITS : iWindowBits,
+        iMemLevel == USE_DEFAULT ? DEFAULT_MEM_LEVEL : iMemLevel);
 }
 
 ZLibCompression::~ZLibCompression()
@@ -74,10 +69,11 @@ int ZLibCompression::CompressImpl(const Buffer& rSource, Buffer* pDestination)
     }
 
     z_stream* pStream = &m_pStreams->m_deflate;
+    unsigned int uiAvailable = pDestination->GetRealSize() - pDestination->GetHeadShiftSize();
     pStream->avail_in = rSource.GetLength();
     pStream->next_in = rSource.GetData();
     pStream->next_out = pDestination->GetData() + 1;
-    pStream->avail_out = pDestination->GetRealSize() - pDestination->GetHeadShiftSize() - 1;
+    pStream->avail_out = uiAvailable - 1;
     if (quazal_deflate(pStream, Z_FINISH) == Z_STREAM_END &&
         m_pStreams->m_deflate.total_out < rSource.GetLength())
     {
@@ -93,69 +89,73 @@ int ZLibCompression::CompressImpl(const Buffer& rSource, Buffer* pDestination)
         return 0;
     }
 
+    unsigned char* pData = pDestination->GetData();
     pDestination->SetLength(rSource.GetLength() + 1);
-    pDestination->GetData()[0] = STORED_MARKER;
-    memcpy(pDestination->GetData() + 1, rSource.GetData(), rSource.GetLength());
+    pData[0] = STORED_MARKER;
+    memcpy(pData + 1, rSource.GetData(), rSource.GetLength());
     return 0;
 }
 
 int ZLibCompression::DecompressImpl(const Buffer& rSource, Buffer* pDestination)
 {
-    unsigned int uiMarker = rSource.GetData()[0];
+    const unsigned char* pSource = rSource.GetData();
+    unsigned int uiMarker = pSource[0];
     int iStatus = DECOMPRESS_STATUS_OK;
-    if (uiMarker == STORED_MARKER)
+    if (uiMarker != STORED_MARKER)
     {
-        pDestination->SetLength(rSource.GetLength() - 1);
-        memcpy(pDestination->GetData(), rSource.GetData() + 1, rSource.GetLength() - 1);
-        return iStatus;
-    }
-
-    bool bFinished = false;
-    if (uiMarker == UNKNOWN_RATIO_MARKER)
-    {
-        pDestination->ResizeByRealSize(
-            rSource.GetLength() * UNKNOWN_RATIO_EXPANSION + pDestination->GetHeadShiftSize());
-    }
-    else if (pDestination->GetRealSize() - pDestination->GetHeadShiftSize() <
-        rSource.GetLength() * uiMarker)
-    {
-        pDestination->ResizeByRealSize(
-            rSource.GetLength() * uiMarker * 2 + pDestination->GetHeadShiftSize());
-    }
-
-    unsigned int uiAttempt = 0;
-    int iResult;
-    for (;;)
-    {
-        quazal_inflateReset(&m_pStreams->m_inflate);
-        z_stream* pStream = &m_pStreams->m_inflate;
-        pStream->next_out = pDestination->GetData();
-        pStream->avail_out = pDestination->GetRealSize() - pDestination->GetHeadShiftSize();
-        pStream->avail_in = rSource.GetLength() - 1;
-        pStream->next_in = rSource.GetData() + 1;
-        iResult = quazal_inflate(pStream, Z_FINISH);
-        if ((m_pStreams->m_inflate.avail_out != 0 || iResult != Z_OK) && iResult != Z_BUF_ERROR)
+        bool bFinished = false;
+        if (uiMarker == UNKNOWN_RATIO_MARKER)
         {
-            bFinished = true;
-            break;
+            pDestination->ResizeByRealSize(
+                rSource.GetLength() * UNKNOWN_RATIO_EXPANSION + pDestination->GetHeadShiftSize());
+        }
+        else if (pDestination->GetRealSize() - pDestination->GetHeadShiftSize() <
+            rSource.GetLength() * uiMarker)
+        {
+            pDestination->ResizeByRealSize(
+                rSource.GetLength() * uiMarker * 2 + pDestination->GetHeadShiftSize());
         }
 
-        pDestination->ResizeByRealSize(
-            pDestination->GetRealSize() * 2 - pDestination->GetHeadShiftSize());
-        ++uiAttempt;
-        if (uiAttempt > MAX_GROW_ATTEMPTS || iResult != Z_OK)
-            break;
-    }
+        unsigned int uiAttempt = 0;
+        int iResult;
+        do
+        {
+            quazal_inflateReset(&m_pStreams->m_inflate);
+            z_stream* pStream = &m_pStreams->m_inflate;
+            pStream->next_out = pDestination->GetData();
+            pStream->avail_out = pDestination->GetRealSize() - pDestination->GetHeadShiftSize();
+            pStream->avail_in = rSource.GetLength() - 1;
+            pStream->next_in = rSource.GetData() + 1;
+            iResult = quazal_inflate(pStream, Z_FINISH);
+            if ((m_pStreams->m_inflate.avail_out == 0 && iResult == Z_OK) || iResult == Z_BUF_ERROR)
+            {
+                pDestination->ResizeByRealSize(
+                    (pDestination->GetRealSize() - pDestination->GetHeadShiftSize()) * 2 +
+                    pDestination->GetHeadShiftSize());
+            }
+            else
+            {
+                bFinished = true;
+            }
+            ++uiAttempt;
+        } while (!bFinished && uiAttempt < MAX_INFLATE_ATTEMPTS && iResult == Z_OK);
 
-    if (iResult == Z_STREAM_END)
+        if (iResult == Z_STREAM_END)
+        {
+            pDestination->SetLength(m_pStreams->m_inflate.total_out);
+        }
+        else
+        {
+            iStatus = DECOMPRESS_STATUS_FAILED;
+            if (iResult == Z_OK && !bFinished)
+                return DECOMPRESS_STATUS_TRUNCATED;
+        }
+    }
+    else
     {
-        pDestination->SetLength(m_pStreams->m_inflate.total_out);
-        return DECOMPRESS_STATUS_OK;
+        pDestination->SetLength(rSource.GetLength() - 1);
+        memcpy(pDestination->GetData(), pSource + 1, rSource.GetLength() - 1);
     }
-
-    iStatus = DECOMPRESS_STATUS_FAILED;
-    if (iResult == Z_OK && !bFinished)
-        iStatus = DECOMPRESS_STATUS_TRUNCATED;
 
     return iStatus;
 }

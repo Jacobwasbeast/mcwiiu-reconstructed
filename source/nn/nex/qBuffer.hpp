@@ -29,7 +29,7 @@ public:
 
     unsigned int size() const
     {
-        return m_pFront != m_pBack ? static_cast<unsigned int>(m_pBack - m_pFront) : 0;
+        return m_pBack != m_pFront ? static_cast<unsigned int>(m_pBack - m_pFront) : 0;
     }
 
     unsigned int capacity() const

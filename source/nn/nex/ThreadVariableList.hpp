@@ -5,6 +5,7 @@
 
 #include "nn/nex/CriticalSection.hpp"
 #include "nn/nex/RootObject.hpp"
+#include "nn/nex/qChain.hpp"
 
 namespace nn
 {
@@ -27,9 +28,7 @@ public:
     void ClearValue();
 
 private:
-    ThreadVariableRoot* m_first;
-    ThreadVariableRoot* m_last;
-    uint32_t m_count;
+    qChain<ThreadVariableRoot*, DefaultChainPolicy<ThreadVariableRoot*> > m_variables;
     ForcedCriticalSection m_criticalSection;
 };
 

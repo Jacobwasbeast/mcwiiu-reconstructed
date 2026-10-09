@@ -9,8 +9,6 @@ namespace nex
 {
 
 ThreadVariableRoot::ThreadVariableRoot()
-    : m_next(0)
-    , m_previous(0)
 {
     ThreadVariableList::GetInstanceRef()->AddVariable(this);
 }

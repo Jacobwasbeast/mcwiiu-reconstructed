@@ -44,10 +44,13 @@ public:
         if (contextId == 0)
             return true;
 
-        if (m_extraContexts->size() <= contextId)
+        if (contextId >= m_extraContexts->size())
             return false;
 
-        return (*m_extraContexts)[contextId] != 0;
+        if ((*m_extraContexts)[contextId] != 0)
+            return true;
+
+        return false;
     }
 
     InstanceControl* FindInstance(unsigned int classId, unsigned int contextId)
@@ -55,10 +58,10 @@ public:
         if (contextId == 0)
             return m_defaultContext.GetInstance(classId);
 
-        if (m_extraContexts->size() <= contextId)
+        if (contextId >= m_extraContexts->size())
         {
             SystemError::SignalError(
-                L"D:\\WiiU\\Cafe_SDK_2.13.01\\SDK\\nex\\include\\OnlineCore/src/Core/InstanceTable.h",
+                L"D:\\home\\jenkins\\workspace\\Master\\Pack\\d4f027b8\\.\\OnlineCore/src/Core/InstanceTable.h",
                 0x48, 0xE0000003, 0);
             return reinterpret_cast<InstanceControl*>(0xFFFFFFFF);
         }

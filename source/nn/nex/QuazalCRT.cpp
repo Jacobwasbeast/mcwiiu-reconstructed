@@ -34,16 +34,14 @@ void QuazalCRTFree(int iAddress)
 
 int QuazalCRTCalloc(int iCount, int iSize)
 {
-    if (iCount != 0 && iSize != 0)
-    {
-        int iAddress = reinterpret_cast<int>(QuazalCRTAlloc(iCount * iSize));
-        if (iAddress != 0)
-            memset(reinterpret_cast<void*>(iAddress), 0, iCount * iSize);
+    if (iCount == 0 || iSize == 0)
+        return 0;
 
-        return iAddress;
-    }
+    int iAddress = reinterpret_cast<int>(QuazalCRTAlloc(iCount * iSize));
+    if (iAddress != 0)
+        memset(reinterpret_cast<void*>(iAddress), 0, iCount * iSize);
 
-    return 0;
+    return iAddress;
 }
 
 voidpf QuazalCZlibAlloc(voidpf opaque, uInt items, uInt size)

@@ -36,13 +36,13 @@ SlidingWindow::SlidingWindow(unsigned short uiWindowSize, unsigned int uiMaxBuff
 
 SlidingWindow::~SlidingWindow()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     Purge();
 }
 
 bool SlidingWindow::Push(PacketOut* pPacket, PacketEncDec* pEncDec, Stream* pStream)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_packets.find(m_nextSequence) != m_packets.end())
         return false;
     if (GetFreeBufferNum() <= 0)
@@ -60,7 +60,7 @@ bool SlidingWindow::Push(PacketOut* pPacket, PacketEncDec* pEncDec, Stream* pStr
 
 PacketOut* SlidingWindow::GetNextToSend()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     PacketOut* pPacket = 0;
     if (m_nextToSend - m_oldestUnacknowledged < m_uiWindowSize)
     {
@@ -76,7 +76,7 @@ PacketOut* SlidingWindow::GetNextToSend()
 
 PacketOut* SlidingWindow::GetPacket(Clock clock)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     PacketMap::iterator found = m_packets.find(clock);
     if (found == m_packets.end())
         return 0;
@@ -92,7 +92,7 @@ PacketOut* SlidingWindow::GetPacket(PacketMap::iterator position)
 
 void SlidingWindow::Acknowledged(Clock clock, qMap<unsigned int, unsigned int>& rPendingCounts)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     PacketMap::iterator found = m_packets.find(clock);
     if (found == m_packets.end())
         return;
@@ -132,7 +132,7 @@ void SlidingWindow::Acknowledged(Clock clock, qMap<unsigned int, unsigned int>& 
 
 void SlidingWindow::Purge()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     PacketMap::iterator it = m_packets.begin();
     while (it != m_packets.end())
     {
@@ -148,13 +148,13 @@ void SlidingWindow::Purge()
 
 bool SlidingWindow::Empty()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     return m_oldestUnacknowledged == m_nextSequence;
 }
 
 bool SlidingWindow::ReadyToSend()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_nextToSend - m_oldestUnacknowledged < m_uiWindowSize)
         return m_nextSequence != m_nextToSend;
     return false;
@@ -162,13 +162,13 @@ bool SlidingWindow::ReadyToSend()
 
 bool SlidingWindow::DataPending()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     return m_uiDataPending != 0;
 }
 
 unsigned int SlidingWindow::NbDataPending()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     return m_uiDataPending;
 }
 
@@ -179,13 +179,13 @@ int SlidingWindow::GetFreeBufferNum() const
 
 SlidingWindow::PacketMap::iterator SlidingWindow::AcquireIterator()
 {
-    Core::GetInstance()->GetScheduler()->GetCriticalSection().Enter();
+    Scheduler::GetInstance()->GetCriticalSection().Enter();
     return m_packets.begin();
 }
 
 void SlidingWindow::ReleaseIterator()
 {
-    Core::GetInstance()->GetScheduler()->GetCriticalSection().Leave();
+    Scheduler::GetInstance()->GetCriticalSection().Leave();
 }
 
 void SlidingWindow::Trace(unsigned long long)

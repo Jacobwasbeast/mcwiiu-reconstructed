@@ -30,12 +30,12 @@ public:
             return true;
         }
 
+        unsigned int length = m_length;
         if (offset == 0xFFFFFFFFu)
         {
-            offset = m_length;
+            offset = length;
         }
 
-        unsigned int length = m_length;
         if (offset > length || offset + size > length)
         {
             length = offset + size;
@@ -43,8 +43,9 @@ public:
 
         if (length > static_cast<unsigned int>(Capacity))
         {
-            static wchar_t file[] = L"D:\\home\\jenkins\\workspace\\Master\\Pack\\d4f027b8\\.\\OnlineCore/src/Core/LiteBuffer.h";
-            SystemError::SignalError(file, 79, 0xE0000019u, 0);
+            SystemError::SignalError(
+                L"D:\\home\\jenkins\\workspace\\Master\\Pack\\d4f027b8\\.\\OnlineCore/src/Core/LiteBuffer.h",
+                79, 0xE0000019u, 0);
             return false;
         }
 

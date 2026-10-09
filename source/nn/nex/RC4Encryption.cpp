@@ -10,7 +10,7 @@ namespace nex
 RC4Encryption::RC4Encryption()
     : EncryptionAlgorithm(5, 0x40)
     , m_bReinitEverytime(true)
-    , m_pCriticalSection(new CriticalSection(0x20000000))
+    , m_pCriticalSection(new CriticalSection())
 {
     SetKey(GetDefaultKey());
 }
@@ -28,22 +28,23 @@ Key RC4Encryption::GetDefaultKey()
 
 void RC4Encryption::PrepareEncryption()
 {
-    for (unsigned int i = 0; i < StateSize; ++i)
+    unsigned int i;
+    for (i = 0; i < StateSize; ++i)
         m_initialState[i] = static_cast<unsigned char>(i);
 
-    m_uiIndexI = 0;
     m_uiIndexJ = 0;
-    unsigned int uiKeyIndex = 0;
-    unsigned int j = 0;
+    m_uiIndexI = 0;
+    unsigned char uiKeyIndex = 0;
+    unsigned char j = 0;
     unsigned char* pKey = m_key.GetContentPtr();
     unsigned int uiKeyLength = m_key.GetLength();
-    for (unsigned int i = 0; i < StateSize; ++i)
+    for (i = 0; i < StateSize; ++i)
     {
         unsigned char uiValue = m_initialState[i];
-        j = (pKey[uiKeyIndex] + uiValue + j) & 0xFF;
+        j = (pKey[uiKeyIndex] + uiValue + j) % StateSize;
         m_initialState[i] = m_initialState[j];
         m_initialState[j] = uiValue;
-        uiKeyIndex = (uiKeyIndex + 1) % uiKeyLength & 0xFF;
+        uiKeyIndex = (uiKeyIndex + 1) % uiKeyLength;
     }
 }
 
@@ -62,32 +63,27 @@ void RC4Encryption::KeyHasChanged()
 
 void RC4Encryption::EncryptDecrypt(unsigned char* pData, unsigned int uiLength)
 {
-    CriticalSection* pCriticalSection = m_pCriticalSection;
-    pCriticalSection->Enter();
+    ScopedCS lock(m_pCriticalSection);
     if (m_key.GetLength() == 0)
-    {
-        pCriticalSection->Leave();
         return;
-    }
 
     if (m_bReinitEverytime)
         ReinitStateArray();
 
-    unsigned int i = m_uiIndexI;
-    unsigned int j = m_uiIndexJ;
+    unsigned char i = m_uiIndexI;
+    unsigned char j = m_uiIndexJ;
     for (unsigned int uiOffset = 0; uiOffset < uiLength; ++uiOffset)
     {
-        i = (i + 1) & 0xFF;
+        i = (i + 1) % StateSize;
         unsigned char uiValue = m_state[i];
-        j = (uiValue + j) & 0xFF;
+        j = (uiValue + j) % StateSize;
         m_state[i] = m_state[j];
         m_state[j] = uiValue;
-        pData[uiOffset] = pData[uiOffset] ^ m_state[(m_state[i] + uiValue) & 0xFF];
+        pData[uiOffset] ^= m_state[(m_state[i] + uiValue) % StateSize];
     }
 
-    m_uiIndexI = static_cast<unsigned char>(i);
-    m_uiIndexJ = static_cast<unsigned char>(j);
-    pCriticalSection->Leave();
+    m_uiIndexI = i;
+    m_uiIndexJ = j;
 }
 
 void RC4Encryption::Encrypt(unsigned char* pData, unsigned int uiLength)
@@ -128,10 +124,8 @@ int RC4Encryption::Decrypt(Buffer* pBuffer)
 
 void RC4Encryption::SetReinitEverytime(bool bReinit)
 {
-    CriticalSection* pCriticalSection = m_pCriticalSection;
-    pCriticalSection->Enter();
+    ScopedCS lock(m_pCriticalSection);
     m_bReinitEverytime = bReinit;
-    pCriticalSection->Leave();
 }
 
 }

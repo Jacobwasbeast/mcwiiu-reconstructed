@@ -13,6 +13,20 @@ namespace nex
 
 class Time;
 
+inline void SetUnalignedNexNetworkOrder16(uint16_t uiValue, unsigned char* pDestination)
+{
+    pDestination[0] = static_cast<unsigned char>(uiValue);
+    pDestination[1] = static_cast<unsigned char>(uiValue >> 8);
+}
+
+inline void SetUnalignedNexNetworkOrder32(uint32_t uiValue, unsigned char* pDestination)
+{
+    pDestination[0] = static_cast<unsigned char>(uiValue);
+    pDestination[1] = static_cast<unsigned char>(uiValue >> 8);
+    pDestination[2] = static_cast<unsigned char>(uiValue >> 16);
+    pDestination[3] = static_cast<unsigned char>(uiValue >> 24);
+}
+
 void SetUnalignedNexNetworkOrder64(uint64_t uiValue, unsigned char* pDestination);
 
 class ByteStream : public RootObject
@@ -55,6 +69,30 @@ public:
     void Trace(uint64_t uiFilter, bool bDumpContents);
 
     template <typename T>
+    bool AppendPrimitive(const T& rValue)
+    {
+        unsigned char aBytes[sizeof(uint64_t)];
+
+        switch (sizeof(T))
+        {
+        case sizeof(uint8_t):
+            aBytes[0] = *reinterpret_cast<const uint8_t*>(&rValue);
+            break;
+        case sizeof(uint16_t):
+            SetUnalignedNexNetworkOrder16(*reinterpret_cast<const uint16_t*>(&rValue), aBytes);
+            break;
+        case sizeof(uint32_t):
+            SetUnalignedNexNetworkOrder32(*reinterpret_cast<const uint32_t*>(&rValue), aBytes);
+            break;
+        case sizeof(uint64_t):
+            SetUnalignedNexNetworkOrder64(*reinterpret_cast<const uint64_t*>(&rValue), aBytes);
+            break;
+        }
+
+        return m_pBuffer->AppendData(aBytes, sizeof(T), APPEND_AT_END);
+    }
+
+    template <typename T>
     bool ExtractPrimitive(T* pValue)
     {
         if (!ValidateBufferLimit(sizeof(T)))
@@ -64,11 +102,34 @@ public:
         }
 
         const unsigned char* pSource = m_pBuffer->GetData() + m_uiPosition;
-        unsigned char* pDestination = reinterpret_cast<unsigned char*>(pValue);
 
-        for (unsigned int i = 0; i < sizeof(T); ++i)
+        switch (sizeof(T))
         {
-            pDestination[sizeof(T) - 1 - i] = pSource[i];
+        case sizeof(uint8_t):
+            *pValue = *reinterpret_cast<const T*>(pSource);
+            break;
+        case sizeof(uint16_t):
+        {
+            uint16_t uiValue = static_cast<uint16_t>(pSource[0] | (pSource[1] << 8));
+            *pValue = *reinterpret_cast<T*>(&uiValue);
+            break;
+        }
+        case sizeof(uint32_t):
+        {
+            uint32_t uiValue = static_cast<uint32_t>(pSource[0]) | (static_cast<uint32_t>(pSource[1]) << 8)
+                | (static_cast<uint32_t>(pSource[2]) << 16) | (static_cast<uint32_t>(pSource[3]) << 24);
+            *pValue = *reinterpret_cast<T*>(&uiValue);
+            break;
+        }
+        case sizeof(uint64_t):
+        {
+            uint64_t uiValue = static_cast<uint64_t>(pSource[0]) | (static_cast<uint64_t>(pSource[1]) << 8)
+                | (static_cast<uint64_t>(pSource[2]) << 16) | (static_cast<uint64_t>(pSource[3]) << 24)
+                | (static_cast<uint64_t>(pSource[4]) << 32) | (static_cast<uint64_t>(pSource[5]) << 40)
+                | (static_cast<uint64_t>(pSource[6]) << 48) | (static_cast<uint64_t>(pSource[7]) << 56);
+            *pValue = *reinterpret_cast<T*>(&uiValue);
+            break;
+        }
         }
 
         m_uiPosition += sizeof(T);
@@ -106,6 +167,11 @@ public:
     }
 
 protected:
+    enum
+    {
+        APPEND_AT_END = 0xFFFFFFFFu
+    };
+
     bool m_bError;
     Buffer* m_pBuffer;
     unsigned int m_uiPosition;

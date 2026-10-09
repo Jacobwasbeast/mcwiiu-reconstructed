@@ -103,7 +103,6 @@ enum NegotiatedFlag
 
 enum Limit
 {
-    STREAM_TYPE_SHIFT = 4,
     SECURE_MODE_ENABLED = 2,
     MAX_UNRELIABLE_PAYLOAD_RESERVE = 0x24,
     MAX_UNRELIABLE_PAYLOAD_RESERVE_V1 = 0x2C,
@@ -158,7 +157,7 @@ void PRUDPEndPoint::SetCalcRetransmissionTimeoutCallback(
 
 void PRUDPEndPoint::ResetEndPointInfo()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_endPointInfo.Reset();
 }
 
@@ -166,7 +165,7 @@ bool PRUDPEndPoint::GetEndPointInfo(EndPointInfo* pEndPointInfo) const
 {
     if (pEndPointInfo == 0)
         return false;
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     *pEndPointInfo = m_endPointInfo;
     pEndPointInfo->m_uiStreamID = m_stationURL.GetStreamID();
     pEndPointInfo->m_uiLocalSessionID = m_uiSessionID;
@@ -444,11 +443,11 @@ void PRUDPEndPoint::HandlerDispatch(Buffer* pBuffer, PacketIn* pPacket)
     {
         if (m_pEventHandler == 0)
             return;
-        ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
         m_pEventHandler->Receive(this, pBuffer, pPacket->m_uiSubStreamID);
         return;
     }
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     PRUDPUserProtocol::GetInstance()->Receive(
         this, pBuffer, pPacket->m_uiTypeAndFlags, pPacket->m_uiSubStreamID);
 }
@@ -746,7 +745,7 @@ void PRUDPEndPoint::StartPing()
 
 void PRUDPEndPoint::StopPing()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_pPingPacket != 0)
     {
         CancelPacketTimeout(m_pPingPacket);
@@ -757,7 +756,7 @@ void PRUDPEndPoint::StopPing()
 
 void PRUDPEndPoint::SetKeepAliveTimeout(unsigned int uiTimeout)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_uiKeepAliveTimeout = uiTimeout;
     if (m_pPingPacket != 0)
         StopPing();
@@ -1456,7 +1455,7 @@ qResult PRUDPEndPoint::_Send(Buffer* pBuffer, unsigned int uiFlags, bool bCopyPa
         return qResult(RESULT_INVALID_STATE);
     if (RootTransport::GetInstance()->IsStopped())
     {
-        ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
         ProcessFaultEvent(NET_FAULT_DISCONNECT);
         return qResult(RESULT_INVALID_STATE);
     }
@@ -1744,7 +1743,7 @@ PRUDPEndPoint::PRUDPEndPoint(ConnectionOrientedStream* pStream, const StationURL
     m_defragFragmentIDs[0] = 1;
     unsigned char& rSessionCounter = g_sessionCounter.Get();
     if (rSessionCounter == 0)
-        rSessionCounter = static_cast<unsigned char>(Time::GetTime() + Platform::GetRandomNumber(SESSION_RANDOM_RANGE));
+        rSessionCounter = static_cast<unsigned char>(static_cast<unsigned long long>(Time::GetTime()) + Platform::GetRandomNumber(SESSION_RANDOM_RANGE));
     else
         ++rSessionCounter;
     if (rSessionCounter == 0)
@@ -1883,7 +1882,7 @@ void PRUDPEndPoint::ServiceIncomingPacket(PacketIn* pPacket)
                 m_uiPeerSessionID = uiSessionID;
                 if (pPacket->m_uiVersion != 0 && pPacket->m_unknown4c != SequenceClock())
                     m_expectedUnreliableSequence = pPacket->m_unknown4c;
-                Stream::Type streamType = static_cast<Stream::Type>(pPacket->m_uiSource >> STREAM_TYPE_SHIFT);
+                Stream::Type streamType = VirtualPort(pPacket->m_uiSource).GetType();
                 if ((streamType == Stream::Unknown1 || streamType == Stream::Unknown9) &&
                     g_streamSettings[streamType].Get().IsEncryptionRequired())
                 {
@@ -1935,7 +1934,7 @@ void PRUDPEndPoint::ServiceIncomingPacket(PacketIn* pPacket)
             SignatureBytes signature;
             signature.m_uiLength = 0;
             m_pMessageSelector->CalcSignature(pPacket, PRUDPMessageInterface::SIGNATURE_METHOD_1,
-                0, static_cast<Stream::Type>(pPacket->m_uiSource >> STREAM_TYPE_SHIFT),
+                0, VirtualPort(pPacket->m_uiSource).GetType(),
                 &static_cast<PRUDPStream*>(m_pStream)->m_signatureGenerator, 0, signature);
             memcpy(pConnect->m_aConnectionSignature, signature.m_bytes, signature.m_uiLength);
             pConnect->m_uiConnectionSignatureSize = signature.m_uiLength;

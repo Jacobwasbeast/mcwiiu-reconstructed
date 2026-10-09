@@ -10,7 +10,9 @@ namespace PersistentGatheringType
 
 enum PersistentGatheringType
 {
-    cPersistentGatheringType_0 = 0
+    cPersistentGatheringType_Open = 0,
+    cPersistentGatheringType_PasswordLocked = 1,
+    cPersistentGatheringType_Official = 2
 };
 
 }

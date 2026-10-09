@@ -22,26 +22,26 @@ public:
     NATRelayInterface();
     virtual ~NATRelayInterface();
 
-    virtual bool RegisterRelayClient(NATTraversalRelayClient* pRelayClient) = 0;
-    virtual bool UnregisterRelayClient() = 0;
-    virtual bool RelayProbeRequest(const qList<StationURL>& rTargetURLs) = 0;
-    virtual bool RelayProbeRequest(const qList<StationURL>& rTargetURLs,
+    virtual void RegisterRelayClient(NATTraversalRelayClient* pRelayClient) = 0;
+    virtual void UnregisterRelayClient() = 0;
+    virtual void RelayProbeRequest(const qList<StationURL>& rTargetURLs) = 0;
+    virtual void RelayProbeRequest(const qList<StationURL>& rTargetURLs,
         const StationURL& rSourceURL) = 0;
-    virtual bool CheckCurrentPublicPort(CallContext* pCallContext,
+    virtual void CheckCurrentPublicPort(CallContext* pCallContext,
         const InetAddress& rAddress, bool bForce) = 0;
-    virtual bool DetectSimplifiedNATProperties(CallContext* pCallContext,
+    virtual void DetectSimplifiedNATProperties(CallContext* pCallContext,
         const InetAddress& rAddress) = 0;
-    virtual bool RequestProbe(const StationURL& rTargetURL) = 0;
-    virtual bool ReportNATTraversalResult(const unsigned int& rConnectionID,
+    virtual void RequestProbe(const StationURL& rTargetURL) = 0;
+    virtual void ReportNATTraversalResult(const unsigned int& rConnectionID,
         const bool& rSucceeded, const unsigned int& rRVConnectionID) = 0;
-    virtual bool ReportNATProperties(unsigned int uiMapping, unsigned int uiFiltering,
+    virtual void ReportNATProperties(unsigned int uiMapping, unsigned int uiFiltering,
         unsigned int uiPortIncrease) = 0;
     virtual bool GetRelaySignatureKey(CallContext* pCallContext,
         RelaySignatureKey* pKey) = 0;
-    virtual bool ReportNATTraversalResultDetail(const unsigned int& rConnectionID,
+    virtual void ReportNATTraversalResultDetail(const unsigned int& rConnectionID,
         const bool& rSucceeded, const NATTraversalResult& rResult,
         unsigned int& rRVConnectionID) = 0;
-    virtual bool UpdateConnectionState(unsigned int uiConnectionID,
+    virtual void UpdateConnectionState(unsigned int uiConnectionID,
         const StationURL& rStationURL) = 0;
 };
 

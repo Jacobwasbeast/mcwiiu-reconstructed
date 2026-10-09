@@ -12,6 +12,8 @@ namespace nn
 namespace nex
 {
 
+const unsigned int RELAY_INVALID_ID = 0xFFFFFFFFu;
+
 class Buffer;
 class Packet;
 class PacketOut;

@@ -2,7 +2,9 @@
 
 #include "nn/nex/ClientProtocolRequestBroker.hpp"
 #include "nn/nex/Credentials.hpp"
+#include "nn/nex/JobProcessProtocolMessage.hpp"
 #include "nn/nex/RootTransport.hpp"
+#include "nn/nex/Scheduler.hpp"
 
 namespace nn
 {
@@ -23,7 +25,8 @@ ClientStreamManager::~ClientStreamManager()
 
 void ClientStreamManager::Receive(EndPoint* pEndPoint, Buffer* pBuffer, unsigned char)
 {
-    m_pProtocolRequestBroker->Receive(pEndPoint, pBuffer);
+    Scheduler::GetInstance()->Queue(
+        new JobProcessProtocolMessage(m_pProtocolRequestBroker, pEndPoint, pBuffer), false);
 }
 
 void ClientStreamManager::FaultDetection(EndPoint* pEndPoint, unsigned int uiError)
@@ -49,7 +52,7 @@ void ClientStreamManager::SetCredentials(Credentials* pCredentials)
     if (pCredentials != 0)
     {
         m_pCredentials = pCredentials;
-        pCredentials->AddRef();
+        m_pCredentials->AddRef();
     }
 }
 

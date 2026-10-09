@@ -1,5 +1,6 @@
 #include "nn/nex/SystemComponentGroup.hpp"
 
+#include <algorithm>
 #include <cwchar>
 
 namespace nn
@@ -9,7 +10,6 @@ namespace nex
 
 SystemComponentGroup::SystemComponentGroup(const String& rName)
     : SystemComponent(rName)
-    , m_components()
 {
 }
 
@@ -25,10 +25,7 @@ const wchar_t* SystemComponentGroup::GetType() const
 
 bool SystemComponentGroup::IsAKindOf(const wchar_t* pType) const
 {
-    if (std::wcscmp(L"SystemComponentGroup", pType) == 0)
-        return true;
-
-    return SystemComponent::IsAKindOf(pType);
+    return std::wcscmp(L"SystemComponentGroup", pType) == 0 || SystemComponent::IsAKindOf(pType);
 }
 
 void SystemComponentGroup::EnforceDeclareSysComponentMacro()
@@ -84,7 +81,7 @@ void SystemComponentGroup::DoWork()
         else
         {
             for (ComponentList::iterator component = m_components.begin();
-                 component != m_components.end(); ++component)
+                 component != m_components.end(); component++)
             {
                 if ((*component)->m_uiState != STATE_TERMINATED)
                     (*component)->Terminate();
@@ -92,26 +89,27 @@ void SystemComponentGroup::DoWork()
         }
     }
 
-    if (m_uiState != STATE_INITIALIZING)
-        return;
-
-    if (GetComponentsState() == STATE_READY || m_components.size() == 0)
+    if (m_uiState == STATE_INITIALIZING)
     {
-        SetState(STATE_READY, false);
-        return;
-    }
-
-    for (ComponentList::iterator component = m_components.begin();
-         component != m_components.end(); ++component)
-    {
-        if ((*component)->m_uiState != STATE_READY)
-            (*component)->Initialize();
+        if (GetComponentsState() == STATE_READY || m_components.size() == 0)
+        {
+            SetState(STATE_READY, false);
+        }
+        else
+        {
+            for (ComponentList::iterator component = m_components.begin();
+                 component != m_components.end(); component++)
+            {
+                if ((*component)->m_uiState != STATE_READY)
+                    (*component)->Initialize();
+            }
+        }
     }
 }
 
 bool SystemComponentGroup::RegisterComponent(SystemComponent* pComponent)
 {
-    m_components.push_back(pComponent);
+    m_components.insert(m_components.end(), pComponent);
     pComponent->SetParent(this);
     TestState();
     return true;
@@ -119,16 +117,15 @@ bool SystemComponentGroup::RegisterComponent(SystemComponent* pComponent)
 
 bool SystemComponentGroup::UnregisterComponent(SystemComponent* pComponent)
 {
-    ComponentList::iterator component = m_components.begin();
-    while (component != m_components.end() && *component != pComponent)
-        ++component;
+    ComponentList::iterator component = std::find(m_components.begin(), m_components.end(), pComponent);
+    if (component != m_components.end())
+    {
+        m_components.erase(component);
+        pComponent->ReleaseRef();
+        return true;
+    }
 
-    if (component == m_components.end())
-        return false;
-
-    m_components.erase(component);
-    pComponent->ReleaseRef();
-    return true;
+    return false;
 }
 
 bool SystemComponentGroup::UnregisterAllComponents()
@@ -156,21 +153,28 @@ SystemComponent::_State SystemComponentGroup::GetComponentsState() const
 {
     const unsigned int uiStates = GetComponentsStates();
 
-    if (m_iInUseCount == 0)
-        return ComputeGroupState(uiStates);
+    _State state;
+    if (m_iInUseCount != 0)
+        state = ApplyOwnUse(ComputeGroupState(uiStates));
+    else
+        state = ComputeGroupState(uiStates);
 
-    return ApplyOwnUse(ComputeGroupState(uiStates));
+    return state;
 }
 
 SystemComponent::_State SystemComponentGroup::ApplyOwnUse(_State state)
 {
-    if (state == STATE_READY || state == STATE_IN_USE)
+    switch (state)
+    {
+    case STATE_READY:
+    case STATE_IN_USE:
         return STATE_IN_USE;
-
-    if (state != STATE_TERMINATING && state != STATE_TERMINATION_PENDING)
+    case STATE_TERMINATING:
+    case STATE_TERMINATION_PENDING:
+        return STATE_TERMINATION_PENDING;
+    default:
         return STATE_TERMINATION_FAILED;
-
-    return STATE_TERMINATION_PENDING;
+    }
 }
 
 SystemComponent::_State SystemComponentGroup::ComputeGroupState(unsigned int uiStates)

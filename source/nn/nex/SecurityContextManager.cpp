@@ -16,17 +16,13 @@ SecurityContextManager::SecurityContextManager()
 {
 }
 
-SecurityContextManager::~SecurityContextManager()
-{
-}
-
 SecurityContextManager* SecurityContextManager::GetInstance()
 {
     Core* pCore = Core::GetInstance();
-    if (pCore == 0)
-        return 0;
+    if (pCore != 0)
+        return pCore->GetSecurityContextManager();
 
-    return pCore->GetSecurityContextManager();
+    return 0;
 }
 
 void SecurityContextManager::Push(unsigned int uiPID, unsigned int uiCID, unsigned int uiAddress)

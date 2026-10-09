@@ -3,6 +3,7 @@
 #include <cstring>
 
 #include "nn/nex/MemoryManager.hpp"
+#include "nn/nex/StringStream.hpp"
 
 namespace nn
 {
@@ -13,10 +14,10 @@ qBuffer::qBuffer(unsigned int uiSize, unsigned int uiHeadRoom)
     : RefCountedObject()
 {
     m_uiHeadRoom = uiHeadRoom;
-    m_pFront = 0;
-    m_pEnd = 0;
     m_pBegin = 0;
+    m_pFront = 0;
     m_pBack = 0;
+    m_pEnd = 0;
     initialize(uiSize);
 }
 
@@ -25,8 +26,8 @@ qBuffer::qBuffer(const qBuffer& rBuffer)
 {
     m_pBegin = 0;
     m_pFront = 0;
-    m_pEnd = 0;
     m_pBack = 0;
+    m_pEnd = 0;
     m_uiHeadRoom = 0;
     initialize(rBuffer.capacity());
     *this = rBuffer;
@@ -112,9 +113,17 @@ void qBuffer::push_back(const unsigned char* pData, unsigned int uiDataSize)
         return;
     }
 
-    while (m_pEnd == m_pBack
-           || uiDataSize > static_cast<unsigned int>(m_pEnd - m_pBack))
+    for (;;)
     {
+        unsigned int uiFree = 0;
+        if (m_pEnd != m_pBack)
+        {
+            uiFree = static_cast<unsigned int>(m_pEnd - m_pBack);
+        }
+        if (uiDataSize <= uiFree)
+        {
+            break;
+        }
         unsigned int uiUsed = 0;
         if (m_pBack != m_pBegin)
         {
@@ -125,6 +134,28 @@ void qBuffer::push_back(const unsigned char* pData, unsigned int uiDataSize)
 
     std::memcpy(m_pBack, pData, uiDataSize);
     m_pBack += uiDataSize;
+}
+
+void qBuffer::Trace(uint64_t uiFilter, bool bDumpContents)
+{
+    if (bDumpContents)
+    {
+        if (size() == 0)
+        {
+            return;
+        }
+
+        StringStream stream;
+        unsigned int uiIndex = 0;
+        for (unsigned char* pByte = m_pFront; pByte != m_pBack; ++pByte, ++uiIndex)
+        {
+            if (uiIndex != 0 && (uiIndex % 32) == 0)
+            {
+                stream.Clear();
+            }
+            hex(stream).StreamNumber(*pByte) << L", ";
+        }
+    }
 }
 
 }

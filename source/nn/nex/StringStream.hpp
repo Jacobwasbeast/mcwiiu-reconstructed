@@ -46,7 +46,8 @@ public:
 
 private:
     friend void zerohex(StringStream& rStream);
-StringStream& noshowbase(StringStream& rStream);
+StringStream& hex(StringStream& rStream);
+    friend StringStream& hex(StringStream& rStream);
     friend StringStream& noshowbase(StringStream& rStream);
 
     void FreeBuffer(wchar_t* pBuffer);

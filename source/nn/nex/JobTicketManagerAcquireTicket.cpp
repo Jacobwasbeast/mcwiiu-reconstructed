@@ -103,7 +103,7 @@ void JobTicketManagerAcquireTicket::PrepareCall()
                                 ->GetConnection(AUTHENTICATION_CONNECTION_TYPE);
     m_acquireContext.SetDependentConnection(pConnection, pConnection->GetConnectionID());
     Buffer* pBuffer = message.GetBuffer();
-    CriticalSection& csScheduler = Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection& csScheduler = Scheduler::GetInstance()->GetCriticalSection();
     csScheduler.Enter();
     qResult sendResult = pConnection->_Send(pBuffer, 1, false, 0, 0);
     csScheduler.Leave();

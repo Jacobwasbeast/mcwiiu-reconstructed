@@ -44,10 +44,11 @@ PRUDPUserProtocol::~PRUDPUserProtocol()
 
 void PRUDPUserProtocol::AcquireInstance()
 {
-    if (GetInstance() == 0)
+    PRUDPUserProtocol* pInstance = GetInstance();
+    if (pInstance == 0)
         new PRUDPUserProtocol();
     else
-        GetInstance()->AddRef();
+        pInstance->AddRef();
 }
 
 void PRUDPUserProtocol::ReleaseInstance()
@@ -95,15 +96,15 @@ void PRUDPUserProtocol::Receive(EndPoint* pEndPoint, Buffer* pBuffer, unsigned i
         return;
     if (pEndPoint == 0)
         return;
+    unsigned int uiConnectionID = pEndPoint->GetConnectionID();
     if (m_pUserPrivateReceiveCallback != 0)
     {
-        m_pUserPrivateReceiveCallback(pEndPoint->GetConnectionID(), pBuffer, uiFlags,
-            uiSubStreamID);
+        m_pUserPrivateReceiveCallback(uiConnectionID, pBuffer, uiFlags, uiSubStreamID);
         return;
     }
     if (uiSubStreamID != 0)
         return;
-    m_pUserReceiveCallback(pEndPoint->GetConnectionID(), pBuffer->GetData(), pBuffer->GetLength());
+    m_pUserReceiveCallback(uiConnectionID, pBuffer->GetData(), pBuffer->GetLength());
 }
 
 qResult PRUDPUserProtocol::Send(EndPoint* pEndPoint, const unsigned char* pData,
@@ -114,9 +115,7 @@ qResult PRUDPUserProtocol::Send(EndPoint* pEndPoint, const unsigned char* pData,
     {
         pBuffer = new (RootObject::TARGET_POOL_PACKET_MANAGEMENT)
             PacketBuffer(uiSize, Buffer::BUFFER_FLAG_POOLED);
-        if (pBuffer == 0)
-            return qResult(RESULT_PACKET_ALLOCATION_FAILED);
-        if (!pBuffer->IsValid())
+        if (pBuffer == 0 || !pBuffer->IsValid())
         {
             delete pBuffer;
             return qResult(RESULT_PACKET_ALLOCATION_FAILED);
@@ -127,12 +126,11 @@ qResult PRUDPUserProtocol::Send(EndPoint* pEndPoint, const unsigned char* pData,
         pBuffer = new Buffer(uiSize, 0);
     }
     pBuffer->AppendData(pData, uiSize, APPEND_AT_END);
-    qResult result;
-    {
-        ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
-        result = pEndPoint->_Send(pBuffer, uiFlags | SEND_FLAG_HISTORY_BUNDLE, false,
-            uiSubStreamID, uiKey);
-    }
+    CriticalSection& criticalSection = Scheduler::GetInstance()->GetCriticalSection();
+    criticalSection.Enter();
+    qResult result = pEndPoint->_Send(pBuffer, uiFlags | SEND_FLAG_HISTORY_BUNDLE, false,
+        uiSubStreamID, uiKey);
+    criticalSection.Leave();
     pBuffer->ReleaseRef();
     return result;
 }

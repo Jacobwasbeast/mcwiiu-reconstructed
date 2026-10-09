@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "nn/nex/RootObject.hpp"
+
 namespace nn
 {
 namespace nex
@@ -12,11 +14,19 @@ class TimeProvider;
 
 extern uint64_t g_lastTime;
 
-class Time
+class Time : public RootObject
 {
 public:
     Time() : m_value(0) {}
     explicit Time(uint64_t value) : m_value(value) {}
+
+    Time& operator=(const Time& other) { return operator=(other.m_value); }
+
+    Time& operator=(uint64_t value)
+    {
+        m_value = value;
+        return *this;
+    }
 
     operator unsigned long long() const { return m_value; }
 
@@ -32,10 +42,10 @@ public:
     Time Divide(float divisor) const;
     Time Scale(float factor) const;
 
-    static uint64_t GetTime();
+    static Time GetTime();
     static void Reset();
     static void RegisterTimeProvider(TimeProvider* provider);
-    static uint64_t ConvertTimeoutToDeadline(uint32_t timeout);
+    static Time ConvertTimeoutToDeadline(uint32_t timeout);
     static int32_t ConvertDeadlineToTimeout(Time deadline);
 
 private:

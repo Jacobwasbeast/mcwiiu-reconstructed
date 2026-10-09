@@ -12,22 +12,16 @@ namespace nex
 {
 
 Job::Job(JobType jobType, const DebugString& rDebugString)
-    : RefCountedObject()
-    , m_pNext(0)
-    , m_pPrevious(0)
-    , m_reserved0(false)
-    , m_pCompletionCallback(0)
-    , m_userContext()
-    , m_jobType(jobType)
-    , m_state(Initial)
-    , m_waitContext(0)
-    , m_nbExecutions(0)
-    , m_executionTime()
-    , m_reserved1(false)
-    , m_reserved2(false)
+    : m_jobType(jobType)
 {
+    m_state = Initial;
+    m_waitContext = 0;
+    m_nbExecutions = 0;
+    m_pCompletionCallback = 0;
+    m_reserved1 = false;
+    m_reserved2 = false;
+    m_reserved0 = false;
 }
-
 Job::~Job()
 {
 }
@@ -128,7 +122,7 @@ void Job::Resume()
 
 void Job::PerformExecution(const Time& rTime)
 {
-    m_executionTime = rTime;
+    m_executionTime = static_cast<uint64_t>(rTime);
     DecoratedExecute();
 
     if (m_state == Running)
@@ -136,7 +130,6 @@ void Job::PerformExecution(const Time& rTime)
 
     ++m_nbExecutions;
 }
-
 bool Job::WaitForCompletion(uint32_t uiTimeout)
 {
     bool bCompleted = false;

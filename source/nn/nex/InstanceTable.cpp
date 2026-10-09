@@ -30,9 +30,17 @@ bool InstanceTable::AddInstance(InstanceControl* instance, unsigned int classId,
                                 unsigned int contextId)
 {
     if (contextId == 0)
-        return m_defaultContext.AddInstance(instance, classId);
+    {
+        if (!m_defaultContext.AddInstance(instance, classId))
+            return false;
+    }
+    else
+    {
+        if (!AddInstanceToVector(instance, classId, contextId))
+            return false;
+    }
 
-    return AddInstanceToVector(instance, classId, contextId);
+    return true;
 }
 
 bool InstanceTable::AddInstanceToVector(InstanceControl* instance, unsigned int classId,
@@ -40,16 +48,18 @@ bool InstanceTable::AddInstanceToVector(InstanceControl* instance, unsigned int 
 {
     if (contextId < m_extraContexts->size())
     {
-        if ((*m_extraContexts)[contextId] == 0)
+        if ((*m_extraContexts)[contextId] != 0)
+        {
+            if ((*m_extraContexts)[contextId]->AddInstance(instance, classId))
+                return true;
+        }
+        else
         {
             SystemError::SignalError(
                 L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/InstanceTable.cpp",
                 0x9E, 0xE0000008, 0);
             return false;
         }
-
-        if ((*m_extraContexts)[contextId]->AddInstance(instance, classId))
-            return true;
     }
 
     SystemError::SignalError(
@@ -84,8 +94,8 @@ unsigned int InstanceTable::FindInstanceContext(InstanceControl* instance, unsig
     unsigned int contextCount = m_extraContexts->size();
     for (unsigned int contextId = 0; contextId < contextCount; ++contextId)
     {
-        InstantiationContext* context = (*m_extraContexts)[contextId];
-        if (context != 0 && context->GetInstance(classId) == instance)
+        if ((*m_extraContexts)[contextId] != 0
+            && (*m_extraContexts)[contextId]->GetInstance(classId) == instance)
             return contextId;
     }
 
@@ -137,8 +147,9 @@ void InstanceTable::AllocateExtraContexts(unsigned int contextCount)
 
 void InstanceTable::FreeExtraContexts()
 {
+    ContextVector* contexts = m_extraContexts;
     m_extraContexts->clear();
-    delete m_extraContexts;
+    delete contexts;
     m_extraContexts = 0;
 }
 

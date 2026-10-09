@@ -72,7 +72,7 @@ void EndPointInfo::Reset()
 
 void EndPointInfo::Trace(EventLog::LogLevel) const
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     Time::GetTime();
 }
 

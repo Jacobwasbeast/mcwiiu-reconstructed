@@ -66,41 +66,28 @@ public:
 
     void SetValue(const T& value)
     {
-        m_criticalSection.Enter();
+        ScopedCS lock(&m_criticalSection);
         m_values[GetThreadID()] = value;
-        m_criticalSection.Leave();
     }
 
-    virtual void ResetValues()
-    {
-        m_criticalSection.Enter();
-
-        while (m_values.size() != 0)
-            m_values.erase(m_values.begin());
-
-        m_criticalSection.Leave();
-    }
+    virtual void ResetValues();
 
     virtual void ClearValue()
     {
-        m_criticalSection.Enter();
+        ScopedCS lock(&m_criticalSection);
 
         typename ValueMap::iterator value = m_values.find(GetThreadID());
         if (value != m_values.end())
             m_values.erase(value);
-
-        m_criticalSection.Leave();
     }
 
     virtual void ClearValue(uint32_t threadId)
     {
-        m_criticalSection.Enter();
+        ScopedCS lock(&m_criticalSection);
 
         typename ValueMap::iterator value = m_values.find(threadId);
         if (value != m_values.end())
             m_values.erase(value);
-
-        m_criticalSection.Leave();
     }
 
 private:
@@ -108,6 +95,15 @@ private:
     mutable ForcedCriticalSection m_criticalSection;
     mutable ValueMap m_values;
 };
+
+template <typename T>
+void ThreadVariable<T>::ResetValues()
+{
+    ScopedCS lock(&m_criticalSection);
+
+    while (m_values.size() != 0)
+        m_values.erase(m_values.begin());
+}
 
 }
 }

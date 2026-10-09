@@ -34,6 +34,18 @@ public:
 
     struct InetAddress
     {
+        InetAddress()
+            : m_uiAddress(0)
+            , m_uiPort(0)
+        {
+        }
+
+        InetAddress(unsigned int uiAddress, unsigned short uiPort)
+            : m_uiAddress(uiAddress)
+            , m_uiPort(uiPort)
+        {
+        }
+
         unsigned int m_uiAddress;
         unsigned short m_uiPort;
     };

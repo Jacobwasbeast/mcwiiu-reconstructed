@@ -19,14 +19,12 @@ const unsigned char DEFAULT_TTL = 0x40;
 Socket::Socket(unsigned int uiTrafficType, unsigned int uiMTU)
     : m_uiState(STATE_CLOSED)
 {
-    m_uiMTU = uiMTU;
+    m_uiTrafficType = uiTrafficType;
     m_bConnected = true;
     m_bVDP = false;
     m_bUDP = true;
-    m_uiTrafficType = uiTrafficType;
-    m_pDriverSocket = 0;
-    if (g_socketDriver != 0)
-        m_pDriverSocket = g_socketDriver->Create();
+    m_uiMTU = uiMTU;
+    m_pDriverSocket = g_socketDriver != 0 ? g_socketDriver->Create() : 0;
 }
 
 Socket::~Socket()
@@ -103,13 +101,14 @@ bool Socket::Bind(InetAddress* pAddress, bool bReuse)
 bool Socket::ProcessDriverSocketResult(SocketDriver::_Result result,
     IOCompletionContext* pContext)
 {
-    if (result == SocketDriver::RESULT_SUCCESS)
-        return true;
-
-    if (result == SocketDriver::RESULT_CLOSED && m_bConnected)
+    switch (result)
     {
-        m_bConnected = false;
-        return false;
+    case SocketDriver::RESULT_CLOSED:
+        if (m_bConnected)
+            m_bConnected = false;
+        break;
+    case SocketDriver::RESULT_SUCCESS:
+        return true;
     }
 
     return false;
@@ -118,34 +117,30 @@ bool Socket::ProcessDriverSocketResult(SocketDriver::_Result result,
 int Socket::RecvImpl(unsigned char* pBuffer, unsigned int uiSize, unsigned int* pReceived,
     InetAddress* pAddress, SocketDriver::_SocketFlag flag)
 {
-    if (m_pDriverSocket != 0)
-    {
-        unsigned int uiReceived = 0;
-        SocketDriver::_Result result;
-        if (m_bUDP)
-        {
-            SocketDriver::InetAddress from;
-            from.m_uiAddress = 0;
-            from.m_uiPort = 0;
-            result = m_pDriverSocket->RecvFrom(pBuffer, uiSize, &from, &uiReceived, flag);
-            pAddress->SetAddress(from.m_uiAddress);
-            pAddress->SetPortNumber(from.m_uiPort);
-        }
-        else
-        {
-            result = m_pDriverSocket->Recv(pBuffer, uiSize, &uiReceived);
-            pAddress->SetAddress(0U);
-            pAddress->SetPortNumber(0);
-        }
+    if (m_pDriverSocket == 0)
+        return -1;
 
-        if (ProcessDriverSocketResult(result, 0))
-        {
-            *pReceived = uiReceived;
-            return 0;
-        }
+    SocketDriver::_Result result;
+    unsigned int uiReceived = 0;
+    if (m_bUDP)
+    {
+        SocketDriver::InetAddress from;
+        result = m_pDriverSocket->RecvFrom(pBuffer, uiSize, &from, &uiReceived, flag);
+        pAddress->SetAddress(from.m_uiAddress);
+        pAddress->SetPortNumber(from.m_uiPort);
+    }
+    else
+    {
+        result = m_pDriverSocket->Recv(pBuffer, uiSize, &uiReceived);
+        pAddress->SetAddress(0U);
+        pAddress->SetPortNumber(0);
     }
 
-    return -1;
+    if (!ProcessDriverSocketResult(result, 0))
+        return -1;
+
+    *pReceived = uiReceived;
+    return 0;
 }
 
 int Socket::RecvNonBlock(unsigned char* pBuffer, unsigned int uiSize, unsigned int* pReceived,
@@ -186,25 +181,19 @@ int Socket::Send(const unsigned char* pBuffer, unsigned int uiSize, const InetAd
 
     if (m_pDriverSocket != 0)
     {
+        SocketDriver::_Result result;
         unsigned int uiSent = 0;
-        bool bSent;
-        if (!m_bUDP)
+        if (m_bUDP)
         {
-            SocketDriver::_Result result = m_pDriverSocket->Send(
-                const_cast<unsigned char*>(pBuffer), uiSize, &uiSent);
-            bSent = ProcessDriverSocketResult(result, 0);
+            SocketDriver::InetAddress to(rAddress.GetAddress(), rAddress.GetPortNumber());
+            result = m_pDriverSocket->SendTo(const_cast<unsigned char*>(pBuffer), uiSize, to, &uiSent);
         }
         else
         {
-            SocketDriver::InetAddress to;
-            to.m_uiAddress = rAddress.GetAddress();
-            to.m_uiPort = rAddress.GetPortNumber();
-            SocketDriver::_Result result = m_pDriverSocket->SendTo(
-                const_cast<unsigned char*>(pBuffer), uiSize, to, &uiSent);
-            bSent = ProcessDriverSocketResult(result, 0);
+            result = m_pDriverSocket->Send(const_cast<unsigned char*>(pBuffer), uiSize, &uiSent);
         }
 
-        if (bSent)
+        if (ProcessDriverSocketResult(result, 0))
             return 0;
     }
 
@@ -230,7 +219,8 @@ void Socket::Poll(PollEvent events, PollEvent* pResult, unsigned int uiTimeout)
     info[0].m_pSocket = m_pDriverSocket;
     info[0].m_uiEvents = events;
     info[0].m_uiResult = 0;
-    if (g_socketDriver->Poll(info, 1, uiTimeout))
+    bool bResult = g_socketDriver->Poll(info, 1, uiTimeout);
+    if (bResult)
         *pResult = static_cast<PollEvent>(info[0].m_uiResult);
 }
 
@@ -241,9 +231,8 @@ bool Socket::Connect(InetAddress* pAddress, IOCompletionContext* pContext)
     pContext->m_pSocket = this;
     if (m_pDriverSocket != 0)
     {
-        SocketDriver::InetAddress to;
-        to.m_uiAddress = pContext->m_address.GetAddress();
-        to.m_uiPort = pContext->m_address.GetPortNumber();
+        SocketDriver::InetAddress to(pContext->m_address.GetAddress(),
+            pContext->m_address.GetPortNumber());
         SocketDriver::_Result result = m_pDriverSocket->Connect(to);
         return ProcessDriverSocketResult(result, pContext);
     }

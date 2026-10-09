@@ -6,9 +6,10 @@ namespace nex
 {
 
 RefCountedObject::RefCountedObject()
-    : m_refCount(1)
+    : m_refCount(0)
     , m_disposing(false)
 {
+    m_refCount = 1;
 }
 
 RefCountedObject::~RefCountedObject()

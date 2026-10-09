@@ -40,6 +40,11 @@ public:
 
     static void TraceBits(uint64_t uiFilter, unsigned char* pData, unsigned int uiBits);
 
+    Buffer* GetBuffer() const
+    {
+        return m_pBuffer;
+    }
+
 protected:
     friend class Ticket;
     friend class KerberosEncryption;

@@ -91,22 +91,30 @@ void JobTicketManagerLoginWithData::InitiateLogin()
 
 void JobTicketManagerLoginWithData::ProcessLoginResult()
 {
-    if (m_loginContext.GetState() != CallContext::CallSucceeded)
+    if (m_loginContext.GetState() == CallContext::CallSucceeded)
+    {
+        if (*m_pResult == true)
+        {
+            SetStep(Step(static_cast<Step::Function>(&JobTicketManagerLoginWithData::DeriveKey), L""));
+        }
+        else
+        {
+            CompleteJob(m_loginContext.GetState(), m_loginContext.GetResult());
+        }
+    }
+    else
     {
         CompleteJob(CallContext::CallFailed, m_loginContext.GetResult());
-        return;
     }
-    if (*m_pResult == true)
-    {
-        SetStep(Step(static_cast<Step::Function>(&JobTicketManagerLoginWithData::DeriveKey), L""));
-        return;
-    }
-    CompleteJob(m_loginContext.GetState(), m_loginContext.GetResult());
 }
 
 void JobTicketManagerLoginWithData::DeriveKey()
 {
-    if (!g_dispatcherThreadEnabled)
+    if (g_dispatcherThreadEnabled)
+    {
+        m_key = KerberosEncryption::CreateKey(*m_pPrincipalID, m_pPassword);
+    }
+    else
     {
         m_keyContext.m_expirationTime = m_pTicketManager->m_pAuthenticationClient->m_loginDeadline;
         if (!KerberosEncryption::CreateKey(&m_keyContext, *m_pPrincipalID, m_pPassword, &m_key))
@@ -115,37 +123,37 @@ void JobTicketManagerLoginWithData::DeriveKey()
             return;
         }
     }
+    if (m_keyContext.GetState() == CallContext::CallInProgress)
+    {
+        SetToSuspended();
+        ResumeOnCallCompletion(&m_keyContext,
+            new Step(static_cast<Step::Function>(&JobTicketManagerLoginWithData::ValidateKey), L""));
+    }
     else
     {
-        m_key = KerberosEncryption::CreateKey(*m_pPrincipalID, m_pPassword);
-    }
-    if (m_keyContext.GetState() != CallContext::CallInProgress)
-    {
         SetStep(Step(static_cast<Step::Function>(&JobTicketManagerLoginWithData::ValidateKey), L""));
-        return;
     }
-    SetToSuspended();
-    ResumeOnCallCompletion(&m_keyContext,
-        new Step(static_cast<Step::Function>(&JobTicketManagerLoginWithData::ValidateKey), L""));
 }
 
 void JobTicketManagerLoginWithData::ValidateKey()
 {
-    if (m_keyContext.GetState() != CallContext::CallSucceeded && !g_dispatcherThreadEnabled)
+    if (m_keyContext.GetState() == CallContext::CallSucceeded || g_dispatcherThreadEnabled)
+    {
+        m_pTicketManager->m_pAuthenticationClient->m_pKerberosEncryption->SetKey(m_key);
+        Buffer decryptedTicket;
+        if (!m_pTicketManager->m_pAuthenticationClient->m_pKerberosEncryption->Decrypt(m_ticketData,
+                &decryptedTicket))
+        {
+            *m_pResult = qResult(TICKET_DECRYPTION_FAILED_RESULT);
+            CompleteJob(CallContext::CallSucceeded, qResult(TICKET_VALIDATION_FAILED_RESULT));
+            return;
+        }
+        CompleteJob(m_loginContext.GetState(), qResult(LOGIN_SUCCEEDED_RESULT));
+    }
+    else
     {
         CompleteJob(m_keyContext.GetState(), m_keyContext.GetResult());
-        return;
     }
-    m_pTicketManager->m_pAuthenticationClient->m_pKerberosEncryption->SetKey(m_key);
-    Buffer decryptedTicket;
-    if (!m_pTicketManager->m_pAuthenticationClient->m_pKerberosEncryption->Decrypt(m_ticketData,
-            &decryptedTicket))
-    {
-        *m_pResult = qResult(TICKET_DECRYPTION_FAILED_RESULT);
-        CompleteJob(CallContext::CallSucceeded, qResult(TICKET_VALIDATION_FAILED_RESULT));
-        return;
-    }
-    CompleteJob(m_loginContext.GetState(), qResult(LOGIN_SUCCEEDED_RESULT));
 }
 
 }

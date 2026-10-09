@@ -44,10 +44,10 @@ bool Network::s_bHMACChecksumEnabled = true;
 bool Network::s_bMD5ChecksumEnabled = true;
 
 Network::Network()
-    : m_criticalSection(0x20000000), m_instanceControl(ClassID), m_localURLs(),
+    : m_criticalSection(), m_instanceControl(ClassID), m_localURLs(),
       m_packetBufferManager(), m_connectivityManager(), m_messageSelector(), m_rc4Encryption(),
-      m_p2pSignatureKey(), m_unknown3d0(), m_unknown3e0(0x20000000), m_unknown42c(),
-      m_unknown43c(0x20000000)
+      m_p2pSignatureKey(), m_unknown3d0(), m_unknown3e0(), m_unknown42c(),
+      m_unknown43c()
 {
     m_instanceControl.SetDelegatorInstance(this);
     Core::AcquireInstance();
@@ -111,11 +111,11 @@ void Network::ReleaseInstance()
 
 bool Network::RegisterTransportAdapter(TransportAdapter* pAdapter)
 {
+    g_transportAdapter = pAdapter;
     if (pAdapter->GetSocketDriver() != 0)
         g_socketDriver = pAdapter->GetSocketDriver();
 
-    g_transportAdapter = pAdapter;
-    pAdapter->Load();
+    g_transportAdapter->Load();
     return true;
 }
 
@@ -159,13 +159,18 @@ void Network::SortAndFilterTargetURLs(qList<StationURL>* pURLs)
 void Network::AddLocalURL(const StationURL& rURL)
 {
     ScopedCS lock(&m_localURLs.GetCriticalSection());
-    for (qList<StationURL>::iterator url = m_localURLs.GetList().begin();
-         url != m_localURLs.GetList().end(); ++url)
+    qList<StationURL>::iterator url = m_localURLs.GetList().begin();
+    while (url != m_localURLs.GetList().end())
     {
-        bool bMatch = String::IsEqual(url->GetAddress(), rURL.GetAddress()) &&
-            url->GetPortNumber() == rURL.GetPortNumber();
+        bool bMatch = false;
+        if (String::IsEqual(url->GetAddress(), rURL.GetAddress()) &&
+            url->GetPortNumber() == rURL.GetPortNumber())
+            bMatch = true;
+
         if (bMatch)
             return;
+
+        url++;
     }
 
     m_localURLs.push_back(rURL);
@@ -174,14 +179,16 @@ void Network::AddLocalURL(const StationURL& rURL)
 bool Network::RemoveLocalURL(const StationURL& rURL)
 {
     ScopedCS lock(&m_localURLs.GetCriticalSection());
-    for (qList<StationURL>::iterator url = m_localURLs.GetList().begin();
-         url != m_localURLs.GetList().end(); ++url)
+    qList<StationURL>::iterator url = m_localURLs.GetList().begin();
+    while (url != m_localURLs.GetList().end())
     {
         if (url->IsMatching(rURL))
         {
             m_localURLs.GetList().erase(url);
             return true;
         }
+
+        url++;
     }
 
     return false;
@@ -194,32 +201,36 @@ bool Network::ReplaceLocalURL(const StationURL& rURL)
     while (url != m_localURLs.GetList().end())
     {
         if (String::IsEqual(url->GetAddress(), rURL.GetAddress()))
-            break;
+        {
+            m_localURLs.GetList().erase(url);
+            m_localURLs.push_back(rURL);
+            return true;
+        }
 
-        ++url;
+        url++;
     }
 
-    if (url == m_localURLs.GetList().end())
-        return false;
-
-    m_localURLs.GetList().erase(url);
-    m_localURLs.push_back(rURL);
-    return true;
+    return false;
 }
 
 bool Network::ReplaceLocalURL(const StationURL& rOldURL, const StationURL& rNewURL)
 {
     ScopedCS lock(&m_localURLs.GetCriticalSection());
-    for (qList<StationURL>::iterator url = m_localURLs.GetList().begin();
-         url != m_localURLs.GetList().end(); ++url)
+    qList<StationURL>::iterator url = m_localURLs.GetList().begin();
+    while (url != m_localURLs.GetList().end())
     {
-        bool bMatch = String::IsEqual(url->GetAddress(), rOldURL.GetAddress()) &&
-            url->GetPortNumber() == rOldURL.GetPortNumber();
+        bool bMatch = false;
+        if (String::IsEqual(url->GetAddress(), rOldURL.GetAddress()) &&
+            url->GetPortNumber() == rOldURL.GetPortNumber())
+            bMatch = true;
+
         if (bMatch)
         {
             *url = rNewURL;
             return true;
         }
+
+        url++;
     }
 
     return false;
@@ -298,7 +309,7 @@ void Network::InitChecksumAlgorithm()
 
 void Network::SetP2PDataPacketSessionSignatureKey(const qVector<unsigned char>& rKey)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (rKey.size() < SignatureKeyMinLength || rKey.size() > SignatureKeyMaxLength)
         return;
 
@@ -315,7 +326,7 @@ void Network::SetP2PDataPacketSessionSignatureKey(const qVector<unsigned char>& 
 
 void Network::ClearP2PDataPacketSessionSignatureKey()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_p2pSignatureKey.GetLength() != 0)
     {
         m_p2pSignatureKey.Clear();
@@ -326,7 +337,7 @@ void Network::ClearP2PDataPacketSessionSignatureKey()
 
 void Network::SetP2PChecksumAlgorithm(KeyedChecksumAlgorithm* pAlgorithm)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!s_bMD5ChecksumEnabled)
         return;
 

@@ -7,6 +7,7 @@
 #include "nn/nex/String.hpp"
 #include "nn/nex/Time.hpp"
 #include "nn/nex/UserContext.hpp"
+#include "nn/nex/qChain.hpp"
 
 namespace nn
 {
@@ -15,9 +16,6 @@ namespace nex
 
 class CallbackRoot;
 class DebugString;
-
-template <class T>
-class DefaultChainPolicy;
 
 class Job : public RefCountedObject
 {
@@ -86,8 +84,7 @@ private:
     friend class JobDeriveKey;
     friend class Scheduler;
 
-    Job* m_pNext;
-    Job* m_pPrevious;
+    qChainLink<Job*> m_link;
     bool m_reserved0;
     CompletionCallback m_pCompletionCallback;
     UserContext m_userContext;

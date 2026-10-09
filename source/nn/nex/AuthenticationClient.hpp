@@ -47,6 +47,7 @@ public:
 private:
     friend class JobBackEndServicesLogin;
     friend class JobBackEndServicesLoginWithData;
+    friend class JobConnectSecureEndPoint;
     friend class JobTicketManagerAcquireTicket;
     friend class JobTicketManagerLogin;
     friend class JobTicketManagerLoginWithData;

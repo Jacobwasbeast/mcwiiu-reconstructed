@@ -28,6 +28,10 @@ typedef MatchMakingProtocolClient::GatheringHolder GatheringHolder;
 typedef MatchMakingProtocolClient::GatheringHolderList GatheringHolderList;
 
 const unsigned int METHOD_ID_MASK = 0x7FFF;
+enum
+{
+    RESULT_NOT_IMPLEMENTED = static_cast<int>(0x80010002u)
+};
 const unsigned int METHOD_COUNT = 44;
 const unsigned int METHOD_REGISTER_GATHERING = 1;
 const unsigned int METHOD_UNREGISTER_GATHERING = 2;
@@ -92,8 +96,7 @@ void MatchMakingProtocolClient::ExtractCallSpecificResults(Message* pMessage,
     const unsigned int uiMethodID = Protocol::ExtractMethodID(pMessage) & METHOD_ID_MASK;
     if (uiMethodID - 1 >= METHOD_COUNT)
     {
-        const int iCallError = static_cast<int>(0x80010002u);
-        ClientProtocol::SetCallError(qResult(iCallError));
+        ClientProtocol::SetCallError(qResult(RESULT_NOT_IMPLEMENTED));
         return;
     }
     if (s_ProtoReturn[uiMethodID - 1] != 0)
@@ -110,7 +113,7 @@ bool MatchMakingProtocolClient::CallRegisterGathering(ProtocolCallContext* pCall
                                                       const GatheringHolder& rGathering)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -140,7 +143,7 @@ bool MatchMakingProtocolClient::RegisterGathering_PrepareRequest(ProtocolCallCon
                                                                  unsigned int* pGatheringID,
                                                                  const GatheringHolder& rGathering)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_REGISTER_GATHERING);
@@ -158,7 +161,7 @@ bool MatchMakingProtocolClient::CallUnregisterGathering(ProtocolCallContext* pCa
                                                         const unsigned int& rGatheringID)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -188,7 +191,7 @@ bool MatchMakingProtocolClient::UnregisterGathering_PrepareRequest(ProtocolCallC
                                                                    bool* pSuccess,
                                                                    const unsigned int& rGatheringID)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_UNREGISTER_GATHERING);
@@ -206,7 +209,7 @@ bool MatchMakingProtocolClient::CallUnregisterGatherings(ProtocolCallContext* pC
                                                          const qList<unsigned int>& rGatheringIDs)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -236,7 +239,7 @@ bool MatchMakingProtocolClient::UnregisterGatherings_PrepareRequest(ProtocolCall
                                                                     bool* pSuccess,
                                                                     const qList<unsigned int>& rGatheringIDs)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_UNREGISTER_GATHERINGS);
@@ -254,7 +257,7 @@ bool MatchMakingProtocolClient::CallUpdateGathering(ProtocolCallContext* pCallCo
                                                     const GatheringHolder& rGathering)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -284,7 +287,7 @@ bool MatchMakingProtocolClient::UpdateGathering_PrepareRequest(ProtocolCallConte
                                                                bool* pSuccess,
                                                                const GatheringHolder& rGathering)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_UPDATE_GATHERING);
@@ -304,7 +307,7 @@ bool MatchMakingProtocolClient::CallInvite(ProtocolCallContext* pCallContext,
                                            const String& rMessage)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -338,7 +341,7 @@ bool MatchMakingProtocolClient::Invite_PrepareRequest(ProtocolCallContext* pCall
                                                       const qList<unsigned int>& rPrincipalIDs,
                                                       const String& rMessage)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_INVITE);
@@ -359,7 +362,7 @@ bool MatchMakingProtocolClient::CallAcceptInvitation(ProtocolCallContext* pCallC
                                                      const String& rMessage)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -391,7 +394,7 @@ bool MatchMakingProtocolClient::AcceptInvitation_PrepareRequest(ProtocolCallCont
                                                                 const unsigned int& rGatheringID,
                                                                 const String& rMessage)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_ACCEPT_INVITATION);
@@ -411,7 +414,7 @@ bool MatchMakingProtocolClient::CallDeclineInvitation(ProtocolCallContext* pCall
                                                       const String& rMessage)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -443,7 +446,7 @@ bool MatchMakingProtocolClient::DeclineInvitation_PrepareRequest(ProtocolCallCon
                                                                  const unsigned int& rGatheringID,
                                                                  const String& rMessage)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_DECLINE_INVITATION);
@@ -464,7 +467,7 @@ bool MatchMakingProtocolClient::CallCancelInvitation(ProtocolCallContext* pCallC
                                                      const String& rMessage)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -498,7 +501,7 @@ bool MatchMakingProtocolClient::CancelInvitation_PrepareRequest(ProtocolCallCont
                                                                 const qList<unsigned int>& rPrincipalIDs,
                                                                 const String& rMessage)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_CANCEL_INVITATION);
@@ -518,7 +521,7 @@ bool MatchMakingProtocolClient::CallGetInvitationsSent(ProtocolCallContext* pCal
                                                        qList<Invitation>* pInvitations)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -548,7 +551,7 @@ bool MatchMakingProtocolClient::GetInvitationsSent_PrepareRequest(ProtocolCallCo
                                                                   const unsigned int& rGatheringID,
                                                                   qList<Invitation>* pInvitations)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GET_INVITATIONS_SENT);
@@ -565,7 +568,7 @@ bool MatchMakingProtocolClient::CallGetInvitationsReceived(ProtocolCallContext* 
                                                            qList<Invitation>* pInvitations)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -593,7 +596,7 @@ bool MatchMakingProtocolClient::GetInvitationsReceived_PrepareRequest(ProtocolCa
                                                                       Message* pMessage,
                                                                       qList<Invitation>* pInvitations)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GET_INVITATIONS_RECEIVED);
@@ -611,7 +614,7 @@ bool MatchMakingProtocolClient::CallParticipate(ProtocolCallContext* pCallContex
                                                 const String& rMessage)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -643,7 +646,7 @@ bool MatchMakingProtocolClient::Participate_PrepareRequest(ProtocolCallContext* 
                                                            const unsigned int& rGatheringID,
                                                            const String& rMessage)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_PARTICIPATE);
@@ -663,7 +666,7 @@ bool MatchMakingProtocolClient::CallCancelParticipation(ProtocolCallContext* pCa
                                                         const String& rMessage)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -695,7 +698,7 @@ bool MatchMakingProtocolClient::CancelParticipation_PrepareRequest(ProtocolCallC
                                                                    const unsigned int& rGatheringID,
                                                                    const String& rMessage)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_CANCEL_PARTICIPATION);
@@ -714,7 +717,7 @@ bool MatchMakingProtocolClient::CallGetParticipants(ProtocolCallContext* pCallCo
                                                     qList<unsigned int>* pParticipantIDs)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -744,7 +747,7 @@ bool MatchMakingProtocolClient::GetParticipants_PrepareRequest(ProtocolCallConte
                                                                const unsigned int& rGatheringID,
                                                                qList<unsigned int>* pParticipantIDs)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GET_PARTICIPANTS);
@@ -764,7 +767,7 @@ bool MatchMakingProtocolClient::CallAddParticipants(ProtocolCallContext* pCallCo
                                                     const String& rMessage)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -798,7 +801,7 @@ bool MatchMakingProtocolClient::AddParticipants_PrepareRequest(ProtocolCallConte
                                                                const qList<unsigned int>& rPrincipalIDs,
                                                                const String& rMessage)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_ADD_PARTICIPANTS);
@@ -818,7 +821,7 @@ bool MatchMakingProtocolClient::CallGetDetailedParticipants(ProtocolCallContext*
                                                             qList<ParticipantDetails>* pParticipants)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -848,7 +851,7 @@ bool MatchMakingProtocolClient::GetDetailedParticipants_PrepareRequest(ProtocolC
                                                                        const unsigned int& rGatheringID,
                                                                        qList<ParticipantDetails>* pParticipants)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GET_DETAILED_PARTICIPANTS);
@@ -866,7 +869,7 @@ bool MatchMakingProtocolClient::CallGetParticipantsURLs(ProtocolCallContext* pCa
                                                         qList<StationURL>* pURLs)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -896,7 +899,7 @@ bool MatchMakingProtocolClient::GetParticipantsURLs_PrepareRequest(ProtocolCallC
                                                                    const unsigned int& rGatheringID,
                                                                    qList<StationURL>* pURLs)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GET_PARTICIPANTSUR_LS);
@@ -915,7 +918,7 @@ bool MatchMakingProtocolClient::CallFindByType(ProtocolCallContext* pCallContext
                                                GatheringHolderList* pGatherings)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -947,7 +950,7 @@ bool MatchMakingProtocolClient::FindByType_PrepareRequest(ProtocolCallContext* p
                                                           const ResultRange& rRange,
                                                           GatheringHolderList* pGatherings)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_FIND_BY_TYPE);
@@ -967,7 +970,7 @@ bool MatchMakingProtocolClient::CallFindByDescription(ProtocolCallContext* pCall
                                                       GatheringHolderList* pGatherings)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -999,7 +1002,7 @@ bool MatchMakingProtocolClient::FindByDescription_PrepareRequest(ProtocolCallCon
                                                                  const ResultRange& rRange,
                                                                  GatheringHolderList* pGatherings)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_FIND_BY_DESCRIPTION);
@@ -1019,7 +1022,7 @@ bool MatchMakingProtocolClient::CallFindByDescriptionRegex(ProtocolCallContext* 
                                                            GatheringHolderList* pGatherings)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1051,7 +1054,7 @@ bool MatchMakingProtocolClient::FindByDescriptionRegex_PrepareRequest(ProtocolCa
                                                                       const ResultRange& rRange,
                                                                       GatheringHolderList* pGatherings)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_FIND_BY_DESCRIPTION_REGEX);
@@ -1070,7 +1073,7 @@ bool MatchMakingProtocolClient::CallFindByID(ProtocolCallContext* pCallContext,
                                              GatheringHolderList* pGatherings)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1100,7 +1103,7 @@ bool MatchMakingProtocolClient::FindByID_PrepareRequest(ProtocolCallContext* pCa
                                                         const qList<unsigned int>& rGatheringIDs,
                                                         GatheringHolderList* pGatherings)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_FIND_BYID);
@@ -1119,7 +1122,7 @@ bool MatchMakingProtocolClient::CallFindBySingleID(ProtocolCallContext* pCallCon
                                                    GatheringHolder* pGathering)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1151,7 +1154,7 @@ bool MatchMakingProtocolClient::FindBySingleID_PrepareRequest(ProtocolCallContex
                                                               bool* pSuccess,
                                                               GatheringHolder* pGathering)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_FIND_BY_SINGLEID);
@@ -1171,7 +1174,7 @@ bool MatchMakingProtocolClient::CallFindByOwner(ProtocolCallContext* pCallContex
                                                 GatheringHolderList* pGatherings)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1203,7 +1206,7 @@ bool MatchMakingProtocolClient::FindByOwner_PrepareRequest(ProtocolCallContext* 
                                                            const ResultRange& rRange,
                                                            GatheringHolderList* pGatherings)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_FIND_BY_OWNER);
@@ -1222,7 +1225,7 @@ bool MatchMakingProtocolClient::CallFindByParticipants(ProtocolCallContext* pCal
                                                        GatheringHolderList* pGatherings)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1252,7 +1255,7 @@ bool MatchMakingProtocolClient::FindByParticipants_PrepareRequest(ProtocolCallCo
                                                                   const qList<unsigned int>& rPrincipalIDs,
                                                                   GatheringHolderList* pGatherings)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_FIND_BY_PARTICIPANTS);
@@ -1270,7 +1273,7 @@ bool MatchMakingProtocolClient::CallFindInvitations(ProtocolCallContext* pCallCo
                                                     GatheringHolderList* pGatherings)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1300,7 +1303,7 @@ bool MatchMakingProtocolClient::FindInvitations_PrepareRequest(ProtocolCallConte
                                                                const ResultRange& rRange,
                                                                GatheringHolderList* pGatherings)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_FIND_INVITATIONS);
@@ -1319,7 +1322,7 @@ bool MatchMakingProtocolClient::CallFindBySQLQuery(ProtocolCallContext* pCallCon
                                                    GatheringHolderList* pGatherings)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1351,7 +1354,7 @@ bool MatchMakingProtocolClient::FindBySQLQuery_PrepareRequest(ProtocolCallContex
                                                               const ResultRange& rRange,
                                                               GatheringHolderList* pGatherings)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_FIND_BYSQL_QUERY);
@@ -1371,7 +1374,7 @@ bool MatchMakingProtocolClient::CallLaunchSession(ProtocolCallContext* pCallCont
                                                   const String& rSessionURL)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1403,7 +1406,7 @@ bool MatchMakingProtocolClient::LaunchSession_PrepareRequest(ProtocolCallContext
                                                              const unsigned int& rGatheringID,
                                                              const String& rSessionURL)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_LAUNCH_SESSION);
@@ -1423,7 +1426,7 @@ bool MatchMakingProtocolClient::CallUpdateSessionURL(ProtocolCallContext* pCallC
                                                      const String& rSessionURL)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1455,7 +1458,7 @@ bool MatchMakingProtocolClient::UpdateSessionURL_PrepareRequest(ProtocolCallCont
                                                                 const unsigned int& rGatheringID,
                                                                 const String& rSessionURL)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_UPDATE_SESSION_URL);
@@ -1475,7 +1478,7 @@ bool MatchMakingProtocolClient::CallGetSessionURL(ProtocolCallContext* pCallCont
                                                   String* pSessionURL)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1507,7 +1510,7 @@ bool MatchMakingProtocolClient::GetSessionURL_PrepareRequest(ProtocolCallContext
                                                              const unsigned int& rGatheringID,
                                                              String* pSessionURL)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GET_SESSION_URL);
@@ -1527,7 +1530,7 @@ bool MatchMakingProtocolClient::CallGetState(ProtocolCallContext* pCallContext,
                                              unsigned int* pState)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1559,7 +1562,7 @@ bool MatchMakingProtocolClient::GetState_PrepareRequest(ProtocolCallContext* pCa
                                                         const unsigned int& rGatheringID,
                                                         unsigned int* pState)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GET_STATE);
@@ -1579,7 +1582,7 @@ bool MatchMakingProtocolClient::CallSetState(ProtocolCallContext* pCallContext,
                                              const unsigned int& rState)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1611,7 +1614,7 @@ bool MatchMakingProtocolClient::SetState_PrepareRequest(ProtocolCallContext* pCa
                                                         const unsigned int& rGatheringID,
                                                         const unsigned int& rState)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_SET_STATE);
@@ -1631,7 +1634,7 @@ bool MatchMakingProtocolClient::CallReportStats(ProtocolCallContext* pCallContex
                                                 const qList<GatheringStats>& rStats)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1663,7 +1666,7 @@ bool MatchMakingProtocolClient::ReportStats_PrepareRequest(ProtocolCallContext* 
                                                            const unsigned int& rGatheringID,
                                                            const qList<GatheringStats>& rStats)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_REPORT_STATS);
@@ -1685,7 +1688,7 @@ bool MatchMakingProtocolClient::CallGetStats(ProtocolCallContext* pCallContext,
                                              qList<GatheringStats>* pStats)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1721,7 +1724,7 @@ bool MatchMakingProtocolClient::GetStats_PrepareRequest(ProtocolCallContext* pCa
                                                         const qList<unsigned char>& rTypes,
                                                         qList<GatheringStats>* pStats)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GET_STATS);
@@ -1742,7 +1745,7 @@ bool MatchMakingProtocolClient::CallDeleteGathering(ProtocolCallContext* pCallCo
                                                     const unsigned int& rGatheringID)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1772,7 +1775,7 @@ bool MatchMakingProtocolClient::DeleteGathering_PrepareRequest(ProtocolCallConte
                                                                bool* pSuccess,
                                                                const unsigned int& rGatheringID)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_DELETE_GATHERING);
@@ -1792,7 +1795,7 @@ bool MatchMakingProtocolClient::CallGetPendingDeletions(ProtocolCallContext* pCa
                                                         qList<DeletionEntry>* pDeletions)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1826,7 +1829,7 @@ bool MatchMakingProtocolClient::GetPendingDeletions_PrepareRequest(ProtocolCallC
                                                                    const ResultRange& rRange,
                                                                    qList<DeletionEntry>* pDeletions)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GET_PENDING_DELETIONS);
@@ -1846,7 +1849,7 @@ bool MatchMakingProtocolClient::CallDeleteFromDeletions(ProtocolCallContext* pCa
                                                         const qList<unsigned int>& rGatheringIDs)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1876,7 +1879,7 @@ bool MatchMakingProtocolClient::DeleteFromDeletions_PrepareRequest(ProtocolCallC
                                                                    bool* pSuccess,
                                                                    const qList<unsigned int>& rGatheringIDs)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_DELETE_FROM_DELETIONS);
@@ -1895,7 +1898,7 @@ bool MatchMakingProtocolClient::CallMigrateGatheringOwnershipV1(ProtocolCallCont
                                                                 const qList<unsigned int>& rCandidateIDs)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1927,7 +1930,7 @@ bool MatchMakingProtocolClient::MigrateGatheringOwnershipV1_PrepareRequest(Proto
                                                                            const unsigned int& rGatheringID,
                                                                            const qList<unsigned int>& rCandidateIDs)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_MIGRATE_GATHERING_OWNERSHIP_V1);
@@ -1947,7 +1950,7 @@ bool MatchMakingProtocolClient::CallFindByDescriptionLike(ProtocolCallContext* p
                                                           GatheringHolderList* pGatherings)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1979,7 +1982,7 @@ bool MatchMakingProtocolClient::FindByDescriptionLike_PrepareRequest(ProtocolCal
                                                                      const ResultRange& rRange,
                                                                      GatheringHolderList* pGatherings)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_FIND_BY_DESCRIPTION_LIKE);
@@ -1998,7 +2001,7 @@ bool MatchMakingProtocolClient::CallRegisterLocalURL(ProtocolCallContext* pCallC
                                                      const String& rSessionURL)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -2025,7 +2028,7 @@ bool MatchMakingProtocolClient::RegisterLocalURL_PrepareRequest(ProtocolCallCont
                                                                 const unsigned int& rGatheringID,
                                                                 const String& rSessionURL)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_REGISTER_LOCAL_URL);
@@ -2040,7 +2043,7 @@ bool MatchMakingProtocolClient::CallRegisterLocalURLs(ProtocolCallContext* pCall
                                                       const qList<StationURL>& rSessionURLs)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -2067,7 +2070,7 @@ bool MatchMakingProtocolClient::RegisterLocalURLs_PrepareRequest(ProtocolCallCon
                                                                  const unsigned int& rGatheringID,
                                                                  const qList<StationURL>& rSessionURLs)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_REGISTER_LOCALUR_LS);
@@ -2081,7 +2084,7 @@ bool MatchMakingProtocolClient::CallUpdateSessionHostV1(ProtocolCallContext* pCa
                                                         const unsigned int& rGatheringID)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -2106,7 +2109,7 @@ bool MatchMakingProtocolClient::UpdateSessionHostV1_PrepareRequest(ProtocolCallC
                                                                    Message* pMessage,
                                                                    const unsigned int& rGatheringID)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_UPDATE_SESSION_HOST_V1);
@@ -2120,7 +2123,7 @@ bool MatchMakingProtocolClient::CallGetSessionURLs(ProtocolCallContext* pCallCon
                                                    qList<StationURL>* pURLs)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -2150,7 +2153,7 @@ bool MatchMakingProtocolClient::GetSessionURLs_PrepareRequest(ProtocolCallContex
                                                               const unsigned int& rGatheringID,
                                                               qList<StationURL>* pURLs)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GET_SESSIONUR_LS);
@@ -2168,7 +2171,7 @@ bool MatchMakingProtocolClient::CallUpdateSessionHost(ProtocolCallContext* pCall
                                                       const bool& rFlag)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -2195,7 +2198,7 @@ bool MatchMakingProtocolClient::UpdateSessionHost_PrepareRequest(ProtocolCallCon
                                                                  const unsigned int& rGatheringID,
                                                                  const bool& rFlag)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_UPDATE_SESSION_HOST);
@@ -2210,7 +2213,7 @@ bool MatchMakingProtocolClient::CallUpdateGatheringOwnership(ProtocolCallContext
                                                              const bool& rFlag)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -2237,7 +2240,7 @@ bool MatchMakingProtocolClient::UpdateGatheringOwnership_PrepareRequest(Protocol
                                                                         const unsigned int& rGatheringID,
                                                                         const bool& rFlag)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_UPDATE_GATHERING_OWNERSHIP);
@@ -2253,7 +2256,7 @@ bool MatchMakingProtocolClient::CallMigrateGatheringOwnership(ProtocolCallContex
                                                               const bool& rFlag)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -2282,7 +2285,7 @@ bool MatchMakingProtocolClient::MigrateGatheringOwnership_PrepareRequest(Protoco
                                                                          const qList<unsigned int>& rCandidateIDs,
                                                                          const bool& rFlag)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_MIGRATE_GATHERING_OWNERSHIP);
@@ -2460,10 +2463,12 @@ void MatchMakingProtocolClient::ProtoReturn_GetDetailedParticipants(Message* pMe
     if (pList != 0)
     {
         _Type_std_list<DDLClassMetaType<ParticipantDetails> >::Extract(pMessage, pList);
-        return;
     }
-    qList<ParticipantDetails> discarded[1];
-    _Type_std_list<DDLClassMetaType<ParticipantDetails> >::Extract(pMessage, &discarded[0]);
+    else
+    {
+        qList<ParticipantDetails> discarded[1];
+        _Type_std_list<DDLClassMetaType<ParticipantDetails> >::Extract(pMessage, &discarded[0]);
+    }
 }
 
 void MatchMakingProtocolClient::ProtoReturn_GetParticipantsURLs(Message* pMessage,
@@ -2473,10 +2478,12 @@ void MatchMakingProtocolClient::ProtoReturn_GetParticipantsURLs(Message* pMessag
     if (pList != 0)
     {
         _Type_std_list<_Type_stationurl>::Extract(pMessage, pList);
-        return;
     }
-    qList<StationURL> discarded[1];
-    _Type_std_list<_Type_stationurl>::Extract(pMessage, &discarded[0]);
+    else
+    {
+        qList<StationURL> discarded[1];
+        _Type_std_list<_Type_stationurl>::Extract(pMessage, &discarded[0]);
+    }
 }
 
 void MatchMakingProtocolClient::ProtoReturn_FindByType(Message* pMessage,
@@ -2546,10 +2553,12 @@ void MatchMakingProtocolClient::ProtoReturn_FindBySingleID(Message* pMessage,
     if (pGathering != 0)
     {
         GatheringAny::Extract(pMessage, pGathering);
-        return;
     }
-    GatheringHolder discarded[1];
-    GatheringAny::Extract(pMessage, &discarded[0]);
+    else
+    {
+        GatheringHolder discarded[1];
+        GatheringAny::Extract(pMessage, &discarded[0]);
+    }
 }
 
 void MatchMakingProtocolClient::ProtoReturn_FindByOwner(Message* pMessage,
@@ -2631,9 +2640,10 @@ void MatchMakingProtocolClient::ProtoReturn_GetSessionURL(Message* pMessage,
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
     if (pMessage->HasError())
         return;
     String* pSessionURL = static_cast<String*>(pCallContext->GetReturnValuePtr(1));
@@ -2692,9 +2702,10 @@ void MatchMakingProtocolClient::ProtoReturn_GetStats(Message* pMessage,
 {
     bool bDiscardedSuccess;
     bool* pSuccess = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pSuccess == 0)
-        pSuccess = &bDiscardedSuccess;
-    *pMessage >> *pSuccess;
+    bool* pDestination = &bDiscardedSuccess;
+    if (pSuccess != 0)
+        pDestination = pSuccess;
+    *pMessage >> *pDestination;
     if (pMessage->HasError())
         return;
     qList<GatheringStats>* pList = static_cast<qList<GatheringStats>*>(pCallContext->GetReturnValuePtr(1));
@@ -2796,10 +2807,12 @@ void MatchMakingProtocolClient::ProtoReturn_GetSessionURLs(Message* pMessage,
     if (pList != 0)
     {
         _Type_std_list<_Type_stationurl>::Extract(pMessage, pList);
-        return;
     }
-    qList<StationURL> discarded[1];
-    _Type_std_list<_Type_stationurl>::Extract(pMessage, &discarded[0]);
+    else
+    {
+        qList<StationURL> discarded[1];
+        _Type_std_list<_Type_stationurl>::Extract(pMessage, &discarded[0]);
+    }
 }
 
 void MatchMakingProtocolClient::ProtoReturn_UpdateSessionHost(Message* pMessage,

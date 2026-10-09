@@ -37,7 +37,7 @@ JobCallContextCallback::~JobCallContextCallback()
 
 bool JobCallContextCallback::StartJob()
 {
-    CriticalSection& csScheduler = Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection& csScheduler = Scheduler::GetInstance()->GetCriticalSection();
     csScheduler.Enter();
     if (!m_pCallContext->InitiateCall())
     {
@@ -46,7 +46,7 @@ bool JobCallContextCallback::StartJob()
     }
 
     m_uiCallId = m_pCallContext->m_uiCallId;
-    Core::GetInstance()->GetScheduler()->Queue(this, false);
+    Scheduler::GetInstance()->Queue(this, false);
     Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
         m_pJobCallContext->m_uiCallId);
     SetStep(Step(static_cast<Step::Function>(&JobCallContextCallback::StepCallStart), L""));

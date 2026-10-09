@@ -49,7 +49,7 @@ void ServiceClient::ConnectionStateHasChanged()
 
 bool ServiceClient::IsConnected() const
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
 
     if (m_pCredentials == 0)

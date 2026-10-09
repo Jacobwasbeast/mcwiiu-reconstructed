@@ -28,7 +28,6 @@ Core::Core()
     , m_cbTerminateImmediately(0)
     , m_pTerminateImmediatelyContext(0)
     , m_reserved0(false)
-    , m_criticalSection(0x20000000)
 {
     g_fatalState = false;
 
@@ -40,9 +39,10 @@ Core::Core()
 
     g_criticalSectionDisabled = !g_threadSafetyEnabled;
 
-    g_instanceTableCriticalSection.Enter();
-    ++g_coreInstanceCount;
-    g_instanceTableCriticalSection.Leave();
+    {
+        ScopedCS lock(&g_instanceTableCriticalSection);
+        ++g_coreInstanceCount;
+    }
 
     m_instanceControl.SetDelegatorInstance(this);
 
@@ -57,18 +57,16 @@ Core::Core()
 
     m_pSecurityContextManager = new SecurityContextManager();
 
-    Scheduler* pScheduler = GetInstance()->GetScheduler();
-    pScheduler->GetCriticalSection().Enter();
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_pSystemComponents->GetCoreGroup()->Initialize();
-    pScheduler->GetCriticalSection().Leave();
 }
 
 Core::~Core()
 {
-    Scheduler* pScheduler = GetInstance()->GetScheduler();
-    pScheduler->GetCriticalSection().Enter();
-    m_pSystemComponents->GetCoreGroup()->Terminate();
-    pScheduler->GetCriticalSection().Leave();
+    {
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+        m_pSystemComponents->GetCoreGroup()->Terminate();
+    }
 
     m_pSystemComponents->WaitForTerminatedState(0xFFFFFFFF);
     m_pScheduler->WaitForAllJobsToComplete(60000, true);
@@ -78,9 +76,10 @@ Core::~Core()
     delete m_pSystemComponents;
     delete m_pSecurityContextManager;
 
-    g_instanceTableCriticalSection.Enter();
-    --g_coreInstanceCount;
-    g_instanceTableCriticalSection.Leave();
+    {
+        ScopedCS lock(&g_instanceTableCriticalSection);
+        --g_coreInstanceCount;
+    }
 
     GlobalVariables::ClearCache();
 }
@@ -172,29 +171,26 @@ void Core::SetTerminateImmediately(bool bTerminateImmediately)
     TerminateImmediatelyCallback cbCallback = 0;
     void* pContext = 0;
 
-    m_criticalSection.Enter();
-
-    if (m_bTerminateImmediately == bTerminateImmediately)
     {
-        m_criticalSection.Leave();
-        return;
-    }
+        ScopedCS lock(&m_criticalSection);
 
-    m_bTerminateImmediately = bTerminateImmediately;
+        if (m_bTerminateImmediately == bTerminateImmediately)
+            return;
 
-    if (bTerminateImmediately)
-    {
-        m_terminateImmediatelyTime = Time(Time::GetTime());
+        m_bTerminateImmediately = bTerminateImmediately;
 
-        if (m_cbTerminateImmediately != 0)
+        if (bTerminateImmediately)
         {
-            cbCallback = m_cbTerminateImmediately;
-            pContext = m_pTerminateImmediatelyContext;
-            m_cbTerminateImmediately = 0;
+            m_terminateImmediatelyTime = Time(Time::GetTime());
+
+            if (m_cbTerminateImmediately != 0)
+            {
+                cbCallback = m_cbTerminateImmediately;
+                pContext = m_pTerminateImmediatelyContext;
+                m_cbTerminateImmediately = 0;
+            }
         }
     }
-
-    m_criticalSection.Leave();
 
     if (cbCallback != 0)
         cbCallback(pContext);

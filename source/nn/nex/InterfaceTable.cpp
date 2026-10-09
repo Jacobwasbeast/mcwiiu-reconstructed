@@ -1,6 +1,17 @@
 #include "nn/nex/InterfaceTable.hpp"
 
-#include <nn/ac/ac_cpp.h>
+#include <nn/result.h>
+
+namespace nn
+{
+namespace ac
+{
+
+nn::Result GetAssignedAddress(unsigned long* pAddress);
+nn::Result GetAssignedSubnet(unsigned long* pSubnet);
+
+}
+}
 
 namespace nn
 {
@@ -30,8 +41,8 @@ void InterfaceTable::cleanup()
 
 bool InterfaceTable::Query()
 {
-    uint32_t uiAddress = 0;
-    uint32_t uiMask = 0;
+    unsigned long uiAddress = 0;
+    unsigned long uiMask = 0;
     if (nn::ac::GetAssignedAddress(&uiAddress).IsFailure())
     {
         return false;

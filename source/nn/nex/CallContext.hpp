@@ -41,7 +41,13 @@ public:
 
     State GetState() const { return m_state; }
 
-    const qResult& GetResult() const { return m_result; }
+    qResult GetResult() const { return m_result; }
+
+    void SetTimeout(unsigned int uiTimeout)
+    {
+        Time deadline = Time::ConvertTimeoutToDeadline(uiTimeout);
+        m_expirationTime = deadline;
+    }
 
     static const wchar_t* GetStateString(State state);
 
@@ -53,10 +59,7 @@ public:
     bool InitiateCall();
     bool InitiateSpecialCall();
 
-    void SignalSuccess(qResult result)
-    {
-        SetStateImpl(CallSucceeded, result, true);
-    }
+    void SignalSuccess(qResult result);
     void SignalFailure(qResult result);
     void SignalCompletion(qResult result);
 
@@ -93,7 +96,11 @@ private:
     friend class JobCallContextCallback;
     friend class JobConnectEndPoint;
     friend class JobPerformNATCheck;
+    friend class JobNATCheckBase;
+    friend class JobCheckCurrentPort;
+    friend class JobCheckNATProperties;
     friend class ConnectionManager;
+    friend class Protocol;
     friend class BackEndServices;
     friend class JobBackEndServicesTerminate;
     friend class JobBackEndServicesLogin;
@@ -107,6 +114,7 @@ private:
     friend class ChecksumAlgorithm;
     friend class JobTicketManagerLoginWithData;
     friend class JobTicketManagerAcquireTicket;
+    friend class JobWaitForNotification;
     class InternalData
     {
     public:

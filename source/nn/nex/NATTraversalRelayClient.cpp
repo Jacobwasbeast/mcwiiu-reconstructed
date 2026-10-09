@@ -94,7 +94,7 @@ void NATTraversalRelayClient::CallReportNATProperties(ProtocolCallContext* pCall
     m_pRelayProtocol->m_pProtocolClient->CallReportNATProperties(pCallContext, rNATMapping, rNATFiltering, rRTT);
 }
 
-void NATTraversalRelayClient::CallGetRelaySignatureKey(ProtocolCallContext* pCallContext,
+bool NATTraversalRelayClient::CallGetRelaySignatureKey(ProtocolCallContext* pCallContext,
                                                        int* pRelayMode,
                                                        DateTime* pCurrentUTCTime,
                                                        String* pRelayAddress,
@@ -102,7 +102,7 @@ void NATTraversalRelayClient::CallGetRelaySignatureKey(ProtocolCallContext* pCal
                                                        int* pRelayAddressType,
                                                        unsigned int* pGameServerID)
 {
-    m_pRelayProtocol->m_pProtocolClient->CallGetRelaySignatureKey(pCallContext, pRelayMode, pCurrentUTCTime, pRelayAddress, pRelayPort, pRelayAddressType, pGameServerID);
+    return m_pRelayProtocol->m_pProtocolClient->CallGetRelaySignatureKey(pCallContext, pRelayMode, pCurrentUTCTime, pRelayAddress, pRelayPort, pRelayAddressType, pGameServerID);
 }
 
 void NATTraversalRelayClient::CallReportNATTraversalResultDetail(ProtocolCallContext* pCallContext,

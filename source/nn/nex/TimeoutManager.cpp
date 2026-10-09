@@ -31,7 +31,7 @@ TimeoutManager::~TimeoutManager()
 
 void TimeoutManager::ServicePacketTimeouts()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     std::vector<PacketOut*, MemAllocator<PacketOut*> > expiredPackets;
     TimeoutMap::iterator timeout = m_timeouts.begin();
     while (timeout != m_timeouts.end())
@@ -56,13 +56,13 @@ void TimeoutManager::ServicePacketTimeouts()
 
 void TimeoutManager::SetQuickTimeout()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     m_bQuickTimeout = true;
 }
 
 void TimeoutManager::SetPacketQuickTimeout(PacketType type)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     std::vector<PacketOut*, MemAllocator<PacketOut*> > matchingPackets;
     for (TimeoutMap::iterator timeout = m_timeouts.begin(); timeout != m_timeouts.end();
          ++timeout)
@@ -85,7 +85,7 @@ void TimeoutManager::SetPacketQuickTimeout(PacketType type)
 
 void TimeoutManager::ForceSetPacketTimeouts(Time time)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     for (TimeoutMap::iterator timeout = m_timeouts.begin(); timeout != m_timeouts.end();
          ++timeout)
     {
@@ -97,7 +97,7 @@ void TimeoutManager::ForceSetPacketTimeouts(Time time)
 
 void TimeoutManager::SchedulePacketTimeout(PacketOut* pPacket)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (m_bQuickTimeout)
     {
         unsigned short uiType = pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK;
@@ -133,7 +133,7 @@ void TimeoutManager::SchedulePacketTimeout(PacketOut* pPacket)
 
 bool TimeoutManager::CancelPacketTimeout(PacketOut* pPacket)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     Time awaitedTime = pPacket->m_pTimeout->GetAwaitedTime();
     std::pair<TimeoutMap::iterator, TimeoutMap::iterator> range =
         m_timeouts.equal_range(awaitedTime);

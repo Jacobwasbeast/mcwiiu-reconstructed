@@ -40,6 +40,10 @@ typedef MatchmakeExtensionProtocolClient::GatheringHolder GatheringHolder;
 typedef MatchmakeExtensionProtocolClient::GatheringHolderList GatheringHolderList;
 
 const unsigned int METHOD_ID_MASK = 0x7FFF;
+enum
+{
+    RESULT_NOT_IMPLEMENTED = static_cast<int>(0x80010002u)
+};
 const unsigned int METHOD_ID_COUNT = 48;
 const unsigned int PROTOCOL_FLAG_UNLOCK_BEFORE_SEND = 0x10;
 
@@ -114,8 +118,7 @@ void MatchmakeExtensionProtocolClient::ExtractCallSpecificResults(Message* pMess
     const unsigned int uiMethodID = Protocol::ExtractMethodID(pMessage) & METHOD_ID_MASK;
     if (uiMethodID - 1 >= METHOD_ID_COUNT - 1)
     {
-        const int iCallError = static_cast<int>(0x80010002u);
-        ClientProtocol::SetCallError(qResult(iCallError));
+        ClientProtocol::SetCallError(qResult(RESULT_NOT_IMPLEMENTED));
         return;
     }
     if (s_ProtoReturn[uiMethodID] != 0)
@@ -131,7 +134,7 @@ bool MatchmakeExtensionProtocolClient::CallCloseParticipation(ProtocolCallContex
                                                               const unsigned int& rGatheringID)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -156,7 +159,7 @@ bool MatchmakeExtensionProtocolClient::CloseParticipation_PrepareRequest(Protoco
                                                                          Message* pMessage,
                                                                          const unsigned int& rGatheringID)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_CLOSE_PARTICIPATION);
@@ -169,7 +172,7 @@ bool MatchmakeExtensionProtocolClient::CallOpenParticipation(ProtocolCallContext
                                                              const unsigned int& rGatheringID)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -194,7 +197,7 @@ bool MatchmakeExtensionProtocolClient::OpenParticipation_PrepareRequest(Protocol
                                                                         Message* pMessage,
                                                                         const unsigned int& rGatheringID)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_OPEN_PARTICIPATION);
@@ -209,7 +212,7 @@ bool MatchmakeExtensionProtocolClient::CallAutoMatchmake_Postpone(ProtocolCallCo
                                                                   const String& rMessage)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -241,7 +244,7 @@ bool MatchmakeExtensionProtocolClient::AutoMatchmake_Postpone_PrepareRequest(Pro
                                                                              GatheringHolder* pJoinedGathering,
                                                                              const String& rMessage)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_AUTO_MATCHMAKE_POSTPONE);
@@ -261,7 +264,7 @@ bool MatchmakeExtensionProtocolClient::CallBrowseMatchmakeSession(ProtocolCallCo
                                                                   GatheringHolderList* pGatherings)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -293,7 +296,7 @@ bool MatchmakeExtensionProtocolClient::BrowseMatchmakeSession_PrepareRequest(Pro
                                                                              const ResultRange& rRange,
                                                                              GatheringHolderList* pGatherings)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_BROWSE_MATCHMAKE_SESSION);
@@ -314,7 +317,7 @@ bool MatchmakeExtensionProtocolClient::CallBrowseMatchmakeSessionWithHostUrls(Pr
                                                                               qList<GatheringURLs>* pGatheringURLs)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -348,7 +351,7 @@ bool MatchmakeExtensionProtocolClient::BrowseMatchmakeSessionWithHostUrls_Prepar
                                                                                          GatheringHolderList* pGatherings,
                                                                                          qList<GatheringURLs>* pGatheringURLs)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_BROWSE_MATCHMAKE_SESSION_WITH_HOST_URLS);
@@ -371,7 +374,7 @@ bool MatchmakeExtensionProtocolClient::CallCreateMatchmakeSession(ProtocolCallCo
                                                                   const unsigned short& rParticipationCount)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -407,7 +410,7 @@ bool MatchmakeExtensionProtocolClient::CreateMatchmakeSession_PrepareRequest(Pro
                                                                              qVector<unsigned char>* pSessionKey,
                                                                              const unsigned short& rParticipationCount)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_CREATE_MATCHMAKE_SESSION);
@@ -429,7 +432,7 @@ bool MatchmakeExtensionProtocolClient::CallJoinMatchmakeSession(ProtocolCallCont
                                                                 qVector<unsigned char>* pSessionKey)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -461,7 +464,7 @@ bool MatchmakeExtensionProtocolClient::JoinMatchmakeSession_PrepareRequest(Proto
                                                                            const String& rMessage,
                                                                            qVector<unsigned char>* pSessionKey)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_JOIN_MATCHMAKE_SESSION);
@@ -481,7 +484,7 @@ bool MatchmakeExtensionProtocolClient::CallModifyCurrentGameAttribute(ProtocolCa
                                                                       const unsigned int& rNewValue)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -510,7 +513,7 @@ bool MatchmakeExtensionProtocolClient::ModifyCurrentGameAttribute_PrepareRequest
                                                                                  const unsigned int& rAttributeIndex,
                                                                                  const unsigned int& rNewValue)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_MODIFY_CURRENT_GAME_ATTRIBUTE);
@@ -528,7 +531,7 @@ bool MatchmakeExtensionProtocolClient::CallUpdateNotificationData(ProtocolCallCo
                                                                   const String& rParam3)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -559,7 +562,7 @@ bool MatchmakeExtensionProtocolClient::UpdateNotificationData_PrepareRequest(Pro
                                                                              const unsigned int& rParam2,
                                                                              const String& rParam3)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_UPDATE_NOTIFICATION_DATA);
@@ -576,7 +579,7 @@ bool MatchmakeExtensionProtocolClient::CallGetFriendNotificationData(ProtocolCal
                                                                      const int& rType)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -606,7 +609,7 @@ bool MatchmakeExtensionProtocolClient::GetFriendNotificationData_PrepareRequest(
                                                                                 qList<NotificationEvent>* pNotificationEvents,
                                                                                 const int& rType)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GET_FRIEND_NOTIFICATION_DATA);
@@ -624,7 +627,7 @@ bool MatchmakeExtensionProtocolClient::CallUpdateApplicationBuffer(ProtocolCallC
                                                                    const qVector<unsigned char>& rApplicationBuffer)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -651,7 +654,7 @@ bool MatchmakeExtensionProtocolClient::UpdateApplicationBuffer_PrepareRequest(Pr
                                                                               const unsigned int& rGatheringID,
                                                                               const qVector<unsigned char>& rApplicationBuffer)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_UPDATE_APPLICATION_BUFFER);
@@ -666,7 +669,7 @@ bool MatchmakeExtensionProtocolClient::CallUpdateMatchmakeSessionAttribute(Proto
                                                                            const qVector<unsigned int>& rAttributes)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -693,7 +696,7 @@ bool MatchmakeExtensionProtocolClient::UpdateMatchmakeSessionAttribute_PrepareRe
                                                                                       const unsigned int& rGatheringID,
                                                                                       const qVector<unsigned int>& rAttributes)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_UPDATE_MATCHMAKE_SESSION_ATTRIBUTE);
@@ -708,7 +711,7 @@ bool MatchmakeExtensionProtocolClient::CallGetlstFriendNotificationData(Protocol
                                                                         const qList<unsigned int>& rTypes)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -738,7 +741,7 @@ bool MatchmakeExtensionProtocolClient::GetlstFriendNotificationData_PrepareReque
                                                                                    qList<NotificationEvent>* pNotificationEvents,
                                                                                    const qList<unsigned int>& rTypes)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GETLST_FRIEND_NOTIFICATION_DATA);
@@ -755,7 +758,7 @@ bool MatchmakeExtensionProtocolClient::CallUpdateMatchmakeSession(ProtocolCallCo
                                                                   const GatheringHolder& rGathering)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -780,7 +783,7 @@ bool MatchmakeExtensionProtocolClient::UpdateMatchmakeSession_PrepareRequest(Pro
                                                                              Message* pMessage,
                                                                              const GatheringHolder& rGathering)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_UPDATE_MATCHMAKE_SESSION);
@@ -796,7 +799,7 @@ bool MatchmakeExtensionProtocolClient::CallAutoMatchmakeWithSearchCriteria_Postp
                                                                                     const String& rMessage)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -830,7 +833,7 @@ bool MatchmakeExtensionProtocolClient::AutoMatchmakeWithSearchCriteria_Postpone_
                                                                                                GatheringHolder* pJoinedGathering,
                                                                                                const String& rMessage)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_AUTO_MATCHMAKE_WITH_SEARCH_CRITERIA_POSTPONE);
@@ -850,7 +853,7 @@ bool MatchmakeExtensionProtocolClient::CallGetPlayingSession(ProtocolCallContext
                                                              qList<PlayingSession>* pPlayingSessions)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -880,7 +883,7 @@ bool MatchmakeExtensionProtocolClient::GetPlayingSession_PrepareRequest(Protocol
                                                                         const qList<unsigned int>& rPrincipalIDs,
                                                                         qList<PlayingSession>* pPlayingSessions)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GET_PLAYING_SESSION);
@@ -899,7 +902,7 @@ bool MatchmakeExtensionProtocolClient::CallCreateCommunity(ProtocolCallContext* 
                                                            const String& rMessage)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -931,7 +934,7 @@ bool MatchmakeExtensionProtocolClient::CreateCommunity_PrepareRequest(ProtocolCa
                                                                       unsigned int* pGatheringID,
                                                                       const String& rMessage)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_CREATE_COMMUNITY);
@@ -949,7 +952,7 @@ bool MatchmakeExtensionProtocolClient::CallUpdateCommunity(ProtocolCallContext* 
                                                            const PersistentGathering& rCommunity)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -974,7 +977,7 @@ bool MatchmakeExtensionProtocolClient::UpdateCommunity_PrepareRequest(ProtocolCa
                                                                       Message* pMessage,
                                                                       const PersistentGathering& rCommunity)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_UPDATE_COMMUNITY);
@@ -989,7 +992,7 @@ bool MatchmakeExtensionProtocolClient::CallJoinCommunity(ProtocolCallContext* pC
                                                          const String& rPassword)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1018,7 +1021,7 @@ bool MatchmakeExtensionProtocolClient::JoinCommunity_PrepareRequest(ProtocolCall
                                                                     const String& rMessage,
                                                                     const String& rPassword)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_JOIN_COMMUNITY);
@@ -1034,7 +1037,7 @@ bool MatchmakeExtensionProtocolClient::CallFindCommunityByGatheringId(ProtocolCa
                                                                       qList<PersistentGathering>* pCommunities)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1064,7 +1067,7 @@ bool MatchmakeExtensionProtocolClient::FindCommunityByGatheringId_PrepareRequest
                                                                                  const qList<unsigned int>& rGatheringIDs,
                                                                                  qList<PersistentGathering>* pCommunities)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_FIND_COMMUNITY_BY_GATHERING_ID);
@@ -1083,7 +1086,7 @@ bool MatchmakeExtensionProtocolClient::CallFindOfficialCommunity(ProtocolCallCon
                                                                  const ResultRange& rRange)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1115,7 +1118,7 @@ bool MatchmakeExtensionProtocolClient::FindOfficialCommunity_PrepareRequest(Prot
                                                                             const bool& rAvailableOnly,
                                                                             const ResultRange& rRange)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_FIND_OFFICIAL_COMMUNITY);
@@ -1135,7 +1138,7 @@ bool MatchmakeExtensionProtocolClient::CallFindCommunityByParticipant(ProtocolCa
                                                                       const ResultRange& rRange)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1167,7 +1170,7 @@ bool MatchmakeExtensionProtocolClient::FindCommunityByParticipant_PrepareRequest
                                                                                  const unsigned int& rPrincipalID,
                                                                                  const ResultRange& rRange)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_FIND_COMMUNITY_BY_PARTICIPANT);
@@ -1186,7 +1189,7 @@ bool MatchmakeExtensionProtocolClient::CallUpdatePrivacySetting(ProtocolCallCont
                                                                 const bool& rPublicParticipation)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1213,7 +1216,7 @@ bool MatchmakeExtensionProtocolClient::UpdatePrivacySetting_PrepareRequest(Proto
                                                                            const bool& rPublic,
                                                                            const bool& rPublicParticipation)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_UPDATE_PRIVACY_SETTING);
@@ -1227,7 +1230,7 @@ bool MatchmakeExtensionProtocolClient::CallGetMyBlackList(ProtocolCallContext* p
                                                           qList<unsigned int>* pPrincipalIDs)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1255,7 +1258,7 @@ bool MatchmakeExtensionProtocolClient::GetMyBlackList_PrepareRequest(ProtocolCal
                                                                      Message* pMessage,
                                                                      qList<unsigned int>* pPrincipalIDs)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GET_MY_BLACK_LIST);
@@ -1271,7 +1274,7 @@ bool MatchmakeExtensionProtocolClient::CallAddToBlackList(ProtocolCallContext* p
                                                           const qList<unsigned int>& rPrincipalIDs)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1296,7 +1299,7 @@ bool MatchmakeExtensionProtocolClient::AddToBlackList_PrepareRequest(ProtocolCal
                                                                      Message* pMessage,
                                                                      const qList<unsigned int>& rPrincipalIDs)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_ADD_TO_BLACK_LIST);
@@ -1309,7 +1312,7 @@ bool MatchmakeExtensionProtocolClient::CallRemoveFromBlackList(ProtocolCallConte
                                                                const qList<unsigned int>& rPrincipalIDs)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1334,7 +1337,7 @@ bool MatchmakeExtensionProtocolClient::RemoveFromBlackList_PrepareRequest(Protoc
                                                                           Message* pMessage,
                                                                           const qList<unsigned int>& rPrincipalIDs)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_REMOVE_FROM_BLACK_LIST);
@@ -1346,7 +1349,7 @@ bool MatchmakeExtensionProtocolClient::RemoveFromBlackList_PrepareRequest(Protoc
 bool MatchmakeExtensionProtocolClient::CallClearMyBlackList(ProtocolCallContext* pCallContext)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1369,7 +1372,7 @@ bool MatchmakeExtensionProtocolClient::CallClearMyBlackList(ProtocolCallContext*
 bool MatchmakeExtensionProtocolClient::ClearMyBlackList_PrepareRequest(ProtocolCallContext* pCallContext,
                                                                        Message* pMessage)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_CLEAR_MY_BLACK_LIST);
@@ -1383,7 +1386,7 @@ bool MatchmakeExtensionProtocolClient::CallReportViolation(ProtocolCallContext* 
                                                            const unsigned int& rViolationCode)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1412,7 +1415,7 @@ bool MatchmakeExtensionProtocolClient::ReportViolation_PrepareRequest(ProtocolCa
                                                                       const String& rUserName,
                                                                       const unsigned int& rViolationCode)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_REPORT_VIOLATION);
@@ -1428,7 +1431,7 @@ bool MatchmakeExtensionProtocolClient::CallIsViolationUser(ProtocolCallContext* 
                                                            unsigned int* pScore)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1458,7 +1461,7 @@ bool MatchmakeExtensionProtocolClient::IsViolationUser_PrepareRequest(ProtocolCa
                                                                       bool* pViolationUser,
                                                                       unsigned int* pScore)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_IS_VIOLATION_USER);
@@ -1479,7 +1482,7 @@ bool MatchmakeExtensionProtocolClient::CallJoinMatchmakeSessionEx(ProtocolCallCo
                                                                   const unsigned short& rParticipationCount)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1515,7 +1518,7 @@ bool MatchmakeExtensionProtocolClient::JoinMatchmakeSessionEx_PrepareRequest(Pro
                                                                              qVector<unsigned char>* pSessionKey,
                                                                              const unsigned short& rParticipationCount)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_JOIN_MATCHMAKE_SESSION_EX);
@@ -1537,7 +1540,7 @@ bool MatchmakeExtensionProtocolClient::CallGetSimplePlayingSession(ProtocolCallC
                                                                    qList<SimplePlayingSession>* pSimplePlayingSessions)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1569,7 +1572,7 @@ bool MatchmakeExtensionProtocolClient::GetSimplePlayingSession_PrepareRequest(Pr
                                                                               const bool& rIncludeLoginUser,
                                                                               qList<SimplePlayingSession>* pSimplePlayingSessions)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GET_SIMPLE_PLAYING_SESSION);
@@ -1588,7 +1591,7 @@ bool MatchmakeExtensionProtocolClient::CallGetSimpleCommunity(ProtocolCallContex
                                                               qList<SimpleCommunity>* pSimpleCommunities)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1618,7 +1621,7 @@ bool MatchmakeExtensionProtocolClient::GetSimpleCommunity_PrepareRequest(Protoco
                                                                          const qList<unsigned int>& rGatheringIDs,
                                                                          qList<SimpleCommunity>* pSimpleCommunities)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GET_SIMPLE_COMMUNITY);
@@ -1638,7 +1641,7 @@ bool MatchmakeExtensionProtocolClient::CallAutoMatchmakeWithGatheringId_Postpone
                                                                                  const String& rMessage)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1672,7 +1675,7 @@ bool MatchmakeExtensionProtocolClient::AutoMatchmakeWithGatheringId_Postpone_Pre
                                                                                             GatheringHolder* pJoinedGathering,
                                                                                             const String& rMessage)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_AUTO_MATCHMAKE_WITH_GATHERING_ID_POSTPONE);
@@ -1692,7 +1695,7 @@ bool MatchmakeExtensionProtocolClient::CallUpdateProgressScore(ProtocolCallConte
                                                                const unsigned char& rProgressScore)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1719,7 +1722,7 @@ bool MatchmakeExtensionProtocolClient::UpdateProgressScore_PrepareRequest(Protoc
                                                                           const unsigned int& rGatheringID,
                                                                           const unsigned char& rProgressScore)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_UPDATE_PROGRESS_SCORE);
@@ -1738,7 +1741,7 @@ bool MatchmakeExtensionProtocolClient::CallDebugNotifyEvent(ProtocolCallContext*
                                                             const String& rParam3)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1773,7 +1776,7 @@ bool MatchmakeExtensionProtocolClient::DebugNotifyEvent_PrepareRequest(ProtocolC
                                                                        const unsigned int& rParam2,
                                                                        const String& rParam3)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_DEBUG_NOTIFY_EVENT);
@@ -1792,7 +1795,7 @@ bool MatchmakeExtensionProtocolClient::CallGenerateMatchmakeSessionSystemPasswor
                                                                                   String* pPassword)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1822,7 +1825,7 @@ bool MatchmakeExtensionProtocolClient::GenerateMatchmakeSessionSystemPassword_Pr
                                                                                              const unsigned int& rGatheringID,
                                                                                              String* pPassword)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_GENERATE_MATCHMAKE_SESSION_SYSTEM_PASSWORD);
@@ -1839,7 +1842,7 @@ bool MatchmakeExtensionProtocolClient::CallClearMatchmakeSessionSystemPassword(P
                                                                                const unsigned int& rGatheringID)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1864,7 +1867,7 @@ bool MatchmakeExtensionProtocolClient::ClearMatchmakeSessionSystemPassword_Prepa
                                                                                           Message* pMessage,
                                                                                           const unsigned int& rGatheringID)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_CLEAR_MATCHMAKE_SESSION_SYSTEM_PASSWORD);
@@ -1878,7 +1881,7 @@ bool MatchmakeExtensionProtocolClient::CallCreateMatchmakeSessionWithParam(Proto
                                                                            MatchmakeSession* pMatchmakeSession)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1908,7 +1911,7 @@ bool MatchmakeExtensionProtocolClient::CreateMatchmakeSessionWithParam_PrepareRe
                                                                                       const CreateMatchmakeSessionParam& rParam,
                                                                                       MatchmakeSession* pMatchmakeSession)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_CREATE_MATCHMAKE_SESSION_WITH_PARAM);
@@ -1926,7 +1929,7 @@ bool MatchmakeExtensionProtocolClient::CallJoinMatchmakeSessionWithParam(Protoco
                                                                          MatchmakeSession* pMatchmakeSession)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -1956,7 +1959,7 @@ bool MatchmakeExtensionProtocolClient::JoinMatchmakeSessionWithParam_PrepareRequ
                                                                                     const JoinMatchmakeSessionParam& rParam,
                                                                                     MatchmakeSession* pMatchmakeSession)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_JOIN_MATCHMAKE_SESSION_WITH_PARAM);
@@ -1974,7 +1977,7 @@ bool MatchmakeExtensionProtocolClient::CallAutoMatchmakeWithParam_Postpone(Proto
                                                                            MatchmakeSession* pMatchmakeSession)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -2004,7 +2007,7 @@ bool MatchmakeExtensionProtocolClient::AutoMatchmakeWithParam_Postpone_PrepareRe
                                                                                       const AutoMatchmakeParam& rParam,
                                                                                       MatchmakeSession* pMatchmakeSession)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_AUTO_MATCHMAKE_WITH_PARAM_POSTPONE);
@@ -2022,7 +2025,7 @@ bool MatchmakeExtensionProtocolClient::CallFindMatchmakeSessionByGatheringIdDeta
                                                                                    MatchmakeSession* pMatchmakeSession)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -2052,7 +2055,7 @@ bool MatchmakeExtensionProtocolClient::FindMatchmakeSessionByGatheringIdDetail_P
                                                                                               const unsigned int& rGatheringID,
                                                                                               MatchmakeSession* pMatchmakeSession)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_FIND_MATCHMAKE_SESSION_BY_GATHERING_ID_DETAIL);
@@ -2071,7 +2074,7 @@ bool MatchmakeExtensionProtocolClient::CallBrowseMatchmakeSessionNoHolder(Protoc
                                                                           qList<MatchmakeSession>* pMatchmakeSessions)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -2103,7 +2106,7 @@ bool MatchmakeExtensionProtocolClient::BrowseMatchmakeSessionNoHolder_PrepareReq
                                                                                      const ResultRange& rRange,
                                                                                      qList<MatchmakeSession>* pMatchmakeSessions)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_BROWSE_MATCHMAKE_SESSION_NO_HOLDER);
@@ -2124,7 +2127,7 @@ bool MatchmakeExtensionProtocolClient::CallBrowseMatchmakeSessionWithHostUrlsNoH
                                                                                       qList<GatheringURLs>* pGatheringURLs)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -2158,7 +2161,7 @@ bool MatchmakeExtensionProtocolClient::BrowseMatchmakeSessionWithHostUrlsNoHolde
                                                                                                  qList<MatchmakeSession>* pMatchmakeSessions,
                                                                                                  qList<GatheringURLs>* pGatheringURLs)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_BROWSE_MATCHMAKE_SESSION_WITH_HOST_URLS_NO_HOLDER);
@@ -2177,7 +2180,7 @@ bool MatchmakeExtensionProtocolClient::CallUpdateMatchmakeSessionPart(ProtocolCa
                                                                       const UpdateMatchmakeSessionParam& rParam)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -2202,7 +2205,7 @@ bool MatchmakeExtensionProtocolClient::UpdateMatchmakeSessionPart_PrepareRequest
                                                                                  Message* pMessage,
                                                                                  const UpdateMatchmakeSessionParam& rParam)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_UPDATE_MATCHMAKE_SESSION_PART);
@@ -2216,7 +2219,7 @@ bool MatchmakeExtensionProtocolClient::CallRequestMatchmaking(ProtocolCallContex
                                                               unsigned long long* pRequestID)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -2246,7 +2249,7 @@ bool MatchmakeExtensionProtocolClient::RequestMatchmaking_PrepareRequest(Protoco
                                                                          const AutoMatchmakeParam& rParam,
                                                                          unsigned long long* pRequestID)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_REQUEST_MATCHMAKING);
@@ -2263,7 +2266,7 @@ bool MatchmakeExtensionProtocolClient::CallWithdrawMatchmaking(ProtocolCallConte
                                                                const unsigned long long& rRequestID)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -2288,7 +2291,7 @@ bool MatchmakeExtensionProtocolClient::WithdrawMatchmaking_PrepareRequest(Protoc
                                                                           Message* pMessage,
                                                                           const unsigned long long& rRequestID)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_WITHDRAW_MATCHMAKING);
@@ -2300,7 +2303,7 @@ bool MatchmakeExtensionProtocolClient::WithdrawMatchmaking_PrepareRequest(Protoc
 bool MatchmakeExtensionProtocolClient::CallWithdrawMatchmakingAll(ProtocolCallContext* pCallContext)
 {
     Message message;
-    CriticalSection* pLock = &Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection* pLock = &Scheduler::GetInstance()->GetCriticalSection();
     pLock->Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, m_uiProtocolID, COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -2323,7 +2326,7 @@ bool MatchmakeExtensionProtocolClient::CallWithdrawMatchmakingAll(ProtocolCallCo
 bool MatchmakeExtensionProtocolClient::WithdrawMatchmakingAll_PrepareRequest(ProtocolCallContext* pCallContext,
                                                                              Message* pMessage)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!RegisterCallContext(pMessage, pCallContext))
         return false;
     AddMethodID(pMessage, METHOD_WITHDRAW_MATCHMAKING_ALL);
@@ -2348,10 +2351,12 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_AutoMatchmake_Postpone(Messag
     if (pGathering != 0)
     {
         GatheringAny::Extract(pMessage, pGathering);
-        return;
     }
-    GatheringHolder discarded[1];
-    GatheringAny::Extract(pMessage, &discarded[0]);
+    else
+    {
+        GatheringHolder discarded[1];
+        GatheringAny::Extract(pMessage, &discarded[0]);
+    }
 }
 
 void MatchmakeExtensionProtocolClient::ProtoReturn_BrowseMatchmakeSession(Message* pMessage,
@@ -2399,9 +2404,10 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_CreateMatchmakeSession(Messag
 {
     unsigned int uiDiscardedGatheringID;
     unsigned int* pGatheringID = static_cast<unsigned int*>(pCallContext->GetReturnValuePtr(0));
-    if (pGatheringID == 0)
-        pGatheringID = &uiDiscardedGatheringID;
-    _Type_uint32::Extract(pMessage, pGatheringID);
+    unsigned int* pDestination = &uiDiscardedGatheringID;
+    if (pGatheringID != 0)
+        pDestination = pGatheringID;
+    _Type_uint32::Extract(pMessage, pDestination);
     if (pMessage->HasError())
         return;
     qVector<unsigned char>* pBuffer = static_cast<qVector<unsigned char>*>(pCallContext->GetReturnValuePtr(1));
@@ -2485,10 +2491,12 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_AutoMatchmakeWithSearchCriter
     if (pGathering != 0)
     {
         GatheringAny::Extract(pMessage, pGathering);
-        return;
     }
-    GatheringHolder discarded[1];
-    GatheringAny::Extract(pMessage, &discarded[0]);
+    else
+    {
+        GatheringHolder discarded[1];
+        GatheringAny::Extract(pMessage, &discarded[0]);
+    }
 }
 
 void MatchmakeExtensionProtocolClient::ProtoReturn_GetPlayingSession(Message* pMessage,
@@ -2668,10 +2676,12 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_AutoMatchmakeWithGatheringId_
     if (pGathering != 0)
     {
         GatheringAny::Extract(pMessage, pGathering);
-        return;
     }
-    GatheringHolder discarded[1];
-    GatheringAny::Extract(pMessage, &discarded[0]);
+    else
+    {
+        GatheringHolder discarded[1];
+        GatheringAny::Extract(pMessage, &discarded[0]);
+    }
 }
 
 void MatchmakeExtensionProtocolClient::ProtoReturn_UpdateProgressScore(Message*,
@@ -2804,9 +2814,10 @@ void MatchmakeExtensionProtocolClient::ProtoReturn_RequestMatchmaking(Message* p
 {
     unsigned long long uiDiscardedRequestID;
     unsigned long long* pRequestID = static_cast<unsigned long long*>(pCallContext->GetReturnValuePtr(0));
-    if (pRequestID == 0)
-        pRequestID = &uiDiscardedRequestID;
-    _Type_uint64::Extract(pMessage, pRequestID);
+    unsigned long long* pDestination = &uiDiscardedRequestID;
+    if (pRequestID != 0)
+        pDestination = pRequestID;
+    _Type_uint64::Extract(pMessage, pDestination);
 }
 
 void MatchmakeExtensionProtocolClient::ProtoReturn_WithdrawMatchmaking(Message*,

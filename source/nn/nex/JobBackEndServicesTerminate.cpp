@@ -29,8 +29,8 @@ JobBackEndServicesTerminate::JobBackEndServicesTerminate(unsigned int uiCallId,
     : StepSequenceJob(JOB_TYPE_2, DebugString(L""))
     , m_callContext()
 {
-    m_uiCallId = uiCallId;
     m_pBackEndServices = pBackEndServices;
+    m_uiCallId = uiCallId;
     m_traceData = TRACE_BACK_END_SERVICES;
     SetStep(Step(static_cast<Step::Function>(&JobBackEndServicesTerminate::StepWaitOnPendingJobs), L""));
 }
@@ -46,16 +46,15 @@ void JobBackEndServicesTerminate::StepWaitOnPendingJobs()
     {
         pBackEndServices->CancelLoginJob();
         SetStep(Step(static_cast<Step::Function>(&JobBackEndServicesTerminate::StepWaitOnLoginCancel), L""));
-        return;
     }
-
-    if (pBackEndServices->LogoutJobIsInProgress())
+    else if (pBackEndServices->LogoutJobIsInProgress())
     {
         SetToWaiting(WAIT_CONTEXT_PENDING_JOB);
-        return;
     }
-
-    SetStep(Step(static_cast<Step::Function>(&JobBackEndServicesTerminate::StepInitLogoutIfRequired), L""));
+    else
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobBackEndServicesTerminate::StepInitLogoutIfRequired), L""));
+    }
 }
 
 void JobBackEndServicesTerminate::StepWaitOnLoginCancel()
@@ -81,10 +80,9 @@ void JobBackEndServicesTerminate::SetFinalState(CallContext::State state, const 
 
 void JobBackEndServicesTerminate::StepInitLogoutIfRequired()
 {
-    Credentials* pCredentials = m_pBackEndServices->GetCredentials();
-    if (pCredentials != 0)
+    if (m_pBackEndServices->GetCredentials() != 0)
     {
-        m_pBackEndServices->LogoutImpl(&m_callContext, pCredentials);
+        m_pBackEndServices->LogoutImpl(&m_callContext, m_pBackEndServices->GetCredentials());
         SetToSuspended();
         ResumeOnCallCompletion(&m_callContext,
             new Step(static_cast<Step::Function>(&JobBackEndServicesTerminate::StepLogoutComplete), L""));
@@ -96,6 +94,7 @@ void JobBackEndServicesTerminate::StepInitLogoutIfRequired()
 
 void JobBackEndServicesTerminate::StepLogoutComplete()
 {
+    const bool bSucceeded = m_callContext.GetResult();
     SetFinalState(m_callContext.GetState(), m_callContext.GetResult());
 }
 

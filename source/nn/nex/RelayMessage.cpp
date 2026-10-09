@@ -42,31 +42,6 @@ const unsigned int RELAY_TIME_STAMP_UNIT = 1000;
 const unsigned int RELAY_GAME_SERVER_ID_PING = 0xFFFFFFFEu;
 const unsigned int RELAY_GAME_SERVER_ID_BROADCAST = 0xFFFFFFFDu;
 
-inline void AppendByte(Buffer* pBuffer, unsigned char uiValue)
-{
-    pBuffer->AppendData(&uiValue, sizeof(uiValue), APPEND_AT_END);
-}
-
-inline void AppendShort(Buffer* pBuffer, unsigned short uiValue)
-{
-    unsigned char aBytes[2];
-
-    aBytes[0] = static_cast<unsigned char>(uiValue);
-    aBytes[1] = static_cast<unsigned char>(uiValue >> 8);
-    pBuffer->AppendData(aBytes, sizeof(aBytes), APPEND_AT_END);
-}
-
-inline void AppendInt(Buffer* pBuffer, unsigned int uiValue)
-{
-    unsigned char aBytes[4];
-
-    aBytes[0] = static_cast<unsigned char>(uiValue);
-    aBytes[1] = static_cast<unsigned char>(uiValue >> 8);
-    aBytes[2] = static_cast<unsigned char>(uiValue >> 16);
-    aBytes[3] = static_cast<unsigned char>(uiValue >> 24);
-    pBuffer->AppendData(aBytes, sizeof(aBytes), APPEND_AT_END);
-}
-
 }
 
 RelayMessage::RelayMessage()
@@ -86,10 +61,9 @@ void RelayMessage::SetRelayDataPacketSignatureKey(const unsigned char* pKey, uns
 void RelayMessage::SetRelayDataPacketSignatureKeyFromP2PDataPacketSessionSignatureKey(
     const qVector<unsigned char>& rKey)
 {
-    const unsigned char* pKey = &rKey[0];
-    const unsigned int uiGatheringID = static_cast<unsigned int>(pKey[0])
-        | static_cast<unsigned int>(pKey[1]) << 8 | static_cast<unsigned int>(pKey[2]) << 16
-        | static_cast<unsigned int>(pKey[3]) << 24;
+    const unsigned int uiGatheringID = static_cast<unsigned int>(rKey[0])
+        | static_cast<unsigned int>(rKey[1]) << 8 | static_cast<unsigned int>(rKey[2]) << 16
+        | static_cast<unsigned int>(rKey[3]) << 24;
 
     RootTransport::GetInstance()->GetRelay()->SetRelayGatheringID(uiGatheringID);
     SetRelayDataPacketSignatureKey(&rKey[RELAY_GATHERING_ID_KEY_OFFSET], RELAY_SIGNATURE_LENGTH);
@@ -110,7 +84,7 @@ void RelayMessage::CalcSignature(SignatureBytes* pSignature, RelayType type,
 
         if (type == RELAY_TYPE_DATA)
         {
-            uiSignedLength = std::min(uiPayloadLength, RELAY_SIGNED_DATA_LIMIT);
+            uiSignedLength = std::min(RELAY_SIGNED_DATA_LIMIT, uiPayloadLength);
         }
 
         md5.update(pPayload, uiSignedLength);
@@ -123,33 +97,25 @@ void RelayMessage::CalcSignature(SignatureBytes* pSignature, RelayType type,
 
 int RelayMessage::GetCurrentTimeStamp()
 {
-    int iTimeStamp = m_timeStampOrigin.m_uiBaseTimeStamp;
-    const long long iElapsed = static_cast<long long>(g_lastTime - m_timeStampOrigin.m_uiStartTime);
-
-    iTimeStamp += static_cast<int>(iElapsed / RELAY_TIME_STAMP_UNIT);
-    return iTimeStamp;
+    return m_timeStampOrigin.m_uiBaseTimeStamp
+        + static_cast<int>(static_cast<long long>(g_lastTime - m_timeStampOrigin.m_uiStartTime)
+            / RELAY_TIME_STAMP_UNIT);
 }
 
 bool RelayMessage::CheckTimeStamp(PacketIn* pPacket)
 {
-    if (pPacket->GetRelayHeader().m_uiGameServerID != RELAY_GAME_SERVER_ID_PING
-        && pPacket->GetRelayHeader().m_uiGameServerID != RELAY_GAME_SERVER_ID_BROADCAST)
+    const unsigned int uiGameServerID = pPacket->GetRelayHeader().m_uiGameServerID;
+
+    if (uiGameServerID != RELAY_GAME_SERVER_ID_PING
+        && uiGameServerID != RELAY_GAME_SERVER_ID_BROADCAST)
     {
-        const int iNow = GetCurrentTimeStamp();
-        const int iTimeStamp = pPacket->GetRelayHeader().m_uiTimeStamp;
-
-        const int iEarliest = iNow - RELAY_TIME_STAMP_TOLERANCE;
-        const int iLatest = iNow + RELAY_TIME_STAMP_TOLERANCE;
-
-        bool bInRange = false;
-
-        if (iTimeStamp == iEarliest || iTimeStamp - iEarliest > 0)
-        {
-            if (iLatest == iTimeStamp || iLatest - iTimeStamp > 0)
-            {
-                bInRange = true;
-            }
-        }
+        const unsigned int uiNow = GetCurrentTimeStamp();
+        const unsigned int uiTimeStamp = pPacket->GetRelayHeader().m_uiTimeStamp;
+        const unsigned int uiEarliest = uiNow - RELAY_TIME_STAMP_TOLERANCE;
+        const unsigned int uiLatest = uiNow + RELAY_TIME_STAMP_TOLERANCE;
+        const bool bInRange =
+            (uiTimeStamp == uiEarliest || static_cast<int>(uiTimeStamp - uiEarliest) > 0)
+            && (uiLatest == uiTimeStamp || static_cast<int>(uiLatest - uiTimeStamp) > 0);
 
         if (!bInRange)
         {
@@ -165,14 +131,11 @@ bool RelayMessage::CheckSignature(ByteStream* pStream, PacketIn* pPacket,
 {
     bool bValid = false;
     SignatureBytes signature;
-    signature.m_uiLength = 0;
-
-    Buffer* pBuffer = pStream->GetBuffer();
-    const unsigned char* pData = pBuffer->GetData();
 
     CalcSignature(&signature, static_cast<RelayType>(pPacket->GetRelayHeader().m_uiType & RELAY_TYPE_MASK),
-        pKey, uiKeyLength, pData, pData + RELAY_PAYLOAD_OFFSET,
-        pBuffer->GetLength() - RELAY_PAYLOAD_OFFSET);
+        pKey, uiKeyLength, pStream->GetBuffer()->GetData(),
+        pStream->GetBuffer()->GetData() + RELAY_PAYLOAD_OFFSET,
+        pStream->GetLength() - RELAY_PAYLOAD_OFFSET);
 
     if (pPacket->m_uiSignatureSize == signature.m_uiLength)
     {
@@ -182,10 +145,10 @@ bool RelayMessage::CheckSignature(ByteStream* pStream, PacketIn* pPacket,
     return bValid;
 }
 
-int RelayMessage::CalcSignature(PacketOut*, SignatureMethod, const Key*, Stream::Type,
+bool RelayMessage::CalcSignature(PacketOut*, SignatureMethod, const Key*, Stream::Type,
     TransportSignatureGenerator*, const SignatureBytes*, SignatureBytes&)
 {
-    return 0;
+    return false;
 }
 
 void RelayMessage::CalcSignature(Packet*, SignatureMethod, const Key*, Stream::Type,
@@ -212,128 +175,148 @@ bool RelayMessage::FastUnpack(ByteStream*, PacketIn*, unsigned int*)
 
 bool RelayMessage::UnpackPayload(const ByteStream* pStream, PacketIn* pPacket)
 {
-    Buffer* pPayload = pPacket->m_pPayload;
     Buffer* pBuffer = pStream->GetBuffer();
+    Buffer* pPayload = pPacket->m_pPayload;
 
     pPayload->Clear();
 
     const unsigned short uiLength =
         static_cast<unsigned short>(pBuffer->GetLength() - RELAY_PAYLOAD_OFFSET);
 
-    return uiLength == 0
-        || pPayload->AppendData(pBuffer->GetData() + pStream->GetPosition(), uiLength,
-               APPEND_AT_END);
+    if (uiLength != 0
+        && !pPayload->AppendData(pBuffer->GetData() + pStream->GetPosition(), uiLength,
+            APPEND_AT_END))
+    {
+        return false;
+    }
+
+    return true;
 }
 
 bool RelayMessage::UnpackWithoutValidation(ByteStream* pStream, PacketIn* pPacket,
     unsigned int* pConsumed, bool bUnpackPayload)
 {
-    if (pStream->GetBuffer()->GetLength() != 0)
+    if (pStream->GetBuffer()->GetLength() == 0)
     {
-        unsigned char uiProtocol = 0;
-        unsigned char uiMarker = 0;
-        unsigned short uiType = 0;
-        unsigned int uiSourceAddress = 0;
-        unsigned int uiDestinationAddress = 0;
-        unsigned short uiSourcePort = 0;
-        unsigned short uiDestinationPort = 0;
-        unsigned int uiGameServerID = 0;
-        unsigned int uiGatheringID = 0;
-        unsigned int uiTimeStamp = 0;
+        return false;
+    }
 
-        if (pStream->ExtractPrimitive(&uiProtocol) && uiProtocol == RELAY_PROTOCOL_BYTE
-            && pStream->ExtractPrimitive(&uiMarker))
+    unsigned char uiProtocol = 0;
+    unsigned char uiMarker = 0;
+    unsigned short uiSourcePort = 0;
+    unsigned short uiDestinationPort = 0;
+    unsigned short uiType = 0;
+    unsigned char uiPort;
+    unsigned int uiSourceAddress = 0;
+    unsigned int uiDestinationAddress = 0;
+    unsigned int uiGameServerID = 0;
+    unsigned int uiGatheringID = 0;
+    unsigned int uiTimeStamp = 0;
+
+    if (!pStream->ExtractPrimitive(&uiProtocol) || uiProtocol != RELAY_PROTOCOL_BYTE)
+    {
+        return false;
+    }
+
+    if (!pStream->ExtractPrimitive(&uiMarker))
+    {
+        return false;
+    }
+    pPacket->m_uiVersion = uiMarker;
+
+    if (!pStream->ExtractPrimitive(&uiType))
+    {
+        return false;
+    }
+    pPacket->GetRelayHeader().m_uiType = uiType;
+
+    if (!pStream->ExtractPrimitive(&uiSourceAddress))
+    {
+        return false;
+    }
+    pPacket->GetRelayHeader().m_uiSourceAddress = uiSourceAddress;
+
+    if (!pStream->ExtractPrimitive(&uiDestinationAddress))
+    {
+        return false;
+    }
+    pPacket->GetRelayHeader().m_uiDestinationAddress = uiDestinationAddress;
+
+    if (!pStream->ExtractPrimitive(&uiSourcePort))
+    {
+        return false;
+    }
+    pPacket->GetRelayHeader().m_uiSourcePort = uiSourcePort;
+
+    if (!pStream->ExtractPrimitive(&uiDestinationPort))
+    {
+        return false;
+    }
+    pPacket->GetRelayHeader().m_uiDestinationPort = uiDestinationPort;
+
+    if (!pStream->ExtractPrimitive(&uiGameServerID))
+    {
+        return false;
+    }
+    pPacket->GetRelayHeader().m_uiGameServerID = uiGameServerID ^ RELAY_GAME_SERVER_ID_MASK;
+
+    if (!pStream->ExtractPrimitive(&uiGatheringID))
+    {
+        return false;
+    }
+    pPacket->GetRelayHeader().m_uiGatheringID = uiGatheringID ^ RELAY_GATHERING_ID_MASK;
+
+    if (!pStream->ExtractPrimitive(&uiTimeStamp))
+    {
+        return false;
+    }
+    pPacket->GetRelayHeader().m_uiTimeStamp = uiTimeStamp;
+
+    if (!pStream->Extract(pPacket->m_aSignature, 1, RELAY_SIGNATURE_LENGTH))
+    {
+        return false;
+    }
+    pPacket->m_uiSignatureSize = RELAY_SIGNATURE_LENGTH;
+
+    if (pStream->GetPosition() != RELAY_PAYLOAD_OFFSET)
+    {
+        return false;
+    }
+
+    pPacket->m_pPayload->Clear();
+
+    Buffer* pBuffer = pStream->GetBuffer();
+
+    uiPort = RELAY_DEFAULT_PORT;
+    pPacket->m_uiSource = uiPort;
+    pPacket->m_uiDestination = uiPort;
+
+    const unsigned short uiPayloadLength =
+        static_cast<unsigned short>(pBuffer->GetLength() - RELAY_PAYLOAD_OFFSET);
+
+    if (uiPayloadLength != 0 && bUnpackPayload)
+    {
+        if (UnpackPayload(pStream, pPacket))
         {
-            pPacket->m_uiVersion = uiMarker;
+            const unsigned int uiPosition = pStream->GetPosition() + uiPayloadLength;
 
-            if (pStream->ExtractPrimitive(&uiType))
+            if (uiPosition <= pStream->GetBuffer()->GetLength())
             {
-                pPacket->GetRelayHeader().m_uiType = uiType;
-
-                if (pStream->ExtractPrimitive(&uiSourceAddress))
-                {
-                    pPacket->GetRelayHeader().m_uiSourceAddress = uiSourceAddress;
-
-                    if (pStream->ExtractPrimitive(&uiDestinationAddress))
-                    {
-                        pPacket->GetRelayHeader().m_uiDestinationAddress = uiDestinationAddress;
-
-                        if (pStream->ExtractPrimitive(&uiSourcePort))
-                        {
-                            pPacket->GetRelayHeader().m_uiSourcePort = uiSourcePort;
-
-                            if (pStream->ExtractPrimitive(&uiDestinationPort))
-                            {
-                                pPacket->GetRelayHeader().m_uiDestinationPort = uiDestinationPort;
-
-                                if (pStream->ExtractPrimitive(&uiGameServerID))
-                                {
-                                    pPacket->GetRelayHeader().m_uiGameServerID =
-                                        uiGameServerID ^ RELAY_GAME_SERVER_ID_MASK;
-
-                                    if (pStream->ExtractPrimitive(&uiGatheringID))
-                                    {
-                                        pPacket->GetRelayHeader().m_uiGatheringID =
-                                            uiGatheringID ^ RELAY_GATHERING_ID_MASK;
-
-                                        if (pStream->ExtractPrimitive(&uiTimeStamp))
-                                        {
-                                            pPacket->GetRelayHeader().m_uiTimeStamp = uiTimeStamp;
-
-                                            if (pStream->Extract(pPacket->m_aSignature, 1,
-                                                    RELAY_SIGNATURE_LENGTH)
-                                                && (pPacket->m_uiSignatureSize =
-                                                       RELAY_SIGNATURE_LENGTH,
-                                                    pStream->GetPosition()
-                                                        == RELAY_PAYLOAD_OFFSET))
-                                            {
-                                                Buffer* pBuffer = pStream->GetBuffer();
-
-                                                pPacket->m_pPayload->Clear();
-
-                                                pPacket->m_uiSource = RELAY_DEFAULT_PORT;
-                                                pPacket->m_uiDestination = RELAY_DEFAULT_PORT;
-
-                                                const unsigned short uiPayloadLength =
-                                                    static_cast<unsigned short>(
-                                                        pBuffer->GetLength()
-                                                        - RELAY_PAYLOAD_OFFSET);
-
-                                                if (uiPayloadLength != 0 && bUnpackPayload)
-                                                {
-                                                    if (!UnpackPayload(pStream, pPacket))
-                                                    {
-                                                        return false;
-                                                    }
-
-                                                    const unsigned int uiPosition =
-                                                        pStream->GetPosition() + uiPayloadLength;
-
-                                                    if (uiPosition <= pBuffer->GetLength())
-                                                    {
-                                                        pStream->SetPosition(uiPosition);
-                                                    }
-                                                }
-
-                                                if (pConsumed != 0)
-                                                {
-                                                    *pConsumed = pBuffer->GetLength();
-                                                }
-
-                                                return true;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+                pStream->SetPosition(uiPosition);
             }
+        }
+        else
+        {
+            return false;
         }
     }
 
-    return false;
+    if (pConsumed != 0)
+    {
+        *pConsumed = pBuffer->GetLength();
+    }
+
+    return true;
 }
 
 bool RelayMessage::UnpackPing(PacketIn* pPacket)
@@ -349,34 +332,38 @@ bool RelayMessage::UnpackPing(PacketIn* pPacket)
     unsigned int uiFirstValue;
     unsigned int uiSecondValue;
 
-    if (stream.ExtractPrimitive(&uiFirst))
+    if (!stream.ExtractPrimitive(&uiFirst))
     {
-        pPacket->GetRelayPingHeader().m_unknown0 = uiFirst;
-
-        if (stream.ExtractPrimitive(&uiSecond))
-        {
-            pPacket->GetRelayPingHeader().m_unknown1 = uiSecond;
-
-            if (stream.GetPosition() + RELAY_PING_PADDING <= stream.GetLength())
-            {
-                stream.SetPosition(stream.GetPosition() + RELAY_PING_PADDING);
-
-                if (stream.ExtractPrimitive(&uiFirstValue))
-                {
-                    pPacket->GetRelayPingHeader().m_unknown4 = uiFirstValue;
-
-                    if (stream.ExtractPrimitive(&uiSecondValue))
-                    {
-                        pPacket->GetRelayPingHeader().m_unknown8 = uiSecondValue;
-                        pPacket->m_pPayload->SetHeadShiftSize(RELAY_PING_HEADER_LENGTH);
-                        return true;
-                    }
-                }
-            }
-        }
+        return false;
     }
+    pPacket->GetRelayPingHeader().m_unknown0 = uiFirst;
 
-    return false;
+    if (!stream.ExtractPrimitive(&uiSecond))
+    {
+        return false;
+    }
+    pPacket->GetRelayPingHeader().m_unknown1 = uiSecond;
+
+    if (stream.GetPosition() + RELAY_PING_PADDING > stream.GetLength())
+    {
+        return false;
+    }
+    stream.SetPosition(stream.GetPosition() + RELAY_PING_PADDING);
+
+    if (!stream.ExtractPrimitive(&uiFirstValue))
+    {
+        return false;
+    }
+    pPacket->GetRelayPingHeader().m_unknown4 = uiFirstValue;
+
+    if (!stream.ExtractPrimitive(&uiSecondValue))
+    {
+        return false;
+    }
+    pPacket->GetRelayPingHeader().m_unknown8 = uiSecondValue;
+
+    pPacket->m_pPayload->SetHeadShiftSize(RELAY_PING_HEADER_LENGTH);
+    return true;
 }
 
 bool RelayMessage::Unpack(ByteStream* pStream, PacketIn* pPacket, const unsigned char* pKey,
@@ -406,26 +393,23 @@ bool RelayMessage::PackPing(PacketOut* pPacket)
 {
     Buffer* pPayload = pPacket->m_pPayload;
 
-    if (pPayload != 0 && pPayload->GetLength() != 0)
-    {
-        if (pPayload->GetHeadShiftSize() == RELAY_PING_HEADER_LENGTH)
-        {
-            pPayload->SetHeadShiftSize(0);
-        }
-        else
-        {
-            Buffer* pBuffer = new Buffer(pPayload->GetLength() + RELAY_PING_HEADER_LENGTH, 0);
-
-            pBuffer->SetLength(RELAY_PING_HEADER_LENGTH);
-            pBuffer->AppendData(pPayload->GetData(), pPayload->GetLength(), APPEND_AT_END);
-            pPacket->SetPayload(pBuffer);
-        }
-    }
-    else
+    if (pPayload == 0 || pPayload->GetLength() == 0)
     {
         Buffer* pBuffer = new Buffer(RELAY_PING_HEADER_LENGTH, 0);
 
         pBuffer->SetLength(RELAY_PING_HEADER_LENGTH);
+        pPacket->SetPayload(pBuffer);
+    }
+    else if (pPayload->GetHeadShiftSize() == RELAY_PING_HEADER_LENGTH)
+    {
+        pPayload->SetHeadShiftSize(0);
+    }
+    else
+    {
+        Buffer* pBuffer = new Buffer(pPayload->GetLength() + RELAY_PING_HEADER_LENGTH, 0);
+
+        pBuffer->SetLength(RELAY_PING_HEADER_LENGTH);
+        pBuffer->AppendData(pPayload->GetData(), pPayload->GetLength(), APPEND_AT_END);
         pPacket->SetPayload(pBuffer);
     }
 
@@ -435,17 +419,17 @@ bool RelayMessage::PackPing(PacketOut* pPacket)
 
     ByteStream stream(pPacket->m_pPayload);
 
-    AppendByte(stream.GetBuffer(), pPacket->GetRelayPingHeader().m_unknown0);
-    AppendByte(stream.GetBuffer(), pPacket->GetRelayPingHeader().m_unknown1);
+    stream.AppendPrimitive(pPacket->GetRelayPingHeader().m_unknown0);
+    stream.AppendPrimitive(pPacket->GetRelayPingHeader().m_unknown1);
 
     for (int i = 0; i < RELAY_PING_PADDING; ++i)
     {
-        unsigned char uiPadding = 0;
-        stream.GetBuffer()->AppendData(&uiPadding, sizeof(uiPadding), APPEND_AT_END);
+        const unsigned char uiPadding = 0;
+        stream.AppendPrimitive(uiPadding);
     }
 
-    AppendInt(stream.GetBuffer(), pPacket->GetRelayPingHeader().m_unknown4);
-    AppendInt(stream.GetBuffer(), pPacket->GetRelayPingHeader().m_unknown8);
+    stream.AppendPrimitive(pPacket->GetRelayPingHeader().m_unknown4);
+    stream.AppendPrimitive(pPacket->GetRelayPingHeader().m_unknown8);
     pPacket->m_pPayload->SetLength(uiLength);
     return true;
 }
@@ -454,21 +438,21 @@ bool RelayMessage::Pack(PacketOut* pPacket, ByteStream* pStream, const unsigned 
     unsigned int uiKeyLength)
 {
     pStream->Clear();
-    AppendByte(pStream->GetBuffer(), RELAY_PROTOCOL_BYTE);
+    pStream->AppendPrimitive(RELAY_PROTOCOL_BYTE);
 
     const unsigned char uiMarker = pPacket->m_uiVersion;
 
     if (uiMarker == RELAY_OUTGOING_BYTE)
     {
-        AppendByte(pStream->GetBuffer(), uiMarker);
-        AppendShort(pStream->GetBuffer(), pPacket->GetRelayHeader().m_uiType);
-        AppendInt(pStream->GetBuffer(), pPacket->GetRelayHeader().m_uiSourceAddress);
-        AppendInt(pStream->GetBuffer(), pPacket->GetRelayHeader().m_uiDestinationAddress);
-        AppendShort(pStream->GetBuffer(), pPacket->GetRelayHeader().m_uiSourcePort);
-        AppendShort(pStream->GetBuffer(), pPacket->GetRelayHeader().m_uiDestinationPort);
-        AppendInt(pStream->GetBuffer(), pPacket->GetRelayHeader().m_uiGameServerID ^ RELAY_GAME_SERVER_ID_MASK);
-        AppendInt(pStream->GetBuffer(), pPacket->GetRelayHeader().m_uiGatheringID ^ RELAY_GATHERING_ID_MASK);
-        AppendInt(pStream->GetBuffer(), pPacket->GetRelayHeader().m_uiTimeStamp);
+        pStream->AppendPrimitive(uiMarker);
+        pStream->AppendPrimitive(pPacket->GetRelayHeader().m_uiType);
+        pStream->AppendPrimitive(pPacket->GetRelayHeader().m_uiSourceAddress);
+        pStream->AppendPrimitive(pPacket->GetRelayHeader().m_uiDestinationAddress);
+        pStream->AppendPrimitive(pPacket->GetRelayHeader().m_uiSourcePort);
+        pStream->AppendPrimitive(pPacket->GetRelayHeader().m_uiDestinationPort);
+        pStream->AppendPrimitive(pPacket->GetRelayHeader().m_uiGameServerID ^ RELAY_GAME_SERVER_ID_MASK);
+        pStream->AppendPrimitive(pPacket->GetRelayHeader().m_uiGatheringID ^ RELAY_GATHERING_ID_MASK);
+        pStream->AppendPrimitive(pPacket->GetRelayHeader().m_uiTimeStamp);
 
         SignatureBytes signature;
         signature.m_uiLength = 0;
@@ -478,15 +462,15 @@ bool RelayMessage::Pack(PacketOut* pPacket, ByteStream* pStream, const unsigned 
         const unsigned char* pData = pStream->GetBuffer()->GetData();
         bool bAppended;
 
-        if (pPayload != 0)
+        if (pPayload == 0)
         {
-            CalcSignature(&signature, type, pKey, uiKeyLength, pData, pPayload->GetData(),
-                pPayload->GetLength());
+            CalcSignature(&signature, type, pKey, uiKeyLength, pData, 0, 0);
             bAppended = pStream->AppendRaw(signature.m_bytes, signature.m_uiLength);
         }
         else
         {
-            CalcSignature(&signature, type, pKey, uiKeyLength, pData, 0, 0);
+            CalcSignature(&signature, type, pKey, uiKeyLength, pData, pPayload->GetData(),
+                pPayload->GetLength());
             bAppended = pStream->AppendRaw(signature.m_bytes, signature.m_uiLength);
         }
 
@@ -506,12 +490,14 @@ bool RelayMessage::Pack(PacketOut* pPacket, ByteStream* pStream, const unsigned 
 
 bool RelayMessage::Pack(PacketOut* pPacket, ByteStream* pStream)
 {
-    if ((pPacket->GetRelayHeader().m_uiType & RELAY_TYPE_MASK) == RELAY_TYPE_PING && !PackPing(pPacket))
+    RelayProtocolHeader& rHeader = pPacket->GetRelayHeader();
+
+    if ((rHeader.m_uiType & RELAY_TYPE_MASK) == RELAY_TYPE_PING && !PackPing(pPacket))
     {
         return false;
     }
 
-    pPacket->GetRelayHeader().m_uiTimeStamp = GetCurrentTimeStamp();
+    rHeader.m_uiTimeStamp = GetCurrentTimeStamp();
     return Pack(pPacket, pStream, m_signatureKey.GetData(), m_signatureKey.GetLength());
 }
 

@@ -1,9 +1,8 @@
 #include "nn/nex/InterfaceInfo.hpp"
 
-#include <arpa/inet.h>
-
 #include <cwchar>
 
+#include "nn/nex/BerkeleySocketDriver.hpp"
 #include "nn/nex/StringConversion.hpp"
 
 namespace nn
@@ -47,7 +46,7 @@ bool InterfaceInfo::Addr2Str(unsigned int uiAddress, wchar_t* pBuffer, unsigned 
     return true;
 }
 
-unsigned int InterfaceInfo::GetAddress() const
+unsigned int InterfaceInfo::GetAddress()
 {
     return m_uiAddress;
 }
@@ -57,7 +56,7 @@ bool InterfaceInfo::GetAddress(wchar_t* pBuffer, unsigned int uiSize)
     return Addr2Str(m_uiAddress, pBuffer, uiSize);
 }
 
-unsigned int InterfaceInfo::GetBroadcastAddress() const
+unsigned int InterfaceInfo::GetBroadcastAddress()
 {
     return m_uiBroadcastAddress;
 }
@@ -74,9 +73,9 @@ bool InterfaceInfo::GetMask(wchar_t* pBuffer, unsigned int uiSize)
 
 bool InterfaceInfo::GetName(wchar_t* pBuffer, unsigned int uiSize)
 {
-    if (!m_name)
+    if (m_name == 0)
     {
-        return m_name;
+        return false;
     }
 
     std::wcsncpy(pBuffer, m_name, uiSize);
@@ -84,7 +83,7 @@ bool InterfaceInfo::GetName(wchar_t* pBuffer, unsigned int uiSize)
     return true;
 }
 
-unsigned int InterfaceInfo::GetFlags() const
+unsigned int InterfaceInfo::GetFlags()
 {
     return m_uiFlags;
 }
@@ -100,12 +99,12 @@ bool InterfaceInfo::GetFlags(wchar_t* pBuffer, unsigned int uiSize)
 
     if ((m_uiFlags & FLAG_LOOPBACK) != 0)
     {
-        std::wcscat(flags, L"LOOPBACK");
+        std::wcscat(flags, L"LOOPBACK ");
     }
 
     if ((m_uiFlags & FLAG_BROADCAST) != 0)
     {
-        std::wcscat(flags, L"BROADCAST");
+        std::wcscat(flags, L"BROADCAST ");
     }
 
     std::wcsncpy(pBuffer, flags, uiSize);

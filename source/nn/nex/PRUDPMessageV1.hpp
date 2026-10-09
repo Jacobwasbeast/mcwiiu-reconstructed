@@ -17,7 +17,7 @@ public:
     PRUDPMessageV1();
     virtual ~PRUDPMessageV1();
 
-    virtual int CalcSignature(PacketOut* pPacket, SignatureMethod method, const Key* pKey,
+    virtual bool CalcSignature(PacketOut* pPacket, SignatureMethod method, const Key* pKey,
         Stream::Type type, TransportSignatureGenerator* pGenerator,
         const SignatureBytes* pSignature, SignatureBytes& rResult);
     virtual void CalcSignature(Packet* pPacket, SignatureMethod method, const Key* pKey,

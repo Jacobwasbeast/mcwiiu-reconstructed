@@ -30,14 +30,13 @@ Key::Key(const String& rString)
 {
     unsigned int uiLength = rString.GetLength() >> 1;
     m_content.resize(uiLength);
-    const wchar_t* pChars = rString;
     for (unsigned int i = 0; i < uiLength; ++i)
     {
-        unsigned int uiHigh = pChars[i * 2];
-        unsigned int uiLow = pChars[i * 2 + 1];
-        unsigned int uiHighValue = uiHigh - '0' < 10 ? uiHigh - '0' : uiHigh - 'W';
-        unsigned int uiLowValue = uiLow - '0' < 10 ? uiLow - '0' : uiLow - 'W';
-        m_content[i] = static_cast<unsigned char>((uiHighValue << 4) | uiLowValue);
+        unsigned int cHigh = static_cast<const wchar_t*>(rString)[i * 2];
+        unsigned int cLow = static_cast<const wchar_t*>(rString)[i * 2 + 1];
+        unsigned int uiHigh = (cHigh >= '0' && cHigh <= '9') ? cHigh - '0' : cHigh - 'a' + 10;
+        unsigned int uiLow = (cLow >= '0' && cLow <= '9') ? cLow - '0' : cLow - 'a' + 10;
+        m_content[i] = static_cast<unsigned char>((uiHigh << 4) | uiLow);
     }
 }
 
@@ -86,19 +85,17 @@ unsigned char* Key::PrepareContentPtr(unsigned int uiLength)
 
 void Key::ExtractToString(String* pString) const
 {
-    pString->Reserve(GetLength() * 2 + 1);
-    unsigned int i = 0;
-    for (; i < GetLength(); ++i)
+    String& string = *pString;
+    string.Reserve(GetLength() * 2 + 1);
+    unsigned int i;
+    for (i = 0; i < GetLength(); ++i)
     {
-        wchar_t* pChars = *pString;
-        unsigned char uiByte = m_content[i];
-        unsigned int uiHigh = uiByte >> 4;
-        unsigned int uiLow = uiByte & 0xF;
-        pChars[i * 2] = static_cast<wchar_t>(uiHigh + (uiHigh < 10 ? '0' : 'W'));
-        pChars[i * 2 + 1] = static_cast<wchar_t>(uiLow + (uiLow < 10 ? '0' : 'W'));
+        unsigned char uiHigh = (m_content[i] >> 4) & 0x0F;
+        unsigned char uiLow = m_content[i] & 0x0F;
+        string[i * 2] = (uiHigh <= 9 ? '0' : 'a' - 10) + uiHigh;
+        string[i * 2 + 1] = (uiLow <= 9 ? '0' : 'a' - 10) + uiLow;
     }
-    wchar_t* pTerminator = *pString;
-    pTerminator[i * 2] = 0;
+    string[i * 2] = 0;
 }
 
 String Key::ToString() const

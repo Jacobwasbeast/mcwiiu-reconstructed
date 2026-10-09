@@ -40,13 +40,8 @@ public:
     {
         StringStream stream;
 
-        {
-            const String baseTraceInfo = Base::GetTraceInfo();
-            stream << static_cast<const wchar_t*>(baseTraceInfo);
-        }
-
-        stream << L"\tArgument: ";
-        stream.StreamNumber(m_argument);
+        stream << Base::GetTraceInfo();
+        (stream << L"\tArgument: ").StreamNumber(m_argument);
 
         return String(stream.GetBuffer());
     }

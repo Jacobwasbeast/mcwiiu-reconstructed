@@ -1,6 +1,7 @@
 #include "nn/nex/RVClientCore.hpp"
 
 #include "nn/nex/DateTime.hpp"
+#include "nn/nex/GlobalNotificationEventManager.hpp"
 #include "nn/nex/ServerProtocol.hpp"
 #include "nn/nex/Time.hpp"
 
@@ -13,23 +14,24 @@ RVClientCore* RVClientCore::s_pInstance = 0;
 
 RVClientCore::RVClientCore()
     : RefCountedObject()
-    , m_pProtocolRegistry(0)
-    , m_instanceControl(0x0c)
-    , m_pGlobalNotificationEventManager(0)
+    , m_instanceControl(ClassID)
     , m_serverProtocols()
     , m_uiGameServerTimeBase(0)
     , m_iGameServerEpochTime(0)
 {
     m_instanceControl.SetDelegatorInstance(this);
+    Core::AcquireInstance();
     m_pProtocolRegistry = new ProtocolRegistry();
+    m_pGlobalNotificationEventManager = new GlobalNotificationEventManager();
+    m_pGlobalNotificationEventManager->SetFlag(NOTIFICATION_PROTOCOL_FLAG);
+    RegisterServerProtocol(NOTIFICATION_EVENT_PROTOCOL_ID, m_pGlobalNotificationEventManager);
 }
 
 RVClientCore::~RVClientCore()
 {
-    m_serverProtocols.clear();
     delete m_pProtocolRegistry;
-    m_pProtocolRegistry = 0;
-    s_pInstance = 0;
+    delete m_pGlobalNotificationEventManager;
+    Core::ReleaseInstance();
 }
 
 RVClientCore* RVClientCore::AcquireInstance()
@@ -52,6 +54,16 @@ unsigned int RVClientCore::RegisterServerProtocol(unsigned short uiProtocolID,
         return 0;
     m_serverProtocols[uiProtocolID] = pProtocol;
     return 1;
+}
+
+void RVClientCore::RegisterGlobalNotificationEventManager(NotificationEventManager* pManager)
+{
+    m_pGlobalNotificationEventManager->RegisterGlobalNotificationEventManager(pManager);
+}
+
+void RVClientCore::UnregisterGlobalNotificationEventManager(NotificationEventManager* pManager)
+{
+    m_pGlobalNotificationEventManager->UnregisterGlobalNotificationEventManager(pManager);
 }
 
 unsigned int RVClientCore::UnregisterServerProtocol(unsigned short uiProtocolID)

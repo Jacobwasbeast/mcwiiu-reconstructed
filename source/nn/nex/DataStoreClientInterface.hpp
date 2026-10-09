@@ -4,11 +4,9 @@
 #include <stdint.h>
 #include <utility>
 
-#include "nn/nex/DataStoreMetaInfo.hpp"
 #include "nn/nex/DataStoreRatingInfo.hpp"
 #include "nn/nex/DataStoreRatingInfoWithSlot.hpp"
-#include "nn/nex/DataStoreSearchParam.hpp"
-#include "nn/nex/DataStoreSearchResult.hpp"
+#include "nn/nex/qMap.hpp"
 #include "nn/nex/qResult.hpp"
 #include "nn/nex/qVector.hpp"
 
@@ -18,190 +16,125 @@ namespace nex
 {
 
 class ProtocolCallContext;
+class String;
 class DataStorePrepareGetParam;
 class DataStorePrepareGetParamV1;
-class DataStoreReqGetInfo;
-class DataStoreReqGetInfoV1;
-class DataStoreReqGetAdditionalMeta;
 class DataStorePreparePostParam;
 class DataStorePreparePostParamV1;
-class DataStoreReqPostInfo;
-class DataStoreReqPostInfoV1;
-class DataStoreCompletePostParam;
-class DataStoreCompletePostParamV1;
 class DataStorePrepareUpdateParam;
-class DataStoreReqUpdateInfo;
-class DataStoreCompleteUpdateParam;
-class DataStoreDeleteParam;
-class DataStoreChangeMetaParam;
-class DataStoreGetMetaParam;
-class DataStoreGetNotificationUrlParam;
-class DataStoreReqGetNotificationUrlInfo;
-class DataStoreGetNewArrivedNotificationsParam;
-class DataStoreNotification;
-class DataStoreNotificationV1;
+class DataStoreReqGetInfo;
 class DataStoreRatingTarget;
-class DataStoreRateObjectParam;
-class DataStoreGetSpecificMetaParam;
-class DataStoreGetSpecificMetaParamV1;
-class DataStoreSpecificMetaInfo;
-class DataStoreSpecificMetaInfoV1;
-class DataStoreTouchObjectParam;
 class DataStoreRatingLog;
-class DataStorePersistenceInfo;
-class DataStorePasswordInfo;
+class DataStorePostObjectEventListener;
+
+template <typename TDataId>
+class DataStoreGetObjectEventListenerTemplate;
+
+template <typename TDataId>
+class DataStoreReceiveNewArrivedObjectsEventListenerTemplate;
 
 class DataStoreClientInterface
 {
 public:
     virtual ~DataStoreClientInterface();
 
-    virtual void PrepareGetObject(ProtocolCallContext* pContext,
-                                  const DataStorePrepareGetParam& rParam,
-                                  DataStoreReqGetInfo* pReqGetInfo) = 0;
-    virtual void PrepareGetObject(ProtocolCallContext* pContext,
-                                  const DataStorePrepareGetParamV1& rParam,
-                                  DataStoreReqGetInfoV1* pReqGetInfo) = 0;
-    virtual void PrepareGetObjectOrMetaBinary(ProtocolCallContext* pContext,
-                                              const DataStorePrepareGetParam& rParam,
-                                              DataStoreReqGetInfo* pReqGetInfo,
-                                              DataStoreReqGetAdditionalMeta* pAdditionalMeta) = 0;
-    virtual void PrepareGetObjectOrMetaBinary(ProtocolCallContext* pContext,
-                                              const DataStorePrepareGetParamV1& rParam,
-                                              DataStoreReqGetInfoV1* pReqGetInfo,
-                                              DataStoreReqGetAdditionalMeta* pAdditionalMeta) = 0;
-    virtual void PreparePostObject(ProtocolCallContext* pContext,
-                                   const DataStorePreparePostParam& rParam,
-                                   DataStoreReqPostInfo* pReqPostInfo) = 0;
-    virtual void PreparePostObject(ProtocolCallContext* pContext,
-                                   const DataStorePreparePostParamV1& rParam,
-                                   DataStoreReqPostInfoV1* pReqPostInfo) = 0;
-    virtual void CompletePostObject(ProtocolCallContext* pContext,
-                                    const DataStoreCompletePostParam& rParam) = 0;
-    virtual void CompletePostObject(ProtocolCallContext* pContext,
-                                    const DataStoreCompletePostParamV1& rParam) = 0;
-    virtual void CompleteSuspendedPostObject(ProtocolCallContext* pContext,
-                                             const qVector<uint64_t>& rDataIds) = 0;
-    virtual void PrepareUpdateObject(ProtocolCallContext* pContext,
-                                     const DataStorePrepareUpdateParam& rParam,
-                                     DataStoreReqUpdateInfo* pReqUpdateInfo) = 0;
-    virtual void CompleteUpdateObject(ProtocolCallContext* pContext,
-                                      const DataStoreCompleteUpdateParam& rParam) = 0;
-    virtual void DeleteObject(ProtocolCallContext* pContext,
-                              const DataStoreDeleteParam& rParam) = 0;
-    virtual void ChangeMeta(ProtocolCallContext* pContext,
-                            const DataStoreChangeMetaParam& rParam) = 0;
-    virtual void GetMeta(ProtocolCallContext* pContext,
-                         const DataStoreGetMetaParam& rParam,
-                         DataStoreMetaInfo* pMetaInfo) = 0;
-    virtual void GetMeta(ProtocolCallContext* pContext,
-                         const qVector<uint64_t>& rDataIds,
-                         const DataStoreGetMetaParam& rParam,
-                         qVector<DataStoreMetaInfo>* pMetaInfos,
-                         qVector<qResult>* pResults) = 0;
-    virtual void GetMeta(ProtocolCallContext* pContext,
-                         const qVector<DataStoreGetMetaParam>& rParams,
-                         qVector<DataStoreMetaInfo>* pMetaInfos,
-                         qVector<qResult>* pResults) = 0;
-    virtual void SearchObject(ProtocolCallContext* pContext,
-                              const DataStoreSearchParam& rParam,
-                              DataStoreSearchResult* pSearchResult) = 0;
-    virtual void SearchObjectLight(ProtocolCallContext* pContext,
-                                   const DataStoreSearchParam& rParam,
-                                   DataStoreSearchResult* pSearchResult) = 0;
-    virtual void GetNotificationUrl(ProtocolCallContext* pContext,
-                                    const DataStoreGetNotificationUrlParam& rParam,
-                                    DataStoreReqGetNotificationUrlInfo* pInfo) = 0;
-    virtual void GetNewArrivedNotifications(
-        ProtocolCallContext* pContext,
-        const DataStoreGetNewArrivedNotificationsParam& rParam,
-        qVector<DataStoreNotification>* pNotifications,
-        bool* pbHasNext) = 0;
-    virtual void GetNewArrivedNotifications(
-        ProtocolCallContext* pContext,
-        const DataStoreGetNewArrivedNotificationsParam& rParam,
-        qVector<DataStoreNotificationV1>* pNotifications,
-        bool* pbHasNext) = 0;
-    virtual void RateObject(ProtocolCallContext* pContext,
-                            const DataStoreRatingTarget& rTarget,
-                            const DataStoreRateObjectParam& rParam,
-                            DataStoreRatingInfo* pRatingInfo) = 0;
-    virtual void GetRating(ProtocolCallContext* pContext,
-                           const DataStoreRatingTarget& rTarget,
-                           DataStoreRatingInfo* pRatingInfo,
-                           uint64_t uiAccessPassword) = 0;
-    virtual void GetRating(ProtocolCallContext* pContext,
-                           const qVector<uint64_t>& rDataIds,
-                           qVector<qVector<DataStoreRatingInfoWithSlot> >* pRatingInfos,
-                           qVector<qResult>* pResults,
-                           uint64_t uiAccessPassword) = 0;
-    virtual void ResetRating(ProtocolCallContext* pContext,
-                             const DataStoreRatingTarget& rTarget,
-                             uint64_t uiUpdatePassword) = 0;
-    virtual void ResetRating(ProtocolCallContext* pContext,
-                             const uint64_t& rDataId) = 0;
-    virtual void ResetRating(ProtocolCallContext* pContext,
-                             const qVector<uint64_t>& rDataIds,
-                             bool bTransactional,
-                             qVector<qResult>* pResults) = 0;
-    virtual void GetSpecificMeta(ProtocolCallContext* pContext,
-                                 const DataStoreGetSpecificMetaParam& rParam,
-                                 qVector<DataStoreSpecificMetaInfo>* pMetaInfos) = 0;
-    virtual void GetSpecificMeta(ProtocolCallContext* pContext,
-                                 const DataStoreGetSpecificMetaParamV1& rParam,
-                                 qVector<DataStoreSpecificMetaInfoV1>* pMetaInfos) = 0;
-    virtual void PostMetaBinary(ProtocolCallContext* pContext,
-                                const DataStorePreparePostParam& rParam,
-                                uint64_t* pDataId) = 0;
-    virtual void PostMetaBinaryWithDataId(ProtocolCallContext* pContext,
-                                          uint64_t uiDataId,
-                                          const DataStorePreparePostParam& rParam) = 0;
-    virtual void PostMetaBinaryWithDataIds(ProtocolCallContext* pContext,
-                                           const qVector<uint64_t>& rDataIds,
-                                           const DataStorePreparePostParam& rParam,
-                                           bool bTransactional,
-                                           qVector<qResult>* pResults) = 0;
-    virtual void PostMetaBinariesWithDataId(
+    virtual bool GetObject(ProtocolCallContext* pContext,
+                           const DataStorePrepareGetParam& rParam,
+                           DataStoreGetObjectEventListenerTemplate<uint64_t>* pListener) = 0;
+    virtual bool GetObject(ProtocolCallContext* pContext,
+                           const DataStorePrepareGetParam& rParam,
+                           void* pBuffer,
+                           uint32_t uiBufferSize,
+                           uint32_t* pReceivedSize) = 0;
+    virtual bool GetObjectOrMetaBinary(ProtocolCallContext* pContext,
+                                       const DataStorePrepareGetParam& rParam,
+                                       DataStoreGetObjectEventListenerTemplate<uint64_t>* pListener) = 0;
+    virtual bool GetObjectV1(ProtocolCallContext* pContext,
+                             const DataStorePrepareGetParamV1& rParam,
+                             DataStoreGetObjectEventListenerTemplate<uint32_t>* pListener) = 0;
+    virtual bool PostObject(ProtocolCallContext* pContext,
+                            const DataStorePreparePostParam& rParam,
+                            uint64_t* pDataId,
+                            DataStorePostObjectEventListener* pListener) = 0;
+    virtual bool PostObject(ProtocolCallContext* pContext,
+                            const DataStorePreparePostParam& rParam,
+                            uint64_t* pDataId,
+                            const void* pData,
+                            bool bCopyData) = 0;
+    virtual bool PostObject(ProtocolCallContext* pContext,
+                            const DataStorePreparePostParam& rParam,
+                            uint64_t* pDataId) = 0;
+    virtual bool PostObject(ProtocolCallContext* pContext,
+                            uint64_t uiDataId,
+                            const DataStorePreparePostParam& rParam) = 0;
+    virtual bool PostObject(
         ProtocolCallContext* pContext,
         const qVector<std::pair<uint64_t, DataStorePreparePostParam> >& rParams,
         bool bTransactional,
         qVector<qResult>* pResults) = 0;
-    virtual void TouchObject(ProtocolCallContext* pContext,
-                             const DataStoreTouchObjectParam& rParam) = 0;
-    virtual void GetRatingWithLog(ProtocolCallContext* pContext,
-                                  const DataStoreRatingTarget& rTarget,
-                                  DataStoreRatingInfo* pRatingInfo,
-                                  DataStoreRatingLog* pRatingLog,
-                                  uint64_t uiAccessPassword) = 0;
-    virtual void GetPersistenceInfo(ProtocolCallContext* pContext,
-                                    uint32_t uiOwnerId,
-                                    uint16_t uiPersistenceSlotId,
-                                    DataStorePersistenceInfo* pInfo) = 0;
-    virtual void GetPersistenceInfo(ProtocolCallContext* pContext,
-                                    uint32_t uiOwnerId,
-                                    qVector<uint16_t> persistenceSlotIds,
-                                    qVector<DataStorePersistenceInfo>* pInfos,
-                                    qVector<qResult>* pResults) = 0;
-    virtual void PerpetuateObject(ProtocolCallContext* pContext,
-                                  uint16_t uiPersistenceSlotId,
-                                  uint64_t uiDataId,
-                                  bool bDeleteLastObject) = 0;
-    virtual void UnperpetuateObject(ProtocolCallContext* pContext,
-                                    uint16_t uiPersistenceSlotId,
-                                    bool bDeleteLastObject) = 0;
-    virtual void GetPasswordInfo(ProtocolCallContext* pContext,
-                                 uint64_t uiDataId,
-                                 DataStorePasswordInfo* pPasswordInfo) = 0;
-    virtual void GetPasswordInfo(ProtocolCallContext* pContext,
-                                 const qVector<uint64_t>& rDataIds,
-                                 qVector<DataStorePasswordInfo>* pPasswordInfos,
-                                 qVector<qResult>* pResults) = 0;
-    virtual void GetObjectInfo(ProtocolCallContext* pContext,
-                               const qVector<uint64_t>& rDataIds,
-                               qVector<DataStoreReqGetInfo>* pReqGetInfos,
-                               qVector<qResult>* pResults) = 0;
-    virtual uint32_t GetMyPrincipalId() const = 0;
-    virtual bool IsCredentialsNeeded() const = 0;
+    virtual bool PostObjectV1(ProtocolCallContext* pContext,
+                              const DataStorePreparePostParamV1& rParam,
+                              uint32_t* pDataId,
+                              DataStorePostObjectEventListener* pListener) = 0;
+    virtual bool UpdateObject(ProtocolCallContext* pContext,
+                              const DataStorePrepareUpdateParam& rParam,
+                              DataStorePostObjectEventListener* pListener) = 0;
+    virtual bool UpdateObject(ProtocolCallContext* pContext,
+                              const DataStorePrepareUpdateParam& rParam,
+                              const void* pData,
+                              bool bCopyData) = 0;
+    virtual bool CheckNotification(ProtocolCallContext* pContext,
+                                   const String& rNotificationUrl,
+                                   String* pNextNotificationUrl,
+                                   uint64_t uiLastDataId,
+                                   uint64_t* pDataIds,
+                                   uint32_t uiDataIdCapacity,
+                                   uint32_t* pDataIdCount,
+                                   uint32_t uiTimeout,
+                                   bool* pbHasNext,
+                                   bool bWait) = 0;
+    virtual qResult ReceiveNewArrivedObjects(
+        ProtocolCallContext* pContext,
+        const unsigned char* pNotificationBuffer,
+        qVector<DataStoreGetObjectEventListenerTemplate<uint64_t>*> getObjectListeners,
+        DataStoreReceiveNewArrivedObjectsEventListenerTemplate<uint64_t>* pListener,
+        bool* pbHasNext) = 0;
+    virtual qResult ReceiveNewArrivedObjectsV1(
+        ProtocolCallContext* pContext,
+        const unsigned char* pNotificationBuffer,
+        qVector<DataStoreGetObjectEventListenerTemplate<uint32_t>*> getObjectListeners,
+        DataStoreReceiveNewArrivedObjectsEventListenerTemplate<uint32_t>* pListener,
+        bool* pbHasNext) = 0;
+    virtual bool GetRating(ProtocolCallContext* pContext,
+                           const DataStoreRatingTarget& rTarget,
+                           DataStoreRatingInfo* pRatingInfo,
+                           uint64_t uiAccessPassword) = 0;
+    virtual bool GetRating(ProtocolCallContext* pContext,
+                           const qVector<uint64_t>& rDataIds,
+                           qVector<qVector<DataStoreRatingInfoWithSlot> >* pRatingInfos,
+                           qVector<qResult>* pResults,
+                           uint64_t uiAccessPassword) = 0;
+    virtual bool GetRating(ProtocolCallContext* pContext,
+                           uint64_t uiDataId,
+                           qMap<signed char, DataStoreRatingInfo>* pRatings,
+                           uint64_t uiAccessPassword) = 0;
+    virtual bool GetRating(ProtocolCallContext* pContext,
+                           const qVector<uint64_t>& rDataIds,
+                           qVector<qMap<signed char, DataStoreRatingInfo> >* pRatings,
+                           qVector<qResult>* pResults) = 0;
+    virtual bool GetRating(ProtocolCallContext* pContext,
+                           const DataStoreRatingTarget& rTarget,
+                           DataStoreRatingInfo* pRatingInfo,
+                           DataStoreRatingLog* pRatingLog,
+                           uint64_t uiAccessPassword) = 0;
+    virtual bool GetObjectByInfo(ProtocolCallContext* pContext,
+                                 const DataStoreReqGetInfo& rReqGetInfo,
+                                 DataStoreGetObjectEventListenerTemplate<uint64_t>* pListener) = 0;
+    virtual bool GetObjectByInfo(ProtocolCallContext* pContext,
+                                 const DataStoreReqGetInfo& rReqGetInfo,
+                                 void* pBuffer,
+                                 uint32_t uiBufferSize,
+                                 uint32_t* pReceivedSize) = 0;
 };
 
 }

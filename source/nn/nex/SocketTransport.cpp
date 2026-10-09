@@ -49,10 +49,6 @@ SocketTransport::TransportJob::TransportJob(SocketTransport* pTransport)
 {
 }
 
-SocketTransport::TransportJob::~TransportJob()
-{
-}
-
 void SocketTransport::TransportJob::Execute()
 {
     m_pTransport->TransportJobMethod();
@@ -72,7 +68,7 @@ SocketTransport::SocketTransport()
     else
     {
         m_pOutgoingQueue = new ProtectedPacketQueue(L"UDP Outgoing Queue Size",
-            &Core::GetInstance()->GetScheduler()->GetCriticalSection());
+            &Scheduler::GetInstance()->GetCriticalSection());
     }
     m_pJob = 0;
     m_pBufferThread = 0;
@@ -111,12 +107,11 @@ void SocketTransport::StartEventListener()
 {
     if (m_pJob == 0)
     {
-        Core* pCore = Core::GetInstance();
-        if (pCore != 0 && pCore->GetScheduler() != 0)
+        if (Scheduler::GetInstance() != 0)
         {
             m_pJob = new TransportJob(this);
             m_pJob->AddRef();
-            Core::GetInstance()->GetScheduler()->RegisterSpecialDispatchJob(m_pJob, false);
+            Scheduler::GetInstance()->RegisterSpecialDispatchJob(m_pJob, false);
         }
     }
     if (g_transportThreadEnabled)
@@ -154,10 +149,9 @@ bool SocketTransport::TerminateTransport()
     }
     if (m_pJob != 0)
     {
-        Core* pCore = Core::GetInstance();
-        if (pCore != 0 && pCore->GetScheduler() != 0)
+        if (Scheduler::GetInstance() != 0)
         {
-            Core::GetInstance()->GetScheduler()->UnregisterSpecialDispatchJob(m_pJob);
+            Scheduler::GetInstance()->UnregisterSpecialDispatchJob(m_pJob);
             m_pJob->ReleaseRef();
             m_pJob = 0;
         }
@@ -170,12 +164,7 @@ bool SocketTransport::BindSocket(unsigned short uiPort, unsigned short* pPortOut
 {
     QueuingSocket* pSocket;
     bool bOpened;
-    if (!g_transportThreadEnabled)
-    {
-        pSocket = new QueuingSocket(uiTrafficType, this, m_uiBufferSize, m_pTransportBuffer);
-        bOpened = pSocket->Open(true);
-    }
-    else
+    if (g_transportThreadEnabled)
     {
         Condition* pCondition = 0;
         if (g_transportBufferMode == 1)
@@ -183,6 +172,11 @@ bool SocketTransport::BindSocket(unsigned short uiPort, unsigned short* pPortOut
         pSocket = new QueuingSocketTransportBuffer(uiTrafficType, this,
             g_transportRecvCountPerCycle, g_transportSendCountPerCycle, m_uiBufferSize, pCondition,
             m_pTransportBuffer);
+        bOpened = pSocket->Open(true);
+    }
+    else
+    {
+        pSocket = new QueuingSocket(uiTrafficType, this, m_uiBufferSize, m_pTransportBuffer);
         bOpened = pSocket->Open(true);
     }
     if (!bOpened)
@@ -217,7 +211,7 @@ bool SocketTransport::BindSocket(unsigned short uiPort, unsigned short* pPortOut
 bool SocketTransport::StartListenImpl(unsigned short uiPort, unsigned short* pPortOut,
     bool bPublish, unsigned int uiTrafficType, bool bFlag, bool bReuse)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (uiPort == 0 && !m_sockets.empty() &&
         m_sockets.front().second->m_uiTrafficType == uiTrafficType)
         uiPort = m_sockets.front().first;
@@ -272,7 +266,7 @@ bool SocketTransport::StartListenReuse(unsigned short uiPort, unsigned short* pP
 
 bool SocketTransport::StopListen(unsigned short uiPort)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     QueuingSocket* pSocket = GetSocket(uiPort);
     if (pSocket == 0)
         return false;
@@ -306,7 +300,7 @@ bool SocketTransport::StopListen(unsigned short uiPort)
 
 void SocketTransport::StopListen()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     while (!m_sockets.empty())
     {
         if (!StopListen(m_sockets.front().first))
@@ -316,7 +310,7 @@ void SocketTransport::StopListen()
 
 unsigned int SocketTransport::GetNbListeningPorts()
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     return m_sockets.size();
 }
 
@@ -329,7 +323,7 @@ QueuingSocket* SocketTransport::GetSocket(unsigned short uiPort)
             return socket->second;
         return 0;
     }
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     SocketTable::iterator socket = m_sockets.find(uiPort);
     if (socket == m_sockets.end())
         return 0;
@@ -345,7 +339,7 @@ bool SocketTransport::Send(unsigned short uiPort, Stream::Type type,
     VirtualPort sourcePort(type, uiSourceStreamID);
     if (m_streamManager.GetStream(sourcePort) == 0)
         return false;
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (GetSocket(uiPort) == 0)
         return false;
     if (m_pVirtualNATDevice != 0)
@@ -359,8 +353,8 @@ bool SocketTransport::Send(unsigned short uiPort, Stream::Type type,
     }
     pPacket->m_unknownF8 = g_lastTime;
     pPacket->m_uiPort = uiPort;
-    pPacket->m_uiSource = static_cast<unsigned char>((type << 4) | uiSourceStreamID);
-    pPacket->m_uiDestination = static_cast<unsigned char>((type << 4) | uiDestinationStreamID);
+    pPacket->m_uiSource = sourcePort.m_uiValue;
+    pPacket->m_uiDestination = VirtualPort(type, uiDestinationStreamID).m_uiValue;
     m_pOutgoingQueue->Queue(pPacket, true);
     return true;
 }
@@ -512,23 +506,23 @@ bool SocketTransport::RouteRelaySendMultiMessage(Buffer* pBuffer, unsigned short
 void SocketTransport::DeliverOutgoingBuffer(QueuingSocket* pSocket, Buffer* pBuffer,
     const InetAddress& rAddress, unsigned short uiPort)
 {
-    if (!TransportAdapter::IsSendMultiAddress(&rAddress))
+    if (TransportAdapter::IsSendMultiAddress(&rAddress))
     {
-        if (m_relay.ShouldRelay(&rAddress))
-        {
-            m_relay.RelayMessage(pBuffer, &rAddress, uiPort);
-        }
-        else if (m_router.ShouldRoute(&rAddress))
-        {
-            m_router.RouteMessage(pBuffer, &rAddress, uiPort);
-        }
-        else if (m_pInetAddressSet == 0 || !m_pInetAddressSet->Match(rAddress))
+        if (!RouteRelaySendMultiMessage(pBuffer, uiPort))
         {
             ++m_aAnalyzeInfo[0];
             pSocket->Send(*pBuffer, rAddress);
         }
     }
-    else if (!RouteRelaySendMultiMessage(pBuffer, uiPort))
+    else if (m_relay.ShouldRelay(&rAddress))
+    {
+        m_relay.RelayMessage(pBuffer, &rAddress, uiPort);
+    }
+    else if (m_router.ShouldRoute(&rAddress))
+    {
+        m_router.RouteMessage(pBuffer, &rAddress, uiPort);
+    }
+    else if (m_pInetAddressSet == 0 || !m_pInetAddressSet->Match(rAddress))
     {
         ++m_aAnalyzeInfo[0];
         pSocket->Send(*pBuffer, rAddress);
@@ -540,7 +534,7 @@ void SocketTransport::DeliverOutgoingImpl()
     if (g_historyBundlingEnabled && m_pOutgoingQueue->size() == 0 && m_history.size() != 0)
     {
         unsigned long long ullNow = Time::GetTime();
-        if (ullNow >= m_nextHistoryTime)
+        if (m_nextHistoryTime <= ullNow)
         {
             QueuingSocket::RetransmitFromHistoryPacketQueue(m_pOutgoingQueue, &m_history,
                 m_history.front()->m_uiPort);
@@ -693,7 +687,7 @@ void SocketTransport::GetBufferSetEmptyDropCount(unsigned int& rSendCount,
     rReceiveCount = 0;
     if (g_transportThreadEnabled)
     {
-        ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
         for (SocketTable::const_iterator socket = m_sockets.begin(); socket != m_sockets.end();
             ++socket)
         {

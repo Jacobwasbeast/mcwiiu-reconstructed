@@ -1,45 +1,27 @@
 #include "nn/nex/ProtocolRequestBrokerInterface.hpp"
 
-#include <map>
-
-#include "nn/nex/Core.hpp"
-#include "nn/nex/CriticalSection.hpp"
+#include "nn/nex/Buffer.hpp"
+#include "nn/nex/DebugString.hpp"
+#include "nn/nex/EndPoint.hpp"
+#include "nn/nex/HighResolutionClock.hpp"
+#include "nn/nex/JobProcessProtocolMessage.hpp"
 #include "nn/nex/SecurityContextManager.hpp"
 #include "nn/nex/Scheduler.hpp"
-#include "nn/nex/SystemError.hpp"
-#include "nn/nex/ThreadVariableRoot.hpp"
-#include "vendor/nn__nex.hpp"
 
 namespace nn { namespace nex {
 
 unsigned int (*g_protocolCurrentPID)() = 0;
 unsigned int (*g_protocolCurrentCID)() = 0;
 
+bool g_jobProcessProtocolEventCloseGuard = false;
+
 namespace
 {
 bool g_protocolIdentityCallbacksInitialized = false;
-
-typedef std::map<unsigned int, Scheduler*> ReceiveSchedulerMap;
-ReceiveSchedulerMap g_receiveSchedulers;
-CriticalSection g_receiveSchedulerLock(0x20000000);
-
-Scheduler* GetGlobalReceiveScheduler()
-{
-    Core* core = Core::GetInstance();
-    return core == 0 ? 0 : core->GetScheduler();
-}
-
-void SignalReceiveSchedulerError()
-{
-    SystemError::SignalError(
-        L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Protocol/ProtocolRequestBroker.cpp",
-        72, 0xe0000003u, 0);
-}
 }
 
 ProtocolRequestBrokerInterface::ProtocolRequestBrokerInterface()
-    : m_reserved0(0), m_bandwidthCounters(String(L"Protocol")), m_operationManager(),
-      mVTable(0x104B732Cu)
+    : m_bandwidthCounters(String(L"Protocol")), m_operationManager()
 {
     if (!g_protocolIdentityCallbacksInitialized)
     {
@@ -59,42 +41,61 @@ void ProtocolRequestBrokerInterface::InitMessage(Message* message, unsigned shor
     Protocol::AddProtocolKey(message, command, protocolId);
 }
 
+JobProcessProtocolEvent::JobProcessProtocolEvent(ProtocolRequestBrokerInterface* pBroker,
+                                                 EndPoint* pEndPoint,
+                                                 const wchar_t* pName)
+    : Job(JOB_TYPE_2, DebugString(pName))
+    , m_pBroker(pBroker)
+    , m_pEndPoint(pEndPoint)
+{
+    m_processingTime = 0;
+    m_processingStart = 0;
+    if (!g_jobProcessProtocolEventCloseGuard)
+    {
+        m_pEndPoint->Open();
+        m_lifeTime = HighResolutionClock::GetHighResolutionTime();
+    }
+}
+
+void JobProcessProtocolEvent::SetBroker(ProtocolRequestBrokerInterface* pBroker)
+{
+    m_pBroker = pBroker;
+}
+
+JobProcessProtocolMessage::JobProcessProtocolMessage(ProtocolRequestBrokerInterface* pBroker,
+                                                     EndPoint* pEndPoint,
+                                                     Buffer* pBuffer)
+    : JobProcessProtocolEvent(pBroker, pEndPoint, L"ProcessProtocoMessage")
+    , m_operation()
+    , m_pBuffer(pBuffer)
+{
+    pBuffer->AddRef();
+}
+
 void ProtocolRequestBrokerInterface::Receive(EndPoint* endPoint, Buffer* buffer)
 {
-    JobProcessProtocolMessage* job =
-        new JobProcessProtocolMessage(this, endPoint, buffer);
+    Scheduler::GetInstance()->Queue(new JobProcessProtocolMessage(this, endPoint, buffer), false);
+}
 
-    Scheduler* scheduler = 0;
-    if (g_threadSafetyEnabled)
-    {
-        const unsigned int threadId = ThreadVariableRoot::GetThreadID();
+JobProcessProtocolEvent::~JobProcessProtocolEvent()
+{
+    if (!g_jobProcessProtocolEventCloseGuard)
+        m_pEndPoint->Close();
+}
 
-        g_receiveSchedulerLock.Enter();
-        ReceiveSchedulerMap::iterator it = g_receiveSchedulers.find(threadId);
-        if (it == g_receiveSchedulers.end())
-        {
-            scheduler = GetGlobalReceiveScheduler();
-            g_receiveSchedulers.insert(ReceiveSchedulerMap::value_type(threadId, scheduler));
-        }
-        else
-        {
-            scheduler = it->second;
-        }
-        g_receiveSchedulerLock.Leave();
-    }
+JobProcessProtocolMessage::~JobProcessProtocolMessage()
+{
+    m_pBuffer->ReleaseRef();
+}
+
+void JobProcessProtocolMessage::Execute()
+{
+    m_pBroker->ProcessMessage(&m_operation, m_pEndPoint, m_pBuffer);
+
+    if (m_operation.m_postponed)
+        SetToWaiting(m_operation.m_postponementDelay);
     else
-    {
-        scheduler = GetGlobalReceiveScheduler();
-    }
-
-    if (scheduler == 0)
-    {
-        SignalReceiveSchedulerError();
-        job->ReleaseRef();
-        return;
-    }
-
-    scheduler->Queue(job, false);
+        SetToComplete();
 }
 
 }}

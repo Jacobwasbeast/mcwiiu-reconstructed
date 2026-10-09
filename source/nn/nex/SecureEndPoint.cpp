@@ -238,7 +238,7 @@ qResult SecureEndPoint::_Connect(Buffer* pRequestData, Buffer* pResponseData,
     JobConnectSecureEndPoint* pJob = new JobConnectSecureEndPoint(this, &m_stationURL,
         pRequestData, pResponseData, pCallback, rUserContext, uiTimeout);
     pJob->AddRef();
-    Core::GetInstance()->GetScheduler()->Queue(pJob, false);
+    Scheduler::GetInstance()->Queue(pJob, false);
 
     if (pCallback == 0)
     {
@@ -260,7 +260,7 @@ qResult SecureEndPoint::_Connect(Buffer* pRequestData, Buffer* pResponseData,
 void SecureEndPoint::DisconnectCallback(EndPoint* pEndPoint, qResult result,
     const UserContext*)
 {
-    ScopedCS lock(&Core::GetInstance()->GetScheduler()->GetCriticalSection());
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
 
     SecureEndPoint* pSecureEndPoint = pEndPoint->m_pSecureEndPoint;
     if (pSecureEndPoint == 0)
@@ -296,7 +296,7 @@ qResult SecureEndPoint::_Send(Buffer* pBuffer, unsigned int uiSize, bool bReliab
     unsigned char uiSubStreamID, unsigned int uiFlags)
 {
     EndPoint* pAssociatedEndPoint = m_pAssociatedEndPoint;
-    CriticalSection& csScheduler = Core::GetInstance()->GetScheduler()->GetCriticalSection();
+    CriticalSection& csScheduler = Scheduler::GetInstance()->GetCriticalSection();
     csScheduler.Enter();
     qResult result =
         pAssociatedEndPoint->_Send(pBuffer, uiSize, bReliable, uiSubStreamID, uiFlags);

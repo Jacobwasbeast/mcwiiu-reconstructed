@@ -30,6 +30,10 @@ public:
     void UnregisterStream();
     bool ShouldRoute(const InetAddress* pAddress);
     bool HasRoute(const InetAddress* pAddress, const InetAddress* pSource);
+    RoutingStream* GetRoutingStream()
+    {
+        return m_pRoutingStream;
+    }
     void AddRoute(const InetAddress& rAddress, const InetAddress& rRoute, bool bReplace);
     bool RouteMessage(Buffer* pBuffer, const InetAddress* pAddress, unsigned short uiPort);
     void Clean();

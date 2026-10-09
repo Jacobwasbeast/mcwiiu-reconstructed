@@ -63,11 +63,15 @@ public:
     static DateTime FromUnixEpochTime(int64_t epochTime);
     static DateTime FromCustomEpochTime(int64_t epochTime, int32_t dayOffset);
 
-private:
     static const DateTime& s_never;
+    static const DateTime& s_future;
 
+private:
     unsigned long long m_value;
 };
+
+class StringStream;
+StringStream& operator<<(StringStream& rStream, const DateTime& rDateTime);
 
 }
 }

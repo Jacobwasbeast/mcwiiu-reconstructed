@@ -353,7 +353,7 @@ void PRUDPMessageV1::CalcSignatureHelper(const Packet* pPacket, SignatureMethod 
     rResult.m_uiLength = SIGNATURE_LENGTH;
 }
 
-int PRUDPMessageV1::CalcSignature(PacketOut* pPacket, SignatureMethod method, const Key* pKey,
+bool PRUDPMessageV1::CalcSignature(PacketOut* pPacket, SignatureMethod method, const Key* pKey,
     Stream::Type type, TransportSignatureGenerator* pGenerator, const SignatureBytes* pSignature,
     SignatureBytes& rResult)
 {
@@ -378,7 +378,7 @@ int PRUDPMessageV1::CalcExpectedSignature(const Packet* pPacket, SignatureMethod
     if (method == SIGNATURE_METHOD_9)
         return 3;
 
-    CalcSignatureHelper(pPacket, method, pKey, static_cast<Stream::Type>(pPacket->m_uiSource >> 4),
+    CalcSignatureHelper(pPacket, method, pKey, VirtualPort(pPacket->m_uiSource).GetType(),
         pSignature, rResult);
     return 0;
 }
@@ -552,7 +552,7 @@ bool PRUDPMessageV1::Unpack(ByteStream* pStream, PacketIn* pPacket, unsigned int
     if (uiOptionLength != 0 && !OptionUnpack(pStream, pPacket, uiOptionLength))
         return false;
 
-    int iStreamType = pPacket->m_uiSource >> 4;
+    int iStreamType = VirtualPort(pPacket->m_uiSource).GetType();
     if (iStreamType > MAX_STREAM_TYPE)
         return false;
 
@@ -642,7 +642,7 @@ bool PRUDPMessageV1::Pack(PacketOut* pPacket, ByteStream* pStream)
 {
     bool bOwnsBuffer = false;
     unsigned short uiPayloadLength = 0;
-    int iStreamType = pPacket->m_uiSource >> 4;
+    int iStreamType = VirtualPort(pPacket->m_uiSource).GetType();
     if ((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_RAW)
     {
         *pStream << *pPacket->m_pPayload;

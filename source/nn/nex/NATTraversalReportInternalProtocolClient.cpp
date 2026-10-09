@@ -19,6 +19,10 @@ namespace
 
 typedef void (*ProtoReturnFunction)(Message* pMessage, ProtocolCallContext* pCallContext);
 const unsigned int METHOD_ID_MASK = 0x7FFF;
+enum
+{
+    RESULT_NOT_IMPLEMENTED = static_cast<int>(0x80010002u)
+};
 const unsigned int METHOD_ID_COUNT = 4;
 const unsigned int PROTOCOL_FLAG_UNLOCK_BEFORE_SEND = 0x10;
 enum MethodId
@@ -47,8 +51,7 @@ void NATTraversalReportInternalProtocolClient::ExtractCallSpecificResults(Messag
     const unsigned int uiMethodID = Protocol::ExtractMethodID(pMessage) & METHOD_ID_MASK;
     if (uiMethodID - 1 >= METHOD_ID_COUNT - 1)
     {
-        const int iCallError = static_cast<int>(0x80010002u);
-        ClientProtocol::SetCallError(qResult(iCallError));
+        ClientProtocol::SetCallError(qResult(RESULT_NOT_IMPLEMENTED));
         return;
     }
     if (s_ProtoReturn[uiMethodID] != 0)
@@ -66,7 +69,7 @@ bool NATTraversalReportInternalProtocolClient::CallReportNATTraversalResult(Prot
                                                                             const unsigned int& rRTT)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -95,7 +98,7 @@ bool NATTraversalReportInternalProtocolClient::ReportNATTraversalResult_PrepareR
                                                                                        const bool& rResult,
                                                                                        const unsigned int& rRTT)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -117,7 +120,7 @@ bool NATTraversalReportInternalProtocolClient::CallReportNATProperties(ProtocolC
                                                                        const unsigned int& rRTT)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -146,7 +149,7 @@ bool NATTraversalReportInternalProtocolClient::ReportNATProperties_PrepareReques
                                                                                   const unsigned int& rNATFiltering,
                                                                                   const unsigned int& rRTT)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -169,7 +172,7 @@ bool NATTraversalReportInternalProtocolClient::CallReportNATTraversalResultDetai
                                                                                   const unsigned int& rRTT)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -200,7 +203,7 @@ bool NATTraversalReportInternalProtocolClient::ReportNATTraversalResultDetail_Pr
                                                                                              const int& rConnectionType,
                                                                                              const unsigned int& rRTT)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {

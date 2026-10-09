@@ -94,6 +94,7 @@ public:
 private:
     friend class PacketBufferManager;
     friend class JobCafeLogin;
+    friend class SystemError;
 
     String m_broadcastAddress;
     ThreadVariable<unsigned int> m_errorCode;

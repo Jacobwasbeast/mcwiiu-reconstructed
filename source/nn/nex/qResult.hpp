@@ -12,10 +12,16 @@ public:
     qResult();
     explicit qResult(const int&);
     explicit qResult(const bool&);
+    ~qResult()
+    {
+    }
     bool Equals(const int&) const;
     bool Equals(const bool&) const;
     operator bool() const;
-    bool operator!() const;
+    unsigned int GetReturnCode() const
+    {
+        return m_code;
+    }
     bool IsError() const
     {
         return (m_code >> 31) != 0;

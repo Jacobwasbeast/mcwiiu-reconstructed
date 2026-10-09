@@ -1,8 +1,6 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_PROTOCOLREQUESTBROKERINTERFACE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_PROTOCOLREQUESTBROKERINTERFACE_HPP
 
-#include <stdint.h>
-
 #include "nn/nex/BandwidthCounterMap.hpp"
 #include "nn/nex/OperationManager.hpp"
 #include "nn/nex/Protocol.hpp"
@@ -14,20 +12,6 @@ class ServerProtocol;
 
 extern unsigned int (*g_protocolCurrentPID)();
 extern unsigned int (*g_protocolCurrentCID)();
-
-struct GhsVTableEntry
-{
-    uint32_t adjustment;
-    uint32_t function;
-};
-
-struct GhsVTable
-{
-    uint32_t header0;
-    uint32_t typeInfo;
-    uint32_t header2;
-    GhsVTableEntry entries[14];
-};
 
 class ProtocolRequestBrokerInterface : public RootObject
 {
@@ -57,18 +41,11 @@ public:
     static void InitMessage(Message* message, unsigned short protocolId, Protocol::_Command command);
     void Receive(EndPoint* endPoint, Buffer* buffer);
 
-    const GhsVTable* GetTailVTable() const
-    {
-        return reinterpret_cast<const GhsVTable*>(static_cast<uintptr_t>(mVTable));
-    }
-
 protected:
     friend class Protocol;
 
-    uint32_t m_reserved0;
     BandwidthCounterMap m_bandwidthCounters;
     OperationManager m_operationManager;
-    uint32_t mVTable;
 };
 
 }}

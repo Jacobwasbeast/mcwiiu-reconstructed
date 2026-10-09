@@ -20,7 +20,6 @@ unsigned int s_nextEvent = 0;
 }
 
 EventHandler::EventHandler(unsigned short maxEvents)
-    : m_criticalSection(0x20000000)
 {
     m_ppSignaled = new volatile bool*();
     m_maxEvents = maxEvents;

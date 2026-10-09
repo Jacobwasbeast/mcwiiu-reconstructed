@@ -26,7 +26,7 @@ void PacketQueue::Purge()
 
 void PacketQueue::Queue(Packet* pPacket, bool bStampTime)
 {
-    if (pPacket->m_pPrevious == 0 && pPacket->m_pNext == 0 && m_packets.front() != pPacket)
+    if (pPacket->m_link.m_pPrevious == 0 && pPacket->m_link.m_pNext == 0 && m_packets.front() != pPacket)
     {
         pPacket->AddRef();
         m_packets.push_back(pPacket);
@@ -37,7 +37,7 @@ void PacketQueue::Queue(Packet* pPacket, bool bStampTime)
 
 void PacketQueue::QueueFront(Packet* pPacket, bool bStampTime)
 {
-    if (pPacket->m_pPrevious == 0 && pPacket->m_pNext == 0 && m_packets.front() != pPacket)
+    if (pPacket->m_link.m_pPrevious == 0 && pPacket->m_link.m_pNext == 0 && m_packets.front() != pPacket)
     {
         pPacket->AddRef();
         m_packets.push_front(pPacket);
@@ -50,7 +50,7 @@ PacketQueue::Chain::iterator PacketQueue::Dequeue(Chain::iterator position)
 {
     Packet* pPacket = *position;
     position = m_packets.erase(position);
-    pPacket->m_queueTime = 0;
+    pPacket->m_queueTime = Time();
     pPacket->ReleaseRef();
     return position;
 }

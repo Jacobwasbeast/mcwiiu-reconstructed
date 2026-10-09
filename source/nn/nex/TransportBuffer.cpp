@@ -56,19 +56,17 @@ void TransportBuffer::ReserveBuffer(unsigned int uiBufferSize, unsigned int uiCo
 Buffer* TransportBuffer::AllocateBuffer(unsigned int uiSize)
 {
     Buffer* pBuffer = 0;
-    CriticalSection* pLock = &m_criticalSection;
-    pLock->Enter();
+    ScopedCS lock(&m_criticalSection);
     if (!m_pBuffers->empty())
     {
         pBuffer = m_pBuffers->front();
-        pBuffer->Clear();
         m_pBuffers->pop();
+        pBuffer->Clear();
     }
     else
     {
         ++m_uiEmptyDropCount;
     }
-    pLock->Leave();
     return pBuffer;
 }
 

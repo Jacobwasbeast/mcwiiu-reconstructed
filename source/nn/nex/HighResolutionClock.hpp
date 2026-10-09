@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "nn/nex/RootObject.hpp"
+#include "nn/nex/Time.hpp"
 
 namespace nn
 {
@@ -18,8 +19,8 @@ public:
 
     static uint64_t GetTickCount();
     static uint64_t GetFrequency();
-    static uint64_t GetTime();
-    static uint64_t GetLowResolutionTime();
+    static Time GetTime();
+    static Time GetLowResolutionTime();
     static uint64_t GetHighResolutionTime();
     static void DefaultToHighResolution();
 

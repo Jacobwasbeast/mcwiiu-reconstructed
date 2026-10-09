@@ -16,6 +16,7 @@ namespace nex
 {
 
 class DateTime;
+class GlobalNotificationEventManager;
 class NotificationEventManager;
 class ServerProtocol;
 
@@ -61,21 +62,22 @@ public:
         return m_pProtocolRegistry;
     }
 
-    NotificationEventManager* GetGlobalNotificationEventManager() const
-    {
-        return m_pGlobalNotificationEventManager;
-    }
-
 private:
     typedef std::pair<const unsigned short, ServerProtocol*> ServerProtocolEntry;
     typedef std::map<unsigned short, ServerProtocol*, std::less<unsigned short>,
                      MemAllocator<ServerProtocolEntry> > ServerProtocolMap;
 
+    enum
+    {
+        NOTIFICATION_EVENT_PROTOCOL_ID = 14,
+        NOTIFICATION_PROTOCOL_FLAG = 8
+    };
+
     static RVClientCore* s_pInstance;
 
     ProtocolRegistry* m_pProtocolRegistry;
     PseudoSingleton m_instanceControl;
-    NotificationEventManager* m_pGlobalNotificationEventManager;
+    GlobalNotificationEventManager* m_pGlobalNotificationEventManager;
     ServerProtocolMap m_serverProtocols;
     unsigned long long m_uiGameServerTimeBase;
     long long m_iGameServerEpochTime;

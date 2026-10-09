@@ -29,8 +29,8 @@ PseudoGlobalVariableRoot* PseudoGlobalVariableList::GetVariable(unsigned int uiI
 
 unsigned int PseudoGlobalVariableList::FindVariableIndex(PseudoGlobalVariableRoot* pVariable)
 {
-    unsigned int uiIndex = 0;
     PseudoGlobalVariableRoot* pCurrent = s_pFirst;
+    unsigned int uiIndex = 0;
     while (pCurrent != 0)
     {
         if (pCurrent == pVariable)
@@ -86,9 +86,8 @@ void PseudoGlobalVariableList::RemoveVariable(PseudoGlobalVariableRoot* pVariabl
             return;
         }
 
-        PseudoGlobalVariableRoot* pNext = pCurrent->GetNext();
         pPrevious = pCurrent;
-        pCurrent = pNext;
+        pCurrent = pCurrent->GetNext();
     }
 }
 

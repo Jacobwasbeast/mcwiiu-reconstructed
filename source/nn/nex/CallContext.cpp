@@ -45,9 +45,9 @@ CallContext::CallContext()
 
 CallContext::~CallContext()
 {
-    if (Core::GetInstance() != 0 && Core::GetInstance()->GetScheduler() != 0)
+    if (Scheduler::GetInstance() != 0)
     {
-        Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+        Scheduler* pScheduler = Scheduler::GetInstance();
         pScheduler->GetCriticalSection().Enter();
 
         if (m_state == CallInProgress)
@@ -144,7 +144,7 @@ bool CallContext::Reset()
 
 bool CallContext::InitiateCall()
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
 
     if (!SetCallInProgressState())
@@ -166,7 +166,7 @@ bool CallContext::InitiateSpecialCall()
 
 bool CallContext::SetCallInProgressState()
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
 
     if (m_state == CallInProgress)
@@ -184,6 +184,11 @@ bool CallContext::SetCallInProgressState()
     return true;
 }
 
+void CallContext::SignalSuccess(qResult result)
+{
+    SetStateImpl(CallSucceeded, result, true);
+}
+
 void CallContext::SignalFailure(qResult result)
 {
     SetStateImpl(CallFailed, result, true);
@@ -193,7 +198,7 @@ bool CallContext::Cancel(State state)
 {
     bool bCanceled;
 
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
 
     {
@@ -262,7 +267,7 @@ bool CallContext::TransitionIsValid(State currentState, State newState)
 
 void CallContext::SetStateImpl(State state, qResult result, bool bPublishResult)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
 
     if (state == Ready)

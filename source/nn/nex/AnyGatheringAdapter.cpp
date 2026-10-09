@@ -12,7 +12,7 @@ namespace nex
 
 AnyGatheringAdapter AnyGatheringAdapter::s_instance;
 AnyGatheringAdapter::PrototypeList* AnyGatheringAdapter::s_pPrototypes = 0;
-CriticalSection AnyGatheringAdapter::s_criticalSection(0x20000000);
+CriticalSection AnyGatheringAdapter::s_criticalSection;
 
 AnyGatheringAdapter::AnyGatheringAdapter()
     : m_uiUseCount(0)
@@ -26,7 +26,8 @@ AnyGatheringAdapter::~AnyGatheringAdapter()
 Gathering* AnyGatheringAdapter::FindPrototype(const String& rType) const
 {
     ScopedCS lock(&s_criticalSection);
-    for (PrototypeList::iterator it = s_pPrototypes->begin(); it != s_pPrototypes->end(); ++it)
+    for (PrototypeList::const_iterator it = s_pPrototypes->begin(); it != s_pPrototypes->end();
+         ++it)
     {
         if (String::IsEqual((*it)->GetGatheringType(), rType))
             return *it;
@@ -80,14 +81,13 @@ Gathering* AnyGatheringAdapter::CreateObject(const String& rType) const
         return pPrototype->Clone();
 
     pPrototype = FindPrototype(String(L"DynamicGathering"));
-    DynamicGathering* pObject = 0;
     if (pPrototype != 0)
     {
-        pObject = static_cast<DynamicGathering*>(pPrototype->Clone());
-        pObject->m_Type = rType;
+        pPrototype = pPrototype->Clone();
+        static_cast<DynamicGathering*>(pPrototype)->m_Type = rType;
     }
 
-    return pObject;
+    return pPrototype;
 }
 
 void AnyGatheringAdapter::StreamIn(Message* pMessage, const Gathering& rGathering) const

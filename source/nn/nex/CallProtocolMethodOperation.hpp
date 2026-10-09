@@ -8,12 +8,15 @@ namespace nn { namespace nex {
 
 class ServerProtocol;
 class JobProcessProtocolMessage;
+class Protocol;
 
 class CallProtocolMethodOperation : public Operation
 {
 public:
     CallProtocolMethodOperation();
-    virtual ~CallProtocolMethodOperation();
+    virtual ~CallProtocolMethodOperation()
+    {
+    }
     virtual unsigned int GetType() const;
     virtual const wchar_t* GetClassNameString() const;
     virtual void ForceImplOperationCommonMethodsMacro();
@@ -25,8 +28,10 @@ public:
     UserContext GetUserContext();
 
 private:
+    friend class ClientProtocolRequestBroker;
     friend class ServerProtocol;
     friend class JobProcessProtocolMessage;
+    friend class Protocol;
 
     unsigned int m_attemptCount;
     bool m_postponed;

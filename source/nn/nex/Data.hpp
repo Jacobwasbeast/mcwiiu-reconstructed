@@ -12,9 +12,7 @@ class Data : public _DDL_Data
 {
 public:
     Data();
-    virtual ~Data()
-    {
-    }
+    virtual ~Data();
 };
 
 }

@@ -13,7 +13,9 @@ class MatchmakeSession : public _DDL_MatchmakeSession
 {
 public:
     MatchmakeSession();
-    virtual ~MatchmakeSession();
+    virtual ~MatchmakeSession()
+    {
+    }
 
     void SetMatchmakeSystemType(MatchmakeSystemType type, unsigned int uiPolicyArgument);
     void Reset();

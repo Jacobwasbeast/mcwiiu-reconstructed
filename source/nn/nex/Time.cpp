@@ -9,37 +9,38 @@ namespace nex
 
 uint64_t g_lastTime;
 
-uint64_t Time::GetTime()
+namespace
 {
-    uint64_t time;
 
-    if (g_systemClockCorrectionEnabled)
-        time = SystemClock::GetTimeImpl(false);
-    else
-        time = SystemClock::GetTimeImplCorrectless();
+const uint32_t INFINITE_TIMEOUT = 0xffffffffu;
+
+}
+
+Time Time::GetTime()
+{
+    Time time = g_systemClockCorrectionEnabled ? SystemClock::GetTimeImpl(false)
+                                               : SystemClock::GetTimeImplCorrectless();
 
     g_lastTime = time;
     return time;
 }
 
-uint64_t Time::ConvertTimeoutToDeadline(uint32_t timeout)
+Time Time::ConvertTimeoutToDeadline(uint32_t timeout)
 {
-    if (timeout == 0xffffffffu)
-        return 0;
+    if (timeout == INFINITE_TIMEOUT)
+        return Time(0);
 
-    return Time(GetTime()) + static_cast<int32_t>(timeout);
+    return GetTime() + static_cast<int32_t>(timeout);
 }
 
 int32_t Time::ConvertDeadlineToTimeout(Time deadline)
 {
-    uint64_t now;
-
-    if (deadline.m_value == 0)
+    if (deadline == 0)
         return -1;
 
-    now = GetTime();
-    if (now < deadline.m_value)
-        return static_cast<int32_t>(deadline.m_value - now);
+    Time now(GetTime());
+    if (now < deadline)
+        return static_cast<int32_t>(deadline - now);
 
     return 0;
 }

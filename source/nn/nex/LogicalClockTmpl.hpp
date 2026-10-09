@@ -16,6 +16,10 @@ public:
     {
     }
 
+    LogicalClockTmpl(ValueType value) : m_value(value)
+    {
+    }
+
     virtual ~LogicalClockTmpl()
     {
     }
@@ -23,12 +27,6 @@ public:
     ValueType GetValue() const
     {
         return m_value;
-    }
-
-    LogicalClockTmpl& operator=(ValueType value)
-    {
-        m_value = value;
-        return *this;
     }
 
     LogicalClockTmpl& operator++()

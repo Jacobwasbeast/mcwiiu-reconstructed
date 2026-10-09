@@ -28,28 +28,21 @@ ChecksumAlgorithm::ChecksumAlgorithm()
 unsigned char ChecksumAlgorithm::ReduceChecksumLength(unsigned char uiLength)
 {
     m_uiChecksumLength = uiLength;
-    if (uiLength == 0)
-    {
-        uiLength = static_cast<unsigned char>(GetChecksumLength());
-        m_uiChecksumLength = uiLength;
-    }
+    if (m_uiChecksumLength == 0)
+        m_uiChecksumLength = GetChecksumLength();
 
-    if (GetChecksumLength() < uiLength)
-        m_uiChecksumLength = static_cast<unsigned char>(GetChecksumLength());
+    if (m_uiChecksumLength > GetChecksumLength())
+        m_uiChecksumLength = GetChecksumLength();
 
     return m_uiChecksumLength;
 }
 
 void ChecksumAlgorithm::CompressChecksum(Buffer* pChecksum)
 {
-    unsigned char uiLength = m_uiChecksumLength;
+    unsigned int uiLength = m_uiChecksumLength;
     unsigned int uiFullLength = GetChecksumLength();
     for (unsigned int i = uiLength; i < uiFullLength; ++i)
-    {
-        unsigned char* pSource = &(*pChecksum)[i];
-        unsigned char* pDestination = &(*pChecksum)[m_uiChecksumLength - 1];
-        *pDestination = *pDestination ^ *pSource;
-    }
+        (*pChecksum)[m_uiChecksumLength - 1] ^= (*pChecksum)[i];
 
     pChecksum->SetLength(m_uiChecksumLength);
 }
@@ -60,7 +53,7 @@ bool ChecksumAlgorithm::AppendChecksum(Buffer* pBuffer)
         return false;
 
     if (m_uiChecksumLength == 0)
-        m_uiChecksumLength = static_cast<unsigned char>(GetChecksumLength());
+        m_uiChecksumLength = GetChecksumLength();
 
     Buffer checksum(GetChecksumLength(), 0);
     ComputeChecksum(*pBuffer, &checksum);
@@ -76,20 +69,15 @@ bool ChecksumAlgorithm::RemoveChecksum(Buffer* pBuffer)
     if (!IsReady())
         return false;
 
-    unsigned int uiLength = m_uiChecksumLength;
-    if (uiLength == 0)
-    {
-        uiLength = GetChecksumLength();
-        m_uiChecksumLength = static_cast<unsigned char>(uiLength);
-    }
+    if (m_uiChecksumLength == 0)
+        m_uiChecksumLength = GetChecksumLength();
 
-    if (uiLength > pBuffer->GetLength())
+    if (pBuffer->GetLength() < m_uiChecksumLength)
         return false;
 
     Buffer received;
-    unsigned char uiChecksumLength = m_uiChecksumLength;
-    pBuffer->SetLength(pBuffer->GetLength() - uiChecksumLength);
-    received.AppendData(pBuffer->GetData() + pBuffer->GetLength(), uiChecksumLength,
+    pBuffer->SetLength(pBuffer->GetLength() - m_uiChecksumLength);
+    received.AppendData(pBuffer->GetData() + pBuffer->GetLength(), m_uiChecksumLength,
         APPEND_AT_END);
 
     Buffer computed(GetChecksumLength(), 0);
@@ -103,8 +91,9 @@ bool ChecksumAlgorithm::RemoveChecksum(Buffer* pBuffer)
 Key ChecksumAlgorithm::DeriveKey(const Buffer& rBuffer, unsigned int uiIterations)
 {
     Buffer current(rBuffer);
+    unsigned int uiCount = 0;
     Buffer derived(GetChecksumLength(), 0);
-    for (unsigned int uiCount = 0; uiCount < uiIterations; ++uiCount)
+    for (; uiCount < uiIterations; ++uiCount)
     {
         derived.Clear();
         ComputeChecksum(current, &derived);
@@ -125,20 +114,15 @@ bool ChecksumAlgorithm::DeriveKey(CallContext* pCallContext,
     ChecksumAlgorithm* pChecksumAlgorithm, const Buffer& rBuffer, unsigned int uiIterations,
     Key* pKey, KeyCache* pKeyCache, Job::JobType jobType)
 {
-    CriticalSection& csScheduler = Core::GetInstance()->GetScheduler()->GetCriticalSection();
-    csScheduler.Enter();
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     if (!pCallContext->InitiateCall())
-    {
-        csScheduler.Leave();
         return false;
-    }
 
     Buffer buffer(rBuffer);
     JobDeriveKey* pJob = new JobDeriveKey(jobType, pCallContext->m_uiCallId, pChecksumAlgorithm,
         &buffer, uiIterations, pKey);
     pJob->m_pKeyCache = pKeyCache;
-    Core::GetInstance()->GetScheduler()->Queue(pJob, false);
-    csScheduler.Leave();
+    Scheduler::GetInstance()->Queue(pJob, false);
     return true;
 }
 

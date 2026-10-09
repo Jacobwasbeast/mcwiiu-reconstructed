@@ -27,7 +27,7 @@ public:
     RelayMessage();
     virtual ~RelayMessage();
 
-    virtual int CalcSignature(PacketOut* pPacket, SignatureMethod method, const Key* pKey,
+    virtual bool CalcSignature(PacketOut* pPacket, SignatureMethod method, const Key* pKey,
         Stream::Type type, TransportSignatureGenerator* pGenerator,
         const SignatureBytes* pSignature, SignatureBytes& rResult);
     virtual void CalcSignature(Packet* pPacket, SignatureMethod method, const Key* pKey,
@@ -73,11 +73,14 @@ public:
         const unsigned char* pPayload, unsigned int uiPayloadLength);
 
 private:
-    class TimeStampOrigin
+    class TimeStampOrigin : public RootObject
     {
     public:
-        TimeStampOrigin() : m_uiStartTime(0), m_unknown10(0), m_uiBaseTimeStamp(0)
+        TimeStampOrigin()
         {
+            m_uiBaseTimeStamp = 0;
+            m_uiStartTime = 0;
+            m_unknown10 = 0;
         }
 
         unsigned int m_unknown0;

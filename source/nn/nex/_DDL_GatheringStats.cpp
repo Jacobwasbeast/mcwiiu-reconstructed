@@ -1,5 +1,7 @@
 #include "nn/nex/_DDL_GatheringStats.hpp"
 
+#include <algorithm>
+
 #include "nn/nex/DDLSerialization.hpp"
 #include "nn/nex/Message.hpp"
 
@@ -8,15 +10,23 @@ namespace nn
 namespace nex
 {
 
+namespace
+{
+
+const uint8_t GATHERING_STATS_MAX_STRUCTURE_VERSION = 0;
+
+}
+
 void _DDL_GatheringStats::Add(Message* pMessage, const _DDL_GatheringStats& rSource)
 {
-    const bool bCompactFormat = pMessage->IsCompactFormat();
     unsigned int uiSizePosition = 0;
+    const bool bCompactFormat = pMessage->IsCompactFormat();
 
     if (!bCompactFormat)
     {
-        const uint8_t uiVersion = 0;
-        _Type_byte::Add(pMessage, uiVersion);
+        uint8_t uiVersion = rSource.m_uiStructureVersion;
+        uint8_t uiMaxVersion = GATHERING_STATS_MAX_STRUCTURE_VERSION;
+        _Type_byte::Add(pMessage, std::min(uiVersion, uiMaxVersion));
         uiSizePosition = pMessage->GetLength();
 
         const uint32_t uiSize = 0;

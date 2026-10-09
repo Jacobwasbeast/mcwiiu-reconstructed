@@ -24,12 +24,12 @@ uint64_t HighResolutionClock::GetFrequency()
     return static_cast<uint64_t>(OSGetSystemInfo()->busClockSpeed >> 2);
 }
 
-uint64_t HighResolutionClock::GetTime()
+Time HighResolutionClock::GetTime()
 {
-    return GetTickCount() * 1000 / GetFrequency();
+    return Time(GetTickCount() * 1000 / GetFrequency());
 }
 
-uint64_t HighResolutionClock::GetLowResolutionTime()
+Time HighResolutionClock::GetLowResolutionTime()
 {
     return GetTime();
 }

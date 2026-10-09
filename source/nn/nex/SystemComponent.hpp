@@ -1,6 +1,8 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_SYSTEMCOMPONENT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_SYSTEMCOMPONENT_HPP
 
+#include <cwchar>
+
 #include "nn/nex/RefCountedObject.hpp"
 #include "nn/nex/String.hpp"
 #include "nn/nex/qResult.hpp"
@@ -42,19 +44,51 @@ public:
     virtual ~SystemComponent();
 
     virtual const wchar_t* GetType() const;
-    virtual bool IsAKindOf(const wchar_t* pType) const;
+    virtual bool IsAKindOf(const wchar_t* pType) const
+    {
+        return std::wcscmp(L"SystemComponent", pType) == 0;
+    }
+
     virtual void EnforceDeclareSysComponentMacro() = 0;
-    virtual void StateTransition(_State state);
-    virtual void OnInitialize();
-    virtual void OnTerminate();
+    virtual void StateTransition(_State state)
+    {
+    }
+
+    virtual void OnInitialize()
+    {
+        TestState();
+    }
+
+    virtual void OnTerminate()
+    {
+        TestState();
+    }
+
     virtual bool BeginInitialization();
-    virtual bool EndInitialization();
+
+    virtual bool EndInitialization()
+    {
+        return true;
+    }
+
     virtual bool BeginTermination();
-    virtual bool EndTermination();
+
+    virtual bool EndTermination()
+    {
+        return true;
+    }
+
     virtual bool ValidTransition(_State state);
     virtual bool UseIsAllowed();
-    virtual _State TestState();
-    virtual void DoWork();
+
+    virtual _State TestState()
+    {
+        return static_cast<_State>(m_uiState);
+    }
+
+    virtual void DoWork()
+    {
+    }
 
     void SetParent(SystemComponent* pParent);
     bool SetState(_State state, bool bForce);

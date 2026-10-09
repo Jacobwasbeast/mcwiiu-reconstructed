@@ -18,6 +18,10 @@ namespace
 
 typedef void (*ProtoReturnFunction)(Message* pMessage, ProtocolCallContext* pCallContext);
 const unsigned int METHOD_ID_MASK = 0x7FFF;
+enum
+{
+    RESULT_NOT_IMPLEMENTED = static_cast<int>(0x80010002u)
+};
 const unsigned int METHOD_ID_COUNT = 5;
 const unsigned int PROTOCOL_FLAG_UNLOCK_BEFORE_SEND = 0x10;
 enum MethodId
@@ -47,8 +51,7 @@ void HealthProtocolClient::ExtractCallSpecificResults(Message* pMessage,
     const unsigned int uiMethodID = Protocol::ExtractMethodID(pMessage) & METHOD_ID_MASK;
     if (uiMethodID - 1 >= METHOD_ID_COUNT - 1)
     {
-        const int iCallError = static_cast<int>(0x80010002u);
-        ClientProtocol::SetCallError(qResult(iCallError));
+        ClientProtocol::SetCallError(qResult(RESULT_NOT_IMPLEMENTED));
         return;
     }
     if (s_ProtoReturn[uiMethodID] != 0)
@@ -63,7 +66,7 @@ Protocol* HealthProtocolClient::CreateResponder() const
 bool HealthProtocolClient::CallPingDaemon(ProtocolCallContext* pCallContext, bool* pReturnValue)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -91,7 +94,7 @@ bool HealthProtocolClient::PingDaemon_PrepareRequest(ProtocolCallContext* pCallC
                                                 Message* pMessage,
                                                 bool* pReturnValue)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -112,15 +115,16 @@ void HealthProtocolClient::ProtoReturn_PingDaemon(Message* pMessage, ProtocolCal
 {
     bool bDiscardedReturnValue;
     bool* pReturnValue = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pReturnValue == 0)
-        pReturnValue = &bDiscardedReturnValue;
-    *pMessage >> *pReturnValue;
+    bool* pDestination = &bDiscardedReturnValue;
+    if (pReturnValue != 0)
+        pDestination = pReturnValue;
+    *pMessage >> *pDestination;
 }
 
 bool HealthProtocolClient::CallPingDatabase(ProtocolCallContext* pCallContext, bool* pReturnValue)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -148,7 +152,7 @@ bool HealthProtocolClient::PingDatabase_PrepareRequest(ProtocolCallContext* pCal
                                                 Message* pMessage,
                                                 bool* pReturnValue)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -169,15 +173,16 @@ void HealthProtocolClient::ProtoReturn_PingDatabase(Message* pMessage, ProtocolC
 {
     bool bDiscardedReturnValue;
     bool* pReturnValue = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pReturnValue == 0)
-        pReturnValue = &bDiscardedReturnValue;
-    *pMessage >> *pReturnValue;
+    bool* pDestination = &bDiscardedReturnValue;
+    if (pReturnValue != 0)
+        pDestination = pReturnValue;
+    *pMessage >> *pDestination;
 }
 
 bool HealthProtocolClient::CallRunSanityCheck(ProtocolCallContext* pCallContext, bool* pReturnValue)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -205,7 +210,7 @@ bool HealthProtocolClient::RunSanityCheck_PrepareRequest(ProtocolCallContext* pC
                                                 Message* pMessage,
                                                 bool* pReturnValue)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -226,15 +231,16 @@ void HealthProtocolClient::ProtoReturn_RunSanityCheck(Message* pMessage, Protoco
 {
     bool bDiscardedReturnValue;
     bool* pReturnValue = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pReturnValue == 0)
-        pReturnValue = &bDiscardedReturnValue;
-    *pMessage >> *pReturnValue;
+    bool* pDestination = &bDiscardedReturnValue;
+    if (pReturnValue != 0)
+        pDestination = pReturnValue;
+    *pMessage >> *pDestination;
 }
 
 bool HealthProtocolClient::CallFixSanityErrors(ProtocolCallContext* pCallContext, bool* pReturnValue)
 {
     Message message;
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     ProtocolRequestBrokerInterface::InitMessage(&message, GetProtocolID(), COMMAND_REQUEST);
     if (!RegisterCallContext(&message, pCallContext))
@@ -262,7 +268,7 @@ bool HealthProtocolClient::FixSanityErrors_PrepareRequest(ProtocolCallContext* p
                                                 Message* pMessage,
                                                 bool* pReturnValue)
 {
-    Scheduler* pScheduler = Core::GetInstance()->GetScheduler();
+    Scheduler* pScheduler = Scheduler::GetInstance();
     pScheduler->GetCriticalSection().Enter();
     if (!RegisterCallContext(pMessage, pCallContext))
     {
@@ -283,9 +289,10 @@ void HealthProtocolClient::ProtoReturn_FixSanityErrors(Message* pMessage, Protoc
 {
     bool bDiscardedReturnValue;
     bool* pReturnValue = static_cast<bool*>(pCallContext->GetReturnValuePtr(0));
-    if (pReturnValue == 0)
-        pReturnValue = &bDiscardedReturnValue;
-    *pMessage >> *pReturnValue;
+    bool* pDestination = &bDiscardedReturnValue;
+    if (pReturnValue != 0)
+        pDestination = pReturnValue;
+    *pMessage >> *pDestination;
 }
 
 }

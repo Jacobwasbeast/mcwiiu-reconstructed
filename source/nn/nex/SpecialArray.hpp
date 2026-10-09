@@ -16,9 +16,7 @@ T* SpecialNew(wchar_t*, unsigned int)
     T* object;
 
     object = static_cast<T*>(MemoryManager::Allocate(sizeof(T)));
-
-    if (object != 0)
-        new (static_cast<void*>(object)) T;
+    new (static_cast<void*>(object)) T;
 
     return object;
 }
@@ -26,10 +24,9 @@ T* SpecialNew(wchar_t*, unsigned int)
 template<class T>
 void SpecialDelete(T* object)
 {
-    if (object == 0)
-        return;
+    if (object != 0)
+        object->~T();
 
-    object->~T();
     MemoryManager::Free(object);
 }
 

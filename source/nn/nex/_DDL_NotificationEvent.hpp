@@ -16,7 +16,11 @@ class Message;
 class _DDL_NotificationEvent : public RootObject
 {
 public:
-    _DDL_NotificationEvent();
+    _DDL_NotificationEvent()
+        : m_uiStructureVersion(0), m_StringParam()
+    {
+    }
+
     virtual ~_DDL_NotificationEvent()
     {
     }

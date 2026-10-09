@@ -43,12 +43,12 @@ bool KerberosEncryption::Encrypt(const Buffer& rSource, Buffer* pDestination, co
 {
     RC4Encryption encryption;
     HMACChecksum checksum;
-    if (checksum.SetKey(rKey) && encryption.SetKey(rKey) &&
-        encryption.Encrypt(rSource, pDestination) == 0)
+    if (!checksum.SetKey(rKey) || !encryption.SetKey(rKey) ||
+        encryption.Encrypt(rSource, pDestination) != 0)
     {
-        return checksum.AppendChecksum(pDestination);
+        return false;
     }
-    return false;
+    return checksum.AppendChecksum(pDestination);
 }
 
 bool KerberosEncryption::Decrypt(const Buffer& rSource, Buffer* pDestination, const Key& rKey)
