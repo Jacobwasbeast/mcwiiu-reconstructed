@@ -27,9 +27,9 @@ ExtremeHillsBiome::ExtremeHillsBiome(EBiomeIDs biomeId, EType type, BiomePropert
     mCreatures.push_back(new MobSpawnerData(5, EntityType::LLAMA, 4, 6));
     mType = type;
 
-    TypedBoxed<MonsterEggBlock::Variant*> variant(MonsterEggBlock::Variant::STONE);
     mMonsterEggFeature = new OreFeature(
-        Blocks::monster_egg->defaultBlockState()->setBoxedValue(MonsterEggBlock::VARIANT, &variant),
+        Blocks::monster_egg->defaultBlockState()->setValue<MonsterEggBlock::Variant*>(
+            MonsterEggBlock::VARIANT, MonsterEggBlock::Variant::STONE),
         9);
 }
 
@@ -78,33 +78,21 @@ void ExtremeHillsBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer
 {
     PIXBeginNamedEvent(0.0F, "ExtremeHillsBiome::buildSurfaceAtDefault");
 
-    mTopBlock.blockId = 2;
-    mTopBlock.blockData = 0;
-    mFillerBlock.blockId = 3;
-    mFillerBlock.blockData = 0;
+    mTopBlock = BlockPair(2, 0);
+    mFillerBlock = BlockPair(3, 0);
 
-    if ((noise >= -1.0 && noise <= 2.0) || mType != eType_Mutated)
+    if ((noise < -1.0 || noise > 2.0) && mType == eType_Mutated)
     {
-        if (noise > 1.0 && mType != eType_ExtraTrees)
-        {
-            mTopBlock.blockId = 1;
-            mTopBlock.blockData = 0;
-            mFillerBlock.blockId = 1;
-            mFillerBlock.blockData = 0;
-        }
-
-        buildSurfaceAtDefault(level, random, primer, x, z, noise);
+        mTopBlock = BlockPair(13, 0);
+        mFillerBlock = BlockPair(13, 0);
     }
-    else
+    else if (noise > 1.0 && mType != eType_ExtraTrees)
     {
-        mTopBlock.blockId = 13;
-        mTopBlock.blockData = 0;
-        mFillerBlock.blockId = 13;
-        mFillerBlock.blockData = 0;
-
-        buildSurfaceAtDefault(level, random, primer, x, z, noise);
+        mTopBlock = BlockPair(1, 0);
+        mFillerBlock = BlockPair(1, 0);
     }
 
+    buildSurfaceAtDefault(level, random, primer, x, z, noise);
     PIXEndNamedEvent();
 }
 

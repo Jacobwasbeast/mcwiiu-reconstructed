@@ -17,7 +17,6 @@
 #include "game/world/generation/SwampTreeFeature.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 
-static const Biome::BlockPair WATER_BLOCK(9, 0);
 static const Biome::BlockPair WATERLILY_BLOCK(111, 0);
 
 SwampBiome::SwampBiome(EBiomeIDs biomeId, BiomeProperties* properties)

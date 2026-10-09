@@ -3,9 +3,8 @@
 
 #include "game/world/biome/BiomeDecorator.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockId.hpp"
 #include "game/world/block/Blocks.hpp"
-
-static const int MYCELIUM_BLOCK_ID = 110;
 
 static const int MUSHROOM_FEATURE_DISABLED = -100;
 
@@ -18,14 +17,13 @@ MushroomIslandBiome::MushroomIslandBiome(EBiomeIDs biomeId, BiomeProperties* pro
     mDecorator->mushroomsPerChunk = 1;
     mDecorator->bigMushroomsPerChunk = 1;
 
-    mTopBlock.blockId = MYCELIUM_BLOCK_ID;
-    mTopBlock.blockData = Blocks::mycelium->convertBlockStateToLegacyData(Blocks::mycelium->defaultBlockState());
+    mTopBlock = BlockPair(BlockId::MYCELIUM, Blocks::mycelium->convertBlockStateToLegacyData(Blocks::mycelium->defaultBlockState()));
 
     mMonsters.clear();
     mCreatures.clear();
-    mWaterCreatures.clear();
     mChickens.clear();
     mWolves.clear();
+    mWaterCreatures.clear();
 
     mMushroomCows.push_back(new MobSpawnerData(8, EntityType::MUSHROOM_COW, 4, 8));
 }

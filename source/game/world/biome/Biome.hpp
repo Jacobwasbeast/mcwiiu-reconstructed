@@ -161,8 +161,7 @@ public:
         int blockId;
         int blockData;
 
-        BlockPair() : blockId(0), blockData(0) {}
-        BlockPair(int blockId, int blockData) : blockId(blockId), blockData(blockData) {}
+        BlockPair(int blockId = 0, int blockData = 0) : blockId(blockId), blockData(blockData) {}
     };
 
     class BiomeHeight
@@ -218,6 +217,8 @@ public:
     };
 
     static const BlockPair STONE_BLOCK;
+    static const BlockPair BEDROCK_BLOCK;
+    static const BlockPair WATER_BLOCK;
 
     static PerlinSimplexNoise* TEMPERATURE_NOISE;
     static PerlinSimplexNoise* BIOME_INFO_NOISE;

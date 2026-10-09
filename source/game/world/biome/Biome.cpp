@@ -59,12 +59,12 @@ typedef boost::unordered_map<std::wstring, Biome*> BiomeNameMap;
 
 const Biome::BlockPair Biome::STONE_BLOCK(1, 0);
 static const Biome::BlockPair AIR_BLOCK(0, 0);
-static const Biome::BlockPair BEDROCK_BLOCK(7, 0);
+const Biome::BlockPair Biome::BEDROCK_BLOCK(7, 0);
 static const Biome::BlockPair GRAVEL_BLOCK(13, 0);
 static const Biome::BlockPair RED_SANDSTONE_BLOCK(179, 0);
 static const Biome::BlockPair SANDSTONE_BLOCK(24, 0);
 static const Biome::BlockPair ICE_BLOCK(79, 0);
-static const Biome::BlockPair WATER_BLOCK(9, 0);
+const Biome::BlockPair Biome::WATER_BLOCK(9, 0);
 
 Biome* Biome::biomes[Biome::MAX_BIOME_ID + 1];
 static BiomeNameMap sBiomesByName;
@@ -234,8 +234,9 @@ Biome::MobSpawnerData::~MobSpawnerData()
 }
 
 Biome::Biome(EBiomeIDs biomeId, BiomeType biomeType, BiomeProperties* properties)
-    : mTopBlock(), mFillerBlock(), id(biomeId), mPreviewColour(eMinecraftColour_Preview_Plains), mOceanRuinConfig(), mBiomeType(biomeType), mFloorBlock()
+    : mTopBlock(), mFillerBlock(), id(biomeId), mOceanRuinConfig(), mBiomeType(biomeType), mFloorBlock()
 {
+    mPreviewColour = eMinecraftColour_Preview_Plains;
     mTopBlock.blockId = Block::getId(Blocks::grass);
     mTopBlock.blockData = Blocks::grass->convertBlockStateToLegacyData(Blocks::grass->defaultBlockState());
     mFillerBlock.blockId = Block::getId(Blocks::dirt);
@@ -867,7 +868,7 @@ Biome* Biome::getBiome(int biomeId, Biome* fallback)
 {
     if (biomeId < 0 || biomeId > MAX_BIOME_ID)
     {
-        return DEFAULT;
+        return OCEAN;
     }
 
     if (biomes[biomeId] != NULL)
@@ -917,8 +918,8 @@ Biome* Biome::setPreviewColor(eMinecraftColour previewColour)
 
 Biome* Biome::setRunDepthAndFloorBlock(unsigned int runDepth, unsigned int floorDepth, BlockPair floorBlock)
 {
-    mFloorDepth = floorDepth;
     mRunDepth = runDepth;
+    mFloorDepth = floorDepth;
     mFloorBlock = floorBlock;
 
     return this;
@@ -927,8 +928,8 @@ Biome* Biome::setRunDepthAndFloorBlock(unsigned int runDepth, unsigned int floor
 Biome* Biome::setSnowAccumulation(float minAccumulation, float maxAccumulation)
 {
     mSnowAccumulation = minAccumulation;
-    mMaxSnowAccumulation = maxAccumulation;
     mMinSnowAccumulation = minAccumulation;
+    mMaxSnowAccumulation = maxAccumulation;
 
     if (minAccumulation > 0.0F && getBiomeType() != eBiomeType_Ocean)
     {

@@ -14,10 +14,8 @@ BeachBiome::BeachBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     mCreatures.clear();
     mChickens.clear();
 
-    mTopBlock.blockId = BlockId::SAND;
-    mTopBlock.blockData = Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState());
-    mFillerBlock.blockId = BlockId::SAND;
-    mFillerBlock.blockData = Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState());
+    mTopBlock = BlockPair(BlockId::SAND, Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState()));
+    mFillerBlock = BlockPair(BlockId::SAND, Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState()));
 
     if (getTemperature() > TURTLE_MIN_TEMPERATURE)
     {

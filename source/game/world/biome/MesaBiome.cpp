@@ -28,24 +28,33 @@ static Biome::BlockPair sClay(BlockId::HARDENED_CLAY, 0);
 static Biome::BlockPair sStainedClay(BlockId::STAINED_HARDENED_CLAY, 0);
 static Biome::BlockPair sOrange(BlockId::STAINED_HARDENED_CLAY, 1);
 static Biome::BlockPair sRedSand(BlockId::SAND, 1);
-static const Biome::BlockPair BEDROCK_BLOCK(BlockId::BEDROCK, 0);
 
 MesaBiome::MesaBiome(EBiomeIDs id, bool brycePillars, bool hasForest, BiomeProperties* properties)
-    : Biome(id, eBiomeType_Mesa, properties), mClayBands(NULL), mSeed(0),
-      mPillarNoise(NULL), mPillarRoofNoise(NULL), mNoise(NULL),
-      mBrycePillars(brycePillars), mHasForest(hasForest)
+    : Biome(id, eBiomeType_Mesa, properties)
 {
+    mBrycePillars = brycePillars;
+    mHasForest = hasForest;
+    mPillarNoise = NULL;
+    mPillarRoofNoise = NULL;
+    mNoise = NULL;
+    mClayBands = NULL;
+    mSeed = 0;
     mCreatures.clear();
     mTopBlock = sRedSand;
     mFillerBlock = sStainedClay;
     delete mDecorator;
     mDecorator = new MesaDecorator();
-    mCreatures.clear();
-    mDecorator->reedsPerChunk = 3;
+    mDecorator->treesPerChunk = -999;
     mDecorator->deadBushPerChunk = 20;
+    mDecorator->reedsPerChunk = 3;
     mDecorator->cactiPerChunk = 5;
     mDecorator->flowersPerChunk = 0;
-    mDecorator->treesPerChunk = hasForest ? 5 : -999;
+    mCreatures.clear();
+
+    if (hasForest)
+    {
+        mDecorator->treesPerChunk = 5;
+    }
 }
 
 MesaBiome::~MesaBiome()
@@ -160,8 +169,9 @@ void MesaBiome::generateBands(long long seed)
     int band = 0;
     for (int i = 0; i < whiteCount; ++i)
     {
+        int length = 1;
         band += random.nextInt(16) + 4;
-        for (int j = 0; band + j < 64 && j < 1; ++j)
+        for (int j = 0; band + j < 64 && j < length; ++j)
         {
             mClayBands[band + j] = whiteBand;
             if (band + j > 1 && random.nextBoolean())
@@ -199,12 +209,7 @@ void MesaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer
     {
         int pillarX = (x & -16) + (z & 15);
         int pillarZ = (z & -16) + (x & 15);
-        double pillar = mPillarNoise->getValue((double)pillarX * 0.25, (double)pillarZ * 0.25);
-        double magnitude = std::fabs(noise);
-        if (magnitude < pillar)
-        {
-            pillar = magnitude;
-        }
+        double pillar = std::min(std::fabs(noise), mPillarNoise->getValue((double)pillarX * 0.25, (double)pillarZ * 0.25));
 
         if (pillar > 0.0)
         {
@@ -265,12 +270,7 @@ void MesaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer
                         filler = mFillerBlock;
                     }
 
-                    int surfaceOffset = y - 63;
-                    if (surfaceOffset < 0)
-                    {
-                        surfaceOffset = 0;
-                    }
-                    runDepth = depth + surfaceOffset;
+                    runDepth = depth + std::max(0, y - 63);
 
                     if (y >= 62)
                     {
@@ -287,10 +287,18 @@ void MesaBiome::buildSurfaceAt(Level* level, Random& random, ChunkPrimer* primer
                         }
                         else if (y > 66 + depth)
                         {
-                            BlockPair surface = sOrange;
-                            if (y >= 64 && y <= 127)
+                            BlockPair surface;
+                            if (y < 64 || y > 127)
                             {
-                                surface = coarse ? sClay : getBand(x, y, z);
+                                surface = sOrange;
+                            }
+                            else if (coarse)
+                            {
+                                surface = sClay;
+                            }
+                            else
+                            {
+                                surface = getBand(x, y, z);
                             }
                             primer->setBlockAndData(index, surface.blockId, surface.blockData);
                         }

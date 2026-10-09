@@ -11,5 +11,9 @@ MutatedForestBiome::MutatedForestBiome(EBiomeIDs biomeId, BiomeProperties* prope
 
 AbstractTreeFeature* MutatedForestBiome::getTreeFeature(Random& random)
 {
-    return new BirchFeature(false, random.nextBoolean());
+    if (random.nextBoolean())
+    {
+        return new BirchFeature(false, true);
+    }
+    return new BirchFeature(false, false);
 }

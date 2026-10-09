@@ -73,24 +73,24 @@ BiomeDecorator::BiomeDecorator()
     coralCrustGen = new CoralCrustFeature();
     coralHangGen = new CoralHangFeature();
     seaAnemoneGen = new SeaAnemoneFeature();
-    settings = NULL;
-    bigMushroomsPerChunk = 0;
-    sandPerChunk2 = 3;
-    decorating = false;
-    extraTreeChance = 0.1f;
     mushroomsPerChunk = 0;
-    treesPerChunk = 0;
-    cactiPerChunk = 0;
     deadBushPerChunk = 0;
+    waterlilyPerChunk = 0;
+    treesPerChunk = 0;
+    extraTreeChance = 0.1f;
+    flowersPerChunk = 2;
+    grassPerChunk = 1;
+    reedsPerChunk = 0;
+    cactiPerChunk = 0;
+    bigMushroomsPerChunk = 0;
     kelpPerChunk = 0;
     sandPerChunk = 1;
-    seagrassPerChunk = 0;
-    grassPerChunk = 1;
+    sandPerChunk2 = 3;
     clayPerChunk = 1;
-    reedsPerChunk = 0;
-    flowersPerChunk = 2;
-    waterlilyPerChunk = 0;
     seaGrassPerChunk = 0;
+    seagrassPerChunk = 0;
+    decorating = false;
+    settings = NULL;
     generateLakes = true;
 }
 
@@ -173,15 +173,15 @@ void BiomeDecorator::decorate(Level* level, Random* random, Biome* biome, const 
 void BiomeDecorator::decorateDepthSpan(Level* level, Random* random, int count, Feature* feature,
                                        int minY, int maxY)
 {
-    if (maxY <= minY)
+    if (maxY < minY)
     {
-        if (maxY < minY)
-        {
-            int swap = minY;
-            minY = maxY;
-            maxY = swap;
-        }
-        else if (minY < 255)
+        int swap = minY;
+        minY = maxY;
+        maxY = swap;
+    }
+    else if (maxY == minY)
+    {
+        if (minY < 255)
         {
             ++maxY;
         }
@@ -196,10 +196,7 @@ void BiomeDecorator::decorateDepthSpan(Level* level, Random* random, int count, 
     MutableBlockPos pos(0, 0, 0);
     for (int i = 0; i < count; ++i)
     {
-        const int x = random->nextInt(16);
-        const int y = random->nextInt(maxY - minY);
-        const int z = random->nextInt(16);
-        pos.set(originX + x, y + minY, originZ + z);
+        pos.set(originX + random->nextInt(16), random->nextInt(maxY - minY) + minY, originZ + random->nextInt(16));
         feature->place(level, *random, pos);
     }
 }
@@ -212,11 +209,8 @@ void BiomeDecorator::decorateDepthAverage(Level* level, Random* random, int coun
     MutableBlockPos pos(0, 0, 0);
     for (int i = 0; i < count; ++i)
     {
-        const int x = originX + random->nextInt(16);
-        const int y1 = random->nextInt(radius);
-        const int y2 = random->nextInt(radius);
-        const int z = originZ + random->nextInt(16);
-        pos.set(x, y1 + y2 + centreY - radius, z);
+        pos.set(originX + random->nextInt(16), random->nextInt(radius) + random->nextInt(radius) + centreY - radius,
+                originZ + random->nextInt(16));
         feature->place(level, *random, pos);
     }
 }

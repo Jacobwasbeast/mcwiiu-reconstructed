@@ -51,17 +51,13 @@ public:
 
     arrayWithLength(std::vector<T>& values)
     {
-        unsigned int count = values.size();
-        T* newData = new T[count];
-        zero(newData, count);
+        length = values.size();
+        data = new T[length];
 
-        for (unsigned int i = 0; i < count; i++)
+        for (unsigned int i = 0; i < length; i++)
         {
-            newData[i] = values.at(i);
+            data[i] = values[i];
         }
-
-        data = newData;
-        length = count;
     }
 
     void resize(unsigned int newLength)
@@ -69,54 +65,50 @@ public:
         if (newLength != length)
         {
             T* newData = new T[newLength];
+            zero(newData, newLength);
 
-            for (unsigned int i = 0; i < newLength; i++)
-            {
-                newData[i] = T();
-            }
+            T* oldData = data;
 
-            if (data != NULL)
+            if (oldData != NULL)
             {
                 unsigned int copyLength = newLength < length ? newLength : length;
 
                 for (unsigned int i = 0; i < copyLength; i++)
                 {
-                    newData[i] = data[i];
+                    newData[i] = oldData[i];
                 }
 
                 delete[] data;
             }
 
-            length = newLength;
             data = newData;
+            length = newLength;
         }
     }
 
-    void resizeNoDelete(unsigned int newLength, void** oldData)
+    void resizeNoDelete(unsigned int newLength, void** previousData)
     {
         if (newLength != length)
         {
             T* newData = new T[newLength];
+            zero(newData, newLength);
 
-            for (unsigned int i = 0; i < newLength; i++)
-            {
-                newData[i] = T();
-            }
+            T* oldData = data;
 
-            if (data != NULL)
+            if (oldData != NULL)
             {
                 unsigned int copyLength = newLength < length ? newLength : length;
 
                 for (unsigned int i = 0; i < copyLength; i++)
                 {
-                    newData[i] = data[i];
+                    newData[i] = oldData[i];
                 }
 
-                *oldData = data;
+                *previousData = data;
             }
 
-            length = newLength;
             data = newData;
+            length = newLength;
         }
     }
 };

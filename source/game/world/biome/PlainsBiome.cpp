@@ -26,13 +26,24 @@ PlainsBiome::PlainsBiome(EBiomeIDs biomeId, bool sunflower, BiomeProperties* pro
 FlowerBlock::Flower* PlainsBiome::getRandomFlower(Random& random, const BlockPos& pos)
 {
     const double temperature = BIOME_INFO_NOISE->getValue(pos.x / 200.0, pos.z / 200.0);
-    if (temperature >= -0.8)
+    if (temperature < -0.8)
     {
-        if (random.nextInt(3) <= 0)
+        const int tulip = random.nextInt(4);
+        switch (tulip)
         {
-            return FlowerBlock::Flower::DANDELION;
+        case 0:
+            return FlowerBlock::Flower::ORANGE_TULIP;
+        case 1:
+            return FlowerBlock::Flower::RED_TULIP;
+        case 2:
+            return FlowerBlock::Flower::PINK_TULIP;
+        case 3:
+        default:
+            return FlowerBlock::Flower::WHITE_TULIP;
         }
-
+    }
+    else if (random.nextInt(3) > 0)
+    {
         const int flower = random.nextInt(3);
         if (flower == 0)
         {
@@ -44,21 +55,10 @@ FlowerBlock::Flower* PlainsBiome::getRandomFlower(Random& random, const BlockPos
         }
         return FlowerBlock::Flower::OXEYE_DAISY;
     }
-
-    const int tulip = random.nextInt(4);
-    if (tulip == 0)
+    else
     {
-        return FlowerBlock::Flower::ORANGE_TULIP;
+        return FlowerBlock::Flower::DANDELION;
     }
-    if (tulip == 1)
-    {
-        return FlowerBlock::Flower::RED_TULIP;
-    }
-    if (tulip == 2)
-    {
-        return FlowerBlock::Flower::PINK_TULIP;
-    }
-    return FlowerBlock::Flower::WHITE_TULIP;
 }
 
 AbstractTreeFeature* PlainsBiome::getTreeFeature(Random& random)
@@ -75,7 +75,12 @@ void PlainsBiome::decorate(Level* level, Random& random, const BlockPos& pos)
 {
     const double temperature = BIOME_INFO_NOISE->getValue((pos.x + 8) / 200.0, (pos.z + 8) / 200.0);
 
-    if (temperature >= -0.8)
+    if (temperature < -0.8)
+    {
+        mDecorator->flowersPerChunk = 15;
+        mDecorator->grassPerChunk = 5;
+    }
+    else
     {
         mDecorator->flowersPerChunk = 4;
         mDecorator->grassPerChunk = 10;
@@ -83,31 +88,22 @@ void PlainsBiome::decorate(Level* level, Random& random, const BlockPos& pos)
 
         for (int i = 0; i < 7; ++i)
         {
-            const int x = random.nextInt(16);
-            const int z = random.nextInt(16);
-            BlockPos plantPos = pos.offset(x + 8, 0, z + 8);
-            const BlockPos heightPos = level->getHeightmapPos(plantPos);
-            const int y = random.nextInt(heightPos.y + 32);
-            DOUBLE_PLANT_FEATURE->place(level, random, plantPos = pos.offset(x + 8, y, z + 8));
+            const int x = random.nextInt(16) + 8;
+            const int z = random.nextInt(16) + 8;
+            const int y = random.nextInt(level->getHeightmapPos(pos.offset(x, 0, z)).y + 32);
+            DOUBLE_PLANT_FEATURE->place(level, random, pos.offset(x, y, z));
         }
-    }
-    else
-    {
-        mDecorator->flowersPerChunk = 15;
-        mDecorator->grassPerChunk = 5;
     }
 
     if (mIsSunflower)
     {
-        DOUBLE_PLANT_FEATURE->setNextPlantType(DoublePlantBlock::VARIANTS[0]);
+        DOUBLE_PLANT_FEATURE->setNextPlantType(DoublePlantBlock::Variant::SUNFLOWER);
         for (int i = 0; i < 10; ++i)
         {
-            const int x = random.nextInt(16);
-            const int z = random.nextInt(16);
-            BlockPos plantPos = pos.offset(x + 8, 0, z + 8);
-            const BlockPos heightPos = level->getHeightmapPos(plantPos);
-            const int y = random.nextInt(heightPos.y + 32);
-            DOUBLE_PLANT_FEATURE->place(level, random, plantPos = pos.offset(x + 8, y, z + 8));
+            const int x = random.nextInt(16) + 8;
+            const int z = random.nextInt(16) + 8;
+            const int y = random.nextInt(level->getHeightmapPos(pos.offset(x, 0, z)).y + 32);
+            DOUBLE_PLANT_FEATURE->place(level, random, pos.offset(x, y, z));
         }
     }
 

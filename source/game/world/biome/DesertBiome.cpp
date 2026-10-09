@@ -7,6 +7,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/biome/BiomeDecorator.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockId.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/DesertWellFeature.hpp"
@@ -20,16 +21,13 @@ DesertBiome::DesertBiome(EBiomeIDs biomeId, BiomeProperties* properties)
     mChickens.clear();
     mWolves.clear();
 
-    mTopBlock.blockData = Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState());
-    mTopBlock.blockId = 12;
-    mFillerBlock.blockData = Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState());
-    mFillerBlock.blockId = 12;
+    mTopBlock = BlockPair(BlockId::SAND, Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState()));
+    mFillerBlock = BlockPair(BlockId::SAND, Blocks::sand->convertBlockStateToLegacyData(Blocks::sand->defaultBlockState()));
 
-    BiomeDecorator* decorator = mDecorator;
-    decorator->treesPerChunk = -999;
-    decorator->reedsPerChunk = 50;
-    decorator->cactiPerChunk = 10;
-    decorator->deadBushPerChunk = 2;
+    mDecorator->treesPerChunk = -999;
+    mDecorator->deadBushPerChunk = 2;
+    mDecorator->reedsPerChunk = 50;
+    mDecorator->cactiPerChunk = 10;
 
     for (std::vector<MobSpawnerData*>::iterator iterator = mMonsters.begin();
          iterator != mMonsters.end(); ++iterator)

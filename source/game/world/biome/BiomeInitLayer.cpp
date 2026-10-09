@@ -85,11 +85,11 @@ arrayWithLength<int> BiomeInitLayer::getArea(int x, int z, int width, int height
     {
         for (int column = 0; column < width; column++)
         {
-            initRandom((long long)(x + column), (long long)(z + row));
+            initRandom((long long)(column + x), (long long)(row + z));
 
-            int parentValue = parentArea.data[column + row * width];
-            int special = (parentValue >> 8) & 0xf;
-            int biomeId = parentValue & 0xfffff0ff;
+            int biomeId = parentArea.data[column + row * width];
+            int special = (biomeId & 0xf00) >> 8;
+            biomeId &= ~0xf00;
 
             if (settings != NULL && settings->fixedBiome >= 0)
             {

@@ -3,6 +3,7 @@
 
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/BlockId.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/generation/AbstractTreeFeature.hpp"
@@ -20,8 +21,7 @@ IceBiome::IceBiome(EBiomeIDs biomeId, bool hasIceSpikes, BiomeProperties* proper
 
     if (hasIceSpikes)
     {
-        mTopBlock.blockData = Blocks::snow->convertBlockStateToLegacyData(Blocks::snow->defaultBlockState());
-        mTopBlock.blockId = 80;
+        mTopBlock = BlockPair(BlockId::SNOW, Blocks::snow->convertBlockStateToLegacyData(Blocks::snow->defaultBlockState()));
     }
 
     mCreatures.clear();

@@ -13,9 +13,9 @@ TheEndBiome::TheEndBiome(EBiomeIDs biomeId, BiomeProperties* properties)
 {
     mMonsters.clear();
     mCreatures.clear();
-    mWaterCreatures.clear();
     mChickens.clear();
     mWolves.clear();
+    mWaterCreatures.clear();
     mAmbientCreatures.clear();
 
     mMonsters.push_back(new MobSpawnerData(10, EntityType::ENDER_MAN, 4, 4));
@@ -33,24 +33,22 @@ unsigned int TheEndBiome::getSkyColor(float temperature)
 
 Vec3* TheEndBiome::getFogColor(float celestialAngle, float partialTicks) const
 {
-    unsigned int fogColour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_End_Fog_Colour);
+    int fogColour = Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_End_Fog_Colour);
 
     float brightness = Mth::cos(celestialAngle * 3.1415927F * 2.0F) * 2.0F + 0.5F;
     if (brightness < 0.0F)
-    {
         brightness = 0.0F;
-    }
-    if (brightness > 1.0F)
-    {
+    else if (brightness > 1.0F)
         brightness = 1.0F;
-    }
 
-    float red = (float)(int)(fogColour >> 16 & 0xFF) / 255.0F;
-    float green = (float)(int)(fogColour >> 8 & 0xFF) / 255.0F;
-    float blue = (float)(int)(fogColour & 0xFF) / 255.0F;
-    float scale = brightness * 0.0F + 0.15F;
+    float red = (float)(fogColour >> 16 & 0xFF) / 255.0F;
+    float green = (float)(fogColour >> 8 & 0xFF) / 255.0F;
+    float blue = (float)(fogColour & 0xFF) / 255.0F;
+    red *= brightness * 0.0F + 0.15F;
+    green *= brightness * 0.0F + 0.15F;
+    blue *= brightness * 0.0F + 0.15F;
 
-    return Vec3::newTemp(red * scale, green * scale, blue * scale);
+    return Vec3::newTemp(red, green, blue);
 }
 
 Biome::EBiomeBaseClass TheEndBiome::getBaseClass()

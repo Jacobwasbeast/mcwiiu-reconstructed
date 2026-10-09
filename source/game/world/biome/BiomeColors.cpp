@@ -27,7 +27,8 @@ unsigned int BiomeColors::WaterColorResolver::getColor(Biome* biome, const Block
 
 unsigned int BiomeColors::SkyColorResolver::getColor(Biome* biome, const BlockPos& pos)
 {
-    return biome->getSkyColor(biome->getTemperature(pos));
+    float temperature = biome->getTemperature(pos);
+    return biome->getSkyColor(temperature);
 }
 
 unsigned int BiomeColors::getAverageColor(LevelSource* level, const BlockPos& pos, BiomeColors::ColorResolver* resolver)
@@ -37,8 +38,7 @@ unsigned int BiomeColors::getAverageColor(LevelSource* level, const BlockPos& po
     int green = 0;
     int blue = 0;
 
-    BlockPos origin(0, 0, 0);
-    MutableBlockPos& samplePos = static_cast<MutableBlockPos&>(origin);
+    MutableBlockPos samplePos;
 
     for (int offsetZ = -1; offsetZ <= 1; ++offsetZ)
     {

@@ -13,10 +13,6 @@
 #include "game/world/generation/SeaPickleFeature.hpp"
 #include "game/entity/mob/Entity.hpp"
 
-namespace
-{
-}
-
 OceanWarmBiome::OceanWarmBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_Ocean, properties),
       mDeep(deep)
@@ -34,13 +30,13 @@ OceanWarmBiome::OceanWarmBiome(EBiomeIDs biomeId, bool deep, BiomeProperties* pr
     mWaterCreatures.push_back(new MobSpawnerData(7, EntityType::DOLPHIN, 3, 5));
     mMonsters.push_back(new MobSpawnerData(10, EntityType::DROWNED, 2, 4));
 
-    mOceanRuinConfig.biomeType = OceanRuin::eRuinType_Warm;
+    mDecorator->seagrassPerChunk = 12;
+    mDecorator->seaGrassPerChunk = 4;
+
+    mOceanRuinConfig.enabled = true;
     mOceanRuinConfig.smallProbability = 0.3F;
     mOceanRuinConfig.clusterProbability = 0.9F;
-    mOceanRuinConfig.enabled = true;
-
-    mDecorator->seaGrassPerChunk = 4;
-    mDecorator->seagrassPerChunk = 12;
+    mOceanRuinConfig.biomeType = OceanRuin::eRuinType_Warm;
 }
 
 float OceanWarmBiome::getCreatureProbability()
@@ -56,28 +52,32 @@ void OceanWarmBiome::decorate(Level* level, Random& random, const BlockPos& pos)
     {
         const int x = random.nextInt(16);
         const int z = random.nextInt(16);
-        mDecorator->coralGen->place(level, random, pos.offset(x, 45, z));
+        BlockPos position = pos.offset(x, 45, z);
+        mDecorator->coralGen->place(level, random, position);
     }
 
     if (random.nextInt(3) == 0)
     {
         const int x = random.nextInt(10);
         const int z = random.nextInt(10);
-        mDecorator->coralCrustGen->place(level, random, pos.offset(x, 45, z));
+        BlockPos position = pos.offset(x, 45, z);
+        mDecorator->coralCrustGen->place(level, random, position);
     }
 
     for (int i = 0; i < 16; ++i)
     {
         const int x = random.nextInt(16);
         const int z = random.nextInt(16);
-        mDecorator->coralHangGen->place(level, random, pos.offset(x, 62, z));
+        BlockPos position = pos.offset(x, 62, z);
+        mDecorator->coralHangGen->place(level, random, position);
     }
 
     for (int i = 0; i < 20; ++i)
     {
         const int x = random.nextInt(16);
         const int z = random.nextInt(16);
-        mDecorator->seaAnemoneGen->place(level, random, pos.offset(x, 62, z));
+        BlockPos position = pos.offset(x, 62, z);
+        mDecorator->seaAnemoneGen->place(level, random, position);
     }
 
     if (random.nextInt(6) == 0)

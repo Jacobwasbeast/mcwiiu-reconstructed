@@ -40,33 +40,29 @@ ForestBiome::ForestBiome(EBiomeIDs biomeId, EType type, BiomeProperties* propert
 
 AbstractTreeFeature* ForestBiome::getTreeFeature(Random& random)
 {
-    if (mType == eType_Roofed)
-    {
-        if (random.nextInt(3) > 0)
-            return new RoofTreeFeature(false);
-    }
-
-    if (mType != eType_Birch && random.nextInt(5) != 0)
-    {
-        if (random.nextInt(10) != 0)
-            return new TreeFeature(false);
+    if (mType == eType_Roofed && random.nextInt(3) > 0)
+        return new RoofTreeFeature(false);
+    if (mType == eType_Birch || random.nextInt(5) == 0)
+        return new BirchFeature(false, false);
+    if (random.nextInt(10) == 0)
         return new BigTreeFeature(false);
-    }
-
-    return new BirchFeature(false, false);
+    return new TreeFeature(false);
 }
 
 FlowerBlock::Flower* ForestBiome::getRandomFlower(Random& random, const BlockPos& pos)
 {
-    if (mType != eType_Flower)
-        return Biome::getRandomFlower(random, pos);
+    if (mType == eType_Flower)
+    {
+        double noise = BIOME_INFO_NOISE->getValue(pos.x / 48.0, pos.z / 48.0);
+        double value = Mth::clamp((noise + 1.0) * 0.5, 0.0, 0.9999);
+        int index = (int)(value * FlowerBlock::Flower::FLOWER_COUNT);
+        FlowerBlock::Flower* flower = FlowerBlock::Flower::FLOWERS[index];
+        if (flower == FlowerBlock::Flower::BLUE_ORCHID)
+            return FlowerBlock::Flower::POPPY;
+        return flower;
+    }
 
-    double noise = BIOME_INFO_NOISE->getValue(pos.x / 48.0, pos.z / 48.0);
-    double value = Mth::clamp((noise + 1.0) * 0.5, 0.0, 0.9999);
-    FlowerBlock::Flower* flower = FlowerBlock::Flower::FLOWERS[(int)(value * 10.0)];
-    if (flower == FlowerBlock::Flower::BLUE_ORCHID)
-        return FlowerBlock::Flower::POPPY;
-    return flower;
+    return Biome::getRandomFlower(random, pos);
 }
 
 void ForestBiome::addMushrooms(Level* level, Random& random, const BlockPos& pos)
@@ -99,22 +95,22 @@ void ForestBiome::addMushrooms(Level* level, Random& random, const BlockPos& pos
 
 void ForestBiome::addDoublePlants(Level* level, Random& random, const BlockPos& pos, int count)
 {
-    while (count-- > 0)
+    for (int i = 0; i < count; ++i)
     {
         int plant = random.nextInt(3);
         if (plant == 0)
-            DOUBLE_PLANT_FEATURE->setNextPlantType(DoublePlantBlock::VARIANTS[1]);
+            DOUBLE_PLANT_FEATURE->setNextPlantType(DoublePlantBlock::Variant::SYRINGA);
         else if (plant == 1)
-            DOUBLE_PLANT_FEATURE->setNextPlantType(DoublePlantBlock::VARIANTS[4]);
+            DOUBLE_PLANT_FEATURE->setNextPlantType(DoublePlantBlock::Variant::ROSE);
         else if (plant == 2)
-            DOUBLE_PLANT_FEATURE->setNextPlantType(DoublePlantBlock::VARIANTS[5]);
+            DOUBLE_PLANT_FEATURE->setNextPlantType(DoublePlantBlock::Variant::PAEONIA);
 
         for (int attempt = 0; attempt < 5; ++attempt)
         {
-            int x = random.nextInt(16);
-            int z = random.nextInt(16);
-            int y = random.nextInt(level->getHeightmapPos(pos.offset(x + 8, 0, z + 8)).y + 32);
-            if (DOUBLE_PLANT_FEATURE->place(level, random, BlockPos(pos.x + x + 8, y, pos.z + z + 8)))
+            int x = random.nextInt(16) + 8;
+            int z = random.nextInt(16) + 8;
+            int y = random.nextInt(level->getHeightmapPos(pos.offset(x, 0, z)).y + 32);
+            if (DOUBLE_PLANT_FEATURE->place(level, random, BlockPos(pos.x + x, y, pos.z + z)))
                 break;
         }
     }
