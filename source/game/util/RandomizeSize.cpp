@@ -10,7 +10,7 @@ RandomizeSize::RandomizeSize(LayerSize* layerSize, float amount)
 {
 }
 
-int RandomizeSize::GetLayerSize(Random& random, double blend) const
+unsigned int RandomizeSize::GetLayerSize(Random& random, double blend) const
 {
     unsigned int size = mLayerSize->GetLayerSize(random, blend);
     unsigned int offset = (unsigned int)floorf((2.0f * mAmount * random.nextFloat() - 1.0f) * (float)size);

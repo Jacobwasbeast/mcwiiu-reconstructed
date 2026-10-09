@@ -223,11 +223,12 @@ void Rabbit::RaidGardenGoal::tick()
 bool Rabbit::RaidGardenGoal::isValidTarget(Level* level, const BlockPos& pos)
 {
     BlockPos farmPos = pos;
-    if (level->getBlockState(farmPos)->getBlock() == Blocks::farmland && mWantsToRaid && !mCanRaid)
+    Block* block = level->getBlockState(farmPos)->getBlock();
+    if (block == Blocks::farmland && mWantsToRaid && !mCanRaid)
     {
         farmPos = farmPos.above();
         const BlockState* state = level->getBlockState(farmPos);
-        Block* block = state->getBlock();
+        block = state->getBlock();
         if (dynamic_cast<CarrotBlock*>(block) != NULL && state->getValue(CropBlock::AGE) == 7)
         {
             mCanRaid = true;
@@ -242,12 +243,12 @@ Rabbit::Rabbit(Level* level)
 {
     fjDerivedCtorCalls();
     mMoreCarrotTicks = 0;
-    mGrassBlock = Blocks::grass;
+    mSpawnBlocks[0] = Blocks::grass;
     mJumpTicks = 0;
     mJumpDuration = 0;
-    mSnowLayerBlock = Blocks::snow_layer;
-    mSandBlock = Blocks::sand;
-    mSnowBlock = Blocks::snow;
+    mSpawnBlocks[2] = Blocks::snow_layer;
+    mSpawnBlocks[3] = Blocks::sand;
+    mSpawnBlocks[1] = Blocks::snow;
     mJumping = false;
     mJumpDelayTicks = 0;
     setSize(0.4f, 0.5f);
@@ -358,11 +359,14 @@ bool Rabbit::checkSpawnRules()
     int z = Mth::floor(mZ);
     BlockPos pos(x, y, z);
     bool spawnBlock = false;
-    if (mLevel->getBlockState(pos.below())->getBlock() == mGrassBlock
-        || mLevel->getBlockState(pos.below())->getBlock() == mSnowBlock
-        || mLevel->getBlockState(pos.below())->getBlock() == mSnowLayerBlock
-        || mLevel->getBlockState(pos.below())->getBlock() == mSandBlock)
-        spawnBlock = true;
+    for (int i = 0; i < SPAWN_BLOCK_COUNT; ++i)
+    {
+        if (mLevel->getBlockState(pos.below())->getBlock() == mSpawnBlocks[i])
+        {
+            spawnBlock = true;
+            break;
+        }
+    }
     return spawnBlock && mLevel->getDaytimeRawBrightness(pos) > 8 && PathfinderMob::checkSpawnRules();
 }
 
@@ -629,21 +633,12 @@ MobGroupData* Rabbit::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
 void Rabbit::eatCarrot()
 {
     CropBlock* carrots = static_cast<CropBlock*>(Blocks::carrots);
-    const BlockState* state = carrots->getStateForAge(carrots->getMaxAge());
-    int particleData = Block::getIdWithData(state);
-    arrayWithLength<int> particleParams(&particleData, 1);
-
-    float randomX = mRandom->nextFloat();
-    float randomY = mRandom->nextFloat();
-    float randomZ = mRandom->nextFloat();
-    float width = mBbWidth;
-
+    int particleData = Block::getIdWithData(carrots->getStateForAge(carrots->getMaxAge()));
     mLevel->addParticle(PARTICLE_BLOCK_DUST,
-                         (mX + (double)(randomX * width + randomX * width)) - width,
-                         mY + 0.5 + (double)(randomY * mBbHeight),
-                         (mZ + (double)(randomZ * width + randomZ * width)) - width,
-                         0.0, 0.0, 0.0,
-                         particleParams);
+                        mX + (mRandom->nextFloat() * mBbWidth * 2.0f) - mBbWidth,
+                        mY + 0.5 + mRandom->nextFloat() * mBbHeight,
+                        mZ + (mRandom->nextFloat() * mBbWidth * 2.0f) - mBbWidth,
+                        0.0, 0.0, 0.0, arrayWithLength<int>(&particleData, 1));
     mMoreCarrotTicks = 40;
 }
 

@@ -26,22 +26,26 @@ extern "C" void outresuint(uint32_t value)
     AIL_debug_log("!-Result = %ld", value);
 }
 
-int32_t ourtoupper(char value)
+char ourtoupper(char value)
 {
-    return (value >= 'a' && value <= 'z') ? static_cast<char>(value - 0x20) : value;
+    if (value >= 'a' && value <= 'z')
+    {
+        return value - ('a' - 'A');
+    }
+    return value;
 }
 
 int OnlyNum(const char* value)
 {
-    const char* current = value;
-    while (*current != '\0')
+    const char* start = value;
+    while (*value != '\0')
     {
-        if ((current != value || *current != '-') &&
-            (static_cast<unsigned int>(static_cast<char>(*current + static_cast<unsigned char>(-'0'))) >= 10 && *current != '.'))
+        if ((value != start || *value != '-') &&
+            (static_cast<unsigned int>(static_cast<char>(*value + static_cast<unsigned char>(-'0'))) >= 10 && *value != '.'))
         {
             return 0;
         }
-        ++current;
+        ++value;
     }
     return 1;
 }
@@ -50,42 +54,47 @@ extern "C" int AIL_stricmp(const char* first, const char* second)
 {
     for (;;)
     {
-        const int firstChar = ourtoupper(*first);
-        const int secondChar = ourtoupper(*second);
-        if (secondChar < firstChar)
-        {
-            return 1;
-        }
+        int firstChar = *first;
+        firstChar = ourtoupper(firstChar);
+        int secondChar = *second;
+        secondChar = ourtoupper(secondChar);
         if (firstChar < secondChar)
         {
             return -1;
         }
+        if (firstChar > secondChar)
+        {
+            return 1;
+        }
         if (firstChar == 0)
         {
-            return 0;
+            break;
         }
         ++first;
         ++second;
     }
+    return 0;
 }
 
 extern "C" int AIL_strnicmp(const char* first, const char* second, int count)
 {
     for (; count != 0; --count)
     {
-        const int firstChar = ourtoupper(*first);
-        const int secondChar = ourtoupper(*second);
+        int firstChar = *first;
+        firstChar = ourtoupper(firstChar);
+        int secondChar = *second;
+        secondChar = ourtoupper(secondChar);
         if (firstChar < secondChar)
         {
             return -1;
         }
-        if (secondChar < firstChar)
+        if (firstChar > secondChar)
         {
             return 1;
         }
         if (firstChar == 0)
         {
-            return 0;
+            break;
         }
         ++first;
         ++second;
@@ -207,7 +216,7 @@ extern "C" void AIL_set_sample_reverb_levels(_SAMPLE* pSample, float fFirst, flo
     AIL_debug_depth = AIL_debug_depth - 1;
 }
 
-extern "C" void AIL_set_sample_low_pass_cut_off(_SAMPLE* pSample, float fCutOff, int iChannel)
+extern "C" void AIL_set_sample_low_pass_cut_off(_SAMPLE* pSample, int iChannel, float fCutOff)
 {
     AIL_debug_depth = AIL_debug_depth + 1;
 
@@ -218,7 +227,7 @@ extern "C" void AIL_set_sample_low_pass_cut_off(_SAMPLE* pSample, float fCutOff,
     }
 
     InMilesMutex();
-    AIL_API_set_sample_low_pass_cut_off(pSample, fCutOff, iChannel);
+    AIL_API_set_sample_low_pass_cut_off(pSample, iChannel, fCutOff);
     OutMilesMutex();
 
     AIL_debug_depth = AIL_debug_depth - 1;

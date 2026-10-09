@@ -53,7 +53,7 @@ public:
     static void clearPool();
     static void resetPool();
 
-    void set(double x0, double y0, double z0, double x1, double y1, double z1);
+    AABB* set(double x0, double y0, double z0, double x1, double y1, double z1);
     void set(const AABB* box);
 
     AABB* setMinX(double minX);

@@ -8,7 +8,7 @@ class RandomizeSize : public LayerSize
 public:
     RandomizeSize(LayerSize* layerSize, float amount);
 
-    virtual int GetLayerSize(Random& random, double blend) const;
+    virtual unsigned int GetLayerSize(Random& random, double blend) const;
 
 private:
     LayerSize* mLayerSize;

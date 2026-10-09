@@ -12,6 +12,9 @@ public:
     int z;
     Vec3i(int x, int y, int z) : x(x), y(y), z(z) {}
     Vec3i(double x, double y, double z);
+    int getX() const { return x; }
+    int getY() const { return y; }
+    int getZ() const { return z; }
     Vec3i offset(int dx, int dy, int dz) const;
     Vec3i offset(const Vec3i& other) const;
     Vec3i offset(double dx, double dy, double dz) const;

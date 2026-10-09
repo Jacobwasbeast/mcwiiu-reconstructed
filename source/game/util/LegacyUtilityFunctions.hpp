@@ -9,7 +9,7 @@ struct _DIG_DRIVER;
 extern "C" void outresfloat(float fResult);
 extern "C" void outresint64(uint32_t low, uint32_t high);
 extern "C" void outresuint(uint32_t value);
-int32_t ourtoupper(char value);
+char ourtoupper(char value);
 int OnlyNum(const char* value);
 extern "C" unsigned int find_ASI_provider(const char* attributeName, const char* fileName);
 extern "C" int AIL_stricmp(const char* first, const char* second);
@@ -24,7 +24,7 @@ extern "C" void AIL_set_sample_channel_levels(_SAMPLE* pSample, const int* pSour
                                               const int* pDestinations, const float* pLevels,
                                               int iCount);
 extern "C" void AIL_set_sample_reverb_levels(_SAMPLE* pSample, float fFirst, float fSecond);
-extern "C" void AIL_set_sample_low_pass_cut_off(_SAMPLE* pSample, float fCutOff, int iChannel);
+extern "C" void AIL_set_sample_low_pass_cut_off(_SAMPLE* pSample, int iChannel, float fCutOff);
 extern "C" void AIL_set_sample_51_volume_pan(_SAMPLE* pSample, float fVolume, float fPan,
                                              float fFade, float fCenter, float fLowFrequency);
 extern "C" int AIL_sample_processor(_SAMPLE* pSample, int iStage);

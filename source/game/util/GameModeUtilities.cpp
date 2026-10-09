@@ -62,41 +62,36 @@ void GameModeUtilities::Position::randomize(Random* random, double minX, double 
 
 bool GameModeUtilities::Position::isSafeInRange(Level* level, int minY, int maxY)
 {
-    static const int MAX_SAFE_HEIGHT = 256;
-    const int blockX = Mth::floor(x);
-    const int blockZ = Mth::floor(z);
-    if (maxY > MAX_SAFE_HEIGHT)
-        maxY = MAX_SAFE_HEIGHT;
-    if (minY < 2)
-        minY = 2;
+    int blockX = Mth::floor(x);
+    int blockZ = Mth::floor(z);
+    int top = std::min(Level::maxBuildHeight, maxY);
+    int bottom = std::max(minY, 2);
 
-    for (int y = maxY; y > minY; --y)
+    for (int y = top; y > bottom; --y)
     {
         BlockPos floorPos = BlockPos(blockX, y, blockZ).below();
         const BlockState* floor = level->getBlockState(floorPos);
         const BlockState* head = level->getBlockState(floorPos.above());
-        if (floor == NULL || floor->getBlock() == Blocks::air)
-            continue;
-        if (!floor->isSolidBlockingCube())
-            return false;
-        if (head->getMaterial() == Material::FIRE)
-            return false;
-        if (dynamic_cast<PressurePlateBlock*>(head->getBlock()) != NULL)
-            return false;
-        return true;
+        if (floor != NULL && floor->getBlock() != Blocks::air)
+        {
+            return floor->isSolidBlockingCube() && head->getMaterial() != Material::FIRE
+                   && dynamic_cast<PressurePlateBlock*>(head->getBlock()) == NULL;
+        }
     }
     return false;
 }
 
 void GameModeUtilities::Position::randomize(Random* random, std::vector<long long>* positions)
 {
-    x = 0.0;
-    z = 0.0;
+    z = x = 0.0;
     if (positions != NULL && !positions->empty())
     {
-        long long packed = positions->at((unsigned int)Mth::nextInt(random, 0, (int)positions->size() - 1));
-        x = (double)(int)(packed >> 32);
-        z = (double)(int)packed;
+        int index = Mth::nextInt(random, 0, positions->size() - 1);
+        long long packed = positions->at(index);
+        int packedX = (int)(packed >> 32);
+        int packedZ = (int)(packed & 0xFFFFFFFF);
+        x = packedX;
+        z = packedZ;
     }
 }
 
@@ -115,39 +110,16 @@ int GameModeUtilities::Position::getSpawnY(Level* level)
 {
     int ix = Mth::floor(x);
     int iz = Mth::floor(z);
-    for (int y = 256; y > 0; y -= 4)
+    for (int y = 256; y > 0; --y)
     {
-        Block* block;
-
-        block = level->getBlockState(BlockPos(ix, y, iz))->getBlock();
+        Block* block = level->getBlockState(BlockPos(ix, y, iz))->getBlock();
         if (block != NULL && block != Blocks::air)
         {
-            if (block != Blocks::lava && block != Blocks::flowing_lava) return y + 1;
-            return y + 50;
-        }
-
-        block = level->getBlockState(BlockPos(ix, y - 1, iz))->getBlock();
-        if (block != NULL && block != Blocks::air)
-        {
-            if (block != Blocks::lava && block != Blocks::flowing_lava) return y;
-            return (y - 3) + 52;
-        }
-
-        block = level->getBlockState(BlockPos(ix, y - 2, iz))->getBlock();
-        if (block != NULL && block != Blocks::air)
-        {
-            if (block != Blocks::lava && block != Blocks::flowing_lava) return (y - 2) + 1;
-            return (y - 2) + 50;
-        }
-
-        block = level->getBlockState(BlockPos(ix, y - 3, iz))->getBlock();
-        if (block != NULL && block != Blocks::air)
-        {
-            if (block != Blocks::lava && block != Blocks::flowing_lava) return y - 2;
-            return (y - 3) + 50;
+            if (block == Blocks::lava || block == Blocks::flowing_lava) return y + 50;
+            return y + 1;
         }
     }
-    return 0x101;
+    return 257;
 }
 
 bool GameModeUtilities::DistributeItemsSpread(const std::vector<boost::shared_ptr<Container> >* containers,
@@ -305,12 +277,9 @@ bool GameModeUtilities::DistributeItemsWeightedRandom(const std::vector<boost::s
 void GameModeUtilities::SpawnWithinArea(boost::shared_ptr<ServerPlayer> player, AABB* area)
 {
     Random random;
-    double rand1 = random.nextDouble();
-    double rand2 = random.nextDouble();
-    double rand3 = random.nextDouble();
-    double x = (area->mMaxX - area->mMinX) * rand1 + area->mMinX;
-    double y = (area->mMaxY - area->mMinY) * rand2 + area->mMinY;
-    double z = (area->mMaxZ - area->mMinZ) * rand3 + area->mMinZ;
+    double x = area->mMinX + (area->mMaxX - area->mMinX) * random.nextDouble();
+    double y = area->mMinY + (area->mMaxY - area->mMinY) * random.nextDouble();
+    double z = area->mMinZ + (area->mMaxZ - area->mMinZ) * random.nextDouble();
     player->absMoveTo(x, y, z, 0.0f, 0.0f);
     player->teleportTo(player->mX, player->mY, player->mZ);
 }
@@ -384,8 +353,8 @@ std::vector<GameModeUtilities::Position*>* GameModeUtilities::createInitialPosit
                                                                                      double minX, double minZ,
                                                                                      double maxX, double maxZ)
 {
-    std::vector<Position*>* positions = new std::vector<Position*>(std::allocator<Position*>());
-    positions->reserve((unsigned int)count);
+    std::vector<Position*>* positions = new std::vector<Position*>();
+    positions->reserve(count);
     for (int i = 0; i < count; ++i)
     {
         Position* position = new Position();

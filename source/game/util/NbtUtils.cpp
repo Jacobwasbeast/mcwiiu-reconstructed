@@ -19,41 +19,48 @@
 
 bool NbtUtils::compareNbt(Tag* first, Tag* second, bool compareLists)
 {
-    if (first != second && first != NULL)
+    if (first == second) return true;
+    if (first == NULL) return true;
+    if (second == NULL) return false;
+    if (typeid(first) != typeid(second)) return false;
+    if (dynamic_cast<CompoundTag*>(first) != NULL)
     {
-        if (second == NULL || typeid(first) != typeid(second)) return false;
-        if (dynamic_cast<CompoundTag*>(first) != NULL)
+        CompoundTag* firstCompound = dynamic_cast<CompoundTag*>(first);
+        CompoundTag* secondCompound = dynamic_cast<CompoundTag*>(second);
+        std::vector<std::wstring>* keys = firstCompound->getAllKeys();
+        std::vector<std::wstring>::const_iterator it;
+        for (it = keys->begin(); it != keys->end(); ++it)
         {
-            CompoundTag* firstCompound = dynamic_cast<CompoundTag*>(first);
-            CompoundTag* secondCompound = dynamic_cast<CompoundTag*>(second);
-            std::vector<std::wstring>* keys = firstCompound->getAllKeys();
-            std::vector<std::wstring>::const_iterator it;
-            for (it = keys->begin(); it != keys->end(); ++it)
-            {
-                std::wstring key = *it;
-                if (!compareNbt(firstCompound->get(key), secondCompound->get(key), compareLists)) return false;
-            }
-            delete keys;
-            return true;
+            std::wstring key = *it;
+            Tag* firstChild = firstCompound->get(key);
+            Tag* secondChild = secondCompound->get(key);
+            if (!compareNbt(firstChild, secondChild, compareLists)) return false;
         }
-        if (dynamic_cast<ListTag*>(first) == NULL || !compareLists) return first->equals(second);
+        delete keys;
+        return true;
+    }
+    if (dynamic_cast<ListTag*>(first) != NULL && compareLists)
+    {
         ListTag* firstList = dynamic_cast<ListTag*>(first);
         ListTag* secondList = dynamic_cast<ListTag*>(second);
         if (firstList->size() == 0) return secondList->size() == 0;
-        int i;
-        for (i = 0; i < firstList->size(); ++i)
+        for (int i = 0; i < firstList->size(); ++i)
         {
             Tag* element = firstList->get(i);
-            int j = 0;
-            if (secondList->size() < 1) return false;
-            while (!compareNbt(element, secondList->get(j), compareLists))
+            bool found = false;
+            for (int j = 0; j < secondList->size(); ++j)
             {
-                ++j;
-                if (secondList->size() <= j) return false;
+                if (compareNbt(element, secondList->get(j), compareLists))
+                {
+                    found = true;
+                    break;
+                }
             }
+            if (!found) return false;
         }
+        return true;
     }
-    return true;
+    return first->equals(second);
 }
 
 BlockPos NbtUtils::readBlockPos(CompoundTag* tag)
@@ -108,16 +115,15 @@ const BlockState* NbtUtils::readBlockState(CompoundTag* tag)
         BlockStateDefinition* definition = block->getBlockStateDefinition();
         std::vector<std::wstring>* keys = properties->getAllKeys();
         std::vector<const Property*> blockProperties = definition->getProperties();
-        std::vector<std::wstring>::const_iterator it;
-        for (it = keys->begin(); it != keys->end(); ++it)
+        for (std::vector<std::wstring>::iterator it = keys->begin(); it != keys->end(); ++it)
         {
             std::wstring key = *it;
-            std::vector<const Property*>::const_iterator property;
-            for (property = blockProperties.begin(); property != blockProperties.end(); ++property)
+            for (std::vector<const Property*>::iterator property = blockProperties.begin(); property != blockProperties.end(); ++property)
             {
-                if (key == (*property)->getName())
+                const Property* blockProperty = *property;
+                if (key == blockProperty->getName())
                 {
-                    state = block->setPropertyValueFromString(state, *property, properties->getString(key));
+                    state = block->setPropertyValueFromString(state, blockProperty, properties->getString(key));
                 }
             }
         }

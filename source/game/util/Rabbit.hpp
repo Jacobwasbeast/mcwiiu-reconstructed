@@ -161,10 +161,9 @@ private:
     int mJumpDelayTicks;
     int mMoreCarrotTicks;
     boost::shared_ptr<void> mField0x794;
-    Block* mGrassBlock;
-    Block* mSnowBlock;
-    Block* mSnowLayerBlock;
-    Block* mSandBlock;
+    static const int SPAWN_BLOCK_COUNT = 4;
+
+    Block* mSpawnBlocks[SPAWN_BLOCK_COUNT];
 };
 
 #endif

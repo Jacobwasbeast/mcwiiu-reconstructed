@@ -29,8 +29,7 @@ BlockPos* RandomPos::getRandomDelta(Random* random, int xz, int y, const Vec3* d
         return new BlockPos(dx, dy, dz);
     }
 
-    float angle = Mth::atan2((int)direction->z, (int)direction->x) - HALF_PI;
-    double target = (double)angle + (double)(2.0f * random->nextFloat() - 1.0f) * maxAngleDelta;
+    double target = (double)(Mth::atan2((int)direction->z, (int)direction->x) - HALF_PI) + (double)(2.0f * random->nextFloat() - 1.0f) * maxAngleDelta;
     double distance = sqrt(random->nextDouble()) * (double)SQRT_OF_TWO * (double)xz;
     double dx = -distance * sin(target);
     double dz = distance * cos(target);
@@ -47,19 +46,19 @@ BlockPos* RandomPos::getRandomDelta(Random* random, int xz, int y, const Vec3* d
 
 BlockPos RandomPos::moveAboveSolid(const BlockPos& pos, const boost::shared_ptr<PathfinderMob>& mob)
 {
-    if (!mob->mLevel->getBlockState(pos)->getMaterial()->isSolid())
+    if (mob->mLevel->getBlockState(pos)->getMaterial()->isSolid())
     {
-        return pos;
+        BlockPos above = pos.above();
+
+        while (above.y < mob->mLevel->getMaxBuildHeight() && mob->mLevel->getBlockState(above)->getMaterial()->isSolid())
+        {
+            above = above.above();
+        }
+
+        return above;
     }
 
-    BlockPos above = pos.above();
-
-    while (above.y < mob->mLevel->getMaxBuildHeight() && mob->mLevel->getBlockState(above)->getMaterial()->isSolid())
-    {
-        above = above.above();
-    }
-
-    return above;
+    return pos;
 }
 
 bool RandomPos::isWaterDestination(const BlockPos& pos, const boost::shared_ptr<PathfinderMob>& mob)
@@ -79,9 +78,9 @@ Vec3* RandomPos::generateRandomPos(const boost::shared_ptr<PathfinderMob>& mob, 
         BlockPos restrictCenter = mob->getRestrictCenter();
         double distanceSqr = restrictCenter.distSqr((double)Mth::floor(mob->mX), (double)Mth::floor(mob->mY),
                                                     (double)Mth::floor(mob->mZ)) + 4.0;
-        float range = mob->getRestrictRadius() + (float)xz;
+        double range = mob->getRestrictRadius() + (float)xz;
 
-        checkRestriction = distanceSqr < (double)range * (double)range;
+        checkRestriction = distanceSqr < range * range;
     }
     else
     {
@@ -93,7 +92,7 @@ Vec3* RandomPos::generateRandomPos(const boost::shared_ptr<PathfinderMob>& mob, 
     int bestX = 0;
     int bestY = 0;
     int bestZ = 0;
-    MutableBlockPos pos(0, 0, 0);
+    MutableBlockPos pos;
 
     for (int attempt = 0; attempt < 10; ++attempt)
     {

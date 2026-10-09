@@ -93,7 +93,7 @@ void AABB::resetPool()
 {
 }
 
-void AABB::set(double x0, double y0, double z0, double x1, double y1, double z1)
+AABB* AABB::set(double x0, double y0, double z0, double x1, double y1, double z1)
 {
     mMinX = x1 < x0 ? x1 : x0;
     mMinY = y1 < y0 ? y1 : y0;
@@ -101,6 +101,7 @@ void AABB::set(double x0, double y0, double z0, double x1, double y1, double z1)
     mMaxX = x0 < x1 ? x1 : x0;
     mMaxY = y0 < y1 ? y1 : y0;
     mMaxZ = z0 < z1 ? z1 : z0;
+    return this;
 }
 
 AABB* AABB::newTemp(double x0, double y0, double z0, double x1, double y1, double z1)

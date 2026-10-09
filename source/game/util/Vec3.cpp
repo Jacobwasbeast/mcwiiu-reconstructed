@@ -1,5 +1,6 @@
 #include "game/util/Vec3.hpp"
 
+#include "game/core/Mth.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3i.hpp"
 #include "game/util/phys__Vec2.hpp"
@@ -11,7 +12,7 @@
 unsigned int Vec3::sThreadStorageTlsIndex = 0;
 Vec3::ThreadStorage* Vec3::sDefaultThreadStorage = NULL;
 
-static Vec3* ZERO = new Vec3(0.0, 0.0, 0.0);
+Vec3* Vec3::ZERO = new Vec3(0.0, 0.0, 0.0);
 
 Vec3::ThreadStorage::ThreadStorage()
 {
@@ -378,11 +379,11 @@ double Vec3::distanceTo(AABB* box)
 
 Vec3* Vec3::directionFromRotation(float xRot, float yRot)
 {
-    float yaw = -yRot * 0.017453292f - 3.1415927f;
+    float yaw = -yRot * Mth::DEG_TO_RAD - 3.1415927f;
     float cosYaw = cosf(yaw);
     float sinYaw = sinf(yaw);
 
-    float pitch = -xRot * 0.017453292f;
+    float pitch = -xRot * Mth::DEG_TO_RAD;
     float cosPitch = -cosf(pitch);
     float sinPitch = sinf(pitch);
 
