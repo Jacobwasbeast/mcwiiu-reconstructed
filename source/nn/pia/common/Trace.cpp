@@ -1,43 +1,56 @@
 #include "nn/pia/common/Trace.hpp"
-#include "nn/pia/Common.hpp"
 #include "nn/pia/HeapManager.hpp"
+#include "nn/pia/common/Memory.hpp"
 #include "platform/wiiu/pead.hpp"
 
-#include <string.h>
 #include <new>
 
 namespace nn { namespace pia { namespace common {
 
-Trace* Trace::s_instance = 0;
-void* Trace::s_storage = 0;
+namespace
+{
+enum
+{
+    cResultAllocationFailed = 0x10c01,
+    cResultInvalidState = 0x10c08,
+    cResultNotInitialized = 0x10c0c,
+    cResultAlreadyExists = 0x10c0f
+};
 
-Trace::Trace() : m_level(0), m_enabled(1), m_start(), m_flags(0), m_ready(true)
+const unsigned long long cDefaultTraceFlags = 1;
+}
+
+Trace* Trace::s_instance = 0;
+unsigned char* Trace::s_storage = 0;
+
+Trace::Trace() : m_flags(cDefaultTraceFlags), m_start(), m_enabled(true)
 {
     m_start.SetNow();
 }
 
-void Trace::CreateInstance()
+Result Trace::CreateInstance()
 {
     if (IsInitialized() == 0)
-        return;
+        return cResultNotInitialized;
     if (IsInSetupMode() == 0)
-        return;
+        return cResultInvalidState;
     if (s_instance != 0)
-        return;
-    s_storage = pead::allocateFromSeadHeap(sizeof(Trace), HeapManager::GetHeap(), 8);
+        return cResultAlreadyExists;
+
+    s_storage = NewArray<unsigned char>(sizeof(Trace), 8);
     if (s_storage == 0)
-        return;
-    memset(s_storage, 0, sizeof(Trace));
+        return cResultAllocationFailed;
     s_instance = new (s_storage) Trace();
+    return 0;
 }
 
 void Trace::DestroyInstance()
 {
-    s_instance = 0;
+    if (s_instance != 0)
+        s_instance = 0;
     if (s_storage != 0)
     {
-        pead::getArraySize(s_storage);
-        pead::freeToSeadHeap(s_storage);
+        DeleteArray(s_storage);
         s_storage = 0;
     }
 }

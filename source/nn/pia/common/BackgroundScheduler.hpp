@@ -2,7 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_BACKGROUND_SCHEDULER_HPP
 
 #include "nn/pia.h"
-#include "nn/pia/ListBase.hpp"
+#include "nn/pia/common/PooledList.hpp"
 #include "platform/wiiu/pead.hpp"
 
 namespace nn { namespace pia { namespace common {
@@ -24,7 +24,7 @@ public:
     CriticalSection* m_criticalSection;
     pead::Event m_event;
     bool m_finalize;
-    ListBase m_jobList;
+    OffsetList m_jobList;
 };
 
 }}}

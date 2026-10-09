@@ -1,9 +1,11 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_MD5_CONTEXT_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_MD5_CONTEXT_HPP
 
+#include "nn/pia/common/Hmac.hpp"
+
 namespace nn { namespace pia { namespace common {
 
-class Md5Context
+class Md5Context : public HashContextBase
 {
 public:
     virtual void Initialize();
@@ -14,9 +16,24 @@ public:
     virtual void ProcessBlock();
 
 private:
-    unsigned int m_state[4];
-    unsigned int m_totalBytes;
-    unsigned char m_block[64];
+    enum
+    {
+        cBlockSize = 64,
+        cBlockWordNum = cBlockSize / 4,
+        cBlockDoubleWordNum = cBlockSize / 8,
+        cStateWordNum = 4,
+        cHashSize = cStateWordNum * 4,
+        cLengthSize = 8
+    };
+
+    unsigned int m_state[cStateWordNum];
+    unsigned int m_length;
+    union
+    {
+        unsigned char bytes[cBlockSize];
+        unsigned int words[cBlockWordNum];
+        unsigned long long doubleWords[cBlockDoubleWordNum];
+    } m_block;
 };
 
 }}}

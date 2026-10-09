@@ -14,9 +14,19 @@ public:
     Result Deserialize(const unsigned char* buffer, unsigned int size);
     void Trace(unsigned long long value) const;
 
-    unsigned char m_prefix[4];
-    unsigned short m_serializedValue;
-    unsigned char m_payload[10];
+    enum
+    {
+        cIdentifierSize = 8
+    };
+
+    unsigned char m_headerType;
+    unsigned char m_dataType;
+    unsigned char m_attribute;
+    unsigned char m_reserved1;
+    unsigned short m_contentSize;
+    unsigned char m_identifier[cIdentifierSize];
+    unsigned char m_keyIndex;
+    unsigned char m_reserved2;
 };
 
 }}}

@@ -17,6 +17,10 @@ public:
     Result Deserialize(const unsigned char* buffer);
     unsigned int IsValid() const;
     bool operator==(const StationAddress& other) const;
+    bool operator!=(const StationAddress& other) const
+    {
+        return !(*this == other);
+    }
     StationAddress& operator=(const StationAddress& other);
     bool operator<(const StationAddress& other) const;
     bool operator>(const StationAddress& other) const;

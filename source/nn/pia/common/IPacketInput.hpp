@@ -10,7 +10,7 @@ class Packet;
 class IPacketInput
 {
 public:
-    virtual ~IPacketInput();
+    virtual ~IPacketInput() {}
     virtual Result Read(Packet* packet) = 0;
     virtual Result CalculateCryptoParameter(unsigned char* parameter, unsigned int size,
                                             Packet* packet) = 0;

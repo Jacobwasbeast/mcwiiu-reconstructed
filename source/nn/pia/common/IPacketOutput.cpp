@@ -2,10 +2,6 @@
 
 namespace nn { namespace pia { namespace common {
 
-IPacketOutput::~IPacketOutput()
-{
-}
-
 unsigned int IPacketOutput::GetMulticastDestinationNum() const
 {
     return 1;

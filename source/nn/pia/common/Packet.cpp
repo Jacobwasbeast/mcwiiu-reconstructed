@@ -8,75 +8,13 @@ namespace nn { namespace pia { namespace common {
 
 namespace {
 
-const Result cEncryptInvalidPacket = static_cast<Result>(0x10c08);
-const Result cEncryptUnsupportedMode = static_cast<Result>(0xc0b);
-const Result cDecryptInvalidPacket = static_cast<Result>(0x2c03);
-const Result cDecryptUnsupportedMode = static_cast<Result>(0xc0b);
-const unsigned int cEncryptedPayloadLimit = Packet::cPayloadSizeMax + 1;
-
-}
-
-Packet::Header::~Header()
+enum
 {
-}
+    cResultInvalidPacket = 0x10c08,
+    cResultUnsupportedMode = 0xc0b,
+    cResultDecryptInvalidPacket = 0x2c03
+};
 
-Result Packet::Header::Serialize(unsigned char* buffer, unsigned int* size) const
-{
-    if (buffer == 0)
-        return static_cast<Result>(0x10c07);
-    if (size == 0)
-        return static_cast<Result>(0x10c07);
-
-    buffer[0] = static_cast<unsigned char>(m_signature >> 24);
-    buffer[1] = static_cast<unsigned char>(m_signature >> 16);
-    buffer[2] = static_cast<unsigned char>(m_signature >> 8);
-    buffer[3] = static_cast<unsigned char>(m_signature);
-    buffer[4] = m_version;
-    buffer[5] = m_passId;
-    buffer[6] = static_cast<unsigned char>(m_sequenceId >> 8);
-    buffer[7] = static_cast<unsigned char>(m_sequenceId);
-    buffer[8] = static_cast<unsigned char>(m_rttResponseFlag >> 8);
-    buffer[9] = static_cast<unsigned char>(m_rttResponseFlag);
-    buffer[10] = static_cast<unsigned char>(m_rttMeasurement >> 8);
-    buffer[11] = static_cast<unsigned char>(m_rttMeasurement);
-    unsigned int index;
-    for (index = 0; index < sizeof(m_cryptoNonce); ++index)
-        buffer[12 + index] = m_cryptoNonce[index];
-    for (index = 0; index < sizeof(m_cryptoSignature); ++index)
-        buffer[20 + index] = m_cryptoSignature[index];
-
-    *size = cSerializedSize;
-    return 0;
-}
-
-Result Packet::Header::Deserialize(const unsigned char* buffer)
-{
-    if (buffer == 0)
-        return static_cast<Result>(0x10c07);
-
-    m_signature = (static_cast<unsigned int>(buffer[0]) << 24) |
-                  (static_cast<unsigned int>(buffer[1]) << 16) |
-                  (static_cast<unsigned int>(buffer[2]) << 8) | buffer[3];
-    m_version = buffer[4];
-    m_passId = buffer[5];
-    m_sequenceId = static_cast<unsigned short>(
-        (static_cast<unsigned int>(buffer[6]) << 8) | buffer[7]);
-    m_rttResponseFlag = static_cast<unsigned short>(
-        (static_cast<unsigned int>(buffer[8]) << 8) | buffer[9]);
-    m_rttMeasurement = static_cast<unsigned short>(
-        (static_cast<unsigned int>(buffer[10]) << 8) | buffer[11]);
-    unsigned int index;
-    for (index = 0; index < sizeof(m_cryptoNonce); ++index)
-        m_cryptoNonce[index] = buffer[12 + index];
-    for (index = 0; index < sizeof(m_cryptoSignature); ++index)
-        m_cryptoSignature[index] = buffer[20 + index];
-
-    return 0;
-}
-
-unsigned int Packet::Header::GetSerializedSize() const
-{
-    return cSerializedSize;
 }
 
 void Packet::PacketData::Copy(const PacketData& packetData)
@@ -106,7 +44,7 @@ const unsigned char* Packet::PacketData::GetPayload(unsigned int offset) const
 
 void Packet::PacketData::SetPayload(const void* payload, unsigned int size)
 {
-    OSBlockMove(GetPayload(), payload, size, FALSE);
+    OSBlockMove(m_data + cHeaderSize, payload, size, FALSE);
 }
 
 void Packet::PacketData::SerializeHeader()
@@ -153,15 +91,11 @@ void Packet::Reset()
     m_field614 = 0;
 }
 
-unsigned int Packet::IsValid() const
+unsigned char Packet::IsValid() const
 {
-    if (m_packetData.m_header.m_signature != cSignature)
-        return 0;
-    if (m_packetData.m_header.m_version != 1 && m_packetData.m_header.m_version != 2)
-        return 0;
-    if (m_size - cHeaderSize > cPayloadSizeMax)
-        return 0;
-    return 1;
+    return m_packetData.m_header.m_signature == cSignature &&
+           (m_packetData.m_header.m_version == 1 || m_packetData.m_header.m_version == 2) &&
+           m_size >= cHeaderSize && m_size <= cDataSizeMax;
 }
 
 unsigned char* Packet::AssignPayload(unsigned int size)
@@ -192,28 +126,27 @@ void Packet::CopyFrom(const Packet& packet)
 
 Result Packet::Encrypt(const Crypto::Setting& setting)
 {
-    if (IsValid() == 0 || m_packetData.m_header.m_version != 1)
-        return cEncryptInvalidPacket;
-
-    if (setting.m_mode == 0)
+    if (!IsValid())
+        return cResultInvalidPacket;
+    if (m_packetData.m_header.m_version != 1)
+        return cResultInvalidPacket;
+    if (setting.m_mode == Crypto::cModeNone)
         return 0;
-    if (setting.m_mode != 1)
-        return cEncryptUnsupportedMode;
+    if (setting.m_mode != Crypto::cModeAesGcm)
+        return cResultUnsupportedMode;
+    if (m_size <= cHeaderSize)
+        return 0;
 
     const unsigned int payloadSize = m_size - cHeaderSize;
-    if (payloadSize < 1)
-        return 0;
-
     const unsigned int blockSize = Crypto::GetBlockSize(setting.m_mode);
-    const unsigned int encryptedSize =
-        ((payloadSize + blockSize - 1) / blockSize) * blockSize;
-    if (encryptedSize >= cEncryptedPayloadLimit)
-        return cEncryptInvalidPacket;
+    const unsigned int encryptedSize = (payloadSize + blockSize - 1) / blockSize * blockSize;
+    if (encryptedSize > cPayloadSizeMax)
+        return cResultInvalidPacket;
 
     unsigned char source[cPayloadSizeMax];
     OSBlockMove(source, m_packetData.GetPayload(), payloadSize, FALSE);
-    const unsigned int paddingSize = encryptedSize - payloadSize;
-    if (paddingSize != 0)
+    const int paddingSize = encryptedSize - payloadSize;
+    if (paddingSize > 0)
         OSBlockSet(source + payloadSize, 0xff, paddingSize);
 
     const Result result = Crypto::Encrypt(
@@ -229,14 +162,14 @@ Result Packet::Encrypt(const Crypto::Setting& setting)
 
 Result Packet::Decrypt(const Crypto::Setting& setting)
 {
-    if (IsValid() == 0)
-        return cDecryptInvalidPacket;
+    if (!IsValid())
+        return cResultDecryptInvalidPacket;
     if (m_packetData.m_header.m_version == 1)
         return 0;
-    if (setting.m_mode != 1)
-        return cDecryptUnsupportedMode;
+    if (setting.m_mode != Crypto::cModeAesGcm)
+        return cResultUnsupportedMode;
     if (m_packetData.m_header.m_version != 2)
-        return cDecryptInvalidPacket;
+        return cResultDecryptInvalidPacket;
 
     const unsigned int encryptedSize = m_size - cHeaderSize;
     if (encryptedSize == 0)
@@ -246,8 +179,10 @@ Result Packet::Decrypt(const Crypto::Setting& setting)
     }
 
     const unsigned int blockSize = Crypto::GetBlockSize(setting.m_mode);
-    if (encryptedSize % blockSize != 0 || encryptedSize >= cEncryptedPayloadLimit)
-        return cDecryptInvalidPacket;
+    if (encryptedSize % blockSize != 0)
+        return cResultDecryptInvalidPacket;
+    if (encryptedSize > cPayloadSizeMax)
+        return cResultDecryptInvalidPacket;
 
     unsigned char destination[cPayloadSizeMax];
     const Result result = Crypto::Decrypt(

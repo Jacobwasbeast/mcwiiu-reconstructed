@@ -8,11 +8,10 @@ namespace nn { namespace pia { namespace common {
 
 struct SockAddrIn
 {
-    union
-    {
-        unsigned char bytes[16];
-        unsigned int words[4];
-    };
+    unsigned short family;
+    unsigned short port;
+    unsigned int address;
+    unsigned char zero[8];
 };
 
 struct AddrInfo
@@ -30,6 +29,11 @@ struct AddrInfo
 class SocketAddress
 {
 public:
+    SocketAddress()
+    {
+        Init();
+    }
+
     void Init();
     void SetInetAddress(const InetAddress& address);
     void GetInetAddress(InetAddress* address);
@@ -43,7 +47,7 @@ public:
 private:
     SockAddrIn* m_pointer;
     SockAddrIn m_address;
-    unsigned int m_unknownTail[5];
+    unsigned int m_unknownTail[4];
 };
 
 }}}

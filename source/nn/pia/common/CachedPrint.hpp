@@ -14,6 +14,7 @@ public:
     ~CachedPrint();
     static Result CreateInstance(unsigned int capacity);
     static void DestroyInstance();
+    static CachedPrint* GetInstance() { return s_instance; }
     void VPrintf(const char* format, va_list args);
     void Printf(const char* format, ...);
     void Clear();
@@ -28,7 +29,7 @@ private:
     unsigned int m_end;
     CriticalSection m_criticalSection;
     static CachedPrint* s_instance;
-    static void* s_storage;
+    static unsigned char* s_storage;
 };
 
 }}}

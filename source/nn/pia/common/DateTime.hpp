@@ -7,7 +7,13 @@ class DateTime
 {
 public:
     DateTime()
-        : m_year(0), m_month(0), m_day(0), m_hour(0), m_minute(0), m_second(0), m_unknown7(0)
+        : m_year(0), m_month(0), m_day(0), m_hour(0), m_minute(0), m_second(0), m_isValid(false)
+    {
+    }
+
+    DateTime(unsigned short year, unsigned char month, unsigned char day, unsigned char hour, unsigned char minute,
+             unsigned char second)
+        : m_year(year), m_month(month), m_day(day), m_hour(hour), m_minute(minute), m_second(second), m_isValid(true)
     {
     }
 
@@ -19,7 +25,42 @@ public:
         m_hour = 0;
         m_minute = 0;
         m_second = 0;
-        m_unknown7 = 0;
+        m_isValid = false;
+    }
+
+    unsigned short GetYear() const
+    {
+        return m_year;
+    }
+
+    unsigned char GetMonth() const
+    {
+        return m_month;
+    }
+
+    unsigned char GetDay() const
+    {
+        return m_day;
+    }
+
+    unsigned char GetHour() const
+    {
+        return m_hour;
+    }
+
+    unsigned char GetMinute() const
+    {
+        return m_minute;
+    }
+
+    unsigned char GetSecond() const
+    {
+        return m_second;
+    }
+
+    bool IsValid() const
+    {
+        return m_isValid;
     }
 
     DateTime& operator=(const DateTime& other);
@@ -35,7 +76,7 @@ private:
     unsigned char m_hour;
     unsigned char m_minute;
     unsigned char m_second;
-    unsigned char m_unknown7;
+    bool m_isValid;
 };
 
 inline DateTime& DateTime::operator=(const DateTime& other)
@@ -46,7 +87,7 @@ inline DateTime& DateTime::operator=(const DateTime& other)
     m_hour = other.m_hour;
     m_minute = other.m_minute;
     m_second = other.m_second;
-    m_unknown7 = other.m_unknown7;
+    m_isValid = other.m_isValid;
     return *this;
 }
 

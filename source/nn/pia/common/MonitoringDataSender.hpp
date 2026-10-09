@@ -10,12 +10,12 @@ class MonitoringDataSender
 public:
     enum DataType
     {
-        cDataType0 = 0,
-        cDataType1 = 1,
+        cDataTypeSessionBegin = 0,
+        cDataTypeSessionEnd = 1,
         cDataType2 = 2
     };
 
-    virtual ~MonitoringDataSender();
+    virtual ~MonitoringDataSender() {}
     virtual Result Startup() = 0;
     virtual void Cleanup() = 0;
     virtual void SetSendSessionBeginReportRequested(bool requested) = 0;

@@ -31,8 +31,7 @@ public:
 
     Step m_currentStep;
     bool m_cancelRequested;
-    unsigned int m_state;
-    unsigned int m_result;
+    unsigned long long m_traceFlag;
 };
 
 }}}

@@ -1,5 +1,7 @@
 #include "nn/pia/common/Report.hpp"
 
+#include <cstdarg>
+
 namespace nn { namespace pia { namespace common {
 
 Report::Report()
@@ -14,8 +16,9 @@ Report::~Report()
 
 void Report::Write(unsigned int category, const char* format, ...)
 {
-    (void)category;
-    (void)format;
+    va_list arguments;
+    va_start(arguments, format);
+    va_end(arguments);
 }
 
 void Report::WriteCaption(unsigned int category)

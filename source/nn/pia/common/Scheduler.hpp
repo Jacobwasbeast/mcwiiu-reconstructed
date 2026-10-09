@@ -2,7 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_SCHEDULER_HPP
 
 #include "nn/pia.h"
-#include "nn/pia/ListBase.hpp"
+#include "nn/pia/common/PooledList.hpp"
 #include "nn/pia/common/Time.hpp"
 
 namespace nn { namespace pia { namespace common {
@@ -25,10 +25,8 @@ public:
     unsigned int GetJobNum() const;
     void Trace(unsigned long long value) const;
 
-    ListBase m_jobList;
-    int m_jobNodeOffset;
-    ListBase m_nextJobList;
-    int m_nextJobNodeOffset;
+    OffsetList m_jobList;
+    OffsetList m_nextJobList;
     Time m_dispatchTime;
     unsigned int m_dispatchCount;
     CriticalSection m_criticalSection;

@@ -1,57 +1,55 @@
 #include "nn/pia/common/CachedPrint.hpp"
 
+#include "nn/pia/common/Memory.hpp"
+
 #include <cstdio>
 #include <new>
 
 namespace nn { namespace pia { namespace common {
 
+namespace
+{
+enum
+{
+    cResultAllocationFailed = 0x10c01,
+    cResultInvalidArgument = 0x10c07,
+    cResultInvalidState = 0x10c08,
+    cResultNotInitialized = 0x10c0c,
+    cResultAlreadyCreated = 0x10c0f
+};
+
+const unsigned int cMinimumCapacity = 0x200;
+}
+
 CachedPrint* CachedPrint::s_instance = 0;
-void* CachedPrint::s_storage = 0;
+unsigned char* CachedPrint::s_storage = 0;
 
 CachedPrint::CachedPrint(unsigned int capacity)
     : m_buffer(0), m_capacity(capacity), m_start(0), m_position(0), m_end(0),
       m_criticalSection(7)
 {
-    m_buffer = static_cast<char*>(pead::allocateFromSeadHeap(
-        capacity, HeapManager::GetHeap()));
-    for (unsigned int index = 0; index < capacity; ++index)
-        if (m_buffer != 0)
-            m_buffer[index] = '\0';
+    m_buffer = NewArray<char>(capacity);
 }
 
 CachedPrint::~CachedPrint()
 {
-    if (m_buffer != 0)
-    {
-        pead::getArraySize(m_buffer);
-        pead::freeToSeadHeap(m_buffer);
-    }
+    DeleteArray(m_buffer);
 }
 
 Result CachedPrint::CreateInstance(unsigned int capacity)
 {
-    static const Result kNotInitialized = 0x10c0c;
-    static const Result kInvalidState = 0x10c08;
-    static const Result kInvalidCapacity = 0x10c07;
-    static const Result kAllocationFailed = 0x10c01;
-    static const Result kAlreadyCreated = 0x10c0f;
-
     if (IsInitialized() == 0)
-        return kNotInitialized;
+        return cResultNotInitialized;
     if (IsInSetupMode() == 0)
-        return kInvalidState;
+        return cResultInvalidState;
     if (s_instance != 0)
-        return kAlreadyCreated;
-    if (capacity < 0x200)
-        return kInvalidCapacity;
+        return cResultAlreadyCreated;
+    if (capacity < cMinimumCapacity)
+        return cResultInvalidArgument;
 
-    s_storage = pead::allocateFromSeadHeap(0x40, HeapManager::GetHeap(), 8);
+    s_storage = NewArray<unsigned char>(sizeof(CachedPrint), 8);
     if (s_storage == 0)
-        return kAllocationFailed;
-    unsigned char* storageBytes = static_cast<unsigned char*>(s_storage);
-    for (unsigned int index = 0; index < 0x40; ++index)
-        if (storageBytes != 0)
-            storageBytes[index] = 0;
+        return cResultAllocationFailed;
     s_instance = new (s_storage) CachedPrint(capacity);
     return 0;
 }
@@ -65,15 +63,14 @@ void CachedPrint::DestroyInstance()
     }
     if (s_storage != 0)
     {
-        pead::getArraySize(s_storage);
-        pead::freeToSeadHeap(s_storage);
+        DeleteArray(s_storage);
         s_storage = 0;
     }
 }
 
 void CachedPrint::VPrintf(const char* format, va_list args)
 {
-    m_criticalSection.Lock();
+    common::ScopedLock lock(m_criticalSection);
     unsigned int maxLength = m_capacity - m_position;
     if (maxLength < 0x100)
     {
@@ -106,7 +103,6 @@ void CachedPrint::VPrintf(const char* format, va_list args)
         m_end = newPosition;
         m_start = 0;
     }
-    m_criticalSection.Unlock();
 }
 
 void CachedPrint::Printf(const char* format, ...)
@@ -119,16 +115,15 @@ void CachedPrint::Printf(const char* format, ...)
 
 void CachedPrint::Clear()
 {
-    m_criticalSection.Lock();
+    common::ScopedLock lock(m_criticalSection);
     m_end = 0;
     m_start = 0;
     m_position = 0;
-    m_criticalSection.Unlock();
 }
 
 void CachedPrint::Flush()
 {
-    m_criticalSection.Lock();
+    common::ScopedLock lock(m_criticalSection);
     const unsigned int start = m_start;
     unsigned int end = m_end;
     if (end != start)
@@ -139,7 +134,6 @@ void CachedPrint::Flush()
     if (end != m_position && m_position != 0)
         pead::system::PrintString(m_buffer, static_cast<int>(m_position));
     Clear();
-    m_criticalSection.Unlock();
 }
 
 }}}

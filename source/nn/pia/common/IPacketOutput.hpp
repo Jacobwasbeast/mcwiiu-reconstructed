@@ -10,8 +10,8 @@ class Packet;
 class IPacketOutput
 {
 public:
-    virtual ~IPacketOutput();
-    virtual void OnStationConnectionEvent() = 0;
+    virtual ~IPacketOutput() {}
+    virtual Result OnStationConnectionEvent() = 0;
     virtual Result CalculateCryptoParameter(unsigned char* parameter, unsigned int size,
                                             Packet* packet) = 0;
     virtual Result Write(const Packet& packet) = 0;

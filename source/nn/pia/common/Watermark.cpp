@@ -1,9 +1,12 @@
 #include "nn/pia/Reconstruction.hpp"
 
 #include <string.h>
+#include <coreinit/memory.h>
 
 namespace
 {
+
+const char* s_defaultName = "(No name)";
 
 long long maximum(long long lhs, long long rhs)
 {
@@ -22,15 +25,19 @@ namespace nn { namespace pia { namespace common {
 Watermark::Watermark()
 {
     m_enabled = false;
-    SetName("(No name)");
+    SetName(s_defaultName);
     Reset();
+}
+
+Watermark::~Watermark()
+{
 }
 
 void Watermark::SetName(const char* name)
 {
     unsigned int length = static_cast<unsigned int>(strlen(name));
     if (length > cNameLengthMax) length = cNameLengthMax;
-    memcpy(m_name, name, length);
+    OSBlockMove(m_name, name, length, FALSE);
     m_name[length] = '\0';
 }
 

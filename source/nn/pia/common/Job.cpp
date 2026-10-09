@@ -20,14 +20,18 @@ void Job::Reset(bool isBackground)
 {
     CriticalSection& criticalSection = g_piaJobScheduler->m_criticalSection;
     criticalSection.Lock();
-    if (m_innerState != cInnerStateNotEntried &&
-        m_innerState < cInnerStateForegroundRunning)
+    switch (m_innerState)
     {
+    case cInnerStateForegroundWaiting:
+    case cInnerStateForegroundReady:
         g_piaJobScheduler->ResetJob(this);
+        break;
+    default:
+        break;
     }
-    m_innerState = cInnerStateNotEntried;
     m_executeCount = 0;
-    m_time = Time();
+    m_time.m_tick = 0;
+    m_innerState = cInnerStateNotEntried;
     criticalSection.Unlock();
 }
 
@@ -104,58 +108,69 @@ void Job::Execute(bool isBackground)
 
     switch (result.m_kind)
     {
+    case cExecuteKindContinue:
+    case cExecuteKindEntryForeground:
+    case cExecuteKindEntryBackground:
+        m_time.SetNow();
+        {
+            bool background = isBackground;
+            switch (result.m_kind)
+            {
+            case cExecuteKindEntryForeground:
+                background = false;
+                break;
+            case cExecuteKindEntryBackground:
+                background = true;
+                break;
+            }
+            g_piaJobScheduler->EntryJob(this, background);
+            m_innerState = background ? cInnerStateBackgroundReady
+                                      : cInnerStateForegroundReady;
+        }
+        break;
     case cExecuteKindFinished:
     case cExecuteKindCancelled:
         m_innerState = cInnerStateCompleted;
-        return;
+        break;
     case cExecuteKindSuspend:
         m_innerState = cInnerStateSuspended;
-        return;
+        break;
     case cExecuteKindWait:
         m_time.SetNow();
-        m_time.m_tick += TimeSpan::GetTicksPerMSec().m_tick * result.m_value;
+        m_time = m_time + TimeSpan::FromMSec(result.m_value);
         g_piaJobScheduler->EntryJob(this, isBackground);
         m_innerState = isBackground ? cInnerStateBackgroundWaiting
                                     : cInnerStateForegroundWaiting;
-        return;
+        break;
     case cExecuteKindNextStep:
         m_time.SetNow();
         g_piaJobScheduler->EntryJobNext(this);
         m_innerState = isBackground ? cInnerStateBackgroundWaiting
                                     : cInnerStateForegroundWaiting;
-        return;
-    case cExecuteKindContinue:
-    case cExecuteKindEntryForeground:
-    case cExecuteKindEntryBackground:
         break;
-    default:
-        return;
     }
-
-    m_time.SetNow();
-    if (result.m_kind == cExecuteKindEntryForeground)
-    {
-        g_piaJobScheduler->EntryJob(this, false);
-        m_innerState = cInnerStateForegroundReady;
-        return;
-    }
-    if (result.m_kind == cExecuteKindEntryBackground)
-    {
-        g_piaJobScheduler->EntryJob(this, true);
-        m_innerState = cInnerStateBackgroundReady;
-        return;
-    }
-    g_piaJobScheduler->EntryJob(this, isBackground);
-    m_innerState = isBackground ? cInnerStateBackgroundReady
-                                : cInnerStateForegroundReady;
 }
 
 bool Job::IsRunning() const
 {
     CriticalSection& criticalSection = g_piaJobScheduler->m_criticalSection;
     criticalSection.Lock();
-    const bool running = m_innerState != cInnerStateNotEntried &&
-                         m_innerState < cInnerStateCompleted;
+    bool running;
+    switch (m_innerState)
+    {
+    case cInnerStateForegroundWaiting:
+    case cInnerStateForegroundReady:
+    case cInnerStateForegroundRunning:
+    case cInnerStateBackgroundWaiting:
+    case cInnerStateBackgroundReady:
+    case cInnerStateBackgroundRunning:
+    case cInnerStateSuspended:
+        running = true;
+        break;
+    default:
+        running = false;
+        break;
+    }
     criticalSection.Unlock();
     return running;
 }
@@ -164,8 +179,18 @@ bool Job::IsForeground() const
 {
     CriticalSection& criticalSection = g_piaJobScheduler->m_criticalSection;
     criticalSection.Lock();
-    const bool foreground = m_innerState != cInnerStateNotEntried &&
-                            m_innerState <= cInnerStateForegroundRunning;
+    bool foreground;
+    switch (m_innerState)
+    {
+    case cInnerStateForegroundWaiting:
+    case cInnerStateForegroundReady:
+    case cInnerStateForegroundRunning:
+        foreground = true;
+        break;
+    default:
+        foreground = false;
+        break;
+    }
     criticalSection.Unlock();
     return foreground;
 }
@@ -174,8 +199,18 @@ bool Job::IsBackground() const
 {
     CriticalSection& criticalSection = g_piaJobScheduler->m_criticalSection;
     criticalSection.Lock();
-    const bool background = m_innerState > cInnerStateForegroundRunning &&
-                            m_innerState <= cInnerStateBackgroundRunning;
+    bool background;
+    switch (m_innerState)
+    {
+    case cInnerStateBackgroundWaiting:
+    case cInnerStateBackgroundReady:
+    case cInnerStateBackgroundRunning:
+        background = true;
+        break;
+    default:
+        background = false;
+        break;
+    }
     criticalSection.Unlock();
     return background;
 }

@@ -8,24 +8,54 @@
 
 namespace nn { namespace pia { namespace common {
 
-template <typename T> void DeleteObj(T* object)
+template <typename T> static T* NewObj()
 {
-    if (object != 0)
-        pead::freeToSeadHeap(object);
+    void* buffer = pead::allocateFromSeadHeap(sizeof(T), HeapManager::GetHeap());
+    if (buffer == 0)
+        return 0;
+    return ::new (buffer) T();
 }
 
-template <typename T> T* NewArray(unsigned int count)
+template <typename T, typename A1, typename A2> static T* NewObj(A1 a1, A2 a2)
+{
+    void* buffer = pead::allocateFromSeadHeap(sizeof(T), HeapManager::GetHeap());
+    if (buffer == 0)
+        return 0;
+    return ::new (buffer) T(a1, a2);
+}
+
+template <typename T> static void DeleteObj(T* object)
+{
+    if (object != 0)
+    {
+        object->~T();
+        pead::freeToSeadHeap(object);
+    }
+}
+
+template <typename T> static T* NewArray(unsigned int count)
 {
     void* buffer = pead::allocateFromSeadHeap(sizeof(T) * count, HeapManager::GetHeap());
     if (buffer == 0)
         return 0;
     T* array = static_cast<T*>(buffer);
     for (unsigned int index = 0; index < count; ++index)
-        new (&array[index]) T();
+        ::new (&array[index]) T();
     return array;
 }
 
-template <typename T> void DeleteArray(T* array)
+template <typename T> static T* NewArray(unsigned int count, int alignment)
+{
+    void* buffer = pead::allocateFromSeadHeap(sizeof(T) * count, HeapManager::GetHeap(), alignment);
+    if (buffer == 0)
+        return 0;
+    T* array = static_cast<T*>(buffer);
+    for (unsigned int index = 0; index < count; ++index)
+        ::new (&array[index]) T();
+    return array;
+}
+
+template <typename T> static void DeleteArray(T* array)
 {
     if (array != 0)
     {

@@ -1,42 +1,19 @@
 #include "nn/pia/common/SessionStateMonitoringContent.hpp"
 
-#include <algorithm>
-#include <string.h>
+#include <coreinit/memory.h>
 
 namespace nn { namespace pia { namespace common {
 
-namespace
-{
-void WriteMetric(unsigned char*& cursor, unsigned char value)
-{
-    *cursor++ = value;
-}
-
-void WriteMetric(unsigned char*& cursor, unsigned short value)
-{
-    serializeU16(cursor, value);
-    cursor += 2;
-}
-
-void WriteMetric(unsigned char*& cursor, unsigned int value)
-{
-    serializeU32(cursor, value);
-    cursor += 4;
-}
-
-void WriteMetric(unsigned char*& cursor, unsigned long long value)
-{
-    serializeU32(cursor, static_cast<unsigned int>(value >> 32));
-    serializeU32(cursor + 4, static_cast<unsigned int>(value));
-    cursor += 8;
-}
-}
+static const unsigned char cUnsetU8 = 0xff;
+static const unsigned short cUnsetU16 = 0xffff;
+static const unsigned int cUnsetU32 = 0xffffffff;
+static const unsigned long long cUnsetU64 = 0xffffffffffffffffULL;
 
 SessionStateMonitoringContent g_sessionStateMonitoringContent;
 
 void SessionStateMonitoringContent::Initialize()
 {
-    memset(this, 0xff, sizeof(*this));
+    OSBlockSet(this, cUnsetU8, sizeof(*this));
     m_contentType = 0x12;
     m_contentVersion = 1;
     m_contentSize = static_cast<unsigned short>(GetSerializedSize());
@@ -45,70 +22,75 @@ void SessionStateMonitoringContent::Initialize()
 
 void SessionStateMonitoringContent::Cleanup()
 {
-    m_schedulerDispatchCount = 0xffffffff;
-    m_metric1[2] = 0xffffffff;
-    for (unsigned int index = 3; index < 19; ++index)
-        m_metric1[index] = 0xffffffff;
-    std::fill(m_metric20, m_metric20 + 16, static_cast<unsigned int>(0xffffffff));
-    std::fill(m_metric36, m_metric36 + 16, 0xffffffffffffffffULL);
-    std::fill(m_metric52, m_metric52 + 16, static_cast<unsigned int>(0xffffffff));
-    std::fill(m_metric68, m_metric68 + 16, static_cast<unsigned int>(0xffffffff));
-    std::fill(m_metric84, m_metric84 + 16, 0xffffffffffffffffULL);
-    std::fill(m_metric100, m_metric100 + 15, static_cast<unsigned int>(0xffffffff));
-    std::fill(m_metric115, m_metric115 + 15, static_cast<unsigned char>(0xff));
-    std::fill(m_metric130, m_metric130 + 15, static_cast<unsigned short>(0xffff));
-    std::fill(m_metric145, m_metric145 + 15, static_cast<unsigned short>(0xffff));
+    m_schedulerDispatchCount = cUnsetU32;
+    m_metric1[2] = cUnsetU32;
+    m_metric223[1] = cUnsetU8;
+    m_metric223[2] = cUnsetU8;
+    for (unsigned int index = 0; index < 16; ++index)
+    {
+        m_metric1[3 + index] = cUnsetU32;
+        m_metric20[index] = cUnsetU32;
+        m_metric36[index] = cUnsetU64;
+        m_metric52[index] = cUnsetU32;
+        m_metric68[index] = cUnsetU32;
+        m_metric84[index] = cUnsetU64;
+    }
+    for (unsigned int index = 0; index < 15; ++index)
+    {
+        m_metric100[index] = cUnsetU32;
+        m_metric115[index] = cUnsetU8;
+        m_metric130[index] = cUnsetU16;
+        m_metric145[index] = cUnsetU16;
+    }
 
-    m_sendThreadSleepMilliSecond = 0xff;
-    m_metric163 = 0xffffffff;
-    m_metric165 = 0xffffffff;
-    m_receiveThreadSleepMilliSecond = 0xff;
-    m_metric162 = 0xffff;
-    m_metric164 = 0xffff;
+    m_sendThreadSleepMilliSecond = cUnsetU8;
+    m_metric163 = cUnsetU32;
+    m_metric165 = cUnsetU32;
+    m_receiveThreadSleepMilliSecond = cUnsetU8;
+    m_metric162 = cUnsetU16;
+    m_metric164 = cUnsetU16;
     for (unsigned int index = 1; index < 5; ++index)
-        m_metric167[index] = 0xffffffff;
+        m_metric167[index] = cUnsetU32;
     for (unsigned int index = 0; index < 4; ++index)
-        m_metric172[index] = 0xffffffff;
-    m_metric185 = 0xffff;
-    m_metric184 = 0xffff;
-    m_metric187[3] = 0xff;
-    m_metric198 = 0xffffffff;
-    m_metric195 = 0xffffffff;
-    m_metric179 = 0xffffffff;
-    m_metric181 = 0xff;
-    m_metric225[1] = 0xff;
-    m_metric196 = 0xff;
-    m_metric187[1] = 0xff;
-    m_metric187[0] = 0xff;
-    m_metric197 = 0xff;
-    m_metric177 = 0xffffffff;
-    m_metric199 = 0xffffffff;
-    m_metric193 = 0xffffffff;
-    m_metric222 = 0xffffffff;
-    m_metric187[2] = 0xff;
-    m_metric225[0] = 0xff;
-    m_metric180 = 0xff;
-    m_metric186 = 0xffffffff;
-    m_metric224 = 0xffffffff;
-    m_metric178 = 0xff;
-    m_metric182 = 0xffffffff;
-    m_metric187[5] = 0xff;
-    m_metric187[4] = 0xff;
-    m_metric223[0] = 0xff;
-    m_metric223[1] = 0xff;
-    m_metric223[2] = 0xff;
-    m_metric225[2] = 0xff;
-    m_metric194 = 0xff;
-    m_metric176 = 0xffffffff;
-    m_metric183 = 0xffffffff;
+        m_metric172[index] = cUnsetU32;
+    m_metric176 = cUnsetU32;
+    m_metric177 = cUnsetU32;
+    m_metric178 = cUnsetU8;
+    m_metric179 = cUnsetU32;
+    m_metric180 = cUnsetU8;
+    m_metric181 = cUnsetU8;
+    m_metric182 = cUnsetU32;
+    m_metric183 = cUnsetU32;
+    m_metric184 = cUnsetU16;
+    m_metric185 = cUnsetU16;
+    m_metric186 = cUnsetU32;
+    m_metric187[0] = cUnsetU8;
+    m_metric187[1] = cUnsetU8;
+    m_metric187[2] = cUnsetU8;
+    m_metric187[3] = cUnsetU8;
+    m_metric187[4] = cUnsetU8;
+    m_metric187[5] = cUnsetU8;
+    m_metric193 = cUnsetU32;
+    m_metric194 = cUnsetU8;
+    m_metric195 = cUnsetU32;
+    m_metric196 = cUnsetU8;
+    m_metric197 = cUnsetU8;
+    m_metric198 = cUnsetU32;
+    m_metric199 = cUnsetU32;
+    m_metric222 = cUnsetU32;
+    m_metric223[0] = cUnsetU8;
+    m_leaveProcessingTime = cUnsetU32;
+    m_metric225[0] = cUnsetU8;
+    m_metric225[1] = cUnsetU8;
+    m_metric225[2] = cUnsetU8;
     for (unsigned int index = 0; index < 4; ++index)
-        m_metric200[index] = 0xff;
+        m_metric200[index] = cUnsetU8;
     for (unsigned int index = 0; index < 5; ++index)
-        m_metric201[index] = 0xff;
-    m_metric203 = 0xffff;
-    m_metric202 = 0xffffffff;
-    m_metric206 = 0xffffffff;
-    m_metric205 = 0xffffffff;
+        m_metric201[index] = cUnsetU8;
+    m_metric203 = cUnsetU16;
+    m_metric202 = cUnsetU32;
+    m_metric206 = cUnsetU32;
+    m_metric205 = cUnsetU32;
 }
 
 unsigned int SessionStateMonitoringContent::GetSerializedSize()
@@ -119,102 +101,228 @@ unsigned int SessionStateMonitoringContent::GetSerializedSize()
 Result SessionStateMonitoringContent::Serialize(unsigned char* buffer, unsigned int* size,
                                                unsigned int maxSize) const
 {
-    if (buffer == 0 || size == 0 || maxSize < GetSerializedSize())
+    if (buffer == 0)
+        return 0x10c07;
+    if (size == 0)
+        return 0x10c07;
+    if (maxSize < GetSerializedSize())
         return 0x10c07;
 
     unsigned int headerSize;
-    const Result result = MonitoringContentHeader::Serialize(buffer, &headerSize, maxSize);
-    if (result != 0)
-        return result;
+    MonitoringContentHeader::Serialize(buffer, &headerSize, maxSize);
     unsigned char* cursor = buffer + headerSize;
 
-    WriteMetric(cursor, m_schedulerDispatchCount);
-    for (unsigned int index = 0; index < 19; ++index)
-        WriteMetric(cursor, m_metric1[index]);
-    for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric20[index]);
-    for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric36[index]);
-    for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric52[index]);
-    for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric68[index]);
-    for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric84[index]);
-    for (unsigned int index = 0; index < 15; ++index)
-        WriteMetric(cursor, m_metric100[index]);
-    for (unsigned int index = 0; index < 15; ++index)
-        WriteMetric(cursor, m_metric115[index]);
-    for (unsigned int index = 0; index < 15; ++index)
-        WriteMetric(cursor, m_metric130[index]);
-    for (unsigned int index = 0; index < 15; ++index)
-        WriteMetric(cursor, m_metric145[index]);
-
-    WriteMetric(cursor, m_sendThreadSleepMilliSecond);
-    WriteMetric(cursor, m_receiveThreadSleepMilliSecond);
-    WriteMetric(cursor, m_metric162);
-    WriteMetric(cursor, m_metric163);
-    WriteMetric(cursor, m_metric164);
-    WriteMetric(cursor, m_metric165);
-    WriteMetric(cursor, m_receiveThreadMetric);
-    for (unsigned int index = 0; index < 5; ++index)
-        WriteMetric(cursor, m_metric167[index]);
-    for (unsigned int index = 0; index < 4; ++index)
-        WriteMetric(cursor, m_metric172[index]);
-    WriteMetric(cursor, m_metric176);
-    WriteMetric(cursor, m_metric177);
-    WriteMetric(cursor, m_metric178);
-    WriteMetric(cursor, m_metric179);
-    WriteMetric(cursor, m_metric180);
-    WriteMetric(cursor, m_metric181);
-    WriteMetric(cursor, m_metric182);
-    WriteMetric(cursor, m_metric183);
-    WriteMetric(cursor, m_metric184);
-    WriteMetric(cursor, m_metric185);
-    WriteMetric(cursor, m_metric186);
-    for (unsigned int index = 0; index < 6; ++index)
-        WriteMetric(cursor, m_metric187[index]);
-    WriteMetric(cursor, m_metric193);
-    WriteMetric(cursor, m_metric194);
-    WriteMetric(cursor, m_metric195);
-    WriteMetric(cursor, m_metric196);
-    WriteMetric(cursor, m_metric197);
-    WriteMetric(cursor, m_metric198);
-    WriteMetric(cursor, m_metric199);
-    for (unsigned int index = 0; index < 4; ++index)
-        WriteMetric(cursor, m_metric200[index]);
-    for (unsigned int index = 0; index < 5; ++index)
-        WriteMetric(cursor, m_metric201[index]);
-    WriteMetric(cursor, m_metric202);
-    WriteMetric(cursor, m_metric203);
-    WriteMetric(cursor, m_metric204);
-    WriteMetric(cursor, m_metric205);
-    WriteMetric(cursor, m_metric206);
-    WriteMetric(cursor, m_metric207);
-    WriteMetric(cursor, m_metric208);
-    WriteMetric(cursor, m_metric209);
-    WriteMetric(cursor, m_metric210);
-    WriteMetric(cursor, m_metric211);
-    WriteMetric(cursor, m_metric212);
-    WriteMetric(cursor, m_metric213);
-    WriteMetric(cursor, m_metric214);
-    WriteMetric(cursor, m_metric215);
-    WriteMetric(cursor, m_metric216);
-    WriteMetric(cursor, m_metric217);
-    WriteMetric(cursor, m_metric218);
-    WriteMetric(cursor, m_metric219);
-    WriteMetric(cursor, m_metric220);
-    for (unsigned int index = 0; index < 4; ++index)
-        WriteMetric(cursor, m_metric221[index]);
-    WriteMetric(cursor, m_metric222);
-    for (unsigned int index = 0; index < 3; ++index)
-        WriteMetric(cursor, m_metric223[index]);
-    WriteMetric(cursor, m_metric224);
-    for (unsigned int index = 0; index < 3; ++index)
-        WriteMetric(cursor, m_metric225[index]);
-    for (unsigned int index = 0; index < 16; ++index)
-        WriteMetric(cursor, m_metric226[index]);
-    WriteMetric(cursor, m_marker);
+    serializeU32(cursor, m_schedulerDispatchCount);
+    cursor += 4;
+    serializeU32(cursor, m_metric1[0]);
+    cursor += 4;
+    serializeU32(cursor, m_metric1[1]);
+    cursor += 4;
+    serializeU32(cursor, m_metric1[2]);
+    cursor += 4;
+    for (int index = 0; index < 16; ++index)
+    {
+        serializeU32(cursor, m_metric1[3 + index]);
+        cursor += 4;
+    }
+    for (int index = 0; index < 16; ++index)
+    {
+        serializeU32(cursor, m_metric20[index]);
+        cursor += 4;
+    }
+    for (int index = 0; index < 16; ++index)
+    {
+        serializeU64(cursor, m_metric36[index]);
+        cursor += 8;
+    }
+    for (int index = 0; index < 16; ++index)
+    {
+        serializeU32(cursor, m_metric52[index]);
+        cursor += 4;
+    }
+    for (int index = 0; index < 16; ++index)
+    {
+        serializeU32(cursor, m_metric68[index]);
+        cursor += 4;
+    }
+    for (int index = 0; index < 16; ++index)
+    {
+        serializeU64(cursor, m_metric84[index]);
+        cursor += 8;
+    }
+    for (int index = 0; index < 15; ++index)
+    {
+        serializeU32(cursor, m_metric100[index]);
+        cursor += 4;
+    }
+    for (int index = 0; index < 15; ++index)
+    {
+        serializeU8(cursor, m_metric115[index]);
+        cursor += 1;
+    }
+    for (int index = 0; index < 15; ++index)
+    {
+        serializeU16(cursor, m_metric130[index]);
+        cursor += 2;
+    }
+    for (int index = 0; index < 15; ++index)
+    {
+        serializeU16(cursor, m_metric145[index]);
+        cursor += 2;
+    }
+    serializeU8(cursor, m_sendThreadSleepMilliSecond);
+    cursor += 1;
+    serializeU8(cursor, m_receiveThreadSleepMilliSecond);
+    cursor += 1;
+    serializeU16(cursor, m_metric162);
+    cursor += 2;
+    serializeU32(cursor, m_metric163);
+    cursor += 4;
+    serializeU16(cursor, m_metric164);
+    cursor += 2;
+    serializeU32(cursor, m_metric165);
+    cursor += 4;
+    serializeU32(cursor, m_receiveThreadMetric);
+    cursor += 4;
+    serializeU32(cursor, m_metric167[0]);
+    cursor += 4;
+    for (int index = 0; index < 4; ++index)
+    {
+        serializeU32(cursor, m_metric167[1 + index]);
+        cursor += 4;
+    }
+    for (int index = 0; index < 4; ++index)
+    {
+        serializeU32(cursor, m_metric172[index]);
+        cursor += 4;
+    }
+    serializeU32(cursor, m_metric176);
+    cursor += 4;
+    serializeU32(cursor, m_metric177);
+    cursor += 4;
+    serializeU8(cursor, m_metric178);
+    cursor += 1;
+    serializeU32(cursor, m_metric179);
+    cursor += 4;
+    serializeU8(cursor, m_metric180);
+    cursor += 1;
+    serializeU8(cursor, m_metric181);
+    cursor += 1;
+    serializeU32(cursor, m_metric182);
+    cursor += 4;
+    serializeU32(cursor, m_metric183);
+    cursor += 4;
+    serializeU16(cursor, m_metric184);
+    cursor += 2;
+    serializeU16(cursor, m_metric185);
+    cursor += 2;
+    serializeU32(cursor, m_metric186);
+    cursor += 4;
+    serializeU8(cursor, m_metric187[0]);
+    cursor += 1;
+    serializeU8(cursor, m_metric187[1]);
+    cursor += 1;
+    serializeU8(cursor, m_metric187[2]);
+    cursor += 1;
+    serializeU8(cursor, m_metric187[3]);
+    cursor += 1;
+    serializeU8(cursor, m_metric187[4]);
+    cursor += 1;
+    serializeU8(cursor, m_metric187[5]);
+    cursor += 1;
+    serializeU32(cursor, m_metric193);
+    cursor += 4;
+    serializeU8(cursor, m_metric194);
+    cursor += 1;
+    serializeU32(cursor, m_metric195);
+    cursor += 4;
+    serializeU8(cursor, m_metric196);
+    cursor += 1;
+    serializeU8(cursor, m_metric197);
+    cursor += 1;
+    serializeU32(cursor, m_metric198);
+    cursor += 4;
+    serializeU32(cursor, m_metric199);
+    cursor += 4;
+    for (int index = 0; index < 4; ++index)
+    {
+        serializeU8(cursor, m_metric200[index]);
+        cursor += 1;
+    }
+    for (int index = 0; index < 5; ++index)
+    {
+        serializeU8(cursor, m_metric201[index]);
+        cursor += 1;
+    }
+    serializeU32(cursor, m_metric202);
+    cursor += 4;
+    serializeU16(cursor, m_metric203);
+    cursor += 2;
+    serializeU8(cursor, m_metric204);
+    cursor += 1;
+    serializeU32(cursor, m_metric205);
+    cursor += 4;
+    serializeU32(cursor, m_metric206);
+    cursor += 4;
+    serializeU16(cursor, m_metric207);
+    cursor += 2;
+    serializeU8(cursor, m_metric208);
+    cursor += 1;
+    serializeU16(cursor, m_metric209);
+    cursor += 2;
+    serializeU16(cursor, m_metric210);
+    cursor += 2;
+    serializeU32(cursor, m_metric211);
+    cursor += 4;
+    serializeU16(cursor, m_metric212);
+    cursor += 2;
+    serializeU16(cursor, m_metric213);
+    cursor += 2;
+    serializeU8(cursor, m_metric214);
+    cursor += 1;
+    serializeU32(cursor, m_metric215);
+    cursor += 4;
+    serializeU32(cursor, m_metric216);
+    cursor += 4;
+    serializeU32(cursor, m_metric217);
+    cursor += 4;
+    serializeU32(cursor, m_metric218);
+    cursor += 4;
+    serializeU64(cursor, m_metric219);
+    cursor += 8;
+    serializeU64(cursor, m_metric220);
+    cursor += 8;
+    serializeU8(cursor, m_metric221[0]);
+    cursor += 1;
+    serializeU8(cursor, m_metric221[1]);
+    cursor += 1;
+    serializeU8(cursor, m_metric221[2]);
+    cursor += 1;
+    serializeU8(cursor, m_metric221[3]);
+    cursor += 1;
+    serializeU32(cursor, m_metric222);
+    cursor += 4;
+    serializeU8(cursor, m_metric223[0]);
+    cursor += 1;
+    serializeU8(cursor, m_metric223[1]);
+    cursor += 1;
+    serializeU8(cursor, m_metric223[2]);
+    cursor += 1;
+    serializeU32(cursor, m_leaveProcessingTime);
+    cursor += 4;
+    serializeU8(cursor, m_metric225[0]);
+    cursor += 1;
+    serializeU8(cursor, m_metric225[1]);
+    cursor += 1;
+    serializeU8(cursor, m_metric225[2]);
+    cursor += 1;
+    for (int index = 0; index < 16; ++index)
+    {
+        serializeU8(cursor, m_metric226[index]);
+        cursor += 1;
+    }
+    serializeU32(cursor, m_marker);
+    cursor += 4;
 
     *size = static_cast<unsigned int>(cursor - buffer);
     return 0;

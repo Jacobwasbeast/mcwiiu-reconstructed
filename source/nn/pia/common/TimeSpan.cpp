@@ -2,8 +2,6 @@
 
 #include <coreinit/systeminfo.h>
 
-namespace nn { namespace pia { namespace common {
-
 namespace
 {
 long long GetFrequency()
@@ -11,30 +9,23 @@ long long GetFrequency()
     const unsigned int busClockSpeed = OSGetSystemInfo()->busClockSpeed;
     return static_cast<long long>(busClockSpeed >> 2);
 }
+}
 
-TimeSpan s_ticksPerMSec;
-bool s_ticksPerMSecInitialized = false;
-TimeSpan s_ticksPerSec;
-bool s_ticksPerSecInitialized = false;
+namespace nn { namespace pia { namespace common {
+
+void TimeSpan::Trace(unsigned long long) const
+{
 }
 
 const TimeSpan& TimeSpan::GetTicksPerMSec()
 {
-    if (!s_ticksPerMSecInitialized)
-    {
-        s_ticksPerMSecInitialized = true;
-        s_ticksPerMSec = TimeSpan(GetFrequency() / 1000);
-    }
+    static const TimeSpan s_ticksPerMSec(GetFrequency() / 1000);
     return s_ticksPerMSec;
 }
 
 const TimeSpan& TimeSpan::GetTicksPerSec()
 {
-    if (!s_ticksPerSecInitialized)
-    {
-        s_ticksPerSecInitialized = true;
-        s_ticksPerSec = TimeSpan(GetTicksPerMSec().m_tick * 1000);
-    }
+    static const TimeSpan s_ticksPerSec(GetTicksPerMSec().m_tick * 1000);
     return s_ticksPerSec;
 }
 

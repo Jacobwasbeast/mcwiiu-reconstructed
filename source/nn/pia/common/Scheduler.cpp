@@ -6,19 +6,6 @@
 
 namespace nn { namespace pia { namespace common {
 
-namespace
-{
-Job* GetJob(ListNode* node, int nodeOffset)
-{
-    return reinterpret_cast<Job*>(reinterpret_cast<unsigned char*>(node) - nodeOffset);
-}
-
-ListNode* GetNode(Job* job, int nodeOffset)
-{
-    return reinterpret_cast<ListNode*>(reinterpret_cast<unsigned char*>(job) + nodeOffset);
-}
-}
-
 Scheduler* g_piaJobScheduler = 0;
 
 void Scheduler::SetMonitoringData()
@@ -37,34 +24,31 @@ void Scheduler::EntryJob(Job* job, bool isBackground)
     ListNode* sentinel = m_jobList.Sentinel();
     for (ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
-        if (GetJob(node, m_jobNodeOffset)->m_time <= job->m_time)
+        if (static_cast<Job*>(m_jobList.FromListNode(node))->m_time <= job->m_time)
         {
-            m_jobList.InsertBeforeNode(node, GetNode(job, m_jobNodeOffset));
+            m_jobList.InsertBeforeNode(node, m_jobList.ToListNode(job));
             return;
         }
     }
-    m_jobList.InsertBeforeNode(sentinel, GetNode(job, m_jobNodeOffset));
+    m_jobList.InsertBeforeNode(sentinel, m_jobList.ToListNode(job));
 }
 
 void Scheduler::EntryJobNext(Job* job)
 {
-    m_nextJobList.InsertAfterNode(m_nextJobList.Sentinel(),
-                                  GetNode(job, m_nextJobNodeOffset));
+    m_nextJobList.InsertAfterNode(m_nextJobList.Sentinel(), m_nextJobList.ToListNode(job));
 }
 
 void Scheduler::ResetJob(Job* job)
 {
     if (job->IsForeground())
     {
-        ListNode* node = GetNode(job, m_jobNodeOffset);
-        if (m_jobList.IsIncludeNode(node))
+        if (m_jobList.IsIncludeNode(m_jobList.ToListNode(job)))
         {
-            m_jobList.EraseNode(node);
+            m_jobList.EraseNode(m_jobList.ToListNode(job));
             return;
         }
-        ListNode* nextNode = GetNode(job, m_nextJobNodeOffset);
-        if (m_nextJobList.IsIncludeNode(nextNode))
-            m_nextJobList.EraseNode(nextNode);
+        if (m_nextJobList.IsIncludeNode(m_nextJobList.ToListNode(job)))
+            m_nextJobList.EraseNode(m_nextJobList.ToListNode(job));
     }
     else if (job->IsBackground())
     {

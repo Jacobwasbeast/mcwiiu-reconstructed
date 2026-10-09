@@ -14,19 +14,20 @@ void Hmac::Initialize(HashContextBase* context, const void* key, unsigned int ke
 
     m_context = context;
     unsigned int block[16];
-    if (keySize <= sizeof(block))
-    {
-        OSBlockMove(block, key, keySize, FALSE);
-    }
-    else
+    if (keySize > sizeof(block))
     {
         m_context->Initialize();
         m_context->Update(key, keySize);
         m_context->GetHash(block);
         keySize = m_context->GetHashSize();
     }
-    if (static_cast<int>(sizeof(block) - keySize) > 0)
-        OSBlockSet(reinterpret_cast<unsigned char*>(block) + keySize, 0, sizeof(block) - keySize);
+    else
+    {
+        OSBlockMove(block, key, keySize, FALSE);
+    }
+    const int padSize = sizeof(block) - keySize;
+    if (padSize > 0)
+        OSBlockSet(reinterpret_cast<unsigned char*>(block) + keySize, 0, padSize);
     for (unsigned int index = 0; index < 16; ++index)
     {
         m_innerPad[index] = block[index] ^ 0x36363636;

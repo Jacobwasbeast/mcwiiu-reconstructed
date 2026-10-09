@@ -2,14 +2,15 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_SESSION_BEGIN_MONITORING_DATA_HPP
 
 #include "nn/pia/Common.hpp"
+#include "nn/pia/common/MonitoringDataHeader.hpp"
 #include "nn/pia/common/SessionBeginMonitoringContent.hpp"
 
 namespace nn { namespace pia { namespace common {
 
-class SessionBeginMonitoringData
+class SessionBeginMonitoringData : public MonitoringDataHeader
 {
 public:
-    static int GetSerializedSize();
+    static unsigned int GetSerializedSize();
     void Initialize();
     Result Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const;
     void SetSdkVersion(unsigned int version);
@@ -18,13 +19,6 @@ public:
     void Cleanup();
     void Trace(unsigned long long value) const;
 
-    unsigned char m_dataType;
-    unsigned char m_version;
-    unsigned short m_reserved;
-    unsigned short m_contentSize;
-    unsigned long long m_identifier;
-    unsigned char m_environment;
-    unsigned char m_reserved2;
     SessionBeginMonitoringContent m_content;
 };
 

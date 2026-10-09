@@ -29,7 +29,7 @@ void InetAddress::operator=(const InetAddress& other)
     m_port = other.m_port;
 }
 
-unsigned long long InetAddress::GetKey() const
+long long InetAddress::GetKey() const
 {
     unsigned long long key = m_address;
     key <<= 32;

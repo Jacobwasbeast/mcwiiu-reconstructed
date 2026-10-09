@@ -12,10 +12,12 @@ public:
     bool operator<=(const TimeSpan& other) const { return m_tick <= other.m_tick; }
     bool operator<(const TimeSpan& other) const { return m_tick < other.m_tick; }
 
+    void Trace(unsigned long long value) const;
     static const TimeSpan& GetTicksPerUSec();
     static const TimeSpan& GetTicksPerMSec();
     static const TimeSpan& GetTicksPerSec();
-    void Trace(unsigned long long value) const;
+
+    static TimeSpan FromMSec(int msec) { TimeSpan span; span.m_tick = GetTicksPerMSec().m_tick * msec; return span; }
 
     long long m_tick;
 };

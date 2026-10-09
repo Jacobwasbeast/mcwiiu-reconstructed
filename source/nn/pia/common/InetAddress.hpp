@@ -17,7 +17,11 @@ public:
     InetAddress(const InetAddress& other);
     ~InetAddress();
     void operator=(const InetAddress& other);
-    unsigned long long GetKey() const;
+    long long GetKey() const;
+    bool operator==(const InetAddress& other) const
+    {
+        return GetKey() == other.GetKey();
+    }
     void GetAddressString(String* string) const;
     void Trace(unsigned long long value) const;
     Result Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const;

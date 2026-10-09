@@ -25,22 +25,8 @@ BackgroundScheduler::BackgroundScheduler(int threadPriority,
       m_finalize(false),
       m_jobList()
 {
-    m_jobList.Init();
     m_thread.start();
-}
-
-namespace
-{
-Job* GetJob(ListNode* node)
-{
-    return reinterpret_cast<Job*>(reinterpret_cast<unsigned char*>(node) -
-                                  offsetof(Job, m_listNode));
-}
-
-ListNode* GetNode(Job* job)
-{
-    return &job->m_listNode;
-}
+    m_jobList.SetOffset(offsetof(Job, m_listNode));
 }
 
 BackgroundScheduler::~BackgroundScheduler()
@@ -55,20 +41,20 @@ void BackgroundScheduler::EntryJob(Job* job)
     ListNode* sentinel = m_jobList.Sentinel();
     for (ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
-        if (GetJob(node)->m_time <= job->m_time)
+        if (static_cast<Job*>(m_jobList.FromListNode(node))->m_time <= job->m_time)
         {
-            m_jobList.InsertBeforeNode(node, GetNode(job));
+            m_jobList.InsertBeforeNode(node, m_jobList.ToListNode(job));
             return;
         }
     }
     m_event.setSignal();
-    m_jobList.InsertBeforeNode(sentinel, GetNode(job));
+    m_jobList.InsertBeforeNode(sentinel, m_jobList.ToListNode(job));
 }
 
 void BackgroundScheduler::ResetJob(Job* job)
 {
-    if (m_jobList.IsIncludeNode(GetNode(job)))
-        m_jobList.EraseNode(GetNode(job));
+    if (m_jobList.IsIncludeNode(m_jobList.ToListNode(job)))
+        m_jobList.EraseNode(m_jobList.ToListNode(job));
 }
 
 void BackgroundScheduler::Dispatch(pead::Thread* thread, int message)
@@ -87,7 +73,7 @@ void BackgroundScheduler::Dispatch(pead::Thread* thread, int message)
             continue;
         }
 
-        Job* job = GetJob(node);
+        Job* job = static_cast<Job*>(m_jobList.FromListNode(node));
         job->Execute(message != 0);
     }
 }

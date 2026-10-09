@@ -109,7 +109,7 @@ Result convertRecvSocketErrorToResult(int error)
     case 0x15:
     case 0x18:
     case 0x31:
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     case 6:
     case 0x12:
     case 0x2c:
@@ -144,7 +144,7 @@ Result convertSendSocketErrorToResult(int error)
     case 0x2f:
     case 0x30:
     case 0x31:
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     case 0x27:
     case 0x28:
     case 0x29:
@@ -201,7 +201,7 @@ Result Socket::Open()
 Result Socket::Close()
 {
     if (m_handle < 0)
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
 
     const int closeResult = socketclose(m_handle);
     m_handle = -1;
@@ -221,7 +221,7 @@ Result Socket::Close()
 Result Socket::SetReuseAddress(bool enabled)
 {
     if (m_handle < 0)
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
 
     int value = enabled;
     if (setsockopt(m_handle, cLevelSocket, cOptionReuseAddress, &value, sizeof(value)) < 0)
@@ -244,7 +244,6 @@ Result Socket::Bind(const InetAddress& address, bool reuseAddress)
 
     m_address = address;
     SocketAddress socketAddress;
-    socketAddress.Init();
     socketAddress.SetInetAddress(address);
     if (bind(handle, socketAddress.GetSockAddrInPointer(), cSockAddrInSize) < 0)
     {
@@ -274,10 +273,9 @@ Result Socket::RecvFrom(unsigned char* buffer, int size, InetAddress* address,
 {
     const int handle = m_handle;
     if (handle < 0)
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
 
     SocketAddress socketAddress;
-    socketAddress.Init();
     int addressSize = cSockAddrInSize;
     const int received = recvfrom_ex(handle, buffer, size, cReceiveFlags,
                                      socketAddress.GetSockAddrInPointer(), &addressSize,
@@ -316,7 +314,6 @@ Result Socket::RecvFrom(unsigned char* buffer, int size, InetAddress* address,
 Result Socket::SendTo(const void* buffer, int size, const InetAddress& address, int* sentSize)
 {
     SocketAddress socketAddress;
-    socketAddress.Init();
     socketAddress.SetInetAddress(address);
     const int handle = m_handle;
     if (handle < 0)
@@ -425,7 +422,7 @@ Result Socket::SetTtl(unsigned char ttl)
 Result Socket::InetAtoH(const char* text, InetAddress* address)
 {
     if (text == 0 || address == 0)
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
 
     unsigned int value[2];
     if (inet_aton(text, value) != 0)

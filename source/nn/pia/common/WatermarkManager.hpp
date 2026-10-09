@@ -11,6 +11,7 @@ class Watermark
 public:
     enum { cNameLengthMax = 63 };
     Watermark();
+    ~Watermark();
     void SetName(const char*);
     void Reset();
     void Update(long long);
@@ -33,6 +34,7 @@ public:
     static Result CreateInstance();
     static void DestroyInstance();
     static void DisableAllWatermark();
+    static WatermarkManager* GetInstance();
     Watermark* GetWatermark(int);
     const Watermark* GetWatermark(int) const;
     void EnableAllWatermark();
@@ -44,6 +46,15 @@ private:
 }}}
 namespace nn { namespace pia { namespace transport {
 extern common::WatermarkManager* g_piaWatermarkManager;
+}}}
+
+namespace nn { namespace pia { namespace common {
+
+inline WatermarkManager* WatermarkManager::GetInstance()
+{
+    return transport::g_piaWatermarkManager;
+}
+
 }}}
 
 #endif

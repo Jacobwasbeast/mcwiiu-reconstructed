@@ -1,44 +1,59 @@
 #include "nn/pia/common/SessionBeginMonitoringData.hpp"
-#include "nn/pia/common/MonitoringDataHeader.hpp"
+#include "nn/pia/common/MonitoringDataSender.hpp"
 #include "platform/wiiu/pead.hpp"
 
-#include <string.h>
+#include <coreinit/memory.h>
 
 namespace nn { namespace pia { namespace common {
 
-int SessionBeginMonitoringData::GetSerializedSize()
+namespace
 {
-    return static_cast<int>(MonitoringContentHeader::GetSerializedSize() + SessionBeginMonitoringContent::GetSerializedSize());
+enum
+{
+    cResultInvalidArgument = 0x10c07,
+    cHeaderType = 0x12
+};
+}
+
+unsigned int SessionBeginMonitoringData::GetSerializedSize()
+{
+    return MonitoringDataHeader::GetSerializedSize() + SessionBeginMonitoringContent::GetSerializedSize();
 }
 
 void SessionBeginMonitoringData::Initialize()
 {
-    memset(this, 0xff, MonitoringDataHeader::GetSerializedSize());
-    m_dataType = 0x12;
-    m_version = 0;
+    OSBlockSet(this, 0xff, sizeof(MonitoringDataHeader));
+    m_headerType = cHeaderType;
+    m_dataType = MonitoringDataSender::cDataTypeSessionBegin;
     m_contentSize = static_cast<unsigned short>(GetSerializedSize());
     pead::Random random;
-    random.init();
-    m_identifier = random.getU64();
-    m_environment = static_cast<unsigned char>(random.getU32());
+    unsigned long long identifier = random.getU64();
+    OSBlockMove(m_identifier, &identifier, sizeof(identifier), false);
+    m_keyIndex = static_cast<unsigned char>(random.getU32());
     m_content.Initialize();
 }
 
 Result SessionBeginMonitoringData::Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const
 {
-    if (buffer == 0 || size == 0 || maxSize < static_cast<unsigned int>(GetSerializedSize()))
-        return 0x10c07;
-    MonitoringDataHeader header;
-    memcpy(&header, this, MonitoringDataHeader::GetSerializedSize());
-    unsigned int headerSize = 0;
-    Result result = header.Serialize(buffer, &headerSize, maxSize);
+    const Result invalid = cResultInvalidArgument;
+    if (buffer == 0)
+        return invalid;
+    if (size == 0)
+        return invalid;
+    if (maxSize < GetSerializedSize())
+        return invalid;
+    unsigned char* cursor = buffer;
+    unsigned int written = 0;
+    Result result;
+    result = MonitoringDataHeader::Serialize(cursor, &written, maxSize);
     if (result != 0)
         return result;
-    unsigned int contentSize = 0;
-    result = m_content.Serialize(buffer + headerSize, &contentSize, maxSize - headerSize);
+    cursor += written;
+    result = m_content.Serialize(cursor, &written, maxSize - written);
     if (result != 0)
         return result;
-    *size = headerSize + contentSize;
+    cursor += written;
+    *size = static_cast<unsigned int>(cursor - buffer);
     return 0;
 }
 

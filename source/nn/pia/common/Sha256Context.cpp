@@ -23,6 +23,9 @@ inline unsigned int rotateRight(unsigned int value, unsigned int count)
 
 void Sha256Context::Initialize()
 {
+    m_blockCount = 0;
+    m_blockCountHigh = 0;
+    m_blockSize = 0;
     m_state[0] = 0x6a09e667;
     m_state[1] = 0xbb67ae85;
     m_state[2] = 0x3c6ef372;
@@ -31,9 +34,6 @@ void Sha256Context::Initialize()
     m_state[5] = 0x9b05688c;
     m_state[6] = 0x1f83d9ab;
     m_state[7] = 0x5be0cd19;
-    m_blockSize = 0;
-    m_blockCount = 0;
-    m_blockCountHigh = 0;
 }
 
 void Sha256Context::Update(const void* data, unsigned int size)
@@ -43,21 +43,6 @@ void Sha256Context::Update(const void* data, unsigned int size)
 
 void Sha256Context::ProcessBlock()
 {
-    unsigned int words[64];
-    const unsigned int* blockWords = reinterpret_cast<const unsigned int*>(m_block);
-    int index;
-    for (index = 0; index < 16; ++index)
-        words[index] = blockWords[index];
-    for (; index < 64; ++index)
-    {
-        const unsigned int low = words[index - 15];
-        const unsigned int high = words[index - 2];
-        words[index] = words[index - 16] +
-                       (rotateRight(low, 7) ^ rotateRight(low, 18) ^ (low >> 3)) +
-                       words[index - 7] +
-                       (rotateRight(high, 17) ^ rotateRight(high, 19) ^ (high >> 10));
-    }
-
     unsigned int a = m_state[0];
     unsigned int b = m_state[1];
     unsigned int c = m_state[2];
@@ -66,6 +51,19 @@ void Sha256Context::ProcessBlock()
     unsigned int f = m_state[5];
     unsigned int g = m_state[6];
     unsigned int h = m_state[7];
+
+    unsigned int words[64];
+    int index;
+    for (index = 0; index < 16; ++index)
+        words[index] = reinterpret_cast<const unsigned int*>(m_block)[index];
+    for (; index < 64; ++index)
+    {
+        words[index] = words[index - 16] +
+                       (rotateRight(words[index - 15], 7) ^ rotateRight(words[index - 15], 18) ^ (words[index - 15] >> 3)) +
+                       words[index - 7] +
+                       (rotateRight(words[index - 2], 17) ^ rotateRight(words[index - 2], 19) ^ (words[index - 2] >> 10));
+    }
+
     for (index = 0; index < 64; ++index)
     {
         const unsigned int temp1 = h + (rotateRight(e, 6) ^ rotateRight(e, 11) ^ rotateRight(e, 25)) +

@@ -8,7 +8,7 @@ void StepSequenceJob::Step::Trace(unsigned long long value) const
 }
 
 StepSequenceJob::StepSequenceJob()
-    : Job(), m_currentStep(), m_cancelRequested(false), m_state(0), m_result(0)
+    : Job(), m_currentStep(), m_cancelRequested(false), m_traceFlag(0)
 {
 }
 

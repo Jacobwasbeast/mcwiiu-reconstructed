@@ -81,7 +81,7 @@ int StationAddress::Compare(const StationAddress& lhs, const StationAddress& rhs
 {
     if (lhs.m_inetAddress.GetKey() < rhs.m_inetAddress.GetKey())
         return -1;
-    return lhs.m_inetAddress.GetKey() > rhs.m_inetAddress.GetKey();
+    return rhs.m_inetAddress.GetKey() < lhs.m_inetAddress.GetKey();
 }
 
 void StationAddress::Trace(unsigned long long value) const

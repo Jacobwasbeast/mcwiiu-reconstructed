@@ -79,7 +79,7 @@ public:
     unsigned char m_metric221[4];
     unsigned int m_metric222;
     unsigned char m_metric223[3];
-    unsigned int m_metric224;
+    unsigned int m_leaveProcessingTime;
     unsigned char m_metric225[3];
     unsigned char m_metric226[16];
     unsigned int m_marker;

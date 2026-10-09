@@ -2,10 +2,10 @@
 
 #include "nn/pia/Common.hpp"
 #include "nn/pia/HeapManager.hpp"
+#include "nn/pia/common/Memory.hpp"
 #include "platform/wiiu/pead.hpp"
 
 #include <new>
-#include <string.h>
 
 namespace nn { namespace pia { namespace transport {
 common::WatermarkManager* g_piaWatermarkManager = 0;
@@ -15,7 +15,15 @@ namespace nn { namespace pia { namespace common {
 
 namespace
 {
-void* s_watermarkStorage = 0;
+enum
+{
+    cResultAllocationFailed = 0x10c01,
+    cResultInvalidState = 0x10c08,
+    cResultNotInitialized = 0x10c0c,
+    cResultAlreadyCreated = 0x10c0f
+};
+
+unsigned char* s_watermarkStorage = 0;
 }
 
 WatermarkManager::WatermarkManager()
@@ -29,18 +37,16 @@ WatermarkManager::~WatermarkManager()
 Result WatermarkManager::CreateInstance()
 {
     if (IsInitialized() == 0)
-        return 0x10c0c;
+        return cResultNotInitialized;
     if (IsInSetupMode() == 0)
-        return 0x10c08;
+        return cResultInvalidState;
     if (transport::g_piaWatermarkManager != 0)
-        return 0x10c0f;
+        return cResultAlreadyCreated;
 
-    pead::Heap* heap = HeapManager::GetHeap();
-    s_watermarkStorage = pead::allocateFromSeadHeap(0x410, heap, 8);
+    s_watermarkStorage = NewArray<unsigned char>(sizeof(WatermarkManager), 8);
     if (s_watermarkStorage == 0)
-        return 0x10c01;
+        return cResultAllocationFailed;
 
-    memset(s_watermarkStorage, 0, 0x410);
     transport::g_piaWatermarkManager = new (s_watermarkStorage) WatermarkManager();
     return 0;
 }
@@ -54,16 +60,19 @@ void WatermarkManager::DestroyInstance()
     }
     if (s_watermarkStorage != 0)
     {
-        pead::getArraySize(s_watermarkStorage);
-        pead::freeToSeadHeap(s_watermarkStorage);
+        DeleteArray(s_watermarkStorage);
         s_watermarkStorage = 0;
     }
 }
 
 void WatermarkManager::EnableAllWatermark()
 {
+    Watermark* watermark = m_watermarks;
     for (unsigned int index = 0; index != cWatermarkNum; ++index)
-        m_watermarks[index].m_enabled = true;
+    {
+        watermark->m_enabled = true;
+        ++watermark;
+    }
 }
 
 Watermark* WatermarkManager::GetWatermark(int index)

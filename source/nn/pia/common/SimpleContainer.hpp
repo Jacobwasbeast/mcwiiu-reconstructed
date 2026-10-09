@@ -3,28 +3,37 @@
 
 #include "nn/pia/common/InetAddress.hpp"
 
-namespace nn { namespace pia { namespace transport { class Station; }}}
-
 namespace nn { namespace pia { namespace common {
 
-template <class T, int N> struct SimpleContainer;
-
-template <>
-struct SimpleContainer<nn::pia::transport::Station*, 32>
+template <class T, int N>
+struct SimpleContainer
 {
-    virtual ~SimpleContainer();
-    virtual void Trace(unsigned long long value) const;
-    unsigned int size;
-    nn::pia::transport::Station* data[32];
-};
+    typedef T* iterator;
 
-template <>
-struct SimpleContainer<InetAddress, 4>
-{
-    virtual ~SimpleContainer();
-    virtual void Trace(unsigned long long value) const;
+    SimpleContainer() : size(0), data()
+    {
+    }
+
+    virtual ~SimpleContainer()
+    {
+    }
+
+    virtual void Trace(unsigned long long) const
+    {
+    }
+
+    iterator begin()
+    {
+        return data;
+    }
+
+    iterator end()
+    {
+        return &data[size];
+    }
+
     unsigned int size;
-    InetAddress data[4];
+    T data[N];
 };
 
 }}}
