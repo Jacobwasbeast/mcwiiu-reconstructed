@@ -43,9 +43,16 @@ public:
     void createDateItem(const EntityDataAccessor<T>* accessor, T value);
 
     template <class T>
+    void define(const EntityDataAccessor<T>* accessor, T value)
+    {
+        createDateItem(accessor, value);
+    }
+
+    template <class T>
     T get(const EntityDataAccessor<T>* accessor)
     {
-        return static_cast<DataItem_Impl<T>*>(mItemsById[accessor->getId()])->getValue();
+        T value = static_cast<DataItem_Impl<T>*>(mItemsById[accessor->getId()])->getValue();
+        return value;
     }
 
     template <class T>

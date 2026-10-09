@@ -160,7 +160,7 @@ boost::shared_ptr<Entity> EntityIO::newEntity(unsigned long long entityType, Lev
         {
             entity = boost::shared_ptr<Entity>((it->second)(level));
         }
-        if (entity->GetType() == EntityType::ENDER_DRAGON)
+        if (eTYPE_DERIVED_FROM(EntityType::ENDER_DRAGON, entity->GetType()))
         {
             boost::static_pointer_cast<EnderDragon>(entity)->AddParts();
         }

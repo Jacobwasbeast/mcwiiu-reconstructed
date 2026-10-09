@@ -81,9 +81,9 @@ BlockPos PathfinderMob::getRestrictCenter()
     return mRestrictionCenter;
 }
 
-double PathfinderMob::getRestrictRadius()
+float PathfinderMob::getRestrictRadius()
 {
-    return (double)mRestrictionRadius;
+    return mRestrictionRadius;
 }
 
 void PathfinderMob::clearRestriction()
@@ -107,7 +107,7 @@ void PathfinderMob::tickLeash()
 
         boost::shared_ptr<TamableAnimal> tamable;
         const boost::shared_ptr<Entity>& self = shared_from_this();
-        if (self != NULL && (self->GetType() & EntityType::TAMABLE_ANIMAL) == EntityType::TAMABLE_ANIMAL)
+        if (self != NULL && eTYPE_DERIVED_FROM(EntityType::TAMABLE_ANIMAL, self->GetType()))
         {
             tamable = boost::dynamic_pointer_cast<TamableAnimal>(shared_from_this());
         }

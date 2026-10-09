@@ -30,31 +30,42 @@ boost::shared_ptr<Entity> IndirectEntityDamageSource::getEntity() const
 
 boost::shared_ptr<ClientboundChatPacket> IndirectEntityDamageSource::getDeathMessagePacket(boost::shared_ptr<LivingEntity> victim) const
 {
-    not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+    not_null_ptr<ItemInstance> item = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
+        ? boost::static_pointer_cast<LivingEntity>(entity)->getMainHandItem()
+        : ItemInstance::EMPTY;
     std::wstring attackerName = L"";
 
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
-        item = boost::static_pointer_cast<LivingEntity>(entity)->getMainHandItem();
-
-    boost::shared_ptr<Entity> attacker = owner ? owner : entity;
-    if (owner && owner->GetType() == EntityType::SERVER_PLAYER)
+    boost::shared_ptr<Entity> attacker;
+    if (owner != NULL)
     {
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(owner);
-        if (player)
-            attackerName = player->getDisplayName();
+        attacker = owner;
+        if (owner->GetType() == EntityType::SERVER_PLAYER)
+        {
+            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(owner);
+            if (player)
+                attackerName = player->getDisplayName();
+        }
+    }
+    else
+    {
+        attacker = entity;
     }
 
-    std::wstring victimName = victim->getNetworkName();
     if (!item->isEmpty() && item->hasCustomHoverName())
-        return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(victimName, deathMessage, attacker, attackerName, item->getHoverName()));
-    return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(victimName, message, attacker, attackerName));
+    {
+        return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(victim->getNetworkName(), deathMessage, attacker, attackerName, item->getHoverName()));
+    }
+    else
+    {
+        return boost::shared_ptr<ClientboundChatPacket>(new ClientboundChatPacket(victim->getNetworkName(), message, attacker, attackerName));
+    }
 }
 
 const DamageSource* IndirectEntityDamageSource::GetBaseDamageSource() const
 {
-    if (baseDamageSource)
-        return baseDamageSource;
-    return DamageSource::GetBaseDamageSource();
+    if (baseDamageSource == NULL)
+        return DamageSource::GetBaseDamageSource();
+    return baseDamageSource;
 }
 
 DamageSource* IndirectEntityDamageSource::copy() const

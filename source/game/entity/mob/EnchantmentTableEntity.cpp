@@ -60,7 +60,10 @@ bool EnchantmentTableEntity::hasCustomName()
 
 std::wstring EnchantmentTableEntity::getDisplayName()
 {
-    hasCustomName();
+    if (hasCustomName())
+    {
+        return getName();
+    }
     return getName();
 }
 
@@ -110,8 +113,9 @@ void EnchantmentTableEntity::tick()
     if (player.get() != NULL)
     {
         Entity* entity = (Entity*)player.get();
-        mRotTarget = (float)std::atan2(entity->mZ - (double)((float)mPos.z + 0.5F),
-                                       entity->mX - (double)((float)mPos.x + 0.5F));
+        double dx = entity->mX - (double)((float)mPos.x + 0.5F);
+        double dz = entity->mZ - (double)((float)mPos.z + 0.5F);
+        mRotTarget = (float)std::atan2(dz, dx);
         mOpen += 0.1F;
         if (mOpen < 0.5F || mRandom->nextInt(40) == 0)
         {

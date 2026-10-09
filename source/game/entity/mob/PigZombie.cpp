@@ -70,16 +70,15 @@ bool PigZombie::isAngry()
 void PigZombie::customServerAiStep()
 {
     AttributeInstance* speed = getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED);
-    if (!isAngry())
-    {
-        if (speed->hasModifier(SPEED_MODIFIER_ATTACKING))
-            speed->removeModifier(SPEED_MODIFIER_ATTACKING);
-    }
-    else
+    if (isAngry())
     {
         if (!isBaby() && !speed->hasModifier(SPEED_MODIFIER_ATTACKING))
             speed->addModifier(new AttributeModifier(*SPEED_MODIFIER_ATTACKING));
         --mRemainingPersistentAngerTime;
+    }
+    else if (speed->hasModifier(SPEED_MODIFIER_ATTACKING))
+    {
+        speed->removeModifier(SPEED_MODIFIER_ATTACKING);
     }
 
     if (mAngerSoundDelay > 0 && --mAngerSoundDelay == 0)
@@ -118,7 +117,7 @@ void PigZombie::makeAngry(boost::shared_ptr<Entity> entity)
 {
     mRemainingPersistentAngerTime = mRandom->nextInt(400) + 400;
     mAngerSoundDelay = mRandom->nextInt(40);
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
         setLastHurtByMob(boost::dynamic_pointer_cast<LivingEntity>(entity));
 }
 
@@ -128,7 +127,7 @@ bool PigZombie::hurt(const DamageSource* source, float damage)
         return false;
 
     boost::shared_ptr<Entity> attacker = source->getEntity();
-    if (attacker && (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (attacker && eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType()))
         makeAngry(attacker);
     return Zombie::hurt(source, damage);
 }
@@ -192,10 +191,8 @@ void PigZombie::PigZombieHurtByOtherGoal::alertOther(
     boost::shared_ptr<PathfinderMob> mob, boost::shared_ptr<LivingEntity> target)
 {
     HurtByTargetGoal::alertOther(mob, target);
-    bool isPigZombie = mob->GetType() == EntityType::PIG_ZOMBIE;
-    if (isPigZombie)
+    if (eTYPE_DERIVED_FROM(EntityType::PIG_ZOMBIE, mob->GetType()))
     {
-        boost::shared_ptr<PigZombie> pig = boost::dynamic_pointer_cast<PigZombie>(mob);
-        pig->makeAngry(target);
+        boost::dynamic_pointer_cast<PigZombie>(mob)->makeAngry(target);
     }
 }

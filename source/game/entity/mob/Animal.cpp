@@ -36,9 +36,11 @@ namespace
 const EntityDataAccessor<int>* Animal::DATA_IN_LOVE = NULL;
 const EntityDataAccessor<int>* Animal::DATA_IN_LOVE_TIME = NULL;
 
-Animal::Animal(Level* level) : AgableMob(level), mSpawnableBlock(Blocks::grass), mLoveCause(L""),
-                               mBreedCooldown(1200)
+Animal::Animal(Level* level) : AgableMob(level)
 {
+    mSpawnableBlock = Blocks::grass;
+    mLoveCause = L"";
+    mBreedCooldown = 1200;
     setDespawnProtected();
     mCategories |= EntityCategory::eEntityCategory_Animal;
 }
@@ -59,13 +61,13 @@ void Animal::setDespawnProtected()
     }
 
     short x = Mth::floor(mX);
-    int z = Mth::floor(mZ);
+    short z = Mth::floor(mZ);
 
     mMinX = x;
     mMaxX = x;
+    mMinZ = z;
+    mMaxZ = z;
     mDespawnProtected = true;
-    mMinZ = static_cast<short>(z);
-    mMaxZ = static_cast<short>(z);
 }
 
 void Animal::defineSynchedData()
@@ -111,19 +113,14 @@ void Animal::updateDespawnProtectedState()
     }
 
     short x = Mth::floor(mX);
-    int z = Mth::floor(mZ);
+    short z = Mth::floor(mZ);
 
-    short maxX = mMaxX < x ? x : mMaxX;
-    short minX = x < mMinX ? x : mMinX;
-    short maxZ = mMaxZ < static_cast<short>(z) ? static_cast<short>(z) : mMaxZ;
-    short minZ = mMinZ < static_cast<short>(z) ? mMinZ : static_cast<short>(z);
+    mMaxX = std::max(mMaxX, x);
+    mMinX = std::min(mMinX, x);
+    mMaxZ = std::max(mMaxZ, z);
+    mMinZ = std::min(z, mMinZ);
 
-    mMaxX = maxX;
-    mMinX = minX;
-    mMaxZ = maxZ;
-    mMinZ = minZ;
-
-    if (maxX - minX > 20 || maxZ - minZ > 20)
+    if (mMaxX - mMinX > 20 || mMaxZ - mMinZ > 20)
     {
         mDespawnProtected = false;
     }
@@ -147,9 +144,9 @@ void Animal::aiStep()
             double ya = mRandom->nextGaussian() * 0.02;
             double za = mRandom->nextGaussian() * 0.02;
             mLevel->addParticle(PARTICLE_HEART,
-                                mX + mRandom->nextFloat() * mBbWidth * 2.0 - mBbWidth,
+                                mX + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
                                 mY + 0.5 + mRandom->nextFloat() * mBbHeight,
-                                mZ + mRandom->nextFloat() * mBbWidth * 2.0 - mBbWidth,
+                                mZ + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
                                 xa, ya, za,
                                 arrayWithLength<int>());
         }
@@ -173,7 +170,7 @@ bool Animal::hurt(const DamageSource* source, float damage)
 
     boost::shared_ptr<Entity> attacker = source->getEntity();
 
-    if (attacker != NULL && (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+    if (attacker != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType())
         && !boost::static_pointer_cast<Player>(attacker)->isAllowedToAttackAnimals())
     {
         return false;
@@ -265,14 +262,14 @@ void Animal::usePlayerItem(boost::shared_ptr<Player> player, not_null_ptr<ItemIn
 
 bool Animal::AgeUpBaby(const boost::shared_ptr<Player>& player, not_null_ptr<ItemInstance> itemInstance)
 {
-    if (!isBaby() || !isFood(itemInstance))
+    if (isBaby() && isFood(itemInstance))
     {
-        return false;
+        usePlayerItem(player, itemInstance);
+        ageUp(6 * 20, true);
+        return true;
     }
 
-    usePlayerItem(player, itemInstance);
-    ageUp(6 * 20, true);
-    return true;
+    return false;
 }
 
 bool Animal::mobInteract(const boost::shared_ptr<Player>& player,
@@ -284,49 +281,49 @@ bool Animal::mobInteract(const boost::shared_ptr<Player>& player,
     {
         if (isFood(itemInstance) && !isBaby() && getInLoveValue() <= 0 && !isBreedCoolingDown())
         {
-            if (mLevel->mIsClientSide)
+            if (!mLevel->mIsClientSide)
             {
-                return false;
+                switch (GetType())
+                {
+                case EntityType::CHICKEN:
+                    if (!mLevel->canCreateMore(EntityType::CHICKEN, Level::eSpawnType_Breed))
+                    {
+                        player->displayClientMessage(MESSAGE_CHICKEN_LIMIT, true);
+                        return false;
+                    }
+                    break;
+                case EntityType::WOLF:
+                    if (!mLevel->canCreateMore(EntityType::WOLF, Level::eSpawnType_Breed))
+                    {
+                        player->displayClientMessage(MESSAGE_WOLF_LIMIT, true);
+                        return false;
+                    }
+                    break;
+                case EntityType::MUSHROOM_COW:
+                    if (!mLevel->canCreateMore(EntityType::MUSHROOM_COW, Level::eSpawnType_Breed))
+                    {
+                        player->displayClientMessage(MESSAGE_ANIMAL_LIMIT, true);
+                        return false;
+                    }
+                    break;
+                default:
+                    if ((GetType() & EntityType::CREATURE_CATEGORY) != 0)
+                    {
+                        if (!mLevel->canCreateMore(GetType(), Level::eSpawnType_Breed))
+                        {
+                            player->displayClientMessage(MESSAGE_MOB_LIMIT, true);
+                            return false;
+                        }
+                    }
+                    break;
+                }
+
+                usePlayerItem(player, itemInstance);
+                setInLove(player);
+                return true;
             }
 
-            unsigned long long type = GetType();
-
-            if (type == EntityType::MUSHROOM_COW)
-            {
-                if (!mLevel->canCreateMore(EntityType::MUSHROOM_COW, Level::eSpawnType_Breed))
-                {
-                    player->displayClientMessage(MESSAGE_ANIMAL_LIMIT, true);
-                    return false;
-                }
-            }
-            else if (type == EntityType::WOLF)
-            {
-                if (!mLevel->canCreateMore(EntityType::WOLF, Level::eSpawnType_Breed))
-                {
-                    player->displayClientMessage(MESSAGE_WOLF_LIMIT, true);
-                    return false;
-                }
-            }
-            else if (type == EntityType::CHICKEN)
-            {
-                if (!mLevel->canCreateMore(EntityType::CHICKEN, Level::eSpawnType_Breed))
-                {
-                    player->displayClientMessage(MESSAGE_CHICKEN_LIMIT, true);
-                    return false;
-                }
-            }
-            else if ((type & EntityType::CREATURE_CATEGORY) != 0)
-            {
-                if (!mLevel->canCreateMore(type, Level::eSpawnType_Breed))
-                {
-                    player->displayClientMessage(MESSAGE_MOB_LIMIT, true);
-                    return false;
-                }
-            }
-
-            usePlayerItem(player, itemInstance);
-            setInLove(player);
-            return true;
+            return false;
         }
 
         if (AgeUpBaby(player, itemInstance))
@@ -358,7 +355,7 @@ boost::shared_ptr<ServerPlayer> Animal::getLoveCause()
     }
 
     boost::shared_ptr<Player> player = mLevel->getPlayerByUUID(mLoveCause);
-    if (player != NULL && player->GetType() == EntityType::SERVER_PLAYER)
+    if (player != NULL && eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, player->GetType()))
     {
         return boost::static_pointer_cast<ServerPlayer>(player);
     }
@@ -402,9 +399,9 @@ void Animal::handleEntityEvent(unsigned char event, int data)
             double ya = mRandom->nextGaussian() * 0.02;
             double za = mRandom->nextGaussian() * 0.02;
             mLevel->addParticle(PARTICLE_HEART,
-                                mX + mRandom->nextFloat() * mBbWidth * 2.0 - mBbWidth,
+                                mX + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
                                 mY + 0.5 + mRandom->nextFloat() * mBbHeight,
-                                mZ + mRandom->nextFloat() * mBbWidth * 2.0 - mBbWidth,
+                                mZ + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
                                 xa, ya, za,
                                 arrayWithLength<int>());
         }

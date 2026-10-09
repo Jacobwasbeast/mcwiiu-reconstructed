@@ -33,15 +33,14 @@ TamableAnimal::~TamableAnimal()
 
 std::wstring TamableAnimal::getOwnerUUID()
 {
-    std::wstring uuid = mEntityData->get(DATA_OWNER_UUID);
-    return uuid;
+    return mEntityData->get(DATA_OWNER_UUID);
 }
 
-boost::shared_ptr<LivingEntity> TamableAnimal::getOwner()
+boost::shared_ptr<Entity> TamableAnimal::getOwner()
 {
     std::wstring uuid = getOwnerUUID();
     if (uuid.empty())
-        return boost::shared_ptr<LivingEntity>();
+        return boost::shared_ptr<Entity>();
     return mLevel->getPlayerByUUID(uuid);
 }
 
@@ -63,7 +62,7 @@ void TamableAnimal::defineSynchedData()
 {
     Animal::defineSynchedData();
     mEntityData->createDateItem(DATA_FLAGS, static_cast<unsigned char>(0));
-    mEntityData->createDateItem(DATA_OWNER_UUID, std::wstring(L""));
+    mEntityData->define(DATA_OWNER_UUID, std::wstring(L""));
 }
 
 void TamableAnimal::addAdditonalSaveData(CompoundTag* tag)
@@ -210,7 +209,7 @@ Team* TamableAnimal::getTeam()
 {
     if (isTame())
     {
-        boost::shared_ptr<LivingEntity> owner = getOwner();
+        boost::shared_ptr<Entity> owner = getOwner();
         if (owner != NULL)
             return owner->getTeam();
     }
@@ -221,7 +220,7 @@ bool TamableAnimal::isAlliedTo(boost::shared_ptr<Entity> entity)
 {
     if (isTame())
     {
-        boost::shared_ptr<LivingEntity> owner = getOwner();
+        boost::shared_ptr<Entity> owner = getOwner();
         if (entity == owner)
         {
             return true;
@@ -238,7 +237,7 @@ bool TamableAnimal::isAlliedTo(boost::shared_ptr<Entity> entity)
 void TamableAnimal::die(const DamageSource* source)
 {
     if (!mLevel->mIsClientSide && mLevel->getGameRules()->getBoolean(GameRules::RULE_SHOWDEATHMESSAGES) && hasCustomName() &&
-        getOwner() != NULL && getOwner()->GetType() == EntityType::SERVER_PLAYER)
+        getOwner() != NULL && eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, getOwner()->GetType()))
     {
         boost::dynamic_pointer_cast<ServerPlayer>(getOwner())->mConnection->send(
             getCombatTracker()->getDeathMessagePacket());

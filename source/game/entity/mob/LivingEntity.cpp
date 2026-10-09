@@ -158,8 +158,8 @@ LivingEntity::~LivingEntity()
 
     delete mAttributes;
     delete mCombatTracker;
-    delete[] mLastHandItems.items;
-    delete[] mLastArmorItems.items;
+    delete[] mLastHandItems.items.data;
+    delete[] mLastArmorItems.items.data;
 
     if (mLastDamageSource)
     {
@@ -485,7 +485,7 @@ void LivingEntity::baseTick()
 
     Entity::baseTick();
 
-    bool isPlayer = (GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+    bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType());
 
     if (isAlive())
     {
@@ -747,14 +747,12 @@ void LivingEntity::stopRiding()
 
     Entity::stopRiding();
 
-    if (vehicle && vehicle != getVehicle())
+    if (vehicle && vehicle != getVehicle()
+        && (!mLevel->mIsClientSide
+            || (eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType())
+                && eTYPE_DERIVED_FROM(EntityType::BOAT, vehicle->GetType()))))
     {
-        if (!mLevel->mIsClientSide
-            || (GetType() & EntityType::PLAYER) != EntityType::PLAYER
-            || vehicle->GetType() != EntityType::BOAT)
-        {
-            findStandUpPosition(vehicle);
-        }
+        findStandUpPosition(vehicle);
     }
 }
 
@@ -791,7 +789,7 @@ int LivingEntity::getLastHurtMobTimestamp()
 
 void LivingEntity::setLastHurtMob(boost::shared_ptr<Entity> target)
 {
-    if ((target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType()))
     {
         mLastHurtMob = boost::static_pointer_cast<LivingEntity>(target);
     }
@@ -815,7 +813,7 @@ void LivingEntity::playEquipSound(not_null_ptr<ItemInstance> itemInstance)
         return;
     }
 
-    if (GetType() == EntityType::ARMOR_STAND)
+    if (eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, GetType()))
     {
         Item* item = itemInstance->getItem();
         ArmorItem* armorItem = dynamic_cast<ArmorItem*>(item);
@@ -1290,7 +1288,7 @@ bool LivingEntity::hurt(const DamageSource* source, float damage)
 
     if (source->isFire() && hasEffect(MobEffects::FIRE_RESISTANCE))
     {
-        if ((GetType() & EntityType::PLAYER) == EntityType::PLAYER && source == DamageSource::LAVA)
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType()) && source == DamageSource::LAVA)
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(shared_from_this());
             player->awardStat(GenericStats::stayinFrosty(), GenericStats::param_stayinFrosty());
@@ -1366,13 +1364,13 @@ bool LivingEntity::hurt(const DamageSource* source, float damage)
 
     if (attacker)
     {
-        if ((attacker->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, attacker->GetType()))
         {
             mHurtByPlayerOnPeaceful = false;
             setLastHurtByMob(boost::static_pointer_cast<LivingEntity>(attacker));
         }
 
-        if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType()))
         {
             if (mLevel->getDifficulty() == Difficulty::PEACEFUL)
             {
@@ -1382,7 +1380,7 @@ bool LivingEntity::hurt(const DamageSource* source, float damage)
             mLastHurtByPlayerTime = 100;
             mLastHurtByPlayer = boost::static_pointer_cast<Player>(attacker);
         }
-        else if (attacker->GetType() == EntityType::WOLF)
+        else if (eTYPE_DERIVED_FROM(EntityType::WOLF, attacker->GetType()))
         {
             boost::shared_ptr<Wolf> wolf = boost::static_pointer_cast<Wolf>(attacker);
 
@@ -1578,12 +1576,12 @@ void LivingEntity::breakItem(not_null_ptr<ItemInstance> itemInstance)
     for (int i = 0; i < 5; ++i)
     {
         Vec3* velocity = Vec3::newTemp((mRandom->nextFloat() - 0.5) * 0.1, Math::random() * 0.1 + 0.1, 0.0);
-        velocity = velocity->xRot(-(mXRot * 0.017453292f));
-        velocity = velocity->yRot(-(mYRot * 0.017453292f));
+        velocity = velocity->xRot(-(mXRot * Mth::DEG_TO_RAD));
+        velocity = velocity->yRot(-(mYRot * Mth::DEG_TO_RAD));
 
         Vec3* offset = Vec3::newTemp((mRandom->nextFloat() - 0.5) * 0.3, -mRandom->nextFloat() * 0.6 - 0.3, 0.6);
-        offset = offset->xRot(-(mXRot * 0.017453292f));
-        offset = offset->yRot(-(mYRot * 0.017453292f));
+        offset = offset->xRot(-(mXRot * Mth::DEG_TO_RAD));
+        offset = offset->yRot(-(mYRot * Mth::DEG_TO_RAD));
         offset = offset->add(mX, mY + (double)getEyeHeight(), mZ);
 
         arrayWithLength<int> particleData(1, false);
@@ -1622,7 +1620,7 @@ void LivingEntity::die(const DamageSource* source)
         int looting = 0;
         boost::shared_ptr<Player> player;
 
-        if (killer && (killer->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (killer && eTYPE_DERIVED_FROM(EntityType::PLAYER, killer->GetType()))
         {
             player = boost::dynamic_pointer_cast<Player>(killer);
             looting = EnchantmentHelper::getMobLooting(boost::dynamic_pointer_cast<LivingEntity>(player));
@@ -1737,7 +1735,7 @@ bool LivingEntity::onLadder()
     int y = Mth::floor(mBoundingBox->mMinY);
     int z = Mth::floor(mZ);
 
-    if ((GetType() & EntityType::PLAYER) == EntityType::PLAYER
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType())
         && static_cast<Player*>(this)->isSpectator())
     {
         return false;
@@ -1896,15 +1894,15 @@ void LivingEntity::spawnEatParticles(const ItemInstance& itemInstance, int count
     for (int i = 0; i < count; ++i)
     {
         Vec3* velocity = Vec3::newTemp((mRandom->nextDouble() - 0.5) * 0.1, mRandom->nextDouble() * 0.1 + 0.1, 0.0);
-        velocity = velocity->xRot(-(mXRot * 0.017453292f));
-        velocity = velocity->yRot(-(mYBodyRot * 0.017453292f));
+        velocity = velocity->xRot(-(mXRot * Mth::DEG_TO_RAD));
+        velocity = velocity->yRot(-(mYBodyRot * Mth::DEG_TO_RAD));
         velocity->y = velocity->y + 0.05;
 
         double offsetX = (mRandom->nextDouble() - 0.5) * 0.3;
         double offsetY = -mRandom->nextDouble() * 0.6 - 0.3;
         Vec3* offset = Vec3::newTemp(offsetX, offsetY, 0.6);
-        offset = offset->xRot(-(mXRot * 0.017453292f));
-        offset = offset->yRot(-(mYBodyRot * 0.017453292f));
+        offset = offset->xRot(-(mXRot * Mth::DEG_TO_RAD));
+        offset = offset->yRot(-(mYBodyRot * Mth::DEG_TO_RAD));
         offset = offset->add(mX, mY + (double)getEyeHeight(), mZ);
 
         int itemId = Item::getId(itemInstance.getItem());
@@ -2253,8 +2251,8 @@ void LivingEntity::findStandUpPosition(boost::shared_ptr<Entity> vehicle)
             angle = 1.5707964f * (getMainArm() == HumanoidArm::LEFT ? -1.0f : 1.0f);
         }
 
-        double dirX = -(double)Mth::sin(-(mYRot * 0.017453292f) - 3.1415927f + angle);
-        double dirZ = -(double)Mth::cos(-(mYRot * 0.017453292f) - 3.1415927f + angle);
+        double dirX = -(double)Mth::sin(-(mYRot * Mth::DEG_TO_RAD) - 3.1415927f + angle);
+        double dirZ = -(double)Mth::cos(-(mYRot * Mth::DEG_TO_RAD) - 3.1415927f + angle);
         double scale = fabs(dirX) - fabs(dirZ) < 0.0 ? fabs(dirZ) : fabs(dirX);
 
         distance = distance / scale;
@@ -2361,7 +2359,7 @@ void LivingEntity::jumpFromGround()
 
     if (isSprinting())
     {
-        float radians = mYRot * 0.017453292f;
+        float radians = mYRot * Mth::DEG_TO_RAD;
         mXd = mXd - (double)(Mth::sin(radians) * 0.2f);
         mZd = mZd + (double)(Mth::cos(radians) * 0.2f);
     }
@@ -2452,7 +2450,7 @@ void LivingEntity::CheckThermalAreas()
 
     int boostMod = 0;
     bool inside = false;
-    unsigned int boostModsSet = 0;
+    bool boostModsSet = false;
     int boostDirection = 0;
 
     std::vector<ThermalAreaRuleDefinition*> areas;
@@ -2460,15 +2458,8 @@ void LivingEntity::CheckThermalAreas()
 
     for (std::vector<ThermalAreaRuleDefinition*>::iterator it = areas.begin(); it != areas.end(); ++it)
     {
-        bool intersecting = false;
-
         if ((*it)->isEnabled() && (*it)->getConditionsMet(shared_from_this())
             && (*it)->getArea()->intersects(getSweptVolume()))
-        {
-            intersecting = true;
-        }
-
-        if (intersecting)
         {
             inside = true;
 
@@ -2590,9 +2581,10 @@ void LivingEntity::CheckThermalAreas()
         if (mY >= mThermalCeiling || mVerticalCollision)
         {
             mInThermalArea = false;
+            mThermalLerping = false;
         }
 
-        mThermalLerping = mInThermalArea;
+        mThermalLerping = mThermalLerping || mInThermalArea;
     }
 
     if (mThermalLerping)
@@ -2624,14 +2616,10 @@ void LivingEntity::CheckThermalAreas()
 
         if (!mInThermalArea)
         {
-            if (mThermalLerpTicks + 1 > 20)
+            if (++mThermalLerpTicks > 20)
             {
                 mThermalLerping = false;
                 mThermalLerpTicks = 0;
-            }
-            else
-            {
-                ++mThermalLerpTicks;
             }
         }
     }
@@ -2659,25 +2647,26 @@ void LivingEntity::CheckThermalAreas()
     {
         if (Mth::sqrt(mXd * mXd + mZd * mZd) < mElytraSpeedBoost)
         {
-            if (boostModsSet != 0)
+            if (boostModsSet)
             {
                 mXd += Mth::abs(mXd) * 0.1 * boostMod;
                 mZd += Mth::abs(mZd) * 0.1 * boostDirection;
 
-                if (mXd * boostMod >= 0.0 && mZd * boostDirection >= 0.0)
+                if (mXd * boostMod < 0.0 || mZd * boostDirection < 0.0)
                 {
-                    return;
+                    mElytraSpeedBoostActive = false;
                 }
             }
             else
             {
                 mXd *= 1.1;
                 mZd *= 1.1;
-                return;
             }
         }
-
-        mElytraSpeedBoostActive = false;
+        else
+        {
+            mElytraSpeedBoostActive = false;
+        }
     }
 }
 
@@ -2690,7 +2679,7 @@ void LivingEntity::fallFlyingTravel(double& xd, double& yd, double& zd, Vec3* lo
         liftFactor = 1.0f;
     }
 
-    float pitch = xRot * 0.017453292f;
+    float pitch = xRot * Mth::DEG_TO_RAD;
     double lookLength = sqrt(lookAngle->x * lookAngle->x + lookAngle->z * lookAngle->z);
     horizontalSpeed = sqrt(xd * xd + zd * zd);
 
@@ -2739,12 +2728,12 @@ void LivingEntity::travel(float xxa, float yya, float zza)
     Player* player = NULL;
     bool skeletonHorseWithPlayerPassenger = false;
 
-    if ((GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType()))
     {
         player = static_cast<Player*>(this);
     }
 
-    bool isSkeletonHorse = GetType() == EntityType::SKELETON_HORSE;
+    bool isSkeletonHorse = eTYPE_DERIVED_FROM(EntityType::SKELETON_HORSE, GetType());
 
     if (isSkeletonHorse && hasPassenger(EntityType::PLAYER))
     {
@@ -2772,7 +2761,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
             float waterSlowdown = isSprinting() ? 0.9f : getWaterSlowDown();
             float moveSpeed = 0.02f;
 
-            if (GetType() == EntityType::DOLPHIN)
+            if (eTYPE_DERIVED_FROM(EntityType::DOLPHIN, GetType()))
             {
                 moveSpeed = getSpeed();
             }
@@ -2920,7 +2909,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
 
             if (!mOnGround)
             {
-                if (GetType() == EntityType::WITHER_BOSS)
+                if (eTYPE_DERIVED_FROM(EntityType::WITHER_BOSS, GetType()))
                 {
                     speed = mFlyingSpeed * acceleration;
                 }
@@ -2953,7 +2942,7 @@ void LivingEntity::travel(float xxa, float yya, float zza)
                     mYd = -0.15;
                 }
 
-                if (isSneaking() && (GetType() & EntityType::PLAYER) == EntityType::PLAYER && mYd < 0.0)
+                if (isSneaking() && eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType()) && mYd < 0.0)
                 {
                     mYd = 0.0;
                 }
@@ -3049,7 +3038,7 @@ void LivingEntity::updateModelAnimation()
 
     double dy;
 
-    if ((GetType() & EntityType::FLYING_MOB) == EntityType::FLYING_MOB)
+    if (eTYPE_DERIVED_FROM(EntityType::FLYING_MOB, GetType()))
     {
         dy = mY - mYo;
     }
@@ -3141,8 +3130,8 @@ int LivingEntity::getLightColor()
 
     if (isPassenger())
     {
-        if ((getVehicle()->GetType() & EntityType::MINECART) == EntityType::MINECART
-            || getVehicle()->GetType() == EntityType::BOAT)
+        if (eTYPE_DERIVED_FROM(EntityType::MINECART, getVehicle()->GetType())
+            || eTYPE_DERIVED_FROM(EntityType::BOAT, getVehicle()->GetType()))
         {
             riding = true;
         }
@@ -3894,20 +3883,17 @@ void LivingEntity::setJumping(bool jumping)
 
 void LivingEntity::take(boost::shared_ptr<Entity> entity, int count)
 {
-    if (entity->mRemoved || mLevel->mIsClientSide)
+    if (!entity->mRemoved && !mLevel->mIsClientSide)
     {
-        return;
-    }
+        EntityTracker* tracker = static_cast<ServerLevel*>(mLevel)->getTracker();
 
-    if (entity->GetType() != EntityType::ITEM_ENTITY
-        && (entity->GetType() & EntityType::ARROW) != EntityType::ARROW
-        && entity->GetType() != EntityType::EXPERIENCE_ORB)
-    {
-        return;
+        if (eTYPE_DERIVED_FROM(EntityType::ITEM_ENTITY, entity->GetType())
+            || eTYPE_DERIVED_FROM(EntityType::ARROW, entity->GetType())
+            || eTYPE_DERIVED_FROM(EntityType::EXPERIENCE_ORB, entity->GetType()))
+        {
+            tracker->broadcast(entity, boost::shared_ptr<ClientboundTakeItemEntityPacket>(new ClientboundTakeItemEntityPacket(entity->getId(), getId(), count)));
+        }
     }
-
-    static_cast<ServerLevel*>(mLevel)->getTracker()->broadcast(entity,
-                                                               boost::shared_ptr<Packet>(new ClientboundTakeItemEntityPacket(entity->getId(), getId(), count)));
 }
 
 bool LivingEntity::canSee(boost::shared_ptr<Entity> entity)
@@ -4134,12 +4120,12 @@ void LivingEntity::spawnItemUseParticles(not_null_ptr<ItemInstance> itemInstance
     for (int i = 0; i < count; ++i)
     {
         Vec3* velocity = Vec3::newTemp((mRandom->nextFloat() - 0.5) * 0.1, Math::random() * 0.1 + 0.1, 0.0);
-        velocity = velocity->xRot(-(mXRot * 0.017453292f));
-        velocity = velocity->yRot(-(mYRot * 0.017453292f));
+        velocity = velocity->xRot(-(mXRot * Mth::DEG_TO_RAD));
+        velocity = velocity->yRot(-(mYRot * Mth::DEG_TO_RAD));
 
         Vec3* offset = Vec3::newTemp((mRandom->nextFloat() - 0.5) * 0.3, -mRandom->nextFloat() * 0.6 - 0.3, 0.6);
-        offset = offset->xRot(-(mXRot * 0.017453292f));
-        offset = offset->yRot(-(mYRot * 0.017453292f));
+        offset = offset->xRot(-(mXRot * Mth::DEG_TO_RAD));
+        offset = offset->yRot(-(mYRot * Mth::DEG_TO_RAD));
         offset = offset->add(mX, mY + (double)getEyeHeight(), mZ);
 
         if (itemInstance->isStackedByData())
@@ -4320,7 +4306,7 @@ bool LivingEntity::randomTeleport(double x, double y, double z)
                                 arrayWithLength<int>());
         }
 
-        if ((GetType() & EntityType::PATHFINDER_MOB) == EntityType::PATHFINDER_MOB)
+        if (eTYPE_DERIVED_FROM(EntityType::PATHFINDER_MOB, GetType()))
         {
             static_cast<PathfinderMob*>(this)->getNavigation()->stop();
         }

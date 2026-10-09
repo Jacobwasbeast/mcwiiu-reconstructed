@@ -40,7 +40,7 @@ public:
     virtual std::wstring getOwnerUUID();
     virtual void setOwnerUUID(const std::wstring& uuid);
     virtual void tame(boost::shared_ptr<Player> player);
-    virtual boost::shared_ptr<LivingEntity> getOwner();
+    virtual boost::shared_ptr<Entity> getOwner();
     virtual bool isOwnedBy(boost::shared_ptr<LivingEntity> entity);
     virtual SitGoal* getSitGoal();
     virtual bool wantsToAttack(boost::shared_ptr<LivingEntity> target, boost::shared_ptr<LivingEntity> owner);

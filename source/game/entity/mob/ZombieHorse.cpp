@@ -59,8 +59,7 @@ EMobType ZombieHorse::getMobType()
 
 boost::shared_ptr<AgableMob> ZombieHorse::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    boost::shared_ptr<ZombieHorse> horse(new ZombieHorse(mLevel));
-    return horse;
+    return boost::shared_ptr<ZombieHorse>(new ZombieHorse(mLevel));
 }
 
 const SoundEvent* ZombieHorse::getAmbientSound()

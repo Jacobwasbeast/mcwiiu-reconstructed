@@ -70,7 +70,7 @@ bool WitherSkeleton::doHurtTarget(boost::shared_ptr<Entity> target)
     if (!Monster::doHurtTarget(target))
         return false;
 
-    if ((target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType()))
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(target);
         living->addEffect(new MobEffectInstance(MobEffects::WITHER, 200),
@@ -93,7 +93,7 @@ void WitherSkeleton::die(const DamageSource* source)
 {
     AbstractSkeleton::die(source);
 
-    if (!(source->getEntity() != NULL && source->getEntity()->GetType() == EntityType::CREEPER))
+    if (!(source->getEntity() != NULL && eTYPE_DERIVED_FROM(EntityType::CREEPER, source->getEntity()->GetType())))
         return;
 
     boost::shared_ptr<Creeper> creeper = boost::static_pointer_cast<Creeper>(source->getEntity());

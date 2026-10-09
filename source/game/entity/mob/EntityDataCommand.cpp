@@ -19,8 +19,7 @@ void EntityDataCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWi
 {
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
-    static_cast<void>(sender);
-    static_cast<void>(stream);
+    byteStream.reset();
 }
 
 boost::shared_ptr<GameCommandPacket> EntityDataCommand::preparePacket(unsigned char mode)

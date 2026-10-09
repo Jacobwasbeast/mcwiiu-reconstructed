@@ -20,12 +20,11 @@ BaseMobSpawner::BaseMobSpawner()
 {
     mDelay = 20;
     mNextSpawnData = new SpawnData();
-    mSpin = 0.0;
-    moSpin = 0.0;
+    mSpin = moSpin = 0.0;
     mMinSpawnDelay = 200;
     mMaxSpawnDelay = 800;
     mSpawnCount = 4;
-    mDisplayEntity.reset();
+    mDisplayEntity = boost::shared_ptr<Entity>();
     mMaxNearbyEntities = 6;
     mRequiredPlayerRange = 16;
     mSpawnRange = 4;
@@ -123,13 +122,13 @@ void BaseMobSpawner::tick()
             return;
         }
 
-        boost::shared_ptr<Mob> mob = (entity->GetType() & EntityType::MOB) == EntityType::MOB
+        boost::shared_ptr<Mob> mob = eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType())
             ? boost::static_pointer_cast<Mob>(entity) : boost::shared_ptr<Mob>();
         entity->moveTo(entity->mX, entity->mY, entity->mZ, level->mRandom->nextFloat() * 360.0f, 0.0f);
         if (mob == NULL || (mob->checkSpawnRules() && mob->checkSpawnObstruction()))
         {
             if (mNextSpawnData->getTag()->size() == 1 && mNextSpawnData->getTag()->contains(L"id", Tag::TAG_STRING)
-                && (entity->GetType() & EntityType::MOB) == EntityType::MOB)
+                && eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()))
             {
                 boost::shared_ptr<Mob> spawnedMob = boost::static_pointer_cast<Mob>(entity);
                 spawnedMob->finalizeMobSpawn(level->getCurrentDifficultyAt(BlockPos(entity)), NULL, std::wstring());
@@ -148,10 +147,14 @@ void BaseMobSpawner::tick()
 
 void BaseMobSpawner::delay()
 {
-    int nextDelay = mMinSpawnDelay;
-    if (mMinSpawnDelay < mMaxSpawnDelay)
-        nextDelay += getLevel()->mRandom->nextInt(mMaxSpawnDelay - mMinSpawnDelay);
-    mDelay = nextDelay;
+    if (mMaxSpawnDelay <= mMinSpawnDelay)
+    {
+        mDelay = mMinSpawnDelay;
+    }
+    else
+    {
+        mDelay = mMinSpawnDelay + getLevel()->mRandom->nextInt(mMaxSpawnDelay - mMinSpawnDelay);
+    }
     if (!mSpawnPotentials.empty())
     {
         SpawnData* data = static_cast<SpawnData*>(WeighedRandom::getRandomItem(getLevel()->mRandom, reinterpret_cast<std::vector<WeighedRandomItem*>*>(&mSpawnPotentials)));
@@ -249,14 +252,13 @@ int BaseMobSpawner::onEventTriggered(int event)
             Random random;
             for (int i = 0; i < 20; ++i)
             {
-                float x = (float)pos.x + getLevel()->mRandom->nextFloat();
-                float y = (float)pos.y + getLevel()->mRandom->nextFloat();
-                float z = (float)pos.z + getLevel()->mRandom->nextFloat();
+                double x = (float)pos.x + getLevel()->mRandom->nextFloat();
+                double y = (float)pos.y + getLevel()->mRandom->nextFloat();
+                double z = (float)pos.z + getLevel()->mRandom->nextFloat();
                 double xd = random.nextGaussian() * 0.02;
                 double yd = random.nextGaussian() * 0.02;
                 double zd = random.nextGaussian() * 0.02;
-                arrayWithLength<int> particleData;
-                getLevel()->addParticle(PARTICLE_EXPLODE, x, y, z, xd, yd, zd, particleData);
+                getLevel()->addParticle(PARTICLE_EXPLODE, x, y, z, xd, yd, zd, arrayWithLength<int>());
             }
         }
         return 1;

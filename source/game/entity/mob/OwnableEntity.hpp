@@ -4,7 +4,7 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 
-class LivingEntity;
+class Entity;
 
 class OwnableEntity
 {
@@ -12,7 +12,7 @@ public:
     virtual ~OwnableEntity() {}
 
     virtual std::wstring getOwnerUUID() = 0;
-    virtual boost::shared_ptr<LivingEntity> getOwner() = 0;
+    virtual boost::shared_ptr<Entity> getOwner() = 0;
 };
 
 #endif

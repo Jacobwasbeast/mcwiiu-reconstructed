@@ -76,34 +76,21 @@ boost::shared_ptr<ItemInstance> LookAtEntityHint::GetEntityAsItem(boost::shared_
 
 unsigned int LookAtEntityHint::onLookAtEntity(boost::shared_ptr<Entity> entity)
 {
-    bool matches = false;
-    if (entityType == entity->GetType())
-    {
-        if (entityPredicate == NULL || entityPredicate(entity))
-        {
-            matches = true;
-        }
-    }
-
-    if (matches)
+    if (entityType == entity->GetType() && (entityPredicate == NULL || entityPredicate(entity)))
     {
         Tutorial::PopupMessageDetails* details = new Tutorial::PopupMessageDetails();
-        unsigned long long type = entity->GetType();
-        if ((type & EntityType::HANGING_ENTITY) != EntityType::HANGING_ENTITY &&
-            (type & EntityType::MINECART) != EntityType::MINECART &&
-            entity->GetType() != EntityType::BOAT &&
-            entity->GetType() != EntityType::ARMOR_STAND &&
-            entity->GetType() != EntityType::ENDER_CRYSTAL)
+        if (eTYPE_DERIVED_FROM(EntityType::HANGING_ENTITY, entity->GetType())
+            || eTYPE_DERIVED_FROM(EntityType::MINECART, entity->GetType())
+            || eTYPE_DERIVED_FROM(EntityType::BOAT, entity->GetType())
+            || eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, entity->GetType())
+            || eTYPE_DERIVED_FROM(EntityType::ENDER_CRYSTAL, entity->GetType()))
         {
-            details->titleId = descriptionId;
-            details->promptId = entityId;
-            details->isItem = true;
-            return tutorial->setMessage(this, details);
-        }
+            boost::shared_ptr<ItemInstance> item = GetEntityAsItem(entity);
+            if (item->isEmpty())
+            {
+                return 0;
+            }
 
-        boost::shared_ptr<ItemInstance> item = GetEntityAsItem(entity);
-        if (!item->isEmpty())
-        {
             details->titleId = item->getUseDescriptionId();
             if (item->getItem() != NULL)
             {
@@ -113,6 +100,13 @@ unsigned int LookAtEntityHint::onLookAtEntity(boost::shared_ptr<Entity> entity)
             details->itemInstance = item;
             details->itemId = Item::VALIDgetId(item->getItem());
             details->itemAuxValue = item->getAuxValue();
+            details->isItem = true;
+            return tutorial->setMessage(this, details);
+        }
+        else
+        {
+            details->titleId = descriptionId;
+            details->promptId = entityId;
             details->isItem = true;
             return tutorial->setMessage(this, details);
         }

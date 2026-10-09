@@ -37,11 +37,11 @@ LeashFenceKnotEntity::LeashFenceKnotEntity(Level* level, const BlockPos& pos)
 {
     _init();
     setPos((double)pos.x + 0.5, (double)pos.y + 0.5, (double)pos.z + 0.5);
-    double halfHeight = 0.25;
-    double yOffset = 0.125;
-    setBoundingBox(AABB::newPermanent(mX - 0.1875, mY - halfHeight + yOffset,
-                                      mZ - 0.1875, mX + 0.1875,
-                                      mY + halfHeight + yOffset, mZ + 0.1875));
+    float yOffset = 0.125f;
+    float halfWidth = 0.1875f;
+    float halfHeight = 0.25f;
+    setBoundingBox(AABB::newPermanent(mX - halfWidth, mY - halfHeight + yOffset, mZ - halfWidth,
+                                      mX + halfWidth, mY + halfHeight + yOffset, mZ + halfWidth));
 }
 
 Entity* LeashFenceKnotEntity::create(Level* level)
@@ -125,6 +125,7 @@ bool LeashFenceKnotEntity::interact(const boost::shared_ptr<Player>& player,
     if (mLevel->mIsClientSide)
         return true;
 
+    bool changed = false;
     std::vector<boost::shared_ptr<Entity> >* entities =
         mLevel->getEntitiesOfClass(typeid(Mob), AABB::newTemp(mX - 7.0, mY - 7.0, mZ - 7.0,
                                                               mX + 7.0, mY + 7.0, mZ + 7.0));
@@ -133,7 +134,6 @@ bool LeashFenceKnotEntity::interact(const boost::shared_ptr<Player>& player,
                                                                mX + 7.0, mY + 7.0, mZ + 7.0));
     entities->insert(entities->end(), boats->begin(), boats->end());
 
-    bool changed = false;
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
          it != entities->end(); ++it)
     {

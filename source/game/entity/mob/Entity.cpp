@@ -142,30 +142,6 @@ void Entity::staticCtor()
     DATA_NAMED_BY_RESTRICTED_PLAYER = SynchedEntityData::defineId(EntityType::ENTITY, EntityType::ENTITY, EntityDataSerializers::BOOLEAN);
 }
 
-bool Entity::instanceof(const boost::shared_ptr<Entity>& entity, unsigned long long type)
-{
-    if (!entity)
-    {
-        return false;
-    }
-
-    unsigned long long entityType = entity->GetType();
-
-    if ((type & 0x3FULL) == 0)
-    {
-        if ((entityType & type) != type)
-        {
-            return false;
-        }
-    }
-    else if (entityType != type)
-    {
-        return false;
-    }
-
-    return true;
-}
-
 void Entity::useSmallIds()
 {
     TlsSetValue(gSmallIdTlsIndex, (void*)1);
@@ -312,7 +288,7 @@ int Entity::getWanderingQuadrant()
     return (getId() + sWanderingTick / 600) & 3;
 }
 
-Entity::Entity(Level* level, bool createEntityData)
+Entity::Entity(Level* level, bool createEntityData) : mPistonDeltas(NULL), mPistonDeltaCount(0)
 {
     mLevel = level;
 
@@ -324,31 +300,35 @@ Entity::Entity(Level* level, bool createEntityData)
 
     if (level != NULL)
     {
-        mDimension = level->mDimension->getType()->getId();
+        mDimension = static_cast<char>(level->mDimension->getType()->getId());
     }
 
     if (createEntityData)
     {
         mEntityData = boost::shared_ptr<SynchedEntityData>(new SynchedEntityData(this));
-
-        mEntityData->createDateItem(DATA_SHARED_FLAGS_ID, 0);
-        mEntityData->createDateItem<int>(DATA_AIR_SUPPLY_ID, getMaxAirSupply());
-        mEntityData->createDateItem(DATA_CUSTOM_NAME_VISIBLE, false);
-        mEntityData->createDateItem(DATA_CUSTOM_NAME, std::wstring(L""));
-        mEntityData->createDateItem(DATA_SILENT, false);
-        mEntityData->createDateItem(DATA_NO_GRAVITY, false);
-        mEntityData->createDateItem(DATA_MOVING, false);
-        mEntityData->createDateItem(DATA_NAMED_BY_RESTRICTED_PLAYER, false);
-        mEntityData->createDateItem(DATA_CREATED_ON_HOST, false);
-        mEntityData->createDateItem(DATA_OWNER_UUID, std::wstring(L""));
     }
     else
     {
-        mEntityData.reset();
+        mEntityData = boost::shared_ptr<SynchedEntityData>();
+    }
+
+    if (mEntityData != NULL)
+    {
+        mEntityData->createDateItem(DATA_SHARED_FLAGS_ID, 0);
+        mEntityData->define<int>(DATA_AIR_SUPPLY_ID, getMaxAirSupply());
+        mEntityData->define(DATA_CUSTOM_NAME_VISIBLE, false);
+        mEntityData->define(DATA_CUSTOM_NAME, std::wstring(L""));
+        mEntityData->define(DATA_SILENT, false);
+        mEntityData->define(DATA_NO_GRAVITY, false);
+        mEntityData->define(DATA_MOVING, false);
+        mEntityData->define(DATA_NAMED_BY_RESTRICTED_PLAYER, false);
+        mEntityData->define(DATA_CREATED_ON_HOST, false);
+        mEntityData->define(DATA_OWNER_UUID, std::wstring(L""));
     }
 
     mCategories = 0;
     mWaterCheckBox = AABB::newPermanent(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    mFireCacheResult = false;
     mFireCacheMinX = 0;
     mFireCacheMinY = 0;
     mFireCacheMinZ = 0;
@@ -501,7 +481,7 @@ Entity::~Entity()
     delete mRandom;
     delete mBoundingBox;
     delete mCommandStats;
-    delete[] mAllSlots.items;
+    delete[] mAllSlots.items.data;
     delete[] mPistonDeltas;
     delete mWaterCheckBox;
 
@@ -1050,7 +1030,7 @@ void Entity::setSecondsOnFire(int seconds)
 {
     int ticks = seconds * 20;
 
-    if ((GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, GetType()))
     {
         ticks = ProtectionEnchantment::getFireAfterDampener(
             boost::static_pointer_cast<LivingEntity>(shared_from_this()), ticks);
@@ -1097,7 +1077,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
     {
         boost::shared_ptr<Entity> passenger = it->lock();
 
-        if (passenger && passenger->GetType() == EntityType::LOCAL_PLAYER)
+        if (passenger && eTYPE_DERIVED_FROM(EntityType::LOCAL_PLAYER, passenger->GetType()))
         {
             if (!boost::static_pointer_cast<LocalPlayer>(passenger)->canMoveOrBeMovedFromTo(
                     mX, mY, mZ, mX + x, mY + y, mZ + z, NULL))
@@ -1196,7 +1176,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
     double wantedZ = z;
 
     if ((type == eMoverType_Self || type == eMoverType_Player) && mOnGround && isSneaking()
-        && (GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        && eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType()))
     {
         while (x != 0.0
                && mLevel->getCollisionAABBs(shared_from_this(),
@@ -1285,7 +1265,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
 
     bool sleeping = false;
 
-    if ((GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType()))
     {
         sleeping = boost::static_pointer_cast<Player>(shared_from_this())->isSleeping();
     }
@@ -1505,7 +1485,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
     mOnGround = mVerticalCollision && wantedY < 0.0;
     mCollision = mHorizontalCollision || mVerticalCollision;
 
-    if ((GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY && mCollision
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, GetType()) && mCollision
         && !gApp.IsAppPaused())
     {
         boost::shared_ptr<LivingEntity> living =
@@ -1704,26 +1684,24 @@ void Entity::playStepSound(const BlockPos& pos, Block* block)
 
     MemSect(31);
 
-    if ((GetType() & EntityType::PLAYER) != EntityType::PLAYER
+    if (!eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType())
         || (getSkinAdjustments().mAnimFlags & 0x4) == 0)
     {
-        Block* above = mLevel->getBlockState(mTickCache, pos.above())->getBlock();
-
-        if (above == Blocks::snow_layer)
+        if (mLevel->getBlockState(mTickCache, pos.above())->getBlock() == Blocks::snow_layer)
         {
-            const SoundType* snowType = above->getSoundType();
+            soundType = Blocks::snow_layer->getSoundType();
 
-            playSound(snowType->getStepSound(), snowType->getVolume() * 0.15f,
-                      snowType->getPitch());
+            playSound(soundType->getStepSound(), soundType->getVolume() * 0.15f,
+                      soundType->getPitch());
         }
         else if (!block->defaultBlockState()->getMaterial()->isLiquid())
         {
             playSound(soundType->getStepSound(), soundType->getVolume() * 0.15f,
                       soundType->getPitch());
         }
-    }
 
-    MemSect(0);
+        MemSect(0);
+    }
 }
 
 void Entity::playUnderwaterSound(const BlockPos& pos, Block* block)
@@ -1937,7 +1915,7 @@ bool Entity::updateInWaterState()
 
     bool inBoat = false;
 
-    if (getVehicle() && getVehicle()->GetType() == EntityType::BOAT)
+    if (getVehicle() && eTYPE_DERIVED_FROM(EntityType::BOAT, getVehicle()->GetType()))
     {
         inBoat = true;
     }
@@ -2070,7 +2048,7 @@ bool Entity::isUnderLiquid(Material* material)
 {
     bool onBoat = false;
 
-    if (getVehicle() && getVehicle()->GetType() == EntityType::BOAT)
+    if (getVehicle() && eTYPE_DERIVED_FROM(EntityType::BOAT, getVehicle()->GetType()))
     {
         onBoat = true;
     }
@@ -2103,7 +2081,7 @@ bool Entity::isUnderLiquid(Material* material)
 
             bool inside = eyeY < surface;
 
-            if (!inside && (GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+            if (!inside && eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType()))
             {
                 return false;
             }
@@ -2119,7 +2097,7 @@ bool Entity::isInLiquid(Material* material, Vec3* pos)
 {
     bool onBoat = false;
 
-    if (getVehicle() && getVehicle()->GetType() == EntityType::BOAT)
+    if (getVehicle() && eTYPE_DERIVED_FROM(EntityType::BOAT, getVehicle()->GetType()))
     {
         onBoat = true;
     }
@@ -2150,7 +2128,7 @@ bool Entity::isInLiquid(Material* material, Vec3* pos)
 
             bool inside = pos->y < surface;
 
-            if (!inside && (GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+            if (!inside && eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType()))
             {
                 return false;
             }
@@ -2180,8 +2158,8 @@ void Entity::moveRelative(float x, float y, float z, float speed)
 
     float scale = speed / length;
 
-    float sin = Mth::sin(mYRot * 0.017453292f);
-    float cos = Mth::cos(mYRot * 0.017453292f);
+    float sin = Mth::sin(mYRot * Mth::DEG_TO_RAD);
+    float cos = Mth::cos(mYRot * Mth::DEG_TO_RAD);
 
     mXd += (double)(x * scale * cos - z * scale * sin);
     mYd += (double)(y * scale);
@@ -2431,8 +2409,8 @@ bool Entity::hurt(const DamageSource* source, float damage)
 
 Vec3* Entity::calculateViewVector(float xRot, float yRot)
 {
-    float yaw = -(yRot * 0.017453292f) - 3.1415927f;
-    float pitch = -(xRot * 0.017453292f);
+    float yaw = -(yRot * Mth::DEG_TO_RAD) - 3.1415927f;
+    float pitch = -(xRot * Mth::DEG_TO_RAD);
 
     float cosYaw = Mth::cos(yaw);
     float sinYaw = Mth::sin(yaw);
@@ -2598,14 +2576,12 @@ void Entity::setSharedFlag(int flag, bool value)
 
     if (value)
     {
-        flags |= 1 << flag;
+        mEntityData->set(DATA_SHARED_FLAGS_ID, flags | (1 << flag), true);
     }
     else
     {
-        flags &= ~(1 << flag);
+        mEntityData->set(DATA_SHARED_FLAGS_ID, flags & ~(1 << flag), true);
     }
-
-    mEntityData->set(DATA_SHARED_FLAGS_ID, flags, true);
 }
 
 CompoundTag* Entity::saveWithoutId(CompoundTag* tag)
@@ -3016,7 +2992,7 @@ void Entity::rideTick()
 
     vehicle->positionRider(shared_from_this());
 
-    if (vehicle->GetType() == EntityType::MINECART_RIDEABLE)
+    if (eTYPE_DERIVED_FROM(EntityType::MINECART_RIDEABLE, vehicle->GetType()))
     {
         mVehicleYRotDelta += (double)(vehicle->mYRot - vehicle->mYRotO);
 
@@ -3085,7 +3061,7 @@ double Entity::getRideHeight()
 
 bool Entity::showVehicleHealth()
 {
-    return (GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
+    return eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, GetType());
 }
 
 bool Entity::startRiding(boost::shared_ptr<Entity> vehicle)
@@ -3205,30 +3181,15 @@ void Entity::stopRidingBeforeTeleport()
 
 void Entity::addPassenger(boost::shared_ptr<Entity> passenger)
 {
-    if (passenger->mVehicle.get() != this)
+    if (!mLevel->mIsClientSide && eTYPE_DERIVED_FROM(EntityType::PLAYER, passenger->GetType())
+        && (!getControllingPassenger()
+            || !eTYPE_DERIVED_FROM(EntityType::PLAYER, getControllingPassenger()->GetType())))
     {
-        return;
-    }
-
-    bool front = false;
-
-    if (!mLevel->mIsClientSide && (passenger->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-    {
-        boost::shared_ptr<Entity> controller = getControllingPassenger();
-
-        if (!controller || (controller->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
-        {
-            front = true;
-        }
-    }
-
-    if (front)
-    {
-        mPassengers.insert(mPassengers.begin(), boost::weak_ptr<Entity>(passenger));
+        mPassengers.insert(mPassengers.begin(), passenger);
     }
     else
     {
-        mPassengers.push_back(boost::weak_ptr<Entity>(passenger));
+        mPassengers.push_back(passenger);
     }
 }
 
@@ -3376,7 +3337,7 @@ NonNullList<not_null_ptr<ItemInstance> > Entity::getAllSlots()
 
     if (mAllSlots.size() == 0)
     {
-        delete[] mAllSlots.items;
+        delete[] mAllSlots.items.data;
         mAllSlots = NonNullList<not_null_ptr<ItemInstance> >::withSize(hands.size() + armor.size(), ItemInstance::EMPTY);
     }
 
@@ -3528,14 +3489,14 @@ bool Entity::isInvisibleTo(boost::shared_ptr<Player> player)
 
 Team* Entity::getTeam()
 {
-    if ((GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType()))
     {
-        return NULL;
+        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(shared_from_this());
+
+        return mLevel->GetScoreboard()->getPlayersTeam(player->getXuid());
     }
 
-    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(shared_from_this());
-
-    return mLevel->GetScoreboard()->getPlayersTeam(player->mXuid);
+    return NULL;
 }
 
 bool Entity::isAlliedTo(boost::shared_ptr<Entity> entity)
@@ -3597,7 +3558,7 @@ Vec3* Entity::getAttachPos(EEntityLocation location, float partialTicks)
         case ENTITY_LOCATION_CHEST_RIGHT:
             return getPos(partialTicks)->add(
                 Vec3::newTemp(0.0, getEyeHeight(), 0.0)
-                    ->yRot(-(getYHeadRot() * 0.017453292f)));
+                    ->yRot(-(getYHeadRot() * Mth::DEG_TO_RAD)));
 
         default:
             return getPos(partialTicks);
@@ -3814,21 +3775,22 @@ boost::shared_ptr<Entity> Entity::changeDimension(int dimension)
         return boost::shared_ptr<Entity>();
     }
 
-    if ((GetType() & EntityType::MOB) == EntityType::MOB && isLeashed())
+    if (eTYPE_DERIVED_FROM(EntityType::MOB, GetType()) && isLeashed())
     {
         dropLeash(true, true);
     }
 
+    MinecraftServer* server = gMinecraftServer;
     int fromDimension = mDimension;
-    ServerLevel* fromLevel = gMinecraftServer->getLevel(fromDimension);
-    ServerLevel* toLevel = gMinecraftServer->getLevel(dimension);
+    ServerLevel* fromLevel = server->getLevel(fromDimension);
+    ServerLevel* toLevel = server->getLevel(dimension);
 
     if (fromDimension == 1 && dimension == 1)
     {
-        toLevel = gMinecraftServer->getLevel(0);
+        toLevel = server->getLevel(0);
     }
 
-    bool isFallingBlock = GetType() == EntityType::FALLING_BLOCK_ENTITY;
+    bool isFallingBlock = eTYPE_DERIVED_FROM(EntityType::FALLING_BLOCK_ENTITY, GetType());
 
     if (isFallingBlock)
     {
@@ -3841,7 +3803,7 @@ boost::shared_ptr<Entity> Entity::changeDimension(int dimension)
         return boost::shared_ptr<Entity>();
     }
 
-    if ((GetType() & EntityType::PLAYER) != EntityType::PLAYER
+    if (!eTYPE_DERIVED_FROM(EntityType::PLAYER, GetType())
         && !toLevel->canCreateMore(GetType(), Level::eSpawnType_Portal))
     {
         return boost::shared_ptr<Entity>();
@@ -3859,14 +3821,7 @@ boost::shared_ptr<Entity> Entity::changeDimension(int dimension)
     {
         BlockPos* dimensionSpawn = toLevel->getDimensionSpecificSpawn();
 
-        if (dimensionSpawn == NULL)
-        {
-            spawnPos = toLevel->getSharedSpawnPos();
-        }
-        else
-        {
-            spawnPos = *dimensionSpawn;
-        }
+        spawnPos = dimensionSpawn != NULL ? *dimensionSpawn : toLevel->getSharedSpawnPos();
     }
     else
     {
@@ -3898,7 +3853,9 @@ boost::shared_ptr<Entity> Entity::changeDimension(int dimension)
 
         moveTo(x, mY, z, 90.0f, 0.0f);
 
-        toLevel->getPortalForcer()->findPortal(shared_from_this(), yRot, blockX, blockZ);
+        PortalForcer* portalForcer = toLevel->getPortalForcer();
+
+        portalForcer->findPortal(shared_from_this(), yRot, blockX, blockZ);
 
         spawnPos = BlockPos(this);
     }
@@ -3913,8 +3870,9 @@ boost::shared_ptr<Entity> Entity::changeDimension(int dimension)
 
         if (fromDimension == 1 && dimension == 1)
         {
-            copy->moveTo(toLevel->getTopSolidBlockPos(toLevel->getSharedSpawnPos()), copy->mYRot,
-                         copy->mXRot);
+            BlockPos topPos = toLevel->getTopSolidBlockPos(toLevel->getSharedSpawnPos());
+
+            copy->moveTo(topPos, copy->mYRot, copy->mXRot);
         }
         else
         {
@@ -4038,14 +3996,12 @@ void Entity::setCustomName(const std::wstring& customName, const std::wstring& o
 
 std::wstring Entity::getCustomName()
 {
-    std::wstring value = mEntityData->get(DATA_CUSTOM_NAME);
-    return value;
+    return mEntityData->get(DATA_CUSTOM_NAME);
 }
 
 std::wstring Entity::getOwnerUUID()
 {
-    std::wstring value = mEntityData->get(DATA_OWNER_UUID);
-    return value;
+    return mEntityData->get(DATA_OWNER_UUID);
 }
 
 bool Entity::wasNamedByRestrictedPlayer()
@@ -4180,7 +4136,7 @@ bool Entity::ignoreExplosion()
 void Entity::doEnchantDamageEffects(boost::shared_ptr<LivingEntity> attacker,
                                     boost::shared_ptr<Entity> target)
 {
-    if ((target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType()))
     {
         EnchantmentHelper::doPostHurtEffects(
             boost::dynamic_pointer_cast<LivingEntity>(target),

@@ -99,31 +99,28 @@ bool Monster::doHurtTarget(boost::shared_ptr<Entity> target)
     boost::shared_ptr<LivingEntity> attacker = boost::static_pointer_cast<LivingEntity>(shared_from_this());
     float damage = (float)getAttribute(SharedMonsterAttributes::ATTACK_DAMAGE)->getValue();
     int knockback = 0;
-    if ((target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType()))
     {
         boost::shared_ptr<LivingEntity> livingTarget = boost::static_pointer_cast<LivingEntity>(target);
         damage += EnchantmentHelper::getDamageBonus(getMainHandItem(), livingTarget);
-        knockback = EnchantmentHelper::getKnockbackBonus(attacker, livingTarget);
+        knockback += EnchantmentHelper::getKnockbackBonus(attacker, livingTarget);
     }
     EntityDamageSource* source = DamageSource::CreateMobAttack(attacker);
     bool hurtTarget = target->hurt(source, damage);
     delete source;
     if (hurtTarget)
     {
-        if (knockback > 0 && (target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (knockback > 0 && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType()))
         {
-            {
-                boost::shared_ptr<LivingEntity> livingTarget = boost::static_pointer_cast<LivingEntity>(target);
-                livingTarget->knockback(attacker, knockback * 0.5f, Mth::sin(mYRot * 0.017453292f),
-                                        -Mth::cos(mYRot * 0.017453292f));
-            }
+            boost::static_pointer_cast<LivingEntity>(target)->knockback(attacker, knockback * 0.5f, Mth::sin(mYRot * 0.017453292f),
+                                                                        -Mth::cos(mYRot * 0.017453292f));
             mXd *= 0.6;
             mZd *= 0.6;
         }
         int fireAspect = EnchantmentHelper::getFireAspect(attacker);
         if (fireAspect > 0)
             target->setSecondsOnFire(fireAspect * 4);
-        if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType()))
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
             not_null_ptr<ItemInstance> mainHandItem = getMainHandItem();
@@ -141,12 +138,8 @@ float Monster::getWalkTargetValue(const BlockPos& pos)
 
 bool Monster::isDarkEnoughToSpawn()
 {
-    int y = (int)mBoundingBox->mMinY;
-    if (mBoundingBox->mMinY < (double)y)
-        --y;
-    BlockPos pos(mX, (double)y, mZ);
-    int skyBrightness = mLevel->getBrightness(LightLayer::SKY, pos);
-    if (mRandom->nextInt(32) < skyBrightness)
+    BlockPos pos(mX, (double)Mth::floor(mBoundingBox->mMinY), mZ);
+    if (mLevel->getBrightness(LightLayer::SKY, pos) > mRandom->nextInt(32))
         return false;
     int brightness = mLevel->getRawBrightness(pos);
     if (mLevel->isThundering())

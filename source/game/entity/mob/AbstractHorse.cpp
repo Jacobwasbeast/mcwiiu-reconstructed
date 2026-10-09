@@ -185,15 +185,14 @@ void AbstractHorse::handleStopJump() { }
 
 std::wstring AbstractHorse::getOwnerUUID()
 {
-    std::wstring uuid = mEntityData->get(DATA_OWNER_UUID);
-    return uuid;
+    return mEntityData->get(DATA_OWNER_UUID);
 }
 
-boost::shared_ptr<LivingEntity> AbstractHorse::getOwner()
+boost::shared_ptr<Entity> AbstractHorse::getOwner()
 {
     std::wstring uuid = getOwnerUUID();
     if (uuid.empty())
-        return boost::shared_ptr<LivingEntity>();
+        return boost::shared_ptr<Entity>();
     return mLevel->getPlayerByUUID(uuid);
 }
 
@@ -234,7 +233,7 @@ void AbstractHorse::defineSynchedData()
 {
     Animal::defineSynchedData();
     mEntityData->createDateItem(DATA_FLAGS, static_cast<unsigned char>(0));
-    mEntityData->createDateItem(DATA_OWNER_UUID, std::wstring(L""));
+    mEntityData->define(DATA_OWNER_UUID, std::wstring(L""));
 }
 
 bool AbstractHorse::isTamed() { return getFlag(2); }
@@ -297,7 +296,7 @@ bool AbstractHorse::hurt(const DamageSource* source, float damage)
     if (isTamed())
     {
         boost::shared_ptr<Entity> direct = source->getDirectEntity();
-        if (direct && (direct->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (direct && eTYPE_DERIVED_FROM(EntityType::PLAYER, direct->GetType()))
         {
             if (!boost::static_pointer_cast<Player>(direct)->canHarmPlayer(getOwnerUUID()))
                 return false;
@@ -787,7 +786,7 @@ bool AbstractHorse::tameWithName(const boost::shared_ptr<Player>& player)
     mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::TAMING_SUCCEEDED, 0);
     if (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, player->GetType()))
     {
-        player->awardStat(gStats->get_tamedEntity(EntityType::HORSE),
+        player->awardStat(GenericStats::tamedEntity(EntityType::HORSE),
                           GenericStats::param_tamedEntity(EntityType::HORSE));
     }
     return true;
@@ -838,10 +837,10 @@ void AbstractHorse::travel(float x, float y, float z)
         mHasImpulse = true;
         if (forward > 0.0f)
         {
-            mXd += static_cast<double>(-0.4f * Mth::sin(mYRot * 0.017453292f) * mJumpRidingScale);
-            mZd += static_cast<double>(0.4f * Mth::cos(mYRot * 0.017453292f) * mJumpRidingScale);
+            mXd += static_cast<double>(-0.4f * Mth::sin(mYRot * Mth::DEG_TO_RAD) * mJumpRidingScale);
+            mZd += static_cast<double>(0.4f * Mth::cos(mYRot * Mth::DEG_TO_RAD) * mJumpRidingScale);
         }
-        if ((rider->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, rider->GetType()))
         {
             mLevel->playLocalSound(mX, mY, mZ, getJumpSound(), SoundSource::eSoundSource_Players,
                                    0.4f, 1.0f, false, 16.0f);
@@ -857,7 +856,7 @@ void AbstractHorse::travel(float x, float y, float z)
         setSpeed(static_cast<float>(getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()));
         LivingEntity::travel(strafe, y, forward);
     }
-    else if ((rider->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    else if (eTYPE_DERIVED_FROM(EntityType::PLAYER, rider->GetType()))
     {
         mXd = 0.0;
         mYd = 0.0;
@@ -1053,7 +1052,7 @@ void AbstractHorse::positionRider(const boost::shared_ptr<Entity>& passenger)
     if (!RiderPositionOverrides::OverridePosition(shared_from_this(), passenger))
         Entity::positionRider(passenger);
 
-    if ((passenger->GetType() & EntityType::MOB) == EntityType::MOB)
+    if (eTYPE_DERIVED_FROM(EntityType::MOB, passenger->GetType()))
         mYBodyRot = boost::dynamic_pointer_cast<Mob>(passenger)->mYBodyRot;
 
     if (mStandAnimO <= 0.0f)
@@ -1068,7 +1067,7 @@ void AbstractHorse::positionRider(const boost::shared_ptr<Entity>& passenger)
                       mY + getRideHeight() + passenger->getRidingHeight() + static_cast<double>(rise),
                       mZ - static_cast<double>(offset * cos));
 
-    if ((passenger->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, passenger->GetType()))
         boost::dynamic_pointer_cast<LivingEntity>(passenger)->mYBodyRot = mYBodyRot;
 }
 

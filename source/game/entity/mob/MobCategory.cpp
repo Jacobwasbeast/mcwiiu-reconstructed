@@ -143,64 +143,34 @@ void MobCategory::staticCtor()
 
 MobCategory* MobCategory::getCategory(unsigned long long enumBaseClass)
 {
-    if (enumBaseClass == EntityType::PHANTOM)
+    switch (enumBaseClass)
     {
-        return PHANTOM;
-    }
-
-    if (enumBaseClass == EntityType::DOLPHIN)
-    {
-        return DOLPHIN;
-    }
-
-    if (enumBaseClass == EntityType::ENDER_CRYSTAL)
-    {
-        return ENDER_CRYSTAL;
-    }
-
-    if (enumBaseClass == EntityType::ARMOR_STAND)
-    {
-        return ARMOR_STAND;
-    }
-
-    if (enumBaseClass == EntityType::WITHER_BOSS)
-    {
-        return WITHER_BOSS;
-    }
-
-    if (enumBaseClass == EntityType::VILLAGER_GOLEM)
-    {
-        return VILLAGER_GOLEM;
-    }
-
-    if (enumBaseClass == EntityType::SNOW_MAN)
-    {
-        return SNOW_MAN;
-    }
-
-    if (enumBaseClass == EntityType::MUSHROOM_COW)
-    {
-        return MUSHROOM_COW;
-    }
-
-    if (enumBaseClass == EntityType::WOLF)
-    {
-        return WOLF;
-    }
-
-    if (enumBaseClass == EntityType::SQUID)
-    {
-        return SQUID;
-    }
-
-    if (enumBaseClass == EntityType::CHICKEN)
-    {
-        return CHICKEN;
-    }
-
-    if (enumBaseClass == EntityType::VILLAGER)
-    {
+    case EntityType::VILLAGER:
         return VILLAGER;
+    case EntityType::CHICKEN:
+        return CHICKEN;
+    case EntityType::SQUID:
+        return SQUID;
+    case EntityType::WOLF:
+        return WOLF;
+    case EntityType::MUSHROOM_COW:
+        return MUSHROOM_COW;
+    case EntityType::SNOW_MAN:
+        return SNOW_MAN;
+    case EntityType::VILLAGER_GOLEM:
+        return VILLAGER_GOLEM;
+    case EntityType::WITHER_BOSS:
+        return WITHER_BOSS;
+    case EntityType::ARMOR_STAND:
+        return ARMOR_STAND;
+    case EntityType::ENDER_CRYSTAL:
+        return ENDER_CRYSTAL;
+    case EntityType::DOLPHIN:
+        return DOLPHIN;
+    case EntityType::PHANTOM:
+        return PHANTOM;
+    default:
+        break;
     }
 
     if ((enumBaseClass & EntityType::CREATURE_CATEGORY) == EntityType::CREATURE_CATEGORY)
@@ -213,17 +183,17 @@ MobCategory* MobCategory::getCategory(unsigned long long enumBaseClass)
         return MONSTER;
     }
 
-    if ((enumBaseClass & EntityType::SLIME) == EntityType::SLIME)
+    if (eTYPE_DERIVED_FROM(EntityType::SLIME, enumBaseClass))
     {
         return SLIME;
     }
 
-    if ((enumBaseClass & EntityType::GUARDIAN) == EntityType::GUARDIAN)
+    if (eTYPE_DERIVED_FROM(EntityType::GUARDIAN, enumBaseClass))
     {
         return GUARDIAN;
     }
 
-    if ((enumBaseClass & EntityType::ENEMY) == EntityType::ENEMY)
+    if (eTYPE_DERIVED_FROM(EntityType::ENEMY, enumBaseClass))
     {
         return MONSTER;
     }
@@ -233,12 +203,13 @@ MobCategory* MobCategory::getCategory(unsigned long long enumBaseClass)
         return AMBIENT;
     }
 
+    MobCategory* category = NULL;
     if ((enumBaseClass & EntityType::WATER_ANIMAL) == EntityType::WATER_ANIMAL)
     {
-        return WATER_CREATURE;
+        category = WATER_CREATURE;
     }
 
-    return NULL;
+    return category;
 }
 
 unsigned int MobCategory::getMaxInstancesPerLevel()

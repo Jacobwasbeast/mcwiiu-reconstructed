@@ -97,8 +97,8 @@ void Horse::staticCtor()
 void Horse::defineSynchedData()
 {
     AbstractHorse::defineSynchedData();
-    mEntityData->createDateItem(DATA_VARIANT, 0);
-    mEntityData->createDateItem(DATA_ARMOR, ItemInstance::EMPTY);
+    mEntityData->define(DATA_VARIANT, 0);
+    mEntityData->define(DATA_ARMOR, ItemInstance::EMPTY);
 }
 int Horse::getVariant() { return mEntityData->get(DATA_VARIANT); }
 
@@ -391,10 +391,10 @@ bool Horse::canMate(const boost::shared_ptr<Animal>& other)
     {
         return false;
     }
-    bool isDonkey = other->GetType() == EntityType::DONKEY;
+    bool isDonkey = eTYPE_DERIVED_FROM(EntityType::DONKEY, other->GetType());
     if (!isDonkey)
     {
-        bool isHorse = other->GetType() == EntityType::HORSE;
+        bool isHorse = eTYPE_DERIVED_FROM(EntityType::HORSE, other->GetType());
         if (!isHorse)
         {
             return false;
@@ -406,7 +406,7 @@ bool Horse::canMate(const boost::shared_ptr<Animal>& other)
 boost::shared_ptr<AgableMob> Horse::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
 {
     boost::shared_ptr<AbstractHorse> child;
-    bool partnerIsDonkey = partner->GetType() == EntityType::DONKEY;
+    bool partnerIsDonkey = eTYPE_DERIVED_FROM(EntityType::DONKEY, partner->GetType());
     if (partnerIsDonkey)
     {
         child = boost::shared_ptr<Mule>(new Mule(mLevel));

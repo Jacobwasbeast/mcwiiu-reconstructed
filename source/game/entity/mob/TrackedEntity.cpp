@@ -413,12 +413,12 @@ boost::shared_ptr<Packet> TrackedEntity::getAddEntityPacket()
 
 bool TrackedEntity::ShouldSendEntityDataOnContruction(boost::shared_ptr<Entity> entity)
 {
-    const bool isPotion = entity->GetType() == EntityType::THROWN_POTION;
+    const bool isPotion = eTYPE_DERIVED_FROM(EntityType::THROWN_POTION, entity->GetType());
     if (isPotion && Minecraft::GetInstance()->GetMiniGame()->HasFeatureSplashLevitatePotions())
     {
         return false;
     }
-    const bool isFireworks = entity->GetType() == EntityType::FIREWORKS_ROCKET_ENTITY;
+    const bool isFireworks = eTYPE_DERIVED_FROM(EntityType::FIREWORKS_ROCKET_ENTITY, entity->GetType());
     if (isFireworks && Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
     {
         return false;
@@ -442,7 +442,7 @@ void TrackedEntity::updatePlayer(EntityTracker* tracker, boost::shared_ptr<Serve
         boost::shared_ptr<Packet> packet = getAddEntityPacket();
         player->mConnection->send(packet);
 
-        if (Minecraft::InMiniGame(eMiniGameId_Any, true) && mEntity->GetType() == EntityType::SERVER_PLAYER)
+        if (Minecraft::InMiniGame(eMiniGameId_Any, true) && eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, mEntity->GetType()))
         {
             boost::shared_ptr<ServerPlayer> trackedPlayer = boost::static_pointer_cast<ServerPlayer>(mEntity);
             GameModePacket::SetCameraData cameraData;
@@ -468,7 +468,7 @@ void TrackedEntity::updatePlayer(EntityTracker* tracker, boost::shared_ptr<Serve
         }
 
         bool sendMotion = mTrackDelta;
-        if ((mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, mEntity->GetType()))
         {
             boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(mEntity);
             ModifiableAttributeMap::AttributeInstanceSet* attributes =
@@ -513,7 +513,7 @@ void TrackedEntity::updatePlayer(EntityTracker* tracker, boost::shared_ptr<Serve
             }
         }
 
-        if ((mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, mEntity->GetType()))
         {
             std::vector<MobEffectInstance*>* effects =
                 boost::static_pointer_cast<LivingEntity>(mEntity)->getActiveEffects();
@@ -525,7 +525,7 @@ void TrackedEntity::updatePlayer(EntityTracker* tracker, boost::shared_ptr<Serve
             delete effects;
         }
 
-        if (mEntity->GetType() == EntityType::MINECART_TNT)
+        if (eTYPE_DERIVED_FROM(EntityType::MINECART_TNT, mEntity->GetType()))
         {
             boost::shared_ptr<MinecartTNT> minecart = boost::static_pointer_cast<MinecartTNT>(mEntity);
             if (minecart != NULL && minecart->isPrimed())
@@ -538,7 +538,7 @@ void TrackedEntity::updatePlayer(EntityTracker* tracker, boost::shared_ptr<Serve
         if (mEntity->isPassenger())
             player->mConnection->send(boost::shared_ptr<Packet>(new ClientboundSetPassengersPacket(mEntity->getVehicle())));
 
-        if ((mEntity->GetType() & EntityType::MOB) == EntityType::MOB)
+        if (eTYPE_DERIVED_FROM(EntityType::MOB, mEntity->GetType()))
         {
             boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(mEntity);
             if (mob->isLeashed())
@@ -618,7 +618,7 @@ void TrackedEntity::broadcastAndSend(boost::shared_ptr<Packet> packet)
 {
     std::vector<boost::shared_ptr<ServerPlayer> > sentTo;
     broadcast(packet);
-    const bool isServerPlayer = mEntity->GetType() == EntityType::SERVER_PLAYER;
+    const bool isServerPlayer = eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, mEntity->GetType());
     boost::shared_ptr<ServerPlayer> player = isServerPlayer ? boost::static_pointer_cast<ServerPlayer>(mEntity) : boost::shared_ptr<ServerPlayer>();
     if (player != NULL && player->mConnection != NULL)
         player->mConnection->send(packet);
@@ -633,7 +633,7 @@ void TrackedEntity::sendDirtyEntityData()
             mEntity->getId(), static_cast<int>(mEntity->GetType()), entityData, false)));
     }
 
-    const bool isLiving = (mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
+    const bool isLiving = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, mEntity->GetType());
     if (isLiving)
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(mEntity);
@@ -690,7 +690,7 @@ void TrackedEntity::tick(EntityTracker* tracker, std::vector<boost::shared_ptr<P
         broadcast(boost::shared_ptr<Packet>(new ClientboundSetPassengersPacket(mEntity)));
     }
 
-    if (mEntity->GetType() == EntityType::ITEM_FRAME && mTickCount % 10 == 0)
+    if (eTYPE_DERIVED_FROM(EntityType::ITEM_FRAME, mEntity->GetType()) && mTickCount % 10 == 0)
     {
         not_null_ptr<ItemInstance> item = boost::static_pointer_cast<ItemFrame>(mEntity)->getItem();
         if (item->getItem() == Items::filledMap && !mEntity->mRemoved)
@@ -739,13 +739,13 @@ void TrackedEntity::tick(EntityTracker* tracker, std::vector<boost::shared_ptr<P
             bool pos = xa * xa + ya * ya + za * za >= 4 || mTickCount % 60 == 0;
             bool rot = std::abs(yRot - mYRotp) >= 1 || std::abs(xRot - mXRotp) >= 1;
 
-            if (mTickCount > 0 || (mEntity->GetType() & EntityType::ARROW) == EntityType::ARROW
-                || (mEntity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+            if (mTickCount > 0 || eTYPE_DERIVED_FROM(EntityType::ARROW, mEntity->GetType())
+                || eTYPE_DERIVED_FROM(EntityType::PLAYER, mEntity->GetType()))
             {
                 if (xa >= -512 && xa < 512 && ya >= -512 && ya < 512 && za >= -512 && za < 512 && !mWasRiding
                     && mWasOnGround == mEntity->mOnGround)
                 {
-                    if ((mEntity->GetType() & EntityType::ARROW) == EntityType::ARROW)
+                    if (eTYPE_DERIVED_FROM(EntityType::ARROW, mEntity->GetType()))
                     {
                         rot = true;
                         pos = pos || mTickCount > 0;
@@ -824,7 +824,7 @@ void TrackedEntity::tick(EntityTracker* tracker, std::vector<boost::shared_ptr<P
             }
 
             bool fallFlying = false;
-            if ((mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+            if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, mEntity->GetType())
                 && boost::static_pointer_cast<LivingEntity>(mEntity)->isFallFlying())
             {
                 fallFlying = true;

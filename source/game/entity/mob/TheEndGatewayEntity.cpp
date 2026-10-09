@@ -123,7 +123,7 @@ void TheEndGatewayEntity::createExitPortal(const BlockPos& position)
     boost::shared_ptr<BlockEntity> blockEntity = mLevel->getBlockEntity(position);
     if (blockEntity != NULL)
     {
-        bool isGateway = blockEntity->GetType() == BlockEntityType::THE_END_GATEWAY_ENTITY;
+        bool isGateway = eTYPE_DERIVED_FROM(BlockEntityType::THE_END_GATEWAY_ENTITY, blockEntity->GetType());
         if (isGateway)
         {
             boost::shared_ptr<TheEndGatewayEntity> gateway = boost::static_pointer_cast<TheEndGatewayEntity>(blockEntity);
@@ -170,7 +170,7 @@ void TheEndGatewayEntity::findExitPortal()
         {
             for (LevelChunk::BlockEntityMap::iterator it = blockEntities->begin(); it != blockEntities->end(); ++it)
             {
-                if (it->second->GetType() == BlockEntityType::THE_END_GATEWAY_ENTITY)
+                if (eTYPE_DERIVED_FROM(BlockEntityType::THE_END_GATEWAY_ENTITY, it->second->GetType()))
                 {
                     boost::shared_ptr<TheEndGatewayEntity> gateway = boost::static_pointer_cast<TheEndGatewayEntity>(it->second);
                     SetExitPortal(new BlockPos(gateway->getBlockPos()));
@@ -209,7 +209,7 @@ void TheEndGatewayEntity::teleportEntity(boost::shared_ptr<Entity> entity)
         return;
     if (isCoolingDown())
         return;
-    bool isPearl = entity->GetType() == EntityType::THROWN_ENDERPEARL;
+    bool isPearl = eTYPE_DERIVED_FROM(EntityType::THROWN_ENDERPEARL, entity->GetType());
     if (isPearl && boost::static_pointer_cast<ThrownEnderpearl>(entity)->getOwner() != NULL)
     {
         teleportEntity(boost::static_pointer_cast<ThrownEnderpearl>(entity)->getOwner());

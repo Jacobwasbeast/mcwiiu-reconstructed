@@ -110,7 +110,7 @@ bool ItemEntity::makeStepSound()
 
 void ItemEntity::defineSynchedData()
 {
-    getEntityData()->createDateItem(DATA_ITEM, ItemInstance::EMPTY);
+    getEntityData()->define(DATA_ITEM, ItemInstance::EMPTY);
 }
 
 not_null_ptr<ItemInstance> ItemEntity::getItem()
@@ -389,7 +389,7 @@ std::wstring ItemEntity::getName()
 boost::shared_ptr<Entity> ItemEntity::changeDimension(int dimension)
 {
     boost::shared_ptr<Entity> newEntity = Entity::changeDimension(dimension);
-    if (!mLevel->mIsClientSide && newEntity && newEntity->GetType() == EntityType::ITEM_ENTITY)
+    if (!mLevel->mIsClientSide && newEntity && eTYPE_DERIVED_FROM(EntityType::ITEM_ENTITY, newEntity->GetType()))
         boost::static_pointer_cast<ItemEntity>(newEntity)->mergeWithNeighbours();
     return newEntity;
 }

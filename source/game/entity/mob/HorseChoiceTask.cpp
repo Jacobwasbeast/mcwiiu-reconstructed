@@ -12,45 +12,41 @@ HorseChoiceTask::HorseChoiceTask(Tutorial* tutorial, int horseDescriptionIdValue
                                  ETelemetryChallenges telemetryChallenge)
     : ChoiceTask(tutorial, -1, promptId, preCompletionEnabled, firstInput, secondInput,
                  completionAction, telemetryChallenge),
-      entityType(0), horseDescriptionId(horseDescriptionIdValue),
-      donkeyDescriptionId(donkeyDescriptionIdValue), muleDescriptionId(muleDescriptionIdValue),
-      fourthDescriptionId(fourthDescriptionIdValue)
+      entityType(0)
 {
+    muleDescriptionId = muleDescriptionIdValue;
+    donkeyDescriptionId = donkeyDescriptionIdValue;
+    horseDescriptionId = horseDescriptionIdValue;
+    fourthDescriptionId = fourthDescriptionIdValue;
 }
 
 int HorseChoiceTask::getDescriptionId()
 {
-    if (entityType == EntityType::MULE)
+    switch (entityType)
     {
-        return muleDescriptionId;
-    }
-    if (entityType == EntityType::DONKEY)
-    {
-        return donkeyDescriptionId;
-    }
-    if (entityType == EntityType::LLAMA)
-    {
-        return fourthDescriptionId;
-    }
-    if (entityType == EntityType::HORSE)
-    {
+    case EntityType::HORSE:
         return horseDescriptionId;
+    case EntityType::LLAMA:
+        return fourthDescriptionId;
+    case EntityType::DONKEY:
+        return donkeyDescriptionId;
+    case EntityType::MULE:
+        return muleDescriptionId;
+    default:
+        return -1;
     }
-    return -1;
 }
 
 void HorseChoiceTask::onLookAtEntity(boost::shared_ptr<Entity> entity)
 {
-    if (entityType != 0)
+    if (entityType == 0)
     {
-        return;
+        if (eTYPE_DERIVED_FROM(EntityType::HORSE, entity->GetType()) ||
+            eTYPE_DERIVED_FROM(EntityType::DONKEY, entity->GetType()) ||
+            eTYPE_DERIVED_FROM(EntityType::MULE, entity->GetType()) ||
+            eTYPE_DERIVED_FROM(EntityType::LLAMA, entity->GetType()))
+        {
+            entityType = entity->GetType();
+        }
     }
-
-    if (entity->GetType() != EntityType::HORSE && entity->GetType() != EntityType::DONKEY &&
-        entity->GetType() != EntityType::MULE && entity->GetType() != EntityType::LLAMA)
-    {
-        return;
-    }
-
-    entityType = entity->GetType();
 }

@@ -40,8 +40,9 @@ EntityTickCache::~EntityTickCache()
 int EntityTickCache::getIndexInCache(int x, int y, int z) const
 {
     int depth = mMaxZ - mMinZ + 1;
+    int height = mMaxY - mMinY + 1;
 
-    return (x - mMinX) * ((mMaxY - mMinY + 1) * depth) + (y - mMinY) * depth + (z - mMinZ);
+    return (x - mMinX) * (height * depth) + (y - mMinY) * depth + (z - mMinZ);
 }
 
 void EntityTickCache::blockChanged(const BlockPos& pos)
@@ -99,42 +100,38 @@ unsigned short EntityTickCache::getElement(int x, int y, int z)
 {
     updateExtents(x, y, z);
 
-    if (x >= mMinX && x <= mMaxX && y >= mMinY && y <= mMaxY && z >= mMinZ && z <= mMaxZ)
+    if (x < mMinX || x > mMaxX || y < mMinY || y > mMaxY || z < mMinZ || z > mMaxZ)
     {
-        int index = getIndexInCache(x, y, z);
-        unsigned short element = mElements[index];
-
-        if (element == 0xFFFF)
-        {
-            element = mLevel->getElement(x, y, z);
-            mElements[index] = element;
-        }
-
-        return element;
+        return 0xFFFF;
     }
 
-    return 0xFFFF;
+    int index = getIndexInCache(x, y, z);
+
+    if (mElements[index] == 0xFFFF)
+    {
+        mElements[index] = mLevel->getElement(x, y, z);
+    }
+
+    return mElements[index];
 }
 
 const BlockState* EntityTickCache::getBlockState(int x, int y, int z)
 {
     updateExtents(x, y, z);
 
-    if (x >= mMinX && x <= mMaxX && y >= mMinY && y <= mMaxY && z >= mMinZ && z <= mMaxZ)
+    if (x < mMinX || x > mMaxX || y < mMinY || y > mMaxY || z < mMinZ || z > mMaxZ)
     {
-        int index = getIndexInCache(x, y, z);
-        const BlockState* state = mBlockStates[index];
-
-        if (state == NULL)
-        {
-            state = Block::getStateByElementId(getElement(x, y, z));
-            mBlockStates[index] = state;
-        }
-
-        return state;
+        return NULL;
     }
 
-    return NULL;
+    int index = getIndexInCache(x, y, z);
+
+    if (mBlockStates[index] == NULL)
+    {
+        mBlockStates[index] = Block::getStateByElementId(getElement(x, y, z));
+    }
+
+    return mBlockStates[index];
 }
 
 void EntityTickCache::clearCache()
@@ -161,78 +158,68 @@ void EntityTickCache::buildCache(Level* level, int minX, int minY, int minZ, int
     int centerY = (minY + maxY) / 2;
     int centerZ = (minZ + maxZ) / 2;
 
-    int newMinX = minX;
-
-    if (mAccessedMinX < newMinX)
+    if (mAccessedMinX < minX)
     {
-        newMinX = mAccessedMinX;
+        minX = mAccessedMinX;
     }
 
-    if (centerX - newMinX > 3)
+    if (centerX - minX > 3)
     {
-        newMinX = centerX - 3;
+        minX = centerX - 3;
     }
 
-    int newMinY = minY;
-
-    if (mAccessedMinY < newMinY)
+    if (mAccessedMinY < minY)
     {
-        newMinY = mAccessedMinY;
+        minY = mAccessedMinY;
     }
 
-    if (centerY - newMinY > 3)
+    if (centerY - minY > 3)
     {
-        newMinY = centerY - 3;
+        minY = centerY - 3;
     }
 
-    int newMinZ = minZ;
-
-    if (mAccessedMinZ < newMinZ)
+    if (mAccessedMinZ < minZ)
     {
-        newMinZ = mAccessedMinZ;
+        minZ = mAccessedMinZ;
     }
 
-    if (centerZ - newMinZ > 3)
+    if (centerZ - minZ > 3)
     {
-        newMinZ = centerZ - 3;
+        minZ = centerZ - 3;
     }
 
-    int newMaxX = maxX;
-
-    if (newMaxX < mAccessedMaxX)
+    if (mAccessedMaxX > maxX)
     {
-        newMaxX = mAccessedMaxX;
+        maxX = mAccessedMaxX;
     }
 
-    if (newMaxX - centerX > 3)
+    if (maxX - centerX > 3)
     {
-        newMaxX = centerX + 3;
+        maxX = centerX + 3;
     }
 
-    int newMaxY = maxY;
-
-    if (newMaxY < mAccessedMaxY)
+    if (mAccessedMaxY > maxY)
     {
-        newMaxY = mAccessedMaxY;
+        maxY = mAccessedMaxY;
     }
 
-    if (newMaxY - centerY > 3)
+    if (maxY - centerY > 3)
     {
-        newMaxY = centerY + 3;
+        maxY = centerY + 3;
     }
 
-    int newMaxZ = maxZ;
-
-    if (newMaxZ < mAccessedMaxZ)
+    if (mAccessedMaxZ > maxZ)
     {
-        newMaxZ = mAccessedMaxZ;
+        maxZ = mAccessedMaxZ;
     }
 
-    if (newMaxZ - centerZ > 3)
+    if (maxZ - centerZ > 3)
     {
-        newMaxZ = centerZ + 3;
+        maxZ = centerZ + 3;
     }
 
+    unsigned short* elements = NULL;
+    const BlockState** blockStates = NULL;
     bool chunksChanged = false;
 
     int maxCachedX = mMaxX;
@@ -252,8 +239,8 @@ void EntityTickCache::buildCache(Level* level, int minX, int minY, int minZ, int
 
     bool boundsChanged = true;
 
-    if (mMinX == newMinX && mMinY == newMinY && mMinZ == newMinZ && mMaxX == newMaxX && mMaxY == newMaxY &&
-        mMaxZ == newMaxZ)
+    if (mMinX == minX && mMinY == minY && mMinZ == minZ && mMaxX == maxX && mMaxY == maxY &&
+        mMaxZ == maxZ)
     {
         boundsChanged = false;
     }
@@ -265,7 +252,7 @@ void EntityTickCache::buildCache(Level* level, int minX, int minY, int minZ, int
         return;
     }
 
-    unsigned int size = (newMaxX - newMinX + 1) * (newMaxY - newMinY + 1) * (newMaxZ - newMinZ + 1);
+    unsigned int size = (maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1);
 
     mCacheChanged = true;
 
@@ -276,9 +263,6 @@ void EntityTickCache::buildCache(Level* level, int minX, int minY, int minZ, int
         return;
     }
 
-    unsigned short* elements = NULL;
-    const BlockState** blockStates = NULL;
-
     if ((int)size > 0)
     {
         elements = new unsigned short[size];
@@ -287,22 +271,24 @@ void EntityTickCache::buildCache(Level* level, int minX, int minY, int minZ, int
 
     int index = 0;
 
-    for (int x = newMinX; x <= newMaxX; ++x)
+    for (int x = minX; x <= maxX; ++x)
     {
-        for (int y = newMinY; y <= newMaxY; ++y)
+        for (int y = minY; y <= maxY; ++y)
         {
-            for (int z = newMinZ; z <= newMaxZ; ++z)
+            for (int z = minZ; z <= maxZ; ++z)
             {
                 if (chunksChanged)
                 {
-                    blockStates[index] = NULL;
                     elements[index] = 0xFFFF;
+                    blockStates[index] = NULL;
                 }
                 else
                 {
                     unsigned short element = getElement(x, y, z);
-                    blockStates[index] = getBlockState(x, y, z);
+                    const BlockState* state = getBlockState(x, y, z);
+
                     elements[index] = element;
+                    blockStates[index] = state;
                 }
 
                 ++index;
@@ -310,21 +296,21 @@ void EntityTickCache::buildCache(Level* level, int minX, int minY, int minZ, int
         }
     }
 
-    mMinX = newMinX;
-    mMinY = newMinY;
-    mMinZ = newMinZ;
-    mMaxX = newMaxX;
-    mMaxY = newMaxY;
-    mMaxZ = newMaxZ;
+    mMinX = minX;
+    mMinY = minY;
+    mMinZ = minZ;
+    mMaxX = maxX;
+    mMaxY = maxY;
+    mMaxZ = maxZ;
 
     if (centerX != mLastCenterX || centerY != mLastCenterY || centerZ != mLastCenterZ)
     {
-        mAccessedMinX = newMaxX;
-        mAccessedMinY = newMaxY;
-        mAccessedMinZ = newMaxZ;
-        mAccessedMaxX = newMinX;
-        mAccessedMaxY = newMinY;
-        mAccessedMaxZ = newMinZ;
+        mAccessedMinX = mMaxX;
+        mAccessedMinY = mMaxY;
+        mAccessedMinZ = mMaxZ;
+        mAccessedMaxX = mMinX;
+        mAccessedMaxY = mMinY;
+        mAccessedMaxZ = mMinZ;
     }
 
     mLastCenterX = centerX;
@@ -374,7 +360,7 @@ void EntityTickCache::buildCache(Level* level, AABB* box)
     float x1 = (float)box->mMaxX;
     int maxX = (int)x1;
 
-    if ((float)maxX < x1)
+    if (x1 > (float)maxX)
     {
         ++maxX;
     }
@@ -382,7 +368,7 @@ void EntityTickCache::buildCache(Level* level, AABB* box)
     float y1 = (float)box->mMaxY;
     int maxY = (int)y1;
 
-    if ((float)maxY < y1)
+    if (y1 > (float)maxY)
     {
         ++maxY;
     }
@@ -390,7 +376,7 @@ void EntityTickCache::buildCache(Level* level, AABB* box)
     float z1 = (float)box->mMaxZ;
     int maxZ = (int)z1;
 
-    if ((float)maxZ < z1)
+    if (z1 > (float)maxZ)
     {
         ++maxZ;
     }

@@ -64,32 +64,34 @@ InteractionResult::EInteractionResult HangingEntityItem::useOn(
     }
 
     boost::shared_ptr<HangingEntity> entity = createEntity(level, placePos, direction, itemInstance->getAuxValue());
-    if (entity == NULL || !entity->survives())
-        return InteractionResult::eInteractionResult_Success;
-
-    if (!level->mIsClientSide)
+    if (entity != NULL && entity->survives())
     {
-        if (!level->addEntity(entity))
+        if (!level->mIsClientSide)
         {
-            player->displayClientMessage(0x1EE681BA, true);
-            return InteractionResult::eInteractionResult_Fail;
-        }
-        entity->playPlacementSound();
+            if (level->addEntity(entity))
+            {
+                entity->playPlacementSound();
 
-        Block* block = NULL;
-        if (mEntityType == EntityType::PAINTING)
-            block = Block::byItem(Items::painting);
-        else if (mEntityType == EntityType::ITEM_FRAME)
-            block = Block::byItem(Items::itemFrame);
-        if (block != NULL)
-        {
-            player->awardStat(gStats->get_blocksPlaced(Block::getId(block)),
-                              GenericStats::param_blocksPlaced(
-                                  block->getBlockState(itemInstance->getAuxValue()), 1));
+                Block* block = NULL;
+                if (mEntityType == EntityType::PAINTING)
+                    block = Block::byItem(Items::painting);
+                else if (mEntityType == EntityType::ITEM_FRAME)
+                    block = Block::byItem(Items::itemFrame);
+                if (block != NULL)
+                {
+                    const BlockState* state = block->getBlockState(itemInstance->getAuxValue());
+                    player->awardStat(GenericStats::blocksPlaced(block), GenericStats::param_blocksPlaced(state, 1));
+                }
+            }
+            else
+            {
+                player->displayClientMessage(0x1EE681BA, true);
+                return InteractionResult::eInteractionResult_Fail;
+            }
         }
+
+        itemInstance->shrink(1);
     }
-
-    itemInstance->shrink(1);
     return InteractionResult::eInteractionResult_Success;
 }
 

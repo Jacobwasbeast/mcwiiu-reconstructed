@@ -159,9 +159,9 @@ void Zombie::registerAttributes()
 void Zombie::defineSynchedData()
 {
     Monster::defineSynchedData();
-    getEntityData()->createDateItem(gZombieBabyId, false);
-    getEntityData()->createDateItem(gZombieAggressiveId, false);
-    getEntityData()->createDateItem(gZombieConvertingId, false);
+    getEntityData()->define(gZombieBabyId, false);
+    getEntityData()->define(gZombieAggressiveId, false);
+    getEntityData()->define(gZombieConvertingId, false);
 }
 
 void Zombie::setAggressive(bool aggressive)
@@ -412,7 +412,7 @@ void Zombie::killed(boost::shared_ptr<LivingEntity> entity)
 
     if (mLevel->getDifficulty() == Difficulty::NORMAL || mLevel->getDifficulty() == Difficulty::HARD)
     {
-        if (entity->GetType() == EntityType::VILLAGER && mLevel->canCreateMore(EntityType::ZOMBIE, Level::eSpawnType_Egg) &&
+        if (eTYPE_DERIVED_FROM(EntityType::VILLAGER, entity->GetType()) && mLevel->canCreateMore(EntityType::ZOMBIE, Level::eSpawnType_Egg) &&
             (mLevel->getDifficulty() == Difficulty::HARD || !mRandom->nextBoolean()))
         {
             boost::shared_ptr<Villager> villager = boost::static_pointer_cast<Villager>(entity);
@@ -458,8 +458,8 @@ void Zombie::positionRider(const boost::shared_ptr<Entity>& entity)
     if (RiderPositionOverrides::OverridePosition(shared_from_this(), entity))
         return;
 
-    double sin = Mth::sin(mYBodyRot * 0.017453292f);
-    double cos = Mth::cos(mYBodyRot * 0.017453292f);
+    double sin = Mth::sin(mYBodyRot * Mth::DEG_TO_RAD);
+    double cos = Mth::cos(mYBodyRot * Mth::DEG_TO_RAD);
     entity->setPos(mX + 0.35 * sin, mY + 1.3, mZ - 0.35 * cos);
 }
 
@@ -598,7 +598,7 @@ double Zombie::getRidingHeight()
 void Zombie::die(const DamageSource* source)
 {
     LivingEntity::die(source);
-    if (source->getEntity() != NULL && source->getEntity()->GetType() == EntityType::CREEPER)
+    if (source->getEntity() != NULL && eTYPE_DERIVED_FROM(EntityType::CREEPER, source->getEntity()->GetType()))
     {
         boost::shared_ptr<Creeper> creeper = boost::static_pointer_cast<Creeper>(source->getEntity());
         if (creeper->isPowered() && creeper->canDropMobsSkull())
@@ -615,7 +615,7 @@ bool Zombie::startRiding(boost::shared_ptr<Entity> vehicle, bool force)
     bool riding = Mob::startRiding(vehicle, force);
     bool chicken = false;
     if (isBaby() && force)
-        chicken = vehicle->GetType() == EntityType::CHICKEN;
+        chicken = eTYPE_DERIVED_FROM(EntityType::CHICKEN, vehicle->GetType());
     if (chicken)
         mIsJockey = true;
     return riding;

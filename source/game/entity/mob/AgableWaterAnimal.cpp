@@ -25,7 +25,7 @@ bool AgableWaterAnimal::isWaterMob()
 
 bool AgableWaterAnimal::checkSpawnRules()
 {
-    MutableBlockPos position(BlockPos(getPos(0.0f)));
+    MutableBlockPos position(getPos(0.0f));
     while (mLevel->getLiquidBlock(position.above())->mMaterial == Material::WATER)
     {
         position = MutableBlockPos(position.above());

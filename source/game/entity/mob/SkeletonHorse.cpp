@@ -71,15 +71,16 @@ void SkeletonHorse::playUnderwaterSound(const BlockPos& pos, Block* block)
 {
     if (mOnGround)
     {
-        if (!isVehicle())
+        if (isVehicle())
         {
-            playSound(SoundEvents::SKELETON_HORSE_STEP_WATER, 0.4f, 1.0f);
-        }
-        else if (++mGallopSoundCounter > 5)
-        {
-            if (mGallopSoundCounter % 3 == 0)
+            ++mGallopSoundCounter;
+            if (mGallopSoundCounter > 5 && mGallopSoundCounter % 3 == 0)
             {
                 playSound(SoundEvents::SKELETON_HORSE_GALLOP_WATER, 0.4f, 1.0f);
+            }
+            else if (mGallopSoundCounter <= 5)
+            {
+                playSound(SoundEvents::SKELETON_HORSE_STEP_WATER, 0.4f, 1.0f);
             }
         }
         else
@@ -136,8 +137,7 @@ ResourceLocation* SkeletonHorse::getDefaultLootTable()
 
 boost::shared_ptr<AgableMob> SkeletonHorse::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    boost::shared_ptr<SkeletonHorse> offspring(new SkeletonHorse(mLevel));
-    return offspring;
+    return boost::shared_ptr<SkeletonHorse>(new SkeletonHorse(mLevel));
 }
 
 bool SkeletonHorse::isTamed()

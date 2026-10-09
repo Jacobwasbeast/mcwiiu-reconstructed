@@ -28,9 +28,13 @@ const EntityDataAccessor<bool>* AgableMob::DATA_BABY_ID = NULL;
 const EntityDataAccessor<bool>* AgableMob::DATA_BABY_ID_2 = NULL;
 
 AgableMob::AgableMob(Level* level)
-    : PathfinderMob(level), mAge(0), mForcedAge(0), mForcedAgeTimer(0),
-      mBaseWidth(-1.0f), mBaseHeight(0.0f)
+    : PathfinderMob(level)
 {
+    mBaseWidth = -1.0f;
+    mBaseHeight = 0.0f;
+    mForcedAgeTimer = 0;
+    mForcedAge = 0;
+    mAge = 0;
 }
 
 void AgableMob::staticCtor()
@@ -44,54 +48,58 @@ void AgableMob::staticCtor()
 bool AgableMob::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    if (itemInstance->getItem() != Items::spawnEgg || mLevel->mIsClientSide)
-        return false;
-
-    const unsigned long long type = EntityIO::sRegistry.get(SpawnEggItem::getNamedIdFrom(itemInstance));
-    if (type == 0 || (type & EntityType::AGABLE_MOB) != EntityType::AGABLE_MOB || GetType() != type)
-        return false;
-
-    int error = -1;
-    if (!SpawnEggItem::canSpawn(SpawnEggItem::getNamedIdFrom(itemInstance), mLevel, &error))
+    if (itemInstance->getItem() == Items::spawnEgg && !mLevel->mIsClientSide)
     {
-        SpawnEggItem::DisplaySpawnError(player, error);
-        return true;
-    }
-
-    if (mLevel->canCreateMore(GetType(), Level::eSpawnType_Egg))
-    {
-        boost::shared_ptr<AgableMob> child =
-            getBreedOffspring(boost::static_pointer_cast<AgableMob>(shared_from_this()));
-        if (child != NULL)
+        const unsigned long long type = EntityIO::sRegistry.get(SpawnEggItem::getNamedIdFrom(itemInstance));
+        if ((type != 0 ? eTYPE_DERIVED_FROM(EntityType::AGABLE_MOB, type) : false) && type == GetType())
         {
-            child->setAge(-24000);
-            child->moveTo(mX, mY, mZ, 0.0f, 0.0f);
-            child->setDespawnProtected();
-            mLevel->addEntity(child);
-            if (itemInstance->hasCustomHoverName())
-                child->setCustomName(itemInstance->getHoverNameUnfiltered(), itemInstance->getOwnerUUID(),
-                                     itemInstance->wasCreatedByRestrictedPlayer());
-            if (!player->mAbilities.mInstabuild)
-                itemInstance->shrink(1);
+            int error = -1;
+            boost::shared_ptr<Entity> spawnCheck =
+                SpawnEggItem::canSpawn(SpawnEggItem::getNamedIdFrom(itemInstance), mLevel, &error);
+            if (spawnCheck != NULL && mLevel->canCreateMore(GetType(), Level::eSpawnType_Egg))
+            {
+                boost::shared_ptr<AgableMob> child =
+                    getBreedOffspring(boost::static_pointer_cast<AgableMob>(shared_from_this()));
+                if (child != NULL)
+                {
+                    child->setAge(-24000);
+                    child->moveTo(mX, mY, mZ, 0.0f, 0.0f);
+                    child->setDespawnProtected();
+                    mLevel->addEntity(child);
+                    if (itemInstance->hasCustomHoverName())
+                        child->setCustomName(itemInstance->getHoverNameUnfiltered(), itemInstance->getOwnerUUID(),
+                                             itemInstance->wasCreatedByRestrictedPlayer());
+                    if (!player->mAbilities.mInstabuild)
+                        itemInstance->shrink(1);
+                }
+            }
+            else
+            {
+                SpawnEggItem::DisplaySpawnError(player, error);
+            }
+            return true;
         }
     }
-    return true;
+    return false;
 }
 
 bool AgableMob::holdingSpawnEggOfClass(const not_null_ptr<ItemInstance>& itemInstance, unsigned long long type)
 {
-    if (itemInstance->getItem() != Items::spawnEgg)
+    if (itemInstance->getItem() == Items::spawnEgg)
     {
-        return false;
+        unsigned long long eggType = EntityIO::sRegistry.get(SpawnEggItem::getNamedIdFrom(itemInstance));
+        return type == eggType;
     }
-    return type == EntityIO::sRegistry.get(SpawnEggItem::getNamedIdFrom(itemInstance));
+    return false;
 }
 
 void AgableMob::defineSynchedData()
 {
     Mob::defineSynchedData();
-    mEntityData->createDateItem(DATA_BABY_ID, false);
-    mEntityData->createDateItem(DATA_BABY_ID_2, false);
+    bool baby = false;
+    mEntityData->createDateItem(DATA_BABY_ID, baby);
+    bool baby2 = false;
+    mEntityData->createDateItem(DATA_BABY_ID_2, baby2);
 }
 
 int AgableMob::getAge()
@@ -113,8 +121,9 @@ int AgableMob::getAge()
 
 void AgableMob::ageUp(int amount, bool forced)
 {
-    int oldAge = getAge();
-    int age = oldAge + amount * 20;
+    int age = getAge();
+    int oldAge = age;
+    age += amount * 20;
     if (age > 0)
     {
         age = 0;
@@ -123,10 +132,11 @@ void AgableMob::ageUp(int amount, bool forced)
             grewUp();
         }
     }
+    int delta = age - oldAge;
     setAge(age);
     if (forced)
     {
-        mForcedAge += age - oldAge;
+        mForcedAge += delta;
         if (mForcedAgeTimer == 0)
         {
             mForcedAgeTimer = 40;
@@ -199,15 +209,17 @@ void AgableMob::aiStep()
         int age = getAge();
         if (age < 0)
         {
-            setAge(age + 1);
-            if (age + 1 == 0)
+            ++age;
+            setAge(age);
+            if (age == 0)
             {
                 grewUp();
             }
         }
         else if (age > 0)
         {
-            setAge(age - 1);
+            --age;
+            setAge(age);
         }
     }
 }

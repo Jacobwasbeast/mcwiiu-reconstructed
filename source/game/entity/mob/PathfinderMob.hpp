@@ -20,7 +20,7 @@ public:
     virtual bool isWithinRestriction(const BlockPos& pos);
     virtual void restrictTo(const BlockPos& pos, int radius);
     virtual BlockPos getRestrictCenter();
-    virtual double getRestrictRadius();
+    virtual float getRestrictRadius();
     virtual void clearRestriction();
     virtual bool hasRestriction();
     virtual void tickLeash();

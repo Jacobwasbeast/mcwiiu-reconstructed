@@ -39,7 +39,7 @@ boost::shared_ptr<ClientboundChatPacket> EntityDamageSource::getDeathMessagePack
     {
         attackerName = boost::static_pointer_cast<Player>(entity)->getDisplayName();
     }
-    else if ((entity->GetType() & EntityType::MOB) == EntityType::MOB)
+    else if (eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()))
     {
         boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
         if (mob->hasCustomName())
@@ -53,7 +53,7 @@ boost::shared_ptr<ClientboundChatPacket> EntityDamageSource::getDeathMessagePack
 
 bool EntityDamageSource::scalesWithDifficulty() const
 {
-    return entity && (entity.get()->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+    return entity && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity.get()->GetType())
         && (entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER;
 }
 

@@ -299,6 +299,7 @@ public:
     virtual bool broadcastToPlayer(boost::shared_ptr<ServerPlayer> player);
     virtual AABB* getBoundingBoxForCulling();
     virtual void setBoundingBox(AABB* boundingBox);
+    AABB* getBoundingBox() { return mBoundingBox; }
     virtual float getEyeHeight();
     virtual bool setSlot(int slot, const not_null_ptr<ItemInstance>& itemInstance);
     virtual void sendMessage(ClientboundChatPacket::EChatPacketMessage message, int* intParams, unsigned int numIntParams, std::wstring* stringParams, unsigned int numStringParams);
@@ -363,6 +364,7 @@ public:
 
     static void staticCtor();
     static bool instanceof(const boost::shared_ptr<Entity>& entity, unsigned long long type);
+    bool instanceof(unsigned long long type) { return eTYPE_DERIVED_FROM(type, GetType()); }
     static int GetLightColor(Entity* entity);
     static void addDataWalkers(DataFixerUpper* dataFixerUpper);
     static void fjDebugCheckSmallIdLeaks();
@@ -596,5 +598,10 @@ public:
     _SkinAdjustments mSkinAdjustments;
     int mAutoSpinAttackTicks;
 };
+
+inline bool Entity::instanceof(const boost::shared_ptr<Entity>& entity, unsigned long long type)
+{
+    return entity != NULL && entity->instanceof(type);
+}
 
 #endif

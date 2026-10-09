@@ -73,7 +73,7 @@ void Skeleton::die(const DamageSource* source)
 {
     AbstractSkeleton::die(source);
 
-    if (source->getEntity() && source->getEntity()->GetType() == EntityType::CREEPER)
+    if (source->getEntity() && eTYPE_DERIVED_FROM(EntityType::CREEPER, source->getEntity()->GetType()))
     {
         boost::shared_ptr<Creeper> creeper =
             boost::static_pointer_cast<Creeper>(source->getEntity());
@@ -89,7 +89,7 @@ boost::shared_ptr<Arrow> Skeleton::getArrow(float distanceFactor)
 {
     not_null_ptr<ItemInstance> item = getItemSlot(EquipmentSlot::OFFHAND);
     boost::shared_ptr<Arrow> arrow = AbstractSkeleton::getArrow(distanceFactor);
-    if (item->getItem() == Items::tippedArrow && arrow->GetType() == EntityType::TIPPABLE_ARROW)
+    if (item->getItem() == Items::tippedArrow && eTYPE_DERIVED_FROM(EntityType::TIPPABLE_ARROW, arrow->GetType()))
         boost::static_pointer_cast<TippableArrow>(arrow)->setEffectsFromItem(item);
     return arrow;
 }

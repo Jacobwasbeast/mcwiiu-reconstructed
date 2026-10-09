@@ -101,41 +101,88 @@ unsigned int EnderDragon::getSynchedAction()
 
 bool EnderDragon::setSynchedAction(EEnderdragonAction action, bool force)
 {
-    bool changed = false;
+    bool validTransition = false;
     switch (getSynchedAction())
     {
     case ACTION_HOLDING_PATTERN:
-        changed = action == ACTION_STRAFE_PLAYER || action == ACTION_LANDING_APPROACH;
+        switch (action)
+        {
+        case ACTION_STRAFE_PLAYER:
+        case ACTION_LANDING_APPROACH:
+            validTransition = true;
+            break;
+        }
         break;
     case ACTION_STRAFE_PLAYER:
-        changed = action == ACTION_HOLDING_PATTERN || action == ACTION_LANDING_APPROACH;
+        switch (action)
+        {
+        case ACTION_HOLDING_PATTERN:
+        case ACTION_LANDING_APPROACH:
+            validTransition = true;
+            break;
+        }
         break;
     case ACTION_LANDING_APPROACH:
-        changed = action == ACTION_LANDING;
+        switch (action)
+        {
+        case ACTION_LANDING:
+            validTransition = true;
+            break;
+        }
         break;
     case ACTION_LANDING:
-        changed = action == ACTION_SITTING_FLAMING || action == ACTION_SITTING_SCANNING;
+        switch (action)
+        {
+        case ACTION_SITTING_FLAMING:
+        case ACTION_SITTING_SCANNING:
+            validTransition = true;
+            break;
+        }
         break;
     case ACTION_TAKEOFF:
-        changed = action == ACTION_HOLDING_PATTERN;
+        switch (action)
+        {
+        case ACTION_HOLDING_PATTERN:
+            validTransition = true;
+            break;
+        }
         break;
     case ACTION_SITTING_FLAMING:
-        changed = action == ACTION_TAKEOFF || action == ACTION_SITTING_SCANNING || action == ACTION_SITTING_ATTACKING;
+        switch (action)
+        {
+        case ACTION_TAKEOFF:
+        case ACTION_SITTING_SCANNING:
+        case ACTION_SITTING_ATTACKING:
+            validTransition = true;
+            break;
+        }
         break;
     case ACTION_SITTING_SCANNING:
-        changed = action == ACTION_TAKEOFF || action == ACTION_SITTING_FLAMING || action == ACTION_SITTING_ATTACKING;
+        switch (action)
+        {
+        case ACTION_TAKEOFF:
+        case ACTION_SITTING_FLAMING:
+        case ACTION_SITTING_ATTACKING:
+            validTransition = true;
+            break;
+        }
         break;
     case ACTION_SITTING_ATTACKING:
-        changed = action == ACTION_TAKEOFF || action == ACTION_SITTING_FLAMING || action == ACTION_SITTING_SCANNING;
-        break;
-    default:
+        switch (action)
+        {
+        case ACTION_TAKEOFF:
+        case ACTION_SITTING_FLAMING:
+        case ACTION_SITTING_SCANNING:
+            validTransition = true;
+            break;
+        }
         break;
     }
 
-    if (force || changed)
+    if (validTransition || force)
         mEntityData->set(DATA_DRAGON_PHASE, static_cast<int>(action), true);
 
-    return force || changed;
+    return force || validTransition;
 }
 
 unsigned int EnderDragon::findClosestNode(double x, double y, double z)
@@ -144,20 +191,19 @@ unsigned int EnderDragon::findClosestNode(double x, double y, double z)
     unsigned int closest = 0;
     Node* target = new Node(static_cast<int>(std::floor(x)), static_cast<int>(std::floor(y)),
                             static_cast<int>(std::floor(z)));
-    unsigned int first = 0;
+    int first = 0;
     if (mDragonFight == NULL || mDragonFight->getCrystalsAlive() == 0)
         first = OUTER_RING_NODE_COUNT;
 
     for (unsigned int i = first; i < PATH_NODE_COUNT; ++i)
     {
-        Node* node = mNodes->data[i];
-        if (node != NULL)
+        if (mNodes->data[i] != NULL)
         {
-            const float distance = node->distanceTo(target);
+            float distance = mNodes->data[i]->distanceTo(target);
             if (distance < closestDistance)
             {
-                closest = i;
                 closestDistance = distance;
+                closest = i;
             }
         }
     }
@@ -170,34 +216,35 @@ unsigned int EnderDragon::findClosestNode()
 {
     if (mNodes->data[0] == NULL)
     {
-        for (int i = 0; i < PATH_NODE_COUNT; ++i)
+        for (unsigned int i = 0; i < PATH_NODE_COUNT; ++i)
         {
+            int heightOffset = 5;
             int x;
             int z;
-            int heightOffset;
             if (i < 12)
             {
-                const float angle = 0.2617994f * static_cast<float>(i) + -Mth::PI;
-                x = static_cast<int>(60.0f * Mth::cos(angle + angle));
-                z = static_cast<int>(60.0f * Mth::sin(angle + angle));
-                heightOffset = 5;
+                const int ringIndex = i;
+                const float angle = 2.0f * (-3.1415927f + 0.2617994f * static_cast<float>(ringIndex));
+                x = static_cast<int>(60.0f * Mth::cos(angle));
+                z = static_cast<int>(60.0f * Mth::sin(angle));
             }
             else if (i < 20)
             {
-                const float angle = 0.3926991f * static_cast<float>(i - 12) + -Mth::PI;
-                x = static_cast<int>(40.0f * Mth::cos(angle + angle));
-                z = static_cast<int>(40.0f * Mth::sin(angle + angle));
-                heightOffset = 15;
+                const int ringIndex = i - 12;
+                const float angle = 2.0f * (-3.1415927f + 0.3926991f * static_cast<float>(ringIndex));
+                x = static_cast<int>(40.0f * Mth::cos(angle));
+                z = static_cast<int>(40.0f * Mth::sin(angle));
+                heightOffset += 10;
             }
             else
             {
-                const float angle = 0.7853982f * static_cast<float>(i - 20) + -Mth::PI;
-                x = static_cast<int>(20.0f * Mth::cos(angle + angle));
-                z = static_cast<int>(20.0f * Mth::sin(angle + angle));
-                heightOffset = 5;
+                const int ringIndex = i - 20;
+                const float angle = 2.0f * (-3.1415927f + 0.7853982f * static_cast<float>(ringIndex));
+                x = static_cast<int>(20.0f * Mth::cos(angle));
+                z = static_cast<int>(20.0f * Mth::sin(angle));
             }
 
-            const int minY = mLevel->getSeaLevel() + 10;
+            const int minY = mLevel->mSeaLevel + 10;
             const BlockPos top = mLevel->getTopSolidBlockPos(BlockPos(x, 0, z));
             int y = top.y + heightOffset;
             if (y < minY)
@@ -246,9 +293,10 @@ Vec3* EnderDragon::getHeadLookVector(float partialTicks)
         if (scale < 1.0f)
             scale = 1.0f;
 
-        const float yRot = mYRot;
+        const float pitch = 6.0f / scale;
         const float xRot = mXRot;
-        mXRot = -((6.0f / scale) * 1.5f * 5.0f);
+        const float yRot = mYRot;
+        mXRot = -pitch * 1.5f * 5.0f;
         mYRot = yRot + static_cast<float>(getHeadYRotDiff(partialTicks));
         result = getViewVector(partialTicks);
         mXRot = xRot;
@@ -260,7 +308,7 @@ Vec3* EnderDragon::getHeadLookVector(float partialTicks)
         const float xRot = mXRot;
         mXRot = -45.0f;
         const float yRot = mYRot;
-        mYRot = yRot + static_cast<float>(getHeadYRotDiff(partialTicks));
+        mYRot = mYRot + static_cast<float>(getHeadYRotDiff(partialTicks));
         result = getViewVector(partialTicks);
         mXRot = xRot;
         mYRot = yRot;
@@ -274,18 +322,17 @@ Vec3* EnderDragon::getHeadLookVector(float partialTicks)
 
 Path* EnderDragon::reconstruct_path(Node*, Node* end)
 {
-    unsigned int count = 1;
-    for (Node* node = end->cameFrom; node != NULL; node = node->cameFrom)
+    int count = 1;
+    for (Node* node = end; node->cameFrom != NULL; node = node->cameFrom)
         ++count;
 
     arrayWithLength<Node*> nodes(count, true);
-    unsigned int last = count - 1;
-    nodes.data[last] = end;
-    Node** slot = nodes.data + last;
-    for (Node* node = end->cameFrom; node != NULL; node = node->cameFrom)
+    Node* node = end;
+    --count;
+    for (nodes[count] = end; node->cameFrom != NULL; nodes[count] = node)
     {
-        --slot;
-        *slot = node;
+        node = node->cameFrom;
+        --count;
     }
 
     Path* path = new Path(nodes);
@@ -295,10 +342,9 @@ Path* EnderDragon::reconstruct_path(Node*, Node* end)
 
 Path* EnderDragon::findPath(int start, int end, Node* target)
 {
-    Node** nodes = mNodes->data;
     for (int i = 0; i < PATH_NODE_COUNT; ++i)
     {
-        Node* node = nodes[i];
+        Node* node = mNodes->data[i];
         node->closed = false;
         node->f = 0.0f;
         node->g = 0.0f;
@@ -307,8 +353,8 @@ Path* EnderDragon::findPath(int start, int end, Node* target)
         node->heapIdx = -1;
     }
 
-    Node* startNode = nodes[start];
-    Node* endNode = nodes[end];
+    Node* startNode = mNodes->data[start];
+    Node* endNode = mNodes->data[end];
     startNode->g = 0.0f;
     startNode->h = static_cast<float>(startNode->distanceTo(endNode));
     startNode->f = startNode->h;
@@ -340,7 +386,7 @@ Path* EnderDragon::findPath(int start, int end, Node* target)
         int currentIndex = 0;
         for (int i = 0; i < PATH_NODE_COUNT; ++i)
         {
-            if (nodes[i] == current)
+            if (mNodes->data[i] == current)
             {
                 currentIndex = i;
                 break;
@@ -352,15 +398,15 @@ Path* EnderDragon::findPath(int start, int end, Node* target)
             if ((mNodeAdjacency[currentIndex] & (1 << i)) == 0)
                 continue;
 
-            Node* neighbour = nodes[i];
+            Node* neighbour = mNodes->data[i];
             if (neighbour->closed)
                 continue;
 
             const float g = static_cast<float>(current->g + current->distanceTo(neighbour));
             if (!neighbour->inOpenSet() || g < neighbour->g)
             {
-                neighbour->g = g;
                 neighbour->cameFrom = current;
+                neighbour->g = g;
                 neighbour->h = static_cast<float>(neighbour->distanceTo(endNode));
                 if (neighbour->inOpenSet())
                 {
@@ -444,7 +490,7 @@ void EnderDragon::findNewTarget()
     case ACTION_TAKEOFF:
         if (!mNewTarget && mPath != NULL && mPath->isDone())
         {
-            int y = mLevel->getSeaLevel() + 5;
+            int y = mLevel->mSeaLevel + 5;
             const BlockPos top = mLevel->getTopSolidBlockPos(BlockPos(0, 0, 0));
             if (top.y > y)
                 y = top.y;
@@ -491,15 +537,13 @@ void EnderDragon::findNewTarget()
     {
         mAttackTarget = player;
         strafeAttackTarget();
-        return;
     }
-
-    if (getSynchedAction() == ACTION_LANDING_APPROACH)
+    else if (getSynchedAction() == ACTION_LANDING_APPROACH)
     {
         if (mPath == NULL || mPath->isDone())
         {
             const unsigned int start = findClosestNode();
-            int y = mLevel->getSeaLevel() + 5;
+            int y = mLevel->mSeaLevel + 5;
             const BlockPos top = mLevel->getTopSolidBlockPos(BlockPos(0, 0, 0));
             if (top.y > y)
                 y = top.y;
@@ -528,73 +572,70 @@ void EnderDragon::findNewTarget()
         navigateToNextPathNode();
         if (mPath != NULL && mPath->isDone())
             setSynchedAction(ACTION_LANDING, false);
-        return;
     }
-
-    if (getSynchedAction() == ACTION_SITTING_FLAMING || getSynchedAction() == ACTION_SITTING_ATTACKING
-        || getSynchedAction() == ACTION_SITTING_SCANNING)
-        return;
-
-    if (mPath == NULL || mPath->isDone())
+    else if (getSynchedAction() != ACTION_SITTING_FLAMING && getSynchedAction() != ACTION_SITTING_ATTACKING
+             && getSynchedAction() != ACTION_SITTING_SCANNING)
     {
-        const unsigned int start = findClosestNode();
-        int end = static_cast<int>(start);
-        if (getSynchedAction() == ACTION_TAKEOFF)
+        if (mPath == NULL || mPath->isDone())
         {
-            Vec3* look = getHeadLookVector(1.0f);
-            end = static_cast<int>(findClosestNode(-(look->x * 40.0), 105.0, -(look->z * 40.0)));
-        }
-        else
-        {
-            if (mRandom->nextInt(8) == 0)
+            const unsigned int start = findClosestNode();
+            int end = static_cast<int>(start);
+            if (getSynchedAction() == ACTION_TAKEOFF)
             {
-                mClockwise = !mClockwise;
-                end += 6;
+                Vec3* look = getHeadLookVector(1.0f);
+                end = static_cast<int>(findClosestNode(-(look->x * 40.0), 105.0, -(look->z * 40.0)));
             }
-            if (mClockwise)
-                ++end;
             else
-                --end;
+            {
+                if (mRandom->nextInt(8) == 0)
+                {
+                    mClockwise = !mClockwise;
+                    end += 6;
+                }
+                if (mClockwise)
+                    ++end;
+                else
+                    --end;
+            }
+
+            if (mDragonFight != NULL && mDragonFight->getCrystalsAlive() == 0)
+            {
+                end = ((end - OUTER_RING_NODE_COUNT) & 7) + OUTER_RING_NODE_COUNT;
+            }
+            else
+            {
+                end %= OUTER_RING_NODE_COUNT;
+                if (end < 0)
+                    end += OUTER_RING_NODE_COUNT;
+            }
+
+            if (mPath != NULL)
+                delete mPath;
+            mPath = findPath(start, end, NULL);
+            if (mPath != NULL)
+                mPath->next();
         }
 
-        if (mDragonFight != NULL && mDragonFight->getCrystalsAlive() == 0)
-        {
-            end = ((end - OUTER_RING_NODE_COUNT) & 7) + OUTER_RING_NODE_COUNT;
-        }
-        else
-        {
-            end %= OUTER_RING_NODE_COUNT;
-            if (end < 0)
-                end += OUTER_RING_NODE_COUNT;
-        }
-
-        if (mPath != NULL)
-            delete mPath;
-        mPath = findPath(start, end, NULL);
-        if (mPath != NULL)
-            mPath->next();
+        navigateToNextPathNode();
+        if (getSynchedAction() != ACTION_STRAFE_PLAYER)
+            mAttackTarget.reset();
     }
-
-    navigateToNextPathNode();
-    if (getSynchedAction() != ACTION_STRAFE_PLAYER)
-        mAttackTarget.reset();
 }
 
 bool EnderDragon::hurt(boost::shared_ptr<MultiEntityMobPart> part, const DamageSource* source, float amount)
 {
     if (part.get() != mHead.get())
     {
-        float bonus = amount - 1.0f < 0.0f ? amount : 1.0f;
-        amount = amount * 0.25f + bonus;
+        amount = amount / 4.0f + std::min(amount, 1.0f);
     }
     if (amount < 0.01f)
         return false;
 
     if ((source->getEntity() != NULL
-         && (source->getEntity()->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+         && eTYPE_DERIVED_FROM(EntityType::PLAYER, source->getEntity()->GetType()))
         || source->isExplosion())
     {
-        const float healthBefore = getHealth();
+        const int healthBefore = static_cast<int>(getHealth());
         reallyHurt(source, amount);
         if (getHealth() <= 0.0f && getSynchedAction() != ACTION_SITTING_FLAMING
             && getSynchedAction() != ACTION_SITTING_SCANNING && getSynchedAction() != ACTION_SITTING_ATTACKING)
@@ -614,8 +655,8 @@ bool EnderDragon::hurt(boost::shared_ptr<MultiEntityMobPart> part, const DamageS
         if (getSynchedAction() == ACTION_SITTING_FLAMING || getSynchedAction() == ACTION_SITTING_SCANNING
             || getSynchedAction() == ACTION_SITTING_ATTACKING)
         {
-            mSittingDamageReceived += static_cast<int>(healthBefore) - static_cast<int>(getHealth());
-            if (static_cast<float>(mSittingDamageReceived) > getMaxHealth() * 0.25f)
+            mSittingDamageReceived += healthBefore - static_cast<int>(getHealth());
+            if (mSittingDamageReceived > 0.25f * getMaxHealth())
             {
                 mSittingDamageReceived = 0;
                 setSynchedAction(ACTION_TAKEOFF, false);
@@ -687,7 +728,7 @@ void EnderDragon::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, co
             mActionTicks = 1;
         }
         else if (source->getEntity() != NULL
-                 && (source->getEntity()->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+                 && eTYPE_DERIVED_FROM(EntityType::PLAYER, source->getEntity()->GetType()))
         {
             if (setSynchedAction(ACTION_STRAFE_PLAYER, false))
             {
@@ -701,25 +742,23 @@ void EnderDragon::onCrystalDestroyed(boost::shared_ptr<EnderCrystal> crystal, co
 void EnderDragon::_init()
 {
     fjDerivedCtorCalls();
-    mXTarget = 0.0;
-    mYTarget = 0.0;
-    mZTarget = 0.0;
+    mXTarget = mYTarget = mZTarget = 0.0;
     mPosPointer = -1;
     mOldFlapTime = 0.0f;
     mFlapTime = 0.0f;
-    mInWall = false;
     mNewTarget = false;
-    mAttackTarget.reset();
+    mInWall = false;
+    mAttackTarget = boost::shared_ptr<Entity>();
     mDeathTime = 0;
-    mNearestCrystal.reset();
+    mNearestCrystal = boost::shared_ptr<EnderCrystal>();
     mFireballCharge = 0;
     mUnusedFloat = 0.0f;
     mClockwise = true;
     setSynchedAction(ACTION_HOLDING_PATTERN, false);
-    mFlameCount = 0;
-    mClientLerpReset = 0.0;
     mActionTicks = 0;
     mSittingDamageReceived = 0;
+    mClientLerpReset = 0.0;
+    mFlameCount = 0;
     for (int i = 0; i < POSITION_HISTORY_SIZE; ++i)
     {
         mPositions[i][0] = 0.0;
@@ -761,33 +800,46 @@ void EnderDragon::getLatencyPos(arrayWithLength<double> positions, int index, fl
     if (getHealth() <= 0.0f)
         partialTicks = 0.0f;
 
-    const float inverse = 1.0f - partialTicks;
-    const double* current = mPositions[(mPosPointer - index) & (POSITION_HISTORY_SIZE - 1)];
-    const double* previous = mPositions[(mPosPointer - index - 1) & (POSITION_HISTORY_SIZE - 1)];
-    positions.data[0] = current[0] + Mth::wrapDegrees(previous[0] - current[0]) * inverse;
-    positions.data[1] = current[1] + (previous[1] - current[1]) * inverse;
-    positions.data[2] = current[2] + (previous[2] - current[2]) * inverse;
+    partialTicks = 1.0f - partialTicks;
+    int current = (mPosPointer - index) & (POSITION_HISTORY_SIZE - 1);
+    int previous = (mPosPointer - index - 1) & (POSITION_HISTORY_SIZE - 1);
+    double base = mPositions[current][0];
+    double delta = Mth::wrapDegrees(mPositions[previous][0] - base);
+    positions.data[0] = base + delta * partialTicks;
+    base = mPositions[current][1];
+    delta = mPositions[previous][1] - base;
+    positions.data[1] = base + delta * partialTicks;
+    positions.data[2] = mPositions[current][2] + (mPositions[previous][2] - mPositions[current][2]) * partialTicks;
 }
 
 float EnderDragon::getTilt(float partialTicks)
 {
-    double current[3];
-    double past[3];
-    getLatencyPos(arrayWithLength<double>(current, 3), 5, partialTicks);
-    getLatencyPos(arrayWithLength<double>(past, 3), 10, partialTicks);
-    return static_cast<float>((current[1] - past[1]) * 10.0);
+    double currentValues[3];
+    double pastValues[3];
+    arrayWithLength<double> current(currentValues, 3);
+    arrayWithLength<double> past(pastValues, 3);
+    getLatencyPos(current, 5, partialTicks);
+    getLatencyPos(past, 10, partialTicks);
+    double tilt = (current[1] - past[1]) * 10.0;
+    return static_cast<float>(tilt);
 }
 
 double EnderDragon::getHeadYOffset(float)
 {
-    double offset = -1.0;
-    if (getSynchedAction() != ACTION_SITTING_FLAMING && getSynchedAction() != ACTION_SITTING_SCANNING
-        && getSynchedAction() != ACTION_SITTING_ATTACKING)
+    double offset;
+    if (getSynchedAction() == ACTION_SITTING_FLAMING || getSynchedAction() == ACTION_SITTING_SCANNING
+        || getSynchedAction() == ACTION_SITTING_ATTACKING)
     {
-        double body[3];
-        double head[3];
-        getLatencyPos(arrayWithLength<double>(body, 3), 5, 1.0f);
-        getLatencyPos(arrayWithLength<double>(head, 3), 0, 1.0f);
+        offset = -1.0;
+    }
+    else
+    {
+        double bodyValues[3];
+        arrayWithLength<double> body(bodyValues, 3);
+        getLatencyPos(body, 5, 1.0f);
+        double headValues[3];
+        arrayWithLength<double> head(headValues, 3);
+        getLatencyPos(head, 0, 1.0f);
         offset = head[1] - body[1];
     }
     return offset;
@@ -892,15 +944,15 @@ bool EnderDragon::checkWalls(AABB* box)
                 if (state->getMaterial() == Material::AIR || state->getMaterial() == Material::FIRE)
                     continue;
 
-                if (mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING) && block != Blocks::barrier
-                    && block != Blocks::obsidian && block != Blocks::end_stone && block != Blocks::bedrock
-                    && block != Blocks::end_portal && block != Blocks::end_portal_frame
-                    && block != Blocks::command_block && block != Blocks::repeating_command_block
-                    && block != Blocks::chain_command_block && block != Blocks::iron_bars
-                    && block != Blocks::end_gateway)
-                    destroyedBlock = mLevel->removeBlock(pos) || destroyedBlock;
-                else
+                if (!mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING) || block == Blocks::barrier
+                    || block == Blocks::obsidian || block == Blocks::end_stone || block == Blocks::bedrock
+                    || block == Blocks::end_portal || block == Blocks::end_portal_frame
+                    || block == Blocks::command_block || block == Blocks::repeating_command_block
+                    || block == Blocks::chain_command_block || block == Blocks::iron_bars
+                    || block == Blocks::end_gateway)
                     hitWall = true;
+                else
+                    destroyedBlock = mLevel->removeBlock(pos) || destroyedBlock;
             }
         }
     }
@@ -920,20 +972,18 @@ void EnderDragon::aiStep()
     if (mLevel->mIsClientSide)
     {
         setHealth(getHealth());
-        const float flap = Mth::cos(mFlapTime * Mth::PI * 2.0f);
-        const float oldFlap = Mth::cos(mOldFlapTime * Mth::PI * 2.0f);
+        const float flap = Mth::cos(mFlapTime * 3.1415927f * 2.0f);
+        const float oldFlap = Mth::cos(mOldFlapTime * 3.1415927f * 2.0f);
         if (oldFlap <= -0.3f && flap >= -0.3f && !isSilent())
         {
-            const SoundSource::ESoundSource soundSource = getSoundSource();
-            mLevel->playLocalSound(mX, mY, mZ, SoundEvents::ENDERDRAGON_FLAP, soundSource, 1.0f,
+            mLevel->playLocalSound(mX, mY, mZ, SoundEvents::ENDERDRAGON_FLAP, getSoundSource(), 1.0f,
                                    0.8f + mRandom->nextFloat() * 0.3f, false, 100.0f);
         }
 
         if (getSynchedAction() != ACTION_SITTING_FLAMING && getSynchedAction() != ACTION_SITTING_SCANNING
             && getSynchedAction() != ACTION_SITTING_ATTACKING && --mGrowlTime < 0)
         {
-            const SoundSource::ESoundSource soundSource = getSoundSource();
-            mLevel->playLocalSound(mX, mY, mZ, SoundEvents::ENDERDRAGON_GROWL, soundSource, 0.5f,
+            mLevel->playLocalSound(mX, mY, mZ, SoundEvents::ENDERDRAGON_GROWL, getSoundSource(), 0.5f,
                                    0.8f + mRandom->nextFloat() * 0.3f, false, 100.0f);
             mGrowlTime = 200 + mRandom->nextInt(200);
         }
@@ -1000,7 +1050,7 @@ void EnderDragon::aiStep()
         if (getSynchedAction() == ACTION_LANDING
             || (getSynchedAction() == ACTION_SITTING_FLAMING && (mTickCount & 1) == 0))
         {
-            Vec3* look = getHeadLookVector(1.0f)->normalize()->yRot(-Mth::PI / 4.0f);
+            Vec3* look = getHeadLookVector(1.0f)->normalize()->yRot(-3.1415927f / 4.0f);
             Random* random = mLevel->mRandom;
             for (int i = 0; i < 8; ++i)
             {
@@ -1029,13 +1079,12 @@ void EnderDragon::aiStep()
                                             -(look->z * 0.08 * j), arrayWithLength<int>());
                     }
                 }
-                look = look->yRot(Mth::PI / 16.0f);
+                look = look->yRot(3.1415927f / 16.0f);
             }
         }
         else if (getSynchedAction() == ACTION_SITTING_ATTACKING)
         {
-            const SoundSource::ESoundSource soundSource = getSoundSource();
-            mLevel->playLocalSound(mX, mY, mZ, SoundEvents::ENDERDRAGON_GROWL, soundSource, 0.5f,
+            mLevel->playLocalSound(mX, mY, mZ, SoundEvents::ENDERDRAGON_GROWL, getSoundSource(), 0.5f,
                                    0.8f + mRandom->nextFloat() * 0.3f, false, 100.0f);
         }
         mYBodyRot = mYRot;
@@ -1103,145 +1152,148 @@ void EnderDragon::aiStep()
             findNewTarget();
         }
 
-        if (getSynchedAction() == ACTION_SITTING_FLAMING)
+        if (getSynchedAction() == ACTION_SITTING_FLAMING && mActionTicks == 50)
         {
-            if (mActionTicks == 50)
+            Vec3* look = getHeadLookVector(1.0f)->normalize();
+            const double x = mHead->mX - look->x * 5.0 * 0.5;
+            const double z = mHead->mZ - look->z * 5.0 * 0.5;
+            double y = mHead->mY + mHead->mBbHeight * 0.5f;
+            MutableBlockPos pos(Mth::floor(x), Mth::floor(y), Mth::floor(z));
+            while (mLevel->isEmptyBlock(pos))
             {
-                Vec3* look = getHeadLookVector(1.0f)->normalize();
-                const double x = mHead->mX - look->x * 5.0 * 0.5;
-                const double z = mHead->mZ - look->z * 5.0 * 0.5;
-                double y = mHead->mY + mHead->mBbHeight * 0.5f;
-                MutableBlockPos pos(Mth::floor(x), Mth::floor(y), Mth::floor(z));
-                while (mLevel->isEmptyBlock(pos))
-                {
-                    y -= 1.0;
-                    pos.set(Mth::floor(x), Mth::floor(y), Mth::floor(z));
-                    if (y < 0.0)
-                        break;
-                }
+                y -= 1.0;
+                pos.set(Mth::floor(x), Mth::floor(y), Mth::floor(z));
+                if (y < 0.0)
+                    break;
+            }
 
-                if (y > 0.0)
+            if (y > 0.0)
+            {
+                y = static_cast<double>(Mth::floor(y) + 1);
+                if (mFlameCloud != NULL)
                 {
-                    y = static_cast<double>(Mth::floor(y) + 1);
-                    if (mFlameCloud != NULL)
-                    {
-                        mFlameCloud->remove();
-                        mFlameCloud.reset();
-                    }
-                    mFlameCloud = boost::shared_ptr<AreaEffectCloud>(new AreaEffectCloud(mLevel, x, y, z));
-                    mFlameCloud->setOwner(boost::static_pointer_cast<LivingEntity>(shared_from_this()));
-                    mFlameCloud->setRadius(5.0f);
-                    mFlameCloud->setDuration(60);
-                    mFlameCloud->setParticle(PARTICLE_DRAGON_BREATH);
-                    mFlameCloud->addEffect(new MobEffectInstance(MobEffects::HARM));
-                    mFlameCloud->setParticleSpawnRateOnTick(10);
-                    mLevel->addEntity(mFlameCloud);
+                    mFlameCloud->remove();
+                    mFlameCloud = boost::shared_ptr<AreaEffectCloud>();
                 }
+                mFlameCloud = boost::shared_ptr<AreaEffectCloud>(new AreaEffectCloud(mLevel, x, y, z));
+                mFlameCloud->setOwner(boost::static_pointer_cast<LivingEntity>(shared_from_this()));
+                mFlameCloud->setRadius(5.0f);
+                mFlameCloud->setDuration(60);
+                mFlameCloud->setParticle(PARTICLE_DRAGON_BREATH);
+                mFlameCloud->addEffect(new MobEffectInstance(MobEffects::HARM));
+                mFlameCloud->setParticleSpawnRateOnTick(10);
+                mLevel->addEntity(mFlameCloud);
             }
         }
-        else if (getSynchedAction() == ACTION_SITTING_SCANNING)
-        {
-            if (mAttackTarget != NULL)
-            {
-                Vec3* toTarget = Vec3::newTemp(mAttackTarget->mX - mX, 0.0, mAttackTarget->mZ - mZ)->normalize();
-                Vec3* facing = Vec3::newTemp(std::sin(mYRot * Mth::PI / 180.0f), 0.0,
-                                             -std::cos(mYRot * Mth::PI / 180.0f))->normalize();
-                const float angle =
-                    std::acos(static_cast<float>(facing->dot(toTarget))) * 180.0f / Mth::PI + 0.5f;
-                if (angle < 0.0f || angle > 10.0f)
-                {
-                    double yRotDelta = Mth::wrapDegrees(
-                        180.0 - std::atan2(mAttackTarget->mX - mHead->mX, mAttackTarget->mZ - mHead->mZ) * 180.0 / Mth::PI
-                        - mYRot);
-                    if (yRotDelta > 50.0)
-                        yRotDelta = 50.0;
-                    else if (yRotDelta < -50.0)
-                        yRotDelta = -50.0;
 
+        if (getSynchedAction() != ACTION_SITTING_FLAMING)
+        {
+            if (getSynchedAction() == ACTION_SITTING_SCANNING)
+            {
+                if (mAttackTarget != NULL)
+                {
+                    Vec3* toTarget = Vec3::newTemp(mAttackTarget->mX - mX, 0.0, mAttackTarget->mZ - mZ)->normalize();
+                    Vec3* facing = Vec3::newTemp(std::sin(mYRot * 3.1415927f / 180.0f), 0.0,
+                                                 -std::cos(mYRot * 3.1415927f / 180.0f))->normalize();
+                    const float angle =
+                        std::acos(static_cast<float>(facing->dot(toTarget))) * 180.0f / 3.1415927f + 0.5f;
+                    if (angle < 0.0f || angle > 10.0f)
+                    {
+                        double yRotDelta = Mth::wrapDegrees(
+                            180.0
+                            - std::atan2(mAttackTarget->mX - mHead->mX, mAttackTarget->mZ - mHead->mZ) * 180.0 / 3.1415927f
+                            - mYRot);
+                        if (yRotDelta > 50.0)
+                            yRotDelta = 50.0;
+                        else if (yRotDelta < -50.0)
+                            yRotDelta = -50.0;
+
+                        const double targetDx = mXTarget - mX;
+                        const double targetDz = mZTarget - mZ;
+                        const double targetDistanceSqr = targetDx * targetDx + targetDz * targetDz;
+                        mYRota *= 0.8f;
+                        const float speed = static_cast<float>(std::sqrt(targetDistanceSqr) * 1.0 + 1.0);
+                        float maxSpeed = static_cast<float>(std::sqrt(targetDistanceSqr) * 1.0 + 1.0);
+                        if (maxSpeed > 40.0f)
+                            maxSpeed = 40.0f;
+                        mYRota += static_cast<float>(yRotDelta * ((0.7f / maxSpeed) / speed));
+                        mYRot += mYRota;
+                    }
+                }
+            }
+            else if (getSynchedAction() != ACTION_SITTING_ATTACKING)
+            {
+                if (getSynchedAction() == ACTION_STRAFE_PLAYER && mAttackTarget != NULL && mPath != NULL
+                    && mPath->isDone())
+                {
+                    mXTarget = mAttackTarget->mX;
+                    mZTarget = mAttackTarget->mZ;
                     const double targetDx = mXTarget - mX;
                     const double targetDz = mZTarget - mZ;
-                    const double targetDistanceSqr = targetDx * targetDx + targetDz * targetDz;
-                    mYRota *= 0.8f;
-                    const float speed = static_cast<float>(std::sqrt(targetDistanceSqr) * 1.0 + 1.0);
-                    float maxSpeed = static_cast<float>(std::sqrt(targetDistanceSqr) * 1.0 + 1.0);
-                    if (maxSpeed > 40.0f)
-                        maxSpeed = 40.0f;
-                    mYRota += static_cast<float>(yRotDelta * ((0.7f / maxSpeed) / speed));
-                    mYRot += mYRota;
+                    double height = std::sqrt(targetDx * targetDx + targetDz * targetDz) / 80.0 - 0.6f;
+                    if (height > 10.0)
+                        height = 10.0;
+                    mYTarget = mAttackTarget->mBoundingBox->mMinY + height;
                 }
+
+                const double horizontalDistance = std::sqrt(dx * dx + dz * dz);
+                float maxClimb = 0.6f;
+                if (getSynchedAction() == ACTION_LANDING)
+                    maxClimb = 1.5f;
+                double climb = dy / horizontalDistance;
+                if (climb < -maxClimb)
+                    climb = -maxClimb;
+                if (climb > maxClimb)
+                    climb = maxClimb;
+                mYd += climb * 0.1f;
+
+                while (mYRot < -180.0f)
+                    mYRot += 360.0f;
+                while (mYRot >= 180.0f)
+                    mYRot -= 360.0f;
+
+                double yRotDelta = 180.0 - std::atan2(dx, dz) * 180.0 / 3.1415927f - mYRot;
+                while (yRotDelta < -180.0)
+                    yRotDelta += 360.0;
+                while (yRotDelta >= 180.0)
+                    yRotDelta -= 360.0;
+                if (yRotDelta > 50.0)
+                    yRotDelta = 50.0;
+                else if (yRotDelta < -50.0)
+                    yRotDelta = -50.0;
+
+                Vec3* direction = Vec3::newTemp(mXTarget - mX, mYTarget - mY, mZTarget - mZ)->normalize();
+                Vec3* facing = Vec3::newTemp(std::sin(mYRot * 3.1415927f / 180.0f), mYd,
+                                             -std::cos(mYRot * 3.1415927f / 180.0f))->normalize();
+                float alignment = static_cast<float>(facing->dot(direction) + 0.5) / 1.5f;
+                if (alignment < 0.0f)
+                    alignment = 0.0f;
+
+                mYRota *= 0.8f;
+                const float speed = static_cast<float>(std::sqrt(mXd * mXd + mZd * mZd) * 1.0 + 1.0);
+                float maxSpeed = static_cast<float>(std::sqrt(mXd * mXd + mZd * mZd) * 1.0 + 1.0);
+                if (maxSpeed > 40.0f)
+                    maxSpeed = 40.0f;
+
+                if (getSynchedAction() == ACTION_LANDING)
+                    mYRota += static_cast<float>(yRotDelta * (maxSpeed / speed));
+                else
+                    mYRota += static_cast<float>(yRotDelta * ((0.7f / maxSpeed) / speed));
+                mYRot += mYRota * 0.1f;
+
+                const float turnInertia = 2.0f / (maxSpeed + 1.0f);
+                moveRelative(0.0f, 0.0f, -1.0f, 0.06f * (alignment * turnInertia + (1.0f - turnInertia)));
+                if (mInWall)
+                    move(eMoverType_Self, mXd * 0.8f, mYd * 0.8f, mZd * 0.8f, false);
+                else
+                    move(eMoverType_Self, mXd, mYd, mZd, false);
+
+                Vec3* motion = Vec3::newTemp(mXd, mYd, mZd)->normalize();
+                const float drag = static_cast<float>(motion->dot(facing) + 1.0) * 0.5f * 0.15f + 0.8f;
+                mXd *= drag;
+                mZd *= drag;
+                mYd *= 0.91f;
             }
-        }
-        else if (getSynchedAction() != ACTION_SITTING_ATTACKING)
-        {
-            if (getSynchedAction() == ACTION_STRAFE_PLAYER && mAttackTarget != NULL && mPath != NULL && mPath->isDone())
-            {
-                mXTarget = mAttackTarget->mX;
-                mZTarget = mAttackTarget->mZ;
-                const double targetDx = mXTarget - mX;
-                const double targetDz = mZTarget - mZ;
-                double height = std::sqrt(targetDx * targetDx + targetDz * targetDz) / 80.0 - 0.6f;
-                if (height > 10.0)
-                    height = 10.0;
-                mYTarget = mAttackTarget->mBoundingBox->mMinY + height;
-            }
-
-            const double horizontalDistance = std::sqrt(dx * dx + dz * dz);
-            float maxClimb = 0.6f;
-            if (getSynchedAction() == ACTION_LANDING)
-                maxClimb = 1.5f;
-            double climb = dy / horizontalDistance;
-            if (climb < -maxClimb)
-                climb = -maxClimb;
-            if (climb > maxClimb)
-                climb = maxClimb;
-            mYd += climb * 0.1f;
-
-            while (mYRot < -180.0f)
-                mYRot += 360.0f;
-            while (mYRot >= 180.0f)
-                mYRot -= 360.0f;
-
-            double yRotDelta = 180.0 - std::atan2(dx, dz) * 180.0 / Mth::PI - mYRot;
-            while (yRotDelta < -180.0)
-                yRotDelta += 360.0;
-            while (yRotDelta >= 180.0)
-                yRotDelta -= 360.0;
-            if (yRotDelta > 50.0)
-                yRotDelta = 50.0;
-            else if (yRotDelta < -50.0)
-                yRotDelta = -50.0;
-
-            Vec3* direction = Vec3::newTemp(mXTarget - mX, mYTarget - mY, mZTarget - mZ)->normalize();
-            Vec3* facing = Vec3::newTemp(std::sin(mYRot * Mth::PI / 180.0f), mYd,
-                                         -std::cos(mYRot * Mth::PI / 180.0f))->normalize();
-            float alignment = static_cast<float>(facing->dot(direction) + 0.5) / 1.5f;
-            if (alignment < 0.0f)
-                alignment = 0.0f;
-
-            mYRota *= 0.8f;
-            const float speed = static_cast<float>(std::sqrt(mXd * mXd + mZd * mZd) * 1.0 + 1.0);
-            float maxSpeed = static_cast<float>(std::sqrt(mXd * mXd + mZd * mZd) * 1.0 + 1.0);
-            if (maxSpeed > 40.0f)
-                maxSpeed = 40.0f;
-
-            if (getSynchedAction() == ACTION_LANDING)
-                mYRota += static_cast<float>(yRotDelta * (maxSpeed / speed));
-            else
-                mYRota += static_cast<float>(yRotDelta * ((0.7f / maxSpeed) / speed));
-            mYRot += mYRota * 0.1f;
-
-            const float turnInertia = 2.0f / (maxSpeed + 1.0f);
-            moveRelative(0.0f, 0.0f, -1.0f, 0.06f * (alignment * turnInertia + (1.0f - turnInertia)));
-            if (mInWall)
-                move(eMoverType_Self, mXd * 0.8f, mYd * 0.8f, mZd * 0.8f, false);
-            else
-                move(eMoverType_Self, mXd, mYd, mZd, false);
-
-            Vec3* motion = Vec3::newTemp(mXd, mYd, mZd)->normalize();
-            const float drag = static_cast<float>(motion->dot(facing) + 1.0) * 0.5f * 0.15f + 0.8f;
-            mXd *= drag;
-            mZd *= drag;
-            mYd *= 0.91f;
         }
         mYBodyRot = mYRot;
     }
@@ -1263,15 +1315,16 @@ void EnderDragon::aiStep()
     mWing2->mBbHeight = 2.0f;
     mWing2->mBbWidth = 4.0f;
 
+    const unsigned int partCount = mSubEntities.size();
     std::vector<Vec3*> oldPositions;
-    oldPositions.reserve(mSubEntities.size());
-    for (unsigned int i = 0; i < mSubEntities.size(); ++i)
+    oldPositions.reserve(partCount);
+    for (unsigned int i = 0; i < partCount; ++i)
         oldPositions.push_back(Vec3::newTemp(mSubEntities[i]->mX, mSubEntities[i]->mY, mSubEntities[i]->mZ));
 
-    const float tilt = getTilt(1.0f) / 180.0f * Mth::PI;
+    const float tilt = getTilt(1.0f) / 180.0f * 3.1415927f;
     const float cosTilt = std::cos(tilt);
     const float sinTilt = std::sin(tilt);
-    const float yRotRadians = mYRot * Mth::PI / 180.0f;
+    const float yRotRadians = mYRot * 3.1415927f / 180.0f;
     const float sinYRot = std::sin(yRotRadians);
     const float cosYRot = std::cos(yRotRadians);
 
@@ -1284,6 +1337,7 @@ void EnderDragon::aiStep()
 
     if (!mLevel->mIsClientSide && mHurtDuration == 0)
     {
+        std::vector<boost::shared_ptr<Entity> > nearbyEntities;
         knockBack(mLevel->getEntities(shared_from_this(),
                                       mWing1->mBoundingBox->grow(4.0, 2.0, 4.0)->move(0.0, -2.0, 0.0), NULL));
         knockBack(mLevel->getEntities(shared_from_this(),
@@ -1295,8 +1349,8 @@ void EnderDragon::aiStep()
     double bodyLatency[3];
     getLatencyPos(arrayWithLength<double>(bodyLatency, 3), 5, 1.0f);
     const double headYRotDiff = getHeadYRotDiff(1.0f);
-    const float sinHead = static_cast<float>(std::sin((mYRot + headYRotDiff) * Mth::PI / 180.0 - mYRota * 0.01f));
-    const float cosHead = static_cast<float>(std::cos((mYRot + headYRotDiff) * Mth::PI / 180.0 - mYRota * 0.01f));
+    const float sinHead = static_cast<float>(std::sin((mYRot + headYRotDiff) * 3.1415927f / 180.0 - mYRota * 0.01f));
+    const float cosHead = static_cast<float>(std::cos((mYRot + headYRotDiff) * 3.1415927f / 180.0 - mYRota * 0.01f));
     mHead->tick();
     mNeck->tick();
     const double headYOffset = getHeadYOffset(1.0f);
@@ -1317,8 +1371,8 @@ void EnderDragon::aiStep()
 
         double partLatency[3];
         getLatencyPos(arrayWithLength<double>(partLatency, 3), 12 + i * 2, 1.0f);
-        const float partYRot = mYRot * Mth::PI / 180.0f
-            + static_cast<float>(rotWrap(partLatency[0] - bodyLatency[0])) * Mth::PI / 180.0f * 1.0f;
+        const float partYRot = mYRot * 3.1415927f / 180.0f
+            + static_cast<float>(rotWrap(partLatency[0] - bodyLatency[0])) * 3.1415927f / 180.0f * 1.0f;
         const float sinPart = std::sin(partYRot);
         const float cosPart = std::cos(partYRot);
         const float spacing = static_cast<float>(i + 1) * 2.0f;
@@ -1339,9 +1393,9 @@ void EnderDragon::aiStep()
         {
             ++mFireballCharge;
             Vec3* toTarget = Vec3::newTemp(mAttackTarget->mX - mX, 0.0, mAttackTarget->mZ - mZ)->normalize();
-            Vec3* facing = Vec3::newTemp(std::sin(mYRot * Mth::PI / 180.0f), 0.0,
-                                         -std::cos(mYRot * Mth::PI / 180.0f))->normalize();
-            const float angle = std::acos(static_cast<float>(facing->dot(toTarget))) * 180.0f / Mth::PI + 0.5f;
+            Vec3* facing = Vec3::newTemp(std::sin(mYRot * 3.1415927f / 180.0f), 0.0,
+                                         -std::cos(mYRot * 3.1415927f / 180.0f))->normalize();
+            const float angle = std::acos(static_cast<float>(facing->dot(toTarget))) * 180.0f / 3.1415927f + 0.5f;
             if (mFireballCharge >= 20 && angle >= 0.0f && angle < 10.0f)
             {
                 Vec3* look = getViewVector(1.0f);
@@ -1378,15 +1432,12 @@ void EnderDragon::aiStep()
 
     if (!mLevel->mIsClientSide)
     {
-        bool inWall = checkWalls(mHead->mBoundingBox);
-        inWall = checkWalls(mNeck->mBoundingBox) | inWall;
-        inWall = checkWalls(mBody->mBoundingBox) | inWall;
-        mInWall = inWall;
+        mInWall = checkWalls(mHead->mBoundingBox) | checkWalls(mNeck->mBoundingBox) | checkWalls(mBody->mBoundingBox);
         if (mDragonFight != NULL)
             mDragonFight->updateDragon(boost::static_pointer_cast<EnderDragon>(shared_from_this()));
     }
 
-    for (unsigned int i = 0; i < mSubEntities.size(); ++i)
+    for (unsigned int i = 0; i < partCount; ++i)
     {
         mSubEntities[i]->mXo = oldPositions[i]->x;
         mSubEntities[i]->mYo = oldPositions[i]->y;
@@ -1507,7 +1558,7 @@ void EnderDragon::readAdditionalSaveData(CompoundTag* tag)
 
 double EnderDragon::getHeadPartYOffset(int part, arrayWithLength<double> first, arrayWithLength<double> second)
 {
-    double result = 0.0;
+    double result;
     if (getSynchedAction() == ACTION_LANDING || getSynchedAction() == ACTION_TAKEOFF)
     {
         const BlockPos top = mLevel->getTopSolidBlockPos(BlockPos(0, 0, 0));
@@ -1521,7 +1572,11 @@ double EnderDragon::getHeadPartYOffset(int part, arrayWithLength<double> first, 
     {
         result = static_cast<double>(part);
     }
-    else if (part != 6)
+    else if (part == 6)
+    {
+        result = 0.0;
+    }
+    else
     {
         result = second.data[1] - first.data[1];
     }

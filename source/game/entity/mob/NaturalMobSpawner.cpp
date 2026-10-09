@@ -34,9 +34,10 @@
 #include "game/core/MemSect.hpp"
 
 NaturalMobSpawner::NaturalMobSpawner(int chunkRadius, ServerLevel* level)
-    : mLastSpawnTime(0), mMinChunk(0), mMaxChunk(0), mLevel(level)
 {
+    mLastSpawnTime = 0;
     int radius = chunkRadius / 2;
+    mLevel = level;
     mMinChunk = -radius;
     mMaxChunk = radius - 1;
 }
@@ -58,7 +59,7 @@ void NaturalMobSpawner::addEdgeChunkPos(int chunkX, int chunkZ)
         return;
     ChunkPos pos(chunkX, chunkZ);
     if (find(pos) == end())
-        insert(std::pair<ChunkPos, bool>(pos, true));
+        insert(std::make_pair(pos, true));
 }
 
 BlockPos NaturalMobSpawner::getRandomPosWithin(Level* level, int chunkX, int chunkZ)
@@ -67,25 +68,24 @@ BlockPos NaturalMobSpawner::getRandomPosWithin(Level* level, int chunkX, int chu
     int x = (chunkX << 4) + level->mRandom->nextInt(16);
     int z = (chunkZ << 4) + level->mRandom->nextInt(16);
     int height = Mth::roundUp(chunk->getHeightmap(BlockPos(x, 0, z)) + 1, 16);
-    if (height < 1)
-        height = 256;
-    return BlockPos(x, level->mRandom->nextInt(height), z);
+    int y = level->mRandom->nextInt(height > 0 ? height : 256);
+    return BlockPos(x, y, z);
 }
 
 bool NaturalMobSpawner::isValidEmptyUnderWaterSpawnBlock(const BlockState* state)
 {
-    if (!state->isSolidBlockingCube() && !state->isSignalSource() && state->getMaterial()->isLiquid()
-        && !BaseRailBlock::isRail(state))
-        return true;
-    return false;
+    if (state->isSolidBlockingCube() || state->isSignalSource() || !state->getMaterial()->isLiquid()
+        || BaseRailBlock::isRail(state))
+        return false;
+    return true;
 }
 
 bool NaturalMobSpawner::isValidEmptySpawnBlock(const BlockState* state)
 {
-    if (!state->isSolidBlockingCube() && !state->isSignalSource() && !state->getMaterial()->isLiquid()
-        && !BaseRailBlock::isRail(state))
-        return true;
-    return false;
+    if (state->isSolidBlockingCube() || state->isSignalSource() || state->getMaterial()->isLiquid()
+        || BaseRailBlock::isRail(state))
+        return false;
+    return true;
 }
 
 bool NaturalMobSpawner::isSpawnPositionOk(Mob::SpawnPlacementType placementType, Level* level, const BlockPos& pos,
@@ -101,30 +101,33 @@ bool NaturalMobSpawner::isSpawnPositionOk(Mob::SpawnPlacementType placementType,
             && level->getBlockState(pos.below())->getMaterial() == Material::WATER
             && !level->getBlockState(pos.above())->isSolidBlockingCubeAndNotSignalSource();
     }
-
-    if (placementType == Mob::SPAWN_PLACEMENT_TYPE_IN_OPEN_WATER)
+    else if (placementType == Mob::SPAWN_PLACEMENT_TYPE_IN_OPEN_WATER)
     {
+        int depth = 0;
         int blocksBelow = 0;
         MutableBlockPos column(0, 0, 0);
-        for (int depth = 0; pos.y - depth >= 0 && depth < 5; ++depth)
+        while (pos.y - depth >= 0 && depth < 5)
         {
             column.set(pos.x, pos.y - depth, pos.z);
             if (level->getBlock(column)->mMaterial->isLiquid())
                 ++blocksBelow;
+            ++depth;
         }
 
         bool surrounded = false;
-        if (blocksBelow == 5 && level->getBlockState(pos.offset(5, 0, 0))->getMaterial()->isLiquid()
-            && level->getBlockState(pos.offset(-5, 0, 0))->getMaterial()->isLiquid()
-            && level->getBlockState(pos.offset(0, 0, 5))->getMaterial()->isLiquid()
-            && level->getBlockState(pos.offset(0, 0, -5))->getMaterial()->isLiquid())
-            surrounded = true;
+        if (blocksBelow == 5)
+        {
+            if (level->getBlockState(pos.offset(5, 0, 0))->getMaterial()->isLiquid()
+                && level->getBlockState(pos.offset(-5, 0, 0))->getMaterial()->isLiquid()
+                && level->getBlockState(pos.offset(0, 0, 5))->getMaterial()->isLiquid()
+                && level->getBlockState(pos.offset(0, 0, -5))->getMaterial()->isLiquid())
+                surrounded = true;
+        }
 
         return state->getMaterial()->isLiquid() && surrounded
             && !level->getBlockState(pos.above())->isSolidBlockingCubeAndNotSignalSource();
     }
-
-    if (placementType == Mob::SPAWN_PLACEMENT_TYPE_ON_WATER_FLOOR)
+    else if (placementType == Mob::SPAWN_PLACEMENT_TYPE_ON_WATER_FLOOR)
     {
         BlockPos below = pos.below();
         if (!level->getBlockState(below)->isTopSolidBlocking() && level->getBlock(pos)->mMaterial->isLiquid())
@@ -134,19 +137,24 @@ bool NaturalMobSpawner::isSpawnPositionOk(Mob::SpawnPlacementType placementType,
         return validFloor && isValidEmptyUnderWaterSpawnBlock(state)
             && isValidEmptyUnderWaterSpawnBlock(level->getBlockState(pos.above()));
     }
-
-    BlockPos below = pos.below();
-    if (!level->getBlockState(below)->isTopSolidBlocking())
-        return false;
-    Block* floor = level->getBlock(below);
-    bool validFloor = floor != Blocks::bedrock && floor != Blocks::barrier;
-    return validFloor && isValidEmptySpawnBlock(state) && isValidEmptySpawnBlock(level->getBlockState(pos.above()));
+    else
+    {
+        BlockPos below = pos.below();
+        if (level->getBlockState(below)->isTopSolidBlocking())
+        {
+            Block* floor = level->getBlock(below);
+            bool validFloor = floor != Blocks::bedrock && floor != Blocks::barrier;
+            return validFloor && isValidEmptySpawnBlock(state)
+                && isValidEmptySpawnBlock(level->getBlockState(pos.above()));
+        }
+    }
+    return false;
 }
 
 unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool spawnFriendlies,
                                      bool spawnPersistent)
 {
-    if (!spawnFriendlies && !spawnEnemies && !spawnPersistent)
+    if (!spawnEnemies && !spawnFriendlies && !spawnPersistent)
         return 0;
 
     MemSect(20);
@@ -163,11 +171,12 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
         for (int i = 0; i < playerCount; ++i)
         {
             boost::shared_ptr<Player> player = level->mPlayers[i];
-            if (player->isSpectator())
-                continue;
-            playerChunkX[i] = Mth::floor(player->mX / 16.0);
-            playerChunkZ[i] = Mth::floor(player->mZ / 16.0);
-            addChunkPos(playerChunkX[i], playerChunkZ[i]);
+            if (!player->isSpectator())
+            {
+                playerChunkX[i] = Mth::floor(player->mX / 16.0);
+                playerChunkZ[i] = Mth::floor(player->mZ / 16.0);
+                addChunkPos(playerChunkX[i], playerChunkZ[i]);
+            }
         }
 
         PIXEndNamedEvent();
@@ -177,19 +186,17 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
         {
             for (int i = 0; i < distance * 2; ++i)
             {
-                if (distance == CHUNK_POLL_RADIUS)
+                for (int p = 0; p < playerCount; ++p)
                 {
-                    for (int p = 0; p < playerCount; ++p)
+                    bool edge = distance == CHUNK_POLL_RADIUS;
+                    if (edge)
                     {
                         addEdgeChunkPos(playerChunkX[p] - distance + i, playerChunkZ[p] - distance);
                         addEdgeChunkPos(playerChunkX[p] + distance, playerChunkZ[p] - distance + i);
                         addEdgeChunkPos(playerChunkX[p] + distance - i, playerChunkZ[p] + distance);
                         addEdgeChunkPos(playerChunkX[p] - distance, playerChunkZ[p] + distance - i);
                     }
-                }
-                else
-                {
-                    for (int p = 0; p < playerCount; ++p)
+                    else
                     {
                         addChunkPos(playerChunkX[p] - distance + i, playerChunkZ[p] - distance);
                         addChunkPos(playerChunkX[p] + distance, playerChunkZ[p] - distance + i);
@@ -234,8 +241,8 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
 
         int chunkCount = (int)size();
         int pollsPerChunk = chunkCount != 0 ? SPAWN_POLL_BUDGET / chunkCount : SPAWN_GROUPS * SPAWN_PACK_SIZE;
-        int packSize = std::max(std::min(pollsPerChunk / SPAWN_GROUPS, SPAWN_PACK_SIZE), 1);
-        int groupCount = std::max(std::min(pollsPerChunk / packSize, SPAWN_GROUPS), 1);
+        int packSize = std::max(std::min<int>(SPAWN_PACK_SIZE, pollsPerChunk / SPAWN_GROUPS), 1);
+        int groupCount = std::max(std::min<int>(SPAWN_GROUPS, pollsPerChunk / packSize), 1);
         if (category == MobCategory::GUARDIAN || category == MobCategory::SLIME)
         {
             packSize = 1;
@@ -245,7 +252,7 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
                            categoryIndex);
 
         bool categoryFull = false;
-        for (iterator chunk = begin(); chunk != end() && !categoryFull; ++chunk)
+        for (iterator chunkEnd = end(), chunk = begin(); chunk != chunkEnd; ++chunk)
         {
             if (chunk->second)
                 continue;
@@ -275,7 +282,7 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
 
             int clusterSize = 0;
             bool chunkDone = false;
-            for (int group = 0; group < groupCount && !categoryFull && !chunkDone; ++group)
+            for (int group = 0; group < groupCount; ++group)
             {
                 int x = start.x;
                 int y = start.y;
@@ -288,8 +295,10 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
                     y += level->mRandom->nextInt(1) - level->mRandom->nextInt(1);
                     z += level->mRandom->nextInt(6) - level->mRandom->nextInt(6);
                     pos.set(x, y, z);
-                    if (((x >> 4) != chunk->first.x || (z >> 4) != chunk->first.z)
-                        && !level->hasChunk(x >> 4, z >> 4, true))
+                    int chunkX = x >> 4;
+                    int chunkZ = z >> 4;
+                    if ((chunkX != chunk->first.x || chunkZ != chunk->first.z)
+                        && !level->hasChunk(chunkX, chunkZ, true))
                         continue;
 
                     if (spawnerData == NULL)
@@ -311,47 +320,51 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
                                            level, pos, group, attempt))
                         continue;
 
+                    boost::shared_ptr<Mob> mob;
                     MemSect(29);
-                    boost::shared_ptr<Mob> mob = mMobCache.getTestMob(level, spawnerData->mEntityBaseClass);
+                    mob = mMobCache.getTestMob(level, spawnerData->mEntityBaseClass);
                     MemSect(0);
 
                     unsigned long long mobType = mob->GetType();
                     if (!category->isSingleType()
                         && (mobType & (EntityType::MONSTER | EntityType::CREATURE_CATEGORY)) != 0)
                     {
-                        bool belowCap;
                         if (mobType == EntityType::GHAST)
                         {
-                            belowCap = level->countInstanceOf(EntityType::GHAST, true, NULL, NULL) < MAX_GHASTS;
+                            if (level->countInstanceOf(EntityType::GHAST, true, NULL, NULL) >= MAX_GHASTS)
+                                continue;
                         }
                         else if (mobType == EntityType::PIG_ZOMBIE)
                         {
-                            belowCap = level->countInstanceOf(EntityType::PIG_ZOMBIE, true, NULL, NULL)
-                                     < category->getMaxInstancesPerLevel() - PIG_ZOMBIE_CAP_MARGIN;
+                            if (level->countInstanceOf(EntityType::PIG_ZOMBIE, true, NULL, NULL)
+                                >= category->getMaxInstancesPerLevel() - PIG_ZOMBIE_CAP_MARGIN)
+                                continue;
                         }
                         else if (mobType == EntityType::ENDER_MAN
                                  && level->mDimension->getType() == DimensionType::THE_END)
                         {
-                            belowCap = level->countInstanceOf(EntityType::ENDER_MAN, false, NULL, NULL)
-                                     < (unsigned int)Mth::floor(category->getMaxInstancesPerLevel() * 0.5f);
+                            unsigned int maxEndermen
+                                = Mth::floor(category->getMaxInstancesPerLevel() * 0.5f);
+                            if (level->countInstanceOf(EntityType::ENDER_MAN, false, NULL, NULL) >= maxEndermen)
+                                continue;
                         }
-                        else if (mobType != EntityType::ENDER_MAN && (mobType & EntityType::MONSTER) == 0)
-                        {
-                            belowCap = level->countInstanceOf(mobType, true, NULL, NULL)
-                                     < category->getMaxInstancesPerLevel() / 2;
-                        }
-                        else
+                        else if (mobType == EntityType::ENDER_MAN || (mobType & EntityType::MONSTER) != 0)
                         {
                             MobCategory* mobCategory = MobCategory::getCategory(mobType);
-                            belowCap = mobCategory == category
-                                    || level->countInstanceOf(mobType, true, NULL, NULL)
-                                           < mobCategory->getMaxInstancesPerLevel();
+                            if (mobCategory != category
+                                && level->countInstanceOf(mobType, true, NULL, NULL)
+                                       >= mobCategory->getMaxInstancesPerLevel())
+                                continue;
                         }
-                        if (!belowCap)
+                        else if (level->countInstanceOf(mobType, true, NULL, NULL)
+                                 >= category->getMaxInstancesPerLevel() / 2)
+                        {
                             continue;
+                        }
                     }
 
-                    mob->moveTo(spawnX, y, spawnZ, level->mRandom->nextFloat() * 360.0f, 0.0f);
+                    float yRot = level->mRandom->nextFloat() * 360.0f;
+                    mob->moveTo(spawnX, y, spawnZ, yRot, 0.0f);
                     if (mob->checkSpawnRules() && mob->checkSpawnObstruction())
                     {
                         mob->checkDespawn();
@@ -391,7 +404,11 @@ unsigned int NaturalMobSpawner::tick(ServerLevel* level, bool spawnEnemies, bool
                     }
                     spawned += clusterSize;
                 }
+                if (categoryFull || chunkDone)
+                    break;
             }
+            if (categoryFull)
+                break;
         }
 
         if (categoryFull)

@@ -49,7 +49,7 @@ public:
     virtual void defineSynchedData();
     virtual bool isTamed();
     virtual std::wstring getOwnerUUID();
-    virtual boost::shared_ptr<LivingEntity> getOwner();
+    virtual boost::shared_ptr<Entity> getOwner();
     virtual float getFoalScale() const;
     virtual int getInventorySize();
     virtual void createInventory();

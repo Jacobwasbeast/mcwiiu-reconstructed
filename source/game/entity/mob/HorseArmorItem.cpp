@@ -14,21 +14,20 @@ HorseArmorItem::HorseArmorItem(int tier, int protection, int texture, const wcha
 {
     mTextures.push_back(texture);
     mHash.assign(hash);
-    mArmorIcon = NULL;
     mIcon = NULL;
+    mArmorIcon = NULL;
 }
 
 HorseArmorItem::HorseArmorItem(int tier, int protection, const int* textures, int textureCount, const wchar_t* hash)
     : Item(), mTier(tier), mProtection(protection)
 {
-    int i;
-    for (i = 0; i < textureCount; ++i)
+    for (int i = 0; i < textureCount; ++i)
     {
         mTextures.push_back(textures[i]);
     }
     mHash.assign(hash);
-    mArmorIcon = NULL;
     mIcon = NULL;
+    mArmorIcon = NULL;
 }
 
 HorseArmorItem::HorseArmorItem(int tier, int protection)
@@ -36,8 +35,8 @@ HorseArmorItem::HorseArmorItem(int tier, int protection)
 {
     mTextures.push_back(-1);
     mHash.assign(L"");
-    mArmorIcon = NULL;
     mIcon = NULL;
+    mArmorIcon = NULL;
 }
 
 bool HorseArmorItem::isHorseArmor(Item* item)
@@ -132,11 +131,11 @@ int HorseArmorItem::getDyedColor(not_null_ptr<ItemInstance> itemInstance) const
 
 int HorseArmorItem::getColor(not_null_ptr<ItemInstance> itemInstance, int layer)
 {
-    if (layer == 0)
+    if (layer != 0)
     {
-        return getDyedColor(itemInstance);
+        return Color(255, 255, 255).getRGB();
     }
-    return Color(255, 255, 255).getRGB();
+    return getDyedColor(itemInstance);
 }
 
 void HorseArmorItem::clearColor(const not_null_ptr<ItemInstance>& itemInstance)

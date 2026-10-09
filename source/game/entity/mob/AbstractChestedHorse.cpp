@@ -28,6 +28,7 @@ const EntityDataAccessor<bool>* AbstractChestedHorse::DATA_CHEST = NULL;
 AbstractChestedHorse::AbstractChestedHorse(Level* level)
     : AbstractHorse(level)
 {
+    mCanGallop = false;
 }
 
 void AbstractChestedHorse::defineSynchedData()
@@ -128,7 +129,7 @@ void AbstractChestedHorse::readAdditionalSaveData(CompoundTag* tag)
         {
             CompoundTag* itemTag = items->getCompound(i);
             unsigned int slot = itemTag->getByte(L"Slot");
-            if (slot > 1 && slot < (unsigned int)mInventory->getContainerSize())
+            if (slot >= 2 && slot < (unsigned int)mInventory->getContainerSize())
             {
                 mInventory->setItem((unsigned int)slot,
                                     not_null_ptr<ItemInstance>(new ItemInstance(itemTag)));

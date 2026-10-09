@@ -35,8 +35,7 @@ bool WaterAnimal::checkSpawnRules()
     BlockPos position(getPos(0.0f));
     while (mLevel->getLiquidBlock(position.above())->mMaterial == Material::WATER)
     {
-        MutableBlockPos above(position.above());
-        position = above;
+        position = MutableBlockPos(position.above());
     }
 
     int y = position.y - mRandom->nextInt(1, 5);

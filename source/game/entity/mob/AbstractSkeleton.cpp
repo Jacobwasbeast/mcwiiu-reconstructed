@@ -175,7 +175,7 @@ void AbstractSkeleton::aiStep()
             : BlockPos(mX, (double)Math::round(mY), mZ);
 
         if (brightness > 0.5f
-            && mRandom->nextFloat() * 30.0f < (brightness - 0.4f) + (brightness - 0.4f)
+            && mRandom->nextFloat() * 30.0f < (brightness - 0.4f) * 2.0f
             && mLevel->canSeeSky(pos))
         {
             not_null_ptr<ItemInstance> item = getItemSlot(EquipmentSlot::HEAD);
@@ -198,12 +198,12 @@ void AbstractSkeleton::aiStep()
         }
     }
     bool inWater = isUnderLiquid(Material::WATER);
-    if (!mInWater)
+    if (mInWater)
     {
-        if (inWater)
+        if (!inWater)
             mReassessWeaponGoal = true;
     }
-    else if (!inWater)
+    else if (inWater)
         mReassessWeaponGoal = true;
     mInWater = inWater;
     Monster::aiStep();
@@ -213,7 +213,7 @@ void AbstractSkeleton::rideTick()
 {
     LivingEntity::rideTick();
     boost::shared_ptr<Entity> vehicle = getVehicle();
-    if (vehicle.get() != NULL && (vehicle->GetType() & EntityType::PATHFINDER_MOB) == EntityType::PATHFINDER_MOB)
+    if (vehicle != NULL && vehicle->instanceof(EntityType::PATHFINDER_MOB))
     {
         boost::shared_ptr<PathfinderMob> pathfinder = boost::static_pointer_cast<PathfinderMob>(getVehicle());
         mYBodyRot = pathfinder->mYBodyRot;
@@ -226,8 +226,8 @@ void AbstractSkeleton::die(const DamageSource* source)
 
     if (source->getDirectEntity() && source->getEntity())
     {
-        if ((source->getDirectEntity()->GetType() & EntityType::ARROW) == EntityType::ARROW
-            && (source->getEntity()->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (source->getDirectEntity()->instanceof(EntityType::ARROW)
+            && source->getEntity()->instanceof(EntityType::PLAYER))
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(source->getEntity());
             const double dx = player->mX - mX;

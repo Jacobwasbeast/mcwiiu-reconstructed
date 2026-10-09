@@ -151,13 +151,14 @@ bool HangingEntity::isPickable()
 
 bool HangingEntity::skipAttackInteraction(boost::shared_ptr<Entity> entity)
 {
-    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
-        return false;
-
-    EntityDamageSource* source = DamageSource::CreatePlayerAttack(boost::static_pointer_cast<Player>(entity));
-    bool skipped = hurt(source, 0.0f);
-    delete source;
-    return skipped;
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
+    {
+        EntityDamageSource* source = DamageSource::CreatePlayerAttack(boost::static_pointer_cast<Player>(entity));
+        bool skipped = hurt(source, 0.0f);
+        delete source;
+        return skipped;
+    }
+    return false;
 }
 
 const Direction* HangingEntity::getDirection()
@@ -170,7 +171,7 @@ bool HangingEntity::hurt(const DamageSource* source, float damage)
     if (isInvulnerableTo(source))
         return false;
     boost::shared_ptr<Entity> attacker = source->getEntity();
-    if (attacker != NULL && (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+    if (attacker != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType())
         && !boost::static_pointer_cast<Player>(attacker)->isAllowedToHurtEntity(shared_from_this()))
         return false;
     if (!mRemoved && !mLevel->mIsClientSide)

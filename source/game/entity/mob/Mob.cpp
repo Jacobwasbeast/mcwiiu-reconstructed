@@ -103,10 +103,10 @@ Mob::~Mob()
     delete mBodyControl;
     delete mNavigation;
     delete mSensing;
-    delete[] mAdditionalItems.items;
+    delete[] mAdditionalItems.items.data;
     delete[] mAdditionalDropChances;
-    delete[] mHandItems.items;
-    delete[] mArmorItems.items;
+    delete[] mHandItems.items.data;
+    delete[] mArmorItems.items.data;
 }
 
 unsigned long long Mob::GetType()
@@ -505,11 +505,11 @@ void Mob::addAdditonalSaveData(CompoundTag* tag)
     {
         CompoundTag* leashTag = new CompoundTag();
 
-        if ((leashHolder->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, leashHolder->GetType()))
         {
             leashTag->putString(L"UUID", leashHolder->getUUID());
         }
-        else if ((leashHolder->GetType() & EntityType::HANGING_ENTITY) == EntityType::HANGING_ENTITY)
+        else if (eTYPE_DERIVED_FROM(EntityType::HANGING_ENTITY, leashHolder->GetType()))
         {
             boost::shared_ptr<HangingEntity> hanging =
                 boost::dynamic_pointer_cast<HangingEntity>(leashHolder);
@@ -629,40 +629,39 @@ void Mob::dropAllDeathLoot(bool hitByPlayer, int lootingLevel, const DamageSourc
     {
         lootTableLocation = getDefaultLootTable();
     }
-    if (lootTableLocation == NULL)
+    if (lootTableLocation != NULL)
+    {
+        LootTable* lootTable = mLevel->getLootTables()->get(lootTableLocation);
+        mLootTable = NULL;
+
+        LootTableContext::Builder* builder = (new LootTableContext::Builder(static_cast<ServerLevel*>(mLevel)))
+                                                 ->withLootedEntity(shared_from_this())
+                                                 ->withDamageSource(source);
+        if (hitByPlayer && mLastHurtByPlayer)
+        {
+            builder->withPlayer(mLastHurtByPlayer)->withLuck(mLastHurtByPlayer->getLuck());
+        }
+
+        Random seededRandom(mLootTableSeed);
+        LootTableContext context = builder->build();
+        Random* random = mLootTableSeed == 0 ? mRandom : &seededRandom;
+
+        std::vector<not_null_ptr<ItemInstance> >* items = lootTable->getRandomItems(random, context);
+        for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin();
+             it != items->end();
+             ++it)
+        {
+            spawnAtLocation(*it, 0.0f);
+        }
+
+        dropEquipment(hitByPlayer, lootingLevel);
+        delete items;
+        delete builder;
+    }
+    else
     {
         LivingEntity::dropAllDeathLoot(hitByPlayer, lootingLevel, source);
-        return;
     }
-
-    ServerLevel* level = static_cast<ServerLevel*>(mLevel);
-    LootTable* lootTable = level->getLootTables()->get(lootTableLocation);
-    mLootTable = NULL;
-
-    LootTableContext::Builder* builder = new LootTableContext::Builder(level);
-    builder->mThisEntity = shared_from_this();
-    builder->mDamageSource = source;
-    if (hitByPlayer && mLastHurtByPlayer)
-    {
-        builder->mKillerEntity = mLastHurtByPlayer;
-        builder->mLuck = mLastHurtByPlayer->getLuck();
-    }
-
-    Random seededRandom(mLootTableSeed);
-    LootTableContext context = builder->build();
-    Random* random = mLootTableSeed == 0 ? mRandom : &seededRandom;
-
-    std::vector<not_null_ptr<ItemInstance> >* items = lootTable->getRandomItems(random, context);
-    for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin();
-         it != items->end();
-         ++it)
-    {
-        spawnAtLocation(*it, 0.0f);
-    }
-
-    dropEquipment(hitByPlayer, lootingLevel);
-    delete items;
-    delete builder;
 }
 
 void Mob::setZza(float zza)
@@ -895,7 +894,7 @@ void Mob::serverAiStep()
     customServerAiStep();
     PIXEndNamedEvent();
 
-    if (isPassenger() && (getVehicle()->GetType() & EntityType::MOB) == EntityType::MOB)
+    if (isPassenger() && eTYPE_DERIVED_FROM(EntityType::MOB, getVehicle()->GetType()))
     {
         boost::shared_ptr<Mob> vehicleMob = boost::static_pointer_cast<Mob>(getVehicle());
 
@@ -960,7 +959,7 @@ void Mob::lookAt(boost::shared_ptr<Entity> entity, float maxHeadXRot, float maxH
     double dz = entity->mZ - mZ;
     double dy;
 
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
     {
         boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
         if (living)
