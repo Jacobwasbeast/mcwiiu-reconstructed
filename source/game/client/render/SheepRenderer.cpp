@@ -24,13 +24,14 @@ SheepRenderer::SheepRenderer(EntityRenderDispatcher* dispatcher, Model*, Model*,
 
 Model* SheepRenderer::getModel(boost::shared_ptr<LivingEntity>& entity)
 {
-    if (!mFurModel->hasOverriddenParts())
-        return mModel;
-
-    boost::shared_ptr<Sheep> sheep = boost::static_pointer_cast<Sheep>(entity);
-    if (sheep->isSheared())
-        return mModel;
-    return mFurModel;
+    if (mFurModel->hasOverriddenParts())
+    {
+        boost::shared_ptr<Sheep> sheep = boost::static_pointer_cast<Sheep>(entity);
+        if (sheep->isSheared())
+            return mModel;
+        return mFurModel;
+    }
+    return mModel;
 }
 
 const ResourceLocation* SheepRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
@@ -40,11 +41,7 @@ const ResourceLocation* SheepRenderer::getTextureLocation(boost::shared_ptr<Enti
 
 void SheepRenderer::setColourState(boost::shared_ptr<Sheep> sheep, float partialTicks)
 {
-    bool isJeb = false;
     if (sheep->hasCustomName() && sheep->getCustomName() == L"jeb_")
-        isJeb = true;
-
-    if (isJeb)
     {
         int colourIndex = sheep->mTickCount / 25 + sheep->getId();
         int colourCount = static_cast<int>(DyeColor::COLORS.size());
@@ -53,10 +50,9 @@ void SheepRenderer::setColourState(boost::shared_ptr<Sheep> sheep, float partial
         float blend = (static_cast<float>(sheep->mTickCount % 25) + partialTicks) / 25.0F;
         arrayWithLength<const float> first = Sheep::getColorArray(DyeColor::byBlockData(firstIndex));
         arrayWithLength<const float> second = Sheep::getColorArray(DyeColor::byBlockData(secondIndex));
-        float inverse = 1.0F - blend;
-        GlStateManager::color3f(first.data[0] * inverse + second.data[0] * blend,
-                                first.data[1] * inverse + second.data[1] * blend,
-                                first.data[2] * inverse + second.data[2] * blend);
+        GlStateManager::color3f(first.data[0] * (1.0F - blend) + second.data[0] * blend,
+                                first.data[1] * (1.0F - blend) + second.data[1] * blend,
+                                first.data[2] * (1.0F - blend) + second.data[2] * blend);
     }
     else
     {

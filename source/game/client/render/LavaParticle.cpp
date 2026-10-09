@@ -48,15 +48,15 @@ void LavaParticle::render(BufferBuilder* buffer,
 
 void LavaParticle::tick()
 {
-    int currentAge = age++;
     xo = x;
     yo = y;
     zo = z;
 
-    if (lifetime <= currentAge)
+    if (age++ >= lifetime)
         remove();
 
-    if ((float)age / (float)lifetime < random.nextFloat())
+    float progress = (float)age / (float)lifetime;
+    if (random.nextFloat() > progress)
         level->addParticle(PARTICLE_SMOKE, x, y, z, xd, yd, zd, arrayWithLength<int>());
 
     yd -= 0.03;

@@ -106,9 +106,9 @@ void PlayerRenderer::setModelProperties(boost::shared_ptr<Player> player, float 
         }
         model->mCrouching = player->isSneaking();
         model->mSwimming = player->getDamageNearbyMobs();
-        model->mEating = false;
         HumanoidModel::eArmPose mainHandPose = HumanoidModel::eArmPose_Empty;
         HumanoidModel::eArmPose offhandPose = HumanoidModel::eArmPose_Empty;
+        model->mEating = false;
         if (!mainHandItem->isEmpty())
         {
             mainHandPose = HumanoidModel::eArmPose_Item;
@@ -134,10 +134,10 @@ void PlayerRenderer::setModelProperties(boost::shared_ptr<Player> player, float 
                 {
                     float remainingTicks =
                         (float)player->getUseItemRemainingTicks() - partialTicks + 1.0f;
-                    float useDuration = (float)mainHandItem->getUseDuration();
+                    float progress = 1.0f - remainingTicks / (float)mainHandItem->getUseDuration();
                     model->mEating = true;
                     model->mUseItemRemainingTicks = remainingTicks;
-                    model->mUseItemProgress = 1.0f - remainingTicks / useDuration;
+                    model->mUseItemProgress = progress;
                 }
             }
         }
@@ -262,7 +262,7 @@ void PlayerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double 
     bool fallFlying = false;
     if (player)
     {
-        fallFlying = (player->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+        fallFlying = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, player->GetType())
             && boost::static_pointer_cast<LivingEntity>(player)->getFallFlyingTicks() > 4;
     }
 
@@ -285,7 +285,7 @@ void PlayerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double 
     GlStateManager::setProfile();
 
     bool suppressSpecialRender = false;
-    if (player && (player->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (player && eTYPE_DERIVED_FROM(EntityType::PLAYER, player->GetType()))
     {
         boost::shared_ptr<Player> localPlayer = Minecraft::GetInstance()->mPlayer;
         if (localPlayer->GetThirdPersonView(false) != 0
@@ -332,8 +332,8 @@ void PlayerRenderer::renderNameTags(boost::shared_ptr<Entity>& entity, double x,
                                     const std::wstring& name, double distance, int colour)
 {
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    EntityRenderer::renderNameTags(entity, x, y, z, name, distance,
-                                   getNametagColour(player->mPlayerIndex));
+    int nameColour = getNametagColour(player->mPlayerIndex);
+    EntityRenderer::renderNameTags(entity, x, y, z, name, distance, nameColour);
 }
 
 void PlayerRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
@@ -343,22 +343,24 @@ void PlayerRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partia
 
 void PlayerRenderer::renderRightHand(boost::shared_ptr<Player> player)
 {
-    GlStateManager::color3f(1.0f, 1.0f, 1.0f);
+    float brightness = 1.0f;
+    GlStateManager::color3f(brightness, brightness, brightness);
+    float scale = 0.0625f;
     PlayerModel* model = static_cast<PlayerModel*>(getModel());
     setModelProperties(player, 0.0f);
     model->mSitting = false;
     showAdditionalModelParts(player);
     model->mAttackTime = 0.0f;
-    model->mRiding = false;
     model->mCrouching = false;
-    model->setupAnim(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0625f, player, _SkinAdjustments());
+    model->mRiding = false;
+    model->setupAnim(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, scale, player, _SkinAdjustments());
     model->mRightArm->mXRot = 0.0f;
-    model->mRightArm->render(0.0625f, true,
+    model->mRightArm->render(scale, true,
                              model->IsBodyPartDisabled(HumanoidModel::eAnimBit_RightArm));
     if (mIs64x64)
     {
         model->mRightSleeve->mXRot = 0.0f;
-        model->mRightSleeve->render(0.0625f, true,
+        model->mRightSleeve->render(scale, true,
                                     model->IsBodyPartDisabled(HumanoidModel::eAnimBit_RightSleeve));
     }
     hideAdditionalModelParts(player);
@@ -366,22 +368,24 @@ void PlayerRenderer::renderRightHand(boost::shared_ptr<Player> player)
 
 void PlayerRenderer::renderLeftHand(boost::shared_ptr<Player> player)
 {
-    GlStateManager::color3f(1.0f, 1.0f, 1.0f);
+    float brightness = 1.0f;
+    GlStateManager::color3f(brightness, brightness, brightness);
+    float scale = 0.0625f;
     PlayerModel* model = static_cast<PlayerModel*>(getModel());
     setModelProperties(player, 0.0f);
     model->mSitting = false;
     showAdditionalModelParts(player);
     model->mAttackTime = 0.0f;
-    model->mRiding = false;
     model->mCrouching = false;
-    model->setupAnim(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0625f, player, _SkinAdjustments());
+    model->mRiding = false;
+    model->setupAnim(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, scale, player, _SkinAdjustments());
     model->mLeftArm->mXRot = 0.0f;
-    model->mLeftArm->render(0.0625f, true,
+    model->mLeftArm->render(scale, true,
                             model->IsBodyPartDisabled(HumanoidModel::eAnimBit_LeftArm));
     if (mIs64x64)
     {
         model->mLeftSleeve->mXRot = 0.0f;
-        model->mLeftSleeve->render(0.0625f, true,
+        model->mLeftSleeve->render(scale, true,
                                    model->IsBodyPartDisabled(HumanoidModel::eAnimBit_LeftSleeve));
     }
     hideAdditionalModelParts(player);
@@ -399,16 +403,13 @@ void PlayerRenderer::setupPosition(boost::shared_ptr<LivingEntity>& entity, doub
     {
         if (player->isPassenger())
         {
-            if ((player->getSkinAdjustments().mAnimFlags & (1 << HumanoidModel::eAnimBit_Seated)) == 0)
-            {
-                if (player->getSkinAdjustments().mHeadY > 0.0f)
-                {
-                    y += (double)(player->getSkinAdjustments().mHeadY * 0.0625f);
-                }
-            }
-            else
+            if ((player->getSkinAdjustments().mAnimFlags & (1 << HumanoidModel::eAnimBit_Seated)) != 0)
             {
                 y += 0.5;
+            }
+            else if (player->getSkinAdjustments().mHeadY > 0.0f)
+            {
+                y += (double)(player->getSkinAdjustments().mHeadY * 0.0625f);
             }
         }
         LivingEntityRenderer::setupPosition(entity, x, y, z);
@@ -437,9 +438,9 @@ void PlayerRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, flo
         if (player->isLocalPlayer())
         {
             boost::shared_ptr<LocalPlayer> localPlayer = boost::static_pointer_cast<LocalPlayer>(player);
-            float fallFlyYaw = localPlayer->mFallFlyYawOld
-                + (localPlayer->mFallFlyYaw - localPlayer->mFallFlyYawOld) * partialTicks;
-            GlStateManager::rotatef(fallFlyYaw, 0.0f, 1.0f, 0.0f);
+            GlStateManager::rotatef(localPlayer->mFallFlyYawOld
+                                        + (localPlayer->mFallFlyYaw - localPlayer->mFallFlyYawOld) * partialTicks,
+                                    0.0f, 1.0f, 0.0f);
         }
         else
         {
@@ -464,7 +465,7 @@ void PlayerRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, flo
         LivingEntityRenderer::setupRotations(entity, ageInTicks, rotationYaw, partialTicks);
         GlStateManager::rotatef(-90.0f - player->mXRot, 1.0f, 0.0f, 0.0f);
         GlStateManager::translatef(0.0f, -1.0f, 0.5f);
-        GlStateManager::rotatef((player->mAutoSpinAttackTicks + partialTicks) * -75.0f,
+        GlStateManager::rotatef((player->mTickCount + partialTicks) * -75.0f,
                                 0.0f, 1.0f, 0.0f);
     }
     else
@@ -481,9 +482,12 @@ void PlayerRenderer::renderShadow(boost::shared_ptr<Entity>& entity, double x, d
     {
         return;
     }
-    if (gApp.GetGameHostOption(eGameHostOption_HostCanBeInvisible) && player && player->hasInvisiblePrivilege())
+    if (gApp.GetGameHostOption(eGameHostOption_HostCanBeInvisible) > 0)
     {
-        return;
+        if (player && player->hasInvisiblePrivilege())
+        {
+            return;
+        }
     }
     EntityRenderer::renderShadow(entity, x, y, z, alpha, partialTicks);
 }
@@ -500,12 +504,14 @@ void PlayerRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float
 {
     if (mDispatcher->mRenderLeash)
     {
-        mElytraLayer->getElytraModel()->mOverrideAnim = true;
+        ElytraModel* elytraModel = mElytraLayer->getElytraModel();
+        elytraModel->mOverrideAnim = true;
     }
     LivingEntityRenderer::renderLayers(entity, limbSwing, limbSwingAmount, partialTick, ageInTicks, netHeadYaw,
                                         headPitch, scale, overlay);
     if (mDispatcher->mRenderLeash)
     {
-        mElytraLayer->getElytraModel()->mOverrideAnim = false;
+        ElytraModel* elytraModel = mElytraLayer->getElytraModel();
+        elytraModel->mOverrideAnim = false;
     }
 }

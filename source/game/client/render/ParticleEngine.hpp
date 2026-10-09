@@ -67,7 +67,7 @@ public:
 
 private:
     Level* level;
-    ParticleList particles[30];
+    ParticleList particles[3][5][2];
     std::vector<TrackingEmitter*> trackingEmitters;
     Textures* textures;
     Random random;

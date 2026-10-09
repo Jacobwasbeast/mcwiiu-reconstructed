@@ -21,18 +21,14 @@
 FireworksParticles::FireworksStarter::FireworksStarter(Level* level, double x, double y, double z,
                                    double xa, double ya, double za,
                                    ParticleEngine* particleEngine, CompoundTag* fireworks)
-    : Particle(level, x, y, z, 0.0, 0.0, 0.0), life(0), particleEngine(particleEngine),
-      twinkle(false)
+    : Particle(level, x, y, z, 0.0, 0.0, 0.0), life(0), twinkle(false)
 {
     xd = xa;
     yd = ya;
     zd = za;
+    this->particleEngine = particleEngine;
     lifetime = 8;
-    if (fireworks == NULL)
-    {
-        explosions = NULL;
-    }
-    else
+    if (fireworks != NULL)
     {
         explosions = fireworks->getList(FireworksItem::TAG_EXPLOSIONS, Tag::TAG_COMPOUND)->copy();
         if (explosions->isEmpty())
@@ -44,7 +40,8 @@ FireworksParticles::FireworksStarter::FireworksStarter(Level* level, double x, d
             lifetime = explosions->size() * 2 - 1;
             for (int i = 0; i < explosions->size(); ++i)
             {
-                if (explosions->getCompound(i)->getBoolean(FireworksItem::TAG_E_FLICKER))
+                CompoundTag* explosion = explosions->getCompound(i);
+                if (explosion->getBoolean(FireworksItem::TAG_E_FLICKER))
                 {
                     twinkle = true;
                     lifetime += 15;
@@ -53,11 +50,10 @@ FireworksParticles::FireworksStarter::FireworksStarter(Level* level, double x, d
             }
         }
     }
-}
-
-FireworksParticles::FireworksStarter::~FireworksStarter()
-{
-    return;
+    else
+    {
+        explosions = NULL;
+    }
 }
 
 void FireworksParticles::FireworksStarter::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
@@ -112,14 +108,10 @@ void FireworksParticles::FireworksStarter::createParticleBall(double scale, int 
         {
             for (int zz = -radius; zz <= radius; ++zz)
             {
-                double xa = random.nextDouble();
-                xa = (double)xx + (xa - random.nextDouble()) * spread;
-                double ya = random.nextDouble();
-                ya = (double)yy + (ya - random.nextDouble()) * spread;
-                double za = random.nextDouble();
-                za = (double)zz + (za - random.nextDouble()) * spread;
-                double distance = std::sqrt(xa * xa + ya * ya + za * za);
-                double velocity = random.nextGaussian() * 0.05 + distance / scale;
+                double xa = xx + (random.nextDouble() - random.nextDouble()) * spread;
+                double ya = yy + (random.nextDouble() - random.nextDouble()) * spread;
+                double za = zz + (random.nextDouble() - random.nextDouble()) * spread;
+                double velocity = std::sqrt(xa * xa + ya * ya + za * za) / scale + random.nextGaussian() * 0.05;
                 createParticle(originX, originY, originZ,
                                xa / velocity, ya / velocity, za / velocity,
                                colors, fadeColors, trail, flicker);
@@ -153,14 +145,13 @@ void FireworksParticles::FireworksStarter::createParticleShape(double scale,
             double nextY = shape.data[point]->data[1];
             for (double fraction = 0.25; fraction <= 1.0; fraction += 0.25)
             {
-                double horizontal = ((nextX - previousX) * fraction + previousX) * scale;
-                double sine = std::sin(angle);
-                double cosine = std::cos(angle);
+                double xd = (previousX + (nextX - previousX) * fraction) * scale;
+                double yd = (previousY + (nextY - previousY) * fraction) * scale;
+                double zd = xd * std::sin(angle);
+                xd = xd * std::cos(angle);
                 for (double side = -1.0; side <= 1.0; side += 2.0)
                 {
-                    double vertical = ((nextY - previousY) * fraction + previousY) * scale;
-                    createParticle(x, y, z, horizontal * cosine * side,
-                                   vertical, horizontal * sine * side,
+                    createParticle(x, y, z, xd * side, yd, zd * side,
                                    colors, fadeColors, trail, flicker);
                 }
             }

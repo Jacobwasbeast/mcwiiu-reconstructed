@@ -10,24 +10,19 @@ FireworksParticles::FireworksSparkParticle::FireworksSparkParticle(
     : SimpleAnimatedParticle(level, x, y, z, 160, 8, -0.004f),
       particleEngine(particleEngine)
 {
-    xd = xa;
-    yd = ya;
     zd = za;
+    yd = ya;
     size *= 0.75f;
+    xd = xa;
     lifetime = random.nextInt(12) + 48;
-    alpha = 0.99f;
+    hasPhysics = false;
+    trail = false;
     fadeRed = 0.0f;
     fadeGreen = 0.0f;
+    flicker = false;
     fadeBlue = 0.0f;
     fading = false;
-    trail = false;
-    flicker = false;
-    hasPhysics = false;
-}
-
-FireworksParticles::FireworksSparkParticle::~FireworksSparkParticle()
-{
-    return;
+    alpha = 0.99f;
 }
 
 void FireworksParticles::FireworksSparkParticle::setTrail(bool trail)
@@ -46,9 +41,9 @@ void FireworksParticles::FireworksSparkParticle::render(
 {
     if (!flicker || age < lifetime / 3 || ((age + lifetime) / 3 & 1) == 0)
     {
-        float px = (float)((x - xo) * partialTicks + xo - xOff);
-        float py = (float)((y - yo) * partialTicks + yo - yOff);
         float pz = (float)((z - zo) * partialTicks + zo - zOff);
+        float py = (float)((y - yo) * partialTicks + yo - yOff);
+        float px = (float)((x - xo) * partialTicks + xo - xOff);
 
         if (2.0f <= px * px + py * py + pz * pz)
         {

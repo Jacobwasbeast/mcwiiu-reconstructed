@@ -22,7 +22,7 @@ EnderParticle::EnderParticle(Level* level, double x, double y, double z, double 
     bCol = (float)(colour & 255) / 255.0f;
     float colourScale = (float)(random.nextFloat() * 0.6f + 0.4f);
     rCol *= colourScale; gCol *= colourScale; bCol *= colourScale;
-    size = scale = (float)(random.nextFloat() * 0.2f + 0.5f);
+    scale = size = (float)(random.nextFloat() * 0.2f + 0.5f);
     lifetime = (int)(Math::random() * 10.0) + 40;
     hasPhysics = false;
     setMiscTex((int)(Math::random() * 8.0));
@@ -30,41 +30,49 @@ EnderParticle::EnderParticle(Level* level, double x, double y, double z, double 
 void EnderParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera, float partialTicks, float xa, float ya, float za, float xa2, float za2)
 {
     float progress = ((float)age + partialTicks) / (float)lifetime;
-    float inverseProgress = 1.0f - progress;
-    size = scale * -(inverseProgress * inverseProgress - 1.0f);
+    progress = 1.0f - progress;
+    progress *= progress;
+    progress = 1.0f - progress;
+    size = scale * progress;
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
 int EnderParticle::getLightColor(float partialTicks)
 {
     int light = Particle::getLightColor(partialTicks);
     float progress = (float)age / (float)lifetime;
+    progress *= progress;
+    progress *= progress;
+    int sky = light & 255;
     int block = (light >> 16) & 255;
-    block += (int)(progress * progress * 15.0f * 16.0f);
+    block += (int)(progress * 15.0f * 16.0f);
     if (block > 240) block = 240;
-    return (light & 255) | (block << 16);
+    return sky | (block << 16);
 }
 float EnderParticle::getBrightness(float partialTicks)
 {
+    float brightness = Particle::getBrightness(partialTicks);
     float progress = (float)age / (float)lifetime;
-    float t = progress * progress;
-    t *= t;
-    return (float)(Particle::getBrightness(partialTicks) * (1.0f - t) + t);
+    progress *= progress;
+    progress *= progress;
+    return brightness * (1.0f - progress) + progress;
 }
 void EnderParticle::tick()
 {
+    xo = x;
+    yo = y;
+    zo = z;
     float progress = (float)age / (float)lifetime;
-    xo = x; yo = y; zo = z; ++age;
-    float curve = 1.0f - ((progress * progress + progress * progress) - progress);
-    float vertical = 1.0f - progress;
-    x = xd * curve + originX;
-    y = yd * curve + originY + vertical;
-    z = zd * curve + originZ;
-    if (age - 1 >= lifetime) remove();
+    float elapsed = progress;
+    progress = -progress + progress * progress * 2.0f;
+    progress = 1.0f - progress;
+    x = xd * progress + originX;
+    y = yd * progress + originY + (1.0f - elapsed);
+    z = zd * progress + originZ;
+    if (age++ >= lifetime) remove();
 }
 void EnderParticle::move(double xa, double ya, double za)
 {
-    AABB* box = getBoundingBox();
-    setBoundingBox(box->move(xa, ya, za));
+    setBoundingBox(getBoundingBox()->move(xa, ya, za));
     setLocationFromBoundingbox();
 }
 uint64_t EnderParticle::GetType() { return ParticleKind::ENDER; }

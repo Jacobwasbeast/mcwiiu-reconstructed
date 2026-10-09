@@ -107,10 +107,10 @@ void DolphinModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, fl
 
 void DolphinModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    mBody->mXRot = headPitch * 0.017453292f;
-    mBody->mYRot = netHeadYaw * 0.017453292f;
+    mBody->mXRot = headPitch * Mth::DEG_TO_RAD;
+    mBody->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
 
-    if (entity->GetType() == EntityType::DOLPHIN)
+    if (eTYPE_DERIVED_FROM(EntityType::DOLPHIN, entity->GetType()))
     {
         boost::shared_ptr<Dolphin> dolphin = boost::static_pointer_cast<Dolphin>(entity);
 

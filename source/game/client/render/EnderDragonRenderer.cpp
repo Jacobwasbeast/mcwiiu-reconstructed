@@ -40,8 +40,9 @@ void EnderDragonRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity
     offsets.data = positions;
     offsets.length = 3;
     dragon->getLatencyPos(offsets, 7, partialTicks);
+    float yRot = (float)positions[0];
     float tilt = dragon->getTilt(partialTicks);
-    GlStateManager::rotatef(-(float)positions[0], 0.0f, 1.0f, 0.0f);
+    GlStateManager::rotatef(-yRot, 0.0f, 1.0f, 0.0f);
     GlStateManager::rotatef(tilt, 1.0f, 0.0f, 0.0f);
     GlStateManager::translatef(0.0f, 0.0f, 1.0f);
     if (dragon->LivingEntity::mDeathTime > 0)
@@ -95,13 +96,12 @@ void EnderDragonRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
         bindTexture(&END_CRYSTAL_BEAM_LOCATION);
         float animation = std::sin(((float)dragon->mNearestCrystal->mTickCount + partialTick) * 0.2f) * 0.5f + 0.5f;
         animation = (animation * animation + animation) * 0.2f;
-        double delta = (double)(1.0f - partialTick);
         renderCrystalBeams(x, y, z, partialTick,
-                           (dragon->mXo - dragon->mX) * delta + dragon->mX,
-                           (dragon->mYo - dragon->mY) * delta + dragon->mY,
-                           (dragon->mZo - dragon->mZ) * delta + dragon->mZ,
+                           dragon->mX + (dragon->mXo - dragon->mX) * (double)(1.0f - partialTick),
+                           dragon->mY + (dragon->mYo - dragon->mY) * (double)(1.0f - partialTick),
+                           dragon->mZ + (dragon->mZo - dragon->mZ) * (double)(1.0f - partialTick),
                            dragon->mTickCount, dragon->mNearestCrystal->mX,
-                           dragon->mNearestCrystal->mY + animation, dragon->mNearestCrystal->mZ);
+                           animation + dragon->mNearestCrystal->mY, dragon->mNearestCrystal->mZ);
     }
 }
 
@@ -139,8 +139,8 @@ void EnderDragonRenderer::renderCrystalBeams(double x, double y, double z, float
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
     GlStateManager::pushMatrix();
     GlStateManager::translatef((float)x, (float)y + 2.0f, (float)z);
-    GlStateManager::rotatef((float)(-std::atan2(dz, dx) * 57.295776f - 90.0f), 0.0f, 1.0f, 0.0f);
-    GlStateManager::rotatef((float)(-std::atan2(horizontal, dy) * 57.295776f - 90.0f), 1.0f, 0.0f, 0.0f);
+    GlStateManager::rotatef(-(std::atan2(dz, dx) * Mth::RAD_TO_DEG) - 90.0f, 0.0f, 1.0f, 0.0f);
+    GlStateManager::rotatef(-(std::atan2(horizontal, dy) * Mth::RAD_TO_DEG) - 90.0f, 1.0f, 0.0f, 0.0f);
     GlStateManager::rotatef(beamRotation, 0.0f, 0.0f, 1.0f);
     beamRotation += 0.5f;
     if (beamRotation >= 360.0f)
@@ -153,16 +153,17 @@ void EnderDragonRenderer::renderCrystalBeams(double x, double y, double z, float
     GlStateManager::blendFunc(4, 6);
     GlStateManager::shadeModel(0);
     float phase = ((float)time + partialTick) * 0.005f;
+    float negPhase = -phase;
     float length = (float)std::sqrt(dx * dx + dy * dy + dz * dz) * 0.03125f - phase;
     builder->begin(1);
     for (int i = 0; i <= 8; ++i)
     {
-        float section = (float)(i % 8) * 0.125f;
         float angle = (float)(i % 8) * 6.2831855f * 0.125f;
-        float sine = std::sin(angle);
-        float cosine = std::cos(angle);
-        builder->vertexUV(sine * 0.75f * 0.2f, cosine * 0.75f * 0.2f, 0.0f, section, length);
-        builder->vertexUV(sine * 0.75f, cosine * 0.75f, distance, section, -phase);
+        float sine = std::sin(angle) * 0.75f;
+        float cosine = std::cos(angle) * 0.75f;
+        float section = (float)(i % 8) * 0.125f;
+        builder->vertexUV(sine * 0.2f, cosine * 0.2f, 0.0f, section, length);
+        builder->vertexUV(sine, cosine, distance, section, negPhase);
     }
     builder->end();
     GlStateManager::enableCull();

@@ -111,7 +111,7 @@ bool Font::CharacterExists(wchar_t character)
 {
     if (mCharacterMap.size() != 0)
         return mCharacterMap.find(character) != mCharacterMap.end();
-    return character <= mColumns * mRows;
+    return character <= mRows * mColumns;
 }
 
 int Font::MapCharacter(wchar_t character)
@@ -123,24 +123,21 @@ int Font::MapCharacter(wchar_t character)
 
 std::wstring Font::sanitize(const std::wstring& text, bool trim)
 {
-    std::wstring result(text);
-    for (int i = 0; i < result.length(); ++i)
+    std::wstring result = text;
+    for (unsigned int i = 0; i < result.length(); ++i)
     {
-        if (!CharacterExists(result[i]))
+        if (CharacterExists(result[i]))
         {
-            if (trim)
-            {
-                result.erase(result.begin() + i);
-                --i;
-            }
-            else
-            {
-                result[i] = 0;
-            }
+            result[i] = static_cast<wchar_t>(MapCharacter(result[i]));
+        }
+        else if (!trim)
+        {
+            result[i] = 0;
         }
         else
         {
-            result[i] = static_cast<wchar_t>(MapCharacter(result[i]));
+            result.erase(result.begin() + i);
+            --i;
         }
     }
 
@@ -148,10 +145,7 @@ std::wstring Font::sanitize(const std::wstring& text, bool trim)
     {
         const std::wstring::size_type first = result.find_first_not_of(L' ');
         const std::wstring::size_type last = result.find_last_not_of(L' ');
-        if (first == std::wstring::npos)
-            result = std::wstring(L"");
-        else
-            result = std::wstring(result, first, last - first + 1);
+        result = first == std::wstring::npos ? std::wstring(L"") : std::wstring(result, first, last - first + 1);
     }
 
     return result;
@@ -281,8 +275,7 @@ unsigned int Font::draw(const std::wstring& text, int x, int y, int color, bool 
         if (darken)
             color = (color & 0xFCFCFC) >> 2 | (color & 0xFF000000);
         GlStateManager::color4f((color >> 16 & 255) / 255.0f, (color >> 8 & 255) / 255.0f,
-                                (color & 255) / 255.0f,
-                                static_cast<int>(static_cast<unsigned int>(color) >> 24) / 255.0f);
+                                (color & 255) / 255.0f, (color >> 24 & 255) / 255.0f);
         mX = static_cast<float>(x);
         mY = static_cast<float>(y);
         return draw(text, darken, useBuilder);
@@ -297,14 +290,15 @@ unsigned int Font::draw(const std::wstring& text, int x, int y, int color)
 
 void Font::cacheCharacter(int character)
 {
+    const float textureWidth = mCharWidths[character] - 0.01f;
     const int column = character % mColumns;
     const int row = character / mColumns;
-    const float textureWidth = mCharWidths[character] - 0.01f;
-    const float textureHeight = static_cast<float>(mCharacterHeight) - 0.01f;
     const float x = static_cast<float>(column * mCharacterWidth);
     const float y = static_cast<float>(row * mCharacterHeight);
+    const float textureHeight = static_cast<float>(mCharacterHeight) - 0.01f;
     const float sheetWidth = static_cast<float>(mColumns * mCharacterWidth);
     const float sheetHeight = static_cast<float>(mRows * mCharacterHeight);
+    Character& glyph = mCharacters[character];
 
     float drawWidth = textureWidth;
     if (mCharacterWidth > 8)
@@ -313,7 +307,6 @@ void Font::cacheCharacter(int character)
         drawWidth = mCharWidths[character] - 0.01f;
     }
 
-    Character& glyph = mCharacters[character];
     glyph.height = textureHeight <= 7.99f ? textureHeight : 7.99f;
     glyph.u0 = x / sheetWidth;
     glyph.u1 = (x + textureWidth) / sheetWidth;
@@ -335,7 +328,8 @@ int Font::wordWrapHeight(const std::wstring& text, int wrapWidth)
     if (lines.size() > 1)
     {
         int height = 0;
-        for (std::vector<std::wstring>::iterator it = lines.begin(); it != lines.end(); ++it)
+        std::vector<std::wstring>::iterator end = lines.end();
+        for (std::vector<std::wstring>::iterator it = lines.begin(); it != end; ++it)
             height += wordWrapHeight(*it, wrapWidth);
         return height;
     }
@@ -378,7 +372,8 @@ void Font::drawWordWrapInternal(const std::wstring& text, int x, int y, int wrap
     std::vector<std::wstring> lines = stringSplit(text, L'\n');
     if (lines.size() > 1)
     {
-        for (std::vector<std::wstring>::iterator it = lines.begin(); it != lines.end(); ++it)
+        std::vector<std::wstring>::iterator end = lines.end();
+        for (std::vector<std::wstring>::iterator it = lines.begin(); it != end; ++it)
         {
             if (y + wordWrapHeight(*it, wrapWidth) > height)
                 break;

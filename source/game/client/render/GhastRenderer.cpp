@@ -14,11 +14,6 @@ GhastRenderer::GhastRenderer(EntityRenderDispatcher* dispatcher)
 {
 }
 
-GhastRenderer::~GhastRenderer()
-{
-    return;
-}
-
 const ResourceLocation* GhastRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
     boost::shared_ptr<Ghast> ghast = boost::static_pointer_cast<Ghast>(entity);

@@ -16,7 +16,6 @@ class HorseRenderer : public AbstractHorseRenderer
 {
 public:
     HorseRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~HorseRenderer();
 
     virtual void bindTexture(const ResourceLocation* location);
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);

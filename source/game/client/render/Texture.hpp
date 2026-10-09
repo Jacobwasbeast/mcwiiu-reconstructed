@@ -35,8 +35,8 @@ public:
             int format, int minFilter, int magFilter, bool mipmap);
     Rect2i* getRect();
     void fill(const Rect2i* rect, int color);
-    void writeAsBMP(const std::wstring& fileName);
-    void writeAsPNG(const std::wstring& fileName);
+    void writeAsBMP(const std::wstring& fileName) {}
+    void writeAsPNG(const std::wstring& fileName) {}
     void blit(int x, int y, Texture* texture);
     void transferFromBuffer(arrayWithLength<int> pixels);
     std::wstring getName();

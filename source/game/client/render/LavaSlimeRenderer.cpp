@@ -20,8 +20,9 @@ void LavaSlimeRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
     if (mModel->hasOverriddenParts() && !entity->isOnFire())
     {
         int lightColor = Entity::GetLightColor(entity.get());
-        GlStateManager::multiTexCoord2f((float)(lightColor % 65536),
-                                        (float)(lightColor / 65536));
+        int blockLight = lightColor % 65536;
+        int skyLight = lightColor / 65536;
+        GlStateManager::multiTexCoord2f((float)blockLight, (float)skyLight);
     }
     MobRenderer::render(entity, x, y, z, yaw, partialTick);
 }
@@ -40,8 +41,8 @@ void LavaSlimeRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float par
 {
     boost::shared_ptr<MagmaCube> magmaCube = boost::static_pointer_cast<MagmaCube>(entity);
     float size = (float)magmaCube->getSize();
-    float squish = (magmaCube->mSquish - magmaCube->mSquishO) * partialTick + magmaCube->mSquishO;
-    float inverseSquish = 1.0F / (squish / (size * 0.5F + 1.0F) + 1.0F);
+    float squish = (magmaCube->mSquishO + (magmaCube->mSquish - magmaCube->mSquishO) * partialTick) / (size * 0.5F + 1.0F);
+    float inverseSquish = 1.0F / (squish + 1.0F);
     GlStateManager::scalef(inverseSquish * size, (1.0F / inverseSquish) * size,
                            inverseSquish * size);
 }

@@ -18,6 +18,8 @@
 
 static const int ALL_FACES = 63;
 
+const float ModelPart::RAD = Mth::RAD_TO_DEG;
+
 ModelPart::ModelPart(Model* model)
 {
     construct(model);
@@ -330,17 +332,17 @@ void ModelPart::render(float scale, bool useDisplayList, bool childrenOnly)
 
         if (mZRot != 0.0f)
         {
-            GlStateManager::rotatef(mZRot * Mth::RAD_TO_DEG, 0.0f, 0.0f, 1.0f);
+            GlStateManager::rotatef(mZRot * RAD, 0.0f, 0.0f, 1.0f);
         }
 
         if (mYRot != 0.0f)
         {
-            GlStateManager::rotatef(mYRot * Mth::RAD_TO_DEG, 0.0f, 1.0f, 0.0f);
+            GlStateManager::rotatef(mYRot * RAD, 0.0f, 1.0f, 0.0f);
         }
 
         if (mXRot != 0.0f)
         {
-            GlStateManager::rotatef(mXRot * Mth::RAD_TO_DEG, 1.0f, 0.0f, 0.0f);
+            GlStateManager::rotatef(mXRot * RAD, 1.0f, 0.0f, 0.0f);
         }
 
         GlStateManager::translatef(mXOffset * scale, mYRotOffset * scale, mZOffset * scale);
@@ -449,17 +451,17 @@ void ModelPart::renderRollable(float scale, bool useDisplayList)
 
     if (mYRot != 0.0f)
     {
-        GlStateManager::rotatef(mYRot * Mth::RAD_TO_DEG, 0.0f, 1.0f, 0.0f);
+        GlStateManager::rotatef(mYRot * RAD, 0.0f, 1.0f, 0.0f);
     }
 
     if (mXRot != 0.0f)
     {
-        GlStateManager::rotatef(mXRot * Mth::RAD_TO_DEG, 1.0f, 0.0f, 0.0f);
+        GlStateManager::rotatef(mXRot * RAD, 1.0f, 0.0f, 0.0f);
     }
 
     if (mZRot != 0.0f)
     {
-        GlStateManager::rotatef(mZRot * Mth::RAD_TO_DEG, 0.0f, 0.0f, 1.0f);
+        GlStateManager::rotatef(mZRot * RAD, 0.0f, 0.0f, 1.0f);
     }
 
     GlStateManager::callList(mDisplayList);
@@ -484,17 +486,17 @@ void ModelPart::translateTo(float scale)
 
         if (mZRot != 0.0f)
         {
-            GlStateManager::rotatef(mZRot * Mth::RAD_TO_DEG, 0.0f, 0.0f, 1.0f);
+            GlStateManager::rotatef(mZRot * RAD, 0.0f, 0.0f, 1.0f);
         }
 
         if (mYRot != 0.0f)
         {
-            GlStateManager::rotatef(mYRot * Mth::RAD_TO_DEG, 0.0f, 1.0f, 0.0f);
+            GlStateManager::rotatef(mYRot * RAD, 0.0f, 1.0f, 0.0f);
         }
 
         if (mXRot != 0.0f)
         {
-            GlStateManager::rotatef(mXRot * Mth::RAD_TO_DEG, 1.0f, 0.0f, 0.0f);
+            GlStateManager::rotatef(mXRot * RAD, 1.0f, 0.0f, 0.0f);
         }
     }
     else if (mX != 0.0f || mY != 0.0f || mZ != 0.0f)

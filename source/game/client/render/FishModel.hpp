@@ -17,7 +17,6 @@ class FishModel : public Model
 {
 public:
     FishModel(const ModelDefinition& modelDefinition, FishRenderer::FishType fishType, int variant);
-    virtual ~FishModel();
 
     virtual void render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
                         float ageInTicks, float netHeadYaw, float headPitch, float scale,

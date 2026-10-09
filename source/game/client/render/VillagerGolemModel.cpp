@@ -95,8 +95,7 @@ void VillagerGolemModel::setupAnim(float limbSwing, float limbSwingAmount, float
     mHead->mXRot = headPitch / 57.295776f;
 
     mLeg0->mXRot = -1.5f * triangleWave(limbSwing, 13.0f) * limbSwingAmount;
-    float legSwing = 1.5f * triangleWave(limbSwing, 13.0f) * limbSwingAmount;
-    mLeg1->mXRot = legSwing;
+    mLeg1->mXRot = 1.5f * triangleWave(limbSwing, 13.0f) * limbSwingAmount;
 
     mLeg0->mYRot = 0.0f;
     mLeg1->mYRot = 0.0f;

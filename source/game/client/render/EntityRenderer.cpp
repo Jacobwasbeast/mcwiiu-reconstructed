@@ -231,11 +231,11 @@ void EntityRenderer::renderShadow(boost::shared_ptr<Entity>& entity, double x, d
     GlStateManager::depthMask(false);
 
     float radius = mShadowRadius;
-    if ((entity->GetType() & EntityType::MOB) == EntityType::MOB)
+    if (eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()))
     {
         boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
         radius *= (float)mob->getSizeScale();
-        if ((mob->GetType() & EntityType::AGABLE_MOB) == EntityType::AGABLE_MOB)
+        if (eTYPE_DERIVED_FROM(EntityType::AGABLE_MOB, mob->GetType()))
         {
             boost::shared_ptr<Animal> animal = boost::static_pointer_cast<Animal>(mob);
             if (animal->isBaby())
@@ -324,7 +324,7 @@ void EntityRenderer::postRender(boost::shared_ptr<Entity>& entity, double x, dou
         if (entity->displayFireAnimation())
         {
             bool spectator = false;
-            if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+            if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
                 spectator = boost::static_pointer_cast<Player>(entity)->isSpectator();
             if (!spectator)
                 renderFlame(entity, x, y, z, partialTick);
@@ -350,7 +350,7 @@ void EntityRenderer::renderNameTag(boost::shared_ptr<Entity>& entity, const std:
         yOffset -= 0.25F;
     std::wstring displayName(name);
     int nameOffset = 0;
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
         if (gApp.isXuidDeadmau5(player->mXuid))

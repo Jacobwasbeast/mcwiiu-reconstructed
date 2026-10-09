@@ -138,8 +138,8 @@ void ParrotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
                             float netHeadYaw, float headPitch, float scale,
                             boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    mHead->mXRot = headPitch * 0.017453292f;
-    mHead->mYRot = netHeadYaw * 0.017453292f;
+    mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
+    mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
     mHead->mZRot = mHeadDefaultZRot;
     mHead->mX = mHeadDefaultX;
     mBody->mX = mBodyDefaultX;
@@ -218,7 +218,7 @@ void ParrotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
     mLeg0->mY = mLeg0DefaultY;
     mLeg1->mY = mLeg1DefaultY;
 
-    const bool isParrot = entity->GetType() == EntityType::PARROT;
+    const bool isParrot = eTYPE_DERIVED_FROM(EntityType::PARROT, entity->GetType());
     if (isParrot)
     {
         boost::shared_ptr<Parrot> parrot = boost::static_pointer_cast<Parrot>(entity);
@@ -264,7 +264,7 @@ void ParrotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
     }
     else if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
-        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         {
             const float legAngle = Mth::DEG_TO_RAD * 40.0f;
             mLeg0->mXRot += legAngle;

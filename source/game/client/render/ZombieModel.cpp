@@ -29,7 +29,7 @@ void ZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
 
     bool aggressive = false;
 
-    if ((entity->GetType() & EntityType::ZOMBIE) == EntityType::ZOMBIE)
+    if (eTYPE_DERIVED_FROM(EntityType::ZOMBIE, entity->GetType()))
     {
         boost::shared_ptr<Zombie> zombie = boost::dynamic_pointer_cast<Zombie>(entity);
         if (zombie->isAggressive())

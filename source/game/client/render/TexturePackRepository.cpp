@@ -11,7 +11,7 @@
 #include "game/client/render/DLCTexturePack.hpp"
 #include "game/client/render/MapRenderer.hpp"
 
-DefaultTexturePack* TexturePackRepository::defaultTexturePack = NULL;
+TexturePack* TexturePackRepository::defaultTexturePack = NULL;
 
 TexturePackRepository::TexturePackRepository(File file, Minecraft* minecraft)
 {
@@ -20,17 +20,17 @@ TexturePackRepository::TexturePackRepository(File file, Minecraft* minecraft)
         defaultTexturePack = new DefaultTexturePack();
     }
 
-    m_selected = NULL;
     m_skinReloaded = false;
+    m_selected = NULL;
     m_allTexturePacks = new std::vector<TexturePack*>;
     m_minecraft = minecraft;
     m_allTexturePacks->push_back(defaultTexturePack);
     m_texturePacksById[defaultTexturePack->getId()] = defaultTexturePack;
     m_selected = defaultTexturePack;
-    m_selected->loadColourTable();
+    defaultTexturePack->loadColourTable();
     defaultTexturePack->loadStructureManager();
-    m_unknown1 = NULL;
     m_unknown0 = 0;
+    m_unknown1 = NULL;
     m_previousSelected = NULL;
 }
 
@@ -95,18 +95,10 @@ TexturePackRepository::TexturePackIdNames* TexturePackRepository::getTexturePack
 
 bool TexturePackRepository::selectTexturePackById(unsigned int packId, bool forceReload)
 {
+    bool result = false;
     gApp.SetRequiredTexturePackID(packId);
-    bool result;
     boost::unordered_map<unsigned int, TexturePack*>::iterator iterator = m_texturePacksById.find(packId);
-    if (iterator == m_texturePacksById.end())
-    {
-        if (selectSkin(defaultTexturePack))
-        {
-            gApp.StartReloadingTexturePack();
-        }
-        result = false;
-    }
-    else
+    if (iterator != m_texturePacksById.end())
     {
         TexturePack* texturePack = iterator->second;
         if (texturePack != m_selected)
@@ -122,6 +114,13 @@ bool TexturePackRepository::selectTexturePackById(unsigned int packId, bool forc
             }
         }
         result = true;
+    }
+    else
+    {
+        if (selectSkin(defaultTexturePack))
+        {
+            gApp.StartReloadingTexturePack();
+        }
     }
     return result;
 }
@@ -139,12 +138,12 @@ TexturePack* TexturePackRepository::getTexturePackById(unsigned int packId)
 TexturePack* TexturePackRepository::addTexturePackFromDLC(DLCPack* dlcPack, unsigned int packId)
 {
     TexturePack* texturePack = NULL;
-    packId &= 0x00ffffff;
+    unsigned int id = packId & 0x00ffffff;
     if (dlcPack != NULL)
     {
-        texturePack = new DLCTexturePack(packId, dlcPack, defaultTexturePack);
+        texturePack = new DLCTexturePack(id, dlcPack, defaultTexturePack);
         m_allTexturePacks->push_back(texturePack);
-        m_texturePacksById[packId] = texturePack;
+        m_texturePacksById[id] = texturePack;
     }
     return texturePack;
 }
@@ -185,7 +184,7 @@ unsigned int TexturePackRepository::getTexturePackIndexByPackId(unsigned int pac
 {
     unsigned int index = 0;
     for (std::vector<TexturePack*>::iterator iterator = m_allTexturePacks->begin();
-         iterator != m_allTexturePacks->end(); ++iterator, ++index)
+         iterator != m_allTexturePacks->end(); ++index, ++iterator)
     {
         if ((*iterator)->getId() == packId)
         {

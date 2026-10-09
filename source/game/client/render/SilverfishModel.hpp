@@ -24,9 +24,14 @@ public:
     virtual void setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments);
     virtual std::wstring getName() { return L"silverfish"; }
 
+    static const int BODY_PART_COUNT = 7;
+    static const int BODY_LAYER_COUNT = 3;
+    static const int BODY_PART_TEX_OFFS[BODY_PART_COUNT][2];
+    static const int BODY_PART_SIZES[BODY_PART_COUNT][3];
+
     arrayWithLength<ModelPart*> mBodyParts;
     arrayWithLength<ModelPart*> mBodyLayers;
-    float mBodyPartZ[7];
+    float mBodyPartZ[BODY_PART_COUNT];
 };
 
 #endif

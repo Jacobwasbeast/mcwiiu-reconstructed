@@ -10,8 +10,8 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/generation/WitherArmorLayer.hpp"
 
-static ResourceLocation WITHER_LOCATION(TN_MOB_WITHER_WITHER);
 static ResourceLocation WITHER_INVULNERABLE_LOCATION(TN_MOB_WITHER_WITHER_INVULNERABLE);
+static ResourceLocation WITHER_LOCATION(TN_MOB_WITHER_WITHER);
 
 WitherBossRenderer::WitherBossRenderer(EntityRenderDispatcher* dispatcher)
     : MobRenderer(dispatcher, new WitherBossModel(0.0F), 1.0F)
@@ -24,10 +24,10 @@ const ResourceLocation* WitherBossRenderer::getTextureLocation(boost::shared_ptr
     boost::shared_ptr<WitherBoss> wither = boost::static_pointer_cast<WitherBoss>(entity);
     int invulnerableTicks = wither->getInvulnerableTicks();
 
-    if (invulnerableTicks > 0 && (invulnerableTicks > 80 || (invulnerableTicks / 5) % 2 != 1))
-        return &WITHER_INVULNERABLE_LOCATION;
+    if (invulnerableTicks <= 0 || (invulnerableTicks <= 80 && (invulnerableTicks / 5) % 2 == 1))
+        return &WITHER_LOCATION;
 
-    return &WITHER_LOCATION;
+    return &WITHER_INVULNERABLE_LOCATION;
 }
 
 void WitherBossRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
@@ -54,14 +54,17 @@ int WitherBossRenderer::getOverlayColor(boost::shared_ptr<LivingEntity>& entity,
     int invulnerableTicks = boost::static_pointer_cast<WitherBoss>(entity)->getInvulnerableTicks();
     if (invulnerableTicks > 0)
     {
-        boost::shared_ptr<WitherBoss> wither = boost::static_pointer_cast<WitherBoss>(entity);
-        float alpha = wither->getOverlayAlpha();
-        if (alpha < 0.0F)
-            alpha = 0.0F;
-        else if (alpha > 1.0F)
-            alpha = 1.0F;
+        int overlay;
+        {
+            boost::shared_ptr<WitherBoss> wither = boost::static_pointer_cast<WitherBoss>(entity);
+            float alpha = wither->getOverlayAlpha();
+            if (alpha < 0.0F)
+                alpha = 0.0F;
+            else if (alpha > 1.0F)
+                alpha = 1.0F;
 
-        int overlay = Mth::floor(alpha * 255.0F);
+            overlay = Mth::floor(alpha * 255.0F);
+        }
         return overlay << 24 | 0x00FFFFFF;
     }
 

@@ -21,8 +21,8 @@ const ResourceLocation* ChickenRenderer::getTextureLocation(boost::shared_ptr<En
 float ChickenRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
 {
     boost::shared_ptr<Chicken> chicken = boost::static_pointer_cast<Chicken>(entity);
-    float flap = (chicken->mFlapTime - chicken->mOFlap) * partialTicks + chicken->mOFlap;
-    float flapSpeed = (chicken->mFlapSpeed - chicken->mOFlapSpeed) * partialTicks + chicken->mOFlapSpeed;
+    float flap = chicken->mOFlap + (chicken->mFlapTime - chicken->mOFlap) * partialTicks;
+    float flapSpeed = chicken->mOFlapSpeed + (chicken->mFlapSpeed - chicken->mOFlapSpeed) * partialTicks;
     return (Mth::sin(flap) + 1.0F) * flapSpeed;
 }
 

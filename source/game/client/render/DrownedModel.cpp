@@ -153,7 +153,7 @@ void DrownedModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
 {
     ZombieModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
 
-    bool isDrowned = entity->GetType() == EntityType::DROWNED;
+    bool isDrowned = eTYPE_DERIVED_FROM(EntityType::DROWNED, entity->GetType());
     float swimAmount = (float)(isDrowned && boost::static_pointer_cast<Drowned>(entity)->getSwimAmount(limbSwingAmount) != 0.0f);
 
     float swing = Mth::sin(mAttackTime * 3.1415927f);

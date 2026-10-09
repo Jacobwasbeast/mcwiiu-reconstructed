@@ -69,17 +69,7 @@ void PolarBearModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, 
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
               entity, _SkinAdjustments());
 
-    if (!mYoung)
-    {
-        mHead->render(scale, useDisplayList, false);
-        mBody->render(scale, useDisplayList, false);
-        mLeg0->render(scale, useDisplayList, false);
-        mLeg1->render(scale, useDisplayList, false);
-        mLeg2->render(scale, useDisplayList, false);
-        mLeg3->render(scale, useDisplayList, false);
-        callSkinnedDrawlist();
-    }
-    else
+    if (mYoung)
     {
         mYHeadOffs = 16.0f;
         mZHeadOffs = 4.0f;
@@ -100,6 +90,16 @@ void PolarBearModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, 
         GlStateManager::popMatrix();
         callSkinnedDrawlist();
     }
+    else
+    {
+        mHead->render(scale, useDisplayList, false);
+        mBody->render(scale, useDisplayList, false);
+        mLeg0->render(scale, useDisplayList, false);
+        mLeg1->render(scale, useDisplayList, false);
+        mLeg2->render(scale, useDisplayList, false);
+        mLeg3->render(scale, useDisplayList, false);
+        callSkinnedDrawlist();
+    }
 }
 
 void PolarBearModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks,
@@ -109,9 +109,8 @@ void PolarBearModel::setupAnim(float limbSwing, float limbSwingAmount, float age
     QuadrupedModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
                               scale, entity, _SkinAdjustments());
 
-    float entityAge = static_cast<float>(entity->mTickCount);
-    float standingScale = boost::static_pointer_cast<PolarBear>(entity)->getStandingAnimationScale(
-        ageInTicks - entityAge);
+    float partialTicks = ageInTicks - entity->mTickCount;
+    float standingScale = boost::static_pointer_cast<PolarBear>(entity)->getStandingAnimationScale(partialTicks);
     float standingScaleSquared = standingScale * standingScale;
     float standingScaleComplement = 1.0f - standingScaleSquared;
 

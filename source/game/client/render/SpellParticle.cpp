@@ -28,35 +28,28 @@ bool SpellParticle::isTransparent()
 
 void SpellParticle::tick()
 {
-    int oldAge = age;
-    ++age;
     xo = x;
     yo = y;
     zo = z;
-    if (lifetime <= oldAge)
+    if (age++ >= lifetime)
         remove();
 
     setMiscTex(baseTex - (age << 3) / lifetime + 7);
     yd += 0.004;
     move(xd, yd, zd);
-
-    double xMotion = xd;
-    double zMotion = zd;
     if (y == yo)
     {
-        xMotion *= 1.1;
-        zMotion *= 1.1;
+        xd *= 1.1;
+        zd *= 1.1;
     }
-    xMotion *= 0.9599999785423279;
-    zMotion *= 0.9599999785423279;
+    xd *= 0.9599999785423279;
     yd *= 0.9599999785423279;
+    zd *= 0.9599999785423279;
     if (onGround)
     {
-        xMotion *= 0.699999988079071;
-        zMotion *= 0.699999988079071;
+        xd *= 0.699999988079071;
+        zd *= 0.699999988079071;
     }
-    xd = xMotion;
-    zd = zMotion;
 }
 
 void SpellParticle::setBaseTex(int texture)
@@ -117,10 +110,10 @@ Particle* SpellParticle::WinningInstantProvider::createParticle(ePARTICLE_TYPE t
     particle->setBaseTex(0x90);
     if (params.length == 4)
     {
-        particle->setColor((float)(params.data[0] - 176) / 255.0f,
-                           (float)(params.data[1] - 176) / 255.0f,
-                           (float)(params.data[2] - 176) / 255.0f);
-        particle->setAlpha((float)(params.data[3] - 176) / 255.0f);
+        particle->setColor((float)params.data[0] / 255.0f,
+                           (float)params.data[1] / 255.0f,
+                           (float)params.data[2] / 255.0f);
+        particle->setAlpha((float)params.data[3] / 255.0f);
         delete[] params.data;
     }
     particle->xd = xa;

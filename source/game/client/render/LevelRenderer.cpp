@@ -989,7 +989,7 @@ bool LevelRenderer::shouldEntityGlow(boost::shared_ptr<Entity> entity, boost::sh
 {
     bool cameraIsSleeping = false;
 
-    if ((camera->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, camera->GetType()))
     {
         cameraIsSleeping = boost::static_pointer_cast<LivingEntity>(camera)->isSleeping();
     }
@@ -1118,7 +1118,7 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
             {
                 renderable = true;
             }
-            else if ((entity->GetType() & EntityType::MOB) == EntityType::MOB)
+            else if (eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()))
             {
                 boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
                 if (mob->isLeashed() && mob->getLeashHolder() != NULL)
@@ -1142,7 +1142,7 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
             {
                 skip = false;
             }
-            else if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+            else if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
             {
                 if (boost::static_pointer_cast<LivingEntity>(entity)->isSleeping())
                 {
@@ -1206,7 +1206,7 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
         {
             boost::shared_ptr<BlockEntity>& blockEntity = bucket[bucketIndex];
 
-            if (blockEntity->GetType() == BlockEntityType::PISTON_MOVING)
+            if (eTYPE_DERIVED_FROM(BlockEntityType::PISTON_MOVING, blockEntity->GetType()))
             {
                 boost::shared_ptr<PistonMovingBlockEntity> pistonEntity =
                     boost::static_pointer_cast<PistonMovingBlockEntity>(blockEntity);
@@ -1276,7 +1276,7 @@ void LevelRenderer::renderEntities(boost::shared_ptr<Entity> camera, Culler* cul
             continue;
         }
 
-        if (destroyBlockEntity->GetType() == BlockEntityType::CHEST)
+        if (eTYPE_DERIVED_FROM(BlockEntityType::CHEST, destroyBlockEntity->GetType()))
         {
             boost::shared_ptr<ChestBlockEntity> chestEntity =
                 boost::static_pointer_cast<ChestBlockEntity>(destroyBlockEntity);
@@ -2296,7 +2296,7 @@ unsigned int LevelRenderer::updateDirtyChunks(unsigned int* count)
 
     if (nearest == 0)
     {
-        long long elapsed = (long long)System::processTimeInMilliSecs() - mLastRebuildTime;
+        long long elapsed = System::processTimeInMilliSecs() - mLastRebuildTime;
 
         mHasDirtyChunks = elapsed > 250;
 
@@ -3327,7 +3327,7 @@ Particle* LevelRenderer::addParticleInternal(Level* level, ePARTICLE_TYPE type, 
 
 void LevelRenderer::entityAdded(boost::shared_ptr<Entity> entity)
 {
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
 
@@ -3341,7 +3341,7 @@ void LevelRenderer::entityAdded(boost::shared_ptr<Entity> entity)
 
 void LevelRenderer::entityRemoved(boost::shared_ptr<Entity> entity)
 {
-    bool isPlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+    bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType());
 
     if (isPlayer)
     {

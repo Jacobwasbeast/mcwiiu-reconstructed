@@ -42,10 +42,10 @@ void HugeExplosionParticle::render(BufferBuilder* buffer, const boost::shared_pt
         const float u1 = u0 + 0.24975f;
         const float v0 = (float)(frame / 4) * 0.25f;
         const float v1 = v0 + 0.24975f;
-        const float scale = size + size;
         const float px = (float)((x - xo) * partialTicks + xo - Particle::xOff);
         const float py = (float)((y - yo) * partialTicks + yo - Particle::yOff);
         const float pz = (float)((z - zo) * partialTicks + zo - Particle::zOff);
+        const float scale = size + size;
 
         if (px * px + py * py + pz * pz >= 9.0f)
         {
@@ -57,18 +57,10 @@ void HugeExplosionParticle::render(BufferBuilder* buffer, const boost::shared_pt
             buffer->normal(0.0f, 1.0f, 0.0f);
             buffer->tex2(240);
 
-            const float x0 = px - xa * scale;
-            const float x1 = px + xa * scale;
-            const float y0 = py - ya * scale;
-            const float y1 = py + ya * scale;
-            const float z0 = pz - za * scale;
-            const float z1 = pz + za * scale;
-            const float xOffset = xa2 * scale;
-            const float zOffset = za2 * scale;
-            buffer->vertexUV(x0 - xOffset, y0, z0 - zOffset, u1, v1);
-            buffer->vertexUV(x0 + xOffset, y1, z0 + zOffset, u1, v0);
-            buffer->vertexUV(x1 + xOffset, y1, z1 + zOffset, u0, v0);
-            buffer->vertexUV(x1 - xOffset, y0, z1 - zOffset, u0, v1);
+            buffer->vertexUV(px - xa * scale - xa2 * scale, py - ya * scale, pz - za * scale - za2 * scale, u1, v1);
+            buffer->vertexUV(px - xa * scale + xa2 * scale, py + ya * scale, pz - za * scale + za2 * scale, u1, v0);
+            buffer->vertexUV(px + xa * scale + xa2 * scale, py + ya * scale, pz + za * scale + za2 * scale, u0, v0);
+            buffer->vertexUV(px + xa * scale - xa2 * scale, py - ya * scale, pz + za * scale - za2 * scale, u0, v1);
 
             Tesselator::getInstance()->end();
             GlStateManager::enableLighting();

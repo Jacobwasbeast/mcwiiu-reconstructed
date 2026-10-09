@@ -121,11 +121,10 @@ bool ParticleEngine::ParticleList::empty()
 }
 
 ParticleEngine::ParticleEngine(Level* level, Textures* textures)
+    : translucent(false), opaque(false)
 {
-    this->textures = textures;
-    translucent = false;
-    opaque = false;
     this->level = level;
+    this->textures = textures;
     registerProviders();
     particleCount = 0;
 }
@@ -208,24 +207,17 @@ void ParticleEngine::createTrackingEmitter(boost::shared_ptr<Entity> entity, con
 void ParticleEngine::add(Particle* particle)
 {
     int texture = particle->getParticleTexture();
-    int textureType;
-    if (particle->getLevel()->mDimension->getType() == DimensionType::OVERWORLD)
-    {
-        textureType = 0;
-    }
-    else
-    {
-        textureType = 2;
-        if (particle->getLevel()->mDimension->getType() == DimensionType::NETHER)
-        {
-            textureType = 1;
-        }
-    }
-    bool lit = particle->getAlpha() == 1.0;
-    unsigned long long type = particle->GetType();
+    int dimension = particle->getLevel()->mDimension->getType() == DimensionType::OVERWORLD ? 0
+        : (particle->getLevel()->mDimension->getType() == DimensionType::NETHER ? 1 : 2);
     int limit;
-    if (type == ParticleKind::FIREWORKS_SPARK)
+    bool lit = particle->getAlpha() == 1.0f;
+    unsigned long long type = particle->GetType();
+    switch (type)
     {
+    case ParticleKind::DRAGON_BREATH:
+        limit = 1000;
+        break;
+    case ParticleKind::FIREWORKS_SPARK:
         if (particleCount + 1 > 2000)
         {
             delete particle;
@@ -233,38 +225,34 @@ void ParticleEngine::add(Particle* particle)
         }
         ++particleCount;
         limit = 0x4000;
-    }
-    else if (type == ParticleKind::DRAGON_BREATH)
-    {
-        limit = 1000;
-    }
-    else
-    {
+        break;
+    default:
         limit = 0x4000;
+        break;
     }
     if (particle->isSemiTransparent())
     {
         lit = false;
     }
-    ParticleList& list = particles[(textureType * 5 + texture) * 2 + (lit ? 1 : 0)];
     if (particle->GetType() == ParticleKind::DRAGON_BREATH)
     {
-        if (list.size() >= limit)
+        if (particles[dimension][texture][lit].size() < limit)
         {
-            return;
+            particles[dimension][texture][lit].push_back(particle);
         }
+        return;
     }
-    else if (list.size() >= limit)
+    else if (particles[dimension][texture][lit].size() >= limit)
     {
-        Particle* old = list.at(0);
+        Particle* old = particles[dimension][texture][lit].at(0);
         if (old->GetType() == ParticleKind::FIREWORKS_SPARK)
         {
             --particleCount;
         }
         delete old;
-        list.RemoveParticle(0);
+        particles[dimension][texture][lit].RemoveParticle(0);
     }
-    list.push_back(particle);
+    particles[dimension][texture][lit].push_back(particle);
 }
 
 Particle* ParticleEngine::createParticle(ePARTICLE_TYPE type, double x, double y, double z,
@@ -274,11 +262,8 @@ Particle* ParticleEngine::createParticle(ePARTICLE_TYPE type, double x, double y
     ParticleProvider* provider = providers[type];
     if (provider != NULL)
     {
-        if (level == NULL)
-        {
-            level = this->level;
-        }
-        Particle* particle = provider->createParticle(type, level, x, y, z, xa, ya, za, parameters);
+        Particle* particle = provider->createParticle(type, level != NULL ? level : this->level,
+                                                      x, y, z, xa, ya, za, parameters);
         if (particle != NULL)
         {
             add(particle);
@@ -345,11 +330,11 @@ void ParticleEngine::tickTextureType(int textureType)
 {
     for (int dimension = 0; dimension < 3; ++dimension)
     {
-        ParticleList& first = particles[dimension * 10 + textureType * 2];
-        ParticleList& second = particles[dimension * 10 + textureType * 2 + 1];
-        tickParticleList(&first);
-        tickParticleList(&second);
-        moveParticlesBetweenLists(&first, &second);
+        for (int list = 0; list < 2; ++list)
+        {
+            tickParticleList(&particles[dimension][textureType][list]);
+        }
+        moveParticlesBetweenLists(&particles[dimension][textureType][0], &particles[dimension][textureType][1]);
     }
 }
 
@@ -424,12 +409,16 @@ void ParticleEngine::render(boost::shared_ptr<Entity>& entity, float partialTick
             continue;
         }
 
-        ParticleList& list = particles[(dimension * 5 + textureType) * 2 + layer];
-        if (!list.empty())
+        if (!particles[dimension][textureType][layer].empty())
         {
-            if (static_cast<unsigned int>(layer) < 2)
+            switch (layer)
             {
-                GlStateManager::depthMask(layer != 0);
+            case 0:
+                GlStateManager::depthMask(false);
+                break;
+            case 1:
+                GlStateManager::depthMask(true);
+                break;
             }
 
             MemSect(0x1f);
@@ -450,14 +439,14 @@ void ParticleEngine::render(boost::shared_ptr<Entity>& entity, float partialTick
             BufferBuilder* buffer = Tesselator::getInstance()->getBuilder();
             GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
             buffer->begin();
-            for (int i = 0; i < list.size(); ++i)
+            for (int i = 0; i < particles[dimension][textureType][layer].size(); ++i)
             {
                 if (buffer->hasMaxVertices())
                 {
                     buffer->end();
                     buffer->begin();
                 }
-                list.at(i)->render(buffer, entity, partialTick, cosYaw, cosPitch, sinYaw,
+                particles[dimension][textureType][layer].at(i)->render(buffer, entity, partialTick, cosYaw, cosPitch, sinYaw,
                     cameraYOff, cameraXOff);
             }
             buffer->end();
@@ -476,12 +465,11 @@ void ParticleEngine::renderLit(boost::shared_ptr<Entity> entity, float partialTi
     Particle::setZOffset(entity->mZOld + (entity->mZ - entity->mZOld) * partialTick);
     Particle::setCamerViewDirection(entity->getViewVector(partialTick));
 
-    const float degToRad = 0.017453292f;
-    const float cosYaw = Mth::cos(entity->mYRot * degToRad);
-    const float sinYaw = Mth::sin(entity->mYRot * degToRad);
-    const float cameraYOff = -sinYaw * Mth::sin(entity->mXRot * degToRad);
-    const float cameraXOff = cosYaw * Mth::sin(entity->mXRot * degToRad);
-    const float cosPitch = Mth::cos(entity->mXRot * degToRad);
+    const float cosYaw = Mth::cos(entity->mYRot * Mth::DEG_TO_RAD);
+    const float sinYaw = Mth::sin(entity->mYRot * Mth::DEG_TO_RAD);
+    const float cameraYOff = -sinYaw * Mth::sin(entity->mXRot * Mth::DEG_TO_RAD);
+    const float cameraXOff = cosYaw * Mth::sin(entity->mXRot * Mth::DEG_TO_RAD);
+    const float cosPitch = Mth::cos(entity->mXRot * Mth::DEG_TO_RAD);
 
     int dimension;
     if (level->mDimension->getType() == DimensionType::OVERWORLD)
@@ -506,10 +494,11 @@ void ParticleEngine::renderLit(boost::shared_ptr<Entity> entity, float partialTi
 
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
 
-    ParticleList& list = particles[dimension * 10 + 6 + layer];
+    ParticleList& list = particles[dimension][3][layer];
     if (!list.empty())
     {
-        BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+        Tesselator* tesselator = Tesselator::getInstance();
+        BufferBuilder* builder = tesselator->getBuilder();
         for (int i = 0; i < list.size(); ++i)
         {
             Particle* particle = list.at(i);
@@ -525,10 +514,10 @@ void ParticleEngine::renderLit(boost::shared_ptr<Entity> entity, float partialTi
 void ParticleEngine::destroy(const BlockPos& pos, const BlockState* state)
 {
     Block* block = state->getBlock();
-    if (Material::AIR != block->getCraftingMaterial())
+    if (block->getCraftingMaterial() != Material::AIR)
     {
         block = state->getBlock();
-        const BlockState* particleState = block->fillVirtualBlockStateProperties(state, level, pos);
+        state = block->fillVirtualBlockStateProperties(state, level, pos);
         for (int x = 0; x < 4; ++x)
         {
             for (int y = 0; y < 4; ++y)
@@ -539,7 +528,7 @@ void ParticleEngine::destroy(const BlockPos& pos, const BlockState* state)
                     const double yOffset = (y + 0.5) * 0.25;
                     const double zOffset = (z + 0.5) * 0.25;
                     TerrainParticle* particle = new TerrainParticle(level, pos.x + xOffset, pos.y + yOffset,
-                        pos.z + zOffset, xOffset - 0.5, yOffset - 0.5, zOffset - 0.5, particleState);
+                        pos.z + zOffset, xOffset - 0.5, yOffset - 0.5, zOffset - 0.5, state);
                     add(particle->init(pos));
                 }
             }
@@ -551,47 +540,45 @@ void ParticleEngine::crack(const BlockPos& pos, const Direction* direction)
 {
     const BlockState* state = level->getBlockState(pos);
     Block* block = state->getBlock();
-    if (state->getRenderShape() == BLOCK_RENDER_INVISIBLE)
+    if (state->getRenderShape() != BLOCK_RENDER_INVISIBLE)
     {
-        return;
-    }
+        int xt = pos.x;
+        int yt = pos.y;
+        int zt = pos.z;
+        const AABB* shape = block->getShape(state, level, pos);
+        double x = xt + random.nextDouble() * ((shape->mMaxX - shape->mMinX) - 0.2f) + 0.1f + shape->mMinX;
+        double y = yt + random.nextDouble() * ((shape->mMaxY - shape->mMinY) - 0.2f) + 0.1f + shape->mMinY;
+        double z = zt + random.nextDouble() * ((shape->mMaxZ - shape->mMinZ) - 0.2f) + 0.1f + shape->mMinZ;
 
-    const AABB* shape = block->getShape(state, level, pos);
-    const double randomX = random.nextDouble();
-    const double randomY = random.nextDouble();
-    const double randomZ = random.nextDouble();
-    double x = randomX * ((shape->mMaxX - shape->mMinX) - 0.2f) + pos.x + 0.1f + shape->mMinX;
-    double y = randomY * ((shape->mMaxY - shape->mMinY) - 0.2f) + pos.y + 0.1f + shape->mMinY;
-    double z = randomZ * ((shape->mMaxZ - shape->mMinZ) - 0.2f) + pos.z + 0.1f + shape->mMinZ;
+        if (direction == Direction::DOWN)
+        {
+            y = yt + shape->mMinY - 0.1f;
+        }
+        if (direction == Direction::UP)
+        {
+            y = yt + shape->mMaxY + 0.1f;
+        }
+        if (direction == Direction::NORTH)
+        {
+            z = zt + shape->mMinZ - 0.1f;
+        }
+        if (direction == Direction::SOUTH)
+        {
+            z = zt + shape->mMaxZ + 0.1f;
+        }
+        if (direction == Direction::WEST)
+        {
+            x = xt + shape->mMinX - 0.1f;
+        }
+        if (direction == Direction::EAST)
+        {
+            x = xt + shape->mMaxX + 0.1f;
+        }
 
-    if (Direction::DOWN == direction)
-    {
-        y = pos.y + shape->mMinY - 0.1f;
+        state = block->fillVirtualBlockStateProperties(state, level, pos);
+        TerrainParticle* particle = new TerrainParticle(level, x, y, z, 0.0, 0.0, 0.0, state);
+        add(particle->init(pos)->setPower(0.2f)->scale(0.6f));
     }
-    if (Direction::UP == direction)
-    {
-        y = pos.y + shape->mMaxY + 0.1f;
-    }
-    if (Direction::NORTH == direction)
-    {
-        z = pos.z + shape->mMinZ - 0.1f;
-    }
-    if (Direction::SOUTH == direction)
-    {
-        z = pos.z + shape->mMaxZ + 0.1f;
-    }
-    if (Direction::WEST == direction)
-    {
-        x = pos.x + shape->mMinX - 0.1f;
-    }
-    if (Direction::EAST == direction)
-    {
-        x = pos.x + shape->mMaxX + 0.1f;
-    }
-
-    TerrainParticle* particle = new TerrainParticle(level, x, y, z, 0.0, 0.0, 0.0,
-        block->fillVirtualBlockStateProperties(state, level, pos));
-    add(particle->init(pos)->setPower(0.2f)->scale(0.6f));
 }
 
 void ParticleEngine::setLevel(Level* newLevel)
@@ -599,16 +586,19 @@ void ParticleEngine::setLevel(Level* newLevel)
     level = newLevel;
     if (level == NULL)
     {
-        for (int i = 0; i < 30; ++i)
+        for (int dimension = 0; dimension < 3; ++dimension)
         {
-            particles[i].ClearParticles();
+            for (int textureType = 0; textureType < 5; ++textureType)
+            {
+                for (int list = 0; list < 2; ++list)
+                {
+                    particles[dimension][textureType][list].ClearParticles();
+                }
+            }
         }
         for (unsigned int i = 0; i < trackingEmitters.size(); ++i)
         {
-            if (trackingEmitters[i] != NULL)
-            {
-                delete trackingEmitters[i];
-            }
+            delete trackingEmitters[i];
         }
         trackingEmitters.clear();
     }
@@ -616,15 +606,26 @@ void ParticleEngine::setLevel(Level* newLevel)
 
 std::wstring ParticleEngine::countParticles()
 {
-    int dimension = 0;
-    if (level->mDimension->getType() != DimensionType::OVERWORLD)
+    int dimension;
+    if (level->mDimension->getType() == DimensionType::OVERWORLD)
     {
-        dimension = level->mDimension->getType() == DimensionType::NETHER ? 1 : 2;
+        dimension = 0;
+    }
+    else
+    {
+        dimension = 2;
+        if (level->mDimension->getType() == DimensionType::NETHER)
+        {
+            dimension = 1;
+        }
     }
     int count = 0;
     for (int textureType = 0; textureType < 5; ++textureType)
     {
-        count += particles[dimension * 10 + textureType * 2].size() + particles[dimension * 10 + textureType * 2 + 1].size();
+        for (int list = 0; list < 2; ++list)
+        {
+            count += particles[dimension][textureType][list].size();
+        }
     }
     return _toString(count);
 }

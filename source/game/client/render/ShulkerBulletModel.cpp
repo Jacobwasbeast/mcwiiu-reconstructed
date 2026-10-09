@@ -1,4 +1,5 @@
 #include "game/client/render/ShulkerBulletModel.hpp"
+#include "game/core/Mth.hpp"
 
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
@@ -28,6 +29,6 @@ void ShulkerBulletModel::setupAnim(float limbSwing, float limbSwingAmount, float
 {
     Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
-    mBase->mYRot = netHeadYaw * 0.017453292f;
-    mBase->mXRot = headPitch * 0.017453292f;
+    mBase->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
+    mBase->mXRot = headPitch * Mth::DEG_TO_RAD;
 }

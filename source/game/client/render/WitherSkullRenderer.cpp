@@ -18,14 +18,14 @@ WitherSkullRenderer::~WitherSkullRenderer()
 {
 }
 
-double WitherSkullRenderer::rotlerp(float from, float to, float partialTick)
+float WitherSkullRenderer::rotlerp(float from, float to, float partialTick)
 {
     float rotation = to - from;
     while (rotation < -180.0F)
         rotation += 360.0F;
     while (rotation >= 180.0F)
         rotation -= 360.0F;
-    return (double)(from + partialTick * rotation);
+    return from + partialTick * rotation;
 }
 
 void WitherSkullRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
@@ -34,10 +34,11 @@ void WitherSkullRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
     GlStateManager::pushMatrix();
     GlStateManager::disableCull();
 
-    float interpolatedYaw = (float)rotlerp(entity->mYRotO, entity->mYRot, partialTick);
+    float interpolatedYaw = rotlerp(entity->mYRotO, entity->mYRot, partialTick);
     float interpolatedPitch = entity->mXRotO + (entity->mXRot - entity->mXRotO) * partialTick;
 
     GlStateManager::translatef((float)x, (float)y, (float)z);
+    float scale = 0.0625F;
     GlStateManager::enableRescaleNormal();
     GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
     GlStateManager::enableAlphaTest();
@@ -50,7 +51,7 @@ void WitherSkullRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
     }
 
     mWitherSkullModel->render(entity, 0.0F, 0.0F, 0.0F, interpolatedYaw,
-                              interpolatedPitch, 0.0625F, true);
+                              interpolatedPitch, scale, true);
 
     if (mSolidRender)
     {

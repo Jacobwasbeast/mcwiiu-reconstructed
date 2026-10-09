@@ -48,7 +48,9 @@ void ArmorStandRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity,
 {
     boost::shared_ptr<ArmorStand> armorStand = boost::static_pointer_cast<ArmorStand>(entity);
     GlStateManager::rotatef(180.0f - rotationYaw, 0.0f, 1.0f, 0.0f);
-    float time = static_cast<float>(armorStand.get()->mLevel->getGameTime() - armorStand.get()->mLastHit) + partialTicks;
+    ArmorStand* stand = armorStand.get();
+    long long ticksSinceHit = stand->mLevel->getGameTime() - stand->mLastHit;
+    float time = ticksSinceHit + partialTicks;
     if (time < 5.0f)
     {
         GlStateManager::rotatef(std::sin(time / 1.5f * 3.1415927f) * 3.0f, 0.0f, 1.0f, 0.0f);

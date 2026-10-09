@@ -130,8 +130,8 @@ void IllagerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, fl
 
 void IllagerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    mHead->mYRot = netHeadYaw * 0.017453292f;
-    mHead->mXRot = headPitch * 0.017453292f;
+    mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
+    mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
 
     mArms->mY = 3.0f;
     mArms->mXRot = -0.75f;

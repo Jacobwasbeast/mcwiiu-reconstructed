@@ -470,5 +470,6 @@ private:
 };
 
 extern Renderer* gRenderer;
+extern Renderer* gRendererInstance;
 
 #endif

@@ -67,7 +67,7 @@ void VexModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTick
 {
     HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
 
-    if (!Minecraft::InMiniGame(eMiniGameId_Any, true) || (entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+    if (!Minecraft::InMiniGame(eMiniGameId_Any, true) || !eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         boost::shared_ptr<Vex> vex = boost::static_pointer_cast<Vex>(entity);
         if (vex->isCharging())
@@ -84,17 +84,16 @@ void VexModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTick
     }
 
     mRightLeg->mXRot += 0.62831855f;
-    mRightWing->mY = 1.0f;
     mRightWing->mZ = 2.0f;
-    mLeftWing->mY = 1.0f;
     mLeftWing->mZ = 2.0f;
-
-    float wingAngle = cosf(ageInTicks * 0.8f) * 3.1415927f * 0.05f + 0.47123894f;
+    mRightWing->mY = 1.0f;
+    mLeftWing->mY = 1.0f;
+    float wingAngle = 0.47123894f + std::cos(ageInTicks * 0.8f) * 3.1415927f * 0.05f;
     mRightWing->mYRot = wingAngle;
     mLeftWing->mYRot = -wingAngle;
+    mLeftWing->mZRot = -0.47123894f;
     mLeftWing->mXRot = 0.47123894f;
     mRightWing->mXRot = 0.47123894f;
-    mLeftWing->mZRot = -0.47123894f;
     mRightWing->mZRot = 0.47123894f;
 }
 

@@ -8,6 +8,7 @@
 #include "game/client/render/Model.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPartSkin.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
@@ -25,8 +26,7 @@ public:
                            _SkinAdjustments skinAdjustments);
     virtual std::wstring getName() { return L"blaze"; }
 
-    ModelPartSkin** mUpperBodyParts;
-    unsigned int mNumUpperBodyParts;
+    arrayWithLength<ModelPartSkin*> mUpperBodyParts;
     ModelPartSkin* mHead;
 };
 #endif

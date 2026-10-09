@@ -17,6 +17,7 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/SignBlockEntity.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/core/XLanguage.hpp"
 
 
@@ -39,14 +40,14 @@ SignRenderer::~SignRenderer()
 
 void SignRenderer::CensorString(std::wstring& text)
 {
-    if (text.compare(0, text.size(), L" ", wcslen(L" ")) != 0)
+    if (text.compare(L" ") != 0)
     {
         unsigned int language = XGetLanguage();
         if (language == XC_LANGUAGE_JAPANESE || language == XC_LANGUAGE_KOREAN || language == XC_LANGUAGE_TCHINESE ||
             language == XC_LANGUAGE_ZH_HANS)
             text = L"Censored";
         else
-            text = L10N::GetString(0x62950b66);
+            text = L10N::GetString(IDS_STRINGVERIFY_CENSORED);
     }
 }
 
@@ -80,11 +81,7 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
         mModel->mSignStick->mShow = false;
     }
 
-    if (breakProgress < 0)
-    {
-        bindTexture(&SIGN_LOCATION);
-    }
-    else
+    if (breakProgress >= 0)
     {
         bindTexture(&BREAKING_LOCATIONS[breakProgress]);
         GlStateManager::matrixMode(2);
@@ -92,6 +89,10 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
         GlStateManager::scalef(4.0f, 2.0f, 1.0f);
         GlStateManager::translatef(0.0625f, 0.0625f, 0.0625f);
         GlStateManager::matrixMode(0);
+    }
+    else
+    {
+        bindTexture(&SIGN_LOCATION);
     }
 
     GlStateManager::pushMatrix();
@@ -115,11 +116,7 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
         GlStateManager::disableLighting();
         int uniqueId = sign->getUniqueId();
         cacheIndex = sign->getTextCacheIndex();
-        if (mTextCache[cacheIndex].uniqueId == uniqueId)
-        {
-            font->bindTexture();
-        }
-        else
+        if (mTextCache[cacheIndex].uniqueId != uniqueId)
         {
             cacheIndex = -1;
             if (sign->getTextCacheEnabled() && mTextCacheCount < 200)
@@ -129,10 +126,11 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
                     if (mTextCache[i].uniqueId == -1)
                     {
                         cacheIndex = i;
-                        gRenderer->CBuffStart(mTextDisplayLists + cacheIndex, false);
                         break;
                     }
                 }
+                if (cacheIndex != -1)
+                    gRenderer->CBuffStart(mTextDisplayLists + cacheIndex, false);
             }
 
             BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
@@ -140,13 +138,12 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
             builder->color((int)colour);
 
             bool localCreator = false;
-            std::wstring creator = sign->getCreatedPlayerUUID();
-            if (creator != L"")
+            if (sign->getCreatedPlayerUUID() != L"")
             {
                 for (int i = 0; i < 4; ++i)
                 {
                     boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[i];
-                    if (player && player->getUUID() == creator)
+                    if (player && player->getUUID() == sign->getCreatedPlayerUUID())
                     {
                         localCreator = true;
                         break;
@@ -158,29 +155,24 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
             for (int line = 0; line < 4; ++line)
             {
                 text = std::wstring(sign->mMessages[line]);
-                bool trusted = !mCensorText && !sign->wasCreatedByRestrictedPlayer();
-                if (!trusted && localCreator && CGameNetworkManager::sInstance.IsHost() &&
-                    sign->wasCreatedByHostPlayer())
-                    trusted = true;
-
-                if (trusted)
+                if ((mCensorText || sign->wasCreatedByRestrictedPlayer()) && !localCreator &&
+                    !(CGameNetworkManager::sInstance.IsHost() && sign->wasCreatedByHostPlayer()))
                 {
-                    if (!sign->IsVerified())
-                    {
-                        if (mLanguage == XC_LANGUAGE_JAPANESE || mLanguage == XC_LANGUAGE_KOREAN || mLanguage == XC_LANGUAGE_TCHINESE ||
-                            mLanguage == XC_LANGUAGE_ZH_HANS)
-                            text = L"Awaiting Approval";
-                        else
-                            text = L10N::GetString(0xad36b773);
-                    }
-                    else if (sign->IsCensored())
-                    {
+                    CensorString(text);
+                }
+                else if (sign->IsVerified())
+                {
+                    if (sign->IsCensored())
                         CensorString(text);
-                    }
+                }
+                else if (mLanguage == XC_LANGUAGE_JAPANESE || mLanguage == XC_LANGUAGE_KOREAN || mLanguage == XC_LANGUAGE_TCHINESE ||
+                         mLanguage == XC_LANGUAGE_ZH_HANS)
+                {
+                    text = L"Awaiting Approval";
                 }
                 else
                 {
-                    CensorString(text);
+                    text = L10N::GetString(IDS_STRINGVERIFY_AWAITING_APPROVAL);
                 }
 
                 if (line == sign->mSelectedLine)
@@ -194,17 +186,21 @@ void SignRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, 
             if (cacheIndex != -1)
             {
                 gRenderer->CBuffEnd();
-                if (!rendered)
-                {
-                    sign->disableTextCache();
-                }
-                else
+                if (rendered)
                 {
                     mTextCache[cacheIndex].uniqueId = sign->getUniqueId();
                     ++mTextCacheCount;
                     sign->setTextCacheIndex(cacheIndex);
                 }
+                else
+                {
+                    sign->disableTextCache();
+                }
             }
+        }
+        else
+        {
+            font->bindTexture();
         }
 
         GlStateManager::color3f(1.0f, 1.0f, 1.0f);
@@ -231,7 +227,15 @@ void SignRenderer::tick()
 {
     bool censorText = gApp.IsConsoleChatCensored();
     int language = XGetLanguage();
-    if (censorText == mCensorText && language == mLanguage)
+    if (censorText != mCensorText || mLanguage != language)
+    {
+        mLanguage = language;
+        mCensorText = censorText;
+        for (int i = 0; i < 200; ++i)
+            mTextCache[i].uniqueId = -1;
+        mTextCacheCount = 0;
+    }
+    else
     {
         for (int i = 0; i < 200; ++i)
         {
@@ -241,12 +245,5 @@ void SignRenderer::tick()
                 --mTextCacheCount;
             }
         }
-        return;
     }
-
-    mLanguage = language;
-    mCensorText = censorText;
-    for (int i = 0; i < 200; ++i)
-        mTextCache[i].uniqueId = -1;
-    mTextCacheCount = 0;
 }

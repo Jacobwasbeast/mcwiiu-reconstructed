@@ -25,11 +25,6 @@ HorseRenderer::HorseRenderer(EntityRenderDispatcher* dispatcher)
 {
 }
 
-HorseRenderer::~HorseRenderer()
-{
-    return;
-}
-
 void HorseRenderer::bindTexture(const ResourceLocation* location)
 {
     mDispatcher->mTextures->bindTextureLayers(location);
@@ -59,7 +54,12 @@ void HorseRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float l
                                 float limbSwingAmount, float ageInTicks, float netHeadYaw,
                                 float headPitch, float scale)
 {
-    if (!entity->isInvisible())
+    if (entity->isInvisible())
+    {
+        mModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
+                          scale, entity, _SkinAdjustments());
+    }
+    else
     {
         boost::shared_ptr<Entity> renderEntity(entity);
         const ResourceLocation* location = getTextureLocation(renderEntity);
@@ -67,8 +67,7 @@ void HorseRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float l
         bool dyedArmor = false;
         boost::shared_ptr<Horse> horse;
 
-        const bool isHorse = entity->GetType() == EntityType::HORSE;
-        if (isHorse)
+        if (eTYPE_DERIVED_FROM(EntityType::HORSE, entity->GetType()))
         {
             horse = boost::static_pointer_cast<Horse>(entity);
             if (horse->isWearingDyedArmor())
@@ -95,10 +94,5 @@ void HorseRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float l
         {
             GlStateManager::texLayerColor3f(horse->getDyedArmorLayer(), 1.0F, 1.0F, 1.0F);
         }
-    }
-    else
-    {
-        mModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                          scale, entity, _SkinAdjustments());
     }
 }

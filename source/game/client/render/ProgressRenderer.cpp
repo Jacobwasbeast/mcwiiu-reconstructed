@@ -30,20 +30,16 @@ void ProgressRenderer::internalProgressStart(const TextField& field)
         mPercent = 0;
         if (!field.active)
         {
-            mTitle.active = false;
-            mTitle.id = field.id;
-            mTitle.text = field.text;
+            mTitle = field;
         }
-        else if (field.id != -2)
+        else if (field.id == -2)
         {
-            mTitle.active = true;
-            mTitle.id = field.id;
-            mTitle.text = field.text;
+            mTitle.active = field.active;
+            mTitle.id = -2;
         }
         else
         {
-            mTitle.active = true;
-            mTitle.id = -2;
+            mTitle = field;
         }
         LeaveCriticalSection(&sProgressRendererMutex);
     }

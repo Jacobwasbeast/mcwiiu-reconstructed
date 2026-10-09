@@ -46,8 +46,7 @@ void TextureManager::createInstance()
 
 unsigned int TextureManager::createTextureID()
 {
-    ++m_nextTextureId;
-    return static_cast<unsigned int>(m_nextTextureId);
+    return m_nextTextureId++;
 }
 
 void TextureManager::registerName(const std::wstring& name, Texture* texture)
@@ -62,14 +61,7 @@ void TextureManager::registerName(const std::wstring& name, Texture* texture)
 
 void TextureManager::registerTexture(Texture* texture)
 {
-    if (m_textures.empty())
-    {
-        m_textures.insert(std::pair<const int, Texture*>(texture->getManagerId(), texture));
-        return;
-    }
-
-    boost::unordered_map<int, Texture*>::iterator it = m_textures.begin();
-    for (; it != m_textures.end(); ++it)
+    for (boost::unordered_map<int, Texture*>::iterator it = m_textures.begin(); it != m_textures.end(); ++it)
     {
         if (it->second == texture)
         {
@@ -96,9 +88,8 @@ std::wstring TextureManager::getTextureNameFromPath(const std::wstring& path)
 
 bool TextureManager::isAnimation(const std::wstring& name, TexturePack* texturePack)
 {
-    const std::wstring baseName(name, 0, name.rfind(L'.'));
-    const std::wstring textPath = L"/" + baseName + L".txt";
-    const bool hasPlainFile = texturePack->hasFile(L"/" + name, false);
+    std::wstring textPath = L"/" + name.substr(0, name.rfind(L'.')) + L".txt";
+    bool hasPlainFile = texturePack->hasFile(L"/" + name, false);
     TexturePack* selected = Minecraft::GetInstance()->mTexturePackRepository->getSelected();
     return selected->hasFile(textPath, !hasPlainFile);
 }
@@ -129,27 +120,21 @@ std::vector<Texture*>* TextureManager::createTextures(const std::wstring& path, 
 
     if (animation)
     {
-        const int frameCount = height / width;
+        const int frameWidth = width;
+        const int frameHeight = width;
+        const int frameCount = height / frameWidth;
         for (int frame = 0; frame < frameCount; ++frame)
         {
-            BufferedImage* frameImage = image->getSubimage(0, width * frame, width, width);
-            bool mipmap = true;
-            if (!singleImage && image->getData(1) == NULL)
-            {
-                mipmap = false;
-            }
-            Texture* frameTexture = createTexture(textureName, 2, width, width, 1, 0, 0, 0, mipmap, frameImage);
+            BufferedImage* frameImage = image->getSubimage(0, frameHeight * frame, frameWidth, frameHeight);
+            bool mipmap = singleImage || image->getData(1) != NULL;
+            Texture* frameTexture = createTexture(textureName, 2, frameWidth, frameHeight, 1, 0, 0, 0, mipmap, frameImage);
             delete frameImage;
             textures->push_back(frameTexture);
         }
     }
     else if (width == height)
     {
-        bool mipmap = true;
-        if (!singleImage && image->getData(1) == NULL)
-        {
-            mipmap = false;
-        }
+        bool mipmap = singleImage || image->getData(1) != NULL;
         textures->push_back(createTexture(textureName, 2, width, height, 1, 0, 0, 0, mipmap, image));
     }
 

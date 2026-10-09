@@ -34,9 +34,9 @@ void ShulkerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double
         BlockPos* oldPosition = shulker->getOldAttachPosition();
         double progress = ((float)interpolation - partialTick) / 6.0;
         progress *= progress;
-        MobRenderer::render(entity, -((double)(position->x - oldPosition->x) * progress - x),
-                            -((double)(position->y - oldPosition->y) * progress - y),
-                            -((double)(position->z - oldPosition->z) * progress - z), yaw, partialTick);
+        MobRenderer::render(entity, x - (double)(position->x - oldPosition->x) * progress,
+                            y - (double)(position->y - oldPosition->y) * progress,
+                            z - (double)(position->z - oldPosition->z) * progress, yaw, partialTick);
     }
     else
     {
@@ -119,16 +119,19 @@ void ShulkerRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, floa
 
 void ShulkerRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale)
 {
-    if (isVisible(entity) || !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer))
+    bool visible = isVisible(entity);
+    bool translucent = !visible && !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer);
+    if (visible || translucent)
     {
         LivingEntityRenderer::renderModel(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
-        return;
     }
-    boost::shared_ptr<Entity> renderEntity = entity;
-    if (!bindTexture(renderEntity))
-        return;
-    ShulkerModel* model = static_cast<ShulkerModel*>(getModel(entity));
-    model->renderWhenInvisible(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
+    else
+    {
+        boost::shared_ptr<Entity> renderEntity = entity;
+        if (!bindTexture(renderEntity))
+            return;
+        static_cast<ShulkerModel*>(getModel(entity))->renderWhenInvisible(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
+    }
 }
 
 Model* ShulkerRenderer::createModel(const ModelDefinition& definition)

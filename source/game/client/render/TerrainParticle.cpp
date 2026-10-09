@@ -125,7 +125,8 @@ void TerrainParticle::render(BufferBuilder* buffer,
 
     int light = getLightColor(partialTicks);
 
-    if (px * px + py * py + pz * pz >= 1.0f)
+    float distSq = px * px + py * py + pz * pz;
+    if (distSq >= 1.0f)
     {
         buffer->color(rCol, gCol, bCol);
         buffer->tex2(light);

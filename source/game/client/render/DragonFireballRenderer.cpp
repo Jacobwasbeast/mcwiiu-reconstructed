@@ -33,11 +33,11 @@ void DragonFireballRenderer::render(boost::shared_ptr<Entity>& entity, double x,
 
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();
+    float r = 1.0F;
+    float xo = 0.5F;
+    float yo = 0.25F;
     GlStateManager::rotatef(180.0F - mDispatcher->mCameraYRot, 0.0F, 1.0F, 0.0F);
-    if (mDispatcher->mOptions->mThirdPersonView == 2)
-        GlStateManager::rotatef(-(-1.0F * mDispatcher->mCameraXRot), 1.0F, 0.0F, 0.0F);
-    else
-        GlStateManager::rotatef(-(1.0F * mDispatcher->mCameraXRot), 1.0F, 0.0F, 0.0F);
+    GlStateManager::rotatef((float)(mDispatcher->mOptions->mThirdPersonView == 2 ? -1 : 1) * -mDispatcher->mCameraXRot, 1.0F, 0.0F, 0.0F);
 
     if (mSolidRender)
     {
@@ -47,10 +47,10 @@ void DragonFireballRenderer::render(boost::shared_ptr<Entity>& entity, double x,
 
     builder->begin();
     builder->normal(0.0F, 1.0F, 0.0F);
-    builder->vertexUV(-0.5F, -0.25F, 0.0F, 0.0F, 1.0F);
-    builder->vertexUV(0.5F, -0.25F, 0.0F, 1.0F, 1.0F);
-    builder->vertexUV(0.5F, 0.75F, 0.0F, 1.0F, 0.0F);
-    builder->vertexUV(-0.5F, 0.75F, 0.0F, 0.0F, 0.0F);
+    builder->vertexUV(0.0F - xo, 0.0F - yo, 0.0F, 0.0F, 1.0F);
+    builder->vertexUV(r - xo, 0.0F - yo, 0.0F, 1.0F, 1.0F);
+    builder->vertexUV(r - xo, r - yo, 0.0F, 1.0F, 0.0F);
+    builder->vertexUV(0.0F - xo, r - yo, 0.0F, 0.0F, 0.0F);
     builder->end();
     tesselator->end();
 

@@ -17,8 +17,8 @@ void SquidRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, floa
                                    float partialTicks)
 {
     boost::shared_ptr<Squid> squid = boost::static_pointer_cast<Squid>(entity);
-    float bodyXRot = (squid->mXBodyRot - squid->mXBodyRotO) * partialTicks + squid->mXBodyRotO;
-    float bodyZRot = (squid->mZBodyRot - squid->mZBodyRotO) * partialTicks + squid->mZBodyRotO;
+    float bodyXRot = squid->mXBodyRotO + (squid->mXBodyRot - squid->mXBodyRotO) * partialTicks;
+    float bodyZRot = squid->mZBodyRotO + (squid->mZBodyRot - squid->mZBodyRotO) * partialTicks;
 
     GlStateManager::translatef(0.0F, 0.5F, 0.0F);
     GlStateManager::rotatef(180.0F - rotationYaw, 0.0F, 1.0F, 0.0F);

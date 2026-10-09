@@ -15,7 +15,7 @@
 extern "C" void OSReport(const char*, ...);
 
 DefaultTexturePack::DefaultTexturePack()
-    : AbstractTexturePack(0, NULL, L10N::GetString(0x3a2a406), NULL)
+    : AbstractTexturePack(0, NULL, L10N::GetString(IDS_DEFAULT_TEXTUREPACK_NAME), NULL)
 {
     loadIcon();
     loadName();
@@ -37,7 +37,7 @@ void DefaultTexturePack::loadIcon()
 
 void DefaultTexturePack::loadName()
 {
-    m_name = L10N::GetString(0x3a2a406);
+    m_name = L10N::GetString(IDS_DEFAULT_TEXTUREPACK_NAME);
 }
 
 void DefaultTexturePack::loadDescription()
@@ -51,41 +51,33 @@ void DefaultTexturePack::loadCustomModels()
 
     File file(TexturePack::getPath(true, NULL).append(L"res/models.bin"));
 
-    if (!file.exists())
-    {
-#if defined(RECON_NATIVE)
-        OSReport("[native] optional default texture-pack models.bin unavailable; continuing without custom models\n");
-        return;
-#else
-        gApp.FatalLoadError(L"<AbstractTexturePack@%d> Failed to load default models", 191);
-#endif
-    }
-    else
+    if (file.exists())
     {
         unsigned int length = (unsigned int)file.length();
         arrayWithLength<unsigned char> data(length, true);
+        FileInputStream fileStream(file);
+        fileStream.read(data, 0, length);
+        fileStream.close();
+
+        ByteArrayInputStream byteStream(data);
+        DataInputStream input(&byteStream);
+        int version = input.readInt();
+        int count = input.readInt();
+
+        for (int index = 0; index < count; index++)
         {
-            FileInputStream fileStream(file);
-            fileStream.read(data, 0, length);
-            fileStream.close();
-
-            ByteArrayInputStream byteStream(data);
-            DataInputStream input(&byteStream);
-            int version = input.readInt();
-            int count = input.readInt();
-
-            for (int index = 0; index < count; index++)
-            {
-                std::wstring modelName = input.readUTF();
-                m_customModels[modelName].readModel(&input, version);
-            }
-            byteStream.mBuffer.data = NULL;
-            byteStream.mBuffer.length = 0;
-            byteStream.mCount = 0;
-            byteStream.mMark = 0;
-            byteStream.mPosition = 0;
+            std::wstring modelName = input.readUTF();
+            m_customModels[modelName].readModel(&input, version);
         }
-
+        byteStream.reset();
+    }
+    else
+    {
+#if defined(RECON_NATIVE)
+        OSReport("[native] optional default texture-pack models.bin unavailable; continuing without custom models\n");
+#else
+        gApp.FatalLoadError(L"<AbstractTexturePack@%d> Failed to load default models", 191);
+#endif
     }
 }
 
@@ -101,7 +93,7 @@ bool DefaultTexturePack::isTerrainUpdateCompatible()
 
 std::wstring DefaultTexturePack::getName()
 {
-    return L10N::GetString(0x3a2a406);
+    return L10N::GetString(IDS_DEFAULT_TEXTUREPACK_NAME);
 }
 
 std::wstring DefaultTexturePack::getDesc1()
@@ -113,7 +105,8 @@ InputStream* DefaultTexturePack::getResourceImplementation(const std::wstring& f
 {
     std::wstring resourceRoot = L"";
     resourceRoot = L"Common\\res\\TitleUpdate\\res";
-    return InputStream::getResourceAsStream(resourceRoot + fileName);
+    InputStream* resource = InputStream::getResourceAsStream(resourceRoot + fileName);
+    return resource;
 }
 
 void DefaultTexturePack::loadUI()

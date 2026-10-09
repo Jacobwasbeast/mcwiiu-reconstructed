@@ -24,18 +24,18 @@ TextureAtlas::TextureAtlas(int iconType, const std::wstring& name,
                            bool singleImage)
     : mIconType(iconType), mName(name), mPath(path), mSpritePrefix(L"")
 {
-    mStitchedTexture = 0;
     mImage = image;
-    mSingleImage = singleImage;
     mMissingIcon = 0;
+    mStitchedTexture = 0;
+    mSingleImage = singleImage;
     mMissingIcon = TextureAtlasSprite::create(MISSING_ICON_NAME);
 }
 
 void TextureAtlas::addIcon(bool singleImage, int x, int y,
                                            const std::wstring& name)
 {
-    const float scale = 0.0625f;
     const float vScale = singleImage ? 0.029411765f : 0.05882353f;
+    const float scale = 0.0625f;
     const float vOffset = singleImage ? 544.0f : 272.0f;
     mSprites[name] = new TextureAtlasSprite(
         name, name, scale * static_cast<float>(y),
@@ -48,8 +48,8 @@ void TextureAtlas::addIconWithName(bool singleImage, int x,
                                                    const std::wstring& name,
                                                    const std::wstring& spriteName)
 {
-    const float scale = 0.0625f;
     const float vScale = singleImage ? 0.029411765f : 0.05882353f;
+    const float scale = 0.0625f;
     const float vOffset = singleImage ? 544.0f : 272.0f;
     mSprites[name] = new TextureAtlasSprite(
         name, spriteName, scale * static_cast<float>(y),
@@ -60,8 +60,8 @@ void TextureAtlas::addIconWithName(bool singleImage, int x,
 void TextureAtlas::addIconSize(bool singleImage, int x, int y,
                                const std::wstring& name, int width, int height)
 {
-    const float scale = 0.0625f;
     const float vScale = singleImage ? 0.029411765f : 0.05882353f;
+    const float scale = 0.0625f;
     const float vOffset = singleImage ? 544.0f : 272.0f;
     mSprites[name] = new TextureAtlasSprite(
         name, name, scale * static_cast<float>(y),
@@ -74,6 +74,8 @@ void TextureAtlas::loadUVs()
 {
     if (!mSprites.empty())
         return;
+    for (boost::unordered_map<std::wstring, TextureAtlasSprite*>::iterator it = mSprites.begin(); it != mSprites.end(); ++it)
+        delete it->second;
     mSprites.clear();
     if (mIconType != 0)
     {
@@ -344,56 +346,55 @@ void TextureAtlas::loadUVs()
         addIcon(false, 16, 13, L"turtle_shell_piece");
         addIcon(false, 16, 14, L"trident");
         addIcon(false, 16, 15, L"phantom_membrane");
-        TextureAtlasSprite* previous;
         ClockAtlasSprite* clock = new ClockAtlasSprite();
-        previous = mSprites[L"clock"];
-        clock->initUVs(previous->getU0(false), previous->getV0(false), previous->getU1(false), previous->getV1(false));
-        delete previous;
+        TextureAtlasSprite* previousClock = mSprites[L"clock"];
+        clock->initUVs(previousClock->getU0(false), previousClock->getV0(false), previousClock->getU1(false), previousClock->getV1(false));
+        delete previousClock;
         mSprites[L"clock"] = clock;
         ClockAtlasSprite* clockP0 = new ClockAtlasSprite(0, clock);
-        previous = mSprites[L"clockP0"];
-        clockP0->initUVs(previous->getU0(false), previous->getV0(false), previous->getU1(false), previous->getV1(false));
-        delete previous;
+        previousClock = mSprites[L"clockP0"];
+        clockP0->initUVs(previousClock->getU0(false), previousClock->getV0(false), previousClock->getU1(false), previousClock->getV1(false));
+        delete previousClock;
         mSprites[L"clockP0"] = clockP0;
         ClockAtlasSprite* clockP1 = new ClockAtlasSprite(1, clock);
-        previous = mSprites[L"clockP1"];
-        clockP1->initUVs(previous->getU0(false), previous->getV0(false), previous->getU1(false), previous->getV1(false));
-        delete previous;
+        previousClock = mSprites[L"clockP1"];
+        clockP1->initUVs(previousClock->getU0(false), previousClock->getV0(false), previousClock->getU1(false), previousClock->getV1(false));
+        delete previousClock;
         mSprites[L"clockP1"] = clockP1;
         ClockAtlasSprite* clockP2 = new ClockAtlasSprite(2, clock);
-        previous = mSprites[L"clockP2"];
-        clockP2->initUVs(previous->getU0(false), previous->getV0(false), previous->getU1(false), previous->getV1(false));
-        delete previous;
+        previousClock = mSprites[L"clockP2"];
+        clockP2->initUVs(previousClock->getU0(false), previousClock->getV0(false), previousClock->getU1(false), previousClock->getV1(false));
+        delete previousClock;
         mSprites[L"clockP2"] = clockP2;
         ClockAtlasSprite* clockP3 = new ClockAtlasSprite(3, clock);
-        previous = mSprites[L"clockP3"];
-        clockP3->initUVs(previous->getU0(false), previous->getV0(false), previous->getU1(false), previous->getV1(false));
-        delete previous;
+        previousClock = mSprites[L"clockP3"];
+        clockP3->initUVs(previousClock->getU0(false), previousClock->getV0(false), previousClock->getU1(false), previousClock->getV1(false));
+        delete previousClock;
         mSprites[L"clockP3"] = clockP3;
         CompassAtlasSprite* compass = new CompassAtlasSprite();
-        previous = mSprites[L"compass"];
-        compass->initUVs(previous->getU0(false), previous->getV0(false), previous->getU1(false), previous->getV1(false));
-        delete previous;
+        TextureAtlasSprite* previousCompass = mSprites[L"compass"];
+        compass->initUVs(previousCompass->getU0(false), previousCompass->getV0(false), previousCompass->getU1(false), previousCompass->getV1(false));
+        delete previousCompass;
         mSprites[L"compass"] = compass;
         CompassAtlasSprite* compassP0 = new CompassAtlasSprite(0, compass);
-        previous = mSprites[L"compassP0"];
-        compassP0->initUVs(previous->getU0(false), previous->getV0(false), previous->getU1(false), previous->getV1(false));
-        delete previous;
+        previousCompass = mSprites[L"compassP0"];
+        compassP0->initUVs(previousCompass->getU0(false), previousCompass->getV0(false), previousCompass->getU1(false), previousCompass->getV1(false));
+        delete previousCompass;
         mSprites[L"compassP0"] = compassP0;
         CompassAtlasSprite* compassP1 = new CompassAtlasSprite(1, compass);
-        previous = mSprites[L"compassP1"];
-        compassP1->initUVs(previous->getU0(false), previous->getV0(false), previous->getU1(false), previous->getV1(false));
-        delete previous;
+        previousCompass = mSprites[L"compassP1"];
+        compassP1->initUVs(previousCompass->getU0(false), previousCompass->getV0(false), previousCompass->getU1(false), previousCompass->getV1(false));
+        delete previousCompass;
         mSprites[L"compassP1"] = compassP1;
         CompassAtlasSprite* compassP2 = new CompassAtlasSprite(2, compass);
-        previous = mSprites[L"compassP2"];
-        compassP2->initUVs(previous->getU0(false), previous->getV0(false), previous->getU1(false), previous->getV1(false));
-        delete previous;
+        previousCompass = mSprites[L"compassP2"];
+        compassP2->initUVs(previousCompass->getU0(false), previousCompass->getV0(false), previousCompass->getU1(false), previousCompass->getV1(false));
+        delete previousCompass;
         mSprites[L"compassP2"] = compassP2;
         CompassAtlasSprite* compassP3 = new CompassAtlasSprite(3, compass);
-        previous = mSprites[L"compassP3"];
-        compassP3->initUVs(previous->getU0(false), previous->getV0(false), previous->getU1(false), previous->getV1(false));
-        delete previous;
+        previousCompass = mSprites[L"compassP3"];
+        compassP3->initUVs(previousCompass->getU0(false), previousCompass->getV0(false), previousCompass->getU1(false), previousCompass->getV1(false));
+        delete previousCompass;
         mSprites[L"compassP3"] = compassP3;
     }
     else
@@ -948,15 +949,15 @@ void TextureAtlas::makeTextureAnimated(TexturePack* pack,
         return;
     }
     std::wstring parent = sprite->mParent;
-    const std::wstring animation = pack->getAnimationString(
-        parent, sprite->getName(), mPath, true);
-    if (animation.empty())
-        return;
-    std::wstring textureName = mPath + parent + mSpritePrefix;
-    std::vector<Texture*>* textures =
-        TextureManager::getInstance()->createTextures(textureName, mSingleImage);
-    if (textures != 0 && !textures->empty())
+    std::wstring animation = pack->getAnimationString(parent, sprite->getName(), mPath, true);
+    if (!animation.empty())
     {
+        std::wstring textureName = mPath + parent + mSpritePrefix;
+        std::vector<Texture*>* textures =
+            TextureManager::getInstance()->createTextures(textureName, mSingleImage);
+        if (textures == 0 || textures->empty())
+            return;
+
         Texture* texture = textures->at(0);
         sprite->init(mStitchedTexture, textures,
                      sprite->getX(), sprite->getY(),
@@ -1033,18 +1034,15 @@ void TextureAtlas::stitch()
         TextureAtlasSprite* sprite = it->second;
         int x = (int)(sprite->getU0(false) * mStitchedTexture->getWidth());
         int y = (int)(sprite->getV0(false) * mStitchedTexture->getHeight());
-        sprite->init(mStitchedTexture, 0, x, y,
-                     (int)(sprite->getU1(false) * mStitchedTexture->getWidth()) - x,
-                     (int)(sprite->getV1(false) * mStitchedTexture->getHeight()) - y, false);
+        int width = (int)(sprite->getU1(false) * mStitchedTexture->getWidth()) - x;
+        int height = (int)(sprite->getV1(false) * mStitchedTexture->getHeight()) - y;
+        sprite->init(mStitchedTexture, 0, x, y, width, height, false);
     }
     MemSect(52);
     for (boost::unordered_map<std::wstring, TextureAtlasSprite*>::iterator it = mSprites.begin(); it != mSprites.end(); ++it)
         makeTextureAnimated(pack, it->second);
     MemSect(0);
-    {
-        std::wstring debugName = L"debug.stitched_" + mName;
-        debugName + L".png";
-    }
+    mStitchedTexture->writeAsPNG(L"debug.stitched_" + mName + L".png");
     mStitchedTexture->updateOnGPU();
 }
 

@@ -14,19 +14,17 @@ ConduitParticle::ConduitParticle(Level* level,
       m_startY(y),
       m_startZ(z)
 {
-    xo = x;
-    yo = y;
-    zo = z;
     xd = xa;
     yd = ya;
     zd = za;
+    xo = x;
+    yo = y;
+    zo = z;
     setPos(x + xa, y + ya, z + za);
 
     Random* levelRandom = level->mRandom;
     float colour = levelRandom->nextFloat(0.4f, 1.0f);
-    float greenBlue = levelRandom->nextFloat(0.2f, 0.7f);
-    size = greenBlue;
-    m_conduitParticleValue = greenBlue;
+    m_conduitParticleValue = size = levelRandom->nextFloat(0.2f, 0.7f);
     rCol = colour * 0.9f;
     gCol = colour * 0.9f;
     bCol = colour;
@@ -35,9 +33,8 @@ ConduitParticle::ConduitParticle(Level* level,
     hasPhysics = false;
     lifetime = (int)lifetimeValue;
 
-    int texture = levelRandom->nextInt(4);
-    int variant = levelRandom->nextInt(0, 3);
-    uvs = TextureUVCoordinateSet::fromOldSystem(texture * 3 + 0xd0 + variant);
+    uvs = TextureUVCoordinateSet::fromOldSystem(levelRandom->nextInt(4) * 3 + 0xd0
+                                                + levelRandom->nextInt(0, 3));
 }
 
 void ConduitParticle::tick()
@@ -46,11 +43,11 @@ void ConduitParticle::tick()
     yo = y;
     zo = z;
 
-    double inverseProgress = 1.0 - (double)age / (double)lifetime;
-    double progress = 1.0 - inverseProgress;
-    setPos(xd * inverseProgress + m_startX,
-           -(progress * progress * progress * 1.2 - (yd * inverseProgress + m_startY)),
-           zd * inverseProgress + m_startZ);
+    double progress = (double)age / (double)lifetime;
+    progress = 1.0 - progress;
+    double fall = 1.0 - progress;
+    fall = fall * fall * fall;
+    setPos(m_startX + xd * progress, m_startY + yd * progress - fall * 1.2, m_startZ + zd * progress);
 
     if (age++ >= lifetime)
         remove();

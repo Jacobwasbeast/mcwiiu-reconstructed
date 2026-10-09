@@ -55,9 +55,9 @@ void VillagerRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
 
         mDispatcher = Minecraft::GetInstance()->getEntityRenderDispatcher();
 
-        const float height = entity->mBbHeight;
+        const float height = entity->mBbHeight + 0.5F;
         GlStateManager::pushMatrix();
-        GlStateManager::translatef((float)x, height + 0.5F + (float)y, (float)z);
+        GlStateManager::translatef((float)x, (float)y + height, (float)z);
         GlStateManager::normal3f(0.0F, 1.0F, 0.0F);
         GlStateManager::rotatef(180.0F - mDispatcher->mCameraYRot, 0.0F, 1.0F, 0.0F);
         const float pitchDirection = mDispatcher->mOptions->mThirdPersonView == 2 ? -1.0F : 1.0F;
@@ -110,16 +110,17 @@ const ResourceLocation* VillagerRenderer::getTextureLocation(boost::shared_ptr<E
 void VillagerRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float)
 {
     boost::shared_ptr<Villager> villager = boost::static_pointer_cast<Villager>(entity);
+    float scale = 0.9375F;
     if (villager->getAge() < 0)
     {
+        scale = (float)(scale * 0.5);
         mShadowRadius = 0.25F;
-        GlStateManager::scalef(0.46875F, 0.46875F, 0.46875F);
     }
     else
     {
         mShadowRadius = 0.5F;
-        GlStateManager::scalef(0.9375F, 0.9375F, 0.9375F);
     }
+    GlStateManager::scalef(scale, scale, scale);
 }
 
 Model* VillagerRenderer::createModel(const ModelDefinition& definition)

@@ -118,7 +118,7 @@ void WolfModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float l
     if (!wolf->isSitting())
     {
         mBody->setPos(0.0f, 14.0f, 2.0f);
-        mBody->mXRot = 90.0f * 0.017453292f;
+        mBody->mXRot = 90.0f * Mth::DEG_TO_RAD;
         upperBody->setPos(-1.0f, 14.0f, -3.0f);
         upperBody->mXRot = mBody->mXRot;
         mTail->setPos(-1.0f, 12.0f, 8.0f);
@@ -162,7 +162,7 @@ void WolfModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTic
                           _SkinAdjustments skinAdjustments)
 {
     Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
-    mHead->mXRot = headPitch * 0.017453292f;
-    mHead->mYRot = netHeadYaw * 0.017453292f;
+    mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
+    mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
     mTail->mXRot = ageInTicks;
 }

@@ -45,12 +45,15 @@ void MobRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, 
                          float yaw, float partialTick)
 {
     LivingEntityRenderer::render(entity, x, y, z, yaw, partialTick);
-    if (mSolidRender)
-        return;
-    if ((entity->GetType() & EntityType::MOB) != EntityType::MOB)
-        return;
-    boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
-    renderLeash(mob, x, y, z, yaw, partialTick);
+    if (!mSolidRender)
+    {
+        bool isMob = eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType());
+        if (isMob)
+        {
+            boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
+            renderLeash(mob, x, y, z, yaw, partialTick);
+        }
+    }
 }
 
 void MobRenderer::setLightColor(boost::shared_ptr<Entity>& entity)
@@ -81,7 +84,7 @@ void MobRenderer::renderLeash(boost::shared_ptr<Mob>& mob, double x, double y, d
     double cosYaw = std::cos(holderYaw * Mth::DEG_TO_RAD);
     double sinYaw = std::sin(holderYaw * Mth::DEG_TO_RAD);
     double sinPitch = std::sin(holderPitch * Mth::DEG_TO_RAD);
-    if ((holder->GetType() & EntityType::HANGING_ENTITY) == EntityType::HANGING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::HANGING_ENTITY, holder->GetType()))
     {
         cosYaw = 0.0;
         sinYaw = 0.0;

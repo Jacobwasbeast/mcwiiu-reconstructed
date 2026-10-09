@@ -36,11 +36,11 @@ void SlimeRenderer::scale(boost::shared_ptr<LivingEntity>& entity, float partial
     boost::shared_ptr<Slime> slime = boost::static_pointer_cast<Slime>(entity);
     GlStateManager::scalef(0.999f, 0.999f, 0.999f);
     float size = static_cast<float>(slime->getSize());
-    float squish = slime->mSquishO + (slime->mSquish - slime->mSquishO) * partialTicks;
-    float scale = 1.0f / (squish / (size * 0.5f + 1.0f) + 1.0f);
-    float scaledSize = scale * size;
-
-    GlStateManager::scalef(scaledSize, (1.0f / scale) * size, scaledSize);
+    float s;
+    float squish = (slime->mSquishO + (slime->mSquish - slime->mSquishO) * partialTicks) / (size * 0.5f + 1.0f);
+    float scale = 1.0f / (squish + 1.0f);
+    s = size;
+    GlStateManager::scalef(scale * s, 1.0f / scale * s, scale * s);
 }
 
 Model* SlimeRenderer::createModel(const ModelDefinition& definition)

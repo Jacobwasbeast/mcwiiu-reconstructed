@@ -129,27 +129,7 @@ void RabbitModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
-    if (!mYoung)
-    {
-        GlStateManager::pushMatrix();
-        GlStateManager::scalef(0.6f, 0.6f, 0.6f);
-        GlStateManager::translatef(0.0f, 16.0f * scale, 0.0f);
-        mRearFootLeft->render(scale, useDisplayList, false);
-        mRearFootRight->render(scale, useDisplayList, false);
-        mHaunchLeft->render(scale, useDisplayList, false);
-        mHaunchRight->render(scale, useDisplayList, false);
-        mBody->render(scale, useDisplayList, false);
-        mFrontLegLeft->render(scale, useDisplayList, false);
-        mFrontLegRight->render(scale, useDisplayList, false);
-        mHead->render(scale, useDisplayList, false);
-        mEarRight->render(scale, useDisplayList, false);
-        mEarLeft->render(scale, useDisplayList, false);
-        mTail->render(scale, useDisplayList, false);
-        mNose->render(scale, useDisplayList, false);
-        GlStateManager::popMatrix();
-        callSkinnedDrawlist();
-    }
-    else
+    if (mYoung)
     {
         GlStateManager::pushMatrix();
         GlStateManager::scalef(0.56666666f, 0.56666666f, 0.56666666f);
@@ -171,6 +151,26 @@ void RabbitModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
         mFrontLegLeft->render(scale, useDisplayList, false);
         mFrontLegRight->render(scale, useDisplayList, false);
         mTail->render(scale, useDisplayList, false);
+        GlStateManager::popMatrix();
+        callSkinnedDrawlist();
+    }
+    else
+    {
+        GlStateManager::pushMatrix();
+        GlStateManager::scalef(0.6f, 0.6f, 0.6f);
+        GlStateManager::translatef(0.0f, 16.0f * scale, 0.0f);
+        mRearFootLeft->render(scale, useDisplayList, false);
+        mRearFootRight->render(scale, useDisplayList, false);
+        mHaunchLeft->render(scale, useDisplayList, false);
+        mHaunchRight->render(scale, useDisplayList, false);
+        mBody->render(scale, useDisplayList, false);
+        mFrontLegLeft->render(scale, useDisplayList, false);
+        mFrontLegRight->render(scale, useDisplayList, false);
+        mHead->render(scale, useDisplayList, false);
+        mEarRight->render(scale, useDisplayList, false);
+        mEarLeft->render(scale, useDisplayList, false);
+        mTail->render(scale, useDisplayList, false);
+        mNose->render(scale, useDisplayList, false);
         GlStateManager::popMatrix();
         callSkinnedDrawlist();
     }
@@ -199,24 +199,22 @@ void RabbitModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     float partialTick = ageInTicks - (float)entity->mTickCount;
     boost::shared_ptr<Rabbit> rabbit = boost::dynamic_pointer_cast<Rabbit>(entity);
 
+    mNose->mXRot = headPitch * Mth::DEG_TO_RAD;
+    mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
     mEarRight->mXRot = headPitch * Mth::DEG_TO_RAD;
     mEarLeft->mXRot = headPitch * Mth::DEG_TO_RAD;
-    mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
-    mNose->mXRot = headPitch * Mth::DEG_TO_RAD;
-
     mNose->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
     mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
     mEarRight->mYRot = mNose->mYRot - 15.0f * Mth::DEG_TO_RAD;
     mEarLeft->mYRot = mNose->mYRot + 15.0f * Mth::DEG_TO_RAD;
 
-    float jump = Mth::sin(rabbit->getJumpCompletion(partialTick) * Mth::PI);
-    mJumpRotation = jump;
-    mRearFootLeft->mXRot = jump * 50.0f * Mth::DEG_TO_RAD;
-    mRearFootRight->mXRot = jump * 50.0f * Mth::DEG_TO_RAD;
-    mHaunchLeft->mXRot = (jump * 50.0f - 21.0f) * Mth::DEG_TO_RAD;
-    mHaunchRight->mXRot = (jump * 50.0f - 21.0f) * Mth::DEG_TO_RAD;
-    mFrontLegLeft->mXRot = (jump * -40.0f - 11.0f) * Mth::DEG_TO_RAD;
-    mFrontLegRight->mXRot = (jump * -40.0f - 11.0f) * Mth::DEG_TO_RAD;
+    mJumpRotation = Mth::sin(rabbit->getJumpCompletion(partialTick) * Mth::PI);
+    mHaunchLeft->mXRot = (mJumpRotation * 50.0f - 21.0f) * Mth::DEG_TO_RAD;
+    mHaunchRight->mXRot = (mJumpRotation * 50.0f - 21.0f) * Mth::DEG_TO_RAD;
+    mRearFootLeft->mXRot = mJumpRotation * 50.0f * Mth::DEG_TO_RAD;
+    mRearFootRight->mXRot = mJumpRotation * 50.0f * Mth::DEG_TO_RAD;
+    mFrontLegLeft->mXRot = (mJumpRotation * -40.0f - 11.0f) * Mth::DEG_TO_RAD;
+    mFrontLegRight->mXRot = (mJumpRotation * -40.0f - 11.0f) * Mth::DEG_TO_RAD;
 }
 
 void RabbitModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing, float limbSwingAmount,

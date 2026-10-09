@@ -34,14 +34,10 @@ void BatRenderer::setupPosition(boost::shared_ptr<LivingEntity>& entity, double 
 void BatRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entity, float ageInTicks,
                                  float rotationYaw, float partialTicks)
 {
-    bool resting = false;
-    if (entity->GetType() == EntityType::BAT && boost::static_pointer_cast<Bat>(entity)->isResting())
-        resting = true;
-
-    if (resting)
+    if (eTYPE_DERIVED_FROM(EntityType::BAT, entity->GetType()) && boost::static_pointer_cast<Bat>(entity)->isResting())
         GlStateManager::translatef(0.0F, -0.1F, 0.0F);
     else
-        GlStateManager::translatef(0.0F, cosf(ageInTicks * 0.3F) * 0.1F, 0.0F);
+        GlStateManager::translatef(0.0F, cos(ageInTicks * 0.3F) * 0.1F, 0.0F);
 
     LivingEntityRenderer::setupRotations(entity, ageInTicks, rotationYaw, partialTicks);
 }

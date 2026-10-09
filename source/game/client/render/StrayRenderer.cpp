@@ -44,31 +44,27 @@ void StrayRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity, float 
     bool visible = isVisible(entity);
     bool invisibleToPlayer = !visible && !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer);
 
-    std::vector<RenderLayer*>::iterator it = mLayers.begin();
-    while (it != mLayers.end())
+    for (std::vector<RenderLayer*>::iterator it = mLayers.begin(); it != mLayers.end(); ++it)
     {
         RenderLayer* layer = *it;
-        if ((visible && !invisibleToPlayer) || layer != mStrayClothingLayer)
+        if ((!visible || invisibleToPlayer) && *it == mStrayClothingLayer)
         {
-            bool skipLayer = false;
-            if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
-                && boost::static_pointer_cast<Player>(entity)->isSpectator()
-                && boost::static_pointer_cast<Player>(entity)->SpectateAsFloatingHead()
-                && (layer == NULL || dynamic_cast<StrayClothingLayer*>(layer) == NULL))
-            {
-                skipLayer = true;
-            }
-
-            if (!skipLayer)
-            {
-                bool teardown = setupOverlayColor(entity, partialTick, layer->colorsOnDamage());
-                layer->render(entity, limbSwing, limbSwingAmount, partialTick, ageInTicks, netHeadYaw, headPitch,
-                              scale, overlay);
-                if (teardown)
-                    teardownOverlayColor();
-            }
+            continue;
         }
-        ++it;
+
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) &&
+            boost::static_pointer_cast<Player>(entity)->isSpectator() &&
+            boost::static_pointer_cast<Player>(entity)->SpectateAsFloatingHead() &&
+            (layer == NULL || dynamic_cast<StrayClothingLayer*>(layer) == NULL))
+        {
+            continue;
+        }
+
+        bool damageOverlay = setupOverlayColor(entity, partialTick, layer->colorsOnDamage());
+        layer->render(entity, limbSwing, limbSwingAmount, partialTick, ageInTicks, netHeadYaw, headPitch, scale,
+                      overlay);
+        if (damageOverlay)
+            teardownOverlayColor();
     }
 }
 

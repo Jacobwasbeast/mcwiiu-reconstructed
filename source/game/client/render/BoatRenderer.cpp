@@ -55,7 +55,8 @@ void BoatRenderer::setupRotation(boost::shared_ptr<Entity> entity, float yaw, fl
         GlStateManager::rotatef(std::sin(hurtTime) * hurtTime * damage / 10.0F * boat->getHurtDir(),
                                 1.0F, 0.0F, 0.0F);
     }
-    if (!Mth::equal(boat->getBubbleAngle(partialTick), 0.0F))
+    float bubbleAngle = boat->getBubbleAngle(partialTick);
+    if (!Mth::equal(bubbleAngle, 0.0F))
         GlStateManager::rotatef(boat->getBubbleAngle(partialTick), 1.0F, 0.0F, 1.0F);
     GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
 }
@@ -83,7 +84,7 @@ void BoatRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y,
     EntityRenderer::render(entity, x, y, z, yaw, partialTick);
     if (!mSolidRender)
     {
-        const bool isBoat = entity->GetType() == EntityType::BOAT;
+        const bool isBoat = eTYPE_DERIVED_FROM(EntityType::BOAT, entity->GetType());
         if (isBoat)
         {
             boost::shared_ptr<Boat> leashedBoat = boost::static_pointer_cast<Boat>(entity);
@@ -136,7 +137,7 @@ void BoatRenderer::renderLeash(boost::shared_ptr<Boat>& boat, double x, double y
     double cosYaw = std::cos(holderYaw);
     double sinYaw = std::sin(holderYaw);
     double sinPitch = std::sin(holderPitch);
-    if ((holder->GetType() & EntityType::HANGING_ENTITY) == EntityType::HANGING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::HANGING_ENTITY, holder->GetType()))
     {
         sinYaw = 0.0;
         sinPitch = -1.0;
@@ -204,7 +205,10 @@ bool BoatRenderer::shouldRender(boost::shared_ptr<Entity>& entity, Culler* culle
         return true;
     boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(entity);
     if (boat && boat->isLeashed() && boat->getLeashHolder())
-        return culler->isVisible(boat->getLeashHolder()->getBoundingBoxForCulling());
+    {
+        boost::shared_ptr<Entity> holder = boat->getLeashHolder();
+        return culler->isVisible(holder->getBoundingBoxForCulling());
+    }
     return false;
 }
 

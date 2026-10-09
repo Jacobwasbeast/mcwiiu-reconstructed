@@ -15,10 +15,10 @@
 DripParticle::DripParticle(Level* level, double x, double y, double z, Material* material)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
-    bool isWater = material == Material::WATER;
+    Material* water = Material::WATER;
     ColourTable* colourTable = Minecraft::GetInstance()->getColourTable();
     unsigned int colour;
-    if (isWater)
+    if (material == water)
         colour = colourTable->getColour(eMinecraftColour_Particle_DripWater);
     else
         colour = colourTable->getColour(eMinecraftColour_Particle_DripLavaStart);
@@ -27,9 +27,9 @@ DripParticle::DripParticle(Level* level, double x, double y, double z, Material*
     bCol = (float)(colour & 255) / 255.0f;
     setMiscTex(113);
     setSize(0.01f, 0.01f);
+    gravity = 0.06f;
     this->material = material;
     delay = 40;
-    gravity = 0.06f;
     lifetime = (int)(64.0 / (random.nextDouble() * 0.8 + 0.2));
     xd = 0.0;
     yd = 0.0;
@@ -56,9 +56,10 @@ void DripParticle::tick()
     yo = y;
     zo = z;
 
-    bool isWater = material == Material::WATER;
+    Material* dripMaterial = material;
+    Material* water = Material::WATER;
     ColourTable* colourTable = Minecraft::GetInstance()->getColourTable();
-    if (isWater)
+    if (dripMaterial == water)
     {
         unsigned int colour = colourTable->getColour(eMinecraftColour_Particle_DripWater);
         rCol = (float)((colour >> 16) & 255) / 255.0f;
@@ -82,17 +83,16 @@ void DripParticle::tick()
         bCol = startBlue - (startBlue - endBlue) / 40.0f * age;
     }
 
-    double fall = yd - gravity;
+    yd -= gravity;
     if (delay-- > 0)
     {
         xd *= 0.02;
-        yd = fall * 0.02;
+        yd *= 0.02;
         zd *= 0.02;
         setMiscTex(113);
     }
     else
     {
-        yd = fall;
         setMiscTex(112);
     }
     move(xd, yd, zd);

@@ -24,8 +24,8 @@ void NoteParticle::render(BufferBuilder* buffer,
                           float xa2,
                           float za2)
 {
-    float progress = Mth::clamp(((float)age + partialTicks) / (float)lifetime * 32.0f,
-                                0.0f, 1.0f);
+    float progress = ((age + partialTicks) / lifetime) * 32.0f;
+    progress = Mth::clamp(progress, 0.0f, 1.0f);
     size = scale * progress;
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
@@ -64,12 +64,12 @@ void NoteParticle::init(Level* level, double x, double y, double z,
                         double xa, double ya, double za, float factor)
 {
     xd *= 0.01;
+    yd *= 0.01;
     zd *= 0.01;
-    yd = yd * 0.01 + 0.2;
+    yd += 0.2;
 
-    int note = (int)std::floor(xa * 24.0 + 0.5);
-    unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour(
-        (eMinecraftColour)(eMinecraftColour_Particle_Note_00 + note));
+    int note = eMinecraftColour_Particle_Note_00 + (int)std::floor(xa * 24.0 + 0.5);
+    unsigned int colour = Minecraft::GetInstance()->getColourTable()->getColour((eMinecraftColour)note);
 
     rCol = (float)((colour >> 16) & 255) / 255.0f;
     gCol = (float)((colour >> 8) & 255) / 255.0f;

@@ -11,7 +11,14 @@ SheepFurModel::SheepFurModel(const ModelDefinition& modelDefinition)
 {
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 
-    if (!modelDefinition.DoesOverrideModel())
+    if (modelDefinition.DoesOverrideModel())
+    {
+        mHasOverriddenParts = true;
+        builder->setVertexAndPixelShader(eMinecraftEntityMaterial_Sheep);
+        compileSkinnedDrawlist();
+        builder->useDefaultShaders();
+    }
+    else
     {
         delete mHead;
         delete mBody;
@@ -44,13 +51,6 @@ SheepFurModel::SheepFurModel(const ModelDefinition& modelDefinition)
         mLeg3->addBox(-2.0f, 0.0f, -2.0f, 4, 6, 4, 0.5f);
         mLeg3->setPos(3.0f, 12.0f, -5.0f);
 
-        compileSkinnedDrawlist();
-        builder->useDefaultShaders();
-    }
-    else
-    {
-        mHasOverriddenParts = true;
-        builder->setVertexAndPixelShader(eMinecraftEntityMaterial_Sheep);
         compileSkinnedDrawlist();
         builder->useDefaultShaders();
     }

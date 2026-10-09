@@ -27,8 +27,7 @@ static float OCELOT_FRONT_LEG_Z = -5.0f;
 
 OcelotModel::OcelotModel()
 {
-    Minecraft::GetInstance();
-    TexturePack* texturePack = TexturePackRepository::defaultTexturePack;
+    TexturePack* texturePack = Minecraft::GetInstance()->mTexturePackRepository->defaultTexturePack;
     LoadOcelotModelDefinition(*texturePack->GetCustomModel(L"ocelot"));
 }
 
@@ -65,7 +64,27 @@ void OcelotModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
               entity, _SkinAdjustments());
 
-    if (!mYoung)
+    if (mYoung)
+    {
+        GlStateManager::pushMatrix();
+        GlStateManager::scalef(0.75f, 0.75f, 0.75f);
+        GlStateManager::translatef(0.0f, 10.0f * scale, 4.0f * scale);
+        mHead->render(scale, useDisplayList, false);
+        GlStateManager::popMatrix();
+        GlStateManager::pushMatrix();
+        GlStateManager::scalef(0.5f, 0.5f, 0.5f);
+        GlStateManager::translatef(0.0f, 24.0f * scale, 0.0f);
+        mBody->render(scale, useDisplayList, false);
+        mBackLegL->render(scale, useDisplayList, false);
+        mBackLegR->render(scale, useDisplayList, false);
+        mFrontLegL->render(scale, useDisplayList, false);
+        mFrontLegR->render(scale, useDisplayList, false);
+        mTail1->render(scale, useDisplayList, false);
+        mTail2->render(scale, useDisplayList, false);
+        GlStateManager::popMatrix();
+        callSkinnedDrawlist();
+    }
+    else
     {
         mHead->render(scale, useDisplayList, false);
         mBody->render(scale, useDisplayList, false);
@@ -76,26 +95,7 @@ void OcelotModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
         mFrontLegL->render(scale, useDisplayList, false);
         mFrontLegR->render(scale, useDisplayList, false);
         callSkinnedDrawlist();
-        return;
     }
-
-    GlStateManager::pushMatrix();
-    GlStateManager::scalef(0.75f, 0.75f, 0.75f);
-    GlStateManager::translatef(0.0f, 10.0f * scale, 4.0f * scale);
-    mHead->render(scale, useDisplayList, false);
-    GlStateManager::popMatrix();
-    GlStateManager::pushMatrix();
-    GlStateManager::scalef(0.5f, 0.5f, 0.5f);
-    GlStateManager::translatef(0.0f, 24.0f * scale, 0.0f);
-    mBody->render(scale, useDisplayList, false);
-    mBackLegL->render(scale, useDisplayList, false);
-    mBackLegR->render(scale, useDisplayList, false);
-    mFrontLegL->render(scale, useDisplayList, false);
-    mFrontLegR->render(scale, useDisplayList, false);
-    mTail1->render(scale, useDisplayList, false);
-    mTail2->render(scale, useDisplayList, false);
-    GlStateManager::popMatrix();
-    callSkinnedDrawlist();
 }
 
 void OcelotModel::render(OcelotModel* model, float scale, bool useDisplayList)
@@ -131,8 +131,8 @@ void OcelotModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
                             boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
     int pose = mPose;
-    mHead->mXRot = headPitch * 0.017453292f;
-    mHead->mYRot = netHeadYaw * 0.017453292f;
+    mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
+    mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
 
     if (pose != 3)
     {
@@ -170,14 +170,10 @@ void OcelotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
     mTail1->mZ = OCELOT_TAIL1_Z;
     mTail2->mY = OCELOT_TAIL2_Y;
     mTail2->mZ = OCELOT_TAIL2_Z;
-    mFrontLegR->mY = OCELOT_FRONT_LEG_Y;
-    mFrontLegR->mZ = OCELOT_FRONT_LEG_Z;
-    mFrontLegL->mY = OCELOT_FRONT_LEG_Y;
-    mFrontLegL->mZ = OCELOT_FRONT_LEG_Z;
-    mBackLegR->mY = OCELOT_BACK_LEG_Y;
-    mBackLegR->mZ = OCELOT_BACK_LEG_Z;
-    mBackLegL->mY = OCELOT_BACK_LEG_Y;
-    mBackLegL->mZ = OCELOT_BACK_LEG_Z;
+    mFrontLegL->mY = mFrontLegR->mY = OCELOT_FRONT_LEG_Y;
+    mFrontLegL->mZ = mFrontLegR->mZ = OCELOT_FRONT_LEG_Z;
+    mBackLegL->mY = mBackLegR->mY = OCELOT_BACK_LEG_Y;
+    mBackLegL->mZ = mBackLegR->mZ = OCELOT_BACK_LEG_Z;
     mTail1->mXRot = 0.9f;
     mBody->mXRot = 0.0f;
 
@@ -202,16 +198,16 @@ void OcelotModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float
     }
     else if (ocelot->isSitting())
     {
-        mBody->mY += -4.0f;
         mBody->mXRot = -45.0f * Mth::DEG_TO_RAD;
+        mBody->mY += -4.0f;
         mBody->mZ += 5.0f;
         mHead->mY += -3.3f;
         mHead->mZ += 1.0f;
         mTail1->mY += 8.0f;
         mTail1->mZ += -2.0f;
-        mTail1->mXRot = 1.7278761f;
         mTail2->mY += 2.0f;
         mTail2->mZ += -0.8f;
+        mTail1->mXRot = 1.7278761f;
         mTail2->mXRot = 2.670354f;
         mFrontLegL->mXRot = -0.15707964f;
         mFrontLegL->mY = OCELOT_FRONT_LEG_Y + 2.0f;

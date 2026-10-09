@@ -90,20 +90,7 @@ void LlamaModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, floa
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
               entity, _SkinAdjustments());
 
-    bool chestOnly = !chestVisible;
-
-    if (!mYoung)
-    {
-        mHead->render(scale, useDisplayList, false);
-        mBody->render(scale, useDisplayList, false);
-        mLeg0->render(scale, useDisplayList, false);
-        mLeg1->render(scale, useDisplayList, false);
-        mLeg2->render(scale, useDisplayList, false);
-        mLeg3->render(scale, useDisplayList, false);
-        mChest1->render(scale, useDisplayList, chestOnly);
-        mChest2->render(scale, useDisplayList, chestOnly);
-    }
-    else
+    if (mYoung)
     {
         GlStateManager::pushMatrix();
         GlStateManager::translatef(0.0f, mYHeadOffs * scale, mZHeadOffs * scale);
@@ -128,9 +115,20 @@ void LlamaModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, floa
         mLeg1->render(scale, useDisplayList, false);
         mLeg2->render(scale, useDisplayList, false);
         mLeg3->render(scale, useDisplayList, false);
-        mChest1->render(scale, useDisplayList, chestOnly);
-        mChest2->render(scale, useDisplayList, chestOnly);
+        mChest1->render(scale, useDisplayList, !chestVisible);
+        mChest2->render(scale, useDisplayList, !chestVisible);
         GlStateManager::popMatrix();
+    }
+    else
+    {
+        mHead->render(scale, useDisplayList, false);
+        mBody->render(scale, useDisplayList, false);
+        mLeg0->render(scale, useDisplayList, false);
+        mLeg1->render(scale, useDisplayList, false);
+        mLeg2->render(scale, useDisplayList, false);
+        mLeg3->render(scale, useDisplayList, false);
+        mChest1->render(scale, useDisplayList, !chestVisible);
+        mChest2->render(scale, useDisplayList, !chestVisible);
     }
 
     callSkinnedDrawlist();

@@ -1,4 +1,5 @@
 #include "game/client/render/CreeperHeadModel.hpp"
+#include "game/core/Mth.hpp"
 
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
@@ -19,8 +20,8 @@ CreeperHeadModel::CreeperHeadModel(float delta, const ModelDefinition& modelDefi
 
 void CreeperHeadModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
-    mHead->mYRot = netHeadYaw * 0.017453292f;
-    mHead->mXRot = headPitch * 0.017453292f;
+    mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
+    mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
     mHead->render(scale, useDisplayList, false);
 
     callSkinnedDrawlist();

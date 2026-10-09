@@ -1,6 +1,7 @@
 #include "game/client/render/LivingEntityRenderer.hpp"
 #include "game/core/EntityType.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 #include "game/client/render/Model.hpp"
@@ -38,10 +39,11 @@ float hermiteBlend(float amount)
 }
 
 LivingEntityRenderer::LivingEntityRenderer(EntityRenderDispatcher* dispatcher, Model* model, float shadowRadius)
-    : EntityRenderer(dispatcher), mLayers(), mItemFrame(false)
+    : EntityRenderer(dispatcher), mLayers()
 {
     mModel = model;
     mShadowRadius = shadowRadius;
+    mItemFrame = false;
 }
 
 bool LivingEntityRenderer::addLayer(RenderLayer* layer)
@@ -52,13 +54,13 @@ bool LivingEntityRenderer::addLayer(RenderLayer* layer)
 
 bool LivingEntityRenderer::removeLayer(RenderLayer* layer)
 {
-    std::vector<RenderLayer*>::iterator it = mLayers.begin();
-    while (it != mLayers.end() && *it != layer)
-        ++it;
-    if (it == mLayers.end())
-        return false;
-    mLayers.erase(it);
-    return true;
+    std::vector<RenderLayer*>::iterator it = std::find(mLayers.begin(), mLayers.end(), layer);
+    if (it != mLayers.end())
+    {
+        mLayers.erase(it);
+        return true;
+    }
+    return false;
 }
 
 Model* LivingEntityRenderer::getModel()
@@ -91,8 +93,9 @@ float LivingEntityRenderer::setupScale(boost::shared_ptr<LivingEntity>& entity, 
     GlStateManager::enableRescaleNormal();
     GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
     scale(entity, partialTicks);
+    const float scaleFactor = 0.0625F;
     GlStateManager::translatef(0.0F, -1.501F, 0.0F);
-    return 0.0625F;
+    return scaleFactor;
 }
 
 bool LivingEntityRenderer::setupSolidState(boost::shared_ptr<LivingEntity>&)
@@ -133,35 +136,38 @@ bool LivingEntityRenderer::setupOverlayColor(boost::shared_ptr<LivingEntity>& en
 
         if (progress > 0.0F)
         {
-            fireTransition = true;
             float phase = ((float)elapsed / 20.0F + (float)elapsed / 20.0F) * 3.1415927F;
             float pulse = Mth::sin((phase + phase) * 0.5F);
             fireRed = 0.8F;
             fireGreen = (float)lerp(0.3F, 0.15F, pulse * pulse);
             fireBlue = 0.0F;
             fireAlpha = hermiteBlend(progress) * 0.7F;
+            fireTransition = true;
         }
     }
 
-    if (!hasOverlay && !hurt && !fireTransition)
-        return false;
-    if (hurt && !combineTextures)
-        return false;
+    if (hasOverlay || hurt || fireTransition)
+    {
+        if (hurt && !combineTextures)
+            return false;
 
-    if (fireTransition)
-    {
-        gRenderer->StateSetLerpColour(fireRed, fireGreen, fireBlue, fireAlpha);
+        if (fireTransition)
+        {
+            gRenderer->StateSetLerpColour(fireRed, fireGreen, fireBlue, fireAlpha);
+        }
+        else if (hurt)
+        {
+            gRenderer->StateSetLerpColour(1.0F, 0.0F, 0.0F, 0.3F);
+        }
+        else
+        {
+            gRenderer->StateSetLerpColour((float)(overlayColor >> 16 & 0xff) / 255.0F,
+                                          (float)(overlayColor >> 8 & 0xff) / 255.0F,
+                                          (float)(overlayColor & 0xff) / 255.0F, (float)alpha / 255.0F);
+        }
         return true;
     }
-    if (!hurt)
-    {
-        gRenderer->StateSetLerpColour((float)(overlayColor >> 16 & 0xff) / 255.0F,
-                                      (float)(overlayColor >> 8 & 0xff) / 255.0F,
-                                      (float)(overlayColor & 0xff) / 255.0F, (float)alpha / 255.0F);
-        return true;
-    }
-    gRenderer->StateSetLerpColour(1.0F, 0.0F, 0.0F, 0.3F);
-    return true;
+    return false;
 }
 
 bool LivingEntityRenderer::setupOverlayColor(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
@@ -185,7 +191,7 @@ void LivingEntityRenderer::tearDownSolidState()
 void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z, float yaw,
                                   float partialTick)
 {
-    bool isPlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+    bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType());
     if (isPlayer)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
@@ -204,14 +210,14 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
     model->mAttackTime = getAttackAnim(living, partialTick);
     model->mRiding = living->isPassenger() && living->getVehicle()->GetType() != EntityType::DOLPHIN;
     model->mYoung = living->isBaby();
-    model->mRidingDolphin = living->isPassenger() && living->getVehicle()->GetType() == EntityType::DOLPHIN;
+    model->mRidingDolphin = living->isPassenger() && eTYPE_DERIVED_FROM(EntityType::DOLPHIN, living->getVehicle()->GetType());
 
     float bodyRot = rotlerp(living->mYBodyRotO, living->mYBodyRot, partialTick);
     float headRot = rotlerp(living->mYHeadRotO, living->mYHeadRot, partialTick);
     float netHeadYaw = headRot - bodyRot;
 
     if (living->isPassenger() &&
-        (living->getVehicle()->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, living->getVehicle()->GetType()))
     {
         boost::shared_ptr<LivingEntity> vehicle = boost::static_pointer_cast<LivingEntity>(living->getVehicle());
         bodyRot = rotlerp(vehicle->mYBodyRotO, vehicle->mYBodyRot, partialTick);
@@ -269,7 +275,7 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
         }
 
         bool showLayers = true;
-        const bool isPlayer = (living->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+        const bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, living->GetType());
         if (isPlayer && boost::static_pointer_cast<Player>(living)->isSpectator() &&
             !boost::static_pointer_cast<Player>(living)->SpectateAsFloatingHead())
         {
@@ -294,7 +300,7 @@ void LivingEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
 
         PIXBeginNamedEvent(0.0F, "renderLayers");
         bool showLayers = true;
-        const bool isPlayer = (living->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+        const bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, living->GetType());
         if (isPlayer && boost::static_pointer_cast<Player>(living)->isSpectator() &&
             !boost::static_pointer_cast<Player>(living)->SpectateAsFloatingHead())
         {
@@ -334,24 +340,22 @@ void LivingEntityRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, 
                                        float headPitch, float scale)
 {
     bool visible = isVisible(entity);
-    bool solid = false;
-    if (!visible)
-        solid = !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer);
+    bool solid = !visible && !entity->isInvisibleTo(Minecraft::GetInstance()->mPlayer);
 
     if (visible || solid)
     {
         boost::shared_ptr<Entity> baseEntity = entity;
-        if (bindTexture(baseEntity))
-        {
-            if (solid)
-                GlStateManager::setProfile();
+        if (!bindTexture(baseEntity))
+            return;
 
-            Model* model = getModel(entity);
-            model->render(baseEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
+        if (solid)
+            GlStateManager::setProfile();
 
-            if (solid)
-                GlStateManager::unsetProfile();
-        }
+        Model* model = getModel(entity);
+        model->render(baseEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, true);
+
+        if (solid)
+            GlStateManager::unsetProfile();
     }
 }
 
@@ -382,23 +386,24 @@ void LivingEntityRenderer::setupRotations(boost::shared_ptr<LivingEntity>& entit
         std::wstring name = entity->getName();
         if (name == L"Dinnerbone" || name == L"Grumm")
         {
-            bool flip = true;
-            if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
-                !boost::static_pointer_cast<Player>(entity)->isModelPartShown(PlayerModelPart::CAPE))
-            {
-                flip = false;
-            }
+            bool flip = !eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) ||
+                        !boost::static_pointer_cast<Player>(entity)->isModelPartShown(PlayerModelPart::CAPE);
             if (flip)
+
             {
                 GlStateManager::translatef(0.0F, entity->mBbHeight + 0.1F, 0.0F);
                 GlStateManager::rotatef(180.0F, 0.0F, 0.0F, 1.0F);
             }
         }
-        else if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
-                 (boost::static_pointer_cast<Player>(entity)->getSkinAdjustments().mAnimFlags & 0x80000000) != 0)
+        else if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         {
-            GlStateManager::translatef(0.0F, entity->mBbHeight + 0.1F, 0.0F);
-            GlStateManager::rotatef(180.0F, 0.0F, 0.0F, 1.0F);
+            unsigned int animFlags = boost::static_pointer_cast<Player>(entity)->getSkinAdjustments().mAnimFlags;
+            if ((animFlags & 0x80000000) != 0)
+
+            {
+                GlStateManager::translatef(0.0F, entity->mBbHeight + 0.1F, 0.0F);
+                GlStateManager::rotatef(180.0F, 0.0F, 0.0F, 1.0F);
+            }
         }
     }
 
@@ -431,7 +436,7 @@ void LivingEntityRenderer::renderLayers(boost::shared_ptr<LivingEntity>& entity,
     for (std::vector<RenderLayer*>::iterator it = mLayers.begin(); it != mLayers.end(); ++it)
     {
         RenderLayer* layer = *it;
-        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) &&
             boost::static_pointer_cast<Player>(entity)->isSpectator() &&
             boost::static_pointer_cast<Player>(entity)->SpectateAsFloatingHead() &&
             (layer == NULL || dynamic_cast<CustomHeadLayer*>(layer) == NULL))
@@ -495,7 +500,7 @@ bool LivingEntityRenderer::shouldShowName(boost::shared_ptr<Entity>& entity)
     if (living->isInvisibleTo(localPlayer) || living.get() == mDispatcher->mCamera.get() || living->isVehicle())
         return false;
 
-    const bool isPlayer = (living->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+    const bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, living->GetType());
     if (!isPlayer || living.get() == localPlayer.get())
     {
         bool renderNames = Minecraft::renderNames();

@@ -17,12 +17,15 @@ UndeadHorseRenderer::UndeadHorseRenderer(EntityRenderDispatcher* dispatcher)
 
 const ResourceLocation* UndeadHorseRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    unsigned long long type = entity->GetType();
-    if (type == EntityType::SKELETON_HORSE)
-        return &SKELETON_HORSE_LOCATION;
-    if (type == EntityType::ZOMBIE_HORSE)
+    switch (entity->GetType())
+    {
+    case EntityType::ZOMBIE_HORSE:
         return &ZOMBIE_HORSE_LOCATION;
-    return EntityRenderer::getTextureLocation(entity);
+    case EntityType::SKELETON_HORSE:
+        return &SKELETON_HORSE_LOCATION;
+    default:
+        return EntityRenderer::getTextureLocation(entity);
+    }
 }
 
 Model* UndeadHorseRenderer::createModel(const ModelDefinition& definition)

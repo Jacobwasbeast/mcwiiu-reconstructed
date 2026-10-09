@@ -13,16 +13,43 @@
 #include "game/core/Mth.hpp"
 #include "game/entity/mob/Entity.hpp"
 
+ModelPartSkin* BoatModel::makePaddle(bool left)
+{
+    ModelPartSkin* paddle = new ModelPartSkin(this, 62, left ? 0 : 20, NULL);
+    paddle->setTexSize(128, 64);
+    int i = 20;
+    int j = 7;
+    int k = 6;
+    float f = -5.0f;
+    paddle->addBox(-1.0f, 0.0f, -5.0f, 2, 2, 18);
+    paddle->addBox(left ? -1.001f : 0.001f, -3.0f, 8.0f, 1, 6, 7);
+    return paddle;
+}
+
 BoatModel::BoatModel(const ModelDefinition& definition)
 {
-    if (!definition.DoesOverrideModel())
+    if (definition.DoesOverrideModel())
+    {
+        mBottom = new ModelPartSkin(this, L"bottom", definition, NULL, 0.0f, NULL);
+        mBack = new ModelPartSkin(this, L"back", definition, NULL, 0.0f, NULL);
+        mFront = new ModelPartSkin(this, L"front", definition, NULL, 0.0f, NULL);
+        mRight = new ModelPartSkin(this, L"right", definition, NULL, 0.0f, NULL);
+        mLeft = new ModelPartSkin(this, L"left", definition, NULL, 0.0f, NULL);
+        mPaddleLeft = new ModelPartSkin(this, L"paddle_left", definition, NULL, 0.0f, NULL);
+        mPaddleRight = new ModelPartSkin(this, L"paddle_right", definition, NULL, 0.0f, NULL);
+    }
+    else
     {
         mBottom = new ModelPartSkin(this, 0, 0, 128, 64);
         mBack = new ModelPartSkin(this, 0, 19, 128, 64);
         mFront = new ModelPartSkin(this, 0, 27, 128, 64);
         mRight = new ModelPartSkin(this, 0, 35, 128, 64);
         mLeft = new ModelPartSkin(this, 0, 43, 128, 64);
-
+        int i = 32;
+        int j = 6;
+        int k = 20;
+        int l = 4;
+        int i1 = 28;
         mBottom->addBox(-14.0f, -9.0f, -3.0f, 28, 16, 3, 0.0f);
         mBottom->setPos(0.0f, 3.0f, 1.0f);
         mBack->addBox(-13.0f, -7.0f, -1.0f, 18, 6, 2, 0.0f);
@@ -48,16 +75,6 @@ BoatModel::BoatModel(const ModelDefinition& definition)
         mPaddleLeft->mZRot = 0.19634955f;
         mPaddleRight->mZRot = 0.19634955f;
     }
-    else
-    {
-        mBottom = new ModelPartSkin(this, L"bottom", definition, NULL, 0.0f, NULL);
-        mBack = new ModelPartSkin(this, L"back", definition, NULL, 0.0f, NULL);
-        mFront = new ModelPartSkin(this, L"front", definition, NULL, 0.0f, NULL);
-        mRight = new ModelPartSkin(this, L"right", definition, NULL, 0.0f, NULL);
-        mLeft = new ModelPartSkin(this, L"left", definition, NULL, 0.0f, NULL);
-        mPaddleLeft = new ModelPartSkin(this, L"paddle_left", definition, NULL, 0.0f, NULL);
-        mPaddleRight = new ModelPartSkin(this, L"paddle_right", definition, NULL, 0.0f, NULL);
-    }
 
     mSecondPassBottom = new ModelPart(this, 0, 0);
     mSecondPassBottom->setTexSize(128, 64);
@@ -69,27 +86,17 @@ BoatModel::BoatModel(const ModelDefinition& definition)
     mSecondPassBottom->compile(0.0625f);
 }
 
-ModelPartSkin* BoatModel::makePaddle(bool left)
-{
-    ModelPartSkin* paddle = new ModelPartSkin(this, 62, left ? 0 : 20, NULL);
-    paddle->setTexSize(128, 64);
-    paddle->addBox(-1.0f, 0.0f, -5.0f, 2, 2, 18);
-    paddle->addBox(left ? -1.001f : 0.001f, -3.0f, 8.0f, 1, 6, 7);
-    return paddle;
-}
-
 void BoatModel::animatePaddle(ModelPartSkin* paddle, boost::shared_ptr<Boat> boat, int side, float scale, float partialTicks, bool useDisplayList)
 {
     float rowingTime = boat->getRowingTime(side, partialTicks);
 
     paddle->mXRot = (float)Mth::clampedLerp(-1.0471976f, -0.2617994f, (Mth::sin(-rowingTime) + 1.0f) * 0.5f);
 
-    float yRot = (float)Mth::clampedLerp(-0.7853982f, 0.7853982f, (Mth::sin(1.0f - rowingTime) + 1.0f) * 0.5f);
+    paddle->mYRot = (float)Mth::clampedLerp(-0.7853982f, 0.7853982f, (Mth::sin(1.0f - rowingTime) + 1.0f) * 0.5f);
     if (side == 1)
     {
-        yRot = 3.1415927f - yRot;
+        paddle->mYRot = 3.1415927f - paddle->mYRot;
     }
-    paddle->mYRot = yRot;
 
     paddle->render(scale, useDisplayList, false);
 }

@@ -69,11 +69,7 @@ void PistonHeadRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
 
     if (movedBlock == Blocks::piston_head && movingBlock->getProgress(partialTick) <= 0.25F)
     {
-        const BlockState* headState = movedState;
-        {
-            TypedBoxed<bool> shortHeadValue(true);
-            headState = headState->setBoxedValue(PistonHeadBlock::SHORT, &shortHeadValue);
-        }
+        const BlockState* headState = movedState->setValue(PistonHeadBlock::SHORT, true);
         mBlockRenderer->tesselatePistonArmNoCulling(headState, position, false, headState);
     }
     else if (movingBlock->isSourcePiston() && !movingBlock->isExtending())
@@ -89,10 +85,7 @@ void PistonHeadRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
 
         builder->offset((float)x - (float)position.x, (float)y - (float)position.y,
                         (float)z - (float)position.z);
-        {
-            TypedBoxed<bool> extendedValue(true);
-            movedState->setBoxedValue(PistonBaseBlock::EXTENDED, &extendedValue);
-        }
+        movedState->setValue(PistonBaseBlock::EXTENDED, true);
         mBlockRenderer->tesselatePistonBaseForceExtended(movedState, position, movedState);
     }
     else

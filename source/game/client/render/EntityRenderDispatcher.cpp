@@ -258,7 +258,8 @@ void EntityRenderDispatcher::setPosition(double x, double y, double z)
 
 EntityRenderer* EntityRenderDispatcher::getRenderer(unsigned long long type)
 {
-    if ((type & EntityType::PLAYER) == EntityType::PLAYER)
+    bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, type);
+    if (isPlayer)
         return mPlayerRenderer;
     iterator it = find(type);
     return it->second;
@@ -274,7 +275,7 @@ PlayerRenderer* EntityRenderDispatcher::getPlayerRenderer(EPlayerModelType model
 
 EntityRenderer* EntityRenderDispatcher::getRenderer(boost::shared_ptr<Entity> entity)
 {
-    bool isPlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+    bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType());
     if (isPlayer)
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
@@ -283,7 +284,7 @@ EntityRenderer* EntityRenderDispatcher::getRenderer(boost::shared_ptr<Entity> en
         return getPlayerRenderer(static_cast<EPlayerModelType>(player->getModelName()));
     }
 
-    bool isFireworks = entity->GetType() == EntityType::FIREWORKS_ROCKET_ENTITY;
+    bool isFireworks = eTYPE_DERIVED_FROM(EntityType::FIREWORKS_ROCKET_ENTITY, entity->GetType());
     if (isFireworks)
         return getRenderer(EntityType::ARROW);
 
@@ -299,7 +300,7 @@ void EntityRenderDispatcher::prepare(Level* level, Font* font, boost::shared_ptr
     mFont = font;
     mPlayer = player;
 
-    bool isLiving = (camera->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
+    bool isLiving = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, camera->GetType());
     if (isLiving && boost::static_pointer_cast<LivingEntity>(camera)->isSleeping())
     {
         const BlockState* state = level->getBlockState(BlockPos(camera));
@@ -371,7 +372,7 @@ void EntityRenderDispatcher::renderHitbox(boost::shared_ptr<Entity>& entity, dou
                                                box->mMaxY - entity->mY + y,
                                                box->mMaxZ - entity->mZ + z), color);
 
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
     {
         LevelRenderer::renderLineBox(AABB::newTemp(x - halfWidth,
                                                    y + entity->getEyeHeight() - 0.01F,
@@ -446,7 +447,7 @@ void EntityRenderDispatcher::render(boost::shared_ptr<Entity>& entity, float par
     GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
 
     render(entity, x, y, z, yaw, partialTicks, renderOutlines,
-           entity->GetType() == EntityType::ITEM_FRAME, entity->ShouldRenderShadow(), false);
+           eTYPE_DERIVED_FROM(EntityType::ITEM_FRAME, entity->GetType()), entity->ShouldRenderShadow(), false);
 }
 
 void EntityRenderDispatcher::renderSecondPass(boost::shared_ptr<Entity>& entity, float partialTicks)

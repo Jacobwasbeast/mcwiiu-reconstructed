@@ -24,6 +24,7 @@ void LeashKnotRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
     GlStateManager::pushMatrix();
     GlStateManager::disableCull();
     GlStateManager::translatef((float)x, (float)y, (float)z);
+    float scale = 0.0625F;
     GlStateManager::enableRescaleNormal();
     GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
     GlStateManager::enableAlphaTest();
@@ -35,7 +36,7 @@ void LeashKnotRenderer::render(boost::shared_ptr<Entity>& entity, double x, doub
         GlStateManager::setupSolidRenderingTextureCombine((int)getTeamColor(entity));
     }
 
-    mKnotModel->render(entity, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, 0.0625F, true);
+    mKnotModel->render(entity, 0.0F, 0.0F, 0.0F, 0.0F, 0.0F, scale, true);
 
     if (mSolidRender)
     {

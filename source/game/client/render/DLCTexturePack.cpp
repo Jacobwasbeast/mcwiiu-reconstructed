@@ -83,9 +83,9 @@ DLCTexturePack::DLCTexturePack(unsigned int id, DLCPack* pack, TexturePack* pare
     if (gApp.getLevelGenerationOptions() != NULL)
         gApp.getLevelGenerationOptions()->setLoadedData();
 
-    m_stringTable = NULL;
     m_colourTableLoaded = true;
     m_materialTableLoaded = true;
+    m_stringTable = NULL;
     if (m_dlcPack->doesPackContainFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true))
     {
         DLCFile* file = m_dlcPack->getFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true);
@@ -262,11 +262,7 @@ void DLCTexturePack::loadCustomModels()
             std::wstring name = stream.readUTF();
             m_customModels[name].readModel(&stream, version);
         }
-        byteStream.mBuffer.data = NULL;
-        byteStream.mBuffer.length = 0;
-        byteStream.mCount = 0;
-        byteStream.mMark = 0;
-        byteStream.mPosition = 0;
+        byteStream.reset();
     }
 }
 
@@ -281,11 +277,7 @@ void DLCTexturePack::loadBehaviours()
         int count = stream.readInt();
         for (int i = 0; i < count; ++i)
             RiderPositionOverrides::ReadOverrides(&stream);
-        byteStream.mBuffer.data = NULL;
-        byteStream.mBuffer.length = 0;
-        byteStream.mCount = 0;
-        byteStream.mMark = 0;
-        byteStream.mPosition = 0;
+        byteStream.reset();
     }
 }
 
@@ -293,7 +285,17 @@ int DLCTexturePack::packMounted(void* data, int userIndex, unsigned int result, 
 {
     DLCTexturePack* pack = static_cast<DLCTexturePack*>(data);
     pack->m_loadingData = false;
-    if (result == 0)
+    if (result != 0)
+    {
+        pack->loadColourTable();
+        pack->loadMaterialTable();
+        for (int attempts = 200; gMinecraftServer == NULL && attempts > 0; --attempts)
+            Sleep(10);
+
+        if (gApp.getLevelGenerationOptions() != NULL)
+            gApp.getLevelGenerationOptions()->setLoadedData();
+    }
+    else
     {
         pack->m_loadedPack = new DLCPack(pack->m_dlcPack->getName(), licenseMask);
         pack->setHasAudio(false);
@@ -307,12 +309,17 @@ int DLCTexturePack::packMounted(void* data, int userIndex, unsigned int result, 
         }
         else
         {
-            std::wstring fullDataPath = gApp.getFilePath(
-                pack->m_dlcPack->GetPackId(), dataPath, true, L"TPACK:");
-            bool loaded = gApp.mDLCManager.readDLCDataFile(numItemsAdded, fullDataPath,
-                                                       pack->m_loadedPack,
-                                                       pack->m_dlcPack->GetPackId(), false);
-            if (loaded)
+            if (!gApp.mDLCManager.readDLCDataFile(
+                    numItemsAdded,
+                    gApp.getFilePath(pack->m_dlcPack->GetPackId(), dataPath, true, L"TPACK:"),
+                    pack->m_loadedPack,
+                    pack->m_dlcPack->GetPackId(),
+                    false))
+            {
+                delete pack->m_loadedPack;
+                pack->m_loadedPack = NULL;
+            }
+            else
             {
                 if (pack->m_loadedPack != NULL)
                 {
@@ -342,62 +349,111 @@ int DLCTexturePack::packMounted(void* data, int userIndex, unsigned int result, 
                         }
                     }
 
-                    if (parentPack->getDLCItemsCount(DLCManager::eDLCType_Audio) != 0)
+                    if (parentPack->getDLCItemsCount(DLCManager::eDLCType_Audio) > 0)
                     {
                         DLCAudioFile* audioFile = static_cast<DLCAudioFile*>(
                             parentPack->getFile(DLCManager::eDLCType_Audio, 0, true, true));
                         pack->setHasAudio(true);
 
-                        int count[DLCAudioFile::eAudioType_NumTypes];
-                        int first[DLCAudioFile::eAudioType_NumTypes];
-                        int last[DLCAudioFile::eAudioType_NumTypes];
-                        int total = 0;
-                        int i;
-                        for (i = 0; i < DLCAudioFile::eAudioType_NumTypes; ++i)
-                            count[i] = audioFile->GetCountofType((DLCAudioFile::EAudioType)i);
+                        int musicStart = 0;
+                        int musicCount = audioFile->GetCountofType(DLCAudioFile::eAudioType_Music);
+                        int menuStart = musicCount;
+                        int menuCount = audioFile->GetCountofType(DLCAudioFile::eAudioType_Menu);
+                        int bossStart = menuStart + menuCount;
+                        int bossCount = audioFile->GetCountofType(DLCAudioFile::eAudioType_Boss);
+                        int nextStart = bossStart + bossCount;
 
-                        for (i = 0; i < 3; ++i)
+                        int miniGameStart;
+                        int miniGameCount = audioFile->GetCountofType(DLCAudioFile::eAudioType_MiniGame);
+                        if (miniGameCount == 0)
                         {
-                            first[i] = total;
-                            total += count[i];
-                            last[i] = total - 1;
-                        }
-                        for (i = 3; i < 8; ++i)
-                        {
-                            if (count[i] != 0)
-                            {
-                                first[i] = total;
-                                total += count[i];
-                            }
-                            else
-                            {
-                                first[i] = 0;
-                            }
-                            last[i] = first[i] + count[i] - 1;
-                        }
-                        if (count[8] != 0)
-                        {
-                            first[8] = total;
-                            total += count[8];
-                            last[8] = total - 1;
+                            miniGameStart = musicStart;
+                            miniGameCount = musicCount;
                         }
                         else
                         {
-                            first[8] = first[3];
-                            last[8] = last[3];
+                            miniGameStart = nextStart;
+                            nextStart += miniGameCount;
+                        }
+
+                        int creditsStart;
+                        int creditsCount = audioFile->GetCountofType(DLCAudioFile::eAudioType_Credits);
+                        if (creditsCount == 0)
+                        {
+                            creditsStart = musicStart;
+                            creditsCount = musicCount;
+                        }
+                        else
+                        {
+                            creditsStart = nextStart;
+                            nextStart += creditsCount;
+                        }
+
+                        int miniGame1Start;
+                        int miniGame1Count = audioFile->GetCountofType(DLCAudioFile::eAudioType_MiniGame1);
+                        if (miniGame1Count == 0)
+                        {
+                            miniGame1Start = musicStart;
+                            miniGame1Count = musicCount;
+                        }
+                        else
+                        {
+                            miniGame1Start = nextStart;
+                            nextStart += miniGame1Count;
+                        }
+
+                        int miniGame2Start;
+                        int miniGame2Count = audioFile->GetCountofType(DLCAudioFile::eAudioType_MiniGame2);
+                        if (miniGame2Count == 0)
+                        {
+                            miniGame2Start = musicStart;
+                            miniGame2Count = musicCount;
+                        }
+                        else
+                        {
+                            miniGame2Start = nextStart;
+                            nextStart += miniGame2Count;
+                        }
+
+                        int miniGame3Start;
+                        int miniGame3Count = audioFile->GetCountofType(DLCAudioFile::eAudioType_MiniGame3);
+                        if (miniGame3Count == 0)
+                        {
+                            miniGame3Start = musicStart;
+                            miniGame3Count = musicCount;
+                        }
+                        else
+                        {
+                            miniGame3Start = nextStart;
+                            nextStart += miniGame3Count;
+                        }
+
+                        int miniGame4Start;
+                        int miniGame4Count = audioFile->GetCountofType(DLCAudioFile::eAudioType_MiniGame4);
+                        if (miniGame4Count == 0)
+                        {
+                            miniGame4Start = miniGameStart;
+                            miniGame4Count = miniGameCount;
+                        }
+                        else
+                        {
+                            miniGame4Start = nextStart;
+                            nextStart += miniGame4Count;
                         }
 
                         Minecraft::GetInstance()->mSoundEngine->SetStreamingSounds(
-                            first[0], last[0], first[1], last[1], first[2], last[2],
-                            first[3], last[3], first[4], last[4], first[5], last[5],
-                            first[6], last[6], first[7], last[7], first[8], last[8], total);
+                            musicStart, musicStart + musicCount - 1,
+                            menuStart, menuStart + menuCount - 1,
+                            bossStart, bossStart + bossCount - 1,
+                            miniGameStart, miniGameStart + miniGameCount - 1,
+                            creditsStart, creditsStart + creditsCount - 1,
+                            miniGame1Start, miniGame1Start + miniGame1Count - 1,
+                            miniGame2Start, miniGame2Start + miniGame2Count - 1,
+                            miniGame3Start, miniGame3Start + miniGame3Count - 1,
+                            miniGame4Start, miniGame4Start + miniGame4Count - 1,
+                            nextStart);
                     }
                 }
-            }
-            else
-            {
-                delete pack->m_loadedPack;
-                pack->m_loadedPack = NULL;
             }
 
             pack->loadColourTable();
@@ -407,22 +463,11 @@ int DLCTexturePack::packMounted(void* data, int userIndex, unsigned int result, 
             pack->hasAudio();
         }
     }
-    else
-    {
-        pack->loadColourTable();
-        pack->loadMaterialTable();
-        for (int attempts = 200; gMinecraftServer == NULL && attempts > 0; --attempts)
-            Sleep(10);
-
-        LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-        if (options != NULL)
-            options->setLoadedData();
-    }
 
     pack->m_hasData = true;
-    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-    if (options != NULL && options->getParentPackId() == pack->m_dlcPack->GetPackId())
-        options->setLoadedData();
+    if (gApp.getLevelGenerationOptions() != NULL
+        && gApp.getLevelGenerationOptions()->getParentPackId() == pack->m_dlcPack->GetPackId())
+        gApp.getLevelGenerationOptions()->setLoadedData();
     gApp.StartReloadingTexturePack();
     return 0;
 }

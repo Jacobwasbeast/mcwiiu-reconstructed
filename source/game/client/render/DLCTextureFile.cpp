@@ -10,10 +10,10 @@ DLCTextureFile::DLCTextureFile(const std::wstring& path)
     : DLCFile(DLCManager::eDLCType_Texture, path.substr(0, path.length() - 4))
     , m_parameters()
 {
-    m_dataSize = 0;
-    m_pData = NULL;
-    m_disableMipMap = false;
     m_hasAnimation = false;
+    m_disableMipMap = false;
+    m_pData = NULL;
+    m_dataSize = 0;
 }
 
 void DLCTextureFile::addData(unsigned char* pData, unsigned int size)
@@ -30,7 +30,9 @@ unsigned char* DLCTextureFile::getData(unsigned int& size)
 
 void DLCTextureFile::addParameter(DLCManager::EDLCParameterType parameter, const std::wstring& value)
 {
-    if (parameter == DLCManager::eDLCParameterType_Anim)
+    switch (parameter)
+    {
+    case DLCManager::eDLCParameterType_Anim:
     {
         std::wstring animation = value;
         if (animation.empty())
@@ -40,46 +42,42 @@ void DLCTextureFile::addParameter(DLCManager::EDLCParameterType parameter, const
 
         if (animation[0] == L'%')
         {
-            std::vector<std::wstring> parts = stringSplit(animation.substr(1), L'%');
+            std::vector<std::wstring> parts = stringSplit(animation.substr(1, animation.length()), L'%');
             m_parameters[parts[0]] = parts[1];
         }
         else
         {
-            m_parameters[L"True"] = animation;
+            m_parameters[L""] = animation;
         }
         m_hasAnimation = true;
-        return;
+        break;
     }
-
-    if (parameter == DLCManager::eDLCParameterType_DisableMipMap)
-    {
+    case DLCManager::eDLCParameterType_DisableMipMap:
         m_disableMipMap = _fromString<bool>(value);
-        if (!m_disableMipMap && value.compare(0, value.length(), L"True", 4) == 0)
+        if (!m_disableMipMap && value.compare(L"True") == 0)
         {
             m_disableMipMap = true;
         }
+        break;
     }
 }
 
 std::wstring DLCTextureFile::getParameterAsString(DLCManager::EDLCParameterType parameter, const std::wstring& name)
 {
-    if (parameter == DLCManager::eDLCParameterType_Anim)
+    switch (parameter)
     {
-        if (!m_hasAnimation)
+    case DLCManager::eDLCParameterType_Anim:
+        if (m_hasAnimation)
         {
-            return L",";
+            boost::unordered_map<std::wstring, std::wstring>::iterator it = m_parameters.find(name);
+            if (it == m_parameters.end())
+            {
+                return m_parameters.begin()->second;
+            }
+            return it->second;
         }
-
-        boost::unordered_map<std::wstring, std::wstring>::const_iterator it = m_parameters.find(name);
-        if (it == m_parameters.end())
-        {
-            return m_parameters.begin()->second;
-        }
-        return it->second;
-    }
-
-    if (parameter == DLCManager::eDLCParameterType_DisableMipMap)
-    {
+        return L",";
+    case DLCManager::eDLCParameterType_DisableMipMap:
         return _toString<bool>(m_disableMipMap);
     }
 
@@ -88,13 +86,12 @@ std::wstring DLCTextureFile::getParameterAsString(DLCManager::EDLCParameterType 
 
 bool DLCTextureFile::getParameterAsBool(DLCManager::EDLCParameterType parameter)
 {
-    if (parameter == DLCManager::eDLCParameterType_Anim)
+    switch (parameter)
     {
+    case DLCManager::eDLCParameterType_Anim:
         return m_hasAnimation;
+    case DLCManager::eDLCParameterType_DisableMipMap:
+        return m_disableMipMap;
     }
-    if (parameter != DLCManager::eDLCParameterType_DisableMipMap)
-    {
-        return false;
-    }
-    return m_disableMipMap;
+    return false;
 }

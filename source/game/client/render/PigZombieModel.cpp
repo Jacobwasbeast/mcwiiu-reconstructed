@@ -106,7 +106,7 @@ void PigZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float age
 
     bool angry = false;
 
-    if (entity->GetType() == EntityType::PIG_ZOMBIE)
+    if (eTYPE_DERIVED_FROM(EntityType::PIG_ZOMBIE, entity->GetType()))
     {
         boost::shared_ptr<PigZombie> pigZombie = boost::static_pointer_cast<PigZombie>(entity);
 

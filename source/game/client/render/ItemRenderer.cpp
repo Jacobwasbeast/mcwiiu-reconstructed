@@ -647,15 +647,17 @@ void ItemRenderer::renderGuiItem(not_null_ptr<ItemInstance> item, int x, int y)
 void ItemRenderer::renderAndDecorateItem(not_null_ptr<ItemInstance> item, float x, float y, float scaleX, float scaleY,
                                          float alpha, bool, bool, bool lighting, TextureAtlasSprite* sprite)
 {
-    if (!item->isEmpty())
-        renderGuiItem(item, x, y, scaleX, scaleY, alpha, lighting, sprite);
+    if (item->isEmpty())
+        return;
+    renderGuiItem(item, x, y, scaleX, scaleY, alpha, lighting, sprite);
 }
 
 void ItemRenderer::renderAndDecorateItem(not_null_ptr<ItemInstance> item, float x, float y, float scale, float alpha,
                                          bool foil)
 {
-    if (!item->isEmpty())
-        renderAndDecorateItem(item, x, y, scale, scale, alpha, foil, false, true, NULL);
+    if (item->isEmpty())
+        return;
+    renderAndDecorateItem(item, x, y, scale, scale, alpha, foil, false, true, NULL);
 }
 
 void ItemRenderer::renderAndDecorateItem(not_null_ptr<ItemInstance> item, int x, int y)
@@ -787,10 +789,18 @@ void ItemRenderer::blit(float x, float y, TextureAtlasSprite* sprite, float widt
     Minecraft* minecraft = Minecraft::GetInstance();
     float xScale = (float)minecraft->mWidth / (float)minecraft->mFullWidth;
     float yScale = (float)minecraft->mHeight / (float)minecraft->mFullHeight;
-    float x0 = (ceilf(x * xScale) + 0.5F) / xScale;
-    float x1 = (floorf((x + width) * xScale) - 0.5F) / xScale;
-    float y0 = (ceilf(y * yScale) + 0.5F) / yScale;
-    float y1 = (floorf((y + height) * yScale) - 0.5F) / yScale;
+    float x0 = x * xScale;
+    float x1 = (x + width) * xScale;
+    float y1 = (y + height) * yScale;
+    float y0 = y * yScale;
+    x0 = ceilf(x0);
+    x1 = floorf(x1);
+    y0 = ceilf(y0);
+    y1 = floorf(y1);
+    x0 = (x0 + 0.5F) / xScale;
+    x1 = (x1 - 0.5F) / xScale;
+    y0 = (y0 + 0.5F) / yScale;
+    y1 = (y1 - 0.5F) / yScale;
     builder->vertexUV(x0, y1, mDepth, (float)sprite->getU0(true), (float)sprite->getV1(true));
     builder->vertexUV(x1, y1, mDepth, (float)sprite->getU1(true), (float)sprite->getV1(true));
     builder->vertexUV(x1, y0, mDepth, (float)sprite->getU1(true), (float)sprite->getV0(true));

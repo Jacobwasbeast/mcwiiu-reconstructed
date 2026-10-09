@@ -63,11 +63,11 @@ void PlayerCloudParticle::tick()
     boost::shared_ptr<Player> nearestPlayer = level->getNearestPlayer(x, y, z, 2.0, false, -1.0);
     if (nearestPlayer)
     {
-        double playerY = nearestPlayer->mBoundingBox->mMinY;
-        if (playerY < y)
+        AABB* box = nearestPlayer->mBoundingBox;
+        if (y > box->mMinY)
         {
-            y = (playerY - y) * 0.2 + y;
-            yd = (nearestPlayer->mYd - yd) * 0.2 + yd;
+            y += (box->mMinY - y) * 0.2;
+            yd += (nearestPlayer->mYd - yd) * 0.2;
             setPos(x, y, z);
         }
     }

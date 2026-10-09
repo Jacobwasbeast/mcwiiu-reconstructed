@@ -26,7 +26,6 @@ public:
         FireworksSparkParticle(Level* level, double x, double y, double z,
                                double xa, double ya, double za,
                                ParticleEngine* particleEngine);
-        virtual ~FireworksSparkParticle();
         void setTrail(bool trail);
         void setFlicker(bool flicker);
         virtual void render(BufferBuilder* buffer,

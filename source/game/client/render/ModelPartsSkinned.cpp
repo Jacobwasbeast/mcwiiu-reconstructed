@@ -88,7 +88,7 @@ void ModelPartsSkinned::compile(float scale)
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     builder->begin();
 
-    for (unsigned int i = 0; i < mParts.size(); ++i)
+    for (int i = 0; i < mParts.size(); ++i)
     {
         ModelPartSkin* part = mParts[i];
 

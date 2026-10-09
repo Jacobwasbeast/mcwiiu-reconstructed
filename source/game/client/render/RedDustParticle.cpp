@@ -37,47 +37,39 @@ void RedDustParticle::render(BufferBuilder* buffer,
                              float partialTicks, float xa, float ya, float za,
                              float xa2, float za2)
 {
-    float progress = ((float)age + partialTicks) / (float)lifetime;
-    float alphaScale = Mth::clamp(progress * 32.0f, 0.0f, 1.0f);
-    Particle::size = size * alphaScale;
+    float progress = ((float)age + partialTicks) / (float)lifetime * 32.0f;
+    progress = Mth::clamp(progress, 0.0f, 1.0f);
+    Particle::size = size * progress;
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
 
 void RedDustParticle::tick()
 {
-    int oldAge = age;
-    int particleLifetime = lifetime;
-    ++age;
     xo = x;
     yo = y;
     zo = z;
 
-    if (oldAge >= particleLifetime)
+    if (age++ >= lifetime)
         remove();
 
     setMiscTex(7 - (age << 3) / lifetime);
     move(xd, yd, zd);
 
-    double xMotion = xd;
-    double zMotion = zd;
     if (y == yo)
     {
-        xMotion *= 1.1;
-        zMotion *= 1.1;
+        xd *= 1.1;
+        zd *= 1.1;
     }
 
-    xMotion *= 0.96;
-    zMotion *= 0.96;
+    xd *= 0.96;
     yd *= 0.96;
+    zd *= 0.96;
 
     if (onGround)
     {
-        xMotion *= 0.7;
-        zMotion *= 0.7;
+        xd *= 0.7f;
+        zd *= 0.7f;
     }
-
-    xd = xMotion;
-    zd = zMotion;
 }
 
 uint64_t RedDustParticle::GetType()

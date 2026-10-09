@@ -7,7 +7,7 @@
 #include "game/core/BufferBuilder.hpp"
 #include "game/util/Math.hpp"
 #include "game/core/Mth.hpp"
-#include "game/world/LevelSource.hpp"
+#include "game/world/Level.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 
@@ -15,23 +15,23 @@ InkParticle::InkParticle(Level* level, double x, double y, double z,
                          double xa, double ya, double za, arrayWithLength<int> params)
     : Particle(level, x, y, z, xa, ya, za)
 {
+    mScale = 1.0f;
     float scale = 1.0f;
-    mScale = scale;
     if (params.length == 1)
         scale = (float)params.data[0] / 100.0f;
 
-    xd = xd * 0.1 + xa;
-    yd = yd * 0.1 + ya;
-    zd = zd * 0.1 + za;
-    float randomScale = (float)(Math::random() * 0.05);
-    rCol = randomScale;
-    gCol = randomScale;
-    bCol = randomScale;
-    float adjustedSize = size * 0.75f * scale;
-    size = adjustedSize;
-    mStartSize = adjustedSize * 0.5f;
-    mEndSize = adjustedSize;
-    lifetime = (int)(12.0f * scale / ((float)Math::random() * 0.8f + 0.2f));
+    xd *= 0.1;
+    yd *= 0.1;
+    zd *= 0.1;
+    xd += xa;
+    yd += ya;
+    zd += za;
+    rCol = gCol = bCol = (float)(Math::random() * 0.05);
+    size *= 0.75f;
+    size *= scale;
+    mStartSize = 0.5f * size;
+    mEndSize = size;
+    lifetime = (int)(scale * 12.0f / ((float)Math::random() * 0.8f + 0.2f));
 }
 
 void InkParticle::render(BufferBuilder* buffer, const boost::shared_ptr<Entity>& camera,
@@ -50,7 +50,8 @@ void InkParticle::tick()
     yo = y;
     zo = z;
     move(xd, yd, zd);
-    if (((LevelSource*)level)->getBlockState(BlockPos(x, y, z))->getMaterial() == Material::AIR)
+    Material* material = level->getBlockState(BlockPos(x, y, z))->getMaterial();
+    if (material == Material::AIR)
         yd -= 0.008;
     if (y == yo)
     {
@@ -79,8 +80,5 @@ Particle* InkParticle::Provider::createParticle(ePARTICLE_TYPE type, Level* leve
                                                 double xa, double ya, double za,
                                                 arrayWithLength<int> params)
 {
-    arrayWithLength<int> localParams;
-    localParams.data = params.data;
-    localParams.length = params.length;
-    return new InkParticle(level, x, y, z, xa, ya, za, localParams);
+    return new InkParticle(level, x, y, z, xa, ya, za, params);
 }

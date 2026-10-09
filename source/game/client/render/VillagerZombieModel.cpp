@@ -31,7 +31,26 @@ void VillagerZombieModel::_init(float scale, float yOffset, bool armourModel, co
         delete mRightLeg;
         delete mLeftLeg;
 
-        if (!armourModel)
+        if (armourModel)
+        {
+            mHead = new ModelPartSkin(this, 0, 0, NULL);
+            mHead->addBox(-4.0f, -10.0f, -4.0f, 8, 8, 8, scale);
+            mHead->setPos(0.0f, yOffset, 0.0f);
+
+            mBody = new ModelPartSkin(this, 16, 16, NULL);
+            mBody->setPos(0.0f, yOffset, 0.0f);
+            mBody->addBox(-4.0f, 0.0f, -2.0f, 8, 12, 4, scale + 0.1f);
+
+            mRightLeg = new ModelPartSkin(this, 0, 16, NULL);
+            mRightLeg->setPos(-2.0f, yOffset + 12.0f, 0.0f);
+            mRightLeg->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale + 0.1f);
+
+            mLeftLeg = new ModelPartSkin(this, 0, 16, NULL);
+            mLeftLeg->mMirror = true;
+            mLeftLeg->setPos(2.0f, yOffset + 12.0f, 0.0f);
+            mLeftLeg->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale + 0.1f);
+        }
+        else
         {
             delete mRightArm;
             delete mLeftArm;
@@ -63,25 +82,6 @@ void VillagerZombieModel::_init(float scale, float yOffset, bool armourModel, co
             mLeftLeg->mMirror = true;
             mLeftLeg->setPos(2.0f, yOffset + 12.0f, 0.0f);
             mLeftLeg->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale);
-        }
-        else
-        {
-            mHead = new ModelPartSkin(this, 0, 0, NULL);
-            mHead->addBox(-4.0f, -10.0f, -4.0f, 8, 8, 8, scale);
-            mHead->setPos(0.0f, yOffset, 0.0f);
-
-            mBody = new ModelPartSkin(this, 16, 16, NULL);
-            mBody->setPos(0.0f, yOffset, 0.0f);
-            mBody->addBox(-4.0f, 0.0f, -2.0f, 8, 12, 4, scale + 0.1f);
-
-            mRightLeg = new ModelPartSkin(this, 0, 16, NULL);
-            mRightLeg->setPos(-2.0f, yOffset + 12.0f, 0.0f);
-            mRightLeg->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale + 0.1f);
-
-            mLeftLeg = new ModelPartSkin(this, 0, 16, NULL);
-            mLeftLeg->mMirror = true;
-            mLeftLeg->setPos(2.0f, yOffset + 12.0f, 0.0f);
-            mLeftLeg->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale + 0.1f);
         }
     }
 

@@ -8,23 +8,8 @@
 #include "game/core/Mth.hpp"
 
 BlazeModel::BlazeModel(const ModelDefinition& modelDefinition)
-    : mUpperBodyParts(NULL)
-    , mNumUpperBodyParts(0)
 {
-    mUpperBodyParts = new ModelPartSkin*[12];
-    mNumUpperBodyParts = 12;
-    mUpperBodyParts[0] = NULL;
-    mUpperBodyParts[1] = NULL;
-    mUpperBodyParts[2] = NULL;
-    mUpperBodyParts[3] = NULL;
-    mUpperBodyParts[4] = NULL;
-    mUpperBodyParts[5] = NULL;
-    mUpperBodyParts[6] = NULL;
-    mUpperBodyParts[7] = NULL;
-    mUpperBodyParts[8] = NULL;
-    mUpperBodyParts[9] = NULL;
-    mUpperBodyParts[10] = NULL;
-    mUpperBodyParts[11] = NULL;
+    mUpperBodyParts = arrayWithLength<ModelPartSkin*>(12, true);
 
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 
@@ -34,18 +19,18 @@ BlazeModel::BlazeModel(const ModelDefinition& modelDefinition)
 
         mHead = new ModelPartSkin(this, L"head", modelDefinition, NULL, 0.0f, NULL);
 
-        mUpperBodyParts[0] = new ModelPartSkin(this, L"upperBodyParts0", modelDefinition, NULL, 0.0f, NULL);
-        mUpperBodyParts[1] = new ModelPartSkin(this, L"upperBodyParts1", modelDefinition, NULL, 0.0f, NULL);
-        mUpperBodyParts[2] = new ModelPartSkin(this, L"upperBodyParts2", modelDefinition, NULL, 0.0f, NULL);
-        mUpperBodyParts[3] = new ModelPartSkin(this, L"upperBodyParts3", modelDefinition, NULL, 0.0f, NULL);
-        mUpperBodyParts[4] = new ModelPartSkin(this, L"upperBodyParts4", modelDefinition, NULL, 0.0f, NULL);
-        mUpperBodyParts[5] = new ModelPartSkin(this, L"upperBodyParts5", modelDefinition, NULL, 0.0f, NULL);
-        mUpperBodyParts[6] = new ModelPartSkin(this, L"upperBodyParts6", modelDefinition, NULL, 0.0f, NULL);
-        mUpperBodyParts[7] = new ModelPartSkin(this, L"upperBodyParts7", modelDefinition, NULL, 0.0f, NULL);
-        mUpperBodyParts[8] = new ModelPartSkin(this, L"upperBodyParts8", modelDefinition, NULL, 0.0f, NULL);
-        mUpperBodyParts[9] = new ModelPartSkin(this, L"upperBodyParts9", modelDefinition, NULL, 0.0f, NULL);
-        mUpperBodyParts[10] = new ModelPartSkin(this, L"upperBodyParts10", modelDefinition, NULL, 0.0f, NULL);
-        mUpperBodyParts[11] = new ModelPartSkin(this, L"upperBodyParts11", modelDefinition, NULL, 0.0f, NULL);
+        mUpperBodyParts.data[0] = new ModelPartSkin(this, L"upperBodyParts0", modelDefinition, NULL, 0.0f, NULL);
+        mUpperBodyParts.data[1] = new ModelPartSkin(this, L"upperBodyParts1", modelDefinition, NULL, 0.0f, NULL);
+        mUpperBodyParts.data[2] = new ModelPartSkin(this, L"upperBodyParts2", modelDefinition, NULL, 0.0f, NULL);
+        mUpperBodyParts.data[3] = new ModelPartSkin(this, L"upperBodyParts3", modelDefinition, NULL, 0.0f, NULL);
+        mUpperBodyParts.data[4] = new ModelPartSkin(this, L"upperBodyParts4", modelDefinition, NULL, 0.0f, NULL);
+        mUpperBodyParts.data[5] = new ModelPartSkin(this, L"upperBodyParts5", modelDefinition, NULL, 0.0f, NULL);
+        mUpperBodyParts.data[6] = new ModelPartSkin(this, L"upperBodyParts6", modelDefinition, NULL, 0.0f, NULL);
+        mUpperBodyParts.data[7] = new ModelPartSkin(this, L"upperBodyParts7", modelDefinition, NULL, 0.0f, NULL);
+        mUpperBodyParts.data[8] = new ModelPartSkin(this, L"upperBodyParts8", modelDefinition, NULL, 0.0f, NULL);
+        mUpperBodyParts.data[9] = new ModelPartSkin(this, L"upperBodyParts9", modelDefinition, NULL, 0.0f, NULL);
+        mUpperBodyParts.data[10] = new ModelPartSkin(this, L"upperBodyParts10", modelDefinition, NULL, 0.0f, NULL);
+        mUpperBodyParts.data[11] = new ModelPartSkin(this, L"upperBodyParts11", modelDefinition, NULL, 0.0f, NULL);
 
         builder->setVertexAndPixelShader(eMinecraftEntityMaterial_BlazeHead);
 
@@ -55,11 +40,10 @@ BlazeModel::BlazeModel(const ModelDefinition& modelDefinition)
     }
     else
     {
-        for (unsigned int i = 0; i < mNumUpperBodyParts; ++i)
+        for (unsigned int i = 0; i < mUpperBodyParts.length; ++i)
         {
-            ModelPartSkin* part = new ModelPartSkin(this, 0, 16, NULL);
-            mUpperBodyParts[i] = part;
-            part->addBox(0.0f, 0.0f, 0.0f, 2, 8, 2);
+            mUpperBodyParts.data[i] = new ModelPartSkin(this, 0, 16, NULL);
+            mUpperBodyParts.data[i]->addBox(0.0f, 0.0f, 0.0f, 2, 8, 2);
         }
 
         mHead = new ModelPartSkin(this, 0, 0, NULL);
@@ -77,9 +61,9 @@ void BlazeModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, floa
 
     mHead->render(scale, useDisplayList, false);
 
-    for (unsigned int i = 0; i < mNumUpperBodyParts; ++i)
+    for (unsigned int i = 0; i < mUpperBodyParts.length; ++i)
     {
-        mUpperBodyParts[i]->render(scale, useDisplayList, false);
+        mUpperBodyParts.data[i]->render(scale, useDisplayList, false);
     }
 
     callSkinnedDrawlist();
@@ -91,9 +75,9 @@ void BlazeModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTi
 
     for (int i = 0; i < 4; ++i)
     {
-        mUpperBodyParts[i]->mY = -2.0f + Mth::cos(((float)(i * 2) + ageInTicks) * 0.25f);
-        mUpperBodyParts[i]->mX = Mth::cos(angle) * 9.0f;
-        mUpperBodyParts[i]->mZ = Mth::sin(angle) * 9.0f;
+        mUpperBodyParts.data[i]->mY = -2.0f + Mth::cos(((float)(i * 2) + ageInTicks) * 0.25f);
+        mUpperBodyParts.data[i]->mX = Mth::cos(angle) * 9.0f;
+        mUpperBodyParts.data[i]->mZ = Mth::sin(angle) * 9.0f;
         angle += 1.5707964f;
     }
 
@@ -101,9 +85,9 @@ void BlazeModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTi
 
     for (int i = 4; i < 8; ++i)
     {
-        mUpperBodyParts[i]->mY = 2.0f + Mth::cos(((float)(i * 2) + ageInTicks) * 0.25f);
-        mUpperBodyParts[i]->mX = Mth::cos(angle) * 7.0f;
-        mUpperBodyParts[i]->mZ = Mth::sin(angle) * 7.0f;
+        mUpperBodyParts.data[i]->mY = 2.0f + Mth::cos(((float)(i * 2) + ageInTicks) * 0.25f);
+        mUpperBodyParts.data[i]->mX = Mth::cos(angle) * 7.0f;
+        mUpperBodyParts.data[i]->mZ = Mth::sin(angle) * 7.0f;
         angle += 1.5707964f;
     }
 
@@ -111,13 +95,13 @@ void BlazeModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTi
 
     for (int i = 8; i < 12; ++i)
     {
-        mUpperBodyParts[i]->mY = 11.0f + Mth::cos(((float)i * 1.5f + ageInTicks) * 0.5f);
-        mUpperBodyParts[i]->mX = Mth::cos(angle) * 5.0f;
-        mUpperBodyParts[i]->mZ = Mth::sin(angle) * 5.0f;
+        mUpperBodyParts.data[i]->mY = 11.0f + Mth::cos(((float)i * 1.5f + ageInTicks) * 0.5f);
+        mUpperBodyParts.data[i]->mX = Mth::cos(angle) * 5.0f;
+        mUpperBodyParts.data[i]->mZ = Mth::sin(angle) * 5.0f;
         angle += 1.5707964f;
     }
 
-    mHead->mYRot = netHeadYaw * 0.017453292f;
-    mHead->mXRot = headPitch * 0.017453292f;
+    mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
+    mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
 }
 

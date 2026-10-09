@@ -20,7 +20,7 @@ public:
     typedef std::pair<unsigned int, std::wstring> TexturePackIdName;
     typedef std::vector<TexturePackIdName> TexturePackIdNames;
 
-    static DefaultTexturePack* defaultTexturePack;
+    static TexturePack* defaultTexturePack;
 
     TexturePackRepository(File file, Minecraft* minecraft);
 

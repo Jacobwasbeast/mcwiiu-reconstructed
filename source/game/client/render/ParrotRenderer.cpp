@@ -33,13 +33,14 @@ const ResourceLocation* ParrotRenderer::getSpectateTextureLocation(boost::shared
 const ResourceLocation* ParrotRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
     if (Minecraft::InMiniGame(eMiniGameId_Any, true)
-        && (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        && eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         return getSpectateTextureLocation(boost::static_pointer_cast<MultiplayerLocalPlayer>(entity));
     }
 
     boost::shared_ptr<Parrot> parrot = boost::static_pointer_cast<Parrot>(entity);
-    return &PARROT_LOCATIONS[parrot->getVariant()];
+    int variant = parrot->getVariant();
+    return &PARROT_LOCATIONS[variant];
 }
 
 float ParrotRenderer::getCustomBob(boost::shared_ptr<Parrot> parrot, float partialTicks)
@@ -58,14 +59,14 @@ float ParrotRenderer::getCustomBob(boost::shared_ptr<Player> player, float parti
 
 float ParrotRenderer::getBob(boost::shared_ptr<LivingEntity>& entity, float partialTicks)
 {
-    const bool isParrot = entity->GetType() == EntityType::PARROT;
+    const bool isParrot = eTYPE_DERIVED_FROM(EntityType::PARROT, entity->GetType());
     if (isParrot)
     {
         return getCustomBob(boost::static_pointer_cast<Parrot>(entity), partialTicks);
     }
 
     if (Minecraft::InMiniGame(eMiniGameId_Any, true)
-        && (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        && eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         return getCustomBob(boost::static_pointer_cast<Player>(entity), partialTicks);
     }

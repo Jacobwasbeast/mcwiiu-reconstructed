@@ -25,7 +25,7 @@ void ArrowRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y
     float yRot = entity.get()->mYRot;
     float shake = 0.0F;
 
-    if ((entity.get()->GetType() & EntityType::ARROW) == EntityType::ARROW)
+    if (eTYPE_DERIVED_FROM(EntityType::ARROW, entity.get()->GetType()))
     {
         boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(entity);
         shake = (float)arrow.get()->mShake - partialTick;

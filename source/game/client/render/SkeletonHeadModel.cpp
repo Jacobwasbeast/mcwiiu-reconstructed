@@ -1,4 +1,5 @@
 #include "game/client/render/SkeletonHeadModel.hpp"
+#include "game/core/Mth.hpp"
 
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
@@ -42,7 +43,7 @@ void SkeletonHeadModel::setupAnim(float limbSwing, float limbSwingAmount, float 
 {
     Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
 
-    mHead->mYRot = netHeadYaw * 0.017453292f;
-    mHead->mXRot = headPitch * 0.017453292f;
+    mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
+    mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
 }
 

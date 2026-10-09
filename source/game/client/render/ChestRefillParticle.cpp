@@ -22,8 +22,8 @@ void ChestRefillParticle::render(BufferBuilder* buffer,
                                  float xa2,
                                  float za2)
 {
-    float scale = Mth::clamp(((float)age + partialTicks) / (float)lifetime * 32.0f,
-                             0.0f, 1.0f);
+    float scale = ((float)age + partialTicks) / (float)lifetime * 32.0f;
+    scale = Mth::clamp(scale, 0.0f, 1.0f);
     size = baseSize * scale;
     Particle::render(buffer, camera, partialTicks, xa, ya, za, xa2, za2);
 }
@@ -49,9 +49,11 @@ void ChestRefillParticle::_init(Level* level, double x, double y, double z,
     xd = xa;
     yd = ya;
     zd = za;
-    size = size * 0.75f * scale;
+    size *= 0.75f;
+    size *= scale;
     baseSize = size;
-    lifetime = (int)((float)(int)(12.0 / (random.nextDouble() * 0.8 + 0.6)) * scale);
+    lifetime = (int)(12.0 / (random.nextDouble() * 0.8 + 0.6));
+    lifetime = (int)((float)lifetime * scale);
     hasPhysics = false;
     setMiscTex(65);
 }

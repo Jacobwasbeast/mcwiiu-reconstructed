@@ -1,5 +1,6 @@
 #include "game/client/render/TextureUtil.hpp"
 
+#include <algorithm>
 #include <cstring>
 #include <stb_image.h>
 #include <zlib.h>
@@ -12,6 +13,7 @@
 #include "game/core/StbiFile.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
 class IntBuffer;
 class Minecraft;
@@ -25,17 +27,12 @@ int ProcessLoadedTextureData(unsigned char* data, int* width, int* height, int**
 {
     int result;
 
-    if (data == NULL)
+    if (data != NULL)
     {
-        result = -1;
-    }
-    else
-    {
-        unsigned int byteCount = *width * *height * sizeof(unsigned int);
+        unsigned int byteCount = *width * *height * sizeof(int);
         result = 0;
-        unsigned int* convertedPixels = (unsigned int*)malloc(byteCount);
-        *pixels = (int*)convertedPixels;
-        memcpy(convertedPixels, data, byteCount);
+        *pixels = (int*)malloc(byteCount);
+        memcpy(*pixels, data, byteCount);
         stbi_image_free(data);
 
         unsigned int* pixel = (unsigned int*)*pixels;
@@ -51,6 +48,10 @@ int ProcessLoadedTextureData(unsigned char* data, int* width, int* height, int**
 #endif
             ++pixel;
         }
+    }
+    else
+    {
+        result = -1;
     }
 
     return result;
@@ -95,15 +96,15 @@ void TextureUtil::prepareImage(int textureId, int width, int height)
 
 int TextureUtil::anaglyph(int colour)
 {
+    int alpha = (colour >> 24) & 0xff;
     int red = (colour >> 16) & 0xff;
     int green = (colour >> 8) & 0xff;
     int blue = colour & 0xff;
-    int weightedRed = red * 30;
+    int anaglyphRed = (red * 30 + green * 59 + blue * 11) / 100;
+    int anaglyphGreen = (red * 30 + green * 70) / 100;
+    int anaglyphBlue = (red * 30 + blue * 70) / 100;
 
-    return (colour & 0xff000000)
-        | (((weightedRed + green * 59 + blue * 11) / 100) << 16)
-        | (((weightedRed + green * 70) / 100) << 8)
-        | ((weightedRed + blue * 70) / 100);
+    return alpha << 24 | anaglyphRed << 16 | anaglyphGreen << 8 | anaglyphBlue;
 }
 
 arrayWithLength<int> TextureUtil::anaglyph(arrayWithLength<int> pixels)
@@ -129,22 +130,19 @@ void TextureUtil::copyToBuffer(arrayWithLength<int> pixels, int offset, int leng
 
     dataBuffer->clear();
     dataBuffer->put(&source, offset, length);
-    dataBuffer->position(0);
-    dataBuffer->limit(length);
+    dataBuffer->position(0)->limit(length);
 }
 
 void TextureUtil::uploadImageChunked(int mipLevel, arrayWithLength<int> pixels, int width, int height, int xOffset, int yOffset, bool blur, bool clamp, bool mipmap)
 {
     int rowsPerChunk = 4194304 / width;
-    int position = 0;
 
-    while (position < width * height)
+    for (int position = 0; position < width * height; )
     {
-        int remainingRows = height - position / width;
-        int rows = remainingRows < rowsPerChunk ? remainingRows : rowsPerChunk;
+        int rows = std::min(rowsPerChunk, height - position / width);
         int count = width * rows;
 
-        copyToBuffer(pixels, position, count);
+        copyToBuffer(pixels, position, width * rows);
 
         position += count;
     }
@@ -203,32 +201,22 @@ void TextureUtil::insertZlibAlphaChannelData(void* pixels, int width, int height
         {
             for (int x = 0; x < width; x++)
             {
-                unsigned char alpha = alphaData[y * width + x];
-                unsigned char* pixel = (unsigned char*)pixels + (y * width + x) * 4;
+                int index = y * width + x;
+                unsigned char alpha = alphaData[index];
+                unsigned char* pixel = (unsigned char*)pixels + index * 4;
                 float alphaScale = alpha / 255.0f;
                 float red = pixel[1] / alphaScale;
                 float green = pixel[2] / alphaScale;
                 float blue = pixel[3] / alphaScale;
 
-                if (red > 255.0f)
-                {
-                    red = 255.0f;
-                }
-
-                if (green > 255.0f)
-                {
-                    green = 255.0f;
-                }
-
-                if (blue > 255.0f)
-                {
-                    blue = 255.0f;
-                }
+                float clampedRed = red < 255.0f ? red : 255.0f;
+                float clampedGreen = green < 255.0f ? green : 255.0f;
+                float clampedBlue = blue < 255.0f ? blue : 255.0f;
 
                 pixel[0] = alpha;
-                pixel[1] = (unsigned char)red;
-                pixel[2] = (unsigned char)green;
-                pixel[3] = (unsigned char)blue;
+                pixel[1] = (unsigned char)clampedRed;
+                pixel[2] = (unsigned char)clampedGreen;
+                pixel[3] = (unsigned char)clampedBlue;
             }
         }
     }
@@ -246,21 +234,16 @@ int TextureUtil::LoadTextureData(const char* fileName, int* width, int* height, 
     callbacks.eof = StbiFile::eof;
 
     file.mFilePosition = 0;
-    file.mFile = CreateFileA(fileName, 0x80000000, 0, NULL, 3, 0x80, 0);
-    file.mFileSize = 0;
+    file.mFile = CreateFileA(fileName, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    file.mFileSize = file.mFile != INVALID_HANDLE_VALUE ? GetFileSize(file.mFile, NULL) : 0;
 
-    if (file.mFile != -1)
-    {
-        file.mFileSize = GetFileSize(file.mFile, NULL);
-    }
-
-    if (file.mFile != -1)
+    if (file.mFile != INVALID_HANDLE_VALUE)
     {
         int components = 0;
         unsigned char* data = stbi_load_from_callbacks(&callbacks, &file, width, height, &components, 4);
         int result = ProcessLoadedTextureData(data, width, height, pixels);
 
-        if (file.mFile != -1)
+        if (file.mFile != INVALID_HANDLE_VALUE)
         {
             CloseHandle(file.mFile);
         }

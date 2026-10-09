@@ -5512,7 +5512,7 @@ bool BlockRenderer::tesselateWallInWorld(const BlockState* state, const BlockPos
 bool BlockRenderer::tesselateLeverInWorld(const BlockState* state, const BlockPos& pos)
 {
     LeverBlock::LeverDirection* facing = state->getValue(LeverBlock::FACING);
-    bool powered = state->getValue(ButtonBlock::POWERED);
+    bool powered = state->getValue(LeverBlock::POWERED);
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
 
     bool hadFixedTexture = hasFixedTexture();
@@ -7342,7 +7342,7 @@ bool BlockRenderer::tesselateCauldronInWorld(const BlockState* state, const Bloc
         unsigned int liquidColor =
             Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Cauldron_Water);
         boost::shared_ptr<BlockEntity> blockEntity = mLevelSource->getBlockEntity(pos);
-        if (blockEntity != NULL && blockEntity->GetType() == BlockEntityType::CAULDRON)
+        if (blockEntity != NULL && eTYPE_DERIVED_FROM(BlockEntityType::CAULDRON, blockEntity->GetType()))
         {
             boost::shared_ptr<CauldronBlockEntity> cauldron =
                 boost::static_pointer_cast<CauldronBlockEntity>(blockEntity);
@@ -7443,7 +7443,7 @@ bool BlockRenderer::tesselateFlowerPotInWorld(const BlockState* state, const Blo
     {
         boost::shared_ptr<BlockEntity> blockEntity = mLevelSource->getBlockEntity(pos);
         const BlockState* plantState;
-        if (blockEntity->GetType() == BlockEntityType::FLOWER_POT)
+        if (eTYPE_DERIVED_FROM(BlockEntityType::FLOWER_POT, blockEntity->GetType()))
         {
             boost::shared_ptr<FlowerPotBlockEntity> pot = boost::static_pointer_cast<FlowerPotBlockEntity>(blockEntity);
             plantState = plant->getBlockState(pot->getItemData());

@@ -7,6 +7,7 @@
 #include "game/client/render/Model.hpp"
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPartsSkinned.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
@@ -29,8 +30,7 @@ public:
     virtual std::wstring getName() { return L"spider"; }
 
 private:
-    ModelPartSkin** mSpiderParts;
-    int mSpiderPartCount;
+    arrayWithLength<ModelPartSkin*> mSpiderParts;
     ModelPartsSkinned mInvisibleParts;
 };
 

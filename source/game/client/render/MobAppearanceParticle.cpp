@@ -14,14 +14,14 @@
 MobAppearanceParticle::MobAppearanceParticle(Level* level, double x, double y, double z)
     : Particle(level, x, y, z, 0.0, 0.0, 0.0)
 {
-    xd = 0.0;
-    yd = 0.0;
-    zd = 0.0;
     rCol = 1.0f;
     gCol = 1.0f;
     bCol = 1.0f;
-    lifetime = 30;
+    xd = 0.0;
+    yd = 0.0;
+    zd = 0.0;
     gravity = 0.0f;
+    lifetime = 30;
 }
 
 int MobAppearanceParticle::getParticleTexture()
@@ -45,10 +45,10 @@ bool MobAppearanceParticle::isAffected()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     int hasCamera = guardian != NULL && minecraft != NULL && minecraft->getCameraEntity();
-    MobEffect* slowdown = MobEffects::DIG_SLOWDOWN;
     if (hasCamera)
     {
-        if ((minecraft->getCameraEntity()->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        MobEffect* slowdown = MobEffects::DIG_SLOWDOWN;
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, minecraft->getCameraEntity()->GetType()))
         {
             boost::shared_ptr<LivingEntity> living =
                 boost::static_pointer_cast<LivingEntity>(minecraft->getCameraEntity());
@@ -71,11 +71,10 @@ void MobAppearanceParticle::render(BufferBuilder*,
     if (guardian == NULL || !isAffected())
         return;
 
-    Minecraft* minecraft = Minecraft::GetInstance();
-    EntityRenderDispatcher* dispatcher = minecraft->getEntityRenderDispatcher();
+    EntityRenderDispatcher* dispatcher = Minecraft::GetInstance()->getEntityRenderDispatcher();
     dispatcher->setPosition(Particle::xOff, Particle::yOff, Particle::zOff);
 
-    float scale = 1.0f / 2.35f;
+    float scale = 1.0f / ElderGuardian::ELDER_SIZE_SCALE;
     float progress = ((float)age + partialTicks) / (float)lifetime;
 
     GlStateManager::depthMask(true);
@@ -88,7 +87,7 @@ void MobAppearanceParticle::render(BufferBuilder*,
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 0.5f * pulse + 0.05f);
     GlStateManager::translatef(0.0f, 1.8f, 0.0f);
     GlStateManager::rotatef(180.0f - camera->mYRot, 0.0f, 1.0f, 0.0f);
-    GlStateManager::rotatef(-(150.0f * progress - 60.0f) - camera->mXRot, 1.0f, 0.0f, 0.0f);
+    GlStateManager::rotatef(60.0f - 150.0f * progress - camera->mXRot, 1.0f, 0.0f, 0.0f);
     GlStateManager::translatef(0.0f, -0.4f, -1.5f);
     GlStateManager::scalef(scale, scale, scale);
     guardian->mYRot = guardian->mYRotO = 0.0f;

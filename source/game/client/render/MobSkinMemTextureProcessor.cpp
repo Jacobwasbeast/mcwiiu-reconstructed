@@ -41,7 +41,7 @@ void MobSkinMemTextureProcessor::setForceAlpha(int x0, int y0, int x1, int y1)
         {
             int y;
             for (y = y0; y < y1; ++y)
-                m_data[y * m_width + x] &= 0x00ffffff;
+                m_data[x + y * m_width] &= 0x00ffffff;
         }
     }
 }

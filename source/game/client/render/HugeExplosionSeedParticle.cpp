@@ -26,12 +26,11 @@ void HugeExplosionSeedParticle::tick()
 
     for (int i = 0; i < 6; ++i)
     {
-        level->addParticle(PARTICLE_LARGE_EXPLODE,
-                           x + (random.nextDouble() - random.nextDouble()) * 4.0,
-                           y + (random.nextDouble() - random.nextDouble()) * 4.0,
-                           z + (random.nextDouble() - random.nextDouble()) * 4.0,
-                           (float)age / (float)lifetime, 0.0, 0.0,
-                           arrayWithLength<int>());
+        double xx = x + (random.nextDouble() - random.nextDouble()) * 4.0;
+        double yy = y + (random.nextDouble() - random.nextDouble()) * 4.0;
+        double zz = z + (random.nextDouble() - random.nextDouble()) * 4.0;
+        arrayWithLength<int> params;
+        level->addParticle(PARTICLE_LARGE_EXPLODE, xx, yy, zz, (float)age / (float)lifetime, 0.0, 0.0, params);
     }
 
     Minecraft::GetInstance()->mAnimateTickLevel = NULL;

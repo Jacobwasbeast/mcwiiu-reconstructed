@@ -33,11 +33,7 @@ void MobSpawnerRenderer::render(BaseMobSpawner* pSpawner, double x, double y, do
         float scale = 0.53125F;
         const float& width = entity->mBbWidth;
         const float& height = entity->mBbHeight;
-        float maxSize = width;
-        if (width - height < 0.0F)
-        {
-            maxSize = height;
-        }
+        float maxSize = std::max(width, height);
         if (maxSize > 1.0)
         {
             scale = 0.53125F / maxSize;
@@ -45,8 +41,7 @@ void MobSpawnerRenderer::render(BaseMobSpawner* pSpawner, double x, double y, do
 
         GlStateManager::translatef(0.0F, 0.4F, 0.0F);
 
-        float spin = pSpawner->getoSpin() + (pSpawner->getSpin() - pSpawner->getoSpin()) * a;
-        GlStateManager::rotatef(spin * 10.0F, 0.0F, 1.0F, 0.0F);
+        GlStateManager::rotatef((float)(pSpawner->getoSpin() + (pSpawner->getSpin() - pSpawner->getoSpin()) * a) * 10.0F, 0.0F, 1.0F, 0.0F);
 
         GlStateManager::translatef(0.0F, -0.4F, 0.0F);
         GlStateManager::rotatef(-30.0F, 1.0F, 0.0F, 0.0F);

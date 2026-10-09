@@ -17,12 +17,15 @@ ChestedHorseRenderer::ChestedHorseRenderer(EntityRenderDispatcher* dispatcher, f
 
 const ResourceLocation* ChestedHorseRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    unsigned long long type = entity->GetType();
-    if (type == EntityType::MULE)
-        return &MULE_LOCATION;
-    if (type == EntityType::DONKEY)
+    switch (entity->GetType())
+    {
+    case EntityType::DONKEY:
         return &DONKEY_LOCATION;
-    return EntityRenderer::getTextureLocation(entity);
+    case EntityType::MULE:
+        return &MULE_LOCATION;
+    default:
+        return EntityRenderer::getTextureLocation(entity);
+    }
 }
 
 Model* ChestedHorseRenderer::createModel(const ModelDefinition& definition)

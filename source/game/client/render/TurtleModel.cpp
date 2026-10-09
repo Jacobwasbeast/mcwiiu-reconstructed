@@ -12,7 +12,11 @@
 TurtleModel::TurtleModel(float scale, const ModelDefinition& modelDefinition)
     : QuadrupedModel(12, scale, modelDefinition)
 {
-    if (!modelDefinition.DoesOverrideModel())
+    if (modelDefinition.DoesOverrideModel())
+    {
+        mEggBelly = new ModelPartSkin(this, L"eggBelly", modelDefinition, NULL, 0.0f, NULL);
+    }
+    else
     {
         mTexWidth = 128;
         mTexHeight = 64;
@@ -52,10 +56,6 @@ TurtleModel::TurtleModel(float scale, const ModelDefinition& modelDefinition)
         mLeg3->addBox(0.0f, 0.0f, -2.0f, 13, 1, 5, 0.0f);
         mLeg3->setPos(5.0f, 21.0f, -4.0f);
     }
-    else
-    {
-        mEggBelly = new ModelPartSkin(this, L"eggBelly", modelDefinition, NULL, 0.0f, NULL);
-    }
 
     compileSkinnedDrawlist();
 }
@@ -73,7 +73,19 @@ void TurtleModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
     mEggBelly->mShow = show;
 
     GlStateManager::pushMatrix();
-    if (!young)
+    if (young)
+    {
+        GlStateManager::scalef(0.16666667f, 0.16666667f, 0.16666667f);
+        GlStateManager::translatef(0.0f, 120.0f * scale, 0.0f);
+        mHead->render(scale, useDisplayList, false);
+        mBody->render(scale, useDisplayList, false);
+        mLeg0->render(scale, useDisplayList, false);
+        mLeg1->render(scale, useDisplayList, false);
+        mLeg2->render(scale, useDisplayList, false);
+        mLeg3->render(scale, useDisplayList, false);
+        mEggBelly->render(scale, useDisplayList, false);
+    }
+    else
     {
         if (turtle->hasEgg())
         {
@@ -86,18 +98,6 @@ void TurtleModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
         mLeg0->render(scale, useDisplayList, false);
         mLeg1->render(scale, useDisplayList, false);
         GlStateManager::popMatrix();
-        mLeg2->render(scale, useDisplayList, false);
-        mLeg3->render(scale, useDisplayList, false);
-        mEggBelly->render(scale, useDisplayList, false);
-    }
-    else
-    {
-        GlStateManager::scalef(0.16666667f, 0.16666667f, 0.16666667f);
-        GlStateManager::translatef(0.0f, 120.0f * scale, 0.0f);
-        mHead->render(scale, useDisplayList, false);
-        mBody->render(scale, useDisplayList, false);
-        mLeg0->render(scale, useDisplayList, false);
-        mLeg1->render(scale, useDisplayList, false);
         mLeg2->render(scale, useDisplayList, false);
         mLeg3->render(scale, useDisplayList, false);
         mEggBelly->render(scale, useDisplayList, false);

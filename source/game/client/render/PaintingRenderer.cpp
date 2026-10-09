@@ -42,23 +42,28 @@ void PaintingRenderer::setBrightness(boost::shared_ptr<Painting> painting, float
     if (direction == Direction::EAST)
         lightZ = Mth::floor(painting->mZ + (double)(x * 0.0625F));
 
-    BlockPos pos(lightX, lightY, lightZ);
-    int light = mDispatcher->mLevel->getLightColor(pos, 0, -1);
+    int light = mDispatcher->mLevel->getLightColor(BlockPos(lightX, lightY, lightZ), 0, -1);
     GlStateManager::multiTexCoord2f((float)(light % 65536), (float)(light / 65536));
     GlStateManager::color3f(1.0F, 1.0F, 1.0F);
 }
 
 void PaintingRenderer::renderPainting(boost::shared_ptr<Painting> painting, int width, int height, int offsetX, int offsetY)
 {
-    const float xStart = -width * 0.5F;
-    const float yStart = -height * 0.5F;
-    const float depth = 0.5F;
-    const float backU0 = 0.75F;
-    const float backU1 = 0.8125F;
-    const float backV0 = 0.0F;
-    const float backV1 = 0.0625F;
-    const float edgeV = 0.001953125F;
-    const float sideU = 0.751953125F;
+    float xStart = -width * 0.5F;
+    float yStart = -height * 0.5F;
+    float depth = 0.5F;
+    float backU0 = 0.75F;
+    float backU1 = 0.8125F;
+    float backV0 = 0.0F;
+    float backV1 = 0.0625F;
+    float edgeU0 = 0.75F;
+    float edgeU1 = 0.8125F;
+    float edgeV0 = 0.001953125F;
+    float edgeV1 = 0.001953125F;
+    float sideU0 = 0.751953125F;
+    float sideU1 = 0.751953125F;
+    float sideV0 = 0.0F;
+    float sideV1 = 0.0625F;
 
     for (int xs = 0; xs < width / 16; ++xs)
     {
@@ -68,11 +73,9 @@ void PaintingRenderer::renderPainting(boost::shared_ptr<Painting> painting, int 
             float x1 = xStart + (float)(xs * 16);
             float y0 = yStart + (float)((ys + 1) * 16);
             float y1 = yStart + (float)(ys * 16);
-
+            setBrightness(painting, (x0 + x1) * 0.5F, (y0 + y1) * 0.5F);
             float u0 = (float)(offsetX + width - xs * 16) * 0.00390625F;
             float u1 = (float)(offsetX + width - (xs + 1) * 16) * 0.00390625F;
-
-            setBrightness(painting, (x0 + x1) * 0.5F, (y0 + y1) * 0.5F);
             float v0 = (float)(offsetY + height - ys * 16) * 0.00390625F;
             float v1 = (float)(offsetY + height - (ys + 1) * 16) * 0.00390625F;
             BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
@@ -88,25 +91,25 @@ void PaintingRenderer::renderPainting(boost::shared_ptr<Painting> painting, int 
             builder->vertexUV(x1, y1, depth, backU1, backV1);
             builder->vertexUV(x0, y1, depth, backU0, backV1);
             builder->normal(0.0F, 1.0F, 0.0F);
-            builder->vertexUV(x0, y0, -depth, backU0, edgeV);
-            builder->vertexUV(x1, y0, -depth, backU1, edgeV);
-            builder->vertexUV(x1, y0, depth, backU1, edgeV);
-            builder->vertexUV(x0, y0, depth, backU0, edgeV);
+            builder->vertexUV(x0, y0, -depth, edgeU0, edgeV0);
+            builder->vertexUV(x1, y0, -depth, edgeU1, edgeV0);
+            builder->vertexUV(x1, y0, depth, edgeU1, edgeV1);
+            builder->vertexUV(x0, y0, depth, edgeU0, edgeV1);
             builder->normal(0.0F, -1.0F, 0.0F);
-            builder->vertexUV(x0, y1, depth, backU0, edgeV);
-            builder->vertexUV(x1, y1, depth, backU1, edgeV);
-            builder->vertexUV(x1, y1, -depth, backU1, edgeV);
-            builder->vertexUV(x0, y1, -depth, backU0, edgeV);
+            builder->vertexUV(x0, y1, depth, edgeU0, edgeV0);
+            builder->vertexUV(x1, y1, depth, edgeU1, edgeV0);
+            builder->vertexUV(x1, y1, -depth, edgeU1, edgeV1);
+            builder->vertexUV(x0, y1, -depth, edgeU0, edgeV1);
             builder->normal(-1.0F, 0.0F, 0.0F);
-            builder->vertexUV(x0, y0, depth, sideU, backV0);
-            builder->vertexUV(x0, y1, depth, sideU, backV1);
-            builder->vertexUV(x0, y1, -depth, sideU, backV1);
-            builder->vertexUV(x0, y0, -depth, sideU, backV0);
+            builder->vertexUV(x0, y0, depth, sideU1, sideV0);
+            builder->vertexUV(x0, y1, depth, sideU1, sideV1);
+            builder->vertexUV(x0, y1, -depth, sideU0, sideV1);
+            builder->vertexUV(x0, y0, -depth, sideU0, sideV0);
             builder->normal(1.0F, 0.0F, 0.0F);
-            builder->vertexUV(x1, y0, -depth, sideU, backV0);
-            builder->vertexUV(x1, y1, -depth, sideU, backV1);
-            builder->vertexUV(x1, y1, depth, sideU, backV1);
-            builder->vertexUV(x1, y0, depth, sideU, backV0);
+            builder->vertexUV(x1, y0, -depth, sideU1, sideV0);
+            builder->vertexUV(x1, y1, -depth, sideU1, sideV1);
+            builder->vertexUV(x1, y1, depth, sideU0, sideV1);
+            builder->vertexUV(x1, y0, depth, sideU0, sideV0);
             builder->end();
         }
     }

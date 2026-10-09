@@ -21,7 +21,21 @@ ShulkerModel::ShulkerModel(const ModelDefinition& modelDefinition)
     mTexWidth = 64;
     mTexHeight = 128;
 
-    if (!modelDefinition.DoesOverrideModel())
+    if (modelDefinition.DoesOverrideModel())
+    {
+        mHasOverriddenParts = true;
+        mHead = new ModelPartSkin(this, L"head", modelDefinition, NULL, 0.0f, NULL);
+        mLid = new ModelPartSkin(this, L"lid", modelDefinition, NULL, 0.0f, NULL);
+        mBase = new ModelPartSkin(this, L"base", modelDefinition, NULL, 0.0f, NULL);
+        mHeadSkin = new ModelPartSkin(this, L"head", modelDefinition, NULL, 0.0f, &mSkinnedParts);
+        Tesselator* tesselator = Tesselator::getInstance();
+        BufferBuilder* builder = tesselator->getBuilder();
+        builder->setVertexAndPixelShader(eMinecraftEntityMaterial_Shulker);
+        compileSkinnedDrawlist();
+        mSkinnedParts.compile(0.0625f);
+        builder->useDefaultShaders();
+    }
+    else
     {
         mLid = new ModelPart(this);
         mBase = new ModelPart(this);
@@ -36,20 +50,6 @@ ShulkerModel::ShulkerModel(const ModelDefinition& modelDefinition)
         mLid->compile(0.0625f);
         mBase->compile(0.0625f);
         mHead->compile(0.0625f);
-    }
-    else
-    {
-        mHasOverriddenParts = true;
-        mHead = new ModelPartSkin(this, L"head", modelDefinition, NULL, 0.0f, NULL);
-        mLid = new ModelPartSkin(this, L"lid", modelDefinition, NULL, 0.0f, NULL);
-        mBase = new ModelPartSkin(this, L"base", modelDefinition, NULL, 0.0f, NULL);
-        mHeadSkin = new ModelPartSkin(this, L"head", modelDefinition, NULL, 0.0f, &mSkinnedParts);
-        Tesselator* tesselator = Tesselator::getInstance();
-        BufferBuilder* builder = tesselator->getBuilder();
-        builder->setVertexAndPixelShader(eMinecraftEntityMaterial_Shulker);
-        compileSkinnedDrawlist();
-        mSkinnedParts.compile(0.0625f);
-        builder->useDefaultShaders();
     }
 }
 
@@ -77,12 +77,12 @@ void ShulkerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
         mLid->mYRot = lidTwist * lidTwist * lidTwist * lidTwist * 3.1415927f * 0.125f;
     else
         mLid->mYRot = 0.0f;
-    mHead->mXRot = headPitch * 0.017453292f;
-    mHead->mYRot = netHeadYaw * 0.017453292f;
+    mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
+    mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
     if (mHeadSkin != NULL)
     {
-        mHeadSkin->mXRot = headPitch * 0.017453292f;
-        mHeadSkin->mYRot = netHeadYaw * 0.017453292f;
+        mHeadSkin->mXRot = headPitch * Mth::DEG_TO_RAD;
+        mHeadSkin->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
     }
 }
 
@@ -93,11 +93,21 @@ void ShulkerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, fl
     boost::shared_ptr<Shulker> shulker = boost::static_pointer_cast<Shulker>(entity);
     const int colour = Minecraft::GetInstance()->getColourTable()->getColour(
         shulker->getColor()->getShulkerColor());
-    GlStateManager::color3f((float)((colour >> 16) & 0xFF) / 255.0f, (float)((colour >> 8) & 0xFF) / 255.0f,
-                            (float)(colour & 0xFF) / 255.0f);
-    mBase->render(scale, useDisplayList, false);
-    if (!mHasOverriddenParts)
+    if (mHasOverriddenParts)
     {
+        GlStateManager::color3f((float)((colour >> 16) & 0xFF) / 255.0f, (float)((colour >> 8) & 0xFF) / 255.0f,
+                                (float)(colour & 0xFF) / 255.0f);
+        mBase->render(scale, useDisplayList, false);
+        mLid->render(scale, useDisplayList, false);
+        mHead->render(scale, useDisplayList, false);
+        callSkinnedDrawlist();
+        GlStateManager::color3f(1.0f, 1.0f, 1.0f);
+    }
+    else
+    {
+        GlStateManager::color3f((float)((colour >> 16) & 0xFF) / 255.0f, (float)((colour >> 8) & 0xFF) / 255.0f,
+                                (float)(colour & 0xFF) / 255.0f);
+        mBase->render(scale, useDisplayList, false);
         mLid->render(scale, useDisplayList, false);
         GlStateManager::color3f(1.0f, 1.0f, 1.0f);
         GlStateManager::matrixMode(2);
@@ -110,13 +120,6 @@ void ShulkerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, fl
         GlStateManager::loadIdentity();
         GlStateManager::translatef(0.0f, 0.0f, 0.0f);
         GlStateManager::matrixMode(0);
-    }
-    else
-    {
-        mLid->render(scale, useDisplayList, false);
-        mHead->render(scale, useDisplayList, false);
-        callSkinnedDrawlist();
-        GlStateManager::color3f(1.0f, 1.0f, 1.0f);
     }
 }
 

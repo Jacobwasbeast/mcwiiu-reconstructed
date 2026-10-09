@@ -1,4 +1,5 @@
 #include "game/client/render/LeashKnotModel.hpp"
+#include "game/core/Mth.hpp"
 
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
@@ -34,6 +35,6 @@ void LeashKnotModel::setupAnim(float limbSwing, float limbSwingAmount, float age
 {
     Model::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
 
-    mKnot->mYRot = netHeadYaw * 0.017453292f;
-    mKnot->mXRot = headPitch * 0.017453292f;
+    mKnot->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
+    mKnot->mXRot = headPitch * Mth::DEG_TO_RAD;
 }

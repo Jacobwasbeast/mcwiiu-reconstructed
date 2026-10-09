@@ -58,7 +58,7 @@ public:
     static void renderNameTagInWorld(Font*, const std::wstring&, float, float, float, int, float, float, bool, bool, int, float);
     unsigned int getLightTexture(int, Level*);
     static int runUpdate(void*);
-    unsigned int getTickCount();
+    int getTickCount();
     unsigned int postEffectActive();
     void shutdownEffect();
     void checkEntityPostEffect(boost::shared_ptr<Entity>);
@@ -90,9 +90,9 @@ public:
     static unsigned int fjGetFpsCap(int);
     static bool anaglyph3d;
     const BlockPos* getFogOffsets();
-    double getTargetFogDistance(const BlockPos&);
+    float getTargetFogDistance(const BlockPos&);
     void getTargetFogColor(const BlockPos&, float&, float&, float&);
-    double modifyFogDistance(const BlockPos&, float, float);
+    float modifyFogDistance(const BlockPos&, float, float);
     void setupClearColor(float);
     FloatBuffer* getBuffer(float, float, float, float);
     void resetFogColor(bool);

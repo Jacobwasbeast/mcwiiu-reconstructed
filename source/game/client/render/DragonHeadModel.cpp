@@ -5,6 +5,7 @@
 #include "game/client/render/ModelDefinition.hpp"
 #include "game/client/render/ModelPart.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/core/Mth.hpp"
 
 DragonHeadModel::DragonHeadModel(float scale, const ModelDefinition& modelDefinition)
 {
@@ -18,9 +19,6 @@ DragonHeadModel::DragonHeadModel(float scale, const ModelDefinition& modelDefini
         mHead->addChild(mJaw);
 
         mUsingDefaultModel = false;
-
-        mHead->compile(0.0625f);
-        mJaw->compile(0.0625f);
     }
     else
     {
@@ -51,19 +49,18 @@ DragonHeadModel::DragonHeadModel(float scale, const ModelDefinition& modelDefini
         mHead->addChild(mJaw);
 
         mUsingDefaultModel = true;
-
-        mHead->compile(0.0625f);
-        mJaw->compile(0.0625f);
     }
+
+    mHead->compile(0.0625f);
+    mJaw->compile(0.0625f);
 }
 
 void DragonHeadModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
-    float jawAngle = (sinf(limbSwing * 3.1415927f * 0.2f) + 1.0f) * 0.2f;
-    mJaw->mXRot = jawAngle;
+    mJaw->mXRot = (sin(limbSwing * 3.1415927f * 0.2f) + 1.0f) * 0.2f;
 
-    mHead->mYRot = netHeadYaw * 0.017453292f;
-    mHead->mXRot = headPitch * 0.017453292f;
+    mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
+    mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
 
     GlStateManager::translatef(0.0f, -0.374375f, 0.0f);
     GlStateManager::scalef(0.75f, 0.75f, 0.75f);

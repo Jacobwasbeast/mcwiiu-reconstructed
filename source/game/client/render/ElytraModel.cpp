@@ -26,26 +26,22 @@ ElytraModel::ElytraModel(const ModelDefinition& modelDefinition)
     mRightWing->mMirror = true;
     mRightWing->addBox(0.0f, 0.0f, 0.0f, 10, 20, 2, 1.0f);
 
-    float x = 5.0f;
-    float y = 0.0f;
     float xRot = 15.0f * Mth::DEG_TO_RAD;
-    float yRot = 0.0f;
     float zRot = -15.0f * Mth::DEG_TO_RAD;
+    float y = 0.0f;
+    float yRot = 0.0f;
 
-    ModelPart* leftWing = mLeftWing;
-    ModelPart* rightWing = mRightWing;
+    mLeftWing->mX = 5.0f;
+    mLeftWing->mY = y;
+    mLeftWing->mXRot = xRot;
+    mLeftWing->mYRot = yRot;
+    mLeftWing->mZRot = zRot;
 
-    leftWing->mX = x;
-    leftWing->mY = y;
-    leftWing->mXRot = xRot;
-    leftWing->mYRot = yRot;
-    leftWing->mZRot = zRot;
-
-    rightWing->mX = -x;
-    rightWing->mY = y;
-    rightWing->mXRot = xRot;
-    rightWing->mYRot = -yRot;
-    rightWing->mZRot = -zRot;
+    mRightWing->mX = -mLeftWing->mX;
+    mRightWing->mYRot = -mLeftWing->mYRot;
+    mRightWing->mY = mLeftWing->mY;
+    mRightWing->mXRot = mLeftWing->mXRot;
+    mRightWing->mZRot = -mLeftWing->mZRot;
 
     compileSkinnedDrawlist();
 }
@@ -55,10 +51,8 @@ void ElytraModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
     GlStateManager::disableRescaleNormal();
     GlStateManager::disableCull();
 
-    bool isBaby = Entity::instanceof(entity, EntityType::LIVING_ENTITY) &&
-                  boost::static_pointer_cast<LivingEntity>(entity)->isBaby();
-
-    if (isBaby)
+    if (Entity::instanceof(entity, EntityType::LIVING_ENTITY) &&
+        boost::static_pointer_cast<LivingEntity>(entity)->isBaby())
     {
         GlStateManager::pushMatrix();
         GlStateManager::scalef(0.5f, 0.5f, 0.5f);
@@ -86,19 +80,12 @@ void ElytraModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
 
     float xRot = 15.0f * Mth::DEG_TO_RAD;
     float zRot = -15.0f * Mth::DEG_TO_RAD;
-    float yRot = 0.0f;
     float y = 0.0f;
-
-    bool isFallFlying = false;
+    float yRot = 0.0f;
 
     if (!mOverrideAnim && entity.get() != NULL &&
-        (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY &&
+        eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()) &&
         boost::dynamic_pointer_cast<LivingEntity>(entity)->isFallFlying())
-    {
-        isFallFlying = true;
-    }
-
-    if (isFallFlying)
     {
         float flyAmount = 1.0f;
 
@@ -116,8 +103,8 @@ void ElytraModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     {
         xRot = 40.0f * Mth::DEG_TO_RAD;
         zRot = -45.0f * Mth::DEG_TO_RAD;
-        yRot = 5.0f * Mth::DEG_TO_RAD;
         y = 3.0f;
+        yRot = 5.0f * Mth::DEG_TO_RAD;
     }
 
     mLeftWing->mX = 5.0f;
@@ -143,9 +130,9 @@ void ElytraModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
     }
 
     mRightWing->mX = -mLeftWing->mX;
+    mRightWing->mYRot = -mLeftWing->mYRot;
     mRightWing->mY = mLeftWing->mY;
     mRightWing->mXRot = mLeftWing->mXRot;
-    mRightWing->mYRot = -mLeftWing->mYRot;
     mRightWing->mZRot = -mLeftWing->mZRot;
 }
 

@@ -105,7 +105,7 @@ void TheEndPortalRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
 
         float layer = (float)(i + 1);
 
-        double timeFraction = (float)((long long)System::processTimeInMilliSecs() % 800000LL) / 800000.0F;
+        double timeFraction = (float)(System::processTimeInMilliSecs() % 800000LL) / 800000.0F;
 
         GlStateManager::translatef(17.0F / layer, (layer / 1.5F + 2.0F) * timeFraction, 0.0F);
         GlStateManager::rotatef((layer * layer * 4321.0F + layer * 9.0F) * 2.0F, 0.0F, 0.0F, 1.0F);

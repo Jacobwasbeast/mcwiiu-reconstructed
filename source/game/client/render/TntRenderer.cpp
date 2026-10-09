@@ -3,6 +3,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "game/client/render/BlockRenderDispatcher.hpp"
+#include "game/client/render/Textures.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Mth.hpp"
@@ -11,8 +12,6 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/Blocks.hpp"
-
-static ResourceLocation TNT_LOCATION(TN_BLOCK_ATLAS);
 
 TntRenderer::TntRenderer(EntityRenderDispatcher* dispatcher)
     : EntityRenderer(dispatcher)
@@ -85,5 +84,5 @@ void TntRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, 
 
 const ResourceLocation* TntRenderer::getTextureLocation(boost::shared_ptr<Entity>&)
 {
-    return &TNT_LOCATION;
+    return &BLOCKS_LOCATION;
 }

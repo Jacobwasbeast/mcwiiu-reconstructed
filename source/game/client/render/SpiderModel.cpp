@@ -11,17 +11,8 @@
 #include <cmath>
 
 SpiderModel::SpiderModel(const ModelDefinition& modelDefinition)
-    : Model(), mSpiderParts(NULL), mSpiderPartCount(0), mInvisibleParts()
 {
-    ModelPartSkin** parts = new ModelPartSkin*[22];
-
-    for (int i = 0; i < 22; i++)
-    {
-        parts[i] = NULL;
-    }
-
-    mSpiderParts = parts;
-    mSpiderPartCount = 22;
+    mSpiderParts = arrayWithLength<ModelPartSkin*>(22, true);
 
     createModelParts(modelDefinition);
     createInvisibleModelParts(modelDefinition);
@@ -29,7 +20,7 @@ SpiderModel::SpiderModel(const ModelDefinition& modelDefinition)
 
 SpiderModel::~SpiderModel()
 {
-    delete[] mSpiderParts;
+    delete[] mSpiderParts.data;
 }
 
 void SpiderModel::createModelParts(const ModelDefinition& modelDefinition)
@@ -108,24 +99,25 @@ void SpiderModel::createModelParts(const ModelDefinition& modelDefinition)
 
 void SpiderModel::createInvisibleModelParts(const ModelDefinition& modelDefinition)
 {
-    if (!modelDefinition.DoesOverrideModel())
-        return;
-    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-    mHasOverriddenParts = true;
-    builder->setVertexAndPixelShader(eMinecraftEntityMaterial_SpiderInvisible);
-    mSpiderParts[11] = new ModelPartSkin(this, L"head", modelDefinition, NULL, 0.0f, &mInvisibleParts);
-    mSpiderParts[12] = new ModelPartSkin(this, L"body0", modelDefinition, NULL, 0.0f, &mInvisibleParts);
-    mSpiderParts[13] = new ModelPartSkin(this, L"body1", modelDefinition, NULL, 0.0f, &mInvisibleParts);
-    mSpiderParts[14] = new ModelPartSkin(this, L"leg0", modelDefinition, NULL, 0.0f, &mInvisibleParts);
-    mSpiderParts[15] = new ModelPartSkin(this, L"leg1", modelDefinition, NULL, 0.0f, &mInvisibleParts);
-    mSpiderParts[16] = new ModelPartSkin(this, L"leg2", modelDefinition, NULL, 0.0f, &mInvisibleParts);
-    mSpiderParts[17] = new ModelPartSkin(this, L"leg3", modelDefinition, NULL, 0.0f, &mInvisibleParts);
-    mSpiderParts[18] = new ModelPartSkin(this, L"leg4", modelDefinition, NULL, 0.0f, &mInvisibleParts);
-    mSpiderParts[19] = new ModelPartSkin(this, L"leg5", modelDefinition, NULL, 0.0f, &mInvisibleParts);
-    mSpiderParts[20] = new ModelPartSkin(this, L"leg6", modelDefinition, NULL, 0.0f, &mInvisibleParts);
-    mSpiderParts[21] = new ModelPartSkin(this, L"leg7", modelDefinition, NULL, 0.0f, &mInvisibleParts);
-    mInvisibleParts.compile(0.0625f);
-    builder->useDefaultShaders();
+    if (modelDefinition.DoesOverrideModel())
+    {
+        BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+        mHasOverriddenParts = true;
+        builder->setVertexAndPixelShader(eMinecraftEntityMaterial_SpiderInvisible);
+        mSpiderParts[11] = new ModelPartSkin(this, L"head", modelDefinition, NULL, 0.0f, &mInvisibleParts);
+        mSpiderParts[12] = new ModelPartSkin(this, L"body0", modelDefinition, NULL, 0.0f, &mInvisibleParts);
+        mSpiderParts[13] = new ModelPartSkin(this, L"body1", modelDefinition, NULL, 0.0f, &mInvisibleParts);
+        mSpiderParts[14] = new ModelPartSkin(this, L"leg0", modelDefinition, NULL, 0.0f, &mInvisibleParts);
+        mSpiderParts[15] = new ModelPartSkin(this, L"leg1", modelDefinition, NULL, 0.0f, &mInvisibleParts);
+        mSpiderParts[16] = new ModelPartSkin(this, L"leg2", modelDefinition, NULL, 0.0f, &mInvisibleParts);
+        mSpiderParts[17] = new ModelPartSkin(this, L"leg3", modelDefinition, NULL, 0.0f, &mInvisibleParts);
+        mSpiderParts[18] = new ModelPartSkin(this, L"leg4", modelDefinition, NULL, 0.0f, &mInvisibleParts);
+        mSpiderParts[19] = new ModelPartSkin(this, L"leg5", modelDefinition, NULL, 0.0f, &mInvisibleParts);
+        mSpiderParts[20] = new ModelPartSkin(this, L"leg6", modelDefinition, NULL, 0.0f, &mInvisibleParts);
+        mSpiderParts[21] = new ModelPartSkin(this, L"leg7", modelDefinition, NULL, 0.0f, &mInvisibleParts);
+        mInvisibleParts.compile(0.0625f);
+        builder->useDefaultShaders();
+    }
 }
 
 void SpiderModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount,
@@ -133,18 +125,20 @@ void SpiderModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, flo
                          bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
-    int i;
-    if (!entity->isInvisible())
+    if (entity->isInvisible())
     {
-        for (i = 0; i < 11; ++i)
+        if (mHasOverriddenParts)
+        {
+            for (int i = 11; i < 22; ++i)
+                mSpiderParts[i]->render(scale, useDisplayList, false);
+            mInvisibleParts.render();
+        }
+    }
+    else
+    {
+        for (int i = 0; i < 11; ++i)
             mSpiderParts[i]->render(scale, useDisplayList, false);
         callSkinnedDrawlist();
-    }
-    else if (mHasOverriddenParts)
-    {
-        for (i = 11; i < 22; ++i)
-            mSpiderParts[i]->render(scale, useDisplayList, false);
-        mInvisibleParts.render();
     }
 }
 
@@ -152,9 +146,8 @@ void SpiderModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInT
                             float netHeadYaw, float headPitch, float scale,
                             boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    const float radians = 0.017453292f;
-    mSpiderParts[0]->mYRot = netHeadYaw * radians;
-    mSpiderParts[0]->mXRot = headPitch * radians;
+    mSpiderParts[0]->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
+    mSpiderParts[0]->mXRot = headPitch * Mth::DEG_TO_RAD;
     const float quarterPi = 0.7853982f;
     const float middleRoll = 0.58119464f;
     const float eighthPi = 0.39269909f;

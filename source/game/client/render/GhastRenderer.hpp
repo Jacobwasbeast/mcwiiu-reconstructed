@@ -16,7 +16,7 @@ class GhastRenderer : public MobRenderer
 {
 public:
     GhastRenderer(EntityRenderDispatcher* dispatcher);
-    virtual ~GhastRenderer();
+    virtual ~GhastRenderer() {}
 
     virtual const ResourceLocation* getTextureLocation(boost::shared_ptr<Entity>& entity);
     virtual Model* createModel(const ModelDefinition& definition);

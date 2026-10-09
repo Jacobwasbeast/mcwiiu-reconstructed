@@ -36,26 +36,22 @@ void IllusionIllagerRenderer::scale(boost::shared_ptr<LivingEntity>&, float)
 void IllusionIllagerRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                                      float yaw, float partialTick)
 {
-    if (!entity->isInvisible())
-    {
-        MobRenderer::render(entity, x, y, z, yaw, partialTick);
-    }
-    else
+    if (entity->isInvisible())
     {
         arrayWithLength<Vec3*> offsets = boost::static_pointer_cast<IllusionIllager>(entity)->getIllusionOffsets(partialTick);
         boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(entity);
         float bob = getBob(livingEntity, partialTick);
         for (unsigned int index = 0; index < offsets.length; ++index)
         {
-            Vec3* offset = offsets.data[index];
-            float phase = (float)index;
-            MobRenderer::render(entity,
-                                Mth::cos(phase + bob * 0.5f) * 0.025 + x + offset->x,
-                                Mth::cos(phase + bob * 0.75f) * 0.0125 + y + offset->y,
-                                Mth::cos(phase + bob * 0.7f) * 0.025 + z + offset->z,
-                                yaw, partialTick);
+            MobRenderer::render(entity, x + offsets[index]->x + Mth::cos(index + bob * 0.5f) * 0.025,
+                                y + offsets[index]->y + Mth::cos(index + bob * 0.75f) * 0.0125,
+                                z + offsets[index]->z + Mth::cos(index + bob * 0.7f) * 0.025, yaw, partialTick);
         }
         delete offsets.data;
+    }
+    else
+    {
+        MobRenderer::render(entity, x, y, z, yaw, partialTick);
     }
 }
 
@@ -97,5 +93,6 @@ void IllusionIllagerRenderer::IllusionIllagerRenderer_ItemInHandLayer::render(
 void IllusionIllagerRenderer::IllusionIllagerRenderer_ItemInHandLayer::translateToHand(const HumanoidArm* arm)
 {
     IllagerModel* model = static_cast<IllagerModel*>(mLivingEntityRenderer->getModel());
-    model->getArm(arm)->translateTo(0.0625f);
+    ModelPart* hand = model->getArm(arm);
+    hand->translateTo(0.0625f);
 }

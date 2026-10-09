@@ -16,5 +16,6 @@ ThrownPotionRenderer::~ThrownPotionRenderer()
 
 not_null_ptr<ItemInstance> ThrownPotionRenderer::getItem(boost::shared_ptr<Entity> entity)
 {
-    return boost::static_pointer_cast<ThrownPotion>(entity)->getItem();
+    boost::shared_ptr<ThrownPotion> potion = boost::static_pointer_cast<ThrownPotion>(entity);
+    return potion->getItem();
 }

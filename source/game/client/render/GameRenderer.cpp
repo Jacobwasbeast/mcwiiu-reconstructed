@@ -530,17 +530,18 @@ int GameRenderer::runUpdate(void*)
             delete sPendingDataDeletes[i];
         sPendingDataDeletes.clear();
 
-        std::vector<ElementStorageWithTick>::iterator entry = sPendingElementStorageDeletes.begin();
-        while (entry != sPendingElementStorageDeletes.end())
+        for (std::vector<ElementStorageWithTick>::iterator entry = sPendingElementStorageDeletes.begin();
+             entry != sPendingElementStorageDeletes.end();)
         {
-            if (entry->tick != 0)
+            if (entry->tick == 0)
+            {
+                delete entry->storage;
+                entry = sPendingElementStorageDeletes.erase(entry);
+            }
+            else
             {
                 ++entry;
-                continue;
             }
-
-            delete entry->storage;
-            entry = sPendingElementStorageDeletes.erase(entry);
         }
 
         LeaveCriticalSection(&sDeleteMutex);
@@ -556,7 +557,7 @@ int GameRenderer::runUpdate(void*)
     return 0;
 }
 
-unsigned int GameRenderer::getTickCount()
+int GameRenderer::getTickCount()
 {
     return mTickCount;
 }
@@ -621,16 +622,12 @@ void GameRenderer::tickFov()
     const float targetFov = player->getFieldOfViewModifier();
 
     mFovO[playerIndex] = mFov[playerIndex];
-    float fov = (targetFov - mFov[playerIndex]) * 0.5f + mFov[playerIndex];
-
-    if (fov > 1.5f)
-        fov = 1.5f;
-    else if (fov < 0.1f)
-        fov = 0.1f;
-
-    mFov[playerIndex] = fov;
+    mFov[playerIndex] += (targetFov - mFov[playerIndex]) * 0.5f;
+    if (mFov[playerIndex] > 1.5f)
+        mFov[playerIndex] = 1.5f;
+    if (mFov[playerIndex] < 0.1f)
+        mFov[playerIndex] = 0.1f;
 }
-
 void GameRenderer::tickLightTexture()
 {
     mBlockLightRedFlickerSpeed = static_cast<float>(
@@ -803,7 +800,7 @@ void GameRenderer::tick(bool tickWorld)
 
 static bool isPickable_apply(boost::shared_ptr<Entity> entity)
 {
-    return entity->isPickable() || entity->GetType() == EntityType::ITEM_ENTITY;
+    return entity->isPickable() || eTYPE_DERIVED_FROM(EntityType::ITEM_ENTITY, entity->GetType());
 }
 
 void GameRenderer::pick(float partialTick)
@@ -1075,29 +1072,20 @@ void GameRenderer::bobHurt(float partialTick)
 
 void GameRenderer::bobView(float partialTick)
 {
-    static const float kZero = 0.0f;
-    static const float kOne = 1.0f;
-    static const float kHalf = 0.5f;
-    static const float kWalkScale = 3.0f;
-    static const float kRollScale = 5.0f;
-    static const float kPi = 3.1415927f;
-    static const float kRollOffset = 0.2f;
+    if (!eTYPE_DERIVED_FROM(EntityType::PLAYER, getCamera()->GetType()))
+        return;
 
-    if ((getCamera()->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-    {
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(getCamera());
+    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(getCamera());
+    const float walkDelta = player->mWalkDist - player->mWalkDistO;
+    const float walk = -(player->mWalkDist + walkDelta * partialTick);
+    const float dist = player->mPrevCameraYaw + (player->mCameraYaw - player->mPrevCameraYaw) * partialTick;
+    const float roll = player->mOBob + (player->mBob - player->mOBob) * partialTick;
 
-        const float walk = -((player->mWalkDist - player->mWalkDistO) * partialTick + player->mWalkDist);
-        const float dist = (player->mCameraYaw - player->mPrevCameraYaw) * partialTick + player->mPrevCameraYaw;
-        const float roll = (player->mBob - player->mOBob) * partialTick + player->mOBob;
-        const float angle = walk * kPi;
-
-        GlStateManager::translatef(Mth::sin(angle) * dist * kHalf, -std::fabs(Mth::cos(angle) * dist), kZero);
-        GlStateManager::rotatef(Mth::sin(angle) * dist * kWalkScale, kZero, kZero, kOne);
-        GlStateManager::rotatef(std::fabs(Mth::cos(angle - kRollOffset) * dist) * kRollScale, kOne, kZero,
-                                kZero);
-        GlStateManager::rotatef(roll, kOne, kZero, kZero);
-    }
+    GlStateManager::translatef(Mth::sin(walk * 3.1415927f) * dist * 0.5f,
+                               -std::fabs(Mth::cos(walk * 3.1415927f) * dist), 0.0f);
+    GlStateManager::rotatef(Mth::sin(walk * 3.1415927f) * dist * 3.0f, 0.0f, 0.0f, 1.0f);
+    GlStateManager::rotatef(std::fabs(Mth::cos(walk * 3.1415927f - 0.2f) * dist) * 5.0f, 1.0f, 0.0f, 0.0f);
+    GlStateManager::rotatef(roll, 1.0f, 0.0f, 0.0f);
 }
 
 unsigned int GameRenderer::getCameraThirdPerson()
@@ -1121,7 +1109,6 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
     static const float kZero = 0.0f;
     static const float kOne = 1.0f;
     static const float kNegOne = -1.0f;
-    static const float kDegToRad = 0.017453292f;
     static const float k180 = 180.0f;
     static const float kFirstPersonNudge = 0.05f;
     static const float kSleepingYOffset = 0.3f;
@@ -1180,8 +1167,8 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
                     if (thirdPerson == 2)
                         pitch = pitch + k180;
 
-                    const float yawRad = kDegToRad * yaw;
-                    const float pitchRad = kDegToRad * pitch;
+                    const float yawRad = Mth::DEG_TO_RAD * yaw;
+                    const float pitchRad = Mth::DEG_TO_RAD * pitch;
 
                     double offsetX = static_cast<float>(-Mth::sin(yawRad) * Mth::cos(pitchRad)) * distance;
                     double offsetZ = static_cast<float>(Mth::cos(yawRad) * Mth::cos(pitchRad)) * distance;
@@ -1300,7 +1287,7 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
     if (mMinecraft->mOptions->mUnknownFlag5 == 0)
     {
         GlStateManager::rotatef(static_cast<float>(getCameraXRot(partialTick)), kOne, kZero, kZero);
-        if ((living->GetType() & EntityType::ANIMAL) == EntityType::ANIMAL)
+        if (eTYPE_DERIVED_FROM(EntityType::ANIMAL, living->GetType()))
         {
             boost::shared_ptr<Animal> animal = boost::static_pointer_cast<Animal>(living);
             GlStateManager::rotatef((animal->mYHeadRot - animal->mYHeadRotO) * partialTick
@@ -1493,7 +1480,7 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
 
     boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mPlayer;
     bool holdingMap = false;
-    const bool cameraIsLocalPlayer = getCamera()->GetType() == EntityType::LOCAL_PLAYER;
+    const bool cameraIsLocalPlayer = eTYPE_DERIVED_FROM(EntityType::LOCAL_PLAYER, getCamera()->GetType());
     if (cameraIsLocalPlayer)
     {
         not_null_ptr<ItemInstance> selected = localPlayer->mInventory->getSelected();
@@ -1554,7 +1541,7 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
     }
 
     const bool cameraSleeping =
-        (getCamera()->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+        eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, getCamera()->GetType())
         && boost::static_pointer_cast<LivingEntity>(getCamera())->isSleeping();
 
     const bool skipFirstPersonHand =
@@ -1597,29 +1584,21 @@ float GameRenderer::getNightVisionScale(boost::shared_ptr<LivingEntity> living, 
     MobEffectInstance* nightVision = living->getEffect(MobEffects::NIGHT_VISION);
     MobEffectInstance* conduitPower = living->getEffect(MobEffects::CONDUIT_POWER);
     if (nightVision == NULL && conduitPower == NULL)
-    {
         return 0.0f;
-    }
-
     int duration = 0;
     if (nightVision != NULL)
-    {
         duration = nightVision->getDuration();
-    }
-    if (conduitPower != NULL && duration < conduitPower->getDuration())
+    if (conduitPower != NULL)
     {
-        duration = conduitPower->getDuration();
+        const int conduitDuration = conduitPower->getDuration();
+        if (duration < conduitDuration)
+            duration = conduitDuration;
     }
     if (duration > 200)
-    {
         return 1.0f;
-    }
-
     float remaining = static_cast<float>(duration) - partialTick;
     if (remaining < 0.0f)
-    {
         remaining = 0.0f;
-    }
     return Mth::sin(remaining * 3.1415927f * 0.05f) * 0.3f + 0.7f;
 }
 
@@ -1812,37 +1791,37 @@ unsigned int GameRenderer::fjGetFpsCap(int value)
 
 const BlockPos* GameRenderer::getFogOffsets()
 {
-    Level* level = mMinecraft->mLevel;
-    const unsigned char biomeScale = level->getLevelData()->getBiomeScale();
     const BlockPos* offsets;
-    if (biomeScale == 1)
+    switch (mMinecraft->mLevel->getLevelData()->getBiomeScale())
+    {
+    case 1:
         offsets = sEndFogOffsets;
-    else if (biomeScale == 2)
+        break;
+    case 2:
         offsets = sNetherFogOffsets;
-    else
+        break;
+    default:
         offsets = sOverworldFogOffsets;
+        break;
+    }
     return offsets;
 }
 
-double GameRenderer::getTargetFogDistance(const BlockPos& pos)
+float GameRenderer::getTargetFogDistance(const BlockPos& pos)
 {
-    static const float kUnitWeight = 1.0f;
-
     const BlockPos* table = getFogOffsets();
 
     float distanceSum = 0.0f;
     float weightSum = 0.0f;
-
-    const BlockPos* delta = table;
-    for (int i = 0; i < 27; ++i, ++delta)
+    for (int i = 0; i < 27; ++i)
     {
-        BlockPos samplePos = pos.offset(delta->x, delta->y, delta->z);
+        BlockPos samplePos = pos.offset(table[i].x, table[i].y, table[i].z);
         Biome* biome = mMinecraft->mLevel->getBiome(samplePos);
         distanceSum += biome->getFogDistance();
-        weightSum += kUnitWeight;
+        weightSum += 1.0f;
     }
 
-    return static_cast<double>(distanceSum / weightSum);
+    return distanceSum / weightSum;
 }
 
 void GameRenderer::getTargetFogColor(const BlockPos& pos, float& red, float& green, float& blue)
@@ -1871,22 +1850,17 @@ void GameRenderer::getTargetFogColor(const BlockPos& pos, float& red, float& gre
     blue = blueSum / weight;
 }
 
-double GameRenderer::modifyFogDistance(const BlockPos& pos, float distance, float value)
+float GameRenderer::modifyFogDistance(const BlockPos& pos, float distance, float value)
 {
-    static const float kZero = 0.0f;
-    static const float kFarDistance = 40.0f;
-    static const float kNearFactor = 1.0f;
-    static const float kFarFactor = 0.33333334f;
-
-    const float deltaY = distance - static_cast<float>(pos.y);
-    if (kZero <= deltaY)
+    const float deltaY = distance - static_cast<float>(pos.getY());
+    if (deltaY >= 0.0f)
     {
-        if (deltaY < kFarDistance)
-            value = value * Mth::Lerp(kNearFactor, kFarFactor, deltaY / kFarDistance);
+        if (deltaY >= 40.0f)
+            value *= 0.33333334f;
         else
-            value = value * kFarFactor;
+            value *= Mth::Lerp(1.0f, 0.33333334f, deltaY / 40.0f);
     }
-    return static_cast<double>(value);
+    return value;
 }
 
 void GameRenderer::setupClearColor(float partialTick)
@@ -1894,7 +1868,7 @@ void GameRenderer::setupClearColor(float partialTick)
     Level* level = mMinecraft->mLevel;
     boost::shared_ptr<Entity> camera = getCamera();
     boost::shared_ptr<LivingEntity> living;
-    if ((camera->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, camera->GetType()))
         living = boost::static_pointer_cast<LivingEntity>(camera);
 
     const float skyBlend = 1.0f - static_cast<float>(std::pow(0.25, 0.25));
@@ -1987,8 +1961,8 @@ void GameRenderer::setupClearColor(float partialTick)
                 mFogHeight = static_cast<float>(cameraY);
         }
 
-        const float fogDistance = static_cast<float>(modifyFogDistance(
-            cameraPos, static_cast<float>(mFogHeight), static_cast<float>(getTargetFogDistance(cameraPos))));
+        const float fogDistance =
+            modifyFogDistance(cameraPos, static_cast<float>(mFogHeight), getTargetFogDistance(cameraPos));
         if (!mFogHeightLocked)
         {
             mPlayerFogRed[playerIndex] = mTargetFogRed[playerIndex];
@@ -2007,8 +1981,8 @@ void GameRenderer::setupClearColor(float partialTick)
         mFogGreen = mPlayerFogGreen[playerIndex];
         mFogBlue = mPlayerFogBlue[playerIndex];
 
-        const float targetDistance = static_cast<float>(modifyFogDistance(
-            cameraPos, static_cast<float>(mFogHeight), static_cast<float>(getTargetFogDistance(cameraPos))));
+        const float targetDistance =
+            modifyFogDistance(cameraPos, static_cast<float>(mFogHeight), getTargetFogDistance(cameraPos));
         if (targetDistance == mTargetFogDistance[playerIndex])
         {
             const float distanceProgress =
@@ -2026,7 +2000,7 @@ void GameRenderer::setupClearColor(float partialTick)
 
         float fogStart = 0.0f;
         float fogEnd = mPlayerFogDistance[playerIndex];
-        if (getCamera()->GetType() == EntityType::LOCAL_PLAYER)
+        if (eTYPE_DERIVED_FROM(EntityType::LOCAL_PLAYER, getCamera()->GetType()))
         {
             const double clarity =
                 boost::static_pointer_cast<LocalPlayer>(getCamera())->getUnderwaterVisionClarity();
@@ -2162,7 +2136,7 @@ void GameRenderer::setupFog(int, float partialTick)
     const BlockState* blockState = Camera::getBlockAt(mMinecraft->mLevel, camera, partialTick);
 
     bool hasBlindness = false;
-    if ((camera->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, camera->GetType()))
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(camera);
         if (living->hasEffect(MobEffects::BLINDNESS))
@@ -3160,7 +3134,7 @@ void GameRenderer::renderEyePass(int eyeIndex, float partialTick, long long, boo
 
         if (mMinecraft->mHitResult != NULL && cameraEntity->isUnderLiquid(Material::WATER))
         {
-            if ((cameraEntity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+            if (eTYPE_DERIVED_FROM(EntityType::PLAYER, cameraEntity->GetType()))
             {
                 boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(cameraEntity);
                 GlStateManager::disableAlphaTest();
@@ -3207,7 +3181,7 @@ void GameRenderer::renderEyePass(int eyeIndex, float partialTick, long long, boo
     GlStateManager::disableBlend();
     if (mZoom == 1.0f)
     {
-        if ((cameraEntity->GetType() & EntityType::PLAYER) == EntityType::PLAYER && mMinecraft->mHitResult != NULL)
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, cameraEntity->GetType()) && mMinecraft->mHitResult != NULL)
         {
             boost::shared_ptr<Player> outlinePlayer = boost::static_pointer_cast<Player>(cameraEntity);
             GlStateManager::disableAlphaTest();
@@ -3284,20 +3258,15 @@ void GameRenderer::renderLevel(float partialTick, long long targetNanoTime)
 
 void GameRenderer::setupGuiScreen(int guiScale)
 {
-    static const double kZero = 0.0;
-    static const double kNear = 1000.0;
-    static const double kFar = 3000.0;
-    static const float kZeroF = 0.0f;
-    static const float kTranslateZ = -2000.0f;
-
     ScreenSizeCalculator screenSize(mMinecraft->mOptions, guiScale);
 
     GlStateManager::matrixMode(1);
     GlStateManager::loadIdentity();
-    GlStateManager::ortho(kZero, screenSize.mWidthScale, screenSize.mHeightScale, kZero, kNear, kFar);
+    GlStateManager::ortho(0.0, static_cast<float>(screenSize.mWidthScale),
+                          static_cast<float>(screenSize.mHeightScale), 0.0, 1000.0, 3000.0);
     GlStateManager::matrixMode(0);
     GlStateManager::loadIdentity();
-    GlStateManager::translatef(kZeroF, kZeroF, kTranslateZ);
+    GlStateManager::translatef(0.0f, 0.0f, -2000.0f);
 }
 
 void GameRenderer::renderItemActivationAnimation(int width, int height, float partialTick)
@@ -3413,7 +3382,7 @@ int GameRenderer::shouldRenderBlockOutline()
         return 0;
 
     boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
-    bool render = (camera->GetType() & EntityType::PLAYER) == EntityType::PLAYER && !mMinecraft->mOptions->mHideGui;
+    bool render = eTYPE_DERIVED_FROM(EntityType::PLAYER, camera->GetType()) && !mMinecraft->mOptions->mHideGui;
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(camera);
     if (render && !player->mAbilities.mMayBuild)
     {
@@ -3422,11 +3391,12 @@ int GameRenderer::shouldRenderBlockOutline()
         if (hit != NULL && hit->mType == HitResult::BLOCK)
         {
             BlockPos pos = hit->getBlockPos();
-            Block* block = mMinecraft->mLevel->getBlockState(pos)->getBlock();
+            const BlockState* state = mMinecraft->mLevel->getBlockState(pos);
+            Block* block = state->getBlock();
             if (mMinecraft->mGameMode->GetGameType() == GameType::SPECTATOR)
             {
                 render = block->mBlockEntity
-                    && (mMinecraft->mLevel->getBlockEntity(pos)->GetType() & BlockEntityType::CONTAINER) == BlockEntityType::CONTAINER;
+                    && eTYPE_DERIVED_FROM(BlockEntityType::CONTAINER, mMinecraft->mLevel->getBlockEntity(pos)->GetType());
             }
             else
             {

@@ -38,13 +38,13 @@ int CreeperRenderer::getOverlayColor(boost::shared_ptr<LivingEntity>& entity,
                                      float, float partialTicks)
 {
     boost::shared_ptr<Creeper> creeper = boost::static_pointer_cast<Creeper>(entity);
-    float swelling = creeper->getSwelling(partialTicks);
-    int flash = (int)(swelling * 10.0F);
-    if ((flash & 1) == 0)
+    float step = creeper->getSwelling(partialTicks);
+    if (((int)(step * 10.0F) & 1) == 0)
         return 0;
 
-    int alpha = Mth::clamp((int)(swelling * 0.2F * 255.0F), 0, 255);
-    return (int)((unsigned)(255 - alpha) << 24) | 0x30FFFFFF;
+    int alpha = (int)(step * 0.2F * 255.0F);
+    alpha = 255 - Mth::clamp(alpha, 0, 255);
+    return (alpha << 24) | 0x30FFFFFF;
 }
 
 const ResourceLocation* CreeperRenderer::getTextureLocation(boost::shared_ptr<Entity>&)

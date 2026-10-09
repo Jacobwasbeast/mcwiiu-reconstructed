@@ -7,7 +7,11 @@
 CowModel::CowModel(const ModelDefinition& modelDefinition)
     : QuadrupedModel(12, 0.0f, modelDefinition)
 {
-    if (!modelDefinition.DoesOverrideModel())
+    if (modelDefinition.DoesOverrideModel())
+    {
+        mZHeadOffs += 2.0f;
+    }
+    else
     {
         delete mHead;
         mHead = new ModelPartSkin(this, 0, 0, NULL);
@@ -31,10 +35,6 @@ CowModel::CowModel(const ModelDefinition& modelDefinition)
 
         mZHeadOffs += 2.0f;
         compileSkinnedDrawlist();
-    }
-    else
-    {
-        mZHeadOffs += 2.0f;
     }
 }
 

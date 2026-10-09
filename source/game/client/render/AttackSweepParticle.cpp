@@ -17,10 +17,11 @@ AttackSweepParticle::AttackSweepParticle(Textures* textures, Level* level,
     , textures(textures)
 {
     quadSize = (float)(1.0 - xa * 0.5);
-    rCol = random.nextFloat() * 0.6f + 0.4f;
+    float colour = random.nextFloat() * 0.6f + 0.4f;
+    rCol = colour;
+    gCol = colour;
+    bCol = colour;
     lifetime = 4;
-    gCol = rCol;
-    bCol = rCol;
 }
 
 void AttackSweepParticle::render(BufferBuilder* buffer,
@@ -38,30 +39,28 @@ void AttackSweepParticle::render(BufferBuilder* buffer,
 
     textures->bindTexture(&PARTICLES_LOCATION);
 
-    float u0 = (float)(frame % 4) * 0.25f;
-    float u1 = (float)(frame / 2) * 0.5f;
+    float u0 = (float)(frame % 4) / 4.0f;
+    float u1 = u0 + 0.24975f;
+    float v0 = (float)(frame / 2) / 2.0f;
+    float v1 = v0 + 0.4995f;
+    float size = quadSize;
     float px = (float)((x - xo) * partialTicks + xo - Particle::xOff);
     float py = (float)((y - yo) * partialTicks + yo - Particle::yOff);
     float pz = (float)((z - zo) * partialTicks + zo - Particle::zOff);
-    float halfHeight = ya * quadSize * 0.5f;
-    float width = xa2 * quadSize;
-    float depth = za2 * quadSize;
-    float xaScaled = xa * quadSize;
-    float zaScaled = za * quadSize;
-    float left = px - xaScaled;
-    float back = pz - zaScaled;
 
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
     GlStateManager::disableLighting();
     Lighting::turnOff();
     buffer->begin(3);
     buffer->color(rCol, gCol, bCol);
-    buffer->vertexUV(left - width, py - halfHeight, back - depth, u0 + 0.24975f, u1 + 0.4995f);
-    buffer->vertexUV(left + width, py + halfHeight, back + depth, u0 + 0.24975f, u1);
-    float right = px + xaScaled;
-    float front = pz + zaScaled;
-    buffer->vertexUV(right + width, py + halfHeight, front + depth, u0, u1);
-    buffer->vertexUV(right - width, py - halfHeight, front - depth, u0, u1 + 0.4995f);
+    buffer->vertexUV(px - xa * size - xa2 * size, py - ya * size * 0.5f,
+                     pz - za * size - za2 * size, u1, v1);
+    buffer->vertexUV(px - xa * size + xa2 * size, py + ya * size * 0.5f,
+                     pz - za * size + za2 * size, u1, v0);
+    buffer->vertexUV(px + xa * size + xa2 * size, py + ya * size * 0.5f,
+                     pz + za * size + za2 * size, u0, v0);
+    buffer->vertexUV(px + xa * size - xa2 * size, py - ya * size * 0.5f,
+                     pz + za * size - za2 * size, u0, v1);
     buffer->end();
     GlStateManager::enableLighting();
 }

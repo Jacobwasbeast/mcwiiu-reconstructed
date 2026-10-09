@@ -65,12 +65,18 @@ void SkullBlockRenderer::renderSkull(float x, float y, float z, const Direction*
                                      int destroyStage, float animationTime, bool useDisplayList)
 {
     Model* model = NULL;
-    if (skullType == 4)
-        model = mActiveCreeperModel;
-    else if (skullType == 5)
+    switch (skullType)
+    {
+    case 5:
         model = mActiveDragonModel;
-    else
+        break;
+    case 4:
+        model = mActiveCreeperModel;
+        break;
+    default:
         model = mActiveSkeletonModels[skullType];
+        break;
+    }
 
     if (destroyStage >= 0)
     {
@@ -183,22 +189,20 @@ bool SkullBlockRenderer::dragonJawCheck()
 void SkullBlockRenderer::updateModel(int modelIndex, const std::wstring& modelName,
                                      const std::wstring& originalModelName, TexturePack* pTexturePack)
 {
-    SkeletonHeadModel*& model = mActiveSkeletonModels[modelIndex];
-    SkeletonHeadModel*& original = mSkeletonModels[modelIndex];
-    if (original == NULL)
-        original = model;
-    if (model != original)
+    if (mSkeletonModels[modelIndex] == NULL)
+        mSkeletonModels[modelIndex] = mActiveSkeletonModels[modelIndex];
+    if (mActiveSkeletonModels[modelIndex] != mSkeletonModels[modelIndex])
     {
-        if (model != NULL)
-            delete model;
-        model = NULL;
+        if (mActiveSkeletonModels[modelIndex] != NULL)
+            delete mActiveSkeletonModels[modelIndex];
+        mActiveSkeletonModels[modelIndex] = NULL;
     }
     if (pTexturePack->HasCustomModel(modelName))
-        model = new SkeletonHeadModel(0, 0, 64, 32, *pTexturePack->GetCustomModel(modelName));
+        mActiveSkeletonModels[modelIndex] = new SkeletonHeadModel(0, 0, 64, 32, *pTexturePack->GetCustomModel(modelName));
     else if (pTexturePack->HasCustomModel(originalModelName))
-        model = new SkeletonHeadModel(0, 0, 64, 32, *pTexturePack->GetCustomModel(originalModelName));
+        mActiveSkeletonModels[modelIndex] = new SkeletonHeadModel(0, 0, 64, 32, *pTexturePack->GetCustomModel(originalModelName));
     else
-        model = original;
+        mActiveSkeletonModels[modelIndex] = mSkeletonModels[modelIndex];
 }
 
 void SkullBlockRenderer::setupForTexturePack(TexturePack* pTexturePack)

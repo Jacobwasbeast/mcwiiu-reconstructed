@@ -70,7 +70,7 @@ void FishingHookRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
 
     float attackAnim = owner->getAttackAnim(partialTick);
     float swing = Mth::sin(Mth::sqrt(attackAnim) * 3.1415927f);
-    float bodyRot = (owner->mYBodyRotO + (owner->mYBodyRot - owner->mYBodyRotO) * partialTick) * 0.017453292f;
+    float bodyRot = (owner->mYBodyRotO + (owner->mYBodyRot - owner->mYBodyRotO) * partialTick) * Mth::DEG_TO_RAD;
     double sinRot = Mth::sin(bodyRot);
     double cosRot = Mth::cos(bodyRot);
     double handX;
@@ -85,8 +85,8 @@ void FishingHookRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
         if (localPlayer && (localPlayer->mViewport == 3 || localPlayer->mViewport == 4 || !gRenderer->IsWidescreen()))
             sideOffset = -0.165f;
         Vec3* offset = Vec3::newTemp((double)(sideOffset * fov), -0.045 * (double)fov, 0.4);
-        offset = offset->xRot(-(owner->mXRotO + (owner->mXRot - owner->mXRotO) * partialTick) * 0.017453292f);
-        offset = offset->yRot(-(owner->mYRotO + (owner->mYRot - owner->mYRotO) * partialTick) * 0.017453292f);
+        offset = offset->xRot(-(owner->mXRotO + (owner->mXRot - owner->mXRotO) * partialTick) * Mth::DEG_TO_RAD);
+        offset = offset->yRot(-(owner->mYRotO + (owner->mYRot - owner->mYRotO) * partialTick) * Mth::DEG_TO_RAD);
         offset = offset->yRot(swing * 0.5f);
         offset = offset->xRot(swing * 0.7f);
         handX = owner->mXo + (owner->mX - owner->mXo) * (double)partialTick + offset->x;

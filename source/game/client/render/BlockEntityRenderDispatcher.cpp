@@ -156,7 +156,7 @@ void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEnt
     if (renderer != NULL)
     {
         if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureCustomBeacons()
-            && blockEntity->GetType() == BlockEntityType::BEACON)
+            && eTYPE_DERIVED_FROM(BlockEntityType::BEACON, blockEntity->GetType()))
         {
             static_cast<BeaconRenderer*>(renderer)->renderSpecialBeamDirection(
                 blockEntity, x, y, z, mX, mY, mZ, a, breakProgress, bTranslucent, alpha,

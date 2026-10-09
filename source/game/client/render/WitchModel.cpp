@@ -66,9 +66,9 @@ void WitchModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTi
     mNose->mYOffset = 0.0f;
     mNose->mZOffset = 0.0f;
     float rate = 0.01f * (float)(entity->getId() % 10);
-    mNose->mXRot = std::sin((float)entity->mTickCount * rate) * 4.5f * 0.017453292f;
+    mNose->mXRot = std::sin((float)entity->mTickCount * rate) * 4.5f * Mth::DEG_TO_RAD;
     mNose->mYRot = 0.0f;
-    mNose->mZRot = std::cos((float)entity->mTickCount * rate) * 2.5f * 0.017453292f;
+    mNose->mZRot = std::cos((float)entity->mTickCount * rate) * 2.5f * Mth::DEG_TO_RAD;
     if (mHoldingItem)
     {
         mNose->mXRot = -0.9f;

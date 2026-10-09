@@ -30,9 +30,9 @@ void EndermanRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
                               float yaw, float partialTick)
 {
     boost::shared_ptr<EnderMan> enderman = boost::static_pointer_cast<EnderMan>(entity);
-    bool carrying = enderman->getCarryingBlock() != NULL;
+    const BlockState* carried = enderman->getCarryingBlock();
     EndermanModel* model = static_cast<EndermanModel*>(getModel());
-    model->mCarrying = carrying;
+    model->mCarrying = carried != NULL;
     model->mCreepy = enderman->isCreepy();
 
     if (enderman->isCreepy())

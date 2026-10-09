@@ -6,7 +6,21 @@
 
 QuadrupedModel::QuadrupedModel(int legHeight, float scale, const ModelDefinition& modelDefinition)
 {
-    if (!modelDefinition.DoesOverrideModel())
+    if (modelDefinition.DoesOverrideModel())
+    {
+        mModelOverridden = true;
+        mYHeadOffs = -4.0f;
+        mZHeadOffs = 4.0f;
+
+        mHead = new ModelPartSkin(this, L"head", modelDefinition, NULL, scale, NULL);
+        mBody = new ModelPartSkin(this, L"body", modelDefinition, NULL, scale, NULL);
+        mLeg0 = new ModelPartSkin(this, L"leg0", modelDefinition, NULL, scale, NULL);
+        mLeg1 = new ModelPartSkin(this, L"leg1", modelDefinition, NULL, scale, NULL);
+        mLeg2 = new ModelPartSkin(this, L"leg2", modelDefinition, NULL, scale, NULL);
+        mLeg3 = new ModelPartSkin(this, L"leg3", modelDefinition, NULL, scale, NULL);
+        mHasOverriddenParts = true;
+    }
+    else
     {
         mYHeadOffs = 8.0f;
         mModelOverridden = false;
@@ -36,20 +50,6 @@ QuadrupedModel::QuadrupedModel(int legHeight, float scale, const ModelDefinition
         mLeg3->addBox(-2.0f, 0.0f, -2.0f, 4, legHeight, 4, scale);
         mLeg3->setPos(3.0f, (float)(24 - legHeight), -5.0f);
     }
-    else
-    {
-        mModelOverridden = true;
-        mYHeadOffs = -4.0f;
-        mZHeadOffs = 4.0f;
-
-        mHead = new ModelPartSkin(this, L"head", modelDefinition, NULL, scale, NULL);
-        mBody = new ModelPartSkin(this, L"body", modelDefinition, NULL, scale, NULL);
-        mLeg0 = new ModelPartSkin(this, L"leg0", modelDefinition, NULL, scale, NULL);
-        mLeg1 = new ModelPartSkin(this, L"leg1", modelDefinition, NULL, scale, NULL);
-        mLeg2 = new ModelPartSkin(this, L"leg2", modelDefinition, NULL, scale, NULL);
-        mLeg3 = new ModelPartSkin(this, L"leg3", modelDefinition, NULL, scale, NULL);
-        mHasOverriddenParts = true;
-    }
 
     compileSkinnedDrawlist();
 }
@@ -61,16 +61,51 @@ void QuadrupedModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, 
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity,
               _SkinAdjustments());
 
-    if (!mModelOverridden)
+    if (mModelOverridden)
     {
         if (mYoung)
         {
+            float ss = 2.0f;
+            GlStateManager::pushMatrix();
+            GlStateManager::translatef(0.0f, (mYHeadOffs + 12.0f) * scale, mZHeadOffs * scale);
+            mHead->render(scale, useDisplayList, false);
+            GlStateManager::popMatrix();
+            GlStateManager::pushMatrix();
+            GlStateManager::scalef(1.0f / ss, 1.0f / ss, 1.0f / ss);
+            GlStateManager::translatef(0.0f, 24.0f * scale, 0.0f);
+            mBody->render(scale, useDisplayList, false);
+            mLeg0->render(scale, useDisplayList, false);
+            mLeg1->render(scale, useDisplayList, false);
+            mLeg2->render(scale, useDisplayList, false);
+            mLeg3->render(scale, useDisplayList, false);
+        }
+        else
+        {
+            mHead->render(scale, useDisplayList, false);
+            mBody->render(scale, useDisplayList, false);
+            mLeg0->render(scale, useDisplayList, false);
+            mLeg1->render(scale, useDisplayList, false);
+            mLeg2->render(scale, useDisplayList, false);
+            mLeg3->render(scale, useDisplayList, false);
+        }
+        if (mYoung)
+        {
+            GlStateManager::popMatrix();
+            callSkinnedDrawlist();
+            return;
+        }
+    }
+    else
+    {
+        if (mYoung)
+        {
+            float ss = 2.0f;
             GlStateManager::pushMatrix();
             GlStateManager::translatef(0.0f, mYHeadOffs * scale, mZHeadOffs * scale);
             mHead->render(scale, useDisplayList, false);
             GlStateManager::popMatrix();
             GlStateManager::pushMatrix();
-            GlStateManager::scalef(0.5f, 0.5f, 0.5f);
+            GlStateManager::scalef(1.0f / ss, 1.0f / ss, 1.0f / ss);
             GlStateManager::translatef(0.0f, 24.0f * scale, 0.0f);
             mBody->render(scale, useDisplayList, false);
             mLeg0->render(scale, useDisplayList, false);
@@ -88,39 +123,6 @@ void QuadrupedModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, 
         mLeg2->render(scale, useDisplayList, false);
         mLeg3->render(scale, useDisplayList, false);
     }
-    else
-    {
-        if (!mYoung)
-        {
-            mHead->render(scale, useDisplayList, false);
-            mBody->render(scale, useDisplayList, false);
-            mLeg0->render(scale, useDisplayList, false);
-            mLeg1->render(scale, useDisplayList, false);
-            mLeg2->render(scale, useDisplayList, false);
-            mLeg3->render(scale, useDisplayList, false);
-        }
-        else
-        {
-            GlStateManager::pushMatrix();
-            GlStateManager::translatef(0.0f, (mYHeadOffs + 12.0f) * scale, mZHeadOffs * scale);
-            mHead->render(scale, useDisplayList, false);
-            GlStateManager::popMatrix();
-            GlStateManager::pushMatrix();
-            GlStateManager::scalef(0.5f, 0.5f, 0.5f);
-            GlStateManager::translatef(0.0f, 24.0f * scale, 0.0f);
-            mBody->render(scale, useDisplayList, false);
-            mLeg0->render(scale, useDisplayList, false);
-            mLeg1->render(scale, useDisplayList, false);
-            mLeg2->render(scale, useDisplayList, false);
-            mLeg3->render(scale, useDisplayList, false);
-        }
-        if (mYoung)
-        {
-            GlStateManager::popMatrix();
-            callSkinnedDrawlist();
-            return;
-        }
-    }
     callSkinnedDrawlist();
 }
 
@@ -128,8 +130,8 @@ void QuadrupedModel::setupAnim(float limbSwing, float limbSwingAmount, float age
                                float netHeadYaw, float headPitch, float scale,
                                boost::shared_ptr<Entity> entity, _SkinAdjustments skinAdjustments)
 {
-    mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
     mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
+    mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
     mBody->mXRot = 90.0f * Mth::DEG_TO_RAD;
 
     mLeg0->mXRot = Mth::cos(limbSwing * 0.6662f) * 1.4f * limbSwingAmount;
@@ -151,23 +153,15 @@ void QuadrupedModel::render(QuadrupedModel* model, float scale, bool useDisplayL
     mLeg2->mXRot = model->mLeg2->mXRot;
     mLeg3->mXRot = model->mLeg3->mXRot;
 
-    if (!mYoung)
+    if (mYoung)
     {
-        mHead->render(scale, useDisplayList, false);
-        mBody->render(scale, useDisplayList, false);
-        mLeg0->render(scale, useDisplayList, false);
-        mLeg1->render(scale, useDisplayList, false);
-        mLeg2->render(scale, useDisplayList, false);
-        mLeg3->render(scale, useDisplayList, false);
-    }
-    else
-    {
+        float ss = 2.0f;
         GlStateManager::pushMatrix();
         GlStateManager::translatef(0.0f, 8.0f * scale, 4.0f * scale);
         mHead->render(scale, useDisplayList, false);
         GlStateManager::popMatrix();
         GlStateManager::pushMatrix();
-        GlStateManager::scalef(0.5f, 0.5f, 0.5f);
+        GlStateManager::scalef(1.0f / ss, 1.0f / ss, 1.0f / ss);
         GlStateManager::translatef(0.0f, 24.0f * scale, 0.0f);
         mBody->render(scale, useDisplayList, false);
         mLeg0->render(scale, useDisplayList, false);
@@ -175,6 +169,15 @@ void QuadrupedModel::render(QuadrupedModel* model, float scale, bool useDisplayL
         mLeg2->render(scale, useDisplayList, false);
         mLeg3->render(scale, useDisplayList, false);
         GlStateManager::popMatrix();
+    }
+    else
+    {
+        mHead->render(scale, useDisplayList, false);
+        mBody->render(scale, useDisplayList, false);
+        mLeg0->render(scale, useDisplayList, false);
+        mLeg1->render(scale, useDisplayList, false);
+        mLeg2->render(scale, useDisplayList, false);
+        mLeg3->render(scale, useDisplayList, false);
     }
     callSkinnedDrawlist();
 }

@@ -43,7 +43,20 @@ void TropicalFishRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, 
 {
     boost::shared_ptr<TropicalFish> fish = boost::static_pointer_cast<TropicalFish>(entity);
 
-    if (!entity->isInvisible())
+    if (entity->isInvisible())
+    {
+        if (fish->getBaseVariant() == 0)
+        {
+            mModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
+                              scale, entity, _SkinAdjustments());
+        }
+        else
+        {
+            mModel2->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
+                               scale, entity, _SkinAdjustments());
+        }
+    }
+    else
     {
         boost::shared_ptr<Entity> renderEntity = entity;
         const ResourceLocation* location = getTextureLocation(renderEntity);
@@ -78,19 +91,6 @@ void TropicalFishRenderer::renderModel(boost::shared_ptr<LivingEntity>& entity, 
 
         GlStateManager::texLayerColor3f(0, 1.0F, 1.0F, 1.0F);
         GlStateManager::texLayerColor3f(1, 1.0F, 1.0F, 1.0F);
-    }
-    else
-    {
-        if (fish->getBaseVariant() == 0)
-        {
-            mModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                              scale, entity, _SkinAdjustments());
-        }
-        else
-        {
-            mModel2->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
-                               scale, entity, _SkinAdjustments());
-        }
     }
 }
 

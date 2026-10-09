@@ -9,6 +9,7 @@
 #include "game/core/ArmorStand.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/HumanoidArm.hpp"
+#include "game/core/Mth.hpp"
 #include "game/entity/mob/Entity.hpp"
 
 ArmorStandModel::ArmorStandModel(float scale, const ModelDefinition& definition)
@@ -80,7 +81,7 @@ void ArmorStandModel::setupAnim(float limbSwing, float limbSwingAmount, float ag
     ArmorStandArmorModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
                                     entity, skinAdjustments);
 
-    bool isArmorStand = entity.get()->GetType() == EntityType::ARMOR_STAND;
+    bool isArmorStand = eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, entity.get()->GetType());
     if (isArmorStand)
     {
         boost::shared_ptr<ArmorStand> armorStand = boost::dynamic_pointer_cast<ArmorStand>(entity);
@@ -89,21 +90,20 @@ void ArmorStandModel::setupAnim(float limbSwing, float limbSwingAmount, float ag
         mRightArm->mShow = armorStand.get()->isShowArms();
         mArmorStandBase->mShow = !armorStand.get()->isNoBasePlate();
 
-        const float degreesToRadians = 0.017453292f;
-        mArmorStandBody->mXRot = (float)armorStand.get()->getBodyPose()->x * degreesToRadians;
-        mArmorStandBody->mYRot = (float)armorStand.get()->getBodyPose()->y * degreesToRadians;
-        mArmorStandBody->mZRot = (float)armorStand.get()->getBodyPose()->z * degreesToRadians;
+        mArmorStandBody->mXRot = Mth::DEG_TO_RAD * (float)armorStand.get()->getBodyPose()->x;
+        mArmorStandBody->mYRot = Mth::DEG_TO_RAD * (float)armorStand.get()->getBodyPose()->y;
+        mArmorStandBody->mZRot = Mth::DEG_TO_RAD * (float)armorStand.get()->getBodyPose()->z;
 
-        mArmorStandRightArm->mXRot = (float)armorStand.get()->getBodyPose()->x * degreesToRadians;
-        mArmorStandRightArm->mYRot = (float)armorStand.get()->getBodyPose()->y * degreesToRadians;
-        mArmorStandRightArm->mZRot = (float)armorStand.get()->getBodyPose()->z * degreesToRadians;
+        mArmorStandRightArm->mXRot = Mth::DEG_TO_RAD * (float)armorStand.get()->getBodyPose()->x;
+        mArmorStandRightArm->mYRot = Mth::DEG_TO_RAD * (float)armorStand.get()->getBodyPose()->y;
+        mArmorStandRightArm->mZRot = Mth::DEG_TO_RAD * (float)armorStand.get()->getBodyPose()->z;
 
-        mArmorStandLeftArm->mXRot = (float)armorStand.get()->getBodyPose()->x * degreesToRadians;
-        mArmorStandLeftArm->mYRot = (float)armorStand.get()->getBodyPose()->y * degreesToRadians;
-        mArmorStandLeftArm->mZRot = (float)armorStand.get()->getBodyPose()->z * degreesToRadians;
+        mArmorStandLeftArm->mXRot = Mth::DEG_TO_RAD * (float)armorStand.get()->getBodyPose()->x;
+        mArmorStandLeftArm->mYRot = Mth::DEG_TO_RAD * (float)armorStand.get()->getBodyPose()->y;
+        mArmorStandLeftArm->mZRot = Mth::DEG_TO_RAD * (float)armorStand.get()->getBodyPose()->z;
 
         mArmorStandBase->mXRot = 0.0f;
-        mArmorStandBase->mYRot = -(degreesToRadians * entity.get()->mYRot);
+        mArmorStandBase->mYRot = -(Mth::DEG_TO_RAD * entity.get()->mYRot);
         mArmorStandBase->mZRot = 0.0f;
     }
 }
@@ -116,7 +116,18 @@ void ArmorStandModel::render(boost::shared_ptr<Entity>& entity, float limbSwing,
                       useDisplayList);
     GlStateManager::pushMatrix();
 
-    if (!mYoung)
+    if (mYoung)
+    {
+        GlStateManager::scalef(0.5f, 0.5f, 0.5f);
+        GlStateManager::translatef(0.0f, 24.0f * scale, 0.0f);
+        mArmorStandBody->render(scale, useDisplayList, false);
+        mArmorStandRightArm->render(scale, useDisplayList, false);
+        mArmorStandLeftArm->render(scale, useDisplayList, false);
+        mArmorStandBase->render(scale, useDisplayList, false);
+        GlStateManager::popMatrix();
+        callSkinnedDrawlist();
+    }
+    else
     {
         if (entity.get()->isSneaking())
         {
@@ -127,19 +138,9 @@ void ArmorStandModel::render(boost::shared_ptr<Entity>& entity, float limbSwing,
         mArmorStandRightArm->render(scale, useDisplayList, false);
         mArmorStandLeftArm->render(scale, useDisplayList, false);
         mArmorStandBase->render(scale, useDisplayList, false);
+        GlStateManager::popMatrix();
+        callSkinnedDrawlist();
     }
-    else
-    {
-        GlStateManager::scalef(0.5f, 0.5f, 0.5f);
-        GlStateManager::translatef(0.0f, 24.0f * scale, 0.0f);
-        mArmorStandBody->render(scale, useDisplayList, false);
-        mArmorStandRightArm->render(scale, useDisplayList, false);
-        mArmorStandLeftArm->render(scale, useDisplayList, false);
-        mArmorStandBase->render(scale, useDisplayList, false);
-    }
-
-    GlStateManager::popMatrix();
-    callSkinnedDrawlist();
 }
 
 void ArmorStandModel::translateToHandItem(float scale, const HumanoidArm* arm)

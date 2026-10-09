@@ -20,29 +20,19 @@
 #include "game/core/Options.hpp"
 #include "game/core/StringFormat.hpp"
 
-static unsigned int gMapColours[208];
+int gMapColours[208];
 static bool gMapColoursLoaded = true;
 
 bool sortByTexture(const MapDecoration& left, const MapDecoration& right)
 {
-    bool result;
-    if (!left.getType()->isPlayer())
+    if (left.getType()->isPlayer() || right.getType()->isPlayer())
     {
-        if (!right.getType()->isPlayer())
-        {
-            int leftIcon = left.getImg() < 16;
-            int rightIcon = right.getImg() < 16;
-            result = false;
-            if (leftIcon && !rightIcon)
-                result = true;
-            return result;
-        }
+        return !left.getType()->isPlayer() && right.getType()->isPlayer();
     }
 
-    result = false;
-    if (!left.getType()->isPlayer() && right.getType()->isPlayer())
-        result = true;
-    return result;
+    bool leftIsIcon = left.getImg() < 16;
+    bool rightIsIcon = right.getImg() < 16;
+    return leftIsIcon && !rightIsIcon;
 }
 
 MapRenderer::MapRenderer(Font* font, Options* options, Textures* textures)
@@ -52,32 +42,26 @@ MapRenderer::MapRenderer(Font* font, Options* options, Textures* textures)
 
 void MapRenderer::reloadColours()
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
-    ColourTable* colours = minecraft->getColourTable();
-    int i;
-    for (i = 0; i < 208; ++i)
+    ColourTable* colourTable = Minecraft::GetInstance()->getColourTable();
+    for (int i = 0; i < 208; ++i)
     {
         int material = i / 4;
         if (material == 0)
         {
-            gMapColours[i] = 16 + ((i + i / 128) * 8 & 8);
-            continue;
-        }
-        unsigned int colour = colours->getColour(MaterialColor::MATERIAL_COLORS[material]->col);
-        int brightness = 220;
-        if (i % 4 == 2)
-        {
-            gMapColours[i] = (((((colour >> 16) & 255) * 255) / 255) << 24) |
-                             (((((colour >> 8) & 255) * 255) / 255) << 16) |
-                             ((((colour & 255) * 255) / 255) << 8) | 255;
+            gMapColours[i] = ((i + i / 128) & 1) * 8 + 16;
         }
         else
         {
-            if (i % 4 == 0)
+            int colour = colourTable->getColour(MaterialColor::MATERIAL_COLORS[material]->col);
+            int brightness = 220;
+            if ((i & 3) == 2)
+                brightness = 255;
+            else if ((i & 3) == 0)
                 brightness = 180;
-            gMapColours[i] = (((((colour >> 16) & 255) * brightness) / 255) << 24) |
-                             (((((colour >> 8) & 255) * brightness) / 255) << 16) |
-                             ((((colour & 255) * brightness) / 255) << 8) | 255;
+            int red = ((colour >> 16) & 255) * brightness / 255;
+            int green = ((colour >> 8) & 255) * brightness / 255;
+            int blue = (colour & 255) * brightness / 255;
+            gMapColours[i] = (red << 24) | (green << 16) | (blue << 8) | 255;
         }
     }
     gMapColoursLoaded = false;
@@ -120,8 +104,7 @@ void MapRenderer::resetData()
     for (it = mMapInstances.begin(); it != mMapInstances.end(); ++it)
     {
         mTextures->releaseTexture(it->second->mTexture);
-        if (it->second != NULL)
-            delete it->second;
+        delete it->second;
     }
     mMapInstances.clear();
 }
@@ -138,7 +121,8 @@ MapRenderer::MapInstance::MapInstance(MapRenderer* renderer,
     : mRenderer(renderer), mData(data), mTexture(-1), mTextureDirty(false)
 {
     mPixels = arrayWithLength<int>(16384, true);
-    arrayWithLength<int>::zero(mPixels.data, 16384);
+    for (int i = 0; i < 16384; i++)
+        mPixels[i] = 0;
     if (gMapColoursLoaded)
         MapRenderer::reloadColours();
 }
@@ -153,14 +137,15 @@ void MapRenderer::MapInstance::fjUpdateWithRenderContext()
     }
     if (mTextureDirty)
     {
-        mRenderer->mTextures->replaceTextureDirect(mPixels, 128, 128, mTexture);
+        Textures* textures = mRenderer->mTextures;
+        textures->replaceTextureDirect(mPixels, 128, 128, mTexture);
     }
 }
 
 void MapRenderer::MapInstance::draw(const boost::shared_ptr<Player>& player)
 {
     fjUpdateWithRenderContext();
-    Player* viewer = player.get();
+    bool noOverlayRendering = player.get() == NULL;
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();
     GlStateManager::bindTexture(mTexture);
@@ -186,18 +171,19 @@ void MapRenderer::MapInstance::draw(const boost::shared_ptr<Player>& player)
         std::vector<MapDecoration>::const_iterator it;
         for (it = decorations.begin(); it != decorations.end(); ++it)
         {
-            if ((viewer || it->renderOnFrame()) && it->visible &&
-                (!viewer || it->getType() != &MapDecoration::Type::TYPES[7]))
+            if ((!noOverlayRendering || it->renderOnFrame()) && it->visible &&
+                (noOverlayRendering || it->getType() != &MapDecoration::Type::TYPES[7]))
             {
                 unsigned int img = it->getImg();
-                int image = img < 16 ? 14 : 120;
                 int hash = it->hashCode();
                 if (counts.find(hash) == counts.end() || counts.at(hash) < 3)
                 {
+                    int image = img >= 16 ? 120 : 14;
                     if (texture != image)
                     {
+                        Textures* textures = mRenderer->mTextures;
+                        textures->bind(textures->loadTexture(image));
                         texture = image;
-                        mRenderer->mTextures->bind(mRenderer->mTextures->loadTexture(image));
                     }
                     GlStateManager::pushMatrix();
                     GlStateManager::translatef((float)it->getX() / 2.0f + 64.0f,
@@ -205,14 +191,15 @@ void MapRenderer::MapInstance::draw(const boost::shared_ptr<Player>& player)
                     GlStateManager::rotatef((float)(it->getRot() * 360) / 16.0f, 0.0f, 0.0f, 1.0f);
                     GlStateManager::scalef(4.0f, 4.0f, 3.0f);
                     GlStateManager::translatef(-0.125f, 0.125f, 0.0f);
-                    int column = (img & 15) % 4;
-                    int row = (int)(img & 15) / 4;
+                    int icon = img & 15;
+                    int column = icon % 4;
+                    int row = icon / 4;
                     float minU = (float)column / 4.0f;
                     float maxU = (float)(column + 1) / 4.0f;
                     float minV = (float)row / 4.0f;
                     float maxV = (float)(row + 1) / 4.0f;
-                    float iconDepth = (float)index * -0.001f;
                     builder->begin();
+                    float iconDepth = (float)index * -0.001f;
                     builder->vertexUV(-1.0f, 1.0f, iconDepth, minU, minV);
                     builder->vertexUV(1.0f, 1.0f, iconDepth, maxU, minV);
                     builder->vertexUV(1.0f, -1.0f, iconDepth, maxU, maxV);
@@ -232,9 +219,10 @@ void MapRenderer::MapInstance::draw(const boost::shared_ptr<Player>& player)
     GlStateManager::scalef(1.0f, 1.0f, 1.0f);
     if (player)
     {
-        std::wstring text = formatwstr(L"X: %d, Y: %d, Z: %d", (int)std::floor(player->mX),
-                                       (int)std::floor(player->mY + player->getEyeHeight()),
-                                       (int)std::floor(player->mZ));
+        int x = (int)std::floor(player->mX);
+        int y = (int)std::floor(player->mY + player->getEyeHeight());
+        int z = (int)std::floor(player->mZ);
+        std::wstring text = formatwstr(L"X: %d, Y: %d, Z: %d", x, y, z);
         mRenderer->mFont->draw(text, 0, 0,
             (int)Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Map_Text));
     }
@@ -243,8 +231,7 @@ void MapRenderer::MapInstance::draw(const boost::shared_ptr<Player>& player)
 
 void MapRenderer::MapInstance::updateTexture()
 {
-    unsigned int i;
-    for (i = 0; i < mData->mColors.length; ++i)
-        mPixels.data[i] = gMapColours[mData->mColors.data[i]];
+    for (int i = 0; i < mData->mColors.length; i++)
+        mPixels[i] = gMapColours[mData->mColors[i]];
     mTextureDirty = true;
 }

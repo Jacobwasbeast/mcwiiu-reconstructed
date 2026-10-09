@@ -21,7 +21,7 @@ VexRenderer::VexRenderer(EntityRenderDispatcher* dispatcher)
 const ResourceLocation* VexRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
     if (Minecraft::InMiniGame(eMiniGameId_Any, true)
-        && (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        && eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         return &VEX_LOCATION;
     }
@@ -36,10 +36,11 @@ const ResourceLocation* VexRenderer::getTextureLocation(boost::shared_ptr<Entity
 void VexRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                          float yaw, float partialTick)
 {
-    unsigned int modelVersion = static_cast<VexModel*>(mModel)->getModelVersion();
+    VexModel* model = static_cast<VexModel*>(mModel);
+    unsigned int modelVersion = model->getModelVersion();
     if (modelVersion != mModelVersion)
     {
-        delete mModel;
+        delete model;
         mModel = new VexModel();
         mModelVersion = modelVersion;
     }

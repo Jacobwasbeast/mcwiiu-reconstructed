@@ -32,7 +32,7 @@ void EnderCrystalRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
     GlStateManager::pushMatrix();
     GlStateManager::translatef((float)x, (float)y, (float)z);
     bindTexture(&ENDER_CRYSTAL_LOCATION);
-    float animation = std::sin(0.2F * age) * 0.5F + 0.5F;
+    float animation = std::sin(age * 0.2F) * 0.5F + 0.5F;
     animation = animation * animation + animation;
     if (mSolidRender)
     {
@@ -41,9 +41,9 @@ void EnderCrystalRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
     }
 
     if (crystal->showsBottom())
-        mModelBase->render(entity, 0.0F, 3.0F * age, animation * 0.2F, 0.0F, 0.0F, 0.0625F, true);
+        mModelBase->render(entity, 0.0F, age * 3.0F, animation * 0.2F, 0.0F, 0.0F, 0.0625F, true);
     else
-        mModelNoBase->render(entity, 0.0F, 3.0F * age, animation * 0.2F, 0.0F, 0.0F, 0.0625F, true);
+        mModelNoBase->render(entity, 0.0F, age * 3.0F, animation * 0.2F, 0.0F, 0.0F, 0.0625F, true);
 
     if (mSolidRender)
     {
@@ -56,9 +56,9 @@ void EnderCrystalRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
     if (beamTarget != NULL)
     {
         bindTexture(&END_CRYSTAL_BEAM_LOCATION);
-        double targetX = (float)beamTarget->x + 0.5F;
-        double targetY = (float)beamTarget->y + 0.5F;
-        double targetZ = (float)beamTarget->z + 0.5F;
+        float targetX = (float)beamTarget->x + 0.5F;
+        float targetY = (float)beamTarget->y + 0.5F;
+        float targetZ = (float)beamTarget->z + 0.5F;
         double offsetX = targetX - crystal->mX;
         double offsetY = targetY - crystal->mY;
         double offsetZ = targetZ - crystal->mZ;

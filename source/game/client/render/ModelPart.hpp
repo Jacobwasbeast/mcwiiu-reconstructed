@@ -12,6 +12,8 @@ struct SKIN_BOX;
 class ModelPart
 {
 public:
+    static const float RAD;
+
     ModelPart();
     ModelPart(Model* model);
     ModelPart(Model* model, int xTexOffs, int yTexOffs);
