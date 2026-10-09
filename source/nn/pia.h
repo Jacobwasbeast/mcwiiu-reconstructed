@@ -26,6 +26,21 @@ public:
 private:
     OSFastMutex m_mutex;
 };
+
+class ScopedLock
+{
+public:
+    explicit ScopedLock(CriticalSection& criticalSection) : m_criticalSection(criticalSection)
+    {
+        m_criticalSection.Lock();
+    }
+    ~ScopedLock()
+    {
+        m_criticalSection.Unlock();
+    }
+private:
+    CriticalSection& m_criticalSection;
+};
 }
 
 
@@ -34,7 +49,7 @@ namespace chat
 Result Initialize();
 Result BeginSetup();
 Result EndSetup();
-Result Finalize();
+void Finalize();
 }
 void Assert(const char* expression, const char* file, unsigned int line,
             const char* function, ...);
@@ -131,7 +146,7 @@ void Assert(const char* expression, const char* file, unsigned int line,
 #include "nn/pia/session/Mesh.hpp"
 #include "nn/pia/session/LeaveSessionJob.hpp"
 #include "nn/pia/session/LeaveMeshJob.hpp"
-#include "nn/pia/session/lan.hpp"
+#include "nn/pia/session/SessionInfoList.hpp"
 #include "nn/pia/session/KickoutManageJob.hpp"
 #include "nn/pia/session/JointSessionJob.hpp"
 #include "nn/pia/session/JoinSessionSetting.hpp"
@@ -238,7 +253,6 @@ void Assert(const char* expression, const char* file, unsigned int line,
 #include "nn/pia/common/MonitoringDataHeader.hpp"
 #include "nn/pia/common/MonitoringDataSender.hpp"
 #include "nn/pia/common/Packet.hpp"
-#include "nn/pia/chat/N_12_chat_Api_cpp_c724e756.hpp"
 #include "nn/pia/chat/HandsFree.hpp"
 #include "nn/pia/chat/DropRecovery.hpp"
 #include "nn/pia/chat/Decoder.hpp"

@@ -5,6 +5,7 @@
 #include "nn/nex/CallbackRoot.hpp"
 #include "nn/nex/Core.hpp"
 #include "nn/nex/CriticalSection.hpp"
+#include "nn/nex/InetAddress.hpp"
 #include "nn/nex/Job.hpp"
 #include "nn/nex/JobConnectEndPoint.hpp"
 #include "nn/nex/RootObject.hpp"
@@ -21,41 +22,6 @@ namespace nex
 {
 class EndPoint;
 class String;
-
-class InetAddress
-{
-public:
-    virtual ~InetAddress();
-    InetAddress();
-    InetAddress(const InetAddress& other);
-    InetAddress(unsigned int address, unsigned short port);
-    InetAddress(const wchar_t* address, unsigned short port);
-    void Init();
-    InetAddress& operator=(const InetAddress& other);
-    unsigned int GetAddress() const;
-    unsigned short GetPortNumber() const;
-    void SetAddress(unsigned int address);
-    void SetPortNumber(unsigned short port);
-    void SetLocalHost();
-    static unsigned int String2Address(const char* address);
-    unsigned int SetAddress(const wchar_t* address);
-    unsigned int GetAddress(wchar_t* buffer, unsigned int size) const;
-    unsigned int GetPortNumber(wchar_t* buffer, unsigned int size) const;
-    String GetPortNumberStr() const;
-    void ToStr(wchar_t* buffer) const;
-    static void EnableAutoLookup(bool enable);
-    InetAddress(void* address, unsigned int size);
-    void SetNetworkAddress(unsigned int address);
-    String GetAddressStr() const;
-    void SetNetworkPortNumber(unsigned short port);
-    bool IsLocalHost() const;
-    String ToStr() const;
-    virtual void Trace(unsigned long long value) const;
-private:
-    unsigned char m_data[16];
-};
-
-class InetAddress;
 class Time;
 class Socket;
 class SignatureBytes;
