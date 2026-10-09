@@ -2,6 +2,7 @@
 #define GAME_DATA_SPARSEDATASTORAGE_HPP
 
 #include "game/world/biome/arrayWithLength.hpp"
+#include <stddef.h>
 #include <stdint.h>
 
 class DataInputStream;
@@ -36,7 +37,17 @@ public:
     class PlaneOffsets
     {
     public:
-        unsigned short offsets[128];
+        static const unsigned int PLANE_TYPE_SHIFT = 14;
+        static const unsigned int PLANE_OFFSET_MASK = (1 << PLANE_TYPE_SHIFT) - 1;
+        static const unsigned int PLANE_TYPE_MASK = 3;
+
+        struct Entry
+        {
+            unsigned short type : 2;
+            unsigned short offset : 14;
+        };
+
+        Entry offsets[128];
         unsigned char payload[0x3f80];
         void initPlane(int plane, void* data);
         unsigned int setData(int plane, int index, int value);
@@ -44,8 +55,21 @@ public:
         unsigned char getDataSize(int plane);
         unsigned int getData(int plane, int index);
         unsigned int getValuesInPlane(int plane, char (&values)[16]);
-        void setDataOffset(int plane, unsigned short offset);
-        unsigned short getDataOffset(int plane);
+        void setDataOffset(int plane, unsigned short offset)
+        {
+            offsets[plane].offset = offset;
+        }
+        unsigned short getDataOffset(int plane)
+        {
+            return offsets[plane].offset;
+        }
+        unsigned char* getDataPointer(int plane)
+        {
+            unsigned char* data = NULL;
+            if (offsets[plane].type != 0)
+                data = reinterpret_cast<unsigned char*>(this) + getDataOffset(plane) * 4;
+            return data;
+        }
         unsigned int getData(int plane, char (&values)[256]);
     };
 
@@ -91,6 +115,7 @@ private:
     DataAndCountValue dataAndCount;
 
     static const unsigned int DATA_SIZE_SHIFT = 16;
+    static const long long DATA_POINTER_MASK = 0x0000ffffffffffffLL;
 
     static int sPendingDeleteList;
     static XLockFreeStack<unsigned char> sPendingDeleteLists[3];

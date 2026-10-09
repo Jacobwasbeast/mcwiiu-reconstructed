@@ -41,6 +41,8 @@ public:
     static void tick();
 
 private:
+    static const long long DATA_POINTER_MASK = 0x0000ffffffffffffLL;
+
     int getDataSize(long long dataAndCount);
     void queueForDelete(unsigned char* data, int size);
     void updateDataAndCount(long long newDataAndCount);

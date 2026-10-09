@@ -20,8 +20,9 @@ int VirtualFree(void* address, unsigned long size, unsigned int freeType);
 #endif
 void __debugbreak();
 
-static void* s_saveData;
-static unsigned int s_saveDataSize;
+static void* s_saveData = NULL;
+static unsigned int s_saveDataSize = 0;
+
 extern CStorage* gStorage;
 
 ConsoleSaveFileOriginal::ConsoleSaveFileOriginal(const std::wstring& filename, void* data, unsigned int dataSize,
@@ -32,21 +33,14 @@ ConsoleSaveFileOriginal::ConsoleSaveFileOriginal(const std::wstring& filename, v
         s_saveData = VirtualAlloc(NULL, 0x4000000, 0x2000, 4);
     mData = s_saveData;
 
-    bool deleteBaseSaveData = false;
     unsigned int saveDataSize = dataSize;
+    bool deleteBaseSaveData = false;
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-    if (data == NULL)
-    {
-        if (options != NULL && options->requiresBaseSave() &&
-            (data = options->getBaseSaveData(saveDataSize)) != NULL && saveDataSize != 0)
-            deleteBaseSaveData = true;
-        else
-            saveDataSize = gStorage->GetSaveSize();
-    }
-    else if (saveDataSize == 0)
-    {
+    if (data == NULL && options != NULL && options->requiresBaseSave() &&
+        (data = options->getBaseSaveData(saveDataSize)) != NULL && saveDataSize != 0)
+        deleteBaseSaveData = true;
+    else if (data == NULL || saveDataSize == 0)
         saveDataSize = gStorage->GetSaveSize();
-    }
 
     if (resetData)
         saveDataSize = 0;
@@ -72,7 +66,7 @@ void ConsoleSaveFileOriginal::refreshFromLevelgen()
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     if (options != NULL && options->requiresBaseSave())
     {
-        unsigned int dataSize = 0;
+        unsigned int dataSize;
         void* data = options->getBaseSaveData(dataSize);
         if (data != NULL && dataSize != 0)
         {
@@ -87,19 +81,25 @@ void ConsoleSaveFileOriginal::refreshFromLevelgen()
 
 void ConsoleSaveFileOriginal::AllocInitialQuota(unsigned int size)
 {
-    if (size < 0x200000)
-        size = 0x200000;
-    VirtualAlloc(s_saveData, (size + 0xffff) & 0xffff0000, 0x1000, 4);
-    s_saveDataSize = (size + 0xffff) >> 16;
+    unsigned int initialSize = size;
+    if (initialSize < SAVE_DATA_MIN_QUOTA)
+        initialSize = SAVE_DATA_MIN_QUOTA;
+
+    unsigned int pages = (initialSize + (SAVE_DATA_PAGE_SIZE - 1)) / SAVE_DATA_PAGE_SIZE;
+    VirtualAlloc(s_saveData, pages * SAVE_DATA_PAGE_SIZE, 0x1000, 4);
+    s_saveDataSize = pages;
 }
 
 void ConsoleSaveFileOriginal::ReAlloc(unsigned int size)
 {
-    if ((s_saveDataSize << 16) < size)
+    unsigned int currentSize = s_saveDataSize * SAVE_DATA_PAGE_SIZE;
+    if (size > currentSize)
     {
-        s_saveDataSize = (size + 0xffff) >> 16;
-        if (VirtualAlloc(s_saveData, (size + 0xffff) & 0xffff0000, 0x1000, 4) == NULL)
+        unsigned int pages = (size + (SAVE_DATA_PAGE_SIZE - 1)) / SAVE_DATA_PAGE_SIZE;
+        void* result = VirtualAlloc(s_saveData, pages * SAVE_DATA_PAGE_SIZE, 0x1000, 4);
+        if (result == NULL)
             __debugbreak();
+        s_saveDataSize = pages;
     }
 }
 
@@ -120,10 +120,9 @@ void ConsoleSaveFileOriginal::deleteFile(FileEntry* entry)
 void ConsoleSaveFileOriginal::setFilePointer(FileEntry* entry, long distanceToMove, int*, unsigned int moveMethod)
 {
     LockSaveAccess();
-    long position = entry->m_startOffset + distanceToMove;
+    entry->m_filePointer = entry->m_data.m_startOffset + distanceToMove;
     if (moveMethod == 2)
-        position += entry->m_fileSize;
-    entry->m_filePointer = position;
+        entry->m_filePointer += entry->m_data.m_fileSize;
     ReleaseSaveAccess();
 }
 
@@ -158,9 +157,9 @@ void ConsoleSaveFileOriginal::Flush(bool, bool)
 
     if (compressedData == NULL)
     {
+        compressedSize = 0;
         PIXBeginNamedEvent(0.0f, "Pre-calc save compression");
         QueryPerformanceCounter(&start);
-        compressedSize = 0;
         Compression::getCompression()->Compress(NULL, &compressedSize, mData, fileSize);
         QueryPerformanceCounter(&end);
         PIXEndNamedEvent();
@@ -177,8 +176,8 @@ void ConsoleSaveFileOriginal::Flush(bool, bool)
         QueryPerformanceCounter(&end);
         PIXEndNamedEvent();
 
-        unsigned int zero = 0;
         std::memset(compressedData, 0, 8);
+        unsigned int zero = 0;
         std::memcpy(compressedData, &zero, sizeof(zero));
         std::memcpy(compressedData + 4, &fileSize, sizeof(fileSize));
 
@@ -208,9 +207,3 @@ unsigned char* ConsoleSaveFileOriginal::getWritePointer(FileEntry* entry)
 {
     return static_cast<unsigned char*>(mData) + entry->m_filePointer;
 }
-
-#if defined(__POWERPC__) || defined(__powerpc__) || defined(__PPC__)
-void __debugbreak()
-{
-}
-#endif

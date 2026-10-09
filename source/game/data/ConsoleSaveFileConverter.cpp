@@ -18,10 +18,10 @@ void ConsoleSaveFileConverter::ProcessSimpleFile(ConsoleSaveFile* saveFileIn, Fi
     unsigned int bytesRead = 0;
     unsigned int bytesWritten = 0;
 
-    unsigned char* buffer = new unsigned char[entryIn->m_fileSize];
+    unsigned char* buffer = new unsigned char[entryIn->m_data.m_fileSize];
 
     saveFileIn->setFilePointer(entryIn, 0, NULL, 0);
-    saveFileIn->readFile(entryIn, buffer, entryIn->m_fileSize, &bytesRead);
+    saveFileIn->readFile(entryIn, buffer, entryIn->m_data.m_fileSize, &bytesRead);
 
     saveFileOut->setFilePointer(entryOut, 0, NULL, 0);
     saveFileOut->writeFile(entryOut, buffer, bytesRead, &bytesWritten);
@@ -99,7 +99,7 @@ void ConsoleSaveFileConverter::ConvertSave(ConsoleSaveFile* saveFileIn, ConsoleS
 
             ProcessSimpleFile(saveFileIn, pPlayerIn, saveFileOut, pPlayerOut);
 
-            pPlayerOut->m_timestamp = pPlayerIn->m_timestamp;
+            pPlayerOut->m_data.m_timestamp = pPlayerIn->m_data.m_timestamp;
         }
 
         delete pPlayerFiles;

@@ -44,8 +44,6 @@ public:
         {
             COORDINATE_MASK = 0x1FFFFFFF,
             COORDINATE_X_SHIFT = 5,
-            COORDINATE_X_CARRY_SHIFT = 27,
-            COORDINATE_X_CARRY_MASK = 3,
             COORDINATE_Z_SHIFT = 2,
             SCALE_MASK = 7,
             SCALE_SHIFT = 2,

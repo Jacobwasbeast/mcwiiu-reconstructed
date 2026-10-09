@@ -44,12 +44,12 @@ unsigned char ByteTag::getId()
 
 bool ByteTag::equals(Tag* other)
 {
-    if (!Tag::equals(other))
+    if (Tag::equals(other))
     {
-        return false;
+        ByteTag* tag = (ByteTag*)other;
+        return mValue == tag->mValue;
     }
-
-    return mValue == ((ByteTag*)other)->mValue;
+    return false;
 }
 
 ByteTag* ByteTag::copy()

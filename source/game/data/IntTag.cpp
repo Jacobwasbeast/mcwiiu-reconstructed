@@ -44,12 +44,12 @@ unsigned char IntTag::getId()
 
 bool IntTag::equals(Tag* other)
 {
-    if (!Tag::equals(other))
+    if (Tag::equals(other))
     {
-        return false;
+        IntTag* tag = (IntTag*)other;
+        return mValue == tag->mValue;
     }
-
-    return mValue == ((IntTag*)other)->mValue;
+    return false;
 }
 
 IntTag* IntTag::copy()
@@ -69,12 +69,12 @@ int IntTag::getAsInt()
 
 short IntTag::getAsShort()
 {
-    return (short)mValue;
+    return (short)(mValue & 65535);
 }
 
 unsigned char IntTag::getAsByte()
 {
-    return (unsigned char)mValue;
+    return (char)(mValue & 255);
 }
 
 double IntTag::getAsDouble()

@@ -23,7 +23,6 @@ static const int PENDING_DELETE_LIST_COUNT = 3;
 static const int PLANE_INDEX_SHIFT = 7;
 static const int PLANE_COUNT_SHIFT = 48;
 static const long long PLANE_COUNT_MASK = 0xffff000000000000LL;
-static const long long DATA_POINTER_MASK = 0x0000ffffffffffffLL;
 
 static int sAllocatedBytes = 0;
 

@@ -99,8 +99,8 @@ void ConsoleSaveFileCommon::_deleteFile(FileEntry* entry)
         return;
     LockSaveAccess();
     unsigned char buffer[SAVE_PAGE_SIZE];
-    unsigned char* destination = static_cast<unsigned char*>(mData) + entry->m_startOffset;
-    unsigned char* source = destination + entry->m_fileSize;
+    unsigned char* destination = static_cast<unsigned char*>(mData) + entry->m_data.m_startOffset;
+    unsigned char* source = destination + entry->m_data.m_fileSize;
     unsigned char* end = static_cast<unsigned char*>(mData) + mFileHeader.GetStartOfNextData();
     for (;;)
     {
@@ -124,7 +124,7 @@ void ConsoleSaveFileCommon::_deleteFile(FileEntry* entry)
 void ConsoleSaveFileCommon::MoveDataBeyond(FileEntry* entry, unsigned int size)
 {
     ReAlloc(mFileHeader.GetFileSize() + size);
-    unsigned char* dataStart = static_cast<unsigned char*>(mData) + entry->m_startOffset + entry->m_fileSize;
+    unsigned char* dataStart = static_cast<unsigned char*>(mData) + entry->m_data.m_startOffset + entry->m_data.m_fileSize;
     unsigned char* source = static_cast<unsigned char*>(mData) + mFileHeader.GetStartOfNextData();
     unsigned char* destination = source + size;
     unsigned char* destinationEnd = destination;
@@ -174,13 +174,13 @@ void ConsoleSaveFileCommon::MoveDataBeyond(FileEntry* entry, unsigned int size)
 
 void ConsoleSaveFileCommon::PrepareForWrite(FileEntry* entry, unsigned int size)
 {
-    int delta = static_cast<int>(entry->m_filePointer - entry->m_startOffset + size - entry->m_fileSize);
+    int delta = static_cast<int>(entry->m_filePointer - entry->m_data.m_startOffset + size - entry->m_data.m_fileSize);
     if (delta > 0)
     {
         PIXBeginNamedEvent(0.0f, "Growing file by %d bytes", delta);
         MoveDataBeyond(entry, static_cast<unsigned int>(delta));
         PIXEndNamedEvent();
-        entry->m_fileSize += delta;
+        entry->m_data.m_fileSize += delta;
         finalizeWrite();
     }
 }
@@ -194,7 +194,7 @@ bool ConsoleSaveFileCommon::_writeFile(FileEntry* entry, const void* buffer, uns
     std::memcpy(static_cast<unsigned char*>(mData) + entry->m_filePointer, buffer, size);
     *written = size;
     entry->m_filePointer += size;
-    entry->m_timestamp = System::currentRealTimeMillis();
+    entry->m_data.m_timestamp = System::currentRealTimeMillis();
     ReleaseSaveAccess();
     return true;
 }
@@ -208,7 +208,7 @@ bool ConsoleSaveFileCommon::_zeroFile(FileEntry* entry, unsigned int size, unsig
     std::memset(static_cast<unsigned char*>(mData) + entry->m_filePointer, 0, size);
     *written = size;
     entry->m_filePointer += size;
-    entry->m_timestamp = System::currentRealTimeMillis();
+    entry->m_data.m_timestamp = System::currentRealTimeMillis();
     ReleaseSaveAccess();
     return true;
 }
@@ -219,7 +219,7 @@ bool ConsoleSaveFileCommon::_readFile(FileEntry* entry, void* buffer, unsigned i
         return false;
     LockSaveAccess();
     unsigned int filePointer = entry->m_filePointer;
-    unsigned int end = entry->m_startOffset + entry->m_fileSize;
+    unsigned int end = entry->m_data.m_startOffset + entry->m_data.m_fileSize;
     if (end < filePointer + size)
         size = end - filePointer;
     std::memcpy(buffer, static_cast<unsigned char*>(mData) + filePointer, size);

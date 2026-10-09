@@ -12,52 +12,48 @@
 
 StringTable::StringTable()
 {
-    m_strings = NULL;
-    m_stringsById = NULL;
     m_isLanguageTable = false;
     m_localized = false;
-    m_dataLength = 0;
-    m_data = NULL;
+    m_strings = NULL;
+    m_stringsById = NULL;
 }
 
 StringTable::StringTable(arrayWithLength<unsigned char> data, bool localized, bool borrowed)
 {
-    m_data = NULL;
     m_strings = NULL;
     m_isLanguageTable = false;
-    m_dataLength = 0;
     m_stringsById = NULL;
     m_localized = localized;
-    if (!borrowed)
+    if (borrowed)
     {
-        unsigned char* source = data.data;
-        m_ownsData = true;
-        arrayWithLength<unsigned char> copy(data.length, true);
-        for (unsigned int i = 0; i < data.length; ++i)
-            copy.data[i] = source[i];
-        m_data = copy.data;
-        m_dataLength = data.length;
+        m_ownsData = false;
+        m_data = data;
         ProcessStringTableData();
     }
     else
     {
-        m_ownsData = false;
-        m_data = data.data;
-        m_dataLength = data.length;
+        unsigned int length = data.length;
+        unsigned char* source = data.data;
+        m_ownsData = true;
+        arrayWithLength<unsigned char> copy(length, true);
+        unsigned char* dest = copy.data;
+        for (unsigned int i = 0; i < length; ++i)
+            dest[i] = source[i];
+        m_data = copy;
         ProcessStringTableData();
     }
     if (m_ownsData)
     {
-        delete[] m_data;
-        m_dataLength = 0;
-        m_data = NULL;
+        delete[] m_data.data;
+        m_data.length = 0;
+        m_data.data = NULL;
     }
 }
 
 StringTable::~StringTable()
 {
     if (m_ownsData)
-        delete[] m_data;
+        delete[] m_data.data;
 }
 
 std::wstring StringTable::FindLanguage(bool& found, long long& count)
@@ -66,16 +62,8 @@ std::wstring StringTable::FindLanguage(bool& found, long long& count)
     gApp.getLocale(localeNames);
 
     std::wstring selected = L"";
-    std::vector<std::wstring>::iterator localeName = localeNames.begin();
-    while (true)
+    for (std::vector<std::wstring>::iterator localeName = localeNames.begin(); localeName != localeNames.end() && !found; ++localeName)
     {
-        if (found)
-            break;
-        if (localeName == localeNames.end())
-        {
-            m_isLanguageTable = false;
-            break;
-        }
         count = 0;
         for (std::vector<std::pair<std::wstring, int> >::iterator entry = m_entries.begin();
              entry != m_entries.end(); ++entry)
@@ -88,8 +76,9 @@ std::wstring StringTable::FindLanguage(bool& found, long long& count)
             }
             count += entry->second;
         }
-        ++localeName;
     }
+    if (!found)
+        m_isLanguageTable = false;
     return selected;
 }
 
@@ -192,21 +181,22 @@ void StringTable::ReadAllFromStream(DataInputStream* stream)
 
 void StringTable::ProcessStringTableData()
 {
-    if (m_data != NULL)
+    if (m_data.data != NULL)
     {
-        arrayWithLength<unsigned char> input(m_data, m_dataLength);
-        ByteArrayInputStream byteStream(input);
+        ByteArrayInputStream byteStream(m_data);
         DataInputStream stream(&byteStream);
         ReadAllFromStream(&stream);
         stream.close();
         byteStream.reset();
-        return;
     }
-    bool found = false;
-    long long count = 0;
-    std::wstring language = FindLanguage(found, count);
-    if (found)
-        SelectLanguage(language);
+    else
+    {
+        bool found = false;
+        long long count = 0;
+        std::wstring language = FindLanguage(found, count);
+        if (found)
+            SelectLanguage(language);
+    }
 }
 
 void StringTable::ReloadStringTable()
@@ -221,8 +211,8 @@ void StringTable::ReloadStringTable()
 
 void StringTable::getData(unsigned char** data, unsigned int* length)
 {
-    *data = m_data;
-    *length = m_dataLength;
+    *data = m_data.data;
+    *length = m_data.length;
 }
 
 wchar_t* StringTable::getString(const std::wstring& key)
@@ -249,9 +239,9 @@ const wchar_t* StringTable::getString(int id)
 
 unsigned int StringTable::getRandomStringId(Random* random)
 {
-    int selected = random->nextInt((int)m_stringsById->size());
-    boost::unordered_map<int, std::wstring>::iterator it = m_stringsById->begin();
-    for (; selected > 0; --selected)
+    int selected = random->nextInt(m_stringsById->size());
+    boost::unordered_map<int, std::wstring>::const_iterator it = m_stringsById->begin();
+    for (int i = 0; i < selected; ++i)
         ++it;
     return (unsigned int)it->first;
 }
@@ -262,12 +252,8 @@ std::vector<int> StringTable::getRandomStringIds(int count, Random* random)
     unsigned int collected = 0;
     while ((int)collected < count && collected < m_stringsById->size())
     {
-        int id = (int)getRandomStringId(random);
-        std::vector<int>::iterator it;
-        for (it = result.begin(); it != result.end() && *it != id; ++it)
-        {
-        }
-        if (it == result.end())
+        int id = getRandomStringId(random);
+        if (std::find(result.begin(), result.end(), id) == result.end())
         {
             result.push_back(id);
             ++collected;
@@ -285,7 +271,10 @@ void StringTable::copyStringToTable(const std::wstring& key, StringTable* table)
         if (m_isLanguageTable)
             continue;
         boost::unordered_map<std::wstring, std::wstring>::iterator found = language->second.strings.find(key);
-        value = found == language->second.strings.end() ? L"" : found->second.c_str();
+        if (found != language->second.strings.end())
+            value = found->second.c_str();
+        else
+            value = L"";
         table->m_languages[language->first].strings[key] = value;
     }
 }
@@ -330,21 +319,20 @@ void StringTable::write(DataOutputStream* stream)
         languageStream.writeInt(2);
         languageStream.writeBoolean(m_isLanguageTable);
         languageStream.writeUTF(lang->first);
-        const _LanguageData& data = lang->second;
         if (m_isLanguageTable)
         {
-            languageStream.writeInt(static_cast<int>(data.stringsById.size()));
-            for (boost::unordered_map<int, std::wstring>::const_iterator item = data.stringsById.begin();
-                 item != data.stringsById.end(); ++item)
+            languageStream.writeInt(static_cast<int>(lang->second.stringsById.size()));
+            for (boost::unordered_map<int, std::wstring>::const_iterator item = lang->second.stringsById.begin();
+                 item != lang->second.stringsById.end(); ++item)
             {
                 languageStream.writeUTF(item->second);
             }
         }
         else
         {
-            languageStream.writeInt(static_cast<int>(data.strings.size()));
-            for (boost::unordered_map<std::wstring, std::wstring>::const_iterator item = data.strings.begin();
-                 item != data.strings.end(); ++item)
+            languageStream.writeInt(static_cast<int>(lang->second.strings.size()));
+            for (boost::unordered_map<std::wstring, std::wstring>::const_iterator item = lang->second.strings.begin();
+                 item != lang->second.strings.end(); ++item)
             {
                 languageStream.writeUTF(item->second);
             }

@@ -45,14 +45,12 @@ unsigned char LongTag::getId()
 
 bool LongTag::equals(Tag* other)
 {
-    if (!Tag::equals(other))
+    if (Tag::equals(other))
     {
-        return false;
+        LongTag* tag = (LongTag*)other;
+        return mValue == tag->mValue;
     }
-
-    LongTag* otherTag = (LongTag*)other;
-
-    return mValue == otherTag->mValue;
+    return false;
 }
 
 LongTag* LongTag::copy()
@@ -67,17 +65,17 @@ long long LongTag::getAsLong()
 
 int LongTag::getAsInt()
 {
-    return (int)mValue;
+    return (int)(mValue & 4294967295LL);
 }
 
 short LongTag::getAsShort()
 {
-    return (short)(mValue & 0xffff);
+    return (short)(mValue & 65535);
 }
 
 unsigned char LongTag::getAsByte()
 {
-    return (unsigned char)(mValue & 0xff);
+    return (unsigned char)(mValue & 255);
 }
 
 double LongTag::getAsDouble()

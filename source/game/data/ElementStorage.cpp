@@ -11,8 +11,8 @@
 #include <cstdlib>
 
 static unsigned int sElementThreadStorageIndex = TlsAlloc();
-static unsigned int sMainThreadStorageCount = 0;
-static unsigned int sRenderThreadStorageCount = 0;
+static int sMainThreadStorageCount = 0;
+static int sRenderThreadStorageCount = 0;
 static OSFastMutex sElementLocks[128];
 static OSFastMutex sThreadCountLock;
 
@@ -81,10 +81,10 @@ void ElementStorage::removeCompressionHeadroom()
 
 bool ElementStorage::shouldLockForRead(ThreadStorage* storage)
 {
-    if (storage->mHasTempData &&
-        ((!storage->mBlockReadLock || sMainThreadStorageCount < 2) && sRenderThreadStorageCount < 2))
-        return false;
-    return true;
+    if (!storage->mHasTempData || (storage->mBlockReadLock && sMainThreadStorageCount > 1) ||
+        sRenderThreadStorageCount > 1)
+        return true;
+    return false;
 }
 
 void ElementStorage::getReadLock(int reason)
@@ -350,14 +350,17 @@ void ElementStorage::read(DataInputStream* in)
 void ElementStorage::CreateNewThreadStorage(eHESThreadId threadId)
 {
     ThreadStorage* storage = new ThreadStorage();
-    storage->mThreadId = (unsigned int)threadId;
+    storage->mThreadId = threadId;
+    storage->mReadLocks = 0;
     storage->mBlockReadLock = threadId == eHESThreadId_Server || threadId == eHESThreadId_ServerPostUpdate;
-    storage->mDataLock = threadId == eHESThreadId_NetworkGame || threadId == eHESThreadId_Main ||
-        (threadId >= eHESThreadId_GameModeTransition && threadId <= eHESThreadId_ClientChunkStorage);
+    storage->mDataLock = storage->mThreadId == eHESThreadId_NetworkGame || storage->mThreadId == eHESThreadId_Main ||
+        (storage->mThreadId >= eHESThreadId_GameModeTransition && storage->mThreadId <= eHESThreadId_ClientChunkStorage);
     storage->mHasTempData = storage->mBlockReadLock || storage->mDataLock;
     TlsSetValue(sElementThreadStorageIndex, storage);
     if (storage->mHasTempData)
         storage->mTempData = (unsigned char*)std::malloc(getRawDataMaxBytes());
+    else
+        storage->mTempData = NULL;
     if (storage->mBlockReadLock)
     {
         EnterCriticalSection(&sThreadCountLock);

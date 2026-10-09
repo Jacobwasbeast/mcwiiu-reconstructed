@@ -51,8 +51,7 @@ private:
     boost::unordered_map<std::wstring, std::wstring>* m_strings;
     boost::unordered_map<int, std::wstring>* m_stringsById;
     std::vector<std::pair<std::wstring, int> > m_entries;
-    unsigned char* m_data;
-    unsigned int m_dataLength;
+    arrayWithLength<unsigned char> m_data;
 };
 
 #endif

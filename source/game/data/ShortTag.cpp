@@ -44,12 +44,12 @@ unsigned char ShortTag::getId()
 
 bool ShortTag::equals(Tag* other)
 {
-    if (!Tag::equals(other))
+    if (Tag::equals(other))
     {
-        return false;
+        ShortTag* tag = (ShortTag*)other;
+        return mValue == tag->mValue;
     }
-
-    return mValue == ((ShortTag*)other)->mValue;
+    return false;
 }
 
 ShortTag* ShortTag::copy()
@@ -74,7 +74,7 @@ short ShortTag::getAsShort()
 
 unsigned char ShortTag::getAsByte()
 {
-    return (unsigned char)mValue;
+    return (char)(mValue & 255);
 }
 
 double ShortTag::getAsDouble()

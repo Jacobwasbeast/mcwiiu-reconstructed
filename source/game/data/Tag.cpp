@@ -46,17 +46,26 @@ Tag::Tag()
 
 const wchar_t* Tag::getTagTypeName(unsigned char id)
 {
-    if (id < NUM_TAG_TYPES)
+    switch (id)
     {
+    case TAG_END:
+    case TAG_BYTE:
+    case TAG_SHORT:
+    case TAG_INT:
+    case TAG_LONG:
+    case TAG_FLOAT:
+    case TAG_DOUBLE:
+    case TAG_BYTE_ARRAY:
+    case TAG_STRING:
+    case TAG_LIST:
+    case TAG_COMPOUND:
+    case TAG_INT_ARRAY:
         return TAG_TYPE_NAMES[id];
-    }
-
-    if (id == 99)
-    {
+    case TAG_ANY_NUMERIC:
         return L"Any Numeric Tag";
+    default:
+        return TAG_TYPE_NAMES[NUM_TAG_TYPES];
     }
-
-    return TAG_TYPE_NAMES[NUM_TAG_TYPES];
 }
 
 void Tag::print(const std::wstring& name, char* indent, std::wostream& out)
@@ -77,53 +86,43 @@ Tag* Tag::newTag(unsigned char id)
 {
     switch (id)
     {
-    case 0:
+    case TAG_END:
         return new EndTag();
-    case 1:
+    case TAG_BYTE:
         return new ByteTag();
-    case 2:
+    case TAG_SHORT:
         return new ShortTag();
-    case 3:
+    case TAG_INT:
         return new IntTag();
-    case 4:
+    case TAG_LONG:
         return new LongTag();
-    case 5:
+    case TAG_FLOAT:
         return new FloatTag();
-    case 6:
+    case TAG_DOUBLE:
         return new DoubleTag();
-    case 7:
+    case TAG_BYTE_ARRAY:
         return new ByteArrayTag();
-    case 8:
-    {
-        void* mem = operator new(0x24);
-        if (mem == NULL)
-            return NULL;
-        return new (mem) StringTag();
-    }
-    case 9:
-    {
-        void* mem = operator new(0x18);
-        if (mem == NULL)
-            return NULL;
-        return new (mem) ListTag(0);
-    }
-    case 10:
-        return new CompoundTag();
-    case 11:
+    case TAG_INT_ARRAY:
         return new IntArrayTag();
-    default:
-        return NULL;
+    case TAG_STRING:
+        return new StringTag();
+    case TAG_LIST:
+        return new ListTag();
+    case TAG_COMPOUND:
+        return new CompoundTag();
     }
+
+    return NULL;
 }
 
 bool Tag::equals(Tag* other)
 {
-    if (other != NULL && getId() == other->getId())
+    if (other == NULL || getId() != other->getId())
     {
-        return true;
+        return false;
     }
 
-    return false;
+    return true;
 }
 
 void Tag::stripEmptyChildren()

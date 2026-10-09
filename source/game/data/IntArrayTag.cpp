@@ -11,8 +11,8 @@ IntArrayTag::IntArrayTag()
 }
 
 IntArrayTag::IntArrayTag(arrayWithLength<int> data)
-    : mData(data)
 {
+    mData = data;
 }
 
 IntArrayTag::~IntArrayTag()
@@ -32,7 +32,7 @@ void IntArrayTag::write(DataOutput* output)
 
 void IntArrayTag::load(DataInput* input, int depth)
 {
-    unsigned int length = input->readInt();
+    int length = input->readInt();
 
     if (mData.data != NULL)
     {
@@ -41,7 +41,7 @@ void IntArrayTag::load(DataInput* input, int depth)
 
     mData = arrayWithLength<int>(length, true);
 
-    for (int i = 0; i < (int)length; i++)
+    for (int i = 0; i < length; i++)
     {
         mData.data[i] = input->readInt();
     }
@@ -63,36 +63,12 @@ unsigned char IntArrayTag::getId()
 
 bool IntArrayTag::equals(Tag* other)
 {
-    if (!Tag::equals(other))
+    if (Tag::equals(other))
     {
-        return false;
+        IntArrayTag* otherArray = (IntArrayTag*)other;
+        return (mData.data == NULL && otherArray->mData.data == NULL) || (mData.data != NULL && mData.length == otherArray->mData.length && memcmp(mData.data, otherArray->mData.data, mData.length * sizeof(int)) == 0);
     }
-
-    IntArrayTag* otherArray = (IntArrayTag*)other;
-
-    bool result = true;
-
-    if (mData.data == NULL)
-    {
-        if (otherArray->mData.data != NULL)
-        {
-            result = false;
-        }
-    }
-    else
-    {
-        if (mData.length != otherArray->mData.length)
-        {
-            return false;
-        }
-
-        if (memcmp(mData.data, otherArray->mData.data, mData.length * sizeof(int)) != 0)
-        {
-            result = false;
-        }
-    }
-
-    return result;
+    return false;
 }
 
 IntArrayTag* IntArrayTag::copy()
@@ -106,8 +82,5 @@ IntArrayTag* IntArrayTag::copy()
 
 arrayWithLength<int> IntArrayTag::getAsIntArray()
 {
-    arrayWithLength<int> result;
-    result.data = mData.data;
-    result.length = mData.length;
-    return result;
+    return mData;
 }

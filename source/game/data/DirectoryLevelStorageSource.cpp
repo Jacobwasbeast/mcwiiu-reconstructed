@@ -20,12 +20,8 @@ LevelData* DirectoryLevelStorageSource::getLevelData(ConsoleSaveFile* saveFile, 
     ConsoleSaveFileInputStream input(saveFile, path);
     CompoundTag* root = NbtIo::readCompressed(&input);
     CompoundTag* data = root->getCompound(std::wstring(L"Data"));
-    data = fixer->updateData(DataFixTypes::eDataFixTypes_Level, data);
-    LevelData* levelData = new LevelData(data);
-    if (root != 0)
-    {
-        delete root;
-    }
+    LevelData* levelData = new LevelData(fixer->updateData(DataFixTypes::eDataFixTypes_Level, data));
+    delete root;
     return levelData;
 }
 
@@ -48,7 +44,11 @@ LevelData* DirectoryLevelStorageSource::getDataTagFor(ConsoleSaveFile* saveFile,
     ConsoleSavePath path(L"level.dat");
     if (saveFile->doesFileExist(path))
     {
-        return getLevelData(saveFile, path, mFixer);
+        LevelData* levelData = getLevelData(saveFile, path, mFixer);
+        if (levelData != 0)
+        {
+            return levelData;
+        }
     }
     return 0;
 }
@@ -81,8 +81,8 @@ bool DirectoryLevelStorageSource::isNewLevelIdAcceptable(const std::wstring& lev
 
 void DirectoryLevelStorageSource::deleteRecursive(std::vector<File*>* files)
 {
-    std::vector<File*>::iterator it;
-    for (it = files->begin(); it != files->end(); ++it)
+    std::vector<File*>::iterator end = files->end();
+    for (std::vector<File*>::iterator it = files->begin(); it != end; ++it)
     {
         File* file = *it;
         if (file->isDirectory())
@@ -96,11 +96,12 @@ void DirectoryLevelStorageSource::deleteRecursive(std::vector<File*>* files)
 void DirectoryLevelStorageSource::deleteLevel(const std::wstring& levelId)
 {
     File level(mBaseDir, levelId);
-    if (level.exists())
+    if (!level.exists())
     {
-        deleteRecursive(level.listFiles());
-        level._delete();
+        return;
     }
+    deleteRecursive(level.listFiles());
+    level._delete();
 }
 
 boost::shared_ptr<LevelStorage> DirectoryLevelStorageSource::selectLevel(ConsoleSaveFile* saveFile, const std::wstring& levelId, bool bCreateIfMissing)

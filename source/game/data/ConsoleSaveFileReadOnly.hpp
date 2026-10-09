@@ -20,6 +20,10 @@ public:
     virtual void refreshFromLevelgen();
     virtual void AllocInitialQuota(unsigned int size);
     virtual void ReAlloc(unsigned int size);
+
+private:
+    static const unsigned int SAVE_DATA_PAGE_SIZE = 0x10000;
+    static const unsigned int SAVE_DATA_MIN_QUOTA = 0x200000;
 };
 
 #endif

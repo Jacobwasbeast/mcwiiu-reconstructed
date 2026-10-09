@@ -43,7 +43,7 @@ DirectoryLevelStorage::DirectoryLevelStorage(ConsoleSaveFile* saveFile, File fol
                                              DataFixerUpper* fixer)
     : mFolder(L""),
       mPlayerDir(PLAYER_DIR),
-      mDataDir(L"data/"),
+      mDataDir(std::wstring(L"data/")),
       mSessionId(System::processTimeInMilliSecs()),
       mLevelId(levelId)
 {
@@ -94,20 +94,20 @@ void DirectoryLevelStorage::save(boost::shared_ptr<Player> player)
         player->saveWithoutId(tag);
 
         ConsoleSavePath file(std::wstring(mPlayerDir) + player->getXuid().toString() + L".dat");
-        if (!gStorage->GetSaveDisabled())
-        {
-            ConsoleSaveFileOutputStream output(mSaveFile, file);
-            NbtIo::writeCompressed(tag, &output);
-        }
-        else
+        if (gStorage->GetSaveDisabled())
         {
             ByteArrayOutputStream* bytes = new ByteArrayOutputStream();
             NbtIo::writeCompressed(tag, bytes);
 
             CachedSaveDataMap::iterator it = mCachedSaveData.find(file.getPath());
-            if (it != mCachedSaveData.end() && it->second != NULL)
+            if (it != mCachedSaveData.end())
                 delete it->second;
             mCachedSaveData[file.getPath()] = bytes;
+        }
+        else
+        {
+            ConsoleSaveFileOutputStream output(mSaveFile, file);
+            NbtIo::writeCompressed(tag, &output);
         }
 
         delete tag;
@@ -132,8 +132,7 @@ CompoundTag* DirectoryLevelStorage::loadPlayerDataTag(PlayerUID uid)
         input.reset();
         return tag;
     }
-
-    if (mSaveFile->doesFileExist(file))
+    else if (mSaveFile->doesFileExist(file))
     {
         ConsoleSaveFileInputStream input(mSaveFile, file);
         return NbtIo::readCompressed(&input);
@@ -286,9 +285,10 @@ LevelData* DirectoryLevelStorage::prepareLevel()
                 getSaveFile()->readFile(entry, &oldMapDataMappings, sizeof(oldMapDataMappings), &bytesRead);
                 for (unsigned int id = 0; id < 256; ++id)
                 {
-                    if (oldMapDataMappings.xuids[id] != PlayerUID(0))
+                    PlayerUID xuid = oldMapDataMappings.xuids[id];
+                    if (xuid != PlayerUID(0))
                     {
-                        mPlayerMappings[oldMapDataMappings.xuids[id]].addMapping(id, 0, 0, oldMapDataMappings.getDimension(id), 3);
+                        mPlayerMappings[xuid].addMapping(id, 0, 0, oldMapDataMappings.getDimension(id), 3);
                         mUsedMappings.data[id >> 3] |= 1 << (id & 7);
                     }
                 }
@@ -299,9 +299,10 @@ LevelData* DirectoryLevelStorage::prepareLevel()
                 getSaveFile()->readFile(entry, &mapDataMappings, sizeof(mapDataMappings), &bytesRead);
                 for (unsigned int id = 0; id < 256; ++id)
                 {
-                    if (mapDataMappings.xuids[id] != PlayerUID(0))
+                    PlayerUID xuid = mapDataMappings.xuids[id];
+                    if (xuid != PlayerUID(0))
                     {
-                        mPlayerMappings[mapDataMappings.xuids[id]].addMapping(id, 0, 0, mapDataMappings.getDimension(id), 3);
+                        mPlayerMappings[xuid].addMapping(id, 0, 0, mapDataMappings.getDimension(id), 3);
                         mUsedMappings.data[id >> 3] |= 1 << (id & 7);
                     }
                 }
@@ -309,8 +310,8 @@ LevelData* DirectoryLevelStorage::prepareLevel()
         }
         else
         {
-            arrayWithLength<unsigned char> data(entry->m_fileSize, true);
-            getSaveFile()->readFile(entry, data.data, entry->m_fileSize, &bytesRead);
+            arrayWithLength<unsigned char> data(entry->m_data.m_fileSize, true);
+            getSaveFile()->readFile(entry, data.data, entry->m_data.m_fileSize, &bytesRead);
 
             ByteArrayInputStream bytes(data);
             DataInputStream input(&bytes);
@@ -345,19 +346,15 @@ void DirectoryLevelStorage::checkSession()
 
 ChunkStorage* DirectoryLevelStorage::createChunkStorage(Dimension* dimension)
 {
-    if (dimension != NULL)
+    if (dynamic_cast<NetherDimension*>(dimension) != NULL)
     {
-        if (dynamic_cast<NetherDimension*>(dimension) != NULL)
-        {
-            File netherFolder(mFolder, NETHER_FOLDER);
-            return new OldChunkStorage(netherFolder, true);
-        }
-
-        if (dynamic_cast<TheEndDimension*>(dimension) != NULL)
-        {
-            File enderFolder(mFolder, ENDER_FOLDER);
-            return new OldChunkStorage(enderFolder, true);
-        }
+        File netherFolder(mFolder, NETHER_FOLDER);
+        return new OldChunkStorage(netherFolder, true);
+    }
+    if (dynamic_cast<TheEndDimension*>(dimension) != NULL)
+    {
+        File enderFolder(mFolder, ENDER_FOLDER);
+        return new OldChunkStorage(enderFolder, true);
     }
     return new OldChunkStorage(mFolder, true);
 }
@@ -369,7 +366,7 @@ void DirectoryLevelStorage::saveLevelData(LevelData* levelData,
     CompoundTag* root = new CompoundTag();
     root->put(L"Data", dataTag);
 
-    ConsoleSavePath file(L"level.dat");
+    ConsoleSavePath file(std::wstring(L"level.dat"));
     ConsoleSaveFileOutputStream output(mSaveFile, file);
     NbtIo::writeCompressed(root, &output);
     delete root;
@@ -381,7 +378,7 @@ void DirectoryLevelStorage::saveLevelData(LevelData* levelData)
     CompoundTag* root = new CompoundTag();
     root->put(L"Data", dataTag);
 
-    ConsoleSavePath file(L"level.dat");
+    ConsoleSavePath file(std::wstring(L"level.dat"));
     ConsoleSaveFileOutputStream output(mSaveFile, file);
     NbtIo::writeCompressed(root, &output);
     delete root;
@@ -502,11 +499,9 @@ void DirectoryLevelStorage::PlayerMappings::writeMappings(DataOutputStream* outp
 
 void DirectoryLevelStorage::PlayerMappings::addMapping(int id, int centreX, int centreZ, int dimension, int scale)
 {
-    long long index = ((long long)(((centreZ & COORDINATE_MASK) << COORDINATE_Z_SHIFT) |
-                                   ((centreX >> COORDINATE_X_CARRY_SHIFT) & COORDINATE_X_CARRY_MASK))
-                       << HIGH_WORD_SHIFT) |
-                      (unsigned int)((centreX << COORDINATE_X_SHIFT) | ((scale & SCALE_MASK) << SCALE_SHIFT) |
-                                     (dimension & DIMENSION_MASK));
+    long long index = ((long long)(centreZ & COORDINATE_MASK) << (HIGH_WORD_SHIFT + COORDINATE_Z_SHIFT)) |
+                      ((long long)(centreX & COORDINATE_MASK) << COORDINATE_X_SHIFT) |
+                      (long long)((scale & SCALE_MASK) << SCALE_SHIFT) | (long long)(dimension & DIMENSION_MASK);
     mMappings[index] = id;
 }
 
@@ -523,13 +518,14 @@ void DirectoryLevelStorage::PlayerMappings::readMappings(DataInputStream* input)
 
 bool DirectoryLevelStorage::PlayerMappings::getMapping(int& id, int centreX, int centreZ, int dimension, int scale)
 {
-    long long index = ((long long)((centreZ & COORDINATE_MASK) << COORDINATE_Z_SHIFT) << HIGH_WORD_SHIFT) |
+    long long index = ((long long)(centreZ & COORDINATE_MASK) << (HIGH_WORD_SHIFT + COORDINATE_Z_SHIFT)) |
                       ((long long)(centreX & COORDINATE_MASK) << COORDINATE_X_SHIFT) |
                       (long long)((scale & SCALE_MASK) << SCALE_SHIFT) | (long long)(dimension & DIMENSION_MASK);
     boost::unordered_map<long long, short>::iterator it = mMappings.find(index);
-    if (it == mMappings.end())
-        return false;
-
-    id = it->second;
-    return true;
+    if (it != mMappings.end())
+    {
+        id = it->second;
+        return true;
+    }
+    return false;
 }

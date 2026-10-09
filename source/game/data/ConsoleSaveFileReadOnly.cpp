@@ -1,6 +1,7 @@
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/data/ConsoleSaveFileReadOnly.hpp"
 
+#include <algorithm>
 #include <cstring>
 
 #include "platform/wiiu/CStorage.hpp"
@@ -25,8 +26,8 @@ ConsoleSaveFileReadOnly::ConsoleSaveFileReadOnly(const std::wstring& filename, v
         sSaveData = VirtualAlloc(NULL, 0x4000000, 0x2000, 4);
     mData = sSaveData;
 
-    bool deleteBaseSaveData = false;
     unsigned int saveDataSize = dataSize;
+    bool deleteBaseSaveData = false;
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     if (data == NULL && options != NULL && options->requiresBaseSave() &&
         (data = options->getBaseSaveData(saveDataSize)) != NULL && saveDataSize != 0)
@@ -51,38 +52,40 @@ ConsoleSaveFileReadOnly::~ConsoleSaveFileReadOnly()
 void ConsoleSaveFileReadOnly::refreshFromLevelgen()
 {
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-    unsigned int saveDataSize = 0;
-    void* saveData;
-
-    if (options == NULL || !options->requiresBaseSave())
-        return;
-
-    saveData = options->getBaseSaveData(saveDataSize);
-    if (saveData == NULL || saveDataSize == 0)
-        return;
-
-    VirtualFree(sSaveData, 0x4000000, 0x4000);
-    sSaveDataPages = 0;
-    mFileHeader.Reset();
-    _initSaveFromData(mFilename, saveDataSize, saveData, mFileHeader.m_savePlatform);
-    options->deleteBaseSaveData();
+    if (options != NULL && options->requiresBaseSave())
+    {
+        unsigned int saveDataSize;
+        void* saveData = options->getBaseSaveData(saveDataSize);
+        if (saveData != NULL && saveDataSize != 0)
+        {
+            VirtualFree(sSaveData, 0x4000000, 0x4000);
+            sSaveDataPages = 0;
+            mFileHeader.Reset();
+            _initSaveFromData(mFilename, saveDataSize, saveData, mFileHeader.m_savePlatform);
+            options->deleteBaseSaveData();
+        }
+    }
 }
 
 void ConsoleSaveFileReadOnly::AllocInitialQuota(unsigned int size)
 {
-    if (size < 0x200000)
-        size = 0x200000;
+    unsigned int initialSize = size;
+    if (initialSize < SAVE_DATA_MIN_QUOTA)
+        initialSize = SAVE_DATA_MIN_QUOTA;
 
-    VirtualAlloc(sSaveData, (size + 0xffff) & 0xffff0000, 0x1000, 4);
-    sSaveDataPages = (size + 0xffff) >> 16;
+    unsigned int pages = (initialSize + (SAVE_DATA_PAGE_SIZE - 1)) / SAVE_DATA_PAGE_SIZE;
+    VirtualAlloc(sSaveData, pages * SAVE_DATA_PAGE_SIZE, 0x1000, 4);
+    sSaveDataPages = pages;
 }
 
 void ConsoleSaveFileReadOnly::ReAlloc(unsigned int size)
 {
-    if ((sSaveDataPages << 16) < size)
+    unsigned int currentSize = sSaveDataPages * SAVE_DATA_PAGE_SIZE;
+    if (size > currentSize)
     {
-        unsigned int pages = (size + 0xffff) >> 16;
-        if (VirtualAlloc(sSaveData, (size + 0xffff) & 0xffff0000, 0x1000, 4) == NULL)
+        unsigned int pages = (size + (SAVE_DATA_PAGE_SIZE - 1)) / SAVE_DATA_PAGE_SIZE;
+        void* result = VirtualAlloc(sSaveData, pages * SAVE_DATA_PAGE_SIZE, 0x1000, 4);
+        if (result == NULL)
             __debugbreak();
         sSaveDataPages = pages;
     }
@@ -104,10 +107,9 @@ void ConsoleSaveFileReadOnly::deleteFile(FileEntry* entry)
 void ConsoleSaveFileReadOnly::setFilePointer(FileEntry* entry, long distanceToMove, int*, unsigned int moveMethod)
 {
     LockSaveAccess();
-    long filePointer = static_cast<long>(entry->m_startOffset) + distanceToMove;
+    entry->m_filePointer = entry->m_data.m_startOffset + distanceToMove;
     if (moveMethod == 2)
-        filePointer += entry->m_fileSize;
-    entry->m_filePointer = static_cast<unsigned int>(filePointer);
+        entry->m_filePointer += entry->m_data.m_fileSize;
     ReleaseSaveAccess();
 }
 

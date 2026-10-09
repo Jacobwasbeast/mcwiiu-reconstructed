@@ -2,6 +2,7 @@
 
 #include "game/core/DataInput.hpp"
 #include "game/core/DataOutput.hpp"
+#include "game/core/Mth.hpp"
 
 #include <math.h>
 #include <wchar.h>
@@ -45,12 +46,12 @@ unsigned char DoubleTag::getId()
 
 bool DoubleTag::equals(Tag* other)
 {
-    if (!Tag::equals(other))
+    if (Tag::equals(other))
     {
-        return false;
+        DoubleTag* tag = (DoubleTag*)other;
+        return mValue == tag->mValue;
     }
-
-    return mValue == ((DoubleTag*)other)->mValue;
+    return false;
 }
 
 DoubleTag* DoubleTag::copy()
@@ -65,38 +66,17 @@ long long DoubleTag::getAsLong()
 
 int DoubleTag::getAsInt()
 {
-    int floorValue = (int)mValue;
-
-    if (mValue < (double)floorValue)
-    {
-        --floorValue;
-    }
-
-    return floorValue;
+    return Mth::floor(mValue);
 }
 
 short DoubleTag::getAsShort()
 {
-    int floorValue = (int)mValue;
-
-    if (mValue < (double)floorValue)
-    {
-        --floorValue;
-    }
-
-    return (short)floorValue;
+    return (short)(Mth::floor(mValue) & 65535);
 }
 
 unsigned char DoubleTag::getAsByte()
 {
-    int floorValue = (int)mValue;
-
-    if (mValue < (double)floorValue)
-    {
-        --floorValue;
-    }
-
-    return (unsigned char)floorValue;
+    return (char)Mth::floor(mValue);
 }
 
 double DoubleTag::getAsDouble()
