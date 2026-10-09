@@ -8,7 +8,7 @@ _NetworkGameInitData::_NetworkGameInitData()
     m_miniGameHostOptions = 0;
     m_levelGenerationOptions = 0;
     m_texturePackId = 0;
-    m_findSeed = 0;
+    m_findSeed = false;
     m_xzSize = 54;
     m_hellScale = 3;
     m_savePlatform = eSavePlatform_WIIU;

@@ -241,11 +241,6 @@ extern "C" void outresuhex(unsigned int uResult)
     AIL_debug_log("!-Result = 0x%lX", uResult);
 }
 
-extern "C" int AIL_ms_count()
-{
-    return (int)rrTimeToMillis(rrGetTime());
-}
-
 extern "C" void outresint(int iResult)
 {
     AIL_debug_log("!-Result = %d", iResult);
@@ -255,22 +250,6 @@ static const unsigned int HANDLE_GUARD = 0xDEADBEEF;
 static const int HANDLE_BLOCK_OVERHEAD = 0x17;
 static const unsigned int HANDLE_BLOCK_ALIGNMENT_MASK = 0xFFFFFFF0;
 static const int HANDLE_TAG_FREE = 1;
-
-void* Handle_Get(Handle handle)
-{
-    if (handle.index != 0 && handle.index <= HandleCount)
-    {
-        const HandleEntry* entry = reinterpret_cast<const HandleEntry*>(
-            HandleTableEnd - handle.index * sizeof(HandleEntry));
-        void* data = entry->data;
-        if (entry->generation == handle.generation)
-        {
-            return data;
-        }
-    }
-
-    return NULL;
-}
 
 Handle Handle_AllocateInfo(int size, const char* file, int line)
 {
@@ -996,7 +975,7 @@ extern "C" int AIL_apply_raw_sound_preset(_SAMPLE* sample, void* preset)
             {
                 cutOff = PRESET_UNIT;
             }
-            AIL_set_sample_low_pass_cut_off(sample, cutOff, ALL_CHANNELS);
+            AIL_set_sample_low_pass_cut_off(sample, ALL_CHANNELS, cutOff);
             break;
         }
         case PRESET_OCCLUSION:
@@ -1191,7 +1170,7 @@ extern "C" int AIL_unapply_raw_sound_preset(_SAMPLE* sample, void* preset)
             words = 5;
             break;
         case PRESET_LOW_PASS:
-            AIL_set_sample_low_pass_cut_off(sample, PRESET_UNIT, ALL_CHANNELS);
+            AIL_set_sample_low_pass_cut_off(sample, ALL_CHANNELS, PRESET_UNIT);
             break;
         case PRESET_OCCLUSION:
             AIL_set_sample_occlusion(sample, PRESET_ZERO);
@@ -1579,7 +1558,7 @@ extern "C" void AIL_API_set_sample_reverb_levels(_SAMPLE* pSample, float fFirst,
     SS_update_sample_reverb_state(pSample);
 }
 
-extern "C" void AIL_API_set_sample_low_pass_cut_off(_SAMPLE* pSample, float fCutOff, int iChannel)
+extern "C" void AIL_API_set_sample_low_pass_cut_off(_SAMPLE* pSample, int iChannel, float fCutOff)
 {
     if (pSample == NULL)
     {
@@ -1871,7 +1850,7 @@ extern "C" void AIL_API_set_sample_occlusion(_SAMPLE* pSample, float fOcclusion)
     }
 
     pSample->occlusion = fOcclusion;
-    AIL_set_sample_low_pass_cut_off(pSample, OCCLUSION_LOW_PASS_BASE - fOcclusion, ALL_CHANNELS);
+    AIL_set_sample_low_pass_cut_off(pSample, ALL_CHANNELS, OCCLUSION_LOW_PASS_BASE - fOcclusion);
 }
 
 extern "C" FLT_INSTANCE* FLT_find_provider_instance(unsigned int uProvider, _DIG_DRIVER* pDriver)

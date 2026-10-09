@@ -5,74 +5,53 @@
 
 _Polygon::_Polygon(arrayWithLength<Vertex*> vertices)
 {
-    mVertices = NULL;
-    mVertexCount = 0;
     _init(vertices);
 }
 
 _Polygon::_Polygon(arrayWithLength<Vertex*> vertices, int u0, int v0, int u1, int v1, float width, float height)
 {
-    mVertices = NULL;
-    mVertexCount = 0;
     _init(vertices);
 
-    float uInset = -0.01f;
-    float vInset = -0.01f;
-    if (u0 < u1)
-    {
-        uInset = 0.01f;
-    }
-    if (v0 < v1)
-    {
-        vInset = 0.01f;
-    }
+    float uInset = u1 > u0 ? 0.01f / width : -0.01f / width;
+    float vInset = v1 > v0 ? 0.01f / height : -0.01f / height;
 
-    float vMin = (float)v0 / height + vInset / height;
-    float uMax = (float)u1 / width - uInset / width;
-    mVertices[0] = mVertices[0]->remap(uMax, vMin);
-    float uMin = (float)u0 / width + uInset / width;
-    mVertices[1] = mVertices[1]->remap(uMin, vMin);
-    float vMax = (float)v1 / height - vInset / height;
-    mVertices[2] = mVertices[2]->remap(uMin, vMax);
-    mVertices[3] = mVertices[3]->remap(uMax, vMax);
+    vertices[0] = vertices[0]->remap((float)u1 / width - uInset, (float)v0 / height + vInset);
+    vertices[1] = vertices[1]->remap((float)u0 / width + uInset, (float)v0 / height + vInset);
+    vertices[2] = vertices[2]->remap((float)u0 / width + uInset, (float)v1 / height - vInset);
+    vertices[3] = vertices[3]->remap((float)u1 / width - uInset, (float)v1 / height - vInset);
 }
 
 _Polygon::_Polygon(arrayWithLength<Vertex*> vertices, float u0, float v0, float u1, float v1)
 {
-    mVertices = NULL;
-    mVertexCount = 0;
     _init(vertices);
 
-    mVertices[0] = mVertices[0]->remap(u1, v0);
-    mVertices[1] = mVertices[1]->remap(u0, v0);
-    mVertices[2] = mVertices[2]->remap(u0, v1);
-    mVertices[3] = mVertices[3]->remap(u1, v1);
+    vertices[0] = vertices[0]->remap(u1, v0);
+    vertices[1] = vertices[1]->remap(u0, v0);
+    vertices[2] = vertices[2]->remap(u0, v1);
+    vertices[3] = vertices[3]->remap(u1, v1);
 }
 
 _Polygon::~_Polygon()
 {
-    delete[] mVertices;
+    delete[] mVertices.data;
 }
 
 void _Polygon::_init(arrayWithLength<Vertex*> vertices)
 {
     mFlipNormal = false;
-    mVertices = vertices.data;
+    mVertices = vertices;
     mVertexCount = vertices.length;
-    mVertexCount2 = vertices.length;
 }
 
 void _Polygon::mirror()
 {
-    unsigned int count = (unsigned int)mVertexCount;
-    Vertex** mirrored = new Vertex*[count];
-    for (unsigned int i = 0; i < count; ++i)
+    arrayWithLength<Vertex*> mirrored(mVertices.length, true);
+    for (unsigned int i = 0; i < mVertices.length; ++i)
     {
-        mirrored[i] = mVertices[count - i - 1];
+        mirrored[i] = mVertices[mVertices.length - i - 1];
     }
-    delete[] mVertices;
+    delete[] mVertices.data;
     mVertices = mirrored;
-    mVertexCount = count;
 }
 
 void _Polygon::render(BufferBuilder* buffer, float scale)
@@ -80,20 +59,21 @@ void _Polygon::render(BufferBuilder* buffer, float scale)
     Vec3* edge0 = mVertices[1]->position->vectorTo(mVertices[0]->position);
     Vec3* edge1 = mVertices[1]->position->vectorTo(mVertices[2]->position);
     Vec3* normalVector = edge1->cross(edge0)->normalize();
+    float nx = (float)normalVector->x;
+    float ny = (float)normalVector->y;
+    float nz = (float)normalVector->z;
     if (mFlipNormal)
     {
-        buffer->normal((float)-normalVector->x, (float)-normalVector->y, (float)-normalVector->z);
+        nx = -nx;
+        ny = -ny;
+        nz = -nz;
     }
-    else
-    {
-        buffer->normal((float)normalVector->x, (float)normalVector->y, (float)normalVector->z);
-    }
+    buffer->normal(nx, ny, nz);
 
     for (int i = 0; i < 4; ++i)
     {
         Vertex* vertex = mVertices[i];
-        buffer->vertexUV((float)(vertex->position->x * scale),
-                         (float)(vertex->position->y * scale),
+        buffer->vertexUV((float)(vertex->position->x * scale), (float)(vertex->position->y * scale),
                          (float)(vertex->position->z * scale), vertex->textureU, vertex->textureV);
     }
 }
@@ -103,20 +83,21 @@ void _Polygon::renderSkinned(BufferBuilder* buffer, float scale, int boneIndex)
     Vec3* edge0 = mVertices[1]->position->vectorTo(mVertices[0]->position);
     Vec3* edge1 = mVertices[1]->position->vectorTo(mVertices[2]->position);
     Vec3* normalVector = edge1->cross(edge0)->normalize();
+    float nx = (float)normalVector->x;
+    float ny = (float)normalVector->y;
+    float nz = (float)normalVector->z;
     if (mFlipNormal)
     {
-        buffer->normal((float)-normalVector->x, (float)-normalVector->y, (float)-normalVector->z);
+        nx = -nx;
+        ny = -ny;
+        nz = -nz;
     }
-    else
-    {
-        buffer->normal((float)normalVector->x, (float)normalVector->y, (float)normalVector->z);
-    }
+    buffer->normal(nx, ny, nz);
 
     for (int i = 0; i < 4; ++i)
     {
         Vertex* vertex = mVertices[i];
-        buffer->vertexUVSkinned((float)(vertex->position->x * scale),
-                                (float)(vertex->position->y * scale),
+        buffer->vertexUVSkinned((float)(vertex->position->x * scale), (float)(vertex->position->y * scale),
                                 (float)(vertex->position->z * scale), vertex->textureU, vertex->textureV, boneIndex);
     }
 }

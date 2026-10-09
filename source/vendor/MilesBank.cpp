@@ -50,12 +50,21 @@ union BankHeaderBuffer
     unsigned char bytes[BANK_HEADER_READ_SIZE];
 };
 
-EnvironmentRecord* NextRecord(EnvironmentRecord* record, int pairCount)
+inline EnvironmentRecord* NextRecord(EnvironmentRecord* record, int dataWords)
 {
-    return reinterpret_cast<EnvironmentRecord*>(record->pairs + pairCount);
+    return reinterpret_cast<EnvironmentRecord*>(reinterpret_cast<char*>(record) +
+                                                (dataWords + 1) * sizeof(unsigned int));
 }
 
-SoundBank::AssetEntry* Relocate(SoundBankImage* bank, SoundBank::AssetEntry* offset)
+inline void EvaluatePair(EnvironmentPreset* environment, EnvironmentPair* pair, PresetEvalFunc evaluate)
+{
+    if (pair->expression != 0)
+    {
+        evaluate(NULL, reinterpret_cast<const char*>(environment) + pair->expression, -1, &pair->value, 1);
+    }
+}
+
+inline SoundBank::AssetEntry* Relocate(SoundBankImage* bank, SoundBank::AssetEntry* offset)
 {
     return reinterpret_cast<SoundBank::AssetEntry*>(reinterpret_cast<char*>(bank) +
                                                     reinterpret_cast<int>(offset));
@@ -121,13 +130,13 @@ extern "C" SoundBank* AIL_open_soundbank(const char* fileName, const char* bankN
     SoundBankImage* bank = static_cast<SoundBankImage*>(
         AIL_mem_alloc_lock_info(header.image.memoryUsage, HLBANK_FILE, BANK_IMAGE_ALLOC_LINE));
     int copySize = request.iBytesRead;
-    if (header.image.memoryUsage < copySize)
+    if (copySize > header.image.memoryUsage)
     {
         copySize = header.image.memoryUsage;
     }
 
     memcpy(bank, &header, copySize);
-    if (request.iBytesRead < header.image.memoryUsage)
+    if (header.image.memoryUsage > request.iBytesRead)
     {
         request.iLength = header.image.memoryUsage - request.iBytesRead;
         request.pOwnerName = HLBANK_FILE;
@@ -171,21 +180,21 @@ extern "C" int AIL_get_event_contents(SoundBank* bank, const char* name,
                                       const unsigned char** contents)
 {
     SoundBankImage* image = reinterpret_cast<SoundBankImage*>(bank);
-    if (bank != NULL && contents != NULL && name != NULL && image->magic == SOUND_BANK_MAGIC)
+    if (image == NULL || contents == NULL || name == NULL || image->magic != SOUND_BANK_MAGIC)
     {
-        SoundBank::AssetEntry* entry = reinterpret_cast<SoundBank::AssetEntry*>(
-            FindAsset(bank, name, image->events, image->eventCount));
-        if (entry == NULL)
-        {
-            AIL_set_error(EVENT_NOT_FOUND_ERROR);
-            return 0;
-        }
-
-        *contents = reinterpret_cast<const unsigned char*>(image) + entry->value;
-        return 1;
+        return 0;
     }
 
-    return 0;
+    SoundBank::AssetEntry* entry = reinterpret_cast<SoundBank::AssetEntry*>(
+        FindAsset(bank, name, image->events, image->eventCount));
+    if (entry == NULL)
+    {
+        AIL_set_error(EVENT_NOT_FOUND_ERROR);
+        return 0;
+    }
+
+    *contents = reinterpret_cast<const unsigned char*>(image) + entry->value;
+    return 1;
 }
 
 extern "C" int AIL_resolve_raw_environment_preset(void* preset, PresetEvalFunc evaluate)
@@ -196,55 +205,39 @@ extern "C" int AIL_resolve_raw_environment_preset(void* preset, PresetEvalFunc e
         return 0;
     }
 
-    EnvironmentRecord* record = environment->records;
     EnvironmentRecord* end = reinterpret_cast<EnvironmentRecord*>(
         reinterpret_cast<char*>(environment) + environment->size);
+    int dataWords;
+    EnvironmentRecord* record = environment->records;
     while (record != end)
     {
-        const unsigned int kind = record->kind;
-        if (kind == ENVIRONMENT_ROOM_TYPE)
+        dataWords = 2;
+        switch (record->kind)
         {
-            record = NextRecord(record, 1);
+        case ENVIRONMENT_ROOM_TYPE:
+            break;
+        case ENVIRONMENT_MASTER_REVERB:
+            EvaluatePair(environment, &record->pairs[0], evaluate);
+            EvaluatePair(environment, &record->pairs[1], evaluate);
+            EvaluatePair(environment, &record->pairs[2], evaluate);
+            dataWords = 6;
+            break;
+        case ENVIRONMENT_MASTER_REVERB_LEVELS:
+            EvaluatePair(environment, &record->pairs[0], evaluate);
+            EvaluatePair(environment, &record->pairs[1], evaluate);
+            dataWords = 4;
+            break;
+        case ENVIRONMENT_MASTER_VOLUME:
+        case ENVIRONMENT_ROLLOFF_FACTOR:
+        case ENVIRONMENT_DOPPLER_FACTOR:
+        case ENVIRONMENT_SPEAKER_RADIUS:
+            EvaluatePair(environment, &record->pairs[0], evaluate);
+            break;
+        default:
+            break;
         }
-        else if (kind == ENVIRONMENT_MASTER_REVERB)
-        {
-            for (int i = 0; i < 3; ++i)
-            {
-                if (record->pairs[i].expression != 0)
-                {
-                    evaluate(NULL,
-                             reinterpret_cast<const char*>(environment) + record->pairs[i].expression,
-                             -1, &record->pairs[i].value, 1);
-                }
-            }
 
-            record = NextRecord(record, 3);
-        }
-        else if (kind == ENVIRONMENT_MASTER_REVERB_LEVELS)
-        {
-            for (int i = 0; i < 2; ++i)
-            {
-                if (record->pairs[i].expression != 0)
-                {
-                    evaluate(NULL,
-                             reinterpret_cast<const char*>(environment) + record->pairs[i].expression,
-                             -1, &record->pairs[i].value, 1);
-                }
-            }
-
-            record = NextRecord(record, 2);
-        }
-        else
-        {
-            if (kind < ENVIRONMENT_KIND_COUNT && record->pairs[0].expression != 0)
-            {
-                evaluate(NULL,
-                         reinterpret_cast<const char*>(environment) + record->pairs[0].expression, -1,
-                         &record->pairs[0].value, 1);
-            }
-
-            record = NextRecord(record, 1);
-        }
+        record = NextRecord(record, dataWords);
     }
 
     return 1;
@@ -258,21 +251,22 @@ extern "C" int AIL_apply_raw_environment_preset(_DIG_DRIVER* driver, void* prese
         return 0;
     }
 
-    EnvironmentRecord* record = environment->records;
     EnvironmentRecord* end = reinterpret_cast<EnvironmentRecord*>(
         reinterpret_cast<char*>(environment) + environment->size);
+    int dataWords;
+    EnvironmentRecord* record = environment->records;
     while (record != end)
     {
+        dataWords = 2;
         switch (record->kind)
         {
         case ENVIRONMENT_ROOM_TYPE:
             AIL_set_room_type(driver, ENVIRONMENT_ROOM_BUS, record->pairs[0].value.integer);
-            record = NextRecord(record, 1);
             break;
         case ENVIRONMENT_MASTER_REVERB:
             AIL_set_digital_master_reverb(driver, ENVIRONMENT_ROOM_BUS, record->pairs[0].value.real,
                                           record->pairs[1].value.real, record->pairs[2].value.real);
-            record = NextRecord(record, 3);
+            dataWords = 6;
             break;
         case ENVIRONMENT_MASTER_REVERB_LEVELS:
         {
@@ -283,7 +277,7 @@ extern "C" int AIL_apply_raw_environment_preset(_DIG_DRIVER* driver, void* prese
                 pow(ENVIRONMENT_DECADE_BASE,
                     static_cast<double>(record->pairs[0].value.real / ENVIRONMENT_DECIBELS_PER_DECADE)));
             AIL_set_digital_master_reverb_levels(driver, ENVIRONMENT_ROOM_BUS, dry, wet);
-            record = NextRecord(record, 2);
+            dataWords = 4;
             break;
         }
         case ENVIRONMENT_MASTER_VOLUME:
@@ -292,26 +286,23 @@ extern "C" int AIL_apply_raw_environment_preset(_DIG_DRIVER* driver, void* prese
                 pow(ENVIRONMENT_DECADE_BASE,
                     static_cast<double>(record->pairs[0].value.real / ENVIRONMENT_DECIBELS_PER_DECADE)));
             AIL_set_digital_master_volume_level(driver, volume);
-            record = NextRecord(record, 1);
             break;
         }
         case ENVIRONMENT_ROLLOFF_FACTOR:
             AIL_set_3D_rolloff_factor(driver, record->pairs[0].value.real);
-            record = NextRecord(record, 1);
             break;
         case ENVIRONMENT_DOPPLER_FACTOR:
             AIL_set_3D_doppler_factor(driver, record->pairs[0].value.real);
-            record = NextRecord(record, 1);
             break;
         case ENVIRONMENT_SPEAKER_RADIUS:
             AIL_set_speaker_configuration(driver, NULL, ENVIRONMENT_SPEAKER_COUNT,
                                           record->pairs[0].value.real);
-            record = NextRecord(record, 1);
             break;
         default:
-            record = NextRecord(record, 1);
             break;
         }
+
+        record = NextRecord(record, dataWords);
     }
 
     return 1;
@@ -320,20 +311,20 @@ extern "C" int AIL_apply_raw_environment_preset(_DIG_DRIVER* driver, void* prese
 extern "C" void* AIL_find_environment_preset(SoundBank* bank, const char* name)
 {
     SoundBankImage* image = reinterpret_cast<SoundBankImage*>(bank);
-    if (name != NULL && bank != NULL && image->magic == SOUND_BANK_MAGIC)
+    if (name == NULL || bank == NULL || image->magic != SOUND_BANK_MAGIC)
     {
-        SoundBank::AssetEntry* entry = reinterpret_cast<SoundBank::AssetEntry*>(
-            FindAsset(bank, name, image->environments, image->environmentCount));
-        if (entry == NULL)
-        {
-            AIL_set_error(ENVIRONMENT_NOT_FOUND_ERROR);
-            return NULL;
-        }
-
-        return reinterpret_cast<char*>(image) + entry->value;
+        return NULL;
     }
 
-    return NULL;
+    SoundBank::AssetEntry* entry = reinterpret_cast<SoundBank::AssetEntry*>(
+        FindAsset(bank, name, image->environments, image->environmentCount));
+    if (entry == NULL)
+    {
+        AIL_set_error(ENVIRONMENT_NOT_FOUND_ERROR);
+        return NULL;
+    }
+
+    return reinterpret_cast<char*>(image) + entry->value;
 }
 
 extern "C" int AIL_unapply_raw_environment_preset(_DIG_DRIVER* driver, void* preset)
@@ -349,43 +340,40 @@ extern "C" int AIL_unapply_raw_environment_preset(_DIG_DRIVER* driver, void* pre
         reinterpret_cast<char*>(environment) + environment->size);
     while (record != end)
     {
+        int dataWords = 2;
         switch (record->kind)
         {
         case ENVIRONMENT_ROOM_TYPE:
             AIL_set_room_type(driver, ENVIRONMENT_ROOM_BUS, 0);
-            record = NextRecord(record, 1);
             break;
         case ENVIRONMENT_MASTER_REVERB:
             AIL_set_digital_master_reverb(driver, ENVIRONMENT_ROOM_BUS, DEFAULT_REVERB_TIME,
                                           DEFAULT_REVERB_PREDELAY, DEFAULT_REVERB_DAMPING);
-            record = NextRecord(record, 3);
+            dataWords = 6;
             break;
         case ENVIRONMENT_MASTER_REVERB_LEVELS:
             AIL_set_digital_master_reverb_levels(driver, ENVIRONMENT_ROOM_BUS, DEFAULT_REVERB_DRY,
                                                  DEFAULT_REVERB_WET);
-            record = NextRecord(record, 2);
+            dataWords = 4;
             break;
         case ENVIRONMENT_MASTER_VOLUME:
             AIL_set_digital_master_volume_level(driver, DEFAULT_MASTER_VOLUME);
-            record = NextRecord(record, 1);
             break;
         case ENVIRONMENT_ROLLOFF_FACTOR:
             AIL_set_3D_rolloff_factor(driver, DEFAULT_ROLLOFF_FACTOR);
-            record = NextRecord(record, 1);
             break;
         case ENVIRONMENT_DOPPLER_FACTOR:
             AIL_set_3D_doppler_factor(driver, DEFAULT_DOPPLER_FACTOR);
-            record = NextRecord(record, 1);
             break;
         case ENVIRONMENT_SPEAKER_RADIUS:
             AIL_set_speaker_configuration(driver, NULL, ENVIRONMENT_SPEAKER_COUNT,
                                           DEFAULT_SPEAKER_RADIUS);
-            record = NextRecord(record, 1);
             break;
         default:
-            record = NextRecord(record, 1);
             break;
         }
+
+        record = NextRecord(record, dataWords);
     }
 
     return 1;

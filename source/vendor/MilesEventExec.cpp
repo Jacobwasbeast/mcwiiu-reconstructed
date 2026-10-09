@@ -139,7 +139,7 @@ Handle* Var_GetRootFromContext(void* context)
     }
 
     const int instanceIndex = token & ENUMERATE_FIRST_INDEX_MASK;
-    if (eventSystem->m_instances.Count() < instanceIndex)
+    if (instanceIndex > eventSystem->m_instances.Count())
     {
         return NULL;
     }
@@ -165,15 +165,15 @@ EventSystem* EventSystem_Allocate(_DIG_DRIVER* driver)
     memset(eventSystem, 0, sizeof(EventSystem));
     eventSystem->m_driver = driver;
     eventSystem->m_magic = EVENT_SYSTEM_MAGIC;
-    if (g_eventSystemList == NULL)
-    {
-        eventSystem->m_next = NULL;
-        g_eventSystemList = eventSystem;
-    }
-    else
+    if (g_eventSystemList != NULL)
     {
         eventSystem->m_next = g_eventSystemList->m_next;
         g_eventSystemList->m_next = eventSystem;
+    }
+    else
+    {
+        eventSystem->m_next = NULL;
+        g_eventSystemList = eventSystem;
     }
 
     return eventSystem;

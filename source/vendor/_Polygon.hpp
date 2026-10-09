@@ -21,9 +21,8 @@ public:
     void flipNormal();
 
 private:
-    Vertex** mVertices;
+    arrayWithLength<Vertex*> mVertices;
     int mVertexCount;
-    int mVertexCount2;
     bool mFlipNormal;
 };
 

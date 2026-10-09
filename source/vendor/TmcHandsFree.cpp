@@ -62,28 +62,28 @@ enum
     kTmcDelayHistogram   = 0x2506C
 };
 
-float* tmcFloat(void* base, unsigned int offset)
+inline float* tmcFloat(void* base, unsigned int offset)
 {
     return reinterpret_cast<float*>(reinterpret_cast<char*>(base) + offset);
 }
 
-short* tmcShort(void* base, unsigned int offset)
+inline short* tmcShort(void* base, unsigned int offset)
 {
     return reinterpret_cast<short*>(reinterpret_cast<char*>(base) + offset);
 }
 
-unsigned short* tmcUShort(void* base, unsigned int offset)
+inline unsigned short* tmcUShort(void* base, unsigned int offset)
 {
     return reinterpret_cast<unsigned short*>(
         reinterpret_cast<char*>(base) + offset);
 }
 
-int* tmcInt(void* base, unsigned int offset)
+inline int* tmcInt(void* base, unsigned int offset)
 {
     return reinterpret_cast<int*>(reinterpret_cast<char*>(base) + offset);
 }
 
-void* tmcAt(void* base, unsigned int offset)
+inline void* tmcAt(void* base, unsigned int offset)
 {
     return reinterpret_cast<char*>(base) + offset;
 }
@@ -96,12 +96,14 @@ struct TmcHfDispatch
     TmcHfEntry entry[8];
 };
 
-TmcHfDispatch* tmcDispatch(void* base)
+inline TmcHfDispatch* tmcDispatch(void* base)
 {
     return reinterpret_cast<TmcHfDispatch*>(
         reinterpret_cast<char*>(base) + kTmcDispatchTable);
 }
 
+extern "C"
+{
 void TMC_HF_FUNC_001(void* handle, float* signal);
 void TMC_HF_FUNC_002(void* handle, float* state, float* levels, float* mix,
                      float* residual);
@@ -155,6 +157,7 @@ void TMC_HF_FUNC_051(TmcHfDispatch* table, float* state, const short* source,
 void TMC_HF_FUNC_052(TmcHfDispatch* table, void* handle, float* signal);
 void TMC_HF_FUNC_053(TmcHfDispatch* table, short* state, const short* source,
                      short* destination, short* history, int count);
+}
 
 const float kTmcAnalysisWindow[128] =
 {
@@ -2991,7 +2994,7 @@ extern "C" unsigned int TMC_HF_Proc(void* handle, const short* inputLeft,
 
 extern "C" unsigned int TMC_HF_Close(void* handle)
 {
-    if (handle != 0)
-        return 0;
-    return 0x40;
+    if (handle == 0)
+        return 0x40;
+    return 0;
 }

@@ -70,6 +70,7 @@ extern unsigned char g_vctInitialized;
 extern unsigned int g_vctMode;
 
 unsigned char VCT_IsInitialized();
+bool VCT_HandleData(unsigned short connectionId, unsigned char* data, unsigned int dataSize);
 
 unsigned int VCTi_GetAudioFrameLength();
 unsigned int VCTi_GetAudioDataSize();
@@ -80,7 +81,7 @@ unsigned int VCT_GetAudioDataSize();
 void VCT_ResetVAD();
 void VCT_EnableVAD(bool bEnabled);
 unsigned int VCT_GetVADReleaseTime();
-unsigned char VCT_GetVADActivity();
+bool VCT_GetVADActivity();
 unsigned int VCTi_GetVADStatus(unsigned int energy, unsigned int threshold, unsigned char* pStatus);
 void vct_init_vad();
 unsigned short VCT_GetVADActiveGain();

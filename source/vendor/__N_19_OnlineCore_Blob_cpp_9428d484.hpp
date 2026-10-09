@@ -5,6 +5,7 @@
 #include "nn/nex/String.hpp"
 #include "nn/nex/SocketDriver.hpp"
 #include "nn/nex/qResult.hpp"
+#include "nn/nex/Stream.hpp"
 
 namespace nn
 {
@@ -14,13 +15,6 @@ class ByteStream;
 class EndPoint;
 class Packet;
 class UserContext;
-namespace Stream
-{
-enum Type
-{
-    TypeUnknown = 0
-};
-}
 }
 }
 
@@ -33,7 +27,7 @@ namespace __N_19_OnlineCore_Blob_cpp_9428d484
     int Utf8ToUnicode(const char*, wchar_t*, unsigned int);
     int GetNeededUtf8BufferSize(const wchar_t*);
     uint64_t IsRendezVousRunning();
-    uint32_t PRUDPVersionCheck(const nn::nex::ByteStream*);
+    int PRUDPVersionCheck(const nn::nex::ByteStream*);
     bool PRUDPUnpackCheck(const nn::nex::ByteStream*, unsigned int*);
     uint32_t RelayProtocolCheck(const nn::nex::ByteStream*);
     void DisconnectCallback(nn::nex::EndPoint*, nn::nex::qResult, const nn::nex::UserContext*);

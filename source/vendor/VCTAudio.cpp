@@ -5,7 +5,7 @@
 #include "vendor/VCTDropRecovery.hpp"
 #include "vendor/VCTQuality.hpp"
 #include "vendor/VCTQueue.hpp"
-#include "vendor/__N_14_chat_Adpcm_cpp_f2b530af.hpp"
+#include "nn/pia/chat/Adpcm.hpp"
 
 #include <string.h>
 #include <coreinit/systeminfo.h>
@@ -92,21 +92,6 @@ VCTSessionLists g_vctSessionLists = { 0, 0 };
 unsigned char g_vctInitialized = 0;
 unsigned int g_vctMode = 0;
 
-unsigned char VCT_IsInitialized()
-{
-    return g_vctInitialized;
-}
-
-unsigned int VCT_GetAudioFrameLength()
-{
-    return VCTi_GetAudioFrameLength();
-}
-
-unsigned int VCT_GetAudioDataSize()
-{
-    return VCTi_GetAudioDataSize();
-}
-
 unsigned int VCTi_GetAudioFrameLength()
 {
     return g_vctAudioFrameLength;
@@ -154,15 +139,6 @@ unsigned int HPFFilter2(const void* pAudio, unsigned int uiSize)
     }
 
     return static_cast<unsigned int>(ullEnergy / uiCount);
-}
-
-unsigned int VCT_GetAudioScale(const void* pAudio, unsigned int uiSize)
-{
-    if (pAudio == 0 || uiSize == 0)
-    {
-        return 0;
-    }
-    return HPFFilter2(pAudio, uiSize);
 }
 
 nn::pia::Result VCT_SendAudioEx(const void* pAudio, unsigned int uiAudioScale)

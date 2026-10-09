@@ -22,7 +22,7 @@ public:
     int m_miniGameHostOptions;
     LevelGenerationOptions* m_levelGenerationOptions;
     int m_texturePackId;
-    unsigned char m_findSeed;
+    bool m_findSeed;
     int m_xzSize;
     unsigned char m_hellScale;
     ESavePlatform m_savePlatform;

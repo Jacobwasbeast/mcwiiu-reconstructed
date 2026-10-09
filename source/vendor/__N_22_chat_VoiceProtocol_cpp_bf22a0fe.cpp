@@ -3,6 +3,7 @@
 #include "game/core/CriticalSection.hpp"
 #include "nn/pia/transport/UnreliableProtocol.hpp"
 #include "nn/pia/ProtocolManager.hpp"
+#include "nn/pia/Transport.hpp"
 
 extern OSFastMutex g_voiceProtocolMutex;
 void __N_22_chat_VoiceProtocol_cpp_bf22a0fe::lock_()
@@ -38,46 +39,42 @@ nn::pia::StationIndex __N_22_chat_VoiceProtocol_cpp_bf22a0fe::convertStationInde
     return static_cast<nn::pia::StationIndex>(static_cast<unsigned short>(index + 1));
 }
 
-nn::pia::Result __N_22_chat_VoiceProtocol_cpp_bf22a0fe::createProtocol(nn::pia::transport::UnreliableProtocol **protocol, unsigned short *protocolId, unsigned char channel)
+template <typename T>
+nn::pia::Result __N_22_chat_VoiceProtocol_cpp_bf22a0fe::createProtocol(T** protocol, unsigned short* protocolId,
+    unsigned char port)
 {
     if (*protocolId != 0)
-    {
-        if (protocol != 0)
-        {
-            *protocol = 0;
-        }
-        return 0x10c08;
-    }
+        return nn::pia::transport::cResultInvalidState;
     if (*protocol != 0)
-        return 0x10c08;
-    if (nn::pia::transport::g_piaProtocolManager == 0)
-        return 0x10c08;
-    nn::pia::transport::UnreliableProtocol *allocated = nn::pia::transport::g_piaProtocolManager->AllocProtocol(0x20);
-    if (allocated != 0)
-        new (allocated) nn::pia::transport::UnreliableProtocol();
-    nn::pia::transport::ProtocolId id = (unsigned short)(0x6800 | channel);
-    unsigned short created = nn::pia::transport::g_piaProtocolManager->CreateProtocolImpl(allocated, id);
-    *protocolId = created;
-    if (created != 0)
-    {
-        *protocol = (nn::pia::transport::UnreliableProtocol *)nn::pia::transport::g_piaProtocolManager->SearchProtocol(created, 0x68);
-        return 0;
-    }
-    *protocol = 0;
-    return 0x10c07;
+        return nn::pia::transport::cResultInvalidState;
+    nn::pia::transport::Transport* transport = nn::pia::transport::g_piaTransport;
+    if (transport == 0)
+        return nn::pia::transport::cResultInvalidState;
+    const unsigned int handle = transport->m_protocolManager.CreateProtocol<T>(port);
+    *protocolId = handle;
+    if (handle == 0)
+        return nn::pia::transport::cResultInvalidArgument;
+    *protocol = transport->m_protocolManager.GetProtocol<T>(handle);
+    return 0;
 }
 
-void __N_22_chat_VoiceProtocol_cpp_bf22a0fe::destroyProtocol(nn::pia::transport::UnreliableProtocol **protocol, unsigned short *protocolId)
+template <typename T>
+void __N_22_chat_VoiceProtocol_cpp_bf22a0fe::destroyProtocol(T** protocol, unsigned short* protocolId)
 {
     if (*protocol != 0)
         (*protocol)->Finalize();
-    if (nn::pia::transport::g_piaProtocolManager != 0 && *protocolId != 0)
+    if (nn::pia::transport::g_piaTransport != 0 && *protocolId != 0)
     {
-        nn::pia::transport::g_piaProtocolManager->DestroyProtocol(*protocolId);
+        nn::pia::transport::g_piaTransport->m_protocolManager.DestroyProtocol(*protocolId);
         *protocolId = 0;
         *protocol = 0;
     }
 }
+
+template nn::pia::Result __N_22_chat_VoiceProtocol_cpp_bf22a0fe::createProtocol<nn::pia::transport::UnreliableProtocol>(
+    nn::pia::transport::UnreliableProtocol** protocol, unsigned short* protocolId, unsigned char port);
+template void __N_22_chat_VoiceProtocol_cpp_bf22a0fe::destroyProtocol<nn::pia::transport::UnreliableProtocol>(
+    nn::pia::transport::UnreliableProtocol** protocol, unsigned short* protocolId);
 
 VCTCodec __N_22_chat_VoiceProtocol_cpp_bf22a0fe::convertCodec(nn::pia::chat::Codec codec)
 {

@@ -46,6 +46,7 @@ static const unsigned int MILES_ASYNC_THREAD_CORE = 2;
 static const float MILES_ASYNC_PRIORITY_THRESHOLD = 30.0f;
 
 static const char MILES_ASYNC_FILE[] = "C:\\devel\\projects\\mss\\src\\sdk\\shared\\milesasync.cpp";
+static const char MILES_ASYNC_MUTEX_BLOCK_NAME[] = "Miles IO mutex block";
 static const char MILES_ASYNC_MUTEX_NAME[] = "Miles IO mutex";
 static const char MILES_ASYNC_THREAD_NAME[] = "Miles IO";
 static const char MILES_ASYNC_WAIT_NAME[] = "Waiting for IO request";
@@ -86,7 +87,7 @@ void LockQueue()
         if (MSS_profile != NULL)
         {
             MSS_profile->pZoneEnter(MSS_profile, 0, 0, 0, 1, MILES_ASYNC_FILE, 126,
-                                    &MilesAsyncQueueLockWaitSite, MILES_ASYNC_MUTEX_NAME);
+                                    &MilesAsyncQueueLockWaitSite, MILES_ASYNC_MUTEX_BLOCK_NAME);
         }
 
         rrMutexLock(&MilesAsyncQueueMutex);

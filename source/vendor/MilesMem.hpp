@@ -135,7 +135,7 @@ extern "C" void AIL_API_set_sample_channel_levels(_SAMPLE* pSample, const int* p
                                                   const int* pDestinations, const float* pLevels,
                                                   int iCount);
 extern "C" void AIL_API_set_sample_reverb_levels(_SAMPLE* pSample, float fFirst, float fSecond);
-extern "C" void AIL_API_set_sample_low_pass_cut_off(_SAMPLE* pSample, float fCutOff, int iChannel);
+extern "C" void AIL_API_set_sample_low_pass_cut_off(_SAMPLE* pSample, int iChannel, float fCutOff);
 extern "C" void AIL_API_set_sample_51_volume_pan(_SAMPLE* pSample, float fVolume, float fPan,
                                                  float fFade, float fCenter, float fLowFrequency);
 extern "C" int AIL_API_sample_processor(_SAMPLE* pSample, int iStage);

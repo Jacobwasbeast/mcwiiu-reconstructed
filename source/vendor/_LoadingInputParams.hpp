@@ -12,7 +12,7 @@ public:
     void* m_threadParam;
     void* m_completionData;
     int m_cancelText;
-    int (*m_cancelFunc)(void*);
+    void (*m_cancelFunc)(void*);
     int (*m_completeFunc)(void*);
     void* m_cancelFuncParam;
     void* m_completeFuncParam;

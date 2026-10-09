@@ -1,13 +1,38 @@
 #include "vendor/__N_16_crypto_iSeed_cpp_03964d54.hpp"
 
+#ifdef __ghs__
+#include <ppc_ghs.h>
+#else
 #include <time.h>
+#endif
 
-static unsigned char g_seedInitialized;
-static uint32_t g_seed0;
-static uint32_t g_seed1;
-static uint32_t g_seed2;
-static uint32_t g_seed3;
+static bool g_seedInitialized = false;
+static uint32_t g_seed[4];
 
+#ifdef __ghs__
+uint64_t __N_16_crypto_iSeed_cpp_03964d54::rdtsc()
+{
+    uint32_t upperCheck;
+    int lower;
+    uint32_t upper;
+
+    do
+    {
+        upper = __MFTBU();
+        lower = __MFTB();
+        upperCheck = __MFTBU();
+    } while (upperCheck != upper);
+
+    return (static_cast<uint64_t>(upperCheck) << 32) | lower;
+}
+
+uint64_t __N_16_crypto_iSeed_cpp_03964d54::GetTicks()
+{
+    uint32_t upper = __MFTBU();
+    int lower = __MFTB();
+    return lower | (static_cast<uint64_t>(upper) << 32);
+}
+#else
 uint64_t __N_16_crypto_iSeed_cpp_03964d54::rdtsc()
 {
     return static_cast<uint64_t>(clock());
@@ -17,6 +42,7 @@ uint64_t __N_16_crypto_iSeed_cpp_03964d54::GetTicks()
 {
     return static_cast<uint64_t>(clock());
 }
+#endif
 
 uint64_t __N_16_crypto_iSeed_cpp_03964d54::hash64shift(unsigned long long value)
 {
@@ -35,46 +61,39 @@ void __N_16_crypto_iSeed_cpp_03964d54::Stir()
     uint32_t a;
     uint32_t b;
     uint32_t c;
-    uint32_t d;
-    uint32_t e;
     uint64_t mixed;
 
-    if (g_seedInitialized == 0)
+    if (!g_seedInitialized)
     {
-        g_seedInitialized = 1;
-        g_seed0 = 0x9e3779b1U;
-        g_seed1 = 0x9e3779b9U;
-        g_seed2 = 0x9e3779b9U;
-        g_seed3 = 0x9e3779b1U;
+        g_seedInitialized = true;
+        g_seed[3] = 0x9e3779b1U;
+        g_seed[1] = 0x9e3779b9U;
+        g_seed[2] = 0x9e3779b9U;
+        g_seed[0] = 0x9e3779b1U;
     }
 
-    a = (g_seed0 - g_seed1) - g_seed2;
-    a ^= g_seed2 >> 13;
-    b = (g_seed1 - g_seed2) - a;
-    b ^= a << 8;
-    c = (g_seed2 - a) - b;
-    c ^= b >> 13;
-    a = (a - b) - c;
-    a ^= c >> 12;
-    b = (b - c) - a;
-    b ^= a << 16;
-    c = (c - a) - b;
-    c ^= b >> 5;
-    g_seed0 = (b - c) - a;
-    g_seed0 ^= a >> 3;
-    b = (b - a) - g_seed0;
-    b ^= g_seed0 << 10;
-    g_seed2 = (a - g_seed0) - b;
-    g_seed2 ^= b >> 15;
-    g_seed1 = b;
+    a = g_seed[0];
+    b = g_seed[1];
+    c = g_seed[2];
+    a -= b; a -= c; a ^= c >> 13;
+    b -= c; b -= a; b ^= a << 8;
+    c -= a; c -= b; c ^= b >> 13;
+    a -= b; a -= c; a ^= c >> 12;
+    b -= c; b -= a; b ^= a << 16;
+    c -= a; c -= b; c ^= b >> 5;
+    a -= b; a -= c; a ^= c >> 3;
+    b -= c; b -= a; b ^= a << 10;
+    c -= a; c -= b; c ^= b >> 15;
+    g_seed[0] = a;
+    g_seed[1] = b;
+    g_seed[2] = c;
 
-    mixed = (static_cast<uint64_t>(c ^ (b << 17)) << 32) | g_seed0;
-    mixed = hash64shift(mixed);
-    g_seed2 = static_cast<uint32_t>(mixed);
-    g_seed3 = static_cast<uint32_t>(mixed >> 32);
-    mixed = hash64shift((static_cast<uint64_t>(static_cast<uint32_t>(mixed)) << 32) | g_seed1);
-    g_seed0 = static_cast<uint32_t>(mixed >> 32);
-    g_seed1 = static_cast<uint32_t>(mixed);
+    mixed = hash64shift((static_cast<uint64_t>(g_seed[2]) << 32) | g_seed[0]);
+    g_seed[2] = static_cast<uint32_t>(mixed >> 32);
+    g_seed[3] = static_cast<uint32_t>(mixed);
+    mixed = hash64shift((static_cast<uint64_t>(g_seed[3]) << 32) | g_seed[1]);
+    g_seed[0] = static_cast<uint32_t>(mixed >> 32);
+    g_seed[1] = static_cast<uint32_t>(mixed);
 }
 
 uint32_t __N_16_crypto_iSeed_cpp_03964d54::AddToSeed(unsigned char *data, unsigned int length)
@@ -85,7 +104,7 @@ uint32_t __N_16_crypto_iSeed_cpp_03964d54::AddToSeed(unsigned char *data, unsign
         return 0;
     for (index = 0; index < length; ++index)
     {
-        g_seed0 ^= data[index];
+        g_seed[0] ^= data[index];
         Stir();
     }
     return 1;

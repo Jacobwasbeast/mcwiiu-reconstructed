@@ -153,17 +153,18 @@ static void InitRouting(int iMode, int iChannels, short* pRouting)
 
 static int RADSS_AXCloseDriver(_RadSoundSystem* pSystem)
 {
+    RadSS_WiiUPrivate* pPrivate = &pSystem->priv;
     int iVoice;
 
     for (iVoice = 0; iVoice < pSystem->ucChannels; iVoice++)
     {
-        if (pSystem->priv.pVoices[iVoice] != NULL)
+        if (pPrivate->pVoices[iVoice] != NULL)
         {
-            pSystem->priv.pVoices[iVoice]->callback = NULL;
-            pSystem->priv.pVoices[iVoice]->callbackEx = NULL;
-            AXSetVoiceState(pSystem->priv.pVoices[iVoice], AX_VOICE_STATE_STOPPED);
-            AXFreeVoice(pSystem->priv.pVoices[iVoice]);
-            pSystem->priv.pVoices[iVoice] = NULL;
+            pPrivate->pVoices[iVoice]->callback = NULL;
+            pPrivate->pVoices[iVoice]->callbackEx = NULL;
+            AXSetVoiceState(pPrivate->pVoices[iVoice], AX_VOICE_STATE_STOPPED);
+            AXFreeVoice(pPrivate->pVoices[iVoice]);
+            pPrivate->pVoices[iVoice] = NULL;
         }
     }
 

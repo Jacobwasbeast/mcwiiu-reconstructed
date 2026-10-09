@@ -18,6 +18,8 @@ static const unsigned int BCFDEC_CLOSE_LINE = 0x11B;
 static const unsigned int BCF_MAGIC = 0x42434631;
 static const unsigned int BCF_MAX_VERSION = 2;
 static const unsigned int BCF_VERSION_SEEK_PAIR = 2;
+static const unsigned int BCF_SEEK_GRANULARITY_SHIFT = 16;
+static const unsigned int BCF_SEEK_COUNT_MASK = 0xFFFF;
 static const unsigned short BCF_FRAME_SYNC = 0x9999;
 static const unsigned int BCF_FRAME_HEADER_BYTES = 4;
 static const unsigned int BCF_FRAME_TRAILER_BYTES = 4;
@@ -124,9 +126,7 @@ static inline unsigned int BcfLoadLE32(const void* pSource)
 
 static inline unsigned int BcfLoadLE16(const void* pSource)
 {
-    short iValue;
-    __lhbrx(pSource, iValue);
-    return (unsigned int)(unsigned short)iValue;
+    return *static_cast<const __bytereversed unsigned short*>(pSource);
 }
 #else
 static inline unsigned int BcfLoadLE32(const void* pSource)
@@ -164,39 +164,36 @@ static inline unsigned int BcfSeekUnit(unsigned int uSampleRate)
 
 int PROVIDER_property(unsigned int uProperty, void* pBefore, const void* pNewValue, void* pAfter)
 {
-    if (pBefore == NULL || pNewValue != NULL || pAfter != NULL)
+    if (pBefore != NULL && pNewValue == NULL && pAfter == NULL)
     {
-        return 0;
+        switch (uProperty)
+        {
+        case RIB_PROVIDER_NAME:
+            *static_cast<const char**>(pBefore) = "MSS Bink Audio Decoder\0";
+            return 1;
+        case RIB_PROVIDER_VERSION:
+            *static_cast<unsigned int*>(pBefore) = BCF_PROVIDER_VERSION;
+            return 1;
+        case ASI_INPUT_FILE_TYPES:
+        case ASI_EDITOR_INPUT_FILE_TYPES:
+            *static_cast<const char**>(pBefore) = "MSS Bink Audio Files\0*.BINKA\0";
+            return 1;
+        case ASI_OUTPUT_FILE_TYPES:
+            *static_cast<const char**>(pBefore) = "Raw PCM files\0*.RAW\0";
+            return 1;
+        }
     }
-
-    switch (uProperty)
-    {
-    case ASI_INPUT_FILE_TYPES:
-    case ASI_EDITOR_INPUT_FILE_TYPES:
-        *static_cast<const char**>(pBefore) = "MSS Bink Audio Files\0*.BINKA\0";
-        return 1;
-    case ASI_OUTPUT_FILE_TYPES:
-        *static_cast<const char**>(pBefore) = "Raw PCM files\0*.RAW\0";
-        return 1;
-    case RIB_PROVIDER_VERSION:
-        *static_cast<unsigned int*>(pBefore) = BCF_PROVIDER_VERSION;
-        return 1;
-    case RIB_PROVIDER_NAME:
-        *static_cast<const char**>(pBefore) = "MSS Bink Audio Decoder\0";
-        return 1;
-    default:
-        return 0;
-    }
+    return 0;
 }
 
 const char* ASI_error()
 {
-    if (ASI_error_text[0] != '\0')
+    if (ASI_error_text[0] == '\0')
     {
-        return ASI_error_text;
+        return NULL;
     }
 
-    return NULL;
+    return ASI_error_text;
 }
 
 int ASI_startup()
@@ -216,7 +213,6 @@ int ASI_stream_open(BCF_ALLOC_CALLBACK pAlloc, BCF_FREE_CALLBACK pFree, unsigned
     unsigned char* pBlock;
     unsigned char* pDecoder;
     unsigned int uSampleRate;
-    int iChannels;
     unsigned int uSeekCount;
     unsigned int uSeekGranularity;
     unsigned int uFrameBytes;
@@ -233,8 +229,13 @@ int ASI_stream_open(BCF_ALLOC_CALLBACK pAlloc, BCF_FREE_CALLBACK pFree, unsigned
     unsigned int uOffset;
     unsigned int uFlags;
 
-    if (pFetch(uUser, &header, sizeof(header), 0) != (int)sizeof(header) ||
-        BcfLoadLE32(&header.uMagic) != BCF_MAGIC || header.ucVersion > BCF_MAX_VERSION)
+    if (pFetch(uUser, &header, sizeof(header), 0) != (int)sizeof(header))
+    {
+        return 0;
+    }
+
+    header.uMagic = BcfLoadLE32(&header.uMagic);
+    if (header.uMagic != BCF_MAGIC || header.ucVersion > BCF_MAX_VERSION)
     {
         return 0;
     }
@@ -244,20 +245,15 @@ int ASI_stream_open(BCF_ALLOC_CALLBACK pAlloc, BCF_FREE_CALLBACK pFree, unsigned
     header.uMaxFrameBytes = BcfLoadLE32(&header.uMaxFrameBytes);
     header.uTotalSamples = BcfLoadLE32(&header.uTotalSamples);
     header.uFileBytes = BcfLoadLE32(&header.uFileBytes);
+    uSeekCount = BcfLoadLE32(&header.uSeekCount);
     uSeekGranularity = 0;
     if (header.ucVersion == BCF_VERSION_SEEK_PAIR)
     {
-        uSeekGranularity = BcfLoadLE16(reinterpret_cast<unsigned char*>(&header.uSeekCount) + 2);
-        uSeekCount = BcfLoadLE16(&header.uSeekCount);
-    }
-    else
-    {
-        uSeekCount = BcfLoadLE32(&header.uSeekCount);
+        uSeekGranularity = uSeekCount >> BCF_SEEK_GRANULARITY_SHIFT;
+        uSeekCount = uSeekCount & BCF_SEEK_COUNT_MASK;
     }
 
     header.uSeekCount = uSeekCount;
-    header.uMagic = BCF_MAGIC;
-    iChannels = header.ucChannels;
 
     if (uSampleRate < BCF_RATE_LONG)
     {
@@ -267,27 +263,22 @@ int ASI_stream_open(BCF_ALLOC_CALLBACK pAlloc, BCF_FREE_CALLBACK pFree, unsigned
             uFrameBytes = BCF_PCM_BYTES_MEDIUM;
         }
 
-        uFrameBytes = uFrameBytes * iChannels;
+        uFrameBytes = uFrameBytes * header.ucChannels;
     }
     else
     {
-        uFrameBytes = iChannels * BCF_PCM_BYTES_LONG;
+        uFrameBytes = header.ucChannels * BCF_PCM_BYTES_LONG;
     }
 
-    uOutputCapacity = uFrameBytes + iChannels * BCF_WORK_BYTES_PER_CHANNEL + BCF_WORK_SLACK_BYTES;
-    iStreamCount = (iChannels + 1) >> 1;
+    uOutputCapacity = uFrameBytes + (header.ucChannels * BCF_WORK_BYTES_PER_CHANNEL + BCF_WORK_SLACK_BYTES);
+    iStreamCount = (header.ucChannels + 1) >> 1;
     header.uMaxFrameBytes = header.uMaxFrameBytes + BCF_FRAME_HEADER_BYTES;
     uDecoderBytes = 0;
     for (iStream = 0; iStream < iStreamCount; ++iStream)
     {
-        auStreamChannels[iStream] = 1;
-        if (iChannels - iStream * 2 > 1)
-        {
-            auStreamChannels[iStream] = 2;
-        }
-
+        auStreamChannels[iStream] = (header.ucChannels - iStream * 2 >= 2) ? 2 : 1;
         auStreamBytes[iStream] =
-            BinkAudioDecompressMemoryLE(uSampleRate, auStreamChannels[iStream], 1);
+            BinkAudioDecompressMemoryLE(header.usSampleRate, auStreamChannels[iStream], 1);
         uDecoderBytes = uDecoderBytes + auStreamBytes[iStream];
     }
 
@@ -333,8 +324,8 @@ int ASI_stream_open(BCF_ALLOC_CALLBACK pAlloc, BCF_FREE_CALLBACK pFree, unsigned
             uChunkEntries = BCF_SEEK_CHUNK_ENTRIES;
         }
 
-        if (pStream->pFetch(pStream->uUser, ausSeekChunk, uChunkEntries * BCF_SEEK_ENTRY_BYTES,
-                            BCF_FETCH_SEQUENTIAL) != (int)(uChunkEntries * BCF_SEEK_ENTRY_BYTES))
+        if (pStream->pFetch(uUser, ausSeekChunk, uChunkEntries * BCF_SEEK_ENTRY_BYTES,
+                            BCF_FETCH_SEQUENTIAL) != uChunkEntries * BCF_SEEK_ENTRY_BYTES)
         {
             pFree(pStream, pStream->uUser, BCFDEC_FILE, BCFDEC_SEEK_FAIL_LINE);
             return 0;
@@ -360,15 +351,15 @@ int ASI_stream_open(BCF_ALLOC_CALLBACK pAlloc, BCF_FREE_CALLBACK pFree, unsigned
     {
         pStream->auStreamChannels[iStream] = auStreamChannels[iStream];
         uFlags = 0;
-        if (iChannels > 2)
+        if (header.ucChannels > 2)
         {
             uFlags = BINKAUDIO_FLAG_PLANAR;
         }
 
         pStream->apDecoders[iStream] = BinkAudioDecompressOpenLE(
-            pDecoder, uSampleRate, auStreamChannels[iStream], uFlags | BINKAUDIO_FLAG_DCT);
-        pStream->auStreamBytes[iStream] = auStreamBytes[iStream];
+            pDecoder, header.usSampleRate, auStreamChannels[iStream], uFlags | BINKAUDIO_FLAG_DCT);
         pDecoder = pDecoder + auStreamBytes[iStream];
+        pStream->auStreamBytes[iStream] = auStreamBytes[iStream];
     }
 
     return reinterpret_cast<int>(pStream);
@@ -919,12 +910,12 @@ void FindFrameBoundary(int iStream)
     unsigned int auCandidates[BCF_SYNC_CANDIDATES];
     unsigned char* pBuffer;
     unsigned char* pFrame;
-    unsigned int uMoved;
     unsigned int uFill;
     unsigned int uWindow;
     unsigned int uCount;
     unsigned int uIndex;
     unsigned int uPayload;
+    unsigned int uHeader;
     unsigned int uLength;
     unsigned int uCandidate;
     unsigned int uNext;
@@ -934,65 +925,64 @@ void FindFrameBoundary(int iStream)
     {
         memcpy(pStream->pInput, pStream->pInput + pStream->uInputPosition,
                pStream->uInputFill - pStream->uInputPosition);
-        uMoved = pStream->uInputPosition;
+        pStream->uInputFill -= pStream->uInputPosition;
         pStream->uInputPosition = 0;
-        pStream->uInputFill = pStream->uInputFill - uMoved;
     }
 
-    memset(auCandidates, 0, sizeof(auCandidates));
+    for (uIndex = 0; uIndex < BCF_SYNC_CANDIDATES; ++uIndex)
+    {
+        auCandidates[uIndex] = 0;
+    }
+
     pBuffer = pStream->pInput;
     uFill = pStream->uInputFill;
 
     for (;;)
     {
+        uIndex = 0;
         uWindow = pStream->header.uMaxFrameBytes;
         uCount = 0;
-        if (uFill > BCF_FRAME_HEADER_BYTES)
+        for (uPayload = BCF_FRAME_HEADER_BYTES; uPayload < uFill; ++uPayload)
         {
-            uIndex = 0;
-            for (uPayload = BCF_FRAME_HEADER_BYTES; uPayload < uFill; ++uPayload)
+            pFrame = pBuffer + uIndex;
+            uHeader = BcfLoadLE32(pFrame);
+            if ((uHeader & BCF_SYNC_LENGTH_MASK) == BCF_FRAME_SYNC)
             {
-                pFrame = pBuffer + uIndex;
-                if (BcfLoadLE16(pFrame) == BCF_FRAME_SYNC)
+                uLength = uHeader >> BCF_SYNC_POSITION_SHIFT;
+                if (uLength <= uWindow)
                 {
-                    uLength = BcfLoadLE16(pFrame + 2);
-                    if (uLength <= uWindow)
+                    if (uIndex + uLength + BCF_FRAME_OVERHEAD_BYTES <= uFill)
                     {
-                        if (uFill < uIndex + uLength + BCF_FRAME_OVERHEAD_BYTES)
-                        {
-                            if (uCount < BCF_SYNC_CANDIDATES)
-                            {
-                                auCandidates[uCount] =
-                                    uLength | (uPayload << BCF_SYNC_POSITION_SHIFT);
-                                uFill = pStream->uInputFill;
-                                pBuffer = pStream->pInput;
-                                uCount = uCount + 1;
-                                uWindow = pStream->header.uMaxFrameBytes;
-                            }
-                        }
-                        else if (BcfLoadLE16(pFrame + BCF_FRAME_HEADER_BYTES + uLength) ==
-                                 BCF_FRAME_SYNC)
+                        if ((BcfLoadLE32(pFrame + BCF_FRAME_HEADER_BYTES + uLength) & BCF_SYNC_LENGTH_MASK) ==
+                            BCF_FRAME_SYNC)
                         {
                             memmove(pBuffer, pFrame, uFill - uIndex);
                             pStream->iNeedSync = 0;
-                            pStream->uInputFill = pStream->uInputFill - uIndex;
+                            pStream->uInputFill -= uIndex;
                             return;
                         }
                     }
+                    else if (uCount < BCF_SYNC_CANDIDATES)
+                    {
+                        auCandidates[uCount] = uLength | (uPayload << BCF_SYNC_POSITION_SHIFT);
+                        uFill = pStream->uInputFill;
+                        pBuffer = pStream->pInput;
+                        ++uCount;
+                        uWindow = pStream->header.uMaxFrameBytes;
+                    }
                 }
-
-                ++uIndex;
             }
+
+            ++uIndex;
         }
 
-        uWindow = uWindow + BCF_FRAME_TRAILER_BYTES;
+        uWindow += BCF_FRAME_TRAILER_BYTES;
         if (uWindow < uFill)
         {
             memmove(pBuffer, pBuffer + uWindow, uFill - uWindow);
-            uFill = pStream->uInputFill - uWindow;
-            pStream->uInputFill = uFill;
-            iRead = pStream->pFetch(pStream->uUser, pStream->pInput + uFill,
-                                    pStream->uInputCapacity - uFill, BCF_FETCH_SEQUENTIAL);
+            pStream->uInputFill -= uWindow;
+            iRead = pStream->pFetch(pStream->uUser, pStream->pInput + pStream->uInputFill,
+                                    pStream->uInputCapacity - pStream->uInputFill, BCF_FETCH_SEQUENTIAL);
         }
         else
         {
@@ -1020,12 +1010,11 @@ void FindFrameBoundary(int iStream)
             {
                 uNext = ((uCandidate & BCF_SYNC_LENGTH_MASK) + uPayload) - uWindow;
                 if (uNext + BCF_FRAME_HEADER_BYTES < uFill &&
-                    BcfLoadLE16(pBuffer + uNext) == BCF_FRAME_SYNC)
+                    (BcfLoadLE32(pBuffer + uNext) & BCF_SYNC_LENGTH_MASK) == BCF_FRAME_SYNC)
                 {
-                    memmove(pBuffer, pBuffer + (uPayload - BCF_FRAME_HEADER_BYTES),
-                            uFill - uPayload);
+                    memmove(pBuffer, pBuffer + (uPayload - BCF_FRAME_HEADER_BYTES), uFill - uPayload);
                     pStream->iNeedSync = 0;
-                    pStream->uInputFill = pStream->uInputFill - uPayload;
+                    pStream->uInputFill -= uPayload;
                     return;
                 }
             }
@@ -1036,19 +1025,18 @@ void FindFrameBoundary(int iStream)
 void SeekStreamForward(BcfStream* pStream, int iBytes)
 {
     unsigned int uRemaining = iBytes;
-    unsigned int uChunk;
 
     while (uRemaining != 0)
     {
-        uChunk = uRemaining;
-        if (pStream->uInputCapacity < uRemaining)
+        unsigned int uChunk = uRemaining;
+        if (uRemaining > pStream->uInputCapacity)
         {
             uChunk = pStream->uInputCapacity;
         }
 
         pStream->pFetch(pStream->uUser, pStream->pInput, uChunk, BCF_FETCH_SEQUENTIAL);
-        pStream->uStreamPosition = pStream->uStreamPosition + uChunk;
-        uRemaining = uRemaining - uChunk;
+        pStream->uStreamPosition += uChunk;
+        uRemaining -= uChunk;
     }
 }
 
@@ -1335,32 +1323,29 @@ void SeekTableLookup(BcfStream* pStream, unsigned int uSample, int* piOffset, in
                      int* piBase)
 {
     unsigned int uFrame = BCF_SEEK_UNIT_SHORT;
-    unsigned int uUnit;
     unsigned int uEntry;
+    unsigned int uUnit;
 
-    if (pStream->header.usSampleRate < BCF_RATE_LONG)
-    {
-        if (pStream->header.usSampleRate >= BCF_RATE_MEDIUM)
-        {
-            uFrame = BCF_SEEK_UNIT_MEDIUM;
-        }
-    }
-    else
+    if (pStream->header.usSampleRate >= BCF_RATE_LONG)
     {
         uFrame = BCF_SEEK_UNIT_LONG;
     }
+    else if (pStream->header.usSampleRate >= BCF_RATE_MEDIUM)
+    {
+        uFrame = BCF_SEEK_UNIT_MEDIUM;
+    }
 
-    if (pStream->header.uTotalSamples < uSample)
+    if (uSample > pStream->header.uTotalSamples)
     {
         uSample = pStream->header.uTotalSamples - 1;
     }
 
     uUnit = uFrame * pStream->uSeekGranularity;
     uEntry = 0;
-    if (uUnit <= uSample)
+    if (uSample >= uUnit)
     {
         uEntry = (uSample - uUnit) / uUnit + 1;
-        if (pStream->header.uSeekCount <= uEntry)
+        if (uEntry >= pStream->header.uSeekCount)
         {
             uEntry = pStream->header.uSeekCount - 1;
         }
@@ -1694,7 +1679,7 @@ int BinkADec_RIB_Main(unsigned int uProvider, int iUpDown,
                       RIB_REGISTER_INTERFACE_CALLBACK pRegisterInterface,
                       RIB_UNREGISTER_INTERFACE_CALLBACK pUnregisterInterface)
 {
-    RIB_INTERFACE_ENTRY codecProviderEntries[4] = {
+    const RIB_INTERFACE_ENTRY codecProviderEntries[4] = {
         {RIB_FUNCTION, "PROVIDER_property", reinterpret_cast<void*>(PROVIDER_property), 0},
         {RIB_PROPERTY, "Name", reinterpret_cast<void*>(RIB_PROVIDER_NAME),
          RIB_READ_ONLY | RIB_ENTRY_STRING},
@@ -1702,7 +1687,7 @@ int BinkADec_RIB_Main(unsigned int uProvider, int iUpDown,
          RIB_READ_ONLY | RIB_ENTRY_HEXADECIMAL},
         {RIB_PROPERTY, "Input file types", reinterpret_cast<void*>(ASI_INPUT_FILE_TYPES),
          RIB_READ_ONLY | RIB_ENTRY_STRING}};
-    RIB_INTERFACE_ENTRY codecTypeEntries[4] = {
+    const RIB_INTERFACE_ENTRY codecTypeEntries[4] = {
         {RIB_PROPERTY, "Editor-supported input file types",
          reinterpret_cast<void*>(ASI_EDITOR_INPUT_FILE_TYPES), RIB_READ_ONLY | RIB_ENTRY_STRING},
         {RIB_PROPERTY, "Output file types", reinterpret_cast<void*>(ASI_OUTPUT_FILE_TYPES),
@@ -1711,22 +1696,22 @@ int BinkADec_RIB_Main(unsigned int uProvider, int iUpDown,
          RIB_READ_ONLY | RIB_ENTRY_DECIMAL},
         {RIB_PROPERTY, "SPU flags", reinterpret_cast<void*>(ASI_SPU_FLAGS_PROPERTY),
          RIB_READ_ONLY | RIB_ENTRY_DECIMAL}};
-    RIB_INTERFACE_ENTRY codecEntries[3] = {
+    const RIB_INTERFACE_ENTRY codecEntries[3] = {
         {RIB_FUNCTION, "ASI_startup", reinterpret_cast<void*>(ASI_startup), 0},
         {RIB_FUNCTION, "ASI_error", reinterpret_cast<void*>(ASI_error), 0},
         {RIB_FUNCTION, "ASI_shutdown", reinterpret_cast<void*>(ASI_shutdown), 0}};
-    RIB_INTERFACE_ENTRY streamEntries[3] = {
+    const RIB_INTERFACE_ENTRY streamEntries[3] = {
         {RIB_FUNCTION, "ASI_stream_open", reinterpret_cast<void*>(ASI_stream_open), 0},
         {RIB_FUNCTION, "ASI_stream_process", reinterpret_cast<void*>(ASI_stream_process), 0},
         {RIB_FUNCTION, "ASI_stream_property", reinterpret_cast<void*>(ASI_stream_property), 0}};
-    RIB_INTERFACE_ENTRY streamControlEntries[4] = {
+    const RIB_INTERFACE_ENTRY streamControlEntries[4] = {
         {RIB_FUNCTION, "ASI_stream_seek", reinterpret_cast<void*>(ASI_stream_seek), 0},
         {RIB_FUNCTION, "ASI_stream_close", reinterpret_cast<void*>(ASI_stream_close), 0},
         {RIB_PROPERTY, "Input bit rate", reinterpret_cast<void*>(ASI_INPUT_BIT_RATE),
          RIB_READ_ONLY | RIB_ENTRY_DECIMAL},
         {RIB_PROPERTY, "Input sample rate", reinterpret_cast<void*>(ASI_INPUT_SAMPLE_RATE),
          RIB_READ_ONLY | RIB_ENTRY_DECIMAL}};
-    RIB_INTERFACE_ENTRY streamFormatEntries[4] = {
+    const RIB_INTERFACE_ENTRY streamFormatEntries[4] = {
         {RIB_PROPERTY, "Input sample width", reinterpret_cast<void*>(ASI_INPUT_SAMPLE_WIDTH),
          RIB_READ_ONLY | RIB_ENTRY_DECIMAL},
         {RIB_PROPERTY, "Input channels", reinterpret_cast<void*>(ASI_INPUT_CHANNELS),
@@ -1735,7 +1720,7 @@ int BinkADec_RIB_Main(unsigned int uProvider, int iUpDown,
          RIB_READ_ONLY | RIB_ENTRY_DECIMAL},
         {RIB_PROPERTY, "Output sample rate", reinterpret_cast<void*>(ASI_OUTPUT_SAMPLE_RATE),
          RIB_READ_ONLY | RIB_ENTRY_DECIMAL}};
-    RIB_INTERFACE_ENTRY streamOutputEntries[5] = {
+    const RIB_INTERFACE_ENTRY streamOutputEntries[5] = {
         {RIB_PROPERTY, "Output sample width", reinterpret_cast<void*>(ASI_OUTPUT_SAMPLE_WIDTH),
          RIB_READ_ONLY | RIB_ENTRY_DECIMAL},
         {RIB_PROPERTY, "Output channels", reinterpret_cast<void*>(ASI_OUTPUT_CHANNELS),
@@ -1746,7 +1731,7 @@ int BinkADec_RIB_Main(unsigned int uProvider, int iUpDown,
          RIB_READ_ONLY | RIB_ENTRY_DECIMAL},
         {RIB_PROPERTY, "Set Looping Samples", reinterpret_cast<void*>(ASI_SET_LOOPING_SAMPLES),
          RIB_ENTRY_DECIMAL}};
-    RIB_INTERFACE_ENTRY streamSeekEntries[6] = {
+    const RIB_INTERFACE_ENTRY streamSeekEntries[6] = {
         {RIB_PROPERTY, "Percent done", reinterpret_cast<void*>(ASI_PERCENT_DONE),
          RIB_READ_ONLY | RIB_ENTRY_PERCENT},
         {RIB_PROPERTY, "Stream seek position", reinterpret_cast<void*>(ASI_STREAM_SEEK_POSITION),
@@ -1760,11 +1745,7 @@ int BinkADec_RIB_Main(unsigned int uProvider, int iUpDown,
         {RIB_PROPERTY, "Clear Loop Meta", reinterpret_cast<void*>(ASI_CLEAR_LOOP_META),
          RIB_READ_ONLY | RIB_ENTRY_CUSTOM}};
 
-    if (iUpDown == 0)
-    {
-        pUnregisterInterface(uProvider, NULL, 0, NULL);
-    }
-    else
+    if (iUpDown)
     {
         pRegisterInterface(uProvider, ASI_CODEC_INTERFACE, 4, codecProviderEntries);
         pRegisterInterface(uProvider, ASI_CODEC_INTERFACE, 4, codecTypeEntries);
@@ -1774,6 +1755,10 @@ int BinkADec_RIB_Main(unsigned int uProvider, int iUpDown,
         pRegisterInterface(uProvider, ASI_STREAM_INTERFACE, 4, streamFormatEntries);
         pRegisterInterface(uProvider, ASI_STREAM_INTERFACE, 5, streamOutputEntries);
         pRegisterInterface(uProvider, ASI_STREAM_INTERFACE, 6, streamSeekEntries);
+    }
+    else
+    {
+        pUnregisterInterface(uProvider, NULL, 0, NULL);
     }
 
     return 1;

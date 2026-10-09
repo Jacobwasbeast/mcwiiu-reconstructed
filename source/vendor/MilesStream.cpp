@@ -137,15 +137,15 @@ static MilesProfileSite StreamPercentSite;
 #define LITTLE_ENDIAN_HIGH_16(uValue) ((((uValue) >> 16 & 0xff) << 8) | ((uValue) >> 24))
 #define LITTLE_ENDIAN_LOW_16(uValue) ((((uValue) & 0xff) << 8) | ((uValue) >> 8 & 0xff))
 
-#define QUEUE_ASI_RESET(pStream, iBuffer, iPosition) \
+#define QUEUE_ASI_RESET(pStream, iBuffer, pLength, iPosition) \
     do \
     { \
-        int iLength = (pStream)->bufferLength[iBuffer]; \
+        int iLength = *(pLength); \
         if (iLength == 0) \
         { \
-            (pStream)->bufferLength[iBuffer] = SILENCE_LENGTH; \
+            *(pLength) = SILENCE_LENGTH; \
             memset((pStream)->buffers[iBuffer], 0, SILENCE_LENGTH); \
-            iLength = (pStream)->bufferLength[iBuffer]; \
+            iLength = *(pLength); \
         } \
         (pStream)->resetASI[iBuffer] = iLength + 1; \
         (pStream)->resetPosition[iBuffer] = (iPosition); \
@@ -161,7 +161,7 @@ void handle_asyncs(_STREAM* pStream, int iWait)
         }
 
         MilesAsyncRead* pRead = &pStream->reads[iIndex];
-        int iDone = MilesAsyncFileStatus(pRead, iWait != 0 ? ASYNC_WAIT_FOREVER : 0);
+        int iDone = MilesAsyncFileStatus(pRead, iWait == 0 ? 0 : ASYNC_WAIT_FOREVER);
         int iBytesRead = pRead->iBytesRead;
         if (iDone != 0 && pRead->iStatus != ASYNC_STATUS_CANCELLED)
         {
@@ -193,17 +193,17 @@ void cancel_asyncs(_STREAM* pStream)
 
 extern "C" float AIL_API_stream_filled_percent(_STREAM* pStream)
 {
-    if (pStream == NULL || pStream->error != 0)
+    if (pStream != NULL && pStream->error == 0)
     {
-        return 0.0f;
-    }
+        if (pStream->preload != 0 || pStream->startRemaining == 0)
+        {
+            return 1.0f;
+        }
 
-    if (pStream->preload == 0 && pStream->startRemaining != 0)
-    {
         return pStream->fillPercent;
     }
 
-    return 1.0f;
+    return 0.0f;
 }
 
 float MilesStreamCB(void* pUserData)
@@ -228,8 +228,8 @@ int start_IOs_if_we_can(_STREAM* pStream)
     {
         if (uLoaded != 0 && pStream->playStatus == STREAM_PLAY_FLAG_PLAYING &&
             pStream->error == 0 &&
-            (pStream->startRemaining < (int)uLoaded ||
-             (unsigned int)pStream->dataLength <= (unsigned int)pStream->readPosition))
+            ((int)uLoaded > pStream->startRemaining ||
+             (unsigned int)pStream->readPosition >= (unsigned int)pStream->dataLength))
         {
             pStream->startRemaining = 0;
             AIL_start_sample(pStream->sample);
@@ -262,71 +262,71 @@ int start_IOs_if_we_can(_STREAM* pStream)
         }
 
         int iPosition = pStream->readPosition;
+        int* pLength = &pStream->bufferLength[iBuffer];
         unsigned int uToRead = pStream->dataLength - iPosition;
-        if ((unsigned int)pStream->bufferSize < uToRead)
+        if (uToRead > (unsigned int)pStream->bufferSize)
         {
             uToRead = pStream->bufferSize;
         }
 
-        if ((unsigned int)(pStream->loopEnd - iPosition) < uToRead)
+        if (uToRead > (unsigned int)(pStream->loopEnd - iPosition))
         {
             uToRead = pStream->loopEnd - iPosition;
         }
 
-        unsigned int uReadLength;
-        if (uToRead == 0 || pStream->buffers[iBuffer] == NULL)
-        {
-            uReadLength = 0;
-            pStream->bufferStart[iBuffer] = iPosition;
-            if (uToRead != 0)
-            {
-                pStream->error = 1;
-            }
-        }
-        else
+        unsigned int uReadLength = 0;
+        if (uToRead != 0 && pStream->buffers[iBuffer] != NULL)
         {
             unsigned int uSectorOffset = (iPosition + pStream->dataStart) & SECTOR_MASK;
-            uReadLength = uToRead;
-            if (uSectorOffset != 0 && pStream->preload == 0 && uToRead > uSectorOffset)
+            if (uSectorOffset != 0 && pStream->preload == 0 && uSectorOffset < uToRead)
             {
-                uToRead = uToRead - uSectorOffset;
-                if (uToRead >= SECTOR_MINIMUM_READ)
+                if (uToRead - uSectorOffset > SECTOR_MINIMUM_READ &&
+                    uSectorOffset % AIL_API_sample_granularity(pStream->sample) == 0)
                 {
-                    unsigned int uGranularity = AIL_API_sample_granularity(pStream->sample);
-                    if (uSectorOffset == (uSectorOffset / uGranularity) * uGranularity)
-                    {
-                        uReadLength = uToRead;
-                    }
+                    uToRead = uToRead - uSectorOffset;
                 }
             }
 
-            MilesAsyncRead* pRead = &pStream->reads[iBuffer];
-            memset(pRead, 0, sizeof(MilesAsyncRead));
-            pRead->pBuffer = pStream->buffers[iBuffer] + pStream->bufferLength[iBuffer];
-            pRead->uFileHandle = pStream->fileHandle;
-            pRead->iLengthHigh = 0;
-            pRead->iLength = uReadLength;
-            pRead->pPriorityCallback = MilesStreamCB;
-            pRead->pOwnerName = MILES_STREAM_FILE;
-            pRead->iOwnerLine = STREAM_READ_LINE;
-            if (pStream->seekOffset == -1)
+            if (uToRead != 0)
             {
-                pRead->uFlags = ASYNC_FLAG_KEEP_OPEN | ASYNC_FLAG_NO_SEEK;
-                pStream->readStatus[iBuffer] = STREAM_READ_PENDING;
-                MilesAsyncFileRead(pRead);
-            }
-            else
-            {
-                pRead->uFlags = ASYNC_FLAG_KEEP_OPEN;
-                pRead->lOffset = pStream->seekOffset;
-                pStream->seekOffset = -1;
-                pStream->readStatus[iBuffer] = STREAM_READ_PENDING;
-                MilesAsyncFileRead(pRead);
+                MilesAsyncRead* pRead = &pStream->reads[iBuffer];
+                memset(pRead, 0, sizeof(MilesAsyncRead));
+                pRead->pBuffer = pStream->buffers[iBuffer] + *pLength;
+                pRead->uFileHandle = pStream->fileHandle;
+                pRead->iLengthHigh = 0;
+                pRead->iLength = uToRead;
+                pRead->pPriorityCallback = MilesStreamCB;
+                pRead->pOwnerName = MILES_STREAM_FILE;
+                pRead->iOwnerLine = STREAM_READ_LINE;
+                if (pStream->seekOffset != -1)
+                {
+                    pRead->uFlags = ASYNC_FLAG_KEEP_OPEN;
+                    pRead->lOffset = pStream->seekOffset;
+                    pStream->seekOffset = -1;
+                    pStream->readStatus[iBuffer] = STREAM_READ_PENDING;
+                    MilesAsyncFileRead(pRead);
+                }
+                else
+                {
+                    pRead->uFlags = ASYNC_FLAG_KEEP_OPEN | ASYNC_FLAG_NO_SEEK;
+                    pStream->readStatus[iBuffer] = STREAM_READ_PENDING;
+                    MilesAsyncFileRead(pRead);
+                }
             }
 
             pStream->bufferStart[iBuffer] = pStream->readPosition;
+            uReadLength = uToRead;
             pStream->readPosition = pStream->readPosition + uReadLength;
-            pStream->bufferLength[iBuffer] = pStream->bufferLength[iBuffer] + uReadLength;
+            *pLength = *pLength + uReadLength;
+        }
+        else
+        {
+            pStream->bufferStart[iBuffer] = iPosition;
+        }
+
+        if (uReadLength != uToRead)
+        {
+            pStream->error = 1;
         }
 
         if (pStream->loopEnd == pStream->readPosition)
@@ -344,13 +344,17 @@ int start_IOs_if_we_can(_STREAM* pStream)
             pStream->seekOffset = pStream->loopStart + pStream->dataStart;
             if (pStream->usingASI != 0 || pStream->blockOriented != 0)
             {
-                QUEUE_ASI_RESET(pStream, iBuffer, pStream->loopStart);
+                QUEUE_ASI_RESET(pStream, iBuffer, pLength, pStream->loopStart);
             }
         }
 
         if (pStream->dataLength == pStream->readPosition)
         {
-            if (pStream->loopCount != 1)
+            if (pStream->loopCount == 1)
+            {
+                pStream->endOfData = STREAM_END_PENDING;
+            }
+            else
             {
                 if (pStream->loopCount != 0)
                 {
@@ -361,12 +365,8 @@ int start_IOs_if_we_can(_STREAM* pStream)
                 pStream->seekOffset = pStream->dataStart;
                 if (pStream->usingASI != 0 || pStream->blockOriented != 0)
                 {
-                    QUEUE_ASI_RESET(pStream, iBuffer, 0);
+                    QUEUE_ASI_RESET(pStream, iBuffer, pLength, 0);
                 }
-            }
-            else
-            {
-                pStream->endOfData = STREAM_END_PENDING;
             }
         }
 
@@ -386,16 +386,13 @@ int start_IOs_if_we_can(_STREAM* pStream)
         pStream->readBuffer = iBuffer;
     } while (iPasses != 0);
 
-    if (pStream->preload == 0 || pStream->fileHandle == STREAM_NO_FILE)
-    {
-        if (pStream->ioState == STREAM_IO_WAITING)
-        {
-            pStream->ioState = STREAM_IO_ACTIVE;
-        }
-    }
-    else
+    if (pStream->preload != 0 && pStream->fileHandle != STREAM_NO_FILE)
     {
         pStream->ioState = 0;
+    }
+    else if (pStream->ioState == STREAM_IO_WAITING)
+    {
+        pStream->ioState = STREAM_IO_ACTIVE;
     }
 
     return iStarted;
@@ -405,144 +402,139 @@ void background(unsigned int uTimer)
 {
     _STREAM* pStream = StreamList;
     InMilesMutex();
-    for (;;)
+    while (pStream != NULL)
     {
-        if (pStream == NULL)
+        _STREAM* pNext;
+        if (pStream->preloadLoaded == 0)
         {
-            OutMilesMutex();
-            return;
-        }
-
-        if (pStream->preloadLoaded != 0)
-        {
-            pStream = pStream->next;
-            continue;
-        }
-
-        if (pStream->ioState == STREAM_IO_ACTIVE)
-        {
-            start_IOs_if_we_can(pStream);
-        }
-
-        bool bRescan = true;
-        while (bRescan)
-        {
-            bRescan = false;
-            int iLoad = pStream->loadBuffer;
-            handle_asyncs(pStream, 0);
-            if (pStream->endOfData == STREAM_END_PENDING &&
-                pStream->playStatus == STREAM_PLAY_FLAG_PLAYING &&
-                pStream->bufferLength[iLoad] == 0)
+            if (pStream->ioState == STREAM_IO_ACTIVE)
             {
-                if (AIL_sample_buffer_available(pStream->sample) != 0)
+                start_IOs_if_we_can(pStream);
+            }
+
+            for (;;)
+            {
+                int iLoad = pStream->loadBuffer;
+                handle_asyncs(pStream, 0);
+                if (pStream->endOfData == STREAM_END_PENDING &&
+                    pStream->playStatus == STREAM_PLAY_FLAG_PLAYING &&
+                    pStream->bufferLength[iLoad] == 0)
                 {
-                    AIL_load_sample_buffer(pStream->sample, pStream->loadBuffer,
-                                           pStream->buffers[0], 0);
-                    int iNext = pStream->loadBuffer + 1;
-                    if (iNext >= STREAM_BUFFER_COUNT)
+                    if (AIL_sample_buffer_available(pStream->sample) != 0)
                     {
-                        iNext = 0;
+                        AIL_load_sample_buffer(pStream->sample, pStream->loadBuffer,
+                                               pStream->buffers[0], 0);
+                        pStream->loadBuffer = pStream->loadBuffer + 1;
+                        if (pStream->loadBuffer >= STREAM_BUFFER_COUNT)
+                        {
+                            pStream->loadBuffer = 0;
+                        }
+
+                        if (pStream->startRemaining != 0 &&
+                            pStream->playStatus == STREAM_PLAY_FLAG_PLAYING &&
+                            pStream->error == 0)
+                        {
+                            pStream->startRemaining = 0;
+                            AIL_start_sample(pStream->sample);
+                        }
+
+                        pStream->endOfData = STREAM_END_QUEUED;
+                        if (pStream->callback != NULL)
+                        {
+                            pStream->callbackPending = 1;
+                        }
+                    }
+                }
+
+                if ((pStream->bufferLength[iLoad] == 0 &&
+                     pStream->endOfData != STREAM_END_PENDING) ||
+                    pStream->playStatus != STREAM_PLAY_FLAG_PLAYING)
+                {
+                    break;
+                }
+
+                if (pStream->readStatus[iLoad] != STREAM_READ_COMPLETE)
+                {
+                    break;
+                }
+
+                if (pStream->preload != 0)
+                {
+                    AIL_set_sample_address(pStream->sample, pStream->buffers[iLoad],
+                                           pStream->bufferLength[iLoad]);
+                    if (pStream->preloadSeek != 0)
+                    {
+                        AIL_set_sample_position(pStream->sample, pStream->preloadSeek);
+                        pStream->preloadSeek = 0;
                     }
 
-                    pStream->loadBuffer = iNext;
-                    if (pStream->startRemaining != 0 &&
+                    pStream->readStatus[iLoad] = 0;
+                    AIL_resume_sample(pStream->sample);
+                    pStream->preloadLoaded = 1;
+                    break;
+                }
+
+                InMilesMutex();
+                if (AIL_sample_buffer_available(pStream->sample) != 0)
+                {
+                    pStream->loadBuffer = pStream->loadBuffer + 1;
+                    if (pStream->loadBuffer >= STREAM_BUFFER_COUNT)
+                    {
+                        pStream->loadBuffer = 0;
+                    }
+
+                    if (pStream->resetASI[iLoad] != 0)
+                    {
+                        pStream->bufferLength[iLoad] = pStream->resetASI[iLoad] - 1;
+                        pStream->resetASI[iLoad] = 0;
+                        AIL_request_EOB_ASI_reset(pStream->sample, iLoad,
+                                                  pStream->resetPosition[iLoad]);
+                    }
+
+                    AIL_load_sample_buffer(pStream->sample, iLoad, pStream->buffers[iLoad],
+                                           pStream->bufferLength[iLoad]);
+                    pStream->sample->lastBuffer = pStream->loadBuffer;
+                    pStream->readStatus[iLoad] = 0;
+                    OutMilesMutex();
+                    if (pStream->startRemaining <= pStream->bufferLength[iLoad] &&
                         pStream->playStatus == STREAM_PLAY_FLAG_PLAYING && pStream->error == 0)
                     {
                         pStream->startRemaining = 0;
                         AIL_start_sample(pStream->sample);
                     }
-
-                    pStream->endOfData = STREAM_END_QUEUED;
-                    if (pStream->callback != NULL)
+                    else
                     {
-                        pStream->callbackPending = 1;
+                        pStream->startRemaining =
+                            pStream->startRemaining - pStream->bufferLength[iLoad];
                     }
-                }
-            }
 
-            if ((pStream->bufferLength[iLoad] == 0 && pStream->endOfData != STREAM_END_PENDING) ||
-                pStream->playStatus != STREAM_PLAY_FLAG_PLAYING)
-            {
-                break;
-            }
-
-            if (pStream->readStatus[iLoad] != STREAM_READ_COMPLETE)
-            {
-                break;
-            }
-
-            if (pStream->preload != 0)
-            {
-                AIL_set_sample_address(pStream->sample, pStream->buffers[iLoad],
-                                       pStream->bufferLength[iLoad]);
-                if (pStream->preloadSeek != 0)
-                {
-                    AIL_set_sample_position(pStream->sample, pStream->preloadSeek);
-                    pStream->preloadSeek = 0;
-                }
-
-                pStream->readStatus[iLoad] = 0;
-                AIL_resume_sample(pStream->sample);
-                pStream->preloadLoaded = 1;
-                break;
-            }
-
-            InMilesMutex();
-            if (AIL_sample_buffer_available(pStream->sample) != 0)
-            {
-                int iNext = pStream->loadBuffer + 1;
-                if (iNext >= STREAM_BUFFER_COUNT)
-                {
-                    iNext = 0;
-                }
-
-                pStream->loadBuffer = iNext;
-                if (pStream->resetASI[iLoad] != 0)
-                {
-                    pStream->bufferLength[iLoad] = pStream->resetASI[iLoad] - 1;
-                    pStream->resetASI[iLoad] = 0;
-                    AIL_request_EOB_ASI_reset(pStream->sample, iLoad,
-                                              pStream->resetPosition[iLoad]);
-                }
-
-                AIL_load_sample_buffer(pStream->sample, iLoad, pStream->buffers[iLoad],
-                                       pStream->bufferLength[iLoad]);
-                pStream->sample->lastBuffer = pStream->loadBuffer;
-                pStream->readStatus[iLoad] = 0;
-                OutMilesMutex();
-                if (pStream->bufferLength[iLoad] < pStream->startRemaining ||
-                    pStream->playStatus != STREAM_PLAY_FLAG_PLAYING || pStream->error != 0)
-                {
-                    pStream->startRemaining =
-                        pStream->startRemaining - pStream->bufferLength[iLoad];
                     pStream->bufferLength[iLoad] = 0;
                 }
                 else
                 {
-                    pStream->startRemaining = 0;
-                    AIL_start_sample(pStream->sample);
-                    pStream->bufferLength[iLoad] = 0;
+                    OutMilesMutex();
+                    break;
                 }
-
-                bRescan = true;
             }
-            else
+
+            pNext = pStream->next;
+            if (pStream->callbackPending != 0 && pStream->callback != NULL &&
+                AIL_sample_status(pStream->sample) != SAMPLE_STATUS_PLAYING)
             {
-                OutMilesMutex();
+                pStream->callbackPending = 0;
+                pStream->callback(pStream);
+                pNext = StreamList;
             }
         }
-
-        _STREAM* pNext = pStream->next;
-        if (pStream->callbackPending != 0 && pStream->callback != NULL &&
-            AIL_sample_status(pStream->sample) != SAMPLE_STATUS_PLAYING)
+        else
         {
-            pStream->callbackPending = 0;
-            pStream->callback(pStream);
-            pNext = StreamList;
+            pNext = pStream->next;
         }
 
         pStream = pNext;
     }
+
+    OutMilesMutex();
 }
 
 extern "C" _STREAM* AIL_API_open_stream(_DIG_DRIVER* pDriver, const char* pFileName,
@@ -1170,68 +1162,71 @@ extern "C" void AIL_API_close_stream(_STREAM* pStream)
 
 extern "C" int AIL_API_stream_status(_STREAM* pStream)
 {
-    if (pStream == NULL || pStream->error != 0)
+    if (pStream != NULL && pStream->error == 0)
     {
-        return -1;
-    }
-
-    if (pStream->paused == 0)
-    {
-        if ((pStream->playStatus & SAMPLE_STATUS_STOPPED) != 0 || pStream->playStatus == 0)
+        if (pStream->paused == 0)
         {
-            return SAMPLE_STATUS_STOPPED;
+            if ((pStream->playStatus & SAMPLE_STATUS_STOPPED) != 0 || pStream->playStatus == 0)
+            {
+                return SAMPLE_STATUS_STOPPED;
+            }
+
+            if (pStream->endOfData == 0 || AIL_API_sample_loaded_len(pStream->sample) != 0 ||
+                ((pStream->bufferLength[pStream->loadBuffer] != 0 ||
+                  pStream->endOfData == STREAM_END_PENDING) &&
+                 pStream->playStatus == STREAM_PLAY_FLAG_PLAYING &&
+                 pStream->readStatus[pStream->loadBuffer] != 0))
+            {
+                return SAMPLE_STATUS_PLAYING;
+            }
         }
 
-        if (pStream->endOfData == 0 || AIL_API_sample_loaded_len(pStream->sample) != 0 ||
-            ((pStream->bufferLength[pStream->loadBuffer] != 0 ||
-              pStream->endOfData == STREAM_END_PENDING) &&
-             pStream->playStatus == STREAM_PLAY_FLAG_PLAYING &&
-             pStream->readStatus[pStream->loadBuffer] != 0))
-        {
-            return SAMPLE_STATUS_PLAYING;
-        }
+        return SAMPLE_STATUS_DONE;
     }
 
-    return SAMPLE_STATUS_DONE;
+    return -1;
 }
 
 int stream_align(_STREAM* pStream, int iPosition)
 {
+    int iAligned = iPosition;
     if (pStream->usingASI == 0)
     {
         if (pStream->blockOriented != 0)
         {
             unsigned int uBlock = pStream->blockSize;
-            unsigned int uAligned = iPosition / uBlock * uBlock;
-            if ((int)uBlock / 2 < (int)(iPosition - uAligned))
+            iAligned = iPosition / uBlock * uBlock;
+            if (iPosition - iAligned > (int)uBlock / 2)
             {
-                uAligned = uAligned + uBlock;
+                iAligned = iAligned + uBlock;
             }
 
-            if (pStream->dataLength < (int)uAligned)
+            if (iAligned > pStream->dataLength)
             {
                 return pStream->dataLength;
             }
 
-            return uAligned;
+            return iAligned;
         }
-
-        int iUnit = 1;
-        if ((pStream->format & FORMAT_16_BIT) != 0)
+        else
         {
-            iUnit = 2;
+            int iUnit = 1;
+            if ((pStream->format & FORMAT_16_BIT) != 0)
+            {
+                iUnit = 2;
+            }
+
+            iUnit = iUnit * pStream->sample->channelCount;
+            iAligned = iPosition - iPosition % iUnit;
         }
-
-        iUnit = iUnit * pStream->sample->channelCount;
-        iPosition = iPosition - iPosition % iUnit;
     }
 
-    if (pStream->dataLength < iPosition)
+    if (iAligned > pStream->dataLength)
     {
-        return pStream->dataLength;
+        iAligned = pStream->dataLength;
     }
 
-    return iPosition;
+    return iAligned;
 }
 
 extern "C" void AIL_API_set_stream_position(_STREAM* pStream, int iPosition)
@@ -1258,45 +1253,44 @@ extern "C" void AIL_API_set_stream_position(_STREAM* pStream, int iPosition)
 
     if (pStream->preload != 0)
     {
-        if (pStream->startRemaining == pStream->startThreshold)
+        if (pStream->startRemaining != pStream->startThreshold)
         {
-            pStream->preloadSeek = iPosition;
+            AIL_set_sample_position(pStream->sample, iPosition);
             return;
         }
 
-        AIL_set_sample_position(pStream->sample, iPosition);
+        pStream->preloadSeek = iPosition;
         return;
     }
 
-    _SAMPLE* pSample = pStream->sample;
-    pSample->resetB = 0;
-    pSample->resetA = 0;
-    int iBuffer = pSample->currentBuffer;
-    if (pSample->currentBuffer != pSample->lastBuffer || pSample->starved == 0)
+    pStream->sample->resetB = 0;
+    pStream->sample->resetA = 0;
+    int iBuffer = pStream->sample->currentBuffer;
+    if (pStream->sample->currentBuffer != pStream->sample->lastBuffer ||
+        pStream->sample->starved == 0)
     {
         do
         {
             if (pStream->bufferStart[iBuffer] <= iPosition &&
-                iPosition - pStream->bufferStart[iBuffer] < pSample->buffers[iBuffer].size)
+                iPosition - pStream->bufferStart[iBuffer] < pStream->sample->buffers[iBuffer].size)
             {
-                while (pSample->currentBuffer != iBuffer)
+                while (pStream->sample->currentBuffer != iBuffer)
                 {
-                    int iCurrent = pSample->currentBuffer;
-                    pSample->buffers[iCurrent].position = SILENCE_LENGTH;
-                    pSample->buffers[pSample->currentBuffer].size = SILENCE_LENGTH;
-                    pStream->readStatus[pSample->currentBuffer] = 0;
-                    pStream->bufferLength[pSample->currentBuffer] = 0;
-                    pStream->resetASI[pSample->currentBuffer] = 0;
-                    pStream->resetPosition[pSample->currentBuffer] = 0;
-                    pStream->bufferStart[pSample->currentBuffer] = 0;
-                    pSample->currentBuffer = pSample->currentBuffer + 1;
-                    if (pSample->currentBuffer >= pSample->bufferCount)
+                    pStream->sample->buffers[pStream->sample->currentBuffer].position = SILENCE_LENGTH;
+                    pStream->sample->buffers[pStream->sample->currentBuffer].size = SILENCE_LENGTH;
+                    pStream->readStatus[pStream->sample->currentBuffer] = 0;
+                    pStream->bufferLength[pStream->sample->currentBuffer] = 0;
+                    pStream->resetASI[pStream->sample->currentBuffer] = 0;
+                    pStream->resetPosition[pStream->sample->currentBuffer] = 0;
+                    pStream->bufferStart[pStream->sample->currentBuffer] = 0;
+                    pStream->sample->currentBuffer = pStream->sample->currentBuffer + 1;
+                    if (pStream->sample->currentBuffer >= pStream->sample->bufferCount)
                     {
-                        pSample->currentBuffer = 0;
+                        pStream->sample->currentBuffer = 0;
                     }
                 }
 
-                pSample->buffers[iBuffer].position = iPosition - pStream->bufferStart[iBuffer];
+                pStream->sample->buffers[iBuffer].position = iPosition - pStream->bufferStart[iBuffer];
                 if (pStream->usingASI != 0)
                 {
                     pStream->asi->seek(pStream->asi->stream, -1);
@@ -1306,11 +1300,11 @@ extern "C" void AIL_API_set_stream_position(_STREAM* pStream, int iPosition)
             }
 
             iBuffer = iBuffer + 1;
-            if (iBuffer >= pSample->bufferCount)
+            if (iBuffer >= pStream->sample->bufferCount)
             {
                 iBuffer = 0;
             }
-        } while (iBuffer != pSample->lastBuffer);
+        } while (iBuffer != pStream->sample->lastBuffer);
     }
 
     cancel_asyncs(pStream);
@@ -1350,23 +1344,23 @@ extern "C" void AIL_API_set_stream_position(_STREAM* pStream, int iPosition)
 
 extern "C" int AIL_API_stream_position(_STREAM* pStream)
 {
-    if (pStream == NULL)
+    if (pStream != NULL)
     {
-        return -1;
+        int iPosition = AIL_sample_position(pStream->sample);
+        if (pStream->preload == 0)
+        {
+            iPosition = iPosition + pStream->bufferStart[pStream->sample->currentBuffer];
+        }
+
+        if (iPosition > pStream->dataLength)
+        {
+            iPosition = pStream->dataLength;
+        }
+
+        return iPosition;
     }
 
-    int iPosition = AIL_sample_position(pStream->sample);
-    if (pStream->preload == 0)
-    {
-        iPosition = iPosition + pStream->bufferStart[pStream->sample->currentBuffer];
-    }
-
-    if (pStream->dataLength < iPosition)
-    {
-        iPosition = pStream->dataLength;
-    }
-
-    return iPosition;
+    return -1;
 }
 
 extern "C" void AIL_API_start_stream(_STREAM* pStream)
@@ -1411,8 +1405,7 @@ extern "C" void AIL_API_pause_stream(_STREAM* pStream, int iPause)
         return;
     }
 
-    unsigned int uStatus = pStream->playStatus;
-    if ((uStatus & STREAM_PLAY_MASK) == 0)
+    if ((pStream->playStatus & STREAM_PLAY_MASK) == 0)
     {
         if (pStream->ioState == STREAM_IO_WAITING)
         {
@@ -1429,13 +1422,12 @@ extern "C" void AIL_API_pause_stream(_STREAM* pStream, int iPause)
         return;
     }
 
-    if ((uStatus & STREAM_PLAY_SAMPLE_STOPPED) != 0)
+    if ((pStream->playStatus & STREAM_PLAY_SAMPLE_STOPPED) != 0)
     {
         AIL_resume_sample(pStream->sample);
-        uStatus = pStream->playStatus;
     }
 
-    pStream->playStatus = uStatus & ~STREAM_PLAY_PAUSE_BITS;
+    pStream->playStatus = pStream->playStatus & ~STREAM_PLAY_PAUSE_BITS;
     background(0);
 }
 
@@ -1496,70 +1488,68 @@ extern "C" void AIL_API_set_stream_ms_position(_STREAM* pStream, unsigned int uM
     int iPosition;
     int iLocation;
 
-    if (pStream == NULL)
+    if (pStream != NULL)
     {
-        return;
-    }
-
-    if ((pStream->format & FORMAT_ADPCM) == 0)
-    {
-        DecoderStage& decoder = pStream->sample->stages[DECODER_STAGE].decoder;
-        if (decoder.active != 0 && decoder.exactSeek != 0)
+        if ((pStream->format & FORMAT_ADPCM) != 0)
         {
-            iLocation = 0;
-            if (decoder.property(decoder.stream, decoder.exactSeek, NULL, &uMilliseconds,
-                                 &iLocation) == 1)
-            {
-                AIL_set_stream_position(pStream, iLocation);
-                return;
-            }
-        }
-
-        if (pStream->blockOriented == 0)
-        {
-            int iSampleBytes = 1;
-            if ((pStream->format & FORMAT_16_BIT) != 0)
-            {
-                iSampleBytes = 2;
-            }
-
-            iPosition = (int)(((float)(unsigned int)(pStream->sampleRate *
-                                                     pStream->sample->channelCount *
-                                                     iSampleBytes) *
+            unsigned int uHeader = 4 << ((pStream->format >> 1) & 1);
+            iPosition = (int)(((float)((unsigned int)(pStream->sampleRate * pStream->blockSize) /
+                                       (((pStream->blockSize - uHeader) * 8) / uHeader + 1)) *
                                (float)(int)uMilliseconds) /
                               MILLISECONDS_PER_SECOND);
         }
         else
         {
-            iPosition = (int)(((float)(unsigned int)pStream->dataRate *
-                               (float)(int)uMilliseconds) /
-                              MILLISECONDS_PER_SECOND);
-        }
-    }
-    else
-    {
-        unsigned int uHeader = 4 << ((pStream->format >> 1) & 1);
-        iPosition = (int)(((float)((unsigned int)(pStream->sampleRate * pStream->blockSize) /
-                                   (((pStream->blockSize - uHeader) * 8) / uHeader + 1)) *
-                           (float)(int)uMilliseconds) /
-                          MILLISECONDS_PER_SECOND);
-    }
+            DecoderStage& decoder = pStream->sample->stages[DECODER_STAGE].decoder;
+            if (decoder.active != 0 && decoder.exactSeek != 0)
+            {
+                iLocation = 0;
+                if (decoder.property(decoder.stream, decoder.exactSeek, NULL, &uMilliseconds,
+                                     &iLocation) == 1)
+                {
+                    AIL_set_stream_position(pStream, iLocation);
+                    return;
+                }
+            }
 
-    AIL_set_stream_position(pStream, iPosition);
+            if (pStream->blockOriented != 0)
+            {
+                iPosition = (int)(((float)(unsigned int)pStream->dataRate *
+                                   (float)(int)uMilliseconds) /
+                                  MILLISECONDS_PER_SECOND);
+            }
+            else
+            {
+                int iSampleBytes = 1;
+                if ((pStream->format & FORMAT_16_BIT) != 0)
+                {
+                    iSampleBytes = 2;
+                }
+
+                iPosition = (int)(((float)(unsigned int)(pStream->sampleRate *
+                                                         pStream->sample->channelCount *
+                                                         iSampleBytes) *
+                                   (float)(int)uMilliseconds) /
+                                  MILLISECONDS_PER_SECOND);
+            }
+        }
+
+        AIL_set_stream_position(pStream, iPosition);
+    }
 }
 
 extern "C" void AILSTRM_shutdown(_DIG_DRIVER* pDriver)
 {
-    _STREAM* pStream = StreamList;
-    while (pStream != NULL)
+    _STREAM* pNext = StreamList;
+    while (pNext != NULL)
     {
-        _STREAM* pNext = pStream->next;
-        if (pStream->sample != NULL && pStream->sample->driver == pDriver)
+        _STREAM* pStream = pNext;
+        _SAMPLE* pSample = pNext->sample;
+        pNext = pNext->next;
+        if (pSample != NULL && pSample->driver == pDriver)
         {
             pStream->sample = NULL;
             AIL_close_stream(pStream);
         }
-
-        pStream = pNext;
     }
 }

@@ -7,8 +7,6 @@
 #include <ppc_ghs.h>
 #endif
 
-void __debugbreak();
-
 struct BINKAUDIODECOMP
 {
     short* pOverlap;
@@ -1081,8 +1079,8 @@ static PlanElement RFFT_PLAN[42] = {
 
 extern "C" double fxptof(unsigned int uValue)
 {
-    double dResult = (float)(int)((uValue & ~FXPT_SIGN_BIT) >> FXPT_MANTISSA_SHIFT) *
-                     FXPT_SCALE_TABLE[uValue & FXPT_SCALE_MASK];
+    float fMantissa = (float)(int)((uValue & ~FXPT_SIGN_BIT) >> FXPT_MANTISSA_SHIFT);
+    double dResult = fMantissa * FXPT_SCALE_TABLE[uValue & FXPT_SCALE_MASK];
 
     if ((uValue & FXPT_SIGN_BIT) != 0)
     {
@@ -1847,6 +1845,8 @@ void scalar_dct3_modulate(float* pOutput, const float* pInput, unsigned int uCou
                           unsigned int uHalfCount, const rfft_complex* pTwiddles)
 {
     unsigned int uIndex;
+    float fTwiddleRe;
+    float fTwiddleIm;
     float fLow;
     float fHigh;
 
@@ -1855,10 +1855,12 @@ void scalar_dct3_modulate(float* pOutput, const float* pInput, unsigned int uCou
 
     for (uIndex = 1; uIndex < uHalfCount; ++uIndex)
     {
+        fTwiddleRe = pTwiddles[uIndex].re;
+        fTwiddleIm = pTwiddles[uIndex].im;
         fLow = pInput[uIndex];
         fHigh = pInput[uCount - uIndex];
-        pOutput[2 * uIndex] = pTwiddles[uIndex].re * fLow - pTwiddles[uIndex].im * fHigh;
-        pOutput[2 * uIndex + 1] = pTwiddles[uIndex].re * fHigh + pTwiddles[uIndex].im * fLow;
+        pOutput[2 * uIndex] = fTwiddleRe * fLow - fTwiddleIm * fHigh;
+        pOutput[2 * uIndex + 1] = fTwiddleRe * fHigh + fTwiddleIm * fLow;
     }
 }
 
@@ -1883,12 +1885,7 @@ void fft_driver(rfft_complex* pData, unsigned int uCount, RFFT_PASS_CALLBACK pPa
 
 int is_pow2(unsigned int uValue)
 {
-    if (uValue != 0 && (uValue & (uValue - 1)) == 0)
-    {
-        return 1;
-    }
-
-    return 0;
+    return uValue != 0 && (uValue & (uValue - 1)) == 0;
 }
 
 extern "C" void radfft_init()
@@ -1914,24 +1911,25 @@ extern "C" void radfft_cfft(float* pOutput, const float* pInput, unsigned int uC
 
     if (!is_pow2(uCount) || uCount > RFFT_MAX_COUNT)
     {
-        __debugbreak();
+        __builtin_trap();
     }
 
-    if (uCount < 3)
+    if (uCount <= 2)
     {
-        if (uCount > 1)
+        if (uCount == 2)
         {
-            pResult[0].re = pFirst[0].re + pFirst[1].re;
-            pResult[0].im = pFirst[0].im + pFirst[1].im;
-            pResult[1].re = pFirst[0].re - pFirst[1].re;
-            pResult[1].im = pFirst[0].im - pFirst[1].im;
-            return;
+            float fFirstRe = pFirst[0].re;
+            float fFirstIm = pFirst[0].im;
+            float fSecondRe = pFirst[1].re;
+            float fSecondIm = pFirst[1].im;
+            pResult[0].re = fFirstRe + fSecondRe;
+            pResult[0].im = fFirstIm + fSecondIm;
+            pResult[1].re = fFirstRe - fSecondRe;
+            pResult[1].im = fFirstIm - fSecondIm;
         }
-
-        if (uCount == 1)
+        else if (uCount == 1)
         {
-            pResult[0].re = pFirst[0].re;
-            pResult[0].im = pFirst[0].im;
+            pResult[0] = pFirst[0];
         }
 
         return;
@@ -1941,14 +1939,16 @@ extern "C" void radfft_cfft(float* pOutput, const float* pInput, unsigned int uC
     uSplit = uQuarter / 3 + 1;
     uRemainder = uQuarter - uSplit + 1;
     pOrder = RFFT_ORDER + uQuarter;
-    scalar_radix4(pResult, pFirst, pFirst + uQuarter, pFirst + uQuarter * 2, pFirst + uQuarter * 3, 0,
-                  uSplit, pOrder);
-    scalar_2radix2(pResult, pFirst, pFirst + uQuarter, pFirst + uQuarter * 2,
-                   pFirst + uQuarter * 3, uSplit, uRemainder, pOrder);
-    scalar_radix4(pResult, pFirst + uQuarter * 3, pFirst, pFirst + uQuarter, pFirst + uQuarter * 2,
-                  uRemainder, uQuarter, pOrder);
+    void (*radix4)(rfft_complex*, const rfft_complex*, const rfft_complex*, const rfft_complex*,
+                   const rfft_complex*, unsigned int, unsigned int, const unsigned short*) = scalar_radix4;
+    const rfft_complex* pSecond = pFirst + uQuarter;
+    const rfft_complex* pThird = pFirst + uQuarter * 2;
+    const rfft_complex* pFourth = pFirst + uQuarter * 3;
+    radix4(pResult, pFirst, pSecond, pThird, pFourth, 0, uSplit, pOrder);
+    scalar_2radix2(pResult, pFirst, pSecond, pThird, pFourth, uSplit, uRemainder, pOrder);
+    radix4(pResult, pFourth, pFirst, pSecond, pThird, uRemainder, uQuarter, pOrder);
 
-    if (uCount > 7)
+    if (uCount >= 8)
     {
         fft_driver(pResult, uCount, scalar_cfpass);
     }
@@ -1962,7 +1962,7 @@ extern "C" void radfft_rifft(float* pOutput, float* pInput, unsigned int uCount)
 
     if (!is_pow2(uCount) || uCount - 2 >= RFFT_MAX_COUNT - 1)
     {
-        __debugbreak();
+        __builtin_trap();
     }
 
     fSum = RFFT_HALF * (pInput[0] + pInput[1]);
@@ -1981,9 +1981,9 @@ extern "C" void radfft_rifft(float* pOutput, float* pInput, unsigned int uCount)
 
 extern "C" void radfft_idct(float* pOutput, float* pInput, unsigned int uCount)
 {
-    if (!is_pow2(uCount) || uCount - 2 > RFFT_MAX_COUNT - 2)
+    if (!is_pow2(uCount) || uCount - 2 >= RFFT_MAX_COUNT - 1)
     {
-        __debugbreak();
+        __builtin_trap();
     }
 
     if (uCount * 4 <= RFFT_MAX_COUNT)

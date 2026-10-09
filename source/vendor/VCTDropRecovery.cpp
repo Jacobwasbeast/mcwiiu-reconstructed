@@ -13,6 +13,7 @@ namespace
 {
     const unsigned int DROP_RECOVER_STREAM_MAX = 15;
     const unsigned int DROP_RECOVER_FRAME_SAMPLE_MAX = 1536;
+    const unsigned int NOISE_SCALE_PERCENT_LIMIT = 801;
 
     unsigned int s_maxNoiseAmplitude = 2400;
     short s_noiseScalePercent = 100;
@@ -154,36 +155,18 @@ namespace
     372, -13293, 7531, -36, -11954, 5142, 31331, 16613, 29494, -912, -31588, 7671,
     -31271, -1211, 24212, 27356, -32628, -501, -12227, 25508, 8986, 18694, -14635, 18628
     };
-
-    unsigned int noiseAmplitude(const void* pPrevious, unsigned int uiSize)
-    {
-        unsigned int uiAmplitude = static_cast<unsigned int>(
-            sqrt(static_cast<double>(vct_calc_energy(pPrevious, uiSize))));
-        if (uiAmplitude > s_maxNoiseAmplitude)
-        {
-            uiAmplitude = s_maxNoiseAmplitude;
-        }
-        if (static_cast<unsigned int>(s_noiseScalePercent) < 0x321)
-        {
-            uiAmplitude = uiAmplitude * static_cast<unsigned int>(s_noiseScalePercent) / 100;
-        }
-        return uiAmplitude;
-    }
 }
 
 unsigned int vct_calc_energy(const void* pAudio, unsigned int uiSize)
 {
+    const short* pSamples = static_cast<const short*>(pAudio);
     const unsigned int uiSamples = uiSize >> 1;
     unsigned int uiEnergy = 0;
 
-    if (uiSamples != 0)
+    for (unsigned int uiSample = 0; uiSample < uiSamples; ++uiSample)
     {
-        const short* pSamples = static_cast<const short*>(pAudio);
-        for (unsigned int uiSample = 0; uiSample < uiSamples; ++uiSample)
-        {
-            const int iSample = pSamples[uiSample];
-            uiEnergy += static_cast<unsigned int>(iSample * iSample);
-        }
+        const short sSample = *pSamples++;
+        uiEnergy += sSample * sSample;
     }
 
     return uiEnergy / uiSamples;
@@ -191,63 +174,79 @@ unsigned int vct_calc_energy(const void* pAudio, unsigned int uiSize)
 
 void vct_recover_drop_copy_tail(const void* pPrevious, void* pOut, unsigned int uiSize)
 {
-    const unsigned int uiUnit = s_copyTailUnitLength;
-    if (uiUnit * 16 > uiSize)
+    const unsigned int uiCopySize = s_copyTailUnitLength * 16;
+    if (uiSize < uiCopySize)
     {
         return;
     }
 
+    const unsigned int uiPeriod = uiCopySize >> 1;
     const unsigned int uiSamples = uiSize >> 1;
-    const unsigned int uiPeriod = uiUnit * 8;
     const int iTail = static_cast<int>(uiSamples - uiPeriod);
     const short* pSource = static_cast<const short*>(pPrevious);
-    const short sLast = pSource[((uiSize & 0xfffffffe) >> 1) - 1];
+    const short sLast = pSource[uiSamples - 1];
     short* pDestination = static_cast<short*>(pOut);
 
     for (unsigned int uiSample = 0; uiSample < uiSamples; ++uiSample)
     {
         const int iOffset = static_cast<int>(uiSample % uiPeriod);
-        const short sTail = pSource[iTail + iOffset];
-        const unsigned int uiFade = s_interpolateSampleNum;
-        if (iOffset < static_cast<int>(uiFade))
+        const int iSource = iTail + iOffset;
+        if (iOffset < s_interpolateSampleNum)
         {
             pDestination[uiSample] = static_cast<short>(
-                (static_cast<int>(sLast) * static_cast<int>(uiFade - (iOffset + 1)) +
-                 static_cast<int>(sTail) * (iOffset + 1)) / static_cast<int>(uiFade));
+                (sLast * (s_interpolateSampleNum - (iOffset + 1)) +
+                 pSource[iSource] * (iOffset + 1)) / s_interpolateSampleNum);
         }
         else
         {
-            pDestination[uiSample] = sTail;
+            pDestination[uiSample] = pSource[iSource];
         }
     }
 }
 
 void vct_recover_drop_white_noise(const void* pPrevious, void* pOut, unsigned int uiSize)
 {
-    const unsigned int uiAmplitude = noiseAmplitude(pPrevious, uiSize);
+    unsigned int uiAmplitude = static_cast<unsigned int>(
+        sqrt(static_cast<double>(vct_calc_energy(pPrevious, uiSize))));
+    if (uiAmplitude > s_maxNoiseAmplitude)
+    {
+        uiAmplitude = s_maxNoiseAmplitude;
+    }
+    if (static_cast<unsigned int>(s_noiseScalePercent) < NOISE_SCALE_PERCENT_LIMIT)
+    {
+        uiAmplitude = uiAmplitude * s_noiseScalePercent / 100;
+    }
+
     const unsigned int uiSamples = uiSize >> 1;
     short* pDestination = static_cast<short*>(pOut);
-
     for (unsigned int uiSample = 0; uiSample < uiSamples; ++uiSample)
     {
-        pDestination[uiSample] =
-            static_cast<short>((uiAmplitude * (0x7fff - rand() % 0xffff)) >> 15);
+        const int iNoise = 0x7fff - rand() % 0xffff;
+        pDestination[uiSample] = static_cast<short>((uiAmplitude * iNoise) >> 15);
     }
 }
 
 void vct_recover_drop_pink_noise(const void* pPrevious, void* pOut, unsigned int uiSize)
 {
-    const unsigned int uiAmplitude = noiseAmplitude(pPrevious, uiSize);
-    unsigned int uiPosition = static_cast<unsigned int>(rand() % 0x5b80);
+    unsigned int uiAmplitude = static_cast<unsigned int>(
+        sqrt(static_cast<double>(vct_calc_energy(pPrevious, uiSize))));
+    if (uiAmplitude > s_maxNoiseAmplitude)
+    {
+        uiAmplitude = s_maxNoiseAmplitude;
+    }
+    if (static_cast<unsigned int>(s_noiseScalePercent) < NOISE_SCALE_PERCENT_LIMIT)
+    {
+        uiAmplitude = uiAmplitude * s_noiseScalePercent / 100;
+    }
+
+    unsigned int uiPosition = rand() % 0x5b80;
     const unsigned int uiSamples = uiSize >> 1;
     short* pDestination = static_cast<short*>(pOut);
-
     for (unsigned int uiSample = 0; uiSample < uiSamples; ++uiSample)
     {
         const unsigned int uiIndex = uiPosition % DROP_RECOVER_FRAME_SAMPLE_MAX;
         ++uiPosition;
-        pDestination[uiSample] = static_cast<short>(
-            (uiAmplitude * static_cast<int>(s_pinkNoiseTable[uiIndex])) >> 15);
+        pDestination[uiSample] = static_cast<short>((uiAmplitude * s_pinkNoiseTable[uiIndex]) >> 15);
     }
 }
 
@@ -278,7 +277,8 @@ void vct_recover_drop(const void* pPrevious, void* pOut, unsigned int uiSize)
 int vct_recover_drop_using_spare(nn::pia::chat::AudioStream* pStream, const _udp_packet* pPacket,
                                  void* pOut, unsigned int)
 {
-    if ((pPacket->m_Flags & VCT_PACKET_FLAG_SPARE) == 0)
+    const unsigned char ucFlags = pPacket->m_Flags;
+    if ((ucFlags & VCT_PACKET_FLAG_SPARE) == 0)
     {
         return 0;
     }
@@ -305,36 +305,30 @@ void vct_filter_fade_in(const short* pSrc, short* pDst, unsigned int uiCount,
     {
         return;
     }
-    if (uiCount < uiFadeLength)
+    if (uiFadeLength > uiCount)
     {
         uiFadeLength = uiCount;
-    }
-    if (uiFadeLength == 0)
-    {
-        return;
     }
 
     for (unsigned int uiSample = 0; uiSample < uiFadeLength; ++uiSample)
     {
         const int iWeight = static_cast<int>(uiSample + 1);
         pDst[uiSample] = static_cast<short>(
-            (static_cast<int>(sPrevious) * static_cast<int>(uiFadeLength - (uiSample + 1)) +
-             static_cast<int>(pSrc[uiSample]) * iWeight) / static_cast<int>(uiFadeLength));
+            (sPrevious * static_cast<int>(uiFadeLength - iWeight) + pSrc[uiSample] * iWeight) /
+            static_cast<int>(uiFadeLength));
     }
 }
 
 void vct_filter_fade_rate(const short* pSrc, short* pDst, unsigned int uiCount,
                           float fStartGain, float fEndGain)
 {
-    const float fCount = static_cast<float>(uiCount);
-    const float fRange = fEndGain - fStartGain;
+    const float fStep = (fEndGain - fStartGain) / static_cast<float>(uiCount);
     float fGain = fStartGain;
 
     for (unsigned int uiSample = 0; uiSample < uiCount; ++uiSample)
     {
-        pDst[uiSample] = static_cast<short>(
-            static_cast<int>(static_cast<float>(pSrc[uiSample]) * fGain));
-        fGain = fGain + fRange / fCount;
+        pDst[uiSample] = static_cast<short>(static_cast<float>(pSrc[uiSample]) * fGain);
+        fGain += fStep;
     }
 }
 
@@ -342,75 +336,65 @@ int vct_recover_drop_fade(const void* pPrevious, void* pOut, unsigned int uiSize
                           unsigned int uiStreamIndex)
 {
     nn::pia::chat::AudioStream* pStream = vct_get_audio_stream(uiStreamIndex);
-    short* pFrame = s_previousFrame[uiStreamIndex];
     short* pDestination = static_cast<short*>(pOut);
-    const unsigned int uiSamples = uiSize >> 1;
-    const unsigned int uiLastSample = ((uiSize & 0xfffffffe) >> 1) - 1;
-    unsigned int uiContinuous = pStream->m_Info.m_ContinuousDropCount;
 
-    if (uiContinuous == 0)
+    if (pStream->m_Info.m_ContinuousDropCount == 0)
     {
-        if (pPrevious == 0)
+        if (pPrevious != 0)
         {
-            return 0;
-        }
+            vct_recover_drop(pPrevious, s_previousFrame[uiStreamIndex], uiSize);
+            memcpy(pOut, s_previousFrame[uiStreamIndex], uiSize);
+            vct_filter_fade_in(pDestination, pDestination, uiSize >> 1, s_interpolateSampleNum,
+                               static_cast<const short*>(pPrevious)[(uiSize >> 1) - 1]);
 
-        vct_recover_drop(pPrevious, pFrame, uiSize);
-        memcpy(pOut, pFrame, uiSize);
-        vct_filter_fade_in(pDestination, pDestination, uiSamples, s_interpolateSampleNum,
-                           static_cast<const short*>(pPrevious)[uiLastSample]);
-
-        pStream->m_DropRecovered = 1;
-        pStream->m_LastRecoveredSample = pDestination[uiLastSample];
-        pStream->m_Info.m_ContinuousDropCount = pStream->m_Info.m_ContinuousDropCount + 1;
-        return 1;
-    }
-
-    const unsigned int uiFadeLength = s_continuousDropFadeLength;
-    if (uiFadeLength < 6)
-    {
-        if (uiContinuous < uiFadeLength)
-        {
-            for (unsigned int uiSample = 0; uiSample < uiSamples; ++uiSample)
-            {
-                const short sSource = pFrame[uiSample];
-                pDestination[uiSample] = static_cast<short>(
-                    sSource - static_cast<short>(static_cast<int>(sSource) *
-                                                 static_cast<int>(uiContinuous) /
-                                                 static_cast<int>(s_continuousDropFadeLength)));
-                uiContinuous = pStream->m_Info.m_ContinuousDropCount;
-            }
-
+            pStream->m_LastRecoveredSample = pDestination[(uiSize >> 1) - 1];
             pStream->m_DropRecovered = 1;
-            pStream->m_LastRecoveredSample = pDestination[uiSamples - 1];
-            pStream->m_Info.m_ContinuousDropCount = pStream->m_Info.m_ContinuousDropCount + 1;
+            pStream->m_Info.m_ContinuousDropCount++;
             return 1;
         }
     }
     else
     {
-        const unsigned int uiRamp = (uiFadeLength - 5) & 0xff;
-        if (static_cast<int>(uiContinuous - 1) < static_cast<int>(uiRamp))
+        const unsigned int uiFadeLength = s_continuousDropFadeLength;
+        if (uiFadeLength >= 6)
         {
-            const float fRamp = static_cast<float>(uiRamp);
-            vct_filter_fade_rate(
-                pFrame, pDestination, uiSamples,
-                1.0f - static_cast<float>(static_cast<int>(uiContinuous - 1)) / fRamp,
-                1.0f - static_cast<float>(static_cast<int>(uiContinuous)) / fRamp);
+            const unsigned char ucRamp = static_cast<unsigned char>(uiFadeLength - 5);
+            const int iStep = static_cast<int>(pStream->m_Info.m_ContinuousDropCount - 1);
+            if (iStep < ucRamp)
+            {
+                const float fRamp = ucRamp;
+                vct_filter_fade_rate(s_previousFrame[uiStreamIndex], pDestination, uiSize >> 1,
+                                     1.0f - iStep / fRamp, 1.0f - (iStep + 1) / fRamp);
 
+                pStream->m_LastRecoveredSample = pDestination[(uiSize >> 1) - 1];
+                pStream->m_DropRecovered = 1;
+                pStream->m_Info.m_ContinuousDropCount++;
+                return 1;
+            }
+        }
+        else if (pStream->m_Info.m_ContinuousDropCount < uiFadeLength)
+        {
+            const short* pFrame = s_previousFrame[uiStreamIndex];
+            const unsigned int uiSamples = uiSize >> 1;
+            for (unsigned int uiSample = 0; uiSample < uiSamples; ++uiSample)
+            {
+                const short sSample = pFrame[uiSample];
+                pDestination[uiSample] = sSample -
+                    static_cast<int>(sSample * pStream->m_Info.m_ContinuousDropCount) /
+                        s_continuousDropFadeLength;
+            }
+
+            pStream->m_LastRecoveredSample = pDestination[uiSamples - 1];
             pStream->m_DropRecovered = 1;
-            pStream->m_LastRecoveredSample = pDestination[uiLastSample];
-            pStream->m_Info.m_ContinuousDropCount = pStream->m_Info.m_ContinuousDropCount + 1;
+            pStream->m_Info.m_ContinuousDropCount++;
             return 1;
         }
-    }
 
-    memset(pOut, 0, uiSize);
-    const unsigned int uiNext = pStream->m_Info.m_ContinuousDropCount + 1;
-    pStream->m_Info.m_ContinuousDropCount = uiNext;
-    if (uiNext == 0)
-    {
-        pStream->m_Info.m_ContinuousDropCount = s_continuousDropFadeLength;
+        memset(pOut, 0, uiSize);
+        if (++pStream->m_Info.m_ContinuousDropCount == 0)
+        {
+            pStream->m_Info.m_ContinuousDropCount = s_continuousDropFadeLength;
+        }
     }
     return 0;
 }
@@ -431,12 +415,12 @@ int vct_recover_drop_stream(nn::pia::chat::AudioStream* pStream, void* pOut, uns
         pStream->m_PreviousPacket = 0;
     }
 
-    if (iRecovered != 0)
+    if (iRecovered == 0)
     {
-        pStream->m_Info.m_FadeRecoverCount = pStream->m_Info.m_FadeRecoverCount + 1;
-        return 1;
+        return 0;
     }
-    return 0;
+    pStream->m_Info.m_FadeRecoverCount = pStream->m_Info.m_FadeRecoverCount + 1;
+    return 1;
 }
 
 void VCT_SetDropRecoverContinuousDropFadeLength(unsigned char ucLength)

@@ -11,7 +11,7 @@ static unsigned short s_vadInactiveGain = 0x118;
 static unsigned int s_vad_6c = 0;
 static unsigned int s_vadReleaseTime = 5;
 static unsigned int s_vad_74 = 0x2d0;
-static unsigned char s_vadActivity = 0;
+static bool s_vadActivity = false;
 
 static unsigned int s_vadBss[4] = {0x1000000, 0x1000000, 0x1000000, 0x1000000};
 
@@ -27,13 +27,13 @@ void VCT_ResetVAD()
         s_vadBss[i] = 0x1000000;
     }
     s_vad_5c = 0;
-    s_vadActivity = 0;
+    s_vadActivity = false;
     s_vad_6c = 0;
     s_vad_54 = 0;
     s_vad_58 = 0;
 }
 
-unsigned char VCT_GetVADActivity()
+bool VCT_GetVADActivity()
 {
     return s_vadActivity;
 }
@@ -47,7 +47,7 @@ unsigned int VCTi_GetVADStatus(unsigned int energy, unsigned int threshold, unsi
     }
     if (s_vadClampGain <= energy)
     {
-        if (s_vadActivity == 0)
+        if (!s_vadActivity)
         {
             unsigned int sum = 0;
             for (int i = 0; i < 4; ++i)
@@ -63,7 +63,7 @@ unsigned int VCTi_GetVADStatus(unsigned int energy, unsigned int threshold, unsi
                 return 0;
             }
             s_vadBss[0] = energy;
-            s_vadActivity = 1;
+            s_vadActivity = true;
             s_vad_58 = 1;
             s_vad_5c = (int)((dVar * s_vadInactiveGain) / 100.0);
             return 1;
@@ -77,7 +77,7 @@ unsigned int VCTi_GetVADStatus(unsigned int energy, unsigned int threshold, unsi
                 {
                     s_vad_58 = 0;
                     s_vad_54 = 0;
-                    s_vadActivity = 0;
+                    s_vadActivity = false;
                     return 3;
                 }
                 return 2;

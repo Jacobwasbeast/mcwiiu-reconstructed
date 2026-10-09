@@ -5,7 +5,7 @@
 #include "nn/pia.h"
 #include "nn/pia/Common.hpp"
 #include "nn/pia/Reconstruction.hpp"
-#include "vendor/__N_18_chat_HandsFree_cpp_120265b3.hpp"
+#include "vendor/TmcHandsFree.hpp"
 #include "vendor/VCTAudio.hpp"
 
 namespace nn { namespace pia {
@@ -32,15 +32,23 @@ struct AudioInfo {
 class VoiceProtocol : public nn::pia::transport::Protocol
 {
 public:
+    enum { cProtocolType = 0x78 };
+
     struct Setting {
+        Setting()
+            : codec(CODEC_4),
+              bufferSize(0x90),
+              maxPlayers(10),
+              dataSize(0x20),
+              sampleRate(0x10)
+        {
+        }
+
+        Codec codec;
         unsigned int bufferSize;
-        unsigned int maxPlayers;
+        unsigned char maxPlayers;
         unsigned int dataSize;
-        unsigned char codec;
-        unsigned char reserved[3];
-        unsigned int frameLength;
         unsigned short sampleRate;
-        unsigned short settingTailPadding;
     };
 
     VoiceProtocol();
@@ -57,7 +65,7 @@ public:
     void Finalize();
     Result GetAudioInfo(StationIndex stationIndex, AudioInfo* audioInfo) const;
     Result GetAudioInfo(unsigned long long stationId, AudioInfo* audioInfo) const;
-    unsigned char GetVadActivity() const;
+    bool GetVadActivity() const;
     unsigned int GetAudioDataSize() const;
     bool IsInCommunication() const;
     unsigned int GetAudioFrameLength() const;
@@ -65,43 +73,35 @@ public:
     bool IsClientInConference(unsigned long long stationId) const;
 
 private:
+    enum { cSendBufferSampleCount = 1536 };
+
     int calcAudioBufferSize(unsigned short sampleRate) const;
-    Result allocProc(unsigned short sampleRate);
+    bool allocProc(unsigned short sampleRate);
     Result setupProtocols(unsigned char maxPlayers, unsigned int dataSize);
     void freeProc();
     void destroyProtocols();
     Result receiveCore(void* pData, unsigned int uiSize, unsigned short* pCids);
 
-    unsigned int m_secondaryState;
-    unsigned int m_secondaryStatus;
+    unsigned short m_unreliableProtocolId;
+    nn::pia::transport::UnreliableProtocol* m_pUnreliableProtocol;
     ::VCTSession* m_vctSession;
-    void* m_auxiliarySession;
+    unsigned char* m_audioBuffer;
     StationIndex m_stationIndex;
-    unsigned int m_codec;
-    unsigned int m_bufferSize;
-    unsigned int m_maxPlayers;
-    unsigned int m_dataSize;
-    unsigned int m_sampleRate;
+    Setting m_setting;
     nn::pia::common::CriticalSection m_criticalSection;
-    unsigned int m_streamingState;
-    unsigned int m_monitoringBytesHigh;
-    unsigned int m_monitoringBytesLow;
-    unsigned int m_monitoringSpeechStart;
-    unsigned int m_monitoringSpeechEnd;
-    unsigned int m_monitoringTicksHigh;
-    unsigned int m_monitoringTicksLow;
+    unsigned int m_dispatchCount;
+    unsigned long long m_sentDataSize;
+    unsigned long long m_receivedDataSize;
+    unsigned long long m_startTick;
     HandsFree* m_handsFree;
-    void* m_pead;
+    short* m_sendBuffer;
 };
 
 unsigned char IsInitialized();
-unsigned short ConvertID_Pia2VCT(StationIndex stationIndex);
+unsigned int ConvertID_Pia2VCT(unsigned int stationIndex);
 }
 }}
 
-extern unsigned int g_voiceAudioFrameLength;
-extern unsigned int g_voiceAudioDataSize;
-extern unsigned char g_voiceVadActivity;
 extern nn::pia::chat::VoiceProtocol* g_voiceProtocolInstance;
 
 namespace __N_22_chat_VoiceProtocol_cpp_bf22a0fe
@@ -112,8 +112,10 @@ bool isOpus(nn::pia::chat::Codec codec);
 TMC_HF_EC_MODE convertEcMode(nn::pia::chat::EcMode mode);
 int convertCid(unsigned short cid);
 nn::pia::StationIndex convertStationIndex(nn::pia::StationIndex index);
-nn::pia::Result createProtocol(nn::pia::transport::UnreliableProtocol** protocol, unsigned short* protocolId, unsigned char channel);
-void destroyProtocol(nn::pia::transport::UnreliableProtocol** protocol, unsigned short* protocolId);
+template <typename T>
+nn::pia::Result createProtocol(T** protocol, unsigned short* protocolId, unsigned char port);
+template <typename T>
+void destroyProtocol(T** protocol, unsigned short* protocolId);
 VCTCodec convertCodec(nn::pia::chat::Codec codec);
 nn::pia::chat::Codec convertCodec(VCTCodec codec);
 nn::pia::chat::EcMode convertEcMode(TMC_HF_EC_MODE mode);

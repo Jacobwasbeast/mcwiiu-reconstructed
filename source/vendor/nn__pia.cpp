@@ -1,6 +1,6 @@
 #include "nn__pia.hpp"
 
-extern void SetModuleId(const char*);
+#include "nn/middleware.h"
 
 namespace nn {
 namespace pia {
