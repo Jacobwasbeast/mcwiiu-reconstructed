@@ -32,8 +32,7 @@ public:
     virtual void Apply(Random& random, BlockTransaction* transaction, int& width, int& height) const;
 
 private:
-    int mSize;
-    const Direction* mValues[16];
+    Pattern mPattern;
     TerracottaLayerThemeFunction mFunction;
 };
 

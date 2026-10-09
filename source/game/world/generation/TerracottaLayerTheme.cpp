@@ -13,10 +13,8 @@ Block* getColour(unsigned char colour);
 
 TerracottaLayerTheme::TerracottaLayerTheme(const Pattern& pattern,
                                            TerracottaLayerThemeFunction function)
-    : mSize(pattern.size), mFunction(function)
+    : mPattern(pattern), mFunction(function)
 {
-    for (int i = 0; i < 16; ++i)
-        mValues[i] = pattern.values[i];
 }
 
 unsigned int TerracottaLayerTheme::CONCENTRIC_RINGS(int x, int z)
@@ -32,21 +30,23 @@ unsigned int TerracottaLayerTheme::OFFSET_RINGS(int x, int z)
 
 unsigned int TerracottaLayerTheme::HASHED(int x, int z)
 {
-    return (boost::hash_value(x) ^ boost::hash_value(z)) & 15u;
+    unsigned int xHash = boost::hash_value(x);
+    unsigned int zHash = boost::hash_value(z);
+    return (xHash ^ zHash) & 15u;
 }
 
 unsigned char TerracottaLayerTheme::TARTAN(int x, int z)
 {
-    unsigned char values[25] = {
-        7, 1, 2, 1, 7,
-        1, 1, 2, 1, 1,
-        2, 2, 3, 2, 2,
-        1, 1, 2, 1, 1,
-        7, 1, 2, 1, 7
+    unsigned char values[5][5] = {
+        { 7, 1, 2, 1, 7 },
+        { 1, 1, 2, 1, 1 },
+        { 2, 2, 3, 2, 2 },
+        { 1, 1, 2, 1, 1 },
+        { 7, 1, 2, 1, 7 }
     };
     unsigned char xIndex = (x + 1275u) % 5;
     unsigned char zIndex = (z + 1275u) % 5;
-    return values[xIndex * 5 + zIndex];
+    return values[xIndex][zIndex];
 }
 
 unsigned int TerracottaLayerTheme::STRIPES(int x, int z)
@@ -62,24 +62,18 @@ unsigned int TerracottaLayerTheme::UNIFORM(int x, int z)
 void TerracottaLayerTheme::Apply(Random& random, BlockTransaction* transaction, int& width, int& height) const
 {
     unsigned char randomColour = (unsigned char)random.nextInt(16);
-    int widthRings = transaction->mSize.x / mSize;
-    int heightRings = transaction->mSize.z / mSize;
+    int xOffset = transaction->mSize.x / mPattern.size / 2;
+    int zOffset = transaction->mSize.z / mPattern.size / 2;
     int x;
     int z;
+    int y;
     for (x = 0; x < transaction->mSize.x; ++x)
     {
         for (z = 0; z < transaction->mSize.z; ++z)
         {
-            int xIndex = x % mSize;
-            int zIndex = z % mSize;
-            const Direction* direction = mValues[xIndex * 4 + zIndex];
-            int ringX = x / mSize;
-            int ringZ = z / mSize;
-            unsigned char colour = (unsigned char)(randomColour + mFunction(ringX - widthRings / 2,
-                                                                              ringZ - heightRings / 2));
-            Block* block = getColour(colour);
-            const BlockState* state = block->defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING, direction);
-            int y;
+            const Direction* direction = mPattern.values[(x % mPattern.size) * 4 + z % mPattern.size];
+            unsigned char colour = (unsigned char)(randomColour + mFunction(x / mPattern.size - xOffset, z / mPattern.size - zOffset));
+            const BlockState* state = getColour(colour)->defaultBlockState()->setValue(HorizontalDirectionalBlock::FACING, direction);
             for (y = 0; y < transaction->mSize.y; ++y)
             {
                 Vec3i position(x, y, z);

@@ -29,9 +29,13 @@ void AbstractClientPlayer::tick()
 bool AbstractClientPlayer::isPickable()
 {
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-    bool allowPvP = Minecraft::InMiniGame(eMiniGameId_Any, true) ? miniGame->AllowPvP() : true;
+    bool allowPvP = true;
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
+    {
+        allowPvP = miniGame->AllowPvP();
+    }
 
-    return allowPvP && isSpectator() != true;
+    return allowPvP && Player::isPickable();
 }
 
 bool AbstractClientPlayer::isSpectator()

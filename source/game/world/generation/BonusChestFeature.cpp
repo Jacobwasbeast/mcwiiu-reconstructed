@@ -28,11 +28,11 @@ bool BonusChestFeature::place(Level* level, Random& random, const BlockPos& orig
 
     if (!useOrigin)
     {
-        const BlockState* state = level->getBlockState(position);
-        while ((state->getMaterial() == Material::AIR || state->getMaterial() == Material::LEAVES) && position.y > 1)
+        for (const BlockState* state = level->getBlockState(position);
+             (state->getMaterial() == Material::AIR || state->getMaterial() == Material::LEAVES) && position.y > 1;
+             state = level->getBlockState(position))
         {
             position = position.below();
-            state = level->getBlockState(position);
         }
 
         if (position.y < 1)
@@ -52,27 +52,20 @@ bool BonusChestFeature::place(Level* level, Random& random, const BlockPos& orig
         }
         else
         {
-            const int xOffsetStart = random.nextInt(4);
-            const int xOffsetEnd = random.nextInt(4);
-            const int yOffsetStart = random.nextInt(3);
-            const int yOffsetEnd = random.nextInt(3);
-            const int zOffsetStart = random.nextInt(4);
-            const int zOffsetEnd = random.nextInt(4);
-            candidate = position.offset(xOffsetStart - xOffsetEnd,
-                                        yOffsetStart - yOffsetEnd,
-                                        zOffsetStart - zOffsetEnd);
+            const int xOffset = random.nextInt(4) - random.nextInt(4);
+            const int yOffset = random.nextInt(3) - random.nextInt(3);
+            const int zOffset = random.nextInt(4) - random.nextInt(4);
+            candidate = position.offset(xOffset, yOffset, zOffset);
         }
 
         if (level->isEmptyBlock(candidate))
         {
-            const BlockPos support = candidate.below();
-            if (level->getBlockState(support)->isTopSolidBlocking())
+            if (level->getBlockState(candidate.below())->isTopSolidBlocking())
             {
                 level->setBlock(candidate, Blocks::chest->defaultBlockState(), Block::UPDATE_CLIENTS, false);
 
                 boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(candidate);
-                const bool isChest = blockEntity->GetType() == BlockEntityType::CHEST;
-                if (isChest)
+                if (eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType()))
                 {
                     boost::shared_ptr<ChestBlockEntity> chest =
                         boost::dynamic_pointer_cast<ChestBlockEntity>(blockEntity);

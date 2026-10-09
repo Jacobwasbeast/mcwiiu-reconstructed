@@ -28,31 +28,33 @@ void SlimeOuterLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
                              float netHeadYaw, float headPitch, float scale,
                              bool bUseDisplayList)
 {
-    if (!entity->isInvisible())
+    if (entity->isInvisible())
     {
-        bool cull = mModel->hasOverriddenParts();
-        if (cull)
-        {
-            GlStateManager::enableCull();
-            GlStateManager::cullFace(1);
-        }
+        return;
+    }
 
-        GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
-        GlStateManager::enableNormalize();
-        GlStateManager::enableBlend();
-        GlStateManager::blendFunc(4, 5);
+    bool cull = mModel->hasOverriddenParts();
+    if (cull)
+    {
+        GlStateManager::enableCull();
+        GlStateManager::cullFace(1);
+    }
 
-        mModel->copyPropertiesFrom(mRenderer->getModel());
-        boost::shared_ptr<Entity> renderEntity = entity;
-        mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
-                       headPitch, scale, bUseDisplayList);
+    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
+    GlStateManager::enableNormalize();
+    GlStateManager::enableBlend();
+    GlStateManager::blendFunc(4, 5);
 
-        GlStateManager::disableBlend();
-        GlStateManager::disableNormalize();
-        if (cull)
-        {
-            GlStateManager::disableCull();
-        }
+    mModel->copyPropertiesFrom(mRenderer->getModel());
+    boost::shared_ptr<Entity> renderEntity = entity;
+    mModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
+                   headPitch, scale, bUseDisplayList);
+
+    GlStateManager::disableBlend();
+    GlStateManager::disableNormalize();
+    if (cull)
+    {
+        GlStateManager::disableCull();
     }
 }
 

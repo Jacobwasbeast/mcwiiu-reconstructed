@@ -17,15 +17,15 @@ static const std::wstring VILLAGES_FILE_ID = L"villages";
 Villages::Villages(const std::wstring& id)
     : SavedData(id)
 {
-    mLevel = NULL;
     mTick = 0;
+    mLevel = NULL;
 }
 
 Villages::Villages(Level* level)
     : SavedData(VILLAGES_FILE_ID)
 {
-    mLevel = level;
     mTick = 0;
+    mLevel = level;
 }
 
 void Villages::setLevel(Level* level)
@@ -79,21 +79,19 @@ bool Villages::isDoor(const BlockPos& pos)
 
 boost::shared_ptr<DoorInfo> Villages::getDoorInfo(const BlockPos& pos)
 {
-    std::vector<boost::shared_ptr<DoorInfo> >::iterator it;
-    for (it = mDoorInfos.begin(); it != mDoorInfos.end(); ++it)
+    for (std::vector<boost::shared_ptr<DoorInfo> >::iterator it = mDoorInfos.begin(); it != mDoorInfos.end(); ++it)
     {
         boost::shared_ptr<DoorInfo> doorInfo = *it;
-        if (doorInfo->getPos().x == pos.x && doorInfo->getPos().z == pos.z && std::abs(doorInfo->getPos().y - pos.y) < 2)
-            return doorInfo;
+        if (doorInfo->getPos().x == pos.x && doorInfo->getPos().z == pos.z && std::abs(doorInfo->getPos().y - pos.y) <= 1)
+            return boost::shared_ptr<DoorInfo>(doorInfo);
     }
 
-    std::vector<boost::shared_ptr<Village> >::iterator village;
-    for (village = mVillages.begin(); village != mVillages.end(); ++village)
+    for (std::vector<boost::shared_ptr<Village> >::iterator it = mVillages.begin(); it != mVillages.end(); ++it)
     {
-        boost::shared_ptr<Village> current = *village;
-        boost::shared_ptr<DoorInfo> info = current->getDoorInfo(pos);
-        if (info)
-            return info;
+        boost::shared_ptr<Village> village = *it;
+        boost::shared_ptr<DoorInfo> doorInfo = village->getDoorInfo(pos);
+        if (doorInfo)
+            return boost::shared_ptr<DoorInfo>(doorInfo);
     }
 
     return boost::shared_ptr<DoorInfo>();
@@ -102,15 +100,10 @@ boost::shared_ptr<DoorInfo> Villages::getDoorInfo(const BlockPos& pos)
 int Villages::skyVisibleBlockCount(const BlockPos& pos, const Direction* direction, int count)
 {
     int visible = 0;
-    int i;
-    for (i = 1; i <= 4; ++i)
+    for (int i = 1; i <= 4; ++i)
     {
-        if (mLevel->canSeeSky(pos.relative(direction, i)))
-        {
-            ++visible;
-            if (visible >= count)
-                break;
-        }
+        if (mLevel->canSeeSky(pos.relative(direction, i)) && ++visible >= count)
+            return visible;
     }
     return visible;
 }
@@ -121,26 +114,27 @@ void Villages::createDoorInfo(const BlockPos& pos)
     const Direction* opposite = facing->getOpposite();
     int front = skyVisibleBlockCount(pos, facing, 5);
     int back = skyVisibleBlockCount(pos, opposite, front + 1);
-    if (back > front)
-        mDoorInfos.push_back(boost::shared_ptr<DoorInfo>(new DoorInfo(pos, facing, mTick)));
-    else if (back < front)
-        mDoorInfos.push_back(boost::shared_ptr<DoorInfo>(new DoorInfo(pos, opposite, mTick)));
+    if (front != back)
+        mDoorInfos.push_back(boost::shared_ptr<DoorInfo>(new DoorInfo(pos, front < back ? facing : opposite, mTick)));
 }
 
 void Villages::addDoorInfos(const BlockPos& pos)
 {
-    for (int x = -16; x < 16; ++x)
-        for (int y = -4; y < 4; ++y)
-            for (int z = -16; z < 16; ++z)
+    int horizontalRange = 16;
+    int verticalRange = 4;
+    int depthRange = 16;
+    for (int x = -horizontalRange; x < horizontalRange; ++x)
+        for (int y = -verticalRange; y < verticalRange; ++y)
+            for (int z = -depthRange; z < depthRange; ++z)
             {
                 BlockPos doorPos = pos.offset(x, y, z);
                 if (isDoor(doorPos))
                 {
                     boost::shared_ptr<DoorInfo> info = getDoorInfo(doorPos);
-                    if (info)
-                        info->setTimeStamp(mTick);
-                    else
+                    if (info == NULL)
                         createDoorInfo(doorPos);
+                    else
+                        info->setTimeStamp(mTick);
                 }
             }
 }
@@ -159,34 +153,28 @@ boost::shared_ptr<Village> Villages::getClosestVillage(const BlockPos& pos, int 
 {
     boost::shared_ptr<Village> closest;
     float best = 3.402823466e+38F;
-    std::vector<boost::shared_ptr<Village> >::iterator it;
-    for (it = mVillages.begin(); it != mVillages.end(); ++it)
+    for (std::vector<boost::shared_ptr<Village> >::iterator it = mVillages.begin(); it != mVillages.end(); ++it)
     {
         boost::shared_ptr<Village> village = *it;
-        const BlockPos* center = village->getCenter();
-        float d = (float)center->distSqr(pos);
-        if (d < best)
-        {
-            float radius = (float)(village->getRadius() + distance);
-            if (d <= radius * radius)
-            {
-                best = d;
-                closest = village;
-            }
-        }
+        float d = (float)village->getCenter()->distSqr(pos);
+        if (d >= best)
+            continue;
+        float radius = (float)(distance + village->getRadius());
+        if (d > radius * radius)
+            continue;
+        closest = village;
+        best = d;
     }
     return closest;
 }
 
 void Villages::cluster()
 {
-    std::vector<boost::shared_ptr<DoorInfo> >::iterator it;
-    for (it = mDoorInfos.begin(); it != mDoorInfos.end(); ++it)
+    for (std::vector<boost::shared_ptr<DoorInfo> >::iterator it = mDoorInfos.begin(); it != mDoorInfos.end(); ++it)
     {
         boost::shared_ptr<DoorInfo> doorInfo = *it;
-        BlockPos pos = doorInfo->getPos();
-        boost::shared_ptr<Village> village = getClosestVillage(pos, 32);
-        if (!village)
+        boost::shared_ptr<Village> village = getClosestVillage(doorInfo->getPos(), 32);
+        if (village == NULL)
         {
             village = boost::shared_ptr<Village>(new Village(mLevel));
             mVillages.push_back(village);

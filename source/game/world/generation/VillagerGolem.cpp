@@ -21,6 +21,7 @@
 #include "game/entity/ai/HurtByTargetGoal.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/entity/ai/MeleeAttackGoal.hpp"
+#include "game/entity/ai/MoveControl.hpp"
 #include "game/entity/ai/MoveTowardsTargetGoal.hpp"
 #include "game/entity/ai/MoveTowardsRestrictionGoal.hpp"
 #include "game/entity/ai/NearestAttackableTargetGoal.hpp"
@@ -53,8 +54,9 @@ const EntityDataAccessor<unsigned char>* VillagerGolem::DATA_PLAYER_CREATED_ID =
 
 bool villagerGolemTargetPredicate(boost::shared_ptr<Entity> entity)
 {
-    return entity && (entity->GetType() & EntityType::MOB) == EntityType::MOB &&
-           EntitySelector::VISIBLE_ENEMY_SELECTOR->apply(entity) && entity->GetType() != EntityType::CREEPER;
+    return entity && eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()) &&
+           EntitySelector::VISIBLE_ENEMY_SELECTOR->apply(entity) &&
+           !eTYPE_DERIVED_FROM(EntityType::CREEPER, entity->GetType());
 }
 
 static Predicate<boost::shared_ptr<Entity> >* TARGET_SELECTOR =
@@ -113,15 +115,15 @@ void VillagerGolem::customServerAiStep()
     if (--mVillageCheckTime < 1)
     {
         mVillageCheckTime = mRandom->nextInt(50) + 70;
-        boost::shared_ptr<Villages> villages = mLevel->getVillages();
-        boost::shared_ptr<Village> village = villages->getClosestVillage(BlockPos(Mth::floor(mX), Mth::floor(mY), Mth::floor(mZ)), 32);
+        boost::shared_ptr<Village> village = mLevel->mVillages->getClosestVillage(BlockPos(Mth::floor(mX), Mth::floor(mY), Mth::floor(mZ)), 32);
         mVillage = village;
-        if (!village)
+        Village* closest = village.get();
+        if (closest == NULL)
             clearRestriction();
         else
         {
-            const BlockPos* center = village.get()->getCenter();
-            restrictTo(*center, static_cast<int>(village.get()->getRadius() * 0.6f));
+            BlockPos center = *closest->getCenter();
+            restrictTo(center, static_cast<int>(closest->getRadius() * 0.6f));
         }
     }
     Mob::customServerAiStep();
@@ -142,8 +144,8 @@ int VillagerGolem::decreaseAirSupply(int airSupply)
 
 void VillagerGolem::doPush(boost::shared_ptr<Entity> entity)
 {
-    if ((entity->GetType() & EntityType::ENEMY) == EntityType::ENEMY && entity->GetType() != EntityType::CREEPER &&
-        getRandom()->nextInt(20) == 0)
+    if (eTYPE_DERIVED_FROM(EntityType::ENEMY, entity->GetType()) &&
+        !eTYPE_DERIVED_FROM(EntityType::CREEPER, entity->GetType()) && getRandom()->nextInt(20) == 0)
         setTarget(boost::dynamic_pointer_cast<LivingEntity>(entity));
     LivingEntity::doPush(entity);
 }
@@ -155,7 +157,7 @@ void VillagerGolem::aiStep()
         --mAttackAnimationTick;
     if (mOfferFlowerTick > 0)
         --mOfferFlowerTick;
-    if (mXd * mXd + mZd * mZd > 2.5000003e-7f && mRandom->nextInt(5) == 0)
+    if (mXd * mXd + mZd * mZd > MoveControl::MIN_SPEED_SQR && mRandom->nextInt(5) == 0)
     {
         int x = Mth::floor(mX);
         int y = Mth::floor(mY - 0.2f);
@@ -181,7 +183,7 @@ bool VillagerGolem::isPlayerCreated()
 
 bool VillagerGolem::canAttackType(unsigned long long type)
 {
-    if (isPlayerCreated() && (type & EntityType::PLAYER) == EntityType::PLAYER)
+    if (isPlayerCreated() && eTYPE_DERIVED_FROM(EntityType::PLAYER, type))
         return false;
     if (type == EntityType::CREEPER)
         return false;
@@ -227,17 +229,22 @@ bool VillagerGolem::doHurtTarget(boost::shared_ptr<Entity> entity)
 
 void VillagerGolem::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == EntityEvent::START_ATTACKING)
+    switch (event)
     {
+    case EntityEvent::START_ATTACKING:
         mAttackAnimationTick = 10;
         playSound(SoundEvents::IRONGOLEM_ATTACK, 1.0f, 1.0f);
-    }
-    else if (event == EntityEvent::OFFER_FLOWER)
+        break;
+    case EntityEvent::OFFER_FLOWER:
         mOfferFlowerTick = 400;
-    else if (event == EntityEvent::STOP_OFFER_FLOWER)
+        break;
+    case EntityEvent::STOP_OFFER_FLOWER:
         mOfferFlowerTick = 0;
-    else
+        break;
+    default:
         Mob::handleEntityEvent(event, data);
+        break;
+    }
 }
 
 unsigned int VillagerGolem::getAttackAnimationTick()
@@ -291,8 +298,8 @@ boost::shared_ptr<Village> VillagerGolem::getVillage()
 
 void VillagerGolem::die(const DamageSource* source)
 {
-    if (!isPlayerCreated() && mLastHurtByPlayer && getVillage())
-        getVillage()->modifyStanding(mLastHurtByPlayer->getName(), -5);
+    if (!isPlayerCreated() && mLastHurtByPlayer && mVillage.lock())
+        mVillage.lock()->modifyStanding(mLastHurtByPlayer->getName(), -5);
     LivingEntity::die(source);
 }
 
@@ -301,7 +308,7 @@ bool VillagerGolem::hurt(const DamageSource* source, float damage)
     if (isPlayerCreated())
     {
         boost::shared_ptr<Entity> attacker = source->getDirectEntity();
-        if (attacker && (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (attacker && eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType()))
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(attacker);
             if (!player->isAllowedToAttackPlayers())
@@ -327,9 +334,9 @@ unsigned int VillagerGolem::GetInteractTooltip(const EntityTooltipDataHolder& to
 
 unsigned int VillagerGolem::GetHitTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    if (isPlayerCreated() && !tooltipData.m_pPlayer->isAllowedToAttackPlayers())
-        return IDS_NONE;
-    return IDS_TOOLTIPS_HIT;
+    if (!isPlayerCreated() || tooltipData.m_pPlayer->isAllowedToAttackPlayers())
+        return IDS_TOOLTIPS_HIT;
+    return IDS_NONE;
 }
 
 unsigned long long VillagerGolem::GetType()

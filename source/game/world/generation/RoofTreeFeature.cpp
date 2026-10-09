@@ -31,11 +31,10 @@ RoofTreeFeature::~RoofTreeFeature()
 
 void RoofTreeFeature::staticCtor()
 {
-    roofTreeTrunkState = Blocks::log2->defaultBlockState()->setValue(
-        NewLogBlock::VARIANT, PlanksBlock::Variant::DARK_OAK);
-    const BlockState* leafState = Blocks::leaves2->defaultBlockState()->setValue(
-        NewLeafBlock::VARIANT, PlanksBlock::Variant::DARK_OAK);
-    roofTreeLeafState = leafState->setValue(LeafBlock::CHECK_DECAY, false);
+    roofTreeTrunkState = Blocks::log2->defaultBlockState()->setValue(NewLogBlock::VARIANT, PlanksBlock::Variant::DARK_OAK);
+    roofTreeLeafState = Blocks::leaves2->defaultBlockState()
+                            ->setValue(NewLeafBlock::VARIANT, PlanksBlock::Variant::DARK_OAK)
+                            ->setValue(LeafBlock::CHECK_DECAY, false);
 }
 
 bool RoofTreeFeature::canPlaceTreeOfHeight(Level* level, const BlockPos& pos, int height)
@@ -95,131 +94,136 @@ bool RoofTreeFeature::place(Level* level, Random& random, const BlockPos& pos)
     const int height = heightOffset + random.nextInt(2) + mBaseHeight;
     const int baseX = pos.x;
     const int baseZ = pos.z;
-    int top = pos.y + height;
-    if (pos.y > 0 && !(top + 1 > 256))
+    const int treeTop = pos.y + height;
+    if (pos.y < 1 || treeTop + 1 > 256)
     {
-        const BlockPos ground = pos.below();
-        Block* groundBlock = level->getBlockState(ground)->getBlock();
-        if ((groundBlock == Blocks::grass || groundBlock == Blocks::dirt)
-            && pos.y < 255 - height
-            && canPlaceTreeOfHeight(level, pos, height))
+        PIXEndNamedEvent();
+        return false;
+    }
+
+    const BlockPos ground = pos.below();
+    Block* groundBlock = level->getBlockState(ground)->getBlock();
+    if ((groundBlock != Blocks::grass && groundBlock != Blocks::dirt) || pos.y >= 255 - height)
+    {
+        PIXEndNamedEvent();
+        return false;
+    }
+
+    if (!canPlaceTreeOfHeight(level, pos, height))
+    {
+        PIXEndNamedEvent();
+        return false;
+    }
+
+    setDirtAt(level, ground);
+    setDirtAt(level, ground.east());
+    setDirtAt(level, ground.south());
+    setDirtAt(level, ground.south().east());
+
+    const Direction* direction = Direction::Plane::HORIZONTAL->getRandomDirection(random);
+    int bendStart = height - random.nextInt(4);
+    int bendLeft = 2 - random.nextInt(3);
+    int x = baseX;
+    int z = baseZ;
+    int top = treeTop - 1;
+
+    MutableBlockPos cursor(0, 0, 0);
+    for (int y = 0; y < height; ++y)
+    {
+        const int logY = pos.y + y;
+        if (y >= bendStart && bendLeft > 0)
         {
-            setDirtAt(level, ground);
-            setDirtAt(level, ground.east());
-            setDirtAt(level, ground.south());
-            setDirtAt(level, ground.south().east());
+            x += direction->getStepX();
+            z += direction->getStepZ();
+            --bendLeft;
+        }
 
-            const Direction* direction = Direction::Plane::HORIZONTAL->getRandomDirection(random);
-            int bendStart = height - random.nextInt(4);
-            int bendLeft = 2 - random.nextInt(3);
-            int x = baseX;
-            int z = baseZ;
-            --top;
+        cursor.set(x, logY, z);
+        Material* material = level->getBlockState(cursor)->getMaterial();
+        if (material == Material::AIR || material == Material::LEAVES)
+        {
+            placeLogAt(level, cursor);
+            placeLogAt(level, cursor.east());
+            placeLogAt(level, cursor.south());
+            placeLogAt(level, cursor.east().south());
+            top = logY;
+        }
+    }
 
-            MutableBlockPos cursor(0, 0, 0);
-            for (int y = 0; y < height; ++y)
+    for (int dx = -2; dx <= 0; ++dx)
+    {
+        for (int dz = -2; dz <= 0; ++dz)
+        {
+            int dy = -1;
+            placeLeafAt(level, x + dx, top + dy, z + dz);
+            placeLeafAt(level, 1 + x - dx, top + dy, z + dz);
+            placeLeafAt(level, x + dx, top + dy, 1 + z - dz);
+            placeLeafAt(level, 1 + x - dx, top + dy, 1 + z - dz);
+            if ((dx > -2 || dz > -1) && (dx != -1 || dz != -2))
             {
-                if (y >= bendStart && bendLeft > 0)
-                {
-                    x += direction->getStepX();
-                    z += direction->getStepZ();
-                    --bendLeft;
-                }
-
-                const int logY = pos.y + y;
-                cursor.set(x, logY, z);
-                Material* material = level->getBlockState(cursor)->getMaterial();
-                if (material == Material::AIR || material == Material::LEAVES)
-                {
-                    placeLogAt(level, cursor);
-                    placeLogAt(level, cursor.east());
-                    placeLogAt(level, cursor.south());
-                    placeLogAt(level, cursor.east().south());
-                    top = logY;
-                }
+                dy = 1;
+                placeLeafAt(level, x + dx, top + dy, z + dz);
+                placeLeafAt(level, 1 + x - dx, top + dy, z + dz);
+                placeLeafAt(level, x + dx, top + dy, 1 + z - dz);
+                placeLeafAt(level, 1 + x - dx, top + dy, 1 + z - dz);
             }
+        }
+    }
 
-            for (int dx = -2; dx <= 0; ++dx)
+    if (random.nextBoolean())
+    {
+        placeLeafAt(level, x, top + 2, z);
+        placeLeafAt(level, x + 1, top + 2, z);
+        placeLeafAt(level, x + 1, top + 2, z + 1);
+        placeLeafAt(level, x, top + 2, z + 1);
+    }
+
+    for (int dx = -3; dx <= 4; ++dx)
+    {
+        for (int dz = -3; dz <= 4; ++dz)
+        {
+            if ((dx != -3 || dz != -3) && (dx != -3 || dz != 4) && (dx != 4 || dz != -3)
+                && (dx != 4 || dz != 4) && (std::abs(dx) < 3 || std::abs(dz) < 3))
             {
-                for (int dz = -2; dz <= 0; ++dz)
+                placeLeafAt(level, x + dx, top, z + dz);
+            }
+        }
+    }
+
+    for (int branchX = -1; branchX <= 2; ++branchX)
+    {
+        for (int branchZ = -1; branchZ <= 2; ++branchZ)
+        {
+            if ((branchX < 0 || branchX > 1 || branchZ < 0 || branchZ > 1) && random.nextInt(3) <= 0)
+            {
+                const int branchLength = random.nextInt(3) + 2;
+                for (int i = 0; i < branchLength; ++i)
                 {
-                    int dy = -1;
-                    placeLeafAt(level, x + dx, top + dy, z + dz);
-                    placeLeafAt(level, x + 1 - dx, top + dy, z + dz);
-                    placeLeafAt(level, x + dx, top + dy, z + 1 - dz);
-                    placeLeafAt(level, x + 1 - dx, top + dy, z + 1 - dz);
-                    if ((dx > -2 || dz > -1) && (dx != -1 || dz != -2))
+                    placeLogAt(level, BlockPos(baseX + branchX, top - i - 1, baseZ + branchZ));
+                }
+
+                for (int dx = -1; dx <= 1; ++dx)
+                {
+                    for (int dz = -1; dz <= 1; ++dz)
                     {
-                        dy = 1;
-                        placeLeafAt(level, x + dx, top + dy, z + dz);
-                        placeLeafAt(level, x + 1 - dx, top + dy, z + dz);
-                        placeLeafAt(level, x + dx, top + dy, z + 1 - dz);
-                        placeLeafAt(level, x + 1 - dx, top + dy, z + 1 - dz);
+                        placeLeafAt(level, x + branchX + dx, top, z + branchZ + dz);
                     }
                 }
-            }
 
-            if (random.nextBoolean())
-            {
-                placeLeafAt(level, x, top + 2, z);
-                placeLeafAt(level, x + 1, top + 2, z);
-                placeLeafAt(level, x + 1, top + 2, z + 1);
-                placeLeafAt(level, x, top + 2, z + 1);
-            }
-
-            for (int dx = -3; dx <= 4; ++dx)
-            {
-                for (int dz = -3; dz <= 4; ++dz)
+                for (int dx = -2; dx <= 2; ++dx)
                 {
-                    if ((dx != -3 || dz != -3) && (dx != -3 || dz != 4) && (dx != 4 || dz != -3)
-                        && (dx != 4 || dz != 4) && (std::abs(dx) < 3 || std::abs(dz) < 3))
+                    for (int dz = -2; dz <= 2; ++dz)
                     {
-                        placeLeafAt(level, x + dx, top, z + dz);
-                    }
-                }
-            }
-
-            for (int branchX = -1; branchX <= 2; ++branchX)
-            {
-                for (int branchZ = -1; branchZ <= 2; ++branchZ)
-                {
-                    if ((branchX < 0 || branchX > 1 || branchZ < 0 || branchZ > 1)
-                        && random.nextInt(3) <= 0)
-                    {
-                        const int branchLength = random.nextInt(3) + 2;
-                        for (int i = 0; i < branchLength; ++i)
+                        if (std::abs(dx) != 2 || std::abs(dz) != 2)
                         {
-                            placeLogAt(
-                                level, BlockPos(baseX + branchX, top - i - 1, baseZ + branchZ));
-                        }
-
-                        for (int dx = -1; dx <= 1; ++dx)
-                        {
-                            for (int dz = -1; dz <= 1; ++dz)
-                            {
-                                placeLeafAt(level, x + dx + branchX, top, z + dz + branchZ);
-                            }
-                        }
-
-                        for (int dx = -2; dx <= 2; ++dx)
-                        {
-                            for (int dz = -2; dz <= 2; ++dz)
-                            {
-                                if (std::abs(dx) != 2 || std::abs(dz) != 2)
-                                {
-                                    placeLeafAt(level, x + dx + branchX, top - 1, z + dz + branchZ);
-                                }
-                            }
+                            placeLeafAt(level, x + branchX + dx, top - 1, z + branchZ + dz);
                         }
                     }
                 }
             }
-
-            PIXEndNamedEvent();
-            return true;
         }
     }
 
     PIXEndNamedEvent();
-    return false;
+    return true;
 }

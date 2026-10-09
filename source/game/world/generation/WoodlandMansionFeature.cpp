@@ -37,7 +37,7 @@ Rotation* fjGetSuitableRandomRotation(Random& random, LevelData* levelData, int 
     const int start = random.nextInt(4);
     for (int offset = 0; offset < 4; ++offset)
     {
-        Rotation* rotation = Rotation::VALUES[(start + offset) % 4];
+        Rotation* rotation = Rotation::VALUES[(offset + start) % 4];
         BlockPos origin(chunkX, 0, chunkZ);
         BlockPos nearLeft = origin.offset(rotation->fjRotate(Vec3i(-7, 1, -3)));
         BlockPos nearRight = origin.offset(rotation->fjRotate(Vec3i(-7, 1, 3)));
@@ -58,14 +58,11 @@ void WoodlandMansionFeature::staticCtor()
 {
     gWoodlandMansionSpawnBiomes.push_back(Biome::ROOFED_FOREST);
     gWoodlandMansionSpawnBiomes.push_back(Biome::ROOFED_FOREST_MUTATED);
-    for (int i = 0; i < 256; i += 8)
+    for (int i = 0; i < 256; ++i)
     {
-        for (int j = 0; j < 8; ++j)
-        {
-            Biome* biome = Biome::byId(i + j);
-            if (biome != NULL && biome->getScale() < 0.4f)
-                gWoodlandMansionAllowedBiomes.push_back(biome);
-        }
+        Biome* biome = Biome::byId(i);
+        if (biome != NULL && biome->getScale() < 0.4f)
+            gWoodlandMansionAllowedBiomes.push_back(biome);
     }
     gWoodlandMansionBiomeRequirements = FjFeatureBiomeRequirements(
         &gWoodlandMansionSpawnBiomes, 4, &gWoodlandMansionAllowedBiomes, 32);
@@ -85,17 +82,10 @@ WoodlandMansionFeature::WoodlandMansionFeature(GenericOverworldLevelSource* sour
     : StructureFeature(), mSource(source)
 {
     FlatGeneratorInfo info(config);
-    int separation = info.getWoodlandMansionSeparation();
-    if (separation < 6)
-        separation = 6;
-    mSeparation = separation;
-    int spacing = info.getWoodlandMansionSpacing();
-    int minSpacing = separation + 1;
-    if (minSpacing < spacing)
-        minSpacing = spacing;
-    mSpacing = minSpacing;
-    mFeatureChunk = FjIsFeatureChunk(&gWoodlandMansionBiomeRequirements, 40,
-                                     minSpacing, mSeparation);
+    mSeparation = std::max(info.getWoodlandMansionSeparation(), 6);
+    mSpacing = std::max(mSeparation + 1, info.getWoodlandMansionSpacing());
+    mFeatureChunk = FjIsFeatureChunk(&gWoodlandMansionBiomeRequirements, 40, mSpacing,
+                                     mSeparation);
     mReducedFeatureChunk = FjIsFeatureChunk::CreateReduced(mFeatureChunk);
 }
 
@@ -110,7 +100,7 @@ bool WoodlandMansionFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWor
     FjIsFeatureChunk* featureChunk = FjIsFeatureChunk::UseReducedSpacing(sizeInChunks, flatWorld)
                                          ? &mReducedFeatureChunk : &mFeatureChunk;
     ChunkPos center = featureChunk->getCenterChunk(chunkX, chunkZ);
-    bool result = featureChunk->isFeatureChunk(*level->getRandomFor(center.x, center.z, 0x9E7F77),
+    bool result = featureChunk->isFeatureChunk(*level->getRandomFor(center.x, center.z, 10387319),
                                                level->getBiomeSource(), sizeInChunks, chunkX,
                                                chunkZ);
     if (result)
@@ -131,7 +121,7 @@ BlockPos* WoodlandMansionFeature::getNearestGeneratedFeature(Level* levelIn,
                                                               bool skipExistingChunks)
 {
     level = levelIn;
-    BiomeSource* biomeSource = levelIn->getBiomeSource();
+    BiomeSource* biomeSource = level->getBiomeSource();
     if (biomeSource->isFixedBiome() && biomeSource->getFixedBiome() != Biome::ROOFED_FOREST)
         return NULL;
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
@@ -139,7 +129,7 @@ BlockPos* WoodlandMansionFeature::getNearestGeneratedFeature(Level* levelIn,
         canPlaceFeatureInChunk(false, eFeatureType_WoodlandMansion, pos.x >> 4, pos.z >> 4))
         return options->getClosestFeature(eFeatureType_WoodlandMansion, pos);
     return StructureFeature::findNearestFeaturePositionBySpacing(
-        levelIn, this, pos, mSpacing, mSeparation, 0x9E7F77, true, 100,
+        levelIn, this, pos, mSpacing, mSeparation, 10387319, true, 100,
         skipExistingChunks);
 }
 
@@ -151,7 +141,7 @@ StructureStart* WoodlandMansionFeature::createStructureStart(int chunkX, int chu
 WoodlandMansionFeature::WoodlandMansionStart::WoodlandMansionStart(
     WoodlandMansionFeature* feature, Level* levelIn, GenericOverworldLevelSource* source,
     Random& randomIn, int chunkX, int chunkZ)
-    : StructureStart(chunkX, chunkZ), mFeature(feature), mValid(false)
+    : StructureStart(chunkX, chunkZ), mFeature(feature)
 {
     create(levelIn, source, randomIn, chunkX, chunkZ);
 }
@@ -175,37 +165,26 @@ void WoodlandMansionFeature::WoodlandMansionStart::create(
     arrayWithLength<unsigned short> elementIds(0x10000, true);
     ChunkPrimer primer(true, elementIds);
     source->prepareHeights(chunkX, chunkZ, &primer);
-    int offset = 5;
-    int corner0;
-    int corner1;
-    int corner2;
-    int corner3;
+    int offsetX = 5;
+    int offsetZ = 5;
     if (rotation == Rotation::CLOCKWISE_90)
     {
-        corner0 = primer.getHighestNonAirPos(7, 7);
-        corner1 = primer.getHighestNonAirPos(7, 12);
-        corner2 = primer.getHighestNonAirPos(2, 7);
-        corner3 = primer.getHighestNonAirPos(2, 12);
+        offsetX = -5;
     }
     else if (rotation == Rotation::CLOCKWISE_180)
     {
-        corner0 = primer.getHighestNonAirPos(7, 7);
-        corner1 = primer.getHighestNonAirPos(7, 2);
-        corner2 = primer.getHighestNonAirPos(2, 7);
-        corner3 = primer.getHighestNonAirPos(2, 2);
+        offsetX = -5;
+        offsetZ = -5;
     }
-    else
+    else if (rotation == Rotation::COUNTERCLOCKWISE_90)
     {
-        if (rotation == Rotation::COUNTERCLOCKWISE_90)
-            offset = -5;
-        corner0 = primer.getHighestNonAirPos(7, 7);
-        corner1 = primer.getHighestNonAirPos(7, offset + 7);
-        corner2 = primer.getHighestNonAirPos(12, 7);
-        corner3 = primer.getHighestNonAirPos(12, offset + 7);
+        offsetZ = -5;
     }
-    int low = std::min(corner0, corner1);
-    int high = std::min(corner2, corner3);
-    int minHeight = low < high ? low : high;
+    int height00 = primer.getHighestNonAirPos(7, 7);
+    int height01 = primer.getHighestNonAirPos(7, 7 + offsetZ);
+    int height10 = primer.getHighestNonAirPos(7 + offsetX, 7);
+    int height11 = primer.getHighestNonAirPos(7 + offsetX, 7 + offsetZ);
+    int minHeight = std::min(std::min(height00, height01), std::min(height10, height11));
     if (minHeight < 60 && !source->isFlat())
     {
         mValid = false;
@@ -224,28 +203,37 @@ void WoodlandMansionFeature::WoodlandMansionStart::postProcess(Level* levelIn, R
                                                                 BoundingBox* box)
 {
     StructureStart::postProcess(levelIn, randomIn, box);
-    int y = getBoundingBox()->y0;
+    int y = mBoundingBox->y0;
     for (int x = box->x0; x <= box->x1; ++x)
     {
         for (int z = box->z0; z <= box->z1; ++z)
         {
             BlockPos pos(x, y, z);
-            if (levelIn->isEmptyBlock(pos) || !getBoundingBox()->isInside(pos))
-                continue;
-
-            for (std::vector<StructurePiece*>::iterator it = mPieces.begin(); it != mPieces.end(); ++it)
+            if (!levelIn->isEmptyBlock(pos) && mBoundingBox->isInside(pos))
             {
-                if (!(*it)->getBoundingBox()->isInside(pos))
-                    continue;
-
-                for (int fillY = y - 1; fillY > 1; --fillY)
+                bool inPiece = false;
+                for (std::vector<StructurePiece*>::iterator it = mPieces.begin();
+                     it != mPieces.end(); ++it)
                 {
-                    BlockPos fillPos(x, fillY, z);
-                    if (!levelIn->isEmptyBlock(fillPos) && !levelIn->getBlockState(fillPos)->getMaterial()->isLiquid())
+                    if ((*it)->mBoundingBox->isInside(pos))
+                    {
+                        inPiece = true;
                         break;
-                    levelIn->setBlock(fillPos, Blocks::cobblestone->defaultBlockState(), Block::UPDATE_CLIENTS, false);
+                    }
                 }
-                break;
+
+                if (inPiece)
+                {
+                    for (int fillY = y - 1; fillY > 1; --fillY)
+                    {
+                        BlockPos fillPos(x, fillY, z);
+                        if (!levelIn->isEmptyBlock(fillPos) &&
+                            !levelIn->getBlockState(fillPos)->getMaterial()->isLiquid())
+                            break;
+                        levelIn->setBlock(fillPos, Blocks::cobblestone->defaultBlockState(),
+                                          Block::UPDATE_CLIENTS, false);
+                    }
+                }
             }
         }
     }

@@ -19,10 +19,10 @@ const BlockState* sanitiseBottomLayerBlocks(const BlockState* pState)
     if (blockId == BlockId::STONE_SLAB)
     {
         StoneSlabBlock* slab = static_cast<StoneSlabBlock*>(block);
-        TypedBoxed<StoneSlabBlock::Variant*>* boxed =
-            static_cast<TypedBoxed<StoneSlabBlock::Variant*>*>(pState->getBoxedValue(slab->getTypeProperty()));
+        StoneSlabBlock::Variant* variant = pState->getValue(
+            static_cast<const AbstractProperty<StoneSlabBlock::Variant*>*>(slab->getTypeProperty()));
 
-        switch (boxed->getValue()->getData())
+        switch (variant->getData())
         {
         case 0:
             return Blocks::stone->defaultBlockState();

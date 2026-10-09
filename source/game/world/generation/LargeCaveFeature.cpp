@@ -35,14 +35,12 @@ void LargeCaveFeature::setCaveBlocks(Level* level, int minX, int maxX, int minY,
         double xd = ((double)worldX + 0.5 - centerX) / radiusX;
         for (int localZ = minZ; localZ < maxZ; ++localZ)
         {
-            bool frozen = false;
             int worldZ = localZ + chunkZ * 16;
             columnPos.x = worldX;
             columnPos.y = 0;
             columnPos.z = worldZ;
             Biome* biome = level->getBiome(columnPos);
-            if (biome->getDepth() < -0.9F && biome->isSnowCovered())
-                frozen = true;
+            bool frozen = biome->getDepth() < -0.9F && biome->isSnowCovered();
             if (hasWater && !frozen)
                 return;
 

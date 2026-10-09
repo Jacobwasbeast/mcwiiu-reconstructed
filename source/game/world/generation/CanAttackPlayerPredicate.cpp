@@ -15,7 +15,8 @@ CanAttackPlayerPredicate::CanAttackPlayerPredicate(MobNearestPlayerTargetGoal* g
 
 bool CanAttackPlayerPredicate::apply(boost::shared_ptr<Entity> entity) const
 {
-    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+    bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType());
+    if (!isPlayer)
     {
         return false;
     }
@@ -35,7 +36,8 @@ bool CanAttackPlayerPredicate::apply(boost::shared_ptr<Entity> entity) const
 
     if (entity->isInvisible())
     {
-        float armorCoverage = boost::dynamic_pointer_cast<Player>(entity)->getArmorCoverPercentage();
+        boost::shared_ptr<Player> invisiblePlayer = boost::dynamic_pointer_cast<Player>(entity);
+        float armorCoverage = invisiblePlayer->getArmorCoverPercentage();
         if (armorCoverage < 0.1f)
         {
             armorCoverage = 0.1f;

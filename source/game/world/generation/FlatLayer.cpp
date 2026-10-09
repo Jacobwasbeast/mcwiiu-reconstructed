@@ -15,7 +15,7 @@ arrayWithLength<int> FlatLayer::getArea(int x, int z, int width, int height)
     {
         for (int j = 0; j < width; j++)
         {
-            area.data[i * width + j] = biome;
+            area.data[j + i * width] = biome;
         }
     }
 

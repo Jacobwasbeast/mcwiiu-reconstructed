@@ -55,8 +55,8 @@ void CapeLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
     double capeY = (player->mPrevChasingPosY + (player->mChasingPosY - player->mPrevChasingPosY) * partialTicks) - (player->mYo + (player->mY - player->mYo) * partialTicks);
     double capeZ = (player->mPrevChasingPosZ + (player->mChasingPosZ - player->mPrevChasingPosZ) * partialTicks) - (player->mZo + (player->mZ - player->mZo) * partialTicks);
     float bodyRot = player->mYBodyRotO + (player->mYBodyRot - player->mYBodyRotO) * partialTicks;
-    double sinBody = Mth::sin(bodyRot * 0.017453292f);
-    double cosBody = -Mth::cos(bodyRot * 0.017453292f);
+    double sinBody = Mth::sin(bodyRot * Mth::DEG_TO_RAD);
+    double cosBody = -Mth::cos(bodyRot * Mth::DEG_TO_RAD);
     float vertical = Mth::clamp((float)capeY * 10.0f, -6.0f, 32.0f);
     float horizontal = (float)(capeX * cosBody - capeZ * sinBody) * 100.0f;
     float forward = (float)(capeX * sinBody + capeZ * cosBody) * 100.0f;

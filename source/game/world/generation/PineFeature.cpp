@@ -44,98 +44,106 @@ bool PineFeature::place(Level* level, Random& random, const BlockPos& pos)
     const int leafStart = height - random.nextInt(2) - 3;
     const int leafRadius = random.nextInt(height - leafStart + 1) + 1;
 
-    if (pos.y > 0 && pos.y + height + 1 <= 128)
+    if (pos.y < 1 || pos.y + height + 1 > 128)
     {
-        if (gApp.getLevelGenerationOptions() != NULL &&
-            gApp.getLevelGenerationOptions()->checkIntersects(
-                BlockPos(pos.x - leafRadius, pos.y - 1, pos.z - leafRadius),
-                BlockPos(pos.x + leafRadius, pos.y + height, pos.z + leafRadius)))
+        PIXEndNamedEvent();
+        return false;
+    }
+
+    if (gApp.getLevelGenerationOptions() != NULL)
+    {
+        LevelGenerationOptions* levelGenerationOptions = gApp.getLevelGenerationOptions();
+        if (levelGenerationOptions->checkIntersects(BlockPos(pos.x - leafRadius, pos.y - 1, pos.z - leafRadius),
+                                                    BlockPos(pos.x + leafRadius, pos.y + height, pos.z + leafRadius)))
         {
             PIXEndNamedEvent();
             return false;
         }
+    }
 
-        bool free = true;
-        for (int y = pos.y; y <= pos.y + height + 1 && free; ++y)
+    bool free = true;
+    for (int y = pos.y; y <= pos.y + height + 1 && free; ++y)
+    {
+        int radius = 0;
+        if (y - pos.y >= leafStart)
         {
-            int radius = 0;
-            if (y - pos.y >= leafStart)
+            radius = leafRadius;
+        }
+        for (int x = pos.x - radius; x <= pos.x + radius && free; ++x)
+        {
+            for (int z = pos.z - radius; z <= pos.z + radius && free; ++z)
             {
-                radius = leafRadius;
-            }
-            for (int x = pos.x - radius; x <= pos.x + radius && free; ++x)
-            {
-                for (int z = pos.z - radius; z <= pos.z + radius && free; ++z)
+                if (y >= 0 && y < 128)
                 {
-                    if (y >= 0 && y < 128)
-                    {
-                        if (!isFree(level->getBlockState(BlockPos(x, y, z))->getBlock()))
-                        {
-                            free = false;
-                        }
-                    }
-                    else
+                    if (!isFree(level->getBlockState(BlockPos(x, y, z))->getBlock()))
                     {
                         free = false;
                     }
                 }
+                else
+                {
+                    free = false;
+                }
+            }
+        }
+    }
+
+    if (!free)
+    {
+        PIXEndNamedEvent();
+        return false;
+    }
+
+    Block* ground = level->getBlockState(pos.below())->getBlock();
+    if ((ground != Blocks::grass && ground != Blocks::dirt) || pos.y >= 127 - height)
+    {
+        PIXEndNamedEvent();
+        return false;
+    }
+
+    setDirtAt(level, pos.below());
+
+    int radius = 0;
+    MutableBlockPos leafPos(0, 0, 0);
+    for (int y = pos.y + height; y >= pos.y + leafStart; --y)
+    {
+        for (int x = pos.x - radius; x <= pos.x + radius; ++x)
+        {
+            int xOffset = x - pos.x;
+            for (int z = pos.z - radius; z <= pos.z + radius; ++z)
+            {
+                int zOffset = z - pos.z;
+                if (std::abs(xOffset) == radius && std::abs(zOffset) == radius && radius > 0)
+                {
+                    continue;
+                }
+                leafPos.set(x, y, z);
+                if (!level->getBlockState(leafPos)->isSolid())
+                {
+                    setBlock(level, leafPos, mLeafState, Block::UPDATE_NONE);
+                }
             }
         }
 
-        if (!free)
+        if (radius >= 1 && y == pos.y + leafStart + 1)
         {
-            PIXEndNamedEvent();
-            return false;
+            --radius;
         }
-
-        Block* ground = level->getBlockState(pos.below())->getBlock();
-        if ((ground == Blocks::grass || ground == Blocks::dirt) && pos.y < 127 - height)
+        else if (radius < leafRadius)
         {
-            setDirtAt(level, pos.below());
+            ++radius;
+        }
+    }
 
-            int radius = 0;
-            MutableBlockPos check(0, 0, 0);
-            for (int y = pos.y + height; y >= pos.y + leafStart; --y)
-            {
-                for (int x = pos.x - radius; x <= pos.x + radius; ++x)
-                {
-                    for (int z = pos.z - radius; z <= pos.z + radius; ++z)
-                    {
-                        if (std::abs(x - pos.x) != radius || std::abs(z - pos.z) != radius || radius < 1)
-                        {
-                            check.set(x, y, z);
-                            if (!level->getBlockState(check)->isSolid())
-                            {
-                                setBlock(level, check, mLeafState, Block::UPDATE_NONE);
-                            }
-                        }
-                    }
-                }
-
-                if (radius >= 1 && y == pos.y + leafStart + 1)
-                {
-                    --radius;
-                }
-                else if (radius < leafRadius)
-                {
-                    ++radius;
-                }
-            }
-
-            for (int trunkY = 0; trunkY < height - 1; ++trunkY)
-            {
-                Material* material = level->getBlockState(pos.above(trunkY))->getMaterial();
-                if (material == Material::AIR || material == Material::LEAVES)
-                {
-                    setBlock(level, pos.above(trunkY), mTrunkState, Block::UPDATE_NONE);
-                }
-            }
-
-            PIXEndNamedEvent();
-            return true;
+    for (int trunkY = 0; trunkY < height - 1; ++trunkY)
+    {
+        Material* material = level->getBlockState(pos.above(trunkY))->getMaterial();
+        if (material == Material::AIR || material == Material::LEAVES)
+        {
+            setBlock(level, pos.above(trunkY), mTrunkState, Block::UPDATE_NONE);
         }
     }
 
     PIXEndNamedEvent();
-    return false;
+    return true;
 }

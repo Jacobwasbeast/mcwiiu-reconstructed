@@ -38,6 +38,7 @@ public:
         , mSpectatorParticipation(false)
     {
     }
+    ~MiniGamePlayerSettings();
 
     bool operator==(const MiniGamePlayerSettings& other) const;
 

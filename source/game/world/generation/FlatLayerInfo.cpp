@@ -44,18 +44,18 @@ void FlatLayerInfo::setStart(int start) { mStart = start; }
 std::wstring FlatLayerInfo::toString()
 {
     std::wstring result;
-    if (mVersion < 3)
-    {
-        result = _toString<int>(Block::getId(getBlock()));
-        if (mHeight > 1)
-            result = _toString<int>(mHeight) + L"x" + result;
-    }
-    else
+    if (mVersion >= 3)
     {
         ResourceLocation key = Block::blockRegistry->getKey(getBlock());
         result = key.toString();
         if (mHeight > 1)
             result = _toString<int>(mHeight) + L"*" + result;
+    }
+    else
+    {
+        result = _toString<int>(Block::getId(getBlock()));
+        if (mHeight > 1)
+            result = _toString<int>(mHeight) + L"x" + result;
     }
     int data = getData();
     if (data > 0)
@@ -87,7 +87,7 @@ std::wstring FlatLayerInfo::getDescriptionText() const
     if (getBlock() == Blocks::air)
         return std::wstring(L10N::GetString(IDS_SUPERFLAT_DESC_AIR_LAYER));
     Block* block = getBlock();
-    if (block == NULL)
-        return std::wstring(L"");
-    return std::wstring(L10N::GetString(block->getUseDescriptionId(-1)));
+    if (block != NULL)
+        return std::wstring(L10N::GetString(block->getUseDescriptionId(-1)));
+    return std::wstring(L"");
 }

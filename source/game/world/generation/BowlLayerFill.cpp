@@ -1,5 +1,6 @@
 #include "game/world/generation/BowlLayerFill.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 #include "game/core/Shape.hpp"
@@ -33,19 +34,15 @@ void BowlLayerFill::ExtrudeLayer(Random&, const Shape& shape, const Vec3i&,
         for (unsigned int z = 0; z < shape.depth; ++z)
         {
             float value = shape.at(x, z);
-            if (value >= 0.0f && value < 1.0)
+            if (0.0f <= value && value < 1.0)
             {
-                int startY = (int)std::floor(height * mCurve(value));
+                int startY = (int)std::floor(height * mCurve(value)) + 3;
+                Vec3i column(x, transaction->mSize.y, z);
                 for (int layer = 0; layer < mThickness; ++layer)
                 {
-                    Vec3i position(x, transaction->mSize.y, z);
-                    Vec3i offset(0, startY + 3 + layer, 0);
-                    position = position.subtract(offset);
-
-                    if (*maxY < position.y)
-                        *maxY = position.y;
-                    if (*minY > position.y)
-                        *minY = position.y;
+                    Vec3i position = column.subtract(Vec3i(0, startY + layer, 0));
+                    *maxY = std::max(*maxY, position.y);
+                    *minY = std::min(*minY, position.y);
                     transaction->setBlock(position, 1, 0);
                 }
             }

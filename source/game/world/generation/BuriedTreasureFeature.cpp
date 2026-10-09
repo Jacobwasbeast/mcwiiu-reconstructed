@@ -116,7 +116,7 @@ bool BuriedTreasureFeature::BuriedTreasurePiece::postProcess(Level* levelIn,
 
     levelIn->setBlock(origin, Blocks::chest->defaultBlockState(), Block::UPDATE_ALL, false);
     boost::shared_ptr<BlockEntity> blockEntity = levelIn->getBlockEntity(origin);
-    if (blockEntity != NULL && blockEntity->GetType() == BlockEntityType::CHEST)
+    if (blockEntity != NULL && eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType()))
     {
         boost::shared_ptr<ChestBlockEntity> chest =
             boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
@@ -181,9 +181,10 @@ BuriedTreasureFeature::BuriedTreasureStart::BuriedTreasureStart(
     BuriedTreasureFeature* feature, Level* levelIn, Random&, int chunkX, int chunkZ)
     : StructureStart(chunkX, chunkZ), mFeature(feature)
 {
-    BlockPos position(chunkX * 16 + 8, 0, chunkZ * 16 + 8);
-    if (levelIn->getBiome(position) != NULL)
-        mPieces.push_back(new BuriedTreasurePiece(chunkX * 16 + 8, chunkZ * 16 + 8));
+    int z = chunkZ * 16;
+    int x = chunkX * 16;
+    if (levelIn->getBiome(BlockPos(x + 8, 0, z + 8)) != NULL)
+        mPieces.push_back(new BuriedTreasurePiece(x + 8, z + 8));
     calculateBoundingBox();
 }
 

@@ -11,6 +11,7 @@
 #include "game/data/ByteArrayTag.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/generation/BuriedTreasureFeature.hpp"
+#include "game/world/generation/LargeFeature.hpp"
 #include "game/world/generation/NetherBridgeFeature.hpp"
 #include "game/world/generation/OceanMonumentFeature.hpp"
 #include "game/world/generation/RandomScatteredLargeFeature.hpp"
@@ -29,27 +30,17 @@ boost::unordered_map<std::wstring, StructureFeatureIO::StructurePieceFactory> St
 boost::unordered_map<unsigned int, std::wstring> StructureFeatureIO::pieceIds;
 int StructureFeatureIO::version = 0;
 
-static const std::wstring kMineshaftName(L"Mineshaft");
-static const std::wstring kVillageName(L"Village");
-static const std::wstring kFortressName(L"Fortress");
-static const std::wstring kStrongholdName(L"StrongHold");
-static const std::wstring kTempleName(L"Temple");
-static const std::wstring kMonumentName(L"Monument");
-static const std::wstring kMansionName(L"Mansion");
-static const std::wstring kBuriedTreasureName(L"BuriedTreasure");
-static const std::wstring kShipwreckName(L"Shipwreck");
-
 void StructureFeatureIO::staticCtor()
 {
-    setStartId(eStructureStart_MineShaft, MineShaftStart::Create, kMineshaftName);
-    setStartId(eStructureStart_Village, VillageFeature::VillageStart::Create, kVillageName);
-    setStartId(eStructureStart_NetherBridge, NetherBridgeFeature::NetherBridgeStart::Create, kFortressName);
-    setStartId(eStructureStart_Stronghold, StrongholdFeature::StrongholdStart::Create, kStrongholdName);
-    setStartId(eStructureStart_ScatteredFeature, RandomScatteredLargeFeature::ScatteredFeatureStart::Create, kTempleName);
-    setStartId(eStructureStart_OceanMonument, OceanMonumentFeature::OceanMonumentStart::Create, kMonumentName);
-    setStartId(eStructureStart_WoodlandMansion, WoodlandMansionFeature::WoodlandMansionStart::Create, kMansionName);
-    setStartId(eStructureStart_BuriedTreasure, BuriedTreasureFeature::BuriedTreasureStart::Create, kBuriedTreasureName);
-    setStartId(eStructureStart_Shipwreck, ShipwreckFeature::ShipwreckStart::Create, kShipwreckName);
+    setStartId(eStructureStart_MineShaft, MineShaftStart::Create, LargeFeature::MINESHAFT);
+    setStartId(eStructureStart_Village, VillageFeature::VillageStart::Create, LargeFeature::VILLAGE);
+    setStartId(eStructureStart_NetherBridge, NetherBridgeFeature::NetherBridgeStart::Create, LargeFeature::FORTRESS);
+    setStartId(eStructureStart_Stronghold, StrongholdFeature::StrongholdStart::Create, LargeFeature::STRONGHOLD);
+    setStartId(eStructureStart_ScatteredFeature, RandomScatteredLargeFeature::ScatteredFeatureStart::Create, LargeFeature::TEMPLE);
+    setStartId(eStructureStart_OceanMonument, OceanMonumentFeature::OceanMonumentStart::Create, LargeFeature::MONUMENT);
+    setStartId(eStructureStart_WoodlandMansion, WoodlandMansionFeature::WoodlandMansionStart::Create, LargeFeature::MANSION);
+    setStartId(eStructureStart_BuriedTreasure, BuriedTreasureFeature::BuriedTreasureStart::Create, LargeFeature::BURIED_TREASURE);
+    setStartId(eStructureStart_Shipwreck, ShipwreckFeature::ShipwreckStart::Create, LargeFeature::SHIPWRECK);
 
     MineShaftPieces::loadStatic();
     VillagePieces::loadStatic();

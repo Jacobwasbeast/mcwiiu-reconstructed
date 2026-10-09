@@ -27,7 +27,14 @@ void SpiderEyesLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
     mRenderer->bindTexture(&SPIDER_EYES_LOCATION);
     GlStateManager::enableBlend();
     GlStateManager::blendFunc(1, 1);
-    GlStateManager::depthMask(!entity->isInvisible());
+    if (entity->isInvisible())
+    {
+        GlStateManager::depthMask(false);
+    }
+    else
+    {
+        GlStateManager::depthMask(true);
+    }
     GlStateManager::multiTexCoord2f(61680.0f, 0.0f);
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
 

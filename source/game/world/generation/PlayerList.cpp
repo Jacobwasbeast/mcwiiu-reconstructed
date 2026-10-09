@@ -1010,7 +1010,7 @@ void PlayerList::repositionAcrossDimension(boost::shared_ptr<Entity> entity, int
         }
     }
 
-    if (entity->GetType() == EntityType::SERVER_PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, entity->GetType()))
     {
         boost::shared_ptr<ServerPlayer> serverPlayer = boost::dynamic_pointer_cast<ServerPlayer>(entity);
         removePlayerFromReceiving(serverPlayer, false, lastDimension);

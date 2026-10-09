@@ -39,7 +39,7 @@ public:
     virtual ~MultiPlayerGameMode();
 
     GameModeConstraints* getGameModeConstraints();
-    boost::shared_ptr<Player> createPlayer(Level* level);
+    boost::shared_ptr<MultiplayerLocalPlayer> createPlayer(Level* level);
     void initPlayer(boost::shared_ptr<Player> player);
     void adjustPlayer(boost::shared_ptr<Player> player);
     void ensureHasSentCarriedItem();
@@ -107,8 +107,8 @@ public:
     void handleCreativeModeItemDrop(not_null_ptr<ItemInstance> item);
     bool hasExperience();
     bool hasFarPickRange();
-    virtual boost::shared_ptr<ItemInstance> handleCraftItem(int recipe, int category,
-                                                             boost::shared_ptr<Player> player);
+    virtual not_null_ptr<ItemInstance> handleCraftItem(int recipe, int category,
+                                                       boost::shared_ptr<Player> player);
     virtual boost::shared_ptr<ItemInstance> handleStackedCraftItem(
         std::vector<std::pair<int, int> >& recipes, int category, boost::shared_ptr<Player> player);
     virtual boost::shared_ptr<ItemInstance> handleCustomCraftItem(

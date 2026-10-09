@@ -19,22 +19,16 @@ bool PumpkinFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
     for (int i = 0; i < 64; ++i)
     {
-        const int xOffsetStart = random.nextInt(8);
-        const int dx = xOffsetStart - random.nextInt(8);
-        const int yOffsetStart = random.nextInt(4);
-        const int dy = yOffsetStart - random.nextInt(4);
-        const int zOffsetStart = random.nextInt(8);
-        const int dz = zOffsetStart - random.nextInt(8);
-        const BlockPos position = origin.offset(dx, dy, dz);
+        BlockPos position = origin.offset(random.nextInt(8) - random.nextInt(8), random.nextInt(4) - random.nextInt(4),
+                                          random.nextInt(8) - random.nextInt(8));
         if (level->isEmptyBlock(position)
             && level->getBlockState(position.below())->getBlock() == Blocks::grass
             && Blocks::pumpkin->mayPlace(level, position))
         {
-            const BlockState* state = Blocks::pumpkin->defaultBlockState();
-            TypedBoxed<const Direction*> facing(
-                Direction::Plane::HORIZONTAL->getRandomDirection(random));
             level->setBlock(position,
-                            state->setBoxedValue(HorizontalDirectionalBlock::FACING_PROPERTY, &facing),
+                            Blocks::pumpkin->defaultBlockState()->setValue(
+                                HorizontalDirectionalBlock::FACING_PROPERTY,
+                                Direction::Plane::HORIZONTAL->getRandomDirection(random)),
                             Block::UPDATE_CLIENTS, false);
         }
     }

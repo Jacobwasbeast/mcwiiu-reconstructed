@@ -29,15 +29,8 @@ bool DeadBushFeature::place(Level* level, Random& random, const BlockPos& origin
 
     for (int i = 0; i < 4; ++i)
     {
-        const int xOffsetStart = random.nextInt(8);
-        const int xOffsetEnd = random.nextInt(8);
-        const int yOffsetStart = random.nextInt(4);
-        const int yOffsetEnd = random.nextInt(4);
-        const int zOffsetStart = random.nextInt(8);
-        const int zOffsetEnd = random.nextInt(8);
-        BlockPos target = pos.offset(xOffsetStart - xOffsetEnd,
-                                     yOffsetStart - yOffsetEnd,
-                                     zOffsetStart - zOffsetEnd);
+        BlockPos target = pos.offset(random.nextInt(8) - random.nextInt(8), random.nextInt(4) - random.nextInt(4),
+                                     random.nextInt(8) - random.nextInt(8));
         if (level->isEmptyBlock(target)
             && Blocks::deadbush->canSurvive(level, target, Blocks::deadbush->defaultBlockState()))
         {

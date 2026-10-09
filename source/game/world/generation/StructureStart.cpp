@@ -34,36 +34,6 @@ StructureStart::~StructureStart()
     delete mBoundingBox;
 }
 
-BoundingBox* StructureStart::getBoundingBox()
-{
-    return mBoundingBox;
-}
-
-bool StructureStart::isDirty()
-{
-    return mDirty;
-}
-
-unsigned int StructureStart::getChunkX()
-{
-    return (unsigned int)mChunkX;
-}
-
-unsigned int StructureStart::getChunkZ()
-{
-    return (unsigned int)mChunkZ;
-}
-
-std::vector<StructurePiece*>* StructureStart::getPieces()
-{
-    return &mPieces;
-}
-
-void StructureStart::clearDirty()
-{
-    mDirty = false;
-}
-
 void StructureStart::setDirty()
 {
     mDirty = true;

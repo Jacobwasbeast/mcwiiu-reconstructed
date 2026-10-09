@@ -1,4 +1,5 @@
 #include "game/world/generation/ShulkerHeadLayer.hpp"
+#include "game/core/Mth.hpp"
 
 #include <boost/shared_ptr.hpp>
 
@@ -61,8 +62,8 @@ void ShulkerHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float lim
     }
 
     ShulkerModel* model = static_cast<ShulkerModel*>(mRenderer->getModel());
-    model->mHead->mYRot = netHeadYaw * 0.017453292f;
-    model->mHead->mXRot = headPitch * 0.017453292f;
+    model->mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
+    model->mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
     mRenderer->bindTexture(&SHULKER_LOCATION);
     model->mHead->render(scale, bUseDisplayList, false);
 

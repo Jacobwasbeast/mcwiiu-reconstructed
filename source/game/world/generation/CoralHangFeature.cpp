@@ -19,11 +19,11 @@ CoralHangFeature::~CoralHangFeature()
 bool CoralHangFeature::canPlaceHangOn(Level* level, const BlockPos& pos)
 {
     Block* block = level->getBlock(pos);
-    if (block != Blocks::coral_block && block != Blocks::stone)
+    if (block == Blocks::coral_block || block == Blocks::stone)
     {
-        return false;
+        return true;
     }
-    return true;
+    return false;
 }
 
 const Direction* CoralHangFeature::randomDirection(Level* level, Random& random,
@@ -78,33 +78,25 @@ bool CoralHangFeature::place(Level* level, Random& random, const BlockPos& origi
         position = position.below();
     }
 
-    if (level->isSolidBlockingBlock(position) && canPlaceHangOn(level, position))
+    if (!level->isSolidBlockingBlock(position) || !canPlaceHangOn(level, position))
     {
-        const Direction* direction = randomDirection(level, random, position);
-        const BlockPos target = position.relative(direction);
-        if (level->isEmptyWaterBlock(target)
-            && level->isUnderWater(target, 266, 0))
-        {
-            const BlockState* state = Blocks::coral_fan_hang->defaultBlockState();
-            {
-                TypedBoxed<int> variant(random.nextInt(CoralFanHang::VARIANT->getValueCount()));
-                state = state->setBoxedValue(CoralFanHang::VARIANT, &variant);
-            }
-            {
-                TypedBoxed<bool> dead(random.nextBoolean());
-                state = state->setBoxedValue(CoralFanHang::DEAD, &dead);
-            }
-            {
-                TypedBoxed<int> facing(turnFacingIntoint(direction));
-                state = state->setBoxedValue(CoralFanHang::DIRECTION, &facing);
-            }
-            if (level->reallyHasChunkAt(target))
-            {
-                setBlock(level, target, state, Block::UPDATE_NONE);
-            }
-            return true;
-        }
+        return false;
     }
 
-    return false;
+    const Direction* direction = randomDirection(level, random, position);
+    const BlockPos target = position.relative(direction);
+    if (!level->isEmptyWaterBlock(target) || !level->isUnderWater(target, 266, 0))
+    {
+        return false;
+    }
+
+    const BlockState* state = Blocks::coral_fan_hang->defaultBlockState()
+        ->setValue(CoralFanHang::VARIANT, random.nextInt(CoralFanHang::VARIANT->getValueCount()))
+        ->setValue(CoralFanHang::DEAD, random.nextBoolean())
+        ->setValue(CoralFanHang::DIRECTION, turnFacingIntoint(direction));
+    if (level->reallyHasChunkAt(target))
+    {
+        setBlock(level, target, state, Block::UPDATE_NONE);
+    }
+    return true;
 }

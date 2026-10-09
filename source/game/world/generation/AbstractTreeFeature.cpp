@@ -60,7 +60,7 @@ void AbstractTreeFeature::placeFallenTrunk(Level* level, const BlockPos& pos,
     MutableBlockPos start(pos.x, pos.y, pos.z);
     const Direction* direction = Direction::Plane::HORIZONTAL->getRandomDirection(random);
     int remaining = length - 2;
-    BlockPos moved = *start.move(direction, random.nextInt(2) + 2);
+    MutableBlockPos moved(*start.move(direction, random.nextInt(2) + 2));
 
     int height = level->getHeightmap(moved.x, moved.z);
     if (height > pos.y + 1)
@@ -68,7 +68,7 @@ void AbstractTreeFeature::placeFallenTrunk(Level* level, const BlockPos& pos,
         return;
     }
 
-    MutableBlockPos cursor(start);
+    MutableBlockPos cursor(moved);
     cursor.set(moved.x, height, moved.z);
 
     int unsupported = 0;
@@ -99,26 +99,23 @@ void AbstractTreeFeature::placeFallenTrunk(Level* level, const BlockPos& pos,
     {
         cursor.move(direction, 1);
 
+        LogBlock::LogAxis* axis;
         if (direction->getAxis()->getId() == Direction::Axis::eAxis_X)
         {
-            setBlock(level, cursor, mTrunkState->setValue(LogBlock::AXIS, LogBlock::X), Block::UPDATE_NONE);
+            axis = LogBlock::X;
         }
         else
         {
-            setBlock(level, cursor, mTrunkState->setValue(LogBlock::AXIS, LogBlock::Z), Block::UPDATE_NONE);
+            axis = LogBlock::Z;
         }
+        setBlock(level, cursor, mTrunkState->setValue(LogBlock::AXIS, axis), Block::UPDATE_NONE);
 
         if (random.nextInt(10) == 0 &&
             level->getBlockState(cursor.above())->getMaterial() == Material::AIR)
         {
-            if (random.nextFloat() >= 0.5f)
-            {
-                setBlock(level, cursor.above(), Blocks::red_mushroom->defaultBlockState(), Block::UPDATE_NONE);
-            }
-            else
-            {
-                setBlock(level, cursor.above(), Blocks::brown_mushroom->defaultBlockState(), Block::UPDATE_NONE);
-            }
+            setBlock(level, cursor.above(),
+                     (random.nextFloat() < 0.5f ? Blocks::brown_mushroom : Blocks::red_mushroom)->defaultBlockState(),
+                     Block::UPDATE_NONE);
         }
     }
 }
@@ -134,21 +131,26 @@ bool AbstractTreeFeature::placeTrunk(Level* level, const BlockPos& pos,
 {
     bool fallen = random.nextInt(80) == 0;
 
-    float vineChance = 0.0f;
-    if (mTrunkState->getValue(OldLogBlock::VARIANT) != PlanksBlock::Variant::BIRCH)
+    float vineChance;
+    if (mTrunkState->getValue(OldLogBlock::VARIANT) == PlanksBlock::Variant::BIRCH)
     {
-        if (fallen)
-        {
-            vineChance = 0.75f;
-        }
-        else if (mHasVines)
-        {
-            vineChance = 1.0f / 3.0f;
-        }
-        else if (random.nextInt(12) == 0)
-        {
-            vineChance = 1.0f;
-        }
+        vineChance = 0.0f;
+    }
+    else if (fallen)
+    {
+        vineChance = 0.75f;
+    }
+    else if (mHasVines)
+    {
+        vineChance = 1.0f / 3.0f;
+    }
+    else if (random.nextInt(12) == 0)
+    {
+        vineChance = 1.0f;
+    }
+    else
+    {
+        vineChance = 0.0f;
     }
 
     if (fallen)

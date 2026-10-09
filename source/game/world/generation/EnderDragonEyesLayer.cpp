@@ -27,7 +27,10 @@ void EnderDragonEyesLayer::render(boost::shared_ptr<LivingEntity>& entity, float
     GlStateManager::blendFunc(1, 1);
     GlStateManager::disableLighting();
     GlStateManager::depthFunc(2);
-    GlStateManager::multiTexCoord2f(61680.0f, 0.0f);
+    int lightColor = 61680;
+    int lightU = lightColor % 65536;
+    int lightV = lightColor / 65536;
+    GlStateManager::multiTexCoord2f((float)lightU, (float)lightV);
     GlStateManager::enableLighting();
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
 

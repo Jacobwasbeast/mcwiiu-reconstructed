@@ -19,7 +19,7 @@ public:
                             int originChunkZ, ChunkPrimer* primer);
 
 private:
-    float rs[128];
+    float rs[1024];
 };
 
 #endif

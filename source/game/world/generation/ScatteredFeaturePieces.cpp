@@ -517,7 +517,7 @@ bool ScatteredFeaturePieces::Igloo::postProcess(Level* level, Random& random, Bo
             BlockPos chestPos = it->first;
             level->setBlock(chestPos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(chestPos.below());
-            if (blockEntity != NULL && blockEntity->GetType() == BlockEntityType::CHEST)
+            if (blockEntity != NULL && eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType()))
             {
                 boost::shared_ptr<ChestBlockEntity> chest = boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
                 chest->setLootTable(&BuiltInLootTables::IGLOO_CHEST, static_cast<long long>(random.nextInt()));

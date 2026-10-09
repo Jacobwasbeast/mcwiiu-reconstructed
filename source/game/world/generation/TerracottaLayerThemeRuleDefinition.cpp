@@ -7,25 +7,18 @@ TerracottaLayerThemeFunction getColourFunc(const std::wstring& function);
 TerracottaLayerTheme::Pattern getPattern(const std::wstring& pattern)
 {
     Random random;
-    const Direction* directions[4];
 
     if (pattern == L"RANDOM:1")
     {
         TerracottaLayerTheme::Pattern result = {1};
-        directions[0] = Direction::NORTH;
-        directions[1] = Direction::SOUTH;
-        directions[2] = Direction::EAST;
-        directions[3] = Direction::WEST;
+        const Direction* directions[4] = {Direction::NORTH, Direction::SOUTH, Direction::EAST, Direction::WEST};
         const Direction* selected = directions[random.nextInt(4)];
         result.values[0] = selected;
         return result;
     }
     else if (pattern == L"RANDOM:2")
     {
-        directions[0] = Direction::NORTH;
-        directions[1] = Direction::SOUTH;
-        directions[2] = Direction::EAST;
-        directions[3] = Direction::WEST;
+        const Direction* directions[4] = {Direction::NORTH, Direction::SOUTH, Direction::EAST, Direction::WEST};
         const Direction* selected = directions[random.nextInt(4)];
         TerracottaLayerTheme::Pattern result = {2};
         result.values[0] = selected->getClockWise();
@@ -36,13 +29,10 @@ TerracottaLayerTheme::Pattern getPattern(const std::wstring& pattern)
     }
     else if (pattern == L"RANDOM:3")
     {
-        directions[0] = Direction::NORTH;
-        directions[1] = Direction::SOUTH;
-        directions[2] = Direction::EAST;
-        directions[3] = Direction::WEST;
+        const Direction* directions[4] = {Direction::NORTH, Direction::SOUTH, Direction::EAST, Direction::WEST};
         const Direction* selected = directions[random.nextInt(4)];
-        TerracottaLayerTheme::Pattern result = {3};
         const Direction* opposite = selected->getOpposite();
+        TerracottaLayerTheme::Pattern result = {3};
         result.values[0] = selected;
         result.values[1] = opposite;
         result.values[2] = selected;
@@ -56,10 +46,7 @@ TerracottaLayerTheme::Pattern getPattern(const std::wstring& pattern)
     }
     else
     {
-        directions[0] = Direction::NORTH;
-        directions[1] = Direction::SOUTH;
-        directions[2] = Direction::EAST;
-        directions[3] = Direction::WEST;
+        const Direction* directions[4] = {Direction::NORTH, Direction::SOUTH, Direction::EAST, Direction::WEST};
         const Direction* selected = directions[random.nextInt(4)];
         const Direction* clockwise = selected->getClockWise();
         const Direction* counterClockwise = selected->getCounterClockWise();

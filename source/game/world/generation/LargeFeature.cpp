@@ -2,6 +2,18 @@
 
 #include "game/world/Level.hpp"
 
+const std::wstring LargeFeature::STRONGHOLD(L"StrongHold");
+const std::wstring LargeFeature::VILLAGE(L"Village");
+const std::wstring LargeFeature::MONUMENT(L"Monument");
+const std::wstring LargeFeature::MANSION(L"Mansion");
+const std::wstring LargeFeature::END_CITY(L"EndCity");
+const std::wstring LargeFeature::TEMPLE(L"Temple");
+const std::wstring LargeFeature::MINESHAFT(L"Mineshaft");
+const std::wstring LargeFeature::FORTRESS(L"Fortress");
+const std::wstring LargeFeature::BURIED_TREASURE(L"BuriedTreasure");
+const std::wstring LargeFeature::SHIPWRECK(L"Shipwreck");
+const std::wstring LargeFeature::RUIN(L"Ruin");
+
 LargeFeature::LargeFeature()
 {
     range = 8;

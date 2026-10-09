@@ -1,5 +1,6 @@
 #include "game/world/generation/WarpedLayerFill.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 #include "game/core/Shape.hpp"
@@ -31,17 +32,13 @@ void WarpedLayerFill::ExtrudeLayer(Random& random, const Shape& shape, const Vec
                                                     (double)z / mNoiseScale);
                 int startY = (int)std::floor(mOffset * (float)((noiseValue + 1.0) * 0.5));
                 int y = startY + 3;
+                Vec3i position(x, transaction->mSize.y, z);
                 for (int layer = 0; layer < mThickness; ++layer)
                 {
-                    Vec3i position(x, transaction->mSize.y, z);
-                    Vec3i offset(0, y + layer, 0);
-                    position = position.subtract(offset);
-
-                    if (*maxY < position.y)
-                        *maxY = position.y;
-                    if (*minY > position.y)
-                        *minY = position.y;
-                    transaction->setBlock(position, 1, 0);
+                    Vec3i blockPos = position.subtract(Vec3i(0, y + layer, 0));
+                    *maxY = std::max(*maxY, blockPos.y);
+                    *minY = std::min(*minY, blockPos.y);
+                    transaction->setBlock(blockPos, 1, 0);
                 }
             }
         }

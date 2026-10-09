@@ -20,40 +20,33 @@ SeaAnemoneFeature::~SeaAnemoneFeature()
 
 bool SeaAnemoneFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    if (level->mIsClientSide)
+    if (!level->mIsClientSide)
     {
-        return true;
-    }
-
-    BlockPos pos = origin;
-    while (!level->isSolidBlockingBlock(pos.below()) && pos.y >= 49)
-    {
-        pos = pos.below();
-    }
-
-    if (level->isEmptyWaterBlock(pos)
-        && level->isSolidBlockingBlock(pos.below())
-        && pos.y > 48
-        && level->isUnderWater(pos, 259, 0)
-        && level->reallyHasChunkAt(pos))
-    {
-        if (!random.rollPercentageChance(75))
+        BlockPos pos = origin;
+        while (!level->isSolidBlockingBlock(pos.below()) && pos.y > 48)
         {
-            const BlockState* state = Blocks::coral_fan->defaultBlockState();
-            TypedBoxed<int> variant(random.nextInt(CoralFan::VARIANT->getValueCount()));
-            state = state->setBoxedValue(CoralFan::VARIANT, &variant);
-            TypedBoxed<int> direction(random.nextInt(CoralFan::DIRECTION->getValueCount()));
-            state = state->setBoxedValue(CoralFan::DIRECTION, &direction);
-            setBlock(level, pos, state, Block::UPDATE_NONE);
-            return true;
+            pos = pos.below();
         }
 
-        const BlockState* state = Blocks::coral->defaultBlockState();
-        TypedBoxed<int> variant(random.nextInt(Coral::VARIANT->getValueCount()));
-        state = state->setBoxedValue(Coral::VARIANT, &variant);
-        setBlock(level, pos, state, Block::UPDATE_NONE);
-        return true;
-    }
+        if (!level->isEmptyWaterBlock(pos) || !level->isSolidBlockingBlock(pos.below()) || pos.y <= 48
+            || !level->isUnderWater(pos, 259, 0) || !level->reallyHasChunkAt(pos))
+        {
+            return false;
+        }
 
-    return false;
+        if (random.rollPercentageChance(75))
+        {
+            const BlockState* state = Blocks::coral->defaultBlockState()->setValue(
+                Coral::VARIANT, random.nextInt(Coral::VARIANT->getValueCount()));
+            setBlock(level, pos, state, Block::UPDATE_NONE);
+        }
+        else
+        {
+            const BlockState* state = Blocks::coral_fan->defaultBlockState()
+                                          ->setValue(CoralFan::VARIANT, random.nextInt(CoralFan::VARIANT->getValueCount()))
+                                          ->setValue(CoralFan::DIRECTION, random.nextInt(CoralFan::DIRECTION->getValueCount()));
+            setBlock(level, pos, state, Block::UPDATE_NONE);
+        }
+    }
+    return true;
 }

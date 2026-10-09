@@ -11,10 +11,12 @@ SmoothLayer::SmoothLayer(long long seed, boost::shared_ptr<Layer> parent)
 
 arrayWithLength<int> SmoothLayer::getArea(int x, int z, int width, int height)
 {
+    int px = x - 1;
+    int pz = z - 1;
     int parentWidth = width + 2;
     int parentHeight = height + 2;
 
-    arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, parentHeight);
+    arrayWithLength<int> parentArea = parent->getArea(px, pz, parentWidth, parentHeight);
 
     PIXBeginNamedEvent(0.0f, "SmoothLayer::getArea");
 
@@ -32,7 +34,7 @@ arrayWithLength<int> SmoothLayer::getArea(int x, int z, int width, int height)
 
             if (west == east && north == south)
             {
-                initRandom(x + j, z + i);
+                initRandom(j + x, i + z);
 
                 if (nextRandom(2) == 0)
                 {

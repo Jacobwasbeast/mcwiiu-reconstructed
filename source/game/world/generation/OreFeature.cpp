@@ -38,10 +38,11 @@ void OreFeature::_init(const BlockState* state, int numberOfBlocks,
                        const Predicate<const Biome::BlockPair&>* predicate)
 {
     const int blockId = Block::getId(state->getBlock());
-    mBlockData = state->getBlock()->convertBlockStateToLegacyData(state);
+    const int blockData = state->getBlock()->convertBlockStateToLegacyData(state);
+    mBlockId = blockId;
+    mBlockData = blockData;
     mNumberOfBlocks = numberOfBlocks;
     mPredicate = predicate;
-    mBlockId = blockId;
 }
 
 bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
@@ -57,23 +58,29 @@ bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
     const double z1 = (float)(origin.z + 8) - Mth::cos(angle) * (float)mNumberOfBlocks * 0.125f;
     const double y0 = origin.y + random.nextInt(3) - 2;
     const double y1 = origin.y + random.nextInt(3) - 2;
+    bool intersects = false;
     PIXEndNamedEvent();
 
     PIXBeginNamedEvent(0.0f, "Level generation options");
     const double radius = (2.0 * (mNumberOfBlocks * 0.0625) + 1.0) * 0.5;
-    const int minX = Mth::floor((x0 > x1 ? x1 : x0) - radius);
-    const int minY = Mth::floor((y0 > y1 ? y1 : y0) - radius);
-    const int minZ = Mth::floor((z0 > z1 ? z1 : z0) - radius);
-    const int maxX = Mth::floor(std::max(x0, x1) + radius);
-    const int maxY = Mth::floor(std::max(y0, y1) + radius);
-    const int maxZ = Mth::floor(std::max(z0, z1) + radius);
+    const double lowX = x0 < x1 ? x0 : x1;
+    const double lowY = y0 < y1 ? y0 : y1;
+    const double lowZ = z0 < z1 ? z0 : z1;
+    const double highX = x0 < x1 ? x1 : x0;
+    const double highY = y0 < y1 ? y1 : y0;
+    const double highZ = z0 < z1 ? z1 : z0;
+    const int minX = Mth::floor(lowX - radius);
+    const int minY = Mth::floor(lowY - radius);
+    const int minZ = Mth::floor(lowZ - radius);
+    const int maxX = Mth::floor(highX + radius);
+    const int maxY = Mth::floor(highY + radius);
+    const int maxZ = Mth::floor(highZ + radius);
     const int xSize = maxX - minX + 1;
     const int ySize = maxY - minY + 1;
     const int zSize = maxZ - minZ + 1;
     std::memset(mask, 0, (xSize * ySize * zSize + 7) / 8);
 
     LevelGenerationOptions* options = NULL;
-    bool intersects = false;
     if (gApp.getLevelGenerationOptions() != NULL)
     {
         options = gApp.getLevelGenerationOptions();
@@ -81,7 +88,7 @@ bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
     }
     PIXEndNamedEvent();
 
-    const int seaLevel = level->getSeaLevel();
+    const bool aboveSeaLevel = y0 > level->getSeaLevel();
     PIXBeginNamedEvent(0.0f, "Attempting %d placements", mNumberOfBlocks);
     for (int placement = 0; placement <= mNumberOfBlocks; ++placement)
     {
@@ -89,8 +96,8 @@ bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
         const double x = (x1 - x0) * progress + x0;
         const double y = (y1 - y0) * progress + y0;
         const double z = (z1 - z0) * progress + z0;
-        const double noise = random.nextDouble();
-        const double width = ((Mth::sin(3.1415927f * progress) + 1.0f) * noise * mNumberOfBlocks * 0.0625 + 1.0) * 0.5;
+        const double size = random.nextDouble() * mNumberOfBlocks * 0.0625;
+        const double width = ((Mth::sin(3.1415927f * progress) + 1.0f) * size + 1.0) * 0.5;
         const int lowerX = Mth::floor(x - width);
         const int lowerY = Mth::floor(y - width);
         const int lowerZ = Mth::floor(z - width);
@@ -110,15 +117,11 @@ bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
             }
         }
 
-        if (seaLevel < y0)
+        if (aboveSeaLevel)
         {
             PIXBeginNamedEvent(0.0f, "Early reject tests");
-            bool reject = false;
-            if (level->getHeightmap(lowerX, lowerZ) < lowerY && level->getHeightmap(upperX, lowerZ) < lowerY &&
-                level->getHeightmap(lowerX, upperZ) < lowerY && level->getHeightmap(upperX, upperZ) < lowerY)
-            {
-                reject = true;
-            }
+            const bool reject = level->getHeightmap(lowerX, lowerZ) < lowerY && level->getHeightmap(upperX, lowerZ) < lowerY &&
+                                level->getHeightmap(lowerX, upperZ) < lowerY && level->getHeightmap(upperX, upperZ) < lowerY;
             PIXEndNamedEvent();
             if (reject)
             {
@@ -127,28 +130,38 @@ bool OreFeature::place(Level* level, Random& random, const BlockPos& origin)
         }
 
         PIXBeginNamedEvent(0.0f, "Setting blocks");
+        const double offsetX = lowerX + 0.5 - x;
+        const double offsetY = lowerY + 0.5 - y;
+        const double offsetZ = lowerZ + 0.5 - z;
+        const int startDx = (int)(offsetX * 256.0);
+        const int startDy = (int)(offsetY * 256.0);
+        const int startDz = (int)(offsetZ * 256.0);
         const int radiusSquared = (int)(width * width * 65536.0);
-        int dx = (int)((lowerX + 0.5 - x) * 256.0);
-        for (int blockX = lowerX; blockX <= upperX; ++blockX, dx += 256)
+        int dx = startDx;
+        int xIndex = (lowerX - minX) * ySize;
+        for (int blockX = lowerX; blockX <= upperX; ++blockX, dx += 256, xIndex += ySize)
         {
-            if (dx * dx >= radiusSquared)
+            const int dxSquared = dx * dx;
+            if (dxSquared >= radiusSquared)
             {
                 continue;
             }
 
-            int dy = (int)((lowerY + 0.5 - y) * 256.0);
-            for (int blockY = lowerY; blockY <= upperY; ++blockY, dy += 256)
+            int dy = startDy;
+            int yIndex = (xIndex + (lowerY - minY)) * zSize + (lowerZ - minZ);
+            for (int blockY = lowerY; blockY <= upperY; ++blockY, dy += 256, yIndex += zSize)
             {
-                if (dx * dx + dy * dy >= radiusSquared)
+                const int dySquared = dy * dy;
+                if (dxSquared + dySquared >= radiusSquared)
                 {
                     continue;
                 }
 
-                int dz = (int)((lowerZ + 0.5 - z) * 256.0);
-                int index = ((blockX - minX) * ySize + (blockY - minY)) * zSize + (lowerZ - minZ);
+                int dz = startDz;
+                int index = yIndex;
                 for (int blockZ = lowerZ; blockZ <= upperZ; ++blockZ, dz += 256)
                 {
-                    if (dx * dx + dy * dy + dz * dz < radiusSquared)
+                    if (dxSquared + dySquared + dz * dz < radiusSquared)
                     {
                         const unsigned char bit = (unsigned char)(1 << (index & 7));
                         if ((mask[index >> 3] & bit) == 0)
@@ -186,5 +199,6 @@ bool OreFeature::NaturalStonePredicate::apply(const Biome::BlockPair& pair) cons
     {
         return false;
     }
-    return StoneBlock::Variant::BY_DATA[pair.blockData]->isNatural();
+    StoneBlock::Variant* variant = StoneBlock::Variant::BY_DATA[pair.blockData];
+    return variant->isNatural();
 }

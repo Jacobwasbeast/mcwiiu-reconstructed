@@ -631,7 +631,7 @@ bool StructurePiece::createChest(Level* level, BoundingBox* box, Random& random,
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
         if (blockEntity)
         {
-            bool isChest = blockEntity->GetType() == BlockEntityType::CHEST;
+            bool isChest = eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType());
             if (isChest)
             {
                 boost::shared_ptr<ChestBlockEntity> chest = boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
@@ -654,7 +654,7 @@ bool StructurePiece::createDispenser(Level* level, BoundingBox* box, Random& ran
         placeBlock(level, Blocks::dispenser->defaultBlockState()->setValue(DispenserBlock::FACING, facing), x, y, z, box);
 
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-        bool isDispenser = (blockEntity->GetType() & BlockEntityType::DISPENSER) == BlockEntityType::DISPENSER;
+        bool isDispenser = eTYPE_DERIVED_FROM(BlockEntityType::DISPENSER, blockEntity->GetType());
         if (isDispenser)
         {
             boost::shared_ptr<DispenserBlockEntity> dispenser =

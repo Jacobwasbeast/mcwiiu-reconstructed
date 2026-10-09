@@ -28,8 +28,8 @@ public:
     int getX() const;
     int getY() const;
     int getZ() const;
-    double getXRot() const;
-    double getYRot() const;
+    float getXRot() const;
+    float getYRot() const;
     virtual void WriteAttributesAsXML(std::string& xml);
     virtual ConsoleGameRules::EGameRuleType getActionType();
 

@@ -205,8 +205,10 @@ public:
 
     bool isInChunk(ChunkPos* chunkPos);
 
-protected:
+public:
     BoundingBox* mBoundingBox;
+
+protected:
     const Direction* mOrientation;
     Mirror* mMirror;
     Rotation* mRotation;

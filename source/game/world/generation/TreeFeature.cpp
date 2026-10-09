@@ -56,60 +56,69 @@ int TreeFeature::prepareSpawn(Level* level, const BlockPos& pos, int height)
 {
     PIXBeginNamedEvent(0.0f, "TreeFeature::prepareSpawn");
     int free = 1;
-    if (pos.y > 0 && pos.y + height + 1 <= 256)
+    if (pos.y < 1 || pos.y + height + 1 > 256)
     {
-        if (gApp.getLevelGenerationOptions() != NULL)
-        {
-            PIXBeginNamedEvent(0.0f, "TreeFeature checking intersects");
-            bool intersects = gApp.getLevelGenerationOptions()->checkIntersects(
-                pos.offset(-2, -1, -2), pos.offset(2, height, 2));
-            PIXEndNamedEvent();
-            if (intersects)
-            {
-                PIXEndNamedEvent();
-                return 0;
-            }
-        }
+        PIXEndNamedEvent();
+        return 0;
+    }
 
-        BlockPos check(0, 0, 0);
-        for (int y = pos.y; y <= pos.y + height + 1; ++y)
+    if (gApp.getLevelGenerationOptions() != NULL)
+    {
+        PIXBeginNamedEvent(0.0f, "TreeFeature checking intersects");
+        LevelGenerationOptions* levelGenerationOptions = gApp.getLevelGenerationOptions();
+        bool intersects = levelGenerationOptions->checkIntersects(pos.offset(-2, -1, -2), pos.offset(2, height, 2));
+        PIXEndNamedEvent();
+        if (intersects)
         {
-            int radius = y != pos.y;
-            if (y >= pos.y + height - 1)
-                radius = 2;
-            for (int x = pos.x - radius; x <= pos.x + radius && free; ++x)
+            PIXEndNamedEvent();
+            return 0;
+        }
+    }
+
+    BlockPos check(0, 0, 0);
+    for (int y = pos.y; y <= pos.y + height + 1; ++y)
+    {
+        int radius = 1;
+        if (y == pos.y)
+            radius = 0;
+        if (y >= pos.y + height - 1)
+            radius = 2;
+        for (int x = pos.x - radius; x <= pos.x + radius && free; ++x)
+        {
+            for (int z = pos.z - radius; z <= pos.z + radius && free; ++z)
             {
-                for (int z = pos.z - radius; z <= pos.z + radius && free; ++z)
+                if (y >= 0 && y < 256)
                 {
-                    if (y >= 0 && y < 256)
-                    {
-                        check.x = x;
-                        check.y = y;
-                        check.z = z;
-                        if (!isFree(level->getBlockState(check)->getBlock()))
-                            free = 0;
-                    }
-                    else
-                    {
+                    check.x = x;
+                    check.y = y;
+                    check.z = z;
+                    if (!isFree(level->getBlockState(check)->getBlock()))
                         free = 0;
-                    }
+                }
+                else
+                {
+                    free = 0;
                 }
             }
         }
-        if (free)
-        {
-            Block* ground = level->getBlockState(pos.below())->getBlock();
-            if ((ground == Blocks::grass || ground == Blocks::dirt || ground == Blocks::farmland)
-                && pos.y < 255 - height)
-            {
-                setDirtAt(level, pos.below());
-                PIXEndNamedEvent();
-                return free;
-            }
-        }
     }
+
+    if (!free)
+    {
+        PIXEndNamedEvent();
+        return 0;
+    }
+
+    Block* ground = level->getBlockState(pos.below())->getBlock();
+    if ((ground != Blocks::grass && ground != Blocks::dirt && ground != Blocks::farmland) || pos.y >= 255 - height)
+    {
+        PIXEndNamedEvent();
+        return 0;
+    }
+
+    setDirtAt(level, pos.below());
     PIXEndNamedEvent();
-    return 0;
+    return free;
 }
 
 void TreeFeature::placeLeaf(Level* level, const MutableBlockPos& pos)
@@ -147,7 +156,7 @@ void TreeFeature::placeCocoa(Level* level, int age, const BlockPos& pos,
 bool TreeFeature::place(Level* level, Random& random, const BlockPos& pos)
 {
     PIXBeginNamedEvent(0.0f, "TreeFeature::place");
-    const int height = random.nextInt(3) + mBaseHeight;
+    int height = random.nextInt(3) + mBaseHeight;
     if (!prepareSpawn(level, pos, height))
     {
         PIXEndNamedEvent();
@@ -161,20 +170,20 @@ bool TreeFeature::place(Level* level, Random& random, const BlockPos& pos)
 
     PIXBeginNamedEvent(0.0f, "Placing TreeFeature leaves");
     MutableBlockPos leafPos(0, 0, 0);
-    for (int y = pos.y + height; y >= pos.y + height - 3; --y)
+    for (int y = pos.y + height; y >= pos.y - 3 + height; --y)
     {
-        const int layer = y - (pos.y + height);
-        const int radius = 1 - layer / 2;
+        int layer = y - (pos.y + height);
+        int radius = 1 - layer / 2;
         for (int x = pos.x - radius; x <= pos.x + radius; ++x)
         {
+            int xOffset = x - pos.x;
             for (int z = pos.z - radius; z <= pos.z + radius; ++z)
             {
-                if (std::abs(x - pos.x) != radius || std::abs(z - pos.z) != radius ||
-                    (random.nextInt(2) != 0 && layer != 0))
-                {
-                    leafPos.set(x, y, z);
-                    placeLeaf(level, leafPos);
-                }
+                if (std::abs(xOffset) == radius && std::abs(z - pos.z) == radius &&
+                    (random.nextInt(2) == 0 || layer == 0))
+                    continue;
+                leafPos.set(x, y, z);
+                placeLeaf(level, leafPos);
             }
         }
     }
@@ -184,9 +193,9 @@ bool TreeFeature::place(Level* level, Random& random, const BlockPos& pos)
     {
         PIXBeginNamedEvent(0.0f, "TreeFeature adding vines");
         MutableBlockPos vinePos(0, 0, 0);
-        for (int y = pos.y + height - 3; y <= pos.y + height; ++y)
+        for (int y = pos.y - 3 + height; y <= pos.y + height; ++y)
         {
-            const int radius = 2 - (y - (pos.y + height)) / 2;
+            int radius = 2 - (y - (pos.y + height)) / 2;
             for (int x = pos.x - radius; x <= pos.x + radius; ++x)
             {
                 for (int z = pos.z - radius; z <= pos.z + radius; ++z)

@@ -15,31 +15,22 @@
 
 bool UnderwaterLargeCaveFeature::isDiggable(int blockId)
 {
-    bool diggable = true;
-    switch (blockId)
-    {
-    case BlockId::AIR:
-    case BlockId::STONE:
-    case BlockId::GRASS:
-    case BlockId::DIRT:
-    case BlockId::FLOWING_WATER:
-    case BlockId::WATER:
-    case BlockId::FLOWING_LAVA:
-    case BlockId::LAVA:
-    case BlockId::SAND:
-    case BlockId::GRAVEL:
-    case BlockId::SANDSTONE:
-    case BlockId::OBSIDIAN:
-    case BlockId::MYCELIUM:
-    case BlockId::STAINED_HARDENED_CLAY:
-    case BlockId::HARDENED_CLAY:
-    case BlockId::RED_SANDSTONE:
-        break;
-    default:
-        diggable = false;
-        break;
-    }
-    return diggable;
+    return blockId == BlockId::AIR ||
+           blockId == BlockId::STONE ||
+           blockId == BlockId::GRASS ||
+           blockId == BlockId::DIRT ||
+           blockId == BlockId::FLOWING_WATER ||
+           blockId == BlockId::WATER ||
+           blockId == BlockId::FLOWING_LAVA ||
+           blockId == BlockId::LAVA ||
+           blockId == BlockId::SAND ||
+           blockId == BlockId::GRAVEL ||
+           blockId == BlockId::SANDSTONE ||
+           blockId == BlockId::OBSIDIAN ||
+           blockId == BlockId::MYCELIUM ||
+           blockId == BlockId::STAINED_HARDENED_CLAY ||
+           blockId == BlockId::HARDENED_CLAY ||
+           blockId == BlockId::RED_SANDSTONE;
 }
 
 void UnderwaterLargeCaveFeature::apply(Level* level, int chunkX, int chunkZ, ChunkPrimer* primer)

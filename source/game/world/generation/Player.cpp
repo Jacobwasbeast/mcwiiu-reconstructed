@@ -250,11 +250,11 @@ void Player::defineSynchedData()
 {
     LivingEntity::defineSynchedData();
     mEntityData->createDateItem(DATA_PLAYER_ABSORPTION_ID, 0.0f);
-    mEntityData->createDateItem(DATA_SCORE_ID, 0);
-    mEntityData->createDateItem(DATA_PLAYER_MODE_CUSTOMISATION, static_cast<unsigned char>(0));
-    mEntityData->createDateItem(DATA_MAIN_HAND, static_cast<unsigned char>(1));
-    mEntityData->createDateItem(DATA_SHOULDER_LEFT, new CompoundTag());
-    mEntityData->createDateItem(DATA_SHOULDER_RIGHT, new CompoundTag());
+    mEntityData->define(DATA_SCORE_ID, 0);
+    mEntityData->define(DATA_PLAYER_MODE_CUSTOMISATION, static_cast<unsigned char>(0));
+    mEntityData->define(DATA_MAIN_HAND, static_cast<unsigned char>(1));
+    mEntityData->define(DATA_SHOULDER_LEFT, new CompoundTag());
+    mEntityData->define(DATA_SHOULDER_RIGHT, new CompoundTag());
 }
 
 bool Player::shouldRenderAtSqrDistance(double distance)
@@ -433,9 +433,14 @@ uint32_t Player::isAllowedToMine()
     return gApp.GetGameHostOption(eGameHostOption_TrustPlayers) != 0 || getPlayerGamePrivilege(ePlayerGamePrivilege_CannotMine) == 0;
 }
 
-uint32_t Player::isAllowedToAttackAnimals()
+bool Player::isAllowedToAttackAnimals()
 {
-    return gApp.GetGameHostOption(eGameHostOption_TrustPlayers) != 0 || getPlayerGamePrivilege(ePlayerGamePrivilege_CannotAttackAnimals) == 0;
+    bool allowed = true;
+    if (gApp.GetGameHostOption(eGameHostOption_TrustPlayers) == 0 && getPlayerGamePrivilege(ePlayerGamePrivilege_CannotAttackAnimals) != 0)
+    {
+        allowed = false;
+    }
+    return allowed;
 }
 
 bool Player::canCreateParticles()
@@ -595,11 +600,6 @@ void Player::SetLiftForceModifier(double modifier)
 GameMode* Player::GetGameMode()
 {
     return 0;
-}
-
-bool Player::isPickable()
-{
-    return !isSpectator();
 }
 
 void Player::setPlayerDefaultSkin(EDefaultSkins skin)
@@ -822,12 +822,12 @@ bool Player::isSleepingLongEnough()
     return mSleeping != 0 && mSleepCounter >= 100;
 }
 
-uint32_t Player::getSleepTimer()
+int Player::getSleepTimer()
 {
     return mSleepCounter;
 }
 
-uint32_t Player::getDeathFadeTimer()
+int Player::getDeathFadeTimer()
 {
     return mDeathFadeTimer;
 }
@@ -876,9 +876,9 @@ bool Player::isPushedByWater()
     return !mAbilities.mFlying;
 }
 
-double Player::getAttackStrengthScale(float)
+float Player::getAttackStrengthScale(float)
 {
-    return 1.0;
+    return 1.0f;
 }
 
 bool Player::mayBuild()
@@ -1242,9 +1242,9 @@ uint8_t Player::SpectateAsOtherEntity()
 {
     uint32_t spectating = 0;
     if (isAlive()) {
-        if (Minecraft::GetInstance()->GetSpectateMode() == MiniGameDef::eSpectateMode_Bat
-            || Minecraft::GetInstance()->GetSpectateMode() == MiniGameDef::eSpectateMode_Parrot
-            || Minecraft::GetInstance()->GetSpectateMode() == MiniGameDef::eSpectateMode_Vex)
+        if (Minecraft::GetInstance()->GetSpectateMode() == eSpectateMode_Bat
+            || Minecraft::GetInstance()->GetSpectateMode() == eSpectateMode_Parrot
+            || Minecraft::GetInstance()->GetSpectateMode() == eSpectateMode_Vex)
             spectating = 1;
     }
     return spectating;
@@ -1252,12 +1252,12 @@ uint8_t Player::SpectateAsOtherEntity()
 
 bool Player::SpectateAsFloatingHead()
 {
-    return isAlive() && Minecraft::GetInstance()->GetSpectateMode() == MiniGameDef::eSpectateMode_FloatingHead;
+    return isAlive() && Minecraft::GetInstance()->GetSpectateMode() == eSpectateMode_FloatingHead;
 }
 
 bool Player::SpectateAsInvisible()
 {
-    return isAlive() && Minecraft::GetInstance()->GetSpectateMode() == MiniGameDef::eSpectateMode_Invisible;
+    return isAlive() && Minecraft::GetInstance()->GetSpectateMode() == eSpectateMode_Invisible;
 }
 
 uint64_t Player::GetSpectateEntity()
@@ -1367,12 +1367,9 @@ uint32_t Player::CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID powerup)
     return 1;
 }
 
-uint8_t Player::canEat(bool alwaysEdible)
+bool Player::canEat(bool alwaysEdible)
 {
-    uint32_t result = 0;
-    if (alwaysEdible || (mFoodData.needsFood() && !mAbilities.mInvulnerable && !hasInvulnerablePrivilege()))
-        result = 1;
-    return result;
+    return alwaysEdible || (mFoodData.needsFood() && !mAbilities.mInvulnerable && !hasInvulnerablePrivilege());
 }
 
 void Player::increaseXp(int32_t amount)
@@ -2133,7 +2130,7 @@ void Player::tick()
             colourData.data[1] = (colour >> 8) & 0xff;
             colourData.data[3] = 0xbf;
             colourData.data[2] = colour & 0xff;
-            float angle = (mYBodyRot + 90.0f) * 0.017453292f;
+            float angle = (mYBodyRot + 90.0f) * Mth::DEG_TO_RAD;
             Vec3* direction = Vec3::newTemp(cosf(angle), 0.0, sinf(angle));
             double y = mRandom->nextDouble() * mBbHeight + mY;
             mLevel->addParticle(PARTICLE_WINNING_INSTANT_SPELL, mX - direction->x * 0.1f, y,
@@ -2485,9 +2482,9 @@ boost::shared_ptr<ItemEntity> Player::drop(not_null_ptr<ItemInstance> item, bool
         dropped->mYd = 0.2f;
     } else {
         float power = 0.3f;
-        dropped->mXd = -(sinf(mYRot * 0.017453292f) * cosf(mXRot * 0.017453292f) * power);
-        dropped->mZd = cosf(mYRot * 0.017453292f) * cosf(mXRot * 0.017453292f) * power;
-        dropped->mYd = 0.1f - sinf(mXRot * 0.017453292f) * power;
+        dropped->mXd = -(sinf(mYRot * Mth::DEG_TO_RAD) * cosf(mXRot * Mth::DEG_TO_RAD) * power);
+        dropped->mZd = cosf(mYRot * Mth::DEG_TO_RAD) * cosf(mXRot * Mth::DEG_TO_RAD) * power;
+        dropped->mYd = 0.1f - sinf(mXRot * Mth::DEG_TO_RAD) * power;
 
         float randAngle = mRandom->nextFloat() * 6.2831855f;
         float randRadius = 0.02f * mRandom->nextFloat();
@@ -2564,10 +2561,11 @@ bool Player::hurt(const DamageSource* source, float damage)
         boost::shared_ptr<Entity> directEntity = source->getDirectEntity();
         if (damage == 0.0f && Minecraft::InMiniGame(eMiniGameId_Any, true) && directEntity)
         {
-            unsigned long long type = directEntity->GetType();
-            if (type == EntityType::FISHING_HOOK || type == EntityType::SNOWBALL || type == EntityType::THROWN_EGG
-                || type == EntityType::PRIMED_TNT
-                || ((type & EntityType::ARROW) == EntityType::ARROW
+            if (eTYPE_DERIVED_FROM(EntityType::FISHING_HOOK, directEntity->GetType())
+                || eTYPE_DERIVED_FROM(EntityType::SNOWBALL, directEntity->GetType())
+                || eTYPE_DERIVED_FROM(EntityType::THROWN_EGG, directEntity->GetType())
+                || eTYPE_DERIVED_FROM(EntityType::PRIMED_TNT, directEntity->GetType())
+                || (eTYPE_DERIVED_FROM(EntityType::ARROW, directEntity->GetType())
                     && Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback()))
             {
                 return LivingEntity::hurt(source, damage);
@@ -2607,7 +2605,7 @@ bool Player::hurt(const DamageSource* source, float damage)
     if (damage == 0.0f) return false;
 
     boost::shared_ptr<Entity> attacker = source->getEntity();
-    if (attacker && (attacker->GetType() & EntityType::ARROW) == EntityType::ARROW)
+    if (attacker && eTYPE_DERIVED_FROM(EntityType::ARROW, attacker->GetType()))
     {
         boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(attacker);
         if (arrow->mOwner)
@@ -2663,14 +2661,12 @@ void Player::checkRidingStatistiscs(double x, double y, double z)
     int cm = static_cast<int>(Math::round(std::sqrt(x * x + y * y + z * z) * 100.0));
     if (cm <= 0) return;
 
-    unsigned long long vehicleType = getVehicle()->GetType();
-
-    if ((vehicleType & EntityType::MINECART) == EntityType::MINECART) {
+    if (eTYPE_DERIVED_FROM(EntityType::MINECART, getVehicle()->GetType())) {
         mMinecartDistanceCm += cm;
         if (mMinecartDistanceCm >= 100) {
-            int meters = mMinecartDistanceCm / 100;
-            mMinecartDistanceCm %= 100;
-            awardStat(gStats->get_minecartOneM(), GenericStats::param_minecart(meters));
+            int distance = mMinecartDistanceCm - mMinecartDistanceCm % 100;
+            mMinecartDistanceCm -= distance;
+            awardStat(GenericStats::minecartOneM(), GenericStats::param_minecart(distance / 100));
         }
 
         if (mStartRidingPos == NULL) {
@@ -2683,27 +2679,19 @@ void Player::checkRidingStatistiscs(double x, double y, double z)
             awardStat(GenericStats::onARail(), GenericStats::param_onARail(static_cast<int>(distance)));
             mField0x781 = 1;
         }
-        return;
-    }
-
-    vehicleType = getVehicle()->GetType();
-    if (vehicleType == EntityType::BOAT) {
+    } else if (eTYPE_DERIVED_FROM(EntityType::BOAT, getVehicle()->GetType())) {
         mBoatDistanceCm += cm;
         if (mBoatDistanceCm >= 100) {
-            int meters = mBoatDistanceCm / 100;
-            mBoatDistanceCm %= 100;
-            awardStat(gStats->get_boatOneM(), GenericStats::param_boat(meters));
+            int distance = mBoatDistanceCm - mBoatDistanceCm % 100;
+            mBoatDistanceCm -= distance;
+            awardStat(GenericStats::boatOneM(), GenericStats::param_boat(distance / 100));
         }
-        return;
-    }
-
-    vehicleType = getVehicle()->GetType();
-    if (vehicleType == EntityType::PIG) {
+    } else if (eTYPE_DERIVED_FROM(EntityType::PIG, getVehicle()->GetType())) {
         mPigDistanceCm += cm;
         if (mPigDistanceCm >= 100) {
-            int meters = mPigDistanceCm / 100;
-            mPigDistanceCm %= 100;
-            awardStat(gStats->get_pigOneM(), GenericStats::param_pig(meters));
+            int distance = mPigDistanceCm - mPigDistanceCm % 100;
+            mPigDistanceCm -= distance;
+            awardStat(GenericStats::pigOneM(), GenericStats::param_pig(distance / 100));
         }
     }
 }
@@ -2799,7 +2787,7 @@ void Player::causeFallDamage(float distance, float multiplier)
         if (mFallDistanceCm >= 100) {
             int meters = mFallDistanceCm / 100;
             mFallDistanceCm %= 100;
-            awardStat(gStats->get_fallOneM(), GenericStats::param_fall(meters));
+            awardStat(GenericStats::fallOneM(), GenericStats::param_fall(meters));
         }
     }
     LivingEntity::causeFallDamage(distance, multiplier);
@@ -2872,7 +2860,7 @@ void Player::respawnEntityOnShoulder(CompoundTag* tag)
 {
     if (mLevel->mIsClientSide || tag->isEmpty()) return;
     boost::shared_ptr<Entity> entity = EntityIO::newEntity(tag, mLevel);
-    if ((entity->GetType() & EntityType::TAMABLE_ANIMAL) == EntityType::TAMABLE_ANIMAL)
+    if (eTYPE_DERIVED_FROM(EntityType::TAMABLE_ANIMAL, entity->GetType()))
         boost::static_pointer_cast<TamableAnimal>(entity)->setOwnerUUID(getUUID());
     entity->setPos(mX, mY + 0.699999988079071, mZ);
     mLevel->addEntity(entity);
@@ -3362,54 +3350,60 @@ bool Player::isAllowedToInteract(boost::shared_ptr<Entity> entity)
 {
     bool allowed = true;
 
-    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && entity->GetType() == EntityType::ARMOR_STAND)
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true) && eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, entity->GetType()))
     {
         return false;
     }
 
     if (gApp.GetGameHostOption(eGameHostOption_TrustPlayers) == 0)
     {
-        if ((entity->GetType() & EntityType::MINECART) == EntityType::MINECART)
+        if (eTYPE_DERIVED_FROM(EntityType::MINECART, entity->GetType()))
         {
             if (getPlayerGamePrivilege(ePlayerGamePrivilege_CanUseContainers) == 0)
             {
                 boost::shared_ptr<Minecart> minecart = boost::static_pointer_cast<Minecart>(entity);
-                const Minecart::Type* type = minecart->getType();
-                if (type->mId == Minecart::Type::CHEST->mId || type->mId == Minecart::Type::HOPPER->mId)
+                switch (minecart->getType()->mId)
                 {
+                case Minecart::Type::eType_Chest:
+                case Minecart::Type::eType_Hopper:
                     allowed = false;
+                    break;
                 }
             }
         }
-        else if ((entity->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE)
+        else if (eTYPE_DERIVED_FROM(EntityType::ABSTRACT_HORSE, entity->GetType()))
         {
             if (getPlayerGamePrivilege(ePlayerGamePrivilege_CanUseContainers) == 0)
             {
                 boost::shared_ptr<AbstractHorse> horse = boost::static_pointer_cast<AbstractHorse>(entity);
                 bool ownedByOther = false;
-                if (horse->isTamed() && horse->getOwnerUUID().compare(getUUID()) != 0)
+                if (horse->isTamed() && horse->getOwnerUUID() != getUUID())
                 {
                     ownedByOther = true;
                 }
-                allowed = !ownedByOther;
+                if (ownedByOther)
+                {
+                    allowed = false;
+                }
             }
         }
-        else if (entity->GetType() == EntityType::ARMOR_STAND)
+        else if (eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, entity->GetType()))
         {
-            if (getPlayerGamePrivilege(ePlayerGamePrivilege_CanUseContainers) != 0)
+            if (getPlayerGamePrivilege(ePlayerGamePrivilege_CanUseContainers) == 0)
             {
-                return true;
+                allowed = false;
             }
-            allowed = false;
         }
         else
         {
-            const unsigned int cannotBuild = getPlayerGamePrivilege(ePlayerGamePrivilege_CannotBuild);
-            if (getPlayerGamePrivilege(ePlayerGamePrivilege_CannotMine) == 0)
+            if (getPlayerGamePrivilege(ePlayerGamePrivilege_CannotBuild) != 0)
             {
-                return cannotBuild == 0;
+                allowed = false;
             }
-            allowed = false;
+            if (getPlayerGamePrivilege(ePlayerGamePrivilege_CannotMine) != 0)
+            {
+                allowed = false;
+            }
         }
     }
 
@@ -3419,36 +3413,39 @@ bool Player::isAllowedToInteract(boost::shared_ptr<Entity> entity)
 uint32_t Player::isAllowedToHurtEntity(boost::shared_ptr<Entity> entity)
 {
     const unsigned long long type = entity->GetType();
-    uint32_t allowed = 1;
+    bool allowed = true;
 
     if (!isAllowedToMine() || gApp.GetGameHostOption(eGameHostOption_MiniGame) != 0)
     {
-        if (type == EntityType::ARMOR_STAND || type == EntityType::LEASH_FENCE_KNOT_ENTITY
-            || type == EntityType::ITEM_FRAME || type == EntityType::PAINTING
-            || type == EntityType::HANGING_ENTITY || type == EntityType::BOAT)
+        switch (type)
         {
-            return 0;
-        }
-        if ((type & EntityType::MINECART) == EntityType::MINECART)
-        {
-            return 0;
+        case EntityType::ARMOR_STAND:
+        case EntityType::LEASH_FENCE_KNOT_ENTITY:
+        case EntityType::ITEM_FRAME:
+        case EntityType::PAINTING:
+        case EntityType::HANGING_ENTITY:
+        case EntityType::BOAT:
+            allowed = false;
+            break;
+        default:
+            allowed = !eTYPE_DERIVED_FROM(EntityType::MINECART, type);
+            break;
         }
     }
 
-    if ((type & EntityType::ANIMAL) == EntityType::ANIMAL)
+    if (allowed)
     {
-        allowed = isAllowedToAttackAnimals();
-    }
-    else if ((type & EntityType::PLAYER) == EntityType::PLAYER)
-    {
-        boost::shared_ptr<Player> target = boost::dynamic_pointer_cast<Player>(entity);
-        allowed = 0;
-        if (isAllowedToAttackPlayers() && gApp.GetGameHostOption(eGameHostOption_PvP) != 0
-            && (GetGameMode() == NULL || GetGameType() != GameType::LOBBY)
-            && !Minecraft::InMiniGame(eMiniGameId_Glide, true)
-            && !target->mAbilities.mInstabuild && !target->isSpectator())
+        if (eTYPE_DERIVED_FROM(EntityType::ANIMAL, type))
         {
-            allowed = 1;
+            allowed = isAllowedToAttackAnimals();
+        }
+        else if (eTYPE_DERIVED_FROM(EntityType::PLAYER, type))
+        {
+            boost::shared_ptr<Player> target = boost::dynamic_pointer_cast<Player>(entity);
+            allowed = isAllowedToAttackPlayers() && gApp.GetGameHostOption(eGameHostOption_PvP) != 0
+                && (GetGameMode() == NULL || GetGameType() != GameType::LOBBY)
+                && !Minecraft::InMiniGame(eMiniGameId_Glide, true)
+                && !target->mAbilities.mInstabuild && !target->isSpectator();
         }
     }
 
@@ -3622,8 +3619,8 @@ void Player::attack(boost::shared_ptr<Entity> entity)
 
     if (knockback > 0)
     {
-        entity->push(-Mth::sin(mYRot * 0.017453292f) * (float)knockback * 0.5f, 0.1,
-                     Mth::cos(mYRot * 0.017453292f) * (float)knockback * 0.5f);
+        entity->push(-Mth::sin(mYRot * Mth::DEG_TO_RAD) * (float)knockback * 0.5f, 0.1,
+                     Mth::cos(mYRot * Mth::DEG_TO_RAD) * (float)knockback * 0.5f);
         mXd *= 0.6;
         mZd *= 0.6;
         setSprinting(false);

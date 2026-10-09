@@ -27,23 +27,27 @@ bool SpringFeature::place(Level* level, Random& random, const BlockPos& origin)
         return false;
     }
 
-    if (level->getBlockId(origin.x, origin.y + 1, origin.z) != BlockId::STONE)
+    int x = origin.x;
+    int y = origin.y;
+    int z = origin.z;
+
+    if (level->getBlockId(x, y + 1, z) != BlockId::STONE)
     {
         return false;
     }
-    if (level->getBlockId(origin.x, origin.y - 1, origin.z) != BlockId::STONE)
+    if (level->getBlockId(x, y - 1, z) != BlockId::STONE)
     {
         return false;
     }
 
-    if (level->getBlockId(origin.x, origin.y, origin.z) != BlockId::AIR
-        && level->getBlockId(origin.x, origin.y, origin.z) != BlockId::STONE)
+    if (level->getBlockId(x, y, z) != BlockId::AIR
+        && level->getBlockId(x, y, z) != BlockId::STONE)
     {
         return false;
     }
 
     int rockCount = 0;
-    int blockId = level->getBlockId(origin.x - 1, origin.y, origin.z);
+    int blockId = level->getBlockId(x - 1, y, z);
     if (blockId == BlockId::STONE)
     {
         ++rockCount;
@@ -53,7 +57,7 @@ bool SpringFeature::place(Level* level, Random& random, const BlockPos& origin)
         return false;
     }
 
-    blockId = level->getBlockId(origin.x + 1, origin.y, origin.z);
+    blockId = level->getBlockId(x + 1, y, z);
     if (blockId == BlockId::STONE)
     {
         ++rockCount;
@@ -63,7 +67,7 @@ bool SpringFeature::place(Level* level, Random& random, const BlockPos& origin)
         return false;
     }
 
-    blockId = level->getBlockId(origin.x, origin.y, origin.z - 1);
+    blockId = level->getBlockId(x, y, z - 1);
     if (blockId == BlockId::STONE)
     {
         ++rockCount;
@@ -73,7 +77,7 @@ bool SpringFeature::place(Level* level, Random& random, const BlockPos& origin)
         return false;
     }
 
-    blockId = level->getBlockId(origin.x, origin.y, origin.z + 1);
+    blockId = level->getBlockId(x, y, z + 1);
     if (blockId == BlockId::STONE)
     {
         ++rockCount;

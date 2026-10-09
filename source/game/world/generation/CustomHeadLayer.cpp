@@ -40,10 +40,10 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
         return;
     }
 
-    bool bSpectating = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+    bool bSpectating = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
         && boost::static_pointer_cast<Player>(entity)->isSpectator();
 
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
         && !(bSpectating && boost::static_pointer_cast<Player>(entity)->SpectateAsSkull())
         && (boost::static_pointer_cast<Player>(entity)->getSkinAdjustments().mAnimFlags & 0x100) != 0)
     {
@@ -67,8 +67,8 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
         GlStateManager::translatef(0.0f, 0.2f, 0.0f);
     }
 
-    bool bVillagerHead = entity->GetType() == EntityType::VILLAGER
-        || entity->GetType() == EntityType::ZOMBIE_VILLAGER;
+    bool bVillagerHead = eTYPE_DERIVED_FROM(EntityType::VILLAGER, entity->GetType())
+        || eTYPE_DERIVED_FROM(EntityType::ZOMBIE_VILLAGER, entity->GetType());
 
     if (entity->isBaby() && entity->GetType() != EntityType::VILLAGER)
     {
@@ -93,7 +93,7 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
             headScale = 1.1875f;
         }
 
-        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         {
             headScale = 1.25f;
         }
@@ -105,7 +105,7 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
             GlStateManager::translatef(0.0f, 0.0625f, 0.0f);
         }
 
-        if (entity->GetType() == EntityType::ARMOR_STAND)
+        if (eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, entity->GetType()))
         {
             SkullBlockRenderer::instance->renderSkull(-0.5f, 0.0f, -0.5f, Direction::UP, 180.0f, headPitch, headItem->getAuxValue(), -1, limbSwing, true);
 

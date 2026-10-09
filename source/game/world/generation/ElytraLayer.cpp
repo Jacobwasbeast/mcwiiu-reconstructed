@@ -50,7 +50,7 @@ void ElytraLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwin
     GlStateManager::pushMatrix();
 
     PlayerRenderer* playerRenderer = dynamic_cast<PlayerRenderer*>(mRenderer);
-    if ((player->GetType() & EntityType::PLAYER) == EntityType::PLAYER && playerRenderer->mSpecialRenderActive)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, player->GetType()) && playerRenderer->mSpecialRenderActive)
     {
         GlStateManager::enableBlend();
         GlStateManager::blendFunc(4, 5);

@@ -20,6 +20,35 @@
 #include "game/world/generation/StructureFeatureSavedData.hpp"
 #include "game/world/generation/StructureStart.hpp"
 
+BoundingBox* StructureStart::getBoundingBox()
+{
+    return mBoundingBox;
+}
+
+bool StructureStart::isDirty()
+{
+    return mDirty;
+}
+
+unsigned int StructureStart::getChunkX()
+{
+    return (unsigned int)mChunkX;
+}
+
+unsigned int StructureStart::getChunkZ()
+{
+    return (unsigned int)mChunkZ;
+}
+
+std::vector<StructurePiece*>* StructureStart::getPieces()
+{
+    return &mPieces;
+}
+
+void StructureStart::clearDirty()
+{
+    mDirty = false;
+}
 
 StructureFeature::StructureFeature()
 {
@@ -63,11 +92,6 @@ bool StructureFeature::postProcess(Level* level, Random& randomSource, ChunkPos*
     restoreSavedData(level);
     int minX = chunkPos->x * 16;
     int minZ = chunkPos->z * 16;
-    if (mStructureMap.empty())
-    {
-        return false;
-    }
-
     bool processed = false;
     for (boost::unordered_map<long long, StructureStart*>::iterator it = mStructureMap.begin();
          it != mStructureMap.end(); ++it)
@@ -92,21 +116,17 @@ bool StructureFeature::postProcess(Level* level, Random& randomSource, ChunkPos*
 bool StructureFeature::isIntersection(int x, int z)
 {
     restoreSavedData(level);
-    if (mStructureMap.empty())
-    {
-        return false;
-    }
-
     for (boost::unordered_map<long long, StructureStart*>::iterator it = mStructureMap.begin();
          it != mStructureMap.end(); ++it)
     {
         StructureStart* start = it->second;
         if (start->isValid() && start->getBoundingBox()->intersects(x, z, x, z))
         {
-            for (std::vector<StructurePiece*>::iterator piece = start->getPieces()->begin();
-                 piece != start->getPieces()->end(); ++piece)
+            std::vector<StructurePiece*>::iterator it2 = start->getPieces()->begin();
+            while (it2 != start->getPieces()->end())
             {
-                if ((*piece)->getBoundingBox()->intersects(x, z, x, z))
+                StructurePiece* next = *it2++;
+                if (next->getBoundingBox()->intersects(x, z, x, z))
                 {
                     return true;
                 }
@@ -122,15 +142,18 @@ StructureStart* StructureFeature::getStructureAt(const BlockPos& pos)
          it != mStructureMap.end(); ++it)
     {
         StructureStart* start = it->second;
-        if (start->isValid() && start->getBoundingBox()->isInside(pos))
+        if (start->isValid())
         {
-            std::vector<StructurePiece*>* pieces = start->getPieces();
-            for (std::vector<StructurePiece*>::iterator piece = pieces->begin();
-                 piece != pieces->end(); ++piece)
+            if (start->getBoundingBox()->isInside(pos))
             {
-                if ((*piece)->getBoundingBox()->isInside(pos))
+                std::vector<StructurePiece*>* pieces = start->getPieces();
+                for (std::vector<StructurePiece*>::iterator piece = pieces->begin();
+                     piece != pieces->end(); piece++)
                 {
-                    return start;
+                    if ((*piece)->getBoundingBox()->isInside(pos))
+                    {
+                        return start;
+                    }
                 }
             }
         }
@@ -155,9 +178,12 @@ bool StructureFeature::isInsideBoundingFeature(Level* level, const BlockPos& pos
          it != mStructureMap.end(); ++it)
     {
         StructureStart* start = it->second;
-        if (start->isValid() && start->getBoundingBox()->isInside(pos))
+        if (start->isValid())
         {
-            return true;
+            if (start->getBoundingBox()->isInside(pos))
+            {
+                return true;
+            }
         }
     }
     return false;
@@ -182,26 +208,27 @@ void StructureFeature::restoreSavedData(Level* levelToRestore)
         mSavedData = boost::shared_ptr<StructureFeatureSavedData>(
             new StructureFeatureSavedData(getFeatureName()));
         levelToRestore->setSavedData(getFeatureName(), mSavedData);
-        return;
     }
-
-    CompoundTag* tags = mSavedData->getFullTag();
-    boost::unordered_map<std::wstring, Tag*>* entries = tags->getAllTagsMap();
-    for (boost::unordered_map<std::wstring, Tag*>::iterator it = entries->begin();
-         it != entries->end(); ++it)
+    else
     {
-        if (it->second->getId() == 7)
+        CompoundTag* tags = mSavedData->getFullTag();
+        boost::unordered_map<std::wstring, Tag*>* entries = tags->getAllTagsMap();
+        for (boost::unordered_map<std::wstring, Tag*>::iterator it = entries->begin();
+             it != entries->end(); it++)
         {
-            StructureStart* start = StructureFeatureIO::loadStaticStart(
-                static_cast<ByteArrayTag*>(it->second), levelToRestore);
-            if (start != NULL)
+            Tag* tag = it->second;
+            if (tag->getId() == Tag::TAG_BYTE_ARRAY)
             {
-                mStructureMap[ChunkPos::asLong(start->getChunkX(), start->getChunkZ())] = start;
+                StructureStart* start = StructureFeatureIO::loadStaticStart(
+                    static_cast<ByteArrayTag*>(tag), levelToRestore);
+                if (start != NULL)
+                {
+                    mStructureMap[ChunkPos::asLong(start->getChunkX(), start->getChunkZ())] = start;
+                }
             }
         }
     }
 }
-
 void StructureFeature::saveFeature(int chunkX, int chunkZ, StructureStart* start)
 {
     mSavedData->putFeatureTag(start->createTag(chunkX, chunkZ), chunkX, chunkZ);

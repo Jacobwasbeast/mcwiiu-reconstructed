@@ -167,11 +167,11 @@ void AbstractArmorLayer::resetColor()
 
 void AbstractArmorLayer::setColor(float red, float green, float blue, float alpha)
 {
+    mColorSet = true;
+    mAlpha = alpha;
     mRed = red;
     mGreen = green;
     mBlue = blue;
-    mAlpha = alpha;
-    mColorSet = true;
 }
 
 Model* AbstractArmorLayer::getArmorModel(const EquipmentSlot* slot)

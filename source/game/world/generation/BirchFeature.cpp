@@ -46,91 +46,93 @@ bool BirchFeature::place(Level* level, Random& random, const BlockPos& origin)
     }
 
     bool free = true;
-    if (origin.y > 0 && origin.y + height + 1 <= 256)
+    if (origin.y < 1 || origin.y + height + 1 > 256)
     {
-        MutableBlockPos check(0, 0, 0);
-        for (int y = origin.y; y <= origin.y + height + 1; ++y)
+        PIXEndNamedEvent();
+        return false;
+    }
+
+    MutableBlockPos check(0, 0, 0);
+    for (int y = origin.y; y <= origin.y + height + 1; ++y)
+    {
+        int radius = 1;
+        if (y == origin.y)
         {
-            int radius = 1;
-            if (y == origin.y)
+            radius = 0;
+        }
+        if (y >= origin.y + height - 1)
+        {
+            radius = 2;
+        }
+        for (int x = origin.x - radius; x <= origin.x + radius && free; ++x)
+        {
+            for (int z = origin.z - radius; z <= origin.z + radius && free; ++z)
             {
-                radius = 0;
-            }
-            if (y >= origin.y + height - 1)
-            {
-                radius = 2;
-            }
-            for (int x = origin.x - radius; x <= origin.x + radius && free; ++x)
-            {
-                for (int z = origin.z - radius; z <= origin.z + radius && free; ++z)
+                if (y >= 0 && y < 256)
                 {
-                    if (y >= 0 && y < 256)
-                    {
-                        check.set(x, y, z);
-                        if (!isFree(level->getBlockState(check)->getBlock()))
-                            free = false;
-                    }
-                    else
-                    {
+                    check.set(x, y, z);
+                    if (!isFree(level->getBlockState(check)->getBlock()))
                         free = false;
-                    }
+                }
+                else
+                {
+                    free = false;
                 }
             }
         }
+    }
 
-        if (!free)
+    if (!free)
+    {
+        PIXEndNamedEvent();
+        return false;
+    }
+
+    Block* ground = level->getBlockState(origin.below())->getBlock();
+    if ((ground != Blocks::grass && ground != Blocks::dirt && ground != Blocks::farmland) ||
+        origin.y >= 255 - height)
+    {
+        PIXEndNamedEvent();
+        return false;
+    }
+
+    if (gApp.getLevelGenerationOptions() != NULL)
+    {
+        LevelGenerationOptions* levelGenerationOptions = gApp.getLevelGenerationOptions();
+        if (levelGenerationOptions->checkIntersects(origin.offset(-3, -1, -3), origin.offset(3, height, 3)))
         {
             PIXEndNamedEvent();
             return false;
         }
+    }
 
-        Block* ground = level->getBlockState(origin.below())->getBlock();
-        if ((ground == Blocks::grass || ground == Blocks::dirt || ground == Blocks::farmland) &&
-            origin.y < 255 - height)
+    setDirtAt(level, origin.below());
+    if (!placeTrunk(level, origin, random, height))
+        return true;
+
+    MutableBlockPos leaves(0, 0, 0);
+    for (int y = origin.y - 3 + height; y <= origin.y + height; ++y)
+    {
+        int yOffset = y - (origin.y + height);
+        int radius = 1 - yOffset / 2;
+        for (int x = origin.x - radius; x <= origin.x + radius; ++x)
         {
-            if (gApp.getLevelGenerationOptions() != NULL)
+            int xOffset = x - origin.x;
+            for (int z = origin.z - radius; z <= origin.z + radius; ++z)
             {
-                LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-                BlockPos from = origin.offset(-3, -1, -3);
-                BlockPos to = origin.offset(3, height, 3);
-                if (options->checkIntersects(from, to))
+                if (std::abs(xOffset) != radius || std::abs(z - origin.z) != radius ||
+                    (random.nextInt(2) != 0 && yOffset != 0))
                 {
-                    PIXEndNamedEvent();
-                    return false;
-                }
-            }
-
-            setDirtAt(level, origin.below());
-            if (!placeTrunk(level, origin, random, height))
-                return true;
-
-            MutableBlockPos leaves(0, 0, 0);
-            for (int y = origin.y + height - 3; y <= origin.y + height; ++y)
-            {
-                const int radius = 1 - (y - (origin.y + height)) / 2;
-                for (int x = origin.x - radius; x <= origin.x + radius; ++x)
-                {
-                    for (int z = origin.z - radius; z <= origin.z + radius; ++z)
+                    leaves.set(x, y, z);
+                    Material* material = level->getBlockState(leaves)->getMaterial();
+                    if (material == Material::AIR || material == Material::LEAVES)
                     {
-                        if (std::abs(x - origin.x) != radius ||
-                            std::abs(z - origin.z) != radius ||
-                            (random.nextInt(2) != 0 && y - (origin.y + height) != 0))
-                        {
-                            leaves.set(x, y, z);
-                            Material* material = level->getBlockState(leaves)->getMaterial();
-                            if (material == Material::AIR || material == Material::LEAVES)
-                            {
-                                setBlock(level, leaves, mLeafState, Block::UPDATE_NONE);
-                            }
-                        }
+                        setBlock(level, leaves, mLeafState, Block::UPDATE_NONE);
                     }
                 }
             }
-            PIXEndNamedEvent();
-            return true;
         }
     }
-
     PIXEndNamedEvent();
-    return false;
+    return true;
 }

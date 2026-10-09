@@ -13,43 +13,44 @@ AddOceanEdgeLayer::AddOceanEdgeLayer(long long seed, boost::shared_ptr<Layer> pa
 
 arrayWithLength<int> AddOceanEdgeLayer::getArea(int x, int z, int width, int height)
 {
+    int parentX = x - 1;
+    int parentZ = z - 1;
     int parentWidth = width + 2;
     int parentHeight = height + 2;
-
-    arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, parentHeight);
+    arrayWithLength<int> parentArea = parent->getArea(parentX, parentZ, parentWidth, parentHeight);
 
     PIXBeginNamedEvent(0.0f, "AddOceanEdgeLayer::getArea");
 
     arrayWithLength<int> area = IntCache::allocate(width * height);
 
-    for (int row = 0; row < height; row++)
+    for (int localZ = 0; localZ < height; localZ++)
     {
-        for (int column = 0; column < width; column++)
+        for (int localX = 0; localX < width; localX++)
         {
-            initRandom((long long)(x + column), (long long)(z + row));
+            initRandom((long long)(localX + x), (long long)(localZ + z));
 
-            int north = parentArea.data[column + 1 + row * parentWidth];
-            int east = parentArea.data[column + 2 + (row + 1) * parentWidth];
-            int west = parentArea.data[column + (row + 1) * parentWidth];
-            int south = parentArea.data[column + 1 + (row + 2) * parentWidth];
-            int centre = parentArea.data[column + 1 + (row + 1) * parentWidth];
+            int centre = parentArea[localX + 1 + (localZ + 1) * parentWidth];
+            int north = parentArea[localX + 1 + (localZ + 1 - 1) * parentWidth];
+            int east = parentArea[localX + 1 + 1 + (localZ + 1) * parentWidth];
+            int west = parentArea[localX + 1 - 1 + (localZ + 1) * parentWidth];
+            int south = parentArea[localX + 1 + (localZ + 1 + 1) * parentWidth];
 
-            if (centre == Biome::eBiomeIDs_WarmOcean)
+            if (centre == Biome::eBiomeIDs_WarmOcean
+                && (north == Biome::eBiomeIDs_FrozenOcean || east == Biome::eBiomeIDs_FrozenOcean
+                    || west == Biome::eBiomeIDs_FrozenOcean || south == Biome::eBiomeIDs_FrozenOcean))
             {
-                if (north == Biome::eBiomeIDs_FrozenOcean || east == Biome::eBiomeIDs_FrozenOcean || west == Biome::eBiomeIDs_FrozenOcean || south == Biome::eBiomeIDs_FrozenOcean)
-                {
-                    centre = Biome::eBiomeIDs_Ocean;
-                }
+                area[localX + localZ * width] = Biome::eBiomeIDs_Ocean;
             }
-            else if (centre == Biome::eBiomeIDs_FrozenOcean)
+            else if (centre == Biome::eBiomeIDs_FrozenOcean
+                && (north == Biome::eBiomeIDs_WarmOcean || east == Biome::eBiomeIDs_WarmOcean
+                    || west == Biome::eBiomeIDs_WarmOcean || south == Biome::eBiomeIDs_WarmOcean))
             {
-                if (north == Biome::eBiomeIDs_WarmOcean || east == Biome::eBiomeIDs_WarmOcean || west == Biome::eBiomeIDs_WarmOcean || south == Biome::eBiomeIDs_WarmOcean)
-                {
-                    centre = Biome::eBiomeIDs_Ocean;
-                }
+                area[localX + localZ * width] = Biome::eBiomeIDs_Ocean;
             }
-
-            area.data[column + row * width] = centre;
+            else
+            {
+                area[localX + localZ * width] = centre;
+            }
         }
     }
 

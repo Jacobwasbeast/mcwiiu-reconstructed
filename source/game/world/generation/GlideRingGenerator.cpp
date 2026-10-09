@@ -23,20 +23,17 @@ static const std::wstring GLIDE_RING_ICON_NAMES[GlideRingGenerator::eGlideRingSi
 
 BlockPos GlideRingGenerator::GetNextPos(const BlockPos& centre, eGlideRingOrientation orientation, int firstMod, int secondMod)
 {
-    if (orientation == eGlideRingOrientation_XY)
+    switch (orientation)
     {
+    case eGlideRingOrientation_XY:
         return BlockPos(centre.x + firstMod, centre.y + secondMod, centre.z);
-    }
-    else if (orientation == eGlideRingOrientation_YZ)
-    {
+    case eGlideRingOrientation_YZ:
         return BlockPos(centre.x, centre.y + firstMod, centre.z + secondMod);
-    }
-    else if (orientation == eGlideRingOrientation_XZ)
-    {
+    case eGlideRingOrientation_XZ:
         return BlockPos(centre.x + firstMod, centre.y, centre.z + secondMod);
+    default:
+        return BlockPos();
     }
-
-    return BlockPos();
 }
 
 int GlideRingGenerator::GetFirstMod(eGlideRingSize size, eGlideRingSection section, int index)
@@ -48,9 +45,8 @@ int GlideRingGenerator::GetFirstMod(eGlideRingSize size, eGlideRingSection secti
     case eGlideRingSection_Left:
         return -GLIDE_RING_EDGE_RADIUS[size];
     case eGlideRingSection_Bottom:
-        break;
     case eGlideRingSection_Top:
-        break;
+        return GLIDE_RING_EDGE_OFFSETS[index];
     case eGlideRingSection_LeftCorner:
         return -GLIDE_RING_CORNER_RADIUS[size];
     case eGlideRingSection_RightCorner:
@@ -62,8 +58,6 @@ int GlideRingGenerator::GetFirstMod(eGlideRingSize size, eGlideRingSection secti
     default:
         return 0;
     }
-
-    return GLIDE_RING_EDGE_OFFSETS[index];
 }
 
 int GlideRingGenerator::GetSecondMod(eGlideRingSize size, eGlideRingSection section, int index)
@@ -71,9 +65,8 @@ int GlideRingGenerator::GetSecondMod(eGlideRingSize size, eGlideRingSection sect
     switch (section)
     {
     case eGlideRingSection_Right:
-        break;
     case eGlideRingSection_Left:
-        break;
+        return GLIDE_RING_EDGE_OFFSETS[index];
     case eGlideRingSection_Bottom:
         return -GLIDE_RING_EDGE_RADIUS[size];
     case eGlideRingSection_Top:
@@ -89,8 +82,6 @@ int GlideRingGenerator::GetSecondMod(eGlideRingSize size, eGlideRingSection sect
     default:
         return 0;
     }
-
-    return GLIDE_RING_EDGE_OFFSETS[index];
 }
 
 void GlideRingGenerator::GetSectionPositions(std::vector<BlockPos>& positions, const BlockPos& centre, eGlideRingSize size, eGlideRingSection section, eGlideRingOrientation orientation)

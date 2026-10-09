@@ -26,9 +26,10 @@ MegaJungleTreeFeature::~MegaJungleTreeFeature()
 
 void MegaJungleTreeFeature::createCrown(Level* level, const BlockPos& pos, int radius)
 {
-    placeDoubleTrunkLeaves(level, pos.above(0), radius + 1);
-    placeDoubleTrunkLeaves(level, pos.above(-1), radius + 2);
-    placeDoubleTrunkLeaves(level, pos.above(-2), radius + 3);
+    for (int i = 0; i >= -2; --i)
+    {
+        placeDoubleTrunkLeaves(level, pos.above(i), radius + 1 - i);
+    }
 }
 
 void MegaJungleTreeFeature::placeVine(Level* level, Random& random, const BlockPos& pos,
@@ -72,11 +73,13 @@ bool MegaJungleTreeFeature::place(Level* level, Random& random, const BlockPos& 
             setBlock(level, leafPos, mTrunkState, Block::UPDATE_NONE);
         }
 
-        const int lowest = top - (random.nextInt(2) + 1);
-        for (int y = lowest; y <= top; ++y)
+        const int count = random.nextInt(2) + 1;
+        const int crownTop = top;
+        for (int y = top - count; y <= crownTop; ++y)
         {
+            const int dy = y - crownTop;
             leafPos.set(x, y, z);
-            placeSingleTrunkLeaves(level, leafPos, 1 - (y - top));
+            placeSingleTrunkLeaves(level, leafPos, 1 - dy);
         }
 
         top -= random.nextInt(4) + 2;

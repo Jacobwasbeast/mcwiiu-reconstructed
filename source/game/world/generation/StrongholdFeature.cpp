@@ -28,9 +28,10 @@ StrongholdFeature::StrongholdFeature(SuperflatConfig* config)
 {
     _init();
     FlatGeneratorInfo info(config);
-    mDistance = static_cast<double>(static_cast<unsigned int>(info.getStrongholdDistance()));
+    mDistance = static_cast<unsigned int>(info.getStrongholdDistance());
+    int count = info.getStrongholdCount();
     mPositions.clear();
-    for (int i = 0; i < info.getStrongholdCount(); ++i)
+    for (int i = 0; i < count; ++i)
     {
         mPositions.push_back(NULL);
     }
@@ -40,15 +41,12 @@ StrongholdFeature::StrongholdFeature(SuperflatConfig* config)
 void StrongholdFeature::_init()
 {
     mAllowedBiomes = std::vector<Biome*>();
-    for (int group = 0; group < 5; ++group)
+    for (int i = 0; i < 40; ++i)
     {
-        for (int index = 0; index < 8; ++index)
+        Biome* biome = Biome::getBiomes()[i];
+        if (biome != NULL && biome->getDepth() > 0.0f)
         {
-            Biome* biome = Biome::getBiomes()[group * 8 + index];
-            if (biome != NULL && biome->getDepth() > 0.0f)
-            {
-                mAllowedBiomes.push_back(biome);
-            }
+            mAllowedBiomes.push_back(biome);
         }
     }
     mDistance = 32.0;
@@ -67,7 +65,7 @@ StrongholdFeature::~StrongholdFeature()
 
 std::wstring StrongholdFeature::getFeatureName()
 {
-    return L"StrongHold";
+    return STRONGHOLD;
 }
 
 void StrongholdFeature::generatePositions()
@@ -82,27 +80,21 @@ void StrongholdFeature::generatePositions()
     {
         for (std::vector<ChunkPos*>::iterator it = mPositions.begin(); it != mPositions.end(); ++it)
         {
-            int x;
-            int z;
-            BlockPos* biomePosition;
-            if (level->getOriginalSaveVersion() < 5)
+            double distance = 0.0;
+            if (level->getOriginalSaveVersion() >= 5)
             {
-                double distance = (positionRandom.nextDouble() + 1.25) *
-                    (static_cast<double>(positionRandom.nextInt(7)) + 5.0);
-                x = Math::round(std::cos(angle) * distance);
-                z = Math::round(std::sin(angle) * distance);
-                biomePosition = level->getBiomeSource()->findBiome(
-                    x * 16 + 8, z * 16 + 8, 112, mAllowedBiomes, &positionRandom);
+                distance = (positionRandom.nextDouble() + 1.25) *
+                    static_cast<double>(positionRandom.nextInt(4) + 3);
             }
             else
             {
-                double distance = (positionRandom.nextDouble() + 1.25) *
-                    static_cast<double>(positionRandom.nextInt(4) + 3);
-                x = Math::round(std::cos(angle) * distance);
-                z = Math::round(std::sin(angle) * distance);
-                biomePosition = level->getBiomeSource()->findBiome(
-                    x * 16 + 8, z * 16 + 8, 112, mAllowedBiomes, &positionRandom);
+                distance = (positionRandom.nextDouble() + 1.25) *
+                    (static_cast<double>(positionRandom.nextInt(7)) + 5.0);
             }
+            int x = Math::round(std::cos(angle) * distance);
+            int z = Math::round(std::sin(angle) * distance);
+            BlockPos* biomePosition = level->getBiomeSource()->findBiome(
+                x * 16 + 8, z * 16 + 8, 112, mAllowedBiomes, &positionRandom);
             if (biomePosition != NULL)
             {
                 x = biomePosition->x >> 4;
@@ -121,7 +113,7 @@ void StrongholdFeature::generatePositions()
     if (!foundPosition)
     {
         gApp.AddTerrainFeaturePosition(eTerrainFeatureType_Stronghold,
-                                      mPositions.front()->x, mPositions.front()->z);
+                                      mPositions[0]->x, mPositions[0]->z);
     }
 }
 
@@ -145,7 +137,7 @@ BlockPos* StrongholdFeature::getNearestGeneratedFeature(Level*,
     BlockPos* nearest = NULL;
     BlockPos candidate(0, 0, 0);
     double nearestDistance = std::numeric_limits<double>::max();
-    for (std::vector<ChunkPos*>::iterator it = mPositions.begin(); it != mPositions.end(); ++it)
+    for (std::vector<ChunkPos*>::iterator it = mPositions.begin(); it != mPositions.end(); it++)
     {
         candidate = BlockPos((*it)->x * 16 + 8, 32, (*it)->z * 16 + 8);
         double distance = candidate.distSqr(pos);
@@ -208,14 +200,14 @@ std::vector<BlockPos>* StrongholdFeature::getGuesstimatedFeaturePositions()
 
 StructureStart* StrongholdFeature::createStructureStart(int chunkX, int chunkZ)
 {
-    for (;;)
+    StrongholdStart* start = NULL;
+    do
     {
-        StrongholdStart* start = new StrongholdStart(level, random, chunkX, chunkZ);
-        if (!start->getPieces()->empty() &&
-            static_cast<StrongholdPieces::StartPiece*>(start->getPieces()->front())->mPortalRoom != NULL)
-            return start;
         delete start;
-    }
+        start = new StrongholdStart(level, random, chunkX, chunkZ);
+    } while (start->getPieces()->empty() ||
+             static_cast<StrongholdPieces::StartPiece*>(start->getPieces()->front())->mPortalRoom == NULL);
+    return start;
 }
 
 StrongholdFeature::StrongholdStart::StrongholdStart(Level* sourceLevel, Random& sourceRandom,
@@ -227,11 +219,13 @@ StrongholdFeature::StrongholdStart::StrongholdStart(Level* sourceLevel, Random& 
         0, sourceRandom, chunkX * 16 + 2, chunkZ * 16 + 2, sourceLevel);
     mPieces.push_back(piece);
     piece->addChildren(piece, &mPieces, sourceRandom);
-    while (!piece->mPendingChildren.empty())
+    std::vector<StructurePiece*>& pendingChildren = piece->mPendingChildren;
+    while (!pendingChildren.empty())
     {
-        int index = sourceRandom.nextInt(static_cast<int>(piece->mPendingChildren.size()));
-        StructurePiece* child = piece->mPendingChildren[index];
-        piece->mPendingChildren.erase(piece->mPendingChildren.begin() + index);
+        int index = sourceRandom.nextInt(pendingChildren.size());
+        std::vector<StructurePiece*>::iterator it = pendingChildren.begin() + index;
+        StructurePiece* child = *it;
+        pendingChildren.erase(it);
         child->addChildren(piece, &mPieces, sourceRandom);
     }
     calculateBoundingBox();

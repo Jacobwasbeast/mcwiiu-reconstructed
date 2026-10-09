@@ -25,26 +25,26 @@ uint32_t XboxStructureActionPlaceSpawner::placeSpawnerInLevel(StructurePiece* st
 {
     BlockPos pos(structurePiece->getWorldX(mEndX, mEndZ), structurePiece->getWorldY(mEndY),
         structurePiece->getWorldZ(mEndX, mEndZ));
-    if (!box->isInside(pos))
+    if (box->isInside(pos))
     {
-        return 0;
+        if (level->getBlockEntity(pos))
+        {
+            level->removeBlockEntity(pos);
+            level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
+        }
+
+        level->setBlock(pos, mBlock->defaultBlockState(), Block::UPDATE_ALL, false);
+        boost::shared_ptr<MobSpawnerBlockEntity> spawner =
+            boost::dynamic_pointer_cast<MobSpawnerBlockEntity>(level->getBlockEntity(pos));
+        if (spawner)
+        {
+            spawner->setEntityId(mEntityId);
+        }
+
+        return 1;
     }
 
-    if (level->getBlockEntity(pos))
-    {
-        level->removeBlockEntity(pos);
-        level->setBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
-    }
-
-    level->setBlock(pos, mBlock->defaultBlockState(), Block::UPDATE_ALL, false);
-    boost::shared_ptr<MobSpawnerBlockEntity> spawner =
-        boost::dynamic_pointer_cast<MobSpawnerBlockEntity>(level->getBlockEntity(pos));
-    if (spawner)
-    {
-        spawner->setEntityId(mEntityId);
-    }
-
-    return 1;
+    return 0;
 }
 
 ConsoleGameRules::EGameRuleType XboxStructureActionPlaceSpawner::getActionType()

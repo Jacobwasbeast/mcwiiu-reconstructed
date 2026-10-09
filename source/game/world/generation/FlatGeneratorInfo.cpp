@@ -21,16 +21,12 @@
 
 static const int MAX_SPACING = 100;
 
-long long getSpacingAndSeparationFromPercentage(int spacing, int separationPercent, int minimumSeparation)
+std::pair<int, int> getSpacingAndSeparationFromPercentage(int spacing, int separationPercent, int minimumSeparation)
 {
-    int scaledSeparation = separationPercent * 5;
-    int clampedSpacing = std::min(spacing, MAX_SPACING);
-    if (clampedSpacing < 16)
-        clampedSpacing = 16;
-    int separation = (scaledSeparation * clampedSpacing) / 100;
-    if (minimumSeparation < separation)
-        minimumSeparation = separation;
-    return (static_cast<long long>(clampedSpacing) << 32) | static_cast<unsigned int>(minimumSeparation);
+    separationPercent *= 5;
+    spacing = std::max(std::min(MAX_SPACING, spacing), 16);
+    minimumSeparation = std::max(separationPercent * spacing / 100, minimumSeparation);
+    return std::make_pair(spacing, minimumSeparation);
 }
 
 FlatGeneratorInfo::FlatGeneratorInfo(SuperflatConfig* config)
@@ -138,11 +134,10 @@ int FlatGeneratorInfo::getLayerIndexAtHeight(int height) const
 {
     int index = 0;
     std::vector<FlatLayerInfo>& layers = core()->layers;
-    std::vector<FlatLayerInfo>::iterator it;
-    std::vector<FlatLayerInfo>::iterator end = layers.end();
-    for (it = layers.begin(); it != end; ++it, ++index)
+    for (std::vector<FlatLayerInfo>::iterator it = layers.begin(), end = layers.end(); it != end; ++it, ++index)
     {
-        if ((int)it->getStart() <= height && height <= it->getEnd())
+        int start = it->getStart();
+        if (start <= height && height <= it->getEnd())
             return index;
     }
     return -1;
@@ -228,22 +223,19 @@ void FlatGeneratorInfo::remLayer(int index)
 
 void FlatGeneratorInfo::getLayers(int* ids, int* data) const
 {
-    for (int height = 0; height < 256; height += 4, ids += 4, data += 4)
+    for (int height = 0; height < 256; ++height)
     {
-        for (int offset = 0; offset < 4; ++offset)
+        int index = getLayerIndexAtHeight(height);
+        if (index >= 0)
         {
-            int index = getLayerIndexAtHeight(height + offset);
-            if (index < 0)
-            {
-                data[offset] = 0;
-                ids[offset] = 0;
-            }
-            else
-            {
-                FlatLayerInfo layer = getLayer(index);
-                ids[offset] = Block::getId(layer.getBlock());
-                data[offset] = layer.getData();
-            }
+            FlatLayerInfo layer = getLayer(index);
+            ids[height] = Block::getId(layer.getBlock());
+            data[height] = layer.getData();
+        }
+        else
+        {
+            data[height] = 0;
+            ids[height] = 0;
         }
     }
 }
@@ -252,8 +244,8 @@ int FlatGeneratorInfo::getHeight() const
 {
     int height = 0;
     std::vector<FlatLayerInfo> layers;
-    getLayers(layers);
-    for (std::vector<FlatLayerInfo>::iterator end = layers.end(), it = layers.begin(); it != end; ++it)
+    this->getLayers(layers);
+    for (std::vector<FlatLayerInfo>::iterator it = layers.begin(), end = layers.end(); it != end; ++it)
         height += it->getHeight();
     return height;
 }
@@ -331,14 +323,15 @@ std::wstring FlatGeneratorInfo::generateDescription()
 
 void FlatGeneratorInfo::reduceLayers()
 {
-    std::vector<FlatLayerInfo>& layers = core()->layers;
+    SuperflatConfig* config = core();
+    std::vector<FlatLayerInfo>& layers = config->layers;
     if (layers.size() > 1)
     {
         std::vector<FlatLayerInfo>::iterator previous = layers.begin() + 1;
         std::vector<FlatLayerInfo>::iterator current = layers.begin() + 2;
         if (current != layers.end())
         {
-            while (current != layers.end())
+            do
             {
                 if (previous->getId() == current->getId() && previous->getData() == current->getData())
                 {
@@ -350,15 +343,11 @@ void FlatGeneratorInfo::reduceLayers()
                     previous = current;
                     ++current;
                 }
-            }
-            core();
+            } while (current != layers.end());
+            config = core();
         }
     }
-    core()->updateLayers();
-    for (int index = (int)layers.size() - 1; index > 0; --index)
-    {
-        if (getLayer(index).getId() != 0)
-            break;
+    config->updateLayers();
+    for (int index = (int)layers.size() - 1; index > 0 && getLayer(index).getId() == 0; --index)
         remLayer(index);
-    }
 }

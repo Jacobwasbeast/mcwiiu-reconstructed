@@ -8,20 +8,14 @@
 #include "game/world/generation/BasicPatchesLayerTheme.hpp"
 
 BasicPatchesLayerThemeRuleDefinition::BasicPatchesLayerThemeRuleDefinition()
-    : mPatchThreshold(0.0f),
+    : GenericMultiBlockThemeRuleDefinition(),
+      mPatchThreshold(0.0f),
       mNoiseScale(5.0),
       mPatchDepth(0)
 {
-    GameRules_IntAttribute* depthAttribute = addIntAttribute(ConsoleGameRules::eGameRuleAttr_startHeight, &mPatchDepth);
-    depthAttribute->setMax(9);
-
-    GameRules_FloatAttribute* thresholdAttribute = addFloatAttribute(ConsoleGameRules::eGameRuleAttr_freq, &mPatchThreshold);
-    thresholdAttribute->setMin(-1.1f);
-    thresholdAttribute->setMax(1.1f);
-
-    GameRules_DoubleAttribute* scaleAttribute = addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mNoiseScale);
-    scaleAttribute->setMin(1.0);
-    scaleAttribute->setMax(1000.0);
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_startHeight, &mPatchDepth)->setMax(9);
+    addFloatAttribute(ConsoleGameRules::eGameRuleAttr_freq, &mPatchThreshold)->setMin(-1.1f)->setMax(1.1f);
+    addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mNoiseScale)->setMin(1.0)->setMax(1000.0);
 }
 
 ConsoleGameRules::EGameRuleType BasicPatchesLayerThemeRuleDefinition::getActionType()

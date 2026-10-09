@@ -445,7 +445,7 @@ bool MultiPlayerLevel::addEntity(boost::shared_ptr<Entity> entity)
     mTrackedEntities.insert(entity);
     if (!added)
         mPendingEntityAdditions.insert(entity);
-    else if ((entity->GetType() & EntityType::MINECART) == EntityType::MINECART)
+    else if (eTYPE_DERIVED_FROM(EntityType::MINECART, entity->GetType()))
         static_cast<ConsoleSoundEngine*>(mMinecraft->mSoundEngine)->play(
             new MinecartSoundInstance(boost::static_pointer_cast<Minecart>(entity)));
     return added;
@@ -524,7 +524,7 @@ void MultiPlayerLevel::removeEntities(std::vector<boost::shared_ptr<Entity> >* e
     while (it != entities->end())
     {
         boost::shared_ptr<Entity> entity = *it;
-        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         {
             it = entities->erase(it);
         }

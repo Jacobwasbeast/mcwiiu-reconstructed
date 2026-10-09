@@ -35,13 +35,13 @@ WallGenerator::WallGenerator(Random random, std::vector<AABB*>* areas,
     std::vector<AABB*>::iterator area = mAreas.begin();
     while (area != mAreas.end())
     {
-        if (mBounds == NULL)
+        if (mBounds != NULL)
         {
-            mBounds = *area;
+            mBounds = mBounds->minmax(*area);
         }
         else
         {
-            mBounds = mBounds->minmax(*area);
+            mBounds = *area;
         }
         ++area;
     }
@@ -101,12 +101,12 @@ void WallGenerator::StartGeneration(Level* level)
             for (int z = 0; z < 3; ++z)
             {
                 const bool internal = IsPointInternal(x, z, 2);
-                AABB* cell = AABB::newTemp(mBounds->mMinX + x * size, mBounds->mMinY, mBounds->mMinZ + z * size,
-                                           mBounds->mMinX + x * size + size, mBounds->mMinY + 16.0,
-                                           mBounds->mMinZ + z * size + size);
-                mWalls.push_back(new Wall(cell, internal, true));
+                AABB* post = AABB::newTemp(mBounds->mMinX + x * size, mBounds->mMinY, mBounds->mMinZ + z * size,
+                                           mBounds->mMinX + x * size + 1.0, mBounds->mMinY + 16.0,
+                                           mBounds->mMinZ + z * size + 1.0);
+                mWalls.push_back(new Wall(post, internal, true));
 
-                if (x + 1 < 3)
+                if (x + 1 <= 2)
                 {
                     const bool boundary = internal || IsPointInternal(x + 1, z, 2);
                     const double wallZ = mBounds->mMinZ + z * size;
@@ -114,7 +114,7 @@ void WallGenerator::StartGeneration(Level* level)
                                                mBounds->mMinX + (x + 1) * size, mBounds->mMinY + 16.0, wallZ + 1.0);
                     mWalls.push_back(new Wall(side, boundary, false));
                 }
-                if (z + 1 < 3)
+                if (z + 1 <= 2)
                 {
                     const bool boundary = internal || IsPointInternal(x, z + 1, 2);
                     const double wallX = mBounds->mMinX + x * size;
@@ -129,11 +129,12 @@ void WallGenerator::StartGeneration(Level* level)
         SetArea(level, transaction,
                 AABB::newTemp(grown->mMinX, grown->mMinY, grown->mMinZ, grown->mMaxX, grown->mMinY + 1.0, grown->mMaxZ),
                 voidState);
+        SetArea(level, transaction, grown, Blocks::planks->defaultBlockState());
 
         for (std::vector<AABB*>::iterator area = mAreas.begin(); area != mAreas.end(); ++area)
         {
-            const BlockState* floor = Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
             AABB* bounds = *area;
+            const BlockState* floor = Blocks::planks->defaultBlockState()->setValue(PlanksBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
             SetArea(level, transaction,
                     AABB::newTemp(bounds->mMinX, bounds->mMinY - 1.0, bounds->mMinZ, bounds->mMaxX, bounds->mMinY,
                                   bounds->mMaxZ),
@@ -143,8 +144,8 @@ void WallGenerator::StartGeneration(Level* level)
 
     for (std::vector<Wall*>::iterator wall = mWalls.begin(); wall != mWalls.end(); ++wall)
     {
-        const BlockState* state = (!(*wall)->mBoundary && !(*wall)->mInternal)
-            ? Blocks::stonebrick->defaultBlockState() : Blocks::planks->defaultBlockState();
+        const BlockState* state = ((*wall)->mBoundary || (*wall)->mInternal)
+            ? Blocks::planks->defaultBlockState() : Blocks::stonebrick->defaultBlockState();
         SetArea(level, transaction, (*wall)->mArea, state);
     }
 

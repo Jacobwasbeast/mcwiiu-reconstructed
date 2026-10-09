@@ -1,5 +1,9 @@
 #include "game/world/generation/MiniGamePlayerSettings.hpp"
 
+MiniGamePlayerSettings::~MiniGamePlayerSettings()
+{
+}
+
 bool MiniGamePlayerSettings::operator==(const MiniGamePlayerSettings& other) const
 {
     return mHostOptions.Get(eCustomGameModeHostOption_All) == other.mHostOptions.Get(eCustomGameModeHostOption_All)

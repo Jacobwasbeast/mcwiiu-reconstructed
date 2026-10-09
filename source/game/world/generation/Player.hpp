@@ -361,8 +361,8 @@ public:
     float getSleepRotation();
     bool isSleeping();
     bool isSleepingLongEnough();
-    uint32_t getSleepTimer();
-    uint32_t getDeathFadeTimer();
+    int getSleepTimer();
+    int getDeathFadeTimer();
     virtual std::wstring getGameProfile();
     virtual uint32_t startSleepInBed(const BlockPos& position, bool force);
     virtual void stopSleepInBed(bool resetTimer, bool updateLevel, bool setSpawn);
@@ -388,7 +388,7 @@ public:
     virtual void checkMovementStatistiscs(double x, double y, double z);
     virtual void increaseXp(int32_t amount);
     FoodData* getFoodData();
-    uint8_t canEat(bool alwaysEdible);
+    bool canEat(bool alwaysEdible);
     bool isHurt();
     virtual uint32_t getEnchantmentSeed();
     virtual void onEnchantmentPerformed(int32_t cost);
@@ -423,7 +423,7 @@ public:
     const HumanoidArm* getMainArm();
     void setMainArm(const HumanoidArm* arm);
     double getCurrentItemAttackStrengthDelay();
-    double getAttackStrengthScale(float partialTicks);
+    float getAttackStrengthScale(float partialTicks);
     ItemCooldowns* getCooldowns();
     void push(boost::shared_ptr<Entity> entity);
     void pushEntities();
@@ -451,7 +451,7 @@ public:
     uint32_t isAllowedToUse(not_null_ptr<ItemInstance> item);
     bool isAllowedToInteract(boost::shared_ptr<Entity> entity);
     uint32_t isAllowedToMine();
-    uint32_t isAllowedToAttackAnimals();
+    bool isAllowedToAttackAnimals();
     uint32_t isAllowedToHurtEntity(boost::shared_ptr<Entity> entity);
     bool isModerator();
     bool IsCreativeFlying();
@@ -502,7 +502,7 @@ public:
     double GetLiftForceModifier();
     void SetLiftForceModifier(double modifier);
     virtual int32_t AutoEquip(not_null_ptr<ItemInstance>& item, not_null_ptr<ItemInstance>& replaced, bool& replacedExisting);
-    bool isPickable();
+    bool isPickable() { return !isSpectator(); }
     virtual void OnEquipArmor(not_null_ptr<ItemInstance> item);
     virtual void OnTakeFromAnvil(not_null_ptr<ItemInstance> item);
     void ChangePlayerSkin();

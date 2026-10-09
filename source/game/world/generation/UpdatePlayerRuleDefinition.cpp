@@ -2,6 +2,7 @@
 
 #include "game/core/StringConversion.hpp"
 
+#include <algorithm>
 #include <string>
 
 #include "game/core/FoodData.hpp"
@@ -44,7 +45,7 @@ UpdatePlayerRuleDefinition::UpdatePlayerRuleDefinition(boost::shared_ptr<Player>
     mHealth = 0;
     mFoodLevel = 0;
     mDimension = 0;
-    mSpawnPosition = new MutableBlockPos(0, 0, 0);
+    mSpawnPosition = new MutableBlockPos();
     mSpawnPosition->setX(static_cast<int>(player->mX));
     mSpawnPosition->setY(static_cast<int>(player->mY));
     mSpawnPosition->setZ(static_cast<int>(player->mZ));
@@ -65,8 +66,8 @@ double UpdatePlayerRuleDefinition::SanitisedYPos(double x, double y, double z,
                                                   boost::shared_ptr<Player> player) const
 {
     ServerLevel* level = gMinecraftServer->getLevel(0);
-    double halfHeight = static_cast<double>(player->mBbHeight) * 0.5;
     double testY = y;
+    double halfHeight = static_cast<double>(player->mBbHeight) * 0.5;
 
     while (level->getBlockState(BlockPos(x, testY + halfHeight, z))->getMaterial() != Material::AIR)
     {
@@ -78,9 +79,11 @@ double UpdatePlayerRuleDefinition::SanitisedYPos(double x, double y, double z,
         testY += 0.1;
     }
 
-    double upper = (y - testY >= 0.0) ? y : testY;
-    double lower = (y - testY >= 0.0) ? testY : y;
-    return (5.0 - (upper - lower) >= 0.0) ? testY : y;
+    if (std::max(y, testY) - std::min(y, testY) > 5.0)
+    {
+        return y;
+    }
+    return testY;
 }
 
 void UpdatePlayerRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* children)
@@ -106,9 +109,9 @@ void UpdatePlayerRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInte
                                                  unsigned int extraAttributeCount)
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 3);
-    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnX, _toString<int>(mSpawnPosition->x));
-    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnY, _toString<int>(mSpawnPosition->y));
-    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnZ, _toString<int>(mSpawnPosition->z));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnX, _toString<int>(mSpawnPosition->getX()));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnY, _toString<int>(mSpawnPosition->getY()));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnZ, _toString<int>(mSpawnPosition->getZ()));
 }
 
 void UpdatePlayerRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)
@@ -117,7 +120,7 @@ void UpdatePlayerRuleDefinition::addAttribute(const std::wstring& name, const st
     {
         if (mSpawnPosition == NULL)
         {
-            mSpawnPosition = new MutableBlockPos(0, 0, 0);
+            mSpawnPosition = new MutableBlockPos();
         }
         mSpawnPosition->setX(_fromString<int>(value));
         return;
@@ -126,7 +129,7 @@ void UpdatePlayerRuleDefinition::addAttribute(const std::wstring& name, const st
     {
         if (mSpawnPosition == NULL)
         {
-            mSpawnPosition = new MutableBlockPos(0, 0, 0);
+            mSpawnPosition = new MutableBlockPos();
         }
         mSpawnPosition->setY(_fromString<int>(value));
         return;
@@ -135,7 +138,7 @@ void UpdatePlayerRuleDefinition::addAttribute(const std::wstring& name, const st
     {
         if (mSpawnPosition == NULL)
         {
-            mSpawnPosition = new MutableBlockPos(0, 0, 0);
+            mSpawnPosition = new MutableBlockPos();
         }
         mSpawnPosition->setZ(_fromString<int>(value));
         return;
@@ -163,22 +166,21 @@ void UpdatePlayerRuleDefinition::postProcessPlayer(boost::shared_ptr<Player> pla
     if (mSpawnPosition != NULL)
     {
         player->mDimension = mDimension;
-        x = static_cast<double>(mSpawnPosition->x) + 0.5;
-        z = static_cast<double>(mSpawnPosition->z) + 0.5;
+        x = static_cast<double>(mSpawnPosition->getX()) + 0.5;
+        z = static_cast<double>(mSpawnPosition->getZ()) + 0.5;
 
         if (Minecraft::InMiniGame(eMiniGameId_Glide, false))
         {
-            y = static_cast<double>(mSpawnPosition->y);
+            y = static_cast<double>(mSpawnPosition->getY());
         }
-        else if (!Minecraft::InMiniGame(eMiniGameId_Lobby, true)
-                 && !Minecraft::InMiniGame(eMiniGameId_Battle, true))
+        else if (Minecraft::InMiniGame(eMiniGameId_Lobby, true)
+                 || Minecraft::InMiniGame(eMiniGameId_Battle, true))
         {
-            y = SanitisedYPos(x, static_cast<double>(mSpawnPosition->y), z, player);
+            y = SanitisedYPos(x, mSpawnPosition->getY() + 0.5 + player->mBbHeight * 0.5f, z, player);
         }
         else
         {
-            y = SanitisedYPos(x, static_cast<double>(mSpawnPosition->y) + 0.5
-                              + static_cast<double>(player->mBbHeight) * 0.5, z, player);
+            y = SanitisedYPos(x, static_cast<double>(mSpawnPosition->getY()), z, player);
         }
     }
 
@@ -199,7 +201,8 @@ void UpdatePlayerRuleDefinition::postProcessPlayer(boost::shared_ptr<Player> pla
 
     for (std::vector<AddItemRuleDefinition*>::iterator it = mItems.begin(); it != mItems.end(); ++it)
     {
-        (*it)->addItemToContainer(player->mInventory, -1);
+        AddItemRuleDefinition* item = *it;
+        item->addItemToContainer(player->mInventory, -1);
     }
 }
 
@@ -218,21 +221,21 @@ int UpdatePlayerRuleDefinition::getZ() const
     return mSpawnPosition->z;
 }
 
-double UpdatePlayerRuleDefinition::getXRot() const
+float UpdatePlayerRuleDefinition::getXRot() const
 {
-    return static_cast<double>(mXRot);
+    return mXRot;
 }
 
-double UpdatePlayerRuleDefinition::getYRot() const
+float UpdatePlayerRuleDefinition::getYRot() const
 {
-    return static_cast<double>(mYRot);
+    return mYRot;
 }
 
 void UpdatePlayerRuleDefinition::WriteAttributesAsXML(std::string& xml)
 {
-    xml.append(formatstr(" spawnX=\"%d\"", mSpawnPosition->x));
-    xml.append(formatstr(" spawnY=\"%d\"", mSpawnPosition->y));
-    xml.append(formatstr(" spawnZ=\"%d\"", mSpawnPosition->z));
+    xml.append(formatstr(" spawnX=\"%d\"", mSpawnPosition->getX()));
+    xml.append(formatstr(" spawnY=\"%d\"", mSpawnPosition->getY()));
+    xml.append(formatstr(" spawnZ=\"%d\"", mSpawnPosition->getZ()));
 
     if (attributeHasValue(ConsoleGameRules::eGameRuleAttr_yRot))
     {

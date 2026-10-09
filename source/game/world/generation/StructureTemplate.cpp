@@ -197,7 +197,7 @@ Vec3* StructureTemplate::transform(Vec3* pos, Mirror* mirror, Rotation* rotation
 void StructureTemplate::placeEntities(Level* level, const BlockPos& pos, Mirror* mirror, Rotation* rotation,
     BoundingBox* boundingBox) const
 {
-    for (std::vector<StructureEntityInfo*>::const_iterator it = mEntities.begin(); it != mEntities.end(); ++it)
+    for (std::vector<StructureEntityInfo*>::const_iterator it = mEntities.begin(); it != mEntities.end(); it++)
     {
         StructureEntityInfo* entityInfo = *it;
 
@@ -222,14 +222,12 @@ void StructureTemplate::placeEntities(Level* level, const BlockPos& pos, Mirror*
         boost::shared_ptr<Entity> entity;
         entity = EntityIO::newEntity(nbt, level);
 
-        Entity* placedEntity = entity.get();
-
-        if (placedEntity != NULL)
+        if (entity != NULL)
         {
-            float yRot = placedEntity->mirror(mirror);
-            yRot = yRot + (placedEntity->mYRot - placedEntity->rotate(rotation));
+            float yRot = entity->mirror(mirror);
+            yRot = yRot + (entity->mYRot - entity->rotate(rotation));
 
-            placedEntity->moveTo(entityPos->x, entityPos->y, entityPos->z, yRot, placedEntity->mXRot);
+            entity->moveTo(entityPos->x, entityPos->y, entityPos->z, yRot, entity->mXRot);
 
             level->addEntity(entity);
         }
@@ -253,14 +251,11 @@ void StructureTemplate::placeInWorld(Level* level, const BlockPos& pos, Structur
 
     for (std::vector<StructureBlockInfo*>::const_iterator it = mBlocks.begin(); it != mBlocks.end(); ++it)
     {
-        StructureBlockInfo* blockInfo = *it;
+        StructureBlockInfo* templateInfo = *it;
 
-        BlockPos blockPos = calculateRelativePosition(settings, blockInfo->mPos).offset(pos);
+        BlockPos blockPos = calculateRelativePosition(settings, templateInfo->mPos).offset(pos);
 
-        if (processor != NULL)
-        {
-            blockInfo = processor->processBlock(level, blockPos, blockInfo);
-        }
+        StructureBlockInfo* blockInfo = processor != NULL ? processor->processBlock(level, blockPos, templateInfo) : templateInfo;
 
         if (lastColumn.x != blockPos.x || lastColumn.z != blockPos.z)
         {
@@ -294,12 +289,12 @@ void StructureTemplate::placeInWorld(Level* level, const BlockPos& pos, Structur
             continue;
         }
 
-        if (settings->isPlacingWaterBelowSeaLevel() && level->getSeaLevel() > blockPos.y)
+        if (settings->isPlacingWaterBelowSeaLevel() && blockPos.y < level->getSeaLevel())
         {
             if (Block::getId(block) == BlockId::AIR)
             {
                 block = Blocks::water;
-                state = Blocks::water->defaultBlockState();
+                state = block->defaultBlockState();
             }
             else if (block->canContainLiquid(state))
             {
@@ -313,7 +308,7 @@ void StructureTemplate::placeInWorld(Level* level, const BlockPos& pos, Structur
 
             if (blockEntity)
             {
-                if ((blockEntity->GetType() & BlockEntityType::CONTAINER) == BlockEntityType::CONTAINER)
+                if (eTYPE_DERIVED_FROM(BlockEntityType::CONTAINER, blockEntity->GetType()))
                 {
                     boost::dynamic_pointer_cast<Container>(blockEntity)->clearContent();
                 }
@@ -397,13 +392,15 @@ void StructureTemplate::placeInWorld(Level* level, const BlockPos& pos, Structur
 
 BlockPos StructureTemplate::getSize(Rotation* rotation) const
 {
-    if (rotation->getType() != Rotation::eTYPE_Clockwise90
-        && rotation->getType() != Rotation::eTYPE_CounterClockwise90)
+    switch (rotation->getType())
     {
+    case Rotation::eTYPE_Clockwise90:
+    case Rotation::eTYPE_CounterClockwise90:
+        return BlockPos(mSize.z, mSize.y, mSize.x);
+
+    default:
         return mSize;
     }
-
-    return BlockPos(mSize.z, mSize.y, mSize.x);
 }
 
 BlockPos StructureTemplate::getZeroPositionWithTransform(const BlockPos& pos, Mirror* mirror, Rotation* rotation,
@@ -492,23 +489,9 @@ void StructureTemplate::load(CompoundTag* tag)
 
         unsigned int paletteIndex = (unsigned int)blockTag->getInt(BLOCK_STATE_TAG);
 
-        const BlockState* state;
+        const BlockState* state = paletteIndex < mPalette.size() ? mPalette.at(paletteIndex) : Blocks::air->defaultBlockState();
 
-        if (paletteIndex >= mPalette.size())
-        {
-            state = Blocks::air->defaultBlockState();
-        }
-        else
-        {
-            state = mPalette.at(paletteIndex);
-        }
-
-        CompoundTag* blockNbt = NULL;
-
-        if (blockTag->contains(BLOCK_NBT_TAG))
-        {
-            blockNbt = blockTag->getCompound(BLOCK_NBT_TAG)->copy();
-        }
+        CompoundTag* blockNbt = blockTag->contains(BLOCK_NBT_TAG) ? blockTag->getCompound(BLOCK_NBT_TAG)->copy() : NULL;
 
         mBlocks.push_back(new StructureBlockInfo(blockPos, state, blockNbt));
     }

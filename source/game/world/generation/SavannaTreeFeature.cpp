@@ -98,100 +98,102 @@ bool SavannaTreeFeature::place(Level* level, Random& random, const BlockPos& ori
         PIXEndNamedEvent();
         return false;
     }
-
-    setDirtAt(level, origin.below());
-
-    const Direction* trunkDirection = Direction::Plane::HORIZONTAL->getRandomDirection(random);
-    int bendStart = height - random.nextInt(4) - 1;
-    int bendLength = 3 - random.nextInt(3);
-    int x = origin.x;
-    int z = origin.z;
-    int topY = 0;
-    MutableBlockPos trunkPos(0, 0, 0);
-    for (int y = 0; y < height; ++y)
+    else
     {
-        int trunkY = origin.y + y;
-        if (y >= bendStart && bendLength > 0)
-        {
-            x += trunkDirection->getStepX();
-            z += trunkDirection->getStepZ();
-            --bendLength;
-        }
-        trunkPos.set(x, trunkY, z);
-        Material* material = level->getBlockState(trunkPos)->getMaterial();
-        if (material == Material::AIR || material == Material::LEAVES)
-        {
-            placeLogAt(level, trunkPos);
-            topY = trunkY;
-        }
-    }
+        setDirtAt(level, origin.below());
 
-    BlockPos canopy(x, topY, z);
-    for (int dx = -3; dx <= 3; ++dx)
-    {
-        for (int dz = -3; dz <= 3; ++dz)
+        const Direction* trunkDirection = Direction::Plane::HORIZONTAL->getRandomDirection(random);
+        int bendStart = height - random.nextInt(4) - 1;
+        int bendLength = 3 - random.nextInt(3);
+        int x = origin.x;
+        int z = origin.z;
+        int topY = 0;
+        MutableBlockPos trunkPos(0, 0, 0);
+        for (int y = 0; y < height; ++y)
         {
-            if (abs(dx) != 3 || abs(dz) != 3)
+            int trunkY = origin.y + y;
+            if (y >= bendStart && bendLength > 0)
+            {
+                x += trunkDirection->getStepX();
+                z += trunkDirection->getStepZ();
+                --bendLength;
+            }
+            trunkPos.set(x, trunkY, z);
+            Material* material = level->getBlockState(trunkPos)->getMaterial();
+            if (material == Material::AIR || material == Material::LEAVES)
+            {
+                placeLogAt(level, trunkPos);
+                topY = trunkY;
+            }
+        }
+
+        BlockPos canopy(x, topY, z);
+        for (int dx = -3; dx <= 3; ++dx)
+        {
+            for (int dz = -3; dz <= 3; ++dz)
+            {
+                if (abs(dx) != 3 || abs(dz) != 3)
+                    placeLeafAt(level, canopy.offset(dx, 0, dz));
+            }
+        }
+        canopy = canopy.above();
+        for (int dx = -1; dx <= 1; ++dx)
+        {
+            for (int dz = -1; dz <= 1; ++dz)
                 placeLeafAt(level, canopy.offset(dx, 0, dz));
         }
-    }
-    canopy = canopy.above();
-    for (int dx = -1; dx <= 1; ++dx)
-    {
-        for (int dz = -1; dz <= 1; ++dz)
-            placeLeafAt(level, canopy.offset(dx, 0, dz));
-    }
-    placeLeafAt(level, canopy.east(2));
-    placeLeafAt(level, canopy.west(2));
-    placeLeafAt(level, canopy.south(2));
-    placeLeafAt(level, canopy.north(2));
+        placeLeafAt(level, canopy.east(2));
+        placeLeafAt(level, canopy.west(2));
+        placeLeafAt(level, canopy.south(2));
+        placeLeafAt(level, canopy.north(2));
 
-    x = origin.x;
-    z = origin.z;
-    const Direction* branchDirection = Direction::Plane::HORIZONTAL->getRandomDirection(random);
-    if (branchDirection != trunkDirection)
-    {
-        int branchY = bendStart - random.nextInt(2) - 1;
-        int branchLength = random.nextInt(3) + 1;
-        topY = 0;
-        for (; branchY < height && branchLength > 0; --branchLength)
+        x = origin.x;
+        z = origin.z;
+        const Direction* branchDirection = Direction::Plane::HORIZONTAL->getRandomDirection(random);
+        if (branchDirection != trunkDirection)
         {
-            if (branchY >= 1)
+            int branchStart = bendStart - random.nextInt(2) - 1;
+            int branchLength = random.nextInt(3) + 1;
+            topY = 0;
+            for (int branchY = branchStart; branchY < height && branchLength > 0; --branchLength)
             {
-                int y = origin.y + branchY;
-                x += branchDirection->getStepX();
-                z += branchDirection->getStepZ();
-                BlockPos branchPos(x, y, z);
-                Material* material = level->getBlockState(branchPos)->getMaterial();
-                if (material == Material::AIR || material == Material::LEAVES)
+                if (branchY >= 1)
                 {
-                    placeLogAt(level, branchPos);
-                    topY = y;
+                    int y = origin.y + branchY;
+                    x += branchDirection->getStepX();
+                    z += branchDirection->getStepZ();
+                    const BlockPos& branchPos = BlockPos(x, y, z);
+                    Material* material = level->getBlockState(branchPos)->getMaterial();
+                    if (material == Material::AIR || material == Material::LEAVES)
+                    {
+                        placeLogAt(level, branchPos);
+                        topY = y;
+                    }
                 }
+                ++branchY;
             }
-            ++branchY;
-        }
 
-        if (topY > 0)
-        {
-            BlockPos branchCanopy(x, topY, z);
-            for (int dx = -2; dx <= 2; ++dx)
+            if (topY > 0)
             {
-                for (int dz = -2; dz <= 2; ++dz)
+                BlockPos branchCanopy(x, topY, z);
+                for (int dx = -2; dx <= 2; ++dx)
                 {
-                    if (abs(dx) != 2 || abs(dz) != 2)
+                    for (int dz = -2; dz <= 2; ++dz)
+                    {
+                        if (abs(dx) != 2 || abs(dz) != 2)
+                            placeLeafAt(level, branchCanopy.offset(dx, 0, dz));
+                    }
+                }
+                branchCanopy = branchCanopy.above();
+                for (int dx = -1; dx <= 1; ++dx)
+                {
+                    for (int dz = -1; dz <= 1; ++dz)
                         placeLeafAt(level, branchCanopy.offset(dx, 0, dz));
                 }
             }
-            branchCanopy = branchCanopy.above();
-            for (int dx = -1; dx <= 1; ++dx)
-            {
-                for (int dz = -1; dz <= 1; ++dz)
-                    placeLeafAt(level, branchCanopy.offset(dx, 0, dz));
-            }
         }
-    }
 
-    PIXEndNamedEvent();
-    return true;
+        PIXEndNamedEvent();
+        return true;
+    }
 }

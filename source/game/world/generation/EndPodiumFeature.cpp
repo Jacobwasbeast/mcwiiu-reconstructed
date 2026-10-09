@@ -30,31 +30,31 @@ bool EndPodiumFeature::place(Level* level, Random&, const BlockPos& origin)
     {
         MutableBlockPos* position = positions->next();
         double distance = position->dist(origin.x, position->y, origin.z);
-        if (distance > 3.5)
-            continue;
-
-        if (position->y < origin.y)
+        if (distance <= 3.5)
         {
-            if (distance <= 2.5)
+            if (position->y < origin.y)
+            {
+                if (distance <= 2.5)
+                    setBlock(level, *position, Blocks::bedrock->defaultBlockState(), Block::UPDATE_NONE);
+                else if (position->y < origin.y)
+                    setBlock(level, *position, Blocks::end_stone->defaultBlockState(), Block::UPDATE_NONE);
+            }
+            else if (position->y > origin.y)
+            {
+                setBlock(level, *position, Blocks::air->defaultBlockState(), Block::UPDATE_NONE);
+            }
+            else if (distance > 2.5)
+            {
                 setBlock(level, *position, Blocks::bedrock->defaultBlockState(), Block::UPDATE_NONE);
+            }
+            else if (mActive)
+            {
+                setBlock(level, *position, Blocks::end_portal->defaultBlockState(), Block::UPDATE_NONE);
+            }
             else
-                setBlock(level, *position, Blocks::end_stone->defaultBlockState(), Block::UPDATE_NONE);
-        }
-        else if (position->y > origin.y)
-        {
-            setBlock(level, *position, Blocks::air->defaultBlockState(), Block::UPDATE_NONE);
-        }
-        else if (distance > 2.5)
-        {
-            setBlock(level, *position, Blocks::bedrock->defaultBlockState(), Block::UPDATE_NONE);
-        }
-        else if (mActive)
-        {
-            setBlock(level, *position, Blocks::end_portal->defaultBlockState(), Block::UPDATE_NONE);
-        }
-        else
-        {
-            setBlock(level, *position, Blocks::air->defaultBlockState(), Block::UPDATE_NONE);
+            {
+                setBlock(level, *position, Blocks::air->defaultBlockState(), Block::UPDATE_NONE);
+            }
         }
     }
 
@@ -66,9 +66,9 @@ bool EndPodiumFeature::place(Level* level, Random&, const BlockPos& origin)
     for (unsigned int i = 0; i < faces.length; ++i)
     {
         const Direction* direction = faces.data[i];
-        TypedBoxed<const Direction*> facing(direction);
         setBlock(level, torchCenter.relative(direction),
-                 Blocks::torch->defaultBlockState()->setBoxedValue(TorchBlock::FACING, &facing), Block::UPDATE_NONE);
+                 Blocks::torch->defaultBlockState()->setValue<const Direction*>(TorchBlock::FACING, direction),
+                 Block::UPDATE_NONE);
     }
 
     return true;

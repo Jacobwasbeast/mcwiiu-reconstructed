@@ -5,6 +5,8 @@
 #include "game/world/LevelEvent.hpp"
 #include "game/core/EntityType.hpp"
 
+#include <algorithm>
+
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/BuiltInLootTables.hpp"
 #include "game/core/GenericStats.hpp"
@@ -92,8 +94,8 @@ void ZombieVillager::startConverting(const std::wstring& player, int conversionT
     mConversionTime = conversionTime;
     getEntityData()->set(DATA_CONVERTING_ID, true, true);
     removeEffect(MobEffects::WEAKNESS);
-    int amplifier = mLevel->getDifficulty()->getId() - 1;
-    addEffect(new MobEffectInstance(MobEffects::DAMAGE_BOOST, conversionTime, amplifier > 0 ? 0 : amplifier),
+    addEffect(new MobEffectInstance(MobEffects::DAMAGE_BOOST, conversionTime,
+                                    std::min(mLevel->getDifficulty()->getId() - 1, 0)),
               boost::shared_ptr<Entity>());
     mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::ZOMBIE_CONVERTING, 0);
 }
@@ -224,7 +226,7 @@ void ZombieVillager::finishConversion()
     boost::shared_ptr<Player> player = mLevel->getPlayerByUUID(mConversionPlayer);
     if (player != NULL)
     {
-        bool isServerPlayer = player->GetType() == EntityType::SERVER_PLAYER;
+        bool isServerPlayer = eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, player->GetType());
         if (isServerPlayer)
             player->awardStat(GenericStats::zombieDoctor(), GenericStats::param_zombieDoctor());
     }

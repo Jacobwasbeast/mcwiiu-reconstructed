@@ -115,7 +115,7 @@ bool MonsterRoomFeature::place(Level* level, Random& random, const BlockPos& ori
 
             level->setBlock(pos, static_cast<ChestBlock*>(Blocks::chest)->reorient(level, pos, Blocks::chest->defaultBlockState()), Block::UPDATE_CLIENTS, false);
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-            if (blockEntity->GetType() == BlockEntityType::CHEST)
+            if (eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType()))
             {
                 boost::shared_ptr<ChestBlockEntity> chestEntity = boost::static_pointer_cast<ChestBlockEntity>(blockEntity);
                 chestEntity->setLootTable(&BuiltInLootTables::SIMPLE_DUNGEON, random.nextLong());
@@ -126,7 +126,7 @@ bool MonsterRoomFeature::place(Level* level, Random& random, const BlockPos& ori
 
     level->setBlock(origin, Blocks::mob_spawner->defaultBlockState(), Block::UPDATE_CLIENTS, false);
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(origin);
-    if (blockEntity->GetType() == BlockEntityType::MOB_SPAWNER)
+    if (eTYPE_DERIVED_FROM(BlockEntityType::MOB_SPAWNER, blockEntity->GetType()))
     {
         boost::shared_ptr<MobSpawnerBlockEntity> spawnerBlockEntity =
             boost::static_pointer_cast<MobSpawnerBlockEntity>(blockEntity);

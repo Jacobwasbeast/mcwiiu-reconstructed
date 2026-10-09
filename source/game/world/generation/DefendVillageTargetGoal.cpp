@@ -18,27 +18,33 @@ DefendVillageTargetGoal::DefendVillageTargetGoal(VillagerGolem* golem)
 bool DefendVillageTargetGoal::canUse()
 {
     boost::shared_ptr<Village> village = mGolem->getVillage();
-    if (!village)
+    if (village == NULL)
     {
         return false;
     }
 
-    mVillageAggressorTarget = village->getClosestAggressor(
-        boost::dynamic_pointer_cast<LivingEntity>(mGolem->shared_from_this()));
+    mVillageAggressorTarget = boost::weak_ptr<LivingEntity>(village->getClosestAggressor(
+        boost::dynamic_pointer_cast<LivingEntity>(mGolem->shared_from_this())));
 
-    if (canAttack(mVillageAggressorTarget.lock(), false))
+    boost::shared_ptr<LivingEntity> target = mVillageAggressorTarget.lock();
+    if (target != NULL && eTYPE_DERIVED_FROM(EntityType::CREEPER, target->GetType()))
+    {
+        return false;
+    }
+    else if (canAttack(target, false))
     {
         return true;
     }
-
-    if (mMob->getRandom()->nextInt(20) != 0)
+    else if (mMob->getRandom()->nextInt(20) == 0)
+    {
+        mVillageAggressorTarget = village->getClosestBadStandingPlayer(
+            boost::dynamic_pointer_cast<LivingEntity>(mGolem->shared_from_this()));
+        return canAttack(mVillageAggressorTarget.lock(), false);
+    }
+    else
     {
         return false;
     }
-
-    mVillageAggressorTarget = village->getClosestBadStandingPlayer(
-        boost::dynamic_pointer_cast<LivingEntity>(mGolem->shared_from_this()));
-    return canAttack(mVillageAggressorTarget.lock(), false);
 }
 
 void DefendVillageTargetGoal::start()

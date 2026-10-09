@@ -24,7 +24,7 @@ void VillagerInteractGoal::start()
     InteractGoal::start();
 
     if (mVillager->hasExcessFood() && mLookAt.lock() &&
-        mLookAt.lock()->GetType() == EntityType::VILLAGER &&
+        eTYPE_DERIVED_FROM(EntityType::VILLAGER, mLookAt.lock()->GetType()) &&
         boost::dynamic_pointer_cast<Villager>(mLookAt.lock())->wantsMoreFood())
         mInteractionDelay = 10;
     else
@@ -79,8 +79,8 @@ void VillagerInteractGoal::tick()
             mVillager->mZ,
             itemToThrow));
 
-        const float pitch = mVillager->mXRot * 0.017453292f;
-        const float yaw = mVillager->mYHeadRot * 0.017453292f;
+        const float pitch = mVillager->mXRot * Mth::DEG_TO_RAD;
+        const float yaw = mVillager->mYHeadRot * Mth::DEG_TO_RAD;
         entity->mXd = -Mth::sin(yaw) * Mth::cos(pitch) * 0.3f;
         entity->mZd = Mth::cos(yaw) * Mth::cos(pitch) * 0.3f;
         entity->mYd = -Mth::sin(pitch) * 0.3f + 0.1f;

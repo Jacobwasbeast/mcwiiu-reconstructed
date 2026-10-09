@@ -15,37 +15,40 @@ SnowEdgeLayer::~SnowEdgeLayer()
 
 arrayWithLength<int> SnowEdgeLayer::getArea(int x, int z, int width, int height)
 {
-    int parentWidth = width + 2;
-    int parentHeight = height + 2;
-
-    arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, parentHeight);
+    arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, width + 2, height + 2);
 
     PIXBeginNamedEvent(0.0f, "SnowEdgeLayer::getArea");
 
     arrayWithLength<int> area = IntCache::allocate(width * height);
 
-    for (int i = 0; i < height; i++)
+    for (int localZ = 0; localZ < height; localZ++)
     {
-        for (int j = 0; j < width; j++)
+        for (int localX = 0; localX < width; localX++)
         {
-            initRandom((long long)(j + x), (long long)(i + z));
+            initRandom((long long)(localX + x), (long long)(localZ + z));
 
-            int centre = parentArea.data[j + 1 + (i + 1) * parentWidth];
+            int centre = parentArea[localX + 1 + (localZ + 1) * (width + 2)];
 
             if (centre == 1)
             {
-                int north = parentArea.data[j + 1 + i * parentWidth];
-                int east = parentArea.data[j + 2 + (i + 1) * parentWidth];
-                int west = parentArea.data[j + (i + 1) * parentWidth];
-                int south = parentArea.data[j + 1 + (i + 2) * parentWidth];
+                int north = parentArea[localX + 1 + (localZ + 1 - 1) * (width + 2)];
+                int east = parentArea[localX + 1 + 1 + (localZ + 1) * (width + 2)];
+                int west = parentArea[localX + 1 - 1 + (localZ + 1) * (width + 2)];
+                int south = parentArea[localX + 1 + (localZ + 1 + 1) * (width + 2)];
 
                 if (north == 4 || east == 4 || west == 4 || south == 4)
                 {
-                    centre = 3;
+                    area[localX + localZ * width] = 3;
+                }
+                else
+                {
+                    area[localX + localZ * width] = centre;
                 }
             }
-
-            area.data[j + i * width] = centre;
+            else
+            {
+                area[localX + localZ * width] = centre;
+            }
         }
     }
 

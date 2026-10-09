@@ -28,12 +28,12 @@ int MegaTreeFeature::calcTreeHeigth(Random& random)
 
 bool MegaTreeFeature::checkIsFree(Level* level, const BlockPos& pos, int height)
 {
+    bool free = true;
     if (pos.y < 1 || pos.y + height + 1 > 256)
     {
         return false;
     }
 
-    bool free = true;
     for (int y = 0; y <= height + 1; ++y)
     {
         int radius = 2;
@@ -63,17 +63,17 @@ bool MegaTreeFeature::checkIsFree(Level* level, const BlockPos& pos, int height)
 
 bool MegaTreeFeature::makeDirtFloor(const BlockPos& pos, Level* level)
 {
-    BlockPos below = pos.below();
+    const BlockPos& below = pos.below();
     Block* block = level->getBlockState(below)->getBlock();
-    if ((block == Blocks::grass || block == Blocks::dirt) && pos.y >= 2)
+    if ((block != Blocks::grass && block != Blocks::dirt) || pos.y < 2)
     {
-        setDirtAt(level, below);
-        setDirtAt(level, below.east());
-        setDirtAt(level, below.south());
-        setDirtAt(level, below.south().east());
-        return true;
+        return false;
     }
-    return false;
+    setDirtAt(level, below);
+    setDirtAt(level, below.east());
+    setDirtAt(level, below.south());
+    setDirtAt(level, below.south().east());
+    return true;
 }
 
 bool MegaTreeFeature::prepareTree(Level* level, Random&, const BlockPos& pos, int height)
@@ -86,14 +86,16 @@ void MegaTreeFeature::placeDoubleTrunkLeaves(Level* level, const BlockPos& pos, 
     int radiusSquared = radius * radius;
     for (int x = -radius; x <= radius + 1; ++x)
     {
+        int x1 = x - 1;
+        int x1x1 = x1 * x1;
+        int xx = x * x;
         for (int z = -radius; z <= radius + 1; ++z)
         {
-            int x1 = x - 1;
             int z1 = z - 1;
-            if (x * x + z * z <= radiusSquared || x1 * x1 + z1 * z1 <= radiusSquared
-                || x * x + z1 * z1 <= radiusSquared || x1 * x1 + z * z <= radiusSquared)
+            if (xx + z * z <= radiusSquared || x1x1 + z1 * z1 <= radiusSquared
+                || xx + z1 * z1 <= radiusSquared || x1x1 + z * z <= radiusSquared)
             {
-                BlockPos leafPos = pos.offset(x, 0, z);
+                const BlockPos& leafPos = pos.offset(x, 0, z);
                 Material* material = level->getBlockState(leafPos)->getMaterial();
                 if (material == Material::AIR || material == Material::LEAVES)
                 {
@@ -113,7 +115,7 @@ void MegaTreeFeature::placeSingleTrunkLeaves(Level* level, const BlockPos& pos, 
         {
             if (x * x + z * z <= radiusSquared)
             {
-                BlockPos leafPos = pos.offset(x, 0, z);
+                const BlockPos& leafPos = pos.offset(x, 0, z);
                 Material* material = level->getBlockState(leafPos)->getMaterial();
                 if (material == Material::AIR || material == Material::LEAVES)
                 {

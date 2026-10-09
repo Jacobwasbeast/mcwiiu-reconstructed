@@ -18,11 +18,6 @@ public:
     virtual void AddIntParams(MasterGameMode* gameMode, std::vector<int>* params) const;
     bool IsUsingPrimaryTargetAreas() const;
     virtual bool UpdateMessage(MasterGameMode* gameMode, int message) const;
-    std::wstring GetVolumeName() const
-    {
-        const std::wstring noName(L"");
-        return m_volumeName.isSet() ? m_volumeName.get() : noName;
-    }
 
 private:
     maybe<std::wstring> m_volumeName;

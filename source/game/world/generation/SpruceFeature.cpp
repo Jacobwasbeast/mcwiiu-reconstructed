@@ -12,6 +12,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/block/MutableBlockPos.hpp"
 #include "game/world/block/PlanksBlock.hpp"
 #include "game/world/block/OldLeafBlock.hpp"
 #include "game/world/block/OldLogBlock.hpp"
@@ -28,22 +29,10 @@ SpruceFeature::SpruceFeature(bool doBlockNotify)
 
 void SpruceFeature::staticCtor()
 {
-    const BlockState* trunkState = Blocks::log->defaultBlockState();
-    {
-        TypedBoxed<PlanksBlock::Variant*> trunkVariant(PlanksBlock::Variant::SPRUCE);
-        trunkState = trunkState->setBoxedValue(OldLogBlock::VARIANT, &trunkVariant);
-    }
-    spruceTrunkState = trunkState;
-    const BlockState* leafState = Blocks::leaves->defaultBlockState();
-    {
-        TypedBoxed<PlanksBlock::Variant*> leafVariant(PlanksBlock::Variant::SPRUCE);
-        leafState = leafState->setBoxedValue(OldLeafBlock::VARIANT, &leafVariant);
-    }
-    {
-        TypedBoxed<bool> decayable(false);
-        leafState = leafState->setBoxedValue(LeafBlock::CHECK_DECAY, &decayable);
-    }
-    spruceLeafState = leafState;
+    spruceTrunkState = Blocks::log->defaultBlockState()->setValue(OldLogBlock::VARIANT, PlanksBlock::Variant::SPRUCE);
+    spruceLeafState = Blocks::leaves->defaultBlockState()
+                          ->setValue(OldLeafBlock::VARIANT, PlanksBlock::Variant::SPRUCE)
+                          ->setValue(LeafBlock::CHECK_DECAY, false);
 }
 
 bool SpruceFeature::place(Level* level, Random& random, const BlockPos& pos)
@@ -52,18 +41,21 @@ bool SpruceFeature::place(Level* level, Random& random, const BlockPos& pos)
     int bareTrunk = random.nextInt(2) + 1;
     int foliageHeight = height - bareTrunk;
     int maxRadius = random.nextInt(2) + 2;
+    bool free = true;
 
     if (pos.y < 1 || pos.y + height + 1 > 256)
         return false;
 
-    if (gApp.getLevelGenerationOptions() != NULL
-        && gApp.getLevelGenerationOptions()->checkIntersects(pos.offset(-maxRadius, -1, -maxRadius),
-                                                                pos.offset(maxRadius, height, maxRadius)))
-        return false;
+    if (gApp.getLevelGenerationOptions() != NULL)
+    {
+        LevelGenerationOptions* levelGenerationOptions = gApp.getLevelGenerationOptions();
+        if (levelGenerationOptions->checkIntersects(pos.offset(-maxRadius, -1, -maxRadius),
+                                                    pos.offset(maxRadius, height, maxRadius)))
+            return false;
+    }
 
-    bool free = true;
-    BlockPos checkPos(0, 0, 0);
-    for (int y = pos.y; y <= pos.y + height + 1; ++y)
+    MutableBlockPos checkPos;
+    for (int y = pos.y; y <= pos.y + height + 1 && free; ++y)
     {
         int radius = y - pos.y >= bareTrunk ? maxRadius : 0;
         for (int x = pos.x - radius; x <= pos.x + radius && free; ++x)
@@ -72,7 +64,7 @@ bool SpruceFeature::place(Level* level, Random& random, const BlockPos& pos)
             {
                 if (y >= 0 && y < 256)
                 {
-                    checkPos = BlockPos(x, y, z);
+                    checkPos.set(x, y, z);
                     Material* material = level->getBlockState(checkPos)->getMaterial();
                     if (material != Material::AIR && material != Material::LEAVES)
                         free = false;
@@ -83,9 +75,10 @@ bool SpruceFeature::place(Level* level, Random& random, const BlockPos& pos)
                 }
             }
         }
-        if (!free)
-            return false;
     }
+
+    if (!free)
+        return false;
 
     Block* ground = level->getBlockState(pos.below())->getBlock();
     if ((ground != Blocks::grass && ground != Blocks::dirt && ground != Blocks::farmland) || pos.y >= 255 - height)
@@ -103,11 +96,14 @@ bool SpruceFeature::place(Level* level, Random& random, const BlockPos& pos)
         int y = pos.y + height - layer;
         for (int x = pos.x - radius; x <= pos.x + radius; ++x)
         {
+            int xOffset = x - pos.x;
             for (int z = pos.z - radius; z <= pos.z + radius; ++z)
             {
-                if (abs(x - pos.x) != radius || abs(z - pos.z) != radius || radius <= 0)
+                int zOffset = z - pos.z;
+                bool corner = abs(xOffset) == radius && abs(zOffset) == radius && radius > 0;
+                if (!corner)
                 {
-                    BlockPos leafPos(x, y, z);
+                    const BlockPos& leafPos = BlockPos(x, y, z);
                     if (!level->getBlockState(leafPos)->isSolid())
                         setBlock(level, leafPos, mLeafState, Block::UPDATE_NONE);
                 }

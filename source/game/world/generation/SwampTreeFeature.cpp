@@ -45,13 +45,12 @@ void SwampTreeFeature::addVine(Level* level, const BlockPos& pos,
     const BlockState* state = Blocks::vine->defaultBlockState()->setValue(property, true);
     BlockPos vinePos = pos;
     setBlock(level, vinePos, state, Block::UPDATE_NONE);
-    int length = 4;
     vinePos = vinePos.below();
-    while (level->getBlockState(vinePos)->getBlock()->mMaterial == Material::AIR && length > 0)
+    for (int length = 4; level->getBlockState(vinePos)->getBlock()->mMaterial == Material::AIR && length > 0;
+         --length)
     {
         setBlock(level, vinePos, state, Block::UPDATE_NONE);
         vinePos = vinePos.below();
-        --length;
     }
 }
 
@@ -60,8 +59,9 @@ bool SwampTreeFeature::place(Level* level, Random& random, const BlockPos& pos)
     PIXBeginNamedEvent(0.0f, "SwampTreeFeature::place");
     BlockPos origin = pos;
     int height = random.nextInt(4) + mBaseHeight;
-    for (; level->getBlockState(origin.below())->getMaterial() == Material::WATER; origin = origin.below())
+    while (level->getBlockState(origin.below())->getMaterial() == Material::WATER)
     {
+        origin = origin.below();
     }
 
     bool free = true;
@@ -168,21 +168,21 @@ bool SwampTreeFeature::place(Level* level, Random& random, const BlockPos& pos)
             for (int z = origin.z - radius; z <= origin.z + radius; ++z)
             {
                 vineSource.set(x, y, z);
-                if (level->getBlockState(vineSource)->getMaterial() != Material::LEAVES)
-                    continue;
-
-                BlockPos west = vineSource.west();
-                BlockPos east = vineSource.east();
-                BlockPos north = vineSource.north();
-                BlockPos south = vineSource.south();
-                if (random.nextInt(4) == 0 && level->getBlockState(west)->getMaterial() == Material::AIR)
-                    addVine(level, west, VineBlock::EAST);
-                if (random.nextInt(4) == 0 && level->getBlockState(east)->getMaterial() == Material::AIR)
-                    addVine(level, east, VineBlock::WEST);
-                if (random.nextInt(4) == 0 && level->getBlockState(north)->getMaterial() == Material::AIR)
-                    addVine(level, north, VineBlock::SOUTH);
-                if (random.nextInt(4) == 0 && level->getBlockState(south)->getMaterial() == Material::AIR)
-                    addVine(level, south, VineBlock::NORTH);
+                if (level->getBlockState(vineSource)->getMaterial() == Material::LEAVES)
+                {
+                    BlockPos west = vineSource.west();
+                    BlockPos east = vineSource.east();
+                    BlockPos north = vineSource.north();
+                    BlockPos south = vineSource.south();
+                    if (random.nextInt(4) == 0 && level->getBlockState(west)->getMaterial() == Material::AIR)
+                        addVine(level, west, VineBlock::EAST);
+                    if (random.nextInt(4) == 0 && level->getBlockState(east)->getMaterial() == Material::AIR)
+                        addVine(level, east, VineBlock::WEST);
+                    if (random.nextInt(4) == 0 && level->getBlockState(north)->getMaterial() == Material::AIR)
+                        addVine(level, north, VineBlock::SOUTH);
+                    if (random.nextInt(4) == 0 && level->getBlockState(south)->getMaterial() == Material::AIR)
+                        addVine(level, south, VineBlock::NORTH);
+                }
             }
         }
     }

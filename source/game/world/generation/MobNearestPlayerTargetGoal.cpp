@@ -43,15 +43,15 @@ bool MobNearestPlayerTargetGoal::canUse()
 
     std::sort(entities->begin(), entities->end(), mSorter);
 
-    if (!entities->empty())
+    if (entities->empty())
     {
-        mTarget = boost::dynamic_pointer_cast<LivingEntity>(entities->at(0));
         delete entities;
-        return true;
+        return false;
     }
 
+    mTarget = boost::dynamic_pointer_cast<LivingEntity>(entities->at(0));
     delete entities;
-    return false;
+    return true;
 }
 
 bool MobNearestPlayerTargetGoal::canContinueToUse()
@@ -80,9 +80,10 @@ bool MobNearestPlayerTargetGoal::canContinueToUse()
         return false;
     }
 
-    if (target->GetType() == EntityType::SERVER_PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, target->GetType()))
     {
-        if (boost::static_pointer_cast<ServerPlayer>(target)->mGameMode->isCreative())
+        boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(target);
+        if (player->mGameMode->isCreative())
         {
             return false;
         }

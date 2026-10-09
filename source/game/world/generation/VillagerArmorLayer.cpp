@@ -20,7 +20,6 @@ void VillagerArmorLayer::createArmorModels()
     if (mModelArmor != NULL)
         delete mModelArmor;
 
-    ModelDefinition modelDefinition;
-    mModelArmorInner = new VillagerZombieModel(0.5f, 0.0f, true, modelDefinition);
-    mModelArmor = new VillagerZombieModel(1.0f, 0.0f, true, modelDefinition);
+    mModelArmorInner = new VillagerZombieModel(0.5f, 0.0f, true, ModelDefinition());
+    mModelArmor = new VillagerZombieModel(1.0f, 0.0f, true, ModelDefinition());
 }

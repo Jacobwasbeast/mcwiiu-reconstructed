@@ -1,5 +1,7 @@
 #include "game/world/generation/MineShaftFeature.hpp"
 
+#include <algorithm>
+
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/MineShaftStart.hpp"
@@ -27,15 +29,13 @@ std::wstring MineShaftFeature::getFeatureName()
 
 bool MineShaftFeature::isFeatureChunk(int chunkX, int chunkZ, bool flatWorld)
 {
-    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     bool forced = false;
+    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     if (options != NULL)
         forced = options->isFeatureChunk(chunkX, chunkZ, eFeatureType_Mineshaft, NULL);
 
-    int distanceX = abs(chunkX);
-    int distanceZ = abs(chunkZ);
     return forced || (random.nextDouble() < mChance &&
-                      random.nextInt(80) < (distanceX < distanceZ ? distanceZ : distanceX));
+                      random.nextInt(80) < std::max(abs(chunkX), abs(chunkZ)));
 }
 
 BlockPos* MineShaftFeature::getNearestGeneratedFeature(Level* levelIn,
@@ -44,10 +44,8 @@ BlockPos* MineShaftFeature::getNearestGeneratedFeature(Level* levelIn,
 {
     int chunkX = pos.x >> 4;
     int chunkZ = pos.z >> 4;
-    int radius = 0;
-    int remaining = 1001;
 
-    while (true)
+    for (int radius = 0; radius <= 1000; ++radius)
     {
         for (int offsetX = -radius; offsetX <= radius; ++offsetX)
         {
@@ -59,28 +57,26 @@ BlockPos* MineShaftFeature::getNearestGeneratedFeature(Level* levelIn,
                 {
                     int candidateX = chunkX + offsetX;
                     int candidateZ = chunkZ + offsetZ;
-                    long long seed = levelIn->getSeed();
-                    random.setSeed(seed ^ (long long)(candidateX ^ candidateZ));
+                    random.setSeed((long long)(candidateX ^ candidateZ) ^ levelIn->getSeed());
                     random.nextInt();
-                    if (isFeatureChunk(candidateX, candidateZ, false) &&
-                        (!skipExistingChunks || !levelIn->isChunkGeneratedAt(candidateX, candidateZ)))
-                        return new BlockPos(candidateX * 16 + 8, 64, candidateZ * 16 + 8);
+                    if (isFeatureChunk(candidateX, candidateZ, false))
+                    {
+                        if (!skipExistingChunks || !levelIn->isChunkGeneratedAt(candidateX, candidateZ))
+                            return new BlockPos(candidateX * 16 + 8, 64, candidateZ * 16 + 8);
+                    }
                 }
             }
         }
-
-        --remaining;
-        ++radius;
-        if (remaining == 0)
-            return NULL;
     }
+
+    return NULL;
 }
 
 StructureStart* MineShaftFeature::createStructureStart(int chunkX, int chunkZ)
 {
     gApp.AddTerrainFeaturePosition((_eTerrainFeatureType)2, chunkX, chunkZ);
-    bool mesa = dynamic_cast<MesaBiome*>(
-        level->getBiome(BlockPos(chunkX * 16 + 8, 64, chunkZ * 16 + 8))) != NULL;
-    return new MineShaftStart(level, random, chunkX, chunkZ,
-                              mesa ? eMineShaftType_Mesa : eMineShaftType_Normal);
+    Biome* biome = level->getBiome(BlockPos(chunkX * 16 + 8, 64, chunkZ * 16 + 8));
+    bool mesa = dynamic_cast<MesaBiome*>(biome) != NULL;
+    MineShaftType type = mesa ? eMineShaftType_Mesa : eMineShaftType_Normal;
+    return new MineShaftStart(level, random, chunkX, chunkZ, type);
 }

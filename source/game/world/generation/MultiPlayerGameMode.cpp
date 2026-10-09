@@ -96,9 +96,9 @@ MultiPlayerGameMode::~MultiPlayerGameMode()
 }
 
 GameModeConstraints* MultiPlayerGameMode::getGameModeConstraints() { return mGameModeConstraints; }
-boost::shared_ptr<Player> MultiPlayerGameMode::createPlayer(Level* level)
+boost::shared_ptr<MultiplayerLocalPlayer> MultiPlayerGameMode::createPlayer(Level* level)
 {
-    return boost::shared_ptr<Player>(new MultiplayerLocalPlayer(
+    return boost::shared_ptr<MultiplayerLocalPlayer>(new MultiplayerLocalPlayer(
         mMinecraft, level, mMinecraft->mUser, mConnection));
 }
 
@@ -524,7 +524,7 @@ void MultiPlayerGameMode::releaseUsingItem(boost::shared_ptr<Player> player)
 bool MultiPlayerGameMode::isServerControlledInventory()
 {
     return mMinecraft->mPlayer->isPassenger()
-        && (mMinecraft->mPlayer->getVehicle()->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE;
+        && eTYPE_DERIVED_FROM(EntityType::ABSTRACT_HORSE, mMinecraft->mPlayer->getVehicle()->GetType());
 }
 boost::shared_ptr<MultiplayerLocalPlayer> MultiPlayerGameMode::GetLocalPlayer()
 {
@@ -816,7 +816,7 @@ void MultiPlayerGameMode::handleCreativeModeItemDrop(not_null_ptr<ItemInstance> 
 }
 bool MultiPlayerGameMode::hasExperience() { return isSurvival(); }
 bool MultiPlayerGameMode::hasFarPickRange() { return isCreative(); }
-boost::shared_ptr<ItemInstance> MultiPlayerGameMode::handleCraftItem(
+not_null_ptr<ItemInstance> MultiPlayerGameMode::handleCraftItem(
     int recipe, int category, boost::shared_ptr<Player> player)
 {
     int uid = player->mContainerMenu->backup(player->mInventory);

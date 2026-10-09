@@ -19,8 +19,11 @@
 #include "game/world/generation/StructureTemplate.hpp"
 
 WoodlandMansionPieces::SimpleGrid::SimpleGrid(int width, int height, int valueIfOutside)
-    : mGrid(width, height), mWidth(width), mHeight(height), mValueIfOutside(valueIfOutside)
 {
+    mWidth = width;
+    mHeight = height;
+    mValueIfOutside = valueIfOutside;
+    mGrid = array2DWithLength<int>(width, height);
 }
 
 WoodlandMansionPieces::SimpleGrid::~SimpleGrid()
@@ -116,14 +119,16 @@ eMinecraftStructureTemplate WoodlandMansionPieces::SecondFloorRoomCollection::ge
 {
     if (staircase)
         return eMinecraftStructureTemplate_Mansion_1x2CStairs;
-    return static_cast<eMinecraftStructureTemplate>(eMinecraftStructureTemplate_Mansion_1x2C1 + random.nextInt(4));
+    int index = random.nextInt(4);
+    return static_cast<eMinecraftStructureTemplate>(eMinecraftStructureTemplate_Mansion_1x2C1 + index);
 }
 
 eMinecraftStructureTemplate WoodlandMansionPieces::SecondFloorRoomCollection::get1x2FrontEntrance(Random& random, bool staircase)
 {
     if (staircase)
         return eMinecraftStructureTemplate_Mansion_1x2DStairs;
-    return static_cast<eMinecraftStructureTemplate>(eMinecraftStructureTemplate_Mansion_1x2D1 + random.nextInt(5));
+    int index = random.nextInt(5);
+    return static_cast<eMinecraftStructureTemplate>(eMinecraftStructureTemplate_Mansion_1x2D1 + index);
 }
 
 eMinecraftStructureTemplate WoodlandMansionPieces::SecondFloorRoomCollection::get1x2Secret(Random&)
@@ -144,9 +149,11 @@ eMinecraftStructureTemplate WoodlandMansionPieces::SecondFloorRoomCollection::ge
 WoodlandMansionPieces::ThirdFloorRoomCollection::~ThirdFloorRoomCollection() { }
 
 WoodlandMansionPieces::MansionGrid::MansionGrid(Random& random)
-    : Random(), mFloorRooms(), mEntranceX(7), mEntranceY(4)
+    : Random(), mFloorRooms()
 {
     Random::operator=(random);
+    mEntranceX = 7;
+    mEntranceY = 4;
     mBaseGrid = new SimpleGrid(11, 11, 5);
     mBaseGrid->set(mEntranceX, mEntranceY, mEntranceX + 1, mEntranceY + 1, 3);
     mBaseGrid->set(mEntranceX - 1, mEntranceY, mEntranceX - 1, mEntranceY + 1, 2);
@@ -190,43 +197,42 @@ WoodlandMansionPieces::MansionGrid::~MansionGrid()
         mFloorRooms.data[i] = NULL;
     }
     delete[] mFloorRooms.data;
-    mFloorRooms.data = NULL;
-    mFloorRooms.length = 0;
+    mFloorRooms = arrayWithLength<SimpleGrid*>();
 }
 
 void WoodlandMansionPieces::MansionGrid::recursiveCorridor(SimpleGrid* grid, int x, int y, const Direction* direction, int length)
 {
-    if (length <= 0)
-        return;
-
-    grid->set(x, y, 1);
-    grid->setIf(x + direction->getStepX(), y + direction->getStepZ(), 0, 1);
-
-    for (int attempt = 0; attempt < 8; ++attempt)
+    if (length > 0)
     {
-        const Direction* next = Direction::from2DDataValue(nextInt(4));
-        if (next == direction->getOpposite() || (next == Direction::EAST && nextBoolean()))
-            continue;
+        grid->set(x, y, 1);
+        grid->setIf(x + direction->getStepX(), y + direction->getStepZ(), 0, 1);
 
-        int nextX = x + direction->getStepX();
-        int nextY = y + direction->getStepZ();
-        if (grid->get(nextX + next->getStepX(), nextY + next->getStepZ()) == 0 &&
-            grid->get(nextX + next->getStepX() * 2, nextY + next->getStepZ() * 2) == 0)
+        for (int attempt = 0; attempt < 8; ++attempt)
         {
-            recursiveCorridor(grid, nextX + next->getStepX(), nextY + next->getStepZ(), next, length - 1);
-            break;
+            const Direction* next = Direction::from2DDataValue(nextInt(4));
+            if (next != direction->getOpposite() && (next != Direction::EAST || !nextBoolean()))
+            {
+                int nextX = x + direction->getStepX();
+                int nextY = y + direction->getStepZ();
+                if (grid->get(nextX + next->getStepX(), nextY + next->getStepZ()) == 0 &&
+                    grid->get(nextX + next->getStepX() * 2, nextY + next->getStepZ() * 2) == 0)
+                {
+                    recursiveCorridor(grid, x + direction->getStepX() + next->getStepX(), y + direction->getStepZ() + next->getStepZ(), next, length - 1);
+                    break;
+                }
+            }
         }
-    }
 
-    const Direction* clockWise = direction->getClockWise();
-    const Direction* counterClockWise = direction->getCounterClockWise();
-    grid->setIf(x + clockWise->getStepX(), y + clockWise->getStepZ(), 0, 2);
-    grid->setIf(x + counterClockWise->getStepX(), y + counterClockWise->getStepZ(), 0, 2);
-    grid->setIf(x + direction->getStepX() + clockWise->getStepX(), y + direction->getStepZ() + clockWise->getStepZ(), 0, 2);
-    grid->setIf(x + direction->getStepX() + counterClockWise->getStepX(), y + direction->getStepZ() + counterClockWise->getStepZ(), 0, 2);
-    grid->setIf(x + direction->getStepX() * 2, y + direction->getStepZ() * 2, 0, 2);
-    grid->setIf(x + clockWise->getStepX() * 2, y + clockWise->getStepZ() * 2, 0, 2);
-    grid->setIf(x + counterClockWise->getStepX() * 2, y + counterClockWise->getStepZ() * 2, 0, 2);
+        const Direction* clockWise = direction->getClockWise();
+        const Direction* counterClockWise = direction->getCounterClockWise();
+        grid->setIf(x + clockWise->getStepX(), y + clockWise->getStepZ(), 0, 2);
+        grid->setIf(x + counterClockWise->getStepX(), y + counterClockWise->getStepZ(), 0, 2);
+        grid->setIf(x + direction->getStepX() + clockWise->getStepX(), y + direction->getStepZ() + clockWise->getStepZ(), 0, 2);
+        grid->setIf(x + direction->getStepX() + counterClockWise->getStepX(), y + direction->getStepZ() + counterClockWise->getStepZ(), 0, 2);
+        grid->setIf(x + direction->getStepX() * 2, y + direction->getStepZ() * 2, 0, 2);
+        grid->setIf(x + clockWise->getStepX() * 2, y + clockWise->getStepZ() * 2, 0, 2);
+        grid->setIf(x + counterClockWise->getStepX() * 2, y + counterClockWise->getStepZ() * 2, 0, 2);
+    }
 }
 
 bool WoodlandMansionPieces::MansionGrid::isHouse(SimpleGrid* grid, int x, int y)
@@ -292,94 +298,93 @@ void WoodlandMansionPieces::MansionGrid::identifyRooms(SimpleGrid* grid, SimpleG
     {
         int x = it->first;
         int y = it->second;
-        if (rooms->get(x, y) != 0)
-            continue;
+        if (rooms->get(x, y) == 0)
+        {
+            int x0 = x;
+            int x1 = x;
+            int y0 = y;
+            int y1 = y;
+            int type = 0x10000;
+            if (rooms->get(x + 1, y) == 0 && rooms->get(x, y + 1) == 0 && rooms->get(x + 1, y + 1) == 0 &&
+                grid->get(x + 1, y) == 2 && grid->get(x, y + 1) == 2 && grid->get(x + 1, y + 1) == 2)
+            {
+                ++x1;
+                ++y1;
+                type = 0x40000;
+            }
+            else if (rooms->get(x - 1, y) == 0 && rooms->get(x, y + 1) == 0 && rooms->get(x - 1, y + 1) == 0 &&
+                grid->get(x - 1, y) == 2 && grid->get(x, y + 1) == 2 && grid->get(x - 1, y + 1) == 2)
+            {
+                --x0;
+                ++y1;
+                type = 0x40000;
+            }
+            else if (rooms->get(x - 1, y) == 0 && rooms->get(x, y - 1) == 0 && rooms->get(x - 1, y - 1) == 0 &&
+                grid->get(x - 1, y) == 2 && grid->get(x, y - 1) == 2 && grid->get(x - 1, y - 1) == 2)
+            {
+                --x0;
+                --y0;
+                type = 0x40000;
+            }
+            else if (rooms->get(x + 1, y) == 0 && grid->get(x + 1, y) == 2)
+            {
+                ++x1;
+                type = 0x20000;
+            }
+            else if (rooms->get(x, y + 1) == 0 && grid->get(x, y + 1) == 2)
+            {
+                ++y1;
+                type = 0x20000;
+            }
+            else if (rooms->get(x - 1, y) == 0 && grid->get(x - 1, y) == 2)
+            {
+                --x0;
+                type = 0x20000;
+            }
+            else if (rooms->get(x, y - 1) == 0 && grid->get(x, y - 1) == 2)
+            {
+                --y0;
+                type = 0x20000;
+            }
 
-        int x0 = x;
-        int x1 = x;
-        int y0 = y;
-        int y1 = y;
-        int type = 0x10000;
-        if (rooms->get(x + 1, y) == 0 && rooms->get(x, y + 1) == 0 && rooms->get(x + 1, y + 1) == 0 &&
-            grid->get(x + 1, y) == 2 && grid->get(x, y + 1) == 2 && grid->get(x + 1, y + 1) == 2)
-        {
-            ++x1;
-            ++y1;
-            type = 0x40000;
-        }
-        else if (rooms->get(x - 1, y) == 0 && rooms->get(x, y + 1) == 0 && rooms->get(x - 1, y + 1) == 0 &&
-            grid->get(x - 1, y) == 2 && grid->get(x, y + 1) == 2 && grid->get(x - 1, y + 1) == 2)
-        {
-            --x0;
-            ++y1;
-            type = 0x40000;
-        }
-        else if (rooms->get(x - 1, y) == 0 && rooms->get(x, y - 1) == 0 && rooms->get(x - 1, y - 1) == 0 &&
-            grid->get(x - 1, y) == 2 && grid->get(x, y - 1) == 2 && grid->get(x - 1, y - 1) == 2)
-        {
-            --x0;
-            --y0;
-            type = 0x40000;
-        }
-        else if (rooms->get(x + 1, y) == 0 && grid->get(x + 1, y) == 2)
-        {
-            ++x1;
-            type = 0x20000;
-        }
-        else if (rooms->get(x, y + 1) == 0 && grid->get(x, y + 1) == 2)
-        {
-            ++y1;
-            type = 0x20000;
-        }
-        else if (rooms->get(x - 1, y) == 0 && grid->get(x - 1, y) == 2)
-        {
-            --x0;
-            type = 0x20000;
-        }
-        else if (rooms->get(x, y - 1) == 0 && grid->get(x, y - 1) == 2)
-        {
-            --y0;
-            type = 0x20000;
-        }
-
-        int doorX = nextBoolean() ? x0 : x1;
-        int doorY = nextBoolean() ? y0 : y1;
-        int doorFlag = 0x200000;
-        if (!grid->edgesTo(doorX, doorY, 1))
-        {
-            doorX = doorX == x0 ? x1 : x0;
-            doorY = doorY == y0 ? y1 : y0;
+            int doorX = nextBoolean() ? x0 : x1;
+            int doorY = nextBoolean() ? y0 : y1;
+            int doorFlag = 0x200000;
             if (!grid->edgesTo(doorX, doorY, 1))
             {
+                doorX = doorX == x0 ? x1 : x0;
                 doorY = doorY == y0 ? y1 : y0;
                 if (!grid->edgesTo(doorX, doorY, 1))
                 {
-                    doorX = doorX == x0 ? x1 : x0;
                     doorY = doorY == y0 ? y1 : y0;
                     if (!grid->edgesTo(doorX, doorY, 1))
                     {
-                        doorFlag = 0;
-                        doorX = x0;
-                        doorY = y0;
+                        doorX = doorX == x0 ? x1 : x0;
+                        doorY = doorY == y0 ? y1 : y0;
+                        if (!grid->edgesTo(doorX, doorY, 1))
+                        {
+                            doorFlag = 0;
+                            doorX = x0;
+                            doorY = y0;
+                        }
                     }
                 }
             }
-        }
 
-        for (int roomY = y0; roomY <= y1; ++roomY)
-        {
-            for (int roomX = x0; roomX <= x1; ++roomX)
+            for (int roomY = y0; roomY <= y1; ++roomY)
             {
-                if (roomX == doorX && roomY == doorY)
-                    rooms->set(roomX, roomY, 0x100000 | doorFlag | type | roomId);
-                else
-                    rooms->set(roomX, roomY, type | roomId);
+                for (int roomX = x0; roomX <= x1; ++roomX)
+                {
+                    if (roomX == doorX && roomY == doorY)
+                        rooms->set(roomX, roomY, 0x100000 | doorFlag | type | roomId);
+                    else
+                        rooms->set(roomX, roomY, type | roomId);
+                }
             }
+            ++roomId;
         }
-        ++roomId;
     }
 }
-
 bool WoodlandMansionPieces::MansionGrid::isRoomId(SimpleGrid*, int x, int y, int floor, int roomId)
 {
     return (mFloorRooms.data[floor]->get(x, y) & 0xffff) == roomId;

@@ -13,12 +13,11 @@ LookAtTradingPlayerGoal::LookAtTradingPlayerGoal(Villager* villager)
 
 bool LookAtTradingPlayerGoal::canUse()
 {
-    if (!mVillager->isTrading())
+    if (mVillager->isTrading())
     {
-        return false;
+        mLookAt = boost::weak_ptr<Entity>(boost::dynamic_pointer_cast<Entity>(mVillager->getTradingPlayer()));
+        return true;
     }
 
-    mLookAt = boost::dynamic_pointer_cast<Entity>(mVillager->getTradingPlayer());
-    return true;
+    return false;
 }
-

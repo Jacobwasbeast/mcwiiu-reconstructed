@@ -124,8 +124,6 @@
 #include <algorithm>
 #include <iostream>
 
-static const float DEGREES_TO_RADIANS = 0.017453292f;
-
 LocalPlayer::LocalPlayer(Minecraft* minecraft, Level* level, User* user, int dimension)
     : AbstractClientPlayer(level, user->name)
 {
@@ -193,7 +191,6 @@ LocalPlayer::LocalPlayer(Minecraft* minecraft, Level* level, User* user, int dim
     mViewport = 0;
     mInput = NULL;
     mUserIndex = -1;
-    mButtonsPressed = 0;
     mHasOpenedInventory = true;
     mLastAttackTick = 0;
     mFlyButtonsDown[0] = 0;
@@ -889,7 +886,7 @@ void LocalPlayer::aiStep()
         }
     }
 
-    const bool diving = isInWater() && (mButtonsDown & 0x80) != 0;
+    const bool diving = isInWater() && (mButtonsDown & (1LL << EControllerActions_Sneak)) != 0;
     if (mInput->mSwimming)
     {
         if (diving && !mOnGround)
@@ -905,7 +902,7 @@ void LocalPlayer::aiStep()
 
     if (mAbilities.mFlying && isControlledCamera())
     {
-        if ((mButtonsDown & 0x80) != 0)
+        if ((mButtonsDown & (1LL << EControllerActions_Sneak)) != 0)
             mYd -= creativeFlyVerticalSpeed;
         if (mInput->mJumping)
         {
@@ -1111,9 +1108,8 @@ void LocalPlayer::move(MoverType type, double xa, double ya, double za, bool col
 
 int LocalPlayer::openFireworks(int x, int y, int z)
 {
-    boost::shared_ptr<LocalPlayer> self = boost::static_pointer_cast<LocalPlayer>(shared_from_this());
-    const int result = static_cast<int>(gApp.LoadFireworksMenu(mUserIndex, self, x, y, z));
-    if (result != 0)
+    bool result = gApp.LoadFireworksMenu(mUserIndex, boost::static_pointer_cast<LocalPlayer>(shared_from_this()), x, y, z);
+    if (result)
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
     return result;
 }
@@ -1349,7 +1345,7 @@ void LocalPlayer::onCrafted(not_null_ptr<ItemInstance> item)
     if (item->getItem()->IsArmor())
     {
         if (static_cast<ArmorItem*>(item->getItem())->hasCustomColor(item))
-            awardStat(gStats->get_armourDyed(Item::VALIDgetId(item->getItem())), GenericStats::param_noArgs());
+            awardStat(GenericStats::armourDyed(item->getItem()), GenericStats::param_noArgs());
     }
 
     if (mMinecraft->mGameModes[mUserIndex] != NULL)
@@ -1477,16 +1473,15 @@ unsigned int LocalPlayer::pickBlock(bool select)
     }
     else if (hitResult->mType == HitResult::ENTITY && hitResult->mEntity)
     {
-        const unsigned long long entityType = hitResult->mEntity->GetType();
-        if (entityType == EntityType::PAINTING)
+        if (eTYPE_DERIVED_FROM(EntityType::PAINTING, hitResult->mEntity->GetType()))
         {
             pickedItem = not_null_ptr<ItemInstance>(new ItemInstance(Items::painting));
         }
-        else if (entityType == EntityType::LEASH_FENCE_KNOT_ENTITY)
+        else if (eTYPE_DERIVED_FROM(EntityType::LEASH_FENCE_KNOT_ENTITY, hitResult->mEntity->GetType()))
         {
             pickedItem = not_null_ptr<ItemInstance>(new ItemInstance(Items::lead));
         }
-        else if (entityType == EntityType::ITEM_FRAME)
+        else if (eTYPE_DERIVED_FROM(EntityType::ITEM_FRAME, hitResult->mEntity->GetType()))
         {
             boost::shared_ptr<ItemFrame> itemFrame = boost::static_pointer_cast<ItemFrame>(hitResult->mEntity);
             not_null_ptr<ItemInstance> frameItem = itemFrame->getItem();
@@ -1495,22 +1490,32 @@ unsigned int LocalPlayer::pickBlock(bool select)
             else
                 pickedItem = not_null_ptr<ItemInstance>(new ItemInstance(Items::itemFrame));
         }
-        else if ((entityType & EntityType::MINECART) == EntityType::MINECART)
+        else if (eTYPE_DERIVED_FROM(EntityType::MINECART, hitResult->mEntity->GetType()))
         {
             boost::shared_ptr<Minecart> minecart = boost::dynamic_pointer_cast<Minecart>(hitResult->mEntity);
-            const int type = minecart->getType()->mId;
-            Item* item = Items::minecart;
-            if (type == 1)
-                item = Items::chestMinecart;
-            else if (type == 2)
-                item = Items::furnaceMinecart;
-            else if (type == 3)
-                item = Items::tntMinecart;
-            else if (type == 5)
-                item = Items::hopperMinecart;
-            else if (type == 6)
-                item = Items::commandBlockMinecart;
-            pickedItem = not_null_ptr<ItemInstance>(new ItemInstance(item));
+            ItemInstance* minecartItem;
+            switch (minecart->getType()->mId)
+            {
+            case Minecart::Type::eType_Chest:
+                minecartItem = new ItemInstance(Items::chestMinecart);
+                break;
+            case Minecart::Type::eType_Furnace:
+                minecartItem = new ItemInstance(Items::furnaceMinecart);
+                break;
+            case Minecart::Type::eType_TNT:
+                minecartItem = new ItemInstance(Items::tntMinecart);
+                break;
+            case Minecart::Type::eType_Hopper:
+                minecartItem = new ItemInstance(Items::hopperMinecart);
+                break;
+            case Minecart::Type::eType_CommandBlock:
+                minecartItem = new ItemInstance(Items::commandBlockMinecart);
+                break;
+            default:
+                minecartItem = new ItemInstance(Items::minecart);
+                break;
+            }
+            pickedItem = not_null_ptr<ItemInstance>(minecartItem);
         }
         else if (eTYPE_DERIVED_FROM(EntityType::BOAT, hitResult->mEntity->GetType()))
         {
@@ -1965,15 +1970,15 @@ void LocalPlayer::updateRichPresence()
     }
     else
     {
-        if (isPassenger() && (getVehicle()->GetType() & EntityType::MINECART) == EntityType::MINECART)
+        if (isPassenger() && eTYPE_DERIVED_FROM(EntityType::MINECART, getVehicle()->GetType()))
         {
             gApp.SetRichPresenceContext(mUserIndex, 2);
         }
-        else if (isPassenger() && getVehicle()->GetType() == EntityType::BOAT)
+        else if (isPassenger() && eTYPE_DERIVED_FROM(EntityType::BOAT, getVehicle()->GetType()))
         {
             gApp.SetRichPresenceContext(mUserIndex, 3);
         }
-        else if (isPassenger() && getVehicle()->GetType() == EntityType::PIG)
+        else if (isPassenger() && eTYPE_DERIVED_FROM(EntityType::PIG, getVehicle()->GetType()))
         {
             gApp.SetRichPresenceContext(mUserIndex, 1);
         }
@@ -2039,7 +2044,7 @@ void LocalPlayer::updateProximityIndicator()
         if (!collisions->empty())
         {
             AABB* closestBox = NULL;
-            for (std::vector<AABB*>::iterator it = collisions->begin(); it != collisions->end(); ++it)
+            for (std::vector<AABB*>::iterator end = collisions->end(), it = collisions->begin(); it != end; ++it)
             {
                 AABB* box = *it;
                 double distance = getPos(1.0f)->distanceTo(box);
@@ -2051,7 +2056,8 @@ void LocalPlayer::updateProximityIndicator()
             }
             Vec3* position = getPos(1.0f);
             Vec3* center = closestBox->getCenter();
-            Vec3* direction = Vec3::newTemp(position->x - center->x, 0.0, position->z - center->z)->normalize();
+            Vec3* direction = Vec3::newTemp(position->x - center->x, 0.0, position->z - center->z);
+            direction->normalize();
             mDamageIndicatorSegments[getIndicatorSegment(static_cast<float>(direction->x),
                                                          static_cast<float>(direction->z))] = true;
             mElytraProximityWarning = true;
@@ -2061,13 +2067,16 @@ void LocalPlayer::updateProximityIndicator()
         {
             Vec3* position = getPos(1.0f);
             std::vector<boost::shared_ptr<Player> >* nearby = mLevel->getNearbyPlayers(shared_from_this(), 3.0);
-            for (std::vector<boost::shared_ptr<Player> >::iterator it = nearby->begin(); it != nearby->end(); ++it)
+            for (std::vector<boost::shared_ptr<Player> >::iterator end = nearby->end(), it = nearby->begin();
+                 it != end; ++it)
             {
-                Vec3* direction =
-                    Vec3::newTemp(position->x - (*it)->mX, 0.0, position->z - (*it)->mZ)->normalize();
+                boost::shared_ptr<Player>& player = *it;
+                Vec3* direction = Vec3::newTemp(position->x - player->mX, 0.0, position->z - player->mZ);
+                direction->normalize();
                 mDamageIndicatorSegments[getIndicatorSegment(static_cast<float>(direction->x),
                                                              static_cast<float>(direction->z))] = true;
             }
+            nearby->clear();
             delete nearby;
         }
         return;
@@ -2485,8 +2494,8 @@ void LocalPlayer::updateAutoJump(float xMovement, float zMovement)
     {
         float inputX = speed * moveVector->x;
         float inputZ = speed * moveVector->y;
-        float sine = Mth::sin(mYRot * DEGREES_TO_RADIANS);
-        float cosine = Mth::cos(mYRot * DEGREES_TO_RADIANS);
+        float sine = Mth::sin(mYRot * Mth::DEG_TO_RAD);
+        float cosine = Mth::cos(mYRot * Mth::DEG_TO_RAD);
         movement = Vec3::newTemp(inputX * cosine - inputZ * sine, movement->y, inputZ * cosine + inputX * sine);
         lengthSquared = (float)movement->lengthSqr();
         if (lengthSquared <= 0.001f)
@@ -2688,10 +2697,11 @@ void LocalPlayer::OnEquipArmor(not_null_ptr<ItemInstance> item)
         Items::ironChestplate,
         Items::ironHelmet
     };
+    int index = 0;
     for (int slot = 0; slot < 4; ++slot)
     {
         not_null_ptr<ItemInstance> armor = mInventory->m_armor[slot];
-        if (armor->isEmpty() || armor->getItem() == NULL || armor->getItem() != ironArmor[slot])
+        if (armor->isEmpty() || armor->getItem() == NULL || armor->getItem() != ironArmor[index++])
         {
             return;
         }

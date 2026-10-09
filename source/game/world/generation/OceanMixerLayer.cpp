@@ -25,43 +25,45 @@ arrayWithLength<int> OceanMixerLayer::getArea(int x, int z, int width, int heigh
 
     PIXBeginNamedEvent(0.0f, "OceanMixerLayer::getArea");
 
-    int count = width * height;
+    arrayWithLength<int> area = IntCache::allocate(width * height);
 
-    arrayWithLength<int> area = IntCache::allocate(count);
-
-    for (int i = 0; i < count; i++)
+    for (int i = 0; i < width * height; i++)
     {
-        if (isOcean(landArea.data[i]) && isOcean(oceanArea.data[i]))
+        if (!isOcean(landArea.data[i]) || !isOcean(oceanArea.data[i]))
         {
-            int oceanBiomeId = oceanArea.data[i];
-
-            if (landArea.data[i] == 24)
-            {
-                switch (oceanBiomeId)
-                {
-                case 0:
-                    oceanBiomeId = 24;
-                    break;
-
-                case 42:
-                    oceanBiomeId = 43;
-                    break;
-
-                case 44:
-                    oceanBiomeId = 45;
-                    break;
-
-                case 46:
-                    oceanBiomeId = 47;
-                    break;
-                }
-            }
-
-            area.data[i] = oceanBiomeId;
+            area.data[i] = landArea.data[i];
         }
         else
         {
-            area.data[i] = landArea.data[i];
+            if (landArea.data[i] == 24)
+            {
+                switch (oceanArea.data[i])
+                {
+                case 42:
+                    area.data[i] = 43;
+                    break;
+
+                case 0:
+                    area.data[i] = 24;
+                    break;
+
+                case 44:
+                    area.data[i] = 45;
+                    break;
+
+                case 46:
+                    area.data[i] = 47;
+                    break;
+
+                default:
+                    area.data[i] = oceanArea.data[i];
+                    break;
+                }
+            }
+            else
+            {
+                area.data[i] = oceanArea.data[i];
+            }
         }
     }
 

@@ -22,9 +22,9 @@ MoveThroughVillageGoal::MoveThroughVillageGoal(PathfinderMob* mob, double speedM
 {
     mPath = NULL;
     mDoorInfo = boost::weak_ptr<DoorInfo>();
+    mMob = mob;
     mSpeedModifier = speedModifier;
     mOnlyAtNight = onlyAtNight;
-    mMob = mob;
     setRequiredControlFlags(1);
 }
 
@@ -45,15 +45,16 @@ bool MoveThroughVillageGoal::hasVisited(boost::shared_ptr<DoorInfo> door)
          it != mVisited.end();)
     {
         boost::shared_ptr<DoorInfo> visited = it->lock();
-        if (!visited)
+        if (visited == NULL)
         {
             it = mVisited.erase(it);
-            continue;
         }
-
-        if (door->getPos().equals(visited->getPos()))
-            return true;
-        ++it;
+        else
+        {
+            if (door->getPos().equals(visited->getPos()))
+                return true;
+            ++it;
+        }
     }
     return false;
 }
@@ -123,13 +124,13 @@ bool MoveThroughVillageGoal::canContinueToUse()
 {
     if (mMob->getNavigation()->isDone())
         return false;
+
+    float limit = mMob->mBbWidth + 4.0f;
     boost::shared_ptr<DoorInfo> doorInfo = mDoorInfo.lock();
     if (!doorInfo)
         return false;
 
-    double distance = mMob->distanceToSqr(doorInfo->getPos());
-    float limit = mMob->mBbWidth + 4.0f;
-    return distance > (double)(limit * limit);
+    return mMob->distanceToSqr(doorInfo->getPos()) > (double)(limit * limit);
 }
 
 void MoveThroughVillageGoal::start()

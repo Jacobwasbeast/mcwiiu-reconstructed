@@ -28,33 +28,30 @@ bool SeaPickleFeature::place(Level* level, Random& random, const BlockPos& origi
             position = position.below();
         }
 
-        if (level->isSolidBlockingBlock(position))
-        {
-            for (int attempt = 0; attempt < 4; ++attempt)
-            {
-                const int dz = random.nextInt(6);
-                const int dx = random.nextInt(6);
-                BlockPos target = position.offset(dx, 0, dz);
-                const int pickles = random.nextInt(0, 4);
-                while (!level->isEmptyWaterBlock(target)
-                    && level->getBlockId(target.x, target.y, target.z) != BlockId::AIR)
-                {
-                    target = target.above();
-                }
-
-                if (level->getBlockId(target.x, target.y, target.z) != BlockId::AIR
-                    && level->getBlockId(target.x, target.y, target.z) != BlockId::SEA_PICKLE
-                    && Blocks::sea_pickle->canSurvive(level, target, Blocks::sea_pickle->defaultBlockState()))
-                {
-                    const BlockState* state = Blocks::sea_pickle->defaultBlockState();
-                    state = state->setValue(SeaPickle::COUNT, pickles);
-                    setBlock(level, target, state, Block::UPDATE_NONE);
-                }
-            }
-        }
-        else
+        if (!level->isSolidBlockingBlock(position))
         {
             return false;
+        }
+
+        for (int attempt = 0; attempt < 4; ++attempt)
+        {
+            const int dz = random.nextInt(6);
+            const int dx = random.nextInt(6);
+            BlockPos target = position.offset(dx, 0, dz);
+            const int pickles = random.nextInt(0, 4);
+            while (!level->isEmptyWaterBlock(target)
+                && level->getBlockId(target.x, target.y, target.z) != BlockId::AIR)
+            {
+                target = target.above();
+            }
+
+            if (level->getBlockId(target.x, target.y, target.z) != BlockId::AIR
+                && level->getBlockId(target.x, target.y, target.z) != BlockId::SEA_PICKLE
+                && Blocks::sea_pickle->canSurvive(level, target, Blocks::sea_pickle->defaultBlockState()))
+            {
+                const BlockState* state = Blocks::sea_pickle->defaultBlockState()->setValue(SeaPickle::COUNT, pickles);
+                setBlock(level, target, state, Block::UPDATE_NONE);
+            }
         }
     }
 

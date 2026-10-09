@@ -11,19 +11,10 @@ SimplePatchesLayerThemeRuleDefinition::SimplePatchesLayerThemeRuleDefinition()
       mNoiseScale(5.0f),
       mPatchThreshold(0.0f)
 {
-    GameRules_IntAttribute* blockIdAttribute = addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mBlockId);
-    blockIdAttribute->setMin(0);
-    blockIdAttribute->setMax(255);
-
+    addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockId, &mBlockId)->setMin(0)->setMax(255);
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_blockAux, &mBlockAux);
-
-    GameRules_FloatAttribute* noiseScaleAttribute = addFloatAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mNoiseScale);
-    noiseScaleAttribute->setMin(0.0f);
-    noiseScaleAttribute->setMax(100.0f);
-
-    GameRules_FloatAttribute* thresholdAttribute = addFloatAttribute(ConsoleGameRules::eGameRuleAttr_freq, &mPatchThreshold);
-    thresholdAttribute->setMin(-1.0f);
-    thresholdAttribute->setMax(1.0f);
+    addFloatAttribute(ConsoleGameRules::eGameRuleAttr_scale, &mNoiseScale)->setMin(0.0f)->setMax(100.0f);
+    addFloatAttribute(ConsoleGameRules::eGameRuleAttr_freq, &mPatchThreshold)->setMin(-1.0f)->setMax(1.0f);
 }
 
 ConsoleGameRules::EGameRuleType SimplePatchesLayerThemeRuleDefinition::getActionType()

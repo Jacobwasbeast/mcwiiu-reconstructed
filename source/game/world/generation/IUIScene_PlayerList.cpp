@@ -1,5 +1,6 @@
 #include "game/world/generation/IUIScene_PlayerList.hpp"
 
+#include <algorithm>
 #include <cstdlib>
 #include <string>
 
@@ -42,7 +43,7 @@ int IUIScene_PlayerList::KickPlayerReturned(void* context, int playerIndex, C4JS
     {
         boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[playerIndex];
         if (player->mPacketListener != NULL)
-            player->mPacketListener->send(boost::shared_ptr<Packet>(new KickPlayerPacket(smallId)));
+            player->mPacketListener->send(boost::shared_ptr<KickPlayerPacket>(new KickPlayerPacket(smallId)));
     }
     return 0;
 }
@@ -59,7 +60,7 @@ void IUIScene_PlayerList::tick()
 {
     EnterCriticalSection(&mCriticalSection);
     unsigned int removed = 0;
-    for (unsigned int index = 0; index < mPlayerChanges.size(); ++index)
+    for (int index = 0; index < mPlayerChanges.size(); ++index)
     {
         PlayerChange* change = mPlayerChanges[index];
         UIControl_ButtonList* list = GetPlayerList();
@@ -75,7 +76,7 @@ void IUIScene_PlayerList::tick()
         {
             ++removed;
             if (removed < static_cast<unsigned int>(list->getItemCount()))
-                list->removeItem(list->getItemCount() - (static_cast<int>(index) + 1), false);
+                list->removeItem(list->getItemCount() - (index + 1), false);
         }
         delete change;
     }
@@ -142,20 +143,20 @@ PlayerInfo* IUIScene_PlayerList::CreatePlayerInfo()
 
 int IUIScene_PlayerList::FindPlayer(unsigned char smallId)
 {
+    int result = -1;
     for (int index = 0; index < GetPlayerCount(); ++index)
     {
         if (GetPlayer(index)->smallId == smallId)
         {
-            if (GetPlayerList()->getCurrentSelection() != GetPlayerList()->getItemCount() - 1)
+            if (GetPlayerList()->getCurrentSelection() == GetPlayerList()->getItemCount() - 1)
             {
-                return index;
+                GetPlayerList()->setCurrentSelection(std::max(0, GetPlayerList()->getItemCount() - 2), false, false);
             }
-            int selection = GetPlayerList()->getItemCount() - 2;
-            GetPlayerList()->setCurrentSelection(selection < 0 ? 0 : selection, false, false);
-            return index;
+            result = index;
+            break;
         }
     }
-    return -1;
+    return result;
 }
 
 void IUIScene_PlayerList::UpdatePlayer(int index, PlayerInfo* oldInfo, PlayerInfo* newInfo)

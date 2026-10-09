@@ -20,10 +20,8 @@ TimeSincePlayersCondition::~TimeSincePlayersCondition()
 
 bool TimeSincePlayersCondition::IsSatisfied(MasterGameMode* gameMode) const
 {
-    if (!gameMode->HasTimer(static_cast<MasterGameMode::ETimerID>(GetTimerID())))
-        return false;
-
-    return gameMode->GetTimerRemainingTime(static_cast<MasterGameMode::ETimerID>(GetTimerID())) <= 0;
+    return gameMode->HasTimer(static_cast<MasterGameMode::ETimerID>(GetTimerID())) &&
+           gameMode->GetTimerRemainingTime(static_cast<MasterGameMode::ETimerID>(GetTimerID())) <= 0;
 }
 
 unsigned int TimeSincePlayersCondition::GetTimerID() const

@@ -2,6 +2,7 @@
 #define GAME_WORLD_GENERATION_FLATGENERATORINFO_HPP
 
 #include <string>
+#include <utility>
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
@@ -21,7 +22,7 @@ class VillageFeature;
 class WoodlandMansionFeature;
 class FlatLayerInfo;
 
-long long getSpacingAndSeparationFromPercentage(int spacing, int separationPercent, int minimumSeparation);
+std::pair<int, int> getSpacingAndSeparationFromPercentage(int spacing, int separationPercent, int minimumSeparation);
 
 class FlatGeneratorInfo
 {

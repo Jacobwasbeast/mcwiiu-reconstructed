@@ -16,11 +16,11 @@
 #include "game/world/block/MutableBlockPos.hpp"
 
 SpikeFeature::SpikeFeature()
-    : Feature(false),
-      mCrystalInvulnerable(false),
-      mSpike(NULL),
-      mCrystalBeamTarget(NULL)
+    : Feature(false)
 {
+    mSpike = NULL;
+    mCrystalBeamTarget = NULL;
+    mCrystalInvulnerable = false;
 }
 
 SpikeFeature::~SpikeFeature()
@@ -52,7 +52,7 @@ bool SpikeFeature::place(Level* level, Random& random, const BlockPos& origin)
 
     while (positions->hasNext())
     {
-        BlockPos position = *positions->next();
+        MutableBlockPos position = *positions->next();
         if (position.distSqr((double)origin.x, (double)position.y, (double)origin.z) <= (double)(radius * radius + 1) &&
             position.y < (int)mSpike->getHeight())
         {
@@ -88,20 +88,21 @@ bool SpikeFeature::place(Level* level, Random& random, const BlockPos& origin)
     }
 
     boost::shared_ptr<EnderCrystal> crystal(new EnderCrystal(level));
-    if (mCrystalBeamTarget == NULL)
+    if (mCrystalBeamTarget != NULL)
     {
-        crystal->setBeamTarget(NULL);
+        crystal->setBeamTarget(new BlockPos(*mCrystalBeamTarget));
     }
     else
     {
-        crystal->setBeamTarget(new BlockPos(*mCrystalBeamTarget));
+        crystal->setBeamTarget(NULL);
     }
     crystal->setInvulnerable(mCrystalInvulnerable);
     crystal->moveTo((float)origin.x + 0.5f, (double)((int)mSpike->getHeight() + 1),
                     (float)origin.z + 0.5f, random.nextFloat() * 360.0f, 0.0f);
     level->addEntity(boost::shared_ptr<Entity>(crystal));
 
-    setBlock(level, BlockPos(origin.x, (int)mSpike->getHeight(), origin.z), Blocks::bedrock->defaultBlockState(), Block::UPDATE_NONE);
+    BlockPos bedrockPos(origin.x, (int)mSpike->getHeight(), origin.z);
+    setBlock(level, bedrockPos, Blocks::bedrock->defaultBlockState(), Block::UPDATE_NONE);
     delete mSpike;
     mSpike = NULL;
     return true;

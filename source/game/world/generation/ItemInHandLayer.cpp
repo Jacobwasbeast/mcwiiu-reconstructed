@@ -50,7 +50,7 @@ void ItemInHandLayer::renderArmWithItem(boost::shared_ptr<LivingEntity> entity, 
 
     bool leftHand = arm == HumanoidArm::LEFT;
     bool suppressSneakingTransform = false;
-    if (entity && (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (entity && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
         suppressSneakingTransform = living->getFallFlyingTicks() > 4;

@@ -24,23 +24,23 @@ void HumanoidArmorLayer::setPartVisibility(Model* model, const EquipmentSlot* sl
     hideAllArmor(model);
     switch (slot->getEIndex())
     {
-    case EquipmentSlot::eIndex_Feet:
-        humanoidModel->mRightLeg->mShow = true;
-        humanoidModel->mLeftLeg->mShow = true;
-        break;
-    case EquipmentSlot::eIndex_Legs:
-        humanoidModel->mBody->mShow = true;
-        humanoidModel->mRightLeg->mShow = true;
-        humanoidModel->mLeftLeg->mShow = true;
+    case EquipmentSlot::eIndex_Head:
+        humanoidModel->mHead->mShow = true;
+        humanoidModel->mHat->mShow = true;
         break;
     case EquipmentSlot::eIndex_Chest:
         humanoidModel->mBody->mShow = true;
         humanoidModel->mRightArm->mShow = true;
         humanoidModel->mLeftArm->mShow = true;
         break;
-    case EquipmentSlot::eIndex_Head:
-        humanoidModel->mHead->mShow = true;
-        humanoidModel->mHat->mShow = true;
+    case EquipmentSlot::eIndex_Legs:
+        humanoidModel->mBody->mShow = true;
+        humanoidModel->mRightLeg->mShow = true;
+        humanoidModel->mLeftLeg->mShow = true;
+        break;
+    case EquipmentSlot::eIndex_Feet:
+        humanoidModel->mRightLeg->mShow = true;
+        humanoidModel->mLeftLeg->mShow = true;
         break;
     }
     humanoidModel->mArmourSlot = slot;

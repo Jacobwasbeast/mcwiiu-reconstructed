@@ -21,17 +21,14 @@ void ZombieArmorLayer::createArmorModels()
     delete mModelArmorInner;
     delete mModelArmor;
 
-    ModelDefinition innerDefinition;
-    ModelDefinition outerDefinition;
-
     if (mEntityType == EntityType::DROWNED)
     {
-        mModelArmorInner = new ZombieModel(0.75f, true, innerDefinition);
-        mModelArmor = new ZombieModel(1.25f, true, outerDefinition);
+        mModelArmorInner = new ZombieModel(0.75f, true, ModelDefinition());
+        mModelArmor = new ZombieModel(1.25f, true, ModelDefinition());
     }
     else
     {
-        mModelArmorInner = new ZombieModel(0.5f, true, innerDefinition);
-        mModelArmor = new ZombieModel(1.0f, true, outerDefinition);
+        mModelArmorInner = new ZombieModel(0.5f, true, ModelDefinition());
+        mModelArmor = new ZombieModel(1.0f, true, ModelDefinition());
     }
 }

@@ -65,6 +65,7 @@
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/HarvestFarmBlockGoal.hpp"
 #include "game/world/block/MappedRegistry.hpp"
+#include "game/world/generation/LargeFeature.hpp"
 #include "game/world/generation/LookAtPlayerGoal.hpp"
 #include "game/world/generation/LookAtTradingPlayerGoal.hpp"
 #include "game/world/generation/Player.hpp"
@@ -226,13 +227,13 @@ void Villager::TreasureMapForEmeralds::addMerchantRecipe(boost::shared_ptr<Merch
         MapItem::renderBiomePreviewMap(level, map);
         MapItemSavedData::addTargetDecoration(map, *target, L"+", mIcon);
 
-        if (mName.compare(L"Monument") == 0)
+        if (mName == LargeFeature::MONUMENT)
         {
             map->setTranslatableName(IDS_ITEM_FILLED_MAP_OCEAN_MONUMENT);
         }
         else
         {
-            map->setTranslatableName(mName.compare(L"Mansion") == 0 ? IDS_ITEM_FILLED_MAP_WOODLAND_MANSION : IDS_DESC_MAP);
+            map->setTranslatableName(mName == LargeFeature::MANSION ? IDS_ITEM_FILLED_MAP_WOODLAND_MANSION : IDS_DESC_MAP);
         }
 
         recipes->push_back(new MerchantRecipe(not_null_ptr<ItemInstance>(new ItemInstance(Items::emerald, value)),
@@ -459,8 +460,8 @@ void Villager::staticCtor()
 
     static ItemListing* cartographerTier4[] =
     {
-        new TreasureMapForEmeralds(PriceRange(12, 20), L"Monument", &MapDecoration::Type::TYPES[15]),
-        new TreasureMapForEmeralds(PriceRange(16, 28), L"Mansion", &MapDecoration::Type::TYPES[14])
+        new TreasureMapForEmeralds(PriceRange(12, 20), LargeFeature::MONUMENT, &MapDecoration::Type::TYPES[15]),
+        new TreasureMapForEmeralds(PriceRange(16, 28), LargeFeature::MANSION, &MapDecoration::Type::TYPES[14])
     };
     career.push_back(arrayWithLength<ItemListing*>(cartographerTier4, 2));
     profession.push_back(career);
@@ -888,7 +889,7 @@ BlockPos Villager::getPosition()
 MobGroupData* Villager::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                          bool randomProfession, const std::wstring&)
 {
-    MobGroupData* result = Mob::finalizeMobSpawn(difficulty, data, L"");
+    data = Mob::finalizeMobSpawn(difficulty, data, L"");
 
     if (randomProfession)
     {
@@ -897,7 +898,7 @@ MobGroupData* Villager::finalizeMobSpawn(const DifficultyInstance& difficulty, M
 
     loadPersonalAiGoals();
     increaseMerchantCareer();
-    return result;
+    return data;
 }
 
 MobGroupData* Villager::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
@@ -1138,17 +1139,17 @@ bool Villager::hurt(const DamageSource* source, float damage)
     {
         boost::shared_ptr<Entity> attacker = source->getDirectEntity();
 
-        if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType()) &&
             !boost::static_pointer_cast<Player>(attacker)->isAllowedToAttackAnimals())
         {
             return false;
         }
 
-        if (attacker != NULL && (attacker->GetType() & EntityType::ARROW) == EntityType::ARROW)
+        if (attacker != NULL && eTYPE_DERIVED_FROM(EntityType::ARROW, attacker->GetType()))
         {
             boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(attacker);
 
-            if (arrow->mOwner != NULL && (arrow->mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+            if (arrow->mOwner != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, arrow->mOwner->GetType()) &&
                 !boost::static_pointer_cast<Player>(arrow->mOwner)->isAllowedToAttackAnimals())
             {
                 return false;
@@ -1313,7 +1314,7 @@ void Villager::setLastHurtByMob(boost::shared_ptr<LivingEntity> attacker)
     {
         village->addAggressor(attacker);
 
-        if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType()))
         {
             int amount = -1;
 
@@ -1342,11 +1343,11 @@ void Villager::die(const DamageSource* source)
 
         if (killer != NULL)
         {
-            if ((killer->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+            if (eTYPE_DERIVED_FROM(EntityType::PLAYER, killer->GetType()))
             {
                 village->modifyStanding(killer->getName(), -2);
             }
-            else if ((killer->GetType() & EntityType::ENEMY) == EntityType::ENEMY)
+            else if (eTYPE_DERIVED_FROM(EntityType::ENEMY, killer->GetType()))
             {
                 village->resetNoBreedTimer();
             }
@@ -1541,17 +1542,18 @@ bool Villager::hasFarmSeeds()
 
 bool Villager::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
 {
-    if (!Mob::setSlot(slot, item))
+    if (Mob::setSlot(slot, item))
     {
-        int index = slot - 300;
-
-        if (index < 0 || (unsigned int)index >= mInventory->getContainerSize())
-        {
-            return false;
-        }
-
-        mInventory->setItem(index, item);
+        return true;
     }
 
-    return true;
+    int index = slot - 300;
+
+    if (index >= 0 && index < mInventory->getContainerSize())
+    {
+        mInventory->setItem(index, item);
+        return true;
+    }
+
+    return false;
 }

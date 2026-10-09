@@ -106,7 +106,7 @@ void LookAtPlayerGoal::tick()
 
 bool LookAtPlayerGoal::LookAtPlayerGoalEntitySelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    return EntitySelector::NO_SPECTATORS->apply(entity) && EntitySelector::ENTITY_STILL_ALIVE->apply(entity);
+    return EntitySelector::NO_SPECTATORS->apply(entity) && EntitySelector::NOT_BEING_RIDDEN_ENTITY_SELECTOR->apply(entity);
 }
 
 LookAtPlayerGoal::LookAtPlayerGoalEntitySelector::~LookAtPlayerGoalEntitySelector()

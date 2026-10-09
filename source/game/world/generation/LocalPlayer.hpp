@@ -176,7 +176,9 @@ private:
     friend class PlayerRenderer;
     friend class ItemInHandRenderer;
     friend class UIScene_HUD;
+    friend class UIScene_InGameHostOptionsMenu;
     friend class UIScene_InGamePlayerOptionsMenu;
+    friend class UIScene_InGameSettingsListMenu;
     friend class UIScene_SignEntryMenu;
     friend class Voteable;
     friend class Tooltips;
@@ -230,10 +232,9 @@ private:
     unsigned char mReserved0x90c[4];
 
 public:
-    int mButtonsDown;
+    unsigned long long mButtonsDown;
 
 private:
-    unsigned int mButtonsPressed;
     unsigned int mLastSingleFlyButtons[2];
     unsigned int mFlyButtonsDown[2];
     unsigned int mFlyButtons[2];

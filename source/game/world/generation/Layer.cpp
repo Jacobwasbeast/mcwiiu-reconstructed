@@ -149,11 +149,11 @@ arrayWithLength<boost::shared_ptr<Layer> > Layer::getDefaultLayers(long long see
         if (zoomStep == 0)
         {
             biomeLayer = boost::shared_ptr<Layer>(new AddIslandLayer(3LL, biomeLayer));
+        }
 
-            if (biomeScale == 0)
-            {
-                biomeLayer = boost::shared_ptr<Layer>(new AddMushroomIslandLayer(5LL, biomeLayer));
-            }
+        if (zoomStep == 0 && biomeScale == 0)
+        {
+            biomeLayer = boost::shared_ptr<Layer>(new AddMushroomIslandLayer(5LL, biomeLayer));
         }
 
         if (zoomStep == 1 || biomeSize == 1)
@@ -181,6 +181,7 @@ arrayWithLength<boost::shared_ptr<Layer> > Layer::getDefaultLayers(long long see
                                                                  biomeCentreZChunk));
     }
 
+    boost::shared_ptr<Layer> resultBiomeLayer = biomeLayer;
     boost::shared_ptr<Layer> voronoiZoom(new VoronoiZoom(10LL, biomeLayer));
 
     biomeLayer->init(seed);
@@ -190,7 +191,7 @@ arrayWithLength<boost::shared_ptr<Layer> > Layer::getDefaultLayers(long long see
 
     layers.data[0] = biomeLayer;
     layers.data[1] = voronoiZoom;
-    layers.data[2] = biomeLayer;
+    layers.data[2] = resultBiomeLayer;
 
     return layers;
 }
