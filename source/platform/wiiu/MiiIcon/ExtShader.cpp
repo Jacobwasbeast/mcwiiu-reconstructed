@@ -32,16 +32,18 @@ void GetIconMatrix(Mat44* projection, Mat34* view, unsigned short width, unsigne
     MII_ICON_ASSERT_POINTER(view);
 
     float aspect = float(width) / float(height);
-    float scale = 1.0f;
+    float scale;
     if (width < height)
         scale = aspect;
+    else
+        scale = 1.0f;
 
     float fovy = RadianToDegree(atan2f(43.2f / scale, 500.0f)) * 2.0f;
     MTXPerspective(projection->mtx, fovy, aspect, 500.0f, 700.0f);
 
     Vec cameraPosition = {0.0f, 34.5f, 600.0f};
-    Vec cameraUp = {0.0f, 1.0f, 0.0f};
-    Vec target = {0.0f, 34.5f, 0.0f};
+    static const Vec cameraUp = {0.0f, 1.0f, 0.0f};
+    static const Vec target = {0.0f, 34.5f, 0.0f};
     MTXLookAt(view->mtx, &cameraPosition, &cameraUp, &target);
 }
 

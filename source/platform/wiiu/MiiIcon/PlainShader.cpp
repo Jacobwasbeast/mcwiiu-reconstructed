@@ -48,11 +48,11 @@ void InitVertexShader(GX2VertexShader** shader, const void* shaderData)
     MII_ICON_ASSERT_MESSAGE(headerSize > 0, "headerSize must be more than zero.");
     MII_ICON_ASSERT_MESSAGE(programSize > 0, "programSize must be more than zero.");
 
-    GX2VertexShader* header = static_cast<GX2VertexShader*>(gRenderer->MemoryAllocMEM2(headerSize, 1));
+    GX2VertexShader* header = static_cast<GX2VertexShader*>(gRendererInstance->MemoryAllocMEM2(headerSize, 1));
 
     MII_ICON_ASSERT_POINTER(header);
 
-    void* program = gRenderer->MemoryAllocMEM2(programSize, GX2_SHADER_ALIGNMENT);
+    void* program = gRendererInstance->MemoryAllocMEM2(programSize, GX2_SHADER_ALIGNMENT);
 
     MII_ICON_ASSERT_POINTER(program);
 
@@ -79,11 +79,11 @@ void InitPixelShader(GX2PixelShader** shader, const void* shaderData)
     MII_ICON_ASSERT_MESSAGE(headerSize > 0, "headerSize must be more than zero.");
     MII_ICON_ASSERT_MESSAGE(programSize > 0, "programSize must be more than zero.");
 
-    GX2PixelShader* header = static_cast<GX2PixelShader*>(gRenderer->MemoryAllocMEM2(headerSize, 1));
+    GX2PixelShader* header = static_cast<GX2PixelShader*>(gRendererInstance->MemoryAllocMEM2(headerSize, 1));
 
     MII_ICON_ASSERT_POINTER(header);
 
-    void* program = gRenderer->MemoryAllocMEM2(programSize, GX2_SHADER_ALIGNMENT);
+    void* program = gRendererInstance->MemoryAllocMEM2(programSize, GX2_SHADER_ALIGNMENT);
 
     MII_ICON_ASSERT_POINTER(program);
 
@@ -108,7 +108,7 @@ void InitFetchShader(FetchShader* fetchShader, const GX2VertexShader* vertexShad
     GX2InitAttribStream(&fetchShader->attribs[0], posLoc, 0, 0, GX2_ATTRIB_FORMAT_32_32_32_FLOAT);
     GX2InitAttribStream(&fetchShader->attribs[1], texLoc, 1, 0, GX2_ATTRIB_FORMAT_32_32_FLOAT);
 
-    void* shaderPtr = gRenderer->MemoryAllocMEM2(GX2CalcFetchShaderSize(2), GX2_SHADER_ALIGNMENT);
+    void* shaderPtr = gRendererInstance->MemoryAllocMEM2(GX2CalcFetchShaderSize(2), GX2_SHADER_ALIGNMENT);
 
     MII_ICON_ASSERT_POINTER(shaderPtr);
 
@@ -132,22 +132,22 @@ void DestroyShader(PlainShader* shader)
     if (shader->vertexShader != NULL)
     {
         if (shader->vertexShader->shaderPtr != NULL)
-            gRenderer->MemoryFreeMEM2(shader->vertexShader->shaderPtr);
-        gRenderer->MemoryFreeMEM2(shader->vertexShader);
+            gRendererInstance->MemoryFreeMEM2(shader->vertexShader->shaderPtr);
+        gRendererInstance->MemoryFreeMEM2(shader->vertexShader);
     }
 
     if (shader->pixelShader != NULL)
     {
         if (shader->pixelShader->shaderPtr != NULL)
-            gRenderer->MemoryFreeMEM2(shader->pixelShader->shaderPtr);
-        gRenderer->MemoryFreeMEM2(shader->pixelShader);
+            gRendererInstance->MemoryFreeMEM2(shader->pixelShader->shaderPtr);
+        gRendererInstance->MemoryFreeMEM2(shader->pixelShader);
     }
 
     if (shader->fetchShader.fetchShader.shaderPtr != NULL)
-        gRenderer->MemoryFreeMEM2(shader->fetchShader.fetchShader.shaderPtr);
+        gRendererInstance->MemoryFreeMEM2(shader->fetchShader.fetchShader.shaderPtr);
 
     if (shader->callback.pContextState != NULL)
-        gRenderer->MemoryFreeMEM2(const_cast<GX2ContextState*>(shader->callback.pContextState));
+        gRendererInstance->MemoryFreeMEM2(const_cast<GX2ContextState*>(shader->callback.pContextState));
 }
 
 u8 ModulateModeToValue(FFLModulateMode mode)
@@ -271,7 +271,7 @@ void InitPlainShader(PlainShader* shader, const void* shaderData)
     shader->callback.pObj = shader;
 
     GX2ContextState* contextState = static_cast<GX2ContextState*>(
-        gRenderer->MemoryAllocMEM2(sizeof(GX2ContextState), GX2_CONTEXT_STATE_ALIGNMENT));
+        gRendererInstance->MemoryAllocMEM2(sizeof(GX2ContextState), GX2_CONTEXT_STATE_ALIGNMENT));
 
     shader->callback.pContextState = contextState;
     shader->callback.pDrawFunc = Draw;

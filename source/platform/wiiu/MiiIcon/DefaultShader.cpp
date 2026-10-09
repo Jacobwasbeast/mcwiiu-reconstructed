@@ -24,7 +24,7 @@ FFLDefaultShader s_DefaultShader;
 
 } // namespace
 
-void InitDefaultShader()
+FFLResult InitDefaultShader()
 {
     if (s_DefaultShaderBuffer == NULL)
     {
@@ -42,6 +42,7 @@ void InitDefaultShader()
     MII_ICON_ASSERT_MESSAGE(result == FFL_RESULT_OK, "A default shader cannot be set up.");
 
     FFLSetDefaultShader(&s_DefaultShader);
+    return result;
 }
 
 void SetupDefaultShaderForCreateModel()
