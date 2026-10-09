@@ -1,8 +1,46 @@
 #include "nn/pia/chat/HandsFree.hpp"
 #include "nn/pia/HeapManager.hpp"
+#include "nn/pia/common/Memory.hpp"
 #include "platform/wiiu/pead.hpp"
 #include "vendor/VCTAudio.hpp"
-#include <cstring>
+
+namespace
+{
+
+unsigned int functionalBits = 0;
+unsigned char currentEchoCancellerMode = 0;
+unsigned char currentNoiseSuppressorLevel = 0;
+unsigned char currentAgcParameterA = 0;
+unsigned char currentAgcParameterB = 0;
+
+bool isValidEcMode(TMC_HF_EC_MODE mode)
+{
+    return mode == TMC_HF_EC_MODE_0 || mode == TMC_HF_EC_MODE_1 || mode == TMC_HF_EC_MODE_2;
+}
+
+bool isValidNsLevel(int level)
+{
+    return level >= 0 && level < 3;
+}
+
+bool isValidAgcLevel(int level)
+{
+    return level >= 0 && level < 5;
+}
+
+void updateFunctionalBits(unsigned int bits, bool enabled)
+{
+    if (enabled)
+    {
+        functionalBits &= ~bits;
+    }
+    else
+    {
+        functionalBits |= bits;
+    }
+}
+
+}
 
 namespace nn { namespace pia { namespace chat {
 
@@ -13,6 +51,7 @@ namespace
     const int kAllocationFailureResult = 0x10c01;
     const int kNotInitializedResult = 0x10c0c;
     const int kProcessingFailureResult = 0xc0b;
+    const unsigned int kWorkspaceSize = 0x251c0;
 
 }
 
@@ -36,52 +75,53 @@ void HandsFree::Finalize()
     }
     if (m_workspace != 0)
     {
-        pead::getArraySize(m_workspace);
-        pead::freeToSeadHeap(m_workspace);
+        common::DeleteArray(m_workspace);
         m_workspace = 0;
     }
 }
 
-int HandsFree::Initialize(TMC_HF_EC_MODE ecMode,
+Result HandsFree::Initialize(TMC_HF_EC_MODE ecMode,
                           int noiseSuppressorLevel, int agcLevel)
 {
     if (m_handle != 0)
         return kAlreadyInitializedResult;
-    if (static_cast<unsigned int>(ecMode) >= 3u ||
-        static_cast<unsigned int>(noiseSuppressorLevel) >= 3u ||
-        static_cast<unsigned int>(agcLevel) >= 5u)
+    if (!isValidEcMode(ecMode) || !isValidNsLevel(noiseSuppressorLevel) ||
+        !isValidAgcLevel(agcLevel))
         return kInvalidParameterResult;
 
-    void* workspace = pead::allocateFromSeadHeap(
-        0x251c0, common::HeapManager::GetHeap());
-    if (workspace == 0)
+    m_workspace = common::NewArray<unsigned int>(kWorkspaceSize / sizeof(unsigned int));
+    if (m_workspace == 0)
         return kAllocationFailureResult;
-    std::memset(workspace, 0, 0x251c0);
     m_ecMode = static_cast<int32_t>(ecMode);
     m_noiseSuppressorLevel = noiseSuppressorLevel;
     m_agcLevel = agcLevel;
-    m_config.workspace = workspace;
-    m_workspace = workspace;
+    m_config.workspace = m_workspace;
     m_config.flags = 7;
-    m_config.neutral = 0;
     m_config.echoCancellerMode = static_cast<int32_t>(ecMode);
     static const int16_t noiseLevels[3] = { 6, 10, 14 };
     m_config.noiseSuppressorLevel = noiseLevels[noiseSuppressorLevel];
-    static const int16_t agcParameters[10] =
-        { 0, 0, 10, -14, 14, -18, 17, -21, 19, -23 };
-    m_config.agcParameterA = agcParameters[agcLevel * 2];
-    m_config.agcParameterB = agcParameters[agcLevel * 2 + 1];
+    static const int16_t agcParameters[5][2] =
+        { { 0, 0 }, { 10, -14 }, { 14, -18 }, { 17, -21 }, { 19, -23 } };
+    m_config.agcParameterA = agcParameters[agcLevel][0];
+    m_config.agcParameterB = agcParameters[agcLevel][1];
     m_config.inputMode = 0;
     m_config.outputMode = 0;
-    m_config.error = 0;
     m_handle = TMC_HF_Init(&m_config);
     if (m_config.error != 0)
         return kProcessingFailureResult;
 
+    currentEchoCancellerMode = static_cast<unsigned char>(m_config.echoCancellerMode);
+    currentNoiseSuppressorLevel = static_cast<unsigned char>(m_config.noiseSuppressorLevel);
+    currentAgcParameterA = static_cast<unsigned char>(m_config.agcParameterA);
+    currentAgcParameterB = static_cast<unsigned char>(-m_config.agcParameterB);
+    functionalBits = 0xffffffff;
+    updateFunctionalBits(2, true);
+    updateFunctionalBits(4, true);
+    updateFunctionalBits(8, true);
     return 0;
 }
 
-int HandsFree::Process(short* output, const short* inputLeft,
+Result HandsFree::Process(short* output, const short* inputLeft,
                        const short* inputRight, const short* inputReference)
 {
     if (m_handle == 0)

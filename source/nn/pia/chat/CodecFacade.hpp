@@ -1,6 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_CHAT_CODECFACADE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_CHAT_CODECFACADE_HPP
 
+#include "nn/pia/Common.hpp"
 #include "vendor/VCTAudio.hpp"
 
 namespace nn { namespace pia { namespace chat {
@@ -11,12 +12,12 @@ public:
     CodecFacade();
     virtual ~CodecFacade();
     virtual void Trace(unsigned long long value) const;
-    void Initialize();
+    Result Initialize();
     void Finalize();
     void Decode(const unsigned char* pData, short* pOut, unsigned int uiSize, VCTCodec codec);
     void Encode(unsigned char* pOut, const short* pAudio, unsigned int uiSize, void* pState,
                 VCTCodec codec);
-    static void CreateInstance();
+    static Result CreateInstance();
     static void DestroyInstance();
 
 private:
@@ -24,7 +25,7 @@ private:
 };
 
 extern CodecFacade* g_codecFacade;
-extern void* g_codecStorage;
+extern unsigned char* g_codecStorage;
 
 }}}
 

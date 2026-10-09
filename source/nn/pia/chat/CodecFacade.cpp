@@ -1,6 +1,8 @@
 #include "nn/pia/chat/CodecFacade.hpp"
 
 #include "nn/pia/ChatSupport.hpp"
+#include "nn/pia/Transport.hpp"
+#include "nn/pia/common/Memory.hpp"
 #include "nn/pia/chat/Adpcm.hpp"
 
 #include <new>
@@ -15,6 +17,18 @@ namespace
     {
         0x3f, 0x7f, 0xff, 0x1ff, 0x3ff, 0x7ff, 0xfff, 0x1fff
     };
+
+    inline unsigned int search(int iValue, const int* pTable, unsigned int uiSize)
+    {
+        for (unsigned int index = 0; index < uiSize; ++index)
+        {
+            if (iValue <= *pTable++)
+            {
+                return index;
+            }
+        }
+        return uiSize;
+    }
 }
 
 namespace nn
@@ -25,49 +39,51 @@ namespace chat
 {
 
 CodecFacade* g_codecFacade = NULL;
-void* g_codecStorage = NULL;
+unsigned char* g_codecStorage = NULL;
 
 CodecFacade::CodecFacade()
     : m_state(0)
 {
 }
 
-void CodecFacade::CreateInstance()
+Result CodecFacade::CreateInstance()
 {
-    if (IsInitialized() == 0 || IsInSetupMode() == 0)
-        return;
+    if (IsInitialized() == 0)
+        return transport::cResultNotInitialized;
+    if (IsInSetupMode() == 0)
+        return transport::cResultInvalidState;
     if (g_codecFacade != 0)
-        return;
+        return transport::cResultAlreadyExists;
 
-    pead::Heap* heap = common::HeapManager::GetHeap();
-    g_codecStorage = pead::allocateFromSeadHeap(8, heap, 8);
+    g_codecStorage = common::NewArray<unsigned char>(sizeof(CodecFacade), 8);
     if (g_codecStorage == 0)
-        return;
+        return transport::cResultOutOfMemory;
     g_codecFacade = new (g_codecStorage) CodecFacade();
+    return 0;
 }
 
 void CodecFacade::DestroyInstance()
 {
     if (g_codecFacade != 0)
     {
-        g_codecFacade->Finalize();
         g_codecFacade->~CodecFacade();
         g_codecFacade = 0;
     }
     if (g_codecStorage != 0)
     {
-        pead::freeToSeadHeap(g_codecStorage);
+        common::DeleteArray(g_codecStorage);
         g_codecStorage = 0;
     }
 }
 
 CodecFacade::~CodecFacade()
 {
+    Finalize();
 }
 
-void CodecFacade::Initialize()
+Result CodecFacade::Initialize()
 {
-    m_state = 0;
+    return 0;
 }
 
 void CodecFacade::Finalize()
@@ -145,20 +161,15 @@ void vct_encode_g711_ulaw(unsigned char* pOut, const short* pAudio, unsigned int
         }
         iSample += G711_BIAS >> 2;
 
-        int iSegment = 0;
-        while (iSegment < G711_SEGMENT_COUNT && iSample > s_ulawSegmentEnd[iSegment])
+        unsigned int uiSegment = search(iSample, s_ulawSegmentEnd, G711_SEGMENT_COUNT);
+        if (uiSegment >= G711_SEGMENT_COUNT)
         {
-            ++iSegment;
-        }
-
-        if (iSegment < G711_SEGMENT_COUNT)
-        {
-            pOut[index] = static_cast<unsigned char>(
-                ((iSegment << 4) | ((iSample >> (iSegment + 1)) & 0x0f)) ^ ucMask);
+            pOut[index] = static_cast<unsigned char>(0x7f ^ ucMask);
         }
         else
         {
-            pOut[index] = static_cast<unsigned char>(0x7f ^ ucMask);
+            pOut[index] = static_cast<unsigned char>(
+                ((uiSegment << 4) | ((iSample >> (uiSegment + 1)) & 0x0f)) ^ ucMask);
         }
     }
 }
@@ -185,7 +196,7 @@ void vct_encode_8bit_raw(unsigned char* pOut, const short* pAudio, unsigned int 
 {
     for (unsigned int index = 0; index < uiCount; ++index)
     {
-        pOut[index] = static_cast<unsigned char>(static_cast<unsigned short>(pAudio[index]) >> 8);
+        pOut[index] = static_cast<unsigned char>(pAudio[index] >> 8);
     }
 }
 
@@ -193,6 +204,6 @@ void vct_decode_8bit_raw(const unsigned char* pData, short* pOut, unsigned int u
 {
     for (unsigned int index = 0; index < uiCount; ++index)
     {
-        pOut[index] = static_cast<short>(pData[index] << 8);
+        pOut[index] = static_cast<short>(static_cast<signed char>(pData[index]) << 8);
     }
 }
