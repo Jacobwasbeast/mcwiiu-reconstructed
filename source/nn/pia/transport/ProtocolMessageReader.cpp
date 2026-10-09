@@ -16,10 +16,10 @@ ProtocolMessageReader::~ProtocolMessageReader()
 void ProtocolMessageReader::Attach(const common::Packet& packet, unsigned int offset)
 {
     const unsigned int payloadSize = packet.m_size - common::Packet::cHeaderSize;
-    if (payloadSize <= offset)
+    if (offset >= payloadSize)
     {
-        m_isTerminator = false;
         m_message = 0;
+        m_isTerminator = false;
         return;
     }
 
@@ -65,8 +65,8 @@ void ProtocolMessageReader::Clear()
 {
     m_message = 0;
     m_stationAddress.Clear();
-    m_messageSize = 0;
     m_sendingPassId = 0;
+    m_messageSize = 0;
 }
 
 unsigned long long ProtocolMessageReader::GetDestination() const
@@ -76,8 +76,7 @@ unsigned long long ProtocolMessageReader::GetDestination() const
 
 unsigned short ProtocolMessageReader::GetProtocolIdPort() const
 {
-    const unsigned short protocolId = m_header.m_protocolId;
-    return protocolId & 0xff;
+    return ProtocolId(m_header.m_protocolId).GetPort();
 }
 
 void ProtocolMessageReader::Trace(unsigned long long value) const

@@ -101,7 +101,7 @@ public:
     ProtocolMessageWriter* m_pendingWriter;
     unsigned short m_field35c;
     unsigned short m_field35e;
-    unsigned int m_field360;
+    int m_field360;
     unsigned int m_field364;
     Iterator m_iterator;
     PacketAnalyzer* m_sendPacketAnalyzer;

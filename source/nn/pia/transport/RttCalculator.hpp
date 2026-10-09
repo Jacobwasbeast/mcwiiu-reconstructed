@@ -35,6 +35,7 @@ private:
     int m_rttMax;
     common::Time m_lastRequestedTime;
     common::LatestMedian<int, 9> m_latestMedian;
+    static int s_pulseInterval;
     static int s_initialPulseInterval;
 };
 }

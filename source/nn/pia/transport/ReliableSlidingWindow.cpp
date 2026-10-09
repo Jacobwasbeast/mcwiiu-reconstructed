@@ -34,28 +34,6 @@ unsigned short g_maximumResendCount;
 
 }
 
-void ReliableSlidingWindow::MessageData::DeserializeHeader(const void* buffer)
-{
-    m_header.Deserialize(static_cast<const unsigned char*>(buffer));
-}
-
-void ReliableSlidingWindow::MessageData::SerializeHeader()
-{
-    unsigned int size;
-    m_header.Serialize(m_data, &size);
-}
-
-void ReliableSlidingWindow::MessageData::CopyPayload(void* destination, const void* source,
-                                                     unsigned int size)
-{
-    OSBlockMove(destination, static_cast<const unsigned char*>(source) + cHeaderSize, size, FALSE);
-}
-
-void ReliableSlidingWindow::MessageData::SetPayload(const void* data, unsigned int size)
-{
-    OSBlockMove(m_data + cHeaderSize, data, size, FALSE);
-}
-
 template <typename T>
 ReliableSlidingWindow::Buffer<T>::Buffer()
     : m_data(0), m_capacity(0), m_head(0), m_sequence(0), m_count(0)
@@ -131,16 +109,82 @@ T* ReliableSlidingWindow::Buffer<T>::GetData(unsigned int sequence)
 template class ReliableSlidingWindow::Buffer<ReliableSlidingWindow::SendData>;
 template class ReliableSlidingWindow::Buffer<ReliableSlidingWindow::ReceiveData>;
 
-ReliableSlidingWindow::SendData* ReliableSlidingWindow::SendBuffer::Assign()
+ReliableSlidingWindow::ReliableSlidingWindow()
+    : m_protocolId(ProtocolId::INVALID), m_localStationId(0), m_remoteStationId(0),
+      m_payloadLimit(0), m_byteCount(0), m_profileStart(0)
 {
-    unsigned int index = m_head + m_count;
-    if (index >= m_capacity)
-        index -= m_capacity;
-    SendData* data = m_data + index;
-    data->m_message.m_header.m_flags = 1;
-    data->m_message.m_header.m_sequenceId = m_sequence + m_count;
-    ++m_count;
-    return data;
+}
+
+void ReliableSlidingWindow::Finalize()
+{
+    m_receiveBuffer.Finalize();
+    m_sendBuffer.Finalize();
+}
+
+ReliableSlidingWindow::~ReliableSlidingWindow()
+{
+    Finalize();
+}
+
+Result ReliableSlidingWindow::Initialize(unsigned int sendCapacity, unsigned int receiveCapacity)
+{
+    int result = m_sendBuffer.Initialize(sendCapacity);
+    if (result != 0)
+        return result;
+    result = m_receiveBuffer.Initialize(receiveCapacity);
+    if (result != 0)
+    {
+        m_sendBuffer.Finalize();
+        return result;
+    }
+    m_retrySpan = pead::TickSpan::cFrequency * 500 / 1000;
+    return 0;
+}
+
+Result ReliableSlidingWindow::Startup(StationPacketHandler* handler, unsigned short protocolId,
+                                      unsigned long long localStationId,
+                                      unsigned long long remoteStationId)
+{
+    if (m_sendBuffer.m_capacity == 0)
+        return cResultNotInitialized;
+    if (m_protocolId != ProtocolId::INVALID)
+        return cResultInvalidState;
+    if (protocolId == ProtocolId::INVALID)
+        return cResultInvalidArgument;
+    if (localStationId == 0)
+        return cResultInvalidArgument;
+    if (remoteStationId == 0)
+        return cResultInvalidArgument;
+    if (localStationId == remoteStationId)
+        return cResultInvalidArgument;
+    m_localStationId = localStationId;
+    m_protocolId = protocolId;
+    m_remoteStationId = remoteStationId;
+    m_payloadLimit = (handler->GetPayloadSizeLimit() & ~7u) - cHeaderSize;
+    m_sendBuffer.Clear();
+    m_receiveBuffer.Clear();
+    m_time = static_cast<unsigned long long>(OSGetSystemTime());
+    m_sequence = cInitialSequence;
+    m_receivedBits = 0;
+    m_field68 = false;
+    m_byteCount = 0;
+    m_profileStart = 0;
+    return 0;
+}
+
+void ReliableSlidingWindow::Cleanup()
+{
+    if (m_protocolId == ProtocolId::INVALID)
+        return;
+    m_protocolId = ProtocolId::INVALID;
+    m_remoteStationId = 0;
+    m_localStationId = 0;
+    m_payloadLimit = 0;
+}
+
+bool ReliableSlidingWindow::IsInCommunication() const
+{
+    return m_protocolId != ProtocolId::INVALID;
 }
 
 ReliableSlidingWindow::ReceiveData* ReliableSlidingWindow::ReceiveBuffer::Assign(unsigned int sequence)
@@ -160,167 +204,20 @@ ReliableSlidingWindow::ReceiveData* ReliableSlidingWindow::ReceiveBuffer::Assign
     return m_data + index;
 }
 
-ReliableSlidingWindow::ReliableSlidingWindow()
-    : m_protocolId(g_piaProtocolDefaultType), m_localStationId(0), m_remoteStationId(0),
-      m_payloadLimit(0), m_byteCount(0), m_profileStart(0)
+void ReliableSlidingWindow::MessageData::DeserializeHeader(const void* buffer)
 {
+    m_header.Deserialize(static_cast<const unsigned char*>(buffer));
 }
 
-ReliableSlidingWindow::~ReliableSlidingWindow()
+void ReliableSlidingWindow::MessageData::CopyPayload(void* destination, const void* source,
+                                                     unsigned int size)
 {
-    Finalize();
-}
-
-void ReliableSlidingWindow::Finalize()
-{
-    m_receiveBuffer.Finalize();
-    m_sendBuffer.Finalize();
-}
-
-Result ReliableSlidingWindow::Initialize(unsigned int sendCapacity, unsigned int receiveCapacity)
-{
-    Result result = m_sendBuffer.Initialize(sendCapacity);
-    if (result != 0)
-        return result;
-    result = m_receiveBuffer.Initialize(receiveCapacity);
-    if (result != 0)
-    {
-        m_sendBuffer.Finalize();
-        return result;
-    }
-    m_retrySpan = pead::TickSpan::cFrequency * 500 / 1000;
-    return 0;
-}
-
-Result ReliableSlidingWindow::Startup(StationPacketHandler* handler, unsigned short protocolId,
-                                      unsigned long long localStationId,
-                                      unsigned long long remoteStationId)
-{
-    if (m_sendBuffer.m_capacity == 0)
-        return cResultNotInitialized;
-    if (IsInCommunication())
-        return cResultInvalidState;
-    if (protocolId == g_piaProtocolDefaultType || localStationId == 0 ||
-        remoteStationId == 0 || localStationId == remoteStationId)
-        return cResultInvalidArgument;
-    m_localStationId = localStationId;
-    m_protocolId = protocolId;
-    m_remoteStationId = remoteStationId;
-    m_payloadLimit = (handler->m_payloadSize & ~7u) - cHeaderSize;
-    m_sendBuffer.Clear();
-    m_receiveBuffer.Clear();
-    m_time = static_cast<unsigned long long>(OSGetSystemTime());
-    m_sequence = cInitialSequence;
-    m_receivedBits = 0;
-    m_field68 = false;
-    m_byteCount = 0;
-    m_profileStart = 0;
-    return 0;
-}
-
-void ReliableSlidingWindow::Cleanup()
-{
-    if (m_protocolId == g_piaProtocolDefaultType)
-        return;
-    m_protocolId = g_piaProtocolDefaultType;
-    m_payloadLimit = 0;
-    m_remoteStationId = 0;
-    m_localStationId = 0;
-}
-
-bool ReliableSlidingWindow::IsInCommunication() const
-{
-    return m_protocolId != g_piaProtocolDefaultType;
-}
-
-unsigned int ReliableSlidingWindow::CanPushData(unsigned int size)
-{
-    if (!IsInCommunication())
-        return false;
-    const unsigned int count = size == 0 ? 1 : (size - 1) / m_payloadLimit + 1;
-    return count <= m_sendBuffer.m_capacity - m_sendBuffer.m_count;
-}
-
-Result ReliableSlidingWindow::PushData(const void* data, unsigned int size)
-{
-    if (!IsInCommunication())
-        return cResultInvalidState;
-    if (size != 0 && data == 0)
-        return cResultInvalidArgument;
-    const unsigned int count = size == 0 ? 1 : (size - 1) / m_payloadLimit + 1;
-    if (count > m_sendBuffer.m_capacity - m_sendBuffer.m_count)
-        return cResultWindowOverflow;
-    if (m_byteCount != 0 || size >= cProfiledSizeMin)
-    {
-        if (m_byteCount == 0)
-            m_profileStart = g_piaTransport->m_time.m_tick;
-        m_byteCount += size;
-    }
-    const unsigned char* source = static_cast<const unsigned char*>(data);
-    for (unsigned int index = 0; index < count; ++index)
-    {
-        SendData* fragment = m_sendBuffer.Assign();
-        const unsigned int fragmentSize = index + 1 == count ? size : m_payloadLimit;
-        if (fragmentSize != 0)
-            fragment->m_message.SetPayload(source, fragmentSize);
-        fragment->m_message.m_header.m_size = static_cast<unsigned short>(fragmentSize);
-        fragment->m_sendTime = 0;
-        fragment->m_size = fragmentSize + cHeaderSize;
-        fragment->m_field0c = 0;
-        if (index + 1 == count)
-            fragment->m_message.m_header.m_flags |= 2;
-        else
-        {
-            source += fragmentSize;
-            size -= fragmentSize;
-        }
-    }
-    return 0;
-}
-
-Result ReliableSlidingWindow::PopData(void* buffer, unsigned int* size, unsigned int bufferSize)
-{
-    if (!IsInCommunication())
-        return cResultInvalidState;
-    if (buffer == 0 || size == 0)
-        return cResultInvalidArgument;
-    unsigned int total = 0;
-    unsigned int count = 0;
-    while (count < m_receiveBuffer.m_count)
-    {
-        unsigned int index = m_receiveBuffer.m_head + count;
-        if (index >= m_receiveBuffer.m_capacity)
-            index -= m_receiveBuffer.m_capacity;
-        ReceiveData* fragment = m_receiveBuffer.m_data + index;
-        if (!fragment->m_valid)
-            return cResultDataNotReady;
-        total += fragment->m_size;
-        if (fragment->m_end)
-        {
-            if (bufferSize < total)
-                return cResultDataSizeInvalid;
-            unsigned char* destination = static_cast<unsigned char*>(buffer);
-            for (unsigned int offset = 0; offset <= count; ++offset)
-            {
-                index = m_receiveBuffer.m_head + offset;
-                if (index >= m_receiveBuffer.m_capacity)
-                    index -= m_receiveBuffer.m_capacity;
-                fragment = m_receiveBuffer.m_data + index;
-                OSBlockMove(destination, fragment->m_payload, fragment->m_size, FALSE);
-                destination += fragment->m_size;
-            }
-            *size = total;
-            m_receiveBuffer.Withdraw(count + 1);
-            return 0;
-        }
-        ++count;
-    }
-    return count < m_receiveBuffer.m_capacity ? cResultDataNotReady : cResultDataSizeInvalid;
+    OSBlockMove(destination, static_cast<const unsigned char*>(source) + cHeaderSize, size, FALSE);
 }
 
 Result ReliableSlidingWindow::AnalyzeProtocolMessage(const ProtocolMessageReader& reader)
 {
-    if (!IsInCommunication())
+    if (m_protocolId == ProtocolId::INVALID)
         return cResultInvalidState;
     const unsigned int messageSize = reader.m_messageSize;
     if (messageSize < cHeaderSize)
@@ -421,17 +318,23 @@ Result ReliableSlidingWindow::AnalyzeProtocolMessage(const ProtocolMessageReader
     return 0;
 }
 
+void ReliableSlidingWindow::MessageData::SerializeHeader()
+{
+    unsigned int size;
+    m_header.Serialize(m_data, &size);
+}
+
 Result ReliableSlidingWindow::Dispatch(StationPacketHandler* handler, unsigned int* size,
                                        unsigned int limit)
 {
-    if (!IsInCommunication())
+    if (m_protocolId == ProtocolId::INVALID)
         return cResultInvalidState;
     m_time = static_cast<unsigned long long>(OSGetSystemTime());
 
     int rtt = -1;
     long long resendTime = m_retrySpan;
     Station* station =
-        g_piaStationManager->GetStationByStationIdWithoutConvert(m_remoteStationId);
+        StationManager::s_pInstance->GetStationByStationIdWithoutConvert(m_remoteStationId);
     if (station != 0)
     {
         rtt = station->GetRtt(s_rttSamplingNum);
@@ -526,6 +429,108 @@ Result ReliableSlidingWindow::Dispatch(StationPacketHandler* handler, unsigned i
     if (size != 0)
         *size = written;
     return 0;
+}
+
+Result ReliableSlidingWindow::PopData(void* buffer, unsigned int* size, unsigned int bufferSize)
+{
+    if (m_protocolId == ProtocolId::INVALID)
+        return cResultInvalidState;
+    if (buffer == 0 || size == 0)
+        return cResultInvalidArgument;
+    unsigned int total = 0;
+    unsigned int count = 0;
+    while (count < m_receiveBuffer.m_count)
+    {
+        unsigned int index = m_receiveBuffer.m_head + count;
+        if (index >= m_receiveBuffer.m_capacity)
+            index -= m_receiveBuffer.m_capacity;
+        ReceiveData* fragment = m_receiveBuffer.m_data + index;
+        if (!fragment->m_valid)
+            return cResultDataNotReady;
+        total += fragment->m_size;
+        if (fragment->m_end)
+        {
+            if (bufferSize < total)
+                return cResultDataSizeInvalid;
+            unsigned char* destination = static_cast<unsigned char*>(buffer);
+            for (unsigned int offset = 0; offset <= count; ++offset)
+            {
+                index = m_receiveBuffer.m_head + offset;
+                if (index >= m_receiveBuffer.m_capacity)
+                    index -= m_receiveBuffer.m_capacity;
+                fragment = m_receiveBuffer.m_data + index;
+                OSBlockMove(destination, fragment->m_payload, fragment->m_size, FALSE);
+                destination += fragment->m_size;
+            }
+            *size = total;
+            m_receiveBuffer.Withdraw(count + 1);
+            return 0;
+        }
+        ++count;
+    }
+    return count < m_receiveBuffer.m_capacity ? cResultDataNotReady : cResultDataSizeInvalid;
+}
+
+ReliableSlidingWindow::SendData* ReliableSlidingWindow::SendBuffer::Assign()
+{
+    unsigned int index = m_head + m_count;
+    if (index >= m_capacity)
+        index -= m_capacity;
+    SendData* data = m_data + index;
+    data->m_message.m_header.m_flags = 1;
+    data->m_message.m_header.m_sequenceId = m_sequence + m_count;
+    ++m_count;
+    return data;
+}
+
+void ReliableSlidingWindow::MessageData::SetPayload(const void* data, unsigned int size)
+{
+    OSBlockMove(m_data + cHeaderSize, data, size, FALSE);
+}
+
+Result ReliableSlidingWindow::PushData(const void* data, unsigned int size)
+{
+    if (m_protocolId == ProtocolId::INVALID)
+        return cResultInvalidState;
+    if (size != 0 && data == 0)
+        return cResultInvalidArgument;
+    const unsigned int count = size == 0 ? 1 : (size - 1) / m_payloadLimit + 1;
+    if (count > m_sendBuffer.m_capacity - m_sendBuffer.m_count)
+        return cResultWindowOverflow;
+    if (m_byteCount != 0 || size >= cProfiledSizeMin)
+    {
+        if (m_byteCount == 0)
+            m_profileStart = g_piaTransport->m_time.m_tick;
+        m_byteCount += size;
+    }
+    const unsigned char* source = static_cast<const unsigned char*>(data);
+    for (unsigned int index = 0; index < count; ++index)
+    {
+        SendData* fragment = m_sendBuffer.Assign();
+        const unsigned int fragmentSize = index + 1 == count ? size : m_payloadLimit;
+        if (fragmentSize != 0)
+            fragment->m_message.SetPayload(source, fragmentSize);
+        fragment->m_message.m_header.m_size = static_cast<unsigned short>(fragmentSize);
+        fragment->m_sendTime = 0;
+        fragment->m_size = fragmentSize + cHeaderSize;
+        fragment->m_field0c = 0;
+        if (index + 1 == count)
+            fragment->m_message.m_header.m_flags |= 2;
+        else
+        {
+            source += fragmentSize;
+            size -= fragmentSize;
+        }
+    }
+    return 0;
+}
+
+unsigned int ReliableSlidingWindow::CanPushData(unsigned int size)
+{
+    if (!IsInCommunication())
+        return false;
+    const unsigned int count = size == 0 ? 1 : (size - 1) / m_payloadLimit + 1;
+    return count <= m_sendBuffer.m_capacity - m_sendBuffer.m_count;
 }
 
 void ReliableSlidingWindow::Trace(unsigned long long) const

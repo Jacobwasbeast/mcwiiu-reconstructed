@@ -6,6 +6,8 @@
 #include "nn/pia/common/StationAddress.hpp"
 #include "nn/pia/common/Time.hpp"
 
+namespace nn { namespace pia { namespace inet { class InetJoinMeshJob; }}}
+
 namespace nn { namespace pia { namespace transport {
 
 class BandwidthCheckProtocol : public Protocol
@@ -24,6 +26,8 @@ public:
         virtual unsigned int GetSerializedSize() const;
     };
 
+    enum { cProtocolType = 0x54 };
+
     enum SenderState
     {
         SenderState_None = 0,
@@ -38,8 +42,7 @@ public:
         ReceiverState_None = 0,
         ReceiverState_WaitingForBulk = 1,
         ReceiverState_Measuring = 2,
-        ReceiverState_WaitingForAck = 3,
-        ReceiverState_WaitingForResponse = 3
+        ReceiverState_SendingResponse = 3
     };
 
     BandwidthCheckProtocol();
@@ -61,7 +64,7 @@ public:
     bool IsCompleted() const;
     Result GetUplinkBitRate(int*) const;
     void SetBandwidthChecked(StationIndex);
-    unsigned int getBulkPacketSize() const;
+    int getBulkPacketSize() const;
     bool isExist(StationIndex) const;
     Result send(StationIndex, const unsigned char*, unsigned int);
     Result sendHeaderOnlyPacket(StationIndex, unsigned int, int, int, int);
@@ -88,8 +91,9 @@ public:
     static const char* getReceiverStateString(ReceiverState);
 
 private:
+    friend class inet::InetJoinMeshJob;
     bool m_initialized;
-    unsigned int m_stationNum;
+    int m_stationNum;
     bool m_activated;
     bool m_isServer;
     unsigned char* m_bulkBuffer;
@@ -97,7 +101,7 @@ private:
     unsigned int m_bandwidthCheckedBitmap;
     int m_measurementTime;
     unsigned int m_bulkPacketSize;
-    unsigned int m_completionTimeout;
+    int m_completionTimeout;
     int m_measurementCount;
     SenderState m_senderState;
     common::Time m_senderStartTime;
@@ -105,7 +109,7 @@ private:
     common::Time m_bulkStartTime;
     int m_uplinkBitRate;
     StationIndex m_senderStation;
-    unsigned int m_bulkPacketSequence;
+    int m_bulkPacketSequence;
     int m_measurementResult;
     bool m_cancelRequested;
     ReceiverState m_receiverState;

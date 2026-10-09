@@ -4,6 +4,7 @@
 #include "nn/pia/transport/Station.hpp"
 #include "nn/pia/transport/ProtocolMessageReader.hpp"
 #include "nn/pia/common/Packet.hpp"
+#include "nn/pia/Assert.hpp"
 #include "platform/wiiu/pead.hpp"
 
 namespace nn { namespace pia { namespace transport {
@@ -74,7 +75,8 @@ void StationPacketHandler::Cleanup()
 
 StationManager* StationPacketHandler::GetStationManager()
 {
-    return g_piaStationManager;
+    PIA_ASSERT(StationManager::s_pInstance != 0);
+    return StationManager::s_pInstance;
 }
 
 Station* StationPacketHandler::GetStation(StationManager* manager,
@@ -121,11 +123,9 @@ void StationPacketHandler::BeginDispatch(const common::Time& time)
     StationManager* manager = GetStationManager();
     unsigned int stationBitmap = 0;
     PacketStream::Reader* reader = m_reader;
-    unsigned int index = static_cast<unsigned int>(reader->m_field04);
-    while (index != static_cast<unsigned int>(reader->m_field08))
+    for (PacketStream::Accessor::Iterator it = reader->Begin(); it != reader->End(); ++it)
     {
-        PacketStream* stream = reader->m_packetStream;
-        const common::Packet* packet = index < stream->m_packetNum ? &stream->m_packets[index] : 0;
+        const common::Packet* packet = &*it;
         if (packet->m_field614 != 0)
         {
             if (packet->m_packetData.m_header.m_passId != 1)
@@ -153,9 +153,6 @@ void StationPacketHandler::BeginDispatch(const common::Time& time)
                 offset += ((m_protocolMessageReader.m_messageSize + 23u) & ~3u) + 4u;
             }
         }
-        ++index;
-        if (static_cast<int>(index) >= static_cast<int>(reader->m_packetStream->m_packetNum))
-            index = 0;
     }
     m_keepAliveReceiver.Update(stationBitmap, time);
 }
@@ -216,7 +213,7 @@ ProtocolMessageWriter* StationPacketHandler::AssignByStationId(
     const ProtocolId& protocolId, unsigned long long stationId,
     unsigned int size, bool isReliable, bool isPriority, bool isBroadcast)
 {
-    Station* station = g_piaStationManager->GetStationByStationIdWithoutConvert(stationId);
+    Station* station = StationManager::s_pInstance->GetStationByStationIdWithoutConvert(stationId);
     if (station == 0 || station->m_field10 == ::nn::pia::cStationIndexInvalid)
         return 0;
     return AssignByStationIndex(protocolId, static_cast<StationIndex>(station->m_field10),
@@ -236,6 +233,7 @@ void StationPacketHandler::Trace(unsigned long long value) const
 
 StationConnectionInfoTable* StationPacketHandler::GetStationConnectionInfoTable()
 {
+    PIA_ASSERT(g_stationConnectionInfoTable != 0);
     return g_stationConnectionInfoTable;
 }
 
@@ -305,11 +303,9 @@ bool StationPacketHandler::AssignHostMessage(unsigned int size, unsigned int siz
     if (!isPriority)
     {
         PacketStream::Writer* writer = m_writer;
-        unsigned int index = static_cast<unsigned int>(writer->m_field04);
-        while (index != static_cast<unsigned int>(writer->m_field08))
+        for (PacketStream::Accessor::Iterator it = writer->Begin(); it != writer->End(); ++it)
         {
-            PacketStream* stream = writer->m_packetStream;
-            common::Packet* candidate = index < stream->m_packetNum ? &stream->m_packets[index] : 0;
+            common::Packet* candidate = &*it;
             if (IsBundleCandidate(candidate, field602, sizeLimit, field604) &&
                 candidate->m_stationIndex == ::nn::pia::cStationIndexSentinelFE)
             {
@@ -317,9 +313,6 @@ bool StationPacketHandler::AssignHostMessage(unsigned int size, unsigned int siz
                 m_protocolMessageWriter.AddMessageBuffer(candidate, payload, 0, true, false);
                 return true;
             }
-            ++index;
-            if (static_cast<int>(index) >= static_cast<int>(writer->m_packetStream->m_packetNum))
-                index = 0;
         }
     }
     common::Packet* packet;
@@ -381,7 +374,7 @@ bool StationPacketHandler::AssignDirectMessage(unsigned int stationBitmap, unsig
                 if (packet == 0)
                     return false;
                 ++index;
-                if (static_cast<int>(index) >= static_cast<int>(writer->m_packetStream->m_packetNum))
+                if (static_cast<int>(index) >= writer->m_packetStream->m_packets.size())
                     index = 0;
             }
             void* payload = AssignPacketPayload(packet, size);
@@ -390,9 +383,9 @@ bool StationPacketHandler::AssignDirectMessage(unsigned int stationBitmap, unsig
         else
         {
             PacketStream* stream = writer->m_packetStream;
-            common::Packet* packet = index < stream->m_packetNum ? &stream->m_packets[index] : 0;
+            common::Packet* packet = stream->m_packets.get(index);
             ++index;
-            if (static_cast<int>(index) >= static_cast<int>(stream->m_packetNum))
+            if (static_cast<int>(index) >= stream->m_packets.size())
                 index = 0;
             if (!IsBundleCandidate(packet, field602, sizeLimit, field604))
                 continue;
@@ -438,11 +431,9 @@ bool StationPacketHandler::AssignAllMessage(unsigned int stationBitmap, unsigned
     if (!isPriority)
     {
         PacketStream::Writer* writer = m_writer;
-        unsigned int index = static_cast<unsigned int>(writer->m_field04);
-        while (index != static_cast<unsigned int>(writer->m_field08))
+        for (PacketStream::Accessor::Iterator it = writer->Begin(); it != writer->End(); ++it)
         {
-            PacketStream* stream = writer->m_packetStream;
-            common::Packet* candidate = index < stream->m_packetNum ? &stream->m_packets[index] : 0;
+            common::Packet* candidate = &*it;
             if (IsBundleCandidate(candidate, field602, sizeLimit, field604) &&
                 candidate->m_stationIndex == ::nn::pia::cStationIndexSentinelFF)
             {
@@ -450,9 +441,6 @@ bool StationPacketHandler::AssignAllMessage(unsigned int stationBitmap, unsigned
                 m_protocolMessageWriter.AddMessageBuffer(candidate, payload, stationBitmap, true, false);
                 return true;
             }
-            ++index;
-            if (static_cast<int>(index) >= static_cast<int>(writer->m_packetStream->m_packetNum))
-                index = 0;
         }
     }
     common::Packet* packet;

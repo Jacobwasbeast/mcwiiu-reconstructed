@@ -1,6 +1,7 @@
 #include "nn/pia/transport/PacketHandler.hpp"
 
 #include "nn/pia/PayloadSizeManager.hpp"
+#include "nn/pia/Transport.hpp"
 #include "nn/pia/common/Crypto.hpp"
 #include "nn/pia/common/Packet.hpp"
 #include "nn/pia/common/Time.hpp"
@@ -8,27 +9,15 @@
 #include "nn/pia/common/IPacketOutput.hpp"
 #include "nn/pia/transport/PacketAnalyzer.hpp"
 #include "nn/pia/HeapManager.hpp"
+#include "nn/pia/common/Memory.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 #include "nn/pia/transport/StationConnectionInfoTable.hpp"
+#include "nn/pia/Common.hpp"
 
-#include <cstring>
+#include <coreinit/memory.h>
 #include <new>
 
 namespace nn { namespace pia { namespace transport {
-
-namespace
-{
-unsigned int nextPacketIndex(const PacketStream::Accessor& accessor, unsigned int index)
-{
-    ++index;
-    return static_cast<int>(index) < static_cast<int>(accessor.m_packetStream->m_packetNum) ? index : 0;
-}
-
-common::Packet* packetAt(const PacketStream::Accessor& accessor, unsigned int index)
-{
-    return index < accessor.m_packetStream->m_packetNum ? accessor.m_packetStream->m_packets + index : 0;
-}
-}
 
 PacketHandler::PacketHandler()
     : m_writer(0), m_reader(0), m_pendingWriter(0), m_iterator(this),
@@ -69,66 +58,76 @@ PacketHandler::Iterator& PacketHandler::GetIterator(const ProtocolId& protocolId
 PacketHandler::Iterator& PacketHandler::GetIterator(unsigned char protocolType)
 {
     m_field35e = 0xff00;
-    m_field35c = static_cast<unsigned short>(protocolType) << 8;
+    m_field35c = ProtocolId(protocolType, 0);
     BeginIteration();
     return m_iterator;
 }
 
 Result PacketHandler::Initialize(unsigned int maxProtocolNum)
 {
+    m_writer = 0;
+    m_reader = 0;
     m_payloadSize = 0;
     m_packetSize = 0;
-    m_reader = 0;
-    m_writer = 0;
-    PacketAnalyzer** analyzers[] = { &m_sendPacketAnalyzer, &m_sendUnicastPacketAnalyzer,
-                                    &m_sendBroadcastPacketAnalyzer, &m_receivePacketAnalyzer };
-    const char* names[] = { "Pia Send", "Pia Send Unicast", "Pia Send Broadcast", "Pia Receive" };
-    for (unsigned int index = 0; index < 4; ++index)
-    {
-        pead::Heap* heap = common::HeapManager::GetHeap();
-        void* storage = pead::allocateFromSeadHeap(sizeof(PacketAnalyzer), heap);
-        *analyzers[index] = storage != 0 ? new (storage) PacketAnalyzer(names[index], maxProtocolNum) : 0;
-        if (*analyzers[index] == 0)
-            return static_cast<Result>(0x10c01);
-    }
+    m_sendPacketAnalyzer = common::NewObj<PacketAnalyzer>("Pia Send", maxProtocolNum);
+    if (m_sendPacketAnalyzer == 0)
+        return cResultOutOfMemory;
+    m_sendUnicastPacketAnalyzer = common::NewObj<PacketAnalyzer>("Pia Send Unicast", maxProtocolNum);
+    if (m_sendUnicastPacketAnalyzer == 0)
+        return cResultOutOfMemory;
+    m_sendBroadcastPacketAnalyzer = common::NewObj<PacketAnalyzer>("Pia Send Broadcast", maxProtocolNum);
+    if (m_sendBroadcastPacketAnalyzer == 0)
+        return cResultOutOfMemory;
+    m_receivePacketAnalyzer = common::NewObj<PacketAnalyzer>("Pia Receive", maxProtocolNum);
+    if (m_receivePacketAnalyzer == 0)
+        return cResultOutOfMemory;
     m_cryptoSetting.m_mode = 0;
     return 0;
 }
 
 void PacketHandler::Finalize()
 {
-    PacketAnalyzer** analyzers[] = { &m_receivePacketAnalyzer, &m_sendBroadcastPacketAnalyzer,
-                                    &m_sendUnicastPacketAnalyzer, &m_sendPacketAnalyzer };
-    for (unsigned int index = 0; index < 4; ++index)
+    if (m_receivePacketAnalyzer != 0)
     {
-        PacketAnalyzer* analyzer = *analyzers[index];
-        if (analyzer != 0)
-        {
-            analyzer->~PacketAnalyzer();
-            pead::freeToSeadHeap(analyzer);
-            *analyzers[index] = 0;
-        }
+        common::DeleteObj(m_receivePacketAnalyzer);
+        m_receivePacketAnalyzer = 0;
     }
-    m_packetSize = 0;
+    if (m_sendBroadcastPacketAnalyzer != 0)
+    {
+        common::DeleteObj(m_sendBroadcastPacketAnalyzer);
+        m_sendBroadcastPacketAnalyzer = 0;
+    }
+    if (m_sendUnicastPacketAnalyzer != 0)
+    {
+        common::DeleteObj(m_sendUnicastPacketAnalyzer);
+        m_sendUnicastPacketAnalyzer = 0;
+    }
+    if (m_sendPacketAnalyzer != 0)
+    {
+        common::DeleteObj(m_sendPacketAnalyzer);
+        m_sendPacketAnalyzer = 0;
+    }
+    m_writer = 0;
     m_reader = 0;
     m_payloadSize = 0;
-    m_writer = 0;
+    m_packetSize = 0;
     m_cryptoSetting = common::CryptoSetting();
 }
 
 void PacketHandler::Cleanup()
 {
-    PacketAnalyzer* analyzers[] = { m_receivePacketAnalyzer, m_sendBroadcastPacketAnalyzer,
-                                  m_sendUnicastPacketAnalyzer, m_sendPacketAnalyzer };
-    for (unsigned int index = 0; index < 4; ++index)
-    {
-        if (analyzers[index] != 0)
-            analyzers[index]->Cleanup();
-    }
-    m_packetSize = 0;
-    m_payloadSize = 0;
-    m_reader = 0;
+    if (m_receivePacketAnalyzer != 0)
+        m_receivePacketAnalyzer->Cleanup();
+    if (m_sendBroadcastPacketAnalyzer != 0)
+        m_sendBroadcastPacketAnalyzer->Cleanup();
+    if (m_sendUnicastPacketAnalyzer != 0)
+        m_sendUnicastPacketAnalyzer->Cleanup();
+    if (m_sendPacketAnalyzer != 0)
+        m_sendPacketAnalyzer->Cleanup();
     m_writer = 0;
+    m_reader = 0;
+    m_payloadSize = 0;
+    m_packetSize = 0;
     m_cryptoSetting = common::CryptoSetting();
 }
 
@@ -138,16 +137,16 @@ Result PacketHandler::Startup(PacketStream::Writer* writer, PacketStream::Reader
                               unsigned long long* stationId,
                               const common::CryptoSetting* cryptoSetting)
 {
-    const unsigned int packetSize =
+    unsigned int packetSize =
         (common::g_payloadSizeManager->m_mtuSize & ~3u) -
         common::g_payloadSizeManager->m_signatureSize;
 
     if (writer == 0 || reader == 0 || packetInput == 0 || packetOutput == 0 || stationId == 0)
-        return static_cast<Result>(0x10c07);
+        return cResultInvalidArgument;
     if (cryptoSetting != 0 && cryptoSetting->m_mode > 1)
-        return static_cast<Result>(0x10c07);
+        return cResultInvalidArgument;
     if (m_writer != 0 || m_reader != 0)
-        return static_cast<Result>(0x10c08);
+        return cResultInvalidState;
 
     m_packetInput = packetInput;
     m_writer = writer;
@@ -156,23 +155,26 @@ Result PacketHandler::Startup(PacketStream::Writer* writer, PacketStream::Reader
     m_protocolMessageWriter.SetSource(0);
     m_pendingWriter = 0;
 
-    if (packetSize - cPacketHeaderSize > cPayloadSizeMax)
-        return static_cast<Result>(0x10c07);
+    if (packetSize < cPacketHeaderSize || packetSize > cPacketHeaderSize + cPayloadSizeMax)
+        return cResultInvalidArgument;
 
-    if (cryptoSetting == 0)
-        m_cryptoSetting = common::CryptoSetting();
-    else
+    if (cryptoSetting != 0)
         m_cryptoSetting = *cryptoSetting;
+    else
+        m_cryptoSetting = common::CryptoSetting();
 
-    if (m_cryptoSetting.m_mode == 0)
+    switch (m_cryptoSetting.m_mode)
     {
+    case 0:
         m_packetSize = packetSize;
-    }
-    else if (m_cryptoSetting.m_mode == 1)
+        break;
+    case 1:
     {
+        packetSize -= cPacketHeaderSize;
         const unsigned int blockSize = common::Crypto::GetBlockSize(common::Crypto::cModeAesGcm);
-        m_packetSize =
-            ((packetSize - cPacketHeaderSize) / blockSize) * blockSize + cPacketHeaderSize;
+        m_packetSize = (packetSize / blockSize) * blockSize + cPacketHeaderSize;
+        break;
+    }
     }
     m_payloadSize = m_packetSize - cPacketHeaderSize;
 
@@ -189,6 +191,37 @@ Result PacketHandler::Startup(PacketStream::Writer* writer, PacketStream::Reader
     return 0;
 }
 
+Result PacketHandler::UpdateSetting(const common::CryptoSetting* cryptoSetting)
+{
+    unsigned int packetSize =
+        (common::g_payloadSizeManager->m_mtuSize & ~3u) -
+        common::g_payloadSizeManager->m_signatureSize;
+
+    if (cryptoSetting != 0 && cryptoSetting->m_mode > 1)
+        return cResultInvalidArgument;
+
+    if (cryptoSetting != 0)
+        m_cryptoSetting = *cryptoSetting;
+    else
+        m_cryptoSetting = common::CryptoSetting();
+
+    switch (m_cryptoSetting.m_mode)
+    {
+    case 0:
+        m_packetSize = packetSize;
+        break;
+    case 1:
+    {
+        packetSize -= cPacketHeaderSize;
+        const unsigned int blockSize = common::Crypto::GetBlockSize(common::Crypto::cModeAesGcm);
+        m_packetSize = (packetSize / blockSize) * blockSize + cPacketHeaderSize;
+        break;
+    }
+    }
+    m_payloadSize = m_packetSize - cPacketHeaderSize;
+    return 0;
+}
+
 int PacketHandler::GetPayloadSizeLimit() const
 {
     return static_cast<int>(m_payloadSize) - 24;
@@ -200,17 +233,36 @@ Result PacketHandler::GetPacketAnalysisData(PacketAnalysisData* send,
                                              PacketAnalysisData* receive) const
 {
     if (send == 0 && receive == 0)
-        return static_cast<Result>(0x10c07);
-    PacketAnalysisData* outputs[] = { send, unicast, broadcast, receive };
-    PacketAnalyzer* analyzers[] = { m_sendPacketAnalyzer, m_sendUnicastPacketAnalyzer,
-                                   m_sendBroadcastPacketAnalyzer, m_receivePacketAnalyzer };
-    for (unsigned int index = 0; index < 4; ++index)
+        return cResultInvalidArgument;
+    if (send != 0)
     {
-        if (outputs[index] == 0)
-            continue;
-        if (analyzers[index] == 0)
-            return static_cast<Result>(0x10c08);
-        const Result result = analyzers[index]->GetPacketAnalysisData(outputs[index]);
+        if (m_sendPacketAnalyzer == 0)
+            return cResultInvalidState;
+        const Result result = m_sendPacketAnalyzer->GetPacketAnalysisData(send);
+        if (result != 0)
+            return result;
+    }
+    if (unicast != 0)
+    {
+        if (m_sendUnicastPacketAnalyzer == 0)
+            return cResultInvalidState;
+        const Result result = m_sendUnicastPacketAnalyzer->GetPacketAnalysisData(unicast);
+        if (result != 0)
+            return result;
+    }
+    if (broadcast != 0)
+    {
+        if (m_sendBroadcastPacketAnalyzer == 0)
+            return cResultInvalidState;
+        const Result result = m_sendBroadcastPacketAnalyzer->GetPacketAnalysisData(broadcast);
+        if (result != 0)
+            return result;
+    }
+    if (receive != 0)
+    {
+        if (m_receivePacketAnalyzer == 0)
+            return cResultInvalidState;
+        const Result result = m_receivePacketAnalyzer->GetPacketAnalysisData(receive);
         if (result != 0)
             return result;
     }
@@ -232,16 +284,23 @@ void PacketHandler::ClearPacketAnalysisData()
 unsigned char* PacketHandler::AssignPacketPayload(common::Packet* packet, unsigned int size)
 {
     unsigned char* payload = packet->AssignPayload(size);
-    std::memset(payload + (size & ~3U) - 4, 0, 4);
+    const unsigned int alignedSize = size & ~3U;
+    *reinterpret_cast<unsigned int*>(payload + alignedSize - 4) = 0;
     return payload;
 }
 
 bool PacketHandler::IsBundleCandidate(const common::Packet* packet, bool field602,
                                        unsigned int sizeLimit, bool field604)
 {
-    return packet->m_field601 == 0 &&
-        (m_cryptoSetting.m_mode == 0 || packet->m_field602 == field602) &&
-        packet->m_size <= sizeLimit && packet->m_field604 == field604;
+    if (packet->m_field601 != 0)
+        return false;
+    if (m_cryptoSetting.m_mode != 0 && packet->m_field602 != field602)
+        return false;
+    if (packet->m_size > sizeLimit)
+        return false;
+    if (packet->m_field604 != field604)
+        return false;
+    return true;
 }
 
 common::Packet* PacketHandler::AssignPacket(const common::StationAddress& address,
@@ -265,47 +324,47 @@ ProtocolMessageWriter* PacketHandler::AssignByStationAddress(const ProtocolId& p
                                                              unsigned int size, bool isPriority,
                                                              bool field602)
 {
-    if (!address.IsValid() || m_writer == 0 || m_pendingWriter != 0)
-        return 0;
-    const unsigned int alignedSize = ((size + 23U) & ~3U) + 4U;
-    if (alignedSize > m_payloadSize)
-        return 0;
-
-    common::Packet* packet = 0;
-    if (!isPriority)
+    ProtocolMessageWriter* writer = 0;
+    if (address.IsValid() && m_writer != 0 && m_pendingWriter == 0)
     {
-        unsigned int index = static_cast<unsigned int>(m_writer->m_field04);
-        while (index != static_cast<unsigned int>(m_writer->m_field08))
+        const unsigned int alignedSize = ((size + 23U) & ~3U) + 4U;
+        if (alignedSize <= m_payloadSize)
         {
-            PacketStream* stream = m_writer->m_packetStream;
-            common::Packet* candidate = index < stream->m_packetNum ? stream->m_packets + index : 0;
-            if (IsBundleCandidate(candidate, field602, m_packetSize - alignedSize, true) &&
-                candidate->m_field5f4 == address)
+            const unsigned int sizeLimit = m_packetSize - alignedSize;
+            common::Packet* packet = 0;
+            if (!isPriority)
             {
-                packet = candidate;
-                break;
+                const PacketStream::Writer* stream = m_writer;
+                for (PacketStream::Accessor::Iterator it = stream->Begin(); it != stream->End(); ++it)
+                {
+                    common::Packet* candidate = &*it;
+                    if (IsBundleCandidate(candidate, field602, sizeLimit, true) &&
+                        candidate->m_field5f4 == address)
+                    {
+                        packet = candidate;
+                        break;
+                    }
+                }
             }
-            ++index;
-            if (static_cast<int>(index) >= static_cast<int>(stream->m_packetNum))
-                index = 0;
+            if (packet == 0)
+                packet = AssignPacket(address, isPriority, field602);
+            if (packet != 0)
+            {
+                unsigned char* payload = AssignPacketPayload(packet, alignedSize);
+                m_protocolMessageWriter.Reset(protocolId, size, false, isPriority);
+                m_protocolMessageWriter.AddMessageBuffer(packet, payload, 0, true, false);
+                writer = &m_protocolMessageWriter;
+                m_pendingWriter = writer;
+            }
         }
     }
-    if (packet == 0)
-        packet = AssignPacket(address, isPriority, field602);
-    if (packet == 0)
-        return 0;
-
-    unsigned char* payload = AssignPacketPayload(packet, alignedSize);
-    m_protocolMessageWriter.Reset(protocolId, size, false, isPriority);
-    m_protocolMessageWriter.AddMessageBuffer(packet, payload, 0, true, false);
-    m_pendingWriter = &m_protocolMessageWriter;
-    return m_pendingWriter;
+    return writer;
 }
 
 Result PacketHandler::Commit()
 {
     if (m_pendingWriter == 0)
-        return static_cast<Result>(0x10c08);
+        return cResultInvalidState;
     m_pendingWriter->Commit();
     m_pendingWriter = 0;
     return 0;
@@ -348,16 +407,20 @@ unsigned int PacketHandler::IsBroadcastSupported() const
 
 bool PacketHandler::CheckFiltering(const common::StationAddress& address) const
 {
-    Station* station = g_piaStationManager->GetStation(address);
+    Station* station = StationManager::s_pInstance->GetStation(address);
     if (station == 0)
         return false;
-    StationConnectionInfo info;
-    return g_stationConnectionInfoTable->GetStationConnectionInfo(station, &info) == 0;
+    Result result;
+    {
+        StationConnectionInfo info;
+        result = g_stationConnectionInfoTable->GetStationConnectionInfo(station, &info);
+    }
+    return result == 0;
 }
 
 void PacketHandler::BeginIteration()
 {
-    m_field360 = static_cast<unsigned int>(-1);
+    m_field360 = -1;
     m_field364 = 0;
     m_protocolMessageReader.Clear();
     NextIteration();
@@ -372,7 +435,7 @@ unsigned int PacketHandler::GenerateConnectionId() const
 
 bool PacketHandler::IsEndIteration() const
 {
-    return static_cast<int>(m_reader->m_field0c) <= static_cast<int>(m_field360);
+    return m_field360 >= static_cast<int>(m_reader->m_field0c);
 }
 
 void PacketHandler::NextIteration()
@@ -381,39 +444,41 @@ void PacketHandler::NextIteration()
         return;
     for (;;)
     {
-        if (m_protocolMessageReader.m_message == 0)
+        if (m_protocolMessageReader.m_message != 0)
+        {
+            common::Packet* packet = m_reader->Get(m_field360);
+            m_field364 += ((m_protocolMessageReader.m_messageSize + 23U) & ~3U) + 4U;
+            if (m_field364 >= packet->m_size - cPacketHeaderSize)
+                m_protocolMessageReader.Clear();
+            else
+                m_protocolMessageReader.Attach(*packet, m_field364);
+        }
+        else
         {
             ++m_field360;
             m_field364 = 0;
-            if (static_cast<int>(m_reader->m_field0c) <= static_cast<int>(m_field360))
+            if (m_field360 >= static_cast<int>(m_reader->m_field0c))
                 return;
-            common::Packet* packet = m_reader->Get(static_cast<int>(m_field360));
+            common::Packet* packet = m_reader->Get(m_field360);
             if (packet->m_field614 == 0)
                 continue;
             m_protocolMessageReader.Attach(*packet, m_field364);
         }
-        else
-        {
-            common::Packet* packet = m_reader->Get(static_cast<int>(m_field360));
-            m_field364 += ((m_protocolMessageReader.m_messageSize + 23U) & ~3U) + 4U;
-            if (m_field364 < packet->m_size - cPacketHeaderSize)
-                m_protocolMessageReader.Attach(*packet, m_field364);
-            else
-                m_protocolMessageReader.Clear();
-        }
         if (m_protocolMessageReader.m_message == 0)
             continue;
-        const unsigned short protocolId = m_protocolMessageReader.m_header.m_protocolId;
-        if ((protocolId & m_field35e) != m_field35c)
+        if ((m_protocolMessageReader.m_header.m_protocolId & m_field35e) != m_field35c)
             continue;
-        if ((m_protocolMessageReader.m_header.m_flags & 4) == 0 &&
+        if (((m_protocolMessageReader.m_header.m_flags >> 2) & 1) == 0 &&
             g_piaProtocolMessageFilteringManager != 0 &&
             g_piaProtocolMessageFilteringManager->IsFilteringEnabled(
-                static_cast<unsigned char>(protocolId >> 8)) != 0 &&
-            !CheckFiltering(m_protocolMessageReader.m_stationAddress))
+                ProtocolId(m_protocolMessageReader.m_header.m_protocolId).GetProtocolType()) != 0)
         {
-            m_protocolMessageReader.m_stationAddress.Trace(0x800000);
-            continue;
+            const common::StationAddress& address = m_protocolMessageReader.m_stationAddress;
+            if (!CheckFiltering(address))
+            {
+                address.Trace(0x800000);
+                continue;
+            }
         }
         if (CheckReceive(m_protocolMessageReader) != 0)
             return;
@@ -423,21 +488,23 @@ void PacketHandler::NextIteration()
 void PacketHandler::BeginDispatch(const common::Time&)
 {
     m_reader->PullAll();
+    PacketStream::Reader* reader = m_reader;
     common::Crypto::Setting setting;
-    setting.m_mode = common::Crypto::cModeNone;
-    setting.m_key = 0;
-    setting.m_keyLength = 0;
     if (m_cryptoSetting.m_mode == 1)
     {
         setting.m_mode = common::Crypto::cModeAesGcm;
         setting.m_key = m_cryptoSetting.m_key;
         setting.m_keyLength = sizeof(m_cryptoSetting.m_key);
     }
-    for (unsigned int index = m_reader->m_field04;
-         index != static_cast<unsigned int>(m_reader->m_field08);
-         index = nextPacketIndex(*m_reader, index))
+    else
     {
-        common::Packet* packet = packetAt(*m_reader, index);
+        setting.m_mode = common::Crypto::cModeNone;
+        setting.m_key = 0;
+        setting.m_keyLength = 0;
+    }
+    for (PacketStream::Accessor::Iterator it = reader->Begin(); it != reader->End(); ++it)
+    {
+        common::Packet* packet = &*it;
         if (packet->IsValid() == 0)
         {
             packet->m_field614 = 0;
@@ -514,10 +581,9 @@ void PacketHandler::BeginDispatch(const common::Time&)
     }
     if (m_receivePacketAnalyzer != 0)
     {
-        for (unsigned int index = m_reader->m_field04;
-             index != static_cast<unsigned int>(m_reader->m_field08);
-             index = nextPacketIndex(*m_reader, index))
-            m_receivePacketAnalyzer->UpdatePacketAnalysisData(*packetAt(*m_reader, index), false, false);
+        reader = m_reader;
+        for (PacketStream::Accessor::Iterator it = reader->Begin(); it != reader->End(); ++it)
+            m_receivePacketAnalyzer->UpdatePacketAnalysisData(*it, false, false);
     }
 }
 
@@ -527,16 +593,19 @@ void PacketHandler::EndDispatch(const common::Time&)
         return;
     if (m_sendPacketAnalyzer != 0)
     {
-        for (unsigned int index = m_writer->m_field04;
-             index != static_cast<unsigned int>(m_writer->m_field08);
-             index = nextPacketIndex(*m_writer, index))
+        for (PacketStream::Accessor::Iterator it = m_writer->Begin(); it != m_writer->End(); ++it)
         {
-            common::Packet* packet = packetAt(*m_writer, index);
-            const bool broadcast = packet->m_stationIndex == 0xff;
-            m_sendPacketAnalyzer->UpdatePacketAnalysisData(*packet, true, broadcast);
-            PacketAnalyzer* analyzer = broadcast ? m_sendBroadcastPacketAnalyzer : m_sendUnicastPacketAnalyzer;
-            if (analyzer != 0)
-                analyzer->UpdatePacketAnalysisData(*packet, true, broadcast);
+            const bool broadcast = it->m_stationIndex == 0xff;
+            m_sendPacketAnalyzer->UpdatePacketAnalysisData(*it, true, broadcast);
+            if (broadcast)
+            {
+                if (m_sendBroadcastPacketAnalyzer != 0)
+                    m_sendBroadcastPacketAnalyzer->UpdatePacketAnalysisData(*it, true, true);
+            }
+            else if (m_sendUnicastPacketAnalyzer != 0)
+            {
+                m_sendUnicastPacketAnalyzer->UpdatePacketAnalysisData(*it, true, false);
+            }
         }
     }
     if (m_cryptoSetting.m_mode != 0)
@@ -548,29 +617,24 @@ void PacketHandler::EndDispatch(const common::Time&)
             setting.m_key = m_cryptoSetting.m_key;
             setting.m_keyLength = sizeof(m_cryptoSetting.m_key);
         }
-        for (unsigned int index = m_writer->m_field04;
-             index != static_cast<unsigned int>(m_writer->m_field08);
-             index = nextPacketIndex(*m_writer, index))
+        for (PacketStream::Accessor::Iterator it = m_writer->Begin(); it != m_writer->End(); ++it)
         {
-            common::Packet* packet = packetAt(*m_writer, index);
-            if (packet->m_field602 != 0)
+            if (it->m_field602 != 0)
                 continue;
             common::Time now;
             now.SetNow();
             unsigned char parameter[12];
-            for (unsigned int byte = 0; byte < 8; ++byte)
-                parameter[byte] = static_cast<unsigned char>(now.m_tick >> (56 - byte * 8));
+            const unsigned long long tick = now.m_tick;
+            OSBlockMove(parameter, &tick, sizeof(tick), FALSE);
             if (m_cryptoSetting.m_mode == 1 && m_packetOutput != 0)
             {
                 ++*m_stationId;
-                for (unsigned int byte = 0; byte < 8; ++byte)
-                    packet->m_packetData.m_header.m_cryptoNonce[byte] =
-                        static_cast<unsigned char>(*m_stationId >> (56 - byte * 8));
-                m_packetOutput->CalculateCryptoParameter(parameter, sizeof(parameter), packet);
+                common::serializeU64(it->m_packetData.m_header.m_cryptoNonce, *m_stationId);
+                m_packetOutput->CalculateCryptoParameter(parameter, sizeof(parameter), &*it);
             }
             setting.m_iv = parameter;
             setting.m_ivLength = sizeof(parameter);
-            packet->Encrypt(setting);
+            it->Encrypt(setting);
         }
     }
     m_reader->Release();

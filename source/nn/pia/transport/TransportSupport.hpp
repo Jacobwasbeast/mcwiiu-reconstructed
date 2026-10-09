@@ -5,6 +5,10 @@
 
 namespace nn { namespace pia { namespace transport {
 
+Result Initialize();
+Result BeginSetup();
+Result EndSetup();
+void Finalize();
 unsigned char IsInitialized();
 unsigned char IsInSetupMode();
 void EmbedModuleInfo();

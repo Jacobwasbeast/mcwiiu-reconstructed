@@ -3,16 +3,13 @@
 
 #include "nn/pia.h"
 #include "nn/pia/common/Time.hpp"
-#include "nn/pia/transport/ConnectionAnalysisData.hpp"
-#include "nn/pia/transport/PacketAnalysisData.hpp"
+#include "nn/pia/transport/TransportAnalysisData.hpp"
 
 namespace nn { namespace pia { namespace transport {
 
 class TransportAnalyzer
 {
 public:
-    enum { cPacketAnalysisDataNum = 4 };
-
     TransportAnalyzer();
     ~TransportAnalyzer();
     static Result CreateInstance();
@@ -29,9 +26,7 @@ public:
     void Trace(unsigned long long value) const;
 
     bool m_startedUp;
-    PacketAnalysisData m_packetAnalysisData[cPacketAnalysisDataNum];
-    ConnectionAnalysisData m_connectionAnalysisData;
-    unsigned int m_field110c;
+    TransportAnalysisData m_analysisData;
     common::Time m_startTime;
 };
 

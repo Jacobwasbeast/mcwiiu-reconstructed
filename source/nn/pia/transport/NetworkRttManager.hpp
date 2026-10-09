@@ -75,6 +75,7 @@ public:
         T* Assign(const common::StationAddress& address, unsigned int now);
         void Lock() { mCritical.Lock(); }
         void Unlock() { mCritical.Unlock(); }
+        common::CriticalSection& GetCriticalSection() { return mCritical; }
         bool IsInitialized() const { return mData != 0; }
     private:
         static const common::StationAddress& AddressOf(const T& value) { return value.address; }
@@ -117,8 +118,8 @@ public:
     void Finalize();
     static void DestroyInstance();
     Result InitializeImpl(unsigned int measurementCapacity, unsigned int responseCapacity);
-    Result WriteToPacket(common::Packet* packet);
-    Result ReadFromPacket(const common::Packet* packet);
+    void WriteToPacket(common::Packet* packet);
+    void ReadFromPacket(const common::Packet* packet);
     unsigned int GetAverage(const common::StationAddress& address);
     int GetStdDev(const common::StationAddress& address);
     int GetCount(const common::StationAddress& address);

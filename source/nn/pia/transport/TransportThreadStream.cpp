@@ -2,6 +2,7 @@
 
 #include "nn/pia/transport/LatencyEmulator.hpp"
 #include "nn/pia/HeapManager.hpp"
+#include "nn/pia/Transport.hpp"
 #include <new>
 
 namespace nn { namespace pia { namespace transport {
@@ -26,15 +27,17 @@ Result TransportThreadStream::InitializeCore(const char* name, int priority,
                                              unsigned int streamIndex)
 {
     if (m_threadState != cThreadStateQuit)
-        return static_cast<Result>(0x10c08);
+        return cResultInvalidState;
 
-    m_latencyEmulator = 0;
-    if (latencyEntryNum != 0)
+    if (latencyEntryNum == 0)
+    {
+        m_latencyEmulator = 0;
+    }
+    else
     {
         void* storage = pead::allocateFromSeadHeap(sizeof(LatencyEmulator),
                                                   common::HeapManager::GetHeap());
-        if (storage != 0)
-            m_latencyEmulator = new (storage) LatencyEmulator(latencyEntryNum);
+        m_latencyEmulator = storage != 0 ? new (storage) LatencyEmulator(latencyEntryNum) : 0;
     }
     m_isPacketLossEnabled = isPacketLossEnabled;
     pead::Heap* heap = common::HeapManager::GetHeap();
@@ -43,9 +46,7 @@ Result TransportThreadStream::InitializeCore(const char* name, int priority,
     m_thread = storage != 0 ? new (storage) pead::DelegateThread(
         pead::SafeStringBase<char>(name), &m_threadDelegate, heap, priority,
         pead::MessageQueue::cNoBlock, 0x7fffffff, 0x2000, 0x20) : 0;
-    const unsigned int coreId = pead::CoreInfo::getCurrentCoreId().value();
-    const pead::CoreIdMask affinity((coreId & 32) != 0 ? 0 : 1u << (coreId & 31));
-    m_thread->setAffinity(affinity);
+    m_thread->setAffinity(pead::CoreIdMask(1 << pead::CoreInfo::getCurrentCoreId().value()));
     PacketStream::Initialize(packetNum, streamIndex);
     m_threadState = cThreadStateStop;
     m_lastResult = 0;
@@ -105,7 +106,7 @@ void TransportThreadStream::ChangeState(ThreadState threadState)
 Result TransportThreadStream::Startup()
 {
     if (m_threadState != cThreadStateStop)
-        return static_cast<Result>(0x10c08);
+        return cResultInvalidState;
 
     if (m_latencyEmulator != 0)
         m_latencyEmulator->Clear();
@@ -130,81 +131,78 @@ void TransportThreadStream::Cleanup()
 
 Result TransportThreadStream::GetLastResult() const
 {
-    if (m_threadState == cThreadStateStop || m_threadState == cThreadStateError)
+    switch (m_threadState)
+    {
+    case cThreadStateStop:
+    case cThreadStateError:
         return m_lastResult;
-    return 0;
+    default:
+        return 0;
+    }
 }
 
 void TransportThreadStream::ThreadFunc(pead::Thread* thread, int)
 {
     for (;;)
     {
-        const ThreadState threadState = m_threadState;
-        if (threadState == static_cast<ThreadState>(cThreadStateStop | cThreadStateRequest))
+        switch (m_threadState)
         {
+        case cThreadStateStop | cThreadStateRequest:
             m_threadState = cThreadStateStop;
-            continue;
-        }
-        if (threadState == static_cast<ThreadState>(cThreadStateRun | cThreadStateRequest))
-        {
+            break;
+        case cThreadStateRun | cThreadStateRequest:
             m_threadState = cThreadStateRun;
-            continue;
-        }
-        if (threadState == static_cast<ThreadState>(cThreadStateQuit | cThreadStateRequest))
-        {
+            break;
+        case cThreadStateQuit | cThreadStateRequest:
             thread->quit(false);
             m_threadState = cThreadStateQuit;
             return;
-        }
-        if (threadState > cThreadStateRequest)
-            continue;
-
-        if (threadState == cThreadStateRun)
+        case cThreadStateRun:
         {
             Result result = ProcessOne();
             if (m_latencyEmulator != 0)
             {
-                const Result dispatchResult = m_latencyEmulator->Dispatch();
+                Result dispatchResult = m_latencyEmulator->Dispatch();
                 if (dispatchResult != 0)
                     result = dispatchResult;
             }
-            if (result == 0 || result == static_cast<Result>(0x2c03))
-                continue;
+            if (result == 0 || result == cResultDataSizeInvalid)
+                break;
 
-            if (result == static_cast<Result>(0x4c0d) ||
-                result == static_cast<Result>(0x2c09))
+            if (result == cResultWindowOverflow)
             {
-                pead::TickSpan interval;
-                interval.setNanoSeconds(static_cast<long long>(m_sleepMilliSecond) * 1000000);
-                m_event.wait(interval);
+                m_event.wait(pead::TickSpan::makeFromMilliSeconds(m_sleepMilliSecond));
+            }
+            else if (result == cResultDataNotReady)
+            {
+                m_event.wait(pead::TickSpan::makeFromMilliSeconds(m_sleepMilliSecond));
             }
             else
             {
                 m_lastResult = result;
                 m_threadState = cThreadStateError;
             }
-            continue;
+            break;
         }
-
-        if (threadState == cThreadStateStop || threadState == cThreadStateError)
+        case cThreadStateStop:
+        case cThreadStateError:
             m_event.wait();
+            break;
+        default:
+            break;
+        }
     }
 }
 
 bool TransportThreadStream::isDropPacket()
 {
-    if (!m_isPacketLossEnabled)
-        return false;
-    if (m_packetLossRatio == 0)
-        return false;
-
-    const unsigned long long scaled =
-        static_cast<unsigned long long>(m_random.getU32()) * 100;
-    return static_cast<int>(scaled >> 32) < m_packetLossRatio;
-}
-
-void TransportThreadStream::OnStartup()
-{
+    if (m_isPacketLossEnabled)
+    {
+        int packetLossRatio = m_packetLossRatio;
+        if (packetLossRatio != 0 && static_cast<int>(m_random.getU32(100)) < packetLossRatio)
+            return true;
+    }
+    return false;
 }
 
 }}}

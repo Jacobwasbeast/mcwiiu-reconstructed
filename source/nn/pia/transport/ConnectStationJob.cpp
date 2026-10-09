@@ -117,25 +117,29 @@ bool ConnectStationJob::CheckErrorOccurred()
 
 bool ConnectStationJob::CheckContextCallCancelled()
 {
-    if (!m_context || !m_context->m_cancelRequested)
-        return false;
-    if (static_cast<unsigned int>(m_context->m_state) - 2 > 2)
-        m_context->SignalCancel();
-    m_context = 0;
-    return true;
+    if (m_context && m_context->m_cancelRequested)
+    {
+        if (static_cast<unsigned int>(m_context->m_state) - 2 > 2)
+            m_context->SignalCancel();
+        m_context = 0;
+        return true;
+    }
+    return false;
 }
 
 bool ConnectStationJob::CheckTimeout()
 {
-    if (!(m_connectionDeadline <= common::g_piaJobScheduler->m_dispatchTime))
-        return false;
-    if (m_context)
+    if (m_connectionDeadline <= common::g_piaJobScheduler->m_dispatchTime)
     {
-        if (static_cast<unsigned int>(m_context->m_state) - 2 > 2)
-            m_context->SignalFailure(0x6c0e);
-        m_context = 0;
+        if (m_context)
+        {
+            if (static_cast<unsigned int>(m_context->m_state) - 2 > 2)
+                m_context->SignalFailure(cResultTimeout);
+            m_context = 0;
+        }
+        return true;
     }
-    return true;
+    return false;
 }
 
 ConnectStationJob::ExecuteResult ConnectStationJob::SendConnectionRequest()
@@ -150,17 +154,18 @@ ConnectStationJob::ExecuteResult ConnectStationJob::SendConnectionRequest()
     {
         common::Time now;
         now.SetNow();
-        m_station->m_field54 = static_cast<unsigned char>(now.m_tick % 0xfe + 2);
+        const unsigned char connectionId = static_cast<unsigned char>(now.m_tick % 0xfe + 2);
+        m_station->m_field54 = connectionId;
     }
     if (!CheckErrorOccurred() && SendConnectionRequestMessage())
     {
-        if (m_station->m_field10 > 0x1f)
+        if (static_cast<int>(m_station->m_field10) > 31)
         {
             m_station->m_lastSendTime = g_piaTransport->m_time;
         }
         m_connectionRejection = 0;
-        m_connectionDeadline.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick +
-            common::TimeSpan::GetTicksPerMSec().m_tick * m_timeoutMsec;
+        const common::TimeSpan timeout = common::TimeSpan::FromMSec(m_timeoutMsec);
+        m_connectionDeadline = common::g_piaJobScheduler->m_dispatchTime + timeout;
         SelectStep(m_currentStep, &ConnectStationJob::WaitRequestAck, "ConnectStationJob::WaitRequestAck");
         return MakeExecuteResult(cExecuteKindNextStep);
     }
@@ -170,68 +175,82 @@ ConnectStationJob::ExecuteResult ConnectStationJob::SendConnectionRequest()
 
 ConnectStationJob::ExecuteResult ConnectStationJob::WaitRequestAck()
 {
-    if (!g_piaResendingMessageManager->CheckNowResending(m_requestAckId))
+    if (g_piaResendingMessageManager->CheckNowResending(m_requestAckId))
     {
-        SelectStep(m_currentStep, &ConnectStationJob::WaitForConnection, "ConnectStationJob::WaitForConnection");
-        m_requestAckId = 0;
-        return MakeExecuteResult(cExecuteKindContinue);
-    }
-    if (CheckContextCallCancelled())
-    {
-        g_piaResendingMessageManager->StopResending(m_requestAckId);
-        m_requestAckId = 0;
-        if (m_station && m_station->m_field20 == 4)
-            m_station->m_field20 = 6;
-        return MakeExecuteResult(cExecuteKindFinished);
-    }
-    if (CheckTimeout() || CheckErrorOccurred())
-    {
-        g_piaResendingMessageManager->StopResending(m_requestAckId);
-        m_requestAckId = 0;
-        SelectStep(m_currentStep, &ConnectStationJob::ConnectionFailed, "ConnectStationJob::ConnectionFailed");
-        return MakeExecuteResult(cExecuteKindContinue);
-    }
-    if (m_station->m_field20 == 5)
-    {
-        g_piaResendingMessageManager->StopResending(m_requestAckId);
-        m_requestAckId = 0;
-        SelectStep(m_currentStep, &ConnectStationJob::ConnectionSucceeded, "ConnectStationJob::ConnectionSucceeded");
-        return MakeExecuteResult(cExecuteKindContinue);
-    }
-    if (m_connectionRejection)
-    {
-        if (m_context)
+        if (CheckContextCallCancelled())
         {
-            if (static_cast<unsigned int>(m_context->m_state) - 2 > 2)
-                m_context->SignalFailure(m_connectionRejection == 1 ? 0xc24 :
-                    m_connectionRejection == 2 ? 0x10c25 : 0xc23);
-            m_context = 0;
+            g_piaResendingMessageManager->StopResending(m_requestAckId);
+            m_requestAckId = 0;
+            if (m_station && m_station->m_field20 == 4)
+                m_station->m_field20 = 6;
+            return MakeExecuteResult(cExecuteKindFinished);
         }
-        g_piaResendingMessageManager->StopResending(m_requestAckId);
-        m_requestAckId = 0;
-        if (m_station && m_station->m_field20 == 4)
-            m_station->m_field20 = 6;
-        return MakeExecuteResult(cExecuteKindFinished);
+        if (CheckTimeout() || CheckErrorOccurred())
+        {
+            g_piaResendingMessageManager->StopResending(m_requestAckId);
+            m_requestAckId = 0;
+            SelectStep(m_currentStep, &ConnectStationJob::ConnectionFailed, "ConnectStationJob::ConnectionFailed");
+            return MakeExecuteResult(cExecuteKindContinue);
+        }
+        if (m_station->m_field20 == 5)
+        {
+            g_piaResendingMessageManager->StopResending(m_requestAckId);
+            m_requestAckId = 0;
+            SelectStep(m_currentStep, &ConnectStationJob::ConnectionSucceeded, "ConnectStationJob::ConnectionSucceeded");
+            return MakeExecuteResult(cExecuteKindContinue);
+        }
+        if (m_connectionRejection)
+        {
+            if (m_context)
+            {
+                if (static_cast<unsigned int>(m_context->m_state) - 2 > 2)
+                {
+                    switch (m_connectionRejection)
+                    {
+                    case 1:
+                        m_context->SignalFailure(cResultConnectionRefused);
+                        break;
+                    case 2:
+                        m_context->SignalFailure(cResultConnectionFailed10c25);
+                        break;
+                    default:
+                        m_context->SignalFailure(cResultConnectionFailed);
+                        break;
+                    }
+                }
+                m_context = 0;
+            }
+            g_piaResendingMessageManager->StopResending(m_requestAckId);
+            m_requestAckId = 0;
+            if (m_station && m_station->m_field20 == 4)
+                m_station->m_field20 = 6;
+            return MakeExecuteResult(cExecuteKindFinished);
+        }
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
-    return MakeExecuteResult(cExecuteKindNextStep);
+    SelectStep(m_currentStep, &ConnectStationJob::WaitForConnection, "ConnectStationJob::WaitForConnection");
+    m_requestAckId = 0;
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 ConnectStationJob::ExecuteResult ConnectStationJob::WaitForConnection()
 {
-    if (m_station->m_field20 == 5)
+    if (m_station->m_field20 != 5)
     {
-        SelectStep(m_currentStep, &ConnectStationJob::ConnectionSucceeded, "ConnectStationJob::ConnectionSucceeded");
-        return MakeExecuteResult(cExecuteKindContinue);
-    }
-    if (CheckContextCallCancelled())
-    {
-        if (m_station && m_station->m_field20 == 4)
-            m_station->m_field20 = 6;
-        return MakeExecuteResult(cExecuteKindFinished);
-    }
-    if (!CheckTimeout() && !CheckErrorOccurred())
+        if (CheckContextCallCancelled())
+        {
+            if (m_station && m_station->m_field20 == 4)
+                m_station->m_field20 = 6;
+            return MakeExecuteResult(cExecuteKindFinished);
+        }
+        if (CheckTimeout() || CheckErrorOccurred())
+        {
+            SelectStep(m_currentStep, &ConnectStationJob::ConnectionFailed, "ConnectStationJob::ConnectionFailed");
+            return MakeExecuteResult(cExecuteKindContinue);
+        }
         return MakeExecuteResult(cExecuteKindNextStep);
-    SelectStep(m_currentStep, &ConnectStationJob::ConnectionFailed, "ConnectStationJob::ConnectionFailed");
+    }
+    SelectStep(m_currentStep, &ConnectStationJob::ConnectionSucceeded, "ConnectStationJob::ConnectionSucceeded");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -240,7 +259,7 @@ ConnectStationJob::ExecuteResult ConnectStationJob::ConnectionFailed()
     if (m_station && m_station->m_field20 == 4)
         m_station->m_field20 = 6;
     if (m_context && static_cast<unsigned int>(m_context->m_state) - 2 > 2)
-        m_context->SignalFailure(0xc23);
+        m_context->SignalFailure(cResultConnectionFailed);
     m_context = 0;
     return MakeExecuteResult(cExecuteKindFinished);
 }
@@ -254,7 +273,7 @@ ConnectStationJob::ExecuteResult ConnectStationJob::ConnectionSucceeded()
         SelectStep(m_currentStep, &ConnectStationJob::ConnectionFailed, "ConnectStationJob::ConnectionFailed");
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    if (static_cast<int>(m_station->m_field10) < 32)
+    if (static_cast<int>(m_station->m_field10) <= 31)
         g_piaTransport->OutputStreamUpdateEvent();
     if (m_context && static_cast<unsigned int>(m_context->m_state) - 2 > 2)
         m_context->SignalSuccess(0);
@@ -273,9 +292,10 @@ ConnectStationJob::ExecuteResult ConnectStationJob::SendRelayConnectionRequest()
     if (SendRelayConnectionRequestMessage())
     {
         m_connectionRejection = 0;
-        m_connectionDeadline.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick +
-            common::TimeSpan::GetTicksPerMSec().m_tick * m_timeoutMsec;
+        const common::TimeSpan timeout = common::TimeSpan::FromMSec(m_timeoutMsec);
+        m_connectionDeadline = common::g_piaJobScheduler->m_dispatchTime + timeout;
         SelectStep(m_currentStep, &ConnectStationJob::WaitRequestAck, "ConnectStationJob::WaitRequestAck");
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     return MakeExecuteResult(cExecuteKindNextStep);
 }
@@ -287,11 +307,13 @@ bool ConnectStationJob::SendConnectionRequestMessage()
     StationProtocol* protocol = m_station->m_field28;
 
     unsigned long long principalId;
-    if (m_station->GetPrincipalId(&principalId) != 0)
+    Result result = m_station->GetPrincipalId(&principalId);
+    if (result != 0)
         return false;
 
     StationConnectionInfo info;
-    if (g_stationConnectionInfoTable->GetStationConnectionInfo(m_station, &info) != 0)
+    result = g_stationConnectionInfoTable->GetStationConnectionInfo(m_station, &info);
+    if (result != 0)
         return false;
 
     unsigned char buffer[128] = {};
@@ -300,21 +322,27 @@ bool ConnectStationJob::SendConnectionRequestMessage()
                                          m_station->m_field55, false, m_secure);
 
     common::StationAddress stationAddress;
-    const int stationIndex = static_cast<int>(m_station->m_field10);
-    if (g_piaTransport->m_relayRouteManager != 0 || stationIndex == 254)
+    if (g_piaTransport->m_relayRouteManager == 0 && static_cast<int>(m_station->m_field10) != cStationIndexReserved)
+    {
+        if (static_cast<int>(m_station->m_field10) <= 31)
+        {
+            const StationIndex stationIndex = static_cast<StationIndex>(m_station->m_field10);
+            if (stationIndex != pia::cStationIndexInvalid)
+            {
+                return g_piaResendingMessageManager->SetSendMessageByStationIndex(
+                    &m_requestAckId, buffer, protocol->GetConnectionRequestDataSize(),
+                    stationIndex, protocol->mProtocolId, false, 0) == 0;
+            }
+        }
+        else
+        {
+            stationAddress = m_station->m_stationAddress;
+        }
+    }
+    else
     {
         stationAddress = m_station->m_stationAddress;
-        return g_piaResendingMessageManager->SetSendMessageByStationAddress(
-            &m_requestAckId, buffer, protocol->GetConnectionRequestDataSize(),
-            stationAddress, protocol->mProtocolId, 0) == 0;
     }
-    if (stationIndex <= 31)
-    {
-        return g_piaResendingMessageManager->SetSendMessageByStationIndex(
-            &m_requestAckId, buffer, protocol->GetConnectionRequestDataSize(),
-            static_cast<StationIndex>(stationIndex), protocol->mProtocolId, false, 0) == 0;
-    }
-    stationAddress = m_station->m_stationAddress;
     return g_piaResendingMessageManager->SetSendMessageByStationAddress(
         &m_requestAckId, buffer, protocol->GetConnectionRequestDataSize(), stationAddress,
         protocol->mProtocolId, 0) == 0;
@@ -327,20 +355,23 @@ bool ConnectStationJob::SendRelayConnectionRequestMessage()
     StationProtocol* protocol = m_station->m_field28;
 
     unsigned long long principalId;
-    if (m_station->GetPrincipalId(&principalId) != 0)
+    Result result = m_station->GetPrincipalId(&principalId);
+    if (result != 0)
         return false;
 
     StationConnectionInfo info;
-    if (g_stationConnectionInfoTable->GetStationConnectionInfo(m_station, &info) != 0)
+    result = g_stationConnectionInfoTable->GetStationConnectionInfo(m_station, &info);
+    if (result != 0)
         return false;
 
     unsigned char buffer[128] = {};
     protocol->MakeConnectionRequestData(buffer, m_station->m_field54, principalId,
                                          static_cast<unsigned int>(info.m_stationLocation.m_field18),
                                          m_station->m_field55, true, m_secure);
-    return g_piaResendingMessageManager->SetSendMessageByStationIndex(
+    result = g_piaResendingMessageManager->SetSendMessageByStationIndex(
         &m_requestAckId, buffer, protocol->GetConnectionRequestDataSize(),
-        static_cast<StationIndex>(m_station->m_field10), protocol->mProtocolId, false, 0) == 0;
+        static_cast<StationIndex>(m_station->m_field10), protocol->mProtocolId, false, 0);
+    return result == 0;
 }
 
 }}}

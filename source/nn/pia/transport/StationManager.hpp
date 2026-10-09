@@ -2,7 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_STATIONMANAGER_HPP
 
 #include "nn/pia.h"
-#include "nn/pia/ListBase.hpp"
+#include "nn/pia/common/PooledList.hpp"
 #include "nn/pia/common/SimpleContainer.hpp"
 #include <cstddef>
 
@@ -48,18 +48,17 @@ public:
     void Trace(unsigned long long) const;
 
 public:
-    common::ListBase m_stationList;
-    common::ListBase m_freeStationList;
-    unsigned int m_stationOffset;
-    unsigned char* m_stationPool;
-    unsigned int m_stationNum;
+    typedef common::PooledList<Station> StationList;
+
+    StationList m_stationList;
     unsigned char* m_stationStorage;
     common::SimpleContainer<Station*, cStationNumMax> m_stations;
     common::SimpleContainer<Station*, cStationNumMax> m_freeStations;
     Station* m_localStation;
     StationIndex m_invalidStationIndex;
+
+    static StationManager* s_pInstance;
 };
-extern StationManager* g_piaStationManager;
 }
 }
 }

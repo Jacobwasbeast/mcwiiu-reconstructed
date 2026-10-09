@@ -2,6 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_RTT_PROTOCOL_HPP
 
 #include "nn/pia/Reconstruction.hpp"
+#include "nn/pia/common/ISerializable.hpp"
 #include "nn/pia/transport/RttCalculator.hpp"
 
 namespace nn { namespace pia { namespace common {
@@ -15,18 +16,23 @@ class ProtocolMessageReader;
 class RttProtocol : public Protocol
 {
 public:
-    class Data
+    class Data : public common::ISerializable
     {
     public:
-        virtual ~Data();
-        virtual Result Deserialize(const unsigned char* buffer);
+        virtual ~Data()
+        {
+        }
+
         virtual Result Serialize(unsigned char* buffer, unsigned int* size) const;
+        virtual Result Deserialize(const unsigned char* buffer);
         virtual unsigned int GetSerializedSize() const;
 
         unsigned int m_type;
         unsigned int m_sequence;
         unsigned long long m_timestamp;
     };
+
+    enum { cProtocolType = 0x58 };
 
     RttProtocol();
     virtual ~RttProtocol();
@@ -57,12 +63,11 @@ public:
 
 private:
     unsigned char m_data[16];
-    int m_stationIndex;
-    unsigned int m_stationIdHigh;
-    unsigned int m_stationIdLow;
+    unsigned int m_stationIndex;
+    unsigned long long m_stationId;
     RttCalculator* m_rttCalculators;
     unsigned short m_stationCount;
-    unsigned char m_isStarConnection;
+    unsigned char m_isBroadcastSupported;
 
 };
 

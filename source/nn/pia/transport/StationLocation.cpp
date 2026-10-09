@@ -32,15 +32,15 @@ StationLocation::~StationLocation()
 void StationLocation::SetStationLocation(const StationLocation& other)
 {
     m_stationAddress = other.m_stationAddress;
+    m_field20 = other.m_field20;
     m_principalId = other.m_principalId;
     m_field18 = other.m_field18;
     m_field1c = other.m_field1c;
-    m_field20 = other.m_field20;
     m_field21 = other.m_field21;
     m_field22 = other.m_field22;
+    m_field25 = other.m_field25;
     m_field23 = other.m_field23;
     m_field24 = other.m_field24;
-    m_field25 = other.m_field25;
     m_field26 = other.m_field26;
     m_inetAddress = other.m_inetAddress;
 }
@@ -59,14 +59,17 @@ void StationLocation::SetStationAddress(const common::StationAddress& address)
 
 bool StationLocation::operator==(const StationLocation& other) const
 {
-    return m_stationAddress == other.m_stationAddress &&
-           m_principalId == other.m_principalId &&
-           m_field18 == other.m_field18 && m_field1c == other.m_field1c &&
-           m_field25 == other.m_field25 && m_field20 == other.m_field20 &&
-           m_field21 == other.m_field21 && m_field22 == other.m_field22 &&
-           m_field23 == other.m_field23 && m_field24 == other.m_field24 &&
-           m_field26 == other.m_field26 &&
-           m_inetAddress.GetKey() == other.m_inetAddress.GetKey();
+    if (m_stationAddress == other.m_stationAddress &&
+        m_principalId == other.m_principalId &&
+        m_field18 == other.m_field18 && m_field1c == other.m_field1c &&
+        m_field25 == other.m_field25 && m_field20 == other.m_field20 &&
+        m_field21 == other.m_field21 && m_field22 == other.m_field22 &&
+        m_field23 == other.m_field23 && m_field24 == other.m_field24 &&
+        m_field26 == other.m_field26 && m_inetAddress == other.m_inetAddress)
+    {
+        return true;
+    }
+    return false;
 }
 
 unsigned int StationLocation::GetSerializedSize() const

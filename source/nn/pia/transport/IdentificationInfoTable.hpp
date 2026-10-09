@@ -1,14 +1,9 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_IDENTIFICATION_INFO_TABLE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_IDENTIFICATION_INFO_TABLE_HPP
 
-#include <new>
-
-#include <boost/type_traits/aligned_storage.hpp>
-#include <boost/type_traits/alignment_of.hpp>
-
 #include "nn/pia.h"
 #include "nn/pia/Common.hpp"
-#include "nn/pia/ListBase.hpp"
+#include "nn/pia/common/PooledList.hpp"
 #include "nn/pia/String.hpp"
 #include "nn/pia/transport/Station.hpp"
 
@@ -67,55 +62,9 @@ private:
         const Station* m_station;
     };
 
-    struct Slot
-    {
-        Slot() { m_node.prev = 0; m_node.next = 0; }
+    typedef common::FixedPooledList<Record, 32> RecordPool;
 
-        Record* GetRecord() { return reinterpret_cast<Record*>(&m_recordStorage); }
-
-        common::ListNode m_node;
-        boost::aligned_storage<sizeof(Record), boost::alignment_of<Record>::value>::type
-            m_recordStorage;
-    };
-
-    struct OffsetList : public common::ListBase
-    {
-        OffsetList() : m_offset(-1) {}
-
-        int m_offset;
-    };
-
-    struct SlotPoolBase
-    {
-        SlotPoolBase() : m_slots(0), m_slotCount(0) { m_freeSlots.m_offset = 0; }
-
-        common::ListBase m_usedSlots;
-        OffsetList m_freeSlots;
-        Slot* m_slots;
-        unsigned int m_slotCount;
-    };
-
-    struct SlotPool : public SlotPoolBase
-    {
-        SlotPool()
-        {
-            m_freeSlots.m_offset = 0;
-            m_slots = reinterpret_cast<Slot*>(m_storage);
-            m_slotCount = 32;
-            for (unsigned int i = 0; i < m_slotCount; ++i)
-            {
-                Slot* slot = new (&m_slots[i]) Slot();
-                m_freeSlots.InsertBeforeNode(
-                    m_freeSlots.Sentinel(),
-                    reinterpret_cast<common::ListNode*>(
-                        reinterpret_cast<char*>(slot) + m_freeSlots.m_offset));
-            }
-        }
-
-        unsigned char m_storage[32 * sizeof(Slot)];
-    };
-
-    SlotPool m_pool;
+    RecordPool m_pool;
     unsigned short m_count;
     common::CriticalSection m_criticalSection;
 };

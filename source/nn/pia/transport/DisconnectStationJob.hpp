@@ -1,11 +1,13 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_DISCONNECT_STATION_JOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_TRANSPORT_DISCONNECT_STATION_JOB_HPP
 
-#include "nn/pia.h"
+#include "nn/pia/Common.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/common/Time.hpp"
 
 namespace nn { namespace pia { namespace transport {
+
+class Station;
 
 class DisconnectStationJob : public common::StepSequenceJob
 {

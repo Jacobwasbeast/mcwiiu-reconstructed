@@ -21,7 +21,6 @@ public:
     };
 
     TransportThreadStream();
-    virtual ~TransportThreadStream();
     Result InitializeCore(const char* name, int priority, unsigned int packetNum,
                           unsigned int latencyEntryNum, bool isPacketLossEnabled,
                           unsigned int streamIndex);
@@ -35,8 +34,9 @@ public:
     void ThreadFunc(pead::Thread* thread, int message);
     void Trace(unsigned long long value) const;
 
-    virtual void OnStartup();
+    virtual void OnStartup() {}
     virtual Result ProcessOne() = 0;
+    virtual ~TransportThreadStream();
 
     pead::Delegate2<TransportThreadStream, pead::Thread*, int> m_threadDelegate;
     pead::Thread* m_thread;

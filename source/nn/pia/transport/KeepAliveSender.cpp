@@ -29,7 +29,7 @@ unsigned int KeepAliveSender::Update(unsigned int stationBitmap, const common::T
 {
     if (!m_enabled)
         return 0;
-    StationManager* manager = g_piaStationManager;
+    StationManager* manager = StationManager::s_pInstance;
     const Station* localStation = manager->m_localStation;
     if (localStation == 0)
         return 0;

@@ -8,7 +8,10 @@ class StationConnectionInfo;
 class MissingStationHandler
 {
 public:
-    virtual ~MissingStationHandler();
+    virtual ~MissingStationHandler()
+    {
+    }
+
     virtual void Execute(StationConnectionInfo* connectionInfo);
 };
 

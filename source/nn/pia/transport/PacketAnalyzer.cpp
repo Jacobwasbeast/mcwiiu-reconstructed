@@ -2,31 +2,20 @@
 
 #include <string.h>
 
+#include "nn/pia/common/Math.hpp"
 #include "nn/pia/common/TimeSpan.hpp"
+#include "nn/pia/PayloadSizeManager.hpp"
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/common/Packet.hpp"
 #include "nn/pia/transport/ProtocolMessageReader.hpp"
 
 namespace nn { namespace pia { namespace transport {
 
-static common::Time getTime()
-{
-    if (g_piaTransport != 0)
-        return g_piaTransport->m_time;
-    common::Time time;
-    time.SetNow();
-    return time;
-}
-
 PacketAnalyzer::PacketAnalyzer(const char* name, unsigned int headerSize)
     : PacketAnalysisData(), m_criticalSection(-1), m_startedUp(false),
       m_headerSize(headerSize)
 {
-    unsigned int length = 0;
-    while (name[length] != '\0')
-        ++length;
-    if (length > cNameLengthMax - 1)
-        length = cNameLengthMax - 1;
+    const unsigned int length = common::minimum<unsigned int>(strlen(name), cNameLengthMax - 1);
     memcpy(m_name, name, length);
     m_name[length] = '\0';
 }
@@ -34,6 +23,22 @@ PacketAnalyzer::PacketAnalyzer(const char* name, unsigned int headerSize)
 PacketAnalyzer::~PacketAnalyzer()
 {
 }
+
+}}}
+
+namespace
+{
+    nn::pia::common::Time getTime()
+    {
+        if (nn::pia::transport::g_piaTransport != 0)
+            return nn::pia::transport::g_piaTransport->m_time;
+        nn::pia::common::Time time;
+        time.SetNow();
+        return time;
+    }
+}
+
+namespace nn { namespace pia { namespace transport {
 
 Result PacketAnalyzer::Startup()
 {
@@ -65,39 +70,36 @@ Result PacketAnalyzer::UpdatePacketAnalysisData(
         return static_cast<Result>(0x10c07);
 
     m_criticalSection.Lock();
-    const unsigned int count = (!isRelay || isSingleCount) ? 1 :
-        static_cast<unsigned int>(packet.GetPacketNumInNetwork());
     unsigned int offset = 0;
-    const unsigned int payloadSize = packet.m_size - common::Packet::cHeaderSize;
-    while (offset < payloadSize - 0x24U)
+    const unsigned int count = (isRelay && !isSingleCount) ?
+        static_cast<unsigned int>(packet.GetPacketNumInNetwork()) : 1;
+    while (offset < packet.m_size - common::Packet::cHeaderSize)
     {
         ProtocolMessageReader reader;
         reader.Attach(packet, offset);
         if (reader.m_message == 0)
             break;
 
-        const unsigned int messageSize = (reader.m_messageSize + 0x17U) & ~3U;
+        const unsigned int messageSize = ((reader.m_messageSize + 0x17U) & ~3U) + 4U;
         const ProtocolId protocolId(reader.m_header.m_protocolId);
         int index = GetIndex(protocolId);
-        if (index < 0)
+        if (index == -1)
             index = CreateIndex(protocolId);
-        if (index >= 0)
+        if (index != -1)
         {
-            Entry& entry = m_entries[index];
-            const unsigned int bytes = count * (messageSize + 4U);
-            entry.m_packetNum += count;
-            entry.m_packetSize += bytes;
-            entry.m_totalPacketNum += count;
-            entry.m_totalPacketSize += bytes;
+            m_entries[index].m_packetNum += count;
+            m_entries[index].m_packetSize += count * messageSize;
+            m_entries[index].m_totalPacketNum += count;
+            m_entries[index].m_totalPacketSize += count * messageSize;
         }
-        offset += messageSize + 4U;
+        offset += messageSize;
     }
 
-    const unsigned int packetBytes = count * (packet.m_size + m_headerSize);
+    const unsigned int signatureSize = common::g_payloadSizeManager->m_signatureSize;
     m_packetNum += count;
-    m_packetSize += packetBytes;
     m_totalPacketNum += count;
-    m_totalPacketSize += packetBytes;
+    m_packetSize += count * (packet.m_size + signatureSize + m_headerSize);
+    m_totalPacketSize += count * (packet.m_size + signatureSize + m_headerSize);
     m_criticalSection.Unlock();
     return 0;
 }
@@ -121,8 +123,7 @@ Result PacketAnalyzer::GetPacketAnalysisData(
 
     const common::Time now = getTime();
     packetAnalysisData->m_passedMilliSecond = static_cast<unsigned int>(
-        (now.m_tick - m_startTime.m_tick) /
-        static_cast<unsigned long long>(common::TimeSpan::GetTicksPerMSec().m_tick));
+        (now - m_startTime).m_tick / common::TimeSpan::GetTicksPerMSec().m_tick);
     return 0;
 }
 

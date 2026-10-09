@@ -58,6 +58,7 @@ public:
     Result GetParticipantCount(unsigned char* count);
     bool IsConnectionRouteRelay() const;
     bool IsConnectionRouteDirect() const;
+    common::StationAddress& GetStationAddress() { return m_stationAddress; }
     unsigned char m_field0;
     common::StationAddress m_stationAddress;
     unsigned int m_field10;
@@ -88,6 +89,7 @@ struct Station::IdentificationToken
 struct Station::PlayerInfo
 {
     PlayerInfo();
+    ~PlayerInfo();
 
     common::FixedString<20> m_name;
     unsigned char m_language;

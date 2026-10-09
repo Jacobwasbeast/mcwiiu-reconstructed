@@ -3,6 +3,7 @@
 #include "nn/pia/HeapManager.hpp"
 #include "nn/pia/transport/ProtocolEvent.hpp"
 #include "nn/pia/transport/ReliableSlidingWindow.hpp"
+#include "nn/pia/transport/Station.hpp"
 #include "nn/pia/transport/StationManager.hpp"
 #include "platform/wiiu/pead.hpp"
 #include <new>
@@ -17,8 +18,7 @@ static unsigned int g_reliableProtocolResendParam2 = 0;
 ReliableProtocol::ReliableProtocol()
     : Protocol(),
       m_field14(0xfd),
-      m_field18(0),
-      m_field1c(0),
+      m_localStationId(0),
       m_field20(0),
       m_field24(0),
       m_field28(0),
@@ -52,11 +52,10 @@ unsigned short ReliableProtocol::GetProtocolType() const
 void ReliableProtocol::Finalize()
 {
     m_field14 = 0xfd;
-    m_field1c = 0;
+    m_localStationId = 0;
     m_field20 = 0;
     m_field2c = 0;
     m_field30 = 0;
-    m_field18 = 0;
     if (m_field24 != 0)
     {
         unsigned char* array = m_field24;
@@ -75,11 +74,10 @@ void ReliableProtocol::Finalize()
 Result ReliableProtocol::Initialize(unsigned int a1, unsigned int a2)
 {
     if (m_field24 != 0)
-        return 0x10c02;
+        return ResultAlreadyInitialized();
 
     m_field14 = 0xfd;
-    m_field18 = 0;
-    m_field1c = 0;
+    m_localStationId = 0;
     unsigned int stationNum = g_piaTransport->m_stationNum;
     m_field20 = stationNum;
     int count = static_cast<int>(stationNum) - 1;
@@ -135,22 +133,18 @@ Result ReliableProtocol::StartupWithStationAddress(const common::StationAddress&
     if (m_field14 != 0xfd)
         return 0x10c08;
 
-    void* station = g_piaStationManager->GetStation(address);
+    Station* station = StationManager::s_pInstance->GetStation(address);
     if (station == 0)
         return 0x10c07;
 
-    const unsigned char* raw = reinterpret_cast<const unsigned char*>(station);
-    int stationIndex = *reinterpret_cast<const int*>(raw + 0x10);
+    int stationIndex = static_cast<int>(station->m_field10);
     if (stationIndex < 0 || stationIndex >= static_cast<int>(m_field20))
         return 0x10c07;
 
     m_field14 = stationIndex;
-    unsigned int hi = *reinterpret_cast<const unsigned int*>(raw + 0x18);
-    unsigned int lo = *reinterpret_cast<const unsigned int*>(raw + 0x1c);
     m_field30 = 0;
-    m_field1c = lo;
+    m_localStationId = station->m_stationId;
     m_field28 = 0;
-    m_field18 = hi;
     g_reliableProtocolSendFailCount = 0;
     return 0;
 }
@@ -159,11 +153,10 @@ void ReliableProtocol::CleanupWithStationAddress()
 {
     if (m_field14 != 0xfd)
     {
-        int count = static_cast<int>(m_field20) - 1;
         m_field14 = 0xfd;
-        m_field1c = 0;
-        m_field18 = 0;
+        m_localStationId = 0;
         m_field30 = 0;
+        int count = static_cast<int>(m_field20) - 1;
         for (int i = 0; i != count; ++i)
         {
             if (reinterpret_cast<ReliableSlidingWindow*>(m_field24)[i].IsInCommunication())
@@ -175,11 +168,10 @@ void ReliableProtocol::CleanupWithStationAddress()
 Result ReliableProtocol::UpdateProtocolEvent(const ProtocolEvent& event)
 {
     if (m_field14 == 0xfd)
-        return 0x10c08;
+        return ResultInvalidState();
 
-    void* station = g_piaStationManager->GetStation(event.m_stationAddress);
-    const unsigned char* stationRaw = reinterpret_cast<const unsigned char*>(station);
-    int stationIndex = *reinterpret_cast<const int*>(stationRaw + 0x10);
+    Station* station = StationManager::s_pInstance->GetStation(event.m_stationAddress);
+    int stationIndex = static_cast<int>(station->m_field10);
 
     if (stationIndex < 0 || stationIndex >= static_cast<int>(m_field20))
         return 0x10c07;
@@ -192,14 +184,8 @@ Result ReliableProtocol::UpdateProtocolEvent(const ProtocolEvent& event)
     case 0:
     {
         unsigned short protocolIdValue = mProtocolId;
-        unsigned int remoteHi = *reinterpret_cast<const unsigned int*>(stationRaw + 0x18);
-        unsigned int remoteLo = *reinterpret_cast<const unsigned int*>(stationRaw + 0x1c);
-        unsigned long long localStationId =
-            (static_cast<unsigned long long>(m_field18) << 32) | m_field1c;
-        unsigned long long remoteStationId =
-            (static_cast<unsigned long long>(remoteHi) << 32) | remoteLo;
         return window->Startup(reinterpret_cast<StationPacketHandler*>(GetStationPacketHandler()),
-                                protocolIdValue, localStationId, remoteStationId);
+                                protocolIdValue, m_localStationId, station->m_stationId);
     }
     case 1:
         window->Cleanup();
@@ -210,17 +196,13 @@ Result ReliableProtocol::UpdateProtocolEvent(const ProtocolEvent& event)
 
 ReliableSlidingWindow* ReliableProtocol::GetSlidingWindow(StationIndex stationIndex)
 {
-    int index = stationIndex;
-    if (index >= m_field14)
-        index = index - 1;
+    int index = stationIndex < m_field14 ? stationIndex : stationIndex - 1;
     return reinterpret_cast<ReliableSlidingWindow*>(m_field24) + index;
 }
 
 const ReliableSlidingWindow* ReliableProtocol::GetSlidingWindow(StationIndex stationIndex) const
 {
-    int index = stationIndex;
-    if (index >= m_field14)
-        index = index - 1;
+    int index = stationIndex < m_field14 ? stationIndex : stationIndex - 1;
     return reinterpret_cast<const ReliableSlidingWindow*>(m_field24) + index;
 }
 
@@ -228,11 +210,11 @@ Result ReliableProtocol::Send(StationIndex stationIndex, const void* data, unsig
 {
     unsigned char* array = m_field24;
     if (array == 0)
-        return 0x10c08;
+        return ResultInvalidState();
     if (m_field14 == 0xfd)
         return 0x2c26;
     if (stationIndex == m_field14)
-        return 0x10c07;
+        return ResultInvalidArgument();
 
     if (stationIndex == static_cast<StationIndex>(0xff))
     {
@@ -325,7 +307,7 @@ Result ReliableProtocol::Receive(unsigned long long* stationId, void* buffer, un
                                   unsigned int bufferSize)
 {
     if (stationId == 0)
-        return 0x10c07;
+        return ResultInvalidArgument();
     if (m_field14 == 0xfd)
         return 0x2c26;
 

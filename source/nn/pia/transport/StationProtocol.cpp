@@ -87,7 +87,7 @@ void StationProtocol::SendDenyingConnectionResponse(const common::StationAddress
 {
     ProtocolId protocolId = mProtocolId;
     ProtocolMessageWriter* writer =
-        reinterpret_cast<PacketHandler*>(mStationPacketHandler)->AssignByStationAddress(
+        mStationPacketHandler->AssignByStationAddress(
             protocolId, address, 17, false, false);
     if (writer)
     {
@@ -98,7 +98,7 @@ void StationProtocol::SendDenyingConnectionResponse(const common::StationAddress
         writer->WriteU8(0, 4);
         writer->WriteU64(principalId, 5);
         writer->WriteU32(infoField, 13);
-        reinterpret_cast<PacketHandler*>(mStationPacketHandler)->Commit();
+        mStationPacketHandler->Commit();
     }
 }
 
@@ -106,7 +106,7 @@ void StationProtocol::SendAck(unsigned int value, StationIndex stationIndex)
 {
     ProtocolId protocolId = mProtocolId;
     StationPacketHandler* handler =
-        reinterpret_cast<StationPacketHandler*>(GetStationPacketHandler());
+        static_cast<StationPacketHandler*>(GetStationPacketHandler());
     ProtocolMessageWriter* writer =
         handler->AssignByStationIndex(protocolId, stationIndex, 8, false, false, true);
     if (writer)
@@ -115,7 +115,7 @@ void StationProtocol::SendAck(unsigned int value, StationIndex stationIndex)
         message[0] = cMessageTypeAck;
         common::serializeU32(message + 4, value);
         writer->SetPayload(message);
-        reinterpret_cast<PacketHandler*>(mStationPacketHandler)->Commit();
+        mStationPacketHandler->Commit();
     }
 }
 
@@ -123,7 +123,7 @@ void StationProtocol::SendAck(unsigned int value, const common::StationAddress& 
 {
     ProtocolId protocolId = mProtocolId;
     ProtocolMessageWriter* writer =
-        reinterpret_cast<PacketHandler*>(mStationPacketHandler)->AssignByStationAddress(
+        mStationPacketHandler->AssignByStationAddress(
             protocolId, address, 8, false, false);
     if (writer)
     {
@@ -131,13 +131,13 @@ void StationProtocol::SendAck(unsigned int value, const common::StationAddress& 
         message[0] = cMessageTypeAck;
         common::serializeU32(message + 4, value);
         writer->SetPayload(message);
-        reinterpret_cast<PacketHandler*>(mStationPacketHandler)->Commit();
+        mStationPacketHandler->Commit();
     }
 }
 
 void StationProtocol::ParseConnectionRequestCommon(const ReceivedMessageAccessor& message, bool relay)
 {
-    if (g_piaStationManager->m_localStation == 0)
+    if (StationManager::s_pInstance->m_localStation == 0)
         return;
     const unsigned char* data = message.m_message;
     if (data[2] != 8)
@@ -206,7 +206,7 @@ void StationProtocol::ParseConnectionRequestCommon(const ReceivedMessageAccessor
                     return;
                 }
             }
-            station = g_piaStationManager->GetStation(message.m_stationAddress);
+            station = StationManager::s_pInstance->GetStation(message.m_stationAddress);
             if (location.m_stationAddress.IsValid() && station == 0)
             {
                 station = g_stationConnectionInfoTable->GetStation(
@@ -237,7 +237,7 @@ void StationProtocol::ParseConnectionRequestCommon(const ReceivedMessageAccessor
             return;
         bool creatable = false;
         unsigned long long uniqueId = 0;
-        if (g_piaStationManager->GetValidStationNum() < g_piaTransport->m_stationNum)
+        if (StationManager::s_pInstance->GetValidStationNum() < g_piaTransport->m_stationNum)
         {
             if (location.m_principalId != 0)
                 uniqueId = location.m_principalId;
@@ -262,8 +262,8 @@ void StationProtocol::ParseConnectionRequestCommon(const ReceivedMessageAccessor
         }
         if (uniqueId != 0)
         {
-            for (Station** it = g_piaStationManager->m_stations.data;
-                 it != g_piaStationManager->m_stations.data + g_piaStationManager->m_stations.size;
+            for (Station** it = StationManager::s_pInstance->m_stations.data;
+                 it != StationManager::s_pInstance->m_stations.data + StationManager::s_pInstance->m_stations.size;
                  ++it)
             {
                 if ((*it)->m_stationId == uniqueId)
@@ -275,7 +275,7 @@ void StationProtocol::ParseConnectionRequestCommon(const ReceivedMessageAccessor
                 }
             }
         }
-        station = g_piaStationManager->CreateStation();
+        station = StationManager::s_pInstance->CreateStation();
         station->Startup(relay ? location.m_stationAddress : message.m_stationAddress);
         station->m_field55 = nonce;
         station->m_field20 = 3;
@@ -379,7 +379,7 @@ void StationProtocol::ParseConnectionRequest(const ReceivedMessageAccessor& mess
 
 void StationProtocol::ParseConnectionResponseCommon(const ReceivedMessageAccessor& message, bool relay)
 {
-    if (g_piaStationManager->m_localStation == 0)
+    if (StationManager::s_pInstance->m_localStation == 0)
         return;
     unsigned int ackId =
         g_piaResendingMessageManager->ExtractAckIdFromMessage(message.m_message, message.m_messageSize);
@@ -404,11 +404,11 @@ void StationProtocol::ParseConnectionResponseCommon(const ReceivedMessageAccesso
                 g_stationConnectionInfoTable->m_localStationConnectionInfo.m_stationLocation.m_field18))
             return;
     }
-    Station* station = g_piaStationManager->GetStation(message.m_stationAddress);
+    Station* station = StationManager::s_pInstance->GetStation(message.m_stationAddress);
     if (station == 0)
     {
         Station* candidate =
-            g_piaStationManager->GetStationByStationIdWithoutConvert(message.m_sourceStationId);
+            StationManager::s_pInstance->GetStationByStationIdWithoutConvert(message.m_sourceStationId);
         if (relay)
         {
             station = candidate;
@@ -577,12 +577,12 @@ unsigned int StationProtocol::SendSimpleMessage(unsigned char messageType,
 {
     ProtocolId protocolId = mProtocolId;
     ProtocolMessageWriter* writer =
-        reinterpret_cast<PacketHandler*>(mStationPacketHandler)->AssignByStationAddress(
+        mStationPacketHandler->AssignByStationAddress(
             protocolId, address, 1, false, false);
     if (writer == 0)
         return 0;
     writer->WriteU8(messageType, 0);
-    if (reinterpret_cast<PacketHandler*>(mStationPacketHandler)->Commit() != 0)
+    if (mStationPacketHandler->Commit() != 0)
         return 0;
     return 1;
 }
@@ -594,12 +594,12 @@ void StationProtocol::SendDisconnectionResponse(const common::StationAddress& ad
 
 void StationProtocol::ParseDisconnectionRequest(const ReceivedMessageAccessor& message)
 {
-    if (g_piaStationManager->m_localStation == 0)
+    if (StationManager::s_pInstance->m_localStation == 0)
         return;
     Station* station =
-        g_piaStationManager->GetStationByStationIdWithoutConvert(message.m_sourceStationId);
+        StationManager::s_pInstance->GetStationByStationIdWithoutConvert(message.m_sourceStationId);
     if (station == 0)
-        station = g_piaStationManager->GetStation(message.m_stationAddress);
+        station = StationManager::s_pInstance->GetStation(message.m_stationAddress);
     if (station != 0)
     {
         if (station->m_stationAddress.IsValid())
@@ -617,22 +617,22 @@ void StationProtocol::ParseDisconnectionRequest(const ReceivedMessageAccessor& m
 
 void StationProtocol::ParseDisconnectionResponse(const ReceivedMessageAccessor& message)
 {
-    if (g_piaStationManager->m_localStation == 0)
+    if (StationManager::s_pInstance->m_localStation == 0)
         return;
     Station* station =
-        g_piaStationManager->GetStationByStationIdWithoutConvert(message.m_sourceStationId);
+        StationManager::s_pInstance->GetStationByStationIdWithoutConvert(message.m_sourceStationId);
     if (station == 0)
-        station = g_piaStationManager->GetStation(message.m_stationAddress);
+        station = StationManager::s_pInstance->GetStation(message.m_stationAddress);
     if (station != 0 && station->m_disconnectStationJob->m_waiting)
         station->m_disconnectStationJob->m_waiting = false;
 }
 
 void StationProtocol::ParseAck(const ReceivedMessageAccessor& message)
 {
-    if (g_piaStationManager->m_localStation == 0)
+    if (StationManager::s_pInstance->m_localStation == 0)
         return;
     unsigned int ackId = common::deserializeU32(message.m_message + 4);
-    Station* station = g_piaStationManager->GetStation(message.m_stationAddress);
+    Station* station = StationManager::s_pInstance->GetStation(message.m_stationAddress);
     if (station == 0)
     {
         g_piaResendingMessageManager->StopResending(ackId);
@@ -694,7 +694,7 @@ Result StationProtocol::Dispatch()
     ReceivedMessageAccessor message;
     ProtocolId protocolId = mProtocolId;
     PacketHandler::Iterator& iterator =
-        reinterpret_cast<PacketHandler*>(mStationPacketHandler)->GetIterator(protocolId);
+        mStationPacketHandler->GetIterator(protocolId);
     while (!iterator.IsEndIteration())
     {
         ProtocolMessageReader* reader = iterator.GetMessageReader();
@@ -716,13 +716,13 @@ unsigned int StationProtocol::SendSimpleMessage(unsigned char messageType,
 {
     ProtocolId protocolId = mProtocolId;
     StationPacketHandler* handler =
-        reinterpret_cast<StationPacketHandler*>(GetStationPacketHandler());
+        static_cast<StationPacketHandler*>(GetStationPacketHandler());
     ProtocolMessageWriter* writer =
         handler->AssignByStationIndex(protocolId, stationIndex, 1, relay, false, true);
     if (writer == 0)
         return 0;
     writer->WriteU8(messageType, 0);
-    Result result = reinterpret_cast<PacketHandler*>(mStationPacketHandler)->Commit();
+    Result result = mStationPacketHandler->Commit();
     if (result != 0)
         return 0;
     return 1;
@@ -875,7 +875,7 @@ unsigned int StationProtocol::IsProtocolFilteringEnabled() const
 
 unsigned short StationProtocol::GetProtocolType() const
 {
-    return 0x14;
+    return cProtocolType;
 }
 
 }}}

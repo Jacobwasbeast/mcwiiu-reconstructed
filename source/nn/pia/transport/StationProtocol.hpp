@@ -32,6 +32,7 @@ public:
         cMessageTypeRelayConnectionResponse = 7
     };
 
+    enum { cProtocolType = 0x14 };
     enum { cConnectionRequestHeaderSize = 17 };
     enum { cStationIndexInvalid = 0xfd };
 

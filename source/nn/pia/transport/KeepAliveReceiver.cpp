@@ -17,7 +17,7 @@ void KeepAliveReceiver::Update(unsigned int stationBitmap, const common::Time& t
     if (!m_enabled || stationBitmap == 0)
         return;
 
-    StationManager* manager = g_piaStationManager;
+    StationManager* manager = StationManager::s_pInstance;
     for (unsigned int index = 0; index != StationManager::cStationNumMax; ++index)
     {
         if ((stationBitmap & (1u << index)) == 0)

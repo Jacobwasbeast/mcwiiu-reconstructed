@@ -16,6 +16,20 @@ public:
     class Entry
     {
     public:
+        Entry() {}
+        Entry(const common::Packet& packet, const common::Time& dispatchTime)
+            : m_dispatchTime(dispatchTime)
+        {
+            m_packet.CopyFrom(packet);
+        }
+
+        Entry& operator=(const Entry& other)
+        {
+            m_packet.CopyFrom(other.m_packet);
+            m_dispatchTime = other.m_dispatchTime;
+            return *this;
+        }
+
         common::Packet m_packet;
         common::Time m_dispatchTime;
     };
@@ -33,10 +47,7 @@ public:
     Result Dispatch();
     void Trace(unsigned long long value) const;
 
-    Entry* m_entries;
-    int m_entryNum;
-    int m_head;
-    int m_tail;
+    pead::RingBuffer<Entry> m_entries;
     Entry* m_buffer;
     common::IPacketInput* m_packetInput;
     common::IPacketOutput* m_packetOutput;

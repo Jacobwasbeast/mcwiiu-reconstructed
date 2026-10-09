@@ -1,8 +1,11 @@
 #include "nn/pia/transport/BandwidthCheckProtocol.hpp"
 
-#include "nn/pia/HeapManager.hpp"
+#include "nn/pia/Assert.hpp"
 #include "nn/pia/PayloadSizeManager.hpp"
 #include "nn/pia/Transport.hpp"
+#include "nn/pia/common/Math.hpp"
+#include "nn/pia/common/Memory.hpp"
+#include "nn/pia/common/SessionBeginMonitoringContent.hpp"
 #include "nn/pia/common/TimeSpan.hpp"
 #include "nn/pia/transport/PacketHandler.hpp"
 #include "nn/pia/transport/ProtocolEvent.hpp"
@@ -10,9 +13,7 @@
 #include "nn/pia/transport/ProtocolMessageWriter.hpp"
 #include "nn/pia/transport/Station.hpp"
 #include "nn/pia/transport/StationManager.hpp"
-#include "vendor/__N_36_transport_BandwidthCheckProtocol_cpp_b607135d.hpp"
 #include "nn/pia/transport/StationPacketHandler.hpp"
-#include "platform/wiiu/pead.hpp"
 
 namespace nn { namespace pia { namespace transport {
 
@@ -20,57 +21,74 @@ namespace
 {
 const unsigned int cBulkBufferSize = 0x584;
 const int cPacketOverheadSize = 0x58;
+const int cIpUdpHeaderSize = 0x1c;
+const int cHeaderSize = 16;
 const unsigned long long cTraceCategoryBandwidth = 0x8000;
 
-long long elapsedMilliseconds(const common::Time& start)
+inline common::Time currentTime()
 {
     common::Time now;
     now.SetNow();
-    const long long elapsedTicks = static_cast<long long>(now.m_tick) -
-                                   static_cast<long long>(start.m_tick);
-    const long long ticksPerMillisecond = common::TimeSpan::GetTicksPerMSec().m_tick;
-    return elapsedTicks / ticksPerMillisecond;
+    return now;
 }
 
-unsigned int stationBit(StationIndex index)
+inline int elapsedMilliseconds(const common::Time& start)
 {
-    if (index < 0 || index >= 32)
-        return 0;
-    return 1u << static_cast<unsigned int>(index);
+    common::Time now;
+    now.SetNow();
+    return static_cast<int>(static_cast<long long>(now.m_tick - start.m_tick) /
+                            common::TimeSpan::GetTicksPerMSec().m_tick);
+}
+
+inline void writeU32(unsigned char* buffer, unsigned int value)
+{
+    buffer[0] = static_cast<unsigned char>(value >> 24);
+    buffer[1] = static_cast<unsigned char>((value >> 16) & 0xff);
+    buffer[2] = static_cast<unsigned char>((value >> 8) & 0xff);
+    buffer[3] = static_cast<unsigned char>(value);
+}
+
+inline unsigned int readU32(const unsigned char* buffer)
+{
+    return (static_cast<unsigned int>(buffer[0]) << 24) |
+           (static_cast<unsigned int>(buffer[1]) << 16) |
+           (static_cast<unsigned int>(buffer[2]) << 8) |
+           static_cast<unsigned int>(buffer[3]);
 }
 }
 
 Result BandwidthCheckProtocol::Header::Serialize(unsigned char* buffer,
                                                  unsigned int* size) const
 {
-    if (buffer == 0 || size == 0)
-        return 0x10c07;
-    const unsigned int values[4] = { m_type, m_sequence, m_offset, m_flags };
-    for (unsigned int field = 0; field < 4; ++field)
-    {
-        const unsigned int value = values[field];
-        buffer[field * 4 + 0] = static_cast<unsigned char>(value >> 24);
-        buffer[field * 4 + 1] = static_cast<unsigned char>(value >> 16);
-        buffer[field * 4 + 2] = static_cast<unsigned char>(value >> 8);
-        buffer[field * 4 + 3] = static_cast<unsigned char>(value);
-    }
-    *size = GetSerializedSize();
+    if (buffer == 0)
+        return cResultInvalidArgument;
+    if (size == 0)
+        return cResultInvalidArgument;
+    unsigned char* cursor = buffer;
+    writeU32(cursor, m_type);
+    cursor += 4;
+    writeU32(cursor, m_sequence);
+    cursor += 4;
+    writeU32(cursor, m_offset);
+    cursor += 4;
+    writeU32(cursor, m_flags);
+    cursor += 4;
+    *size = static_cast<unsigned int>(cursor - buffer);
     return 0;
 }
 
 Result BandwidthCheckProtocol::Header::Deserialize(const unsigned char* buffer)
 {
     if (buffer == 0)
-        return 0x10c07;
-    unsigned int* values[4] = { &m_type, &m_sequence, &m_offset, &m_flags };
-    for (unsigned int field = 0; field < 4; ++field)
-    {
-        const unsigned int offset = field * 4;
-        *values[field] = (static_cast<unsigned int>(buffer[offset + 0]) << 24) |
-                         (static_cast<unsigned int>(buffer[offset + 1]) << 16) |
-                         (static_cast<unsigned int>(buffer[offset + 2]) << 8) |
-                         static_cast<unsigned int>(buffer[offset + 3]);
-    }
+        return cResultInvalidArgument;
+    const unsigned char* cursor = buffer;
+    m_type = readU32(cursor);
+    cursor += 4;
+    m_sequence = readU32(cursor);
+    cursor += 4;
+    m_offset = readU32(cursor);
+    cursor += 4;
+    m_flags = readU32(cursor);
     return 0;
 }
 
@@ -95,19 +113,20 @@ BandwidthCheckProtocol::BandwidthCheckProtocol()
 
 BandwidthCheckProtocol::~BandwidthCheckProtocol()
 {
+    PIA_ASSERT(!m_initialized);
 }
 
 void BandwidthCheckProtocol::initSender()
 {
-    m_senderStartTime.m_tick = 0;
-    m_uplinkBitRate = -1;
-    m_senderStation = static_cast<StationIndex>(0xfd);
-    m_bulkPacketSequence = 0;
     m_senderState = SenderState_None;
+    m_senderStartTime.m_tick = 0;
     m_ackReceived = false;
     m_bulkStartTime.m_tick = 0;
-    m_cancelRequested = false;
+    m_uplinkBitRate = -1;
+    m_senderStation = pia::cStationIndexInvalid;
+    m_bulkPacketSequence = 0;
     m_measurementResult = -1;
+    m_cancelRequested = false;
 }
 
 void BandwidthCheckProtocol::initReceiver()
@@ -117,7 +136,7 @@ void BandwidthCheckProtocol::initReceiver()
     m_bulkArrivalTime.m_tick = 0;
     m_responseSentTime.m_tick = 0;
     m_receivedBytes = 0;
-    m_receiverStation = static_cast<StationIndex>(0xfd);
+    m_receiverStation = pia::cStationIndexInvalid;
     m_stationAddress.Clear();
     m_ackSentTime.m_tick = 0;
     m_receiverActive = false;
@@ -129,26 +148,21 @@ void BandwidthCheckProtocol::initReceiver()
 Result BandwidthCheckProtocol::Initialize()
 {
     if (m_initialized)
-        return 0x10c02;
-    pead::Heap* heap = common::HeapManager::GetHeap();
-    unsigned char* buffer = static_cast<unsigned char*>(
-        pead::allocateFromSeadHeap(cBulkBufferSize, heap));
-    if (buffer == 0)
-        return 0x10c01;
-    for (unsigned int index = 0; index < cBulkBufferSize; ++index)
-        buffer[index] = 0;
-    m_bulkBuffer = buffer;
-    m_stationNum = g_piaTransport != 0 ? g_piaTransport->m_stationNum :
-                   (g_piaStationManager != 0 ? g_piaStationManager->m_stationNum : 0);
+        return cResultAlreadyInitialized;
+    m_bulkBuffer = common::NewArray<unsigned char>(cBulkBufferSize);
+    if (m_bulkBuffer == 0)
+        return cResultOutOfMemory;
+    m_stationNum = g_piaTransport->m_stationNum;
     m_activeStationBitmap = 0;
     m_bandwidthCheckedBitmap = 0;
-    m_measurementTime = static_cast<unsigned int>(-1);
-    m_bulkPacketSize = 0;
-    m_completionTimeout = 0;
-    m_measurementCount = 0;
     initSender();
     initReceiver();
+    m_completionTimeout = 0;
+    m_measurementTime = -1;
+    m_isServer = false;
     m_initialized = true;
+    m_bulkPacketSize = 0;
+    m_measurementCount = 0;
     m_activated = false;
     return 0;
 }
@@ -159,12 +173,8 @@ void BandwidthCheckProtocol::Finalize()
         return;
     m_initialized = false;
     m_activated = false;
-    if (m_bulkBuffer != 0)
-    {
-        pead::getArraySize(m_bulkBuffer);
-        pead::freeToSeadHeap(m_bulkBuffer);
-        m_bulkBuffer = 0;
-    }
+    common::DeleteArray(m_bulkBuffer);
+    m_bulkBuffer = 0;
 }
 
 Result BandwidthCheckProtocol::Startup()
@@ -182,38 +192,45 @@ void BandwidthCheckProtocol::Cleanup()
 
 int BandwidthCheckProtocol::GetMaxIpPacketSize() const
 {
-    return common::g_payloadSizeManager == 0 ? 0 :
-        static_cast<int>(common::g_payloadSizeManager->m_mtuSize + 0x1c);
+    return static_cast<int>(common::g_payloadSizeManager->m_mtuSize) + cIpUdpHeaderSize;
 }
 
 int BandwidthCheckProtocol::GetMinIpPacketSize() const
 {
-    return common::g_payloadSizeManager == 0 ? 0 :
-        static_cast<int>(common::g_payloadSizeManager->m_minMtuSize + 0x68);
+    return static_cast<int>(common::g_payloadSizeManager->m_signatureSize) + cPacketOverheadSize +
+           cHeaderSize;
 }
 
 unsigned int BandwidthCheckProtocol::IsSetupParamValid(int measurementTime,
                                                        unsigned int ipPacketSize,
                                                        int measurementCount) const
 {
-    return static_cast<unsigned int>(measurementTime - 1) < 1000000u &&
-           (ipPacketSize & 3u) == 0 &&
-           ipPacketSize <= static_cast<unsigned int>(GetMaxIpPacketSize()) &&
-           static_cast<unsigned int>(GetMinIpPacketSize()) <= ipPacketSize &&
-           measurementCount > 0;
+    if (measurementTime < 1 || measurementTime > 1000000)
+        return false;
+    if ((ipPacketSize & 3u) != 0)
+        return false;
+    if (static_cast<unsigned int>(GetMaxIpPacketSize()) < ipPacketSize)
+        return false;
+    if (ipPacketSize < static_cast<unsigned int>(GetMinIpPacketSize()))
+        return false;
+    if (measurementCount > 0)
+        return true;
+    return false;
 }
 
 Result BandwidthCheckProtocol::Activate(int measurementTime, unsigned int ipPacketSize,
                                         bool isServer, int measurementCount)
 {
     if (!IsSetupParamValid(measurementTime, ipPacketSize, measurementCount))
-        return 0x10c07;
+        return cResultInvalidArgument;
     if (!m_initialized)
-        return 0x10c0c;
-    m_measurementTime = static_cast<unsigned int>(measurementTime);
+        return cResultNotInitialized;
+    m_measurementTime = measurementTime;
+    common::g_sessionBeginMonitoringContent.m_metric135 = static_cast<unsigned int>(measurementTime);
     m_bulkPacketSize = ipPacketSize;
+    common::g_sessionBeginMonitoringContent.m_metric133 = static_cast<unsigned short>(ipPacketSize);
     m_activated = true;
-    m_measurementCount = static_cast<unsigned int>(measurementCount);
+    m_measurementCount = measurementCount;
     m_completionTimeout = static_cast<unsigned int>(measurementCount + 0xfa);
     m_isServer = isServer;
     return 0;
@@ -221,14 +238,27 @@ Result BandwidthCheckProtocol::Activate(int measurementTime, unsigned int ipPack
 
 void BandwidthCheckProtocol::Inactivate()
 {
-    m_completionTimeout = 0;
-    m_measurementTime = static_cast<unsigned int>(-1);
     m_activated = false;
     m_isServer = false;
+    m_measurementTime = -1;
+    m_bulkPacketSize = 0;
+    m_completionTimeout = 0;
     m_measurementCount = 0;
     initSender();
     initReceiver();
 }
+
+}}}
+
+namespace
+{
+    bool isUnavailableStationIndex(nn::pia::StationIndex stationIndex)
+    {
+        return stationIndex > 0x1f;
+    }
+}
+
+namespace nn { namespace pia { namespace transport {
 
 bool BandwidthCheckProtocol::IsReady() const
 {
@@ -242,12 +272,12 @@ bool BandwidthCheckProtocol::IsReady() const
 
 Result BandwidthCheckProtocol::StartSend(StationIndex stationIndex)
 {
-    if (__N_36_transport_BandwidthCheckProtocol_cpp_b607135d::isUnavailableStationIndex(stationIndex))
-        return 0x10c07;
+    if (isUnavailableStationIndex(stationIndex))
+        return cResultInvalidArgument;
     if (!m_initialized)
-        return 0x10c0c;
+        return cResultNotInitialized;
     if (!IsReady())
-        return 0x10c08;
+        return cResultInvalidState;
     initSender();
     m_senderStation = stationIndex;
     return 0;
@@ -272,40 +302,37 @@ bool BandwidthCheckProtocol::IsCompleted() const
 Result BandwidthCheckProtocol::GetUplinkBitRate(int* result) const
 {
     if (result == 0)
-        return 0x10c07;
+        return cResultInvalidArgument;
     if (!m_initialized)
-        return 0x10c0c;
+        return cResultNotInitialized;
     if (!IsCompleted())
-        return 0x10c08;
-    int bitRate;
+        return cResultInvalidState;
     if (m_senderState == SenderState_Completed)
-        bitRate = m_uplinkBitRate;
+        *result = m_uplinkBitRate;
     else
     {
-        bitRate = -1;
         if (m_senderState != SenderState_Canceled)
             Trace(cTraceCategoryBandwidth);
+        *result = -1;
     }
-    *result = bitRate;
     return 0;
 }
 
 void BandwidthCheckProtocol::SetBandwidthChecked(StationIndex stationIndex)
 {
-    const unsigned int bit = stationBit(stationIndex);
-    if (bit != 0)
-        m_bandwidthCheckedBitmap |= bit;
+    m_bandwidthCheckedBitmap |= 1 << stationIndex;
 }
 
-unsigned int BandwidthCheckProtocol::getBulkPacketSize() const
+int BandwidthCheckProtocol::getBulkPacketSize() const
 {
-    return m_bulkPacketSize;
+    return static_cast<int>(m_bulkPacketSize);
 }
 
 bool BandwidthCheckProtocol::IsBandwidthChecked(StationIndex stationIndex) const
 {
-    const unsigned int bit = stationBit(stationIndex);
-    return bit != 0 && (m_bandwidthCheckedBitmap & bit) != 0;
+    if (stationIndex > 31)
+        return false;
+    return (m_bandwidthCheckedBitmap & (1 << stationIndex)) != 0;
 }
 
 bool BandwidthCheckProtocol::isStartSendCalled() const
@@ -326,22 +353,18 @@ bool BandwidthCheckProtocol::isBulkDataArrived() const
 
 bool BandwidthCheckProtocol::isExist(StationIndex stationIndex) const
 {
-    return g_piaStationManager != 0 &&
-           g_piaStationManager->GetStation(stationIndex) != 0;
+    return StationManager::s_pInstance->GetStation(stationIndex) != 0;
 }
 
 Result BandwidthCheckProtocol::send(StationIndex stationIndex,
                                     const unsigned char* payload,
                                     unsigned int payloadSize)
 {
+    StationPacketHandler* handler = static_cast<StationPacketHandler*>(GetStationPacketHandler());
     if (!isExist(stationIndex))
         return 0x2c0a;
-    StationPacketHandler* handler = reinterpret_cast<StationPacketHandler*>(
-        static_cast<uintptr_t>(GetStationPacketHandler()));
-    if (handler == 0)
-        return 0;
     ProtocolMessageWriter* writer = handler->AssignByStationIndex(
-        mProtocolId, stationIndex, payloadSize, false, false, true);
+        GetProtocolId(), stationIndex, payloadSize, false, false, true);
     if (writer == 0)
         return 0;
     writer->SetPayload(payload);
@@ -378,30 +401,26 @@ int BandwidthCheckProtocol::getPayloadSize(unsigned int ipPacketSize) const
 
 Result BandwidthCheckProtocol::sendBulkPacket()
 {
-    if (m_bulkBuffer == 0 || common::g_payloadSizeManager == 0)
-        return 0x10c01;
     Header header;
     header.m_type = 1;
     header.m_sequence = 0xffffffffu;
-    header.m_offset = m_bulkPacketSequence;
+    header.m_offset = static_cast<unsigned int>(m_bulkPacketSequence);
     header.m_flags = 0xffffffffu;
     unsigned int serializedSize = 0;
     header.Serialize(m_bulkBuffer, &serializedSize);
-    PacketHandler* handler = reinterpret_cast<PacketHandler*>(
-        static_cast<uintptr_t>(GetStationPacketHandler()));
-    if (handler == 0)
-        return 0x10c08;
-    int payloadSize = getPayloadSize(m_bulkPacketSize);
-    const int payloadLimit = handler->GetPayloadSizeLimit();
-    if (payloadSize > payloadLimit)
-        payloadSize = payloadLimit;
-    if (payloadSize < static_cast<int>(serializedSize) ||
-        payloadSize > static_cast<int>(cBulkBufferSize))
-        return 0x10c07;
-    const Result result = send(m_senderStation, m_bulkBuffer,
-                               static_cast<unsigned int>(payloadSize));
+    PacketHandler* handler = mStationPacketHandler;
+    unsigned int payloadSize = getPayloadSize(m_bulkPacketSize);
+    if (handler->GetPayloadSizeLimit() < payloadSize)
+    {
+        Trace(cTraceCategoryBandwidth);
+        payloadSize = handler->GetPayloadSizeLimit();
+    }
+    const Result result = send(m_senderStation, m_bulkBuffer, payloadSize);
     if (result == 0)
+    {
         ++m_bulkPacketSequence;
+        return 0;
+    }
     return result;
 }
 
@@ -419,38 +438,63 @@ Result BandwidthCheckProtocol::sendResponse()
 
 void BandwidthCheckProtocol::processSend()
 {
-    if (m_senderState == SenderState_WaitingForAck &&
-        elapsedMilliseconds(m_senderStartTime) > 150)
+    if (m_senderState == SenderState_WaitingForAck)
     {
-        m_senderStartTime.SetNow();
-        if (sendSynPacket() == 0x2c0a)
-            m_cancelRequested = true;
+        common::Time now;
+        now.SetNow();
+        if (static_cast<int>(static_cast<long long>(now.m_tick - m_senderStartTime.m_tick) /
+                         common::TimeSpan::GetTicksPerMSec().m_tick) > 150)
+        {
+            const Result result = sendSynPacket();
+            if (result != 0 && result == 0x2c0a)
+                m_cancelRequested = true;
+            common::Time sentTime;
+            sentTime.SetNow();
+            m_senderStartTime = sentTime;
+        }
     }
     else if (m_senderState == SenderState_Measuring)
     {
-        const float target = static_cast<float>(m_measurementTime) * 1.30f *
-                             static_cast<float>(m_bulkPacketSize) / 1000.0f;
-        for (unsigned int packet = 0; packet < 4; ++packet)
+        common::Time now;
+        now.SetNow();
+        const int elapsed = static_cast<int>(static_cast<long long>(now.m_tick - m_bulkStartTime.m_tick) /
+                         common::TimeSpan::GetTicksPerMSec().m_tick);
+        const int sentBits = m_bulkPacketSequence * getBulkPacketSize() * 8;
+        for (int packet = 0; packet < 4; ++packet)
         {
-            const float sent = static_cast<float>(m_bulkPacketSequence) *
-                               static_cast<float>(m_bulkPacketSize) * 8.0f;
-            if (!(sent < target))
-                break;
-            if (sendBulkPacket() == 0x2c0a)
-                m_cancelRequested = true;
+            if (sentBits < static_cast<int>(m_measurementTime * 130.0f / 100.0f * elapsed / 1000.0f))
+            {
+                const Result result = sendBulkPacket();
+                if (result != 0 && result == 0x2c0a)
+                    m_cancelRequested = true;
+            }
         }
     }
-    if (m_receiverState == ReceiverState_WaitingForAck &&
-        elapsedMilliseconds(m_ackSentTime) > 100)
+    if (m_receiverState == ReceiverState_WaitingForBulk)
     {
-        sendAckPacket();
-        m_ackSentTime.SetNow();
+        common::Time now;
+        now.SetNow();
+        if (static_cast<int>(static_cast<long long>(now.m_tick - m_ackSentTime.m_tick) /
+                         common::TimeSpan::GetTicksPerMSec().m_tick) > 100)
+        {
+            sendAckPacket();
+            common::Time sentTime;
+            sentTime.SetNow();
+            m_ackSentTime = sentTime;
+        }
     }
-    else if (m_receiverState == ReceiverState_WaitingForResponse &&
-             elapsedMilliseconds(m_responseSentTime) > 100)
+    else if (m_receiverState == ReceiverState_SendingResponse)
     {
-        sendResponse();
-        m_responseSentTime.SetNow();
+        common::Time now;
+        now.SetNow();
+        if (static_cast<int>(static_cast<long long>(now.m_tick - m_responseSentTime.m_tick) /
+                         common::TimeSpan::GetTicksPerMSec().m_tick) > 100)
+        {
+            sendResponse();
+            common::Time sentTime;
+            sentTime.SetNow();
+            m_responseSentTime = sentTime;
+        }
     }
 }
 
@@ -479,7 +523,7 @@ void BandwidthCheckProtocol::senderStateTransition()
         else if (m_ackReceived)
         {
             m_senderState = SenderState_Measuring;
-            m_bulkStartTime.SetNow();
+            m_bulkStartTime = currentTime();
         }
         break;
     case SenderState_Measuring:
@@ -487,8 +531,7 @@ void BandwidthCheckProtocol::senderStateTransition()
             processCancel();
         else if (m_uplinkBitRate != -1)
             m_senderState = SenderState_Completed;
-        else if (elapsedMilliseconds(m_bulkStartTime) >
-                 static_cast<long long>(m_completionTimeout))
+        else if (elapsedMilliseconds(m_bulkStartTime) > m_completionTimeout)
             m_senderState = SenderState_WaitingForResponse;
         break;
     case SenderState_WaitingForResponse:
@@ -496,8 +539,7 @@ void BandwidthCheckProtocol::senderStateTransition()
             processCancel();
         else if (m_uplinkBitRate != -1)
             m_senderState = SenderState_Completed;
-        else if (elapsedMilliseconds(m_bulkStartTime) >
-                 static_cast<long long>(m_completionTimeout) + 2000)
+        else if (elapsedMilliseconds(m_bulkStartTime) > m_completionTimeout + 2000)
             m_senderState = SenderState_Canceled;
         break;
     default:
@@ -512,27 +554,35 @@ void BandwidthCheckProtocol::receiverStateTransition()
     case ReceiverState_None:
         if (m_receiverActive)
         {
+            common::Time now;
+            now.SetNow();
             m_receiverState = ReceiverState_WaitingForBulk;
-            m_receiverStartTime.SetNow();
+            m_receiverStartTime = now;
         }
         break;
     case ReceiverState_WaitingForBulk:
         if (isBulkDataArrived())
         {
+            common::Time now;
+            now.SetNow();
             m_receiverState = ReceiverState_Measuring;
-            m_bulkArrivalTime.SetNow();
+            m_bulkArrivalTime = now;
         }
-        else if (elapsedMilliseconds(m_receiverStartTime) > 2000)
-            initReceiver();
+        else
+        {
+            common::Time now;
+            now.SetNow();
+            if (static_cast<int>(static_cast<long long>(now.m_tick - m_receiverStartTime.m_tick) /
+                                 common::TimeSpan::GetTicksPerMSec().m_tick) > 2000)
+                initReceiver();
+        }
         break;
     case ReceiverState_Measuring:
-        if (elapsedMilliseconds(m_bulkArrivalTime) >
-            static_cast<long long>(m_measurementCount))
-            m_receiverState = ReceiverState_WaitingForAck;
+        if (elapsedMilliseconds(m_bulkArrivalTime) > m_measurementCount)
+            m_receiverState = ReceiverState_SendingResponse;
         break;
-    case ReceiverState_WaitingForAck:
-        if (elapsedMilliseconds(m_bulkArrivalTime) >
-            static_cast<long long>(m_measurementCount) + 1000)
+    case ReceiverState_SendingResponse:
+        if (elapsedMilliseconds(m_bulkArrivalTime) > m_measurementCount + 1000)
         {
             if (m_uplinkBitRate == -1 && !isStartSendCalled() && !m_isServer)
                 StartSend(m_receiverStation);
@@ -545,94 +595,99 @@ void BandwidthCheckProtocol::receiverStateTransition()
 
 void BandwidthCheckProtocol::processReceive()
 {
-    PacketHandler* handler = reinterpret_cast<PacketHandler*>(
-        static_cast<uintptr_t>(GetStationPacketHandler()));
-    PacketHandler::Iterator& iterator = handler->GetIterator(mProtocolId);
-    while (!handler->IsEndIteration())
+    PacketHandler* handler = mStationPacketHandler;
+    bool isTransitioned = false;
+    PacketHandler::Iterator& iterator = handler->GetIterator(GetProtocolId());
+    while (!iterator.IsEndIteration())
     {
-        ProtocolMessageReader& reader = *iterator.GetMessageReader();
+        ProtocolMessageReader* reader = iterator.GetMessageReader();
+        const StationIndex stationIndex =
+            g_piaTransport->ConvertToStationIndexUnsafe(reader->m_header.m_source);
+        if ((m_activeStationBitmap & (1 << stationIndex)) == 0)
         {
-            const StationIndex stationIndex =
-                g_piaTransport->ConvertToStationIndexUnsafe(reader.m_header.m_source);
-            if ((m_activeStationBitmap & stationBit(stationIndex)) != 0)
+            iterator.NextIteration();
+            continue;
+        }
+        Header header;
+        header.Deserialize(reader->m_message + ProtocolMessageReader::cMessageHeaderSize);
+        switch (header.m_type)
+        {
+        case 3:
+            if (m_receiverState == ReceiverState_None && !IsBandwidthChecked(stationIndex))
             {
-                Header header;
-                header.Deserialize(reader.m_message + ProtocolMessageReader::cMessageHeaderSize);
-                if (header.m_type == 3)
+                m_receiverStation = stationIndex;
+                m_stationAddress = reader->m_stationAddress;
+                m_receiverActive = true;
+                Trace(cTraceCategoryBandwidth);
+            }
+            break;
+        case 4:
+            if (m_senderState == SenderState_WaitingForAck)
+            {
+                if (m_senderStation == stationIndex)
                 {
-                    if (m_receiverState == ReceiverState_None &&
-                        !IsBandwidthChecked(stationIndex))
-                    {
-                        m_receiverStation = stationIndex;
-                        m_stationAddress = reader.m_stationAddress;
-                        m_receiverActive = true;
-                        Trace(cTraceCategoryBandwidth);
-                    }
+                    m_ackReceived = true;
+                    Trace(cTraceCategoryBandwidth);
                 }
-                else if (header.m_type == 1)
+                else
+                    Trace(cTraceCategoryBandwidth);
+            }
+            break;
+        case 1:
+            if (m_receiverState == ReceiverState_WaitingForBulk)
+            {
+                if (stationIndex == m_receiverStation &&
+                    m_stationAddress == reader->m_stationAddress)
                 {
-                    if (m_receiverState == ReceiverState_WaitingForBulk &&
-                        stationIndex == m_receiverStation &&
-                        m_stationAddress == reader.m_stationAddress)
-                    {
-                        m_firstBulkPacketSequence = static_cast<int>(header.m_offset);
-                        m_lastBulkPacketSequence = static_cast<int>(header.m_offset);
-                    }
-                    else if (m_receiverState == ReceiverState_Measuring &&
-                             stationIndex == m_receiverStation &&
-                             m_stationAddress == reader.m_stationAddress)
-                    {
-                        m_receivedBytes += static_cast<unsigned int>(
-                            getIpPacketSize(reader.m_messageSize));
-                        ++m_receivedBulkPacketCount;
-                    }
-                    else
-                    {
-                        Station* station = g_piaStationManager->GetStation(reader.m_stationAddress);
-                        station->Trace(cTraceCategoryBandwidth);
-                    }
-                }
-                else if (header.m_type == 2)
-                {
-                    if (m_senderState == SenderState_Measuring ||
-                        m_senderState == SenderState_WaitingForResponse)
-                    {
-                        m_uplinkBitRate = static_cast<int>(header.m_sequence);
-                        const int packetCount = getSendPacketNumInMeasuringTime();
-                        const int value = packetCount > 0
-                            ? 10000 - static_cast<int>(header.m_flags) * 10000 / packetCount
-                            : 0;
-                        m_measurementResult = value > 0 ? value : 0;
-                    }
-                }
-                else if (header.m_type == 4)
-                {
-                    if (m_senderState == SenderState_WaitingForAck &&
-                        m_senderStation == stationIndex)
-                    {
-                        m_ackReceived = true;
-                        Trace(cTraceCategoryBandwidth);
-                    }
-                    else
-                    {
-                        Station* station = g_piaStationManager->GetStation(reader.m_stationAddress);
-                        station->Trace(cTraceCategoryBandwidth);
-                    }
+                    m_firstBulkPacketSequence = static_cast<int>(header.m_offset);
+                    m_lastBulkPacketSequence = static_cast<int>(header.m_offset);
+                    Trace(cTraceCategoryBandwidth);
                 }
             }
+            else if (m_receiverState == ReceiverState_Measuring)
+            {
+                if (stationIndex == m_receiverStation &&
+                    m_stationAddress == reader->m_stationAddress)
+                {
+                    m_receivedBytes += getIpPacketSize(reader->m_messageSize);
+                    ++m_receivedBulkPacketCount;
+                }
+                else
+                    reader->m_stationAddress.Trace(cTraceCategoryBandwidth);
+            }
+            break;
+        case 2:
+            if (m_senderState == SenderState_Measuring ||
+                m_senderState == SenderState_WaitingForResponse)
+            {
+                const int lostPackets = static_cast<int>(header.m_flags) * 10000;
+                m_uplinkBitRate = static_cast<int>(header.m_sequence);
+                common::g_sessionBeginMonitoringContent.m_metric136 = header.m_sequence;
+                const int packetCount = getSendPacketNumInMeasuringTime();
+                m_measurementResult = common::maximum(0, 10000 - lostPackets / packetCount);
+                common::g_sessionBeginMonitoringContent.m_metric134 =
+                    static_cast<unsigned short>(m_measurementResult);
+            }
+            break;
+        default:
+            break;
         }
         senderStateTransition();
         receiverStateTransition();
-        handler->NextIteration();
+        iterator.NextIteration();
+        isTransitioned = true;
     }
-    senderStateTransition();
-    receiverStateTransition();
+    if (!isTransitioned)
+    {
+        senderStateTransition();
+        receiverStateTransition();
+    }
 }
 
 Result BandwidthCheckProtocol::Dispatch()
 {
     if (!m_initialized)
-        return 0x10c0c;
+        return cResultNotInitialized;
     if (!m_activated)
         return 0;
     processSend();
@@ -642,28 +697,29 @@ Result BandwidthCheckProtocol::Dispatch()
 
 Result BandwidthCheckProtocol::UpdateProtocolEvent(const ProtocolEvent& event)
 {
-    if (g_piaStationManager == 0)
-        return 0x10c07;
-    const Station* station = g_piaStationManager->GetStation(event.m_stationAddress);
-    if (station == 0)
-        return 0x10c07;
+    const Station* station = StationManager::s_pInstance->GetStation(event.m_stationAddress);
     const StationIndex stationIndex = static_cast<StationIndex>(station->m_field10);
-    if (stationIndex < 0 || static_cast<unsigned int>(stationIndex) >= m_stationNum)
-        return 0x10c07;
-    const unsigned int bit = stationBit(stationIndex);
-    if (event.m_type == 0)
-        m_activeStationBitmap |= bit;
-    else if (event.m_type == 1)
+    if (stationIndex < 0 || stationIndex >= m_stationNum)
+        return cResultInvalidArgument;
+    switch (event.m_type)
     {
+    case 0:
+        m_activeStationBitmap |= 1 << stationIndex;
+        break;
+    case 1:
+    {
+        const unsigned int bit = 1 << stationIndex;
         m_activeStationBitmap &= ~bit;
         m_bandwidthCheckedBitmap &= ~bit;
         if (stationIndex == m_receiverStation)
             initReceiver();
         if (stationIndex == m_senderStation && !IsCompleted())
             m_senderState = SenderState_Canceled;
+        break;
     }
-    else
-        return 0x10c07;
+    default:
+        return cResultInvalidArgument;
+    }
     return 0;
 }
 
@@ -673,7 +729,7 @@ void BandwidthCheckProtocol::Trace(unsigned long long) const
 
 unsigned short BandwidthCheckProtocol::GetProtocolType() const
 {
-    return 0x54;
+    return cProtocolType;
 }
 
 }}}

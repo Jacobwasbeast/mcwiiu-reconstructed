@@ -25,61 +25,82 @@ public:
         virtual Result Serialize(unsigned char* buffer, unsigned int* size) const
         {
             if (buffer == 0)
-                return static_cast<Result>(cResultInvalidArgument);
+                return cResultInvalidArgument;
             if (size == 0)
-                return static_cast<Result>(cResultInvalidArgument);
+                return cResultInvalidArgument;
 
-            buffer[0] = (m_flags >> 8) & 0xff;
-            buffer[1] = m_flags & 0xff;
-            buffer[2] = (m_size >> 8) & 0xff;
-            buffer[3] = m_size & 0xff;
-            buffer[4] = (m_field08 >> 24) & 0xff;
-            buffer[5] = (m_field08 >> 16) & 0xff;
-            buffer[6] = (m_field08 >> 8) & 0xff;
-            buffer[7] = m_field08 & 0xff;
-            buffer[8] = (m_sequenceId >> 24) & 0xff;
-            buffer[9] = (m_sequenceId >> 16) & 0xff;
-            buffer[10] = (m_sequenceId >> 8) & 0xff;
-            buffer[11] = m_sequenceId & 0xff;
-            buffer[12] = (m_field10 >> 24) & 0xff;
-            buffer[13] = (m_field10 >> 16) & 0xff;
-            buffer[14] = (m_field10 >> 8) & 0xff;
-            buffer[15] = m_field10 & 0xff;
-            buffer[16] = (m_field18 >> 56) & 0xff;
-            buffer[17] = (m_field18 >> 48) & 0xff;
-            buffer[18] = (m_field18 >> 40) & 0xff;
-            buffer[19] = (m_field18 >> 32) & 0xff;
-            buffer[20] = (m_field18 >> 24) & 0xff;
-            buffer[21] = (m_field18 >> 16) & 0xff;
-            buffer[22] = (m_field18 >> 8) & 0xff;
-            buffer[23] = m_field18 & 0xff;
-            *size = cHeaderSize;
+            unsigned char* cursor = buffer;
+            const unsigned short flags = m_flags;
+            cursor[0] = static_cast<unsigned char>((flags >> 8) & 0xff);
+            cursor[1] = static_cast<unsigned char>(flags & 0xff);
+            cursor += sizeof(m_flags);
+            const unsigned short messageSize = m_size;
+            cursor[0] = static_cast<unsigned char>((messageSize >> 8) & 0xff);
+            cursor[1] = static_cast<unsigned char>(messageSize & 0xff);
+            cursor += sizeof(m_size);
+            const unsigned int field08 = m_field08;
+            cursor[0] = static_cast<unsigned char>((field08 >> 24) & 0xff);
+            cursor[1] = static_cast<unsigned char>((field08 >> 16) & 0xff);
+            cursor[2] = static_cast<unsigned char>((field08 >> 8) & 0xff);
+            cursor[3] = static_cast<unsigned char>(field08 & 0xff);
+            cursor += sizeof(m_field08);
+            const unsigned int sequenceId = m_sequenceId;
+            cursor[0] = static_cast<unsigned char>((sequenceId >> 24) & 0xff);
+            cursor[1] = static_cast<unsigned char>((sequenceId >> 16) & 0xff);
+            cursor[2] = static_cast<unsigned char>((sequenceId >> 8) & 0xff);
+            cursor[3] = static_cast<unsigned char>(sequenceId & 0xff);
+            cursor += sizeof(m_sequenceId);
+            const unsigned int field10 = m_field10;
+            cursor[0] = static_cast<unsigned char>((field10 >> 24) & 0xff);
+            cursor[1] = static_cast<unsigned char>((field10 >> 16) & 0xff);
+            cursor[2] = static_cast<unsigned char>((field10 >> 8) & 0xff);
+            cursor[3] = static_cast<unsigned char>(field10 & 0xff);
+            cursor += sizeof(m_field10);
+            const unsigned long long field18 = m_field18;
+            cursor[0] = static_cast<unsigned char>((field18 >> 56) & 0xff);
+            cursor[1] = static_cast<unsigned char>((field18 >> 48) & 0xff);
+            cursor[2] = static_cast<unsigned char>((field18 >> 40) & 0xff);
+            cursor[3] = static_cast<unsigned char>((field18 >> 32) & 0xff);
+            cursor[4] = static_cast<unsigned char>((field18 >> 24) & 0xff);
+            cursor[5] = static_cast<unsigned char>((field18 >> 16) & 0xff);
+            cursor[6] = static_cast<unsigned char>((field18 >> 8) & 0xff);
+            cursor[7] = static_cast<unsigned char>(field18 & 0xff);
+            cursor += sizeof(m_field18);
+
+            *size = static_cast<unsigned int>(cursor - buffer);
             return 0;
         }
 
         virtual Result Deserialize(const unsigned char* buffer)
         {
+            const Result invalid = cResultInvalidArgument;
             if (buffer == 0)
-                return static_cast<Result>(cResultInvalidArgument);
+                return invalid;
 
-            m_flags = (buffer[0] << 8) | buffer[1];
-            m_size = (buffer[2] << 8) | buffer[3];
-            m_field08 = static_cast<unsigned int>(buffer[4]) << 24 |
-                static_cast<unsigned int>(buffer[5]) << 16 |
-                static_cast<unsigned int>(buffer[6]) << 8 | buffer[7];
-            m_sequenceId = static_cast<unsigned int>(buffer[8]) << 24 |
-                static_cast<unsigned int>(buffer[9]) << 16 |
-                static_cast<unsigned int>(buffer[10]) << 8 | buffer[11];
-            m_field10 = static_cast<unsigned int>(buffer[12]) << 24 |
-                static_cast<unsigned int>(buffer[13]) << 16 |
-                static_cast<unsigned int>(buffer[14]) << 8 | buffer[15];
-            m_field18 = static_cast<unsigned long long>(buffer[16]) << 56 |
-                static_cast<unsigned long long>(buffer[17]) << 48 |
-                static_cast<unsigned long long>(buffer[18]) << 40 |
-                static_cast<unsigned long long>(buffer[19]) << 32 |
-                static_cast<unsigned long long>(buffer[20]) << 24 |
-                static_cast<unsigned long long>(buffer[21]) << 16 |
-                static_cast<unsigned long long>(buffer[22]) << 8 | buffer[23];
+            const unsigned char* cursor = buffer;
+            m_flags = static_cast<unsigned short>(cursor[0] << 8 | cursor[1]);
+            cursor += sizeof(m_flags);
+            m_size = static_cast<unsigned short>(cursor[0] << 8 | cursor[1]);
+            cursor += sizeof(m_size);
+            m_field08 = static_cast<unsigned int>(cursor[0]) << 24 |
+                static_cast<unsigned int>(cursor[1]) << 16 |
+                static_cast<unsigned int>(cursor[2]) << 8 | cursor[3];
+            cursor += sizeof(m_field08);
+            m_sequenceId = static_cast<unsigned int>(cursor[0]) << 24 |
+                static_cast<unsigned int>(cursor[1]) << 16 |
+                static_cast<unsigned int>(cursor[2]) << 8 | cursor[3];
+            cursor += sizeof(m_sequenceId);
+            m_field10 = static_cast<unsigned int>(cursor[0]) << 24 |
+                static_cast<unsigned int>(cursor[1]) << 16 |
+                static_cast<unsigned int>(cursor[2]) << 8 | cursor[3];
+            cursor += sizeof(m_field10);
+            m_field18 = static_cast<unsigned long long>(cursor[0]) << 56 |
+                static_cast<unsigned long long>(cursor[1]) << 48 |
+                static_cast<unsigned long long>(cursor[2]) << 40 |
+                static_cast<unsigned long long>(cursor[3]) << 32 |
+                static_cast<unsigned long long>(cursor[4]) << 24 |
+                static_cast<unsigned long long>(cursor[5]) << 16 |
+                static_cast<unsigned long long>(cursor[6]) << 8 | cursor[7];
             return 0;
         }
 
@@ -169,7 +190,7 @@ public:
     Result AnalyzeProtocolMessage(const ProtocolMessageReader& reader);
     Result Dispatch(StationPacketHandler* handler, unsigned int* size, unsigned int limit);
 
-    unsigned short m_protocolId;
+    ProtocolId m_protocolId;
     unsigned long long m_localStationId;
     unsigned long long m_remoteStationId;
     SendBuffer m_sendBuffer;

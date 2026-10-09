@@ -255,4 +255,8 @@ Station::PlayerInfo::PlayerInfo()
 {
 }
 
+Station::PlayerInfo::~PlayerInfo()
+{
+}
+
 }}}

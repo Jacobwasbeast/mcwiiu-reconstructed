@@ -31,6 +31,8 @@ public:
     void ClearTable();
     void Trace(unsigned long long value) const;
     StationConnectionInfo& GetLocalStationConnectionInfo() { return m_localStationConnectionInfo; }
+    StationConnectionInfo& GetHostStationConnectionInfo() { return m_hostStationConnectionInfo; }
+    common::StationAddress& GetHostStationAddress() { return m_hostStationAddress; }
 
     StationConnectionInfo m_localStationConnectionInfo;
     StationConnectionInfo m_hostStationConnectionInfo;

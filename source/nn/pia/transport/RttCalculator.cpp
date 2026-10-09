@@ -2,6 +2,7 @@
 #include <algorithm>
 #include "nn/pia/Transport.hpp"
 namespace nn { namespace pia { namespace transport {
+int RttCalculator::s_pulseInterval = 2000;
 int RttCalculator::s_initialPulseInterval = 2000;
 
 RttCalculator::RttCalculator()
@@ -74,23 +75,20 @@ void RttCalculator::Cleanup()
 {
     if (!m_started)
         return;
+    m_started = 0;
+    m_lastRequestedTime = common::Time();
+    m_lastRtt = -1;
     m_latestMedian.m_count = 0;
     m_latestMedian.m_index = 0;
-    m_lastRequestedTime.m_tick = 0;
-    m_lastRtt = -1;
-    m_started = 0;
     ResetRttMinMax();
 }
 
 bool RttCalculator::IsTimeOut() const
 {
-    const unsigned long long elapsedTicks =
-        g_piaTransport->m_time.m_tick - m_lastRequestedTime.m_tick;
-    const long long elapsedMilliseconds = static_cast<long long>(elapsedTicks) /
-        common::TimeSpan::GetTicksPerMSec().m_tick;
-    const int elapsedLow = static_cast<int>(static_cast<unsigned int>(elapsedMilliseconds));
-    const int timeoutMilliseconds = m_latestMedian.m_count == 9 ? 2000 : s_initialPulseInterval;
-    return elapsedLow >= timeoutMilliseconds;
+    const int interval = m_latestMedian.m_count == 9 ? s_pulseInterval : s_initialPulseInterval;
+    const common::TimeSpan elapsed = g_piaTransport->m_time - m_lastRequestedTime;
+    const int elapsedMsec = static_cast<int>(elapsed.m_tick / common::TimeSpan::GetTicksPerMSec().m_tick);
+    return elapsedMsec >= interval;
 }
 
 void RttCalculator::SetLastRequestedTime(const common::Time& time)
@@ -101,12 +99,11 @@ void RttCalculator::SetLastRequestedTime(const common::Time& time)
 void RttCalculator::Update(int rtt)
 {
     m_lastRtt = rtt;
-    const unsigned int index = (m_latestMedian.m_index + m_latestMedian.m_count) % 9;
-    m_latestMedian.m_values[index] = rtt;
-    if (m_latestMedian.m_count < 9)
-        ++m_latestMedian.m_count;
-    else
+    m_latestMedian.m_values[(m_latestMedian.m_index + m_latestMedian.m_count) % 9] = rtt;
+    if (m_latestMedian.m_count == 9)
         m_latestMedian.m_index = (m_latestMedian.m_index + 1) % 9;
+    else
+        ++m_latestMedian.m_count;
 
     if (m_rttMin == -1 || rtt < m_rttMin)
         m_rttMin = rtt;
@@ -117,8 +114,16 @@ void RttCalculator::Update(int rtt)
 Result RttCalculator::SetInitialPulseInterval(int interval)
 {
     if (interval < 1)
-        return 0x10c07;
+        return cResultInvalidArgument;
     s_initialPulseInterval = interval;
+    return 0;
+}
+
+Result RttCalculator::SetPulseInterval(int interval)
+{
+    if (interval < 1)
+        return cResultInvalidArgument;
+    s_pulseInterval = interval;
     return 0;
 }
 }}}
