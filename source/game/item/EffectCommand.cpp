@@ -20,9 +20,5 @@ void EffectCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithLe
     std::wstring playerName = inputStream.readUTF();
     (void)playerName;
 
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
+    byteStream.reset();
 }

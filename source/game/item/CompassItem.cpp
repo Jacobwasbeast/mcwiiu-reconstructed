@@ -50,15 +50,15 @@ TextureAtlasSprite* CompassItem::getIcon(int auxValue)
 void CompassItem::registerIcons(IconRegister* iconRegister)
 {
     Item::registerIcons(iconRegister);
-    mIcons[0] = iconRegister->registerIcon(COMPASS_ICON_NAMES[0]);
-    mIcons[1] = iconRegister->registerIcon(COMPASS_ICON_NAMES[1]);
-    mIcons[2] = iconRegister->registerIcon(COMPASS_ICON_NAMES[2]);
-    mIcons[3] = iconRegister->registerIcon(COMPASS_ICON_NAMES[3]);
+    for (int i = 0; i < 4; ++i)
+    {
+        mIcons[i] = iconRegister->registerIcon(COMPASS_ICON_NAMES[i]);
+    }
 }
 
 double CompassItem::CompassItem_ItemPropertyFunction::getFrameRotation(boost::shared_ptr<ItemFrame> frame)
 {
-    return (double)Mth::wrapDegrees(frame->getDirection()->get2DDataValue() * 90 + 180);
+    return (double)Mth::wrapDegrees(frame->mDirection->get2DDataValue() * 90 + 180);
 }
 
 double CompassItem::CompassItem_ItemPropertyFunction::getSpawnToAngle(Level* level,
@@ -80,7 +80,8 @@ double CompassItem::CompassItem_ItemPropertyFunction::wobble(Level* level, doubl
 
     double delta = std::fmod(value - mRotation, 6.2831854820251465);
     delta = Mth::clamp(delta, -1.0, 1.0);
-    mWobble = (delta * 0.1 + mWobble) * 0.8;
+    mWobble += delta * 0.1;
+    mWobble *= 0.8;
     mRotation += mWobble;
 
     return mRotation;
@@ -95,17 +96,9 @@ float CompassItem::CompassItem_ItemPropertyFunction::call(not_null_ptr<ItemInsta
         return 0.0f;
     }
 
-    bool hasEntity = entity.get() != NULL;
-    boost::shared_ptr<Entity> source;
-
-    if (hasEntity)
-    {
-        source = entity;
-    }
-    else
-    {
-        source = boost::dynamic_pointer_cast<Entity>(itemInstance->getFrame());
-    }
+    bool hasEntity = entity != NULL;
+    boost::shared_ptr<Entity> source = hasEntity ? boost::shared_ptr<Entity>(entity)
+                                                 : boost::dynamic_pointer_cast<Entity>(itemInstance->getFrame());
 
     if (level == NULL)
     {
@@ -114,26 +107,17 @@ float CompassItem::CompassItem_ItemPropertyFunction::call(not_null_ptr<ItemInsta
 
     double angle;
 
-    if (!level->mDimension->isNaturalDimension())
+    if (level->mDimension->isNaturalDimension())
     {
-        angle = Math::random() * 6.2831854820251465;
+        double rotation = hasEntity ? source->mYRot : getFrameRotation(boost::dynamic_pointer_cast<ItemFrame>(source));
+
+        rotation = std::fmod(rotation, 360.0);
+        double spawnAngle = getSpawnToAngle(level, source);
+        angle = 3.1415927410125732 - ((rotation - 90.0) * Mth::DEG_TO_RAD - spawnAngle);
     }
     else
     {
-        double rotation;
-
-        if (hasEntity)
-        {
-            rotation = (double)source->mYRot;
-        }
-        else
-        {
-            rotation = getFrameRotation(boost::dynamic_pointer_cast<ItemFrame>(source));
-        }
-
-        rotation = std::fmod(rotation, 360.0);
-        angle = 3.1415927410125732 -
-            ((rotation - 90.0) * 0.017453292f - getSpawnToAngle(level, source));
+        angle = Math::random() * 6.2831854820251465;
     }
 
     if (hasEntity)

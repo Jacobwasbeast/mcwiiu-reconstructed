@@ -12,11 +12,11 @@ class WorldlyContainer : public virtual Container
 {
 public:
     WorldlyContainer();
-    virtual ~WorldlyContainer();
 
     virtual arrayWithLength<int> getSlotsForFace(const Direction* face) = 0;
     virtual bool canPlaceItemThroughFace(int slot, not_null_ptr<ItemInstance> itemInstance, const Direction* face) = 0;
     virtual bool canTakeItemThroughFace(int slot, not_null_ptr<ItemInstance> itemInstance, const Direction* face) = 0;
+    virtual ~WorldlyContainer();
 };
 
 #endif

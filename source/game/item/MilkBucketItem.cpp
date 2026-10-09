@@ -17,7 +17,7 @@ not_null_ptr<ItemInstance> MilkBucketItem::finishUsingItem(not_null_ptr<ItemInst
                                                            Level* level,
                                                            boost::shared_ptr<LivingEntity> entity)
 {
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) &&
         !boost::static_pointer_cast<Player>(entity)->mAbilities.mInstabuild)
     {
         itemInstance->shrink(1);
@@ -28,7 +28,7 @@ not_null_ptr<ItemInstance> MilkBucketItem::finishUsingItem(not_null_ptr<ItemInst
         entity->removeAllEffects();
     }
 
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         boost::static_pointer_cast<Player>(entity)->awardStat(
             gStats->get_itemsUsed(Item::VALIDgetId(this)),

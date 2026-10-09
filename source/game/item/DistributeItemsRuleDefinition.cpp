@@ -52,9 +52,8 @@ GameRuleDefinition* DistributeItemsRuleDefinition::addChild(ConsoleGameRules::EG
     GameRuleDefinition* rule = NULL;
     if (type == ConsoleGameRules::eGameRuleType_WorldPosition)
     {
-        WorldPositionRuleDefinition* position = new WorldPositionRuleDefinition();
-        rule = position;
-        mPositions.push_back(position);
+        rule = new WorldPositionRuleDefinition();
+        mPositions.push_back(static_cast<WorldPositionRuleDefinition*>(rule));
     }
     return rule;
 }

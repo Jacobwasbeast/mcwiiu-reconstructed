@@ -1,4 +1,6 @@
 #include "game/item/FishFoodItem.hpp"
+
+#include "game/core/FoodConstants.hpp"
 #include "game/core/StringIds.hpp"
 
 #include <boost/shared_ptr.hpp>
@@ -11,10 +13,10 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/world/Level.hpp"
 
-FishFoodItem::Type* FishFoodItem::Type::COD = new FishFoodItem::Type(0, 0xFB51767E, IDS_DESC_FISH_COD_RAW, IDS_ITEM_FISH_COD_COOKED, IDS_DESC_FISH_COD_COOKED, 2, 0.6f, 5, 0.8f, L"fishRaw", L"fishCooked");
-FishFoodItem::Type* FishFoodItem::Type::SALMON = new FishFoodItem::Type(1, IDS_ITEM_FISH_SALMON_RAW, IDS_DESC_FISH_SALMON_RAW, IDS_ITEM_FISH_SALMON_COOKED, IDS_DESC_FISH_SALMON_COOKED, 2, 0.8f, 6, 1.0f, L"fish_salmon_raw", L"fish_salmon_cooked");
-FishFoodItem::Type* FishFoodItem::Type::CLOWNFISH = new FishFoodItem::Type(2, 0x0B072C6C, 0xCC0E58F0, 1, 0.8f, L"fish_clownfish_raw");
-FishFoodItem::Type* FishFoodItem::Type::PUFFERFISH = new FishFoodItem::Type(3, IDS_ITEM_FISH_PUFFERFISH_RAW, IDS_DESC_FISH_PUFFERFISH_RAW, 1, 0.8f, L"fish_pufferfish_raw");
+FishFoodItem::Type* FishFoodItem::Type::COD = new FishFoodItem::Type(0, IDS_ITEM_FISH_COD_RAW, IDS_DESC_FISH_COD_RAW, IDS_ITEM_FISH_COD_COOKED, IDS_DESC_FISH_COD_COOKED, 2, FoodConstants::FOOD_SATURATION_POOR, 5, FoodConstants::FOOD_SATURATION_NORMAL, L"fishRaw", L"fishCooked");
+FishFoodItem::Type* FishFoodItem::Type::SALMON = new FishFoodItem::Type(1, IDS_ITEM_FISH_SALMON_RAW, IDS_DESC_FISH_SALMON_RAW, IDS_ITEM_FISH_SALMON_COOKED, IDS_DESC_FISH_SALMON_COOKED, 2, FoodConstants::FOOD_SATURATION_POOR, 6, FoodConstants::FOOD_SATURATION_GOOD, L"fish_salmon_raw", L"fish_salmon_cooked");
+FishFoodItem::Type* FishFoodItem::Type::CLOWNFISH = new FishFoodItem::Type(2, 0x0B072C6C, 0xCC0E58F0, 1, FoodConstants::FOOD_SATURATION_POOR, L"fish_clownfish_raw");
+FishFoodItem::Type* FishFoodItem::Type::PUFFERFISH = new FishFoodItem::Type(3, IDS_ITEM_FISH_PUFFERFISH_RAW, IDS_DESC_FISH_PUFFERFISH_RAW, 1, FoodConstants::FOOD_SATURATION_POOR, L"fish_pufferfish_raw");
 FishFoodItem::Type* gFishFoodTypes[4] = {
     FishFoodItem::Type::COD,
     FishFoodItem::Type::SALMON,
@@ -48,11 +50,21 @@ FishFoodItem::Type::Type(int id, unsigned int name, unsigned int description,
 FishFoodItem::Type::Type(int id, unsigned int name, unsigned int description,
                          int nutrition, float saturation,
                          const std::wstring& icon)
-    : mId(id), mName(name), mCookedName(-1), mRawNutrition(nutrition),
-      mRawSaturation(saturation), mCookedNutrition(0), mCookedSaturation(0.0f),
-      mCanBeCooked(0), mIcon(icon), mCookedIcon(L""), mRawIcon(0),
-      mCookedIconValue(0), mDescription(description), mCookedDescription(-1)
 {
+    mId = id;
+    mName = name;
+    mCookedName = -1;
+    mRawNutrition = nutrition;
+    mRawSaturation = saturation;
+    mCookedNutrition = 0;
+    mCookedSaturation = 0.0f;
+    mCanBeCooked = 0;
+    mIcon = icon;
+    mCookedIcon = L"";
+    mDescription = description;
+    mCookedDescription = -1;
+    mRawIcon = 0;
+    mCookedIconValue = 0;
 }
 
 FishFoodItem::Type* FishFoodItem::Type::getById(int id)
@@ -66,9 +78,7 @@ FishFoodItem::Type* FishFoodItem::Type::getById(int id)
 
 FishFoodItem::Type* FishFoodItem::Type::getByItem(not_null_ptr<ItemInstance> itemInstance)
 {
-    Item* item = itemInstance->getItem();
-    FishFoodItem* fish = dynamic_cast<FishFoodItem*>(item);
-    if (fish != NULL)
+    if (dynamic_cast<FishFoodItem*>(itemInstance->getItem()) != NULL)
     {
         return getById(itemInstance->getAuxValue());
     }
@@ -90,32 +100,24 @@ unsigned int FishFoodItem::Type::getRawNutrition() const
     return mRawNutrition;
 }
 
-double FishFoodItem::Type::getCookedSaturation() const
+float FishFoodItem::Type::getCookedSaturation() const
 {
-    return (double)mCookedSaturation;
+    return mCookedSaturation;
 }
 
-double FishFoodItem::Type::getRawSaturation() const
+float FishFoodItem::Type::getRawSaturation() const
 {
-    return (double)mRawSaturation;
+    return mRawSaturation;
 }
 
 int FishFoodItem::Type::getName(bool cooked) const
 {
-    return (cooked && mCookedName != -1) ? mCookedName : (int)mName;
+    return cooked && mCookedName != -1 ? mCookedName : mName;
 }
 
 int FishFoodItem::Type::getDescription(bool cooked) const
 {
-    if (cooked)
-    {
-        int cookedDescription = mCookedDescription;
-        if (cookedDescription != -1)
-        {
-            return cookedDescription;
-        }
-    }
-    return mDescription;
+    return cooked && mCookedDescription != -1 ? mCookedDescription : mDescription;
 }
 
 TextureAtlasSprite* FishFoodItem::Type::getIcon(bool cooked)
@@ -161,15 +163,16 @@ float FishFoodItem::getSaturationModifier(not_null_ptr<ItemInstance> itemInstanc
     Type* type = Type::getByItem(itemInstance);
     if (mCooked && type->canBeCooked())
     {
-        return (float)type->getCookedSaturation();
+        return type->getCookedSaturation();
     }
-    return (float)type->getRawSaturation();
+    return type->getRawSaturation();
 }
 
 void FishFoodItem::addEatEffect(not_null_ptr<ItemInstance> itemInstance, Level* level,
                                 boost::shared_ptr<Player> player)
 {
-    if (Type::getByItem(itemInstance) == Type::PUFFERFISH)
+    Type* type = Type::getByItem(itemInstance);
+    if (type == Type::PUFFERFISH)
     {
         player->addEffect(new MobEffectInstance(MobEffects::POISON, 1200, 3),
                           boost::shared_ptr<Entity>());
@@ -200,8 +203,8 @@ TextureAtlasSprite* FishFoodItem::getIcon(int auxValue)
 
 void FishFoodItem::registerIcons(IconRegister* iconRegister)
 {
-    gFishFoodTypes[0]->registerIcons(iconRegister);
-    gFishFoodTypes[1]->registerIcons(iconRegister);
-    gFishFoodTypes[2]->registerIcons(iconRegister);
-    gFishFoodTypes[3]->registerIcons(iconRegister);
+    for (int i = 0; i < 4; i++)
+    {
+        gFishFoodTypes[i]->registerIcons(iconRegister);
+    }
 }

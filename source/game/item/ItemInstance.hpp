@@ -137,7 +137,7 @@ public:
     void setRepairCost(int cost);
     bool hasAdventureModeBreakTagForBlock(Block* block);
     bool hasAdventureModePlaceTagForBlock(Block* block);
-    int getPopTime() const { return mPopTime; }
+    int getPopTime() const;
     void setPopTime(int time);
     void set4JData(int data);
     int get4JData();
@@ -147,7 +147,22 @@ public:
     void removeTagElement(const std::wstring& name);
     void addAttributeModifier(const std::wstring& name, AttributeModifier* modifier, const EquipmentSlot* slot);
     std::wstring getDisplayName();
-    static not_null_ptr<ItemInstance> EMPTY;
+    static const wchar_t* TAG_ENCH;
+    static const wchar_t* TAG_ENCH_ID;
+    static const wchar_t* TAG_ENCH_LEVEL;
+    static const wchar_t* TAG_DISPLAY;
+    static const wchar_t* TAG_NAME;
+    static const wchar_t* TAG_LOC_NAME;
+    static const wchar_t* TAG_UNBREAKABLE;
+    static const wchar_t* TAG_REPAIR_COST;
+    static const wchar_t* TAG_OWNER_ID;
+    static const wchar_t* TAG_CREATED_ON_HOST;
+    static const wchar_t* TAG_CREATED_BY_RESTRICTED;
+    static const wchar_t* TAG_FISH_BUCKET;
+    static const wchar_t* TAG_CAN_DESTROY;
+    static const wchar_t* TAG_CAN_PLACE_ON;
+    static const wchar_t* TAG_HIDE_FLAGS;
+    static const not_null_ptr<ItemInstance> EMPTY;
 private:
     int mCount;
     int mPopTime;

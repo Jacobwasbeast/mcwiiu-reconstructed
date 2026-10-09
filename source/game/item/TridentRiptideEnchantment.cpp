@@ -35,8 +35,8 @@ int TridentRiptideEnchantment::getMaxLevel()
 bool TridentRiptideEnchantment::checkCompatibility(const Enchantment* other) const
 {
     if (other != NULL &&
-        (dynamic_cast<const TridentLoyaltyEnchantment*>(other) != NULL ||
-         dynamic_cast<const TridentChannelingEnchantment*>(other) != NULL))
+        (dynamic_cast<const TridentChannelingEnchantment*>(other) != NULL ||
+         dynamic_cast<const TridentLoyaltyEnchantment*>(other) != NULL))
     {
         return false;
     }

@@ -83,11 +83,11 @@ float PickaxeItem::getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, cons
 {
     Material* material = state->getMaterial();
 
-    if (material != Material::METAL && material != Material::HEAVY_METAL &&
-        material != Material::STONE)
+    if (material == Material::METAL || material == Material::HEAVY_METAL ||
+        material == Material::STONE)
     {
-        return DiggerItem::getDestroySpeed(itemInstance, state);
+        return mSpeed;
     }
 
-    return mSpeed;
+    return DiggerItem::getDestroySpeed(itemInstance, state);
 }

@@ -33,7 +33,7 @@ public:
     virtual std::wstring getDisplayName();
 
     static bool isHotbarSlot(int slot);
-    not_null_ptr<ItemInstance>& getSelected();
+    const not_null_ptr<ItemInstance>& getSelected();
     static int getSelectionSize();
     bool isSameItem(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second, bool ignoreTags);
     bool hasRemainingSpaceForItem(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second, bool ignoreTags);
@@ -116,6 +116,7 @@ private:
     friend class CraftingMenu;
     friend class FireworksMenu;
     friend class IUIScene_CraftingMenu;
+    friend class InventoryMenu;
     friend class EnderMan;
 
     NonNullList<not_null_ptr<ItemInstance> > m_items;

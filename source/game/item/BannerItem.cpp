@@ -80,34 +80,35 @@ InteractionResult::EInteractionResult BannerItem::useOn(boost::shared_ptr<Player
         return InteractionResult::eInteractionResult_Fail;
     }
 
-    if (!level->mIsClientSide)
+    if (level->mIsClientSide)
     {
-        if (replaceable)
-        {
-            placePos = placePos.below();
-        }
+        return InteractionResult::eInteractionResult_Success;
+    }
 
-        if (direction == Direction::UP)
-        {
-            int rotation = Mth::floor((double)((player->mYRot + 180.0f) * 16.0f / 360.0f) + 0.5) & 15;
-            StandingBannerBlock* banner = static_cast<StandingBannerBlock*>(Blocks::standing_banner);
-            level->setBlock(placePos, banner->getBlockState(rotation), Block::UPDATE_ALL, false);
-        }
-        else
-        {
-            level->setBlock(placePos,
-                            Blocks::wall_banner->defaultBlockState()->setValue(BannerBlock::FACING, direction),
-                            Block::UPDATE_ALL,
-                            false);
-        }
+    if (replaceable)
+    {
+        placePos = placePos.below();
+    }
 
-        boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(placePos);
-        if (blockEntity.get() == NULL || blockEntity->GetType() != BlockEntityType::BANNER)
-        {
-            player->displayClientMessage((int)IDS_MAX_BANNERS, true);
-            return InteractionResult::eInteractionResult_Fail;
-        }
+    if (direction == Direction::UP)
+    {
+        int rotation = Mth::floor((double)((player->mYRot + 180.0f) * 16.0f / 360.0f) + 0.5) & 15;
+        level->setBlock(placePos,
+                        Blocks::standing_banner->defaultBlockState()->setValue(StandingBannerBlock::ROTATION, rotation),
+                        Block::UPDATE_ALL,
+                        false);
+    }
+    else
+    {
+        level->setBlock(placePos,
+                        Blocks::wall_banner->defaultBlockState()->setValue(BannerBlock::FACING, direction),
+                        Block::UPDATE_ALL,
+                        false);
+    }
 
+    boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(placePos);
+    if (blockEntity != NULL && eTYPE_DERIVED_FROM(BlockEntityType::BANNER, blockEntity->GetType()))
+    {
         const SoundType* soundType = mBlock->getSoundType();
         level->playSound(boost::shared_ptr<Player>(), placePos, soundType->getPlaceSound(),
                          SoundSource::eSoundSource_Blocks,
@@ -116,15 +117,18 @@ InteractionResult::EInteractionResult BannerItem::useOn(boost::shared_ptr<Player
 
         boost::static_pointer_cast<BannerBlockEntity>(blockEntity)->setItemValues(itemInstance, false);
         itemInstance->shrink(1);
+        return InteractionResult::eInteractionResult_Success;
     }
 
-    return InteractionResult::eInteractionResult_Success;
+    player->displayClientMessage((int)IDS_MAX_BANNERS, true);
+    return InteractionResult::eInteractionResult_Fail;
 }
 
 std::wstring BannerItem::getName(not_null_ptr<ItemInstance> itemInstance)
 {
     const DyeColor* color = getColor(itemInstance);
-    return std::wstring(L10N::GetString(BannerPattern::BASE->getDisplayName(color->getBlockData())));
+    int nameId = BannerPattern::BASE->getDisplayName(color->getBlockData());
+    return L10N::GetString(nameId);
 }
 
 void BannerItem::appendHoverTextFromBannerBlockEntityTag(not_null_ptr<ItemInstance> itemInstance,
@@ -176,8 +180,9 @@ int BannerItem::getColor(not_null_ptr<ItemInstance> itemInstance, int layer)
     {
         return 0xFFFFFF;
     }
-    const DyeColor* color = BannerItem::getColor(itemInstance);
-    return color->getTextureDiffuseColor();
+    const DyeColor* color = getColor(itemInstance);
+    int diffuseColor = color->getTextureDiffuseColor();
+    return diffuseColor;
 }
 
 int BannerItem::getFirstPatternName(not_null_ptr<ItemInstance> itemInstance)
@@ -199,7 +204,7 @@ int BannerItem::getFirstPatternName(not_null_ptr<ItemInstance> itemInstance)
         }
     }
 
-    const DyeColor* color;
+    const DyeColor* color = NULL;
     if (tag != NULL && tag->contains(BannerBlockEntity::TAG_BASE))
     {
         color = DyeColor::byItemData(tag->getInt(BannerBlockEntity::TAG_BASE));

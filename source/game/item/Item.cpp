@@ -14,6 +14,7 @@
 #include "game/core/Integer.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/Minecart.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/Rarity.hpp"
 #include "game/core/Stats.hpp"
 #include "game/entity/mob/HangingEntityItem.hpp"
@@ -799,11 +800,11 @@ HitResult* Item::getPlayerPOVHitResult(Level* level, boost::shared_ptr<Player> p
 
     Vec3* from = Vec3::newTemp(player->mX, player->mY + player->getEyeHeight(), player->mZ);
 
-    float yaw = -yRot * 0.017453292f - 3.1415927f;
+    float yaw = -yRot * Mth::DEG_TO_RAD - 3.1415927f;
     float cosYaw = cosf(yaw);
     float sinYaw = sinf(yaw);
 
-    float pitch = -(xRot * 0.017453292f);
+    float pitch = -(xRot * Mth::DEG_TO_RAD);
     float cosPitch = -cosf(pitch);
     float sinPitch = sinf(pitch);
 

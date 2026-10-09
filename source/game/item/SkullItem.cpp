@@ -83,7 +83,7 @@ InteractionResult::EInteractionResult SkullItem::useOn(boost::shared_ptr<Player>
         }
 
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(placePos);
-        if (blockEntity && blockEntity->GetType() == BlockEntityType::SKULL)
+        if (blockEntity && eTYPE_DERIVED_FROM(BlockEntityType::SKULL, blockEntity->GetType()))
         {
             boost::shared_ptr<SkullBlockEntity> skull =
                 boost::static_pointer_cast<SkullBlockEntity>(blockEntity);

@@ -34,7 +34,7 @@ bool CarrotOnAStickItem::TestUse(Level*, boost::shared_ptr<Player> player,
                                   InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    if (player->isPassenger() && player->getVehicle()->GetType() == EntityType::PIG)
+    if (player->isPassenger() && eTYPE_DERIVED_FROM(EntityType::PIG, player->getVehicle()->GetType()))
     {
         boost::shared_ptr<Pig> pig = boost::static_pointer_cast<Pig>(player->getVehicle());
         if (itemInstance->getMaxDamage() - itemInstance->getAuxValue() > 6 && pig->testboost())
@@ -61,7 +61,7 @@ InteractionResultHolder CarrotOnAStickItem::use(Level* level,
             itemInstance);
     }
 
-    if (player->isPassenger() && player->getVehicle()->GetType() == EntityType::PIG)
+    if (player->isPassenger() && eTYPE_DERIVED_FROM(EntityType::PIG, player->getVehicle()->GetType()))
     {
         boost::shared_ptr<Pig> pig = boost::static_pointer_cast<Pig>(player->getVehicle());
         if (itemInstance->getMaxDamage() - itemInstance->getAuxValue() > 6 && pig->boost())

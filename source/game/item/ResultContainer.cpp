@@ -10,7 +10,7 @@ ResultContainer::ResultContainer()
 
 ResultContainer::~ResultContainer()
 {
-    delete[] items.items;
+    delete[] items.items.data;
 }
 
 unsigned int ResultContainer::getContainerSize()
@@ -86,10 +86,7 @@ int ResultContainer::getContainerDataCount()
 
 void ResultContainer::clearContent()
 {
-    for (unsigned int slot = 0; slot < items.size(); ++slot)
-    {
-        items[slot] = items.defaultValue;
-    }
+    items.clear();
 }
 
 std::wstring ResultContainer::getName()

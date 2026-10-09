@@ -73,7 +73,7 @@ public:
     static void runIterationOnItem(EnchantmentIterationMethod& method, const not_null_ptr<ItemInstance>& item);
     static void runIterationOnInventory(EnchantmentIterationMethod& method, NonNullList<not_null_ptr<ItemInstance> > items);
     static int getDamageProtection(NonNullList<not_null_ptr<ItemInstance> > items, const DamageSource* source);
-    static double getDamageBonus(const not_null_ptr<ItemInstance>& item, const boost::shared_ptr<LivingEntity>& entity);
+    static float getDamageBonus(const not_null_ptr<ItemInstance>& item, const boost::shared_ptr<LivingEntity>& entity);
     static void doPostHurtEffects(const boost::shared_ptr<LivingEntity>& target, const boost::shared_ptr<Entity>& attacker);
     static void doPostDamageEffects(const boost::shared_ptr<LivingEntity>& attacker, const boost::shared_ptr<Entity>& target);
     static int getKnockbackBonus(const boost::shared_ptr<LivingEntity>& attacker, const boost::shared_ptr<LivingEntity>& target);

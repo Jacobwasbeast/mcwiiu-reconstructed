@@ -77,7 +77,7 @@ InteractionResultHolder FishingRodItem::use(Level* level,
             level->addEntity(entity);
         }
         player->swing(hand);
-        player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),
+        player->awardStat(GenericStats::itemsUsed(this),
                           GenericStats::param_itemsUsed(player, itemInstance));
     }
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
@@ -124,7 +124,7 @@ float FishingRodItem::FishingRodItem_ItemPropertyFunction::call(
             inOffhand = false;
         }
         if ((inMainHand || inOffhand)
-            && (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+            && eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
             if (player->mFishing)

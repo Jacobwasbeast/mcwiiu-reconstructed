@@ -12,10 +12,10 @@
 AddItemRuleDefinition::AddItemRuleDefinition()
     : GameRuleDefinition()
 {
-    mCount = 1;
-    mItemId = 0;
     m4JData = 0;
     mData = 0;
+    mItemId = 0;
+    mCount = 1;
     mSlot = -1;
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_itemId, &mItemId);
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_quantity, &mCount);
@@ -109,9 +109,8 @@ GameRuleDefinition* AddItemRuleDefinition::addChild(ConsoleGameRules::EGameRuleT
 {
     GameRuleDefinition* rule = NULL;
     if (type == ConsoleGameRules::eGameRuleType_AddEnchantment) {
-        AddEnchantmentRuleDefinition* child = new AddEnchantmentRuleDefinition();
-        rule = child;
-        mEnchantments.push_back(child);
+        rule = new AddEnchantmentRuleDefinition();
+        mEnchantments.push_back(static_cast<AddEnchantmentRuleDefinition*>(rule));
     }
     return rule;
 }

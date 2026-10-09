@@ -61,6 +61,8 @@ public:
         float mToughness;
     };
 
+    static DispenseItemBehavior* DISPENSE_ITEM_BEHAVIOR;
+
     ArmorItem(const ArmorMaterial* material, int renderIndex, const EquipmentSlot* slot);
 
     virtual unsigned int GetUseTooltip(const ItemTooltipDataHolder& tooltipData);

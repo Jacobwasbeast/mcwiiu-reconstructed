@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "game/item/ArmorItem.hpp"
+
 class Item;
 
 class Items {
@@ -54,26 +56,26 @@ public:
     static Item* wheatSeeds;
     static Item* wheat;
     static Item* bread;
-    static Item* leatherHelmet;
-    static Item* leatherChestplate;
-    static Item* leatherLeggings;
-    static Item* leatherBoots;
-    static Item* chainmailHelmet;
-    static Item* chainmailChestplate;
-    static Item* chainmailLeggings;
-    static Item* chainmailBoots;
-    static Item* ironHelmet;
-    static Item* ironChestplate;
-    static Item* ironLeggings;
-    static Item* ironBoots;
-    static Item* diamondHelmet;
-    static Item* diamondChestplate;
-    static Item* diamondLeggings;
-    static Item* diamondBoots;
-    static Item* goldenHelmet;
-    static Item* goldenChestplate;
-    static Item* goldenLeggings;
-    static Item* goldenBoots;
+    static ArmorItem* leatherHelmet;
+    static ArmorItem* leatherChestplate;
+    static ArmorItem* leatherLeggings;
+    static ArmorItem* leatherBoots;
+    static ArmorItem* chainmailHelmet;
+    static ArmorItem* chainmailChestplate;
+    static ArmorItem* chainmailLeggings;
+    static ArmorItem* chainmailBoots;
+    static ArmorItem* ironHelmet;
+    static ArmorItem* ironChestplate;
+    static ArmorItem* ironLeggings;
+    static ArmorItem* ironBoots;
+    static ArmorItem* diamondHelmet;
+    static ArmorItem* diamondChestplate;
+    static ArmorItem* diamondLeggings;
+    static ArmorItem* diamondBoots;
+    static ArmorItem* goldenHelmet;
+    static ArmorItem* goldenChestplate;
+    static ArmorItem* goldenLeggings;
+    static ArmorItem* goldenBoots;
     static Item* flint;
     static Item* porkchop;
     static Item* cookedPorkchop;
@@ -219,7 +221,7 @@ public:
     static Item* shulkerShell;
     static Item* ironNugget;
     static Item* turtleShellPiece;
-    static Item* turtleHelmet;
+    static ArmorItem* turtleHelmet;
     static Item* trident;
     static Item* kelp;
     static Item* driedKelp;

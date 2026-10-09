@@ -12,8 +12,8 @@
 AddEnchantmentRuleDefinition::AddEnchantmentRuleDefinition()
     : GameRuleDefinition()
 {
-    mEnchantmentId = 0;
     mLevel = 0;
+    mEnchantmentId = 0;
 
     GameRules_IntAttribute* enchantmentAttribute =
         addIntAttribute(ConsoleGameRules::eGameRuleAttr_enchantmentId, &mEnchantmentId);
@@ -26,7 +26,8 @@ unsigned int AddEnchantmentRuleDefinition::enchantItem(not_null_ptr<ItemInstance
     unsigned int enchanted = 0;
     if (!item->isEmpty())
     {
-        if (item->getItem() == Items::enchantedBook)
+        bool isEnchantedBook = item->getItem() == Items::enchantedBook;
+        if (isEnchantedBook)
         {
             EnchantedBookItem::addEnchantment(item, new EnchantmentInstance(Enchantment::byId(mEnchantmentId), mLevel));
         }

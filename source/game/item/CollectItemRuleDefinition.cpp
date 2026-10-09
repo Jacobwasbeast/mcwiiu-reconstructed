@@ -37,7 +37,8 @@ int CollectItemRuleDefinition::getGoal()
 
 int CollectItemRuleDefinition::getProgress(GameRule* gameRule)
 {
-    return gameRule->getParameter(L"iQuantity").iValue;
+    GameRule::_ValueType value = gameRule->getParameter(L"iQuantity");
+    return value.iValue;
 }
 
 int CollectItemRuleDefinition::getIcon()
@@ -53,35 +54,33 @@ int CollectItemRuleDefinition::getAuxValue()
 void CollectItemRuleDefinition::populateGameRule(GameRulesInstance::EGameRulesInstanceType type, GameRule* gameRule)
 {
     GameRule::_ValueType value;
+    value.iValue = 0;
     gameRule->setParameter(L"iQuantity", value);
     GameRuleDefinition::populateGameRule(type, gameRule);
 }
 
 bool CollectItemRuleDefinition::onCollectItem(GameRule* gameRule, not_null_ptr<ItemInstance> item)
 {
-    if (Item::getId(item->getItem()) != mIcon)
-        return false;
-    if (item->getAuxValue() != mAuxValue)
-        return false;
-    if (item->get4JData() != mDataTag)
-        return false;
-    if (getComplete(gameRule))
-        return false;
-
-    GameRule::_ValueType value = gameRule->getParameter(L"iQuantity");
-    value.iValue += item->getCount();
-    gameRule->setParameter(L"iQuantity", value);
-
-    if (mGoal <= value.iValue)
+    bool collected = false;
+    if (Item::getId(item->getItem()) == mIcon && item->getAuxValue() == mAuxValue &&
+        item->get4JData() == mDataTag && !getComplete(gameRule))
     {
-        setComplete(gameRule, true);
-        if (gameRule->mConnection != 0)
+        GameRule::_ValueType value = gameRule->getParameter(L"iQuantity");
+        value.iValue += item->getCount();
+        gameRule->setParameter(L"iQuantity", value);
+        collected = true;
+
+        if (mGoal <= value.iValue)
         {
-            boost::shared_ptr<Packet> packet(new UpdateGameRuleProgressPacket(
-                getActionType(), mDescriptionName, mIcon, mAuxValue, mDataTag, 0, 0));
-            gameRule->mConnection->send(packet);
+            setComplete(gameRule, true);
+            if (gameRule->mConnection != 0)
+            {
+                boost::shared_ptr<Packet> packet(new UpdateGameRuleProgressPacket(
+                    getActionType(), mDescriptionName, mIcon, mAuxValue, mDataTag, 0, 0));
+                gameRule->mConnection->send(packet);
+            }
         }
     }
 
-    return true;
+    return collected;
 }

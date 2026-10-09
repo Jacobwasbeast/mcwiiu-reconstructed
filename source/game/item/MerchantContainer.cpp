@@ -10,13 +10,13 @@ MerchantContainer::MerchantContainer(boost::shared_ptr<Player> player, boost::sh
     mTradingPlayer = player;
     mMerchant = merchant;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(3, ItemInstance::EMPTY);
-    mSelectionHint = 0;
     mActiveRecipe = 0;
+    mSelectionHint = 0;
 }
 
 MerchantContainer::~MerchantContainer()
 {
-    delete[] mItems.items;
+    delete[] mItems.items.data;
 }
 
 std::wstring MerchantContainer::getName()
@@ -67,22 +67,22 @@ void MerchantContainer::updateSellItem()
                 mActiveRecipe = recipe;
                 setItem(2, recipe->getSellItem()->copy());
             }
-            else if (second->isEmpty())
-            {
-                setItem(2, ItemInstance::EMPTY);
-            }
-            else
+            else if (!second->isEmpty())
             {
                 recipe = offers->getRecipeFor(second, first, mSelectionHint);
-                if (recipe == 0 || recipe->isDeprecated())
-                {
-                    setItem(2, ItemInstance::EMPTY);
-                }
-                else
+                if (recipe != 0 && !recipe->isDeprecated())
                 {
                     mActiveRecipe = recipe;
                     setItem(2, recipe->getSellItem()->copy());
                 }
+                else
+                {
+                    setItem(2, ItemInstance::EMPTY);
+                }
+            }
+            else
+            {
+                setItem(2, ItemInstance::EMPTY);
             }
         }
         mMerchant->notifyTradeUpdated(getItem(2));
@@ -206,8 +206,5 @@ int MerchantContainer::getContainerDataCount()
 
 void MerchantContainer::clearContent()
 {
-    for (unsigned int i = 0; i < mItems.size(); ++i)
-    {
-        mItems[i] = mItems.defaultValue;
-    }
+    mItems.clear();
 }

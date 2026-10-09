@@ -49,12 +49,12 @@ AxeItem::AxeItem(const Item::Tier* tier)
 float AxeItem::getDestroySpeed(not_null_ptr<ItemInstance> itemInstance, const BlockState* state)
 {
     Material* material = state->getMaterial();
-    if (material != Material::WOOD && material != Material::PLANT && material != Material::REPLACEABLE_PLANT
-        && material != Material::BAMBOO)
+    if (material == Material::WOOD || material == Material::PLANT || material == Material::REPLACEABLE_PLANT
+        || material == Material::BAMBOO)
     {
-        return DiggerItem::getDestroySpeed(itemInstance, state);
+        return mSpeed;
     }
-    return mSpeed;
+    return DiggerItem::getDestroySpeed(itemInstance, state);
 }
 
 InteractionResult::EInteractionResult AxeItem::useOn(boost::shared_ptr<Player> player, Level* level,
@@ -73,7 +73,8 @@ InteractionResult::EInteractionResult AxeItem::useOn(boost::shared_ptr<Player> p
     {
         if (!simulate)
         {
-            level->setBlock(pos, block->getStrippedBlock(state), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+            const BlockState* strippedState = block->getStrippedBlock(state);
+            level->setBlock(pos, strippedState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
             if (!level->mIsClientSide)
             {
                 itemInstance->hurtAndBreak(1, player);

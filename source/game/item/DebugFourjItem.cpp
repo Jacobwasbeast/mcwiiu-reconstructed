@@ -39,7 +39,7 @@ bool DebugFourjItem::interactEnemy(not_null_ptr<ItemInstance>,
 {
     if (!player->mLevel->mIsClientSide)
     {
-        if ((target->GetType() & EntityType::MOB) == EntityType::MOB)
+        if (eTYPE_DERIVED_FROM(EntityType::MOB, target->GetType()))
         {
             boost::shared_ptr<Mob> mob = boost::dynamic_pointer_cast<Mob>(target);
             bool persistent = mob->isPersistenceRequired();

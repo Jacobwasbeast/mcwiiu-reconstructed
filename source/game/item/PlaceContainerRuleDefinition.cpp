@@ -13,9 +13,10 @@
 #include "game/world/generation/StructurePiece.hpp"
 
 PlaceContainerRuleDefinition::PlaceContainerRuleDefinition()
-    : XboxStructureActionPlaceBlock(), mChance(1.0f)
+    : XboxStructureActionPlaceBlock()
 {
     mBlock = Blocks::chest;
+    mChance = 1.0f;
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_facing, &mAuxValue);
     addFloatAttribute(ConsoleGameRules::eGameRuleAttr_probability, &mChance);
 }
@@ -42,34 +43,29 @@ bool PlaceContainerRuleDefinition::placeContainerInLevel(Level* level, const Blo
     }
 
     Random random;
-    if (mChance <= random.nextFloat())
+    if (random.nextFloat() < mChance)
     {
-        return false;
-    }
-
-    level->setBlock(pos, mBlock->getBlockState(mAuxValue), Block::UPDATE_ALL, false);
-    boost::shared_ptr<Container> container = boost::dynamic_pointer_cast<Container>(level->getBlockEntity(pos));
-    if (container)
-    {
-        for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin();
-             it != mRandomItemSets.end(); ++it)
+        level->setBlock(pos, mBlock->getBlockState(mAuxValue), Block::UPDATE_ALL, false);
+        boost::shared_ptr<Container> container = boost::dynamic_pointer_cast<Container>(level->getBlockEntity(pos));
+        if (container)
         {
-            (*it)->populateContainer(container, ruleset);
-        }
-
-        unsigned int slot = 0;
-        for (std::vector<AddItemRuleDefinition*>::iterator it = mAddItems.begin();
-             it != mAddItems.end(); ++it)
-        {
-            if (slot >= container->getContainerSize())
+            for (std::vector<RandomItemSetRuleDefinition*>::iterator it = mRandomItemSets.begin();
+                 it != mRandomItemSets.end(); ++it)
             {
-                break;
+                (*it)->populateContainer(container, ruleset);
             }
-            (*it)->addItemToContainer(container, static_cast<int>(slot));
-            ++slot;
+
+            unsigned int slot = 0;
+            for (std::vector<AddItemRuleDefinition*>::iterator it = mAddItems.begin();
+                 it != mAddItems.end() && slot < container->getContainerSize(); ++it, ++slot)
+            {
+                AddItemRuleDefinition* addItem = *it;
+                addItem->addItemToContainer(container, static_cast<int>(slot));
+            }
         }
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool PlaceContainerRuleDefinition::placeContainerInChunk(StructurePiece* structurePiece, Level* level,

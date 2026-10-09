@@ -1,24 +1,24 @@
 #include "game/item/SimpleContainer.hpp"
 
+#include <algorithm>
+
 #include "game/core/L10N.hpp"
 #include "game/item/ContainerHelper.hpp"
 #include "game/item/ItemInstance.hpp"
 
 SimpleContainer::SimpleContainer(int id, const std::wstring& name, bool hasCustomName, int size)
-    : mId(0), mName(), mSize(0), mItems(), mListeners(), mHasCustomName(false)
 {
     _init(id, name, hasCustomName, size);
 }
 
 SimpleContainer::SimpleContainer(const std::wstring& name, int size)
-    : mId(0), mName(), mSize(0), mItems(), mListeners(), mHasCustomName(false)
 {
     _init(0, name, true, size);
 }
 
 SimpleContainer::~SimpleContainer()
 {
-    delete[] mItems.items;
+    delete[] mItems.items.data;
 }
 
 void SimpleContainer::_init(int id, const std::wstring& name, bool hasCustomName, int size)
@@ -32,11 +32,7 @@ void SimpleContainer::_init(int id, const std::wstring& name, bool hasCustomName
 
 std::wstring SimpleContainer::getName()
 {
-    if (mName.empty())
-    {
-        return std::wstring(L10N::GetString(mId));
-    }
-    return mName;
+    return mName.empty() ? L10N::GetString(mId) : mName;
 }
 
 std::wstring SimpleContainer::getCustomName()
@@ -45,7 +41,7 @@ std::wstring SimpleContainer::getCustomName()
     {
         return mName;
     }
-    return std::wstring(L"container");
+    return std::wstring(L"");
 }
 
 bool SimpleContainer::hasCustomName()
@@ -97,17 +93,17 @@ not_null_ptr<ItemInstance> SimpleContainer::removeItem(unsigned int slot, int co
 not_null_ptr<ItemInstance> SimpleContainer::removeItemNoUpdate(int slot)
 {
     not_null_ptr<ItemInstance> result = mItems[(unsigned int)slot];
-    if (!result->isEmpty())
+    if (result->isEmpty())
     {
-        mItems[(unsigned int)slot] = ItemInstance::EMPTY;
-        return result;
+        return ItemInstance::EMPTY;
     }
-    return ItemInstance::EMPTY;
+    mItems.set((unsigned int)slot, ItemInstance::EMPTY);
+    return result;
 }
 
 void SimpleContainer::setItem(unsigned int slot, not_null_ptr<ItemInstance> item)
 {
-    if (slot >= (unsigned int)mSize)
+    if (slot >= mItems.size())
     {
         return;
     }
@@ -158,10 +154,7 @@ int SimpleContainer::getContainerDataCount()
 
 void SimpleContainer::clearContent()
 {
-    for (unsigned int i = 0; i < mItems.size(); ++i)
-    {
-        mItems[i] = mItems.defaultValue;
-    }
+    mItems.clear();
 }
 
 void SimpleContainer::addListener(net_minecraft_world::ContainerListener* listener)
@@ -171,19 +164,13 @@ void SimpleContainer::addListener(net_minecraft_world::ContainerListener* listen
 
 void SimpleContainer::removeListener(net_minecraft_world::ContainerListener* listener)
 {
-    std::vector<net_minecraft_world::ContainerListener*>::iterator it = mListeners.begin();
-    for (;;)
+    std::vector<net_minecraft_world::ContainerListener*>::iterator it;
+    for (it = mListeners.begin(); it != mListeners.end() && *it != listener; ++it)
     {
-        if (it == mListeners.end())
-        {
-            break;
-        }
-        if (*it == listener)
-        {
-            mListeners.erase(it);
-            break;
-        }
-        ++it;
+    }
+    if (it != mListeners.end())
+    {
+        mListeners.erase(it);
     }
 }
 
@@ -192,25 +179,17 @@ not_null_ptr<ItemInstance> SimpleContainer::addItem(not_null_ptr<ItemInstance> i
     not_null_ptr<ItemInstance> remainder = item->copy();
     for (int i = 0; i < mSize; ++i)
     {
-        not_null_ptr<ItemInstance> current = getItem((unsigned int)i);
+        boost::shared_ptr<ItemInstance> current = getItem((unsigned int)i);
         if (current->isEmpty())
         {
             setItem((unsigned int)i, remainder);
             setChanged();
             return ItemInstance::EMPTY;
         }
-        else if (ItemInstance::isSame(current, remainder))
+        if (ItemInstance::isSame(current, remainder))
         {
-            int amount = getMaxStackSize();
-            if (current->getMaxStackSize() < amount)
-            {
-                amount = current->getMaxStackSize();
-            }
-            int count = remainder->getCount();
-            if (amount - current->getCount() < count)
-            {
-                count = amount - current->getCount();
-            }
+            int maxSize = std::min(getMaxStackSize(), current->getMaxStackSize());
+            int count = std::min(remainder->getCount(), maxSize - current->getCount());
             if (count > 0)
             {
                 current->grow(count);

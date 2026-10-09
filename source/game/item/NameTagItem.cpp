@@ -30,7 +30,7 @@ bool NameTagItem::interactEnemy(not_null_ptr<ItemInstance> itemInstance,
         mob->setPersistenceRequired(true);
 
         if (mob->isPassenger() &&
-            (mob->getVehicle()->GetType() & EntityType::MOB) == EntityType::MOB)
+            eTYPE_DERIVED_FROM(EntityType::MOB, mob->getVehicle()->GetType()))
         {
             boost::shared_ptr<Mob> vehicle = boost::static_pointer_cast<Mob>(mob->getVehicle());
             vehicle->setPersistenceRequired(true);

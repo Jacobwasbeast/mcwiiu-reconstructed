@@ -35,14 +35,7 @@ InteractionResult::EInteractionResult RecordItem::useOn(boost::shared_ptr<Player
                                                         bool simulate)
 {
     const BlockState* state = level->getBlockState(pos);
-    Block* block = state->getBlock();
-    if (block != Blocks::jukebox)
-    {
-        return InteractionResult::eInteractionResult_Pass;
-    }
-
-    JukeboxBlock* jukebox = static_cast<JukeboxBlock*>(block);
-    if (jukebox->TestUse(level, pos, state, player))
+    if (state->getBlock() != Blocks::jukebox || state->getValue(JukeboxBlock::HAS_RECORD))
     {
         return InteractionResult::eInteractionResult_Pass;
     }
@@ -50,7 +43,7 @@ InteractionResult::EInteractionResult RecordItem::useOn(boost::shared_ptr<Player
     if (!simulate && !level->mIsClientSide)
     {
         not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-        jukebox->setRecord(level, pos, state, itemInstance);
+        static_cast<JukeboxBlock*>(Blocks::jukebox)->setRecord(level, pos, state, itemInstance);
         level->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_PLAY_RECORDING, pos, Item::getId(this));
         player->awardStat(GenericStats::musicToMyEars(),
                           GenericStats::param_musicToMyEars(

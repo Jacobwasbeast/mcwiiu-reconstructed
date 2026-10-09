@@ -22,7 +22,6 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/generation/Player.hpp"
 
-static const wchar_t* TAG_DISPLAY = L"display";
 static const int STRONGHOLD_DECORATION_ID = -1;
 
 MapItemSavedData::MapItemSavedData(const std::wstring& id)
@@ -388,7 +387,7 @@ void MapItemSavedData::addTargetDecoration(const not_null_ptr<ItemInstance>& ite
     decorations->add(decoration);
     if (type->hasMapColor())
     {
-        CompoundTag* display = static_cast<CompoundTag*>(item->getOrCreateTagElement(TAG_DISPLAY));
+        CompoundTag* display = static_cast<CompoundTag*>(item->getOrCreateTagElement(ItemInstance::TAG_DISPLAY));
         display->putInt(L"MapColor", type->getMapColor());
     }
 }

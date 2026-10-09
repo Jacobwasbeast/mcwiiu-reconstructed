@@ -43,12 +43,12 @@ not_null_ptr<ItemInstance> PotionItem::finishUsingItem(not_null_ptr<ItemInstance
                                                        boost::shared_ptr<LivingEntity> entity)
 {
     boost::shared_ptr<Player> player =
-        (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+        eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
             ? boost::static_pointer_cast<Player>(entity)
             : boost::shared_ptr<Player>();
     if (player.get() != NULL)
     {
-        player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)),
+        player->awardStat(GenericStats::itemsUsed(this),
                           GenericStats::param_itemsUsed(player, itemInstance));
         if (PotionUtils::hasEffect(itemInstance, MobEffects::WATER_BREATHING))
         {
@@ -159,11 +159,11 @@ TextureAtlasSprite* PotionItem::getIcon(int)
 TextureAtlasSprite* PotionItem::getLayerIcon(int auxValue, int layer,
                                              not_null_ptr<ItemInstance> itemInstance)
 {
-    if (layer != 0)
+    if (layer == 0)
     {
-        return Item::getLayerIcon(auxValue, layer, itemInstance);
+        return mLayerIcon;
     }
-    return mLayerIcon;
+    return Item::getLayerIcon(auxValue, layer, itemInstance);
 }
 
 bool PotionItem::hasMultipleSpriteLayers()

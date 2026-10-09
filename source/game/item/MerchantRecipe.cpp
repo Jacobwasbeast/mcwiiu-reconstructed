@@ -52,8 +52,7 @@ void MerchantRecipe::load(CompoundTag* tag)
     mSell = not_null_ptr<ItemInstance>(new ItemInstance(sellTag));
     if (tag->contains(L"buyB", Tag::TAG_COMPOUND))
     {
-        CompoundTag* buyBTag = tag->getCompound(L"buyB");
-        mBuyB = not_null_ptr<ItemInstance>(new ItemInstance(buyBTag));
+        mBuyB = not_null_ptr<ItemInstance>(new ItemInstance(tag->getCompound(L"buyB")));
     }
     if (tag->contains(L"uses", Tag::TAG_ANY_NUMERIC))
     {
@@ -83,38 +82,18 @@ bool MerchantRecipe::hasSecondaryBuyItem() { return !mBuyB->isEmpty(); }
 not_null_ptr<ItemInstance> MerchantRecipe::getSellItem() { return mSell; }
 bool MerchantRecipe::isSame(MerchantRecipe* other)
 {
-    bool same = false;
-    if (mBuyA->getItem() == other->mBuyA->getItem())
+    if (mBuyA->getItem() != other->mBuyA->getItem() || mSell->getItem() != other->mSell->getItem())
     {
-        if (mSell->getItem() == other->mSell->getItem())
-        {
-            if (mBuyB->isEmpty() && other->mBuyB->isEmpty())
-            {
-                same = true;
-            }
-            else if (!mBuyB->isEmpty() && !other->mBuyB->isEmpty() && mBuyB->getItem() == other->mBuyB->getItem())
-            {
-                same = true;
-            }
-        }
+        return false;
     }
-    return same;
+    return (mBuyB->isEmpty() && other->mBuyB->isEmpty())
+           || (!mBuyB->isEmpty() && !other->mBuyB->isEmpty() && mBuyB->getItem() == other->mBuyB->getItem());
+
 }
 bool MerchantRecipe::isSameSameButBetter(MerchantRecipe* other)
 {
-    bool better = false;
-    if (isSame(other))
-    {
-        if (mBuyA->getCount() < other->mBuyA->getCount())
-        {
-            better = true;
-        }
-        else if (!mBuyB->isEmpty() && mBuyB->getCount() < other->mBuyB->getCount())
-        {
-            better = true;
-        }
-    }
-    return better;
+    return isSame(other) && (mBuyA->getCount() < other->mBuyA->getCount()
+                             || (!mBuyB->isEmpty() && mBuyB->getCount() < other->mBuyB->getCount()));
 }
 int MerchantRecipe::getUses() { return mUses; }
 int MerchantRecipe::getMaxUses() { return mMaxUses; }
@@ -122,12 +101,8 @@ void MerchantRecipe::increaseUses() { ++mUses; }
 void MerchantRecipe::increaseMaxUses(int amount) { mMaxUses += amount; }
 bool MerchantRecipe::isDeprecated()
 {
-    bool soldOut = mSell->isEmpty();
-    bool deprecated = true;
-    if (mUses < mMaxUses && !soldOut)
-    {
-        deprecated = false;
-    }
+    bool hasSellItem = !mSell->isEmpty();
+    bool deprecated = mUses >= mMaxUses || !hasSellItem;
     return deprecated;
 }
 void MerchantRecipe::enforceDeprecated() { mUses = mMaxUses; }

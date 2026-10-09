@@ -70,8 +70,7 @@ void PowerupItems::BroadcastTimedPowerup(boost::shared_ptr<Player> player,
 {
     if (!player->mLevel->mIsClientSide)
     {
-        PlayerList* players = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
-        players->broadcastToAllExceptTeam(player, boost::shared_ptr<ClientboundPowerupPacket>(new ClientboundPowerupPacket(powerupId, time)));
+        (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->broadcastToAllExceptTeam(player, boost::shared_ptr<ClientboundPowerupPacket>(new ClientboundPowerupPacket(powerupId, time)));
     }
 }
 

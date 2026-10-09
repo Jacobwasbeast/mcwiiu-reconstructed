@@ -12,16 +12,15 @@ ShapedRecipe::ShapedRecipe(int width, int height, ItemInstance** ingredients, It
       mHeight(height),
       mIngredients(ingredients)
 {
-    int i;
-    for (i = 0; i < width * height; ++i)
+    for (int i = 0; i < width * height; i++)
     {
-        if (ingredients[i] == NULL)
+        if (mIngredients[i] == NULL)
         {
-            ingredients[i] = ItemInstance::EMPTY.get();
+            mIngredients[i] = ItemInstance::EMPTY.get();
         }
     }
-    mGroup = static_cast<_eGroupType>(group);
     mResult = result;
+    mGroup = static_cast<_eGroupType>(group);
     mKeepTag = false;
 }
 
@@ -39,13 +38,12 @@ NonNullList<not_null_ptr<ItemInstance> > ShapedRecipe::getRemainingItems(boost::
 {
     NonNullList<not_null_ptr<ItemInstance> > result =
         NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
-    unsigned int i;
-    for (i = 0; i < result.size(); ++i)
+    for (unsigned int i = 0; i < result.size(); i++)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (item->getItem()->hasCraftingRemainingItem())
         {
-            result[i] = not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem()));
+            result.set(i, not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem())));
         }
     }
     return result;
@@ -64,9 +62,9 @@ bool ShapedRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContaine
     {
         for (gridRow = 0; gridRow < 3; ++gridRow)
         {
-            ItemInstance* ingredient = ItemInstance::EMPTY.get();
             int recipeColumn = gridColumn - column;
             int recipeRow = gridRow - row;
+            ItemInstance* ingredient = ItemInstance::EMPTY.get();
             if (recipeColumn >= 0 && recipeRow >= 0 && recipeColumn < mWidth && recipeRow < mHeight)
             {
                 if (mirror)
@@ -148,15 +146,14 @@ int ShapedRecipe::size()
 
 bool ShapedRecipe::recipeRequires(int itemId)
 {
-    int column;
-    int row;
-    for (column = 0; column < 3; ++column)
+    for (int column = 0; column < 3; column++)
     {
-        for (row = 0; row < 3; ++row)
+        for (int row = 0; row < 3; row++)
         {
             if (column < mWidth && row < mHeight)
             {
-                mIngredients[column + row * mWidth]->isEmpty();
+                ItemInstance* expected = mIngredients[column + row * mWidth];
+                expected->isEmpty();
             }
         }
     }
@@ -254,19 +251,16 @@ void ShapedRecipe::recipeRequires(INGREDIENTS_REQUIRED* ingredientsRequired)
 boost::shared_ptr<CraftingContainer> ShapedRecipe::generateExpectedCraftSlots()
 {
     boost::shared_ptr<CraftingContainer> result(new CraftingContainer(NULL, 3, 3));
-    int column;
-    int row;
-    for (column = 0; column < 3; ++column)
+    for (int column = 0; column < 3; column++)
     {
-        for (row = 0; row < 3; ++row)
+        for (int row = 0; row < 3; row++)
         {
             if (column < mWidth && row < mHeight)
             {
-                unsigned int slotIndex = static_cast<unsigned int>(column + row * 3);
-                ItemInstance* ingredient = mIngredients[slotIndex];
+                ItemInstance* ingredient = mIngredients[column + row * 3];
                 if (!ingredient->isEmpty())
                 {
-                    result->setItem(slotIndex, ingredient->copy());
+                    result->setItem(column + row * 3, ingredient->copy());
                 }
             }
         }

@@ -53,16 +53,24 @@ unsigned int DiggerItemHint::attack(not_null_ptr<ItemInstance> item,
 {
     if (!item->isEmpty())
     {
+        bool itemFound = false;
         for (unsigned int i = 0; i < mItemCount; ++i)
         {
             if (item->getItem() == mItems[i])
             {
-                if ((entity->GetType() & EntityType::MOB) != EntityType::MOB)
-                {
-                    return 0xffffffffU;
-                }
+                itemFound = true;
+                break;
+            }
+        }
+
+        if (itemFound)
+        {
+            bool isMob = eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType());
+            if (isMob)
+            {
                 return 0xe729d451U;
             }
+            return 0xffffffffU;
         }
     }
 

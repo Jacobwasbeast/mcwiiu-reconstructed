@@ -292,7 +292,7 @@ NonNullList<not_null_ptr<ItemInstance> > BannerRecipes::BannerAddPatternRecipe::
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (!item->isEmpty() && item->getItem()->hasCraftingRemainingItem())
-            result[i] = not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem()));
+            result.set(i, not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem())));
     }
     return result;
 }
@@ -409,13 +409,13 @@ NonNullList<not_null_ptr<ItemInstance> > BannerRecipes::BannerDuplicateRecipe::g
         {
             if (item->getItem()->hasCraftingRemainingItem())
             {
-                result[i] = not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem()));
+                result.set(i, not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem())));
             }
             else if (item->hasTag() && BannerBlockEntity::getPatternCount(item) > 0)
             {
                 not_null_ptr<ItemInstance> copy = item->copy();
                 copy->setCount(1);
-                result[i] = copy;
+                result.set(i, copy);
             }
         }
     }

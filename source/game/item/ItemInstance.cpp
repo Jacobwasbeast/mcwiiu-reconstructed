@@ -1,16 +1,20 @@
 #include "game/item/ItemInstance.hpp"
 
-static const wchar_t* TAG_ENCH = L"ench";
-static const wchar_t* TAG_ENCH_ID = L"id";
-static const wchar_t* TAG_ENCH_LEVEL = L"lvl";
-static const wchar_t* TAG_DISPLAY = L"display";
-static const wchar_t* TAG_NAME = L"Name";
-static const wchar_t* TAG_LOC_NAME = L"LocName";
-static const wchar_t* TAG_UNBREAKABLE = L"Unbreakable";
-static const wchar_t* TAG_REPAIR_COST = L"RepairCost";
-static const wchar_t* TAG_OWNER_ID = L"ownerID";
-static const wchar_t* TAG_CREATED_ON_HOST = L"createdOnHost";
-static const wchar_t* TAG_CREATED_BY_RESTRICTED = L"createdByRestricted";
+const wchar_t* ItemInstance::TAG_ENCH = L"ench";
+const wchar_t* ItemInstance::TAG_ENCH_ID = L"id";
+const wchar_t* ItemInstance::TAG_ENCH_LEVEL = L"lvl";
+const wchar_t* ItemInstance::TAG_DISPLAY = L"display";
+const wchar_t* ItemInstance::TAG_NAME = L"Name";
+const wchar_t* ItemInstance::TAG_LOC_NAME = L"LocName";
+const wchar_t* ItemInstance::TAG_UNBREAKABLE = L"Unbreakable";
+const wchar_t* ItemInstance::TAG_REPAIR_COST = L"RepairCost";
+const wchar_t* ItemInstance::TAG_OWNER_ID = L"ownerID";
+const wchar_t* ItemInstance::TAG_CREATED_ON_HOST = L"createdOnHost";
+const wchar_t* ItemInstance::TAG_CREATED_BY_RESTRICTED = L"createdByRestricted";
+const wchar_t* ItemInstance::TAG_FISH_BUCKET = L"FishBucket";
+const wchar_t* ItemInstance::TAG_CAN_DESTROY = L"CanDestroy";
+const wchar_t* ItemInstance::TAG_CAN_PLACE_ON = L"CanPlaceOn";
+const wchar_t* ItemInstance::TAG_HIDE_FLAGS = L"HideFlags";
 #include "game/core/StringIds.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/Items.hpp"
@@ -55,7 +59,7 @@ static const wchar_t* TAG_CREATED_BY_RESTRICTED = L"createdByRestricted";
 #include "game/ui/CraftingMenu.hpp"
 #include "game/ui/InventoryMenu.hpp"
 #include "game/world/block/Blocks.hpp"
-not_null_ptr<ItemInstance> ItemInstance::EMPTY(new ItemInstance(static_cast<Item*>(NULL)));
+const not_null_ptr<ItemInstance> ItemInstance::EMPTY(new ItemInstance(static_cast<Item*>(NULL)));
 
 ItemInstance::ItemInstance(Block* block)
     : mFrame(),
@@ -170,6 +174,11 @@ bool ItemInstance::isEmpty() const
     return false;
 }
 
+int ItemInstance::getPopTime() const
+{
+    return mPopTime;
+}
+
 int ItemInstance::getCount()
 {
     return mEmptyCache != 0 ? 0 : mCount;
@@ -199,7 +208,7 @@ void ItemInstance::_init(Item* item, int count, int auxValue)
     mCount = count;
     mPopTime = 0;
     mAuxValue = auxValue;
-    mCensorshipInfo = boost::shared_ptr<CensoredString>(new CensoredString(static_cast<int>(0xAD36B773u), 0x62950B66));
+    mCensorshipInfo = boost::shared_ptr<CensoredString>(new CensoredString(IDS_STRINGVERIFY_AWAITING_APPROVAL, IDS_STRINGVERIFY_CENSORED));
     mCanBreak = 0;
     mBreakBlock = 0;
     updateEmptyCacheFlag();
@@ -693,7 +702,7 @@ void ItemInstance::onCraftedBy(Level* level, boost::shared_ptr<Player> player, i
 
     if (countCraft)
     {
-        player->awardStat(gStats->get_itemsCrafted(Item::VALIDgetId(mItem)),
+        player->awardStat(GenericStats::itemsCrafted(mItem),
                           GenericStats::param_itemsCrafted(mItem, mAuxValue, amount));
     }
     getItem()->onCraftedBy(shared_from_this(), level, player);
@@ -935,8 +944,8 @@ std::vector<HtmlString>* ItemInstance::getTooltipLines(boost::shared_ptr<Player>
     lines->push_back(title);
 
     int hideFlags = 0;
-    if (hasTag() && mTag->contains(L"HideFlags", Tag::TAG_ANY_NUMERIC))
-        hideFlags = mTag->getInt(L"HideFlags");
+    if (hasTag() && mTag->contains(TAG_HIDE_FLAGS, Tag::TAG_ANY_NUMERIC))
+        hideFlags = mTag->getInt(TAG_HIDE_FLAGS);
 
     if ((hideFlags & 0x20) == 0)
         getItem()->appendHoverText(shared_from_this(), player, lines, advanced);
@@ -979,9 +988,9 @@ std::vector<HtmlString>* ItemInstance::getTooltipLines(boost::shared_ptr<Player>
     if (hasTag() && getTag()->getBoolean(TAG_UNBREAKABLE) && (hideFlags & 0x04) == 0)
         lines->push_back(HtmlString(L10N::GetString(IDS_ITEM_UNBREAKABLE), eMinecraftColour_HTMLColor_9, false, false, 0));
 
-    if (hasTag() && mTag->contains(L"CanDestroy", Tag::TAG_LIST) && (hideFlags & 0x08) == 0)
+    if (hasTag() && mTag->contains(TAG_CAN_DESTROY, Tag::TAG_LIST) && (hideFlags & 0x08) == 0)
     {
-        ListTag* blocks = mTag->getList(L"CanDestroy", Tag::TAG_STRING);
+        ListTag* blocks = mTag->getList(TAG_CAN_DESTROY, Tag::TAG_STRING);
         if (blocks->size() > 0)
         {
             lines->push_back(HtmlString(L"", eMinecraftColour_NOTSET, false, false, 0));
@@ -998,9 +1007,9 @@ std::vector<HtmlString>* ItemInstance::getTooltipLines(boost::shared_ptr<Player>
         }
     }
 
-    if (hasTag() && mTag->contains(L"CanPlaceOn", Tag::TAG_LIST) && (hideFlags & 0x10) == 0)
+    if (hasTag() && mTag->contains(TAG_CAN_PLACE_ON, Tag::TAG_LIST) && (hideFlags & 0x10) == 0)
     {
-        ListTag* blocks = mTag->getList(L"CanPlaceOn", Tag::TAG_STRING);
+        ListTag* blocks = mTag->getList(TAG_CAN_PLACE_ON, Tag::TAG_STRING);
         if (blocks->size() > 0)
         {
             lines->push_back(HtmlString(L"", eMinecraftColour_NOTSET, false, false, 0));

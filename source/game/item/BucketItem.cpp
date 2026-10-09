@@ -47,56 +47,74 @@
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
-static const unsigned int values[11][10] = {
-        { 1, 7, 1, 1, 0x32c4c9ab, 7, 7, 1, 0, 0xd50701c3 },
-        { 7, 3, 0, 1, 0xcd035b9e, 0, 7, 0, 4, 0x47b1b097 },
-        { 11, 7, 0, 1, 0x6ccc17a8, 1, 0, 0, 0, 0x9adcd29d },
-        { 6, 3, 0, 5, 0xd2b1c3e2, 10, 4, 1, 3, 0x246fab99 },
-        { 0, 14, 1, 5, 0xa50ad51a, 0, 4, 0, 5, 0x6ad3fd21 },
-        { 0, 7, 1, 2, 0xa7dc5b3c, 0, 1, 1, 5, 0xf1e7d6f7 },
-        { 9, 6, 0, 3, 0x206ac466, 5, 3, 0, 4, 0xf9431ba7 },
-        { 14, 0, 1, 4, 0x9b750144, 7, 14, 0, 2, 0xb31348e5 },
-        { 14, 0, 1, 3, 0x38e1599f, 0, 4, 1, 0, 0xf9785bdf },
-        { 14, 0, 0, 1, 0xc02e273a, 7, 0, 0, 1, 0x968e5c0c },
-        { 4, 4, 1, 1, 0x395fe7d7, 0, 3, 9, 4, 0x0a5c6461 }
+static const int TROPICAL_FISH_COLOR_NAMES[15] = {
+    static_cast<int>(IDS_DESC_TROPICAL_COLOR_WHITE), IDS_DESC_TROPICAL_COLOR_ORANGE, IDS_DESC_TROPICAL_COLOR_MAGENTA, IDS_DESC_TROPICAL_COLOR_SKY, static_cast<int>(IDS_DESC_TROPICAL_COLOR_YELLOW),
+    IDS_DESC_TROPICAL_COLOR_LIME, static_cast<int>(IDS_DESC_TROPICAL_COLOR_ROSE), static_cast<int>(IDS_DESC_TROPICAL_COLOR_GRAY), static_cast<int>(IDS_DESC_TROPICAL_COLOR_SILVER),
+    static_cast<int>(IDS_DESC_TROPICAL_COLOR_TEAL), static_cast<int>(IDS_DESC_TROPICAL_COLOR_PLUM), IDS_DESC_TROPICAL_COLOR_BLUE, static_cast<int>(IDS_DESC_TROPICAL_COLOR_BROWN),
+    IDS_DESC_TROPICAL_COLOR_GREEN, IDS_DESC_TROPICAL_COLOR_RED,
+};
+
+static const int TROPICAL_FISH_PATTERN_NAMES[24] = {
+    0x1AC7A9D7, 0x0D35BF83, 0x14328023, 0x0CC5A1D0, static_cast<int>(0x86347D6E), static_cast<int>(0xBDBA78AC),
+    static_cast<int>(0x8C4ED0B3), 0x1918A669, static_cast<int>(0x9983DE84), static_cast<int>(0x947BF784),
+    static_cast<int>(0xC1AD361F), static_cast<int>(0xF13321A2), 0x2189FC84, static_cast<int>(0x9717CFF0),
+    static_cast<int>(0xA9D36B90), 0x1D2AD27B, 0x54FEB165, static_cast<int>(0xAEEAEA77),
+    static_cast<int>(0xACD88200), static_cast<int>(0xF10D126A), 0x2ADC42EF, static_cast<int>(0x8AD673EF),
+    0x75F6484C, 0x340BB259,
+};
+
+static const unsigned int values[22][5] = {
+        { 1, 7, 1, 1, IDS_DESC_TROPICAL_SCHOOL_ANEMONE },
+        { 7, 7, 1, 0, IDS_DESC_TROPICAL_SCHOOL_BLACKTANG },
+        { 7, 3, 0, 1, IDS_DESC_TROPICAL_SCHOOL_BLUEDORY },
+        { 0, 7, 0, 4, IDS_DESC_TROPICAL_SCHOOL_BUTTERFLYFISH },
+        { 11, 7, 0, 1, IDS_DESC_TROPICAL_SCHOOL_CHICHLID },
+        { 1, 0, 0, 0, IDS_DESC_TROPICAL_SCHOOL_CLOWNFISH },
+        { 6, 3, 0, 5, IDS_DESC_TROPICAL_SCHOOL_COTTON_CANDY_BETTA },
+        { 10, 4, 1, 3, IDS_DESC_TROPICAL_SCHOOL_DOTTYBACK },
+        { 0, 14, 1, 5, IDS_DESC_TROPICAL_SCHOOL_EMPEROR_RED_SNAPPER },
+        { 0, 4, 0, 5, IDS_DESC_TROPICAL_SCHOOL_GOATFISH },
+        { 0, 7, 1, 2, IDS_DESC_TROPICAL_SCHOOL_MOORISH_IDOL },
+        { 0, 1, 1, 5, IDS_DESC_TROPICAL_SCHOOL_ORNATE_BUTTERFLY },
+        { 9, 6, 0, 3, IDS_DESC_TROPICAL_SCHOOL_PARROTFISH },
+        { 5, 3, 0, 4, IDS_DESC_TROPICAL_SCHOOL_QUEEN_ANGEL_FISH },
+        { 14, 0, 1, 4, IDS_DESC_TROPICAL_SCHOOL_RED_CICHLID },
+        { 7, 14, 0, 2, IDS_DESC_TROPICAL_SCHOOL_RED_LIPPED_BLENNY },
+        { 14, 0, 1, 3, IDS_DESC_TROPICAL_SCHOOL_RED_SNAPPER },
+        { 0, 4, 1, 0, IDS_DESC_TROPICAL_SCHOOL_THREADFIN },
+        { 14, 0, 0, 1, IDS_DESC_TROPICAL_SCHOOL_TOMATO_CLOWN },
+        { 7, 0, 0, 1, IDS_DESC_TROPICAL_SCHOOL_TRIGGERFISH },
+        { 4, 4, 1, 1, IDS_DESC_TROPICAL_SCHOOL_YELLOW_TANG },
+        { 0, 3, 9, 4, IDS_DESC_TROPICAL_SCHOOL_YELLOWTAIL_PARROT }
 };
 
 int BucketItem::getSchoolName(int a, int b, int c, int d)
 {
-    const unsigned int (*row)[10] = values;
-    int remaining = 11;
-    while (true)
+    for (int i = 0; i < 22; ++i)
     {
-        if ((*row)[0] == a && (*row)[1] == b && (*row)[2] == c && (*row)[3] == d)
+        unsigned int baseColor = values[i][0];
+        unsigned int patternColor = values[i][1];
+        unsigned int size = values[i][2];
+        unsigned int pattern = values[i][3];
+        if (baseColor == a && patternColor == b && size == c && pattern == d)
         {
-            return (*row)[4];
-        }
-        if ((*row)[5] == a && (*row)[6] == b && (*row)[7] == c && (*row)[8] == d)
-        {
-            return (*row)[9];
-        }
-        --remaining;
-        ++row;
-        if (remaining == 0)
-        {
-            return -1;
+            return values[i][4];
         }
     }
+    return -1;
 }
 
 BucketItem::BucketItem(BucketFillType fillType)
-    : Item(), mFillType(fillType)
+    : Item()
 {
     mMaxStackSize = 1;
+    mFillType = fillType;
 
     switch (fillType)
     {
     case EMPTY:
     case NONE:
         mBlock = Blocks::air;
-        break;
-    case LAVA:
-        mBlock = Blocks::flowing_lava;
         break;
     case MILK:
     case FISH:
@@ -105,6 +123,9 @@ BucketItem::BucketItem(BucketFillType fillType)
     case PUFFER:
     case WATER:
         mBlock = Blocks::flowing_water;
+        break;
+    case LAVA:
+        mBlock = Blocks::flowing_lava;
         break;
     default:
         break;
@@ -118,19 +139,19 @@ bool BucketItem::isFishBucket()
 
 bool BucketItem::supportsEntityType(const unsigned long long& type, int& variant) const
 {
-    switch (static_cast<unsigned int>(type))
+    switch (static_cast<int>(type))
     {
-    case static_cast<unsigned int>(EntityType::FISH):
+    case static_cast<int>(EntityType::FISH):
         variant = 2;
         return true;
-    case static_cast<unsigned int>(EntityType::PUFFERFISH):
-        variant = 5;
-        return true;
-    case static_cast<unsigned int>(EntityType::SALMON):
+    case static_cast<int>(EntityType::SALMON):
         variant = 3;
         return true;
-    case static_cast<unsigned int>(EntityType::TROPICAL_FISH):
+    case static_cast<int>(EntityType::TROPICAL_FISH):
         variant = 4;
+        return true;
+    case static_cast<int>(EntityType::PUFFERFISH):
+        variant = 5;
         return true;
     default:
         return false;
@@ -139,28 +160,27 @@ bool BucketItem::supportsEntityType(const unsigned long long& type, int& variant
 
 void BucketItem::addBucketEntitySaveData(boost::shared_ptr<Entity> entity, not_null_ptr<ItemInstance> itemInstance)
 {
-    if (!entity)
+    if (entity != NULL)
     {
-        return;
+        if (itemInstance->hasTag())
+        {
+            itemInstance->getTag()->remove(ItemInstance::TAG_FISH_BUCKET);
+        }
+        CompoundTag* tag = new CompoundTag();
+        entity->addAdditonalSaveData(tag);
+        if (!entity->getCustomName().empty())
+        {
+            std::wstring customName = entity->getCustomName();
+            tag->putString(L"CustomName", customName);
+            std::wstring ownerUUID = entity->getOwnerUUID();
+            tag->putString(L"OwnerUUID", ownerUUID);
+            bool restricted = entity->wasNamedByRestrictedPlayer();
+            tag->putBoolean(L"CreatedByRestrictedPlayer", restricted);
+            bool host = entity->wasNamedOnHost();
+            tag->putBoolean(L"CreatedOnHost", host);
+        }
+        itemInstance->addTagElement(ItemInstance::TAG_FISH_BUCKET, tag);
     }
-    if (itemInstance->hasTag())
-    {
-        itemInstance->getTag()->remove(L"FishBucket");
-    }
-    CompoundTag* tag = new CompoundTag();
-    entity->addAdditonalSaveData(tag);
-    if (!entity->getCustomName().empty())
-    {
-        std::wstring customName = entity->getCustomName();
-        tag->putString(L"CustomName", customName);
-        std::wstring ownerUUID = entity->getOwnerUUID();
-        tag->putString(L"OwnerUUID", ownerUUID);
-        bool restricted = entity->wasNamedByRestrictedPlayer();
-        tag->putBoolean(L"CreatedByRestrictedPlayer", restricted);
-        bool host = entity->wasNamedOnHost();
-        tag->putBoolean(L"CreatedOnHost", host);
-    }
-    itemInstance->addTagElement(L"FishBucket", tag);
 }
 
 not_null_ptr<ItemInstance> BucketItem::createResultItem(not_null_ptr<ItemInstance> itemInstance,
@@ -195,59 +215,56 @@ not_null_ptr<ItemInstance> BucketItem::collectFish(boost::shared_ptr<Player> pla
                                                    boost::shared_ptr<ItemInstance> itemInstance)
 {
     int variant = 0;
-    if (!entity)
-        return itemInstance;
-    unsigned long long type = entity->GetType();
-    if (!supportsEntityType(type, variant))
-        return itemInstance;
-    if (!entity->isInWater() || (mFillType != EMPTY && mFillType != WATER))
-        return itemInstance;
-
-    Item* resultItem = NULL;
-    switch (variant)
+    if (entity != NULL && supportsEntityType(entity->GetType(), variant) && entity->isInWater()
+        && (mFillType == EMPTY || mFillType == WATER))
     {
-    case 2:
-        resultItem = Items::fishBucket;
-        break;
-    case 3:
-        resultItem = Items::salmonBucket;
-        break;
-    case 4:
-        resultItem = Items::tropicalBucket;
-        break;
-    case 5:
-        resultItem = Items::pufferBucket;
-        break;
-    default:
-        break;
-    }
+        Item* resultItem = NULL;
+        switch (variant)
+        {
+        case 2:
+            resultItem = Items::fishBucket;
+            break;
+        case 3:
+            resultItem = Items::salmonBucket;
+            break;
+        case 4:
+            resultItem = Items::tropicalBucket;
+            break;
+        case 5:
+            resultItem = Items::pufferBucket;
+            break;
+        default:
+            break;
+        }
 
-    if (!player->mLevel->mIsClientSide)
-    {
-        std::vector<boost::shared_ptr<Entity> > removed;
-        removed.push_back(entity);
-        player->mLevel->removeEntities(&removed);
+        if (!player->mLevel->mIsClientSide)
+        {
+            std::vector<boost::shared_ptr<Entity> > removed;
+            removed.push_back(entity);
+            player->mLevel->removeEntities(&removed);
+        }
+        player->playSound(SoundEvents::BUCKET_FILL_FISH, 1.0f, 1.0f);
+        return createResultItem(itemInstance, player, resultItem, entity);
     }
-    player->playSound(SoundEvents::BUCKET_FILL_FISH, 1.0f, 1.0f);
-    return createResultItem(itemInstance, player, resultItem, entity);
+    return itemInstance;
 }
 
 InteractionResult::EInteractionResult BucketItem::useOn(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos,
                                                         InteractionHand::EInteractionHand hand, const Direction* direction,
                                                         float hitX, float hitY, float hitZ, bool simulate)
 {
-    InteractionResult::EInteractionResult result;
-    if (!simulate)
+    if (simulate)
     {
-        result = Item::useOn(player, level, pos, hand, direction, hitX, hitY, hitZ, simulate);
+        if (TestUse(level, player, hand))
+        {
+            return InteractionResult::eInteractionResult_Success;
+        }
+        return InteractionResult::eInteractionResult_Fail;
     }
     else
     {
-        result = InteractionResult::eInteractionResult_Fail;
-        if (TestUse(level, player, hand))
-            return InteractionResult::eInteractionResult_Success;
+        return Item::useOn(player, level, pos, hand, direction, hitX, hitY, hitZ, simulate);
     }
-    return result;
 }
 
 static bool isPickable_apply(boost::shared_ptr<Entity> entity)
@@ -255,7 +272,7 @@ static bool isPickable_apply(boost::shared_ptr<Entity> entity)
     bool pickable = true;
     if (!entity->isPickable())
     {
-        bool isItem = entity->GetType() == EntityType::ITEM_ENTITY;
+        bool isItem = eTYPE_DERIVED_FROM(EntityType::ITEM_ENTITY, entity->GetType());
         if (!isItem)
             pickable = false;
     }
@@ -523,16 +540,16 @@ bool BucketItem::isFishBucketNameCensored(const std::wstring& name, const std::w
 {
     bool censored = !gApp.IsUUIDLocal(owner) && (gApp.IsConsoleChatCensored() || restricted);
     bool hidden = !host && censored;
-    if ((!CGameNetworkManager::sInstance.IsHost() || !hidden) && (CGameNetworkManager::sInstance.IsHost() || !censored))
+    if ((CGameNetworkManager::sInstance.IsHost() && hidden) || (!CGameNetworkManager::sInstance.IsHost() && censored))
     {
-        return false;
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool BucketItem::readBucketEntitySaveData(boost::shared_ptr<Entity> entity, not_null_ptr<ItemInstance> itemInstance)
 {
-    CompoundTag* tag = static_cast<CompoundTag*>(itemInstance->getTagElement(L"FishBucket"));
+    CompoundTag* tag = static_cast<CompoundTag*>(itemInstance->getTagElement(ItemInstance::TAG_FISH_BUCKET));
     if (tag == NULL)
     {
         return false;
@@ -781,7 +798,7 @@ InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> 
                                     false);
                 player->playSound(SoundEvents::BUCKET_FILL_LAVA, 1.0f, 1.0f);
                 if (level->mDimension->getType() == DimensionType::NETHER)
-                    player->awardStat(gStats->get_netherLavaCollected(), GenericStats::param_noArgs());
+                    player->awardStat(GenericStats::netherLavaCollected(), GenericStats::param_noArgs());
                 delete hitResult;
                 return InteractionResultHolder(InteractionResult::eInteractionResult_Success,
                                                createResultItem(itemInstance, player, Items::lavaBucket,
@@ -843,29 +860,22 @@ InteractionResultHolder BucketItem::use(Level* level, boost::shared_ptr<Player> 
 not_null_ptr<ItemInstance> BucketItem::finishUsingItem(not_null_ptr<ItemInstance> itemInstance, Level* level,
                                                        boost::shared_ptr<LivingEntity> entity)
 {
-    if (mFillType != MILK)
-        return itemInstance;
-
-    bool notInstabuild = false;
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (mFillType == MILK)
     {
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-        if (!player->mAbilities.mInstabuild)
-            notInstabuild = true;
-    }
-    if (notInstabuild)
-        itemInstance->shrink(1);
-    if (!level->mIsClientSide)
-        entity->removeAllEffects();
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-    {
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-        player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)),
-                          GenericStats::param_itemsUsed(boost::static_pointer_cast<Player>(entity), itemInstance));
-    }
-    if (!itemInstance->isEmpty())
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
+            && !boost::static_pointer_cast<Player>(entity)->mAbilities.mInstabuild)
+            itemInstance->shrink(1);
+        if (!level->mIsClientSide)
+            entity->removeAllEffects();
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
+            boost::static_pointer_cast<Player>(entity)->awardStat(
+                GenericStats::itemsUsed(this),
+                GenericStats::param_itemsUsed(boost::static_pointer_cast<Player>(entity), itemInstance));
+        if (itemInstance->isEmpty())
+            return not_null_ptr<ItemInstance>(new ItemInstance(Items::bucket));
         return itemInstance;
-    return not_null_ptr<ItemInstance>(new ItemInstance(Items::bucket));
+    }
+    return itemInstance;
 }
 
 int BucketItem::getUseDuration(not_null_ptr<ItemInstance> itemInstance)
@@ -885,36 +895,21 @@ unsigned int BucketItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
         return IDS_TOOLTIPS_DRINK;
     }
     bool canUse = TestUse(tooltipData.m_pLevel, tooltipData.m_pPlayer, InteractionHand::eInteractionHand_MainHand);
-    if (!canUse)
+    if (canUse)
     {
-        return IDS_NONE;
-    }
-    if (!isFishBucket())
-    {
+        bool fishBucket = isFishBucket();
+        if (fishBucket)
+        {
+            return IDS_TOOLTIPS_EMPTY;
+        }
         return IDS_TOOLTIPS_COLLECT;
     }
-    return IDS_TOOLTIPS_EMPTY;
+    return IDS_NONE;
 }
-
-static const int TROPICAL_FISH_COLOR_NAMES[15] = {
-    static_cast<int>(IDS_DESC_TROPICAL_COLOR_WHITE), IDS_DESC_TROPICAL_COLOR_ORANGE, IDS_DESC_TROPICAL_COLOR_MAGENTA, IDS_DESC_TROPICAL_COLOR_SKY, static_cast<int>(IDS_DESC_TROPICAL_COLOR_YELLOW),
-    0x4E44ECC4, static_cast<int>(0xB03701A2), static_cast<int>(0xD02C583C), static_cast<int>(0xF41C4A76),
-    static_cast<int>(0xF6303EFD), static_cast<int>(0xFF2145A5), 0x59210C0F, static_cast<int>(0xA6E7677F),
-    0x3538B71A, 0x4A597242,
-};
-
-static const int TROPICAL_FISH_PATTERN_NAMES[24] = {
-    0x1AC7A9D7, 0x0D35BF83, 0x14328023, 0x0CC5A1D0, static_cast<int>(0x86347D6E), static_cast<int>(0xBDBA78AC),
-    static_cast<int>(0x8C4ED0B3), 0x1918A669, static_cast<int>(0x9983DE84), static_cast<int>(0x947BF784),
-    static_cast<int>(0xC1AD361F), static_cast<int>(0xF13321A2), 0x2189FC84, static_cast<int>(0x9717CFF0),
-    static_cast<int>(0xA9D36B90), 0x1D2AD27B, 0x54FEB165, static_cast<int>(0xAEEAEA77),
-    static_cast<int>(0xACD88200), static_cast<int>(0xF10D126A), 0x2ADC42EF, static_cast<int>(0x8AD673EF),
-    0x75F6484C, 0x340BB259,
-};
 
 std::wstring BucketItem::getName(not_null_ptr<ItemInstance> itemInstance)
 {
-    CompoundTag* tag = static_cast<CompoundTag*>(itemInstance->getTagElement(L"FishBucket"));
+    CompoundTag* tag = static_cast<CompoundTag*>(itemInstance->getTagElement(ItemInstance::TAG_FISH_BUCKET));
     bool fishBucket = isFishBucket();
     std::wstring customName = L"";
     bool censored = false;

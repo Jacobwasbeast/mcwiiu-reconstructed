@@ -105,7 +105,7 @@ void MapItem::update(Level* level, boost::shared_ptr<Entity> entity, boost::shar
 {
     if (level->mDimension->getType()->getId() != data->mDimension)
         return;
-    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+    if (!eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         return;
 
     long long now = System::processTimeInMilliSecs();
@@ -427,7 +427,7 @@ void MapItem::inventoryTick(not_null_ptr<ItemInstance> itemInstance, Level* leve
 
     boost::shared_ptr<MapItemSavedData> data = getSavedData(itemInstance, level);
 
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
         int newMapId = level->getAuxValueForMap(player->mXuid, data->mDimension, data->mXCenter,
@@ -457,7 +457,7 @@ void MapItem::inventoryTick(not_null_ptr<ItemInstance> itemInstance, Level* leve
     {
         shouldUpdate = true;
     }
-    else if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    else if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
         shouldUpdate = (player->getOffhandItem() == itemInstance);

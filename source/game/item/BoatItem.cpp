@@ -37,8 +37,8 @@ bool BoatItem::TestUse(Level* level, boost::shared_ptr<Player> player, Interacti
     double fromY = player->mYo + (player->mY - player->mYo) + player->getEyeHeight();
     double fromZ = player->mZo + (player->mZ - player->mZo);
     Vec3* from = Vec3::newTemp(fromX, fromY, fromZ);
-    float yaw = -yRot * 0.017453292f - 3.1415927f;
-    float pitch = -xRot * 0.017453292f;
+    float yaw = -yRot * Mth::DEG_TO_RAD - 3.1415927f;
+    float pitch = -xRot * Mth::DEG_TO_RAD;
     float yawCos = Mth::cos(yaw);
     float yawSin = Mth::sin(yaw);
     float pitchCos = -Mth::cos(pitch);
@@ -85,8 +85,8 @@ InteractionResultHolder BoatItem::use(Level* level,
     double fromY = player->mYo + (player->mY - player->mYo) + player->getEyeHeight();
     double fromZ = player->mZo + (player->mZ - player->mZo);
     Vec3* from = Vec3::newTemp(fromX, fromY, fromZ);
-    float yaw = -yRot * 0.017453292f - 3.1415927f;
-    float pitch = -xRot * 0.017453292f;
+    float yaw = -yRot * Mth::DEG_TO_RAD - 3.1415927f;
+    float pitch = -xRot * Mth::DEG_TO_RAD;
     float yawCos = Mth::cos(yaw);
     float yawSin = Mth::sin(yaw);
     float pitchCos = -Mth::cos(pitch);
@@ -154,7 +154,7 @@ InteractionResultHolder BoatItem::use(Level* level,
         {
             itemInstance->shrink(1);
         }
-        player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)),
+        player->awardStat(GenericStats::itemsUsed(this),
                           GenericStats::param_itemsUsed(player, itemInstance));
     }
     else if (!level->mIsClientSide)

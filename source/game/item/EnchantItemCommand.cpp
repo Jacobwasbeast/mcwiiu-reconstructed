@@ -32,6 +32,7 @@ void EnchantItemCommand::execute(boost::shared_ptr<CommandSender> sender,
     PlayerUID uid = stream.readPlayerUID();
     int enchantmentId = stream.readInt();
     int level = stream.readInt();
+    byteStream.reset();
 
     boost::shared_ptr<ServerPlayer> player = getPlayer(uid);
 
@@ -39,43 +40,23 @@ void EnchantItemCommand::execute(boost::shared_ptr<CommandSender> sender,
 
     if (player.get() == NULL)
     {
-        byteStream.mBuffer.data = NULL;
-        byteStream.mBuffer.length = 0;
-        byteStream.mCount = 0;
-        byteStream.mMark = 0;
-        byteStream.mPosition = 0;
         return;
     }
 
     not_null_ptr<ItemInstance> item = player->getMainHandItem();
     if (item->isEmpty())
     {
-        byteStream.mBuffer.data = NULL;
-        byteStream.mBuffer.length = 0;
-        byteStream.mCount = 0;
-        byteStream.mMark = 0;
-        byteStream.mPosition = 0;
         return;
     }
 
     Enchantment* enchantment = Enchantment::byId(enchantmentId);
     if (enchantment == NULL)
     {
-        byteStream.mBuffer.data = NULL;
-        byteStream.mBuffer.length = 0;
-        byteStream.mCount = 0;
-        byteStream.mMark = 0;
-        byteStream.mPosition = 0;
         return;
     }
 
     if (!enchantment->canEnchant(item))
     {
-        byteStream.mBuffer.data = NULL;
-        byteStream.mBuffer.length = 0;
-        byteStream.mCount = 0;
-        byteStream.mMark = 0;
-        byteStream.mPosition = 0;
         return;
     }
 
@@ -95,15 +76,10 @@ void EnchantItemCommand::execute(boost::shared_ptr<CommandSender> sender,
         {
             for (int i = 0; i < enchantmentTags->size(); ++i)
             {
-                int existingId = enchantmentTags->getCompound(i)->getShort(L"id");
+                int existingId = enchantmentTags->getCompound(i)->getShort(ItemInstance::TAG_ENCH_ID);
                 if (Enchantment::byId(existingId) != NULL &&
                     !Enchantment::byId(existingId)->isCompatibleWith(enchantment))
                 {
-                    byteStream.mBuffer.data = NULL;
-                    byteStream.mBuffer.length = 0;
-                    byteStream.mCount = 0;
-                    byteStream.mMark = 0;
-                    byteStream.mPosition = 0;
                     return;
                 }
             }
@@ -117,11 +93,6 @@ void EnchantItemCommand::execute(boost::shared_ptr<CommandSender> sender,
     logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_Text,
                    NULL, 0, stringParams, 1);
     sender->setCommandStats(CommandStats::AFFECTED_ITEMS, 1);
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
 }
 
 boost::shared_ptr<GameCommandPacket> EnchantItemCommand::preparePacket(

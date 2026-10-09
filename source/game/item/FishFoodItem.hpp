@@ -33,8 +33,8 @@ public:
         unsigned char canBeCooked() const;
         unsigned int getCookedNutrition() const;
         unsigned int getRawNutrition() const;
-        double getCookedSaturation() const;
-        double getRawSaturation() const;
+        float getCookedSaturation() const;
+        float getRawSaturation() const;
         int getName(bool cooked) const;
         int getDescription(bool cooked) const;
         TextureAtlasSprite* getIcon(bool cooked);
@@ -55,7 +55,7 @@ public:
         std::wstring mCookedIcon;
         TextureAtlasSprite* mRawIcon;
         TextureAtlasSprite* mCookedIconValue;
-        int mDescription;
+        unsigned int mDescription;
         int mCookedDescription;
     };
 

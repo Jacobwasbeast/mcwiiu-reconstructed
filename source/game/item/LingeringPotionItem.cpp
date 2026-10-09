@@ -56,7 +56,7 @@ InteractionResultHolder LingeringPotionItem::use(Level* level,
         level->addEntity(potion);
     }
 
-    player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)),
+    player->awardStat(GenericStats::itemsUsed(this),
                       GenericStats::param_itemsUsed(player, itemInstance));
 
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);

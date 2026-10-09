@@ -21,5 +21,8 @@ void EffectChangedTask::onEffectChanged(MobEffect* effect, bool added)
         return;
     }
 
-    completed = (effectRemoved == !added);
+    if (effectRemoved == !added)
+        completed = true;
+    else
+        completed = false;
 }

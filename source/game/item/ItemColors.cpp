@@ -27,17 +27,19 @@ ItemColors::ItemColors()
 
 void ItemColors::registerColor(ItemColor* color, arrayWithLength<Item*> items)
 {
-    for (unsigned int i = 0; i < items.length; ++i)
+    for (unsigned int i = 0; i < items.length; i++)
     {
-        mItemColorIds->addMapping(color, Item::getId(items.data[i]));
+        int id = Item::getId(items.data[i]);
+        mItemColorIds->addMapping(color, id);
     }
 }
 
 void ItemColors::registerColor(ItemColor* color, arrayWithLength<Block*> blocks)
 {
-    for (unsigned int i = 0; i < blocks.length; ++i)
+    for (unsigned int i = 0; i < blocks.length; i++)
     {
-        mItemColorIds->addMapping(color, Item::getId(Item::byBlock(blocks.data[i])));
+        Item* item = Item::byBlock(blocks.data[i]);
+        mItemColorIds->addMapping(color, Item::getId(item));
     }
 }
 
@@ -48,7 +50,7 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
     public:
         int getColor(const not_null_ptr<ItemInstance>& item, int layer)
         {
-            return layer < 1 ? item->getItem()->getColor(item, 0) : -1;
+            return layer > 0 ? -1 : item->getItem()->getColor(item, 0);
         }
     };
     class Bed_ItemColor : public ItemColor
@@ -108,9 +110,10 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
                 green += (color >> 8) & 0xff;
                 blue += color & 0xff;
             }
-            return static_cast<int>(((red / values.length) << 16)
-                | ((green / values.length) << 8)
-                | (blue / values.length));
+            red /= values.length;
+            green /= values.length;
+            blue /= values.length;
+            return static_cast<int>((red << 16) | (green << 8) | blue);
         }
     };
     class Grass_ItemColor : public ItemColor {
@@ -134,14 +137,12 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
     public:
         int getColor(const not_null_ptr<ItemInstance>& item, int layer)
         {
-            if (layer < 1)
-            {
-                std::vector<MobEffectInstance*>* effects = PotionUtils::getMobEffects(item);
-                int color = PotionUtils::getColor(effects);
-                delete effects;
-                return color;
-            }
-            return -1;
+            if (layer > 0)
+                return -1;
+            std::vector<MobEffectInstance*>* effects = PotionUtils::getMobEffects(item);
+            int color = PotionUtils::getColor(effects);
+            delete effects;
+            return color;
         }
     };
     class SpawnEgg_ItemColor : public ItemColor
@@ -150,18 +151,20 @@ ItemColors* ItemColors::createDefault(BlockColors* blockColors)
         int getColor(const not_null_ptr<ItemInstance>& item, int layer)
         {
             EntityIO::SpawnInfo::iterator found = EntityIO::sSpawnInfo.find(SpawnEggItem::getNamedIdFrom(item));
-            if (found == EntityIO::sSpawnInfo.end())
-                return -1;
-            EntityIO::SpawnableMobInfo* info = found->second;
-            if (layer == 0)
+            if (found != EntityIO::sSpawnInfo.end())
             {
-                if (info->colour == 0)
-                    return -1;
-                return static_cast<int>(Minecraft::GetInstance()->getColourTable()->getColour(info->colour));
+                EntityIO::SpawnableMobInfo* info = found->second;
+                if (layer == 0)
+                {
+                    if (info->colour != 0)
+                        return static_cast<int>(Minecraft::GetInstance()->getColourTable()->getColour(info->colour));
+                }
+                else if (info->secondaryColour != 0)
+                {
+                    return static_cast<int>(Minecraft::GetInstance()->getColourTable()->getColour(info->secondaryColour));
+                }
             }
-            if (info->secondaryColour == 0)
-                return -1;
-            return static_cast<int>(Minecraft::GetInstance()->getColourTable()->getColour(info->secondaryColour));
+            return -1;
         }
     };
     class TallGrass_ItemColor : public ItemColor

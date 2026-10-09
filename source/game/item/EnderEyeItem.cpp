@@ -25,10 +25,10 @@
 #include "game/world/block/BooleanProperty.hpp"
 #include "game/world/block/EndPortalFrameBlock.hpp"
 #include "game/world/block/TypedBoxed.hpp"
+#include "game/world/generation/LargeFeature.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/world/generation/Player.hpp"
 
-static const std::wstring kStrongholdName(L"StrongHold");
 
 EnderEyeItem::EnderEyeItem() : Item()
 {
@@ -123,7 +123,7 @@ InteractionResultHolder EnderEyeItem::use(Level* level, boost::shared_ptr<Player
     player->startUsingItem(hand);
     if (!level->mIsClientSide)
     {
-        BlockPos* target = static_cast<ServerLevel*>(level)->getChunkSource()->findNearestMapFeature(level, kStrongholdName, BlockPos(player), false);
+        BlockPos* target = static_cast<ServerLevel*>(level)->getChunkSource()->findNearestMapFeature(level, LargeFeature::STRONGHOLD, BlockPos(player), false);
         if (target != NULL)
         {
             boost::shared_ptr<EyeOfEnderSignal> signal(

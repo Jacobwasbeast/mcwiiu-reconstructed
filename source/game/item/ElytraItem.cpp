@@ -4,7 +4,7 @@
 #include "game/core/BehaviorRegistry.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/entity/mob/Mob.hpp"
-#include "game/item/ArmorDispenseItemBehavior.hpp"
+#include "game/item/ArmorItem.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/ui/ItemTooltipDataHolder.hpp"
@@ -19,7 +19,7 @@ ElytraItem::ElytraItem()
     mMaxStackSize = 1;
     setMaxDamage(0x1B0);
     addProperty(ResourceLocation(L"broken"), new ElytraItem_ItemPropertyFunction());
-    DispenserBlock::DISPENSER_REGISTRY.add(this, new ArmorDispenseItemBehavior());
+    DispenserBlock::DISPENSER_REGISTRY.add(this, ArmorItem::DISPENSE_ITEM_BEHAVIOR);
 }
 
 int ElytraItem::GetArmorType()
@@ -48,12 +48,12 @@ InteractionResultHolder ElytraItem::use(Level*,
     player->setItemSlot(slot, itemInHand->copy());
     itemInHand->setCount(0);
 
-    if (equippedItem->isEmpty())
+    if (!equippedItem->isEmpty())
     {
-        return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInHand);
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Success, equippedItem);
     }
 
-    return InteractionResultHolder(InteractionResult::eInteractionResult_Success, equippedItem);
+    return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInHand);
 }
 
 bool ElytraItem::TestUse(Level*, boost::shared_ptr<Player>, InteractionHand::EInteractionHand)

@@ -60,13 +60,13 @@ Recipes::Recipes()
     mToolRecipies = new ToolRecipies();
     mWeaponRecipies = new WeaponRecipies();
     mOreRecipies = new OreRecipies();
-    mFoodRecipies = new FoodRecipies();
-    mStructureRecipies = new StructureRecipies();
+    mFoodRecipies = new FoodRecipies;
+    mStructureRecipies = new StructureRecipies;
     mArmorRecipes = new ArmorRecipes();
     mClothDyeRecipes = new ClothDyeRecipes();
     mBannerRecipes = new BannerRecipes;
     mShulkerBoxRecipes = new ShulkerBoxRecipes();
-    mArmorDyeRecipe = new ArmorDyeRecipe();
+    mArmorDyeRecipe = new ArmorDyeRecipe;
     mRecipes[eRecipeCategory_Crafting].push_back(new MapCloningRecipe());
     mFireworksRecipe = new FireworksRecipe();
     mRepairItemRecipe = new RepairItemRecipe();
@@ -423,9 +423,8 @@ Recipe* Recipes::addShapedRecipe(ItemInstance* result, int category, ...)
 
 void Recipes::addShapelessRecipe(ItemInstance* result, int category, va_list arguments)
 {
-    std::vector<ItemInstance*>* ingredients = new std::vector<ItemInstance*>();
-    int achievementId = -1;
     Recipe::_eGroupType group = Recipe::eGroupType_Miscellaneous;
+    std::vector<ItemInstance*>* ingredients = new std::vector<ItemInstance*>();
     int itemId = Item::getId(result->getItem());
     int baseItemType;
 
@@ -437,14 +436,27 @@ void Recipes::addShapelessRecipe(ItemInstance* result, int category, va_list arg
     {
         baseItemType = result->getItem()->getBaseItemType();
     }
+    int achievementId = -1;
 
     const wchar_t* format = va_arg(arguments, const wchar_t*);
     for (const wchar_t* type = format; *type != 0; ++type)
     {
         switch (*type)
         {
+        case L'z':
+            ingredients->push_back(va_arg(arguments, ItemInstance*)->copy_not_shared());
+            break;
+        case L'i':
+            ingredients->push_back(new ItemInstance(va_arg(arguments, Item*)));
+            break;
+        case L't':
+            ingredients->push_back(new ItemInstance(va_arg(arguments, Block*), 1, -1));
+            break;
         case L'b':
             baseItemType = va_arg(arguments, int);
+            break;
+        case L'v':
+            achievementId = va_arg(arguments, int);
             break;
         case L'g':
         {
@@ -469,18 +481,6 @@ void Recipes::addShapelessRecipe(ItemInstance* result, int category, va_list arg
             }
             break;
         }
-        case L'i':
-            ingredients->push_back(new ItemInstance(va_arg(arguments, Item*)));
-            break;
-        case L't':
-            ingredients->push_back(new ItemInstance(va_arg(arguments, Block*), 1, -1));
-            break;
-        case L'v':
-            achievementId = va_arg(arguments, int);
-            break;
-        case L'z':
-            ingredients->push_back(va_arg(arguments, ItemInstance*)->copy_not_shared());
-            break;
         default:
             break;
         }
@@ -514,12 +514,10 @@ void Recipes::buildRecipeIngredientsArray()
     {
         mRecipeIngredients[category] = new Recipe::INGREDIENTS_REQUIRED[mRecipes[category].size()];
         int recipeIndex = 0;
-        std::vector<Recipe*>::iterator recipe = mRecipes[category].begin();
         std::vector<Recipe*>::iterator recipesEnd = mRecipes[category].end();
-        for (; recipe != recipesEnd; ++recipe)
+        for (std::vector<Recipe*>::iterator recipe = mRecipes[category].begin(); recipe != recipesEnd; recipe++)
         {
-            (*recipe)->recipeRequires(&mRecipeIngredients[category][recipeIndex]);
-            ++recipeIndex;
+            (*recipe)->recipeRequires(&mRecipeIngredients[category][recipeIndex++]);
         }
     }
 }
@@ -536,9 +534,9 @@ void Recipes::addCustomRecipe(Recipe* recipe, ERecipeCategory category)
 
 not_null_ptr<ItemInstance> Recipes::getItemFor(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level, Recipe* recipe, ERecipeCategory category)
 {
+    int itemCount = 0;
     not_null_ptr<ItemInstance> first = ItemInstance::EMPTY;
     not_null_ptr<ItemInstance> second = ItemInstance::EMPTY;
-    int itemCount = 0;
     for (unsigned int slot = 0; slot < craftingContainer->getContainerSize(); ++slot)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(slot);
@@ -554,23 +552,26 @@ not_null_ptr<ItemInstance> Recipes::getItemFor(boost::shared_ptr<CraftingContain
         second->getCount() == 1 && first->getItem()->canBeDepleted())
     {
         Item* item = first->getItem();
-        int damage = item->getMaxDamage() - ((item->getMaxDamage() - first->getDamageValue()) +
-                     (item->getMaxDamage() - second->getDamageValue()) + item->getMaxDamage() * 5 / 100);
-        if (damage < 0) damage = 0;
-        return not_null_ptr<ItemInstance>(new ItemInstance(item, 1, damage));
+        int remaining1 = item->getMaxDamage() - first->getDamageValue();
+        int remaining2 = item->getMaxDamage() - second->getDamageValue();
+        int remaining = remaining1 + remaining2 + item->getMaxDamage() * 5 / 100;
+        int resultDamage = item->getMaxDamage() - remaining;
+        if (resultDamage < 0) resultDamage = 0;
+        return not_null_ptr<ItemInstance>(new ItemInstance(first->getItem(), 1, resultDamage));
     }
 
-    if (recipe == NULL)
+    if (recipe != NULL)
     {
-        std::vector<Recipe*>& recipes = mRecipes[category];
-        for (std::vector<Recipe*>::iterator current = recipes.begin(); current != recipes.end(); ++current)
-        {
-            if ((*current)->matches(craftingContainer, level)) return (*current)->assemble(craftingContainer);
-        }
+        if (recipe->matches(craftingContainer, level)) return recipe->assemble(craftingContainer);
     }
-    else if (recipe->matches(craftingContainer, level))
+    else
     {
-        return recipe->assemble(craftingContainer);
+        std::vector<Recipe*>::iterator end = mRecipes[category].end();
+        for (std::vector<Recipe*>::iterator current = mRecipes[category].begin(); current != end; ++current)
+        {
+            Recipe* candidate = *current;
+            if (candidate->matches(craftingContainer, level)) return candidate->assemble(craftingContainer);
+        }
     }
     return ItemInstance::EMPTY;
 }
@@ -611,16 +612,16 @@ eAward Recipes::hasAchievementAttachedToRecipe(boost::shared_ptr<CraftingContain
 
 NonNullList<not_null_ptr<ItemInstance> > Recipes::getRemainingItemsFor(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level, ERecipeCategory category)
 {
-    std::vector<Recipe*>& recipes = mRecipes[category];
-    for (std::vector<Recipe*>::iterator current = recipes.begin(); current != recipes.end(); ++current)
+    for (std::vector<Recipe*>::iterator current = mRecipes[category].begin(); current != mRecipes[category].end(); ++current)
     {
-        if ((*current)->matches(craftingContainer, level)) return (*current)->getRemainingItems(craftingContainer);
+        Recipe* recipe = *current;
+        if (recipe->matches(craftingContainer, level)) return recipe->getRemainingItems(craftingContainer);
     }
 
     NonNullList<not_null_ptr<ItemInstance> > remaining = NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
     for (unsigned int slot = 0; slot < remaining.size(); ++slot)
     {
-        remaining[slot] = craftingContainer->getItem(slot);
+        remaining.set(slot, craftingContainer->getItem(slot));
     }
     return remaining;
 }

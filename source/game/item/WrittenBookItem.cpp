@@ -162,7 +162,7 @@ void WrittenBookItem::resolveBookComponents(not_null_ptr<ItemInstance> itemInsta
     }
     tag->put(TAG_PAGES, pages);
 
-    if (!(player->GetType() == EntityType::SERVER_PLAYER && player->getMainHandItem() == itemInstance))
+    if (!eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, player->GetType()) || player->getMainHandItem() != itemInstance)
     {
         return;
     }
@@ -170,7 +170,7 @@ void WrittenBookItem::resolveBookComponents(not_null_ptr<ItemInstance> itemInsta
     boost::shared_ptr<ServerPlayer> serverPlayer = boost::static_pointer_cast<ServerPlayer>(player);
     Slot* slot = player->mContainerMenu->getSlotFor(player->mInventory, player->mInventory->m_selected);
     serverPlayer->mConnection->send(
-        boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket(0, slot->mIndex, itemInstance)));
+        boost::shared_ptr<ClientboundContainerSetSlotPacket>(new ClientboundContainerSetSlotPacket(0, slot->mIndex, itemInstance)));
 }
 
 InteractionResultHolder WrittenBookItem::use(Level* level,

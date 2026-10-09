@@ -36,7 +36,7 @@ not_null_ptr<ItemInstance> BottleItem::turnBottleIntoItem(not_null_ptr<ItemInsta
                                     not_null_ptr<ItemInstance> result)
 {
     itemInstance->shrink(1);
-    player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),
+    player->awardStat(GenericStats::itemsUsed(this),
                       GenericStats::param_itemsUsed(player, itemInstance));
 
     if (!itemInstance->isEmpty())

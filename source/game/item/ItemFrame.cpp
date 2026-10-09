@@ -72,8 +72,8 @@ void ItemFrame::_init()
 
 void ItemFrame::defineSynchedData()
 {
-    getEntityData()->createDateItem(DATA_ITEM, ItemInstance::EMPTY);
-    getEntityData()->createDateItem(DATA_ROTATION, 0);
+    getEntityData()->define(DATA_ITEM, ItemInstance::EMPTY);
+    getEntityData()->define(DATA_ROTATION, 0);
 }
 
 float ItemFrame::getPickRadius()
@@ -116,7 +116,7 @@ bool ItemFrame::hurt(const DamageSource* source, float damage)
         return false;
     }
     boost::shared_ptr<Entity> attacker = source->getEntity();
-    if (attacker && (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+    if (attacker && eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType())
         && !boost::dynamic_pointer_cast<Player>(attacker)->isAllowedToHurtEntity(shared_from_this()))
     {
         return false;
@@ -181,7 +181,7 @@ void ItemFrame::dropItem(boost::shared_ptr<Entity> breaker, bool dropSelf)
     }
     mLevel->updateObservingBlocksAt(mPos, Blocks::air);
     not_null_ptr<ItemInstance> item = getItem();
-    if (breaker && (breaker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (breaker && eTYPE_DERIVED_FROM(EntityType::PLAYER, breaker->GetType()))
     {
         if (boost::static_pointer_cast<Player>(breaker)->mAbilities.mInstabuild)
         {

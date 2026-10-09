@@ -50,9 +50,9 @@ Inventory::Inventory(Player* player)
 
 Inventory::~Inventory()
 {
-    delete[] m_items.items;
-    delete[] m_armor.items;
-    delete[] m_offhand.items;
+    delete[] m_items.items.data;
+    delete[] m_armor.items.data;
+    delete[] m_offhand.items.data;
 }
 
 std::wstring Inventory::getName()
@@ -80,7 +80,7 @@ bool Inventory::isHotbarSlot(int slot)
     return slot >= 0 && slot < 9;
 }
 
-not_null_ptr<ItemInstance>& Inventory::getSelected()
+const not_null_ptr<ItemInstance>& Inventory::getSelected()
 {
     return isHotbarSlot(m_selected) ? m_items[m_selected] : ItemInstance::EMPTY;
 }
@@ -541,7 +541,7 @@ void Inventory::setItem(unsigned int slot, not_null_ptr<ItemInstance> item)
     {
         if (slot < m_compartments[index].size())
         {
-            if (index == 1 && !item->isEmpty() && m_player->GetType() == EntityType::LOCAL_PLAYER)
+            if (index == 1 && !item->isEmpty() && eTYPE_DERIVED_FROM(EntityType::LOCAL_PLAYER, m_player->GetType()))
             {
                 m_player->OnEquipArmor(item);
             }
@@ -844,10 +844,7 @@ void Inventory::clearContent()
 {
     for (int compartment = 0; compartment < 3; ++compartment)
     {
-        for (unsigned int slot = 0; slot < m_compartments[compartment].size(); ++slot)
-        {
-            m_compartments[compartment][slot] = m_compartments[compartment].defaultValue;
-        }
+        m_compartments[compartment].clear();
     }
 }
 
@@ -1010,19 +1007,31 @@ int Inventory::removeResourcesWithTags(not_null_ptr<ItemInstance> item)
 not_null_ptr<ItemInstance> Inventory::getResourceItem(Item* item)
 {
     int slot = getSlot(item, -1, NULL);
-    return slot < 0 ? ItemInstance::EMPTY : getItem(slot);
+    if (slot < 0)
+    {
+        return ItemInstance::EMPTY;
+    }
+    return getItem(slot);
 }
 
 not_null_ptr<ItemInstance> Inventory::getResourceItem(Item* item, int auxValue)
 {
     int slot = getSlot(item, auxValue, NULL);
-    return slot < 0 ? ItemInstance::EMPTY : getItem(slot);
+    if (slot < 0)
+    {
+        return ItemInstance::EMPTY;
+    }
+    return getItem(slot);
 }
 
 not_null_ptr<ItemInstance> Inventory::getResourceItem(Item* item, int auxValue, CompoundTag* tag)
 {
     int slot = getSlot(item, auxValue, tag);
-    return slot < 0 ? ItemInstance::EMPTY : getItem(slot);
+    if (slot < 0)
+    {
+        return ItemInstance::EMPTY;
+    }
+    return getItem(slot);
 }
 
 bool Inventory::hasResource(Item* item)

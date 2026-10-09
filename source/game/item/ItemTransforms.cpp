@@ -359,7 +359,7 @@ ItemTransforms* ItemTransforms::getTransforms(const ItemInstance* item, LivingEn
 {
     if (entity != NULL)
     {
-        bool isArmourStand = entity->GetType() == EntityType::ARMOR_STAND;
+        bool isArmourStand = eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, entity->GetType());
         if (isArmourStand)
         {
             ItemTransforms* armourStandTransforms = getArmourStandTransforms(item, entity);

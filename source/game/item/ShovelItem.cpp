@@ -57,36 +57,33 @@ InteractionResult::EInteractionResult ShovelItem::useOn(boost::shared_ptr<Player
                                                           bool simulate)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-
-    bool mayUse = player->mayUseItemAt(pos.relative(direction), direction, itemInstance);
-
-    if (mayUse)
+    if (!player->mayUseItemAt(pos.relative(direction), direction, itemInstance))
     {
-        Block* block = level->getBlockState(pos)->getBlock();
-        if (direction != Direction::DOWN &&
-            level->getBlockState(pos.above())->getMaterial() == Material::AIR &&
-            block == Blocks::grass)
-        {
-            if (!simulate)
-            {
-                level->playSound(player,
-                                 pos,
-                                 SoundEvents::SHOVEL_FLATTEN,
-                                 SoundSource::eSoundSource_Blocks,
-                                 1.0f,
-                                 1.0f,
-                                 16.0f);
-                if (!level->mIsClientSide)
-                {
-                    level->setBlock(pos, Blocks::grass_path->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
-                    itemInstance->hurtAndBreak(1, player);
-                }
-            }
-            return InteractionResult::eInteractionResult_Success;
-        }
+        return InteractionResult::eInteractionResult_Fail;
+    }
 
+    Block* block = level->getBlockState(pos)->getBlock();
+    if (direction == Direction::DOWN || level->getBlockState(pos.above())->getMaterial() != Material::AIR
+        || block != Blocks::grass)
+    {
         return InteractionResult::eInteractionResult_Pass;
     }
 
-    return InteractionResult::eInteractionResult_Fail;
+    if (!simulate)
+    {
+        level->playSound(player,
+                         pos,
+                         SoundEvents::SHOVEL_FLATTEN,
+                         SoundSource::eSoundSource_Blocks,
+                         1.0f,
+                         1.0f,
+                         16.0f);
+        if (!level->mIsClientSide)
+        {
+            const BlockState* pathState = Blocks::grass_path->defaultBlockState();
+            level->setBlock(pos, pathState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+            itemInstance->hurtAndBreak(1, player);
+        }
+    }
+    return InteractionResult::eInteractionResult_Success;
 }

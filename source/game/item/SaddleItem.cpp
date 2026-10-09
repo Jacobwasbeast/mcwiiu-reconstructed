@@ -18,7 +18,7 @@ bool SaddleItem::interactEnemy(not_null_ptr<ItemInstance> itemInstance,
                                boost::shared_ptr<LivingEntity> target,
                                InteractionHand::EInteractionHand hand)
 {
-    if (target && target->GetType() == EntityType::PIG)
+    if (target && eTYPE_DERIVED_FROM(EntityType::PIG, target->GetType()))
     {
         boost::shared_ptr<Pig> pig = boost::static_pointer_cast<Pig>(target);
         if (!pig->hasSaddle() && !pig->isBaby())

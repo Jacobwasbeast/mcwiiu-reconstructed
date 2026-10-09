@@ -12,7 +12,7 @@ static DummyUniform* sDummyUniform = new DummyUniform();
 
 void Effect::destroy()
 {
-    ProgramManager* manager = (ProgramManager*)ProgramManager::getInstance();
+    ProgramManager* manager = ProgramManager::getInstance();
     manager->releaseProgram(this);
 }
 

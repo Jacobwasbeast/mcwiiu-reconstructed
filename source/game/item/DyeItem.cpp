@@ -57,31 +57,29 @@ bool DyeItem::growCrop(not_null_ptr<ItemInstance> itemInstance, Level* level,
     const BlockState* state = level->getBlockState(pos);
     Block* block = state->getBlock();
 
-    if (block == NULL)
+    if (block != NULL)
     {
-        return false;
-    }
+        BonemealableBlock* crop = dynamic_cast<BonemealableBlock*>(block);
 
-    BonemealableBlock* crop = dynamic_cast<BonemealableBlock*>(block);
-
-    if (crop == NULL ||
-        !crop->isValidBonemealTarget(level, pos, state, level->mIsClientSide) ||
-        !crop->isBonemealSuccess(level, level->mRandom, pos, state))
-    {
-        return false;
-    }
-
-    if (!simulate)
-    {
-        if (!level->mIsClientSide)
+        if (crop != NULL &&
+            crop->isValidBonemealTarget(level, pos, state, level->mIsClientSide) &&
+            crop->isBonemealSuccess(level, level->mRandom, pos, state))
         {
-            crop->performBonemeal(level, level->mRandom, pos, state);
-        }
+            if (!simulate)
+            {
+                if (!level->mIsClientSide)
+                {
+                    crop->performBonemeal(level, level->mRandom, pos, state);
+                }
 
-        itemInstance->shrink(1);
+                itemInstance->shrink(1);
+            }
+
+            return true;
+        }
     }
 
-    return true;
+    return false;
 }
 
 InteractionResult::EInteractionResult DyeItem::useOn(boost::shared_ptr<Player> player,
@@ -113,8 +111,9 @@ InteractionResult::EInteractionResult DyeItem::useOn(boost::shared_ptr<Player> p
     else if (color == DyeColor::BROWN)
     {
         const BlockState* state = level->getBlockState(blockPos);
+        Block* block = state->getBlock();
 
-        if (state->getBlock() == Blocks::log &&
+        if (block == Blocks::log &&
             state->getValue(OldLogBlock::VARIANT) == PlanksBlock::Variant::JUNGLE)
         {
             if (direction == Direction::DOWN || direction == Direction::UP)
@@ -157,22 +156,20 @@ void DyeItem::addGrowthParticles(Level* level, const BlockPos& pos, int count)
 
     const BlockState* state = level->getBlockState(pos);
 
-    if (state->getMaterial() == Material::AIR)
+    if (state->getMaterial() != Material::AIR)
     {
-        return;
-    }
-
-    for (int i = 0; i < count; ++i)
-    {
-        const double xa = level->mRandom->nextGaussian() * 0.02;
-        const double ya = level->mRandom->nextGaussian() * 0.02;
-        const double za = level->mRandom->nextGaussian() * 0.02;
-        const double x = (double)((float)pos.x + level->mRandom->nextFloat());
-        const double y = (double)pos.y +
-            (double)level->mRandom->nextFloat() * state->getShape(level, pos)->mMaxY;
-        const double z = (double)((float)pos.z + level->mRandom->nextFloat());
-
-        level->addParticle(PARTICLE_HAPPY_VILLAGER, x, y, z, xa, ya, za, arrayWithLength<int>());
+        for (int i = 0; i < count; ++i)
+        {
+            double xa = level->mRandom->nextGaussian() * 0.02;
+            double ya = level->mRandom->nextGaussian() * 0.02;
+            double za = level->mRandom->nextGaussian() * 0.02;
+            level->addParticle(PARTICLE_HAPPY_VILLAGER,
+                               (double)((float)pos.x + level->mRandom->nextFloat()),
+                               (double)pos.y + (double)level->mRandom->nextFloat() *
+                                   state->getShape(level, pos)->mMaxY,
+                               (double)((float)pos.z + level->mRandom->nextFloat()),
+                               xa, ya, za, arrayWithLength<int>());
+        }
     }
 }
 
@@ -180,7 +177,7 @@ bool DyeItem::interactEnemy(not_null_ptr<ItemInstance> itemInstance,
     boost::shared_ptr<Player> player, boost::shared_ptr<LivingEntity> target,
     InteractionHand::EInteractionHand hand)
 {
-    bool isSheep = target->GetType() == EntityType::SHEEP;
+    bool isSheep = eTYPE_DERIVED_FROM(EntityType::SHEEP, target->GetType());
 
     if (isSheep)
     {

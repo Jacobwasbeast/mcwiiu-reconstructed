@@ -6,16 +6,16 @@
 
 CraftingContainer::CraftingContainer(AbstractContainerMenu* menu, unsigned int width, unsigned int height)
     : Container(),
-      mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(width * height, ItemInstance::EMPTY)),
-      mWidth(width),
-      mHeight(height),
-      mMenu(menu)
+      mItems(NonNullList<not_null_ptr<ItemInstance> >::withSize(width * height, ItemInstance::EMPTY))
 {
+    mMenu = menu;
+    mWidth = width;
+    mHeight = height;
 }
 
 CraftingContainer::~CraftingContainer()
 {
-    delete[] mItems.items;
+    delete[] mItems.items.data;
 }
 
 std::wstring CraftingContainer::getName()
@@ -35,7 +35,10 @@ bool CraftingContainer::hasCustomName()
 
 std::wstring CraftingContainer::getDisplayName()
 {
-    hasCustomName();
+    if (hasCustomName())
+    {
+        return getName();
+    }
     return getName();
 }
 
@@ -140,10 +143,7 @@ int CraftingContainer::getContainerDataCount()
 
 void CraftingContainer::clearContent()
 {
-    for (unsigned int i = 0; i < mItems.size(); ++i)
-    {
-        mItems[i] = mItems.defaultValue;
-    }
+    mItems.clear();
 }
 
 int CraftingContainer::getHeight()

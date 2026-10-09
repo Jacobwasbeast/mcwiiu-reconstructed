@@ -33,8 +33,8 @@ FoodItem::FoodItem(int nutrition, bool isMeat)
 void FoodItem::_init()
 {
     mIsFastFood = false;
-    mEffectProbability = 0.0f;
     mCanAlwaysEat = false;
+    mEffectProbability = 0.0f;
     mEatEffect = NULL;
 }
 
@@ -42,10 +42,10 @@ not_null_ptr<ItemInstance> FoodItem::finishUsingItem(not_null_ptr<ItemInstance> 
                                                      Level* level,
                                                      boost::shared_ptr<LivingEntity> entity)
 {
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-        player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(itemInstance->getItem())),
+        player->awardStat(GenericStats::itemsUsed(itemInstance->getItem()),
                           GenericStats::param_itemsUsed(player, itemInstance));
         if (itemInstance->getItem() == Items::rottenFlesh && player->getFoodData()->getFoodLevel() == 0)
         {
@@ -56,7 +56,7 @@ not_null_ptr<ItemInstance> FoodItem::finishUsingItem(not_null_ptr<ItemInstance> 
 
     if (!level->mIsClientSide)
     {
-        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
             player->getFoodData()->eat(this, itemInstance);
@@ -73,7 +73,7 @@ not_null_ptr<ItemInstance> FoodItem::finishUsingItem(not_null_ptr<ItemInstance> 
         }
 
         bool consume = true;
-        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
             if (player->mAbilities.mInstabuild)

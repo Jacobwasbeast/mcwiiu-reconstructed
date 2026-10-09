@@ -244,8 +244,8 @@ int EnchantmentHelper::getDamageProtection(NonNullList<not_null_ptr<ItemInstance
     return sDamageProtectionIteration.mProtection;
 }
 
-double EnchantmentHelper::getDamageBonus(const not_null_ptr<ItemInstance>& item,
-                                         const boost::shared_ptr<LivingEntity>& entity)
+float EnchantmentHelper::getDamageBonus(const not_null_ptr<ItemInstance>& item,
+                                        const boost::shared_ptr<LivingEntity>& entity)
 {
     sDamageBonusIteration.mBonus = 0.0f;
     sDamageBonusIteration.mTarget = entity;
@@ -268,7 +268,7 @@ void EnchantmentHelper::doPostHurtEffects(const boost::shared_ptr<LivingEntity>&
     }
 
     if (attacker.get() != NULL
-        && (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        && eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType()))
     {
         runIterationOnItem(sPostHurtIteration, target->getMainHandItem());
     }
@@ -288,7 +288,7 @@ void EnchantmentHelper::doPostDamageEffects(const boost::shared_ptr<LivingEntity
     NonNullList<not_null_ptr<ItemInstance> > slots = target->getAllSlots();
     runIterationOnInventory(sPostDamageIteration, slots);
 
-    if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType()))
     {
         runIterationOnItem(sPostDamageIteration, attacker->getMainHandItem());
     }

@@ -24,6 +24,8 @@ ItemTransform* ItemTransform::deserialize(float rotationX, float rotationY, floa
                                           float translationY, float translationZ, float scaleX, float scaleY,
                                           float scaleZ)
 {
-    return new ItemTransform(Vector3f(rotationX, rotationY, rotationZ), Vector3f(translationX, translationY, translationZ),
-                             Vector3f(scaleX, scaleY, scaleZ), true);
+    Vector3f rotation(rotationX, rotationY, rotationZ);
+    Vector3f translation(translationX, translationY, translationZ);
+    Vector3f scale(scaleX, scaleY, scaleZ);
+    return new ItemTransform(rotation, translation, scale, true);
 }

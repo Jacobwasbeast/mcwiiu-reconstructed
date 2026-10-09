@@ -5,7 +5,7 @@
 
 BindingCurseEnchantment::BindingCurseEnchantment(const Rarity* rarity,
                                                  arrayWithLength<const EquipmentSlot*> slots)
-    : Enchantment(rarity, EnchantmentCategory::ARMOR, slots)
+    : Enchantment(rarity, EnchantmentCategory::WEARABLE, slots)
 {
     setDescriptionId((int)IDS_ENCHANTMENT_CURSE_OF_BINDING);
 }

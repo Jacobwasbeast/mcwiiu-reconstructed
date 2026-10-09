@@ -93,7 +93,7 @@ InteractionResult::EInteractionResult SignItem::useOn(boost::shared_ptr<Player> 
 
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(signPos);
 
-        if (blockEntity && blockEntity->GetType() == BlockEntityType::SIGN)
+        if (blockEntity && eTYPE_DERIVED_FROM(BlockEntityType::SIGN, blockEntity->GetType()))
         {
             if (BlockItem::updateCustomBlockEntityTag(level, player, signPos, itemInstance))
             {
@@ -103,7 +103,7 @@ InteractionResult::EInteractionResult SignItem::useOn(boost::shared_ptr<Player> 
 
         Block* signBlock = direction == Direction::UP ? Blocks::standing_sign : Blocks::wall_sign;
 
-        player->awardStat(gStats->get_blocksPlaced(Block::getId(signBlock)),
+        player->awardStat(GenericStats::blocksPlaced(signBlock),
                           GenericStats::param_blocksPlaced(signBlock->getBlockState(itemInstance->getAuxValue()), 1));
     }
 

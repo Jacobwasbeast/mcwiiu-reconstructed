@@ -37,6 +37,8 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
+DispenseItemBehavior* ArmorItem::DISPENSE_ITEM_BEHAVIOR = new ArmorDispenseItemBehavior();
+
 static const int HEALTH_PER_SLOT[4] = { 13, 15, 16, 11 };
 
 static const eMODIFIER_ID ARMOR_MODIFIER_ID_PER_SLOT[4] = { eMODIFIER_ID_ArmorFeet,
@@ -179,7 +181,7 @@ not_null_ptr<ItemInstance> ArmorItem::dispenseArmor(BlockSource* blockSource,
 
     entity->setItemSlot(slot, itemInstance->split(1));
 
-    if ((entity->GetType() & EntityType::MOB) == EntityType::MOB)
+    if (eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()))
     {
         boost::static_pointer_cast<Mob>(entity)->setDropChance(slot, 2.0f);
     }

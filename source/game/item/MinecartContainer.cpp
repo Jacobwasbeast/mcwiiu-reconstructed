@@ -35,7 +35,7 @@ MinecartContainer::MinecartContainer(Level* level)
 
 MinecartContainer::~MinecartContainer()
 {
-    delete[] mItems.items;
+    delete[] mItems.items.data;
 }
 
 void MinecartContainer::_init()
@@ -88,7 +88,7 @@ void MinecartContainer::unpackLootTable(const boost::shared_ptr<Player>& player)
     LootTableContext::Builder* builder = new LootTableContext::Builder(static_cast<ServerLevel*>(mLevel));
     if (player)
     {
-        builder->mLuck = player->getLuck();
+        builder->withLuck(player->getLuck());
     }
     LootTableContext context = builder->build();
     lootTable->fill(static_cast<Container*>(this), random, context);
@@ -190,10 +190,7 @@ int MinecartContainer::getContainerDataCount()
 void MinecartContainer::clearContent()
 {
     unpackLootTable(boost::shared_ptr<Player>());
-    for (unsigned int i = 0; i < mItems.size(); ++i)
-    {
-        mItems[i] = mItems.defaultValue;
-    }
+    mItems.clear();
 }
 
 bool MinecartContainer::isLocked()
@@ -275,7 +272,7 @@ void MinecartContainer::addAdditonalSaveData(CompoundTag* tag)
 void MinecartContainer::readAdditionalSaveData(CompoundTag* tag)
 {
     Minecart::readAdditionalSaveData(tag);
-    delete[] mItems.items;
+    delete[] mItems.items.data;
     mItems = NonNullList<not_null_ptr<ItemInstance> >::withSize(getContainerSize(), ItemInstance::EMPTY);
     if (tag->contains(L"LootTable", Tag::TAG_STRING) && StructureFeatureIO::getVersion() >= 2)
     {

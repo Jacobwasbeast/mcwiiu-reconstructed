@@ -55,7 +55,7 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
                                boost::shared_ptr<LivingEntity> entity,
                                int timeLeft)
 {
-    bool isPlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+    bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType());
 
     if (!isPlayer)
     {
@@ -76,8 +76,8 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
 
         float yRot = player->mYRot;
         float xRot = player->mXRot;
-        yRot *= 0.017453292f;
-        xRot *= 0.017453292f;
+        yRot *= Mth::DEG_TO_RAD;
+        xRot *= Mth::DEG_TO_RAD;
         float dirX = -Mth::sin(yRot) * Mth::cos(xRot);
         float dirY = -Mth::sin(xRot);
         float dirZ = Mth::cos(yRot) * Mth::cos(xRot);
@@ -172,9 +172,7 @@ void TridentItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
                          16.0f);
     }
 
-    Player* awardee = player.operator->();
-    Stat* stat = gStats->get_itemsUsed(Item::VALIDgetId(this));
-    awardee->awardStat(stat, GenericStats::param_itemsUsed(player, itemInstance));
+    player->awardStat(GenericStats::itemsUsed(this), GenericStats::param_itemsUsed(player, itemInstance));
 }
 
 InteractionResultHolder TridentItem::use(Level* level,

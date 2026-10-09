@@ -92,7 +92,7 @@ bool DamageEnchantment::canEnchant(not_null_ptr<ItemInstance> itemInstance)
 void DamageEnchantment::doPostAttack(boost::shared_ptr<LivingEntity> attacker,
                                      boost::shared_ptr<Entity> target, int level)
 {
-    if ((target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType()))
     {
         boost::shared_ptr<LivingEntity> livingTarget =
             boost::static_pointer_cast<LivingEntity>(target);

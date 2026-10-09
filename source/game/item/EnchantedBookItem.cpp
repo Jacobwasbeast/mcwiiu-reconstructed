@@ -9,8 +9,8 @@
 #include "game/item/Items.hpp"
 
 static const std::wstring TAG_STORED_ENCHANTMENTS = L"StoredEnchantments";
-static const wchar_t* TAG_ENCH_ID = L"id";
-static const wchar_t* TAG_ENCH_LEVEL = L"lvl";
+const wchar_t* TAG_ENCH_ID = L"id";
+const wchar_t* TAG_ENCH_LEVEL = L"lvl";
 
 EnchantedBookItem::EnchantedBookItem()
     : Item()
@@ -30,11 +30,11 @@ bool EnchantedBookItem::isEnchantable(not_null_ptr<ItemInstance> itemInstance)
 ListTag* EnchantedBookItem::getEnchantments(not_null_ptr<ItemInstance> itemInstance)
 {
     CompoundTag* tag = itemInstance->getTag();
-    if (tag == NULL)
+    if (tag != NULL)
     {
-        return new ListTag();
+        return tag->getList(TAG_STORED_ENCHANTMENTS, Tag::TAG_COMPOUND);
     }
-    return tag->getList(TAG_STORED_ENCHANTMENTS, Tag::TAG_COMPOUND);
+    return new ListTag();
 }
 
 const Rarity* EnchantedBookItem::getRarity(not_null_ptr<ItemInstance> itemInstance)

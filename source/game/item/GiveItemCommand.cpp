@@ -42,6 +42,7 @@ void GiveItemCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
     int auxValue = stream.readInt();
 
     std::wstring playerName = stream.readUTF();
+    byteStream.reset();
 
     boost::shared_ptr<ServerPlayer> player = getPlayer(uid);
 
@@ -50,9 +51,6 @@ void GiveItemCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
         not_null_ptr<ItemInstance> item(new ItemInstance(Item::byId(itemId), count, auxValue));
 
         bool added = player->mInventory->add(item);
-
-        int intParams[1];
-        intParams[0] = itemId;
 
         if (added)
         {
@@ -69,7 +67,19 @@ void GiveItemCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
             player->mInventoryMenu->broadcastChanges();
         }
 
-        if (added && item->getCount() <= 0)
+        if (!added || item->getCount() > 0)
+        {
+            sender->setCommandStats(CommandStats::AFFECTED_ITEMS, count - item->getCount());
+
+            boost::shared_ptr<ItemEntity> entity = player->drop(item, false);
+
+            if (entity)
+            {
+                entity->setNoPickUpDelay();
+                entity->setOwner(player->getName());
+            }
+        }
+        else
         {
             item->setCount(1);
 
@@ -82,18 +92,9 @@ void GiveItemCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
                 entity->makeFakeItem();
             }
         }
-        else
-        {
-            sender->setCommandStats(CommandStats::AFFECTED_ITEMS, count - item->getCount());
 
-            boost::shared_ptr<ItemEntity> entity = player->drop(item, false);
-
-            if (entity)
-            {
-                entity->setNoPickUpDelay();
-                entity->setOwner(player->getName());
-            }
-        }
+        int intParams[1];
+        intParams[0] = itemId;
 
         std::wstring stringParams[2];
 
@@ -102,11 +103,6 @@ void GiveItemCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
 
         logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_Text, intParams, 1, stringParams, 2);
     }
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
 }
 
 boost::shared_ptr<GameCommandPacket> GiveItemCommand::preparePacket(boost::shared_ptr<Player> player, int itemId, int count, int data, const std::wstring& playerName)
@@ -119,7 +115,8 @@ boost::shared_ptr<GameCommandPacket> GiveItemCommand::preparePacket(boost::share
     ByteArrayOutputStream byteStream;
     DataOutputStream stream(&byteStream);
 
-    stream.writePlayerUID(player->mXuid);
+    PlayerUID uid = player->mXuid;
+    stream.writePlayerUID(uid);
     stream.writeInt(itemId);
     stream.writeInt(count);
     stream.writeInt(data);

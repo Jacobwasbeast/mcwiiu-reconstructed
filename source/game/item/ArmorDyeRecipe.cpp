@@ -17,11 +17,10 @@ ArmorDyeRecipe::~ArmorDyeRecipe()
 
 bool ArmorDyeRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level*)
 {
-    unsigned int i;
     not_null_ptr<ItemInstance> armor = ItemInstance::EMPTY;
     std::vector<not_null_ptr<ItemInstance> > dyes;
 
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    for (unsigned int i = 0; i < craftingContainer->getContainerSize(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (item->isEmpty())
@@ -31,23 +30,27 @@ bool ArmorDyeRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContai
 
         ArmorItem* armorItem = dynamic_cast<ArmorItem*>(item->getItem());
         HorseArmorItem* horseArmorItem = dynamic_cast<HorseArmorItem*>(item->getItem());
-        if (armorItem == NULL && horseArmorItem == NULL)
+        if (armorItem != NULL || horseArmorItem != NULL)
         {
-            if (item->getItem() != Items::dye)
+            if (((armorItem != NULL && armorItem->getMaterial() == ArmorItem::ArmorMaterial::LEATHER) ||
+                 (horseArmorItem != NULL && horseArmorItem->isDyeable())) &&
+                armor->isEmpty())
+            {
+                armor = item;
+            }
+            else
             {
                 return false;
             }
-            dyes.push_back(item);
-            continue;
         }
-
-        if (!((armorItem != NULL && armorItem->getMaterial() == ArmorItem::ArmorMaterial::LEATHER) ||
-              (horseArmorItem != NULL && horseArmorItem->isDyeable())) ||
-            !armor->isEmpty())
+        else if (item->getItem() == Items::dye)
+        {
+            dyes.push_back(item);
+        }
+        else
         {
             return false;
         }
-        armor = item;
     }
 
     return !armor->isEmpty() && !dyes.empty();
@@ -200,16 +203,15 @@ ItemInstance* ArmorDyeRecipe::getIngredientItem(int, int)
 
 NonNullList<not_null_ptr<ItemInstance> > ArmorDyeRecipe::getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    unsigned int i;
     NonNullList<not_null_ptr<ItemInstance> > result =
         NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
 
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    for (unsigned int i = 0; i < craftingContainer->getContainerSize(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (item->getItem()->hasCraftingRemainingItem())
         {
-            result[i] = not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem()));
+            result.set(i, not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem())));
         }
     }
     return result;

@@ -85,40 +85,49 @@ bool CompoundContainer::isEmpty()
 
 not_null_ptr<ItemInstance> CompoundContainer::getItem(unsigned int slot)
 {
-    if (slot < mFirst->getContainerSize())
+    if (slot >= mFirst->getContainerSize())
+    {
+        return mSecond->getItem(slot - mFirst->getContainerSize());
+    }
+    else
     {
         return mFirst->getItem(slot);
     }
-    return mSecond->getItem(slot - mFirst->getContainerSize());
 }
 
 not_null_ptr<ItemInstance> CompoundContainer::removeItem(unsigned int slot, int count)
 {
-    if (slot < mFirst->getContainerSize())
+    if (slot >= mFirst->getContainerSize())
+    {
+        return mSecond->removeItem(slot - mFirst->getContainerSize(), count);
+    }
+    else
     {
         return mFirst->removeItem(slot, count);
     }
-    return mSecond->removeItem(slot - mFirst->getContainerSize(), count);
 }
 
 not_null_ptr<ItemInstance> CompoundContainer::removeItemNoUpdate(int slot)
 {
-    if (slot < mFirst->getContainerSize())
+    if (slot >= mFirst->getContainerSize())
+    {
+        return mSecond->removeItemNoUpdate(slot - mFirst->getContainerSize());
+    }
+    else
     {
         return mFirst->removeItemNoUpdate(slot);
     }
-    return mSecond->removeItemNoUpdate(slot - mFirst->getContainerSize());
 }
 
 void CompoundContainer::setItem(unsigned int slot, not_null_ptr<ItemInstance> item)
 {
-    if (slot < mFirst->getContainerSize())
+    if (slot >= mFirst->getContainerSize())
     {
-        mFirst->setItem(slot, item);
+        mSecond->setItem(slot - mFirst->getContainerSize(), item);
     }
     else
     {
-        mSecond->setItem(slot - mFirst->getContainerSize(), item);
+        mFirst->setItem(slot, item);
     }
 }
 

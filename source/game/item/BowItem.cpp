@@ -52,17 +52,7 @@ BowItem::BowItem()
 
 bool BowItem::isValidProjectile(not_null_ptr<ItemInstance> itemInstance)
 {
-    bool valid = false;
-
-    if (!itemInstance->isEmpty())
-    {
-        if (dynamic_cast<ArrowItem*>(itemInstance->getItem()) != NULL)
-        {
-            valid = true;
-        }
-    }
-
-    return valid;
+    return !itemInstance->isEmpty() && dynamic_cast<ArrowItem*>(itemInstance->getItem()) != NULL;
 }
 
 not_null_ptr<ItemInstance> BowItem::findProjectile(boost::shared_ptr<Player> player)
@@ -122,7 +112,9 @@ void BowItem::fjReleaseUsingWithProjectile(not_null_ptr<ItemInstance> itemInstan
                                            int timeLeft,
                                            not_null_ptr<ItemInstance> projectile)
 {
-    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+    bool isPlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+
+    if (!isPlayer)
     {
         return;
     }
@@ -220,7 +212,7 @@ void BowItem::fjReleaseUsingWithProjectile(not_null_ptr<ItemInstance> itemInstan
         }
     }
 
-    player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)),
+    player->awardStat(GenericStats::itemsUsed(this),
                       GenericStats::param_itemsUsed(player, itemInstance));
 }
 
@@ -229,7 +221,9 @@ void BowItem::releaseUsing(not_null_ptr<ItemInstance> itemInstance,
                            boost::shared_ptr<LivingEntity> entity,
                            int timeLeft)
 {
-    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+    bool isPlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+
+    if (!isPlayer)
     {
         return;
     }
@@ -286,9 +280,10 @@ void BowItem::registerIcons(IconRegister* iconRegister)
 {
     Item::registerIcons(iconRegister);
 
-    mDrawnIcons[0] = iconRegister->registerIcon(BOW_PULL_ICON_NAMES[0]);
-    mDrawnIcons[1] = iconRegister->registerIcon(BOW_PULL_ICON_NAMES[1]);
-    mDrawnIcons[2] = iconRegister->registerIcon(BOW_PULL_ICON_NAMES[2]);
+    for (int i = 0; i < 3; i++)
+    {
+        mDrawnIcons[i] = iconRegister->registerIcon(BOW_PULL_ICON_NAMES[i]);
+    }
 }
 
 TextureAtlasSprite* BowItem::getDrawnIcon(int stage)
@@ -333,19 +328,12 @@ TextureAtlasSprite* BowItem::GetOverrideCountIcon(not_null_ptr<ItemInstance> ite
 
 unsigned int BowItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    unsigned int tooltip = IDS_NONE;
-
     if (tooltipData.m_pPlayer->mAbilities.mInstabuild
         || tooltipData.m_pPlayer->mInventory->hasResource(Items::arrow)
         || tooltipData.m_pPlayer->mInventory->hasResource(Items::tippedArrow))
     {
-        if (tooltipData.m_pPlayer->isUsingItem())
-        {
-            return IDS_TOOLTIPS_RELEASE_BOW;
-        }
-
-        tooltip = IDS_TOOLTIPS_DRAW_BOW;
+        return tooltipData.m_pPlayer->isUsingItem() ? IDS_TOOLTIPS_RELEASE_BOW : IDS_TOOLTIPS_DRAW_BOW;
     }
 
-    return tooltip;
+    return IDS_NONE;
 }

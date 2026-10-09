@@ -33,7 +33,7 @@ InteractionResultHolder EmptyMapItem::use(Level* level,
         player->drop(map, false);
     }
 
-    player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),
+    player->awardStat(GenericStats::itemsUsed(this),
                       GenericStats::param_itemsUsed(player, itemInstance));
 
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);

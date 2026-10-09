@@ -55,7 +55,7 @@ not_null_ptr<ItemInstance> ChorusFruitItem::finishUsingItem(not_null_ptr<ItemIns
             }
         }
 
-        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
             player->getCooldowns()->addCooldown(this, 20);

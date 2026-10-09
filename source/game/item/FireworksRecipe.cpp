@@ -4,6 +4,7 @@
 #include "game/data/ListTag.hpp"
 #include "game/item/CraftingContainer.hpp"
 #include "game/item/DyeItem.hpp"
+#include "game/item/FireworksItem.hpp"
 #include "game/item/Item.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
@@ -34,17 +35,18 @@ void FireworksRecipe::updatePossibleRecipes(boost::shared_ptr<CraftingContainer>
                                             bool* hasGunpowder,
                                             bool* hasFireworkCharge)
 {
-    unsigned int slot;
-    int gunpowder = 0;
-    int charges = 0;
-    int dyes = 0;
-    int paper = 0;
-    int effects = 0;
-    int shapes = 0;
-
     *hasPaper = false;
     *hasGunpowder = false;
     *hasFireworkCharge = false;
+
+    unsigned int slot;
+    int paper = 0;
+    int gunpowder = 0;
+    int dyes = 0;
+    int charges = 0;
+    int effects = 0;
+    int shapes = 0;
+    int extras;
 
     for (slot = 0; slot < craftingContainer->getContainerSize(); ++slot)
     {
@@ -86,12 +88,14 @@ void FireworksRecipe::updatePossibleRecipes(boost::shared_ptr<CraftingContainer>
         }
     }
 
+    extras = effects + dyes + shapes;
+
     if (gunpowder > 3 || paper > 1)
     {
         return;
     }
 
-    if (effects + dyes + shapes == 0)
+    if (extras == 0)
     {
         *hasPaper = true;
     }
@@ -124,31 +128,32 @@ bool FireworksRecipe::isValidIngredient(not_null_ptr<ItemInstance> item,
                                         bool hasGunpowder,
                                         bool hasFireworkCharge)
 {
+    bool valid = false;
+
     if (item->getItem() == Items::gunpowder)
     {
-        hasPaper = hasPaper || hasGunpowder;
+        valid = hasPaper || hasGunpowder;
     }
     else if (item->getItem() == Items::fireworkCharge)
     {
-        hasPaper = hasPaper || hasFireworkCharge;
+        valid = hasPaper || hasFireworkCharge;
     }
     else if (item->getItem() == Items::dye)
     {
-        hasPaper = hasGunpowder || hasFireworkCharge;
+        valid = hasGunpowder || hasFireworkCharge;
     }
-    else if (item->getItem() != Items::paper)
+    else if (item->getItem() == Items::paper)
     {
-        hasPaper = hasGunpowder;
-
-        if (item->getItem() != Items::glowstoneDust && item->getItem() != Items::diamond &&
-            item->getItem() != Items::fireCharge && item->getItem() != Items::feather &&
-            item->getItem() != Items::goldNugget && item->getItem() != Items::skull)
-        {
-            hasPaper = false;
-        }
+        valid = hasPaper;
+    }
+    else if (item->getItem() == Items::glowstoneDust || item->getItem() == Items::diamond ||
+             item->getItem() == Items::fireCharge || item->getItem() == Items::feather ||
+             item->getItem() == Items::goldNugget || item->getItem() == Items::skull)
+    {
+        valid = hasGunpowder;
     }
 
-    return hasPaper;
+    return valid;
 }
 
 void FireworksRecipe::setResultItem(not_null_ptr<ItemInstance> item)
@@ -188,6 +193,7 @@ void FireworksRecipe::ReleaseThreadStorage()
 
 bool FireworksRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level)
 {
+    not_null_ptr<ItemInstance> result = ItemInstance::EMPTY;
     unsigned int slot;
     int gunpowder = 0;
     int charges = 0;
@@ -233,7 +239,7 @@ bool FireworksRecipe::matches(boost::shared_ptr<CraftingContainer> craftingConta
         }
         else
         {
-            setResultItem(ItemInstance::EMPTY);
+            setResultItem(result);
             return false;
         }
     }
@@ -242,13 +248,13 @@ bool FireworksRecipe::matches(boost::shared_ptr<CraftingContainer> craftingConta
 
     if (gunpowder > 3 || paper > 1)
     {
-        setResultItem(ItemInstance::EMPTY);
+        setResultItem(result);
         return false;
     }
 
     if (gunpowder >= 1 && paper == 1 && extras == 0)
     {
-        not_null_ptr<ItemInstance> result(new ItemInstance(Items::fireworks, 3));
+        result = not_null_ptr<ItemInstance>(new ItemInstance(Items::fireworks, 3));
         CompoundTag* fireworks = new CompoundTag();
 
         if (charges > 0)
@@ -259,20 +265,24 @@ bool FireworksRecipe::matches(boost::shared_ptr<CraftingContainer> craftingConta
             {
                 not_null_ptr<ItemInstance> item = craftingContainer->getItem(slot);
 
-                if (item->getItem() == Items::fireworkCharge && item->hasTag() &&
-                    item->getTag()->contains(L"Explosion", Tag::TAG_COMPOUND))
+                if (item->getItem() != Items::fireworkCharge)
                 {
-                    explosions->add(item->getTag()->getCompound(L"Explosion")->copy());
+                    continue;
+                }
+
+                if (item->hasTag() && item->getTag()->contains(FireworksItem::TAG_EXPLOSION, Tag::TAG_COMPOUND))
+                {
+                    explosions->add(item->getTag()->getCompound(FireworksItem::TAG_EXPLOSION)->copy());
                 }
             }
 
-            fireworks->put(L"Explosions", explosions);
+            fireworks->put(FireworksItem::TAG_EXPLOSIONS, explosions);
         }
 
-        fireworks->putByte(L"Flight", static_cast<unsigned char>(gunpowder));
+        fireworks->putByte(FireworksItem::TAG_FLIGHT, static_cast<unsigned char>(gunpowder));
 
         CompoundTag* tag = new CompoundTag();
-        tag->put(L"Fireworks", fireworks);
+        tag->put(FireworksItem::TAG_FIREWORKS, fireworks);
         result->setTag(tag);
         setResultItem(result);
         return true;
@@ -280,10 +290,10 @@ bool FireworksRecipe::matches(boost::shared_ptr<CraftingContainer> craftingConta
 
     if (gunpowder == 1 && paper == 0 && charges == 0 && dyes >= 1 && shapes <= 1)
     {
-        not_null_ptr<ItemInstance> result(new ItemInstance(Items::fireworkCharge));
-        std::vector<int> colors;
+        result = not_null_ptr<ItemInstance>(new ItemInstance(Items::fireworkCharge));
         CompoundTag* tag = new CompoundTag();
         CompoundTag* explosion = new CompoundTag();
+        std::vector<int> colors;
         unsigned char shape = 0;
 
         for (slot = 0; slot < craftingContainer->getContainerSize(); ++slot)
@@ -301,11 +311,11 @@ bool FireworksRecipe::matches(boost::shared_ptr<CraftingContainer> craftingConta
             }
             else if (item->getItem() == Items::glowstoneDust)
             {
-                explosion->putBoolean(L"Flicker", true);
+                explosion->putBoolean(FireworksItem::TAG_E_FLICKER, true);
             }
             else if (item->getItem() == Items::diamond)
             {
-                explosion->putBoolean(L"Trail", true);
+                explosion->putBoolean(FireworksItem::TAG_E_TRAIL, true);
             }
             else if (item->getItem() == Items::fireCharge)
             {
@@ -325,10 +335,16 @@ bool FireworksRecipe::matches(boost::shared_ptr<CraftingContainer> craftingConta
             }
         }
 
-        arrayWithLength<int> explosionColors(colors);
-        explosion->putIntArray(L"Colors", explosionColors);
-        explosion->putByte(L"Type", shape);
-        tag->put(L"Explosion", explosion);
+        arrayWithLength<int> explosionColors(colors.size(), true);
+
+        for (unsigned int i = 0; i < explosionColors.length; ++i)
+        {
+            explosionColors[i] = colors.at(i);
+        }
+
+        explosion->putIntArray(FireworksItem::TAG_E_COLORS, explosionColors);
+        explosion->putByte(FireworksItem::TAG_E_TYPE, shape);
+        tag->put(FireworksItem::TAG_EXPLOSION, explosion);
         result->setTag(tag);
         setResultItem(result);
         return true;
@@ -336,7 +352,6 @@ bool FireworksRecipe::matches(boost::shared_ptr<CraftingContainer> craftingConta
 
     if (gunpowder == 0 && paper == 0 && charges == 1 && dyes >= 1 && dyes == extras)
     {
-        not_null_ptr<ItemInstance> result = ItemInstance::EMPTY;
         std::vector<int> colors;
 
         for (slot = 0; slot < craftingContainer->getContainerSize(); ++slot)
@@ -359,22 +374,38 @@ bool FireworksRecipe::matches(boost::shared_ptr<CraftingContainer> craftingConta
             }
         }
 
-        arrayWithLength<int> fadeColors(colors);
+        arrayWithLength<int> fadeColors(colors.size(), true);
+
+        for (unsigned int i = 0; i < fadeColors.length; ++i)
+        {
+            fadeColors[i] = colors.at(i);
+        }
 
         if (!result->isEmpty() && result->hasTag())
         {
-            CompoundTag* explosion = result->getTag()->getCompound(L"Explosion");
+            CompoundTag* explosion = result->getTag()->getCompound(FireworksItem::TAG_EXPLOSION);
 
-            if (explosion != NULL)
+            if (explosion == NULL)
             {
-                explosion->putIntArray(L"FadeColors", fadeColors);
+                delete fadeColors.data;
                 setResultItem(result);
-                return true;
+                return false;
             }
+
+            explosion->putIntArray(FireworksItem::TAG_E_FADECOLORS, fadeColors);
         }
+        else
+        {
+            delete fadeColors.data;
+            setResultItem(result);
+            return false;
+        }
+
+        setResultItem(result);
+        return true;
     }
 
-    setResultItem(ItemInstance::EMPTY);
+    setResultItem(result);
     return false;
 }
 
@@ -414,7 +445,7 @@ NonNullList<not_null_ptr<ItemInstance> > FireworksRecipe::getRemainingItems(boos
 
         if (item->getItem()->hasCraftingRemainingItem())
         {
-            remaining[slot] = not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem()));
+            remaining.set(slot, not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem())));
         }
     }
 

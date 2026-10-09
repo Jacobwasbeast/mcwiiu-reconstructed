@@ -28,32 +28,30 @@ std::wstring RandomItemSetRuleDefinition::getId()
 
 void RandomItemSetRuleDefinition::populateContainer(boost::shared_ptr<Container> container, LevelRuleset* ruleset)
 {
-    if (mItems.empty())
+    if (mItems.size() > 0)
     {
-        if (ruleset != NULL)
+        Random random;
+        arrayWithLength<WeighedTreasure*> treasures(static_cast<unsigned int>(mItems.size()), true);
+        for (unsigned int i = 0; i < treasures.length; ++i)
         {
-            RandomItemSetRuleDefinition* itemSet = ruleset->getRandomItemSet(mId);
-            if (itemSet != NULL)
-            {
-                itemSet->populateContainer(container, ruleset);
-            }
+            treasures.data[i] = mItems[i]->getItem();
         }
-        return;
-    }
 
-    Random random;
-    arrayWithLength<WeighedTreasure*> treasures(static_cast<unsigned int>(mItems.size()), true);
-    for (unsigned int i = 0; i < treasures.length; ++i)
-    {
-        treasures.data[i] = mItems[i]->getItem();
+        WeighedTreasure::addChestItems(&random, treasures, container, mMaxCount, false);
+        for (unsigned int i = 0; i < treasures.length; ++i)
+        {
+            delete treasures.data[i];
+        }
+        delete[] treasures.data;
     }
-
-    WeighedTreasure::addChestItems(&random, treasures, container, mMaxCount, false);
-    for (unsigned int i = 0; i < treasures.length; ++i)
+    else if (ruleset != NULL)
     {
-        delete treasures.data[i];
+        RandomItemSetRuleDefinition* itemSet = ruleset->getRandomItemSet(mId);
+        if (itemSet != NULL)
+        {
+            itemSet->populateContainer(container, ruleset);
+        }
     }
-    delete[] treasures.data;
 }
 
 void RandomItemSetRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* children)
@@ -74,9 +72,8 @@ GameRuleDefinition* RandomItemSetRuleDefinition::addChild(ConsoleGameRules::EGam
     GameRuleDefinition* rule = NULL;
     if (type == ConsoleGameRules::eGameRuleType_WeighedTreasureItem)
     {
-        WeighedTreasureItemRuleDefinition* item = new WeighedTreasureItemRuleDefinition();
-        rule = item;
-        mItems.push_back(item);
+        rule = new WeighedTreasureItemRuleDefinition();
+        mItems.push_back(static_cast<WeighedTreasureItemRuleDefinition*>(rule));
     }
     return rule;
 }

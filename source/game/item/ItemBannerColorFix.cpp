@@ -16,43 +16,46 @@ int ItemBannerColorFix::getVersion()
 
 CompoundTag* ItemBannerColorFix::fix(CompoundTag* tag)
 {
-    if (tag->getString(L"id") == L"minecraft:banner" && tag->contains(L"tag", Tag::TAG_COMPOUND))
+    if (tag->getString(L"id") == L"minecraft:banner")
     {
-        CompoundTag* itemTag = tag->getCompound(L"tag");
-
-        if (itemTag->contains(L"BlockEntityTag", Tag::TAG_COMPOUND))
+        if (tag->contains(L"tag", Tag::TAG_COMPOUND))
         {
-            CompoundTag* blockEntityTag = itemTag->getCompound(L"BlockEntityTag");
+            CompoundTag* itemTag = tag->getCompound(L"tag");
 
-            if (blockEntityTag->contains(L"Base", Tag::TAG_ANY_NUMERIC))
+            if (itemTag->contains(L"BlockEntityTag", Tag::TAG_COMPOUND))
             {
-                tag->putShort(L"Damage", (short)(blockEntityTag->getShort(L"Base") & 0xF));
+                CompoundTag* blockEntityTag = itemTag->getCompound(L"BlockEntityTag");
 
-                if (itemTag->contains(L"display", Tag::TAG_COMPOUND))
+                if (blockEntityTag->contains(L"Base", Tag::TAG_ANY_NUMERIC))
                 {
-                    CompoundTag* displayTag = itemTag->getCompound(L"display");
+                    tag->putShort(L"Damage", (short)(blockEntityTag->getShort(L"Base") & 0xF));
 
-                    if (displayTag->contains(L"Lore", Tag::TAG_LIST))
+                    if (itemTag->contains(L"display", Tag::TAG_COMPOUND))
                     {
-                        ListTag* loreTag = displayTag->getList(L"Lore", Tag::TAG_STRING);
+                        CompoundTag* displayTag = itemTag->getCompound(L"display");
 
-                        if (loreTag->size() == 1 && loreTag->getString(0) == L"(+NBT)")
+                        if (displayTag->contains(L"Lore", Tag::TAG_LIST))
                         {
-                            return tag;
+                            ListTag* loreTag = displayTag->getList(L"Lore", Tag::TAG_STRING);
+
+                            if (loreTag->size() == 1 && loreTag->getString(0) == L"(+NBT)")
+                            {
+                                return tag;
+                            }
                         }
                     }
-                }
 
-                blockEntityTag->remove(L"Base");
+                    blockEntityTag->remove(L"Base");
 
-                if (blockEntityTag->isEmpty())
-                {
-                    itemTag->remove(L"BlockEntityTag");
-                }
+                    if (blockEntityTag->isEmpty())
+                    {
+                        itemTag->remove(L"BlockEntityTag");
+                    }
 
-                if (itemTag->isEmpty())
-                {
-                    tag->remove(L"tag");
+                    if (itemTag->isEmpty())
+                    {
+                        tag->remove(L"tag");
+                    }
                 }
             }
         }

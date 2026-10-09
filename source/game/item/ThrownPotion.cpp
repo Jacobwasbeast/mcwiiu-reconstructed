@@ -96,8 +96,8 @@ void ThrownPotion::dowseFire(const BlockPos& pos, const Direction* direction)
 
 bool ThrownPotion::isWaterSensitiveEntity(const boost::shared_ptr<Entity>& entity)
 {
-    return entity->GetType() == EntityType::ENDER_MAN || entity->GetType() == EntityType::BLAZE
-        || entity->GetType() == EntityType::SNOW_MAN;
+    return eTYPE_DERIVED_FROM(EntityType::ENDER_MAN, entity->GetType()) || eTYPE_DERIVED_FROM(EntityType::BLAZE, entity->GetType())
+        || eTYPE_DERIVED_FROM(EntityType::SNOW_MAN, entity->GetType());
 }
 
 void ThrownPotion::applyWater()
@@ -206,14 +206,14 @@ void ThrownPotion::applySplash(const HitResult* result, std::vector<MobEffectIns
                     living->addEffect(new MobEffectInstance(effect, duration,
                                                              effectInstance->getAmplifier()), source);
 
-                    if (effect == MobEffects::POISON && living->GetType() == EntityType::WITCH && owner != NULL
-                        && (owner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+                    if (effect == MobEffects::POISON && eTYPE_DERIVED_FROM(EntityType::WITCH, living->GetType()) && owner != NULL
+                        && eTYPE_DERIVED_FROM(EntityType::PLAYER, owner->GetType()))
                     {
                         boost::static_pointer_cast<ServerPlayer>(owner)->awardStat(
                             GenericStats::tasteOfYourOwnMedicine(), GenericStats::param_tasteOfYourOwnMedicine());
                     }
 
-                    if ((living->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+                    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, living->GetType())
                         && effect == MobEffects::WATER_BREATHING)
                     {
                         boost::static_pointer_cast<Player>(living)->ResetTimerAchievement(
@@ -323,7 +323,7 @@ float ThrownPotion::getGravity()
 
 void ThrownPotion::defineSynchedData()
 {
-    getEntityData()->createDateItem(DATA_ITEM, ItemInstance::EMPTY);
+    getEntityData()->define(DATA_ITEM, ItemInstance::EMPTY);
 }
 
 unsigned long long ThrownPotion::GetType()
