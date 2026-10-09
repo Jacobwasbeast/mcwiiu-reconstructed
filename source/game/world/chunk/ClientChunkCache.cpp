@@ -263,9 +263,9 @@ void ClientChunkCache::MultiPlayerChunkCacheInit(Level* level, ChunkStorage* sto
         }
 
         ChunkPrimer primer(false, elementIds);
-        WaterLevelChunk* waterChunk = new WaterLevelChunk(level, &primer, 0, 0);
-        m_waterChunk = waterChunk;
+        m_waterChunk = new WaterLevelChunk(level, &primer, 0, 0);
         delete[] elementIds.data;
+        WaterLevelChunk* waterChunk = static_cast<WaterLevelChunk*>(m_waterChunk);
 
         if (level->getLevelData()->getGeneratorType() == LevelType::FLAT)
         {
@@ -647,7 +647,7 @@ bool ClientChunkCache::tick()
     long long start = System::processTimeInMilliSecs();
     std::vector<LevelChunk*>::iterator it = m_loadedChunkList.begin();
     std::vector<LevelChunk*>::iterator end = m_loadedChunkList.end();
-    for (; static_cast<long long>(System::processTimeInMilliSecs()) - start < CHUNK_TICK_BUDGET_MS && it != end; ++it)
+    for (; System::processTimeInMilliSecs() - start < CHUNK_TICK_BUDGET_MS && it != end; ++it)
     {
         (*it)->tick(false);
     }

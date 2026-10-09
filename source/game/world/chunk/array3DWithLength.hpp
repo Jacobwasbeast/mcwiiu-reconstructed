@@ -10,19 +10,16 @@ public:
     array2DWithLength<T>** data;
     unsigned int length;
 
-    array3DWithLength(unsigned int depth, unsigned int width, unsigned int height);
-};
-
-template <class T>
-array3DWithLength<T>::array3DWithLength(unsigned int depth, unsigned int width, unsigned int height)
-{
-    data = new array2DWithLength<T>*[depth];
-    length = depth;
-
-    for (unsigned int i = 0; i < length; i++)
+    array3DWithLength(unsigned int depth, unsigned int width, unsigned int height)
     {
-        data[i] = new array2DWithLength<T>(width, height);
+        data = new array2DWithLength<T>*[depth];
+        length = depth;
+
+        for (unsigned int i = 0; i < depth; i++)
+        {
+            data[i] = new array2DWithLength<T>(width, height);
+        }
     }
-}
+};
 
 #endif

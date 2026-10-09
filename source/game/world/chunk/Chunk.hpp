@@ -75,9 +75,9 @@ public:
     unsigned int elementToBlockId(unsigned short element);
     void makeCopyForRebuild(Chunk* source);
     void rebuild(unsigned int* count);
-    double distanceToSqr(boost::shared_ptr<Entity> entity) const;
+    float distanceToSqr(boost::shared_ptr<Entity> entity) const;
     void _delete();
-    unsigned long long cull(Culler* culler);
+    void cull(Culler* culler);
     void clearDirty();
 
     unsigned int elementToData(unsigned short element);

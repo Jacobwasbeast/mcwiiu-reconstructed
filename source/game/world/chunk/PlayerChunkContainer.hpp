@@ -4,6 +4,7 @@
 #include <vector>
 #include <boost/shared_ptr.hpp>
 
+#include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 
 class BlockEntity;
@@ -44,8 +45,7 @@ private:
     PlayerChunkMap* mMap;
     std::vector<boost::shared_ptr<ServerPlayer> > mPlayers;
     ChunkPos mPos;
-    unsigned short* mBlockChanges;
-    int mBlockChangesCapacity;
+    arrayWithLength<short> mBlockChanges;
     LevelChunk* mChunk;
     int mBlockChangesCount;
     int mMinX;

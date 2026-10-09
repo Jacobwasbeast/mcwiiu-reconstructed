@@ -127,12 +127,13 @@ File OldChunkStorage::getFile(int x, int z)
 
 void OldChunkStorage::swapBlockID(LevelChunk* chunk, int x, int y, int z, int oldId, int newId)
 {
-    unsigned short element = chunk->getElement(x, y, z);
-    int id = static_cast<int>(element) >> 4;
+    int element = chunk->getElement(x, y, z);
+    int id = element >> 4;
     if (id == oldId || id == newId)
     {
-        int replacement = id == oldId ? newId : oldId;
-        chunk->setElement(x, y, z, static_cast<unsigned short>(replacement << 4 | (element & 0xf)));
+        int newBlock = id != newId ? newId : oldId;
+        unsigned short newElement = (newBlock << 4) | (element & 0xf);
+        chunk->setElement(x, y, z, newElement);
     }
 }
 
@@ -183,20 +184,22 @@ void OldChunkStorage::loadEntities(LevelChunk* chunk, Level* level, CompoundTag*
             int i;
             for (i = 0; i < entities->size(); ++i)
             {
-                loadAndAddEntity(entities->getCompound(i), level, chunk);
+                CompoundTag* entityTag = entities->getCompound(i);
+                loadAndAddEntity(entityTag, level, chunk);
                 chunk->setLastSaveHadEntities(true);
             }
         }
     }
     if (tag->contains(L"TileEntities"))
     {
-        ListTag* entities = tag->getList(L"TileEntities", Tag::TAG_COMPOUND);
-        if (entities != NULL)
+        ListTag* blockEntities = tag->getList(L"TileEntities", Tag::TAG_COMPOUND);
+        if (blockEntities != NULL)
         {
             int i;
-            for (i = 0; i < entities->size(); ++i)
+            for (i = 0; i < blockEntities->size(); ++i)
             {
-                boost::shared_ptr<BlockEntity> blockEntity = BlockEntity::loadStatic(level, entities->getCompound(i));
+                CompoundTag* blockEntityTag = blockEntities->getCompound(i);
+                boost::shared_ptr<BlockEntity> blockEntity = BlockEntity::loadStatic(level, blockEntityTag);
                 if (blockEntity)
                     chunk->addBlockEntity(blockEntity);
             }
@@ -314,12 +317,11 @@ bool OldChunkStorage::saveEntities(LevelChunk* chunk, Level* level, CompoundTag*
     chunk->mLastSaveHadEntities = false;
     ListTag* entitiesTag = new ListTag();
     EnterCriticalSection(&LevelChunk::m_csEntities);
-    int section;
-    for (section = 0; section < chunk->mEntitySectionCount; ++section)
+    for (int section = 0; section < chunk->mEntitySectionCount; ++section)
     {
-        std::vector<boost::shared_ptr<Entity> >* entities = chunk->mEntitySections[section];
-        std::vector<boost::shared_ptr<Entity> >::iterator entity;
-        for (entity = entities->begin(); entity != entities->end(); ++entity)
+        std::vector<boost::shared_ptr<Entity> >::iterator end = chunk->mEntitySections[section]->end();
+        for (std::vector<boost::shared_ptr<Entity> >::iterator entity = chunk->mEntitySections[section]->begin();
+             entity != end; ++entity)
         {
             boost::shared_ptr<Entity> savedEntity = *entity;
             chunk->mLastSaveHadEntities = true;
@@ -357,8 +359,8 @@ void OldChunkStorage::save(LevelChunk* chunk, Level* level, DataOutputStream* st
     saveEntities(chunk, level, tag);
     PIXBeginNamedEvent(0.0f, "Saving block entities");
     ListTag* blockEntities = new ListTag();
-    LevelChunk::BlockEntityMap::iterator it;
-    for (it = chunk->mBlockEntityMap.begin(); it != chunk->mBlockEntityMap.end(); ++it)
+    LevelChunk::BlockEntityMap::iterator end = chunk->mBlockEntityMap.end();
+    for (LevelChunk::BlockEntityMap::iterator it = chunk->mBlockEntityMap.begin(); it != end; ++it)
     {
         boost::shared_ptr<BlockEntity> blockEntity = it->second;
         CompoundTag* blockEntityTag = new CompoundTag();
@@ -378,7 +380,7 @@ void OldChunkStorage::save(LevelChunk* chunk, Level* level, DataOutputStream* st
         {
             TickNextTickData tick = ticks->at(i);
             CompoundTag* tickTag = new CompoundTag();
-            tickTag->putInt(L"i", Block::getId(tick.getBlock()));
+            tickTag->putInt(L"i", Block::getId(tick.block));
             tickTag->putInt(L"x", tick.pos.x);
             tickTag->putInt(L"y", tick.pos.y);
             tickTag->putInt(L"z", tick.pos.z);
@@ -428,7 +430,10 @@ void OldChunkStorage::addEntityToWorld(boost::shared_ptr<Entity> entity, Level* 
             std::vector<boost::weak_ptr<Entity> >* passengers = entity->getPassengers();
             std::vector<boost::weak_ptr<Entity> >::iterator it;
             for (it = passengers->begin(); it != passengers->end(); ++it)
-                addEntityToWorld(it->lock(), level);
+            {
+                boost::shared_ptr<Entity> passenger = it->lock();
+                addEntityToWorld(passenger, level);
+            }
         }
     }
 }

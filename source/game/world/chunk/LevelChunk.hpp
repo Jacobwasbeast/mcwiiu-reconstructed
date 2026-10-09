@@ -79,7 +79,7 @@ public:
     {
     public:
         BlockChange(short packedPos, unsigned int element) : mPackedPos(packedPos), mElement(element) {}
-        int GetPackedPos() const;
+        short GetPackedPos() const;
         unsigned int GetElement() const;
         BlockPos GetPos() const;
         const BlockState* GetState() const;
@@ -194,7 +194,7 @@ public:
     virtual void getElementAndExtraElement(int x, int y, int z, unsigned short* element, unsigned short* extraElement);
     virtual int getBrightness(LightLayer::variety layer, const BlockPos& pos);
     virtual void getNeighbourBrightnesses(int* brightnesses, LightLayer::variety layer, int x, int y, int z);
-    virtual bool setBrightness(LightLayer::variety layer, const BlockPos& pos, int brightness);
+    virtual void setBrightness(LightLayer::variety layer, const BlockPos& pos, int brightness);
     virtual int getRawBrightness(const BlockPos& pos, int skyDarken);
     virtual void addEntity(boost::shared_ptr<Entity> entity);
     virtual void removeEntity(boost::shared_ptr<Entity> entity);

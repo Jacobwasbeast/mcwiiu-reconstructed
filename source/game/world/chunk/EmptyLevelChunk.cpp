@@ -69,9 +69,8 @@ void EmptyLevelChunk::getNeighbourBrightnesses(int* brightnesses, LightLayer::va
     brightnesses[5] = 0;
 }
 
-bool EmptyLevelChunk::setBrightness(LightLayer::variety, const BlockPos&, int)
+void EmptyLevelChunk::setBrightness(LightLayer::variety, const BlockPos&, int)
 {
-    return false;
 }
 
 int EmptyLevelChunk::getRawBrightness(const BlockPos&, int)
@@ -156,10 +155,10 @@ int EmptyLevelChunk::getBlocksAndData(arrayWithLength<unsigned char>* output, in
         length = volume + (volume / 2) * 3;
     else
         length = volume + volume / 2;
-    unsigned char* begin = output->data + offset;
-    unsigned char* end = output->data + offset + length;
-    for (unsigned char* p = begin; p != end; ++p)
-        *p = 0;
+    unsigned char* begin = &output->data[offset];
+    unsigned char* end = &output->data[offset + length];
+    while (begin != end)
+        *begin++ = 0;
     return length;
 }
 
@@ -177,10 +176,8 @@ int EmptyLevelChunk::setBlocksAndData(arrayWithLength<unsigned char>, int x, int
 
 Random* EmptyLevelChunk::getRandom(long long seed)
 {
-    long long levelSeed = getLevel()->getSeed();
-    long long chunkSeed = levelSeed + (long long)(x * x * 0x4c1906) + (long long)(x * 0x5ac0db) +
-                          (long long)(z * z * 0x4307a7) + (long long)(z * 0x5f24f);
-    return new Random(chunkSeed ^ seed);
+    return new Random(getLevel()->getSeed() + (long long)(x * x * 0x4c1906) + (long long)(x * 0x5ac0db) +
+                      (long long)(z * z * 0x4307a7) + (long long)(z * 0x5f24f) ^ seed);
 }
 
 bool EmptyLevelChunk::isEmpty()

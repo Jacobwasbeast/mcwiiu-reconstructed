@@ -32,7 +32,7 @@ public:
     virtual void setExtraElement(int x, int y, int z, unsigned short element);
     virtual unsigned short getExtraElement(int x, int y, int z);
     virtual bool setData(int x, int y, int z, int data, int flags, bool* changed);
-    virtual bool setBrightness(LightLayer::variety layer, const BlockPos& pos, int brightness);
+    virtual void setBrightness(LightLayer::variety layer, const BlockPos& pos, int brightness);
     void setLevelChunkBrightness(LightLayer::variety layer, int x, int y, int z, int brightness);
     virtual void addEntity(boost::shared_ptr<Entity> entity);
     virtual void removeEntity(boost::shared_ptr<Entity> entity);

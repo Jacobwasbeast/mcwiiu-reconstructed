@@ -24,17 +24,17 @@
 
 void SetThreadName(unsigned int threadId, const char* name);
 
-static OSFastMutex sSaveMutex;
-static std::deque<DataOutputStream*> sSaveQueue;
-static int sActiveSaves = 0;
-static C4JThreadImpl* sSaveThreads[3] = { NULL, NULL, NULL };
+OSFastMutex McRegionChunkStorage::sSaveMutex;
+std::deque<DataOutputStream*> McRegionChunkStorage::sSaveQueue;
+int McRegionChunkStorage::sActiveSaves = 0;
+C4JThread* McRegionChunkStorage::sSaveThreads[3];
 
 McRegionChunkStorage::McRegionChunkStorage(ConsoleSaveFile* saveFile,
     const std::wstring& directory, DataFixerUpper* fixer)
     : mDirectory(directory), mRegionData()
 {
-    mSaveFile = saveFile;
     mFixer = fixer;
+    mSaveFile = saveFile;
     if (directory == L"DIM-1r")
     {
         mSaveFile->createFile(ConsoleSavePath(L"DIM-1r.-1.-1.mcr"));
@@ -58,15 +58,15 @@ McRegionChunkStorage::~McRegionChunkStorage()
         delete it->second.data;
 }
 
-void McRegionChunkStorage::runSaveThreadProc(void*)
+int McRegionChunkStorage::runSaveThreadProc(void*)
 {
     Compression::CreateNewThreadStorage();
     RegionFile::CreateNewThreadStorage();
-    unsigned int previousQueueSize = 0;
-    for (;;)
+    bool running = true;
+    unsigned int queueSize = 0;
+    DataOutputStream* stream = NULL;
+    while (running)
     {
-        DataOutputStream* stream = NULL;
-        unsigned int queueSize = 0;
         if (TryEnterCriticalSection(&sSaveMutex))
         {
             queueSize = (unsigned int)sSaveQueue.size();
@@ -83,28 +83,27 @@ void McRegionChunkStorage::runSaveThreadProc(void*)
                 stream->close();
                 stream->deleteChildStream();
                 PIXEndNamedEvent();
-                delete stream;
             }
+            delete stream;
+            stream = NULL;
             EnterCriticalSection(&sSaveMutex);
             --sActiveSaves;
             LeaveCriticalSection(&sSaveMutex);
-            previousQueueSize = queueSize;
         }
-        Sleep(previousQueueSize > 1 ? 1 : 100);
+        Sleep(queueSize > 1 ? 1 : 100);
     }
+    return 0;
 }
 
 void McRegionChunkStorage::staticCtor()
 {
-    InitializeCriticalSectionAndSpinCount(&sSaveMutex, 0x1400);
-    char name[256];
-    int i;
-    for (i = 0; i < 3; ++i)
+    InitializeCriticalSectionAndSpinCount(&sSaveMutex, 5120);
+    for (int i = 0; i < 3; ++i)
     {
+        char name[256];
         std::sprintf(name, "McRegion Save thread %d\n", i);
         SetThreadName(0, name);
-        sSaveThreads[i] = new C4JThreadImpl(
-            (int (*)(void*))McRegionChunkStorage::runSaveThreadProc, NULL, name, 0);
+        sSaveThreads[i] = new C4JThreadImpl(runSaveThreadProc, NULL, name, 0);
         sSaveThreads[i]->SetProcessor(0);
         sSaveThreads[i]->Run();
     }
@@ -112,63 +111,65 @@ void McRegionChunkStorage::staticCtor()
 
 LevelChunk* McRegionChunkStorage::load(Level* level, int x, int z, LevelChunk* chunk)
 {
-    bool newSaveFormat = false;
+    bool newSaveFormat;
     DataInputStream* stream = gRegionFileCache._getChunkDataInputStream(
         mSaveFile, mDirectory, x, z, &newSaveFormat);
-    if (mSaveFile->getOriginalSaveVersion() < 8 && !newSaveFormat)
+    if (mSaveFile->getOriginalSaveVersion() >= 8 || newSaveFormat)
     {
-        if (stream == NULL)
-            return NULL;
-        char message[260];
-        MemSect(8);
-        CompoundTag* tag = mFixer->updateData(DataFixTypes::eDataFixTypes_Chunk, NbtIo::read(stream));
-        MemSect(0);
-        stream->deleteChildStream();
-        delete stream;
-        if (!tag->contains(L"Level"))
+        if (stream != NULL)
         {
-            std::sprintf(message, "Chunk file at %d, %d is missing level data, skipping\n", x, z);
-            delete tag;
-            return NULL;
+            MemSect(9);
+            chunk = OldChunkStorage::load(level, stream, mFixer, NULL);
+            loadEntities(level, chunk);
+            MemSect(0);
+            stream->deleteChildStream();
+            delete stream;
         }
-        if (!tag->getCompound(L"Level")->contains(L"Blocks"))
-        {
-            std::sprintf(message, "Chunk file at %d, %d is missing block data, skipping\n", x, z);
-            delete tag;
-            return NULL;
-        }
-        MemSect(9);
-        chunk = OldChunkStorage::load(level, tag->getCompound(L"Level"), chunk);
-        MemSect(0);
-        if (!chunk->isAt(x, z))
-        {
-            std::sprintf(message, "Chunk file at %d, %d is in the wrong location; relocating. Expected %d, %d, got %d, %d\n",
-                x, z, x, z, chunk->x, chunk->z);
-            delete chunk;
-            delete tag;
-            return NULL;
-        }
+        return chunk;
+    }
+
+    if (stream == NULL)
+        return NULL;
+
+    char message[260];
+    MemSect(8);
+    CompoundTag* tag = mFixer->updateData(DataFixTypes::eDataFixTypes_Chunk, NbtIo::read(stream));
+    MemSect(0);
+    stream->deleteChildStream();
+    delete stream;
+    if (!tag->contains(L"Level"))
+    {
+        std::sprintf(message, "Chunk file at %d, %d is missing level data, skipping\n", x, z);
         delete tag;
+        return NULL;
     }
-    else if (stream != NULL)
+    if (!tag->getCompound(L"Level")->contains(L"Blocks"))
     {
-        MemSect(9);
-        chunk = OldChunkStorage::load(level, stream, mFixer, NULL);
-        loadEntities(level, chunk);
-        MemSect(0);
-        stream->deleteChildStream();
-        delete stream;
+        std::sprintf(message, "Chunk file at %d, %d is missing block data, skipping\n", x, z);
+        delete tag;
+        return NULL;
     }
+    MemSect(9);
+    chunk = OldChunkStorage::load(level, tag->getCompound(L"Level"), chunk);
+    MemSect(0);
+    if (!chunk->isAt(x, z))
+    {
+        std::sprintf(message, "Chunk file at %d, %d is in the wrong location; relocating. Expected %d, %d, got %d, %d\n",
+            x, z, x, z, chunk->x, chunk->z);
+        delete chunk;
+        delete tag;
+        return NULL;
+    }
+    delete tag;
     return chunk;
 }
 
 void McRegionChunkStorage::save(Level* level, LevelChunk* chunk)
 {
     level->checkSession();
-    MemSect(0x1e);
+    MemSect(30);
     PIXBeginNamedEvent(0.0f, "Getting output stream\n");
-    DataOutputStream* stream = gRegionFileCache._getChunkDataOutputStream(
-        mSaveFile, mDirectory, chunk->x, chunk->z, true);
+    DataOutputStream* stream = RegionFileCache::getChunkDataOutputStream(mSaveFile, mDirectory, chunk->x, chunk->z);
     PIXEndNamedEvent();
     PIXBeginNamedEvent(0.0f, "Writing chunk data");
     OldChunkStorage::save(chunk, level, stream);

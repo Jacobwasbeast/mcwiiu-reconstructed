@@ -60,9 +60,8 @@ bool WaterLevelChunk::setData(int, int, int, int, int, bool* changed)
     return true;
 }
 
-bool WaterLevelChunk::setBrightness(LightLayer::variety, const BlockPos&, int)
+void WaterLevelChunk::setBrightness(LightLayer::variety, const BlockPos&, int)
 {
-    return false;
 }
 
 void WaterLevelChunk::setLevelChunkBrightness(LightLayer::variety layer, int x, int y, int z, int brightness)
@@ -150,10 +149,8 @@ int WaterLevelChunk::setBlocksAndData(arrayWithLength<unsigned char>, int x, int
 
 Random* WaterLevelChunk::getRandom(long long seed)
 {
-    long long levelSeed = level->getSeed();
-    long long mixedSeed = levelSeed + (long long)(x * x * 0x4c1906) + (long long)(x * 0x5ac0db) +
-                          (long long)(z * z * 0x4307a7) + (long long)(z * 0x5f24f);
-    return new Random(mixedSeed ^ seed);
+    return new Random(level->getSeed() + (long long)(x * x * 0x4c1906) + (long long)(x * 0x5ac0db) +
+                      (long long)(z * z * 0x4307a7) + (long long)(z * 0x5f24f) ^ seed);
 }
 
 Biome* WaterLevelChunk::getBiome(const BlockPos&, BiomeSource*)

@@ -17,12 +17,12 @@ ChunkPos::ChunkPos(const BlockPos& pos)
 
 long long ChunkPos::asLong(int x, int z)
 {
-    return (static_cast<long long>(z) << 32) | static_cast<unsigned int>(x);
+    return (static_cast<long long>(x) & 0xFFFFFFFFLL) | ((static_cast<long long>(z) & 0xFFFFFFFFLL) << 32);
 }
 
 std::size_t ChunkPos::hashCode() const
 {
-    static boost::hash<long long> hasher;
+    static boost::hash<long long> hasher = boost::hash<long long>();
     return hasher(asLong(x, z));
 }
 

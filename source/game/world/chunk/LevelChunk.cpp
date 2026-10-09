@@ -131,7 +131,7 @@ LevelChunk::~LevelChunk()
     LeaveCriticalSection(&m_csEntities);
     delete mPendingBlockEntityTag;
 }
-int LevelChunk::BlockChange::GetPackedPos() const
+short LevelChunk::BlockChange::GetPackedPos() const
 {
     return mPackedPos;
 }
@@ -1592,7 +1592,7 @@ void LevelChunk::getNeighbourBrightnesses(int* brightnesses, LightLayer::variety
         brightnesses[3] = storage->get(x, localY, z);
     }
 }
-bool LevelChunk::setBrightness(LightLayer::variety layer, const BlockPos& pos, int brightness)
+void LevelChunk::setBrightness(LightLayer::variety layer, const BlockPos& pos, int brightness)
 {
     setUnsaved(true);
 
@@ -1600,17 +1600,15 @@ bool LevelChunk::setBrightness(LightLayer::variety layer, const BlockPos& pos, i
     {
         if (level->mDimension->isHasSkyLight())
         {
-            SparseLightStorage* storage = pos.y < 128 ? mSkyLight : mSkyLightUpper;
-            storage->set(pos.x & 15, pos.y & 127, pos.z & 15, brightness);
+            SparseLightStorage* storage = pos.y >= 128 ? mSkyLightUpper : mSkyLight;
+            storage->set(pos.x & 15, pos.y % 128, pos.z & 15, brightness);
         }
     }
     else if (layer == LightLayer::BLOCK)
     {
-        SparseLightStorage* storage = pos.y < 128 ? mBlockLight : mBlockLightUpper;
-        storage->set(pos.x & 15, pos.y & 127, pos.z & 15, brightness);
+        SparseLightStorage* storage = pos.y >= 128 ? mBlockLightUpper : mBlockLight;
+        storage->set(pos.x & 15, pos.y % 128, pos.z & 15, brightness);
     }
-
-    return true;
 }
 int LevelChunk::getRawBrightness(const BlockPos& pos, int skyDarken)
 {
@@ -1946,7 +1944,7 @@ bool LevelChunk::containsPlayer()
         for (unsigned int index = 0; index < entities->size(); ++index)
         {
             boost::shared_ptr<Entity>& entity = entities->at(index);
-            if (entity->GetType() == EntityType::SERVER_PLAYER)
+            if (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, entity->GetType()))
             {
                 LeaveCriticalSection(&m_csEntities);
                 return true;
@@ -2171,9 +2169,8 @@ int LevelChunk::setBlocksAndData(arrayWithLength<unsigned char> input, int x, in
 }
 Random* LevelChunk::getRandom(long long seed)
 {
-    long long chunkSeed = level->getSeed() + (long long)(x * x * 0x4c1906) + (long long)(x * 0x5ac0db) +
-                          (long long)(z * z * 0x4307a7) + (long long)(z * 0x5f24f);
-    return new Random(chunkSeed ^ seed);
+    return new Random(level->getSeed() + (long long)(x * x * 0x4c1906) + (long long)(x * 0x5ac0db) +
+                      (long long)(z * z * 0x4307a7) + (long long)(z * 0x5f24f) ^ seed);
 }
 bool LevelChunk::isEmpty()
 {

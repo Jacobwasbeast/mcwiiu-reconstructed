@@ -10,6 +10,11 @@ public:
     arrayWithLength<T>** data;
     unsigned int length;
 
+    array2DWithLength()
+    {
+        data = NULL;
+        length = 0;
+    }
     array2DWithLength(unsigned int width, unsigned int height);
     arrayWithLength<T>*& operator[](unsigned int i) { return data[i]; }
 };
