@@ -1,7 +1,7 @@
 #ifndef SOURCE_PLATFORM_WIIU_C4JEVENTQUEUEIMPL_HPP
 #define SOURCE_PLATFORM_WIIU_C4JEVENTQUEUEIMPL_HPP
 
-#include <deque>
+#include <queue>
 
 #include "platform/wiiu/C4JEventQueue.hpp"
 #include "platform/wiiu/C4JEventImpl.hpp"
@@ -23,7 +23,7 @@ public:
 
 private:
     C4JThreadImpl* m_thread;
-    std::deque<void*> m_events;
+    std::queue<void*> m_events;
     C4JEventArrayImpl* m_eventArray;
     C4JEventImpl* m_finishEvent;
     OSFastMutex m_mutex;

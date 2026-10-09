@@ -7,6 +7,10 @@
 #define ERROR_CANCELLED 1223
 #endif
 
+#ifndef STILL_ACTIVE
+#define STILL_ACTIVE 259
+#endif
+
 struct _FILETIME
 {
     unsigned int dwLowDateTime;
@@ -29,8 +33,11 @@ static const unsigned int FILE_ATTRIBUTE_NORMAL = 0x00000080;
 static const unsigned int FILE_FLAG_SEQUENTIAL_SCAN = 0x08000000;
 static const unsigned int GENERIC_READ = 0x80000000;
 static const unsigned int GENERIC_WRITE = 0x40000000;
+static const unsigned int CREATE_NEW = 1;
+static const unsigned int CREATE_ALWAYS = 2;
 static const unsigned int OPEN_EXISTING = 3;
 static const unsigned int OPEN_ALWAYS = 4;
+static const unsigned int TRUNCATE_EXISTING = 5;
 
 struct MEMORYSTATUS
 {
@@ -80,7 +87,7 @@ void GetSystemTime(SYSTEMTIME* systemTime);
 void GetLocalTime(SYSTEMTIME* systemTime);
 unsigned int FileTimeToSystemTime(const FILETIME* fileTime, SYSTEMTIME* systemTime);
 
-FSClient* GetWiiUFileSystemClient();
+extern FSClient* gFileSystemClient;
 extern FSClient* gFileCacheClient;
 void WiiUInitialise();
 

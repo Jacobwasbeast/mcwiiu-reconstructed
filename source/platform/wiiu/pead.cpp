@@ -8,7 +8,6 @@
 #include <string.h>
 #include <wchar.h>
 #include <new>
-#include <vector>
 
 #include <coreinit/time.h>
 #include <coreinit/core.h>
@@ -22,11 +21,9 @@ namespace
 {
 BinaryStreamFormat sBinaryFormat;
 TextStreamFormat sTextFormat;
-HeapMgr* sHeapMgr;
-ThreadMgr* sThreadMgr;
+FixedSafeString1024 sTextBuffer;
+Mutex sMutex;
 IDelegate1<const PrintConfig::PrintEventArg&>* sFinalPrintCallback;
-IDelegate1<const HeapMgr::AllocFailedCallbackArg*>* sAllocFailedCallback;
-std::vector<Heap*> sHeaps;
 
 template <typename T>
 T byteSwap(T value)
@@ -48,34 +45,6 @@ T convertEndian(T value, Endian::Types endian)
     return endian == Endian::cLittle ? byteSwap(value) : value;
 }
 
-template <typename T>
-bool parseInteger(T* value, const SafeStringBase<char>& text, StringUtil::CardinalNumber cardinal)
-{
-    if (!value) return false;
-    char* end = 0;
-    int base = cardinal == StringUtil::cHexadecimal ? 16 :
-               cardinal == StringUtil::cOctal ? 8 :
-               cardinal == StringUtil::cBinary ? 2 : 10;
-    unsigned long long parsed = strtoull(text.cstr(), &end, base);
-    if (!end || *end) return false;
-    *value = static_cast<T>(parsed);
-    return true;
-}
-
-template <typename T>
-bool parseSignedInteger(T* value, const SafeStringBase<char>& text, StringUtil::CardinalNumber cardinal)
-{
-    if (!value) return false;
-    char* end = 0;
-    int base = cardinal == StringUtil::cHexadecimal ? 16 :
-               cardinal == StringUtil::cOctal ? 8 :
-               cardinal == StringUtil::cBinary ? 2 : 10;
-    long long parsed = strtoll(text.cstr(), &end, base);
-    if (!end || *end) return false;
-    *value = static_cast<T>(parsed);
-    return true;
-}
-
 int appendText(char* destination, unsigned int capacity, const char* source, int length)
 {
     if (!destination || capacity == 0) return 0;
@@ -95,231 +64,40 @@ void appendWide(StringUtil::__N_18_peadStringUtil_cpp_6714fef4::OutBuffer16* out
 }
 }
 
-template <typename T>
-void BufferedSafeStringBase<T>::copy(const T* text)
-{
-    if (!mBuffer || mBufferSize <= 0) return;
-    int index = 0;
-    if (text)
-        while (index < mBufferSize - 1 && text[index])
-        {
-            mBuffer[index] = text[index];
-            ++index;
-        }
-    mBuffer[index] = 0;
-}
-
-template <>
-int BufferedSafeStringBase<char>::formatImpl_(char* buffer, int size, const char* format, va_list args)
-{
-    if (!buffer || size <= 0) return 0;
-    int result = ::vsnprintf(buffer, static_cast<size_t>(size), format, args);
-    buffer[size - 1] = 0;
-    return result;
-}
-
-template <>
-int BufferedSafeStringBase<wchar_t>::formatImpl_(wchar_t* buffer, int size, const wchar_t* format, va_list args)
-{
-    if (!buffer || size <= 0) return 0;
-    int result = ::vswprintf(buffer, static_cast<size_t>(size), format, args);
-    buffer[size - 1] = 0;
-    return result;
-}
-
-template <typename T>
-int BufferedSafeStringBase<T>::format(const T* formatText, ...)
-{
-    va_list args;
-    va_start(args, formatText);
-    int result = formatV(formatText, args);
-    va_end(args);
-    return result;
-}
-
-template <typename T>
-int BufferedSafeStringBase<T>::appendWithFormatV(const T* formatText, va_list args)
-{
-    int length = this->calcLength();
-    if (length >= mBufferSize) return 0;
-    return formatImpl_(mBuffer + length, mBufferSize - length, formatText, args);
-}
-
-template <typename T>
-int BufferedSafeStringBase<T>::appendWithFormat(const T* formatText, ...)
-{
-    va_list args;
-    va_start(args, formatText);
-    int result = appendWithFormatV(formatText, args);
-    va_end(args);
-    return result;
-}
-
-template <typename T>
-HeapSafeStringBase<T>::~HeapSafeStringBase()
-{
-    if (this->mBuffer) freeToSeadHeap(this->mBuffer);
-}
-
-template <>
-SafeStringBase<char>& SafeStringBase<char>::__as__S(const SafeStringBase<char>& other)
-{
-    return operator=(other);
-}
-
-template <>
-SafeStringBase<wchar_t>& SafeStringBase<wchar_t>::__as__S(const SafeStringBase<wchar_t>& other)
-{
-    return operator=(other);
-}
-
-template <>
-BufferedSafeStringBase<char>& BufferedSafeStringBase<char>::__as__S(const SafeStringBase<char>& other)
-{
-    return operator=(other);
-}
-
-template <>
-BufferedSafeStringBase<wchar_t>& BufferedSafeStringBase<wchar_t>::__as__S(const SafeStringBase<wchar_t>& other)
-{
-    return operator=(other);
-}
-
-template <>
-int BufferedSafeStringBase<char>::formatImpl___S(char* buffer, int size, const char* formatText, va_list args)
-{
-    return formatImpl_(buffer, size, formatText, args);
-}
-
-template <>
-int BufferedSafeStringBase<wchar_t>::formatImpl___S(wchar_t* buffer, int size, const wchar_t* formatText, va_list args)
-{
-    return formatImpl_(buffer, size, formatText, args);
-}
-
-template <>
-int BufferedSafeStringBase<char>::formatV__S(const char* formatText, va_list args)
-{
-    return formatV(formatText, args);
-}
-
-template <>
-int BufferedSafeStringBase<char>::format__S(const char* formatText, ...)
-{
-    va_list args;
-    va_start(args, formatText);
-    int result = formatV__S(formatText, args);
-    va_end(args);
-    return result;
-}
-
-template <>
-int BufferedSafeStringBase<wchar_t>::formatV__S(const wchar_t* formatText, va_list args)
-{
-    return formatV(formatText, args);
-}
-
-template <>
-int BufferedSafeStringBase<wchar_t>::format__S(const wchar_t* formatText, ...)
-{
-    va_list args;
-    va_start(args, formatText);
-    int result = formatV__S(formatText, args);
-    va_end(args);
-    return result;
-}
-
-template <>
-int BufferedSafeStringBase<char>::appendWithFormatV__S(const char* formatText, va_list args)
-{
-    return appendWithFormatV(formatText, args);
-}
-
-template <>
-int BufferedSafeStringBase<wchar_t>::appendWithFormatV__S(const wchar_t* formatText, va_list args)
-{
-    return appendWithFormatV(formatText, args);
-}
-
-template <>
-int BufferedSafeStringBase<char>::appendWithFormat__S(const char* formatText, ...)
-{
-    va_list args;
-    va_start(args, formatText);
-    int result = appendWithFormatV__S(formatText, args);
-    va_end(args);
-    return result;
-}
-
-template <>
-int BufferedSafeStringBase<wchar_t>::appendWithFormat__S(const wchar_t* formatText, ...)
-{
-    va_list args;
-    va_start(args, formatText);
-    int result = appendWithFormatV__S(formatText, args);
-    va_end(args);
-    return result;
-}
-
-template <>
-void BufferedSafeStringBase<char>::assureTerminationImpl___S() const
-{
-    assureTerminationImpl_();
-}
-
-template <>
-void BufferedSafeStringBase<wchar_t>::assureTerminationImpl___S() const
-{
-    assureTerminationImpl_();
-}
-
-template <>
-HeapSafeStringBase<char>& HeapSafeStringBase<char>::__as__S(const SafeStringBase<char>& other)
-{
-    return operator=(other);
-}
-
-template <>
-HeapSafeStringBase<wchar_t>& HeapSafeStringBase<wchar_t>::__as__S(const SafeStringBase<wchar_t>& other)
-{
-    return operator=(other);
-}
-
-template class SafeStringBase<char>;
-template class SafeStringBase<wchar_t>;
-template class BufferedSafeStringBase<char>;
-template class BufferedSafeStringBase<wchar_t>;
-template class HeapSafeStringBase<char>;
-template class HeapSafeStringBase<wchar_t>;
-
 void ListNode::insertBack_(ListNode* node)
 {
-    node->mPrev = mPrev;
-    node->mNext = this;
-    mPrev->mNext = node;
-    mPrev = node;
+    ListNode* next = mNext;
+    mNext = node;
+    node->mPrev = this;
+    node->mNext = next;
+    if (next)
+        next->mPrev = node;
 }
 
 void ListNode::insertFront_(ListNode* node)
 {
-    node->mPrev = this;
-    node->mNext = mNext;
-    mNext->mPrev = node;
-    mNext = node;
+    ListNode* prev = mPrev;
+    mPrev = node;
+    node->mPrev = prev;
+    node->mNext = this;
+    if (prev)
+        prev->mNext = node;
 }
 
 void ListNode::erase_()
 {
-    mPrev->mNext = mNext;
-    mNext->mPrev = mPrev;
-    mPrev = this;
-    mNext = this;
+    if (mPrev)
+        mPrev->mNext = mNext;
+    if (mNext)
+        mNext->mPrev = mPrev;
+    mNext = 0;
+    mPrev = 0;
 }
 
 ListNode* ListImpl::nth(int index) const
 {
     if (index < 0 || index >= mCount) return 0;
-    ListNode* node = mStart.next();
+    ListNode* node = mStartEnd.next();
     while (index--) node = node->next();
     return node;
 }
@@ -330,14 +108,14 @@ void ListImpl::sort(int offset, int (*compare)(const void*, const void*))
         return;
 
     ListNode* node = nth(1);
-    while (node != &mStart)
+    while (node != &mStartEnd)
     {
         ListNode* next = node->next();
         if (compare(reinterpret_cast<const char*>(node->prev()) - offset,
                     reinterpret_cast<const char*>(node) - offset) > 0)
         {
             ListNode* insertion = node->prev();
-            while (insertion != &mStart &&
+            while (insertion != &mStartEnd &&
                    compare(reinterpret_cast<const char*>(insertion) - offset,
                            reinterpret_cast<const char*>(node) - offset) > 0)
                 insertion = insertion->prev();
@@ -350,7 +128,16 @@ void ListImpl::sort(int offset, int (*compare)(const void*, const void*))
 
 void ListImpl::clear()
 {
-    while (mStart.next() != &mStart) mStart.next()->erase_();
+    ListNode* node = mStartEnd.mNext;
+    while (node != &mStartEnd)
+    {
+        ListNode* current = node;
+        node = node->mNext;
+        current->mNext = 0;
+        current->mPrev = 0;
+    }
+    mStartEnd.mPrev = &mStartEnd;
+    mStartEnd.mNext = &mStartEnd;
     mCount = 0;
 }
 
@@ -584,13 +371,19 @@ void BinaryStreamFormat::readBit(StreamSrc* src, void* data, unsigned int bits)
 
 void BinaryStreamFormat::readString(StreamSrc* src, BufferedSafeStringBase<char>* string, unsigned int size)
 {
-    unsigned int length = readU32(src, Endian::cHost);
-    unsigned int capacity = static_cast<unsigned int>(string->getBufferSize());
-    unsigned int copySize = length < size ? length : size;
-    if (capacity) copySize = copySize < capacity - 1 ? copySize : capacity - 1;
-    src->read(string->getBuffer(), copySize);
-    if (capacity) string->getBuffer()[copySize] = 0;
-    if (length > copySize) src->skip(static_cast<int>(length - copySize));
+    unsigned int restSize = 0;
+    if (size > static_cast<unsigned int>(string->getBufferSize()))
+    {
+        restSize = size - string->getBufferSize();
+        size = string->getBufferSize();
+    }
+    src->read(string->getBuffer(), size);
+    if (size + 1 < static_cast<unsigned int>(string->getBufferSize()))
+        string->trim(size);
+    else
+        string->trim(string->getBufferSize() - 1);
+    if (restSize != 0)
+        src->read(string->getBuffer(), restSize);
 }
 
 void BinaryStreamFormat::readMemBlock(StreamSrc* src, void* data, unsigned int size) { src->read(data, size); }
@@ -626,99 +419,218 @@ void BinaryStreamFormat::flush(StreamSrc*) {}
 void BinaryStreamFormat::rewind(StreamSrc* src) { src->rewind(); }
 
 TextStreamFormat::~TextStreamFormat() {}
-TextStreamFormat::TextStreamFormat() : mTextBuffer() {}
-void TextStreamFormat::getNextData_(StreamSrc* source)
+TextStreamFormat::TextStreamFormat() : mSeparator(" \t\n") {}
+void TextStreamFormat::getNextData_(StreamSrc* src)
 {
-    unsigned int length = 0;
+    char commentEnd = '\0';
     bool quoted = false;
-    bool blockComment = false;
-    char character = 0;
-    while (source->read(&character, 1) == 1)
+    bool multiByte = false;
+    char character;
+    sTextBuffer.clear();
+    int length = 0;
+    while (src->read(&character, 1) != 0)
     {
-        if (blockComment)
+        if (commentEnd != '\0')
         {
-            if (character == '*')
+            if (__N_24_peadTextStreamFormat_cpp_8d174ff4::isSJISCode_(character))
             {
-                char next = 0;
-                if (source->read(&next, 1) == 1 && next == '/') blockComment = false;
+                if (src->read(&character, 1) == 0)
+                    return;
+                continue;
             }
-            continue;
-        }
-        if (!quoted && (character == ' ' || character == '\t' || character == '\r' || character == '\n'))
-        {
-            if (length) break;
-            continue;
-        }
-        if (!quoted && character == '#')
-        {
-            while (source->read(&character, 1) == 1 && character != '\n') {}
-            if (length) break;
-            continue;
-        }
-        if (!quoted && character == '/')
-        {
-            char next = 0;
-            if (source->read(&next, 1) == 1)
+            if (character == commentEnd)
             {
-                if (next == '/')
+                if (commentEnd == '*')
                 {
-                    while (source->read(&character, 1) == 1 && character != '\n') {}
-                    if (length) break;
+                    commentEnd = '/';
                     continue;
                 }
-                if (next == '*')
-                {
-                    blockComment = true;
-                    continue;
-                }
-                if (length < static_cast<unsigned int>(mTextBuffer.getBufferSize() - 1)) mTextBuffer.getBuffer()[length++] = character;
-                character = next;
+                commentEnd = '\0';
+                character = mSeparator[0];
+            }
+            else
+            {
+                if (commentEnd == '/')
+                    commentEnd = '*';
+                continue;
             }
         }
-        if (character == '"')
+        if (quoted)
         {
-            quoted = !quoted;
-            if (!quoted) break;
-            continue;
+            if (character == '"')
+            {
+                if (!multiByte && length > 1 && sTextBuffer[length - 1] == '\\')
+                {
+                    sTextBuffer.copyAt(length - 1, "\"", 1);
+                    continue;
+                }
+                return;
+            }
+            sTextBuffer.append(character);
+            if (!__N_24_peadTextStreamFormat_cpp_8d174ff4::isSJISCode_(character))
+            {
+                multiByte = false;
+                ++length;
+                continue;
+            }
         }
-        if (length < static_cast<unsigned int>(mTextBuffer.getBufferSize() - 1)) mTextBuffer.getBuffer()[length++] = character;
-        if (__N_24_peadTextStreamFormat_cpp_8d174ff4::isSJISCode_(static_cast<unsigned char>(character)))
+        else
         {
-            if (source->read(&character, 1) == 1 && length < static_cast<unsigned int>(mTextBuffer.getBufferSize() - 1))
-                mTextBuffer.getBuffer()[length++] = character;
+            if (length == 0 && character == '"')
+            {
+                quoted = true;
+                continue;
+            }
+            if (mSeparator.include(character))
+            {
+                if (!sTextBuffer.isEmpty())
+                    return;
+                continue;
+            }
+            sTextBuffer.append(character);
+            if (!__N_24_peadTextStreamFormat_cpp_8d174ff4::isSJISCode_(character))
+            {
+                multiByte = false;
+                ++length;
+                if (length >= 1 && sTextBuffer[length - 1] == '#')
+                {
+                    commentEnd = '\n';
+                    --length;
+                    sTextBuffer.trim(length);
+                }
+                if (length >= 2 && sTextBuffer[length - 2] == '/' && sTextBuffer[length - 1] == '/')
+                {
+                    commentEnd = '\n';
+                    length -= 2;
+                    sTextBuffer.trim(length);
+                }
+                else if (length >= 2 && sTextBuffer[length - 2] == '/' && sTextBuffer[length - 1] == '*')
+                {
+                    commentEnd = '*';
+                    length -= 2;
+                    sTextBuffer.trim(length);
+                }
+                continue;
+            }
+        }
+        if (src->read(&character, 1) == 0)
+            return;
+        sTextBuffer.append(character);
+        multiByte = true;
+        length += 2;
+    }
+}
+unsigned char TextStreamFormat::readU8(StreamSrc* src, Endian::Types)
+{
+    ScopedLock<Mutex> lock(&sMutex);
+    unsigned char value = 0;
+    getNextData_(src);
+    StringUtil::tryParseU8(&value, sTextBuffer.cstr(), StringUtil::cAuto);
+    return value;
+}
+unsigned short TextStreamFormat::readU16(StreamSrc* src, Endian::Types)
+{
+    ScopedLock<Mutex> lock(&sMutex);
+    unsigned short value = 0;
+    getNextData_(src);
+    StringUtil::tryParseU16(&value, sTextBuffer.cstr(), StringUtil::cAuto);
+    return value;
+}
+unsigned int TextStreamFormat::readU32(StreamSrc* src, Endian::Types)
+{
+    ScopedLock<Mutex> lock(&sMutex);
+    unsigned int value = 0;
+    getNextData_(src);
+    StringUtil::tryParseU32(&value, sTextBuffer.cstr(), StringUtil::cAuto);
+    return value;
+}
+unsigned long long TextStreamFormat::readU64(StreamSrc* src, Endian::Types)
+{
+    ScopedLock<Mutex> lock(&sMutex);
+    unsigned long long value = 0;
+    getNextData_(src);
+    StringUtil::tryParseU64(&value, sTextBuffer.cstr(), StringUtil::cAuto);
+    return value;
+}
+signed char TextStreamFormat::readS8(StreamSrc* src, Endian::Types)
+{
+    ScopedLock<Mutex> lock(&sMutex);
+    signed char value = 0;
+    getNextData_(src);
+    StringUtil::tryParseS8(&value, sTextBuffer.cstr(), StringUtil::cAuto);
+    return value;
+}
+short TextStreamFormat::readS16(StreamSrc* src, Endian::Types)
+{
+    ScopedLock<Mutex> lock(&sMutex);
+    short value = 0;
+    getNextData_(src);
+    StringUtil::tryParseS16(&value, sTextBuffer.cstr(), StringUtil::cAuto);
+    return value;
+}
+int TextStreamFormat::readS32(StreamSrc* src, Endian::Types)
+{
+    ScopedLock<Mutex> lock(&sMutex);
+    int value = 0;
+    getNextData_(src);
+    StringUtil::tryParseS32(&value, sTextBuffer.cstr(), StringUtil::cAuto);
+    return value;
+}
+long long TextStreamFormat::readS64(StreamSrc* src, Endian::Types)
+{
+    ScopedLock<Mutex> lock(&sMutex);
+    long long value = 0;
+    getNextData_(src);
+    StringUtil::tryParseS64(&value, sTextBuffer.cstr(), StringUtil::cAuto);
+    return value;
+}
+float TextStreamFormat::readF32(StreamSrc* src, Endian::Types)
+{
+    ScopedLock<Mutex> lock(&sMutex);
+    float value = 0.0f;
+    getNextData_(src);
+    if (sTextBuffer.calcLength() != 0)
+        ::sscanf(sTextBuffer.cstr(), "%f", &value);
+    return value;
+}
+void TextStreamFormat::readBit(StreamSrc* src, void* data, unsigned int bitNum)
+{
+    ScopedLock<Mutex> lock(&sMutex);
+    getNextData_(src);
+    SafeStringBase<char> text(sTextBuffer.cstr());
+    if (text.calcLength() >= 2 && text.at(0) == '0' && text.at(1) == 'b')
+        text = SafeStringBase<char>(text.cstr() + 2);
+    unsigned char* bytes = static_cast<unsigned char*>(data);
+    unsigned char value = 0;
+    unsigned int bit = 0;
+    int length = text.calcLength();
+    for (int index = 0; index != length + 1 && bit < bitNum; ++index)
+    {
+        value <<= 1;
+        if (text.at(index) == '1')
+            value |= 1;
+        ++bit;
+        if ((bit & 7) == 0)
+        {
+            bytes[(bit >> 3) - 1] = value;
+            value = 0;
         }
     }
-    mTextBuffer.getBuffer()[length] = 0;
+    if ((bit & 7) != 0)
+        bytes[bit >> 3] = static_cast<unsigned char>((bytes[bit >> 3] & (0xff << (bit & 7))) | value);
 }
-unsigned char TextStreamFormat::readU8(StreamSrc* s, Endian::Types) { return static_cast<unsigned char>(readU32(s, Endian::cHost)); }
-unsigned short TextStreamFormat::readU16(StreamSrc* s, Endian::Types) { return static_cast<unsigned short>(readU32(s, Endian::cHost)); }
-unsigned int TextStreamFormat::readU32(StreamSrc* s, Endian::Types) { getNextData_(s); return static_cast<unsigned int>(strtoul(mTextBuffer.cstr(), 0, 0)); }
-unsigned long long TextStreamFormat::readU64(StreamSrc* s, Endian::Types) { getNextData_(s); return strtoull(mTextBuffer.cstr(), 0, 0); }
-signed char TextStreamFormat::readS8(StreamSrc* s, Endian::Types) { return static_cast<signed char>(readS32(s, Endian::cHost)); }
-short TextStreamFormat::readS16(StreamSrc* s, Endian::Types) { return static_cast<short>(readS32(s, Endian::cHost)); }
-int TextStreamFormat::readS32(StreamSrc* s, Endian::Types) { getNextData_(s); return static_cast<int>(strtol(mTextBuffer.cstr(), 0, 0)); }
-long long TextStreamFormat::readS64(StreamSrc* s, Endian::Types) { getNextData_(s); return strtoll(mTextBuffer.cstr(), 0, 0); }
-float TextStreamFormat::readF32(StreamSrc* s, Endian::Types) { getNextData_(s); return static_cast<float>(strtod(mTextBuffer.cstr(), 0)); }
-void TextStreamFormat::readBit(StreamSrc* source, void* destination, unsigned int bitCount)
+void TextStreamFormat::readString(StreamSrc* src, BufferedSafeStringBase<char>* dst, unsigned int)
 {
-    getNextData_(source);
-    unsigned char* bytes = static_cast<unsigned char*>(destination);
-    memset(bytes, 0, (bitCount + 7) / 8);
-    for (unsigned int bit = 0; bit < bitCount && mTextBuffer.cstr()[bit]; ++bit)
-        if (mTextBuffer.cstr()[bit] == '1') bytes[bit / 8] |= static_cast<unsigned char>(1u << (bit & 7));
+    ScopedLock<Mutex> lock(&sMutex);
+    getNextData_(src);
+    dst->copy(sTextBuffer);
 }
-void TextStreamFormat::readString(StreamSrc* source, BufferedSafeStringBase<char>* destination, unsigned int size)
+void TextStreamFormat::readMemBlock(StreamSrc* src, void* dst, unsigned int size)
 {
-    getNextData_(source);
-    int length = mTextBuffer.calcLength();
-    if (length > static_cast<int>(size)) mTextBuffer.getBuffer()[size] = 0;
-    destination->copy(mTextBuffer.cstr());
-}
-void TextStreamFormat::readMemBlock(StreamSrc* source, void* destination, unsigned int size)
-{
-    getNextData_(source);
+    ScopedLock<Mutex> lock(&sMutex);
+    getNextData_(src);
     unsigned int decodedSize = 0;
-    Base64::decode(destination, size, mTextBuffer.cstr(), mTextBuffer.calcLength(), &decodedSize);
+    Base64::decode(dst, size, sTextBuffer.cstr(), sTextBuffer.calcLength(), &decodedSize);
 }
 
 void TextStreamFormat::writeU8(StreamSrc* s, Endian::Types, unsigned char v) { char b[16]; ::snprintf(b, sizeof(b), "%u", v); s->write(b, strlen(b)); }
@@ -740,7 +652,22 @@ void TextStreamFormat::writeBit(StreamSrc* source, const void* data, unsigned in
     }
 }
 void TextStreamFormat::writeString(StreamSrc* s, const SafeStringBase<char>& v, unsigned int n) { unsigned int l = v.calcLength(); if (l > n) l = n; s->write(v.cstr(), l); }
-void TextStreamFormat::writeMemBlock(StreamSrc* s, const void* d, unsigned int n) { Base64::encode(mTextBuffer.getBuffer(), d, n, false); s->write(mTextBuffer.cstr(), ((n + 2) / 3) * 4); }
+void TextStreamFormat::writeMemBlock(StreamSrc* src, const void* data, unsigned int size)
+{
+    ScopedLock<Mutex> lock(&sMutex);
+    sTextBuffer.clear();
+    unsigned int encodedSize = (size / 3 + (size % 3 != 0)) * 4;
+    if (encodedSize + 1 < sTextBuffer.getBufferSize())
+    {
+        char* buffer = sTextBuffer.getBuffer();
+        buffer[encodedSize] = '\0';
+        Base64::encode(buffer, data, size, false);
+        src->write("\"", 1);
+        src->write(sTextBuffer.cstr(), sTextBuffer.calcLength());
+        src->write("\"", 1);
+        src->write(mSeparator.cstr(), 1);
+    }
+}
 void TextStreamFormat::writeDecorationText(StreamSrc* s, const SafeStringBase<char>& v) { s->write(v.cstr(), v.calcLength()); }
 void TextStreamFormat::writeNullChar(StreamSrc* s) { static const char zero = 0; s->write(&zero, 1); }
 void TextStreamFormat::skip(StreamSrc* s, unsigned int n) { s->skip(n); }
@@ -872,14 +799,9 @@ int BitFlagUtil::findOnBitFromRight(unsigned int value, int ordinal)
 }
 
 CoreId::CoreId() : mId(0) {}
-static unsigned int sCoreCount;
-static unsigned int sCoreIdMap[3];
-static unsigned int sCoreIndexTable[3];
-
-CoreId CoreInfo::getCurrentCoreId()
-{
-    return CoreId(sCoreIndexTable[OSGetCoreId()]);
-}
+unsigned int CoreInfo::sCoreCount;
+unsigned int CoreInfo::sCoreIdMap[3];
+unsigned int CoreInfo::sCoreIndexTable[3];
 
 void CoreInfo::configure()
 {
@@ -902,394 +824,1145 @@ bool __N_24_peadTextStreamFormat_cpp_8d174ff4::isSJISCode_(unsigned char)
     return false;
 }
 
-IDisposer::IDisposer() : mDisposerNode(), mHeap(HeapMgr::instance() ? HeapMgr::instance()->getCurrentHeap() : 0)
+Heap* IDisposer::cDestructedFlag = reinterpret_cast<Heap*>(1);
+
+IDisposer::IDisposer() : mDisposerHeap(0), mListNode()
 {
-    if (mHeap) mHeap->appendDisposer_(this);
+    if (HeapMgr::instance())
+    {
+        mDisposerHeap = HeapMgr::instance()->findContainHeap(this);
+        if (mDisposerHeap)
+            mDisposerHeap->appendDisposer_(this);
+    }
 }
 
-IDisposer::IDisposer(Heap* heap, HeapNullOption option) : mDisposerNode(), mHeap(heap)
+IDisposer::IDisposer(Heap* heap, HeapNullOption option) : mDisposerHeap(heap), mListNode()
 {
-    if (!mHeap && option == cHeapNullOption_Assert && HeapMgr::instance()) mHeap = HeapMgr::instance()->getCurrentHeap();
-    if (mHeap) mHeap->appendDisposer_(this);
+    if (!mDisposerHeap)
+    {
+        switch (option)
+        {
+        case cHeapNullOption_AlwaysUseSpecifiedHeap:
+        case cHeapNullOption_UseSpecifiedOrContainHeap:
+            if (!HeapMgr::instance())
+                return;
+            mDisposerHeap = HeapMgr::instance()->findContainHeap(this);
+            break;
+        case cHeapNullOption_UseSpecifiedOrCurrentHeap:
+            if (!HeapMgr::instance())
+                return;
+            mDisposerHeap = HeapMgr::instance()->getCurrentHeap();
+            break;
+        default:
+            return;
+        }
+        if (!mDisposerHeap)
+            return;
+    }
+    mDisposerHeap->appendDisposer_(this);
 }
 
 IDisposer::~IDisposer()
 {
-    if (mHeap) mHeap->removeDisposer_(this);
+    if (mDisposerHeap != cDestructedFlag)
+    {
+        if (mDisposerHeap)
+            mDisposerHeap->removeDisposer_(this);
+        mDisposerHeap = cDestructedFlag;
+    }
 }
 
 Heap::Heap(const SafeStringBase<char>& name, Heap* parent, void* start, unsigned int size, HeapDirection direction, bool enableLock)
-    : IDisposer(parent, cHeapNullOption_Allow), mName(name), mParent(parent), mChildren(), mDisposers(), mStart(start), mSize(size), mDirection(direction), mEnableLock(enableLock)
+    : IDisposer(parent, cHeapNullOption_UseSpecifiedOrContainHeap), mName(name), mStart(start), mSize(size), mParent(parent),
+      mChildren(), mListNode(), mDisposerList(), mDirection(direction), mCS(parent), mFlag(cFlag_EnableWarning),
+      mHeapCheckTag(HeapMgr::issueHeapCheckTag())
 {
-    sHeaps.push_back(this);
-    if (mParent) mParent->pushBackChild_(this);
+    if (enableLock)
+        mFlag.set(cFlag_EnableLock);
+    else
+        mFlag.reset(cFlag_EnableLock);
+    ConditionalScopedLock<CriticalSection> lock(&mCS, enableLock);
+    mChildren.initOffset(offsetof(Heap, mListNode));
+    mDisposerList.initOffset(offsetof(IDisposer, mListNode));
 }
 
-Heap::~Heap() { for (std::vector<Heap*>::iterator it = sHeaps.begin(); it != sHeaps.end(); ++it) if (*it == this) { sHeaps.erase(it); break; } }
+Heap::~Heap() {}
+
 bool Heap::checkDerivedRuntimeTypeInfo(const RuntimeTypeInfo::Interface* type) const { return checkDerivedRuntimeTypeInfoStatic(type); }
 const RuntimeTypeInfo::Interface* Heap::getRuntimeTypeInfo() const { return getRuntimeTypeInfoStatic(); }
 bool ExpHeap::checkDerivedRuntimeTypeInfo(const RuntimeTypeInfo::Interface* type) const { return checkDerivedRuntimeTypeInfoStatic(type); }
 const RuntimeTypeInfo::Interface* ExpHeap::getRuntimeTypeInfo() const { return getRuntimeTypeInfoStatic(); }
 void* Heap::tryRealloc(void*, unsigned int, int) { return 0; }
 void Heap::dump() const {}
+
 void Heap::dumpYAML(WriteStream& stream, int indent) const
 {
-    for (int index = 0; index < indent; ++index) stream.writeDecorationText(SafeStringBase<char>("  "));
-    stream.writeDecorationText(SafeStringBase<char>("name: "));
-    stream.writeDecorationText(mName);
-    stream.writeDecorationText(SafeStringBase<char>("\n"));
-    for (int index = 0; index < indent; ++index) stream.writeDecorationText(SafeStringBase<char>("  "));
-    stream.writeDecorationText(SafeStringBase<char>("size: "));
-    stream.writeU32(mSize);
-    stream.writeDecorationText(SafeStringBase<char>("\n"));
+    ConditionalScopedLock<CriticalSection> lock(const_cast<CriticalSection*>(&mCS), isEnableLock());
+    FixedSafeString128 line(SafeStringBase<char>(""));
+    line.append(' ', indent);
+    line.appendWithFormat("- name: \"%s\"\n", mName.cstr());
+    stream.writeDecorationText(line);
+    line.clear();
+    line.append(' ', indent);
+    line.appendWithFormat("  start_address: 0x%08X\n", getStartAddress());
+    stream.writeDecorationText(line);
+    line.clear();
+    line.append(' ', indent);
+    line.appendWithFormat("  end_address: 0x%08X\n", getEndAddress());
+    stream.writeDecorationText(line);
+    line.clear();
+    line.append(' ', indent);
+    if (!mParent)
+        line.appendWithFormat("  parent: %s\n", "~");
+    else
+        line.appendWithFormat("  parent: %s\n", mParent->mName.cstr());
+    stream.writeDecorationText(line);
+    line.clear();
+    line.append(' ', indent);
+    line.appendWithFormat("  direction: %s\n", mDirection == cHeapDirection_Forward ? "Forward" : "Reverse");
+    stream.writeDecorationText(line);
+    line.clear();
+    line.append(' ', indent);
+    line.appendWithFormat("  size: %u\n", getSize());
+    stream.writeDecorationText(line);
+    line.clear();
+    line.append(' ', indent);
+    line.appendWithFormat("  free_size: %u\n", getFreeSize());
+    stream.writeDecorationText(line);
+    line.clear();
+    line.append(' ', indent);
+    line.appendWithFormat("  max_allocatable_size: %u\n", getMaxAllocatableSize(4));
+    stream.writeDecorationText(line);
 }
-void Heap::pushBackChild_(Heap* child) { if (child) child->mParent = this; }
+
+void Heap::pushBackChild_(Heap* child)
+{
+    ScopedLock<CriticalSection> treeLock(HeapMgr::getHeapTreeLockCS());
+    ConditionalScopedLock<CriticalSection> lock(&mCS, isEnableLock());
+    mChildren.pushBack(child);
+}
+
 void Heap::dumpTreeYAML(WriteStream& stream, int indent) const
 {
     dumpYAML(stream, indent);
-    for (std::vector<Heap*>::iterator it = sHeaps.begin(); it != sHeaps.end(); ++it)
-        if ((*it)->mParent == this) (*it)->dumpTreeYAML(stream, indent + 1);
+    FixedSafeString128 line(SafeStringBase<char>(""));
+    line.append(' ', indent);
+    line.appendWithFormat("  children:\n");
+    stream.writeDecorationText(line);
+    for (OffsetList<Heap>::iterator it = mChildren.begin(); it != mChildren.end(); ++it)
+        it->dumpTreeYAML(stream, indent + 4);
 }
-Heap* Heap::findContainHeap_(const void* address) { for (std::vector<Heap*>::iterator it = sHeaps.begin(); it != sHeaps.end(); ++it) if ((*it)->isInclude(address)) return *it; return isInclude(address) ? this : 0; }
-void Heap::dispose_(const void*, const void*) { while (mDisposers.next() != &mDisposers) mDisposers.next()->erase_(); }
-void Heap::eraseChild_(Heap* child) { if (child && child->mParent == this) child->mParent = 0; }
-void Heap::destruct_() { dispose_(mStart, static_cast<unsigned char*>(mStart) + mSize); if (mParent) mParent->eraseChild_(this); }
-void Heap::appendDisposer_(IDisposer* disposer) { if (disposer) mDisposers.next()->insertFront_(&disposer->mDisposerNode); }
-void Heap::removeDisposer_(IDisposer* disposer) { if (disposer) disposer->mDisposerNode.erase_(); }
+
+Heap* Heap::findContainHeap_(const void* address)
+{
+    if (!isInclude(address))
+        return 0;
+    for (OffsetList<Heap>::iterator it = mChildren.begin(); it != mChildren.end(); ++it)
+    {
+        if (it->isInclude(address))
+            return it->findContainHeap_(address);
+    }
+    return this;
+}
+
+void Heap::dispose_(const void* begin, const void* end)
+{
+    mFlag.set(cFlag_Disposing);
+    OffsetList<IDisposer>::iterator it = mDisposerList.begin();
+    while (it != mDisposerList.end())
+    {
+        IDisposer* disposer = &*it;
+        if (disposer->mDisposerHeap && ((!begin && !end) || (begin <= disposer && disposer < end)))
+        {
+            disposer->~IDisposer();
+            it = mDisposerList.begin();
+        }
+        else
+        {
+            ++it;
+        }
+    }
+    mFlag.reset(cFlag_Disposing);
+}
+
+void Heap::eraseChild_(Heap* child)
+{
+    ScopedLock<CriticalSection> treeLock(HeapMgr::getHeapTreeLockCS());
+    ConditionalScopedLock<CriticalSection> lock(&mCS, isEnableLock());
+    mChildren.erase(child);
+}
+
+void Heap::destruct_()
+{
+    ConditionalScopedLock<CriticalSection> lock(&mCS, isEnableLock());
+    dispose_(0, 0);
+    HeapMgr::removeFromFindContainHeapCache_(this);
+    if (mParent)
+        mParent->eraseChild_(this);
+}
+
+void Heap::appendDisposer_(IDisposer* disposer)
+{
+    ConditionalScopedLock<CriticalSection> lock(&mCS, isEnableLock());
+    mDisposerList.pushBack(disposer);
+}
+
+void Heap::removeDisposer_(IDisposer* disposer)
+{
+    ConditionalScopedLock<CriticalSection> lock(&mCS, isEnableLock());
+    mDisposerList.erase(disposer);
+}
 
 ExpHeap::ExpHeap(const SafeStringBase<char>& name, Heap* parent, void* start, unsigned int size, HeapDirection direction, bool enableLock)
-    : Heap(name, parent, start, size, direction, enableLock), mAllocMode(cAllocMode_FirstFit), mFreeSize(size), mFreeHead(0), mFreeTail(0), mUseHead(0), mUseTail(0), mOwnsMemory(false)
+    : Heap(name, parent, start, size, direction, enableLock), mAllocMode(cAllocMode_FirstFit), mFreeList(), mUseList()
 {
-    createMaxSizeFreeMemBlock_(this);
+    ConditionalScopedLock<CriticalSection> lock(&mCS, isEnableLock());
+    mFreeList.initOffset(offsetof(MemBlock, mListNode));
+    mUseList.initOffset(offsetof(MemBlock, mListNode));
 }
-ExpHeap::~ExpHeap() {}
-ExpHeap* ExpHeap::tryCreate(unsigned int size, const SafeStringBase<char>& name, Heap* parent, HeapDirection direction, bool lock)
+
+ExpHeap::~ExpHeap()
 {
-    unsigned int total = static_cast<unsigned int>(sizeof(ExpHeap)) + size;
-    void* storage = parent ? parent->tryAlloc(total, 4) : malloc(total);
-    if (!storage) return 0;
-    unsigned char* arena = static_cast<unsigned char*>(storage) + sizeof(ExpHeap);
-    ExpHeap* heap = new (storage) ExpHeap(name, parent, arena, size, direction, lock);
-    heap->mOwnsMemory = true;
+    destruct_();
+}
+
+ExpHeap* ExpHeap::tryCreate(unsigned int size, const SafeStringBase<char>& name, Heap* parent, HeapDirection direction, bool enableLock)
+{
+    if (!parent)
+    {
+        parent = HeapMgr::instance()->getCurrentHeap();
+        if (!parent)
+            return 0;
+    }
+    if (size == 0)
+        size = parent->getMaxAllocatableSize(4) & ~3u;
+    else
+        size = (size + 3) & ~3u;
+    if (size <= sizeof(ExpHeap) + sizeof(MemBlock))
+        return 0;
+    unsigned char* start = static_cast<unsigned char*>(parent->tryAlloc(size, direction * 4));
+    if (!start)
+        return 0;
+    if (parent->mDirection == cHeapDirection_Reverse)
+        direction = static_cast<HeapDirection>(-direction);
+    ExpHeap* heap;
+    if (direction == cHeapDirection_Forward)
+        heap = new (start) ExpHeap(name, parent, start, size, cHeapDirection_Forward, enableLock);
+    else
+        heap = new (start + size - sizeof(ExpHeap)) ExpHeap(name, parent, start, size, direction, enableLock);
+    doCreate(heap, parent);
     return heap;
 }
-ExpHeap* ExpHeap::create(unsigned int size, const SafeStringBase<char>& name, Heap* parent, HeapDirection direction, bool lock) { return tryCreate(size, name, parent, direction, lock); }
-ExpHeap* ExpHeap::tryCreate(void* storage, unsigned int size, const SafeStringBase<char>& name, bool lock)
+
+ExpHeap* ExpHeap::create(unsigned int size, const SafeStringBase<char>& name, Heap* parent, HeapDirection direction, bool enableLock)
 {
-    if (!storage || size <= sizeof(ExpHeap) + sizeof(MemBlock)) return 0;
-    unsigned char* arena = static_cast<unsigned char*>(storage) + sizeof(ExpHeap);
-    return new (storage) ExpHeap(name, 0, arena, size - sizeof(ExpHeap), cHeapDirection_Forward, lock);
+    return tryCreate(size, name, parent, direction, enableLock);
 }
+
+ExpHeap* ExpHeap::tryCreate(void* address, unsigned int size, const SafeStringBase<char>& name, bool enableLock)
+{
+    size &= ~3u;
+    if (size <= sizeof(ExpHeap) + sizeof(MemBlock))
+        return 0;
+    ExpHeap* heap = new (address) ExpHeap(name, 0, address, size, cHeapDirection_Forward, enableLock);
+    doCreate(heap, 0);
+    return heap;
+}
+
 void ExpHeap::pushToFreeList_(MemBlock* block)
 {
-    block->previous = 0;
-    block->next = mFreeHead;
-    if (mFreeHead) mFreeHead->previous = block;
-    else mFreeTail = block;
-    mFreeHead = block;
+    MemBlock* previous = 0;
+    for (OffsetList<MemBlock>::iterator it = mFreeList.begin(); it != mFreeList.end(); ++it)
+    {
+        MemBlock* next = &*it;
+        if (block < next)
+        {
+            bool merged = false;
+            if (previous && previous->memory() + previous->mSize == reinterpret_cast<unsigned char*>(block))
+            {
+                previous->mSize += block->mOffset + block->mSize + sizeof(MemBlock);
+                block = previous;
+                merged = true;
+            }
+            if (block->memory() + block->mSize == reinterpret_cast<unsigned char*>(next))
+            {
+                if (!merged)
+                    mFreeList.insertBefore(next, block);
+                block->mSize += next->mOffset + next->mSize + sizeof(MemBlock);
+                mFreeList.erase(next);
+            }
+            else if (!merged)
+            {
+                mFreeList.insertBefore(next, block);
+            }
+            return;
+        }
+        previous = next;
+    }
+    if (mFreeList.size() != 0 && previous->memory() + previous->mSize == reinterpret_cast<unsigned char*>(block))
+    {
+        previous->mSize += block->mOffset + block->mSize + sizeof(MemBlock);
+        return;
+    }
+    mFreeList.pushBack(block);
 }
+
 void ExpHeap::createMaxSizeFreeMemBlock_(ExpHeap* heap)
 {
-    if (heap->mSize < sizeof(MemBlock)) return;
-    MemBlock* block = new (heap->mStart) MemBlock();
-    block->address = static_cast<unsigned char*>(heap->mStart);
-    block->payload = 0;
-    block->span = heap->mSize;
-    block->size = heap->mSize - sizeof(MemBlock);
-    block->alignment = 4;
+    ConditionalScopedLock<CriticalSection> lock(&heap->mCS, heap->isEnableLock());
+    void* address = heap->mDirection == cHeapDirection_Forward ? static_cast<void*>(heap + 1) : heap->mStart;
+    MemBlock* block = new (address) MemBlock();
+    block->mSize = heap->mSize - sizeof(ExpHeap) - sizeof(MemBlock);
     heap->pushToFreeList_(block);
 }
-void ExpHeap::doCreate(ExpHeap* heap, Heap* parent) { if (parent) parent->pushBackChild_(heap); }
-bool ExpHeap::compareMemBlockAddr_(const MemBlock* first, const MemBlock* second) { return first < second; }
-MemBlock* ExpHeap::findLastMemBlockIfFree_() { for (MemBlock* block = mFreeHead; block; block = block->next) if (block->address + block->span == static_cast<unsigned char*>(mStart) + mSize) return block; return 0; }
-int ExpHeap::adjustBack_() { MemBlock* block = findLastMemBlockIfFree_(); if (!block) return 0; int size = static_cast<int>(block->span); removeFreeBlock_(block); mSize -= size; mFreeSize -= size; return size; }
-MemBlock* ExpHeap::findFirstMemBlockIfFree_() { for (MemBlock* block = mFreeHead; block; block = block->next) if (block->address == mStart) return block; return 0; }
-int ExpHeap::adjustFront_()
+
+void ExpHeap::doCreate(ExpHeap* heap, Heap* parent)
+{
+    createMaxSizeFreeMemBlock_(heap);
+    if (parent)
+        parent->pushBackChild_(heap);
+}
+
+int ExpHeap::compareMemBlockAddr_(const MemBlock* first, const MemBlock* second)
+{
+    if (reinterpret_cast<const char*>(first) - reinterpret_cast<const char*>(second) < 0)
+        return -1;
+    return 1;
+}
+
+MemBlock* ExpHeap::findLastMemBlockIfFree_()
+{
+    mUseList.sort(compareMemBlockAddr_);
+    MemBlock* lastFree = mFreeList.back();
+    MemBlock* lastUse = mUseList.back();
+    if (!lastUse)
+    {
+        if (lastFree)
+            return lastFree;
+    }
+    else if (lastUse < lastFree)
+    {
+        return lastFree;
+    }
+    return 0;
+}
+
+unsigned int ExpHeap::adjustBack_()
+{
+    MemBlock* block = findLastMemBlockIfFree_();
+    if (block)
+    {
+        unsigned int size = reinterpret_cast<unsigned char*>(block) - static_cast<unsigned char*>(mStart);
+        mFreeList.erase(block);
+        if (mParent->resizeBack(mStart, size))
+        {
+            mSize = size;
+            return size;
+        }
+    }
+    return mSize;
+}
+
+MemBlock* ExpHeap::findFirstMemBlockIfFree_()
+{
+    mUseList.sort(compareMemBlockAddr_);
+    MemBlock* firstFree = mFreeList.front();
+    MemBlock* firstUse = mUseList.front();
+    if (firstUse && firstUse <= firstFree)
+        return 0;
+    return firstFree;
+}
+
+unsigned int ExpHeap::adjustFront_()
 {
     MemBlock* block = findFirstMemBlockIfFree_();
-    if (!block) return 0;
-    int size = static_cast<int>(block->span);
-    removeFreeBlock_(block);
-    mStart = block->address + block->span;
-    mSize -= size;
-    mFreeSize -= size;
-    return size;
+    if (block)
+    {
+        unsigned int size = mSize - (block->mOffset + block->mSize + sizeof(MemBlock));
+        mFreeList.erase(block);
+        void* start = mParent->resizeFront(mStart, size);
+        if (start)
+        {
+            mSize = size;
+            mStart = start;
+            return size;
+        }
+    }
+    return mSize;
 }
-MemBlock* ExpHeap::findFreeMemBlockFromHead_(unsigned int size, FindMode mode) const { return findFreeMemBlockFromHead_(size, 4, mode); }
+
+unsigned int ExpHeap::adjust()
+{
+    if (!mParent)
+        return mSize;
+    ConditionalScopedLock<CriticalSection> lock(&mCS, isEnableLock());
+    ConditionalScopedLock<CriticalSection> parentLock(&mParent->mCS, mParent->isEnableLock());
+    if (mDirection == cHeapDirection_Forward)
+        return adjustBack_();
+    return adjustFront_();
+}
+
+MemBlock* ExpHeap::findFreeMemBlockFromHead_(unsigned int size, FindMode mode) const
+{
+    MemBlock* found = 0;
+    for (OffsetList<MemBlock>::iterator it = mFreeList.begin(); it != mFreeList.end(); ++it)
+    {
+        unsigned int blockSize = it->mSize;
+        if (size <= blockSize)
+        {
+            if (mode == cFindMode_FirstFit)
+                return &*it;
+            if (!found || (mode == cFindMode_BestFit && blockSize < found->mSize) ||
+                (mode == cFindMode_MaxSize && found->mSize < blockSize))
+                found = &*it;
+        }
+    }
+    return found;
+}
+
+MemBlock* ExpHeap::allocFromHead_(unsigned int size)
+{
+    MemBlock* block = findFreeMemBlockFromHead_(size, static_cast<FindMode>(mAllocMode));
+    if (block)
+    {
+        unsigned short offset = block->mOffset;
+        unsigned int blockSize = block->mSize;
+        block->mSize = size;
+        unsigned int remainSize = blockSize - size;
+        mFreeList.erase(block);
+        pushToUseList_(block);
+        if (remainSize > sizeof(MemBlock))
+        {
+            MemBlock* freeBlock = new (reinterpret_cast<unsigned char*>(block) + offset + sizeof(MemBlock) + size) MemBlock(remainSize - sizeof(MemBlock));
+            pushToFreeList_(freeBlock);
+        }
+        else if (remainSize != 0)
+        {
+            block->mSize = size + remainSize;
+        }
+    }
+    return block;
+}
+
 MemBlock* ExpHeap::findFreeMemBlockFromHead_(unsigned int size, int alignment, FindMode mode) const
 {
     MemBlock* found = 0;
-    unsigned int best = 0xffffffffu;
-    unsigned int boundary = alignment < 0 ? static_cast<unsigned int>(-alignment) : static_cast<unsigned int>(alignment);
-    if (boundary < 4) boundary = 4;
-    for (MemBlock* block = mFreeHead; block; block = block->next)
+    for (OffsetList<MemBlock>::iterator it = mFreeList.begin(); it != mFreeList.end(); ++it)
     {
-        size_t payload = ((size_t)(block->address + sizeof(MemBlock)) + boundary - 1) & ~(boundary - 1);
-        unsigned int needed = static_cast<unsigned int>(payload - (size_t)block->address) + size;
-        if (needed <= block->span && (mode == cFindMode_FirstFit || block->span < best)) { found = block; best = block->span; if (mode == cFindMode_FirstFit) break; }
+        unsigned int blockSize = it->mSize;
+        if (size <= blockSize)
+        {
+            uintptr_t memory = reinterpret_cast<uintptr_t>(it->memory());
+            uintptr_t aligned = (memory + alignment - 1) & ~static_cast<uintptr_t>(alignment - 1);
+            if (size + (aligned - memory) <= blockSize)
+            {
+                if (mode == cFindMode_FirstFit)
+                    return &*it;
+                if (!found || (mode == cFindMode_BestFit && blockSize < found->mSize) ||
+                    (mode == cFindMode_MaxSize && found->mSize < blockSize))
+                    found = &*it;
+            }
+        }
     }
     return found;
 }
-void ExpHeap::pushToUseList_(MemBlock* block)
+
+MemBlock* ExpHeap::allocFromHead_(unsigned int size, int alignment)
 {
-    block->previous = 0;
-    block->next = mUseHead;
-    if (mUseHead) mUseHead->previous = block;
-    else mUseTail = block;
-    mUseHead = block;
-}
-void* ExpHeap::allocFromHead_(unsigned int size) { return allocFromHead_(size, 4); }
-void* ExpHeap::allocFromHead_(unsigned int size, int alignment)
-{
-    MemBlock* block = findFreeMemBlockFromHead_(size, alignment, mAllocMode == cAllocMode_FirstFit ? cFindMode_FirstFit : cFindMode_BestFit);
-    if (!block) return 0;
-    removeFreeBlock_(block);
-    unsigned int boundary = alignment < 0 ? static_cast<unsigned int>(-alignment) : static_cast<unsigned int>(alignment);
-    if (boundary < 4) boundary = 4;
-    unsigned char* payload = (unsigned char*)(((size_t)(block->address + sizeof(MemBlock)) + boundary - 1) & ~(boundary - 1));
-    unsigned int used = static_cast<unsigned int>(payload + size - block->address);
-    unsigned int remainder = block->span - used;
-    if (remainder > sizeof(MemBlock) + 4)
+    MemBlock* block = findFreeMemBlockFromHead_(size, alignment, static_cast<FindMode>(mAllocMode));
+    if (block)
     {
-        MemBlock* freeBlock = new (block->address + used) MemBlock();
-        freeBlock->address = block->address + used;
-        freeBlock->payload = 0;
-        freeBlock->span = remainder;
-        freeBlock->size = remainder - sizeof(MemBlock);
-        freeBlock->alignment = 4;
-        pushToFreeList_(freeBlock);
-        block->span = used;
+        uintptr_t memory = reinterpret_cast<uintptr_t>(block->memory());
+        unsigned int padding = ((memory + alignment - 1) & ~static_cast<uintptr_t>(alignment - 1)) - memory;
+        unsigned int remainSize = block->mSize - (size + padding);
+        if (padding < 0x10000)
+        {
+            block->setOffset(padding);
+            block->mSize = size;
+            mFreeList.erase(block);
+            pushToUseList_(block);
+        }
+        else
+        {
+            block->mOffset = 0;
+            MemBlock* useBlock = reinterpret_cast<MemBlock*>(reinterpret_cast<unsigned char*>(block) + padding);
+            block->mSize = padding - sizeof(MemBlock);
+            useBlock = new (useBlock) MemBlock();
+            useBlock->mOffset = 0;
+            useBlock->mSize = size;
+            pushToUseList_(useBlock);
+            block = useBlock;
+        }
+        if (remainSize > sizeof(MemBlock))
+        {
+            MemBlock* freeBlock = new (block->memory() + size) MemBlock(remainSize - sizeof(MemBlock));
+            pushToFreeList_(freeBlock);
+        }
+        else if (remainSize != 0)
+        {
+            block->mSize = size + remainSize;
+        }
     }
-    block->payload = payload;
-    block->size = size;
-    block->alignment = alignment;
-    pushToUseList_(block);
-    mFreeSize -= block->span;
-    return payload;
+    return block;
 }
-MemBlock* ExpHeap::findFreeMemBlockFromTail_(unsigned int size, FindMode mode) const { return findFreeMemBlockFromTail_(size, -4, mode); }
+
+MemBlock* ExpHeap::findFreeMemBlockFromTail_(unsigned int size, FindMode mode) const
+{
+    MemBlock* found = 0;
+    for (MemBlock* block = mFreeList.back(); block; block = mFreeList.prev(block))
+    {
+        unsigned int blockSize = block->mSize;
+        if (size <= blockSize)
+        {
+            if (mode == cFindMode_FirstFit)
+                return block;
+            if (!found || (mode == cFindMode_BestFit && blockSize < found->mSize) ||
+                (mode == cFindMode_MaxSize && found->mSize < blockSize))
+                found = block;
+        }
+    }
+    return found;
+}
+
+MemBlock* ExpHeap::allocFromTail_(unsigned int size)
+{
+    MemBlock* block = findFreeMemBlockFromTail_(size, static_cast<FindMode>(mAllocMode));
+    if (!block)
+        return 0;
+    if (block->mSize - size > sizeof(MemBlock))
+    {
+        unsigned int freeSize = block->mSize - size - sizeof(MemBlock);
+        unsigned char* address = block->memory() + freeSize;
+        block->mSize = freeSize;
+        MemBlock* useBlock = new (address) MemBlock(size);
+        pushToUseList_(useBlock);
+        return useBlock;
+    }
+    mFreeList.erase(block);
+    pushToUseList_(block);
+    return block;
+}
+
 MemBlock* ExpHeap::findFreeMemBlockFromTail_(unsigned int size, int alignment, FindMode mode) const
 {
     MemBlock* found = 0;
-    unsigned int best = 0xffffffffu;
-    unsigned int boundary = alignment < 0 ? static_cast<unsigned int>(-alignment) : static_cast<unsigned int>(alignment);
-    if (boundary < 4) boundary = 4;
-    for (MemBlock* block = mFreeTail; block; block = block->previous)
+    for (MemBlock* block = mFreeList.back(); block; block = mFreeList.prev(block))
     {
-        size_t payload = ((size_t)(block->address + block->span - size)) & ~(boundary - 1);
-        if (payload >= (size_t)(block->address + sizeof(MemBlock)) && (mode == cFindMode_FirstFit || block->span < best)) { found = block; best = block->span; if (mode == cFindMode_FirstFit) break; }
+        unsigned int blockSize = block->mSize;
+        if (size <= blockSize)
+        {
+            uintptr_t address = reinterpret_cast<uintptr_t>(block->memory()) + (blockSize - size);
+            if (size + (address - (address & ~static_cast<uintptr_t>(alignment - 1))) <= blockSize)
+            {
+                if (mode == cFindMode_FirstFit)
+                    return block;
+                if (!found || (mode == cFindMode_BestFit && blockSize < found->mSize) ||
+                    (mode == cFindMode_MaxSize && found->mSize < blockSize))
+                    found = block;
+            }
+        }
     }
     return found;
 }
-void* ExpHeap::allocFromTail_(unsigned int size) { return allocFromTail_(size, -4); }
-void* ExpHeap::allocFromTail_(unsigned int size, int alignment) { return allocFromHead_(size, alignment); }
-void* ExpHeap::realloc_(void* address, unsigned char*, unsigned int oldSize, unsigned int newSize, int alignment)
+
+MemBlock* ExpHeap::allocFromTail_(unsigned int size, int alignment)
 {
-    void* replacement = tryAlloc(newSize, alignment);
-    if (!replacement) return 0;
-    memcpy(replacement, address, oldSize < newSize ? oldSize : newSize);
-    free(address);
-    return replacement;
+    MemBlock* block = findFreeMemBlockFromTail_(size, alignment, static_cast<FindMode>(mAllocMode));
+    if (!block)
+        return 0;
+    uintptr_t address = reinterpret_cast<uintptr_t>(block->memory()) + (block->mSize - size);
+    unsigned int useSize = size + (address - (address & ~static_cast<uintptr_t>(alignment - 1)));
+    unsigned int remainSize = block->mSize - useSize;
+    if (remainSize > sizeof(MemBlock))
+    {
+        unsigned int freeSize = remainSize - sizeof(MemBlock);
+        unsigned char* useAddress = block->memory() + freeSize;
+        block->mSize = freeSize;
+        MemBlock* useBlock = new (useAddress) MemBlock(useSize);
+        pushToUseList_(useBlock);
+        return useBlock;
+    }
+    block->setOffset(remainSize);
+    block->mSize = useSize;
+    mFreeList.erase(block);
+    pushToUseList_(block);
+    return block;
 }
+
+void ExpHeap::pushToUseList_(MemBlock* block)
+{
+    if (mDirection == cHeapDirection_Forward)
+        mUseList.pushBack(block);
+    else
+        mUseList.pushFront(block);
+}
+
+void* ExpHeap::realloc_(void* address, unsigned char* memory, unsigned int copySize, unsigned int size, int alignment)
+{
+    void* newAddress = tryAlloc(size, alignment);
+    if (newAddress)
+    {
+        MemUtil::copy(newAddress, memory, copySize);
+        free(address);
+    }
+    return newAddress;
+}
+
 void ExpHeap::destroy()
 {
     Heap* parent = mParent;
-    bool owned = mOwnsMemory;
-    void* storage = this;
+    void* start = mStart;
     this->~ExpHeap();
-    if (owned) { if (parent) parent->free(storage); else ::free(storage); }
+    if (parent && parent->isFreeable())
+        parent->free(start);
 }
-unsigned int ExpHeap::adjust() { int adjusted = mDirection == cHeapDirection_Forward ? adjustBack_() : adjustFront_(); return adjusted < 0 ? 0 : static_cast<unsigned int>(adjusted); }
+
 void* ExpHeap::tryAlloc(unsigned int size, int alignment)
 {
     unsigned int allocSize = size < 4 ? 4 : size;
     if (allocSize >= mSize)
     {
-        if (sAllocFailedCallback)
+        if (HeapMgr::instance() && HeapMgr::instance()->getAllocFailedCallback())
         {
-            HeapMgr::AllocFailedCallbackArg arg = { this, size, alignment };
-            sAllocFailedCallback->invoke(&arg);
+            HeapMgr::AllocFailedCallbackArg arg;
+            arg.heap = this;
+            arg.requestSize = size;
+            arg.requestAlignment = alignment;
+            arg.allocSize = allocSize;
+            arg.allocAlignment = alignment;
+            HeapMgr::instance()->getAllocFailedCallback()->invoke(&arg);
         }
         return 0;
     }
-    unsigned int absAlignment = alignment < 0 ? static_cast<unsigned int>(-alignment) : static_cast<unsigned int>(alignment);
-    if ((absAlignment - 1) & absAlignment)
+    unsigned int absAlignment = alignment < 0 ? -alignment : alignment;
+    if (((absAlignment - 1) & absAlignment) != 0)
     {
-        if (sAllocFailedCallback)
+        if (HeapMgr::instance() && HeapMgr::instance()->getAllocFailedCallback())
         {
-            HeapMgr::AllocFailedCallbackArg arg = { this, size, alignment };
-            sAllocFailedCallback->invoke(&arg);
+            HeapMgr::AllocFailedCallbackArg arg;
+            arg.heap = this;
+            arg.requestSize = size;
+            arg.requestAlignment = alignment;
+            arg.allocSize = allocSize;
+            arg.allocAlignment = alignment;
+            HeapMgr::instance()->getAllocFailedCallback()->invoke(&arg);
         }
         return 0;
     }
-    unsigned int roundedSize = (allocSize + 3) & 0xfffffffcu;
-    int effective = alignment * static_cast<int>(mDirection);
-    void* result;
-    if (effective < 0)
-        result = -effective < 5 ? allocFromTail_(roundedSize) : allocFromTail_(roundedSize, effective);
+    allocSize = (allocSize + 3) & ~3u;
+    ConditionalScopedLock<CriticalSection> lock(&mCS, isEnableLock());
+    int directedAlignment = alignment * mDirection;
+    MemBlock* block;
+    if (directedAlignment < 0)
+    {
+        directedAlignment = -directedAlignment;
+        if (directedAlignment < 5)
+            block = allocFromTail_(allocSize);
+        else
+            block = allocFromTail_(allocSize, directedAlignment);
+    }
+    else if (directedAlignment < 5)
+    {
+        block = allocFromHead_(allocSize);
+    }
     else
-        result = effective < 5 ? allocFromHead_(roundedSize) : allocFromHead_(roundedSize, effective);
-    if (!result && sAllocFailedCallback)
     {
-        HeapMgr::AllocFailedCallbackArg arg = { this, size, alignment };
-        sAllocFailedCallback->invoke(&arg);
+        block = allocFromHead_(allocSize, directedAlignment);
     }
-    return result;
+    if (!block)
+    {
+        if (HeapMgr::instance() && HeapMgr::instance()->getAllocFailedCallback())
+        {
+            HeapMgr::AllocFailedCallbackArg arg;
+            arg.heap = this;
+            arg.requestSize = size;
+            arg.requestAlignment = alignment;
+            arg.allocSize = allocSize;
+            arg.allocAlignment = directedAlignment;
+            HeapMgr::instance()->getAllocFailedCallback()->invoke(&arg);
+        }
+        return 0;
+    }
+    block->mMagic = mHeapCheckTag;
+    return block->memory();
 }
-void ExpHeap::removeFreeBlock_(MemBlock* block) { if (block->previous) block->previous->next = block->next; else mFreeHead = block->next; if (block->next) block->next->previous = block->previous; else mFreeTail = block->previous; }
-void ExpHeap::removeUseBlock_(MemBlock* block) { if (block->previous) block->previous->next = block->next; else mUseHead = block->next; if (block->next) block->next->previous = block->previous; else mUseTail = block->previous; }
+
+void ExpHeap::dumpUseList() const
+{
+    ConditionalScopedLock<CriticalSection> lock(const_cast<CriticalSection*>(&mCS), isEnableLock());
+}
+
+void ExpHeap::dumpFreeList() const
+{
+    ConditionalScopedLock<CriticalSection> lock(const_cast<CriticalSection*>(&mCS), isEnableLock());
+}
+
 void ExpHeap::free(void* address)
 {
-    for (MemBlock* block = mUseHead; block; block = block->next)
-    {
-        if (block->payload != address) continue;
-        removeUseBlock_(block);
-        mFreeSize += block->span;
-        block->payload = 0;
-        pushToFreeList_(block);
+    if (!address)
         return;
+    if (!isInclude(address))
+        return;
+    if (mFlag.isOn(cFlag_Disposing))
+        return;
+    ConditionalScopedLock<CriticalSection> lock(&mCS, isEnableLock());
+    MemBlock* block = MemBlock::findManageArea(address);
+    if (!block)
+    {
+        dumpUseList();
+        dumpFreeList();
+    }
+    else if (block->mMagic == mHeapCheckTag)
+    {
+        mUseList.erase(block);
+        unsigned short offset = block->mOffset;
+        block->mOffset = 0;
+        block->mSize += offset;
+        pushToFreeList_(block);
     }
 }
-unsigned int ExpHeap::resizeFront(void* address, unsigned int size)
+
+void* ExpHeap::resizeFront(void* address, unsigned int size)
 {
-    for (MemBlock* block = mUseHead; block; block = block->next)
+    if (!isInclude(address))
+        return 0;
+    ConditionalScopedLock<CriticalSection> lock(&mCS, isEnableLock());
+    MemBlock* block = MemBlock::findManageArea(address);
+    unsigned int blockSize = block->mSize;
+    size = (size + 3) & ~3u;
+    if (size < blockSize)
     {
-        if (block->payload == address && size <= block->size)
+        unsigned int span = block->mOffset + blockSize;
+        unsigned int freeSpan = span + sizeof(MemBlock) - size;
+        if (freeSpan - sizeof(MemBlock) >= sizeof(MemBlock))
         {
-            mFreeSize += block->size - size;
-            block->size = size;
-            return size;
+            MemBlock* useBlock = new (reinterpret_cast<unsigned char*>(block) + (freeSpan - sizeof(MemBlock))) MemBlock();
+            useBlock->mMagic = mHeapCheckTag;
+            useBlock->mSize = size;
+            pushToUseList_(useBlock);
+            mUseList.erase(block);
+            block->mOffset = 0;
+            block->mSize = freeSpan - 2 * sizeof(MemBlock);
+            pushToFreeList_(block);
+            return useBlock->memory();
         }
+        block->setOffset(span - size);
+        return block->memory();
     }
+    if (size <= blockSize)
+        return block->memory();
     return 0;
 }
-unsigned int ExpHeap::resizeBack(void* address, unsigned int size) { return resizeFront(address, size); }
+
+void* ExpHeap::resizeBack(void* address, unsigned int size)
+{
+    if (!isInclude(address))
+        return 0;
+    ConditionalScopedLock<CriticalSection> lock(&mCS, isEnableLock());
+    MemBlock* block = MemBlock::findManageArea(address);
+    unsigned int blockSize = block->mSize;
+    size = (size + 3) & ~3u;
+    if (size < blockSize)
+    {
+        unsigned int remainSize = blockSize - size;
+        if (remainSize >= sizeof(MemBlock))
+        {
+            unsigned char* freeAddress = block->memory() + size;
+            block->mSize = size;
+            MemBlock* freeBlock = new (freeAddress) MemBlock(remainSize - sizeof(MemBlock));
+            pushToFreeList_(freeBlock);
+        }
+        return block->memory();
+    }
+    if (size <= blockSize)
+        return block->memory();
+    return 0;
+}
+
 void* ExpHeap::tryRealloc(void* address, unsigned int size, int alignment)
 {
-    if (!address) return tryAlloc(size, alignment);
-    unsigned int oldSize = getAllocatedSize(address);
-    return realloc_(address, static_cast<unsigned char*>(address), oldSize, size, alignment);
+    if (!address)
+        return tryAlloc(size, alignment);
+    if (size == 0)
+    {
+        free(address);
+        return 0;
+    }
+    if (!isInclude(address) || alignment < 0)
+        return 0;
+    ConditionalScopedLock<CriticalSection> lock(&mCS, isEnableLock());
+    MemBlock* block = MemBlock::findManageArea(address);
+    unsigned int blockSize = block->mSize;
+    size = (size + 3) & ~3u;
+    if (blockSize <= size)
+    {
+        if (blockSize < size)
+        {
+            if (alignment == 0)
+                alignment = 4;
+            return realloc_(address, block->memory(), blockSize, size, alignment);
+        }
+        unsigned char* memory = block->memory();
+        if (alignment != 0 && (reinterpret_cast<uintptr_t>(memory) & (alignment - 1)) != 0)
+            return realloc_(address, memory, blockSize, size, alignment);
+        return memory;
+    }
+    if (alignment != 0)
+    {
+        unsigned char* memory = block->memory();
+        if ((reinterpret_cast<uintptr_t>(memory) & (alignment - 1)) != 0)
+            return realloc_(address, memory, size, size, alignment);
+    }
+    unsigned int remainSize = blockSize - size;
+    if (remainSize >= sizeof(MemBlock))
+    {
+        unsigned char* freeAddress = block->memory() + size;
+        block->mSize = size;
+        MemBlock* freeBlock = new (freeAddress) MemBlock(remainSize - sizeof(MemBlock));
+        pushToFreeList_(freeBlock);
+    }
+    return block->memory();
 }
-void ExpHeap::freeAll() { mFreeHead = mFreeTail = mUseHead = mUseTail = 0; mFreeSize = mSize; createMaxSizeFreeMemBlock_(this); }
+
+void ExpHeap::freeAll()
+{
+    ConditionalScopedLock<CriticalSection> lock(&mCS, isEnableLock());
+    dispose_(0, 0);
+    mUseList.clear();
+    mFreeList.clear();
+    createMaxSizeFreeMemBlock_(this);
+}
+
 void* ExpHeap::getStartAddress() const { return mStart; }
 void* ExpHeap::getEndAddress() const { return static_cast<unsigned char*>(mStart) + mSize; }
+
+unsigned int ExpHeap::getFreeSize() const
+{
+    ConditionalScopedLock<CriticalSection> lock(const_cast<CriticalSection*>(&mCS), isEnableLock());
+    unsigned int freeSize = 0;
+    for (OffsetList<MemBlock>::iterator it = mFreeList.begin(); it != mFreeList.end(); ++it)
+        freeSize += it->mSize;
+    return freeSize;
+}
+
 unsigned int ExpHeap::getSize() const { return mSize; }
-unsigned int ExpHeap::getFreeSize() const { return mFreeSize; }
-unsigned int ExpHeap::getMaxAllocatableSize(int alignment) const { MemBlock* block = findFreeMemBlockFromHead_(0, alignment, cFindMode_BestFit); return block ? block->size : 0; }
-bool ExpHeap::isInclude(const void* address) const { return address >= mStart && address < static_cast<unsigned char*>(mStart) + mSize; }
-bool ExpHeap::isEmpty() const { return mFreeSize == mSize; }
+
+unsigned int ExpHeap::getMaxAllocatableSize(int alignment) const
+{
+    unsigned int absAlignment = alignment < 0 ? -alignment : alignment;
+    if (((absAlignment - 1) & absAlignment) != 0)
+        return 0;
+    ConditionalScopedLock<CriticalSection> lock(const_cast<CriticalSection*>(&mCS), isEnableLock());
+    int directedAlignment = alignment * mDirection;
+    MemBlock* block;
+    if (directedAlignment < 0)
+    {
+        directedAlignment = -directedAlignment;
+        if (directedAlignment > 4)
+        {
+            block = findFreeMemBlockFromTail_(4, directedAlignment, cFindMode_MaxSize);
+            if (!block)
+                return 0;
+            uintptr_t address = reinterpret_cast<uintptr_t>(block->memory()) + block->mSize - 4;
+            return block->mSize - (address - (address & ~static_cast<uintptr_t>(directedAlignment - 1)));
+        }
+        block = findFreeMemBlockFromTail_(4, cFindMode_MaxSize);
+    }
+    else
+    {
+        if (directedAlignment > 4)
+        {
+            block = findFreeMemBlockFromHead_(4, directedAlignment, cFindMode_MaxSize);
+            if (!block)
+                return 0;
+            uintptr_t memory = reinterpret_cast<uintptr_t>(block->memory());
+            return block->mSize - (((memory + directedAlignment - 1) & ~static_cast<uintptr_t>(directedAlignment - 1)) - memory);
+        }
+        block = findFreeMemBlockFromHead_(4, cFindMode_MaxSize);
+    }
+    if (block)
+        return block->mSize;
+    return 0;
+}
+
+bool ExpHeap::isInclude(const void* address) const
+{
+    const unsigned char* start = static_cast<const unsigned char*>(mStart);
+    unsigned int size = mSize;
+    const unsigned char* begin;
+    if (mDirection == cHeapDirection_Forward)
+    {
+        begin = start + sizeof(ExpHeap);
+    }
+    else
+    {
+        size -= sizeof(ExpHeap);
+        begin = start;
+    }
+    return begin <= address && address < start + size;
+}
+
+bool ExpHeap::isEmpty() const { return mUseList.size() == 0; }
 bool ExpHeap::isFreeable() const { return true; }
 bool ExpHeap::isResizable() const { return true; }
 bool ExpHeap::isAdjustable() const { return true; }
-void ExpHeap::dump() const { char text[128]; ::snprintf(text, sizeof(text), "ExpHeap %s size=%u free=%u", mName.cstr(), mSize, mFreeSize); system::PrintString(text, 0); }
-void ExpHeap::dumpYAML(WriteStream& stream, int indent) const { Heap::dumpYAML(stream, indent); }
+
+void ExpHeap::dump() const
+{
+    ConditionalScopedLock<CriticalSection> lock(const_cast<CriticalSection*>(&mCS), isEnableLock());
+    dumpUseList();
+    dumpFreeList();
+}
+
+unsigned int ExpHeap::getAllocatedSize(void* address)
+{
+    if (!isInclude(address))
+        return 0;
+    return MemBlock::findManageArea(address)->mSize;
+}
+
+void ExpHeap::dumpYAML(WriteStream& stream, int indent) const
+{
+    ConditionalScopedLock<CriticalSection> lock(const_cast<CriticalSection*>(&mCS), isEnableLock());
+    Heap::dumpYAML(stream, indent);
+    FixedSafeString128 line(SafeStringBase<char>(""));
+    line.append(' ', indent);
+    line.appendWithFormat("  heap_type: ExpHeap\n");
+    stream.writeDecorationText(line);
+    line.clear();
+    line.append(' ', indent);
+    line.appendWithFormat("  alloc_mode: %s\n", getAllocMode() == cAllocMode_FirstFit ? "First Fit" : "Best Fit");
+    stream.writeDecorationText(line);
+    line.clear();
+    line.append(' ', indent);
+    line.appendWithFormat("  use_list_size: %d\n", mUseList.size());
+    stream.writeDecorationText(line);
+    line.clear();
+    line.append(' ', indent);
+    line.appendWithFormat("  free_list_size: %d\n", mFreeList.size());
+    stream.writeDecorationText(line);
+}
+
 void ExpHeap::setAllocMode(AllocMode mode) { mAllocMode = mode; }
 ExpHeap::AllocMode ExpHeap::getAllocMode() const { return mAllocMode; }
-unsigned int ExpHeap::getAllocatedSize(void* address) { for (MemBlock* block = mUseHead; block; block = block->next) if (block->payload == address) return block->size; return 0; }
-void ExpHeap::dumpUseList() const { for (MemBlock* block = mUseHead; block; block = block->next) { char text[96]; ::snprintf(text, sizeof(text), "use %p %u", block->payload, block->size); system::PrintString(text, 0); } }
-void ExpHeap::dumpFreeList() const { for (MemBlock* block = mFreeHead; block; block = block->next) { char text[96]; ::snprintf(text, sizeof(text), "free %p %u", block->address, block->span); system::PrintString(text, 0); } }
 
 FindContainHeapCache::FindContainHeapCache() : mHeap(0) {}
+
 bool FindContainHeapCache::tryRemoveHeap(Heap* heap)
 {
-    if (mHeap == heap) { mHeap = reinterpret_cast<Heap*>(uintptr_t(1)); return true; }
-    return (reinterpret_cast<uintptr_t>(mHeap) & ~uintptr_t(1)) != reinterpret_cast<uintptr_t>(heap);
+    unsigned int original;
+    if (mHeap.compareExchange(reinterpret_cast<uintptr_t>(heap), 0, &original))
+        return true;
+    return (original & ~1u) != reinterpret_cast<uintptr_t>(heap);
 }
 
-HeapMgr::HeapMgr() : mRootHeap(0), mCurrentHeap(0), mUnknown8(), mLock(), mCacheOwner(0), mCacheList(0) {}
-HeapMgr::~HeapMgr()
-{
-    mLock.lock();
-    mCurrentHeap = 0;
-    mRootHeap = 0;
-    mCacheOwner = 0;
-    mCacheList = 0;
-    mLock.unlock();
-}
-void HeapMgr::initialize(Arena*) { if (!sHeapMgr) sHeapMgr = new HeapMgr(); initializeImpl_(); }
-void HeapMgr::destroy() { delete sHeapMgr; sHeapMgr = 0; }
-Heap* HeapMgr::findContainHeap(const void* address) const { return mRootHeap ? mRootHeap->findContainHeap_(address) : 0; }
-Heap* HeapMgr::getCurrentHeap() const { return mCurrentHeap ? mCurrentHeap : mRootHeap; }
-bool HeapMgr::isContainedInAnyHeap(const void* address) { return sHeapMgr && sHeapMgr->findContainHeap(address); }
-HeapMgr* HeapMgr::instance() { return sHeapMgr; }
+Arena* HeapMgr::sArena = 0;
+HeapMgr HeapMgr::sInstance;
+HeapMgr* HeapMgr::sInstancePtr = 0;
+AtomicU32 HeapMgr::sHeapCheckTag;
+HeapMgr::RootHeaps HeapMgr::sRootHeaps;
+CriticalSection HeapMgr::sHeapTreeLockCS;
+HeapMgr::IndependentHeaps HeapMgr::sIndependentHeaps;
+
+HeapMgr::HeapMgr() : mAllocFailedCallback(0) {}
+HeapMgr::~HeapMgr() {}
+
 void HeapMgr::createRootHeap_()
 {
-    if (sHeapMgr && sHeapMgr->mRootHeap)
-        sHeapMgr->mCurrentHeap = sHeapMgr->mRootHeap;
+    sRootHeaps.pushBack(ExpHeap::tryCreate(sArena->mStart, sArena->mSize, SafeStringBase<char>("RootHeap"), false));
 }
-void HeapMgr::initializeImpl_() { createRootHeap_(); }
-Heap* HeapMgr::findHeapByName_(Heap* heap, const SafeStringBase<char>& name, int* index)
+
+void HeapMgr::initializeImpl_()
 {
-    for (std::vector<Heap*>::iterator it = sHeaps.begin(); it != sHeaps.end(); ++it)
+    sInstance.mAllocFailedCallback = 0;
+    createRootHeap_();
+    sInstancePtr = &sInstance;
+}
+
+void HeapMgr::initialize(Arena* arena)
+{
+    sArena = arena;
+    initializeImpl_();
+}
+
+void HeapMgr::destroy()
+{
+    sHeapTreeLockCS.lock();
+    sInstance.mAllocFailedCallback = 0;
+    while (!sIndependentHeaps.isEmpty())
     {
-        if (heap && *it != heap && (*it)->mParent != heap) continue;
-        if (strcmp((*it)->mName.cstr(), name.cstr()) != 0) continue;
-        if (*index == 0) return *it;
-        --*index;
+        sIndependentHeaps.back()->destroy();
+        sIndependentHeaps.popBack();
+    }
+    while (!sRootHeaps.isEmpty())
+    {
+        sRootHeaps.back()->destroy();
+        sRootHeaps.popBack();
+    }
+    sInstancePtr = 0;
+    sArena->mSize = 0;
+    sArena->mStart = 0;
+    sArena = 0;
+    sHeapTreeLockCS.unlock();
+}
+
+Heap* HeapMgr::findContainHeap(const void* address) const
+{
+    FindContainHeapCache* cache = 0;
+    if (ThreadMgr::instance())
+    {
+        Thread* thread = ThreadMgr::instance()->getCurrentThread();
+        if (thread)
+        {
+            cache = thread->getFindContainHeapCache();
+            if (cache)
+            {
+                Heap* cached = reinterpret_cast<Heap*>(cache->mHeap.fetchOr(1));
+                if (cached && cached->mChildren.size() == 0 && cached->isInclude(address))
+                {
+                    cache->mHeap.fetchAnd(~1u);
+                    return cached;
+                }
+                cache->mHeap.fetchAnd(~1u);
+            }
+        }
+    }
+    ScopedLock<CriticalSection> lock(&sHeapTreeLockCS);
+    if (cache)
+    {
+        Heap* cached = reinterpret_cast<Heap*>(cache->mHeap.load());
+        if (cached)
+        {
+            Heap* heap = cached->findContainHeap_(address);
+            if (heap)
+            {
+                if (heap != cached)
+                    cache->mHeap.store(reinterpret_cast<uintptr_t>(heap));
+                return heap;
+            }
+        }
+    }
+    for (Heap** it = sRootHeaps.begin(); it != sRootHeaps.end(); ++it)
+    {
+        Heap* heap = (*it)->findContainHeap_(address);
+        if (heap)
+        {
+            if (cache)
+                cache->mHeap.store(reinterpret_cast<uintptr_t>(heap));
+            return heap;
+        }
+    }
+    for (Heap** it = sIndependentHeaps.begin(); it != sIndependentHeaps.end(); ++it)
+    {
+        Heap* heap = (*it)->findContainHeap_(address);
+        if (heap)
+        {
+            if (cache)
+                cache->mHeap.store(reinterpret_cast<uintptr_t>(heap));
+            return heap;
+        }
     }
     return 0;
 }
-void HeapMgr::removeFromFindContainHeapCache_(Heap* heap)
+
+Heap* HeapMgr::findHeapByName_(Heap* heap, const SafeStringBase<char>& name, int* index)
 {
-    if (!heap || !sHeapMgr) return;
-    unsigned char* manager = reinterpret_cast<unsigned char*>(sHeapMgr);
-    FindContainHeapCache* primaryOwner = *reinterpret_cast<FindContainHeapCache**>(manager + 0x58);
-    FindContainHeapCache* primary = primaryOwner ? reinterpret_cast<FindContainHeapCache*>(reinterpret_cast<unsigned char*>(primaryOwner) + 0x70) : 0;
-    if (primary)
+    if (heap->mName == name)
     {
-        while (!primary->tryRemoveHeap(heap)) Thread::sleep(TickSpan(OSNanosecondsToTicks(10000)));
+        if (*index == 0)
+            return heap;
+        --*index;
     }
-    CriticalSection* lock = reinterpret_cast<CriticalSection*>(manager + 0x1c);
-    unsigned char* sentinel = manager + 0x10;
-    for (;;)
+    for (OffsetList<Heap>::iterator it = heap->mChildren.begin(); it != heap->mChildren.end(); ++it)
     {
-        lock->lock();
-        unsigned char* node = *reinterpret_cast<unsigned char**>(manager + 0x14);
-        bool retry = false;
-        while (node != sentinel)
-        {
-            void* owner = *reinterpret_cast<void**>(node + 8);
-            FindContainHeapCache* cache = owner ? reinterpret_cast<FindContainHeapCache*>(reinterpret_cast<unsigned char*>(owner) + 0x70) : 0;
-            if (!cache || !cache->tryRemoveHeap(heap)) { retry = true; break; }
-            node = *reinterpret_cast<unsigned char**>(node + 4);
-        }
-        lock->unlock();
-        if (!retry) return;
-        Thread::sleep(TickSpan(OSNanosecondsToTicks(10000)));
+        Heap* found = findHeapByName_(&*it, name, index);
+        if (found)
+            return found;
     }
+    return 0;
+}
+
+Heap* HeapMgr::getCurrentHeap() const
+{
+    return ThreadMgr::instance()->getCurrentThread()->getCurrentHeap();
+}
+
+bool HeapMgr::isContainedInAnyHeap(const void* address)
+{
+    for (Heap** it = sRootHeaps.begin(); it != sRootHeaps.end(); ++it)
+    {
+        if ((*it)->isInclude(address))
+            return true;
+    }
+    for (Heap** it = sIndependentHeaps.begin(); it != sIndependentHeaps.end(); ++it)
+    {
+        if ((*it)->isInclude(address))
+            return true;
+    }
+    return false;
 }
 
 void* allocateFromSeadHeap(unsigned int size, Heap* heap)
 {
-    return allocateFromSeadHeap(size, heap, 4);
+    if (!heap)
+    {
+        heap = HeapMgr::instance()->getCurrentHeap();
+        if (!heap)
+            return 0;
+    }
+    void* address = heap->tryAlloc(size, 4);
+    if (!address)
+        return 0;
+    return address;
 }
 
 void* allocateFromSeadHeap(unsigned int size)
 {
-    return allocateFromSeadHeap(size, sHeapMgr ? sHeapMgr->getCurrentHeap() : 0, 4);
+    Heap* heap = HeapMgr::instance()->getCurrentHeap();
+    if (!heap)
+        return 0;
+    void* address = heap->tryAlloc(size, 4);
+    if (!address)
+        return 0;
+    return address;
 }
 
 void* allocateFromSeadHeap(unsigned int size, Heap* heap, int alignment)
 {
-    return heap ? heap->tryAlloc(size, alignment) : 0;
+    if (!heap)
+    {
+        heap = HeapMgr::instance()->getCurrentHeap();
+        if (!heap)
+            return 0;
+    }
+    void* address = heap->tryAlloc(size, alignment);
+    if (!address)
+        return 0;
+    return address;
 }
 
 void freeToSeadHeap(void* address)
 {
-    if (!address || !sHeapMgr) return;
-    Heap* heap = sHeapMgr->findContainHeap(address);
-    if (heap) heap->free(address);
+    Heap* heap = HeapMgr::instance()->findContainHeap(address);
+    if (heap)
+        heap->free(address);
 }
 
 unsigned int getArraySize(void* address)
 {
-    if (!address) return 0;
-    unsigned int header = static_cast<unsigned int*>(address)[-1];
-    return header & 1 ? *(unsigned int*)(header + 11) : header;
+    return MemBlock::findManageArea(address)->mSize;
 }
 
-CriticalSection::CriticalSection() : IDisposer() { OSInitMutex(reinterpret_cast<OSMutex*>(mStorage)); }
-CriticalSection::CriticalSection(Heap* heap) : IDisposer(heap, cHeapNullOption_Allow) { OSInitMutex(reinterpret_cast<OSMutex*>(mStorage)); }
+CriticalSection::CriticalSection() : IDisposer()
+{
+    memset(mStorage, 0, sizeof(mStorage));
+    OSInitMutexEx(reinterpret_cast<OSMutex*>(mStorage), 0);
+}
+CriticalSection::CriticalSection(Heap* heap) : IDisposer(heap, cHeapNullOption_UseSpecifiedOrContainHeap)
+{
+    memset(mStorage, 0, sizeof(mStorage));
+    OSInitMutexEx(reinterpret_cast<OSMutex*>(mStorage), 0);
+}
 CriticalSection::~CriticalSection() {}
 void CriticalSection::lock() { OSLockMutex(reinterpret_cast<OSMutex*>(mStorage)); }
 void CriticalSection::unlock() { OSUnlockMutex(reinterpret_cast<OSMutex*>(mStorage)); }
@@ -1318,54 +1991,80 @@ bool MessageQueue::push(int value, BlockType block) { if (mCount >= mCapacity) r
 int MessageQueue::pop(BlockType block) { if (!mCount) return 0; int value = mMessages[mRead]; mRead = (mRead + 1) % mCapacity; --mCount; (void)block; return value; }
 bool MessageQueue::jam(int value, BlockType block) { if (mCount >= mCapacity) return false; mRead = (mRead + mCapacity - 1) % mCapacity; mMessages[mRead] = value; ++mCount; (void)block; return true; }
 
-Thread::Thread(Heap* heap, OSThread* thread) : IDisposer(heap, cHeapNullOption_Allow), mThreadNameVtable(0), mThreadName("$pead::MainThread"), mMessageQueue(), mStackSize(0), mUnknown5c(0), mUnknown60(0), mUnknown64(0), mUnknown68(0), mUnknown6c(0), mFindContainHeapCache(), mBlockType(MessageQueue::cNoBlock), mUnknown78(0x7fffffff), mMessageState(static_cast<int>(reinterpret_cast<uintptr_t>(thread))), mThreadState(1), mAffinityMask(1), mThread(thread), mStack(0), mPriority(thread ? OSGetThreadPriority(thread) : 0) {
-    mUnknown64 = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(this));
-    mMessageState = static_cast<int>(reinterpret_cast<uintptr_t>(thread));
-    if (thread)
-    {
-        unsigned char* raw = reinterpret_cast<unsigned char*>(thread);
-        const unsigned int stackTop = *reinterpret_cast<unsigned int*>(raw + 0x398);
-        mStack = reinterpret_cast<void*>(static_cast<uintptr_t>(stackTop));
-        mStackSize = static_cast<int>(*reinterpret_cast<unsigned int*>(raw + 0x394) - stackTop);
-    }
-    mMessageQueue.allocate(0x20, heap);
+Thread::Thread(Heap* heap, OSThread* thread)
+    : IDisposer(), mName("pead::MainThread"), mMessageQueue(), mStackSize(0), mListNode(), mCurrentHeap(0),
+      mFindContainHeapCache(), mBlockType(MessageQueue::cNoBlock), mQuitMsg(cDefaultQuitMsg),
+      mId(reinterpret_cast<uintptr_t>(thread)), mState(cState_Running), mAffinity(1), mThread(thread), mStack(0),
+      mPriority(OSGetThreadPriority(thread))
+{
+    mListNode.mData = this;
+    mMessageQueue.allocate(cDefaultMessageQueueSize, heap);
+    mStack = static_cast<unsigned char*>(thread->stackEnd);
+    mStackSize = static_cast<unsigned char*>(thread->stackStart) - mStack;
 }
-Thread::Thread(const SafeStringBase<char>& name, Heap* heap, int priority, MessageQueue::BlockType blockType, int affinityMask, int stackSize, int)
-    : IDisposer(heap, cHeapNullOption_Allow), mThreadNameVtable(0), mThreadName(name.cstr()), mMessageQueue(), mStackSize(stackSize), mUnknown5c(0), mUnknown60(0), mUnknown64(0), mUnknown68(0), mUnknown6c(0), mFindContainHeapCache(), mBlockType(blockType), mUnknown78(0x7fffffff), mMessageState(0), mThreadState(0), mAffinityMask(static_cast<unsigned int>(affinityMask)), mThread(0), mStack(0), mPriority(priority) {
-    mUnknown64 = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(this));
-    if (mStackSize > 0) mStack = allocateFromSeadHeap(static_cast<unsigned int>(mStackSize), heap, 8);
-    mThread = static_cast<OSThread*>(allocateFromSeadHeap(1696, heap, 8));
-    if (mThread)
+Thread::Thread(const SafeStringBase<char>& name, Heap* heap, int priority, MessageQueue::BlockType blockType, int quitMsg, int stackSize, int messageQueueSize)
+    : IDisposer(), mName(name), mMessageQueue(), mStackSize(stackSize), mListNode(), mCurrentHeap(0),
+      mFindContainHeapCache(), mBlockType(blockType), mQuitMsg(quitMsg), mId(0), mState(cState_Initialized),
+      mAffinity(1), mStack(0), mPriority(priority)
+{
+    mListNode.mData = this;
+    mMessageQueue.allocate(messageQueueSize, heap);
+    mStack = NewArray<unsigned char>(mStackSize, heap);
+    mThread = new (allocateFromSeadHeap(sizeof(OSThread), heap, cThreadAlignment)) OSThread();
+    mThread->stackEnd = reinterpret_cast<void*>(cUncreatedStackEnd);
+    mThread->stackStart = 0;
+    mId = reinterpret_cast<uintptr_t>(mThread);
+    ThreadMgr* threadMgr = ThreadMgr::instance();
+    if (threadMgr)
     {
-        unsigned char* raw = reinterpret_cast<unsigned char*>(mThread);
-        *reinterpret_cast<unsigned int*>(raw + 0x394) = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(mStack));
-        *reinterpret_cast<unsigned int*>(raw + 0x398) = 0xffffffffu;
+        ScopedLock<CriticalSection> lock(&threadMgr->mListCS);
+        threadMgr->mList.pushBack(&mListNode);
     }
-    mMessageQueue.allocate(0x20, heap);
 }
-Thread::~Thread() { if (mStack) freeToSeadHeap(mStack); }
-void Thread::waitDone() { if (mThreadState != 0 && mThreadState != 4) { OSJoinThread(mThread, 0); mThreadState = 4; } }
+Thread::~Thread()
+{
+    ThreadMgr* threadMgr = ThreadMgr::instance();
+    if (threadMgr)
+    {
+        if (this != threadMgr->mMainThread)
+        {
+            {
+                ScopedLock<CriticalSection> lock(&threadMgr->mListCS);
+                mListNode.erase();
+            }
+            if (mState == cState_Running)
+                quitAndWaitDoneSingleThread(false);
+            else if (mState == cState_Quitting || mState == cState_Terminated)
+                waitDone();
+            if (mThread)
+                freeToSeadHeap(mThread);
+            DeleteArray(mStack);
+        }
+        mMessageQueue.free();
+    }
+}
+void Thread::waitDone() { if (mState != cState_Initialized && mState != cState_Released) { OSJoinThread(mThread, 0); mState = cState_Released; } }
 int Thread::cafeThreadFunc_(int, void* context)
 {
     Thread* thread = static_cast<Thread*>(context);
     thread->run_();
-    thread->mThreadState = 3;
+    thread->mState = cState_Terminated;
     return 0;
 }
 unsigned int Thread::start()
 {
-    if (mThreadState != 0 || !mThread || !mStack || mStackSize <= 0) return 0;
+    if (mState != cState_Initialized || !mThread || !mStack || mStackSize <= 0) return 0;
     if (!C4JThreadImpl::OSCreateThread4J(mThread, cafeThreadFunc_, 0, this,
-                                         static_cast<unsigned char*>(mStack) + mStackSize,
+                                         mStack + mStackSize,
                                          static_cast<unsigned int>(mStackSize),
                                          static_cast<unsigned int>(mPriority), 0)) return 0;
-    OSSetThreadName(mThread, mThreadName);
+    OSSetThreadName(mThread, mName.cstr());
     unsigned short platformMask = 0;
     for (unsigned int id = 0; id < 3; ++id)
-        if (mAffinityMask & (1u << id)) platformMask = static_cast<unsigned short>(platformMask | CoreInfo::getPlatformMask(CoreId(static_cast<int>(id))));
+        if (mAffinity.value() & (1u << id)) platformMask = static_cast<unsigned short>(platformMask | CoreInfo::getPlatformMask(CoreId(static_cast<int>(id))));
     OSSetThreadAffinity(mThread, platformMask);
-    mThreadState = 1;
-    mMessageState = static_cast<int>(reinterpret_cast<uintptr_t>(mThread));
+    mState = cState_Running;
+    mId = reinterpret_cast<uintptr_t>(mThread);
     OSResumeThread(mThread);
     return 1;
 }
@@ -1375,27 +2074,26 @@ void Thread::setPriority(int priority) { mPriority = priority; if (mThread) OSSe
 int Thread::getPriority() const { return mThread ? OSGetThreadPriority(mThread) : mPriority; }
 void Thread::setAffinity(const CoreIdMask& mask)
 {
-    mAffinityMask = mask.value();
+    mAffinity = mask;
     unsigned short platformMask = 0;
     for (unsigned int id = 0; id < 3; ++id)
-        if (mAffinityMask & (1u << id)) platformMask = static_cast<unsigned short>(platformMask | CoreInfo::getPlatformMask(CoreId(static_cast<int>(id))));
+        if (mAffinity.value() & (1u << id)) platformMask = static_cast<unsigned short>(platformMask | CoreInfo::getPlatformMask(CoreId(static_cast<int>(id))));
     if (mThread) OSSetThreadAffinity(mThread, platformMask);
 }
-void* Thread::getStackCheckStartAddress_() const { return mStack ? static_cast<unsigned char*>(mStack) + 4 : 0; }
+void* Thread::getStackCheckStartAddress_() const { return mStack ? mStack + 4 : 0; }
 void Thread::destroy() { waitDone(); }
 MessageQueue* Thread::getMessageQueue() const { return const_cast<MessageQueue*>(&mMessageQueue); }
-bool Thread::sendMessage(int message, MessageQueue::BlockType block) { if (!message || mThreadState == 3 || mThreadState == 4 || message == mUnknown78) return false; return mMessageQueue.push(message, block); }
-int Thread::recvMessage(MessageQueue::BlockType block) { if (mThreadState == 2) return 0; return mMessageQueue.pop(block); }
-void Thread::quit(bool jam) { mThreadState = 2; if (jam) mMessageQueue.jam(0, mBlockType); else mMessageQueue.push(0, mBlockType); }
+bool Thread::sendMessage(int message, MessageQueue::BlockType block) { if (!message || mState == cState_Terminated || mState == cState_Released || message == mQuitMsg) return false; return mMessageQueue.push(message, block); }
+int Thread::recvMessage(MessageQueue::BlockType block) { if (mState == cState_Quitting) return 0; return mMessageQueue.pop(block); }
+void Thread::quit(bool jam) { mState = cState_Quitting; if (jam) mMessageQueue.jam(0, mBlockType); else mMessageQueue.push(0, mBlockType); }
 void Thread::quitAndDestroySingleThread(bool jam) { quitAndWaitDoneSingleThread(jam); destroy(); }
 void Thread::quitAndWaitDoneSingleThread(bool jam) { quit(jam); waitDone(); }
 MessageQueue::BlockType Thread::getBlockType() const { return mBlockType; }
 int Thread::getStackSize() const { return mStackSize; }
-void Thread::run_() { int message; while ((message = recvMessage(mBlockType)) != mUnknown78) calc_(message); }
+void Thread::run_() { int message; while ((message = recvMessage(mBlockType)) != mQuitMsg) calc_(message); }
 int Thread::calcStackUsedSizePeak() const { return 0; }
 
-MainThread::MainThread(Heap* heap, OSThread* thread) : Thread(heap, thread) { mUnknown64 = static_cast<unsigned int>(reinterpret_cast<uintptr_t>(this)); mMessageState = static_cast<int>(reinterpret_cast<uintptr_t>(thread)); mStack = 0; }
-MainThread::~MainThread() { mThreadState = 3; }
+MainThread::~MainThread() { mState = cState_Terminated; }
 void MainThread::destroy() {}
 void MainThread::quit(bool) {}
 void MainThread::waitDone() {}
@@ -1403,85 +2101,129 @@ void MainThread::quitAndDestroySingleThread(bool) {}
 void MainThread::setPriority(int) {}
 void MainThread::calc_(int) {}
 
-DelegateThread::DelegateThread(const SafeStringBase<char>& name, IDelegate2<Thread*, int>* delegate, Heap* heap, int priority, MessageQueue::BlockType block, int queueSize, int stackSize, int affinity)
-    : Thread(name, heap, priority, block, queueSize, stackSize, affinity), mDelegate(delegate) {}
+DelegateThread::DelegateThread(const SafeStringBase<char>& name, IDelegate2<Thread*, int>* delegate, Heap* heap, int priority, MessageQueue::BlockType block, int quitMsg, int stackSize, int messageQueueSize)
+    : Thread(name, heap, priority, block, quitMsg, stackSize, messageQueueSize), mDelegate(delegate) {}
 DelegateThread::~DelegateThread() {}
 void DelegateThread::calc_(int message) { if (mDelegate) mDelegate->invoke(this, message); }
 
-ThreadMgr::SingletonDisposer_::~SingletonDisposer_() { ThreadMgr::deleteInstance(); }
-namespace
+ThreadMgr* ThreadMgr::sInstance = 0;
+ThreadMgr::SingletonDisposer_* ThreadMgr::SingletonDisposer_::sStaticDisposer = 0;
+
+ThreadMgr::SingletonDisposer_::~SingletonDisposer_()
 {
-struct ThreadEntry
-{
-    ListNode node;
-    Thread* thread;
-    explicit ThreadEntry(Thread* value) : node(), thread(value) {}
-};
-std::vector<ThreadEntry*> sThreadEntries;
+    if (this == sStaticDisposer)
+    {
+        sStaticDisposer = 0;
+        sInstance->~ThreadMgr();
+        sInstance = 0;
+    }
 }
 
-ThreadMgr::ThreadMgr()
-    : mUnknown0(), mThreadList(), mUnknown18(0), mLock(), mCurrentThread(0), mMainThread(0) {}
+void HeapMgr::removeFromFindContainHeapCache_(Heap* heap)
+{
+    ThreadMgr* threadMgr = ThreadMgr::instance();
+    if (!threadMgr)
+        return;
+    Thread* mainThread = threadMgr->getMainThread();
+    TickSpan wait = TickSpan::makeFromMicroSeconds(10);
+    if (mainThread)
+    {
+        while (!mainThread->getFindContainHeapCache()->tryRemoveHeap(heap))
+            Thread::sleep(wait);
+    }
+    for (;;)
+    {
+        threadMgr->mListCS.lock();
+        bool removed = true;
+        for (TListNode<Thread*>* node = threadMgr->mList.begin(); node != threadMgr->mList.end(); node = ThreadMgr::ThreadList::next(node))
+        {
+            if (!node->mData->getFindContainHeapCache()->tryRemoveHeap(heap))
+            {
+                removed = false;
+                break;
+            }
+        }
+        if (removed)
+            break;
+        threadMgr->mListCS.unlock();
+        Thread::sleep(wait);
+    }
+    threadMgr->mListCS.unlock();
+}
+
+ThreadMgr::ThreadMgr() : mList(), mListCS(), mMainThread(0) {}
 ThreadMgr::~ThreadMgr()
 {
-    mLock.lock();
-    for (ListNode* node = mThreadList.next(); node != &mThreadList; )
+    ScopedLock<CriticalSection> lock(&mListCS);
+    for (TListNode<Thread*>* node = mList.begin(); node != mList.end(); node = ThreadList::next(node))
+        node->mData->quit(false);
+    bool allDone;
+    do
     {
-        ThreadEntry* entry = reinterpret_cast<ThreadEntry*>(node);
-        node = node->next();
-        entry->node.erase_();
-        delete entry;
-    }
-    sThreadEntries.clear();
-    mLock.unlock();
-    destroyMainThread_();
-    mCurrentThread = 0;
-    sThreadMgr = 0;
+        allDone = true;
+        for (TListNode<Thread*>* node = mList.begin(); node != mList.end(); node = ThreadList::next(node))
+            allDone &= node->mData->isDone();
+        Thread::yield();
+    } while (!allDone);
+    for (TListNode<Thread*>* node = mList.begin(); node != mList.end(); node = ThreadList::next(node))
+        node->mData->waitDone();
+    sInstance = 0;
 }
-void ThreadMgr::createInstance(Heap* heap) { if (!sThreadMgr) { sThreadMgr = new ThreadMgr(); sThreadMgr->initialize(heap); } }
-void ThreadMgr::deleteInstance() { delete sThreadMgr; sThreadMgr = 0; }
+ThreadMgr* ThreadMgr::createInstance(Heap* heap)
+{
+    if (!sInstance)
+    {
+        unsigned char* buffer = NewArray<unsigned char>(sizeof(ThreadMgr), heap);
+        SingletonDisposer_::sStaticDisposer = new (buffer) SingletonDisposer_(heap);
+        sInstance = new (buffer) ThreadMgr();
+    }
+    return sInstance;
+}
+void ThreadMgr::deleteInstance()
+{
+    SingletonDisposer_* disposer = SingletonDisposer_::sStaticDisposer;
+    if (disposer)
+    {
+        SingletonDisposer_::sStaticDisposer = 0;
+        disposer->~SingletonDisposer_();
+        if (sInstance)
+        {
+            sInstance->~ThreadMgr();
+            freeToSeadHeap(sInstance);
+        }
+        sInstance = 0;
+    }
+}
 void ThreadMgr::initMainThread_(Heap* heap)
 {
-    mMainThread = new MainThread(heap, OSGetCurrentThread());
-    mCurrentThread = mMainThread;
-    ThreadEntry* entry = new ThreadEntry(mMainThread);
-    mThreadList.insertBack_(&entry->node);
-    sThreadEntries.push_back(entry);
+    OSThread* thread = OSGetCurrentThread();
+    mMainThread = new (allocateFromSeadHeap(sizeof(MainThread), heap)) MainThread(heap, thread);
 }
 unsigned int ThreadMgr::getCurrentThreadID_()
 {
-    return static_cast<unsigned int>(reinterpret_cast<uintptr_t>(OSGetCurrentThread()));
+    return reinterpret_cast<uintptr_t>(OSGetCurrentThread());
 }
-void ThreadMgr::initialize(Heap* heap) { if (!mMainThread) initMainThread_(heap); }
+void ThreadMgr::initialize(Heap* heap) { initMainThread_(heap); }
 void ThreadMgr::destroyMainThread_()
 {
-    if (!mMainThread) return;
-    mLock.lock();
-    for (std::vector<ThreadEntry*>::iterator it = sThreadEntries.begin(); it != sThreadEntries.end(); ++it)
-        if ((*it)->thread == mMainThread) { (*it)->node.erase_(); delete *it; sThreadEntries.erase(it); break; }
-    mLock.unlock();
-    delete mMainThread;
-    mMainThread = 0;
+    if (mMainThread)
+    {
+        mMainThread->~MainThread();
+        freeToSeadHeap(mMainThread);
+        mMainThread = 0;
+    }
 }
 void ThreadMgr::destroy() { destroyMainThread_(); }
 Thread* ThreadMgr::getCurrentThread() const
 {
-    ThreadMgr* self = const_cast<ThreadMgr*>(this);
-    self->mLock.lock();
+    ScopedLock<CriticalSection> lock(&mListCS);
     const unsigned int id = getCurrentThreadID_();
-    for (ListNode* node = self->mThreadList.next(); node != &self->mThreadList; node = node->next())
+    for (TListNode<Thread*>* node = mList.begin(); node != mList.end(); node = ThreadList::next(node))
     {
-        ThreadEntry* entry = reinterpret_cast<ThreadEntry*>(node);
-        if (entry->thread && static_cast<unsigned int>(reinterpret_cast<uintptr_t>(entry->thread->mThread)) == id)
-        {
-            Thread* result = entry->thread;
-            self->mLock.unlock();
-            return result;
-        }
+        if (node->mData->mId == id)
+            return node->mData;
     }
-    Thread* result = self->mCurrentThread;
-    self->mLock.unlock();
-    return result;
+    return mMainThread;
 }
 void ThreadMgr::waitDoneMultipleThread(Thread* const* threads, int count) { for (int index = 0; index < count; ++index) threads[index]->waitDone(); }
 void ThreadMgr::quitAndWaitDoneMultipleThread(Thread** threads, int count, bool jam) { for (int index = 0; index < count; ++index) threads[index]->quit(jam); waitDoneMultipleThread(threads, count); }
@@ -1541,82 +2283,316 @@ void PrintFormatter::proceedToFormatMark_(char* specifier)
     if (current > begin) mOutput->write(begin, static_cast<int>(current - begin));
     mPosition = mLength;
 }
-void PrintFormatter::outputString_(const char*, PrintOutput* output, const char* text, int length) { if (output) output->write(text, length); }
-void PrintFormatter::outputPtr_(const char* format, PrintOutput* output, unsigned int pointer) { char text[32]; int length = ::snprintf(text, sizeof(text), format, pointer); if (output) output->write(text, length); }
-
-template <typename T>
-void PrintFormatter::out(const T& value, const char* format, PrintOutput* output)
+void PrintFormatter::outputString_(const char* option, PrintOutput* output, const char* text, int length)
 {
-    char text[128];
-    int length = ::snprintf(text, sizeof(text), format, value);
-    if (length > 0 && output) output->write(text, length);
+    if (!option || option[1] == 's')
+    {
+        if (length == -1)
+            output->write(text, strlen(text));
+        else
+            output->write(text, length);
+        return;
+    }
+    if (option[strlen(option) - 1] == 's')
+    {
+        FixedSafeString128 converted;
+        SafeStringBase<char> source(text);
+        int convertedLength = StringUtil::convertUtf8ToSjis(converted.getBuffer(), converted.getBufferSize(), source.cstr(), -1);
+        if (option[1] == '-')
+        {
+            output->write(text, length == -1 ? strlen(text) : length);
+            int width = StringUtil::parseS32(SafeStringBase<char>(option + 2), StringUtil::cDecimal);
+            for (int index = 0; index < width - convertedLength; ++index)
+                output->write(" ", 1);
+        }
+        else
+        {
+            int width = StringUtil::parseS32(SafeStringBase<char>(option + 1), StringUtil::cDecimal);
+            for (int index = 0; index < width - convertedLength; ++index)
+                output->write(" ", 1);
+            if (length == -1)
+                output->write(text, strlen(text));
+            else
+                output->write(text, length);
+        }
+    }
+    else
+    {
+        FixedSafeString128 formatted;
+        int formattedLength = formatted.format(option, text);
+        output->write(formatted.cstr(), formattedLength);
+    }
 }
-
-void PrintFormatter::out(const char* value, const char* format, PrintOutput* output) { out<const char*>(value, format, output); }
-void PrintFormatter::out(const wchar_t* value, const char*, PrintOutput* output)
+void PrintFormatter::outputPtr_(const char* option, PrintOutput* output, unsigned int pointer)
 {
-    char text[256];
-    int length = StringUtil::convertUtf16ToUtf8(text, sizeof(text), value, -1);
-    if (length > 0 && output) output->write(text, length);
-}
-void PrintFormatter::out(const Heap& value, const char* format, PrintOutput* output) { outputPtr_(format, output, static_cast<unsigned int>((size_t)&value)); }
-void PrintFormatter::out(const ExpHeap& value, const char* format, PrintOutput* output) { outputPtr_(format, output, static_cast<unsigned int>((size_t)&value)); }
-void PrintFormatter::out(const TickSpan& value, const char* format, PrintOutput* output) { out<long long>(value.toNanoSeconds(), format, output); }
-
-template <typename T, template <typename> class Wrapper>
-void PrintFormatter::OutImpl<T, Wrapper>::out(const Wrapper<T>& value, const char* format, PrintOutput* output)
-{
-    PrintFormatter::out(value, format, output);
-}
-
-template <>
-void PrintFormatter::OutImpl<char, BufferedSafeStringBase>::out__S(const BufferedSafeStringBase<char>& value, const char* format, PrintOutput* output)
-{
-    PrintFormatter::out(value.cstr(), format, output);
-}
-
-template <>
-void PrintFormatter::OutImpl<char, SafeStringBase>::out__S(const SafeStringBase<char>& value, const char* format, PrintOutput* output)
-{
-    PrintFormatter::out(value.cstr(), format, output);
-}
-
-template <>
-void PrintFormatter::OutImpl<unsigned char, BitFlag>::out__S(const BitFlag<unsigned char>& value, const char* format, PrintOutput* output)
-{
-    PrintFormatter::out(value.getDirect(), format, output);
-}
-
-template <>
-void PrintFormatter::OutImpl<unsigned int, BitFlag>::out__S(const BitFlag<unsigned int>& value, const char* format, PrintOutput* output)
-{
-    PrintFormatter::out(value.getDirect(), format, output);
-}
-
-template <>
-void PrintFormatter::OutImpl<unsigned long long, BitFlag>::out__S(const BitFlag<unsigned long long>& value, const char* format, PrintOutput* output)
-{
-    PrintFormatter::out(value.getDirect(), format, output);
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, pointer);
+    else
+        length = text.format("0x%08X", pointer);
+    output->write(text.cstr(), length);
 }
 
 template <>
-void PrintFormatter::OutImpl<unsigned short, BitFlag>::out__S(const BitFlag<unsigned short>& value, const char* format, PrintOutput* output)
+void PrintFormatter::out<unsigned char>(const unsigned char& value, const char* option, PrintOutput* output)
 {
-    PrintFormatter::out(value.getDirect(), format, output);
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, value);
+    else
+        length = text.format("%u", value);
+    output->write(text.cstr(), length);
 }
 
-template void PrintFormatter::out<unsigned char>(const unsigned char&, const char*, PrintOutput*);
-template void PrintFormatter::out<unsigned short>(const unsigned short&, const char*, PrintOutput*);
-template void PrintFormatter::out<unsigned int>(const unsigned int&, const char*, PrintOutput*);
-template void PrintFormatter::out<unsigned long long>(const unsigned long long&, const char*, PrintOutput*);
-template void PrintFormatter::out<signed char>(const signed char&, const char*, PrintOutput*);
-template void PrintFormatter::out<short>(const short&, const char*, PrintOutput*);
-template void PrintFormatter::out<int>(const int&, const char*, PrintOutput*);
-template void PrintFormatter::out<long long>(const long long&, const char*, PrintOutput*);
-template void PrintFormatter::out<float>(const float&, const char*, PrintOutput*);
-template void PrintFormatter::out<double>(const double&, const char*, PrintOutput*);
-template void PrintFormatter::out<char>(const char&, const char*, PrintOutput*);
-template void PrintFormatter::out<bool>(const bool&, const char*, PrintOutput*);
+template <>
+void PrintFormatter::out<unsigned short>(const unsigned short& value, const char* option, PrintOutput* output)
+{
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, value);
+    else
+        length = text.format("%u", value);
+    output->write(text.cstr(), length);
+}
+
+template <>
+void PrintFormatter::out<unsigned int>(const unsigned int& value, const char* option, PrintOutput* output)
+{
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, value);
+    else
+        length = text.format("%u", value);
+    output->write(text.cstr(), length);
+}
+
+template <>
+void PrintFormatter::out<unsigned long long>(const unsigned long long& value, const char* option, PrintOutput* output)
+{
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, value);
+    else
+        length = text.format("%llu", value);
+    output->write(text.cstr(), length);
+}
+
+template <>
+void PrintFormatter::out<signed char>(const signed char& value, const char* option, PrintOutput* output)
+{
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, value);
+    else
+        length = text.format("%d", value);
+    output->write(text.cstr(), length);
+}
+
+template <>
+void PrintFormatter::out<short>(const short& value, const char* option, PrintOutput* output)
+{
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, value);
+    else
+        length = text.format("%d", value);
+    output->write(text.cstr(), length);
+}
+
+template <>
+void PrintFormatter::out<int>(const int& value, const char* option, PrintOutput* output)
+{
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, value);
+    else
+        length = text.format("%d", value);
+    output->write(text.cstr(), length);
+}
+
+template <>
+void PrintFormatter::out<long long>(const long long& value, const char* option, PrintOutput* output)
+{
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, value);
+    else
+        length = text.format("%lld", value);
+    output->write(text.cstr(), length);
+}
+
+template <>
+void PrintFormatter::out<float>(const float& value, const char* option, PrintOutput* output)
+{
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, value);
+    else
+        length = text.format("%f", value);
+    output->write(text.cstr(), length);
+}
+
+template <>
+void PrintFormatter::out<double>(const double& value, const char* option, PrintOutput* output)
+{
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, value);
+    else
+        length = text.format("%f", value);
+    output->write(text.cstr(), length);
+}
+
+template <>
+void PrintFormatter::out<char>(const char& value, const char* option, PrintOutput* output)
+{
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, value);
+    else
+        length = text.format("%d", value);
+    output->write(text.cstr(), length);
+}
+
+template <>
+void PrintFormatter::out<long>(const long& value, const char* option, PrintOutput* output)
+{
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, value);
+    else
+        length = text.format("%d", value);
+    output->write(text.cstr(), length);
+}
+
+template <>
+void PrintFormatter::out<bool>(const bool& value, const char* option, PrintOutput* output)
+{
+    if (option)
+        out<int>(value, option, output);
+    else if (value)
+        output->write("true", 4);
+    else
+        output->write("false", 5);
+}
+
+template <>
+void PrintFormatter::out<char>(const char* value, const char* option, PrintOutput* output)
+{
+    bool isString = true;
+    if (option)
+        isString = SafeStringBase<char>(option).include('s');
+    if (isString)
+    {
+        outputString_(option, output, value, -1);
+        return;
+    }
+    FixedSafeString<32> text;
+    int length = text.format(option, value);
+    output->write(text.cstr(), length);
+}
+
+template <>
+void PrintFormatter::out<wchar_t>(const wchar_t* value, const char* option, PrintOutput* output)
+{
+    bool isString = true;
+    if (option)
+        isString = SafeStringBase<char>(option).include('s');
+    if (isString)
+    {
+        FixedSafeString<256> text;
+        int length = StringUtil::convertUtf16ToUtf8(text.getBuffer(), text.getBufferSize(), SafeStringBase<wchar_t>(value).cstr(), -1);
+        outputString_(option, output, text.cstr(), length);
+        return;
+    }
+    FixedSafeString<32> text;
+    int length = text.format(option, value);
+    output->write(text.cstr(), length);
+}
+
+template <>
+void PrintFormatter::out<TickSpan>(const TickSpan& value, const char*, PrintOutput* output)
+{
+    out<long long>(value.toMicroSeconds(), "%lld", output);
+    output->write("us", 2);
+}
+
+template <>
+void PrintFormatter::OutImpl<char, SafeStringBase>::out(const SafeStringBase<char>& value, const char* option, PrintOutput* output)
+{
+    outputString_(option, output, value.cstr(), value.calcLength());
+}
+
+template <>
+void PrintFormatter::OutImpl<char, BufferedSafeStringBase>::out(const BufferedSafeStringBase<char>& value, const char* option, PrintOutput* output)
+{
+    outputString_(option, output, value.cstr(), value.calcLength());
+}
+
+template <>
+void PrintFormatter::OutImpl<unsigned char, BitFlag>::out(const BitFlag<unsigned char>& value, const char* option, PrintOutput* output)
+{
+    unsigned char bits = value.getDirect();
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, bits);
+    else
+        length = text.format("0x%x", bits);
+    output->write(text.cstr(), length);
+}
+
+template <>
+void PrintFormatter::OutImpl<unsigned short, BitFlag>::out(const BitFlag<unsigned short>& value, const char* option, PrintOutput* output)
+{
+    unsigned short bits = value.getDirect();
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, bits);
+    else
+        length = text.format("0x%x", bits);
+    output->write(text.cstr(), length);
+}
+
+template <>
+void PrintFormatter::OutImpl<unsigned int, BitFlag>::out(const BitFlag<unsigned int>& value, const char* option, PrintOutput* output)
+{
+    unsigned int bits = value.getDirect();
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, bits);
+    else
+        length = text.format("0x%x", bits);
+    output->write(text.cstr(), length);
+}
+
+template <>
+void PrintFormatter::OutImpl<unsigned long long, BitFlag>::out(const BitFlag<unsigned long long>& value, const char* option, PrintOutput* output)
+{
+    unsigned long long bits = value.getDirect();
+    FixedSafeString<32> text;
+    int length;
+    if (option)
+        length = text.format(option, bits);
+    else
+        length = text.format("0x%llx", bits);
+    output->write(text.cstr(), length);
+}
 
 void PrintConfig::registerFinalCallback(IDelegate1<const PrintEventArg&>* callback) { sFinalPrintCallback = callback; }
 void PrintConfig::execCallbacks(const PrintEventArg& event) { if (sFinalPrintCallback) sFinalPrintCallback->invoke(event); }
@@ -1641,16 +2617,35 @@ void StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseSignImpl_(int* sign
     else if (*current == '+') ++current;
 }
 
-bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParsePrefixImpl_(int* base, SafeStringBase<char>::iterator& current, const SafeStringBase<char>& text)
+bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParsePrefixImpl_(int* base, SafeStringBase<char>::iterator& current, const SafeStringBase<char>&)
 {
-    if (*base == 0) *base = 10;
-    SafeStringBase<char>::iterator next = current;
-    if (next == text.end() || *next != '0') return true;
-    ++next;
-    if (next == text.end()) return true;
-    if ((*next == 'x' || *next == 'X') && (*base == 10 || *base == 16)) { *base = 16; ++next; current = next; }
-    else if ((*next == 'b' || *next == 'B') && (*base == 10 || *base == 2)) { *base = 2; ++next; current = next; }
-    else if (*base == 10) *base = 8;
+    char character = *current;
+    if (character < '0' || character > '9') return false;
+    if (character == '0')
+    {
+        SafeStringBase<char>::iterator next = current;
+        ++next;
+        if (*next == 'b')
+        {
+            *base = 2;
+            ++current;
+            ++current;
+        }
+        else if (*next == 'x')
+        {
+            *base = 16;
+            ++current;
+            ++current;
+        }
+        else
+        {
+            *base = 8;
+        }
+    }
+    else
+    {
+        *base = 10;
+    }
     return true;
 }
 
@@ -1663,7 +2658,7 @@ bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseNumberImpl_(T* valu
     {
         char character = *current;
         if (!character) break;
-        int digit = base == 16 ? checkAndConvertHexChar_(character) : checkAndConvertDecChar_(character);
+        int digit = checkAndConvertHexChar_(character);
         if (digit < 0 || digit >= base) break;
         parsed = static_cast<T>(parsed * base + digit);
         found = true;
@@ -1677,22 +2672,27 @@ bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseDecImpl_(T* value, 
 {
     T parsed = 0;
     if (!tryParseNumberImpl_(&parsed, current, 10)) return false;
-    *value = static_cast<T>(parsed * sign);
+    if (value) *value = static_cast<T>(parsed * sign);
     return true;
 }
 
 template <typename T>
 bool StringUtil::__N_18_peadStringUtil_cpp_6714fef4::tryParseImpl_(T* value, const SafeStringBase<char>& text, int base)
 {
-    if (!value) return false;
     SafeStringBase<char>::iterator current = text.begin();
     int sign;
     tryParseSignImpl_(&sign, current);
-    tryParsePrefixImpl_(&base, current, text);
-    T parsed = 0;
-    if (!tryParseNumberImpl_(&parsed, current, base) || *current) return false;
-    *value = static_cast<T>(parsed * sign);
-    return true;
+    if (base > 0 || tryParsePrefixImpl_(&base, current, text))
+    {
+        if (base == 10) return tryParseDecImpl_(value, current, sign);
+        T parsed;
+        if (tryParseNumberImpl_(&parsed, current, base))
+        {
+            *value = static_cast<T>(parsed * sign);
+            return true;
+        }
+    }
+    return false;
 }
 
 template <typename T>
@@ -1723,7 +2723,7 @@ template <typename T>
 T pead::StringUtil::__N_18_peadStringUtil_cpp_6714fef4::parseImpl_(const SafeStringBase<char>& text, CardinalNumber cardinal)
 {
     T value = 0;
-    tryParseImpl_(&value, text, cardinal == cHexadecimal ? 16 : cardinal == cOctal ? 8 : cardinal == cBinary ? 2 : 10);
+    tryParseImpl_(&value, text, cardinal);
     return value;
 }
 
@@ -1917,15 +2917,15 @@ template void FormatParser16::printIntegerInverseStringFromArg_<unsigned long lo
 template void FormatParser16::printStringCore_<char>(OutBuffer16*, const char*);
 template void FormatParser16::printStringCore_<wchar_t>(OutBuffer16*, const wchar_t*);
 
-bool StringUtil::tryParseU64(unsigned long long* v, const SafeStringBase<char>& s, CardinalNumber c) { return parseInteger(v, s, c); }
-bool StringUtil::tryParseS64(long long* v, const SafeStringBase<char>& s, CardinalNumber c) { return parseSignedInteger(v, s, c); }
-bool StringUtil::tryParseU32(unsigned int* v, const SafeStringBase<char>& s, CardinalNumber c) { return parseInteger(v, s, c); }
-bool StringUtil::tryParseS32(int* v, const SafeStringBase<char>& s, CardinalNumber c) { return parseSignedInteger(v, s, c); }
-bool StringUtil::tryParseU16(unsigned short* v, const SafeStringBase<char>& s, CardinalNumber c) { return parseInteger(v, s, c); }
-bool StringUtil::tryParseS16(short* v, const SafeStringBase<char>& s, CardinalNumber c) { return parseSignedInteger(v, s, c); }
-bool StringUtil::tryParseU8(unsigned char* v, const SafeStringBase<char>& s, CardinalNumber c) { return parseInteger(v, s, c); }
-bool StringUtil::tryParseS8(signed char* v, const SafeStringBase<char>& s, CardinalNumber c) { return parseSignedInteger(v, s, c); }
-int StringUtil::parseS32(const SafeStringBase<char>& s, CardinalNumber c) { int value = 0; tryParseS32(&value, s, c); return value; }
+bool StringUtil::tryParseU64(unsigned long long* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
+bool StringUtil::tryParseS64(long long* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
+bool StringUtil::tryParseU32(unsigned int* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
+bool StringUtil::tryParseS32(int* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
+bool StringUtil::tryParseU16(unsigned short* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
+bool StringUtil::tryParseS16(short* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
+bool StringUtil::tryParseU8(unsigned char* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
+bool StringUtil::tryParseS8(signed char* v, const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::tryParseImpl_(v, s, c); }
+int StringUtil::parseS32(const SafeStringBase<char>& s, CardinalNumber c) { return StringUtilImpl::parseImpl_<int>(s, c); }
 int StringUtil::vsw16printf(wchar_t* b, unsigned int n, const wchar_t* f, va_list a) { return ::vswprintf(b, n, f, a); }
 int StringUtil::vsnprintf(char* b, unsigned int n, const char* f, va_list a) { return ::vsnprintf(b, n, f, a); }
 int StringUtil::convertUtf16ToSjis(char* destination, unsigned int capacity, const wchar_t* source, int length)

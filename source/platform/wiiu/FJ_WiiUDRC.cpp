@@ -23,10 +23,13 @@ void HandleDRCStatusChanges()
     unsigned char drcConnected = g_pInput->IsPadDRCController(s_drcPad);
     if (drcConnected != s_drcConnected)
     {
-        if (drcConnected == 0)
+        if (drcConnected != 0)
+        {
+            if (gApp.GetDRCIconEnabled())
+                gApp.SetDRCOuputEnabled(true);
+        }
+        else
             gApp.SetDRCOuputEnabled(false);
-        else if (gApp.GetDRCIconEnabled())
-            gApp.SetDRCOuputEnabled(true);
         s_drcConnected = drcConnected;
     }
 }
@@ -41,30 +44,30 @@ FJ_WiiUDRC::FJ_WiiUDRC(fuiRenderNode* pRenderNode)
 
 void FJ_WiiUDRC::UpdateTileBackground(FJ_Event*)
 {
-    if (m_tileCount != 0)
-        return;
-
-    FJ_FuiNode* tile = FJ_Factory::createObject("DirtTile", m_pRenderNode, true, NULL);
-    m_tilesAcross = (int)ceilf(getStage()->getStageWidth() / tile->getWidth());
-    int tilesDown = (int)ceilf(getStage()->getStageHeight() / tile->getHeight());
-    int tileCount = (tilesDown + 1) * m_tilesAcross;
-    if (tileCount > MAX_TILES)
-        tileCount = MAX_TILES;
-    m_tilesDown = tilesDown + 1;
-    m_tileCount = tileCount;
-
-    for (int i = 0; i < m_tileCount; ++i)
+    if (m_tileCount == 0)
     {
-        FJ_FuiNode* node = FJ_Factory::createObject("DirtTile", m_pRenderNode, true, NULL);
-        int row = i / m_tilesAcross;
-        node->setX((float)(i - row * m_tilesAcross) * tile->getWidth());
-        node->setY((float)row * tile->getHeight());
-        m_tiles[i] = node;
-        getChildByName(std::string("DRC_Background"))->addChildAt(node, 0);
-    }
+        FJ_FuiNode* tile = FJ_Factory::createObject("DirtTile", m_pRenderNode, true, NULL);
+        m_tilesAcross = (int)ceilf(getStage()->getStageWidth() / tile->getWidth());
+        int tilesDown = (int)ceilf(getStage()->getStageHeight() / tile->getHeight()) + 1;
+        int tileCount = tilesDown * m_tilesAcross;
+        if (tileCount > MAX_TILES)
+            tileCount = MAX_TILES;
+        m_tilesDown = tilesDown;
+        m_tileCount = tileCount;
 
-    if (tile != NULL)
-        delete tile;
+        for (int i = 0; i < m_tileCount; ++i)
+        {
+            FJ_FuiNode* node = FJ_Factory::createObject("DirtTile", m_pRenderNode, true, NULL);
+            int row = i / m_tilesAcross;
+            node->setX((float)(i - row * m_tilesAcross) * tile->getWidth());
+            node->setY((float)row * tile->getHeight());
+            m_tiles[i] = node;
+            getChildByName(std::string("DRC_Background"))->addChildAt(node, 0);
+        }
+
+        if (tile != NULL)
+            delete tile;
+    }
 }
 
 void FJ_WiiUDRC::_UpdateTileBackground(FJ_FuiNode* pNode, FJ_Event* pEvent)
@@ -74,10 +77,10 @@ void FJ_WiiUDRC::_UpdateTileBackground(FJ_FuiNode* pNode, FJ_Event* pEvent)
 
 void FJ_WiiUDRC::ShowDRCBackground(bool bShow)
 {
-    if (!bShow)
-        removeEventListener(eFJEventType_EnterFrame, this, _UpdateTileBackground);
-    else
+    if (bShow)
         addEventListener(eFJEventType_EnterFrame, this, _UpdateTileBackground, false);
+    else
+        removeEventListener(eFJEventType_EnterFrame, this, _UpdateTileBackground);
     getChildByName(std::string("DRC_Background"))->setVisible(bShow);
 }
 
@@ -97,24 +100,24 @@ void FJ_WiiUDRC::SetSafeZone(int, int iBottom, int, int iRight)
     if (getChildByName(std::string("DRC_On_Icon")) != NULL)
     {
         getChildByName(std::string("DRC_On_Icon"))
-            ->setX((float)Math::round(-((float)iRight * scaleX -
-                                        (getStage()->getStageWidth() -
-                                         getChildByName(std::string("DRC_On_Icon"))->getWidth()))));
+            ->setX((float)Math::round(getStage()->getStageWidth() -
+                                      getChildByName(std::string("DRC_On_Icon"))->getWidth() -
+                                      iRight * scaleX));
         getChildByName(std::string("DRC_On_Icon"))
-            ->setY((float)Math::round(-((float)iBottom * scaleY -
-                                        (getStage()->getStageHeight() -
-                                         getChildByName(std::string("DRC_On_Icon"))->getHeight()))));
+            ->setY((float)Math::round(getStage()->getStageHeight() -
+                                      getChildByName(std::string("DRC_On_Icon"))->getHeight() -
+                                      iBottom * scaleY));
     }
     if (getChildByName(std::string("DRC_Off_Icon")) != NULL)
     {
         getChildByName(std::string("DRC_Off_Icon"))
-            ->setX((float)Math::round(-((float)iRight * scaleX -
-                                        (getStage()->getStageWidth() -
-                                         getChildByName(std::string("DRC_On_Icon"))->getWidth()))));
+            ->setX((float)Math::round(getStage()->getStageWidth() -
+                                      getChildByName(std::string("DRC_On_Icon"))->getWidth() -
+                                      iRight * scaleX));
         getChildByName(std::string("DRC_Off_Icon"))
-            ->setY((float)Math::round(-((float)iBottom * scaleY -
-                                        (getStage()->getStageHeight() -
-                                         getChildByName(std::string("DRC_On_Icon"))->getHeight()))));
+            ->setY((float)Math::round(getStage()->getStageHeight() -
+                                      getChildByName(std::string("DRC_On_Icon"))->getHeight() -
+                                      iBottom * scaleY));
     }
 }
 
@@ -130,32 +133,36 @@ unsigned int FJ_WiiUDRC::getType()
 
 int FJ_WiiUDRC::GetIconX()
 {
-    float x = getChildByName(std::string("DRC_On_Icon")) == NULL
-                  ? 0.0f
-                  : getChildByName(std::string("DRC_On_Icon"))->getX();
-    return (int)(x * (s_drcDesignWidth / getStage()->getStageWidth()));
+    float x = getChildByName(std::string("DRC_On_Icon")) != NULL
+                  ? getChildByName(std::string("DRC_On_Icon"))->getX()
+                  : 0.0f;
+    float scale = s_drcDesignWidth / getStage()->getStageWidth();
+    return (int)(x * scale);
 }
 
 int FJ_WiiUDRC::GetIconY()
 {
-    float y = getChildByName(std::string("DRC_On_Icon")) == NULL
-                  ? 0.0f
-                  : getChildByName(std::string("DRC_On_Icon"))->getY();
-    return (int)(y * (s_drcDesignHeight / getStage()->getStageHeight()));
+    float y = getChildByName(std::string("DRC_On_Icon")) != NULL
+                  ? getChildByName(std::string("DRC_On_Icon"))->getY()
+                  : 0.0f;
+    float scale = s_drcDesignHeight / getStage()->getStageHeight();
+    return (int)(y * scale);
 }
 
 int FJ_WiiUDRC::GetIconWidth()
 {
-    float width = getChildByName(std::string("DRC_On_Icon")) == NULL
-                      ? 0.0f
-                      : getChildByName(std::string("DRC_On_Icon"))->getWidth();
-    return (int)(width * (s_drcDesignWidth / getStage()->getStageWidth()));
+    float width = getChildByName(std::string("DRC_On_Icon")) != NULL
+                      ? getChildByName(std::string("DRC_On_Icon"))->getWidth()
+                      : 0.0f;
+    float scale = s_drcDesignWidth / getStage()->getStageWidth();
+    return (int)(width * scale);
 }
 
 int FJ_WiiUDRC::GetIconHeight()
 {
-    float height = getChildByName(std::string("DRC_On_Icon")) == NULL
-                       ? 0.0f
-                       : getChildByName(std::string("DRC_On_Icon"))->getHeight();
-    return (int)(height * (s_drcDesignHeight / getStage()->getStageHeight()));
+    float height = getChildByName(std::string("DRC_On_Icon")) != NULL
+                       ? getChildByName(std::string("DRC_On_Icon"))->getHeight()
+                       : 0.0f;
+    float scale = s_drcDesignHeight / getStage()->getStageHeight();
+    return (int)(height * scale);
 }

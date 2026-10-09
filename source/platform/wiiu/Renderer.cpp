@@ -93,7 +93,7 @@ static const GX2PrimitiveType sPrimitiveModes[7] = {
 
 static const unsigned int SURFACE_FORMAT_FLAG_SRGB = 0x400;
 
-Renderer* gRenderer = NULL;
+Renderer* gRendererInstance = NULL;
 static OSFastMutex sTotalAllocMutex;
 static int sTotalCommandBufferBytes = 0;
 static unsigned long long sPreviousSubmitTimeStamp = 0;
@@ -132,7 +132,7 @@ int user_write_data_bytes_written()
     return (int)(sUserWriteDataCurrent - sUserWriteDataStart);
 }
 
-static Renderer sRenderer;
+Renderer* gRenderer = new Renderer;
 
 namespace
 {
@@ -146,7 +146,7 @@ Renderer::Context*& currentRendererContext()
 
 Renderer::Renderer()
 {
-    gRenderer = this;
+    gRendererInstance = this;
 }
 
 void Renderer::Tick()
@@ -1083,8 +1083,8 @@ void Renderer::MatrixSetIdentity()
 void Renderer::MultWithStack(float (*matrix)[4])
 {
     Context& context = getContext();
-    float (*top)[4] = context.mMatrixStack[context.mMatrixMode][context.mMatrixStackDepth[context.mMatrixMode]];
-    ASM_MTX44Concat(matrix, top, top);
+    ASM_MTX44Concat(matrix, context.mMatrixStack[context.mMatrixMode][context.mMatrixStackDepth[context.mMatrixMode]],
+                    context.mMatrixStack[context.mMatrixMode][context.mMatrixStackDepth[context.mMatrixMode]]);
     context.mMatrixDirty[context.mMatrixMode] = true;
 }
 
@@ -1301,16 +1301,18 @@ void Renderer::StateSetTexColour(int stage, float red, float green, float blue, 
 void Renderer::StateSetDepthMask(bool bDepthMask)
 {
     Context& context = getContext();
-    CommandBuffer* buffer = context.mRecordingBuffer;
 
-    if (buffer == NULL)
+    if (context.mRecordingBuffer != NULL)
+    {
+        if (context.mRecordingBuffer->mRecordState)
+        {
+            context.mRecordingBuffer->SetDepthMask(bDepthMask);
+        }
+    }
+    else
     {
         context.mDepthMask = bDepthMask;
         GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE, bDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
-    }
-    else if (buffer->mRecordState)
-    {
-        buffer->SetDepthMask(bDepthMask);
     }
 }
 
@@ -1335,33 +1337,40 @@ void Renderer::StateSetBlendEnable(bool bBlend)
 void Renderer::StateSetBlendFunc(int source, int destination)
 {
     Context& context = getContext();
-    CommandBuffer* buffer = context.mRecordingBuffer;
 
-    if (buffer == NULL)
+    if (context.mRecordingBuffer != NULL)
+    {
+        if (context.mRecordingBuffer->mRecordState)
+        {
+            context.mRecordingBuffer->SetBlendFunc(source, destination);
+        }
+    }
+    else
     {
         context.mBlendSource = static_cast<GX2BlendFunction>(source);
         context.mBlendDestination = static_cast<GX2BlendFunction>(destination);
         GX2SetBlendControl(GX2_RENDER_TARGET_0, context.mBlendSource, context.mBlendDestination, GX2_BLEND_COMBINE_ADD, GX2_FALSE, GX2_BLEND_ZERO, GX2_BLEND_ZERO, GX2_BLEND_COMBINE_ADD);
-    }
-    else if (buffer->mRecordState)
-    {
-        buffer->SetBlendFunc(source, destination);
     }
 }
 
 void Renderer::StateSetBlendFactor(unsigned int factor)
 {
     Context& context = getContext();
-    CommandBuffer* buffer = context.mRecordingBuffer;
 
-    if (buffer == NULL)
+    if (context.mRecordingBuffer != NULL)
     {
-        GX2SetBlendConstantColor((float)(factor & 0xFF) / 255.0f, (float)((factor >> 8) & 0xFF) / 255.0f,
-                                 (float)((factor >> 16) & 0xFF) / 255.0f, (float)(factor >> 24) / 255.0f);
+        if (context.mRecordingBuffer->mRecordState)
+        {
+            context.mRecordingBuffer->SetBlendFactor(factor);
+        }
     }
-    else if (buffer->mRecordState)
+    else
     {
-        buffer->SetBlendFactor(factor);
+        float red = (float)(factor & 0xFF) / 255.0f;
+        float green = (float)((factor >> 8) & 0xFF) / 255.0f;
+        float blue = (float)((factor >> 16) & 0xFF) / 255.0f;
+        float alpha = (float)(factor >> 24) / 255.0f;
+        GX2SetBlendConstantColor(red, green, blue, alpha);
     }
 }
 
@@ -1375,32 +1384,36 @@ void Renderer::StateSetAlphaFunc(int alphaFunc, float reference)
 void Renderer::StateSetDepthFunc(int depthFunc)
 {
     Context& context = getContext();
-    CommandBuffer* buffer = context.mRecordingBuffer;
 
-    if (buffer == NULL)
+    if (context.mRecordingBuffer != NULL)
+    {
+        if (context.mRecordingBuffer->mRecordState)
+        {
+            context.mRecordingBuffer->SetDepthFunc(depthFunc);
+        }
+    }
+    else
     {
         context.mDepthFunc = static_cast<GX2CompareFunction>(depthFunc);
         GX2SetDepthStencilControl(context.mDepthTestEnable ? GX2_TRUE : GX2_FALSE, context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
-    }
-    else if (buffer->mRecordState)
-    {
-        buffer->SetDepthFunc(depthFunc);
     }
 }
 
 void Renderer::StateSetFaceCull(bool bFaceCull)
 {
     Context& context = getContext();
-    CommandBuffer* buffer = context.mRecordingBuffer;
 
-    if (buffer == NULL)
+    if (context.mRecordingBuffer != NULL)
+    {
+        if (context.mRecordingBuffer->mRecordState)
+        {
+            context.mRecordingBuffer->SetFaceCull(bFaceCull);
+        }
+    }
+    else
     {
         context.mFaceCull = bFaceCull;
         GX2SetPolygonControl(GX2_FRONT_FACE_CCW, GX2_FALSE, bFaceCull ? GX2_TRUE : GX2_FALSE, GX2_FALSE, GX2_POLYGON_MODE_TRIANGLE, GX2_POLYGON_MODE_TRIANGLE, GX2_TRUE, GX2_TRUE, GX2_FALSE);
-    }
-    else if (buffer->mRecordState)
-    {
-        buffer->SetFaceCull(bFaceCull);
     }
 }
 
@@ -1427,16 +1440,18 @@ void Renderer::StateSetWriteEnable(bool bRed, bool bGreen, bool bBlue, bool bAlp
 void Renderer::StateSetDepthTestEnable(bool bDepthTest)
 {
     Context& context = getContext();
-    CommandBuffer* buffer = context.mRecordingBuffer;
 
-    if (buffer == NULL)
+    if (context.mRecordingBuffer != NULL)
+    {
+        if (context.mRecordingBuffer->mRecordState)
+        {
+            context.mRecordingBuffer->SetDepthTestEnable(bDepthTest);
+        }
+    }
+    else
     {
         context.mDepthTestEnable = bDepthTest;
         GX2SetDepthStencilControl(bDepthTest ? GX2_TRUE : GX2_FALSE, context.mDepthMask ? GX2_TRUE : GX2_FALSE, context.mDepthFunc, GX2_TRUE, GX2_TRUE, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP, context.mStencilFunc, GX2_STENCIL_REPLACE, GX2_STENCIL_KEEP, GX2_STENCIL_KEEP);
-    }
-    else if (buffer->mRecordState)
-    {
-        buffer->SetDepthTestEnable(bDepthTest);
     }
 }
 
@@ -1570,19 +1585,21 @@ void Renderer::StateSetLightColour(int light, float red, float green, float blue
     }
 
     Context& context = getContext();
-    CommandBuffer* buffer = context.mRecordingBuffer;
 
-    if (buffer == NULL)
+    if (context.mRecordingBuffer != NULL)
+    {
+        if (context.mRecordingBuffer->mRecordState)
+        {
+            context.mRecordingBuffer->SetLightColour(light, red, green, blue);
+        }
+    }
+    else
     {
         context.mLightColour[light][0] = red;
-        context.mLightColour[light][2] = blue;
         context.mLightColour[light][1] = green;
         context.mLightingDirty = true;
         context.mLightColour[light][3] = 1.0f;
-    }
-    else if (buffer->mRecordState)
-    {
-        buffer->SetLightColour(light, red, green, blue);
+        context.mLightColour[light][2] = blue;
     }
 }
 
@@ -1615,9 +1632,15 @@ void Renderer::StateSetLightDirection(int light, float x, float y, float z)
     }
 
     Context& context = getContext();
-    CommandBuffer* buffer = context.mRecordingBuffer;
 
-    if (buffer == NULL)
+    if (context.mRecordingBuffer != NULL)
+    {
+        if (context.mRecordingBuffer->mRecordState)
+        {
+            context.mRecordingBuffer->SetLightDirection(light, x, y, z);
+        }
+    }
+    else
     {
         Vec direction;
         direction.x = x;
@@ -1630,14 +1653,10 @@ void Renderer::StateSetLightDirection(int light, float x, float y, float z)
         ASM_VECNormalize(&direction, &direction);
 
         context.mLightDirection[light][0] = direction.x;
-        context.mLightingDirty = true;
         context.mLightDirection[light][1] = direction.y;
-        context.mLightDirection[light][3] = 0.0f;
         context.mLightDirection[light][2] = direction.z;
-    }
-    else if (buffer->mRecordState)
-    {
-        buffer->SetLightDirection(light, x, y, z);
+        context.mLightDirection[light][3] = 0.0f;
+        context.mLightingDirty = true;
     }
 }
 
@@ -1649,16 +1668,18 @@ void Renderer::StateSetLightEnable(int light, bool bEnable)
     }
 
     Context& context = getContext();
-    CommandBuffer* buffer = context.mRecordingBuffer;
 
-    if (buffer == NULL)
+    if (context.mRecordingBuffer != NULL)
+    {
+        if (context.mRecordingBuffer->mRecordState)
+        {
+            context.mRecordingBuffer->SetLightEnable(light, bEnable);
+        }
+    }
+    else
     {
         context.mLightEnable[light] = bEnable;
         context.mLightingDirty = true;
-    }
-    else if (buffer->mRecordState)
-    {
-        buffer->SetLightEnable(light, bEnable);
     }
 }
 
@@ -1908,9 +1929,9 @@ void Renderer::SetLayeredParam(int slot, int layer, float offset, float scale)
 void Renderer::SetLayeredTextureSize(int width, int height)
 {
     getContext();
-    mLayeredParamsDirty = true;
     mLayeredTextureSize[0] = (float)width;
     mLayeredTextureSize[1] = (float)height;
+    mLayeredParamsDirty = true;
 }
 
 void Renderer::StateSetBoneMatrixData(int bone)
@@ -2444,7 +2465,7 @@ int Renderer::LoadTextureData(unsigned char* fileData, unsigned int fileSize, D3
 
     png_image_begin_read_from_memory(&image, fileData, fileSize);
 
-    if ((image.warning_or_error & 3) >= 2)
+    if ((image.warning_or_error & 3) > 1)
     {
         return -1;
     }
@@ -2452,14 +2473,14 @@ int Renderer::LoadTextureData(unsigned char* fileData, unsigned int fileSize, D3
     image.format = 0x23;
     *data = (int*)new unsigned char[image.height * image.width * 4];
 
-    if (*data == NULL || !png_image_finish_read(&image, NULL, *data, 0, NULL))
+    if (*data != NULL && png_image_finish_read(&image, NULL, *data, 0, NULL))
     {
-        return -1;
+        info->Width = image.width;
+        info->Height = image.height;
+        return 0;
     }
 
-    info->Width = image.width;
-    info->Height = image.height;
-    return 0;
+    return -1;
 }
 
 int Renderer::SaveTextureData(const char* fileName, D3DXIMAGE_INFO* info, int* data)
@@ -2697,12 +2718,12 @@ void* Renderer::CreateMiiIconTexture(FFLDataSource dataSource, FFLStoreData* sto
 {
     OSReport("Setup FFL...\n");
 
-    int created = gRenderer->TextureCreate();
-    GX2Texture* miiTexture = gRenderer->TextureGetTexture(created);
+    int created = gRendererInstance->TextureCreate();
+    GX2Texture* miiTexture = gRendererInstance->TextureGetTexture(created);
     void* result = MakeIcon(miiTexture, ICON_SHADER_TYPE_DEFAULT, dataSource, storeData, index);
     GX2Invalidate(GX2_INVALIDATE_CPU_TEXTURE, miiTexture->surface.imagePtr, miiTexture->surface.imageSize);
     GX2InitSampler(&sMiiIconSampler, GX2_TEX_CLAMP_CLAMP, GX2_TEX_XY_FILTER_BILINEAR);
-    gRenderer->TextureSetTexture(created, *miiTexture);
+    gRendererInstance->TextureSetTexture(created, *miiTexture);
     *texture = created;
     return result;
 }
@@ -3262,7 +3283,7 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vertexType, Context&
         {
             if (mRecordState)
             {
-                gRenderer->UpdateLightingState();
+                gRendererInstance->UpdateLightingState();
 
                 if (shaderVertexType == C4JRender::eVertexType_Default && context.mLightingEnable)
                 {
@@ -3283,11 +3304,11 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vertexType, Context&
                     shaderVertexType = C4JRender::eVertexType_Entity;
                 }
 
-                if (shaderVertexType != gRenderer->mCurrentVertexShader)
+                if (shaderVertexType != gRendererInstance->mCurrentVertexShader)
                 {
-                    GX2SetFetchShader(gRenderer->mFetchShaders[shaderVertexType]);
-                    GX2SetVertexShader(gRenderer->mVertexShaders[shaderVertexType]);
-                    gRenderer->mCurrentVertexShader = shaderVertexType;
+                    GX2SetFetchShader(gRendererInstance->mFetchShaders[shaderVertexType]);
+                    GX2SetVertexShader(gRendererInstance->mVertexShaders[shaderVertexType]);
+                    gRendererInstance->mCurrentVertexShader = shaderVertexType;
                 }
             }
 
@@ -3295,7 +3316,7 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vertexType, Context&
             {
                 if (numBatches != 0 &&
                     command.mVertices.mOffset == batchOffset[numBatches - 1] +
-                    batchCount[numBatches - 1] * gRenderer->mVertexStrides[C4JRender::eVertexType_Terrain])
+                    batchCount[numBatches - 1] * gRendererInstance->mVertexStrides[C4JRender::eVertexType_Terrain])
                 {
                     batchCount[numBatches - 1] += command.mVertices.mCount;
                 }
@@ -3308,21 +3329,21 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vertexType, Context&
             }
             else
             {
-                GX2SetAttribBuffer(0, mVerticesUsed, gRenderer->mVertexStrides[shaderVertexType], mVertices);
+                GX2SetAttribBuffer(0, mVerticesUsed, gRendererInstance->mVertexStrides[shaderVertexType], mVertices);
                 GX2DrawEx(sPrimitiveModes[primitiveType], command.mVertices.mCount,
-                          command.mVertices.mOffset / gRenderer->mVertexStrides[shaderVertexType], 1);
-                gRenderer->mCommandBufferVertsDrawn += command.mVertices.mCount;
+                          command.mVertices.mOffset / gRendererInstance->mVertexStrides[shaderVertexType], 1);
+                gRendererInstance->mCommandBufferVertsDrawn += command.mVertices.mCount;
             }
         }
     }
 
-    GX2SetAttribBuffer(0, mVerticesUsed, gRenderer->mVertexStrides[shaderVertexType], mVertices);
+    GX2SetAttribBuffer(0, mVerticesUsed, gRendererInstance->mVertexStrides[shaderVertexType], mVertices);
 
     for (unsigned int batch = 0; batch < numBatches; ++batch)
     {
         GX2DrawEx(sPrimitiveModes[primitiveType], batchCount[batch],
-                  batchOffset[batch] / gRenderer->mVertexStrides[shaderVertexType], 1);
-        gRenderer->mCommandBufferVertsDrawn += batchCount[batch];
+                  batchOffset[batch] / gRendererInstance->mVertexStrides[shaderVertexType], 1);
+        gRendererInstance->mCommandBufferVertsDrawn += batchCount[batch];
     }
 
     if (bMatrixPushed)
@@ -3332,12 +3353,12 @@ void Renderer::CommandBuffer::Render(C4JRender::eVertexType vertexType, Context&
         GX2SetVertexUniformReg(0x10, 0x10, identity);
     }
 
-    mLastRenderedFrame = gRenderer->mFrameCount;
+    mLastRenderedFrame = gRendererInstance->mFrameCount;
 }
 
 bool Renderer::CommandBuffer::IsBusy()
 {
-    return mLastRenderedFrame >= gRenderer->mFrameCount - 3;
+    return mLastRenderedFrame >= gRendererInstance->mFrameCount - 3;
 }
 
 void Renderer::CommandBuffer::AddMatrix(const float* matrix)
@@ -3353,7 +3374,7 @@ void Renderer::CommandBuffer::AddVertices(unsigned int vertexStride, unsigned in
 {
     if (context.mMatrixDirty[3])
     {
-        AddMatrix(gRenderer->MatrixGet(3));
+        AddMatrix(gRendererInstance->MatrixGet(3));
         context.mMatrixDirty[3] = false;
     }
 
@@ -3481,7 +3502,7 @@ void Renderer::CommandBuffer::SetLightDirection(int light, float x, float y, flo
     command.mType = eCommandType_LightDirection;
     command.mLight.mIndex = light;
 
-    Context& context = gRenderer->getContext();
+    Context& context = gRendererInstance->getContext();
 
     Vec direction;
     float transposed[4][4];

@@ -15,9 +15,7 @@ int CoreUser_DynLoad_DefaultAlloc(int32_t size, int32_t alignment, void** result
     {
         if (alignment > -4)
         {
-            block = MEMAllocFromDefaultHeapEx((unsigned int)size, -4);
-            *result = block;
-            return block != 0 ? 0 : 0xbad10002;
+            alignment = -4;
         }
     }
     else if (alignment < 4)

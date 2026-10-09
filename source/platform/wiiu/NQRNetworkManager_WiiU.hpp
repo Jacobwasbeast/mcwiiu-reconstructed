@@ -7,6 +7,7 @@
 #include <vector>
 
 #include <nn/result.h>
+#include <nn/fp/fp_cpp.h>
 
 #include "game/core/CriticalSection.hpp"
 #include "game/network/INQRNetworkManagerListener.hpp"
@@ -39,6 +40,8 @@ namespace nn
 
 class NQRNetworkManager_WiiU : public NQRNetworkManager
 {
+    friend class NintendoVoiceChat_WiiU;
+
 public:
     enum ENEXAsyncProcess
     {
@@ -191,7 +194,7 @@ public:
     void NonNetworkPlayerComplete(NQRNetworkPlayer* player, unsigned char smallId);
     void AddConnectedPlayer(NQRNetworkPlayer* player);
     void HandlePlayerJoined(NQRNetworkPlayer* player);
-    NQRNetworkPlayer* FindOrCreateNonNetworkPlayer(int slotIndex, int type, PlayerSyncData* syncData);
+    void FindOrCreateNonNetworkPlayer(int slotIndex, int type, PlayerSyncData* syncData);
     void NetworkPlayerSmallIdAllocated(NQRNetworkPlayer* player, unsigned char smallId);
     void MapRoomSlotPlayers(int previousPlayerCount);
     void UpdateRoomSyncUIDsFromPlayers();
@@ -201,9 +204,9 @@ public:
     void ClearSendQueue();
     void SetState(eNQRNetworkManagerInternalState state);
     void TickSendQueue();
-    void Pia_InitializeCommon(unsigned char* buffer, unsigned int size, unsigned long long stationId, bool host, bool online);
-    void Pia_InitializeInet();
-    void Pia_InitializeSession(const nn::pia::session::Session::Setting& setting);
+    nn::pia::Result Pia_InitializeCommon(unsigned char* memory, unsigned int memorySize, unsigned long long traceFlags, bool enableCachedPrint, bool);
+    nn::pia::Result Pia_InitializeInet();
+    nn::pia::Result Pia_InitializeSession(const nn::pia::session::Session::Setting& setting);
     ConnectedStation* GetConnectedStation(unsigned long long stationId);
     void AddConnectedStation(unsigned long long stationId);
     void Pia_SignalLeaveSession();
@@ -359,11 +362,11 @@ private:
     OSFastMutex m_connectedStationMutex;
     std::vector<ConnectedStation> m_connectedStations;
     unsigned char m_unknown1324[4];
-    unsigned char m_unknown1328[0x2c];
+    nn::fp::GameMode m_presenceGameMode;
     bool m_unknown1354;
     nn::nex::ProtocolCallContext* m_nexCallContext;
     ENEXAsyncProcess m_nexAsyncProcess;
-    unsigned char m_unknown1360[0x14];
+    std::deque<ENEXAsyncProcess> m_nexAsyncProcessQueue;
     int m_nexLoginState;
     int m_unknown1378;
     bool m_unknown137C;
@@ -390,7 +393,6 @@ private:
     bool m_online;
     int m_sessionId;
     unsigned int m_roomPlayerMask;
-    int m_roomPlayerCount;
     int m_maxPlayers;
     bool m_running;
     unsigned int m_friendPresenceCount;

@@ -18,15 +18,15 @@ void MiiData::CreateSysUserData(int slot)
 
     sAdditionalInfoResult = FFLGetAdditionalInfo(&additionalInfo, FFL_DATA_SOURCE_STORE_DATA, &storeData, 0, TRUE);
 
-    nn::act::GetUuidEx(reinterpret_cast<char*>(&entry.mUuid), slot);
-
-    memcpy(entry.mName, additionalInfo.name, sizeof(entry.mName));
     *reinterpret_cast<FFLCreateID*>(entry.mCreatorId) = additionalInfo.creatorID;
-
     entry.mIsAccountMii = true;
     entry.mIsGuestMii = false;
 
-    entry.mIconMemory = (void*)gRenderer->CreateMiiIconTexture(FFL_DATA_SOURCE_STORE_DATA, &storeData, 0,
+    nn::act::GetUuidEx(reinterpret_cast<char*>(&entry.mUuid), slot);
+
+    memcpy(entry.mName, additionalInfo.name, sizeof(entry.mName));
+
+    entry.mIconMemory = (void*)gRendererInstance->CreateMiiIconTexture(FFL_DATA_SOURCE_STORE_DATA, &storeData, 0,
                                                                &entry.mIconTexture);
 
     mSysUserMiis.push_back(entry);
@@ -39,13 +39,13 @@ void MiiData::CreateGuestData(int index)
 
     FFLGetAdditionalInfo(&additionalInfo, FFL_DATA_SOURCE_DEFAULT, NULL, index, TRUE);
 
-    memcpy(entry.mName, additionalInfo.name, sizeof(entry.mName));
     *reinterpret_cast<FFLCreateID*>(entry.mCreatorId) = additionalInfo.creatorID;
-
     entry.mIsAccountMii = false;
     entry.mIsGuestMii = true;
 
-    entry.mIconMemory = (void*)gRenderer->CreateMiiIconTexture(FFL_DATA_SOURCE_DEFAULT, NULL, index,
+    memcpy(entry.mName, additionalInfo.name, sizeof(entry.mName));
+
+    entry.mIconMemory = (void*)gRendererInstance->CreateMiiIconTexture(FFL_DATA_SOURCE_DEFAULT, NULL, index,
                                                                &entry.mIconTexture);
 
     mGuestMiis.push_back(entry);
@@ -58,13 +58,13 @@ void MiiData::CreateMiiMakerData(int index)
 
     FFLGetAdditionalInfo(&additionalInfo, FFL_DATA_SOURCE_OFFICIAL, NULL, index, TRUE);
 
-    memcpy(entry.mName, additionalInfo.name, sizeof(entry.mName));
     *reinterpret_cast<FFLCreateID*>(entry.mCreatorId) = additionalInfo.creatorID;
-
     entry.mIsAccountMii = false;
     entry.mIsGuestMii = false;
 
-    entry.mIconMemory = (void*)gRenderer->CreateMiiIconTexture(FFL_DATA_SOURCE_OFFICIAL, NULL, index,
+    memcpy(entry.mName, additionalInfo.name, sizeof(entry.mName));
+
+    entry.mIconMemory = (void*)gRendererInstance->CreateMiiIconTexture(FFL_DATA_SOURCE_OFFICIAL, NULL, index,
                                                                &entry.mIconTexture);
 
     mMiiMakerMiis.push_back(entry);
@@ -72,15 +72,16 @@ void MiiData::CreateMiiMakerData(int index)
 
 void MiiData::LoadAllData()
 {
-    if (!gRenderer->InitFFL())
+    if (!gRendererInstance->InitFFL())
     {
         return;
     }
 
     int accountCount = nn::act::GetNumOfAccounts();
 
-    for (int slot = 1; slot <= accountCount; ++slot)
+    for (int i = 0; i < accountCount; ++i)
     {
+        int slot = i + 1;
         if (nn::act::IsSlotOccupied(slot))
         {
             CreateSysUserData(slot);
@@ -113,28 +114,28 @@ void MiiData::LoadAllData()
         CreateGuestData(guestIndex);
     }
 
-    gRenderer->ShutdownFFL();
+    gRendererInstance->ShutdownFFL();
 }
 
 void MiiData::FreeAllData()
 {
-    for (unsigned int i = 0; i < mSysUserMiis.size(); ++i)
+    for (int i = 0; i < mSysUserMiis.size(); ++i)
     {
-        gRenderer->FreeMiiIconTexture(mSysUserMiis[i].mIconTexture, mSysUserMiis[i].mIconMemory);
+        gRendererInstance->FreeMiiIconTexture(mSysUserMiis[i].mIconTexture, mSysUserMiis[i].mIconMemory);
     }
 
     mSysUserMiis.clear();
 
-    for (unsigned int i = 0; i < mGuestMiis.size(); ++i)
+    for (int i = 0; i < mGuestMiis.size(); ++i)
     {
-        gRenderer->FreeMiiIconTexture(mGuestMiis[i].mIconTexture, mGuestMiis[i].mIconMemory);
+        gRendererInstance->FreeMiiIconTexture(mGuestMiis[i].mIconTexture, mGuestMiis[i].mIconMemory);
     }
 
     mGuestMiis.clear();
 
-    for (unsigned int i = 0; i < mMiiMakerMiis.size(); ++i)
+    for (int i = 0; i < mMiiMakerMiis.size(); ++i)
     {
-        gRenderer->FreeMiiIconTexture(mMiiMakerMiis[i].mIconTexture, mMiiMakerMiis[i].mIconMemory);
+        gRendererInstance->FreeMiiIconTexture(mMiiMakerMiis[i].mIconTexture, mMiiMakerMiis[i].mIconMemory);
     }
 
     mMiiMakerMiis.clear();

@@ -1,23 +1,12 @@
 #include "platform/wiiu/cNintendoDLCInfo.hpp"
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <cwchar>
 
-struct _OVERLAPPED
-{
-    unsigned int Internal;
-    unsigned int InternalHigh;
-    unsigned int Offset;
-    unsigned int OffsetHigh;
-    void* hEvent;
-};
-
-int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
-               void* securityAttributes, unsigned int creationDisposition,
-               unsigned int flagsAndAttributes, int templateFile);
 unsigned int GetFileSize(int file, unsigned int* fileSizeHigh);
 unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead,
              _OVERLAPPED* overlapped);
@@ -37,7 +26,6 @@ void cNintendoDLCInfo::AddDLCInfo(DLC_INFO* pDLCInfo)
 
     wchar_t packName[64];
     mbstowcs(packName, pDLCInfo->PackName, 64);
-    packName[63] = L'\0';
     m_dlcInfoByPackName[std::wstring(packName)] = pDLCInfo;
 }
 
@@ -46,9 +34,10 @@ DLC_INFO* cNintendoDLCInfo::GetDLCInfoForPackID(unsigned int packID)
     for (boost::unordered_map<unsigned int, DLC_INFO*>::iterator it = m_dlcInfoByCatalogIndex.begin();
          it != m_dlcInfoByCatalogIndex.end(); ++it)
     {
-        if (it->second->PackID == packID)
+        DLC_INFO* pDLCInfo = it->second;
+        if (packID == pDLCInfo->PackID)
         {
-            return it->second;
+            return pDLCInfo;
         }
     }
 
@@ -60,9 +49,10 @@ DLC_INFO* cNintendoDLCInfo::GetDLCInfoFromBanner(char* pBannerName)
     for (boost::unordered_map<unsigned int, DLC_INFO*>::iterator it = m_dlcInfoByCatalogIndex.begin();
          it != m_dlcInfoByCatalogIndex.end(); ++it)
     {
-        if (std::strcmp(it->second->BannerName, pBannerName) == 0)
+        DLC_INFO* pDLCInfo = it->second;
+        if (std::strcmp(pDLCInfo->BannerName, pBannerName) == 0)
         {
-            return it->second;
+            return pDLCInfo;
         }
     }
 
@@ -89,12 +79,12 @@ bool cNintendoDLCInfo::GetDLCPurchased(char* pPackName)
     {
         wchar_t packName[64];
         mbstowcs(packName, pPackName, 64);
-        packName[63] = L'\0';
 
-        boost::unordered_map<std::wstring, DLC_INFO*>::iterator it = m_dlcInfoByPackName.find(std::wstring(packName));
+        boost::unordered_map<std::wstring, DLC_INFO*>::const_iterator it = m_dlcInfoByPackName.find(std::wstring(packName));
         if (it != m_dlcInfoByPackName.end())
         {
-            return it->second->Purchased;
+            DLC_INFO* pDLCInfo = it->second;
+            return pDLCInfo->Purchased;
         }
     }
 
@@ -103,26 +93,29 @@ bool cNintendoDLCInfo::GetDLCPurchased(char* pPackName)
 
 bool cNintendoDLCInfo::SetDLCPurchased(unsigned int catalogIndex, bool purchased)
 {
+    bool found = false;
     for (boost::unordered_map<unsigned int, DLC_INFO*>::iterator it = m_dlcInfoByCatalogIndex.begin();
-         it != m_dlcInfoByCatalogIndex.end(); ++it)
+         it != m_dlcInfoByCatalogIndex.end(); it++)
     {
-        if (it->second->CatalogIndex == catalogIndex)
+        DLC_INFO* pDLCInfo = it->second;
+        if (pDLCInfo->CatalogIndex == catalogIndex)
         {
-            it->second->Purchased = purchased;
-            return true;
+            pDLCInfo->Purchased = purchased;
+            found = true;
+            break;
         }
     }
 
-    return false;
+    return found;
 }
 
 DLC_INFO* cNintendoDLCInfo::GetDLCInfoByIndex(unsigned int index)
 {
     unsigned int currentIndex = 0;
     for (boost::unordered_map<unsigned int, DLC_INFO*>::iterator it = m_dlcInfoByCatalogIndex.begin();
-         it != m_dlcInfoByCatalogIndex.end(); ++it)
+         it != m_dlcInfoByCatalogIndex.end(); it++)
     {
-        if (currentIndex == index)
+        if (index == currentIndex)
         {
             return it->second;
         }
@@ -136,10 +129,10 @@ DLC_INFO* cNintendoDLCInfo::GetDLCInfoByRomName(const char* pRomName)
 {
     std::string romName(pRomName);
     for (boost::unordered_map<unsigned int, DLC_INFO*>::iterator it = m_dlcInfoByCatalogIndex.begin();
-         it != m_dlcInfoByCatalogIndex.end(); ++it)
+         it != m_dlcInfoByCatalogIndex.end(); it++)
     {
         DLC_INFO* pDLCInfo = it->second;
-        if (romName.compare(0, romName.size(), pDLCInfo->RomName, std::strlen(pDLCInfo->RomName)) == 0)
+        if (romName == pDLCInfo->RomName)
         {
             return pDLCInfo;
         }
@@ -153,7 +146,8 @@ void cNintendoDLCInfo::LoadLocalDLCImages()
     for (boost::unordered_map<unsigned int, DLC_INFO*>::iterator it = m_dlcInfoByCatalogIndex.begin();
          it != m_dlcInfoByCatalogIndex.end(); ++it)
     {
-        LoadLocalDLCImage(it->second);
+        DLC_INFO* pDLCInfo = it->second;
+        LoadLocalDLCImage(pDLCInfo);
     }
 }
 
@@ -166,8 +160,8 @@ void cNintendoDLCInfo::FreeLocalDLCImages()
         if (pDLCInfo->ImageSize != 0)
         {
             std::free(pDLCInfo->pImageData);
-            pDLCInfo->pImageData = NULL;
             pDLCInfo->ImageSize = 0;
+            pDLCInfo->pImageData = NULL;
         }
     }
 }
@@ -177,16 +171,15 @@ void cNintendoDLCInfo::LoadLocalDLCImage(DLC_INFO* pDLCInfo)
     char fileName[68];
     std::sprintf(fileName, "WiiU/DLCImages/%s.png", pDLCInfo->BannerName);
 
-    int file = CreateFileA(fileName, 0x80000000, 0, NULL, 3, 0x80, 0);
-    if (file != -1)
+    int file = CreateFileA(fileName, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    if (file != INVALID_HANDLE_VALUE)
     {
         unsigned int fileSizeHigh = 0;
-        unsigned int fileSize = GetFileSize(file, &fileSizeHigh);
-        pDLCInfo->ImageSize = fileSize;
-        if (fileSize != 0)
+        pDLCInfo->ImageSize = GetFileSize(file, &fileSizeHigh);
+        if (pDLCInfo->ImageSize != 0)
         {
-            pDLCInfo->pImageData = std::malloc(fileSize);
-            unsigned int bytesRead = 0;
+            pDLCInfo->pImageData = std::malloc(pDLCInfo->ImageSize);
+            unsigned int bytesRead;
             if (ReadFile(file, pDLCInfo->pImageData, pDLCInfo->ImageSize, &bytesRead, NULL) == 0)
             {
                 std::free(pDLCInfo->pImageData);

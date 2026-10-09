@@ -52,7 +52,7 @@ public:
     };
 
     NQRNetworkManager();
-    virtual ~NQRNetworkManager();
+    virtual ~NQRNetworkManager() {}
 
     enum VTableSlot
     {
@@ -203,7 +203,8 @@ public:
         wchar_t m_szMiiName[11];
         unsigned int m_uiSmallId : 8;
         unsigned int m_uiLocalPlayerIndex : 4;
-        unsigned int m_uiSyncFlags : 20;
+        unsigned int m_uiPlayerCountMinusOne : 4;
+        unsigned int m_uiSyncFlags : 16;
     };
 
     virtual void Tick() = 0;

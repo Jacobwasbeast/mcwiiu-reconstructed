@@ -1,4 +1,5 @@
 #include "platform/wiiu/SndMicDevice.hpp"
+#include <coreinit/core.h>
 #include <coreinit/memdefaultheap.h>
 
 #include <coreinit/time.h>
@@ -102,9 +103,6 @@ enum eAXDevice
 extern "C"
 {
 void OSSleepTicks(OSTime ticks);
-int OSGetCoreCount();
-int OSGetCoreId();
-int OSGetMainCoreId();
 OSThread* OSGetDefaultThread(unsigned int iCoreId);
 int OSIsThreadTerminated(OSThread* pThread);
 void OSPanic(const char* pFile, int iLine, const char* pMessage);

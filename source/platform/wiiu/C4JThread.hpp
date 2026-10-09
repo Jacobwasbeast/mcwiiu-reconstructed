@@ -14,7 +14,7 @@ public:
     virtual uint32_t GetProcessor() = 0;
     virtual void SetPriority(int priority) = 0;
     virtual uint32_t WaitForCompletion(int milliseconds) = 0;
-    virtual uint32_t GetExitCode() = 0;
+    virtual int GetExitCode() = 0;
     virtual const char* getName() = 0;
     virtual void SetDeleteOnExit(bool deleteOnExit) = 0;
 

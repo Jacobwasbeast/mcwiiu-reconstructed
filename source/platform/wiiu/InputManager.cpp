@@ -3,10 +3,10 @@
 
 bool InputManager_IsShowingErrorViewer()
 {
-    return g_pInput->IsShowingErrorViewer() != 0;
+    return g_pInputInstance->IsShowingErrorViewer() != 0;
 }
 
 bool InputManager_IsShowingOnscreenKeyboard()
 {
-    return g_pInput->IsShowingOnscreenKeyboard() != 0;
+    return g_pInputInstance->IsShowingOnscreenKeyboard() != 0;
 }

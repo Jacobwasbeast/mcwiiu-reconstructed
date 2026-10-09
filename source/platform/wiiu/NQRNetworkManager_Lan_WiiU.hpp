@@ -6,10 +6,13 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <nn/fp/fp_cpp.h>
 
 #include "game/core/CriticalSection.hpp"
 #include "game/network/INQRNetworkManagerListener.hpp"
+#include "nn/pia/Common.hpp"
 #include "nn/pia/lan/LanSessionInfo.hpp"
+#include "nn/pia/session/Session.hpp"
 #include "platform/wiiu/C4JStorage.hpp"
 #include "platform/wiiu/NQRNetworkManager.hpp"
 
@@ -83,11 +86,8 @@ public:
 
     enum EJoinFailedReason
     {
-        eJoinFailedReason_None,
         eJoinFailedReason_Full,
-        eJoinFailedReason_Version,
-        eJoinFailedReason_Mii,
-        eJoinFailedReason_Network
+        eJoinFailedReason_MiiInUse
     };
 
     struct SendQueueItem
@@ -194,7 +194,7 @@ public:
     void NonNetworkPlayerComplete(NQRNetworkPlayer* player, unsigned char smallId);
     void AddConnectedPlayer(NQRNetworkPlayer* player);
     void HandlePlayerJoined(NQRNetworkPlayer* player);
-    NQRNetworkPlayer* FindOrCreateNonNetworkPlayer(int type, int localIndex, PlayerSyncData* syncData);
+    void FindOrCreateNonNetworkPlayer(int slotIndex, int type, PlayerSyncData* syncData);
     void NetworkPlayerSmallIdAllocated(NQRNetworkPlayer* player, unsigned char smallId);
     void MapRoomSlotPlayers(int removedIndex);
     void UpdateRoomSyncUIDsFromPlayers();
@@ -205,13 +205,13 @@ public:
     void SetState(eNQRNetworkManagerInternalState state);
     void TickSendQueue();
     int InitialiseNetwork(NetworkType type);
-    void Pia_InitializeCommon(unsigned char* buffer, unsigned int size, unsigned long long stationId, bool host, bool online);
-    void Lan_InitializePiaLan();
-    void Pia_InitializeSession(const void* setting);
+    nn::pia::Result Pia_InitializeCommon(unsigned char* memory, unsigned int memorySize, unsigned long long traceFlags, bool enableCachedPrint, bool);
+    nn::pia::Result Lan_InitializePiaLan();
+    nn::pia::Result Pia_InitializeSession(const nn::pia::session::Session::Setting& setting);
     ConnectedStation* GetConnectedStation(unsigned long long stationId);
     void AddConnectedStation(unsigned long long stationId);
     void Pia_SignalLeaveSession();
-    static void Pia_SessionCallback(int eventType, unsigned long long stationId, void* context);
+    static void Pia_SessionCallback(nn::pia::session::Session::EventType eventType, unsigned long long stationId, void* context);
     void InitialiseAfterOnline();
     bool IsInitialisedAfterOnline();
     void OnlineCheck();
@@ -228,7 +228,7 @@ public:
     void Pia_Shutdown();
     void SetLastNetworkError(int result);
     void Net_GetLocalAddress(unsigned int* address, unsigned int* subnetMask);
-    bool Lan_StartupPiaLan();
+    nn::pia::Result Lan_StartupPiaLan();
     void UpdateApplicationConnected();
     bool Pia_CreateSession();
     bool canRunRateControlledEvent();
@@ -268,7 +268,7 @@ public:
     static int TickThreadProc(void* context);
     void MallocAndSetExtDataFromNQRPresenceInfo(void** extData, PresenceSyncInfo* presenceInfo);
     static void GetFriendsThreadProc(void* context);
-    bool Session_BrowseSession(nn::pia::session::SessionSearchCriteria* criteria);
+    nn::pia::Result Session_BrowseSession(nn::pia::session::SessionSearchCriteria* criteria);
     unsigned int GetFriendsFromSessionBrowse();
     void ClearRichPresenceCustomData();
     void UpdateRemotePlay();
@@ -313,11 +313,6 @@ private:
         unsigned int hostOptions;
         unsigned int texturePack;
         wchar_t name[64];
-
-        SaveTransferDescriptor() : kind(0), version(0), dataSize(0), metadataSize(0), seed(0), hostOptions(0), texturePack(0)
-        {
-            std::memset(name, 0, sizeof(name));
-        }
     };
 
     bool m_friendPresenceUpdated;
@@ -346,23 +341,31 @@ private:
     bool m_matchmaking;
     OSFastMutex m_playerMutex;
     PlayerSyncData m_roomPlayers[8];
-    unsigned char m_unknown1140[0x116c - 0x1140];
+    void* m_externalData;
+    unsigned int m_externalDataSize;
+    unsigned char m_unknown1148[0x116c - 0x1148];
     std::vector<NQRNetworkPlayer*> m_unconnectedPlayers;
     std::deque<SendQueueItem> m_sendQueue;
     OSFastMutex m_sendQueueMutex;
-    unsigned char m_unknown11BC[0x1250 - 0x11bc];
+    NQRNetworkPlayer* m_roomSlotPlayers[8];
+    unsigned char m_unknown11DC[0x1224 - 0x11dc];
+    OSFastMutex m_playerConnectionMutex;
     eNQRNetworkManagerFriendSearchState m_friendSearchState;
     unsigned char m_unknown1254[4];
     bool m_friendSearchBusy;
-    unsigned char m_unknown1259[0x1268 - 0x1259];
+    unsigned char m_unknown1259[0x1260 - 0x1259];
+    int m_friendSearchStatus;
+    unsigned char m_unknown1264[0x1268 - 0x1264];
     OSFastMutex m_friendSearchMutex;
     unsigned char m_unknown1294[0x12a4 - 0x1294];
     std::vector<FriendSearchResult> m_friendSearchResults;
-    unsigned char m_unknown12B4[0x12e0 - 0x12b4];
+    OSFastMutex m_connectedPlayerMutex;
     std::vector<NQRNetworkPlayer*> m_players;
     OSFastMutex m_connectedStationMutex;
     std::vector<ConnectedStation> m_connectedStations;
-    unsigned char m_unknown132C[0x1360 - 0x132c];
+    unsigned char m_unknown132C[0x1330 - 0x132c];
+    nn::fp::GameMode m_presenceGameMode;
+    unsigned char m_unknown135C[0x1360 - 0x135c];
     void* m_nexContext;
     ENEXAsyncProcess m_nexAsyncProcess;
     unsigned char m_unknown1368[0x1381 - 0x1368];
@@ -374,48 +377,49 @@ private:
     bool m_leaveRequested;
     bool m_browseRequested;
     bool m_randomJoinRequested;
-    unsigned char m_unknown1396[0x13a8 - 0x1396];
+    unsigned char m_unknown1396[0x1398 - 0x1396];
 
 public:
-    unsigned int m_saveTransferSize;
+    int m_saveTransferSize;
     unsigned char* m_saveTransferData;
-    unsigned int m_saveTransferOffset;
+    int m_saveTransferOffset;
 
 private:
-    unsigned char m_unknown13B4[0x13fc - 0x13b4];
+    bool m_saveTransferPacketPending;
+    unsigned char m_unknown13A5[0x13a8 - 0x13a5];
+    int m_saveTransferReceiveSize;
+    unsigned char* m_saveTransferReceiveData;
+    int m_saveTransferReceiveOffset;
+    wchar_t m_saveTransferSenderName[36];
 
 public:
     ESaveTransferState m_saveTransferState;
 
 private:
-    unsigned char m_unknown1400[0x143c - 0x1400];
+    SaveTransferDescriptor* m_saveTransferDescriptor;
+    unsigned char m_unknown1404[0x143c - 0x1404];
 
 public:
     unsigned int m_saveTransferSessionId;
 
 private:
-    unsigned char m_unknown1440[0x1bc8 - 0x1440];
+    bool m_saveTransferSessionFound;
+    unsigned char m_unknown1441[0x1450 - 0x1441];
+    nn::pia::lan::LanSessionInfo m_saveTransferSessionInfo;
+    unsigned int m_unreliableProtocolHandle;
+    unsigned int m_reliableProtocolHandle;
+    unsigned char m_unknown1BB0[0x1bc8 - 0x1bb0];
     unsigned long long m_lastRateControlledEvent;
-    unsigned char m_unknown1BD0[0x1bd8 - 0x1bd0];
+    unsigned char m_unknown1BD0[0x1bd4 - 0x1bd0];
+    unsigned char m_gameMode;
+    unsigned char m_unknown1BD5[0x1bd8 - 0x1bd5];
     void* m_searchCriteria;
     int m_sessionId;
     unsigned int m_roomPlayerMask;
     unsigned int m_friendPresenceCount;
     unsigned int m_nextSmallId;
     unsigned int m_pendingSessionId;
-    unsigned char m_gameMode;
-    PresenceSyncInfo m_presenceInfo;
-    void* m_externalData;
-    unsigned int m_externalDataSize;
     bool m_running;
-
-    bool m_saveTransferPacketPending;
-    SaveTransferDescriptor m_saveTransferDescriptor;
-    unsigned int m_saveTransferGeneration;
-    unsigned int m_saveTransferFlags;
-    unsigned int m_saveTransferPacketSize;
-    unsigned char m_saveTransferMode;
-
 };
 
 extern NQRNetworkManager_Lan_WiiU* gLanNetworkManager;

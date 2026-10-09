@@ -47,6 +47,8 @@ public:
     unsigned char IsRemote();
     bool IsHost();
     unsigned int GetLocalPlayerIndex();
+    eNQRNetworkPlayerType GetType() { return m_type; }
+    unsigned int GetLocalIndex() { return m_localPlayerIndex; }
     unsigned long long GetStationId() { return m_stationId; }
     bool IsSameSystem(NQRNetworkPlayer* player);
     unsigned int GetCustomDataValue();

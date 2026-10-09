@@ -1,9 +1,19 @@
 #ifndef PLATFORM_WIIU_PEAD_HPP
 #define PLATFORM_WIIU_PEAD_HPP
 
+#include <limits.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdarg.h>
+
+#include <coreinit/core.h>
+#include <coreinit/memory.h>
+
+#ifdef __ghs__
+#include <ppc_ghs.h>
+#else
+#include <coreinit/atomic.h>
+#endif
 
 struct OSThread;
 
@@ -31,6 +41,15 @@ class Heap;
 class StackSymbolResolver;
 class StreamFormat;
 class WriteStream;
+
+class MemUtil
+{
+public:
+    static void* copy(void* destination, const void* source, unsigned int size)
+    {
+        return OSBlockMove(destination, source, size, FALSE);
+    }
+};
 
 struct Endian
 {
@@ -63,14 +82,10 @@ public:
         const T* mCurrent;
     };
 
-    SafeStringBase(const T* text = 0) : mStringTop(text ? text : emptyString()) {}
+    SafeStringBase() : mStringTop(&cNullChar) {}
+    SafeStringBase(const T* text) : mStringTop(text) {}
     virtual ~SafeStringBase() {}
-    virtual SafeStringBase& operator=(const SafeStringBase& other)
-    {
-        mStringTop = other.mStringTop;
-        return *this;
-    }
-    SafeStringBase& __as__S(const SafeStringBase& other);
+    virtual SafeStringBase& operator=(const SafeStringBase& other);
     virtual void assureTerminationImpl_() const {}
     const T* cstr() const
     {
@@ -87,32 +102,176 @@ public:
     }
     int calcLength() const
     {
-        const T* end = mStringTop;
-        while (*end)
-            ++end;
-        return static_cast<int>(end - mStringTop);
+        assureTerminationImpl_();
+        int length = 0;
+        for (;;)
+        {
+            if (length > cMaximumLength || mStringTop[length] == cNullChar)
+                break;
+            ++length;
+        }
+        if (length > cMaximumLength)
+            return 0;
+        return length;
+    }
+    bool isEmpty() const { return mStringTop[0] == cNullChar; }
+    bool isEqual(const SafeStringBase& other) const
+    {
+        assureTerminationImpl_();
+        if (cstr() == other.cstr())
+            return true;
+        for (int index = 0; index <= cMaximumLength; ++index)
+        {
+            if (mStringTop[index] != other.mStringTop[index])
+                return false;
+            if (mStringTop[index] == cNullChar)
+                return true;
+        }
+        return false;
+    }
+    bool operator==(const SafeStringBase& other) const { return isEqual(other); }
+    const T& at(int index) const
+    {
+        int length = calcLength();
+        if (index < 0 || index > length)
+            return cNullChar;
+        return mStringTop[index];
+    }
+    bool include(const T& character) const
+    {
+        const T* text = cstr();
+        for (int index = 0; index <= cMaximumLength; ++index)
+        {
+            if (text[index] == cNullChar)
+                break;
+            if (text[index] == character)
+                return true;
+        }
+        return character == 0;
     }
 
+    static const T cNullChar;
+    static const int cMaximumLength = 0x80000;
+
 protected:
-    static const T* emptyString()
-    {
-        static const T empty[1] = {0};
-        return empty;
-    }
     const T* mStringTop;
 };
+
+template<> const char SafeStringBase<char>::cNullChar;
+template<> const wchar_t SafeStringBase<wchar_t>::cNullChar;
+template<> SafeStringBase<char>& SafeStringBase<char>::operator=(const SafeStringBase<char>& other);
+template<> SafeStringBase<wchar_t>& SafeStringBase<wchar_t>::operator=(const SafeStringBase<wchar_t>& other);
 
 template<typename T> class Buffer
 {
 public:
-    Buffer(T* buffer = 0, int size = 0) : mBuffer(buffer), mSize(size) {}
+    Buffer() : mSize(0), mBuffer(0) {}
+    Buffer(int size, T* buffer) : mSize(size), mBuffer(buffer) {}
     T* begin() const { return mBuffer; }
     T* end() const { return mBuffer + mSize; }
     int size() const { return mSize; }
-    const T& operator[](int index) const { return mBuffer[index]; }
+    bool isBufferReady() const { return mBuffer != 0; }
+    bool isIndexValid(int index) const { return static_cast<unsigned int>(index) < static_cast<unsigned int>(mSize); }
+    T& operator[](int index)
+    {
+        if (isIndexValid(index))
+            return mBuffer[index];
+        return mBuffer[0];
+    }
+    const T& operator[](int index) const
+    {
+        if (isIndexValid(index))
+            return mBuffer[index];
+        return mBuffer[0];
+    }
+    T* get(int index) const { return isIndexValid(index) ? mBuffer + index : 0; }
+    T* getBufferPtr() const { return mBuffer; }
+    void setBuffer(int size, T* buffer)
+    {
+        if (size > 0 && buffer)
+        {
+            mSize = size;
+            mBuffer = buffer;
+        }
+    }
+    bool tryAllocBuffer(int size, Heap* heap, int alignment = sizeof(void*));
+    void freeBuffer();
 
 private:
+    int mSize;
     T* mBuffer;
+};
+
+template<typename T> class RingBuffer
+{
+public:
+    RingBuffer() : mBuffer(NULL), mCapacity(0), mHead(0), mSize(0) {}
+
+    void setBuffer(int capacity, T* buffer)
+    {
+        if (capacity > 0)
+        {
+            mBuffer = buffer;
+            mSize = 0;
+            mHead = 0;
+            mCapacity = capacity;
+        }
+    }
+
+    T& operator()(int index)
+    {
+        if (index < mSize)
+            return mBuffer[calcRealIdx(index)];
+        return mBuffer[0];
+    }
+
+    T& front() { return operator()(0); }
+
+    bool pushBack(const T& item)
+    {
+        int size = mSize;
+        if (size < mCapacity)
+        {
+            mSize = size + 1;
+            mBuffer[calcRealIdx(size)] = item;
+            return true;
+        }
+        return false;
+    }
+
+    void popFront()
+    {
+        if (mSize > 0)
+        {
+            ++mHead;
+            if (mHead >= mCapacity)
+                mHead = 0;
+            --mSize;
+        }
+    }
+
+    void clear()
+    {
+        mSize = 0;
+        mHead = 0;
+    }
+
+    int size() const { return mSize; }
+    int capacity() const { return mCapacity; }
+    bool isEmpty() const { return mSize == 0; }
+    bool isFull() const { return mSize >= mCapacity; }
+
+    int calcRealIdx(int index) const
+    {
+        int realIndex = mHead + index;
+        if (realIndex >= mCapacity)
+            realIndex -= mCapacity;
+        return realIndex;
+    }
+
+    T* mBuffer;
+    int mCapacity;
+    int mHead;
     int mSize;
 };
 
@@ -121,6 +280,9 @@ template<typename T> class BitFlag
 public:
     BitFlag(T value = 0) : mValue(value) {}
     T getDirect() const { return mValue; }
+    void set(T mask) { mValue |= mask; }
+    void reset(T mask) { mValue &= ~mask; }
+    bool isOn(T mask) const { return mValue & mask; }
 
 private:
     T mValue;
@@ -129,49 +291,129 @@ private:
 template<typename T> class BufferedSafeStringBase : public SafeStringBase<T>
 {
 public:
-    BufferedSafeStringBase(T* buffer = 0, int size = 0)
-        : SafeStringBase<T>(buffer), mBuffer(buffer), mBufferSize(size)
+    BufferedSafeStringBase(T* buffer, int size) : SafeStringBase<T>(buffer), mBufferSize(size)
     {
-        if (mBuffer && mBufferSize > 0)
-            mBuffer[0] = 0;
+        if (size <= 0)
+        {
+            this->mStringTop = 0;
+            mBufferSize = 0;
+        }
+        else
+        {
+            assureTerminationImpl_();
+        }
     }
     virtual ~BufferedSafeStringBase() {}
-    virtual BufferedSafeStringBase& operator=(const SafeStringBase<T>& other)
-    {
-        copy(other.cstr());
-        return *this;
-    }
-    BufferedSafeStringBase& __as__S(const SafeStringBase<T>& other);
-    virtual void assureTerminationImpl_() const
-    {
-        if (mBuffer && mBufferSize > 0)
-            mBuffer[mBufferSize - 1] = 0;
-    }
+    virtual BufferedSafeStringBase& operator=(const SafeStringBase<T>& other);
+    virtual void assureTerminationImpl_() const;
     static int formatImpl_(T* buffer, int size, const T* format, va_list args);
-    static int formatImpl___S(T* buffer, int size, const T* format, va_list args);
-    int formatV(const T* format, va_list args) { return formatImpl_(mBuffer, mBufferSize, format, args); }
-    int formatV__S(const T* format, va_list args);
+    int formatV(const T* format, va_list args);
     int format(const T* format, ...);
-    int format__S(const T* format, ...);
     int appendWithFormatV(const T* format, va_list args);
-    int appendWithFormatV__S(const T* format, va_list args);
     int appendWithFormat(const T* format, ...);
-    int appendWithFormat__S(const T* format, ...);
-    void assureTerminationImpl___S() const;
     int getBufferSize() const { return mBufferSize; }
-    T* getBuffer() { return mBuffer; }
-    const T* getBuffer() const { return mBuffer; }
-    void clear()
+    T* getBuffer()
     {
-        if (mBuffer && mBufferSize > 0)
-            mBuffer[0] = 0;
+        assureTerminationImpl_();
+        return getMutableStringTop_();
     }
-    void copy(const T* text);
+    const T* getBuffer() const
+    {
+        assureTerminationImpl_();
+        return this->mStringTop;
+    }
+    void clear() { getMutableStringTop_()[0] = SafeStringBase<T>::cNullChar; }
+    void copy(const SafeStringBase<T>& source, int length = -1);
+    int copyAt(int index, const SafeStringBase<T>& source, int length)
+    {
+        int currentLength = this->calcLength();
+        if (index < 0)
+        {
+            index = currentLength + index + 1;
+            if (index < 0)
+                index = 0;
+        }
+        if (length >= mBufferSize - index)
+            length = mBufferSize - index - 1;
+        if (length <= 0)
+            return 0;
+        MemUtil::copy(getMutableStringTop_() + index, source.cstr(), length * sizeof(T));
+        if (index + length > currentLength)
+            getMutableStringTop_()[index + length] = SafeStringBase<T>::cNullChar;
+        return length;
+    }
+    int append(T character)
+    {
+        int length = this->calcLength();
+        if (length >= mBufferSize - 1)
+            return 0;
+        getMutableStringTop_()[length] = character;
+        getMutableStringTop_()[length + 1] = SafeStringBase<T>::cNullChar;
+        return 1;
+    }
+    int append(T character, int count)
+    {
+        if (count <= 0)
+            return 0;
+        int length = this->calcLength();
+        if (count >= mBufferSize - length)
+            count = mBufferSize - length - 1;
+        T* buffer = getMutableStringTop_();
+        for (int index = 0; index < count; ++index)
+            buffer[length + index] = character;
+        buffer[length + count] = SafeStringBase<T>::cNullChar;
+        return count;
+    }
+    int trim(int length)
+    {
+        if (length >= mBufferSize)
+            return this->calcLength();
+        if (length < 0)
+            length = 0;
+        getMutableStringTop_()[length] = SafeStringBase<T>::cNullChar;
+        return length;
+    }
+    const T& operator[](int index) const
+    {
+        if (index < 0 || index > mBufferSize - 1)
+            return SafeStringBase<T>::cNullChar;
+        return this->mStringTop[index];
+    }
 
 protected:
-    T* mBuffer;
+    T* getMutableStringTop_() { return const_cast<T*>(this->mStringTop); }
+
     int mBufferSize;
 };
+
+template<typename T> inline void BufferedSafeStringBase<T>::copy(const SafeStringBase<T>& source, int length)
+{
+    T* buffer = getMutableStringTop_();
+    const T* text = source.cstr();
+    if (buffer == text)
+        return;
+    if (length < 0)
+        length = source.calcLength();
+    if (length >= mBufferSize)
+        length = mBufferSize - 1;
+    MemUtil::copy(buffer, text, length * sizeof(T));
+    buffer[length] = SafeStringBase<T>::cNullChar;
+}
+
+template<> BufferedSafeStringBase<char>& BufferedSafeStringBase<char>::operator=(const SafeStringBase<char>& other);
+template<> BufferedSafeStringBase<wchar_t>& BufferedSafeStringBase<wchar_t>::operator=(const SafeStringBase<wchar_t>& other);
+template<> void BufferedSafeStringBase<char>::assureTerminationImpl_() const;
+template<> void BufferedSafeStringBase<wchar_t>::assureTerminationImpl_() const;
+template<> int BufferedSafeStringBase<char>::formatImpl_(char* buffer, int size, const char* format, va_list args);
+template<> int BufferedSafeStringBase<wchar_t>::formatImpl_(wchar_t* buffer, int size, const wchar_t* format, va_list args);
+template<> int BufferedSafeStringBase<char>::formatV(const char* format, va_list args);
+template<> int BufferedSafeStringBase<wchar_t>::formatV(const wchar_t* format, va_list args);
+template<> int BufferedSafeStringBase<char>::format(const char* format, ...);
+template<> int BufferedSafeStringBase<wchar_t>::format(const wchar_t* format, ...);
+template<> int BufferedSafeStringBase<char>::appendWithFormatV(const char* format, va_list args);
+template<> int BufferedSafeStringBase<wchar_t>::appendWithFormatV(const wchar_t* format, va_list args);
+template<> int BufferedSafeStringBase<char>::appendWithFormat(const char* format, ...);
+template<> int BufferedSafeStringBase<wchar_t>::appendWithFormat(const wchar_t* format, ...);
 
 template<typename T> class StringBuilderBase : public BufferedSafeStringBase<T>
 {
@@ -182,44 +424,45 @@ public:
 template<typename T> class HeapSafeStringBase : public BufferedSafeStringBase<T>
 {
 public:
-    HeapSafeStringBase(T* buffer = 0, int size = 0) : BufferedSafeStringBase<T>(buffer, size) {}
+    HeapSafeStringBase(T* buffer, int size) : BufferedSafeStringBase<T>(buffer, size) {}
     virtual ~HeapSafeStringBase();
-    virtual HeapSafeStringBase& operator=(const SafeStringBase<T>& other)
-    {
-        BufferedSafeStringBase<T>::operator=(other);
-        return *this;
-    }
-    HeapSafeStringBase& __as__S(const SafeStringBase<T>& other);
+    virtual HeapSafeStringBase& operator=(const SafeStringBase<T>& other);
 };
 
-template<int N> class FixedSafeStringBase : public BufferedSafeStringBase<char>
+template<> HeapSafeStringBase<char>& HeapSafeStringBase<char>::operator=(const SafeStringBase<char>& other);
+template<> HeapSafeStringBase<wchar_t>& HeapSafeStringBase<wchar_t>::operator=(const SafeStringBase<wchar_t>& other);
+
+template<typename T, int N> class FixedSafeStringBase : public BufferedSafeStringBase<T>
 {
 public:
-    FixedSafeStringBase() : BufferedSafeStringBase<char>(mStorage, N) {}
-    FixedSafeStringBase(const SafeStringBase<char>& text) : BufferedSafeStringBase<char>(mStorage, N)
+    FixedSafeStringBase() : BufferedSafeStringBase<T>(mStorage, N)
     {
-        this->copy(text.cstr());
+        this->clear();
+    }
+    FixedSafeStringBase(const SafeStringBase<T>& text) : BufferedSafeStringBase<T>(mStorage, N)
+    {
+        this->copy(text);
     }
     virtual ~FixedSafeStringBase() {}
-    virtual FixedSafeStringBase& operator=(const SafeStringBase<char>& text)
+    virtual FixedSafeStringBase& operator=(const SafeStringBase<T>& text)
     {
-        this->copy(text.cstr());
+        this->copy(text);
         return *this;
     }
 
 private:
-    char mStorage[N];
+    T mStorage[N];
 };
 
-template<int N> class FixedSafeString : public FixedSafeStringBase<N>
+template<int N> class FixedSafeString : public FixedSafeStringBase<char, N>
 {
 public:
     FixedSafeString() {}
-    FixedSafeString(const SafeStringBase<char>& text) : FixedSafeStringBase<N>(text) {}
+    FixedSafeString(const SafeStringBase<char>& text) : FixedSafeStringBase<char, N>(text) {}
     virtual ~FixedSafeString() {}
     virtual FixedSafeString& operator=(const SafeStringBase<char>& text)
     {
-        FixedSafeStringBase<N>::operator=(text);
+        FixedSafeStringBase<char, N>::operator=(text);
         return *this;
     }
 };
@@ -257,8 +500,10 @@ public:
 
 class ListNode
 {
+    friend class ListImpl;
+
 public:
-    ListNode() : mPrev(this), mNext(this) {}
+    ListNode() : mPrev(0), mNext(0) {}
     void insertBack_(ListNode* node);
     void insertFront_(ListNode* node);
     void erase_();
@@ -275,7 +520,35 @@ class Random;
 class ListImpl
 {
 public:
-    ListImpl() : mStart(), mCount(0) {}
+    ListImpl() : mStartEnd(), mCount(0)
+    {
+        mStartEnd.mNext = &mStartEnd;
+        mStartEnd.mPrev = &mStartEnd;
+    }
+    bool isEmpty() const { return mCount == 0; }
+    int size() const { return mCount; }
+    void pushBack(ListNode* item)
+    {
+        mStartEnd.insertFront_(item);
+        ++mCount;
+    }
+    void pushFront(ListNode* item)
+    {
+        mStartEnd.insertBack_(item);
+        ++mCount;
+    }
+    void insertBefore(ListNode* basis, ListNode* item)
+    {
+        basis->insertFront_(item);
+        ++mCount;
+    }
+    void erase(ListNode* item)
+    {
+        item->erase_();
+        --mCount;
+    }
+    ListNode* front() const { return mCount > 0 ? mStartEnd.mNext : 0; }
+    ListNode* back() const { return mCount > 0 ? mStartEnd.mPrev : 0; }
     ListNode* nth(int index) const;
     void sort(int offset, int (*compare)(const void*, const void*));
     void clear();
@@ -293,9 +566,106 @@ public:
     void uniq(int, int (*)(const void*, const void*));
     bool checkLinks() const;
 
-private:
-    ListNode mStart;
+protected:
+    ListNode mStartEnd;
     int mCount;
+};
+
+template<typename T> class OffsetList : public ListImpl
+{
+public:
+    class iterator
+    {
+    public:
+        iterator(T* object, int offset) : mObject(object), mOffset(offset) {}
+        T& operator*() const { return *mObject; }
+        T* operator->() const { return mObject; }
+        iterator& operator++()
+        {
+            ListNode* node = reinterpret_cast<ListNode*>(reinterpret_cast<char*>(mObject) + mOffset)->next();
+            mObject = reinterpret_cast<T*>(reinterpret_cast<char*>(node) + -mOffset);
+            return *this;
+        }
+        bool operator==(const iterator& other) const { return mObject == other.mObject; }
+        bool operator!=(const iterator& other) const { return mObject != other.mObject; }
+
+    private:
+        T* mObject;
+        int mOffset;
+    };
+
+    OffsetList() : mOffset(-1) {}
+    void initOffset(int offset) { mOffset = offset; }
+    void pushBack(T* object) { ListImpl::pushBack(objToListNode(object)); }
+    void pushFront(T* object) { ListImpl::pushFront(objToListNode(object)); }
+    void insertBefore(T* basis, T* object) { ListImpl::insertBefore(objToListNode(basis), objToListNode(object)); }
+    void erase(T* object) { ListImpl::erase(objToListNode(object)); }
+    T* front() const { return listNodeToObjWithNullCheck(ListImpl::front()); }
+    T* back() const { return listNodeToObjWithNullCheck(ListImpl::back()); }
+    T* prev(const T* object) const
+    {
+        ListNode* node = objToListNode(object)->prev();
+        if (node == &mStartEnd)
+            return 0;
+        return listNodeToObj(node);
+    }
+    void clear() { ListImpl::clear(); }
+    void sort(int (*compare)(const T*, const T*))
+    {
+        ListImpl::sort(mOffset, reinterpret_cast<int (*)(const void*, const void*)>(compare));
+    }
+    iterator begin() const { return iterator(listNodeToObj(mStartEnd.next()), mOffset); }
+    iterator end() const { return iterator(listNodeToObj(&mStartEnd), mOffset); }
+
+protected:
+    ListNode* objToListNode(const T* object) const
+    {
+        return reinterpret_cast<ListNode*>(const_cast<char*>(reinterpret_cast<const char*>(object)) + mOffset);
+    }
+    T* listNodeToObj(const ListNode* node) const
+    {
+        return reinterpret_cast<T*>(const_cast<char*>(reinterpret_cast<const char*>(node)) + -mOffset);
+    }
+    T* listNodeToObjWithNullCheck(ListNode* node) const { return node ? listNodeToObj(node) : 0; }
+
+    int mOffset;
+};
+
+template<typename T> class TList;
+
+template<typename T> class TListNode : public ListNode
+{
+public:
+    TListNode() : ListNode(), mData(), mList(0) {}
+    void erase()
+    {
+        TList<T>* list = mList;
+        if (list)
+            list->erase(this);
+    }
+
+    T mData;
+    TList<T>* mList;
+};
+
+template<typename T> class TList : public ListImpl
+{
+public:
+    TList() : ListImpl() {}
+    void pushBack(TListNode<T>* item)
+    {
+        item->erase();
+        item->mList = this;
+        ListImpl::pushBack(item);
+    }
+    void erase(TListNode<T>* item)
+    {
+        item->mList = 0;
+        ListImpl::erase(item);
+    }
+    TListNode<T>* begin() const { return static_cast<TListNode<T>*>(mStartEnd.next()); }
+    const ListNode* end() const { return &mStartEnd; }
+    static TListNode<T>* next(const TListNode<T>* item) { return static_cast<TListNode<T>*>(item->next()); }
 };
 
 class PtrArrayImpl
@@ -317,11 +687,49 @@ public:
     void heapSort(int (*)(const void*, const void*));
     int compare(const PtrArrayImpl&, int (*)(const void*, const void*)) const;
     void uniq(int (*)(const void*, const void*));
+    int size() const { return mPtrNum; }
+    bool isEmpty() const { return mPtrNum == 0; }
 
-private:
+protected:
     int mPtrNum;
     int mPtrNumMax;
     void** mPtrs;
+};
+
+template<typename T> class PtrArray : public PtrArrayImpl
+{
+public:
+    T* at(int index) const
+    {
+        if (static_cast<unsigned int>(index) < static_cast<unsigned int>(mPtrNum))
+            return static_cast<T*>(mPtrs[index]);
+        return 0;
+    }
+    T* back() const { return at(mPtrNum - 1); }
+    void pushBack(T* value)
+    {
+        if (mPtrNum < mPtrNumMax)
+        {
+            mPtrs[mPtrNum] = value;
+            ++mPtrNum;
+        }
+    }
+    void popBack()
+    {
+        if (mPtrNum > 0)
+            --mPtrNum;
+    }
+    T** begin() const { return reinterpret_cast<T**>(mPtrs); }
+    T** end() const { return reinterpret_cast<T**>(mPtrs) + mPtrNum; }
+};
+
+template<typename T, int N> class FixedPtrArray : public PtrArray<T>
+{
+public:
+    FixedPtrArray() { this->setBuffer(N, mWork); }
+
+private:
+    void* mWork[N];
 };
 
 class Random
@@ -332,6 +740,11 @@ public:
     void init();
     void init(unsigned int, unsigned int, unsigned int, unsigned int);
     unsigned int getU32();
+    unsigned int getU32(unsigned int max)
+    {
+        return static_cast<unsigned int>((static_cast<unsigned long long>(getU32()) * max) >> 32);
+    }
+    int getS32Range(int a, int b) { return getU32(b - a) + a; }
     unsigned long long getU64();
     void getContext(unsigned int*, unsigned int*, unsigned int*, unsigned int*) const;
 
@@ -342,10 +755,9 @@ private:
 class StreamSrc
 {
 public:
-    virtual ~StreamSrc() {}
-    virtual int skip(int) = 0;
     virtual unsigned int read(void*, unsigned int) = 0;
     virtual unsigned int write(const void*, unsigned int) = 0;
+    virtual int skip(int) = 0;
     virtual void rewind() = 0;
     virtual bool isEOF() = 0;
     virtual bool flush() { return true; }
@@ -355,12 +767,12 @@ class BufferReadStreamSrc : public StreamSrc
 {
 public:
     BufferReadStreamSrc(StreamSrc*, void*, unsigned int);
-    virtual ~BufferReadStreamSrc();
-    virtual int skip(int);
     virtual unsigned int read(void*, unsigned int);
     virtual unsigned int write(const void*, unsigned int);
+    virtual int skip(int);
     virtual void rewind();
     virtual bool isEOF();
+    virtual ~BufferReadStreamSrc();
 
 private:
     const unsigned char* mBuffer;
@@ -373,13 +785,13 @@ class BufferWriteStreamSrc : public StreamSrc
 {
 public:
     BufferWriteStreamSrc(StreamSrc*, void*, unsigned int);
-    virtual ~BufferWriteStreamSrc();
-    virtual int skip(int);
     virtual unsigned int read(void*, unsigned int);
     virtual unsigned int write(const void*, unsigned int);
+    virtual int skip(int);
     virtual void rewind();
     virtual bool isEOF();
     virtual bool flush();
+    virtual ~BufferWriteStreamSrc();
 
 protected:
     unsigned char* mBuffer;
@@ -509,7 +921,7 @@ public:
 
 private:
     void getNextData_(StreamSrc*);
-    FixedSafeString128 mTextBuffer;
+    FixedSafeString128 mSeparator;
 };
 
 class Stream
@@ -696,26 +1108,123 @@ class CoreInfo
 public:
     static void configure();
     static int getPlatformMask(CoreId);
-    static CoreId getCurrentCoreId();
+    static CoreId getCurrentCoreId() { return CoreId(sCoreIndexTable[OSGetCoreId()]); }
     static void dump();
+
+    static unsigned int sCoreCount;
+    static unsigned int sCoreIdMap[3];
+    static unsigned int sCoreIndexTable[3];
 };
 
 class IDisposer
 {
+    friend class Heap;
+
 public:
     enum HeapNullOption
     {
-        cHeapNullOption_Assert = 0,
-        cHeapNullOption_Allow = 1
+        cHeapNullOption_AlwaysUseSpecifiedHeap = 0,
+        cHeapNullOption_UseSpecifiedOrContainHeap = 1,
+        cHeapNullOption_DoNotAppendDisposerIfNoHeapSpecified = 2,
+        cHeapNullOption_UseSpecifiedOrCurrentHeap = 3
     };
     IDisposer();
     IDisposer(Heap*, HeapNullOption);
     virtual ~IDisposer();
 
+    static Heap* cDestructedFlag;
+
 private:
-    friend class Heap;
-    ListNode mDisposerNode;
-    Heap* mHeap;
+    Heap* mDisposerHeap;
+    ListNode mListNode;
+};
+
+class AtomicU32
+{
+public:
+    AtomicU32(unsigned int value = 0) : mValue(value) {}
+    unsigned int load() const { return mValue; }
+    void store(unsigned int value) { mValue = value; }
+    unsigned int increment()
+    {
+#ifdef __ghs__
+        unsigned int previous;
+        do
+        {
+            previous = __LWARX(&mValue, 0);
+            __DCBST(&mValue, 0);
+        } while (!__STWCX(&mValue, 0, previous + 1));
+        return previous;
+#else
+        return static_cast<unsigned int>(OSAddAtomic(reinterpret_cast<volatile int32_t*>(&mValue), 1));
+#endif
+    }
+    unsigned int fetchOr(unsigned int mask)
+    {
+#ifdef __ghs__
+        unsigned int previous;
+        do
+        {
+            previous = __LWARX(&mValue, 0);
+            __DCBST(&mValue, 0);
+        } while (!__STWCX(&mValue, 0, previous | mask));
+        return previous;
+#else
+        uint32_t previous;
+        do
+            previous = mValue;
+        while (!OSCompareAndSwapAtomicEx(&mValue, previous, previous | mask, &previous));
+        return previous;
+#endif
+    }
+    unsigned int fetchAnd(unsigned int mask)
+    {
+#ifdef __ghs__
+        unsigned int previous;
+        do
+        {
+            previous = __LWARX(&mValue, 0);
+            __DCBST(&mValue, 0);
+        } while (!__STWCX(&mValue, 0, previous & mask));
+        return previous;
+#else
+        uint32_t previous;
+        do
+            previous = mValue;
+        while (!OSCompareAndSwapAtomicEx(&mValue, previous, previous & mask, &previous));
+        return previous;
+#endif
+    }
+    bool compareExchange(unsigned int expected, unsigned int desired, unsigned int* original)
+    {
+#ifdef __ghs__
+        unsigned int previous;
+        do
+        {
+            previous = __LWARX(&mValue, 0);
+            if (previous != expected)
+            {
+                *original = previous;
+                return false;
+            }
+            __DCBST(&mValue, 0);
+        } while (!__STWCX(&mValue, 0, desired));
+        *original = previous;
+        return true;
+#else
+        uint32_t previous;
+        BOOL exchanged = OSCompareAndSwapAtomicEx(&mValue, expected, desired, &previous);
+        *original = previous;
+        return exchanged != FALSE;
+#endif
+    }
+
+private:
+#ifdef __ghs__
+    unsigned int mValue;
+#else
+    volatile uint32_t mValue;
+#endif
 };
 
 template<typename T> class IDelegate1
@@ -729,7 +1238,6 @@ public:
 template<typename T1, typename T2> class IDelegate2
 {
 public:
-    virtual ~IDelegate2() {}
     virtual void invoke(T1, T2) = 0;
     virtual IDelegate2* clone(Heap*) const { return 0; }
 };
@@ -739,8 +1247,12 @@ template<typename Owner, typename T1, typename T2> class Delegate2 : public IDel
 public:
     typedef void (Owner::*Method)(T1, T2);
     Delegate2(Owner* owner, Method method) : mOwner(owner), mMethod(method) {}
-    virtual void invoke(T1 first, T2 second) { (mOwner->*mMethod)(first, second); }
-    virtual IDelegate2<T1, T2>* clone(Heap*) const { return new Delegate2(*this); }
+    virtual void invoke(T1 first, T2 second)
+    {
+        if (mOwner != 0 && mMethod != 0)
+            (mOwner->*mMethod)(first, second);
+    }
+    virtual IDelegate2<T1, T2>* clone(Heap* heap) const { return new (heap) Delegate2(mOwner, mMethod); }
 
 private:
     Owner* mOwner;
@@ -769,8 +1281,24 @@ private:
     bool mEnabled;
 };
 
+class CriticalSection : public IDisposer
+{
+public:
+    CriticalSection();
+    CriticalSection(Heap*);
+    virtual ~CriticalSection();
+    void lock();
+    void unlock();
+    bool tryLock();
+    void dump(StackSymbolResolver*);
+
+private:
+    unsigned int mStorage[11];
+};
+
 class Heap : public IDisposer
 {
+    friend class ExpHeap;
     friend class HeapMgr;
 
 public:
@@ -778,6 +1306,12 @@ public:
     {
         cHeapDirection_Forward = 1,
         cHeapDirection_Reverse = -1
+    };
+    enum Flag
+    {
+        cFlag_EnableLock = 1,
+        cFlag_Disposing = 2,
+        cFlag_EnableWarning = 4
     };
     Heap(const SafeStringBase<char>&, Heap*, void*, unsigned int, HeapDirection, bool);
     virtual ~Heap();
@@ -796,8 +1330,8 @@ public:
     virtual unsigned int adjust() = 0;
     virtual void* tryAlloc(unsigned int, int) = 0;
     virtual void free(void*) = 0;
-    virtual unsigned int resizeFront(void*, unsigned int) = 0;
-    virtual unsigned int resizeBack(void*, unsigned int) = 0;
+    virtual void* resizeFront(void*, unsigned int) = 0;
+    virtual void* resizeBack(void*, unsigned int) = 0;
     virtual void* tryRealloc(void*, unsigned int, int);
     virtual void freeAll() = 0;
     virtual void* getStartAddress() const = 0;
@@ -814,6 +1348,10 @@ public:
     virtual void dumpYAML(WriteStream&, int) const;
     virtual void pushBackChild_(Heap*);
     void dumpTreeYAML(WriteStream&, int) const;
+    const SafeStringBase<char>& getName() const { return mName; }
+    Heap* getParent() const { return mParent; }
+    HeapDirection getDirection() const { return mDirection; }
+    bool isEnableLock() const { return mFlag.isOn(cFlag_EnableLock); }
     Heap* findContainHeap_(const void*);
     void dispose_(const void*, const void*);
     void eraseChild_(Heap*);
@@ -824,25 +1362,45 @@ public:
 
 protected:
     SafeStringBase<char> mName;
-    Heap* mParent;
-    ListNode mChildren;
-    ListNode mDisposers;
     void* mStart;
     unsigned int mSize;
+    Heap* mParent;
+    OffsetList<Heap> mChildren;
+    ListNode mListNode;
+    OffsetList<IDisposer> mDisposerList;
     HeapDirection mDirection;
-    bool mEnableLock;
+    CriticalSection mCS;
+    BitFlag<unsigned short> mFlag;
+    unsigned short mHeapCheckTag;
 };
 
 class MemBlock
 {
 public:
-    MemBlock* previous;
-    MemBlock* next;
-    unsigned char* address;
-    void* payload;
-    unsigned int span;
-    unsigned int size;
-    int alignment;
+    MemBlock() : mListNode(), mMagic(0), mOffset(0), mSize(0) {}
+    explicit MemBlock(unsigned int size) : mListNode(), mMagic(0), mOffset(0), mSize(size) {}
+    unsigned char* memory() const
+    {
+        return const_cast<unsigned char*>(reinterpret_cast<const unsigned char*>(this)) + sizeof(MemBlock) + mOffset;
+    }
+    void setOffset(unsigned short offset)
+    {
+        mOffset = offset;
+        if (offset)
+            reinterpret_cast<uintptr_t*>(memory())[-1] = reinterpret_cast<uintptr_t>(this) + 1;
+    }
+    static MemBlock* findManageArea(void* memory)
+    {
+        uintptr_t tag = static_cast<uintptr_t*>(memory)[-1];
+        if (tag & 1)
+            return reinterpret_cast<MemBlock*>(tag - 1);
+        return reinterpret_cast<MemBlock*>(static_cast<unsigned char*>(memory) - sizeof(MemBlock));
+    }
+
+    ListNode mListNode;
+    unsigned short mMagic;
+    unsigned short mOffset;
+    unsigned int mSize;
 };
 
 class ExpHeap : public Heap
@@ -851,7 +1409,8 @@ public:
     enum FindMode
     {
         cFindMode_FirstFit = 0,
-        cFindMode_BestFit = 1
+        cFindMode_BestFit = 1,
+        cFindMode_MaxSize = 2
     };
     enum AllocMode
     {
@@ -881,8 +1440,8 @@ public:
     virtual unsigned int adjust();
     virtual void* tryAlloc(unsigned int, int);
     virtual void free(void*);
-    virtual unsigned int resizeFront(void*, unsigned int);
-    virtual unsigned int resizeBack(void*, unsigned int);
+    virtual void* resizeFront(void*, unsigned int);
+    virtual void* resizeBack(void*, unsigned int);
     virtual void* tryRealloc(void*, unsigned int, int);
     virtual void freeAll();
     virtual void* getStartAddress() const;
@@ -909,30 +1468,25 @@ private:
     void pushToFreeList_(MemBlock*);
     static void createMaxSizeFreeMemBlock_(ExpHeap*);
     static void doCreate(ExpHeap*, Heap*);
-    static bool compareMemBlockAddr_(const MemBlock*, const MemBlock*);
+    static int compareMemBlockAddr_(const MemBlock*, const MemBlock*);
     MemBlock* findLastMemBlockIfFree_();
-    int adjustBack_();
+    unsigned int adjustBack_();
     MemBlock* findFirstMemBlockIfFree_();
-    int adjustFront_();
+    unsigned int adjustFront_();
     MemBlock* findFreeMemBlockFromHead_(unsigned int, FindMode) const;
     MemBlock* findFreeMemBlockFromHead_(unsigned int, int, FindMode) const;
     void pushToUseList_(MemBlock*);
-    void* allocFromHead_(unsigned int);
-    void* allocFromHead_(unsigned int, int);
+    MemBlock* allocFromHead_(unsigned int);
+    MemBlock* allocFromHead_(unsigned int, int);
     MemBlock* findFreeMemBlockFromTail_(unsigned int, FindMode) const;
     MemBlock* findFreeMemBlockFromTail_(unsigned int, int, FindMode) const;
-    void* allocFromTail_(unsigned int);
-    void* allocFromTail_(unsigned int, int);
+    MemBlock* allocFromTail_(unsigned int);
+    MemBlock* allocFromTail_(unsigned int, int);
     void* realloc_(void*, unsigned char*, unsigned int, unsigned int, int);
-    void removeFreeBlock_(MemBlock*);
-    void removeUseBlock_(MemBlock*);
+
     AllocMode mAllocMode;
-    unsigned int mFreeSize;
-    MemBlock* mFreeHead;
-    MemBlock* mFreeTail;
-    MemBlock* mUseHead;
-    MemBlock* mUseTail;
-    bool mOwnsMemory;
+    OffsetList<MemBlock> mFreeList;
+    OffsetList<MemBlock> mUseList;
 };
 
 class FindContainHeapCache
@@ -941,27 +1495,20 @@ public:
     FindContainHeapCache();
     bool tryRemoveHeap(Heap*);
 
-private:
-    Heap* mHeap;
+    AtomicU32 mHeap;
 };
 
-class CriticalSection : public IDisposer
+class Arena
 {
 public:
-    CriticalSection();
-    CriticalSection(Heap*);
-    virtual ~CriticalSection();
-    void lock();
-    void unlock();
-    bool tryLock();
-    void dump(StackSymbolResolver*);
-
-private:
-    unsigned int mStorage[11];
+    unsigned char* mStart;
+    unsigned int mSize;
 };
 
 class HeapMgr
 {
+    friend class Heap;
+
 public:
     struct AllocCallbackArg
     {
@@ -977,11 +1524,17 @@ public:
     struct AllocFailedCallbackArg
     {
         Heap* heap;
-        unsigned int size;
-        int alignment;
+        unsigned int requestSize;
+        int requestAlignment;
+        unsigned int allocSize;
+        int allocAlignment;
     };
+    typedef IDelegate1<const AllocFailedCallbackArg*> IAllocFailedCallback;
+    typedef FixedPtrArray<Heap, 4> RootHeaps;
+    typedef FixedPtrArray<Heap, 4> IndependentHeaps;
+
     HeapMgr();
-    ~HeapMgr();
+    virtual ~HeapMgr();
     static void initialize(Arena*);
     static void destroy();
     Heap* findContainHeap(const void*) const;
@@ -989,21 +1542,29 @@ public:
     Heap* getCurrentHeap() const;
     static bool isContainedInAnyHeap(const void*);
     static void dumpTreeYAML(WriteStream&);
-    static void setAllocFailedCallback(IDelegate1<const AllocFailedCallbackArg*>*);
+    void setAllocFailedCallback(IAllocFailedCallback*);
     void setCurrentHeap_(Heap*);
-    static HeapMgr* instance();
+    IAllocFailedCallback* getAllocFailedCallback() const { return mAllocFailedCallback; }
+    static HeapMgr* instance() { return sInstancePtr; }
+    static Heap* getRootHeap(int index) { return sRootHeaps.at(index); }
+    static CriticalSection* getHeapTreeLockCS() { return &sHeapTreeLockCS; }
+    static unsigned short issueHeapCheckTag() { return static_cast<unsigned short>(sHeapCheckTag.increment()); }
 
 private:
     static void createRootHeap_();
     static void initializeImpl_();
     static Heap* findHeapByName_(Heap*, const SafeStringBase<char>&, int*);
     static void removeFromFindContainHeapCache_(Heap*);
-    Heap* mRootHeap;
-    Heap* mCurrentHeap;
-    unsigned char mUnknown8[0x14];
-    CriticalSection mLock;
-    void* mCacheOwner;
-    void* mCacheList;
+
+    IAllocFailedCallback* mAllocFailedCallback;
+
+    static Arena* sArena;
+    static HeapMgr sInstance;
+    static HeapMgr* sInstancePtr;
+    static AtomicU32 sHeapCheckTag;
+    static RootHeaps sRootHeaps;
+    static CriticalSection sHeapTreeLockCS;
+    static IndependentHeaps sIndependentHeaps;
 };
 
 void* allocateFromSeadHeap(unsigned int, Heap*);
@@ -1012,17 +1573,29 @@ void* allocateFromSeadHeap(unsigned int, Heap*, int);
 void freeToSeadHeap(void*);
 unsigned int getArraySize(void*);
 
-template<typename T> T* NewArray(unsigned int count, Heap* heap, int alignment)
+template<typename T> T* NewArray(unsigned int count, Heap* heap)
 {
-    T* array = static_cast<T*>(allocateFromSeadHeap(sizeof(T) * count, heap, alignment));
-    if (!array)
+    void* memory = allocateFromSeadHeap(sizeof(T) * count, heap);
+    if (!memory)
         return 0;
+    T* array = static_cast<T*>(memory);
     for (unsigned int index = 0; index < count; ++index)
         new (array + index) T();
     return array;
 }
 
-template<typename T> inline void DeleteArray(T* array)
+template<typename T> T* NewArray(unsigned int count, Heap* heap, int alignment)
+{
+    void* memory = allocateFromSeadHeap(sizeof(T) * count, heap, alignment);
+    if (!memory)
+        return 0;
+    T* array = static_cast<T*>(memory);
+    for (unsigned int index = 0; index < count; ++index)
+        new (array + index) T();
+    return array;
+}
+
+template<typename T> void DeleteArray(T* array)
 {
     if (!array)
         return;
@@ -1030,6 +1603,40 @@ template<typename T> inline void DeleteArray(T* array)
     while (count)
         array[--count].~T();
     freeToSeadHeap(array);
+}
+
+template<typename T> inline bool Buffer<T>::tryAllocBuffer(int size, Heap* heap, int alignment)
+{
+    if (size > 0)
+    {
+        if (!heap)
+            heap = HeapMgr::instance()->getCurrentHeap();
+        T* buffer = static_cast<T*>(heap->tryAlloc(sizeof(T) * size, alignment));
+        if (buffer)
+        {
+            for (int index = 0; index < size; ++index)
+                new (buffer + index) T();
+        }
+        if (buffer)
+        {
+            mSize = size;
+            mBuffer = buffer;
+            return true;
+        }
+    }
+    return false;
+}
+
+template<typename T> inline void Buffer<T>::freeBuffer()
+{
+    if (mBuffer)
+    {
+        for (int index = 0; index < mSize; ++index)
+            mBuffer[index].~T();
+        HeapMgr::instance()->findContainHeap(mBuffer)->free(mBuffer);
+        mBuffer = 0;
+        mSize = 0;
+    }
 }
 
 class Mutex : public IDisposer
@@ -1067,10 +1674,13 @@ private:
 template<typename Lock> class ConditionalScopedLock
 {
 public:
-    ConditionalScopedLock(Lock* lock, bool condition) : mLock(condition ? lock : 0)
+    ConditionalScopedLock(Lock* lock, bool condition) : mLock(0)
     {
-        if (mLock)
+        if (condition)
+        {
+            mLock = lock;
             mLock->lock();
+        }
     }
     ~ConditionalScopedLock()
     {
@@ -1087,7 +1697,25 @@ class TickSpan
 public:
     TickSpan(long long ticks = 0) : mTicks(ticks) {}
     long long toNanoSeconds() const;
+    long long toMicroSeconds() const
+    {
+        const long long cMicroSecondsLimit = LLONG_MAX / 1000000;
+        const long long cMilliSecondsLimit = LLONG_MAX / 1000;
+        if (-cMicroSecondsLimit <= mTicks && mTicks < cMicroSecondsLimit)
+            return mTicks * 1000000 / cFrequency;
+        if (-cMilliSecondsLimit <= mTicks && mTicks < cMilliSecondsLimit)
+            return mTicks * 1000 / cFrequency * 1000;
+        return mTicks / cFrequency * 1000000;
+    }
     void setNanoSeconds(long long);
+    static TickSpan makeFromMicroSeconds(long long microSeconds)
+    {
+        return TickSpan(microSeconds * cFrequency / 1000 / 1000);
+    }
+    static TickSpan makeFromMilliSeconds(long long milliSeconds)
+    {
+        return TickSpan(milliSeconds * cFrequency / 1000);
+    }
     long long getTicks() const { return mTicks; }
 
     static const long long cFrequency;
@@ -1176,32 +1804,49 @@ public:
     void setStackOverflowExceptionEnable(bool);
     void initStackCheck_();
     void initStackCheckWithCurrentStackPointer_();
+    Heap* getCurrentHeap() const { return mCurrentHeap; }
+    void setCurrentHeap_(Heap* heap) { mCurrentHeap = heap; }
+    FindContainHeapCache* getFindContainHeapCache() { return &mFindContainHeapCache; }
+    bool isDone() const { return mState == cState_Terminated || mState == cState_Released; }
+
+    enum
+    {
+        cDefaultQuitMsg = INT_MAX,
+        cDefaultMessageQueueSize = 32,
+        cThreadAlignment = 8
+    };
+    static const uintptr_t cUncreatedStackEnd = static_cast<uintptr_t>(-1);
 
 protected:
-    unsigned int mThreadNameVtable;
-    const char* mThreadName;
+    enum State
+    {
+        cState_Initialized = 0,
+        cState_Running = 1,
+        cState_Quitting = 2,
+        cState_Terminated = 3,
+        cState_Released = 4
+    };
+
+    SafeStringBase<char> mName;
     MessageQueue mMessageQueue;
     int mStackSize;
-    int mUnknown5c;
-    int mUnknown60;
-    int mUnknown64;
-    int mUnknown68;
-    int mUnknown6c;
+    TListNode<Thread*> mListNode;
+    Heap* mCurrentHeap;
     FindContainHeapCache mFindContainHeapCache;
     MessageQueue::BlockType mBlockType;
-    int mUnknown78;
-    int mMessageState;
-    int mThreadState;
-    unsigned int mAffinityMask;
+    int mQuitMsg;
+    unsigned int mId;
+    State mState;
+    CoreIdMask mAffinity;
     OSThread* mThread;
-    void* mStack;
+    unsigned char* mStack;
     int mPriority;
 };
 
 class MainThread : public Thread
 {
 public:
-    MainThread(Heap*, OSThread*);
+    MainThread(Heap* heap, OSThread* thread) : Thread(heap, thread) {}
     virtual ~MainThread();
     virtual void destroy();
     virtual void quit(bool);
@@ -1229,15 +1874,22 @@ public:
     class SingletonDisposer_ : public IDisposer
     {
     public:
+        explicit SingletonDisposer_(Heap* heap) : IDisposer(heap, cHeapNullOption_UseSpecifiedOrCurrentHeap) {}
         virtual ~SingletonDisposer_();
+
+        static SingletonDisposer_* sStaticDisposer;
     };
+    typedef TList<Thread*> ThreadList;
+
     ThreadMgr();
-    ~ThreadMgr();
-    static void createInstance(Heap*);
+    virtual ~ThreadMgr();
+    static ThreadMgr* instance() { return sInstance; }
+    static ThreadMgr* createInstance(Heap*);
     static void deleteInstance();
     void initialize(Heap*);
     void destroy();
     Thread* getCurrentThread() const;
+    MainThread* getMainThread() const { return mMainThread; }
     bool isMainThread() const;
     static void waitDoneMultipleThread(Thread* const*, int);
     static void quitAndWaitDoneMultipleThread(Thread**, int, bool);
@@ -1246,15 +1898,19 @@ public:
     static void checkCurrentThreadStackPointerOverFlow(const char*, int);
 
 private:
+    friend class Thread;
+    friend class HeapMgr;
+
     void initMainThread_(Heap*);
     void destroyMainThread_();
     static unsigned int getCurrentThreadID_();
-    unsigned int mUnknown0[4];
-    ListNode mThreadList;
-    unsigned int mUnknown18;
-    CriticalSection mLock;
-    Thread* mCurrentThread;
+
+    unsigned int mSingletonDisposerBuf_[sizeof(SingletonDisposer_) / sizeof(unsigned int)];
+    ThreadList mList;
+    mutable CriticalSection mListCS;
     MainThread* mMainThread;
+
+    static ThreadMgr* sInstance;
 };
 
 class PrintFormatter;
@@ -1313,7 +1969,6 @@ public:
     {
     public:
         static void out(const Wrapper<T>&, const char*, PrintOutput*);
-        static void out__S(const Wrapper<T>&, const char*, PrintOutput*);
     };
 
     PrintFormatter(const char*, PrintOutput*);
@@ -1324,11 +1979,7 @@ public:
     static void outputString_(const char*, PrintOutput*, const char*, int);
     static void outputPtr_(const char*, PrintOutput*, unsigned int);
     template<typename T> static void out(const T&, const char*, PrintOutput*);
-    static void out(const char*, const char*, PrintOutput*);
-    static void out(const wchar_t*, const char*, PrintOutput*);
-    static void out(const Heap&, const char*, PrintOutput*);
-    static void out(const ExpHeap&, const char*, PrintOutput*);
-    static void out(const TickSpan&, const char*, PrintOutput*);
+    template<typename T> static void out(const T*, const char*, PrintOutput*);
 
 private:
     void proceedToFormatMark_(char*);
@@ -1396,10 +2047,9 @@ namespace StringUtil
 {
     enum CardinalNumber
     {
-        cDecimal = 0,
-        cHexadecimal = 1,
-        cOctal = 2,
-        cBinary = 3
+        cAuto = -1,
+        cDecimal = 10,
+        cHexadecimal = 16
     };
     struct Char16Pair
     {
@@ -1538,6 +2188,16 @@ int replaceStringImpl(wchar_t*, int*, int, const wchar_t*, int, const SafeString
 template<typename T>
 int replaceStringImpl_(T*, int*, int, const T*, int, const SafeStringBase<T>&, const SafeStringBase<T>&,
                        bool*);
+}
+
+inline void* operator new(size_t size, pead::Heap* heap)
+{
+    return pead::allocateFromSeadHeap(size, heap);
+}
+
+inline void operator delete(void* memory, pead::Heap*)
+{
+    pead::freeToSeadHeap(memory);
 }
 
 #endif

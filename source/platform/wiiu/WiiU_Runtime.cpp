@@ -10,15 +10,10 @@
 #include "game/core/CriticalSection.hpp"
 #include "platform/wiiu/WiiU_FileCache.hpp"
 
-static FSClient* sFileSystemClient = 0;
+FSClient* gFileSystemClient = 0;
 FSClient* gFileCacheClient = 0;
 
 void stateChangeCallback(FSClient*, FSVolumeState, void*);
-
-FSClient* GetWiiUFileSystemClient()
-{
-    return sFileSystemClient;
-}
 
 unsigned int FileTimeToSystemTime(const FILETIME* fileTime, SYSTEMTIME* systemTime)
 {
@@ -30,19 +25,25 @@ unsigned int FileTimeToSystemTime(const FILETIME* fileTime, SYSTEMTIME* systemTi
 void WiiUInitialise()
 {
     FSInit();
-    sFileSystemClient = static_cast<FSClient*>(std::malloc(0x1700));
-    FSAddClient(sFileSystemClient, FS_ERROR_FLAG_NONE);
-    gFileCacheClient = sFileSystemClient;
+    gFileSystemClient = static_cast<FSClient*>(std::malloc(0x1700));
+    FSAddClient(gFileSystemClient, FS_ERROR_FLAG_NONE);
+    gFileCacheClient = gFileSystemClient;
     FSStateChangeParams notification = {stateChangeCallback, 0, 0};
-    FSSetStateChangeNotification(sFileSystemClient, &notification);
+    FSSetStateChangeNotification(gFileSystemClient, &notification);
     s_writeBuffer = static_cast<unsigned char*>(MEMAllocFromDefaultHeapEx(FILE_CACHE_BUFFER_SIZE, 64));
     InitializeCriticalSection(&s_writeMutex);
     InitializeCriticalSection(&s_commandBlockMutex);
 }
 
+#if defined(__POWERPC__) || defined(__powerpc__) || defined(__PPC__)
+void __debugbreak()
+{
+}
+#endif
+
 unsigned int GetLastFileErrorCodeForViewer()
 {
-    return static_cast<unsigned int>(FSGetLastErrorCodeForViewer(sFileSystemClient));
+    return static_cast<unsigned int>(FSGetLastErrorCodeForViewer(gFileSystemClient));
 }
 
 unsigned int GetLastError()

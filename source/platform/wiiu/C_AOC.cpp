@@ -48,15 +48,17 @@ void C_AOC::Init()
     m_pWorkBuffer = MEMAllocFromDefaultHeapEx(m_uiWorkBufferSize, 64);
 
     m_eState = eAOCState_Start;
-    m_uiCurrentTitle = 0;
     m_uiTitleCount = 0;
+    m_uiCurrentTitle = 0;
     m_iNumContentNames = 0;
 
     m_pTitleList = (AOCTitle*)MEMAllocFromDefaultHeap(sizeof(AOCTitle) * MAX_AOC_TITLES);
 
     char* pStack = (char*)MEMAllocFromDefaultHeap(AOC_THREAD_STACK_SIZE);
 
-    if (C4JThreadImpl::OSCreateThread4J(&m_thread, GetPurchasedContent_threadEntry, 0, this, pStack + AOC_THREAD_STACK_SIZE, AOC_THREAD_STACK_SIZE, AOC_THREAD_PRIORITY, AOC_THREAD_ATTRIBUTES))
+    bool bCreated = C4JThreadImpl::OSCreateThread4J(&m_thread, GetPurchasedContent_threadEntry, 0, this, pStack + AOC_THREAD_STACK_SIZE, AOC_THREAD_STACK_SIZE, AOC_THREAD_PRIORITY, AOC_THREAD_ATTRIBUTES);
+
+    if (bCreated)
     {
         OSResumeThread(&m_thread);
     }
@@ -64,7 +66,8 @@ void C_AOC::Init()
 
 int C_AOC::GetPurchasedContent_threadEntry(int iArgc, void* pArgv)
 {
-    ((C_AOC*)pArgv)->GetPurchasedContent();
+    C_AOC* pAOC = (C_AOC*)pArgv;
+    pAOC->GetPurchasedContent();
     return 0;
 }
 
@@ -83,13 +86,13 @@ void C_AOC::GetPurchasedContent()
             break;
 
         case eAOCState_ListTitles:
-            if (AOC_ListTitle(&m_uiTitleCount, m_pTitleList, MAX_AOC_TITLES, m_pWorkBuffer, m_uiWorkBufferSize) != 0 || m_uiTitleCount == 0)
+            if (AOC_ListTitle(&m_uiTitleCount, m_pTitleList, MAX_AOC_TITLES, m_pWorkBuffer, m_uiWorkBufferSize) == 0 && m_uiTitleCount != 0)
             {
-                m_eState = eAOCState_Finalise;
+                m_eState = eAOCState_OpenTitle;
             }
             else
             {
-                m_eState = eAOCState_OpenTitle;
+                m_eState = eAOCState_Finalise;
             }
             break;
 
@@ -116,29 +119,30 @@ void C_AOC::GetPurchasedContent()
             {
                 int iDirHandle = -1;
 
-                if (!OpenDir(m_szMountPath, &iDirHandle))
+                if (OpenDir(m_szMountPath, &iDirHandle) != 1)
                 {
                     m_eState = eAOCState_Error;
-                    break;
                 }
-
-                FSDirEntry dirEntry;
-
-                while (ReadDir(&iDirHandle, &dirEntry) && (dirEntry.info.flags & FS_STAT_DIRECTORY) != 0)
+                else
                 {
-                    char* pContentName = new char[strlen(dirEntry.name)];
-                    strcpy(pContentName, dirEntry.name);
+                    FSDirEntry dirEntry;
 
-                    m_contentNames.push_back(pContentName);
-                    m_iNumContentNames++;
+                    while (ReadDir(&iDirHandle, &dirEntry) == 1 && (dirEntry.info.flags & FS_STAT_DIRECTORY) != 0)
+                    {
+                        char* pContentName = new char[strlen(dirEntry.name)];
+                        strcpy(pContentName, dirEntry.name);
+
+                        m_contentNames.push_back(pContentName);
+                        m_iNumContentNames++;
+                    }
+
+                    if (iDirHandle >= 0)
+                    {
+                        CloseDir(&iDirHandle);
+                    }
+
+                    m_eState = eAOCState_GetPurchaseInfo;
                 }
-
-                if (iDirHandle >= 0)
-                {
-                    CloseDir(&iDirHandle);
-                }
-
-                m_eState = eAOCState_GetPurchaseInfo;
             }
             break;
 
@@ -148,7 +152,8 @@ void C_AOC::GetPurchasedContent()
 
                 for (iContent = 0; iContent < m_iNumContentNames; iContent++)
                 {
-                    m_contentIndices[iContent] = (unsigned short)strtoull(m_contentNames[iContent], NULL, 16);
+                    const char* pContentName = m_contentNames[iContent];
+                    m_contentIndices[iContent] = (unsigned short)strtoull(pContentName, NULL, 16);
                 }
 
                 m_pPurchased = (int*)MEMAllocFromDefaultHeap(m_iNumContentNames * sizeof(int));
@@ -157,12 +162,12 @@ void C_AOC::GetPurchasedContent()
                 {
                     for (iContent = 0; iContent < m_iNumContentNames; iContent++)
                     {
-                        cNintendoDLCInfo* pDLCInfoInstance = gApp.GetDLCInfoInstance();
-                        DLC_INFO* pDLCInfo = pDLCInfoInstance->GetDLCInfoByRomName(m_contentNames[iContent]);
+                        const char* pContentName = m_contentNames[iContent];
+                        DLC_INFO* pDLCInfo = gApp.GetDLCInfoInstance()->GetDLCInfoByRomName(pContentName);
 
                         if (m_pPurchased[iContent] == 1 && pDLCInfo != NULL)
                         {
-                            if (pDLCInfoInstance->SetDLCPurchased(pDLCInfo->CatalogIndex, true))
+                            if (gApp.GetDLCInfoInstance()->SetDLCPurchased(pDLCInfo->CatalogIndex, true))
                             {
                                 std::wstring packName = convStringToWstring(std::string(pDLCInfo->PackName));
                                 gApp.HandleDLCLicenseChange(packName);
@@ -171,9 +176,9 @@ void C_AOC::GetPurchasedContent()
                     }
                 }
 
+                m_iNumContentNames = 0;
                 m_uiTitleCount = 0;
                 m_uiCurrentTitle = 0;
-                m_iNumContentNames = 0;
 
                 for (std::vector<const char*>::iterator it = m_contentNames.begin(); it != m_contentNames.end(); ++it)
                 {

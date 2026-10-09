@@ -12,10 +12,6 @@ NQRNetworkManager::NQRNetworkManager()
 {
 }
 
-NQRNetworkManager::~NQRNetworkManager()
-{
-}
-
 void NQRNetworkManager::SafeToRespondToGameBootInvite(int iUserIndex)
 {
     g_bSafeToRespondToGameBootInvite = true;

@@ -41,8 +41,10 @@ void C4JEventQueueImpl::threadPoll()
     }
     while (ShutdownManager::ShouldRun(ShutdownManager::eThreadId_EventQueue))
     {
-        if (m_eventArray->WaitForAny(-1) == 0)
+        unsigned int result = m_eventArray->WaitForAny(-1);
+        if (result == 0)
         {
+            bool empty = true;
             do
             {
                 EnterCriticalSection(&m_mutex);
@@ -50,19 +52,15 @@ void C4JEventQueueImpl::threadPoll()
                 LeaveCriticalSection(&m_mutex);
                 m_eventHandler(event);
                 EnterCriticalSection(&m_mutex);
-                m_events.pop_front();
-                const bool hasEvents = !m_events.empty();
-                if (!hasEvents)
+                m_events.pop();
+                empty = m_events.empty();
+                if (empty)
                 {
                     m_finishEvent->Set();
                 }
                 LeaveCriticalSection(&m_mutex);
-                if (!hasEvents)
-                {
-                    break;
-                }
             }
-            while (true);
+            while (!empty);
         }
     }
     ShutdownManager::HasFinished(ShutdownManager::eThreadId_EventQueue);
@@ -98,7 +96,7 @@ void C4JEventQueueImpl::sendEvent(void* event)
         init();
     }
     EnterCriticalSection(&m_mutex);
-    m_events.push_back(event);
+    m_events.push(event);
     m_eventArray->Set(0);
     m_finishEvent->Clear();
     LeaveCriticalSection(&m_mutex);

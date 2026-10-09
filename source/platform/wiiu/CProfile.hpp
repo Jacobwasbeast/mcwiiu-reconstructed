@@ -524,5 +524,6 @@ private:
 };
 
 extern CProfile* gProfile;
+extern CProfile* gProfileInstance;
 
 #endif

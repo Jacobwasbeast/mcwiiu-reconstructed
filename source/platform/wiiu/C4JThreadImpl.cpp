@@ -1,6 +1,7 @@
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "game/core/System.hpp"
 #include "game/core/CriticalSection.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 #include <coreinit/memdefaultheap.h>
 #include <coreinit/fastmutex.h>
 #include <coreinit/atomic64.h>
@@ -122,7 +123,7 @@ int C4JThreadImpl::entryPoint(int, void* argument)
 }
 
 C4JThreadImpl::C4JThreadImpl(int (*entry)(void*), void* argument, const char* name, int stackSize)
-    : m_argument(argument), m_entry(entry), m_stackSize(stackSize), m_processor(-1), m_running(false), m_started(false), m_exitCode(259), m_startTime(0), m_completionEvent(new C4JEventImpl(C4JEvent::Mode1)), m_priority(16)
+    : m_argument(argument), m_entry(entry), m_stackSize(stackSize), m_processor(-1), m_running(false), m_started(false), m_exitCode(STILL_ACTIVE), m_startTime(0), m_completionEvent(new C4JEventImpl(C4JEvent::Mode1)), m_priority(16)
 {
     if (m_stackSize == 0)
         m_stackSize = 0x20000;
@@ -216,7 +217,7 @@ uint32_t C4JThreadImpl::WaitForCompletion(int milliseconds)
     return m_completionEvent == NULL ? 0 : m_completionEvent->WaitForSignal(milliseconds);
 }
 
-uint32_t C4JThreadImpl::GetExitCode() { return m_exitCode; }
+int C4JThreadImpl::GetExitCode() { return m_exitCode; }
 const char* C4JThreadImpl::getName() { return m_name; }
 void C4JThreadImpl::SetDeleteOnExit(bool deleteOnExit) { m_deleteOnExit = deleteOnExit; }
 

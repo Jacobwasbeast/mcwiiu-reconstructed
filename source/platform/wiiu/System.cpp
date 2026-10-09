@@ -46,7 +46,7 @@ uint64_t System::processTimeInSeconds()
     return (long long)processTime(eTimeGranularity_MilliSecs) / 1000;
 }
 
-uint64_t System::processTimeInMilliSecs()
+long long System::processTimeInMilliSecs()
 {
     return processTime(eTimeGranularity_MilliSecs);
 }

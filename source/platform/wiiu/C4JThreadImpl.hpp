@@ -31,7 +31,7 @@ public:
     virtual uint32_t GetProcessor();
     virtual void SetPriority(int priority);
     virtual uint32_t WaitForCompletion(int milliseconds);
-    virtual uint32_t GetExitCode();
+    virtual int GetExitCode();
     virtual const char* getName();
     virtual void SetDeleteOnExit(bool deleteOnExit);
     static void SetMainThreadID();

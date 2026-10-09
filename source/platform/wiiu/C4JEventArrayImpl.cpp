@@ -1,9 +1,6 @@
 #include "platform/wiiu/C4JEventArrayImpl.hpp"
 
-static unsigned long long elapsedMilliseconds(unsigned long long ticks)
-{
-    return ticks * 1000ULL / (static_cast<unsigned long long>(OSGetSystemInfo()->busClockSpeed) >> 2);
-}
+#include <coreinit/time.h>
 
 C4JEventArrayImpl::C4JEventArrayImpl(int count, C4JEventArray::EMode mode)
     : m_count(count), m_mode(mode)
@@ -29,22 +26,20 @@ void C4JEventArrayImpl::Clear(int index)
     OSResetEvent(&m_events[index]);
 }
 
-uint64_t C4JEventArrayImpl::SetAll()
+void C4JEventArrayImpl::SetAll()
 {
     for (int index = 0; index < m_count; ++index)
     {
         Set(index);
     }
-    return 0;
 }
 
-uint64_t C4JEventArrayImpl::ClearAll()
+void C4JEventArrayImpl::ClearAll()
 {
     for (int index = 0; index < m_count; ++index)
     {
         Clear(index);
     }
-    return 0;
 }
 
 unsigned int C4JEventArrayImpl::WaitForAll(int timeout)
@@ -58,24 +53,23 @@ unsigned int C4JEventArrayImpl::WaitForAll(int timeout)
         return 0;
     }
 
-    int remaining = timeout;
     for (int index = 0; index < m_count; ++index)
     {
-        int start = OSGetTick();
-        int waitResult = 0;
-        if (remaining != 0)
+        OSTick start = OSGetTick();
+        BOOL result = timeout != 0 ? OSWaitEventWithTimeout(&m_events[index], timeout) : FALSE;
+        bool signaled = result != FALSE;
+        OSTick now = OSGetTick();
+        if (signaled)
         {
-            waitResult = OSWaitEventWithTimeout(&m_events[index], remaining);
+            timeout -= OSTicksToMilliseconds(now - start);
+            if (timeout < 0)
+            {
+                timeout = 0;
+            }
         }
-        int now = OSGetTick();
-        if (waitResult == 0)
+        else
         {
             return 0x102;
-        }
-        remaining -= static_cast<int>(elapsedMilliseconds(now - start));
-        if (remaining < 0)
-        {
-            remaining = 0;
         }
     }
     return 0;
@@ -97,8 +91,7 @@ unsigned int C4JEventArrayImpl::WaitForAny(int timeout)
         }
     }
 
-    int start = OSGetTick();
-    unsigned long long elapsed;
+    OSTick start = OSGetTick();
     do
     {
         for (int index = 0; index < m_count; ++index)
@@ -108,9 +101,7 @@ unsigned int C4JEventArrayImpl::WaitForAny(int timeout)
                 return 0;
             }
         }
-        int now = OSGetTick();
-        elapsed = elapsedMilliseconds(now - start);
-    } while (elapsed < static_cast<unsigned long long>(static_cast<long long>(timeout)));
+    } while (OSTicksToMilliseconds(OSGetTick() - start) < timeout);
     return 0x102;
 }
 
@@ -121,7 +112,8 @@ unsigned int C4JEventArrayImpl::WaitForSingle(int index, int timeout)
         OSWaitEvent(&m_events[index]);
         return 0;
     }
-    OSWaitEventWithTimeout(&m_events[index], static_cast<unsigned long long>(timeout) * 1000000ULL);
+    int timeoutNs = timeout * 1000000;
+    OSWaitEventWithTimeout(&m_events[index], timeoutNs);
     return 0x102;
 }
 

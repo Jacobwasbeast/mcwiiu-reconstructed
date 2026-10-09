@@ -15,8 +15,8 @@ public:
     virtual ~C4JEventArray() {}
     virtual void Set(int index) = 0;
     virtual void Clear(int index) = 0;
-    virtual uint64_t SetAll() = 0;
-    virtual uint64_t ClearAll() = 0;
+    virtual void SetAll() = 0;
+    virtual void ClearAll() = 0;
     virtual unsigned int WaitForAll(int timeout) = 0;
     virtual unsigned int WaitForAny(int timeout) = 0;
     virtual unsigned int WaitForSingle(int index, int timeout) = 0;

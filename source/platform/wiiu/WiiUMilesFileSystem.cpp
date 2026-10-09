@@ -11,14 +11,25 @@ extern unsigned int ReadFile(int hFile, void* lpBuffer, unsigned int nNumberOfBy
 
 struct CFileHandle
 {
+    CFileHandle(const char* filename, int fileHandle, unsigned int fileSize)
+    {
+        mFileHandle = fileHandle;
+        mCurrentPos = 0;
+        mStartOffset = 0;
+        mLength = 0;
+        mFileSize = fileSize;
+        mValidPosition = 1;
+        strncpy(mFilename, filename, 0x104);
+    }
+
     char mFilename[0x104];
     int mFileHandle;
-    int mStartOffset;
-    int mLength;
-    int mCurrentPos;
+    unsigned int mStartOffset;
+    unsigned int mLength;
+    unsigned int mCurrentPos;
     unsigned char mValidPosition;
     char mPadding[3];
-    int mFileSize;
+    unsigned int mFileSize;
 };
 
 static unsigned char sInitialized = 0;
@@ -30,10 +41,9 @@ void InvalidePositionsForOtherHandles(CFileHandle* handle)
     EnterCriticalSection(&sMutex);
     for (size_t i = 0; i < sFileHandles.size(); ++i)
     {
-        CFileHandle* other = sFileHandles[i];
-        if (other != handle && other->mFileHandle == handle->mFileHandle)
+        if (sFileHandles[i] != handle && sFileHandles[i]->mFileHandle == handle->mFileHandle)
         {
-            other->mValidPosition = 0;
+            sFileHandles[i]->mValidPosition = 0;
         }
     }
     LeaveCriticalSection(&sMutex);
@@ -64,18 +74,7 @@ unsigned int file_open_callback(const char* filename, unsigned int* handleOut)
         {
             if (strcmp(sFileHandles[i]->mFilename, localName) == 0)
             {
-                CFileHandle* existingHandle = sFileHandles[i];
-                handle = new CFileHandle;
-                if (handle != NULL)
-                {
-                    handle->mFileSize = existingHandle->mFileSize;
-                    handle->mStartOffset = 0;
-                    handle->mCurrentPos = 0;
-                    handle->mValidPosition = 1;
-                    handle->mFileHandle = existingHandle->mFileHandle;
-                    handle->mLength = 0;
-                    strncpy(handle->mFilename, filename, 0x104);
-                }
+                handle = new CFileHandle(filename, sFileHandles[i]->mFileHandle, sFileHandles[i]->mFileSize);
                 break;
             }
         }
@@ -90,16 +89,7 @@ unsigned int file_open_callback(const char* filename, unsigned int* handleOut)
                 *handleOut = 0;
                 return 0;
             }
-            handle = new CFileHandle;
-            if (handle != NULL)
-            {
-                handle->mFileHandle = fd;
-                handle->mLength = 0;
-                handle->mStartOffset = 0;
-                handle->mFileSize = size;
-                handle->mValidPosition = 1;
-                strncpy(handle->mFilename, localName, 0x104);
-            }
+            handle = new CFileHandle(localName, fd, size);
         }
 
         dst = localName;
@@ -118,8 +108,8 @@ unsigned int file_open_callback(const char* filename, unsigned int* handleOut)
         }
         *dst = '\0';
         int length = atoi(localName);
-        handle->mCurrentPos = length;
         handle->mStartOffset = length;
+        handle->mCurrentPos = length;
         handle->mValidPosition = 0;
         InvalidePositionsForOtherHandles(handle);
         EnterCriticalSection(&sMutex);
@@ -130,30 +120,20 @@ unsigned int file_open_callback(const char* filename, unsigned int* handleOut)
     }
 
     int fd = CreateFileA(filename, 0x80000000, 0, NULL, 3, 0, 0);
-    if (fd != 0)
+    if (fd == 0)
     {
-        int size = SetFilePointer(fd, 0, NULL, 2);
-        SetFilePointer(fd, 0, NULL, 0);
-        CFileHandle* handle = new CFileHandle;
-        if (handle != NULL)
-        {
-            handle->mCurrentPos = 0;
-            handle->mFileHandle = fd;
-            handle->mLength = 0;
-            handle->mStartOffset = 0;
-            handle->mFileSize = size;
-            handle->mValidPosition = 1;
-            strncpy(handle->mFilename, filename, 0x104);
-        }
-        EnterCriticalSection(&sMutex);
-        sFileHandles.push_back(handle);
-        LeaveCriticalSection(&sMutex);
-        *handleOut = (unsigned int)handle;
-        return 1;
+        *handleOut = 0;
+        return 0;
     }
 
-    *handleOut = 0;
-    return 0;
+    int size = SetFilePointer(fd, 0, NULL, 2);
+    SetFilePointer(fd, 0, NULL, 0);
+    CFileHandle* handle = new CFileHandle(filename, fd, size);
+    EnterCriticalSection(&sMutex);
+    sFileHandles.push_back(handle);
+    LeaveCriticalSection(&sMutex);
+    *handleOut = (unsigned int)handle;
+    return 1;
 }
 
 void file_close_callback(unsigned int handleVal)
@@ -167,7 +147,7 @@ void file_close_callback(unsigned int handleVal)
         if (sFileHandles[i] == handle)
         {
             delete handle;
-            sFileHandles[i] = sFileHandles.back();
+            sFileHandles[i] = sFileHandles[sFileHandles.size() - 1];
             sFileHandles.pop_back();
             break;
         }
@@ -189,59 +169,56 @@ int file_seek_callback(unsigned int handleVal, int offset, unsigned int origin)
 {
     CFileHandle* handle = (CFileHandle*)handleVal;
 
-    int length = handle->mLength;
-    if (length != 0)
+    if (handle->mLength == 0)
     {
         unsigned int target;
-        unsigned int maxPos = handle->mStartOffset + length;
-        if (origin == 1)
+        switch (origin)
         {
+        case 1:
             target = handle->mCurrentPos + offset;
-            if (target > maxPos)
-                target = maxPos;
+            if (target > handle->mFileSize)
+                target = handle->mFileSize;
+            break;
+        case 2:
+            target = handle->mFileSize + offset;
+            if (target > handle->mFileSize)
+                target = handle->mFileSize;
+            break;
+        default:
+            target = offset;
+            if (target > handle->mFileSize)
+                target = handle->mFileSize;
+            break;
         }
-        else if (origin == 2)
-        {
-            target = maxPos + offset;
-            if (target > maxPos)
-                target = maxPos;
-        }
-        else
-        {
-            target = handle->mStartOffset + offset;
-            if (target > maxPos)
-                target = maxPos;
-        }
-        handle->mValidPosition = 0;
         handle->mCurrentPos = target;
+        handle->mValidPosition = 0;
         InvalidePositionsForOtherHandles(handle);
-        return handle->mCurrentPos - handle->mStartOffset;
+        return handle->mCurrentPos;
     }
 
     unsigned int target;
-    unsigned int maxPos = handle->mFileSize;
-    if (origin == 1)
+    switch (origin)
     {
+    case 1:
         target = handle->mCurrentPos + offset;
-        if (target > maxPos)
-            target = maxPos;
+        if (target > handle->mStartOffset + handle->mLength)
+            target = handle->mStartOffset + handle->mLength;
+        break;
+    case 2:
+        target = handle->mStartOffset + handle->mLength + offset;
+        if (target > handle->mStartOffset + handle->mLength)
+            target = handle->mStartOffset + handle->mLength;
+        break;
+    default:
+        target = handle->mStartOffset + offset;
+        if (target > handle->mStartOffset + handle->mLength)
+            target = handle->mStartOffset + handle->mLength;
+        break;
     }
-    else if (origin == 2)
-    {
-        target = maxPos + offset;
-        if (target > maxPos)
-            target = maxPos;
-    }
-    else
-    {
-        target = offset;
-        if (target > maxPos)
-            target = maxPos;
-    }
-    handle->mValidPosition = 0;
     handle->mCurrentPos = target;
+    handle->mValidPosition = 0;
     InvalidePositionsForOtherHandles(handle);
-    return handle->mCurrentPos;
+    return handle->mCurrentPos - handle->mStartOffset;
 }
 
 int file_read_callback(unsigned int handleVal, void* buffer, unsigned int bytes)
@@ -256,10 +233,10 @@ int file_read_callback(unsigned int handleVal, void* buffer, unsigned int bytes)
 
     if (handle->mLength != 0)
     {
-        int maxPos = handle->mStartOffset + handle->mLength;
-        if ((unsigned int)maxPos < (unsigned int)(handle->mCurrentPos + bytes))
+        unsigned int end = handle->mStartOffset + handle->mLength;
+        if (handle->mCurrentPos + bytes > end)
         {
-            bytes = maxPos - handle->mCurrentPos;
+            bytes = end - handle->mCurrentPos;
         }
     }
 

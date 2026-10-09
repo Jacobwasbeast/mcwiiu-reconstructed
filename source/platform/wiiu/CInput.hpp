@@ -342,6 +342,7 @@ public:
 };
 
 extern CInput* g_pInput;
+extern CInput* g_pInputInstance;
 
 int XEnableGuestSignin(int enable);
 

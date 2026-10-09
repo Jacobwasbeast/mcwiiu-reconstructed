@@ -44,14 +44,15 @@ void stateChangeCallback(FSClient*, FSVolumeState, void*);
 extern CStorage* gStorage;
 
 CProfile* gProfile;
+CProfile* gProfileInstance = NULL;
 
 static char sCountryCodeData[0x300];
 
 PlayerUID getPlayerUID(int quadrant, bool includeOffline)
 {
     PlayerUID uid(0);
-    if (gProfile->IsValidPlayer(quadrant))
-        gProfile->GetXUID(quadrant, &uid, includeOffline);
+    if (gProfileInstance->IsValidPlayer(quadrant))
+        gProfileInstance->GetXUID(quadrant, &uid, includeOffline);
     return uid;
 }
 
@@ -251,7 +252,7 @@ CProfile::CProfile()
     mLoadedMiiData->mSysUserMiis = mMiiData->mSysUserMiis;
     mLoadedMiiData->mGuestMiis = mMiiData->mGuestMiis;
     mLoadedMiiData->mMiiMakerMiis = mMiiData->mMiiMakerMiis;
-    gProfile = this;
+    gProfileInstance = this;
     SystemOnCreate();
     AwardManagerOnCreate();
     RichPresenceOnCreate();
@@ -386,7 +387,7 @@ int CProfile::SignInUser(MiiDataEntry* mii, int pad)
         checkParentalControl(quadrant);
     }
     OnSignin(pad);
-    g_pInput->LockPad(pad, quadrant);
+    g_pInputInstance->LockPad(pad, quadrant);
     if (mii != NULL)
         SetSignInChange(true);
     return quadrant;
@@ -455,9 +456,9 @@ PlayerUID CProfile::QuadrantOfflineXUID(int quadrant)
     if (mii == NULL)
         return PlayerUID(0);
     if (mii->mIsAccountMii)
-        return PlayerUID(mii->mUuid, mProfiles[quadrant].onlineAccount, g_pInput->IsPadDRCController(quadrant));
+        return PlayerUID(mii->mUuid, mProfiles[quadrant].onlineAccount, g_pInputInstance->IsPadDRCController(quadrant));
     FFLCreateID* createId = (FFLCreateID*)mii->mCreatorId;
-    return PlayerUID(*createId, mPrincipalId, mii->mIsGuestMii, g_pInput->IsPadDRCController(quadrant));
+    return PlayerUID(*createId, mPrincipalId, mii->mIsGuestMii, g_pInputInstance->IsPadDRCController(quadrant));
 }
 
 PlayerUID CProfile::QuadrantOnlineXUID(int quadrant)
@@ -652,7 +653,7 @@ void CProfile::Tick()
             {
                 mProfiles[quadrant].signedIn = false;
                 std::memset(&mProfiles[quadrant], 0, PROFILE_DETAILS::SIGN_OUT_CLEAR_SIZE);
-                g_pInput->UnlockPad(quadrant);
+                g_pInputInstance->UnlockPad(quadrant);
             }
             SetSignInChange(true);
             mSignOutQueue.pop_front();
@@ -990,7 +991,7 @@ void CProfile::SetPresenceString(int presence)
         (resultValue & descriptionMask) < 0x1f400)
     {
         unsigned int errorCode = nn::fp::ResultToErrorCode(result);
-        gProfile->DebugPrintf("\"%s @%d\" failed. errorCode = %03u-%04u\n", "SetPresenceString", 197,
+        gProfileInstance->DebugPrintf("\"%s @%d\" failed. errorCode = %03u-%04u\n", "SetPresenceString", 197,
                               errorCode / 10000, errorCode % 10000);
     }
 }
@@ -1081,13 +1082,13 @@ int CProfile::GetPrimaryPad()
 
 void CProfile::SetPrimaryPad(int pad)
 {
-    g_pInput->LockPad(pad, 0);
+    g_pInputInstance->LockPad(pad, 0);
     mPrimaryPad = 0;
 }
 
 void CProfile::ClearGameUsers()
 {
-    g_pInput->UnlockPad(0);
+    g_pInputInstance->UnlockPad(0);
     for (int quadrant = 1; quadrant < 4; ++quadrant)
     {
         if (IsSignedIn(quadrant))
@@ -1394,7 +1395,7 @@ void CProfile::flushSaveDirectory(unsigned char slot)
 int CProfile::AwardManagerThreadProc(int, void* argument)
 {
     CProfile* profile = (CProfile*)argument;
-    gProfile->DebugPrintf("<CAwardManager> Thread Starting: %p.\n", argument);
+    gProfileInstance->DebugPrintf("<CAwardManager> Thread Starting: %p.\n", argument);
     for (;;)
     {
         OSSleepTicks(OSMillisecondsToTicks(70));

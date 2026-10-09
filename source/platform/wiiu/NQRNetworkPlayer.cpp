@@ -92,16 +92,28 @@ void NQRNetworkPlayer::SendInternal(NQRNetworkPlayer* player, const void* data, 
 void NQRNetworkPlayer::SendData(NQRNetworkPlayer* player, const void* data, unsigned int size, bool reliable)
 {
     AckFlags flags = reliable ? Ack_Return : Ack_Request;
-    if (!m_local)
+    if (m_local)
     {
+        if (m_type == eNQRNetworkPlayerType_Host && player->m_type == eNQRNetworkPlayerType_Local)
+        {
+            m_manager->LocalDataSend(this, player, data, size);
+            return;
+        }
         if (m_type == eNQRNetworkPlayerType_Local && player->m_type == eNQRNetworkPlayerType_Host)
-            SendInternal(player, data, size, flags);
+        {
+            m_manager->LocalDataSend(this, player, data, size);
+            return;
+        }
+        if (m_type == eNQRNetworkPlayerType_Host && player->m_type == eNQRNetworkPlayerType_Remote)
+        {
+            player->SendInternal(player, data, size, flags);
+            return;
+        }
     }
-    else if ((m_type == eNQRNetworkPlayerType_Host && player->m_type == eNQRNetworkPlayerType_Local) ||
-             (m_type == eNQRNetworkPlayerType_Local && player->m_type == eNQRNetworkPlayerType_Host))
-        m_manager->LocalDataSend(this, player, data, size);
-    else if (m_type == eNQRNetworkPlayerType_Host && player->m_type == eNQRNetworkPlayerType_Remote)
-        player->SendInternal(player, data, size, flags);
+    else if (m_type == eNQRNetworkPlayerType_Local && player->m_type == eNQRNetworkPlayerType_Host)
+    {
+        SendInternal(player, data, size, flags);
+    }
 }
 
 int NQRNetworkPlayer::GetPacketDataSize() { return 0; }
@@ -120,5 +132,5 @@ int NQRNetworkPlayer::GetSendQueueSizeMessages() { return m_manager->GetSendQueu
 
 int NQRNetworkPlayer::GetTotalOutstandingAckCount() { return m_outstandingAckCount; }
 unsigned int NQRNetworkPlayer::GetTotalSendQueueBytes() { return m_totalSendQueueBytes; }
-unsigned int NQRNetworkPlayer::GetTotalSendQueueMessages() { EnterCriticalSection(&m_voiceMutex); unsigned int value = m_sendQueue.size(); LeaveCriticalSection(&m_voiceMutex); return value; }
+unsigned int NQRNetworkPlayer::GetTotalSendQueueMessages() { OSFastMutex* mutex = &m_voiceMutex; EnterCriticalSection(mutex); unsigned int value = m_sendQueue.size(); LeaveCriticalSection(mutex); return value; }
 int NQRNetworkPlayer::GetSessionIndex() { return m_manager->GetSessionIndex(this); }

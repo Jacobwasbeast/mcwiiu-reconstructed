@@ -152,7 +152,7 @@ static OSThread s_fontThread;
 static OSThread s_predictThread;
 static unsigned char s_fontStack[0x20000];
 static unsigned char s_predictStack[0x20000];
-static CInput* s_inputInstance = 0;
+CInput* g_pInputInstance = 0;
 unsigned int g_inputPlatformFlag = 0;
 
 enum
@@ -291,8 +291,7 @@ CInput* g_pInput = new (std::nothrow) CInput;
 
 CInput::CInput()
 {
-    s_inputInstance = this;
-    g_pInput = this;
+    g_pInputInstance = this;
     joypadMapsReady = 0;
     menuDisplayed[0] = 0;
     menuDisplayed[1] = 0;
@@ -1389,19 +1388,19 @@ unsigned int CInput::RequestKeyboard(const wchar_t* title, const wchar_t* initia
 {
     if (keyboardState != eKeyboardProcessState_0)
     {
-        s_inputInstance->DebugPrintf("CInput::RequestKeyboard: Ignored a keyboard request while keyboard is active\n");
+        g_pInputInstance->DebugPrintf("CInput::RequestKeyboard: Ignored a keyboard request while keyboard is active\n");
         return 1;
     }
 
     SetKeyboardMode(eKeyboardProcessState_1);
     const wchar_t* diagnosticText = initialText == 0 ? L"" : initialText;
-    s_inputInstance->DebugPrintf("CInput::RequestKeyboard: Opening keyboard : maxChars - %d init str - %ls\n", maximumLength, diagnosticText);
+    g_pInputInstance->DebugPrintf("CInput::RequestKeyboard: Opening keyboard : maxChars - %d init str - %ls\n", maximumLength, diagnosticText);
     keyboardCallback = callback;
     keyboardMaximumLength = maximumLength;
     keyboardContext = context;
     keyboardPad = pad;
     keyboardMode = mode;
-    s_inputInstance->RemapIpad(keyboardPad);
+    g_pInputInstance->RemapIpad(keyboardPad);
     std::memset(keyboardText, 0, 0x200);
     std::memcpy(keyboardText, initialText, maximumLength << 1);
     return 0;
@@ -1537,11 +1536,11 @@ void CInput::TickKeyboard()
         std::memset(&controllerInfo, 0, sizeof(controllerInfo));
         if (keyboardPad == 0)
         {
-            controllerInfo.vpad = (VPADStatus*)s_inputInstance->GetVPadStatus();
+            controllerInfo.vpad = (VPADStatus*)g_pInputInstance->GetVPadStatus();
         }
         else if (keyboardPad < 5)
         {
-            controllerInfo.kpad[keyboardPad - 1] = (KPADStatus*)s_inputInstance->GetKPadStatus(keyboardPad);
+            controllerInfo.kpad[keyboardPad - 1] = (KPADStatus*)g_pInputInstance->GetKPadStatus(keyboardPad);
         }
         nn::swkbd::Calc(controllerInfo);
         OSMessage fontMessage;
@@ -1708,10 +1707,10 @@ void CInput::TickErrorViewer()
         nn::erreula::ControllerInfo controllerInfo;
         std::memset(&controllerInfo, 0, sizeof(controllerInfo));
         errorViewerVisible = 1;
-        controllerInfo.vpad = (VPADStatus*)s_inputInstance->GetVPadStatus();
+        controllerInfo.vpad = (VPADStatus*)g_pInputInstance->GetVPadStatus();
         for (int pad = 1; pad < 5; ++pad)
         {
-            controllerInfo.kpad[pad - 1] = (KPADStatus*)s_inputInstance->GetKPadStatus(pad);
+            controllerInfo.kpad[pad - 1] = (KPADStatus*)g_pInputInstance->GetKPadStatus(pad);
         }
         nn::erreula::Calc(controllerInfo);
         if (nn::erreula::IsDecideSelectButtonError() && static_cast<int>(nn::erreula::GetStateErrorViewer()) == 2)
