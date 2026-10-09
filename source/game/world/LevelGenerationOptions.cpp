@@ -198,7 +198,7 @@ std::wstring LevelGenerationOptions::getDefaultSaveName()
     case eSrc_Local:
         return getString(info()->getDefaultSaveName());
     case eSrc_Tutorial:
-        return L10N::GetString(0xe6c3646e);
+        return L10N::GetString(IDS_TUTORIALSAVENAME);
     default:
         return L"";
     }
@@ -943,11 +943,7 @@ ConsoleSchematicFile* LevelGenerationOptions::loadSchematicFile(const std::wstri
     ConsoleSchematicFile* schematic = new ConsoleSchematicFile();
     schematic->load(&input);
     mSchematicFiles[name] = schematic;
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
+    byteStream.reset();
     return schematic;
 }
 

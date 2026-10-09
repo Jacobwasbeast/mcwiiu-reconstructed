@@ -24,6 +24,7 @@
 #include "game/world/generation/HellFireFeature.hpp"
 #include "game/world/generation/HellPortalFeature.hpp"
 #include "game/world/generation/HellSpringFeature.hpp"
+#include "game/world/generation/LargeFeature.hpp"
 #include "game/world/generation/LargeHellCaveFeature.hpp"
 #include "game/world/generation/LightGemFeature.hpp"
 #include "game/world/generation/OreFeature.hpp"
@@ -31,15 +32,14 @@
 
 
 static FjNetherrackBlockPred sNetherrackPredicate;
-static const std::wstring FORTRESS_NAME(L"Fortress");
 
 NetherLevelSource::NetherLevelSource(Level* level, bool generateStructures, long long seed)
 {
     int xzSize = level->getLevelData()->getXZSize();
     int hellScale = level->getLevelData()->getHellScale();
     mLevelSize = static_cast<int>(std::ceil(static_cast<float>(xzSize) / static_cast<float>(hellScale)));
-    mGenerateStructures = generateStructures;
     mLevel = level;
+    mGenerateStructures = generateStructures;
     mRandom = Random(seed);
     mPopulationRandom = Random(seed);
 
@@ -91,7 +91,8 @@ NetherLevelSource::~NetherLevelSource()
 void NetherLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* primer)
 {
     const int lavaLevel = mLevel->getSeaLevel() / 2 + 1;
-    arrayWithLength<double> buffer = getHeights(arrayWithLength<double>(), chunkX * 4, 0, chunkZ * 4, 5, 17, 5);
+    arrayWithLength<double> buffer;
+    buffer = getHeights(buffer, chunkX * 4, 0, chunkZ * 4, 5, 17, 5);
 
     for (int xc = 0; xc < 4; ++xc)
     {
@@ -99,24 +100,27 @@ void NetherLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* prim
         {
             for (int yc = 0; yc < 16; ++yc)
             {
+                double yStep = 0.125;
                 double s0 = buffer.data[((xc + 0) * 5 + zc + 0) * 17 + yc + 0];
                 double s1 = buffer.data[((xc + 0) * 5 + zc + 1) * 17 + yc + 0];
                 double s2 = buffer.data[((xc + 1) * 5 + zc + 0) * 17 + yc + 0];
                 double s3 = buffer.data[((xc + 1) * 5 + zc + 1) * 17 + yc + 0];
-                const double s0Rise = buffer.data[((xc + 0) * 5 + zc + 0) * 17 + yc + 1] - s0;
-                const double s1Rise = buffer.data[((xc + 0) * 5 + zc + 1) * 17 + yc + 1] - s1;
-                const double s2Rise = buffer.data[((xc + 1) * 5 + zc + 0) * 17 + yc + 1] - s2;
-                const double s3Rise = buffer.data[((xc + 1) * 5 + zc + 1) * 17 + yc + 1] - s3;
+                double s0Step = (buffer.data[((xc + 0) * 5 + zc + 0) * 17 + yc + 1] - s0) * yStep;
+                double s1Step = (buffer.data[((xc + 0) * 5 + zc + 1) * 17 + yc + 1] - s1) * yStep;
+                double s2Step = (buffer.data[((xc + 1) * 5 + zc + 0) * 17 + yc + 1] - s2) * yStep;
+                double s3Step = (buffer.data[((xc + 1) * 5 + zc + 1) * 17 + yc + 1] - s3) * yStep;
 
                 for (int y = 0; y < 8; ++y)
                 {
+                    double xStep = 0.25;
                     double x0 = s0;
                     double x1 = s1;
 
                     for (int x = 0; x < 4; ++x)
                     {
-                        const double zStep = (x1 - x0) * 0.25;
+                        double zStep = 0.25;
                         double value = x0;
+                        double valueStep = (x1 - x0) * zStep;
 
                         for (int z = 0; z < 4; ++z)
                         {
@@ -129,18 +133,18 @@ void NetherLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* prim
                             {
                                 state = Blocks::netherrack->defaultBlockState();
                             }
-                            primer->setState(x + xc * 4, y + yc * 8, z + zc * 4, state);
-                            value += zStep;
+                            primer->setState(xc * 4 + x, yc * 8 + y, zc * 4 + z, state);
+                            value += valueStep;
                         }
 
-                        x0 += (s2 - s0) * 0.25;
-                        x1 += (s3 - s1) * 0.25;
+                        x0 += (s2 - s0) * xStep;
+                        x1 += (s3 - s1) * xStep;
                     }
 
-                    s0 += s0Rise * 0.125;
-                    s1 += s1Rise * 0.125;
-                    s2 += s2Rise * 0.125;
-                    s3 += s3Rise * 0.125;
+                    s0 += s0Step;
+                    s1 += s1Step;
+                    s2 += s2Step;
+                    s3 += s3Step;
                 }
             }
         }
@@ -151,7 +155,7 @@ void NetherLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* prim
 
 void NetherLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* primer)
 {
-    const int seaLevel = mLevel->getSeaLevel();
+    const int waterHeight = mLevel->getSeaLevel() + 1;
 
     arrayWithLength<double> sandBuffer(256, true);
     arrayWithLength<double> gravelBuffer(256, true);
@@ -236,7 +240,7 @@ void NetherLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* prime
                             top = Blocks::air->defaultBlockState();
                             material = Blocks::netherrack->defaultBlockState();
                         }
-                        else if (y >= seaLevel - 3 && y <= seaLevel + 2)
+                        else if (y >= waterHeight - 4 && y <= waterHeight + 1)
                         {
                             top = Blocks::netherrack->defaultBlockState();
                             material = Blocks::netherrack->defaultBlockState();
@@ -256,22 +260,21 @@ void NetherLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* prime
                                     {
                                         wartY = 127;
                                     }
-                                    const int wartOffs = (x * 16 + z) * 128 + wartY;
-                                    if (primer->getState(wartOffs)->getBlock() != Blocks::bedrock)
+                                    if (primer->getState((x * 16 + z) * 128 + wartY)->getBlock() != Blocks::bedrock)
                                     {
-                                        primer->setState(wartOffs, Blocks::nether_wart->defaultBlockState());
+                                        primer->setState((x * 16 + z) * 128 + wartY, Blocks::nether_wart->defaultBlockState());
                                     }
                                 }
                             }
                         }
 
-                        if (y < seaLevel + 1 && (top == NULL || top->getMaterial() == Material::AIR))
+                        if (y < waterHeight && (top == NULL || top->getMaterial() == Material::AIR))
                         {
                             top = Blocks::lava->defaultBlockState();
                         }
 
                         run = runDepth;
-                        if (y >= seaLevel || sand)
+                        if (y >= waterHeight - 1 || sand)
                         {
                             if (primer->getState(offs)->getBlock() != Blocks::bedrock)
                             {
@@ -334,7 +337,6 @@ arrayWithLength<double> NetherLevelSource::getHeights(arrayWithLength<double> bu
     ar = mNoise1->getRegion(ar, x, y, z, xSize, ySize, zSize, s, hs, s);
     br = mNoise2->getRegion(br, x, y, z, xSize, ySize, zSize, s, hs, s);
 
-    int p = 0;
     arrayWithLength<double> yoffs(ySize, true);
     for (int yy = 0; yy < ySize; ++yy)
     {
@@ -352,6 +354,7 @@ arrayWithLength<double> NetherLevelSource::getHeights(arrayWithLength<double> bu
         }
     }
 
+    int p = 0;
     for (int xx = 0; xx < xSize; ++xx)
     {
         for (int zz = 0; zz < zSize; ++zz)
@@ -413,12 +416,10 @@ LevelChunk* NetherLevelSource::createChunk(int chunkX, int chunkZ)
 {
     mRandom.setSeed(static_cast<long long>(chunkX) * 341873128712LL + static_cast<long long>(chunkZ) * 132897987541LL);
 
-    unsigned short* elementIds = static_cast<unsigned short*>(XPhysicalAlloc(65536, 0xFFFFFFFF, 0x1000, 4));
-    XMemSet128(elementIds, 0, 65536);
-    arrayWithLength<unsigned short> elements;
-    elements.data = elementIds;
-    elements.length = 32768;
-    ChunkPrimer primer(false, elements);
+    unsigned int elementCount = 32768;
+    unsigned short* elementIds = static_cast<unsigned short*>(XPhysicalAlloc(elementCount * sizeof(unsigned short), 0xFFFFFFFF, 0x1000, 4));
+    XMemSet128(elementIds, 0, elementCount * sizeof(unsigned short));
+    ChunkPrimer primer(false, arrayWithLength<unsigned short>(elementIds, elementCount));
 
     prepareHeights(chunkX, chunkZ, &primer);
     buildSurfaces(chunkX, chunkZ, &primer);
@@ -529,7 +530,7 @@ std::vector<Biome::MobSpawnerData*>* NetherLevelSource::getMobsAt(MobCategory* c
 BlockPos* NetherLevelSource::findNearestMapFeature(Level* level, const std::wstring& feature,
                                                     const BlockPos& pos, bool findUnexplored)
 {
-    if (FORTRESS_NAME == feature && mNetherBridgeFeature != NULL)
+    if (LargeFeature::FORTRESS == feature && mNetherBridgeFeature != NULL)
     {
         return mNetherBridgeFeature->getNearestGeneratedFeature(level, pos, findUnexplored);
     }
@@ -543,7 +544,7 @@ void NetherLevelSource::recreateLogicStructuresForChunk(LevelChunk* chunk, int c
 
 bool NetherLevelSource::isPosInFeature(Level* level, const std::wstring& feature, const BlockPos& pos)
 {
-    if (FORTRESS_NAME == feature && mNetherBridgeFeature != NULL)
+    if (LargeFeature::FORTRESS == feature && mNetherBridgeFeature != NULL)
     {
         return mNetherBridgeFeature->isInsideFeature(pos);
     }

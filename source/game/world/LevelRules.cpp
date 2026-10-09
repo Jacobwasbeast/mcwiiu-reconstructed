@@ -32,8 +32,7 @@ void LevelRules::removeLevelRule(LevelRuleset* ruleset)
         m_levelRules.erase(rule);
     }
 
-    std::vector<LevelRulesetGroup*>::iterator group = m_ruleGroups.begin();
-    while (group != m_ruleGroups.end())
+    for (std::vector<LevelRulesetGroup*>::iterator group = m_ruleGroups.begin(); group != m_ruleGroups.end();)
     {
         std::vector<LevelRuleset*>::iterator member;
         while ((member = std::find((*group)->rulesets.begin(), (*group)->rulesets.end(), ruleset)) != (*group)->rulesets.end())
@@ -73,36 +72,29 @@ void LevelRules::getRulesByType(ELevelRuleType type, std::vector<LevelRuleset*>*
 
 void LevelRules::populateRulesets()
 {
-    std::vector<LevelRuleset*>::iterator rule = m_levelRules.begin();
-    while (rule != m_levelRules.end())
+    for (std::vector<LevelRuleset*>::iterator rule = m_levelRules.begin(); rule != m_levelRules.end(); ++rule)
     {
         LevelRuleset* ruleset = *rule;
-        LevelRulesetGroup* group = NULL;
-        std::vector<LevelRulesetGroup*>::iterator existing = m_ruleGroups.begin();
+        bool found = false;
         const std::vector<LevelRulesetGroup*>::iterator end = m_ruleGroups.end();
-        if (existing != end)
+        for (std::vector<LevelRulesetGroup*>::iterator existing = m_ruleGroups.begin(); existing != end; ++existing)
         {
-            const ELevelRuleType type = (*rule)->getRuleType();
-            do
+            LevelRulesetGroup* group = *existing;
+            LevelRuleset* const& front = group->rulesets.front();
+            if (front->getRuleType() == ruleset->getRuleType() && front->getThemeId() == ruleset->getThemeId())
             {
-                LevelRuleset* const& front = (*existing)->rulesets.front();
-                if (front->getRuleType() == type && front->getThemeId() == (*rule)->getThemeId())
-                {
-                    group = *existing;
-                    break;
-                }
-                ++existing;
-            } while (existing != end);
+                group->rulesets.push_back(ruleset);
+                found = true;
+                break;
+            }
         }
 
-        if (group == NULL)
+        if (!found)
         {
-            group = new LevelRulesetGroup();
+            LevelRulesetGroup* group = new LevelRulesetGroup();
             m_ruleGroups.push_back(group);
+            group->rulesets.push_back(ruleset);
         }
-
-        group->rulesets.push_back(ruleset);
-        ++rule;
     }
 }
 
@@ -169,7 +161,7 @@ bool LevelRules::LevelRulesetGroup::SortMapRules(const LevelRulesetGroup* first,
         {
             firstIndex = offset;
         }
-        if (g_mapRuleOrder[offset + 9] == secondTheme)
+        else if (g_mapRuleOrder[offset + 9] == secondTheme)
         {
             secondIndex = offset;
         }
@@ -179,5 +171,5 @@ bool LevelRules::LevelRulesetGroup::SortMapRules(const LevelRulesetGroup* first,
     {
         return firstIndex < secondIndex;
     }
-    return secondTheme < firstTheme;
+    return firstTheme > secondTheme;
 }

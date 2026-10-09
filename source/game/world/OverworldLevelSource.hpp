@@ -41,7 +41,7 @@ public:
     OverworldLevelSource(Level* level, long long seed, bool generateStructures, SuperflatConfig* config);
     virtual ~OverworldLevelSource();
 
-    double getHeightFalloff(int x, int z, int* distance);
+    float getHeightFalloff(int x, int z, int* distance);
     void getHeights(int x, int y, int z, arrayWithLength<Biome*>& biomes, arrayWithLength<double>& heights);
     virtual void prepareHeights(int chunkX, int chunkZ, ChunkPrimer* primer);
     void buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* primer, arrayWithLength<Biome*> biomes);

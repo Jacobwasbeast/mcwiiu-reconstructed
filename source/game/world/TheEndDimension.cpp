@@ -1,6 +1,8 @@
 #include "game/world/TheEndDimension.hpp"
 
+#include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <cstring>
 #include <limits>
 
@@ -25,9 +27,7 @@
 
 int aaDistance(int x, int z, const ChunkPos* pos)
 {
-    const int xDistance = Mth::abs(x - pos->x);
-    const int zDistance = Mth::abs(z - pos->z);
-    return xDistance > zDistance ? xDistance : zDistance;
+    return std::max(std::abs(x - pos->x), std::abs(z - pos->z));
 }
 
 ChunkPos TheEndDimension::AREAS[2] = { ChunkPos(0, 0), ChunkPos(0, 25) };
@@ -71,8 +71,7 @@ ChunkGenerator* TheEndDimension::createRandomLevelGenerator() const
 {
     LevelData* levelData = mLevel->getLevelData();
     return new TheEndLevelSource(mLevel, levelData->isGenerateMapFeatures(), mLevel->getSeed(),
-                                 getSpawnPos() == NULL ? BlockPos(0, 0, 0)
-                                                                  : *getSpawnPos());
+                                 getSpawnPos() != NULL ? *getSpawnPos() : BlockPos(0, 0, 0));
 }
 
 float TheEndDimension::getTimeOfDay(long long time, float partialTick) const
@@ -87,11 +86,15 @@ float* TheEndDimension::getSunriseColor(float celestialAngle, float timeOfDay)
 
 Vec3* TheEndDimension::getFogColor(float celestialAngle, float timeOfDay)
 {
-    float brightness = Mth::clamp(Mth::cos(celestialAngle * 6.2831855f) * 2.0f + 0.5f,
-                                  0.0f, 1.0f);
-    float scale = brightness * 0.0f + 0.15f;
-    float red = 0.627451f * scale;
-    return Vec3::newTemp(red, 0.5019608f * scale, red);
+    float brightness = Mth::cos(celestialAngle * 6.2831855f) * 2.0f + 0.5f;
+    brightness = Mth::clamp(brightness, 0.0f, 1.0f);
+    float red = 0.627451f;
+    float green = 0.5019608f;
+    float blue = 0.627451f;
+    red = red * (brightness * 0.0f + 0.15f);
+    green = green * (brightness * 0.0f + 0.15f);
+    blue = blue * (brightness * 0.0f + 0.15f);
+    return Vec3::newTemp(red, green, blue);
 }
 
 bool TheEndDimension::hasGround() { return false; }
@@ -136,9 +139,12 @@ void TheEndDimension::tick()
 
 ChunkPos* TheEndDimension::closestAreaToPoint(int x, int z)
 {
-    unsigned int centralDistance = aaDistance(x, z, &AREAS[0]);
-    unsigned int outerDistance = aaDistance(x, z, &AREAS[1]);
-    return outerDistance < centralDistance ? &AREAS[1] : &AREAS[0];
+    ChunkPos* closest = &AREAS[0];
+    unsigned int closestDistance = aaDistance(x, z, &AREAS[0]);
+    ChunkPos* area = &AREAS[1];
+    if (static_cast<unsigned int>(aaDistance(x, z, area)) < closestDistance)
+        closest = area;
+    return closest;
 }
 
 AABB* TheEndDimension::getPlayerConstraints(const BlockPos& pos)
@@ -150,26 +156,27 @@ AABB* TheEndDimension::getPlayerConstraints(const BlockPos& pos)
                              96.0, std::numeric_limits<double>::max(), 96.0)->move(origin);
     }
     AABB* bounds = Dimension::getPlayerConstraints(pos);
-    bounds->set(bounds->mMinX, -std::numeric_limits<double>::max(), bounds->mMinZ,
-                bounds->mMaxX, std::numeric_limits<double>::max(), bounds->mMaxZ);
-    return bounds;
+    return bounds->set(bounds->mMinX, -std::numeric_limits<double>::max(), bounds->mMinZ,
+                       bounds->mMaxX, std::numeric_limits<double>::max(), bounds->mMaxZ);
 }
 
 bool TheEndDimension::containsChunk(int x, int z)
 {
     bool result = Dimension::containsChunk(x, z);
-    if (!result || !mModernEnd)
-        return result;
-    const int size = getXZSize();
-    const int index = (x + size / 2) * size + z + size / 2;
-    char& cached = mChunkData[index];
-    if (cached == -1)
+    if (result && mModernEnd)
     {
-        ChunkPos* area = closestAreaToPoint(x, z);
-        cached = (x - area->x >= -6 && x - area->x < 6 &&
-                  z - area->z >= -6 && z - area->z < 6) ? 1 : 0;
+        const int size = getXZSize();
+        char& cached = mChunkData[(x + size / 2) * size + (z + size / 2)];
+        if (cached == -1)
+        {
+            ChunkPos* area = closestAreaToPoint(x, z);
+            int dx = x - area->x;
+            int dz = z - area->z;
+            cached = (dx >= -6 && dx < 6 && dz >= -6 && dz < 6) ? 1 : 0;
+        }
+        return cached == 1;
     }
-    return cached == 1;
+    return result;
 }
 
 int TheEndDimension::getBlockLightColour()

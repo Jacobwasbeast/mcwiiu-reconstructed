@@ -72,6 +72,7 @@ class Level : public LevelSource
     friend class DynamicLiquidBlock;
     friend class GenerationWriteTask;
     friend class VillageSiege;
+    friend class VillagerGolem;
 public:
     enum ESPAWN_TYPE
     {
@@ -85,6 +86,8 @@ public:
         virtual ~RangeModifier() {}
         virtual double apply(boost::shared_ptr<Player> player) const = 0;
     };
+
+    static const int maxBuildHeight = 256;
 
     Level(boost::shared_ptr<LevelStorage> levelStorage, LevelData* levelData, Dimension* dimension, bool isClientSide);
     ~Level();
@@ -458,7 +461,6 @@ public:
     void gatherStats();
     boost::shared_ptr<Player> getNearestAttackablePlayer(boost::shared_ptr<Entity> entity, double distance,
                                                           double angle);
-private:
     int mSeaLevel;
 protected:
     OSFastMutex mEntityMutex;

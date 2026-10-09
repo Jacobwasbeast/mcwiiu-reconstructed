@@ -47,48 +47,43 @@ void WorldBorder::setSize(double size)
 
 double WorldBorder::getSize()
 {
-    double size;
     if (getStatus() != STATIONARY)
     {
-        long long now = System::processTimeInMilliSecs();
-        float progress = static_cast<float>(now - m_lerpStart) / static_cast<float>(m_lerpEnd - m_lerpStart);
-        if (progress < 1.0) return m_size + (m_lerpTarget - m_size) * progress;
-        setSize(m_lerpTarget);
-        size = m_size;
+        double progress = static_cast<float>(System::processTimeInMilliSecs() - m_lerpStart) / static_cast<float>(m_lerpEnd - m_lerpStart);
+        if (progress >= 1.0)
+        {
+            setSize(m_lerpTarget);
+        }
+        else
+        {
+            return m_size + (m_lerpTarget - m_size) * progress;
+        }
     }
-    else
-    {
-        size = m_size;
-    }
-    return size;
+    return m_size;
 }
 
 double WorldBorder::getMinX()
 {
-    double lowest = getCenterX() - getSize() * 0.5;
-    double limit = static_cast<double>(-m_absoluteMaxSize);
-    if (lowest < limit) lowest = limit;
+    double lowest = getCenterX() - getSize() / 2.0;
+    if (lowest < static_cast<double>(-m_absoluteMaxSize)) lowest = static_cast<double>(-m_absoluteMaxSize);
     return lowest;
 }
 double WorldBorder::getMaxX()
 {
-    double highest = getCenterX() + getSize() * 0.5;
-    double limit = static_cast<double>(m_absoluteMaxSize);
-    if (limit < highest) highest = limit;
+    double highest = getCenterX() + getSize() / 2.0;
+    if (highest > static_cast<double>(m_absoluteMaxSize)) highest = static_cast<double>(m_absoluteMaxSize);
     return highest;
 }
 double WorldBorder::getMinZ()
 {
-    double lowest = getCenterZ() - getSize() * 0.5;
-    double limit = static_cast<double>(-m_absoluteMaxSize);
-    if (lowest < limit) lowest = limit;
+    double lowest = getCenterZ() - getSize() / 2.0;
+    if (lowest < static_cast<double>(-m_absoluteMaxSize)) lowest = static_cast<double>(-m_absoluteMaxSize);
     return lowest;
 }
 double WorldBorder::getMaxZ()
 {
-    double highest = getCenterZ() + getSize() * 0.5;
-    double limit = static_cast<double>(m_absoluteMaxSize);
-    if (limit < highest) highest = limit;
+    double highest = getCenterZ() + getSize() / 2.0;
+    if (highest > static_cast<double>(m_absoluteMaxSize)) highest = static_cast<double>(m_absoluteMaxSize);
     return highest;
 }
 
@@ -109,9 +104,9 @@ double WorldBorder::getDistanceToBorder(double x, double z)
     double toMaxZ = getMaxZ() - z;
     double fromMinX = x - getMinX();
     double toMaxX = getMaxX() - x;
-    double distanceX = fromMinX < toMaxX ? fromMinX : toMaxX;
-    double distanceXZ = distanceX < fromMinZ ? distanceX : fromMinZ;
-    return distanceXZ < toMaxZ ? distanceXZ : toMaxZ;
+    double distance = std::min(fromMinX, toMaxX);
+    distance = std::min(distance, fromMinZ);
+    return std::min(distance, toMaxZ);
 }
 
 double WorldBorder::getDistanceToBorder(boost::shared_ptr<Entity> entity)
@@ -130,7 +125,7 @@ void WorldBorder::setCenter(double x, double z)
         (*it)->onBorderCenterSet(this, x, z);
 }
 
-long long WorldBorder::getLerpRemainingTime() { return getStatus() == STATIONARY ? 0 : m_lerpEnd - static_cast<long long>(System::processTimeInMilliSecs()); }
+long long WorldBorder::getLerpRemainingTime() { return getStatus() == STATIONARY ? 0 : m_lerpEnd - System::processTimeInMilliSecs(); }
 double WorldBorder::getLerpTarget() { return m_lerpTarget; }
 
 void WorldBorder::lerpSizeBetween(double oldSize, double newSize, long long timeMs)

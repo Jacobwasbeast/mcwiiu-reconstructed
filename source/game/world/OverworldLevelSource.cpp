@@ -28,6 +28,7 @@
 #include "game/world/generation/CanyonFeature.hpp"
 #include "game/world/generation/LakeFeature.hpp"
 #include "game/world/generation/LargeCaveFeature.hpp"
+#include "game/world/generation/LargeFeature.hpp"
 #include "game/world/generation/MineShaftFeature.hpp"
 #include "game/world/generation/MonsterRoomFeature.hpp"
 #include "game/world/generation/OceanMonumentFeature.hpp"
@@ -85,15 +86,10 @@ OverworldLevelSource::OverworldLevelSource(Level* level, long long seed, bool ge
 
     mOceanBlock = Blocks::water->defaultBlockState();
 
-    if (config == NULL)
+    CustomizableSourceSettings::Builder* builder;
+    if (config != NULL)
     {
-        CustomizableSourceSettings::Builder* builder = new CustomizableSourceSettings::Builder();
-        mSettings = new CustomizableSourceSettings(builder);
-        delete builder;
-    }
-    else
-    {
-        CustomizableSourceSettings::Builder* builder = CustomizableSourceSettings::Builder::fromString(config);
+        builder = CustomizableSourceSettings::Builder::fromString(config);
         mSettings = builder->build();
         if (mSettings->useLavaOceans)
         {
@@ -104,8 +100,13 @@ OverworldLevelSource::OverworldLevelSource(Level* level, long long seed, bool ge
             mOceanBlock = Blocks::water->defaultBlockState();
         }
         level->setSeaLevel(mSettings->seaLevel);
-        delete builder;
     }
+    else
+    {
+        builder = new CustomizableSourceSettings::Builder();
+        mSettings = new CustomizableSourceSettings(builder);
+    }
+    delete builder;
 }
 
 OverworldLevelSource::~OverworldLevelSource()
@@ -135,7 +136,7 @@ OverworldLevelSource::~OverworldLevelSource()
     delete[] mSurfaceDepths.data;
 }
 
-double OverworldLevelSource::getHeightFalloff(int x, int z, int* distance)
+float OverworldLevelSource::getHeightFalloff(int x, int z, int* distance)
 {
     int radius = (mLevelSize << 4) / 2;
     int west = x + radius;
@@ -153,7 +154,8 @@ double OverworldLevelSource::getHeightFalloff(int x, int z, int* distance)
     float falloff = 0.0f;
     if (edgeDistance < 32)
     {
-        falloff = static_cast<float>(32 - edgeDistance) * 0.03125f * 128.0f;
+        float edgeRatio = (32 - edgeDistance) / 32.0f;
+        falloff = edgeRatio * 128.0f;
     }
     *distance = edgeDistance;
     return falloff;
@@ -367,7 +369,8 @@ void OverworldLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* pr
 {
     arrayWithLength<double> surfaceDepths(256, true);
     PIXBeginNamedEvent(0.0f, "Getting noise region");
-    surfaceDepths = mSurfaceNoise->getRegion(surfaceDepths, chunkX * 16, chunkZ * 16, 16, 16, 0.0625, 0.0625, 1.0);
+    const double noiseScale = 0.0625;
+    surfaceDepths = mSurfaceNoise->getRegion(surfaceDepths, chunkX * 16, chunkZ * 16, 16, 16, noiseScale, noiseScale, 1.0);
     PIXEndNamedEvent();
     for (int x = 0; x < 16; ++x)
     {
@@ -670,27 +673,17 @@ std::vector<Biome::MobSpawnerData*>* OverworldLevelSource::getMobsAt(MobCategory
     return biome->getMobs(category);
 }
 
-static const std::wstring kStrongholdName(L"StrongHold");
-static const std::wstring kVillageName(L"Village");
-static const std::wstring kMonumentName(L"Monument");
-static const std::wstring kMansionName(L"Mansion");
-static const std::wstring kTempleName(L"Temple");
-static const std::wstring kMineshaftName(L"Mineshaft");
-static const std::wstring kBuriedTreasureName(L"BuriedTreasure");
-static const std::wstring kShipwreckName(L"Shipwreck");
-static const std::wstring kRuinName(L"Ruin");
-
 bool OverworldLevelSource::isPosInFeature(Level*, const std::wstring& feature, const BlockPos& pos)
 {
     if (!mGenerateStructures) return false;
-    if (kStrongholdName == feature && mStronghold != NULL) return mStronghold->isInsideFeature(pos);
-    if (kShipwreckName == feature && mShipwreck != NULL) return mShipwreck->isInsideFeature(pos);
-    if (kMansionName == feature && mMansion != NULL) return mMansion->isInsideFeature(pos);
-    if (kMonumentName == feature && mMonument != NULL) return mMonument->isInsideFeature(pos);
-    if (kVillageName == feature && mVillage != NULL) return mVillage->isInsideFeature(pos);
-    if (kMineshaftName == feature && mMineshaft != NULL) return mMineshaft->isInsideFeature(pos);
-    if (kTempleName == feature && mTemple != NULL) return mTemple->isInsideFeature(pos);
-    if (kRuinName.compare(feature) == 0 && mOceanRuin != NULL) return mOceanRuin->isInsideFeature(pos);
+    if (LargeFeature::STRONGHOLD == feature && mStronghold != NULL) return mStronghold->isInsideFeature(pos);
+    if (LargeFeature::SHIPWRECK == feature && mShipwreck != NULL) return mShipwreck->isInsideFeature(pos);
+    if (LargeFeature::MANSION == feature && mMansion != NULL) return mMansion->isInsideFeature(pos);
+    if (LargeFeature::MONUMENT == feature && mMonument != NULL) return mMonument->isInsideFeature(pos);
+    if (LargeFeature::VILLAGE == feature && mVillage != NULL) return mVillage->isInsideFeature(pos);
+    if (LargeFeature::MINESHAFT == feature && mMineshaft != NULL) return mMineshaft->isInsideFeature(pos);
+    if (LargeFeature::TEMPLE == feature && mTemple != NULL) return mTemple->isInsideFeature(pos);
+    if (LargeFeature::RUIN.compare(feature) == 0 && mOceanRuin != NULL) return mOceanRuin->isInsideFeature(pos);
     return false;
 }
 
@@ -698,15 +691,15 @@ BlockPos* OverworldLevelSource::findNearestMapFeature(Level* level, const std::w
                                                        const BlockPos& pos, bool takeBlock)
 {
     if (!mGenerateStructures) return NULL;
-    if (kStrongholdName == feature && mStronghold != NULL) return mStronghold->getNearestGeneratedFeature(level, pos, takeBlock);
-    if (kShipwreckName == feature && mShipwreck != NULL) return mShipwreck->getNearestGeneratedFeature(level, pos, takeBlock);
-    if (kMansionName == feature && mMansion != NULL) return mMansion->getNearestGeneratedFeature(level, pos, takeBlock);
-    if (kMonumentName == feature && mMonument != NULL) return mMonument->getNearestGeneratedFeature(level, pos, takeBlock);
-    if (kVillageName == feature && mVillage != NULL) return mVillage->getNearestGeneratedFeature(level, pos, takeBlock);
-    if (kMineshaftName == feature && mMineshaft != NULL) return mMineshaft->getNearestGeneratedFeature(level, pos, takeBlock);
-    if (kTempleName == feature && mTemple != NULL) return mTemple->getNearestGeneratedFeature(level, pos, takeBlock);
-    if (kBuriedTreasureName == feature && mBuriedTreasure != NULL) return mBuriedTreasure->getNearestGeneratedFeature(level, pos, takeBlock);
-    if (kRuinName == feature && mOceanRuin != NULL) return mOceanRuin->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::STRONGHOLD == feature && mStronghold != NULL) return mStronghold->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::SHIPWRECK == feature && mShipwreck != NULL) return mShipwreck->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::MANSION == feature && mMansion != NULL) return mMansion->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::MONUMENT == feature && mMonument != NULL) return mMonument->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::VILLAGE == feature && mVillage != NULL) return mVillage->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::MINESHAFT == feature && mMineshaft != NULL) return mMineshaft->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::TEMPLE == feature && mTemple != NULL) return mTemple->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::BURIED_TREASURE == feature && mBuriedTreasure != NULL) return mBuriedTreasure->getNearestGeneratedFeature(level, pos, takeBlock);
+    if (LargeFeature::RUIN == feature && mOceanRuin != NULL) return mOceanRuin->getNearestGeneratedFeature(level, pos, takeBlock);
     return NULL;
 }
 

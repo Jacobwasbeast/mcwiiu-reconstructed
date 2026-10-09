@@ -4,6 +4,8 @@
 #include "game/world/chunk/ChunkPrimer.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/chunk/LevelChunk.hpp"
+#include "game/world/generation/LargeFeature.hpp"
+#include "game/world/generation/StrongholdFeature.hpp"
 #include "game/world/generation/StructureFeature.hpp"
 #include "game/entity/mob/MobCategory.hpp"
 
@@ -41,14 +43,14 @@ std::vector<Biome::MobSpawnerData*>* CustomLevelSource::getMobsAt(MobCategory*, 
 bool CustomLevelSource::isPosInFeature(Level*, const std::wstring& feature, const BlockPos& pos)
 {
     if (!mGenerateStructures) return false;
-    if (feature == L"StrongHold" && mStronghold != NULL) return mStronghold->isInsideFeature(pos);
-    if (feature == L"Shipwreck" && mShipwreck != NULL) return mShipwreck->isInsideFeature(pos);
-    if (feature == L"Mansion" && mMansion != NULL) return mMansion->isInsideFeature(pos);
-    if (feature == L"Monument" && mMonument != NULL) return mMonument->isInsideFeature(pos);
-    if (feature == L"Village" && mVillage != NULL) return mVillage->isInsideFeature(pos);
-    if (feature == L"Mineshaft" && mMineshaft != NULL) return mMineshaft->isInsideFeature(pos);
-    if (feature == L"Temple" && mTemple != NULL) return mTemple->isInsideFeature(pos);
-    if (feature == L"Ruin" && mOceanRuin != NULL) return mOceanRuin->isInsideFeature(pos);
+    if (LargeFeature::STRONGHOLD == feature && mStronghold != NULL) return mStronghold->isInsideFeature(pos);
+    if (LargeFeature::SHIPWRECK == feature && mShipwreck != NULL) return mShipwreck->isInsideFeature(pos);
+    if (LargeFeature::MANSION == feature && mMansion != NULL) return mMansion->isInsideFeature(pos);
+    if (LargeFeature::MONUMENT == feature && mMonument != NULL) return mMonument->isInsideFeature(pos);
+    if (LargeFeature::VILLAGE == feature && mVillage != NULL) return mVillage->isInsideFeature(pos);
+    if (LargeFeature::MINESHAFT == feature && mMineshaft != NULL) return mMineshaft->isInsideFeature(pos);
+    if (LargeFeature::TEMPLE == feature && mTemple != NULL) return mTemple->isInsideFeature(pos);
+    if (LargeFeature::RUIN == feature && mOceanRuin != NULL) return mOceanRuin->isInsideFeature(pos);
     return false;
 }
 

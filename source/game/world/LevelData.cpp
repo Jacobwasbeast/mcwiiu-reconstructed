@@ -414,7 +414,7 @@ void LevelData::setTagData(CompoundTag* tag)
     tag->putLong(L"Time", mGameTime);
     tag->putLong(L"DayTime", mDayTime);
     tag->putLong(L"SizeOnDisk", mSizeOnDisk);
-    tag->putLong(L"LastPlayed", static_cast<long long>(System::processTimeInMilliSecs()));
+    tag->putLong(L"LastPlayed", System::processTimeInMilliSecs());
     tag->putString(L"LevelName", mLevelName);
     tag->putInt(L"version", mVersion);
     tag->putInt(L"clearWeatherTime", mClearWeatherTime);

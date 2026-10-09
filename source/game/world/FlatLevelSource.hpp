@@ -9,6 +9,7 @@
 #include "game/util/Random.hpp"
 #include "game/world/GenericOverworldLevelSource.hpp"
 #include "game/world/biome/Biome.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 #include "game/world/chunk/ChunkGenerator.hpp"
 
 class BlockPos;
@@ -54,8 +55,7 @@ private:
     Feature* mLakes;
     Feature* mLavaLakes;
     OceanMonumentFeature* mOceanMonument;
-    unsigned short* mElementIds;
-    unsigned int mElementIdCount;
+    arrayWithLength<unsigned short> mElementIds;
 };
 
 #endif

@@ -82,6 +82,9 @@
 
 static unsigned int sInstaTickTlsIndex = TlsAlloc();
 static unsigned int sLightingCacheTlsIndex = TlsAlloc();
+static int sEntityTickRange = 32;
+
+const int Level::maxBuildHeight;
 
 Level::Level(boost::shared_ptr<LevelStorage> levelStorage, LevelData* levelData, Dimension* dimension,
              bool isClientSide)
@@ -1079,17 +1082,16 @@ bool Level::checkLight(LightLayer::variety layer, const BlockPos& pos, bool only
     PIXEndNamedEvent();
 
     unsigned int* queue = (cache == NULL) ? mLightUpdateQueue : cache + 0x1000;
-    int minBound = (mDimension->getXZSize() * -16) >> 1;
-    int maxBound = ((mDimension->getXZSize() << 4) >> 1) - 1;
+    int checked = 0;
+    int toCheck = 0;
+    int minBound = -(mDimension->getXZSize() * 16) / 2;
+    int maxBound = mDimension->getXZSize() * 16 / 2 - 1;
 
     if (centreX > maxBound || centreX < minBound || centreZ > maxBound || centreZ < minBound)
     {
         LeaveCriticalSection(&mLightMutex);
         return false;
     }
-
-    int toCheck = 0;
-    int checked = 0;
 
     PIXBeginNamedEvent(0.0f, "First block");
 
@@ -1101,23 +1103,26 @@ bool Level::checkLight(LightLayer::variety layer, const BlockPos& pos, bool only
         initCacheComplete(cache, centreX, centreY, centreZ);
     }
 
-    if (expectedLight < currentLight)
+    if (expectedLight > currentLight)
+    {
+        queue[0] = 0x20820;
+        toCheck = 1;
+    }
+    else if (expectedLight < currentLight)
     {
         queue[0] = ((unsigned int)currentLight << 18) | 0x20820;
 
         int count = 1;
         MutableBlockPos current(0, 0, 0);
-        unsigned int* read = queue;
         unsigned int* keep = queue;
 
         do
         {
-            unsigned int entry = *read;
-            ++read;
+            unsigned int entry = queue[checked];
             ++checked;
 
-            int light = (entry >> 18) & 0xF;
             int x = (int)(entry & 0x3F) - 32 + centreX;
+            int light = (entry >> 18) & 0xF;
             int y = (int)((entry >> 6) & 0x3F) - 32 + centreY;
             int z = (int)((entry >> 12) & 0x3F) - 32 + centreZ;
             current.set(x, y, z);
@@ -1157,27 +1162,21 @@ bool Level::checkLight(LightLayer::variety layer, const BlockPos& pos, bool only
 
                 current.set(nx, ny, nz);
 
-                int emission = 0;
-                int blocking;
+                int emission;
 
                 if (layer == LightLayer::SKY)
                 {
-                    blocking = getBlockingCached(cache, LightLayer::SKY, getBlock(current),
-                                                 getExtraBlock(current), current);
+                    emission = 0;
                 }
                 else
                 {
                     emission = getBlock(current)->defaultBlockState()->getLightEmission();
-                    blocking = getBlockingCached(cache, layer, getBlock(current), getExtraBlock(current),
-                                                 current);
                 }
 
-                if (blocking < 1)
-                {
-                    blocking = 1;
-                }
+                int blocking =
+                    std::max(getBlockingCached(cache, layer, getBlock(current), getExtraBlock(current), current), 1);
 
-                if (blocking > 14 && emission > 0)
+                if (blocking >= 15 && emission > 0)
                 {
                     blocking = 1;
                 }
@@ -1185,17 +1184,15 @@ bool Level::checkLight(LightLayer::variety layer, const BlockPos& pos, bool only
                 int neighbourLight = getBrightnessCached(cache, layer, nx, ny, nz);
                 int fallOff = light - blocking;
 
-                if (fallOff < neighbourLight)
+                if (neighbourLight == fallOff && count < 0x8000)
+                {
+                    queue[count] = (nx - centreX + 32) | ((ny - centreY + 32) << 6) | ((nz - centreZ + 32) << 12)
+                                   | (fallOff << 18);
+                    ++count;
+                }
+                else if (neighbourLight > fallOff)
                 {
                     stillLit = true;
-                }
-                else if (fallOff == neighbourLight && count < 0x8000)
-                {
-                    queue[count] = (unsigned int)(nx - centreX + 32)
-                                   | ((unsigned int)(ny - centreY + 32) << 6)
-                                   | ((unsigned int)(nz - centreZ + 32) << 12)
-                                   | ((unsigned int)fallOff << 18);
-                    ++count;
                 }
             }
 
@@ -1207,18 +1204,13 @@ bool Level::checkLight(LightLayer::variety layer, const BlockPos& pos, bool only
             }
         }
         while (checked < count);
-    }
-    else if (expectedLight > currentLight)
-    {
-        queue[0] = 0x20820;
-        toCheck = 1;
+        checked = 0;
     }
 
     PIXEndNamedEvent();
     PIXBeginNamedEvent(0.0f, "Second block: checked=%i toCheck=%i", 0, toCheck);
 
     MutableBlockPos current(0, 0, 0);
-    checked = 0;
 
     while (checked < toCheck)
     {
@@ -1236,8 +1228,11 @@ bool Level::checkLight(LightLayer::variety layer, const BlockPos& pos, bool only
         }
 
         int light = getBrightnessCached(cache, layer, x, y, z);
-        bool ignoreEmission = layer == LightLayer::BLOCK && skipCentre
-                              && !(x == centreX && y == centreY && z == centreZ);
+        bool ignoreEmission = false;
+        if (layer == LightLayer::BLOCK && skipCentre)
+        {
+            ignoreEmission = x != centreX || y != centreY || z != centreZ;
+        }
         int expected = getExpectedLight(cache, current, layer, ignoreEmission);
 
         if (expected == light)
@@ -1247,63 +1242,49 @@ bool Level::checkLight(LightLayer::variety layer, const BlockPos& pos, bool only
 
         setBrightnessCached(cache, &dirty, layer, x, y, z, expected);
 
-        if (light >= expected)
+        if (expected <= light)
         {
             continue;
         }
 
-        if (Mth::abs(x - centreX) + Mth::abs(y - centreY) + Mth::abs(z - centreZ) >= 17
-            || toCheck >= 0x7FFA)
+        bool hasSpace = toCheck < 0x7FFA;
+        if (abs(x - centreX) + abs(y - centreY) + abs(z - centreZ) < 17 && hasSpace)
         {
-            continue;
-        }
+            if (x - 1 >= minBound && getBrightnessCached(cache, layer, x - 1, y, z) < expected)
+            {
+                queue[toCheck] = (x - 1 - centreX + 32) + ((y - centreY + 32) << 6) + ((z - centreZ + 32) << 12);
+                ++toCheck;
+            }
 
-        if (x - 1 >= minBound && getBrightnessCached(cache, layer, x - 1, y, z) < expected)
-        {
-            queue[toCheck] = (unsigned int)(x - 1 - centreX + 32)
-                             | ((unsigned int)(y - centreY + 32) << 6)
-                             | ((unsigned int)(z - centreZ + 32) << 12);
-            ++toCheck;
-        }
+            if (x + 1 <= maxBound && getBrightnessCached(cache, layer, x + 1, y, z) < expected)
+            {
+                queue[toCheck] = (x + 1 - centreX + 32) + ((y - centreY + 32) << 6) + ((z - centreZ + 32) << 12);
+                ++toCheck;
+            }
 
-        if (x + 1 <= maxBound && getBrightnessCached(cache, layer, x + 1, y, z) < expected)
-        {
-            queue[toCheck] = (unsigned int)(x + 1 - centreX + 32)
-                             | ((unsigned int)(y - centreY + 32) << 6)
-                             | ((unsigned int)(z - centreZ + 32) << 12);
-            ++toCheck;
-        }
+            if (y - 1 >= 0 && getBrightnessCached(cache, layer, x, y - 1, z) < expected)
+            {
+                queue[toCheck] = (x - centreX + 32) + ((y - 1 - centreY + 32) << 6) + ((z - centreZ + 32) << 12);
+                ++toCheck;
+            }
 
-        if (y - 1 >= 0 && getBrightnessCached(cache, layer, x, y - 1, z) < expected)
-        {
-            queue[toCheck] = (unsigned int)(x - centreX + 32)
-                             | ((unsigned int)(y - 1 - centreY + 32) << 6)
-                             | ((unsigned int)(z - centreZ + 32) << 12);
-            ++toCheck;
-        }
+            if (y + 1 < 256 && getBrightnessCached(cache, layer, x, y + 1, z) < expected)
+            {
+                queue[toCheck] = (x - centreX + 32) + ((y + 1 - centreY + 32) << 6) + ((z - centreZ + 32) << 12);
+                ++toCheck;
+            }
 
-        if (y + 1 < 256 && getBrightnessCached(cache, layer, x, y + 1, z) < expected)
-        {
-            queue[toCheck] = (unsigned int)(x - centreX + 32)
-                             | ((unsigned int)(y + 1 - centreY + 32) << 6)
-                             | ((unsigned int)(z - centreZ + 32) << 12);
-            ++toCheck;
-        }
+            if (z - 1 >= minBound && getBrightnessCached(cache, layer, x, y, z - 1) < expected)
+            {
+                queue[toCheck] = (x - centreX + 32) + ((y - centreY + 32) << 6) + ((z - 1 - centreZ + 32) << 12);
+                ++toCheck;
+            }
 
-        if (z - 1 >= minBound && getBrightnessCached(cache, layer, x, y, z - 1) < expected)
-        {
-            queue[toCheck] = (unsigned int)(x - centreX + 32)
-                             | ((unsigned int)(y - centreY + 32) << 6)
-                             | ((unsigned int)(z - 1 - centreZ + 32) << 12);
-            ++toCheck;
-        }
-
-        if (z + 1 <= maxBound && getBrightnessCached(cache, layer, x, y, z + 1) < expected)
-        {
-            queue[toCheck] = (unsigned int)(x - centreX + 32)
-                             | ((unsigned int)(y - centreY + 32) << 6)
-                             | ((unsigned int)(z + 1 - centreZ + 32) << 12);
-            ++toCheck;
+            if (z + 1 <= maxBound && getBrightnessCached(cache, layer, x, y, z + 1) < expected)
+            {
+                queue[toCheck] = (x - centreX + 32) + ((y - centreY + 32) << 6) + ((z + 1 - centreZ + 32) << 12);
+                ++toCheck;
+            }
         }
     }
 
@@ -2618,46 +2599,47 @@ bool Level::addEntity(boost::shared_ptr<Entity> entity)
 
     int chunkX = Mth::floor(entity->mX * 0.0625);
     int chunkZ = Mth::floor(entity->mZ * 0.0625);
-    bool forcedLoading = entity->mForcedLoading;
-
-    bool playerEntity = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
-    if (!playerEntity && !forcedLoading && !hasChunk(chunkX, chunkZ, false))
+    if (entity == NULL)
     {
         return false;
     }
 
-    if (playerEntity)
+    bool forcedLoading = entity->mForcedLoading;
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-        std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin();
-
-        while (it != mPlayers.end() && *it != player)
-        {
-            ++it;
-        }
-
-        if (it == mPlayers.end())
-        {
-            mPlayers.push_back(player);
-        }
-
-        updateSleepingPlayerList();
+        forcedLoading = true;
     }
 
-    MemSect(0x2A);
-    getChunk(chunkX, chunkZ)->addEntity(entity);
-    MemSect(0);
+    if (forcedLoading || hasChunk(chunkX, chunkZ, false))
+    {
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
+        {
+            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+            std::vector<boost::shared_ptr<Player> >::iterator it = std::find(mPlayers.begin(), mPlayers.end(), entity);
+            if (it == mPlayers.end())
+            {
+                mPlayers.push_back(player);
+            }
 
-    EnterCriticalSection(&mEntityMutex);
-    MemSect(0x2B);
-    mEntities.push_back(entity);
-    MemSect(0);
-    LeaveCriticalSection(&mEntityMutex);
+            updateSleepingPlayerList();
+        }
 
-    MemSect(0x2C);
-    entityAdded(entity);
-    MemSect(0);
-    return true;
+        MemSect(0x2A);
+        getChunk(chunkX, chunkZ)->addEntity(entity);
+        MemSect(0);
+
+        EnterCriticalSection(&mEntityMutex);
+        MemSect(0x2B);
+        mEntities.push_back(entity);
+        MemSect(0);
+        LeaveCriticalSection(&mEntityMutex);
+
+        MemSect(0x2C);
+        entityAdded(entity);
+        MemSect(0);
+        return true;
+    }
+    return false;
 }
 
 void Level::entityAdded(boost::shared_ptr<Entity> entity)
@@ -2698,7 +2680,7 @@ void Level::removeEntity(boost::shared_ptr<Entity> entity)
 
     entity->remove();
 
-    bool playerEntity = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+    bool playerEntity = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType());
     if (playerEntity)
     {
         std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin();
@@ -2720,7 +2702,7 @@ void Level::removeEntityImmediately(boost::shared_ptr<Entity> entity)
     entity->setDropContainerContent(false);
     entity->remove();
 
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         std::vector<boost::shared_ptr<Player> >::iterator playerIt = mPlayers.begin();
 
@@ -3447,7 +3429,7 @@ void Level::setDayTime(long long value)
         {
             for (std::vector<boost::shared_ptr<Player> >::iterator it = mPlayers.begin(); it != mPlayers.end(); ++it)
             {
-                (*it)->awardStat(gStats->get_timePlayed(), GenericStats::param_time(static_cast<int>(delta)));
+                (*it)->awardStat(GenericStats::timePlayed(), GenericStats::param_time(static_cast<int>(delta)));
             }
         }
     }
@@ -3772,7 +3754,7 @@ bool Level::addBlockEntity(boost::shared_ptr<BlockEntity> entity)
 {
     EnterCriticalSection(&mBlockEntityMutex);
     mBlockEntities.push_back(entity);
-    if ((entity->GetType() & BlockEntityType::TICKABLE) == BlockEntityType::TICKABLE)
+    if (eTYPE_DERIVED_FROM(BlockEntityType::TICKABLE, entity->GetType()))
     {
         mTickingBlockEntities.push_back(entity);
     }
@@ -3820,15 +3802,15 @@ void Level::tick(boost::shared_ptr<Entity> entity, bool updateChunk)
 {
     int blockX = Mth::floor(entity->mX);
     int blockZ = Mth::floor(entity->mZ);
-    int range = 32;
+    int range = sEntityTickRange;
     if (updateChunk)
     {
-        if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER
+        if (!eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
             && !hasChunksAt(blockX - range, 0, blockZ - range, blockX + range, 0, blockZ + range, true))
         {
             if (!mIsClientSide)
             {
-                if ((entity->GetType() & EntityType::MOB) == EntityType::MOB)
+                if (eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()))
                 {
                     boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
                     mob->checkDespawn();
@@ -3850,7 +3832,7 @@ void Level::tick(boost::shared_ptr<Entity> entity, bool updateChunk)
 
     if (updateChunk)
     {
-        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER || entity->mInChunk)
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) || entity->mInChunk)
         {
             ++entity->mTickCount;
             if (entity->isPassenger())
@@ -3864,6 +3846,27 @@ void Level::tick(boost::shared_ptr<Entity> entity, bool updateChunk)
         }
     }
 
+    if (Mth::isNaN(entity->mX))
+    {
+        entity->mX = entity->mXOld;
+    }
+    if (Mth::isNaN(entity->mY))
+    {
+        entity->mY = entity->mYOld;
+    }
+    if (Mth::isNaN(entity->mZ))
+    {
+        entity->mZ = entity->mZOld;
+    }
+    if (Mth::isNaN(entity->mXRot))
+    {
+        entity->mXRot = entity->mXRotO;
+    }
+    if (Mth::isNaN(entity->mYRot))
+    {
+        entity->mYRot = entity->mYRotO;
+    }
+
     int chunkX = Mth::floor(entity->mX * 0.0625);
     int chunkY = Mth::floor(entity->mY * 0.0625);
     int chunkZ = Mth::floor(entity->mZ * 0.0625);
@@ -3873,15 +3876,15 @@ void Level::tick(boost::shared_ptr<Entity> entity, bool updateChunk)
         {
             getChunk(entity->mChunkX, entity->mChunkZ)->removeEntity(entity, entity->mChunkY);
         }
-        if (!entity->checkAndResetTeleportedFlag() && !hasChunk(chunkX, chunkZ, true))
-        {
-            entity->mInChunk = false;
-        }
-        else
+        if (entity->checkAndResetTeleportedFlag() || hasChunk(chunkX, chunkZ, true))
         {
             MemSect(0x27);
             getChunk(chunkX, chunkZ)->addEntity(entity);
             MemSect(0);
+        }
+        else
+        {
+            entity->mInChunk = false;
         }
     }
 
@@ -3973,7 +3976,7 @@ void Level::tickEntities()
 
         if (!entity->shouldTick())
         {
-            if (!mIsClientSide && (entity->GetType() & EntityType::MOB) == EntityType::MOB)
+            if (!mIsClientSide && eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()))
             {
                 boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
                 mob->checkDespawn();
@@ -4387,44 +4390,51 @@ void Level::removeBlockEntity(const BlockPos& pos)
 {
     EnterCriticalSection(&mBlockEntityMutex);
     boost::shared_ptr<BlockEntity> entity = getBlockEntity(pos);
-    if (entity != NULL)
+    if (entity != NULL && mProcessingBlockEntities)
     {
-        if (mProcessingBlockEntities)
-        {
-            entity->setRemoved();
-        }
+        entity->setRemoved();
         std::vector<boost::shared_ptr<BlockEntity> >::iterator it =
             std::find(mPendingBlockEntities.begin(), mPendingBlockEntities.end(), entity);
         if (it != mPendingBlockEntities.end())
         {
             mPendingBlockEntities.erase(it);
         }
-        if (mProcessingBlockEntities)
-        {
-            LeaveCriticalSection(&mBlockEntityMutex);
-            return;
-        }
-        it = std::find(mBlockEntities.begin(), mBlockEntities.end(), entity);
-        if (it != mBlockEntities.end())
-        {
-            mBlockEntities.erase(it);
-        }
-        if ((entity->GetType() & BlockEntityType::TICKABLE) == BlockEntityType::TICKABLE)
-        {
-            it = std::find(mTickingBlockEntities.begin(), mTickingBlockEntities.end(), entity);
-            if (it != mTickingBlockEntities.end())
-            {
-                mTickingBlockEntities.erase(it);
-            }
-        }
-        blockEntityRemovedExtra(entity);
+        LeaveCriticalSection(&mBlockEntityMutex);
     }
-    LevelChunk* chunk = getChunkAt(pos);
-    if (chunk != NULL)
+    else
     {
-        chunk->removeBlockEntity(pos);
+        if (entity != NULL)
+        {
+            std::vector<boost::shared_ptr<BlockEntity> >::iterator it =
+                std::find(mPendingBlockEntities.begin(), mPendingBlockEntities.end(), entity);
+            if (it != mPendingBlockEntities.end())
+            {
+                mPendingBlockEntities.erase(it);
+            }
+            std::vector<boost::shared_ptr<BlockEntity> >::iterator it2 =
+                std::find(mBlockEntities.begin(), mBlockEntities.end(), entity);
+            if (it2 != mBlockEntities.end())
+            {
+                mBlockEntities.erase(it2);
+            }
+            if (eTYPE_DERIVED_FROM(BlockEntityType::TICKABLE, entity->GetType()))
+            {
+                std::vector<boost::shared_ptr<BlockEntity> >::iterator it3 =
+                    std::find(mTickingBlockEntities.begin(), mTickingBlockEntities.end(), entity);
+                if (it3 != mTickingBlockEntities.end())
+                {
+                    mTickingBlockEntities.erase(it3);
+                }
+            }
+            blockEntityRemovedExtra(entity);
+        }
+        LevelChunk* chunk = getChunkAt(pos);
+        if (chunk != NULL)
+        {
+            chunk->removeBlockEntity(pos);
+        }
+        LeaveCriticalSection(&mBlockEntityMutex);
     }
-    LeaveCriticalSection(&mBlockEntityMutex);
 }
 
 void Level::markForRemoval(boost::shared_ptr<BlockEntity> entity)
@@ -4740,15 +4750,9 @@ bool Level::internalGetCollisionAABBs(boost::shared_ptr<Entity> entity, const AA
     const int maxZ = Mth::ceil(static_cast<float>(box->mMaxZ)) + expansion;
 
     const bool inMiniGame = Minecraft::InMiniGame(eMiniGameId_Any, true);
-    AABB* constraints = NULL;
-    bool outsideWorldBorder = false;
-    bool insideWorldBorder = false;
-    if (entity != NULL)
-    {
-        constraints = mDimension->getPlayerConstraints(BlockPos(entity));
-        outsideWorldBorder = entity->mOutsideWorldBorder;
-        insideWorldBorder = isInsideWorldBorder(entity);
-    }
+    AABB* constraints = entity != NULL ? mDimension->getPlayerConstraints(BlockPos(entity)) : NULL;
+    const bool outsideWorldBorder = entity != NULL && entity->mOutsideWorldBorder;
+    const bool insideWorldBorder = entity != NULL && isInsideWorldBorder(entity);
     PIXEndNamedEvent();
 
     if (includePlayerConstraints && constraints != NULL)
@@ -4777,11 +4781,13 @@ bool Level::internalGetCollisionAABBs(boost::shared_ptr<Entity> entity, const AA
             {
                 continue;
             }
-            if ((x >> 4) != chunkX || (z >> 4) != chunkZ)
+            const int newChunkX = x >> 4;
+            const int newChunkZ = z >> 4;
+            if (newChunkX != chunkX || newChunkZ != chunkZ)
             {
-                chunkX = x >> 4;
-                chunkZ = z >> 4;
-                chunk = getChunk(chunkX, chunkZ);
+                chunk = getChunk(newChunkX, newChunkZ);
+                chunkX = newChunkX;
+                chunkZ = newChunkZ;
             }
             pos.set(x, 64, z);
             if (chunk == NULL || chunk->isEmpty())
@@ -4790,7 +4796,7 @@ bool Level::internalGetCollisionAABBs(boost::shared_ptr<Entity> entity, const AA
             }
             for (int y = minY - 1; y < maxY; ++y)
             {
-                if (((edgeX || edgeZ) && y == maxY - 1) || static_cast<unsigned int>(y) > 255)
+                if (((edgeX || edgeZ) && y == maxY - 1) || y < 0 || y >= 256)
                 {
                     continue;
                 }
@@ -4810,11 +4816,20 @@ bool Level::internalGetCollisionAABBs(boost::shared_ptr<Entity> entity, const AA
                     else
                     {
                         const int section = HierarchicalElementStorage::GetSectionIDFromXYZ(x, y, z);
-                        if (std::find(emptySections.begin(), emptySections.end(), section) != emptySections.end())
+                        bool knownEmpty = false;
+                        for (unsigned int i = 0; i < emptySections.size(); ++i)
+                        {
+                            if (emptySections[i] == section)
+                            {
+                                knownEmpty = true;
+                                break;
+                            }
+                        }
+                        if (knownEmpty)
                         {
                             continue;
                         }
-                        bool sectionEmpty = false;
+                        bool sectionEmpty;
                         const unsigned short element = chunk->getElement(x & 15, y, z & 15, &sectionEmpty);
                         if (element == 0)
                         {
@@ -4824,7 +4839,7 @@ bool Level::internalGetCollisionAABBs(boost::shared_ptr<Entity> entity, const AA
                             }
                             continue;
                         }
-                        const int blockId = element >> 4;
+                        const unsigned short blockId = element >> 4;
                         if (blockId == BlockId::BUBBLE_COLUMN_SEGMENT || blockId == BlockId::WATER
                             || blockId == BlockId::FLOWING_WATER)
                         {
@@ -4849,7 +4864,7 @@ bool Level::internalGetCollisionAABBs(boost::shared_ptr<Entity> entity, const AA
                         state->addCollissionAABBs(this, pos, box, collisions, entity, false);
                     }
                 }
-                if (stopOnFirst && !collisions->empty())
+                if (stopOnFirst && collisions->size() != 0)
                 {
                     PIXEndNamedEvent();
                     return true;
@@ -5630,13 +5645,15 @@ bool Level::canCreateMore(unsigned long long type, ESPAWN_TYPE spawnType)
             count = countInstanceOf(category->getEnumBaseClass(), category->isSingleType(), NULL, NULL);
             limit = category->getMaxInstancesPerLevelWithSpawnEgg();
         }
-        else if ((type & EntityType::MINECART) == EntityType::MINECART)
+        else if (eTYPE_DERIVED_FROM(EntityType::MINECART, type))
         {
-            return countInstanceOf(EntityType::MINECART, false, NULL, NULL) < 250;
+            count = countInstanceOf(EntityType::MINECART, false, NULL, NULL);
+            limit = 250;
         }
-        else if (type == EntityType::BOAT)
+        else if (eTYPE_DERIVED_FROM(EntityType::BOAT, type))
         {
-            return countInstanceOf(EntityType::BOAT, true, NULL, NULL) < 40;
+            count = countInstanceOf(EntityType::BOAT, true, NULL, NULL);
+            limit = 40;
         }
     }
     else if (spawnType == eSpawnType_Breed)
@@ -5689,46 +5706,38 @@ void Level::removeAllEntities(bool players, bool mobs, bool items, bool vehicles
     while (it != entities.end())
     {
         boost::shared_ptr<Entity> entity = *it;
-        if (entity == NULL)
+        bool isPlayer = eTYPE_DERIVED_FROM(EntityType::HANGING_ENTITY, entity->GetType())
+            || eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, entity->GetType());
+        bool isMob = eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType());
+        bool isItem = eTYPE_DERIVED_FROM(EntityType::MINECART, entity->GetType())
+            || eTYPE_DERIVED_FROM(EntityType::BOAT, entity->GetType());
+        bool isOther = !isPlayer && !isMob && !isItem;
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
+            || eTYPE_DERIVED_FROM(EntityType::ENDER_DRAGON, entity->GetType())
+            || eTYPE_DERIVED_FROM(EntityType::ENDER_CRYSTAL, entity->GetType()))
         {
-            it = entities.erase(it);
-            continue;
-        }
-
-        unsigned long long type = entity->GetType();
-        bool isPlayer = (type & EntityType::HANGING_ENTITY) == EntityType::HANGING_ENTITY
-            || type == EntityType::ARMOR_STAND;
-        bool isMob = (type & EntityType::MOB) == EntityType::MOB;
-        bool isItem = (type & EntityType::MINECART) == EntityType::MINECART
-            || type == EntityType::BOAT;
-        bool isVehicle = (type & EntityType::PLAYER) == EntityType::PLAYER
-            || type == EntityType::ENDER_DRAGON || type == EntityType::ENDER_CRYSTAL;
-        if (isVehicle)
-        {
-            bool inMiniGame = Minecraft::InMiniGame(eMiniGameId_Glide, true);
-            if (inMiniGame && type != EntityType::ENDER_CRYSTAL)
+            if (Minecraft::InMiniGame(eMiniGameId_Glide, true)
+                && eTYPE_DERIVED_FROM(EntityType::ENDER_CRYSTAL, entity->GetType()))
             {
                 ++it;
-                continue;
             }
-            it = entities.erase(it);
-            continue;
+            else
+            {
+                it = entities.erase(it);
+            }
         }
-        bool inBounds = entity->mChunkX >= x && entity->mChunkX <= z
-            && entity->mChunkZ >= y && entity->mChunkZ <= radius;
-        if (inBounds)
+        else if (entity->mChunkX >= x && entity->mChunkX <= z && entity->mChunkZ >= y && entity->mChunkZ <= radius)
         {
             it = entities.erase(it);
-            continue;
         }
-        if ((players || !isPlayer) && (mobs || !isMob)
-            && (items || !isItem)
-            && (vehicles || (isPlayer || isMob || isItem)))
+        else if ((!players && isPlayer) || (!mobs && isMob) || (!items && isItem) || (!vehicles && isOther))
+        {
+            it = entities.erase(it);
+        }
+        else
         {
             ++it;
-            continue;
         }
-        it = entities.erase(it);
     }
     removeEntities(&entities);
 }

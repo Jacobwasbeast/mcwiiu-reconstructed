@@ -24,10 +24,9 @@ NetherFlatLevelSource::NetherFlatLevelSource(Level* level, bool generateStructur
 {
     int xzSize = level->getLevelData()->getXZSize();
     int hellScale = level->getLevelData()->getHellScale();
-    int levelSize = static_cast<int>(std::ceil(static_cast<float>(xzSize) / static_cast<float>(hellScale)));
+    mLevelSize = static_cast<int>(std::ceil(static_cast<float>(xzSize) / static_cast<float>(hellScale)));
     mLevel = level;
     mGenerateStructures = generateStructures;
-    mLevelSize = levelSize;
     mRandom = new Random(seed);
     mPopulationRandom = new Random(seed);
 }
@@ -86,9 +85,9 @@ void NetherFlatLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* p
                     }
                 }
 
-                if (mLevelSize / 2 - 1 <= chunkX)
+                if (chunkX >= mLevelSize / 2 - 1)
                 {
-                    if (x + mRandom->nextInt(4) >= 15 || mLevelSize / 2 < chunkX)
+                    if (x + mRandom->nextInt(4) >= 15 || chunkX > mLevelSize / 2)
                     {
                         primer->setState(blockIndex, Blocks::bedrock->defaultBlockState());
                         placed = true;
@@ -105,7 +104,7 @@ void NetherFlatLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* p
                         }
                     }
                 }
-                else if (z + mRandom->nextInt(4) >= 15 || mLevelSize / 2 < chunkZ)
+                else if (z + mRandom->nextInt(4) >= 15 || chunkZ > mLevelSize / 2)
                 {
                     primer->setState(blockIndex, Blocks::bedrock->defaultBlockState());
                 }
@@ -124,12 +123,12 @@ void NetherFlatLevelSource::buildSurfaces(int chunkX, int chunkZ, ChunkPrimer* p
 LevelChunk* NetherFlatLevelSource::createChunk(int chunkX, int chunkZ)
 {
     mRandom->setSeed(static_cast<long long>(chunkX) * 341873128712LL + static_cast<long long>(chunkZ) * 132897987541LL);
-    unsigned short* elementIds = static_cast<unsigned short*>(XPhysicalAlloc(65536, 0xFFFFFFFF, 0x1000, 4));
-    XMemSet128(elementIds, 0, 65536);
-    arrayWithLength<unsigned short> elements;
-    elements.data = elementIds;
-    elements.length = 32768;
-    ChunkPrimer primer(false, elements);
+
+    unsigned int elementCount = 32768;
+    unsigned short* elementIds = static_cast<unsigned short*>(XPhysicalAlloc(elementCount * sizeof(unsigned short), 0xFFFFFFFF, 0x1000, 4));
+    XMemSet128(elementIds, 0, elementCount * sizeof(unsigned short));
+    ChunkPrimer primer(false, arrayWithLength<unsigned short>(elementIds, elementCount));
+
     prepareHeights(chunkX, chunkZ, &primer);
     buildSurfaces(chunkX, chunkZ, &primer);
     LevelChunk* chunk = new LevelChunk(mLevel, &primer, chunkX, chunkZ);
@@ -156,21 +155,19 @@ void NetherFlatLevelSource::postProcess(int chunkX, int chunkZ)
     int count = mPopulationRandom->nextInt(mPopulationRandom->nextInt(10) + 1) + 1;
     for (int i = 0; i < count; ++i)
     {
-        const int x = mPopulationRandom->nextInt(16);
-        const int y = mPopulationRandom->nextInt(120);
-        const int z = mPopulationRandom->nextInt(16);
-        HellFireFeature feature;
-        feature.place(mLevel, *mPopulationRandom, BlockPos(originX + x + 8, y + 4, originZ + z + 8));
+        int x = originX + mPopulationRandom->nextInt(16) + 8;
+        int y = mPopulationRandom->nextInt(120) + 4;
+        int z = originZ + mPopulationRandom->nextInt(16) + 8;
+        HellFireFeature().place(mLevel, *mPopulationRandom, BlockPos(x, y, z));
     }
 
     count = mPopulationRandom->nextInt(mPopulationRandom->nextInt(10) + 1);
     for (int i = 0; i < count; ++i)
     {
-        const int x = mPopulationRandom->nextInt(16);
-        const int y = mPopulationRandom->nextInt(120);
-        const int z = mPopulationRandom->nextInt(16);
-        LightGemFeature feature;
-        feature.place(mLevel, *mPopulationRandom, BlockPos(originX + x + 8, y + 4, originZ + z + 8));
+        int x = originX + mPopulationRandom->nextInt(16) + 8;
+        int y = mPopulationRandom->nextInt(120) + 4;
+        int z = originZ + mPopulationRandom->nextInt(16) + 8;
+        LightGemFeature().place(mLevel, *mPopulationRandom, BlockPos(x, y, z));
     }
 
     FallingBlock::fallInstantly = false;
