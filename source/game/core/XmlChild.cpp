@@ -24,10 +24,7 @@ XmlChild::XmlChild(const std::wstring& value, bool isText)
 XmlChild::XmlChild(const XmlChild& other)
     : m_type(other.m_type), m_value(other.m_value)
 {
-}
-
-XmlChild::~XmlChild()
-{
+    m_value = other.m_value;
 }
 
 std::wstring XmlChild::txt() const

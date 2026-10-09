@@ -12,9 +12,9 @@ PostChain::PostChain(TextureManager* textureManager, ResourceManager* resourceMa
     mScreenTarget = screenTarget;
     mResourceManager = resourceManager;
     mWidth = screenTarget->width;
-    mHeight = screenTarget->height;
     mTime = 0.0f;
     mLastStamp = 0.0f;
+    mHeight = screenTarget->height;
     (void)textureManager;
     mName = name->toString();
     updateOrthoMatrix();
@@ -24,8 +24,8 @@ void PostChain::updateOrthoMatrix()
 {
     mOrthoMatrix = new Matrix4f();
     mOrthoMatrix->setIdentity();
-    mOrthoMatrix->m[0] = 2.0f / static_cast<float>(mWidth);
-    mOrthoMatrix->m[5] = 2.0f / static_cast<float>(-mHeight);
+    mOrthoMatrix->m[0] = 2.0f / static_cast<float>(mScreenTarget->renderWidth);
+    mOrthoMatrix->m[5] = 2.0f / static_cast<float>(-mScreenTarget->renderHeight);
     mOrthoMatrix->m[10] = -0.0020001999f;
     mOrthoMatrix->m[15] = 1.0f;
     mOrthoMatrix->m[3] = -1.0f;

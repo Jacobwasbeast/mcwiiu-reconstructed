@@ -27,7 +27,7 @@ bool WonByAmountCondition::canAward(const GameMedal* medal, const StatsUID& uid,
     unsigned int bestOpponentTime = UINT_MAX;
     for (int round = 0; round <= static_cast<int>(Minecraft::GetInstance()->GetMiniGame()->GetRoundCount()); ++round)
     {
-        for (unsigned int playerRound = 0; playerRound < static_cast<unsigned int>(playerStats->getTotalRounds()); ++playerRound)
+        for (unsigned int playerRound = 0; playerRound < playerStats->getTotalRounds(); ++playerRound)
         {
             playerTime = playerStats->getRoundStats(playerRound)->mLifeSpan;
             for (GameStats::StatsMap::iterator it = allPlayerStats->begin(); it != allPlayerStats->end(); ++it)
@@ -45,14 +45,18 @@ bool WonByAmountCondition::canAward(const GameMedal* medal, const StatsUID& uid,
 
         if (playerTime < bestOpponentTime)
         {
-            const float margin = static_cast<float>(bestOpponentTime - playerTime);
             if (mOperator == GameMedal::OPERATOR_AT_MOST)
             {
+                float margin = static_cast<float>(bestOpponentTime - playerTime);
                 if (margin <= mTarget)
                     return true;
             }
-            else if (mOperator == GameMedal::OPERATOR_AT_LEAST && mTarget <= margin)
-                return true;
+            else if (mOperator == GameMedal::OPERATOR_AT_LEAST)
+            {
+                float margin = static_cast<float>(bestOpponentTime - playerTime);
+                if (margin >= mTarget)
+                    return true;
+            }
         }
     }
     return false;

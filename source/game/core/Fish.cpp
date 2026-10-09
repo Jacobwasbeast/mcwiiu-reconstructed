@@ -37,14 +37,14 @@ Fish::Fish(Level* level, bool deferredInit)
 
 void Fish::_init()
 {
-    mSwimAmplitude = 0.01f;
+    mSwimTicks = 1;
     mSwimFrequency = 0.02f;
     mWaterValueC = 12.0f;
-    mSwimTicks = 1;
+    mSwimAmplitude = 0.01f;
+    mSwimSpeed = 1.0f;
+    mSwimFlag = false;
     mSwimRotation = 0.0f;
     mSwimRotationOld = 0.0f;
-    mSwimFlag = false;
-    mSwimSpeed = 1.0f;
     mMaxFlockSize = mRandom->nextInt(4, 8);
 }
 
@@ -136,13 +136,14 @@ bool Fish::mobInteract(const boost::shared_ptr<Player>& player,
                        InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
-    if (item->getItem() != Items::bucket && item->getItem() != Items::waterBucket)
-        return Mob::mobInteract(player, hand);
-
-    not_null_ptr<ItemInstance> result(
-        static_cast<BucketItem*>(item->getItem())->collectFish(player, shared_from_this(), item));
-    player->setItemInHand(hand, result);
-    return true;
+    if (item->getItem() == Items::bucket || item->getItem() == Items::waterBucket)
+    {
+        boost::shared_ptr<ItemInstance> result =
+            static_cast<BucketItem*>(item->getItem())->collectFish(player, shared_from_this(), item);
+        player->setItemInHand(hand, result);
+        return true;
+    }
+    return Mob::mobInteract(player, hand);
 }
 
 unsigned int Fish::GetInteractTooltip(const EntityTooltipDataHolder& holder)

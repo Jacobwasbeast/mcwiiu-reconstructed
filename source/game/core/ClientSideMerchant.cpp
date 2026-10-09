@@ -23,10 +23,9 @@ ClientSideMerchant::~ClientSideMerchant()
     delete mOffers;
 }
 
-MerchantContainer* ClientSideMerchant::createContainer()
+void ClientSideMerchant::createContainer()
 {
     mContainer = new MerchantContainer(mTradingPlayer, shared_from_this());
-    return mContainer;
 }
 
 boost::shared_ptr<Player> ClientSideMerchant::getTradingPlayer()

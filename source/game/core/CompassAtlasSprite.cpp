@@ -33,12 +33,13 @@ void CompassAtlasSprite::updateFromPosition(Level* level, double x, double z, do
     if (level != NULL && !noJitter)
     {
         BlockPos spawn = level->getSharedSpawnPos();
-        double facing = ((static_cast<double>(static_cast<int>(yRot) % 360) - 90.0) * pi) / 180.0;
-        target = -(facing - std::atan2(static_cast<double>(spawn.z) - z, static_cast<double>(spawn.x) - x));
+        double dx = spawn.x - x;
+        double dz = spawn.z - z;
+        yRot = static_cast<int>(yRot) % 360;
+        target = -((yRot - 90.0) * pi / 180.0 - std::atan2(dz, dx));
         if (!level->mDimension->isNaturalDimension())
         {
-            double random = Math::random();
-            target = random * pi + random * pi;
+            target = Math::random() * pi * 2.0;
         }
     }
 
@@ -69,32 +70,30 @@ void CompassAtlasSprite::updateFromPosition(Level* level, double x, double z, do
         mAngle += mAngleDelta;
     }
 
-    if (mParent == NULL)
+    if (mParent != NULL)
     {
-        std::vector<Texture*>* frames = mFrames;
-        int frame = static_cast<int>((mAngle / (pi * 2.0) + 1.0) * static_cast<double>(static_cast<int>(frames->size()))) % frames->size();
+        int frame = static_cast<int>((mAngle / (pi * 2.0) + 1.0) * mParent->mFrames->size()) % mParent->mFrames->size();
         while (frame < 0)
         {
-            frame = (frame + static_cast<int>(frames->size())) % static_cast<int>(frames->size());
+            frame = (frame + static_cast<int>(mParent->mFrames->size())) % static_cast<int>(mParent->mFrames->size());
         }
         if (frame != mFrame)
         {
             mFrame = frame;
-            mSource->blit(mX, mY, frames->at(frame), mRotated);
+            mParent->mSource->blit(mX, mY, mParent->mFrames->at(frame), mRotated);
         }
     }
     else
     {
-        std::vector<Texture*>* frames = mParent->mFrames;
-        int frame = static_cast<int>((mAngle / (pi * 2.0) + 1.0) * static_cast<double>(static_cast<int>(frames->size()))) % frames->size();
+        int frame = static_cast<int>((mAngle / (pi * 2.0) + 1.0) * mFrames->size()) % mFrames->size();
         while (frame < 0)
         {
-            frame = (frame + static_cast<int>(frames->size())) % static_cast<int>(frames->size());
+            frame = (frame + static_cast<int>(mFrames->size())) % static_cast<int>(mFrames->size());
         }
         if (frame != mFrame)
         {
             mFrame = frame;
-            mParent->mSource->blit(mX, mY, frames->at(frame), mRotated);
+            mSource->blit(mX, mY, mFrames->at(frame), mRotated);
         }
     }
 }

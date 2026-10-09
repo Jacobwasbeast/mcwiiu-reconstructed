@@ -220,10 +220,11 @@ void Slime::remove()
         int count = 2 + mRandom->nextInt(3);
         for (int i = 0; i < count; ++i)
         {
-            if (i != 0 && static_cast<unsigned int>(mLevel->countInstanceOf(EntityType::SLIME, true, NULL, NULL))
-                >= MobCategory::SLIME->getMaxInstancesPerLevel())
+            if (i != 0)
             {
-                continue;
+                unsigned int slimeCount = mLevel->countInstanceOf(EntityType::SLIME, true, NULL, NULL);
+                if (slimeCount >= MobCategory::SLIME->getMaxInstancesPerLevel())
+                    continue;
             }
 
             float offsetX = (static_cast<float>(i % 2) - 0.5f) * static_cast<float>(size) * 0.25f;
@@ -248,7 +249,7 @@ void Slime::remove()
 void Slime::push(boost::shared_ptr<Entity> entity)
 {
     Entity::push(entity);
-    bool isGolem = entity->GetType() == EntityType::VILLAGER_GOLEM;
+    bool isGolem = eTYPE_DERIVED_FROM(EntityType::VILLAGER_GOLEM, entity->GetType());
     if (isGolem && isDealsDamage())
         dealDamage(boost::static_pointer_cast<LivingEntity>(entity));
 }
@@ -360,7 +361,8 @@ MobGroupData* Slime::finalizeMobSpawn(const DifficultyInstance& difficulty, MobG
     int sizeIndex = mRandom->nextInt(3);
     if (sizeIndex < 2 && mRandom->nextFloat() < 0.5f * difficulty.getSpecialMultiplier())
         ++sizeIndex;
-    setSize(1 << sizeIndex, true);
+    int size = 1 << sizeIndex;
+    setSize(size, true);
     return Mob::finalizeMobSpawn(difficulty, data, L"");
 }
 
@@ -386,7 +388,7 @@ bool Slime::SlimeAttackGoal::canUse()
         return false;
     if (!target->isAlive())
         return false;
-    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType()) &&
         boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)
         return false;
     return true;
@@ -405,12 +407,12 @@ bool Slime::SlimeAttackGoal::canContinueToUse()
         return false;
     if (!target->isAlive())
         return false;
-    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType()) &&
         boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)
         return false;
-    if (--mGrowTiredTimer > 0)
-        return true;
-    return false;
+    if (--mGrowTiredTimer <= 0)
+        return false;
+    return true;
 }
 
 void Slime::SlimeAttackGoal::tick()

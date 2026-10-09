@@ -16,8 +16,13 @@ public:
     class NameData
     {
     public:
-        NameData(std::wstring name, std::wstring ownerUuid, bool createdOnHost, bool createdByRestrictedPlayer);
-        NameData(const NameData& other);
+        NameData(std::wstring name, std::wstring ownerUuid, bool createdOnHost, bool createdByRestrictedPlayer)
+        {
+            this->name = name;
+            this->ownerUuid = ownerUuid;
+            this->createdOnHost = createdOnHost;
+            this->createdByRestrictedPlayer = createdByRestrictedPlayer;
+        }
 
         std::wstring name;
         std::wstring ownerUuid;
@@ -25,11 +30,16 @@ public:
         bool createdByRestrictedPlayer;
     };
 
-    InteractionObject();
+    InteractionObject()
+    {
+    }
 
     virtual AbstractContainerMenu* createMenu(boost::shared_ptr<Inventory> inventory, boost::shared_ptr<Player> player) = 0;
     virtual int getTypeId(bool large) = 0;
-    virtual NameData GetNetworkNameData();
+    virtual NameData GetNetworkNameData()
+    {
+        return NameData(getDisplayName(), L"", true, false);
+    }
 };
 
 #endif

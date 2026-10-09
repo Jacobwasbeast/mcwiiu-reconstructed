@@ -17,10 +17,11 @@ int ScrolledSelectionList::getMaxPosition()
 
 int ScrolledSelectionList::getItemAtPosition(int x, int y)
 {
-    int center = width / 2;
-    int relativeY = (y - top) - headerPadding + (int)amountScrolled - 4;
+    int minX = width / 2 - 110;
+    int maxX = width / 2 + 110;
+    int relativeY = y - top - headerPadding + (int)amountScrolled - 4;
     int item = relativeY / slotHeight;
-    if (x >= center - 110 && x <= center + 110 && item >= 0 && relativeY >= 0 && item < getNumberOfItems())
+    if (x >= minX && x <= maxX && item >= 0 && relativeY >= 0 && item < getNumberOfItems())
     {
         return item;
     }
@@ -35,13 +36,16 @@ void ScrolledSelectionList::init(std::vector<Button*>* buttons, int scrollUpButt
 
 void ScrolledSelectionList::capYPosition()
 {
-    int maxScroll = getMaxPosition() - ((height - top) - 4);
-    maxScroll /= 2;
+    int maxScroll = getMaxPosition() - ((bottom - top) - 4);
+    if (maxScroll < 0)
+    {
+        maxScroll /= 2;
+    }
     if (amountScrolled < 0.0f)
     {
         amountScrolled = 0.0f;
     }
-    if ((float)maxScroll < amountScrolled)
+    if (amountScrolled > (float)maxScroll)
     {
         amountScrolled = (float)maxScroll;
     }

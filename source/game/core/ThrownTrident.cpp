@@ -139,9 +139,9 @@ void ThrownTrident::tick()
 
 not_null_ptr<ItemInstance> ThrownTrident::getPickupItem()
 {
-    if (!mTridentItem->isEmpty())
-        return mTridentItem;
-    return not_null_ptr<ItemInstance>(new ItemInstance(Items::trident));
+    if (mTridentItem->isEmpty())
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::trident));
+    return mTridentItem;
 }
 
 void ThrownTrident::doPostHurtEffects(const boost::shared_ptr<LivingEntity>& entity)

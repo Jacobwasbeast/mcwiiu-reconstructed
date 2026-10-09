@@ -46,23 +46,22 @@ unsigned char* ByteBuffer::getBuffer()
 
 unsigned int ByteBuffer::getInt(unsigned int index)
 {
-    unsigned char* bytes = mBuffer + index;
-    unsigned char first = bytes[0];
-    unsigned char second = bytes[1];
-    unsigned char third = bytes[2];
-    unsigned char fourth = bytes[3];
+    unsigned int result = 0;
+    unsigned int first = mBuffer[index];
+    unsigned int second = mBuffer[index + 1];
+    unsigned int third = mBuffer[index + 2];
+    unsigned int fourth = mBuffer[index + 3];
 
     if (mOrder == eByteOrder_BigEndian)
     {
-        return ((unsigned int)first << 24) | ((unsigned int)second << 16) | ((unsigned int)third << 8) | (unsigned int)fourth;
+        result = (first << 24) | (second << 16) | (third << 8) | fourth;
     }
-
-    if (mOrder == eByteOrder_LittleEndian)
+    else if (mOrder == eByteOrder_LittleEndian)
     {
-        return ((unsigned int)fourth << 24) | ((unsigned int)third << 16) | ((unsigned int)second << 8) | (unsigned int)first;
+        result = first | (second << 8) | (third << 16) | (fourth << 24);
     }
 
-    return 0;
+    return result;
 }
 
 void ByteBuffer::putInt(unsigned int index, int value)
@@ -72,16 +71,14 @@ void ByteBuffer::putInt(unsigned int index, int value)
         mBuffer[index] = (unsigned char)((value >> 24) & 0xFF);
         mBuffer[index + 1] = (unsigned char)((value >> 16) & 0xFF);
         mBuffer[index + 2] = (unsigned char)((value >> 8) & 0xFF);
-        mBuffer[index + 3] = (unsigned char)value;
-        return;
+        mBuffer[index + 3] = (unsigned char)(value & 0xFF);
     }
-
-    if (mOrder == eByteOrder_LittleEndian)
+    else if (mOrder == eByteOrder_LittleEndian)
     {
-        mBuffer[index] = (unsigned char)value;
+        mBuffer[index] = (unsigned char)(value & 0xFF);
         mBuffer[index + 1] = (unsigned char)((value >> 8) & 0xFF);
         mBuffer[index + 2] = (unsigned char)((value >> 16) & 0xFF);
-        mBuffer[index + 3] = value >> 24;
+        mBuffer[index + 3] = (unsigned char)((value >> 24) & 0xFF);
     }
 }
 

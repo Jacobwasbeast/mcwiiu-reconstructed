@@ -17,13 +17,13 @@ Input::Input()
     mWasJumping = false;
     mJumping = false;
     mSneaking = false;
+    mMovementReady = false;
+    mLookReady = false;
     mUp = false;
     mDown = false;
     mLeft = false;
     mRight = false;
     mSwimming = false;
-    mMovementReady = false;
-    mLookReady = false;
 }
 
 Input::~Input()
@@ -34,48 +34,47 @@ void Input::tick(LocalPlayer* player)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     int playerIndex = player->mUserIndex;
-    MultiPlayerGameMode* gameMode = minecraft->mGameModes[playerIndex];
 
     mLeft = false;
     mRight = false;
 
-    if (gameMode->isInputAllowed(EControllerActions_MoveLeft) || gameMode->isInputAllowed(EControllerActions_MoveRight))
+    if (minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_MoveLeft) ||
+        minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_MoveRight))
     {
-        mMoveStrafe = static_cast<float>(-g_pInput->GetJoypadStick_LX(playerIndex, true));
+        mMoveStrafe = -g_pInput->GetJoypadStick_LX(playerIndex, true);
+        if (mMoveStrafe > 0.5f)
+        {
+            mLeft = true;
+        }
+        else if (mMoveStrafe < -0.5f)
+        {
+            mRight = true;
+        }
     }
     else
     {
         mMoveStrafe = 0.0f;
     }
 
-    if (mMoveStrafe > 0.5f)
-    {
-        mLeft = true;
-    }
-    else if (mMoveStrafe < -0.5f)
-    {
-        mRight = true;
-    }
-
     mUp = false;
     mDown = false;
 
-    if (gameMode->isInputAllowed(EControllerActions_MoveForward) || gameMode->isInputAllowed(EControllerActions_MoveBackward))
+    if (minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_MoveForward) ||
+        minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_MoveBackward))
     {
-        mMoveForward = static_cast<float>(g_pInput->GetJoypadStick_LY(playerIndex, true));
+        mMoveForward = g_pInput->GetJoypadStick_LY(playerIndex, true);
+        if (mMoveForward > 0.0f)
+        {
+            mUp = true;
+        }
+        else if (mMoveForward < 0.0f)
+        {
+            mDown = true;
+        }
     }
     else
     {
         mMoveForward = 0.0f;
-    }
-
-    if (mMoveForward > 0.0f)
-    {
-        mUp = true;
-    }
-    else if (mMoveForward < 0.0f)
-    {
-        mDown = true;
     }
 
     if (!mMovementReady)
@@ -88,16 +87,23 @@ void Input::tick(LocalPlayer* player)
         mMoveForward = 0.0f;
     }
 
-    bool sneakButtonDown = (player->mButtonsDown & 0x80) != 0;
-    bool inWater = player->isInWater();
-    bool onGround = player->mOnGround;
-    bool flying = player->mAbilities.mFlying;
-    mSwimming = inWater && !onGround && !flying && sneakButtonDown;
-    bool canToggleSneak = ((!inWater || onGround) && !flying) || player->isPassenger();
-
-    if (canToggleSneak && sneakButtonDown && gameMode->isInputAllowed(EControllerActions_Sneak))
+    bool swimming = player->isInWater() && !player->mOnGround && !player->mAbilities.mFlying;
+    if (swimming && (player->mButtonsDown & (1LL << EControllerActions_Sneak)) != 0)
     {
-        mSneaking = !mSneaking;
+        mSwimming = true;
+    }
+    else
+    {
+        mSwimming = false;
+    }
+
+    if ((!player->mAbilities.mFlying && !swimming) || player->isPassenger())
+    {
+        if ((player->mButtonsDown & (1LL << EControllerActions_Sneak)) != 0 &&
+            minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_Sneak))
+        {
+            mSneaking = !mSneaking;
+        }
     }
 
     if (mSneaking)
@@ -109,16 +115,18 @@ void Input::tick(LocalPlayer* player)
     float turnX = 0.0f;
     float turnY = 0.0f;
 
-    if (gameMode->isInputAllowed(EControllerActions_LookUp) || gameMode->isInputAllowed(EControllerActions_LookDown))
+    if (minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_LookUp) ||
+        minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_LookDown))
     {
-        turnX = static_cast<float>(g_pInput->GetJoypadStick_RX(playerIndex, true));
-        turnX *= static_cast<float>(GameSettings::GetGameSettings(playerIndex, eGameSetting_GameSensitivity)) / 100.0f;
+        turnX = g_pInput->GetJoypadStick_RX(playerIndex, true) *
+                (static_cast<float>(GameSettings::GetGameSettings(playerIndex, eGameSetting_GameSensitivity)) / 100.0f);
     }
 
-    if (gameMode->isInputAllowed(EControllerActions_LookLeft) || gameMode->isInputAllowed(EControllerActions_LookRight))
+    if (minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_LookLeft) ||
+        minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_LookRight))
     {
-        turnY = static_cast<float>(g_pInput->GetJoypadStick_RY(playerIndex, true));
-        turnY *= static_cast<float>(GameSettings::GetGameSettings(playerIndex, eGameSetting_GameSensitivity)) / 100.0f;
+        turnY = g_pInput->GetJoypadStick_RY(playerIndex, true) *
+                (static_cast<float>(GameSettings::GetGameSettings(playerIndex, eGameSetting_GameSensitivity)) / 100.0f);
     }
 
     if (GameSettings::GetGameSettings(playerIndex, eGameSetting_InvertLook) != 0)
@@ -129,8 +137,8 @@ void Input::tick(LocalPlayer* player)
     if (gApp.GetFirstMiniGameType() == eMiniGameId_Glide &&
         player->CheckPowerup(PowerupItems::eGlide_Timed_Powerup_ID_InvertControls))
     {
-        turnX = -turnX;
         turnY = -turnY;
+        turnX = -turnX;
     }
 
     if (!mLookReady)
@@ -139,15 +147,21 @@ void Input::tick(LocalPlayer* player)
         {
             mLookReady = true;
         }
-        turnX = 0.0f;
-        turnY = 0.0f;
+        turnX = turnY = 0.0f;
     }
 
     player->interpolateTurn(turnX * (turnX < 0.0f ? -turnX : turnX) * 50.0f,
                             turnY * (turnY < 0.0f ? -turnY : turnY) * 50.0f);
 
-    mJumping = g_pInput->GetValue(playerIndex, EControllerActions_Jump, false) != 0 &&
-               gameMode->isInputAllowed(EControllerActions_Jump);
+    if (g_pInput->GetValue(playerIndex, EControllerActions_Jump, false) != 0 &&
+        minecraft->mGameModes[playerIndex]->isInputAllowed(EControllerActions_Jump))
+    {
+        mJumping = true;
+    }
+    else
+    {
+        mJumping = false;
+    }
 }
 
 phys::Vec2* Input::getMoveVector()

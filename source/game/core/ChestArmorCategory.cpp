@@ -1,10 +1,1 @@
 #include "game/core/ChestArmorCategory.hpp"
-
-#include "game/core/EquipmentSlot.hpp"
-#include "game/item/ArmorItem.hpp"
-
-bool ChestArmorCategory::canEnchant(Item* item) const
-{
-    ArmorItem* armorItem = dynamic_cast<ArmorItem*>(item);
-    return armorItem != NULL && armorItem->mSlot == EquipmentSlot::CHEST;
-}

@@ -46,7 +46,7 @@ bool CaveSpider::doHurtTarget(boost::shared_ptr<Entity> target)
 {
     if (Monster::doHurtTarget(target))
     {
-        if ((target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType()))
         {
             int duration;
 

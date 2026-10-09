@@ -76,7 +76,8 @@ const SpellcasterIllager::IllagerSpell* SpellcasterIllager::getCurrentSpell()
     {
         return mCurrentSpell;
     }
-    return IllagerSpell::byId(mEntityData->get(DATA_ID));
+    int id = mEntityData->get(DATA_ID);
+    return IllagerSpell::byId(id);
 }
 
 void SpellcasterIllager::customServerAiStep()
@@ -93,13 +94,13 @@ void SpellcasterIllager::tick()
         double red = spell->mX;
         double green = spell->mY;
         double blue = spell->mZ;
-        float angle = mYBodyRot * 0.017453292f
+        float angle = mYBodyRot * Mth::DEG_TO_RAD
                       + Mth::cos((float)mTickCount * 0.6662f) * 0.25f;
-        double xOffset = (double)Mth::cos(angle) * 0.6;
-        double zOffset = (double)Mth::sin(angle) * 0.6;
-        mLevel->addParticle(PARTICLE_MOB_SPELL, mX + xOffset, mY + 1.8, mZ + zOffset,
+        float cosAngle = Mth::cos(angle);
+        float sinAngle = Mth::sin(angle);
+        mLevel->addParticle(PARTICLE_MOB_SPELL, mX + cosAngle * 0.6, mY + 1.8, mZ + sinAngle * 0.6,
                             red, green, blue, arrayWithLength<int>());
-        mLevel->addParticle(PARTICLE_MOB_SPELL, mX - xOffset, mY + 1.8, mZ - zOffset,
+        mLevel->addParticle(PARTICLE_MOB_SPELL, mX - cosAngle * 0.6, mY + 1.8, mZ - sinAngle * 0.6,
                             red, green, blue, arrayWithLength<int>());
     }
 }
@@ -111,12 +112,21 @@ SpellcasterIllager::IllagerSpell::IllagerSpell(int id, double x, double y, doubl
 
 SpellcasterIllager::IllagerSpell* SpellcasterIllager::IllagerSpell::byId(int id)
 {
-    if (id == 1) return gSpell1;
-    if (id == 2) return gSpell2;
-    if (id == 3) return gSpell3;
-    if (id == 4) return gSpell4;
-    if (id == 5) return gSpell5;
-    return gSpell0;
+    switch (id)
+    {
+    case 1:
+        return gSpell1;
+    case 2:
+        return gSpell2;
+    case 3:
+        return gSpell3;
+    case 4:
+        return gSpell4;
+    case 5:
+        return gSpell5;
+    default:
+        return gSpell0;
+    }
 }
 
 SpellcasterIllager::SpellcasterUseSpellGoal::SpellcasterUseSpellGoal(SpellcasterIllager* spellcaster)
@@ -127,19 +137,18 @@ SpellcasterIllager::SpellcasterUseSpellGoal::SpellcasterUseSpellGoal(Spellcaster
 
 bool SpellcasterIllager::SpellcasterUseSpellGoal::canUse()
 {
-    LivingEntity* target = mSpellcaster->getTarget().get();
-    if (target != NULL && !mSpellcaster->isCastingSpell()
-        && mNextAttackTickCount <= mSpellcaster->mTickCount)
-    {
-        return true;
-    }
-    return false;
+    if (mSpellcaster->getTarget() == NULL)
+        return false;
+    if (mSpellcaster->isCastingSpell())
+        return false;
+    if (mSpellcaster->mTickCount < mNextAttackTickCount)
+        return false;
+    return true;
 }
 
 bool SpellcasterIllager::SpellcasterUseSpellGoal::canContinueToUse()
 {
-    boost::shared_ptr<LivingEntity> target = mSpellcaster->getTarget();
-    return target != NULL && mSpellcaster->isCastingSpell();
+    return mSpellcaster->getTarget() != NULL && mSpellcaster->isCastingSpell();
 }
 
 bool SpellcasterIllager::SpellcasterUseSpellGoal::canInterrupt()
@@ -172,20 +181,28 @@ void SpellcasterIllager::SpellcasterUseSpellGoal::tick()
                                                   (float)mSpellcaster->getMaxHeadXRot());
     }
 
-    if (mSpellWarmup > 0 && --mSpellWarmup == 0)
+    if (mSpellWarmup > 0)
     {
-        mSpellcaster->setIsCastingSpell(getSpell());
-        const SoundEvent* sound = getSpellPrepareSound();
-        if (sound != NULL)
+        mSpellWarmup--;
+        if (mSpellWarmup == 0)
         {
-            mSpellcaster->playSound(sound, 1.0f, 1.0f);
+            mSpellcaster->setIsCastingSpell(getSpell());
+            const SoundEvent* sound = getSpellPrepareSound();
+            if (sound != NULL)
+            {
+                mSpellcaster->playSound(sound, 1.0f, 1.0f);
+            }
         }
     }
 
-    if (mSpellcaster->mSpellTicks > 0 && --mSpellcaster->mSpellTicks == 0)
+    if (mSpellcaster->mSpellTicks > 0)
     {
-        performSpellCasting();
-        mSpellcaster->playSound(mSpellcaster->getCastingSoundEvent(), 1.0f, 1.0f);
+        mSpellcaster->mSpellTicks--;
+        if (mSpellcaster->mSpellTicks == 0)
+        {
+            performSpellCasting();
+            mSpellcaster->playSound(mSpellcaster->getCastingSoundEvent(), 1.0f, 1.0f);
+        }
     }
 }
 

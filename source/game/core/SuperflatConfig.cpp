@@ -16,7 +16,8 @@ SuperflatConfig::SuperflatConfig()
 
 bool SuperflatConfig::hasParam(unsigned char parameter)
 {
-    return mOptions.find(parameter) != mOptions.end();
+    unsigned char key = parameter;
+    return mOptions.find(key) != mOptions.end();
 }
 
 SuperflatConfig* SuperflatConfig::setDisplayname(const std::wstring& name)
@@ -39,14 +40,20 @@ void SuperflatConfig::setOption(unsigned char parameter, unsigned char option, u
 {
     if (hasOption(parameter, option))
     {
-        mOptions[parameter][option] = value;
-        return;
+        unsigned char key = parameter;
+        unsigned char subkey = option;
+        mOptions[key][subkey] = value;
     }
-    if (!hasParam(parameter))
+    else
     {
-        addParam(parameter);
+        if (!hasParam(parameter))
+        {
+            addParam(parameter);
+        }
+        unsigned char key = parameter;
+        boost::unordered_map<unsigned char, unsigned char>& options = mOptions[key];
+        options.insert(boost::unordered_map<unsigned char, unsigned char>::value_type(option, value));
     }
-    mOptions[parameter].insert(std::make_pair(option, value));
 }
 
 void SuperflatConfig::removeParam(unsigned char parameter)
@@ -171,11 +178,7 @@ void SuperflatConfig::fromBlob(arrayWithLength<unsigned char> data)
             setOption(parameter, stream.readByte(), stream.readByte());
         }
     }
-    input.mBuffer.data = NULL;
-    input.mBuffer.length = 0;
-    input.mCount = 0;
-    input.mMark = 0;
-    input.mPosition = 0;
+    input.reset();
 }
 
 ByteArrayTag* SuperflatConfig::toTag()

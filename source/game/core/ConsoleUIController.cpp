@@ -1360,7 +1360,7 @@ void ConsoleUIController::ShowAutosaveCountdownTimer(bool show)
 void ConsoleUIController::UpdateAutosaveCountdownTimer(unsigned int remainingSecs)
 {
     wchar_t text[100];
-    swprintf(text, 100, L10N::GetString(0x2a1b8f34), remainingSecs);
+    swprintf(text, 100, L10N::GetString(IDS_AUTOSAVE_COUNTDOWN), remainingSecs);
     if (m_groups[EUIGroup_Fullscreen]->getPressStartToPlay() != 0)
         m_groups[EUIGroup_Fullscreen]->getPressStartToPlay()->setTrialTimer(text);
 }

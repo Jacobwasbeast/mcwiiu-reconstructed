@@ -49,66 +49,68 @@ bool SeaPickle::performBonemeal(bool simulate, Level* level, Random* random, con
 {
     const BlockState* belowState = level->getBlockState(pos.below());
     Block* below = belowState->getBlock();
-    if (this != Blocks::sea_pickle || !level->isUnderWater(pos, 0x10f, 0) || below != Blocks::coral_block)
-        return false;
-    if (belowState->getValue(CoralBlock::DEAD))
-        return false;
-
-    int x = pos.x - 2;
-    int dx = 0;
-    int offset = 0;
-    int width = 1;
-    for (int layer = 0; layer < 5; ++layer)
+    if (this == Blocks::sea_pickle && level->isUnderWater(pos, BlockId::SEA_PICKLE, 0) && below == Blocks::coral_block)
     {
-        for (int i = 0; i < width; ++i)
+        if (belowState->getValue(CoralBlock::DEAD))
+            return false;
+        int offset = 0;
+        int x = pos.x - 2;
+        int layer = 0;
+        int width = 1;
+        for (int dx = 0; dx < 5; ++dx)
         {
-            int yEnd = pos.y + 1;
-            for (int y = pos.y - 1; y < yEnd; ++y)
+            for (int i = 0; i < width; ++i)
             {
-                BlockPos target(x + dx, y, pos.z - offset + i);
-                if (!(target == pos) && random->nextInt(3) == 0 && level->isUnderWater(target, 0x10f, 0))
+                int yStart = pos.y - 1;
+                int yEnd = pos.y + 1;
+                for (int y = yStart; y < yEnd; ++y)
                 {
-                    Block* targetBelow = level->getBlock(target.below());
-                    if (targetBelow == Blocks::coral_block)
+                    BlockPos target(x + dx, y, pos.z - offset + i);
+                    if (!(target == pos) && random->nextInt(3) == 0 && level->isUnderWater(target, BlockId::SEA_PICKLE, 0))
                     {
-                        if (!targetBelow->defaultBlockState()->getValue(CoralBlock::DEAD) && level->isEmptyWaterBlock(target))
+                        Block* targetBelow = level->getBlock(target.below());
+                        if (targetBelow == Blocks::coral_block)
                         {
-                            Block* existing = level->getBlock(target);
-                            int minCount = 0;
-                            int count;
-                            if (existing != Blocks::sea_pickle || (minCount = existing->defaultBlockState()->getValue(COUNT)) < 3)
-                                count = random->nextInt(minCount, 3);
-                            else
-                                count = 3;
-                            if (!simulate)
+                            if (!targetBelow->defaultBlockState()->getValue(CoralBlock::DEAD) && level->isEmptyWaterBlock(target))
                             {
-                                const BlockState* grown = Blocks::sea_pickle->defaultBlockState()->setValue(COUNT, count);
-                                level->setBlock(target, grown, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+                                Block* existing = level->getBlock(target);
+                                int minCount = 0;
+                                int count;
+                                if (existing != Blocks::sea_pickle || (minCount = existing->defaultBlockState()->getValue(COUNT)) < 3)
+                                    count = random->nextInt(minCount, 3);
+                                else
+                                    count = 3;
+                                if (!simulate)
+                                {
+                                    const BlockState* grown = Blocks::sea_pickle->defaultBlockState()->setValue(COUNT, count);
+                                    level->setBlock(target, grown, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+                                }
                             }
                         }
                     }
                 }
             }
+            if (layer < 2)
+            {
+                width += 2;
+                ++offset;
+            }
+            else
+            {
+                width -= 2;
+                --offset;
+            }
+            ++layer;
         }
-        if (layer < 2)
-        {
-            ++offset;
-            width += 2;
-        }
-        else
-        {
-            --offset;
-            width -= 2;
-        }
-        ++dx;
-    }
 
-    if (!simulate)
-    {
-        const BlockState* full = Blocks::sea_pickle->defaultBlockState()->setValue(COUNT, 3);
-        level->setBlock(pos, full, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+        if (!simulate)
+        {
+            const BlockState* full = Blocks::sea_pickle->defaultBlockState()->setValue(COUNT, 3);
+            level->setBlock(pos, full, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+        }
+        return true;
     }
-    return true;
+    return false;
 }
 
 bool SeaPickle::isBonemealSuccess(Level* level, Random* random, const BlockPos& pos, const BlockState* state)
@@ -212,11 +214,13 @@ unsigned int SeaPickle::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
         int count = tooltipData.m_pLevel->getBlockState(tooltipData.m_blockPos)->getValue(COUNT);
         const BlockState* belowState = tooltipData.m_pLevel->getBlockState(tooltipData.m_blockPos.below());
         Block* below = belowState->getBlock();
-        if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail
-            && DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0
-            && below == Blocks::coral_block && !belowState->getValue(CoralBlock::DEAD) && count < 3)
+        if (tooltipData.m_eInteractionResult != InteractionResult::eInteractionResult_Fail)
         {
-            return IDS_TOOLTIPS_GROW;
+            if (DyeColor::byItemData(tooltipData.m_pItemInstance->getAuxValue())->getBlockData() == 0
+                && below == Blocks::coral_block && !belowState->getValue(CoralBlock::DEAD) && count < 3)
+            {
+                return IDS_TOOLTIPS_GROW;
+            }
         }
     }
     return Block::GetInteractTooltip(tooltipData);
@@ -224,7 +228,8 @@ unsigned int SeaPickle::GetInteractTooltip(const BlockTooltipDataHolder& tooltip
 
 const BlockState* SeaPickle::getBlockState(int data)
 {
-    return defaultBlockState()->setValue(COUNT, data & 7)->setValue(FLANGE, data >> 3 & 1);
+    int count = data & 7;
+    return defaultBlockState()->setValue(COUNT, count)->setValue(FLANGE, (data >> 3) & 1);
 }
 
 BlockStateDefinition* SeaPickle::createBlockStateDefinition()
@@ -238,16 +243,15 @@ bool SeaPickle::isSilkTouchable() { return false; }
 bool SeaPickle::mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* state)
 {
     int id = level->getBlockId(pos.x, pos.y, pos.z);
-    if (id == 20 || id == 95)
+    if (id == BlockId::GLASS || id == BlockId::STAINED_GLASS)
         return true;
-    if (!level->isEmptyBlock(pos) && !level->isEmptyWaterBlock(pos))
-    {
-        if (HalfSlabBlock::isHalfSlab(state) && state->getValue(HalfSlabBlock::TYPE) != HalfSlabBlock::TOP)
-            return false;
-        if (state->isSolidBlockingBlock())
-            return true;
-    }
-    return false;
+    if (level->isEmptyBlock(pos) || level->isEmptyWaterBlock(pos))
+        return false;
+    if (HalfSlabBlock::isHalfSlab(state) && state->getValue(HalfSlabBlock::TYPE) != HalfSlabBlock::TOP)
+        return false;
+    if (!state->isSolidBlockingBlock())
+        return false;
+    return true;
 }
 
 void SeaPickle::onPlace(Level* level, const BlockPos& pos, const BlockState* state)
@@ -260,15 +264,16 @@ void SeaPickle::onPlace(Level* level, const BlockPos& pos, const BlockState* sta
 
 void SeaPickle::checkAlive(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    if (canSurvive(level, pos, state))
-        return;
-    int count = level->getBlockState(pos)->getValue(COUNT);
-    if (count < 4)
-        ++count;
-    Block::popResource(level, pos,
-                       not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(Blocks::sea_pickle), count,
-                                                                   getSpawnResourcesAuxValue(state))));
-    level->setBlockAndData(pos.x, pos.y, pos.z, BlockId::AIR, 0, Block::UPDATE_ALL);
+    if (!canSurvive(level, pos, state))
+    {
+        int count = level->getBlockState(pos)->getValue(COUNT);
+        if (count < 4)
+            ++count;
+        Block::popResource(level, pos,
+                           not_null_ptr<ItemInstance>(new ItemInstance(Item::byBlock(Blocks::sea_pickle), count,
+                                                                       getSpawnResourcesAuxValue(state))));
+        level->setBlockAndData(pos.x, pos.y, pos.z, BlockId::AIR, 0, Block::UPDATE_ALL);
+    }
 }
 
 void SeaPickle::neighborChanged(const BlockState*, Level* level, const BlockPos& pos, Block*, const BlockPos&)
@@ -287,9 +292,9 @@ void SeaPickle::tick(Level* level, const BlockPos& pos, const BlockState* state,
         return;
 
     int count = state->getValue(COUNT);
-    int flange = state->getValue(FLANGE);
-    bool underWater = level->isUnderWater(pos, 0x10f, 0);
-    if (flange != 1)
+    bool flange = state->getValue(FLANGE) == 1;
+    bool underWater = level->isUnderWater(pos, BlockId::SEA_PICKLE, 0);
+    if (!flange)
     {
         if (!underWater)
         {

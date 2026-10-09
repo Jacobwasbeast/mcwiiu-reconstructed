@@ -6,6 +6,13 @@
 class FoodConstants
 {
 public:
+    static const float FOOD_SATURATION_POOR;
+    static const float FOOD_SATURATION_LOW;
+    static const float FOOD_SATURATION_NORMAL;
+    static const float FOOD_SATURATION_GOOD;
+    static const float FOOD_SATURATION_MAX;
+    static const float FOOD_SATURATION_SUPERNATURAL;
+
     static uint32_t MaxFood();
     static float StartSaturation();
     static float ExhaustionHeal();

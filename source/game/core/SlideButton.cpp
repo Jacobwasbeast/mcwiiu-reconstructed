@@ -20,57 +20,51 @@ int SlideButton::getYImage(bool hovered)
 
 void SlideButton::renderBg(Minecraft* minecraft, int mouseX, int mouseY)
 {
-    if (!mVisible)
+    if (mVisible)
     {
-        return;
-    }
-
-    if (mSliding)
-    {
-        float value = static_cast<float>(mouseX - (mX + 4)) /
-                      static_cast<float>(mWidth - 8);
-        if (value < 0.0f || value > 1.0f)
+        if (mSliding)
         {
-            mValue = value < 0.0f ? 0.0f : 1.0f;
-        }
-        else
-        {
-            mValue = value;
+            mValue = static_cast<float>(mouseX - (mX + 4)) / static_cast<float>(mWidth - 8);
+            if (mValue < 0.0f)
+            {
+                mValue = 0.0f;
+            }
+            if (mValue > 1.0f)
+            {
+                mValue = 1.0f;
+            }
+
+            minecraft->mOptions->set(mOption, mValue);
+            mMessage = minecraft->mOptions->getMessage(mOption);
         }
 
-        minecraft->mOptions->set(mOption, mValue);
-        mMessage = minecraft->mOptions->getMessage(mOption);
+        GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
+        blit(mX + static_cast<int>(mValue * static_cast<float>(mWidth - 8)), mY, 0, 66, 4, 20);
+        blit(mX + static_cast<int>(mValue * static_cast<float>(mWidth - 8)) + 4, mY, 196, 66, 4, 20);
     }
-
-    GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
-    blit(mX + static_cast<int>(mValue * static_cast<float>(mWidth - 8)), mY,
-         0, 66, 4, 20);
-    blit(mX + static_cast<int>(mValue * static_cast<float>(mWidth - 8)) + 4, mY,
-         196, 66, 4, 20);
 }
 
 bool SlideButton::clicked(Minecraft* minecraft, int mouseX, int mouseY)
 {
-    if (!Button::clicked(minecraft, mouseX, mouseY))
+    if (Button::clicked(minecraft, mouseX, mouseY))
     {
-        return false;
+        mValue = static_cast<float>(mouseX - (mX + 4)) / static_cast<float>(mWidth - 8);
+        if (mValue < 0.0f)
+        {
+            mValue = 0.0f;
+        }
+        if (mValue > 1.0f)
+        {
+            mValue = 1.0f;
+        }
+
+        minecraft->mOptions->set(mOption, mValue);
+        mMessage = minecraft->mOptions->getMessage(mOption);
+        mSliding = true;
+        return true;
     }
 
-    float value = static_cast<float>(mouseX - (mX + 4)) /
-                  static_cast<float>(mWidth - 8);
-    if (value < 0.0f || value > 1.0f)
-    {
-        mValue = value < 0.0f ? 0.0f : 1.0f;
-    }
-    else
-    {
-        mValue = value;
-    }
-
-    minecraft->mOptions->set(mOption, mValue);
-    mMessage = minecraft->mOptions->getMessage(mOption);
-    mSliding = true;
-    return true;
+    return false;
 }
 
 void SlideButton::released(int mouseX, int mouseY)

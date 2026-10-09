@@ -10,7 +10,7 @@ UniformSize::UniformSize(unsigned int size)
     }
 }
 
-int UniformSize::GetLayerSize(Random& random, double blend) const
+unsigned int UniformSize::GetLayerSize(Random& random, double blend) const
 {
     return mSize;
 }

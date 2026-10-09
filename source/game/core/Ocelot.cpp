@@ -137,7 +137,7 @@ void Ocelot::registerGoals()
     mGoalSelector.addGoal(8, new OcelotAttackGoal(this), true);
     mGoalSelector.addGoal(9, new BreedGoal(this, 0.8), true);
     mGoalSelector.addGoal(10, new WaterAvoidingRandomStrollGoal(this, 0.8,
-                                                                0.001f / 100.0f), true);
+                                                                WaterAvoidingRandomStrollGoal::PROBABILITY / 100.0f), true);
     mGoalSelector.addGoal(11, new LookAtPlayerGoal(this, typeid(Player), 10.0f), true);
 
     mTargetSelector.addGoal(1, new NonTameRandomTargetGoal(this, typeid(Chicken), false, NULL, true), true);
@@ -148,8 +148,10 @@ void Ocelot::registerGoals()
 void Ocelot::defineSynchedData()
 {
     TamableAnimal::defineSynchedData();
-    mEntityData->createDateItem(DATA_CAT_TYPE, 0);
-    mEntityData->createDateItem(DATA_IS_TEMPTED, false);
+    int catType = 0;
+    mEntityData->createDateItem(DATA_CAT_TYPE, catType);
+    bool tempted = false;
+    mEntityData->createDateItem(DATA_IS_TEMPTED, tempted);
 }
 
 void Ocelot::customServerAiStep()
@@ -215,13 +217,15 @@ void Ocelot::readAdditionalSaveData(CompoundTag* tag)
 
 const SoundEvent* Ocelot::getAmbientSound()
 {
-    if (!isTame())
-        return NULL;
-    if (isInLove())
-        return SoundEvents::CAT_PURR;
-    if (mRandom->nextInt(4) == 0)
-        return SoundEvents::CAT_PURREOW;
-    return SoundEvents::CAT_AMBIENT;
+    if (isTame())
+    {
+        if (isInLove())
+            return SoundEvents::CAT_PURR;
+        if (mRandom->nextInt(4) == 0)
+            return SoundEvents::CAT_PURREOW;
+        return SoundEvents::CAT_AMBIENT;
+    }
+    return NULL;
 }
 
 const SoundEvent* Ocelot::getHurtSound(const DamageSource*)
@@ -283,7 +287,7 @@ bool Ocelot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHan
                 if (mRandom->nextInt(3) == 0)
                 {
                     tame(player);
-                    player->awardStat(gStats->get_tamedEntity(EntityType::OCELOT),
+                    player->awardStat(GenericStats::tamedEntity(EntityType::OCELOT),
                                       GenericStats::param_tamedEntity(EntityType::OCELOT));
                     setCatType(mLevel->mRandom->nextInt(3) + 1);
                     spawnTamingParticles(true);
@@ -348,7 +352,8 @@ bool Ocelot::isFood(const not_null_ptr<ItemInstance>& item)
     bool food = false;
     if (item->getItem() == Items::fish)
     {
-        FishFoodItem::Type* type = FishFoodItem::Type::getById(item->getAuxValue());
+        int auxValue = item->getAuxValue();
+        FishFoodItem::Type* type = FishFoodItem::Type::getById(auxValue);
         if (type == FishFoodItem::Type::COD || type == FishFoodItem::Type::SALMON)
             food = true;
     }
@@ -388,18 +393,19 @@ bool Ocelot::checkSpawnRules()
 
 bool Ocelot::checkSpawnObstruction()
 {
-    if (!(mLevel->isUnobstructed(mBoundingBox)
-          && mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty()
-          && !mLevel->containsAnyLiquid(mBoundingBox)))
-        return false;
-
-    BlockPos pos(mX, mBoundingBox->mMinY, mZ);
-    if (pos.y < mLevel->getSeaLevel())
-        return false;
-
-    const BlockState* below = mLevel->getBlockState(pos.below());
-    if (below->getBlock() == Blocks::grass || below->getMaterial() == Material::LEAVES)
-        return true;
+    if (mLevel->isUnobstructed(mBoundingBox)
+        && mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty()
+        && !mLevel->containsAnyLiquid(mBoundingBox))
+    {
+        BlockPos pos(mX, mBoundingBox->mMinY, mZ);
+        if (pos.y >= mLevel->getSeaLevel())
+        {
+            const BlockState* below = mLevel->getBlockState(pos.below());
+            Block* block = below->getBlock();
+            if (block == Blocks::grass || below->getMaterial() == Material::LEAVES)
+                return true;
+        }
+    }
     return false;
 }
 
@@ -413,7 +419,7 @@ std::wstring Ocelot::getName()
 MobGroupData* Ocelot::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                        const std::wstring&)
 {
-    MobGroupData* groupData = Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
+    data = Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 
     if (getCatType() == 0 && mLevel->mRandom->nextInt(7) == 0)
     {
@@ -426,7 +432,7 @@ MobGroupData* Ocelot::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
         }
     }
 
-    return groupData;
+    return data;
 }
 
 void Ocelot::positionRider(const boost::shared_ptr<Entity>& passenger)
@@ -434,7 +440,7 @@ void Ocelot::positionRider(const boost::shared_ptr<Entity>& passenger)
     if (!RiderPositionOverrides::OverridePosition(shared_from_this(), passenger))
         passenger->setPos(mX, mY + 0.35 + passenger->getRidingHeight(), mZ);
 
-    if ((passenger->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, passenger->GetType()))
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(passenger);
         living->mYBodyRot = mYBodyRot;
@@ -460,53 +466,43 @@ unsigned int Ocelot::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDa
 
     if (!isPassenger() && itemId == ItemId::NAME_TAG && tooltipData.m_pItemInstance->hasCustomHoverName())
     {
-        bool renaming = true;
-        if (hasCustomName() && tooltipData.m_pItemInstance->getHoverName() == getCustomName())
-            renaming = false;
-        if (renaming)
+        if (!hasCustomName() || !(tooltipData.m_pItemInstance->getHoverName() == getCustomName()))
             return IDS_TOOLTIPS_NAME;
     }
 
     if (isTame())
     {
-        if (!isFood(tooltipData.m_pItemInstance))
+        if (isFood(tooltipData.m_pItemInstance))
         {
-            bool canSit = false;
-            if (isOwnedBy(tooltipData.m_pPlayer) && !isSittingOnBlock())
-                canSit = true;
-            if (canSit)
-            {
-                if (isSitting())
-                    return IDS_TOOLTIPS_FOLLOWME;
-                return IDS_TOOLTIPS_SIT;
-            }
+            if (isBaby())
+                return IDS_TOOLTIPS_FEED;
+            if (!isInLove() && !isBaby() && !isBreedCoolingDown())
+                return IDS_TOOLTIPS_LOVEMODE;
             return IDS_NONE;
         }
 
-        if (isBaby())
+        if (isOwnedBy(tooltipData.m_pPlayer) && !isSittingOnBlock())
+        {
+            if (isSitting())
+                return IDS_TOOLTIPS_FOLLOWME;
+            return IDS_TOOLTIPS_SIT;
+        }
+        return IDS_NONE;
+    }
+
+    if (isFood(tooltipData.m_pItemInstance))
+    {
+        if ((mEntityData->get(DATA_IS_TEMPTED)
+             || (!isBaby() && tooltipData.m_pPlayer->mAbilities.mInstabuild))
+            && tooltipData.m_pPlayer->distanceToSqr(shared_from_this()) < 9.0)
+        {
+            if (getPassengers()->empty())
+                return IDS_TOOLTIPS_TAME;
+        }
+        else if (isBaby())
+        {
             return IDS_TOOLTIPS_FEED;
-        if (!isInLove() && !isBaby() && !isBreedCoolingDown())
-            return IDS_TOOLTIPS_LOVEMODE;
-        return IDS_NONE;
-    }
-
-    if (!isFood(tooltipData.m_pItemInstance))
-        return IDS_NONE;
-
-    bool nearPlayer = false;
-    if ((mEntityData->get(DATA_IS_TEMPTED)
-         || (!isBaby() && tooltipData.m_pPlayer->mAbilities.mInstabuild))
-        && tooltipData.m_pPlayer->distanceToSqr(shared_from_this()) < 9.0)
-        nearPlayer = true;
-
-    if (nearPlayer)
-    {
-        if (getPassengers()->empty())
-            return IDS_TOOLTIPS_TAME;
-    }
-    else if (isBaby())
-    {
-        return IDS_TOOLTIPS_FEED;
+        }
     }
 
     return IDS_NONE;

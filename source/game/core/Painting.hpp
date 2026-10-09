@@ -21,6 +21,8 @@ public:
     public:
         Motive(std::wstring name, int width, int height, int textureX, int textureY);
 
+        static const int MAX_MOTIVE_NAME_LENGTH;
+
         std::wstring name;
         int width;
         int height;

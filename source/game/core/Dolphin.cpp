@@ -69,8 +69,8 @@ Dolphin::Dolphin(Level* level)
 MobGroupData* Dolphin::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name)
 {
     setAirSupply(getMaxAirSupply());
-    mTreasureTime = 400;
     mXRot = 0.0f;
+    mTreasureTime = 400;
     return Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 }
 
@@ -168,7 +168,7 @@ void Dolphin::positionRider(const boost::shared_ptr<Entity>& passenger)
     passenger->setPos(mX + side->getStepX() * 0.7 - getDirection()->getStepX(),
                       mY + passenger->getRidingHeight() + 0.5,
                       mZ + side->getStepZ() * 0.7 - getDirection()->getStepZ());
-    bool isLiving = (passenger->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
+    bool isLiving = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, passenger->GetType());
     if (isLiving)
     {
         boost::static_pointer_cast<LivingEntity>(passenger)->mYBodyRot = mYHeadRot;
@@ -194,8 +194,7 @@ boost::shared_ptr<ItemEntity> Dolphin::drop(const not_null_ptr<ItemInstance>& it
 
 boost::shared_ptr<AgableMob> Dolphin::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    boost::shared_ptr<Dolphin> offspring(new Dolphin(mLevel));
-    return offspring;
+    return boost::shared_ptr<Dolphin>(new Dolphin(mLevel));
 }
 
 bool Dolphin::isItemABribingFish(not_null_ptr<ItemInstance> item)

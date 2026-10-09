@@ -24,13 +24,13 @@ GameRule::~GameRule()
 
 GameRule::_ValueType GameRule::getParameter(const std::wstring& name)
 {
-    mParameters.find(name);
+    ParameterMap::iterator it = mParameters.find(name);
     return mParameters[name];
 }
 
 void GameRule::setParameter(const std::wstring& name, _ValueType value)
 {
-    mParameters.find(name);
+    ParameterMap::iterator it = mParameters.find(name);
     mParameters[name] = value;
 }
 

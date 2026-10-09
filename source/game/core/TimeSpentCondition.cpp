@@ -1,5 +1,6 @@
 #include "game/core/TimeSpentCondition.hpp"
 
+#include <algorithm>
 #include <climits>
 
 #include "game/world/generation/PlayerStats.hpp"
@@ -32,15 +33,9 @@ float TimeSpentCondition::getScore(const GameMedal* medal, PlayerStats* playerSt
                     const unsigned int split = roundStats->mCheckpointTimes.at(checkpoint) - previousTime;
                     previousTime = roundStats->mCheckpointTimes.at(checkpoint);
                     if (highest)
-                    {
-                        if (score < split)
-                            score = split;
-                    }
+                        score = std::max(score, split);
                     else
-                    {
-                        if (split < score)
-                            score = split;
-                    }
+                        score = std::min(score, split);
                 }
             }
         }
@@ -48,15 +43,9 @@ float TimeSpentCondition::getScore(const GameMedal* medal, PlayerStats* playerSt
         {
             const unsigned int timeSpent = roundStats->mTimeSpent[mCategory];
             if (highest)
-            {
-                if (score < timeSpent)
-                    score = timeSpent;
-            }
+                score = std::max(score, timeSpent);
             else
-            {
-                if (timeSpent < score)
-                    score = timeSpent;
-            }
+                score = std::min(score, timeSpent);
         }
     }
     return static_cast<float>(score);

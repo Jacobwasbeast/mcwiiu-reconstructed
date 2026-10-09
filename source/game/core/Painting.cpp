@@ -16,6 +16,8 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 
+const int Painting::Motive::MAX_MOTIVE_NAME_LENGTH = 13;
+
 Painting::Motive* paintingMotives[30] = {
     new Painting::Motive(L"Kebab", 16, 16, 0, 0),
     new Painting::Motive(L"Aztec", 16, 16, 16, 0),
@@ -164,7 +166,7 @@ void Painting::dropItem(boost::shared_ptr<Entity> breaker)
     if (!mLevel->getGameRules()->getBoolean(GameRules::RULE_DOENTITYDROPS))
         return;
     playSound(SoundEvents::PAINTING_BREAK, 1.0f, 1.0f);
-    if (breaker != NULL && (breaker->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (breaker != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, breaker->GetType()))
     {
         boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(breaker);
         if (player->mAbilities.mInstabuild)

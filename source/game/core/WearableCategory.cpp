@@ -9,12 +9,8 @@
 
 bool WearableCategory::canEnchant(Item* item) const
 {
-    bool isPumpkin = false;
-    if (dynamic_cast<BlockItem*>(item) != NULL &&
-        dynamic_cast<PumpkinBlock*>(dynamic_cast<BlockItem*>(item)->getBlock()) != NULL)
-    {
-        isPumpkin = true;
-    }
+    bool isPumpkin = dynamic_cast<BlockItem*>(item) != NULL &&
+                     dynamic_cast<PumpkinBlock*>(dynamic_cast<BlockItem*>(item)->getBlock()) != NULL;
 
     return dynamic_cast<ArmorItem*>(item) != NULL ||
            dynamic_cast<ElytraItem*>(item) != NULL ||

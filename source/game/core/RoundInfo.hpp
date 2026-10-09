@@ -15,7 +15,7 @@ public:
 
     std::wstring getRoundId() const;
     std::wstring getSubRoundId() const;
-    unsigned int getCurrentSubRoundNumber() const;
+    int getCurrentSubRoundNumber() const;
     unsigned int getThemeId() const;
     unsigned int getThemeSubId() const;
     unsigned int getThemeUniqueId() const;

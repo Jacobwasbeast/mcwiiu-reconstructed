@@ -196,12 +196,12 @@ std::wstring DLCSkinFile::getParameterAsString(DLCManager::EDLCParameterType par
     switch (parameter)
     {
     case DLCManager::eDLCParameterType_DisplayName:
-        if (!mLocKeySet)
-            return lookupString(mDisplayNameID, mDisplayName);
+        if (mLocKeySet)
         {
             std::vector<std::wstring> parts = stringSplit(lookupString(mLocKey, mDisplayName), L'-');
-            return parts[0];
+            return parts.front();
         }
+        return lookupString(mDisplayNameID, mDisplayName);
     case DLCManager::eDLCParameterType_ThemeName:
         if (mLocKeySet)
         {
@@ -229,7 +229,8 @@ bool DLCSkinFile::getParameterAsBool(DLCManager::EDLCParameterType parameter)
 
 DLCLocalisationFile* DLCSkinFile::getLocalisationFile()
 {
-    DLCLocalisationFile* localisation = static_cast<DLCLocalisationFile*>(m_pPack->getFile(
+    DLCLocalisationFile* localisation = NULL;
+    localisation = static_cast<DLCLocalisationFile*>(m_pPack->getFile(
         DLCManager::eDLCType_Localisation, L"localisation.loc", true, true));
     if (localisation == NULL)
     {

@@ -5,6 +5,8 @@
 
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/biome/arrayWithLength.hpp"
+#include "game/item/Item.hpp"
+#include "game/world/block/Block.hpp"
 
 class BlockState;
 class DamageSource;
@@ -128,6 +130,82 @@ public:
     static Stat* mineBlock()
     {
         return gStats->get_totalBlocksMined();
+    }
+    static Stat* tamedEntity(unsigned long long entityType)
+    {
+        return gStats->get_tamedEntity(entityType);
+    }
+    static Stat* shearedEntity(unsigned long long entityType)
+    {
+        return gStats->get_shearedEntity(entityType);
+    }
+    static Stat* itemsUsed(Item* item)
+    {
+        return gStats->get_itemsUsed(Item::VALIDgetId(item));
+    }
+    static Stat* fallOneM()
+    {
+        return gStats->get_fallOneM();
+    }
+    static Stat* minecartOneM()
+    {
+        return gStats->get_minecartOneM();
+    }
+    static Stat* boatOneM()
+    {
+        return gStats->get_boatOneM();
+    }
+    static Stat* pigOneM()
+    {
+        return gStats->get_pigOneM();
+    }
+    static Stat* cowsMilked()
+    {
+        return gStats->get_cowsMilked();
+    }
+    static Stat* netherLavaCollected()
+    {
+        return gStats->get_netherLavaCollected();
+    }
+    static Stat* breedEntity(unsigned long long entityType)
+    {
+        return gStats->get_breedEntity(entityType);
+    }
+    static Stat* craftedEntity(unsigned long long entityType)
+    {
+        return gStats->get_craftedEntity(entityType);
+    }
+    static Stat* timePlayed()
+    {
+        return gStats->get_timePlayed();
+    }
+    static Stat* blocksPlaced(Block* block)
+    {
+        return gStats->get_blocksPlaced(Block::getId(block));
+    }
+    static Stat* blocksMined(Block* block)
+    {
+        return gStats->get_blocksMined(Block::getId(block));
+    }
+    static Stat* itemsCrafted(Item* item)
+    {
+        return gStats->get_itemsCrafted(Item::VALIDgetId(item));
+    }
+    static Stat* itemsBought(Item* item)
+    {
+        return gStats->get_itemsBought(Item::VALIDgetId(item));
+    }
+    static Stat* armourDyed(Item* item)
+    {
+        return gStats->get_armourDyed(Item::VALIDgetId(item));
+    }
+    static Stat* completeTheEnd()
+    {
+        return gStats->get_completeTheEnd();
+    }
+    static Stat* enteredBiome(int biomeId)
+    {
+        return gStats->get_enteredBiome(biomeId);
     }
     static Stat* mineWood();
     static Stat* buildWorkbench();

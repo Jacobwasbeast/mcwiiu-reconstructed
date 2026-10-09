@@ -185,13 +185,13 @@ void Turtle::grewUp()
 void Turtle::defineSynchedData()
 {
     Animal::defineSynchedData();
-    mEntityData->createDateItem(DATA_HOME_POS, BlockPos::ZERO);
-    mEntityData->createDateItem(DATA_HAS_EGG, false);
-    mEntityData->createDateItem(DATA_HAS_GIVEN_UP_ON_EGG, false);
-    mEntityData->createDateItem(DATA_IS_LAYING_EGG, false);
-    mEntityData->createDateItem(DATA_TRAVEL_POS, BlockPos::ZERO);
-    mEntityData->createDateItem(DATA_GOING_HOME, false);
-    mEntityData->createDateItem(DATA_TRAVELLING, false);
+    mEntityData->define(DATA_HOME_POS, BlockPos::ZERO);
+    mEntityData->define(DATA_HAS_EGG, false);
+    mEntityData->define(DATA_HAS_GIVEN_UP_ON_EGG, false);
+    mEntityData->define(DATA_IS_LAYING_EGG, false);
+    mEntityData->define(DATA_TRAVEL_POS, BlockPos::ZERO);
+    mEntityData->define(DATA_GOING_HOME, false);
+    mEntityData->define(DATA_TRAVELLING, false);
 }
 
 PathNavigation* Turtle::createNavigation(Level* level)

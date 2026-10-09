@@ -31,12 +31,11 @@ ControllerTask::ControllerTask(Tutorial* tutorial, int descriptionId, bool preCo
         inputMappings[alternateMappings[i]] = false;
     }
 
-    int* ids = new int[completionIdValueCount];
-    completionIds = ids;
+    completionIds = new int[completionIdValueCount];
 
     for (int completionId = 0; completionId < completionIdValueCount; ++completionId)
     {
-        ids[completionId] = completionIdValues[completionId];
+        completionIds[completionId] = completionIdValues[completionId];
     }
 
     completionIdCount = completionIdValueCount;

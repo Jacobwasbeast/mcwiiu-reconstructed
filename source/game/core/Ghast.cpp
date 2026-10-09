@@ -86,9 +86,9 @@ bool Ghast::hurt(const DamageSource* source, float damage)
 {
     if (isInvulnerableTo(source))
         return false;
-    if (source->getDirectEntity() && source->getDirectEntity()->GetType() == EntityType::LARGE_FIREBALL)
+    if (source->getDirectEntity() && eTYPE_DERIVED_FROM(EntityType::LARGE_FIREBALL, source->getDirectEntity()->GetType()))
     {
-        if (source->getEntity() && (source->getEntity()->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (source->getEntity() && eTYPE_DERIVED_FROM(EntityType::PLAYER, source->getEntity()->GetType()))
         {
             LivingEntity::hurt(source, 1000.0f);
             boost::dynamic_pointer_cast<Player>(source->getEntity())->awardStat(GenericStats::ghast(), GenericStats::param_ghast());
@@ -166,17 +166,21 @@ Ghast::GhastLookGoal::~GhastLookGoal() {}
 bool Ghast::GhastLookGoal::canUse() { return true; }
 void Ghast::GhastLookGoal::tick()
 {
-    if (!mGhast->getTarget())
+    if (mGhast->getTarget() == NULL)
     {
         mGhast->mYBodyRot = mGhast->mYRot = -(float)std::atan2(mGhast->mXd, mGhast->mZd) * Mth::RAD_TO_DEG;
-        return;
     }
-
-    boost::shared_ptr<LivingEntity> target = mGhast->getTarget();
-    double distance = 64.0;
-    if (target->distanceToSqr(mGhast->shared_from_this()) < distance * distance)
+    else
     {
-        mGhast->mYBodyRot = mGhast->mYRot = -(float)std::atan2(target->mX - mGhast->mX, target->mZ - mGhast->mZ) * Mth::RAD_TO_DEG;
+        boost::shared_ptr<LivingEntity> target = mGhast->getTarget();
+        double distance = 64.0;
+        if (target->distanceToSqr(mGhast->shared_from_this()) < distance * distance)
+        {
+            double dx = target->mX - mGhast->mX;
+            double dz = target->mZ - mGhast->mZ;
+            float rot = -(float)std::atan2(dx, dz) * Mth::RAD_TO_DEG;
+            mGhast->mYBodyRot = mGhast->mYRot = rot;
+        }
     }
 }
 Ghast::GhastMoveControl::GhastMoveControl(Ghast* ghast) : MoveControl(ghast), mGhast(ghast), mCountdown(0) {}
@@ -190,7 +194,7 @@ bool Ghast::GhastMoveControl::canReach(double x, double y, double z, double dist
     for (int step = 1; (double)step < distance; ++step)
     {
         box = box->move(dx, dy, dz);
-        if (!mGhast->mLevel->getCollisionAABBs(mGhast->shared_from_this(), box, false, false, false)->empty())
+        if (mGhast->mLevel->getCollisionAABBs(mGhast->shared_from_this(), box, false, false, false)->size() > 0)
             return false;
     }
     return true;
@@ -202,10 +206,11 @@ void Ghast::GhastMoveControl::tick()
     double dx = mWantedX - mGhast->mX;
     double dy = mWantedY - mGhast->mY;
     double dz = mWantedZ - mGhast->mZ;
+    double distance = dx * dx + dy * dy + dz * dz;
     if (mCountdown-- <= 0)
     {
         mCountdown += mGhast->getRandom()->nextInt(5) + 2;
-        double distance = Mth::sqrt(dx * dx + dy * dy + dz * dz);
+        distance = Mth::sqrt(distance);
         if (canReach(mWantedX, mWantedY, mWantedZ, distance))
         {
             mGhast->mXd += dx / distance * 0.1;
@@ -226,39 +231,33 @@ void Ghast::GhastShootFireballGoal::tick()
 {
     boost::shared_ptr<LivingEntity> target = mGhast->getTarget();
     double maxDistance = 64.0;
-    bool canSeeTarget = false;
     if (target->distanceToSqr(mGhast->shared_from_this()) < maxDistance * maxDistance && mGhast->canSee(target))
-        canSeeTarget = true;
-    if (canSeeTarget)
     {
+        Level* level = mGhast->mLevel;
         ++mChargeTime;
         if (mChargeTime == 10)
-            mGhast->mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_GHAST_WARNING, BlockPos(mGhast->shared_from_this()), 0);
+            level->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_GHAST_WARNING, BlockPos(mGhast->shared_from_this()), 0);
         if (mChargeTime == 20)
         {
-            double reach = 4.0;
-            mGhast->mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_GHAST_FIREBALL, BlockPos(mGhast->shared_from_this()), 0);
             Vec3* viewVector = mGhast->getViewVector(1.0f);
-            double xd = target->mX - (viewVector->x * reach + mGhast->mX);
+            double xd = target->mX - (mGhast->mX + viewVector->x * 4.0);
             double yd = (target->mBoundingBox->mMinY + (double)(target->mBbHeight * 0.5f)) - (mGhast->mY + 0.5 + (double)(mGhast->mBbHeight * 0.5f));
-            double zd = target->mZ - (viewVector->z * reach + mGhast->mZ);
-            boost::shared_ptr<LargeFireball> fireball(new LargeFireball(mGhast->mLevel, boost::dynamic_pointer_cast<LivingEntity>(mGhast->shared_from_this()), xd, yd, zd));
+            double zd = target->mZ - (mGhast->mZ + viewVector->z * 4.0);
+            level->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_GHAST_FIREBALL, BlockPos(mGhast->shared_from_this()), 0);
+            boost::shared_ptr<LargeFireball> fireball(new LargeFireball(level, boost::dynamic_pointer_cast<LivingEntity>(mGhast->shared_from_this()), xd, yd, zd));
             fireball->mExplosionPower = mGhast->getExplosionPower();
-            fireball->mX = viewVector->x * reach + mGhast->mX;
+            fireball->mX = mGhast->mX + viewVector->x * 4.0;
             fireball->mY = mGhast->mY + (double)(mGhast->mBbHeight * 0.5f) + 0.5;
-            fireball->mZ = viewVector->z * reach + mGhast->mZ;
-            mGhast->mLevel->addEntity(fireball);
+            fireball->mZ = mGhast->mZ + viewVector->z * 4.0;
+            level->addEntity(fireball);
             mChargeTime = -40;
         }
-        mGhast->setCharging(mChargeTime > 10);
     }
     else if (mChargeTime > 0)
     {
         --mChargeTime;
-        mGhast->setCharging(mChargeTime > 10);
     }
-    else
-        mGhast->setCharging(mChargeTime > 10);
+    mGhast->setCharging(mChargeTime > 10);
 }
 Ghast::RandomFloatAroundGoal::RandomFloatAroundGoal(Ghast* ghast) : Goal(), mGhast(ghast)
 {
@@ -268,16 +267,16 @@ Ghast::RandomFloatAroundGoal::~RandomFloatAroundGoal() {}
 bool Ghast::RandomFloatAroundGoal::canUse()
 {
     MoveControl* control = static_cast<MoveControl*>(mGhast->getMoveControl());
-    if (control->hasWanted())
-    {
-        double dx = control->getWantedX() - mGhast->mX;
-        double dy = control->getWantedY() - mGhast->mY;
-        double dz = control->getWantedZ() - mGhast->mZ;
-        double distance = dx * dx + dy * dy + dz * dz;
-        if (distance >= 1.0 && distance <= 3600.0)
-            return false;
-    }
-    return true;
+    if (!control->hasWanted())
+        return true;
+
+    double dx = control->getWantedX() - mGhast->mX;
+    double dy = control->getWantedY() - mGhast->mY;
+    double dz = control->getWantedZ() - mGhast->mZ;
+    double distance = dx * dx + dy * dy + dz * dz;
+    if (distance < 1.0 || distance > 3600.0)
+        return true;
+    return false;
 }
 bool Ghast::RandomFloatAroundGoal::canContinueToUse() { return false; }
 void Ghast::RandomFloatAroundGoal::start()

@@ -15,7 +15,7 @@ class ExplorationMapFunction : public LootItemFunction
 {
 public:
     ExplorationMapFunction(std::vector<LootItemCondition*>* conditions, const std::wstring& destination);
-    virtual ~ExplorationMapFunction();
+    virtual ~ExplorationMapFunction() {}
 
     virtual not_null_ptr<ItemInstance> apply(const not_null_ptr<ItemInstance>& itemInstance,
                                              Random* random, LootTableContext& context);

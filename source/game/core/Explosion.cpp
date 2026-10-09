@@ -355,7 +355,7 @@ void Explosion::explode()
 
         double knockback = falloff;
 
-        if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
         {
             knockback = ProtectionEnchantment::getExplosionKnockbackAfterDampener(boost::static_pointer_cast<LivingEntity>(entity), falloff);
         }
@@ -379,7 +379,7 @@ void Explosion::explode()
         entity->mYd += offsetY;
         entity->mZd += offsetZ;
 
-        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         {
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
 
@@ -460,20 +460,23 @@ void Explosion::finalizeExplosion(bool spawnParticles, std::vector<BlockPos>* to
 
                 double toParticleLength = sqrt(toParticleX * toParticleX + toParticleY * toParticleY + toParticleZ * toParticleZ);
 
+                toParticleX /= toParticleLength;
+                toParticleY /= toParticleLength;
+                toParticleZ /= toParticleLength;
+
                 double speed = 0.5 / (toParticleLength / (double)mRadius + 0.1);
-                speed *= (double)(float)(mLevel->mRandom->nextFloat() * mLevel->mRandom->nextFloat() + 0.3f);
+                speed *= (double)(mLevel->mRandom->nextFloat() * mLevel->mRandom->nextFloat() + 0.3f);
+                toParticleX *= speed;
+                toParticleY *= speed;
+                toParticleZ *= speed;
 
-                double motionX = toParticleX / toParticleLength * speed;
-                double motionY = toParticleY / toParticleLength * speed;
-                double motionZ = toParticleZ / toParticleLength * speed;
-
-                mLevel->addParticle(PARTICLE_EXPLODE, (particleX + mX) * 0.5, (particleY + mY) * 0.5, (particleZ + mZ) * 0.5,
-                    motionX, motionY, motionZ, arrayWithLength<int>());
+                mLevel->addParticle(PARTICLE_EXPLODE, (particleX + mX) / 2.0, (particleY + mY) / 2.0, (particleZ + mZ) / 2.0,
+                    toParticleX, toParticleY, toParticleZ, arrayWithLength<int>());
 
                 if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureLessExplosionParticles())
                 {
                     mLevel->addParticle(PARTICLE_SMOKE, particleX, particleY, particleZ,
-                        motionX, motionY, motionZ, arrayWithLength<int>());
+                        toParticleX, toParticleY, toParticleZ, arrayWithLength<int>());
                 }
             }
 
@@ -533,12 +536,12 @@ boost::shared_ptr<LivingEntity> Explosion::getSourceMob()
         return boost::shared_ptr<LivingEntity>();
     }
 
-    if (mSource->GetType() == EntityType::PRIMED_TNT)
+    if (eTYPE_DERIVED_FROM(EntityType::PRIMED_TNT, mSource->GetType()))
     {
         return boost::static_pointer_cast<PrimedTnt>(mSource)->getOwner();
     }
 
-    if ((mSource->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, mSource->GetType()))
     {
         return boost::static_pointer_cast<LivingEntity>(mSource);
     }

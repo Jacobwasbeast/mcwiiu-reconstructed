@@ -1,7 +1,8 @@
 #ifndef GAME_CORE_SAMPLENOTIFICATIONEVENTHANDLER_HPP
 #define GAME_CORE_SAMPLENOTIFICATIONEVENTHANDLER_HPP
 
-#include <nex.h>
+#include "nn/nex/NotificationEventHandler.hpp"
+#include "nn/nex/NotificationEvent.hpp"
 
 class SampleNotificationEventHandler : public nn::nex::NotificationEventHandler
 {

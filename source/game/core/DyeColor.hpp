@@ -59,6 +59,8 @@ public:
 
 private:
     friend class CraftingMenu;
+    friend class InventoryMenu;
+    friend class StainedGlassBlock;
 
     static const DyeColor* BY_BLOCK_DATA[16];
     static const DyeColor* BY_ITEM_DATA[16];

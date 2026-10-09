@@ -35,10 +35,10 @@ Vex::Vex(Level* level)
     delete mMoveControl;
     mMoveControl = new VexMoveControl(this);
     setSize(0.4f, 0.8f);
-    mExperienceReward = 3;
-    boundOrigin = 0;
     hasLimitedLife = false;
     limitedLife = 0;
+    boundOrigin = 0;
+    mExperienceReward = 3;
 }
 
 Vex::~Vex() { delete boundOrigin; }
@@ -191,9 +191,7 @@ void Vex::VexChargeAttackGoal::stop() { owner->setIsCharging(false); }
 void Vex::VexChargeAttackGoal::tick()
 {
     boost::shared_ptr<LivingEntity> target = owner->getTarget();
-    const AABB* targetBox = target->mBoundingBox;
-    if (owner->mBoundingBox->intersects(targetBox->mMinX, targetBox->mMinY, targetBox->mMinZ,
-                                        targetBox->mMaxX, targetBox->mMaxY, targetBox->mMaxZ))
+    if (owner->mBoundingBox->intersects(target->mBoundingBox))
     {
         owner->doHurtTarget(target);
         owner->setIsCharging(false);
@@ -279,19 +277,21 @@ void Vex::VexRandomMoveGoal::tick()
 {
     const BlockPos* origin = owner->getBoundOrigin();
     if (origin == 0) origin = new BlockPos(owner);
-    Random* random = owner->mRandom;
     Level* level = owner->mLevel;
+    Random* random = owner->mRandom;
     for (int attempt = 0; attempt != 3; ++attempt)
     {
         const BlockPos candidate = origin->offset(random->nextInt(15) - 7, random->nextInt(11) - 5,
                                                   random->nextInt(15) - 7);
-        if (!level->isEmptyBlock(candidate)) continue;
-        owner->mMoveControl->setWantedPosition(candidate.x + 0.5, candidate.y + 0.5,
-                                               candidate.z + 0.5, 0.25);
-        if (!owner->getTarget())
-            owner->getLookControl()->setLookAt(candidate.x + 0.5, candidate.y + 0.5,
-                                               candidate.z + 0.5, 180.0f, 20.0f);
-        break;
+        if (level->isEmptyBlock(candidate))
+        {
+            owner->mMoveControl->setWantedPosition(candidate.x + 0.5, candidate.y + 0.5,
+                                                   candidate.z + 0.5, 0.25);
+            if (owner->getTarget() == NULL)
+                owner->getLookControl()->setLookAt(candidate.x + 0.5, candidate.y + 0.5,
+                                                   candidate.z + 0.5, 180.0f, 20.0f);
+            break;
+        }
     }
 }
 std::wstring Vex::VexRandomMoveGoal::getName() { return L"Vex Random Move"; }

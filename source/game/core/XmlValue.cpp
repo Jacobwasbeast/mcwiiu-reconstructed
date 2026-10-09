@@ -2,10 +2,10 @@
 
 bool XmlValue::isString() const
 {
-    return m_isString;
+    return m_value.isSet();
 }
 
 std::wstring XmlValue::asString() const
 {
-    return std::wstring(m_value, 0);
+    return std::wstring(m_value.get(), 0);
 }

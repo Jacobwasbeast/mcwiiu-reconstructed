@@ -23,7 +23,7 @@ CombatEntry::~CombatEntry()
 
 bool CombatEntry::isCombatRelated()
 {
-    return mSource->getEntity() && (mSource->getEntity()->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
+    return mSource->getEntity() && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, mSource->getEntity()->GetType());
 }
 
 const DamageSource* CombatEntry::getSource()

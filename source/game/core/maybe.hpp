@@ -27,25 +27,25 @@ public:
         return value;
     }
 
+    T otherwise(T fallback) const
+    {
+        return hasValue ? value : fallback;
+    }
+
     maybe<T> otherwise(maybe<T> fallback) const
     {
-        if (hasValue)
-        {
-            return maybe<T>(value);
-        }
-
-        return fallback;
+        return hasValue ? maybe<T>(value) : fallback;
     }
 
     template <class U>
     maybe<U> fmap(maybe<U> (*func)(T)) const
     {
-        if (!hasValue)
+        if (hasValue)
         {
-            return maybe<U>();
+            return func(value);
         }
 
-        return func(value);
+        return maybe<U>();
     }
 
 private:

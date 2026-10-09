@@ -14,11 +14,8 @@
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/generation/LargeFeature.hpp"
 #include "game/world/generation/PlayerUID.hpp"
-
-static const std::wstring MONUMENT_DESTINATION(L"Monument");
-static const std::wstring MANSION_DESTINATION(L"Mansion");
-static const std::wstring BURIED_TREASURE_DESTINATION(L"BuriedTreasure");
 
 ExplorationMapFunction::ExplorationMapFunction(std::vector<LootItemCondition*>* conditions,
                                                const std::wstring& destination)
@@ -26,21 +23,17 @@ ExplorationMapFunction::ExplorationMapFunction(std::vector<LootItemCondition*>* 
 {
 }
 
-ExplorationMapFunction::~ExplorationMapFunction()
-{
-}
-
 const MapDecoration::Type* ExplorationMapFunction::getType(const std::wstring& destination)
 {
-    if (destination == MONUMENT_DESTINATION)
+    if (destination == LargeFeature::MONUMENT)
     {
         return &MapDecoration::Type::TYPES[15];
     }
-    if (destination == MANSION_DESTINATION)
+    if (destination == LargeFeature::MANSION)
     {
         return &MapDecoration::Type::TYPES[14];
     }
-    if (destination == BURIED_TREASURE_DESTINATION)
+    if (destination == LargeFeature::BURIED_TREASURE)
     {
         return &MapDecoration::Type::TYPES[20];
     }
@@ -49,15 +42,15 @@ const MapDecoration::Type* ExplorationMapFunction::getType(const std::wstring& d
 
 unsigned int ExplorationMapFunction::getTranslatableName(const std::wstring& destination)
 {
-    if (destination == MONUMENT_DESTINATION)
+    if (destination == LargeFeature::MONUMENT)
     {
         return IDS_ITEM_FILLED_MAP_OCEAN_MONUMENT;
     }
-    if (destination == MANSION_DESTINATION)
+    if (destination == LargeFeature::MANSION)
     {
         return IDS_ITEM_FILLED_MAP_WOODLAND_MANSION;
     }
-    if (destination == BURIED_TREASURE_DESTINATION)
+    if (destination == LargeFeature::BURIED_TREASURE)
     {
         return 0xd2f653b5;
     }
@@ -74,23 +67,21 @@ not_null_ptr<ItemInstance> ExplorationMapFunction::apply(const not_null_ptr<Item
     {
         position = entity->getPos(0.0f);
     }
-    BlockPos mapPosition(position);
-    BlockPos* featurePosition = level->findNearestMapFeature(mDestination, mapPosition, false);
-
-    if (featurePosition != NULL)
+    BlockPos* featurePosition = level->findNearestMapFeature(mDestination, BlockPos(position), false);
+    if (featurePosition == NULL)
     {
-        const MapDecoration::Type* type = getType(mDestination);
-        int scale = type == &MapDecoration::Type::TYPES[20] ? 1 : 2;
-        not_null_ptr<ItemInstance> map = MapItem::setupNewMap(PlayerUID(0), level, 0,
-                                                               (double)featurePosition->x,
-                                                               (double)featurePosition->z,
-                                                               (unsigned char)scale, true, true);
-        MapItem::renderBiomePreviewMap(level, map);
-        MapItemSavedData::addTargetDecoration(map, *featurePosition, L"+", type);
-        map->setTranslatableName(getTranslatableName(mDestination));
-        delete featurePosition;
-        return map;
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::nautilusCore, 1));
     }
 
-    return not_null_ptr<ItemInstance>(new ItemInstance(Items::nautilusCore, 1));
+    const MapDecoration::Type* type = getType(mDestination);
+    int scale = type == &MapDecoration::Type::TYPES[20] ? 1 : 2;
+    not_null_ptr<ItemInstance> map = MapItem::setupNewMap(PlayerUID(0), level, 0,
+                                                           (double)featurePosition->x,
+                                                           (double)featurePosition->z,
+                                                           (unsigned char)scale, true, true);
+    MapItem::renderBiomePreviewMap(level, map);
+    MapItemSavedData::addTargetDecoration(map, *featurePosition, L"+", type);
+    map->setTranslatableName(getTranslatableName(mDestination));
+    delete featurePosition;
+    return map;
 }

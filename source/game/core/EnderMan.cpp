@@ -427,7 +427,7 @@ void EnderMan::EndermanLookForPlayerGoal::tick()
         if (--mAggroTime > 0)
             return;
         NearestAttackableTargetGoal::mTarget = mPendingTarget;
-        mPendingTarget.reset();
+        mPendingTarget = boost::shared_ptr<Player>();
         NearestAttackableTargetGoal::start();
         return;
     }
@@ -435,7 +435,7 @@ void EnderMan::EndermanLookForPlayerGoal::tick()
     boost::shared_ptr<Entity> target = NearestAttackableTargetGoal::mTarget.lock();
     if (target != NULL)
     {
-        if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType()) &&
             mEnderMan->isLookingAtMe(boost::static_pointer_cast<Player>(target)))
         {
             if (target->distanceToSqr(mEnderMan->shared_from_this()) < 16.0)

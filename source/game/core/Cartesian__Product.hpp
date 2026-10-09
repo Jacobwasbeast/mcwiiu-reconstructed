@@ -17,10 +17,22 @@ public:
     {
     public:
         ProductIterator(std::vector<const std::vector<Boxed*>*>* iterables);
-        virtual ~ProductIterator();
+        virtual ~ProductIterator()
+        {
+            delete[] mResults.data;
+            delete[] mIterators.data;
+        }
 
         bool hasNext();
-        arrayWithLength<Boxed*> next();
+        arrayWithLength<Boxed*> next()
+        {
+            for (; mIndex < (int)mIterators.length; mIndex++)
+            {
+                mResults[mIndex] = *mIterators[mIndex]++;
+            }
+
+            return mResults;
+        }
 
     private:
         int mIndex;

@@ -272,7 +272,7 @@ void PolarBear::PolarBearHurtByTargetGoal::start()
 void PolarBear::PolarBearHurtByTargetGoal::alertOther(boost::shared_ptr<PathfinderMob> mob,
                                                        boost::shared_ptr<LivingEntity> target)
 {
-    bool isPolarBear = mob->GetType() == EntityType::POLAR_BEAR;
+    bool isPolarBear = eTYPE_DERIVED_FROM(EntityType::POLAR_BEAR, mob->GetType());
     if (isPolarBear)
     {
         if (!boost::static_pointer_cast<PolarBear>(mob)->isBaby())
@@ -294,7 +294,7 @@ bool PolarBear::PolarBearMeleeAttackGoal::canUse()
     {
         if (target)
         {
-            bool isPlayer = (target->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+            bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType());
             if (isPlayer) return false;
         }
     }

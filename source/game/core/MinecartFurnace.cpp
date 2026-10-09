@@ -29,8 +29,7 @@ MinecartFurnace::MinecartFurnace(Level* level) : Minecart(level)
 {
     fjDerivedCtorCalls();
     mFuel = 0;
-    mPushX = 0.0;
-    mPushZ = 0.0;
+    mPushX = mPushZ = 0.0;
 }
 
 MinecartFurnace::MinecartFurnace(Level* level, double x, double y, double z)
@@ -38,8 +37,7 @@ MinecartFurnace::MinecartFurnace(Level* level, double x, double y, double z)
 {
     fjDerivedCtorCalls();
     mFuel = 0;
-    mPushX = 0.0;
-    mPushZ = 0.0;
+    mPushX = mPushZ = 0.0;
 }
 
 Entity* MinecartFurnace::create(Level* level)
@@ -119,12 +117,12 @@ void MinecartFurnace::destroy(const DamageSource* source)
 void MinecartFurnace::moveAlongTrack(const BlockPos& pos, const BlockState* state)
 {
     Minecart::moveAlongTrack(pos, state);
-    const double pushLength = mPushX * mPushX + mPushZ * mPushZ;
+    double pushLength = mPushX * mPushX + mPushZ * mPushZ;
     if (pushLength > 0.0001 && mXd * mXd + mZd * mZd > 0.001)
     {
-        const double length = Mth::sqrt(pushLength);
-        mPushX /= length;
-        mPushZ /= length;
+        pushLength = Mth::sqrt(pushLength);
+        mPushX /= pushLength;
+        mPushZ /= pushLength;
         if (mPushX * mXd + mPushZ * mZd < 0.0)
         {
             mPushX = 0.0;
@@ -132,30 +130,33 @@ void MinecartFurnace::moveAlongTrack(const BlockPos& pos, const BlockState* stat
         }
         else
         {
-            const double speed = getMaxSpeed();
-            mPushX *= length / speed;
-            mPushZ *= length / speed;
+            double scale = pushLength / getMaxSpeed();
+            mPushX *= scale;
+            mPushZ *= scale;
         }
     }
 }
 
 void MinecartFurnace::applyNaturalSlowdown()
 {
-    const double pushLength = mPushX * mPushX + mPushZ * mPushZ;
-    if (pushLength <= 0.0001)
+    double pushLength = mPushX * mPushX + mPushZ * mPushZ;
+    if (pushLength > 0.0001)
     {
-        mXd *= 0.9800000190734863;
-        mZd *= 0.9800000190734863;
+        pushLength = Mth::sqrt(pushLength);
+        mPushX /= pushLength;
+        mPushZ /= pushLength;
+        double friction = 0.8f;
+        mXd *= friction;
         mYd *= 0.0;
+        mZd *= friction;
+        mXd += mPushX;
+        mZd += mPushZ;
     }
     else
     {
-        const double length = Mth::sqrt(pushLength);
-        mPushX /= length;
-        mPushZ /= length;
+        mXd *= 0.98f;
         mYd *= 0.0;
-        mXd = mXd * 0.800000011920929 + mPushX;
-        mZd = mZd * 0.800000011920929 + mPushZ;
+        mZd *= 0.98f;
     }
     Minecart::applyNaturalSlowdown();
 }
@@ -163,22 +164,21 @@ void MinecartFurnace::applyNaturalSlowdown()
 bool MinecartFurnace::interact(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
-    const int allowed = player->isAllowedToInteract(shared_from_this());
-    if (allowed == 1)
+    if (!player->isAllowedToInteract(shared_from_this()))
     {
-        if (item->getItem() == Items::coal && mFuel + 3600 <= 32000)
-        {
-            if (!player->mAbilities.mInstabuild)
-            {
-                item->shrink(1);
-            }
-            mFuel += 3600;
-        }
-        mPushX = mX - player->mX;
-        mPushZ = mZ - player->mZ;
-        return true;
+        return false;
     }
-    return false;
+    if (item->getItem() == Items::coal && mFuel + 3600 <= 32000)
+    {
+        if (!player->mAbilities.mInstabuild)
+        {
+            item->shrink(1);
+        }
+        mFuel += 3600;
+    }
+    mPushX = mX - player->mX;
+    mPushZ = mZ - player->mZ;
+    return true;
 }
 
 unsigned int MinecartFurnace::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)

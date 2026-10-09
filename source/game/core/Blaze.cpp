@@ -124,14 +124,13 @@ void Blaze::aiStep()
                                    0.3f + mRandom->nextFloat() * 0.7f, false, 16.0f);
         }
 
-        mLevel->addParticle(PARTICLE_LARGE_SMOKE, mX + (mRandom->nextDouble() - 0.5) * mBbWidth,
-                            mY + mRandom->nextDouble() * mBbHeight,
-                            mZ + (mRandom->nextDouble() - 0.5) * mBbWidth,
-                            0.0, 0.0, 0.0, arrayWithLength<int>());
-        mLevel->addParticle(PARTICLE_LARGE_SMOKE, mX + (mRandom->nextDouble() - 0.5) * mBbWidth,
-                            mY + mRandom->nextDouble() * mBbHeight,
-                            mZ + (mRandom->nextDouble() - 0.5) * mBbWidth,
-                            0.0, 0.0, 0.0, arrayWithLength<int>());
+        for (int i = 0; i < 2; ++i)
+        {
+            mLevel->addParticle(PARTICLE_LARGE_SMOKE, mX + (mRandom->nextDouble() - 0.5) * mBbWidth,
+                                mY + mRandom->nextDouble() * mBbHeight,
+                                mZ + (mRandom->nextDouble() - 0.5) * mBbWidth,
+                                0.0, 0.0, 0.0, arrayWithLength<int>());
+        }
     }
 
     Monster::aiStep();
@@ -285,7 +284,7 @@ void Blaze::BlazeAttackGoal::tick()
                 mAttackTime = 60;
                 mBlaze->setCharged(true);
             }
-            else if (mAttackStep < 5)
+            else if (mAttackStep <= 4)
             {
                 mAttackTime = 6;
             }
@@ -298,16 +297,20 @@ void Blaze::BlazeAttackGoal::tick()
 
             if (mAttackStep > 1)
             {
-                double spread = std::sqrt(std::sqrt(distance)) * 0.5;
+                Random* random = mBlaze->mRandom;
+                float spread = static_cast<float>(std::sqrt(std::sqrt(distance))) * 0.5f;
                 mBlaze->mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_BLAZE_FIREBALL,
                                            BlockPos(static_cast<int>(mBlaze->mX), static_cast<int>(mBlaze->mY),
                                                      static_cast<int>(mBlaze->mZ)), 0);
-                boost::shared_ptr<SmallFireball> fireball(new SmallFireball(
-                    mBlaze->mLevel, boost::dynamic_pointer_cast<Mob>(mBlaze->shared_from_this()),
-                    xd + mBlaze->mRandom->nextGaussian() * spread, yd,
-                    zd + mBlaze->mRandom->nextGaussian() * spread));
-                fireball->mY = mBlaze->mY + mBlaze->mBbHeight * 0.5f + 0.5;
-                mBlaze->mLevel->addEntity(fireball);
+                for (int i = 0; i < 1; ++i)
+                {
+                    boost::shared_ptr<SmallFireball> fireball(new SmallFireball(
+                        mBlaze->mLevel, boost::dynamic_pointer_cast<Mob>(mBlaze->shared_from_this()),
+                        xd + random->nextGaussian() * spread, yd,
+                        zd + random->nextGaussian() * spread));
+                    fireball->mY = mBlaze->mY + mBlaze->mBbHeight * 0.5f + 0.5;
+                    mBlaze->mLevel->addEntity(fireball);
+                }
             }
         }
 

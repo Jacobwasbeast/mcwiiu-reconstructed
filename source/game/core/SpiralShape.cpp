@@ -9,5 +9,5 @@ SpiralShape::SpiralShape(int minRadius, int maxRadius, double angle)
 
 void SpiralShape::GenerateShape(Random& random, Shape& shape) const
 {
-    random.nextInt(this->maxRadius - this->minRadius);
+    int radius = random.nextInt(this->maxRadius - this->minRadius) + this->minRadius;
 }

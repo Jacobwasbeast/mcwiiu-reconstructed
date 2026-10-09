@@ -9,10 +9,8 @@ public:
     float z;
 
     Vector3f()
-        : x(0.0f)
-        , y(0.0f)
-        , z(0.0f)
     {
+        x = y = z = 0.0f;
     }
 
     Vector3f(float x, float y, float z)

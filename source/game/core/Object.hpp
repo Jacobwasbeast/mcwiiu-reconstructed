@@ -1,6 +1,11 @@
 #ifndef GAME_CORE_OBJECT_HPP
 #define GAME_CORE_OBJECT_HPP
 
+class ArmorItem;
+class Block;
+class Item;
+class ItemInstance;
+
 struct Object
 {
     enum EType
@@ -11,15 +16,33 @@ struct Object
         eType_Block = 0x4000206
     };
 
-    Object(void* object, int auxValue, int flags)
-        : object(object), auxValue(auxValue), flags(flags)
+    Object(Item* item)
     {
+        this->type = eType_Item;
+        this->object = item;
+    }
+
+    Object(ItemInstance* itemInstance)
+    {
+        this->type = eType_ItemInstance;
+        this->object = itemInstance;
+    }
+
+    Object(ArmorItem* armorItem)
+    {
+        this->type = eType_ArmorItem;
+        this->object = armorItem;
+    }
+
+    Object(Block* block)
+    {
+        this->type = eType_Block;
+        this->object = block;
     }
 
     void* object;
     int value;
-    int auxValue;
-    int flags;
+    unsigned long long type;
 };
 
 #endif

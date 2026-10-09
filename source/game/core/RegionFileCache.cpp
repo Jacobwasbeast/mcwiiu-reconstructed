@@ -32,12 +32,15 @@ RegionFileCache::~RegionFileCache()
 
 bool RegionFileCache::useSplitSaves(ESavePlatform platform)
 {
-    if (platform == eSavePlatform_NX || platform == eSavePlatform_XB1 || platform == eSavePlatform_PS4)
+    switch (platform)
     {
+    case eSavePlatform_NX:
+    case eSavePlatform_XB1:
+    case eSavePlatform_PS4:
         return true;
+    default:
+        return false;
     }
-
-    return false;
 }
 
 File RegionFileCache::getFilepath(ConsoleSaveFile* saveFile, const std::wstring& folder, int x, int z)
@@ -66,9 +69,14 @@ RegionFile* RegionFileCache::_getRegionFile(ConsoleSaveFile* saveFile, const std
 
     RegionFileMap::iterator it = mRegionFiles.find(filepath);
 
-    if (it != mRegionFiles.end() && it->second != NULL)
+    if (it != mRegionFiles.end())
     {
-        return it->second;
+        RegionFile* cached = it->second;
+
+        if (cached != NULL)
+        {
+            return cached;
+        }
     }
 
     RegionFile* regionFile = new RegionFile(saveFile, &filepath);

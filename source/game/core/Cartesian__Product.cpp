@@ -21,12 +21,6 @@ Product::ProductIterator::ProductIterator(std::vector<const std::vector<Boxed*>*
     mResults = arrayWithLength<Boxed*>(mIterators.length, true);
 }
 
-Product::ProductIterator::~ProductIterator()
-{
-    delete[] mResults.data;
-    delete[] mIterators.data;
-}
-
 bool Product::ProductIterator::hasNext()
 {
     if (mIndex == -2)
@@ -76,20 +70,6 @@ bool Product::ProductIterator::hasNext()
     }
 
     return mIndex >= 0;
-}
-
-arrayWithLength<Boxed*> Product::ProductIterator::next()
-{
-    int i;
-
-    for (i = mIndex; i < (int)mIterators.length; i++)
-    {
-        mResults.data[i] = *mIterators.data[i]++;
-    }
-
-    mIndex = i;
-
-    return mResults;
 }
 
 }

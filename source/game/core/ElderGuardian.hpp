@@ -11,6 +11,8 @@ class SoundEvent;
 class ElderGuardian : public Guardian
 {
 public:
+    static const float ELDER_SIZE_SCALE;
+
     ElderGuardian(Level* level);
 
     static void addDataWalkers(DataFixerUpper* fixer);

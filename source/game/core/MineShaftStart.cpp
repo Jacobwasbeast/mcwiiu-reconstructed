@@ -10,17 +10,15 @@ MineShaftStart::MineShaftStart(Level* level, Random& random, int chunkX, int chu
     : StructureStart(chunkX, chunkZ), mType(type)
 {
     MineShaftPieces::MineShaftRoom* room =
-        new MineShaftPieces::MineShaftRoom(0, random, chunkX * 16 + 2, chunkZ * 16 + 2, type);
+        new MineShaftPieces::MineShaftRoom(0, random, (chunkX << 4) + 2, (chunkZ << 4) + 2, mType);
     mPieces.push_back(room);
     room->addChildren(room, &mPieces, random);
     calculateBoundingBox();
 
     if (type == MineShaftFeature::eMineShaftType_Mesa)
     {
-        int seaLevel = level->getSeaLevel();
-        BoundingBox* box = mBoundingBox;
-        int y = seaLevel - box->y0 + box->getYSpan() / 2 + 5;
-        box->move(0, y, 0);
+        int y = level->getSeaLevel() - mBoundingBox->y1 + mBoundingBox->getYSpan() / 2 + 5;
+        mBoundingBox->move(0, y, 0);
         for (std::vector<StructurePiece*>::iterator it = mPieces.begin(); it != mPieces.end(); ++it)
         {
             (*it)->move(0, y, 0);

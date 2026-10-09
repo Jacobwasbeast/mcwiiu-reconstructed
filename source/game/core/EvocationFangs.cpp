@@ -34,32 +34,26 @@ EvocationFangs::EvocationFangs(Level* level, double x, double y, double z, float
 void EvocationFangs::_init()
 {
     fjDerivedCtorCalls();
+    mWarmupDelay = 0;
     mSentSpikeEvent = false;
     mLifeTicks = 22;
     mClientSideAttack = false;
-    mWarmupDelay = 0;
     std::wstring ownerUUID(L"");
 }
 
 void EvocationFangs::setOwner(const boost::shared_ptr<LivingEntity>& owner)
 {
     mOwner = owner;
-    if (owner.get() == NULL)
-        mOwnerUUID = std::wstring(L"");
-    else
-        mOwnerUUID = owner.get()->getUUID();
+    mOwnerUUID = owner == NULL ? std::wstring(L"") : owner->getUUID();
 }
 
 boost::shared_ptr<LivingEntity> EvocationFangs::getOwner()
 {
     ServerLevel* serverLevel = dynamic_cast<ServerLevel*>(mLevel);
-    bool lookupOwner = false;
     if (mOwner.lock() == NULL && mOwnerUUID != L"" && serverLevel != NULL)
-        lookupOwner = true;
-    if (lookupOwner)
     {
         boost::shared_ptr<Entity> entity = serverLevel->getEntityByUUID(mOwnerUUID);
-        if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
             mOwner = boost::static_pointer_cast<LivingEntity>(entity);
     }
     return mOwner.lock();
@@ -84,21 +78,25 @@ void EvocationFangs::addAdditonalSaveData(CompoundTag* tag)
 void EvocationFangs::dealDamageTo(const boost::shared_ptr<LivingEntity>& target)
 {
     boost::shared_ptr<LivingEntity> owner = getOwner();
-    if (target->isAlive() && !target->isInvulnerable() && target.get() != owner.get())
+    if (!target->isAlive() || target->isInvulnerable() || target == owner)
     {
-        if (owner == NULL)
+        return;
+    }
+
+    if (owner == NULL)
+    {
+        target->hurt(DamageSource::MAGIC, 6.0f);
+    }
+    else
+    {
+        if (owner->isAlliedTo(target))
         {
-            target->hurt(DamageSource::MAGIC, 6.0f);
+            return;
         }
-        else
-        {
-            if (!owner->isAlliedTo(target))
-            {
-                DamageSource* damage = DamageSource::CreateIndirectMagic(shared_from_this(), owner, DamageSource::MAGIC);
-                target->hurt(damage, 6.0f);
-                delete damage;
-            }
-        }
+
+        DamageSource* damage = DamageSource::CreateIndirectMagic(shared_from_this(), owner, DamageSource::MAGIC);
+        target->hurt(damage, 6.0f);
+        delete damage;
     }
 }
 
@@ -106,41 +104,46 @@ void EvocationFangs::tick()
 {
     Entity::tick();
 
-    if (!mLevel->mIsClientSide)
+    if (mLevel->mIsClientSide)
     {
-        --mWarmupDelay;
-        if (mWarmupDelay < 0)
+        if (mClientSideAttack)
         {
-            if (mWarmupDelay == -8)
+            --mLifeTicks;
+            if (mLifeTicks == 14)
             {
-                Level* level = mLevel;
-                std::vector<boost::shared_ptr<Entity> >* entities =
-                    level->getEntitiesOfClass(typeid(LivingEntity), mBoundingBox->grow(0.2, 0.0, 0.2));
-                for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+                for (int i = 0; i < 12; ++i)
                 {
-                    dealDamageTo(boost::static_pointer_cast<LivingEntity>(*it));
+                    double x = mX + (mRandom->nextDouble() * 2.0 - 1.0) * (double)mBbWidth * 0.5;
+                    double y = mY + 0.05 + mRandom->nextDouble() * 1.0;
+                    double z = mZ + (mRandom->nextDouble() * 2.0 - 1.0) * (double)mBbWidth * 0.5;
+                    double xa = (mRandom->nextDouble() * 2.0 - 1.0) * 0.3;
+                    double ya = 0.3 + mRandom->nextDouble() * 0.3;
+                    double za = (mRandom->nextDouble() * 2.0 - 1.0) * 0.3;
+                    arrayWithLength<int> parameters;
+                    mLevel->addParticle(PARTICLE_CRIT, x, y + 1.0, z, xa, ya, za, parameters);
                 }
-                delete entities;
             }
-            if (!mSentSpikeEvent)
-            {
-                mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::START_ATTACKING, 0);
-                mSentSpikeEvent = true;
-            }
-            if (--mLifeTicks < 0) remove();
         }
     }
-    else if (mClientSideAttack && --mLifeTicks == 14)
+    else if (--mWarmupDelay < 0)
     {
-        for (int i = 0; i < 12; ++i)
+        if (mWarmupDelay == -8)
         {
-            double x = mX + (mRandom->nextDouble() * 2.0 - 1.0) * (double)mBbWidth * 0.5;
-            double y = mY + mRandom->nextDouble() + 0.05;
-            double z = mZ + (mRandom->nextDouble() * 2.0 - 1.0) * (double)mBbWidth * 0.5;
-            mLevel->addParticle(PARTICLE_CRIT, x, y + 1.0, z,
-                                (mRandom->nextDouble() * 2.0 - 1.0) * 0.3, mRandom->nextDouble() * 0.3 + 0.3,
-                                (mRandom->nextDouble() * 2.0 - 1.0) * 0.3, arrayWithLength<int>());
+            Level* level = mLevel;
+            std::vector<boost::shared_ptr<Entity> >* entities =
+                level->getEntitiesOfClass(typeid(LivingEntity), mBoundingBox->grow(0.2, 0.0, 0.2));
+            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+            {
+                dealDamageTo(boost::static_pointer_cast<LivingEntity>(*it));
+            }
+            delete entities;
         }
+        if (!mSentSpikeEvent)
+        {
+            mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::START_ATTACKING, 0);
+            mSentSpikeEvent = true;
+        }
+        if (--mLifeTicks < 0) remove();
     }
 }
 
@@ -166,9 +169,7 @@ float EvocationFangs::getAnimationProgress(float partialTicks) const
 {
     if (!mClientSideAttack) return 0.0f;
     int ticks = mLifeTicks - 2;
-    float progress = 1.0f;
-    if (ticks > 0) progress = 1.0f - ((float)ticks - partialTicks) / 20.0f;
-    return progress;
+    return ticks <= 0 ? 1.0f : 1.0f - ((float)ticks - partialTicks) / 20.0f;
 }
 
 Entity* EvocationFangs::create(Level* level)

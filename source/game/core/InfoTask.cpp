@@ -62,17 +62,29 @@ bool InfoTask::isCompleted()
         return false;
     }
 
-    if (!gConsoleUIController.GetMenuDisplayed(tutorial->playerId))
+    if (gConsoleUIController.GetMenuDisplayed(tutorial->playerId))
     {
-        boost::unordered_map<int, bool>::iterator input = completedInputs.begin();
-        while (input != completedInputs.end())
+        for (boost::unordered_map<int, bool>::iterator it = completedInputs.begin();
+             it != completedInputs.end(); ++it)
         {
-            if (!input->second)
+            if (!it->second)
+            {
+                result = false;
+                break;
+            }
+        }
+    }
+    else
+    {
+        for (boost::unordered_map<int, bool>::iterator it = completedInputs.begin();
+             it != completedInputs.end(); ++it)
+        {
+            if (!it->second)
             {
                 if (g_pInput->GetValue(minecraft->mPlayer->mUserIndex,
-                                       static_cast<unsigned char>(input->first), false))
+                                       static_cast<unsigned char>(it->first), false) > 0)
                 {
-                    input->second = true;
+                    it->second = true;
                     result = true;
                 }
                 else
@@ -80,20 +92,6 @@ bool InfoTask::isCompleted()
                     result = false;
                 }
             }
-            ++input;
-        }
-    }
-    else
-    {
-        boost::unordered_map<int, bool>::iterator input = completedInputs.begin();
-        while (input != completedInputs.end())
-        {
-            if (!input->second)
-            {
-                completed = false;
-                return false;
-            }
-            ++input;
         }
     }
 
@@ -126,20 +124,13 @@ void InfoTask::handleUIInput(int input)
 {
     if (activated)
     {
-        if (completedInputs.empty())
+        for (boost::unordered_map<int, bool>::iterator it = completedInputs.begin();
+             it != completedInputs.end(); ++it)
         {
-            return;
-        }
-
-        boost::unordered_map<int, bool>::iterator current = completedInputs.begin();
-        while (current != completedInputs.end())
-        {
-            if (current->first == input)
+            if (input == it->first)
             {
-                current->second = true;
+                it->second = true;
             }
-            ++current;
         }
     }
-    return;
 }

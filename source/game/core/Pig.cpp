@@ -105,28 +105,30 @@ bool Pig::canBeControlledByRider()
 
     boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(passenger);
     not_null_ptr<ItemInstance> mainHandItem = player->getMainHandItem();
-    return player->getMainHandItem()->getItem() == Items::carrotOnAStick
-        || player->getOffhandItem()->getItem() == Items::carrotOnAStick;
+    if (player->getMainHandItem()->getItem() == Items::carrotOnAStick
+        || player->getOffhandItem()->getItem() == Items::carrotOnAStick)
+        return true;
+    return false;
 }
 
 void Pig::onSyncedDataUpdated(const EntityDataAccessor_Base* accessor)
 {
-    if (accessor->getId() == DATA_BOOST_TIME->getId() && mLevel->mIsClientSide)
+    if (DATA_BOOST_TIME->getId() == accessor->getId() && mLevel->mIsClientSide)
     {
         int boostTime = mEntityData->get(DATA_BOOST_TIME);
-        if (boostTime < 1 || boostTime == mBoostTotalTime)
-        {
-            mBoostTotalTime = 0;
-            mBoosting = false;
-            mBoostStartTime = 0;
-            mBoostTime = 0;
-        }
-        else
+        if (boostTime > 0 && boostTime != mBoostTotalTime)
         {
             mBoostTotalTime = boostTime;
             mBoosting = true;
             mBoostTime = 0;
             mBoostStartTime = System::processTimeInMilliSecs();
+        }
+        else
+        {
+            mBoosting = false;
+            mBoostTime = 0;
+            mBoostTotalTime = 0;
+            mBoostStartTime = 0;
         }
     }
     AgableMob::onSyncedDataUpdated(accessor);
@@ -181,35 +183,41 @@ void Pig::playStepSound(const BlockPos&, Block*)
 bool Pig::mobInteract(const boost::shared_ptr<Player>& player,
                       InteractionHand::EInteractionHand hand)
 {
-    if (Animal::mobInteract(player, hand))
-        return true;
-
-    not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
-    if (item->getItem() == Items::nameTag)
+    if (!Animal::mobInteract(player, hand))
     {
-        item->interactEnemy(player,
-                            boost::static_pointer_cast<LivingEntity>(shared_from_this()), hand);
-        return true;
-    }
-
-    if (hasSaddle() && !player->isVehicle() && !isLeashedToPlayer(player))
-    {
-        if (!mLevel->mIsClientSide)
+        not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
+        if (item->getItem() == Items::nameTag)
         {
-            if (hasPassenger(player))
-                player->stopRiding();
-            else
-                player->startRiding(shared_from_this());
+            item->interactEnemy(player,
+                                boost::static_pointer_cast<LivingEntity>(shared_from_this()), hand);
+            return true;
         }
+        else if (hasSaddle() && !player->isVehicle() && !isLeashedToPlayer(player))
+        {
+            if (!mLevel->mIsClientSide)
+            {
+                if (hasPassenger(player))
+                    player->stopRiding();
+                else
+                    player->startRiding(shared_from_this());
+            }
+            return true;
+        }
+        else if (item->getItem() == Items::saddle)
+        {
+            item->interactEnemy(player,
+                                boost::static_pointer_cast<LivingEntity>(shared_from_this()), hand);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
         return true;
     }
-
-    if (item->getItem() != Items::saddle)
-        return false;
-
-    item->interactEnemy(player,
-                        boost::static_pointer_cast<LivingEntity>(shared_from_this()), hand);
-    return true;
 }
 
 void Pig::die(const DamageSource* source)
@@ -274,101 +282,100 @@ void Pig::causeFallDamage(float fallDistance, float damageMultiplier)
 
 void Pig::travel(float xxa, float yya, float zza)
 {
-    boost::shared_ptr<Entity> passenger;
-    if (!getPassengers()->empty())
-    {
-        const std::vector<boost::weak_ptr<Entity> >* passengers = getPassengers();
-        passenger = passengers->at(0).lock();
-    }
+    boost::shared_ptr<Entity> passenger = getPassengers()->empty()
+        ? boost::shared_ptr<Entity>() : getPassengers()->at(0).lock();
 
-    if (isVehicle() && canBeControlledByRider())
-    {
-        mYRot = passenger->mYRot;
-        mYRotO = mYRot;
-        mXRot = passenger->mXRot * 0.5f;
-        setRot(mYRot, mXRot);
-        mYBodyRot = mYRot;
-        mYHeadRot = mYRot;
-        mMaxUpStep = 1.0f;
-        mFlyingSpeed = getSpeed() * 0.1f;
-
-        if (mBoosting)
-        {
-            int elapsed = Mth::clamp(
-                static_cast<int>((static_cast<long long>(System::processTimeInMilliSecs()) - mBoostStartTime) / 1000 * 20),
-                0, mBoostTotalTime);
-            if (!mLevel->mIsClientSide && elapsed == mBoostTotalTime)
-            {
-                mBoostTime = 0;
-                mBoosting = false;
-                mBoostTotalTime = 0;
-                mBoostStartTime = 0;
-                mEntityData->set(DATA_BOOST_TIME, 0, true);
-            }
-            else
-            {
-                mBoostTime = elapsed;
-            }
-        }
-
-        if (isControlledByLocalInstance())
-        {
-            float speed = static_cast<float>(
-                getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()) * 0.225f;
-            if (mBoosting)
-                speed += (speed + speed)
-                    * std::sin(static_cast<float>(mBoostTime) / mBoostTotalTime * 3.1415927f);
-            setSpeed(speed);
-            LivingEntity::travel(0.0f, 0.0f, 1.0f);
-        }
-        else
-        {
-            mXd = 0.0;
-            mYd = 0.0;
-            mZd = 0.0;
-        }
-
-        mAnimationSpeedOld = mAnimationSpeed;
-        float movement = static_cast<float>(
-            std::sqrt((mX - mXo) * (mX - mXo) + (mZ - mZo) * (mZ - mZo))) * 4.0f;
-        movement = std::min(movement, 1.0f);
-        mAnimationSpeed += (movement - mAnimationSpeed) * 0.4f;
-        mAnimationPosition += mAnimationSpeed;
-    }
-    else
+    if (!isVehicle() || !canBeControlledByRider())
     {
         mMaxUpStep = 0.5f;
         mFlyingSpeed = 0.02f;
         LivingEntity::travel(xxa, yya, zza);
+        return;
     }
+
+    mYRot = passenger->mYRot;
+    mYRotO = mYRot;
+    mXRot = passenger->mXRot * 0.5f;
+    setRot(mYRot, mXRot);
+    mYBodyRot = mYRot;
+    mYHeadRot = mYRot;
+    mMaxUpStep = 1.0f;
+    mFlyingSpeed = getSpeed() * 0.1f;
+
+    if (mBoosting)
+    {
+        long long elapsedMs = System::processTimeInMilliSecs() - mBoostStartTime;
+        int elapsed = Mth::clamp(static_cast<int>(elapsedMs / 1000 * 20), 0, mBoostTotalTime);
+        if (mLevel->mIsClientSide || elapsed != mBoostTotalTime)
+        {
+            mBoostTime = elapsed;
+        }
+        else
+        {
+            mBoostTime = 0;
+            mBoosting = false;
+            mBoostTotalTime = 0;
+            mBoostStartTime = 0;
+            mEntityData->set(DATA_BOOST_TIME, 0, true);
+        }
+    }
+
+    if (isControlledByLocalInstance())
+    {
+        float speed = static_cast<float>(
+            getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue()) * 0.225f;
+        if (mBoosting)
+            speed += (speed + speed)
+                * std::sin(static_cast<float>(mBoostTime) / mBoostTotalTime * 3.1415927f);
+        setSpeed(speed);
+        LivingEntity::travel(0.0f, 0.0f, 1.0f);
+    }
+    else
+    {
+        mXd = 0.0;
+        mYd = 0.0;
+        mZd = 0.0;
+    }
+
+    mAnimationSpeedOld = mAnimationSpeed;
+    double zd = mZ - mZo;
+    double xd = mX - mXo;
+    float movement = static_cast<float>(std::sqrt(xd * xd + zd * zd)) * 4.0f;
+    if (movement > 1.0f)
+        movement = 1.0f;
+    mAnimationSpeed += (movement - mAnimationSpeed) * 0.4f;
+    mAnimationPosition += mAnimationSpeed;
 }
 
 bool Pig::boost()
 {
-    if (!mBoosting && !mLevel->mIsClientSide)
-    {
-        mBoosting = true;
-        mBoostTime = 0;
-        mBoostTotalTime = getRandom()->nextInt(561) + 140;
-        mBoostStartTime = System::processTimeInMilliSecs();
-        mEntityData->set(DATA_BOOST_TIME, mBoostTotalTime, true);
-        return true;
-    }
-    return false;
+    if (mBoosting || mLevel->mIsClientSide)
+        return false;
+
+    mBoosting = true;
+    mBoostTime = 0;
+    mBoostTotalTime = getRandom()->nextInt(561) + 140;
+    mBoostStartTime = System::processTimeInMilliSecs();
+    mEntityData->set(DATA_BOOST_TIME, mBoostTotalTime, true);
+    return true;
 }
 
 bool Pig::testboost() { return !mBoosting; }
 
 boost::shared_ptr<AgableMob> Pig::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    boost::shared_ptr<Pig> offspring(new Pig(mLevel));
-    return offspring;
+    return boost::shared_ptr<Pig>(new Pig(mLevel));
 }
 
 bool Pig::isFood(const not_null_ptr<ItemInstance>& itemInstance)
 {
     Item* item = itemInstance->getItem();
-    return FOOD_ITEMS.data[0] == item || FOOD_ITEMS.data[1] == item || FOOD_ITEMS.data[2] == item;
+    for (int i = 0; i < 3; ++i)
+    {
+        if (FOOD_ITEMS[i] == item)
+            return true;
+    }
+    return false;
 }
 
 bool Pig::removeWhenFarAway()

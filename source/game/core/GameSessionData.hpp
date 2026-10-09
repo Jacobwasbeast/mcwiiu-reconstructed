@@ -15,6 +15,21 @@ public:
     class Gamertag
     {
     public:
+        Gamertag()
+        {
+            memset(m_name, 0, sizeof(m_name));
+        }
+
+        bool operator==(const Gamertag& other) const
+        {
+            return strcmp(m_name, other.m_name) == 0;
+        }
+
+        bool operator!=(const Gamertag& other) const
+        {
+            return !(*this == other);
+        }
+
         char m_name[MAX_GAMERTAG_LENGTH];
     };
 

@@ -373,8 +373,8 @@ void Stats::buildAdditionalStats()
     Stat* stat;
     int statId = 0x05010000;
 
-    killsEnderdragon = (new GeneralStat(statId++, L"stat.killsEnderdragon"))->postConstruct(true);
-    completeTheEnd = (new GeneralStat(statId++, L"stat.completeTheEnd"))->postConstruct(true);
+    killsEnderdragon = (new GeneralStat(statId++, std::wstring(L"stat.killsEnderdragon")))->postConstruct(true);
+    completeTheEnd = (new GeneralStat(statId++, std::wstring(L"stat.completeTheEnd")))->postConstruct(true);
 
     itemStat = (new ItemStat(statId++, L"craftItem.flowerPot", Item::getId(Items::flowerPot)))->setExtended();
     itemCraftedStats[itemStat->getItemId()] = itemStat;

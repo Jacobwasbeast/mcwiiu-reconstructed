@@ -226,27 +226,31 @@ unsigned int IUIScene_StartGame::GetCustomGameModeID()
 unsigned int IUIScene_StartGame::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
+    fuiRenderNode* currentNode = m_movie->getRootNode();
     {
-        fuiRenderNode* root = m_movie->getRootNode();
-        m_mainPanel.setupControl(this, root, std::string("MainPanel"));
+        m_mainPanel.setupControl(this, currentNode, std::string("MainPanel"));
         m_controls.push_back(&m_mainPanel);
     }
-    fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
     {
-        m_texturePackName.setupControl(this, panel, std::string("TexturePackName"));
-        m_controls.push_back(&m_texturePackName);
-    }
-    {
-        m_texturePackDescription.setupControl(this, panel, std::string("TexturePackDescription"));
-        m_controls.push_back(&m_texturePackDescription);
-    }
-    {
-        m_texturePackIcon.setupControl(this, panel, std::string("Icon"));
-        m_controls.push_back(&m_texturePackIcon);
-    }
-    {
-        m_texturePackComparison.setupControl(this, panel, std::string("ComparisonPic"));
-        m_controls.push_back(&m_texturePackComparison);
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_mainPanel.getFuiRenderNode();
+        {
+            m_texturePackName.setupControl(this, currentNode, std::string("TexturePackName"));
+            m_controls.push_back(&m_texturePackName);
+        }
+        {
+            m_texturePackDescription.setupControl(this, currentNode, std::string("TexturePackDescription"));
+            m_controls.push_back(&m_texturePackDescription);
+        }
+        {
+            m_texturePackIcon.setupControl(this, currentNode, std::string("Icon"));
+            m_controls.push_back(&m_texturePackIcon);
+        }
+        {
+            m_texturePackComparison.setupControl(this, currentNode, std::string("ComparisonPic"));
+            m_controls.push_back(&m_texturePackComparison);
+        }
+        currentNode = parentNode;
     }
     return 1;
 }
@@ -523,7 +527,7 @@ void IUIScene_StartGame::HostGame(unsigned int playerMask)
             }
             else if (m_launchData.mFindBalancedSeed)
             {
-                initData->m_findSeed = 1;
+                initData->m_findSeed = true;
             }
             else
             {
@@ -648,6 +652,7 @@ void IUIScene_StartGame::HostGame(unsigned int playerMask)
     gApp.SetAutosaveTimerTime();
     FullscreenProgressState* state = new FullscreenProgressState;
     params->m_completionData = state;
+    state->closeMode = 3;
     state->playerId = 0;
     gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
                                          EUILayer_Scene, EUIGroup_PlayerDefault);

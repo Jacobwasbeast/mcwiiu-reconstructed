@@ -147,7 +147,7 @@ unsigned int GameStats::GetRoundTime()
     {
         if (mRoundEndTime > 0)
             return Math::round(static_cast<float>(mRoundEndTime - mRoundStartTime) / MILLISECONDS_PER_SECOND);
-        return Math::round(static_cast<float>(static_cast<long long>(System::processTimeInMilliSecs()) - mRoundStartTime) / MILLISECONDS_PER_SECOND);
+        return Math::round(static_cast<float>(System::processTimeInMilliSecs() - mRoundStartTime) / MILLISECONDS_PER_SECOND);
     }
     return 0;
 }
@@ -819,7 +819,7 @@ void GameStats::RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entr
     {
         weapon = Scoreboard::Weapon(Item::getId(Items::splashPotion), Scoreboard::GetPotionByDamageSource(damageSource));
     }
-    else if (attacker != NULL && (attacker->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    else if (attacker != NULL && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, attacker->GetType()))
     {
         not_null_ptr<ItemInstance> heldItem = boost::static_pointer_cast<LivingEntity>(attacker)->getMainHandItem();
         if (heldItem != NULL)
@@ -832,7 +832,7 @@ void GameStats::RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entr
         }
     }
 
-    const bool victimIsServerPlayer = entity->GetType() == EntityType::SERVER_PLAYER;
+    const bool victimIsServerPlayer = eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, entity->GetType());
     if (victimIsServerPlayer && attacker == NULL
         && (damageSource == Scoreboard::DAMAGE_SOURCE_FALL || damageSource == Scoreboard::DAMAGE_SOURCE_LAVA))
     {
@@ -904,14 +904,14 @@ void GameStats::RecordDamage(boost::shared_ptr<Entity> entity, CombatEntry* entr
     event.mFallCount = fallCount;
     event.mTime = tick;
 
-    if (entity != NULL && entity->GetType() == EntityType::SERVER_PLAYER)
+    if (entity != NULL && eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, entity->GetType()))
     {
         PlayerStats* victimStats = GetPlayerStats(boost::static_pointer_cast<ServerPlayer>(entity)->getSUID());
         if (victimStats != NULL)
             victimStats->updateTrackedStats(mCurrentRound, &event);
     }
 
-    if (attacker != NULL && attacker != entity && attacker->GetType() == EntityType::SERVER_PLAYER)
+    if (attacker != NULL && attacker != entity && eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, attacker->GetType()))
     {
         PlayerStats* attackerStats = GetPlayerStats(boost::static_pointer_cast<ServerPlayer>(attacker)->getSUID());
         if (attackerStats != NULL)
@@ -970,7 +970,7 @@ void GameStats::RecordDeath(boost::shared_ptr<Entity> entity)
     const unsigned int deathCount = GetDeathCount(player->getSUID());
     ++mRoundDeathCount;
 
-    const bool isServerPlayer = entity->GetType() == EntityType::SERVER_PLAYER;
+    const bool isServerPlayer = eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, entity->GetType());
     if (!isServerPlayer)
         return;
 
@@ -1007,7 +1007,7 @@ void GameStats::RecordDeath(boost::shared_ptr<Entity> entity)
 
         bool killedByPlayer = false;
         if (fatalDamage->mAttackerEntity != NULL)
-            killedByPlayer = fatalDamage->mAttackerEntity->GetType() == EntityType::SERVER_PLAYER;
+            killedByPlayer = eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, fatalDamage->mAttackerEntity->GetType());
         if (killedByPlayer)
         {
             boost::shared_ptr<ServerPlayer> killer = boost::static_pointer_cast<ServerPlayer>(fatalDamage->mAttackerEntity);
@@ -1047,10 +1047,7 @@ void GameStats::RecordItem(const StatsUID& uid, not_null_ptr<ItemInstance> item)
     std::map<int, int>& items = stats->getRoundStats(mCurrentRound)->mItems;
     const int itemId = Item::VALIDgetId(item->getItem());
     if (items.find(itemId) != items.end())
-    {
-        const int count = item->getCount();
-        items[itemId] += count;
-    }
+        items[itemId] += item->getCount();
     else
         items.insert(std::make_pair(itemId, item->getCount()));
 }
@@ -1275,7 +1272,7 @@ bool GameStats::RecordLastCheckpoint(const StatsUID& uid, int checkpoint, int se
         {
             stats->getRoundStats(mCurrentRound)->mLastBankedCheckpointID = checkpoint;
             const unsigned int elapsedSeconds = static_cast<unsigned int>(
-                std::floor(static_cast<double>(static_cast<long long>(System::processTimeInMilliSecs()) - mRoundStartTime))
+                std::floor(static_cast<double>(System::processTimeInMilliSecs() - mRoundStartTime))
                 / MILLISECONDS_PER_SECOND_EXACT);
             stats->getRoundStats(mCurrentRound)->mCheckpointTimes[checkpoint] = elapsedSeconds;
             stats->getRoundStats(mCurrentRound)->mPoints += stats->getRoundStats(mCurrentRound)->mUnbankedPoints;

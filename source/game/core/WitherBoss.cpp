@@ -179,12 +179,12 @@ unsigned long long WitherBoss::GetType()
 void WitherBoss::defineSynchedData()
 {
     Mob::defineSynchedData();
-    mEntityData->createDateItem(DATA_TARGET_A, getId());
-    mEntityData->createDateItem(DATA_TARGET_B, getId());
-    mEntityData->createDateItem(DATA_TARGET_C, getId());
-    mEntityData->createDateItem(DATA_ID_INV, 0);
-    mEntityData->createDateItem(DATA_AERIAL_ATTACK, false);
-    mEntityData->createDateItem(DATA_CHARGE_ATTACK, false);
+    mEntityData->define(DATA_TARGET_A, getId());
+    mEntityData->define(DATA_TARGET_B, getId());
+    mEntityData->define(DATA_TARGET_C, getId());
+    mEntityData->define(DATA_ID_INV, 0);
+    mEntityData->define(DATA_AERIAL_ATTACK, false);
+    mEntityData->define(DATA_CHARGE_ATTACK, false);
 }
 
 void WitherBoss::registerAttributes()
@@ -224,17 +224,16 @@ bool WitherBoss::hurt(const DamageSource* source, float damage)
         return false;
 
     boost::shared_ptr<Entity> directEntity = source->getDirectEntity();
-    if (directEntity != NULL && directEntity->GetType() == EntityType::WITHER_SKULL)
+    if (directEntity != NULL && eTYPE_DERIVED_FROM(EntityType::WITHER_SKULL, directEntity->GetType()))
         mPauseTicks = 80;
 
-    if (source == DamageSource::DROWN)
-        return false;
-    if (source->getEntity() != NULL && source->getEntity()->GetType() == EntityType::WITHER_BOSS)
+    if (source == DamageSource::DROWN
+        || (source->getEntity() != NULL && eTYPE_DERIVED_FROM(EntityType::WITHER_BOSS, source->getEntity()->GetType())))
         return false;
 
     if (mSpawningFrames > 0 && source->getEntity() != NULL)
     {
-        if ((source->getEntity()->GetType() & EntityType::MOB) == EntityType::MOB)
+        if (eTYPE_DERIVED_FROM(EntityType::MOB, source->getEntity()->GetType()))
         {
             boost::shared_ptr<Mob> attacker =
                 boost::static_pointer_cast<Mob>(mLevel->getEntity(source->getEntity()->getId()));
@@ -247,28 +246,22 @@ bool WitherBoss::hurt(const DamageSource* source, float damage)
 
     if (isPowered() && directEntity != NULL)
     {
-        if ((directEntity->GetType() & EntityType::ARROW) == EntityType::ARROW || directEntity->GetType() == EntityType::THROWN_TRIDENT)
+        if (eTYPE_DERIVED_FROM(EntityType::ARROW, directEntity->GetType()) || eTYPE_DERIVED_FROM(EntityType::THROWN_TRIDENT, directEntity->GetType()))
             return false;
     }
 
     boost::shared_ptr<Entity> attacker = source->getEntity();
-    if (attacker != NULL && (attacker->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+    if (attacker != NULL && !eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType()))
     {
-        bool undead = false;
-        if ((attacker->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
-        {
-            boost::shared_ptr<LivingEntity> livingAttacker = boost::static_pointer_cast<LivingEntity>(attacker);
-            if (livingAttacker->getMobType() == MOB_TYPE_UNDEAD)
-                undead = true;
-        }
-        if (undead)
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, attacker->GetType())
+            && boost::static_pointer_cast<LivingEntity>(attacker)->getMobType() == MOB_TYPE_UNDEAD)
             return false;
     }
 
     if (mDestroyBlocksTick < 1)
         mDestroyBlocksTick = 20;
-    mIdleHeadUpdates[0] += 3;
-    mIdleHeadUpdates[1] += 3;
+    for (int head = 0; head < 2; ++head)
+        mIdleHeadUpdates[head] += 3;
 
     bool hurt = Monster::hurt(source, damage);
     if (hurt)
@@ -286,12 +279,12 @@ bool WitherBoss::hurt(const DamageSource* source, float damage)
         if (attacker != NULL)
         {
             bool canSeeAttacker = canSee(attacker);
-            double distanceSqr = getPos(1.0f)->subtract(attacker->mX, attacker->mY, attacker->mZ)->lengthSqr();
-            if (attacker == getTarget() && (!canSeeAttacker || mTargetRange * mTargetRange < (float)distanceSqr))
+            float distanceSqr = getPos(1.0f)->subtract(attacker->mX, attacker->mY, attacker->mZ)->lengthSqr();
+            if (attacker == getTarget() && (!canSeeAttacker || mTargetRange * mTargetRange < distanceSqr))
                 mChargeTimer = 1;
         }
 
-        if (mBossEvent != NULL && attacker != NULL && attacker->GetType() == EntityType::SERVER_PLAYER)
+        if (mBossEvent != NULL && attacker != NULL && eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, attacker->GetType()))
             mBossEvent->addPlayer(boost::static_pointer_cast<ServerPlayer>(attacker), (int)damage);
     }
     return hurt;
@@ -768,7 +761,7 @@ boost::shared_ptr<LivingEntity> WitherBoss::getTarget()
         boost::shared_ptr<Entity> target = mLevel->getEntity(getAlternativeTarget(0));
         if (target != NULL)
         {
-            bool isLiving = (target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
+            bool isLiving = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType());
             if (isLiving)
                 return boost::static_pointer_cast<LivingEntity>(target);
         }
@@ -879,7 +872,7 @@ void WitherBoss::customServerAiStep()
                 else
                 {
                     bool invulnerablePlayer = false;
-                    const bool isPlayer = (target->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+                    const bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType());
                     if (isPlayer)
                     {
                         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
@@ -894,7 +887,7 @@ void WitherBoss::customServerAiStep()
                     else
                     {
                         const bool isLiving =
-                            (target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
+                            eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType());
                         if (isLiving && (difficulty == Difficulty::NORMAL || difficulty == Difficulty::HARD))
                         {
                             performRangedAttack(head, boost::static_pointer_cast<LivingEntity>(target));

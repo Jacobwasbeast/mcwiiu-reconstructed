@@ -37,7 +37,7 @@ RegionFile::RegionFile(ConsoleSaveFile* saveFile, File* file)
     mFileEntry = mSaveFile->createFile(ConsoleSavePath(file->getPath()));
     mSaveFile->setFilePointer(mFileEntry, 0, NULL, FILE_END);
 
-    if (mFileEntry->m_fileSize < SECTOR_BYTES)
+    if (mFileEntry->m_data.m_fileSize < SECTOR_BYTES)
     {
         mSizeDelta += SECTOR_BYTES * 2;
         mNewFile = true;
@@ -47,9 +47,9 @@ RegionFile::RegionFile(ConsoleSaveFile* saveFile, File* file)
         mNewFile = false;
     }
 
-    if ((mFileEntry->m_fileSize & (SECTOR_BYTES - 1)) != 0)
+    if ((mFileEntry->m_data.m_fileSize & (SECTOR_BYTES - 1)) != 0)
     {
-        unsigned int padding = SECTOR_BYTES - (mFileEntry->m_fileSize & (SECTOR_BYTES - 1));
+        unsigned int padding = SECTOR_BYTES - (mFileEntry->m_data.m_fileSize & (SECTOR_BYTES - 1));
         unsigned int bytesWritten = 0;
         unsigned char* zeroes = new unsigned char[padding];
         std::memset(zeroes, 0, padding);
@@ -64,7 +64,7 @@ RegionFile::RegionFile(ConsoleSaveFile* saveFile, File* file)
     }
     else
     {
-        sectorCount = static_cast<int>(mFileEntry->m_fileSize) / SECTOR_BYTES;
+        sectorCount = static_cast<int>(mFileEntry->m_data.m_fileSize) / SECTOR_BYTES;
     }
 
     mUsedSectors = new std::vector<bool>();

@@ -202,7 +202,7 @@ void GameModeOptions::Set(eCustomGameModeHostOption eOption, unsigned int uValue
     }
 }
 
-std::pair<bool, eCustomGameModeHostOption> GameModeOptions::parse(std::wstring sName)
+maybe<eCustomGameModeHostOption> GameModeOptions::parse(std::wstring sName)
 {
     if (sName.at(0) == L'$')
     {
@@ -213,9 +213,9 @@ std::pair<bool, eCustomGameModeHostOption> GameModeOptions::parse(std::wstring s
     {
         if (sName == HOST_OPTION_NAMES[nOption])
         {
-            return std::make_pair(true, static_cast<eCustomGameModeHostOption>(nOption));
+            return maybe<eCustomGameModeHostOption>(static_cast<eCustomGameModeHostOption>(nOption));
         }
     }
 
-    return std::make_pair(false, eCustomGameModeHostOption_NoSmallSkins);
+    return maybe<eCustomGameModeHostOption>();
 }

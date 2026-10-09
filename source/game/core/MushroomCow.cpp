@@ -46,64 +46,62 @@ bool MushroomCow::mobInteract(const boost::shared_ptr<Player>& player,
     if (itemInstance->getItem() == Items::bowl && getAge() >= 0)
     {
         itemInstance->shrink(1);
-        if (!itemInstance->isEmpty())
-        {
-            not_null_ptr<ItemInstance> stew(new ItemInstance(Items::mushroomStew));
-            if (!player->mInventory->add(stew))
-                player->drop(not_null_ptr<ItemInstance>(new ItemInstance(Items::mushroomStew)), false);
-        }
-        else
+        if (itemInstance->isEmpty())
         {
             player->setItemInHand(hand, not_null_ptr<ItemInstance>(new ItemInstance(Items::mushroomStew)));
+            return true;
         }
+        if (!player->mInventory->add(not_null_ptr<ItemInstance>(new ItemInstance(Items::mushroomStew))))
+            player->drop(not_null_ptr<ItemInstance>(new ItemInstance(Items::mushroomStew)), false);
         return true;
     }
 
     if (itemInstance->getItem() == Items::shears && getAge() >= 0)
     {
-        if (!mLevel->canCreateMore(EntityType::COW, Level::eSpawnType_Breed))
+        if (mLevel->canCreateMore(EntityType::COW, Level::eSpawnType_Breed))
+        {
+            mLevel->addParticle(PARTICLE_LARGE_EXPLODE, mX, mY + mBbHeight * 0.5f, mZ, 0.0, 0.0, 0.0,
+                                arrayWithLength<int>());
+
+            if (!mLevel->mIsClientSide)
+            {
+                remove();
+
+                boost::shared_ptr<Cow> cow(new Cow(mLevel, true));
+                if (isPassenger())
+                {
+                    cow->startRiding(getVehicle(), true);
+                }
+                if (isLeashed())
+                {
+                    cow->setLeashedTo(getLeashHolder(), true);
+                }
+                cow->moveTo(mX, mY, mZ, mYRot, mXRot);
+                cow->setHealth(getHealth());
+                cow->mYBodyRot = mYBodyRot;
+                if (hasCustomName())
+                {
+                    cow->setCustomName(getCustomName(), getOwnerUUID(), wasNamedByRestrictedPlayer());
+                }
+                mLevel->addEntity(cow);
+
+                for (int i = 0; i < 5; ++i)
+                {
+                    mLevel->addEntity(boost::shared_ptr<Entity>(boost::shared_ptr<ItemEntity>(new ItemEntity(
+                        mLevel, mX, mY + mBbHeight, mZ, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::red_mushroom))))));
+                }
+
+                itemInstance->hurtAndBreak(1, player);
+                playSound(SoundEvents::SHEEP_SHEAR, 1.0f, 1.0f);
+                return true;
+            }
+            return true;
+        }
+        else
         {
             player->displayClientMessage(IDS_CANT_SHEAR_MOOSHROOM, true);
             return true;
         }
-
-        mLevel->addParticle(PARTICLE_LARGE_EXPLODE, mX, mY + mBbHeight * 0.5f, mZ, 0.0, 0.0, 0.0,
-                            arrayWithLength<int>());
-
-        if (mLevel->mIsClientSide)
-        {
-            return true;
-        }
-
-        remove();
-
-        boost::shared_ptr<Cow> cow(new Cow(mLevel, true));
-        if (isPassenger())
-        {
-            cow->startRiding(getVehicle(), true);
-        }
-        if (isLeashed())
-        {
-            cow->setLeashedTo(getLeashHolder(), true);
-        }
-        cow->moveTo(mX, mY, mZ, mYRot, mXRot);
-        cow->setHealth(getHealth());
-        cow->mYBodyRot = mYBodyRot;
-        if (hasCustomName())
-        {
-            cow->setCustomName(getCustomName(), getOwnerUUID(), wasNamedByRestrictedPlayer());
-        }
-        mLevel->addEntity(cow);
-
-        for (int i = 0; i < 5; ++i)
-        {
-            mLevel->addEntity(boost::shared_ptr<Entity>(boost::shared_ptr<ItemEntity>(new ItemEntity(
-                mLevel, mX, mY + mBbHeight, mZ, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::red_mushroom))))));
-        }
-
-        itemInstance->hurtAndBreak(1, player);
-        playSound(SoundEvents::SHEEP_SHEAR, 1.0f, 1.0f);
-        return true;
     }
 
     return Cow::mobInteract(player, hand);
@@ -119,8 +117,7 @@ bool MushroomCow::checkSpawnRules()
 
 boost::shared_ptr<AgableMob> MushroomCow::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    boost::shared_ptr<MushroomCow> offspring(new MushroomCow(mLevel));
-    return offspring;
+    return boost::shared_ptr<MushroomCow>(new MushroomCow(mLevel));
 }
 
 unsigned int MushroomCow::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)

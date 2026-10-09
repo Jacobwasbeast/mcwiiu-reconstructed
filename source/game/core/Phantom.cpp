@@ -54,9 +54,9 @@ void Phantom::tick()
                                    16.0f);
         }
 
-        float wingAngle = (flap + 1.0f) * 0.5f * -50.0f * 0.017453292f;
-        float xOffset = Mth::cos(mYRot * 0.017453292f) * 1.3f * Mth::cos(wingAngle);
-        float zOffset = Mth::sin(mYRot * 0.017453292f) * 1.3f * Mth::cos(wingAngle);
+        float wingAngle = (flap + 1.0f) * 0.5f * -50.0f * Mth::DEG_TO_RAD;
+        float xOffset = Mth::cos(mYRot * Mth::DEG_TO_RAD) * 1.3f * Mth::cos(wingAngle);
+        float zOffset = Mth::sin(mYRot * Mth::DEG_TO_RAD) * 1.3f * Mth::cos(wingAngle);
         float yOffset = Mth::sin(wingAngle) + 0.3f;
         mLevel->addParticle(PARTICLE_TOWN_AURA, mX + xOffset, mY + yOffset, mZ + zOffset, 0.0, 0.0, 0.0,
                             arrayWithLength<int>());

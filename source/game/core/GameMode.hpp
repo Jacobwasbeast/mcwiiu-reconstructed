@@ -82,8 +82,8 @@ public:
     virtual void RecordLanding(const BlockPos& pos);
     virtual void OnMouseDown();
 
-    virtual boost::shared_ptr<ItemInstance> handleCraftItem(int recipe, int category,
-                                                            boost::shared_ptr<Player> player);
+    virtual not_null_ptr<ItemInstance> handleCraftItem(int recipe, int category,
+                                                       boost::shared_ptr<Player> player);
     virtual boost::shared_ptr<ItemInstance> handleStackedCraftItem(
         std::vector<std::pair<int, int> >& recipes, int category,
         boost::shared_ptr<Player> player);

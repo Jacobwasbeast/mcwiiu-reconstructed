@@ -36,7 +36,7 @@ float BodyControl::clamp(float base, float value, float maxDifference)
 
 void BodyControl::clientTick()
 {
-    if (mMob->GetType() == EntityType::WITHER_BOSS
+    if (eTYPE_DERIVED_FROM(EntityType::WITHER_BOSS, mMob->GetType())
         && static_cast<WitherBoss*>(mMob)->IsChargeAttacking())
     {
         mMob->mYBodyRot = mMob->mYHeadRot;
@@ -53,7 +53,7 @@ void BodyControl::clientTick()
 
         if (passengers->empty() || mMob->controllingPassengerIsA(EntityType::MOB))
         {
-            if (mMob->GetType() == EntityType::WITHER_BOSS)
+            if (eTYPE_DERIVED_FROM(EntityType::WITHER_BOSS, mMob->GetType()))
             {
                 maxYRotFromBody = 360.0f;
             }
@@ -84,7 +84,7 @@ void BodyControl::clientTick()
 
             mMob->mYBodyRot = clamp(yHeadRot, mMob->mYBodyRot, maxYRotFromBody);
 
-            if (mMob->GetType() == EntityType::WITHER_BOSS)
+            if (eTYPE_DERIVED_FROM(EntityType::WITHER_BOSS, mMob->GetType()))
             {
                 mMob->mYRot = mMob->mYBodyRot;
             }

@@ -5,8 +5,7 @@
 
 std::wstring CreateRoundGuid()
 {
-    Random random;
-    return _toString<int>(random.nextInt());
+    return _toString<int>(Random().nextInt());
 }
 
 RoundInfo::RoundInfo()
@@ -20,12 +19,7 @@ RoundInfo::RoundInfo()
 
 void RoundInfo::reset()
 {
-    RoundInfo info;
-    mRoundId = info.mRoundId;
-    mSubRoundId = info.mSubRoundId;
-    mCurrentSubRoundNumber = info.mCurrentSubRoundNumber;
-    mThemeId = info.mThemeId;
-    mThemeSubId = info.mThemeSubId;
+    *this = RoundInfo();
 }
 
 void RoundInfo::startNewRound()
@@ -51,7 +45,7 @@ std::wstring RoundInfo::getSubRoundId() const
     return mSubRoundId;
 }
 
-unsigned int RoundInfo::getCurrentSubRoundNumber() const
+int RoundInfo::getCurrentSubRoundNumber() const
 {
     return mCurrentSubRoundNumber;
 }
@@ -86,13 +80,14 @@ void RoundInfo::setUniqueThemeId(int uniqueThemeId)
 {
     if (uniqueThemeId >= 0)
     {
-        setTheme(LevelGenerationOptions::GetThemeFromUniqueId(uniqueThemeId),
-                 LevelGenerationOptions::GetMapSizeFromUniqueId(uniqueThemeId));
+        int themeId = LevelGenerationOptions::GetThemeFromUniqueId(uniqueThemeId);
+        int themeSubId = LevelGenerationOptions::GetMapSizeFromUniqueId(uniqueThemeId);
+        setTheme(themeId, themeSubId);
     }
     else
     {
-        mThemeId = 0xffffffffU;
-        mThemeSubId = 0xffffffffU;
+        mThemeId = -1;
+        mThemeSubId = -1;
     }
 }
 

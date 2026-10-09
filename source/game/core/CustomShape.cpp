@@ -12,16 +12,17 @@ CustomShape::CustomShape(unsigned short size, arrayWithLength<float> values)
 
 void CustomShape::GenerateShape(Random& random, Shape& shape) const
 {
-    float sourceSize = (float)size;
-    float xScale = sourceSize / (float)shape.width;
-    float zScale = sourceSize / (float)shape.depth;
+    float xScale = (float)size / (float)shape.width;
+    float zScale = (float)size / (float)shape.depth;
 
     for (unsigned int x = 0; x < shape.width; x++)
     {
         for (unsigned int z = 0; z < shape.depth; z++)
         {
-            int sourceX = (int)floorf((float)x * xScale);
-            int sourceZ = (int)floorf((float)z * zScale);
+            float scaledX = (float)x * xScale;
+            float scaledZ = (float)z * zScale;
+            int sourceX = (int)floorf(scaledX);
+            int sourceZ = (int)floorf(scaledZ);
 
             shape.at(x, z) = values.data[size * sourceX + sourceZ];
         }

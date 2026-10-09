@@ -14,10 +14,8 @@ int InputConstraint::getType()
 
 bool InputConstraint::isMappingConstrained(int playerId, int mapping)
 {
-    if (constrainedMapping == mapping || mapping <= EControllerActions_Pause)
+    if (constrainedMapping == mapping || mapping < EControllerActions_Scoreboard)
         return true;
 
-    unsigned int constrainedButtons = g_pInput->GetGameJoypadMaps(playerId, constrainedMapping);
-    unsigned int requestedButtons = g_pInput->GetGameJoypadMaps(playerId, mapping);
-    return (constrainedButtons & requestedButtons) != 0;
+    return (g_pInput->GetGameJoypadMaps(playerId, constrainedMapping) & g_pInput->GetGameJoypadMaps(playerId, mapping)) != 0;
 }

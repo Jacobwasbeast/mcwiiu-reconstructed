@@ -532,7 +532,7 @@ void CommonMasterGameMode::CheckProgress(boost::shared_ptr<Player> player, const
 
     int checkpointID;
     int lapsCompleted;
-    if (player->GetType() == EntityType::GHOST_PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::GHOST_PLAYER, player->GetType()))
     {
         boost::shared_ptr<GhostPlayer> ghost = boost::static_pointer_cast<GhostPlayer>(player);
         checkpointID = ghost->getLastCheckpointId();

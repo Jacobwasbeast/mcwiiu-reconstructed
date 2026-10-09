@@ -29,7 +29,7 @@ public:
 
     static uint64_t processTime(ETimeGranularity granularity);
     static uint64_t processTimeInSeconds();
-    static uint64_t processTimeInMilliSecs();
+    static long long processTimeInMilliSecs();
     static unsigned int processTimeInMicroSecs();
     static uint64_t processTimeInNanoSecs();
     static uint64_t currentRealTimeMillis();

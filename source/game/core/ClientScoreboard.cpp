@@ -31,7 +31,7 @@ static bool selectGlideWinner(const ClientScoreboard* scoreboard, bool usePoints
         for (; round != player->second->mRoundStats.end(); ++round)
         {
             const Scoreboard::PlayerStats::_RoundStats& stats = round->second;
-            if (!stats.mEndZoneEntered)
+            if (!stats.mLapsCompleted)
             {
                 continue;
             }
@@ -117,7 +117,7 @@ Scoreboard::PlayerStats::_RoundStats* ClientScoreboard::GetPlayerRoundStats(cons
 int ClientScoreboard::GetLastBankedCheckpointID(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    return stats == NULL ? -1 : stats->mLastCheckpointSequenceId;
+    return stats == NULL ? -1 : stats->mLastBankedCheckpointId;
 }
 
 void ClientScoreboard::RemovePlayerStats(const StatsUID& suid)
@@ -336,7 +336,7 @@ int ClientScoreboard::GetDamageReceived(const StatsUID& suid, int round)
     return stats == NULL ? 0 : stats->mDeaths;
 }
 
-int ClientScoreboard::GetLifeSpan(const StatsUID& suid, int round)
+unsigned int ClientScoreboard::GetLifeSpan(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
     if (stats != NULL)
@@ -346,7 +346,7 @@ int ClientScoreboard::GetLifeSpan(const StatsUID& suid, int round)
     return Minecraft::InMiniGame(eMiniGameId_Glide, true) ? -1 : 0;
 }
 
-int ClientScoreboard::GetBestLifeSpan(const StatsUID& suid, int* round)
+unsigned int ClientScoreboard::GetBestLifeSpan(const StatsUID& suid, int* round)
 {
     unsigned int best = 0xffffffffu;
     PlayerStats* player = GetPlayerStats(suid);
@@ -363,10 +363,10 @@ int ClientScoreboard::GetBestLifeSpan(const StatsUID& suid, int* round)
             }
         }
     }
-    return static_cast<int>(best);
+    return best;
 }
 
-int ClientScoreboard::GetBestLifeSpan()
+unsigned int ClientScoreboard::GetBestLifeSpan()
 {
     unsigned int best = 0xffffffffu;
     PlayerStatsMap::iterator it = mPlayerStats.begin();
@@ -387,7 +387,7 @@ int ClientScoreboard::GetBestLifeSpan()
             }
         }
     }
-    return static_cast<int>(best);
+    return best;
 }
 
 int ClientScoreboard::GetTotalLifeSpan(const StatsUID& suid)
@@ -443,7 +443,7 @@ int ClientScoreboard::GetSecondaryTargets(const StatsUID& suid, int round)
 int ClientScoreboard::GetLapsCompleted(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    return stats == NULL ? 0 : stats->mEndZoneEntered;
+    return stats == NULL ? 0 : stats->mLapsCompleted;
 }
 
 int ClientScoreboard::GetPoints(const StatsUID& suid, int round)
@@ -471,7 +471,7 @@ int ClientScoreboard::GetLastPointsAdded(const StatsUID& suid, int round)
     return points;
 }
 
-int ClientScoreboard::GetBestPoints(const StatsUID& suid, int* round)
+unsigned int ClientScoreboard::GetBestPoints(const StatsUID& suid, int* round)
 {
     unsigned int best = 0;
     PlayerStats* player = GetPlayerStats(suid);
@@ -488,10 +488,10 @@ int ClientScoreboard::GetBestPoints(const StatsUID& suid, int* round)
             }
         }
     }
-    return static_cast<int>(best);
+    return best;
 }
 
-int ClientScoreboard::GetBestPoints()
+unsigned int ClientScoreboard::GetBestPoints()
 {
     unsigned int best = 0;
     PlayerStatsMap::iterator it = mPlayerStats.begin();
@@ -512,7 +512,7 @@ int ClientScoreboard::GetBestPoints()
             }
         }
     }
-    return static_cast<int>(best);
+    return best;
 }
 
 void ClientScoreboard::SetPersonalBest(const StatsUID& suid, int round)
@@ -541,7 +541,7 @@ int ClientScoreboard::GetLastCheckpointID(const StatsUID& suid, int round)
 int ClientScoreboard::GetLastCheckpointSequenceID(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    return stats == NULL ? -1 : stats->mLapsCompleted;
+    return stats == NULL ? -1 : stats->mLastCheckpointSequenceId;
 }
 
 int ClientScoreboard::GetDeaths(const StatsUID& suid, int round)
@@ -626,13 +626,13 @@ int ClientScoreboard::GetTotalJumps(const StatsUID& suid)
 const unsigned short* ClientScoreboard::GetVotesGiven(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    return stats == NULL ? NO_VOTES_GIVEN : &stats->mDeathsMelee;
+    return stats == NULL ? NO_VOTES_GIVEN : stats->mScoresGiven;
 }
 
 const unsigned short* ClientScoreboard::GetVotesReceived(const StatsUID& suid, int round)
 {
     PlayerStats::_RoundStats* stats = GetPlayerRoundStats(suid, round);
-    return stats == NULL ? NO_VOTES_RECEIVED : &stats->mKillsMelee;
+    return stats == NULL ? NO_VOTES_RECEIVED : stats->mScoresReceived;
 }
 
 int ClientScoreboard::GetRoundLength(unsigned int round)
@@ -851,13 +851,13 @@ bool ClientScoreboard::IsOverallGlideWinner(const StatsUID& suid, bool usePoints
     if (usePoints)
     {
         int round = -1;
-        const int value = GetBestPoints(suid, &round);
+        const unsigned int value = GetBestPoints(suid, &round);
         return value == GetBestPoints() && GetEndZoneEntered(suid, round);
     }
     else
     {
         int round = -1;
-        const int value = GetBestLifeSpan(suid, &round);
+        const unsigned int value = GetBestLifeSpan(suid, &round);
         return value == GetBestLifeSpan() && GetEndZoneEntered(suid, round);
     }
 }

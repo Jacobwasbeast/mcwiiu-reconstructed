@@ -1,5 +1,7 @@
 #include "game/core/Scoreboard.hpp"
 
+#include <cstring>
+
 #include <boost/unordered_set.hpp>
 
 #include "game/core/DamageSource.hpp"
@@ -68,9 +70,9 @@ void Scoreboard::removePlayerTeam(PlayerTeam* pTeam)
         typedef boost::unordered_set<PlayerUID, boost::hash<PlayerUID>, std::equal_to<PlayerUID> >
             PlayerSet;
 
-        for (PlayerSet::const_iterator player = pTeam->getPlayers()->begin();
-             player != pTeam->getPlayers()->end();
-             ++player)
+        PlayerSet::const_iterator player;
+
+        for (player = pTeam->getPlayers()->begin(); player != pTeam->getPlayers()->end(); player++)
         {
             mTeamsByPlayer.erase(*player);
         }
@@ -82,7 +84,7 @@ void Scoreboard::removePlayerTeam(PlayerTeam* pTeam)
 
 void Scoreboard::removeAllPlayerTeams()
 {
-    while (mTeamsByName.size() != 0)
+    while (!mTeamsByName.empty())
     {
         removePlayerTeam(mTeamsByName.begin()->second);
     }
@@ -214,30 +216,30 @@ Scoreboard::EDamageSource Scoreboard::GetDamageSource(const DamageSource* pSourc
         source = DAMAGE_SOURCE_ARROW;
     else if (pSource->equals(DamageSource::FLY_INTO_WALL))
         source = DAMAGE_SOURCE_FLY_INTO_WALL;
+    else if (pSource->getEntity())
+        source = DAMAGE_SOURCE_MELEE;
     else
-    {
         source = DAMAGE_SOURCE_UNKNOWN;
-
-        if (pSource->getEntity())
-            source = DAMAGE_SOURCE_MELEE;
-    }
 
     return source;
 }
 
 Potion* Scoreboard::GetPotionByDamageSource(EDamageSource damageSource)
 {
-    if (damageSource == DAMAGE_SOURCE_POISON)
+    Potion* pPotion = NULL;
+
+    switch (damageSource)
     {
-        return Potions::POISON;
+    case DAMAGE_SOURCE_HARM:
+        pPotion = Potions::HARMING;
+        break;
+
+    case DAMAGE_SOURCE_POISON:
+        pPotion = Potions::POISON;
+        break;
     }
 
-    if (damageSource == DAMAGE_SOURCE_HARM)
-    {
-        return Potions::HARMING;
-    }
-
-    return NULL;
+    return pPotion;
 }
 
 Scoreboard::Weapon::Weapon()
@@ -278,13 +280,13 @@ not_null_ptr<ItemInstance> Scoreboard::Weapon::GetItemInstance() const
     Item* pItem = Item::byId(mItemId);
     Potion* pPotion;
 
-    if (pItem == NULL || dynamic_cast<PotionItem*>(pItem) == NULL || mPotionId < 0
-        || (pPotion = Potion::byId(mPotionId)) == NULL)
+    if (pItem != NULL && dynamic_cast<PotionItem*>(pItem) != NULL && mPotionId >= 0
+        && (pPotion = Potion::byId(mPotionId)) != NULL)
     {
-        return not_null_ptr<ItemInstance>(new ItemInstance(pItem, 1));
+        return PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(pItem)), pPotion);
     }
 
-    return PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(pItem)), pPotion);
+    return not_null_ptr<ItemInstance>(new ItemInstance(pItem, 1));
 }
 
 Scoreboard::PlayerStats::PlayerStats()
@@ -295,19 +297,9 @@ Scoreboard::PlayerStats::PlayerStats()
     mRoundStats = RoundStatsMap();
 }
 
-Scoreboard::PlayerStats::PlayerStats(const PlayerStats& other)
-    : StatsUID(other)
-    , mName(other.mName)
-    , mMedal(other.mMedal)
-    , mFavouriteWeapon(other.mFavouriteWeapon)
-    , mWeaknessWeapon(other.mWeaknessWeapon)
-    , mRoundStats(other.mRoundStats)
-{
-}
-
 StatsUID Scoreboard::PlayerStats::getRecordSUID()
 {
-    return *this;
+    return static_cast<StatsUID&>(*this);
 }
 
 void Scoreboard::PlayerStats::setRecordSUID(const StatsUID& suid)
@@ -319,13 +311,12 @@ std::wstring Scoreboard::PlayerStats::getRecord(eStringArgIndex index, int round
 {
     _RoundStats& roundStats = mRoundStats[round];
 
-    if (index == eStringArg_PlayerName)
+    switch (index)
     {
+    case eStringArg_PlayerName:
         return mName;
-    }
 
-    if (index == eStringArg_KillerName)
-    {
+    case eStringArg_KillerName:
         if ((unsigned int)life < roundStats.mPerLife.size())
         {
             return roundStats.mPerLife[life].mKillerName;
@@ -341,18 +332,15 @@ bool Scoreboard::PlayerStats::getRecord(eBoolArgIndex index, int round)
 {
     _RoundStats& roundStats = mRoundStats[round];
 
-    if (index == eBoolArg_Active)
+    switch (index)
     {
+    case eBoolArg_Active:
         return roundStats.mActive;
-    }
 
-    if (index == eBoolArg_Finished)
-    {
+    case eBoolArg_Finished:
         return roundStats.mFinished;
-    }
 
-    if (index == eBoolArg_Winner)
-    {
+    case eBoolArg_Winner:
         return roundStats.mWinner;
     }
 
@@ -392,7 +380,7 @@ int Scoreboard::PlayerStats::getRecord(eIntArgIndex index, int round)
         {
             return mMedal->GetId();
         }
-        break;
+        return -1;
 
     case eIntArg_FavouriteWeaponItem:
         return mFavouriteWeapon.mItemId;
@@ -454,8 +442,8 @@ int Scoreboard::PlayerStats::getRecord(eIntArgIndex index, int round)
     case eIntArg_LastCheckpointId:
         return roundStats.mLastCheckpointId;
 
-    case eIntArg_LapsCompleted:
-        return roundStats.mLapsCompleted;
+    case eIntArg_LastBankedCheckpointId:
+        return roundStats.mLastBankedCheckpointId;
 
     case eIntArg_CheckpointTime:
         if (roundStats.mCheckpointTimes.find(roundStats.mLastCheckpointId)
@@ -463,40 +451,40 @@ int Scoreboard::PlayerStats::getRecord(eIntArgIndex index, int round)
         {
             return roundStats.mCheckpointTimes.at(roundStats.mLastCheckpointId);
         }
-        break;
+        return -1;
 
     case eIntArg_LastCheckpointSequenceId:
         return roundStats.mLastCheckpointSequenceId;
 
-    case eIntArg_EndZoneEntered:
-        return roundStats.mEndZoneEntered;
+    case eIntArg_LapsCompleted:
+        return roundStats.mLapsCompleted;
 
     case eIntArg_CheckpointsPassed:
         return roundStats.mCheckpointsPassed;
 
     case eIntArg_KillsMelee:
-        return roundStats.mKillsMelee;
+        return roundStats.mScoresReceived[0];
 
     case eIntArg_KillsRanged:
-        return roundStats.mKillsRanged;
+        return roundStats.mScoresReceived[1];
 
     case eIntArg_KillsExplosive:
-        return roundStats.mKillsExplosive;
+        return roundStats.mScoresReceived[2];
 
     case eIntArg_KillsOther:
-        return roundStats.mKillsOther;
+        return roundStats.mScoresReceived[3];
 
     case eIntArg_DeathsMelee:
-        return roundStats.mDeathsMelee;
+        return roundStats.mScoresGiven[0];
 
     case eIntArg_DeathsRanged:
-        return roundStats.mDeathsRanged;
+        return roundStats.mScoresGiven[1];
 
     case eIntArg_DeathsExplosive:
-        return roundStats.mDeathsExplosive;
+        return roundStats.mScoresGiven[2];
 
     case eIntArg_DeathsOther:
-        return roundStats.mDeathsOther;
+        return roundStats.mScoresGiven[3];
 
     case eIntArg_WeaknessWeaponItem:
         return mWeaknessWeapon.mItemId;
@@ -507,8 +495,6 @@ int Scoreboard::PlayerStats::getRecord(eIntArgIndex index, int round)
     default:
         return 0;
     }
-
-    return -1;
 }
 
 long long Scoreboard::PlayerStats::getRecord(eInt64ArgIndex index, int round)
@@ -667,8 +653,8 @@ void Scoreboard::PlayerStats::setRecord(eIntArgIndex index, int round, int value
         roundStats.mLastCheckpointId = value;
         break;
 
-    case eIntArg_LapsCompleted:
-        roundStats.mLapsCompleted = value;
+    case eIntArg_LastBankedCheckpointId:
+        roundStats.mLastBankedCheckpointId = value;
         break;
 
     case eIntArg_CheckpointTime:
@@ -682,8 +668,8 @@ void Scoreboard::PlayerStats::setRecord(eIntArgIndex index, int round, int value
         roundStats.mLastCheckpointSequenceId = value;
         break;
 
-    case eIntArg_EndZoneEntered:
-        roundStats.mEndZoneEntered = value;
+    case eIntArg_LapsCompleted:
+        roundStats.mLapsCompleted = value;
         break;
 
     case eIntArg_CheckpointsPassed:
@@ -691,35 +677,35 @@ void Scoreboard::PlayerStats::setRecord(eIntArgIndex index, int round, int value
         break;
 
     case eIntArg_KillsMelee:
-        roundStats.mKillsMelee = (unsigned short)value;
+        roundStats.mScoresReceived[0] = (unsigned short)value;
         break;
 
     case eIntArg_KillsRanged:
-        roundStats.mKillsRanged = (unsigned short)value;
+        roundStats.mScoresReceived[1] = (unsigned short)value;
         break;
 
     case eIntArg_KillsExplosive:
-        roundStats.mKillsExplosive = (unsigned short)value;
+        roundStats.mScoresReceived[2] = (unsigned short)value;
         break;
 
     case eIntArg_KillsOther:
-        roundStats.mKillsOther = (unsigned short)value;
+        roundStats.mScoresReceived[3] = (unsigned short)value;
         break;
 
     case eIntArg_DeathsMelee:
-        roundStats.mDeathsMelee = (unsigned short)value;
+        roundStats.mScoresGiven[0] = (unsigned short)value;
         break;
 
     case eIntArg_DeathsRanged:
-        roundStats.mDeathsRanged = (unsigned short)value;
+        roundStats.mScoresGiven[1] = (unsigned short)value;
         break;
 
     case eIntArg_DeathsExplosive:
-        roundStats.mDeathsExplosive = (unsigned short)value;
+        roundStats.mScoresGiven[2] = (unsigned short)value;
         break;
 
     case eIntArg_DeathsOther:
-        roundStats.mDeathsOther = (unsigned short)value;
+        roundStats.mScoresGiven[3] = (unsigned short)value;
         break;
 
     case eIntArg_WeaknessWeaponItem:
@@ -746,45 +732,44 @@ bool Scoreboard::PlayerStats::isRecordSame(PlayerStats* pOther, int record, int 
         return getRecordSUID() == pOther->getRecordSUID();
     }
 
-    int index = record - eRecord_StringFirst;
+    record -= eRecord_StringFirst;
 
-    if (index < eStringArg_Count)
+    if (record < eStringArg_Count)
     {
-        return getRecord((eStringArgIndex)index, round, life)
-                   .compare(pOther->getRecord((eStringArgIndex)index, round, life))
-               == 0;
+        return getRecord((eStringArgIndex)record, round, life)
+               == pOther->getRecord((eStringArgIndex)record, round, life);
     }
 
-    index = record - eRecord_BoolFirst;
+    record -= eStringArg_Count;
 
-    if (index < eBoolArg_Count)
+    if (record < eBoolArg_Count)
     {
-        return getRecord((eBoolArgIndex)index, round)
-               == pOther->getRecord((eBoolArgIndex)index, round);
+        return getRecord((eBoolArgIndex)record, round)
+               == pOther->getRecord((eBoolArgIndex)record, round);
     }
 
-    index = record - eRecord_FloatFirst;
+    record -= eBoolArg_Count;
 
-    if (index < eFloatArg_Count)
+    if (record < eFloatArg_Count)
     {
-        return getRecord((eFloatArgIndex)index, round)
-               == pOther->getRecord((eFloatArgIndex)index, round);
+        return getRecord((eFloatArgIndex)record, round)
+               == pOther->getRecord((eFloatArgIndex)record, round);
     }
 
-    index = record - eRecord_IntFirst;
+    record -= eFloatArg_Count;
 
-    if (index < eIntArg_Count)
+    if (record < eIntArg_Count)
     {
-        return getRecord((eIntArgIndex)index, round)
-               == pOther->getRecord((eIntArgIndex)index, round);
+        return getRecord((eIntArgIndex)record, round)
+               == pOther->getRecord((eIntArgIndex)record, round);
     }
 
-    index = record - eRecord_Int64First;
+    record -= eIntArg_Count;
 
-    if (index < eInt64Arg_Count)
+    if (record < eInt64Arg_Count)
     {
-        return pOther->getRecord((eInt64ArgIndex)index, round)
-               == getRecord((eInt64ArgIndex)index, round);
+        return getRecord((eInt64ArgIndex)record, round)
+               == pOther->getRecord((eInt64ArgIndex)record, round);
     }
 
     return false;
@@ -799,7 +784,7 @@ unsigned long long Scoreboard::PlayerStats::getChangedBitfield(PlayerStats* pOth
     {
         if (!isRecordSame(pOther, record, round, life))
         {
-            changed |= (unsigned long long)1 << record;
+            changed |= 1LL << (unsigned int)record;
         }
     }
 
@@ -809,12 +794,14 @@ unsigned long long Scoreboard::PlayerStats::getChangedBitfield(PlayerStats* pOth
 void Scoreboard::PlayerStats::updateFromOtherStats(PlayerStats* pOther, int round, int life,
                                                    unsigned long long changed)
 {
-    for (int record = 0; record < eRecord_Count; record++)
+    for (unsigned long long record = 0; record < eRecord_Count; record++)
     {
         if (((changed >> record) & 1) == 0)
         {
             continue;
         }
+
+        unsigned long long index = record;
 
         if (record == eRecord_SUID)
         {
@@ -822,9 +809,9 @@ void Scoreboard::PlayerStats::updateFromOtherStats(PlayerStats* pOther, int roun
             continue;
         }
 
-        _RoundStats& roundStats = mRoundStats[round];
+        index -= eRecord_StringFirst;
 
-        if (roundStats.mPerLife.size() <= (unsigned int)life)
+        if ((unsigned int)life >= mRoundStats[round].mPerLife.size())
         {
             int missing = (int)mRoundStats[round].mPerLife.size() - life + 1;
 
@@ -834,8 +821,6 @@ void Scoreboard::PlayerStats::updateFromOtherStats(PlayerStats* pOther, int roun
             }
         }
 
-        int index = record - eRecord_StringFirst;
-
         if (index < eStringArg_Count)
         {
             setRecord((eStringArgIndex)index, round, life,
@@ -843,7 +828,7 @@ void Scoreboard::PlayerStats::updateFromOtherStats(PlayerStats* pOther, int roun
             continue;
         }
 
-        index = record - eRecord_BoolFirst;
+        index -= eStringArg_Count;
 
         if (index < eBoolArg_Count)
         {
@@ -851,7 +836,7 @@ void Scoreboard::PlayerStats::updateFromOtherStats(PlayerStats* pOther, int roun
             continue;
         }
 
-        index = record - eRecord_FloatFirst;
+        index -= eBoolArg_Count;
 
         if (index < eFloatArg_Count)
         {
@@ -860,7 +845,7 @@ void Scoreboard::PlayerStats::updateFromOtherStats(PlayerStats* pOther, int roun
             continue;
         }
 
-        index = record - eRecord_IntFirst;
+        index -= eFloatArg_Count;
 
         if (index < eIntArg_Count)
         {
@@ -877,9 +862,9 @@ void Scoreboard::PlayerStats::readRecord(DataInputStream* pInput, int record, in
         return;
     }
 
-    std::vector<_RoundStats::_PerLife>& perLife = mRoundStats[round].mPerLife;
+    record -= eRecord_StringFirst;
 
-    if (perLife.size() <= (unsigned int)life)
+    if ((unsigned int)life >= mRoundStats[round].mPerLife.size())
     {
         int missing = life - (int)mRoundStats[round].mPerLife.size() + 1;
 
@@ -889,43 +874,41 @@ void Scoreboard::PlayerStats::readRecord(DataInputStream* pInput, int record, in
         }
     }
 
-    int index = record - eRecord_StringFirst;
-
-    if (index < eStringArg_Count)
+    if (record < eStringArg_Count)
     {
-        setRecord((eStringArgIndex)index, round, life, pInput->readUTF());
+        setRecord((eStringArgIndex)record, round, life, pInput->readUTF());
         return;
     }
 
-    index = record - eRecord_BoolFirst;
+    record -= eStringArg_Count;
 
-    if (index < eBoolArg_Count)
+    if (record < eBoolArg_Count)
     {
-        setRecord((eBoolArgIndex)index, round, pInput->readBoolean());
+        setRecord((eBoolArgIndex)record, round, pInput->readBoolean());
         return;
     }
 
-    index = record - eRecord_FloatFirst;
+    record -= eBoolArg_Count;
 
-    if (index < eFloatArg_Count)
+    if (record < eFloatArg_Count)
     {
-        setRecord((eFloatArgIndex)index, round, pInput->readFloat());
+        setRecord((eFloatArgIndex)record, round, pInput->readFloat());
         return;
     }
 
-    index = record - eRecord_IntFirst;
+    record -= eFloatArg_Count;
 
-    if (index < eIntArg_Count)
+    if (record < eIntArg_Count)
     {
-        setRecord((eIntArgIndex)index, round, pInput->readVarInt());
+        setRecord((eIntArgIndex)record, round, pInput->readVarInt());
         return;
     }
 
-    index = record - eRecord_Int64First;
+    record -= eIntArg_Count;
 
-    if (index < eInt64Arg_Count)
+    if (record < eInt64Arg_Count)
     {
-        setRecord((eInt64ArgIndex)index, round, pInput->readLong());
+        setRecord((eInt64ArgIndex)record, round, pInput->readLong());
     }
 }
 
@@ -938,43 +921,43 @@ void Scoreboard::PlayerStats::writeRecord(DataOutputStream* pOutput, int record,
         return;
     }
 
-    int index = record - eRecord_StringFirst;
+    record -= eRecord_StringFirst;
 
-    if (index < eStringArg_Count)
+    if (record < eStringArg_Count)
     {
-        pOutput->writeUTF(getRecord((eStringArgIndex)index, round, life));
+        pOutput->writeUTF(getRecord((eStringArgIndex)record, round, life));
         return;
     }
 
-    index = record - eRecord_BoolFirst;
+    record -= eStringArg_Count;
 
-    if (index < eBoolArg_Count)
+    if (record < eBoolArg_Count)
     {
-        pOutput->writeBoolean(getRecord((eBoolArgIndex)index, round));
+        pOutput->writeBoolean(getRecord((eBoolArgIndex)record, round));
         return;
     }
 
-    index = record - eRecord_FloatFirst;
+    record -= eBoolArg_Count;
 
-    if (index < eFloatArg_Count)
+    if (record < eFloatArg_Count)
     {
-        pOutput->writeFloat(getRecord((eFloatArgIndex)index, round));
+        pOutput->writeFloat(getRecord((eFloatArgIndex)record, round));
         return;
     }
 
-    index = record - eRecord_IntFirst;
+    record -= eFloatArg_Count;
 
-    if (index < eIntArg_Count)
+    if (record < eIntArg_Count)
     {
-        pOutput->writeVarInt(getRecord((eIntArgIndex)index, round));
+        pOutput->writeVarInt(getRecord((eIntArgIndex)record, round));
         return;
     }
 
-    index = record - eRecord_Int64First;
+    record -= eIntArg_Count;
 
-    if (index < eInt64Arg_Count)
+    if (record < eInt64Arg_Count)
     {
-        pOutput->writeLong(getRecord((eInt64ArgIndex)index, round));
+        pOutput->writeLong(getRecord((eInt64ArgIndex)record, round));
     }
 }
 
@@ -984,129 +967,29 @@ Scoreboard::PlayerStats::_RoundStats::_RoundStats()
     mWinner = false;
     mActive = false;
     mPlacement = Minecraft::InMiniGame(eMiniGameId_Glide, true) ? -1 : 0;
-    mDamageDealt = 0;
     mScore = 0;
-    mEndZoneEntered = 0;
-    mLongestShot = 0.0;
+    mKills = 0;
+    mBlocksMined = 0;
     mBestTime = 0.0;
     mDistanceTravelled = 0.0;
+    mLongestShot = 0.0;
     mFallDistance = 0.0;
-    mDamageTaken = 0;
-    mItemsCollected = 0;
-    mCheckpointsPassed = 0;
-    mBlocksPlaced = 0;
-    mLastCheckpointSequenceId = 0;
-    mLastCheckpointId = 0;
-    mArrowsHit = 0;
-    mTimePlayed = 0;
-    mMobKills = 0;
-    mBlocksMined = 0;
-    mTotalTime = 0;
-    mDeaths = 0;
-    mKills = 0;
-    mArrowsFired = 0;
     mLapsCompleted = 0;
+    mTimePlayed = 0;
+    mTotalTime = 0;
+    mItemsCollected = 0;
+    mLastCheckpointId = 0;
+    mMobKills = 0;
+    mLastCheckpointSequenceId = 0;
+    mArrowsHit = 0;
+    mLastBankedCheckpointId = 0;
+    mArrowsFired = 0;
+    mCheckpointsPassed = 0;
+    mDamageTaken = 0;
+    mBlocksPlaced = 0;
+    mDamageDealt = 0;
+    mDeaths = 0;
     mCheckpointTimes = boost::unordered_map<int, int>();
-    mDeathsMelee = 0;
-    mDeathsRanged = 0;
-    mDeathsExplosive = 0;
-    mDeathsOther = 0;
-    mKillsMelee = 0;
-    mKillsRanged = 0;
-    mKillsExplosive = 0;
-    mKillsOther = 0;
-}
-
-Scoreboard::PlayerStats::_RoundStats::_RoundStats(const _RoundStats& other)
-    : mActive(other.mActive)
-    , mFinished(other.mFinished)
-    , mScore(other.mScore)
-    , mPlacement(other.mPlacement)
-    , mKills(other.mKills)
-    , mDeaths(other.mDeaths)
-    , mKillerWeapon(other.mKillerWeapon)
-    , mLives(other.mLives)
-    , mPerLife(other.mPerLife)
-    , mDamageDealt(other.mDamageDealt)
-    , mDamageTaken(other.mDamageTaken)
-    , mTimeAlive(other.mTimeAlive)
-    , mQuit(other.mQuit)
-    , mWinner(other.mWinner)
-    , mArrowsFired(other.mArrowsFired)
-    , mArrowsHit(other.mArrowsHit)
-    , mBlocksPlaced(other.mBlocksPlaced)
-    , mLastCheckpointId(other.mLastCheckpointId)
-    , mLastCheckpointSequenceId(other.mLastCheckpointSequenceId)
-    , mLapsCompleted(other.mLapsCompleted)
-    , mEndZoneEntered(other.mEndZoneEntered)
-    , mDistanceTravelled(other.mDistanceTravelled)
-    , mLongestShot(other.mLongestShot)
-    , mFallDistance(other.mFallDistance)
-    , mCheckpointTimes(other.mCheckpointTimes)
-    , mMobKills(other.mMobKills)
-    , mCheckpointsPassed(other.mCheckpointsPassed)
-    , mItemsCollected(other.mItemsCollected)
-    , mBlocksMined(other.mBlocksMined)
-    , mTimePlayed(other.mTimePlayed)
-    , mTotalTime(other.mTotalTime)
-    , mBestTime(other.mBestTime)
-    , mDeathsMelee(other.mDeathsMelee)
-    , mDeathsRanged(other.mDeathsRanged)
-    , mDeathsExplosive(other.mDeathsExplosive)
-    , mDeathsOther(other.mDeathsOther)
-    , mKillsMelee(other.mKillsMelee)
-    , mKillsRanged(other.mKillsRanged)
-    , mKillsExplosive(other.mKillsExplosive)
-    , mKillsOther(other.mKillsOther)
-    , mLastKillerName(other.mLastKillerName)
-    , mLastVictimName(other.mLastVictimName)
-{
-}
-
-Scoreboard::PlayerStats::_RoundStats& Scoreboard::PlayerStats::_RoundStats::operator=(
-    const _RoundStats& other)
-{
-    mActive = other.mActive;
-    mFinished = other.mFinished;
-    mScore = other.mScore;
-    mPlacement = other.mPlacement;
-    mKills = other.mKills;
-    mDeaths = other.mDeaths;
-    mKillerWeapon = other.mKillerWeapon;
-    mLives = other.mLives;
-    mPerLife = other.mPerLife;
-    mDamageDealt = other.mDamageDealt;
-    mDamageTaken = other.mDamageTaken;
-    mTimeAlive = other.mTimeAlive;
-    mQuit = other.mQuit;
-    mWinner = other.mWinner;
-    mArrowsFired = other.mArrowsFired;
-    mArrowsHit = other.mArrowsHit;
-    mBlocksPlaced = other.mBlocksPlaced;
-    mLastCheckpointId = other.mLastCheckpointId;
-    mLastCheckpointSequenceId = other.mLastCheckpointSequenceId;
-    mLapsCompleted = other.mLapsCompleted;
-    mEndZoneEntered = other.mEndZoneEntered;
-    mDistanceTravelled = other.mDistanceTravelled;
-    mLongestShot = other.mLongestShot;
-    mFallDistance = other.mFallDistance;
-    mCheckpointTimes = other.mCheckpointTimes;
-    mMobKills = other.mMobKills;
-    mCheckpointsPassed = other.mCheckpointsPassed;
-    mItemsCollected = other.mItemsCollected;
-    mBlocksMined = other.mBlocksMined;
-    mTimePlayed = other.mTimePlayed;
-    mTotalTime = other.mTotalTime;
-    mBestTime = other.mBestTime;
-    mDeathsMelee = other.mDeathsMelee;
-    mDeathsRanged = other.mDeathsRanged;
-    mDeathsExplosive = other.mDeathsExplosive;
-    mDeathsOther = other.mDeathsOther;
-    mKillsMelee = other.mKillsMelee;
-    mKillsRanged = other.mKillsRanged;
-    mKillsExplosive = other.mKillsExplosive;
-    mKillsOther = other.mKillsOther;
-    mLastKillerName = other.mLastKillerName;
-    mLastVictimName = other.mLastVictimName;
-    return *this;
+    memset(mScoresGiven, 0, sizeof(mScoresGiven));
+    memset(mScoresReceived, 0, sizeof(mScoresReceived));
 }

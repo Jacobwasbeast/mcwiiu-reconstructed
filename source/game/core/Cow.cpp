@@ -46,11 +46,9 @@ void Cow::registerGoals()
     mGoalSelector.addGoal(1, new PanicGoal(this, 2.0), true);
     mGoalSelector.addGoal(2, new BreedGoal(this, 1.0), true);
 
-    static Item* temptItemsData[1] = { Items::wheat };
-    arrayWithLength<Item*> temptItems;
-    temptItems.data = temptItemsData;
-    temptItems.length = 1;
-    mGoalSelector.addGoal(3, new TemptGoal(this, 1.25, temptItems, false, arrayWithLength<int>()), true);
+    static Item* temptItems[] = { Items::wheat };
+    mGoalSelector.addGoal(3, new TemptGoal(this, 1.25, arrayWithLength<Item*>(temptItems, 1), false, arrayWithLength<int>()),
+                          true);
 
     mGoalSelector.addGoal(4, new FollowParentGoal(this, 1.25), true);
     mGoalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0), true);
@@ -99,31 +97,28 @@ bool Cow::mobInteract(const boost::shared_ptr<Player>& player,
                       InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    if (itemInstance->getItem() != Items::bucket || isBaby())
-        return Animal::mobInteract(player, hand);
-
-    player->awardStat(gStats->get_cowsMilked(), GenericStats::param_cowsMilked());
-    playSound(SoundEvents::COW_MILK, 1.0f, 1.0f);
-    itemInstance->shrink(1);
-
-    if (!itemInstance->isEmpty())
+    if (itemInstance->getItem() == Items::bucket && !isBaby())
     {
-        not_null_ptr<ItemInstance> milkBucket(new ItemInstance(Items::milkBucket));
-        if (!player->mInventory->add(milkBucket))
+        player->awardStat(GenericStats::cowsMilked(), GenericStats::param_cowsMilked());
+        playSound(SoundEvents::COW_MILK, 1.0f, 1.0f);
+        itemInstance->shrink(1);
+
+        if (itemInstance->isEmpty())
+        {
+            player->setItemInHand(hand, not_null_ptr<ItemInstance>(new ItemInstance(Items::milkBucket)));
+        }
+        else if (!player->mInventory->add(not_null_ptr<ItemInstance>(new ItemInstance(Items::milkBucket))))
+        {
             player->drop(not_null_ptr<ItemInstance>(new ItemInstance(Items::milkBucket, 1, 0)), false);
+        }
+        return true;
     }
-    else
-    {
-        player->setItemInHand(hand, not_null_ptr<ItemInstance>(new ItemInstance(Items::milkBucket)));
-    }
-
-    return true;
+    return Animal::mobInteract(player, hand);
 }
 
 boost::shared_ptr<AgableMob> Cow::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    boost::shared_ptr<Cow> cow(new Cow(mLevel, true));
-    return cow;
+    return boost::shared_ptr<Cow>(new Cow(mLevel, true));
 }
 
 float Cow::getEyeHeight()

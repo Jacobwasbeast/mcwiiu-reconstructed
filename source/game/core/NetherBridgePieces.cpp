@@ -1316,7 +1316,7 @@ bool NetherBridgePieces::MonsterThrone::postProcess(Level* level, Random&, Bound
             mHasPlacedSpawner = true;
             level->setBlock(pos, Blocks::mob_spawner->defaultBlockState(), Block::UPDATE_CLIENTS, false);
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-            if (blockEntity != NULL && blockEntity->GetType() == BlockEntityType::MOB_SPAWNER)
+            if (blockEntity != NULL && eTYPE_DERIVED_FROM(BlockEntityType::MOB_SPAWNER, blockEntity->GetType()))
             {
                 boost::shared_ptr<MobSpawnerBlockEntity> spawner =
                     boost::static_pointer_cast<MobSpawnerBlockEntity>(blockEntity);

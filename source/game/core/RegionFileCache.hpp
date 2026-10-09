@@ -54,10 +54,17 @@ public:
 
     static File fjGetFilepath(ConsoleSaveFile* saveFile, const std::wstring& folder, int x, int z);
 
+    static DataOutputStream* getChunkDataOutputStream(ConsoleSaveFile* saveFile, const std::wstring& folder, int x, int z);
+
 private:
     RegionFileMap mRegionFiles;
 };
 
 extern RegionFileCache gRegionFileCache;
+
+inline DataOutputStream* RegionFileCache::getChunkDataOutputStream(ConsoleSaveFile* saveFile, const std::wstring& folder, int x, int z)
+{
+    return gRegionFileCache._getChunkDataOutputStream(saveFile, folder, x, z, true);
+}
 
 #endif

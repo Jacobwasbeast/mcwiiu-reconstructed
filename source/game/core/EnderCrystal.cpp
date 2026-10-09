@@ -58,16 +58,16 @@ bool EnderCrystal::makeStepSound()
 
 void EnderCrystal::defineSynchedData()
 {
-    getEntityData()->createDateItem(DATA_BEAM_TARGET, static_cast<BlockPos*>(NULL));
-    getEntityData()->createDateItem(DATA_SHOW_BOTTOM, true);
+    getEntityData()->define(DATA_BEAM_TARGET, static_cast<BlockPos*>(NULL));
+    getEntityData()->define(DATA_SHOW_BOTTOM, true);
 }
 
 void EnderCrystal::tick()
 {
-    ++mTime;
     mXo = mX;
     mYo = mY;
     mZo = mZ;
+    ++mTime;
 
     if (!mLevel->mIsClientSide)
     {
@@ -136,8 +136,7 @@ bool EnderCrystal::hurt(const DamageSource* source, float damage)
     if (isInvulnerableTo(source))
         return false;
 
-    bool fromDragon = source->getEntity() && source->getEntity()->GetType() == EntityType::ENDER_DRAGON;
-    if (fromDragon)
+    if (source->getEntity() && eTYPE_DERIVED_FROM(EntityType::ENDER_DRAGON, source->getEntity()->GetType()))
         return false;
 
     if (!mRemoved && !mLevel->mIsClientSide)

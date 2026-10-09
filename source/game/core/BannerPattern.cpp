@@ -7,7 +7,7 @@
 
 std::vector<const BannerPattern*> BannerPattern::PATTERNS;
 
-BannerPattern* BannerPattern::BASE = NULL;
+const BannerPattern* BannerPattern::BASE = NULL;
 BannerPattern* BannerPattern::SQUARE_BOTTOM_LEFT = NULL;
 BannerPattern* BannerPattern::SQUARE_BOTTOM_RIGHT = NULL;
 BannerPattern* BannerPattern::SQUARE_TOP_LEFT = NULL;

@@ -22,9 +22,10 @@ BufferedImage::BufferedImage(int width, int height, int mipLevels)
 
 BufferedImage::BufferedImage(const std::wstring& name, bool mipmapDisabled, bool useTitleUpdate, const std::wstring& path)
 {
+    std::wstring base;
     std::wstring baseName = name;
     m_mipmapDisabled = 0;
-    std::wstring base = path;
+    base = path;
     if (base.empty())
     {
         if (useTitleUpdate)
@@ -33,7 +34,7 @@ BufferedImage::BufferedImage(const std::wstring& name, bool mipmapDisabled, bool
         }
         else
         {
-            base = L"Common\\";
+            base = L"Common/";
         }
     }
 
@@ -44,13 +45,13 @@ BufferedImage::BufferedImage(const std::wstring& name, bool mipmapDisabled, bool
     int level;
     for (level = 0; level < levels; ++level)
     {
+        std::wstring file;
         std::wstring suffix = L"";
         if (level != 0)
         {
-            suffix = std::wstring(L"MipMapLevel") + _toString(level + 1);
+            suffix = L"MipMapLevel" + _toString(level + 1);
         }
 
-        std::wstring file;
         if (mipmapDisabled)
         {
             file = base + L"res" + baseName.substr(0, baseName.length());
@@ -87,17 +88,18 @@ BufferedImage::BufferedImage(DLCPack* pack, const std::wstring& name, bool mipma
     int i;
     for (i = 0; i < 10; ++i) m_data[i] = NULL;
 
+    unsigned int imageLength = 0;
     const int levels = mipmapDisabled ? 1 : 10;
     int level;
     for (level = 0; level < levels; ++level)
     {
+        std::wstring file;
         std::wstring suffix = L"";
         if (level != 0)
         {
-            suffix = std::wstring(L"MipMapLevel") + _toString(level + 1);
+            suffix = L"MipMapLevel" + _toString(level + 1);
         }
 
-        std::wstring file;
         if (mipmapDisabled)
         {
             file = L"res" + baseName.substr(0, baseName.length());
@@ -118,7 +120,6 @@ BufferedImage::BufferedImage(DLCPack* pack, const std::wstring& name, bool mipma
         DLCFile* imageFile = pack->getFile(DLCManager::eDLCType_All, file, true, true);
         m_mipmapDisabled = imageFile->getParameterAsBool(DLCManager::eDLCParameterType_DisableMipMap);
 
-        unsigned int imageLength = 0;
         unsigned char* imageData = imageFile->getData(imageLength);
         if (imageData == NULL || imageLength == 0)
         {
@@ -147,12 +148,12 @@ BufferedImage::BufferedImage(DLCPack* pack, const std::wstring& name, bool mipma
 }
 
 BufferedImage::BufferedImage(unsigned char* data, unsigned int length)
-    : m_mipmapDisabled(0)
 {
-    int i;
-    for (i = 0; i < 10; ++i) m_data[i] = NULL;
     int width = 0;
     int height = 0;
+    m_mipmapDisabled = 0;
+    int i;
+    for (i = 0; i < 10; ++i) m_data[i] = NULL;
     if (TextureUtil::LoadTextureData(data, length, &width, &height, &m_data[0]) == 0)
     {
         m_width = (unsigned int)width;
@@ -204,10 +205,12 @@ BufferedImage* BufferedImage::getSubimage(int x, int y, int width, int height)
     {
         int levelWidth = width >> level;
         int levelHeight = height >> level;
+        int levelX = x >> level;
+        int levelY = y >> level;
         int levelCount = levelHeight * levelWidth;
-        arrayWithLength<int> levelPixels((int*)std::malloc(levelCount * sizeof(int)), levelCount);
-        image->m_data[level] = levelPixels.data;
-        getRGB(x >> level, y >> level, levelWidth, levelHeight, levelPixels, 0, levelWidth, level);
+        int* levelData = (int*)std::malloc(levelCount * sizeof(int));
+        image->m_data[level] = levelData;
+        getRGB(levelX, levelY, levelWidth, levelHeight, arrayWithLength<int>(levelData, levelCount), 0, levelWidth, level);
         ++level;
     }
     return image;

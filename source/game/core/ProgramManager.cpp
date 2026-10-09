@@ -1,8 +1,10 @@
 #include "game/core/ProgramManager.hpp"
 
-uint32_t ProgramManager::getInstance()
+static ProgramManager sInstance;
+
+ProgramManager* ProgramManager::getInstance()
 {
-    return 0x105759B0u;
+    return &sInstance;
 }
 
 void ProgramManager::releaseProgram(Effect* effect)

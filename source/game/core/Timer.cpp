@@ -3,15 +3,16 @@
 #include "game/core/System.hpp"
 
 Timer::Timer(float ticksPerSecond)
-    : ticksPerSecond(ticksPerSecond)
-    , lastHRTime(0.0)
-    , elapsedTicks(0)
-    , renderPartialTicks(0.0f)
-    , timerSpeed(1.0f)
-    , elapsedPartialTicks(0.0f)
-    , timeSyncCounter(0)
-    , timeSyncAdjustment(1.0)
 {
+    lastHRTime = 0.0;
+    elapsedTicks = 0;
+    renderPartialTicks = 0.0f;
+    timerSpeed = 1.0f;
+    elapsedPartialTicks = 0.0f;
+    timeSyncCounter = 0;
+    timeSyncAdjustment = 1.0;
+
+    this->ticksPerSecond = ticksPerSecond;
     lastSyncSysClock = System::processTimeInMilliSecs();
     lastSyncHRClock = System::processTimeInMilliSecs();
 }

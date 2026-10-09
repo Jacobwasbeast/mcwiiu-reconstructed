@@ -183,8 +183,8 @@ ArmorStand::ArmorStand(Level* level, double x, double y, double z)
 
 ArmorStand::~ArmorStand()
 {
-    delete[] mHandItems.items;
-    delete[] mArmorItems.items;
+    delete[] mHandItems.items.data;
+    delete[] mArmorItems.items.data;
 }
 
 void ArmorStand::staticCtor()
@@ -248,27 +248,27 @@ NonNullList<not_null_ptr<ItemInstance> > ArmorStand::getArmorSlots()
 }
 not_null_ptr<ItemInstance> ArmorStand::getItemSlot(const EquipmentSlot* slot)
 {
-    if (slot->getType() == EquipmentSlot::HAND)
+    switch (slot->getType())
     {
+    case EquipmentSlot::HAND:
         return mHandItems[slot->getIndex()];
-    }
-    if (slot->getType() == EquipmentSlot::ARMOR)
-    {
+    case EquipmentSlot::ARMOR:
         return mArmorItems[slot->getIndex()];
     }
     return ItemInstance::EMPTY;
 }
 void ArmorStand::setItemSlot(const EquipmentSlot* slot, not_null_ptr<ItemInstance> item)
 {
-    if (slot->getType() == EquipmentSlot::HAND)
+    switch (slot->getType())
     {
+    case EquipmentSlot::HAND:
         playEquipSound(item);
-        mHandItems[slot->getIndex()] = item;
-    }
-    else if (slot->getType() == EquipmentSlot::ARMOR)
-    {
+        mHandItems.set(slot->getIndex(), item);
+        break;
+    case EquipmentSlot::ARMOR:
         playEquipSound(item);
-        mArmorItems[slot->getIndex()] = item;
+        mArmorItems.set(slot->getIndex(), item);
+        break;
     }
 }
 bool ArmorStand::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
@@ -303,14 +303,13 @@ bool ArmorStand::setSlot(int slot, const not_null_ptr<ItemInstance>& item)
         return false;
     }
 
-    if (!item->isEmpty() && !Mob::isValidSlotForItem(equipmentSlot, item)
-        && equipmentSlot != EquipmentSlot::HEAD)
+    if (item->isEmpty() || Mob::isValidSlotForItem(equipmentSlot, item)
+        || equipmentSlot == EquipmentSlot::HEAD)
     {
-        return false;
+        setItemSlot(equipmentSlot, item);
+        return true;
     }
-
-    setItemSlot(equipmentSlot, item);
-    return true;
+    return false;
 }
 bool ArmorStand::isEffectiveAi() { return LivingEntity::isEffectiveAi() && !isNoGravity(); }
 bool ArmorStand::isSmall() { return (mEntityData->get(DATA_FLAGS) & 1) != 0; }
@@ -415,24 +414,19 @@ const EquipmentSlot* ArmorStand::getClickedSlot(const Vec3* hit)
 {
     const EquipmentSlot* slot = EquipmentSlot::MAINHAND;
     bool small = isSmall();
-    double y = hit->y;
-    if (small)
-    {
-        y *= 2.0;
-    }
+    double y = small ? hit->y * 2.0 : hit->y;
+    const EquipmentSlot* feet = EquipmentSlot::FEET;
 
-    if (y >= 0.1 && y < (small ? 0.8 : 0.45) + 0.1 && hasItemInSlot(EquipmentSlot::FEET))
+    if (y >= 0.1 && y < 0.1 + (small ? 0.8 : 0.45) && hasItemInSlot(feet))
     {
         slot = EquipmentSlot::FEET;
     }
-    else if (y >= (small ? 0.3 : 0.0) + 0.9
-             && y < (small ? 1.0 : 0.7) + 0.9
+    else if (y >= 0.9 + (small ? 0.3 : 0.0) && y < 0.9 + (small ? 1.0 : 0.7)
              && hasItemInSlot(EquipmentSlot::CHEST))
     {
         slot = EquipmentSlot::CHEST;
     }
-    else if (y >= 0.4 && y < (small ? 1.0 : 0.8) + 0.4
-             && hasItemInSlot(EquipmentSlot::LEGS))
+    else if (y >= 0.4 && y < 0.4 + (small ? 1.0 : 0.8) && hasItemInSlot(EquipmentSlot::LEGS))
     {
         slot = EquipmentSlot::LEGS;
     }
@@ -516,23 +510,30 @@ InteractionResult::EInteractionResult ArmorStand::interactAt(
     if (player->isSneaking())
     {
         setPoseIndex((getPoseIndex() + 1) % 13);
-        return InteractionResult::eInteractionResult_Success;
     }
-
-    if (isMarker())
+    else
     {
-        return InteractionResult::eInteractionResult_Pass;
-    }
+        if (isMarker() || (heldItem->getItem() == Items::nameTag && heldItem->hasCustomHoverName()))
+        {
+            return InteractionResult::eInteractionResult_Pass;
+        }
 
-    if (heldItem->getItem() == Items::nameTag && heldItem->hasCustomHoverName())
-    {
-        return InteractionResult::eInteractionResult_Pass;
-    }
+        if (mLevel->mIsClientSide || player->isSpectator())
+        {
+            return InteractionResult::eInteractionResult_Success;
+        }
 
-    if (!mLevel->mIsClientSide && !player->isSpectator())
-    {
         const EquipmentSlot* equipmentSlot = Mob::getEquipmentSlotForItem(heldItem);
-        if (!heldItem->isEmpty())
+        if (heldItem->isEmpty())
+        {
+            const EquipmentSlot* clickedSlot = getClickedSlot(hit);
+            const EquipmentSlot* useSlot = isDisabled(clickedSlot) ? equipmentSlot : clickedSlot;
+            if (hasItemInSlot(useSlot))
+            {
+                swapItem(player, useSlot, heldItem, hand);
+            }
+        }
+        else
         {
             if (isDisabled(equipmentSlot))
             {
@@ -543,15 +544,6 @@ InteractionResult::EInteractionResult ArmorStand::interactAt(
                 return InteractionResult::eInteractionResult_Fail;
             }
             swapItem(player, equipmentSlot, heldItem, hand);
-        }
-        else
-        {
-            const EquipmentSlot* clickedSlot = getClickedSlot(hit);
-            const EquipmentSlot* useSlot = isDisabled(clickedSlot) ? equipmentSlot : clickedSlot;
-            if (hasItemInSlot(useSlot))
-            {
-                swapItem(player, useSlot, heldItem, hand);
-            }
         }
     }
 
@@ -576,7 +568,7 @@ ArmorStand::EInteraction ArmorStand::test_interactAt(boost::shared_ptr<Player> p
     {
         ArmorItem* armor = dynamic_cast<ArmorItem*>(item->getItem());
         if (armor != NULL)
-            slot = armor->getSlot();
+            slot = armor->mSlot;
         if (item->getItem() == Items::skull || item->getItem() == Item::byBlock(Blocks::carved_pumpkin))
             slot = EquipmentSlot::HEAD;
     }
@@ -588,15 +580,22 @@ ArmorStand::EInteraction ArmorStand::test_interactAt(boost::shared_ptr<Player> p
         return eInteraction_None;
     if (holdingItem && slot == EquipmentSlot::MAINHAND && !isShowArms())
         return eInteraction_None;
-
-    if (holdingItem)
-        return getItemSlot(slot)->isEmpty() ? eInteraction_Place : eInteraction_Swap;
-    return getItemSlot(clickedSlot)->isEmpty() ? eInteraction_None : eInteraction_Take;
+    if (holdingItem && !getItemSlot(slot)->isEmpty())
+    {
+        return eInteraction_Swap;
+    }
+    else if (holdingItem)
+    {
+        return eInteraction_Place;
+    }
+    else if (!getItemSlot(clickedSlot)->isEmpty())
+    {
+        return eInteraction_Take;
+    }
+    return eInteraction_None;
 }
 unsigned int ArmorStand::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
-    static const unsigned int INTERACTION_TOOLTIPS[] = {IDS_TOOLTIPS_PLACE, IDS_TOOLTIPS_PICKUP_GENERIC, IDS_TOOLTIPS_PICKUPPLACE, IDS_TOOLTIPS_ARMOUR_STAND_POSE};
-
     if (Item::getId(tooltipData.m_pItemInstance->getItem()) == ItemId::NAME_TAG
         && tooltipData.m_pItemInstance->hasCustomHoverName())
     {
@@ -607,12 +606,21 @@ unsigned int ArmorStand::GetInteractTooltip(const EntityTooltipDataHolder& toolt
 
     if (tooltipData.m_bAllowedToInteract)
     {
-        Vec3* viewerLocation = Minecraft::GetInstance()->mHitResult->mLocation;
-        Vec3* hit = Vec3::newTemp(viewerLocation->x - mX, viewerLocation->y - mY, viewerLocation->z - mZ);
-        unsigned int interaction =
-            test_interactAt(tooltipData.m_pPlayer, hit, tooltipData.m_pItemInstance, InteractionHand::eInteractionHand_MainHand);
-        if (interaction != eInteraction_None && interaction <= eInteraction_ChangePose)
-            return INTERACTION_TOOLTIPS[interaction - 1];
+        HitResult* hitResult = Minecraft::GetInstance()->mHitResult;
+        Vec3* hit = Vec3::newTemp(hitResult->mLocation->x - mX, hitResult->mLocation->y - mY,
+                                  hitResult->mLocation->z - mZ);
+        switch (test_interactAt(tooltipData.m_pPlayer, hit, tooltipData.m_pItemInstance,
+                                InteractionHand::eInteractionHand_MainHand))
+        {
+        case eInteraction_Place:
+            return IDS_TOOLTIPS_PLACE;
+        case eInteraction_Take:
+            return IDS_TOOLTIPS_PICKUP_GENERIC;
+        case eInteraction_Swap:
+            return IDS_TOOLTIPS_PICKUPPLACE;
+        case eInteraction_ChangePose:
+            return IDS_TOOLTIPS_ARMOUR_STAND_POSE;
+        }
     }
     return IDS_NONE;
 }
@@ -667,10 +675,8 @@ void ArmorStand::showBreakingParticles()
         return;
     int blockData = Block::getIdWithData(Blocks::planks->defaultBlockState());
     arrayWithLength<int> data(&blockData, 1);
-    double spreadX = mBbWidth / 4.0f;
-    double spreadY = mBbHeight / 4.0f;
-    level->sendParticles(PARTICLE_BLOCK_DUST, mX, mY + mBbHeight / 1.5, mZ, 10, spreadX, spreadY,
-                         spreadX, 0.05, data);
+    level->sendParticles(PARTICLE_BLOCK_DUST, mX, mY + mBbHeight / 1.5, mZ, 10, mBbWidth / 4.0f, mBbHeight / 4.0f,
+                         mBbWidth / 4.0f, 0.05, data);
 }
 void ArmorStand::brokenByPlayer()
 {
@@ -966,8 +972,9 @@ Entity* ArmorStand::create(Level* level)
 
 bool ArmorStand::RidableMinecartEntitySelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    return (entity->GetType() & EntityType::MINECART) == EntityType::MINECART
+    bool result = eTYPE_DERIVED_FROM(EntityType::MINECART, entity->GetType())
         && boost::static_pointer_cast<Minecart>(entity)->getType() == Minecart::Type::RIDEABLE;
+    return result;
 }
 
 ArmorStand::RidableMinecartEntitySelector::~RidableMinecartEntitySelector()

@@ -36,6 +36,7 @@ public:
     static int fastFloor(double value);
     static float abs(float value);
     static double abs(double value);
+    static bool isNaN(double value);
 
     static char clamp(char value, char min, char max);
     static int clamp(int value, int min, int max);
@@ -130,10 +131,15 @@ inline int Mth::absFloor(double value)
     return value < static_cast<double>(truncated) ? truncated - 1 : truncated;
 }
 
+inline bool Mth::isNaN(double value)
+{
+    return value != value;
+}
+
 inline int Mth::ceil(float value)
 {
     int truncated = (int)value;
-    return (float)truncated < value ? truncated + 1 : truncated;
+    return value > (float)truncated ? truncated + 1 : truncated;
 }
 
 template <typename T>

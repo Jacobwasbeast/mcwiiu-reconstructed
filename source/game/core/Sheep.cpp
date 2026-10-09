@@ -1,4 +1,7 @@
 #include "game/core/Sheep.hpp"
+
+#include <algorithm>
+
 #include "game/entity/mob/EntityEvent.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
@@ -38,7 +41,7 @@
 #include "game/world/generation/Player.hpp"
 #include "game/item/ItemId.hpp"
 
-static const EntityDataAccessor<unsigned char>* gSheepSheared;
+static const EntityDataAccessor<unsigned char>* gSheepSheared = NULL;
 static boost::unordered_map<const DyeColor*, arrayWithLength<const float> > gSheepColors;
 
 Sheep::Sheep(Level* level) : Animal(level)
@@ -87,21 +90,18 @@ void Sheep::staticCtor()
     gSheepSheared = SynchedEntityData::defineId(EntityType::SHEEP, EntityType::ANIMAL,
                                                 EntityDataSerializers::BYTE);
 
-    for (std::vector<const DyeColor*>::iterator it = DyeColor::COLORS.begin();
+    for (std::vector<const DyeColor*>::const_iterator it = DyeColor::COLORS.begin();
          it != DyeColor::COLORS.end(); ++it)
     {
-        gSheepColors[*it] = createSheepColor(*it);
+        const DyeColor* color = *it;
+        gSheepColors[color] = createSheepColor(color);
     }
 
     float* white = new float[3];
     white[0] = 0.9019608f;
     white[1] = 0.9019608f;
     white[2] = 0.9019608f;
-
-    arrayWithLength<const float> whiteColors;
-    whiteColors.data = white;
-    whiteColors.length = 3;
-    gSheepColors[DyeColor::WHITE] = whiteColors;
+    gSheepColors[DyeColor::WHITE] = arrayWithLength<const float>(white, 3);
 }
 
 void Sheep::registerGoals()
@@ -112,11 +112,9 @@ void Sheep::registerGoals()
     mGoalSelector.addGoal(1, new PanicGoal(this, 1.25), true);
     mGoalSelector.addGoal(2, new BreedGoal(this, 1.0), true);
 
-    static Item* temptItemsData[1] = { Items::wheat };
-    arrayWithLength<Item*> temptItems;
-    temptItems.data = temptItemsData;
-    temptItems.length = 1;
-    mGoalSelector.addGoal(3, new TemptGoal(this, 1.1, temptItems, false, arrayWithLength<int>()),
+    static Item* temptItems[] = { Items::wheat };
+    mGoalSelector.addGoal(3, new TemptGoal(this, 1.1, arrayWithLength<Item*>(temptItems, 1), false,
+                                           arrayWithLength<int>()),
                           true);
 
     mGoalSelector.addGoal(4, new FollowParentGoal(this, 1.1), true);
@@ -136,12 +134,7 @@ void Sheep::aiStep()
 {
     if (mLevel->mIsClientSide)
     {
-        int ticks = mEatAnimationTick - 1;
-        if (ticks < 0)
-        {
-            ticks = 0;
-        }
-        mEatAnimationTick = ticks;
+        mEatAnimationTick = std::max(0, mEatAnimationTick - 1);
     }
     Animal::aiStep();
 }
@@ -202,7 +195,7 @@ float Sheep::getHeadEatAngleScale(float partialTick)
     float scale = 0.62831855f;
     if (mEatAnimationTick <= 0)
     {
-        scale = mXRot * 0.017453292f;
+        scale = mXRot * Mth::DEG_TO_RAD;
     }
     return scale;
 }
@@ -256,7 +249,7 @@ bool Sheep::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand
                 wool->mZd += (mRandom->nextFloat() - mRandom->nextFloat()) * 0.1f;
             }
 
-            player->awardStat(gStats->get_shearedEntity(EntityType::SHEEP),
+            player->awardStat(GenericStats::shearedEntity(EntityType::SHEEP),
                               GenericStats::param_shearedEntity(EntityType::SHEEP));
         }
 
@@ -297,26 +290,25 @@ void Sheep::readAdditionalSaveData(CompoundTag* tag)
 
 unsigned int Sheep::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 {
-    int itemId = Item::getId(holder.m_pItemInstance->getItem());
-
-    if (itemId == ItemId::DYE)
+    switch (Item::getId(holder.m_pItemInstance->getItem()))
+    {
+    case ItemId::DYE:
     {
         const DyeColor* color = DyeColor::byItemData(holder.m_pItemInstance->getAuxValue());
         if (!isSheared() && getColor() != color)
         {
             return IDS_TOOLTIPS_DYE;
         }
+        break;
     }
-    else
-    {
-        if (itemId != ItemId::SHEARS)
-        {
-            return Animal::GetInteractTooltip(holder);
-        }
+    case ItemId::SHEARS:
         if (!isBaby() && !isSheared())
         {
             return IDS_TOOLTIPS_SHEAR;
         }
+        break;
+    default:
+        return Animal::GetInteractTooltip(holder);
     }
 
     return Animal::GetInteractTooltip(holder);
@@ -385,9 +377,9 @@ void Sheep::ate()
 
 MobGroupData* Sheep::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* group, const std::wstring&)
 {
-    MobGroupData* result = Mob::finalizeMobSpawn(difficulty, group, L"");
+    group = Mob::finalizeMobSpawn(difficulty, group, L"");
     setColor(getRandomSheepColor(mLevel->mRandom));
-    return result;
+    return group;
 }
 
 float Sheep::getEyeHeight()

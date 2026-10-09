@@ -1,6 +1,6 @@
 #include "game/core/Frustum.hpp"
 
-#include <math.h>
+#include <cmath>
 
 #include "game/core/FloatBuffer.hpp"
 #include "game/core/GlStateManager.hpp"
@@ -24,7 +24,7 @@ Frustum::~Frustum()
 
 void Frustum::normalizePlane(float* plane)
 {
-    float magnitude = sqrtf(plane[0] * plane[0] + plane[1] * plane[1] + plane[2] * plane[2]);
+    float magnitude = std::sqrt(plane[0] * plane[0] + plane[1] * plane[1] + plane[2] * plane[2]);
 
     plane[0] /= magnitude;
     plane[1] /= magnitude;
@@ -41,7 +41,7 @@ void Frustum::calculateFrustum()
     GlStateManager::getMatrix(1, _proj);
     GlStateManager::getMatrix(0, _modl);
 
-    arrayWithLength<float> proj = theFrustum->proj;
+    arrayWithLength<float> proj(theFrustum->proj.data, theFrustum->proj.length);
     arrayWithLength<float> modl = theFrustum->modl;
 
     _proj->flip()->limit(16);

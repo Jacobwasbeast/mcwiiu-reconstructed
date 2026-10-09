@@ -4,10 +4,29 @@
 #include <string.h>
 
 #include "game/core/Handle.hpp"
+#include "vendor/MilesHandle.hpp"
 
 Handle Handle_AllocateInfo(int size, const char* file, int line);
-void* Handle_Get(Handle handle);
 void Handle_Free(Handle handle);
+
+static void* Handle_Get(Handle handle)
+{
+    if (handle.index != 0 && handle.index <= HandleCount)
+    {
+        const HandleEntry* entry = reinterpret_cast<const HandleEntry*>(
+            HandleTableEnd - handle.index * sizeof(HandleEntry));
+        void* data = entry->data;
+        if (handle.generation == entry->generation)
+        {
+            return data;
+        }
+    }
+
+    return NULL;
+}
+
+#define MILES_EVENT_ARRAY_FILE "C:\\devel\\projects\\mss\\src\\sdk\\shared\\mileseventarray.h"
+const int MILES_EVENT_ARRAY_ALLOC_LINE = 0x6c;
 
 template <class T>
 class PODHandleArray
@@ -42,11 +61,12 @@ public:
 template <class T>
 void PODHandleArray<T>::Construct()
 {
-    m_handle = Handle();
     m_data = NULL;
     m_count = 0;
     m_capacity = 0;
     m_locked = 0;
+    m_handle.index = 0;
+    m_handle.generation = 0;
 }
 
 template <class T>
@@ -57,8 +77,9 @@ void PODHandleArray<T>::FreeMem()
 
     Handle_Free(m_handle);
 
-    m_handle = Handle();
     m_data = NULL;
+    m_handle.index = 0;
+    m_handle.generation = 0;
     m_capacity = 0;
 }
 
@@ -69,9 +90,9 @@ void PODHandleArray<T>::Reacquire()
 }
 
 template <class T>
-int PODHandleArray<T>::VerifyRoom(int count)
+inline int PODHandleArray<T>::VerifyRoom(int count)
 {
-    if (count <= m_capacity)
+    if (m_capacity >= count)
     {
         return 1;
     }
@@ -82,7 +103,7 @@ int PODHandleArray<T>::VerifyRoom(int count)
     }
 
     int capacity = m_capacity * 2;
-    if (capacity < count)
+    if (count > capacity)
     {
         capacity = count;
     }
@@ -92,7 +113,7 @@ int PODHandleArray<T>::VerifyRoom(int count)
         return 0;
     }
 
-    Handle handle = Handle_AllocateInfo(capacity * sizeof(T), __FILE__, __LINE__);
+    Handle handle = Handle_AllocateInfo(capacity * sizeof(T), MILES_EVENT_ARRAY_FILE, MILES_EVENT_ARRAY_ALLOC_LINE);
 
     T* data = (T*)Handle_Get(handle);
     if (data == NULL)
@@ -126,26 +147,28 @@ int PODHandleArray<T>::Push(const T& value)
 template <class T>
 int PODHandleArray<T>::PushCount(const T* values, int count)
 {
-    if (!VerifyRoom(m_count + count))
+    int result = VerifyRoom(m_count + count);
+    if (result)
     {
-        return 0;
+        memcpy(&m_data[m_count], values, count * sizeof(T));
+        m_count += count;
+        result = 1;
     }
 
-    memcpy(&m_data[m_count], values, count * sizeof(T));
-    m_count += count;
-    return 1;
+    return result;
 }
 
 template <class T>
 int PODHandleArray<T>::PushEmpty()
 {
-    if (!VerifyRoom(m_count + 1))
+    int result = VerifyRoom(m_count + 1);
+    if (result)
     {
-        return 0;
+        m_count++;
+        result = 1;
     }
 
-    m_count++;
-    return 1;
+    return result;
 }
 
 template <class T>

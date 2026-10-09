@@ -22,7 +22,7 @@ public:
     ClientSideMerchant(boost::shared_ptr<Player> player, const std::wstring& name);
     virtual ~ClientSideMerchant();
 
-    MerchantContainer* createContainer();
+    void createContainer();
     boost::shared_ptr<Player> getTradingPlayer();
     virtual void setTradingPlayer(const boost::shared_ptr<Player>& player);
     virtual MerchantRecipeList* getOffers(const boost::shared_ptr<Player>& player);

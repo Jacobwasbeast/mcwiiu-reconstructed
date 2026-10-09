@@ -22,8 +22,24 @@
 #include "game/world/chunk/LevelChunk.hpp"
 #include "game/world/generation/LevelGenerators.hpp"
 
+static const unsigned int CRC_POLYNOMIAL = 0xedb88320U;
+static const unsigned int CRC_INITIAL = 0xffffffffU;
+static const unsigned int FULL_LICENSE_MASK = 0xffffffffU;
+
 static unsigned int gGameRuleCRCTable[256];
 static bool gGameRuleCRCTableReady = false;
+
+const wchar_t* GameRuleManager::sAttributeNames[ConsoleGameRules::eGameRuleAttr_Count] = {
+    L"descriptionName", L"promptName", L"dataTag", L"enchantmentId", L"enchantmentLevel", L"itemId", L"quantity", L"auxValue", L"slot",
+    L"name", L"food", L"health", L"blockId", L"useCoords", L"seed", L"flatworld", L"filename", L"rot", L"data", L"block", L"entity",
+    L"facing", L"edgeBlock", L"fillBlock", L"skipAir", L"x", L"x0", L"x1", L"y", L"y0", L"y1", L"z", L"z0", L"z1", L"chunkX",
+    L"chunkZ", L"yRot", L"xRot", L"spawnX", L"spawnY", L"spawnZ", L"orientation", L"dimension", L"topblockId", L"biomeId", L"feature",
+    L"minCount", L"maxCount", L"weight", L"id", L"probability", L"method", L"hasBeenInCreative", L"cloudHeight", L"fogDistance", L"dayTime",
+    L"target", L"speed", L"dir", L"type", L"pass", L"for", L"random", L"blockAux", L"size", L"scale", L"freq", L"func", L"upper", L"lower",
+    L"dY", L"thickness", L"points", L"holeSize", L"variant", L"startHeight", L"pattern", L"colour", L"primary", L"laps", L"liftForceModifier",
+    L"staticLift", L"targetHeight", L"speedBoost", L"boostDirection", L"condition_type", L"condition_value_0", L"condition_value_1", L"beam_length",
+    L"beam_direction", L"string_IDS"
+};
 
 const wchar_t* GameRuleManager::sTagNames[ConsoleGameRules::eGameRuleType_Count] = {
     L"", L"MapOptions", L"ApplySchematic", L"GenerateStructure", L"GenerateBox", L"PlaceBlock", L"PlaceContainer", L"PlaceSpawner",
@@ -39,23 +55,11 @@ const wchar_t* GameRuleManager::sTagNames[ConsoleGameRules::eGameRuleType_Count]
     L"Powerup", L"Checkpoint", L"CustomBeacon", L"ActiveViewArea"
 };
 
-static const wchar_t* gGameRuleAttributeNames[91] = {
-    L"descriptionName", L"promptName", L"dataTag", L"enchantmentId", L"enchantmentLevel", L"itemId", L"quantity", L"auxValue", L"slot",
-    L"name", L"food", L"health", L"blockId", L"useCoords", L"seed", L"flatworld", L"filename", L"rot", L"data", L"block", L"entity",
-    L"facing", L"edgeBlock", L"fillBlock", L"skipAir", L"x", L"x0", L"x1", L"y", L"y0", L"y1", L"z", L"z0", L"z1", L"chunkX",
-    L"chunkZ", L"yRot", L"xRot", L"spawnX", L"spawnY", L"spawnZ", L"orientation", L"dimension", L"topblockId", L"biomeId", L"feature",
-    L"minCount", L"maxCount", L"weight", L"id", L"probability", L"method", L"hasBeenInCreative", L"cloudHeight", L"fogDistance", L"dayTime",
-    L"target", L"speed", L"dir", L"type", L"pass", L"for", L"random", L"blockAux", L"size", L"scale", L"freq", L"func", L"upper", L"lower",
-    L"dY", L"thickness", L"points", L"holeSize", L"variant", L"startHeight", L"pattern", L"colour", L"primary", L"laps", L"liftForceModifier",
-    L"staticLift", L"targetHeight", L"speedBoost", L"boostDirection", L"condition_type", L"condition_value_0", L"condition_value_1", L"beam_length",
-    L"beam_direction", L"string_IDS"
-};
-
 GameRuleManager::GameRuleManager()
 {
-    mLevelGenerationOptions = NULL;
     mDebugGameRuleDefinitions = NULL;
     mGameRuleDefinitions = NULL;
+    mLevelGenerationOptions = NULL;
     mLevelGenerators = new LevelGenerators();
     mLevelRules = new LevelRules();
 }
@@ -70,10 +74,8 @@ void GameRuleManager::unloadCurrentGameRules()
         if (options->isFromSave())
         {
             mLevelRules->removeLevelRule(definitions);
-            if (mGameRuleDefinitions != NULL)
-            {
-                delete mGameRuleDefinitions;
-            }
+            definitions = mGameRuleDefinitions;
+            delete definitions;
             options = mLevelGenerationOptions;
         }
     }
@@ -107,12 +109,12 @@ void GameRuleManager::unloadCurrentGameRules()
 void GameRuleManager::setLevelGenerationOptions(LevelGenerationOptions* options)
 {
     unloadCurrentGameRules();
-    mLevelGenerationOptions = options;
     mGameRuleDefinitions = NULL;
+    mLevelGenerationOptions = options;
     mDebugGameRuleDefinitions = NULL;
-    if (options != NULL)
+    if (mLevelGenerationOptions != NULL)
     {
-        if (options->requiresGameRules())
+        if (mLevelGenerationOptions->requiresGameRules())
         {
             mGameRuleDefinitions = options->getRequiredGameRules();
         }
@@ -122,17 +124,20 @@ void GameRuleManager::setLevelGenerationOptions(LevelGenerationOptions* options)
 
 void GameRuleManager::MakeCRCTable()
 {
-    unsigned int i;
-    unsigned int j;
-    unsigned int value;
-    for (i = 0; i < 256; ++i)
+    unsigned int c;
+    int n;
+    int k;
+    for (n = 0; n < 256; n++)
     {
-        value = i;
-        for (j = 0; j < 8; ++j)
+        c = (unsigned int)n;
+        for (k = 0; k < 8; k++)
         {
-            value = (value & 1) ? ((value >> 1) ^ 0xedb88320U) : (value >> 1);
+            if (c & 1)
+                c = CRC_POLYNOMIAL ^ (c >> 1);
+            else
+                c = c >> 1;
         }
-        gGameRuleCRCTable[i] = value;
+        gGameRuleCRCTable[n] = c;
     }
     gGameRuleCRCTableReady = true;
 }
@@ -143,24 +148,22 @@ unsigned int GameRuleManager::UpdateCRC(unsigned int crc, unsigned char* data, i
         5,6,7,3,4,5,6,7,1,2,6,1,1,2,3,4,5,5,6,7,3,4,5,6,7,1,2,6,
         1,1,2,3,4,5,5,6,7,3,4,5,6,7,7,5,4,7,5,4,7,5,4,7,6,5,4,3
     };
-    int position = 0;
-    unsigned int increment = 0;
     if (!gGameRuleCRCTableReady)
-    {
         MakeCRCTable();
-    }
-    while (position < length)
+    int n = 0;
+    unsigned int increment = 0;
+    while (n < length)
     {
-        crc = gGameRuleCRCTable[(crc ^ data[position]) & 0xff] ^ (crc >> 8);
-        position += increments[increment];
-        increment = (increment + 1) % 56;
+        crc = gGameRuleCRCTable[(crc ^ data[n]) & 0xff] ^ (crc >> 8);
+        n += increments[increment++];
+        increment %= 56;
     }
     return crc;
 }
 
 unsigned int GameRuleManager::CRC(unsigned char* data, int length)
 {
-    return ~UpdateCRC(0xffffffffU, data, length);
+    return ~UpdateCRC(CRC_INITIAL, data, length);
 }
 
 unsigned int GameRuleManager::addLevelGenerationOptions(LevelGenerationOptions* options)
@@ -215,13 +218,9 @@ void GameRuleManager::readChildren(DataInputStream* input, std::vector<std::wstr
 
 unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsigned char* data, unsigned int size, StringTable* table)
 {
-    arrayWithLength<unsigned char> inputData;
-    inputData.data = data;
-    inputData.length = size;
+    arrayWithLength<unsigned char> inputData(data, size);
     ByteArrayInputStream bytes(inputData);
     DataInputStream input(&bytes);
-    DataInputStream* rules = &input;
-    ByteArrayInputStream* expandedBytes = NULL;
     long long version = input.readShort();
     unsigned char compression = 0;
     unsigned int expectedCRC = 0;
@@ -238,7 +237,13 @@ unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsi
         input.readBoolean();
         input.readBoolean();
     }
-    if (compression != 0)
+    ByteArrayInputStream* expandedBytes = NULL;
+    DataInputStream* rules;
+    if (compression == 0)
+    {
+        rules = &input;
+    }
+    else
     {
         unsigned int expandedSize = input.readInt();
         unsigned int compressedSize = input.readInt();
@@ -249,7 +254,7 @@ unsigned int GameRuleManager::readRuleFile(LevelGenerationOptions* options, unsi
         switch (compression)
         {
         case 0:
-            memcpy(expanded.data, compressed.data, expanded.length);
+            memcpy(expanded.data, compressed.data, expandedSize);
             break;
         case 1:
             Compression::getCompression()->Decompress(expanded.data, &expanded.length, compressed.data, compressed.length);
@@ -344,7 +349,7 @@ void GameRuleManager::loadGameRules(DLCPack* pack)
     for (int i = 0; i < count; ++i)
     {
         DLCGameRulesHeader* header = static_cast<DLCGameRulesHeader*>(pack->getFile(DLCManager::eDLCType_GameRulesHeader, i, true, true));
-        unsigned int size = 0;
+        unsigned int size;
         unsigned char* data = header->getData(size);
         LevelGenerationOptions* options = new LevelGenerationOptions(pack);
         options->setGrSource(header);
@@ -356,7 +361,7 @@ void GameRuleManager::loadGameRules(DLCPack* pack)
     for (int i = 0; i < count; ++i)
     {
         DLCFile* file = pack->getFile(DLCManager::eDLCType_GameRules, i, true, true);
-        unsigned int size = 0;
+        unsigned int size;
         unsigned char* data = file->getData(size);
         LevelGenerationOptions* options = new LevelGenerationOptions(pack);
         options->setGrSource(new GameRulesSource());
@@ -398,15 +403,15 @@ void GameRuleManager::loadGameRules(LevelGenerationOptions* options, unsigned ch
     unsigned int remaining = expanded.length - tableSize;
     arrayWithLength<unsigned char> ruleData(remaining, true);
     rules.read(ruleData);
-    if (readRuleFile(options, ruleData.data, ruleData.length, table) == 0)
-    {
-        delete options;
-        delete table;
-    }
-    else
+    if (readRuleFile(options, ruleData.data, ruleData.length, table) != 0)
     {
         options->setSrc(LevelGenerationOptions::eSrc_Save);
         setLevelGenerationOptions(options);
+    }
+    else
+    {
+        delete options;
+        delete table;
     }
     rules.close();
     rulesBytes.close();
@@ -445,15 +450,15 @@ void GameRuleManager::writeRuleFile(DataOutputStream* output)
             if (tagTypes.find(type) != tagTypes.end())
             {
                 output->writeUTF(sTagNames[type]);
-                tags[type] = key++;
+                tags[static_cast<ConsoleGameRules::EGameRuleType>(type)] = key++;
             }
         }
         for (int attribute = 0; attribute < ConsoleGameRules::eGameRuleAttr_Count; ++attribute)
         {
             if (attributes.find(attribute) != attributes.end())
             {
-                output->writeUTF(gGameRuleAttributeNames[attribute]);
-                tags[attribute + 77] = key++;
+                output->writeUTF(sAttributeNames[attribute]);
+                tags[attribute + ConsoleGameRules::eGameRuleType_Count] = key++;
             }
         }
     }
@@ -468,11 +473,8 @@ void GameRuleManager::writeRuleFile(DataOutputStream* output)
         DataOutputStream schematicOutput(&schematicBytes);
         file->save(&schematicOutput);
         output->writeUTF(name);
-        output->writeInt(schematicBytes.mCount);
-        arrayWithLength<unsigned char> schematicData;
-        schematicData.data = schematicBytes.mBuffer.data;
-        schematicData.length = schematicBytes.mCount;
-        output->write(schematicData);
+        output->writeInt(schematicBytes.mBuffer.length);
+        output->write(schematicBytes.mBuffer);
         schematicOutput.close();
         schematicBytes.close();
     }
@@ -509,33 +511,24 @@ void GameRuleManager::saveGameRules(unsigned char** data, unsigned int* size)
         rules.writeInt(0);
         rules.writeInt(0);
     }
-    else
+    else if (definitions->getStringTable() != NULL)
     {
-        if (definitions->getStringTable() != NULL)
-        {
-            unsigned char* stringData = NULL;
-            unsigned int stringSize = 0;
-            definitions->getStringTable()->getData(&stringData, &stringSize);
-            rules.writeInt(stringSize);
-            arrayWithLength<unsigned char> tableData;
-            tableData.data = stringData;
-            tableData.length = stringSize;
-            rules.write(tableData);
-            writeRuleFile(&rules);
-        }
+        arrayWithLength<unsigned char> stringData;
+        definitions->getStringTable()->getData(&stringData.data, &stringData.length);
+        rules.writeInt(stringData.length);
+        rules.write(stringData);
+        writeRuleFile(&rules);
     }
-    unsigned int sourceSize = rulesBytes.mCount;
-    arrayWithLength<unsigned char> compressed(sourceSize, false);
-    Compression::getCompression()->CompressLZXRLE(compressed.data, &compressed.length, rulesBytes.mBuffer.data, sourceSize, NULL);
+    arrayWithLength<unsigned char> compressed(rulesBytes.mBuffer.length, false);
+    Compression::getCompression()->CompressLZXRLE(compressed.data, &compressed.length, rulesBytes.mBuffer.data, rulesBytes.mBuffer.length, NULL);
     output.writeInt(compressed.length);
-    output.writeInt(sourceSize);
+    output.writeInt(rulesBytes.mBuffer.length);
     output.write(compressed);
     delete[] compressed.data;
-    compressed.data = NULL;
     rules.close();
     rulesBytes.close();
-    *size = bytes.mCount;
     *data = bytes.mBuffer.data;
+    *size = bytes.mBuffer.length;
     bytes.mBuffer.data = NULL;
     output.close();
     bytes.close();
@@ -561,15 +554,15 @@ void GameRuleManager::processSchematicsLighting(LevelChunk* chunk)
 
 unsigned int GameRuleManager::loadGameRulesPack(File* file)
 {
-    unsigned int loaded = 0;
+    bool loaded = false;
     if (file->exists())
     {
-        DLCPack* pack = new DLCPack(std::wstring(L""), 0xffffffffU);
+        DLCPack* pack = new DLCPack(std::wstring(L""), FULL_LICENSE_MASK);
         unsigned int count = 0;
         if (gApp.mDLCManager.readDLCDataFile(count, file->getPath(), pack, 0, false))
         {
             gApp.mDLCManager.addPack(pack);
-            loaded = 1;
+            loaded = true;
         }
         else
         {
@@ -581,8 +574,7 @@ unsigned int GameRuleManager::loadGameRulesPack(File* file)
 
 void GameRuleManager::loadDefaultGameRules()
 {
-    std::vector<LevelGenerationOptions*>* options = mLevelGenerators->getLevelGenerators();
-    unsigned int index = options->size();
+    unsigned int index = mLevelGenerators->getLevelGenerators()->size();
     std::wstring root(L"WiiU/Lobby/");
     File file(root + L"Lobby.pck");
     if (loadGameRulesPack(&file) != 0)

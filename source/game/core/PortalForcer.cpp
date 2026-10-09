@@ -52,17 +52,20 @@ bool PortalForcer::HasCachedPortal(const ChunkPos& chunkPos, BlockPos& portalPos
     {
         PortalPosition* cached = it->second;
         LevelChunk* chunk = level->getChunkLoadedOrUnloadedAt(cached->x, cached->z);
-        if (chunk == NULL || chunk->isEmpty() ||
-            chunk->getBlockId(cached->x & 15, cached->y, cached->z & 15) == BlockId::PORTAL)
+        if (chunk != NULL && !chunk->isEmpty() &&
+            chunk->getBlockId(cached->x & 15, cached->y, cached->z & 15) != BlockId::PORTAL)
+        {
+            std::vector<ChunkPos>::iterator position = std::find(portalPositions.begin(), portalPositions.end(), chunkPos);
+            portalPositions.erase(position);
+            delete portalCache[chunkPos];
+            portalCache.erase(chunkPos);
+        }
+        else
         {
             portalPos = *cached;
             cached->lastUpdate = level->getGameTime();
             return true;
         }
-
-        portalPositions.erase(std::find(portalPositions.begin(), portalPositions.end(), chunkPos));
-        delete portalCache[chunkPos];
-        portalCache.erase(chunkPos);
     }
     return false;
 }
@@ -79,11 +82,11 @@ void PortalForcer::uncacheLeastUsedPortal()
     for (std::vector<ChunkPos>::iterator pos = portalPositions.begin(); pos != portalPositions.end(); ++pos)
     {
         ChunkPos key = *pos;
-        long long updateTime = portalCache[key]->lastUpdate;
-        if (updateTime < leastTime || pos == portalPositions.begin())
+        PortalPosition* position = portalCache[key];
+        if (position->lastUpdate < leastTime || pos == portalPositions.begin())
         {
-            leastTime = updateTime;
             least = pos;
+            leastTime = position->lastUpdate;
         }
     }
 
@@ -241,7 +244,7 @@ bool PortalForcer::findPortal(boost::shared_ptr<Entity> entity, float rotation, 
     entity->mYRot = rotation - (float)(entity->getPortalEntranceForwards()->getOpposite()->get2DDataValue() * 90) +
                     (float)(portal->getForwards()->get2DDataValue() * 90);
 
-    if (entity->GetType() == EntityType::SERVER_PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, entity->GetType()))
     {
         boost::shared_ptr<ServerPlayer> player = boost::static_pointer_cast<ServerPlayer>(entity);
         player->mConnection->teleport(x, y, z, entity->mYRot, entity->mXRot, true, true);
@@ -516,34 +519,42 @@ bool PortalForcer::createPortal(boost::shared_ptr<Entity> entity)
 
 void PortalForcer::force(boost::shared_ptr<Entity> entity, float rotation, int chunkX, int chunkZ)
 {
-    Level* world = static_cast<Level*>(level);
-    if (world->mDimension->getType() == DimensionType::THE_END)
+    if (level->mDimension->getType() == DimensionType::THE_END)
     {
-        int centerX = Mth::floor(entity->mX);
-        int centerY = Mth::floor(entity->mY);
-        int centerZ = Mth::floor(entity->mZ);
-        for (int z = centerZ + 2; z >= centerZ - 2; --z)
+        int x = Mth::floor(entity->mX);
+        int y = Mth::floor(entity->mY) - 1;
+        int z = Mth::floor(entity->mZ);
+        int xa = 1;
+        int za = 0;
+        for (int s = -2; s <= 2; ++s)
         {
-            for (int x = centerX - 2; x <= centerX + 2; ++x)
+            for (int b = -2; b <= 2; ++b)
             {
-                world->setBlockAndUpdate(BlockPos(x, centerY - 2, z), Blocks::obsidian->defaultBlockState());
-                world->setBlockAndUpdate(BlockPos(x, centerY - 1, z), Blocks::air->defaultBlockState());
-                world->setBlockAndUpdate(BlockPos(x, centerY, z), Blocks::air->defaultBlockState());
-                world->setBlockAndUpdate(BlockPos(x, centerY + 1, z), Blocks::air->defaultBlockState());
+                for (int h = -1; h < 3; ++h)
+                {
+                    int xx = x + b * xa + s * za;
+                    int yy = y + h;
+                    int zz = z + b * za - s * xa;
+                    bool border = h < 0;
+                    level->setBlockAndUpdate(BlockPos(xx, yy, zz), border ? Blocks::obsidian->defaultBlockState()
+                                                                          : Blocks::air->defaultBlockState());
+                }
             }
         }
-        entity->moveTo((double)centerX, (double)(centerY - 1), (double)centerZ, entity->mYRot, 0.0f);
+        entity->moveTo((double)x, (double)y, (double)z, entity->mYRot, 0.0f);
         entity->mXd = 0.0;
         entity->mYd = 0.0;
         entity->mZd = 0.0;
         return;
     }
 
-    if (!findPortal(entity, rotation, chunkX, chunkZ))
+    if (findPortal(entity, rotation, chunkX, chunkZ))
     {
-        createPortal(entity);
-        findPortal(entity, rotation, chunkX, chunkZ);
+        return;
     }
+
+    createPortal(entity);
+    findPortal(entity, rotation, chunkX, chunkZ);
 }
 
 bool PortalForcer::isBlocked(const BlockPos& pos)

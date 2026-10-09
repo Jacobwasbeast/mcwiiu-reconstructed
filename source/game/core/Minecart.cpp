@@ -76,13 +76,13 @@ std::wstring Minecart::Type::NAMES[7] = {
     L"MinecartCommandBlock"
 };
 
-const Minecart::Type* Minecart::Type::RIDEABLE = new Minecart::Type(0);
-const Minecart::Type* Minecart::Type::CHEST = new Minecart::Type(1);
-const Minecart::Type* Minecart::Type::FURNACE = new Minecart::Type(2);
-const Minecart::Type* Minecart::Type::TNT = new Minecart::Type(3);
-const Minecart::Type* Minecart::Type::SPAWNER = new Minecart::Type(4);
-const Minecart::Type* Minecart::Type::HOPPER = new Minecart::Type(5);
-const Minecart::Type* Minecart::Type::COMMAND_BLOCK = new Minecart::Type(6);
+const Minecart::Type* Minecart::Type::RIDEABLE = new Minecart::Type(Minecart::Type::eType_Rideable);
+const Minecart::Type* Minecart::Type::CHEST = new Minecart::Type(Minecart::Type::eType_Chest);
+const Minecart::Type* Minecart::Type::FURNACE = new Minecart::Type(Minecart::Type::eType_Furnace);
+const Minecart::Type* Minecart::Type::TNT = new Minecart::Type(Minecart::Type::eType_TNT);
+const Minecart::Type* Minecart::Type::SPAWNER = new Minecart::Type(Minecart::Type::eType_Spawner);
+const Minecart::Type* Minecart::Type::HOPPER = new Minecart::Type(Minecart::Type::eType_Hopper);
+const Minecart::Type* Minecart::Type::COMMAND_BLOCK = new Minecart::Type(Minecart::Type::eType_CommandBlock);
 
 const Minecart::Type* Minecart::Type::VALUES[7] = {
     Minecart::Type::RIDEABLE,
@@ -176,15 +176,15 @@ boost::shared_ptr<Minecart> Minecart::createMinecart(Level* level, double x, dou
 {
     switch (type->mId)
     {
-    case 1:
+    case Type::eType_Chest:
         return boost::shared_ptr<Minecart>(new MinecartChest(level, x, y, z));
-    case 2:
+    case Type::eType_Furnace:
         return boost::shared_ptr<Minecart>(new MinecartFurnace(level, x, y, z));
-    case 3:
+    case Type::eType_TNT:
         return boost::shared_ptr<Minecart>(new MinecartTNT(level, x, y, z));
-    case 4:
+    case Type::eType_Spawner:
         return boost::shared_ptr<Minecart>(new MinecartSpawner(level, x, y, z));
-    case 5:
+    case Type::eType_Hopper:
         return boost::shared_ptr<Minecart>(new MinecartHopper(level, x, y, z));
     default:
         return boost::shared_ptr<Minecart>(new MinecartRideable(level, x, y, z));
@@ -255,7 +255,7 @@ bool Minecart::hurt(const DamageSource* source, float damage)
     if (source != NULL && dynamic_cast<const EntityDamageSource*>(source) != NULL)
     {
         boost::shared_ptr<Entity> attacker = source->getDirectEntity();
-        if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType())
             && !boost::static_pointer_cast<Player>(attacker)->isAllowedToHurtEntity(shared_from_this()))
         {
             return false;
@@ -269,7 +269,7 @@ bool Minecart::hurt(const DamageSource* source, float damage)
     hasPassenger(source->getEntity());
 
     bool creativePlayer = source->getEntity() != NULL
-                          && (source->getEntity()->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+                          && eTYPE_DERIVED_FROM(EntityType::PLAYER, source->getEntity()->GetType())
                           && boost::static_pointer_cast<Player>(source->getEntity())->mAbilities.mInstabuild;
 
     if (creativePlayer || getDamage() > 40.0f)
@@ -464,7 +464,7 @@ void Minecart::tick()
         double zDelta = mZo - mZ;
         if (xDelta * xDelta + zDelta * zDelta > 0.001)
         {
-            mYRot = (float)(std::atan2(zDelta, xDelta) * 180.0 / Mth::PI);
+            mYRot = (float)(std::atan2(zDelta, xDelta) * 180.0 / 3.1415927f);
             if (mFlipped)
             {
                 mYRot += 180.0f;
@@ -484,11 +484,12 @@ void Minecart::tick()
             PushableBySelector selector(shared_from_this());
             std::vector<boost::shared_ptr<Entity> >* entities =
                 mLevel->getEntities(shared_from_this(), mBoundingBox->grow(0.2f, 0.0, 0.2f), &selector, NULL);
-            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+            std::vector<boost::shared_ptr<Entity> >::iterator itEnd = entities->end();
+            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != itEnd; ++it)
             {
                 boost::shared_ptr<Entity> entity = *it;
-                if (Entity::instanceof(entity, EntityType::PLAYER) || entity->GetType() == EntityType::VILLAGER_GOLEM
-                    || Entity::instanceof(entity, EntityType::MINECART) || entity->GetType() == EntityType::BOAT
+                if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) || eTYPE_DERIVED_FROM(EntityType::VILLAGER_GOLEM, entity->GetType())
+                    || eTYPE_DERIVED_FROM(EntityType::MINECART, entity->GetType()) || eTYPE_DERIVED_FROM(EntityType::BOAT, entity->GetType())
                     || isVehicle() || entity->isPassenger())
                 {
                     entity->push(shared_from_this());
@@ -503,11 +504,12 @@ void Minecart::tick()
         {
             std::vector<boost::shared_ptr<Entity> >* entities =
                 mLevel->getEntities(shared_from_this(), mBoundingBox->grow(0.2f, 0.0, 0.2f), NULL);
-            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
+            std::vector<boost::shared_ptr<Entity> >::iterator itEnd = entities->end();
+            for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != itEnd; ++it)
             {
                 boost::shared_ptr<Entity> entity = *it;
                 if (!hasPassenger(entity) && entity->isPushable(shared_from_this())
-                    && Entity::instanceof(entity, EntityType::MINECART))
+                    && eTYPE_DERIVED_FROM(EntityType::MINECART, entity->GetType()))
                 {
                     boost::shared_ptr<Minecart> minecart = boost::static_pointer_cast<Minecart>(entity);
                     minecart->mPushedMinecart = false;
@@ -615,13 +617,13 @@ void Minecart::moveAlongTrack(const BlockPos& pos, const BlockState* state)
     if (!passengers->empty())
     {
         boost::shared_ptr<Entity> passenger = passengers->at(0).lock();
-        if ((passenger->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, passenger->GetType()))
         {
             boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(passenger);
             if (living->mZza > 0.0 && mXd * mXd + mZd * mZd < 0.01)
             {
-                float xPush = -std::sin(living->mYRot * Mth::DEG_TO_RAD);
-                float zPush = std::cos(living->mYRot * Mth::DEG_TO_RAD);
+                float xPush = -std::sin(living->mYRot * 0.017453292f);
+                float zPush = std::cos(living->mYRot * 0.017453292f);
                 mXd += xPush * 0.1;
                 mZd += zPush * 0.1;
                 braking = false;

@@ -12,6 +12,16 @@
 class DirectionalDegrade : public DegradationRuleDefinition
 {
 public:
+    enum EDirection
+    {
+        eDirection_North = 1,
+        eDirection_South,
+        eDirection_East,
+        eDirection_West,
+        eDirection_ToEdges,
+        eDirection_ToCentre
+    };
+
     DirectionalDegrade();
 
     virtual ConsoleGameRules::EGameRuleType getActionType();
@@ -21,7 +31,7 @@ public:
     virtual void NextBlocks(BlockDegradeRoutine::LayerCache* layerCache, arrayWithLength<BlockPos>& blocks);
 
 private:
-    int mDirection;
+    EDirection mDirection;
     std::vector<BlockPos> mBlocks;
 };
 

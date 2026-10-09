@@ -90,7 +90,7 @@ void SnowMan::addDataWalkers(DataFixerUpper* fixer)
 void SnowMan::registerGoals()
 {
     mGoalSelector.addGoal(1, new RangedAttackGoal(this, this, 1.25, 20, 10.0f), true);
-    mGoalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 1.0, 0.001f / 100.0f), true);
+    mGoalSelector.addGoal(2, new WaterAvoidingRandomStrollGoal(this, 1.0, WaterAvoidingRandomStrollGoal::PROBABILITY / 100.0f), true);
     mGoalSelector.addGoal(3, new LookAtPlayerGoal(this, typeid(Player), 6.0f), true);
     mGoalSelector.addGoal(4, new RandomLookAroundGoal(this), true);
     mTargetSelector.addGoal(1, new NearestAttackableTargetGoal(this, typeid(Mob), 10,
@@ -158,10 +158,10 @@ void SnowMan::aiStep()
     {
         for (int i = 0; i < 4; ++i)
         {
-            int snowX = Mth::floor(mX + ((i % 2) * 2 - 1) * 0.25f);
-            int snowY = Mth::floor(mY);
-            int snowZ = Mth::floor(mZ + (((i / 2) % 2) * 2 - 1) * 0.25f);
-            BlockPos snowPos(snowX, snowY, snowZ);
+            x = Mth::floor(mX + ((i % 2) * 2 - 1) * 0.25f);
+            y = Mth::floor(mY);
+            z = Mth::floor(mZ + (((i / 2) % 2) * 2 - 1) * 0.25f);
+            BlockPos snowPos(x, y, z);
             if (mLevel->getBlockState(snowPos)->getMaterial() == Material::AIR &&
                 mLevel->getBiome(snowPos)->getTemperature(snowPos) < 0.8f &&
                 Blocks::snow_layer->mayPlace(mLevel, snowPos))
@@ -183,7 +183,7 @@ float SnowMan::getEyeHeight()
 bool SnowMan::hurt(const DamageSource* source, float damage)
 {
     boost::shared_ptr<Entity> entity = source->getDirectEntity();
-    if (entity && (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (entity && eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
         if (!player->isAllowedToAttackPlayers())
@@ -195,14 +195,18 @@ bool SnowMan::hurt(const DamageSource* source, float damage)
 unsigned int SnowMan::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
     unsigned int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
-    if (itemId == ItemId::SHEARS && hasPumpkin())
-        return IDS_TOOLTIPS_SHEAR;
-    if (itemId == ItemId::LEAD)
+    switch (itemId)
     {
+    case ItemId::LEAD:
         if (!isLeashed())
             return IDS_TOOLTIPS_LEASH;
         if (getLeashHolder().get() == tooltipData.m_pPlayer.get())
             return IDS_TOOLTIPS_UNLEASH;
+        break;
+    case ItemId::SHEARS:
+        if (hasPumpkin())
+            return IDS_TOOLTIPS_SHEAR;
+        break;
     }
     return IDS_NONE;
 }

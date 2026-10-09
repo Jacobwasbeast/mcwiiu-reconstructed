@@ -80,7 +80,7 @@ void MG04ScoreboardLayout::Init(int value)
         INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerByIndex(index);
         if (networkPlayer != 0)
         {
-            PlayerInfo* info = new MG04PlayerInfo();
+            MG04PlayerInfo* info = new MG04PlayerInfo();
             BuildPlayerInfo(networkPlayer, info);
             m_players.push_back(info);
         }
@@ -94,7 +94,8 @@ UIString MG04ScoreboardLayout::getLabel2(const StatsUID& uid)
     ClientScoreboard* scoreboard =
         Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const int blocks = scoreboard->GetBlocksPlaced(uid, -1);
-    std::wstring text(L"");
+    std::wstring text;
+    text = L"";
     text = replaceAll(text, L"{*BLOCKS*}", _toString<unsigned int>(blocks));
     return UIString(text);
 }
@@ -103,7 +104,8 @@ UIString MG04ScoreboardLayout::getLabel3(const StatsUID& uid)
 {
     ClientScoreboard* scoreboard =
         Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
-    const int blocks = scoreboard->GetBlocksDestroyed(uid, -1);
+    int round = -1;
+    const int blocks = scoreboard->GetBlocksDestroyed(uid, round);
     std::wstring text(L10N::GetString(IDS_MG_BLOCKS_DESTROYED));
     text = replaceAll(text, L"{*BLOCKS*}", _toString<unsigned int>(blocks));
     return UIString(text);
@@ -114,7 +116,8 @@ UIString MG04ScoreboardLayout::getLabel4(const StatsUID& uid)
     ClientScoreboard* scoreboard =
         Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLevel()->GetClientScoreboard();
     const int distance = scoreboard->GetTotalDistanceTravelled(uid);
-    std::wstring text(L10N::GetString(IDS_MG_DISTANCE_TRAVELLED));
+    const wchar_t* format = L10N::GetString(IDS_MG_DISTANCE_TRAVELLED);
+    std::wstring text(format);
     text = replaceAll(text, L"{*DELTA*}", _toString<unsigned int>(distance));
     return UIString(text);
 }
@@ -200,24 +203,20 @@ not_null_ptr<ItemInstance> MG04ScoreboardLayout::getItemForSlot(int row, int, co
         {
             return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
         }
-        return ItemInstance::EMPTY;
     }
-
-    if (row == 0)
+    else
     {
-        return not_null_ptr<ItemInstance>(new ItemInstance(Items::ironIngot));
-    }
-    if (row == 1)
-    {
-        return not_null_ptr<ItemInstance>(new ItemInstance(Items::goldIngot));
-    }
-    if (row == 2)
-    {
-        return not_null_ptr<ItemInstance>(new ItemInstance(Items::diamond));
-    }
-    if (row == 3)
-    {
-        return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
+        switch (row)
+        {
+        case 0:
+            return not_null_ptr<ItemInstance>(new ItemInstance(Items::ironIngot));
+        case 1:
+            return not_null_ptr<ItemInstance>(new ItemInstance(Items::goldIngot));
+        case 2:
+            return not_null_ptr<ItemInstance>(new ItemInstance(Items::diamond));
+        case 3:
+            return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
+        }
     }
     return ItemInstance::EMPTY;
 }
@@ -256,18 +255,14 @@ PlayerInfo* MG04ScoreboardLayout::CreatePlayerInfo()
 
 void MG04ScoreboardLayout::AddPlayer(unsigned char smallId)
 {
-    PlayerInfo* info = new MG04PlayerInfo();
+    MG04PlayerInfo* info = new MG04PlayerInfo();
     BuildPlayerInfo(CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId), info);
     m_players.push_back(info);
 }
 
 void MG04ScoreboardLayout::UpdatePlayer(int index, PlayerInfo*, PlayerInfo* newInfo, bool)
 {
-    PlayerInfo* info = m_players[index];
-    info->smallId = newInfo->smallId;
-    info->colour = newInfo->colour;
-    info->voiceStatus = newInfo->voiceStatus;
-    info->name = newInfo->name;
+    *m_players[index] = *newInfo;
 }
 
 bool MG04ScoreboardLayout::showLifeSpanProgress()

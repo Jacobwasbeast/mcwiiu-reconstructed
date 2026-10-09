@@ -216,7 +216,7 @@ bool Boat::hurt(const DamageSource* source, float damage)
     if (source != NULL && dynamic_cast<const EntityDamageSource*>(source) != NULL)
     {
         boost::shared_ptr<Entity> attacker = source->getDirectEntity();
-        if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType())
             && !boost::static_pointer_cast<Player>(attacker)->isAllowedToHurtEntity(shared_from_this()))
         {
             return false;
@@ -231,7 +231,7 @@ bool Boat::hurt(const DamageSource* source, float damage)
     markHurt();
 
     const bool creativePlayer = source->getEntity() != NULL
-        && (source->getEntity()->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+        && eTYPE_DERIVED_FROM(EntityType::PLAYER, source->getEntity()->GetType())
         && boost::static_pointer_cast<Player>(source->getEntity())->mAbilities.mInstabuild;
 
     if (creativePlayer || getDamage() > 40.0f)
@@ -277,7 +277,7 @@ void Boat::onAboveBubbleCol(bool down)
 
 void Boat::push(boost::shared_ptr<Entity> entity)
 {
-    const bool isBoat = entity->GetType() == EntityType::BOAT;
+    const bool isBoat = eTYPE_DERIVED_FROM(EntityType::BOAT, entity->GetType());
     if (isBoat)
     {
         if (entity->mBoundingBox->mMinY < mBoundingBox->mMaxY)
@@ -731,8 +731,7 @@ void Boat::tick()
     if (isControlledByLocalInstance())
     {
         if (getPassengers()->empty()
-            || (static_cast<const PassengerList*>(getPassengers())->at(0).lock()->GetType() & EntityType::PLAYER)
-                != EntityType::PLAYER)
+            || !eTYPE_DERIVED_FROM(EntityType::PLAYER, static_cast<const PassengerList*>(getPassengers())->at(0).lock()->GetType()))
             setPaddleState(false, false);
 
         floatBoat();
@@ -768,16 +767,10 @@ void Boat::tick()
                 if (sound != NULL)
                 {
                     const Vec3* view = getViewVector(1.0f);
-                    if (i == 1)
-                    {
-                        mLevel->playSound(boost::shared_ptr<Player>(), mX - view->z, mY, mZ + view->x, sound,
-                                          getSoundSource(), 1.0f, 0.8f + 0.4f * mRandom->nextFloat(), 16.0f);
-                    }
-                    else
-                    {
-                        mLevel->playSound(boost::shared_ptr<Player>(), mX + view->z, mY, mZ - view->x, sound,
-                                          getSoundSource(), 1.0f, 0.8f + 0.4f * mRandom->nextFloat(), 16.0f);
-                    }
+                    const double xOffset = i == 1 ? -view->z : view->z;
+                    const double zOffset = i == 1 ? view->x : -view->x;
+                    mLevel->playSound(boost::shared_ptr<Player>(), mX + xOffset, mY, mZ + zOffset, sound,
+                                      getSoundSource(), 1.0f, 0.8f + 0.4f * mRandom->nextFloat(), 16.0f);
                 }
             }
             mPaddlePositions[i] += paddleStroke;
@@ -803,12 +796,12 @@ void Boat::tick()
                 continue;
 
             if (serverSide && getPassengers()->size() < 2 && !entity->isPassenger()
-                && (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
-                && (entity->GetType() & EntityType::WATER_ANIMAL) != EntityType::WATER_ANIMAL
-                && (entity->GetType() & EntityType::AGABLE_WATER_ANIMAL) != EntityType::AGABLE_WATER_ANIMAL
-                && entity->GetType() != EntityType::TURTLE
-                && (entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER
-                && (entity->GetType() & EntityType::MINECART) != EntityType::MINECART)
+                && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
+                && !eTYPE_DERIVED_FROM(EntityType::WATER_ANIMAL, entity->GetType())
+                && !eTYPE_DERIVED_FROM(EntityType::AGABLE_WATER_ANIMAL, entity->GetType())
+                && !eTYPE_DERIVED_FROM(EntityType::TURTLE, entity->GetType())
+                && !eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
+                && !eTYPE_DERIVED_FROM(EntityType::MINECART, entity->GetType()))
             {
                 entity->startRiding(shared_from_this());
             }
@@ -852,18 +845,18 @@ void Boat::positionRider(const boost::shared_ptr<Entity>& passenger)
             offset = -0.6f;
         else
             offset = 0.2f;
-        const bool isAnimal = (passenger->GetType() & EntityType::ANIMAL) == EntityType::ANIMAL;
+        const bool isAnimal = eTYPE_DERIVED_FROM(EntityType::ANIMAL, passenger->GetType());
         if (isAnimal)
             offset += 0.2f;
     }
 
-    const Vec3* seat = Vec3::newTemp(offset, 0.0, 0.0)->yRot(-mYRot * 0.017453292f - 3.1415927f / 2.0f);
+    const Vec3* seat = Vec3::newTemp(offset, 0.0, 0.0)->yRot(-mYRot * Mth::DEG_TO_RAD - 3.1415927f / 2.0f);
     passenger->setPos(mX + seat->x, mY + height, mZ + seat->z);
     passenger->mYRot += mDeltaRotation;
     passenger->setYHeadRot(passenger->getYHeadRot() + mDeltaRotation);
     clampRotation(passenger);
 
-    const bool isAnimalPassenger = (passenger->GetType() & EntityType::ANIMAL) == EntityType::ANIMAL;
+    const bool isAnimalPassenger = eTYPE_DERIVED_FROM(EntityType::ANIMAL, passenger->GetType());
     if (isAnimalPassenger && getPassengers()->size() > 1)
     {
         const int facing = (passenger->getId() & 1) == 0 ? 90 : 270;
@@ -886,11 +879,11 @@ void Boat::addAdditonalSaveData(CompoundTag* tag)
     if (leashHolder)
     {
         CompoundTag* leashTag = new CompoundTag();
-        if ((leashHolder->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, leashHolder->GetType()))
         {
             leashTag->putString(L"UUID", leashHolder->getUUID());
         }
-        else if ((leashHolder->GetType() & EntityType::HANGING_ENTITY) == EntityType::HANGING_ENTITY)
+        else if (eTYPE_DERIVED_FROM(EntityType::HANGING_ENTITY, leashHolder->GetType()))
         {
             BlockPos pos = boost::dynamic_pointer_cast<HangingEntity>(leashHolder)->getPos();
             leashTag->putInt(L"X", pos.x);

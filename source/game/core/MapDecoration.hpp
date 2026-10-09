@@ -30,7 +30,7 @@ public:
     MapDecoration(const Type* type, char x, char y, char rot, int id, bool visible);
 
     const Type* getType() const;
-    unsigned char getImg() const;
+    unsigned int getImg() const;
     int getX() const;
     int getY() const;
     int getRot() const;

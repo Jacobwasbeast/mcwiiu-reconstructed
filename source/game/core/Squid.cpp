@@ -47,20 +47,20 @@ void Squid::addDataWalkers(DataFixerUpper* fixer)
 
 void Squid::_init()
 {
-    mXBodyRot = 0.0f;
     mXBodyRotO = 0.0f;
-    mZBodyRot = 0.0f;
+    mXBodyRot = 0.0f;
     mZBodyRotO = 0.0f;
-    mTentacleMovement = 0.0f;
+    mZBodyRot = 0.0f;
     mOldTentacleMovement = 0.0f;
-    mTentacleAngle = 0.0f;
+    mTentacleMovement = 0.0f;
     mOldTentacleAngle = 0.0f;
+    mTentacleAngle = 0.0f;
     mSpeed = 0.0f;
     mTentacleSpeed = 0.0f;
     mRotateSpeed = 0.0f;
-    mMovementX = 0.0f;
-    mMovementY = 0.0f;
     mMovementZ = 0.0f;
+    mMovementY = 0.0f;
+    mMovementX = 0.0f;
 }
 
 void Squid::registerGoals()
@@ -134,26 +134,7 @@ void Squid::aiStep()
         }
     }
 
-    if (!isInWaterOrBubble())
-    {
-        mTentacleAngle = Mth::abs(Mth::sin(mTentacleMovement)) * 3.1415927f * 0.25f;
-        mXd = 0.0;
-        mZd = 0.0;
-        if (hasEffect(MobEffects::LEVITATION))
-        {
-            mYd = (mYd + (0.05 * (double)(getEffect(MobEffects::LEVITATION)->getAmplifier() + 1) - mYd)) * 0.98f;
-        }
-        else
-        {
-            if (!isNoGravity())
-            {
-                mYd -= 0.08;
-            }
-            mYd *= 0.98f;
-        }
-        mXBodyRot += (-90.0f - mXBodyRot) * 0.02f;
-    }
-    else
+    if (isInWaterOrBubble())
     {
         if (mTentacleMovement < 3.1415927f)
         {
@@ -188,6 +169,25 @@ void Squid::aiStep()
         mZBodyRot += 3.1415927f * mRotateSpeed * 1.5f;
         mXBodyRot += (-(float)std::atan2(horizontalSpeed, mYd) * 57.295776f - mXBodyRot) * 0.1f;
     }
+    else
+    {
+        mTentacleAngle = Mth::abs(Mth::sin(mTentacleMovement)) * 3.1415927f * 0.25f;
+        mXd = 0.0;
+        mZd = 0.0;
+        if (hasEffect(MobEffects::LEVITATION))
+        {
+            mYd = (mYd + (0.05 * (double)(getEffect(MobEffects::LEVITATION)->getAmplifier() + 1) - mYd)) * 0.98f;
+        }
+        else
+        {
+            if (!isNoGravity())
+            {
+                mYd -= 0.08;
+            }
+            mYd *= 0.98f;
+        }
+        mXBodyRot += (-90.0f - mXBodyRot) * 0.02f;
+    }
 }
 
 void Squid::travel(float xa, float ya, float za)
@@ -207,7 +207,7 @@ Vec3* Squid::randomInkDir()
     float xSpread = random->nextFloat() * mBbWidth;
     float x = (float)backwards->x + (xSpread + xSpread) - mBbWidth;
     float yBase = (float)backwards->y + 0.5f;
-    double y = random->nextFloat() * (double)mBbHeight + yBase;
+    float y = random->nextFloat() * mBbHeight + yBase;
     float zSpread = random->nextFloat() * mBbWidth;
     float z = (float)backwards->z + (zSpread + zSpread) - mBbWidth;
     return Vec3::newTemp(x, y, z)->normalize();
@@ -215,50 +215,45 @@ Vec3* Squid::randomInkDir()
 
 void Squid::spawnInkParticles()
 {
-    int inkValue = 500;
     int count = 15;
+    int inkValue = 500;
     if (isBaby())
     {
-        inkValue = 300;
         count = 8;
+        inkValue = 300;
     }
     for (int i = 0; i < count; ++i)
     {
         Vec3* direction = randomInkDir()->multiply(0.1, 0.1, 0.1);
-        int inkValues[1];
-        inkValues[0] = inkValue;
-        arrayWithLength<int> inkData(inkValues, 1);
-        mLevel->addParticle(PARTICLE_INK, mX, mY, mZ, direction->x, direction->y, direction->z, inkData);
+        int inkData[1] = { inkValue };
+        mLevel->addParticle(PARTICLE_INK, mX, mY, mZ, direction->x, direction->y, direction->z,
+                            arrayWithLength<int>(inkData, 1));
     }
 
     for (int i = 0; i < 5; ++i)
     {
         Vec3* direction = randomInkDir();
-        int bubbleValues[4];
-        bubbleValues[0] = 0;
-        bubbleValues[1] = 1;
-        bubbleValues[2] = 244;
-        bubbleValues[3] = 1;
-        arrayWithLength<int> bubbleData(bubbleValues, 4);
-        mLevel->addParticle(PARTICLE_BUBBLE, mX, mY, mZ, direction->x, direction->y, direction->z, bubbleData);
+        int bubbleData[4] = { 0, 1, 244, 1 };
+        mLevel->addParticle(PARTICLE_BUBBLE, mX, mY, mZ, direction->x, direction->y, direction->z,
+                            arrayWithLength<int>(bubbleData, 4));
     }
 }
 
 void Squid::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == EntityEvent::SQUID_ANIM_SYNCH)
+    switch (event)
     {
-        mTentacleMovement = 0;
-    }
-    else if (event == EntityEvent::SQUID_INK)
-    {
+    case EntityEvent::SQUID_INK:
         spawnInkParticles();
         mLevel->playLocalSound(mX, mY, mZ, SoundEvents::SQUID_SQUIRT, SoundSource::eSoundSource_Hostile, 0.3f, 1.0f,
                                false, 16.0f);
-    }
-    else
-    {
+        break;
+    case EntityEvent::SQUID_ANIM_SYNCH:
+        mTentacleMovement = 0;
+        break;
+    default:
         Mob::handleEntityEvent(event, data);
+        break;
     }
 }
 
@@ -277,15 +272,15 @@ bool Squid::hasMovementVector()
 bool Squid::hurt(const DamageSource* source, float damage)
 {
     bool hurt = LivingEntity::hurt(source, damage);
-    if (source->getEntity() == NULL)
-    {
-        if (getJumpControl() != NULL)
-            getJumpControl()->jump();
-    }
-    else
+    if (source->getEntity() != NULL)
     {
         spawnInkParticles();
         mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::SQUID_INK, 0);
+    }
+    else
+    {
+        if (getJumpControl() != NULL)
+            getJumpControl()->jump();
     }
     return hurt;
 }
@@ -327,7 +322,7 @@ void Squid::SquidRandomMovementGoal::tick()
     {
         float angle = mSquid->getRandom()->nextFloat() * 6.2831855f;
         float x = Mth::cos(angle) * 0.2f;
-        float y = mSquid->getRandom()->nextFloat() * 0.2f - 0.1f;
+        float y = -0.1f + mSquid->getRandom()->nextFloat() * 0.2f;
         float z = Mth::sin(angle) * 0.2f;
         mSquid->setMovementVector(x, y, z);
     }

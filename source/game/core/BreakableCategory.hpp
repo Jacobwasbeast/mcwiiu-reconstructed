@@ -2,13 +2,15 @@
 #define GAME_CORE_BREAKABLECATEGORY_HPP
 
 #include "game/item/EnchantmentCategory.hpp"
-
-class Item;
+#include "game/item/Item.hpp"
 
 class BreakableCategory : public EnchantmentCategory
 {
 public:
-    virtual bool canEnchant(Item* item) const;
+    virtual bool canEnchant(Item* item) const
+    {
+        return item->canBeDepleted();
+    }
 };
 
 #endif

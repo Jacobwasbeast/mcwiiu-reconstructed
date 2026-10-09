@@ -121,19 +121,16 @@ void Bat::tick()
 {
     PIXBeginNamedEvent(0.0f, "Bat tick");
     Mob::tick();
-    if (!isResting())
+    if (isResting())
     {
-        mYd *= 0.6000000238418579;
-    }
-    else
-    {
-        int y = (int)mY;
         mXd = 0.0;
         mYd = 0.0;
         mZd = 0.0;
-        if (mY < (double)y)
-            --y;
-        mY = ((double)y + 1.0) - (double)mBbHeight;
+        mY = (double)Mth::floor(mY) + 1.0 - (double)mBbHeight;
+    }
+    else
+    {
+        mYd *= 0.6f;
     }
     PIXEndNamedEvent();
 }
@@ -156,8 +153,7 @@ void Bat::customServerAiStep()
         {
             if (mRandom->nextInt(200) == 0)
                 mYHeadRot = (float)mRandom->nextInt(360);
-            boost::shared_ptr<Player> player = mLevel->getNearestPlayer(shared_from_this(), 4.0, -1.0);
-            if (player)
+            if (mLevel->getNearestPlayer(shared_from_this(), 4.0, -1.0) != NULL)
             {
                 setResting(false);
                 mLevel->levelEvent(boost::shared_ptr<Player>(), LevelEvent::SOUND_BAT_LIFTOFF, pos, 0);
@@ -166,7 +162,7 @@ void Bat::customServerAiStep()
         return;
     }
 
-    if (mTargetPosition != NULL && (!mLevel->isEmptyBlock(*mTargetPosition) || mTargetPosition->y < 1))
+    if (mTargetPosition != NULL && (!mLevel->isEmptyBlock(*mTargetPosition) || mTargetPosition->getY() < 1))
     {
         delete mTargetPosition;
         mTargetPosition = NULL;
@@ -180,16 +176,18 @@ void Bat::customServerAiStep()
                                        (int)mZ + mRandom->nextInt(7) - mRandom->nextInt(7));
     }
 
-    double xDelta = ((double)mTargetPosition->x + 0.5) - mX;
-    double yDelta = ((double)mTargetPosition->y + 0.1) - mY;
-    double zDelta = ((double)mTargetPosition->z + 0.5) - mZ;
+    double xDelta = ((double)mTargetPosition->getX() + 0.5) - mX;
+    double yDelta = ((double)mTargetPosition->getY() + 0.1) - mY;
+    double zDelta = ((double)mTargetPosition->getZ() + 0.5) - mZ;
     float xDirection = (float)((xDelta > 0.0) - (xDelta < 0.0));
     float yDirection = (float)((yDelta > 0.0) - (yDelta < 0.0));
     float zDirection = (float)((zDelta > 0.0) - (zDelta < 0.0));
-    mXd = (xDirection * 0.5f - mXd) * 0.1f + mXd;
-    mYd = (yDirection * 0.7f - mYd) * 0.1f + mYd;
-    mZd = (zDirection * 0.5f - mZd) * 0.1f + mZd;
-    mYRot += Mth::wrapDegrees((float)(std::atan2(mZd, mXd) * 57.2957763671875) - 90.0f - mYRot);
+    mXd += (xDirection * 0.5f - mXd) * 0.1f;
+    mYd += (yDirection * 0.7f - mYd) * 0.1f;
+    mZd += (zDirection * 0.5f - mZd) * 0.1f;
+    float wantedYRot = (float)(std::atan2(mZd, mXd) * Mth::RAD_TO_DEG) - 90.0f;
+    float yRotDelta = Mth::wrapDegrees(wantedYRot - mYRot);
+    mYRot += yRotDelta;
     mZza = 0.5f;
     const BlockState* aboveState = mLevel->getBlockState(above);
     if (mRandom->nextInt(100) == 0 && aboveState->getBlock()->isSolidBlockingCubeAndNotSignalSource(aboveState))
@@ -243,22 +241,17 @@ void Bat::addAdditonalSaveData(CompoundTag* tag)
 bool Bat::checkSpawnRules()
 {
     BlockPos pos(mX, mBoundingBox->mMinY, mZ);
-    if (pos.y < mLevel->getSeaLevel())
-    {
-        int brightness = mLevel->getRawBrightness(pos);
-        int threshold;
-        if (!gHalloweenEvent)
-        {
-            if (mRandom->nextBoolean())
-                return false;
-            threshold = mRandom->nextInt(4);
-        }
-        else
-            threshold = mRandom->nextInt(7);
-        if (brightness <= threshold)
-            return Mob::checkSpawnRules();
-    }
-    return false;
+    if (pos.y >= mLevel->getSeaLevel())
+        return false;
+    int brightness = mLevel->getRawBrightness(pos);
+    int maxLight = 4;
+    if (gHalloweenEvent)
+        maxLight = 7;
+    else if (mRandom->nextBoolean())
+        return false;
+    if (brightness > mRandom->nextInt(maxLight))
+        return false;
+    return Mob::checkSpawnRules();
 }
 
 float Bat::getEyeHeight()

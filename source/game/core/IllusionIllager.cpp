@@ -180,7 +180,7 @@ bool IllusionIllager::isAlliedTo(boost::shared_ptr<Entity> entity)
 {
     if (Entity::isAlliedTo(entity))
         return true;
-    bool isLiving = (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
+    bool isLiving = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType());
     int illager = isLiving && boost::static_pointer_cast<LivingEntity>(entity)->getMobType() == MOB_TYPE_ILLAGER;
     if (illager)
         return getTeam() == NULL && entity->getTeam() == NULL;

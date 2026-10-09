@@ -92,7 +92,7 @@ void Witch::registerGoals()
 void Witch::defineSynchedData()
 {
     Monster::defineSynchedData();
-    getEntityData()->createDateItem(DATA_USING_ITEM, false);
+    getEntityData()->define(DATA_USING_ITEM, false);
 }
 const SoundEvent* Witch::getAmbientSound() { return SoundEvents::WITCH_AMBIENT; }
 const SoundEvent* Witch::getHurtSound(const DamageSource*) { return SoundEvents::WITCH_HURT; }

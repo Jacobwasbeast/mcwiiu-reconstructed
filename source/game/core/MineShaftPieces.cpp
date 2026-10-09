@@ -380,7 +380,7 @@ bool MineShaftPieces::MineShaftCorridor::postProcess(Level* level, Random& rando
                 boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
                 if (blockEntity != NULL)
                 {
-                    bool isSpawner = blockEntity->GetType() == BlockEntityType::MOB_SPAWNER;
+                    bool isSpawner = eTYPE_DERIVED_FROM(BlockEntityType::MOB_SPAWNER, blockEntity->GetType());
                     if (isSpawner)
                     {
                         boost::shared_ptr<MobSpawnerBlockEntity> spawner =

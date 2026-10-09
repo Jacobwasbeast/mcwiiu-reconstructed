@@ -100,7 +100,7 @@ const SoundEvent* Parrot::getImitatedSound(unsigned long long type)
 {
     boost::unordered_map<unsigned long long, const SoundEvent*>::const_iterator it =
         gImitatedSounds.find(type);
-    return it == gImitatedSounds.end() ? SoundEvents::PARROT_AMBIENT : it->second;
+    return it != gImitatedSounds.end() ? it->second : SoundEvents::PARROT_AMBIENT;
 }
 
 float Parrot::getPitch(Random* random)
@@ -134,12 +134,14 @@ bool Parrot::imitateNearbyMobs(Level* level, Entity* entity)
 
 const SoundEvent* Parrot::getAmbient(Random* random)
 {
-    if (random->nextInt(1000) != 0)
-        return SoundEvents::PARROT_AMBIENT;
-    boost::unordered_map<unsigned long long, const SoundEvent*>::const_iterator it =
-        gImitatedSounds.begin();
-    std::advance(it, random->nextInt((int)gImitatedSounds.size()));
-    return getImitatedSound(it->first);
+    if (random->nextInt(1000) == 0)
+    {
+        boost::unordered_map<unsigned long long, const SoundEvent*>::const_iterator it =
+            gImitatedSounds.begin();
+        std::advance(it, random->nextInt((int)gImitatedSounds.size()));
+        return getImitatedSound(it->first);
+    }
+    return SoundEvents::PARROT_AMBIENT;
 }
 
 void Parrot::playAmbientSound(Level* level, boost::shared_ptr<Entity> entity)
@@ -152,10 +154,10 @@ void Parrot::playAmbientSound(Level* level, boost::shared_ptr<Entity> entity)
 
 void Parrot::_init()
 {
-    mFlap = 0.0f;
-    mFlapSpeed = 0.0f;
-    mOFlapSpeed = 0.0f;
     mOFlap = 0.0f;
+    mFlapSpeed = 0.0f;
+    mFlap = 0.0f;
+    mOFlapSpeed = 0.0f;
     mFlapping = 1.0f;
     mRecordPlayingNearby = false;
 }
@@ -265,8 +267,8 @@ void Parrot::aiStep()
     if (mRecordPosition == NULL || mRecordPosition->distSqr(mX, mY, mZ) > 12.0 ||
         mLevel->getBlockState(*mRecordPosition)->getBlock() != Blocks::jukebox)
     {
-        mRecordPosition = NULL;
         mRecordPlayingNearby = false;
+        mRecordPosition = NULL;
     }
     Animal::aiStep();
     calculateFlapping();
@@ -287,8 +289,8 @@ bool Parrot::isPartyParrot()
 bool Parrot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
-    Item* itemType = item->getItem();
     bool feedingTameFood = false;
+    Item* itemType = item->getItem();
     for (unsigned int i = 0; i < TAME_FOOD.length; ++i)
     {
         if (TAME_FOOD.data[i] == itemType)
@@ -326,8 +328,7 @@ bool Parrot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHan
 
         return true;
     }
-
-    if (itemType == POISONOUS_FOOD)
+    else if (itemType == POISONOUS_FOOD)
     {
         if (!player->mAbilities.mInstabuild)
             item->shrink(1);
@@ -339,20 +340,12 @@ bool Parrot::mobInteract(const boost::shared_ptr<Player>& player, InteractionHan
 
         return true;
     }
-
-    bool owned = !mLevel->mIsClientSide && !isFlying() && isTame() && isOwnedBy(player);
-
-    if (owned)
+    else if (!mLevel->mIsClientSide && !isFlying() && isTame() && isOwnedBy(player))
     {
         bool renaming = false;
-        if (Item::getId(itemType) == ItemId::NAME_TAG && !isPassenger())
-        {
-            if (item->hasCustomHoverName())
-            {
-                if (!hasCustomName() || !(item->getHoverName() == getCustomName()))
-                    renaming = true;
-            }
-        }
+        if (Item::getId(itemType) == ItemId::NAME_TAG && !isPassenger() && item->hasCustomHoverName()
+            && (!hasCustomName() || !(item->getHoverName() == getCustomName())))
+            renaming = true;
 
         if (!renaming && !isLeashedToPlayer(player))
         {
@@ -402,17 +395,16 @@ unsigned int Parrot::GetInteractTooltip(const EntityTooltipDataHolder& holder)
     if (isLeashedToPlayer(holder.m_pPlayer))
         return IDS_TOOLTIPS_UNLEASH;
 
-    const not_null_ptr<ItemInstance>& item = holder.m_pItemInstance;
-    if (item->getItem() == POISONOUS_FOOD)
+    if (holder.m_pItemInstance->getItem() == POISONOUS_FOOD)
         return IDS_NONE;
 
     if (!isPassenger())
     {
-        if (Item::getId(item->getItem()) == ItemId::NAME_TAG)
+        if (Item::getId(holder.m_pItemInstance->getItem()) == ItemId::NAME_TAG)
         {
-            if (item->hasCustomHoverName())
+            if (holder.m_pItemInstance->hasCustomHoverName())
             {
-                if (!hasCustomName() || !(item->getHoverName() == getCustomName()))
+                if (!hasCustomName() || !(holder.m_pItemInstance->getHoverName() == getCustomName()))
                     return IDS_TOOLTIPS_NAME;
             }
 
@@ -429,12 +421,12 @@ unsigned int Parrot::GetInteractTooltip(const EntityTooltipDataHolder& holder)
 
     if (!isTame())
     {
-        if (isTameFood(item) && getPassengers()->empty())
+        if (isTameFood(holder.m_pItemInstance) && getPassengers()->empty())
             return IDS_TOOLTIPS_TAME;
         return IDS_NONE;
     }
 
-    if (Item::getId(item->getItem()) == ItemId::LEAD && !isLeashed())
+    if (Item::getId(holder.m_pItemInstance->getItem()) == ItemId::LEAD && !isLeashed())
         return IDS_TOOLTIPS_LEASH;
 
     if (isOwnedBy(holder.m_pPlayer))
@@ -518,7 +510,8 @@ bool Parrot::isPushable(boost::shared_ptr<Entity>)
 
 void Parrot::doPush(boost::shared_ptr<Entity> entity)
 {
-    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+    bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType());
+    if (!isPlayer)
         LivingEntity::doPush(entity);
 }
 
@@ -527,11 +520,15 @@ bool Parrot::hurt(const DamageSource* source, float damage)
     if (isTame())
     {
         boost::shared_ptr<Entity> direct = source->getDirectEntity();
-        if (direct && (direct->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (direct)
         {
-            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(direct);
-            if (!player->canHarmPlayer(getOwnerUUID()))
-                return false;
+            bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, direct->GetType());
+            if (isPlayer)
+            {
+                boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(direct);
+                if (!player->canHarmPlayer(getOwnerUUID()))
+                    return false;
+            }
         }
     }
 

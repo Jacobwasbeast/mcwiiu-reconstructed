@@ -106,16 +106,14 @@ void MagmaCube::decreaseSquish()
 
 void MagmaCube::jumpFromGround()
 {
-    float jump = getSize() * 0.1f + 0.42f;
+    mYd = 0.42f + getSize() * 0.1f;
     mHasImpulse = true;
-    mYd = (double)jump;
 }
 
 void MagmaCube::jumpInLava()
 {
-    float jump = getSize() * 0.05f + 0.22f;
+    mYd = 0.22f + getSize() * 0.05f;
     mHasImpulse = true;
-    mYd = (double)jump;
 }
 
 void MagmaCube::causeFallDamage(float, float)

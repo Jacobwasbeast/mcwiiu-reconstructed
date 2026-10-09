@@ -8,7 +8,7 @@ class LinearBlendSize : public LayerSize
 public:
     LinearBlendSize(unsigned int minSize, unsigned int maxSize);
 
-    virtual int GetLayerSize(Random& random, double blend) const;
+    virtual unsigned int GetLayerSize(Random& random, double blend) const;
 
 private:
     int mMinSize;

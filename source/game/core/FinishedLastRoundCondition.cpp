@@ -16,13 +16,9 @@ FinishedLastRoundCondition::~FinishedLastRoundCondition()
 
 bool FinishedLastRoundCondition::canAward(const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const
 {
-    bool awarded = false;
     PlayerStats* playerStats = gameStats->GetPlayerStats(uid);
-    if (playerStats != NULL)
-    {
-        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-        awarded = playerStats->getReachedEnd(miniGame->GetFinalRoundIndex());
-    }
+    if (playerStats == NULL)
+        return false;
 
-    return awarded;
+    return playerStats->getReachedEnd(Minecraft::GetInstance()->GetMiniGame()->GetFinalRoundIndex());
 }

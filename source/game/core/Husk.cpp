@@ -71,12 +71,11 @@ bool Husk::doHurtTarget(boost::shared_ptr<Entity> target)
 {
     bool hurt = Zombie::doHurtTarget(target);
     if (hurt && getMainHandItem()->isEmpty() &&
-        (target->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, target->GetType()))
     {
-        int difficulty = (int)mLevel->getCurrentDifficultyAt(BlockPos(this)).getEffectiveDifficulty();
-        boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(target);
-        living->addEffect(new MobEffectInstance(MobEffects::HUNGER, difficulty * 140),
-                          boost::shared_ptr<Entity>());
+        float difficulty = mLevel->getCurrentDifficultyAt(BlockPos(this)).getEffectiveDifficulty();
+        boost::static_pointer_cast<LivingEntity>(target)->addEffect(
+            new MobEffectInstance(MobEffects::HUNGER, 140 * (int)difficulty), boost::shared_ptr<Entity>());
     }
     return hurt;
 }

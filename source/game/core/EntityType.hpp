@@ -3,6 +3,7 @@
 
 namespace EntityType
 {
+    const unsigned long long CONCRETE_TYPE_MASK = 0x3F;
     const unsigned long long ENTITY = 0x08000000ULL;
     const unsigned long long LIVING_ENTITY = ENTITY | 0x4000000;
     const unsigned long long MOB = LIVING_ENTITY | 0x1000000;
@@ -219,9 +220,10 @@ namespace ParticleKind
 
 static inline bool eTYPE_DERIVED_FROM(unsigned long long base, unsigned long long type)
 {
-    if ((base & 0x3f) != 0)
+    if ((base & EntityType::CONCRETE_TYPE_MASK) != 0)
         return base == type;
-    return (base & type) == base;
+    else
+        return (base & type) == base;
 }
 
 #endif

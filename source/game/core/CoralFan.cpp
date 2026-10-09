@@ -6,6 +6,7 @@
 
 #include "game/core/Direction.hpp"
 #include "game/core/IconRegister.hpp"
+#include "game/core/StringIds.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/util/AABB.hpp"
@@ -181,18 +182,18 @@ int CoralFan::getDescriptionId(int auxValue)
     switch (state->getValue(CoralFan::VARIANT))
     {
     case 0:
-        return dead ? static_cast<int>(0xB34422EEU) : static_cast<int>(0xA1128C9DU);
+        return dead ? IDS_TILE_CORAL_FAN_DEAD_BLUE_FAN : IDS_TILE_CORAL_FAN_BLUE_FAN;
     case 1:
-        return dead ? 0x49DEF5D4 : 0x54923487;
+        return dead ? IDS_TILE_CORAL_FAN_DEAD_PINK_FAN : IDS_TILE_CORAL_FAN_PINK_FAN;
     case 2:
-        return dead ? static_cast<int>(0x842794C6U) : 0x5C092885;
+        return dead ? IDS_TILE_CORAL_FAN_DEAD_PURPLE_FAN : IDS_TILE_CORAL_FAN_PURPLE_FAN;
     case 3:
-        return dead ? 0x4A67CEEB : 0x29A6A280;
+        return dead ? IDS_TILE_CORAL_FAN_DEAD_RED_FAN : IDS_TILE_CORAL_FAN_RED_FAN;
     case 4:
-        return dead ? static_cast<int>(0x93926B4CU) : 0x6932757F;
+        return dead ? IDS_TILE_CORAL_FAN_DEAD_YELLOW_FAN : IDS_TILE_CORAL_FAN_YELLOW_FAN;
     }
 
-    return dead ? static_cast<int>(0xB34422EEU) : static_cast<int>(0xA1128C9DU);
+    return dead ? IDS_TILE_CORAL_FAN_DEAD_BLUE_FAN : IDS_TILE_CORAL_FAN_BLUE_FAN;
 }
 
 bool CoralFan::mayReplaceWithPlace(LevelSource* levelSource, const BlockPos& pos)

@@ -26,7 +26,7 @@ void GenerationWriteTask::doWork(long long endTime)
 {
     if (mLevel->mChunkSource != NULL)
     {
-        while (!mChunks->empty() && static_cast<long long>(System::processTimeInMilliSecs()) < endTime)
+        while (!mChunks->empty() && System::processTimeInMilliSecs() < endTime)
         {
             ChunkPos chunk = mChunks->front();
             mChunks->pop_front();

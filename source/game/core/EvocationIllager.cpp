@@ -53,10 +53,9 @@ void EvocationIllager::registerGoals()
     mGoalSelector.addGoal(9, new LookAtPlayerGoal(this, typeid(Player), 3.0f, 1.0f), true);
     mGoalSelector.addGoal(10, new LookAtPlayerGoal(this, typeid(Mob), 8.0f), true);
 
-    unsigned long long* hurtByTargetTypes = new unsigned long long[1];
+    arrayWithLength<unsigned long long> hurtByTargetTypes(1, true);
     hurtByTargetTypes[0] = EntityType::EVOCATION_ILLAGER;
-    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true,
-        arrayWithLength<unsigned long long>(hurtByTargetTypes, 1)), true);
+    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, hurtByTargetTypes), true);
     mTargetSelector.addGoal(2, (new NearestAttackableTargetGoal(this, typeid(Player), true, false, false))
         ->setUnseenMemoryTicks(300), true);
     mTargetSelector.addGoal(3, (new NearestAttackableTargetGoal(this, typeid(Villager), true, false, false))
@@ -87,24 +86,16 @@ bool EvocationIllager::isAlliedTo(boost::shared_ptr<Entity> entity)
     if (!entity) return false;
     if (entity == shared_from_this()) return true;
     if (Entity::isAlliedTo(entity)) return true;
-    bool isVex = entity->GetType() == EntityType::VEX;
-    if (isVex)
+    if (eTYPE_DERIVED_FROM(EntityType::VEX, entity->GetType()))
     {
-        boost::shared_ptr<Vex> vex = boost::static_pointer_cast<Vex>(entity);
-        return isAlliedTo(vex->getOwner());
+        return isAlliedTo(boost::static_pointer_cast<Vex>(entity)->getOwner());
     }
-    bool isIllager = false;
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()) &&
+        boost::static_pointer_cast<LivingEntity>(entity)->getMobType() == MOB_TYPE_ILLAGER)
     {
-        boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
-        if (living->getMobType() == 3)
-        {
-            isIllager = true;
-        }
+        return getTeam() == NULL && entity->getTeam() == NULL;
     }
-    if (!isIllager)
-        return false;
-    return !getTeam() && !entity->getTeam();
+    return false;
 }
 const SoundEvent* EvocationIllager::getAmbientSound() { return SoundEvents::EVOCATION_ILLAGER_AMBIENT; }
 const SoundEvent* EvocationIllager::getDeathSound() { return SoundEvents::EVOCATION_ILLAGER_DEATH; }

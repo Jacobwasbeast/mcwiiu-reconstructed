@@ -31,7 +31,8 @@ XmlObject::~XmlObject()
 
 XmlObject* XmlObject::child(const std::wstring& name)
 {
-    for (std::vector<XmlChild>::iterator item = m_children.begin(); item != m_children.end(); ++item)
+    std::vector<XmlChild>::iterator item;
+    for (item = m_children.begin(); item != m_children.end(); ++item)
         if (item->m_type == 1)
         {
             if (equalsIgnoreCase(item->xml()->mName, name) || name.empty())
@@ -42,7 +43,8 @@ XmlObject* XmlObject::child(const std::wstring& name)
 
 const XmlObject* XmlObject::child(const std::wstring& name) const
 {
-    for (std::vector<XmlChild>::const_iterator item = m_children.begin(); item != m_children.end(); ++item)
+    std::vector<XmlChild>::const_iterator item;
+    for (item = m_children.begin(); item != m_children.end(); ++item)
         if (item->m_type == 1)
         {
             if (equalsIgnoreCase(item->xml()->mName, name) || name.empty())
@@ -73,16 +75,10 @@ const XmlChild& XmlObject::operator[](int index) const
 
 XmlValue XmlObject::operator[](const std::wstring& name) const
 {
-    XmlValue result;
-    result.m_isString = 0;
     for (std::vector<std::pair<std::wstring, std::wstring> >::const_iterator attribute = m_attrs.begin(); attribute != m_attrs.end(); ++attribute)
         if (equalsIgnoreCase(name, attribute->first))
-        {
-            result.m_isString = 1;
-            result.m_value = attribute->second;
-            break;
-        }
-    return result;
+            return XmlValue(maybe<std::wstring>(std::wstring(attribute->second)));
+    return XmlValue(maybe<std::wstring>());
 }
 
 std::wstring XmlObject::asString() const
@@ -108,11 +104,7 @@ std::wstring XmlObject::toString(int indent, bool formatted) const
         output += attribute->second;
         output += L"\"";
     }
-    if (m_children.empty())
-    {
-        output += L"/>\n";
-    }
-    else
+    if (!m_children.empty())
     {
         output += L">";
         for (std::vector<XmlChild>::const_iterator item = m_children.begin(); item != m_children.end(); ++item)
@@ -144,6 +136,10 @@ std::wstring XmlObject::toString(int indent, bool formatted) const
         output += L">";
         if (m_children.back().m_type == 1)
             output += std::wstring(indent, L'\t');
+    }
+    else
+    {
+        output += L"/>\n";
     }
     return output;
 }

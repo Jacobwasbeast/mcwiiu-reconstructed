@@ -22,7 +22,7 @@ public:
                int width, int height, int depth, float inflate, bool mirror,
                int faceMask, bool flip);
     void rotate_axis(float angle, double& x, double& y) const;
-    Cube* rotate(float x, float y, float z);
+    void rotate(float x, float y, float z);
     void render(BufferBuilder* buffer, float scale);
     void renderSkinned(BufferBuilder* buffer, float scale, int boneIndex);
     Cube* setId(const std::wstring& id);

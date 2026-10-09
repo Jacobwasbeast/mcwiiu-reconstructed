@@ -68,8 +68,8 @@ Path* Path::createFromStream(DataInputStream* stream)
         target = Node::createFromStream(stream);
     }
 
-    arrayWithLength<Node*> nodes;
     int nodeCount = stream->readInt();
+    arrayWithLength<Node*> nodes;
 
     if (nodeCount > 0)
     {
@@ -81,8 +81,8 @@ Path* Path::createFromStream(DataInputStream* stream)
         }
     }
 
-    arrayWithLength<Node*> openSet;
     int openSetCount = stream->readInt();
+    arrayWithLength<Node*> openSet;
 
     if (openSetCount > 0)
     {
@@ -94,8 +94,8 @@ Path* Path::createFromStream(DataInputStream* stream)
         }
     }
 
-    arrayWithLength<Node*> closedSet;
     int closedSetCount = stream->readInt();
+    arrayWithLength<Node*> closedSet;
 
     if (closedSetCount > 0)
     {
@@ -149,10 +149,7 @@ bool Path::sameAs(Path* other)
 
     for (unsigned int i = 0; i < nodes.length; i++)
     {
-        Node* node = nodes.data[i];
-        Node* otherNode = other->nodes.data[i];
-
-        if (node->x != otherNode->x || node->y != otherNode->y || node->z != otherNode->z)
+        if (nodes[i]->x != other->nodes[i]->x || nodes[i]->y != other->nodes[i]->y || nodes[i]->z != other->nodes[i]->z)
         {
             return false;
         }
@@ -208,11 +205,9 @@ void Path::set(int index, Node* node)
 
 Node* Path::last()
 {
-    int lastIndex = size - 1;
-
     if (size > 0)
     {
-        return nodes.data[lastIndex];
+        return nodes[size - 1];
     }
 
     return NULL;
@@ -225,11 +220,11 @@ Node* Path::getTarget()
 
 Vec3* Path::getPos(boost::shared_ptr<Entity> entity, int index)
 {
-    Node* node = nodes.data[index];
+    double x = nodes.data[index]->x + (int)(entity->mBbWidth + 1.0f) * 0.5;
+    double y = nodes.data[index]->y;
+    double z = nodes.data[index]->z + (int)(entity->mBbWidth + 1.0f) * 0.5;
 
-    return Vec3::newTemp(node->x + (int)(entity->mBbWidth + 1.0f) * 0.5,
-                         node->y,
-                         node->z + (int)(entity->mBbWidth + 1.0f) * 0.5);
+    return Vec3::newTemp(x, y, z);
 }
 
 Vec3* Path::currentPos(boost::shared_ptr<Entity> entity)

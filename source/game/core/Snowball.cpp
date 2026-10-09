@@ -49,11 +49,12 @@ bool Snowball::onHit(const HitResult* result)
         if (!mLevel->mIsClientSide)
         {
             if (Minecraft::InMiniGame(eMiniGameId_Any, true) && mOwner
-                && (mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+                && eTYPE_DERIVED_FROM(EntityType::PLAYER, mOwner->GetType()))
             {
-                boost::static_pointer_cast<Player>(mOwner)->GetGameMode()->RecordSnowballHit();
+                GameMode* gameMode = boost::static_pointer_cast<Player>(mOwner)->GetGameMode();
+                gameMode->RecordSnowballHit();
 
-                if ((result->mEntity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+                if (eTYPE_DERIVED_FROM(EntityType::PLAYER, result->mEntity->GetType()))
                 {
                     boost::shared_ptr<Player> player =
                         boost::static_pointer_cast<Player>(result->mEntity);
@@ -66,11 +67,12 @@ bool Snowball::onHit(const HitResult* result)
         }
 
         float damage = 0.0f;
-        if (result->mEntity->GetType() == EntityType::BLAZE)
+        bool isBlaze = result->mEntity->GetType() == EntityType::BLAZE;
+        if (isBlaze)
         {
             damage = 3.0f;
         }
-        else if ((result->mEntity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+        else if (eTYPE_DERIVED_FROM(EntityType::PLAYER, result->mEntity->GetType())
                  && Minecraft::InMiniGame(eMiniGameId_Battle, false))
         {
             damage = 0.1f;

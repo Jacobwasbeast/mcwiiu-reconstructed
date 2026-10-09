@@ -41,9 +41,9 @@ public:
     not_null_ptr<ItemInstance> GetKillerWeapon(const StatsUID& suid, int round);
     int GetDamageDealt(const StatsUID& suid, int round);
     int GetDamageReceived(const StatsUID& suid, int round);
-    int GetLifeSpan(const StatsUID& suid, int round);
-    int GetBestLifeSpan(const StatsUID& suid, int* round);
-    int GetBestLifeSpan();
+    unsigned int GetLifeSpan(const StatsUID& suid, int round);
+    unsigned int GetBestLifeSpan(const StatsUID& suid, int* round);
+    unsigned int GetBestLifeSpan();
     int GetTotalLifeSpan(const StatsUID& suid);
     int GetRoundsWon(const StatsUID& suid);
     bool IsWinningOnMatchPoint(const StatsUID& suid);
@@ -52,8 +52,8 @@ public:
     int GetSecondaryTargets(const StatsUID& suid, int round);
     int GetPoints(const StatsUID& suid, int round);
     int GetLastPointsAdded(const StatsUID& suid, int round);
-    int GetBestPoints(const StatsUID& suid, int* round);
-    int GetBestPoints();
+    unsigned int GetBestPoints(const StatsUID& suid, int* round);
+    unsigned int GetBestPoints();
     void SetPersonalBest(const StatsUID& suid, int round);
     bool IsPersonalBest(const StatsUID& suid, int round);
     virtual int GetLastCheckpointID(const StatsUID& suid, int round);

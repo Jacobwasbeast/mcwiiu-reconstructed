@@ -32,22 +32,23 @@ int AreaConstraint::getType()
 
 bool AreaConstraint::isConstraintSatisfied(int playerId)
 {
-    Vec3* pos = Minecraft::GetInstance()->mLocalPlayers[playerId]->getPos(1.0f);
-
+    Minecraft* minecraft = Minecraft::GetInstance();
     bool withinHorizontally = true;
     bool withinVertically = true;
 
-    if (pos->x <= innerArea->mMinX || innerArea->mMaxX <= pos->x)
+    Vec3* pos = minecraft->mLocalPlayers[playerId]->getPos(1.0f);
+
+    if (pos->x <= innerArea->mMinX || pos->x >= innerArea->mMaxX)
     {
         withinHorizontally = false;
     }
 
-    if (pos->z <= innerArea->mMinZ || innerArea->mMaxZ <= pos->z)
+    if (pos->z <= innerArea->mMinZ || pos->z >= innerArea->mMaxZ)
     {
         withinHorizontally = false;
     }
 
-    if (pos->y <= innerArea->mMinY || innerArea->mMaxY <= pos->y)
+    if (pos->y <= innerArea->mMinY || pos->y >= innerArea->mMaxY)
     {
         withinVertically = false;
     }
@@ -93,17 +94,17 @@ int AreaConstraint::canMoveToPosition(double oldX, double oldY, double oldZ, dou
 
     if (positionOnly)
     {
-        if (newPos->x < area->mMinX || area->mMaxX < newPos->x)
+        if (newPos->x < area->mMinX || newPos->x > area->mMaxX)
         {
             withinX = false;
         }
 
-        if (newPos->y < area->mMinY || area->mMaxY < newPos->y)
+        if (newPos->y < area->mMinY || newPos->y > area->mMaxY)
         {
             withinY = false;
         }
 
-        if (newPos->z < area->mMinZ || area->mMaxZ < newPos->z)
+        if (newPos->z < area->mMinZ || newPos->z > area->mMaxZ)
         {
             withinZ = false;
         }
@@ -111,19 +112,19 @@ int AreaConstraint::canMoveToPosition(double oldX, double oldY, double oldZ, dou
     else
     {
         if ((newPos->x <= area->mMinX && newPos->x < oldPos->x) ||
-            (area->mMaxX <= newPos->x && oldPos->x < newPos->x))
+            (newPos->x >= area->mMaxX && newPos->x > oldPos->x))
         {
             withinX = false;
         }
 
         if ((newPos->y <= area->mMinY && newPos->y < oldPos->y) ||
-            (area->mMaxY <= newPos->y && oldPos->y < newPos->y))
+            (newPos->y >= area->mMaxY && newPos->y > oldPos->y))
         {
             withinY = false;
         }
 
         if ((newPos->z <= area->mMinZ && newPos->z < oldPos->z) ||
-            (area->mMaxZ <= newPos->z && oldPos->z < newPos->z))
+            (newPos->z >= area->mMaxZ && newPos->z > oldPos->z))
         {
             withinZ = false;
         }

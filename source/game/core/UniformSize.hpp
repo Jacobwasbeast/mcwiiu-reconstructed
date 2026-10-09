@@ -8,7 +8,7 @@ class UniformSize : public LayerSize
 public:
     UniformSize(unsigned int size);
 
-    virtual int GetLayerSize(Random& random, double blend) const;
+    virtual unsigned int GetLayerSize(Random& random, double blend) const;
 
 private:
     int mSize;

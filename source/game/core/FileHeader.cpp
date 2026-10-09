@@ -22,19 +22,18 @@ static const short MAX_SUPPORTED_SAVE_VERSION = 12;
 
 FileHeader::FileHeader()
 {
-    m_savePlatform = eSavePlatform_WIIU;
-    m_saveEndian = eByteOrder_BigEndian;
+    m_currentFile = NULL;
     m_saveVersion = 0;
     m_originalSaveVersion = CURRENT_SAVE_VERSION;
-    m_currentFile = NULL;
+    m_savePlatform = eSavePlatform_WIIU;
+    m_saveEndian = eByteOrder_BigEndian;
 }
 
 FileHeader::~FileHeader()
 {
     for (unsigned int i = 0; i < m_fileEntries.size(); i++)
     {
-        if (m_fileEntries[i] != NULL)
-            delete m_fileEntries[i];
+        delete m_fileEntries[i];
     }
 }
 
@@ -42,17 +41,16 @@ void FileHeader::Reset()
 {
     for (unsigned int i = 0; i < m_fileEntries.size(); i++)
     {
-        if (m_fileEntries[i] != NULL)
-            delete m_fileEntries[i];
+        delete m_fileEntries[i];
     }
 
     m_fileEntries.clear();
 
-    m_savePlatform = eSavePlatform_WIIU;
-    m_saveEndian = eByteOrder_BigEndian;
+    m_currentFile = NULL;
     m_saveVersion = 0;
     m_originalSaveVersion = CURRENT_SAVE_VERSION;
-    m_currentFile = NULL;
+    m_savePlatform = eSavePlatform_WIIU;
+    m_saveEndian = eByteOrder_BigEndian;
 }
 
 unsigned int FileHeader::GetStartOfNextData()
@@ -61,8 +59,8 @@ unsigned int FileHeader::GetStartOfNextData()
 
     for (unsigned int i = 0; i < m_fileEntries.size(); i++)
     {
-        if (m_fileEntries[i]->m_fileSize != 0)
-            startOfNextData += m_fileEntries[i]->m_fileSize;
+        if (m_fileEntries[i]->m_data.m_fileSize != 0)
+            startOfNextData += m_fileEntries[i]->m_data.m_fileSize;
     }
 
     return startOfNextData;
@@ -74,11 +72,7 @@ FileEntry* FileHeader::AddFile(const std::wstring& fileName, unsigned int fileSi
 
     memset(name, 0, sizeof(name));
 
-    unsigned int nameSize = fileName.length() * sizeof(wchar_t);
-    if (nameSize > sizeof(name))
-        nameSize = sizeof(name);
-
-    memcpy(name, wstringtochar16(fileName), nameSize);
+    memcpy(name, wstringtochar16(fileName), std::min(sizeof(name), sizeof(wchar_t) * fileName.length()));
 
     for (unsigned int i = 0; i < m_fileEntries.size(); i++)
     {
@@ -102,12 +96,12 @@ void FileHeader::AdjustStartOffsets(FileEntry* entry, unsigned int size, bool bR
         {
             if (bRemove)
             {
-                m_fileEntries[i]->m_startOffset -= size;
+                m_fileEntries[i]->m_data.m_startOffset -= size;
                 m_fileEntries[i]->m_filePointer -= size;
             }
             else
             {
-                m_fileEntries[i]->m_startOffset += size;
+                m_fileEntries[i]->m_data.m_startOffset += size;
                 m_fileEntries[i]->m_filePointer += size;
             }
         }
@@ -123,7 +117,7 @@ void FileHeader::RemoveFile(FileEntry* entry)
     if (entry == NULL)
         return;
 
-    AdjustStartOffsets(entry, entry->m_fileSize, true);
+    AdjustStartOffsets(entry, entry->m_data.m_fileSize, true);
 
     std::vector<FileEntry*>::iterator it = std::find(m_fileEntries.begin(), m_fileEntries.end(), entry);
     if (it < m_fileEntries.end())
@@ -135,32 +129,36 @@ void FileHeader::RemoveFile(FileEntry* entry)
 void FileHeader::WriteHeader(void* pData)
 {
     unsigned int indexOffset = GetStartOfNextData();
+    unsigned int fileCount = m_fileEntries.size();
+    short originalSaveVersion = m_originalSaveVersion;
+    short saveVersion = CURRENT_SAVE_VERSION;
 
     unsigned int* pOffsets = (unsigned int*)pData;
     short* pVersions = (short*)(pOffsets + 2);
 
     pOffsets[0] = indexOffset;
-    pOffsets[1] = m_fileEntries.size();
-    pVersions[0] = m_originalSaveVersion;
-    pVersions[1] = CURRENT_SAVE_VERSION;
+    pOffsets[1] = fileCount;
+    pVersions[0] = originalSaveVersion;
+    pVersions[1] = saveVersion;
 
     unsigned char* pEntryData = (unsigned char*)pData + indexOffset;
 
     for (unsigned int i = 0; i < m_fileEntries.size(); i++)
     {
-        memcpy(pEntryData, m_fileEntries[i], FILE_ENTRY_DATA_SIZE);
+        memcpy(pEntryData, &m_fileEntries[i]->m_data, FILE_ENTRY_DATA_SIZE);
         pEntryData += FILE_ENTRY_DATA_SIZE;
     }
 }
 
 void FileHeader::ReadHeader(void* pData, ESavePlatform platform)
 {
-    switch (platform)
+    m_savePlatform = platform;
+
+    switch (m_savePlatform)
     {
     case eSavePlatform_X360:
     case eSavePlatform_WIIU:
     case eSavePlatform_PS3:
-        m_savePlatform = platform;
         m_saveEndian = eByteOrder_BigEndian;
         break;
 
@@ -169,7 +167,6 @@ void FileHeader::ReadHeader(void* pData, ESavePlatform platform)
     case eSavePlatform_PS4:
     case eSavePlatform_WIN:
     case eSavePlatform_PSV:
-        m_savePlatform = platform;
         m_saveEndian = eByteOrder_LittleEndian;
         break;
 
@@ -179,72 +176,76 @@ void FileHeader::ReadHeader(void* pData, ESavePlatform platform)
         break;
     }
 
-    unsigned int* pOffsets = (unsigned int*)pData;
-    short* pVersions = (short*)(pOffsets + 2);
-
-    unsigned int indexOffset = pOffsets[0];
+    unsigned int indexOffset = *(unsigned int*)pData;
     if (m_saveEndian != eByteOrder_BigEndian)
         System::ReverseULONG(&indexOffset);
 
-    unsigned int fileCount = pOffsets[1];
+    unsigned int fileCount = *(unsigned int*)((char*)pData + sizeof(indexOffset));
     if (m_saveEndian != eByteOrder_BigEndian)
         System::ReverseULONG(&fileCount);
 
-    m_originalSaveVersion = pVersions[0];
+    char* pVersions = (char*)pData + sizeof(indexOffset) + sizeof(fileCount);
+    m_originalSaveVersion = *(short*)pVersions;
     if (m_saveEndian != eByteOrder_BigEndian)
         System::ReverseSHORT(&m_originalSaveVersion);
 
-    m_saveVersion = pVersions[1];
+    m_saveVersion = *(short*)(pVersions + sizeof(m_originalSaveVersion));
     if (m_saveEndian != eByteOrder_BigEndian)
         System::ReverseSHORT(&m_saveVersion);
 
     unsigned char* pEntryData = (unsigned char*)pData + indexOffset;
 
-    if (m_saveVersion == 0)
-        return;
-
-    if (m_saveVersion == 1)
+    switch (m_saveVersion)
     {
-        unsigned int readOffset = 0;
-
-        while (readOffset < fileCount)
+    case 1:
+        for (unsigned int readOffset = 0; readOffset < fileCount; readOffset += FILE_ENTRY_DATA_SIZE_V1)
         {
             FileEntry* pEntry = new FileEntry();
 
-            memcpy(pEntry, pEntryData, FILE_ENTRY_DATA_SIZE_V1);
+            memcpy(&pEntry->m_data, pEntryData, FILE_ENTRY_DATA_SIZE_V1);
 
+            pEntry->m_filePointer = pEntry->m_data.m_startOffset;
             m_currentFile = pEntry;
-            pEntry->m_filePointer = pEntry->m_startOffset;
             m_fileEntries.push_back(pEntry);
 
-            readOffset += FILE_ENTRY_DATA_SIZE_V1;
             pEntryData += FILE_ENTRY_DATA_SIZE_V1;
         }
-    }
-    else if (m_saveVersion <= MAX_SUPPORTED_SAVE_VERSION)
-    {
+        break;
+
+    case 2:
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+    case 10:
+    case CURRENT_SAVE_VERSION:
+    case MAX_SUPPORTED_SAVE_VERSION:
         for (unsigned int i = 0; i < fileCount; i++)
         {
             FileEntry* pEntry = new FileEntry();
 
-            memcpy(pEntry, pEntryData, FILE_ENTRY_DATA_SIZE);
+            memcpy(&pEntry->m_data, pEntryData, FILE_ENTRY_DATA_SIZE);
 
             if (m_saveEndian != eByteOrder_BigEndian)
             {
-                System::ReverseCHAR16A(pEntry->m_name, 64);
-                System::ReverseULONG(&pEntry->m_fileSize);
-                System::ReverseULONG(&pEntry->m_startOffset);
-                System::ReverseULONGLONG(&pEntry->m_timestamp);
+                System::ReverseCHAR16A(pEntry->m_data.m_name, 64);
+                System::ReverseULONG(&pEntry->m_data.m_fileSize);
+                System::ReverseULONG(&pEntry->m_data.m_startOffset);
+                System::ReverseULONGLONG(&pEntry->m_data.m_timestamp);
             }
 
-            pEntry->m_fileName = char16towstring(pEntry->m_name);
+            pEntry->m_fileName = char16towstring(pEntry->m_data.m_name);
 
+            pEntry->m_filePointer = pEntry->m_data.m_startOffset;
             m_currentFile = pEntry;
-            pEntry->m_filePointer = pEntry->m_startOffset;
             m_fileEntries.push_back(pEntry);
 
             pEntryData += FILE_ENTRY_DATA_SIZE;
         }
+        break;
     }
 }
 

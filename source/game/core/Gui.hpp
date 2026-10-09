@@ -29,8 +29,8 @@ public:
     void renderVignette(float partialTick, int width, int height);
     void renderPumpkin(int width, int height);
     void renderPortalOverlay(float portalTime, int width, int height);
-    void renderThermalOverlay(ThermalAreaRuleDefinition* rule, float alpha, int width, int height,
-                              float partialTick);
+    void renderThermalOverlay(ThermalAreaRuleDefinition* rule, float partialTick, int width, int height,
+                              float alpha);
     void render(float partialTick, bool hideGui, int width, int height);
     void renderSlot(int playerIndex, int x, int y, float partialTick);
     void tick();
@@ -74,7 +74,7 @@ private:
     ThermalAreaRuleDefinition* mThermalOverlayRules[4];
     int mThermalOverlayFade[4];
     int mCharacterDisplayTime[4];
-    int mUnknown1D0;
+    float mUnknown1D0;
     float mVignetteBrightness;
 };
 

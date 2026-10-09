@@ -15,7 +15,7 @@ NotFastestTimeButWonAnywayCondition::~NotFastestTimeButWonAnywayCondition()
 bool NotFastestTimeButWonAnywayCondition::canAward(const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const
 {
     PlayerStats* playerStats = gameStats->GetPlayerStats(uid);
-    if (playerStats == NULL || gameStats->mCurrentRound == 0)
+    if (playerStats == NULL)
     {
         return false;
     }

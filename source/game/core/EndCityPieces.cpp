@@ -182,7 +182,7 @@ void EndCityPieces::EndCityPiece::handleDataMarker(const std::wstring& marker,
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(below);
             if (blockEntity)
             {
-                bool isChest = blockEntity->GetType() == BlockEntityType::CHEST;
+                bool isChest = eTYPE_DERIVED_FROM(BlockEntityType::CHEST, blockEntity->GetType());
                 if (isChest)
                 {
                     boost::shared_ptr<ChestBlockEntity> chest =

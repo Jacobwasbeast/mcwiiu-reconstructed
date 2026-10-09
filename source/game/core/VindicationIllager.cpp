@@ -42,8 +42,8 @@ void VindicationIllager::registerGoals()
     alertTypes.data[0] = EntityType::VINDICATION_ILLAGER;
     mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, alertTypes), true);
     mTargetSelector.addGoal(2, new NearestAttackableTargetGoal(this, typeid(Player), true, false, false), true);
-    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(SnowMan), true, false, false), true);
     mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(Villager), true, false, false), true);
+    mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(SnowMan), true, false, false), true);
     mTargetSelector.addGoal(3, new NearestAttackableTargetGoal(this, typeid(VillagerGolem), true, false, false), true);
     mTargetSelector.addGoal(4, new VindicatorJohnnyAttackGoal(this), true);
 }
@@ -84,11 +84,7 @@ MobGroupData* VindicationIllager::finalizeMobSpawn(const DifficultyInstance& dif
                                                   MobGroupData* data,
                                                   const std::wstring& reason)
 {
-    MobGroupData* result;
-    {
-        const std::wstring spawnReason(L"");
-        result = Mob::finalizeMobSpawn(difficulty, data, spawnReason);
-    }
+    MobGroupData* result = Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
     populateDefaultEquipmentSlots(difficulty);
     populateDefaultEquipmentEnchantments(difficulty);
     return result;
@@ -102,13 +98,10 @@ bool VindicationIllager::isAlliedTo(boost::shared_ptr<Entity> entity)
 {
     if (Entity::isAlliedTo(entity))
         return true;
-    bool illager = false;
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
         && boost::static_pointer_cast<LivingEntity>(entity)->getMobType() == MOB_TYPE_ILLAGER)
-        illager = true;
-    if (!illager)
-        return false;
-    return getTeam() == 0 && entity->getTeam() == 0;
+        return getTeam() == NULL && entity->getTeam() == NULL;
+    return false;
 }
 void VindicationIllager::setCustomName(const std::wstring& name, const std::wstring& displayName, bool visible)
 {
@@ -122,11 +115,11 @@ unsigned long long VindicationIllager::GetType() { return EntityType::VINDICATIO
 
 bool VindicationIllager::LIVING_ENTITY_SELECTOR::apply(boost::shared_ptr<Entity> entity) const
 {
-    return (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+    return eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
         && boost::static_pointer_cast<LivingEntity>(entity)->attackable();
 }
 VindicationIllager::VindicatorJohnnyAttackGoal::VindicatorJohnnyAttackGoal(VindicationIllager* mob)
-    : NearestAttackableTargetGoal(mob, typeid(Entity), 0, true, false,
+    : NearestAttackableTargetGoal(mob, typeid(Entity), 0, true, true,
                                   new LIVING_ENTITY_SELECTOR(), false, true) {}
 bool VindicationIllager::VindicatorJohnnyAttackGoal::canUse()
 {

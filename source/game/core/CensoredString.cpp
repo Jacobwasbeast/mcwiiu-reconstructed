@@ -40,25 +40,20 @@ void CensoredString::_init(TickAction* action, int firstId, int secondId)
     m_tickAction = action;
     m_censored = L"";
     m_flags &= static_cast<unsigned char>(0xf8);
-    if (!m_useLocalization)
+    if (m_useLocalization)
     {
-        m_pending = L"";
-        m_pendingId = -1;
-        m_censoredId = -1;
-        m_uuid = L"";
-        m_chatCensored = false;
-        m_uuidLocal = true;
+        m_pending = L10N::GetString(firstId);
     }
     else
     {
-        const wchar_t* pending = L10N::GetString(firstId);
-        m_pending.assign(pending, wcslen(pending));
-        m_pendingId = firstId;
-        m_censoredId = secondId;
-        m_uuid = L"";
-        m_chatCensored = false;
-        m_uuidLocal = true;
+        m_pending = L"";
+        firstId = secondId = -1;
     }
+    m_pendingId = firstId;
+    m_censoredId = secondId;
+    m_uuid = L"";
+    m_chatCensored = false;
+    m_uuidLocal = true;
 }
 
 std::wstring CensoredString::getPendingString()
@@ -75,19 +70,19 @@ std::wstring CensoredString::getCensoredString()
     return CENSORED_FALLBACK;
 }
 
-uint64_t CensoredString::_verified(const std::wstring& value, bool censored)
+void CensoredString::_verified(const std::wstring& value, bool censored)
 {
-    m_censored = L"Custom";
-    m_flags = static_cast<unsigned char>((m_flags & 0xfe) | 4);
+    m_censored = L"";
+    m_flags &= static_cast<unsigned char>(0xfe);
+    m_flags |= static_cast<unsigned char>(4);
     m_pending = value;
     if (censored)
         m_flags = static_cast<unsigned char>(m_flags | 2);
     else
         m_flags = static_cast<unsigned char>(m_flags & 0xfd);
-    return 0;
 }
 
-uint64_t CensoredString::_changed()
+void CensoredString::_changed()
 {
     if (m_tickAction != NULL)
     {
@@ -95,7 +90,6 @@ uint64_t CensoredString::_changed()
             m_tickAction->Execute();
     }
     m_flags = static_cast<unsigned char>(m_flags & 0xfb);
-    return 0;
 }
 
 void CensoredString::set(const std::wstring& value, const std::wstring& uuid, bool chatCensored, bool uuidLocal)
@@ -103,27 +97,31 @@ void CensoredString::set(const std::wstring& value, const std::wstring& uuid, bo
     m_uuid = uuid;
     m_chatCensored = chatCensored;
     m_uuidLocal = uuidLocal;
-    if (!m_useLocalization)
+    if (m_useLocalization)
+    {
+        if (!((m_flags & 1) > 0 && m_censored == value))
+        {
+            if (value.empty())
+            {
+                _verified(L"", false);
+            }
+            else if (m_pending == value && (m_flags & 1) > 0)
+            {
+                _verified(m_pending, (m_flags & 2) > 0);
+            }
+        }
+    }
+    else
     {
         _verified(value, false);
-    }
-    else if ((m_flags & 1) <= 0 || m_censored != value)
-    {
-        if (value.empty())
-        {
-            _verified(L"", false);
-        }
-        else if (m_pending == value && (m_flags & 1) > 0)
-        {
-            _verified(m_pending, (m_flags & 2) != 0);
-        }
     }
     _changed();
 }
 
 uint32_t CensoredString::checkParentalFilter()
 {
-    bool censored = !gApp.IsUUIDLocal(m_uuid) && (gApp.IsConsoleChatCensored() || m_chatCensored);
+    uint32_t isLocal = gApp.IsUUIDLocal(m_uuid);
+    bool censored = !isLocal && (gApp.IsConsoleChatCensored() || m_chatCensored);
     bool blocked = !m_uuidLocal && censored;
     if (CGameNetworkManager::sInstance.IsHost() && blocked)
         return 0;

@@ -23,6 +23,17 @@ public:
     class Type
     {
     public:
+        enum EType
+        {
+            eType_Rideable,
+            eType_Chest,
+            eType_Furnace,
+            eType_TNT,
+            eType_Spawner,
+            eType_Hopper,
+            eType_CommandBlock
+        };
+
         Type(int id = 0) : mId(id) {}
         std::wstring getName() const;
 

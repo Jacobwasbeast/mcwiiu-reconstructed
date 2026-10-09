@@ -10,45 +10,29 @@
 
 IntegerCondition::IntegerCondition(const XmlObject& object)
 {
-    maybe<std::wstring> op = object[L"op"].maybeString();
-    if (op.isSet())
-    {
-        std::pair<bool, EOperator> parsed = parseOperator(op.get());
-        _init(object, parsed.second);
-    }
-    else
-        _init(object, EOperator_LessThan);
+    _init(object, object[L"op"].maybeString().fmap(parseOperator).get());
 }
 
 void IntegerCondition::_init(const XmlObject& object, EOperator op)
 {
-    m_threshold = object[L"value"].maybeInt().otherwise(0).get();
+    m_threshold = object[L"value"].maybeInt().otherwise(0);
 
-    maybe<std::wstring> option = object[L"value"].maybeString();
-    if (option.isSet())
-    {
-        std::pair<bool, eCustomGameModeHostOption> parsed = GameModeOptions::parse(option.get());
-        m_option = parsed.first ? static_cast<int>(parsed.second) : -1;
-    }
-    else
-    {
-        m_option = -1;
-    }
+    m_option = object[L"value"].maybeString().fmap(GameModeOptions::parse).otherwise(static_cast<eCustomGameModeHostOption>(-1));
 
     m_operator = op;
 }
 
-std::pair<bool, EOperator> IntegerCondition::parseOperator(std::wstring name)
+maybe<EOperator> IntegerCondition::parseOperator(std::wstring name)
 {
     if (name == L"LessThan")
-        return std::make_pair(true, EOperator_LessThan);
+        return maybe<EOperator>(EOperator_LessThan);
     if (name == L"LessThanOrEquals")
-        return std::make_pair(true, EOperator_LessThanOrEquals);
+        return maybe<EOperator>(EOperator_LessThanOrEquals);
     if (name == L"GreaterThan")
-        return std::make_pair(true, EOperator_GreaterThan);
+        return maybe<EOperator>(EOperator_GreaterThan);
     if (name == L"GreaterThanOrEquals")
-        return std::make_pair(true, EOperator_GreaterThanOrEquals);
-    return std::make_pair(false, EOperator_LessThan);
+        return maybe<EOperator>(EOperator_GreaterThanOrEquals);
+    return maybe<EOperator>();
 }
 
 bool IntegerCondition::IsSatisfied(MasterGameMode* gameMode) const

@@ -16,8 +16,7 @@
 #include "game/world/generation/Player.hpp"
 
 CombatTracker::CombatTracker(LivingEntity* mob)
-    : mMob(mob), mLastDamageTime(0), mCombatStartTime(0), mCombatEndTime(0),
-      mInCombat(false), mTakingDamage(false), mPreparedStatus(0)
+    : mMob(mob), mLastDamageTime(0)
 {
 }
 
@@ -26,7 +25,6 @@ CombatTracker::~CombatTracker()
     std::vector<CombatEntry*>::iterator it;
     for (it = mEntries.begin(); it != mEntries.end(); ++it)
         delete *it;
-    mEntries.clear();
 }
 
 void CombatTracker::resetPreparedStatus()
@@ -158,7 +156,7 @@ boost::shared_ptr<ClientboundChatPacket> CombatTracker::getDeathMessagePacket()
         }
         else if (attacker != NULL && (killer == NULL || attacker != killer))
         {
-            not_null_ptr<ItemInstance> item = (attacker->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
+            not_null_ptr<ItemInstance> item = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, attacker->GetType())
                 ? boost::static_pointer_cast<LivingEntity>(attacker)->getMainHandItem()
                 : ItemInstance::EMPTY;
             if (!item->isEmpty() && item->hasCustomHoverName())
@@ -212,15 +210,15 @@ void CombatTracker::recordDamage(const DamageSource* source, float healthBeforeD
     CombatEntry* entry = new CombatEntry(source, mMob->mTickCount, healthBeforeDamage, damage,
                                          static_cast<eLOCATION>(mPreparedStatus), mMob->mFallDistance);
 
-    if (mEntries.size() > 3)
+    if (mEntries.size() >= 4)
     {
         delete mEntries.front();
         mEntries.erase(mEntries.begin());
     }
     mEntries.push_back(entry);
 
-    mTakingDamage = true;
     mLastDamageTime = mMob->mTickCount;
+    mTakingDamage = true;
 
     if (entry->isCombatRelated() && !mInCombat && mMob->isAlive())
     {
@@ -230,7 +228,7 @@ void CombatTracker::recordDamage(const DamageSource* source, float healthBeforeD
         mMob->onEnterCombat();
     }
 
-    if ((mMob->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, mMob->GetType()))
     {
         Player* player = static_cast<Player*>(mMob);
         bool killed = healthBeforeDamage - damage <= 0.0f;
@@ -253,48 +251,43 @@ void CombatTracker::recordDamage(const DamageSource* source, float healthBeforeD
 
 boost::shared_ptr<LivingEntity> CombatTracker::getKiller()
 {
-    boost::shared_ptr<Player> bestPlayerKiller;
-    float bestPlayerDamage = 0.0f;
     boost::shared_ptr<LivingEntity> bestLivingKiller;
+    boost::shared_ptr<Player> bestPlayerKiller;
     float bestLivingDamage = 0.0f;
+    float bestPlayerDamage = 0.0f;
 
     std::vector<CombatEntry*>::iterator it;
     for (it = mEntries.begin(); it != mEntries.end(); ++it)
     {
         CombatEntry* entry = *it;
-        const DamageSource* source = entry->getSource();
-        if (source != 0 && source->getEntity())
+        const DamageSource* source;
+        if ((source = entry->getSource()) != NULL && source->getEntity() != NULL
+            && eTYPE_DERIVED_FROM(EntityType::PLAYER, entry->getSource()->getEntity()->GetType())
+            && (bestPlayerKiller == NULL || entry->getDamage() > bestPlayerDamage))
         {
-            if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entry->getSource()->getEntity()->GetType()) &&
-                (!bestPlayerKiller || entry->getDamage() > bestPlayerDamage))
-            {
-                bestPlayerDamage = entry->getDamage();
-                bestPlayerKiller = boost::dynamic_pointer_cast<Player>(entry->getSource()->getEntity());
-            }
+            bestPlayerDamage = entry->getDamage();
+            bestPlayerKiller = boost::dynamic_pointer_cast<Player>(entry->getSource()->getEntity());
         }
 
-        source = entry->getSource();
-        if (source != 0 && source->getEntity())
+        if ((source = entry->getSource()) != NULL && source->getEntity() != NULL
+            && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entry->getSource()->getEntity()->GetType())
+            && (bestLivingKiller == NULL || entry->getDamage() > bestLivingDamage))
         {
-            if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entry->getSource()->getEntity()->GetType()) &&
-                (!bestLivingKiller || entry->getDamage() > bestLivingDamage))
-            {
-                bestLivingDamage = entry->getDamage();
-                bestLivingKiller = boost::dynamic_pointer_cast<LivingEntity>(entry->getSource()->getEntity());
-            }
+            bestLivingDamage = entry->getDamage();
+            bestLivingKiller = boost::dynamic_pointer_cast<LivingEntity>(entry->getSource()->getEntity());
         }
     }
 
-    if (!bestPlayerKiller || bestPlayerDamage < bestLivingDamage / 3.0f)
-        return bestLivingKiller;
-    return bestPlayerKiller;
+    if (bestPlayerKiller != NULL && bestPlayerDamage >= bestLivingDamage / 3.0f)
+        return bestPlayerKiller;
+    return bestLivingKiller;
 }
 
 int CombatTracker::getCombatDuration()
 {
-    if (!mInCombat)
-        return mCombatEndTime - mCombatStartTime;
-    return mMob->mTickCount - mCombatStartTime;
+    if (mInCombat)
+        return mMob->mTickCount - mCombatStartTime;
+    return mCombatEndTime - mCombatStartTime;
 }
 
 LivingEntity* CombatTracker::getMob()

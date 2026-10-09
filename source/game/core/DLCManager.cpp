@@ -18,21 +18,13 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "game/core/StringConversion.hpp"
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 std::vector<std::wstring> g_dlcSkinNames;
 
 char* wstringtofilename(const std::wstring& text, char (&fileName)[256]);
-struct _OVERLAPPED;
-static const unsigned int GENERIC_READ = 0x80000000;
-static const unsigned int OPEN_EXISTING = 3;
-static const unsigned int FILE_ATTRIBUTE_NORMAL = 0x00000080;
-
-int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
-                void* securityAttributes, unsigned int creationDisposition,
-                unsigned int flagsAndAttributes, int templateFile);
 unsigned int GetFileSize(int file, unsigned int* highSize);
-unsigned int GetLastError();
 unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead,
                       unsigned int* bytesRead, _OVERLAPPED* overlapped);
 

@@ -40,50 +40,71 @@ unsigned int cCommerce::PurchaseDLCByIndex(unsigned int index, int contentType)
 
 bool cCommerce::OwnsBundleContainingPack(unsigned int packId)
 {
-    int bundleId;
+    bool owned = false;
 
     switch (packId)
     {
-    case 0x206:
-    case 0x405:
-    case 0x100c:
-        bundleId = 0x1196;
+    case 0x1002:
+    case 0x1003:
+    case 0x1004:
+    case 0x1005:
+    {
+        DLCPack* pack = gApp.mDLCManager.getPackFromPackID(0x1006);
+        if (pack != NULL && pack->hasPurchasedPack())
+            owned = true;
         break;
-    case 0x214:
-    case 0x219:
-        bundleId = 0x1197;
+    }
+    case 0x22b:
+    case 0x1011:
+    case 0x1012:
+    case 0x1013:
+    {
+        DLCPack* pack = gApp.mDLCManager.getPackFromPackID(0x1010);
+        if (pack != NULL && pack->hasPurchasedPack())
+            owned = true;
         break;
+    }
+    case 0x21e:
+    case 0x409:
+    case 0x100b:
+    {
+        DLCPack* pack = gApp.mDLCManager.getPackFromPackID(0x1194);
+        if (pack != NULL && pack->hasPurchasedPack())
+            owned = true;
+        break;
+    }
     case 0x21a:
     case 0x407:
     case 0x801:
     case 0x802:
     case 0x807:
     case 0x809:
-        bundleId = 0x1195;
+    {
+        DLCPack* pack = gApp.mDLCManager.getPackFromPackID(0x1195);
+        if (pack != NULL && pack->hasPurchasedPack())
+            owned = true;
         break;
-    case 0x21e:
-    case 0x409:
-    case 0x100b:
-        bundleId = 0x1194;
+    }
+    case 0x206:
+    case 0x405:
+    case 0x100c:
+    {
+        DLCPack* pack = gApp.mDLCManager.getPackFromPackID(0x1196);
+        if (pack != NULL && pack->hasPurchasedPack())
+            owned = true;
         break;
-    case 0x22b:
-    case 0x1011:
-    case 0x1012:
-    case 0x1013:
-        bundleId = 0x1010;
+    }
+    case 0x214:
+    case 0x219:
+    {
+        DLCPack* pack = gApp.mDLCManager.getPackFromPackID(0x1197);
+        if (pack != NULL && pack->hasPurchasedPack())
+            owned = true;
         break;
-    case 0x1002:
-    case 0x1003:
-    case 0x1004:
-    case 0x1005:
-        bundleId = 0x1006;
-        break;
-    default:
-        return false;
+    }
     }
 
-    DLCPack* pack = gApp.mDLCManager.getPackFromPackID(bundleId);
-    return pack != NULL && pack->hasPurchasedPack();
+    return owned;
 }
 
 unsigned int cCommerce::PurchaseDLCByPackID(unsigned int packId)

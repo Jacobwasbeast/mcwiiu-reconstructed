@@ -90,8 +90,8 @@ void ShulkerBullet::setMoveDirection(const Direction* direction)
 
 void ShulkerBullet::selectNextMoveDirection(const Direction::Axis* axis)
 {
-    double heightOffset = 0.5;
     BlockPos destination(0, 0, 0);
+    double heightOffset = 0.5;
     if (mTarget == NULL)
     {
         destination = BlockPos(this).below();
@@ -152,7 +152,7 @@ void ShulkerBullet::selectNextMoveDirection(const Direction::Axis* axis)
     double dx = targetX - mX;
     double dy = targetY - mY;
     double dz = targetZ - mZ;
-    double length = Mth::sqrt(dz * dz + dx * dx + dy * dy);
+    double length = Mth::sqrt(dx * dx + dy * dy + dz * dz);
     if (length == 0.0)
     {
         mPowerX = 0.0;
@@ -183,10 +183,10 @@ void ShulkerBullet::onHit(const HitResult* result)
         if (result->mEntity->hurt(damageSource, 4.0f))
         {
             doEnchantDamageEffects(mOwner, result->mEntity);
-            if ((result->mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+            if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, result->mEntity->GetType()))
             {
-                boost::shared_ptr<LivingEntity> target = boost::static_pointer_cast<LivingEntity>(result->mEntity);
-                target->addEffect(new MobEffectInstance(MobEffects::LEVITATION, 200), shared_from_this());
+                boost::static_pointer_cast<LivingEntity>(result->mEntity)
+                    ->addEffect(new MobEffectInstance(MobEffects::LEVITATION, 200), shared_from_this());
             }
         }
         delete damageSource;
@@ -244,7 +244,7 @@ void ShulkerBullet::tick()
 
         bool tracking = false;
         if (mTarget != NULL && mTarget->isAlive()
-            && !((mTarget->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+            && !(eTYPE_DERIVED_FROM(EntityType::PLAYER, mTarget->GetType())
                  && boost::static_pointer_cast<Player>(mTarget)->isSpectator()))
         {
             tracking = true;

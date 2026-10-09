@@ -135,6 +135,7 @@ private:
     boost::unordered_map<std::wstring, unsigned int> mStrings;
     boost::unordered_map<PlayerUID, double, boost::hash<PlayerUID> > mPlayerProgress;
     boost::unordered_map<StatsUID, int, boost::hash<StatsUID> > mLastCheckpoints;
+    bool mLocalPlayerInRound[4];
     long long mLocalRoundTimeStart;
     bool mServerIsWaitingOnChunkLoading;
     bool mLocalChunksLoaded;

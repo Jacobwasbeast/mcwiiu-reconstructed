@@ -52,17 +52,17 @@ bool RiderPositionOverrides::OverridePosition(
 
     unsigned char isTamed = 0;
     unsigned char isSaddled = 0;
-    if ((vehicle->GetType() & EntityType::TAMABLE_ANIMAL) == EntityType::TAMABLE_ANIMAL)
+    if (eTYPE_DERIVED_FROM(EntityType::TAMABLE_ANIMAL, vehicle->GetType()))
     {
         isTamed = boost::static_pointer_cast<TamableAnimal>(vehicle)->isTame();
     }
-    else if ((vehicle->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE)
+    else if (eTYPE_DERIVED_FROM(EntityType::ABSTRACT_HORSE, vehicle->GetType()))
     {
         boost::shared_ptr<AbstractHorse> horse = boost::static_pointer_cast<AbstractHorse>(vehicle);
         isSaddled = horse->isSaddled();
         isTamed = horse->isTamed();
     }
-    else if (vehicle->GetType() == EntityType::PIG)
+    else if (eTYPE_DERIVED_FROM(EntityType::PIG, vehicle->GetType()))
     {
         isSaddled = boost::static_pointer_cast<Pig>(vehicle)->hasSaddle();
     }
@@ -80,7 +80,7 @@ bool RiderPositionOverrides::OverridePosition(
             overridePosition.x,
             overridePosition.y + passenger->getRidingHeight(),
             overridePosition.z);
-        riderOffset->yRot(-(vehicle->mYRot * 0.017453292f));
+        riderOffset->yRot(-(vehicle->mYRot * Mth::DEG_TO_RAD));
 
         Vec3* vehiclePosition = Vec3::newTemp(
             vehicle->mX,
@@ -89,10 +89,10 @@ bool RiderPositionOverrides::OverridePosition(
 
         float cosine;
         float sine;
-        if ((vehicle->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, vehicle->GetType()))
         {
             float bodyRotation =
-                boost::static_pointer_cast<LivingEntity>(vehicle)->mYBodyRot * 0.017453292f;
+                boost::static_pointer_cast<LivingEntity>(vehicle)->mYBodyRot * Mth::DEG_TO_RAD;
             cosine = Mth::cos(bodyRotation);
             sine = Mth::sin(bodyRotation);
         }

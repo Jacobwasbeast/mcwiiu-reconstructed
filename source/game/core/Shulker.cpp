@@ -149,7 +149,7 @@ AABB* Shulker::ShulkerDefenseAttackGoal::getTargetSearchArea(double distance)
 }
 
 Shulker::ShulkerNearestAttackGoal::ShulkerNearestAttackGoal(Shulker* shulker)
-    : NearestAttackableTargetGoal(shulker, typeid(LivingEntity), true, false, false), mShulker(shulker)
+    : NearestAttackableTargetGoal(shulker, typeid(Player), true, false, false), mShulker(shulker)
 {
 }
 
@@ -301,9 +301,9 @@ void Shulker::defineSynchedData()
 {
     Mob::defineSynchedData();
     mEntityData->createDateItem(DATA_ATTACH_FACE, Direction::DOWN);
-    mEntityData->createDateItem(DATA_ATTACH_POSITION, static_cast<BlockPos*>(NULL));
-    mEntityData->createDateItem(DATA_PEEK, static_cast<unsigned char>(0));
-    mEntityData->createDateItem(DATA_COLOR, static_cast<unsigned char>(DEFAULT_COLOR->getBlockData()));
+    mEntityData->define(DATA_ATTACH_POSITION, static_cast<BlockPos*>(NULL));
+    mEntityData->define(DATA_PEEK, static_cast<unsigned char>(0));
+    mEntityData->define(DATA_COLOR, static_cast<unsigned char>(DEFAULT_COLOR->getBlockData()));
 }
 
 void Shulker::registerAttributes()
@@ -506,7 +506,7 @@ void Shulker::tick()
             for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
             {
                 boost::shared_ptr<Entity> entity = *it;
-                bool isShulker = entity->GetType() == EntityType::SHULKER;
+                bool isShulker = eTYPE_DERIVED_FROM(EntityType::SHULKER, entity->GetType());
                 if (!isShulker && !entity->mNoPhysics)
                     entity->move(eMoverType_Self, pushX, pushY, pushZ, false);
             }
@@ -553,25 +553,28 @@ bool Shulker::teleportSomewhere()
     BlockPos* origin = new BlockPos(this);
     for (int attempt = 0; attempt < 5; ++attempt)
     {
-        int dx = 8 - mRandom->nextInt(17);
-        int dy = 8 - mRandom->nextInt(17);
-        int dz = 8 - mRandom->nextInt(17);
-        BlockPos candidate = origin->offset(dx, dy, dz);
+        BlockPos candidate = origin->offset(8 - mRandom->nextInt(17), 8 - mRandom->nextInt(17), 8 - mRandom->nextInt(17));
         if (candidate.y > 0 && mLevel->isEmptyBlock(candidate) && mLevel->isInsideWorldBorder(shared_from_this())
             && mLevel->getCollisionAABBs(shared_from_this(), AABB::newTemp(candidate), false, false, false)->empty())
         {
-            for (unsigned int i = 0; i < Direction::VALUES.size(); ++i)
+            bool attached = false;
+            for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
             {
-                const Direction* direction = Direction::VALUES[i];
+                const Direction* direction = *it;
                 if (mLevel->isSolidBlockingBlockInLoadedChunk(candidate.relative(direction), false))
                 {
                     mEntityData->set(DATA_ATTACH_FACE, direction, true);
-                    playSound(SoundEvents::SHULKER_TELEPORT, 1.0f, 1.0f);
-                    mEntityData->set(DATA_ATTACH_POSITION, new BlockPos(candidate), true);
-                    mEntityData->set(DATA_PEEK, static_cast<unsigned char>(0), true);
-                    setTarget(boost::shared_ptr<LivingEntity>());
-                    return true;
+                    attached = true;
+                    break;
                 }
+            }
+            if (attached)
+            {
+                playSound(SoundEvents::SHULKER_TELEPORT, 1.0f, 1.0f);
+                mEntityData->set(DATA_ATTACH_POSITION, new BlockPos(candidate), true);
+                mEntityData->set(DATA_PEEK, static_cast<unsigned char>(0), true);
+                setTarget(boost::shared_ptr<LivingEntity>());
+                return true;
             }
         }
     }
@@ -622,7 +625,7 @@ bool Shulker::hurt(const DamageSource* source, float damage)
     if (isClosed())
     {
         boost::shared_ptr<Entity> attacker = source->getDirectEntity();
-        if (attacker != NULL && (attacker->GetType() & EntityType::PROJECTILE) == EntityType::PROJECTILE)
+        if (attacker != NULL && eTYPE_DERIVED_FROM(EntityType::PROJECTILE, attacker->GetType()))
             return false;
     }
 

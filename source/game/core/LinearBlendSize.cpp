@@ -9,7 +9,7 @@ LinearBlendSize::LinearBlendSize(unsigned int minSize, unsigned int maxSize)
 {
 }
 
-int LinearBlendSize::GetLayerSize(Random& random, double blend) const
+unsigned int LinearBlendSize::GetLayerSize(Random& random, double blend) const
 {
     return mMinSize + (int)(blend * (mMaxSize - mMinSize));
 }

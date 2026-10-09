@@ -147,11 +147,12 @@ bool Silverfish::isDarkEnoughToSpawn()
 
 bool Silverfish::checkSpawnRules()
 {
-    if (!Monster::checkSpawnRules())
+    if (Monster::checkSpawnRules())
     {
-        return false;
+        boost::shared_ptr<Player> nearestPlayer = mLevel->getNearestPlayer(shared_from_this(), 5.0, -1.0);
+        return nearestPlayer == NULL;
     }
-    return !mLevel->getNearestPlayer(shared_from_this(), 5.0, -1.0);
+    return false;
 }
 
 EMobType Silverfish::getMobType()
@@ -262,13 +263,13 @@ void Silverfish::SilverfishWakeUpFriendsGoal::tick()
                 const BlockState* state = level->getBlockState(pos);
                 if (state->getBlock() == Blocks::monster_egg)
                 {
-                    if (!level->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
+                    if (level->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
                     {
-                        level->setBlock(pos, state->getValue(MonsterEggBlock::VARIANT)->getHostBlockState(), Block::UPDATE_ALL, false);
+                        level->destroyBlock(pos, true);
                     }
                     else
                     {
-                        level->destroyBlock(pos, true);
+                        level->setBlock(pos, state->getValue(MonsterEggBlock::VARIANT)->getHostBlockState(), Block::UPDATE_ALL, false);
                     }
                     if (random->nextBoolean())
                     {

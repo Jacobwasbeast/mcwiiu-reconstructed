@@ -47,6 +47,7 @@ public:
     static void VitaVirtualDecompress(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize);
 
     void SetDecompressionType(ESavePlatform platform);
+    void SetDecompressionType(ECompressionTypes type) { m_decompressionType = type; }
 
     friend class ConsoleSchematicFile;
     friend class GameRuleManager;

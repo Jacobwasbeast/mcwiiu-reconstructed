@@ -28,9 +28,7 @@ void BossHealthOverlay::update(boost::shared_ptr<ClientboundBossEventPacket> pac
     }
     else
     {
-        boost::unordered_map<std::wstring, LerpingBossEvent*>::const_iterator iterator =
-            mBossEvents.find(packet->getId());
-        if (iterator != mBossEvents.end())
+        if (mBossEvents.find(packet->getId()) != mBossEvents.end())
         {
             mBossEvents[packet->getId()]->update(packet);
         }
@@ -44,45 +42,39 @@ void BossHealthOverlay::reset()
 
 bool BossHealthOverlay::shouldPlayMusic()
 {
-    boost::unordered_map<std::wstring, LerpingBossEvent*>::iterator iterator;
-    bool result = false;
-    for (iterator = mBossEvents.begin(); iterator != mBossEvents.end(); ++iterator)
+    for (boost::unordered_map<std::wstring, LerpingBossEvent*>::iterator it = mBossEvents.begin(); it != mBossEvents.end(); ++it)
     {
-        if (iterator->second->shouldPlayBossMusic())
+        LerpingBossEvent* event = it->second;
+        if (event->shouldPlayBossMusic())
         {
-            result = true;
-            break;
+            return true;
         }
     }
-    return result;
+    return false;
 }
 
 bool BossHealthOverlay::shouldDarkenScreen()
 {
-    boost::unordered_map<std::wstring, LerpingBossEvent*>::iterator iterator;
-    bool result = false;
-    for (iterator = mBossEvents.begin(); iterator != mBossEvents.end(); ++iterator)
+    for (boost::unordered_map<std::wstring, LerpingBossEvent*>::iterator it = mBossEvents.begin(); it != mBossEvents.end(); ++it)
     {
-        if (iterator->second->shouldDarkenScreen())
+        LerpingBossEvent* event = it->second;
+        if (event->shouldDarkenScreen())
         {
-            result = true;
-            break;
+            return true;
         }
     }
-    return result;
+    return false;
 }
 
 bool BossHealthOverlay::shouldCreateWorldFog()
 {
-    boost::unordered_map<std::wstring, LerpingBossEvent*>::iterator iterator;
-    bool result = false;
-    for (iterator = mBossEvents.begin(); iterator != mBossEvents.end(); ++iterator)
+    for (boost::unordered_map<std::wstring, LerpingBossEvent*>::iterator it = mBossEvents.begin(); it != mBossEvents.end(); ++it)
     {
-        if (iterator->second->shouldCreateWorldFog())
+        LerpingBossEvent* event = it->second;
+        if (event->shouldCreateWorldFog())
         {
-            result = true;
-            break;
+            return true;
         }
     }
-    return result;
+    return false;
 }

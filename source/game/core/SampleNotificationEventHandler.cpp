@@ -1,5 +1,7 @@
 #include "game/core/SampleNotificationEventHandler.hpp"
 
+#include "nn/nex/StringStream.hpp"
+
 static unsigned int s_uiNewOwnerPid = 0;
 
 SampleNotificationEventHandler::~SampleNotificationEventHandler()

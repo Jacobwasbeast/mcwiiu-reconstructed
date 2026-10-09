@@ -131,44 +131,52 @@ bool GameMode::MayPlace(const BlockPos& pos, BlockItem* item)
 {
     if (isSpectator())
         return false;
-    if (!Minecraft::InMiniGame(eMiniGameId_Any, true))
-        return true;
-
-    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-    LevelRuleset* ruleset;
-    GrantPermissionsRuleDefinition* permissions;
-    if (options != NULL && (ruleset = options->getRequiredGameRules()) != NULL &&
-        (permissions = static_cast<GrantPermissionsRuleDefinition*>(
-             ruleset->getRuleByType(ConsoleGameRules::eGameRuleType_GrantPermissions))) != NULL)
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
-        if (permissions->canPlace(GetPlayer(), GetLevel(),
-                                  gApp.getLevelGenerationOptions()->getRequiredGameRules(), pos))
-            return true;
+        LevelRuleset* ruleset;
+        GrantPermissionsRuleDefinition* permissions;
+        bool canPlace = false;
+        LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+        if (options != NULL && (ruleset = options->getRequiredGameRules()) != NULL &&
+            (permissions = static_cast<GrantPermissionsRuleDefinition*>(
+                 ruleset->getRuleByType(ConsoleGameRules::eGameRuleType_GrantPermissions))) != NULL)
+        {
+            canPlace = permissions->canPlace(GetPlayer(), GetLevel(),
+                                             gApp.getLevelGenerationOptions()->getRequiredGameRules(), pos);
+        }
+        if (!canPlace)
+        {
+            const MiniGameDef* miniGame = GetMiniGame();
+            return miniGame->MayPlace(Block::getId(item->getBlock()));
+        }
     }
-    const MiniGameDef* miniGame = GetMiniGame();
-    return miniGame->MayPlace(Block::getId(item->getBlock()));
+    return true;
 }
 
 bool GameMode::MayUse(const BlockPos& pos, Item* item)
 {
     if (isSpectator())
         return false;
-    if (!Minecraft::InMiniGame(eMiniGameId_Any, true))
-        return true;
-
-    LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-    LevelRuleset* ruleset;
-    GrantPermissionsRuleDefinition* permissions;
-    if (options != NULL && (ruleset = options->getRequiredGameRules()) != NULL &&
-        (permissions = static_cast<GrantPermissionsRuleDefinition*>(
-             ruleset->getRuleByType(ConsoleGameRules::eGameRuleType_GrantPermissions))) != NULL)
+    if (Minecraft::InMiniGame(eMiniGameId_Any, true))
     {
-        if (permissions->canUse(GetPlayer(), GetLevel(),
-                                gApp.getLevelGenerationOptions()->getRequiredGameRules(), pos))
-            return true;
+        LevelRuleset* ruleset;
+        GrantPermissionsRuleDefinition* permissions;
+        bool canUse = false;
+        LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
+        if (options != NULL && (ruleset = options->getRequiredGameRules()) != NULL &&
+            (permissions = static_cast<GrantPermissionsRuleDefinition*>(
+                 ruleset->getRuleByType(ConsoleGameRules::eGameRuleType_GrantPermissions))) != NULL)
+        {
+            canUse = permissions->canUse(GetPlayer(), GetLevel(),
+                                         gApp.getLevelGenerationOptions()->getRequiredGameRules(), pos);
+        }
+        if (!canUse)
+        {
+            const MiniGameDef* miniGame = GetMiniGame();
+            return miniGame->MayUse(Item::getId(item));
+        }
     }
-    const MiniGameDef* miniGame = GetMiniGame();
-    return miniGame->MayUse(Item::getId(item));
+    return true;
 }
 
 bool GameMode::AutoEquipEnabled()
@@ -362,29 +370,14 @@ void GameMode::UpdateCraftAchievements(boost::shared_ptr<Player> player,
 {
     switch (Item::VALIDgetId(item->getItem()))
     {
-    case 0x17:
-        player->awardStat(GenericStats::dispenseWithThis(), GenericStats::param_dispenseWithThis());
-        break;
-    case 0x2f:
-        player->awardStat(GenericStats::bookcase(), GenericStats::param_bookcase());
-        break;
     case 0x3a:
         player->awardStat(GenericStats::buildWorkbench(), GenericStats::param_buildWorkbench());
-        break;
-    case 0x3d:
-        player->awardStat(GenericStats::buildFurnace(), GenericStats::param_buildFurnace());
-        break;
-    case 0x74:
-        player->awardStat(GenericStats::enchantments(), GenericStats::param_enchantments());
-        break;
-    case 0x10c:
-        player->awardStat(GenericStats::buildSword(), GenericStats::param_buildSword());
         break;
     case 0x10e:
         player->awardStat(GenericStats::buildPickaxe(), GenericStats::param_buildPickaxe());
         break;
-    case 0x112:
-        player->awardStat(GenericStats::buildBetterPickaxe(), GenericStats::param_buildBetterPickaxe());
+    case 0x3d:
+        player->awardStat(GenericStats::buildFurnace(), GenericStats::param_buildFurnace());
         break;
     case 0x122:
     case 0x123:
@@ -399,13 +392,30 @@ void GameMode::UpdateCraftAchievements(boost::shared_ptr<Player> player,
     case 0x162:
         player->awardStat(GenericStats::bakeCake(), GenericStats::param_bakeCake());
         break;
+    case 0x112:
+        player->awardStat(GenericStats::buildBetterPickaxe(), GenericStats::param_buildBetterPickaxe());
+        break;
+    case 0x10c:
+        player->awardStat(GenericStats::buildSword(), GenericStats::param_buildSword());
+        break;
+    case 0x17:
+        player->awardStat(GenericStats::dispenseWithThis(), GenericStats::param_dispenseWithThis());
+        break;
+    case 0x74:
+        player->awardStat(GenericStats::enchantments(), GenericStats::param_enchantments());
+        break;
+    case 0x2f:
+        player->awardStat(GenericStats::bookcase(), GenericStats::param_bookcase());
+        break;
     }
 
-    if (award == eAward_ChangeOfSheets)
-        player->awardStat(GenericStats::changeOfSheets(), GenericStats::param_changeOfSheets());
+    if (award != eAward_ChangeOfSheets)
+        return;
+
+    player->awardStat(GenericStats::changeOfSheets(), GenericStats::param_changeOfSheets());
 }
 
-boost::shared_ptr<ItemInstance> GameMode::handleCraftItem(int recipe, int category,
+not_null_ptr<ItemInstance> GameMode::handleCraftItem(int recipe, int category,
                                                          boost::shared_ptr<Player> player)
 {
     Recipes* recipes = Recipes::getInstance();

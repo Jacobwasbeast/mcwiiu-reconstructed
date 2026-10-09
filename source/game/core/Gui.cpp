@@ -1,11 +1,8 @@
 #include "game/core/Gui.hpp"
 #include "game/core/StringIds.hpp"
 
-#include <algorithm>
 #include <cmath>
 #include <vector>
-
-#include <boost/assert.hpp>
 
 #include "game/client/render/EntityRenderDispatcher.hpp"
 #include "game/client/render/GameRenderer.hpp"
@@ -55,35 +52,32 @@ ResourceLocation guiThermalLiftOverlayTexture(TN_ENVIRONMENT_THERMAL_2);
 }
 
 Gui::Gui(Minecraft* minecraft)
-    : mItemRenderer(0),
-      mRandom(new Random()),
-      mMinecraft(minecraft),
-      mUnknownD4(0),
+    : mUnknownD4(0),
       mUnknownE8(0),
-      mUnknownEC(7),
-      mTickCount(0),
-      mSingleMessageVisible(false),
-      mJukeboxTime(0.0f),
-      mUnknown19C(2.55f),
-      mUnknown1D0(0),
-      mVignetteBrightness(1.0f)
+      mUnknownEC(7)
 {
-    int i;
-    for (i = 0; i < 4; ++i) {
-        mMessages[i].clear();
-        mNowPlaying[i].clear();
-        mSingleMessages[i].clear();
+    mRandom = new Random();
+    mTickCount = 0;
+    for (int i = 0; i < 4; ++i) {
         mSingleMessageTime[i] = 0;
+        mSingleMessages[i] = L"";
+        mNowPlaying[i] = L"";
+    }
+    mUnknown19C = 2.55f;
+    mVignetteBrightness = 1.0f;
+    mUnknown1D0 = 0.0f;
+    mSingleMessageVisible = false;
+    for (int i = 0; i < 4; ++i) {
         mBossOverlays[i] = new BossHealthOverlay(minecraft);
     }
-    for (i = 0; i < 4; ++i) {
-        mCharacterDisplayTime[i] = 0;
+    mMinecraft = minecraft;
+    mItemRenderer = minecraft->getItemRenderer();
+    for (int i = 0; i < 4; ++i) {
         mThermalOverlayRules[i] = 0;
         mThermalOverlayFade[i] = 0;
+        mCharacterDisplayTime[i] = 0;
     }
-    if (minecraft != 0) {
-        mItemRenderer = minecraft->getItemRenderer();
-    }
+    mJukeboxTime = 0.0f;
 }
 
 BossHealthOverlay* Gui::getBossOverlay(int index)
@@ -129,7 +123,9 @@ void Gui::renderPumpkin(int width, int height)
 void Gui::renderPortalOverlay(float portalTime, int width, int height)
 {
     if (portalTime < 1.0f) {
-        portalTime = portalTime * portalTime * portalTime * portalTime * 0.8f + 0.2f;
+        portalTime *= portalTime;
+        portalTime *= portalTime;
+        portalTime = portalTime * 0.8f + 0.2f;
     }
     GlStateManager::disableAlphaTest();
     GlStateManager::disableDepthTest();
@@ -140,17 +136,17 @@ void Gui::renderPortalOverlay(float portalTime, int width, int height)
     mMinecraft->mTextures->bindTexture(&BLOCKS_LOCATION);
     MemSect(0);
     TextureAtlasSprite* sprite = Blocks::portal->getTexture(Direction::UP);
-    const double minU = sprite->getU0(false);
-    const double minV = sprite->getV0(false);
-    const double maxU = sprite->getU1(false);
-    const double maxV = sprite->getV1(false);
+    float minU = sprite->getU0(false);
+    float minV = sprite->getV0(false);
+    float maxU = sprite->getU1(false);
+    float maxV = sprite->getV1(false);
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();
     builder->begin();
-    builder->vertexUV(0.0f, static_cast<float>(height), -90.0f, static_cast<float>(minU), static_cast<float>(maxV));
-    builder->vertexUV(static_cast<float>(width), static_cast<float>(height), -90.0f, static_cast<float>(maxU), static_cast<float>(maxV));
-    builder->vertexUV(static_cast<float>(width), 0.0f, -90.0f, static_cast<float>(maxU), static_cast<float>(minV));
-    builder->vertexUV(0.0f, 0.0f, -90.0f, static_cast<float>(minU), static_cast<float>(minV));
+    builder->vertexUV(0.0f, static_cast<float>(height), -90.0f, minU, maxV);
+    builder->vertexUV(static_cast<float>(width), static_cast<float>(height), -90.0f, maxU, maxV);
+    builder->vertexUV(static_cast<float>(width), 0.0f, -90.0f, maxU, minV);
+    builder->vertexUV(0.0f, 0.0f, -90.0f, minU, minV);
     builder->end();
     GlStateManager::depthMask(true);
     GlStateManager::enableDepthTest();
@@ -158,43 +154,42 @@ void Gui::renderPortalOverlay(float portalTime, int width, int height)
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
 }
 
-void Gui::renderThermalOverlay(ThermalAreaRuleDefinition* rule, float alpha, int width, int height,
-                               float partialTick)
+void Gui::renderThermalOverlay(ThermalAreaRuleDefinition* rule, float partialTick, int width, int height,
+                               float alpha)
 {
-    if (rule->isEnabled() && rule->getElytraSpeedBoost() > 0.0) {
+    if (rule->getElytraSpeedBoost() > 0.0) {
         return;
     }
     GlStateManager::disableAlphaTest();
     GlStateManager::disableDepthTest();
     GlStateManager::depthMask(false);
     GlStateManager::blendFunc(4, 5);
-    MemSect(0x1f);
-    ResourceLocation* texture = &guiThermalOverlayTexture;
     float textureAlpha = 1.0f;
-    if (rule->isEnabled()) {
-        if (rule->getLiftForceModifier() <= 1.0) {
-            if (rule->getMaxHeight() > 0.0 || rule->getLiftSpeed() != 0.0)
-                texture = &guiThermalLiftOverlayTexture;
-        } else {
-            textureAlpha = 0.5f;
-        }
+    MemSect(0x1f);
+    if (rule->getLiftForceModifier() > 1.0) {
+        mMinecraft->mTextures->bindTexture(&guiThermalOverlayTexture);
+        textureAlpha = 0.5f;
+    } else if (rule->getMaxHeight() > 0.0 || rule->getLiftSpeed() != 0.0) {
+        mMinecraft->mTextures->bindTexture(&guiThermalLiftOverlayTexture);
+    } else {
+        mMinecraft->mTextures->bindTexture(&guiThermalOverlayTexture);
     }
-    mMinecraft->mTextures->bindTexture(texture);
     MemSect(0);
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, textureAlpha);
-    const float time = (static_cast<float>(mMinecraft->mGameRenderer->getTickCount()) + partialTick) *
+    const float top = static_cast<float>(height) * 0.25f;
+    const float time = (static_cast<float>(Minecraft::GetInstance()->mGameRenderer->getTickCount()) + partialTick) *
                        -0.011111111f;
-    const float topV = time + 1.0f;
-    const float bottomV = time + 0.25f;
+    const float bottomV = time + 1.0f;
+    const float topV = time + (bottomV - time) * 0.25f;
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();
     builder->begin();
-    builder->color(1.0f, 1.0f, 1.0f, alpha * 0.5f);
-    builder->vertexUV(0.0f, static_cast<float>(height), -90.0f, 0.0f, topV);
-    builder->vertexUV(static_cast<float>(width), static_cast<float>(height), -90.0f, 6.0f, topV);
+    builder->color(1.0f, 1.0f, 1.0f, 0.5f * alpha);
+    builder->vertexUV(0.0f, static_cast<float>(height), -90.0f, 0.0f, bottomV);
+    builder->vertexUV(static_cast<float>(width), static_cast<float>(height), -90.0f, 6.0f, bottomV);
     builder->color(1.0f, 1.0f, 1.0f, 0.0f);
-    builder->vertexUV(static_cast<float>(width), static_cast<float>(height) * 0.25f, -90.0f, 6.0f, bottomV);
-    builder->vertexUV(0.0f, static_cast<float>(height) * 0.25f, -90.0f, 0.0f, bottomV);
+    builder->vertexUV(static_cast<float>(width), top, -90.0f, 6.0f, topV);
+    builder->vertexUV(0.0f, top, -90.0f, 0.0f, topV);
     builder->end();
     GlStateManager::depthMask(true);
     GlStateManager::enableDepthTest();
@@ -204,186 +199,187 @@ void Gui::renderThermalOverlay(ThermalAreaRuleDefinition* rule, float alpha, int
 
 void Gui::render(float partialTick, bool hideGui, int width, int height)
 {
-    boost::shared_ptr<MultiplayerLocalPlayer> player = mMinecraft->mPlayer;
-    const int playerIndex = player->mUserIndex;
-    const int viewport = player->mViewport;
-    const int setting = static_cast<int>(GameSettings::GetGameSettings(
-        playerIndex, viewport == 0 ? eGameSetting_HUDSize : eGameSetting_HUDSizeSplitscreen));
-    const int guiScale = setting + 2;
+    const int playerIndex = mMinecraft->mPlayer->mUserIndex;
+    int guiScale;
+    if (mMinecraft->mPlayer->mViewport == C4JRender::eViewportType_FullScreen) {
+        guiScale = GameSettings::GetGameSettings(playerIndex, eGameSetting_HUDSize) + 2;
+    } else {
+        guiScale = GameSettings::GetGameSettings(playerIndex, eGameSetting_HUDSizeSplitscreen) + 2;
+    }
     ScreenSizeCalculator size(mMinecraft->mOptions, guiScale);
-    const int screenWidth = static_cast<int>(size.getWidth());
-    const int screenHeight = static_cast<int>(size.getHeight());
-    gGuiScreenScale = static_cast<float>(guiScale);
-
-    float xScale = 0.5f;
-    float yScale = 0.5f;
-    float scaleOne = 1.0f;
+    const int screenWidth = size.getWidth();
+    const int screenHeight = size.getHeight();
     int x = 0;
     int y = 0;
+    float xScale = 1.0f;
+    float yScale = 1.0f;
     bool joinedLayout = false;
-    switch (viewport) {
-    case 0:
-        x = screenWidth / 20;
-        y = screenHeight / 20;
-        xScale = scaleOne;
-        yScale = scaleOne;
-        break;
-    case 1:
-        gGuiScreenScale *= 0.5f;
-        x = screenWidth / 10;
-        y = screenHeight / 10;
-        yScale = scaleOne;
-        joinedLayout = true;
-        break;
-    case 2:
-        gGuiScreenScale *= 0.5f;
-        x = screenWidth / 10;
-        y = 0;
-        yScale = scaleOne;
-        joinedLayout = true;
-        break;
+    gGuiScreenScale = static_cast<float>(guiScale);
+
+    int splitYOffset;
+    switch (guiScale) {
     case 3:
-        gGuiScreenScale *= 0.5f;
-        x = screenWidth / 10;
-        y = screenHeight / 10;
-        xScale = scaleOne;
-        joinedLayout = true;
+        splitYOffset = 0;
         break;
     case 4:
-        gGuiScreenScale *= 0.5f;
-        x = 0;
-        y = (guiScale == 3 ? 0 : (guiScale == 4 ? -5 : 10)) + screenHeight / 10;
-        xScale = scaleOne;
-        joinedLayout = true;
-        break;
-    case 5:
-        gGuiScreenScale *= 0.5f;
-        x = screenWidth / 10;
-        y = screenHeight / 10;
-        xScale = scaleOne;
-        yScale = scaleOne;
-        break;
-    case 6:
-        gGuiScreenScale *= 0.5f;
-        x = 0;
-        y = screenHeight / 10;
-        xScale = scaleOne;
-        yScale = scaleOne;
-        break;
-    case 7:
-        gGuiScreenScale *= 0.5f;
-        x = screenWidth / 10;
-        y = 0;
-        xScale = scaleOne;
-        yScale = scaleOne;
-        break;
-    case 8:
-        gGuiScreenScale *= 0.5f;
-        xScale = scaleOne;
-        yScale = scaleOne;
+        splitYOffset = -5;
         break;
     default:
-        xScale = scaleOne;
-        yScale = scaleOne;
+        splitYOffset = 10;
         break;
     }
 
-    bool joinTransform = false;
-    if (!gConsoleUIController.GetMenuDisplayed(playerIndex))
-        joinTransform = gApp.GetXuiAction(playerIndex) != eXuiAction_AutoSave;
-    if (GameSettings::GetGameSettings(playerIndex, eGameSetting_Tooltips) == 0 && joinTransform)
-        BOOST_ASSERT(mMinecraft->mPlayer);
-    if (GameSettings::GetGameSettings(playerIndex, eGameSetting_DisplayHUD) == 0)
-        joinTransform = false;
+    switch (mMinecraft->mPlayer->mViewport) {
+    case C4JRender::eViewportType_FullScreen:
+        x = screenWidth / 20;
+        y = screenHeight / 20;
+        break;
+    case C4JRender::eViewportType_TopHalf:
+        gGuiScreenScale *= 0.5f;
+        x = screenWidth / 10;
+        y = screenHeight / 10;
+        xScale = 0.5f;
+        joinedLayout = true;
+        break;
+    case C4JRender::eViewportType_BottomHalf:
+        gGuiScreenScale *= 0.5f;
+        x = screenWidth / 10;
+        y = 0;
+        xScale = 0.5f;
+        joinedLayout = true;
+        break;
+    case C4JRender::eViewportType_LeftHalf:
+        gGuiScreenScale *= 0.5f;
+        x = screenWidth / 10;
+        y = screenHeight / 10;
+        yScale = 0.5f;
+        joinedLayout = true;
+        break;
+    case C4JRender::eViewportType_RightHalf:
+        gGuiScreenScale *= 0.5f;
+        x = 0;
+        y = splitYOffset + screenHeight / 10;
+        yScale = 0.5f;
+        joinedLayout = true;
+        break;
+    case C4JRender::eViewportType_TopLeftQuarter:
+        gGuiScreenScale *= 0.5f;
+        x = screenWidth / 10;
+        y = screenHeight / 10;
+        break;
+    case C4JRender::eViewportType_TopRightQuarter:
+        gGuiScreenScale *= 0.5f;
+        x = 0;
+        y = screenHeight / 10;
+        break;
+    case C4JRender::eViewportType_BottomLeftQuarter:
+        gGuiScreenScale *= 0.5f;
+        x = screenWidth / 10;
+        y = 0;
+        break;
+    case C4JRender::eViewportType_BottomRightQuarter:
+        gGuiScreenScale *= 0.5f;
+        x = 0;
+        y = 0;
+        break;
+    default:
+        break;
+    }
+
+    bool displayGui = !gConsoleUIController.GetMenuDisplayed(playerIndex) &&
+                      gApp.GetXuiAction(playerIndex) != eXuiAction_AutoSave;
+    int tooltipsYOffset = 0;
+    if (GameSettings::GetGameSettings(playerIndex, eGameSetting_Tooltips) == 0 && displayGui) {
+        switch (mMinecraft->mPlayer->mViewport) {
+        case C4JRender::eViewportType_FullScreen:
+            tooltipsYOffset = screenHeight / 10;
+            break;
+        default:
+            switch (guiScale) {
+            case 3:
+                tooltipsYOffset = 28;
+                break;
+            case 4:
+                tooltipsYOffset = 28;
+                break;
+            default:
+                tooltipsYOffset = 14;
+                break;
+            }
+            break;
+        }
+    }
+    if (GameSettings::GetGameSettings(playerIndex, eGameSetting_DisplayHUD) == 0) {
+        displayGui = false;
+    }
 
     mMinecraft->mGameRenderer->setupGuiScreen(guiScale);
     mMinecraft->mGameRenderer->renderItemActivationAnimation(screenWidth, screenHeight, partialTick);
     GlStateManager::enableBlend();
     GlStateManager::blendFunc(4, 5);
 
-    if (Minecraft::useFancyGraphics())
-        renderVignette(player->getBrightness(), screenWidth, screenHeight);
+    if (Minecraft::useFancyGraphics()) {
+        renderVignette(mMinecraft->mPlayer->getBrightness(), screenWidth, screenHeight);
+    }
 
-    not_null_ptr<ItemInstance> helmet = player->mInventory->getArmor(3);
-    if (!player->GetThirdPersonView(false) &&
-        helmet->getItem() == Item::byBlock(Blocks::carved_pumpkin) && !player->isSpectator())
+    not_null_ptr<ItemInstance> helmet = mMinecraft->mPlayer->mInventory->getArmor(3);
+    if (!mMinecraft->mPlayer->GetThirdPersonView(false) &&
+        helmet->getItem() == Item::byBlock(Blocks::carved_pumpkin) && !mMinecraft->mPlayer->isSpectator()) {
         renderPumpkin(screenWidth, screenHeight);
+    }
 
-    if (!player->hasEffect(MobEffects::CONFUSION)) {
-        const float portalIntensity = player->mPortalEffectIntensityO +
-                                      (player->mPortalEffectIntensity - player->mPortalEffectIntensityO) *
-                                          partialTick;
-        if (portalIntensity > 0.0f)
+    if (!mMinecraft->mPlayer->hasEffect(MobEffects::CONFUSION)) {
+        const float portalIntensity =
+            mMinecraft->mPlayer->mPortalEffectIntensityO +
+            (mMinecraft->mPlayer->mPortalEffectIntensity - mMinecraft->mPlayer->mPortalEffectIntensityO) *
+                partialTick;
+        if (portalIntensity > 0.0f) {
             renderPortalOverlay(portalIntensity, screenWidth, screenHeight);
+        }
     }
 
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
-    if (Minecraft::InMiniGame(eMiniGameId_Glide, true)) {
-        if (options && options->getRequiredGameRules()) {
-            std::vector<ThermalAreaRuleDefinition*> areas;
-            options->getRequiredGameRules()->getThermalAreas(&areas);
-            for (std::vector<ThermalAreaRuleDefinition*>::const_iterator it = areas.begin();
-                 it != areas.end(); ++it) {
-                ThermalAreaRuleDefinition* rule = *it;
-                if (!rule->isEnabled() || player->getFallFlyingTicks() <= 4)
-                    continue;
-                boost::shared_ptr<Entity> entity = boost::static_pointer_cast<Entity>(player);
-                if (!rule->getConditionsMet(entity))
-                    continue;
-                AABB* area = rule->getArea();
-                AABB* sweptVolume = player->getSweptVolume();
-                if (sweptVolume->intersects(area->mMinX, area->mMinY, area->mMinZ,
-                                            area->mMaxX, area->mMaxY, area->mMaxZ)) {
-                    mThermalOverlayRules[playerIndex] = rule;
-                    mThermalOverlayFade[playerIndex] = 30;
-                    break;
-                }
+    if (Minecraft::InMiniGame(eMiniGameId_Glide, true) && options && options->getRequiredGameRules()) {
+        std::vector<ThermalAreaRuleDefinition*> areas;
+        options->getRequiredGameRules()->getThermalAreas(&areas);
+        for (std::vector<ThermalAreaRuleDefinition*>::iterator it = areas.begin(); it != areas.end(); ++it) {
+            if ((*it)->isEnabled() && mMinecraft->mPlayer->getFallFlyingTicks() > 4 &&
+                (*it)->getConditionsMet(mMinecraft->mPlayer) &&
+                (*it)->getArea()->intersects(mMinecraft->mPlayer->getSweptVolume())) {
+                mThermalOverlayRules[playerIndex] = *it;
+                mThermalOverlayFade[playerIndex] = 30;
+                break;
             }
-            ThermalAreaRuleDefinition* rule = mThermalOverlayRules[playerIndex];
-            int& fade = mThermalOverlayFade[playerIndex];
-            if (rule && fade >= 0) {
-                renderThermalOverlay(rule, static_cast<float>(fade) / 30.0f,
-                                     screenWidth, screenHeight, partialTick);
-                --fade;
-            } else {
-                mThermalOverlayRules[playerIndex] = 0;
-                fade = 0;
-            }
+        }
+        if (mThermalOverlayRules[playerIndex] != NULL && mThermalOverlayFade[playerIndex] >= 0) {
+            renderThermalOverlay(mThermalOverlayRules[playerIndex], partialTick, screenWidth, screenHeight,
+                                 static_cast<float>(mThermalOverlayFade[playerIndex]) / 30.0f);
+            --mThermalOverlayFade[playerIndex];
+        } else {
+            mThermalOverlayRules[playerIndex] = NULL;
+            mThermalOverlayFade[playerIndex] = 0;
         }
     }
 
     if (!mMinecraft->mGameMode->isCutScene()) {
-        if (joinTransform && joinedLayout) {
+        if (displayGui && joinedLayout) {
             GlStateManager::pushMatrix();
             GlStateManager::scalef(xScale, yScale, xScale);
         }
-        if (GameSettings::GetGameSettings(playerIndex, eGameSetting_AnimatedCharacter) != 0 && joinTransform) {
-            bool renderPreview = true;
-            if (player->isSneaking() || player->isSprinting()) {
+        if (GameSettings::GetGameSettings(playerIndex, eGameSetting_AnimatedCharacter) != 0 && displayGui) {
+            if (mMinecraft->mPlayer->isSneaking() || mMinecraft->mPlayer->isSprinting()) {
                 mCharacterDisplayTime[playerIndex] = 30;
-            } else if (player->mAbilities.mFlying || player->isFallFlying() || player->isFallFlying()) {
+            } else if (mMinecraft->mPlayer->mAbilities.mFlying || mMinecraft->mPlayer->isFallFlying() ||
+                       mMinecraft->mPlayer->isFallFlying()) {
                 mCharacterDisplayTime[playerIndex] = 5;
-            } else {
-                if (mCharacterDisplayTime[playerIndex] < 1) {
-                    renderPreview = false;
-                } else {
-                    --mCharacterDisplayTime[playerIndex];
-                    renderPreview = mCharacterDisplayTime[playerIndex] >= 1;
-                }
+            } else if (mCharacterDisplayTime[playerIndex] > 0) {
+                --mCharacterDisplayTime[playerIndex];
             }
 
-            if (renderPreview) {
-                boost::shared_ptr<Entity> camera = mMinecraft->getCameraEntity();
-                boost::shared_ptr<Entity> renderedPlayer = boost::static_pointer_cast<Entity>(player);
-                EntityRenderDispatcher* dispatcher = mMinecraft->getEntityRenderDispatcher();
-                dispatcher->prepare(mMinecraft->mLevel, mMinecraft->mFont, camera, mMinecraft->mSpectateEntity,
-                                    mMinecraft->mOptions, partialTick);
-
-                const float savedYRot = player->mYRot;
-                const float savedXRot = player->mXRot;
-                const float savedYRotO = player->mYRotO;
-                const int savedFireTicks = player->mRemainingFireTicks;
-                const bool savedSharedFlag = player->getSharedFlag(Entity::FLAG_ONFIRE);
+            if (mCharacterDisplayTime[playerIndex] > 0) {
+                Minecraft::GetInstance()->getEntityRenderDispatcher()->prepare(
+                    mMinecraft->mLevel, mMinecraft->mFont, mMinecraft->getCameraEntity(),
+                    mMinecraft->mSpectateEntity, mMinecraft->mOptions, partialTick);
 
                 GlStateManager::enableRescaleNormal();
                 GlStateManager::enableColorMaterial();
@@ -391,41 +387,43 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
                 GlStateManager::translatef(static_cast<float>(x + 10), static_cast<float>(y + 17), 50.0f);
                 GlStateManager::scalef(-12.0f, 12.0f, 12.0f);
                 GlStateManager::rotatef(180.0f, 0.0f, 0.0f, 1.0f);
+                const float savedYRot = mMinecraft->mPlayer->mYRot;
+                const float savedYRotO = mMinecraft->mPlayer->mYRotO;
+                const float savedXRot = mMinecraft->mPlayer->mXRot;
+                const int savedFireTicks = mMinecraft->mPlayer->mRemainingFireTicks;
+                const bool savedOnFire = mMinecraft->mPlayer->getSharedFlag(Entity::FLAG_ONFIRE);
                 GlStateManager::rotatef(135.0f, 0.0f, 1.0f, 0.0f);
                 Lighting::turnOn();
                 GlStateManager::rotatef(-135.0f, 0.0f, 1.0f, 0.0f);
-                const float headPitch = std::atan(0.25f);
-                GlStateManager::rotatef(-headPitch * 20.0f, 1.0f, 0.0f, 0.0f);
-                const float interpolatedBodyYaw = player->mYBodyRotO +
-                                                  (player->mYBodyRot - player->mYBodyRotO);
-                GlStateManager::rotatef(interpolatedBodyYaw + 15.707964f,
-                                        0.0f, 1.0f, 0.0f);
+                GlStateManager::rotatef(-(std::atan(0.25f) * 20.0f), 1.0f, 0.0f, 0.0f);
+                const float bodyYaw = mMinecraft->mPlayer->mYBodyRotO +
+                                      (mMinecraft->mPlayer->mYBodyRot - mMinecraft->mPlayer->mYBodyRotO);
+                GlStateManager::rotatef(bodyYaw - -15.707964f, 0.0f, 1.0f, 0.0f);
                 GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
-
-                if (!player->isFallFlying()) {
-                    player->mYRot = interpolatedBodyYaw;
-                    player->mYRotO = interpolatedBodyYaw;
-                    player->mXRot = -std::atan(0.25f) * 20.0f;
+                if (!mMinecraft->mPlayer->isFallFlying()) {
+                    mMinecraft->mPlayer->mYRot = bodyYaw;
+                    mMinecraft->mPlayer->mYRotO = mMinecraft->mPlayer->mYRot;
+                    mMinecraft->mPlayer->mXRot = -(std::atan(0.25f) * 20.0f);
                 }
-                player->clearFire();
-                player->setSharedFlag(Entity::FLAG_ONFIRE, false);
-                if (!player->isFallFlying()) {
-                    GlStateManager::translatef(0.0f, -1.62f, 0.0f);
+                mMinecraft->mPlayer->clearFire();
+                mMinecraft->mPlayer->setSharedFlag(Entity::FLAG_ONFIRE, false);
+                if (mMinecraft->mPlayer->isFallFlying()) {
+                    GlStateManager::translatef(
+                        0.0f, 1.62f * (Mth::clamp(mMinecraft->mPlayer->mXRot, -90.0f, 90.0f) / 90.0f), 0.0f);
                 } else {
-                    const double pitch = Mth::clamp(static_cast<double>(player->mXRot), -90.0, 90.0);
-                    GlStateManager::translatef(0.0f, 1.62f * static_cast<float>(pitch / 90.0), 0.0f);
+                    GlStateManager::translatef(0.0f, -1.62f, 0.0f);
                 }
-                dispatcher->mCameraYRot = 180.0f;
-                dispatcher->mRenderName = true;
-                dispatcher->render(renderedPlayer, 0.0, 0.0, 0.0, 0.0f,
-                                   1.0f, false, false, true, false);
-                dispatcher->mRenderName = false;
-
-                player->mYRot = savedYRot;
-                player->mXRot = savedXRot;
-                player->mYRotO = savedYRotO;
-                player->mRemainingFireTicks = savedFireTicks;
-                player->setSharedFlag(Entity::FLAG_ONFIRE, savedSharedFlag);
+                Minecraft::GetInstance()->getEntityRenderDispatcher()->mCameraYRot = 180.0f;
+                Minecraft::GetInstance()->getEntityRenderDispatcher()->mRenderName = true;
+                boost::shared_ptr<Entity> entity = mMinecraft->mPlayer;
+                Minecraft::GetInstance()->getEntityRenderDispatcher()->render(entity, 0.0, 0.0, 0.0, 0.0f, 1.0f,
+                                                                              false, false, true, false);
+                Minecraft::GetInstance()->getEntityRenderDispatcher()->mRenderName = false;
+                mMinecraft->mPlayer->mYRot = savedYRot;
+                mMinecraft->mPlayer->mYRotO = savedYRotO;
+                mMinecraft->mPlayer->mXRot = savedXRot;
+                mMinecraft->mPlayer->mRemainingFireTicks = savedFireTicks;
+                mMinecraft->mPlayer->setSharedFlag(Entity::FLAG_ONFIRE, savedOnFire);
                 GlStateManager::popMatrix();
                 Lighting::turnOff();
                 GlStateManager::disableRescaleNormal();
@@ -435,26 +433,27 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
 
     GlStateManager::disableBlend();
     GlStateManager::blendFunc(4, 5);
-    const int sleepTimer = static_cast<int>(player->getSleepTimer());
-    if (sleepTimer > 0) {
+    if (mMinecraft->mPlayer->getSleepTimer() > 0) {
         GlStateManager::disableDepthTest();
         GlStateManager::disableAlphaTest();
+        const int sleepTimer = mMinecraft->mPlayer->getSleepTimer();
         float alpha = static_cast<float>(sleepTimer) / 100.0f;
-        if (alpha > 1.0f)
+        if (alpha > 1.0f) {
             alpha = 1.0f - static_cast<float>(sleepTimer - 100) / 10.0f;
+        }
+        const int colour = (static_cast<int>(220.0f * alpha) << 24) | 0x101020;
         fill(0, 0, static_cast<int>(static_cast<float>(screenWidth) / xScale),
-             static_cast<int>(static_cast<float>(screenHeight) / yScale),
-             (static_cast<int>(220.0f * alpha) << 24) | 0x101020);
+             static_cast<int>(static_cast<float>(screenHeight) / yScale), colour);
         GlStateManager::enableAlphaTest();
         GlStateManager::enableDepthTest();
     }
-    if (!player->isAlive()) {
+    if (!mMinecraft->mPlayer->isAlive()) {
         GlStateManager::disableDepthTest();
         GlStateManager::disableAlphaTest();
-        const float alpha = static_cast<float>(player->getDeathFadeTimer()) / 21.0f;
+        const float alpha = static_cast<float>(mMinecraft->mPlayer->getDeathFadeTimer()) / 21.0f;
+        const int colour = (static_cast<int>(220.0f * alpha) << 24) | 0x200000;
         fill(0, 0, static_cast<int>(static_cast<float>(screenWidth) / xScale),
-             static_cast<int>(static_cast<float>(screenHeight) / yScale),
-             (static_cast<int>(220.0f * alpha) << 24) | 0x200000);
+             static_cast<int>(static_cast<float>(screenHeight) / yScale), colour);
         GlStateManager::enableAlphaTest();
         GlStateManager::enableDepthTest();
     }
@@ -463,8 +462,9 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
     GlStateManager::enableBlend();
     GlStateManager::blendFunc(4, 5);
     GlStateManager::disableAlphaTest();
-    if (joinTransform && joinedLayout)
+    if (displayGui && joinedLayout) {
         GlStateManager::popMatrix();
+    }
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
     GlStateManager::disableBlend();
     GlStateManager::enableAlphaTest();
@@ -472,17 +472,15 @@ void Gui::render(float partialTick, bool hideGui, int width, int height)
 
 void Gui::renderSlot(int playerIndex, int x, int y, float partialTick)
 {
-    not_null_ptr<ItemInstance> item =
-        mMinecraft->mPlayer->mInventory->getItem(static_cast<unsigned int>(playerIndex));
+    not_null_ptr<ItemInstance> item = mMinecraft->mPlayer->mInventory->m_items[playerIndex];
     if (item->isEmpty()) {
         return;
     }
 
-    const int popTime = item->getPopTime();
-    const float popRemaining = static_cast<float>(popTime) - partialTick;
-    if (0.0f < popRemaining) {
-        const float popScale = popRemaining / 5.0f + 1.0f;
+    const float popRemaining = static_cast<float>(item->getPopTime()) - partialTick;
+    if (popRemaining > 0.0f) {
         GlStateManager::pushMatrix();
+        const float popScale = popRemaining / 5.0f + 1.0f;
         GlStateManager::translatef(static_cast<float>(x + 8), static_cast<float>(y + 12), 0.0f);
         GlStateManager::scalef(1.0f / popScale, (popScale + 1.0f) * 0.5f, 1.0f);
         GlStateManager::translatef(static_cast<float>(-(x + 8)), static_cast<float>(-(y + 12)), 0.0f);
@@ -490,7 +488,7 @@ void Gui::renderSlot(int playerIndex, int x, int y, float partialTick)
 
     mItemRenderer->renderAndDecorateItem(item, x, y);
 
-    if (0.0f < popRemaining) {
+    if (popRemaining > 0.0f) {
         GlStateManager::popMatrix();
     }
 
@@ -531,32 +529,55 @@ void Gui::addMessage(const std::wstring& message, int playerIndex, bool overlay,
 {
     std::wstring text = message;
 
-    unsigned int maxLength;
-    if (static_cast<unsigned int>(mMinecraft->mPlayer->mViewport) < 3) {
-        maxLength = gRenderer->IsHiDef() ? 0x69 : 0x37;
-        const unsigned int language = XGetLanguage();
-        if (language == XC_LANGUAGE_JAPANESE || language == XC_LANGUAGE_KOREAN ||
-            language == XC_LANGUAGE_TCHINESE) {
-            maxLength = gRenderer->IsHiDef() ? 0x46 : 0x23;
-        }
-    } else {
+    int maxLength;
+    switch (mMinecraft->mPlayer->mViewport) {
+    case C4JRender::eViewportType_FullScreen:
+    case C4JRender::eViewportType_TopHalf:
+    case C4JRender::eViewportType_BottomHalf:
         maxLength = 0x37;
-        const unsigned int language = XGetLanguage();
-        if (language == XC_LANGUAGE_JAPANESE || language == XC_LANGUAGE_KOREAN ||
-            language == XC_LANGUAGE_TCHINESE) {
-            maxLength = 0x23;
+        if (gRenderer->IsHiDef()) {
+            maxLength = 0x69;
         }
+        switch (XGetLanguage()) {
+        case XC_LANGUAGE_JAPANESE:
+        case XC_LANGUAGE_KOREAN:
+        case XC_LANGUAGE_TCHINESE:
+            if (gRenderer->IsHiDef()) {
+                maxLength = 0x46;
+            } else {
+                maxLength = 0x23;
+            }
+            break;
+        }
+        break;
+    default:
+        maxLength = 0x37;
+        switch (XGetLanguage()) {
+        case XC_LANGUAGE_JAPANESE:
+        case XC_LANGUAGE_KOREAN:
+        case XC_LANGUAGE_TCHINESE:
+            maxLength = 0x23;
+            break;
+        }
+        break;
     }
 
     bool wrapped = false;
     while (text.length() > maxLength) {
-        const unsigned int searchEnd = std::min<unsigned int>(text.length(), maxLength);
-        text.find_last_of(L" ", searchEnd);
-        unsigned int split = maxLength;
-        const unsigned int splitLanguage = XGetLanguage();
-        if (splitLanguage != XC_LANGUAGE_JAPANESE && splitLanguage != XC_LANGUAGE_KOREAN &&
-            splitLanguage != XC_LANGUAGE_TCHINESE) {
-            split = static_cast<unsigned int>(text.find_last_of(L" ", searchEnd));
+        unsigned int searchEnd = 1;
+        while (searchEnd < text.length() && static_cast<int>(searchEnd + 1) <= maxLength) {
+            ++searchEnd;
+        }
+        unsigned int split = text.find_last_of(L" ", searchEnd);
+        switch (XGetLanguage()) {
+        case XC_LANGUAGE_JAPANESE:
+        case XC_LANGUAGE_KOREAN:
+        case XC_LANGUAGE_TCHINESE:
+            split = maxLength;
+            break;
+        default:
+            split = text.find_last_of(L" ", searchEnd);
+            break;
         }
         if (split != searchEnd) {
             ++split;
@@ -572,31 +593,32 @@ void Gui::addMessage(const std::wstring& message, int playerIndex, bool overlay,
             if (mMinecraft->mLocalPlayers[i] == NULL) {
                 continue;
             }
-            if (GameSettings::GetGameSettings(i, overlay ? eGameSetting_DeathMessages : eGameSetting_DisplayGameMessages) != 0 ||
-                force) {
+            const bool display = overlay ? GameSettings::GetGameSettings(i, eGameSetting_DeathMessages) != 0
+                                         : GameSettings::GetGameSettings(i, eGameSetting_DisplayGameMessages) != 0;
+            if (display || force) {
                 mMessages[i].insert(mMessages[i].begin(), GuiMessage(text));
                 while (mMessages[i].size() > 50) {
                     mMessages[i].pop_back();
                 }
             }
         }
-        return;
-    }
-
-    if (GameSettings::GetGameSettings(playerIndex, overlay ? eGameSetting_DeathMessages : eGameSetting_DisplayGameMessages) != 0 ||
-        force) {
-        mMessages[playerIndex].insert(mMessages[playerIndex].begin(), GuiMessage(text));
-        while (mMessages[playerIndex].size() > 50) {
-            mMessages[playerIndex].pop_back();
+    } else {
+        const bool display = overlay ? GameSettings::GetGameSettings(playerIndex, eGameSetting_DeathMessages) != 0
+                                     : GameSettings::GetGameSettings(playerIndex, eGameSetting_DisplayGameMessages) != 0;
+        if (display || force) {
+            mMessages[playerIndex].insert(mMessages[playerIndex].begin(), GuiMessage(text));
+            while (mMessages[playerIndex].size() > 50) {
+                mMessages[playerIndex].pop_back();
+            }
         }
-    }
-    if (overlay && filtered) {
-        if (append) {
-            mNowPlaying[playerIndex] = text + L"\n";
-        } else if (wrapped) {
-            mNowPlaying[playerIndex] += text;
-        } else {
-            mNowPlaying[playerIndex] = text;
+        if (overlay && filtered) {
+            if (append) {
+                mNowPlaying[playerIndex] = text + L"\n";
+            } else if (wrapped) {
+                mNowPlaying[playerIndex] += text;
+            } else {
+                mNowPlaying[playerIndex] = text;
+            }
         }
     }
 }
@@ -630,15 +652,10 @@ void Gui::setSingleMessage(const std::wstring& message, int playerIndex, int dur
 
 void Gui::setNowPlaying(const std::wstring& message)
 {
-    int i;
-    const wchar_t* prefix = L10N::GetString(IDS_NOWPLAYING);
-    std::wstring text = prefix == 0 ? std::wstring() : std::wstring(prefix);
-    text += message;
-    for (i = 0; i < 4; i += 2) {
-        mNowPlaying[i] = text;
-        mNowPlaying[i + 1] = mNowPlaying[i];
-        mSingleMessageTime[i] = 0x3c;
-        mSingleMessageTime[i + 1] = 0x3c;
+    for (int i = 0; i < 4; ++i)
+    {
+        mSingleMessages[i] = L10N::GetString(IDS_NOWPLAYING) + message;
+        mSingleMessageTime[i] = 60;
     }
     mSingleMessageVisible = true;
 }

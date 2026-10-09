@@ -742,7 +742,7 @@ int CMinecraftApp::SignInChangeCallback(void* context, bool signedIn, unsigned i
                     if (guestSignedOut)
                     {
                         int options[1] = { IDS_CONFIRM_OK };
-                        gConsoleUIController.RequestErrorMessage(0xDAD07967, 0x4EEC6392, options, 1,
+                        gConsoleUIController.RequestErrorMessage(IDS_GUEST_ORDER_CHANGED_TITLE, IDS_GUEST_ORDER_CHANGED_TEXT, options, 1,
                                                                  gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
                     }
 
@@ -1221,7 +1221,7 @@ int CMinecraftApp::ExitAndJoinFromInviteSaveDialogReturned(void* context, int pa
     {
         int parameters[2] = { static_cast<int>(IDS_CONFIRM_CANCEL), static_cast<int>(IDS_CONFIRM_OK) };
         gConsoleUIController.RequestErrorMessage(
-            static_cast<int>(0xa3d4a110), static_cast<int>(0xbb7e4722), parameters, 2,
+            static_cast<int>(IDS_TITLE_DECLINE_SAVE_GAME), static_cast<int>(IDS_CONFIRM_DECLINE_SAVE_GAME), parameters, 2,
             static_cast<unsigned int>(gProfile->GetPrimaryPad()),
             ExitAndJoinFromInviteDeclineSaveReturned, context, NULL, true);
     }
@@ -1300,10 +1300,9 @@ int CMinecraftApp::RemoteSaveThreadProc(void* context)
 }
 int CMinecraftApp::ExitGameFromRemoteSaveDialogReturned(void* context, int pad, C4JStorage::EMessageResult result)
 {
-    CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
-    if (app != NULL && result == C4JStorage::EMessageResult_Decline)
-        app->SetAction(pad, eXuiAction_ExitWorld, NULL);
-    else if (result != C4JStorage::EMessageResult_Decline)
+    if (result == C4JStorage::EMessageResult_Decline)
+        gApp.SetAction(pad, eXuiAction_ExitWorld, NULL);
+    else
     {
         UIScene* scene = gConsoleUIController.FindScene(EUIScene_FullscreenProgress);
         if (scene != NULL)
@@ -1311,16 +1310,17 @@ int CMinecraftApp::ExitGameFromRemoteSaveDialogReturned(void* context, int pad, 
     }
     return 0;
 }
-int CMinecraftApp::ExitGameFromRemoteSave(void* context)
+void CMinecraftApp::ExitGameFromRemoteSave(void* context)
 {
-    int messageParameters[2] = { static_cast<int>(IDS_CONFIRM_CANCEL), static_cast<int>(IDS_CONFIRM_OK) };
+    unsigned int pad = gProfile->GetPrimaryPad();
+    int messageParameters[3];
+    messageParameters[0] = IDS_CONFIRM_CANCEL;
+    messageParameters[1] = IDS_CONFIRM_OK;
     gConsoleUIController.RequestAlertMessage(static_cast<int>(IDS_EXIT_GAME),
                                               static_cast<int>(IDS_CONFIRM_EXIT_GAME),
-                                              messageParameters, 2,
-                                              static_cast<unsigned int>(gProfile->GetPrimaryPad()),
-                                              ExitGameFromRemoteSaveDialogReturned, context,
+                                              messageParameters, 2, pad,
+                                              ExitGameFromRemoteSaveDialogReturned, NULL,
                                               NULL, true);
-    return 0;
 }
 int CMinecraftApp::TexturePackDialogReturned(void* context, int pad, C4JStorage::EMessageResult result)
 {
@@ -2746,7 +2746,7 @@ uint32_t CMinecraftApp::WarningTrialTexturePackReturned(void* context, int pad, 
         {
             int parameter = static_cast<int>(IDS_CONFIRM_OK);
             gConsoleUIController.RequestErrorMessage(
-                static_cast<int>(0x8a21894b), static_cast<int>(0xc34c0b77), &parameter, 1,
+                static_cast<int>(IDS_PRO_NOTONLINE_TITLE), static_cast<int>(0xc34c0b77), &parameter, 1,
                 static_cast<unsigned int>(pad), NULL, NULL, NULL, true);
         }
         else
@@ -3585,7 +3585,7 @@ std::wstring CMinecraftApp::getEntityName(uint64_t entityType, int32_t auxValue)
     if (entityType == EntityType::VILLAGER_GOLEM)
         return L10N::GetString(IDS_IRONGOLEM);
     if (entityType == EntityType::MAGMA_CUBE)
-        return L10N::GetString(0x9E8D900F);
+        return L10N::GetString(IDS_LAVA_SLIME);
     if (entityType == EntityType::BLAZE)
         return L10N::GetString(IDS_BLAZE);
     if (entityType == EntityType::ENDER_DRAGON)
@@ -3998,9 +3998,9 @@ void CMinecraftApp::ProcessFakePadValueA()
         mFakePadValues[pad] = 0;
     }
 }
-uint32_t CMinecraftApp::IsVoiceChatEnabled()
+bool CMinecraftApp::IsVoiceChatEnabled()
 {
-    return GetGameStarted() != 0 &&
+    return gApp.GetGameStarted() != 0 &&
         GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_GameChat) != 0;
 }
 void CMinecraftApp::CaptureScreenshot(int32_t playerNumber)
@@ -4017,7 +4017,7 @@ void CMinecraftApp::HandleXuiActions()
     if (GetGlobalXuiAction() == eXuiAction_LavaNearSpawn)
     {
         int parameters[1] = { static_cast<int>(IDS_CONFIRM_OK) };
-        if (gConsoleUIController.RequestErrorMessage(0x3856a24c, static_cast<int>(0xbf12dc51U), parameters, 1,
+        if (gConsoleUIController.RequestErrorMessage(IDS_CANT_PLACE_NEAR_SPAWN_TITLE, static_cast<int>(0xbf12dc51U), parameters, 1,
                                                      0xff, NULL, NULL, NULL, true) != 1)
             SetGlobalXuiAction(eXuiAction_Idle);
     }
@@ -4302,7 +4302,7 @@ void CMinecraftApp::HandleXuiActions()
         {
             SetActionInternal(pad, eXuiAction_Idle, NULL);
             int parameters[2] = { static_cast<int>(IDS_UNLOCK_TITLE), static_cast<int>(IDS_EXIT_GAME) };
-            gConsoleUIController.RequestErrorMessage(0x383ba45f, static_cast<int>(0x91a0515aU), parameters, 2,
+            gConsoleUIController.RequestErrorMessage(IDS_TRIALOVER_TITLE, static_cast<int>(0x91a0515aU), parameters, 2,
                                                      pad, TrialOverReturned, this, NULL, true);
             break;
         }
@@ -4342,7 +4342,7 @@ void CMinecraftApp::HandleXuiActions()
                 int parameters[1] = { static_cast<int>(IDS_CONFIRM_OK) };
                 if (gConsoleUIController.RequestErrorMessage(
                         CGameNetworkManager::sInstance.CorrectErrorIDS(static_cast<int>(IDS_CONNECTION_LOST)),
-                        CGameNetworkManager::sInstance.CorrectErrorIDS(static_cast<int>(0x9d363c70U)),
+                        CGameNetworkManager::sInstance.CorrectErrorIDS(static_cast<int>(IDS_CONNECTION_LOST_LIVE)),
                         parameters, 1, 0xff, EthernetDisconnectReturned, reinterpret_cast<void*>(pad), NULL,
                         true) == 1)
                     SetActionInternal(pad, eXuiAction_ConnectionLost, NULL);
@@ -4376,7 +4376,7 @@ void CMinecraftApp::HandleXuiActions()
                 int parameters[1] = { static_cast<int>(IDS_CONFIRM_OK) };
                 gConsoleUIController.RequestErrorMessage(
                     CGameNetworkManager::sInstance.CorrectErrorIDS(static_cast<int>(IDS_CONNECTION_LOST)),
-                    CGameNetworkManager::sInstance.CorrectErrorIDS(static_cast<int>(0x9d363c70U)),
+                    CGameNetworkManager::sInstance.CorrectErrorIDS(static_cast<int>(IDS_CONNECTION_LOST_LIVE)),
                     parameters, 1, 0xff, EthernetDisconnectReturned, reinterpret_cast<void*>(pad), NULL, true);
                 MinecraftServer::HaltServer(false);
                 CGameNetworkManager::sInstance.LeaveGame(false);
@@ -4540,6 +4540,10 @@ void CMinecraftApp::HandleXuiActions()
                 state->closeMode = 6;
                 state->backScene = EUIScene_EndPoem;
             }
+            else
+            {
+                state->closeMode = 3;
+            }
             params->m_completionData = state;
             gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress, params,
                                                  EUILayer_Scene, EUIGroup_PlayerDefault);
@@ -4566,18 +4570,19 @@ void CMinecraftApp::HandleXuiActions()
             params->m_threadProc = &RemoteSaveThreadProc;
             params->m_threadParam = NULL;
             FullscreenProgressState* state = new FullscreenProgressState;
-            state->closeMode = 1;
             state->playerId = 0;
-            if (!gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), EUIScene_ConnectingProgress))
+            if (gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), EUIScene_ConnectingProgress))
             {
-                if (!gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), EUIScene_EndPoem))
-                {
-                }
-                else
-                {
-                    state->closeMode = 6;
-                    state->backScene = EUIScene_EndPoem;
-                }
+                state->closeMode = 1;
+            }
+            else if (gConsoleUIController.IsSceneInStack(gProfile->GetPrimaryPad(), EUIScene_EndPoem))
+            {
+                state->closeMode = 6;
+                state->backScene = EUIScene_EndPoem;
+            }
+            else
+            {
+                state->closeMode = 3;
             }
             params->m_cancelFunc = &ExitGameFromRemoteSave;
             params->m_cancelText = IDS_TOOLTIPS_EXIT;
@@ -4589,7 +4594,7 @@ void CMinecraftApp::HandleXuiActions()
         case eXuiAction_MultiplayerNotAllowed:
         {
             int parameters[1] = { static_cast<int>(IDS_CONFIRM_OK) };
-            if (gConsoleUIController.RequestErrorMessage(0x252ab13f, static_cast<int>(0xcc5a590fU), parameters, 1,
+            if (gConsoleUIController.RequestErrorMessage(IDS_NO_MULTIPLAYER_PRIVILEGE_TITLE, static_cast<int>(IDS_NO_MULTIPLAYER_PRIVILEGE_JOIN_TEXT), parameters, 1,
                                                          gProfile->GetPrimaryPad(), NULL, NULL, NULL, true) != 1)
                 SetActionInternal(pad, eXuiAction_Idle, NULL);
             break;
@@ -4668,7 +4673,7 @@ void CMinecraftApp::HandleXuiActions()
             break;
         case eXuiAction_TexturePackMissing:
         {
-            int parameters[2] = { IDS_TEXTUREPACK_FULLVERSION, 0x4424ed62 };
+            int parameters[2] = { IDS_TEXTUREPACK_FULLVERSION, IDS_TEXTURE_PACK_TRIALVERSION };
             gConsoleUIController.RequestErrorMessage(IDS_DLC_TEXTUREPACK_NOT_PRESENT_TITLE, IDS_DLC_TEXTUREPACK_NOT_PRESENT, parameters, 2,
                                                      gProfile->GetPrimaryPad(), TexturePackDialogReturned, this,
                                                      NULL, true);
@@ -4691,6 +4696,7 @@ void CMinecraftApp::HandleXuiActions()
             params->m_threadProc = &GameModeTransitionThreadProc;
             params->m_miniGameId = Minecraft::GetInstance()->GetMiniGame()->GetId();
             FullscreenProgressState* completionData = new FullscreenProgressState;
+            completionData->closeMode = 3;
             completionData->playerId = gProfile->GetPrimaryPad();
             params->m_completionData = completionData;
             params->m_completeFunc = &GameModeTransitionComplete;

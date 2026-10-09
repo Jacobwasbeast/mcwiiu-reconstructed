@@ -48,9 +48,7 @@ void RegisterAwardsWithProfileManager()
 {
     for (int i = 0; i < UIScene_AchievementsMenu::DISPLAY_COUNT; ++i)
     {
-        int id = UIScene_AchievementsMenu::sDisplayList[i];
-        const AchievementInfo* info = reinterpret_cast<const AchievementInfo*>(
-            static_cast<uintptr_t>(static_cast<unsigned int>(UIScene_AchievementsMenu::GetInfo(id))));
+        const AchievementInfo* info = UIScene_AchievementsMenu::GetInfo(UIScene_AchievementsMenu::sDisplayList[i]);
         gProfile->RegisterAward(info->id, info->registrationId, eAwardType_None, info->title,
                                 info->description);
     }

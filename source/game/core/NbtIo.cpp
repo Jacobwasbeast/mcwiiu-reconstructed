@@ -74,12 +74,12 @@ void NbtIo::writeUnnamedTag(Tag* tag, DataOutput* output)
 {
     output->writeByte(tag->getId());
 
-    if (tag->getId() != Tag::TAG_END)
-    {
-        output->writeUTF(L"");
+    if (tag->getId() == Tag::TAG_END)
+        return;
 
-        tag->write(output);
-    }
+    output->writeUTF(L"");
+
+    tag->write(output);
 }
 
 void NbtIo::write(CompoundTag* tag, DataOutput* output)
@@ -104,11 +104,7 @@ CompoundTag* NbtIo::decompress(arrayWithLength<unsigned char> data)
 
     CompoundTag* tag = read(&input);
 
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
+    byteStream.reset();
 
     input.close();
 

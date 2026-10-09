@@ -97,7 +97,7 @@ bool MinecartTNT::hurt(const DamageSource* source, float damage)
     boost::shared_ptr<Entity> entity = source->getDirectEntity();
     if (entity)
     {
-        if ((entity->GetType() & EntityType::ARROW) == EntityType::ARROW)
+        if (eTYPE_DERIVED_FROM(EntityType::ARROW, entity->GetType()))
         {
             boost::shared_ptr<Arrow> arrow = boost::dynamic_pointer_cast<Arrow>(entity);
             if (arrow->isOnFire())

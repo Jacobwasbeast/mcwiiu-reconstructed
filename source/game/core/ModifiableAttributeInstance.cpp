@@ -17,9 +17,7 @@ ModifiableAttributeInstance::~ModifiableAttributeInstance()
 {
     for (int operation = 0; operation < NUM_OPERATIONS; ++operation)
     {
-        ModifierSet& modifiers = mModifiersByOperation[operation];
-
-        for (ModifierSet::iterator it = modifiers.begin(); it != modifiers.end(); ++it)
+        for (ModifierSet::iterator it = mModifiersByOperation[operation].begin(); it != mModifiersByOperation[operation].end(); ++it)
         {
             delete *it;
         }
@@ -114,14 +112,12 @@ void ModifiableAttributeInstance::removeModifier(AttributeModifier* modifier)
 
     for (int operation = 0; operation < NUM_OPERATIONS; ++operation)
     {
-        ModifierSet& operationModifiers = mModifiersByOperation[operation];
-
-        for (ModifierSet::iterator it = operationModifiers.begin(); it != operationModifiers.end(); ++it)
+        for (ModifierSet::iterator it = mModifiersByOperation[operation].begin(); it != mModifiersByOperation[operation].end(); ++it)
         {
             if (modifier->equals(*it))
             {
                 removed.insert(*it);
-                operationModifiers.erase(it);
+                mModifiersByOperation[operation].erase(it);
                 break;
             }
         }

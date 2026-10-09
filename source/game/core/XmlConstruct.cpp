@@ -46,20 +46,22 @@ bool XmlConstruct::asBool() const
 
     std::wstring value = asString();
     if (equalsIgnoreCase(value, L"true"))
+    {
         return true;
-
-    if (equalsIgnoreCase(value, L"false"))
+    }
+    else if (equalsIgnoreCase(value, L"false"))
+    {
         return false;
-
-    return false;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 bool XmlConstruct::asBool(bool defaultValue) const
 {
-    if (isBool())
-        defaultValue = asBool();
-
-    return defaultValue;
+    return isBool() ? asBool() : defaultValue;
 }
 
 double XmlConstruct::asDouble() const
@@ -125,28 +127,17 @@ maybe<std::wstring> XmlConstruct::maybeString() const
 
 maybe<int> XmlConstruct::maybeInt() const
 {
-    maybe<int> result;
-    if (isInt())
-        result = maybe<int>(asInt());
-
-    return result;
+    return isInt() ? maybe<int>(asInt()) : maybe<int>();
 }
 
 maybe<unsigned int> XmlConstruct::maybeUInt() const
 {
-    maybe<unsigned int> result;
-    if (isUInt())
-        result = maybe<unsigned int>(asUInt());
-
-    return result;
+    return isUInt() ? maybe<unsigned int>(asUInt()) : maybe<unsigned int>();
 }
 
 maybe<bool> XmlConstruct::maybeBool() const
 {
-    if (!isBool())
-        return maybe<bool>();
-
-    return maybe<bool>(asBool());
+    return isBool() ? maybe<bool>(asBool()) : maybe<bool>();
 }
 
 maybe<double> XmlConstruct::maybeDouble() const
@@ -156,9 +147,6 @@ maybe<double> XmlConstruct::maybeDouble() const
 
 maybe<float> XmlConstruct::maybeFloat() const
 {
-    maybe<float> result;
-    if (isFloat())
-        result = maybe<float>(asFloat());
-
-    return result;
+    return isFloat() ? maybe<float>(asFloat()) : maybe<float>();
 }
+

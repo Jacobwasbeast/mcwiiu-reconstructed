@@ -121,39 +121,33 @@ void LightningBolt::tick()
         }
     }
 
-    if (mLife < 0)
+    if (mLife >= 0)
     {
-        return;
-    }
-
-    if (mLevel->mIsClientSide)
-    {
-        mLevel->setSkyFlashTime(2);
-        return;
-    }
-
-    if (mVisualOnly)
-    {
-        return;
-    }
-
-    std::vector<boost::shared_ptr<Entity> >* entities =
-        mLevel->getEntities(shared_from_this(),
-                             AABB::newTemp(mX - 3.0, mY - 3.0, mZ - 3.0,
-                                           mX + 3.0, mY + 9.0, mZ + 3.0),
-                             NULL);
-
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-         it != entities->end();
-         ++it)
-    {
-        boost::shared_ptr<Entity> entity = *it;
-
-        if (std::find(mHitEntities.begin(), mHitEntities.end(), entity->getId())
-            == mHitEntities.end())
+        if (mLevel->mIsClientSide)
         {
-            entity->thunderHit(this);
-            mHitEntities.push_back(entity->getId());
+            mLevel->setSkyFlashTime(2);
+        }
+        else if (!mVisualOnly)
+        {
+            std::vector<boost::shared_ptr<Entity> >* entities =
+                mLevel->getEntities(shared_from_this(),
+                                     AABB::newTemp(mX - 3.0, mY - 3.0, mZ - 3.0,
+                                                   mX + 3.0, mY + 9.0, mZ + 3.0),
+                                     NULL);
+
+            std::vector<boost::shared_ptr<Entity> >::iterator it;
+            std::vector<boost::shared_ptr<Entity> >::iterator end;
+            for (end = entities->end(), it = entities->begin(); it != end; ++it)
+            {
+                boost::shared_ptr<Entity> entity = *it;
+
+                if (std::find(mHitEntities.begin(), mHitEntities.end(), entity->getId())
+                    == mHitEntities.end())
+                {
+                    entity->thunderHit(this);
+                    mHitEntities.push_back(entity->getId());
+                }
+            }
         }
     }
 }

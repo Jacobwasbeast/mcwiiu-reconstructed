@@ -125,13 +125,13 @@ bool BubbleColumnSegment::isValidBubbleColumnLocation(Level* level, const BlockP
     int x = pos.x;
     int y = pos.y;
     int z = pos.z;
-    if (level->getBlockId(x - 1, y, z) != BLOCK_ID_AIR && level->getBlockId(x + 1, y, z) != BLOCK_ID_AIR
-        && level->getBlockId(x, y, z - 1) != BLOCK_ID_AIR && level->getBlockId(x, y, z + 1) != BLOCK_ID_AIR)
+    if (level->getBlockId(x - 1, y, z) == BLOCK_ID_AIR || level->getBlockId(x + 1, y, z) == BLOCK_ID_AIR
+        || level->getBlockId(x, y, z - 1) == BLOCK_ID_AIR || level->getBlockId(x, y, z + 1) == BLOCK_ID_AIR)
     {
-        return true;
+        return false;
     }
 
-    return false;
+    return true;
 }
 
 bool BubbleColumnSegment::addBubbleColumnSegment(Level* level, const BlockPos& pos)
@@ -152,23 +152,23 @@ bool BubbleColumnSegment::addBubbleColumnSegment(Level* level, const BlockPos& p
 
 void BubbleColumnSegment::tick(Level* level, const BlockPos& pos, const BlockState* state, Random* random)
 {
-    if (canSurvive(level, pos, state))
-    {
-        addBubbleColumnSegment(level, pos);
-    }
-    else
+    if (!canSurvive(level, pos, state))
     {
         level->setBlockAndUpdate(pos, Blocks::water->defaultBlockState());
         level->neighborChanged(pos, level->getBlock(pos), pos);
+    }
+    else
+    {
+        addBubbleColumnSegment(level, pos);
     }
 }
 
 void BubbleColumnSegment::RectifyBubbleFlow(Level* level, const BlockPos& pos, bool down)
 {
-    if (getFlowDownward(level->getBlockState(pos)) != down)
+    bool flow = getFlowDownward(level->getBlockState(pos));
+    if (flow != down)
     {
-        const BlockState* bubbleState =
-            Blocks::bubble_column_segment->defaultBlockState()->setValue(DRAG, down);
+        const BlockState* bubbleState = Blocks::bubble_column_segment->defaultBlockState()->setValue(DRAG, down);
         level->setBlock(pos, bubbleState, Block::UPDATE_CLIENTS, false);
 
         BlockPos above = pos.above();
@@ -186,7 +186,26 @@ int BubbleColumnSegment::getTickDelay(Level* level)
 
 void BubbleColumnSegment::animateTick(const BlockState* state, Level* level, const BlockPos& pos, Random* random)
 {
-    if (!state->getValue(DRAG))
+    if (state->getValue(DRAG))
+    {
+        const BlockState* aboveState = level->getBlockState(pos.above());
+        if (aboveState->getBlock() == Blocks::water || aboveState->getBlock() == Blocks::air
+            || level->mRandom->nextInt(3) == 0)
+        {
+            level->addAlwaysVisibleParticle(ePARTICLE_CURRENT_DOWN, pos.x + 0.3, pos.y + 0.8,
+                                            pos.z + 0.3, 0.0, 0.0, 0.0, arrayWithLength<int>());
+        }
+
+        if (random->nextInt(200) == 0)
+        {
+            level->playLocalSound((double)pos.x, (double)pos.y, (double)pos.z,
+                                  SoundEvents::BUBBLE_COLUMN_WHIRLPOOL_AMBIENT,
+                                  SoundSource::eSoundSource_Blocks,
+                                  0.2f + random->nextFloat() * 0.2f,
+                                  0.9f + random->nextFloat() * 0.15f, false, 16.0f);
+        }
+    }
+    else
     {
         const BlockState* aboveState = level->getBlockState(pos.above());
         if (aboveState->getBlock() == Blocks::water || aboveState->getBlock() == Blocks::air
@@ -210,25 +229,6 @@ void BubbleColumnSegment::animateTick(const BlockState* state, Level* level, con
                                   0.9f + random->nextFloat() * 0.15f, false, 16.0f);
         }
     }
-    else
-    {
-        const BlockState* aboveState = level->getBlockState(pos.above());
-        if (aboveState->getBlock() == Blocks::water || aboveState->getBlock() == Blocks::air
-            || level->mRandom->nextInt(3) == 0)
-        {
-            level->addAlwaysVisibleParticle(ePARTICLE_CURRENT_DOWN, pos.x + 0.3, pos.y + 0.8,
-                                            pos.z + 0.3, 0.0, 0.0, 0.0, arrayWithLength<int>());
-        }
-
-        if (random->nextInt(200) == 0)
-        {
-            level->playLocalSound((double)pos.x, (double)pos.y, (double)pos.z,
-                                  SoundEvents::BUBBLE_COLUMN_WHIRLPOOL_AMBIENT,
-                                  SoundSource::eSoundSource_Blocks,
-                                  0.2f + random->nextFloat() * 0.2f,
-                                  0.9f + random->nextFloat() * 0.15f, false, 16.0f);
-        }
-    }
 }
 
 void BubbleColumnSegment::neighborChanged(const BlockState* state, Level* level, const BlockPos& pos,
@@ -245,33 +245,33 @@ bool BubbleColumnSegment::canSurvive(Level* level, const BlockPos& pos, const Bl
                      || belowId == BLOCK_ID_SOUL_SAND;
     bool valid = isValidBubbleColumnLocation(level, pos);
 
-    if (supported && valid)
+    if (!supported || !valid)
     {
-        if (belowId == BLOCK_ID_BUBBLE_COLUMN_SEGMENT)
-        {
-            RectifyBubbleFlow(level, pos, getFlowDownward(level->getBlockState(below)));
-        }
-        else
-        {
-            bool down = belowId == BLOCK_ID_MAGMA;
-            if (down != getFlowDownward(level->getBlockState(pos)))
-            {
-                const BlockState* bubbleState =
-                    Blocks::bubble_column_segment->defaultBlockState()->setValue(DRAG, down);
-                level->setBlock(pos, bubbleState, Block::UPDATE_CLIENTS, false);
-            }
-
-            BlockPos above = pos.above();
-            if (level->getBlockId(above.x, above.y, above.z) == BLOCK_ID_BUBBLE_COLUMN_SEGMENT)
-            {
-                RectifyBubbleFlow(level, above, down);
-            }
-        }
-
-        return true;
+        return false;
     }
 
-    return false;
+    if (belowId == BLOCK_ID_BUBBLE_COLUMN_SEGMENT)
+    {
+        RectifyBubbleFlow(level, pos, getFlowDownward(level->getBlockState(below)));
+    }
+    else
+    {
+        bool down = belowId == BLOCK_ID_MAGMA;
+        if (down != getFlowDownward(level->getBlockState(pos)))
+        {
+            const BlockState* bubbleState =
+                Blocks::bubble_column_segment->defaultBlockState()->setValue(DRAG, down);
+            level->setBlock(pos, bubbleState, Block::UPDATE_CLIENTS, false);
+        }
+
+        BlockPos above = pos.above();
+        if (level->getBlockId(above.x, above.y, above.z) == BLOCK_ID_BUBBLE_COLUMN_SEGMENT)
+        {
+            RectifyBubbleFlow(level, above, down);
+        }
+    }
+
+    return true;
 }
 
 bool BubbleColumnSegment::canInstantlyTick()

@@ -144,7 +144,7 @@ void Spider::setClimbing(bool climbing)
 MobGroupData* Spider::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                        const std::wstring&)
 {
-    MobGroupData* result = Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
+    data = Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 
     if (mLevel->mRandom->nextInt(100) == 0)
     {
@@ -160,16 +160,16 @@ MobGroupData* Spider::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
                 || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::FROZEN_OCEAN
                 || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::DEEP_FROZEN_OCEAN))
         {
-            rider.reset(new Stray(mLevel));
+            rider = boost::shared_ptr<Stray>(new Stray(mLevel));
         }
         else if (mLevel->mRandom->rollPercentageChance(80)
                  && mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::HELL)
         {
-            rider.reset(new WitherSkeleton(mLevel));
+            rider = boost::shared_ptr<WitherSkeleton>(new WitherSkeleton(mLevel));
         }
         else
         {
-            rider.reset(new Skeleton(mLevel));
+            rider = boost::shared_ptr<Skeleton>(new Skeleton(mLevel));
         }
 
         rider->moveTo(mX, mY, mZ, mYRot, 0.0f);
@@ -178,22 +178,24 @@ MobGroupData* Spider::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
         rider->startRiding(shared_from_this());
     }
 
-    if (result == NULL)
+    if (data == NULL)
     {
-        SpiderEffectsGroupData* effects = new SpiderEffectsGroupData();
-        result = effects;
+        data = new SpiderEffectsGroupData();
         if (mLevel->getDifficulty() == Difficulty::HARD &&
             mLevel->mRandom->nextFloat() < 0.1f * difficulty.getSpecialMultiplier())
         {
-            effects->setRandomEffect(mLevel->mRandom);
+            static_cast<SpiderEffectsGroupData*>(data)->setRandomEffect(mLevel->mRandom);
         }
     }
 
-    SpiderEffectsGroupData* effects = dynamic_cast<SpiderEffectsGroupData*>(result);
-    if (effects != NULL && effects->mEffect != NULL)
-        addEffect(new MobEffectInstance(effects->mEffect, INT_MAX), boost::shared_ptr<Entity>());
+    if (dynamic_cast<SpiderEffectsGroupData*>(data) != NULL)
+    {
+        MobEffect* effect = static_cast<SpiderEffectsGroupData*>(data)->mEffect;
+        if (effect != NULL)
+            addEffect(new MobEffectInstance(effect, INT_MAX), boost::shared_ptr<Entity>());
+    }
 
-    return result;
+    return data;
 }
 
 float Spider::getEyeHeight() { return 0.65f; }
@@ -206,7 +208,8 @@ Spider::SpiderAttackGoal::SpiderAttackGoal(Spider* spider)
 
 bool Spider::SpiderAttackGoal::canContinueToUse()
 {
-    if (mMob->getBrightness() >= 0.5f && mMob->getRandom()->nextInt(100) == 0)
+    float brightness = mMob->getBrightness();
+    if (brightness >= 0.5f && mMob->getRandom()->nextInt(100) == 0)
     {
         mMob->setTarget(boost::shared_ptr<LivingEntity>());
         return false;
@@ -242,6 +245,10 @@ Spider::SpiderTargetGoal::SpiderTargetGoal(Spider* spider, const std::type_info&
 
 bool Spider::SpiderTargetGoal::canUse()
 {
-    if (mMob->getBrightness() < 0.5f) return NearestAttackableTargetGoal::canUse();
+    float brightness = mMob->getBrightness();
+    if (brightness < 0.5f)
+    {
+        return NearestAttackableTargetGoal::canUse();
+    }
     return false;
 }

@@ -212,7 +212,7 @@ void DispenserBootstrap::StaticCtor()
                     entity->absMoveTo(entity->mX, entity->mY - std::ceil(static_cast<double>(entity->mBbHeight)), entity->mZ);
                 }
 
-                if ((entity->GetType() & EntityType::MOB) == EntityType::MOB)
+                if (eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()))
                 {
                     boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
                     level->addEntity(mob);
@@ -395,7 +395,7 @@ void DispenserBootstrap::StaticCtor()
         virtual not_null_ptr<ItemInstance> execute(BlockSource* source, not_null_ptr<ItemInstance> item, eOUTCOME& outcome)
         {
             outcome = eOUTCOME_Success;
-            if (DyeColor::byItemData(item->getAuxValue()) == DyeColor::WHITE)
+            if (DyeColor::WHITE == DyeColor::byItemData(item->getAuxValue()))
             {
                 Level* level = source->getWorld();
                 const Direction* direction = source->getBlockState()->getValue(DispenserBlock::FACING);
@@ -455,7 +455,7 @@ void DispenserBootstrap::StaticCtor()
                 {
                     level->setBlock(position, block->defaultBlockState()->setValue(SkullBlock::FACING, Direction::UP), Block::UPDATE_ALL, false);
                     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(position);
-                    bool isSkull = blockEntity->GetType() == BlockEntityType::SKULL;
+                    bool isSkull = eTYPE_DERIVED_FROM(BlockEntityType::SKULL, blockEntity->GetType());
                     if (isSkull)
                     {
                         boost::shared_ptr<SkullBlockEntity> skull = boost::static_pointer_cast<SkullBlockEntity>(blockEntity);

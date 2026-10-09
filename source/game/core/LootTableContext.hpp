@@ -32,6 +32,30 @@ public:
             mLevel = level;
         }
 
+        Builder* withLuck(float luck)
+        {
+            mLuck = luck;
+            return this;
+        }
+
+        Builder* withLootedEntity(boost::shared_ptr<Entity> entity)
+        {
+            mThisEntity = entity;
+            return this;
+        }
+
+        Builder* withPlayer(boost::shared_ptr<Player> player)
+        {
+            mKillerEntity = player;
+            return this;
+        }
+
+        Builder* withDamageSource(const DamageSource* damageSource)
+        {
+            mDamageSource = damageSource;
+            return this;
+        }
+
         LootTableContext build()
         {
             return LootTableContext(mLuck,

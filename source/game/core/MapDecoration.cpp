@@ -99,7 +99,7 @@ const MapDecoration::Type* MapDecoration::getType() const
     return this->type;
 }
 
-unsigned char MapDecoration::getImg() const
+unsigned int MapDecoration::getImg() const
 {
     return this->type->getIcon();
 }

@@ -97,10 +97,10 @@ public:
         eIntArg_TimePlayed,
         eIntArg_TotalTime,
         eIntArg_LastCheckpointId,
-        eIntArg_LapsCompleted,
+        eIntArg_LastBankedCheckpointId,
         eIntArg_CheckpointTime,
         eIntArg_LastCheckpointSequenceId,
-        eIntArg_EndZoneEntered,
+        eIntArg_LapsCompleted,
         eIntArg_CheckpointsPassed,
         eIntArg_KillsMelee,
         eIntArg_KillsRanged,
@@ -148,9 +148,6 @@ public:
             };
 
             _RoundStats();
-            _RoundStats(const _RoundStats& other);
-
-            _RoundStats& operator=(const _RoundStats& other);
 
             bool mActive;
             bool mFinished;
@@ -169,10 +166,10 @@ public:
             int mArrowsFired;
             int mArrowsHit;
             int mBlocksPlaced;
-            int mLastCheckpointId;
-            int mLapsCompleted;
+            unsigned int mLastCheckpointId;
             int mLastCheckpointSequenceId;
-            int mEndZoneEntered;
+            int mLastBankedCheckpointId;
+            int mLapsCompleted;
             double mDistanceTravelled;
             double mLongestShot;
             double mFallDistance;
@@ -184,14 +181,8 @@ public:
             int mTimePlayed;
             int mTotalTime;
             double mBestTime;
-            unsigned short mDeathsMelee;
-            unsigned short mDeathsRanged;
-            unsigned short mDeathsExplosive;
-            unsigned short mDeathsOther;
-            unsigned short mKillsMelee;
-            unsigned short mKillsRanged;
-            unsigned short mKillsExplosive;
-            unsigned short mKillsOther;
+            unsigned short mScoresGiven[4];
+            unsigned short mScoresReceived[4];
             std::wstring mLastKillerName;
             std::wstring mLastVictimName;
         };
@@ -211,7 +202,6 @@ public:
         };
 
         PlayerStats();
-        PlayerStats(const PlayerStats& other);
 
         StatsUID getRecordSUID();
         void setRecordSUID(const StatsUID& suid);

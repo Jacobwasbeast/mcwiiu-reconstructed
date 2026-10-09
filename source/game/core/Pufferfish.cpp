@@ -66,8 +66,8 @@ void Pufferfish::damageNearbyMobs()
     for (unsigned int i = 0; i < entities->size(); ++i)
     {
         boost::shared_ptr<Entity> entity = entities->at(i);
-        bool isServerPlayer = entity->GetType() == EntityType::SERVER_PLAYER;
-        if (!isServerPlayer && (entity->GetType() & EntityType::MONSTER) != EntityType::MONSTER)
+        bool isServerPlayer = eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, entity->GetType());
+        if (!isServerPlayer && !eTYPE_DERIVED_FROM(EntityType::MONSTER, entity->GetType()))
             continue;
 
         boost::shared_ptr<Mob> living = boost::static_pointer_cast<Mob>(entity);
@@ -77,12 +77,15 @@ void Pufferfish::damageNearbyMobs()
         stung = true;
     }
 
-    int64_t now;
-    if (mLevel->mIsClientSide && stung && (now = System::processTimeInSeconds(), mLastStingSoundTime + mStingSoundDelay < now))
+    if (mLevel->mIsClientSide && stung)
     {
-        mLastStingSoundTime = now;
-        mLevel->playLocalSound(mX, mY, mZ, SoundEvents::PUFFERFISH_STING, SoundSource::eSoundSource_Hostile, 1.0f,
-                               1.0f, false, 16.0f);
+        int64_t now = System::processTimeInSeconds();
+        if (mLastStingSoundTime + mStingSoundDelay < now)
+        {
+            mLastStingSoundTime = now;
+            mLevel->playLocalSound(mX, mY, mZ, SoundEvents::PUFFERFISH_STING, SoundSource::eSoundSource_Hostile, 1.0f,
+                                   1.0f, false, 16.0f);
+        }
     }
 }
 
@@ -92,16 +95,16 @@ bool Pufferfish::validatePuffedTypes(boost::shared_ptr<Entity> entity)
         return false;
     if ((entity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
         return false;
-    bool isFish = entity->GetType() == EntityType::FISH;
+    bool isFish = eTYPE_DERIVED_FROM(EntityType::FISH, entity->GetType());
     if (!isFish)
     {
-        bool isSalmon = entity->GetType() == EntityType::SALMON;
+        bool isSalmon = eTYPE_DERIVED_FROM(EntityType::SALMON, entity->GetType());
         if (!isSalmon)
         {
-            bool isPufferfish = entity->GetType() == EntityType::PUFFERFISH;
+            bool isPufferfish = eTYPE_DERIVED_FROM(EntityType::PUFFERFISH, entity->GetType());
             if (!isPufferfish)
             {
-                bool isTropicalFish = entity->GetType() == EntityType::TROPICAL_FISH;
+                bool isTropicalFish = eTYPE_DERIVED_FROM(EntityType::TROPICAL_FISH, entity->GetType());
                 if (!isTropicalFish)
                     return true;
             }
@@ -123,7 +126,7 @@ void Pufferfish::checkForDangerousMobs()
             continue;
 
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-        bool isCreativePlayer = (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+        bool isCreativePlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) &&
                                 boost::static_pointer_cast<Player>(entity)->mAbilities.mInstabuild;
         if (isCreativePlayer)
             continue;

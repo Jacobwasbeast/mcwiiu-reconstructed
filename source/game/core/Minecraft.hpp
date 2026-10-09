@@ -213,7 +213,7 @@ public:
     LevelRenderer* mLevelRenderer;
     boost::shared_ptr<MultiplayerLocalPlayer> mPlayer;
     MultiPlayerLevel** mLevels;
-    int mLevelCount;
+    unsigned int mLevelCount;
     boost::shared_ptr<MultiplayerLocalPlayer> mLocalPlayers[4];
     MultiPlayerGameMode* mGameModes[4];
     int mLocalPlayerIdx;

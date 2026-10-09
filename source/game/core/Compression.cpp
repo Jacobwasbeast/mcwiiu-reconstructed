@@ -20,12 +20,13 @@ static const unsigned int LZX_CODEC_WINDOW_SIZE = 0x20000;
 
 Compression::Compression()
 {
+    m_pDecompressBuffer = NULL;
+
     XMemCodecParametersLZX codecParameters;
     codecParameters.flags = 0;
     codecParameters.windowSize = LZX_CODEC_WINDOW_SIZE;
     codecParameters.compressionPartitionSize = LZX_CODEC_WINDOW_SIZE;
 
-    m_pDecompressBuffer = NULL;
     XMemCreateCompressionContext(XMEMCODEC_LZX, &codecParameters, 0, &m_pCompressionContext);
     XMemCreateDecompressionContext(XMEMCODEC_LZX, &codecParameters, 0, &m_pDecompressionContext);
 
@@ -94,19 +95,17 @@ Compression* Compression::getCompression()
 
 int Compression::internalCompressRle(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize)
 {
-    unsigned char* pOutput = (unsigned char*)pDest;
-    unsigned char* pOutputLimit = (unsigned char*)pDest + *pDestSize - 3;
-    unsigned char* pInput = (unsigned char*)pSource;
     unsigned char* pInputEnd = (unsigned char*)pSource + sourceSize;
+    unsigned char* pOutput = (unsigned char*)pDest;
+    unsigned char* pInput = (unsigned char*)pSource;
+    unsigned char* pOutputLimit = pOutput + *pDestSize - 3;
 
     PIXBeginNamedEvent(0.0f, "RLE compression");
 
     do
     {
-        unsigned char value = *pInput;
+        unsigned char value = *pInput++;
         unsigned int runLength = 1;
-
-        ++pInput;
 
         while (pInput != pInputEnd && *pInput == value && runLength < 256)
         {
@@ -114,25 +113,26 @@ int Compression::internalCompressRle(void* pDest, unsigned int* pDestSize, void*
             ++runLength;
         }
 
-        if (runLength > 3)
+        if (runLength <= 3)
         {
-            pOutput[0] = 0xFF;
-            pOutput[1] = (unsigned char)(runLength - 1);
-            pOutput[2] = value;
-            pOutput += 3;
-        }
-        else if (value == 0xFF)
-        {
-            pOutput[0] = 0xFF;
-            pOutput[1] = (unsigned char)(runLength - 1);
-            pOutput += 2;
+            if (value == 0xFF)
+            {
+                *pOutput++ = 0xFF;
+                *pOutput++ = (unsigned char)(runLength - 1);
+            }
+            else
+            {
+                for (unsigned int i = 0; i < runLength; ++i)
+                {
+                    *pOutput++ = value;
+                }
+            }
         }
         else
         {
-            for (unsigned int i = 0; i < runLength; ++i)
-            {
-                *pOutput++ = value;
-            }
+            *pOutput++ = 0xFF;
+            *pOutput++ = (unsigned char)(runLength - 1);
+            *pOutput++ = value;
         }
     }
     while (pInput != pInputEnd && pOutput < pOutputLimit);
@@ -151,23 +151,22 @@ int Compression::internalCompressRle(void* pDest, unsigned int* pDestSize, void*
 
 int Compression::internalDecompressRle(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize)
 {
-    unsigned char* pOutput = (unsigned char*)pDest;
     unsigned char* pInput = (unsigned char*)pSource;
     unsigned char* pInputEnd = (unsigned char*)pSource + sourceSize;
+    unsigned char* pOutput = (unsigned char*)pDest;
 
     while (pInput != pInputEnd)
     {
-        if (*pInput == 0xFF)
-        {
-            unsigned int runLength = pInput[1];
-            unsigned char runValue = 0xFF;
+        unsigned char value = *pInput++;
 
-            pInput += 2;
+        if (value == 0xFF)
+        {
+            unsigned int runLength = *pInput++;
+            unsigned char runValue = 0xFF;
 
             if (runLength >= 3)
             {
-                runValue = *pInput;
-                ++pInput;
+                runValue = *pInput++;
             }
 
             ++runLength;
@@ -179,9 +178,7 @@ int Compression::internalDecompressRle(void* pDest, unsigned int* pDestSize, voi
         }
         else
         {
-            *pOutput = *pInput;
-            ++pOutput;
-            ++pInput;
+            *pOutput++ = value;
         }
     }
 
@@ -195,15 +192,15 @@ int Compression::Compress(void* pDest, unsigned int* pDestSize, void* pSource, u
     uLong compressedSize = *pDestSize;
     int result = 0;
 
-    if (pDest == NULL)
-    {
-        *pDestSize = compressBound(sourceSize);
-    }
-    else
+    if (pDest != NULL)
     {
         result = compress((Bytef*)pDest, &compressedSize, (const Bytef*)pSource, sourceSize);
 
         *pDestSize = compressedSize;
+    }
+    else
+    {
+        *pDestSize = compressBound(sourceSize);
     }
 
     if (result != 0)
@@ -280,13 +277,13 @@ int Compression::CompressLZXRLE(void* pDest, unsigned int* pDestSize, void* pSou
 
 int Compression::DecompressLZXRLE(void* pDest, unsigned int* pDestSize, void* pSource, unsigned int sourceSize)
 {
-    unsigned char* pScratchBuffer = NULL;
-
     EnterCriticalSection(&m_decompressLock);
 
     unsigned int decompressedSize = *pDestSize;
+    unsigned char* pScratchBuffer = NULL;
+    unsigned int bufferSize = 200 * 1024;
 
-    if (decompressedSize > 0x32000)
+    if (decompressedSize > bufferSize)
     {
         pScratchBuffer = new unsigned char[decompressedSize];
 
@@ -295,11 +292,11 @@ int Compression::DecompressLZXRLE(void* pDest, unsigned int* pDestSize, void* pS
     }
     else
     {
-        decompressedSize = 0x32000;
+        decompressedSize = bufferSize;
 
         if (m_pDecompressBuffer == NULL)
         {
-            m_pDecompressBuffer = new unsigned char[0x32000];
+            m_pDecompressBuffer = new unsigned char[bufferSize];
         }
 
         Decompress(m_pDecompressBuffer, &decompressedSize, pSource, sourceSize);
@@ -359,24 +356,27 @@ void Compression::VitaVirtualDecompress(void* pDest, unsigned int* pDestSize, vo
 
     while (inputOffset != sourceSize)
     {
-        if (pInput[inputOffset] == 0)
+        unsigned char value = pInput[inputOffset];
+
+        if (value != 0)
         {
-            int zeroCount = pInput[inputOffset + 1];
+            pOutput[outputSize] = value;
+            ++outputSize;
+        }
+        else
+        {
+            ++inputOffset;
+
+            int zeroCount = pInput[inputOffset];
 
             for (int i = 0; i < zeroCount; ++i)
             {
                 pOutput[outputSize] = 0;
                 ++outputSize;
             }
+        }
 
-            inputOffset += 2;
-        }
-        else
-        {
-            pOutput[outputSize] = pInput[inputOffset];
-            ++outputSize;
-            ++inputOffset;
-        }
+        ++inputOffset;
     }
 
     *pDestSize = outputSize;
@@ -387,22 +387,18 @@ void Compression::SetDecompressionType(ESavePlatform platform)
     switch (platform)
     {
     case eSavePlatform_X360:
-        getCompression()->m_decompressionType = eCompressionTypes_LZXRLE;
-        return;
+        getCompression()->SetDecompressionType(eCompressionTypes_LZXRLE);
+        break;
+    case eSavePlatform_PS3:
+        getCompression()->SetDecompressionType(eCompressionTypes_ZlibPS3);
+        break;
     case eSavePlatform_WIIU:
     case eSavePlatform_NX:
     case eSavePlatform_XB1:
-        getCompression()->m_decompressionType = eCompressionTypes_Zlib;
-        return;
-    case eSavePlatform_PS3:
-        getCompression()->m_decompressionType = eCompressionTypes_ZlibPS3;
-        return;
     case eSavePlatform_PS4:
     case eSavePlatform_WIN:
     case eSavePlatform_PSV:
-        getCompression()->m_decompressionType = eCompressionTypes_Zlib;
-        return;
-    default:
-        return;
+        getCompression()->SetDecompressionType(eCompressionTypes_Zlib);
+        break;
     }
 }

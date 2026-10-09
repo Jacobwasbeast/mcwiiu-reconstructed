@@ -28,10 +28,10 @@ void GuiComponent::fill(int x0, int y0, int x1, int y1, int color)
         y1 = y;
     }
 
+    float alpha = static_cast<float>((color >> 24) & 255) / 255.0f;
     float red = static_cast<float>((color >> 16) & 255) / 255.0f;
     float green = static_cast<float>((color >> 8) & 255) / 255.0f;
     float blue = static_cast<float>(color & 255) / 255.0f;
-    float alpha = static_cast<float>((color >> 24) & 255) / 255.0f;
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();
     GlStateManager::enableBlend();
@@ -50,14 +50,14 @@ void GuiComponent::fill(int x0, int y0, int x1, int y1, int color)
 
 void GuiComponent::fillGradient(int x0, int y0, int x1, int y1, int color0, int color1)
 {
+    float alpha0 = static_cast<float>((color0 >> 24) & 255) / 255.0f;
     float red0 = static_cast<float>((color0 >> 16) & 255) / 255.0f;
     float green0 = static_cast<float>((color0 >> 8) & 255) / 255.0f;
     float blue0 = static_cast<float>(color0 & 255) / 255.0f;
-    float alpha0 = static_cast<float>((color0 >> 24) & 255) / 255.0f;
+    float alpha1 = static_cast<float>((color1 >> 24) & 255) / 255.0f;
     float red1 = static_cast<float>((color1 >> 16) & 255) / 255.0f;
     float green1 = static_cast<float>((color1 >> 8) & 255) / 255.0f;
     float blue1 = static_cast<float>(color1 & 255) / 255.0f;
-    float alpha1 = static_cast<float>((color1 >> 24) & 255) / 255.0f;
     GlStateManager::disableTexture();
     GlStateManager::enableBlend();
     GlStateManager::disableAlphaTest();
@@ -96,22 +96,21 @@ void GuiComponent::blit(int x, int y, int u, int v, int width, int height)
     BufferBuilder* builder = tesselator->getBuilder();
     builder->begin();
     float scale = 0.75f;
-    float xOffset = (scale * static_cast<float>(Minecraft::GetInstance()->mWidth) /
-                     static_cast<float>(Minecraft::GetInstance()->mHeight)) / gGuiScreenScale;
+    float xOffset = scale * Minecraft::GetInstance()->mWidth;
+    xOffset = xOffset / Minecraft::GetInstance()->mFullWidth / gGuiScreenScale;
     float yOffset = scale / gGuiScreenScale;
     float x0 = floorf(static_cast<float>(x) * gGuiScreenScale) / gGuiScreenScale;
     float y0 = floorf(static_cast<float>(y) * gGuiScreenScale) / gGuiScreenScale;
     float scaledWidth = floorf(static_cast<float>(width) * gGuiScreenScale) / gGuiScreenScale;
     float scaledHeight = floorf(static_cast<float>(height) * gGuiScreenScale) / gGuiScreenScale;
-    float x1 = x0 + scaledWidth;
-    float y1 = y0 + scaledHeight;
-    float u0 = static_cast<float>(u) * 0.00390625f;
-    float v0 = static_cast<float>(v + height) * 0.00390625f;
-    float u1 = static_cast<float>(u + width) * 0.00390625f;
-    float v1 = static_cast<float>(v) * 0.00390625f;
-    builder->vertexUV(x0 - xOffset, y0 - yOffset, zLevel, u0, v0);
-    builder->vertexUV(x1 - xOffset, y0 - yOffset, zLevel, u1, v0);
-    builder->vertexUV(x1 - xOffset, y1 - yOffset, zLevel, u1, v1);
-    builder->vertexUV(x0 - xOffset, y1 - yOffset, zLevel, u0, v1);
+    float us = 0.00390625f;
+    float vs = 0.00390625f;
+    builder->vertexUV(x0 - xOffset, y0 + scaledHeight - yOffset, zLevel, static_cast<float>(u) * us,
+                      static_cast<float>(v + height) * vs);
+    builder->vertexUV(x0 + scaledWidth - xOffset, y0 + scaledHeight - yOffset, zLevel,
+                      static_cast<float>(u + width) * us, static_cast<float>(v + height) * vs);
+    builder->vertexUV(x0 + scaledWidth - xOffset, y0 - yOffset, zLevel, static_cast<float>(u + width) * us,
+                      static_cast<float>(v) * vs);
+    builder->vertexUV(x0 - xOffset, y0 - yOffset, zLevel, static_cast<float>(u) * us, static_cast<float>(v) * vs);
     builder->end();
 }

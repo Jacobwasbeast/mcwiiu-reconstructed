@@ -1,6 +1,7 @@
 #include "game/core/Chicken.hpp"
 #include "game/core/EntityType.hpp"
 
+#include <algorithm>
 #include <typeinfo>
 
 #include "game/client/audio/SoundEvents.hpp"
@@ -51,10 +52,10 @@ void Chicken::addDataWalkers(DataFixerUpper* fixer)
 
 void Chicken::_init()
 {
-    mFlapTime = 0.0f;
-    mFlapSpeed = 0.0f;
     mOFlapSpeed = 0.0f;
     mOFlap = 0.0f;
+    mFlapTime = 0.0f;
+    mFlapSpeed = 0.0f;
     mFlapping = 1.0f;
     mTimeUntilNextEgg = 0;
     setPathfindingMalus(BlockPathTypes::WATER, 0.0f);
@@ -142,21 +143,13 @@ ResourceLocation* Chicken::getDefaultLootTable()
 
 boost::shared_ptr<AgableMob> Chicken::getBreedOffspring(boost::shared_ptr<AgableMob>)
 {
-    boost::shared_ptr<Chicken> offspring(new Chicken(mLevel));
-    return offspring;
+    return boost::shared_ptr<Chicken>(new Chicken(mLevel));
 }
 
 bool Chicken::isFood(const not_null_ptr<ItemInstance>& itemInstance)
 {
-    Item* item = itemInstance->getItem();
-    Item** it = FOOD_ITEMS.data;
-    Item** end = FOOD_ITEMS.data + FOOD_ITEMS.length;
-    for (; it != end; ++it)
-    {
-        if (*it == item)
-            break;
-    }
-    return it != end;
+    return std::find(FOOD_ITEMS.data, FOOD_ITEMS.data + FOOD_ITEMS.length, itemInstance->getItem())
+        != FOOD_ITEMS.data + FOOD_ITEMS.length;
 }
 
 void Chicken::readAdditionalSaveData(CompoundTag* tag)
@@ -180,9 +173,9 @@ void Chicken::addAdditonalSaveData(CompoundTag* tag)
 
 bool Chicken::removeWhenFarAway()
 {
-    if (!canBeControlledByRider())
-        return Animal::removeWhenFarAway();
-    return !isVehicle() && Animal::removeWhenFarAway();
+    if (canBeControlledByRider())
+        return !isVehicle() && Animal::removeWhenFarAway();
+    return Animal::removeWhenFarAway();
 }
 
 void Chicken::positionRider(const boost::shared_ptr<Entity>& passenger)
@@ -190,14 +183,14 @@ void Chicken::positionRider(const boost::shared_ptr<Entity>& passenger)
     if (!RiderPositionOverrides::OverridePosition(shared_from_this(), passenger))
     {
         Entity::positionRider(passenger);
-        float sinAngle = Mth::sin(mYBodyRot * 0.017453292f);
-        float cosAngle = Mth::cos(mYBodyRot * 0.017453292f);
+        float sinAngle = Mth::sin(mYBodyRot * Mth::DEG_TO_RAD);
+        float cosAngle = Mth::cos(mYBodyRot * Mth::DEG_TO_RAD);
         double yOffset = 0.0;
         passenger->setPos(mX + static_cast<double>(0.1f * sinAngle),
                           mY + static_cast<double>(mBbHeight * 0.5f) + passenger->getRidingHeight() + yOffset,
                           mZ - static_cast<double>(0.1f * cosAngle));
     }
-    if ((passenger->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, passenger->GetType()))
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(passenger);
         living->mYBodyRot = mYBodyRot;

@@ -38,11 +38,9 @@ CoralFanHang::CoralFanHang()
     ClearDerivedInit();
     DerivedInit();
 
-    const BlockState* state = defaultBlockState();
-    state = state->setValue(CoralFanHang::VARIANT, 0);
-    state = state->setValue(CoralFanHang::DIRECTION, 2);
-    state = state->setValue(CoralFanHang::DEAD, false);
-    registerDefaultState(state);
+    registerDefaultState(defaultBlockState()->setValue(CoralFanHang::VARIANT, 0)
+                                            ->setValue(CoralFanHang::DIRECTION, 2)
+                                            ->setValue(CoralFanHang::DEAD, false));
 }
 
 Item* CoralFanHang::getResource(const BlockState* state, Random* random, int lootBonus)
@@ -122,18 +120,16 @@ TextureAtlasSprite* CoralFanHang::getTexture(const Direction* direction, const B
 
 int CoralFanHang::convertBlockStateToLegacyData(const BlockState* state)
 {
-    return (state->getValue(CoralFanHang::VARIANT) << 1)
-        | (state->getValue(CoralFanHang::DIRECTION) << 2)
-        | (state->getValue(CoralFanHang::DEAD) ? 1 : 0);
+    int data = state->getValue(CoralFanHang::VARIANT) << 1;
+    data |= state->getValue(CoralFanHang::DIRECTION) << 2;
+    return data | state->getValue(CoralFanHang::DEAD);
 }
 
 const BlockState* CoralFanHang::getBlockState(int data)
 {
-    const BlockState* state = defaultBlockState();
-    state = state->setValue(CoralFanHang::VARIANT, (data >> 1) & 1);
-    state = state->setValue(CoralFanHang::DIRECTION, (data >> 2) & 3);
-    state = state->setValue(CoralFanHang::DEAD, (data & 1) != 0);
-    return state;
+    return defaultBlockState()->setValue(CoralFanHang::VARIANT, (data >> 1) & 1)
+                              ->setValue(CoralFanHang::DIRECTION, (data >> 2) & 3)
+                              ->setValue(CoralFanHang::DEAD, (data & 1) > 0);
 }
 
 not_null_ptr<ItemInstance> CoralFanHang::getSilkTouchItemInstance(const BlockState* state)
@@ -218,7 +214,8 @@ void CoralFanHang::checkAlive(Level* level, const BlockPos& pos, const BlockStat
 
     if (!level->isUnderWater(pos, Block::getId(this), 0))
     {
-        level->setBlock(pos, state->setValue(CoralFanHang::DEAD, true), Block::UPDATE_ALL, false);
+        state = state->setValue(CoralFanHang::DEAD, true);
+        level->setBlock(pos, state, Block::UPDATE_ALL, false);
     }
 
     if (!level->isSolidBlockingBlock(support) && !level->getBlock(support)->isSlabBlock())

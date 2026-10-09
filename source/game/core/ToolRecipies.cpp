@@ -39,81 +39,68 @@ void ToolRecipies::_init()
 {
     mLists = new std::vector<Object*>[eToolList_Count];
 
-    mLists[eToolList_Ingredients].push_back(new Object(Blocks::planks, 0, Object::eType_Block));
-    mLists[eToolList_Ingredients].push_back(new Object(Blocks::cobblestone, 0, Object::eType_Block));
-    mLists[eToolList_Ingredients].push_back(new Object(Items::ironIngot, 0, Object::eType_Item));
-    mLists[eToolList_Ingredients].push_back(new Object(Items::diamond, 0, Object::eType_Item));
-    mLists[eToolList_Ingredients].push_back(new Object(Items::goldIngot, 0, Object::eType_Item));
+    mLists[eToolList_Ingredients].push_back(new Object(Blocks::planks));
+    mLists[eToolList_Ingredients].push_back(new Object(Blocks::cobblestone));
+    mLists[eToolList_Ingredients].push_back(new Object(Items::ironIngot));
+    mLists[eToolList_Ingredients].push_back(new Object(Items::diamond));
+    mLists[eToolList_Ingredients].push_back(new Object(Items::goldIngot));
 
-    mLists[eToolList_Pickaxes].push_back(new Object(Items::woodenPickaxe, 0, Object::eType_Item));
-    mLists[eToolList_Pickaxes].push_back(new Object(Items::stonePickaxe, 0, Object::eType_Item));
-    mLists[eToolList_Pickaxes].push_back(new Object(Items::ironPickaxe, 0, Object::eType_Item));
-    mLists[eToolList_Pickaxes].push_back(new Object(Items::diamondPickaxe, 0, Object::eType_Item));
-    mLists[eToolList_Pickaxes].push_back(new Object(Items::goldenPickaxe, 0, Object::eType_Item));
+    mLists[eToolList_Pickaxes].push_back(new Object(Items::woodenPickaxe));
+    mLists[eToolList_Pickaxes].push_back(new Object(Items::stonePickaxe));
+    mLists[eToolList_Pickaxes].push_back(new Object(Items::ironPickaxe));
+    mLists[eToolList_Pickaxes].push_back(new Object(Items::diamondPickaxe));
+    mLists[eToolList_Pickaxes].push_back(new Object(Items::goldenPickaxe));
 
-    mLists[eToolList_Shovels].push_back(new Object(Items::woodenShovel, 0, Object::eType_Item));
-    mLists[eToolList_Shovels].push_back(new Object(Items::stoneShovel, 0, Object::eType_Item));
-    mLists[eToolList_Shovels].push_back(new Object(Items::ironShovel, 0, Object::eType_Item));
-    mLists[eToolList_Shovels].push_back(new Object(Items::diamondShovel, 0, Object::eType_Item));
-    mLists[eToolList_Shovels].push_back(new Object(Items::goldenShovel, 0, Object::eType_Item));
+    mLists[eToolList_Shovels].push_back(new Object(Items::woodenShovel));
+    mLists[eToolList_Shovels].push_back(new Object(Items::stoneShovel));
+    mLists[eToolList_Shovels].push_back(new Object(Items::ironShovel));
+    mLists[eToolList_Shovels].push_back(new Object(Items::diamondShovel));
+    mLists[eToolList_Shovels].push_back(new Object(Items::goldenShovel));
 
-    mLists[eToolList_Axes].push_back(new Object(Items::woodenAxe, 0, Object::eType_Item));
-    mLists[eToolList_Axes].push_back(new Object(Items::stoneAxe, 0, Object::eType_Item));
-    mLists[eToolList_Axes].push_back(new Object(Items::ironAxe, 0, Object::eType_Item));
-    mLists[eToolList_Axes].push_back(new Object(Items::diamondAxe, 0, Object::eType_Item));
-    mLists[eToolList_Axes].push_back(new Object(Items::goldenAxe, 0, Object::eType_Item));
+    mLists[eToolList_Axes].push_back(new Object(Items::woodenAxe));
+    mLists[eToolList_Axes].push_back(new Object(Items::stoneAxe));
+    mLists[eToolList_Axes].push_back(new Object(Items::ironAxe));
+    mLists[eToolList_Axes].push_back(new Object(Items::diamondAxe));
+    mLists[eToolList_Axes].push_back(new Object(Items::goldenAxe));
 
-    mLists[eToolList_Hoes].push_back(new Object(Items::woodenHoe, 0, Object::eType_Item));
-    mLists[eToolList_Hoes].push_back(new Object(Items::stoneHoe, 0, Object::eType_Item));
-    mLists[eToolList_Hoes].push_back(new Object(Items::ironHoe, 0, Object::eType_Item));
-    mLists[eToolList_Hoes].push_back(new Object(Items::diamondHoe, 0, Object::eType_Item));
-    mLists[eToolList_Hoes].push_back(new Object(Items::goldenHoe, 0, Object::eType_Item));
+    mLists[eToolList_Hoes].push_back(new Object(Items::woodenHoe));
+    mLists[eToolList_Hoes].push_back(new Object(Items::stoneHoe));
+    mLists[eToolList_Hoes].push_back(new Object(Items::ironHoe));
+    mLists[eToolList_Hoes].push_back(new Object(Items::diamondHoe));
+    mLists[eToolList_Hoes].push_back(new Object(Items::goldenHoe));
 }
 
 void ToolRecipies::addRecipes(Recipes* recipes)
 {
-    unsigned int i;
-    for (i = 0; i < mLists[eToolList_Ingredients].size(); ++i)
+    wchar_t types[7];
+    types[6] = L'\0';
+
+    for (unsigned int i = 0; i < mLists[eToolList_Ingredients].size(); ++i)
     {
         Object* ingredient = mLists[eToolList_Ingredients].at(i);
 
-        Object* pickaxe = mLists[eToolList_Pickaxes].at(i);
-        wchar_t pickaxeFormat[] = L"wcicig";
-        if (ingredient->auxValue == 0 && ingredient->flags == Object::eType_Block)
+        for (int tool = eToolList_Pickaxes; tool < eToolList_Count; ++tool)
         {
-            pickaxeFormat[4] = L't';
-        }
-        recipes->addShapedRecipe(new ItemInstance(static_cast<Item*>(pickaxe->object)), pickaxeFormat,
-            toolRecipeShapes[eToolShape_Pickaxe], L'#', Items::stick, L'X', ingredient->object, L'T');
+            Item* target = static_cast<Item*>(mLists[tool].at(i)->object);
 
-        Object* shovel = mLists[eToolList_Shovels].at(i);
-        wchar_t shovelFormat[] = L"wcicig";
-        if (ingredient->auxValue == 0 && ingredient->flags == Object::eType_Block)
-        {
-            shovelFormat[4] = L't';
-        }
-        recipes->addShapedRecipe(new ItemInstance(static_cast<Item*>(shovel->object)), shovelFormat,
-            toolRecipeShapes[eToolShape_Shovel], L'#', Items::stick, L'X', ingredient->object, L'T');
+            types[0] = L'w';
+            types[1] = L'c';
+            types[2] = L'i';
+            types[3] = L'c';
+            types[5] = L'g';
+            if (ingredient->type == Object::eType_Block)
+            {
+                types[4] = L't';
+            }
+            else
+            {
+                types[4] = L'i';
+            }
 
-        Object* axe = mLists[eToolList_Axes].at(i);
-        wchar_t axeFormat[] = L"wcicig";
-        if (ingredient->auxValue == 0 && ingredient->flags == Object::eType_Block)
-        {
-            axeFormat[4] = L't';
+            recipes->addShapedRecipe(new ItemInstance(target), types, toolRecipeShapes[tool - 1], L'#', Items::stick,
+                L'X', ingredient->object, L'T');
         }
-        recipes->addShapedRecipe(new ItemInstance(static_cast<Item*>(axe->object)), axeFormat,
-            toolRecipeShapes[eToolShape_Axe], L'#', Items::stick, L'X', ingredient->object, L'T');
-
-        Object* hoe = mLists[eToolList_Hoes].at(i);
-        wchar_t hoeFormat[] = L"wcicig";
-        if (ingredient->auxValue == 0 && ingredient->flags == Object::eType_Block)
-        {
-            hoeFormat[4] = L't';
-        }
-        recipes->addShapedRecipe(new ItemInstance(static_cast<Item*>(hoe->object)), hoeFormat,
-            toolRecipeShapes[eToolShape_Hoe], L'#', Items::stick, L'X', ingredient->object, L'T');
     }
 
-    recipes->addShapedRecipe(new ItemInstance(Items::shears), L"sscig", L" #", L"# ", L'#',
-        Items::ironIngot, L'T');
+    recipes->addShapedRecipe(new ItemInstance(Items::shears), L"sscig", L" #", L"# ", L'#', Items::ironIngot, L'T');
 }

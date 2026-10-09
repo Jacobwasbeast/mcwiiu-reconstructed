@@ -4,17 +4,22 @@
 #include <string>
 
 #include "game/core/XmlConstruct.hpp"
+#include "game/core/maybe.hpp"
 
 class XmlValue : public XmlConstruct
 {
 public:
+    XmlValue(const maybe<std::wstring>& value)
+        : m_value(value)
+    {
+    }
+
     virtual ~XmlValue() {}
     virtual bool isString() const;
     virtual std::wstring asString() const;
+
 private:
-    friend class XmlObject;
-    bool m_isString;
-    std::wstring m_value;
+    maybe<std::wstring> m_value;
 };
 
 #endif

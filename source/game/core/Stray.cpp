@@ -78,7 +78,7 @@ const SoundEvent* Stray::getStepSound()
 boost::shared_ptr<Arrow> Stray::getArrow(float distanceFactor)
 {
     boost::shared_ptr<Arrow> arrow = AbstractSkeleton::getArrow(distanceFactor);
-    if (arrow->GetType() == EntityType::TIPPABLE_ARROW)
+    if (eTYPE_DERIVED_FROM(EntityType::TIPPABLE_ARROW, arrow->GetType()))
         boost::static_pointer_cast<TippableArrow>(arrow)->addEffect(new MobEffectInstance(MobEffects::MOVEMENT_SLOWDOWN, 600));
     return arrow;
 }

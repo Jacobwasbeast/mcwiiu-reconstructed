@@ -12,21 +12,21 @@
 struct DirectionName
 {
     std::wstring name;
-    int direction;
+    DirectionalDegrade::EDirection direction;
 };
 
 static DirectionName sDirectionNames[7] =
 {
-    { L"North", 1 },
-    { L"South", 2 },
-    { L"East", 3 },
-    { L"West", 4 },
-    { L"ToEdges", 5 },
-    { L"ToCentre", 6 }
+    { L"North", DirectionalDegrade::eDirection_North },
+    { L"South", DirectionalDegrade::eDirection_South },
+    { L"East", DirectionalDegrade::eDirection_East },
+    { L"West", DirectionalDegrade::eDirection_West },
+    { L"ToEdges", DirectionalDegrade::eDirection_ToEdges },
+    { L"ToCentre", DirectionalDegrade::eDirection_ToCentre }
 };
 
 DirectionalDegrade::DirectionalDegrade()
-    : mDirection(5)
+    : mDirection(eDirection_ToEdges)
 {
 }
 
@@ -42,7 +42,7 @@ void DirectionalDegrade::addAttribute(const std::wstring& name, const std::wstri
     {
         for (int i = 0; i < 7; ++i)
         {
-            if (value == sDirectionNames[i].name)
+            if (value.compare(sDirectionNames[i].name) == 0)
             {
                 mDirection = sDirectionNames[i].direction;
             }
@@ -82,12 +82,12 @@ void DirectionalDegrade::NextBlocks(BlockDegradeRoutine::LayerCache* layerCache,
         Random random;
         PerlinNoise noise(&random, 3);
         arrayWithLength<double> values;
-        values = noise.getRegion(values, min.x, min.y, min.z,
-                                 paddedSize.x, paddedSize.y, paddedSize.z, 5.0, 5.0, 5.0);
+        arrayWithLength<double> noiseValues = noise.getRegion(values, min.x, min.y, min.z,
+                                                              paddedSize.x, paddedSize.y, paddedSize.z, 5.0, 5.0, 5.0);
 
-        CachedSortFunction sortFunction(values, bounds);
+        CachedSortFunction sortFunction(noiseValues, bounds);
         std::sort(mBlocks.begin(), mBlocks.end(), sortFunction);
-        delete[] values.data;
+        delete[] noiseValues.data;
     }
 
     unsigned int blockCount = 0;

@@ -35,14 +35,14 @@ CameraController::~CameraController()
 
 void CameraController::reset()
 {
+    mTime = 0.0f;
+    mDuration = 0.0f;
+    mCurrentNode = -1;
+    mCurveIndex = 0;
     mFromPos = NULL;
     mFromRot = NULL;
     mToPos = NULL;
     mToRot = NULL;
-    mCurrentNode = -1;
-    mTime = 0.0f;
-    mDuration = 0.0f;
-    mCurveIndex = 0;
 }
 
 void CameraController::clear()
@@ -76,14 +76,16 @@ int CameraController::getCameraMode()
 
 Vec3* CameraController::CalculateBezierPoint(float t, Vec3* p0, Vec3* p1, Vec3* p2, Vec3* p3)
 {
-    float inverse = 1.0f - t;
-    float inverseSquared = inverse * inverse;
-    float squared = t * t;
-    Vec3* result = Vec3::newTemp(p0)->multiply(inverseSquared * inverse);
-    result = result->add(Vec3::newTemp(p1)->multiply(3.0f * inverseSquared * t));
-    result = result->add(Vec3::newTemp(p2)->multiply(3.0f * inverse * squared));
-    result = result->add(Vec3::newTemp(p3)->multiply(squared * t));
-    return result;
+    float u = 1.0f - t;
+    float tt = t * t;
+    float uu = u * u;
+    float uuu = uu * u;
+    float ttt = tt * t;
+    Vec3* point = Vec3::newTemp(p0)->multiply(uuu);
+    point = point->add(Vec3::newTemp(p1)->multiply(3.0f * uu * t));
+    point = point->add(Vec3::newTemp(p2)->multiply(3.0f * u * tt));
+    point = point->add(Vec3::newTemp(p3)->multiply(ttt));
+    return point;
 }
 
 void CameraController::CalculateCurveLengths()
@@ -223,8 +225,7 @@ void CameraController::update(float delta)
         }
         float part = (mTime + delta) / mDuration;
         float blend = part * part * (3.0f - 2.0f * part);
-        if (1.0f - blend < 0.0f)
-            blend = 1.0f;
+        blend = std::min(1.0f, blend);
         mTime = mTime + delta;
         *mCurrentPos = *mFromPos->interpolateTo(mToPos, blend);
         *mCurrentRot = *mFromRot->interpolateTo(mToRot, blend);

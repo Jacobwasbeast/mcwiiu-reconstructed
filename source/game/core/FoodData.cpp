@@ -24,14 +24,9 @@ FoodData::FoodData()
 
 void FoodData::eat(int foodLevelValue, float saturationModifier)
 {
-    int newFoodLevel = foodLevel + foodLevelValue;
-    const int maxFood = static_cast<int>(FoodConstants::MaxFood());
-    if (newFoodLevel > maxFood)
-        newFoodLevel = maxFood;
-    float newSaturation = saturationLevel + saturationModifier * static_cast<float>(foodLevelValue) * 2.0f;
-    const float foodLevelAsFloat = static_cast<float>(newFoodLevel);
-    foodLevel = newFoodLevel;
-    saturationLevel = newSaturation >= foodLevelAsFloat ? foodLevelAsFloat : newSaturation;
+    foodLevel = std::min(foodLevelValue + foodLevel, static_cast<int>(FoodConstants::MaxFood()));
+    float saturation = saturationLevel + foodLevelValue * saturationModifier * 2.0f;
+    saturationLevel = std::min(saturation, static_cast<float>(foodLevel));
 }
 
 void FoodData::eat(FoodItem* foodItem, const not_null_ptr<ItemInstance>& itemInstance)
@@ -51,21 +46,16 @@ void FoodData::tick(const boost::shared_ptr<Player>& player)
     const Difficulty* difficulty = player->mLevel->getDifficulty();
     lastFoodLevel = foodLevel;
 
-    if (static_cast<double>(exhaustionLevel) > FoodConstants::ExhaustionDrop())
+    if (exhaustionLevel > FoodConstants::ExhaustionDrop())
     {
         exhaustionLevel -= FoodConstants::ExhaustionDrop();
-        if (saturationLevel <= 0.0f)
+        if (saturationLevel > 0.0f)
         {
-            if (difficulty != Difficulty::PEACEFUL)
-            {
-                const int reducedFoodLevel = foodLevel - 1;
-                foodLevel = reducedFoodLevel < 0 ? 0 : reducedFoodLevel;
-            }
+            saturationLevel = std::max(saturationLevel - 1.0f, 0.0f);
         }
-        else
+        else if (difficulty != Difficulty::PEACEFUL)
         {
-            const float reducedSaturation = saturationLevel - 1.0f;
-            saturationLevel = reducedSaturation < 0.0f ? 0.0f : reducedSaturation;
+            foodLevel = std::max(foodLevel - 1, 0);
         }
     }
 

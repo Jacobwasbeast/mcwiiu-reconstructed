@@ -2,7 +2,7 @@
 #define GAME_CORE_GAMEMODEOPTIONS_HPP
 
 #include <string>
-#include <utility>
+#include "game/core/maybe.hpp"
 
 enum eCustomGameModeHostOption
 {
@@ -32,7 +32,7 @@ public:
     unsigned int Get(eCustomGameModeHostOption eOption) const;
     void Set(eCustomGameModeHostOption eOption, unsigned int uValue);
 
-    static std::pair<bool, eCustomGameModeHostOption> parse(std::wstring sName);
+    static maybe<eCustomGameModeHostOption> parse(std::wstring sName);
 
 private:
     unsigned int m_uOptions;

@@ -306,7 +306,7 @@ public:
     eXuiAction GetXuiAction(int player);
     static int RemoteSaveThreadProc(void* context);
     static int ExitGameFromRemoteSaveDialogReturned(void* context, int pad, C4JStorage::EMessageResult result);
-    static int ExitGameFromRemoteSave(void* context);
+    static void ExitGameFromRemoteSave(void* context);
     static int TexturePackDialogReturned(void* context, int pad, C4JStorage::EMessageResult result);
     static void SetupMiniGameMusic();
     static int GameModeTransitionThreadProc(void* context);
@@ -444,7 +444,7 @@ public:
     void SetFirstMiniGameType(EMiniGameId type);
     EMiniGameId GetFirstMiniGameType();
     void ProcessFakePadValueA();
-    uint32_t IsVoiceChatEnabled();
+    bool IsVoiceChatEnabled();
     void HandleXuiActions();
     void SetSkinAdjustments(uint32_t id, _SkinAdjustments value);
     _SkinAdjustments GetSkinAdjustments(uint32_t id);

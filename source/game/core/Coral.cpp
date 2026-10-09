@@ -27,11 +27,11 @@ AbstractProperty<int>* Coral::VARIANT = static_cast<AbstractProperty<int>*>(Inte
 
 namespace
 {
-    std::wstring TEXTURE_BLUE = L"coral_plant_blue";
-    std::wstring TEXTURE_PINK = L"coral_plant_pink";
-    std::wstring TEXTURE_PURPLE = L"coral_plant_purple";
-    std::wstring TEXTURE_RED = L"coral_plant_red";
-    std::wstring TEXTURE_YELLOW = L"coral_plant_yellow";
+    std::wstring CORAL_ICON_NAMES[5] =
+    {
+        L"coral_plant_blue", L"coral_plant_pink", L"coral_plant_purple", L"coral_plant_red",
+        L"coral_plant_yellow"
+    };
 
     const AABB* CORAL_SHAPE = AABB::newPermanent(0.1f, 0.0, 0.1f, 0.9f, 0.8f, 0.9f);
 }
@@ -100,11 +100,10 @@ TextureAtlasSprite* Coral::getTexture(const Direction* direction, const BlockSta
 
 void Coral::registerIcons(IconRegister* iconRegister)
 {
-    mIcons[0] = iconRegister->registerIcon(TEXTURE_BLUE);
-    mIcons[1] = iconRegister->registerIcon(TEXTURE_PINK);
-    mIcons[2] = iconRegister->registerIcon(TEXTURE_PURPLE);
-    mIcons[3] = iconRegister->registerIcon(TEXTURE_RED);
-    mIcons[4] = iconRegister->registerIcon(TEXTURE_YELLOW);
+    for (int i = 0; i < 5; ++i)
+    {
+        mIcons[i] = iconRegister->registerIcon(CORAL_ICON_NAMES[i]);
+    }
 }
 
 int Coral::convertBlockStateToLegacyData(const BlockState* state)
@@ -114,10 +113,7 @@ int Coral::convertBlockStateToLegacyData(const BlockState* state)
 
 const BlockState* Coral::getBlockState(int data)
 {
-    const BlockState* defaultState = defaultBlockState();
-    AbstractProperty<int>* property = Coral::VARIANT;
-    TypedBoxed<int> variant(data);
-    return defaultState->setBoxedValue(property, &variant);
+    return defaultBlockState()->setValue(Coral::VARIANT, data);
 }
 
 int Coral::getDescriptionId(int auxValue)
@@ -161,40 +157,27 @@ bool Coral::isSilkTouchable()
 
 bool Coral::mayPlaceOn(Level* level, const BlockPos& pos, const BlockState* state)
 {
-    BlockPos abovePos = pos.above();
-    if (!level->isUnderWater(abovePos, 263, 0))
+    if (level->isUnderWater(pos.above(), 263, 0))
     {
-        return false;
-    }
-
-    if (level->getBlock(pos.above(2))->mMaterial == Material::AIR)
-    {
-        return false;
-    }
-
-    if (level->getLiquidBlock(pos)->mMaterial == Material::WATER)
-    {
-        int liquidLevel = level->getLiquidBlockState(pos)->getValue(LiquidBlock::LEVEL);
-        if (static_cast<unsigned int>(liquidLevel - 1) < 7U)
+        if (level->getBlock(pos.above(2))->mMaterial != Material::AIR)
         {
-            return false;
+            if (level->getLiquidBlock(pos)->mMaterial == Material::WATER)
+            {
+                int liquidLevel = level->getLiquidBlockState(pos)->getValue(LiquidBlock::LEVEL);
+                if (liquidLevel > 0 && liquidLevel < 8)
+                {
+                    return false;
+                }
+            }
+
+            Block* block = state->getBlock();
+            bool onSlabTop = block->isSlabBlock() && !HalfSlabBlock::isBottomSlab(block->convertBlockStateToLegacyData(state));
+
+            if (state->canProvideSupport(Direction::UP, BLOCK_SUPPORT_CENTER) || onSlabTop)
+            {
+                return true;
+            }
         }
-    }
-
-    Block* block = state->getBlock();
-    bool onSlabTop = false;
-
-    if (block->isSlabBlock())
-    {
-        if (!HalfSlabBlock::isBottomSlab(block->convertBlockStateToLegacyData(state)))
-        {
-            onSlabTop = true;
-        }
-    }
-
-    if (state->canProvideSupport(Direction::UP, BLOCK_SUPPORT_CENTER) || onSlabTop)
-    {
-        return true;
     }
 
     return false;

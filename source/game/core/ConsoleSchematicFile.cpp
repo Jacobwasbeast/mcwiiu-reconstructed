@@ -1213,7 +1213,7 @@ void ConsoleSchematicFile::applyBlockEntities(LevelChunk* chunk, AABB* chunkArea
 
         CompoundTag* tag = it->second;
         boost::shared_ptr<Entity> entity = EntityIO::newEntity(tag, chunk->level);
-        if (entity->GetType() == EntityType::PAINTING)
+        if (eTYPE_DERIVED_FROM(EntityType::PAINTING, entity->GetType()))
         {
             boost::shared_ptr<Painting> painting = boost::dynamic_pointer_cast<Painting>(entity);
             painting->setPos(x, y, z);
@@ -1383,8 +1383,7 @@ bool ConsoleSchematicFile::undoPrevious(Level* level)
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities.begin(); it != entities.end(); ++it)
     {
         boost::shared_ptr<Entity> entity = *it;
-        unsigned long long type = entity->GetType();
-        if ((type & EntityType::PLAYER) != EntityType::PLAYER)
+        if (!eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         {
             level->removeEntity(entity);
         }

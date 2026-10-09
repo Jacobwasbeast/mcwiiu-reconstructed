@@ -9,17 +9,8 @@
 #include "game/minigame/MiniGameDef.hpp"
 
 TimeCondition::TimeCondition(const XmlObject& object)
+    : IntegerCondition(object, object[L"op"].maybeString().fmap(parseOperator).otherwise(EOperator_GreaterThanOrEquals))
 {
-    maybe<std::wstring> op = object[L"op"].maybeString();
-    if (!op.isSet())
-    {
-        _init(object, EOperator_GreaterThanOrEquals);
-    }
-    else
-    {
-        std::pair<bool, EOperator> parsed = IntegerCondition::parseOperator(op.get());
-        _init(object, parsed.first ? parsed.second : EOperator_GreaterThanOrEquals);
-    }
     m_offset = 0;
 
     maybe<int> offset = object[L"offset"].maybeInt();
@@ -38,14 +29,14 @@ void TimeCondition::AddIntParams(MasterGameMode* gameMode, std::vector<int>* par
 unsigned int TimeCondition::GetThreshold(MasterGameMode* gameMode) const
 {
     int threshold;
-    if (m_option < 0)
-    {
-        threshold = m_threshold;
-    }
-    else
+    if (m_option >= 0)
     {
         threshold = static_cast<int>(CommonMasterGameMode::GetMiniGame()->HostOption_Time(
             static_cast<eCustomGameModeHostOption>(m_option)));
+    }
+    else
+    {
+        threshold = m_threshold;
     }
     return static_cast<unsigned int>(threshold + m_offset);
 }
@@ -53,14 +44,14 @@ unsigned int TimeCondition::GetThreshold(MasterGameMode* gameMode) const
 bool TimeCondition::IsSatisfied(MasterGameMode* gameMode) const
 {
     int value;
-    if (m_option < 0)
-    {
-        value = m_threshold;
-    }
-    else
+    if (m_option >= 0)
     {
         value = static_cast<int>(CommonMasterGameMode::GetMiniGame()->HostOption_Time(
             static_cast<eCustomGameModeHostOption>(m_option)));
+    }
+    else
+    {
+        value = m_threshold;
     }
 
     if (value == -1)

@@ -43,54 +43,58 @@ bool MG03ScoreboardLayout::SORTBYSCORE(PlayerInfo* first, PlayerInfo* second)
     {
         if (secondInfo->highlight != 0)
         {
-            return 1;
+            return true;
         }
     }
     else if (secondInfo->highlight == 0)
     {
-        return 0;
+        return false;
     }
 
-    int secondScore = secondInfo->points;
-    int firstScore = firstInfo->points;
-    if (secondScore < firstScore)
+    if (firstInfo->points > secondInfo->points)
     {
-        return 1;
+        return true;
     }
-    if (secondScore <= firstScore)
+    if (firstInfo->points < secondInfo->points)
     {
-        if (firstInfo->endZoneEntered == 0)
-        {
-            if (secondInfo->endZoneEntered != 0)
-            {
-                return 0;
-            }
-        }
-        else if (secondInfo->endZoneEntered == 0)
-        {
-            return 1;
-        }
+        return false;
+    }
 
-        if (firstInfo->lifeSpan < secondInfo->lifeSpan)
+    if (firstInfo->endZoneEntered != 0)
+    {
+        if (secondInfo->endZoneEntered == 0)
         {
-            return 1;
-        }
-        if (!(firstInfo->lifeSpan > secondInfo->lifeSpan))
-        {
-            secondScore = secondInfo->secondaryTargets;
-            firstScore = firstInfo->secondaryTargets;
-            if (secondScore < firstScore)
-            {
-                return 1;
-            }
-            if (secondScore <= firstScore &&
-                secondInfo->mapTraversed < firstInfo->mapTraversed)
-            {
-                return 1;
-            }
+            return true;
         }
     }
-    return 0;
+    else if (secondInfo->endZoneEntered != 0)
+    {
+        return false;
+    }
+
+    if (firstInfo->lifeSpan < secondInfo->lifeSpan)
+    {
+        return true;
+    }
+    if (firstInfo->lifeSpan > secondInfo->lifeSpan)
+    {
+        return false;
+    }
+
+    if (firstInfo->secondaryTargets > secondInfo->secondaryTargets)
+    {
+        return true;
+    }
+    if (firstInfo->secondaryTargets < secondInfo->secondaryTargets)
+    {
+        return false;
+    }
+
+    if (firstInfo->mapTraversed > secondInfo->mapTraversed)
+    {
+        return true;
+    }
+    return false;
 }
 
 void MG03ScoreboardLayout::Init(int value)
@@ -104,7 +108,7 @@ void MG03ScoreboardLayout::Init(int value)
         INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerByIndex(index);
         if (player != 0)
         {
-            PlayerInfo* info = new MG03PlayerInfo();
+            MG03PlayerInfo* info = new MG03PlayerInfo();
             BuildPlayerInfo(player, info);
             m_players.push_back(info);
         }
@@ -131,7 +135,7 @@ std::wstring MG03ScoreboardLayout::getStatForRound(const StatsUID& uid, int roun
 
     if (scoreboard->GetEndZoneEntered(uid, round))
     {
-        return UIScene_HUD::formatTime(static_cast<unsigned int>(scoreboard->GetLifeSpan(uid, round)), false);
+        return UIScene_HUD::formatTime(scoreboard->GetLifeSpan(uid, round), false);
     }
 
     return L10N::GetString(IDS_DNF);
@@ -194,24 +198,34 @@ unsigned int MG03ScoreboardLayout::getStatIcon2(const EScoreboardType&)
 
 unsigned int MG03ScoreboardLayout::getStatIcon3(const EScoreboardType&)
 {
-    unsigned int icon = 0xffffffffu;
+    unsigned int icon;
     if (Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) == 0)
     {
+        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
         icon = 0x75;
-        if (Minecraft::GetInstance()->GetMiniGame()->ArePointsActive())
+        if (miniGame->ArePointsActive())
             return 0x71;
+    }
+    else
+    {
+        icon = 0xffffffffu;
     }
     return icon;
 }
 
 unsigned int MG03ScoreboardLayout::getStatIcon4(const EScoreboardType&)
 {
-    unsigned int icon = 0xffffffffu;
+    unsigned int icon;
     if (Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) == 0)
     {
+        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
         icon = 0x76;
-        if (Minecraft::GetInstance()->GetMiniGame()->ArePointsActive())
+        if (miniGame->ArePointsActive())
             return 0x72;
+    }
+    else
+    {
+        icon = 0xffffffffu;
     }
     return icon;
 }
@@ -223,7 +237,6 @@ unsigned int MG03ScoreboardLayout::getStatIcon5(const EScoreboardType&)
 
 unsigned int MG03ScoreboardLayout::getTitleIcon(int column, const EScoreboardType& type)
 {
-    unsigned int icon = 0xffffffffu;
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
     if (miniGame->ArePointsActive())
     {
@@ -234,10 +247,7 @@ unsigned int MG03ScoreboardLayout::getTitleIcon(int column, const EScoreboardTyp
         case 2:
             return 0x73;
         case 4:
-            icon = 3;
-            if (type == EScoreboardType_Scoreboard)
-                icon = 0x77;
-            break;
+            return type == EScoreboardType_Scoreboard ? 0x77 : 3;
         }
     }
     else
@@ -247,13 +257,10 @@ unsigned int MG03ScoreboardLayout::getTitleIcon(int column, const EScoreboardTyp
         case 0:
             return 0x73;
         case 2:
-            icon = 3;
-            if (type == EScoreboardType_Scoreboard)
-                icon = 0x77;
-            break;
+            return type == EScoreboardType_Scoreboard ? 0x77 : 3;
         }
     }
-    return icon;
+    return 0xffffffffu;
 }
 
 std::wstring MG03ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, const EScoreboardType& type)
@@ -263,28 +270,11 @@ std::wstring MG03ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, 
     ClientMasterGameMode* gameMode = Minecraft::GetInstance()->GetClientMasterGameMode();
     const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
 
-    if (!miniGame->ArePointsActive())
+    if (miniGame->ArePointsActive())
     {
-        if (column == 0)
+        switch (column)
         {
-            if (type == EScoreboardType_Award || gameMode->IsWaitingToStart() || gameMode->IsRoundStarting())
-            {
-                int round = -1;
-                const unsigned int lifeSpan = scoreboard->GetBestLifeSpan(uid, &round);
-                if (scoreboard->GetEndZoneEntered(uid, round))
-                    return UIScene_HUD::formatTime(lifeSpan, false);
-                if ((gameMode->IsWaitingToStart() || gameMode->IsRoundStarting()) && scoreboard->mCurrentRound == 0)
-                    return L"---";
-                return L10N::GetString(IDS_DNF);
-            }
-            if (scoreboard->GetEndZoneEntered(uid, -1))
-                return UIScene_HUD::formatTime(static_cast<unsigned int>(scoreboard->GetLifeSpan(uid, -1)), false);
-            return L"---";
-        }
-    }
-    else
-    {
-        if (column == 0)
+        case 0:
         {
             int points;
             if (type == EScoreboardType_Award || gameMode->IsWaitingToStart() || gameMode->IsRoundStarting())
@@ -300,18 +290,38 @@ std::wstring MG03ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, 
             }
             return formatwstr(L"%d", points);
         }
-        if (column == 2)
-        {
+        case 2:
             if (type == EScoreboardType_Award || gameMode->IsWaitingToStart() || gameMode->IsRoundStarting())
             {
                 int round = -1;
                 scoreboard->GetBestPoints(uid, &round);
-                if (scoreboard->GetEndZoneEntered(uid, round))
-                    return UIScene_HUD::formatTime(static_cast<unsigned int>(scoreboard->GetLifeSpan(uid, round)), false);
-                return L10N::GetString(IDS_DNF);
+                if (!scoreboard->GetEndZoneEntered(uid, round))
+                    return L10N::GetString(IDS_DNF);
+                return UIScene_HUD::formatTime(scoreboard->GetLifeSpan(uid, round), false);
             }
             if (scoreboard->GetEndZoneEntered(uid, -1))
-                return UIScene_HUD::formatTime(static_cast<unsigned int>(scoreboard->GetLifeSpan(uid, -1)), false);
+                return UIScene_HUD::formatTime(scoreboard->GetLifeSpan(uid, -1), false);
+            return L"---";
+        }
+    }
+    else
+    {
+        if (column == 0)
+        {
+            if (type == EScoreboardType_Award || gameMode->IsWaitingToStart() || gameMode->IsRoundStarting())
+            {
+                int round = -1;
+                const long long lifeSpan = scoreboard->GetBestLifeSpan(uid, &round);
+                if (!scoreboard->GetEndZoneEntered(uid, round))
+                {
+                    if ((gameMode->IsWaitingToStart() || gameMode->IsRoundStarting()) && scoreboard->mCurrentRound == 0)
+                        return L"---";
+                    return L10N::GetString(IDS_DNF);
+                }
+                return UIScene_HUD::formatTime(lifeSpan, false);
+            }
+            if (scoreboard->GetEndZoneEntered(uid, -1))
+                return UIScene_HUD::formatTime(scoreboard->GetLifeSpan(uid, -1), false);
             return L"---";
         }
     }
@@ -320,25 +330,24 @@ std::wstring MG03ScoreboardLayout::GetRowLabel(int column, const StatsUID& uid, 
 
 not_null_ptr<ItemInstance> MG03ScoreboardLayout::getItemForSlot(int row, int column, const unsigned int& value, const EScoreboardType& type)
 {
-    if (type != EScoreboardType_Scoreboard || row == -1)
+    not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+    if (type == EScoreboardType_Scoreboard && row != -1)
     {
-        return ItemInstance::EMPTY;
-    }
-
-    const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-    if (miniGame->ArePointsActive())
-    {
-        if (row == 4)
+        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
+        if (miniGame->ArePointsActive())
         {
-            return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
+            if (row == 4)
+            {
+                item = not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
+            }
+        }
+        else if (row == 2)
+        {
+            item = not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
         }
     }
-    else if (row == 2)
-    {
-        return not_null_ptr<ItemInstance>(new ItemInstance(Items::skull, 1, 3));
-    }
 
-    return ItemInstance::EMPTY;
+    return item;
 }
 
 unsigned char MG03ScoreboardLayout::GetEndBarIcon(PlayerInfo* baseInfo)
@@ -367,13 +376,13 @@ void MG03ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* b
 
     const bool isSpectating = localPlayer != 0 && localPlayer->isSpectator();
 
-    const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
-
-    int lifespan = 0;
-    int points = 0;
     int secondaryTargets = 0;
-    unsigned char endZoneEntered = 0;
-    double mapTraversed = 100.0;
+    int points = 0;
+    int lifespan;
+    unsigned char endZoneEntered;
+    double mapTraversed;
+
+    const StatsUID uid = StatsUID::NETWORKPLAYER_SUID(player);
 
     if (miniGame->ArePointsActive())
     {
@@ -389,12 +398,12 @@ void MG03ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* b
         else
         {
             points = scoreboard->GetPoints(uid, -1);
-            endZoneEntered = scoreboard->GetEndZoneEntered(uid, -1);
-            if (endZoneEntered)
+            if (scoreboard->GetEndZoneEntered(uid, -1))
             {
                 lifespan = scoreboard->GetLifeSpan(uid, -1);
                 secondaryTargets = scoreboard->GetSecondaryTargets(uid, -1);
                 endZoneEntered = scoreboard->GetEndZoneEntered(uid, -1);
+                mapTraversed = 100.0;
             }
             else
             {
@@ -420,11 +429,11 @@ void MG03ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* b
         }
         else
         {
-            endZoneEntered = scoreboard->GetEndZoneEntered(uid, -1);
-            if (endZoneEntered)
+            if (scoreboard->GetEndZoneEntered(uid, -1))
             {
                 lifespan = scoreboard->GetLifeSpan(uid, -1);
                 endZoneEntered = scoreboard->GetEndZoneEntered(uid, -1);
+                mapTraversed = 100.0;
             }
             else
             {
@@ -439,13 +448,12 @@ void MG03ScoreboardLayout::BuildPlayerInfo(INetworkPlayer* player, PlayerInfo* b
         }
     }
 
-    const unsigned char highlight = (isSpectating && !endZoneEntered) ? 1 : 0;
-    info->highlight = highlight;
+    info->highlight = isSpectating && !endZoneEntered;
     info->endZoneEntered = endZoneEntered;
+    info->lifeSpan = lifespan;
     info->points = points;
     info->secondaryTargets = secondaryTargets;
     info->mapTraversed = mapTraversed;
-    info->lifeSpan = lifespan;
 
     MultiPlayerGameMode* localGameMode = Minecraft::GetInstance()->mLocalPlayers[m_userIndex]->GetLocalGameMode();
     info->teamInvite = static_cast<unsigned char>(localGameMode->IsTeamInvite(player->GetOnlineName()));
@@ -459,18 +467,14 @@ PlayerInfo* MG03ScoreboardLayout::CreatePlayerInfo()
 
 void MG03ScoreboardLayout::AddPlayer(unsigned char smallId)
 {
-    PlayerInfo* info = new MG03PlayerInfo();
+    MG03PlayerInfo* info = new MG03PlayerInfo();
     BuildPlayerInfo(CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId), info);
     m_players.push_back(info);
 }
 
 void MG03ScoreboardLayout::UpdatePlayer(int index, PlayerInfo*, PlayerInfo* newInfo, bool)
 {
-    PlayerInfo* info = m_players[index];
-    info->smallId = newInfo->smallId;
-    info->voiceStatus = newInfo->voiceStatus;
-    info->colour = newInfo->colour;
-    info->name = newInfo->name;
+    *m_players[index] = *newInfo;
 }
 
 std::wstring MG03ScoreboardLayout::GetCustomProgressDetails(const StatsUID& uid, int& value)
@@ -481,37 +485,36 @@ std::wstring MG03ScoreboardLayout::GetCustomProgressDetails(const StatsUID& uid,
     std::wstring details = L"";
     int round = -1;
 
-    if (!miniGame->ArePointsActive())
+    if (miniGame->ArePointsActive())
     {
-        const unsigned int personal = scoreboard->GetBestLifeSpan(uid, &round);
-        const unsigned int best = scoreboard->GetBestLifeSpan();
-        const unsigned int behind = personal - best;
-        if (behind == 0)
+        const unsigned int personal = scoreboard->GetBestPoints(uid, &round);
+        const unsigned int best = scoreboard->GetBestPoints();
+        const unsigned int behind = best - personal;
+        if (behind != 0)
         {
-            value = 100;
-            details = formatwstr(L"%d:%.2d.%.3d", (personal / 60000) % 60, (personal / 1000) % 60, personal % 1000);
+            value = static_cast<int>((static_cast<float>(personal) / static_cast<float>(best)) * 100.0f);
+            details = formatwstr(L"-%d", behind);
         }
         else
-        {
-            value = static_cast<int>((static_cast<float>(best) / static_cast<float>(personal)) * 100.0f);
-            details = formatwstr(L"+%d:%.2d.%.3d", (behind / 60000) % 60, (behind / 1000) % 60, behind % 1000);
-        }
-    }
-    else
-    {
-        const int personal = scoreboard->GetBestPoints(uid, &round);
-        const int best = scoreboard->GetBestPoints();
-        const int behind = best - personal;
-        if (behind == 0)
         {
             value = 100;
             details = formatwstr(L"%d", personal);
         }
+    }
+    else
+    {
+        const unsigned int personal = scoreboard->GetBestLifeSpan(uid, &round);
+        const unsigned int best = scoreboard->GetBestLifeSpan();
+        const unsigned int behind = personal - best;
+        if (behind != 0)
+        {
+            value = static_cast<int>((static_cast<float>(best) / static_cast<float>(personal)) * 100.0f);
+            details = formatwstr(L"+%d:%.2d.%.3d", (behind / 60000) % 60, (behind / 1000) % 60, behind % 1000);
+        }
         else
         {
-            value = static_cast<int>((static_cast<float>(static_cast<unsigned int>(personal)) /
-                                      static_cast<float>(static_cast<unsigned int>(best))) * 100.0f);
-            details = formatwstr(L"-%d", behind);
+            value = 100;
+            details = formatwstr(L"%d:%.2d.%.3d", (personal / 60000) % 60, (personal / 1000) % 60, personal % 1000);
         }
     }
 

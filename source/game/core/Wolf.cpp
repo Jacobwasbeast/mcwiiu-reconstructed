@@ -150,16 +150,15 @@ void Wolf::customServerAiStep()
 void Wolf::defineSynchedData()
 {
     TamableAnimal::defineSynchedData();
-    mEntityData->createDateItem(DATA_HEALTH_ID, getHealth());
-    mEntityData->createDateItem(DATA_INTERESTED, false);
-    mEntityData->createDateItem(DATA_COLLAR_COLOR, DyeColor::RED->getItemData());
+    mEntityData->define(DATA_HEALTH_ID, getHealth());
+    mEntityData->define(DATA_INTERESTED, false);
+    mEntityData->define(DATA_COLLAR_COLOR, DyeColor::RED->getItemData());
 }
 void Wolf::playStepSound(const BlockPos&, Block*) { playSound(SoundEvents::WOLF_STEP, 0.15f, 1.0f); }
 bool Wolf::isAngry() { return (mEntityData->get(DATA_FLAGS) & WOLF_ANGRY_FLAG) != 0; }
 const DyeColor* Wolf::getCollarColor()
 {
-    const DyeColor* color = DyeColor::byItemData(mEntityData->get(DATA_COLLAR_COLOR) & WOLF_COLLAR_COLOR_MASK);
-    return color;
+    return DyeColor::byItemData(mEntityData->get(DATA_COLLAR_COLOR) & WOLF_COLLAR_COLOR_MASK);
 }
 void Wolf::addAdditonalSaveData(CompoundTag* tag)
 {
@@ -297,7 +296,7 @@ bool Wolf::hurt(const DamageSource* source, float damage)
         boost::shared_ptr<Entity> direct = source->getDirectEntity();
         if (direct)
         {
-            bool isPlayer = (direct->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+            bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, direct->GetType());
             if (isPlayer)
             {
                 boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(direct);
@@ -315,10 +314,10 @@ bool Wolf::hurt(const DamageSource* source, float damage)
         mSitGoal->wantToSit(false);
     if (attacker)
     {
-        bool isPlayer = (attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+        bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType());
         if (!isPlayer)
         {
-            bool isArrow = (attacker->GetType() & EntityType::ARROW) == EntityType::ARROW;
+            bool isArrow = eTYPE_DERIVED_FROM(EntityType::ARROW, attacker->GetType());
             if (!isArrow)
                 damage = (damage + 1.0f) * 0.5f;
         }
@@ -357,7 +356,68 @@ bool Wolf::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand:
 {
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
 
-    if (!isTame())
+    if (isTame())
+    {
+        if (!item->isEmpty())
+        {
+            FoodItem* food = dynamic_cast<FoodItem*>(item->getItem());
+            if (food != NULL)
+            {
+                if (food->isMeat() && mEntityData->get(DATA_HEALTH_ID) < 20.0f)
+                {
+                    if (!player->mAbilities.mInstabuild)
+                    {
+                        item->shrink(1);
+                    }
+                    heal((float)food->getNutrition(item));
+                    if (item->getCount() < 1)
+                    {
+                        player->mInventory->setItem(player->mInventory->m_selected, ItemInstance::EMPTY);
+                    }
+                    return true;
+                }
+            }
+            else if (item->getItem() == Items::dye)
+            {
+                const DyeColor* color = DyeColor::byItemData(item->getAuxValue());
+                if (color != getCollarColor())
+                {
+                    setCollarColor(color);
+                    if (!player->mAbilities.mInstabuild)
+                    {
+                        item->shrink(1);
+                    }
+                    return true;
+                }
+            }
+        }
+
+        if (isOwnedBy(player))
+        {
+            if (!mLevel->mIsClientSide && !isFood(item) && !isLeashedToPlayer(player)
+                && item->getItem() != Items::lead
+                && (item->isEmpty() || item->getItem() != Items::spawnEgg || item->getAuxValue() != WOLF_SPAWN_EGG_AUX))
+            {
+                bool renaming = false;
+                if (Item::getId(item->getItem()) == ItemId::NAME_TAG && !isPassenger() && item->hasCustomHoverName()
+                    && (!hasCustomName() || item->getHoverName().compare(getCustomName()) != 0))
+                {
+                    renaming = true;
+                }
+
+                if (!renaming)
+                {
+                    mSitGoal->wantToSit(!isSitting());
+                    mJumping = false;
+                    mNavigation->stop();
+                    setTarget(boost::shared_ptr<LivingEntity>());
+                }
+            }
+        }
+
+        return Animal::mobInteract(player, hand);
+    }
+    else
     {
         if (Item::getId(item->getItem()) == Item::getId(Items::bone) && !isAngry())
         {
@@ -370,7 +430,7 @@ bool Wolf::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand:
             {
                 if (mRandom->nextInt(3) == 0)
                 {
-                    player->awardStat(gStats->get_tamedEntity(EntityType::WOLF),
+                    player->awardStat(GenericStats::tamedEntity(EntityType::WOLF),
                                       GenericStats::param_tamedEntity(EntityType::WOLF));
                     tame(player, true, true);
                     mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::TAMING_SUCCEEDED, 0);
@@ -390,61 +450,6 @@ bool Wolf::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand:
         }
         return AgableMob::mobInteract(player, hand);
     }
-
-    if (!item->isEmpty())
-    {
-        FoodItem* food = dynamic_cast<FoodItem*>(item->getItem());
-        if (food != NULL)
-        {
-            if (food->isMeat() && mEntityData->get(DATA_HEALTH_ID) < 20.0f)
-            {
-                if (!player->mAbilities.mInstabuild)
-                {
-                    item->shrink(1);
-                }
-                heal((float)food->getNutrition(item));
-                if (item->getCount() < 1)
-                {
-                    player->mInventory->setItem(player->mInventory->m_selected, ItemInstance::EMPTY);
-                }
-                return true;
-            }
-        }
-        else if (item->getItem() == Items::dye)
-        {
-            const DyeColor* color = DyeColor::byItemData(item->getAuxValue());
-            if (color != getCollarColor())
-            {
-                setCollarColor(color);
-                if (!player->mAbilities.mInstabuild)
-                {
-                    item->shrink(1);
-                }
-                return true;
-            }
-        }
-    }
-
-    if (isOwnedBy(player) && !mLevel->mIsClientSide && !isFood(item) && !isLeashedToPlayer(player)
-        && item->getItem() != Items::lead
-        && (item->isEmpty() || item->getItem() != Items::spawnEgg || item->getAuxValue() != WOLF_SPAWN_EGG_AUX))
-    {
-        bool renaming = false;
-        if (Item::getId(item->getItem()) == ItemId::NAME_TAG && !isPassenger() && item->hasCustomHoverName())
-        {
-            renaming = !hasCustomName() || item->getHoverName() != getCustomName();
-        }
-
-        if (!renaming)
-        {
-            mSitGoal->wantToSit(!isSitting());
-            mJumping = false;
-            mNavigation->stop();
-            setTarget(boost::shared_ptr<LivingEntity>());
-        }
-    }
-
-    return Animal::mobInteract(player, hand);
 }
 void Wolf::handleEntityEvent(unsigned char event, int data)
 {
@@ -481,8 +486,7 @@ bool Wolf::isFood(const not_null_ptr<ItemInstance>& item)
 }
 int Wolf::GetSynchedHealth()
 {
-    int health = static_cast<int>(getEntityData()->get(DATA_HEALTH_ID));
-    return health;
+    return static_cast<int>(getEntityData()->get(DATA_HEALTH_ID));
 }
 unsigned int Wolf::GetInteractTooltip(const EntityTooltipDataHolder& tooltipData)
 {
@@ -586,7 +590,7 @@ bool Wolf::canMate(const boost::shared_ptr<Animal>& other)
         return false;
     if (!isTame())
         return false;
-    bool isWolf = other->GetType() == EntityType::WOLF;
+    bool isWolf = eTYPE_DERIVED_FROM(EntityType::WOLF, other->GetType());
     if (!isWolf)
         return false;
     boost::shared_ptr<Wolf> wolf = boost::static_pointer_cast<Wolf>(other);
@@ -600,12 +604,12 @@ bool Wolf::canMate(const boost::shared_ptr<Animal>& other)
 }
 bool Wolf::wantsToAttack(boost::shared_ptr<LivingEntity> target, boost::shared_ptr<LivingEntity> owner)
 {
-    if (target->GetType() == EntityType::CREEPER || target->GetType() == EntityType::GHAST)
+    if (eTYPE_DERIVED_FROM(EntityType::CREEPER, target->GetType()) || eTYPE_DERIVED_FROM(EntityType::GHAST, target->GetType()))
     {
         return false;
     }
 
-    if (target->GetType() == EntityType::WOLF)
+    if (eTYPE_DERIVED_FROM(EntityType::WOLF, target->GetType()))
     {
         boost::shared_ptr<Wolf> wolf = boost::static_pointer_cast<Wolf>(target);
         if (wolf->isTame() && wolf->getOwner() == owner)
@@ -614,8 +618,8 @@ bool Wolf::wantsToAttack(boost::shared_ptr<LivingEntity> target, boost::shared_p
         }
     }
 
-    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER
-        && (owner->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType())
+        && eTYPE_DERIVED_FROM(EntityType::PLAYER, owner->GetType())
         && !boost::static_pointer_cast<Player>(owner)->canHarmPlayer(boost::static_pointer_cast<Player>(target)))
     {
         return false;
@@ -646,7 +650,7 @@ bool Wolf::WolfAvoidEntityGoal::canUse()
     if (AvoidEntityGoal::canUse())
     {
         boost::shared_ptr<Entity> target = mToAvoid.lock();
-        bool isLlama = target->GetType() == EntityType::LLAMA;
+        bool isLlama = eTYPE_DERIVED_FROM(EntityType::LLAMA, target->GetType());
         if (isLlama)
             return !mWolf->isTame() && avoidLlama(boost::static_pointer_cast<Llama>(target));
     }

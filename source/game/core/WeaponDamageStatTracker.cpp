@@ -6,9 +6,9 @@ WeaponDamageStatTracker::WeaponDamageStatTracker(const StatsUID& statsUID,
                                                  ETrackingType trackingType)
     : StatTracker<Scoreboard::Weapon>(statsUID, Scoreboard::Weapon(0, NULL))
     , mDamageByWeapon()
-    , mTrackingType(trackingType)
 {
     mDamageByWeapon[mValue.GetKey()] = 0.0f;
+    mTrackingType = trackingType;
 }
 
 void WeaponDamageStatTracker::update(const DamageEvent* damageEvent)

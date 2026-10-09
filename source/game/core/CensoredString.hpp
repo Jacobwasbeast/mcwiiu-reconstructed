@@ -20,8 +20,8 @@ public:
     void _init(TickAction* action, int firstId, int secondId);
     std::wstring getPendingString();
     std::wstring getCensoredString();
-    uint64_t _verified(const std::wstring& value, bool censored);
-    uint64_t _changed();
+    void _verified(const std::wstring& value, bool censored);
+    void _changed();
     void set(const std::wstring& value, const std::wstring& uuid, bool chatCensored, bool uuidLocal);
     uint32_t checkParentalFilter();
     std::wstring raw();
@@ -33,7 +33,7 @@ public:
     void _update(const std::wstring& value);
     int compare(const std::wstring& value);
 
-    const std::wstring& getUUID() { return m_uuid; }
+    std::wstring getUUID() { return m_uuid; }
     bool isUUIDLocal() { return m_uuidLocal; }
     bool isChatCensored() { return m_chatCensored; }
 

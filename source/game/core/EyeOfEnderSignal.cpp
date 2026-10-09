@@ -36,32 +36,34 @@ void EyeOfEnderSignal::_init()
 {
     fjDerivedCtorCalls();
     mUnknown = 0;
-    mTargetX = 0.0;
-    mTargetY = 0.0;
     mTargetZ = 0.0;
+    mTargetY = 0.0;
+    mTargetX = 0.0;
     mLife = 0;
     mDropItem = false;
 }
 
 void EyeOfEnderSignal::signalTo(const BlockPos& pos)
 {
-    double dx = static_cast<double>(pos.x) - mX;
-    double dz = static_cast<double>(pos.z) - mZ;
+    double x = pos.x;
+    int y = pos.y;
+    double z = pos.z;
+    double dx = x - mX;
+    double dz = z - mZ;
     double distance = std::sqrt(dx * dx + dz * dz);
-    if (distance <= 12.0)
-    {
-        mTargetX = static_cast<double>(pos.x);
-        mLife = 0;
-        mTargetZ = static_cast<double>(pos.z);
-        mTargetY = static_cast<double>(pos.y);
-    }
-    else
+    if (distance > 12.0)
     {
         mTargetX = mX + dx / distance * 12.0;
-        mLife = 0;
         mTargetZ = mZ + dz / distance * 12.0;
         mTargetY = mY + 8.0;
     }
+    else
+    {
+        mTargetX = x;
+        mTargetY = y;
+        mTargetZ = z;
+    }
+    mLife = 0;
     mDropItem = mRandom->nextInt(5) > 0;
 }
 
@@ -71,7 +73,12 @@ void EyeOfEnderSignal::defineSynchedData()
 
 bool EyeOfEnderSignal::shouldRenderAtSqrDistance(double distanceSqr)
 {
-    double distance = mBoundingBox->getSize() * 4.0 * 64.0;
+    double distance = mBoundingBox->getSize() * 4.0;
+    if (distance != distance)
+    {
+        distance = 4.0;
+    }
+    distance *= 64.0;
     return distanceSqr < distance * distance;
 }
 
@@ -83,10 +90,8 @@ void EyeOfEnderSignal::lerpMotion(double xd, double yd, double zd)
     if (mXRotO == 0.0f && mYRotO == 0.0f)
     {
         double horizontal = std::sqrt(xd * xd + zd * zd);
-        mYRot = static_cast<float>(std::atan2(xd, zd) * Mth::RAD_TO_DEG);
-        mYRotO = mYRot;
-        mXRot = static_cast<float>(std::atan2(yd, horizontal) * Mth::RAD_TO_DEG);
-        mXRotO = mXRot;
+        mYRotO = mYRot = static_cast<float>(std::atan2(xd, zd) * Mth::RAD_TO_DEG);
+        mXRotO = mXRot = static_cast<float>(std::atan2(yd, horizontal) * Mth::RAD_TO_DEG);
     }
 }
 
@@ -103,32 +108,30 @@ void EyeOfEnderSignal::tick()
 
     double horizontal = sqrt(mXd * mXd + mZd * mZd);
     mYRot = (float)(atan2(mXd, mZd) * Mth::RAD_TO_DEG);
-    float xRot = (float)(atan2(mYd, horizontal) * Mth::RAD_TO_DEG);
+    mXRot = (float)(atan2(mYd, horizontal) * Mth::RAD_TO_DEG);
 
-    while (xRot - mXRotO < -180.0f)
+    while (mXRot - mXRotO < -180.0f)
     {
         mXRotO -= 360.0f;
     }
 
-    while (xRot - mXRotO >= 180.0f)
+    while (mXRot - mXRotO >= 180.0f)
     {
         mXRotO += 360.0f;
     }
 
-    float yRot = mYRot;
-
-    while (yRot - mYRotO < -180.0f)
+    while (mYRot - mYRotO < -180.0f)
     {
         mYRotO -= 360.0f;
     }
 
-    while (yRot - mYRotO >= 180.0f)
+    while (mYRot - mYRotO >= 180.0f)
     {
         mYRotO += 360.0f;
     }
 
-    mYRot = mYRotO + (yRot - mYRotO) * 0.2f;
-    mXRot = mXRotO + (xRot - mXRotO) * 0.2f;
+    mXRot = mXRotO + (mXRot - mXRotO) * 0.2f;
+    mYRot = mYRotO + (mYRot - mYRotO) * 0.2f;
 
     if (!mLevel->mIsClientSide)
     {
@@ -188,8 +191,8 @@ void EyeOfEnderSignal::tick()
 
         if (mDropItem)
         {
-            not_null_ptr<ItemInstance> item(new ItemInstance(Items::enderEye));
-            mLevel->addEntity(boost::shared_ptr<Entity>(new ItemEntity(mLevel, mX, mY, mZ, item)));
+            mLevel->addEntity(boost::shared_ptr<ItemEntity>(
+                new ItemEntity(mLevel, mX, mY, mZ, not_null_ptr<ItemInstance>(new ItemInstance(Items::enderEye)))));
         }
         else
         {

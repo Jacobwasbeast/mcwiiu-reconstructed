@@ -1,6 +1,7 @@
 #include "game/core/FillTool.hpp"
 
 #include <math.h>
+#include <algorithm>
 
 #include "game/core/DataInputStream.hpp"
 #include "game/core/DataOutputStream.hpp"
@@ -13,6 +14,7 @@
 #include "game/util/Math.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
+#include "game/world/block/BlockId.hpp"
 #include "game/world/block/BlockItem.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
@@ -25,31 +27,31 @@ FillTool::FillTool(ConsoleSchematicFile* schematic)
     : BlockPos(0, 0, 0),
       mPointB(0, 0, 0)
 {
-    mPointB.x = 3;
-    mPointB.y = 3;
-    mPointB.z = 3;
-    mEdgeBlock = NULL;
     mFillBlock = NULL;
-    mReplaceOnlyBlock = NULL;
-    mEdgeData = 0;
-    mFillData = 0;
-    mReplaceOnlyData = 0;
     mReplaceOnlyDataMask = -1;
+    mPointB.z = 3;
+    mFillData = 0;
+    mPointB.y = 3;
+    mPointB.x = 3;
+    mEdgeData = 0;
     mDimension = 0;
+    mReplaceOnlyData = 0;
+    mActive = false;
+    mReplaceOnlyBlock = NULL;
     mReplaceOnly = false;
     mHasPointB = false;
     mField0x6C = false;
     mSchematic = schematic;
-    mActive = false;
+    mEdgeBlock = NULL;
     mOperation.mBounds = AABB::newPermanent(0.0, 0.0, 0.0, 3.0, 3.0, 3.0);
-    mMode = 1;
-    mShape = 1;
-    mFillDataMask = -1;
-    mSurfaceBrush = false;
     mBrushStrength = 2.0f;
+    mField0x50 = 0;
+    mMode = 1;
+    mFillDataMask = -1;
+    mShape = 1;
     mHandleDataType = HANDLE_DATA_NONE;
     mLiquidType = 0;
-    mField0x50 = 0;
+    mSurfaceBrush = false;
 }
 
 FillTool::~FillTool()
@@ -59,21 +61,22 @@ FillTool::~FillTool()
 
 void FillTool::Reset()
 {
-    mHandleDataType = HANDLE_DATA_NONE;
-    mReplaceOnlyData = 0;
-    mFillDataMask = -1;
-    mReplaceOnlyDataMask = 0x00ffffff;
     mReplaceOnlyBlock = NULL;
+    mReplaceOnlyData = 0;
+    mReplaceOnlyDataMask = 0x00ffffff;
+    mFillDataMask = -1;
+    mHandleDataType = HANDLE_DATA_NONE;
 }
 
 int FillTool::IsWaterBlock(const BlockState* state)
 {
     int result = 0;
-    unsigned int id = Block::getId(state->getBlock());
-    if (id > 7)
+    switch (Block::getId(state->getBlock()))
     {
-        if (id < 10)
-            result = 1;
+    case BlockId::FLOWING_WATER:
+    case BlockId::WATER:
+        result = 1;
+        break;
     }
     return result;
 }
@@ -81,22 +84,45 @@ int FillTool::IsWaterBlock(const BlockState* state)
 int FillTool::IsLavaBlock(const BlockState* state)
 {
     int result = 0;
-    unsigned int id = Block::getId(state->getBlock());
-    if (id > 9 && id < 12)
+    switch (Block::getId(state->getBlock()))
+    {
+    case BlockId::FLOWING_LAVA:
+    case BlockId::LAVA:
         result = 1;
+        break;
+    }
     return result;
 }
 
 int FillTool::IsValidSurfaceBlock(const BlockState* state)
 {
-    unsigned int id = Block::getId(state->getBlock());
-    if (id < 0x6a)
-        return id != 0 && (id < 8 || (id > 0xb && (id < 0x11 || id > 0x12)));
-    if (id < 0x102)
-        return id != 0x6a && id != 0x7f && (id < 0xa1 || id > 0xa2);
-    if (id == 0x102)
-        return 0;
-    return id < 0x108 || (id > 0x10c && (id < 0x10e || id > 0x110));
+    int result = 1;
+    switch (Block::getId(state->getBlock()))
+    {
+    case BlockId::AIR:
+    case BlockId::FLOWING_WATER:
+    case BlockId::WATER:
+    case BlockId::FLOWING_LAVA:
+    case BlockId::LAVA:
+    case BlockId::LOG:
+    case BlockId::LEAVES:
+    case BlockId::VINE:
+    case BlockId::COCOA:
+    case BlockId::LEAVES2:
+    case BlockId::LOG2:
+    case BlockId::KELP:
+    case BlockId::CORAL_FAN:
+    case BlockId::CORAL_FAN_DEAD:
+    case BlockId::CORAL_FAN_HANG:
+    case BlockId::CORAL_FAN_HANG2:
+    case BlockId::CORAL_FAN_HANG3:
+    case BlockId::SEA_GRASS:
+    case BlockId::SEA_PICKLE:
+    case BlockId::BUBBLE_COLUMN_SEGMENT:
+        result = 0;
+        break;
+    }
+    return result;
 }
 
 void FillTool::tick()
@@ -106,19 +132,16 @@ void FillTool::tick()
 
     if (mOperation.mMode == 4)
     {
-        AABB* bounds = mOperation.mBounds;
-        int width = (int)(bounds->mMaxX - bounds->mMinX);
-        int depth = (int)(bounds->mMaxZ - bounds->mMinZ);
-        int baseZ = (int)bounds->mMinZ;
-        int baseX = (int)bounds->mMinX;
+        int width = (int)(mOperation.mBounds->mMaxX - mOperation.mBounds->mMinX);
+        int depth = (int)(mOperation.mBounds->mMaxZ - mOperation.mBounds->mMinZ);
+        int baseZ = (int)mOperation.mBounds->mMinZ;
+        int baseX = (int)mOperation.mBounds->mMinX;
         float halfWidth = (float)width * 0.5f;
         float halfDepth = (float)depth * 0.5f;
         unsigned int area = width * depth;
-        float centreZ = ((float)bounds->mMinZ + halfDepth) - 0.5f;
-        float radius = halfDepth;
-        if (halfWidth - halfDepth < 0.0f)
-            radius = halfWidth;
-        float centreX = ((float)bounds->mMinX + halfWidth) - 0.5f;
+        float centreZ = ((float)mOperation.mBounds->mMinZ + halfDepth) - 0.5f;
+        float radius = std::min(halfDepth, halfWidth);
+        float centreX = ((float)mOperation.mBounds->mMinX + halfWidth) - 0.5f;
 
         int* surface = new int[area];
         for (unsigned int i = 0; i < area; ++i)
@@ -160,21 +183,24 @@ void FillTool::tick()
             {
                 for (int x = 0; x < width; ++x)
                 {
-                    float worldX = (float)x + (float)bounds->mMinX;
-                    float worldZ = (float)z + (float)bounds->mMinZ;
-                    if (mOperation.mShape == 0 || mOperation.mShape > 2 ||
-                        sqrtf((worldX - centreX) * (worldX - centreX) +
-                              (worldZ - centreZ) * (worldZ - centreZ)) < radius)
+                    float worldX = (float)x + (float)mOperation.mBounds->mMinX;
+                    float worldZ = (float)z + (float)mOperation.mBounds->mMinZ;
+                    switch (mOperation.mShape)
                     {
-                        MutableBlockPos pos((int)worldX, top, (int)worldZ);
-                        const BlockState* state = mOperation.mLevel->getBlockState(pos);
-                        while (surface[row + x] < pos.y &&
-                               (state == NULL || state->getBlock() == Blocks::air))
-                        {
-                            mOperation.mLevel->setBlock(pos, liquid, Block::UPDATE_CLIENTS, false);
-                            pos = MutableBlockPos(pos.below());
-                            state = mOperation.mLevel->getBlockState(pos);
-                        }
+                    case 1:
+                    case 2:
+                        if (sqrtf((worldX - centreX) * (worldX - centreX) +
+                                  (worldZ - centreZ) * (worldZ - centreZ)) >= radius)
+                            continue;
+                        break;
+                    }
+                    MutableBlockPos pos((int)worldX, top, (int)worldZ);
+                    const BlockState* state = mOperation.mLevel->getBlockState(pos);
+                    while (surface[row + x] < pos.y && (state == NULL || state->getBlock() == Blocks::air))
+                    {
+                        mOperation.mLevel->setBlock(pos, liquid, Block::UPDATE_CLIENTS, false);
+                        pos = MutableBlockPos(pos.below());
+                        state = mOperation.mLevel->getBlockState(pos);
                     }
                 }
                 row += width;
@@ -183,64 +209,59 @@ void FillTool::tick()
     }
     else if (mOperation.mMode == 3)
     {
-        AABB* bounds = mOperation.mBounds;
-        int width = (int)(bounds->mMaxX - bounds->mMinX);
-        int depth = (int)(bounds->mMaxZ - bounds->mMinZ);
+        int width = (int)(mOperation.mBounds->mMaxX - mOperation.mBounds->mMinX);
+        int depth = (int)(mOperation.mBounds->mMaxZ - mOperation.mBounds->mMinZ);
         float halfWidth = (float)width * 0.5f;
         float halfDepth = (float)depth * 0.5f;
-        float radius = halfDepth;
-        if (halfWidth - halfDepth < 0.0f)
-            radius = halfWidth;
-        float centreZ = ((float)bounds->mMinZ + halfDepth) - 0.5f;
-        float centreX = ((float)bounds->mMinX + halfWidth) - 0.5f;
+        float radius = std::min(halfDepth, halfWidth);
+        float centreZ = ((float)mOperation.mBounds->mMinZ + halfDepth) - 0.5f;
+        float centreX = ((float)mOperation.mBounds->mMinX + halfWidth) - 0.5f;
 
         for (int z = 0; z < depth; ++z)
         {
             for (int x = 0; x < width; ++x)
             {
-                float worldX = (float)x + (float)bounds->mMinX;
-                float worldZ = (float)z + (float)bounds->mMinZ;
-                if (mOperation.mShape == 0 || mOperation.mShape > 2 ||
-                    sqrtf((worldX - centreX) * (worldX - centreX) +
-                          (worldZ - centreZ) * (worldZ - centreZ)) < radius)
+                float worldX = (float)x + (float)mOperation.mBounds->mMinX;
+                float worldZ = (float)z + (float)mOperation.mBounds->mMinZ;
+                switch (mOperation.mShape)
                 {
-                    MutableBlockPos pos(
-                        mOperation.mLevel->getHeightmapPos(BlockPos((int)worldX, 0, (int)worldZ)).below());
-                    while (pos.y > 0)
+                case 1:
+                case 2:
+                    if (sqrtf((worldX - centreX) * (worldX - centreX) + (worldZ - centreZ) * (worldZ - centreZ)) >=
+                        radius)
+                        continue;
+                    break;
+                }
+                MutableBlockPos pos(
+                    mOperation.mLevel->getHeightmapPos(BlockPos((int)worldX, 0, (int)worldZ)).below());
+                while (pos.y > 0 && !IsValidSurfaceBlock(mOperation.mLevel->getBlockState(pos)))
+                    pos = MutableBlockPos(pos.below());
+                std::vector<std::pair<const BlockState*, int> >::const_iterator layer =
+                    mOperation.mBrushBlocks.begin();
+                while (layer != mOperation.mBrushBlocks.end() && pos.y > 0)
+                {
+                    const BlockState* brush = layer->first;
+                    int thickness = layer->second;
+                    for (int i = 0; i < thickness && pos.y > 0; ++i)
                     {
                         const BlockState* state = mOperation.mLevel->getBlockState(pos);
                         if (IsValidSurfaceBlock(state))
-                            break;
+                            mOperation.mLevel->setBlock(pos, brush, Block::UPDATE_CLIENTS, false);
                         pos = MutableBlockPos(pos.below());
                     }
-                    std::vector<std::pair<const BlockState*, int> >::const_iterator layer =
-                        mOperation.mBrushBlocks.begin();
-                    while (layer != mOperation.mBrushBlocks.end() && pos.y > 0)
-                    {
-                        const BlockState* brush = layer->first;
-                        int thickness = layer->second;
-                        for (int i = 0; i < thickness && pos.y > 0; ++i)
-                        {
-                            const BlockState* state = mOperation.mLevel->getBlockState(pos);
-                            if (IsValidSurfaceBlock(state))
-                                mOperation.mLevel->setBlock(pos, brush, Block::UPDATE_CLIENTS, false);
-                            pos = MutableBlockPos(pos.below());
-                        }
-                        ++layer;
-                    }
+                    ++layer;
                 }
             }
         }
     }
     else if (mOperation.mMode == 2)
     {
-        AABB* bounds = mOperation.mBounds;
-        int width = (int)(bounds->mMaxX - bounds->mMinX);
-        double strength = (double)mBrushStrength;
-        int depth = (int)(bounds->mMaxZ - bounds->mMinZ);
+        int width = (int)(mOperation.mBounds->mMaxX - mOperation.mBounds->mMinX);
+        float strength = mBrushStrength;
+        int depth = (int)(mOperation.mBounds->mMaxZ - mOperation.mBounds->mMinZ);
         int radius = (int)ceil(strength * 2.57);
-        int baseX = (int)bounds->mMinX;
-        int baseZ = (int)bounds->mMinZ;
+        int baseX = (int)mOperation.mBounds->mMinX;
+        int baseZ = (int)mOperation.mBounds->mMinZ;
         int stride = width + radius * 2 + 1;
         unsigned int cells = (unsigned int)(stride * (depth + radius * 2 + 1));
 
@@ -257,17 +278,9 @@ void FillTool::tick()
                     mOperation.mLevel->getHeightmapPos(BlockPos(baseX + sampleX, 0, baseZ + sampleZ)).below());
                 if (mOperation.mSkipSurfaceWater)
                 {
-                    while (pos.y > 0)
-                    {
-                        const BlockState* state = mOperation.mLevel->getBlockState(pos);
-                        if (!IsWaterBlock(state))
-                        {
-                            const BlockState* extra = mOperation.mLevel->getExtraBlockState(pos);
-                            if (!IsWaterBlock(extra))
-                                break;
-                        }
+                    while (pos.y > 0 && (IsWaterBlock(mOperation.mLevel->getBlockState(pos)) ||
+                                         IsWaterBlock(mOperation.mLevel->getExtraBlockState(pos))))
                         pos = MutableBlockPos(pos.below());
-                    }
                 }
                 heights[cursor] = pos.y;
                 ++cursor;
@@ -280,28 +293,29 @@ void FillTool::tick()
             for (int x = 0; x < width; ++x)
             {
                 int centre = row + x;
-                MutableBlockPos pos((int)bounds->mMinX + x, heights[centre], (int)bounds->mMinZ + z);
+                MutableBlockPos pos(
+                    (int)mOperation.mBounds->mMinX + x, heights[centre], (int)mOperation.mBounds->mMinZ + z);
                 float weightTotal = 0.0f;
                 float heightTotal = 0.0f;
                 for (int kernelZ = z - radius; kernelZ < z + radius + 1; ++kernelZ)
                 {
+                    int offsetZ = kernelZ - z;
                     for (int kernelX = x - radius; kernelX < x + radius + 1; ++kernelX)
                     {
                         int offsetX = kernelX - x;
-                        int offsetZ = kernelZ - z;
-                        float weight;
+                        float weight = 1.0f;
                         if (mOperation.mSmoothType == 0)
                         {
                             weight = expf((float)(-(offsetX * offsetX + offsetZ * offsetZ)) /
-                                          (float)((double)(float)(strength + strength) * strength));
-                            weight = weight / (float)((double)(float)(6.2831855f * strength) * strength);
+                                          ((strength + strength) * strength)) /
+                                     ((6.2831855f * strength) * strength);
                         }
-                        else
+                        else if (mOperation.mSmoothType == 1)
                         {
                             weight = 1.0f;
                         }
                         weightTotal = weightTotal + weight;
-                        heightTotal = (float)heights[(kernelZ + radius) * stride + kernelX + radius] * weight +
+                        heightTotal = (float)heights[(kernelZ + radius) * stride + (kernelX + radius)] * weight +
                                       heightTotal;
                     }
                 }
@@ -328,47 +342,25 @@ void FillTool::tick()
         LevelChunk* chunk = mOperation.mLevel->getChunk(mOperation.mChunkX, mOperation.mChunkZ);
         if (!chunk->isEmpty())
         {
-            AABB* bounds = mOperation.mBounds;
+            int startX = (int)std::max(floor(mOperation.mBounds->mMinX), chunk->x * 16.0);
+            int endX = (int)std::min(floor(mOperation.mBounds->mMaxX), ((startX >> 4) << 4) + 16.0);
 
-            double minX = floor(bounds->mMinX);
-            double chunkMinX = (double)chunk->x * 16.0;
-            if (minX < chunkMinX)
-                minX = chunkMinX;
-            int startX = (int)minX;
-            double maxX = floor(bounds->mMaxX);
-            double chunkMaxX = (double)((startX >> 4) << 4) + 16.0;
-            if (chunkMaxX < maxX)
-                maxX = chunkMaxX;
-            int endX = (int)maxX;
+            int startY = (int)floor(mOperation.mBounds->mMinY);
+            int endY = (int)floor(mOperation.mBounds->mMaxY);
+            startY = std::max(startY, 0);
+            startY = std::min(startY, 255);
+            endY = std::max(endY, 0);
+            endY = std::min(endY, 255);
 
-            int startY = (int)floor(bounds->mMinY);
-            int endY = (int)floor(bounds->mMaxY);
-            if (startY < 0)
-                startY = 0;
-            if (startY > 255)
-                startY = 255;
-            if (endY < 0)
-                endY = 0;
-            if (endY > 255)
-                endY = 255;
-
-            int startZ = (int)floor(bounds->mMinZ);
-            if (startZ < chunk->z * 16)
-                startZ = chunk->z * 16;
-            int endZ = (int)floor(bounds->mMaxZ);
-            if ((startZ >> 4) * 16 + 16 < endZ)
-                endZ = (startZ >> 4) * 16 + 16;
+            int startZ = std::max((int)floor(mOperation.mBounds->mMinZ), chunk->z << 4);
+            int endZ = std::min((int)floor(mOperation.mBounds->mMaxZ), ((startZ >> 4) << 4) + 16);
 
             float halfHeight = (float)(endY - startY) * 0.5f;
-            float halfDepth = (float)(bounds->mMaxZ - bounds->mMinZ) * 0.5f;
-            float halfWidth = (float)(bounds->mMaxX - bounds->mMinX) * 0.5f;
-            float radius = halfHeight;
-            if (halfDepth < halfHeight)
-                radius = halfDepth;
-            float centreX = ((float)bounds->mMinX + halfWidth) - 0.5f;
-            if (halfWidth - radius < 0.0f)
-                radius = halfWidth;
-            float centreZ = ((float)bounds->mMinZ + halfDepth) - 0.5f;
+            float halfDepth = (float)(mOperation.mBounds->mMaxZ - mOperation.mBounds->mMinZ) * 0.5f;
+            float halfWidth = (float)(mOperation.mBounds->mMaxX - mOperation.mBounds->mMinX) * 0.5f;
+            float radius = std::min(std::min(halfHeight, halfDepth), halfWidth);
+            float centreX = ((float)mOperation.mBounds->mMinX + halfWidth) - 0.5f;
+            float centreZ = ((float)mOperation.mBounds->mMinZ + halfDepth) - 0.5f;
             float centreY = ((float)startY + halfHeight) - 0.5f;
 
             int doubleSlabId = -1;
@@ -387,40 +379,45 @@ void FillTool::tick()
                     {
                         pos.setZ(z);
                         bool edge = false;
-                        if (mOperation.mShape == 1)
+                        switch (mOperation.mShape)
                         {
-                            float extent = radius * radius;
-                            float deltaX = (float)x - centreX;
-                            float deltaY = (float)y - centreY;
-                            float deltaZ = (float)z - centreZ;
-                            float distance = (deltaX * deltaX) / extent + (deltaY * deltaY) / extent +
-                                             (deltaZ * deltaZ) / extent;
-                            if (distance >= 1.0f)
-                            {
-                                if (distance > 1.0f)
-                                    continue;
+                        default:
+                            if (y == startY || y == endY - 1 || x == startX || x == endX - 1 ||
+                                z == startZ || z == endZ - 1)
                                 edge = true;
-                            }
-                        }
-                        else if (mOperation.mShape == 2)
-                        {
-                            float deltaX = (float)x - centreX;
-                            float deltaY = (float)y - centreY;
-                            float deltaZ = (float)z - centreZ;
-                            float distance = (deltaX * deltaX) / (halfWidth * halfWidth) +
-                                             (deltaY * deltaY) / (halfHeight * halfHeight) +
-                                             (deltaZ * deltaZ) / (halfDepth * halfDepth);
-                            if (distance >= 1.0f)
+                            break;
+                        case 2:
                             {
-                                if (distance > 1.0f)
-                                    continue;
-                                edge = true;
+                                float deltaX = (float)x - centreX;
+                                float deltaY = (float)y - centreY;
+                                float deltaZ = (float)z - centreZ;
+                                float distance = (deltaX * deltaX) / (halfWidth * halfWidth) +
+                                                 (deltaY * deltaY) / (halfHeight * halfHeight) +
+                                                 (deltaZ * deltaZ) / (halfDepth * halfDepth);
+                                if (distance >= 1.0f)
+                                {
+                                    if (distance > 1.0f)
+                                        continue;
+                                    edge = true;
+                                }
                             }
-                        }
-                        else if (y == startY || y == endY - 1 || x == startX || x == endX - 1 ||
-                                 z == startZ || z == endZ - 1)
-                        {
-                            edge = true;
+                            break;
+                        case 1:
+                            {
+                                float extent = radius * radius;
+                                float deltaX = (float)x - centreX;
+                                float deltaY = (float)y - centreY;
+                                float deltaZ = (float)z - centreZ;
+                                float distance = (deltaX * deltaX) / extent + (deltaY * deltaY) / extent +
+                                                 (deltaZ * deltaZ) / extent;
+                                if (distance >= 1.0f)
+                                {
+                                    if (distance > 1.0f)
+                                        continue;
+                                    edge = true;
+                                }
+                            }
+                            break;
                         }
 
                         const BlockState* state = mOperation.mLevel->getBlockState(BlockPos(x, y, z));
@@ -431,8 +428,9 @@ void FillTool::tick()
                             (mOperation.mIgnoreWater && (id == 9 || id == 8)))
                             continue;
                         int mask = mOperation.mFillDataMask;
-                        if (mOperation.mHandleDataType == 1)
+                        switch (mOperation.mHandleDataType)
                         {
+                        case 1:
                             if (mOperation.mReplaceOnlyBlock != NULL && id == mOperation.mReplaceOnlyBlockId)
                             {
                                 mOperation.mLevel->setExtraBlock(pos, Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
@@ -440,22 +438,18 @@ void FillTool::tick()
                                     pos, mOperation.mFillBlock->getBlockState(data & mask), Block::UPDATE_CLIENTS, false);
                             }
                             continue;
-                        }
-                        if (mOperation.mHandleDataType == 2)
-                        {
+                        case 2:
                             if (mOperation.mReplaceOnlyBlock != NULL &&
                                 (HalfSlabBlock::isHalfSlab(block) || HalfSlabBlock::isFullSlab(block)) &&
                                 (mask & (mOperation.mReplaceOnlyData ^ data)) == 0)
                             {
                                 if (id == mOperation.mReplaceOnlyBlockId)
                                 {
+                                    int slabData = (data & ~mask) | (mOperation.mFillData & mask);
                                     mOperation.mLevel->setExtraBlock(
                                         pos, Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                                     mOperation.mLevel->setBlock(
-                                        pos,
-                                        mOperation.mFillBlock->getBlockState(
-                                            (data & ~mask) | (mOperation.mFillData & mask)),
-                                        Block::UPDATE_CLIENTS, false);
+                                        pos, mOperation.mFillBlock->getBlockState(slabData), Block::UPDATE_CLIENTS, false);
                                 }
                                 else if (id == doubleSlabId)
                                 {
@@ -463,13 +457,11 @@ void FillTool::tick()
                                         HalfSlabBlock::GetDoubleSlabBlockFromSlab(mOperation.mFillBlock);
                                     if (doubleSlab != NULL)
                                     {
+                                        int slabData = (data & ~mask) | (mOperation.mFillData & mask);
                                         mOperation.mLevel->setExtraBlock(
                                             pos, Blocks::air->defaultBlockState(), Block::UPDATE_CLIENTS, false);
                                         mOperation.mLevel->setBlock(
-                                            pos,
-                                            doubleSlab->getBlockState(
-                                                (data & ~mask) | (mOperation.mFillData & mask)),
-                                            Block::UPDATE_CLIENTS, false);
+                                            pos, doubleSlab->getBlockState(slabData), Block::UPDATE_CLIENTS, false);
                                     }
                                 }
                             }
@@ -498,14 +490,14 @@ void FillTool::tick()
         }
 
         int nextZ = mOperation.mChunkZ + 1;
-        if (nextZ > mOperation.mChunkMaxZ)
+        if (nextZ <= mOperation.mChunkMaxZ)
         {
-            mOperation.mChunkX = mOperation.mChunkX + 1;
-            mOperation.mChunkZ = mOperation.mChunkMinZ;
+            mOperation.mChunkZ = nextZ;
         }
         else
         {
-            mOperation.mChunkZ = nextZ;
+            mOperation.mChunkX = mOperation.mChunkX + 1;
+            mOperation.mChunkZ = mOperation.mChunkMinZ;
         }
         return;
     }
@@ -541,16 +533,16 @@ void FillTool::Serialise(DataOutputStream* output)
     output->writeInt(mEdgeData);
     output->writeInt(Block::getId(mFillBlock));
     output->writeInt(mFillData);
-    if (mReplaceOnlyBlock == NULL)
-    {
-        output->writeBoolean(false);
-    }
-    else
+    if (mReplaceOnlyBlock != NULL)
     {
         output->writeBoolean(true);
         output->writeInt(Block::getId(mReplaceOnlyBlock));
         output->writeInt(mReplaceOnlyData);
         output->writeInt(mReplaceOnlyDataMask);
+    }
+    else
+    {
+        output->writeBoolean(false);
     }
     output->writeInt(mFillDataMask);
     output->writeInt(mDimension);
@@ -607,9 +599,13 @@ void FillTool::Deserialise(DataInputStream* input)
         int count = input->readInt();
         for (int i = 0; i < count; ++i)
         {
-            unsigned short elementId = input->readUnsignedShort();
+            int elementId = input->readUnsignedShort();
             int thickness = input->readInt();
             mSurfaceBlocks.push_back(std::make_pair(Block::getStateByElementId(elementId), thickness));
         }
+    }
+    else
+    {
+        mSurfaceBlocks.clear();
     }
 }

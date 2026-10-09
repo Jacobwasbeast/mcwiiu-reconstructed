@@ -1422,7 +1422,7 @@ bool StrongholdPieces::PortalRoom::postProcess(Level* level, Random& random, Bou
             mHasPlacedSpawner = true;
             level->setBlock(pos, Blocks::mob_spawner->defaultBlockState(), Block::UPDATE_CLIENTS, false);
             boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-            bool isSpawner = blockEntity->GetType() == BlockEntityType::MOB_SPAWNER;
+            bool isSpawner = eTYPE_DERIVED_FROM(BlockEntityType::MOB_SPAWNER, blockEntity->GetType());
             if (isSpawner)
             {
                 boost::shared_ptr<MobSpawnerBlockEntity> spawner =

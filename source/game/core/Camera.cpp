@@ -7,6 +7,7 @@
 #include "game/core/FloatBuffer.hpp"
 #include "game/core/GlStateManager.hpp"
 #include "game/core/MemoryTracker.hpp"
+#include "game/core/Mth.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/Level.hpp"
@@ -61,8 +62,8 @@ void Camera::prepare(boost::shared_ptr<Player> player, bool secondPass)
     }
 
     float side = (float)(1 - 2 * (int)secondPass);
-    float yaw = yRotation * 0.017453292f;
-    float pitch = xRotation * 0.017453292f;
+    float yaw = yRotation * Mth::DEG_TO_RAD;
+    float pitch = xRotation * Mth::DEG_TO_RAD;
 
     gCameraXOff = cosf(yaw) * side;
     gCameraZOff = sinf(yaw) * side;

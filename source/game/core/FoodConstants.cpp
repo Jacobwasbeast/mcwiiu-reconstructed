@@ -2,6 +2,13 @@
 #include "game/core/Minecraft.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 
+const float FoodConstants::FOOD_SATURATION_POOR = 0.1f;
+const float FoodConstants::FOOD_SATURATION_LOW = 0.3f;
+const float FoodConstants::FOOD_SATURATION_NORMAL = 0.6f;
+const float FoodConstants::FOOD_SATURATION_GOOD = 0.8f;
+const float FoodConstants::FOOD_SATURATION_MAX = 1.0f;
+const float FoodConstants::FOOD_SATURATION_SUPERNATURAL = 1.2f;
+
 static const float MAX_SATURATION = 20.0f;
 static const float START_SATURATION = MAX_SATURATION / 4;
 static const float SATURATION_FLOOR = MAX_SATURATION / 8;

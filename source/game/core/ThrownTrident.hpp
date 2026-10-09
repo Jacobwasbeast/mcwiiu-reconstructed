@@ -54,6 +54,8 @@ public:
     unsigned char isEnchanted();
 
 private:
+    friend class ThrownTridentRenderer;
+
     not_null_ptr<ItemInstance> mTridentItem;
     bool mDealtDamage;
     int mOwnerId;

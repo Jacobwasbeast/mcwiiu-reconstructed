@@ -46,8 +46,6 @@ public:
     class ReadScore
     {
     public:
-        ReadScore(const ReadScore& other);
-
         PlayerUID m_uid;
         unsigned int m_uiRank;
         std::wstring m_wsGamertag;

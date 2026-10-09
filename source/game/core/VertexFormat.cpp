@@ -3,9 +3,9 @@
 
 VertexFormat::VertexFormat()
 {
+    colorOffset = -1;
     normalOffset = -1;
     vertexSize = 0;
-    colorOffset = -1;
 }
 
 VertexFormat::VertexFormat(VertexFormat* other)

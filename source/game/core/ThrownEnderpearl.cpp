@@ -69,7 +69,7 @@ bool ThrownEnderpearl::onHit(const HitResult* result)
     {
         BlockPos position = result->getBlockPos();
         boost::shared_ptr<BlockEntity> blockEntity = mLevel->getBlockEntity(position);
-        if (blockEntity && blockEntity->GetType() == BlockEntityType::THE_END_GATEWAY_ENTITY)
+        if (blockEntity && eTYPE_DERIVED_FROM(BlockEntityType::THE_END_GATEWAY_ENTITY, blockEntity->GetType()))
         {
             boost::shared_ptr<TheEndGatewayEntity> gateway =
                 boost::static_pointer_cast<TheEndGatewayEntity>(blockEntity);
@@ -163,7 +163,7 @@ void ThrownEnderpearl::tick()
 {
     PIXBeginNamedEvent(0.0f, "Thrown enderpearl tick");
     boost::shared_ptr<LivingEntity> owner = getOwner();
-    if (owner && (owner->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+    if (owner && eTYPE_DERIVED_FROM(EntityType::PLAYER, owner->GetType())
         && !owner->isAlive())
     {
         remove();

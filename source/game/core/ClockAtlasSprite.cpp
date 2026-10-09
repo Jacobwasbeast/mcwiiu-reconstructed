@@ -8,22 +8,26 @@
 #include "game/world/generation/MultiplayerLocalPlayer.hpp"
 
 ClockAtlasSprite::ClockAtlasSprite()
-    : TextureAtlasSprite(L"clock", L"clock", 0.0f, 0.0f, 0.0f, 0.0f, 256.0f, 256.0f),
-      mLastTime(0.0), mRotation(0.0), mPlayerIndex(255), mParent(0)
+    : TextureAtlasSprite(L"clock", L"clock", 0.0f, 0.0f, 0.0f, 0.0f, 256.0f, 256.0f)
 {
+    mLastTime = mRotation = 0.0;
+    mPlayerIndex = 255;
+    mParent = NULL;
 }
 
 ClockAtlasSprite::ClockAtlasSprite(int playerIndex, ClockAtlasSprite* parent)
-    : TextureAtlasSprite(L"clock", L"clock", 0.0f, 0.0f, 0.0f, 0.0f, 256.0f, 256.0f),
-      mLastTime(0.0), mRotation(0.0), mPlayerIndex(playerIndex), mParent(parent)
+    : TextureAtlasSprite(L"clock", L"clock", 0.0f, 0.0f, 0.0f, 0.0f, 256.0f, 256.0f)
 {
+    mPlayerIndex = playerIndex;
+    mParent = parent;
+    mLastTime = mRotation = 0.0;
 }
 
 void ClockAtlasSprite::cycleFrames()
 {
     Minecraft* minecraft = Minecraft::GetInstance();
     double time = 0.0;
-    if (mPlayerIndex < 4 && minecraft->mLevel != NULL && minecraft->mLocalPlayers[mPlayerIndex] != NULL)
+    if (mPlayerIndex >= 0 && mPlayerIndex < 4 && minecraft->mLevel != NULL && minecraft->mLocalPlayers[mPlayerIndex] != NULL)
     {
         time = minecraft->mLocalPlayers[mPlayerIndex]->mLevel->getTimeOfDay(1.0f);
         if (!minecraft->mLocalPlayers[mPlayerIndex]->mLevel->mDimension->isNaturalDimension())
@@ -49,42 +53,30 @@ void ClockAtlasSprite::cycleFrames()
     mRotation = (delta * 0.1 + mRotation) * 0.8;
     mLastTime += mRotation;
 
-    if (mParent == NULL)
+    if (mParent != NULL)
     {
-        std::vector<Texture*>* frames = mFrames;
-        unsigned int count = frames->size();
-        unsigned int divisor = frames->size();
-        int scaled = static_cast<int>((mLastTime + 1.0) * static_cast<double>(count));
-        int frame = scaled % divisor;
+        int frame = static_cast<int>((mLastTime + 1.0) * mParent->mFrames->size()) % mParent->mFrames->size();
         while (frame < 0)
         {
-            int total = frames->size();
-            int modulus = frames->size();
-            frame = (frame + total) % modulus;
+            frame = (frame + static_cast<int>(mParent->mFrames->size())) % static_cast<int>(mParent->mFrames->size());
         }
         if (frame != mFrame)
         {
             mFrame = frame;
-            mSource->blit(mX, mY, frames->at(frame), mRotated);
+            mParent->mSource->blit(mX, mY, mParent->mFrames->at(frame), mRotated);
         }
     }
     else
     {
-        std::vector<Texture*>* frames = mParent->mFrames;
-        unsigned int count = frames->size();
-        unsigned int divisor = frames->size();
-        int scaled = static_cast<int>((mLastTime + 1.0) * static_cast<double>(count));
-        int frame = scaled % divisor;
+        int frame = static_cast<int>((mLastTime + 1.0) * mFrames->size()) % mFrames->size();
         while (frame < 0)
         {
-            int total = frames->size();
-            int modulus = frames->size();
-            frame = (frame + total) % modulus;
+            frame = (frame + static_cast<int>(mFrames->size())) % static_cast<int>(mFrames->size());
         }
         if (frame != mFrame)
         {
             mFrame = frame;
-            mParent->mSource->blit(mX, mY, frames->at(frame), mRotated);
+            mSource->blit(mX, mY, mFrames->at(frame), mRotated);
         }
     }
 }

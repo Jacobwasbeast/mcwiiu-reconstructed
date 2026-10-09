@@ -17,7 +17,9 @@ void PatchyShape::GenerateShape(Random& random, Shape& shape) const
     {
         for (unsigned int z = 0; z < shape.depth; z++)
         {
-            shape.at(x, z) = (float)(noise.getValue((double)x / this->scale, (double)z / this->scale) + 1.0);
+            double xd = (double)x / this->scale;
+            float value = (float)(noise.getValue(xd, (double)z / this->scale) + 1.0);
+            shape.at(x, z) = value;
         }
     }
 }

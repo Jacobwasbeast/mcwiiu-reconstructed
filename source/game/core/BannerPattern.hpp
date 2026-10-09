@@ -31,7 +31,7 @@ public:
     unsigned short getCraftingMenuTab() const;
 
     static std::vector<const BannerPattern*> PATTERNS;
-    static BannerPattern* BASE;
+    static const BannerPattern* BASE;
     static BannerPattern* SQUARE_BOTTOM_LEFT;
     static BannerPattern* SQUARE_BOTTOM_RIGHT;
     static BannerPattern* SQUARE_TOP_LEFT;

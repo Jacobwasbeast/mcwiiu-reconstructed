@@ -56,7 +56,7 @@ Llama::LlamaDefendTargetGoal::LlamaDefendTargetGoal(Llama* llama)
 bool Llama::LlamaDefendTargetGoal::canUse()
 {
     boost::shared_ptr<LivingEntity> target = mTarget.lock();
-    if (NearestAttackableTargetGoal::canUse() && target != NULL && target->GetType() == EntityType::WOLF &&
+    if (NearestAttackableTargetGoal::canUse() && target != NULL && eTYPE_DERIVED_FROM(EntityType::WOLF, target->GetType()) &&
         !boost::static_pointer_cast<Wolf>(target)->isTame())
         return true;
     mMob->setTarget(boost::shared_ptr<LivingEntity>());
@@ -71,11 +71,14 @@ Llama::LlamaHurtByTargetGoal::LlamaHurtByTargetGoal(Llama* llama)
     : HurtByTargetGoal(llama, false, arrayWithLength<unsigned long long>()) { }
 bool Llama::LlamaHurtByTargetGoal::canContinueToUse()
 {
-    const bool isLlama = mMob->GetType() == EntityType::LLAMA;
-    if (isLlama && static_cast<Llama*>(mMob)->mDidSpit)
+    if (eTYPE_DERIVED_FROM(EntityType::LLAMA, mMob->GetType()))
     {
-        static_cast<Llama*>(mMob)->setDidSpit(false);
-        return false;
+        Llama* llama = static_cast<Llama*>(mMob);
+        if (llama->mDidSpit)
+        {
+            llama->setDidSpit(false);
+            return false;
+        }
     }
 
     return TargetGoal::canContinueToUse();
@@ -136,8 +139,7 @@ void Llama::staticCtor()
 }
 void Llama::setStrength(int strength)
 {
-    int clamped = std::min(MAX_STRENGTH, strength);
-    mEntityData->set(DATA_STRENGTH, clamped < 1 ? 1 : clamped, true);
+    mEntityData->set(DATA_STRENGTH, std::max(1, std::min(MAX_STRENGTH, strength)), true);
 }
 void Llama::setRandomStrength() {
     int maxStrength = mRandom->nextFloat() < 0.04f ? 5 : 3;
@@ -172,10 +174,7 @@ void Llama::readAdditionalSaveData(CompoundTag* tag)
     AbstractChestedHorse::readAdditionalSaveData(tag);
     setVariant(tag->getInt(L"Variant"));
     if (tag->contains(L"DecorItem", Tag::TAG_COMPOUND))
-    {
-        not_null_ptr<ItemInstance> item(new ItemInstance(tag->getCompound(L"DecorItem")));
-        mInventory->setItem(1, item);
-    }
+        mInventory->setItem(1, not_null_ptr<ItemInstance>(new ItemInstance(tag->getCompound(L"DecorItem"))));
     updateEquipment();
 }
 void Llama::registerGoals()
@@ -213,26 +212,24 @@ int Llama::getInventorySize()
 }
 void Llama::positionRider(const boost::shared_ptr<Entity>& passenger)
 {
-    if (hasPassenger(passenger))
-    {
-        if (!RiderPositionOverrides::OverridePosition(shared_from_this(), passenger))
-        {
-            const float cos = Mth::cos(mYBodyRot * 0.017453292f);
-            const float sin = Mth::sin(mYBodyRot * 0.017453292f);
-            passenger->setPos(mX + 0.30000001192092896 * sin,
-                              mY + getRideHeight() + passenger->getRidingHeight(),
-                              mZ - 0.30000001192092896 * cos);
-        }
-    }
+    if (!hasPassenger(passenger))
+        return;
+    if (RiderPositionOverrides::OverridePosition(shared_from_this(), passenger))
+        return;
+
+    const float cos = Mth::cos(mYBodyRot * Mth::DEG_TO_RAD);
+    const float sin = Mth::sin(mYBodyRot * Mth::DEG_TO_RAD);
+    passenger->setPos(mX + 0.3f * sin, mY + getRideHeight() + passenger->getRidingHeight(),
+                      mZ - 0.3f * cos);
 }
 double Llama::getRideHeight() { return mBbHeight * 0.67; }
 bool Llama::canBeControlledByRider() { return false; }
 int Llama::handleEating(const boost::shared_ptr<Player>& player, const not_null_ptr<ItemInstance>& item)
 {
     float healAmount = 0.0f;
-    int flag = 0;
     int growth = 0;
     int temperGain = 0;
+    int flag = 0;
     Item* food = item->getItem();
 
     if (food == Items::wheat)
@@ -256,34 +253,19 @@ int Llama::handleEating(const boost::shared_ptr<Player>& player, const not_null_
         flag = 1;
     }
 
-    if (isBaby() && growth != 0)
+    if (isBaby() && growth > 0)
     {
         ageUp(growth, true);
         flag = 1;
     }
 
-    if (temperGain == 0)
+    if (temperGain > 0 && (flag || !isTamed()) && getTemper() < getMaxTemper())
     {
-        if (flag == 0)
-            return 0;
-    }
-    else
-    {
-        if (flag == 0 && isTamed())
-            return 0;
-        if (getTemper() >= getMaxTemper())
-        {
-            if (flag == 0)
-                return 0;
-        }
-        else
-        {
-            flag = 1;
-            modifyTemper(temperGain);
-        }
+        flag = 1;
+        modifyTemper(temperGain);
     }
 
-    if (!isSilent())
+    if (flag && !isSilent())
     {
         mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::EAT_ITEM_PARTICLES, Item::getId(food));
         mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, SoundEvents::LLAMA_EAT, getSoundSource(), 1.0f,
@@ -348,6 +330,7 @@ unsigned int Llama::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDat
 
     unsigned int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
     bool food = itemId == BlockId::HAY_BLOCK || itemId == ItemId::WHEAT;
+    bool hay = itemId == BlockId::HAY_BLOCK;
 
     if (itemId == ItemId::SPAWN_EGG)
     {
@@ -379,31 +362,31 @@ unsigned int Llama::GetInteractTooltip(const EntityTooltipDataHolder& tooltipDat
         return IDS_TOOLTIPS_MOUNT;
     }
 
-    if (!isBaby())
+    bool baby = isBaby();
+    if (baby || !isTamed())
     {
-        if (isTamed())
+        if (!baby && tooltipData.m_pItemInstance->isEmpty())
         {
-            if ((tooltipData.m_pPlayer->isSneaking() && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer)) && isTamed())
-                || (itemId == ItemId::SADDLE && !isSaddled()))
-                return IDS_TOOLTIPS_OPEN;
-            if (itemId == BlockId::CHEST && !hasChest())
-                return IDS_TOOLTIPS_ATTACH;
-            if (itemId == BlockId::HAY_BLOCK && !isInLove() && !isBaby() && getPassengers()->empty() && !isBreedCoolingDown())
-                return IDS_TOOLTIPS_LOVEMODE;
-            if (food && getHealth() < getMaxHealth())
-                return IDS_TOOLTIPS_HEAL;
-            if (getPassengers()->empty())
-                return IDS_TOOLTIPS_MOUNT;
-            return IDS_NONE;
-        }
-
-        if (tooltipData.m_pItemInstance->isEmpty() && getPassengers()->empty())
+            if (!getPassengers()->empty())
+                return IDS_NONE;
             return IDS_TOOLTIPS_TAME;
+        }
+        if (food)
+            return IDS_TOOLTIPS_FEED;
+        return IDS_NONE;
     }
 
-    if (food)
-        return IDS_TOOLTIPS_FEED;
-
+    if ((tooltipData.m_pPlayer->isSneaking() && (!isVehicle() || hasPassenger(tooltipData.m_pPlayer)) && isTamed())
+        || (itemId == ItemId::SADDLE && !isSaddled()))
+        return IDS_TOOLTIPS_OPEN;
+    if (itemId == BlockId::CHEST && !hasChest())
+        return IDS_TOOLTIPS_ATTACH;
+    if (hay && !isInLove() && !isBaby() && getPassengers()->empty() && !isBreedCoolingDown())
+        return IDS_TOOLTIPS_LOVEMODE;
+    if (food && getHealth() < getMaxHealth())
+        return IDS_TOOLTIPS_HEAL;
+    if (getPassengers()->empty())
+        return IDS_TOOLTIPS_MOUNT;
     return IDS_NONE;
 }
 bool Llama::HideUseTooltips() { return true; }
@@ -431,7 +414,7 @@ void Llama::updateEquipment()
 int Llama::getMaxTemper() const { return 30; }
 bool Llama::canMate(const boost::shared_ptr<Animal>& other)
 {
-    return other != shared_from_this() && other->GetType() == EntityType::LLAMA && canParent() &&
+    return other != shared_from_this() && eTYPE_DERIVED_FROM(EntityType::LLAMA, other->GetType()) && canParent() &&
            boost::static_pointer_cast<Llama>(other)->canParent();
 }
 boost::shared_ptr<AgableMob> Llama::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
@@ -440,16 +423,10 @@ boost::shared_ptr<AgableMob> Llama::getBreedOffspring(boost::shared_ptr<AgableMo
     AbstractHorse::setOffspringAttributes(partner, baby);
 
     boost::shared_ptr<Llama> llamaPartner = boost::static_pointer_cast<Llama>(partner);
-    int maxStrength = getStrength();
-    int partnerStrength = llamaPartner->getStrength();
-    if (partnerStrength > maxStrength)
-        maxStrength = partnerStrength;
-
-    int strength = mRandom->nextInt(maxStrength);
-    int newStrength = strength + 1;
+    int strength = mRandom->nextInt(std::max(getStrength(), llamaPartner->getStrength())) + 1;
     if (mRandom->nextFloat() < 0.03f)
-        newStrength = strength + 2;
-    baby->setStrength(newStrength);
+        strength++;
+    baby->setStrength(strength);
 
     baby->setVariant(mRandom->nextBoolean() ? getVariant() : llamaPartner->getVariant());
 
@@ -458,37 +435,33 @@ boost::shared_ptr<AgableMob> Llama::getBreedOffspring(boost::shared_ptr<AgableMo
 void Llama::setDidSpit(bool didSpit) { mDidSpit = didSpit; }
 void Llama::causeFallDamage(float fallDistance, float damageMultiplier)
 {
-    const float scaled = (fallDistance * 0.5f - 3.0f) * damageMultiplier;
-    int damage = static_cast<int>(scaled);
-    if (static_cast<float>(damage) < scaled)
-        ++damage;
-
-    if (static_cast<float>(damage) <= 0.0f)
-        return;
-
-    if (fallDistance >= 6.0f)
+    float damage = Mth::ceil((fallDistance * 0.5f - 3.0f) * damageMultiplier);
+    if (damage > 0.0f)
     {
-        hurt(DamageSource::FALL, static_cast<float>(damage));
-        if (isVehicle())
+        if (fallDistance >= 6.0f)
         {
-            std::set<boost::shared_ptr<Entity> >* passengers = getIndirectPassengers();
-            for (std::set<boost::shared_ptr<Entity> >::iterator it = passengers->begin();
-                 it != passengers->end(); ++it)
+            hurt(DamageSource::FALL, damage);
+            if (isVehicle())
             {
-                (*it)->hurt(DamageSource::FALL, static_cast<float>(damage));
+                std::set<boost::shared_ptr<Entity> >* passengers = getIndirectPassengers();
+                for (std::set<boost::shared_ptr<Entity> >::iterator it = passengers->begin();
+                     it != passengers->end(); ++it)
+                {
+                    (*it)->hurt(DamageSource::FALL, damage);
+                }
+                delete passengers;
             }
-            delete passengers;
+        }
+
+        const BlockState* state = mLevel->getBlockState(BlockPos(mX, mY - 0.2 - static_cast<double>(mYRotO), mZ));
+        if (state->getMaterial() != Material::AIR && !isSilent())
+        {
+            const SoundType* soundType = state->getBlock()->getSoundType();
+            mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, soundType->getStepSound(),
+                              getSoundSource(), soundType->getVolume() * 0.5f,
+                              soundType->getPitch() * 0.75f, 16.0f);
         }
     }
-
-    const BlockState* state = mLevel->getBlockState(BlockPos(mX, mY - 0.2 - static_cast<double>(mYRotO), mZ));
-    if (state->getMaterial() == Material::AIR || isSilent())
-        return;
-
-    const SoundType* soundType = state->getBlock()->getSoundType();
-    mLevel->playSound(boost::shared_ptr<Player>(), mX, mY, mZ, soundType->getStepSound(),
-                      getSoundSource(), soundType->getVolume() * 0.5f,
-                      soundType->getPitch() * 0.75f, 16.0f);
 }
 void Llama::leaveCaravan()
 {

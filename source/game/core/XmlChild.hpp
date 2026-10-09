@@ -21,7 +21,7 @@ public:
     XmlChild(const std::wstring& value);
     XmlChild(const std::wstring& value, bool isText);
     XmlChild(const XmlChild& other);
-    virtual ~XmlChild();
+    virtual ~XmlChild() {}
 
     std::wstring txt() const;
     XmlObject* xml();

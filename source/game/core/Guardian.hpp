@@ -96,8 +96,8 @@ public:
     virtual float getWalkTargetValue(const BlockPos& pos);
     float getAttackAnimationScale(float partialTicks);
     virtual void aiStep();
-    double getTailAnimation(float partialTicks);
-    double getSpikesAnimation(float partialTicks);
+    float getTailAnimation(float partialTicks);
+    float getSpikesAnimation(float partialTicks);
     virtual ResourceLocation* getDefaultLootTable();
     virtual bool isDarkEnoughToSpawn();
     virtual bool checkSpawnObstruction();

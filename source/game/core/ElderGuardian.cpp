@@ -18,11 +18,13 @@
 #include "game/world/generation/Player.hpp"
 #include "game/world/generation/PlayerSelector.hpp"
 
+const float ElderGuardian::ELDER_SIZE_SCALE = 2.35f;
+
 ElderGuardian::ElderGuardian(Level* level)
     : Guardian(level, false)
 {
     fjDerivedCtorCalls();
-    setSize(mBbWidth * 2.35f, mBbHeight * 2.35f);
+    setSize(mBbWidth * ELDER_SIZE_SCALE, mBbHeight * ELDER_SIZE_SCALE);
     setPersistenceRequired(true);
     if (mRandomStrollGoal != NULL)
     {

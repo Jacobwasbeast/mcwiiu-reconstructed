@@ -734,6 +734,7 @@ void IUIScene_LoadCreateJoin::LoadLevelGen(LevelGenerationOptions* options)
     params->m_threadParam = initData;
 
     FullscreenProgressState* progressState = new FullscreenProgressState();
+    progressState->closeMode = 3;
     progressState->playerId = 0;
     params->m_completionData = progressState;
     gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_FullscreenProgress,
@@ -790,6 +791,7 @@ void IUIScene_LoadCreateJoin::LoadSaveFromDisk(File* file, ESavePlatform platfor
     params->m_threadParam = initData;
 
     FullscreenProgressState* progressState = new FullscreenProgressState();
+    progressState->closeMode = 3;
     progressState->playerId = 0;
     params->m_completionData = progressState;
 

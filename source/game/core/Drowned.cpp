@@ -44,9 +44,11 @@ static Predicate<boost::shared_ptr<Entity> >* DROWNED_TARGET_SELECTOR =
     new UnderwaterOrInDarknessSelector();
 
 Drowned::Drowned(Level* level)
-    : Zombie(level, false), mIsRangedAttacking(false), mMeleeAttackGoal(NULL),
-      mRangedAttackGoal(NULL)
+    : Zombie(level, false)
 {
+    mMeleeAttackGoal = NULL;
+    mRangedAttackGoal = NULL;
+    mIsRangedAttacking = false;
     setSwimmer(true);
     fjDerivedCtorCalls();
     delete mMoveControl;
@@ -71,7 +73,8 @@ void Drowned::performRangedAttack(boost::shared_ptr<LivingEntity> target, float)
     double dx = target->mX - mX;
     double dy = target->mBoundingBox->mMinY + target->mBbHeight / 3.0f - trident->mY;
     double dz = target->mZ - mZ;
-    double distance = std::sqrt(dx * dx + dz * dz);
+    double distanceSqr = dx * dx + dz * dz;
+    double distance = std::sqrt(distanceSqr);
     trident->shoot(dx, dy + distance * 0.2f, dz, 1.6f,
                    14.0f - (float)mLevel->getDifficulty()->getId() * 4.0f);
     playSound(SoundEvents::TRIDENT_THROW, 1.0f, 1.0f / (getRandom()->nextFloat() * 0.4f + 0.8f));
@@ -85,8 +88,7 @@ bool Drowned::isAggressive()
 
 void Drowned::setAggressive(bool aggressive)
 {
-    bool holdsTrident = getMainHandItem()->getItem() == Items::trident;
-    if (holdsTrident)
+    if (getMainHandItem()->getItem() == Items::trident)
     {
         if (aggressive)
             startUsingItem(InteractionHand::eInteractionHand_MainHand);
@@ -103,23 +105,14 @@ bool Drowned::breathesWater()
 
 bool Drowned::checkSpawnRules()
 {
-    bool result = false;
-    if (mLevel->getDifficulty() != Difficulty::PEACEFUL &&
-        !mLevel->containsAnysolidBlocking(mBoundingBox))
-    {
-        if (getWalkTargetValue(BlockPos(mX, mBoundingBox->mMinY, mZ)) >= 0.0f)
-            result = true;
-    }
-    return result;
+    return mLevel->getDifficulty() != Difficulty::PEACEFUL && !mLevel->containsAnysolidBlocking(mBoundingBox) &&
+           getWalkTargetValue(BlockPos(mX, mBoundingBox->mMinY, mZ)) >= 0.0f;
 }
 
 bool Drowned::checkSpawnObstruction()
 {
-    bool result = false;
-    if (mLevel->isUnobstructed(mBoundingBox, shared_from_this()) &&
-        mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty())
-        result = true;
-    return result;
+    return mLevel->isUnobstructed(mBoundingBox, shared_from_this()) &&
+           mLevel->getCollisionAABBs(shared_from_this(), mBoundingBox, false, false, false)->empty();
 }
 
 void Drowned::aiStep()
@@ -129,24 +122,11 @@ void Drowned::aiStep()
         return;
 
     boost::shared_ptr<LivingEntity> target = getTarget();
-    if (!target)
-    {
-        if (!mRangedAttackGoal)
-            setAggressive(false);
-        else if (!mRangedAttackGoal->canContinueToUse())
-            setAggressive(false);
-    }
-    else
+    if (target != NULL)
     {
         setAggressive(true);
 
-        if (!mRangedAttackGoal)
-        {
-            bool holdsTrident = getMainHandItem()->getItem() == Items::trident;
-            if (holdsTrident)
-                mRangedAttackGoal = new RangedAttackGoal(this, this, 1.0, 20, 60, 10.0f);
-        }
-        else
+        if (mRangedAttackGoal != NULL)
         {
             double distance = target->distanceToSqr(shared_from_this());
             if (mIsRangedAttacking || distance >= 25.0)
@@ -165,6 +145,23 @@ void Drowned::aiStep()
                     mIsRangedAttacking = false;
                 }
             }
+        }
+        else
+        {
+            if (getMainHandItem()->getItem() == Items::trident)
+                mRangedAttackGoal = new RangedAttackGoal(this, this, 1.0, 20, 60, 10.0f);
+        }
+    }
+    else
+    {
+        if (mRangedAttackGoal != NULL)
+        {
+            if (!mRangedAttackGoal->canContinueToUse())
+                setAggressive(false);
+        }
+        else
+        {
+            setAggressive(false);
         }
     }
 }
@@ -232,11 +229,7 @@ void Drowned::travel(float xxa, float yya, float zza)
         stopSwimming();
     }
 
-    if (!isInWaterOrBubble() || !isEffectiveAi())
-    {
-        LivingEntity::travel(xxa, yya, zza);
-    }
-    else
+    if (isInWaterOrBubble() && isEffectiveAi())
     {
         PIXBeginNamedEvent(0.0f, "Travel in water");
         double oldY = mY;
@@ -256,8 +249,8 @@ void Drowned::travel(float xxa, float yya, float zza)
         }
         else if (shouldApplyWaterGravity() && !isSwimming())
         {
-            slowDown = LivingEntity::getWaterSlowDown();
             gravity = 0.02f;
+            slowDown = LivingEntity::getWaterSlowDown();
         }
 
         mYd = mYd * slowDown - gravity;
@@ -267,6 +260,10 @@ void Drowned::travel(float xxa, float yya, float zza)
         }
         PIXEndNamedEvent();
         updateModelAnimation();
+    }
+    else
+    {
+        LivingEntity::travel(xxa, yya, zza);
     }
 }
 

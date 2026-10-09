@@ -23,10 +23,7 @@ public:
 
     bool operator==(const TickNextTickData& other);
 
-private:
     Block* block;
-
-public:
     BlockPos pos;
     long long triggerTick;
     int priorityTilt;
