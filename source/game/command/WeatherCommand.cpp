@@ -28,6 +28,7 @@ void WeatherCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithL
     DataInputStream stream(&byteStream);
 
     unsigned char mode = stream.readByte();
+    byteStream.reset();
 
     ServerLevel* level = gMinecraftServer->mLevels.data[0];
     LevelData* levelData = level->getLevelData();
@@ -35,18 +36,9 @@ void WeatherCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithL
     Random random;
     int duration = random.nextInt(600) * 20 + 6000;
 
-    if (mode == 1)
+    switch (mode)
     {
-        levelData->setClearWeatherTime(0);
-        levelData->setRainTime(duration);
-        levelData->setThunderTime(duration);
-        levelData->setRaining(true);
-        levelData->setThundering(false);
-
-        logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_WeatherRain, NULL, 0, NULL, 0);
-    }
-    else if (mode == 2)
-    {
+    case 2:
         levelData->setClearWeatherTime(0);
         levelData->setRainTime(duration);
         levelData->setThunderTime(duration);
@@ -54,9 +46,17 @@ void WeatherCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithL
         levelData->setThundering(true);
 
         logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_WeatherThunder, NULL, 0, NULL, 0);
-    }
-    else
-    {
+        break;
+    case 1:
+        levelData->setClearWeatherTime(0);
+        levelData->setRainTime(duration);
+        levelData->setThunderTime(duration);
+        levelData->setRaining(true);
+        levelData->setThundering(false);
+
+        logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_WeatherRain, NULL, 0, NULL, 0);
+        break;
+    default:
         levelData->setClearWeatherTime(duration);
         levelData->setRainTime(0);
         levelData->setThunderTime(0);
@@ -64,14 +64,10 @@ void WeatherCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithL
         levelData->setThundering(false);
 
         logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_WeatherClear, NULL, 0, NULL, 0);
+        break;
     }
 
     level->tickWeather(true);
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
 }
 
 boost::shared_ptr<GameCommandPacket> WeatherCommand::preparePacket(unsigned char mode)

@@ -19,12 +19,7 @@ void AchievementCommand::execute(boost::shared_ptr<CommandSender> sender, arrayW
 {
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
-    (void)sender;
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
+    byteStream.reset();
 }
 
 bool AchievementCommand::isValidWildcardPlayerArgument(int argumentIndex)

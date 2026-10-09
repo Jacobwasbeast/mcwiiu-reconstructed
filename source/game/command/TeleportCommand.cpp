@@ -27,13 +27,11 @@ void TeleportCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
     unsigned char mode = stream.readByte();
-    PlayerUID sourceUid = stream.readPlayerUID();
-    boost::shared_ptr<ServerPlayer> source = playerList->getPlayer(sourceUid);
+    boost::shared_ptr<ServerPlayer> source = playerList->getPlayer(stream.readPlayerUID());
 
     if (mode == 0)
     {
-        PlayerUID targetUid = stream.readPlayerUID();
-        boost::shared_ptr<ServerPlayer> target = playerList->getPlayer(targetUid);
+        boost::shared_ptr<ServerPlayer> target = playerList->getPlayer(stream.readPlayerUID());
         if (source && target && source->mLevel->mDimension->getType() == target->mLevel->mDimension->getType()
             && source->isAlive())
         {
@@ -42,11 +40,18 @@ void TeleportCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
                 source->stopSleepInBed(true, true, false);
             }
 
-            bool sourcePassenger = source->isPassenger();
-            bool targetPassenger = target->isPassenger();
+            bool passenger = source->isPassenger() || target->isPassenger();
             source->stopRidingBeforeTeleport();
-            source->mConnection->teleport(target->mX, (sourcePassenger || targetPassenger ? target->mY + 1.0 : target->mY), target->mZ,
-                                          target->mYRot, target->mXRot, true, true);
+            if (passenger)
+            {
+                source->mConnection->teleport(target->mX, target->mY + 1.0, target->mZ, target->mYRot,
+                                              target->mXRot, true, true);
+            }
+            else
+            {
+                source->mConnection->teleport(target->mX, target->mY, target->mZ, target->mYRot,
+                                              target->mXRot, true, true);
+            }
             if (source == sender)
             {
                 std::wstring stringParams = source->getName();
@@ -73,15 +78,18 @@ void TeleportCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
 
             bool passenger = source->isPassenger();
             source->stopRidingBeforeTeleport();
-            source->mConnection->teleport(x, (passenger ? y + 1.0f : y), z,
-                                          source->mYRot, source->mXRot, true, true);
+            if (passenger)
+            {
+                source->mConnection->teleport(x, y + 1.0f, z, source->mYRot, source->mXRot, true, true);
+            }
+            else
+            {
+                source->mConnection->teleport(x, y, z, source->mYRot, source->mXRot, true, true);
+            }
         }
     }
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
+
+    byteStream.reset();
 }
 
 boost::shared_ptr<GameCommandPacket> TeleportCommand::preparePacket(PlayerUID source, PlayerUID target)

@@ -29,9 +29,8 @@ void SetDefaultSpawnpointCommand::execute(boost::shared_ptr<CommandSender> sende
 
         sender->getCommandSenderWorld()->setSpawnPos(pos);
 
-        boost::shared_ptr<Packet> packet(new ClientboundSetSpawnPositionPacket(pos.x, pos.y, pos.z));
-
-        gMinecraftServer->getPlayers()->broadcastAll(packet);
+        gMinecraftServer->getPlayers()->broadcastAll(boost::shared_ptr<ClientboundSetSpawnPositionPacket>(
+            new ClientboundSetSpawnPositionPacket(pos.x, pos.y, pos.z)));
 
         int intParams[3] = { pos.x, pos.y, pos.z };
 

@@ -19,7 +19,6 @@ void CloneCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithLen
 {
     ByteArrayInputStream byteStream(data);
     DataInputStream inputStream(&byteStream);
-    (void)sender;
-    (void)inputStream;
+    byteStream.reset();
 }
 

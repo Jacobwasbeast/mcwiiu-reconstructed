@@ -9,8 +9,8 @@ CommandDispatcher::CommandDispatcher()
 
 CommandDispatcher::~CommandDispatcher()
 {
-    boost::unordered_set<Command*>::iterator it;
-    for (it = mCommands.begin(); it != mCommands.end(); ++it)
+    for (boost::unordered_set<Command*>::const_iterator it = mCommands.begin(), end = mCommands.end(); it != end;
+         ++it)
     {
         delete *it;
     }

@@ -19,11 +19,7 @@ void SummonCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWithLe
 {
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
+    byteStream.reset();
 }
 
 boost::shared_ptr<GameCommandPacket> SummonCommand::preparePacket(unsigned char entityType)

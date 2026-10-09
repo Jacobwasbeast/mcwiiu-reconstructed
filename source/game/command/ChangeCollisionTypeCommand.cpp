@@ -24,27 +24,23 @@ void ChangeCollisionTypeCommand::execute(boost::shared_ptr<CommandSender> sender
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
 
-    PlayerUID uid = stream.readPlayerUID();
     PlayerList* playerList = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers);
+    PlayerUID uid = stream.readPlayerUID();
     boost::shared_ptr<ServerPlayer> player = playerList->getPlayer(uid);
     int collisionType = stream.readInt();
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
+    byteStream.reset();
 
-    if (collisionType == 1)
+    switch (collisionType)
     {
-        player->SetSmallSize();
-    }
-    else if (collisionType == 2)
-    {
+    case 2:
         player->SetNoCollisionSize();
-    }
-    else
-    {
+        break;
+    case 1:
+        player->SetSmallSize();
+        break;
+    default:
         player->SetNormalSize();
+        break;
     }
 }
 

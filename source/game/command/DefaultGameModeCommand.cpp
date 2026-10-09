@@ -27,25 +27,26 @@ EGameCommand DefaultGameModeCommand::getId()
 
 void DefaultGameModeCommand::doSetGameType(const GameType* gameType)
 {
-    gMinecraftServer->setDefaultGameMode(gameType);
+    MinecraftServer* server = gMinecraftServer;
+    server->setDefaultGameMode(gameType);
     CGameNetworkManager::sInstance.SetSessionGameModeId(gameType->getId());
     CGameNetworkManager::sInstance.UpdateAndSetGameSessionData(NULL);
 
-    if (gMinecraftServer->getForceGameType())
+    if (server->getForceGameType())
     {
         for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it =
                  gMinecraftServer->getPlayers()->mPlayers.begin();
              it != gMinecraftServer->getPlayers()->mPlayers.end();
              ++it)
         {
-            (*it)->setGameMode(const_cast<GameType*>(gameType));
-            (*it)->mFallDistance = 0.0f;
+            boost::shared_ptr<ServerPlayer> player = *it;
+            player->setGameMode(gameType);
+            player->mFallDistance = 0.0f;
 
-            boost::shared_ptr<Packet> info(new PlayerInfoPacket(*it));
-            gMinecraftServer->getPlayers()->broadcastAll(info);
+            gMinecraftServer->getPlayers()->broadcastAll(
+                boost::shared_ptr<PlayerInfoPacket>(new PlayerInfoPacket(player)));
 
-            (*it)->sendMessage(ClientboundChatPacket::eChatPacketMessage_GameModeChanged,
-                               NULL, 0, NULL, 0);
+            player->sendMessage(ClientboundChatPacket::eChatPacketMessage_GameModeChanged, NULL, 0, NULL, 0);
         }
     }
 }
@@ -57,17 +58,13 @@ void DefaultGameModeCommand::execute(boost::shared_ptr<CommandSender> sender,
     DataInputStream stream(&byteStream);
 
     unsigned char gameType = stream.readByte();
+    byteStream.reset();
     doSetGameType(GameType::byId(gameType));
     gApp.SetGameHostOption(eGameHostOption_DefaultGameMode, gameType);
 
     int intParams[1] = { gameType };
     logAdminAction(sender, eChatPacketMessage_AdminAction,
                    intParams, 1, NULL, 0);
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
 }
 
 boost::shared_ptr<GameCommandPacket> DefaultGameModeCommand::preparePacket(unsigned char gameType)

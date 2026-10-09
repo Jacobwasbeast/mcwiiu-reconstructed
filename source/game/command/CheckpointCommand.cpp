@@ -41,6 +41,7 @@ void CheckpointCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWi
 {
     ByteArrayInputStream byteStream(data);
     DataInputStream stream(&byteStream);
+    MinecraftServer* server = gMinecraftServer;
 
     StatsUID uid(stream.readPlayerUID());
 
@@ -48,26 +49,19 @@ void CheckpointCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWi
     boost::shared_ptr<ServerPlayer> player = playerList->getPlayerFromStatsUID(uid);
 
     int checkpoint = stream.readInt();
+    byteStream.reset();
 
     std::vector<CheckpointRuleDefinition*>* checkpoints =
         gApp.getLevelGenerationOptions()->getRequiredGameRules()->getCheckpoints();
 
-    MasterGameMode* gameMode = gMinecraftServer->mMasterGameMode;
+    MasterGameMode* gameMode = server->mMasterGameMode;
     unsigned int round = gameMode->mGameStats.mCurrentRound;
 
     if (player && player->isAlive() && !gameMode->mGameStats.GetPlayerStats(uid)->getReachedEnd(round))
     {
         ServerPlayerGameMode* playerGameMode = static_cast<ServerPlayerGameMode*>(player->GetGameMode());
 
-        if (checkpoint > 0)
-        {
-            if (!checkpoints->empty() && (unsigned int)checkpoint < checkpoints->size())
-            {
-                playerGameMode->RecordLastCheckpoint(checkpoint,
-                                                     (*checkpoints)[checkpoint]->getSequenceID(), true, true, true);
-            }
-        }
-        else if (checkpoint == 0)
+        if (checkpoint == 0)
         {
             gameMode->mGameStats.RemovePlayerStats(player);
             gameMode->mGameStats.AddPlayerStats(player);
@@ -80,55 +74,62 @@ void CheckpointCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWi
 
             gameMode->ResetRoundTime();
         }
-
-        int lastCheckpoint = playerGameMode->getLastCheckpoint();
-
-        while (lastCheckpoint >= 0 && !(*checkpoints)[lastCheckpoint]->hasSpawnPoint())
+        else if (checkpoint > 0)
         {
-            lastCheckpoint--;
+            if ((unsigned int)checkpoint < checkpoints->size())
+            {
+                playerGameMode->RecordLastCheckpoint(checkpoint,
+                                                     (*checkpoints)[checkpoint]->getSequenceID(), true, true, true);
+            }
         }
 
-        if (lastCheckpoint >= 0)
+        for (int lastCheckpoint = playerGameMode->getLastCheckpoint(); lastCheckpoint >= 0;
+             --lastCheckpoint)
         {
-            playerGameMode->ResetTempPoints();
-            playerGameMode->RecordLastCheckpoint(lastCheckpoint,
-                                                 (*checkpoints)[lastCheckpoint]->getSequenceID(), true, true, true);
-
-            UpdatePlayerRuleDefinition* spawnPoint = (*checkpoints)[lastCheckpoint]->GetSpawnPoint();
-            int spawnX = spawnPoint->getX();
-            int spawnY = spawnPoint->getY();
-            int spawnZ = spawnPoint->getZ();
-
-            PlayerList* players = (gMinecraftServer != NULL) ? gMinecraftServer->mPlayers : NULL;
-            std::vector<boost::shared_ptr<ServerPlayer> >* allPlayers = players->getPlayers();
-
-            for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = allPlayers->begin();
-                 it != allPlayers->end(); ++it)
+            if ((*checkpoints)[lastCheckpoint]->hasSpawnPoint())
             {
-                if (*it && (*it)->GetCamera() == player)
+                playerGameMode->ResetTempPoints();
+                playerGameMode->RecordLastCheckpoint(lastCheckpoint,
+                                                     (*checkpoints)[lastCheckpoint]->getSequenceID(), true, true, true);
+
+                UpdatePlayerRuleDefinition* spawnPoint = (*checkpoints)[lastCheckpoint]->GetSpawnPoint();
+                int spawnX = spawnPoint->getX();
+                int spawnY = spawnPoint->getY();
+                int spawnZ = spawnPoint->getZ();
+
+                PlayerList* players = (gMinecraftServer != NULL) ? gMinecraftServer->mPlayers : NULL;
+                std::vector<boost::shared_ptr<ServerPlayer> >* allPlayers = players->getPlayers();
+
+                std::vector<boost::shared_ptr<ServerPlayer> >::iterator end = allPlayers->end();
+                for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = allPlayers->begin();
+                     it != end; ++it)
                 {
-                    (*it)->mLoadedChunks.clear();
-                    (*it)->mLastSentX = (double)spawnX;
-                    (*it)->mLastSentZ = (double)spawnZ;
-
-                    (*it)->mConnection->teleport((double)spawnX, (double)spawnY, (double)spawnZ,
-                                                 spawnPoint->getYRot(), spawnPoint->getXRot(), true, true);
-
-                    if (checkpoint == 0)
+                    if (*it && (*it)->GetCamera() == player)
                     {
-                        (*it)->mConnection->send(GameModePacket::Create(GameModePacket::eMessage_UpdateStartTime,
-                                                                        GameModePacket::UpdateStartTimeData(0)));
+                        (*it)->mLoadedChunks.clear();
+                        (*it)->mLastSentX = (double)spawnX;
+                        (*it)->mLastSentZ = (double)spawnZ;
+
+                        (*it)->mConnection->teleport((double)spawnX, (double)spawnY, (double)spawnZ,
+                                                     spawnPoint->getYRot(), spawnPoint->getXRot(), true, true);
+
+                        if (checkpoint == 0)
+                        {
+                            (*it)->mConnection->send(GameModePacket::Create(GameModePacket::eMessage_UpdateStartTime,
+                                                                            GameModePacket::UpdateStartTimeData(0)));
+                        }
                     }
                 }
-            }
 
-            player->mXOld = (double)spawnX;
-            player->mYOld = (double)spawnY;
-            player->mZOld = (double)spawnZ;
+                player->mXOld = (double)spawnX;
+                player->mYOld = (double)spawnY;
+                player->mZOld = (double)spawnZ;
 
-            if (CommonMasterGameMode::GetMiniGame()->GetId() == 3)
-            {
-                player->startFallFlying();
+                if (CommonMasterGameMode::GetMiniGame()->GetId() == 3)
+                {
+                    player->startFallFlying();
+                }
+                break;
             }
         }
 
@@ -144,11 +145,6 @@ void CheckpointCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWi
         player->ResetThermalVariables();
         gameMode->ResetLastKnownPosition(player->mPlayerIndex);
     }
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
 }
 
 boost::shared_ptr<GameCommandPacket> CheckpointCommand::preparePacket(const StatsUID& uid, int checkpoint)

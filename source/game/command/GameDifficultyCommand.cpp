@@ -25,15 +25,12 @@ void GameDifficultyCommand::execute(boost::shared_ptr<CommandSender> sender, arr
     DataInputStream stream(&byteStream);
 
     int difficulty = stream.readInt();
+    byteStream.reset();
+
     gMinecraftServer->setDifficulty(Difficulty::byId(difficulty));
 
     int intParams[1] = { difficulty };
     logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_DifficultySuccess, intParams, 1, NULL, 0);
-    byteStream.mBuffer.data = NULL;
-    byteStream.mBuffer.length = 0;
-    byteStream.mCount = 0;
-    byteStream.mMark = 0;
-    byteStream.mPosition = 0;
 }
 
 boost::shared_ptr<GameCommandPacket> GameDifficultyCommand::preparePacket(int difficulty)
