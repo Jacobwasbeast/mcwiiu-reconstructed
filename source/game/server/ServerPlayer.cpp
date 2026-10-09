@@ -477,8 +477,8 @@ void ServerPlayer::doTickB()
     if (health != mLastSentHealth || food != mLastSentFood ||
         saturationIsZero != mLastSentSaturationWasZero)
     {
-        boost::shared_ptr<LivingEntity> killCredit = getKillCredit();
-        if (killCredit == NULL || (killCredit->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+        if ((getKillCredit() != NULL && !eTYPE_DERIVED_FROM(EntityType::PLAYER, getKillCredit()->GetType()))
+            || getKillCredit() == NULL)
             mCauseOfDeathId = -1;
         TelemetryDamageSource damageSource = {
             static_cast<ETelemetryChallenges>(mPvpState), mCauseOfDeathId, mPlayerWeaponId
@@ -703,6 +703,7 @@ void ServerPlayer::readAdditionalSaveData(CompoundTag* tag)
         gameRules->read(&input);
         input.close();
         bytes.close();
+        bytes.reset();
     }
 }
 
@@ -810,7 +811,7 @@ void ServerPlayer::tick()
     }
     if (biome != mLastBiome)
     {
-        awardStat(gStats->get_enteredBiome(biome->id), GenericStats::param_enteredBiome(biome->id));
+        awardStat(GenericStats::enteredBiome(biome->id), GenericStats::param_enteredBiome(biome->id));
         mLastBiome = biome;
     }
 
@@ -933,16 +934,16 @@ bool ServerPlayer::hurt(const DamageSource* source, float damage)
     {
         boost::shared_ptr<Entity> attacker = source->getDirectEntity();
 
-        if ((attacker->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, attacker->GetType()) &&
             !boost::static_pointer_cast<Player>(attacker)->canHarmPlayer(
                 boost::dynamic_pointer_cast<Player>(shared_from_this())))
             return false;
 
-        if (attacker != NULL && (attacker->GetType() & EntityType::ARROW) == EntityType::ARROW &&
+        if (attacker != NULL && eTYPE_DERIVED_FROM(EntityType::ARROW, attacker->GetType()) &&
             !Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback())
         {
             boost::shared_ptr<Arrow> arrow = boost::static_pointer_cast<Arrow>(attacker);
-            if (arrow->mOwner != NULL && (arrow->mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER &&
+            if (arrow->mOwner != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, arrow->mOwner->GetType()) &&
                 !canHarmPlayer(boost::dynamic_pointer_cast<Player>(arrow->mOwner)))
                 return false;
         }
@@ -1111,7 +1112,7 @@ void ServerPlayer::addEffect(MobEffectInstance* effectInstance, const boost::sha
 {
     if (effectInstance != NULL && effectInstance->getEffect() == MobEffects::LEVITATION)
     {
-        if (source && source->GetType() == EntityType::SHULKER_BULLET)
+        if (source && eTYPE_DERIVED_FROM(EntityType::SHULKER_BULLET, source->GetType()))
         {
             if (mLevitationSourceY == NULL)
                 mLevitationSourceY = new double(mY);
@@ -1939,7 +1940,7 @@ void ServerPlayer::resetLastActionTime()
 
 void ServerPlayer::sendRemoveEntity(boost::shared_ptr<Entity> entity)
 {
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         mConnection->send(boost::shared_ptr<Packet>(new ClientboundRemoveEntitiesPacket(entity->getId())));
     else
         mEntitiesToRemove.push_back(entity->getId());

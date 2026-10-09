@@ -70,9 +70,9 @@ Scoreboard::PlayerStats* ServerScoreboard::GetPlayerStats(const StatsUID& suid, 
     roundStats.mTimePlayed = sourceRound->mLastBankedPoints;
     roundStats.mTotalTime = sourceRound->mLastPointsAdded;
     roundStats.mLastCheckpointId = sourceRound->mLastCheckpointID;
-    roundStats.mLapsCompleted = sourceRound->mLastCheckpointSequenceID;
-    roundStats.mLastCheckpointSequenceId = sourceRound->mLastBankedCheckpointID;
-    roundStats.mEndZoneEntered = sourceRound->mLapsCompleted;
+    roundStats.mLastCheckpointSequenceId = sourceRound->mLastCheckpointSequenceID;
+    roundStats.mLastBankedCheckpointId = sourceRound->mLastBankedCheckpointID;
+    roundStats.mLapsCompleted = sourceRound->mLapsCompleted;
     roundStats.mCheckpointsPassed = sourceRound->mDeaths;
     roundStats.mWinner = sourceRound->mReachedEnd;
     roundStats.mDamageDealt = sourceRound->mBlocksPlaced.mCount;
@@ -88,14 +88,11 @@ Scoreboard::PlayerStats* ServerScoreboard::GetPlayerStats(const StatsUID& suid, 
         roundStats.mCheckpointTimes[it->first] = it->second;
     }
 
-    roundStats.mDeathsMelee = sourceRound->mScoresGiven[0];
-    roundStats.mKillsMelee = sourceRound->mScoresReceived[0];
-    roundStats.mDeathsRanged = sourceRound->mScoresGiven[1];
-    roundStats.mKillsRanged = sourceRound->mScoresReceived[1];
-    roundStats.mDeathsExplosive = sourceRound->mScoresGiven[2];
-    roundStats.mKillsExplosive = sourceRound->mScoresReceived[2];
-    roundStats.mDeathsOther = sourceRound->mScoresGiven[3];
-    roundStats.mKillsOther = sourceRound->mScoresReceived[3];
+    for (int i = 0; i < ::PlayerStats::RoundStats::BUILD_SCORE_COUNT; ++i)
+    {
+        roundStats.mScoresGiven[i] = sourceRound->mScoresGiven[i];
+        roundStats.mScoresReceived[i] = sourceRound->mScoresReceived[i];
+    }
     roundStats.mLastKillerName = gameStats.GetWinningThemeChoice();
     roundStats.mLastVictimName = sourceRound->mThemeVote;
     return stats;

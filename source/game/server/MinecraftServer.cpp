@@ -172,12 +172,11 @@ void MinecraftServer::setDifficulty(const Difficulty* difficulty)
 {
     for (unsigned int i = 0; i < mLevels.length; ++i)
     {
-        ServerLevel* level = mLevels.data[i];
+        ServerLevel* level = mLevels[i];
         if (level != 0)
             setLevelDifficulty(level, difficulty);
     }
-    boost::shared_ptr<ClientboundChangeDifficultyPacket> packet(new ClientboundChangeDifficultyPacket(difficulty, false));
-    mPlayers->broadcastAll(boost::shared_ptr<Packet>(packet));
+    mPlayers->broadcastAll(boost::shared_ptr<ClientboundChangeDifficultyPacket>(new ClientboundChangeDifficultyPacket(difficulty, false)));
 }
 
 int MinecraftServer::runPostUpdate(void* argument)
@@ -306,9 +305,16 @@ bool MinecraftServer::loadLevel(LevelStorageSource* storageSource, const std::ws
     mLevels = arrayWithLength<ServerLevel*>(3, true);
     defaultGameType = LevelSettings::validateGameType(mSettings->getInt(eServerSetting_GameMode, initData->m_gameType));
 
-    boost::shared_ptr<LevelStorage> storage;
+    boost::shared_ptr<McRegionLevelStorage> storage;
     DiskSaveBuffer* saveData = initData->m_saveData;
-    if (saveData == 0)
+    if (saveData != 0)
+    {
+        ConsoleSaveFile* saveFile = new ConsoleSaveFileOriginal(saveData->name, saveData->data, saveData->length, false, static_cast<ESavePlatform>(initData->m_savePlatform));
+        saveFile->isSaveEndianDifferent();
+        saveFile->ConvertToLocalPlatform();
+        storage = boost::shared_ptr<McRegionLevelStorage>(new McRegionLevelStorage(saveFile, File(std::wstring(L".")), name, true, Minecraft::GetInstance()->getFixerUpper()));
+    }
+    else
     {
         ConsoleSaveFile* saveFile;
         LevelGenerationOptions* levelGen = gApp.getLevelGenerationOptions();
@@ -323,14 +329,7 @@ bool MinecraftServer::loadLevel(LevelStorageSource* storageSource, const std::ws
         {
             saveFile = new ConsoleSaveFileOriginal(std::wstring(L""), 0, 0, false, eSavePlatform_WIIU);
         }
-        storage = boost::shared_ptr<LevelStorage>(new McRegionLevelStorage(saveFile, File(std::wstring(L".")), name, true, Minecraft::GetInstance()->getFixerUpper()));
-    }
-    else
-    {
-        ConsoleSaveFile* saveFile = new ConsoleSaveFileOriginal(saveData->name, saveData->data, saveData->length, false, static_cast<ESavePlatform>(initData->m_savePlatform));
-        if (saveFile->isSaveEndianDifferent())
-            saveFile->ConvertToLocalPlatform();
-        storage = boost::shared_ptr<LevelStorage>(new McRegionLevelStorage(saveFile, File(std::wstring(L".")), name, true, Minecraft::GetInstance()->getFixerUpper()));
+        storage = boost::shared_ptr<McRegionLevelStorage>(new McRegionLevelStorage(saveFile, File(std::wstring(L".")), name, true, Minecraft::GetInstance()->getFixerUpper()));
     }
 
     LevelData* levelData = storage->prepareLevel();
@@ -357,7 +356,7 @@ bool MinecraftServer::loadLevel(LevelStorageSource* storageSource, const std::ws
     if (saveFile->doesFileExist(gameRulesPath))
     {
         FileEntry* entry = saveFile->createFile(gameRulesPath);
-        unsigned int size = entry->m_fileSize;
+        unsigned int size = entry->m_data.m_fileSize;
         arrayWithLength<unsigned char> ruleData(size, true);
         saveFile->setFilePointer(entry, 0, 0, 0);
         unsigned int read;
@@ -391,20 +390,21 @@ bool MinecraftServer::loadLevel(LevelStorageSource* storageSource, const std::ws
         {
             mLevels.data[i] = static_cast<ServerLevel*>((new ServerLevel(this, storage, levelData, 0))->postConstruct());
             setLevelDifficulty(mLevels.data[i], Difficulty::byId(gApp.GetGameHostOption(eGameHostOption_Difficulty)));
-            if (gApp.getLevelGenerationOptions() == 0)
+            if (gApp.getLevelGenerationOptions() != 0)
             {
-                if (initData->m_levelTypeOptions != 0)
-                    mLevels.data[i]->getLevelData()->setHasBeenInCreative(true);
+                LevelGenerationOptions* levelGen = gApp.getLevelGenerationOptions();
+                BlockPos* spawnPos = levelGen->getSpawnPos();
+                if (spawnPos != 0)
+                    mLevels.data[i]->setSpawnPos(*spawnPos);
+                mLevels.data[i]->getLevelData()->setHasBeenInCreative(mLevels.data[i]->getLevelData()->getHasBeenInCreative() || levelGen->isFromDLC());
+                mLevels.data[i]->getLevelData()->setCloudHeight(levelGen->getCloudHeight());
+                mLevels.data[i]->setFogDistance(levelGen->getFogDistance());
                 mLevels.data[i]->initializeLevel(levelSettings);
             }
             else
             {
-                LevelGenerationOptions* levelGen = gApp.getLevelGenerationOptions();
-                if (levelGen->getSpawnPos() != 0)
-                    mLevels.data[i]->setSpawnPos(*levelGen->getSpawnPos());
-                mLevels.data[i]->getLevelData()->setHasBeenInCreative(mLevels.data[i]->getLevelData()->getHasBeenInCreative() || levelGen->isFromDLC());
-                mLevels.data[i]->getLevelData()->setCloudHeight(levelGen->getCloudHeight());
-                mLevels.data[i]->setFogDistance(levelGen->getFogDistance());
+                if (initData->m_levelTypeOptions != 0)
+                    mLevels.data[i]->getLevelData()->setHasBeenInCreative(true);
                 mLevels.data[i]->initializeLevel(levelSettings);
             }
             inMiniGame = Minecraft::InMiniGame(eMiniGameId_Any, true);
@@ -431,10 +431,10 @@ bool MinecraftServer::loadLevel(LevelStorageSource* storageSource, const std::ws
     mPlayers->setLevel(mLevels);
     setDifficulty(Difficulty::byId(gApp.GetGameHostOption(eGameHostOption_Difficulty)));
 
-    if (!mLevels.data[0]->mIsNew)
-        progressRenderer->progressStage(IDS_PROGRESS_LOADING_SPAWN_AREA);
-    else
+    if (mLevels.data[0]->mIsNew)
         progressRenderer->progressStage(IDS_PROGRESS_GENERATING_SPAWN_AREA);
+    else
+        progressRenderer->progressStage(IDS_PROGRESS_LOADING_SPAWN_AREA);
     gApp.SetGameHostOption(eGameHostOption_HasBeenInCreative, defaultGameType == GameType::CREATIVE || mLevels.data[0]->getHasBeenInCreative());
     gApp.SetGameHostOption(eGameHostOption_Structures, mLevels.data[0]->isGenerateMapFeatures());
 
@@ -537,34 +537,33 @@ bool MinecraftServer::initServer(long long seed, _NetworkGameInitData* initData,
     mConnection = new ServerConnection(this);
     Socket::Initialise(mConnection);
 
-    while (gApp.getLevelGenerationOptions() != 0)
-    {
-        if (gApp.getLevelGenerationOptions()->hasLoadedData())
-            break;
+    while (gApp.getLevelGenerationOptions() != 0 && !gApp.getLevelGenerationOptions()->hasLoadedData())
         Sleep(1);
-    }
     if (gApp.getLevelGenerationOptions() != 0)
         gApp.getLevelGenerationOptions()->ready();
 
-    if (gApp.getGameRuleDefinitions() == 0 || initData->m_levelGenerationOptions == 0 || !initData->m_levelGenerationOptions->isGameModeLobby())
-    {
-        mMasterGameMode = 0;
-        setPlayers(new PlayerList(this, 0));
-    }
-    else
+    if (gApp.getGameRuleDefinitions() != 0 && initData->m_levelGenerationOptions != 0 && initData->m_levelGenerationOptions->isGameModeLobby())
     {
         mMasterGameMode = new MasterGameMode(&initData->m_ruleGroups);
         mMasterGameMode->SetupServerSettings(mSettings);
         setPlayers(new PlayerList(this, mMasterGameMode));
+        setAnimals(mSettings->getBoolean(eServerSetting_SpawnAnimals, true));
+        setNpcsEnabled(mSettings->getBoolean(eServerSetting_SpawnNpcs, true));
+        setPvpAllowed(mSettings->getBoolean(eServerSetting_Pvp, gApp.GetGameHostOption(eGameHostOption_PvP) != 0));
     }
-    setAnimals(mSettings->getBoolean(eServerSetting_SpawnAnimals, true));
-    setNpcsEnabled(mSettings->getBoolean(eServerSetting_SpawnNpcs, true));
-    setPvpAllowed(mSettings->getBoolean(eServerSetting_Pvp, gApp.GetGameHostOption(eGameHostOption_PvP) != 0));
+    else
+    {
+        mMasterGameMode = 0;
+        setPlayers(new PlayerList(this, mMasterGameMode));
+        setAnimals(mSettings->getBoolean(eServerSetting_SpawnAnimals, true));
+        setNpcsEnabled(mSettings->getBoolean(eServerSetting_SpawnNpcs, true));
+        setPvpAllowed(mSettings->getBoolean(eServerSetting_Pvp, gApp.GetGameHostOption(eGameHostOption_PvP) != 0));
+    }
 
     std::wstring levelName = mSettings->getString(eServerSetting_LevelName, std::wstring(L"world"));
     std::wstring levelTypeName = L"";
     if ((gApp.getLevelGenerationOptions() != 0 && gApp.getLevelGenerationOptions()->getuseFlatWorld()) ||
-        gApp.GetGameHostOption(eGameHostOption_LevelType) != 0)
+        gApp.GetGameHostOption(eGameHostOption_LevelType) > 0)
     {
         levelTypeName = mSettings->getString(eServerSetting_LevelType, std::wstring(L"flat"));
     }
@@ -605,8 +604,8 @@ bool MinecraftServer::initServer(long long seed, _NetworkGameInitData* initData,
     if (initData->m_saveData != 0)
     {
         std::free(initData->m_saveData->data);
-        initData->m_saveData->length = 0;
         initData->m_saveData->data = 0;
+        initData->m_saveData->length = 0;
     }
     CGameNetworkManager::sInstance.ServerReady();
     return initialised;
@@ -752,10 +751,11 @@ void MinecraftServer::fjSetServerPaused(bool paused)
 void MinecraftServer::tick()
 {
     std::vector<std::wstring> expiredTimers;
-    for (boost::unordered_map<std::wstring, int>::iterator it = s_countdownTimers.begin(); it != s_countdownTimers.end(); ++it)
+    for (boost::unordered_map<std::wstring, int>::iterator it = s_countdownTimers.begin(); it != s_countdownTimers.end(); it++)
     {
-        if (it->second > 0)
-            s_countdownTimers[it->first] = it->second - 1;
+        int remaining = it->second;
+        if (remaining > 0)
+            s_countdownTimers[it->first] = remaining - 1;
         else
             expiredTimers.push_back(it->first);
     }
@@ -773,8 +773,8 @@ void MinecraftServer::tick()
         {
             if (level->getGameRules()->getBoolean(GameRules::RULE_DAYLIGHT) || level->ShouldForceTimeUpdate())
             {
-                mPlayers->broadcastAll(boost::shared_ptr<Packet>(new ClientboundSetTimePacket(level->getGameTime(), level->getDayTime(),
-                                                                                              level->getGameRules()->getBoolean(GameRules::RULE_DAYLIGHT))),
+                mPlayers->broadcastAll(boost::shared_ptr<ClientboundSetTimePacket>(new ClientboundSetTimePacket(level->getGameTime(), level->getDayTime(),
+                                                                                                                level->getGameRules()->getBoolean(GameRules::RULE_DAYLIGHT))),
                                        level->mDimension->getType()->getId());
             }
         }
@@ -855,7 +855,7 @@ void MinecraftServer::run(long long seed, void* argument)
     if (initData != 0)
     {
         hostSettings = gApp.GetGameHostOption(eGameHostOption_All);
-        findSeed = initData->m_findSeed != 0;
+        findSeed = initData->m_findSeed;
         texturePackId = initData->m_texturePackId;
     }
 
@@ -946,42 +946,36 @@ void MinecraftServer::run(long long seed, void* argument)
                 void* param = gApp.GetXuiServerActionParam(pad);
                 switch (action)
                 {
-                case eXuiServerAction_DropItem:
-                {
-                    boost::shared_ptr<ServerPlayer> player = mPlayers->mPlayers.at(0);
-                    player->drop(not_null_ptr<ItemInstance>(new ItemInstance(Item::byId(reinterpret_cast<int>(param)), 1, 0)), false);
-                    break;
-                }
                 case eXuiServerAction_SaveGame:
                 case eXuiServerAction_AutoSaveGame:
                 {
                     gApp.EnterSaveNotificationSection();
                     if (mPlayers != 0)
                         mPlayers->saveAll(Minecraft::GetInstance()->mProgressRenderer, false);
-                    mPlayers->broadcastAll(boost::shared_ptr<Packet>(new UpdateProgressPacket(20)));
+                    mPlayers->broadcastAll(boost::shared_ptr<UpdateProgressPacket>(new UpdateProgressPacket(20)));
                     if (!s_haltRequested)
                     {
                         int saveProgress = 33;
-                        bool halted = false;
-                        for (unsigned int i = 0; i < mLevels.length; ++i)
+                        for (unsigned int i = 0; i < mLevels.length && !s_haltRequested; ++i)
                         {
                             mLevels.data[mLevels.length - 1 - i]->save(true, Minecraft::GetInstance()->mProgressRenderer,
                                                                    action == eXuiServerAction_AutoSaveGame);
-                            mPlayers->broadcastAll(boost::shared_ptr<Packet>(new UpdateProgressPacket(saveProgress)));
+                            mPlayers->broadcastAll(boost::shared_ptr<UpdateProgressPacket>(new UpdateProgressPacket(saveProgress)));
                             saveProgress += 33;
-                            if (s_haltRequested)
-                            {
-                                halted = true;
-                                break;
-                            }
                         }
-                        if (!halted)
+                        if (!s_haltRequested)
                         {
                             saveGameRules();
                             mLevels.data[0]->saveToDisc(Minecraft::GetInstance()->mProgressRenderer, action == eXuiServerAction_AutoSaveGame);
                         }
                     }
                     gApp.LeaveSaveNotificationSection();
+                    break;
+                }
+                case eXuiServerAction_DropItem:
+                {
+                    boost::shared_ptr<ServerPlayer> player = mPlayers->mPlayers.at(0);
+                    player->drop(not_null_ptr<ItemInstance>(new ItemInstance(Item::byId(reinterpret_cast<int>(param)), 1, 0)), false);
                     break;
                 }
                 case eXuiServerAction_SpawnMob:
@@ -1012,7 +1006,7 @@ void MinecraftServer::run(long long seed, void* argument)
                     break;
                 }
                 case eXuiServerAction_ServerSettingChanged:
-                    mPlayers->broadcastAll(boost::shared_ptr<Packet>(
+                    mPlayers->broadcastAll(boost::shared_ptr<ServerSettingsChangedPacket>(
                         new ServerSettingsChangedPacket(0, gApp.GetGameHostOption(eGameHostOption_Gamertags))));
                     break;
                 default:
@@ -1036,10 +1030,8 @@ void MinecraftServer::broadcastStartSavingPacket()
 
 void MinecraftServer::broadcastStopSavingPacket()
 {
-    if (s_haltRequested)
-        return;
-    boost::shared_ptr<ClientboundGameEventPacket> packet(new ClientboundGameEventPacket(ClientboundGameEventPacket::STOP_SAVING, 0.0f));
-    mPlayers->broadcastAll(boost::shared_ptr<Packet>(packet));
+    if (!s_haltRequested)
+        mPlayers->broadcastAll(boost::shared_ptr<ClientboundGameEventPacket>(new ClientboundGameEventPacket(ClientboundGameEventPacket::STOP_SAVING, 0.0f)));
 }
 
 unsigned long long MinecraftServer::main(long long seed, void* argument)
@@ -1114,7 +1106,7 @@ bool MinecraftServer::chunkPacketManagement_CanSendTo(INetworkPlayer* player)
 
 void MinecraftServer::chunkPacketManagement_DidSendTo(INetworkPlayer* player)
 {
-    if (static_cast<long long>(System::processTimeInMilliSecs()) - s_chunkPacketTickStart >= 35)
+    if (System::processTimeInMilliSecs() - s_chunkPacketTickStart >= 35)
         s_chunkPacketBudgetSpent = true;
     if (player != 0)
     {

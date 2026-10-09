@@ -25,14 +25,12 @@ void ServerBossEvent::broadcast(ClientboundBossEventPacket::Operation operation)
     }
 
     boost::shared_ptr<Packet> packet(new ClientboundBossEventPacket(operation, this));
-    std::map<boost::shared_ptr<ServerPlayer>, int>::iterator it;
-    for (it = players.begin(); it != players.end(); ++it)
+    for (std::map<boost::shared_ptr<ServerPlayer>, int>::iterator it = players.begin(); it != players.end(); ++it)
     {
         boost::shared_ptr<ServerPlayer> player = it->first;
         if (player->mConnection != 0)
         {
-            ServerGamePacketListenerImpl* connection = player->mConnection.operator->();
-            connection->send(packet);
+            player->mConnection->send(packet);
         }
     }
 }
@@ -145,10 +143,9 @@ void ServerBossEvent::setVisible(bool visible)
     if (visible != this->visible)
     {
         this->visible = visible;
-        std::map<boost::shared_ptr<ServerPlayer>, int>::iterator it;
         ClientboundBossEventPacket::Operation operation =
             visible ? ClientboundBossEventPacket::ADD : ClientboundBossEventPacket::REMOVE;
-        for (it = players.begin(); it != players.end(); ++it)
+        for (std::map<boost::shared_ptr<ServerPlayer>, int>::iterator it = players.begin(); it != players.end(); ++it)
         {
             boost::shared_ptr<ServerPlayer> player = it->first;
             if (player->mConnection != 0)
@@ -165,8 +162,7 @@ void ServerBossEvent::setVisible(bool visible)
 std::vector<boost::shared_ptr<ServerPlayer> >* ServerBossEvent::getPlayers()
 {
     std::vector<boost::shared_ptr<ServerPlayer> >* result = new std::vector<boost::shared_ptr<ServerPlayer> >();
-    std::map<boost::shared_ptr<ServerPlayer>, int>::iterator it;
-    for (it = players.begin(); it != players.end(); ++it)
+    for (std::map<boost::shared_ptr<ServerPlayer>, int>::iterator it = players.begin(); it != players.end(); ++it)
     {
         result->push_back(it->first);
     }
