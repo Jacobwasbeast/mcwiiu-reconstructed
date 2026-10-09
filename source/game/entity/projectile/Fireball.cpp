@@ -268,7 +268,7 @@ bool Fireball::hurt(const DamageSource* source, float)
                 mPowerY = direction->y * 0.1;
                 mPowerZ = direction->z * 0.1;
             }
-            bool living = (source->getEntity()->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY;
+            bool living = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, source->getEntity()->GetType());
             if (living)
             {
                 mOwner = boost::dynamic_pointer_cast<LivingEntity>(source->getEntity());

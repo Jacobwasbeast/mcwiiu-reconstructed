@@ -52,7 +52,7 @@ void SmallFireball::onHit(const HitResult* result)
 
     if (result->mEntity == NULL)
     {
-        if (mOwner && (mOwner->GetType() & EntityType::MOB) == EntityType::MOB
+        if (mOwner && eTYPE_DERIVED_FROM(EntityType::MOB, mOwner->GetType())
             && !mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
         {
             remove();

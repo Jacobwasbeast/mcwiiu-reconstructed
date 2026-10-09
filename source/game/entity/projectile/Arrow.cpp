@@ -46,8 +46,8 @@ void Arrow::addDataWalkers(DataFixerUpper*)
 
 void Arrow::_init()
 {
-    mEnchantPower = 0;
     mKnockback = 0;
+    mEnchantPower = 0;
 }
 
 void Arrow::addAdditonalSaveData(CompoundTag* tag)
@@ -84,8 +84,7 @@ void Arrow::setEnchantmentEffectsFromEntity(const boost::shared_ptr<LivingEntity
         setKnockback(punch);
     if (power > 0)
         setEnchantPower(power);
-    int flame = EnchantmentHelper::getEnchantmentLevel(Enchantments::FLAMING_ARROWS, entity);
-    if (flame > 0)
+    if (EnchantmentHelper::getEnchantmentLevel(Enchantments::FLAMING_ARROWS, entity) > 0)
         setSecondsOnFire(100);
 }
 
@@ -97,7 +96,7 @@ void Arrow::onHitEntity(const HitResult* result)
         + (speed * 0.97f + (static_cast<float>(mRandom->nextGaussian()) * 0.25f
         + static_cast<float>(mLevel->getDifficulty()->getId()) * 0.11f));
     if (isCritArrow())
-        damage = Mth::clamp(mRandom->nextFloat(damage * 0.5f + 2.0f) + damage, 9.0f, 10.0f);
+        damage = Mth::clamp(damage + mRandom->nextFloat(damage * 0.5f + 2.0f), 9.0f, 10.0f);
     if (mEnchantPower > 0)
         damage = damage * (static_cast<float>(mEnchantPower) * 0.25f + 1.25f);
     int wholeDamage = static_cast<int>(damage);
@@ -105,7 +104,7 @@ void Arrow::onHitEntity(const HitResult* result)
     bool fire = false;
     if (isOnFire())
     {
-        bool isEnderMan = entity->GetType() == EntityType::ENDER_MAN;
+        bool isEnderMan = eTYPE_DERIVED_FROM(EntityType::ENDER_MAN, entity->GetType());
         if (!isEnderMan)
             fire = true;
     }
@@ -117,26 +116,9 @@ void Arrow::onHitEntity(const HitResult* result)
     if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureArrowCanKnockback())
         wholeDamage = 0;
 
-    bool hurt = entity->hurt(source, static_cast<float>(wholeDamage));
-    if (!hurt)
+    if (entity->hurt(source, static_cast<float>(wholeDamage)))
     {
-        mXd *= -0.1f;
-        mYd *= -0.1f;
-        mZd *= -0.1f;
-        mFlightTime = 0;
-        mYRot += 180.0f;
-        mYRotO += 180.0f;
-        setCritArrow(false);
-        if (!mLevel->mIsClientSide && mZd * mZd + mXd * mXd + mYd * mYd < 0.001f)
-        {
-            if (mPickup == ePickup_Allowed)
-                spawnAtLocation(getPickupItem(), 0.1f);
-            remove();
-        }
-    }
-    else
-    {
-        if ((result->mEntity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, result->mEntity->GetType()))
         {
             boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
             if (!mLevel->mIsClientSide)
@@ -146,11 +128,10 @@ void Arrow::onHitEntity(const HitResult* result)
                 const double horizontal = Mth::sqrt(mXd * mXd + mZd * mZd);
                 if (horizontal > 0.0)
                 {
-                    const double knockback = static_cast<double>(mKnockback);
-                    living->push(mXd * knockback * 0.6 / horizontal, 0.1, mZd * knockback * 0.6 / horizontal);
+                    living->push(mXd * mKnockback * 0.6 / horizontal, 0.1, mZd * mKnockback * 0.6 / horizontal);
                 }
             }
-            if (mOwner != NULL && (mOwner->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+            if (mOwner != NULL && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, mOwner->GetType()))
             {
                 EnchantmentHelper::doPostHurtEffects(living, mOwner);
                 EnchantmentHelper::doPostDamageEffects(boost::static_pointer_cast<LivingEntity>(mOwner), living);
@@ -166,6 +147,22 @@ void Arrow::onHitEntity(const HitResult* result)
         playSound(SoundEvents::ARROW_HIT, 1.0f, 1.2f / (mRandom->nextFloat() * 0.2f + 0.9f));
         if (result->mEntity->GetType() != EntityType::ENDER_DRAGON)
             remove();
+    }
+    else
+    {
+        mXd *= -0.1f;
+        mYd *= -0.1f;
+        mZd *= -0.1f;
+        mFlightTime = 0;
+        mYRot += 180.0f;
+        mYRotO += 180.0f;
+        setCritArrow(false);
+        if (!mLevel->mIsClientSide && mXd * mXd + mYd * mYd + mZd * mZd < 0.001f)
+        {
+            if (mPickup == ePickup_Allowed)
+                spawnAtLocation(getPickupItem(), 0.1f);
+            remove();
+        }
     }
     delete source;
 }

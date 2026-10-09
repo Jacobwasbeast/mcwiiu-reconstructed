@@ -67,7 +67,7 @@ AbstractRotatedItemProjectile::AbstractRotatedItemProjectile(Level* level,
     _init();
     setPos(owner->mX, owner->mY + owner->getEyeHeight() - 0.10000000149011612, owner->mZ);
     mOwner = owner;
-    if ((owner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, owner->GetType()))
         mPickup = ePickup_Allowed;
 }
 
@@ -110,30 +110,34 @@ void AbstractRotatedItemProjectile::defineSynchedData()
 void AbstractRotatedItemProjectile::shoot(double x, double y, double z, float velocity,
     float inaccuracy)
 {
-    double length = Mth::sqrt(x * x + y * y + z * z);
-    double spread = 0.0075;
-    x = (x / length + mRandom->nextGaussian() * spread * inaccuracy) * velocity;
-    y = (y / length + mRandom->nextGaussian() * spread * inaccuracy) * velocity;
-    z = (z / length + mRandom->nextGaussian() * spread * inaccuracy) * velocity;
+    float length = Mth::sqrt(x * x + y * y + z * z);
+    x /= length;
+    y /= length;
+    z /= length;
+    x += mRandom->nextGaussian() * 0.0075 * inaccuracy;
+    y += mRandom->nextGaussian() * 0.0075 * inaccuracy;
+    z += mRandom->nextGaussian() * 0.0075 * inaccuracy;
+    x *= velocity;
+    y *= velocity;
+    z *= velocity;
     mXd = x;
     mYd = y;
     mZd = z;
     double horizontal = std::sqrt(x * x + z * z);
     mYRot = static_cast<float>(std::atan2(x, z)) * Mth::RAD_TO_DEG;
     mXRot = static_cast<float>(std::atan2(y, horizontal)) * Mth::RAD_TO_DEG;
-    mLife = 0;
     mYRotO = mYRot;
     mXRotO = mXRot;
+    mLife = 0;
     fjSanitisePosAndVel(this);
 }
 
 void AbstractRotatedItemProjectile::shootFromRotation(boost::shared_ptr<Entity> entity, float xRot,
     float yRot, float offset, float velocity, float inaccuracy)
 {
-    const float radians = 0.017453292f;
-    double x = -(sinf(yRot * radians) * cosf(xRot * radians));
-    double y = -sinf(xRot * radians);
-    double z = cosf(yRot * radians) * cosf(xRot * radians);
+    float x = -std::sin(yRot * Mth::DEG_TO_RAD) * std::cos(xRot * Mth::DEG_TO_RAD);
+    float y = -std::sin(xRot * Mth::DEG_TO_RAD);
+    float z = std::cos(yRot * Mth::DEG_TO_RAD) * std::cos(xRot * Mth::DEG_TO_RAD);
     shoot(x, y, z, velocity, inaccuracy);
     mXd += entity->mXd;
     mZd += entity->mZd;
@@ -159,7 +163,12 @@ void AbstractRotatedItemProjectile::setCritArrow(bool critical)
 bool AbstractRotatedItemProjectile::onHit(const HitResult* result)
 {
     boost::shared_ptr<Entity> hitEntity = result->mEntity;
-    if (hitEntity == NULL)
+    if (hitEntity != NULL)
+    {
+        onHitEntity(result);
+        return true;
+    }
+    else
     {
         BlockPos pos = result->getBlockPos();
         mXTile = pos.x;
@@ -188,13 +197,13 @@ bool AbstractRotatedItemProjectile::onHit(const HitResult* result)
         mInGround = true;
         mShake = 7;
         setCritArrow(false);
-        if (state->getMaterial() == Material::AIR)
-            return false;
-        mInTile->entityInside(mLevel, pos, state, shared_from_this());
-        return true;
+        if (state->getMaterial() != Material::AIR)
+        {
+            mInTile->entityInside(mLevel, pos, state, shared_from_this());
+            return true;
+        }
+        return false;
     }
-    onHitEntity(result);
-    return true;
 }
 
 const SoundEvent* AbstractRotatedItemProjectile::getOnHitSound() const
@@ -204,9 +213,9 @@ const SoundEvent* AbstractRotatedItemProjectile::getOnHitSound() const
 
 boost::shared_ptr<Entity> AbstractRotatedItemProjectile::findHitEntity(Vec3* from, Vec3* to)
 {
+    boost::shared_ptr<Entity> hitEntity;
     std::vector<boost::shared_ptr<Entity> >* entities = mLevel->getEntities(shared_from_this(),
         mBoundingBox->expand(mXd, mYd, mZd)->grow(1.0), sArrowTargetsPredicates, NULL);
-    boost::shared_ptr<Entity> hitEntity;
     double nearestDistance = 0.0;
     for (unsigned int i = 0; i < entities->size(); ++i)
     {
@@ -251,7 +260,9 @@ bool AbstractRotatedItemProjectile::canChangeDimensions()
 bool AbstractRotatedItemProjectile::shouldRenderAtSqrDistance(double distanceSqr)
 {
     double distance = mBoundingBox->getSize() * 10.0;
-    distance = distance * 64.0 * getViewScale();
+    if (Mth::isNaN(distance))
+        distance = 1.0;
+    distance *= 64.0 * getViewScale();
     return distanceSqr < distance * distance;
 }
 
@@ -284,8 +295,8 @@ void AbstractRotatedItemProjectile::tick()
     Block* block = state->getBlock();
     if (state->getMaterial() != Material::AIR && !isNoPhysics())
     {
-        const AABB* shape = state->getShape(mLevel, tilePos);
-        if (shape != NULL && shape->move(tilePos)->contains(Vec3::newTemp(mX, mY, mZ)))
+        const AABB* shape = state->getClipAABB(mLevel, tilePos);
+        if (shape != Block::NULL_AABB && shape->move(tilePos)->contains(Vec3::newTemp(mX, mY, mZ)))
             mInGround = true;
     }
 
@@ -330,10 +341,10 @@ void AbstractRotatedItemProjectile::tick()
     }
 
     if (hitResult != NULL && hitResult->mType == HitResult::ENTITY
-        && (hitResult->mEntity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        && eTYPE_DERIVED_FROM(EntityType::PLAYER, hitResult->mEntity->GetType()))
     {
         boost::shared_ptr<Player> hitPlayer = boost::static_pointer_cast<Player>(hitResult->mEntity);
-        if (mOwner && (mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+        if (mOwner && eTYPE_DERIVED_FROM(EntityType::PLAYER, mOwner->GetType())
             && !boost::static_pointer_cast<Player>(mOwner)->canHarmPlayer(hitPlayer))
         {
             delete hitResult;

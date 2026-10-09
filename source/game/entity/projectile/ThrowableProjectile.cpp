@@ -51,18 +51,21 @@ ThrowableProjectile::~ThrowableProjectile()
 void ThrowableProjectile::shoot(double x, double y, double z, float velocity, float inaccuracy)
 {
     double length = std::sqrt(x * x + y * y + z * z);
-    double spread = 0.007499999832361937;
-    x = (x / length + mRandom->nextGaussian() * spread * inaccuracy) * velocity;
-    y = (y / length + mRandom->nextGaussian() * spread * inaccuracy) * velocity;
-    z = (z / length + mRandom->nextGaussian() * spread * inaccuracy) * velocity;
+    x /= length;
+    y /= length;
+    z /= length;
+    x += mRandom->nextGaussian() * 0.007499999832361937 * inaccuracy;
+    y += mRandom->nextGaussian() * 0.007499999832361937 * inaccuracy;
+    z += mRandom->nextGaussian() * 0.007499999832361937 * inaccuracy;
+    x *= velocity;
+    y *= velocity;
+    z *= velocity;
     mXd = x;
     mYd = y;
     mZd = z;
     float horizontal = (float)std::sqrt(x * x + z * z);
-    mYRot = (float)(std::atan2(x, z) * Mth::RAD_TO_DEG);
-    mYRotO = mYRot;
-    mXRot = (float)(std::atan2(y, (double)horizontal) * Mth::RAD_TO_DEG);
-    mXRotO = mXRot;
+    mYRotO = mYRot = (float)(std::atan2(x, z) * Mth::RAD_TO_DEG);
+    mXRotO = mXRot = (float)(std::atan2(y, (double)horizontal) * Mth::RAD_TO_DEG);
     mLife = 0;
 }
 
@@ -76,10 +79,9 @@ void ThrowableProjectile::shootFromRotation(boost::shared_ptr<Entity> entity, fl
         offset = (float)miniGame->getThrowAngle(type, offset);
     }
 
-    const float radians = 0.017453292f;
-    double x = -Mth::sin(yRot * radians) * Mth::cos(xRot * radians);
-    double y = -Mth::sin((xRot + offset) * radians);
-    double z = Mth::cos(yRot * radians) * Mth::cos(xRot * radians);
+    float x = -Mth::sin(yRot * Mth::DEG_TO_RAD) * Mth::cos(xRot * Mth::DEG_TO_RAD);
+    float y = -Mth::sin((xRot + offset) * Mth::DEG_TO_RAD);
+    float z = Mth::cos(yRot * Mth::DEG_TO_RAD) * Mth::cos(xRot * Mth::DEG_TO_RAD);
     shoot(x, y, z, velocity, inaccuracy);
     mXd += entity->mXd;
     mZd += entity->mZd;
@@ -99,14 +101,14 @@ void ThrowableProjectile::addDataWalkers(DataFixerUpper*, unsigned long long)
 
 void ThrowableProjectile::_throwableInit()
 {
+    mXTile = -1;
+    mYTile = -1;
     mZTile = -1;
     mInTile = Blocks::air;
     mInGround = false;
-    mYTile = -1;
-    mXTile = -1;
+    mShake = 0;
     mLife = 0;
     mFlightTime = 0;
-    mShake = 0;
     mOwnerName = L"";
     setSize(0.25f, 0.25f);
     mParticleSpawnPos = NULL;
@@ -120,7 +122,10 @@ void ThrowableProjectile::defineSynchedData()
 
 bool ThrowableProjectile::shouldRenderAtSqrDistance(double distanceSqr)
 {
-    double distance = mBoundingBox->getSize() * 4.0 * 64.0;
+    double distance = mBoundingBox->getSize() * 4.0;
+    if (Mth::isNaN(distance))
+        distance = 4.0;
+    distance *= 64.0;
     return distanceSqr < distance * distance;
 }
 
@@ -302,9 +307,11 @@ void ThrowableProjectile::addAdditonalSaveData(CompoundTag* tag)
     tag->putString(L"inTile", inTileName.toString());
     tag->putByte(L"shake", (unsigned char)mShake);
     tag->putByte(L"inGround", (unsigned char)mInGround);
-    if (mOwnerName.empty() && mOwner
-        && (mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
-        mOwnerName = mOwner->getName();
+    if (mOwnerName.empty() && mOwner)
+    {
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, mOwner->GetType()))
+            mOwnerName = mOwner->getName();
+    }
     tag->putString(L"ownerName", mOwnerName.empty() ? L"" : mOwnerName);
 }
 
@@ -319,7 +326,7 @@ void ThrowableProjectile::readAdditionalSaveData(CompoundTag* tag)
         mInTile = Block::byId(tag->getByte(L"inTile"));
     mShake = tag->getByte(L"shake");
     mInGround = tag->getByte(L"inGround") == 1;
-    mOwner.reset();
+    mOwner = boost::shared_ptr<LivingEntity>();
     mOwnerName = tag->getString(L"ownerName");
     if (mOwnerName.empty())
         mOwnerName = L"";

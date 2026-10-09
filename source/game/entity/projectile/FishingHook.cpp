@@ -65,12 +65,13 @@ void FishingHook::bringInHookedEntity()
 {
     if (mOwner)
     {
-        double dx = mOwner->mX - mX;
-        double dy = mOwner->mY - mY;
-        double dz = mOwner->mZ - mZ;
-        mHookedIn->mXd += dx * 0.1;
-        mHookedIn->mYd += dy * 0.1;
-        mHookedIn->mZd += dz * 0.1;
+        double xa = mOwner->mX - mX;
+        double ya = mOwner->mY - mY;
+        double za = mOwner->mZ - mZ;
+        double speed = 0.1;
+        mHookedIn->mXd += xa * speed;
+        mHookedIn->mYd += ya * speed;
+        mHookedIn->mZd += za * speed;
         mHookedIn->mHurtMarked = true;
     }
 }
@@ -88,21 +89,20 @@ int FishingHook::retrieve()
     {
         bringInHookedEntity();
         mLevel->broadcastEntityEvent(shared_from_this(), EntityEvent::FISHING_ROD_REEL_IN, 0);
-        result = mHookedIn->GetType() == EntityType::ITEM_ENTITY ? 3 : 5;
+        result = eTYPE_DERIVED_FROM(EntityType::ITEM_ENTITY, mHookedIn->GetType()) ? 3 : 5;
     }
     else if (mTicksCatchable > 0)
     {
-        LootTableContext::Builder* builder =
-            new LootTableContext::Builder(static_cast<ServerLevel*>(mLevel));
-        builder->mLuck = (float)mLuck + mOwner->getLuck();
+        LootTableContext::Builder* builder = new LootTableContext::Builder(static_cast<ServerLevel*>(mLevel));
+        builder->withLuck((float)mLuck + mOwner->getLuck());
 
         LootTableContext context = builder->build();
-        std::vector<not_null_ptr<ItemInstance> >* items =
-            BuiltInLootTables::getLootTable(&BuiltInLootTables::FISHING)->getRandomItems(mRandom, context);
+        LootTable* lootTable = BuiltInLootTables::getLootTable(&BuiltInLootTables::FISHING);
+        std::vector<not_null_ptr<ItemInstance> >* items = lootTable->getRandomItems(mRandom, context);
 
         for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items->begin();
              it != items->end();
-             ++it)
+             it++)
         {
             boost::shared_ptr<ItemEntity> itemEntity(new ItemEntity(mLevel, mX, mY, mZ, *it));
 
@@ -116,12 +116,8 @@ int FishingHook::retrieve()
             itemEntity->mZd = dz * 0.1;
             mLevel->addEntity(itemEntity);
 
-            boost::shared_ptr<ExperienceOrb> orb(new ExperienceOrb(mOwner->mLevel,
-                                                                   mOwner->mX,
-                                                                   mOwner->mY + 0.5,
-                                                                   mOwner->mZ + 0.5,
-                                                                   mRandom->nextInt(6) + 1));
-            mOwner->mLevel->addEntity(orb);
+            mOwner->mLevel->addEntity(boost::shared_ptr<ExperienceOrb>(new ExperienceOrb(
+                mOwner->mLevel, mOwner->mX, mOwner->mY + 0.5, mOwner->mZ + 0.5, mRandom->nextInt(6) + 1)));
         }
 
         delete items;
@@ -141,11 +137,11 @@ int FishingHook::retrieve()
 void FishingHook::_init()
 {
     fjDerivedCtorCalls();
+    mInGround = false;
     mTicksInAir = 0;
     mTicksCatchable = 0;
     mTicksCaughtDelay = 0;
     mTicksCatchableDelay = 0;
-    mInGround = false;
     mHookedIn = boost::shared_ptr<Entity>();
     mOwner = boost::shared_ptr<Player>();
     mTicksInGround = 0;
@@ -167,10 +163,10 @@ void FishingHook::shoot()
 {
     float xRot = Mth::clamp(mOwner->mXRotO + (mOwner->mXRot - mOwner->mXRotO), -89.9f, 89.9f);
     float yRot = mOwner->mYRotO + (mOwner->mYRot - mOwner->mYRotO);
-    float cosYRot = Mth::cos(-yRot * 0.017453292f - 3.1415927f);
-    float sinYRot = Mth::sin(-yRot * 0.017453292f - 3.1415927f);
-    float negCosXRot = -Mth::cos(-xRot * 0.017453292f);
-    float sinXRot = Mth::sin(-xRot * 0.017453292f);
+    float cosYRot = Mth::cos(-yRot * Mth::DEG_TO_RAD - 3.1415927f);
+    float sinYRot = Mth::sin(-yRot * Mth::DEG_TO_RAD - 3.1415927f);
+    float negCosXRot = -Mth::cos(-xRot * Mth::DEG_TO_RAD);
+    float sinXRot = Mth::sin(-xRot * Mth::DEG_TO_RAD);
 
     double x = mOwner->mXo + (mOwner->mX - mOwner->mXo) - (double)sinYRot * 0.3;
     double y = mOwner->mYo + (mOwner->mY - mOwner->mYo) + mOwner->getEyeHeight();
@@ -221,19 +217,7 @@ void FishingHook::defineSynchedData()
 
 bool FishingHook::canBeHooked(const boost::shared_ptr<Entity>& entity)
 {
-    bool canHook = true;
-
-    if (!entity->isPickable())
-    {
-        bool isItem = entity->GetType() == EntityType::ITEM_ENTITY;
-
-        if (!isItem)
-        {
-            canHook = false;
-        }
-    }
-
-    return canHook;
+    return entity->isPickable() || eTYPE_DERIVED_FROM(EntityType::ITEM_ENTITY, entity->GetType());
 }
 
 bool FishingHook::makeStepSound()
@@ -285,16 +269,16 @@ bool FishingHook::shouldStopFishing()
 
 void FishingHook::updateRotation()
 {
-    float horizontal = Mth::sqrt(mXd * mXd + mZd * mZd);
+    double horizontal = Mth::sqrt(mXd * mXd + mZd * mZd);
     mYRot = (float)(std::atan2(mXd, mZd) * Mth::RAD_TO_DEG);
-    float xRot = (float)(std::atan2(mYd, (double)horizontal) * Mth::RAD_TO_DEG);
+    mXRot = (float)(std::atan2(mYd, horizontal) * Mth::RAD_TO_DEG);
 
-    while (xRot - mXRotO < -180.0f)
+    while (mXRot - mXRotO < -180.0f)
     {
         mXRotO -= 360.0f;
     }
 
-    while (xRot - mXRotO >= 180.0f)
+    while (mXRot - mXRotO >= 180.0f)
     {
         mXRotO += 360.0f;
     }
@@ -309,7 +293,7 @@ void FishingHook::updateRotation()
         mYRotO += 360.0f;
     }
 
-    mXRot = mXRotO + (xRot - mXRotO) * 0.2f;
+    mXRot = mXRotO + (mXRot - mXRotO) * 0.2f;
     mYRot = mYRotO + (mYRot - mYRotO) * 0.2f;
 }
 
@@ -429,7 +413,7 @@ void FishingHook::catchingFish(const BlockPos& pos)
         if (mTicksCatchableDelay > 0)
         {
             mFishAngle = (float)mRandom->nextGaussian() * 4.0f + mFishAngle;
-            float angle = mFishAngle * 0.017453292f;
+            float angle = mFishAngle * Mth::DEG_TO_RAD;
             float sinAngle = sinf(angle);
             float cosAngle = cosf(angle);
             double x = mX + (double)(sinAngle * (float)mTicksCatchableDelay) * 0.1;
@@ -503,7 +487,7 @@ void FishingHook::catchingFish(const BlockPos& pos)
 
         if (mRandom->nextFloat() < chance)
         {
-            float angle = Mth::nextFloat(mRandom, 0.0f, 360.0f) * 0.017453292f;
+            float angle = Mth::nextFloat(mRandom, 0.0f, 360.0f) * Mth::DEG_TO_RAD;
             float distance = Mth::nextFloat(mRandom, 25.0f, 60.0f);
             double x = mX + (double)(Mth::sin(angle) * distance * 0.1f);
             double y = std::floor(mBoundingBox->mMinY) + 1.0;
@@ -571,10 +555,10 @@ void FishingHook::tick()
         }
     }
 
+    float liquidHeight = 0.0f;
     BlockPos pos(this);
     const BlockState* state = mLevel->getBlockState(pos);
     const BlockState* aboveState = mLevel->getBlockState(pos.above());
-    float liquidHeight = 0.0f;
 
     if (state->getMaterial() == Material::WATER)
     {
@@ -611,16 +595,16 @@ void FishingHook::tick()
             checkCollision();
         }
 
-        if (!mInGround && !mOnGround && !mHorizontalCollision)
-        {
-            ++mTicksInAir;
-        }
-        else
+        if (mInGround || mOnGround || mHorizontalCollision)
         {
             mTicksInAir = 0;
             mXd = 0.0;
             mYd = 0.0;
             mZd = 0.0;
+        }
+        else
+        {
+            ++mTicksInAir;
         }
     }
     else if (mCurrentState == 1)

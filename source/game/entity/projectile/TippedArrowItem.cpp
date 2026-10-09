@@ -57,12 +57,12 @@ TextureAtlasSprite* TippedArrowItem::getLayerIcon(int auxValue,
                                                   int layer,
                                                   not_null_ptr<ItemInstance> itemInstance)
 {
-    if (layer != 0)
+    if (layer == 0)
     {
-        return Item::getLayerIcon(auxValue, layer, itemInstance);
+        return mArrowHeadIcon;
     }
 
-    return mArrowHeadIcon;
+    return Item::getLayerIcon(auxValue, layer, itemInstance);
 }
 
 void TippedArrowItem::registerIcons(IconRegister* iconRegister)

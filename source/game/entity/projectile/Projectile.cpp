@@ -24,29 +24,26 @@ bool Projectile::onHit(const HitResult* result)
         && !mLevel->mIsClientSide
         && result->mType == HitResult::BLOCK
         && mOwner
-        && (mOwner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        && eTYPE_DERIVED_FROM(EntityType::PLAYER, mOwner->GetType()))
     {
-        BlockPos pos = result->getBlockPos();
+        const BlockPos& pos = result->getBlockPos();
         GameMode* gameMode = boost::static_pointer_cast<Player>(mOwner)->GetGameMode();
         if (gameMode->MayDestroy(pos))
         {
             Block* block = mLevel->getBlock(pos);
-            if (block != NULL)
+            TntBlock* tntBlock = dynamic_cast<TntBlock*>(block);
+            if (tntBlock != NULL)
             {
-                TntBlock* tntBlock = dynamic_cast<TntBlock*>(block);
-                if (tntBlock != NULL)
-                {
-                    const BlockState* state = mLevel->getBlockState(pos)->setValue(TntBlock::EXPLODE, true);
-                    tntBlock->destroy(mLevel, pos, state, mOwner);
-                    mLevel->removeBlock(pos);
-                }
-                else
-                {
-                    mLevel->destroyBlock(pos, false);
-                }
-                gameMode->RecordBlockDestroyed(pos, Block::getId(block));
-                return true;
+                const BlockState* state = mLevel->getBlockState(pos);
+                tntBlock->destroy(mLevel, pos, state->setValue(TntBlock::EXPLODE, true), mOwner);
+                mLevel->removeBlock(pos);
             }
+            else
+            {
+                mLevel->destroyBlock(pos, false);
+            }
+            gameMode->RecordBlockDestroyed(pos, Block::getId(block));
+            return true;
         }
     }
     if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureInvertedExplodingGrenades())
