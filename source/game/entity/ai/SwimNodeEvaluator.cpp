@@ -1,6 +1,7 @@
 #include "game/entity/ai/SwimNodeEvaluator.hpp"
 
 #include "game/core/Direction.hpp"
+#include "game/core/Mth.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/world/LevelSource.hpp"
@@ -21,76 +22,53 @@ SwimNodeEvaluator::SwimNodeEvaluator(bool allowBreaching)
 const BlockPathTypes* SwimNodeEvaluator::getPathTypeAtPos(int x, int y, int z, bool checkNeighbors)
 {
     BlockPos pos(x, y, z);
+    const Material* liquidMaterial = NULL;
     const BlockState* state = mLevelSource->getBlockState(mMob->mTickCache, pos);
     const Material* material = state->getMaterial();
-    const Material* liquidMaterial = NULL;
     if (material == Material::AIR)
         liquidMaterial = mLevelSource->getLiquidBlock(pos)->getCraftingMaterial();
 
     if (state->getMaterial() == Material::AIR && liquidMaterial == Material::AIR)
     {
-        BlockPos belowPos = pos.below();
-        const BlockState* belowState = mLevelSource->getBlockState(mMob->mTickCache, belowPos);
+        const BlockState* belowState = mLevelSource->getBlockState(mMob->mTickCache, pos.below());
         if (belowState->getMaterial() == Material::WATER)
             return BlockPathTypes::BREACH;
-        if (static_cast<double>(y) <= mMob->mY)
+        if (static_cast<double>(pos.y) <= mMob->mY)
+            return BlockPathTypes::WALKABLE;
+    }
+    else if (state->getMaterial() != Material::WATER)
+    {
+        Block* block = state->getBlock();
+        if (block->isSlabBlock() && HalfSlabBlock::isBottomSlab(block->convertBlockStateToLegacyData(state)))
             return BlockPathTypes::WALKABLE;
     }
     else
     {
-        if (state->getMaterial() == Material::WATER)
+        if (checkNeighbors)
         {
-            if (checkNeighbors)
+            for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin();
+                 it != Direction::VALUES.end(); ++it)
             {
-                for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin();
-                     it != Direction::VALUES.end(); ++it)
-                {
-                    const Direction* direction = *it;
-                    if (direction != Direction::DOWN && direction != Direction::UP &&
-                        getPathTypeAtPos(x + direction->getStepX(), y + direction->getStepY(),
-                                         z + direction->getStepZ(), false) == BlockPathTypes::BLOCKED)
-                        return BlockPathTypes::WATER_BORDER;
-                }
+                const Direction* direction = *it;
+                if (direction != Direction::DOWN && direction != Direction::UP &&
+                    getPathTypeAtPos(x + direction->getStepX(), y + direction->getStepY(),
+                                     z + direction->getStepZ(), false) == BlockPathTypes::BLOCKED)
+                    return BlockPathTypes::WATER_BORDER;
             }
-            return BlockPathTypes::WATER;
         }
-
-        Block* block = state->getBlock();
-        if (block->isSlabBlock() && HalfSlabBlock::isBottomSlab(block->convertBlockStateToLegacyData(state)))
-            return BlockPathTypes::WALKABLE;
+        return BlockPathTypes::WATER;
     }
     return BlockPathTypes::BLOCKED;
 }
 
 Node* SwimNodeEvaluator::getStart()
 {
-    int x = static_cast<int>(mMob->mX);
-    if (mMob->mX < static_cast<double>(x))
-        --x;
-    int y = static_cast<int>(mMob->mY + 0.5);
-    if (mMob->mY + 0.5 < static_cast<double>(y))
-        --y;
-    int z = static_cast<int>(mMob->mZ);
-    if (mMob->mZ < static_cast<double>(z))
-        --z;
-    return NodeEvaluator::getNode(x, y, z);
+    return NodeEvaluator::getNode(Mth::floor(mMob->mX), Mth::floor(mMob->mY + 0.5), Mth::floor(mMob->mZ));
 }
 
 Node* SwimNodeEvaluator::getGoal(double x, double y, double z)
 {
-    double offset = static_cast<double>(mMob->mBbWidth * 0.5f);
-    x -= offset;
-    int ix = static_cast<int>(x);
-    if (x < static_cast<double>(ix))
-        --ix;
-    int iy = static_cast<int>(y + 0.5);
-    if (y + 0.5 < static_cast<double>(iy))
-        --iy;
-    z -= offset;
-    int iz = static_cast<int>(z);
-    if (z < static_cast<double>(iz))
-        --iz;
-    return NodeEvaluator::getNode(ix, iy, iz);
+    return NodeEvaluator::getNode(Mth::floor(x - mMob->mBbWidth * 0.5f), Mth::floor(y + 0.5), Mth::floor(z - mMob->mBbWidth * 0.5f));
 }
 
 Node* SwimNodeEvaluator::getDirectGoal(const BlockPos& pos)
@@ -124,16 +102,7 @@ Node* SwimNodeEvaluator::getWaterNode(int x, int y, int z)
     }
     else if (type == BlockPathTypes::WATER_BORDER)
     {
-        int mobX = static_cast<int>(mMob->mX);
-        if (mMob->mX < static_cast<double>(mobX))
-            --mobX;
-        int mobY = static_cast<int>(mMob->mY);
-        if (mMob->mY < static_cast<double>(mobY))
-            --mobY;
-        int mobZ = static_cast<int>(mMob->mZ);
-        if (mMob->mZ < static_cast<double>(mobZ))
-            --mobZ;
-        if (getPathTypeAtPos(mobX, mobY, mobZ, false) == BlockPathTypes::WATER)
+        if (getPathTypeAtPos(Mth::floor(mMob->mX), Mth::floor(mMob->mY), Mth::floor(mMob->mZ), false) == BlockPathTypes::WATER)
             return NodeEvaluator::getNode(x, y, z);
     }
     return NULL;
@@ -142,8 +111,8 @@ Node* SwimNodeEvaluator::getWaterNode(int x, int y, int z)
 int SwimNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Node* current, Node* target, float maxCost)
 {
     int count = 0;
-    for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin();
-         it != Direction::VALUES.end(); ++it)
+    std::vector<const Direction*>::const_iterator it;
+    for (it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
     {
         const Direction* direction = *it;
         Node* node = getWaterNode(current->x + direction->getStepX(),

@@ -29,13 +29,13 @@ MoveControl::MoveControl(Mob* mob)
 
 void MoveControl::copyFrom(MoveControl* other)
 {
+    mOperation = other->mOperation;
     mWantedX = other->mWantedX;
     mWantedY = other->mWantedY;
     mWantedZ = other->mWantedZ;
-    mOperation = other->mOperation;
+    mSpeedModifier = other->mSpeedModifier < 1.0 ? 1.0 : other->mSpeedModifier;
     mStrafeForwards = other->mStrafeForwards;
     mStrafeRight = other->mStrafeRight;
-    mSpeedModifier = other->mSpeedModifier < 1.0 ? 1.0 : other->mSpeedModifier;
 }
 
 void MoveControl::wait()
@@ -80,9 +80,9 @@ void MoveControl::setWantedPosition(double x, double y, double z, double speedMo
 void MoveControl::strafe(float forwards, float right)
 {
     mStrafeForwards = forwards;
+    mOperation = STRAFE;
     mStrafeRight = right;
     mSpeedModifier = 0.25;
-    mOperation = STRAFE;
 }
 
 float MoveControl::rotlerp(float from, float to, float max)
@@ -111,12 +111,8 @@ float MoveControl::rotlerp(float from, float to, float max)
 
 void MoveControl::tick()
 {
-    bool swimming = false;
-    if ((mMob->GetType() & EntityType::WATER_ANIMAL) == EntityType::WATER_ANIMAL
-        && mMob->GetType() != EntityType::SQUID && mMob->isInWater())
-    {
-        swimming = true;
-    }
+    bool swimming = eTYPE_DERIVED_FROM(EntityType::WATER_ANIMAL, mMob->GetType())
+                    && !eTYPE_DERIVED_FROM(EntityType::SQUID, mMob->GetType()) && mMob->isInWater();
 
     if (mOperation == STRAFE)
     {
@@ -157,11 +153,7 @@ void MoveControl::tick()
             {
                 bool blocked = evaluator->getBlockPathType(mMob->mLevel, target.x, target.y, target.z)
                                != BlockPathTypes::WALKABLE;
-                bool sunlit = false;
-                if (navigation->shouldAvoidSun() && mMob->mLevel->isDay() && mMob->mLevel->canSeeSky(target))
-                {
-                    sunlit = true;
-                }
+                bool sunlit = navigation->shouldAvoidSun() && mMob->mLevel->isDay() && mMob->mLevel->canSeeSky(target);
 
                 if (blocked || sunlit)
                 {
@@ -185,12 +177,11 @@ void MoveControl::tick()
     }
     else if (mOperation == MOVE_TO)
     {
+        mOperation = WAIT;
         double dx = mWantedX - mMob->mX;
         double dz = mWantedZ - mMob->mZ;
         double dy = mWantedY - mMob->mY;
-        double distanceSqr = dy * dy + dx * dx + dz * dz;
-        mOperation = WAIT;
-        if (distanceSqr < MIN_SPEED_SQR)
+        if (dx * dx + dy * dy + dz * dz < MIN_SPEED_SQR)
         {
             mMob->setZza(0.0f);
             return;

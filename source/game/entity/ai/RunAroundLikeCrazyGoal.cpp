@@ -14,8 +14,9 @@
 #include "game/world/generation/Player.hpp"
 
 RunAroundLikeCrazyGoal::RunAroundLikeCrazyGoal(AbstractHorse* horse, double speedModifier)
-    : mHorse(horse), mSpeedModifier(speedModifier), mWantedX(0.0), mWantedY(0.0), mWantedZ(0.0)
+    : mHorse(horse), mSpeedModifier(speedModifier)
 {
+    mWantedX = mWantedY = mWantedZ = 0.0;
     setRequiredControlFlags(1);
 }
 
@@ -30,7 +31,7 @@ bool RunAroundLikeCrazyGoal::canUse()
         return false;
     }
 
-    bool isPlayer = (mHorse->getControllingPassenger()->GetType() & EntityType::PLAYER) == EntityType::PLAYER;
+    bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, mHorse->getControllingPassenger()->GetType());
     if (!isPlayer)
     {
         return false;
@@ -71,7 +72,8 @@ void RunAroundLikeCrazyGoal::tick()
         return;
     }
 
-    if ((passenger->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, passenger->GetType());
+    if (isPlayer)
     {
         int temper = mHorse->getTemper();
         int maxTemper = mHorse->getMaxTemper();

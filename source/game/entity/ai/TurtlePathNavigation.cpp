@@ -29,9 +29,15 @@ bool TurtlePathNavigation::canUpdatePath()
 
 bool TurtlePathNavigation::isStableDestination(const BlockPos& pos)
 {
-    if (mMob->GetType() == EntityType::TURTLE) {
+    if (eTYPE_DERIVED_FROM(EntityType::TURTLE, mMob->GetType()))
+    {
         Turtle* turtle = static_cast<Turtle*>(mMob);
-        if (turtle->isTravelling() && turtle->isInWater()) return mLevel->getBlockState(pos)->getBlock() == Blocks::water;
+        if (turtle->isTravelling() && turtle->isInWater())
+        {
+            const BlockState* state = mLevel->getBlockState(pos);
+            return state->getBlock() == Blocks::water;
+        }
     }
-    return mLevel->getBlockState(pos.below())->getMaterial() != Material::AIR;
+    const BlockState* below = mLevel->getBlockState(pos.below());
+    return below->getMaterial() != Material::AIR;
 }

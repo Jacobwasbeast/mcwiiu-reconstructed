@@ -8,9 +8,8 @@
 
 OwnerHurtTargetGoal::OwnerHurtTargetGoal(TamableAnimal* tamable)
     : TargetGoal(tamable, false)
-    , mTamable(tamable)
-    , mOwnerLastHurt()
 {
+    mTamable = tamable;
     setRequiredControlFlags(1);
     mTimestamp = 0;
 }
@@ -25,7 +24,7 @@ bool OwnerHurtTargetGoal::canUse()
     if (!owner)
         return false;
 
-    mOwnerLastHurt = owner->getLastHurtMob();
+    mOwnerLastHurt = boost::weak_ptr<LivingEntity>(owner->getLastHurtMob());
     int timestamp = owner->getLastHurtMobTimestamp();
     boost::shared_ptr<LivingEntity> lastHurt = mOwnerLastHurt.lock();
     return timestamp != mTimestamp && canAttack(lastHurt, false)

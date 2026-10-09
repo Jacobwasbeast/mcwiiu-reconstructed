@@ -37,8 +37,8 @@ void WitherRandomAttackPosGoal::start()
 void WitherRandomAttackPosGoal::stop()
 {
     WitherBoss* wither = static_cast<WitherBoss*>(mMob);
-    mMob->mFlyingSpeed /= 15.0f;
     mIsPathing = false;
+    wither->mFlyingSpeed /= 15.0f;
     wither->setWantsToMove(false);
     wither->setIsPathing(false);
     wither->setShotDelay(20);
@@ -52,23 +52,29 @@ bool WitherRandomAttackPosGoal::canUse()
     {
         Vec3* targetPos = mMob->getTarget()->getPos(1.0f);
 
-        if (!mIsPathing)
+        if (mIsPathing)
         {
-            boost::shared_ptr<PathfinderMob> mob =
-                boost::static_pointer_cast<PathfinderMob>(mMob->shared_from_this());
-            Vec3* position = RandomPos::getPos(mob, mXz, mY, -1);
-            if (position != NULL)
-            {
-                Vec3* direction = position->subtract(mMob->mX, mMob->mY, mMob->mZ);
-                direction->y = 0.0;
-                Vec3* target = direction->normalize()->multiply((float)mXz, (float)mXz, (float)mXz)->add(targetPos);
-                target->y = mMob->mY;
-                mWantedX = target->x;
-                mWantedY = target->y;
-                mWantedZ = target->z;
-                return true;
-            }
+            return false;
         }
+
+        boost::shared_ptr<PathfinderMob> mob =
+            boost::static_pointer_cast<PathfinderMob>(mMob->shared_from_this());
+        Vec3* position = RandomPos::getPos(mob, mXz, mY, -1);
+        if (position == NULL)
+        {
+            return false;
+        }
+
+        position = position->subtract(mMob->mX, mMob->mY, mMob->mZ);
+        position->y = 0.0;
+        position = position->normalize();
+        position = position->multiply((float)mXz, (float)mXz, (float)mXz);
+        position = position->add(targetPos);
+        position->y = mMob->mY;
+        mWantedX = position->x;
+        mWantedY = position->y;
+        mWantedZ = position->z;
+        return true;
     }
 
     return false;

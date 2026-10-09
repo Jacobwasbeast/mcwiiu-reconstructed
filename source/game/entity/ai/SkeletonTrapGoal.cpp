@@ -84,9 +84,8 @@ void SkeletonTrapGoal::tick()
         boost::shared_ptr<AbstractHorse> trapHorse = createHorse(difficulty);
         boost::shared_ptr<Skeleton> trapSkeleton = createSkeleton(difficulty, trapHorse);
         trapSkeleton->startRiding(trapHorse);
-        double pushX = mHorse->getRandom()->nextGaussian() * 0.5;
-        double pushZ = mHorse->getRandom()->nextGaussian() * 0.5;
-        trapHorse->push(pushX, 0.0, pushZ);
+        trapHorse->push(mHorse->getRandom()->nextGaussian() * 0.5, 0.0,
+                        mHorse->getRandom()->nextGaussian() * 0.5);
     }
 }
 

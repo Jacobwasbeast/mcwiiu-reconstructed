@@ -7,7 +7,7 @@
 
 bool LivingShulkerSelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    return entity->GetType() == EntityType::SHULKER && entity->isAlive();
+    return eTYPE_DERIVED_FROM(EntityType::SHULKER, entity->GetType()) && entity->isAlive();
 }
 
 LivingShulkerSelector::~LivingShulkerSelector()

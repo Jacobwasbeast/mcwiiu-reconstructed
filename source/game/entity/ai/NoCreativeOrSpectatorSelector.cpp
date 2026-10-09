@@ -6,7 +6,7 @@
 
 bool NoCreativeOrSpectatorSelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
         && boost::static_pointer_cast<Player>(entity)->isSpectator()
         && boost::static_pointer_cast<Player>(entity)->isCreative())
     {

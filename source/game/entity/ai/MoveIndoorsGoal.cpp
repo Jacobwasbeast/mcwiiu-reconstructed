@@ -17,11 +17,10 @@
 
 MoveIndoorsGoal::MoveIndoorsGoal(PathfinderMob* mob)
     : Goal(),
-      mMob(mob),
-      mDoorInfo(),
-      mDoorX(-1),
-      mDoorZ(-1)
+      mDoorInfo()
 {
+    mDoorX = mDoorZ = -1;
+    mMob = mob;
     setRequiredControlFlags(1);
 }
 
@@ -75,13 +74,16 @@ void MoveIndoorsGoal::start()
     }
 
     BlockPos pos = doorInfo->getIndoorPos();
+    int x = pos.getX();
+    int y = pos.getY();
+    int z = pos.getZ();
     if (mMob->distanceToSqr(pos) > 256.0)
     {
         Vec3* destination = RandomPos::getPosTowards(
             boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this()),
             14,
             3,
-            Vec3::newTemp((double)pos.x + 0.5, (double)pos.y, (double)pos.z + 0.5));
+            Vec3::newTemp((double)x + 0.5, (double)y, (double)z + 0.5));
         if (destination != NULL)
         {
             mMob->getNavigation()->moveTo(destination->x, destination->y,
@@ -90,10 +92,7 @@ void MoveIndoorsGoal::start()
     }
     else
     {
-        mMob->getNavigation()->moveTo((double)pos.x + 0.5,
-                                      (double)pos.y,
-                                      (double)pos.z + 0.5,
-                                      1.0);
+        mMob->getNavigation()->moveTo((double)x + 0.5, (double)y, (double)z + 0.5, 1.0);
     }
 }
 

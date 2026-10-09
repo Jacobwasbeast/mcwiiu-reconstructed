@@ -103,7 +103,7 @@ bool LlamaFollowCaravanGoal::canUse()
     mLlama->joinCaravan(closest);
     ++distance;
 
-    if (leashHolder && (leashHolder->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+    if (leashHolder && eTYPE_DERIVED_FROM(EntityType::PLAYER, leashHolder->GetType())
         && distance > 4)
     {
         boost::static_pointer_cast<Player>(leashHolder)->awardStat(

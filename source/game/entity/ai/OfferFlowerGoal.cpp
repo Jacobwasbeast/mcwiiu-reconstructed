@@ -14,8 +14,9 @@
 #include "game/world/generation/VillagerGolem.hpp"
 
 OfferFlowerGoal::OfferFlowerGoal(VillagerGolem* golem)
-    : mGolem(golem), mTarget(), mTicks(0)
 {
+    mTicks = 0;
+    mGolem = golem;
     setRequiredControlFlags(3);
 }
 

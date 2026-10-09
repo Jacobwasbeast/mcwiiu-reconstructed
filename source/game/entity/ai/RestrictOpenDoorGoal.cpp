@@ -13,9 +13,9 @@
 
 RestrictOpenDoorGoal::RestrictOpenDoorGoal(PathfinderMob* mob)
     : Goal(),
-      mMob(mob),
       mDoorInfo()
 {
+    mMob = mob;
 }
 
 bool RestrictOpenDoorGoal::canUse()

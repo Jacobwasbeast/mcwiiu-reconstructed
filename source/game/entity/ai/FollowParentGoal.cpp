@@ -11,8 +11,10 @@
 #include "game/world/block/BlockPos.hpp"
 
 FollowParentGoal::FollowParentGoal(Animal* animal, double speedModifier)
-    : mAnimal(animal), mParentAnimal(), mSpeedModifier(speedModifier), mTimeToRecalcPath(0)
 {
+    mTimeToRecalcPath = 0;
+    mAnimal = animal;
+    mSpeedModifier = speedModifier;
 }
 
 bool FollowParentGoal::canUse()
@@ -92,8 +94,7 @@ void FollowParentGoal::stop()
 
 void FollowParentGoal::tick()
 {
-    --mTimeToRecalcPath;
-    if (mTimeToRecalcPath < 1)
+    if (--mTimeToRecalcPath <= 0)
     {
         mTimeToRecalcPath = 10;
         mAnimal->getNavigation()->moveTo(mParentAnimal.lock(), mSpeedModifier);

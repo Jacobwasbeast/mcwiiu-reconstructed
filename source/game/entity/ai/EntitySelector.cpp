@@ -14,7 +14,7 @@
 
 bool validPlayerPredicate(boost::shared_ptr<Player> player)
 {
-    static Predicate<boost::shared_ptr<Entity> >* validPlayerDistance =
+    static Predicate<boost::shared_ptr<Entity> >* const validPlayerDistance =
         EntitySelector::withinDistance(0.0, 128.0, 0.0, 192.0);
 
     return EntitySelector::ENTITY_STILL_ALIVE->apply(player)

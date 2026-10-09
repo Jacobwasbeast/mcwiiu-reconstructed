@@ -7,8 +7,7 @@
 
 bool ShulkerDefenseAttackGoalPredicate::apply(boost::shared_ptr<Entity> entity) const
 {
-    return (entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY
-        && (entity->GetType() & EntityType::ENEMY) == EntityType::ENEMY;
+    return entity->instanceof(EntityType::LIVING_ENTITY) && entity->instanceof(EntityType::ENEMY);
 }
 
 ShulkerDefenseAttackGoalPredicate::~ShulkerDefenseAttackGoalPredicate()

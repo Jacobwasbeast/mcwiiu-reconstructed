@@ -32,7 +32,7 @@ void TurtleBreedGoal::breed()
 
     if (player)
     {
-        player->awardStat(gStats->get_breedEntity(mTurtle->GetType()),
+        player->awardStat(GenericStats::breedEntity(mTurtle->GetType()),
                           GenericStats::param_breedEntity(mTurtle->GetType()));
     }
 
@@ -43,10 +43,9 @@ void TurtleBreedGoal::breed()
     Random* random = mAnimal->getRandom();
     if (mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBLOOT))
     {
-        boost::shared_ptr<ExperienceOrb> orb(new ExperienceOrb(
+        mLevel->addEntity(boost::shared_ptr<ExperienceOrb>(new ExperienceOrb(
             mLevel, mAnimal->mX, mAnimal->mY, mAnimal->mZ,
-            random->nextInt(7) + 1));
-        mLevel->addEntity(orb);
+            random->nextInt(7) + 1)));
     }
 }
 

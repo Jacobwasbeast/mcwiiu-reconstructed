@@ -39,15 +39,15 @@ bool LeapAtTargetGoal::canUse()
 bool LeapAtTargetGoal::canContinueToUse()
 {
     boost::shared_ptr<LivingEntity> target = mTarget.lock();
-    if (!target)
+    if (target)
     {
-        return false;
-    }
-    if ((target->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
-    {
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType()))
+        {
+            return target->mLevel->getDifficulty() != Difficulty::PEACEFUL && !mMob->mOnGround;
+        }
         return !mMob->mOnGround;
     }
-    return target->mLevel->getDifficulty() != Difficulty::PEACEFUL && !mMob->mOnGround;
+    return false;
 }
 
 void LeapAtTargetGoal::start()

@@ -57,39 +57,40 @@ bool FindMountGoal::canUse()
     for (unsigned int i = 0; i < entities->size(); ++i)
     {
         boost::shared_ptr<Entity> candidate = entities->at(i);
-        if ((candidate->GetType() & EntityType::MOB) != EntityType::MOB || mMob->getId() == candidate->getId())
-            continue;
-
-        boost::shared_ptr<Mob> mount = boost::static_pointer_cast<Mob>(candidate);
-        boost::shared_ptr<Entity> self = mMob->shared_from_this();
-        if (!mount->isAlive() || !mount->canAddPassenger(self) || mount->isSleeping())
-            continue;
-        if ((mount->GetType() & EntityType::TAMABLE_ANIMAL) == EntityType::TAMABLE_ANIMAL &&
-            boost::static_pointer_cast<TamableAnimal>(mount)->isTame())
-            continue;
-        if ((mount->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE &&
-            boost::static_pointer_cast<AbstractHorse>(mount)->isTamed())
-            continue;
-        if (mount->isBaby() || (mAvoidWater && mount->isInWater()))
-            continue;
-
-        bool mountType = false;
-        for (unsigned int index = 0; index < sizeof(mountTypes) / sizeof(mountTypes[0]); ++index)
+        if (eTYPE_DERIVED_FROM(EntityType::MOB, candidate->GetType()) && mMob->getId() != candidate->getId())
         {
-            if (mount->GetType() == mountTypes[index])
+            boost::shared_ptr<Mob> mount = boost::static_pointer_cast<Mob>(candidate);
+            boost::shared_ptr<Entity> self = mMob->shared_from_this();
+            if (mount->isAlive() && mount->canAddPassenger(self) && !mount->isSleeping())
             {
-                mountType = true;
-                break;
-            }
-        }
-        if (!mountType)
-            continue;
+                if ((eTYPE_DERIVED_FROM(EntityType::TAMABLE_ANIMAL, mount->GetType()) &&
+                     boost::static_pointer_cast<TamableAnimal>(mount)->isTame()) ||
+                    (eTYPE_DERIVED_FROM(EntityType::ABSTRACT_HORSE, mount->GetType()) &&
+                     boost::static_pointer_cast<AbstractHorse>(mount)->isTamed()) ||
+                    mount->isBaby())
+                    continue;
+                if (mAvoidWater && mount->isInWater())
+                    continue;
 
-        double distance = mount->distanceToSqr(self);
-        if (nearestDistance < 0.0 || distance < nearestDistance)
-        {
-            mTarget = mount;
-            nearestDistance = distance;
+                bool mountType = false;
+                for (unsigned int index = 0; index < sizeof(mountTypes) / sizeof(mountTypes[0]); ++index)
+                {
+                    if (mount->GetType() == mountTypes[index])
+                    {
+                        mountType = true;
+                        break;
+                    }
+                }
+                if (!mountType)
+                    continue;
+
+                double distance = mount->distanceToSqr(self);
+                if (nearestDistance < 0.0 || distance < nearestDistance)
+                {
+                    mTarget = mount;
+                    nearestDistance = distance;
+                }
+            }
         }
     }
 

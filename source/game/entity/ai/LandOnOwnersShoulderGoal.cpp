@@ -8,8 +8,8 @@
 #include "game/world/generation/Player.hpp"
 
 LandOnOwnersShoulderGoal::LandOnOwnersShoulderGoal(ShoulderRidingEntity* owner)
-    : mOwner(owner)
 {
+    mOwner = owner;
 }
 
 bool LandOnOwnersShoulderGoal::canUse()
@@ -38,14 +38,9 @@ void LandOnOwnersShoulderGoal::tick()
     if (!mShoulderRiding && !mOwner->isSitting() && !mOwner->isLeashed())
     {
         boost::shared_ptr<Player> player = mPlayer.lock();
-        if (player)
+        if (player && mOwner->mBoundingBox->intersects(player->mBoundingBox))
         {
-            AABB* playerBox = player->mBoundingBox;
-            if (mOwner->mBoundingBox->intersects(playerBox->mMinX, playerBox->mMinY, playerBox->mMinZ,
-                                                 playerBox->mMaxX, playerBox->mMaxY, playerBox->mMaxZ))
-            {
-                mShoulderRiding = mOwner->setEntityOnShoulder(player);
-            }
+            mShoulderRiding = mOwner->setEntityOnShoulder(player);
         }
     }
 }

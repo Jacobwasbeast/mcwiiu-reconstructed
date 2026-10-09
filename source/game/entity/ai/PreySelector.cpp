@@ -5,7 +5,7 @@
 
 bool PreySelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    return entity->GetType() == EntityType::SHEEP || entity->GetType() == EntityType::RABBIT;
+    return eTYPE_DERIVED_FROM(EntityType::SHEEP, entity->GetType()) || eTYPE_DERIVED_FROM(EntityType::RABBIT, entity->GetType());
 }
 
 PreySelector::~PreySelector()

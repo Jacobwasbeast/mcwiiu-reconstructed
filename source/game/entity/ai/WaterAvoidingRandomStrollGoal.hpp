@@ -14,6 +14,8 @@ public:
     virtual ~WaterAvoidingRandomStrollGoal() {}
     virtual Vec3* getPosition();
 
+    static const float PROBABILITY;
+
 protected:
     float mProbability;
 };

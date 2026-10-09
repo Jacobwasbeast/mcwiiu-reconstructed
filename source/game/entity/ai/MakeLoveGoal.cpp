@@ -65,10 +65,10 @@ bool MakeLoveGoal::canUse()
         return false;
 
     mPartner = boost::weak_ptr<Villager>(boost::dynamic_pointer_cast<Villager>(entity));
-    if (mPartner.lock()->getAge() == 0 && mPartner.lock()->isWillingToBreed(true))
-        return true;
+    if (mPartner.lock()->getAge() != 0 || !mPartner.lock()->isWillingToBreed(true))
+        return false;
 
-    return false;
+    return true;
 }
 
 void MakeLoveGoal::start()
@@ -95,18 +95,18 @@ void MakeLoveGoal::breed()
     mPartner.lock()->setAge(6000);
     mVillager->setAge(6000);
 
-    if (!mLevel->canCreateMore(EntityType::VILLAGER, Level::eSpawnType_Breed))
-        return;
+    if (mLevel->canCreateMore(EntityType::VILLAGER, Level::eSpawnType_Breed))
+    {
+        boost::shared_ptr<Villager> villager = boost::dynamic_pointer_cast<Villager>(
+            mVillager->getBreedOffspring(mPartner.lock()));
 
-    boost::shared_ptr<Villager> villager = boost::dynamic_pointer_cast<Villager>(
-        mVillager->getBreedOffspring(mPartner.lock()));
-
-    mPartner.lock()->setWillingToBreed(false);
-    mVillager->setWillingToBreed(false);
-    villager->setAge(-24000);
-    villager->moveTo(mVillager->mX, mVillager->mY, mVillager->mZ, 0.0f, 0.0f);
-    mLevel->addEntity(villager);
-    mLevel->broadcastEntityEvent(villager, EntityEvent::LOVE_HEARTS, 0);
+        mPartner.lock()->setWillingToBreed(false);
+        mVillager->setWillingToBreed(false);
+        villager->setAge(-24000);
+        villager->moveTo(mVillager->mX, mVillager->mY, mVillager->mZ, 0.0f, 0.0f);
+        mLevel->addEntity(villager);
+        mLevel->broadcastEntityEvent(villager, EntityEvent::LOVE_HEARTS, 0);
+    }
 }
 
 void MakeLoveGoal::tick()

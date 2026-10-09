@@ -17,11 +17,11 @@
 
 TurtleLayEggGoal::TurtleLayEggGoal(Turtle* turtle, double speedModifier,
                                    double searchDistance)
-    : MoveToBlockGoal(turtle, speedModifier, Mth::ceil((float)searchDistance), 1, 1.0),
-      mTurtle(turtle),
-      mLayEggCounter(0),
-      mSearchDistanceSquared(searchDistance * searchDistance)
+    : MoveToBlockGoal(turtle, speedModifier, Mth::ceil((float)searchDistance), 1, 1.0)
 {
+    mLayEggCounter = 0;
+    mTurtle = turtle;
+    mSearchDistanceSquared = searchDistance * searchDistance;
 }
 
 TurtleLayEggGoal::~TurtleLayEggGoal()
@@ -39,14 +39,14 @@ bool TurtleLayEggGoal::homeIsValid()
 {
     int verticalSearchStart = mVerticalSearchStart;
     int searchRange = mSearchRange;
-    for (int y = 0; y <= verticalSearchStart; y = y <= 0 ? 1 - y : -y)
+    for (int y = 0; y <= verticalSearchStart; y = y > 0 ? -y : 1 - y)
     {
         for (int radius = 0; radius < searchRange; ++radius)
         {
-            for (int x = 0; x <= radius; x = x <= 0 ? 1 - x : -x)
+            for (int x = 0; x <= radius; x = x > 0 ? -x : 1 - x)
             {
-                int firstZ = x < radius && x > -radius ? radius : 0;
-                for (int z = firstZ; z <= radius; z = z <= 0 ? 1 - z : -z)
+                for (int z = x < radius && x > -radius ? radius : 0;
+                     z <= radius; z = z > 0 ? -z : 1 - z)
                 {
                     BlockPos candidate = mTurtle->getHomePos().offset(x, y - 1, z);
                     if (isValidTarget(mTurtle->mLevel, candidate))

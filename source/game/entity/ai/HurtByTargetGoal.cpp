@@ -17,25 +17,23 @@
 HurtByTargetGoal::HurtByTargetGoal(PathfinderMob* mob, bool alertSameType,
                                    arrayWithLength<unsigned long long> entityTypes)
     : TargetGoal(mob, false),
-      mAlertSameType(alertSameType),
-      mEntityTypes(NULL),
-      mEntityTypesLength(0)
+      mAlertSameType(alertSameType)
 {
-    mEntityTypes = entityTypes.data;
-    mEntityTypesLength = entityTypes.length;
+    mEntityTypes = entityTypes;
     setRequiredControlFlags(1);
     mTimestamp = 0;
 }
 
 HurtByTargetGoal::~HurtByTargetGoal()
 {
-    delete[] mEntityTypes;
+    delete[] mEntityTypes.data;
 }
 
 bool HurtByTargetGoal::canUse()
 {
-    return mMob->getLastHurtByMobTimestamp() != mTimestamp
-        && canAttack(mMob->getLastHurtByMob(), false) && !mMob->mHurtByPlayerOnPeaceful;
+    int timestamp = mMob->getLastHurtByMobTimestamp();
+    return timestamp != mTimestamp && canAttack(mMob->getLastHurtByMob(), false)
+        && !mMob->mHurtByPlayerOnPeaceful;
 }
 
 void HurtByTargetGoal::alertOthers()
@@ -51,14 +49,14 @@ void HurtByTargetGoal::alertOthers()
     {
         boost::shared_ptr<PathfinderMob> mob =
             boost::dynamic_pointer_cast<PathfinderMob>(*it);
-        if (mob == mMob->shared_from_this())
+        if (mMob->shared_from_this() == mob)
             continue;
 
         if (mob->getTarget())
             continue;
 
-        if ((mMob->GetType() & EntityType::TAMABLE_ANIMAL) == EntityType::TAMABLE_ANIMAL
-            && (mob->GetType() & EntityType::TAMABLE_ANIMAL) == EntityType::TAMABLE_ANIMAL
+        if (eTYPE_DERIVED_FROM(EntityType::TAMABLE_ANIMAL, mMob->GetType())
+            && eTYPE_DERIVED_FROM(EntityType::TAMABLE_ANIMAL, mob->GetType())
             && static_cast<TamableAnimal*>(mMob)->getOwner() != boost::dynamic_pointer_cast<TamableAnimal>(mob)->getOwner())
             continue;
 
@@ -67,9 +65,10 @@ void HurtByTargetGoal::alertOthers()
 
         bool excluded = false;
         unsigned int i;
-        for (i = 0; i != mEntityTypesLength; ++i)
+        for (i = 0; i != mEntityTypes.length; ++i)
         {
-            if (mEntityTypes[i] == mob->GetType())
+            unsigned long long entityType = mEntityTypes[i];
+            if (entityType == mob->GetType())
             {
                 excluded = true;
                 break;

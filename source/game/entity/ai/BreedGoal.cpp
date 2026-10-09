@@ -1,6 +1,7 @@
 #include "game/entity/ai/BreedGoal.hpp"
 
 #include <boost/shared_ptr.hpp>
+#include <cfloat>
 #include <string>
 #include <typeinfo>
 #include <vector>
@@ -33,9 +34,13 @@ BreedGoal::BreedGoal(Animal* animal, double speedModifier)
 }
 
 BreedGoal::BreedGoal(Animal* animal, double speedModifier, const std::type_info& partnerType)
-    : mAnimal(animal), mPartner(), mLevel(animal->mLevel),
-      mPartnerType(&partnerType), mTicks(0), mSpeedModifier(speedModifier)
+    : mPartner()
 {
+    mPartnerType = &partnerType;
+    mTicks = 0;
+    mSpeedModifier = speedModifier;
+    mAnimal = animal;
+    mLevel = animal->mLevel;
     setRequiredControlFlags(3);
 }
 
@@ -44,10 +49,9 @@ boost::shared_ptr<Animal> BreedGoal::getFreePartner()
     AABB* area = mAnimal->mBoundingBox->grow(8.0);
     std::vector<boost::shared_ptr<Entity> >* entities =
         mLevel->getEntitiesOfClass(*mPartnerType, area);
+    double nearest = DBL_MAX;
     boost::shared_ptr<Animal> partner;
-    double nearest = 1.7976931348623157e+308;
-    std::vector<boost::shared_ptr<Entity> >::const_iterator it;
-    for (it = entities->begin(); it != entities->end(); ++it)
+    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
         boost::shared_ptr<Animal> candidate = boost::dynamic_pointer_cast<Animal>(*it);
         if (mAnimal->canMate(candidate) && mAnimal->distanceToSqr(candidate) < nearest)
@@ -92,17 +96,17 @@ void BreedGoal::tick()
     {
         BlockPos pos(partner);
         Path* path = mAnimal->getNavigation()->getPath();
+        bool atEnd = false;
         if (path != NULL)
         {
-            bool atEnd = false;
-            if (path->endsIn(Vec3::newTemp(&pos)) && path->IsWithinStepsToTheEnd(1))
-                atEnd = true;
-            if (atEnd)
-            {
-                bool seen = mAnimal->getSensing()->canSee(partner);
-                if (seen && mAnimal->distanceToSqr(partner) < 9.0)
-                    breed();
-            }
+            atEnd = path->endsIn(Vec3::newTemp(&pos));
+            atEnd = atEnd && path->IsWithinStepsToTheEnd(1);
+        }
+        if (atEnd)
+        {
+            bool seen = mAnimal->getSensing()->canSee(partner);
+            if (seen && mAnimal->distanceToSqr(partner) < 9.0)
+                breed();
         }
     }
 }

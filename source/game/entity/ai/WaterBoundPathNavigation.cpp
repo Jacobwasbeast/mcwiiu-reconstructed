@@ -55,14 +55,12 @@ void WaterBoundPathNavigation::updatePath()
         (float)Mth::abs(mMob->mY - currentPos->y) < distance + distance)
         mPath->next();
 
-    int index = mPath->getIndex();
-    int size = mPath->getSize();
-    int best = index + 6;
-    if (size - 1 < best)
-        best = size - 1;
+    int best = mPath->getIndex() + 6;
+    int lastIndex = mPath->getSize() - 1;
+    if (lastIndex < best)
+        best = lastIndex;
 
-    index = mPath->getIndex();
-    while (index < best)
+    while (mPath->getIndex() < best)
     {
         Vec3* position = mPath->getPos(mMob->shared_from_this(), best);
         if (position->distanceToSqr(mobPos) <= 36.0 &&
@@ -73,15 +71,14 @@ void WaterBoundPathNavigation::updatePath()
             return;
         }
         --best;
-        index = mPath->getIndex();
     }
     doStuckDetection(mobPos);
 }
 
 bool WaterBoundPathNavigation::canMoveDirectly(Vec3* a, Vec3* b, int x, int y, int z)
 {
-    Vec3* target = Vec3::newTemp(b->x, b->y + (double)mMob->mBbHeight * 0.5, b->z);
-    HitResult* result = mLevel->clip(a, target, false, true, false, false, NULL, false);
+    HitResult* result = mLevel->clip(a, Vec3::newTemp(b->x, b->y + (double)mMob->mBbHeight * 0.5, b->z), false, true,
+                                     false, false, NULL, false);
     bool clear = result == NULL || result->mType == HitResult::MISS;
     delete result;
     return clear;

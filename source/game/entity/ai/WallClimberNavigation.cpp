@@ -41,44 +41,39 @@ Path* WallClimberNavigation::createPath(boost::shared_ptr<Entity> entity)
 bool WallClimberNavigation::moveTo(boost::shared_ptr<Entity> entity, double speed)
 {
     Path* path = createPath(entity);
-    if (path == 0)
+    if (path != 0)
+    {
+        return moveTo(path, speed);
+    }
+    else
     {
         setPosition(new BlockPos(entity));
         mSpeedModifier = speed;
         return true;
     }
-    return moveTo(path, speed);
 }
 
 void WallClimberNavigation::tick()
 {
-    if (!isDone())
+    if (isDone())
+    {
+        if (mTargetPos != 0)
+        {
+            double widthSquared = mMob->mBbWidth * mMob->mBbWidth;
+
+            if (mMob->distanceSqrToBlockPosCenter(*mTargetPos) < widthSquared ||
+                (mMob->mY > mTargetPos->getY() && mMob->distanceSqrToBlockPosCenter(BlockPos(mTargetPos->getX(), (int)std::floor(mMob->mY), mTargetPos->getZ())) < widthSquared))
+            {
+                mTargetPos = 0;
+            }
+            else
+            {
+                mMob->getMoveControl()->setWantedPosition(mTargetPos->getX(), mTargetPos->getY(), mTargetPos->getZ(), mSpeedModifier);
+            }
+        }
+    }
+    else
     {
         PathNavigation::tick();
-        return;
     }
-    if (mTargetPos == 0)
-    {
-        return;
-    }
-
-    const double widthSquared = (double)(mMob->mBbWidth * mMob->mBbWidth);
-    if (widthSquared <= mMob->distanceSqrToBlockPosCenter(*mTargetPos))
-    {
-        if (mMob->mY <= (double)mTargetPos->y)
-        {
-            mMob->getMoveControl()->setWantedPosition(
-                (double)mTargetPos->x, (double)mTargetPos->y, (double)mTargetPos->z, mSpeedModifier);
-            return;
-        }
-
-        BlockPos pos(mTargetPos->x, (int)std::floor(mMob->mY), mTargetPos->z);
-        if (widthSquared <= mMob->distanceSqrToBlockPosCenter(pos))
-        {
-            mMob->getMoveControl()->setWantedPosition(
-                (double)mTargetPos->x, (double)mTargetPos->y, (double)mTargetPos->z, mSpeedModifier);
-            return;
-        }
-    }
-    mTargetPos = 0;
 }

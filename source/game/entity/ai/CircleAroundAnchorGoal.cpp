@@ -62,13 +62,12 @@ void CircleAroundAnchorGoal::setAnchorAboveTarget()
     }
 
     Vec3* position = target->getPos(0.0f)->add(0.0, (double)mHeightRange.min, 0.0);
-    if (mHeightRange.max - mHeightRange.min > 0.0f)
+    float range = mHeightRange.max - mHeightRange.min;
+    if (range > 0.0f)
     {
-        position = position->add(0.0,
-                                 (double)mMob->mLevel->mRandom->nextFloat(mHeightRange.max - mHeightRange.min),
-                                 0.0);
+        position = position->add(0.0, (double)mMob->mLevel->mRandom->nextFloat(range), 0.0);
     }
-    int seaLevel = mMob->mLevel->getSeaLevel();
+    int seaLevel = mMob->mLevel->mSeaLevel;
     if (position->y <= (double)seaLevel)
     {
         position->y = (double)(seaLevel + 1);
@@ -94,7 +93,7 @@ void CircleAroundAnchorGoal::selectNext()
         }
     }
 
-    mAngle += mDirection * 30.0f * 0.017453292f;
+    mAngle += mDirection * 30.0f * Mth::DEG_TO_RAD;
     Vec3* wanted = anchor->add((double)(mCurrentDistance * Mth::cos(mAngle)),
                                (double)mCurrentHeight,
                                (double)(mCurrentDistance * Mth::sin(mAngle)));
@@ -112,7 +111,7 @@ void CircleAroundAnchorGoal::selectNext()
 void CircleAroundAnchorGoal::start()
 {
     Random* random = mMob->mLevel->mRandom;
-    mCurrentDistance = random->nextFloat() * (mDistanceRange.max - mDistanceRange.min) + mDistanceRange.min;
+    mCurrentDistance = mDistanceRange.min + random->nextFloat() * (mDistanceRange.max - mDistanceRange.min);
     mCurrentHeight = calculateHeightOffset();
     mDirection = random->nextBoolean() ? 1.0f : -1.0f;
     if (mMob->getTarget())
@@ -163,47 +162,53 @@ void CircleAroundAnchorGoal::tick()
         setAnchorAboveTarget();
     }
 
-    if (mVerticalRange.min < mVerticalRange.max
+    if (mVerticalRange.max > mVerticalRange.min
         && (mVerticalInterval == 0 || random->nextInt(mVerticalInterval) == 0))
     {
         mCurrentHeight = calculateHeightOffset();
     }
 
-    if (mDistanceRange.min < mDistanceRange.max
+    if (mDistanceRange.max > mDistanceRange.min
         && (mDistanceInterval == 0 || random->nextInt(mDistanceInterval) == 0))
     {
-        float nextDistance = mCurrentDistance + 1.0f;
-        if (mDistanceRange.max < nextDistance)
+        if (mCurrentDistance + 1.0f <= mDistanceRange.max)
+        {
+            mCurrentDistance += 1.0f;
+        }
+        else
         {
             mCurrentDistance = mDistanceRange.min;
             mDirection = -mDirection;
         }
-        else
-        {
-            mCurrentDistance = nextDistance;
-        }
     }
 
     Vec3* position = mMob->getPos(0.0f);
-    phys::Vec2* current = phys::Vec2::newTemp((float)position->x, (float)position->z);
-    phys::Vec2* wanted = phys::Vec2::newTemp((float)mMob->getMoveControl()->getWantedX(),
-                                             (float)mMob->getMoveControl()->getWantedZ());
-    double distanceToWanted = wanted->distanceToSqr(current);
+    double distanceToWanted = phys::Vec2::newTemp((float)mMob->getMoveControl()->getWantedX(),
+                                                  (float)mMob->getMoveControl()->getWantedZ())
+                                  ->distanceToSqr(phys::Vec2::newTemp((float)position->x, (float)position->z));
 
-    if (distanceToWanted < (double)mMinDistanceSquared
-        && mMob->getMoveControl()->getWantedY() < mMob->getPos(0.0f)->y
-        && !mMob->mLevel->isEmptyBlock(BlockPos(mMob->getPos(0.0f)).below(1)))
+    if (distanceToWanted < (double)mMinDistanceSquared)
     {
-        mCurrentHeight = mCurrentHeight > 1.0f ? mCurrentHeight : 1.0f;
-        selectNext();
+        if (mMob->getMoveControl()->getWantedY() < mMob->getPos(0.0f)->y)
+        {
+            if (!mMob->mLevel->isEmptyBlock(BlockPos(mMob->getPos(0.0f)).below(1)))
+            {
+                mCurrentHeight = mCurrentHeight > 1.0f ? mCurrentHeight : 1.0f;
+                selectNext();
+            }
+        }
     }
 
-    if (distanceToWanted < (double)mMinDistanceSquared
-        && mMob->getMoveControl()->getWantedY() > mMob->getPos(0.0f)->y
-        && !mMob->mLevel->isEmptyBlock(BlockPos(mMob->getPos(0.0f)).above(1)))
+    if (distanceToWanted < (double)mMinDistanceSquared)
     {
-        mCurrentHeight = mCurrentHeight > -1.0f ? -1.0f : mCurrentHeight;
-        selectNext();
+        if (mMob->getMoveControl()->getWantedY() > mMob->getPos(0.0f)->y)
+        {
+            if (!mMob->mLevel->isEmptyBlock(BlockPos(mMob->getPos(0.0f)).above(1)))
+            {
+                mCurrentHeight = mCurrentHeight < -1.0f ? mCurrentHeight : -1.0f;
+                selectNext();
+            }
+        }
     }
 
     if (touchingTarget())

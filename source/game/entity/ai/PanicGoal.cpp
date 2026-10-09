@@ -13,20 +13,21 @@
 #include "game/entity/mob/PathfinderMob.hpp"
 
 PanicGoal::PanicGoal(PathfinderMob* mob, double speedModifier)
-    : mMob(mob), mSpeedModifier(speedModifier), mWantedX(0.0), mWantedY(0.0), mWantedZ(0.0)
+    : mMob(mob), mSpeedModifier(speedModifier)
 {
+    mWantedX = mWantedY = mWantedZ = 0.0;
     setRequiredControlFlags(1);
 }
 
 BlockPos* PanicGoal::lookForWater(Level* level, Entity* entity, int range, int verticalRange)
 {
     BlockPos origin(entity);
-    BlockPos* result = NULL;
     int originX = origin.x;
     int originY = origin.y;
     int originZ = origin.z;
     float bestDistance = static_cast<float>(range * range * verticalRange * 2);
     BlockPos pos(0, 0, 0);
+    BlockPos* result = NULL;
 
     for (int x = originX - range; x <= originX + range; ++x)
     {
@@ -44,8 +45,8 @@ BlockPos* PanicGoal::lookForWater(Level* level, Entity* entity, int range, int v
                         + (z - originZ) * (z - originZ));
                     if (distance < bestDistance)
                     {
-                        result = new BlockPos(pos);
                         bestDistance = distance;
+                        result = new BlockPos(pos);
                     }
                 }
             }

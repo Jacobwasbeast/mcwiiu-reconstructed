@@ -44,11 +44,11 @@ double NearestAttackableTargetGoal::DisguisedRangeModifier::apply(boost::shared_
     if (item->getItem() == Items::skull)
     {
         int damage = item->getDamageValue();
-        bool isSkeleton = mMob->GetType() == EntityType::SKELETON;
+        bool isSkeleton = eTYPE_DERIVED_FROM(EntityType::SKELETON, mMob->GetType());
         bool disguisedAsSkeleton = isSkeleton && damage == 0;
         bool disguisedAsZombie =
-            (mMob->GetType() & EntityType::ZOMBIE) == EntityType::ZOMBIE && damage == 2;
-        bool isCreeper = mMob->GetType() == EntityType::CREEPER;
+            eTYPE_DERIVED_FROM(EntityType::ZOMBIE, mMob->GetType()) && damage == 2;
+        bool isCreeper = eTYPE_DERIVED_FROM(EntityType::CREEPER, mMob->GetType());
         bool disguisedAsCreeper = isCreeper && damage == 4;
         if (disguisedAsSkeleton || disguisedAsZombie || disguisedAsCreeper)
             return 0.5;

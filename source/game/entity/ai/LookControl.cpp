@@ -21,7 +21,7 @@ LookControl::LookControl(Mob* mob)
 void LookControl::setLookAt(boost::shared_ptr<Entity> entity, float yMaxRotationIncrease, float xMaxRotationIncrease)
 {
     mWantedX = entity->mX;
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
     {
         mWantedY = boost::static_pointer_cast<LivingEntity>(entity)->getEyeHeight() + entity->mY;
     }
@@ -80,7 +80,7 @@ float LookControl::rotlerp(float from, float to, float maxDelta)
 
 void LookControl::tick()
 {
-    if (mMob->GetType() == EntityType::WITHER_BOSS)
+    if (eTYPE_DERIVED_FROM(EntityType::WITHER_BOSS, mMob->GetType()))
     {
         return;
     }

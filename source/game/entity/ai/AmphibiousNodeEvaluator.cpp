@@ -3,6 +3,7 @@
 #include <algorithm>
 
 #include "game/core/EntityType.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/Node.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
@@ -42,34 +43,24 @@ void AmphibiousNodeEvaluator::done()
 
 Node* AmphibiousNodeEvaluator::getStart()
 {
-    const AABB* box = mMob->mBoundingBox;
-    int x = static_cast<int>(box->mMinX);
-    int y = static_cast<int>(box->mMinY + 0.5);
-    int z = static_cast<int>(box->mMinZ);
-    if (box->mMinX < static_cast<double>(x)) --x;
-    if (box->mMinY + 0.5 < static_cast<double>(y)) --y;
-    if (box->mMinZ < static_cast<double>(z)) --z;
-    return getNode(x, y, z);
+    return getNode(Mth::floor(mMob->getBoundingBox()->mMinX), Mth::floor(mMob->getBoundingBox()->mMinY + 0.5),
+                   Mth::floor(mMob->getBoundingBox()->mMinZ));
 }
 
 Node* AmphibiousNodeEvaluator::getGoal(double x, double y, double z)
 {
-    int ix = static_cast<int>(x);
-    int iy = static_cast<int>(y + 0.5);
-    int iz = static_cast<int>(z);
-    if (x < static_cast<double>(ix)) --ix;
-    if (y + 0.5 < static_cast<double>(iy)) --iy;
-    if (z < static_cast<double>(iz)) --iz;
-    return getNode(ix, iy, iz);
+    return getNode(Mth::floor(x), Mth::floor(y + 0.5), Mth::floor(z));
 }
 
 double AmphibiousNodeEvaluator::inWaterDependentPosHeight(const BlockPos& pos)
 {
-    if (mMob->isInWater())
-        return static_cast<double>(pos.y) + 0.5;
-    BlockPos below = pos.below();
-    double y = static_cast<double>(pos.y);
-    return y - (1.0 - getBlockState(mEntity->mTickCache, mLevelSource, below)->getShape(mLevelSource, below)->mMaxY);
+    if (!mMob->isInWater())
+    {
+        BlockPos below = pos.below();
+        const BlockState* state = getBlockState(mEntity->mTickCache, mLevelSource, below);
+        return pos.y - (1.0 - state->getShape(mLevelSource, below)->mMaxY);
+    }
+    return pos.y + 0.5;
 }
 
 Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int verticalRange,
@@ -129,8 +120,8 @@ Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int vertical
         if (below == BlockPathTypes::BLOCKED)
         {
             node = getNode(x, y, z);
-            cachedNode->hasAcceptedNode = true;
             cachedNode->acceptedNode = node;
+            cachedNode->hasAcceptedNode = true;
             node->type = BlockPathTypes::WALKABLE;
             node->costMalus = node->costMalus < malus ? malus : node->costMalus;
             return node;
@@ -139,8 +130,8 @@ Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int vertical
         if (below == BlockPathTypes::WATER)
         {
             node = getNode(x, y, z);
-            cachedNode->hasAcceptedNode = true;
             cachedNode->acceptedNode = node;
+            cachedNode->hasAcceptedNode = true;
             node->type = BlockPathTypes::WATER;
             node->costMalus = node->costMalus < malus ? malus : node->costMalus;
             return node;
@@ -170,9 +161,7 @@ Node* AmphibiousNodeEvaluator::getAcceptedNode(int x, int y, int z, int vertical
                 node = getNode(x, y, z);
                 node->type = type;
                 node->costMalus = node->costMalus < malus ? malus : node->costMalus;
-                cachedNode->hasAcceptedNode = true;
-                cachedNode->acceptedNode = node;
-                return node;
+                break;
             }
         }
     }
@@ -259,7 +248,10 @@ const BlockPathTypes* AmphibiousNodeEvaluator::getBlockPathTypes(LevelSource* le
         for (int dy = 0; dy < sizeY; ++dy)
             for (int dz = 0; dz < sizeZ; ++dz)
             {
-                int key = BlockPos(x + dx, y + dy, z + dz).hashCode();
+                int blockX = dx + x;
+                int blockY = dy + y;
+                int blockZ = dz + z;
+                int key = BlockPos(blockX, blockY, blockZ).hashCode();
                 boost::unordered_map<int, int>::iterator cached = mBlockPathTypeMap.find(key);
                 if (cached != mBlockPathTypeMap.end())
                 {
@@ -267,7 +259,7 @@ const BlockPathTypes* AmphibiousNodeEvaluator::getBlockPathTypes(LevelSource* le
                     continue;
                 }
 
-                const BlockPathTypes* type = getBlockPathType(levelSource, x + dx, y + dy, z + dz);
+                const BlockPathTypes* type = getBlockPathType(levelSource, blockX, blockY, blockZ);
                 if (type == BlockPathTypes::RAIL
                     && !levelSource->getBlockState(mobPos)->getBlock()->instanceof(EBLOCK_TYPE_RAIL))
                 {
@@ -300,8 +292,7 @@ const BlockPathTypes* AmphibiousNodeEvaluator::getBlockPathType(LevelSource* lev
     const BlockPathTypes* type = getBlockPathTypeRaw(levelSource, x, y, z);
     if (type == BlockPathTypes::WATER)
     {
-        for (std::vector<const Direction*>::const_iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end();
-             ++it)
+        for (std::vector<const Direction*>::iterator it = Direction::VALUES.begin(); it != Direction::VALUES.end(); ++it)
         {
             const Direction* direction = *it;
             if (getBlockPathTypeRaw(levelSource, x + direction->getStepX(), y + direction->getStepY(),

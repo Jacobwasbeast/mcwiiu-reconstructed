@@ -14,8 +14,9 @@
 #include "game/world/generation/VillagerGolem.hpp"
 
 TakeFlowerGoal::TakeFlowerGoal(Villager* villager)
-    : mGolem(), mTicks(0), mWantsToTakeFlower(false)
+    : mGolem(), mWantsToTakeFlower(false)
 {
+    mTicks = 0;
     mGolem = boost::weak_ptr<VillagerGolem>();
     mVillager = villager;
     setRequiredControlFlags(3);
@@ -31,7 +32,7 @@ bool TakeFlowerGoal::canUse()
     std::vector<boost::shared_ptr<Entity> >* entities = mVillager->mLevel->getEntitiesOfClass(
         typeid(VillagerGolem), mVillager->mBoundingBox->grow(6.0, 2.0, 6.0));
 
-    if (entities->empty())
+    if (entities->size() == 0)
     {
         delete entities;
         return false;
@@ -43,7 +44,7 @@ bool TakeFlowerGoal::canUse()
         boost::shared_ptr<VillagerGolem> golem = boost::dynamic_pointer_cast<VillagerGolem>(*it);
         if (golem->getOfferFlowerTick() > 0)
         {
-            mGolem = golem;
+            mGolem = boost::weak_ptr<VillagerGolem>(golem);
             break;
         }
     }

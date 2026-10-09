@@ -78,27 +78,28 @@ bool GoalSelector::canCoExist(InternalGoal* goal, InternalGoal* otherGoal)
 
 bool GoalSelector::canUseInSystem(InternalGoal* goal)
 {
-    const int requiredFlags = goal->mGoal->getRequiredControlFlags();
-    if (isControlFlagDisabled(requiredFlags))
+    if (isControlFlagDisabled(goal->mGoal->getRequiredControlFlags()))
     {
         return false;
     }
-    std::vector<InternalGoal*>::iterator it;
-    for (it = mGoals.begin(); it != mGoals.end(); ++it)
+    if (!mGoals.empty())
     {
-        InternalGoal* runningGoal = *it;
-        if (runningGoal != goal)
+        for (std::vector<InternalGoal*>::iterator it = mGoals.begin(); it != mGoals.end(); ++it)
         {
-            if (goal->mPriority < runningGoal->mPriority)
+            InternalGoal* runningGoal = *it;
+            if (runningGoal != goal)
             {
-                if (!runningGoal->mGoal->canInterrupt())
+                if (goal->mPriority >= runningGoal->mPriority)
+                {
+                    if (!canCoExist(goal, runningGoal))
+                    {
+                        return false;
+                    }
+                }
+                else if (!runningGoal->mGoal->canInterrupt())
                 {
                     return false;
                 }
-            }
-            else if (!canCoExist(goal, runningGoal))
-            {
-                return false;
             }
         }
     }

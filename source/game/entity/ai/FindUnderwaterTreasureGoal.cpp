@@ -19,9 +19,7 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Iterator.hpp"
 #include "game/world/block/MutableBlockPos.hpp"
-
-static const std::wstring kRuinName(L"Ruin");
-static const std::wstring kShipwreckName(L"Shipwreck");
+#include "game/world/generation/LargeFeature.hpp"
 
 FindUnderwaterTreasureGoal::FindUnderwaterTreasureGoal(PathfinderMob* mob, float speedModifier, int searchRadius, int maxDistance)
     : Goal(),
@@ -66,8 +64,8 @@ void FindUnderwaterTreasureGoal::start()
     if (!level->mIsClientSide)
     {
         BlockPos pos(mMob->getPos(0.0f));
-        BlockPos* ruin = level->findNearestMapFeature(kRuinName, pos, false);
-        BlockPos* shipwreck = level->findNearestMapFeature(kShipwreckName, pos, false);
+        BlockPos* ruin = level->findNearestMapFeature(LargeFeature::RUIN, pos, false);
+        BlockPos* shipwreck = level->findNearestMapFeature(LargeFeature::SHIPWRECK, pos, false);
 
         BlockPos* chest = NULL;
         Iterator<MutableBlockPos*>* positions = BlockPos::mutablesBetween(
@@ -240,7 +238,7 @@ void FindUnderwaterTreasureGoal::setBribed()
     mBribed = true;
 }
 
-unsigned char FindUnderwaterTreasureGoal::getBribed()
+bool FindUnderwaterTreasureGoal::getBribed()
 {
     return mBribed;
 }

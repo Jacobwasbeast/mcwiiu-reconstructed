@@ -25,7 +25,8 @@ AvoidEntityGoal::AvoidEntityGoal(PathfinderMob* mob, const std::type_info& avoid
 
 AvoidEntityGoal::~AvoidEntityGoal()
 {
-    delete mPath;
+    if (mPath != NULL)
+        delete mPath;
 
     if (mSelector != Predicates<boost::shared_ptr<Entity> >::alwaysTrue)
         delete mSelector;
@@ -35,31 +36,28 @@ AvoidEntityGoal::~AvoidEntityGoal()
 
 void AvoidEntityGoal::_init(PathfinderMob* mob, const Predicate<boost::shared_ptr<Entity> >* selector, float maxDistance, double walkSpeedModifier, double sprintSpeedModifier)
 {
-    mSprintSpeedModifier = sprintSpeedModifier;
-    mWalkSpeedModifier = walkSpeedModifier;
+    mMob = mob;
     mSelector = selector;
     mMaxDistance = maxDistance;
-    mMob = mob;
+    mWalkSpeedModifier = walkSpeedModifier;
+    mSprintSpeedModifier = sprintSpeedModifier;
     mNavigation = mob->getNavigation();
     setRequiredControlFlags(1);
     mEntitySelector = new AvoidEntityGoalEntitySelector(this);
-    mToAvoid.reset();
+    mToAvoid = boost::weak_ptr<Entity>();
     mPath = NULL;
 }
 
 bool AvoidEntityGoal::canUse()
 {
-    const Predicate<boost::shared_ptr<Entity> >* predicates[3];
-    predicates[0] = EntitySelector::NO_CREATIVE_OR_SPECTATOR;
-    predicates[1] = mEntitySelector;
-    predicates[2] = mSelector;
+    const Predicate<boost::shared_ptr<Entity> >* predicates[] = { EntitySelector::NO_CREATIVE_OR_SPECTATOR, mEntitySelector, mSelector };
 
     Predicate<boost::shared_ptr<Entity> >* predicate =
         new Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate(
             Predicates<boost::shared_ptr<Entity> >::ConnectivePredicate::eOperator_And, predicates, 3);
 
-    std::vector<boost::shared_ptr<Entity> >* entities = mMob->mLevel->getEntitiesOfClass(
-        *mAvoidType, mMob->mBoundingBox->grow(mMaxDistance, 3.0, mMaxDistance), predicate, true);
+    AABB* bb = mMob->mBoundingBox->grow(mMaxDistance, 3.0, mMaxDistance);
+    std::vector<boost::shared_ptr<Entity> >* entities = mMob->mLevel->getEntitiesOfClass(*mAvoidType, bb, predicate, true);
 
     delete predicate;
 
@@ -69,13 +67,13 @@ bool AvoidEntityGoal::canUse()
         return false;
     }
 
-    mToAvoid.reset();
+    mToAvoid = boost::weak_ptr<Entity>();
 
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin(); it != entities->end(); ++it)
     {
         if (!(*it)->isCreative())
         {
-            mToAvoid = *it;
+            mToAvoid = boost::weak_ptr<Entity>(*it);
             break;
         }
     }
@@ -86,8 +84,7 @@ bool AvoidEntityGoal::canUse()
     if (toAvoid.get() == NULL)
         return false;
 
-    boost::shared_ptr<PathfinderMob> mob = boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this());
-    Vec3* pos = RandomPos::getPosAvoid(mob, 16, 7, Vec3::newTemp(toAvoid->mX, toAvoid->mY, toAvoid->mZ));
+    Vec3* pos = RandomPos::getPosAvoid(boost::dynamic_pointer_cast<PathfinderMob>(mMob->shared_from_this()), 16, 7, Vec3::newTemp(toAvoid->mX, toAvoid->mY, toAvoid->mZ));
     if (pos == NULL)
         return false;
 
@@ -115,7 +112,7 @@ void AvoidEntityGoal::start()
 
 void AvoidEntityGoal::stop()
 {
-    mToAvoid.reset();
+    mToAvoid = boost::weak_ptr<Entity>();
 }
 
 void AvoidEntityGoal::tick()
@@ -127,10 +124,8 @@ void AvoidEntityGoal::tick()
 
     if (mMob->getNavigation()->isRiverFollowing())
     {
-        boost::shared_ptr<Entity> toAvoid = mToAvoid.lock();
-        Vec3* direction = mMob->getPos(0.0f)->subtract(toAvoid->getPos(0.0f));
-        Vec3* away = direction->normalize()->add(mMob->mXd, mMob->mYd, mMob->mZd);
-        Vec3* delta = away->multiply(mMob->getSpeed() * 0.75f);
+        Vec3* direction = mMob->getPos(0.0f)->subtract(mToAvoid.lock()->getPos(0.0f));
+        Vec3* delta = direction->normalize()->add(mMob->mXd, mMob->mYd, mMob->mZd)->multiply(mMob->getSpeed() * 0.75f);
         mMob->move(eMoverType_Self, delta->x, delta->y, delta->z, false);
     }
 }

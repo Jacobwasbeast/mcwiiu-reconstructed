@@ -22,7 +22,7 @@ public:
     virtual void stop();
     virtual void tick();
     void setBribed();
-    unsigned char getBribed();
+    bool getBribed();
     virtual std::wstring getName();
 
 private:

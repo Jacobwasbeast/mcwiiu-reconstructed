@@ -24,14 +24,16 @@ MoveToWaterGoal::~MoveToWaterGoal()
 
 bool MoveToWaterGoal::canUse()
 {
-    if (mEntity->mLevel->getLiquidBlock(BlockPos(mEntity))->mMaterial == Material::WATER)
+    Block* liquid = mEntity->mLevel->getLiquidBlock(BlockPos(mEntity));
+    if (liquid->mMaterial == Material::WATER)
         return false;
     return MoveToBlockGoal::canUse();
 }
 
 bool MoveToWaterGoal::canContinueToUse()
 {
-    if (mEntity->mLevel->getLiquidBlock(BlockPos(mEntity))->mMaterial == Material::WATER)
+    Block* liquid = mEntity->mLevel->getLiquidBlock(BlockPos(mEntity));
+    if (liquid->mMaterial == Material::WATER)
         return false;
     return MoveToBlockGoal::canContinueToUse();
 }

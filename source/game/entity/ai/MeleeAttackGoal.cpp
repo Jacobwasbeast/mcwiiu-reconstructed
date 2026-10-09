@@ -37,9 +37,9 @@ void MeleeAttackGoal::_init(PathfinderMob* mob, double speedModifier, bool follo
     mTicksUntilNextAttack = 0;
     mPath = NULL;
     mTicksUntilNextPathRecalculation = 0;
-    mTargetX = 0.0;
-    mTargetY = 0.0;
     mTargetZ = 0.0;
+    mTargetY = 0.0;
+    mTargetX = 0.0;
 }
 
 bool MeleeAttackGoal::canUse()
@@ -58,9 +58,12 @@ bool MeleeAttackGoal::canUse()
     if (!(getAttackReachSqr(target) < mMob->distanceToSqr(target->mX, target->mBoundingBox->mMinY, target->mZ)))
         return true;
 
-    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType())
         && mMob->mLevel->getDifficulty() == Difficulty::PEACEFUL)
+    {
         mMob->setTarget(boost::shared_ptr<LivingEntity>());
+        return false;
+    }
     return false;
 }
 
@@ -78,7 +81,7 @@ bool MeleeAttackGoal::canContinueToUse()
     if (!mMob->isWithinRestriction(BlockPos(target)))
         return false;
 
-    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType()))
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
         if (player->isSpectator() || player->isCreative()
@@ -98,7 +101,7 @@ void MeleeAttackGoal::start()
 void MeleeAttackGoal::stop()
 {
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();
-    if (target && (target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (target && eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType()))
     {
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
         if (player->isSpectator() || player->isCreative())

@@ -73,16 +73,22 @@ void RiverFollowingGoal::determineSteerDirection()
     HitResult* rightHit = level->clip(position,
         right->multiply(lookDistance - 1.5f)->add(position), false, true, true, false, NULL, false);
 
-    Material* forwardMaterial = Material::WATER;
-    if (forwardHit != NULL)
+    Material* forwardMaterial;
+    if (forwardHit == NULL)
+        forwardMaterial = Material::WATER;
+    else
         forwardMaterial = level->getBlock(forwardHit->getBlockPos())->mMaterial;
 
-    Material* leftMaterial = Material::WATER;
-    if (leftHit != NULL)
+    Material* leftMaterial;
+    if (leftHit == NULL)
+        leftMaterial = Material::WATER;
+    else
         leftMaterial = level->getBlock(leftHit->getBlockPos())->mMaterial;
 
-    Material* rightMaterial = Material::WATER;
-    if (rightHit != NULL)
+    Material* rightMaterial;
+    if (rightHit == NULL)
+        rightMaterial = Material::WATER;
+    else
         rightMaterial = level->getBlock(rightHit->getBlockPos())->mMaterial;
 
     if ((forwardHit != NULL && forwardHit->mType != HitResult::MISS)
@@ -92,18 +98,18 @@ void RiverFollowingGoal::determineSteerDirection()
         || (rightHit != NULL && rightHit->mType != HitResult::MISS)
         || rightMaterial->blocksMotion())
     {
-        Vec3* unchosen = Vec3::newTemp(0.0, 0.0, 0.0);
-        Vec3* chosen = unchosen;
+        Vec3* chosen = Vec3::newTemp(0.0, 0.0, 0.0);
         double smallestAngle = 1.7976931348623157e+308;
         double furthestDistance = 2.2250738585072014e-308;
         bool clearDirectionFound = false;
-        int offsetX;
-        int offsetZ;
 
-        for (offsetX = -1; offsetX <= 1; ++offsetX)
+        for (int offsetX = -1; offsetX <= 1; ++offsetX)
         {
-            for (offsetZ = -1; offsetZ <= 1; ++offsetZ)
+            for (int offsetZ = -1; offsetZ <= 1; ++offsetZ)
             {
+                if (offsetX == 0 && offsetZ == 0)
+                    continue;
+
                 Vec3* candidate = Vec3::newTemp(position->x + (double)offsetX, position->y,
                                                 position->z + (double)offsetZ)
                                       ->subtract(position)->normalize();
@@ -118,7 +124,7 @@ void RiverFollowingGoal::determineSteerDirection()
                 {
                     double distance =
                         position->distanceToSqr((hit->getBlockPos() - position)->add(position));
-                    if (!clearDirectionFound && distance > furthestDistance)
+                    if (!clearDirectionFound && furthestDistance < distance)
                     {
                         chosen = candidate;
                     }
@@ -136,10 +142,10 @@ void RiverFollowingGoal::determineSteerDirection()
             }
         }
 
-        if (chosen != unchosen)
-            mSteerDirection = chosen->multiply(2.0);
-        else
+        if (chosen == Vec3::ZERO)
             mSteerDirection = lookAngle->multiply(-1.0, -1.0, -1.0);
+        else
+            mSteerDirection = chosen->multiply(2.0);
     }
 
     Vec3* turnLeft = Vec3::newTemp(lookAngle->x, 0.0, lookAngle->z)->yRot(45.0f);
@@ -165,9 +171,21 @@ void RiverFollowingGoal::determineSteerDirection()
     bool groundBelow = groundHit != NULL && groundHit->mType != HitResult::MISS;
 
     BlockPos blockPos(mMob->getPos(0.0f));
-    if (!mMob->followsLeader() && level->getBlock(blockPos.above()) == Blocks::air)
+    bool inAir = false;
+    if (!mMob->followsLeader())
+        inAir = level->getBlock(blockPos.above()) == Blocks::air;
+    if (!inAir)
     {
         if (groundBelow)
+            mSteerDirection = mSteerDirection->add(0.0, 0.5, 0.0);
+    }
+    else
+    {
+        if (!groundBelow)
+        {
+            mSteerDirection = mSteerDirection->add(0.0, -0.25, 0.0);
+        }
+        else
         {
             double heightAboveBlock = mMob->mY - (double)blockPos.y;
             if (heightAboveBlock > 0.75)
@@ -175,14 +193,6 @@ void RiverFollowingGoal::determineSteerDirection()
             else if (heightAboveBlock < 0.25)
                 mSteerDirection = mSteerDirection->add(0.0, 0.1, 0.0);
         }
-        else
-        {
-            mSteerDirection = mSteerDirection->add(0.0, -0.25, 0.0);
-        }
-    }
-    else if (groundBelow)
-    {
-        mSteerDirection = mSteerDirection->add(0.0, 0.5, 0.0);
     }
 }
 
@@ -192,9 +202,8 @@ void RiverFollowingGoal::tick()
     if (!mMob->followsLeader() || mMob->isLeader())
     {
         mSteerDirection = mSteerDirection->normalize()->multiply(mSpeed);
-        float rotation = -(float)std::atan2(mSteerDirection->x, mSteerDirection->z);
-        float yRot = mMob->mYRot;
-        mMob->mYRot = Mth::clampRotateDegrees(yRot, rotation * 57.295776f, 45.0f);
+        float rotation = -(float)std::atan2(mSteerDirection->x, mSteerDirection->z) * Mth::RAD_TO_DEG;
+        mMob->mYRot = Mth::clampRotateDegrees(mMob->mYRot, rotation, 45.0f);
         if (mMob->isUnderLiquid(Material::WATER))
             mMob->mYd = 0.0;
 

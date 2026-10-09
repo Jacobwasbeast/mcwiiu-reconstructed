@@ -228,7 +228,7 @@ void PathNavigation::doStuckDetection(Vec3* pos)
         }
         if (mTimeoutLimit > 0.0 && (double)mStuckTime > mTimeoutLimit * 3.0)
         {
-            mLastTargetPos->set(0.0, 0.0, 0.0);
+            mLastTargetPos->set(Vec3::ZERO);
             mStuckTime = 0;
             mTimeoutLimit = 0.0;
             stop();

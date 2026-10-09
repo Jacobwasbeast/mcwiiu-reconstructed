@@ -35,14 +35,7 @@ bool SwimWithMobGoal::canSwimWith(boost::shared_ptr<Entity> entity)
     unsigned long long* it;
     for (it = mEntityTypes.data; it != mEntityTypes.data + mEntityTypes.length; ++it)
     {
-        unsigned long long entityType = entity->GetType();
-        unsigned long long type = *it;
-        bool matches;
-        if ((type & 0x3FULL) == 0)
-            matches = (entityType & type) == type;
-        else
-            matches = entityType == type;
-        if (matches)
+        if (entity->instanceof(*it))
             return true;
     }
 
@@ -56,8 +49,8 @@ bool SwimWithMobGoal::setWantedMob()
     std::vector<boost::shared_ptr<Entity> >* candidates =
         new std::vector<boost::shared_ptr<Entity> >;
 
-    for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
-         it != entities->end(); ++it)
+    std::vector<boost::shared_ptr<Entity> >::iterator it;
+    for (it = entities->begin(); it != entities->end(); ++it)
     {
         boost::shared_ptr<Entity> entity = *it;
         if (entity)
@@ -73,23 +66,23 @@ bool SwimWithMobGoal::setWantedMob()
         }
     }
 
-    if (candidates->empty())
+    if (!candidates->empty())
     {
+        mWantedMob = candidates->at(mMob->getRandom()->nextInt((int)candidates->size()));
         delete candidates;
-        return false;
+        return true;
     }
 
-    mWantedMob = candidates->at(mMob->getRandom()->nextInt((int)candidates->size()));
     delete candidates;
-    return true;
+    return false;
 }
 
 bool SwimWithMobGoal::canUse()
 {
-    if (mMob->getNavigation() == NULL || mMob->mLevel->mRandom->nextInt(10) != 0)
-        return false;
+    if (mMob->getNavigation() != NULL && mMob->mLevel->mRandom->nextInt(10) == 0)
+        return setWantedMob();
 
-    return setWantedMob();
+    return false;
 }
 
 bool SwimWithMobGoal::canContinueToUse()
@@ -131,8 +124,8 @@ BlockPos SwimWithMobGoal::GetTargetPosition(boost::shared_ptr<Entity> entity, Ve
 {
     Vec3* position = Vec3::newTemp((double)Mth::floor(entity->getPos(0.0f)->x),
                                    (double)Mth::floor(entity->getPos(0.0f)->y),
-                                   (double)Mth::floor(entity->getPos(0.0f)->z))
-                         ->add(0.5, 0.5, 0.5);
+                                   (double)Mth::floor(entity->getPos(0.0f)->z));
+    position = position->add(0.5, 0.5, 0.5);
     position = position->add(entity->getLookAngle()->multiply(offset))
                    ->add(direction->multiply(distance * 3.0));
     BlockPos target = BlockPos(position).offset(0, -1, 0);

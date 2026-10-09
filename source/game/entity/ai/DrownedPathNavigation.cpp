@@ -1,5 +1,6 @@
 #include "game/entity/ai/DrownedPathNavigation.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 #include "game/core/HitResult.hpp"
@@ -20,8 +21,7 @@ DrownedPathNavigation::DrownedPathNavigation(Mob* mob, Level* level)
       mAmphibiousNodeEvaluator(mob)
 {
     mGroundPathFinder = GroundPathNavigation::createPathFinder();
-    mPathFinder = createPathFinder();
-    mWaterPathFinder = mPathFinder;
+    mPathFinder = mWaterPathFinder = createPathFinder();
 }
 
 DrownedPathNavigation::~DrownedPathNavigation()
@@ -80,11 +80,7 @@ Vec3* DrownedPathNavigation::getTempMobPos()
 
 void DrownedPathNavigation::tick()
 {
-    if (!mMob->isSwimming())
-    {
-        PathNavigation::tick();
-    }
-    else
+    if (mMob->isSwimming())
     {
         ++mTick;
         if (mHasDelayedRecomputation)
@@ -107,7 +103,7 @@ void DrownedPathNavigation::tick()
         {
             Vec3* mobPos = getTempMobPos();
             Vec3* next = mPath->getPos(mMob->shared_from_this(), mPath->getIndex());
-            if (next->y < mobPos->y && (!mMob->mOnGround || !isInLiquid()) &&
+            if (mobPos->y > next->y && (!mMob->mOnGround || !isInLiquid()) &&
                 std::floor(mobPos->x) == std::floor(next->x) &&
                 std::floor(mobPos->z) == std::floor(next->z))
             {
@@ -127,48 +123,45 @@ void DrownedPathNavigation::tick()
             return;
         }
 
-        BlockPos pos(current);
-        BlockPos below = pos.below();
+        BlockPos below = BlockPos(current).below();
         const AABB* shape = mLevel->getBlockState(below)->getShape(mLevel, below);
         Vec3* target = current->subtract(0.0, 1.0 - shape->mMaxY, 0.0);
         mMob->getMoveControl()->setWantedPosition(target->x, target->y, target->z, mSpeedModifier);
+    }
+    else
+    {
+        PathNavigation::tick();
     }
 }
 
 void DrownedPathNavigation::updatePath()
 {
-    if (!mMob->isSwimming())
+    if (mMob->isSwimming())
+    {
+        Vec3* mobPos = getTempMobPos();
+        float widthSqr = mMob->mBbWidth * mMob->mBbWidth;
+        int lookAhead = 6;
+        if (mobPos->distanceToSqr(mPath->getPos(mMob->shared_from_this(), mPath->getIndex())) < widthSqr)
+        {
+            mPath->next();
+        }
+
+        for (int index = std::min(mPath->getIndex() + lookAhead, mPath->getSize() - 1); index > mPath->getIndex(); --index)
+        {
+            Vec3* target = mPath->getPos(mMob->shared_from_this(), index);
+            if (target->distanceToSqr(mobPos) <= 36.0 && canMoveDirectly(mobPos, target, 0, 0, 0))
+            {
+                mPath->setIndex(index);
+                break;
+            }
+        }
+
+        doStuckDetection(mobPos);
+    }
+    else
     {
         PathNavigation::updatePath();
-        return;
     }
-
-    Vec3* mobPos = getTempMobPos();
-    float width = mMob->mBbWidth;
-    if (mobPos->distanceToSqr(mPath->getPos(mMob->shared_from_this(), mPath->getIndex())) < (double)(width * width))
-    {
-        mPath->next();
-    }
-
-    int best = mPath->getIndex() + 6;
-    int last = mPath->getSize() - 1;
-    if (last < best)
-    {
-        best = last;
-    }
-
-    for (int index = best; mPath->getIndex() < index; --index)
-    {
-        Vec3* target = mPath->getPos(mMob->shared_from_this(), index);
-        if (target->distanceToSqr(mobPos) <= 36.0 && canMoveDirectly(mobPos, target, 0, 0, 0))
-        {
-            mPath->setIndex(index);
-            doStuckDetection(mobPos);
-            return;
-        }
-    }
-
-    doStuckDetection(mobPos);
 }
 
 bool DrownedPathNavigation::canMoveDirectly(Vec3* start, Vec3* end, int width, int height, int depth)

@@ -17,7 +17,7 @@ bool MobCanWearArmourEntitySelector::apply(boost::shared_ptr<Entity> entity) con
         return false;
     }
 
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
+    if (!eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
     {
         return false;
     }
@@ -28,34 +28,35 @@ bool MobCanWearArmourEntitySelector::apply(boost::shared_ptr<Entity> entity) con
         return false;
     }
 
-    const bool isVillager = livingEntity->GetType() == EntityType::VILLAGER;
+    const bool isVillager = eTYPE_DERIVED_FROM(EntityType::VILLAGER, livingEntity->GetType());
     if (isVillager)
     {
         return false;
     }
 
-    if ((livingEntity->GetType() & EntityType::ZOMBIE) == EntityType::ZOMBIE ||
-        (livingEntity->GetType() & EntityType::ABSTRACT_SKELETON) == EntityType::ABSTRACT_SKELETON)
+    if (eTYPE_DERIVED_FROM(EntityType::ZOMBIE, livingEntity->GetType()) ||
+        eTYPE_DERIVED_FROM(EntityType::ABSTRACT_SKELETON, livingEntity->GetType()))
     {
         return true;
     }
 
-    if ((livingEntity->GetType() & EntityType::MOB) == EntityType::MOB)
+    if (eTYPE_DERIVED_FROM(EntityType::MOB, livingEntity->GetType()))
     {
         return boost::static_pointer_cast<Mob>(livingEntity)->canPickUpLoot();
     }
 
-    const bool isArmorStand = livingEntity->GetType() == EntityType::ARMOR_STAND;
+    const bool isArmorStand = eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, livingEntity->GetType());
     if (isArmorStand)
     {
         return true;
     }
 
-    if ((livingEntity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+    const bool isPlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, livingEntity->GetType());
+    if (isPlayer)
     {
-        return false;
+        return true;
     }
 
-    return true;
+    return false;
 }
 

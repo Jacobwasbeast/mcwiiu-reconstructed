@@ -61,10 +61,10 @@ void SwimIdleGoal::tick()
     mMob->mYd = 0.0;
     mMob->mZd = 0.0;
 
-    bool isWaterAnimal = (mMob->GetType() & EntityType::WATER_ANIMAL) == EntityType::WATER_ANIMAL;
+    bool isWaterAnimal = eTYPE_DERIVED_FROM(EntityType::WATER_ANIMAL, mMob->GetType());
     if (!isWaterAnimal)
     {
-        isWaterAnimal = (mMob->GetType() & EntityType::AGABLE_WATER_ANIMAL) == EntityType::AGABLE_WATER_ANIMAL;
+        isWaterAnimal = eTYPE_DERIVED_FROM(EntityType::AGABLE_WATER_ANIMAL, mMob->GetType());
     }
     if (isWaterAnimal)
     {
@@ -76,8 +76,8 @@ void SwimIdleGoal::tick()
             const float phase = static_cast<float>(std::abs(id) % 100);
             const float swim = Mth::sin((static_cast<float>(mMob->mTickCount) + phase) * waterAnimal->mSwimFrequency)
                 * waterAnimal->mSwimAmplitude;
-            const float cosYaw = Mth::cos(mMob->mYRot * 0.017453292f);
-            const float sinYaw = Mth::sin(mMob->mYRot * 0.017453292f);
+            const float cosYaw = Mth::cos(mMob->mYRot * Mth::DEG_TO_RAD);
+            const float sinYaw = Mth::sin(mMob->mYRot * Mth::DEG_TO_RAD);
 
             mMob->mXd += static_cast<double>(swim * cosYaw);
             mMob->mZd += static_cast<double>(swim * sinYaw);

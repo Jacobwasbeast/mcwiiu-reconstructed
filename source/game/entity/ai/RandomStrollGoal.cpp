@@ -22,13 +22,11 @@ RandomStrollGoal::RandomStrollGoal(PathfinderMob* mob, double speedModifier, int
 
 void RandomStrollGoal::_init(PathfinderMob* mob, double speedModifier, int interval)
 {
+    mForceTrigger = false;
+    mWantedX = mWantedY = mWantedZ = 0.0;
     mMob = mob;
-    mWantedX = 0.0;
-    mWantedY = 0.0;
-    mWantedZ = 0.0;
     mSpeedModifier = speedModifier;
     mInterval = interval;
-    mForceTrigger = false;
     setRequiredControlFlags(1);
 }
 

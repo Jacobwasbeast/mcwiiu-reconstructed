@@ -26,8 +26,7 @@ public:
 protected:
     bool mAlertSameType;
     int mTimestamp;
-    unsigned long long* mEntityTypes;
-    unsigned int mEntityTypesLength;
+    arrayWithLength<unsigned long long> mEntityTypes;
 };
 
 #endif

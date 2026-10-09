@@ -22,7 +22,7 @@ public:
     {
     public:
         FollowPredicate(Mob* mob);
-        virtual ~FollowPredicate();
+        virtual ~FollowPredicate() {}
         virtual bool apply(boost::shared_ptr<Entity> entity) const;
 
     private:

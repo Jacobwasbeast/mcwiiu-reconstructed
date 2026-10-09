@@ -26,15 +26,14 @@ bool SitGoal::canUse()
         return false;
     }
 
-    boost::shared_ptr<Entity> owner = mMob->getOwner();
-    boost::shared_ptr<LivingEntity> livingOwner = boost::dynamic_pointer_cast<LivingEntity>(owner);
+    boost::shared_ptr<LivingEntity> owner = boost::dynamic_pointer_cast<LivingEntity>(mMob->getOwner());
 
-    if (!livingOwner)
+    if (owner == NULL)
     {
         return true;
     }
 
-    if (mMob->distanceToSqr(livingOwner) < 144.0 && livingOwner->getLastHurtByMob())
+    if (mMob->distanceToSqr(owner) < 144.0 && owner->getLastHurtByMob() != NULL)
     {
         return false;
     }

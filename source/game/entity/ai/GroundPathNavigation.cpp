@@ -55,27 +55,28 @@ bool GroundPathNavigation::canUpdatePath()
 
 int GroundPathNavigation::getSurfaceY()
 {
-    if (mMob->isInWater() && canFloat())
+    if (!mMob->isInWater() || !canFloat())
     {
-        int y = static_cast<int>(mMob->mBoundingBox->mMinY);
-        MutableBlockPos pos(static_cast<int>(std::floor(mMob->mX)), y,
-                             static_cast<int>(std::floor(mMob->mZ)));
-        int checks = 0;
-        Block* block = mLevel->getBlock(pos);
-        while (block == Blocks::flowing_water || block == Blocks::water)
-        {
-            ++y;
-            pos.setY(y);
-            block = mLevel->getBlock(pos);
-            ++checks;
-            if (checks > 16)
-            {
-                return static_cast<int>(mMob->mBoundingBox->mMinY);
-            }
-        }
-        return y;
+        return static_cast<int>(mMob->mBoundingBox->mMinY + 0.5);
     }
-    return static_cast<int>(mMob->mBoundingBox->mMinY + 0.5);
+    int y = static_cast<int>(mMob->mBoundingBox->mMinY);
+    int x = static_cast<int>(std::floor(mMob->mX));
+    int z = static_cast<int>(std::floor(mMob->mZ));
+    MutableBlockPos pos(x, y, z);
+    Block* block = mLevel->getBlock(pos);
+    int checks = 0;
+    while (block == Blocks::flowing_water || block == Blocks::water)
+    {
+        ++y;
+        pos.setY(y);
+        block = mLevel->getBlock(pos);
+        ++checks;
+        if (checks > 16)
+        {
+            return static_cast<int>(mMob->mBoundingBox->mMinY);
+        }
+    }
+    return y;
 }
 
 Vec3* GroundPathNavigation::getTempMobPos()
@@ -86,7 +87,8 @@ Vec3* GroundPathNavigation::getTempMobPos()
 Path* GroundPathNavigation::createPath(const BlockPos& pos)
 {
     BlockPos target(pos);
-    if (mLevel->getBlockState(target)->getMaterial() == Material::AIR && !mMob->canFly())
+    const Material* material = mLevel->getBlockState(target)->getMaterial();
+    if (material == Material::AIR && !mMob->canFly())
     {
         BlockPos column = target.below();
         while (column.y > 0 && mLevel->getBlockState(column)->getMaterial() == Material::AIR)
@@ -143,40 +145,33 @@ Path* GroundPathNavigation::createPath(boost::shared_ptr<Entity> entity)
 void GroundPathNavigation::trimPath()
 {
     PathNavigation::trimPath();
-    if (!mAvoidSun)
+    if (mAvoidSun && !mLevel->canSeeSky(BlockPos(mMob->mX, mMob->mBoundingBox->mMinY + 0.5, mMob->mZ)))
     {
-        return;
-    }
-    if (mLevel->canSeeSky(BlockPos(mMob->mX, mMob->mBoundingBox->mMinY + 0.5, mMob->mZ)))
-    {
-        return;
-    }
-    MutableBlockPos pathPos;
-    int removeCount = -1;
-    for (int index = 0; index < mPath->getSize(); ++index)
-    {
-        Node* node = mPath->get(index);
-        pathPos.set(node->x, node->y, node->z);
-        if (mLevel->canSeeSky(pathPos))
+        MutableBlockPos pathPos(0, 0, 0);
+        for (int i = 0; i < mPath->getSize(); ++i)
         {
-            if (index == 0)
+            Node* node = mPath->get(i);
+            pathPos.set(node->x, node->y, node->z);
+            if (mLevel->canSeeSky(pathPos))
             {
-                mPath->setSize(0);
+                if (i == 0)
+                {
+                    mPath->setSize(0);
+                }
+                else
+                {
+                    mPath->setSize(i - 1);
+                }
+                return;
             }
-            else
-            {
-                mPath->setSize(removeCount);
-            }
-            break;
         }
-        ++removeCount;
     }
 }
 
 bool GroundPathNavigation::canWalkAbove(int x, int y, int z, int sizeX, int sizeY, int sizeZ,
                                         Vec3* pos, double xStep, double zStep)
 {
-    MutableBlockPos blockPos;
+    MutableBlockPos blockPos(0, 0, 0);
     for (int ix = x; ix < x + sizeX; ++ix)
     {
         blockPos.setX(ix);
@@ -186,10 +181,15 @@ bool GroundPathNavigation::canWalkAbove(int x, int y, int z, int sizeX, int size
             for (int iz = z; iz < z + sizeZ; ++iz)
             {
                 blockPos.setZ(iz);
-                if ((xStep * (ix + 0.5 - pos->x) + zStep * (iz + 0.5 - pos->z)) >= 0.0 &&
-                    !mLevel->getBlockState(mMob->mTickCache, blockPos)->getBlock()->isPathfindable(mLevel, blockPos))
+                double dx = ix + 0.5 - pos->x;
+                double dz = iz + 0.5 - pos->z;
+                if (dx * xStep + dz * zStep >= 0.0)
                 {
-                    return false;
+                    Block* block = mLevel->getBlockState(mMob->mTickCache, blockPos)->getBlock();
+                    if (!block->isPathfindable(mLevel, blockPos))
+                    {
+                        return false;
+                    }
                 }
             }
         }
@@ -215,7 +215,9 @@ bool GroundPathNavigation::canWalkOn(int x, int y, int z, int sizeX, int sizeY, 
             for (int iz = minZ; iz < minZ + sizeZ; ++iz)
             {
                 blockPos.setZ(iz);
-                if (xStep * (ix + 0.5 - pos->x) + zStep * (iz + 0.5 - pos->z) >= 0.0)
+                double dx = ix + 0.5 - pos->x;
+                double dz = iz + 0.5 - pos->z;
+                if (dx * xStep + dz * zStep >= 0.0)
                 {
                     const BlockPathTypes* type = mNodeEvaluator.getBlockPathType(
                         mLevel, ix, y - 1, iz, static_cast<Mob*>(mMob), sizeX, sizeY, sizeZ, true, true);
@@ -250,44 +252,52 @@ bool GroundPathNavigation::canMoveDirectly(Vec3* start, Vec3* end, int width, in
     {
         return false;
     }
-    double length = std::sqrt(lengthSquared);
-    double xStep = xDelta * (1.0 / length);
-    double zStep = zDelta * (1.0 / length);
-    if (!canWalkOn(x, static_cast<int>(start->y), z, width + 2, height, depth + 2, start, xStep, zStep))
+    double inverseLength = 1.0 / std::sqrt(lengthSquared);
+    xDelta *= inverseLength;
+    zDelta *= inverseLength;
+    width += 2;
+    depth += 2;
+    if (!canWalkOn(x, static_cast<int>(start->y), z, width, height, depth, start, xDelta, zDelta))
     {
         return false;
     }
+    width -= 2;
+    depth -= 2;
+    double xStepDistance = 1.0 / std::fabs(xDelta);
+    double zStepDistance = 1.0 / std::fabs(zDelta);
     double xDistance = x - start->x;
     double zDistance = z - start->z;
-    if (xStep >= 0.0)
+    if (xDelta >= 0.0)
     {
         xDistance += 1.0;
     }
-    if (zStep >= 0.0)
+    if (zDelta >= 0.0)
     {
         zDistance += 1.0;
     }
-    xDistance /= xStep;
-    zDistance /= zStep;
-    int xDirection = xStep < 0.0 ? -1 : 1;
-    int zDirection = zStep < 0.0 ? -1 : 1;
-    int xRemaining = static_cast<int>(std::floor(end->x)) - x;
-    int zRemaining = static_cast<int>(std::floor(end->z)) - z;
+    xDistance /= xDelta;
+    zDistance /= zDelta;
+    int xDirection = xDelta < 0.0 ? -1 : 1;
+    int zDirection = zDelta < 0.0 ? -1 : 1;
+    int xEnd = static_cast<int>(std::floor(end->x));
+    int zEnd = static_cast<int>(std::floor(end->z));
+    int xRemaining = xEnd - x;
+    int zRemaining = zEnd - z;
     while (xRemaining * xDirection > 0 || zRemaining * zDirection > 0)
     {
         if (xDistance < zDistance)
         {
+            xDistance += xStepDistance;
             x += xDirection;
-            xDistance += 1.0 / std::fabs(xStep);
-            xRemaining -= xDirection;
+            xRemaining = xEnd - x;
         }
         else
         {
+            zDistance += zStepDistance;
             z += zDirection;
-            zDistance += 1.0 / std::fabs(zStep);
-            zRemaining -= zDirection;
+            zRemaining = zEnd - z;
         }
-        if (!canWalkOn(x, static_cast<int>(start->y), z, width, height, depth, start, xStep, zStep))
+        if (!canWalkOn(x, static_cast<int>(start->y), z, width, height, depth, start, xDelta, zDelta))
         {
             return false;
         }

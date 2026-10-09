@@ -6,6 +6,8 @@
 #include "game/util/Random.hpp"
 #include "game/util/RandomPos.hpp"
 
+const float WaterAvoidingRandomStrollGoal::PROBABILITY = 0.001f;
+
 WaterAvoidingRandomStrollGoal::WaterAvoidingRandomStrollGoal(PathfinderMob* mob, double speedModifier)
     : RandomStrollGoal(mob, speedModifier),
       mProbability(0.001f)

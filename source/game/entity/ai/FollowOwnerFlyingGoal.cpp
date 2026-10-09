@@ -13,10 +13,8 @@ FollowOwnerFlyingGoal::FollowOwnerFlyingGoal(TamableAnimal* tamable, double spee
 
 bool FollowOwnerFlyingGoal::isTeleportFriendlyBlock(int x, int z, int y, int dx, int dz)
 {
-    BlockPos blockPos(x + dx, y - 1, z + dz);
-    const BlockState* blockState = mLevel->getBlockState(blockPos);
+    const BlockState* blockState = mLevel->getBlockState(BlockPos(x + dx, y - 1, z + dz));
     return (blockState->isTopSolidBlocking() || blockState->getMaterial() == Material::LEAVES)
         && mLevel->isEmptyBlock(BlockPos(x + dx, y, z + dz))
         && mLevel->isEmptyBlock(BlockPos(x + dx, y + 1, z + dz));
 }
-

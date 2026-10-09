@@ -25,8 +25,11 @@
 #include "game/core/Node.hpp"
 
 WalkNodeEvaluator::WalkNodeEvaluator(Entity* entity)
-    : NodeEvaluator(), mOldWaterCost(0.0f), mRailAtStart(false), mRailBelowStart(false), mEntity(entity)
 {
+    mRailAtStart = false;
+    mRailBelowStart = false;
+    mOldWaterCost = 0.0f;
+    mEntity = entity;
 }
 
 void WalkNodeEvaluator::prepare(LevelSource* levelSource, Mob* mob)
@@ -65,9 +68,9 @@ Node* WalkNodeEvaluator::getStart()
     int y;
     if (isCanFloat() && mMob->isInWater())
     {
+        y = static_cast<int>(mMob->mY);
         const int x = Mth::floor(mMob->mX);
         const int z = Mth::floor(mMob->mZ);
-        y = static_cast<int>(mMob->mY);
         int blockId = mLevelSource->getBlockId(mEntity->mTickCache, x, y, z);
         while (blockId == BlockId::FLOWING_WATER || blockId == BlockId::WATER)
             blockId = mLevelSource->getBlockId(mEntity->mTickCache, x, ++y, z);
@@ -88,8 +91,7 @@ Node* WalkNodeEvaluator::getStart()
 
     BlockPos mobPos(mMob);
     const BlockPathTypes* type = getBlockPathType(mMob, mobPos.x, y, mobPos.z);
-    const float malus = mMob->getPathfindingMalus(type);
-    if (malus < 0.0f)
+    if (mMob->getPathfindingMalus(type) < 0.0f)
     {
         boost::unordered_set<BlockPos> corners(11);
         corners.insert(BlockPos(mMob->mBoundingBox->mMinX, static_cast<double>(y), mMob->mBoundingBox->mMinZ));
@@ -108,13 +110,7 @@ Node* WalkNodeEvaluator::getStart()
 
 Node* WalkNodeEvaluator::getGoal(double x, double y, double z)
 {
-    int ix = static_cast<int>(x);
-    int iy = static_cast<int>(y);
-    int iz = static_cast<int>(z);
-    if (x < static_cast<double>(ix)) --ix;
-    if (y < static_cast<double>(iy)) --iy;
-    if (z < static_cast<double>(iz)) --iz;
-    return NodeEvaluator::getNode(ix, iy, iz);
+    return NodeEvaluator::getNode(Mth::floor(x), Mth::floor(y), Mth::floor(z));
 }
 
 int WalkNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Node* current, Node* target, float maxCost)
@@ -187,13 +183,13 @@ const BlockPathTypes* WalkNodeEvaluator::getBlockPathType(LevelSource* levelSour
                                                            bool canOpenDoors, bool canPassDoors)
 {
     int pathTypeFlags = 0;
-    const BlockPathTypes* pathType = getBlockPathTypes(levelSource, x, y, z, sizeX, sizeY, sizeZ, canOpenDoors,
-                                                       canPassDoors, pathTypeFlags, BlockPathTypes::BLOCKED);
-    const BlockPathTypes* worst = BlockPathTypes::FENCE;
-    if (pathTypeFlags & (1 << worst->id))
-        return worst;
+    const BlockPathTypes* pathType = BlockPathTypes::BLOCKED;
+    pathType = getBlockPathTypes(levelSource, x, y, z, sizeX, sizeY, sizeZ, canOpenDoors, canPassDoors,
+                                 pathTypeFlags, pathType);
+    if (pathTypeFlags & (1 << BlockPathTypes::FENCE->id))
+        return BlockPathTypes::FENCE;
 
-    worst = BlockPathTypes::BLOCKED;
+    const BlockPathTypes* worst = BlockPathTypes::BLOCKED;
     for (int i = 0; i < static_cast<int>(sizeof(BlockPathTypes::VALUES) / sizeof(BlockPathTypes::VALUES[0])); ++i)
     {
         const BlockPathTypes* type = BlockPathTypes::VALUES[i];
@@ -219,7 +215,10 @@ const BlockPathTypes* WalkNodeEvaluator::getBlockPathTypes(LevelSource* levelSou
         for (int dy = 0; dy < sizeY; ++dy)
             for (int dz = 0; dz < sizeZ; ++dz)
             {
-                int key = BlockPos(x + dx, y + dy, z + dz).hashCode();
+                int blockX = dx + x;
+                int blockY = dy + y;
+                int blockZ = dz + z;
+                int key = BlockPos(blockX, blockY, blockZ).hashCode();
                 boost::unordered_map<int, int>::iterator cached = mBlockPathTypeMap.find(key);
                 if (cached != mBlockPathTypeMap.end())
                 {
@@ -227,7 +226,7 @@ const BlockPathTypes* WalkNodeEvaluator::getBlockPathTypes(LevelSource* levelSou
                     continue;
                 }
 
-                const BlockPathTypes* type = getBlockPathType(levelSource, x + dx, y + dy, z + dz);
+                const BlockPathTypes* type = getBlockPathType(levelSource, blockX, blockY, blockZ);
                 if (type == BlockPathTypes::DOOR_WOOD_CLOSED && canOpenDoors && canPassDoors)
                     type = BlockPathTypes::WALKABLE;
                 else if (type == BlockPathTypes::DOOR_OPEN && !canPassDoors)
@@ -265,12 +264,13 @@ const BlockPathTypes* WalkNodeEvaluator::getBlockPathTypeRaw(LevelSource* levelS
         return BlockPathTypes::DAMAGE_CACTUS;
     if (block->mIsDoor)
     {
-        if (DoorBlock::isOpen(levelSource, pos))
-            return BlockPathTypes::DOOR_OPEN;
-        if (material == Material::WOOD)
+        const bool open = DoorBlock::isOpen(levelSource, pos);
+        if (material == Material::WOOD && !open)
             return BlockPathTypes::DOOR_WOOD_CLOSED;
-        if (material == Material::METAL)
+        if (material == Material::METAL && !open)
             return BlockPathTypes::DOOR_IRON_CLOSED;
+        if (open)
+            return BlockPathTypes::DOOR_OPEN;
     }
     if (block->mIsRail)
         return BlockPathTypes::RAIL;
@@ -278,9 +278,7 @@ const BlockPathTypes* WalkNodeEvaluator::getBlockPathTypeRaw(LevelSource* levelS
         return BlockPathTypes::FENCE;
     if (block->mIsFenceGate && !state->getValue(FenceGateBlock::OPEN))
         return BlockPathTypes::FENCE;
-    if (!block->isPathfindable(levelSource, pos))
-        return BlockPathTypes::BLOCKED;
-    return BlockPathTypes::OPEN;
+    return block->isPathfindable(levelSource, pos) ? BlockPathTypes::OPEN : BlockPathTypes::BLOCKED;
 }
 
 const BlockPathTypes* WalkNodeEvaluator::checkNeighbourBlocks(LevelSource* levelSource, int x, int y, int z,
@@ -293,7 +291,8 @@ const BlockPathTypes* WalkNodeEvaluator::checkNeighbourBlocks(LevelSource* level
         {
             if (dx == 0 && dz == 0)
                 continue;
-            int blockId = levelSource->getElement(mEntity->mTickCache, x + dx, y, dz + z) >> 4;
+            unsigned short element = levelSource->getElement(mEntity->mTickCache, x + dx, y, dz + z);
+            int blockId = element >> 4;
             if (blockId == BlockId::CACTUS)
                 pathType = BlockPathTypes::DANGER_CACTUS;
             else if (blockId == BlockId::FIRE)
@@ -361,7 +360,7 @@ Node* WalkNodeEvaluator::getLandNode(int x, int y, int z, int verticalRange, dou
                 const double centreX = (x - direction->getStepX()) + 0.5;
                 const double centreZ = (z - direction->getStepZ()) + 0.5;
                 AABB* space = AABB::newTemp(centreX - halfWidth, blockY + 0.001, centreZ - halfWidth, centreX + halfWidth,
-                                            static_cast<float>(blockY) + mMob->mBbHeight, centreZ + halfWidth);
+                                            static_cast<float>(y) + mMob->mBbHeight, centreZ + halfWidth);
                 const AABB* shape = getBlockState(mEntity->mTickCache, mLevelSource, pos)->getShape(mLevelSource, pos);
                 if (mMob->mLevel->hasBlockCubes(space->expand(0.0, shape->mMaxY - 0.002, 0.0)))
                     node = NULL;
@@ -371,7 +370,7 @@ Node* WalkNodeEvaluator::getLandNode(int x, int y, int z, int verticalRange, dou
         if (type == BlockPathTypes::OPEN)
         {
             AABB* space = AABB::newTemp(x - halfWidth + 0.5, blockY + 0.001, z - halfWidth + 0.5, x + halfWidth + 0.5,
-                                        static_cast<float>(blockY) + mMob->mBbHeight, z + halfWidth + 0.5);
+                                        static_cast<float>(y) + mMob->mBbHeight, z + halfWidth + 0.5);
             if (mMob->mLevel->hasBlockCubes(space))
             {
                 cachedNode->hasAcceptedNode = true;
@@ -410,11 +409,9 @@ Node* WalkNodeEvaluator::getLandNode(int x, int y, int z, int verticalRange, dou
                 if (type != BlockPathTypes::OPEN)
                 {
                     node = getNode(x, y, z);
-                    cachedNode->acceptedNode = node;
                     node->type = type;
                     node->costMalus = node->costMalus < malus ? malus : node->costMalus;
-                    cachedNode->hasAcceptedNode = true;
-                    return node;
+                    break;
                 }
             }
         }

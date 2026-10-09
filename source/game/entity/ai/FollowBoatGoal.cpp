@@ -30,7 +30,7 @@ bool FollowBoatGoal::canUse()
     {
         boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(boats->at(i));
         if (boat->getControllingPassenger() != NULL
-            && (boat->getControllingPassenger()->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+            && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, boat->getControllingPassenger()->GetType()))
         {
             boost::shared_ptr<LivingEntity> passenger = boost::static_pointer_cast<LivingEntity>(boat->getControllingPassenger());
             if (Mth::abs(passenger->mXxa) > 0.0f || Mth::abs(passenger->mZza) > 0.0f)
@@ -64,7 +64,7 @@ void FollowBoatGoal::start()
     {
         boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(boats->at(i));
         if (boat->getControllingPassenger() != NULL
-            && (boat->getControllingPassenger()->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+            && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, boat->getControllingPassenger()->GetType()))
         {
             mTarget = boost::static_pointer_cast<LivingEntity>(boat->getControllingPassenger());
             break;

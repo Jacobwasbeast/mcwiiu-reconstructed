@@ -41,15 +41,15 @@ bool MobNearestMobTargetGoal::canUse()
     std::vector<boost::shared_ptr<Entity> >* entities =
         mob->mLevel->getEntitiesOfClass(*mTargetType, searchBox, &mCanAttack, true);
     std::sort(entities->begin(), entities->end(), mSorter);
-    if (!entities->empty())
+    if (entities->empty())
     {
-        mTarget = boost::static_pointer_cast<LivingEntity>(entities->at(0));
         delete entities;
-        return true;
+        return false;
     }
 
+    mTarget = boost::static_pointer_cast<LivingEntity>(entities->at(0));
     delete entities;
-    return false;
+    return true;
 }
 
 bool MobNearestMobTargetGoal::canContinueToUse()
@@ -65,7 +65,7 @@ bool MobNearestMobTargetGoal::canContinueToUse()
     if (mMob->distanceToSqr(target) > followDistance * followDistance)
         return false;
 
-    bool isServerPlayer = target->GetType() == EntityType::SERVER_PLAYER;
+    bool isServerPlayer = eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, target->GetType());
     if (isServerPlayer)
     {
         boost::shared_ptr<ServerPlayer> player =

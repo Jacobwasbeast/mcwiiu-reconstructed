@@ -77,10 +77,10 @@ Vec3* WaterAvoidingRandomFlyingGoal::getPosition()
         position = getTreePos();
     }
 
-    if (position != NULL)
+    if (position == NULL)
     {
-        return position;
+        return WaterAvoidingRandomStrollGoal::getPosition();
     }
 
-    return WaterAvoidingRandomStrollGoal::getPosition();
+    return position;
 }

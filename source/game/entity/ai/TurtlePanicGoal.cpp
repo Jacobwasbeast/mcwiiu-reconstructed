@@ -17,15 +17,7 @@ TurtlePanicGoal::~TurtlePanicGoal()
 
 bool TurtlePanicGoal::canUse()
 {
-    bool calm = false;
-    {
-        boost::shared_ptr<LivingEntity> lastHurtByMob = mMob->getLastHurtByMob();
-        if (lastHurtByMob.get() == NULL && !mMob->isOnFire())
-        {
-            calm = true;
-        }
-    }
-    if (calm)
+    if (mMob->getLastHurtByMob().get() == NULL && !mMob->isOnFire())
     {
         return false;
     }
@@ -41,4 +33,3 @@ bool TurtlePanicGoal::canUse()
 
     return findRandomPosition();
 }
-

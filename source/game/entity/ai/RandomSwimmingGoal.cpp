@@ -1,5 +1,6 @@
 #include "game/entity/ai/RandomSwimmingGoal.hpp"
 
+#include <algorithm>
 #include <boost/shared_ptr.hpp>
 #include <cmath>
 
@@ -29,8 +30,9 @@ RandomSwimmingGoal::~RandomSwimmingGoal()
 void RandomSwimmingGoal::getWaterHeights(MutableBlockPos pos, int& topY, float& waterY, float& minY, float& maxY)
 {
     Level* level = ((Entity*)mMob)->mLevel;
-    topY = level->getAboveTopSolidBlock(pos, false, false);
-    waterY = (float)topY;
+    int top = level->getAboveTopSolidBlock(pos, false, false);
+    topY = top;
+    waterY = (float)top;
 
     while (waterY < (float)level->getMaxBuildHeight())
     {
@@ -43,20 +45,15 @@ void RandomSwimmingGoal::getWaterHeights(MutableBlockPos pos, int& topY, float& 
         waterY += 1.0f;
     }
 
-    const float upper = waterY - 1.5f;
-    const float upperBound = (float)((Entity*)mMob)->mY + (float)mY;
-    maxY = upper >= upperBound ? upperBound : upper;
-    const float lower = waterY - 20.0f;
-    const float lowerBound = (float)((Entity*)mMob)->mY - (float)mY;
-    float bottom = lower < lowerBound ? lowerBound : lower;
-    if (bottom <= (float)topY)
+    maxY = std::min(waterY - 1.5f, (float)((Entity*)mMob)->mY + (float)mY);
+    minY = std::max(waterY - 20.0f, (float)((Entity*)mMob)->mY - (float)mY);
+    if (minY <= (float)topY)
     {
-        bottom = (float)topY + 0.5f;
+        minY = (float)topY + 0.5f;
     }
-    minY = bottom;
-    if (maxY < bottom)
+    if (maxY < minY)
     {
-        maxY = bottom;
+        maxY = minY;
     }
 }
 
@@ -68,23 +65,22 @@ Vec3* RandomSwimmingGoal::getPosition()
         boost::shared_ptr<PathfinderMob> mob =
             boost::static_pointer_cast<PathfinderMob>(((Entity*)mMob)->shared_from_this());
         int attempts = 0;
-        float minY = 0.0f;
-        float maxY = 0.0f;
-        float waterY = 0.0f;
         int topY = 0;
+        float waterY;
+        float minY;
+        float maxY;
 
         do
         {
             target = RandomPos::getPos(mob, mXz, mY, -1);
-            ++attempts;
             if (target != NULL)
             {
-                BlockPos blockPos(target);
-                getWaterHeights(static_cast<const MutableBlockPos&>(blockPos), topY, waterY, minY, maxY);
+                getWaterHeights(MutableBlockPos(target), topY, waterY, minY, maxY);
                 target->y = (double)mMob->getRandom()->nextFloat(minY, maxY);
             }
+            ++attempts;
         }
-        while (target != NULL && attempts <= 29 && ((Entity*)mMob)->mLevel->getBlock(BlockPos(target))->mMaterial != Material::WATER);
+        while (target != NULL && attempts < 30 && ((Entity*)mMob)->mLevel->getBlock(BlockPos(target))->mMaterial != Material::WATER);
 
         if (target != NULL)
         {

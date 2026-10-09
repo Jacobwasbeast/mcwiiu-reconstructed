@@ -13,9 +13,9 @@
 BegGoal::BegGoal(Wolf* wolf, float distance)
 {
     mPlayer = boost::weak_ptr<Player>();
-    mLevel = wolf->mLevel;
     mTime = 0;
     mWolf = wolf;
+    mLevel = wolf->mLevel;
     mDistance = distance;
     setRequiredControlFlags(2);
 }

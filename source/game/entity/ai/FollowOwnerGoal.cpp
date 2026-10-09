@@ -27,8 +27,8 @@ FollowOwnerGoal::FollowOwnerGoal(TamableAnimal* tamable, double speedModifier, f
     mLevel = tamable->mLevel;
     mSpeedModifier = speedModifier;
     mNavigation = tamable->getNavigation();
-    mStopDistance = stopDistance;
     mStartDistance = startDistance;
+    mStopDistance = stopDistance;
     setRequiredControlFlags(3);
 }
 
@@ -40,13 +40,10 @@ bool FollowOwnerGoal::canUse()
         return false;
     }
 
-    if ((owner->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, owner->GetType())
+        && boost::static_pointer_cast<Player>(owner)->isSpectator())
     {
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(owner);
-        if (player->isSpectator())
-        {
-            return false;
-        }
+        return false;
     }
 
     if (mTamable->isSitting())
@@ -59,7 +56,7 @@ bool FollowOwnerGoal::canUse()
         return false;
     }
 
-    mOwner = owner;
+    mOwner = boost::weak_ptr<LivingEntity>(owner);
     return true;
 }
 
@@ -130,26 +127,26 @@ void FollowOwnerGoal::tick()
     if (owner->isPassenger())
     {
         boost::shared_ptr<Entity> vehicle = owner->getVehicle();
-        if (vehicle->mXd <= 0.0)
-        {
-            minX = 0;
-            maxX = 2;
-        }
-        else
+        if (vehicle->mXd > 0.0)
         {
             minX = 2;
             maxX = 4;
         }
-
-        if (vehicle->mZd <= 0.0)
-        {
-            minZ = 0;
-            maxZ = 2;
-        }
         else
+        {
+            minX = 0;
+            maxX = 2;
+        }
+
+        if (vehicle->mZd > 0.0)
         {
             minZ = 2;
             maxZ = 4;
+        }
+        else
+        {
+            minZ = 0;
+            maxZ = 2;
         }
     }
 
@@ -158,7 +155,7 @@ void FollowOwnerGoal::tick()
         for (int dz = 0; dz <= 4; ++dz)
         {
             if ((dx < 1 || dz < 1 || dx > 3 || dz > 3)
-                && (dx < minX || dz < minZ || dx > maxX || dz > maxZ)
+                && !(dx >= minX && dz >= minZ && dx <= maxX && dz <= maxZ)
                 && isTeleportFriendlyBlock(x, z, y, dx, dz))
             {
                 mTamable->moveTo((double)((float)(x + dx) + 0.5f), (double)y,

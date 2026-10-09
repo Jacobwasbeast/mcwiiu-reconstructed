@@ -12,12 +12,10 @@
 MoveTowardsTargetGoal::MoveTowardsTargetGoal(PathfinderMob* mob, double speedModifier,
                                              float within)
 {
+    mWantedX = mWantedY = mWantedZ = 0.0;
     mMob = mob;
     mSpeedModifier = speedModifier;
     mWithin = within;
-    mWantedX = 0.0;
-    mWantedY = 0.0;
-    mWantedZ = 0.0;
     setRequiredControlFlags(1);
 }
 

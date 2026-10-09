@@ -15,10 +15,13 @@
 
 RangedBowAttackGoal::RangedBowAttackGoal(Monster* mob, double speedModifier, int attackInterval,
                                          float attackRadius)
-    : Goal(), mMob(mob), mSpeedModifier(speedModifier), mAttackInterval(attackInterval),
-      mAttackRadiusSqr(attackRadius * attackRadius), mAttackTime(-1), mSeeTime(0),
-      mStrafingClockwise(false), mStrafingBackwards(false), mStrafingTime(-1)
+    : Goal(), mAttackTime(-1), mSeeTime(0), mStrafingClockwise(false), mStrafingBackwards(false),
+      mStrafingTime(-1)
 {
+    mMob = mob;
+    mSpeedModifier = speedModifier;
+    mAttackInterval = attackInterval;
+    mAttackRadiusSqr = attackRadius * attackRadius;
     setRequiredControlFlags(3);
 }
 
@@ -70,7 +73,7 @@ void RangedBowAttackGoal::tick()
     if (!target)
         return;
 
-    double distance = mMob->distanceToSqr(target->mX, target->mBoundingBox->mMinY, target->mZ);
+    double distance = mMob->distanceToSqr(target->mX, target->getBoundingBox()->mMinY, target->mZ);
     bool canSee = mMob->getSensing()->canSee(target);
     if (canSee != (mSeeTime > 0))
         mSeeTime = 0;

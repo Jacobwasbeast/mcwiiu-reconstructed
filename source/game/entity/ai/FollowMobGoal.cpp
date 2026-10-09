@@ -18,15 +18,6 @@ FollowMobGoal::FollowPredicate::FollowPredicate(Mob* mob)
 {
 }
 
-FollowMobGoal::FollowPredicate::~FollowPredicate()
-{
-}
-
-bool FollowMobGoal::FollowPredicate::apply(boost::shared_ptr<Entity> entity) const
-{
-    return entity && mMob->GetType() != entity->GetType();
-}
-
 FollowMobGoal::FollowMobGoal(Mob* mob, double speedModifier, float stopDistance, float areaSize)
     : mTarget()
 {
@@ -34,10 +25,10 @@ FollowMobGoal::FollowMobGoal(Mob* mob, double speedModifier, float stopDistance,
     mPredicate = new FollowPredicate(mob);
     mSpeedModifier = speedModifier;
     mNavigation = mob->getNavigation();
-    mTimeToRecalcPath = 0;
     mStopDistance = stopDistance;
-    mOldWaterCost = 0.0f;
     mAreaSize = areaSize;
+    mTimeToRecalcPath = 0;
+    mOldWaterCost = 0.0f;
     setRequiredControlFlags(3);
     dynamic_cast<GroundPathNavigation*>(mob->getNavigation()) ||
         dynamic_cast<FlyingPathNavigation*>(mob->getNavigation());
@@ -106,22 +97,26 @@ void FollowMobGoal::tick()
     double dy = mMob->mY - target->mY;
     double dz = mMob->mZ - target->mZ;
     double distSq = dx * dx + dy * dy + dz * dz;
-    if (distSq > (double)(mStopDistance * mStopDistance))
+    if (distSq <= (double)(mStopDistance * mStopDistance))
     {
-        mNavigation->moveTo(target, mSpeedModifier);
+        mNavigation->stop();
+        LookControl* targetLook = target->getLookControl();
+        if (distSq <= (double)mStopDistance ||
+            (targetLook->getWantedX() == mMob->mX &&
+             targetLook->getWantedY() == mMob->mY &&
+             targetLook->getWantedZ() == mMob->mZ))
+        {
+            double followX = target->mX - mMob->mX;
+            double followZ = target->mZ - mMob->mZ;
+            mNavigation->moveTo(mMob->mX - followX, mMob->mY, mMob->mZ - followZ, mSpeedModifier);
+        }
         return;
     }
 
-    mNavigation->stop();
-    LookControl* targetLook = target->getLookControl();
-    if (distSq <= (double)mStopDistance ||
-        (targetLook->getWantedX() == mMob->mX &&
-         targetLook->getWantedY() == mMob->mY &&
-         targetLook->getWantedZ() == mMob->mZ))
-    {
-        double followX = target->mX - mMob->mX;
-        double followZ = target->mZ - mMob->mZ;
-        mNavigation->moveTo(mMob->mX - followX, mMob->mY, mMob->mZ - followZ, mSpeedModifier);
-    }
+    mNavigation->moveTo(target, mSpeedModifier);
 }
 
+bool FollowMobGoal::FollowPredicate::apply(boost::shared_ptr<Entity> entity) const
+{
+    return entity && mMob->GetType() != entity->GetType();
+}

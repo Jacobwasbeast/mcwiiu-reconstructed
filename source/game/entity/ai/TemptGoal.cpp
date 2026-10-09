@@ -1,5 +1,6 @@
 #include "game/entity/ai/TemptGoal.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 #include <boost/shared_ptr.hpp>
@@ -14,23 +15,17 @@
 TemptGoal::TemptGoal(PathfinderMob* mob, double speedModifier,
                      arrayWithLength<Item*> items, bool canScare,
                      arrayWithLength<int> itemAuxValues)
-    : mTargetX(0.0)
-    , mTargetY(0.0)
-    , mTargetZ(0.0)
-    , mTargetXRot(0.0)
-    , mTargetYRot(0.0)
 {
+    mTargetX = mTargetY = mTargetZ = mTargetXRot = mTargetYRot = 0.0;
     mPlayer = boost::weak_ptr<Player>();
-    mMob = mob;
-    mSpeedModifier = speedModifier;
-    mDelayTemptCounter = 0;
-    mRunning = false;
-    mItems.data = items.data;
-    mItems.length = items.length;
-    mItemAuxValues.data = itemAuxValues.data;
-    mItemAuxValues.length = itemAuxValues.length;
-    mCanScare = canScare;
     mField0x61 = false;
+    mRunning = false;
+    mSpeedModifier = speedModifier;
+    mMob = mob;
+    mDelayTemptCounter = 0;
+    mItems = items;
+    mItemAuxValues = itemAuxValues;
+    mCanScare = canScare;
     setRequiredControlFlags(3);
 }
 
@@ -89,15 +84,7 @@ bool TemptGoal::canContinueToUse()
 
             double xRotDelta = fabs((double)player->mXRot - mTargetXRot);
             double yRotDelta = fabs((double)player->mYRot - mTargetYRot);
-            if (xRotDelta > 360.0 - xRotDelta)
-            {
-                xRotDelta = 360.0 - xRotDelta;
-            }
-            if (yRotDelta > 360.0 - yRotDelta)
-            {
-                yRotDelta = 360.0 - yRotDelta;
-            }
-            if (xRotDelta > 5.0 || yRotDelta > 5.0)
+            if (std::min(xRotDelta, 360.0 - xRotDelta) > 5.0 || std::min(yRotDelta, 360.0 - yRotDelta) > 5.0)
             {
                 mDelayTemptCounter = 100;
                 return false;

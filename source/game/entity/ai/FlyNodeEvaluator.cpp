@@ -1,6 +1,8 @@
 #include "game/entity/ai/FlyNodeEvaluator.hpp"
 #include "game/world/block/BlockId.hpp"
 
+#include <algorithm>
+
 #include <boost/unordered_set.hpp>
 
 #include "game/core/Mth.hpp"
@@ -85,13 +87,7 @@ Node* FlyNodeEvaluator::getStart()
 
 Node* FlyNodeEvaluator::getGoal(double x, double y, double z)
 {
-    int ix = static_cast<int>(x);
-    int iy = static_cast<int>(y);
-    int iz = static_cast<int>(z);
-    if (x < static_cast<double>(ix)) --ix;
-    if (y < static_cast<double>(iy)) --iy;
-    if (z < static_cast<double>(iz)) --iz;
-    return NodeEvaluator::getNode(ix, iy, iz);
+    return NodeEvaluator::getNode(Mth::floor(x), Mth::floor(y), Mth::floor(z));
 }
 
 int FlyNodeEvaluator::getNeighbors(arrayWithLength<Node*>* neighbors, Node* current, Node* target, float maxCost)
@@ -189,12 +185,10 @@ Node* FlyNodeEvaluator::getNode(int x, int y, int z)
     if (malus >= 0.0f)
     {
         node = NodeEvaluator::getNode(x, y, z);
-        float cost = node->costMalus < malus ? malus : node->costMalus;
+        node->costMalus = std::max(node->costMalus, malus);
         node->type = type;
         if (type == BlockPathTypes::WALKABLE)
-            node->costMalus = cost + 1.0f;
-        else
-            node->costMalus = cost;
+            node->costMalus += 1.0f;
     }
     return node;
 }
@@ -204,10 +198,10 @@ const BlockPathTypes* FlyNodeEvaluator::getBlockPathType(LevelSource* levelSourc
                                                           bool canOpenDoors, bool canPassDoors)
 {
     int pathTypeFlags = 0;
+    const BlockPathTypes* result = BlockPathTypes::BLOCKED;
     BlockPos mobPos(mob);
-    const BlockPathTypes* result = getBlockPathTypes(levelSource, x, y, z, sizeX, sizeY, sizeZ,
-                                                     canOpenDoors, canPassDoors, pathTypeFlags,
-                                                     BlockPathTypes::BLOCKED);
+    result = getBlockPathTypes(levelSource, x, y, z, sizeX, sizeY, sizeZ, canOpenDoors, canPassDoors,
+                               pathTypeFlags, result);
     if ((pathTypeFlags & 1 << BlockPathTypes::FENCE->id) != 0)
         return BlockPathTypes::FENCE;
 

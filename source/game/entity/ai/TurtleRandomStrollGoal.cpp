@@ -14,12 +14,11 @@ TurtleRandomStrollGoal::~TurtleRandomStrollGoal()
 
 bool TurtleRandomStrollGoal::canUse()
 {
-    Turtle* turtle = static_cast<Turtle*>(mMob);
-    if ((turtle->GetType() != EntityType::TURTLE || !turtle->hasEgg() || turtle->hasGivenUpOnEgg())
-        && !turtle->isInWater())
+    if ((!eTYPE_DERIVED_FROM(EntityType::TURTLE, mMob->GetType()) || !static_cast<Turtle*>(mMob)->hasEgg()
+         || static_cast<Turtle*>(mMob)->hasGivenUpOnEgg())
+        && !mMob->isInWater())
     {
         return RandomStrollGoal::canUse();
     }
     return false;
 }
-

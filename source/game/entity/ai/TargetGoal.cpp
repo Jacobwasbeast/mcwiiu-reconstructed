@@ -56,7 +56,7 @@ bool TargetGoal::canContinueToUse()
     if (!target || !target->isAlive())
         return false;
 
-    if (mMob->GetType() == EntityType::WITHER_SKELETON)
+    if (eTYPE_DERIVED_FROM(EntityType::WITHER_SKELETON, mMob->GetType()))
     {
         boost::shared_ptr<WitherBoss> parent =
             static_cast<WitherSkeleton*>(mMob)->getWitherParent();
@@ -80,7 +80,7 @@ bool TargetGoal::canContinueToUse()
             return false;
     }
 
-    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType()))
     {
         if (target->mLevel->getDifficulty() == Difficulty::PEACEFUL)
         {
@@ -147,7 +147,7 @@ bool TargetGoal::canAttack(Mob* mob, boost::shared_ptr<LivingEntity> target,
             return false;
     }
 
-    if ((target->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType()))
     {
         if ((!allowInvulnerablePlayers
              && boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)

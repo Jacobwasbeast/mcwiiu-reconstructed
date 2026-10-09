@@ -34,9 +34,9 @@ public:
     Operation getOperation() const;
     void setOperation(Operation operation);
 
-protected:
     static float MIN_SPEED_SQR;
 
+protected:
     Mob* mMob;
     double mWantedX;
     double mWantedY;
