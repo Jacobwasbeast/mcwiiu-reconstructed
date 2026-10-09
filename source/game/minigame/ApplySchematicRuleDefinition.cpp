@@ -17,17 +17,16 @@
 static const unsigned short sRotationDegrees[4] = {0, 90, 180, 270};
 
 ApplySchematicRuleDefinition::ApplySchematicRuleDefinition(LevelGenerationOptions* options)
-    : mLevelGenerationOptions(options),
-      mSchematicName(),
-      mOrigin(Vec3::newPermanent(0.0, 0.0, 0.0)),
-      mLocationBox(NULL),
-      mRotation(ConsoleSchematicFile::eSchematicRotation_0),
-      mDimension(0),
-      mBlocksApplied(0),
-      mLightingApplied(0),
-      mComplete(false)
 {
+    mLevelGenerationOptions = options;
+    mOrigin = Vec3::newPermanent(0.0, 0.0, 0.0);
+    mLocationBox = NULL;
+    mComplete = false;
+    mLightingApplied = 0;
+    mRotation = ConsoleSchematicFile::eSchematicRotation_0;
+    mBlocksApplied = 0;
     mSchematicFile = NULL;
+    mDimension = 0;
 }
 
 ApplySchematicRuleDefinition::~ApplySchematicRuleDefinition()
@@ -38,9 +37,9 @@ ApplySchematicRuleDefinition::~ApplySchematicRuleDefinition()
 
 void ApplySchematicRuleDefinition::reset()
 {
-    mComplete = false;
     mBlocksApplied = 0;
     mLightingApplied = 0;
+    mComplete = false;
 }
 
 bool ApplySchematicRuleDefinition::isComplete()
@@ -62,16 +61,17 @@ void ApplySchematicRuleDefinition::updateLocationBox()
     mLocationBox = box;
     box->mMaxY = mOrigin->y + static_cast<double>(mSchematicFile->mHeight);
 
-    if (mRotation == ConsoleSchematicFile::eSchematicRotation_90 ||
-        mRotation == ConsoleSchematicFile::eSchematicRotation_270)
+    switch (mRotation)
     {
+    case ConsoleSchematicFile::eSchematicRotation_90:
+    case ConsoleSchematicFile::eSchematicRotation_270:
         box->mMaxX = mOrigin->x + static_cast<double>(mSchematicFile->mDepth);
         box->mMaxZ = mOrigin->z + static_cast<double>(mSchematicFile->mWidth);
-    }
-    else
-    {
+        break;
+    default:
         box->mMaxX = mOrigin->x + static_cast<double>(mSchematicFile->mWidth);
         box->mMaxZ = mOrigin->z + static_cast<double>(mSchematicFile->mDepth);
+        break;
     }
 }
 
@@ -88,16 +88,16 @@ void ApplySchematicRuleDefinition::processSchematic(AABB* chunkBox, LevelChunk* 
     {
         mSchematicFile = mLevelGenerationOptions->getSchematicFile(mSchematicName);
     }
-    if (mLocationBox == NULL)
+    AABB* box = mLocationBox;
+    if (box == NULL)
     {
         updateLocationBox();
+        box = mLocationBox;
     }
 
-    if (chunkBox->intersects(mLocationBox->mMinX, mLocationBox->mMinY,
-                             mLocationBox->mMinZ, mLocationBox->mMaxX,
-                             mLocationBox->mMaxY, mLocationBox->mMaxZ))
+    if (chunkBox->intersects(box))
     {
-        mLocationBox->mMaxY = mLocationBox->mMaxY <= 256.0 ? mLocationBox->mMaxY : 256.0;
+        box->mMaxY = box->mMaxY <= 256.0 ? box->mMaxY : 256.0;
 
         PIXBeginNamedEvent(0.0f, "Applying blocks and data");
         mBlocksApplied += mSchematicFile->applyBlocksAndData(
@@ -133,16 +133,16 @@ void ApplySchematicRuleDefinition::processSchematicLighting(AABB* chunkBox, Leve
     {
         mSchematicFile = mLevelGenerationOptions->getSchematicFile(mSchematicName);
     }
-    if (mLocationBox == NULL)
+    AABB* box = mLocationBox;
+    if (box == NULL)
     {
         updateLocationBox();
+        box = mLocationBox;
     }
 
-    if (chunkBox->intersects(mLocationBox->mMinX, mLocationBox->mMinY,
-                             mLocationBox->mMinZ, mLocationBox->mMaxX,
-                             mLocationBox->mMaxY, mLocationBox->mMaxZ))
+    if (chunkBox->intersects(box))
     {
-        mLocationBox->mMaxY = mLocationBox->mMaxY <= 256.0 ? mLocationBox->mMaxY : 256.0;
+        box->mMaxY = box->mMaxY <= 256.0 ? box->mMaxY : 256.0;
 
         PIXBeginNamedEvent(0.0f, "Patching lighting");
         mLightingApplied += mSchematicFile->applyLighting(chunk, chunkBox, mLocationBox, mRotation);
@@ -177,9 +177,7 @@ bool ApplySchematicRuleDefinition::checkIntersects(const BlockPos& min, const Bl
         updateLocationBox();
         box = mLocationBox;
     }
-    Vec3* from = Vec3::newTemp(&min);
-    Vec3* to = Vec3::newTemp(&max);
-    return box->intersects(from, to);
+    return box->intersects(Vec3::newTemp(&min), Vec3::newTemp(&max));
 }
 
 std::wstring ApplySchematicRuleDefinition::getSchematicName()
@@ -201,10 +199,10 @@ void ApplySchematicRuleDefinition::writeAttributes(GameRuleSaveInterface* saveIn
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_y, _toString(mOrigin->y));
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_z, _toString(mOrigin->z));
     saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_rot,
-                                 (mRotation == ConsoleSchematicFile::eSchematicRotation_0 ||
-                                  static_cast<unsigned int>(mRotation) > ConsoleSchematicFile::eSchematicRotation_270)
-                                     ? _toString(0)
-                                     : _toString(static_cast<int>(sRotationDegrees[mRotation])));
+                                 (mRotation > ConsoleSchematicFile::eSchematicRotation_0 &&
+                                  static_cast<unsigned int>(mRotation) <= ConsoleSchematicFile::eSchematicRotation_270)
+                                     ? _toString(static_cast<int>(sRotationDegrees[mRotation]))
+                                     : _toString(0));
 }
 
 void ApplySchematicRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)
@@ -221,13 +219,13 @@ void ApplySchematicRuleDefinition::addAttribute(const std::wstring& name, const 
     if (name == L"x")
     {
         double x = static_cast<double>(_fromString<int>(value));
-        if (static_cast<int>(fabs(x)) & 1)
+        if ((static_cast<int>(fabs(x)) & 1) == 0)
         {
-            mOrigin->x = x - 1.0;
+            mOrigin->x = x;
         }
         else
         {
-            mOrigin->x = x;
+            mOrigin->x = x - 1.0;
         }
         return;
     }
@@ -238,26 +236,26 @@ void ApplySchematicRuleDefinition::addAttribute(const std::wstring& name, const 
         {
             y -= 1.0;
         }
-        if (y < 0.0)
+        if (y >= 0.0)
         {
-            mOrigin->y = 0.0;
+            mOrigin->y = y;
         }
         else
         {
-            mOrigin->y = y;
+            mOrigin->y = 0.0;
         }
         return;
     }
     if (name == L"z")
     {
         double z = static_cast<double>(_fromString<int>(value));
-        if (static_cast<int>(fabs(z)) & 1)
+        if ((static_cast<int>(fabs(z)) & 1) == 0)
         {
-            mOrigin->z = z - 1.0;
+            mOrigin->z = z;
         }
         else
         {
-            mOrigin->z = z;
+            mOrigin->z = z - 1.0;
         }
         return;
     }
@@ -275,6 +273,9 @@ void ApplySchematicRuleDefinition::addAttribute(const std::wstring& name, const 
         int rotationIndex = static_cast<int>(static_cast<float>(rotation) / 90.0f + 0.5f);
         switch (rotationIndex)
         {
+        case 0:
+            mRotation = ConsoleSchematicFile::eSchematicRotation_0;
+            break;
         case 1:
         case 2:
             mRotation = static_cast<ConsoleSchematicFile::ESchematicRotation>(rotationIndex);

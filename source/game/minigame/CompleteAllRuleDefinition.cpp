@@ -9,8 +9,8 @@
 
 std::wstring CompleteAllRuleDefinition::generateDescriptionString(const std::wstring& description, void* value, int count)
 {
-    std::wstring text = description;
     const int* values = static_cast<const int*>(value);
+    std::wstring text = description;
 
     text = replaceAll(text, L"{*progress*}", _toString(values[1]));
     text = replaceAll(text, L"{*goal*}", _toString(values[0]));
@@ -41,25 +41,24 @@ void CompleteAllRuleDefinition::updateStatus(GameRule* rule)
         }
     }
 
-    if (rule->mConnection == NULL)
+    if (rule->mConnection != NULL)
     {
-        return;
-    }
+        ProgressData data;
+        data.goal = goal;
+        data.progress = progress;
 
-    ProgressData data;
-    data.goal = goal;
-    data.progress = progress;
-
-    int icon = -1;
-    int auxValue = 0;
-    if (mCompletedChild != NULL)
-    {
-        icon = mCompletedChild->getIcon();
-        auxValue = mCompletedChild->getAuxValue();
-        mCompletedChild = NULL;
+        int icon = -1;
+        int auxValue = 0;
+        if (mCompletedChild != NULL)
+        {
+            icon = mCompletedChild->getIcon();
+            auxValue = mCompletedChild->getAuxValue();
+            mCompletedChild = NULL;
+        }
+        boost::shared_ptr<UpdateGameRuleProgressPacket> packet(new UpdateGameRuleProgressPacket(
+            getActionType(), mDescriptionName, icon, auxValue, 0, &data, sizeof(data)));
+        rule->mConnection->send(packet);
     }
-    rule->mConnection->send(boost::shared_ptr<Packet>(new UpdateGameRuleProgressPacket(
-        getActionType(), mDescriptionName, icon, auxValue, 0, &data, sizeof(data))));
 }
 
 bool CompleteAllRuleDefinition::onUseBlock(GameRule* rule, int blockId, int x, int y, int z)

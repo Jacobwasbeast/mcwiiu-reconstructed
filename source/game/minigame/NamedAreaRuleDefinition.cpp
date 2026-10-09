@@ -4,9 +4,10 @@
 #include "game/world/block/BlockPos.hpp"
 
 NamedAreaRuleDefinition::NamedAreaRuleDefinition()
-    : mName(L""),
-      mArea(AABB::newPermanent(0.0, 0.0, 0.0, 0.0, 0.0, 0.0))
 {
+    mName = L"";
+    mArea = AABB::newPermanent(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+
     addStringAttribute(ConsoleGameRules::eGameRuleAttr_name, &mName);
     addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_x0, &mArea->mMinX);
     addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_y0, &mArea->mMinY);
@@ -78,10 +79,10 @@ void NamedAreaRuleDefinition::updateWithPoints(int x0, int y0, int z0, int x1, i
     }
 
     mArea->mMinX = minX;
-    mArea->mMinY = minY;
-    mArea->mMinZ = minZ;
     mArea->mMaxX = maxX;
+    mArea->mMinY = minY;
     mArea->mMaxY = maxY;
+    mArea->mMinZ = minZ;
     mArea->mMaxZ = maxZ;
 }
 

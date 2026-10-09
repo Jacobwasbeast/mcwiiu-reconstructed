@@ -9,11 +9,11 @@
 #include "game/core/StringFormat.hpp"
 
 CheckpointRuleDefinition::CheckpointRuleDefinition()
-    : mBeacons()
 {
     mSpawnPoint = NULL;
-    mElytraBoost = -1.0;
     mSequenceID = -1;
+    mElytraBoost = -1.0;
+    mBeacons.clear();
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_id, &mSequenceID);
     addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_speedBoost, &mElytraBoost);
 }
@@ -63,14 +63,12 @@ GameRuleDefinition* CheckpointRuleDefinition::addChild(ConsoleGameRules::EGameRu
     GameRuleDefinition* rule = NULL;
     if (type == ConsoleGameRules::eGameRuleType_UpdatePlayer)
     {
-        mSpawnPoint = new UpdatePlayerRuleDefinition();
-        rule = mSpawnPoint;
+        rule = mSpawnPoint = new UpdatePlayerRuleDefinition();
     }
     else if (type == ConsoleGameRules::eGameRuleType_CustomBeacon)
     {
-        CustomBeaconRuleDefinition* beacon = new CustomBeaconRuleDefinition();
-        rule = beacon;
-        mBeacons.push_back(beacon);
+        rule = new CustomBeaconRuleDefinition();
+        mBeacons.push_back(static_cast<CustomBeaconRuleDefinition*>(rule));
     }
 
     return rule;
@@ -117,12 +115,13 @@ void CheckpointRuleDefinition::WriteXMLData(std::string& xml)
     if (mSpawnPoint == NULL)
     {
         xml += "/>\n";
-        return;
     }
-
-    xml += ">\n";
-    mSpawnPoint->WriteXMLData(xml);
-    xml += formatstr("</%ls>\n", GameRuleManager::sTagNames[type]);
+    else
+    {
+        xml += ">\n";
+        mSpawnPoint->WriteXMLData(xml);
+        xml += formatstr("</%ls>\n", GameRuleManager::sTagNames[type]);
+    }
 }
 
 void CheckpointRuleDefinition::processBeacons(ServerLevel* level)

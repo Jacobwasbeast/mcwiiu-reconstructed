@@ -29,7 +29,7 @@ MiniGamePlayerSettings& MiniGameOptionCache::getPreviousOptions(int playerIndex,
 {
     PlayerUID playerUid(0);
     gProfile->GetXUID(playerIndex, &playerUid, true);
-    std::pair<PlayerUID, EMiniGameId> key(playerUid, miniGameId);
+    std::pair<PlayerUID, EMiniGameId> key(std::make_pair(playerUid, miniGameId));
     OptionMap::iterator it = mOptions.find(key);
     if (it == mOptions.end())
     {
@@ -37,7 +37,7 @@ MiniGamePlayerSettings& MiniGameOptionCache::getPreviousOptions(int playerIndex,
         MiniGamePlayerSettings options = miniGame->GetDefaultPlayerSettings();
         if (miniGameId == eMiniGameId_Tumble || miniGameId == eMiniGameId_Build)
         {
-            options.mHostOptions.Set(eCustomGameModeHostOption_SpectateMode, 0);
+            options.mHostOptions.Set(eCustomGameModeHostOption_NoSmallSkins, 0);
         }
         mOptions[key] = options;
         it = mOptions.find(key);

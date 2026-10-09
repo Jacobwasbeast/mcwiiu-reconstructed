@@ -46,6 +46,15 @@ enum EBuildMode
     EBuildMode_WhiteList,
     EBuildMode_BlackList
 };
+enum ESpectateMode
+{
+    eSpectateMode_HostOption = -1,
+    eSpectateMode_Invisible,
+    eSpectateMode_Bat,
+    eSpectateMode_Parrot,
+    eSpectateMode_Vex,
+    eSpectateMode_FloatingHead
+};
 
 class GameType;
 
@@ -53,16 +62,6 @@ class MiniGameDef
 {
 public:
     static const std::wstring sPlayerInventoryLootGroup;
-
-    enum ESpectateMode
-    {
-        eSpectateMode_HostOption = -1,
-        eSpectateMode_Invisible,
-        eSpectateMode_Bat,
-        eSpectateMode_Parrot,
-        eSpectateMode_Vex,
-        eSpectateMode_FloatingHead
-    };
 
     enum ELootDistributionMethod
     {
@@ -128,48 +127,27 @@ public:
     };
     struct FoodBalance
     {
-        bool mMaxFoodEnabled;
-        int mMaxFood;
-        bool mMaxSaturationEnabled;
-        float mMaxSaturation;
-        bool mStartSaturationEnabled;
-        float mStartSaturation;
-        bool mSaturationFloorEnabled;
-        float mSaturationFloor;
-        bool mExhaustionDropEnabled;
-        float mExhaustionDrop;
-        bool mHealthTickEnabled;
-        int mHealthTickCount;
-        bool mHealthTickSaturatedEnabled;
-        int mHealthTickCountSaturated;
-        bool mHealLevelEnabled;
-        int mHealLevel;
-        bool mStarveLevelEnabled;
-        int mStarveLevel;
-        bool mSprintLevelEnabled;
-        int mSprintLevel;
-        bool mExhaustionHealEnabled;
-        float mExhaustionHeal;
-        bool mExhaustionJumpEnabled;
-        float mExhaustionJump;
-        bool mExhaustionSprintJumpEnabled;
-        float mExhaustionSprintJump;
-        bool mExhaustionMineEnabled;
-        float mExhaustionMine;
-        bool mExhaustionAttackEnabled;
-        float mExhaustionAttack;
-        bool mExhaustionDamageEnabled;
-        float mExhaustionDamage;
-        bool mExhaustionSneakEnabled;
-        float mExhaustionSneak;
-        bool mExhaustionWalkEnabled;
-        float mExhaustionWalk;
-        bool mExhaustionSprintEnabled;
-        float mExhaustionSprint;
-        bool mExhaustionSwimEnabled;
-        float mExhaustionSwim;
-        bool mExhaustionIdleEnabled;
-        float mExhaustionIdle;
+        maybe<int> mMaxFood;
+        maybe<float> mMaxSaturation;
+        maybe<float> mStartSaturation;
+        maybe<float> mSaturationFloor;
+        maybe<float> mExhaustionDrop;
+        maybe<int> mHealthTickCount;
+        maybe<int> mHealthTickCountSaturated;
+        maybe<int> mHealLevel;
+        maybe<int> mStarveLevel;
+        maybe<int> mSprintLevel;
+        maybe<float> mExhaustionHeal;
+        maybe<float> mExhaustionJump;
+        maybe<float> mExhaustionSprintJump;
+        maybe<float> mExhaustionMine;
+        maybe<float> mExhaustionAttack;
+        maybe<float> mExhaustionDamage;
+        maybe<float> mExhaustionSneak;
+        maybe<float> mExhaustionWalk;
+        maybe<float> mExhaustionSprint;
+        maybe<float> mExhaustionSwim;
+        maybe<float> mExhaustionIdle;
         FoodBalance();
         FoodBalance(const FoodBalance& other);
     };
@@ -285,9 +263,9 @@ public:
     std::wstring getVersionString() const;
     bool IsCRCValid() const;
     bool HasPermission(EBuildMode mode, const std::vector<int>& permissions, int value) const;
-    unsigned int MayPlace(int id) const;
+    bool MayPlace(int id) const;
     unsigned int MayDestroy(int id) const;
-    unsigned int MayUse(int id) const;
+    bool MayUse(int id) const;
     unsigned int MayUseBlock(int id) const;
     bool CanAutoStart() const;
     bool ShowInvulnerableEffect() const;
@@ -473,7 +451,7 @@ private:
     static T atMaybe(const boost::unordered_map<int, T>& values, int key, T defaultValue);
 
     unsigned char mHostOptionVersion;
-    boost::unordered_map<int, unsigned int> mOptionDefaults;
+    boost::unordered_map<int, int> mOptionDefaults;
     boost::unordered_map<int, std::vector<int> > mOptionLists;
     std::vector<boost::unordered_map<int, boost::unordered_map<int, int> > > mMatchmakingFilters;
     std::vector<int> mMatchmakingFilterDefaults;

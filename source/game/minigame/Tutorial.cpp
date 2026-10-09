@@ -1682,29 +1682,26 @@ void Tutorial::onLookAtEntity(boost::shared_ptr<Entity> entity)
         std::vector<TutorialHint*>::iterator hintIt = stateHints[currentState].begin();
         while (hintIt < stateHints[currentState].end())
         {
-            if ((*hintIt)->onLookAtEntity(entity) != 0)
+            TutorialHint* hint = *hintIt;
+            if (hint->onLookAtEntity(entity) != 0)
                 break;
             ++hintIt;
         }
         if (currentState == eTutorial_State_Gameplay)
         {
-            unsigned long long entityType = entity->GetType();
-            if ((entityType & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE
-                && entity->GetType() != EntityType::SKELETON_HORSE
-                && entity->GetType() != EntityType::ZOMBIE_HORSE
+            if (eTYPE_DERIVED_FROM(EntityType::ABSTRACT_HORSE, entity->GetType())
+                && !eTYPE_DERIVED_FROM(EntityType::SKELETON_HORSE, entity->GetType())
+                && !eTYPE_DERIVED_FROM(EntityType::ZOMBIE_HORSE, entity->GetType())
                 && (!enabled || completed))
             {
-                boost::shared_ptr<AbstractHorse> horse =
-                    boost::static_pointer_cast<AbstractHorse>(entity);
-                if (horse->isBaby() != 1)
+                if (!boost::static_pointer_cast<AbstractHorse>(entity)->isBaby())
                     changeTutorialState(eTutorial_State_Horse, NULL);
             }
         }
-        std::vector<TutorialTask*>::iterator taskIt = stateTasks[currentState].begin();
-        while (taskIt != stateTasks[currentState].end())
+        for (std::vector<TutorialTask*>::iterator it = stateTasks[currentState].begin();
+             it != stateTasks[currentState].end(); ++it)
         {
-            (*taskIt)->onLookAtEntity(entity);
-            ++taskIt;
+            (*it)->onLookAtEntity(entity);
         }
     }
 }

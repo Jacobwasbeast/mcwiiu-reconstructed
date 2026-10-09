@@ -204,9 +204,9 @@ void MiniGameMedals::staticCtor()
     glideMedals.addMedal((new MultiConditionMedal(0x79CA8ED4, 625, new TotalDeathsCondition(1.0f, GameMedal::OPERATOR_AT_LEAST, true)))
         ->addExtraCondition(new WinnerCondition())
         ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST)));
-    conditionMedal = new MultiConditionMedal(IDS_MG03_MEDAL_POINTS, 625, new TotalPointsCondition(1.0f, GameMedal::OPERATOR_AT_LEAST, true));
-    conditionMedal->addExtraCondition(new VariantCondition(eMiniGameVariantId_ScoreAttack));
-    conditionMedal->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST));
+    conditionMedal = (new MultiConditionMedal(IDS_MG03_MEDAL_POINTS, 625, new TotalPointsCondition(1.0f, GameMedal::OPERATOR_AT_LEAST, true)))
+        ->addExtraCondition(new VariantCondition(eMiniGameVariantId_ScoreAttack))
+        ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST));
     conditionMedal->SetCanMultiAward(true);
     glideMedals.addMedal(conditionMedal);
     conditionMedal = new MultiConditionMedal(0xEAA09456, 625, new HasSpawnedAtAllCheckpointsCondition());
@@ -279,14 +279,14 @@ void MiniGameMedals::staticCtor()
     medal->SetCanMultiAward(true);
     glideMedals.addMedal(medal);
 
-    conditionMedal = new MultiConditionMedal(0x6B80D29C, 625, new ReachEndTimeCondition(FLT_MAX, true, GameMedal::OPERATOR_AT_MOST));
-    conditionMedal->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST));
+    conditionMedal = (new MultiConditionMedal(0x6B80D29C, 625, new ReachEndTimeCondition(FLT_MAX, true, GameMedal::OPERATOR_AT_MOST)))
+        ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST));
     conditionMedal->SetCanMultiAward(true);
     glideMedals.addMedal(conditionMedal);
     glideMedals.addMedal((new MultiConditionMedal(0x0932AB28, 125, new TopSpeedCondition(0.0f, GameMedal::OPERATOR_AT_LEAST)))
         ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST)));
-    conditionMedal = new MultiConditionMedal(0x47708614, 25, new ImprovedCondition(1.0f, GameMedal::OPERATOR_AT_LEAST));
-    conditionMedal->addExtraCondition(new FinishedLastRoundCondition());
+    conditionMedal = (new MultiConditionMedal(0x47708614, 25, new ImprovedCondition(1.0f, GameMedal::OPERATOR_AT_LEAST)))
+        ->addExtraCondition(new FinishedLastRoundCondition());
     conditionMedal->SetCanMultiAward(true);
     glideMedals.addMedal(conditionMedal);
     glideMedals.addMedal((new MultiConditionMedal(0x6EDA42F4, 25, new TimeSpentCondition(1.0f, eTimeSpentCategory_BetweenCheckpoints, GameMedal::OPERATOR_AT_LEAST, true)))
@@ -300,17 +300,17 @@ void MiniGameMedals::staticCtor()
     glideMedals.addMedal((new MultiConditionMedal(0x89F55709, 3125, new LastInFirstRoundCondition()))
         ->addExtraCondition(new WinnerCondition())
         ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST)));
-    conditionMedal = new MultiConditionMedal(0x18A608DA, 625, new FastestTimeAndHightestScoreInARoundCondition());
-    conditionMedal->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST));
-    conditionMedal->addExtraCondition(new VariantCondition(eMiniGameVariantId_ScoreAttack));
+    conditionMedal = (new MultiConditionMedal(0x18A608DA, 625, new FastestTimeAndHightestScoreInARoundCondition()))
+        ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST))
+        ->addExtraCondition(new VariantCondition(eMiniGameVariantId_ScoreAttack));
     conditionMedal->SetCanMultiAward(true);
     glideMedals.addMedal(conditionMedal);
-    conditionMedal = new MultiConditionMedal(IDS_MG03_MEDAL_CLOSE, 3125, new WonByAmountCondition(1000.0f, GameMedal::OPERATOR_AT_MOST));
-    conditionMedal->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST));
+    conditionMedal = (new MultiConditionMedal(IDS_MG03_MEDAL_CLOSE, 3125, new WonByAmountCondition(1000.0f, GameMedal::OPERATOR_AT_MOST)))
+        ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST));
     conditionMedal->SetCanMultiAward(true);
     glideMedals.addMedal(conditionMedal);
-    conditionMedal = new MultiConditionMedal(0xC9D3B088, 625, new WonByAmountCondition(10000.0f, GameMedal::OPERATOR_AT_LEAST));
-    conditionMedal->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST));
+    conditionMedal = (new MultiConditionMedal(0xC9D3B088, 625, new WonByAmountCondition(10000.0f, GameMedal::OPERATOR_AT_LEAST)))
+        ->addExtraCondition(new PlayerCountCondition(2.0f, GameMedal::OPERATOR_AT_LEAST));
     conditionMedal->SetCanMultiAward(true);
     glideMedals.addMedal(conditionMedal);
     glideMedals.addMedal((new MultiConditionMedal(0x13F33157, 125, new TimeSpentCondition(1000.0f, eTimeSpentCategory_GoingBackwards, GameMedal::OPERATOR_AT_LEAST, true)))

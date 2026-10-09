@@ -31,6 +31,7 @@
 #include "game/item/ArmorItem.hpp"
 #include "game/item/DyeItem.hpp"
 #include "game/item/Enchantment.hpp"
+#include "game/item/FireworksItem.hpp"
 #include "game/item/ItemInstance.hpp"
 #include "game/item/ItemPotionFix.hpp"
 #include "game/item/Item.hpp"
@@ -56,7 +57,7 @@ static bool sCrcTableBuilt = false;
 
 static const unsigned int sHostOptionCategoryStringIds[4] =
 {
-    0xfb298fe6u, 0xe1a168a0u, IDS_PARROT, IDS_VEX
+    IDS_MG_OPTION_SPECTATE_MODE_INVISIBLE, IDS_MG_OPTION_SPECTATE_MODE_BAT, IDS_PARROT, IDS_VEX
 };
 
 static MiniGamePlayerSettings sPlayerSettings;
@@ -126,14 +127,14 @@ maybe<int> parseGameType(std::wstring value)
     return maybe<int>();
 }
 
-maybe<int> parseSpectateMode(std::wstring value)
+maybe<ESpectateMode> parseSpectateMode(std::wstring value)
 {
-    if (value == L"$SpectateMode") return maybe<int>(MiniGameDef::eSpectateMode_HostOption);
-    if (value == L"Invisible") return maybe<int>(MiniGameDef::eSpectateMode_Invisible);
-    if (value == L"Bat") return maybe<int>(MiniGameDef::eSpectateMode_Bat);
-    if (value == L"Parrot") return maybe<int>(MiniGameDef::eSpectateMode_Parrot);
-    if (value == L"Vex") return maybe<int>(MiniGameDef::eSpectateMode_Vex);
-    return maybe<int>();
+    if (value == L"$SpectateMode") return maybe<ESpectateMode>(eSpectateMode_HostOption);
+    if (value == L"Invisible") return maybe<ESpectateMode>(eSpectateMode_Invisible);
+    if (value == L"Bat") return maybe<ESpectateMode>(eSpectateMode_Bat);
+    if (value == L"Parrot") return maybe<ESpectateMode>(eSpectateMode_Parrot);
+    if (value == L"Vex") return maybe<ESpectateMode>(eSpectateMode_Vex);
+    return maybe<ESpectateMode>();
 }
 
 maybe<int> parseBuildMode(std::wstring value)
@@ -269,43 +270,25 @@ MiniGameDef::ChestRefill::ChestRefill()
 }
 
 MiniGameDef::FoodBalance::FoodBalance()
-    : mMaxFoodEnabled(false), mMaxFood(0), mMaxSaturationEnabled(false), mMaxSaturation(0.0f)
-    , mStartSaturationEnabled(false), mStartSaturation(0.0f), mSaturationFloorEnabled(false), mSaturationFloor(0.0f)
-    , mExhaustionDropEnabled(false), mExhaustionDrop(0.0f)
-    , mHealthTickEnabled(false), mHealthTickCount(0), mHealthTickSaturatedEnabled(false), mHealthTickCountSaturated(0)
-    , mHealLevelEnabled(false), mHealLevel(0), mStarveLevelEnabled(false), mStarveLevel(0)
-    , mSprintLevelEnabled(false), mSprintLevel(0), mExhaustionHealEnabled(false), mExhaustionHeal(0.0f)
-    , mExhaustionJumpEnabled(false), mExhaustionJump(0.0f), mExhaustionSprintJumpEnabled(false), mExhaustionSprintJump(0.0f)
-    , mExhaustionMineEnabled(false), mExhaustionMine(0.0f), mExhaustionAttackEnabled(false), mExhaustionAttack(0.0f)
-    , mExhaustionDamageEnabled(false), mExhaustionDamage(0.0f)
-    , mExhaustionSneakEnabled(false), mExhaustionSneak(0.0f), mExhaustionWalkEnabled(false), mExhaustionWalk(0.0f)
-    , mExhaustionSprintEnabled(false), mExhaustionSprint(0.0f), mExhaustionSwimEnabled(false), mExhaustionSwim(0.0f)
-    , mExhaustionIdleEnabled(false), mExhaustionIdle(0.0f)
+    : mMaxFood(), mMaxSaturation(), mStartSaturation(), mSaturationFloor(), mExhaustionDrop()
+    , mHealthTickCount(), mHealthTickCountSaturated(), mHealLevel(), mStarveLevel(), mSprintLevel()
+    , mExhaustionHeal(), mExhaustionJump(), mExhaustionSprintJump(), mExhaustionMine(), mExhaustionAttack()
+    , mExhaustionDamage(), mExhaustionSneak(), mExhaustionWalk(), mExhaustionSprint(), mExhaustionSwim()
+    , mExhaustionIdle()
 {
 }
 
 MiniGameDef::FoodBalance::FoodBalance(const FoodBalance& other)
-    : mMaxFoodEnabled(other.mMaxFoodEnabled), mMaxFood(other.mMaxFood)
-    , mMaxSaturationEnabled(other.mMaxSaturationEnabled), mMaxSaturation(other.mMaxSaturation)
-    , mStartSaturationEnabled(other.mStartSaturationEnabled), mStartSaturation(other.mStartSaturation)
-    , mSaturationFloorEnabled(other.mSaturationFloorEnabled), mSaturationFloor(other.mSaturationFloor)
-    , mExhaustionDropEnabled(other.mExhaustionDropEnabled), mExhaustionDrop(other.mExhaustionDrop)
-    , mHealthTickEnabled(other.mHealthTickEnabled), mHealthTickCount(other.mHealthTickCount)
-    , mHealthTickSaturatedEnabled(other.mHealthTickSaturatedEnabled), mHealthTickCountSaturated(other.mHealthTickCountSaturated)
-    , mHealLevelEnabled(other.mHealLevelEnabled), mHealLevel(other.mHealLevel)
-    , mStarveLevelEnabled(other.mStarveLevelEnabled), mStarveLevel(other.mStarveLevel)
-    , mSprintLevelEnabled(other.mSprintLevelEnabled), mSprintLevel(other.mSprintLevel)
-    , mExhaustionHealEnabled(other.mExhaustionHealEnabled), mExhaustionHeal(other.mExhaustionHeal)
-    , mExhaustionJumpEnabled(other.mExhaustionJumpEnabled), mExhaustionJump(other.mExhaustionJump)
-    , mExhaustionSprintJumpEnabled(other.mExhaustionSprintJumpEnabled), mExhaustionSprintJump(other.mExhaustionSprintJump)
-    , mExhaustionMineEnabled(other.mExhaustionMineEnabled), mExhaustionMine(other.mExhaustionMine)
-    , mExhaustionAttackEnabled(other.mExhaustionAttackEnabled), mExhaustionAttack(other.mExhaustionAttack)
-    , mExhaustionDamageEnabled(other.mExhaustionDamageEnabled), mExhaustionDamage(other.mExhaustionDamage)
-    , mExhaustionSneakEnabled(other.mExhaustionSneakEnabled), mExhaustionSneak(other.mExhaustionSneak)
-    , mExhaustionWalkEnabled(other.mExhaustionWalkEnabled), mExhaustionWalk(other.mExhaustionWalk)
-    , mExhaustionSprintEnabled(other.mExhaustionSprintEnabled), mExhaustionSprint(other.mExhaustionSprint)
-    , mExhaustionSwimEnabled(other.mExhaustionSwimEnabled), mExhaustionSwim(other.mExhaustionSwim)
-    , mExhaustionIdleEnabled(other.mExhaustionIdleEnabled), mExhaustionIdle(other.mExhaustionIdle)
+    : mMaxFood(other.mMaxFood), mMaxSaturation(other.mMaxSaturation), mStartSaturation(other.mStartSaturation)
+    , mSaturationFloor(other.mSaturationFloor), mExhaustionDrop(other.mExhaustionDrop)
+    , mHealthTickCount(other.mHealthTickCount), mHealthTickCountSaturated(other.mHealthTickCountSaturated)
+    , mHealLevel(other.mHealLevel), mStarveLevel(other.mStarveLevel), mSprintLevel(other.mSprintLevel)
+    , mExhaustionHeal(other.mExhaustionHeal), mExhaustionJump(other.mExhaustionJump)
+    , mExhaustionSprintJump(other.mExhaustionSprintJump), mExhaustionMine(other.mExhaustionMine)
+    , mExhaustionAttack(other.mExhaustionAttack), mExhaustionDamage(other.mExhaustionDamage)
+    , mExhaustionSneak(other.mExhaustionSneak), mExhaustionWalk(other.mExhaustionWalk)
+    , mExhaustionSprint(other.mExhaustionSprint), mExhaustionSwim(other.mExhaustionSwim)
+    , mExhaustionIdle(other.mExhaustionIdle)
 {
 }
 
@@ -468,11 +451,8 @@ MiniGameDef::MiniGameDef(const XmlObject& object)
     getVersionNumber(object, &mVersionMajor, &mVersionMinor);
     mId = (EMiniGameId)object[L"id"].asUInt(0);
 
-    maybe<std::wstring> difficulty = object.child(L"DifficultyOverride")->maybeString();
-    mDifficulty = difficulty.isSet() ? parseDifficulty(difficulty.get()) : maybe<int>();
-
-    maybe<std::wstring> gameType = object.child(L"PlayerGameType")->maybeString();
-    mPlayerGameType = gameType.isSet() ? parseGameType(gameType.get()) : maybe<int>();
+    mDifficulty = object.child(L"DifficultyOverride")->maybeString().fmap(parseDifficulty);
+    mPlayerGameType = object.child(L"PlayerGameType")->maybeString().fmap(parseGameType);
 
     Abilities abilities;
     if (mPlayerGameType.isSet())
@@ -510,13 +490,12 @@ MiniGameDef::MiniGameDef(const XmlObject& object)
             mSounds[parseSound(sound->xml()->mName).get()] = SoundSpec(*sound->xml());
     }
 
-    maybe<int> spectateMode = object.child(L"SpectateMode")->maybeString().fmap(parseSpectateMode);
-    mSpectateMode = spectateMode.isSet() ? spectateMode.get() : 0;
+    mSpectateMode = object.child(L"SpectateMode")->maybeString().fmap(parseSpectateMode).otherwise(eSpectateMode_Invisible);
 
     boost::unordered_map<std::wstring, unsigned long long> spectateEntities;
     spectateEntities[L""] = 0;
     spectateEntities[L"Bat"] = EntityType::BAT;
-    mSpectateEntity = spectateEntities[object.child(L"SpectateEntity")->XmlConstruct::asString(L"")];
+    mSpectateEntity = spectateEntities[object.child(L"SpectateEntity")->asString()];
 
     mShowInvulnerableEffect = object.child(L"ShowInvulnerableEffect")->asBool(false);
     mLockedInventory = object.child(L"LockedInventory")->asBool(false);
@@ -677,49 +656,27 @@ void MiniGameDef::parseFoodBalance(const XmlObject& object, FoodBalance* parent)
 {
     FoodBalance* balance = parent == NULL ? new FoodBalance() : new FoodBalance(*parent);
 
-    maybe<int> intValue = object.child(L"MaxFood")->maybeInt();
-    if (intValue.isSet()) { balance->mMaxFoodEnabled = true; balance->mMaxFood = intValue.get(); }
-    maybe<float> floatValue = object.child(L"MaxSaturation")->maybeFloat();
-    if (floatValue.isSet()) { balance->mMaxSaturationEnabled = true; balance->mMaxSaturation = floatValue.get(); }
-    floatValue = object.child(L"StartSaturation")->maybeFloat();
-    if (floatValue.isSet()) { balance->mStartSaturationEnabled = true; balance->mStartSaturation = floatValue.get(); }
-    floatValue = object.child(L"SaturationFloor")->maybeFloat();
-    if (floatValue.isSet()) { balance->mSaturationFloorEnabled = true; balance->mSaturationFloor = floatValue.get(); }
-    floatValue = object.child(L"ExhaustionDrop")->maybeFloat();
-    if (floatValue.isSet()) { balance->mExhaustionDropEnabled = true; balance->mExhaustionDrop = floatValue.get(); }
-    intValue = object.child(L"HealthTickCount")->maybeInt();
-    if (intValue.isSet()) { balance->mHealthTickEnabled = true; balance->mHealthTickCount = intValue.get(); }
-    intValue = object.child(L"HealthTickCountSaturated")->maybeInt();
-    if (intValue.isSet()) { balance->mHealthTickSaturatedEnabled = true; balance->mHealthTickCountSaturated = intValue.get(); }
-    intValue = object.child(L"HealLevel")->maybeInt();
-    if (intValue.isSet()) { balance->mHealLevelEnabled = true; balance->mHealLevel = intValue.get(); }
-    intValue = object.child(L"StarveLevel")->maybeInt();
-    if (intValue.isSet()) { balance->mStarveLevelEnabled = true; balance->mStarveLevel = intValue.get(); }
-    intValue = object.child(L"SprintLevel")->maybeInt();
-    if (intValue.isSet()) { balance->mSprintLevelEnabled = true; balance->mSprintLevel = intValue.get(); }
-    floatValue = object.child(L"ExhaustionHeal")->maybeFloat();
-    if (floatValue.isSet()) { balance->mExhaustionHealEnabled = true; balance->mExhaustionHeal = floatValue.get(); }
-    floatValue = object.child(L"ExhaustionJump")->maybeFloat();
-    if (floatValue.isSet()) { balance->mExhaustionJumpEnabled = true; balance->mExhaustionJump = floatValue.get(); }
-    floatValue = object.child(L"ExhaustionSprintJump")->maybeFloat();
-    if (floatValue.isSet()) { balance->mExhaustionSprintJumpEnabled = true; balance->mExhaustionSprintJump = floatValue.get(); }
-    floatValue = object.child(L"ExhaustionMine")->maybeFloat();
-    if (floatValue.isSet()) { balance->mExhaustionMineEnabled = true; balance->mExhaustionMine = floatValue.get(); }
-    floatValue = object.child(L"ExhaustionAttack")->maybeFloat();
-    if (floatValue.isSet()) { balance->mExhaustionAttackEnabled = true; balance->mExhaustionAttack = floatValue.get(); }
-    floatValue = object.child(L"ExhaustionDamage")->maybeFloat();
-    if (floatValue.isSet()) { balance->mExhaustionDamageEnabled = true; balance->mExhaustionDamage = floatValue.get(); }
-    floatValue = object.child(L"ExhaustionSneak")->maybeFloat();
-    if (floatValue.isSet()) { balance->mExhaustionSneakEnabled = true; balance->mExhaustionSneak = floatValue.get(); }
-    floatValue = object.child(L"ExhaustionWalk")->maybeFloat();
-    if (floatValue.isSet()) { balance->mExhaustionWalkEnabled = true; balance->mExhaustionWalk = floatValue.get(); }
-    floatValue = object.child(L"ExhaustionSprint")->maybeFloat();
-    if (floatValue.isSet()) { balance->mExhaustionSprintEnabled = true; balance->mExhaustionSprint = floatValue.get(); }
-
-    floatValue = object.child(L"ExhaustionSwim")->maybeFloat();
-    if (floatValue.isSet()) { balance->mExhaustionSwimEnabled = true; balance->mExhaustionSwim = floatValue.get(); }
-    floatValue = object.child(L"ExhaustionIdle")->maybeFloat();
-    if (floatValue.isSet()) { balance->mExhaustionIdleEnabled = true; balance->mExhaustionIdle = floatValue.get(); }
+    balance->mMaxFood = object.child(L"MaxFood")->maybeInt().otherwise(balance->mMaxFood);
+    balance->mMaxSaturation = object.child(L"MaxSaturation")->maybeFloat().otherwise(balance->mMaxSaturation);
+    balance->mStartSaturation = object.child(L"StartSaturation")->maybeFloat().otherwise(balance->mStartSaturation);
+    balance->mSaturationFloor = object.child(L"SaturationFloor")->maybeFloat().otherwise(balance->mSaturationFloor);
+    balance->mExhaustionDrop = object.child(L"ExhaustionDrop")->maybeFloat().otherwise(balance->mExhaustionDrop);
+    balance->mHealthTickCount = object.child(L"HealthTickCount")->maybeInt().otherwise(balance->mHealthTickCount);
+    balance->mHealthTickCountSaturated = object.child(L"HealthTickCountSaturated")->maybeInt().otherwise(balance->mHealthTickCountSaturated);
+    balance->mHealLevel = object.child(L"HealLevel")->maybeInt().otherwise(balance->mHealLevel);
+    balance->mStarveLevel = object.child(L"StarveLevel")->maybeInt().otherwise(balance->mStarveLevel);
+    balance->mSprintLevel = object.child(L"SprintLevel")->maybeInt().otherwise(balance->mSprintLevel);
+    balance->mExhaustionHeal = object.child(L"ExhaustionHeal")->maybeFloat().otherwise(balance->mExhaustionHeal);
+    balance->mExhaustionJump = object.child(L"ExhaustionJump")->maybeFloat().otherwise(balance->mExhaustionJump);
+    balance->mExhaustionSprintJump = object.child(L"ExhaustionSprintJump")->maybeFloat().otherwise(balance->mExhaustionSprintJump);
+    balance->mExhaustionMine = object.child(L"ExhaustionMine")->maybeFloat().otherwise(balance->mExhaustionMine);
+    balance->mExhaustionAttack = object.child(L"ExhaustionAttack")->maybeFloat().otherwise(balance->mExhaustionAttack);
+    balance->mExhaustionDamage = object.child(L"ExhaustionDamage")->maybeFloat().otherwise(balance->mExhaustionDamage);
+    balance->mExhaustionSneak = object.child(L"ExhaustionSneak")->maybeFloat().otherwise(balance->mExhaustionSneak);
+    balance->mExhaustionWalk = object.child(L"ExhaustionWalk")->maybeFloat().otherwise(balance->mExhaustionWalk);
+    balance->mExhaustionSprint = object.child(L"ExhaustionSprint")->maybeFloat().otherwise(balance->mExhaustionSprint);
+    balance->mExhaustionSwim = object.child(L"ExhaustionSwim")->maybeFloat().otherwise(balance->mExhaustionSwim);
+    balance->mExhaustionIdle = object.child(L"ExhaustionIdle")->maybeFloat().otherwise(balance->mExhaustionIdle);
 
     mFoodBalances[object[L"id"].asInt()] = balance;
 
@@ -763,21 +720,13 @@ void MiniGameDef::parsePermissions(const XmlObject& object)
         return;
     }
 
-    maybe<std::wstring> modeName = object[L"mode"].maybeString();
-    int buildMode = EBuildMode_NoRestrictions;
-    if (modeName.isSet())
-    {
-        maybe<int> parsed = parseBuildMode(modeName.get());
-        if (parsed.isSet())
-            buildMode = parsed.get();
-    }
-    *mode = (EBuildMode)buildMode;
+    EBuildMode buildMode = (EBuildMode)object[L"mode"].maybeString().fmap(parseBuildMode).otherwise(EBuildMode_NoRestrictions);
+    *mode = buildMode;
 
     if (buildMode == EBuildMode_NoRestrictions)
         return;
 
-    const std::vector<XmlChild>& children = object.getChildrenRaw();
-    for (std::vector<XmlChild>::const_iterator child = children.begin(); child != children.end(); ++child)
+    for (std::vector<XmlChild>::const_iterator child = object.getChildrenRaw().begin(); child != object.getChildrenRaw().end(); ++child)
     {
         if (child->m_type == 1 && equalsIgnoreCase(child->xml()->mName, L"Exception"))
             exceptions->push_back((*child->xml())[L"id"].asInt());
@@ -805,71 +754,70 @@ std::deque<not_null_ptr<ItemInstance> > MiniGameDef::parseItemInstance(const Xml
     if (slot != NULL)
         *slot = object[L"slot"].asInt(-1);
 
-    not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
-    if (id != 0)
+    not_null_ptr<ItemInstance> item;
+    if (id == 0)
     {
-        item = not_null_ptr<ItemInstance>(new ItemInstance(Item::byId(id), count, aux));
+        item = ItemInstance::EMPTY;
+    }
+    else
+    {
+        Item* baseItem = Item::byId(id);
+        item = not_null_ptr<ItemInstance>(new ItemInstance(baseItem, count, aux));
 
         std::vector<MobEffectInstance*> effects;
         std::wstring potionName;
-        const std::vector<XmlChild>& children = object.getChildrenRaw();
-        for (std::vector<XmlChild>::const_iterator child = children.begin(); child != children.end(); ++child)
+        for (std::vector<XmlChild>::const_iterator child = object.getChildrenRaw().begin(); child != object.getChildrenRaw().end(); ++child)
         {
             if (child->m_type != 1)
                 continue;
 
-            const XmlObject& entry = *child->xml();
-            if (equalsIgnoreCase(entry.mName, L"Enchantment"))
+            if (equalsIgnoreCase(child->xml()->mName, L"Enchantment"))
             {
-                bool overrideEnchantable = entry[L"override"].asBool(false);
+                bool overrideEnchantable = (*child->xml())[L"override"].asBool(false);
                 if (item->isEnchantable() || overrideEnchantable)
                 {
-                    int enchantmentId = entry[L"id"].asInt();
-                    int level = entry[L"level"].asInt();
+                    int enchantmentId = (*child->xml())[L"id"].asInt();
+                    int level = (*child->xml())[L"level"].asInt();
                     Enchantment* enchantment = Enchantment::byId(enchantmentId);
                     if (enchantment != NULL && overrideEnchantable)
-                    {
                         item->enchant(enchantment, level);
-                    }
                     else if (enchantment != NULL && enchantment->canEnchant(item))
-                    {
-                        int maxLevel = enchantment->getMaxLevel();
-                        item->enchant(enchantment, level < maxLevel ? level : maxLevel);
-                    }
+                        item->enchant(enchantment, std::min(level, enchantment->getMaxLevel()));
                 }
             }
-            else if (equalsIgnoreCase(entry.mName, L"Dye"))
+            else if (equalsIgnoreCase(child->xml()->mName, L"Dye"))
             {
-                ArmorItem* armor = dynamic_cast<ArmorItem*>(Item::byId(id));
-                int colour = _fromHEXString<int>(entry[L"rgb"].maybeString().get());
+                ArmorItem* armor = dynamic_cast<ArmorItem*>(baseItem);
+                int colour = _fromHEXString<int>((*child->xml())[L"rgb"].maybeString().get());
                 if (armor != NULL)
                     armor->setColor(item, colour);
             }
-            else if (equalsIgnoreCase(entry.mName, L"FireworkData"))
+            else if (equalsIgnoreCase(child->xml()->mName, L"FireworkData"))
             {
                 ListTag* explosions = new ListTag();
                 CompoundTag* explosion = new CompoundTag();
                 std::vector<int> colours;
-                colours.push_back(DyeItem::DYE_COLORS[entry[L"DyeColorAux"].asInt() & 0xf]);
+                colours.push_back(DyeItem::DYE_COLORS[(*child->xml())[L"DyeColorAux"].asInt() & 0xf]);
                 arrayWithLength<int> colourArray(colours.size(), true);
-                for (unsigned int i = 0; i < colours.size(); ++i)
-                    colourArray.data[i] = colours.at(i);
-                explosion->putIntArray(L"Colors", colourArray);
-                explosion->putByte(L"Type", (unsigned char)entry[L"Type"].asInt());
+                for (unsigned int i = 0; i < colourArray.length; ++i)
+                    colourArray[i] = colours.at(i);
+                explosion->putIntArray(FireworksItem::TAG_E_COLORS, colourArray);
+                explosion->putByte(FireworksItem::TAG_E_TYPE, (unsigned char)(*child->xml())[L"Type"].asInt());
                 explosions->add(explosion);
                 CompoundTag* fireworks = new CompoundTag();
-                fireworks->put(L"Explosions", explosions);
+                fireworks->put(FireworksItem::TAG_EXPLOSIONS, explosions);
                 CompoundTag* tag = new CompoundTag();
-                tag->put(L"Fireworks", fireworks);
+                tag->put(FireworksItem::TAG_FIREWORKS, fireworks);
                 item->setTag(tag);
             }
-            else if (equalsIgnoreCase(entry.mName, L"CustomMobEffect"))
+            else if (equalsIgnoreCase(child->xml()->mName, L"CustomMobEffect"))
             {
-                MobEffect* effect = MobEffect::byId(entry[L"Id"].asInt(0));
-                int amplifier = entry[L"Amplifier"].asInt(1);
-                int duration = entry[L"Duration"].asInt(200);
-                bool ambient = entry[L"Ambient"].asBool(false);
-                potionName = entry[L"Name"].XmlConstruct::asString(L"");
+                int effectId = (*child->xml())[L"Id"].asInt(0);
+                MobEffect* effect = MobEffect::byId(effectId);
+                int amplifier = (*child->xml())[L"Amplifier"].asInt(1);
+                int duration = (*child->xml())[L"Duration"].asInt(200);
+                bool ambient = (*child->xml())[L"Ambient"].asBool(false);
+                potionName = (*child->xml())[L"Name"].XmlConstruct::asString(L"");
                 if (amplifier < 0)
                     amplifier = 0;
                 effects.push_back(new MobEffectInstance(effect, duration, amplifier, ambient, true));
@@ -981,35 +929,33 @@ void MiniGameDef::parseItemOverrideMap(int itemId, const XmlObject& object)
     if (equalsIgnoreCase(object.mName, L"BaseDamage"))
     {
         mItemBalance.mBaseDamage[itemId] = object.asDouble();
-        return;
     }
-    if (equalsIgnoreCase(object.mName, L"Protection"))
+    else if (equalsIgnoreCase(object.mName, L"Protection"))
     {
         mItemBalance.mProtection[itemId] = object.asInt();
-        return;
     }
-    if (equalsIgnoreCase(object.mName, L"Degradation"))
+    else if (equalsIgnoreCase(object.mName, L"Degradation"))
     {
         mItemBalance.mDegradation[itemId] = object.asDouble();
-        return;
     }
-    if (equalsIgnoreCase(object.mName, L"Nutrition"))
+    else if (equalsIgnoreCase(object.mName, L"Nutrition"))
     {
         mItemBalance.mNutrition[itemId] = object.asInt();
-        return;
     }
-    if (equalsIgnoreCase(object.mName, L"SaturationFactor"))
+    else if (equalsIgnoreCase(object.mName, L"SaturationFactor"))
     {
         mItemBalance.mSaturationFactor[itemId] = object.asFloat();
-        return;
     }
-    if (equalsIgnoreCase(object.mName, L"PotionDuration") && (itemId == ItemId::POTION || itemId == ItemId::SPLASH_POTION))
+    else if (equalsIgnoreCase(object.mName, L"PotionDuration") && (itemId == ItemId::POTION || itemId == ItemId::SPLASH_POTION))
     {
-        mItemBalance.mPotionDuration[object[L"effectId"].asInt()] = object.asInt();
-        return;
+        int effectId = object[L"effectId"].asInt();
+        mItemBalance.mPotionDuration[effectId] = object.asInt();
     }
-    if (equalsIgnoreCase(object.mName, L"LingeringDuration") && itemId == ItemId::LINGERING_POTION)
-        mItemBalance.mLingeringDuration[object[L"effectId"].asInt()] = object.asInt();
+    else if (equalsIgnoreCase(object.mName, L"LingeringDuration") && itemId == ItemId::LINGERING_POTION)
+    {
+        int effectId = object[L"effectId"].asInt();
+        mItemBalance.mLingeringDuration[effectId] = object.asInt();
+    }
 }
 
 void MiniGameDef::parseMatchmakingFilter(const XmlObject& object)
@@ -1025,9 +971,9 @@ void MiniGameDef::parseMatchmakingFilter(const XmlObject& object)
         for (std::vector<XmlChild>::const_iterator option = options.begin(); option != options.end(); ++option)
         {
             const XmlObject* optionObject = option->xml();
-            std::pair<bool, eCustomGameModeHostOption> parsed = GameModeOptions::parse(optionObject->mName);
-            if (parsed.first)
-                filter[variantIndex][parsed.second] = (*optionObject)[L"value"].asInt();
+            maybe<eCustomGameModeHostOption> parsed = GameModeOptions::parse(optionObject->mName);
+            if (parsed.isSet())
+                filter[variantIndex][parsed.get()] = (*optionObject)[L"value"].asInt();
         }
     }
 
@@ -1056,14 +1002,14 @@ void MiniGameDef::parseHostOptionSettings(const XmlObject& object)
             continue;
         }
 
-        std::pair<bool, eCustomGameModeHostOption> parsed = GameModeOptions::parse(childObject->mName);
-        if (!parsed.first)
+        maybe<eCustomGameModeHostOption> parsed = GameModeOptions::parse(childObject->mName);
+        if (!parsed.isSet())
             continue;
 
-        eCustomGameModeHostOption option = parsed.second;
+        eCustomGameModeHostOption option = parsed.get();
         unsigned int type = GetOptionType(option);
         unsigned int defaultValue = (*childObject)[L"default"].asInt();
-        mOptionDefaults[option] = static_cast<unsigned int>(-1);
+        mOptionDefaults[option] = -1;
         std::vector<int>& values = mOptionLists[option];
 
         if (type == 0)
@@ -1355,21 +1301,21 @@ std::wstring MiniGameDef::GetLootSetText(int id) const
     {
         if (id < 3)
         {
-            if (id == 0) return L10N::GetString(0x9d428428);
-            if (id == 1) return L10N::GetString(0xc344fe91);
-            return L10N::GetString(0xe94778fa);
+            if (id == 0) return L10N::GetString(IDS_MG01_ITEMSET_0);
+            if (id == 1) return L10N::GetString(IDS_MG01_ITEMSET_1);
+            return L10N::GetString(IDS_MG01_ITEMSET_2);
         }
-        if (id < 4) return L10N::GetString(0xf49f363);
-        if (id == 4) return L10N::GetString(0x354c6dcc);
-        if (id == 5) return L10N::GetString(0x6482ae73);
+        if (id < 4) return L10N::GetString(IDS_MG01_ITEMSET_3);
+        if (id == 4) return L10N::GetString(IDS_MG01_ITEMSET_4);
+        if (id == 5) return L10N::GetString(IDS_MG01_ITEMSET_RANDOM);
         return std::wstring();
     }
     if (mode == 2)
     {
-        if (id == 0) return L10N::GetString(0x6ea6266a);
-        if (id == 1) return L10N::GetString(0x48a3ac01);
-        if (id < 3) return L10N::GetString(0x304c4139);
-        if (id == 3) return L10N::GetString(0x93162dc9);
+        if (id == 0) return L10N::GetString(IDS_MG02_VARIANT_1);
+        if (id == 1) return L10N::GetString(IDS_MG02_VARIANT_2);
+        if (id < 3) return L10N::GetString(IDS_MG02_VARIANT_FIREWORKS);
+        if (id == 3) return L10N::GetString(IDS_MG02_VARIANT_LEVITATE);
         return std::wstring();
     }
     return std::wstring();
@@ -1384,21 +1330,21 @@ std::wstring MiniGameDef::GetLootSetDescription(int id) const
     {
         if (id < 3)
         {
-            if (id == 0) return L10N::GetString(0xe3d04b5e);
-            if (id == 1) return L10N::GetString(0xfdf2d6af);
-            return L10N::GetString(0x172a369c);
+            if (id == 0) return L10N::GetString(IDS_MG01_ITEMSET_0_DESC);
+            if (id == 1) return L10N::GetString(IDS_MG01_ITEMSET_1_DESC);
+            return L10N::GetString(IDS_MG01_ITEMSET_2_DESC);
         }
-        if (id < 4) return L10N::GetString(0x931ab4ad);
-        if (id == 4) return L10N::GetString(0x32400c9a);
-        if (id == 5) return L10N::GetString(0x597a317d);
+        if (id < 4) return L10N::GetString(IDS_MG01_ITEMSET_3_DESC);
+        if (id == 4) return L10N::GetString(IDS_MG01_ITEMSET_4_DESC);
+        if (id == 5) return L10N::GetString(IDS_MG01_ITEMSET_RANDOM_DESC);
         return std::wstring();
     }
     if (mode == 2)
     {
-        if (id == 0) return L10N::GetString(0xdf7a97cc);
-        if (id == 1) return L10N::GetString(0x5486471f);
-        if (id < 3) return L10N::GetString(0xfcc2df67);
-        if (id == 3) return L10N::GetString(0xbb83a837);
+        if (id == 0) return L10N::GetString(IDS_MG02_VARIANT_1_DESC);
+        if (id == 1) return L10N::GetString(IDS_MG02_VARIANT_2_DESC);
+        if (id < 3) return L10N::GetString(IDS_MG02_VARIANT_FIREWORKS_DESC);
+        if (id == 3) return L10N::GetString(IDS_MG02_VARIANT_LEVITATE_DESC);
         return std::wstring();
     }
     return std::wstring();
@@ -1426,9 +1372,9 @@ bool MiniGameDef::HasPermission(EBuildMode mode, const std::vector<int>& permiss
     return (mode == EBuildMode_WhiteList) == listed;
 }
 
-unsigned int MiniGameDef::MayPlace(int id) const { return !mEditActionsDisabled && HasPermission(mPlaceMode, mPlacePermissions, id); }
+bool MiniGameDef::MayPlace(int id) const { return !mEditActionsDisabled && HasPermission(mPlaceMode, mPlacePermissions, id); }
 unsigned int MiniGameDef::MayDestroy(int id) const { return !mEditActionsDisabled && HasPermission(mDestroyMode, mDestroyPermissions, id); }
-unsigned int MiniGameDef::MayUse(int id) const { return !mEditActionsDisabled && HasPermission(mUseMode, mUsePermissions, id); }
+bool MiniGameDef::MayUse(int id) const { return !mEditActionsDisabled && HasPermission(mUseMode, mUsePermissions, id); }
 unsigned int MiniGameDef::MayUseBlock(int id) const { return !mEditActionsDisabled && HasPermission(mUseBlockMode, mBlockUsePermissions, id); }
 
 bool MiniGameDef::CanAutoStart() const { return mCanAutoStart; }
@@ -1463,27 +1409,27 @@ const MiniGameDef::FoodBalance* MiniGameDef::GetFoodBalance() const
     return &sDefaultFoodBalance;
 }
 
-unsigned int MiniGameDef::getMaxFood(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mMaxFoodEnabled ? f->mMaxFood : value; }
-float MiniGameDef::getMaxSaturation(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mMaxSaturationEnabled ? f->mMaxSaturation : value; }
-float MiniGameDef::getStartSaturation(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mStartSaturationEnabled ? f->mStartSaturation : value; }
-float MiniGameDef::getSaturationFloor(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mSaturationFloorEnabled ? f->mSaturationFloor : value; }
-float MiniGameDef::getExhaustionDrop(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionDropEnabled ? f->mExhaustionDrop : value; }
-unsigned int MiniGameDef::getHealthTickCount(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mHealthTickEnabled ? f->mHealthTickCount : value; }
-unsigned int MiniGameDef::getHealthTickCountSaturated(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mHealthTickSaturatedEnabled ? f->mHealthTickCountSaturated : value; }
-unsigned int MiniGameDef::getHealLevel(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mHealLevelEnabled ? f->mHealLevel : value; }
-unsigned int MiniGameDef::getStarveLevel(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mStarveLevelEnabled ? f->mStarveLevel : value; }
-unsigned int MiniGameDef::getSprintLevel(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mSprintLevelEnabled ? f->mSprintLevel : value; }
-float MiniGameDef::getExhaustionHeal(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionHealEnabled ? f->mExhaustionHeal : value; }
-float MiniGameDef::getExhaustionJump(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionJumpEnabled ? f->mExhaustionJump : value; }
-float MiniGameDef::getExhaustionSprintJump(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionSprintJumpEnabled ? f->mExhaustionSprintJump : value; }
-float MiniGameDef::getExhaustionMine(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionMineEnabled ? f->mExhaustionMine : value; }
-float MiniGameDef::getExhaustionAttack(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionAttackEnabled ? f->mExhaustionAttack : value; }
-float MiniGameDef::getExhaustionDamage(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionDamageEnabled ? f->mExhaustionDamage : value; }
-float MiniGameDef::getExhaustionWalk(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionWalkEnabled ? f->mExhaustionWalk : value; }
-float MiniGameDef::getExhaustionSprint(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionSprintEnabled ? f->mExhaustionSprint : value; }
-float MiniGameDef::getExhaustionSneak(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionSneakEnabled ? f->mExhaustionSneak : value; }
-float MiniGameDef::getExhaustionSwim(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionSwimEnabled ? f->mExhaustionSwim : value; }
-float MiniGameDef::getExhaustionIdle(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionIdleEnabled ? f->mExhaustionIdle : value; }
+unsigned int MiniGameDef::getMaxFood(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mMaxFood.otherwise(value); }
+float MiniGameDef::getMaxSaturation(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mMaxSaturation.otherwise(value); }
+float MiniGameDef::getStartSaturation(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mStartSaturation.otherwise(value); }
+float MiniGameDef::getSaturationFloor(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mSaturationFloor.otherwise(value); }
+float MiniGameDef::getExhaustionDrop(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionDrop.otherwise(value); }
+unsigned int MiniGameDef::getHealthTickCount(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mHealthTickCount.otherwise(value); }
+unsigned int MiniGameDef::getHealthTickCountSaturated(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mHealthTickCountSaturated.otherwise(value); }
+unsigned int MiniGameDef::getHealLevel(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mHealLevel.otherwise(value); }
+unsigned int MiniGameDef::getStarveLevel(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mStarveLevel.otherwise(value); }
+unsigned int MiniGameDef::getSprintLevel(int value) const { const FoodBalance* f = GetFoodBalance(); return f->mSprintLevel.otherwise(value); }
+float MiniGameDef::getExhaustionHeal(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionHeal.otherwise(value); }
+float MiniGameDef::getExhaustionJump(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionJump.otherwise(value); }
+float MiniGameDef::getExhaustionSprintJump(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionSprintJump.otherwise(value); }
+float MiniGameDef::getExhaustionMine(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionMine.otherwise(value); }
+float MiniGameDef::getExhaustionAttack(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionAttack.otherwise(value); }
+float MiniGameDef::getExhaustionDamage(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionDamage.otherwise(value); }
+float MiniGameDef::getExhaustionWalk(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionWalk.otherwise(value); }
+float MiniGameDef::getExhaustionSprint(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionSprint.otherwise(value); }
+float MiniGameDef::getExhaustionSneak(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionSneak.otherwise(value); }
+float MiniGameDef::getExhaustionSwim(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionSwim.otherwise(value); }
+float MiniGameDef::getExhaustionIdle(float value) const { const FoodBalance* f = GetFoodBalance(); return f->mExhaustionIdle.otherwise(value); }
 
 int MiniGameDef::getCentralRefillChance() const
 {
@@ -1633,135 +1579,164 @@ unsigned int MiniGameDef::HostOption_Time(eCustomGameModeHostOption option) cons
 std::wstring MiniGameDef::GetValueText(eCustomGameModeHostOption option, int value) const
 {
     unsigned int type = GetOptionType(option);
-
-    if (type == 0)
+    switch (type)
     {
-        if (option == 0)
+    case 1:
+        switch (option)
         {
-            value = (value == 0);
-        }
-        return L10N::GetString(value != 0 ? IDS_ON : IDS_OFF);
-    }
+        case eCustomGameModeHostOption_SpectateMode:
+            return L10N::GetString(sHostOptionCategoryStringIds[HostOption_Category(option, value)]);
 
-    if (type == 1)
-    {
-        if (option == 1)
-        {
-            unsigned int category = HostOption_Category(option, (unsigned int)value);
-            return L10N::GetString((int)sHostOptionCategoryStringIds[category]);
-        }
-
-        if (option > 10)
-        {
-            if (option == 11)
+        case eCustomGameModeHostOption_MapVariant:
+            switch (value)
             {
-                if (value == 0) return L10N::GetString(IDS_MG_ANY);
-                if (value == 1) return L10N::GetString(IDS_MG_SHORT);
-                if (value < 3) return L10N::GetString(0xa7e3639c);
-                if (value != 3) return std::wstring();
+            case 0:
+                return L10N::GetString(IDS_MG_ANY);
+            case 1:
+                return L10N::GetString(IDS_MG_SHORT);
+            case 2:
+                return L10N::GetString(IDS_MG_MEDIUM);
+            case 3:
                 return L10N::GetString(IDS_MG_LONG);
+            default:
+                return L"";
             }
-            if (option < 13)
+
+        case eCustomGameModeHostOption_ModeVariant:
+            switch (GetId())
             {
-                unsigned int id = GetId();
-                if (id != 0)
+            case eMiniGameId_Battle:
+                switch (value)
                 {
-                    if (id == 1)
-                    {
-                        if (value == 0) return L10N::GetString(0x189a3627);
-                        if (value == 1) return L10N::GetString(0x9038dc1);
-                        if (value < 3) return L10N::GetString(0x6829d25f);
-                        if (value != 3) return std::wstring();
-                        return L10N::GetString(0xa0f8061a);
-                    }
-                    if (id < 3)
-                    {
-                        if (value < 2)
-                        {
-                            if (value == 0) return L10N::GetString(0x189a3627);
-                            if (value == 1) return L10N::GetString(0x6ea6266a);
-                        }
-                        if (value < 3) return L10N::GetString(0x48a3ac01);
-                        if (value != 3)
-                        {
-                            if (value == 4) return L10N::GetString(0xa0f8061a);
-                            return std::wstring();
-                        }
-                        return L10N::GetString(0x34f502c2);
-                    }
-                    if (id == 3)
-                    {
-                        if (value == 0) return L10N::GetString(0x189a3627);
-                        if (value == 1) return L10N::GetString(0xc45287b7);
-                        if (value == 2) return L10N::GetString(0x1c7d5232);
-                        if (value != 4) return std::wstring();
-                        return L10N::GetString(0xa0f8061a);
-                    }
+                case 0:
+                    return L10N::GetString(IDS_MG_VARIANT_ANY);
+                case 1:
+                    return L10N::GetString(IDS_MG01_VARIANT_CASUAL);
+                case 2:
+                    return L10N::GetString(IDS_MG01_VARIANT_COMPETITIVE);
+                case 3:
+                    return L10N::GetString(IDS_MG_VARIANT_CUSTOM);
+                default:
+                    return L"";
                 }
-                return std::wstring();
+            case eMiniGameId_Tumble:
+                switch (value)
+                {
+                case 0:
+                    return L10N::GetString(IDS_MG_VARIANT_ANY);
+                case 1:
+                    return L10N::GetString(IDS_MG02_VARIANT_1);
+                case 2:
+                    return L10N::GetString(IDS_MG02_VARIANT_2);
+                case 3:
+                    return L10N::GetString(IDS_MG_VARIANT_RANDOM);
+                case 4:
+                    return L10N::GetString(IDS_MG_VARIANT_CUSTOM);
+                default:
+                    return L"";
+                }
+            case eMiniGameId_Glide:
+                switch (value)
+                {
+                case 0:
+                    return L10N::GetString(IDS_MG_VARIANT_ANY);
+                case 1:
+                    return L10N::GetString(IDS_MG03_VARIANT_TIMEATTACK);
+                case 2:
+                    return L10N::GetString(IDS_MG03_VARIANT_SCOREATTACK);
+                case 4:
+                    return L10N::GetString(IDS_MG_VARIANT_CUSTOM);
+                default:
+                    return L"";
+                }
             }
-            if (option == 13)
+            return L"";
+
+        case eCustomGameModeHostOption_GameVariant:
+            switch (GetId())
             {
-                unsigned int id = GetId();
-                if (id != 0)
+            case eMiniGameId_Battle:
+                switch (value)
                 {
-                    if (id == 1)
-                    {
-                        if (value == 0) return L10N::GetString(0x9038dc1);
-                        if (value == 1) return L10N::GetString(0x6829d25f);
-                        if (value == 2) return L10N::GetString(0xa0f8061a);
-                        return std::wstring();
-                    }
-                    if (id < 3)
-                    {
-                        if (value == 0) return L10N::GetString(0x6ea6266a);
-                        if (value == 1) return L10N::GetString(0x48a3ac01);
-                        if (value < 3) return L10N::GetString(0x34f502c2);
-                        if (value != 3) return std::wstring();
-                        return L10N::GetString(0xa0f8061a);
-                    }
-                    if (id == 3)
-                    {
-                        if (value == 0) return L10N::GetString(0xc45287b7);
-                        if (value != 1) return std::wstring();
-                        return L10N::GetString(0x1c7d5232);
-                    }
+                case 0:
+                    return L10N::GetString(IDS_MG01_VARIANT_CASUAL);
+                case 1:
+                    return L10N::GetString(IDS_MG01_VARIANT_COMPETITIVE);
+                case 2:
+                    return L10N::GetString(IDS_MG_VARIANT_CUSTOM);
+                default:
+                    return L"";
                 }
-                return std::wstring();
+            case eMiniGameId_Tumble:
+                switch (value)
+                {
+                case 0:
+                    return L10N::GetString(IDS_MG02_VARIANT_1);
+                case 1:
+                    return L10N::GetString(IDS_MG02_VARIANT_2);
+                case 2:
+                    return L10N::GetString(IDS_MG_VARIANT_RANDOM);
+                case 3:
+                    return L10N::GetString(IDS_MG_VARIANT_CUSTOM);
+                default:
+                    return L"";
+                }
+            case eMiniGameId_Glide:
+                switch (value)
+                {
+                case 0:
+                    return L10N::GetString(IDS_MG03_VARIANT_TIMEATTACK);
+                case 1:
+                    return L10N::GetString(IDS_MG03_VARIANT_SCOREATTACK);
+                default:
+                    return L"";
+                }
+            }
+            return L"";
+        }
+        return L"";
+
+    case 2:
+        if (option == eCustomGameModeHostOption_RoundLength)
+        {
+            switch (value)
+            {
+            case 0:
+                return L10N::GetString(IDS_MG_SHORT);
+            case 1:
+                return L10N::GetString(IDS_MG_MEDIUM);
+            case 2:
+                return L10N::GetString(IDS_MG_LONG);
+            default:
+                return L"";
             }
         }
-        return std::wstring();
+        else
+        {
+            int seconds = HostOption_Time(option, value);
+            if (seconds == -2)
+                return L10N::GetString(IDS_MG_OPTION_NONE);
+            if (seconds == -1)
+                return L10N::GetString(IDS_MG_OPTION_UNLIMITED);
+            if (seconds >= 60)
+            {
+                std::wstring text = L10N::GetString(seconds == 60 ? IDS_MG_OPTION_MIN : IDS_MG_OPTION_MINS);
+                return replaceAll(text, L"{*MINUTES*}", _toString(seconds / 60));
+            }
+            if (seconds >= 0)
+            {
+                std::wstring text = L10N::GetString(seconds == 1 ? IDS_MG_OPTION_SEC : IDS_MG_OPTION_SECS);
+                return replaceAll(text, L"{*SECONDS*}", _toString(seconds));
+            }
+            return L"";
+        }
+
+    case 0:
+        if (option == eCustomGameModeHostOption_NoSmallSkins)
+            value = !value;
+        return L10N::GetString(value ? IDS_ON : IDS_OFF);
     }
-
-    if (type == 2)
-    {
-        if (option == 2)
-        {
-            if (value == 0) return L10N::GetString(IDS_MG_SHORT);
-            if (value == 1) return L10N::GetString(0xa7e3639c);
-            if (value == 2) return L10N::GetString(IDS_MG_LONG);
-            return std::wstring();
-        }
-
-        int seconds = (int)HostOption_Time(option, (unsigned int)value);
-        if (seconds == -2) return L10N::GetString(0xb10b55cf);
-        if (seconds == -1) return L10N::GetString(0xd2691ec2);
-        if (seconds > 0x3b)
-        {
-            std::wstring templateText = L10N::GetString(seconds == 0x3c ? 0xb80e547f : 0x82557e0c);
-            std::wstring minutesText = _toString(seconds / 0x3c);
-            return replaceAll(templateText, L"{*MINUTES*}", minutesText);
-        }
-        if (seconds >= 0)
-        {
-            std::wstring templateText = L10N::GetString(seconds == 1 ? 0xb58fee78 : 0x4ddf2da3);
-            std::wstring secondsText = _toString(seconds);
-            return replaceAll(templateText, L"{*SECONDS*}", secondsText);
-        }
-        return std::wstring();
-    }
-
-    return std::wstring();
+    return L"";
 }
 
 std::wstring MiniGameDef::getComparisonImageForGameMode(EMiniGameId id)
@@ -1949,7 +1924,7 @@ unsigned int MiniGameDef::GetName() const
 
 unsigned int MiniGameDef::GetHostOptionStringId(eCustomGameModeHostOption option)
 {
-    static const unsigned int names[] = { 0xa329d6e9U, 0x901c1fe8U, 0x908811f4U };
+    static const unsigned int names[] = { IDS_MG_OPTION_ALLOW_ALL_SKINS, 0x901c1fe8U, 0x908811f4U };
     if (option < eCustomGameModeHostOption_MaxPlayers) return names[option];
     if (option == eCustomGameModeHostOption_CentreSpawn || option == eCustomGameModeHostOption_IsTeams) return 0xef2a2f6aU;
     if (option == eCustomGameModeHostOption_GameVariant) return 0x5bd476fbU;
@@ -2191,9 +2166,9 @@ unsigned int MiniGameDef::GetMapSizeOverride() const
 
 std::wstring MiniGameDef::GetMapSizeOverrideText(int value) const
 {
-    if (value == 0) return L10N::GetString(0xcf546b6);
-    if (value == 1) return L10N::GetString(0xba592d3e);
-    if (value == 2) return L10N::GetString(0x4ef02404);
+    if (value == 0) return L10N::GetString(IDS_MG01_MAP_SIZE_AUTO);
+    if (value == 1) return L10N::GetString(IDS_MG01_MAP_SIZE_SMALL);
+    if (value == 2) return L10N::GetString(IDS_MG01_MAP_SIZE_LARGE);
     return L"";
 }
 

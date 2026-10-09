@@ -12,7 +12,8 @@ SchematicThemeRuleDefinition::SchematicThemeRuleDefinition()
 
 SchematicThemeRuleDefinition::~SchematicThemeRuleDefinition()
 {
-    for (std::vector<AssetRuleDef*>::iterator asset = mAssets.begin(); asset != mAssets.end(); ++asset)
+    std::vector<AssetRuleDef*>::iterator end = mAssets.end();
+    for (std::vector<AssetRuleDef*>::iterator asset = mAssets.begin(); asset != end; ++asset)
     {
         delete *asset;
     }
@@ -27,9 +28,11 @@ LayerTheme* SchematicThemeRuleDefinition::Generate() const
 {
     SchematicTheme* theme = new SchematicTheme();
 
-    for (std::vector<AssetRuleDef*>::const_iterator asset = mAssets.begin(); asset != mAssets.end(); ++asset)
+    std::vector<AssetRuleDef*>::const_iterator end = mAssets.end();
+    for (std::vector<AssetRuleDef*>::const_iterator it = mAssets.begin(); it != end; ++it)
     {
-        std::wstring filename = ConsoleSchematicFile::formatFilenameWithExt((*asset)->mFilename);
+        AssetRuleDef* asset = *it;
+        std::wstring filename = ConsoleSchematicFile::formatFilenameWithExt(asset->mFilename);
         if (!filename.empty())
         {
             CommonMasterGameMode* gameMode = CommonMasterGameMode::GetMasterOrClient();
@@ -38,7 +41,7 @@ LayerTheme* SchematicThemeRuleDefinition::Generate() const
             if (schematic != NULL)
             {
                 static_cast<AssetTheme<ConsoleSchematicFile*>*>(theme)->addAsset(
-                    static_cast<unsigned int>((*asset)->mMinimumWidth), schematic);
+                    static_cast<unsigned int>(asset->mMinimumWidth), schematic);
             }
         }
     }

@@ -7,9 +7,9 @@
 DamageSourceMedal::DamageSourceMedal(int name, float target, unsigned int weight,
                                      Scoreboard::EDamageSource source)
     : GameMedal(name, target, weight, OPERATOR_AT_LEAST, true, false)
-    , mSources(new std::vector<Scoreboard::EDamageSource>())
 {
-    mSources->push_back(source);
+    Scoreboard::EDamageSource sources[] = { source };
+    mSources = new std::vector<Scoreboard::EDamageSource>(sources, sources + 1);
 }
 
 DamageSourceMedal::DamageSourceMedal(int name, float target, unsigned int weight,
@@ -28,7 +28,7 @@ float DamageSourceMedal::GetScore(PlayerStats* playerStats) const
 {
     float score = 0.0f;
 
-    for (std::vector<Scoreboard::EDamageSource>::const_iterator source = mSources->begin();
+    for (std::vector<Scoreboard::EDamageSource>::iterator source = mSources->begin();
          source != mSources->end(); ++source)
     {
         score += playerStats->mDamageTakenBySource[*source]->getValue();

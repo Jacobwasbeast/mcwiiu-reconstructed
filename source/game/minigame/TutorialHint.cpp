@@ -12,7 +12,7 @@ TutorialHint::TutorialHint(eTutorial_Hint hintValue, Tutorial* tutorialValue, in
       consecutiveTicks(0), lastBlock(NULL), active(true), fadeAllowed(allowFadeValue),
       minimumTime(minimumDisplayTime)
 {
-    tutorial->addMessage(description, repeatMessage && hintType != HINT_CREATE_ITEM_SELECTED, 3);
+    tutorialValue->addMessage(description, repeatMessage && hintType != HINT_CREATE_ITEM_SELECTED, 3);
 }
 
 int TutorialHint::startDestroyBlock(not_null_ptr<ItemInstance> item, const BlockState* state)

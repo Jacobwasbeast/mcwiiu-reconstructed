@@ -22,13 +22,13 @@ void PowerupRuleDefinition::getChildren(std::vector<GameRuleDefinition*>* childr
 
 GameRuleDefinition* PowerupRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    AddItemRuleDefinition* item = NULL;
+    GameRuleDefinition* rule = NULL;
     if (type == ConsoleGameRules::eGameRuleType_AddItem)
     {
-        item = new AddItemRuleDefinition();
-        mPowerups.push_back(item);
+        rule = new AddItemRuleDefinition();
+        mPowerups.push_back(static_cast<AddItemRuleDefinition*>(rule));
     }
-    return item;
+    return rule;
 }
 
 void PowerupRuleDefinition::GiveRandomPowerup(boost::shared_ptr<Player> player)

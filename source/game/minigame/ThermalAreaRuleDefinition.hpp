@@ -23,7 +23,7 @@ public:
     bool getConditionsMet(boost::shared_ptr<Entity> entity);
     void resetConditions();
     void updateUseCount();
-    unsigned int setBoostMods(int& boostMod, int& boostDirection);
+    bool setBoostMods(int& boostMod, int& boostDirection);
     unsigned int getBoostDirection();
 
     bool isEnabled() const { return mEnabled; }

@@ -39,31 +39,26 @@ AnyCombinationOfRuleDefinition::AnyCombinationOfRuleDefinition(
 AnyCombinationOfRuleDefinition* AnyCombinationOfRuleDefinition::GetRandomLeafChild(
     const LayerMetadata& metadata, Random& layerRandom, Random& random) const
 {
-    if (mCombinationVariations == NULL)
+    CombinationVariationsRuleDefinition* variations = mCombinationVariations;
+    if (variations != NULL)
     {
-        return const_cast<AnyCombinationOfRuleDefinition*>(this);
-    }
+        const std::vector<AnyCombinationOfRuleDefinition*>* combinations = variations->GetCombinations();
+        bool wholeLevel = variations->IsForWholeLevel();
+        size_t count = combinations->size();
+        AnyCombinationOfRuleDefinition* child;
 
-    const std::vector<AnyCombinationOfRuleDefinition*>* combinations =
-        mCombinationVariations->GetCombinations();
-    bool wholeLevel = mCombinationVariations->IsForWholeLevel();
-    int count = static_cast<int>(combinations->size());
-    AnyCombinationOfRuleDefinition* child;
-
-    do
-    {
-        unsigned int index = layerRandom.nextInt(count);
-        unsigned int randomIndex = random.nextInt(count);
-        if (!wholeLevel)
+        do
         {
-            index = randomIndex;
+            int layerIndex = layerRandom.nextInt(count);
+            int randomIndex = random.nextInt(count);
+            child = combinations->at(wholeLevel ? layerIndex : randomIndex);
         }
+        while (LayerMetadata::getFilter(child->mFilter)(metadata) == false || child == NULL);
 
-        child = combinations->at(index);
+        AnyCombinationOfRuleDefinition* leaf = child->GetRandomLeafChild(metadata, layerRandom, random);
+        return leaf;
     }
-    while (LayerMetadata::getFilter(child->mFilter)(metadata) == false || child == NULL);
-
-    return child->GetRandomLeafChild(metadata, layerRandom, random);
+    return const_cast<AnyCombinationOfRuleDefinition*>(this);
 }
 
 void AnyCombinationOfRuleDefinition::GetPossibleLayerSizes(

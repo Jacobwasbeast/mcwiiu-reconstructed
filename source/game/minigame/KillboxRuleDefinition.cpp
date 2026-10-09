@@ -1,5 +1,6 @@
 #include "game/minigame/KillboxRuleDefinition.hpp"
 
+#include "game/core/StringIds.hpp"
 #include "game/minigame/GameRuleDefinition.hpp"
 #include "game/minigame/NamedAreaRuleDefinition.hpp"
 #include "game/util/AABB.hpp"
@@ -45,14 +46,14 @@ void KillboxRuleDefinition::GetDeathMessageIDS(int& deathMessageIDS, std::wstrin
         return;
     }
 
-    if (mDescriptionName != L"")
+    if (mDescriptionName.compare(L"") != 0)
     {
         deathMessageIDS = 0;
         deathMessage = mDescriptionName;
         return;
     }
 
-    deathMessageIDS = 0x6F2C7352;
+    deathMessageIDS = IDS_DEATH_OUTOFWORLD;
     deathMessage = L"";
 }
 

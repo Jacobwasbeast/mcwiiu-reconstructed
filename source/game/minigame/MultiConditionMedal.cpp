@@ -40,12 +40,13 @@ MultiConditionMedal::MultiCondition::MultiCondition(float target, GameMedal::EOp
 bool MultiConditionMedal::MultiCondition::canAward(const GameMedal* medal, const StatsUID& uid, GameStats* gameStats) const
 {
     PlayerStats* playerStats = gameStats->GetPlayerStats(uid);
-    if (playerStats == NULL)
+    if (playerStats != NULL)
     {
-        return false;
+        float score = getScore(medal, playerStats);
+        return GameMedal::defaultCanAward(uid, gameStats, score, mTarget, mOperator);
     }
 
-    return GameMedal::defaultCanAward(uid, gameStats, (float)getScore(medal, playerStats), mTarget, mOperator);
+    return false;
 }
 
 float MultiConditionMedal::MultiCondition::getScore(const GameMedal* medal, PlayerStats* playerStats) const

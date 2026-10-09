@@ -21,9 +21,9 @@ static const wchar_t* sBeamDirectionNames[7] =
 
 CustomBeaconRuleDefinition::CustomBeaconRuleDefinition()
 {
-    mLength = 0;
-    mDirection = BeaconBlockEntity::eBEAM_DIRECTION_NONE;
     mPosition = NULL;
+    mDirection = BeaconBlockEntity::eBEAM_DIRECTION_NONE;
+    mLength = 0;
     addIntAttribute(ConsoleGameRules::eGameRuleAttr_beam_length, &mLength);
 }
 
@@ -34,7 +34,7 @@ CustomBeaconRuleDefinition::~CustomBeaconRuleDefinition()
 
 void CustomBeaconRuleDefinition::processCustomBeacon(ServerLevel* level)
 {
-    BlockPos position(mPosition->x, mPosition->y, mPosition->z);
+    BlockPos position(mPosition->getX(), mPosition->getY(), mPosition->getZ());
     boost::shared_ptr<BeaconBlockEntity> beacon = boost::dynamic_pointer_cast<BeaconBlockEntity>(level->getBlockEntity(position));
     if (beacon && mDirection != BeaconBlockEntity::eBEAM_DIRECTION_NONE)
     {
@@ -46,7 +46,7 @@ void CustomBeaconRuleDefinition::processCustomBeacon(ServerLevel* level)
 
 void CustomBeaconRuleDefinition::deactivateCustomBeacon(ServerLevel* level)
 {
-    BlockPos position(mPosition->x, mPosition->y, mPosition->z);
+    BlockPos position(mPosition->getX(), mPosition->getY(), mPosition->getZ());
     boost::shared_ptr<BeaconBlockEntity> beacon = boost::dynamic_pointer_cast<BeaconBlockEntity>(level->getBlockEntity(position));
     if (beacon && mDirection != BeaconBlockEntity::eBEAM_DIRECTION_NONE)
     {
@@ -60,9 +60,9 @@ void CustomBeaconRuleDefinition::writeAttributes(GameRuleSaveInterface* saveInte
                                                   unsigned int extraAttributeCount)
 {
     GameRuleDefinition::writeAttributes(saveInterface, extraAttributeCount + 3);
-    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnX, _toString(mPosition->x));
-    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnY, _toString(mPosition->y));
-    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnZ, _toString(mPosition->z));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnX, _toString(mPosition->getX()));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnY, _toString(mPosition->getY()));
+    saveInterface->saveAttribute(ConsoleGameRules::eGameRuleAttr_spawnZ, _toString(mPosition->getZ()));
 }
 
 void CustomBeaconRuleDefinition::addAttribute(const std::wstring& name, const std::wstring& value)
@@ -71,27 +71,30 @@ void CustomBeaconRuleDefinition::addAttribute(const std::wstring& name, const st
     {
         if (mPosition == NULL)
         {
-            mPosition = new MutableBlockPos(0, 0, 0);
+            mPosition = new MutableBlockPos();
         }
-        mPosition->setX(_fromString<int>(value));
+        int x = _fromString<int>(value);
+        mPosition->setX(x);
         return;
     }
     if (name.compare(gRuleAttributeNames[ConsoleGameRules::eGameRuleAttr_spawnY]) == 0)
     {
         if (mPosition == NULL)
         {
-            mPosition = new MutableBlockPos(0, 0, 0);
+            mPosition = new MutableBlockPos();
         }
-        mPosition->setY(_fromString<int>(value));
+        int y = _fromString<int>(value);
+        mPosition->setY(y);
         return;
     }
     if (name.compare(gRuleAttributeNames[ConsoleGameRules::eGameRuleAttr_spawnZ]) == 0)
     {
         if (mPosition == NULL)
         {
-            mPosition = new MutableBlockPos(0, 0, 0);
+            mPosition = new MutableBlockPos();
         }
-        mPosition->setZ(_fromString<int>(value));
+        int z = _fromString<int>(value);
+        mPosition->setZ(z);
         return;
     }
     if (name.compare(gRuleAttributeNames[ConsoleGameRules::eGameRuleAttr_beam_direction]) == 0)
@@ -151,9 +154,9 @@ AABB* CustomBeaconRuleDefinition::getBoundingVolume()
 
 void CustomBeaconRuleDefinition::moveBoundingVolume(int x, int y, int z)
 {
-    mPosition->setX(mPosition->x + x);
-    mPosition->setY(mPosition->y + y);
-    mPosition->setZ(mPosition->z + z);
+    mPosition->setX(mPosition->getX() + x);
+    mPosition->setY(mPosition->getY() + y);
+    mPosition->setZ(mPosition->getZ() + z);
 }
 
 ConsoleGameRules::EGameRuleType CustomBeaconRuleDefinition::getActionType()

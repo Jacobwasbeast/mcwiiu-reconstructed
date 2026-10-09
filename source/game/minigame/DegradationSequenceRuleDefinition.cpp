@@ -33,20 +33,18 @@ void DegradationSequenceRuleDefinition::getChildren(std::vector<GameRuleDefiniti
 
 GameRuleDefinition* DegradationSequenceRuleDefinition::addChild(ConsoleGameRules::EGameRuleType type)
 {
-    GameRuleDefinition* result = NULL;
+    GameRuleDefinition* rule = NULL;
 
     if (type == ConsoleGameRules::eGameRuleType_RandomDissolveDegrade)
     {
-        RandomDissolveDegrade* rule = new RandomDissolveDegrade();
-        mDegradationRules.push_back(rule);
-        result = rule;
+        rule = new RandomDissolveDegrade();
+        mDegradationRules.push_back(static_cast<DegradationRuleDefinition*>(rule));
     }
     else if (type == ConsoleGameRules::eGameRuleType_DirectionalDegrade)
     {
-        DirectionalDegrade* rule = new DirectionalDegrade();
-        mDegradationRules.push_back(rule);
-        result = rule;
+        rule = new DirectionalDegrade();
+        mDegradationRules.push_back(static_cast<DegradationRuleDefinition*>(rule));
     }
 
-    return result;
+    return rule;
 }

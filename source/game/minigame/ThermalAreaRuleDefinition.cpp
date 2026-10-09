@@ -19,17 +19,9 @@ static const wchar_t* sBoostDirectionNames[8] = {
 };
 
 ThermalAreaRuleDefinition::ThermalAreaRuleDefinition()
+    : mLiftForceModifier(1.0), mStaticLift(0.0), mTargetHeight(0.0), mSpeedBoost(0.0), mBoostDirection(4),
+      mConditionType(0), mConditionValue0(0), mConditionValue1(0), mEnabled(true)
 {
-    mEnabled = true;
-    mStaticLift = 0.0;
-    mBoostDirection = 4;
-    mLiftForceModifier = 1.0;
-    mSpeedBoost = 0.0;
-    mTargetHeight = 0.0;
-    mConditionType = 0;
-    mConditionValue1 = 0;
-    mConditionValue0 = 0;
-
     addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_liftForceModifier, &mLiftForceModifier);
     addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_staticLift, &mStaticLift);
     addDoubleAttribute(ConsoleGameRules::eGameRuleAttr_targetHeight, &mTargetHeight);
@@ -46,25 +38,26 @@ ThermalAreaRuleDefinition::~ThermalAreaRuleDefinition()
 
 bool ThermalAreaRuleDefinition::getConditionsMet(boost::shared_ptr<Entity> entity)
 {
-    if (mConditionType == 1)
+    switch (mConditionType)
     {
-        if (mConditionValue0 <= mUseCount)
+    case 1:
+        if (mUseCount >= mConditionValue0)
         {
             return false;
         }
-    }
-    else if (mConditionType == 2)
-    {
-        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        break;
+    case 2:
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         {
             ClientScoreboard* scoreboard = Minecraft::GetInstance()->mLevel->GetClientScoreboard();
             boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-            int points = scoreboard->GetPoints(player->getSUID(), -1);
-            if (points < mConditionValue0 || mConditionValue1 < points)
+            int lapsCompleted = scoreboard->GetLapsCompleted(player->getSUID(), -1);
+            if (lapsCompleted < mConditionValue0 || lapsCompleted > mConditionValue1)
             {
                 return false;
             }
         }
+        break;
     }
 
     return true;
@@ -131,28 +124,28 @@ void ThermalAreaRuleDefinition::addAttribute(const std::wstring& name, const std
     }
 }
 
-unsigned int ThermalAreaRuleDefinition::setBoostMods(int& boostMod, int& boostDirection)
+bool ThermalAreaRuleDefinition::setBoostMods(int& boostMod, int& boostDirection)
 {
     switch (mBoostDirection)
     {
     case 0:
         boostMod = 1;
         boostDirection = 0;
-        return 1;
+        return true;
     case 1:
         boostMod = -1;
         boostDirection = 0;
-        return 1;
+        return true;
     case 2:
         boostMod = 0;
         boostDirection = 1;
-        return 1;
+        return true;
     case 3:
         boostMod = 0;
         boostDirection = -1;
-        return 1;
+        return true;
     default:
-        return 0;
+        return false;
     }
 }
 

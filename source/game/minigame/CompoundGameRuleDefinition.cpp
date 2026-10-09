@@ -122,8 +122,8 @@ bool CompoundGameRuleDefinition::onUseBlock(GameRule* gameRule, int blockId, int
             bool childTriggered = it->second.pGameRule->getGameRuleDefinition()->onUseBlock(it->second.pGameRule, blockId, x, y, z);
             if (!bTriggered && childTriggered)
             {
-                bTriggered = true;
                 mCompletedChild = it->second.pGameRule->getGameRuleDefinition();
+                bTriggered = true;
             }
         }
     }
@@ -142,8 +142,8 @@ bool CompoundGameRuleDefinition::onCollectItem(GameRule* gameRule, not_null_ptr<
             bool childTriggered = it->second.pGameRule->getGameRuleDefinition()->onCollectItem(it->second.pGameRule, item);
             if (!bTriggered && childTriggered)
             {
-                bTriggered = true;
                 mCompletedChild = it->second.pGameRule->getGameRuleDefinition();
+                bTriggered = true;
             }
         }
     }
