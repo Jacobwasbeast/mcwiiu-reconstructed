@@ -9,8 +9,7 @@
 #include "game/ui/fuiRenderNodeTimeline.hpp"
 #include "game/util/Math.hpp"
 
-extern std::string g_toolTipLabels[][2];
-std::string g_toolTipLabels[16][2] = {
+static std::string g_toolTipLabels[16][2] = {
     {"Button_A", "Button_A_Animated"},
     {"Button_B", "Button_B_Animated"},
     {"Button_X", "Button_X_Animated"},
@@ -28,7 +27,7 @@ std::string g_toolTipLabels[16][2] = {
     {"Button_DpadDown", "Button_Select_Animated"},
     {"Button_LeftStick", "Button_LeftStick_Animated"}
 };
-std::string g_toolTipControllerSuffix("_CTRL_");
+static std::string g_toolTipControllerSuffix("_CTRL_");
 
 FJ_ToolTip::FJ_ToolTip(fuiRenderNode* renderNode)
     : FJ_Base(renderNode), m_controllerType(0), m_primaryType(-1), m_secondaryType(-1)
@@ -46,31 +45,22 @@ FJ_ToolTip::~FJ_ToolTip()
 
 fuiRenderNodeEditText* FJ_ToolTip::GetSecondaryTextField()
 {
-    fuiRenderNodeEditText* field = NULL;
-    FJ_FuiNode* child;
-
+    fuiRenderNodeEditText* textField = 0;
+    FJ_FuiNode* node;
     if (isFJ_Label())
     {
-        child = getChildAt(0)->asMovieClip();
+        node = getChildAt(0);
+        node = node->asMovieClip();
     }
     else
     {
-        FJ_FuiNode* container = getChildByName(std::string("FJ_TextContainer_2"));
-        if (container == NULL)
-            return field;
-        if (container->getNumChildren() == 0)
-            return field;
-        child = container->getChildAt(0);
+        node = getChildByName(std::string("FJ_TextContainer_2"));
+        node = (node != 0 && node->getNumChildren() != 0) ? node->getChildAt(0) : 0;
     }
-
-    if (child != NULL)
-    {
-        fuiRenderNodeTimeline* timeline =
-            static_cast<fuiRenderNodeTimeline*>(child->m_pRenderNode->asTimeline());
-        if (timeline != NULL)
-            field = timeline->getChildAt(0)->asEditText();
-    }
-    return field;
+    fuiRenderNode* timelineNode;
+    if (node != 0 && (timelineNode = node->m_pRenderNode->asTimeline()) != 0)
+        textField = static_cast<fuiRenderNodeTimeline*>(timelineNode)->getChildAt(0)->asEditText();
+    return textField;
 }
 
 void FJ_ToolTip::SetSecondaryText(const std::wstring& text)
@@ -98,10 +88,10 @@ void FJ_ToolTip::SetSecondaryText(const std::wstring& text)
 void FJ_ToolTip::SetType(int type, int subtype)
 {
     char label[64];
-    if (m_controllerType < 1)
-        label[0] = '\0';
-    else
+    if (m_controllerType > 0)
         std::sprintf(label, "%s%d", g_toolTipControllerSuffix.c_str(), m_controllerType);
+    else
+        label[0] = '\0';
 
     if (type >= 0)
     {
@@ -118,15 +108,16 @@ void FJ_ToolTip::SetType(int type, int subtype)
     {
         if (static_cast<int>(m_primaryText->getWidth()) > 0)
         {
-            m_secondaryPanel->setX(static_cast<float>(static_cast<int>(m_primaryText->getWidth()))
-                                   + m_primaryText->getX() + 1.0f);
+            int width = static_cast<int>(m_primaryText->getWidth());
+            m_secondaryPanel->setX(m_primaryText->getX() + static_cast<float>(width) + 1.0f);
+            m_secondaryPanel->setVisible(true);
         }
         else
         {
-            m_secondaryPanel->setX(m_primaryText->getX()
-                                   + static_cast<float>(m_textContainerX) + 1.0f);
+            int width = m_textContainerX;
+            m_secondaryPanel->setX(m_primaryText->getX() + static_cast<float>(width) + 1.0f);
+            m_secondaryPanel->setVisible(true);
         }
-        m_secondaryPanel->setVisible(true);
 
         SetSecondaryText(std::wstring(L"+"));
 
@@ -181,10 +172,10 @@ uint8_t FJ_ToolTip::IsSingleButtonToolTip()
 void FJ_ToolTip::Animate()
 {
     char label[64];
-    if (m_controllerType < 1)
-        label[0] = '\0';
-    else
+    if (m_controllerType > 0)
         std::sprintf(label, "%s%d", g_toolTipControllerSuffix.c_str(), m_controllerType);
+    else
+        label[0] = '\0';
 
     if (m_primaryText->isVisible())
         m_primaryText->gotoAndPlay(g_toolTipLabels[m_primaryType][1] + label);
@@ -199,25 +190,23 @@ void FJ_ToolTip::SetLabel(const std::wstring& label)
 
     if (m_primaryText->isVisible() && !m_secondaryText->isVisible())
     {
-        int width = m_textContainerX;
+        int offset = m_textContainerX + 1;
         if (m_secondaryText->getWidth() > 0.0f)
-            width = static_cast<int>(m_secondaryText->getWidth());
+            offset = static_cast<int>(m_secondaryText->getWidth()) + 1;
 
-        fuiRect rect = m_primaryText->getRect(m_primaryText);
-        m_textContainer->setX(rect.xMin + m_primaryText->getX()
-                              + static_cast<float>(width + 1));
+        m_textContainer->setX(m_primaryText->getRect(m_primaryText).xMin + m_primaryText->getX()
+                              + static_cast<float>(offset));
         return;
     }
 
     if (m_primaryText->isVisible() && m_secondaryText->isVisible())
     {
-        int width = m_textContainerX;
+        int offset = m_textContainerX + 1;
         if (m_secondaryText->getWidth() > 0.0f)
-            width = static_cast<int>(m_secondaryText->getWidth());
+            offset = static_cast<int>(m_secondaryText->getWidth()) + 1;
 
-        fuiRect rect = m_secondaryText->getRect(m_secondaryText);
-        m_textContainer->setX(rect.xMin + m_secondaryText->getX()
-                              + static_cast<float>(width + 1));
+        m_textContainer->setX(m_secondaryText->getRect(m_secondaryText).xMin + m_secondaryText->getX()
+                              + static_cast<float>(offset));
         return;
     }
 

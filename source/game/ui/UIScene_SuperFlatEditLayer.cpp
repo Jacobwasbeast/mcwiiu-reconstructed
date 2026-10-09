@@ -32,27 +32,52 @@ extern CInput* g_pInput;
 unsigned int UIScene_SuperFlatEditLayer::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_mainPanel.setupControl(this, root, "MainPanel");
-    m_controls.push_back(&m_mainPanel);
-    m_heightSlider.setupControl(this, m_mainPanel.getFuiRenderNode(), "LayerHeight");
-    m_controls.push_back(&m_heightSlider);
-    m_confirmButton.setupControl(this, m_mainPanel.getFuiRenderNode(), "ConfirmLayer");
-    m_controls.push_back(&m_confirmButton);
-    m_slotList.setupControl(this, m_mainPanel.getFuiRenderNode(), "containerList");
-    m_controls.push_back(&m_slotList);
-    m_title.setupControl(this, m_mainPanel.getFuiRenderNode(), "EditLayerTitle");
-    m_controls.push_back(&m_title);
-    m_heightLabel.setupControl(this, m_mainPanel.getFuiRenderNode(), "LayerHeightLabel");
-    m_controls.push_back(&m_heightLabel);
-    m_typeLabel.setupControl(this, m_mainPanel.getFuiRenderNode(), "LayerTypeLabel");
-    m_controls.push_back(&m_typeLabel);
-    m_cursor.setupControl(this, m_mainPanel.getFuiRenderNode(), "cursor");
-    m_controls.push_back(&m_cursor);
-    m_sliderTouch.setupControl(this, m_mainPanel.getFuiRenderNode(), "TouchPanel_Slider");
-    m_controls.push_back(&m_sliderTouch);
-    m_listTouch.setupControl(this, m_mainPanel.getFuiRenderNode(), "TouchPanel_containerList");
-    m_controls.push_back(&m_listTouch);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_mainPanel.setupControl(this, currentNode, std::string("MainPanel"));
+        m_controls.push_back(&m_mainPanel);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_mainPanel.getFuiRenderNode();
+        {
+            m_heightSlider.setupControl(this, currentNode, std::string("LayerHeight"));
+            m_controls.push_back(&m_heightSlider);
+        }
+        {
+            m_confirmButton.setupControl(this, currentNode, std::string("ConfirmLayer"));
+            m_controls.push_back(&m_confirmButton);
+        }
+        {
+            m_slotList.setupControl(this, currentNode, std::string("containerList"));
+            m_controls.push_back(&m_slotList);
+        }
+        {
+            m_title.setupControl(this, currentNode, std::string("EditLayerTitle"));
+            m_controls.push_back(&m_title);
+        }
+        {
+            m_heightLabel.setupControl(this, currentNode, std::string("LayerHeightLabel"));
+            m_controls.push_back(&m_heightLabel);
+        }
+        {
+            m_typeLabel.setupControl(this, currentNode, std::string("LayerTypeLabel"));
+            m_controls.push_back(&m_typeLabel);
+        }
+        {
+            m_cursor.setupControl(this, currentNode, std::string("cursor"));
+            m_controls.push_back(&m_cursor);
+        }
+        {
+            m_sliderTouch.setupControl(this, currentNode, std::string("TouchPanel_Slider"));
+            m_controls.push_back(&m_sliderTouch);
+        }
+        {
+            m_listTouch.setupControl(this, currentNode, std::string("TouchPanel_containerList"));
+            m_controls.push_back(&m_listTouch);
+        }
+        currentNode = parentNode;
+    }
     return 1;
 }
 

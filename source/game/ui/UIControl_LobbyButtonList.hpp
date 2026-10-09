@@ -11,7 +11,7 @@ class fuiRenderNode;
 class UIControl_LobbyButtonList : public UIControl_ButtonList
 {
 public:
-    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
 };
 
 #endif

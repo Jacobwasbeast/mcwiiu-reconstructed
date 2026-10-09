@@ -111,12 +111,17 @@ void UIScene_InGameInfoMenu::UpdatePlayer(int index, PlayerInfo* oldInfo, Player
 
 bool UIScene_InGameInfoMenu::hasSomethingToEdit(unsigned char smallId)
 {
+    bool result = false;
     INetworkPlayer* local = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(m_playerId);
     INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(smallId);
     bool trustPlayers = gApp.GetGameHostOption(eGameHostOption_TrustPlayers) != 0;
     bool cheatsEnabled = gApp.GetGameHostOption(eGameHostOption_CheatsEnabled) != 0;
-    bool result = false;
-    if (local == NULL || local != player)
+    if (local != NULL && local == player)
+    {
+        if (cheatsEnabled)
+            result = true;
+    }
+    else
     {
         if (!trustPlayers && player != NULL && !player->IsHost())
             result = true;
@@ -125,15 +130,12 @@ bool UIScene_InGameInfoMenu::hasSomethingToEdit(unsigned char smallId)
         if (!player->IsLocal() && !player->IsSameSystem(CGameNetworkManager::sInstance.GetHostPlayer()))
             result = true;
     }
-    else if (cheatsEnabled)
-    {
-        result = true;
-    }
     return result;
 }
 
 void UIScene_InGameInfoMenu::updateTooltips()
 {
+    int yTooltip = -1;
     int tooltip = -1;
     int partyTooltip = -1;
     _XPARTY_USER_LIST users;
@@ -141,7 +143,7 @@ void UIScene_InGameInfoMenu::updateTooltips()
         partyTooltip = static_cast<int>(IDS_TOOLTIPS_INVITE_PARTY);
     if (CGameNetworkManager::sInstance.IsLocalGame())
         partyTooltip = -1;
-    unsigned int selected = m_playerList.getCurrentSelection();
+    int selected = m_playerList.getCurrentSelection();
     if (selected < m_players.size())
     {
         INetworkPlayer* player =
@@ -165,19 +167,25 @@ void UIScene_InGameInfoMenu::updateTooltips()
         }
     }
     gConsoleUIController.SetTooltips(m_playerId, tooltip, static_cast<int>(IDS_TOOLTIPS_BACK), partyTooltip,
-                                     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
+                                     yTooltip, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                      false, false);
 }
 
 unsigned int UIScene_InGameInfoMenu::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_optionsButton.setupControl(this, root, std::string("GameOptions"));
-    m_controls.push_back(&m_optionsButton);
-    m_playerList.setupControl(this, root, std::string("GamePlayers"));
-    m_controls.push_back(&m_playerList);
-    m_titleLabel.setupControl(this, root, std::string("Title"));
-    m_controls.push_back(&m_titleLabel);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_optionsButton.setupControl(this, currentNode, std::string("GameOptions"));
+        m_controls.push_back(&m_optionsButton);
+    }
+    {
+        m_playerList.setupControl(this, currentNode, std::string("GamePlayers"));
+        m_controls.push_back(&m_playerList);
+    }
+    {
+        m_titleLabel.setupControl(this, currentNode, std::string("Title"));
+        m_controls.push_back(&m_titleLabel);
+    }
     return 1;
 }
 
@@ -225,11 +233,13 @@ void UIScene_InGameInfoMenu::handleInput(int playerId, int action, bool repeat, 
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
-    case EControllerActions_MenuX:
-        if (!pressed || repeat)
-            return;
-        CGameNetworkManager::sInstance.IsLocalGame();
-        return;
+    case EControllerActions_MenuCancel:
+        if (pressed && !repeat)
+        {
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
+            navigateBack();
+        }
+        break;
     case EControllerActions_MenuY:
     {
         if (!pressed)
@@ -238,8 +248,9 @@ void UIScene_InGameInfoMenu::handleInput(int playerId, int action, bool repeat, 
             return;
         if (m_playerList.getItemCount() < 1)
             return;
+        int playerCount = m_players.size();
         unsigned int selection = m_playerList.getCurrentSelection();
-        if (selection >= m_players.size())
+        if (selection >= playerCount)
             return;
         INetworkPlayer* player =
             CGameNetworkManager::sInstance.GetPlayerBySmallId(m_players[selection]->smallId);
@@ -249,19 +260,17 @@ void UIScene_InGameInfoMenu::handleInput(int playerId, int action, bool repeat, 
         uid != PlayerUID(0);
         return;
     }
+    case EControllerActions_MenuX:
+        if (!pressed || repeat)
+            return;
+        CGameNetworkManager::sInstance.IsLocalGame();
+        return;
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
     case EControllerActions_MenuPageUp:
     case EControllerActions_MenuPageDown:
     case EControllerActions_MenuOk:
         sendInputToMovie(action, repeat, pressed, released);
-        break;
-    case EControllerActions_MenuCancel:
-        if (pressed && !repeat)
-        {
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
-            navigateBack();
-        }
         break;
     default:
         break;
@@ -278,16 +287,16 @@ void UIScene_InGameInfoMenu::handleGainFocus(bool hadFocus)
 void UIScene_InGameInfoMenu::handlePress(int controlId, int childId)
 {
     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-    if (controlId == 0)
+    switch (controlId)
     {
+    case 0:
         gConsoleUIController.NavigateToScene(m_playerId, EUIScene_InGameHostOptionsMenu, NULL,
                                              EUILayer_Scene, EUIGroup_PlayerDefault);
-        return;
-    }
-    if (controlId == 1)
+        break;
+    case 1:
     {
-        INetworkPlayer* networkPlayer =
-            CGameNetworkManager::sInstance.GetPlayerBySmallId(m_players[childId]->smallId);
+        PlayerInfo* info = m_players[childId];
+        INetworkPlayer* networkPlayer = CGameNetworkManager::sInstance.GetPlayerBySmallId(info->smallId);
         boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
         if (m_isHost || localPlayer->isModerator())
         {
@@ -319,6 +328,8 @@ void UIScene_InGameInfoMenu::handlePress(int controlId, int childId)
                 }
             }
         }
+        break;
+    }
     }
 }
 

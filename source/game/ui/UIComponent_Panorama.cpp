@@ -21,8 +21,8 @@ UIComponent_Panorama::UIComponent_Panorama(int sceneType, void*, UILayer* layer)
 {
     initialiseMovie();
     m_panoramaDay = true;
-    m_currentFrame = 0;
     m_movieLoaded = true;
+    m_currentFrame = 0;
     while (!m_hasTicked)
         tick();
 }
@@ -61,14 +61,21 @@ void UIComponent_Panorama::tick()
 
 std::wstring UIComponent_Panorama::getMoviePath()
 {
-    C4JRender::eViewportType viewport = m_layer->getViewport();
-    if (viewport == C4JRender::eViewportType_FullScreen ||
-        static_cast<unsigned int>(viewport) > C4JRender::eViewportType_BottomRightQuarter) {
+    switch (m_layer->getViewport()) {
+    case C4JRender::eViewportType_TopHalf:
+    case C4JRender::eViewportType_BottomHalf:
+    case C4JRender::eViewportType_LeftHalf:
+    case C4JRender::eViewportType_RightHalf:
+    case C4JRender::eViewportType_TopLeftQuarter:
+    case C4JRender::eViewportType_TopRightQuarter:
+    case C4JRender::eViewportType_BottomLeftQuarter:
+    case C4JRender::eViewportType_BottomRightQuarter:
+        m_splitScreen = true;
+        return L"PanoramaSplit";
+    default:
         m_splitScreen = false;
         return L"Panorama";
     }
-    m_splitScreen = true;
-    return L"PanoramaSplit";
 }
 
 void UIComponent_Panorama::handleReload()
@@ -79,25 +86,29 @@ void UIComponent_Panorama::handleReload()
 void UIComponent_Panorama::render(int width, int height, C4JRender::eViewportType viewport)
 {
     bool isHalf = viewport >= C4JRender::eViewportType_TopHalf && viewport <= C4JRender::eViewportType_RightHalf;
-    if (!m_splitScreen || !isHalf) {
-        UIScene::render(width, height, viewport);
-        return;
-    }
+    if (m_splitScreen && isHalf) {
+        int x = 0;
+        int y = 0;
+        switch (viewport) {
+        case C4JRender::eViewportType_BottomHalf:
+            y = static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f);
+            break;
+        case C4JRender::eViewportType_RightHalf:
+            x = static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f);
+            break;
+        }
+        gConsoleUIController.setupRenderPosition(x, y);
 
-    if (viewport == C4JRender::eViewportType_BottomHalf)
-        gConsoleUIController.setupRenderPosition(0, static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f));
-    else if (viewport == C4JRender::eViewportType_RightHalf)
-        gConsoleUIController.setupRenderPosition(static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f), 0);
-    else
-        gConsoleUIController.setupRenderPosition(0, 0);
-
-    if (viewport == C4JRender::eViewportType_RightHalf ||
-        viewport == C4JRender::eViewportType_LeftHalf) {
-        gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width),
-                     static_cast<float>(static_cast<int>(gConsoleUIController.getScreenHeight())));
+        if (viewport == C4JRender::eViewportType_LeftHalf ||
+            viewport == C4JRender::eViewportType_RightHalf) {
+            int screenHeight = static_cast<int>(gConsoleUIController.getScreenHeight());
+            gFui->render(m_movie, 0.0f, 0.0f, static_cast<float>(width), static_cast<float>(screenHeight));
+        } else {
+            gFui->render(m_movie, 0.0f, 0.0f, gConsoleUIController.getScreenWidth(),
+                         gConsoleUIController.getScreenHeight(), 0.5f, 0.5f);
+        }
     } else {
-        gFui->render(m_movie, 0.0f, 0.0f, gConsoleUIController.getScreenWidth(),
-                     gConsoleUIController.getScreenHeight(), 0.5f, 0.5f);
+        UIScene::render(width, height, viewport);
     }
 }
 

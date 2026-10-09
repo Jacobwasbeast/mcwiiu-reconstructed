@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <string>
 
+#include "game/core/GameSettings.hpp"
 #include "game/ui/UIControl_MultiList.hpp"
 #include "game/ui/UIControl_HTMLLabel.hpp"
 #include "game/ui/UIScene.hpp"
@@ -34,6 +35,9 @@ public:
     void setGameSettings();
 
 private:
+    void addSettingCheckbox(int playerId, const wchar_t* label, int id, eGameSetting setting);
+    void addInvertedSettingCheckbox(int playerId, const wchar_t* label, int id, eGameSetting setting);
+
     UIControl_MultiList m_multiList;
     UIControl_HTMLLabel m_description;
     unsigned int m_settingsMode;

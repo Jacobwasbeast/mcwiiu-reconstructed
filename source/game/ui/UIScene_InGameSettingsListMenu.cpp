@@ -29,6 +29,7 @@
 #include "game/ui/UILayer.hpp"
 #include "game/ui/fuiFile.hpp"
 #include "game/ui/fuiRenderNode.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/PlayerList.hpp"
 #include "platform/wiiu/CProfile.hpp"
 
@@ -44,10 +45,9 @@ UIScene_InGameSettingsListMenu::UIScene_InGameSettingsListMenu(int sceneType, vo
     m_customGame = Minecraft::GetInstance()->GetMiniGame()->GetId() == eMiniGameId_Lobby;
     m_launchData.mMiniGameId = m_miniGameId;
     m_launchData.mMatchmaking = CGameNetworkManager::sInstance.IsInPublicJoinableGame();
-    bool timeTrial = Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0;
-    m_launchData.mPad = sceneType;
+    m_launchData.mTimeTrial = Minecraft::GetInstance()->GetMiniGame()->GetHostOption(eCustomGameModeHostOption_TimeTrial) != 0;
     m_mapSelection = 0;
-    m_launchData.mTimeTrial = timeTrial;
+    m_launchData.mPad = sceneType;
     switch (m_miniGameId)
     {
     case eMiniGameId_Battle:
@@ -168,40 +168,40 @@ void UIScene_InGameSettingsListMenu::Init()
 
     if (m_miniGameId == eMiniGameId_Battle)
     {
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0xa329d6e9)), 5,
+        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG_OPTION_ALLOW_ALL_SKINS)), 5,
             m_playerSettings.mHostOptions.Get(eCustomGameModeHostOption_NoSmallSkins) == 0);
 
         int lootSet = m_playerSettings.mLootSetId;
         if (m_customGame && m_playerSettings.mRandomLootSet)
             lootSet = 5;
-        std::wstring label = std::wstring(L10N::GetString(0x5ccdb447)) + L": " +
+        std::wstring label = std::wstring(L10N::GetString(IDS_MG01_ITEMSET)) + L": " +
             MiniGameDef::GetCustomGameModeById(m_miniGameId, true)->GetLootSetText(lootSet);
         m_multiList.AddNewSlider(label, 6, 0, 5, lootSet, false, 7, 3);
 
         label = std::wstring(L10N::GetString(0x1cbfab4a)) + L": " +
             MiniGameDef::GetCustomGameModeById(m_miniGameId, true)->GetFoodBalanceIndexText(m_playerSettings.mFoodBalance);
         m_multiList.AddNewSlider(label, 7, 0, 7, m_playerSettings.mFoodBalance, false, 7, 3);
-        std::swprintf(text, 256, L"%ls: %d", L10N::GetString(0x9ad3440e), m_playerSettings.mRoundCount);
+        std::swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_MG01_ROUND_COUNT), m_playerSettings.mRoundCount);
         m_multiList.AddNewSlider(std::wstring(text),
                                  9, 1, 10, m_playerSettings.mRoundCount, false, 7, 3);
 
-        label = std::wstring(L10N::GetString(0xf8df77ce)) + L": " +
+        label = std::wstring(L10N::GetString(IDS_MG01_MAP_SIZE)) + L": " +
             MiniGameDef::GetCustomGameModeById(m_miniGameId, true)->GetMapSizeOverrideText(
                 m_playerSettings.mMapSizeOverride.isSet() ? m_playerSettings.mMapSizeOverride.get() : 0);
         m_multiList.AddNewSlider(label, 10, 0, 2,
             m_playerSettings.mMapSizeOverride.isSet() ? m_playerSettings.mMapSizeOverride.get() : 0, false, 7, 3);
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0x1d7e9b6f)), 11,
+        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG01_NATURAL_REGENERATION)), 11,
                                    m_playerSettings.mNaturalRegeneration);
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0xddc824da)), 13,
+        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG01_SMALL_INVENTORY)), 13,
                                    m_playerSettings.mSmallInventoryEnabled);
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0x7356945d)), 14,
+        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG01_TAKE_EVERYTHING)), 14,
                                    m_playerSettings.mTakeEverythingEnabled);
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0xaa27b127)), 15,
+        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG01_CHEST_REFILL_SETTING)), 15,
                                    m_playerSettings.mChestRefillEnabled);
     }
     else if (m_miniGameId == eMiniGameId_Tumble)
     {
-        std::wstring lootLabel = std::wstring(L10N::GetString(0x5ccdb447)) + L": " +
+        std::wstring lootLabel = std::wstring(L10N::GetString(IDS_MG01_ITEMSET)) + L": " +
             MiniGameDef::GetCustomGameModeById(m_miniGameId, true)->GetLootSetText(m_playerSettings.mLootSetId);
         m_multiList.AddNewSlider(lootLabel, 6, 0, 3, m_playerSettings.mLootSetId, false, 7, 3);
 
@@ -272,18 +272,19 @@ void UIScene_InGameSettingsListMenu::UpdateSettings(bool unavailable)
     m_multiList.clearList();
     Init();
     m_multiList.setCurrentSelection(activeItem, false, true);
-    int parameters[1] = { static_cast<int>(IDS_CONFIRM_OK) };
+    int parameters[1];
+    parameters[0] = IDS_CONFIRM_OK;
     if (unavailable)
     {
         gConsoleUIController.RequestAlertMessage(IDS_MG_SETTINGS_UPDATED_TITLE, 0xd5232b99, parameters,
-                                                  1, m_playerId, 0, 0, 0, true);
+                                                  1, m_playerId, NULL, NULL, NULL, true);
         m_multiList.EnableItem(0, false, true);
         m_multiList.SetCheckboxValue(0, false, true);
     }
     else
     {
         gConsoleUIController.RequestAlertMessage(IDS_MG_SETTINGS_UPDATED_TITLE, IDS_MG_SETTINGS_UPDATED_MSG, parameters,
-                                                  1, m_playerId, 0, 0, 0, true);
+                                                  1, m_playerId, NULL, NULL, NULL, true);
     }
 }
 
@@ -309,9 +310,9 @@ void UIScene_InGameSettingsListMenu::handleReload()
 
 void UIScene_InGameSettingsListMenu::updateComponents()
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
+    bool inMenu = Minecraft::GetInstance()->mLevel == 0;
     bool showLogo;
-    if (minecraft->mLevel == 0)
+    if (inMenu)
     {
         m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
         showLogo = true;
@@ -335,71 +336,79 @@ std::wstring UIScene_InGameSettingsListMenu::getMoviePath()
 
 void UIScene_InGameSettingsListMenu::setGameSettings()
 {
-    if (!m_host || !m_primaryPlayer ||
-        (m_miniGameId != eMiniGameId_Battle && m_miniGameId != eMiniGameId_Tumble))
+    if (!m_host || !m_primaryPlayer)
+        return;
+
+    if (m_miniGameId != eMiniGameId_Battle && m_miniGameId != eMiniGameId_Tumble)
         return;
 
     unsigned int hostOptions = gApp.GetGameHostOption(eGameHostOption_All);
     if (m_miniGameId == eMiniGameId_Battle)
     {
-        m_playerSettings.mHostOptions.Set(eCustomGameModeHostOption_CentreSpawn,
-                             static_cast<unsigned int>(m_multiList.GetCheckboxValue(0)));
-        m_playerSettings.mHostOptions.Set(eCustomGameModeHostOption_NoSmallSkins,
-                             static_cast<unsigned int>(m_multiList.GetCheckboxValue(5)) ^ 1);
-        m_playerSettings.mNaturalRegeneration = m_multiList.GetCheckboxValue(11) != 0;
-        m_playerSettings.mSmallInventoryEnabled = m_multiList.GetCheckboxValue(13) != 0;
-        m_playerSettings.mTakeEverythingEnabled = m_multiList.GetCheckboxValue(14) != 0;
-        m_playerSettings.mChestRefillEnabled = m_multiList.GetCheckboxValue(15) != 0;
+        m_playerSettings.mHostOptions.Set(eCustomGameModeHostOption_CentreSpawn, m_multiList.GetCheckboxValue(0));
+        m_playerSettings.mHostOptions.Set(eCustomGameModeHostOption_NoSmallSkins, !m_multiList.GetCheckboxValue(5));
+        m_playerSettings.mNaturalRegeneration = m_multiList.GetCheckboxValue(11);
+        m_playerSettings.mSmallInventoryEnabled = m_multiList.GetCheckboxValue(13);
+        m_playerSettings.mTakeEverythingEnabled = m_multiList.GetCheckboxValue(14);
+        m_playerSettings.mChestRefillEnabled = m_multiList.GetCheckboxValue(15);
         gApp.SetGameHostOption(hostOptions, eGameHostOption_NaturalRegeneration,
-                                  m_playerSettings.mNaturalRegeneration);
+                               m_playerSettings.mNaturalRegeneration);
     }
-    else
+    else if (m_miniGameId == eMiniGameId_Tumble)
     {
-        m_playerSettings.mSpectatorParticipation = m_multiList.GetCheckboxValue(18) != 0;
+        m_playerSettings.mSpectatorParticipation = m_multiList.GetCheckboxValue(18);
     }
 
     MiniGameDef::SetPlayerSettings(m_playerSettings);
+
     bool broadcast = false;
     if (!(m_playerSettings == m_originalPlayerSettings))
         broadcast = true;
 
-    int selection = 0;
-    if (m_miniGameId == eMiniGameId_Battle)
-        selection = GameSettings::GetBattleMiniGameMapSelection(m_playerId);
-    else if (m_miniGameId == eMiniGameId_Glide)
-        selection = GameSettings::GetGlideMiniGameMapSelection(m_playerId);
-
-    if (selection != m_mapSelection)
+    unsigned int mapSelection = 0;
+    switch (m_miniGameId)
     {
-        PlayerList* playerList = gMinecraftServer != 0 ? gMinecraftServer->mPlayers : 0;
-        playerList->broadcastPlaylistInfo(&m_launchData.mLevelRulesetGroups);
+    case eMiniGameId_Battle:
+        mapSelection = GameSettings::GetBattleMiniGameMapSelection(m_playerId);
+        break;
+    case eMiniGameId_Glide:
+        mapSelection = GameSettings::GetGlideMiniGameMapSelection(m_playerId);
+        break;
+    }
+
+    if (mapSelection != m_mapSelection)
+    {
+        (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)
+            ->broadcastPlaylistInfo(&m_launchData.mLevelRulesetGroups);
         broadcast = true;
     }
 
     if (broadcast)
     {
-        const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
-        PlayerList* playerList = gMinecraftServer != 0 ? gMinecraftServer->mPlayers : 0;
-        playerList->broadcastAll(miniGame->GetPlayerSettingsPacket());
+        (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)
+            ->broadcastAll(Minecraft::GetInstance()->GetMiniGame()->GetPlayerSettingsPacket());
     }
 
     if (hostOptions != gApp.GetGameHostOption(eGameHostOption_All))
     {
-        ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
-        if (connection != 0)
-            connection->send(boost::shared_ptr<Packet>(new ServerSettingsChangedPacket(1, hostOptions)));
+        boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
+        if (player->mPacketListener != NULL)
+        {
+            player->mPacketListener->send(
+                boost::shared_ptr<Packet>(new ServerSettingsChangedPacket(1, hostOptions)));
+        }
     }
 }
 
 void UIScene_InGameSettingsListMenu::UpdateDescriptionText()
 {
     static int descriptionIds[] = {
-        0x4f8bedac, 0x75cf2428, 0x4c17ef92, IDS_MASHUP_CHOOSE_BETWEEN_SEVERAL_VARIANTS_SAME_CORE_GAME_TEXT, static_cast<int>(0xfe516d5e),
-        static_cast<int>(0xbe68971f), 0, 0, IDS_MG_LIVES_PER_ROUND_DESC, 0x5e1bb988,
-        0x2a5c55c8, static_cast<int>(0xb66f0561), static_cast<int>(0xf7c16b2c),
-        static_cast<int>(0xe7ba74fc), static_cast<int>(0xe8f6de23),
-        static_cast<int>(0xbfd9bf09), 0x0d7dae19, 0x35ef3122,
-        static_cast<int>(0xa541f7ca)
+        IDS_MG_OPTION_DESC_CENTRE_SPAWN, IDS_MG_OPTION_DESC_MAP_SELECT, IDS_MG_OPTION_DESC_ROUND_LENGTH, IDS_MASHUP_CHOOSE_BETWEEN_SEVERAL_VARIANTS_SAME_CORE_GAME_TEXT, static_cast<int>(IDS_MG_OPTION_DESC_SPECTATE_MODE),
+        static_cast<int>(0xbe68971f), 0, 0, IDS_MG_LIVES_PER_ROUND_DESC, IDS_MG01_ROUND_COUNT_DESC,
+        IDS_MG01_MAP_SIZE_DESC, static_cast<int>(IDS_MG01_NATURAL_REGENERATION_DESC), static_cast<int>(0xf7c16b2c),
+        static_cast<int>(IDS_MG01_SMALL_INVENTORY_DESC), static_cast<int>(IDS_MG01_TAKE_EVERYTHING_DESC),
+        static_cast<int>(IDS_MG01_CHEST_REFILL_SETTING_DESC), IDS_MG02_LAYER_SCALE_DESC, IDS_MG02_LAYER_COUNT_DESC,
+        static_cast<int>(IDS_MG02_SPECTATOR_PARTICIPATION_DESC)
     };
 
     if (m_childFocus == -1.0)
@@ -407,17 +416,9 @@ void UIScene_InGameSettingsListMenu::UpdateDescriptionText()
 
     int descriptionId = descriptionIds[static_cast<int>(m_childFocus)];
     std::wstring description(L"");
-    bool hiDef;
-    if (descriptionId == -1 || descriptionId == -2)
-    {
-        hiDef = gRenderer->IsHiDef();
-    }
-    else
-    {
+    if (descriptionId != -1 && descriptionId != -2)
         description = gApp.FormatHTMLString(m_playerId, std::wstring(L10N::GetString(descriptionId)), -1);
-        hiDef = gRenderer->IsHiDef();
-    }
-    if (!hiDef)
+    if (!gRenderer->IsHiDef())
         gRenderer->IsWidescreen();
 
     if (m_childFocus == 6.0)
@@ -508,7 +509,7 @@ void UIScene_InGameSettingsListMenu::handleSliderElementMove(int, int element, i
         m_playerSettings.mLootSetId = static_cast<unsigned int>(m_multiList.GetSliderValue(6));
         if (m_miniGameId == eMiniGameId_Battle)
             m_playerSettings.mRandomLootSet = m_playerSettings.mLootSetId == 5;
-        std::wstring label = std::wstring(L10N::GetString(0x5ccdb447)) + L": " +
+        std::wstring label = std::wstring(L10N::GetString(IDS_MG01_ITEMSET)) + L": " +
                              miniGame->GetLootSetText(m_playerSettings.mLootSetId);
         m_multiList.SetItemLabel(6, UIString(label), false);
         UpdateDescriptionText();
@@ -536,7 +537,7 @@ void UIScene_InGameSettingsListMenu::handleSliderElementMove(int, int element, i
         return;
     case 9:
         m_playerSettings.mRoundCount = static_cast<int>(m_multiList.GetSliderValue(9));
-        std::swprintf(text, 256, L"%ls: %d", L10N::GetString(0x9ad3440e), m_playerSettings.mRoundCount);
+        std::swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_MG01_ROUND_COUNT), m_playerSettings.mRoundCount);
         m_multiList.SetItemLabel(9, UIString(std::wstring(text)), false);
         UpdateDescriptionText();
         return;
@@ -544,7 +545,7 @@ void UIScene_InGameSettingsListMenu::handleSliderElementMove(int, int element, i
     {
         int mapSize = static_cast<int>(m_multiList.GetSliderValue(10));
         m_playerSettings.mMapSizeOverride = mapSize == 0 ? maybe<int>() : maybe<int>(mapSize);
-        std::wstring label = std::wstring(L10N::GetString(0xf8df77ce)) + L": " +
+        std::wstring label = std::wstring(L10N::GetString(IDS_MG01_MAP_SIZE)) + L": " +
                              miniGame->GetMapSizeOverrideText(mapSize);
         m_multiList.SetItemLabel(10, UIString(label), false);
         UpdateDescriptionText();

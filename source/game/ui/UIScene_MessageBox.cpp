@@ -42,17 +42,17 @@ UIScene_MessageBox::UIScene_MessageBox(int sceneType, void* sceneData, UILayer* 
     m_buttons[3].init(UIString(L10N::GetString(data->messageParameters[button])), button);
     m_title.init(UIString(L10N::GetString(data->titleId)));
 
-    if (data->overrideText == 0) {
-        m_content.init(UIString(L10N::GetString(data->messageId)));
-    } else {
+    if (data->overrideText != 0) {
         wchar_t text[512];
         swprintf(text, 512, data->overrideText, L10N::GetString(data->messageId));
         m_content.init(UIString(text));
+    } else {
+        m_content.init(UIString(L10N::GetString(data->messageId)));
     }
 
     static_cast<FJ_MessageBox*>(m_movie->getRootNode()->getFuiNode())->AutoResize();
-    m_callbackData = data->callbackData;
     m_callback = data->callback;
+    m_callbackData = data->callbackData;
     layer->addComponent(sceneType, EUIScene_MenuBackground, 0);
     gConsoleUIController.HideChestRefillAnimation();
     gConsoleUIController.TouchBoxRebuild(this);
@@ -60,7 +60,8 @@ UIScene_MessageBox::UIScene_MessageBox(int sceneType, void* sceneData, UILayer* 
 
 UIScene_MessageBox::~UIScene_MessageBox()
 {
-    if (gProfile->GetPrimaryPad() != m_playerId) {
+    bool primaryPlayer = gProfile->GetPrimaryPad() == m_playerId;
+    if (!primaryPlayer) {
         gConsoleUIController.SetTooltips(m_playerId, -1, -1, -1, -1, -1, -1, -1, -1,
                                          -1, -1, -1, -1, -1, -1, -1, -1, false, false);
     }
@@ -72,35 +73,29 @@ unsigned int UIScene_MessageBox::mapElementsAndNames()
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
     {
-        std::string name("Button0");
-        m_buttons[0].setupControl(this, root, name);
+        m_buttons[0].setupControl(this, root, std::string("Button0"));
+        m_controls.push_back(&m_buttons[0]);
     }
-    m_controls.push_back(&m_buttons[0]);
     {
-        std::string name("Button1");
-        m_buttons[1].setupControl(this, root, name);
+        m_buttons[1].setupControl(this, root, std::string("Button1"));
+        m_controls.push_back(&m_buttons[1]);
     }
-    m_controls.push_back(&m_buttons[1]);
     {
-        std::string name("Button2");
-        m_buttons[2].setupControl(this, root, name);
+        m_buttons[2].setupControl(this, root, std::string("Button2"));
+        m_controls.push_back(&m_buttons[2]);
     }
-    m_controls.push_back(&m_buttons[2]);
     {
-        std::string name("Button3");
-        m_buttons[3].setupControl(this, root, name);
+        m_buttons[3].setupControl(this, root, std::string("Button3"));
+        m_controls.push_back(&m_buttons[3]);
     }
-    m_controls.push_back(&m_buttons[3]);
     {
-        std::string name("Title");
-        m_title.setupControl(this, root, name);
+        m_title.setupControl(this, root, std::string("Title"));
+        m_controls.push_back(&m_title);
     }
-    m_controls.push_back(&m_title);
     {
-        std::string name("Content");
-        m_content.setupControl(this, root, name);
+        m_content.setupControl(this, root, std::string("Content"));
+        m_controls.push_back(&m_content);
     }
-    m_controls.push_back(&m_content);
     return 1;
 }
 
@@ -134,11 +129,6 @@ void UIScene_MessageBox::handleInput(int playerId, int action, bool repeat, bool
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
-    case EControllerActions_MenuUp:
-    case EControllerActions_MenuDown:
-    case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, pressed, released);
-        break;
     case EControllerActions_MenuCancel:
         if (pressed && m_alert)
         {
@@ -146,6 +136,11 @@ void UIScene_MessageBox::handleInput(int playerId, int action, bool repeat, bool
             if (m_callback != 0)
                 (*m_callback)(m_callbackData, playerId, C4JStorage::EMessageResult_Cancelled);
         }
+        break;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuOk:
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     }
     handled = true;

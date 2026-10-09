@@ -17,8 +17,8 @@ class UIScene_InventoryMenu : public UIScene_AbstractContainerMenu,
 public:
     UIScene_InventoryMenu(int pad, void* data, UILayer* layer);
     virtual ~UIScene_InventoryMenu();
-    virtual unsigned int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual unsigned int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual void GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position);
     virtual void GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot, _UIVec2D* position, _UIVec2D* size);
     virtual void handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection section);

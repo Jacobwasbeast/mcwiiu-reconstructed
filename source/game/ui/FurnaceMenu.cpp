@@ -15,12 +15,12 @@
 
 FurnaceMenu::FurnaceMenu(boost::shared_ptr<Inventory> inventory,
                          boost::shared_ptr<Container> container)
-    : AbstractContainerMenu(),
-      mCookingProgress(0),
-      mCookingTotalTime(0),
-      mLitTime(0),
-      mLitDuration(0)
+    : AbstractContainerMenu()
 {
+    mLitDuration = 0;
+    mLitTime = 0;
+    mCookingTotalTime = 0;
+    mCookingProgress = 0;
     mContainer = container;
     container->startOpen(
         boost::static_pointer_cast<Player>(inventory->m_player->shared_from_this()));
@@ -52,10 +52,10 @@ void FurnaceMenu::addSlotListener(net_minecraft_world_inventory::ContainerListen
 void FurnaceMenu::broadcastChanges()
 {
     AbstractContainerMenu::broadcastChanges();
-    std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it =
-        m_listeners.begin();
     std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator end =
         m_listeners.end();
+    std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it =
+        m_listeners.begin();
     for (; it != end; ++it)
     {
         net_minecraft_world_inventory::ContainerListener* listener = *it;
@@ -100,8 +100,8 @@ int FurnaceMenu::GetInvSlotStart()
 void FurnaceMenu::fjCheckAchievements(const boost::shared_ptr<Player>& player,
                                       const not_null_ptr<ItemInstance>& item)
 {
-    if (mContainer->getContainerData(4) == 1 && item->getItem() == Items::coal &&
-        item->getAuxValue() == 1)
+    bool fueledByCharcoal = mContainer->getContainerData(4) == 1;
+    if (fueledByCharcoal && item->getItem() == Items::coal && item->getAuxValue() == 1)
     {
         player->awardStat(GenericStats::renewableEnergy(),
                           GenericStats::param_renewableEnergy());
@@ -123,7 +123,7 @@ not_null_ptr<ItemInstance> FurnaceMenu::quickMoveStack(boost::shared_ptr<Player>
         itemstack = item->copy();
         if (index == 2)
         {
-            if (moveItemStackTo(item, GetInvSlotStart(), 39, true, true, true) != 1)
+            if (!moveItemStackTo(item, GetInvSlotStart(), 39, true, true, true))
             {
                 return ItemInstance::EMPTY;
             }
@@ -133,35 +133,35 @@ not_null_ptr<ItemInstance> FurnaceMenu::quickMoveStack(boost::shared_ptr<Player>
         }
         else if (index == 1 || index == 0)
         {
-            if (moveItemStackTo(item, GetInvSlotStart(), 39, false, true, true) != 1)
+            if (!moveItemStackTo(item, GetInvSlotStart(), 39, false, true, true))
             {
                 return ItemInstance::EMPTY;
             }
         }
         else if (!FurnaceRecipes::getInstance()->getResult(item)->isEmpty())
         {
-            if (moveItemStackTo(item, 0, 1, false, true, true) != 1)
+            if (!moveItemStackTo(item, 0, 1, false, true, true))
             {
                 return ItemInstance::EMPTY;
             }
         }
         else if (FurnaceBlockEntity::isFuel(item))
         {
-            if (moveItemStackTo(item, 1, 2, false, true, true) != 1)
+            if (!moveItemStackTo(item, 1, 2, false, true, true))
             {
                 return ItemInstance::EMPTY;
             }
         }
         else if (index >= GetInvSlotStart() && index < 30)
         {
-            if (moveItemStackTo(item, 30, 39, false, true, true) != 1)
+            if (!moveItemStackTo(item, 30, 39, false, true, true))
             {
                 return ItemInstance::EMPTY;
             }
         }
         else if (index >= 30 && index < 39)
         {
-            if (moveItemStackTo(item, GetInvSlotStart(), 30, false, true, true) != 1)
+            if (!moveItemStackTo(item, GetInvSlotStart(), 30, false, true, true))
             {
                 return ItemInstance::EMPTY;
             }
@@ -179,7 +179,10 @@ not_null_ptr<ItemInstance> FurnaceMenu::quickMoveStack(boost::shared_ptr<Player>
         {
             return ItemInstance::EMPTY;
         }
-        slot->onTake(player, item);
+        else
+        {
+            slot->onTake(player, item);
+        }
     }
     return itemstack;
 }

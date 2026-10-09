@@ -19,45 +19,31 @@ UIScene_ReinstallMenu::UIScene_ReinstallMenu(int type, void*, UILayer* layer)
 unsigned int UIScene_ReinstallMenu::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
-    fuiRenderNode* root = m_movie->getRootNode();
-
+    fuiRenderNode* currentNode = m_movie->getRootNode();
     {
-        std::string name("Button1");
-        m_buttons[0].setupControl(this, root, name);
+        m_buttons[0].setupControl(this, currentNode, std::string("Button1"));
+        m_controls.push_back(&m_buttons[0]);
     }
-    UIControl* control1 = &m_buttons[0];
-    m_controls.push_back(control1);
     {
-        std::string name("Button2");
-        m_buttons[1].setupControl(this, root, name);
+        m_buttons[1].setupControl(this, currentNode, std::string("Button2"));
+        m_controls.push_back(&m_buttons[1]);
     }
-    UIControl* control2 = &m_buttons[1];
-    m_controls.push_back(control2);
     {
-        std::string name("Button3");
-        m_buttons[2].setupControl(this, root, name);
+        m_buttons[2].setupControl(this, currentNode, std::string("Button3"));
+        m_controls.push_back(&m_buttons[2]);
     }
-    UIControl* control3 = &m_buttons[2];
-    m_controls.push_back(control3);
     {
-        std::string name("Button4");
-        m_buttons[3].setupControl(this, root, name);
+        m_buttons[3].setupControl(this, currentNode, std::string("Button4"));
+        m_controls.push_back(&m_buttons[3]);
     }
-    UIControl* control4 = &m_buttons[3];
-    m_controls.push_back(control4);
     {
-        std::string name("Button5");
-        m_buttons[4].setupControl(this, root, name);
+        m_buttons[4].setupControl(this, currentNode, std::string("Button5"));
+        m_controls.push_back(&m_buttons[4]);
     }
-    UIControl* control5 = &m_buttons[4];
-    m_controls.push_back(control5);
     {
-        std::string name("Button6");
-        m_buttons[5].setupControl(this, root, name);
+        m_buttons[5].setupControl(this, currentNode, std::string("Button6"));
+        m_controls.push_back(&m_buttons[5]);
     }
-    UIControl* control6 = &m_buttons[5];
-    m_controls.push_back(control6);
-
     return 1;
 }
 

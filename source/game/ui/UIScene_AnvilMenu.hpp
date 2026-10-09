@@ -35,8 +35,8 @@ public:
     UIScene_AnvilMenu(int type, void* data, UILayer* layer);
     virtual ~UIScene_AnvilMenu();
 
-    virtual unsigned int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual unsigned int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual void GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
                                       _UIVec2D* position);
     virtual void GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,

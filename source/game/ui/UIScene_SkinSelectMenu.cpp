@@ -30,9 +30,9 @@ extern ConsoleUIController gConsoleUIController;
 
 static const int s_defaultSkinNameIds[19] = {
     -1,
-    0x4d50fa0f, 0x274e7fa6, 0x014c053d, (int)0xdb498ad4, (int)0xb547106b, (int)0x8f449602,
-    0x69421b99, 0x433fa130, 0x7d64cd57, 0x576252ee, (int)0xcb2bd086, (int)0xf12e4aef,
-    IDS_DEFAULT_SKIN12, (int)0xa529561d, 0x3321e6e2, 0x5924614b, 0x0d1f6c79, (int)0xe71cf210
+    IDS_DEFAULT_SKIN0, IDS_DEFAULT_SKIN1, IDS_DEFAULT_SKIN2, IDS_DEFAULT_SKIN3, IDS_DEFAULT_SKIN4, IDS_DEFAULT_SKIN5,
+    IDS_DEFAULT_SKIN6, IDS_DEFAULT_SKIN7, IDS_DEFAULT_SKIN8, IDS_DEFAULT_SKIN9, IDS_DEFAULT_SKIN10, IDS_DEFAULT_SKIN11,
+    IDS_DEFAULT_SKIN12, IDS_DEFAULT_SKIN13, IDS_DEFAULT_SKIN14, IDS_DEFAULT_SKIN15, IDS_DEFAULT_SKIN17, IDS_DEFAULT_SKIN16
 };
 
 static int s_newestSkinPackIds[12] = {
@@ -102,57 +102,76 @@ UIScene_SkinSelectMenu::~UIScene_SkinSelectMenu()
 unsigned int UIScene_SkinSelectMenu::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
-    fuiRenderNode* root = m_movie->getRootNode();
-
-    m_touchCharacters.setupControl(this, root, std::string("TouchIggyCharacters"));
-    m_controls.push_back(&m_touchCharacters);
-
-    m_labelPackName.setupControl(this, root, std::string("Pack_Name"));
-    m_controls.push_back(&m_labelPackName);
-
-    m_labelPackType.setupControl(this, root, std::string("Pack_Type"));
-    m_controls.push_back(&m_labelPackType);
-
-    m_labelSkinName.setupControl(this, root, std::string("SkinTitle1"));
-    m_controls.push_back(&m_labelSkinName);
-
-    m_labelSkinOrigin.setupControl(this, root, std::string("SkinTitle2"));
-    m_controls.push_back(&m_labelSkinOrigin);
-
-    m_controlTimer.setupControl(this, root, std::string("Timer"));
-    m_controls.push_back(&m_controlTimer);
-
-    m_controlCharacters.setupControl(this, root, std::string("IggyCharacters"));
-    m_controls.push_back(&m_controlCharacters);
-
-    fuiRenderNode* charactersNode = m_controlCharacters.getFuiRenderNode();
-    m_characters[0].setupControl(this, charactersNode, std::string("iggy_Character0"));
-    m_controls.push_back(&m_characters[0]);
-
-    m_characters[1].setupControl(this, charactersNode, std::string("iggy_Character1"));
-    m_controls.push_back(&m_characters[1]);
-
-    m_characters[2].setupControl(this, charactersNode, std::string("iggy_Character2"));
-    m_controls.push_back(&m_characters[2]);
-
-    m_characters[3].setupControl(this, charactersNode, std::string("iggy_Character3"));
-    m_controls.push_back(&m_characters[3]);
-
-    m_characters[4].setupControl(this, charactersNode, std::string("iggy_Character4"));
-    m_controls.push_back(&m_characters[4]);
-
-    m_characters[5].setupControl(this, charactersNode, std::string("iggy_Character5"));
-    m_controls.push_back(&m_characters[5]);
-
-    m_characters[6].setupControl(this, charactersNode, std::string("iggy_Character6"));
-    m_controls.push_back(&m_characters[6]);
-
-    m_packIcon.setupControl(this, root, std::string("TexturePackIcon"));
-    m_controls.push_back(&m_packIcon);
-
-    m_packList.setupControl(this, root, std::string("SkinButtonList"));
-    m_controls.push_back(&m_packList);
-
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_touchCharacters.setupControl(this, currentNode, std::string("TouchIggyCharacters"));
+        m_controls.push_back(&m_touchCharacters);
+    }
+    {
+        m_labelPackName.setupControl(this, currentNode, std::string("Pack_Name"));
+        m_controls.push_back(&m_labelPackName);
+    }
+    {
+        m_labelPackType.setupControl(this, currentNode, std::string("Pack_Type"));
+        m_controls.push_back(&m_labelPackType);
+    }
+    {
+        m_labelSkinName.setupControl(this, currentNode, std::string("SkinTitle1"));
+        m_controls.push_back(&m_labelSkinName);
+    }
+    {
+        m_labelSkinOrigin.setupControl(this, currentNode, std::string("SkinTitle2"));
+        m_controls.push_back(&m_labelSkinOrigin);
+    }
+    {
+        m_controlTimer.setupControl(this, currentNode, std::string("Timer"));
+        m_controls.push_back(&m_controlTimer);
+    }
+    {
+        m_controlCharacters.setupControl(this, currentNode, std::string("IggyCharacters"));
+        m_controls.push_back(&m_controlCharacters);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_controlCharacters.getFuiRenderNode();
+        {
+            m_characters[0].setupControl(this, currentNode, std::string("iggy_Character0"));
+            m_controls.push_back(&m_characters[0]);
+        }
+        {
+            m_characters[1].setupControl(this, currentNode, std::string("iggy_Character1"));
+            m_controls.push_back(&m_characters[1]);
+        }
+        {
+            m_characters[2].setupControl(this, currentNode, std::string("iggy_Character2"));
+            m_controls.push_back(&m_characters[2]);
+        }
+        {
+            m_characters[3].setupControl(this, currentNode, std::string("iggy_Character3"));
+            m_controls.push_back(&m_characters[3]);
+        }
+        {
+            m_characters[4].setupControl(this, currentNode, std::string("iggy_Character4"));
+            m_controls.push_back(&m_characters[4]);
+        }
+        {
+            m_characters[5].setupControl(this, currentNode, std::string("iggy_Character5"));
+            m_controls.push_back(&m_characters[5]);
+        }
+        {
+            m_characters[6].setupControl(this, currentNode, std::string("iggy_Character6"));
+            m_controls.push_back(&m_characters[6]);
+        }
+        currentNode = parentNode;
+    }
+    {
+        m_packIcon.setupControl(this, currentNode, std::string("TexturePackIcon"));
+        m_controls.push_back(&m_packIcon);
+    }
+    {
+        m_packList.setupControl(this, currentNode, std::string("SkinButtonList"));
+        m_controls.push_back(&m_packList);
+    }
     return 1;
 }
 
@@ -334,7 +353,7 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
         case 0:
             backupTexture = static_cast<_TEXTURE_NAME>(getTextureId(static_cast<int>(m_skinIndex)));
             if (m_skinIndex == 0)
-                skinName = L10N::GetString(0x9b98d7f4);
+                skinName = L10N::GetString(IDS_DEFAULT_SKINS);
             else
                 skinName = L10N::GetString(s_defaultSkinNameIds[m_skinIndex]);
             if (m_originalSkinId == static_cast<int>(m_skinIndex))
@@ -357,7 +376,7 @@ void UIScene_SkinSelectMenu::handleSkinIndexChanged()
                         GameSettings::GetPlayerFavoriteSkin(m_playerId, static_cast<int>(m_skinIndex)));
                     backupTexture = static_cast<_TEXTURE_NAME>(getTextureId(favouriteSkin));
                     if (favouriteSkin == 0)
-                        skinName = L10N::GetString(0x9b98d7f4);
+                        skinName = L10N::GetString(IDS_DEFAULT_SKINS);
                     else
                         skinName = L10N::GetString(s_defaultSkinNameIds[favouriteSkin]);
                     if (m_originalSkinId == static_cast<int>(GameSettings::GetPlayerFavoriteSkin(
@@ -680,7 +699,7 @@ void UIScene_SkinSelectMenu::SetSkinPackButtonList()
 
     m_packList.clearList();
     m_packList.AddNewButton(L10N::GetString(IDS_NO_SKIN_PACK), 0, true);
-    m_packList.AddNewButton(L10N::GetString(0x70a431bd), 1, true);
+    m_packList.AddNewButton(L10N::GetString(IDS_FAVORITES_SKIN_PACK), 1, true);
 
     if (texturePackSkinPack != NULL && texturePackSkinPack->GetPackId() >= 0x400)
     {
@@ -783,7 +802,7 @@ void UIScene_SkinSelectMenu::setPackLabel()
     if (m_packIndex < 2)
     {
         if (m_packIndex == 1)
-            packName = L10N::GetString(0x70a431bd);
+            packName = L10N::GetString(IDS_FAVORITES_SKIN_PACK);
         else
             packName = L10N::GetString(IDS_NO_SKIN_PACK);
     }
@@ -1132,7 +1151,7 @@ void UIScene_SkinSelectMenu::SetFavoriteSkin(int player, int skin)
     if (favouriteCount == 10)
     {
         int messageParameters[2] = { static_cast<int>(IDS_CONFIRM_OK), IDS_CONFIRM_CANCEL };
-        gConsoleUIController.RequestAlertMessage(0x397a0127, static_cast<int>(0x935a46d2), messageParameters, 2, player,
+        gConsoleUIController.RequestAlertMessage(IDS_MAX_FAVORITES_TITLE, static_cast<int>(IDS_MAX_FAVORITES_TEXT), messageParameters, 2, player,
                                                  ManageFavoritesReturned,
                                                  reinterpret_cast<void*>(GetCallbackUniqueId()), NULL, true);
         return;

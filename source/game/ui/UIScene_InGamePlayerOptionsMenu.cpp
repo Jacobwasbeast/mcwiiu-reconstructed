@@ -147,47 +147,59 @@ UIScene_InGamePlayerOptionsMenu::UIScene_InGamePlayerOptionsMenu(int sceneType, 
 void UIScene_InGamePlayerOptionsMenu::resetCheatCheckboxes()
 {
     bool cheatsEnabled = gApp.GetGameHostOption(eGameHostOption_CheatsEnabled) != 0;
-    if (!cheatsEnabled || m_isHost)
-        return;
-    bool cheats = m_playerOptions.IsCheckbox(ePlayerOption_Moderator) && m_playerOptions.GetCheckboxValue(ePlayerOption_Moderator) != 0;
-    if (m_playerOptions.IsCheckbox(ePlayerOption_Invisible))
+    if (cheatsEnabled && !m_isHost)
     {
-        m_playerOptions.EnableItem(ePlayerOption_Invisible, cheats, true);
-        m_playerOptions.SetCheckboxValue(ePlayerOption_Invisible, cheats && Player::getPlayerGamePrivilege(m_privileges,
-            Player::ePlayerGamePrivilege_CanToggleInvisible) != 0, true);
+        bool cheats = false;
+        if (m_playerOptions.IsCheckbox(ePlayerOption_Moderator))
+        {
+            cheats = m_playerOptions.GetCheckboxValue(ePlayerOption_Moderator);
+        }
+        if (m_playerOptions.IsCheckbox(ePlayerOption_Invisible))
+        {
+            m_playerOptions.EnableItem(ePlayerOption_Invisible, cheats, true);
+            m_playerOptions.SetCheckboxValue(ePlayerOption_Invisible, cheats && Player::getPlayerGamePrivilege(m_privileges,
+                Player::ePlayerGamePrivilege_CanToggleInvisible) != 0, true);
+        }
+        bool creativeMode = Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CreativeMode) != 0;
+        if (!creativeMode)
+        {
+            m_playerOptions.EnableItem(ePlayerOption_Fly, cheats, true);
+            m_playerOptions.SetCheckboxValue(ePlayerOption_Fly, cheats && Player::getPlayerGamePrivilege(m_privileges,
+                Player::ePlayerGamePrivilege_CanToggleFly) != 0, true);
+            m_playerOptions.EnableItem(ePlayerOption_DisableExhaustion, cheats, true);
+            m_playerOptions.SetCheckboxValue(ePlayerOption_DisableExhaustion, cheats && Player::getPlayerGamePrivilege(m_privileges,
+                Player::ePlayerGamePrivilege_CanToggleExhaustion) != 0, true);
+        }
+        if (m_playerOptions.IsCheckbox(ePlayerOption_Invisible))
+        {
+            m_playerOptions.EnableItem(ePlayerOption_Teleport, cheats, true);
+            m_playerOptions.SetCheckboxValue(ePlayerOption_Teleport, cheats && Player::getPlayerGamePrivilege(m_privileges,
+                Player::ePlayerGamePrivilege_CanTeleport) != 0, true);
+        }
     }
-    if (Player::getPlayerGamePrivilege(m_privileges, Player::ePlayerGamePrivilege_CreativeMode) == 0)
-    {
-        m_playerOptions.EnableItem(ePlayerOption_Fly, cheats, true);
-        m_playerOptions.SetCheckboxValue(ePlayerOption_Fly, cheats && Player::getPlayerGamePrivilege(m_privileges,
-            Player::ePlayerGamePrivilege_CanToggleFly) != 0, true);
-        m_playerOptions.EnableItem(ePlayerOption_DisableExhaustion, cheats, true);
-        m_playerOptions.SetCheckboxValue(ePlayerOption_DisableExhaustion, cheats && Player::getPlayerGamePrivilege(m_privileges,
-            Player::ePlayerGamePrivilege_CanToggleExhaustion) != 0, true);
-    }
-    m_playerOptions.EnableItem(ePlayerOption_Teleport, cheats, true);
-    m_playerOptions.SetCheckboxValue(ePlayerOption_Teleport, cheats && Player::getPlayerGamePrivilege(m_privileges,
-        Player::ePlayerGamePrivilege_CanTeleport) != 0, true);
 }
 
 void UIScene_InGamePlayerOptionsMenu::OnPlayerChanged(void* context, INetworkPlayer* player, bool added)
 {
     UIScene_InGamePlayerOptionsMenu* scene = static_cast<UIScene_InGamePlayerOptionsMenu*>(context);
-    UIScene* back = scene->getBackScene();
-    if (back != 0)
-        IUIScene_PlayerList::OnPlayerChanged(
-            static_cast<IUIScene_PlayerList*>(static_cast<UIScene_InGameInfoMenu*>(back)), player, added);
+    UIScene_InGameInfoMenu* infoMenu = static_cast<UIScene_InGameInfoMenu*>(scene->getBackScene());
+    if (infoMenu != 0)
+        IUIScene_PlayerList::OnPlayerChanged(static_cast<IUIScene_PlayerList*>(infoMenu), player, added);
     if (added && player != 0 && player->GetSmallId() == scene->m_smallId)
         scene->m_navigatingBack = true;
 }
 
 unsigned int UIScene_InGamePlayerOptionsMenu::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_playerOptions.setupControl(this, root, std::string("PlayerOptionsList"));
-    m_controls.push_back(&m_playerOptions);
-    m_gamertag.setupControl(this, root, std::string("Gamertag"));
-    m_controls.push_back(&m_gamertag);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_playerOptions.setupControl(this, currentNode, std::string("PlayerOptionsList"));
+        m_controls.push_back(&m_playerOptions);
+    }
+    {
+        m_gamertag.setupControl(this, currentNode, std::string("Gamertag"));
+        m_controls.push_back(&m_gamertag);
+    }
     return 1;
 }
 
@@ -446,7 +458,9 @@ void UIScene_InGamePlayerOptionsMenu::handleDestroy()
 void UIScene_InGamePlayerOptionsMenu::handlePress(int, int childId)
 {
     gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-    if (childId == ePlayerOption_Kick)
+    switch (childId)
+    {
+    case ePlayerOption_Kick:
     {
         unsigned char* data = new unsigned char();
         *data = m_smallId;
@@ -461,12 +475,15 @@ void UIScene_InGamePlayerOptionsMenu::handlePress(int, int childId)
             gConsoleUIController.RequestAlertMessage(IDS_UNLOCK_KICK_PLAYER_TITLE, IDS_UNLOCK_KICK_PLAYER,
                 parameters, 2, m_playerId, IUIScene_PlayerList::KickPlayerReturned, data, 0, true);
         }
+        break;
     }
-    else if (childId == ePlayerOption_SetSpawn)
+    case ePlayerOption_SetSpawn:
     {
         INetworkPlayer* player = CGameNetworkManager::sInstance.GetPlayerBySmallId(m_smallId);
         ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
         connection->send(SetSpawnpointCommand::preparePacket(player->GetUID()));
+        break;
+    }
     }
 }
 
@@ -511,8 +528,8 @@ void UIScene_InGamePlayerOptionsMenu::handleSliderElementMove(int, int element, 
     gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
     if (element == ePlayerOption_GameMode)
     {
-        const GameType* gameType = GameType::byId(value);
-        m_playerOptions.SetItemLabel(element, UIString(L10N::GetString(gameType->getSliderLabel())), false);
+        m_playerOptions.SetItemLabel(ePlayerOption_GameMode,
+                                     UIString(L10N::GetString(GameType::byId(value)->getSliderLabel())), false);
     }
 }
 

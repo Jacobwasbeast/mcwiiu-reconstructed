@@ -48,36 +48,47 @@ const unsigned int COPY_POLL_INTERVAL = 100;
 }
 
 UIScene_LoadCreateJoinMenu::UIScene_LoadCreateJoinMenu(int playerId, void* data, UILayer* layer)
-    : IUIScene_LoadCreateJoin(), UIScene(playerId, layer), m_saveDetailsCount(0), m_hideLoadTab(false),
-      m_miniGamesMenu(data != NULL), m_saveDeviceRemoved(false), m_thumbnailWindowStart(0),
-      m_thumbnailReturned(false), m_unusedCounter(0), m_copyInProgress(false), m_copyCancelled(false),
-      m_unusedFlagA(false), m_unusedFlagB(false), m_loadSelectionChanged(false), m_activeTab(0),
-      m_uploadState(eUploadState_Finished), m_uploadCancelled(false)
+    : IUIScene_LoadCreateJoin(), UIScene(playerId, layer)
 {
     initialiseMovie();
     gApp.SetLiveLinkRequired(true);
+    m_hideLoadTab = false;
     m_loadTimer.setVisible(true);
     m_createTimer.setVisible(false);
     m_joinTimer.setVisible(true);
+    m_thumbnailReturned = false;
+    m_thumbnailWindowStart = 0;
+    m_saveDetailsCount = 0;
+    m_unusedCounter = 0;
+    m_copyInProgress = false;
+    m_copyCancelled = false;
+    m_saveDeviceRemoved = false;
+    m_unusedFlagB = false;
+    m_unusedFlagA = false;
     gStorage->ClearSavesInfo();
+    m_miniGamesMenu = false;
+    if (data != NULL)
+        m_miniGamesMenu = true;
     static_cast<FJ_LoadCreateJoinMenu*>(m_movie->getRootNode()->getFuiNode())->ShowSaveSizeBar(!m_miniGamesMenu);
     m_loadList.init(0);
     m_createList.init(1);
     m_gamesList.init(2);
     _init(data != NULL);
     m_saveSizeBar.init(UIString(L""), 3, 0, SAVE_DATA_QUOTA);
-    if (!m_miniGames)
-    {
-        m_loadTitle.init(UIString(IDS_LOAD_TAB));
-        m_createTitle.init(UIString(IDS_CREATE_TAB));
-        m_joinTitle.init(UIString(IDS_JOIN_TAB));
-    }
-    else
+    m_loadSelectionChanged = false;
+    if (m_miniGames)
     {
         m_loadTitle.init(UIString(IDS_CREATE_TAB));
         m_createTitle.init(UIString(IDS_JOIN_TAB));
         m_joinTitle.init(UIString(IDS_FRIENDS_TAB));
     }
+    else
+    {
+        m_loadTitle.init(UIString(IDS_LOAD_TAB));
+        m_createTitle.init(UIString(IDS_CREATE_TAB));
+        m_joinTitle.init(UIString(IDS_JOIN_TAB));
+    }
+    m_activeTab = 0;
     m_loadTouch.init(4);
     m_createTouch.init(5);
     m_joinTouch.init(6);
@@ -103,46 +114,86 @@ std::wstring UIScene_LoadCreateJoinMenu::getMoviePath()
 
 unsigned int UIScene_LoadCreateJoinMenu::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
-
-    m_loadTab.setupControl(this, root, "LoadGame");
-    m_controls.push_back(&m_loadTab);
-    fuiRenderNode* loadRoot = m_loadTab.getFuiRenderNode();
-    m_loadList.setupControl(this, loadRoot, "LoadGameList");
-    m_controls.push_back(&m_loadList);
-    m_loadTimer.setupControl(this, loadRoot, "LoadGameTimer");
-    m_controls.push_back(&m_loadTimer);
-    m_saveSizeBar.setupControl(this, loadRoot, "SaveSizeBar");
-    m_controls.push_back(&m_saveSizeBar);
-    m_loadTouch.setupControl(this, loadRoot, "TouchTabLoad");
-    m_controls.push_back(&m_loadTouch);
-
-    m_createTab.setupControl(this, root, "NewGame");
-    m_controls.push_back(&m_createTab);
-    fuiRenderNode* createRoot = m_createTab.getFuiRenderNode();
-    m_createList.setupControl(this, createRoot, "NewGameList");
-    m_controls.push_back(&m_createList);
-    m_createTimer.setupControl(this, createRoot, "NewGameTimer");
-    m_controls.push_back(&m_createTimer);
-    m_createTouch.setupControl(this, createRoot, "TouchTabCreate");
-    m_controls.push_back(&m_createTouch);
-
-    m_joinTab.setupControl(this, root, "JoinGame");
-    m_controls.push_back(&m_joinTab);
-    fuiRenderNode* joinRoot = m_joinTab.getFuiRenderNode();
-    m_gamesList.setupControl(this, joinRoot, "JoinGameGamesList");
-    m_controls.push_back(&m_gamesList);
-    m_joinTimer.setupControl(this, joinRoot, "JoinGamesTimer");
-    m_controls.push_back(&m_joinTimer);
-    m_joinTouch.setupControl(this, joinRoot, "TouchTabJoin");
-    m_controls.push_back(&m_joinTouch);
-
-    m_loadTitle.setupControl(this, root, "LoadGameTabTitle");
-    m_controls.push_back(&m_loadTitle);
-    m_createTitle.setupControl(this, root, "NewGameTabTitle");
-    m_controls.push_back(&m_createTitle);
-    m_joinTitle.setupControl(this, root, "JoinGameTabTitle");
-    m_controls.push_back(&m_joinTitle);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_loadTab.setupControl(this, currentNode, std::string("LoadGame"));
+        m_controls.push_back(&m_loadTab);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_loadTab.getFuiRenderNode();
+        {
+            m_loadList.setupControl(this, currentNode, std::string("LoadGameList"));
+            m_controls.push_back(&m_loadList);
+        }
+        {
+            m_loadTimer.setupControl(this, currentNode, std::string("LoadGameTimer"));
+            m_controls.push_back(&m_loadTimer);
+        }
+        {
+            m_saveSizeBar.setupControl(this, currentNode, std::string("SaveSizeBar"));
+            m_controls.push_back(&m_saveSizeBar);
+        }
+        {
+            m_loadTouch.setupControl(this, currentNode, std::string("TouchTabLoad"));
+            m_controls.push_back(&m_loadTouch);
+        }
+        currentNode = parentNode;
+    }
+    {
+        m_createTab.setupControl(this, currentNode, std::string("NewGame"));
+        m_controls.push_back(&m_createTab);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_createTab.getFuiRenderNode();
+        {
+            m_createList.setupControl(this, currentNode, std::string("NewGameList"));
+            m_controls.push_back(&m_createList);
+        }
+        {
+            m_createTimer.setupControl(this, currentNode, std::string("NewGameTimer"));
+            m_controls.push_back(&m_createTimer);
+        }
+        {
+            m_createTouch.setupControl(this, currentNode, std::string("TouchTabCreate"));
+            m_controls.push_back(&m_createTouch);
+        }
+        currentNode = parentNode;
+    }
+    {
+        m_joinTab.setupControl(this, currentNode, std::string("JoinGame"));
+        m_controls.push_back(&m_joinTab);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_joinTab.getFuiRenderNode();
+        {
+            m_gamesList.setupControl(this, currentNode, std::string("JoinGameGamesList"));
+            m_controls.push_back(&m_gamesList);
+        }
+        {
+            m_joinTimer.setupControl(this, currentNode, std::string("JoinGamesTimer"));
+            m_controls.push_back(&m_joinTimer);
+        }
+        {
+            m_joinTouch.setupControl(this, currentNode, std::string("TouchTabJoin"));
+            m_controls.push_back(&m_joinTouch);
+        }
+        currentNode = parentNode;
+    }
+    {
+        m_loadTitle.setupControl(this, currentNode, std::string("LoadGameTabTitle"));
+        m_controls.push_back(&m_loadTitle);
+    }
+    {
+        m_createTitle.setupControl(this, currentNode, std::string("NewGameTabTitle"));
+        m_controls.push_back(&m_createTitle);
+    }
+    {
+        m_joinTitle.setupControl(this, currentNode, std::string("JoinGameTabTitle"));
+        m_controls.push_back(&m_joinTitle);
+    }
     return 1;
 }
 
@@ -156,32 +207,36 @@ wchar_t* UIScene_LoadCreateJoinMenu::getThumbnailName(int index)
 int UIScene_LoadCreateJoinMenu::LoadSaveDataThumbnailReturned(void* context, unsigned char* data, unsigned int size)
 {
     UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(context);
-    if (data == NULL || size == 0)
+    if (data != NULL && size != 0)
     {
-        menu->m_thumbnailReturned = true;
+        menu->m_saveListDetails[menu->m_nextThumbnail].m_thumbnail = new unsigned char[size];
+        std::memcpy(menu->m_saveListDetails[menu->m_nextThumbnail].m_thumbnail, data, size);
+        menu->m_saveListDetails[menu->m_nextThumbnail].m_thumbnailSize = size;
+    }
+    else
+    {
         menu->m_saveListDetails[menu->m_nextThumbnail].m_thumbnail = NULL;
         menu->m_saveListDetails[menu->m_nextThumbnail].m_thumbnailSize = 0;
-        return 0;
     }
-    unsigned char* thumbnail = new unsigned char[size];
-    menu->m_saveListDetails[menu->m_nextThumbnail].m_thumbnail = thumbnail;
-    std::memcpy(thumbnail, data, size);
     menu->m_thumbnailReturned = true;
-    menu->m_saveListDetails[menu->m_nextThumbnail].m_thumbnailSize = size;
     return 0;
 }
 
 void UIScene_LoadCreateJoinMenu::requestNextThumbnail()
 {
     int nextThumbnail = m_nextThumbnail;
-    if (nextThumbnail < static_cast<int>(m_loadList.getItemCount()) &&
+    if (nextThumbnail < m_loadList.getItemCount() &&
         nextThumbnail < m_thumbnailWindowStart + static_cast<int>(THUMBNAIL_WINDOW_SIZE))
     {
         SAVE_DETAILS* details = gStorage->ReturnSavesInfo();
-        if (m_nextThumbnail < details->count &&
-            gStorage->LoadSaveDataThumbnail(&details->saves[m_nextThumbnail], &LoadSaveDataThumbnailReturned,
-                                            this) == C4JStorage::ESaveGame_GetThumbnail)
-            return;
+        nextThumbnail = m_nextThumbnail;
+        if (nextThumbnail < details->count)
+        {
+            C4JStorage::ESaveGameState state = gStorage->LoadSaveDataThumbnail(
+                &details->saves[nextThumbnail], &LoadSaveDataThumbnailReturned, this);
+            if (state == C4JStorage::ESaveGame_GetThumbnail)
+                return;
+        }
     }
     m_thumbnailRequested = false;
     m_thumbnailsComplete = true;
@@ -231,7 +286,10 @@ void UIScene_LoadCreateJoinMenu::tick()
 
     if (m_loadSelectionChanged)
     {
-        m_saveSizeBar.selectSave(DoesLoadListHaveFocus() ? m_selectedSaveIndex : -1);
+        int selectedSave = -1;
+        if (DoesLoadListHaveFocus())
+            selectedSave = m_selectedSaveIndex;
+        m_saveSizeBar.selectSave(selectedSave);
         m_loadSelectionChanged = false;
     }
 
@@ -251,7 +309,12 @@ void UIScene_LoadCreateJoinMenu::tick()
             }
             m_saveInfoReady = true;
             UpdateGamesList();
-            if (!m_miniGames)
+            if (m_miniGames)
+            {
+                m_thumbnailRequested = false;
+                m_thumbnailsComplete = true;
+            }
+            else
             {
                 if (m_saveListDetails != NULL)
                 {
@@ -260,7 +323,8 @@ void UIScene_LoadCreateJoinMenu::tick()
                         const wchar_t* name = getThumbnailName(i);
                         if (hasRegisteredSubstitutionTexture(name))
                             unregisterSubstitutionTexture(name, false);
-                        delete m_saveListDetails[i].m_thumbnail;
+                        if (m_saveListDetails[i].m_thumbnail != NULL)
+                            delete m_saveListDetails[i].m_thumbnail;
                     }
                     delete[] m_saveListDetails;
                 }
@@ -269,12 +333,13 @@ void UIScene_LoadCreateJoinMenu::tick()
                 m_saveDetailsCount = m_saveDetails->count;
                 for (int i = 0; i < m_saveDetails->count; ++i)
                 {
-                    SAVE_INFO& save = m_saveDetails->saves[i];
-                    m_saveSizeBar.addSave(save.nandSize);
-                    m_loadList.addItem(std::wstring(save.title), L"");
+                    m_saveSizeBar.addSave(m_saveDetails->saves[i].nandSize);
+                    m_loadList.addItem(std::wstring(m_saveDetails->saves[i].title), L"");
                     m_saveListDetails[i].m_saveIndex = i;
-                    std::memcpy(m_saveListDetails[i].m_title, save.title, sizeof(save.title));
-                    std::memcpy(m_saveListDetails[i].m_filename, save.filename, sizeof(save.filename));
+                    std::memcpy(m_saveListDetails[i].m_title, m_saveDetails->saves[i].title,
+                                sizeof(m_saveDetails->saves[i].title));
+                    std::memcpy(m_saveListDetails[i].m_filename, m_saveDetails->saves[i].filename,
+                                sizeof(m_saveDetails->saves[i].filename));
                 }
                 m_selectedSaveIndex = loadSelection;
                 if (m_activeTab == 0)
@@ -284,11 +349,6 @@ void UIScene_LoadCreateJoinMenu::tick()
                 }
                 ShowSaveListTimer(false);
                 updateTooltips();
-            }
-            else
-            {
-                m_thumbnailRequested = false;
-                m_thumbnailsComplete = true;
             }
         }
     }
@@ -305,22 +365,23 @@ void UIScene_LoadCreateJoinMenu::tick()
         if (m_thumbnailReturned)
         {
             m_thumbnailReturned = false;
-            if (m_closing)
+            if (!m_closing)
+            {
+                const wchar_t* name = getThumbnailName(m_nextThumbnail);
+                if (m_saveListDetails[m_nextThumbnail].m_thumbnail != NULL)
+                {
+                    if (!hasRegisteredSubstitutionTexture(name))
+                        registerSubstitutionTexture(name, m_saveListDetails[m_nextThumbnail].m_thumbnail,
+                                                    m_saveListDetails[m_nextThumbnail].m_thumbnailSize, false);
+                }
+                m_loadList.setTextureName(m_nextThumbnail, name);
+                ++m_nextThumbnail;
+                requestNextThumbnail();
+            }
+            else
             {
                 m_thumbnailRequested = false;
-                _tick();
-                return;
             }
-            const wchar_t* name = getThumbnailName(m_nextThumbnail);
-            _SaveListDetails& details = m_saveListDetails[m_nextThumbnail];
-            if (details.m_thumbnail != NULL)
-            {
-                if (!hasRegisteredSubstitutionTexture(name))
-                    registerSubstitutionTexture(name, details.m_thumbnail, details.m_thumbnailSize, false);
-            }
-            m_loadList.setTextureName(m_nextThumbnail, name);
-            ++m_nextThumbnail;
-            requestNextThumbnail();
             _tick();
             return;
         }
@@ -329,13 +390,12 @@ void UIScene_LoadCreateJoinMenu::tick()
     if (static_cast<int>(m_loadList.getItemCount()) > static_cast<int>(THUMBNAIL_WINDOW_SIZE))
     {
         int windowStart = static_cast<int>(m_loadList.GetTopItem()) - THUMBNAIL_WINDOW_LEAD;
-        if (windowStart < 0)
-            windowStart = 0;
+        windowStart = windowStart < 0 ? 0 : windowStart;
         if (windowStart != m_thumbnailWindowStart)
         {
             m_nextThumbnail = windowStart;
-            m_thumbnailReturned = true;
             m_thumbnailWindowStart = windowStart;
+            m_thumbnailReturned = true;
             cleanUpThumbNails(false);
         }
     }
@@ -367,8 +427,8 @@ void UIScene_LoadCreateJoinMenu::handleGainFocus(bool navigatedBack)
         return;
 
     gApp.SetLiveLinkRequired(true);
-    m_ignoreInput = false;
     m_onlinePlayAllowed = gProfile->IsSignedInLive(m_playerId) && gProfile->AllowedToPlayMultiplayer(m_playerId);
+    m_ignoreInput = false;
     if (gApp.StartInstallDLCProcess(m_playerId) == 0 && gApp.DLCInstallPending() == 0)
     {
         m_ignoreInput = false;
@@ -399,11 +459,15 @@ void UIScene_LoadCreateJoinMenu::handleLoseFocus()
 
 UIControl* UIScene_LoadCreateJoinMenu::GetMainPanel()
 {
-    if (m_activeTab == 1)
+    switch (m_activeTab)
+    {
+    case 1:
         return &m_createTab;
-    if (m_activeTab == 2)
+    case 2:
         return &m_joinTab;
-    return &m_loadTab;
+    default:
+        return &m_loadTab;
+    }
 }
 
 void UIScene_LoadCreateJoinMenu::handleInput(int playerId, int action, bool repeat, bool pressed, bool released,
@@ -441,24 +505,26 @@ void UIScene_LoadCreateJoinMenu::handleDestroy()
 
 void UIScene_LoadCreateJoinMenu::handleReload()
 {
-    int createSelection = m_selectedCreateIndex;
     int loadSelection = m_selectedSaveIndex;
+    int createSelection = m_selectedCreateIndex;
     _init(m_miniGames);
-    static_cast<FJ_LoadCreateJoinMenu*>(m_movie->getRootNode()->getFuiNode())->ShowSaveSizeBar(!m_miniGamesMenu);
+    FJ_LoadCreateJoinMenu* menu = static_cast<FJ_LoadCreateJoinMenu*>(m_movie->getRootNode()->getFuiNode());
+    menu->ShowSaveSizeBar(!m_miniGamesMenu);
     SelectTab(m_activeTab);
     m_selectedSaveIndex = loadSelection;
     m_selectedCreateIndex = createSelection;
-    if (!m_miniGames)
-        return;
-    if (m_activeTab == 0)
+    if (m_miniGames)
     {
-        m_loadList.setCurrentSelection(loadSelection, false, true);
-        m_loadList.updateChildFocus(loadSelection);
-    }
-    else if (m_activeTab == 1)
-    {
-        m_createList.setCurrentSelection(createSelection, false, true);
-        m_createList.updateChildFocus(m_selectedCreateIndex);
+        if (m_activeTab == 0)
+        {
+            m_loadList.setCurrentSelection(loadSelection, false, true);
+            m_loadList.updateChildFocus(loadSelection);
+        }
+        else if (m_activeTab == 1)
+        {
+            m_createList.setCurrentSelection(createSelection, false, true);
+            m_createList.updateChildFocus(m_selectedCreateIndex);
+        }
     }
 }
 
@@ -473,7 +539,7 @@ void UIScene_LoadCreateJoinMenu::handlePress(int controlId, int childId)
     {
         int createIndex = childId;
         if (!m_miniGames)
-            createIndex = childId - 1;
+            --createIndex;
         HandleNewListPress(childId, createIndex);
         break;
     }
@@ -491,12 +557,12 @@ void UIScene_LoadCreateJoinMenu::handleFocusChange(int controlId, int childId)
         m_loadSelectionChanged = true;
         m_selectedSaveIndex = childId;
         break;
-    case 1:
-        m_selectedCreateIndex = childId;
-        break;
     case 2:
         m_selectedGameIndex = childId;
         m_gamesList.updateChildFocus(childId);
+        break;
+    case 1:
+        m_selectedCreateIndex = childId;
         break;
     }
     updateTooltips();
@@ -524,21 +590,26 @@ void UIScene_LoadCreateJoinMenu::HandleSaveDeviceRemoved(int)
 
 void UIScene_LoadCreateJoinMenu::handleTouchInput(unsigned int, int, int, int touchBox, bool pressed, bool, bool)
 {
-    unsigned int box = touchBox;
     if (!pressed)
         return;
-    if (box < 4)
-        return;
-    if (box > 6)
-        return;
-    int tab = box - 4;
-    if (GetHideLoadTab())
-        tab = box - 5;
-    if (m_activeTab == tab)
-        return;
-    m_activeTab = tab;
-    updateTooltips();
-    SelectTab(m_activeTab);
+    switch (touchBox)
+    {
+    case 4:
+    case 5:
+    case 6:
+    {
+        unsigned int tab = touchBox - 4;
+        if (GetHideLoadTab())
+            --tab;
+        if (m_activeTab != tab)
+        {
+            m_activeTab = tab;
+            updateTooltips();
+            SelectTab(m_activeTab);
+        }
+        break;
+    }
+    }
 }
 
 void UIScene_LoadCreateJoinMenu::SelectTab(int tab)
@@ -721,22 +792,31 @@ void UIScene_LoadCreateJoinMenu::DeleteSaveFile(int index)
 
 void UIScene_LoadCreateJoinMenu::Initialise()
 {
-    m_selectedGameIndex = 0;
-    m_texturePackWorldCount = 0;
-    m_selectedCreateIndex = 0;
     m_selectedSaveIndex = 0;
+    m_selectedGameIndex = 0;
+    m_selectedCreateIndex = 0;
     m_buttonCount = 0;
+    m_texturePackWorldCount = 0;
     if (!gProfile->IsFullVersion() || m_miniGames)
     {
         AddDefaultButtons();
         m_ignoreInput = false;
         gApp.mDLCManager.checkForCorruptDLCAndAlert(true);
-        return;
     }
-    if (!gStorage->GetSaveDisabled())
-        gStorage->EnoughSpaceForAMinSaveGame();
-    m_pendingAction = ePendingAction_GetSaveInfo;
-    gApp.mDLCManager.checkForCorruptDLCAndAlert(true);
+    else
+    {
+        if (gStorage->GetSaveDisabled())
+        {
+            m_pendingAction = ePendingAction_GetSaveInfo;
+            gApp.mDLCManager.checkForCorruptDLCAndAlert(true);
+        }
+        else
+        {
+            gStorage->EnoughSpaceForAMinSaveGame();
+            m_pendingAction = ePendingAction_GetSaveInfo;
+            gApp.mDLCManager.checkForCorruptDLCAndAlert(true);
+        }
+    }
 }
 
 bool UIScene_LoadCreateJoinMenu::DoesLoadListHaveFocus()
@@ -772,29 +852,30 @@ int UIScene_LoadCreateJoinMenu::KeyboardCompleteWorldNameCallback(void* context,
 {
     UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(
         gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context)));
-    if (menu == NULL)
-        return 0;
-    if (accepted)
+    if (menu != NULL)
     {
         menu->m_ignoreInput = false;
-        wchar_t worldName[128];
-        std::memset(worldName, 0, sizeof(worldName));
-        g_pInput->GetText(worldName, 127);
-        if (worldName[0] == L'\0')
+        if (accepted)
+        {
+            wchar_t worldName[128];
+            std::memset(worldName, 0, sizeof(worldName));
+            g_pInput->GetText(worldName, 127);
+            if (worldName[0] != L'\0')
+            {
+                menu->m_ignoreInput = true;
+                gStorage->RenameSaveData(menu->m_selectedSaveIndex, worldName, &RenameSaveDataReturned, context);
+            }
+            else
+            {
+                menu->m_ignoreInput = false;
+                menu->updateTooltips();
+            }
+        }
+        else
         {
             menu->m_ignoreInput = false;
             menu->updateTooltips();
         }
-        else
-        {
-            menu->m_ignoreInput = true;
-            gStorage->RenameSaveData(menu->m_selectedSaveIndex, worldName, &RenameSaveDataReturned, context);
-        }
-    }
-    else
-    {
-        menu->m_ignoreInput = false;
-        menu->updateTooltips();
     }
     return 0;
 }
@@ -815,29 +896,35 @@ int UIScene_LoadCreateJoinMenu::CopySaveDataReturned(void* context, bool success
     gConsoleUIController.EnterCallbackIdCriticalSection();
     UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(
         gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context)));
-    if (menu == NULL)
+    if (menu != NULL)
+    {
+        if (success)
+        {
+            menu->m_pendingAction = ePendingAction_ReloadSaveInfo;
+            menu->m_copyInProgress = false;
+            gConsoleUIController.LeaveCallbackIdCriticalSection();
+        }
+        else
+        {
+            int options[1] = { IDS_CONFIRM_OK };
+            if (state == C4JStorage::ESaveGame_CopyFailedNoSpace)
+            {
+                gConsoleUIController.LeaveCallbackIdCriticalSection();
+                gConsoleUIController.RequestErrorMessage(IDS_COPYSAVE_FAILED_TITLE, 0x5D2F512D, options, 1,
+                                                         gProfile->GetPrimaryPad(),
+                                                         &CopySaveErrorDialogFinishedCallback, context, NULL, true);
+            }
+            else
+            {
+                menu->m_copyInProgress = false;
+                gConsoleUIController.LeaveCallbackIdCriticalSection();
+            }
+        }
+    }
+    else
     {
         gConsoleUIController.LeaveCallbackIdCriticalSection();
-        return 0;
     }
-    if (success)
-    {
-        menu->m_pendingAction = ePendingAction_ReloadSaveInfo;
-        menu->m_copyInProgress = false;
-        gConsoleUIController.LeaveCallbackIdCriticalSection();
-        return 0;
-    }
-    if (state == C4JStorage::ESaveGame_CopyFailedNoSpace)
-    {
-        int options[1] = { IDS_CONFIRM_OK };
-        gConsoleUIController.LeaveCallbackIdCriticalSection();
-        gConsoleUIController.RequestErrorMessage(IDS_COPYSAVE_FAILED_TITLE, 0x5D2F512D, options, 1,
-                                                 gProfile->GetPrimaryPad(), &CopySaveErrorDialogFinishedCallback,
-                                                 context, NULL, true);
-        return 0;
-    }
-    menu->m_copyInProgress = false;
-    gConsoleUIController.LeaveCallbackIdCriticalSection();
     return 0;
 }
 
@@ -865,48 +952,55 @@ int UIScene_LoadCreateJoinMenu::CopySaveThreadProc(void* context)
         gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context)));
     if (menu != NULL)
     {
-        menu->m_copyCancelled = false;
         menu->m_copyInProgress = true;
+        menu->m_copyCancelled = false;
         gConsoleUIController.LeaveCallbackIdCriticalSection();
         gStorage->CopySaveData(&menu->m_saveDetails->saves[menu->m_selectedSaveIndex], &CopySaveDataReturned,
                                &CopySaveDataProgress, context);
 
-        while (true)
+        bool copying = true;
+        do
         {
             Sleep(COPY_POLL_INTERVAL);
             gConsoleUIController.EnterCallbackIdCriticalSection();
             menu = static_cast<UIScene_LoadCreateJoinMenu*>(
                 gConsoleUIController.GetSceneFromCallbackId(reinterpret_cast<unsigned int>(context)));
-            if (menu == NULL)
-                break;
-            bool copying = menu->m_copyInProgress;
+            if (menu != NULL)
+                copying = menu->m_copyInProgress;
+            else
+                copying = false;
             gConsoleUIController.LeaveCallbackIdCriticalSection();
-            if (!copying)
-                return 0;
-        }
+        } while (copying);
     }
-    gConsoleUIController.LeaveCallbackIdCriticalSection();
+    else
+    {
+        gConsoleUIController.LeaveCallbackIdCriticalSection();
+    }
     return 0;
 }
 
 int UIScene_LoadCreateJoinMenu::CopySaveDialogReturned(void* context, int pad, C4JStorage::EMessageResult result)
 {
     UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(context);
-    if (result != C4JStorage::EMessageResult_Accept)
+    if (result == C4JStorage::EMessageResult_Accept)
+    {
+        _LoadingInputParams* params = new _LoadingInputParams();
+        params->m_threadParam = reinterpret_cast<void*>(menu->GetCallbackUniqueId());
+        params->m_threadProc = &CopySaveThreadProc;
+        params->m_waitForThreadToDelete = true;
+        FullscreenProgressState* progressState = new FullscreenProgressState();
+        progressState->reservedFlag1 = true;
+        progressState->reservedFlag2 = true;
+        progressState->closeMode = 6;
+        progressState->playerId = 0;
+        params->m_completionData = progressState;
+        gConsoleUIController.NavigateToScene(pad, EUIScene_FullscreenProgress, params, EUILayer_Scene,
+                                             EUIGroup_PlayerDefault);
+    }
+    else
     {
         menu->m_ignoreInput = false;
-        return 0;
     }
-    _LoadingInputParams* params = new _LoadingInputParams();
-    params->m_threadParam = reinterpret_cast<void*>(menu->GetCallbackUniqueId());
-    params->m_waitForThreadToDelete = true;
-    params->m_threadProc = &CopySaveThreadProc;
-    FullscreenProgressState* progressState = new FullscreenProgressState;
-    params->m_completionData = progressState;
-    progressState->closeMode = 6;
-    progressState->playerId = 0;
-    gConsoleUIController.NavigateToScene(pad, EUIScene_FullscreenProgress, params, EUILayer_Scene,
-                                         EUIGroup_PlayerDefault);
     return 0;
 }
 
@@ -928,18 +1022,17 @@ int UIScene_LoadCreateJoinMenu::UploadNintendoLanSaveThreadProc(void* context)
     UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(context);
     menu->m_uploadCancelled = false;
     Minecraft* minecraft = Minecraft::GetInstance();
-    ProgressRenderer* progress = minecraft->mProgressRenderer;
-    progress->progressStagePercentage(0);
-    progress->progressStart(IDS_TITLE_SAVETRANSFER);
-    progress->progressStage(IDS_SAVETRANSFER_INITIALISING_NETWORK);
+    minecraft->mProgressRenderer->progressStagePercentage(0);
+    minecraft->mProgressRenderer->progressStart(IDS_TITLE_SAVETRANSFER);
+    minecraft->mProgressRenderer->progressStage(IDS_SAVETRANSFER_INITIALISING_NETWORK);
 
     SAVE_DETAILS* details = gStorage->ReturnSavesInfo();
-    SAVE_INFO& save = details->saves[menu->m_selectedSaveIndex];
+    int saveIndex = menu->m_selectedSaveIndex;
     menu->m_uploadState = eUploadState_LoadingSave;
-    if (gStorage->LoadSaveData(&save, &LoadSaveDataForUploadReturned, menu) == C4JStorage::ESaveGame_Load)
+    if (gStorage->LoadSaveData(&details->saves[saveIndex], &LoadSaveDataForUploadReturned, menu) == C4JStorage::ESaveGame_Load)
     {
         menu->m_uploadState = eUploadState_LoadingSave;
-        progress->progressStagePercentage(0);
+        minecraft->mProgressRenderer->progressStagePercentage(0);
     }
     else
     {
@@ -949,7 +1042,6 @@ int UIScene_LoadCreateJoinMenu::UploadNintendoLanSaveThreadProc(void* context)
     NQRNetworkManager_Lan_WiiU* lan = gLanNetworkManager;
     arrayWithLength<unsigned char> saveData;
     EUploadState startState = menu->m_uploadState;
-    int okOption[1] = { IDS_CONFIRM_OK };
     while (menu->m_uploadState != eUploadState_Finished)
     {
         switch (menu->m_uploadState)
@@ -960,42 +1052,46 @@ int UIScene_LoadCreateJoinMenu::UploadNintendoLanSaveThreadProc(void* context)
             break;
         case eUploadState_StartingLanSession:
             if (menu->m_uploadState != startState)
-                progress->progressStage(IDS_SAVETRANSFER_INITIALISING_NETWORK);
-            if (CGameNetworkManager::sInstance.isLanModeChangeInProgress())
+                minecraft->mProgressRenderer->progressStage(IDS_SAVETRANSFER_INITIALISING_NETWORK);
+            if (!CGameNetworkManager::sInstance.isLanModeChangeInProgress())
             {
-                if (menu->m_uploadCancelled)
-                    menu->m_uploadState = eUploadState_Finished;
-                break;
-            }
-            switch (lan->m_saveTransferState)
-            {
-            case NQRNetworkManager_Lan_WiiU::eSaveTransfer_CreatingSession:
-                break;
-            case NQRNetworkManager_Lan_WiiU::eSaveTransfer_CreateSessionFailed:
-                menu->m_uploadState = eUploadState_Failed;
-                break;
-            case NQRNetworkManager_Lan_WiiU::eSaveTransfer_WaitingForReceiver:
-                menu->m_uploadState = eUploadState_WaitingForReceiver;
-                break;
-            default:
-            {
-                if (!CGameNetworkManager::sInstance.isLanConnected())
+                const int transferState = lan->m_saveTransferState;
+                if (transferState == NQRNetworkManager_Lan_WiiU::eSaveTransfer_CreatingSession)
+                {
+                }
+                else if (transferState == NQRNetworkManager_Lan_WiiU::eSaveTransfer_CreateSessionFailed)
                 {
                     menu->m_uploadState = eUploadState_Failed;
-                    break;
                 }
-                unsigned int saveSize = gStorage->GetSaveSize();
-                saveData.resize(saveSize);
-                gStorage->GetSaveData(saveData.data, &saveSize);
-                if (save.thumbnail == NULL)
-                    break;
-                CMinecraftApp::PngTagData tagData;
-                gApp.GetImageTextData(save.thumbnail, save.thumbnailSize, &tagData);
-                lan->CreateSessionForSaveTransfer(saveData.length, saveData.data, save.thumbnailSize,
-                                                  save.thumbnail, tagData.seed, tagData.hostOptions,
-                                                  tagData.texturePack, save.title);
-                break;
+                else if (transferState == NQRNetworkManager_Lan_WiiU::eSaveTransfer_WaitingForReceiver)
+                {
+                    menu->m_uploadState = eUploadState_WaitingForReceiver;
+                }
+                else if (CGameNetworkManager::sInstance.isLanConnected())
+                {
+                    unsigned int saveSize = gStorage->GetSaveSize();
+                    saveData.resize(saveSize);
+                    gStorage->GetSaveData(saveData.data, &saveSize);
+                    SAVE_INFO& save = details->saves[saveIndex];
+                    unsigned char* thumbnail = save.thumbnail;
+                    if (thumbnail != NULL)
+                    {
+                        unsigned int thumbnailSize = save.thumbnailSize;
+                        CMinecraftApp::PngTagData tagData;
+                        gApp.GetImageTextData(thumbnail, thumbnailSize, &tagData);
+                        lan->CreateSessionForSaveTransfer(saveData.length, saveData.data, thumbnailSize, thumbnail,
+                                                          tagData.seed, tagData.hostOptions, tagData.texturePack,
+                                                          save.title);
+                    }
+                }
+                else
+                {
+                    menu->m_uploadState = eUploadState_Failed;
+                }
             }
+            else if (menu->m_uploadCancelled)
+            {
+                menu->m_uploadState = eUploadState_Finished;
             }
             break;
         case eUploadState_Cancelled:
@@ -1007,7 +1103,7 @@ int UIScene_LoadCreateJoinMenu::UploadNintendoLanSaveThreadProc(void* context)
                 menu->m_uploadState = eUploadState_Finished;
                 break;
             }
-            progress->progressStage(0xB9F3A58A);
+            minecraft->mProgressRenderer->progressStage(0xB9F3A58A);
             if (lan->m_saveTransferState == NQRNetworkManager_Lan_WiiU::eSaveTransfer_Transferring)
                 menu->m_uploadState = eUploadState_Transferring;
             break;
@@ -1030,14 +1126,14 @@ int UIScene_LoadCreateJoinMenu::UploadNintendoLanSaveThreadProc(void* context)
                 int percent = static_cast<int>(lan->m_saveTransferOffset * 100) /
                               static_cast<int>(lan->m_saveTransferSize);
                 std::swprintf(text, 256, L10N::GetString(0x0CE6C914), percent);
-                progress->progressStage(std::wstring(text));
-                progress->progressStagePercentage(percent);
+                minecraft->mProgressRenderer->progressStage(std::wstring(text));
+                minecraft->mProgressRenderer->progressStagePercentage(percent);
                 break;
             }
             case NQRNetworkManager_Lan_WiiU::eSaveTransfer_SendComplete:
                 std::swprintf(text, 256, L10N::GetString(0xB7147763), 100);
-                progress->progressStage(std::wstring(text));
-                progress->progressStagePercentage(100);
+                minecraft->mProgressRenderer->progressStage(std::wstring(text));
+                minecraft->mProgressRenderer->progressStagePercentage(100);
                 menu->m_uploadState = eUploadState_Complete;
                 break;
             default:
@@ -1046,22 +1142,28 @@ int UIScene_LoadCreateJoinMenu::UploadNintendoLanSaveThreadProc(void* context)
             break;
         }
         case eUploadState_Complete:
+        {
+            int okOption[1] = { IDS_CONFIRM_OK };
             gConsoleUIController.RequestErrorMessage(IDS_TITLE_SAVETRANSFER, 0x4925B633, okOption, 1,
                                                      gProfile->GetPrimaryPad(), &CrossSaveUploadFinishedCallback,
                                                      menu, NULL, true);
             menu->m_uploadState = eUploadState_CompleteShown;
             break;
+        }
         case eUploadState_Failed:
+        {
             if (menu->m_uploadCancelled)
             {
                 menu->m_uploadState = eUploadState_Finished;
                 break;
             }
+            int okOption[1] = { IDS_CONFIRM_OK };
             gConsoleUIController.RequestErrorMessage(IDS_TITLE_SAVETRANSFER, IDS_SAVE_TRANSFER_FAILED, okOption, 1,
                                                      gProfile->GetPrimaryPad(), &CrossSaveUploadFinishedCallback,
                                                      menu, NULL, true);
             menu->m_uploadState = eUploadState_FailedShown;
             break;
+        }
         default:
             break;
         }
@@ -1075,13 +1177,12 @@ int UIScene_LoadCreateJoinMenu::UploadNintendoLanSaveThreadProc(void* context)
     return 0;
 }
 
-int UIScene_LoadCreateJoinMenu::CancelSaveUploadCallback(void* context)
+void UIScene_LoadCreateJoinMenu::CancelSaveUploadCallback(void* context)
 {
     UIScene_LoadCreateJoinMenu* menu = static_cast<UIScene_LoadCreateJoinMenu*>(context);
     menu->m_uploadCancelled = true;
     gConsoleUIController.SetTooltips(0, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
     menu->m_ignoreInput = true;
-    return 0;
 }
 
 void UIScene_LoadCreateJoinMenu::LaunchSaveUpload()
@@ -1089,13 +1190,15 @@ void UIScene_LoadCreateJoinMenu::LaunchSaveUpload()
     _LoadingInputParams* params = new _LoadingInputParams();
     params->m_threadProc = &UploadNintendoLanSaveThreadProc;
     params->m_threadParam = this;
-    FullscreenProgressState* progressState = new FullscreenProgressState;
+    FullscreenProgressState* progressState = new FullscreenProgressState();
+    progressState->reservedFlag1 = true;
+    progressState->reservedFlag2 = true;
+    progressState->closeMode = 6;
+    progressState->playerId = 0;
+    params->m_completionData = progressState;
     params->m_cancelText = IDS_TOOLTIPS_CANCEL;
     params->m_cancelFunc = &CancelSaveUploadCallback;
     params->m_cancelFuncParam = this;
-    params->m_completionData = progressState;
-    progressState->closeMode = 6;
-    progressState->playerId = 0;
     gConsoleUIController.NavigateToScene(m_playerId, EUIScene_FullscreenProgress, params, EUILayer_Scene,
                                          EUIGroup_PlayerDefault);
 }
@@ -1143,8 +1246,8 @@ int UIScene_LoadCreateJoinMenu::handleSaveOptionsDialogReturned(int pad, C4JStor
             break;
         int options[2] = { IDS_CONFIRM_OK, IDS_CONFIRM_CANCEL };
         SAVE_INFO& save = gStorage->ReturnSavesInfo()->saves[m_selectedSaveIndex];
-        unsigned char* thumbnail = NULL;
         unsigned int thumbnailSize = 0;
+        unsigned char* thumbnail = NULL;
         if (save.thumbnail != NULL)
         {
             thumbnailSize = save.thumbnailSize;
@@ -1153,12 +1256,12 @@ int UIScene_LoadCreateJoinMenu::handleSaveOptionsDialogReturned(int pad, C4JStor
         CMinecraftApp::PngTagData tagData;
         if (thumbnail != NULL)
             gApp.GetImageTextData(thumbnail, thumbnailSize, &tagData);
-        if ((tagData.flags & CMinecraftApp::PngTagData::eFlag_ExtraData) == 0 ||
-            gApp.GetExtraGameData(tagData.extraData, eGameExtraData_SaveVersion) < EXTRA_DATA_SAVE_VERSION)
-            gConsoleUIController.RequestAlertMessage(IDS_TITLE_SAVETRANSFER, 0x129BC197, options, 2, pad,
+        if ((tagData.flags & CMinecraftApp::PngTagData::eFlag_ExtraData) != 0 &&
+            gApp.GetExtraGameData(tagData.extraData, eGameExtraData_SaveVersion) >= EXTRA_DATA_SAVE_VERSION)
+            gConsoleUIController.RequestAlertMessage(IDS_TITLE_SAVETRANSFER, 0x1E0353F0, options, 2, pad,
                                                      &SaveTransferDialogReturned, this, NULL, true);
         else
-            gConsoleUIController.RequestAlertMessage(IDS_TITLE_SAVETRANSFER, 0x1E0353F0, options, 2, pad,
+            gConsoleUIController.RequestAlertMessage(IDS_TITLE_SAVETRANSFER, 0x129BC197, options, 2, pad,
                                                      &SaveTransferDialogReturned, this, NULL, true);
         break;
     }
@@ -1177,15 +1280,23 @@ int UIScene_LoadCreateJoinMenu::handleTexturePackDialogReturned(int pad, C4JStor
         XBackgroundDownloadSetMode(XBACKGROUND_DOWNLOAD_MODE_ALWAYS_ALLOW);
         if (gProfile->IsSignedIn(pad))
         {
-            int options[1] = { IDS_CONFIRM_OK };
-            if (!gProfile->IsSignedInLive(pad))
-                gConsoleUIController.RequestErrorMessage(0x8A21894B, 0xC34C0B77, options, 1, pad, NULL, NULL, NULL,
+            if (gProfile->IsSignedInLive(pad))
+            {
+                if (!gApp.GetCommerceInstance()->PurchaseDLCByPackID(
+                        m_joinSceneData->session->m_gameSessionData.m_texturePackParentId))
+                {
+                    int options[1] = { IDS_CONFIRM_OK };
+                    gConsoleUIController.RequestErrorMessage(IDS_DLC_ALREADY_INSTALLED_TITLE,
+                                                             IDS_DLC_ALREADY_INSTALLED_TEXT, options, 1, pad, NULL,
+                                                             NULL, NULL, true);
+                }
+            }
+            else
+            {
+                int options[1] = { IDS_CONFIRM_OK };
+                gConsoleUIController.RequestErrorMessage(IDS_PRO_NOTONLINE_TITLE, 0xC34C0B77, options, 1, pad, NULL, NULL, NULL,
                                                          true);
-            else if (!gApp.GetCommerceInstance()->PurchaseDLCByPackID(
-                         m_joinSceneData->session->m_gameSessionData.m_texturePackParentId))
-                gConsoleUIController.RequestErrorMessage(IDS_DLC_ALREADY_INSTALLED_TITLE,
-                                                         IDS_DLC_ALREADY_INSTALLED_TEXT, options, 1, pad, NULL, NULL,
-                                                         NULL, true);
+            }
         }
     }
     m_ignoreInput = false;

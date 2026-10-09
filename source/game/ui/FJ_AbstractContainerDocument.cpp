@@ -17,9 +17,9 @@ FJ_AbstractContainerDocument::FJ_AbstractContainerDocument(fuiRenderNode* render
 
 void FJ_AbstractContainerDocument::handleMouseMove(FJ_Event* event)
 {
+    FJ_MouseMoveEvent* mouseEvent = static_cast<FJ_MouseMoveEvent*>(event);
     FJ_FuiNode* mainPanel = getChildByName(std::string("MainPanel"))->asMovieClip();
     FJ_Cursor* cursor = mainPanel->getChildByName(std::string("cursor"))->asFJ_Cursor();
-    FJ_MouseMoveEvent* mouseEvent = static_cast<FJ_MouseMoveEvent*>(event);
     cursor->setX(mouseEvent->m_fX);
     cursor->setY(mouseEvent->m_fY);
     cursor->UpdatePanelAlignment();
@@ -48,23 +48,19 @@ void FJ_AbstractContainerDocument::HideInventory()
     {
         int oldHeight = mainPanel->getRenderNodeChildAt(0)->getHeight();
 
-        if (FJ_FuiNode::asMovieClip(mainPanel->getChildByName(std::string("BackgroundPanel")))->getChildAt(0) == 0)
-        {
-            mainPanel->getChildAt(0)->decHeight(inventory->FJ_SlotList::getHeight() + (hotbar->getY() - (inventory->getY() + inventory->FJ_SlotList::getHeight())));
-            hotbar->setY(inventory->getY());
-            mainPanel->removeChild(inventory, true);
-
-            float newHeight = mainPanel->getRenderNodeChildAt(0)->getHeight();
-            incY(Math::round((oldHeight - newHeight) * 0.5f));
-        }
-        else
+        if (FJ_FuiNode::asMovieClip(mainPanel->getChildByName(std::string("BackgroundPanel")))->getChildAt(0) != 0)
         {
             FJ_FuiNode::asMovieClip(mainPanel->getChildByName(std::string("BackgroundPanel")))->getChildAt(0)->decHeight(inventory->FJ_SlotList::getHeight() + (hotbar->getY() - (inventory->getY() + inventory->FJ_SlotList::getHeight())));
             hotbar->setY(inventory->getY());
             mainPanel->removeChild(inventory, true);
-
-            float newHeight = mainPanel->getRenderNodeChildAt(0)->getHeight();
-            incY(Math::round((oldHeight - newHeight) * 0.5f));
+            incY(Math::round((oldHeight - mainPanel->getRenderNodeChildAt(0)->getHeight()) * 0.5f));
+        }
+        else
+        {
+            mainPanel->getChildAt(0)->decHeight(inventory->FJ_SlotList::getHeight() + (hotbar->getY() - (inventory->getY() + inventory->FJ_SlotList::getHeight())));
+            hotbar->setY(inventory->getY());
+            mainPanel->removeChild(inventory, true);
+            incY(Math::round((oldHeight - mainPanel->getRenderNodeChildAt(0)->getHeight()) * 0.5f));
         }
     }
 }

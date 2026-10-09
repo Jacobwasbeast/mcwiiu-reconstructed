@@ -102,17 +102,15 @@ BrewingStandMenu::BrewingStandMenu(boost::shared_ptr<Inventory> inventory,
     mIngredientSlot = addSlot(new IngredientsSlot(container, 3, 79, 17));
     addSlot(new FuelSlot(container, 4, 17, 17));
 
-    int row;
-    int column;
-    for (row = 0; row < 3; ++row)
+    for (int row = 0; row < 3; ++row)
     {
-        for (column = 0; column < 9; ++column)
+        for (int column = 0; column < 9; ++column)
         {
             addSlot(new Slot(inventory, column + row * 9 + 9,
                              8 + column * 18, 84 + row * 18));
         }
     }
-    for (column = 0; column < 9; ++column)
+    for (int column = 0; column < 9; ++column)
     {
         addSlot(new Slot(inventory, column, 8 + column * 18, 142));
     }
@@ -165,7 +163,7 @@ not_null_ptr<ItemInstance> BrewingStandMenu::quickMoveStack(boost::shared_ptr<Pl
 
         if ((index >= 0 && index <= 2) || index == 3 || index == 4)
         {
-            if (moveItemStackTo(item, 5, 41, true, true, true) != 1)
+            if (!moveItemStackTo(item, 5, 41, true, true, true))
                 return ItemInstance::EMPTY;
             slot->onQuickCraft(item, clicked);
         }
@@ -173,32 +171,32 @@ not_null_ptr<ItemInstance> BrewingStandMenu::quickMoveStack(boost::shared_ptr<Pl
         {
             if (!mIngredientSlot->hasItem() && mIngredientSlot->mayPlace(item))
             {
-                if (moveItemStackTo(item, 3, 4, false, true, true) != 1)
+                if (!moveItemStackTo(item, 3, 4, false, true, true))
                     return ItemInstance::EMPTY;
             }
             else if (PotionSlot::mayPlaceItem(item))
             {
-                if (moveItemStackTo(item, 0, 3, false, true, true) != 1)
+                if (!moveItemStackTo(item, 0, 3, false, true, true))
                     return ItemInstance::EMPTY;
             }
             else if (FuelSlot::mayPlaceItem(item))
             {
-                if (moveItemStackTo(item, 4, 5, false, true, true) != 1)
+                if (!moveItemStackTo(item, 4, 5, false, true, true))
                     return ItemInstance::EMPTY;
             }
             else if (index >= 5 && index < 32)
             {
-                if (moveItemStackTo(item, 32, 41, false, true, true) != 1)
+                if (!moveItemStackTo(item, 32, 41, false, true, true))
                     return ItemInstance::EMPTY;
             }
             else if (index >= 32 && index < 41)
             {
-                if (moveItemStackTo(item, 5, 32, false, true, true) != 1)
+                if (!moveItemStackTo(item, 5, 32, false, true, true))
                     return ItemInstance::EMPTY;
             }
             else
             {
-                if (moveItemStackTo(item, 5, 41, false, true, true) != 1)
+                if (!moveItemStackTo(item, 5, 41, false, true, true))
                     return ItemInstance::EMPTY;
             }
         }

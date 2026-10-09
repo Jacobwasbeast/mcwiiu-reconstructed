@@ -57,11 +57,12 @@ void UIControl_SlotList::showSlotRedBox(int slot, bool show)
     list->SetSlotRedBox(slot, show);
 }
 
-void UIControl_SlotList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_SlotList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_SlotList;
-    UIControl_Base::setupControl(scene, node, name);
+    bool result = UIControl_Base::setupControl(scene, node, name);
     m_highlightSlot = 0;
+    return result;
 }
 
 void UIControl_SlotList::ReInit()

@@ -123,7 +123,8 @@ public:
     virtual void SetHTabItem(int tab, not_null_ptr<ItemInstance> item) = 0;
 
 protected:
-    static int m_craftingTabOrder[2][4];
+    static int m_craftingTabOrder2x2[4];
+    static int m_craftingTabOrder3x3[4];
     static int m_groupMap2x2[5][7];
     static int m_groupMap3x3[5][7];
 
@@ -141,7 +142,7 @@ protected:
     std::vector<int> m_baseItemSlots;
     std::vector<int> m_availableRecipes;
     std::vector<std::pair<int, bool> > m_duplicateItemSlots;
-    boost::shared_ptr<ItemInstance> m_baseRecipeItem;
+    not_null_ptr<ItemInstance> m_baseRecipeItem;
     int m_selectedInventorySlot;
     std::vector<std::pair<int, int> > m_stackedRecipes;
     not_null_ptr<ItemInstance> m_accumulatedItem;

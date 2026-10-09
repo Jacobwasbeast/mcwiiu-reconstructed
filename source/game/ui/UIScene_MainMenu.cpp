@@ -73,7 +73,7 @@ UIScene_MainMenu::UIScene_MainMenu(int sceneType, void*, UILayer* layer)
     if (gProfile->IsFullVersion())
     {
         m_showUpsell = false;
-        m_buttons[5].init(UIString(0xe6987a73), 5);
+        m_buttons[5].init(UIString(IDS_DOWNLOADABLECONTENT), 5);
     }
     else
     {
@@ -119,24 +119,42 @@ unsigned int UIScene_MainMenu::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
-    m_buttons[0].setupControl(this, root, "Button1");
-    m_controls.push_back(&m_buttons[0]);
-    m_buttons[1].setupControl(this, root, "Button2");
-    m_controls.push_back(&m_buttons[1]);
-    m_buttons[2].setupControl(this, root, "Button3");
-    m_controls.push_back(&m_buttons[2]);
-    m_buttons[3].setupControl(this, root, "Button4");
-    m_controls.push_back(&m_buttons[3]);
-    m_buttons[4].setupControl(this, root, "Button5");
-    m_controls.push_back(&m_buttons[4]);
-    m_buttons[5].setupControl(this, root, "Button6");
-    m_controls.push_back(&m_buttons[5]);
-    m_buttons[6].setupControl(this, root, "Button7");
-    m_controls.push_back(&m_buttons[6]);
-    m_buttons[7].setupControl(this, root, "ButtonUpsell");
-    m_controls.push_back(&m_buttons[7]);
-    m_timer.setupControl(this, root, "Timer");
-    m_controls.push_back(&m_timer);
+    {
+        m_buttons[0].setupControl(this, root, std::string("Button1"));
+        m_controls.push_back(&m_buttons[0]);
+    }
+    {
+        m_buttons[1].setupControl(this, root, std::string("Button2"));
+        m_controls.push_back(&m_buttons[1]);
+    }
+    {
+        m_buttons[2].setupControl(this, root, std::string("Button3"));
+        m_controls.push_back(&m_buttons[2]);
+    }
+    {
+        m_buttons[3].setupControl(this, root, std::string("Button4"));
+        m_controls.push_back(&m_buttons[3]);
+    }
+    {
+        m_buttons[4].setupControl(this, root, std::string("Button5"));
+        m_controls.push_back(&m_buttons[4]);
+    }
+    {
+        m_buttons[5].setupControl(this, root, std::string("Button6"));
+        m_controls.push_back(&m_buttons[5]);
+    }
+    {
+        m_buttons[6].setupControl(this, root, std::string("Button7"));
+        m_controls.push_back(&m_buttons[6]);
+    }
+    {
+        m_buttons[7].setupControl(this, root, std::string("ButtonUpsell"));
+        m_controls.push_back(&m_buttons[7]);
+    }
+    {
+        m_timer.setupControl(this, root, std::string("Timer"));
+        m_controls.push_back(&m_timer);
+    }
     return 1;
 }
 
@@ -190,7 +208,7 @@ void UIScene_MainMenu::customDrawSplash(fuiRect* rect)
     GlStateManager::translatef((rect->xMax - rect->xMin) * 0.5f, rect->yMax - rect->yMin, 0.0f);
     GlStateManager::rotatef(-17.0f, 0.0f, 0.0f, 1.0f);
 
-    float phase = static_cast<float>(static_cast<long long>(System::processTimeInMilliSecs()) % 1000) / 1000.0f * 3.1415927f;
+    float phase = static_cast<float>(System::processTimeInMilliSecs() % 1000) / 1000.0f * 3.1415927f;
     float scale = (1.8f - Mth::abs(Mth::sin(phase + phase) * 0.1f)) *
                   (m_splashX / m_splashWidth) * 100.0f;
     float factor = scale / static_cast<float>(font->width(m_splash) + 32);
@@ -234,7 +252,7 @@ void UIScene_MainMenu::tick()
 
     if (m_showUpsell && gProfile->IsFullVersion()) {
         m_showUpsell = false;
-        m_buttons[5].init(UIString(L10N::GetString(0xe6987a73)), 5);
+        m_buttons[5].init(UIString(L10N::GetString(IDS_DOWNLOADABLECONTENT)), 5);
     }
 }
 
@@ -262,7 +280,7 @@ void UIScene_MainMenu::handleInput(int playerId, int action, bool repeat, bool p
 
 void UIScene_MainMenu::handleUnlockFullVersion()
 {
-    m_buttons[5].setLabel(UIString(0xe6987a73), true, false);
+    m_buttons[5].setLabel(UIString(IDS_DOWNLOADABLECONTENT), true, false);
 }
 
 void UIScene_MainMenu::PrepareToPlayGame(int playerId)
@@ -289,7 +307,7 @@ void UIScene_MainMenu::RunLeaderboards(int playerId)
     }
     else if (!gProfile->IsSignedInLive(playerId))
     {
-        gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xc34c0b77, &messageParameter, 1, 0xff,
+        gConsoleUIController.RequestErrorMessage(IDS_PRO_NOTONLINE_TITLE, 0xc34c0b77, &messageParameter, 1, 0xff,
                                                  NULL, NULL, NULL, true);
     }
     else
@@ -343,9 +361,9 @@ void UIScene_MainMenu::RunUnlockOrDLC(int playerId)
             return;
         }
 
-        int messageParameters[2] = { 0x51d141b, 0x3f0766c7 };
+        int messageParameters[2] = { IDS_PRO_NOTONLINE_ACCEPT, IDS_PRO_NOTONLINE_DECLINE };
         m_pendingAction = 5;
-        gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xb837024e, messageParameters, 2,
+        gConsoleUIController.RequestErrorMessage(IDS_PRO_NOTONLINE_TITLE, IDS_PRO_NOTONLINE_TEXT, messageParameters, 2,
                                                  playerId, MustConnectReturnedNintendo, this,
                                                  NULL, true);
         return;
@@ -361,7 +379,7 @@ void UIScene_MainMenu::RunUnlockOrDLC(int playerId)
     if (!gProfile->IsSignedInLive(playerId))
     {
         int signInParameter = IDS_CONFIRM_OK;
-        gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xc34c0b77, &signInParameter, 1,
+        gConsoleUIController.RequestErrorMessage(IDS_PRO_NOTONLINE_TITLE, 0xc34c0b77, &signInParameter, 1,
                                                  0xff, NULL, NULL, NULL, true);
         return;
     }
@@ -399,17 +417,23 @@ int UIScene_MainMenu::MustConnectReturnedNintendo(void* context, int userIndex,
     UIScene_MainMenu* scene = static_cast<UIScene_MainMenu*>(context);
     if (result == C4JStorage::EMessageResult_Accept)
     {
-        if (scene->m_pendingAction == 1)
-            CGameNetworkManager::sInstance.ShowConnectOnlineNintendoProgress(userIndex,
-                                                                  CreateLoad_SignInReturned, scene);
-        else if (scene->m_pendingAction == 2)
+        switch (scene->m_pendingAction)
+        {
+        case 2:
             CGameNetworkManager::sInstance.ShowConnectOnlineNintendoProgress(userIndex,
                                                                   Leaderboards_SignInReturned,
                                                                   scene);
-        else if (scene->m_pendingAction == 5)
+            break;
+        case 1:
+            CGameNetworkManager::sInstance.ShowConnectOnlineNintendoProgress(userIndex,
+                                                                  CreateLoad_SignInReturned, scene);
+            break;
+        case 5:
             CGameNetworkManager::sInstance.ShowConnectOnlineNintendoProgress(userIndex,
                                                                   UnlockFullGame_SignInReturned,
                                                                   scene);
+            break;
+        }
     }
     else if (scene->m_pendingAction == 1)
     {
@@ -479,6 +503,7 @@ void UIScene_MainMenu::LoadTrial()
     loadingParams->m_threadParam = initData;
 
     FullscreenProgressState* state = new FullscreenProgressState;
+    state->closeMode = 3;
     state->playerId = gProfile->GetPrimaryPad();
     loadingParams->m_completionData = state;
 
@@ -509,9 +534,9 @@ void UIScene_MainMenu::RunPlayGame(int playerId)
         if (!signedInLive)
         {
             user->name = convStringToWstring(gProfile->GetGamertag(gProfile->GetPrimaryPad()));
-            int messageParameters[2] = { 0x51d141b, 0x3f0766c7 };
+            int messageParameters[2] = { IDS_PRO_NOTONLINE_ACCEPT, IDS_PRO_NOTONLINE_DECLINE };
             m_pendingAction = 1;
-            gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xb837024e, messageParameters, 2,
+            gConsoleUIController.RequestErrorMessage(IDS_PRO_NOTONLINE_TITLE, IDS_PRO_NOTONLINE_TEXT, messageParameters, 2,
                                                      playerId, MustConnectReturnedNintendo, this,
                                                      NULL, true);
             return;
@@ -702,37 +727,47 @@ int UIScene_MainMenu::MustSignInReturned(void* context, int userIndex,
 
 void UIScene_MainMenu::handlePress(int controlId, int)
 {
+    int (*signInReturnedFunc)(void*, bool, int, int) = NULL;
     int pad = gProfile->GetPrimaryPad();
     switch (controlId) {
+    default:
+        m_miniGamesSelected = false;
+        return;
     case 0:
         m_pendingAction = 1;
         m_miniGamesSelected = false;
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        signInReturnedFunc = &CreateLoad_SignInReturned;
         break;
     case 1:
         m_miniGamesSelected = true;
         m_pendingAction = 1;
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        signInReturnedFunc = &CreateLoad_SignInReturned;
         break;
     case 2:
         m_miniGamesSelected = false;
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         m_pendingAction = 2;
+        signInReturnedFunc = &Leaderboards_SignInReturned;
         break;
     case 3:
         m_miniGamesSelected = false;
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         m_pendingAction = 3;
+        signInReturnedFunc = &Achievements_SignInReturned;
         break;
     case 4:
         m_miniGamesSelected = false;
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         m_pendingAction = 4;
+        signInReturnedFunc = &HelpAndOptions_SignInReturned;
         break;
     case 5:
         m_miniGamesSelected = false;
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         m_pendingAction = 5;
+        signInReturnedFunc = &UnlockFullGame_SignInReturned;
         break;
     case 6:
         {
@@ -744,21 +779,21 @@ void UIScene_MainMenu::handlePress(int controlId, int)
                                                      0xff, ExitGameReturned, this, NULL, true);
         }
         return;
-    default:
-        m_miniGamesSelected = false;
-        return;
     }
 
-    if (gProfile->IsSignedIn(pad)) {
-        RunAction(pad);
-        return;
+    if (signInReturnedFunc != NULL)
+    {
+        if (gProfile->IsSignedIn(pad))
+        {
+            RunAction(pad);
+        }
+        else
+        {
+            int messageParameters[2] = { IDS_CONFIRM_OK, IDS_CONFIRM_CANCEL };
+            gConsoleUIController.RequestErrorMessage(IDS_MUST_SIGN_IN_TITLE, IDS_MUST_SIGN_IN_TEXT, messageParameters, 2, pad,
+                                                     MustSignInReturned, this, NULL, true);
+        }
     }
-
-    int messageParameters[2];
-    messageParameters[0] = IDS_CONFIRM_CANCEL;
-    messageParameters[1] = IDS_CONFIRM_OK;
-    gConsoleUIController.RequestErrorMessage(0x14b60640, 0x221d8d9d, messageParameters, 2, pad,
-                                             MustSignInReturned, this, NULL, true);
 }
 
 void UIScene_MainMenu::handleGainFocus(bool hadFocus)
@@ -790,7 +825,7 @@ void UIScene_MainMenu::handleGainFocus(bool hadFocus)
     }
 
     if (hadFocus && gProfile->IsFullVersion())
-        m_buttons[5].setLabel(UIString(0xe6987a73), false, false);
+        m_buttons[5].setLabel(UIString(IDS_DOWNLOADABLECONTENT), false, false);
 
     m_timer.setVisible(false);
     m_buttons[0].setVisible(true);

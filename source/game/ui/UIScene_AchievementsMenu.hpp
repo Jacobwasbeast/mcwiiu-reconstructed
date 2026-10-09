@@ -28,7 +28,7 @@ public:
     static const int sDisplayList[DISPLAY_COUNT];
     UIScene_AchievementsMenu(int type, void* data, UILayer* layer);
     virtual ~UIScene_AchievementsMenu();
-    static int GetInfo(int achievement);
+    static const AchievementInfo* GetInfo(int achievement);
     void registerTexture(int achievement);
     virtual void updateTooltips();
     void SetAchievementDescription(std::vector<HtmlString>* lines);

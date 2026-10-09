@@ -52,27 +52,27 @@ void FJ_ListButtonLayerIcon::SetSlotID(int slotId, bool visible)
 void FJ_ListButtonLayerIcon::SetTextureName(const std::wstring& textureName,
                                             const std::wstring&)
 {
-    if (textureName.empty() || m_textureNode != NULL)
-        return;
+    if (!textureName.empty() && m_textureNode == NULL)
+    {
+        FJ_FuiNode* iconPlaceholder = getChildByName("IconPlaceholder")->asMovieClip();
+        iconPlaceholder->setScaleX(iconPlaceholder->getScaleX() / getScaleX());
+        iconPlaceholder->setScaleY(iconPlaceholder->getScaleY() / getScaleY());
 
-    FJ_FuiNode* iconPlaceholder = getChildByName("IconPlaceholder")->asMovieClip();
-    iconPlaceholder->setScaleX(iconPlaceholder->getScaleX() / getScaleX());
-    iconPlaceholder->setScaleY(iconPlaceholder->getScaleY() / getScaleY());
+        fuiRect rect;
+        rect.xMin = 0.0f;
+        rect.yMin = 0.0f;
+        rect.xMax = iconPlaceholder->getWidth() / iconPlaceholder->getScaleX();
+        rect.yMax = iconPlaceholder->getHeight() / iconPlaceholder->getScaleY();
 
-    fuiRect rect;
-    rect.xMin = 0.0f;
-    rect.yMin = 0.0f;
-    rect.xMax = iconPlaceholder->getWidth() / iconPlaceholder->getScaleX();
-    rect.yMax = iconPlaceholder->getHeight() / iconPlaceholder->getScaleY();
-
-    unsigned int width = 0;
-    unsigned int height = 0;
-    bool hasTexture = false;
-    unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasTexture);
-    fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-        getStage()->m_pRenderNode, &rect, "CustomTexture", width, height,
-        texture, true, hasTexture);
-    m_textureNode = new FJ_FuiNode(renderNode);
-    renderNode->setFuiNode(m_textureNode);
-    iconPlaceholder->addChild(m_textureNode);
+        unsigned int width;
+        unsigned int height;
+        bool hasTexture = false;
+        unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasTexture);
+        fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
+            getStage()->m_pRenderNode, &rect, "CustomTexture", width, height,
+            texture, true, hasTexture);
+        m_textureNode = new FJ_FuiNode(renderNode);
+        renderNode->setFuiNode(m_textureNode);
+        iconPlaceholder->addChild(m_textureNode);
+    }
 }

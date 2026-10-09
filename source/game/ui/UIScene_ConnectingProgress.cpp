@@ -30,40 +30,40 @@ UIScene_ConnectingProgress::UIScene_ConnectingProgress(int type, void* data, UIL
     m_tipLabel.setVisible(false);
     m_miniGameId = params->m_miniGameId;
 
-    if (!gApp.GetGameHostOption(eGameHostOption_MiniGame))
-    {
-        m_miniGameLogoSet = false;
-        SetLoadingScreenType(0);
-    }
-    else
+    if (gApp.GetGameHostOption(eGameHostOption_MiniGame))
     {
         SetLoadingScreenType(1);
         setMiniGameLogoTexture();
         m_miniGameLogoSet = true;
+    }
+    else
+    {
+        m_miniGameLogoSet = false;
+        SetLoadingScreenType(0);
     }
     layer->addComponent(type, EUIScene_Panorama, NULL);
     layer->addComponent(type, EUIScene_Logo, NULL);
     m_progressControl.showBar(false);
     m_progressControl.setVisible(false);
 
-    if (params->m_stringId == -1)
-        m_titleLabel.init(UIString(L""));
-    else
+    if (params->m_stringId != -1)
         m_titleLabel.init(UIString(L10N::GetString(params->m_stringId)));
+    else
+        m_titleLabel.init(UIString(L""));
 
     m_progressControl.init(UIString(L""), 0, 0, 100, 0);
     m_confirmationButton.init(UIString(L10N::GetString(IDS_CONFIRM_OK)), 0);
     ShowConfirmationButton(false);
 
     m_showTooltips = params->m_showTooltips;
-    m_cancelled = false;
     m_setFailTimer = params->m_setFailTimer;
-    m_removeLocalPlayer = false;
-    m_cancelFunc = params->m_cancelFunc;
-    m_showingButton = false;
-    m_cancelFuncParam = params->m_cancelFuncParam;
-    m_movieLoaded = false;
     m_timerTime = params->m_timerTime;
+    m_cancelFunc = params->m_cancelFunc;
+    m_cancelFuncParam = params->m_cancelFuncParam;
+    m_removeLocalPlayer = false;
+    m_showingButton = false;
+    m_cancelled = false;
+    m_movieLoaded = false;
     delete params;
 }
 
@@ -87,22 +87,20 @@ void UIScene_ConnectingProgress::SetLoadingScreenType(int type)
 void UIScene_ConnectingProgress::setMiniGameLogoTexture()
 {
     const MiniGameDef* game = Minecraft::GetInstance()->GetMiniGame();
-    bool found;
     std::wstring icon = (game->GetId() == eMiniGameId_Any || game->GetId() == eMiniGameId_Lobby)
         ? Minecraft::GetInstance()->GetFirstMiniGame()->getIcon()
         : game->getIcon();
-    found = gApp.hasArchiveFile(icon, false);
 
-    if (!found)
-    {
-        m_logoControl.setTextureName(L"", false);
-    }
-    else
+    if (gApp.hasArchiveFile(icon, false))
     {
         arrayWithLength<unsigned char> file = gApp.getArchiveFile(icon, false);
         if (file.length != 0 && file.data != NULL)
             registerSubstitutionTexture(icon, file.data, file.length, true);
         m_logoControl.setTextureName(icon, false);
+    }
+    else
+    {
+        m_logoControl.setTextureName(L"", false);
     }
 }
 
@@ -113,23 +111,40 @@ void UIScene_ConnectingProgress::ShowConfirmationButton(bool show)
 
 unsigned int UIScene_ConnectingProgress::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
-
-    m_progressControl.setupControl(this, root, "ProgressBar");
-    m_controls.push_back(&m_progressControl);
-    m_titleLabel.setupControl(this, root, "Title");
-    m_controls.push_back(&m_titleLabel);
-    m_tipLabel.setupControl(this, root, "Tip");
-    m_controls.push_back(&m_tipLabel);
-    m_gameModeIconControl.setupControl(this, root, "GMIcon");
-    m_controls.push_back(&m_gameModeIconControl);
-    fuiRenderNode* iconNode = m_gameModeIconControl.getFuiRenderNode();
-    m_logoControl.setupControl(this, iconNode, "MG_Logo");
-    m_controls.push_back(&m_logoControl);
-    m_confirmationButton.setupControl(this, root, "Confirm");
-    m_controls.push_back(&m_confirmationButton);
-    m_timerControl.setupControl(this, root, "Timer");
-    m_controls.push_back(&m_timerControl);
+    fuiRenderNode* currentRoot = m_movie->getRootNode();
+    {
+        m_progressControl.setupControl(this, currentRoot, std::string("ProgressBar"));
+        m_controls.push_back(&m_progressControl);
+    }
+    {
+        m_titleLabel.setupControl(this, currentRoot, std::string("Title"));
+        m_controls.push_back(&m_titleLabel);
+    }
+    {
+        m_tipLabel.setupControl(this, currentRoot, std::string("Tip"));
+        m_controls.push_back(&m_tipLabel);
+    }
+    {
+        m_gameModeIconControl.setupControl(this, currentRoot, std::string("GMIcon"));
+        m_controls.push_back(&m_gameModeIconControl);
+    }
+    {
+        fuiRenderNode* lastRoot = currentRoot;
+        currentRoot = m_gameModeIconControl.getFuiRenderNode();
+        {
+            m_logoControl.setupControl(this, currentRoot, std::string("MG_Logo"));
+            m_controls.push_back(&m_logoControl);
+        }
+        currentRoot = lastRoot;
+    }
+    {
+        m_confirmationButton.setupControl(this, currentRoot, std::string("Confirm"));
+        m_controls.push_back(&m_confirmationButton);
+    }
+    {
+        m_timerControl.setupControl(this, currentRoot, std::string("Timer"));
+        m_controls.push_back(&m_timerControl);
+    }
     return 1;
 }
 
@@ -245,8 +260,8 @@ void UIScene_ConnectingProgress::handleTimerComplete(int)
     }
     else
     {
-        int parameter = IDS_CONFIRM_OK;
-        gConsoleUIController.RequestErrorMessage(IDS_CONNECTION_FAILED, message, &parameter, 1,
+        int parameters[1] = { IDS_CONFIRM_OK };
+        gConsoleUIController.RequestErrorMessage(IDS_CONNECTION_FAILED, message, parameters, 1,
                                                  gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
     }
     gApp.SetAction(gProfile->GetPrimaryPad(), eXuiAction_ExitWorld, reinterpret_cast<void*>(1));
@@ -262,12 +277,7 @@ std::wstring UIScene_ConnectingProgress::getMoviePath()
 void UIScene_ConnectingProgress::handleInput(int playerId, int action, bool repeat,
                                              bool pressed, bool released, bool& handled)
 {
-    if (!m_showTooltips)
-    {
-        if (!m_showingButton || action != EControllerActions_MenuOk)
-            return;
-    }
-    else
+    if (m_showTooltips)
     {
         gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
         switch (action)
@@ -285,6 +295,11 @@ void UIScene_ConnectingProgress::handleInput(int playerId, int action, bool repe
         default:
             return;
         }
+    }
+    else
+    {
+        if (!m_showingButton || action != EControllerActions_MenuOk)
+            return;
     }
 
     if (pressed)

@@ -68,12 +68,12 @@ UIScene_InventoryMenu::UIScene_InventoryMenu(int pad, void* data, UILayer* layer
                IUIScene_AbstractContainerMenu::ESceneSection_InventoryHotbar,
                m_classicCrafting ? IUIScene_AbstractContainerMenu::ESceneSection_InventoryMax : IUIScene_AbstractContainerMenu::ESceneSection_InventoryCrafting,
                sceneData->creative);
-    m_armorList.addSlots(InventoryMenu::ARMOR_SLOT_START, 9 - InventoryMenu::ARMOR_SLOT_START);
-    m_shieldList.addSlots(45, 1);
+    m_armorList.addSlots(InventoryMenu::ARMOR_SLOT_START, InventoryMenu::ARMOR_SLOT_END - InventoryMenu::ARMOR_SLOT_START);
+    m_shieldList.addSlots(InventoryMenu::USE_ROW_SLOT_END, 1);
     if (m_classicCrafting)
     {
-        m_craftingList.addSlots(1, 5 - 1);
-        m_resultList.addSlots(0, 1);
+        m_craftingList.addSlots(InventoryMenu::CRAFT_SLOT_START, InventoryMenu::CRAFT_SLOT_END - InventoryMenu::CRAFT_SLOT_START);
+        m_resultList.addSlots(InventoryMenu::RESULT_SLOT, 1);
         m_craftingLabel.setLabel(UIString(IDS_CONTROLS_CRAFTING), false, false);
     }
     delete sceneData;
@@ -89,9 +89,9 @@ UIScene_InventoryMenu::~UIScene_InventoryMenu()
     delete[] m_effectDurations;
 }
 
-unsigned int UIScene_InventoryMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_InventoryMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    unsigned int columns = 0;
+    int columns = 0;
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_InventoryHotbar:
@@ -114,19 +114,19 @@ unsigned int UIScene_InventoryMenu::getSectionColumns(IUIScene_AbstractContainer
     return columns;
 }
 
-unsigned int UIScene_InventoryMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_InventoryMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    unsigned int rows = 0;
+    int rows = 0;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryHotbar:
-        rows = 1;
+    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryArmor:
+        rows = 4;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_InventoryInventory:
         rows = GetInventoryRows();
         break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryArmor:
-        rows = 4;
+    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryHotbar:
+        rows = 1;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_InventoryShield:
         rows = 1;
@@ -152,36 +152,35 @@ unsigned int UIScene_InventoryMenu::GetSectionAndSlotInDirection(IUIScene_Abstra
     const ESceneSection shield = ESceneSection_InventoryShield;
     const ESceneSection crafting = ESceneSection_InventoryCrafting;
     const ESceneSection result = ESceneSection_InventoryResult;
-    const ESceneSection below = m_smallInventory ? hotbar : inventory;
 
     ESceneSection target = section;
     int xOffset = 0;
     int yOffset = 0;
     bool choosePlayerColumn = false;
 
-    if (section == hotbar)
+    switch (section)
     {
+    case shield:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            choosePlayerColumn = true;
+        {
+            target = m_smallInventory ? hotbar : inventory;
+            xOffset = m_classicCrafting ? -5 : -8;
+        }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            if (!m_smallInventory)
-                target = inventory;
-            else
-                choosePlayerColumn = true;
+            target = m_classicCrafting ? crafting : hotbar;
+            xOffset = m_classicCrafting ? -5 : -8;
         }
-    }
-    else if (section == inventory)
-    {
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left ||
+                 state == IUIScene_AbstractContainerMenu::ETapState_Right)
+        {
+            target = armor;
+            yOffset = 3;
+        }
+        break;
+    case armor:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = hotbar;
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            choosePlayerColumn = true;
-    }
-    else if (section == armor)
-    {
-        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = below;
+            target = m_smallInventory ? hotbar : inventory;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
             target = hotbar;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
@@ -199,69 +198,72 @@ unsigned int UIScene_InventoryMenu::GetSectionAndSlotInDirection(IUIScene_Abstra
                 target = shield;
             }
         }
-    }
-    else if (section == shield)
-    {
+        break;
+    case inventory:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        {
-            target = below;
-            xOffset = m_classicCrafting ? -5 : -8;
-        }
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-        {
-            target = m_classicCrafting ? crafting : hotbar;
-            xOffset = m_classicCrafting ? -5 : -8;
-        }
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left ||
-                 state == IUIScene_AbstractContainerMenu::ETapState_Right)
-        {
-            target = armor;
-            yOffset = 3;
-        }
-    }
-    else if (section == crafting && m_classicCrafting)
-    {
-        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        {
-            target = below;
-            xOffset = -5;
-        }
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-        {
             target = hotbar;
-            xOffset = -5;
-        }
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
-        {
-            target = armor;
-            yOffset = -1;
-        }
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
-        {
-            target = result;
-        }
-    }
-    else if (section == result && m_classicCrafting)
-    {
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+            choosePlayerColumn = true;
+        break;
+    case hotbar:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        {
-            target = below;
-            xOffset = -8;
-        }
+            choosePlayerColumn = true;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            target = hotbar;
-            xOffset = -8;
+            if (!m_smallInventory)
+                target = inventory;
+            else
+                choosePlayerColumn = true;
         }
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
+        break;
+    case crafting:
+        if (m_classicCrafting)
         {
-            *x = static_cast<int>(getSectionColumns(crafting));
-            target = crafting;
+            if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+            {
+                target = m_smallInventory ? hotbar : inventory;
+                xOffset = -5;
+            }
+            else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+            {
+                target = hotbar;
+                xOffset = -5;
+            }
+            else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
+            {
+                target = armor;
+                yOffset = -1;
+            }
+            else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
+            {
+                target = result;
+            }
         }
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
+        break;
+    case result:
+        if (m_classicCrafting)
         {
-            target = armor;
+            if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+            {
+                target = m_smallInventory ? hotbar : inventory;
+                xOffset = -8;
+            }
+            else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+            {
+                target = hotbar;
+                xOffset = -8;
+            }
+            else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
+            {
+                *x = getSectionColumns(crafting);
+                target = crafting;
+            }
+            else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
+            {
+                target = armor;
+            }
         }
+        break;
     }
 
     if (choosePlayerColumn)
@@ -294,17 +296,17 @@ void UIScene_InventoryMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu:
 {
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryHotbar:
-        position->x = m_hotbarList.getXPos();
-        position->y = m_hotbarList.getYPos();
+    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryArmor:
+        position->x = m_armorList.getXPos();
+        position->y = m_armorList.getYPos();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_InventoryInventory:
         position->x = m_inventoryList.getXPos();
         position->y = m_inventoryList.getYPos();
         break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryArmor:
-        position->x = m_armorList.getXPos();
-        position->y = m_armorList.getYPos();
+    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryHotbar:
+        position->x = m_hotbarList.getXPos();
+        position->y = m_hotbarList.getYPos();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_InventoryCrafting:
         if (m_classicCrafting)
@@ -334,17 +336,17 @@ void UIScene_InventoryMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ES
     _UIVec2D sectionSize;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryHotbar:
-        sectionSize.x = m_hotbarList.getWidth();
-        sectionSize.y = m_hotbarList.getHeight();
+    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryArmor:
+        sectionSize.x = m_armorList.getWidth();
+        sectionSize.y = m_armorList.getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_InventoryInventory:
         sectionSize.x = m_inventoryList.getWidth();
         sectionSize.y = m_inventoryList.getHeight();
         break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryArmor:
-        sectionSize.x = m_armorList.getWidth();
-        sectionSize.y = m_armorList.getHeight();
+    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryHotbar:
+        sectionSize.x = m_hotbarList.getWidth();
+        sectionSize.y = m_hotbarList.getHeight();
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_InventoryCrafting:
         if (m_classicCrafting)
@@ -369,14 +371,12 @@ void UIScene_InventoryMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::ES
     }
     int rows = getSectionRows(section);
     int columns = getSectionColumns(section);
-    float itemWidth = sectionSize.x / static_cast<float>(columns);
-    float itemHeight = sectionSize.y / static_cast<float>(rows);
+    size->x = sectionSize.x / columns;
+    size->y = sectionSize.y / rows;
+    int column = itemIndex % columns;
     int row = itemIndex / columns;
-    int column = itemIndex - row * columns;
-    size->x = itemWidth;
-    size->y = itemHeight;
-    position->x = static_cast<float>(column) * itemWidth;
-    position->y = static_cast<float>(row) * itemHeight;
+    position->x = column * size->x;
+    position->y = row * size->y;
 }
 
 void UIScene_InventoryMenu::handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection)
@@ -394,11 +394,11 @@ int UIScene_InventoryMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu:
     case IUIScene_AbstractContainerMenu::ESceneSection_InventoryArmor:
         return InventoryMenu::ARMOR_SLOT_START;
     case IUIScene_AbstractContainerMenu::ESceneSection_InventoryShield:
-        return 45;
+        return InventoryMenu::USE_ROW_SLOT_END;
     case IUIScene_AbstractContainerMenu::ESceneSection_InventoryCrafting:
-        return m_classicCrafting ? 1 : InventoryMenu::INV_SLOT_START;
+        return m_classicCrafting ? InventoryMenu::CRAFT_SLOT_START : InventoryMenu::INV_SLOT_START;
     case IUIScene_AbstractContainerMenu::ESceneSection_InventoryResult:
-        return m_classicCrafting ? 0 : InventoryMenu::ARMOR_SLOT_START;
+        return m_classicCrafting ? InventoryMenu::RESULT_SLOT : InventoryMenu::ARMOR_SLOT_START;
     default:
         return 0;
     }
@@ -406,18 +406,18 @@ int UIScene_InventoryMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu:
 
 void UIScene_InventoryMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
 {
-    unsigned int columns = getSectionColumns(section);
+    int index = slot + direction * getSectionColumns(section);
     UIControl_SlotList* list = NULL;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryHotbar:
-        list = &m_hotbarList;
+    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryArmor:
+        list = &m_armorList;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_InventoryInventory:
         list = &m_inventoryList;
         break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryArmor:
-        list = &m_armorList;
+    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryHotbar:
+        list = &m_hotbarList;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_InventoryCrafting:
         if (m_classicCrafting)
@@ -438,14 +438,18 @@ void UIScene_InventoryMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMen
         break;
     }
     if (wrap)
-        list->setHighlightSlot(slot + direction * columns);
+        list->setHighlightSlot(index);
 }
 
 void UIScene_InventoryMenu::SetClassicCrafting(bool classicCrafting)
 {
-    FJ_InventoryMenu* document = static_cast<FJ_InventoryMenu*>(m_movie->getRootNode()->getFuiNode());
-    document->SetClassicCrafting(classicCrafting);
-    if (!classicCrafting) { m_armorList.UpdateControl(); m_playerControl.UpdateControl(); m_shieldList.UpdateControl(); }
+    static_cast<FJ_InventoryMenu*>(m_movie->getRootNode()->getFuiNode())->SetClassicCrafting(classicCrafting);
+    if (!classicCrafting)
+    {
+        m_armorList.UpdateControl();
+        m_playerControl.UpdateControl();
+        m_shieldList.UpdateControl();
+    }
 }
 
 void UIScene_InventoryMenu::updateEffectsDisplay()
@@ -455,8 +459,8 @@ void UIScene_InventoryMenu::updateEffectsDisplay()
         return;
 
     std::vector<MobEffectInstance*>* activeEffects = player->getActiveEffects();
-    int* effectValues = new int[activeEffects->size() * 2];
     int valueCount = 0;
+    int* effectValues = new int[activeEffects->size() * 2];
     std::vector<MobEffectInstance*>::iterator it;
     for (it = activeEffects->begin(); it != activeEffects->end(); ++it)
     {
@@ -525,12 +529,30 @@ unsigned int UIScene_InventoryMenu::mapElementsAndNames()
     UIScene_AbstractContainerMenu::mapElementsAndNames();
     fuiRenderNode* rootNode = m_movie->getRootNode();
     fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
-    m_armorList.setupControl(this, panel, std::string("armorList")); m_controls.push_back(&m_armorList);
-    m_craftingList.setupControl(this, panel, std::string("craftingList")); m_controls.push_back(&m_craftingList);
-    m_resultList.setupControl(this, panel, std::string("Result")); m_controls.push_back(&m_resultList);
-    m_playerControl.setupControl(this, panel, std::string("iggy_player")); m_controls.push_back(&m_playerControl);
-    m_craftingLabel.setupControl(this, panel, std::string("craftingLabel")); m_controls.push_back(&m_craftingLabel);
-    m_shieldList.setupControl(this, panel, std::string("shieldList")); m_controls.push_back(&m_shieldList);
+    {
+        m_armorList.setupControl(this, panel, std::string("armorList"));
+        m_controls.push_back(&m_armorList);
+    }
+    {
+        m_craftingList.setupControl(this, panel, std::string("craftingList"));
+        m_controls.push_back(&m_craftingList);
+    }
+    {
+        m_resultList.setupControl(this, panel, std::string("Result"));
+        m_controls.push_back(&m_resultList);
+    }
+    {
+        m_playerControl.setupControl(this, panel, std::string("iggy_player"));
+        m_controls.push_back(&m_playerControl);
+    }
+    {
+        m_craftingLabel.setupControl(this, panel, std::string("craftingLabel"));
+        m_controls.push_back(&m_craftingLabel);
+    }
+    {
+        m_shieldList.setupControl(this, panel, std::string("shieldList"));
+        m_controls.push_back(&m_shieldList);
+    }
     return 1;
 }
 
@@ -548,12 +570,12 @@ void UIScene_InventoryMenu::handleReload()
         IUIScene_AbstractContainerMenu::ESceneSection_InventoryHotbar,
         m_classicCrafting ? IUIScene_AbstractContainerMenu::ESceneSection_InventoryMax : IUIScene_AbstractContainerMenu::ESceneSection_InventoryCrafting,
         m_navigateBack);
-    m_armorList.addSlots(InventoryMenu::ARMOR_SLOT_START, 9 - InventoryMenu::ARMOR_SLOT_START);
-    m_shieldList.addSlots(45, 1);
+    m_armorList.addSlots(InventoryMenu::ARMOR_SLOT_START, InventoryMenu::ARMOR_SLOT_END - InventoryMenu::ARMOR_SLOT_START);
+    m_shieldList.addSlots(InventoryMenu::USE_ROW_SLOT_END, 1);
     if (m_classicCrafting)
     {
-        m_craftingList.addSlots(1, 5 - 1);
-        m_resultList.addSlots(0, 1);
+        m_craftingList.addSlots(InventoryMenu::CRAFT_SLOT_START, InventoryMenu::CRAFT_SLOT_END - InventoryMenu::CRAFT_SLOT_START);
+        m_resultList.addSlots(InventoryMenu::RESULT_SLOT, 1);
     }
     for (int i = 0; i < static_cast<int>(MobEffect::GetEffectCount()) + 1; ++i)
         m_effectDurations[i] = 0;
@@ -564,14 +586,14 @@ UIControl* UIScene_InventoryMenu::getSection(IUIScene_AbstractContainerMenu::ESc
     UIControl* control = NULL;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryHotbar:
-        control = &m_hotbarList;
+    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryArmor:
+        control = &m_armorList;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_InventoryInventory:
         control = &m_inventoryList;
         break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryArmor:
-        control = &m_armorList;
+    case IUIScene_AbstractContainerMenu::ESceneSection_InventoryHotbar:
+        control = &m_hotbarList;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_InventoryCrafting:
         if (m_classicCrafting)
@@ -611,7 +633,7 @@ void UIScene_InventoryMenu::customDraw(const char* name, fuiRect* rect)
     not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
     int slotId = -1;
     std::sscanf(name, "slot_%d", &slotId);
-    if (slotId >= InventoryMenu::ARMOR_SLOT_START && slotId < 9)
+    if (slotId >= InventoryMenu::ARMOR_SLOT_START && slotId < InventoryMenu::ARMOR_SLOT_END)
     {
         item = m_menu->getSlot(slotId)->getItem();
         bool empty = item->isEmpty();

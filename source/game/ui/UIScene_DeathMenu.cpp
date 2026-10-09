@@ -29,15 +29,15 @@ UIScene_DeathMenu::UIScene_DeathMenu(int playerId, void*, UILayer* layer)
 {
     initialiseMovie();
 
-    int timerId;
-    int timerLength;
     if (gApp.GetGameHostOption(eGameHostOption_MiniGame) != 0)
     {
         m_deathMenuActive = true;
         m_exitButton.setVisible(false);
         m_respawnButton.setVisible(false);
-        timerId = 0;
-        timerLength = Minecraft::InMiniGame(eMiniGameId_Glide, true) ? 1000 : 2000;
+        if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
+            addTimer(0, 1000);
+        else
+            addTimer(0, 2000);
     }
     else
     {
@@ -46,45 +46,38 @@ UIScene_DeathMenu::UIScene_DeathMenu(int playerId, void*, UILayer* layer)
         m_respawnButton.init(UIString(L10N::GetString(IDS_RESPAWN)), 0);
         m_exitButton.setEnable(false, true);
         m_respawnButton.setEnable(false, true);
-        timerId = 1;
-        timerLength = 1000;
+        addTimer(1, 1000);
     }
-    addTimer(timerId, timerLength);
 
-    if (!Minecraft::InMiniGame(eMiniGameId_Glide, true))
-        m_titleLabel.setLabel(UIString(L10N::GetString(IDS_YOU_DIED)), false, false);
-    else
+    if (Minecraft::InMiniGame(eMiniGameId_Glide, true))
         m_titleLabel.setLabel(UIString(L10N::GetString(IDS_MG03_YOU_CRASHED)), false, false);
+    else
+        m_titleLabel.setLabel(UIString(L10N::GetString(IDS_YOU_DIED)), false, false);
     Minecraft* minecraft = Minecraft::GetInstance();
     Gui* gui = minecraft->mGui;
 
-    if (!Minecraft::InMiniGame(eMiniGameId_Tumble, true) &&
-        !Minecraft::InMiniGame(eMiniGameId_Glide, true))
     {
-        std::wstring deathMessage(gui->mNowPlaying[playerId]);
+        std::wstring deathMessage = !Minecraft::InMiniGame(eMiniGameId_Tumble, true) &&
+                                            !Minecraft::InMiniGame(eMiniGameId_Glide, true)
+                                        ? gui->mNowPlaying[playerId]
+                                        : std::wstring(L"");
         m_deathMessageLabel.setLabel(UIString(deathMessage), false, false);
         m_unknownStateA = false;
         m_unknownStateB = false;
-    }
-    else
-    {
-        std::wstring deathMessage(L"");
-        m_deathMessageLabel.setLabel(UIString(deathMessage), false, false);
-        m_unknownStateB = false;
-        m_unknownStateA = false;
     }
 
     std::wstring extraMessage(L"");
     if (Minecraft::InMiniGame(eMiniGameId_Any, true) &&
-        Minecraft::GetInstance()->GetMiniGame()->GetLivesPerRound() != 0)
+        Minecraft::GetInstance()->GetMiniGame()->GetLivesPerRound() > 0)
     {
         boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[playerId];
         if (!player->isSpectator())
-            extraMessage = gui->mSingleMessages[playerId];
+            extraMessage = std::wstring(gui->mSingleMessages[playerId]);
     }
     m_extraMessageLabel.setLabel(UIString(extraMessage), false, false);
 
-    if (minecraft != NULL && Minecraft::GetInstance()->mGameModes[playerId] != NULL)
+    Minecraft* currentMinecraft = Minecraft::GetInstance();
+    if (minecraft != NULL && currentMinecraft->mGameModes[playerId] != NULL)
     {
         Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[playerId]->getTutorial();
         if (tutorial != NULL)
@@ -101,7 +94,8 @@ UIScene_DeathMenu::~UIScene_DeathMenu()
 
     if (minecraft != NULL && minecraft->mGameModes[m_playerId] != NULL)
     {
-        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[m_playerId]->getTutorial();
+        MultiPlayerGameMode* gameMode = Minecraft::GetInstance()->mGameModes[m_playerId];
+        Tutorial* tutorial = gameMode->getTutorial();
         if (tutorial != NULL)
             tutorial->showTutorialPopup(true);
     }
@@ -109,17 +103,27 @@ UIScene_DeathMenu::~UIScene_DeathMenu()
 
 unsigned int UIScene_DeathMenu::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_respawnButton.setupControl(this, root, std::string("Respawn"));
-    m_controls.push_back(&m_respawnButton);
-    m_exitButton.setupControl(this, root, std::string("ExitGame"));
-    m_controls.push_back(&m_exitButton);
-    m_titleLabel.setupControl(this, root, std::string("Title"));
-    m_controls.push_back(&m_titleLabel);
-    m_deathMessageLabel.setupControl(this, root, std::string("DeathMessage"));
-    m_controls.push_back(&m_deathMessageLabel);
-    m_extraMessageLabel.setupControl(this, root, std::string("ExtraMessage"));
-    m_controls.push_back(&m_extraMessageLabel);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_respawnButton.setupControl(this, currentNode, std::string("Respawn"));
+        m_controls.push_back(&m_respawnButton);
+    }
+    {
+        m_exitButton.setupControl(this, currentNode, std::string("ExitGame"));
+        m_controls.push_back(&m_exitButton);
+    }
+    {
+        m_titleLabel.setupControl(this, currentNode, std::string("Title"));
+        m_controls.push_back(&m_titleLabel);
+    }
+    {
+        m_deathMessageLabel.setupControl(this, currentNode, std::string("DeathMessage"));
+        m_controls.push_back(&m_deathMessageLabel);
+    }
+    {
+        m_extraMessageLabel.setupControl(this, currentNode, std::string("ExtraMessage"));
+        m_controls.push_back(&m_extraMessageLabel);
+    }
     return 1;
 }
 

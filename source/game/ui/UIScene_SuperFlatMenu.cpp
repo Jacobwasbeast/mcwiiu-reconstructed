@@ -68,120 +68,106 @@ UIScene_SuperFlatMenu::~UIScene_SuperFlatMenu()
 unsigned int UIScene_SuperFlatMenu::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
-    fuiRenderNode* root = m_movie->getRootNode();
-
+    fuiRenderNode* currentNode = m_movie->getRootNode();
     {
-        std::string name("LayersTabTitle");
-        m_layers.tab.setupControl(this, root, name);
+        m_layers.tab.setupControl(this, currentNode, std::string("LayersTabTitle"));
+        m_controls.push_back(&m_layers.tab);
     }
-    m_controls.push_back(&m_layers.tab);
     {
-        std::string name("BiomesTabTitle");
-        m_biomes.tab.setupControl(this, root, name);
+        m_biomes.tab.setupControl(this, currentNode, std::string("BiomesTabTitle"));
+        m_controls.push_back(&m_biomes.tab);
     }
-    m_controls.push_back(&m_biomes.tab);
     {
-        std::string name("PropertiesTabTitle");
-        m_properties.tab.setupControl(this, root, name);
+        m_properties.tab.setupControl(this, currentNode, std::string("PropertiesTabTitle"));
+        m_controls.push_back(&m_properties.tab);
     }
-    m_controls.push_back(&m_properties.tab);
-
     {
-        std::string name("Layers");
-        m_layers.panel.setupControl(this, root, name);
+        m_layers.panel.setupControl(this, currentNode, std::string("Layers"));
+        m_controls.push_back(&m_layers.panel);
     }
-    m_controls.push_back(&m_layers.panel);
-    fuiRenderNode* panel = m_layers.panel.getFuiRenderNode();
     {
-        std::string name("LayersList");
-        m_layers.list.setupControl(this, panel, name);
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_layers.panel.getFuiRenderNode();
+        {
+            m_layers.list.setupControl(this, currentNode, std::string("LayersList"));
+            m_controls.push_back(&m_layers.list);
+        }
+        {
+            m_layers.helpTitle.setupControl(this, currentNode, std::string("LayersHelpTitle"));
+            m_controls.push_back(&m_layers.helpTitle);
+        }
+        {
+            m_layers.help.setupControl(this, currentNode, std::string("LayersHelpHtml"));
+            m_controls.push_back(&m_layers.help);
+        }
+        {
+            m_layers.timer.setupControl(this, currentNode, std::string("LayersTimer"));
+            m_controls.push_back(&m_layers.timer);
+        }
+        {
+            m_layersTouch.setupControl(this, currentNode, std::string("TouchTabLayers"));
+            m_controls.push_back(&m_layersTouch);
+        }
+        currentNode = parentNode;
     }
-    m_controls.push_back(&m_layers.list);
     {
-        std::string name("LayersHelpTitle");
-        m_layers.helpTitle.setupControl(this, panel, name);
+        m_biomes.panel.setupControl(this, currentNode, std::string("Biomes"));
+        m_controls.push_back(&m_biomes.panel);
     }
-    m_controls.push_back(&m_layers.helpTitle);
     {
-        std::string name("LayersHelpHtml");
-        m_layers.help.setupControl(this, panel, name);
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_biomes.panel.getFuiRenderNode();
+        {
+            m_biomes.list.setupControl(this, currentNode, std::string("BiomesList"));
+            m_controls.push_back(&m_biomes.list);
+        }
+        {
+            m_biomes.helpTitle.setupControl(this, currentNode, std::string("BiomesHelpTitle"));
+            m_controls.push_back(&m_biomes.helpTitle);
+        }
+        {
+            m_biomes.help.setupControl(this, currentNode, std::string("BiomesHelpHtml"));
+            m_controls.push_back(&m_biomes.help);
+        }
+        {
+            m_biomes.timer.setupControl(this, currentNode, std::string("BiomesTimer"));
+            m_controls.push_back(&m_biomes.timer);
+        }
+        {
+            m_biomesTouch.setupControl(this, currentNode, std::string("TouchTabBiomes"));
+            m_controls.push_back(&m_biomesTouch);
+        }
+        currentNode = parentNode;
     }
-    m_controls.push_back(&m_layers.help);
     {
-        std::string name("LayersTimer");
-        m_layers.timer.setupControl(this, panel, name);
+        m_properties.panel.setupControl(this, currentNode, std::string("Properties"));
+        m_controls.push_back(&m_properties.panel);
     }
-    m_controls.push_back(&m_layers.timer);
     {
-        std::string name("TouchTabLayers");
-        m_layersTouch.setupControl(this, panel, name);
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_properties.panel.getFuiRenderNode();
+        {
+            m_properties.list.setupControl(this, currentNode, std::string("PropertiesList"));
+            m_controls.push_back(&m_properties.list);
+        }
+        {
+            m_properties.helpTitle.setupControl(this, currentNode, std::string("PropertiesHelpTitle"));
+            m_controls.push_back(&m_properties.helpTitle);
+        }
+        {
+            m_properties.help.setupControl(this, currentNode, std::string("PropertiesHelpHtml"));
+            m_controls.push_back(&m_properties.help);
+        }
+        {
+            m_properties.timer.setupControl(this, currentNode, std::string("PropertiesTimer"));
+            m_controls.push_back(&m_properties.timer);
+        }
+        {
+            m_propertiesTouch.setupControl(this, currentNode, std::string("TouchTabProperties"));
+            m_controls.push_back(&m_propertiesTouch);
+        }
+        currentNode = parentNode;
     }
-    m_controls.push_back(&m_layersTouch);
-
-    {
-        std::string name("Biomes");
-        m_biomes.panel.setupControl(this, root, name);
-    }
-    m_controls.push_back(&m_biomes.panel);
-    panel = m_biomes.panel.getFuiRenderNode();
-    {
-        std::string name("BiomesList");
-        m_biomes.list.setupControl(this, panel, name);
-    }
-    m_controls.push_back(&m_biomes.list);
-    {
-        std::string name("BiomesHelpTitle");
-        m_biomes.helpTitle.setupControl(this, panel, name);
-    }
-    m_controls.push_back(&m_biomes.helpTitle);
-    {
-        std::string name("BiomesHelpHtml");
-        m_biomes.help.setupControl(this, panel, name);
-    }
-    m_controls.push_back(&m_biomes.help);
-    {
-        std::string name("BiomesTimer");
-        m_biomes.timer.setupControl(this, panel, name);
-    }
-    m_controls.push_back(&m_biomes.timer);
-    {
-        std::string name("TouchTabBiomes");
-        m_biomesTouch.setupControl(this, panel, name);
-    }
-    m_controls.push_back(&m_biomesTouch);
-
-    {
-        std::string name("Properties");
-        m_properties.panel.setupControl(this, root, name);
-    }
-    m_controls.push_back(&m_properties.panel);
-    panel = m_properties.panel.getFuiRenderNode();
-    {
-        std::string name("PropertiesList");
-        m_properties.list.setupControl(this, panel, name);
-    }
-    m_controls.push_back(&m_properties.list);
-    {
-        std::string name("PropertiesHelpTitle");
-        m_properties.helpTitle.setupControl(this, panel, name);
-    }
-    m_controls.push_back(&m_properties.helpTitle);
-    {
-        std::string name("PropertiesHelpHtml");
-        m_properties.help.setupControl(this, panel, name);
-    }
-    m_controls.push_back(&m_properties.help);
-    {
-        std::string name("PropertiesTimer");
-        m_properties.timer.setupControl(this, panel, name);
-    }
-    m_controls.push_back(&m_properties.timer);
-    {
-        std::string name("TouchTabProperties");
-        m_propertiesTouch.setupControl(this, panel, name);
-    }
-    m_controls.push_back(&m_propertiesTouch);
-
     return 1;
 }
 

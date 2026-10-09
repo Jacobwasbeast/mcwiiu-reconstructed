@@ -21,7 +21,7 @@ void FJ_MobEffect::SetupEffectType(int iEffectType)
 std::wstring FJ_MobEffect::GetFormattedTime(int iDuration)
 {
     int iMinutes = (iDuration % 3600) / 60;
-    int iSeconds = (iDuration % 3600) - iMinutes * 60;
+    int iSeconds = (iDuration % 3600) % 60;
     return _toString(iMinutes) + L":" + (iSeconds < 10 ? L"0" : L"") + _toString(iSeconds);
 }
 
@@ -44,17 +44,17 @@ void FJ_MobEffect::Init(const std::wstring& effectName, int iDuration)
     pPointerTextPanel->getChildAt(0)->setWidth((float)iWidth);
     pPointerTextPanel->getChildAt(0)->setHeight((float)iHeight);
 
-    FJ_FuiNode* pEffectName = getChildByName("EffectName")->asMovieClip();
-    fuiRenderNodeEditText* pEffectNameText = pEffectName->getChildAt(0)->asMovieClip()->getRenderNodeChildAt(0)->asEditText();
-    pEffectNameText->setScaleX(1.0f / pEffectName->getScaleX());
-    pEffectNameText->setScaleY(1.0f / pEffectName->getScaleY());
+    FJ_FuiNode* pTextNode = getChildByName("EffectName")->asMovieClip();
+    fuiRenderNodeEditText* pEffectNameText = pTextNode->getChildAt(0)->asMovieClip()->getRenderNodeChildAt(0)->asEditText();
+    pEffectNameText->setScaleX(1.0f / pTextNode->getScaleX());
+    pEffectNameText->setScaleY(1.0f / pTextNode->getScaleY());
     pEffectNameText->setWidth((float)iWidth);
     pEffectNameText->setText(effectName);
 
-    FJ_FuiNode* pEffectDuration = getChildByName("EffectDuration")->asMovieClip();
-    m_pDurationText = pEffectDuration->getChildAt(0)->asMovieClip()->getRenderNodeChildAt(0)->asEditText();
-    m_pDurationText->setScaleX(1.0f / pEffectDuration->getScaleX());
-    m_pDurationText->setScaleY(1.0f / pEffectDuration->getScaleY());
+    pTextNode = getChildByName("EffectDuration")->asMovieClip();
+    m_pDurationText = pTextNode->getChildAt(0)->asMovieClip()->getRenderNodeChildAt(0)->asEditText();
+    m_pDurationText->setScaleX(1.0f / pTextNode->getScaleX());
+    m_pDurationText->setScaleY(1.0f / pTextNode->getScaleY());
     m_pDurationText->setWidth((float)iWidth);
     m_iDuration = iDuration;
     SetDuration(iDuration);

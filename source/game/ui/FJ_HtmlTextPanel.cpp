@@ -15,7 +15,7 @@ FJ_HtmlTextPanel::FJ_HtmlTextPanel(fuiRenderNode* pRenderNode)
     FJ_FuiNode* textFieldContainer = textContainer->getChildAt(0)->asMovieClip();
     m_textField = static_cast<fuiRenderNodeEditText*>(textFieldContainer->getRenderNodeChildByName(std::string("FJ_TextField")));
     addChild(m_textField);
-    m_textField->setY(textFieldContainer->getY());
+    m_textField->setY(textContainer->getY());
     removeChild(textContainer, true);
 
     m_pointerTextPanel = getChildByName(std::string("PointerTextPanel"))->asMovieClip();
@@ -27,15 +27,15 @@ FJ_HtmlTextPanel::FJ_HtmlTextPanel(fuiRenderNode* pRenderNode)
 void FJ_HtmlTextPanel::SetLabel(const std::wstring& label)
 {
     m_textField->setHTMLText(label);
-    if (!m_fixedWidthEnabled)
-    {
-        m_textField->setAutoSize(TextFieldAutoSizeLeft);
-    }
-    else
+    if (m_fixedWidthEnabled)
     {
         m_textField->setAutoSize(TextFieldAutoSizeCenter);
         m_textField->m_wordWrap = true;
         m_textField->setWidth(static_cast<float>(m_fixedWidth));
+    }
+    else
+    {
+        m_textField->setAutoSize(TextFieldAutoSizeLeft);
     }
 
     if (m_fixedWidthEnabled)
@@ -48,15 +48,12 @@ void FJ_HtmlTextPanel::SetLabel(const std::wstring& label)
     {
         fuiRect charBounds = m_textField->getCharBoundaries(0);
         int charHeight = static_cast<int>(charBounds.yMax - charBounds.yMin);
-        float fCharHeight = static_cast<float>(charHeight);
 
         m_textField->setX(m_pointerTextPanel->getX() + 4.0f);
-
-        FJ_FuiNode* panelWidthNode = m_pointerTextPanel->getChildAt(0);
-        panelWidthNode->setWidth(static_cast<float>(Math::round(fCharHeight * 0.8f + m_textField->getWidth())));
-        m_pointerTextPanel->getChildAt(0)->setHeight(m_textField->getHeight() + fCharHeight);
-        m_textField->setX(static_cast<float>(Math::round(fCharHeight * 0.35f + m_pointerTextPanel->getX())));
-        m_textField->setY(static_cast<float>(Math::round(m_pointerTextPanel->getY() + static_cast<float>(charHeight / 2))));
+        m_pointerTextPanel->getChildAt(0)->setWidth(static_cast<float>(Math::round(m_textField->getWidth() + charHeight * 0.8f)));
+        m_pointerTextPanel->getChildAt(0)->setHeight(m_textField->getHeight() + charHeight);
+        m_textField->setX(static_cast<float>(Math::round(m_pointerTextPanel->getX() + charHeight * 0.35f)));
+        m_textField->setY(static_cast<float>(Math::round(m_pointerTextPanel->getY() + charHeight / 2)));
     }
 }
 

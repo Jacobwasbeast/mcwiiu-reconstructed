@@ -26,62 +26,113 @@ UIComponent_Chat::UIComponent_Chat(int type, void* data, UILayer* layer)
 unsigned int UIComponent_Chat::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_labels[0].setupControl(this, root, "Label1");
-    m_controls.push_back(&m_labels[0]);
-    m_labels[1].setupControl(this, root, "Label2");
-    m_controls.push_back(&m_labels[1]);
-    m_labels[2].setupControl(this, root, "Label3");
-    m_controls.push_back(&m_labels[2]);
-    m_labels[3].setupControl(this, root, "Label4");
-    m_controls.push_back(&m_labels[3]);
-    m_labels[4].setupControl(this, root, "Label5");
-    m_controls.push_back(&m_labels[4]);
-    m_labels[5].setupControl(this, root, "Label6");
-    m_controls.push_back(&m_labels[5]);
-    m_labels[6].setupControl(this, root, "Label7");
-    m_controls.push_back(&m_labels[6]);
-    m_labels[7].setupControl(this, root, "Label8");
-    m_controls.push_back(&m_labels[7]);
-    m_labels[8].setupControl(this, root, "Label9");
-    m_controls.push_back(&m_labels[8]);
-    m_labels[9].setupControl(this, root, "Label10");
-    m_controls.push_back(&m_labels[9]);
-    m_backgrounds[0].setupControl(this, root, "Label1Background");
-    m_controls.push_back(&m_backgrounds[0]);
-    m_backgrounds[1].setupControl(this, root, "Label2Background");
-    m_controls.push_back(&m_backgrounds[1]);
-    m_backgrounds[2].setupControl(this, root, "Label3Background");
-    m_controls.push_back(&m_backgrounds[2]);
-    m_backgrounds[3].setupControl(this, root, "Label4Background");
-    m_controls.push_back(&m_backgrounds[3]);
-    m_backgrounds[4].setupControl(this, root, "Label5Background");
-    m_controls.push_back(&m_backgrounds[4]);
-    m_backgrounds[5].setupControl(this, root, "Label6Background");
-    m_controls.push_back(&m_backgrounds[5]);
-    m_backgrounds[6].setupControl(this, root, "Label7Background");
-    m_controls.push_back(&m_backgrounds[6]);
-    m_backgrounds[7].setupControl(this, root, "Label8Background");
-    m_controls.push_back(&m_backgrounds[7]);
-    m_backgrounds[8].setupControl(this, root, "Label9Background");
-    m_controls.push_back(&m_backgrounds[8]);
-    m_backgrounds[9].setupControl(this, root, "Label10Background");
-    m_controls.push_back(&m_backgrounds[9]);
-    m_chatLabel.setupControl(this, root, "Jukebox");
-    m_controls.push_back(&m_chatLabel);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_labels[0].setupControl(this, currentNode, std::string("Label1"));
+        m_controls.push_back(&m_labels[0]);
+    }
+    {
+        m_labels[1].setupControl(this, currentNode, std::string("Label2"));
+        m_controls.push_back(&m_labels[1]);
+    }
+    {
+        m_labels[2].setupControl(this, currentNode, std::string("Label3"));
+        m_controls.push_back(&m_labels[2]);
+    }
+    {
+        m_labels[3].setupControl(this, currentNode, std::string("Label4"));
+        m_controls.push_back(&m_labels[3]);
+    }
+    {
+        m_labels[4].setupControl(this, currentNode, std::string("Label5"));
+        m_controls.push_back(&m_labels[4]);
+    }
+    {
+        m_labels[5].setupControl(this, currentNode, std::string("Label6"));
+        m_controls.push_back(&m_labels[5]);
+    }
+    {
+        m_labels[6].setupControl(this, currentNode, std::string("Label7"));
+        m_controls.push_back(&m_labels[6]);
+    }
+    {
+        m_labels[7].setupControl(this, currentNode, std::string("Label8"));
+        m_controls.push_back(&m_labels[7]);
+    }
+    {
+        m_labels[8].setupControl(this, currentNode, std::string("Label9"));
+        m_controls.push_back(&m_labels[8]);
+    }
+    {
+        m_labels[9].setupControl(this, currentNode, std::string("Label10"));
+        m_controls.push_back(&m_labels[9]);
+    }
+    {
+        m_backgrounds[0].setupControl(this, currentNode, std::string("Label1Background"));
+        m_controls.push_back(&m_backgrounds[0]);
+    }
+    {
+        m_backgrounds[1].setupControl(this, currentNode, std::string("Label2Background"));
+        m_controls.push_back(&m_backgrounds[1]);
+    }
+    {
+        m_backgrounds[2].setupControl(this, currentNode, std::string("Label3Background"));
+        m_controls.push_back(&m_backgrounds[2]);
+    }
+    {
+        m_backgrounds[3].setupControl(this, currentNode, std::string("Label4Background"));
+        m_controls.push_back(&m_backgrounds[3]);
+    }
+    {
+        m_backgrounds[4].setupControl(this, currentNode, std::string("Label5Background"));
+        m_controls.push_back(&m_backgrounds[4]);
+    }
+    {
+        m_backgrounds[5].setupControl(this, currentNode, std::string("Label6Background"));
+        m_controls.push_back(&m_backgrounds[5]);
+    }
+    {
+        m_backgrounds[6].setupControl(this, currentNode, std::string("Label7Background"));
+        m_controls.push_back(&m_backgrounds[6]);
+    }
+    {
+        m_backgrounds[7].setupControl(this, currentNode, std::string("Label8Background"));
+        m_controls.push_back(&m_backgrounds[7]);
+    }
+    {
+        m_backgrounds[8].setupControl(this, currentNode, std::string("Label9Background"));
+        m_controls.push_back(&m_backgrounds[8]);
+    }
+    {
+        m_backgrounds[9].setupControl(this, currentNode, std::string("Label10Background"));
+        m_controls.push_back(&m_backgrounds[9]);
+    }
+    {
+        m_chatLabel.setupControl(this, currentNode, std::string("Jukebox"));
+        m_controls.push_back(&m_chatLabel);
+    }
     return 1;
 }
 
 std::wstring UIComponent_Chat::getMoviePath()
 {
-    unsigned int viewport = m_layer->getViewport();
-    if (viewport == C4JRender::eViewportType_FullScreen || viewport > C4JRender::eViewportType_BottomRightQuarter)
+    C4JRender::eViewportType viewport = m_layer->getViewport();
+    switch (viewport)
     {
+    case C4JRender::eViewportType_TopHalf:
+    case C4JRender::eViewportType_BottomHalf:
+    case C4JRender::eViewportType_LeftHalf:
+    case C4JRender::eViewportType_RightHalf:
+    case C4JRender::eViewportType_TopLeftQuarter:
+    case C4JRender::eViewportType_TopRightQuarter:
+    case C4JRender::eViewportType_BottomLeftQuarter:
+    case C4JRender::eViewportType_BottomRightQuarter:
+        m_splitScreen = true;
+        return L"ComponentChatSplit";
+    default:
         m_splitScreen = false;
         return L"ComponentChat";
     }
-    m_splitScreen = true;
-    return L"ComponentChatSplit";
 }
 
 void UIComponent_Chat::render(int width, int height, C4JRender::eViewportType viewport)
@@ -140,18 +191,7 @@ void UIComponent_Chat::render(int width, int height, C4JRender::eViewportType vi
 void UIComponent_Chat::handleTimerComplete(int timerId)
 {
     Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mLocalPlayers[m_playerId].get() == NULL)
-    {
-        for (int i = 0; i < 10; ++i)
-        {
-            m_backgrounds[i].setOpacity(0.0f);
-            m_labels[i].setOpacity(0.0f);
-            m_labels[i].setLabel(UIString(L""), false, false);
-        }
-        m_chatLabel.setOpacity(0.0f);
-        setVisible(false);
-    }
-    else
+    if (minecraft->mLocalPlayers[m_playerId].get() != NULL)
     {
         Gui* gui = minecraft->mGui;
         bool visible = false;
@@ -181,6 +221,17 @@ void UIComponent_Chat::handleTimerComplete(int timerId)
             m_chatLabel.setLabel(UIString(nowPlaying), false, false);
         }
         setVisible(visible);
+    }
+    else
+    {
+        for (int i = 0; i < 10; ++i)
+        {
+            m_backgrounds[i].setOpacity(0.0f);
+            m_labels[i].setOpacity(0.0f);
+            m_labels[i].setLabel(UIString(L""), false, false);
+        }
+        m_chatLabel.setOpacity(0.0f);
+        setVisible(false);
     }
 }
 

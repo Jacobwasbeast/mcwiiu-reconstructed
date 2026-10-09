@@ -82,56 +82,64 @@ std::wstring UIScene_GameModeScoreboardMenu::getMoviePath()
 
 unsigned int UIScene_GameModeScoreboardMenu::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
+    fuiRenderNode* currentNode = m_movie->getRootNode();
     {
-        m_awardPanel.setupControl(this, root, std::string("PanelAward"));
+        m_awardPanel.setupControl(this, currentNode, std::string("PanelAward"));
         m_controls.push_back(&m_awardPanel);
     }
-    fuiRenderNode* panel = m_awardPanel.getFuiRenderNode();
     {
-        m_stat1Label.setupControl(this, panel, std::string("Stat1Label"));
-        m_controls.push_back(&m_stat1Label);
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_awardPanel.getFuiRenderNode();
+        {
+            m_stat1Label.setupControl(this, currentNode, std::string("Stat1Label"));
+            m_controls.push_back(&m_stat1Label);
+        }
+        {
+            m_stat2Label.setupControl(this, currentNode, std::string("Stat2Label"));
+            m_controls.push_back(&m_stat2Label);
+        }
+        {
+            m_stat3Label.setupControl(this, currentNode, std::string("Stat3Label"));
+            m_controls.push_back(&m_stat3Label);
+        }
+        {
+            m_stat4Label.setupControl(this, currentNode, std::string("Stat4Label"));
+            m_controls.push_back(&m_stat4Label);
+        }
+        {
+            m_gamertagLabel.setupControl(this, currentNode, std::string("Stat5Label"));
+            m_controls.push_back(&m_gamertagLabel);
+        }
+        {
+            m_killBar.setupControl(this, currentNode, std::string("KillBar"));
+            m_controls.push_back(&m_killBar);
+        }
+        {
+            m_stat5Label.setupControl(this, currentNode, std::string("KilledByLabel"));
+            m_controls.push_back(&m_stat5Label);
+        }
+        {
+            m_killedByLabel.setupControl(this, currentNode, std::string("GamertagLabel"));
+            m_controls.push_back(&m_killedByLabel);
+        }
+        currentNode = parentNode;
     }
     {
-        m_stat2Label.setupControl(this, panel, std::string("Stat2Label"));
-        m_controls.push_back(&m_stat2Label);
-    }
-    {
-        m_stat3Label.setupControl(this, panel, std::string("Stat3Label"));
-        m_controls.push_back(&m_stat3Label);
-    }
-    {
-        m_stat4Label.setupControl(this, panel, std::string("Stat4Label"));
-        m_controls.push_back(&m_stat4Label);
-    }
-    {
-        m_stat5Label.setupControl(this, panel, std::string("Stat5Label"));
-        m_controls.push_back(&m_stat5Label);
-    }
-    {
-        m_killBar.setupControl(this, panel, std::string("KillBar"));
-        m_controls.push_back(&m_killBar);
-    }
-    {
-        m_killedByLabel.setupControl(this, panel, std::string("KilledByLabel"));
-        m_controls.push_back(&m_killedByLabel);
-    }
-    {
-        m_gamertagLabel.setupControl(this, panel, std::string("GamertagLabel"));
-        m_controls.push_back(&m_gamertagLabel);
-    }
-    {
-        m_mainPanel.setupControl(this, root, std::string("PanelScoreboard"));
+        m_mainPanel.setupControl(this, currentNode, std::string("PanelScoreboard"));
         m_controls.push_back(&m_mainPanel);
     }
-    panel = m_mainPanel.getFuiRenderNode();
     {
-        m_playerTitleLabel.setupControl(this, panel, std::string("PlayerTitle"));
-        m_controls.push_back(&m_playerTitleLabel);
-    }
-    {
-        m_playerList.setupControl(this, panel, std::string("Scoreboard"));
-        m_controls.push_back(&m_playerList);
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_mainPanel.getFuiRenderNode();
+        {
+            m_playerTitleLabel.setupControl(this, currentNode, std::string("PlayerTitle"));
+            m_controls.push_back(&m_playerTitleLabel);
+        }
+        {
+            m_playerList.setupControl(this, currentNode, std::string("Scoreboard"));
+            m_controls.push_back(&m_playerList);
+        }
+        currentNode = parentNode;
     }
     return 1;
 }
@@ -331,8 +339,8 @@ void UIScene_GameModeScoreboardMenu::tick()
         else
         {
             int rounds = Minecraft::GetInstance()->GetMiniGame()->GetRoundCount();
-            int totalRoundLength = 0;
-            int totalLifeSpan = 0;
+            unsigned int totalRoundLength = 0;
+            unsigned int totalLifeSpan = 0;
             unsigned int roundsSurvived = 0;
             for (int round = 0; round < rounds; ++round)
             {

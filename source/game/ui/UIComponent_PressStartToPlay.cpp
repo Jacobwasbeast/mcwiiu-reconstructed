@@ -35,12 +35,6 @@ struct AvatarRequest
 };
 }
 
-UIComponent_PressStartToPlay::Toast::Toast(const Toast& other)
-    : title(other.title), description(other.description), gamerPic(other.gamerPic),
-      achievementIcon(other.achievementIcon)
-{
-}
-
 UIComponent_PressStartToPlay::UIComponent_PressStartToPlay(int type, void* data, UILayer* layer)
     : UIScene(type, layer)
 {
@@ -54,12 +48,12 @@ UIComponent_PressStartToPlay::UIComponent_PressStartToPlay(int type, void* data,
     m_autosaveTimer = L"";
     m_trialTimerLabel.init(UIString(L""));
     m_trialTimerLabel.setVisible(false);
-    m_achievementToastShowing = false;
-    m_achievement = 0;
     m_player = 0;
+    m_achievement = 0;
     m_holdToShowAchievements = false;
     m_holdActionCancelled = false;
     m_holdCancelPending = false;
+    m_achievementToastShowing = false;
     SetText(UIString(L10N::GetString(IDS_PRESS_START_TO_JOIN)), false);
     m_saveIcon.setVisible(false);
     m_playerNameLabel.init(UIString(L""));
@@ -159,10 +153,10 @@ void UIComponent_PressStartToPlay::showPlayerDisplayName(bool show)
 
 void UIComponent_PressStartToPlay::SetText(UIString text, bool multiLine)
 {
-    if (multiLine)
-        static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())->SetMultiLineText(text.getString());
-    else
+    if (!multiLine)
         static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())->SetText(text.getString());
+    else
+        static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())->SetMultiLineText(text.getString());
 }
 
 void UIComponent_PressStartToPlay::showPressStart(int player, bool show)
@@ -172,10 +166,10 @@ void UIComponent_PressStartToPlay::showPressStart(int player, bool show)
     m_showPressStart[player] = show;
     if (!gConsoleUIController.IsExpectingOrReloadingSkin() && hasMovie())
     {
-        if (!gApp.IsDrcPreventingSplitscreen())
-            SetText(UIString(L10N::GetString(IDS_PRESS_START_TO_JOIN)), false);
-        else
+        if (gApp.IsDrcPreventingSplitscreen())
             SetText(UIString(L10N::GetString(0x9a0686fb)), true);
+        else
+            SetText(UIString(L10N::GetString(IDS_PRESS_START_TO_JOIN)), false);
         m_mainPanel.setVisible(show);
         if (show)
         {
@@ -226,7 +220,7 @@ int UIComponent_PressStartToPlay::AvatarReturned(void* context, unsigned char* d
         std::wstring text = L10N::GetString(0x4523129e);
         std::wstring description = gApp.FormatHTMLString(
             player, replaceAll(text, L"{*CONTROLLER_VK_X*}", L"{*CONTROLLER_VK_Y*}"), -1);
-        Toast toast(title, description, texture, info->icon);
+        Toast toast = { title, description, texture, info->icon };
         if (!scene->m_achievementToastShowing)
             scene->ShowAchievementToast(toast);
         else
@@ -255,14 +249,22 @@ unsigned int UIComponent_PressStartToPlay::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
-    m_trialTimerLabel.setupControl(this, root, "TrialTimer");
-    m_controls.push_back(&m_trialTimerLabel);
-    m_saveIcon.setupControl(this, root, "SaveIcon");
-    m_controls.push_back(&m_saveIcon);
-    m_playerNameLabel.setupControl(this, root, "PlayerName");
-    m_controls.push_back(&m_playerNameLabel);
-    m_mainPanel.setupControl(this, root, "MainPanel");
-    m_controls.push_back(&m_mainPanel);
+    {
+        m_trialTimerLabel.setupControl(this, root, std::string("TrialTimer"));
+        m_controls.push_back(&m_trialTimerLabel);
+    }
+    {
+        m_saveIcon.setupControl(this, root, std::string("SaveIcon"));
+        m_controls.push_back(&m_saveIcon);
+    }
+    {
+        m_playerNameLabel.setupControl(this, root, std::string("PlayerName"));
+        m_controls.push_back(&m_playerNameLabel);
+    }
+    {
+        m_mainPanel.setupControl(this, root, std::string("MainPanel"));
+        m_controls.push_back(&m_mainPanel);
+    }
     return 1;
 }
 
@@ -300,15 +302,16 @@ void UIComponent_PressStartToPlay::HideAchievementToast()
     static_cast<FJ_PressStartToPlay*>(m_movie->getRootNode()->getFuiNode())->HideAchievementToast();
     if (!m_achievementToasts.empty())
     {
-        ShowAchievementToast(m_achievementToasts.front());
-        m_achievementToasts.erase(m_achievementToasts.begin());
+        std::vector<Toast>::iterator it = m_achievementToasts.begin();
+        ShowAchievementToast(*it);
+        m_achievementToasts.erase(it);
     }
 }
 
 void UIComponent_PressStartToPlay::ShowAchievementMenu()
 {
-    m_achievementToastShowing = false;
     m_holdToShowAchievements = false;
+    m_achievementToastShowing = false;
     if (gApp.GetGameStarted() != 0)
         gConsoleUIController.CloseAllPlayersScenes(false);
     gConsoleUIController.NavigateToScene(m_player, EUIScene_AchievementsMenu,

@@ -1,6 +1,7 @@
 #include "game/ui/IUIScene_AbstractContainerMenu.hpp"
 #include "game/core/StringIds.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 #include "game/client/render/Renderer.hpp"
@@ -46,14 +47,14 @@ static const int s_toolTipStringIds[] = {
 IUIScene_AbstractContainerMenu::IUIScene_AbstractContainerMenu()
 {
     m_menu = NULL;
-    m_takeAllEnabled = false;
-    m_quickCraftDisabled = false;
-    m_pointerPos.x = 0.0f;
-    m_pointerLabelSlot = NULL;
-    m_pointerPos.y = 0.0f;
     m_autoDeleteMenu = false;
+    m_pointerLabelSlot = NULL;
+    m_pointerPos.x = 0.0f;
     m_previousTutorialState = eTutorial_State_Gameplay;
+    m_takeAllEnabled = false;
+    m_pointerPos.y = 0.0f;
     m_smallInventory = false;
+    m_quickCraftDisabled = false;
 }
 
 IUIScene_AbstractContainerMenu::~IUIScene_AbstractContainerMenu()
@@ -83,8 +84,8 @@ int IUIScene_AbstractContainerMenu::GetSectionDimensions(ESceneSection section, 
         *columns = 0;
         return 0;
     }
-    *rows = (int)getSectionRows(section);
-    *columns = (int)getSectionColumns(section);
+    *rows = getSectionRows(section);
+    *columns = getSectionColumns(section);
     return *rows * *columns;
 }
 
@@ -213,7 +214,7 @@ std::vector<HtmlString>* IUIScene_AbstractContainerMenu::GetItemDescription(Slot
 
     boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[getPad()];
     std::vector<HtmlString>* description = slot->getItem()->getTooltipLines(player, false);
-    if (description->size() != 0)
+    if (!description->empty())
     {
         description->at(0).mColour = slot->getItem()->getRarity()->colour;
         if (slot->getItem()->hasCustomHoverName())
@@ -225,37 +226,27 @@ std::vector<HtmlString>* IUIScene_AbstractContainerMenu::GetItemDescription(Slot
 bool IUIScene_AbstractContainerMenu::IsSameItemAs(not_null_ptr<ItemInstance> first,
                                                   not_null_ptr<ItemInstance> second)
 {
-    if (!first->isEmpty() && !second->isEmpty())
-    {
-        bool same = false;
-        if (first->getItem() == second->getItem())
-        {
-            if (second->isStackedByData() && second->getAuxValue() != first->getAuxValue())
-                return false;
-            if (ItemInstance::tagMatches(second, first))
-                same = true;
-        }
-        return same;
-    }
-    return false;
+    if (first->isEmpty() || second->isEmpty())
+        return false;
+
+    return first->getItem() == second->getItem() &&
+           (!second->isStackedByData() || second->getAuxValue() == first->getAuxValue()) &&
+           ItemInstance::tagMatches(second, first);
 }
 
 int IUIScene_AbstractContainerMenu::GetEmptyStackSpace(Slot* slot)
 {
-    if (slot == NULL || !slot->hasItem())
-        return 0;
-
-    not_null_ptr<ItemInstance> item = slot->getItem();
-    if (!item->isStackable())
-        return 0;
-
-    int count = item->getCount();
-    int maxStackSize = item->getMaxStackSize();
-    int slotMaxStackSize = slot->getMaxStackSize();
-    if (slotMaxStackSize < maxStackSize)
-        maxStackSize = slotMaxStackSize;
-    int space = maxStackSize - count;
-    return space < 0 ? 0 : space;
+    if (slot != NULL && slot->hasItem())
+    {
+        not_null_ptr<ItemInstance> item = slot->getItem();
+        if (item->isStackable())
+        {
+            int count = item->getCount();
+            int space = std::min(item->getMaxStackSize(), slot->getMaxStackSize()) - count;
+            return std::max(space, 0);
+        }
+    }
+    return 0;
 }
 
 void IUIScene_AbstractContainerMenu::recalculateQuickCraftRemaining()
@@ -307,10 +298,9 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
         }
     }
 
+    _UIVec2D newPointerPos = m_pointerPos;
     float pointerX = m_pointerPos.x + m_pointerImageOffset.x;
     float pointerY = m_pointerPos.y + m_pointerImageOffset.y;
-    float newPointerX = m_pointerPos.x;
-    float newPointerY = m_pointerPos.y;
 
     int pad = getPad();
     bool pointerMoved = false;
@@ -467,53 +457,58 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
     }
     else if (!pointerMoved)
     {
+        int targetSlotX;
+        int targetSlotY;
         int columns;
         int rows;
         switch (m_tapState)
         {
         case ETapState_Up:
-            slotX = m_currentSlotX;
-            slotY = m_currentSlotY - 1;
+            targetSlotX = m_currentSlotX;
+            targetSlotY = m_currentSlotY - 1;
             break;
         case ETapState_Down:
-            slotX = m_currentSlotX;
-            slotY = m_currentSlotY + 1;
+            targetSlotX = m_currentSlotX;
+            targetSlotY = m_currentSlotY + 1;
             break;
         case ETapState_Left:
-            slotX = m_currentSlotX - 1;
-            slotY = m_currentSlotY;
+            targetSlotX = m_currentSlotX - 1;
+            targetSlotY = m_currentSlotY;
             break;
         case ETapState_Right:
-            slotX = m_currentSlotX + 1;
-            slotY = m_currentSlotY;
+            targetSlotX = m_currentSlotX + 1;
+            targetSlotY = m_currentSlotY;
             break;
         case ETapState_NoMove:
-            slotX = m_currentSlotX;
-            slotY = m_currentSlotY;
+            targetSlotX = m_currentSlotX;
+            targetSlotY = m_currentSlotY;
             break;
         default:
-            slotX = -1;
-            slotY = -1;
+            targetSlotX = -1;
+            targetSlotY = -1;
             break;
         }
         GetSectionDimensions(section, &columns, &rows);
 
         if (m_tapState != ETapState_Cancelled && m_tapState != ETapState_None &&
-            (!IsSectionSlotList(section) || slotX < 0 || slotX >= columns || slotY < 0 || slotY >= rows))
+            (!IsSectionSlotList(section) || targetSlotX < 0 || targetSlotX >= columns || targetSlotY < 0 ||
+             targetSlotY >= rows))
         {
-            section = static_cast<ESceneSection>(GetSectionAndSlotInDirection(section, m_tapState, &slotX, &slotY));
+            section = static_cast<ESceneSection>(
+                GetSectionAndSlotInDirection(section, m_tapState, &targetSlotX, &targetSlotY));
             if (!IsSectionSlotList(section))
                 onSlot = false;
             GetSectionDimensions(section, &columns, &rows);
         }
 
-        if (!IsSectionSlotList(section) || (slotX >= 0 && slotX < columns && slotY >= 0 && slotY < rows))
+        if (!IsSectionSlotList(section) ||
+            (targetSlotX >= 0 && targetSlotX < columns && targetSlotY >= 0 && targetSlotY < rows))
         {
             _UIVec2D sectionPos;
             _UIVec2D itemPos;
             _UIVec2D itemSize;
             GetPositionOfSection(section, &sectionPos);
-            slotIndex = slotY * columns + slotX;
+            slotIndex = targetSlotY * columns + targetSlotX;
             GetItemScreenData(section, slotIndex, &itemPos, &itemSize);
             if (IsSectionSlotList(section))
             {
@@ -523,8 +518,8 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
             snapPos.x = itemSize.x * 0.5f + itemPos.x;
             snapPos.y = itemSize.y * 0.5f + itemPos.y;
             m_currentSection = section;
-            m_currentSlotX = slotX;
-            m_currentSlotY = slotY;
+            m_currentSlotX = targetSlotX;
+            m_currentSlotY = targetSlotY;
         }
 
         m_tapState = ETapState_None;
@@ -536,22 +531,21 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
     }
 
     if (pointerX < m_pointerMinX)
-        newPointerX = m_pointerMinX;
+        pointerX = m_pointerMinX;
     else if (pointerX > m_pointerMaxX)
-        newPointerX = m_pointerMaxX;
-    else
-        newPointerX = pointerX;
+        pointerX = m_pointerMaxX;
+    newPointerPos.x = pointerX;
     if (pointerY < m_pointerMinY)
-        newPointerY = m_pointerMinY;
+        pointerY = m_pointerMinY;
     else if (pointerY > m_pointerMaxY)
-        newPointerY = m_pointerMaxY;
-    else
-        newPointerY = pointerY;
+        pointerY = m_pointerMaxY;
+    newPointerPos.y = pointerY;
 
-    bool pointerOutsideMenu = newPointerX < m_panelMinX || newPointerX > m_panelMaxX ||
-                              newPointerY < m_panelMinY || newPointerY > m_panelMaxY;
+    bool pointerOutsideMenu = false;
+    if (pointerX < m_panelMinX || pointerX > m_panelMaxX || pointerY < m_panelMinY || pointerY > m_panelMaxY)
+        pointerOutsideMenu = true;
 
-    boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mLocalPlayers[getPad()];
+    boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[getPad()];
     not_null_ptr<ItemInstance> carried = ItemInstance::EMPTY;
     if (player.get() != NULL)
         carried = player->mInventory->getCarried();
@@ -592,20 +586,9 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
             {
                 carriedSameAsSlot = IsSameItemAs(carried, slotItem);
                 canCombine = m_menu->mayCombine(slot, carried);
-                if (canCombine)
-                {
-                    Item* item = slot->getItem()->getItem();
-                    if (item != NULL && dynamic_cast<ArmorItem*>(item) != NULL)
-                    {
-                        slotItemIsWearable = true;
-                    }
-                    else
-                    {
-                        item = slot->getItem()->getItem();
-                        if (item != NULL && dynamic_cast<ShulkerBoxBlockItem*>(item) != NULL)
-                            slotItemIsWearable = true;
-                    }
-                }
+                slotItemIsWearable =
+                    canCombine && (dynamic_cast<ArmorItem*>(slot->getItem()->getItem()) != NULL ||
+                                   dynamic_cast<ShulkerBoxBlockItem*>(slot->getItem()->getItem()) != NULL);
                 if (carriedSameAsSlot)
                     slotSpace = GetEmptyStackSpace(m_menu->getSlot(slotId));
             }
@@ -613,10 +596,10 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
         if (carriedIsItem)
         {
             mayPlace = slot->mayPlace(carried);
-            if (!slotIsItem)
-                slotSpace = slot->getMaxStackSize();
-            else
+            if (slotIsItem)
                 slotSpace = GetEmptyStackSpace(slot);
+            else
+                slotSpace = slot->getMaxStackSize();
             if (mayPlace && slotSpace > 0)
             {
                 canPlaceOne = true;
@@ -633,17 +616,17 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
         m_pointerLabelSlot = slot;
         delete description;
     }
-    else if (section == ESceneSection_None || IsSectionSlotList(section))
-    {
-        SetPointerText(NULL, false);
-        m_pointerLabelSlot = NULL;
-    }
-    else
+    else if (section != ESceneSection_None && !IsSectionSlotList(section))
     {
         std::vector<HtmlString>* description = GetSectionHoverText(section);
         SetPointerText(description, false);
         m_pointerLabelSlot = NULL;
         delete description;
+    }
+    else
+    {
+        SetPointerText(NULL, false);
+        m_pointerLabelSlot = NULL;
     }
 
     EToolTipItem toolTip0 = eToolTipNone;
@@ -766,70 +749,71 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
         if (section == ESceneSection_InventoryHotbar || section == ESceneSection_InventoryInventory)
         {
             not_null_ptr<ItemInstance> item = getSlotItem(section, slotIndex);
-            int armorType = ArmorRecipes::GetArmorType(item->getItem());
-            if (armorType == 0)
+            switch (ArmorRecipes::GetArmorType(item->getItem()))
+            {
+            case 0:
             {
                 const EquipmentSlot* equipmentSlot = Mob::getEquipmentSlotForItem(item);
-                if (equipmentSlot->getType() == EquipmentSlot::ARMOR &&
-                    isSlotEmpty(ESceneSection_InventoryArmor, 0))
-                {
+                if (equipmentSlot->getType() == EquipmentSlot::ARMOR && isSlotEmpty(ESceneSection_InventoryArmor, 0))
                     toolTip3 = eToolTipEquip;
-                }
                 else
-                {
                     toolTip3 = eToolTipQuickMove;
-                }
+                break;
             }
-            else
-            {
-                bool armorSlotEmpty = false;
-                if (armorType == 1)
-                    armorSlotEmpty = isSlotEmpty(ESceneSection_InventoryArmor, 0);
-                else if (armorType == 2)
-                    armorSlotEmpty = isSlotEmpty(ESceneSection_InventoryArmor, 1);
-                else if (armorType == 3)
-                    armorSlotEmpty = isSlotEmpty(ESceneSection_InventoryArmor, 2);
-                else if (armorType == 4)
-                    armorSlotEmpty = isSlotEmpty(ESceneSection_InventoryArmor, 3);
-                toolTip3 = armorSlotEmpty ? eToolTipEquip : eToolTipQuickMove;
+            case 1:
+                toolTip3 = isSlotEmpty(ESceneSection_InventoryArmor, 0) ? eToolTipEquip : eToolTipQuickMove;
+                break;
+            case 2:
+                toolTip3 = isSlotEmpty(ESceneSection_InventoryArmor, 1) ? eToolTipEquip : eToolTipQuickMove;
+                break;
+            case 3:
+                toolTip3 = isSlotEmpty(ESceneSection_InventoryArmor, 2) ? eToolTipEquip : eToolTipQuickMove;
+                break;
+            case 4:
+                toolTip3 = isSlotEmpty(ESceneSection_InventoryArmor, 3) ? eToolTipEquip : eToolTipQuickMove;
+                break;
+            default:
+                toolTip3 = eToolTipQuickMove;
+                break;
             }
         }
         else if (section == ESceneSection_FurnaceHotbar || section == ESceneSection_FurnaceInventory)
         {
             not_null_ptr<ItemInstance> item = getSlotItem(section, slotIndex);
             bool isFuel = FurnaceBlockEntity::isFuel(item);
-            if (FurnaceRecipes::getInstance()->getResult(item)->isEmpty())
+            bool canSmelt = !FurnaceRecipes::getInstance()->getResult(item)->isEmpty();
+            if (canSmelt)
             {
-                if (!isFuel)
-                {
-                    toolTip3 = eToolTipQuickMove;
-                }
-                else if (!isSlotEmpty(ESceneSection_FurnaceFuel, 0))
-                {
-                    not_null_ptr<ItemInstance> fuel = getSlotItem(ESceneSection_FurnaceFuel, 0);
-                    toolTip3 = fuel->getItem() == item->getItem() ? eToolTipQuickMoveFuel : eToolTipQuickMove;
-                }
-                else
-                {
-                    toolTip3 = eToolTipQuickMoveFuel;
-                }
-            }
-            else if (isSlotEmpty(ESceneSection_FurnaceIngredient, 0))
-            {
-                toolTip3 = eToolTipQuickMoveIngredient;
-            }
-            else
-            {
-                not_null_ptr<ItemInstance> ingredient = getSlotItem(ESceneSection_FurnaceIngredient, 0);
-                if (ingredient->getItem() == item->getItem() ||
-                    !FurnaceRecipes::getInstance()->getResult(item)->isEmpty())
+                if (isSlotEmpty(ESceneSection_FurnaceIngredient, 0))
                 {
                     toolTip3 = eToolTipQuickMoveIngredient;
                 }
                 else
                 {
-                    toolTip3 = eToolTipQuickMove;
+                    not_null_ptr<ItemInstance> ingredient = getSlotItem(ESceneSection_FurnaceIngredient, 0);
+                    if (ingredient->getItem() == item->getItem() ||
+                        !FurnaceRecipes::getInstance()->getResult(item)->isEmpty())
+                    {
+                        toolTip3 = eToolTipQuickMoveIngredient;
+                    }
+                    else
+                    {
+                        toolTip3 = eToolTipQuickMove;
+                    }
                 }
+            }
+            else if (!isFuel)
+            {
+                toolTip3 = eToolTipQuickMove;
+            }
+            else if (!isSlotEmpty(ESceneSection_FurnaceFuel, 0))
+            {
+                not_null_ptr<ItemInstance> fuel = getSlotItem(ESceneSection_FurnaceFuel, 0);
+                toolTip3 = fuel->getItem() == item->getItem() ? eToolTipQuickMoveFuel : eToolTipQuickMove;
+            }
+            else
+            {
+                toolTip3 = eToolTipQuickMoveFuel;
             }
         }
         else if (section == ESceneSection_BrewingHotbar || section == ESceneSection_BrewingInventory)
@@ -840,38 +824,38 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
             bool isBottle = item->getItem() == Items::potion || item->getItem() == Items::splashPotion ||
                             item->getItem() == Items::lingeringPotion ||
                             item->getItem() == Items::glassBottle;
-            if (!isIngredient)
+            if (isIngredient)
             {
-                if (!isBottle)
-                {
-                    toolTip3 = eToolTipQuickMove;
-                }
-                else if (isSlotEmpty(ESceneSection_BrewingBottle1, 0) || isSlotEmpty(ESceneSection_BrewingBottle2, 0) ||
-                         isSlotEmpty(ESceneSection_BrewingBottle3, 0))
+                if (isSlotEmpty(ESceneSection_BrewingIngredient, 0))
                 {
                     toolTip3 = eToolTipQuickMoveIngredient;
                 }
+                else if (notBlazePowder)
+                {
+                    toolTip3 = eToolTipQuickMove;
+                }
+                else if (isSlotEmpty(ESceneSection_BrewingFuel, 0))
+                {
+                    toolTip3 = eToolTipQuickMoveFuel;
+                }
                 else
                 {
-                    toolTip3 = eToolTipNone;
+                    not_null_ptr<ItemInstance> fuel = getSlotItem(ESceneSection_BrewingFuel, 0);
+                    toolTip3 = fuel->getCount() < fuel->getMaxStackSize() ? eToolTipQuickMoveFuel : eToolTipNone;
                 }
             }
-            else if (isSlotEmpty(ESceneSection_BrewingIngredient, 0))
-            {
-                toolTip3 = eToolTipQuickMoveIngredient;
-            }
-            else if (notBlazePowder)
+            else if (!isBottle)
             {
                 toolTip3 = eToolTipQuickMove;
             }
-            else if (isSlotEmpty(ESceneSection_BrewingFuel, 0))
+            else if (isSlotEmpty(ESceneSection_BrewingBottle1, 0) || isSlotEmpty(ESceneSection_BrewingBottle2, 0) ||
+                     isSlotEmpty(ESceneSection_BrewingBottle3, 0))
             {
-                toolTip3 = eToolTipQuickMoveFuel;
+                toolTip3 = eToolTipQuickMoveIngredient;
             }
             else
             {
-                not_null_ptr<ItemInstance> fuel = getSlotItem(ESceneSection_BrewingFuel, 0);
-                toolTip3 = fuel->getCount() < fuel->getMaxStackSize() ? eToolTipQuickMoveFuel : eToolTipNone;
+                toolTip3 = eToolTipNone;
             }
         }
         else if (section == ESceneSection_EnchantHotbar || section == ESceneSection_EnchantInventory)
@@ -906,7 +890,7 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
         else
         {
             not_null_ptr<ItemInstance> item = getSlotItem(section, slotIndex);
-            if (item->getItem() == NULL || dynamic_cast<ShulkerBoxBlockItem*>(item->getItem()) == NULL)
+            if (dynamic_cast<ShulkerBoxBlockItem*>(item->getItem()) == NULL)
                 toolTip3 = eToolTipQuickMove;
         }
     }
@@ -989,38 +973,38 @@ void IUIScene_AbstractContainerMenu::onMouseTick()
     SetToolTip((EToolTipButton)6, toolTip6);
     SetToolTip((EToolTipButton)7, toolTip7);
 
-    float pointerPosX = newPointerX - m_pointerImageOffset.x;
-    float pointerPosY = newPointerY - m_pointerImageOffset.y;
+    newPointerPos.x -= m_pointerImageOffset.x;
+    newPointerPos.y -= m_pointerImageOffset.y;
     if (xDirection != 0.0f)
     {
         if (xDirection == 1.0f)
-            pointerPosX += 0.999999f;
+            newPointerPos.x += 0.999999f;
         else
-            pointerPosX -= 0.999999f;
+            newPointerPos.x -= 0.999999f;
     }
     if (yDirection != 0.0f)
     {
         if (yDirection == 1.0f)
-            pointerPosY += 0.999999f;
+            newPointerPos.y += 0.999999f;
         else
-            pointerPosY -= 0.999999f;
+            newPointerPos.y -= 0.999999f;
     }
-    pointerPosX = floorf(pointerPosX);
-    pointerPosX += (float)((int)pointerPosX % 2);
-    pointerPosY = floorf(pointerPosY);
-    pointerPosY += (float)((int)pointerPosY % 2);
-    m_pointerPos.x = pointerPosX;
-    m_pointerPos.y = pointerPosY;
+    newPointerPos.x = floorf(newPointerPos.x);
+    newPointerPos.x += (float)((int)newPointerPos.x % 2);
+    newPointerPos.y = floorf(newPointerPos.y);
+    newPointerPos.y += (float)((int)newPointerPos.y % 2);
+    m_pointerPos = newPointerPos;
     adjustPointerForSafeZone();
 
     if (m_menu->m_uiQuickCraftActive)
     {
         bool addSlot = false;
-        if (slot != NULL && m_menu->m_uiQuickCraftSlots.size() < (unsigned int)carried->getCount() && canPlaceOne)
+        if (slot != NULL && m_menu->m_uiQuickCraftSlots.size() < (unsigned int)carried->getCount() && canPlaceOne &&
+            AbstractContainerMenu::canItemQuickReplace(
+                slot, minecraft->mLocalPlayers[getPad()]->mInventory->getCarried(), true) &&
+            m_menu->canDragTo(slot))
         {
-            not_null_ptr<ItemInstance> dragged = minecraft->mLocalPlayers[getPad()]->mInventory->getCarried();
-            if (AbstractContainerMenu::canItemQuickReplace(slot, dragged, true) && m_menu->canDragTo(slot))
-                addSlot = true;
+            addSlot = true;
         }
         if (addSlot && m_menu->m_uiQuickCraftSlots.find(slot) == m_menu->m_uiQuickCraftSlots.end())
             m_menu->m_uiQuickCraftSlots.insert(slot);
@@ -1051,31 +1035,25 @@ void IUIScene_AbstractContainerMenu::handleQuickCraft()
     if (player.get() != NULL)
         carried = player->mInventory->getCarried();
 
-    if (carried->isEmpty() || carried->getCount() <= 1)
-        return;
-
-    m_menu->m_uiQuickCraftActive = !m_menu->m_uiQuickCraftActive;
-    if (!m_menu->m_uiQuickCraftActive)
+    if (!carried->isEmpty() && carried->getCount() > 1)
     {
-        if (!m_menu->m_uiQuickCraftSlots.empty())
+        m_menu->m_uiQuickCraftActive = !m_menu->m_uiQuickCraftActive;
+        if (!m_menu->m_uiQuickCraftActive)
         {
-            slotClicked(-999, AbstractContainerMenu::getQuickcraftMask(0, 0), ClickType::eClickType_QuickCraft);
-            if (m_menu->m_uiQuickCraftSlots.empty())
+            if (!m_menu->m_uiQuickCraftSlots.empty())
             {
-                slotClicked(-999, AbstractContainerMenu::getQuickcraftMask(2, 0), ClickType::eClickType_QuickCraft);
-            }
-            else
-            {
-                AbstractContainerMenu::SlotSet::iterator it;
-                for (it = m_menu->m_uiQuickCraftSlots.begin(); it != m_menu->m_uiQuickCraftSlots.end(); ++it)
+                slotClicked(-999, AbstractContainerMenu::getQuickcraftMask(0, 0), ClickType::eClickType_QuickCraft);
+                for (AbstractContainerMenu::SlotSet::iterator it = m_menu->m_uiQuickCraftSlots.begin();
+                     it != m_menu->m_uiQuickCraftSlots.end(); ++it)
                 {
-                    slotClicked((*it)->mIndex, AbstractContainerMenu::getQuickcraftMask(1, 0),
+                    Slot* slot = *it;
+                    slotClicked(slot->mIndex, AbstractContainerMenu::getQuickcraftMask(1, 0),
                                 ClickType::eClickType_QuickCraft);
                 }
                 slotClicked(-999, AbstractContainerMenu::getQuickcraftMask(2, 0), ClickType::eClickType_QuickCraft);
             }
+            m_menu->m_uiQuickCraftSlots.clear();
         }
-        m_menu->m_uiQuickCraftSlots.clear();
     }
 }
 
@@ -1099,7 +1077,7 @@ bool IUIScene_AbstractContainerMenu::handleKeyDown(int pad, int action, bool rep
 
     int buttonNum = 0;
     int quickKeyHeld = 0;
-    bool clicked = false;
+    int validKeyPress = 0;
     switch (action)
     {
     case EControllerActions_MenuA:
@@ -1107,61 +1085,60 @@ bool IUIScene_AbstractContainerMenu::handleKeyDown(int pad, int action, bool rep
         {
             m_menu->m_uiQuickCraftActive = false;
             m_menu->m_uiQuickCraftSlots.clear();
+            validKeyPress = 1;
             buttonNum = 0;
             quickKeyHeld = 0;
             gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-            clicked = true;
+        }
+        break;
+    case EControllerActions_MenuX:
+        if (!repeat && !m_menu->m_uiQuickCraftActive)
+        {
+            validKeyPress = 1;
+            buttonNum = 1;
+            quickKeyHeld = 0;
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        }
+        break;
+    case EControllerActions_MenuY:
+        if (!repeat && (!m_menu->m_uiQuickCraftActive || !m_pointerOutsideMenu))
+        {
+            validKeyPress = 1;
+            buttonNum = 0;
+            quickKeyHeld = 1;
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        }
+        break;
+    case EControllerActions_MenuLeftScroll:
+        if (!repeat && canTakeAll())
+        {
+            handleTakeAll(0);
+            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         }
         break;
     case EControllerActions_MenuB:
     case EControllerActions_MenuStart:
         gConsoleUIController.SetTooltips(pad, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
                                           -1, false, false);
-        if (!m_navigateBack)
+        if (m_navigateBack)
         {
-            gConsoleUIController.CloseUIScenes(pad, false);
+            gConsoleUIController.NavigateBack(pad, false, EUIScene_None, EUILayer_Count);
             return false;
         }
-        gConsoleUIController.NavigateBack(pad, false, EUIScene_None, EUILayer_Count);
-        return false;
-    case EControllerActions_MenuX:
-        if (!repeat && !m_menu->m_uiQuickCraftActive)
-        {
-            buttonNum = 1;
-            quickKeyHeld = 0;
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-            clicked = true;
-        }
-        break;
-    case EControllerActions_MenuY:
-        if (!repeat && (!m_menu->m_uiQuickCraftActive || !m_pointerOutsideMenu))
-        {
-            buttonNum = 0;
-            quickKeyHeld = 1;
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-            clicked = true;
-        }
-        break;
-    case EControllerActions_MenuUp:
-        m_tapState = ETapState_Up;
-        handleAdditionalKeyPress(action);
-        UpdateTooltips();
-        return false;
-    case EControllerActions_MenuDown:
-        m_tapState = ETapState_Down;
-        handleAdditionalKeyPress(action);
-        UpdateTooltips();
-        return false;
-    case EControllerActions_MenuRight:
-        m_tapState = ETapState_Right;
-        handleAdditionalKeyPress(action);
-        UpdateTooltips();
+        gConsoleUIController.CloseUIScenes(pad, false);
         return false;
     case EControllerActions_MenuLeft:
         m_tapState = ETapState_Left;
-        handleAdditionalKeyPress(action);
-        UpdateTooltips();
-        return false;
+        break;
+    case EControllerActions_MenuRight:
+        m_tapState = ETapState_Right;
+        break;
+    case EControllerActions_MenuUp:
+        m_tapState = ETapState_Up;
+        break;
+    case EControllerActions_MenuDown:
+        m_tapState = ETapState_Down;
+        break;
     case EControllerActions_MenuPageUp:
         if (canQuickCraft())
             handleQuickCraft();
@@ -1172,44 +1149,38 @@ bool IUIScene_AbstractContainerMenu::handleKeyDown(int pad, int action, bool rep
         {
             int currentIndex = getCurrentIndex(m_currentSection);
             int slotIndex = currentIndex - getSectionStartOffset(m_currentSection);
-            if (!isSlotEmpty(m_currentSection, slotIndex) && Minecraft::GetInstance()->mGameModes[pad] != NULL)
+            if (!isSlotEmpty(m_currentSection, slotIndex))
             {
-                Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[pad]->getTutorial();
-                if (tutorial != NULL)
+                MultiPlayerGameMode* gameMode = Minecraft::GetInstance()->mGameModes[pad];
+                if (gameMode != NULL)
                 {
-                    not_null_ptr<ItemInstance> item = getSlotItem(m_currentSection, slotIndex)->copy();
-                    Tutorial::PopupMessageDetails* details = new Tutorial::PopupMessageDetails();
-                    details->titleId = item->getUseDescriptionId();
-                    if (item->getItem() != NULL)
-                        details->itemDescription = item->getHoverName();
-                    details->itemDescriptionId = item->getDescriptionId(-1);
-                    details->itemInstance = item;
-                    details->itemId = Item::VALIDgetId(item->getItem());
-                    details->itemAuxValue = item->getAuxValue();
-                    details->force = true;
-                    details->allowFade = true;
-                    tutorial->setMessage(NULL, details);
+                    Tutorial* tutorial = gameMode->getTutorial();
+                    if (tutorial != NULL)
+                    {
+                        not_null_ptr<ItemInstance> item = getSlotItem(m_currentSection, slotIndex)->copy();
+                        Tutorial::PopupMessageDetails* details = new Tutorial::PopupMessageDetails;
+                        details->titleId = item->getUseDescriptionId();
+                        if (item->getItem() != NULL)
+                            details->itemDescription = item->getHoverName();
+                        details->itemDescriptionId = item->getDescriptionId(-1);
+                        details->itemInstance = item;
+                        details->itemId = Item::VALIDgetId(item->getItem());
+                        details->itemAuxValue = item->getAuxValue();
+                        details->force = true;
+                        details->allowFade = true;
+                        tutorial->setMessage(NULL, details);
+                    }
+                    gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
                 }
-                gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
             }
         }
         handled = true;
-        break;
-    case EControllerActions_MenuLeftScroll:
-        if (!repeat && canTakeAll())
-        {
-            handleTakeAll(0);
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-            handleAdditionalKeyPress(action);
-            UpdateTooltips();
-            return false;
-        }
         break;
     default:
         break;
     }
 
-    if (clicked)
+    if (validKeyPress == 1)
     {
         if (!handleValidKeyPress(pad, buttonNum, quickKeyHeld))
         {
@@ -1226,11 +1197,12 @@ bool IUIScene_AbstractContainerMenu::handleKeyDown(int pad, int action, bool rep
                 handleOtherClicked(pad, m_currentSection, buttonNum, quickKeyHeld != 0);
             }
         }
-        UpdateTooltips();
-        return true;
+        handled = true;
     }
-
-    handleAdditionalKeyPress(action);
+    else
+    {
+        handleAdditionalKeyPress(action);
+    }
     UpdateTooltips();
     return handled;
 }
@@ -1263,14 +1235,15 @@ void IUIScene_AbstractContainerMenu::handleSlotListClicked(ESceneSection section
 
 void IUIScene_AbstractContainerMenu::handleTakeAll(int buttonNum)
 {
-    int columns;
     int rows;
+    int columns;
     GetSectionDimensions(ESceneSection_ContainerChest, &columns, &rows);
     int startIndex = getSectionStartOffset(ESceneSection_ContainerChest);
+    int count = rows * columns;
 
     Minecraft* minecraft = Minecraft::GetInstance();
     minecraft->mGameModes[getPad()]->handleTakeAllInvenetory(m_menu->m_containerId, buttonNum, startIndex,
-                                                             rows * columns, minecraft->mLocalPlayers[getPad()]);
+                                                             count, minecraft->mLocalPlayers[getPad()]);
     handleSectionClick(ESceneSection_ContainerChest);
 }
 

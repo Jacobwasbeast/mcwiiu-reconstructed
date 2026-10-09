@@ -21,8 +21,8 @@ public:
     UIScene_BrewingStandMenu(int type, void* data, UILayer* layer);
     virtual ~UIScene_BrewingStandMenu();
 
-    virtual unsigned int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual unsigned int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section,
                                                        IUIScene_AbstractContainerMenu::ETapState state,
                                                        int* x, int* y);

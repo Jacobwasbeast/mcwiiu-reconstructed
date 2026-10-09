@@ -447,10 +447,11 @@ void fuiTTFFontSet::FontSizeData::loadGlyphImage(GlyphInfo* glyph)
     }
 
     unsigned short codepoint = (unsigned short)glyph->m_codepoint;
+    fuiTTFFontSet* fontSet = m_fontSet;
 
-    if (stbtt_FindGlyphIndex(&m_fontSet->m_fonts[m_ttfIndex].m_info, codepoint) == 0)
+    if (stbtt_FindGlyphIndex(&fontSet->m_fonts[m_ttfIndex].m_info, codepoint) == 0)
     {
-        codepoint = m_fontSet->m_missingGlyphChar;
+        codepoint = fontSet->m_missingGlyphChar;
     }
 
     m_textureDirty = true;
@@ -460,9 +461,11 @@ void fuiTTFFontSet::FontSizeData::loadGlyphImage(GlyphInfo* glyph)
     stbtt_MakeCodepointBitmap(&m_fontSet->m_fonts[m_ttfIndex].m_info, m_glyphBitmap, glyph->m_x1 - glyph->m_x0,
                               glyph->m_y1 - glyph->m_y0, m_glyphWidth, m_scale, m_scale, codepoint);
 
-    for (int y = 0; y < m_glyphHeight; y++)
+    int x;
+    int y;
+    for (y = 0; y < m_glyphHeight; y++)
     {
-        for (int x = 0; x < m_glyphWidth; x++)
+        for (x = 0; x < m_glyphWidth; x++)
         {
             int pixel = y * m_glyphWidth + x;
 
@@ -510,9 +513,9 @@ void fuiTTFFontSet::FontSizeData::loadGlyphImage(GlyphInfo* glyph)
     int destX = (slot - row * m_glyphsPerRow) * m_glyphWidth;
     int destY = row * m_glyphHeight;
 
-    for (int y = 0; y < m_glyphHeight; y++)
+    for (y = 0; y < m_glyphHeight; y++)
     {
-        for (int x = 0; x < m_glyphWidth; x++)
+        for (x = 0; x < m_glyphWidth; x++)
         {
             setPixel(destX + x, destY + y, m_glyphBitmap[y * m_glyphWidth + x]);
         }

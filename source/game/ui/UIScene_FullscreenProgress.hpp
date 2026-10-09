@@ -27,7 +27,7 @@ struct FullscreenProgressState
 
     FullscreenProgressState()
         : showConfirmation(false), reservedFlag1(true), reservedFlag2(true), showTip(true),
-          closeMode(3), backScene(EUIScene_None)
+          closeMode(0), backScene(EUIScene_None)
     {
     }
 };
@@ -62,7 +62,7 @@ private:
     bool m_threadStarted;
     FullscreenProgressState* m_completionData;
     bool m_confirmationVisible;
-    int (*m_cancelFunc)(void*);
+    void (*m_cancelFunc)(void*);
     int (*m_completeFunc)(void*);
     void* m_cancelFuncParam;
     void* m_completeFuncParam;

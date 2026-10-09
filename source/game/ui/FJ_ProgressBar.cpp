@@ -28,8 +28,8 @@ void FJ_ProgressBar::initFiller()
 
     fuiRect rect;
     rect.xMin = 0.0f;
-    rect.xMax = m_pFiller->getWidth();
     rect.yMin = 0.0f;
+    rect.xMax = m_pFiller->getWidth();
     rect.yMax = m_pFiller->getHeight();
     fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
         getStage()->m_pRenderNode, &rect, "fillerMask");
@@ -67,10 +67,11 @@ float FJ_ProgressBar::getProgress()
 
 void FJ_ProgressBar::setProgress(float progress)
 {
-    if (progress > 1.0f || progress < 0.0f)
-        m_progress = progress > 1.0f ? 1.0f : 0.0f;
-    else
-        m_progress = progress;
+    m_progress = progress;
+    if (m_progress > 1.0f)
+        m_progress = 1.0f;
+    else if (m_progress < 0.0f)
+        m_progress = 0.0f;
 
     if (m_barType)
     {

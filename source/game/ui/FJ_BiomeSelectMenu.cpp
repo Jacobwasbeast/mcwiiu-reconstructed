@@ -29,14 +29,14 @@ unsigned int FJ_BiomeSelectMenu::getType()
 void FJ_BiomeSelectMenu::SetMapNavigator(float scale, int x, int z)
 {
     FJ_FuiNode* guide = getChildByName(std::string("MainPanel.NavigatorGuide"));
-    guide->setWidth(static_cast<float>(Math::round(1.0f / scale * mNavigatorWidth)));
-    guide->setHeight(static_cast<float>(Math::round(1.0f / scale * mNavigatorHeight)));
+    guide->setWidth(static_cast<float>(Math::round(mNavigatorWidth * (1.0f / scale))));
+    guide->setHeight(static_cast<float>(Math::round(mNavigatorHeight * (1.0f / scale))));
 
     const float guideWidth = guide->getWidth();
-    const int offsetX = Math::round(mNavigatorWidth / 200.0f * static_cast<float>(x) + (mNavigatorWidth * 0.5f - guideWidth * 0.5f));
-    const int offsetY = Math::round(mNavigatorWidth / 200.0f * static_cast<float>(z) + (mNavigatorWidth * 0.5f - guideWidth * 0.5f));
-    guide->setX(mNavigatorX + static_cast<float>(offsetX));
-    guide->setY(mNavigatorY + static_cast<float>(offsetY));
+    const float offsetX = static_cast<float>(Math::round(mNavigatorWidth / 200.0f * static_cast<float>(x) + (mNavigatorWidth * 0.5f - guideWidth * 0.5f)));
+    const float offsetY = static_cast<float>(Math::round(mNavigatorWidth / 200.0f * static_cast<float>(z) + (mNavigatorWidth * 0.5f - guideWidth * 0.5f)));
+    guide->setX(mNavigatorX + offsetX);
+    guide->setY(mNavigatorY + offsetY);
 
     if (guide->getX() + guideWidth > mNavigatorX + mNavigatorWidth)
     {

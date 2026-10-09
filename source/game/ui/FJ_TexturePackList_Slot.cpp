@@ -30,8 +30,8 @@ void FJ_TexturePackList_Slot::SetTextureName(const std::wstring& textureName)
     rect.yMin = slotPlaceHolder->getY();
     rect.xMax = rect.xMin + slotPlaceHolder->getWidth();
     rect.yMax = rect.yMin + slotPlaceHolder->getHeight();
-    unsigned int width = 0;
-    unsigned int height = 0;
+    unsigned int width;
+    unsigned int height;
     bool hasTexture = false;
     unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasTexture);
     fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(

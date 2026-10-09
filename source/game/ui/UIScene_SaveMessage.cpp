@@ -27,21 +27,21 @@ UIScene_SaveMessage::UIScene_SaveMessage(int playerId, void* sceneData, UILayer*
     m_confirmButton.init(UIString(L10N::GetString(IDS_CONFIRM_OK)), 0);
     gApp.SetDRCIconEnabled(true);
 
-    if (!gApp.HasNoSpaceForSaveQuota())
+    if (gApp.HasNoSpaceForSaveQuota())
     {
-        m_descriptionLabel.init(UIString(L10N::GetString(IDS_SAVE_ICON_MESSAGE)));
+        m_descriptionLabel.init(UIString(L10N::GetString(0x89199462)));
     }
     else
     {
-        m_descriptionLabel.init(UIString(L10N::GetString(0x89199462)));
+        m_descriptionLabel.init(UIString(L10N::GetString(IDS_SAVE_ICON_MESSAGE)));
     }
 
     static_cast<FJ_SaveMessage*>(m_movie->getRootNode()->getFuiNode())->AutoResize();
 
     for (int pad = 0; pad < 4; ++pad)
     {
-        bool padInUse = g_pInput->IsPadConnected(pad) != 0 || gProfile->IsSignedIn(pad);
-        if (padInUse && !gApp.DLCInstallProcessCompleted() && !gApp.DLCInstallPending())
+        if ((g_pInput->IsPadConnected(pad) || gProfile->IsSignedIn(pad))
+            && !gApp.DLCInstallProcessCompleted() && !gApp.DLCInstallPending())
         {
             gApp.StartInstallDLCProcess(pad);
             break;
@@ -60,11 +60,15 @@ UIScene_SaveMessage::~UIScene_SaveMessage()
 unsigned int UIScene_SaveMessage::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_confirmButton.setupControl(this, root, std::string("Confirm"));
-    m_controls.push_back(&m_confirmButton);
-    m_descriptionLabel.setupControl(this, root, std::string("Description"));
-    m_controls.push_back(&m_descriptionLabel);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_confirmButton.setupControl(this, currentNode, std::string("Confirm"));
+        m_controls.push_back(&m_confirmButton);
+    }
+    {
+        m_descriptionLabel.setupControl(this, currentNode, std::string("Description"));
+        m_controls.push_back(&m_descriptionLabel);
+    }
     return 1;
 }
 

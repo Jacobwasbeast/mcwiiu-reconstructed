@@ -43,21 +43,19 @@ void fuiRenderNodeBitmap::render(fuiRect* bounds, fuiMatrix* matrix)
 
     {
         fuiBitmap* bitmap = static_cast<fuiBitmap*>(m_object);
-        const float width = (float)bitmap->width;
-        const float height = (float)bitmap->height;
         float vertices[12];
         vertices[0] = 0.0f;
         vertices[1] = 0.0f;
-        vertices[2] = width;
-        vertices[3] = height;
+        vertices[2] = (float)bitmap->width;
+        vertices[3] = (float)bitmap->height;
         vertices[4] = 0.0f;
-        vertices[5] = height;
+        vertices[5] = (float)bitmap->height;
         vertices[6] = 0.0f;
         vertices[7] = 0.0f;
-        vertices[8] = width;
+        vertices[8] = (float)bitmap->width;
         vertices[9] = 0.0f;
-        vertices[10] = width;
-        vertices[11] = height;
+        vertices[10] = (float)bitmap->width;
+        vertices[11] = (float)bitmap->height;
 
         m_file->initialiseRenderTexture(bitmap, true);
         gRenderer->TextureBind(bitmap->textureId);
@@ -72,15 +70,15 @@ void fuiRenderNodeBitmap::render(fuiRect* bounds, fuiMatrix* matrix)
         const float blueAdd = gFui->m_colorStack[gFui->m_colorDepth].blueAdd;
         const float alphaAdd = gFui->m_colorStack[gFui->m_colorDepth].alphaAdd;
 
-        if ((gFui->m_filterStack[gFui->m_filterDepth] & 1) == 0)
-        {
-            gRenderer->TextureSetParam(1, 0);
-            gRenderer->TextureSetParam(2, 0);
-        }
-        else
+        if (gFui->m_filterStack[gFui->m_filterDepth] & 1)
         {
             gRenderer->TextureSetParam(1, 1);
             gRenderer->TextureSetParam(2, 1);
+        }
+        else
+        {
+            gRenderer->TextureSetParam(1, 0);
+            gRenderer->TextureSetParam(2, 0);
         }
         gRenderer->StateSetColour(redMultiply, greenMultiply, blueMultiply, alphaMultiply);
         gRenderer->StateSetColourAdd(redAdd, greenAdd, blueAdd, alphaAdd);

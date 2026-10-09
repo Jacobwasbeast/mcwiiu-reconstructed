@@ -24,18 +24,20 @@ void UIControl_CheckBox::setChecked(bool checked)
     m_checked = checked;
 }
 
-unsigned int UIControl_CheckBox::IsChecked()
+bool UIControl_CheckBox::IsChecked()
 {
-    if (m_fuiRenderNode == 0)
-        return 0;
-    return static_cast<FJ_CheckBox*>(m_fuiRenderNode->getFuiNode())->getChecked();
+    fuiRenderNode* node = m_fuiRenderNode;
+    if (node == 0)
+        return false;
+    return static_cast<FJ_CheckBox*>(node->getFuiNode())->getChecked();
 }
 
-void UIControl_CheckBox::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_CheckBox::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_CheckBox;
-    UIControl_Base::setupControl(scene, node, name);
+    bool result = UIControl_Base::setupControl(scene, node, name);
     m_enabled = true;
+    return result;
 }
 
 void UIControl_CheckBox::init(UIString label, int id, bool checked)
@@ -43,11 +45,17 @@ void UIControl_CheckBox::init(UIString label, int id, bool checked)
     m_label = label;
     m_controlId = id;
     m_checked = checked;
-    static_cast<FJ_CheckBox*>(m_fuiRenderNode->getFuiNode())->Init(label.getString(), id, checked);
+    std::wstring& text = label.getString();
+    static_cast<FJ_CheckBox*>(m_fuiRenderNode->getFuiNode())->Init(text, id, checked);
 
-    int layerId = m_scene->m_layer->m_layerId;
-    if (layerId == 4 || (layerId >= 6 && layerId <= 7))
+    switch (m_scene->m_layer->m_layerId)
+    {
+    case EUILayer_Fullscreen:
+    case EUILayer_Scene:
+    case EUILayer_HUD:
         gConsoleUIController.TouchBoxAdd(this, m_scene);
+        break;
+    }
 }
 
 unsigned char UIControl_CheckBox::TouchIsChecked()

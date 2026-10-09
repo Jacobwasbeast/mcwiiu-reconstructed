@@ -12,10 +12,10 @@ UIControl_SpaceIndicatorBar::UIControl_SpaceIndicatorBar()
     m_saveGameOffset = 0.0f;
 }
 
-void UIControl_SpaceIndicatorBar::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_SpaceIndicatorBar::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_Progress;
-    UIControl_Base::setupControl(scene, node, name);
+    return UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_SpaceIndicatorBar::setSaveSize(long long size)
@@ -60,7 +60,8 @@ void UIControl_SpaceIndicatorBar::reset()
 
 void UIControl_SpaceIndicatorBar::addSave(long long size)
 {
-    m_saves.push_back(std::make_pair(size, (float)(m_totalSize - m_startOffset) / (float)(m_endOffset - m_startOffset)));
+    float offset = (float)(m_totalSize - m_startOffset) / (float)(m_endOffset - m_startOffset);
+    m_saves.push_back(std::pair<long long, float>(size, offset));
     m_totalSize += size;
     setTotalSize(m_totalSize);
 }

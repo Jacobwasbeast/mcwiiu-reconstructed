@@ -32,17 +32,16 @@ void UIScene_TrialExitUpsell::handleInput(int playerId, int action, bool repeat,
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
+    case EControllerActions_MenuCancel:
+        navigateBack();
+        break;
     case EControllerActions_MenuOk:
         if (pressed)
         {
             gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
             gApp.ExitGame();
-            return;
         }
         break;
-    case EControllerActions_MenuCancel:
-        navigateBack();
-        return;
     case EControllerActions_MenuX:
         if (gProfile->IsSignedIn(playerId))
         {

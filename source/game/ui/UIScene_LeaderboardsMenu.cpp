@@ -76,33 +76,27 @@ bool UIScene_LeaderboardsMenu::OnStatsReadComplete(LeaderboardManager::eStatsRet
 
 unsigned int UIScene_LeaderboardsMenu::GetEntryStartIndex()
 {
-    if (!m_entries.empty())
-        return m_entries.front().rank;
-    return 0;
+    if (m_entries.size() == 0)
+        return 0;
+    return m_entries[0].rank;
 }
 
 bool UIScene_LeaderboardsMenu::LanguageUsesCommaRadix(int language)
 {
-    switch (language)
-    {
-    case XC_LANGUAGE_GERMAN:
-    case XC_LANGUAGE_FRENCH:
-    case XC_LANGUAGE_SPANISH:
-    case XC_LANGUAGE_PORTUGUESE:
-    case XC_LANGUAGE_POLISH:
-    case XC_LANGUAGE_RUSSIAN:
-    case XC_LANGUAGE_SWEDISH:
-    case XC_LANGUAGE_NORWEGIAN:
-    case XC_LANGUAGE_DUTCH:
-    case XC_LANGUAGE_FINNISH:
-    case XC_LANGUAGE_GREEK:
-    case XC_LANGUAGE_DANISH:
-    case XC_LANGUAGE_CZECH:
-    case XC_LANGUAGE_SLOVAK:
-        return true;
-    default:
-        return false;
-    }
+    return language == XC_LANGUAGE_GERMAN ||
+           language == XC_LANGUAGE_FRENCH ||
+           language == XC_LANGUAGE_SPANISH ||
+           language == XC_LANGUAGE_PORTUGUESE ||
+           language == XC_LANGUAGE_POLISH ||
+           language == XC_LANGUAGE_RUSSIAN ||
+           language == XC_LANGUAGE_SWEDISH ||
+           language == XC_LANGUAGE_NORWEGIAN ||
+           language == XC_LANGUAGE_DUTCH ||
+           language == XC_LANGUAGE_FINNISH ||
+           language == XC_LANGUAGE_GREEK ||
+           language == XC_LANGUAGE_DANISH ||
+           language == XC_LANGUAGE_CZECH ||
+           language == XC_LANGUAGE_SLOVAK;
 }
 
 void UIScene_LeaderboardsMenu::CopyLeaderboardEntry(LeaderboardManager::ReadScore* score,
@@ -359,7 +353,7 @@ void UIScene_LeaderboardsMenu::SetLeaderboardHeader()
         m_statsType == LeaderboardManager::eStatsType_DistanceTravelled)
     {
         unsigned int uniqueId = LevelGenerationOptions::CreateUniqueId(static_cast<int>(descriptor.themeId), 0);
-        if (m_levelRuleGroups.empty())
+        if (m_levelRuleGroups.size() == 0)
             gApp.getLevelRules()->getRulesByType(LevelRules::eLevelRuleType_Glide,
                                                       &m_levelRuleGroups, false);
         for (std::vector<LevelRules::LevelRulesetGroup*>::iterator group = m_levelRuleGroups.begin();
@@ -369,8 +363,7 @@ void UIScene_LeaderboardsMenu::SetLeaderboardHeader()
             if (options->getUniqueId() == uniqueId)
             {
                 label = label + L" : " + options->getWorldName();
-                m_leaderboardLabel.setLabel(UIString(label), false, false);
-                return;
+                break;
             }
         }
     }
@@ -393,43 +386,38 @@ void UIScene_LeaderboardsMenu::ReadStats(int startRank)
         m_startRank = startRank;
     }
 
-    if ((m_readType == LeaderboardManager::eReadType_MyScore ||
-         m_readType == LeaderboardManager::eReadType_TopRank) && startRank != -1)
+    int readType = m_readType;
+    if ((readType == LeaderboardManager::eReadType_MyScore || readType == LeaderboardManager::eReadType_TopRank) &&
+        startRank != -1)
     {
-        m_leaderboardInterface.ReadStats_TopRank(
-            this, m_leaderboardIndex, static_cast<LeaderboardManager::EStatsType>(m_statsType),
-            static_cast<unsigned int>(m_startRank), static_cast<unsigned int>(m_numRows));
-        m_infoLabel.setLabel(UIString(L10N::GetString(IDS_LEADERBOARD_LOADING)), false, false);
-        m_infoLabel.setVisible(true);
-        return;
+        readType = LeaderboardManager::eReadType_TopRank;
     }
-    if (m_readType == LeaderboardManager::eReadType_Friends)
+
+    switch (readType)
+    {
+    case LeaderboardManager::eReadType_Friends:
     {
         PlayerUID uid(0);
         gProfile->GetXUID(gProfile->GetPrimaryPad(), &uid, true);
         m_leaderboardInterface.ReadStats_Friends(
             this, m_leaderboardIndex, static_cast<LeaderboardManager::EStatsType>(m_statsType),
             uid, static_cast<unsigned int>(m_startRank), static_cast<unsigned int>(m_numRows));
+        break;
     }
-    else if (m_readType == LeaderboardManager::eReadType_MyScore)
+    case LeaderboardManager::eReadType_MyScore:
     {
         PlayerUID uid(0);
         gProfile->GetXUID(gProfile->GetPrimaryPad(), &uid, true);
         m_leaderboardInterface.ReadStats_MyScore(
             this, m_leaderboardIndex, static_cast<LeaderboardManager::EStatsType>(m_statsType),
             uid, static_cast<unsigned int>(m_numRows));
-        m_infoLabel.setLabel(UIString(L10N::GetString(IDS_LEADERBOARD_LOADING)), false, false);
-        m_infoLabel.setVisible(true);
-        return;
+        break;
     }
-    else if (m_readType == LeaderboardManager::eReadType_TopRank)
-    {
+    case LeaderboardManager::eReadType_TopRank:
         m_leaderboardInterface.ReadStats_TopRank(
             this, m_leaderboardIndex, static_cast<LeaderboardManager::EStatsType>(m_statsType),
             static_cast<unsigned int>(m_startRank), static_cast<unsigned int>(m_numRows));
-        m_infoLabel.setLabel(UIString(L10N::GetString(IDS_LEADERBOARD_LOADING)), false, false);
-        m_infoLabel.setVisible(true);
-        return;
+        break;
     }
     m_infoLabel.setLabel(UIString(L10N::GetString(IDS_LEADERBOARD_LOADING)), false, false);
     m_infoLabel.setVisible(true);
@@ -528,19 +516,31 @@ void UIScene_LeaderboardsMenu::staticCtor()
 
 unsigned int UIScene_LeaderboardsMenu::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_leaderboardList.setupControl(this, root, "Gamers");
-    m_controls.push_back(&m_leaderboardList);
-    m_filterLabel.setupControl(this, root, "Filter");
-    m_controls.push_back(&m_filterLabel);
-    m_leaderboardLabel.setupControl(this, root, "Leaderboard");
-    m_controls.push_back(&m_leaderboardLabel);
-    m_entriesLabel.setupControl(this, root, "Entries");
-    m_controls.push_back(&m_entriesLabel);
-    m_infoLabel.setupControl(this, root, "Info");
-    m_controls.push_back(&m_infoLabel);
-    m_tabNavigation.setupControl(this, root, "TabNavigation");
-    m_controls.push_back(&m_tabNavigation);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_leaderboardList.setupControl(this, currentNode, std::string("Gamers"));
+        m_controls.push_back(&m_leaderboardList);
+    }
+    {
+        m_filterLabel.setupControl(this, currentNode, std::string("Filter"));
+        m_controls.push_back(&m_filterLabel);
+    }
+    {
+        m_leaderboardLabel.setupControl(this, currentNode, std::string("Leaderboard"));
+        m_controls.push_back(&m_leaderboardLabel);
+    }
+    {
+        m_entriesLabel.setupControl(this, currentNode, std::string("Entries"));
+        m_controls.push_back(&m_entriesLabel);
+    }
+    {
+        m_infoLabel.setupControl(this, currentNode, std::string("Info"));
+        m_controls.push_back(&m_infoLabel);
+    }
+    {
+        m_tabNavigation.setupControl(this, currentNode, std::string("TabNavigation"));
+        m_controls.push_back(&m_tabNavigation);
+    }
     return 1;
 }
 
@@ -865,8 +865,7 @@ void UIScene_LeaderboardsMenu::customDraw(const char* name, fuiRect* rect)
     if (slot == -1)
         return;
 
-    int iconId = gLeaderboardIconIds[m_statsType * 7 + slot];
-    not_null_ptr<ItemInstance> item(new ItemInstance(Item::byId(iconId), 1, 0));
+    not_null_ptr<ItemInstance> item(new ItemInstance(Item::byId(gLeaderboardIconIds[m_statsType * 7 + slot]), 1, 0));
     customDrawSlotControlFui(rect, m_playerId, item, 1.0f, false, false, false);
 }
 
@@ -882,8 +881,9 @@ void UIScene_LeaderboardsMenu::handleRequestMoreData(int id, bool forward)
     if (m_visibleRowCount == 0)
         return;
 
+    unsigned int index = id + 1;
     unsigned int start = GetEntryStartIndex();
-    if (static_cast<unsigned int>(id + 1) < start)
+    if (index < start)
     {
         if (g_pLeaderboardManager->isIdle())
         {
@@ -893,14 +893,9 @@ void UIScene_LeaderboardsMenu::handleRequestMoreData(int id, bool forward)
             ReadStats(newStart);
         }
     }
-    else
+    else if (index >= start + m_entries.size() && g_pLeaderboardManager->isIdle())
     {
-        unsigned int loaded = static_cast<unsigned int>(m_entries.size());
-        if (start + loaded <= static_cast<unsigned int>(id + 1) && g_pLeaderboardManager->isIdle())
-        {
-            loaded = static_cast<unsigned int>(m_entries.size());
-            ReadStats(static_cast<int>(GetEntryStartIndex() + loaded + 1));
-        }
+        ReadStats(static_cast<int>(GetEntryStartIndex() + m_entries.size() + 1));
     }
 }
 

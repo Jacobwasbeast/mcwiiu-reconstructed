@@ -165,9 +165,9 @@ bool UIScene_AbstractContainerMenu::isSlotEmpty(IUIScene_AbstractContainerMenu::
                                                 int slotIndex)
 {
     Slot* slot = m_menu->getSlot(getSectionStartOffset(section) + slotIndex);
-    if (slot == NULL)
-        return false;
-    return !slot->hasItem();
+    if (slot != NULL)
+        return !slot->hasItem();
+    return false;
 }
 
 void UIScene_AbstractContainerMenu::adjustPointerForSafeZone()
@@ -176,21 +176,36 @@ void UIScene_AbstractContainerMenu::adjustPointerForSafeZone()
 
 unsigned int UIScene_AbstractContainerMenu::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_mainPanel.setupControl(this, root, "MainPanel");
-    m_controls.push_back(&m_mainPanel);
-
-    fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
-    m_backgroundPanel.setupControl(this, panel, "BackgroundPanel");
-    m_controls.push_back(&m_backgroundPanel);
-    m_hotbarList.setupControl(this, panel, "hotbarList");
-    m_controls.push_back(&m_hotbarList);
-    m_inventoryList.setupControl(this, panel, "inventoryList");
-    m_controls.push_back(&m_inventoryList);
-    m_cursor.setupControl(this, panel, "cursor");
-    m_controls.push_back(&m_cursor);
-    m_inventoryLabel.setupControl(this, panel, "inventoryLabel");
-    m_controls.push_back(&m_inventoryLabel);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_mainPanel.setupControl(this, currentNode, std::string("MainPanel"));
+        m_controls.push_back(&m_mainPanel);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_mainPanel.getFuiRenderNode();
+        {
+            m_backgroundPanel.setupControl(this, currentNode, std::string("BackgroundPanel"));
+            m_controls.push_back(&m_backgroundPanel);
+        }
+        {
+            m_hotbarList.setupControl(this, currentNode, std::string("hotbarList"));
+            m_controls.push_back(&m_hotbarList);
+        }
+        {
+            m_inventoryList.setupControl(this, currentNode, std::string("inventoryList"));
+            m_controls.push_back(&m_inventoryList);
+        }
+        {
+            m_cursor.setupControl(this, currentNode, std::string("cursor"));
+            m_controls.push_back(&m_cursor);
+        }
+        {
+            m_inventoryLabel.setupControl(this, currentNode, std::string("inventoryLabel"));
+            m_controls.push_back(&m_inventoryLabel);
+        }
+        currentNode = parentNode;
+    }
     return 1;
 }
 
@@ -199,18 +214,18 @@ void UIScene_AbstractContainerMenu::handleDestroy()
     Minecraft* minecraft = Minecraft::GetInstance();
     if (minecraft->mGameModes[m_playerId] != NULL)
     {
-        Minecraft* current = Minecraft::GetInstance();
-        if (current->mGameModes[m_playerId] != NULL)
+        MultiPlayerGameMode* gameMode = Minecraft::GetInstance()->mGameModes[m_playerId];
+        if (gameMode != NULL)
         {
-            Tutorial* tutorial = current->mGameModes[m_playerId]->getTutorial();
+            Tutorial* tutorial = gameMode->getTutorial();
             if (tutorial != NULL)
                 tutorial->changeTutorialState(m_previousTutorialState, NULL);
         }
     }
 
-    const boost::shared_ptr<MultiplayerLocalPlayer>& player = minecraft->mLocalPlayers[m_playerId];
-    if (player != NULL && player->mContainerMenu->m_containerId == m_menu->m_containerId)
-        player->closeContainer();
+    if (minecraft->mLocalPlayers[m_playerId] != NULL &&
+        minecraft->mLocalPlayers[m_playerId]->mContainerMenu->m_containerId == m_menu->m_containerId)
+        minecraft->mLocalPlayers[m_playerId]->closeContainer();
 
     gConsoleUIController.OverrideSFX(m_playerId, 0, false);
     gConsoleUIController.OverrideSFX(m_playerId, 20, false);

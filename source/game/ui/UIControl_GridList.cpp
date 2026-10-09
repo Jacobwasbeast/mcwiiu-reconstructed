@@ -80,9 +80,9 @@ int UIControl_GridList::getListIndex(int index)
     return listIndex;
 }
 
-void UIControl_GridList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_GridList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    UIControl_Base::setupControl(scene, node, name);
+    return UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_GridList::clearList()

@@ -3,8 +3,8 @@
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-void UIControl_LobbyButtonList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_LobbyButtonList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_LobbyButtonList;
-    UIControl_ButtonList::setupControl(scene, node, name);
+    return UIControl_ButtonList::setupControl(scene, node, name);
 }

@@ -18,7 +18,7 @@ void PauseScreen::init()
     mButtons.clear();
 
     mButtons.push_back(new Button(1, mWidth / 2 - 100, mHeight / 4 + 104,
-                                  std::wstring(L"Save and quit to title")));
+                                  L"Save and quit to title"));
 
     if (mMinecraft->isClientSide())
     {
@@ -26,9 +26,9 @@ void PauseScreen::init()
     }
 
     mButtons.push_back(new Button(4, mWidth / 2 - 100, mHeight / 4 + 8,
-                                  std::wstring(L"LBack to game")));
+                                  L"LBack to game"));
     mButtons.push_back(new Button(0, mWidth / 2 - 100, mHeight / 4 + 80,
-                                  std::wstring(L"LOptions...")));
+                                  L"LOptions..."));
     mButtons.push_back(new Button(5, mWidth / 2 - 100, mHeight / 4 + 32,
                                   98, 20, I18n::get(L"gui.achievements")));
     mButtons.push_back(new Button(6, mWidth / 2 + 2, mHeight / 4 + 32,
@@ -69,12 +69,13 @@ void PauseScreen::render(int x, int y, float partialTick)
 
     if (mTickCount < 20)
     {
-        float phase = (mTickCount % 10 + partialTick) / 10.0f * 3.1415927f;
-        int color = static_cast<int>(255.0f * (Mth::sin(phase * 2.0f) * 0.2f + 0.8f));
-        drawString(mFont, std::wstring(L"Saving level.."), 8, mHeight - 16,
-                   (color << 16) | (color << 8) | color);
+        float col = (mTickCount % 10 + partialTick) / 10.0f;
+        col = Mth::sin(col * 3.1415927f * 2) * 0.2f + 0.8f;
+        int br = static_cast<int>(255 * col);
+        drawString(mFont, L"Saving level..", 8, mHeight - 16,
+                   (br << 16) | (br << 8) | br);
     }
 
-    drawCenteredString(mFont, std::wstring(L"Game menu"), mWidth / 2, 40, 0xffffff);
+    drawCenteredString(mFont, L"Game menu", mWidth / 2, 40, 0xffffff);
     Screen::render(x, y, partialTick);
 }

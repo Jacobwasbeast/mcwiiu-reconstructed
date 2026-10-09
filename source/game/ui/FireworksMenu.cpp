@@ -61,8 +61,9 @@ void FireworksMenu::slotsChanged()
 void FireworksMenu::removed(boost::shared_ptr<Player> player)
 {
     AbstractContainerMenu::removed(player);
-    if (!m_level->mIsClientSide)
-        clearContainer(player, m_level, m_craftSlots);
+    if (m_level->mIsClientSide)
+        return;
+    clearContainer(player, m_level, m_craftSlots);
 }
 
 bool FireworksMenu::stillValid(boost::shared_ptr<Player> player)
@@ -85,27 +86,31 @@ not_null_ptr<ItemInstance> FireworksMenu::quickMoveStack(boost::shared_ptr<Playe
 
         if (index == 0)
         {
-            if (moveItemStackTo(stack, 10, 46, true, true, true) != 1)
+            if (!moveItemStackTo(stack, 10, 46, true, true, true))
                 return ItemInstance::EMPTY;
             slot->onQuickCraft(stack, clicked);
         }
         else if (index >= 10 && index < 37)
         {
-            bool moved = false;
-            if (isValidIngredient(stack, -1))
-                moved = moveItemStackTo(stack, 1, 10, false, true, true) != 0;
-            if (!moved && moveItemStackTo(stack, 37, 46, false, true, true) != 1)
+            if (isValidIngredient(stack, -1) && moveItemStackTo(stack, 1, 10, false, true, true))
+            {
+            }
+            else if (!moveItemStackTo(stack, 37, 46, false, true, true))
+            {
                 return ItemInstance::EMPTY;
+            }
         }
         else if (index >= 37 && index < 46)
         {
-            bool moved = false;
-            if (isValidIngredient(stack, -1))
-                moved = moveItemStackTo(stack, 1, 10, false, true, true) != 0;
-            if (!moved && moveItemStackTo(stack, 10, 37, false, true, true) != 1)
+            if (isValidIngredient(stack, -1) && moveItemStackTo(stack, 1, 10, false, true, true))
+            {
+            }
+            else if (!moveItemStackTo(stack, 10, 37, false, true, true))
+            {
                 return ItemInstance::EMPTY;
+            }
         }
-        else if (moveItemStackTo(stack, 10, 46, false, true, true) != 1)
+        else if (!moveItemStackTo(stack, 10, 46, false, true, true))
         {
             return ItemInstance::EMPTY;
         }
@@ -117,8 +122,8 @@ not_null_ptr<ItemInstance> FireworksMenu::quickMoveStack(boost::shared_ptr<Playe
 
         if (stack->getCount() == clicked->getCount())
             return ItemInstance::EMPTY;
-
-        slot->onTake(player, stack);
+        else
+            slot->onTake(player, stack);
     }
     return clicked;
 }
@@ -130,9 +135,9 @@ bool FireworksMenu::canTakeItemForPickAll(not_null_ptr<ItemInstance> item, Slot*
 
 bool FireworksMenu::isValidIngredient(not_null_ptr<ItemInstance> item, int slot)
 {
-    if (!item->isEmpty() && slot != 0)
-        return FireworksRecipe::isValidIngredient(item, m_hasPaper,
-                                                  m_hasGunpowder,
-                                                  m_hasFireworkCharge);
-    return true;
+    if (item->isEmpty() || slot == 0)
+        return true;
+    return FireworksRecipe::isValidIngredient(item, m_hasPaper,
+                                              m_hasGunpowder,
+                                              m_hasFireworkCharge);
 }

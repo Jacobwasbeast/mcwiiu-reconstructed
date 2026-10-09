@@ -36,27 +36,43 @@ UIScene_Keyboard::~UIScene_Keyboard()
 
 unsigned int UIScene_Keyboard::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
-
-    m_enterTextLabel.setupControl(this, root, std::string("EnterTextLabel"));
-    m_controls.push_back(&m_enterTextLabel);
-    m_keyboardTextInput.setupControl(this, root, std::string("KeyboardTextInput"));
-    m_controls.push_back(&m_keyboardTextInput);
-    m_spaceButton.setupControl(this, root, std::string("Button_space"));
-    m_controls.push_back(&m_spaceButton);
-    m_cursorLeftButton.setupControl(this, root, std::string("Button_CursorLeft"));
-    m_controls.push_back(&m_cursorLeftButton);
-    m_cursorRightButton.setupControl(this, root, std::string("Button_CursorRight"));
-    m_controls.push_back(&m_cursorRightButton);
-    m_capsButton.setupControl(this, root, std::string("Button_Caps"));
-    m_controls.push_back(&m_capsButton);
-    m_doneButton.setupControl(this, root, std::string("Button_Done"));
-    m_controls.push_back(&m_doneButton);
-    m_symbolsButton.setupControl(this, root, std::string("Button_symbols"));
-    m_controls.push_back(&m_symbolsButton);
-    m_backspaceButton.setupControl(this, root, std::string("Button_bspace"));
-    m_controls.push_back(&m_backspaceButton);
-
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_enterTextLabel.setupControl(this, currentNode, std::string("EnterTextLabel"));
+        m_controls.push_back(&m_enterTextLabel);
+    }
+    {
+        m_keyboardTextInput.setupControl(this, currentNode, std::string("KeyboardTextInput"));
+        m_controls.push_back(&m_keyboardTextInput);
+    }
+    {
+        m_spaceButton.setupControl(this, currentNode, std::string("Button_space"));
+        m_controls.push_back(&m_spaceButton);
+    }
+    {
+        m_cursorLeftButton.setupControl(this, currentNode, std::string("Button_CursorLeft"));
+        m_controls.push_back(&m_cursorLeftButton);
+    }
+    {
+        m_cursorRightButton.setupControl(this, currentNode, std::string("Button_CursorRight"));
+        m_controls.push_back(&m_cursorRightButton);
+    }
+    {
+        m_capsButton.setupControl(this, currentNode, std::string("Button_Caps"));
+        m_controls.push_back(&m_capsButton);
+    }
+    {
+        m_doneButton.setupControl(this, currentNode, std::string("Button_Done"));
+        m_controls.push_back(&m_doneButton);
+    }
+    {
+        m_symbolsButton.setupControl(this, currentNode, std::string("Button_symbols"));
+        m_controls.push_back(&m_symbolsButton);
+    }
+    {
+        m_backspaceButton.setupControl(this, currentNode, std::string("Button_bspace"));
+        m_controls.push_back(&m_backspaceButton);
+    }
     return 1;
 }
 

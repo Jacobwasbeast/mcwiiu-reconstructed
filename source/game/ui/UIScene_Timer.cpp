@@ -27,9 +27,11 @@ std::wstring UIScene_Timer::getMoviePath()
 unsigned int UIScene_Timer::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_control.setupControl(this, root, "Background");
-    m_controls.push_back(&m_control);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_control.setupControl(this, currentNode, std::string("Background"));
+        m_controls.push_back(&m_control);
+    }
     return 1;
 }
 

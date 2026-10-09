@@ -35,20 +35,19 @@ void FJ_LeaderboardHeader::Init(int count, FJ_FuiNode* parent, int x, int y)
         m_icons[i]->gotoAndStop(std::string("SlotNormal"));
     }
 
-    float iconY = static_cast<float>(static_cast<int>(m_icons[0]->getY()) + y);
+    int iconY = static_cast<int>(m_icons[0]->getY());
     m_slotAreaWidth = static_cast<int>(m_icons[0]->getWidth());
     int left = static_cast<int>(m_icons[0]->getX());
     int right = static_cast<int>(m_icons[6]->getX());
     int spacing = (right - left) / 6;
     int slotWidth = ((right - left) - (count - 1) * spacing) / count;
-    float halfSlotWidth = static_cast<float>(slotWidth) * 0.5f;
     for (int i = 0; i < 7; ++i)
     {
         if (i < count)
         {
-            m_entryPositions[i] = Math::round(static_cast<float>(left + i * (spacing + slotWidth)) + halfSlotWidth);
+            m_entryPositions[i] = Math::round(static_cast<float>(left + i * (spacing + slotWidth)) + static_cast<float>(slotWidth) * 0.5f);
             m_icons[i]->setX(static_cast<float>(x + Math::round(static_cast<float>(m_entryPositions[i]) * getScaleX())));
-            m_icons[i]->setY(iconY);
+            m_icons[i]->setY(static_cast<float>(iconY + y));
             m_icons[i]->setVisible(true);
         }
         else
@@ -82,29 +81,75 @@ void FJ_LeaderboardHeader::SetupHeaders(std::wstring rank, std::wstring gamertag
 
 fuiRenderNode* FJ_LeaderboardHeader::GetBitmapData(int type)
 {
-    static const char* normal[] = {
-        "LeaderBoard_Icon_Fallen", "LeaderBoard_Icon_Walked", "LeaderBoard_Icon_Swam",
-        "LeaderBoard_Icon_Zombie", "LeaderBoard_Icon_ZombiePigman", "LeaderBoard_Icon_Ghast",
-        "LeaderBoard_Icon_Creeper", "LeaderBoard_Icon_Skeleton", "LeaderBoard_Icon_Spider",
-        "LeaderBoard_Icon_SpiderJockey", "LeaderBoard_Icon_Slime", "LeaderBoard_Icon_Portal",
-        "LeaderBoard_Icon_Score", "LeaderBoard_Icon_Time", "LeaderBoard_Icon_TotalRings"
-    };
-    static const char* small[] = {
-        "LeaderBoard_Icon_Fallen_Small", "LeaderBoard_Icon_Walked_Small",
-        "LeaderBoard_Icon_Swam_Small", "LeaderBoard_Icon_Zombie_Small",
-        "LeaderBoard_Icon_ZombiePigman_Small", "LeaderBoard_Icon_Ghast_Small",
-        "LeaderBoard_Icon_Creeper_Small", "LeaderBoard_Icon_Skeleton_Small",
-        "LeaderBoard_Icon_Spider_Small", "LeaderBoard_Icon_SpiderJockey_Small",
-        "LeaderBoard_Icon_Slime_Small", "LeaderBoard_Icon_Portal_Small",
-        "LeaderBoard_Icon_Score_Small", "LeaderBoard_Icon_Time_Small",
-        "LeaderBoard_Icon_TotalRings_Small"
-    };
-    const char* name;
-    if (type >= 2 && type <= 16)
-        name = m_small ? small[type - 2] : normal[type - 2];
-    else
-        name = m_small ? "LeaderBoard_Icon_Climbed_Small" : "LeaderBoard_Icon_Climbed";
-    return gFui->createNodeFromSymbol(name, m_pRenderNode);
+    switch (type)
+    {
+    default:
+        if (!m_small)
+            return gFui->createNodeFromSymbol("LeaderBoard_Icon_Climbed", m_pRenderNode);
+        break;
+    case 2:
+        if (m_small)
+            return gFui->createNodeFromSymbol("LeaderBoard_Icon_Fallen_Small", m_pRenderNode);
+        return gFui->createNodeFromSymbol("LeaderBoard_Icon_Fallen", m_pRenderNode);
+    case 3:
+        if (m_small)
+            return gFui->createNodeFromSymbol("LeaderBoard_Icon_Walked_Small", m_pRenderNode);
+        return gFui->createNodeFromSymbol("LeaderBoard_Icon_Walked", m_pRenderNode);
+    case 4:
+        if (m_small)
+            return gFui->createNodeFromSymbol("LeaderBoard_Icon_Swam_Small", m_pRenderNode);
+        return gFui->createNodeFromSymbol("LeaderBoard_Icon_Swam", m_pRenderNode);
+    case 5:
+        if (m_small)
+            return gFui->createNodeFromSymbol("LeaderBoard_Icon_Zombie_Small", m_pRenderNode);
+        return gFui->createNodeFromSymbol("LeaderBoard_Icon_Zombie", m_pRenderNode);
+    case 6:
+        if (m_small)
+            return gFui->createNodeFromSymbol("LeaderBoard_Icon_ZombiePigman_Small", m_pRenderNode);
+        return gFui->createNodeFromSymbol("LeaderBoard_Icon_ZombiePigman", m_pRenderNode);
+    case 7:
+        if (m_small)
+            return gFui->createNodeFromSymbol("LeaderBoard_Icon_Ghast_Small", m_pRenderNode);
+        return gFui->createNodeFromSymbol("LeaderBoard_Icon_Ghast", m_pRenderNode);
+    case 8:
+        if (m_small)
+            return gFui->createNodeFromSymbol("LeaderBoard_Icon_Creeper_Small", m_pRenderNode);
+        return gFui->createNodeFromSymbol("LeaderBoard_Icon_Creeper", m_pRenderNode);
+    case 9:
+        if (m_small)
+            return gFui->createNodeFromSymbol("LeaderBoard_Icon_Skeleton_Small", m_pRenderNode);
+        return gFui->createNodeFromSymbol("LeaderBoard_Icon_Skeleton", m_pRenderNode);
+    case 10:
+        if (m_small)
+            return gFui->createNodeFromSymbol("LeaderBoard_Icon_Spider_Small", m_pRenderNode);
+        return gFui->createNodeFromSymbol("LeaderBoard_Icon_Spider", m_pRenderNode);
+    case 11:
+        if (m_small)
+            return gFui->createNodeFromSymbol("LeaderBoard_Icon_SpiderJockey_Small", m_pRenderNode);
+        return gFui->createNodeFromSymbol("LeaderBoard_Icon_SpiderJockey", m_pRenderNode);
+    case 12:
+        if (m_small)
+            return gFui->createNodeFromSymbol("LeaderBoard_Icon_Slime_Small", m_pRenderNode);
+        return gFui->createNodeFromSymbol("LeaderBoard_Icon_Slime", m_pRenderNode);
+    case 13:
+        if (m_small)
+            return gFui->createNodeFromSymbol("LeaderBoard_Icon_Portal_Small", m_pRenderNode);
+        return gFui->createNodeFromSymbol("LeaderBoard_Icon_Portal", m_pRenderNode);
+    case 14:
+        if (m_small)
+            return gFui->createNodeFromSymbol("LeaderBoard_Icon_Score_Small", m_pRenderNode);
+        return gFui->createNodeFromSymbol("LeaderBoard_Icon_Score", m_pRenderNode);
+    case 15:
+        if (m_small)
+            return gFui->createNodeFromSymbol("LeaderBoard_Icon_Time_Small", m_pRenderNode);
+        return gFui->createNodeFromSymbol("LeaderBoard_Icon_Time", m_pRenderNode);
+    case 16:
+        if (m_small)
+            return gFui->createNodeFromSymbol("LeaderBoard_Icon_TotalRings_Small", m_pRenderNode);
+        return gFui->createNodeFromSymbol("LeaderBoard_Icon_TotalRings", m_pRenderNode);
+    }
+
+    return gFui->createNodeFromSymbol("LeaderBoard_Icon_Climbed_Small", m_pRenderNode);
 }
 
 void FJ_LeaderboardHeader::SetupSlot(int slot, int type)
@@ -173,9 +218,9 @@ unsigned int FJ_LeaderboardHeader::getType()
 void FJ_LeaderboardHeader::ASConstructor()
 {
     FJ_FuiNode* node = getChildByName("SlotArea_Small");
-    if (node == NULL)
-        node = getChildByName("SlotArea")->asMovieClip();
-    else
+    if (node != NULL)
         m_small = true;
+    else
+        node = getChildByName("SlotArea")->asMovieClip();
     node->setVisible(false);
 }

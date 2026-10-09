@@ -50,73 +50,139 @@ UIScene_QuadrantSignin::~UIScene_QuadrantSignin()
 unsigned int UIScene_QuadrantSignin::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
-    fuiRenderNode* root = m_movie->getRootNode();
-    fuiRenderNode* controller;
-
-    m_controllerControls[0].setupControl(this, root, "Controller1");
-    m_controls.push_back(&m_controllerControls[0]);
-    controller = m_controllerControls[0].getFuiRenderNode();
-    m_pressLabels[0].setupControl(this, controller, "PressLabel");
-    m_controls.push_back(&m_pressLabels[0]);
-    m_gamerTagLabels[0].setupControl(this, controller, "GamerTag");
-    m_controls.push_back(&m_gamerTagLabels[0]);
-    m_accountTypeLabels[0].setupControl(this, controller, "AccountType");
-    m_controls.push_back(&m_accountTypeLabels[0]);
-    m_playerNumberLabels[0].setupControl(this, controller, "PlayerNumber");
-    m_controls.push_back(&m_playerNumberLabels[0]);
-    m_playerPictures[0].setupControl(this, controller, "PlayerPic");
-    m_controls.push_back(&m_playerPictures[0]);
-    m_connectControllerLabels[0].setupControl(this, controller, "ConnectControllerLabel");
-    m_controls.push_back(&m_connectControllerLabels[0]);
-
-    m_controllerControls[1].setupControl(this, root, "Controller2");
-    m_controls.push_back(&m_controllerControls[1]);
-    controller = m_controllerControls[1].getFuiRenderNode();
-    m_pressLabels[1].setupControl(this, controller, "PressLabel");
-    m_controls.push_back(&m_pressLabels[1]);
-    m_gamerTagLabels[1].setupControl(this, controller, "GamerTag");
-    m_controls.push_back(&m_gamerTagLabels[1]);
-    m_accountTypeLabels[1].setupControl(this, controller, "AccountType");
-    m_controls.push_back(&m_accountTypeLabels[1]);
-    m_playerNumberLabels[1].setupControl(this, controller, "PlayerNumber");
-    m_controls.push_back(&m_playerNumberLabels[1]);
-    m_playerPictures[1].setupControl(this, controller, "PlayerPic");
-    m_controls.push_back(&m_playerPictures[1]);
-    m_connectControllerLabels[1].setupControl(this, controller, "ConnectControllerLabel");
-    m_controls.push_back(&m_connectControllerLabels[1]);
-
-    m_controllerControls[2].setupControl(this, root, "Controller3");
-    m_controls.push_back(&m_controllerControls[2]);
-    controller = m_controllerControls[2].getFuiRenderNode();
-    m_pressLabels[2].setupControl(this, controller, "PressLabel");
-    m_controls.push_back(&m_pressLabels[2]);
-    m_gamerTagLabels[2].setupControl(this, controller, "GamerTag");
-    m_controls.push_back(&m_gamerTagLabels[2]);
-    m_accountTypeLabels[2].setupControl(this, controller, "AccountType");
-    m_controls.push_back(&m_accountTypeLabels[2]);
-    m_playerNumberLabels[2].setupControl(this, controller, "PlayerNumber");
-    m_controls.push_back(&m_playerNumberLabels[2]);
-    m_playerPictures[2].setupControl(this, controller, "PlayerPic");
-    m_controls.push_back(&m_playerPictures[2]);
-    m_connectControllerLabels[2].setupControl(this, controller, "ConnectControllerLabel");
-    m_controls.push_back(&m_connectControllerLabels[2]);
-
-    m_controllerControls[3].setupControl(this, root, "Controller4");
-    m_controls.push_back(&m_controllerControls[3]);
-    controller = m_controllerControls[3].getFuiRenderNode();
-    m_pressLabels[3].setupControl(this, controller, "PressLabel");
-    m_controls.push_back(&m_pressLabels[3]);
-    m_gamerTagLabels[3].setupControl(this, controller, "GamerTag");
-    m_controls.push_back(&m_gamerTagLabels[3]);
-    m_accountTypeLabels[3].setupControl(this, controller, "AccountType");
-    m_controls.push_back(&m_accountTypeLabels[3]);
-    m_playerNumberLabels[3].setupControl(this, controller, "PlayerNumber");
-    m_controls.push_back(&m_playerNumberLabels[3]);
-    m_playerPictures[3].setupControl(this, controller, "PlayerPic");
-    m_controls.push_back(&m_playerPictures[3]);
-    m_connectControllerLabels[3].setupControl(this, controller, "ConnectControllerLabel");
-    m_controls.push_back(&m_connectControllerLabels[3]);
-
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_controllerControls[0].setupControl(this, currentNode, std::string("Controller1"));
+        m_controls.push_back(&m_controllerControls[0]);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_controllerControls[0].getFuiRenderNode();
+        {
+            m_pressLabels[0].setupControl(this, currentNode, std::string("PressLabel"));
+            m_controls.push_back(&m_pressLabels[0]);
+        }
+        {
+            m_gamerTagLabels[0].setupControl(this, currentNode, std::string("GamerTag"));
+            m_controls.push_back(&m_gamerTagLabels[0]);
+        }
+        {
+            m_accountTypeLabels[0].setupControl(this, currentNode, std::string("AccountType"));
+            m_controls.push_back(&m_accountTypeLabels[0]);
+        }
+        {
+            m_playerNumberLabels[0].setupControl(this, currentNode, std::string("PlayerNumber"));
+            m_controls.push_back(&m_playerNumberLabels[0]);
+        }
+        {
+            m_playerPictures[0].setupControl(this, currentNode, std::string("PlayerPic"));
+            m_controls.push_back(&m_playerPictures[0]);
+        }
+        {
+            m_connectControllerLabels[0].setupControl(this, currentNode, std::string("ConnectControllerLabel"));
+            m_controls.push_back(&m_connectControllerLabels[0]);
+        }
+        currentNode = parentNode;
+    }
+    {
+        m_controllerControls[1].setupControl(this, currentNode, std::string("Controller2"));
+        m_controls.push_back(&m_controllerControls[1]);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_controllerControls[1].getFuiRenderNode();
+        {
+            m_pressLabels[1].setupControl(this, currentNode, std::string("PressLabel"));
+            m_controls.push_back(&m_pressLabels[1]);
+        }
+        {
+            m_gamerTagLabels[1].setupControl(this, currentNode, std::string("GamerTag"));
+            m_controls.push_back(&m_gamerTagLabels[1]);
+        }
+        {
+            m_accountTypeLabels[1].setupControl(this, currentNode, std::string("AccountType"));
+            m_controls.push_back(&m_accountTypeLabels[1]);
+        }
+        {
+            m_playerNumberLabels[1].setupControl(this, currentNode, std::string("PlayerNumber"));
+            m_controls.push_back(&m_playerNumberLabels[1]);
+        }
+        {
+            m_playerPictures[1].setupControl(this, currentNode, std::string("PlayerPic"));
+            m_controls.push_back(&m_playerPictures[1]);
+        }
+        {
+            m_connectControllerLabels[1].setupControl(this, currentNode, std::string("ConnectControllerLabel"));
+            m_controls.push_back(&m_connectControllerLabels[1]);
+        }
+        currentNode = parentNode;
+    }
+    {
+        m_controllerControls[2].setupControl(this, currentNode, std::string("Controller3"));
+        m_controls.push_back(&m_controllerControls[2]);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_controllerControls[2].getFuiRenderNode();
+        {
+            m_pressLabels[2].setupControl(this, currentNode, std::string("PressLabel"));
+            m_controls.push_back(&m_pressLabels[2]);
+        }
+        {
+            m_gamerTagLabels[2].setupControl(this, currentNode, std::string("GamerTag"));
+            m_controls.push_back(&m_gamerTagLabels[2]);
+        }
+        {
+            m_accountTypeLabels[2].setupControl(this, currentNode, std::string("AccountType"));
+            m_controls.push_back(&m_accountTypeLabels[2]);
+        }
+        {
+            m_playerNumberLabels[2].setupControl(this, currentNode, std::string("PlayerNumber"));
+            m_controls.push_back(&m_playerNumberLabels[2]);
+        }
+        {
+            m_playerPictures[2].setupControl(this, currentNode, std::string("PlayerPic"));
+            m_controls.push_back(&m_playerPictures[2]);
+        }
+        {
+            m_connectControllerLabels[2].setupControl(this, currentNode, std::string("ConnectControllerLabel"));
+            m_controls.push_back(&m_connectControllerLabels[2]);
+        }
+        currentNode = parentNode;
+    }
+    {
+        m_controllerControls[3].setupControl(this, currentNode, std::string("Controller4"));
+        m_controls.push_back(&m_controllerControls[3]);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_controllerControls[3].getFuiRenderNode();
+        {
+            m_pressLabels[3].setupControl(this, currentNode, std::string("PressLabel"));
+            m_controls.push_back(&m_pressLabels[3]);
+        }
+        {
+            m_gamerTagLabels[3].setupControl(this, currentNode, std::string("GamerTag"));
+            m_controls.push_back(&m_gamerTagLabels[3]);
+        }
+        {
+            m_accountTypeLabels[3].setupControl(this, currentNode, std::string("AccountType"));
+            m_controls.push_back(&m_accountTypeLabels[3]);
+        }
+        {
+            m_playerNumberLabels[3].setupControl(this, currentNode, std::string("PlayerNumber"));
+            m_controls.push_back(&m_playerNumberLabels[3]);
+        }
+        {
+            m_playerPictures[3].setupControl(this, currentNode, std::string("PlayerPic"));
+            m_controls.push_back(&m_playerPictures[3]);
+        }
+        {
+            m_connectControllerLabels[3].setupControl(this, currentNode, std::string("ConnectControllerLabel"));
+            m_controls.push_back(&m_connectControllerLabels[3]);
+        }
+        currentNode = parentNode;
+    }
     return 1;
 }
 
@@ -139,7 +205,7 @@ void UIScene_QuadrantSignin::_initQuadrants()
     for (int i = 0; i < 4; ++i)
     {
         m_avatarPending[i] = false;
-        m_pressLabels[i].init(UIString(0x14b60640));
+        m_pressLabels[i].init(UIString(IDS_MUST_SIGN_IN_TITLE));
         m_connectControllerLabels[i].init(UIString(L""));
         m_accountTypeLabels[i].init(UIString(L""));
         m_controllerStates[i] = eControllerStatus_Disconnected;
@@ -181,9 +247,8 @@ int UIScene_QuadrantSignin::AvatarReturned(void* context, unsigned char* data, u
     AvatarRequest* request = static_cast<AvatarRequest*>(context);
     if (data == NULL && size != 0)
     {
-        ++s_avatarImageCount;
         wchar_t name[32];
-        std::swprintf(name, 32, L"quadrantImage%05d", s_avatarImageCount);
+        std::swprintf(name, 32, L"quadrantImage%05d", s_avatarImageCount++);
         request->scene->registerSubstitutionTexture(std::wstring(name), data, size, false);
         request->scene->m_playerPictures[request->quadrant].setTextureName(std::wstring(name), true);
     }
@@ -195,27 +260,23 @@ void UIScene_QuadrantSignin::updateState()
 {
     for (int i = 0; i < 4; ++i)
     {
-        if (!gProfile->IsSignedIn(i) || !g_pInput->IsPadConnected(i) || gProfile->IsSigningIn(i))
+        if (gProfile->IsSignedIn(i) && g_pInput->IsPadConnected(i) && !gProfile->IsSigningIn(i))
         {
-            if (!g_pInput->IsPadConnected(i))
-            {
-                setControllerState(i, eControllerStatus_Disconnected);
-            }
-            else
-            {
-                setControllerState(i, eControllerStatus_Connected);
-                m_gamerTagLabels[i].setLabel(UIString(L""), false, false);
-            }
-            m_avatarPending[i] = false;
-            continue;
-        }
-
-        setControllerState(i, eControllerStatus_SignedIn);
-        m_gamerTagLabels[i].setLabel(UIString(gProfile->GetMiiName(i)), false, false);
-        if (!m_avatarPending[i])
-        {
-            if (gProfile->GetProfileAvatar(i, AvatarReturned, new AvatarRequest(this, i)))
+            setControllerState(i, eControllerStatus_SignedIn);
+            m_gamerTagLabels[i].setLabel(UIString(gProfile->GetMiiName(i)), false, false);
+            if (!m_avatarPending[i] && gProfile->GetProfileAvatar(i, AvatarReturned, new AvatarRequest(this, i)))
                 m_avatarPending[i] = true;
+        }
+        else if (g_pInput->IsPadConnected(i))
+        {
+            setControllerState(i, eControllerStatus_Connected);
+            m_gamerTagLabels[i].setLabel(UIString(L""), false, false);
+            m_avatarPending[i] = false;
+        }
+        else
+        {
+            setControllerState(i, eControllerStatus_Disconnected);
+            m_avatarPending[i] = false;
         }
     }
 }
@@ -254,11 +315,32 @@ void UIScene_QuadrantSignin::handleInput(int playerId, int action, bool repeat, 
         gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
         switch (action)
         {
-        case EControllerActions_MenuUp:
-        case EControllerActions_MenuDown:
-            if (pressed)
-                sendInputToMovie(action, repeat, pressed, released);
-            break;
+        case EControllerActions_MenuCancel:
+            if (!pressed)
+                break;
+            if (playerId != gProfile->GetPrimaryPad())
+            {
+                if (gProfile->IsSignedIn(playerId))
+                {
+                    gProfile->SignOutUser(playerId);
+                    handled = true;
+                    return;
+                }
+                break;
+            }
+            m_signInPending = true;
+            m_signInInfo.callback(m_signInInfo.context, false, playerId);
+            gProfile->CancelProfileAvatarRequest();
+            if (m_signInInfo.returnToHome)
+            {
+                gConsoleUIController.NavigateToHomeMenu(false);
+                handled = true;
+                return;
+            }
+            gApp.SetDRCIconEnabled(true);
+            navigateBack();
+            handled = true;
+            return;
         case EControllerActions_MenuOk:
             if (!pressed)
                 break;
@@ -275,31 +357,10 @@ void UIScene_QuadrantSignin::handleInput(int playerId, int action, bool repeat, 
                                       reinterpret_cast<void*>(GetCallbackUniqueId()), playerId);
             handled = true;
             return;
-        case EControllerActions_MenuCancel:
-            if (!pressed)
-                break;
-            if (playerId == gProfile->GetPrimaryPad())
-            {
-                m_signInPending = true;
-                m_signInInfo.callback(m_signInInfo.context, false, playerId);
-                gProfile->CancelProfileAvatarRequest();
-                if (m_signInInfo.returnToHome)
-                {
-                    gConsoleUIController.NavigateToHomeMenu(false);
-                    handled = true;
-                    return;
-                }
-                gApp.SetDRCIconEnabled(true);
-                navigateBack();
-                handled = true;
-                return;
-            }
-            if (gProfile->IsSignedIn(playerId))
-            {
-                gProfile->SignOutUser(playerId);
-                handled = true;
-                return;
-            }
+        case EControllerActions_MenuUp:
+        case EControllerActions_MenuDown:
+            if (pressed)
+                sendInputToMovie(action, repeat, pressed, released);
             break;
         }
     }

@@ -130,24 +130,19 @@ static const AchievementInfo s_achievementInfo[97] = {
     { 96, L"MCTrophy_92", 97, (int)0x1ad380ab, (int)0x155d709a },
 };
 
-static inline const AchievementInfo* GetInfoRecord(int achievement)
+const AchievementInfo* UIScene_AchievementsMenu::GetInfo(int achievement)
 {
-    return reinterpret_cast<const AchievementInfo*>(static_cast<uintptr_t>(static_cast<unsigned int>(UIScene_AchievementsMenu::GetInfo(achievement))));
-}
-
-int UIScene_AchievementsMenu::GetInfo(int achievement)
-{
-    return (int)(uintptr_t)&s_achievementInfo[achievement];
+    return &s_achievementInfo[achievement];
 }
 
 void UIScene_AchievementsMenu::registerTexture(int achievement)
 {
     wchar_t path[64];
-    swprintf(path, 64, L"Graphics\\Achievements\\%ls.png", GetInfoRecord(achievement)->icon);
+    swprintf(path, 64, L"Graphics\\Achievements\\%ls.png", GetInfo(achievement)->icon);
     if (gApp.hasArchiveFile(path, false)) {
         arrayWithLength<unsigned char> file = gApp.getArchiveFile(path, false);
         if (file.length != 0 && file.data != NULL)
-            registerSubstitutionTexture(GetInfoRecord(achievement)->icon, file.data, file.length, true);
+            registerSubstitutionTexture(GetInfo(achievement)->icon, file.data, file.length, true);
     }
 }
 
@@ -162,17 +157,15 @@ UIScene_AchievementsMenu::UIScene_AchievementsMenu(int type, void* data, UILayer
     int selectedAchievement = (int)(uintptr_t)data;
     int selectedIndex = 0;
     for (int i = 0; i < DISPLAY_COUNT; ++i) {
-        int id = sDisplayList[i];
-        if (selectedAchievement == id) {
+        if (selectedAchievement == sDisplayList[i]) {
             selectedIndex = i;
         }
-        registerTexture(id);
+        registerTexture(sDisplayList[i]);
     }
     m_titleLabel.init(UIString(IDS_ACHIEVEMENTS));
     m_achievementName.init(UIString(L""));
     for (int i = 0; i < DISPLAY_COUNT; ++i) {
-        int id = sDisplayList[i];
-        const AchievementInfo* info = GetInfoRecord(id);
+        const AchievementInfo* info = GetInfo(sDisplayList[i]);
         m_achievementsList.AddNewItem(i, info->icon);
         m_achievementsList.EnableItem(i, gProfile->IsAwardsFlagSet(m_playerId, info->id), true);
     }
@@ -200,12 +193,12 @@ void UIScene_AchievementsMenu::SetAchievementDescription(std::vector<HtmlString>
 void UIScene_AchievementsMenu::UpdateAchievementDetails()
 {
     int achievementId = sDisplayList[m_achievementIndex];
-    std::wstring title(L10N::GetString(GetInfoRecord(achievementId)->title));
+    std::wstring title(L10N::GetString(GetInfo(achievementId)->title));
     m_achievementName.setLabel(UIString(title), false, false);
     std::vector<HtmlString>* lines = new std::vector<HtmlString>();
     if (m_showDescription)
     {
-        std::wstring description(L10N::GetString(GetInfoRecord(achievementId)->description));
+        std::wstring description(L10N::GetString(GetInfo(achievementId)->description));
         HtmlString line(description, eMinecraftColour_HTMLColor_White, false, false, 0);
         lines->push_back(line);
     }
@@ -215,16 +208,28 @@ void UIScene_AchievementsMenu::UpdateAchievementDetails()
 
 unsigned int UIScene_AchievementsMenu::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_titleLabel.setupControl(this, root, "AcheivementsLabel");
-    m_controls.push_back(&m_titleLabel);
-    m_achievementName.setupControl(this, root, "AchievementName");
-    m_controls.push_back(&m_achievementName);
-    m_mainPanel.setupControl(this, root, "AchievementsListContainer");
-    m_controls.push_back(&m_mainPanel);
-    fuiRenderNode* panelNode = m_mainPanel.getFuiRenderNode();
-    m_achievementsList.setupControl(this, panelNode, "AchievementsList");
-    m_controls.push_back(&m_achievementsList);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_titleLabel.setupControl(this, currentNode, std::string("AcheivementsLabel"));
+        m_controls.push_back(&m_titleLabel);
+    }
+    {
+        m_achievementName.setupControl(this, currentNode, std::string("AchievementName"));
+        m_controls.push_back(&m_achievementName);
+    }
+    {
+        m_mainPanel.setupControl(this, currentNode, std::string("AchievementsListContainer"));
+        m_controls.push_back(&m_mainPanel);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_mainPanel.getFuiRenderNode();
+        {
+            m_achievementsList.setupControl(this, currentNode, std::string("AchievementsList"));
+            m_controls.push_back(&m_achievementsList);
+        }
+        currentNode = parentNode;
+    }
     return 1;
 }
 
@@ -258,8 +263,8 @@ void UIScene_AchievementsMenu::handleInput(int playerId, int action, bool repeat
             handled = true;
             break;
         case EControllerActions_MenuX:
-            m_updateDetails = true;
             m_showDescription = !m_showDescription;
+            m_updateDetails = true;
             break;
         case EControllerActions_MenuUp:
         case EControllerActions_MenuDown:
@@ -295,14 +300,12 @@ void UIScene_AchievementsMenu::handleReload()
 {
     m_achievementsList.init(0);
     for (int i = 0; i < DISPLAY_COUNT; ++i) {
-        int id = sDisplayList[i];
-        registerTexture(id);
+        registerTexture(sDisplayList[i]);
     }
     m_titleLabel.init(UIString(IDS_ACHIEVEMENTS));
     m_achievementName.init(UIString(L""));
     for (int i = 0; i < DISPLAY_COUNT; ++i) {
-        int id = sDisplayList[i];
-        const AchievementInfo* info = GetInfoRecord(id);
+        const AchievementInfo* info = GetInfo(sDisplayList[i]);
         m_achievementsList.AddNewItem(i, info->icon);
         m_achievementsList.EnableItem(i, gProfile->IsAwardsFlagSet(m_playerId, info->id), true);
     }

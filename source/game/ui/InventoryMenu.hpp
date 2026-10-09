@@ -8,6 +8,7 @@
 
 class Container;
 class CraftingContainer;
+class EquipmentSlot;
 class Inventory;
 class ItemInstance;
 class Player;
@@ -23,10 +24,15 @@ public:
         virtual bool mayPlace(not_null_ptr<ItemInstance> item);
     };
 
-    static const int ARMOR_SLOT_START = 5;
-    static const int INV_SLOT_START = 9;
+    static const int RESULT_SLOT;
+    static const int CRAFT_SLOT_START;
+    static const int CRAFT_SLOT_END;
+    static const int ARMOR_SLOT_START;
+    static const int ARMOR_SLOT_END;
+    static const int INV_SLOT_START;
     static const int INV_SLOT_END = 36;
-    static const int USE_ROW_SLOT_START = 36;
+    static const int USE_ROW_SLOT_START;
+    static const int USE_ROW_SLOT_END;
 
     InventoryMenu(boost::shared_ptr<Inventory> inventory, bool active, Player* player);
 
@@ -42,6 +48,8 @@ public:
                                                boost::shared_ptr<Player> player);
 
 private:
+    static const EquipmentSlot* SLOT_IDS[4];
+
     Player* mPlayer;
 
 public:

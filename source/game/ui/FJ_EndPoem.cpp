@@ -16,7 +16,6 @@
 FJ_EndPoem::FJ_EndPoem(fuiRenderNode* renderNode)
     : FJ_Document(renderNode)
 {
-    m_tilePrototype = NULL;
     m_tileCount = 0;
     m_tileColumns = 0;
     m_tileRows = 0;
@@ -26,6 +25,7 @@ FJ_EndPoem::FJ_EndPoem(fuiRenderNode* renderNode)
     m_lastLabel = 0;
     m_scrollSpeed = 0;
     m_appending = false;
+    m_tilePrototype = NULL;
 }
 
 FJ_EndPoem::~FJ_EndPoem()
@@ -62,8 +62,10 @@ void FJ_EndPoem::UpdateTileBackground()
         for (int i = 0; i < m_tileCount; ++i)
         {
             FJ_FuiNode* tile = FJ_Factory::createObject("DirtTile", m_pRenderNode, true, NULL);
-            tile->setX((i % m_tileColumns) * m_tilePrototype->getWidth());
-            tile->setY((i / m_tileColumns) * m_tilePrototype->getHeight());
+            int row = i / m_tileColumns;
+            int column = i % m_tileColumns;
+            tile->setX(column * m_tilePrototype->getWidth());
+            tile->setY(row * m_tilePrototype->getHeight());
             m_tiles[i] = tile;
             addChildAt(tile, 0);
         }
@@ -87,23 +89,26 @@ void FJ_EndPoem::UpdateScrolling(FJ_Event* event)
 {
     if (m_scrollSpeed > 0)
     {
-        if (m_lastLabel != 0 && !m_visibleNodes.empty() && m_visibleLabels[m_visibleNodes.size() - 1] < m_lastLabel)
+        if (m_lastLabel != 0 && m_visibleNodes.size() != 0 && m_visibleLabels[m_visibleNodes.size() - 1] < m_lastLabel)
             m_lastLabelShown = false;
         if (!m_lastLabelShown)
         {
-            if (m_visibleNodes.empty())
+            if (!m_visibleNodes.empty())
+            {
+                if (m_visibleNodes[m_visibleNodes.size() - 1]->getY() + m_visibleNodes[m_visibleNodes.size() - 1]->getHeight() < getStage()->getStageHeight())
+                {
+                    m_appending = true;
+                    RequestNextLabel(m_visibleLabels[m_visibleNodes.size() - 1] + 1);
+                }
+            }
+            else
             {
                 m_appending = true;
                 RequestNextLabel(0);
             }
-            else if (m_visibleNodes[m_visibleNodes.size() - 1]->getY() + m_visibleNodes[m_visibleNodes.size() - 1]->getHeight() < getStage()->getStageHeight())
-            {
-                m_appending = true;
-                RequestNextLabel(m_visibleLabels[m_visibleNodes.size() - 1] + 1);
-            }
         }
     }
-    else if (!m_visibleNodes.empty())
+    else if (m_visibleNodes.size() != 0)
     {
         if (m_visibleNodes.front()->getY() > 0.0f && m_visibleLabels.front() > 0)
         {
@@ -112,14 +117,14 @@ void FJ_EndPoem::UpdateScrolling(FJ_Event* event)
         }
     }
 
-    if (!(m_scrollSpeed > 0 && m_lastLabelShown && !m_visibleNodes.empty() &&
+    if (!(m_scrollSpeed > 0 && m_lastLabelShown && m_visibleNodes.size() != 0 &&
           m_visibleNodes[m_visibleNodes.size() - 1]->getY() + m_visibleNodes[m_visibleNodes.size() - 1]->getHeight() * 0.5f < getStage()->getStageHeight() * 0.5f))
     {
         for (unsigned int i = 0; i < m_visibleNodes.size(); ++i)
             m_visibleNodes[i]->decY((float)Math::round(1.0f) * m_scrollSpeed);
     }
 
-    if (!m_visibleNodes.empty())
+    if (m_visibleNodes.size() != 0)
     {
         if (m_scrollSpeed > 0 && m_visibleNodes.front()->getY() + m_visibleNodes.front()->getHeight() < 0.0f)
         {

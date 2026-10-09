@@ -14,8 +14,11 @@
 #include "game/util/Math.hpp"
 
 FJ_LoadMenu::FJ_LoadMenu(fuiRenderNode* renderNode)
-    : FJ_Document(renderNode), m_unused(0), m_customLoadMenu(false), m_iconY(0)
+    : FJ_Document(renderNode)
 {
+    m_customLoadMenu = false;
+    m_unused = 0;
+    m_iconY = 0;
     addEventListener(eFJEventType_CheckboxToggled, this, _handleCheckboxToggled, false);
 }
 
@@ -67,7 +70,7 @@ void FJ_LoadMenu::InitCustomLoadMenu()
     mainPanel->getChildByName("TexturePackName")->setVisible(false);
     mainPanel->removeChild(mainPanel->getChildByName("TexturePackName"), true);
 
-    mainPanel->getChildByName("MultiList")->setTabIndex(1);
+    mainPanel->getChildByName("MultiList")->m_iTabIndex = 1;
     SetFocus(-1);
 }
 
@@ -84,10 +87,12 @@ void FJ_LoadMenu::RescaleCustomLoadMenu(bool comparison)
     int spareHeight = m_listHeight - multiList->GetListHeight();
     int descriptionHeight =
         (int)(description->GetRealHeight() + (comparisonPic->getY() - (description->getY() + description->GetRealHeight())));
+    float comparisonY = comparisonPic->getY();
     float reclaimedHeight = (float)spareHeight;
     float offset = reclaimedHeight * 0.5f;
-    int availableHeight =
-        (int)(comparisonPic->getY() - Math::round(offset) - (textY + Math::round(offset)) - textY);
+    int shift = Math::round(offset);
+    int textTop = textY + Math::round(offset);
+    int availableHeight = (int)(comparisonY - shift - textTop - textY);
     description->setHeight(descriptionHeight + levelIcon->getHeight() - reclaimedHeight);
 
     if (description->GetNumberOfLines() < 3)
@@ -116,14 +121,7 @@ void FJ_LoadMenu::RescaleCustomLoadMenu(bool comparison)
     mainPanel->getChildByName("TextPanel")->incY(Math::round(offset));
     description->setY(textY + Math::round(offset));
 
-    if (!comparison)
-    {
-        mainPanel->getChildByName("ComparisonPic")->decY(Math::round(offset));
-        mainPanel->getChildByName("ComparisonPicBG")->decY(Math::round(offset));
-        description->setScaleY(1.0f);
-        description->setHeight(description->GetOptimalHeight(-1));
-    }
-    else
+    if (comparison)
     {
         description->setScaleY(1.0f);
         description->setHeight(mainPanel->getChildByName("TextPanel")->getChildAt(0)->getHeight() - textY * 2);
@@ -131,6 +129,13 @@ void FJ_LoadMenu::RescaleCustomLoadMenu(bool comparison)
         mainPanel->removeChild(mainPanel->getChildByName("ComparisonPic"), true);
         mainPanel->getChildByName("ComparisonPicBG")->setVisible(false);
         mainPanel->removeChild(mainPanel->getChildByName("ComparisonPicBG"), true);
+    }
+    else
+    {
+        mainPanel->getChildByName("ComparisonPic")->decY(Math::round(offset));
+        mainPanel->getChildByName("ComparisonPicBG")->decY(Math::round(offset));
+        description->setScaleY(1.0f);
+        description->setHeight(description->GetOptimalHeight(-1));
     }
 }
 

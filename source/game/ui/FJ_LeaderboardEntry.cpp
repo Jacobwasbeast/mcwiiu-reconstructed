@@ -12,8 +12,6 @@ static std::string s_entryStates[2] = { "Entry_Unselected", "Entry_Selected" };
 FJ_LeaderboardEntry::FJ_LeaderboardEntry(fuiRenderNode* pRenderNode)
     : FJ_FuiNode(pRenderNode), m_rankTextWidth(0.0f), m_gamertagTextWidth(0.0f), m_columnTextWidth(0.0f)
 {
-    int i;
-
     FJ_FuiNode* rankContainer = getChildByName("RankContainer")->getChildAt(0)->asMovieClip();
     FJ_FuiNode* gamertagContainer = getChildByName("GamertagContainer")->getChildAt(0)->asMovieClip();
     m_rankText = rankContainer->getRenderNodeChildAt(0)->asEditText();
@@ -22,7 +20,7 @@ FJ_LeaderboardEntry::FJ_LeaderboardEntry(fuiRenderNode* pRenderNode)
     m_gamertagTextWidth = m_gamertagText->getWidth();
 
     char name[64];
-    for (i = 0; i < 7; ++i)
+    for (int i = 0; i < 7; ++i)
     {
         std::sprintf(name, "FJ_Column_%d", i);
         FJ_FuiNode* column = getChildByName(name)->getChildAt(0)->asMovieClip();
@@ -30,7 +28,8 @@ FJ_LeaderboardEntry::FJ_LeaderboardEntry(fuiRenderNode* pRenderNode)
         addChild(m_columnText[i]);
         m_columnText[i]->setX(getChildByName(name)->getX());
         m_columnText[i]->setY(getChildByName(name)->getY());
-        column->getParent()->removeChild(column, true);
+        FJ_FuiNode* parent = column->getParent();
+        parent->removeChild(column, true);
         m_columnTextWidth = m_columnText[i]->getWidth();
     }
     ChangeState(0);
@@ -50,16 +49,15 @@ void FJ_LeaderboardEntry::Init(int count, int firstValue, int spacing, int offse
     {
         if (i < count)
         {
-            int x = firstValue + offset + i * spacing;
-            m_columnPosition[i] = x;
-            m_columnText[i]->setX((float)x);
+            m_columnPosition[i] = firstValue + spacing * i + offset;
+            m_columnText[i]->setX((float)m_columnPosition[i]);
             m_columnText[i]->setVisibility(true);
         }
         else
             m_columnText[i]->setVisibility(false);
     }
     m_numColumns = count;
-    m_firstValuePosition = (firstValue + offset + (firstValue + offset + spacing * (count - 1))) / 2;
+    m_firstValuePosition = (firstValue + offset + (firstValue + spacing * (count - 1) + offset)) / 2;
 }
 
 void FJ_LeaderboardEntry::SetData(FJ_LeaderboardList::CLeaderboardEntry* pEntry)
@@ -140,9 +138,9 @@ unsigned int FJ_LeaderboardEntry::getType()
 void FJ_LeaderboardEntry::UpdateHighlightColours()
 {
     FJ_FuiNode* style = getChildByName("StyleContainer")->getChildAt(0)->asMovieClip();
-    unsigned int color = style->getRenderNodeChildAt(0)->asEditText()->m_colour;
-    m_rankText->m_colour = color;
-    m_gamertagText->m_colour = color;
+    fuiRenderNodeEditText* text = style->getRenderNodeChildAt(0)->asEditText();
+    m_rankText->m_colour = text->m_colour;
+    m_gamertagText->m_colour = text->m_colour;
     for (int i = 0; i < 7; ++i)
-        m_columnText[i]->m_colour = color;
+        m_columnText[i]->m_colour = text->m_colour;
 }

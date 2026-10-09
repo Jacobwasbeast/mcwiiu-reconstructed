@@ -1,5 +1,6 @@
 #include "game/ui/FJ_CheckBox.hpp"
 
+#include <algorithm>
 #include <string>
 
 #include "game/ui/FJ_Event.hpp"
@@ -42,19 +43,20 @@ void FJ_CheckBox::SetCheckBox(bool checked)
 {
     m_checked = checked;
     FJ_FuiNode* parent = getObjListParent();
-    if (parent == NULL)
+    if (parent != NULL)
+    {
+        if (parent->isFJ_List())
+        {
+            getRoot()->m_pCallbackScene->handleCheckboxElementToggled(static_cast<FJ_Base*>(getObjListParent())->getId(), getId(), m_checked);
+        }
+        else if (getObjListParent()->isFJ_List2D())
+        {
+            getRoot()->m_pCallbackScene->handleCheckboxElementToggled(static_cast<FJ_Base*>(getObjListParent())->getId(), getId(), m_checked);
+        }
+    }
+    else
     {
         dispatchEvent(new FJ_Event(eFJEventType_CheckboxToggled, true, false));
-    }
-    else if (parent->isFJ_List())
-    {
-        UIScene* scene = getRoot()->m_pCallbackScene;
-        scene->handleCheckboxElementToggled(static_cast<FJ_Base*>(getObjListParent())->getId(), getId(), m_checked);
-    }
-    else if (getObjListParent()->isFJ_List2D())
-    {
-        UIScene* scene = getRoot()->m_pCallbackScene;
-        scene->handleCheckboxElementToggled(static_cast<FJ_Base*>(getObjListParent())->getId(), getId(), m_checked);
     }
     UpdateCheckBox();
 }
@@ -62,7 +64,7 @@ void FJ_CheckBox::SetCheckBox(bool checked)
 void FJ_CheckBox::ChangeState(int state)
 {
     std::string* row = s_checkBoxStates[state];
-    gotoAndStop(row[m_enabled ^ 1]);
+    gotoAndStop(row[!m_enabled]);
     m_currentState = state;
 }
 
@@ -119,11 +121,12 @@ void FJ_CheckBox::_focusOutHandler(FJ_FuiNode* node, FJ_Event* event)
 
 void FJ_CheckBox::keyDownHandler(FJ_Event* event)
 {
-    if (!m_enabled || FJ_CheckBox::s_keyDown ||
-        static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode != 0)
-        return;
-    FJ_CheckBox::s_keyDown = true;
-    SetCheckBox(m_checked ^ 1);
+    if (m_enabled && !FJ_CheckBox::s_keyDown && static_cast<FJ_KeyboardEvent*>(event)->m_iKeyCode == 0)
+    {
+        FJ_CheckBox::s_keyDown = true;
+        bool checked = !m_checked;
+        SetCheckBox(checked);
+    }
 }
 
 void FJ_CheckBox::_keyDownHandler(FJ_FuiNode* node, FJ_Event* event)
@@ -174,14 +177,10 @@ void FJ_CheckBox::Init(const std::wstring& name, int id, bool checked)
 void FJ_CheckBox::GetLabelTooWide(fuiRenderNodeEditText* textField)
 {
     const float maxWidth = static_cast<float>(m_maxLabelWidth);
-    int width = maxWidth <= textField->m_textWidth ? static_cast<int>(textField->m_textWidth) : static_cast<int>(maxWidth);
-    width = width < m_labelWidth ? m_labelWidth : width;
-    int required = m_oldWidth;
-    if (width > m_labelWidth)
-        required = m_oldWidth - m_labelWidth + width;
-    if (required < m_newWidth)
-        required = m_newWidth;
-    m_newWidth = required;
+    int width = static_cast<int>(maxWidth > textField->m_textWidth ? maxWidth : textField->m_textWidth);
+    width = std::max(width, m_labelWidth);
+    int required = width > m_labelWidth ? m_oldWidth - m_labelWidth + width : m_oldWidth;
+    m_newWidth = std::max(m_newWidth, required);
 }
 
 void FJ_CheckBox::SetNewObjectWidth(int)

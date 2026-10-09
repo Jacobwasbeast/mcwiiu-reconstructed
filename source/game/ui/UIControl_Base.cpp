@@ -12,17 +12,17 @@
 
 UIControl_Base::UIControl_Base()
 {
-    m_controlId = 0;
     m_labelChanged = false;
+    m_controlId = 0;
 }
 
 UIControl_Base::~UIControl_Base()
 {
 }
 
-void UIControl_Base::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_Base::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
-    UIControl::setupControl(scene, node, name);
+    return UIControl::setupControl(scene, node, name);
 }
 
 void UIControl_Base::setLabel(UIString label, bool update, bool force)
@@ -61,9 +61,12 @@ void UIControl_Base::tick()
 
 const wchar_t* UIControl_Base::getLabel()
 {
-    if (!m_fuiRenderNode->getFuiNode()->isFJ_Base())
-        return L"";
-    return m_fuiRenderNode->getFuiNode()->asFJ_Base()->GetLabel().c_str();
+    if (m_fuiRenderNode->getFuiNode()->isFJ_Base())
+    {
+        const std::wstring& label = m_fuiRenderNode->getFuiNode()->asFJ_Base()->GetLabel();
+        return label.c_str();
+    }
+    return L"";
 }
 
 void UIControl_Base::setAllPossibleLabels(int firstLabel, unsigned int labelCount, wchar_t (*labels)[256])

@@ -55,7 +55,7 @@ public:
     virtual unsigned int mapElementsAndNames();
     virtual void updateTooltips();
     virtual void updateComponents();
-    unsigned char GetControlsAction(EControl control);
+    int GetControlsAction(EControl control);
     std::wstring GetControlsString(EControl control, bool& mapped);
     void UpdateControls(int player);
     static int ResetControlsWarningDialogReturned(void* context, int pad,
@@ -79,7 +79,7 @@ public:
     virtual int getSceneType();
 
 private:
-    bool m_isFlying;
+    bool m_canFly;
     bool m_updateControls;
     bool m_mappingsChanged;
     bool m_showAssignHelp;

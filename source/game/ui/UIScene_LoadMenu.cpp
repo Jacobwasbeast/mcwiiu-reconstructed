@@ -490,55 +490,59 @@ int UIScene_LoadMenu::LoadSaveDataThumbnailReturned(void* context, unsigned char
 unsigned int UIScene_LoadMenu::mapElementsAndNames()
 {
     IUIScene_StartGame::mapElementsAndNames();
-    fuiRenderNode* root = m_movie->getRootNode();
+    fuiRenderNode* currentNode = m_movie->getRootNode();
     {
-        m_mainPanel.setupControl(this, root, std::string("MainPanel"));
+        m_mainPanel.setupControl(this, currentNode, std::string("MainPanel"));
         m_controls.push_back(&m_mainPanel);
     }
-    fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
     {
-        m_gameName.setupControl(this, panel, std::string("GameName"));
-        m_controls.push_back(&m_gameName);
-    }
-    {
-        m_createdMode.setupControl(this, panel, std::string("CreatedMode"));
-        m_controls.push_back(&m_createdMode);
-    }
-    {
-        m_description.setupControl(this, panel, std::string("Seed"));
-        m_controls.push_back(&m_description);
-    }
-    {
-        m_texturePackList.setupControl(this, panel, std::string("TexturePackSelector"));
-        m_controls.push_back(&m_texturePackList);
-    }
-    {
-        m_gameModeSlider.setupControl(this, panel, std::string("GameModeToggle"));
-        m_controls.push_back(&m_gameModeSlider);
-    }
-    {
-        m_onlineGameCheckBox.setupControl(this, panel, std::string("CheckboxOnline"));
-        m_controls.push_back(&m_onlineGameCheckBox);
-    }
-    {
-        m_playButton.setupControl(this, panel, std::string("MoreOptions"));
-        m_controls.push_back(&m_playButton);
-    }
-    {
-        m_loadSettings.setupControl(this, panel, std::string("LoadSettings"));
-        m_controls.push_back(&m_loadSettings);
-    }
-    {
-        m_difficultySlider.setupControl(this, panel, std::string("Difficulty"));
-        m_controls.push_back(&m_difficultySlider);
-    }
-    {
-        m_levelIcon.setupControl(this, panel, std::string("LevelIcon"));
-        m_controls.push_back(&m_levelIcon);
-    }
-    {
-        m_list.setupControl(this, panel, std::string("MultiList"));
-        m_controls.push_back(&m_list);
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_mainPanel.getFuiRenderNode();
+        {
+            m_gameName.setupControl(this, currentNode, std::string("GameName"));
+            m_controls.push_back(&m_gameName);
+        }
+        {
+            m_createdMode.setupControl(this, currentNode, std::string("CreatedMode"));
+            m_controls.push_back(&m_createdMode);
+        }
+        {
+            m_description.setupControl(this, currentNode, std::string("Seed"));
+            m_controls.push_back(&m_description);
+        }
+        {
+            m_texturePackList.setupControl(this, currentNode, std::string("TexturePackSelector"));
+            m_controls.push_back(&m_texturePackList);
+        }
+        {
+            m_gameModeSlider.setupControl(this, currentNode, std::string("GameModeToggle"));
+            m_controls.push_back(&m_gameModeSlider);
+        }
+        {
+            m_onlineGameCheckBox.setupControl(this, currentNode, std::string("CheckboxOnline"));
+            m_controls.push_back(&m_onlineGameCheckBox);
+        }
+        {
+            m_playButton.setupControl(this, currentNode, std::string("MoreOptions"));
+            m_controls.push_back(&m_playButton);
+        }
+        {
+            m_loadSettings.setupControl(this, currentNode, std::string("LoadSettings"));
+            m_controls.push_back(&m_loadSettings);
+        }
+        {
+            m_difficultySlider.setupControl(this, currentNode, std::string("Difficulty"));
+            m_controls.push_back(&m_difficultySlider);
+        }
+        {
+            m_levelIcon.setupControl(this, currentNode, std::string("LevelIcon"));
+            m_controls.push_back(&m_levelIcon);
+        }
+        {
+            m_list.setupControl(this, currentNode, std::string("MultiList"));
+            m_controls.push_back(&m_list);
+        }
+        currentNode = parentNode;
     }
     return 1;
 }
@@ -746,7 +750,7 @@ void UIScene_LoadMenu::handleInput(int, int action, bool repeat, bool pressed,
         sendInputToMovie(action, repeat, pressed, released);
         if (!m_launchData.mHostMiniGame && !m_launchData.mJoinMiniGame)
         {
-            unsigned int checked = m_onlineGameCheckBox.IsChecked();
+            bool checked = m_onlineGameCheckBox.IsChecked();
             if (m_launchData.mOnlineGame != checked)
             {
                 m_launchData.mOnlineGame = checked;

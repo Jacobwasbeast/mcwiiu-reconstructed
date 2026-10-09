@@ -21,19 +21,6 @@ public:
         std::wstring description;
         std::wstring gamerPic;
         std::wstring achievementIcon;
-
-        Toast()
-            : title(), description(), gamerPic(), achievementIcon()
-        {
-        }
-
-        Toast(const std::wstring& title, const std::wstring& description, const std::wstring& gamerPic,
-              const wchar_t* achievementIcon)
-            : title(title), description(description), gamerPic(gamerPic), achievementIcon(achievementIcon)
-        {
-        }
-
-        Toast(const Toast& other);
     };
 
     UIComponent_PressStartToPlay(int type, void* data, UILayer* layer);

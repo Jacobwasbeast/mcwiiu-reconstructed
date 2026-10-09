@@ -11,11 +11,11 @@ UIControl_Progress::UIControl_Progress()
 {
 }
 
-void UIControl_Progress::setupControl(UIScene* scene, fuiRenderNode* node,
+bool UIControl_Progress::setupControl(UIScene* scene, fuiRenderNode* node,
                                       const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_Progress;
-    UIControl_Base::setupControl(scene, node, name);
+    return UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_Progress::init(UIString label, int controlId, int minimum, int maximum,

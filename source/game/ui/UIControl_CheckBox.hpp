@@ -10,8 +10,8 @@ public:
     virtual ~UIControl_CheckBox() {}
     unsigned char IsEnabled();
     void setChecked(bool checked);
-    unsigned int IsChecked();
-    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    bool IsChecked();
+    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void init(UIString label, int id, bool checked);
     unsigned char TouchIsChecked();
     void SetEnable(bool enable);

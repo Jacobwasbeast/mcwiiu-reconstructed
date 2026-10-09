@@ -7,11 +7,11 @@ UIControl_AchievementsList::UIControl_AchievementsList()
 {
 }
 
-void UIControl_AchievementsList::setupControl(UIScene* scene, fuiRenderNode* node,
+bool UIControl_AchievementsList::setupControl(UIScene* scene, fuiRenderNode* node,
                                               const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_AchievementsList;
-    UIControl_GridList::setupControl(scene, node, name);
+    return UIControl_GridList::setupControl(scene, node, name);
 }
 
 void UIControl_AchievementsList::AddNewItem(int id, const std::wstring& textureName)

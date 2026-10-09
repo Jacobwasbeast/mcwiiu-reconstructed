@@ -18,27 +18,16 @@ FJ_LabelOutline::FJ_LabelOutline(fuiRenderNode* renderNode)
     m_labelText->setAutoSize(TextFieldAutoSizeLeft);
 
     int i;
-    for (i = 0; i < 4; ++i)
+    for (i = 0; i < 8; ++i)
     {
         char name[68];
-        std::sprintf(name, "FJ_Outline_%d", i * 2);
+        std::sprintf(name, "FJ_Outline_%d", i);
         fuiRenderNode* outline = labelContainer->getRenderNodeChildByName(std::string(name));
         if (outline != 0)
         {
-            fuiRenderNodeEditText* text = outline->asEditText();
-            m_outlineText.push_back(text);
+            m_outlineText.push_back(outline->asEditText());
             m_outlineText.back()->setAutoSize(TextFieldAutoSizeLeft);
-            m_outlineX.push_back(m_outlineText[i * 2]->getX());
-        }
-
-        std::sprintf(name, "FJ_Outline_%d", i * 2 + 1);
-        outline = labelContainer->getRenderNodeChildByName(std::string(name));
-        if (outline != 0)
-        {
-            fuiRenderNodeEditText* text = outline->asEditText();
-            m_outlineText.push_back(text);
-            m_outlineText.back()->setAutoSize(TextFieldAutoSizeLeft);
-            m_outlineX.push_back(m_outlineText[i * 2 + 1]->getX());
+            m_outlineX.push_back(m_outlineText[i]->getX());
         }
     }
 
@@ -65,8 +54,7 @@ void FJ_LabelOutline::SetLabel(const std::wstring& label)
         m_labelText->setX(m_labelText->getX() - static_cast<float>(offset));
     }
 
-    std::size_t i;
-    for (i = 0; i < m_outlineText.size(); ++i)
+    for (int i = 0; i < m_outlineText.size(); ++i)
     {
         m_outlineText[i]->setText(label);
         m_outlineText[i]->setX(m_outlineX[i]);

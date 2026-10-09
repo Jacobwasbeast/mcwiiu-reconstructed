@@ -35,10 +35,10 @@ UIScene_AvatarSelectMenu::UIScene_AvatarSelectMenu(int player, void* data, UILay
 {
     initialiseMovie();
     gApp.SetLiveLinkRequired(true);
-    m_userControls.m_owner = this;
     m_pad = player;
-    m_guestControls.m_owner = this;
+    m_userControls.m_owner = this;
     m_favouriteControls.m_owner = this;
+    m_guestControls.m_owner = this;
     m_userControls.m_list.init(0);
     m_favouriteControls.m_list.init(1);
     m_guestControls.m_list.init(2);
@@ -48,11 +48,11 @@ UIScene_AvatarSelectMenu::UIScene_AvatarSelectMenu(int player, void* data, UILay
     m_userControls.m_timer.setVisible(false);
     m_favouriteControls.m_timer.setVisible(false);
     m_guestControls.m_timer.setVisible(false);
-    m_miisAdded = false;
     m_initialised = false;
     m_unknown1 = false;
     m_navigateBack = false;
     m_currentTab = 0;
+    m_miisAdded = false;
 
     int choice = 0;
     for (int pad = 0; pad < 4; ++pad)
@@ -80,40 +80,82 @@ UIScene_AvatarSelectMenu::~UIScene_AvatarSelectMenu()
 
 unsigned int UIScene_AvatarSelectMenu::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_userControls.m_tab.setupControl(this, root, "UserTab");
-    m_controls.push_back(&m_userControls.m_tab);
-    fuiRenderNode* userTab = m_userControls.m_tab.getFuiRenderNode();
-    m_userControls.m_list.setupControl(this, userTab, "UserList");
-    m_controls.push_back(&m_userControls.m_list);
-    m_userControls.m_timer.setupControl(this, userTab, "UserTimer");
-    m_controls.push_back(&m_userControls.m_timer);
-    m_userTabTouch.setupControl(this, userTab, "TouchTabUser");
-    m_controls.push_back(&m_userTabTouch);
-    m_favouriteControls.m_tab.setupControl(this, root, "FavouriteTab");
-    m_controls.push_back(&m_favouriteControls.m_tab);
-    fuiRenderNode* favouriteTab = m_favouriteControls.m_tab.getFuiRenderNode();
-    m_favouriteControls.m_list.setupControl(this, favouriteTab, "FavouriteList");
-    m_controls.push_back(&m_favouriteControls.m_list);
-    m_favouriteControls.m_timer.setupControl(this, favouriteTab, "FavouriteTimer");
-    m_controls.push_back(&m_favouriteControls.m_timer);
-    m_favouriteTabTouch.setupControl(this, favouriteTab, "TouchTabFavourite");
-    m_controls.push_back(&m_favouriteTabTouch);
-    m_guestControls.m_tab.setupControl(this, root, "GuestTab");
-    m_controls.push_back(&m_guestControls.m_tab);
-    fuiRenderNode* guestTab = m_guestControls.m_tab.getFuiRenderNode();
-    m_guestControls.m_list.setupControl(this, guestTab, "GuestTabList");
-    m_controls.push_back(&m_guestControls.m_list);
-    m_guestControls.m_timer.setupControl(this, guestTab, "GuestTimer");
-    m_controls.push_back(&m_guestControls.m_timer);
-    m_guestTabTouch.setupControl(this, guestTab, "TouchTabGuest");
-    m_controls.push_back(&m_guestTabTouch);
-    m_userControls.m_title.setupControl(this, root, "UserTabTitle");
-    m_controls.push_back(&m_userControls.m_title);
-    m_favouriteControls.m_title.setupControl(this, root, "FavouriteTabTitle");
-    m_controls.push_back(&m_favouriteControls.m_title);
-    m_guestControls.m_title.setupControl(this, root, "GuestTabTitle");
-    m_controls.push_back(&m_guestControls.m_title);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_userControls.m_tab.setupControl(this, currentNode, std::string("UserTab"));
+        m_controls.push_back(&m_userControls.m_tab);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_userControls.m_tab.getFuiRenderNode();
+        {
+            m_userControls.m_list.setupControl(this, currentNode, std::string("UserList"));
+            m_controls.push_back(&m_userControls.m_list);
+        }
+        {
+            m_userControls.m_timer.setupControl(this, currentNode, std::string("UserTimer"));
+            m_controls.push_back(&m_userControls.m_timer);
+        }
+        {
+            m_userTabTouch.setupControl(this, currentNode, std::string("TouchTabUser"));
+            m_controls.push_back(&m_userTabTouch);
+        }
+        currentNode = parentNode;
+    }
+    {
+        m_favouriteControls.m_tab.setupControl(this, currentNode, std::string("FavouriteTab"));
+        m_controls.push_back(&m_favouriteControls.m_tab);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_favouriteControls.m_tab.getFuiRenderNode();
+        {
+            m_favouriteControls.m_list.setupControl(this, currentNode, std::string("FavouriteList"));
+            m_controls.push_back(&m_favouriteControls.m_list);
+        }
+        {
+            m_favouriteControls.m_timer.setupControl(this, currentNode, std::string("FavouriteTimer"));
+            m_controls.push_back(&m_favouriteControls.m_timer);
+        }
+        {
+            m_favouriteTabTouch.setupControl(this, currentNode, std::string("TouchTabFavourite"));
+            m_controls.push_back(&m_favouriteTabTouch);
+        }
+        currentNode = parentNode;
+    }
+    {
+        m_guestControls.m_tab.setupControl(this, currentNode, std::string("GuestTab"));
+        m_controls.push_back(&m_guestControls.m_tab);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_guestControls.m_tab.getFuiRenderNode();
+        {
+            m_guestControls.m_list.setupControl(this, currentNode, std::string("GuestTabList"));
+            m_controls.push_back(&m_guestControls.m_list);
+        }
+        {
+            m_guestControls.m_timer.setupControl(this, currentNode, std::string("GuestTimer"));
+            m_controls.push_back(&m_guestControls.m_timer);
+        }
+        {
+            m_guestTabTouch.setupControl(this, currentNode, std::string("TouchTabGuest"));
+            m_controls.push_back(&m_guestTabTouch);
+        }
+        currentNode = parentNode;
+    }
+    {
+        m_userControls.m_title.setupControl(this, currentNode, std::string("UserTabTitle"));
+        m_controls.push_back(&m_userControls.m_title);
+    }
+    {
+        m_favouriteControls.m_title.setupControl(this, currentNode, std::string("FavouriteTabTitle"));
+        m_controls.push_back(&m_favouriteControls.m_title);
+    }
+    {
+        m_guestControls.m_title.setupControl(this, currentNode, std::string("GuestTabTitle"));
+        m_controls.push_back(&m_guestControls.m_title);
+    }
     return 1;
 }
 
@@ -121,31 +163,50 @@ void UIScene_AvatarSelectMenu::AddMiiItem(TabControls& controls, MiiDataEntry* m
 {
     for (int i = 0; i < 4; ++i)
     {
-        if (!gProfile->IsSignedIn(i)) continue;
-        PlayerUID uid(0);
-        gProfile->GetXUID(i, &uid, false);
-        if (mii->mIsAccountMii ? uid.uuid == mii->mUuid : std::memcmp(uid.mii.createId, mii->mCreatorId, 10) == 0)
-            return;
+        if (gProfile->IsSignedIn(i))
+        {
+            PlayerUID uid(0);
+            gProfile->GetXUID(i, &uid, false);
+            if (mii->mIsAccountMii)
+            {
+                if (uid.uuid == mii->mUuid)
+                    return;
+            }
+            else if (std::memcmp(uid.mii.createId, mii->mCreatorId, 10) == 0)
+            {
+                return;
+            }
+        }
     }
-    std::wstring name;
-    for (int i = 0; i < 11 && mii->mName[i] != 0; ++i) name.push_back((wchar_t)mii->mName[i]);
-    controls.m_list.addItem(name);
+    controls.m_list.addItem(reinterpret_cast<const wchar_t*>(mii->mName));
     wchar_t texture[32];
-    std::swprintf(texture, 32, L"Mii_num_%d", controls.m_list.getItemCount() - 1);
-    std::wstring textureName(texture);
-    registerSubstitutionTexture(textureName, 0, (unsigned int)mii->mIconTexture, false);
-    controls.m_list.setTextureName(controls.m_list.getItemCount() - 1, textureName);
+    std::swprintf(texture, 32, L"Mii_num_%d", mii->mIconTexture);
+    registerSubstitutionTexture(texture, NULL, mii->mIconTexture, false);
+    int index = controls.m_list.getItemCount() - 1;
+    controls.m_list.setTextureName(index, texture);
     controls.m_miis.push_back(mii);
 }
 
 void UIScene_AvatarSelectMenu::AddMiiItems()
 {
-    int count = gProfile->GetNumSysUserMiis();
-    for (int i = 0; i < count; ++i) AddMiiItem(m_userControls, gProfile->GetSysUserMiiData(i));
-    count = gProfile->GetNumFavouriteMiis();
-    for (int i = 0; i < count; ++i) AddMiiItem(m_favouriteControls, gProfile->GetFavouriteMiiData(i));
-    count = gProfile->GetNumGuestMiis();
-    for (int i = 0; i < count; ++i) AddMiiItem(m_guestControls, gProfile->GetGuestMiiData(i));
+    int userCount = gProfile->GetNumSysUserMiis();
+    for (int i = 0; i < userCount; ++i)
+    {
+        MiiDataEntry* mii = gProfile->GetSysUserMiiData(i);
+        AddMiiItem(m_userControls, mii);
+    }
+    int favouriteCount = gProfile->GetNumFavouriteMiis();
+    for (int i = 0; i < favouriteCount; ++i)
+    {
+        MiiDataEntry* mii = gProfile->GetFavouriteMiiData(i);
+        AddMiiItem(m_favouriteControls, mii);
+    }
+    int guestCount = gProfile->GetNumGuestMiis();
+    for (int i = 0; i < guestCount; ++i)
+    {
+        MiiDataEntry* mii = gProfile->GetGuestMiiData(i);
+        AddMiiItem(m_guestControls, mii);
+    }
 }
 
 void UIScene_AvatarSelectMenu::updateTooltips() { hasFocus(m_playerId); }
@@ -165,7 +226,6 @@ bool UIScene_AvatarSelectMenu::handleKeyDown(int, int action, bool)
 {
     if (m_initialised) return false;
     bool consumed = false;
-    int tab = m_currentTab;
     switch (action)
     {
     case EControllerActions_MenuB:
@@ -176,18 +236,18 @@ bool UIScene_AvatarSelectMenu::handleKeyDown(int, int action, bool)
         break;
     case EControllerActions_MenuRight:
     case EControllerActions_MenuRightScroll:
-        tab = tab + 1;
-        if (tab >= 3) tab = 0;
-        m_currentTab = tab;
-        SelectTab(tab);
+        m_currentTab = m_currentTab + 1;
+        if (m_currentTab >= 3)
+            m_currentTab = 0;
+        SelectTab(m_currentTab);
         updateTooltips();
         break;
     case EControllerActions_MenuLeft:
     case EControllerActions_MenuLeftScroll:
-        tab = tab - 1;
-        if (tab < 0) tab = 2;
-        m_currentTab = tab;
-        SelectTab(tab);
+        m_currentTab = m_currentTab - 1;
+        if (m_currentTab < 0)
+            m_currentTab = 2;
+        SelectTab(m_currentTab);
         updateTooltips();
         break;
     }
@@ -240,19 +300,37 @@ void UIScene_AvatarSelectMenu::handleTouchInput(unsigned int playerId, int touch
                                                int touchBox, bool pressed, bool repeat,
                                                bool released)
 {
-    if (!pressed) return;
-    if (touchBox <= 2 || touchBox >= 6) return;
-    if (m_activeTab == touchBox - 3) return;
-    m_activeTab = touchBox - 3;
-    updateTooltips();
-    SelectTab(m_activeTab);
+    if (!pressed)
+        return;
+    switch (touchBox)
+    {
+    case 3:
+    case 4:
+    case 5:
+    {
+        int tab = touchBox - 3;
+        if (m_activeTab != tab)
+        {
+            m_activeTab = tab;
+            updateTooltips();
+            SelectTab(m_activeTab);
+        }
+        break;
+    }
+    }
 }
 
 UIControl* UIScene_AvatarSelectMenu::GetMainPanel()
 {
-    if (m_activeTab == 1) return &m_favouriteControls.m_tab;
-    if (m_activeTab == 2) return &m_guestControls.m_tab;
-    return &m_userControls.m_tab;
+    switch (m_activeTab)
+    {
+    case 1:
+        return &m_favouriteControls.m_tab;
+    case 2:
+        return &m_guestControls.m_tab;
+    default:
+        return &m_userControls.m_tab;
+    }
 }
 
 void UIScene_AvatarSelectMenu::tick()
@@ -280,15 +358,29 @@ std::wstring UIScene_AvatarSelectMenu::getMoviePath() { return std::wstring(L"Av
 
 void UIScene_AvatarSelectMenu::handlePress(int controlId, int childId)
 {
-    if (controlId == 0)
-        gApp.RequestSignInUIWiiUReturnedSelected(m_userControls.m_miis[childId], m_choice, m_pad);
-    else if (controlId == 1)
-        gApp.RequestSignInUIWiiUReturnedSelected(m_favouriteControls.m_miis[childId], m_choice, m_pad);
-    else if (controlId == 2)
-        gApp.RequestSignInUIWiiUReturnedSelected(m_guestControls.m_miis[childId], m_choice, m_pad);
-    else
-        gApp.RequestSignInUIWiiUReturnedSelected(NULL, m_choice, m_pad);
-    navigateBack();
+    MiiDataEntry* mii = NULL;
+    switch (controlId)
+    {
+    case 0:
+        mii = m_userControls.m_miis[childId];
+        gApp.RequestSignInUIWiiUReturnedSelected(mii, m_choice, m_pad);
+        navigateBack();
+        break;
+    case 1:
+        mii = m_favouriteControls.m_miis[childId];
+        gApp.RequestSignInUIWiiUReturnedSelected(mii, m_choice, m_pad);
+        navigateBack();
+        break;
+    case 2:
+        mii = m_guestControls.m_miis[childId];
+        gApp.RequestSignInUIWiiUReturnedSelected(mii, m_choice, m_pad);
+        navigateBack();
+        break;
+    default:
+        gApp.RequestSignInUIWiiUReturnedSelected(mii, m_choice, m_pad);
+        navigateBack();
+        break;
+    }
 }
 
 int UIScene_AvatarSelectMenu::getSceneType() { return EUIScene_LoadCreateJoinMenu; }

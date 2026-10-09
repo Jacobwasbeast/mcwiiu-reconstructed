@@ -37,14 +37,13 @@ UIScene_HelpAndOptionsMenu::UIScene_HelpAndOptionsMenu(int playerId, void*, UILa
         removeControl(&m_buttons[5], false);
     if (gApp.GetLocalPlayerCount() > 1) {
         removeControl(&m_buttons[4], false);
-        if (m_playerId != gProfile->GetPrimaryPad())
+        if (gProfile->GetPrimaryPad() != m_playerId)
             removeControl(&m_buttons[5], false);
     }
-    Minecraft* minecraft = Minecraft::GetInstance();
+    boost::shared_ptr<MultiplayerLocalPlayer>& player = Minecraft::GetInstance()->mLocalPlayers[playerId];
     if (!gProfile->IsFullVersion()
-        || (Minecraft::InMiniGame(eMiniGameId_Any, true) && minecraft->mLocalPlayers[playerId].get() != NULL
-            && minecraft->mLocalPlayers[playerId].get()->GetGameType() != GameType::LOBBY
-            && !gApp.DebugArtToolsOn()))
+        || (Minecraft::InMiniGame(eMiniGameId_Any, true) && player.get() != NULL
+            && player.get()->GetGameType() != GameType::LOBBY && !gApp.DebugArtToolsOn()))
         removeControl(&m_buttons[0], false);
     doHorizontalResizeCheck();
     gConsoleUIController.TouchBoxRebuild(this);
@@ -98,16 +97,21 @@ void UIScene_HelpAndOptionsMenu::updateTooltips()
 
 void UIScene_HelpAndOptionsMenu::updateComponents()
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
-    bool showSecond = false;
-    if (minecraft->mLevel == NULL) {
+    bool showLogo;
+    bool notInGame = Minecraft::GetInstance()->mLevel == NULL;
+    if (notInGame)
+    {
         m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
-        showSecond = true;
-    } else {
-        m_layer->showComponent(m_playerId, EUIScene_Panorama, false);
-        showSecond = gApp.GetLocalPlayerCount() == 1;
+        showLogo = true;
     }
-    m_layer->showComponent(m_playerId, EUIScene_Logo, showSecond);
+    else
+    {
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, false);
+        showLogo = false;
+        if (gApp.GetLocalPlayerCount() == 1)
+            showLogo = true;
+    }
+    m_layer->showComponent(m_playerId, EUIScene_Logo, showLogo);
 }
 
 std::wstring UIScene_HelpAndOptionsMenu::getMoviePath()
@@ -118,8 +122,8 @@ std::wstring UIScene_HelpAndOptionsMenu::getMoviePath()
 void UIScene_HelpAndOptionsMenu::handleReload()
 {
     removeControl(&m_buttons[6], false);
-    Minecraft* minecraft = Minecraft::GetInstance();
-    if (m_playerId != gProfile->GetPrimaryPad() || minecraft->mLevel != NULL)
+    bool notInGame = Minecraft::GetInstance()->mLevel == NULL;
+    if (m_playerId != gProfile->GetPrimaryPad() || !notInGame)
         removeControl(&m_buttons[5], false);
     if (gApp.GetLocalPlayerCount() > 1) {
         removeControl(&m_buttons[4], false);
@@ -127,10 +131,9 @@ void UIScene_HelpAndOptionsMenu::handleReload()
             removeControl(&m_buttons[5], false);
     }
     gProfile->IsFullVersion();
-    bool keepButton1 = gProfile->IsFullVersion() &&
-        (!Minecraft::InMiniGame(eMiniGameId_Any, true) ||
-         minecraft->mLocalPlayers[m_playerId]->GetGameType() == GameType::LOBBY);
-    if (!keepButton1)
+    boost::shared_ptr<MultiplayerLocalPlayer>& player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
+    if (!gProfile->IsFullVersion()
+        || (Minecraft::InMiniGame(eMiniGameId_Any, true) && player->GetGameType() != GameType::LOBBY))
         removeControl(&m_buttons[0], false);
     doHorizontalResizeCheck();
     gConsoleUIController.TouchBoxRebuild(this);
@@ -159,13 +162,30 @@ void UIScene_HelpAndOptionsMenu::handleInput(int, int action, bool repeat, bool 
 
 void UIScene_HelpAndOptionsMenu::handlePress(int controlId, int)
 {
-    if (static_cast<unsigned int>(controlId) > 6)
-        return;
-    static const unsigned char scenes[7] = {
-        EUIScene_SkinSelectMenu, EUIScene_HowToPlayMenu, EUIScene_ControlsMenu,
-        EUIScene_SettingsMenu, EUIScene_Credits, EUIScene_ReinstallMenu, 13
-    };
-    gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(scenes[controlId]), 0, EUILayer_Scene, EUIGroup_PlayerDefault);
+    switch (controlId)
+    {
+    case 0:
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_SkinSelectMenu, NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
+        break;
+    case 1:
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_HowToPlayMenu, NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
+        break;
+    case 2:
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_ControlsMenu, NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
+        break;
+    case 3:
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_SettingsMenu, NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
+        break;
+    case 4:
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_Credits, NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
+        break;
+    case 5:
+        gConsoleUIController.NavigateToScene(m_playerId, EUIScene_ReinstallMenu, NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
+        break;
+    case 6:
+        gConsoleUIController.NavigateToScene(m_playerId, static_cast<EUIScene>(13), NULL, EUILayer_Scene, EUIGroup_PlayerDefault);
+        break;
+    }
 }
 
 int UIScene_HelpAndOptionsMenu::getSceneType() { return EUIScene_HelpAndOptionsMenu; }

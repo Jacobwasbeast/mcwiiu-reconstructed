@@ -24,29 +24,34 @@ void UIControl_TextInput::init(UIString label, int id)
     m_label = label;
     m_controlId = id;
 
-    FJ_FuiNode* node = m_fuiRenderNode->getFuiNode();
-    if (!node->isFJ_TextInput())
+    if (m_fuiRenderNode->getFuiNode()->isFJ_TextInput())
     {
-        if (m_fuiRenderNode->getFuiNode()->isFJ_SignInput())
-            m_fuiRenderNode->getFuiNode()->asFJ_SignInput()->Init(label.getString(), id);
+        std::wstring& text = label.getString();
+        m_fuiRenderNode->getFuiNode()->asFJ_TextInput()->Init(text, id);
     }
-    else
+    else if (m_fuiRenderNode->getFuiNode()->isFJ_SignInput())
     {
-        m_fuiRenderNode->getFuiNode()->asFJ_TextInput()->Init(label.getString(), id);
+        std::wstring& text = label.getString();
+        m_fuiRenderNode->getFuiNode()->asFJ_SignInput()->Init(text, id);
     }
 
-    unsigned int layerId = m_scene->m_layer->m_layerId;
-    if (layerId == EUILayer_Fullscreen || (layerId > EUILayer_Tutorial && layerId < EUILayer_Count))
+    switch (m_scene->m_layer->m_layerId)
+    {
+    case EUILayer_Fullscreen:
+    case EUILayer_Scene:
+    case EUILayer_HUD:
         gConsoleUIController.TouchBoxAdd(this, m_scene);
+        break;
+    }
 
     SetCharLimit(101);
 }
 
-void UIControl_TextInput::setupControl(UIScene* scene, fuiRenderNode* node,
+bool UIControl_TextInput::setupControl(UIScene* scene, fuiRenderNode* node,
                                        const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_TextInput;
-    UIControl_Base::setupControl(scene, node, name);
+    return UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_TextInput::ReInit()

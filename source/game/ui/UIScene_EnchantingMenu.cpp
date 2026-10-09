@@ -90,9 +90,9 @@ bool UIScene_EnchantingMenu::IsSectionSlotList(IUIScene_AbstractContainerMenu::E
     }
 }
 
-unsigned int UIScene_EnchantingMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_EnchantingMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    unsigned int columns = 0;
+    int columns = 0;
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
@@ -109,9 +109,9 @@ unsigned int UIScene_EnchantingMenu::getSectionColumns(IUIScene_AbstractContaine
     return columns;
 }
 
-unsigned int UIScene_EnchantingMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_EnchantingMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    unsigned int rows = 0;
+    int rows = 0;
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
@@ -132,112 +132,122 @@ unsigned int UIScene_EnchantingMenu::GetSectionAndSlotInDirection(
     IUIScene_AbstractContainerMenu::ESceneSection section,
     IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y)
 {
-    IUIScene_AbstractContainerMenu::ESceneSection target = section;
-    int dx = 0;
+    IUIScene_AbstractContainerMenu::ESceneSection newSection = section;
+    int xOffset = 0;
+
     switch (section)
     {
+    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            if (*x > 2)
+                newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3;
+            else if (*x == 2)
+                newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
+            else
+                newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
+        }
+        break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            if (*x > 2) target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1;
-            else if (*x > 1) target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
-            else target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
-        }
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-        {
-            if (m_smallInventory == 0)
-                target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory;
-            else if (*x > 2)
-                target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3;
+            if (*x > 2)
+                newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1;
             else if (*x > 1)
-                target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
+                newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
             else
-                target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
+                newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
         }
-        break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory:
-        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            if (*x > 2) target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3;
-            else if (*x > 1) target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
-            else target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
+            if (m_smallInventory)
+            {
+                if (*x > 2)
+                    newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3;
+                else if (*x == 2)
+                    newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
+                else
+                    newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
+            }
+            else
+            {
+                newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory;
+            }
         }
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = m_smallInventory != 0 ?
-                IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar :
-                IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory;
+            newSection = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar
+                                          : IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar;
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1;
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = m_smallInventory != 0 ?
-                IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar :
-                IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory;
-            dx = -2;
+            newSection = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar
+                                          : IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory;
+            xOffset = -2;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar;
-            dx = -2;
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar;
+            xOffset = -2;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1;
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton2;
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton2;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar;
-            dx = -7;
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar;
+            xOffset = -7;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton2:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3;
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1;
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton1;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton3:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
         {
-            target = m_smallInventory != 0 ?
-                IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar :
-                IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory;
-            dx = -7;
+            newSection = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_EnchantHotbar
+                                          : IUIScene_AbstractContainerMenu::ESceneSection_EnchantInventory;
+            xOffset = -7;
         }
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton2;
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantButton2;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantLapis;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
-            target = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
-        break;
-    default:
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_EnchantItem;
         break;
     }
-    static_cast<IUIScene_AbstractContainerMenu*>(this)->updateSlotPosition(section, target, state, x, y, dx, 0);
-    return target;
+
+    updateSlotPosition(section, newSection, state, x, y, xOffset, 0);
+    return newSection;
 }
 
 void UIScene_EnchantingMenu::GetPositionOfSection(
@@ -318,8 +328,8 @@ void UIScene_EnchantingMenu::GetItemScreenData(
     }
     if (IsSectionSlotList(section))
     {
-        const int rows = static_cast<int>(getSectionRows(section));
-        const int columns = static_cast<int>(getSectionColumns(section));
+        const int rows = getSectionRows(section);
+        const int columns = getSectionColumns(section);
         const float cellWidth = extent.x / static_cast<float>(columns);
         const float cellHeight = extent.y / static_cast<float>(rows);
         size->x = cellWidth;
@@ -385,7 +395,7 @@ int UIScene_EnchantingMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu
 void UIScene_EnchantingMenu::setSectionSelectedSlot(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
 {
-    const int columns = static_cast<int>(getSectionColumns(section));
+    const int columns = getSectionColumns(section);
     const int index = direction * columns + slot;
     UIControl_SlotList* list = NULL;
     switch (section)

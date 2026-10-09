@@ -58,14 +58,14 @@ not_null_ptr<ItemInstance> ShulkerBoxMenu::quickMoveStack(boost::shared_ptr<Play
 
         if (index < (int)mContainer->getContainerSize())
         {
-            if (moveItemStackTo(item, (int)mContainer->getContainerSize(),
-                                (int)m_slots.size(), true, true, true) != 1)
+            if (!moveItemStackTo(item, (int)mContainer->getContainerSize(),
+                                (int)m_slots.size(), true, true, true))
             {
                 return ItemInstance::EMPTY;
             }
         }
-        else if (moveItemStackTo(item, 0, (int)mContainer->getContainerSize(),
-                                 false, true, true) != 1)
+        else if (!moveItemStackTo(item, 0, (int)mContainer->getContainerSize(),
+                                 false, true, true))
         {
             return ItemInstance::EMPTY;
         }

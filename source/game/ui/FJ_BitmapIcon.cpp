@@ -36,31 +36,32 @@ void FJ_BitmapIcon::SetTextureName(const std::wstring& textureName)
             if (m_pBitmapNode != NULL)
                 m_pBitmapNode->setVisible(true);
         }
-
-        if (m_pBitmapNode != NULL)
-        {
-            unsigned int width = 0;
-            unsigned int height = 0;
-            bool hasTexture = false;
-            unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasTexture);
-            static_cast<fuiRenderNodeCodeGenRect*>(m_pBitmapNode->m_pRenderNode)->setTexture(
-                width, height, texture, hasTexture);
-            return;
-        }
     }
 
-    fuiRect rect;
-    rect.xMin = 0.0f;
-    rect.xMax = getWidth() / getScaleX();
-    rect.yMin = 0.0f;
-    rect.yMax = getHeight() / getScaleY();
-    unsigned int width = 0;
-    unsigned int height = 0;
-    bool hasTexture = false;
-    unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasTexture);
-    fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
-        getStage()->m_pRenderNode, &rect, "CustomTexture", width, height, texture, true, hasTexture);
-    m_pBitmapNode = new FJ_FuiNode(renderNode);
-    renderNode->setFuiNode(m_pBitmapNode);
-    addChild(m_pBitmapNode);
+    if (m_pBitmapNode == NULL)
+    {
+        fuiRect rect;
+        rect.xMin = 0.0f;
+        rect.yMin = 0.0f;
+        rect.xMax = getWidth() / getScaleX();
+        rect.yMax = getHeight() / getScaleY();
+        unsigned int width;
+        unsigned int height;
+        bool hasTexture = false;
+        unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasTexture);
+        fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(
+            getStage()->m_pRenderNode, &rect, "CustomTexture", width, height, texture, true, hasTexture);
+        m_pBitmapNode = new FJ_FuiNode(renderNode);
+        renderNode->setFuiNode(m_pBitmapNode);
+        addChild(m_pBitmapNode);
+    }
+    else
+    {
+        unsigned int width;
+        unsigned int height;
+        bool hasTexture = false;
+        unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasTexture);
+        static_cast<fuiRenderNodeCodeGenRect*>(m_pBitmapNode->m_pRenderNode)->setTexture(
+            width, height, texture, hasTexture);
+    }
 }

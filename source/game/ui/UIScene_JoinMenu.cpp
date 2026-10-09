@@ -25,12 +25,12 @@ UIScene_JoinMenu::UIScene_JoinMenu(int sceneType, void* data, UILayer* layer)
 {
     initialiseMovie();
     m_gameInfo.init(UIString(L""));
-    m_initialised = false;
-    m_friendSessionUpdated = false;
-    m_error = false;
     JoinSceneData* value = static_cast<JoinSceneData*>(data);
     m_friendSessionInfo = value->session;
     m_matchmaking = value->miniGames;
+    m_friendSessionUpdated = false;
+    m_error = false;
+    m_initialised = false;
 }
 
 unsigned int UIScene_JoinMenu::GetCustomGameModeID()
@@ -41,20 +41,17 @@ unsigned int UIScene_JoinMenu::mapElementsAndNames()
 {
     fuiRenderNode* root = m_movie->getRootNode();
     {
-        std::string name("JoinGame");
-        m_joinButton.setupControl(this, root, name);
+        m_joinButton.setupControl(this, root, "JoinGame");
+        m_controls.push_back(&m_joinButton);
     }
-    m_controls.push_back(&m_joinButton);
     {
-        std::string name("GamePlayers");
-        m_gamePlayers.setupControl(this, root, name);
+        m_gamePlayers.setupControl(this, root, "GamePlayers");
+        m_controls.push_back(&m_gamePlayers);
     }
-    m_controls.push_back(&m_gamePlayers);
     {
-        std::string name("GameInfo");
-        m_gameInfo.setupControl(this, root, name);
+        m_gameInfo.setupControl(this, root, "GameInfo");
+        m_controls.push_back(&m_gameInfo);
     }
-    m_controls.push_back(&m_gameInfo);
     return 1;
 }
 void UIScene_JoinMenu::friendSessionUpdated(bool updated, void* data)
@@ -69,54 +66,69 @@ void UIScene_JoinMenu::friendSessionUpdated(bool updated, void* data)
 }
 void UIScene_JoinMenu::AddDescriptionForOption(std::vector<HtmlString>& descriptions, eGameHostOption option, int options)
 {
-    unsigned int title = 0;
-    const wchar_t* value = L"";
-    unsigned int state;
-    if (option == eGameHostOption_Difficulty)
+    std::wstring value = L"";
+    std::wstring on = L10N::GetString(IDS_ON);
+    std::wstring off = L10N::GetString(IDS_OFF);
+    int title = -1;
+    switch (option)
     {
-        state = gApp.GetGameHostOption((unsigned int)options, option);
+    case eGameHostOption_Difficulty:
         title = IDS_LABEL_DIFFICULTY;
-        value = L10N::GetString(state == 1 ? IDS_DIFFICULTY_TITLE_EASY : state == 2 ? IDS_DIFFICULTY_TITLE_NORMAL :
-                                state == 3 ? IDS_DIFFICULTY_TITLE_HARD : IDS_DIFFICULTY_TITLE_PEACEFUL);
-    }
-    else if (option == eGameHostOption_Gamertags)
-    {
-        state = gApp.GetGameHostOption((unsigned int)options, option);
-        title = 0x8ca04f68;
-        value = L10N::GetString(state ? IDS_ON : IDS_OFF);
-    }
-    else if (option == eGameHostOption_LevelType)
-    {
-        state = gApp.GetGameHostOption((unsigned int)options, option);
-        title = IDS_LABEL_LEVEL_TYPE;
-        value = L10N::GetString(state ? 0xf37d7beb : 0x1494c206);
-    }
-    else if (option == eGameHostOption_Structures)
-    {
-        state = gApp.GetGameHostOption((unsigned int)options, option);
+        switch (gApp.GetGameHostOption(options, eGameHostOption_Difficulty))
+        {
+        case 1:
+            value = L10N::GetString(IDS_DIFFICULTY_TITLE_EASY);
+            break;
+        case 2:
+            value = L10N::GetString(IDS_DIFFICULTY_TITLE_NORMAL);
+            break;
+        case 3:
+            value = L10N::GetString(IDS_DIFFICULTY_TITLE_HARD);
+            break;
+        case 0:
+            value = L10N::GetString(IDS_DIFFICULTY_TITLE_PEACEFUL);
+            break;
+        default:
+            value = L10N::GetString(IDS_DIFFICULTY_TITLE_PEACEFUL);
+            break;
+        }
+        break;
+    case eGameHostOption_Gamertags:
+        title = IDS_LABEL_GAMERTAGS;
+        value = gApp.GetGameHostOption(options, eGameHostOption_Gamertags) ? on : off;
+        break;
+    case eGameHostOption_Structures:
         title = IDS_LABEL_STRUCTURES;
-        value = L10N::GetString(state ? IDS_ON : IDS_OFF);
+        value = gApp.GetGameHostOption(options, eGameHostOption_Structures) ? on : off;
+        break;
+    case eGameHostOption_LevelType:
+        title = IDS_LABEL_LEVEL_TYPE;
+        value = L10N::GetString(gApp.GetGameHostOption(options, eGameHostOption_LevelType) ? IDS_LEVELTYPE_SUPERFLAT : IDS_LEVELTYPE_NORMAL);
+        break;
+    case eGameHostOption_PvP:
+        title = IDS_LABEL_PvP;
+        value = gApp.GetGameHostOption(options, eGameHostOption_PvP) ? on : off;
+        break;
+    case eGameHostOption_TrustPlayers:
+        title = IDS_LABEL_TRUST;
+        value = gApp.GetGameHostOption(options, eGameHostOption_TrustPlayers) ? on : off;
+        break;
+    case eGameHostOption_TNT:
+        title = IDS_LABEL_TNT;
+        value = gApp.GetGameHostOption(options, eGameHostOption_TNT) ? on : off;
+        break;
+    case eGameHostOption_FireSpreads:
+        title = IDS_LABEL_FIRE_SPREADS;
+        value = gApp.GetGameHostOption(options, eGameHostOption_FireSpreads) ? on : off;
+        break;
+    default:
+        break;
     }
-    else if (option == eGameHostOption_PvP)
+    if (title != -1)
     {
-        state = gApp.GetGameHostOption((unsigned int)options, option);
-        title = 0x550744a3;
-        value = L10N::GetString(state ? IDS_ON : IDS_OFF);
+        descriptions.push_back(HtmlString(formatwstr(L"%ls %ls", L10N::GetString(title), value.c_str()),
+                                          eMinecraftColour_NOTSET, false, false, 0));
     }
-    else if (option == eGameHostOption_TrustPlayers ||
-             option == eGameHostOption_TNT ||
-             option == eGameHostOption_FireSpreads)
-    {
-        state = gApp.GetGameHostOption((unsigned int)options, option);
-        title = option == eGameHostOption_TrustPlayers ? IDS_LABEL_TRUST :
-                option == eGameHostOption_TNT ? IDS_LABEL_TNT : IDS_LABEL_FIRE_SPREADS;
-        value = L10N::GetString(state ? IDS_ON : IDS_OFF);
-    }
-    else
-        return;
-    descriptions.push_back(
-        HtmlString(formatwstr(L"%ls %ls", L10N::GetString(title), value),
-                   eMinecraftColour_NOTSET, false, false, 0));
 }
 int UIScene_JoinMenu::ErrorDialogReturned(void* data, int, C4JStorage::EMessageResult)
 {
@@ -144,39 +156,40 @@ void UIScene_JoinMenu::tick()
         m_gamePlayers.init(1);
         for (int i = 0; i < GameSessionData::MAX_SESSION_PLAYERS; ++i)
         {
-            GameSessionData::Gamertag emptyGamertag;
-            bool slotEmpty = strcmp(m_friendSessionInfo->m_gameSessionData.m_playerGamertags[i].m_name,
-                                    emptyGamertag.m_name) == 0;
-            if (slotEmpty)
-                break;
-            wchar_t displayName[32];
-            if (strcmp(m_friendSessionInfo->m_gameSessionData.m_playerGamertags[i].m_name,
-                       m_friendSessionInfo->m_gameSessionData.m_hostGamertag.m_name) == 0)
+            if (m_friendSessionInfo->m_gameSessionData.m_playerGamertags[i] != GameSessionData::Gamertag())
             {
-                char gamertag[GameSessionData::MAX_GAMERTAG_LENGTH + 2];
-                memcpy(gamertag, m_friendSessionInfo->m_gameSessionData.m_playerGamertags[i].m_name,
-                       GameSessionData::MAX_GAMERTAG_LENGTH);
-                gamertag[sizeof(gamertag) - 1] = 0;
-                wchar_t hostName[32];
-                mbstowcs(hostName, gamertag, 32);
-                swprintf(displayName, 32, L"%ls %ls", L10N::GetString(0x566a7b93), hostName);
+                const char* playerName = m_friendSessionInfo->m_gameSessionData.m_playerGamertags[i].m_name;
+                wchar_t displayName[32];
+                char gamertag[32];
+                if (strcmp(playerName,
+                           m_friendSessionInfo->m_gameSessionData.m_hostGamertag.m_name) == 0)
+                {
+                    char hostGamertag[32];
+                    memcpy(hostGamertag, playerName,
+                           GameSessionData::MAX_GAMERTAG_LENGTH);
+                    hostGamertag[GameSessionData::MAX_GAMERTAG_LENGTH + 1] = 0;
+                    wchar_t hostName[32];
+                    mbstowcs(hostName, hostGamertag, 32);
+                    swprintf(displayName, 32, L"%ls %ls", hostName, L10N::GetString(0x566a7b93));
+                }
+                else
+                {
+                    memcpy(gamertag, playerName,
+                           GameSessionData::MAX_GAMERTAG_LENGTH);
+                    gamertag[GameSessionData::MAX_GAMERTAG_LENGTH + 1] = 0;
+                    mbstowcs(displayName, gamertag, 32);
+                }
+                m_gamePlayers.addItem(std::wstring(displayName));
             }
             else
-            {
-                char gamertag[GameSessionData::MAX_GAMERTAG_LENGTH + 2];
-                memcpy(gamertag, m_friendSessionInfo->m_gameSessionData.m_playerGamertags[i].m_name,
-                       GameSessionData::MAX_GAMERTAG_LENGTH);
-                gamertag[sizeof(gamertag) - 1] = 0;
-                mbstowcs(displayName, gamertag, 32);
-            }
-            m_gamePlayers.addItem(std::wstring(displayName));
+                break;
         }
 
         if (m_friendSessionInfo->m_gameSessionData.m_gameModeId == static_cast<unsigned int>(GameType::LOBBY->getId()))
         {
+            EMiniGameId miniGameId = static_cast<EMiniGameId>(m_friendSessionInfo->m_gameSessionData.m_miniGameId);
             std::vector<HtmlString> descriptions;
-            MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(
-                static_cast<EMiniGameId>(m_friendSessionInfo->m_gameSessionData.m_miniGameId), true);
+            MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(miniGameId, true);
             miniGame->GetGameSettingsDescription(descriptions, m_friendSessionInfo->m_gameSessionData.m_customGameModeHostOptions);
             m_gameInfo.setLabel(UIString(HtmlString::Compose(&descriptions)), false, false);
         }
@@ -185,9 +198,10 @@ void UIScene_JoinMenu::tick()
             unsigned int hostOptions = m_friendSessionInfo->m_gameSessionData.m_gameHostOptions;
             std::vector<HtmlString> descriptions;
             std::wstring gameModeName = L"";
-            if (m_friendSessionInfo->m_gameSessionData.m_gameModeId == static_cast<unsigned int>(GameType::CREATIVE->getId()))
+            unsigned int gameModeId = m_friendSessionInfo->m_gameSessionData.m_gameModeId;
+            if (gameModeId == static_cast<unsigned int>(GameType::CREATIVE->getId()))
                 gameModeName = L10N::GetString(IDS_CREATIVE);
-            else if (m_friendSessionInfo->m_gameSessionData.m_gameModeId == static_cast<unsigned int>(GameType::ADVENTURE->getId()))
+            else if (gameModeId == static_cast<unsigned int>(GameType::ADVENTURE->getId()))
                 gameModeName = L10N::GetString(IDS_ADVENTURE);
             else
                 gameModeName = L10N::GetString(IDS_SURVIVAL);
@@ -222,7 +236,9 @@ void UIScene_JoinMenu::tick()
 }
 void UIScene_JoinMenu::updateTooltips()
 {
-    int tooltip = getControlFocus() == 1 ? -1 : static_cast<int>(IDS_TOOLTIPS_SELECT);
+    int tooltip = -1;
+    if (getControlFocus() != 1)
+        tooltip = IDS_TOOLTIPS_SELECT;
     gConsoleUIController.SetTooltips(0, tooltip, IDS_TOOLTIPS_BACK, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
 }
@@ -272,25 +288,15 @@ void UIScene_JoinMenu::handleFocusChange(int focus, int childFocus)
 }
 void UIScene_JoinMenu::JoinGame(UIScene_JoinMenu* scene)
 {
+    unsigned int playerMask = 0;
     bool multiplayerRestricted = false;
-    int playerMask = 0;
     bool allPlayersSignedInLive = true;
 
     gProfile->SetLockedProfile(0);
     if (scene->m_friendSessionInfo != NULL)
         CGameNetworkManager::sInstance.m_joiningMiniGameId = static_cast<EMiniGameId>(scene->m_friendSessionInfo->m_gameSessionData.m_miniGameId);
 
-    if (!gApp.IsLocalMultiplayerAvailable())
-    {
-        if (gProfile->IsSignedIn(gProfile->GetPrimaryPad()))
-        {
-            if (!gProfile->AllowedToPlayMultiplayer(gProfile->GetPrimaryPad()))
-                multiplayerRestricted = true;
-            playerMask = CGameNetworkManager::GetLocalPlayerMask(gProfile->GetPrimaryPad());
-            allPlayersSignedInLive = gProfile->IsSignedInLive(gProfile->GetPrimaryPad());
-        }
-    }
-    else
+    if (gApp.IsLocalMultiplayerAvailable())
     {
         for (int userIndex = 0; userIndex < 4; ++userIndex)
         {
@@ -305,12 +311,22 @@ void UIScene_JoinMenu::JoinGame(UIScene_JoinMenu* scene)
             }
         }
     }
+    else
+    {
+        if (gProfile->IsSignedIn(gProfile->GetPrimaryPad()))
+        {
+            if (!gProfile->AllowedToPlayMultiplayer(gProfile->GetPrimaryPad()))
+                multiplayerRestricted = true;
+            playerMask = CGameNetworkManager::GetLocalPlayerMask(gProfile->GetPrimaryPad());
+            allPlayersSignedInLive = gProfile->IsSignedInLive(gProfile->GetPrimaryPad());
+        }
+    }
 
     if (!allPlayersSignedInLive)
     {
-        int parameter = IDS_CONFIRM_OK;
         scene->m_joining = false;
-        gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xb837024e, &parameter, 1,
+        int parameter = IDS_CONFIRM_OK;
+        gConsoleUIController.RequestErrorMessage(IDS_PRO_NOTONLINE_TITLE, IDS_PRO_NOTONLINE_TEXT, &parameter, 1,
                                                  gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
         return;
     }
@@ -323,10 +339,10 @@ void UIScene_JoinMenu::JoinGame(UIScene_JoinMenu* scene)
     }
     if (multiplayerRestricted)
     {
-        int parameter = IDS_CONFIRM_OK;
         scene->setVisible(true);
         scene->m_joining = false;
-        gConsoleUIController.RequestErrorMessage(0x252ab13f, 0xcc5a590f, &parameter, 1,
+        int parameter = IDS_CONFIRM_OK;
+        gConsoleUIController.RequestErrorMessage(IDS_NO_MULTIPLAYER_PRIVILEGE_TITLE, IDS_NO_MULTIPLAYER_PRIVILEGE_JOIN_TEXT, &parameter, 1,
                                                  gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
         return;
     }
@@ -341,32 +357,41 @@ void UIScene_JoinMenu::JoinGame(UIScene_JoinMenu* scene)
                                                          scene->m_matchmaking);
     gApp.SetLiveLinkRequired(false);
 
-    int parameter = IDS_CONFIRM_OK;
-    switch (result)
+    if (result != 0)
     {
-    case 0:
+        int exitReasonTitleId = IDS_CONNECTION_FAILED;
+        int exitReasonStringId = -1;
+        switch (result)
+        {
+        case 2:
+            exitReasonStringId = IDS_DISCONNECTED_SERVER_FULL;
+            break;
+        case 3:
+            exitReasonStringId = IDS_ERROR_NETWORK;
+            break;
+        case 4:
+            exitReasonTitleId = IDS_NO_MULTIPLAYER_PRIVILEGE_TITLE;
+            exitReasonStringId = IDS_NO_MULTIPLAYER_PRIVILEGE_JOIN_TEXT;
+            break;
+        }
+
+        if (exitReasonStringId == -1)
+        {
+            gConsoleUIController.NavigateBack(scene->m_playerId, false, EUIScene_None, EUILayer_Count);
+        }
+        else
+        {
+            int parameter = IDS_CONFIRM_OK;
+            gConsoleUIController.RequestErrorMessage(exitReasonTitleId, exitReasonStringId, &parameter, 1,
+                                                     gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
+            gConsoleUIController.NavigateToHomeMenu(false);
+        }
+    }
+    else
+    {
         telemetryManagerInstance->PrepareMiniGameHostOptions(scene->m_playerId, NULL,
                                                              eTelemetryJoinMethod_FriendsList);
         Minecraft::GetInstance()->SetJoiningFromFriendsTabOrInvite(false);
-        break;
-    case 2:
-        gConsoleUIController.RequestErrorMessage(IDS_CONNECTION_FAILED, 0xb86be603, &parameter, 1,
-                                                 gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
-        gConsoleUIController.NavigateToHomeMenu(false);
-        break;
-    case 3:
-        gConsoleUIController.RequestErrorMessage(IDS_CONNECTION_FAILED, IDS_ERROR_NETWORK, &parameter, 1,
-                                                 gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
-        gConsoleUIController.NavigateToHomeMenu(false);
-        break;
-    case 4:
-        gConsoleUIController.RequestErrorMessage(0x252ab13f, 0xcc5a590f, &parameter, 1,
-                                                 gProfile->GetPrimaryPad(), NULL, NULL, NULL, true);
-        gConsoleUIController.NavigateToHomeMenu(false);
-        break;
-    default:
-        gConsoleUIController.NavigateBack(scene->m_playerId, false, EUIScene_None, EUILayer_Count);
-        break;
     }
 }
 int UIScene_JoinMenu::WiiUDRCWarningReturned(void* data, int,
@@ -420,11 +445,15 @@ void UIScene_JoinMenu::StartSharedLaunchFlow()
 }
 void UIScene_JoinMenu::handlePress(int controlId, int)
 {
-    if (controlId == 0)
+    switch (controlId)
     {
+    case eControl_JoinGame:
         m_joining = true;
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         StartSharedLaunchFlow();
+        break;
+    case eControl_GamePlayers:
+        break;
     }
 }
 int UIScene_JoinMenu::getSceneType()

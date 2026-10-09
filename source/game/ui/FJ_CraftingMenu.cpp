@@ -14,12 +14,12 @@
 #include "game/ui/fuiRenderNodeEditText.hpp"
 #include "game/util/Math.hpp"
 
-static std::string s_horizontalTabNames[7] = { "TabH_1", "TabH_2", "TabH_3", "TabH_4", "TabH_5", "TabH_6", "TabH_7" };
-static std::string s_verticalTabNames[5] = { "TabV_1", "TabV_2", "TabV_3", "TabV_4", "TabV_5" };
-static std::string s_horizontalTouchPanelNames[7] = { "TouchPanel_0", "TouchPanel_1", "TouchPanel_2", "TouchPanel_3",
-                                                      "TouchPanel_4", "TouchPanel_5", "TouchPanel_6" };
-static std::string s_verticalTouchPanelNames[5] = { "TouchPanel_V_0", "TouchPanel_V_1", "TouchPanel_V_2",
-                                                    "TouchPanel_V_3", "TouchPanel_V_4" };
+std::string s_horizontalTabNames[7] = { "TabH_1", "TabH_2", "TabH_3", "TabH_4", "TabH_5", "TabH_6", "TabH_7" };
+std::string s_verticalTabNames[5] = { "TabV_1", "TabV_2", "TabV_3", "TabV_4", "TabV_5" };
+std::string s_horizontalTouchPanelNames[7] = { "TouchPanel_0", "TouchPanel_1", "TouchPanel_2", "TouchPanel_3",
+                                               "TouchPanel_4", "TouchPanel_5", "TouchPanel_6" };
+std::string s_verticalTouchPanelNames[5] = { "TouchPanel_V_0", "TouchPanel_V_1", "TouchPanel_V_2",
+                                             "TouchPanel_V_3", "TouchPanel_V_4" };
 
 static const int s_craftingIconFrames[7] = { 1, 2, 3, 5, 6, 7, 1 };
 static const int s_otherIconFrames[7] = { 1, 2, 3, 4, 5, 6, 7 };
@@ -113,24 +113,7 @@ void FJ_CraftingMenu::MoveSelector(int horizontal, int vertical)
         selector->setX(slots->getX() - Math::round((selector->getWidth() - m_selectorStep) * 0.5f) +
                        horizontal * m_selectorStep);
         selector->setY(slots->getY() - Math::round((selector->getHeight() - m_selectorStep) * 0.5f));
-        if (verticalSlot2 == NULL || verticalSlot3 == NULL)
-        {
-            slotSelector2->setVisible(vertical == 1);
-            slotSelector3->setVisible(vertical == 2);
-            if (slotSelector2->isVisible())
-            {
-                slotSelector2->setX(slots->getX() - Math::round((slotSelector2->getWidth() - m_selectorStep) * 0.5f) +
-                                    horizontal * m_selectorStep);
-                slotSelector2->setY(slots->getY() - Math::round((slotSelector2->getHeight() - m_selectorStep) * 0.5f));
-            }
-            if (slotSelector3->isVisible())
-            {
-                slotSelector3->setX(slots->getX() - Math::round((slotSelector3->getWidth() - m_selectorStep) * 0.5f) +
-                                    horizontal * m_selectorStep);
-                slotSelector3->setY(slots->getY() - Math::round((slotSelector3->getHeight() - m_selectorStep) * 0.5f));
-            }
-        }
-        else
+        if (verticalSlot2 != NULL && verticalSlot3 != NULL)
         {
             slotSelector2->setVisible(vertical == 1);
             slotSelector3->setVisible(vertical == 2);
@@ -148,34 +131,54 @@ void FJ_CraftingMenu::MoveSelector(int horizontal, int vertical)
                 slotSelector3->setY(slots->getY() - Math::round((slotSelector3->getHeight() - m_selectorStep) * 0.5f));
             }
         }
+        else
+        {
+            slotSelector2->setVisible(vertical == 1);
+            slotSelector3->setVisible(vertical == 2);
+            if (slotSelector2->isVisible())
+            {
+                slotSelector2->setX(slots->getX() - Math::round((slotSelector2->getWidth() - m_selectorStep) * 0.5f) +
+                                    horizontal * m_selectorStep);
+                slotSelector2->setY(slots->getY() - Math::round((slotSelector2->getHeight() - m_selectorStep) * 0.5f));
+            }
+            if (slotSelector3->isVisible())
+            {
+                slotSelector3->setX(slots->getX() - Math::round((slotSelector3->getWidth() - m_selectorStep) * 0.5f) +
+                                    horizontal * m_selectorStep);
+                slotSelector3->setY(slots->getY() - Math::round((slotSelector3->getHeight() - m_selectorStep) * 0.5f));
+            }
+        }
     }
     else
     {
         slotSelector2->setVisible(false);
         slotSelector3->setVisible(false);
-        if (m_panelMode == 2)
+        if (m_panelMode != 1)
         {
-            if (getChildByName("MainPanel.Slot2_1") != NULL && getChildByName("MainPanel.Slot2_2") != NULL)
+            if (m_panelMode == 2)
             {
-                if (horizontal > 1)
-                    horizontal = 1;
-                selector->setX(m_slot2Items[horizontal]->getX() -
-                               Math::round((selector->getWidth() - m_selectorStep) * 0.5f));
-                selector->setY(m_slot2Items[horizontal]->getY() -
-                               Math::round((selector->getHeight() - m_selectorStep) * 0.5f));
+                if (getChildByName("MainPanel.Slot2_1") != NULL && getChildByName("MainPanel.Slot2_2") != NULL)
+                {
+                    if (horizontal >= 2)
+                        horizontal = 1;
+                    selector->setX(m_slot2Items[horizontal]->getX() -
+                                   Math::round((selector->getWidth() - m_selectorStep) * 0.5f));
+                    selector->setY(m_slot2Items[horizontal]->getY() -
+                                   Math::round((selector->getHeight() - m_selectorStep) * 0.5f));
+                }
             }
-        }
-        else if (m_panelMode == 3)
-        {
-            if (getChildByName("MainPanel.Slot3_1") != NULL && getChildByName("MainPanel.Slot3_2") != NULL &&
-                getChildByName("MainPanel.Slot3_3") != NULL)
+            else if (m_panelMode == 3)
             {
-                if (horizontal > 2)
-                    horizontal = 2;
-                selector->setX(m_slot3Items[horizontal]->getX() -
-                               Math::round((selector->getWidth() - m_selectorStep) * 0.5f));
-                selector->setY(m_slot3Items[horizontal]->getY() -
-                               Math::round((selector->getHeight() - m_selectorStep) * 0.5f));
+                if (getChildByName("MainPanel.Slot3_1") != NULL && getChildByName("MainPanel.Slot3_2") != NULL &&
+                    getChildByName("MainPanel.Slot3_3") != NULL)
+                {
+                    if (horizontal >= 3)
+                        horizontal = 2;
+                    selector->setX(m_slot3Items[horizontal]->getX() -
+                                   Math::round((selector->getWidth() - m_selectorStep) * 0.5f));
+                    selector->setY(m_slot3Items[horizontal]->getY() -
+                                   Math::round((selector->getHeight() - m_selectorStep) * 0.5f));
+                }
             }
         }
         scrollArrows->setVisible(vertical > 0);
@@ -189,12 +192,12 @@ void FJ_CraftingMenu::init(FJ_Event* event)
     m_slot3Items[0] = getChildByName("MainPanel.Slot3_1");
     m_slot3Items[1] = getChildByName("MainPanel.Slot3_2");
     m_slot3Items[2] = getChildByName("MainPanel.Slot3_3");
-    m_horizontalTabCount = 0;
-    m_panelType = -1;
-    m_verticalTabCount = 0;
-    m_descriptionBaseY = 0;
-    m_activeTab = -1;
     m_activeSubtab = -1;
+    m_verticalTabCount = 0;
+    m_horizontalTabCount = 0;
+    m_descriptionBaseY = 0;
+    m_panelType = -1;
+    m_activeTab = -1;
     m_selectorStep = getChildByName("MainPanel.CraftingHSlots")->asFJ_SlotList()->m_slotSize;
     for (int i = 0; i < 5; ++i)
         m_ingredients[i] = false;
@@ -329,8 +332,8 @@ FJ_FuiNode* FJ_CraftingMenu::SetupIggySlot(FJ_FuiNode* node)
     {
         fuiRect rect;
         rect.xMin = 0.0f;
-        rect.xMax = iggy->getRenderNodeChildAt(0)->getWidth();
         rect.yMin = 0.0f;
+        rect.xMax = iggy->getRenderNodeChildAt(0)->getWidth();
         rect.yMax = iggy->getRenderNodeChildAt(0)->getHeight();
         char name[64];
         std::sprintf(name, "iggy_%s", node->getName());
@@ -350,51 +353,60 @@ FJ_FuiNode* FJ_CraftingMenu::SetupIggySlot(FJ_FuiNode* node)
 
 void FJ_CraftingMenu::SetCraftingMenu(int horizontalCount, int verticalCount, bool enabled)
 {
-    for (int i = 0; i < 7; ++i)
+    int i;
+    FJ_FuiNode* tab;
+    FJ_FuiNode* tabOff;
+    FJ_FuiNode* touchPanel;
+    int frame;
+
+    for (i = 0; i < 7; ++i)
     {
-        FJ_FuiNode* tab =
+        tab =
             FJ_FuiNode::asMovieClip(getChildByName("MainPanel"))->getChildByName(s_horizontalTabNames[i])->asMovieClip();
-        FJ_FuiNode* tabOff = FJ_FuiNode::asMovieClip(getChildByName("MainPanel"))
+        tabOff = FJ_FuiNode::asMovieClip(getChildByName("MainPanel"))
                                  ->getChildByName(std::string(tab->getName()) + "_Off")
                                  ->asMovieClip();
-        FJ_FuiNode* touchPanel = FJ_FuiNode::asMovieClip(
+        touchPanel = FJ_FuiNode::asMovieClip(
             FJ_FuiNode::asMovieClip(getChildByName("MainPanel"))->getChildByName(s_horizontalTouchPanelNames[i]));
-        if (tab == NULL)
+        if (tab != NULL)
+        {
+            SetupIggySlot(tab)->setVisible(enabled);
+            tab->getChildByName("staticicon")->setVisible(!enabled);
+            if (m_craftingType == 0)
+                FJ_FuiNode::asMovieClip(FJ_FuiNode::asMovieClip(tab->getChildByName("staticicon"))->getChildAt(0))
+                    ->gotoAndStop(s_craftingIconFrames[i]);
+            else
+                FJ_FuiNode::asMovieClip(FJ_FuiNode::asMovieClip(tab->getChildByName("staticicon"))->getChildAt(0))
+                    ->gotoAndStop(s_otherIconFrames[i]);
+
+            if (i == 0)
+                frame = 1;
+            else if (i >= 1 && i <= 5)
+                frame = 2;
+            else
+                frame = 3;
+            FJ_FuiNode::asMovieClip(tab->getChildByName("HorTabOn"))->gotoAndStop(frame);
+
+            if (touchPanel != NULL)
+                touchPanel->setVisible(i < horizontalCount);
+            tab->setVisible(i < horizontalCount);
+            tabOff->setVisible(i < horizontalCount);
+            m_horizontalTabCount = horizontalCount;
+        }
+        else
+        {
             break;
-
-        SetupIggySlot(tab)->setVisible(enabled);
-        tab->getChildByName("staticicon")->setVisible(!enabled);
-        if (m_craftingType == 0)
-            FJ_FuiNode::asMovieClip(FJ_FuiNode::asMovieClip(tab->getChildByName("staticicon"))->getChildAt(0))
-                ->gotoAndStop(s_craftingIconFrames[i]);
-        else
-            FJ_FuiNode::asMovieClip(FJ_FuiNode::asMovieClip(tab->getChildByName("staticicon"))->getChildAt(0))
-                ->gotoAndStop(s_otherIconFrames[i]);
-
-        int frame;
-        if (i == 0)
-            frame = 1;
-        else if (i < 6)
-            frame = 2;
-        else
-            frame = 3;
-        FJ_FuiNode::asMovieClip(tab->getChildByName("HorTabOn"))->gotoAndStop(frame);
-
-        if (touchPanel != NULL)
-            touchPanel->setVisible(i < horizontalCount);
-        tab->setVisible(i < horizontalCount);
-        tabOff->setVisible(i < horizontalCount);
-        m_horizontalTabCount = horizontalCount;
+        }
     }
 
-    for (int i = 0; i < 5; ++i)
+    for (i = 0; i < 5; ++i)
     {
-        FJ_FuiNode* tab =
+        tab =
             FJ_FuiNode::asMovieClip(getChildByName("MainPanel"))->getChildByName(s_verticalTabNames[i])->asMovieClip();
-        FJ_FuiNode* tabOff = FJ_FuiNode::asMovieClip(getChildByName("MainPanel"))
+        tabOff = FJ_FuiNode::asMovieClip(getChildByName("MainPanel"))
                                  ->getChildByName(std::string(tab->getName()) + "_Off")
                                  ->asMovieClip();
-        FJ_FuiNode* touchPanel = FJ_FuiNode::asMovieClip(
+        touchPanel = FJ_FuiNode::asMovieClip(
             FJ_FuiNode::asMovieClip(getChildByName("MainPanel"))->getChildByName(s_verticalTouchPanelNames[i]));
         if (tab == NULL)
             break;
@@ -426,23 +438,27 @@ void FJ_CraftingMenu::SelectVerticalItem(int index)
     FJ_FuiNode* verticalSlot2 = slotSelector2->getChildByName("Crafting2VSlot2");
     FJ_FuiNode* slotSelector3 = getChildByName("MainPanel.SlotSelector3");
     FJ_FuiNode* verticalSlot3 = slotSelector3->getChildByName("Crafting3VSlot3");
-    int row = index - 1;
+    index--;
     if (verticalSlot2 != NULL && verticalSlot3 != NULL)
     {
-        if (slotSelector2->isVisible() && row == -1)
-            row = 0;
+        if (slotSelector2->isVisible() && index == -1)
+            index = 0;
         selector->setY(slots->getY() - Math::round((selector->getHeight() - m_selectorStep) * 0.5f) +
-                       m_selectorStep * row);
+                       m_selectorStep * index);
     }
 }
 
 void FJ_CraftingMenu::UpdateTabs(FJ_Event* event)
 {
-    for (int i = 0; i < m_horizontalTabCount; ++i)
+    int i;
+    FJ_FuiNode* tab;
+    FJ_FuiNode* tabOff;
+
+    for (i = 0; i < m_horizontalTabCount; ++i)
     {
-        FJ_FuiNode* tab =
+        tab =
             FJ_FuiNode::asMovieClip(getChildByName("MainPanel"))->getChildByName(s_horizontalTabNames[i])->asMovieClip();
-        FJ_FuiNode* tabOff = FJ_FuiNode::asMovieClip(getChildByName("MainPanel"))
+        tabOff = FJ_FuiNode::asMovieClip(getChildByName("MainPanel"))
                                  ->getChildByName(std::string(tab->getName()) + "_Off")
                                  ->asMovieClip();
         if (i == m_activeTab)
@@ -457,11 +473,11 @@ void FJ_CraftingMenu::UpdateTabs(FJ_Event* event)
         }
     }
 
-    for (int i = 0; i < m_verticalTabCount; ++i)
+    for (i = 0; i < m_verticalTabCount; ++i)
     {
-        FJ_FuiNode* tab =
+        tab =
             FJ_FuiNode::asMovieClip(getChildByName("MainPanel"))->getChildByName(s_verticalTabNames[i])->asMovieClip();
-        FJ_FuiNode* tabOff = FJ_FuiNode::asMovieClip(getChildByName("MainPanel"))
+        tabOff = FJ_FuiNode::asMovieClip(getChildByName("MainPanel"))
                                  ->getChildByName(std::string(tab->getName()) + "_Off")
                                  ->asMovieClip();
         if (i == m_activeSubtab)
@@ -475,11 +491,6 @@ void FJ_CraftingMenu::UpdateTabs(FJ_Event* event)
             tabOff->setVisible(true);
         }
     }
-}
-
-void FJ_CraftingMenu::_UpdateTabs(FJ_FuiNode* node, FJ_Event* event)
-{
-    static_cast<FJ_CraftingMenu*>(node)->UpdateTabs(event);
 }
 
 void FJ_CraftingMenu::SetActiveTab(int tab, int subtab)

@@ -77,10 +77,10 @@ UIScene_HopperMenu::~UIScene_HopperMenu()
 {
 }
 
-unsigned int UIScene_HopperMenu::getSectionColumns(
+int UIScene_HopperMenu::getSectionColumns(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    unsigned int columns = 0;
+    int columns = 0;
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar: columns = 9; break;
@@ -91,10 +91,10 @@ unsigned int UIScene_HopperMenu::getSectionColumns(
     return columns;
 }
 
-unsigned int UIScene_HopperMenu::getSectionRows(
+int UIScene_HopperMenu::getSectionRows(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    unsigned int rows = 0;
+    int rows = 0;
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar: rows = 1; break;
@@ -109,51 +109,52 @@ unsigned int UIScene_HopperMenu::GetSectionAndSlotInDirection(
     IUIScene_AbstractContainerMenu::ESceneSection section,
     IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y)
 {
-    const IUIScene_AbstractContainerMenu::ESceneSection hotbar =
-        IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar;
-    const IUIScene_AbstractContainerMenu::ESceneSection inventory =
-        IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory;
-    const IUIScene_AbstractContainerMenu::ESceneSection hopper =
-        IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots;
+    IUIScene_AbstractContainerMenu::ESceneSection newSection = section;
+    int xOffset = 0;
 
-    if (section == hotbar && state == IUIScene_AbstractContainerMenu::ETapState_Down)
+    switch (section)
     {
-        updateSlotPosition(section, hopper, state, x, y, 2, 0);
-        return hopper;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            newSection = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar
+                                          : IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory;
+            xOffset = -2;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar;
+            xOffset = -2;
+        }
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots;
+            xOffset = 2;
+        }
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_HopperHotbar:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots;
+            xOffset = 2;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            newSection = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_HopperSlots
+                                          : IUIScene_AbstractContainerMenu::ESceneSection_HopperInventory;
+            xOffset = m_smallInventory ? 2 : 0;
+        }
+        break;
     }
-    if (section == hotbar && state == IUIScene_AbstractContainerMenu::ETapState_Up)
-    {
-        const bool smallInventory = m_smallInventory != 0;
-        const IUIScene_AbstractContainerMenu::ESceneSection target =
-            smallInventory ? hopper : inventory;
-        updateSlotPosition(section, target, state, x, y,
-                                              smallInventory ? 2 : 0, 0);
-        return target;
-    }
-    if (section == inventory && state == IUIScene_AbstractContainerMenu::ETapState_Down)
-    {
-        updateSlotPosition(section, hotbar, state, x, y, 0, 0);
-        return hotbar;
-    }
-    if (section == inventory && state == IUIScene_AbstractContainerMenu::ETapState_Up)
-    {
-        updateSlotPosition(section, hopper, state, x, y, 2, 0);
-        return hopper;
-    }
-    if (section == hopper && state == IUIScene_AbstractContainerMenu::ETapState_Down)
-    {
-        const IUIScene_AbstractContainerMenu::ESceneSection target =
-            m_smallInventory ? hotbar : inventory;
-        updateSlotPosition(section, target, state, x, y, -2, 0);
-        return target;
-    }
-    if (section == hopper && state == IUIScene_AbstractContainerMenu::ETapState_Up)
-    {
-        updateSlotPosition(section, hotbar, state, x, y, -2, 0);
-        return hotbar;
-    }
-    updateSlotPosition(section, section, state, x, y, 0, 0);
-    return section;
+
+    updateSlotPosition(section, newSection, state, x, y, xOffset, 0);
+    return newSection;
 }
 
 void UIScene_HopperMenu::GetPositionOfSection(

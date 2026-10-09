@@ -62,7 +62,7 @@ public:
     };
 
     virtual ~UIControl_ScoreboardButtonList() {}
-    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     void addItem(const std::wstring& label, int playerIcon, int voipIcon, bool immediate);
     void SetSlotTextureName(int item, int slot, const std::wstring& textureName, bool immediate);
     void setSlotsText(int item, const std::wstring& slot0, const std::wstring& slot1,

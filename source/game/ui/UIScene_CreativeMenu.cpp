@@ -297,9 +297,9 @@ unsigned int UIScene_CreativeMenu::CanHaveFocus(IUIScene_AbstractContainerMenu::
     }
 }
 
-unsigned int UIScene_CreativeMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_CreativeMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    unsigned int columns = 0;
+    int columns = 0;
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector:
@@ -312,9 +312,9 @@ unsigned int UIScene_CreativeMenu::getSectionColumns(IUIScene_AbstractContainerM
     return columns;
 }
 
-unsigned int UIScene_CreativeMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_CreativeMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    unsigned int rows = 0;
+    int rows = 0;
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector:
@@ -332,14 +332,19 @@ unsigned int UIScene_CreativeMenu::GetSectionAndSlotInDirection(IUIScene_Abstrac
                                                                  int* x, int* y)
 {
     IUIScene_AbstractContainerMenu::ESceneSection next = section;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar &&
-        (state == IUIScene_AbstractContainerMenu::ETapState_Down || state == IUIScene_AbstractContainerMenu::ETapState_Up))
-        next = IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector &&
-             (state == IUIScene_AbstractContainerMenu::ETapState_Down || state == IUIScene_AbstractContainerMenu::ETapState_Up))
-        next = IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down || state == IUIScene_AbstractContainerMenu::ETapState_Up)
+            next = IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down || state == IUIScene_AbstractContainerMenu::ETapState_Up)
+            next = IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector;
+        break;
+    }
     updateSlotPosition(section, next, state, x, y, 0, 0);
-    return static_cast<unsigned int>(next);
+    return next;
 }
 
 void UIScene_CreativeMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
@@ -750,7 +755,7 @@ int UIScene_CreativeMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::
 
 void UIScene_CreativeMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slotX, int slotY, bool pointer)
 {
-    int columns = static_cast<int>(getSectionColumns(section));
+    int columns = getSectionColumns(section);
     UIControl_SlotList* list = NULL;
     if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar)
         list = &m_hotbarList;
@@ -1039,16 +1044,16 @@ void UIScene_CreativeMenu::staticCtor()
     builder.ITEM_BLOCKSTATE(Blocks::tallgrass->defaultBlockState()->setValue(TallGrassBlock::VARIANT, TallGrassBlock::Variant::FERN));
     builder.ITEM_BLOCKSTATE(Blocks::deadbush->defaultBlockState());
     builder.ADD(not_null_ptr<ItemInstance>(new ItemInstance(Items::flowerPot, 1, 0)));
-    builder.ITEM_AUX(Blocks::yellow_flower, static_cast<FlowerBlock*>(Blocks::yellow_flower)->getFlowerProperty(), FlowerBlock::Flower::DANDELION);
-    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::POPPY);
-    builder.ITEM_BLOCKSTATE(Blocks::red_flower->defaultBlockState()->setValue(static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::BLUE_ORCHID));
-    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::ALLIUM);
-    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::HOUSTONIA);
-    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::RED_TULIP);
-    builder.ITEM_BLOCKSTATE(Blocks::red_flower->defaultBlockState()->setValue(static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::ORANGE_TULIP));
-    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::WHITE_TULIP);
-    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::PINK_TULIP);
-    builder.ITEM_AUX(Blocks::red_flower, static_cast<FlowerBlock*>(Blocks::red_flower)->getFlowerProperty(), FlowerBlock::Flower::OXEYE_DAISY);
+    builder.ITEM_AUX(Blocks::yellow_flower, Blocks::yellow_flower->getFlowerProperty(), FlowerBlock::Flower::DANDELION);
+    builder.ITEM_AUX(Blocks::red_flower, Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::POPPY);
+    builder.ITEM_BLOCKSTATE(Blocks::red_flower->defaultBlockState()->setValue(Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::BLUE_ORCHID));
+    builder.ITEM_AUX(Blocks::red_flower, Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::ALLIUM);
+    builder.ITEM_AUX(Blocks::red_flower, Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::HOUSTONIA);
+    builder.ITEM_AUX(Blocks::red_flower, Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::RED_TULIP);
+    builder.ITEM_BLOCKSTATE(Blocks::red_flower->defaultBlockState()->setValue(Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::ORANGE_TULIP));
+    builder.ITEM_AUX(Blocks::red_flower, Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::WHITE_TULIP);
+    builder.ITEM_AUX(Blocks::red_flower, Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::PINK_TULIP);
+    builder.ITEM_AUX(Blocks::red_flower, Blocks::red_flower->getFlowerProperty(), FlowerBlock::Flower::OXEYE_DAISY);
     builder.ITEM_BLOCKSTATE(Blocks::double_plant->defaultBlockState()->setValue(DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::SUNFLOWER));
     builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::SYRINGA);
     builder.ITEM_AUX(Blocks::double_plant, DoublePlantBlock::VARIANT, DoublePlantBlock::Variant::GRASS);
@@ -1778,91 +1783,52 @@ void UIScene_CreativeMenu::staticCtor()
 unsigned int UIScene_CreativeMenu::mapElementsAndNames()
 {
     UIScene_AbstractContainerMenu::mapElementsAndNames();
-    m_movie->getRootNode();
-    fuiRenderNode* mainNode = m_mainPanel.getFuiRenderNode();
-
+    fuiRenderNode* currentNode = m_movie->getRootNode();
     {
-        std::string name("TouchPanel_0");
-        m_touchPanels[0].setupControl(this, mainNode, name);
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_mainPanel.getFuiRenderNode();
+        {
+            m_touchPanels[0].setupControl(this, currentNode, std::string("TouchPanel_0"));
+            m_controls.push_back(&m_touchPanels[0]);
+        }
+        {
+            m_touchPanels[1].setupControl(this, currentNode, std::string("TouchPanel_1"));
+            m_controls.push_back(&m_touchPanels[1]);
+        }
+        {
+            m_touchPanels[2].setupControl(this, currentNode, std::string("TouchPanel_2"));
+            m_controls.push_back(&m_touchPanels[2]);
+        }
+        {
+            m_touchPanels[3].setupControl(this, currentNode, std::string("TouchPanel_3"));
+            m_controls.push_back(&m_touchPanels[3]);
+        }
+        {
+            m_touchPanels[4].setupControl(this, currentNode, std::string("TouchPanel_4"));
+            m_controls.push_back(&m_touchPanels[4]);
+        }
+        {
+            m_touchPanels[5].setupControl(this, currentNode, std::string("TouchPanel_5"));
+            m_controls.push_back(&m_touchPanels[5]);
+        }
+        {
+            m_touchPanels[6].setupControl(this, currentNode, std::string("TouchPanel_6"));
+            m_controls.push_back(&m_touchPanels[6]);
+        }
+        {
+            m_touchPanels[7].setupControl(this, currentNode, std::string("TouchPanel_7"));
+            m_controls.push_back(&m_touchPanels[7]);
+        }
+        {
+            m_touchPanels[8].setupControl(this, currentNode, std::string("TouchPanel_Slider"));
+            m_controls.push_back(&m_touchPanels[8]);
+        }
+        {
+            m_containerList.setupControl(this, currentNode, std::string("containerList"));
+            m_controls.push_back(&m_containerList);
+        }
+        currentNode = parentNode;
     }
-    {
-        UIControl* control = &m_touchPanels[0];
-        m_controls.push_back(control);
-    }
-    {
-        std::string name("TouchPanel_1");
-        m_touchPanels[1].setupControl(this, mainNode, name);
-    }
-    {
-        UIControl* control = &m_touchPanels[1];
-        m_controls.push_back(control);
-    }
-    {
-        std::string name("TouchPanel_2");
-        m_touchPanels[2].setupControl(this, mainNode, name);
-    }
-    {
-        UIControl* control = &m_touchPanels[2];
-        m_controls.push_back(control);
-    }
-    {
-        std::string name("TouchPanel_3");
-        m_touchPanels[3].setupControl(this, mainNode, name);
-    }
-    {
-        UIControl* control = &m_touchPanels[3];
-        m_controls.push_back(control);
-    }
-    {
-        std::string name("TouchPanel_4");
-        m_touchPanels[4].setupControl(this, mainNode, name);
-    }
-    {
-        UIControl* control = &m_touchPanels[4];
-        m_controls.push_back(control);
-    }
-    {
-        std::string name("TouchPanel_5");
-        m_touchPanels[5].setupControl(this, mainNode, name);
-    }
-    {
-        UIControl* control = &m_touchPanels[5];
-        m_controls.push_back(control);
-    }
-    {
-        std::string name("TouchPanel_6");
-        m_touchPanels[6].setupControl(this, mainNode, name);
-    }
-    {
-        UIControl* control = &m_touchPanels[6];
-        m_controls.push_back(control);
-    }
-    {
-        std::string name("TouchPanel_7");
-        m_touchPanels[7].setupControl(this, mainNode, name);
-    }
-    {
-        UIControl* control = &m_touchPanels[7];
-        m_controls.push_back(control);
-    }
-    {
-        std::string name("TouchPanel_Slider");
-        m_touchPanels[8].setupControl(this, mainNode, name);
-    }
-    {
-        UIControl* control = &m_touchPanels[8];
-        m_controls.push_back(control);
-    }
-
-    {
-        std::string name("containerList");
-        m_containerList.setupControl(this, mainNode, name);
-    }
-    {
-        UIControl* control = &m_containerList;
-        m_controls.push_back(control);
-    }
-
     return 1;
 }
 

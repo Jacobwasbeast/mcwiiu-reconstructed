@@ -70,10 +70,10 @@ UIScene_FurnaceMenu::~UIScene_FurnaceMenu()
 {
 }
 
-unsigned int UIScene_FurnaceMenu::getSectionColumns(
+int UIScene_FurnaceMenu::getSectionColumns(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    unsigned int columns = 0;
+    int columns = 0;
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar:
@@ -91,10 +91,10 @@ unsigned int UIScene_FurnaceMenu::getSectionColumns(
     return columns;
 }
 
-unsigned int UIScene_FurnaceMenu::getSectionRows(
+int UIScene_FurnaceMenu::getSectionRows(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    unsigned int rows = 0;
+    int rows = 0;
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory:
@@ -117,55 +117,101 @@ unsigned int UIScene_FurnaceMenu::GetSectionAndSlotInDirection(
     IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y)
 {
     IUIScene_AbstractContainerMenu::ESceneSection target = section;
-    if (section < IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar || section > IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult)
+    int horizontalOffset = 0;
+    switch (section)
     {
-        updateSlotPosition(section, section, state, x, y, 0, 0);
-        return section;
-    }
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar && state == IUIScene_AbstractContainerMenu::ETapState_Up)
-    {
-        if (m_smallInventory == 0)
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
-            updateSlotPosition(section,
-                IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory, state,
-                x, y, 0, 0);
-            return static_cast<unsigned int>(5);
+            target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar;
+            horizontalOffset = -7;
         }
-        if (*x < 6)
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            if (m_smallInventory)
+                target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar;
+            else
+                target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory;
+            horizontalOffset = -7;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left || state == IUIScene_AbstractContainerMenu::ETapState_Right)
+        {
+            target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient;
+        }
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar;
+            horizontalOffset = -3;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
             target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel;
-        else
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left || state == IUIScene_AbstractContainerMenu::ETapState_Right)
+        {
             target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult;
+        }
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            if (m_smallInventory)
+                target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar;
+            else
+                target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory;
+            horizontalOffset = -3;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left || state == IUIScene_AbstractContainerMenu::ETapState_Right)
+        {
+            target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult;
+        }
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            if (*x < 6)
+                target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel;
+            else
+                target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult;
+        }
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            if (m_smallInventory)
+            {
+                if (*x < 6)
+                    target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel;
+                else
+                    target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult;
+            }
+            else
+            {
+                target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory;
+            }
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            if (*x < 6)
+                target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient;
+            else
+                target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult;
+        }
+        break;
+    default:
+        break;
     }
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory && state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar && state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        target = *x < 6 ? IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient :
-            IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory && state == IUIScene_AbstractContainerMenu::ETapState_Up)
-        target = *x < 6 ? IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel : section;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient && state == IUIScene_AbstractContainerMenu::ETapState_Up)
-        target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient && state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel && state == IUIScene_AbstractContainerMenu::ETapState_Up)
-        target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel && state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        target = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar : IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult && state == IUIScene_AbstractContainerMenu::ETapState_Up)
-        target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult && state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        target = m_smallInventory ? IUIScene_AbstractContainerMenu::ESceneSection_FurnaceHotbar : IUIScene_AbstractContainerMenu::ESceneSection_FurnaceInventory;
-    else if ((state == IUIScene_AbstractContainerMenu::ETapState_Left || state == IUIScene_AbstractContainerMenu::ETapState_Right) && (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult))
-        target = IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient;
-    if (target == section && state != IUIScene_AbstractContainerMenu::ETapState_Left && state != IUIScene_AbstractContainerMenu::ETapState_Right)
-        updateSlotPosition(section, section, state, x, y, 0, 0);
-    else
-    {
-        int horizontalOffset = 0;
-        if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceIngredient || section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceFuel) horizontalOffset = -3;
-        else if (section == IUIScene_AbstractContainerMenu::ESceneSection_FurnaceResult) horizontalOffset = -7;
-        updateSlotPosition(section, target, state, x, y, horizontalOffset, 0);
-    }
+    updateSlotPosition(section, target, state, x, y, horizontalOffset, 0);
     return static_cast<unsigned int>(target);
 }
 
@@ -276,39 +322,43 @@ void UIScene_FurnaceMenu::setSectionSelectedSlot(
 unsigned int UIScene_FurnaceMenu::mapElementsAndNames()
 {
     UIScene_AbstractContainerMenu::mapElementsAndNames();
-    m_movie->getRootNode();
-    fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
+    fuiRenderNode* currentNode = m_movie->getRootNode();
     {
-        m_ingredientSlot.setupControl(this, panel, std::string("Ingredient"));
-        m_controls.push_back(&m_ingredientSlot);
-    }
-    {
-        m_fuelSlot.setupControl(this, panel, std::string("Fuel"));
-        m_controls.push_back(&m_fuelSlot);
-    }
-    {
-        m_resultSlot.setupControl(this, panel, std::string("Result"));
-        m_controls.push_back(&m_resultSlot);
-    }
-    {
-        m_furnaceLabel.setupControl(this, panel, std::string("Furnace_text"));
-        m_controls.push_back(&m_furnaceLabel);
-    }
-    {
-        m_ingredientLabel.setupControl(this, panel, std::string("Ingredient_Label"));
-        m_controls.push_back(&m_ingredientLabel);
-    }
-    {
-        m_fuelLabel.setupControl(this, panel, std::string("Fuel_Label"));
-        m_controls.push_back(&m_fuelLabel);
-    }
-    {
-        m_furnaceFire.setupControl(this, panel, std::string("FurnaceFire"));
-        m_controls.push_back(&m_furnaceFire);
-    }
-    {
-        m_furnaceArrow.setupControl(this, panel, std::string("FurnaceArrow"));
-        m_controls.push_back(&m_furnaceArrow);
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_mainPanel.getFuiRenderNode();
+        {
+            m_ingredientSlot.setupControl(this, currentNode, std::string("Ingredient"));
+            m_controls.push_back(&m_ingredientSlot);
+        }
+        {
+            m_fuelSlot.setupControl(this, currentNode, std::string("Fuel"));
+            m_controls.push_back(&m_fuelSlot);
+        }
+        {
+            m_resultSlot.setupControl(this, currentNode, std::string("Result"));
+            m_controls.push_back(&m_resultSlot);
+        }
+        {
+            m_furnaceLabel.setupControl(this, currentNode, std::string("Furnace_text"));
+            m_controls.push_back(&m_furnaceLabel);
+        }
+        {
+            m_ingredientLabel.setupControl(this, currentNode, std::string("Ingredient_Label"));
+            m_controls.push_back(&m_ingredientLabel);
+        }
+        {
+            m_fuelLabel.setupControl(this, currentNode, std::string("Fuel_Label"));
+            m_controls.push_back(&m_fuelLabel);
+        }
+        {
+            m_furnaceFire.setupControl(this, currentNode, std::string("FurnaceFire"));
+            m_controls.push_back(&m_furnaceFire);
+        }
+        {
+            m_furnaceArrow.setupControl(this, currentNode, std::string("FurnaceArrow"));
+            m_controls.push_back(&m_furnaceArrow);
+        }
+        currentNode = parentNode;
     }
     return 1;
 }

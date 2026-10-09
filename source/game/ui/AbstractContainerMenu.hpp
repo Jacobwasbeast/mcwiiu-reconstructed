@@ -92,7 +92,7 @@ public:
     bool isSynched(boost::shared_ptr<Player> player);
     void setSynched(boost::shared_ptr<Player> player, bool value);
     static bool stackAsdAsd(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second);
-    int moveItemStackTo(not_null_ptr<ItemInstance> item, int start, int end, bool reverse, bool mergeStacks, bool fillEmpty);
+    bool moveItemStackTo(not_null_ptr<ItemInstance> item, int start, int end, bool reverse, bool mergeStacks, bool fillEmpty);
     virtual bool isOverrideResultClick(int slot, int button);
     static int getQuickcraftMask(int header, int type);
     static int getRedstoneSignalFromContainer(boost::shared_ptr<Container> container);

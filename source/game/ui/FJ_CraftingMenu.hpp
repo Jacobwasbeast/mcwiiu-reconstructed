@@ -32,7 +32,6 @@ public:
     void SetSafeZone(int top, int bottom, int left, int right);
     void SelectVerticalItem(int index);
     void UpdateTabs(FJ_Event* event);
-    static void _UpdateTabs(FJ_FuiNode* node, FJ_Event* event);
     void SetActiveTab(int tab, int subtab);
     void ShowIngredient(int index, bool show);
 
@@ -44,8 +43,8 @@ private:
     int m_verticalTabCount;
     int m_panelMode;
     int m_panelType;
-    int m_activeTab;
-    int m_activeSubtab;
+    unsigned int m_activeTab;
+    unsigned int m_activeSubtab;
     int m_selectorStep;
     bool m_ingredients[5];
     int m_descriptionBaseY;

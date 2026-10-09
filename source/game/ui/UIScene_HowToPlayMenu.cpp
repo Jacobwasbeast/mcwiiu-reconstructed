@@ -18,7 +18,7 @@
 
 extern ConsoleUIController gConsoleUIController;
 
-static unsigned int s_howToPlayMenuLabels[33] = {
+unsigned int UIScene_HowToPlayMenu::m_buttonLabels[33] = {
     IDS_HOW_TO_PLAY_MENU_WHATSNEW, IDS_HOW_TO_PLAY_MENU_BASICS, IDS_HOW_TO_PLAY_MENU_MULTIPLAYER, IDS_HOW_TO_PLAY_MENU_HUD,
     IDS_HOW_TO_PLAY_MENU_MG01, IDS_HOW_TO_PLAY_MENU_MG02, IDS_HOW_TO_PLAY_MENU_MG03, IDS_HOW_TO_PLAY_MENU_CREATIVE,
     IDS_HOW_TO_PLAY_MENU_INVENTORY, IDS_HOW_TO_PLAY_MENU_CHESTS, IDS_HOW_TO_PLAY_MENU_CRAFTING, IDS_HOW_TO_PLAY_MENU_FURNACE,
@@ -47,8 +47,9 @@ UIScene_HowToPlayMenu::UIScene_HowToPlayMenu(int sceneType, void*, UILayer* laye
 {
     initialiseMovie();
     m_buttonList.init(0);
+    int itemId = 0;
     for (int i = 0; i < 33; ++i)
-        m_buttonList.addItem(L10N::GetString(s_howToPlayMenuLabels[i]), i);
+        m_buttonList.addItem(L10N::GetString(m_buttonLabels[i]), itemId++);
     doHorizontalResizeCheck();
     m_selectedItem = 0;
     gConsoleUIController.TouchBoxRebuild(this);
@@ -82,8 +83,9 @@ void UIScene_HowToPlayMenu::updateComponents()
 
 void UIScene_HowToPlayMenu::handleReload()
 {
+    int itemId = 0;
     for (int i = 0; i < 33; ++i)
-        m_buttonList.addItem(L10N::GetString(s_howToPlayMenuLabels[i]), i);
+        m_buttonList.addItem(L10N::GetString(m_buttonLabels[i]), itemId++);
     m_buttonList.setCurrentSelection(m_selectedItem, false, true);
     doHorizontalResizeCheck();
     gConsoleUIController.TouchBoxRebuild(this);
@@ -131,9 +133,11 @@ void UIScene_HowToPlayMenu::handlePress(int controlId, int childId)
 
 unsigned int UIScene_HowToPlayMenu::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_buttonList.setupControl(this, root, std::string("HowToList"));
-    m_controls.push_back(&m_buttonList);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_buttonList.setupControl(this, currentNode, std::string("HowToList"));
+        m_controls.push_back(&m_buttonList);
+    }
     return 1;
 }
 

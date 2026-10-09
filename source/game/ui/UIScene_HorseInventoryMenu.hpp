@@ -23,8 +23,8 @@ class UIScene_HorseInventoryMenu : public UIScene_AbstractContainerMenu,
 public:
     UIScene_HorseInventoryMenu(int player, void* data, UILayer* layer);
 
-    virtual unsigned int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual unsigned int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual void GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
                                       _UIVec2D* position);
     virtual void GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,

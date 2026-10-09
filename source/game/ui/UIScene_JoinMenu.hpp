@@ -14,6 +14,12 @@ class UILayer;
 class UIScene_JoinMenu : public UIScene, public IUIPartial_OnlineRestricted
 {
 public:
+    enum EControls
+    {
+        eControl_JoinGame,
+        eControl_GamePlayers,
+        eControl_GameInfo
+    };
     UIScene_JoinMenu(int, void*, UILayer*);
     virtual unsigned int GetCustomGameModeID();
     virtual unsigned int mapElementsAndNames();

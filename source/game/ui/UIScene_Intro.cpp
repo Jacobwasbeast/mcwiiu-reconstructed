@@ -137,12 +137,11 @@ void UIScene_Intro::handleTouchInput(unsigned int playerId, int, int, int, bool,
 
 unsigned int UIScene_Intro::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
+    fuiRenderNode* currentNode = m_movie->getRootNode();
     {
-        std::string name("TouchToSkip");
-        m_touchControl.setupControl(this, root, name);
+        m_touchControl.setupControl(this, currentNode, std::string("TouchToSkip"));
+        m_controls.push_back(&m_touchControl);
     }
-    m_controls.push_back(&m_touchControl);
     return 1;
 }
 

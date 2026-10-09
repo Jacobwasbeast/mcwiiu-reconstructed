@@ -39,11 +39,15 @@ UIScene_SettingsListMenu::~UIScene_SettingsListMenu()
 unsigned int UIScene_SettingsListMenu::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_multiList.setupControl(this, root, std::string("MultiList"));
-    m_controls.push_back(&m_multiList);
-    m_description.setupControl(this, root, std::string("Description"));
-    m_controls.push_back(&m_description);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_multiList.setupControl(this, currentNode, std::string("MultiList"));
+        m_controls.push_back(&m_multiList);
+    }
+    {
+        m_description.setupControl(this, currentNode, std::string("Description"));
+        m_controls.push_back(&m_description);
+    }
     return 1;
 }
 
@@ -59,6 +63,20 @@ void UIScene_SettingsListMenu::HideDescription()
     menu->HideDescription();
 }
 
+inline void UIScene_SettingsListMenu::addSettingCheckbox(int playerId, const wchar_t* label, int id,
+                                                         eGameSetting setting)
+{
+    m_multiList.AddNewCheckbox(std::wstring(label), id,
+                               GameSettings::GetGameSettings(playerId, setting) == 1);
+}
+
+inline void UIScene_SettingsListMenu::addInvertedSettingCheckbox(int playerId, const wchar_t* label, int id,
+                                                                 eGameSetting setting)
+{
+    m_multiList.AddNewCheckbox(std::wstring(label), id,
+                               GameSettings::GetGameSettings(playerId, setting) != 1);
+}
+
 void UIScene_SettingsListMenu::Init()
 {
     wchar_t text[256];
@@ -68,200 +86,170 @@ void UIScene_SettingsListMenu::Init()
     m_host = CGameNetworkManager::sInstance.IsHost();
     m_saveRequested = false;
 
-    if (m_settingsMode == 0)
+    switch (m_settingsMode)
     {
-        bool canChangeSkin = m_primaryPlayer;
-        bool canChangeDifficulty = m_primaryPlayer;
-        if (m_gameStarted)
+    case 0:
         {
-            canChangeDifficulty = false;
-            if (!CGameNetworkManager::sInstance.IsHost())
-                canChangeSkin = false;
-        }
-        bool gameStarted = gApp.GetGameStarted();
-        if (m_primaryPlayer)
-            m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0xffa0f6dc)), 0,
-                GameSettings::GetGameSettings(m_playerId, eGameSetting_SplitScreenVertical) == 1);
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_AUTOJUMP)), 9,
-            GameSettings::GetGameSettings(m_playerId, eGameSetting_AutoJump) == 1);
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_VIEW_BOBBING)), 1,
-            GameSettings::GetGameSettings(m_playerId, eGameSetting_ViewBob) == 1);
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_FLYING_VIEW_ROLLING)), 2,
-            GameSettings::GetGameSettings(m_playerId, eGameSetting_FlyingViewRolling) != 1);
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_HINTS)), 3,
-            GameSettings::GetGameSettings(m_playerId, eGameSetting_Hints) == 1);
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_CHECKBOX_DEATH_MESSAGES)), 4,
-            GameSettings::GetGameSettings(m_playerId, eGameSetting_DeathMessages) == 1);
-        if (!gameStarted)
-            m_multiList.AddNewButton(std::wstring(L10N::GetString(0x1ef2b27c)), 5, false);
-        if (canChangeSkin)
-        {
-            int skin = static_cast<int>(GameSettings::GetGameSettings(
-                m_playerId, eGameSetting_Autosave));
-            for (unsigned int index = 0; index < 9; ++index)
+            bool canChangeDifficulty = true;
+            bool canChangeAutosave = true;
+            bool showSaveButton = true;
+            if (!m_primaryPlayer)
             {
-                if (index == 0)
-                    std::swprintf(m_skinNames[index], 256, L"%ls", L10N::GetString(IDS_SLIDER_AUTOSAVE_OFF));
-                else
-                    std::swprintf(m_skinNames[index], 256, L"%ls: %d %ls",
-                                  L10N::GetString(IDS_SLIDER_AUTOSAVE), index * 15,
-                                  L10N::GetString(0xabfb1191));
+                canChangeDifficulty = false;
+                canChangeAutosave = false;
             }
-            m_multiList.AddNewSlider(std::wstring(m_skinNames[skin]), 6, 0, 8, skin,
-                                      false, 7, 3);
-        }
-        std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(0xa5cbebb5),
-                      GameSettings::GetGameSettings(m_playerId, eGameSetting_GameSensitivity));
-        m_multiList.AddNewSlider(std::wstring(text), 7, 1, 200,
-                                  GameSettings::GetGameSettings(m_playerId, eGameSetting_GameSensitivity),
-                                  true, 7, 3);
-        if (canChangeDifficulty)
-        {
-            int difficulty = static_cast<int>(GameSettings::GetGameSettings(
-                m_playerId, eGameSetting_Difficulty));
-            for (int index = 0; index < 4; ++index)
-                std::swprintf(m_difficultyNames[index], 256, L"%ls: %ls",
-                              L10N::GetString(IDS_SLIDER_DIFFICULTY),
-                              L10N::GetString(Difficulty::byId(index)->getKey()));
-            m_multiList.AddNewSlider(std::wstring(m_difficultyNames[difficulty]), 8, 0, 3,
-                                      difficulty, false, 7, 3);
-        }
-        doVerticalResizeCheck();
-        doHorizontalResizeCheck();
-        HideDescription();
-        gApp.GetLocalPlayerCount();
-        gConsoleUIController.TouchBoxRebuild(this);
-        return;
-    }
-    if (m_settingsMode == 1)
-    {
-        std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(IDS_SLIDER_MUSIC),
-                      GameSettings::GetGameSettings(m_playerId, eGameSetting_MusicVolume));
-        m_multiList.AddNewSlider(std::wstring(text), 10, 0, 100,
-                                  GameSettings::GetGameSettings(m_playerId, eGameSetting_MusicVolume),
-                                  true, 7, 3);
-        std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(IDS_SLIDER_SOUND),
-                      GameSettings::GetGameSettings(m_playerId, eGameSetting_SoundVolume));
-        m_multiList.AddNewSlider(std::wstring(text), 11, 0, 100,
-                                  GameSettings::GetGameSettings(m_playerId, eGameSetting_SoundVolume),
-                                  true, 7, 3);
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_CAVE_SOUNDS)), 12,
-            GameSettings::GetGameSettings(m_playerId, eGameSetting_CaveSounds) == 1);
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MINECART_SOUNDS)), 13,
-            GameSettings::GetGameSettings(m_playerId, eGameSetting_MinecartSounds) == 1);
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0xbce33af3)), 14,
-            GameSettings::GetGameSettings(m_playerId, eGameSetting_GameChat) == 1);
-        m_multiList.EnableItem(14, true, true);
-        doVerticalResizeCheck();
-        doHorizontalResizeCheck();
-        HideDescription();
-        gApp.GetLocalPlayerCount();
-        gConsoleUIController.TouchBoxRebuild(this);
-        return;
-    }
-    if (m_settingsMode < 3)
-    {
-        if (gProfile->GetPrimaryPad() == m_playerId)
-        {
-            m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_CHECKBOX_RENDER_CLOUDS)), 15,
-                GameSettings::GetGameSettings(m_playerId, eGameSetting_Clouds) == 1);
-            if (!m_gameStarted || m_primaryPlayer)
-                m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0x68a6fe3f)), 16,
-                    GameSettings::GetGameSettings(m_playerId, eGameSetting_CustomSkinAnim) == 1);
-            std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(IDS_SLIDER_GAMMA),
-                          GameSettings::GetGameSettings(m_playerId, eGameSetting_Gamma));
-            m_multiList.AddNewSlider(std::wstring(text), 17, 0, 100,
-                                      GameSettings::GetGameSettings(m_playerId, eGameSetting_Gamma),
+            if (m_gameStarted)
+            {
+                canChangeDifficulty = false;
+                if (!CGameNetworkManager::sInstance.IsHost())
+                    canChangeAutosave = false;
+            }
+            if (gApp.GetGameStarted())
+                showSaveButton = false;
+            if (m_primaryPlayer)
+                addSettingCheckbox(m_playerId, L10N::GetString(IDS_CHECKBOX_VERTICAL_SPLIT_SCREEN), 0, eGameSetting_SplitScreenVertical);
+            addSettingCheckbox(m_playerId, L10N::GetString(IDS_AUTOJUMP), 9, eGameSetting_AutoJump);
+            addSettingCheckbox(m_playerId, L10N::GetString(IDS_VIEW_BOBBING), 1, eGameSetting_ViewBob);
+            addInvertedSettingCheckbox(m_playerId, L10N::GetString(IDS_FLYING_VIEW_ROLLING), 2,
+                                       eGameSetting_FlyingViewRolling);
+            addSettingCheckbox(m_playerId, L10N::GetString(IDS_HINTS), 3, eGameSetting_Hints);
+            addSettingCheckbox(m_playerId, L10N::GetString(IDS_CHECKBOX_DEATH_MESSAGES), 4, eGameSetting_DeathMessages);
+            if (showSaveButton)
+                m_multiList.AddNewButton(std::wstring(L10N::GetString(IDS_LANGUAGE_SELECTOR)), 5, false);
+            if (canChangeAutosave)
+            {
+                int skin = static_cast<int>(GameSettings::GetGameSettings(
+                    m_playerId, eGameSetting_Autosave));
+                for (unsigned int index = 0; index < 9; ++index)
+                {
+                    if (index == 0)
+                        std::swprintf(m_skinNames[index], 256, L"%ls", L10N::GetString(IDS_SLIDER_AUTOSAVE_OFF));
+                    else
+                        std::swprintf(m_skinNames[index], 256, L"%ls: %d %ls",
+                                      L10N::GetString(IDS_SLIDER_AUTOSAVE), index * 15,
+                                      L10N::GetString(IDS_MINUTES));
+                }
+                m_multiList.AddNewSlider(std::wstring(m_skinNames[skin]), 6, 0, 8, skin,
+                                          false, 7, 3);
+            }
+            std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(IDS_SLIDER_SENSITIVITY_INGAME),
+                          GameSettings::GetGameSettings(m_playerId, eGameSetting_GameSensitivity));
+            m_multiList.AddNewSlider(std::wstring(text), 7, 1, 200,
+                                      GameSettings::GetGameSettings(m_playerId, eGameSetting_GameSensitivity),
                                       true, 7, 3);
+            if (canChangeDifficulty)
+            {
+                int difficulty = static_cast<int>(GameSettings::GetGameSettings(
+                    m_playerId, eGameSetting_Difficulty));
+                for (int index = 0; index < 4; ++index)
+                    std::swprintf(m_difficultyNames[index], 256, L"%ls: %ls",
+                                  L10N::GetString(IDS_SLIDER_DIFFICULTY),
+                                  L10N::GetString(Difficulty::byId(index)->getKey()));
+                m_multiList.AddNewSlider(std::wstring(m_difficultyNames[difficulty]), 8, 0, 3,
+                                          difficulty, false, 7, 3);
+            }
         }
-        bool showGhostOptions = !m_gameStarted;
-        if (m_gameStarted && Minecraft::InMiniGame(eMiniGameId_Glide, true))
-            showGhostOptions = Minecraft::GetInstance()->GetMiniGame()->GetHostOption(
-                eCustomGameModeHostOption_TimeTrial) != 0;
-        if (showGhostOptions)
+        break;
+    case 1:
         {
-            m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0x9791b32b)), 18,
-                GameSettings::GetGameSettings(m_playerId, eGameSetting_ShowGlideGhost) == 1);
-            m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG03_SHOW_GHOST_PATH)), 19,
-                GameSettings::GetGameSettings(m_playerId, eGameSetting_ShowGlideGhostPath) == 1);
+            std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(IDS_SLIDER_MUSIC),
+                          GameSettings::GetGameSettings(m_playerId, eGameSetting_MusicVolume));
+            m_multiList.AddNewSlider(std::wstring(text), 10, 0, 100,
+                                      GameSettings::GetGameSettings(m_playerId, eGameSetting_MusicVolume),
+                                      true, 7, 3);
+            std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(IDS_SLIDER_SOUND),
+                          GameSettings::GetGameSettings(m_playerId, eGameSetting_SoundVolume));
+            m_multiList.AddNewSlider(std::wstring(text), 11, 0, 100,
+                                      GameSettings::GetGameSettings(m_playerId, eGameSetting_SoundVolume),
+                                      true, 7, 3);
+            addSettingCheckbox(m_playerId, L10N::GetString(IDS_CAVE_SOUNDS), 12, eGameSetting_CaveSounds);
+            addSettingCheckbox(m_playerId, L10N::GetString(IDS_MINECART_SOUNDS), 13, eGameSetting_MinecartSounds);
+            addSettingCheckbox(m_playerId, L10N::GetString(IDS_VOICE_CHAT), 14, eGameSetting_GameChat);
+            m_multiList.EnableItem(14, true, true);
         }
-        doVerticalResizeCheck();
-        doHorizontalResizeCheck();
-        HideDescription();
-        gApp.GetLocalPlayerCount();
-        gConsoleUIController.TouchBoxRebuild(this);
-        return;
-    }
-    if (m_settingsMode != 3)
-    {
-        doVerticalResizeCheck();
-        doHorizontalResizeCheck();
-        HideDescription();
-        gApp.GetLocalPlayerCount();
-        gConsoleUIController.TouchBoxRebuild(this);
-        return;
-    }
-    m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_CHECKBOX_DISPLAY_HUD)), 20,
-        GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplayHUD) == 1);
-    m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_CHECKBOX_DISPLAY_HAND)), 21,
-        GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplayHand) == 1);
-    m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0xa15f6dc)), 22,
-        GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplayGameMessages) == 1);
-    if (m_primaryPlayer)
-    {
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_CHECKBOX_DISPLAY_SAVE_ICON)), 23,
-            GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplaySaveIcon) == 1);
-        std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(IDS_SLIDER_INTERFACEOPACITY),
-                      GameSettings::GetGameSettings(m_playerId, eGameSetting_InterfaceOpacity));
-        m_multiList.AddNewSlider(std::wstring(text), 24, 0, 100,
-                                  GameSettings::GetGameSettings(m_playerId, eGameSetting_InterfaceOpacity),
-                                  true, 7, 3);
-    }
-    m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_IN_GAME_TOOLTIPS)), 25,
-        GameSettings::GetGameSettings(m_playerId, eGameSetting_Tooltips) == 1);
-    m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_CHECKBOX_ANIMATED_CHARACTER)), 26,
-        GameSettings::GetGameSettings(m_playerId, eGameSetting_AnimatedCharacter) == 1);
-    std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(0xd51ff648),
-                  GameSettings::GetGameSettings(m_playerId, eGameSetting_InterfaceSensitivity));
-    m_multiList.AddNewSlider(std::wstring(text), 27, 0, 200,
-                              GameSettings::GetGameSettings(m_playerId, eGameSetting_InterfaceSensitivity),
-                              true, 7, 3);
-    bool primaryPlayer = m_primaryPlayer;
-    if ((!m_gameStarted || (CGameNetworkManager::sInstance.IsHost()
-                            && !Minecraft::InMiniGame(eMiniGameId_Any, true))) && primaryPlayer)
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0x2c94b968)), 28,
-            GameSettings::GetGameSettings(m_playerId, eGameSetting_DisplayMii) == 1);
-    if (m_primaryPlayer)
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(0x7eb016e)), 29,
-            GameSettings::GetGameSettings(m_playerId, eGameSetting_SplitscreenNicknames) == 1);
-    if (gApp.GetGameHostOption(eGameHostOption_MiniGame) == 0)
-        m_multiList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_CHECKBOX_CLASSIC_CRAFTING)), 30,
-            GameSettings::GetGameSettings(m_playerId, eGameSetting_ClassicCrafting) == 1);
-    if (!m_primaryPlayer || gProfile->IsGuest(m_playerId))
-    {
-        std::swprintf(text, 256, L"%ls: %d", L10N::GetString(0x6d606219),
-                      GameSettings::GetGameSettings(m_playerId, eGameSetting_HUDSizeSplitscreen));
-        m_multiList.AddNewSlider(std::wstring(text), 32, 1, 3,
-                                  GameSettings::GetGameSettings(m_playerId, eGameSetting_HUDSizeSplitscreen) + 1,
-                                  false, 7, 3);
-    }
-    else
-    {
-        std::swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_SLIDER_UISIZE),
-                      GameSettings::GetGameSettings(m_playerId, eGameSetting_HUDSize));
-        m_multiList.AddNewSlider(std::wstring(text), 31, 1, 3,
-                                  GameSettings::GetGameSettings(m_playerId, eGameSetting_HUDSize) + 1,
-                                  false, 7, 3);
-        std::swprintf(text, 256, L"%ls: %d", L10N::GetString(0x6d606219),
-                      GameSettings::GetGameSettings(m_playerId, eGameSetting_HUDSizeSplitscreen));
-        m_multiList.AddNewSlider(std::wstring(text), 32, 1, 3,
-                                  GameSettings::GetGameSettings(m_playerId, eGameSetting_HUDSizeSplitscreen) + 1,
-                                  false, 7, 3);
+        break;
+    case 2:
+        {
+            if (gProfile->GetPrimaryPad() == m_playerId)
+            {
+                addSettingCheckbox(m_playerId, L10N::GetString(IDS_CHECKBOX_RENDER_CLOUDS), 15, eGameSetting_Clouds);
+                if (!m_gameStarted || m_primaryPlayer)
+                    addSettingCheckbox(m_playerId, L10N::GetString(IDS_CHECKBOX_CUSTOM_SKIN_ANIM), 16, eGameSetting_CustomSkinAnim);
+                std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(IDS_SLIDER_GAMMA),
+                              GameSettings::GetGameSettings(m_playerId, eGameSetting_Gamma));
+                m_multiList.AddNewSlider(std::wstring(text), 17, 0, 100,
+                                          GameSettings::GetGameSettings(m_playerId, eGameSetting_Gamma),
+                                          true, 7, 3);
+            }
+            if (!m_gameStarted
+                || (Minecraft::InMiniGame(eMiniGameId_Glide, true)
+                    && Minecraft::GetInstance()->GetMiniGame()->GetHostOption(
+                           eCustomGameModeHostOption_TimeTrial)))
+            {
+                addSettingCheckbox(m_playerId, L10N::GetString(IDS_MG03_ENABLE_GHOST), 18, eGameSetting_ShowGlideGhost);
+                addSettingCheckbox(m_playerId, L10N::GetString(IDS_MG03_SHOW_GHOST_PATH), 19, eGameSetting_ShowGlideGhostPath);
+            }
+        }
+        break;
+    case 3:
+        {
+            addSettingCheckbox(m_playerId, L10N::GetString(IDS_CHECKBOX_DISPLAY_HUD), 20, eGameSetting_DisplayHUD);
+            addSettingCheckbox(m_playerId, L10N::GetString(IDS_CHECKBOX_DISPLAY_HAND), 21, eGameSetting_DisplayHand);
+            addSettingCheckbox(m_playerId, L10N::GetString(IDS_CHECKBOX_DISPLAY_CHAT_MESSAGES), 22, eGameSetting_DisplayGameMessages);
+            if (m_primaryPlayer)
+            {
+                addSettingCheckbox(m_playerId, L10N::GetString(IDS_CHECKBOX_DISPLAY_SAVE_ICON), 23, eGameSetting_DisplaySaveIcon);
+                std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(IDS_SLIDER_INTERFACEOPACITY),
+                              GameSettings::GetGameSettings(m_playerId, eGameSetting_InterfaceOpacity));
+                m_multiList.AddNewSlider(std::wstring(text), 24, 0, 100,
+                                          GameSettings::GetGameSettings(m_playerId, eGameSetting_InterfaceOpacity),
+                                          true, 7, 3);
+            }
+            addSettingCheckbox(m_playerId, L10N::GetString(IDS_IN_GAME_TOOLTIPS), 25, eGameSetting_Tooltips);
+            addSettingCheckbox(m_playerId, L10N::GetString(IDS_CHECKBOX_ANIMATED_CHARACTER), 26, eGameSetting_AnimatedCharacter);
+            std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(IDS_SLIDER_SENSITIVITY_INMENU),
+                          GameSettings::GetGameSettings(m_playerId, eGameSetting_InterfaceSensitivity));
+            m_multiList.AddNewSlider(std::wstring(text), 27, 0, 200,
+                                      GameSettings::GetGameSettings(m_playerId, eGameSetting_InterfaceSensitivity),
+                                      true, 7, 3);
+            bool primaryPlayer = m_primaryPlayer;
+            if ((!m_gameStarted || (CGameNetworkManager::sInstance.IsHost()
+                                    && !Minecraft::InMiniGame(eMiniGameId_Any, true))) && primaryPlayer)
+                addSettingCheckbox(m_playerId, L10N::GetString(IDS_IN_GAME_GAMERTAGS), 28, eGameSetting_DisplayMii);
+            if (m_primaryPlayer)
+                addSettingCheckbox(m_playerId, L10N::GetString(IDS_CHECKBOX_DISPLAY_SPLITSCREENGAMERTAGS), 29, eGameSetting_SplitscreenNicknames);
+            if (gApp.GetGameHostOption(eGameHostOption_MiniGame) == 0)
+                addSettingCheckbox(m_playerId, L10N::GetString(IDS_CHECKBOX_CLASSIC_CRAFTING), 30, eGameSetting_ClassicCrafting);
+            if (!m_primaryPlayer || gProfile->IsGuest(m_playerId))
+            {
+                std::swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_SLIDER_UISIZESPLITSCREEN),
+                              GameSettings::GetGameSettings(m_playerId, eGameSetting_HUDSizeSplitscreen) + 1);
+                m_multiList.AddNewSlider(std::wstring(text), 32, 1, 3,
+                                          GameSettings::GetGameSettings(m_playerId, eGameSetting_HUDSizeSplitscreen) + 1,
+                                          false, 7, 3);
+            }
+            else
+            {
+                std::swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_SLIDER_UISIZE),
+                              GameSettings::GetGameSettings(m_playerId, eGameSetting_HUDSize) + 1);
+                m_multiList.AddNewSlider(std::wstring(text), 31, 1, 3,
+                                          GameSettings::GetGameSettings(m_playerId, eGameSetting_HUDSize) + 1,
+                                          false, 7, 3);
+                std::swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_SLIDER_UISIZESPLITSCREEN),
+                              GameSettings::GetGameSettings(m_playerId, eGameSetting_HUDSizeSplitscreen) + 1);
+                m_multiList.AddNewSlider(std::wstring(text), 32, 1, 3,
+                                          GameSettings::GetGameSettings(m_playerId, eGameSetting_HUDSizeSplitscreen) + 1,
+                                          false, 7, 3);
+            }
+        }
+        break;
     }
     doVerticalResizeCheck();
     doHorizontalResizeCheck();
     HideDescription();
-    gApp.GetLocalPlayerCount();
+    if (gApp.GetLocalPlayerCount() > 1)
+    {
+    }
     gConsoleUIController.TouchBoxRebuild(this);
 }
 
@@ -422,16 +410,16 @@ void UIScene_SettingsListMenu::handleReload()
 
 void UIScene_SettingsListMenu::updateComponents()
 {
-    Minecraft* minecraft = Minecraft::GetInstance();
-    if (minecraft->mLevel != 0)
-    {
-        m_layer->showComponent(m_playerId, EUIScene_Panorama, false);
-        m_layer->showComponent(m_playerId, EUIScene_Logo, gApp.GetLocalPlayerCount() == 1);
-    }
-    else
+    bool notInGame = Minecraft::GetInstance()->mLevel == 0;
+    if (notInGame)
     {
         m_layer->showComponent(m_playerId, EUIScene_Panorama, true);
         m_layer->showComponent(m_playerId, EUIScene_Logo, true);
+    }
+    else
+    {
+        m_layer->showComponent(m_playerId, EUIScene_Panorama, false);
+        m_layer->showComponent(m_playerId, EUIScene_Logo, gApp.GetLocalPlayerCount() == 1);
     }
 }
 
@@ -485,77 +473,66 @@ void UIScene_SettingsListMenu::handleSliderElementMove(int, int id, int value)
 {
     gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
     wchar_t text[256];
-    if (id == 6)
+    switch (id)
     {
+    case 6:
         GameSettings::SetGameSettings(m_playerId, eGameSetting_Autosave, value);
         m_multiList.SetItemLabel(6, UIString(m_skinNames[value]), false);
         gApp.SetAutosaveTimerTime();
-    }
-    else if (id == 7)
-    {
+        break;
+    case 7:
         GameSettings::SetGameSettings(m_playerId, eGameSetting_GameSensitivity, value);
-        std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(0xa5cbebb5),
+        std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(IDS_SLIDER_SENSITIVITY_INGAME),
                       GameSettings::GetGameSettings(m_playerId, eGameSetting_GameSensitivity));
         m_multiList.SetItemLabel(7, UIString(text), false);
-    }
-    else if (id == 8)
-    {
+        break;
+    case 8:
         GameSettings::SetGameSettings(m_playerId, eGameSetting_Difficulty, value);
         m_multiList.SetItemLabel(8, UIString(m_difficultyNames[value]), false);
-    }
-    else if (id == 10)
-    {
+        break;
+    case 10:
         GameSettings::SetGameSettings(m_playerId, eGameSetting_MusicVolume, value);
         std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(IDS_SLIDER_MUSIC), value);
         m_multiList.SetItemLabel(10, UIString(text), false);
-    }
-    else if (id == 11)
-    {
+        break;
+    case 11:
         GameSettings::SetGameSettings(m_playerId, eGameSetting_SoundVolume, value);
         std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(IDS_SLIDER_SOUND), value);
         m_multiList.SetItemLabel(11, UIString(text), false);
-    }
-    else if (id == 17)
-    {
+        break;
+    case 17:
         GameSettings::SetGameSettings(m_playerId, eGameSetting_Gamma, value);
         std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(IDS_SLIDER_GAMMA), value);
         m_multiList.SetItemLabel(17, UIString(text), false);
-    }
-    else if (id == 24)
-    {
+        break;
+    case 24:
         GameSettings::SetGameSettings(m_playerId, eGameSetting_InterfaceOpacity, value);
         std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(IDS_SLIDER_INTERFACEOPACITY), value);
         m_multiList.SetItemLabel(24, UIString(text), false);
-    }
-    else if (id == 27)
-    {
-        GameSettings::SetGameSettings(m_playerId, eGameSetting_InterfaceSensitivity, value);
-        std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(0xd51ff648), value);
-        m_multiList.SetItemLabel(27, UIString(text), false);
-    }
-    else if (id == 31)
-    {
+        break;
+    case 31:
         std::swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_SLIDER_UISIZE), value);
         m_multiList.SetItemLabel(31, UIString(text), false);
-        int oldValue = static_cast<int>(GameSettings::GetGameSettings(
-            m_playerId, eGameSetting_HUDSize));
-        if (value != oldValue + 1)
+        if (value != GameSettings::GetGameSettings(m_playerId, eGameSetting_HUDSize) + 1)
         {
             GameSettings::SetGameSettings(m_playerId, eGameSetting_HUDSize, value - 1);
             gConsoleUIController.UpdateSelectedItemPos(m_playerId);
         }
-    }
-    else if (id == 32)
-    {
-        std::swprintf(text, 256, L"%ls: %d", L10N::GetString(0x6d606219), value);
+        break;
+    case 32:
+        std::swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_SLIDER_UISIZESPLITSCREEN), value);
         m_multiList.SetItemLabel(32, UIString(text), false);
-        int oldValue = static_cast<int>(GameSettings::GetGameSettings(
-            m_playerId, eGameSetting_HUDSizeSplitscreen));
-        if (value != oldValue + 1)
+        if (value != GameSettings::GetGameSettings(m_playerId, eGameSetting_HUDSizeSplitscreen) + 1)
         {
             GameSettings::SetGameSettings(m_playerId, eGameSetting_HUDSizeSplitscreen, value - 1);
             gConsoleUIController.UpdateSelectedItemPos(m_playerId);
         }
+        break;
+    case 27:
+        GameSettings::SetGameSettings(m_playerId, eGameSetting_InterfaceSensitivity, value);
+        std::swprintf(text, 256, L"%ls: %d%%", L10N::GetString(IDS_SLIDER_SENSITIVITY_INMENU), value);
+        m_multiList.SetItemLabel(27, UIString(text), false);
+        break;
     }
 }
 

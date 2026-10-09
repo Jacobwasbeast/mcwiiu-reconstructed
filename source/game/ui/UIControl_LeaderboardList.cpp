@@ -20,12 +20,13 @@ void UIControl_LeaderboardList::clearList()
     m_fuiRenderNode->getFuiNode()->asFJ_LeaderboardList()->ResetLeaderboard();
 }
 
-void UIControl_LeaderboardList::setupControl(UIScene* scene, fuiRenderNode* node,
+bool UIControl_LeaderboardList::setupControl(UIScene* scene, fuiRenderNode* node,
                                              const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_LeaderboardList;
-    UIControl_Base::setupControl(scene, node, name);
+    bool result = UIControl_Base::setupControl(scene, node, name);
     m_touchBoxAdded = false;
+    return result;
 }
 
 void UIControl_LeaderboardList::init(int controlId)

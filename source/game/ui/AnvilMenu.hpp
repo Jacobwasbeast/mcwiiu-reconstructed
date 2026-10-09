@@ -37,7 +37,7 @@ public:
     virtual not_null_ptr<ItemInstance> quickMoveStack(boost::shared_ptr<Player> player, int index);
     void setItemName(const std::wstring& name, bool censored);
 
-    boost::shared_ptr<ResultContainer> mResultSlots;
+    boost::shared_ptr<Container> mResultSlots;
     boost::shared_ptr<Container> mInputSlots;
     Level* mLevel;
     BlockPos mPosition;

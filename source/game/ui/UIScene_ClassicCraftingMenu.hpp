@@ -28,8 +28,8 @@ class UIScene_ClassicCraftingMenu : public UIScene_AbstractContainerMenu
 public:
     UIScene_ClassicCraftingMenu(int type, void* data, UILayer* layer);
     virtual ~UIScene_ClassicCraftingMenu();
-    virtual unsigned int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual unsigned int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int GetSectionAndSlotInDirection(IUIScene_AbstractContainerMenu::ESceneSection section, IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y);
     virtual void GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position);
     virtual void GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot, _UIVec2D* position, _UIVec2D* size);

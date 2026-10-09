@@ -78,41 +78,40 @@ void FJ_ControlsMenu::PositionControlsHelp()
 {
     FJ_List* controlsList = static_cast<FJ_List*>(m_root->getChildByName(std::string("ControlsMultiList")));
     FJ_FuiNode* activeItem = controlsList->ReturnItem(controlsList->GetActiveItem());
-    if (activeItem == NULL)
-        return;
-
-    getChildByName(std::string("ControlsHelpPanel"))->setX(static_cast<float>(Math::round(
-        getChildByName(std::string("BackgroundPanel"))->getX() +
-        getChildByName(std::string("BackgroundPanel"))->getWidth() - 5.0f)));
-
-    getChildByName(std::string("ControlsHelpPanel"))->setY(static_cast<float>(Math::round(
-        activeItem->getY() + activeItem->getHeight() * 0.5f -
-        getChildByName(std::string("ControlsHelpPanel"))->getHeight() * 0.5f)));
-
-    if (getChildByName(std::string("ControlsHelpPanel"))->getY() +
-        getChildByName(std::string("ControlsHelpPanel"))->getHeight() <=
-        getChildByName(std::string("BackgroundPanel"))->getY() +
-        getChildByName(std::string("BackgroundPanel"))->getHeight())
+    if (activeItem != NULL)
     {
-        if (getChildByName(std::string("ControlsHelpPanel"))->getY() <
-            getChildByName(std::string("BackgroundPanel"))->getY())
+        const float padding = 5.0f;
+
+        getChildByName(std::string("ControlsHelpPanel"))->setX(static_cast<float>(Math::round(
+            getChildByName(std::string("BackgroundPanel"))->getX() +
+            getChildByName(std::string("BackgroundPanel"))->getWidth() - padding)));
+
+        getChildByName(std::string("ControlsHelpPanel"))->setY(static_cast<float>(Math::round(
+            activeItem->getY() + activeItem->getHeight() * 0.5f -
+            getChildByName(std::string("ControlsHelpPanel"))->getHeight() * 0.5f)));
+
+        if (getChildByName(std::string("ControlsHelpPanel"))->getY() +
+            getChildByName(std::string("ControlsHelpPanel"))->getHeight() >
+            getChildByName(std::string("BackgroundPanel"))->getY() +
+            getChildByName(std::string("BackgroundPanel"))->getHeight())
+        {
+            getChildByName(std::string("ControlsHelpPanel"))->setY(
+                getChildByName(std::string("ControlsHelpPanel"))->getY() -
+                static_cast<float>(Math::round(
+                    getChildByName(std::string("ControlsHelpPanel"))->getY() +
+                    getChildByName(std::string("ControlsHelpPanel"))->getHeight() -
+                    (getChildByName(std::string("BackgroundPanel"))->getY() +
+                     getChildByName(std::string("BackgroundPanel"))->getHeight()))) - padding);
+        }
+        else if (getChildByName(std::string("ControlsHelpPanel"))->getY() <
+                 getChildByName(std::string("BackgroundPanel"))->getY())
         {
             getChildByName(std::string("ControlsHelpPanel"))->setY(
                 getChildByName(std::string("ControlsHelpPanel"))->getY() +
                 static_cast<float>(Math::round(
                     getChildByName(std::string("BackgroundPanel"))->getY() -
-                    getChildByName(std::string("ControlsHelpPanel"))->getY())) + 5.0f);
+                    getChildByName(std::string("ControlsHelpPanel"))->getY())) + padding);
         }
-    }
-    else
-    {
-        getChildByName(std::string("ControlsHelpPanel"))->setY(
-            getChildByName(std::string("ControlsHelpPanel"))->getY() -
-            static_cast<float>(Math::round(
-                getChildByName(std::string("ControlsHelpPanel"))->getY() +
-                getChildByName(std::string("ControlsHelpPanel"))->getHeight() -
-                (getChildByName(std::string("BackgroundPanel"))->getY() +
-                 getChildByName(std::string("BackgroundPanel"))->getHeight()))) - 5.0f);
     }
 }
 

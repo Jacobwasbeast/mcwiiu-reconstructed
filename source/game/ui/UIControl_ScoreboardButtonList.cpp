@@ -42,11 +42,11 @@ unsigned int UIControl_ScoreboardButtonList::PendingSetSlotsText::OnTick()
     return 1;
 }
 
-void UIControl_ScoreboardButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
+bool UIControl_ScoreboardButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
                                                   const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_ScoreboardButtonList;
-    UIControl_ButtonList::setupControl(scene, node, name);
+    return UIControl_ButtonList::setupControl(scene, node, name);
 }
 
 void UIControl_ScoreboardButtonList::addItem(const std::wstring& label, int playerIcon,

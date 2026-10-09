@@ -81,7 +81,11 @@ void FJ_SuperFlatEditLayerMenu::SetScrollBar(int count, int position)
         return;
     }
     int last = count - 1;
-    int clamped = position < count ? (position < 0 ? 0 : position) : last;
+    int clamped = position;
+    if (clamped >= count)
+        clamped = last;
+    else if (clamped < 0)
+        clamped = 0;
     if (count == 1)
     {
         scrollBar->setAlpha(0.5f);
@@ -94,7 +98,7 @@ void FJ_SuperFlatEditLayerMenu::SetScrollBar(int count, int position)
         button->setVisible(true);
         if (count > 1)
         {
-            if (clamped < mSlotID)
+            if (mSlotID > clamped)
             {
                 if (clamped < last)
                 {
@@ -103,7 +107,7 @@ void FJ_SuperFlatEditLayerMenu::SetScrollBar(int count, int position)
                 }
                 mScrollDown->setVisible(true);
             }
-            else if (clamped > mSlotID)
+            else if (mSlotID < clamped)
             {
                 if (clamped > 0)
                 {
@@ -124,7 +128,7 @@ void FJ_SuperFlatEditLayerMenu::SetScrollBar(int count, int position)
     }
     if (count > 1)
     {
-        button->setY((float)(mScrollBottom - mScrollTop) * ((float)clamped / (float)last) + (float)mScrollTop);
+        button->setY((float)mScrollTop + (float)(mScrollBottom - mScrollTop) * ((float)clamped / (float)last));
     }
     else
     {

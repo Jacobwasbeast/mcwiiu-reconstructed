@@ -10,7 +10,11 @@ FJ_SpaceIndicatorBar::FJ_SpaceIndicatorBar(fuiRenderNode* renderNode)
 
     m_barWidth = m_saveBar->getWidth();
 
-    fuiRect rect = { 0.0f, m_saveBar->getWidth(), 0.0f, m_saveBar->getHeight() };
+    fuiRect rect;
+    rect.xMin = 0.0f;
+    rect.yMin = 0.0f;
+    rect.xMax = m_saveBar->getWidth();
+    rect.yMax = m_saveBar->getHeight();
     fuiRenderNodeCodeGenRect* greenNode = new fuiRenderNodeCodeGenRect(
         getStage()->m_pRenderNode, &rect, "fillerMask_Green");
     m_saveGameFiller = new FJ_FuiNode(greenNode);
@@ -38,43 +42,35 @@ void FJ_SpaceIndicatorBar::GetBarFiller()
 
 void FJ_SpaceIndicatorBar::setSaveGameSize(float size)
 {
-    const float maximum = 1.0f;
-    const float minimum = 0.0f;
-    float width;
-
-    if (size <= maximum)
+    if (size > 1.0f)
     {
-        if (size < minimum)
-            size = minimum;
-        m_saveGameFiller->setWidth((m_barWidth / m_saveBar->getScaleX()) * size);
-        width = m_saveGameFiller->getWidth();
+        size = 1.0f;
     }
-    else
+    else if (size < 0.0f)
     {
-        m_saveGameFiller->setWidth((m_barWidth / m_saveBar->getScaleX()) * maximum);
-        width = m_saveGameFiller->getWidth();
-        size = maximum;
+        size = 0.0f;
     }
 
-    if (width < maximum && size > minimum)
-        m_saveGameFiller->setWidth(maximum);
+    m_saveGameFiller->setWidth((m_barWidth / m_saveBar->getScaleX()) * size);
+
+    if (m_saveGameFiller->getWidth() < 1.0f && size > 0.0f)
+    {
+        m_saveGameFiller->setWidth(1.0f);
+    }
 }
 
 void FJ_SpaceIndicatorBar::setTotalSize(float size)
 {
-    const float maximum = 1.0f;
-    const float minimum = 0.0f;
+    if (size > 1.0f)
+    {
+        size = 1.0f;
+    }
+    else if (size < 0.0f)
+    {
+        size = 0.0f;
+    }
 
-    if (size <= maximum)
-    {
-        if (size < minimum)
-            size = minimum;
-        m_totalFiller->setWidth((m_barWidth / m_saveBarFiller->getScaleX()) * size);
-    }
-    else
-    {
-        m_totalFiller->setWidth((m_barWidth / m_saveBarFiller->getScaleX()) * maximum);
-    }
+    m_totalFiller->setWidth((m_barWidth / m_saveBarFiller->getScaleX()) * size);
 }
 
 void FJ_SpaceIndicatorBar::setSaveGameOffset(float offset)

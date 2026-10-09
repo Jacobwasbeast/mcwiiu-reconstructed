@@ -34,9 +34,8 @@ void UIControl_Slider::init(UIString label, int controlId, int minimum, int maxi
     m_repeatDelay = repeatDelay;
     m_repeat = repeat;
 
-    const std::wstring& text = label.getString();
-    static_cast<FJ_Slider*>(m_fuiRenderNode->getFuiNode())->Init(text, controlId, minimum, maximum, value,
-                                                                 repeat, repeatDelay, repeatStep);
+    static_cast<FJ_Slider*>(m_fuiRenderNode->getFuiNode())->Init(label.getString(), controlId, minimum, maximum,
+                                                                 value, repeat, repeatDelay, repeatStep);
 
     switch (m_scene->m_layer->m_layerId)
     {
@@ -48,10 +47,10 @@ void UIControl_Slider::init(UIString label, int controlId, int minimum, int maxi
     }
 }
 
-void UIControl_Slider::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_Slider::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_Slider;
-    UIControl_Base::setupControl(scene, node, name);
+    return UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_Slider::setFocus(bool focus)
@@ -85,9 +84,7 @@ void UIControl_Slider::SetSliderValue(int value)
 
 void UIControl_Slider::MoveSliderValue(int amount)
 {
-    int value = std::min(m_maximum, amount + (int)m_currentValue);
-    if (value < m_minimum)
-        value = m_minimum;
+    int value = std::max(m_minimum, std::min(m_maximum, amount + (int)m_currentValue));
     SetSliderValue(value);
     handleSliderMove(value);
 }

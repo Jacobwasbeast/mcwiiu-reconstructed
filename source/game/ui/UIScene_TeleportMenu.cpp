@@ -61,15 +61,13 @@ unsigned int UIScene_TeleportMenu::mapElementsAndNames()
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
     {
-        std::string playersName("GamePlayers");
-        m_playerList.setupControl(this, root, playersName);
+        m_playerList.setupControl(this, root, "GamePlayers");
+        m_controls.push_back(&m_playerList);
     }
-    m_controls.push_back(&m_playerList);
     {
-        std::string titleName("Title");
-        m_title.setupControl(this, root, titleName);
+        m_title.setupControl(this, root, "Title");
+        m_controls.push_back(&m_title);
     }
-    m_controls.push_back(&m_title);
     return 1;
 }
 
@@ -83,9 +81,15 @@ UIScene_TeleportMenu::_PlayerInfo* UIScene_TeleportMenu::BuildPlayerInfo(INetwor
     if (player->HasVoice())
     {
         if (player->IsMutedByLocalUser(m_playerId))
+        {
             voiceStatus = 3;
+        }
         else
-            voiceStatus = player->IsTalking() ? 2 : 1;
+        {
+            voiceStatus = 1;
+            if (player->IsTalking())
+                voiceStatus = 2;
+        }
     }
     info->voiceStatus = voiceStatus;
     info->colour = static_cast<short>(gApp.GetPlayerColour(info->smallId));
@@ -95,9 +99,9 @@ UIScene_TeleportMenu::_PlayerInfo* UIScene_TeleportMenu::BuildPlayerInfo(INetwor
 
 void UIScene_TeleportMenu::OnPlayerChanged(void* context, INetworkPlayer* player, bool removed)
 {
-    UIScene_TeleportMenu* scene = static_cast<UIScene_TeleportMenu*>(context);
     bool found = false;
     unsigned int foundIndex = 0;
+    UIScene_TeleportMenu* scene = static_cast<UIScene_TeleportMenu*>(context);
     for (unsigned int i = 0; i < scene->m_playerInfo.size(); ++i)
     {
         if (!found)
@@ -192,19 +196,19 @@ void UIScene_TeleportMenu::handleInput(int, int action, bool repeat, bool presse
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
-    case EControllerActions_MenuUp:
-    case EControllerActions_MenuDown:
-    case EControllerActions_MenuPageUp:
-    case EControllerActions_MenuPageDown:
-    case EControllerActions_MenuOk:
-        sendInputToMovie(action, repeat, pressed, released);
-        break;
     case EControllerActions_MenuCancel:
         if (pressed && !repeat)
         {
             gConsoleUIController.PlayUISFX(SoundEvents::UI_BACK);
             navigateBack();
         }
+        break;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuPageUp:
+    case EControllerActions_MenuPageDown:
+    case EControllerActions_MenuOk:
+        sendInputToMovie(action, repeat, pressed, released);
         break;
     }
 }
@@ -220,7 +224,8 @@ void UIScene_TeleportMenu::handlePress(int controlId, int itemIndex)
 {
     if (controlId != 0)
         return;
-    INetworkPlayer* target = CGameNetworkManager::sInstance.GetPlayerBySmallId(m_playerInfo[itemIndex]->smallId);
+    _PlayerInfo* info = m_playerInfo[itemIndex];
+    INetworkPlayer* target = CGameNetworkManager::sInstance.GetPlayerBySmallId(info->smallId);
     INetworkPlayer* local = CGameNetworkManager::sInstance.GetLocalPlayerByUserIndex(m_playerId);
     boost::shared_ptr<GameCommandPacket> packet;
     if (m_splitScreen)

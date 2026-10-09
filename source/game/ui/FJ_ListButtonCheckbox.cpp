@@ -101,8 +101,8 @@ void FJ_ListButtonCheckbox::SetTextureName(const std::wstring& textureName)
     rect.xMax = iconPlaceholder->getWidth() / iconPlaceholder->getScaleX();
     rect.yMax = iconPlaceholder->getHeight() / iconPlaceholder->getScaleY();
 
-    unsigned int width = 0;
-    unsigned int height = 0;
+    unsigned int width;
+    unsigned int height;
     bool hasTexture = false;
     unsigned int texture = gFui->getCustomTexture(textureName, &width, &height, &hasTexture);
     fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(

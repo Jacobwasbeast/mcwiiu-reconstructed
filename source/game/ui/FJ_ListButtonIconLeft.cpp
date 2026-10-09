@@ -66,8 +66,8 @@ void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName,
             rect.xMax = iconControl->getWidth() / iconControl->getScaleX();
             rect.yMax = iconControl->getHeight() / iconControl->getScaleY();
 
-            unsigned int width = 0;
-            unsigned int height = 0;
+            unsigned int width;
+            unsigned int height;
             bool hasAlpha = false;
             unsigned int texture = gFui->getCustomTexture(
                 textureName, &width, &height, &hasAlpha);
@@ -80,8 +80,8 @@ void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName,
         }
         else
         {
-            unsigned int width = 0;
-            unsigned int height = 0;
+            unsigned int width;
+            unsigned int height;
             bool hasAlpha = false;
             unsigned int texture = gFui->getCustomTexture(
                 textureName, &width, &height, &hasAlpha);
@@ -106,8 +106,8 @@ void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName,
                 rect.xMax = iconControl->getWidth() / iconControl->getScaleX();
                 rect.yMax = iconControl->getHeight() / iconControl->getScaleY();
 
-                unsigned int width = 0;
-                unsigned int height = 0;
+                unsigned int width;
+                unsigned int height;
                 bool hasAlpha = false;
                 unsigned int texture = gFui->getCustomTexture(
                     textureName1, &width, &height, &hasAlpha);
@@ -121,8 +121,8 @@ void FJ_ListButtonIconLeft::SetTextureName(const std::wstring& textureName,
         }
         else
         {
-            unsigned int width = 0;
-            unsigned int height = 0;
+            unsigned int width;
+            unsigned int height;
             bool hasAlpha = false;
             unsigned int texture = gFui->getCustomTexture(
                 textureName1, &width, &height, &hasAlpha);

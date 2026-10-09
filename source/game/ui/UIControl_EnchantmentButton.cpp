@@ -61,11 +61,11 @@ UIControl_EnchantmentButton::UIControl_EnchantmentButton()
                              0xff000000);
 }
 
-void UIControl_EnchantmentButton::setupControl(UIScene* scene, fuiRenderNode* node,
+bool UIControl_EnchantmentButton::setupControl(UIScene* scene, fuiRenderNode* node,
                                                 const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_EnchantmentButton;
-    UIControl_Button::setupControl(scene, node, name);
+    return UIControl_Button::setupControl(scene, node, name);
 }
 
 void UIControl_EnchantmentButton::updateState()

@@ -69,21 +69,21 @@ void FJ_MultilistMenu::DoVerticalResizeCheck()
 
         if (getStage()->getStageHeight() != 360.0f && getStage()->getStageHeight() != 540.0f)
         {
-            float thirdHeight = static_cast<float>(oldChildHeight) / 3.0f;
-            int rounded = Math::round(thirdHeight - backgroundList->getChildAt(0)->getHeight() * 0.5f);
-            int targetY = static_cast<int>(static_cast<float>(rounded) + backgroundList->getY());
+            int targetY = static_cast<int>(
+                static_cast<float>(Math::round(static_cast<float>(oldChildHeight) / 3.0f
+                                               - backgroundList->getChildAt(0)->getHeight() * 0.5f))
+                + backgroundList->getY());
             int safeDelta = static_cast<int>(static_cast<float>(targetY) - backgroundList->getY());
-            if (getISafeZoneBottom() < safeDelta)
+            if (safeDelta > getISafeZoneBottom())
             {
                 safeDelta -= getISafeZoneBottom();
             }
-            float delta = static_cast<float>(safeDelta);
-            if (backgroundList->getY() < backgroundList->getY() + delta)
+            if (backgroundList->getY() + static_cast<float>(safeDelta) > backgroundList->getY())
             {
-                multiList->incY(delta);
-                backgroundList->incY(delta);
-                description->incY(delta);
-                backgroundText->incY(delta);
+                multiList->incY(static_cast<float>(safeDelta));
+                backgroundList->incY(static_cast<float>(safeDelta));
+                description->incY(static_cast<float>(safeDelta));
+                backgroundText->incY(static_cast<float>(safeDelta));
                 description->setHeight(
                     backgroundText->getHeight() - 2.0f * (description->getY() - backgroundText->getY()));
             }
@@ -95,7 +95,7 @@ void FJ_MultilistMenu::DoVerticalResizeCheck()
         float stageHeight = getStage()->getStageHeight();
         int rounded = Math::round(stageHeight * 0.5f - backgroundList->getChildAt(0)->getHeight() * 0.5f);
         int safeDelta = static_cast<int>(static_cast<float>(rounded) - backgroundList->getY());
-        if (getISafeZoneBottom() < safeDelta)
+        if (safeDelta > getISafeZoneBottom())
         {
             safeDelta -= getISafeZoneBottom();
         }
@@ -117,25 +117,25 @@ void FJ_MultilistMenu::DoHorizontalResizeCheck()
     FJ_FuiNode* description = getChildByName("Description");
 
     float listWidth = static_cast<float>(multiList->GetListWidth());
-    if (multiList->getWidth() < listWidth)
+    if (listWidth > multiList->getWidth())
     {
         listWidth = static_cast<float>(multiList->GetListWidth());
-        float widthDelta = static_cast<float>(static_cast<int>(listWidth - multiList->getWidth()));
-
-        backgroundList->getChildAt(0)->incWidth(widthDelta);
-        multiList->incWidth(widthDelta);
-
+        int widthDelta = static_cast<int>(listWidth - multiList->getWidth());
         std::wstring savedLabel;
+
+        backgroundList->getChildAt(0)->incWidth(static_cast<float>(widthDelta));
+        multiList->incWidth(static_cast<float>(widthDelta));
+
         for (int itemIndex = 0; itemIndex < multiList->getINumButtons(); ++itemIndex)
         {
             savedLabel = static_cast<FJ_Base*>(multiList->ReturnItem(itemIndex))->GetLabel();
             static_cast<FJ_Base*>(multiList->ReturnItem(itemIndex))->SetLabel(std::wstring(L""));
-            float itemWidth = multiList->ReturnItem(itemIndex)->getWidth();
-            static_cast<FJ_Base*>(multiList->ReturnItem(itemIndex))->SetNewObjectWidth(static_cast<int>(itemWidth + widthDelta));
+            int newWidth = static_cast<int>(multiList->ReturnItem(itemIndex)->getWidth() + static_cast<float>(widthDelta));
+            static_cast<FJ_Base*>(multiList->ReturnItem(itemIndex))->SetNewObjectWidth(newWidth);
             static_cast<FJ_Base*>(multiList->ReturnItem(itemIndex))->SetLabel(savedLabel);
         }
 
-        float halfDelta = widthDelta * 0.5f;
+        float halfDelta = static_cast<float>(widthDelta) * 0.5f;
         multiList->decX(static_cast<float>(Math::round(halfDelta)));
         backgroundList->decX(static_cast<float>(Math::round(halfDelta)));
         if (description->isVisible())

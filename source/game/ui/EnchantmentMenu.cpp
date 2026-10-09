@@ -23,15 +23,13 @@ EnchantmentMenu::EnchantmentMenu(boost::shared_ptr<Inventory> inventory, Level* 
     : AbstractContainerMenu()
 {
     mEnchantmentContainer = boost::shared_ptr<EnchantmentContainer>(new EnchantmentContainer(this));
-    mCosts[0] = 0;
-    mCosts[1] = 0;
-    mCosts[2] = 0;
-    mEnchantmentIds[0] = -1;
-    mEnchantmentIds[1] = -1;
-    mEnchantmentIds[2] = -1;
-    mEnchantmentLevels[0] = -1;
-    mEnchantmentLevels[1] = -1;
-    mEnchantmentLevels[2] = -1;
+    for (int i = 0; i < 3; ++i)
+        mCosts[i] = 0;
+    for (int i = 0; i < 3; ++i)
+    {
+        mEnchantmentIds[i] = -1;
+        mEnchantmentLevels[i] = -1;
+    }
     mLevel = level;
     mPosition = pos;
     mEnchantmentSeed = static_cast<long long>(static_cast<int>(inventory->m_player->getEnchantmentSeed()));
@@ -39,16 +37,14 @@ EnchantmentMenu::EnchantmentMenu(boost::shared_ptr<Inventory> inventory, Level* 
     addSlot(new EnchantmentSlot(mEnchantmentContainer, 0, 15, 47));
     addSlot(new EnchantmentCostSlot(mEnchantmentContainer, 1, 35, 47));
 
-    int row;
-    int column;
-    for (row = 0; row < 3; ++row)
+    for (int row = 0; row < 3; ++row)
     {
-        for (column = 0; column < 9; ++column)
+        for (int column = 0; column < 9; ++column)
         {
             addSlot(new Slot(inventory, row * 9 + column + 9, 8 + column * 18, 84 + row * 18));
         }
     }
-    for (column = 0; column < 9; ++column)
+    for (int column = 0; column < 9; ++column)
         addSlot(new Slot(inventory, column, 8 + column * 18, 142));
 
     mDataChanged = false;
@@ -65,7 +61,7 @@ void EnchantmentMenu::broadcastData(net_minecraft_world_inventory::ContainerList
     listener->setContainerData(this, 0, mCosts[0]);
     listener->setContainerData(this, 1, mCosts[1]);
     listener->setContainerData(this, 2, mCosts[2]);
-    listener->setContainerData(this, 3, static_cast<int>(mEnchantmentSeed) & 0xfffffff0);
+    listener->setContainerData(this, 3, static_cast<int>(mEnchantmentSeed & -16));
     listener->setContainerData(this, 4, mEnchantmentIds[0]);
     listener->setContainerData(this, 5, mEnchantmentIds[1]);
     listener->setContainerData(this, 6, mEnchantmentIds[2]);
@@ -282,18 +278,18 @@ int EnchantmentMenu::getGoldCount()
 void EnchantmentMenu::removed(boost::shared_ptr<Player> player)
 {
     AbstractContainerMenu::removed(player);
-    if (!mLevel->mIsClientSide)
-        clearContainer(player, mLevel, mEnchantmentContainer);
+    if (mLevel->mIsClientSide)
+        return;
+    clearContainer(player, mLevel, mEnchantmentContainer);
 }
 
 bool EnchantmentMenu::stillValid(boost::shared_ptr<Player> player)
 {
-    if (mLevel->getBlockState(mPosition)->getBlock() == Blocks::enchanting_table)
-    {
-        if (player->distanceAsIfHitscanned(mPosition, *player->mBoundingBox) <= 30.25f)
-            return true;
-    }
-    return false;
+    if (mLevel->getBlockState(mPosition)->getBlock() != Blocks::enchanting_table)
+        return false;
+    if (player->distanceAsIfHitscanned(mPosition, *player->mBoundingBox) > 30.25f)
+        return false;
+    return true;
 }
 
 not_null_ptr<ItemInstance> EnchantmentMenu::quickMoveStack(boost::shared_ptr<Player> player, int index)
@@ -308,40 +304,40 @@ not_null_ptr<ItemInstance> EnchantmentMenu::quickMoveStack(boost::shared_ptr<Pla
 
         if (index == 0 || index == 1)
         {
-            if (moveItemStackTo(stack, 2, 29, true, true, true) != true)
+            if (!moveItemStackTo(stack, 2, 29, true, true, true))
             {
-                if (moveItemStackTo(stack, 29, 38, false, true, true) != true)
+                if (!moveItemStackTo(stack, 29, 38, false, true, true))
                     return ItemInstance::EMPTY;
             }
         }
         else if (stack->getItem() == Items::dye && DyeColor::byItemData(stack->getAuxValue()) == DyeColor::BLUE)
         {
-            if (moveItemStackTo(stack, 1, 2, true, true, true) != true)
+            if (!moveItemStackTo(stack, 1, 2, true, true, true))
                 return ItemInstance::EMPTY;
         }
-        else if (index - 2 < 27)
+        else if (index >= 2 && index < 29)
         {
-            if (!stack->isEnchantable() || itemSlot->hasItem())
+            if (stack->isEnchantable() && !itemSlot->hasItem())
             {
-                if (moveItemStackTo(stack, 29, 38, false, true, true) != true)
+                if (!moveItemStackTo(stack, 0, 1, false, true, true))
                     return ItemInstance::EMPTY;
             }
             else
             {
-                if (moveItemStackTo(stack, 0, 1, false, true, true) != true)
+                if (!moveItemStackTo(stack, 29, 38, false, true, true))
                     return ItemInstance::EMPTY;
             }
         }
-        else if (index - 29 < 9)
+        else if (index >= 29 && index < 38)
         {
-            if (!stack->isEnchantable() || itemSlot->hasItem())
+            if (stack->isEnchantable() && !itemSlot->hasItem())
             {
-                if (moveItemStackTo(stack, 2, 29, false, true, true) != true)
+                if (!moveItemStackTo(stack, 0, 1, false, true, true))
                     return ItemInstance::EMPTY;
             }
             else
             {
-                if (moveItemStackTo(stack, 0, 1, false, true, true) != true)
+                if (!moveItemStackTo(stack, 2, 29, false, true, true))
                     return ItemInstance::EMPTY;
             }
         }
@@ -356,7 +352,8 @@ not_null_ptr<ItemInstance> EnchantmentMenu::quickMoveStack(boost::shared_ptr<Pla
             slot->setChanged();
         if (stack->getCount() == clicked->getCount())
             return ItemInstance::EMPTY;
-        slot->onTake(player, stack);
+        else
+            slot->onTake(player, stack);
     }
     return clicked;
 }

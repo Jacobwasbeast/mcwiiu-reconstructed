@@ -14,23 +14,21 @@
 template<typename T>
 T _fromString(const std::wstring& value);
 
-int gCreateWorldScreenTickCount = 0;
-
-static const wchar_t illegalFileCharacters[15] = {L'/', L'\n', L'\r', L'\t', L'\0', L'\f', L'`', L'?',
+extern const wchar_t illegalFileCharacters[15] = {L'/', L'\n', L'\r', L'\t', L'\0', L'\f', L'`', L'?',
                                                    L'*', L'\\', L'<', L'>', L'|', L'\"', L':'};
 
 CreateWorldScreen::CreateWorldScreen(Screen* parentScreen)
-    : Screen(), mParentScreen(parentScreen), mResultFolder(), mCreatingWorld(false)
 {
+    mCreatingWorld = false;
+    mParentScreen = parentScreen;
 }
 
 void CreateWorldScreen::tick()
 {
     mNameEdit->tick();
     mSeedEdit->tick();
-    bool invokeButton = gCreateWorldScreenTickCount == 100;
-    ++gCreateWorldScreenTickCount;
-    if (invokeButton)
+    static int tickCount = 0;
+    if (tickCount++ == 100)
     {
         buttonClicked(mButtons[0]);
     }
@@ -48,19 +46,12 @@ void CreateWorldScreen::updateResultFolder()
 {
     mResultFolder = trimString(mNameEdit->getValue());
 
-    int pass;
-    for (pass = 0; pass < 3; ++pass)
+    for (int i = 0; i < 15; ++i)
     {
-        const wchar_t* character = illegalFileCharacters + pass * 5;
-        int index;
-        for (index = 0; index < 5; ++index)
+        std::wstring::size_type position;
+        while ((position = mResultFolder.find(illegalFileCharacters[i])) != std::wstring::npos)
         {
-            wchar_t illegal = character[index];
-            std::wstring::size_type position;
-            while ((position = mResultFolder.find(&illegal, 0, 1)) != std::wstring::npos)
-            {
-                mResultFolder[position] = L'_';
-            }
+            mResultFolder[position] = L'_';
         }
     }
 
@@ -121,8 +112,14 @@ void CreateWorldScreen::buttonClicked(Button* button)
 
 void CreateWorldScreen::keyPressed(wchar_t key, int action)
 {
-    EditBox* edit = mNameEdit->mFocused ? mNameEdit : mSeedEdit;
-    edit->keyPressed(key, action);
+    if (mNameEdit->mFocused)
+    {
+        mNameEdit->keyPressed(key, action);
+    }
+    else
+    {
+        mSeedEdit->keyPressed(key, action);
+    }
     if (key == 13)
     {
         buttonClicked(mButtons[0]);

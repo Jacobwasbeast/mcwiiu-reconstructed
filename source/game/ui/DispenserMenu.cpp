@@ -9,22 +9,19 @@ DispenserMenu::DispenserMenu(boost::shared_ptr<Container> playerInventory,
 {
     m_dispenser = dispenser;
 
-    int row;
-    int column;
-
-    for (row = 0; row < 3; ++row) {
-        for (column = 0; column < 3; ++column) {
-            addSlot(new Slot(dispenser, row * 3 + column, 62 + column * 18, 17 + row * 18));
+    for (int row = 0; row < 3; ++row) {
+        for (int column = 0; column < 3; ++column) {
+            addSlot(new Slot(dispenser, column + row * 3, 62 + column * 18, 17 + row * 18));
         }
     }
 
-    for (row = 0; row < 3; ++row) {
-        for (column = 0; column < 9; ++column) {
+    for (int row = 0; row < 3; ++row) {
+        for (int column = 0; column < 9; ++column) {
             addSlot(new Slot(playerInventory, column + row * 9 + 9, 8 + column * 18, 84 + row * 18));
         }
     }
 
-    for (column = 0; column < 9; ++column) {
+    for (int column = 0; column < 9; ++column) {
         addSlot(new Slot(playerInventory, column, 8 + column * 18, 142));
     }
 }
@@ -50,11 +47,11 @@ not_null_ptr<ItemInstance> DispenserMenu::quickMoveStack(boost::shared_ptr<Playe
             && Minecraft::GetInstance()->GetMiniGame()->IsSmallInventoryEnabled();
 
         if (index < 9) {
-            if (moveItemStackTo(item, smallInventory ? 36 : 9, 45, true, true, true) != 1) {
+            if (!moveItemStackTo(item, smallInventory ? 36 : 9, 45, true, true, true)) {
                 return ItemInstance::EMPTY;
             }
         } else {
-            if (moveItemStackTo(item, 0, 9, false, true, true) != 1) {
+            if (!moveItemStackTo(item, 0, 9, false, true, true)) {
                 return ItemInstance::EMPTY;
             }
         }
@@ -67,9 +64,9 @@ not_null_ptr<ItemInstance> DispenserMenu::quickMoveStack(boost::shared_ptr<Playe
 
         if (item->getCount() == result->getCount()) {
             return ItemInstance::EMPTY;
+        } else {
+            slot->onTake(player, item);
         }
-
-        slot->onTake(player, item);
     }
 
     return result;

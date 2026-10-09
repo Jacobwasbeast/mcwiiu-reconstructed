@@ -48,12 +48,12 @@ not_null_ptr<ItemInstance> TrapMenu::quickMoveStack(boost::shared_ptr<Player> pl
         result = item->copy();
         if (index < 9)
         {
-            if (moveItemStackTo(item, 9, 45, true, true, true) != true)
+            if (!moveItemStackTo(item, 9, 45, true, true, true))
             {
                 return ItemInstance::EMPTY;
             }
         }
-        else if (moveItemStackTo(item, 0, 9, false, true, true) != true)
+        else if (!moveItemStackTo(item, 0, 9, false, true, true))
         {
             return ItemInstance::EMPTY;
         }

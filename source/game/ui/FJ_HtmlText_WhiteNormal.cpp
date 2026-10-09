@@ -14,8 +14,8 @@ FJ_HtmlText_WhiteNormal::FJ_HtmlText_WhiteNormal(fuiRenderNode* pRenderNode)
 void FJ_HtmlText_WhiteNormal::ASConstructor()
 {
     FJ_FuiNode* textContainer = getChildByName(std::string("FJ_TextContainer"));
-    fuiRenderNodeEditText* textField = textContainer->getChildAt(0)->getRenderNodeChildByName(std::string("FJ_TextField"))->asEditText();
-    m_pText = textField;
+    FJ_FuiNode* textChild = textContainer->getChildAt(0);
+    m_pText = textChild->getRenderNodeChildByName(std::string("FJ_TextField"))->asEditText();
     addChild(m_pText);
     removeChild(textContainer, true);
 }

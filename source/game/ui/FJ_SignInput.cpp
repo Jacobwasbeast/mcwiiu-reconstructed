@@ -27,14 +27,8 @@ void FJ_SignInput::ChangeState(int state)
 {
     if (m_leftArrow != 0 && m_rightArrow != 0)
     {
-        const char* rightFrame = "UnSelected";
-        const char* leftFrame = rightFrame;
-        if (state == 0)
-            leftFrame = "Selected_Left";
-        m_leftArrow->gotoAndPlay(std::string(leftFrame));
-        if (state == 0)
-            rightFrame = "Selected_Right";
-        m_rightArrow->gotoAndPlay(std::string(rightFrame));
+        m_leftArrow->gotoAndPlay(state == 0 ? "Selected_Left" : "UnSelected");
+        m_rightArrow->gotoAndPlay(state == 0 ? "Selected_Right" : "UnSelected");
     }
 }
 

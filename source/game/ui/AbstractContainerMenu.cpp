@@ -524,10 +524,10 @@ bool AbstractContainerMenu::canTakeItemForPickAll(not_null_ptr<ItemInstance>, Sl
 void AbstractContainerMenu::clearContainer(boost::shared_ptr<Player> player, Level* level, boost::shared_ptr<Container> container)
 {
     boost::shared_ptr<ServerPlayer> serverPlayer;
-    if (player->GetType() == EntityType::SERVER_PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, player->GetType()))
         serverPlayer = boost::static_pointer_cast<ServerPlayer>(player);
     if (!player->isAlive()
-        || (player->GetType() == EntityType::SERVER_PLAYER && serverPlayer->hasDisconnected()))
+        || (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, player->GetType()) && serverPlayer->hasDisconnected()))
     {
         unsigned int i;
         for (i = 0; i < container->getContainerSize(); ++i)
@@ -597,9 +597,9 @@ bool AbstractContainerMenu::stackAsdAsd(not_null_ptr<ItemInstance> first, not_nu
     return result;
 }
 
-int AbstractContainerMenu::moveItemStackTo(not_null_ptr<ItemInstance> item, int start, int end, bool reverse, bool mergeStacks, bool fillEmpty)
+bool AbstractContainerMenu::moveItemStackTo(not_null_ptr<ItemInstance> item, int start, int end, bool reverse, bool mergeStacks, bool fillEmpty)
 {
-    int moved = 0;
+    bool moved = false;
     if (mergeStacks && item->isStackable())
     {
         int i = reverse ? end - 1 : start;
@@ -617,20 +617,20 @@ int AbstractContainerMenu::moveItemStackTo(not_null_ptr<ItemInstance> item, int 
                     item->setCount(0);
                     slotItem->setCount(total);
                     slot->setChanged();
-                    moved = 1;
+                    moved = true;
                 }
                 else if (slotItem->getCount() < limit)
                 {
                     item->shrink(limit - slotItem->getCount());
                     slotItem->setCount(limit);
                     slot->setChanged();
-                    moved = 1;
+                    moved = true;
                 }
             }
             if (reverse) --i; else ++i;
         }
     }
-    if ((fillEmpty || moved != 0) && item->getCount() > 0)
+    if ((fillEmpty || moved) && item->getCount() > 0)
     {
         int i = reverse ? end - 1 : start;
         while (!reverse && i < end || reverse && i >= start)
@@ -652,7 +652,7 @@ int AbstractContainerMenu::moveItemStackTo(not_null_ptr<ItemInstance> item, int 
                 }
                 slot->set(placed);
                 slot->setChanged();
-                moved = 1;
+                moved = true;
                 break;
             }
             if (reverse) --i; else ++i;
@@ -689,7 +689,7 @@ int AbstractContainerMenu::getRedstoneSignalFromContainer(boost::shared_ptr<Cont
 
 int AbstractContainerMenu::getRedstoneSignalFromBlockEntity(boost::shared_ptr<BlockEntity> entity)
 {
-    if ((entity->GetType() & BlockEntityType::CONTAINER) == BlockEntityType::CONTAINER)
+    if (eTYPE_DERIVED_FROM(BlockEntityType::CONTAINER, entity->GetType()))
         return getRedstoneSignalFromContainer(boost::dynamic_pointer_cast<Container>(entity));
     return 0;
 }

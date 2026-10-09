@@ -15,10 +15,10 @@ UIControl_Button::UIControl_Button()
 {
 }
 
-void UIControl_Button::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_Button::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_Button;
-    UIControl_Base::setupControl(scene, node, name);
+    return UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_Button::init(UIString label, int id)

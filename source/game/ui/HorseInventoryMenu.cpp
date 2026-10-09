@@ -22,7 +22,7 @@ HorseInventoryMenu::HorseInventoryMenu(boost::shared_ptr<Container> playerInvent
     addSlot(new HorseSaddleSlot(this, horseContainer, 0, 8, 18));
     addSlot(new HorseArmorSlot(this, horseContainer, 1, 8, 36));
 
-    if ((horseEntity->GetType() & EntityType::ABSTRACT_CHESTED_HORSE) == EntityType::ABSTRACT_CHESTED_HORSE &&
+    if (eTYPE_DERIVED_FROM(EntityType::ABSTRACT_CHESTED_HORSE, horseEntity->GetType()) &&
         boost::static_pointer_cast<AbstractChestedHorse>(horseEntity)->hasChest())
     {
         int row;
@@ -69,22 +69,22 @@ not_null_ptr<ItemInstance> HorseInventoryMenu::quickMoveStack(boost::shared_ptr<
         result = item->copy();
         if ((unsigned int)index < m_container->getContainerSize())
         {
-            if (moveItemStackTo(item, m_container->getContainerSize() + 27, (int)m_slots.size(),
-                                false, true, true) != 1)
+            if (!moveItemStackTo(item, m_container->getContainerSize() + 27, (int)m_slots.size(),
+                                false, true, true))
             {
-                if (moveItemStackTo(item, m_container->getContainerSize(), (int)m_slots.size(),
-                                    true, true, true) != 1)
+                if (!moveItemStackTo(item, m_container->getContainerSize(), (int)m_slots.size(),
+                                    true, true, true))
                     return ItemInstance::EMPTY;
             }
         }
         else if (getSlot(1)->mayPlace(item) && !getSlot(1)->hasItem())
         {
-            if (moveItemStackTo(item, 1, 2, false, true, true) != 1)
+            if (!moveItemStackTo(item, 1, 2, false, true, true))
                 return ItemInstance::EMPTY;
         }
         else if (getSlot(0)->mayPlace(item))
         {
-            if (moveItemStackTo(item, 0, 1, false, true, true) != 1)
+            if (!moveItemStackTo(item, 0, 1, false, true, true))
                 return ItemInstance::EMPTY;
         }
         else if (m_container->getContainerSize() <= 2 ||
@@ -93,14 +93,14 @@ not_null_ptr<ItemInstance> HorseInventoryMenu::quickMoveStack(boost::shared_ptr<
             int horseSize = m_container->getContainerSize();
             int playerInventoryEnd = horseSize + 27;
             int playerSlotsEnd = horseSize + 36;
-            if (index >= playerInventoryEnd && index < playerSlotsEnd)
+            if (index >= horseSize && index < playerInventoryEnd)
             {
-                if (moveItemStackTo(item, horseSize, playerInventoryEnd, false, true, true) != 1)
+                if (!moveItemStackTo(item, playerInventoryEnd, playerSlotsEnd, false, true, true))
                     return ItemInstance::EMPTY;
             }
-            else if (index >= horseSize && index < playerInventoryEnd)
+            else if (index >= playerInventoryEnd && index < playerSlotsEnd)
             {
-                if (moveItemStackTo(item, playerInventoryEnd, playerSlotsEnd, false, true, true) != 1)
+                if (!moveItemStackTo(item, horseSize, playerInventoryEnd, false, true, true))
                     return ItemInstance::EMPTY;
             }
         }

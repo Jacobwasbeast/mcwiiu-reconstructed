@@ -23,37 +23,42 @@
 UIControl_PlayerSkinPreview::UIControl_PlayerSkinPreview()
 {
     m_controlType = eUIControlType_PlayerSkinPreview;
-    mUnknown50 = 0;
     mUnknown54 = 1.0f;
     mUnknown58 = 1.0f;
+    mUnknown50 = 0;
     Minecraft* minecraft = Minecraft::GetInstance();
     ScreenSizeCalculator calculator(minecraft->mOptions, minecraft->mFullWidth, minecraft->mFullHeight, -1);
     mWidth = (float)minecraft->mFullWidth;
-    mHeight = (float)minecraft->mFullHeight;
     mWidthScale = (float)calculator.mWidthScale;
+    mHeight = (float)minecraft->mFullHeight;
     mHeightScale = (float)calculator.mHeightScale;
     mTexturePath = L"default";
     mTextureName = TN_MOB_STEVE;
     mCapePath = L"";
+
     mRotation = 0;
     mPitch = 0;
-    mInitialRotation = 0;
-    mFacingRotation = 0;
+
+    mAnimationAngle = 0.0f;
     mUnknown110 = 0.0f;
     mLimbSwingAmountOld = 0.0f;
     mLimbSwingAmount = 0.0f;
     mLimbSwing = 0.0f;
+
     mCapeVisible = false;
     mFacingLeft = false;
-    mAnimationTicks = 0;
-    mAnimating = false;
-    mAnimationAngle = 0.0f;
-    mAnimation = 0;
-    mAdditionalModelParts = NULL;
     mRotating = false;
     mRotateBack = false;
     mRotateForward = false;
     mRotateBackward = false;
+
+    mAnimation = 0;
+
+    mFacingRotation = 0;
+    mInitialRotation = 0;
+    mAnimationTicks = 0;
+    mAnimating = false;
+    mAdditionalModelParts = NULL;
 }
 
 void UIControl_PlayerSkinPreview::tick()
@@ -118,7 +123,7 @@ void UIControl_PlayerSkinPreview::tick()
 
 unsigned int UIControl_PlayerSkinPreview::bindTexture(const std::wstring& name, int texture)
 {
-    Textures* textures = Minecraft::GetInstance()->getTextureManager();
+    Textures* textures = Minecraft::GetInstance()->mTextures;
     int loaded = textures->loadMemTexture(name, texture);
     if (loaded >= 0)
     {
@@ -130,7 +135,7 @@ unsigned int UIControl_PlayerSkinPreview::bindTexture(const std::wstring& name, 
 
 unsigned int UIControl_PlayerSkinPreview::bindTexture(const std::wstring& name, const std::wstring& path)
 {
-    Textures* textures = Minecraft::GetInstance()->getTextureManager();
+    Textures* textures = Minecraft::GetInstance()->mTextures;
     int loaded = textures->loadMemTexture(name, path);
     if (loaded >= 0)
     {
@@ -159,34 +164,26 @@ void UIControl_PlayerSkinPreview::render(EntityRenderer* renderer, double x, dou
     model->mRiding = false;
     model->mSwimAmount = 0.0f;
     model->mSpearThrowProgress = 0.0f;
-    ModelPart* head = model->mHead;
-    head->mXRot = 0.0f;
+    model->mHead->mXRot = 0.0f;
     model->mSkinAdjustments = mSkinAdjustments;
 
+    model->mHead->mYRot = 0.0f;
     if (!mAnimating)
     {
-        if (mAnimation == 1)
+        switch (mAnimation)
         {
+        case 1:
             model->mCrouching = true;
-            head->mYRot = 0.1f;
-        }
-        else if (mAnimation == 2)
-        {
-            head->mYRot = 0.0f;
+            model->mHead->mYRot = 0.1f;
+            break;
+        case 2:
             model->setArmPose(HumanoidArm::RIGHT, HumanoidModel::eArmPose_Item);
             mAnimationAngle += 1.0f;
             if (mAnimationAngle >= 18.0f)
                 mAnimationAngle = 0.0f;
             model->mAttackTime = mAnimationAngle / 18.0f;
+            break;
         }
-        else
-        {
-            head->mYRot = 0.0f;
-        }
-    }
-    else
-    {
-        head->mYRot = 0.0f;
     }
 
     float bodyRotation = (float)mRotation;
@@ -198,15 +195,13 @@ void UIControl_PlayerSkinPreview::render(EntityRenderer* renderer, double x, dou
     GlStateManager::scalef(0.9375f, 0.9375f, 0.9375f);
     GlStateManager::translatef(0.0f, -1.5078125f, 0.0f);
 
-    float limbSwingAmountOld = mLimbSwingAmount;
-    mLimbSwingAmountOld = limbSwingAmountOld;
-    float newLimbSwingAmount = limbSwingAmountOld + (0.1f - limbSwingAmountOld) * 0.4f;
-    mLimbSwingAmount = newLimbSwingAmount;
-    float newLimbSwing = mLimbSwing + newLimbSwingAmount;
-    mLimbSwing = newLimbSwing;
-    float limbSwingAmount = limbSwingAmountOld + (newLimbSwingAmount - limbSwingAmountOld) * partialTick;
+    mLimbSwingAmountOld = mLimbSwingAmount;
+    mLimbSwingAmount += (0.1f - mLimbSwingAmount) * 0.4f;
+    mLimbSwing += mLimbSwingAmount;
+    float limbSwingAmount = mLimbSwingAmountOld + (mLimbSwingAmount - mLimbSwingAmountOld) * partialTick;
     if (limbSwingAmount > 1.0f)
         limbSwingAmount = 1.0f;
+    float limbSwing = mLimbSwing - mLimbSwingAmount * (1.0f - partialTick);
 
     MemSect(0x1f);
     bindTexture(mTexturePath, mTextureName);
@@ -214,8 +209,7 @@ void UIControl_PlayerSkinPreview::render(EntityRenderer* renderer, double x, dou
     GlStateManager::enableAlphaTest();
     model->setAllVisible(true);
     boost::shared_ptr<Entity> noEntity;
-    model->render(noEntity, newLimbSwing - newLimbSwingAmount * (1.0f - partialTick), limbSwingAmount, 0.0f,
-                  headRotation - bodyRotation, 0.0f, 0.0625f, true);
+    model->render(noEntity, limbSwing, limbSwingAmount, 0.0f, headRotation - bodyRotation, 0.0f, 0.0625f, true);
 
     if (bindTexture(mCapePath, std::wstring(L"")) != 0)
     {
@@ -261,10 +255,12 @@ void UIControl_PlayerSkinPreview::render(fuiRect* rect)
     GlStateManager::pushMatrix();
 
     float rectWidth = rect->xMax - rect->xMin;
+    float rectHeight = rect->yMax - rect->yMin;
+    float centreX = rectWidth / 2;
     if ((mSkinAdjustments.mAnimFlags & 0x80000000) == 0)
-        GlStateManager::translatef(rectWidth * 0.5f, (rect->yMax - rect->yMin) - 3.5f, 50.0f);
+        GlStateManager::translatef(centreX, rectHeight - 3.5f, 50.0f);
     else
-        GlStateManager::translatef(rectWidth * 0.5f, (rect->yMax - rect->yMin) + -253.5f, 50.0f);
+        GlStateManager::translatef(centreX, rectHeight + -253.5f, 50.0f);
     float scale = rectWidth / (mWidth / mHeight);
     GlStateManager::scalef(-scale, scale, scale);
     if ((mSkinAdjustments.mAnimFlags & 0x80000000) == 0)
@@ -291,19 +287,17 @@ void UIControl_PlayerSkinPreview::render(fuiRect* rect)
 
     if (renderer != NULL)
     {
-        std::vector<ModelPart*>* parts = mAdditionalModelParts;
-        if (parts != NULL && !parts->empty())
+        if (mAdditionalModelParts != NULL && !mAdditionalModelParts->empty())
         {
-            for (std::vector<ModelPart*>::iterator it = parts->begin(); it != parts->end(); ++it)
+            for (std::vector<ModelPart*>::iterator it = mAdditionalModelParts->begin(); it != mAdditionalModelParts->end(); ++it)
             {
                 (*it)->mShow = true;
             }
         }
         render(renderer, 0.0, 0.0, 0.0, 0.0f, 1.0f);
-        parts = mAdditionalModelParts;
-        if (parts != NULL && !parts->empty())
+        if (mAdditionalModelParts != NULL && !mAdditionalModelParts->empty())
         {
-            for (std::vector<ModelPart*>::iterator it = parts->begin(); it != parts->end(); ++it)
+            for (std::vector<ModelPart*>::iterator it = mAdditionalModelParts->begin(); it != mAdditionalModelParts->end(); ++it)
             {
                 (*it)->mShow = false;
             }

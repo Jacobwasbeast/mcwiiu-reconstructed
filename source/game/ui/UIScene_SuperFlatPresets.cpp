@@ -52,11 +52,10 @@ UIScene_SuperFlatPresets::UIScene_SuperFlatPresets(int sceneType, void* data, UI
     m_presetList.init(0);
     m_presetList.UseIggyIcons();
 
-    const DefaultPresetInfo* info;
-    for (info = s_defaultPresetInfo; info->preset >= 0; ++info)
+    for (int i = 0; s_defaultPresetInfo[i].preset >= 0; ++i)
     {
         SuperflatConfig* preset = new SuperflatConfig();
-        preset->makePreset(static_cast<DefaultPresets::Preset>(info->preset));
+        preset->makePreset(static_cast<DefaultPresets::Preset>(s_defaultPresetInfo[i].preset));
         m_defaultPresets.push_back(preset);
     }
     PopulatePresetList();
@@ -66,11 +65,10 @@ UIScene_SuperFlatPresets::UIScene_SuperFlatPresets(int sceneType, void* data, UI
 
 UIScene_SuperFlatPresets::~UIScene_SuperFlatPresets()
 {
-    std::vector<SuperflatConfig*>::iterator it;
-    for (it = m_customPresets.begin(); it != m_customPresets.end(); ++it)
+    for (std::vector<SuperflatConfig*>::iterator it = m_customPresets.begin(); it != m_customPresets.end(); ++it)
         delete *it;
     m_customPresets.clear();
-    for (it = m_defaultPresets.begin(); it != m_defaultPresets.end(); ++it)
+    for (std::vector<SuperflatConfig*>::iterator it = m_defaultPresets.begin(); it != m_defaultPresets.end(); ++it)
         delete *it;
     m_defaultPresets.clear();
 }
@@ -79,10 +77,14 @@ unsigned int UIScene_SuperFlatPresets::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
     fuiRenderNode* root = m_movie->getRootNode();
-    m_presetList.setupControl(this, root, "PresetsList");
-    m_controls.push_back(&m_presetList);
-    m_presetTitle.setupControl(this, root, "PresetsTitle");
-    m_controls.push_back(&m_presetTitle);
+    {
+        m_presetList.setupControl(this, root, std::string("PresetsList"));
+        m_controls.push_back(&m_presetList);
+    }
+    {
+        m_presetTitle.setupControl(this, root, std::string("PresetsTitle"));
+        m_controls.push_back(&m_presetTitle);
+    }
     return 1;
 }
 
@@ -94,7 +96,8 @@ int UIScene_SuperFlatPresets::GetPresetCount() const
 
 int UIScene_SuperFlatPresets::SafeGetIndex(unsigned int count, int start, int index) const
 {
-    if (index >= start && index < start + static_cast<int>(count))
+    int end = start + static_cast<int>(count);
+    if (start <= index && index < end)
         return index - start;
     return -1;
 }
@@ -225,8 +228,10 @@ void UIScene_SuperFlatPresets::HandlePresetListPress(int function)
     int selection = m_presetList.getCurrentSelection();
     if (GetFunction(function) == 1)
     {
-        int parameters[2] = { static_cast<int>(IDS_CONFIRM_OK), static_cast<int>(IDS_CONFIRM_CANCEL) };
         m_selectedPreset = selection;
+        int parameters[2];
+        parameters[0] = IDS_CONFIRM_OK;
+        parameters[1] = IDS_CONFIRM_CANCEL;
         gConsoleUIController.RequestAlertMessage(IDS_SUPERFLAT_LOAD_PRESET, IDS_SUPERFLAT_UNSAVED_CONFIGURATION_LOAD_MESSAGE, parameters, 2,
                                                   m_playerId, LoadConfirmMessageCallback, this, 0, true);
     }
@@ -288,8 +293,8 @@ int UIScene_SuperFlatPresets::GetIcon(int index) const
 
 void UIScene_SuperFlatPresets::customDraw(const char* name, fuiRect* rect)
 {
-    int slot = -1;
     not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+    int slot = -1;
     std::sscanf(name, "slot_0_%d", &slot);
     if (slot != -1)
         item = not_null_ptr<ItemInstance>(new ItemInstance(Item::byId(GetIcon(slot)), 1, 0));
@@ -299,7 +304,8 @@ void UIScene_SuperFlatPresets::customDraw(const char* name, fuiRect* rect)
 
 std::wstring UIScene_SuperFlatPresets::getMoviePath()
 {
-    return L"SuperFlatPresets";
+    const wchar_t* path = L"SuperFlatPresets";
+    return path;
 }
 
 int UIScene_SuperFlatPresets::getSceneType()

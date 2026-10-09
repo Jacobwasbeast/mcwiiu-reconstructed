@@ -12,6 +12,17 @@
 
 extern ConsoleUIController gConsoleUIController;
 
+static const unsigned int kStringConnectToNintendoNetwork = 0x051d141b;
+static const unsigned int kStringContinuePlayingOffline = 0x3f0766c7;
+static const unsigned int kStringNotConnectedTitle = 0x8a21894b;
+static const unsigned int kStringNotConnectedText = 0xb837024e;
+static const unsigned int kStringError = 0x0e6bf122;
+static const unsigned int kStringGuestsCannotPurchase = 0x8ba9896f;
+static const unsigned int kStringUnlockMapPackTitle = 0x8983d4db;
+static const unsigned int kStringUnlockMapPackText = 0xa9be05dc;
+static const unsigned int kStringUnlockMashUpPackTitle = 0x1139ff03;
+static const unsigned int kStringUnlockMashUpPackText = 0xa78136d4;
+
 IUIScene_DlcSelectMenu::IUIScene_DlcSelectMenu(eDLCContentType contentType)
     : m_purchasePending(false), m_pack(NULL), m_contentType(contentType)
 {
@@ -31,8 +42,8 @@ int IUIScene_DlcSelectMenu::MustSignInReturned(void*, int userIndex,
 
 void IUIScene_DlcSelectMenu::showNotOnlineDialog(int userIndex)
 {
-    int messageParameters[2] = { 0x051d141b, 0x3f0766c7 };
-    gConsoleUIController.RequestErrorMessage(0x8a21894b, 0xb837024e, messageParameters, 2,
+    int messageParameters[2] = { kStringConnectToNintendoNetwork, kStringContinuePlayingOffline };
+    gConsoleUIController.RequestErrorMessage(kStringNotConnectedTitle, kStringNotConnectedText, messageParameters, 2,
                                              userIndex, MustSignInReturned, this, NULL, true);
 }
 
@@ -70,7 +81,7 @@ void IUIScene_DlcSelectMenu::tryPurchaseDlc(int userIndex, bool& handled,
     int messageParameter = (int)IDS_CONFIRM_OK;
     if (gProfile->IsGuest(userIndex))
     {
-        gConsoleUIController.RequestAlertMessage(0x0e6bf122, 0x8ba9896f,
+        gConsoleUIController.RequestAlertMessage(kStringError, kStringGuestsCannotPurchase,
                                                   &messageParameter, 1, userIndex,
                                                   NULL, NULL, NULL, true);
         return;
@@ -96,24 +107,26 @@ void IUIScene_DlcSelectMenu::tryPurchaseDlc(int userIndex, bool& handled,
     m_purchasePending = true;
     handled = false;
     int parameters[2] = { (int)IDS_CONFIRM_OK, (int)IDS_CONFIRM_CANCEL };
-    int selectedType = (int)m_contentType;
-    if ((int)contentType != 0xb)
-        selectedType = (int)contentType;
-    if (selectedType == 1)
+    eDLCContentType selectedType = m_contentType;
+    if (contentType != eDLCContentType_All)
+        selectedType = contentType;
+    unsigned int titleId;
+    unsigned int messageId;
+    switch (selectedType)
     {
-        gConsoleUIController.RequestAlertMessage(IDS_UNLOCK_DLC_TITLE, IDS_UNLOCK_DLC_SKIN, parameters, 2,
-                                                  userIndex, UnlockPackReturned, this, NULL, true);
+    case eDLCContentType_SkinPack:
+        titleId = IDS_UNLOCK_DLC_TITLE;
+        messageId = IDS_UNLOCK_DLC_SKIN;
+        break;
+    case eDLCContentType_MashupPack:
+        titleId = kStringUnlockMashUpPackTitle;
+        messageId = kStringUnlockMashUpPackText;
+        break;
+    default:
+        titleId = kStringUnlockMapPackTitle;
+        messageId = kStringUnlockMapPackText;
+        break;
     }
-    else
-    {
-        int titleId = (int)0x8983d4db;
-        int messageId = (int)0xa9be05dc;
-        if (selectedType == 3)
-        {
-            titleId = 0x1139ff03;
-            messageId = (int)0xa78136d4;
-        }
-        gConsoleUIController.RequestAlertMessage(titleId, messageId, parameters, 2,
+    gConsoleUIController.RequestAlertMessage(titleId, messageId, parameters, 2,
                                                   userIndex, UnlockPackReturned, this, NULL, true);
-    }
 }

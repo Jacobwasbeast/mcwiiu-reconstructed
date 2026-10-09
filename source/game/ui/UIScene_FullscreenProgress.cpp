@@ -33,16 +33,16 @@ UIScene_FullscreenProgress::UIScene_FullscreenProgress(int type, void* data, UIL
 {
     initialiseMovie();
     m_movieLoaded = false;
-    if (gApp.GetGameHostOption(eGameHostOption_MiniGame) == 0)
-    {
-        m_miniGame = false;
-        SetLoadingScreenType(0);
-    }
-    else
+    if (gApp.GetGameHostOption(eGameHostOption_MiniGame) != 0)
     {
         m_miniGame = true;
         SetLoadingScreenType(1);
         setMiniGameLogoTexture();
+    }
+    else
+    {
+        m_miniGame = false;
+        SetLoadingScreenType(0);
     }
     layer->addComponent(type, EUIScene_Panorama, NULL);
     layer->addComponent(type, EUIScene_Logo, NULL);
@@ -61,9 +61,9 @@ UIScene_FullscreenProgress::UIScene_FullscreenProgress(int type, void* data, UIL
     m_cancelTooltip = params->m_cancelText;
     m_cancelFunc = params->m_cancelFunc;
     m_completeFunc = params->m_completeFunc;
-    m_cancelFuncParam = params->m_cancelFuncParam;
     m_completeFuncParam = params->m_completeFuncParam;
     m_miniGameId = params->m_miniGameId;
+    m_cancelFuncParam = params->m_cancelFuncParam;
     m_waitForThreadToDelete = params->m_waitForThreadToDelete;
     m_playerId = m_completionData->playerId;
     Minecraft* minecraft = Minecraft::GetInstance();
@@ -137,17 +137,20 @@ void UIScene_FullscreenProgress::ShowConfirmationButton(bool show)
 void UIScene_FullscreenProgress::SetTipText(bool initial)
 {
     std::wstring text;
-    if (m_miniGameId == eMiniGameId_Any)
+    EMiniGameId id = m_miniGameId;
+    if (id != eMiniGameId_Any)
     {
-        unsigned int tip = gApp.GetNextTip(false, eMiniGameId_Lobby);
+        if (id == eMiniGameId_Lobby)
+        {
+            id = gApp.GetFirstMiniGameType();
+        }
+        unsigned int tip = gApp.GetNextTip(true, id);
         text = gApp.FormatHTMLString(
             m_playerId, std::wstring(L10N::GetString(static_cast<int>(tip))), -1);
     }
     else
     {
-        EMiniGameId id = m_miniGameId;
-        if (id == eMiniGameId_Lobby) id = gApp.GetFirstMiniGameType();
-        unsigned int tip = gApp.GetNextTip(true, id);
+        unsigned int tip = gApp.GetNextTip(false, eMiniGameId_Lobby);
         text = gApp.FormatHTMLString(
             m_playerId, std::wstring(L10N::GetString(static_cast<int>(tip))), -1);
     }
@@ -167,42 +170,61 @@ void UIScene_FullscreenProgress::SetTipText(bool initial)
 
 unsigned int UIScene_FullscreenProgress::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
-    std::vector<UIControl*>* controls = &m_controls;
-    m_progressControl.setupControl(this, root, "ProgressBar");
-    controls->push_back(&m_progressControl);
-    m_titleLabel.setupControl(this, root, "Title");
-    controls->push_back(&m_titleLabel);
-    m_tipLabel.setupControl(this, root, "Tip");
-    controls->push_back(&m_tipLabel);
-    m_timerTitleControl.setupControl(this, root, "GMIcon");
-    controls->push_back(&m_timerTitleControl);
-    fuiRenderNode* timerTitleNode = m_timerTitleControl.getFuiRenderNode();
-    m_logoControl.setupControl(this, timerTitleNode, "MG_Logo");
-    controls->push_back(&m_logoControl);
-    m_confirmationButton.setupControl(this, root, "Confirm");
-    controls->push_back(&m_confirmationButton);
-    m_timerControl.setupControl(this, root, "Timer");
-    controls->push_back(&m_timerControl);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_progressControl.setupControl(this, currentNode, std::string("ProgressBar"));
+        m_controls.push_back(&m_progressControl);
+    }
+    {
+        m_titleLabel.setupControl(this, currentNode, std::string("Title"));
+        m_controls.push_back(&m_titleLabel);
+    }
+    {
+        m_tipLabel.setupControl(this, currentNode, std::string("Tip"));
+        m_controls.push_back(&m_tipLabel);
+    }
+    {
+        m_timerTitleControl.setupControl(this, currentNode, std::string("GMIcon"));
+        m_controls.push_back(&m_timerTitleControl);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_timerTitleControl.getFuiRenderNode();
+        {
+            m_logoControl.setupControl(this, currentNode, std::string("MG_Logo"));
+            m_controls.push_back(&m_logoControl);
+        }
+        currentNode = parentNode;
+    }
+    {
+        m_confirmationButton.setupControl(this, currentNode, std::string("Confirm"));
+        m_controls.push_back(&m_confirmationButton);
+    }
+    {
+        m_timerControl.setupControl(this, currentNode, std::string("Timer"));
+        m_controls.push_back(&m_timerControl);
+    }
     return 1;
 }
 
 void UIScene_FullscreenProgress::handleReload()
 {
     m_tipLabel.setVisible(m_completionData->showTip);
-    if (gApp.GetGameHostOption(eGameHostOption_MiniGame) == 0)
-    {
-        m_miniGame = false;
-        SetLoadingScreenType(0);
-    }
-    else
+    if (gApp.GetGameHostOption(eGameHostOption_MiniGame) != 0)
     {
         m_miniGame = true;
         SetLoadingScreenType(1);
         setMiniGameLogoTexture();
+        ShowConfirmationButton(false);
+        SetTipText(false);
     }
-    ShowConfirmationButton(false);
-    SetTipText(false);
+    else
+    {
+        m_miniGame = false;
+        SetLoadingScreenType(0);
+        ShowConfirmationButton(false);
+        SetTipText(false);
+    }
 }
 
 void UIScene_FullscreenProgress::updateTooltips()
@@ -217,7 +239,9 @@ void UIScene_FullscreenProgress::updateTooltips()
 
 void UIScene_FullscreenProgress::handleDestroy()
 {
-    if (m_thread->GetExitCode() == 0x103 && m_cancelFunc != NULL && !m_wasCancelled)
+    int code = m_thread->GetExitCode();
+    unsigned int exitCode = *reinterpret_cast<unsigned int*>(&code);
+    if (exitCode == STILL_ACTIVE && m_cancelFunc != NULL && !m_wasCancelled)
     {
         m_wasCancelled = true;
         m_cancelFunc(m_cancelFuncParam);
@@ -251,10 +275,28 @@ void UIScene_FullscreenProgress::tick()
             m_statusText = status;
         }
     }
-    int threadState = m_thread->GetExitCode();
-    if (threadState != 0x103)
+    int code = m_thread->GetExitCode();
+    unsigned int exitCode = *reinterpret_cast<unsigned int*>(&code);
+    if (exitCode != STILL_ACTIVE)
     {
-        if (threadState == 0)
+        if (exitCode != 0)
+        {
+            if (exitCode != ERROR_CANCELLED)
+            {
+                CGameNetworkManager::sInstance.WiiU_ShowErrorViewer();
+                if (gApp.GetXuiAction(m_playerId) != eXuiAction_ConnectionLostWait)
+                {
+                    int parameter = static_cast<int>(IDS_CONFIRM_OK);
+                    int title = CGameNetworkManager::sInstance.CorrectErrorIDS(IDS_CONNECTION_FAILED);
+                    int message = CGameNetworkManager::sInstance.CorrectErrorIDS(IDS_CONNECTION_LOST_SERVER);
+                    gConsoleUIController.RequestErrorMessage(title, message, &parameter, 1, 0xff,
+                                                             NULL, NULL, NULL, true);
+                    gConsoleUIController.NavigateToHomeMenu(false);
+                }
+                gConsoleUIController.UpdatePlayerBasePositions();
+            }
+        }
+        else
         {
             if (!m_wasCancelled && m_completionData->showConfirmation)
             {
@@ -277,62 +319,50 @@ void UIScene_FullscreenProgress::tick()
                 {
                     m_completeFunc(m_completeFuncParam);
                 }
-                int closeMode = m_completionData->closeMode;
-                if (closeMode == 1)
+                switch (m_completionData->closeMode)
                 {
+                case 6:
                     gConsoleUIController.UpdatePlayerBasePositions();
-                    navigateBack();
-                }
-                else if (closeMode == 2)
+                    m_layer->m_group->NavigateBack(m_playerId, m_completionData->backScene,
+                                                   static_cast<EUILayer>(m_layer->m_layerId));
+                    gConsoleUIController.FixupMenuDisplayedAfterNavigateBack();
+                    break;
+                case 5:
                 {
-                    gConsoleUIController.CloseUIScenes(m_completionData->playerId, false);
-                    gConsoleUIController.UpdatePlayerBasePositions();
-                }
-                else if (closeMode == 3)
-                {
-                    gConsoleUIController.CloseAllPlayersScenes(false);
-                    gConsoleUIController.UpdatePlayerBasePositions();
-                }
-                else if (closeMode == 4)
-                {
-                    gConsoleUIController.NavigateToHomeMenu(false);
-                    gConsoleUIController.UpdatePlayerBasePositions();
-                }
-                else if (closeMode == 5 || closeMode == 6)
-                {
-                    if (closeMode == 5)
+                    gConsoleUIController.SetIgnoreAutosaveMenuDisplayed(m_playerId, false);
+                    Minecraft* mc = Minecraft::GetInstance();
+                    if (mc->mGameModes[gProfile->GetPrimaryPad()] != NULL)
                     {
-                        gConsoleUIController.SetIgnoreAutosaveMenuDisplayed(m_playerId, false);
-                        Minecraft* mc = Minecraft::GetInstance();
-                        if (mc->mGameModes[gProfile->GetPrimaryPad()] != NULL)
+                        Tutorial* tutorial = mc->mGameModes[gProfile->GetPrimaryPad()]->getTutorial();
+                        if (tutorial != NULL)
                         {
-                            Tutorial* tutorial = mc->mGameModes[gProfile->GetPrimaryPad()]->getTutorial();
-                            if (tutorial != NULL)
-                            {
-                                tutorial->showTutorialPopup(true);
-                            }
+                            tutorial->showTutorialPopup(true);
                         }
                     }
                     gConsoleUIController.UpdatePlayerBasePositions();
                     m_layer->m_group->NavigateBack(m_playerId, m_completionData->backScene,
                                                    static_cast<EUILayer>(m_layer->m_layerId));
                     gConsoleUIController.FixupMenuDisplayedAfterNavigateBack();
+                    break;
+                }
+                case 1:
+                    gConsoleUIController.UpdatePlayerBasePositions();
+                    navigateBack();
+                    break;
+                case 2:
+                    gConsoleUIController.CloseUIScenes(m_completionData->playerId, false);
+                    gConsoleUIController.UpdatePlayerBasePositions();
+                    break;
+                case 3:
+                    gConsoleUIController.CloseAllPlayersScenes(false);
+                    gConsoleUIController.UpdatePlayerBasePositions();
+                    break;
+                case 4:
+                    gConsoleUIController.NavigateToHomeMenu(false);
+                    gConsoleUIController.UpdatePlayerBasePositions();
+                    break;
                 }
             }
-        }
-        else if (threadState != ERROR_CANCELLED)
-        {
-            CGameNetworkManager::sInstance.WiiU_ShowErrorViewer();
-            if (gApp.GetXuiAction(m_playerId) != eXuiAction_ConnectionLostWait)
-            {
-                int parameter = static_cast<int>(IDS_CONFIRM_OK);
-                int title = CGameNetworkManager::sInstance.CorrectErrorIDS(IDS_CONNECTION_FAILED);
-                int message = CGameNetworkManager::sInstance.CorrectErrorIDS(IDS_CONNECTION_LOST_SERVER);
-                gConsoleUIController.RequestErrorMessage(title, message, &parameter, 1, 0xff,
-                                                         NULL, NULL, NULL, true);
-                gConsoleUIController.NavigateToHomeMenu(false);
-            }
-            gConsoleUIController.UpdatePlayerBasePositions();
         }
     }
 
@@ -363,18 +393,18 @@ void UIScene_FullscreenProgress::handleInput(int playerId, int action, bool repe
 {
     switch (action)
     {
+    case EControllerActions_MenuOk:
+        if (pressed)
+        {
+            sendInputToMovie(action, repeat, pressed, released);
+        }
+        break;
     case EControllerActions_MenuB:
     case EControllerActions_MenuCancel:
         if (pressed && m_cancelFunc != NULL && !m_wasCancelled)
         {
             m_wasCancelled = true;
             m_cancelFunc(m_cancelFuncParam);
-        }
-        break;
-    case EControllerActions_MenuOk:
-        if (pressed)
-        {
-            sendInputToMovie(action, repeat, pressed, released);
         }
         break;
     }
@@ -391,6 +421,11 @@ void UIScene_FullscreenProgress::handlePress(int controlId, int childId)
         gConsoleUIController.UpdatePlayerBasePositions();
         navigateBack();
         break;
+    case 6:
+        gConsoleUIController.UpdatePlayerBasePositions();
+        m_layer->m_group->NavigateBack(m_playerId, m_completionData->backScene, static_cast<EUILayer>(m_layer->m_layerId));
+        gConsoleUIController.FixupMenuDisplayedAfterNavigateBack();
+        break;
     case 2:
         gConsoleUIController.CloseUIScenes(m_completionData->playerId, false);
         gConsoleUIController.UpdatePlayerBasePositions();
@@ -402,11 +437,6 @@ void UIScene_FullscreenProgress::handlePress(int controlId, int childId)
     case 4:
         gConsoleUIController.NavigateToHomeMenu(false);
         gConsoleUIController.UpdatePlayerBasePositions();
-        break;
-    case 6:
-        gConsoleUIController.UpdatePlayerBasePositions();
-        m_layer->m_group->NavigateBack(m_playerId, m_completionData->backScene, static_cast<EUILayer>(m_layer->m_layerId));
-        gConsoleUIController.FixupMenuDisplayedAfterNavigateBack();
         break;
     }
 }

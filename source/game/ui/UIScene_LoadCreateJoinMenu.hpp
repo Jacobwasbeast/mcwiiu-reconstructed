@@ -112,7 +112,7 @@ public:
     static int LoadSaveDataForUploadReturned(void* context, bool failed, bool complete);
     static int CrossSaveUploadFinishedCallback(void* context, int pad, C4JStorage::EMessageResult result);
     static int UploadNintendoLanSaveThreadProc(void* context);
-    static int CancelSaveUploadCallback(void* context);
+    static void CancelSaveUploadCallback(void* context);
     void LaunchSaveUpload();
     static int SaveTransferDialogReturned(void* context, int pad, C4JStorage::EMessageResult result);
     virtual int handleSaveOptionsDialogReturned(int pad, C4JStorage::EMessageResult result);

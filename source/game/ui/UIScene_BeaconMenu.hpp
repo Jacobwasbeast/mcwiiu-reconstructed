@@ -36,8 +36,8 @@ public:
     virtual std::vector<HtmlString>* GetSectionHoverText(
         IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual unsigned int IsVisible(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual unsigned int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
-    virtual unsigned int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual int getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section);
+    virtual int getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section);
     virtual void GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section,
                                       _UIVec2D* position);
     virtual void GetItemScreenData(IUIScene_AbstractContainerMenu::ESceneSection section, int slot,
@@ -46,7 +46,7 @@ public:
     virtual void setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section,
                                         int slot, int direction, bool wrap);
 
-    unsigned int GetPowerButtonId(IUIScene_AbstractContainerMenu::ESceneSection section);
+    int GetPowerButtonId(IUIScene_AbstractContainerMenu::ESceneSection section);
     unsigned int GetPowerButtonTier(IUIScene_AbstractContainerMenu::ESceneSection section);
     MobEffect* GetPowerButtonEffect(IUIScene_AbstractContainerMenu::ESceneSection section);
     unsigned char IsPowerButtonSelected(IUIScene_AbstractContainerMenu::ESceneSection section);

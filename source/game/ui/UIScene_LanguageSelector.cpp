@@ -97,12 +97,11 @@ void UIScene_LanguageSelector::handlePress(int controlId, int childId)
 
 unsigned int UIScene_LanguageSelector::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
+    fuiRenderNode* currentNode = m_movie->getRootNode();
     {
-        std::string name("HowToList");
-        m_languageList.setupControl(this, root, name);
+        m_languageList.setupControl(this, currentNode, std::string("HowToList"));
+        m_controls.push_back(&m_languageList);
     }
-    m_controls.push_back(&m_languageList);
     return 1;
 }
 

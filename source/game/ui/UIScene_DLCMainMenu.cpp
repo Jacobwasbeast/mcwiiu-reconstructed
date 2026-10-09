@@ -50,12 +50,18 @@ UIScene_DLCMainMenu::~UIScene_DLCMainMenu()
 unsigned int UIScene_DLCMainMenu::mapElementsAndNames()
 {
     fuiRenderNode* root = m_movie->getRootNode();
-    m_offerList.setupControl(this, root, "OffersList");
-    m_controls.push_back(&m_offerList);
-    m_titleLabel.setupControl(this, root, "OffersList_Title");
-    m_controls.push_back(&m_titleLabel);
-    m_timer.setupControl(this, root, "Timer");
-    m_controls.push_back(&m_timer);
+    {
+        m_offerList.setupControl(this, root, std::string("OffersList"));
+        m_controls.push_back(&m_offerList);
+    }
+    {
+        m_titleLabel.setupControl(this, root, std::string("OffersList_Title"));
+        m_controls.push_back(&m_titleLabel);
+    }
+    {
+        m_timer.setupControl(this, root, std::string("Timer"));
+        m_controls.push_back(&m_timer);
+    }
     return 1;
 }
 
@@ -148,10 +154,11 @@ void UIScene_DLCMainMenu::handlePress(int controlId, int childId)
 {
     if (controlId == 0)
     {
+        int index = childId;
         struct OffersData { int playerId; unsigned char reserved[4]; int category; };
         OffersData* data = new OffersData();
         data->playerId = m_playerId;
-        data->category = childId;
+        data->category = index;
         killTimer(0);
         gConsoleUIController.NavigateToScene(m_playerId, EUIScene_DLCOffersMenu,
                                              data, EUILayer_Scene,

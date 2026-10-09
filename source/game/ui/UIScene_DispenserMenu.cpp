@@ -75,10 +75,10 @@ UIScene_DispenserMenu::~UIScene_DispenserMenu()
 {
 }
 
-unsigned int UIScene_DispenserMenu::getSectionColumns(
+int UIScene_DispenserMenu::getSectionColumns(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    unsigned int columns = 0;
+    int columns = 0;
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_DispenserHotbar:
@@ -96,10 +96,10 @@ unsigned int UIScene_DispenserMenu::getSectionColumns(
     return columns;
 }
 
-unsigned int UIScene_DispenserMenu::getSectionRows(
+int UIScene_DispenserMenu::getSectionRows(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    unsigned int rows = 0;
+    int rows = 0;
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots:
@@ -128,44 +128,52 @@ unsigned int UIScene_DispenserMenu::GetSectionAndSlotInDirection(
     const IUIScene_AbstractContainerMenu::ESceneSection dispenser =
         IUIScene_AbstractContainerMenu::ESceneSection_DispenserSlots;
 
-    if (section == hotbar && state == IUIScene_AbstractContainerMenu::ETapState_Down)
+    IUIScene_AbstractContainerMenu::ESceneSection newSection = section;
+    int xOffset = 0;
+
+    switch (section)
     {
-        updateSlotPosition(section, dispenser, state, x, y, 3, 0);
-        return dispenser;
+    case dispenser:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            newSection = m_smallInventory ? hotbar : inventory;
+            xOffset = -3;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            newSection = hotbar;
+            xOffset = -3;
+        }
+        break;
+    case inventory:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            newSection = hotbar;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            newSection = dispenser;
+            xOffset = 3;
+        }
+        break;
+    case hotbar:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            newSection = dispenser;
+            xOffset = 3;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            newSection = m_smallInventory ? dispenser : inventory;
+            xOffset = m_smallInventory ? 3 : 0;
+        }
+        break;
+    default:
+        break;
     }
-    if (section == hotbar && state == IUIScene_AbstractContainerMenu::ETapState_Up)
-    {
-        const bool smallInventory = m_smallInventory != 0;
-        const IUIScene_AbstractContainerMenu::ESceneSection target =
-            smallInventory ? dispenser : inventory;
-        updateSlotPosition(section, target, state, x, y,
-                                             smallInventory ? 3 : 0, 0);
-        return target;
-    }
-    if (section == inventory && state == IUIScene_AbstractContainerMenu::ETapState_Down)
-    {
-        updateSlotPosition(section, hotbar, state, x, y, 0, 0);
-        return hotbar;
-    }
-    if (section == inventory && state == IUIScene_AbstractContainerMenu::ETapState_Up)
-    {
-        updateSlotPosition(section, dispenser, state, x, y, 3, 0);
-        return dispenser;
-    }
-    if (section == dispenser && state == IUIScene_AbstractContainerMenu::ETapState_Down)
-    {
-        const IUIScene_AbstractContainerMenu::ESceneSection target =
-            m_smallInventory ? hotbar : inventory;
-        updateSlotPosition(section, target, state, x, y, -3, 0);
-        return target;
-    }
-    if (section == dispenser && state == IUIScene_AbstractContainerMenu::ETapState_Up)
-    {
-        updateSlotPosition(section, hotbar, state, x, y, -3, 0);
-        return hotbar;
-    }
-    updateSlotPosition(section, section, state, x, y, 0, 0);
-    return section;
+
+    updateSlotPosition(section, newSection, state, x, y, xOffset, 0);
+    return newSection;
 }
 
 void UIScene_DispenserMenu::GetPositionOfSection(

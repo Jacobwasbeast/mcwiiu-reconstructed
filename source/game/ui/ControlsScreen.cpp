@@ -10,9 +10,9 @@ ControlsScreen::ControlsScreen(Screen* parent, Options* options)
     : Screen()
 {
     mTitle = L"Controls";
+    mSelectedKey = -1;
     mParent = parent;
     mOptions = options;
-    mSelectedKey = -1;
 }
 
 int ControlsScreen::getLeftScreenPosition()
@@ -27,8 +27,8 @@ void ControlsScreen::init()
 
     for (int key = 0; key < 14; ++key)
     {
-        mButtons.push_back(new SmallButton(key, left + (key % 2) * 160,
-            mHeight / 6 + (key / 2) * 24, 70, 20, mOptions->getKeyMessage(key)));
+        mButtons.push_back(new SmallButton(key, left + key % 2 * 160,
+            mHeight / 6 + 24 * (key >> 1), 70, 20, mOptions->getKeyMessage(key)));
     }
 
     mButtons.push_back(new Button(200, mWidth / 2 - 100, mHeight / 6 + 168,
@@ -40,18 +40,18 @@ void ControlsScreen::buttonClicked(Button* button)
 {
     for (int key = 0; key < 14; ++key)
     {
-        Button* keyButton = mButtons[key];
-        keyButton->mMessage = mOptions->getKeyMessage(key);
+        mButtons[key]->mMessage = mOptions->getKeyMessage(key);
     }
 
     if (button->mId == 200)
     {
         mMinecraft->setScreen(mParent);
-        return;
     }
-
-    mSelectedKey = button->mId;
-    button->mMessage = L"> " + mOptions->getKeyMessage(mSelectedKey) + L" <";
+    else
+    {
+        mSelectedKey = button->mId;
+        button->mMessage = L"> " + mOptions->getKeyMessage(button->mId) + L" <";
+    }
 }
 
 void ControlsScreen::keyPressed(wchar_t key, int action)
@@ -59,8 +59,7 @@ void ControlsScreen::keyPressed(wchar_t key, int action)
     if (mSelectedKey >= 0)
     {
         mOptions->setKey(mSelectedKey, action);
-        Button* keyButton = mButtons[mSelectedKey];
-        keyButton->mMessage = mOptions->getKeyMessage(mSelectedKey);
+        mButtons[mSelectedKey]->mMessage = mOptions->getKeyMessage(mSelectedKey);
         mSelectedKey = -1;
         return;
     }
@@ -76,8 +75,8 @@ void ControlsScreen::render(int x, int y, float partialTick)
     int left = getLeftScreenPosition();
     for (int key = 0; key < 14; ++key)
     {
-        drawString(mFont, mOptions->getKeyDescription(key), left + (key % 2) * 160 + 76,
-            mHeight / 6 + (key / 2) * 24 + 7, 0xffffffff);
+        drawString(mFont, mOptions->getKeyDescription(key), left + key % 2 * 160 + 76,
+            mHeight / 6 + 24 * (key >> 1) + 7, 0xffffffff);
     }
 
     Screen::render(x, y, partialTick);

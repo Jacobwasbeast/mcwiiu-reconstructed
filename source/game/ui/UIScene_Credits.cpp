@@ -588,15 +588,15 @@ UIScene_Credits::UIScene_Credits(int type, void*, UILayer* layer)
     for (unsigned int packIndex = 0; packIndex < packCount; ++packIndex)
     {
         DLCPack* pack = gApp.mDLCManager.getPack(packIndex, DLCManager::eDLCType_All);
-        if (!pack->m_creditIds.empty())
+        std::vector<std::wstring>& creditIds = pack->m_creditIds;
+        if (!creditIds.empty())
         {
             if (pack->doesPackContainFile(DLCManager::eDLCType_Localisation, L"localisation.loc", true, true))
             {
                 DLCLocalisationFile* file = static_cast<DLCLocalisationFile*>(
                     pack->getFile(DLCManager::eDLCType_Localisation, L"localisation.loc", true, true));
                 StringTable* stringTable = file->getStringTable();
-                for (std::vector<std::wstring>::iterator it = pack->m_creditIds.begin();
-                     it != pack->m_creditIds.end(); ++it)
+                for (std::vector<std::wstring>::iterator it = creditIds.begin(); it != creditIds.end(); ++it)
                 {
                     addCreditLine(stringTable->getString(*it));
                 }
@@ -606,31 +606,34 @@ UIScene_Credits::UIScene_Credits(int type, void*, UILayer* layer)
                 DLCLocalisationFile* file = static_cast<DLCLocalisationFile*>(
                     pack->getFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true));
                 StringTable* stringTable = file->getStringTable();
-                for (std::vector<std::wstring>::iterator it = pack->m_creditIds.begin();
-                     it != pack->m_creditIds.end(); ++it)
+                for (std::vector<std::wstring>::iterator it = creditIds.begin(); it != creditIds.end(); ++it)
                 {
                     addCreditLine(stringTable->getString(*it));
                 }
             }
         }
-        for (std::vector<std::wstring>::iterator it = pack->m_creditStrings.begin();
-             it != pack->m_creditStrings.end(); ++it)
+        std::vector<std::wstring>& creditStrings = pack->m_creditStrings;
+        if (!creditStrings.empty())
         {
-            addCreditLine(*it);
+            for (std::vector<std::wstring>::iterator it = creditStrings.begin(); it != creditStrings.end(); ++it)
+            {
+                addCreditLine(*it);
+            }
         }
 
         std::vector<DLCPack*>& childPacks = pack->getChildPacks();
         for (std::vector<DLCPack*>::iterator child = childPacks.begin(); child != childPacks.end(); ++child)
         {
-            if (!(*child)->m_creditIds.empty())
+            std::vector<std::wstring>& childCreditIds = (*child)->m_creditIds;
+            if (!childCreditIds.empty())
             {
                 if (pack->doesPackContainFile(DLCManager::eDLCType_Localisation, L"localisation.loc", true, true))
                 {
                     DLCLocalisationFile* file = static_cast<DLCLocalisationFile*>(
                         pack->getFile(DLCManager::eDLCType_Localisation, L"localisation.loc", true, true));
                     StringTable* stringTable = file->getStringTable();
-                    for (std::vector<std::wstring>::iterator it = (*child)->m_creditIds.begin();
-                         it != (*child)->m_creditIds.end(); ++it)
+                    for (std::vector<std::wstring>::iterator it = childCreditIds.begin();
+                         it != childCreditIds.end(); ++it)
                     {
                         addCreditLine(stringTable->getString(*it));
                     }
@@ -640,17 +643,21 @@ UIScene_Credits::UIScene_Credits(int type, void*, UILayer* layer)
                     DLCLocalisationFile* file = static_cast<DLCLocalisationFile*>(
                         pack->getFile(DLCManager::eDLCType_Localisation, L"languages.loc", true, true));
                     StringTable* stringTable = file->getStringTable();
-                    for (std::vector<std::wstring>::iterator it = (*child)->m_creditIds.begin();
-                         it != (*child)->m_creditIds.end(); ++it)
+                    for (std::vector<std::wstring>::iterator it = childCreditIds.begin();
+                         it != childCreditIds.end(); ++it)
                     {
                         addCreditLine(stringTable->getString(*it));
                     }
                 }
             }
-            for (std::vector<std::wstring>::iterator it = (*child)->m_creditStrings.begin();
-                 it != (*child)->m_creditStrings.end(); ++it)
+            std::vector<std::wstring>& childCreditStrings = (*child)->m_creditStrings;
+            if (!childCreditStrings.empty())
             {
-                addCreditLine(*it);
+                for (std::vector<std::wstring>::iterator it = childCreditStrings.begin();
+                     it != childCreditStrings.end(); ++it)
+                {
+                    addCreditLine(*it);
+                }
             }
         }
     }
@@ -660,24 +667,25 @@ UIScene_Credits::UIScene_Credits(int type, void*, UILayer* layer)
     for (int credit = 0; credit < PRELOADED_CREDIT_COUNT; ++credit)
     {
         ++m_currentCredit;
-        const SCreditTextItemDef& item = CREDIT_TEXT[credit];
-        if (item.primaryId == IDS_NONE)
+        if (CREDIT_TEXT[credit].primaryId == IDS_NONE)
         {
-            setNextLabel(item.text, item.type);
+            setNextLabel(CREDIT_TEXT[credit].text, CREDIT_TEXT[credit].type);
         }
         else
         {
             wchar_t* label = new wchar_t[PRELOADED_LABEL_LENGTH];
-            if (item.secondaryId == IDS_NONE)
+            if (CREDIT_TEXT[credit].secondaryId != IDS_NONE)
             {
-                swprintf(label, PRELOADED_LABEL_LENGTH, item.text, L10N::GetString(item.primaryId));
+                swprintf(label, PRELOADED_LABEL_LENGTH, CREDIT_TEXT[credit].text,
+                         L10N::GetString(CREDIT_TEXT[credit].primaryId),
+                         L10N::GetString(CREDIT_TEXT[credit].secondaryId));
             }
             else
             {
-                swprintf(label, PRELOADED_LABEL_LENGTH, item.text, L10N::GetString(item.primaryId),
-                         L10N::GetString(item.secondaryId));
+                swprintf(label, PRELOADED_LABEL_LENGTH, CREDIT_TEXT[credit].text,
+                         L10N::GetString(CREDIT_TEXT[credit].primaryId));
             }
-            setNextLabel(label, item.type);
+            setNextLabel(label, CREDIT_TEXT[credit].type);
             delete[] label;
         }
     }
@@ -698,11 +706,10 @@ void UIScene_Credits::AddCreditText(const wchar_t* text)
 {
     SCreditTextItemDef* item = new SCreditTextItemDef;
     item->type = ECreditTextTypes_Text;
-    item->secondaryId = IDS_NONE;
     item->primaryId = IDS_NONE;
-    wchar_t* copy = new wchar_t[std::wcslen(text) + 1];
-    item->text = copy;
-    std::wcscpy(copy, text);
+    item->secondaryId = IDS_NONE;
+    item->text = new wchar_t[std::wcslen(text) + 1];
+    std::wcscpy(const_cast<wchar_t*>(item->text), text);
     m_dlcCredits.push_back(item);
 }
 
@@ -783,57 +790,60 @@ void UIScene_Credits::tick()
     if (!m_requestMoreData) return;
     m_requestMoreData = false;
 
-    const SCreditTextItemDef* item;
-    if (m_currentCredit + 1 < m_creditCount)
+    if (m_currentCredit + 1 >= m_creditCount)
+    {
+        m_currentCredit = 0;
+    }
+    else
     {
         ++m_currentCredit;
-        if (m_currentCredit >= CREDIT_TEXT_COUNT)
+    }
+
+    const SCreditTextItemDef* item;
+    if (m_currentCredit >= CREDIT_TEXT_COUNT)
+    {
+        item = GetDLCCredits(m_currentCredit - CREDIT_TEXT_COUNT);
+    }
+    else
+    {
+        item = &CREDIT_TEXT[m_currentCredit];
+    }
+
+    if (item->text != NULL)
+    {
+        if (item->primaryId == CREDIT_IMAGE)
         {
-            item = GetDLCCredits(m_currentCredit - CREDIT_TEXT_COUNT);
+            addImage(static_cast<ECreditIcons>(item->secondaryId));
         }
         else
         {
-            item = &CREDIT_TEXT[m_currentCredit];
+            std::wstring text(item->text);
+            if (!gConsoleUIController.UsingBitmapFont())
+            {
+                text = replaceAll(text, L"\u00A9", L"(C)");
+                text = replaceAll(text, L"\u00AE", L"(R)");
+                text = replaceAll(text, L"\u2122", L"(TM)");
+                text = replaceAll(text, L"\u2013", L"-");
+            }
+
+            wchar_t label[LABEL_BUFFER_LENGTH];
+            std::memset(label, 0, sizeof(label));
+            if (item->primaryId == IDS_NONE)
+            {
+                std::wcscpy(label, text.c_str());
+            }
+            else if (item->secondaryId != IDS_NONE)
+            {
+                swprintf(label, LABEL_LENGTH, text.c_str(), L10N::GetString(item->primaryId),
+                         L10N::GetString(item->secondaryId));
+            }
+            else
+            {
+                swprintf(label, LABEL_LENGTH, text.c_str(), L10N::GetString(item->primaryId));
+            }
+            setNextLabel(label, item->type);
         }
     }
-    else
-    {
-        m_currentCredit = 0;
-        item = &CREDIT_TEXT[0];
-    }
-
-    if (item->text == NULL) return;
-    if (item->primaryId == CREDIT_IMAGE)
-    {
-        addImage(static_cast<ECreditIcons>(item->secondaryId));
-        return;
-    }
-
-    std::wstring text(item->text);
-    if (!gConsoleUIController.UsingBitmapFont())
-    {
-        text = replaceAll(text, L"\u00A9", L"(C)");
-        text = replaceAll(text, L"\u00AE", L"(R)");
-        text = replaceAll(text, L"\u2122", L"(TM)");
-        text = replaceAll(text, L"\u2013", L"-");
-    }
-
-    wchar_t label[LABEL_BUFFER_LENGTH];
-    std::memset(label, 0, sizeof(label));
-    if (item->primaryId == IDS_NONE)
-    {
-        std::wcscpy(label, text.c_str());
-    }
-    else if (item->secondaryId == IDS_NONE)
-    {
-        swprintf(label, LABEL_LENGTH, text.c_str(), L10N::GetString(item->primaryId));
-    }
-    else
-    {
-        swprintf(label, LABEL_LENGTH, text.c_str(), L10N::GetString(item->primaryId),
-                 L10N::GetString(item->secondaryId));
-    }
-    setNextLabel(label, item->type);
 }
 
 std::wstring UIScene_Credits::getMoviePath()

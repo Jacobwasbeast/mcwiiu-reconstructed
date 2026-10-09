@@ -113,14 +113,14 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
     if (player->isPassenger())
     {
         boost::shared_ptr<Entity> vehicle = player->getVehicle();
-        const bool isMinecart = (vehicle->GetType() & EntityType::MINECART) == EntityType::MINECART;
+        const bool isMinecart = eTYPE_DERIVED_FROM(EntityType::MINECART, vehicle->GetType());
         if (isMinecart)
         {
             OverwriteTooltip(playerId, EControllerActions_Sneak, static_cast<int>(IDS_TOOLTIPS_EXIT));
         }
         else
         {
-            const bool isBoat = vehicle->GetType() == EntityType::BOAT;
+            const bool isBoat = eTYPE_DERIVED_FROM(EntityType::BOAT, vehicle->GetType());
             if (isBoat)
                 OverwriteTooltip(playerId, EControllerActions_Sneak, static_cast<int>(IDS_TOOLTIPS_EXIT));
             else
@@ -313,7 +313,7 @@ void Tooltips::SetInteractTooltips(boost::shared_ptr<MultiplayerLocalPlayer> pla
     bool tamedOrNotHorse = true;
     if (vehicle != NULL)
     {
-        const bool isHorse = (vehicle->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE;
+        const bool isHorse = eTYPE_DERIVED_FROM(EntityType::ABSTRACT_HORSE, vehicle->GetType());
         if (isHorse)
             tamedOrNotHorse = boost::static_pointer_cast<AbstractHorse>(vehicle)->isTamed();
     }

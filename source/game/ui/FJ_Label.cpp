@@ -3,7 +3,6 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "game/ui/fuiRenderNode.hpp"
@@ -62,20 +61,27 @@ void FJ_Label::SetLabel(const std::wstring& label)
 
 int FJ_Label::GetAverageCharHeight()
 {
-    fuiRenderNodeEditText* textField = GetTextField();
     int count = 0;
     int total = 0;
-    for (std::wstring::size_type index = 0; index < textField->getText().size(); ++index)
+    fuiRenderNodeEditText* textField = GetTextField();
+    for (unsigned int index = 0; index < textField->getText().size(); ++index)
     {
-        std::pair<float, float> boundaries = textField->getCharBoundaries(static_cast<int>(index));
+        total += static_cast<int>(textField->getCharBoundaries(index).yMax);
         ++count;
-        total += static_cast<int>(boundaries.second);
-        if (count > 4)
+        if (count >= 5)
         {
             break;
         }
     }
-    return count == 0 ? 0 : total / count;
+    if (count == 0)
+    {
+        total = 0;
+    }
+    else
+    {
+        total /= count;
+    }
+    return total;
 }
 
 void FJ_Label::GetLabelTooWide(fuiRenderNodeEditText* textField)

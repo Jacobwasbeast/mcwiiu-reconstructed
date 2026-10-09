@@ -8,6 +8,8 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/L10N.hpp"
 #include "game/core/cCommerce.hpp"
+#include "platform/wiiu/cCommerceNintendoWiiU.hpp"
+#include "platform/wiiu/cNintendoDLCInfo.hpp"
 #include "game/core/cDLCInfo.hpp"
 #include "game/core/cProductInfo.hpp"
 #include "game/ui/UIControl_List.hpp"
@@ -20,8 +22,7 @@
 extern ConsoleUIController gConsoleUIController;
 
 UIScene_DLCOffersMenu::UIScene_DLCOffersMenu(int type, void* data, UILayer* layer)
-    : UIScene(type, layer), m_titleLabel(), m_priceLabel(), m_descriptionLabel(), m_banner(),
-      m_timer(), m_displayUpdated(false), m_category(static_cast<int*>(data)[2]), m_selection(0),
+    : UIScene(type, layer), m_displayUpdated(false), m_category(static_cast<int*>(data)[2]), m_selection(0),
       m_productCount(0), m_populatePending(true), m_products(NULL)
 {
     initialiseMovie();
@@ -37,15 +38,15 @@ UIScene_DLCOffersMenu::UIScene_DLCOffersMenu(int type, void* data, UILayer* laye
     m_waitingForCatalog = true;
     m_navigateBack = false;
 
-    switch (static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->GetDLCCatalogState())
+    switch (gApp.GetCommerceInstance()->GetDLCCatalogState())
     {
     case cCommerce::eDLCCatalogState_Retrieved:
         break;
     case cCommerce::eDLCCatalogState_LogInFailed:
-        if (static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->AttemptLogIn() == 0)
+        if (gApp.GetCommerceInstance()->AttemptLogIn() == 0)
             m_navigateBack = true;
         else
-            static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->SetDLCCatalogState(cCommerce::eDLCCatalogState_Unknown);
+            gApp.GetCommerceInstance()->SetDLCCatalogState(cCommerce::eDLCCatalogState_Unknown);
         break;
     default:
         m_timer.setVisible(false);
@@ -59,74 +60,88 @@ UIScene_DLCOffersMenu::UIScene_DLCOffersMenu(int type, void* data, UILayer* laye
 UIScene_DLCOffersMenu::~UIScene_DLCOffersMenu()
 {
     gApp.SetLiveLinkRequired(false);
-    static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->ClearProductInfo();
+    gApp.GetCommerceInstance()->ClearProductInfo();
 }
 
 unsigned int UIScene_DLCOffersMenu::mapElementsAndNames()
 {
     fuiRenderNode* root = m_movie->getRootNode();
-    m_offerList.setupControl(this, root, std::string("OffersList"));
-    m_controls.push_back(&m_offerList);
-    m_titleLabel.setupControl(this, root, std::string("OffersList_Title"));
-    m_controls.push_back(&m_titleLabel);
-    m_priceLabel.setupControl(this, root, std::string("PriceTag"));
-    m_controls.push_back(&m_priceLabel);
-    m_descriptionLabel.setupControl(this, root, std::string("HTMLSellText"));
-    m_controls.push_back(&m_descriptionLabel);
-    m_banner.setupControl(this, root, std::string("DLCIcon"));
-    m_controls.push_back(&m_banner);
-    m_timer.setupControl(this, root, std::string("Timer"));
-    m_controls.push_back(&m_timer);
+    {
+        m_offerList.setupControl(this, root, std::string("OffersList"));
+        m_controls.push_back(&m_offerList);
+    }
+    {
+        m_titleLabel.setupControl(this, root, std::string("OffersList_Title"));
+        m_controls.push_back(&m_titleLabel);
+    }
+    {
+        m_priceLabel.setupControl(this, root, std::string("PriceTag"));
+        m_controls.push_back(&m_priceLabel);
+    }
+    {
+        m_descriptionLabel.setupControl(this, root, std::string("HTMLSellText"));
+        m_controls.push_back(&m_descriptionLabel);
+    }
+    {
+        m_banner.setupControl(this, root, std::string("DLCIcon"));
+        m_controls.push_back(&m_banner);
+    }
+    {
+        m_timer.setupControl(this, root, std::string("Timer"));
+        m_controls.push_back(&m_timer);
+    }
     return 1;
 }
 
 uint32_t UIScene_DLCOffersMenu::ExitDLCOffersMenu(void*, int, C4JStorage::EMessageResult)
 {
-    static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->HideStoreIcon();
+    gApp.GetCommerceInstance()->HideStoreIcon();
     gConsoleUIController.NavigateToHomeMenu(false);
     return 0;
 }
 
 uint32_t UIScene_DLCOffersMenu::UpdateDisplay(cProductInfo*)
 {
-    if (static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->GetPurchasabilityUpdated() && static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->GetDLCCatalogListRetrieved() &&
-        static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->GetDLCCatalogListInfoRetrieved() && m_productCount != 0)
+    if (gApp.GetCommerceInstance()->GetPurchasabilityUpdated() && gApp.GetCommerceInstance()->GetDLCCatalogListRetrieved() &&
+        gApp.GetCommerceInstance()->GetDLCCatalogListInfoRetrieved() && m_productCount != 0)
     {
-        static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->ClearProductInfo();
-        static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->GetDLCProductInfo(&m_products, &m_productCount, m_category, gConsoleUIController.UsingBitmapFont());
+        gApp.GetCommerceInstance()->ClearProductInfo();
+        gApp.GetCommerceInstance()->GetDLCProductInfo(&m_products, &m_productCount, m_category, gConsoleUIController.UsingBitmapFont());
         for (unsigned int i = 0; i < m_productCount; ++i)
-            m_offerList.showTick(i, !m_products[i].CanPurchase());
+        {
+            bool purchased = true;
+            if (m_products[i].CanPurchase())
+                purchased = false;
+            m_offerList.showTick(i, purchased);
+        }
     }
 
-    if (!m_displayUpdated && static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->GetDLCCatalogListRetrieved() && m_productCount != 0)
+    if (!m_displayUpdated && gApp.GetCommerceInstance()->GetDLCCatalogListRetrieved() && m_productCount != 0)
     {
         m_descriptionLabel.setLabel(UIString(m_products[m_selection].GetDescription()), false, false);
         m_priceLabel.setLabel(UIString(m_products[m_selection].GetPriceString()), false, false);
         std::wstring banner = convUtf8ToWstring(m_products[m_selection].GetBanner());
         if (!hasRegisteredSubstitutionTexture(banner))
         {
-            unsigned int imageSize = 0;
             void* imageData = NULL;
+            unsigned int imageSize = 0;
             bool freeImageData;
-            static_cast<cDLCInfo*>((void*)gApp.GetDLCInfoInstance())
-                ->DLC_RetrieveImageData(m_products[m_selection].GetBanner(), &imageData, &imageSize, &freeImageData);
-            if (imageSize == 0)
-            {
-                m_banner.setTextureName(L"", true);
-                updateTooltips();
-            }
-            else
+            gApp.GetDLCInfoInstance()->DLC_RetrieveImageData(m_products[m_selection].GetBanner(), &imageData, &imageSize, &freeImageData);
+            if (imageSize != 0)
             {
                 registerSubstitutionTexture(banner, static_cast<unsigned char*>(imageData), imageSize, freeImageData);
                 m_banner.setTextureName(banner, true);
-                updateTooltips();
+            }
+            else
+            {
+                m_banner.setTextureName(L"", true);
             }
         }
         else
         {
             m_banner.setTextureName(banner, true);
-            updateTooltips();
         }
+        updateTooltips();
         return 1;
     }
     return 0;
@@ -142,8 +157,8 @@ void UIScene_DLCOffersMenu::tick()
             navigateBack();
             return;
         }
-        if (static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->GetDLCCatalogListRetrieved() && static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->GetDLCCatalogListInfoRetrieved() &&
-            static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->GetDLCProductInfo(&m_products, &m_productCount, m_category, gConsoleUIController.UsingBitmapFont()))
+        if (gApp.GetCommerceInstance()->GetDLCCatalogListRetrieved() && gApp.GetCommerceInstance()->GetDLCCatalogListInfoRetrieved() &&
+            gApp.GetCommerceInstance()->GetDLCProductInfo(&m_products, &m_productCount, m_category, gConsoleUIController.UsingBitmapFont()))
         {
             for (unsigned int i = 0; i < m_productCount; ++i)
                 m_offerList.addItem(std::string(m_products[i].GetName()), !m_products[i].CanPurchase(), i);
@@ -153,12 +168,16 @@ void UIScene_DLCOffersMenu::tick()
             m_timer.setVisible(false);
         }
     }
-    if (!m_displayUpdated && static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->GetDLCCatalogListInfoRetrieved() && m_productCount != 0 &&
+    if (!m_displayUpdated && gApp.GetCommerceInstance()->GetDLCCatalogListInfoRetrieved() && m_productCount != 0 &&
         m_offerList.hasFocus())
     {
         int focus = getControlChildFocus();
-        if (focus >= 0 && UpdateDisplay(&m_products[focus]))
-            m_displayUpdated = true;
+        if (focus >= 0)
+        {
+            cProductInfo* product = &m_products[focus];
+            if (UpdateDisplay(product))
+                m_displayUpdated = true;
+        }
     }
 }
 
@@ -185,6 +204,10 @@ void UIScene_DLCOffersMenu::handleInput(int, int action, bool repeat, bool press
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
+    case EControllerActions_MenuCancel:
+        if (pressed)
+            navigateBack();
+        break;
     case EControllerActions_MenuUp:
         if (pressed && m_productCount != 0 && !m_timer.getVisible())
         {
@@ -210,17 +233,13 @@ void UIScene_DLCOffersMenu::handleInput(int, int action, bool repeat, bool press
     case EControllerActions_MenuOk:
         sendInputToMovie(action, repeat, pressed, released);
         break;
-    case EControllerActions_MenuCancel:
-        if (pressed)
-            navigateBack();
-        break;
     }
 }
 
 void UIScene_DLCOffersMenu::handlePress(int controlId, int childId)
 {
     if (controlId == 0)
-        static_cast<cCommerce*>((void*)gApp.GetCommerceInstance())->PurchaseDLCByIndex(childId, m_playerId);
+        gApp.GetCommerceInstance()->PurchaseDLCByIndex(childId, m_playerId);
 }
 
 void UIScene_DLCOffersMenu::handleSelectionChanged(int)

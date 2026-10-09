@@ -68,7 +68,7 @@ public:
     bool GetCheckboxValue(int id);
     void AddNewTextInput(const std::wstring& label, int id, int charLimit);
     uint32_t GetSliderValue(int id);
-    virtual void setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
+    virtual bool setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name);
     virtual void setAllPossibleLabels(int firstLabel, unsigned int labelCount,
                                       wchar_t (*labels)[256]);
     void AddNewMenuButton(const std::wstring& label, int id);

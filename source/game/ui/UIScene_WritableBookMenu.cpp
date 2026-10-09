@@ -244,7 +244,7 @@ void UIScene_WritableBookMenu::Init()
                 language == XC_LANGUAGE_TCHINESE || language == XC_LANGUAGE_ZH_HANS)
                 censoredText = L"Censored";
             else
-                censoredText = L10N::GetString(0x62950b66);
+                censoredText = L10N::GetString(IDS_STRINGVERIFY_CENSORED);
             m_pages = new ListTag();
             m_pages->add(new StringTag(censoredText));
             m_pageCount = 1;

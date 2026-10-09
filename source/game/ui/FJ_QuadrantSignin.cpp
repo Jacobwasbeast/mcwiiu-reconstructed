@@ -6,9 +6,9 @@
 #include "game/ui/FJ_FuiNode.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
-static std::string s_controllerNames[4] = { "Controller1", "Controller2", "Controller3", "Controller4" };
-static std::string s_controllerStatusNames[5] = { "ConnectController", "PressToJoin", "PlayerDetails",
-                                                  "PlayerLoggedIn_ConnectController", "PlayerLoggedIn_NoController" };
+std::string s_controllerNames[4] = { "Controller1", "Controller2", "Controller3", "Controller4" };
+const std::string s_controllerStatusNames[5] = { "ConnectController", "PressToJoin", "PlayerDetails",
+                                                 "PlayerLoggedIn_ConnectController", "PlayerLoggedIn_NoController" };
 
 FJ_QuadrantSignin::FJ_QuadrantSignin(fuiRenderNode* renderNode)
     : FJ_Document(renderNode)
@@ -74,19 +74,19 @@ void FJ_QuadrantSignin::init(FJ_Event* event)
 void FJ_QuadrantSignin::SetABSwap(bool swap)
 {
     mABSwap = swap;
-    if (!swap)
-    {
-        mControllers[0]->getChildByName("ButtonGraphic")->gotoAndStop("StopX");
-        mControllers[1]->getChildByName("ButtonGraphic")->gotoAndStop("StopX");
-        mControllers[2]->getChildByName("ButtonGraphic")->gotoAndStop("StopX");
-        mControllers[3]->getChildByName("ButtonGraphic")->gotoAndStop("StopX");
-    }
-    else
+    if (swap)
     {
         mControllers[0]->getChildByName("ButtonGraphic")->gotoAndStop("StopO");
         mControllers[1]->getChildByName("ButtonGraphic")->gotoAndStop("StopO");
         mControllers[2]->getChildByName("ButtonGraphic")->gotoAndStop("StopO");
         mControllers[3]->getChildByName("ButtonGraphic")->gotoAndStop("StopO");
+    }
+    else
+    {
+        mControllers[0]->getChildByName("ButtonGraphic")->gotoAndStop("StopX");
+        mControllers[1]->getChildByName("ButtonGraphic")->gotoAndStop("StopX");
+        mControllers[2]->getChildByName("ButtonGraphic")->gotoAndStop("StopX");
+        mControllers[3]->getChildByName("ButtonGraphic")->gotoAndStop("StopX");
     }
 }
 

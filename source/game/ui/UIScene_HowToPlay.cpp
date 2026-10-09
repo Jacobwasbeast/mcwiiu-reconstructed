@@ -90,13 +90,11 @@ UIScene_HowToPlay::sCustomItems::sCustomItems(Item* item, Potion* potion, int co
 
 not_null_ptr<ItemInstance> UIScene_HowToPlay::sCustomItems::GetItemInstance() const
 {
-    if (m_potion == NULL)
-    {
-        if (m_item == NULL)
-            return not_null_ptr<ItemInstance>(new ItemInstance(m_block, m_count, m_auxValue));
+    if (m_potion != NULL)
+        return PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(m_item, m_count, m_auxValue)), m_potion);
+    if (m_item != NULL)
         return not_null_ptr<ItemInstance>(new ItemInstance(m_item, m_count, m_auxValue));
-    }
-    return PotionUtils::setPotion(not_null_ptr<ItemInstance>(new ItemInstance(m_item, m_count, m_auxValue)), m_potion);
+    return not_null_ptr<ItemInstance>(new ItemInstance(m_block, m_count, m_auxValue));
 }
 
 UIScene_HowToPlay::UIScene_HowToPlay(int playerId, void* data, UILayer* layer)
@@ -111,7 +109,7 @@ UIScene_HowToPlay::UIScene_HowToPlay(int playerId, void* data, UILayer* layer)
     m_labels[7].init(UIString(L10N::GetString(IDS_INGREDIENT)));
     m_labels[8].init(UIString(L10N::GetString(IDS_FURNACE)));
     m_labels[3].init(UIString(repeated));
-    m_labels[11].init(UIString(L10N::GetString(0xfbc6e08)));
+    m_labels[11].init(UIString(L10N::GetString(IDS_GROUPNAME_BUILDING_BLOCKS)));
     m_labels[4].init(UIString(L10N::GetString(IDS_CHEST_LARGE)));
     m_labels[1].init(UIString(repeated));
     m_labels[2].init(UIString(L10N::GetString(IDS_CHEST)));
@@ -132,8 +130,8 @@ UIScene_HowToPlay::UIScene_HowToPlay(int playerId, void* data, UILayer* layer)
     m_labels[19].init(UIString(repeated.c_str()));
     m_labels[21].init(UIString(L10N::GetString(IDS_ITEM_EMERALD)));
     m_labels[22].init(UIString(L10N::GetString(IDS_REQUIRED_ITEMS_FOR_TRADE)));
-    m_labels[24].init(UIString(L10N::GetString(0xb3c82373)));
-    m_labels[25].init(UIString(L10N::GetString(0x7b8c1d5d)));
+    m_labels[24].init(UIString(L10N::GetString(IDS_CONTAINER_BEACON_PRIMARY_POWER)));
+    m_labels[25].init(UIString(L10N::GetString(IDS_CONTAINER_BEACON_SECONDARY_POWER)));
     m_labels[26].init(UIString(L10N::GetString(IDS_TILE_HOPPER)));
     m_labels[27].init(UIString(repeated.c_str()));
     m_labels[28].init(UIString(L10N::GetString(IDS_TILE_DROPPER)));
@@ -141,7 +139,7 @@ UIScene_HowToPlay::UIScene_HowToPlay(int playerId, void* data, UILayer* layer)
 
     text = L10N::GetString(IDS_VILLAGER_OFFERS_ITEM);
     text = replaceAll(text, L"{*VILLAGER_TYPE*}", L10N::GetString(IDS_VILLAGER_CLERIC));
-    text.replace(text.find(L"%s"), 2, L10N::GetString(0x5ae2b631));
+    text.replace(text.find(L"%s"), 2, L10N::GetString(IDS_TILE_LIGHT_GEM));
     m_labels[23].init(UIString(text.c_str()));
 
     m_pageCount = 0;
@@ -228,78 +226,152 @@ void UIScene_HowToPlay::StartPage(EHowToPlayPage page)
 
 unsigned int UIScene_HowToPlay::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_dynamicHtmlText.setupControl(this, root, "DynamicHtmlText");
-    m_controls.push_back(&m_dynamicHtmlText);
-    m_container.setupControl(this, root, "HowToPlayContainer_13");
-    m_controls.push_back(&m_container);
-    fuiRenderNode* containerNode = m_container.getFuiRenderNode();
-    m_enchantmentBook.setupControl(this, containerNode, "iggy_EnchantmentBook");
-    m_controls.push_back(&m_enchantmentBook);
-    m_enchantmentBooks[0].setupControl(this, containerNode, "iggy_slot_Button_1");
-    m_controls.push_back(&m_enchantmentBooks[0]);
-    m_enchantmentBooks[1].setupControl(this, containerNode, "iggy_slot_Button_2");
-    m_controls.push_back(&m_enchantmentBooks[1]);
-    m_enchantmentBooks[2].setupControl(this, containerNode, "iggy_slot_Button_3");
-    m_controls.push_back(&m_enchantmentBooks[2]);
-    m_labels[8].setupControl(this, root, "Label1_10");
-    m_controls.push_back(&m_labels[8]);
-    m_labels[7].setupControl(this, root, "Label2_10");
-    m_controls.push_back(&m_labels[7]);
-    m_labels[5].setupControl(this, root, "Label3_10");
-    m_controls.push_back(&m_labels[5]);
-    m_labels[6].setupControl(this, root, "Label4_10");
-    m_controls.push_back(&m_labels[6]);
-    m_labels[4].setupControl(this, root, "Label1_7");
-    m_controls.push_back(&m_labels[4]);
-    m_labels[3].setupControl(this, root, "Label2_7");
-    m_controls.push_back(&m_labels[3]);
-    m_labels[11].setupControl(this, root, "Label1_4");
-    m_controls.push_back(&m_labels[11]);
-    m_labels[2].setupControl(this, root, "Label1_6");
-    m_controls.push_back(&m_labels[2]);
-    m_labels[1].setupControl(this, root, "Label2_6");
-    m_controls.push_back(&m_labels[1]);
-    m_labels[0].setupControl(this, root, "Label1_5");
-    m_controls.push_back(&m_labels[0]);
-    m_labels[9].setupControl(this, root, "Label1_11");
-    m_controls.push_back(&m_labels[9]);
-    m_labels[10].setupControl(this, root, "Label2_11");
-    m_controls.push_back(&m_labels[10]);
-    m_labels[12].setupControl(this, root, "Label1_13");
-    m_controls.push_back(&m_labels[12]);
-    m_labels[13].setupControl(this, root, "Label2_13");
-    m_controls.push_back(&m_labels[13]);
-    m_labels[14].setupControl(this, root, "Label1_12");
-    m_controls.push_back(&m_labels[14]);
-    m_labels[15].setupControl(this, root, "Label2_12");
-    m_controls.push_back(&m_labels[15]);
-    m_labels[23].setupControl(this, root, "Label1_22");
-    m_controls.push_back(&m_labels[23]);
-    m_labels[22].setupControl(this, root, "Label2_22");
-    m_controls.push_back(&m_labels[22]);
-    m_labels[19].setupControl(this, root, "Label3_22");
-    m_controls.push_back(&m_labels[19]);
-    m_labels[21].setupControl(this, root, "Label4_22");
-    m_controls.push_back(&m_labels[21]);
-    m_labels[18].setupControl(this, root, "Label1_21");
-    m_controls.push_back(&m_labels[18]);
-    m_labels[17].setupControl(this, root, "Label2_21");
-    m_controls.push_back(&m_labels[17]);
-    m_labels[16].setupControl(this, root, "Label3_21");
-    m_controls.push_back(&m_labels[16]);
-    m_labels[24].setupControl(this, root, "Label1_25");
-    m_controls.push_back(&m_labels[24]);
-    m_labels[25].setupControl(this, root, "Label2_25");
-    m_controls.push_back(&m_labels[25]);
-    m_labels[26].setupControl(this, root, "Label1_27");
-    m_controls.push_back(&m_labels[26]);
-    m_labels[27].setupControl(this, root, "Label2_27");
-    m_controls.push_back(&m_labels[27]);
-    m_labels[28].setupControl(this, root, "Label1_28");
-    m_controls.push_back(&m_labels[28]);
-    m_labels[29].setupControl(this, root, "Label2_28");
-    m_controls.push_back(&m_labels[29]);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_dynamicHtmlText.setupControl(this, currentNode, std::string("DynamicHtmlText"));
+        m_controls.push_back(&m_dynamicHtmlText);
+    }
+    {
+        m_container.setupControl(this, currentNode, std::string("HowToPlayContainer_13"));
+        m_controls.push_back(&m_container);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_container.getFuiRenderNode();
+        {
+            m_enchantmentBook.setupControl(this, currentNode, std::string("iggy_EnchantmentBook"));
+            m_controls.push_back(&m_enchantmentBook);
+        }
+        {
+            m_enchantmentBooks[0].setupControl(this, currentNode, std::string("iggy_slot_Button_1"));
+            m_controls.push_back(&m_enchantmentBooks[0]);
+        }
+        {
+            m_enchantmentBooks[1].setupControl(this, currentNode, std::string("iggy_slot_Button_2"));
+            m_controls.push_back(&m_enchantmentBooks[1]);
+        }
+        {
+            m_enchantmentBooks[2].setupControl(this, currentNode, std::string("iggy_slot_Button_3"));
+            m_controls.push_back(&m_enchantmentBooks[2]);
+        }
+        currentNode = parentNode;
+    }
+    {
+        m_labels[8].setupControl(this, currentNode, std::string("Label1_10"));
+        m_controls.push_back(&m_labels[8]);
+    }
+    {
+        m_labels[7].setupControl(this, currentNode, std::string("Label2_10"));
+        m_controls.push_back(&m_labels[7]);
+    }
+    {
+        m_labels[5].setupControl(this, currentNode, std::string("Label3_10"));
+        m_controls.push_back(&m_labels[5]);
+    }
+    {
+        m_labels[6].setupControl(this, currentNode, std::string("Label4_10"));
+        m_controls.push_back(&m_labels[6]);
+    }
+    {
+        m_labels[4].setupControl(this, currentNode, std::string("Label1_7"));
+        m_controls.push_back(&m_labels[4]);
+    }
+    {
+        m_labels[3].setupControl(this, currentNode, std::string("Label2_7"));
+        m_controls.push_back(&m_labels[3]);
+    }
+    {
+        m_labels[11].setupControl(this, currentNode, std::string("Label1_4"));
+        m_controls.push_back(&m_labels[11]);
+    }
+    {
+        m_labels[2].setupControl(this, currentNode, std::string("Label1_6"));
+        m_controls.push_back(&m_labels[2]);
+    }
+    {
+        m_labels[1].setupControl(this, currentNode, std::string("Label2_6"));
+        m_controls.push_back(&m_labels[1]);
+    }
+    {
+        m_labels[0].setupControl(this, currentNode, std::string("Label1_5"));
+        m_controls.push_back(&m_labels[0]);
+    }
+    {
+        m_labels[9].setupControl(this, currentNode, std::string("Label1_11"));
+        m_controls.push_back(&m_labels[9]);
+    }
+    {
+        m_labels[10].setupControl(this, currentNode, std::string("Label2_11"));
+        m_controls.push_back(&m_labels[10]);
+    }
+    {
+        m_labels[12].setupControl(this, currentNode, std::string("Label1_13"));
+        m_controls.push_back(&m_labels[12]);
+    }
+    {
+        m_labels[13].setupControl(this, currentNode, std::string("Label2_13"));
+        m_controls.push_back(&m_labels[13]);
+    }
+    {
+        m_labels[14].setupControl(this, currentNode, std::string("Label1_12"));
+        m_controls.push_back(&m_labels[14]);
+    }
+    {
+        m_labels[15].setupControl(this, currentNode, std::string("Label2_12"));
+        m_controls.push_back(&m_labels[15]);
+    }
+    {
+        m_labels[23].setupControl(this, currentNode, std::string("Label1_22"));
+        m_controls.push_back(&m_labels[23]);
+    }
+    {
+        m_labels[22].setupControl(this, currentNode, std::string("Label2_22"));
+        m_controls.push_back(&m_labels[22]);
+    }
+    {
+        m_labels[19].setupControl(this, currentNode, std::string("Label3_22"));
+        m_controls.push_back(&m_labels[19]);
+    }
+    {
+        m_labels[21].setupControl(this, currentNode, std::string("Label4_22"));
+        m_controls.push_back(&m_labels[21]);
+    }
+    {
+        m_labels[18].setupControl(this, currentNode, std::string("Label1_21"));
+        m_controls.push_back(&m_labels[18]);
+    }
+    {
+        m_labels[17].setupControl(this, currentNode, std::string("Label2_21"));
+        m_controls.push_back(&m_labels[17]);
+    }
+    {
+        m_labels[16].setupControl(this, currentNode, std::string("Label3_21"));
+        m_controls.push_back(&m_labels[16]);
+    }
+    {
+        m_labels[24].setupControl(this, currentNode, std::string("Label1_25"));
+        m_controls.push_back(&m_labels[24]);
+    }
+    {
+        m_labels[25].setupControl(this, currentNode, std::string("Label2_25"));
+        m_controls.push_back(&m_labels[25]);
+    }
+    {
+        m_labels[26].setupControl(this, currentNode, std::string("Label1_27"));
+        m_controls.push_back(&m_labels[26]);
+    }
+    {
+        m_labels[27].setupControl(this, currentNode, std::string("Label2_27"));
+        m_controls.push_back(&m_labels[27]);
+    }
+    {
+        m_labels[28].setupControl(this, currentNode, std::string("Label1_28"));
+        m_controls.push_back(&m_labels[28]);
+    }
+    {
+        m_labels[29].setupControl(this, currentNode, std::string("Label2_28"));
+        m_controls.push_back(&m_labels[29]);
+    }
     return 1;
 }
 
@@ -312,7 +384,7 @@ void UIScene_HowToPlay::updateTooltips()
     {
         if (m_page + 1 != EHowToPlayPage_Count)
             first = IDS_HOW_TO_PLAY_NEXT;
-        gConsoleUIController.SetTooltips(m_playerId, first, IDS_TOOLTIPS_BACK, 0x403e4e5, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
+        gConsoleUIController.SetTooltips(m_playerId, first, IDS_TOOLTIPS_BACK, IDS_HOW_TO_PLAY_PREV, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, false, false);
     }
 }
 
@@ -336,40 +408,41 @@ void UIScene_HowToPlay::handleInput(int, int action, bool repeat, bool pressed, 
     switch (action)
     {
     case EControllerActions_MenuCancel:
-        if (!pressed)
-            return;
-        navigateBack();
-        handled = true;
-        return;
+        if (pressed)
+        {
+            navigateBack();
+            handled = true;
+        }
+        break;
     case EControllerActions_MenuA:
-        if (!pressed)
-            return;
-        if (m_page + 1 != EHowToPlayPage_Count)
+        if (pressed)
         {
-            StartPage(static_cast<EHowToPlayPage>(m_page + 1));
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+            if (m_page + 1 != EHowToPlayPage_Count)
+            {
+                StartPage(static_cast<EHowToPlayPage>(m_page + 1));
+                gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+            }
+            handled = true;
         }
-        handled = true;
-        return;
+        break;
     case EControllerActions_MenuX:
-        if (!pressed)
-            return;
-        if (m_pageCount <= m_page - 1)
+        if (pressed)
         {
-            StartPage(static_cast<EHowToPlayPage>(m_page - 1));
-            gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+            if (m_page - 1 >= m_pageCount)
+            {
+                StartPage(static_cast<EHowToPlayPage>(m_page - 1));
+                gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+            }
+            handled = true;
         }
-        handled = true;
-        return;
+        break;
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
     case EControllerActions_MenuPageUp:
     case EControllerActions_MenuPageDown:
+        sendInputToMovie(action, repeat, pressed, released);
         break;
-    default:
-        return;
     }
-    sendInputToMovie(action, repeat, pressed, released);
 }
 
 void UIScene_HowToPlay::customDrawEnchantmentFont(fuiRect* rect, int variant)

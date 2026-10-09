@@ -14,19 +14,20 @@ BeaconMenu::BeaconMenu(boost::shared_ptr<Container> playerContainer,
     mPaymentSlot = new PaymentSlot(beaconContainer, 0, 136, 110);
     addSlot(mPaymentSlot);
 
-    int row;
-    int group;
-    for (row = 0; row < 3; ++row)
+    int xo = 36;
+    int yo = 137;
+    for (int i = 0; i < 3; ++i)
     {
-        for (group = 0; group < 3; ++group)
+        for (int j = 0; j < 9; ++j)
         {
-            addSlot(new Slot(playerContainer, row * 9 + group * 3 + 9, 36 + group * 54, 137 + row * 18));
-            addSlot(new Slot(playerContainer, row * 9 + group * 3 + 10, 54 + group * 54, 137 + row * 18));
-            addSlot(new Slot(playerContainer, row * 9 + group * 3 + 11, 72 + group * 54, 137 + row * 18));
+            addSlot(new Slot(playerContainer, j + i * 9 + 9, xo + j * 18, yo + i * 18));
         }
     }
-    for (group = 0; group < 9; ++group)
-        addSlot(new Slot(playerContainer, group, 36 + group * 18, 195));
+
+    for (int k = 0; k < 9; ++k)
+    {
+        addSlot(new Slot(playerContainer, k, xo + k * 18, yo + 58));
+    }
 }
 
 void BeaconMenu::addSlotListener(net_minecraft_world_inventory::ContainerListener* listener)
@@ -72,29 +73,29 @@ not_null_ptr<ItemInstance> BeaconMenu::quickMoveStack(boost::shared_ptr<Player> 
 
         if (index == 0)
         {
-            if (moveItemStackTo(item, 1, 37, true, true, true) != true)
+            if (!moveItemStackTo(item, 1, 37, true, true, true))
                 return ItemInstance::EMPTY;
             slot->onQuickCraft(item, result);
         }
         else if (!mPaymentSlot->hasItem() && mPaymentSlot->mayPlace(item) &&
                  item->getCount() == 1)
         {
-            if (moveItemStackTo(item, 0, 1, false, true, true) != true)
+            if (!moveItemStackTo(item, 0, 1, false, true, true))
                 return ItemInstance::EMPTY;
         }
         else if (index >= 1 && index < 28)
         {
-            if (moveItemStackTo(item, 28, 37, false, true, true) != true)
+            if (!moveItemStackTo(item, 28, 37, false, true, true))
                 return ItemInstance::EMPTY;
         }
         else if (index >= 28 && index < 37)
         {
-            if (moveItemStackTo(item, 1, 28, false, true, true) != true)
+            if (!moveItemStackTo(item, 1, 28, false, true, true))
                 return ItemInstance::EMPTY;
         }
         else
         {
-            if (moveItemStackTo(item, 1, 37, false, true, true) != true)
+            if (!moveItemStackTo(item, 1, 37, false, true, true))
                 return ItemInstance::EMPTY;
         }
 
@@ -105,7 +106,8 @@ not_null_ptr<ItemInstance> BeaconMenu::quickMoveStack(boost::shared_ptr<Player> 
 
         if (item->getCount() == result->getCount())
             return ItemInstance::EMPTY;
-        slot->onTake(player, item);
+        else
+            slot->onTake(player, item);
     }
     return result;
 }

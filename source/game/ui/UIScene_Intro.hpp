@@ -4,9 +4,6 @@
 #include <string>
 
 #include "game/ui/UIScene.hpp"
-#define setupControl setupControlBase
-#include "game/ui/UIControl_Base.hpp"
-#undef setupControl
 #include "game/ui/UIControl_Touch.hpp"
 
 class UILayer;

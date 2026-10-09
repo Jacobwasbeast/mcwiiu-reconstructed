@@ -55,7 +55,7 @@ UIScene_AnvilMenu::UIScene_AnvilMenu(int type, void* data, UILayer* layer)
     m_inventory = boost::shared_ptr<Inventory>();
     m_anvilMenu = 0;
     m_itemName = boost::shared_ptr<CensoredString>(
-        new CensoredString(&m_nameUpdateAction, 0xad36b773, 0x62950b66));
+        new CensoredString(&m_nameUpdateAction, IDS_STRINGVERIFY_AWAITING_APPROVAL, IDS_STRINGVERIFY_CENSORED));
     m_pendingName = 0;
     initialiseMovie();
     m_crossVisible = false;
@@ -65,10 +65,9 @@ UIScene_AnvilMenu::UIScene_AnvilMenu(int type, void* data, UILayer* layer)
     m_inventory = sceneData->inventory;
 
     Minecraft* minecraft = Minecraft::GetInstance();
-    MultiPlayerGameMode* gameMode = minecraft->mGameModes[type];
-    if (gameMode != 0)
+    if (minecraft->mGameModes[type] != 0)
     {
-        Tutorial* tutorial = gameMode->getTutorial();
+        Tutorial* tutorial = Minecraft::GetInstance()->mGameModes[type]->getTutorial();
         if (tutorial != 0)
         {
             m_previousTutorialState = tutorial->currentState;
@@ -87,8 +86,8 @@ UIScene_AnvilMenu::UIScene_AnvilMenu(int type, void* data, UILayer* layer)
     m_ingredientSlot.addSlots(0, 1);
     m_ingredientSlot2.addSlots(1, 1);
     m_resultSlot.addSlots(2, 1);
-    std::wstring costLabel(L"");
     bool costLabelSafe = false;
+    std::wstring costLabel(L"");
     if (m_anvilMenu->mRepairCost > 0)
     {
         bool showCost = true;
@@ -106,14 +105,15 @@ UIScene_AnvilMenu::UIScene_AnvilMenu(int type, void* data, UILayer* layer)
             wchar_t label[256];
             swprintf(label, 0x100, L10N::GetString(IDS_REPAIR_COST), m_anvilMenu->mRepairCost);
             costLabel = label;
-            if (m_anvilMenu->getSlot(2)->mayPickup(
-                    boost::dynamic_pointer_cast<Player>(m_inventory->m_player->shared_from_this())) != 1)
+            if (!m_anvilMenu->getSlot(2)->mayPickup(
+                    boost::dynamic_pointer_cast<Player>(m_inventory->m_player->shared_from_this())))
                 costLabelSafe = true;
         }
     }
     setCostLabel(costLabel, costLabelSafe);
 
     delete sceneData;
+    m_ignoreInput = false;
     gApp.SetRichPresenceContext(type, 0xc);
 }
 
@@ -132,7 +132,7 @@ bool UIScene_AnvilMenu::IsSectionSlotList(IUIScene_AbstractContainerMenu::EScene
     }
 }
 
-unsigned int UIScene_AnvilMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_AnvilMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     static const unsigned char columns[] = { 9, 9, 1, 1, 1 };
     switch (section)
@@ -148,7 +148,7 @@ unsigned int UIScene_AnvilMenu::getSectionColumns(IUIScene_AbstractContainerMenu
     }
 }
 
-unsigned int UIScene_AnvilMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_AnvilMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
     switch (section)
     {
@@ -172,42 +172,9 @@ unsigned int UIScene_AnvilMenu::GetSectionAndSlotInDirection(IUIScene_AbstractCo
     IUIScene_AbstractContainerMenu::ESceneSection target = section;
     int horizontalOffset = 0;
 
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_AnvilHotbar)
+    switch (section)
     {
-        if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-        {
-            if (m_smallInventory == 0)
-                target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilInventory;
-            else if (*x < 4)
-                target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem1;
-            else if (*x < 5)
-                target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem2;
-            else
-                target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilResult;
-        }
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        {
-            target = *x < 4 ? IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem1 : IUIScene_AbstractContainerMenu::ESceneSection_AnvilName;
-        }
-    }
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_AnvilInventory)
-    {
-        if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-        {
-            if (*x < 4)
-                target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem1;
-            else if (*x < 5)
-                target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem2;
-            else
-                target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilResult;
-        }
-        else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        {
-            target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilHotbar;
-        }
-    }
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem1)
-    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem1:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
             target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilName;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
@@ -219,9 +186,8 @@ unsigned int UIScene_AnvilMenu::GetSectionAndSlotInDirection(IUIScene_AbstractCo
             target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilResult;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
             target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem2;
-    }
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem2)
-    {
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem2:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
             target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilName;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
@@ -233,9 +199,8 @@ unsigned int UIScene_AnvilMenu::GetSectionAndSlotInDirection(IUIScene_AbstractCo
             target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem1;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
             target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilResult;
-    }
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_AnvilResult)
-    {
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_AnvilResult:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
             target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilName;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
@@ -247,9 +212,8 @@ unsigned int UIScene_AnvilMenu::GetSectionAndSlotInDirection(IUIScene_AbstractCo
             target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem2;
         else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
             target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem1;
-    }
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_AnvilName)
-    {
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_AnvilName:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
         {
             target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilHotbar;
@@ -259,6 +223,44 @@ unsigned int UIScene_AnvilMenu::GetSectionAndSlotInDirection(IUIScene_AbstractCo
         {
             target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem2;
         }
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_AnvilInventory:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilHotbar;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            if (*x <= 3)
+                target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem1;
+            else if (*x <= 4)
+                target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem2;
+            else
+                target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilResult;
+        }
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_AnvilHotbar:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            if (m_smallInventory != 0)
+            {
+                if (*x <= 3)
+                    target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem1;
+                else if (*x <= 4)
+                    target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem2;
+                else
+                    target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilResult;
+            }
+            else
+            {
+                target = IUIScene_AbstractContainerMenu::ESceneSection_AnvilInventory;
+            }
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            target = *x <= 3 ? IUIScene_AbstractContainerMenu::ESceneSection_AnvilItem1 : IUIScene_AbstractContainerMenu::ESceneSection_AnvilName;
+        }
+        break;
     }
 
     updateSlotPosition(section,
@@ -336,8 +338,8 @@ void UIScene_AnvilMenu::GetItemScreenData(IUIScene_AbstractContainerMenu::EScene
     }
     if (IsSectionSlotList(section))
     {
-        int rows = static_cast<int>(getSectionRows(section));
-        int columns = static_cast<int>(getSectionColumns(section));
+        int rows = getSectionRows(section);
+        int columns = getSectionColumns(section);
         float cellHeight = itemSize.y / static_cast<float>(rows);
         float cellWidth = itemSize.x / static_cast<float>(columns);
         size->y = cellHeight;
@@ -432,7 +434,7 @@ int UIScene_AnvilMenu::getSectionStartOffset(IUIScene_AbstractContainerMenu::ESc
 void UIScene_AnvilMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section,
                                                 int slot, int direction, bool wrap)
 {
-    const int columns = static_cast<int>(getSectionColumns(section));
+    const int columns = getSectionColumns(section);
     const int target = direction * columns + slot;
     UIControl_SlotList* list = static_cast<UIControl_SlotList*>(0);
     switch (section)
@@ -655,7 +657,8 @@ void UIScene_AnvilMenu::updateItemName()
         output.writeUTF(m_itemName->raw());
         std::wstring channel = censored ? L"MC|RIName" : L"MC|ItemName";
         Minecraft::GetInstance()->getConnection(getPad())->send(
-            boost::shared_ptr<Packet>(new ServerboundCustomPayloadPacket(channel, bytes.toByteArray())));
+            boost::shared_ptr<ServerboundCustomPayloadPacket>(
+                new ServerboundCustomPayloadPacket(channel, bytes.toByteArray())));
     }
 }
 

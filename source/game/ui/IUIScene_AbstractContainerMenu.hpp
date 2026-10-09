@@ -186,8 +186,8 @@ public:
     virtual bool IsSectionSlotList(ESceneSection section);
     virtual unsigned int CanHaveFocus(ESceneSection section);
     virtual unsigned int IsVisible(ESceneSection section);
-    virtual unsigned int getSectionColumns(ESceneSection section) = 0;
-    virtual unsigned int getSectionRows(ESceneSection section) = 0;
+    virtual int getSectionColumns(ESceneSection section) = 0;
+    virtual int getSectionRows(ESceneSection section) = 0;
     virtual unsigned int GetSectionAndSlotInDirection(ESceneSection section, ETapState tapState,
                                                       int* slotX, int* slotY) = 0;
     virtual void GetPositionOfSection(ESceneSection section, _UIVec2D* position) = 0;

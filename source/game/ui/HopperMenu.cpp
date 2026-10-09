@@ -41,15 +41,15 @@ not_null_ptr<ItemInstance> HopperMenu::quickMoveStack(boost::shared_ptr<Player> 
         not_null_ptr<ItemInstance> item = slot->getItem();
         result = item->copy();
         if ((unsigned int)index < m_container->getContainerSize()) {
-            if (moveItemStackTo(item, (int)m_container->getContainerSize() + 27,
-                                (int)m_slots.size(), false, true, true) != 1) {
-                if (moveItemStackTo(item, (int)m_container->getContainerSize(),
-                                    (int)m_slots.size(), true, true, true) != 1) {
+            if (!moveItemStackTo(item, (int)m_container->getContainerSize() + 27,
+                                (int)m_slots.size(), false, true, true)) {
+                if (!moveItemStackTo(item, (int)m_container->getContainerSize(),
+                                    (int)m_slots.size(), true, true, true)) {
                     return ItemInstance::EMPTY;
                 }
             }
-        } else if (moveItemStackTo(item, 0, (int)m_container->getContainerSize(),
-                                   false, true, true) != 1) {
+        } else if (!moveItemStackTo(item, 0, (int)m_container->getContainerSize(),
+                                   false, true, true)) {
             return ItemInstance::EMPTY;
         }
         if (item->getCount() == 0) {

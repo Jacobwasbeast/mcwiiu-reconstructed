@@ -9,8 +9,11 @@
 #include "game/util/Math.hpp"
 
 FJ_TutorialPopup::FJ_TutorialPopup(fuiRenderNode* pRenderNode)
-    : FJ_FuiNode(pRenderNode), m_backgroundPanel(NULL), m_iconHolder(NULL), m_bitmap(NULL)
+    : FJ_FuiNode(pRenderNode)
 {
+    m_iconHolder = NULL;
+    m_bitmap = NULL;
+    m_backgroundPanel = NULL;
     m_titleY = (int)getChildByName(std::string("Title"))->getY();
     m_exitScreenShotY = (int)getChildByName(std::string("ExitScreenShot"))->getY();
     m_descriptionY = (int)getChildByName(std::string("Description"))->getY();
@@ -55,6 +58,8 @@ void FJ_TutorialPopup::ShowIconHolder(bool visible)
 
 void FJ_TutorialPopup::AdjustLayout(bool reposition)
 {
+    int y = 0;
+    int height = 0;
     setY(0.0f);
     if (reposition)
     {
@@ -63,12 +68,10 @@ void FJ_TutorialPopup::AdjustLayout(bool reposition)
     }
 
     FJ_FuiNode* title = getChildByName(std::string("Title"));
-    int y = 0;
-    int height = 0;
     if (title->isVisible())
     {
         y = m_titleY;
-        height = (int)(title->getHeight() < (float)m_titleHeight ? (float)m_titleHeight : title->getHeight());
+        height = (int)((float)m_titleHeight > title->getHeight() ? (float)m_titleHeight : title->getHeight());
     }
 
     FJ_FuiNode* exitScreenShot = getChildByName(std::string("ExitScreenShot"));
@@ -104,22 +107,30 @@ void FJ_TutorialPopup::AdjustLayout(bool reposition)
 
 fuiRenderNode* FJ_TutorialPopup::GetBitmapData(int type)
 {
-    const char* symbol = "icon_armour";
     switch (type)
     {
-    case 2: symbol = "icon_brewing"; break;
-    case 3: symbol = "icon_decoration"; break;
-    case 4: symbol = "icon_food"; break;
-    case 5: symbol = "icon_Materials"; break;
-    case 6: symbol = "icon_mechanisms"; break;
-    case 7: symbol = "icon_misc"; break;
-    case 8: symbol = "icon_Redstone_and_Transport"; break;
-    case 9: symbol = "icon_structures"; break;
-    case 10: symbol = "icon_tools"; break;
-    case 11: symbol = "icon_transport"; break;
-    default: break;
+    case 2:
+        return (fuiRenderNode*)gFui->createNodeFromSymbol("icon_brewing", m_pRenderNode);
+    case 3:
+        return (fuiRenderNode*)gFui->createNodeFromSymbol("icon_decoration", m_pRenderNode);
+    case 4:
+        return (fuiRenderNode*)gFui->createNodeFromSymbol("icon_food", m_pRenderNode);
+    case 5:
+        return (fuiRenderNode*)gFui->createNodeFromSymbol("icon_Materials", m_pRenderNode);
+    case 6:
+        return (fuiRenderNode*)gFui->createNodeFromSymbol("icon_mechanisms", m_pRenderNode);
+    case 7:
+        return (fuiRenderNode*)gFui->createNodeFromSymbol("icon_misc", m_pRenderNode);
+    case 8:
+        return (fuiRenderNode*)gFui->createNodeFromSymbol("icon_Redstone_and_Transport", m_pRenderNode);
+    case 9:
+        return (fuiRenderNode*)gFui->createNodeFromSymbol("icon_structures", m_pRenderNode);
+    case 10:
+        return (fuiRenderNode*)gFui->createNodeFromSymbol("icon_tools", m_pRenderNode);
+    case 11:
+        return (fuiRenderNode*)gFui->createNodeFromSymbol("icon_transport", m_pRenderNode);
     }
-    return (fuiRenderNode*)gFui->createNodeFromSymbol(symbol, m_pRenderNode);
+    return (fuiRenderNode*)gFui->createNodeFromSymbol("icon_armour", m_pRenderNode);
 }
 
 void FJ_TutorialPopup::SetupIconHolder(int type)
@@ -133,18 +144,22 @@ void FJ_TutorialPopup::SetupIconHolder(int type)
         m_iconHolder->getParent()->removeChild(m_iconHolder, true);
         m_iconHolder = NULL;
     }
-    if (m_bitmap != NULL && m_bitmap->getParent() != NULL)
+    if (m_bitmap != NULL)
     {
-        static_cast<fuiRenderNodeTimeline*>(m_bitmap->getParent())->removeChild(m_bitmap, true);
-        m_bitmap = NULL;
+        fuiRenderNodeTimeline* parent = static_cast<fuiRenderNodeTimeline*>(m_bitmap->getParent());
+        if (parent != NULL)
+        {
+            parent->removeChild(m_bitmap, true);
+            m_bitmap = NULL;
+        }
     }
 
     if (type == 0)
     {
         fuiRect rect;
         rect.xMin = (float)width;
+        rect.yMin = rect.xMin;
         rect.xMax = rect.xMin + holder->getWidth() - (float)(width * 2);
-        rect.yMin = (float)width;
         rect.yMax = rect.yMin + holder->getHeight() - (float)(width * 2);
         fuiRenderNodeCodeGenRect* renderNode = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "iggy_slot_IconHolder");
         renderNode->setAlpha(0.25f);

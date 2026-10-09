@@ -224,8 +224,7 @@ void FJ_TextInput::Init(std::wstring name, int id)
         fuiRenderNodeTimeline* timeline = static_cast<fuiRenderNodeTimeline*>(timelineNode);
         m_pTextField = timeline->getChildAt(0)->asEditText();
     }
-    fuiRect bounds = m_pTextField->getBounds();
-    m_pTextField->setScrollRect(bounds);
+    m_pTextField->setScrollRect(m_pTextField->getBounds());
     SetLabelAlignment(4);
     m_isLabel = false;
     if (!m_bUseScale)

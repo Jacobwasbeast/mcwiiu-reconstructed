@@ -59,10 +59,8 @@ void FJ_Slider::UpdateSliderScaleMask()
     if (getScaleX() != 1.0f)
     {
         const float backgroundWidth = background->getWidth();
-        const float outlineWidth = outline->getWidth();
-        const float outlineBackgroundWidth = background->getWidth();
-        const float sliderMaskWidth = m_sliderMask->getWidth();
-        const float maskBackgroundWidth = background->getWidth();
+        const float outlineExtra = outline->getWidth() - background->getWidth();
+        const float sliderMaskExtra = m_sliderMask->getWidth() - background->getWidth();
         background->setScaleX(1.0f / getScaleX());
         outline->setScaleX(1.0f / getScaleX());
         m_sliderMask->setScaleX(1.0f / getScaleX());
@@ -75,8 +73,8 @@ void FJ_Slider::UpdateSliderScaleMask()
 
         fuiRect rect;
         rect.xMin = 0.0f;
-        rect.xMax = backgroundWidth * getScaleX();
         rect.yMin = 0.0f;
+        rect.xMax = backgroundWidth * getScaleX();
         rect.yMax = background->getHeight();
         fuiRenderNodeCodeGenRect* maskRender = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "bgMask");
         FJ_FuiNode* mask = new FJ_FuiNode(maskRender);
@@ -90,13 +88,13 @@ void FJ_Slider::UpdateSliderScaleMask()
         mask = new FJ_FuiNode(maskRender);
         maskRender->setFuiNode(mask);
         m_tintInactiveMask->addMask(mask);
-        rect.xMax = backgroundWidth * getScaleX() + (sliderMaskWidth - maskBackgroundWidth);
+        rect.xMax = backgroundWidth * getScaleX() + sliderMaskExtra;
         rect.yMax = m_sliderMask->getHeight();
         maskRender = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "bghMask");
         mask = new FJ_FuiNode(maskRender);
         maskRender->setFuiNode(mask);
         m_sliderMask->addMask(mask);
-        rect.xMax = backgroundWidth * getScaleX() + (outlineWidth - outlineBackgroundWidth);
+        rect.xMax = backgroundWidth * getScaleX() + outlineExtra;
         rect.yMax = outline->getHeight();
         maskRender = new fuiRenderNodeCodeGenRect(getStage()->m_pRenderNode, &rect, "outlineMask");
         mask = new FJ_FuiNode(maskRender);
@@ -111,10 +109,13 @@ void FJ_Slider::UpdateSliderScaleMask()
 
 void FJ_Slider::SetSlider(int value)
 {
-    const float range = (float)(m_maxValue - m_minValue);
-    const float position = (float)(value - m_minValue) / range;
+    const int offset = value - m_minValue;
+    const int range = m_maxValue - m_minValue;
+    const float ratio = (float)offset / (float)range;
+    const float width = m_rightPosition - m_leftPosition;
+    const float position = width * ratio + m_leftPosition;
     FJ_FuiNode* slider = getChildByName(std::string("Slider"))->asMovieClip();
-    slider->setX((m_rightPosition - m_leftPosition) * position + m_leftPosition);
+    slider->setX(position);
 }
 
 void FJ_Slider::ChangeState(int state)
@@ -184,10 +185,7 @@ void FJ_Slider::MoveSlider(int amount)
 {
     const int oldValue = m_sliderCurrent;
     m_sliderCurrent += amount;
-    int clamped = std::min(m_maxValue, m_sliderCurrent);
-    if (clamped < m_minValue)
-        clamped = m_minValue;
-    m_sliderCurrent = clamped;
+    m_sliderCurrent = std::max(m_minValue, std::min(m_maxValue, m_sliderCurrent));
     if (oldValue != m_sliderCurrent)
     {
         SetSlider(m_sliderCurrent);
@@ -204,10 +202,9 @@ void FJ_Slider::keyDownHandler(FJ_Event* event)
 {
     if (!m_enabled)
         return;
-    const int ticks = m_keyPressTicks + 1;
-    if (!m_repeat || ticks < m_repeatDelay)
+    if (!m_repeat || m_keyPressTicks + 1 < m_repeatDelay)
     {
-        m_keyPressTicks = ticks;
+        m_keyPressTicks++;
     }
     else
     {
@@ -288,18 +285,11 @@ void FJ_Slider::Init(const std::wstring& name, int id, int minValue, int maxValu
 void FJ_Slider::SetRelativeSliderPos(float position)
 {
     const int oldValue = m_sliderCurrent;
-    float clamped = std::min(1.0f, position);
-    if (clamped < 0.0f)
-        clamped = 0.0f;
-    float bias = 0.0f;
-    if (m_minValue > 0 && clamped > 0.0f)
-        bias = (float)m_minValue;
+    position = std::max(0.0f, std::min(1.0f, position));
     const int range = m_maxValue - m_minValue;
-    m_sliderCurrent = Math::round((float)range * clamped + bias);
-    int bounded = std::min(m_maxValue, m_sliderCurrent);
-    if (bounded < m_minValue)
-        bounded = m_minValue;
-    m_sliderCurrent = bounded;
+    const float bias = m_minValue > 0 && position > 0.0f ? (float)m_minValue : 0.0f;
+    m_sliderCurrent = Math::round((float)range * position + bias);
+    m_sliderCurrent = std::max(m_minValue, std::min(m_maxValue, m_sliderCurrent));
     if (oldValue != m_sliderCurrent)
     {
         SetSlider(m_sliderCurrent);
@@ -319,11 +309,8 @@ float FJ_Slider::GetRealWidth()
 
 void FJ_Slider::SetSliderValue(int value)
 {
-    int bounded = std::min(m_maxValue, value);
-    if (bounded < m_minValue)
-        bounded = m_minValue;
-    m_sliderCurrent = bounded;
-    SetSlider(bounded);
+    m_sliderCurrent = std::max(m_minValue, std::min(m_maxValue, value));
+    SetSlider(m_sliderCurrent);
 }
 
 void FJ_Slider::EnableSlider(bool enabled)
@@ -336,19 +323,17 @@ void FJ_Slider::EnableSlider(bool enabled)
 
 void FJ_Slider::GetLabelTooWide(fuiRenderNodeEditText* textField)
 {
-    int widest = m_maxLabelWidth;
-    if (static_cast<float>(widest) <= textField->m_textWidth)
-        widest = static_cast<int>(textField->m_textWidth);
+    const float labelWidth = static_cast<float>(m_maxLabelWidth);
+    const int widest = static_cast<int>(labelWidth > textField->m_textWidth ? labelWidth : textField->m_textWidth);
     const float scaledWidth = static_cast<float>(widest) * 1.1f;
     const float currentWidth = static_cast<float>(m_newWidth);
-    const int newWidth = scaledWidth <= currentWidth ? static_cast<int>(currentWidth) : static_cast<int>(scaledWidth);
-    if (m_newWidth < newWidth)
-        m_newWidth = newWidth;
-    if (!m_labelOverflowResolved && m_wrapWidth < widest)
+    const int newWidth = static_cast<int>(scaledWidth > currentWidth ? scaledWidth : currentWidth);
+    m_newWidth = newWidth > m_newWidth ? newWidth : m_newWidth;
+    if (!m_labelOverflowResolved && widest > m_wrapWidth)
     {
-        m_ellipsisWidth = static_cast<int>(static_cast<float>(m_wrapWidth) * 0.8f);
         m_labelTooWide = true;
         m_labelOverflowResolved = true;
+        m_ellipsisWidth = static_cast<int>(static_cast<float>(m_wrapWidth) * 0.8f);
     }
 }
 

@@ -395,8 +395,8 @@ void SuperflatMenu::MapOceanMonument::write(FlatGeneratorInfo& info)
     if (isChecked())
     {
         const int separation = mSub2.getPosition();
-        const long long values = getSpacingAndSeparationFromPercentage(mSub.getPosition(), separation, OCEAN_MONUMENT_MIN_SEPARATION);
-        info.setOceanMonument(static_cast<int>(values >> 32), static_cast<int>(values));
+        const std::pair<int, int> values = getSpacingAndSeparationFromPercentage(mSub.getPosition(), separation, OCEAN_MONUMENT_MIN_SEPARATION);
+        info.setOceanMonument(values.first, values.second);
     }
     else
     {
@@ -421,8 +421,8 @@ void SuperflatMenu::MapShipwrecks::write(FlatGeneratorInfo& info)
     if (isChecked())
     {
         const int separation = mSub2.getPosition();
-        const long long values = getSpacingAndSeparationFromPercentage(mSub.getPosition(), separation, SHIPWRECK_MIN_SEPARATION);
-        info.setShipwrecks(static_cast<int>(values >> 32), static_cast<int>(values));
+        const std::pair<int, int> values = getSpacingAndSeparationFromPercentage(mSub.getPosition(), separation, SHIPWRECK_MIN_SEPARATION);
+        info.setShipwrecks(values.first, values.second);
     }
     else
     {
@@ -447,8 +447,8 @@ void SuperflatMenu::MapWoodlandMansion::write(FlatGeneratorInfo& info)
     if (isChecked())
     {
         const int separation = mSub2.getPosition();
-        const long long values = getSpacingAndSeparationFromPercentage(mSub.getPosition(), separation, WOODLAND_MANSION_MIN_SEPARATION);
-        info.setWoodlandMansion(static_cast<int>(values >> 32), static_cast<int>(values));
+        const std::pair<int, int> values = getSpacingAndSeparationFromPercentage(mSub.getPosition(), separation, WOODLAND_MANSION_MIN_SEPARATION);
+        info.setWoodlandMansion(values.first, values.second);
     }
     else
     {

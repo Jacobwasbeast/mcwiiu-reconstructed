@@ -69,7 +69,7 @@ not_null_ptr<ItemInstance> MerchantMenu::quickMoveStack(boost::shared_ptr<Player
             result = item->copy();
             if (index == 2)
             {
-                if (moveItemStackTo(item, 3, 39, true, true, true) != 1)
+                if (!moveItemStackTo(item, 3, 39, true, true, true))
                 {
                     return ItemInstance::EMPTY;
                 }
@@ -77,21 +77,21 @@ not_null_ptr<ItemInstance> MerchantMenu::quickMoveStack(boost::shared_ptr<Player
             }
             else if (index == 0 || index == 1)
             {
-                if (moveItemStackTo(item, 3, 39, false, true, true) != 1)
+                if (!moveItemStackTo(item, 3, 39, false, true, true))
                 {
                     return ItemInstance::EMPTY;
                 }
             }
             else if (index >= 3 && index < 30)
             {
-                if (moveItemStackTo(item, 30, 39, false, true, true) != 1)
+                if (!moveItemStackTo(item, 30, 39, false, true, true))
                 {
                     return ItemInstance::EMPTY;
                 }
             }
             else if (index >= 30 && index < 39)
             {
-                if (moveItemStackTo(item, 3, 30, false, true, true) != 1)
+                if (!moveItemStackTo(item, 3, 30, false, true, true))
                 {
                     return ItemInstance::EMPTY;
                 }

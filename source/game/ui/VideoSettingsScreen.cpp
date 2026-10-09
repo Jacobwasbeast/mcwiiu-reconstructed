@@ -26,25 +26,21 @@ void VideoSettingsScreen::init()
         Options::Option::renderDistance, Options::Option::invertMouse, Options::Option::sound,
         Options::Option::framerateLimit, Options::Option::sensitivity
     };
-    int buttonIndex;
-    for (buttonIndex = 0; buttonIndex < 8; ++buttonIndex)
+    for (int i = 0; i < 8; ++i)
     {
-        const Options::Option* option = videoOptions[buttonIndex];
-        int x = mWidth / 2 - 155 + (buttonIndex % 2) * 160;
-        int y = mHeight / 6 + (buttonIndex / 2) * 24;
-        if (option->isProgress())
+        const Options::Option* option = videoOptions[i];
+        if (!option->isProgress())
         {
-            std::wstring message = mOptions->getMessage(option);
-            int id = option->getId();
-            double value = mOptions->getProgressValue(option);
-            mButtons.push_back(new SlideButton(id, x, y, option, message,
-                                               static_cast<float>(value)));
+            mButtons.push_back(new SmallButton(option->getId(), mWidth / 2 - 155 + i % 2 * 160,
+                                               mHeight / 6 + 24 * (i >> 1), option,
+                                               mOptions->getMessage(option)));
         }
         else
         {
-            std::wstring message = mOptions->getMessage(option);
-            int id = option->getId();
-            mButtons.push_back(new SmallButton(id, x, y, option, message));
+            mButtons.push_back(new SlideButton(option->getId(), mWidth / 2 - 155 + i % 2 * 160,
+                                               mHeight / 6 + 24 * (i >> 1), option,
+                                               mOptions->getMessage(option),
+                                               mOptions->getProgressValue(option)));
         }
     }
 

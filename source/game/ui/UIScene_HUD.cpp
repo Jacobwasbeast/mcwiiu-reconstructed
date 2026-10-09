@@ -121,88 +121,144 @@ bool UIScene_HUD::HideMainHUD()
 
 unsigned int UIScene_HUD::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
-
-    m_messageLabels[0].setupControl(this, root, std::string("Label1"));
-    m_controls.push_back(&m_messageLabels[0]);
-    m_messageLabels[1].setupControl(this, root, std::string("Label2"));
-    m_controls.push_back(&m_messageLabels[1]);
-    m_messageLabels[2].setupControl(this, root, std::string("Label3"));
-    m_controls.push_back(&m_messageLabels[2]);
-    m_messageLabels[3].setupControl(this, root, std::string("Label4"));
-    m_controls.push_back(&m_messageLabels[3]);
-    m_messageLabels[4].setupControl(this, root, std::string("Label5"));
-    m_controls.push_back(&m_messageLabels[4]);
-    m_messageLabels[5].setupControl(this, root, std::string("Label6"));
-    m_controls.push_back(&m_messageLabels[5]);
-    m_messageLabels[6].setupControl(this, root, std::string("Label7"));
-    m_controls.push_back(&m_messageLabels[6]);
-    m_messageLabels[7].setupControl(this, root, std::string("Label8"));
-    m_controls.push_back(&m_messageLabels[7]);
-    m_messageLabels[8].setupControl(this, root, std::string("Label9"));
-    m_controls.push_back(&m_messageLabels[8]);
-    m_messageLabels[9].setupControl(this, root, std::string("Label10"));
-    m_controls.push_back(&m_messageLabels[9]);
-
-    m_messageControls[0].setupControl(this, root, std::string("Label1Background"));
-    m_controls.push_back(&m_messageControls[0]);
-    m_messageControls[1].setupControl(this, root, std::string("Label2Background"));
-    m_controls.push_back(&m_messageControls[1]);
-    m_messageControls[2].setupControl(this, root, std::string("Label3Background"));
-    m_controls.push_back(&m_messageControls[2]);
-    m_messageControls[3].setupControl(this, root, std::string("Label4Background"));
-    m_controls.push_back(&m_messageControls[3]);
-    m_messageControls[4].setupControl(this, root, std::string("Label5Background"));
-    m_controls.push_back(&m_messageControls[4]);
-    m_messageControls[5].setupControl(this, root, std::string("Label6Background"));
-    m_controls.push_back(&m_messageControls[5]);
-    m_messageControls[6].setupControl(this, root, std::string("Label7Background"));
-    m_controls.push_back(&m_messageControls[6]);
-    m_messageControls[7].setupControl(this, root, std::string("Label8Background"));
-    m_controls.push_back(&m_messageControls[7]);
-    m_messageControls[8].setupControl(this, root, std::string("Label9Background"));
-    m_controls.push_back(&m_messageControls[8]);
-    m_messageControls[9].setupControl(this, root, std::string("Label10Background"));
-    m_controls.push_back(&m_messageControls[9]);
-
-    m_selectedLabel.setupControl(this, root, std::string("Jukebox"));
-    m_controls.push_back(&m_selectedLabel);
-
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_messageLabels[0].setupControl(this, currentNode, std::string("Label1"));
+        m_controls.push_back(&m_messageLabels[0]);
+    }
+    {
+        m_messageLabels[1].setupControl(this, currentNode, std::string("Label2"));
+        m_controls.push_back(&m_messageLabels[1]);
+    }
+    {
+        m_messageLabels[2].setupControl(this, currentNode, std::string("Label3"));
+        m_controls.push_back(&m_messageLabels[2]);
+    }
+    {
+        m_messageLabels[3].setupControl(this, currentNode, std::string("Label4"));
+        m_controls.push_back(&m_messageLabels[3]);
+    }
+    {
+        m_messageLabels[4].setupControl(this, currentNode, std::string("Label5"));
+        m_controls.push_back(&m_messageLabels[4]);
+    }
+    {
+        m_messageLabels[5].setupControl(this, currentNode, std::string("Label6"));
+        m_controls.push_back(&m_messageLabels[5]);
+    }
+    {
+        m_messageLabels[6].setupControl(this, currentNode, std::string("Label7"));
+        m_controls.push_back(&m_messageLabels[6]);
+    }
+    {
+        m_messageLabels[7].setupControl(this, currentNode, std::string("Label8"));
+        m_controls.push_back(&m_messageLabels[7]);
+    }
+    {
+        m_messageLabels[8].setupControl(this, currentNode, std::string("Label9"));
+        m_controls.push_back(&m_messageLabels[8]);
+    }
+    {
+        m_messageLabels[9].setupControl(this, currentNode, std::string("Label10"));
+        m_controls.push_back(&m_messageLabels[9]);
+    }
+    {
+        m_messageControls[0].setupControl(this, currentNode, std::string("Label1Background"));
+        m_controls.push_back(&m_messageControls[0]);
+    }
+    {
+        m_messageControls[1].setupControl(this, currentNode, std::string("Label2Background"));
+        m_controls.push_back(&m_messageControls[1]);
+    }
+    {
+        m_messageControls[2].setupControl(this, currentNode, std::string("Label3Background"));
+        m_controls.push_back(&m_messageControls[2]);
+    }
+    {
+        m_messageControls[3].setupControl(this, currentNode, std::string("Label4Background"));
+        m_controls.push_back(&m_messageControls[3]);
+    }
+    {
+        m_messageControls[4].setupControl(this, currentNode, std::string("Label5Background"));
+        m_controls.push_back(&m_messageControls[4]);
+    }
+    {
+        m_messageControls[5].setupControl(this, currentNode, std::string("Label6Background"));
+        m_controls.push_back(&m_messageControls[5]);
+    }
+    {
+        m_messageControls[6].setupControl(this, currentNode, std::string("Label7Background"));
+        m_controls.push_back(&m_messageControls[6]);
+    }
+    {
+        m_messageControls[7].setupControl(this, currentNode, std::string("Label8Background"));
+        m_controls.push_back(&m_messageControls[7]);
+    }
+    {
+        m_messageControls[8].setupControl(this, currentNode, std::string("Label9Background"));
+        m_controls.push_back(&m_messageControls[8]);
+    }
+    {
+        m_messageControls[9].setupControl(this, currentNode, std::string("Label10Background"));
+        m_controls.push_back(&m_messageControls[9]);
+    }
+    {
+        m_selectedLabel.setupControl(this, currentNode, std::string("Jukebox"));
+        m_controls.push_back(&m_selectedLabel);
+    }
     if (m_splitScreen)
     {
-        m_displayName.setupControl(this, root, std::string("LabelGamertag"));
+        m_displayName.setupControl(this, currentNode, std::string("LabelGamertag"));
         m_controls.push_back(&m_displayName);
     }
-
-    m_healthLabel.setupControl(this, root, std::string("ScoreLabel"));
-    m_controls.push_back(&m_healthLabel);
-    m_hudComponent.setupControl(this, root, std::string("ScoreIcon"));
-    m_controls.push_back(&m_hudComponent);
-    m_foodLabel.setupControl(this, root, std::string("SpeedLabel"));
-    m_controls.push_back(&m_foodLabel);
-    m_armourLabel.setupControl(this, root, std::string("TimeLabel"));
-    m_controls.push_back(&m_armourLabel);
-
-    m_positionLabels[0].setupControl(this, root, std::string("PositionOne"));
-    m_controls.push_back(&m_positionLabels[0]);
-    m_positionLabels[1].setupControl(this, root, std::string("PositionTwo"));
-    m_controls.push_back(&m_positionLabels[1]);
-    m_positionLabels[2].setupControl(this, root, std::string("PositionThree"));
-    m_controls.push_back(&m_positionLabels[2]);
-
-    m_positionControls[0].setupControl(this, root, std::string("Gold"));
-    m_controls.push_back(&m_positionControls[0]);
-    m_positionControls[1].setupControl(this, root, std::string("Silver"));
-    m_controls.push_back(&m_positionControls[1]);
-    m_positionControls[2].setupControl(this, root, std::string("Bronze"));
-    m_controls.push_back(&m_positionControls[2]);
-
-    m_effectLabel.setupControl(this, root, std::string("WrongWayLabel"));
-    m_controls.push_back(&m_effectLabel);
-
-    m_splashLabel.setupControl(this, root, std::string("RoundNumber"));
-    m_controls.push_back(&m_splashLabel);
-
+    {
+        m_healthLabel.setupControl(this, currentNode, std::string("ScoreLabel"));
+        m_controls.push_back(&m_healthLabel);
+    }
+    {
+        m_hudComponent.setupControl(this, currentNode, std::string("ScoreIcon"));
+        m_controls.push_back(&m_hudComponent);
+    }
+    {
+        m_foodLabel.setupControl(this, currentNode, std::string("SpeedLabel"));
+        m_controls.push_back(&m_foodLabel);
+    }
+    {
+        m_armourLabel.setupControl(this, currentNode, std::string("TimeLabel"));
+        m_controls.push_back(&m_armourLabel);
+    }
+    {
+        m_positionLabels[0].setupControl(this, currentNode, std::string("PositionOne"));
+        m_controls.push_back(&m_positionLabels[0]);
+    }
+    {
+        m_positionLabels[1].setupControl(this, currentNode, std::string("PositionTwo"));
+        m_controls.push_back(&m_positionLabels[1]);
+    }
+    {
+        m_positionLabels[2].setupControl(this, currentNode, std::string("PositionThree"));
+        m_controls.push_back(&m_positionLabels[2]);
+    }
+    {
+        m_positionControls[0].setupControl(this, currentNode, std::string("Gold"));
+        m_controls.push_back(&m_positionControls[0]);
+    }
+    {
+        m_positionControls[1].setupControl(this, currentNode, std::string("Silver"));
+        m_controls.push_back(&m_positionControls[1]);
+    }
+    {
+        m_positionControls[2].setupControl(this, currentNode, std::string("Bronze"));
+        m_controls.push_back(&m_positionControls[2]);
+    }
+    {
+        m_effectLabel.setupControl(this, currentNode, std::string("WrongWayLabel"));
+        m_controls.push_back(&m_effectLabel);
+    }
+    {
+        m_splashLabel.setupControl(this, currentNode, std::string("RoundNumber"));
+        m_controls.push_back(&m_splashLabel);
+    }
     return 1;
 }
 
@@ -1254,7 +1310,7 @@ void UIScene_HUD::updateFrameTick()
             ClientMasterGameMode* clientGameMode = minecraft->GetClientMasterGameMode();
             const MiniGameDef* miniGame = Minecraft::GetInstance()->GetMiniGame();
             boost::shared_ptr<Player> glidePlayer = localPlayer;
-            if (localPlayer->isSpectator() && (localPlayer->GetCamera()->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+            if (localPlayer->isSpectator() && eTYPE_DERIVED_FROM(EntityType::PLAYER, localPlayer->GetCamera()->GetType()))
                 glidePlayer = boost::static_pointer_cast<Player>(localPlayer->GetCamera());
 
             SetHudGameMode(2);
@@ -1307,7 +1363,7 @@ void UIScene_HUD::updateFrameTick()
             bool showTimerIcon = true;
             if (scoreboard->GetEndZoneEntered(glidePlayer->getSUID(), -1))
             {
-                elapsedMs = static_cast<unsigned int>(scoreboard->GetLifeSpan(glidePlayer->getSUID(), -1));
+                elapsedMs = scoreboard->GetLifeSpan(glidePlayer->getSUID(), -1);
                 SetTime(formatTime(static_cast<long long>(elapsedMs), true));
             }
             else if (!clientGameMode->IsRoundEnding())
@@ -1618,7 +1674,7 @@ void UIScene_HUD::updateFrameTick()
                     ShowAnimatedSplash(L10N::GetString(IDS_MG03_ROUND_FINAL), true, 0);
                 else
                 {
-                    std::wstring splash = L10N::GetString(0x91a1400c);
+                    std::wstring splash = L10N::GetString(IDS_MG03_ROUND_NUMBER);
                     splash = replaceAll(splash, L"%d", formatwstr(L"%d", currentRound + 1));
                     ShowAnimatedSplash(splash, true, 0);
                 }
@@ -1679,7 +1735,7 @@ void UIScene_HUD::updateFrameTick()
             }
             else
             {
-                const int lifeSpan = scoreboard->GetLifeSpan(uid, -1);
+                const unsigned int lifeSpan = scoreboard->GetLifeSpan(uid, -1);
                 showTimedSplash(formatwstr(L"%02d:%02d.%03d", lifeSpan / 60000, (lifeSpan / 1000) % 0x3c, lifeSpan % 1000),
                                 0x3c, 2);
             }
@@ -1700,7 +1756,7 @@ void UIScene_HUD::updateFrameTick()
             {
                 if (!scoreboard->IsPersonalBest(uid, -1))
                 {
-                    const int lifeSpan = scoreboard->GetLifeSpan(uid, -1);
+                    const unsigned int lifeSpan = scoreboard->GetLifeSpan(uid, -1);
                     showTimedSplash(formatwstr(L"%02d:%02d.%03d", lifeSpan / 60000, (lifeSpan / 1000) % 0x3c, lifeSpan % 1000),
                                     0x3c, 2);
                     m_resultSplashShown = true;
@@ -1712,7 +1768,7 @@ void UIScene_HUD::updateFrameTick()
                 }
                 else if (System::processTimeInMilliSecs() >= m_personalBestTime + 3000)
                 {
-                    const int lifeSpan = scoreboard->GetLifeSpan(uid, -1);
+                    const unsigned int lifeSpan = scoreboard->GetLifeSpan(uid, -1);
                     showTimedSplash(formatwstr(L"%02d:%02d.%03d", lifeSpan / 60000, (lifeSpan / 1000) % 0x3c, lifeSpan % 1000),
                                     0x3c, 2);
                     m_resultSplashShown = true;

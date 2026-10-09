@@ -13,15 +13,21 @@ UIComponent_MenuBackground::UIComponent_MenuBackground(int sceneType, void* data
 
 std::wstring UIComponent_MenuBackground::getMoviePath()
 {
-    unsigned int viewport = m_layer->getViewport();
-    if (viewport == C4JRender::eViewportType_FullScreen ||
-        viewport > C4JRender::eViewportType_BottomRightQuarter)
+    switch (m_layer->getViewport())
     {
-        m_splitScreen = false;
-    }
-    else
-    {
+    case C4JRender::eViewportType_TopHalf:
+    case C4JRender::eViewportType_BottomHalf:
+    case C4JRender::eViewportType_LeftHalf:
+    case C4JRender::eViewportType_RightHalf:
+    case C4JRender::eViewportType_TopLeftQuarter:
+    case C4JRender::eViewportType_TopRightQuarter:
+    case C4JRender::eViewportType_BottomLeftQuarter:
+    case C4JRender::eViewportType_BottomRightQuarter:
         m_splitScreen = true;
+        break;
+    default:
+        m_splitScreen = false;
+        break;
     }
     return L"MenuBackground";
 }
@@ -29,50 +35,57 @@ std::wstring UIComponent_MenuBackground::getMoviePath()
 void UIComponent_MenuBackground::render(int width, int height,
                                         C4JRender::eViewportType viewport)
 {
-    if (!m_splitScreen)
+    if (m_splitScreen)
+    {
+        int xPos = 0;
+        int yPos = 0;
+        switch (viewport)
+        {
+        case C4JRender::eViewportType_BottomHalf:
+        case C4JRender::eViewportType_BottomLeftQuarter:
+            yPos = static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f);
+            break;
+        case C4JRender::eViewportType_RightHalf:
+        case C4JRender::eViewportType_TopRightQuarter:
+            xPos = static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f);
+            break;
+        case C4JRender::eViewportType_BottomRightQuarter:
+            xPos = static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f);
+            yPos = static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f);
+            break;
+        default:
+            break;
+        }
+        gConsoleUIController.setupRenderPosition(xPos, yPos);
+
+        int movieY = 0;
+        int movieWidth = width;
+        int movieHeight = height;
+        switch (viewport)
+        {
+        case C4JRender::eViewportType_LeftHalf:
+        case C4JRender::eViewportType_RightHalf:
+            movieHeight = static_cast<int>(gConsoleUIController.getScreenHeight());
+            break;
+        case C4JRender::eViewportType_TopHalf:
+        case C4JRender::eViewportType_BottomHalf:
+            movieWidth = static_cast<int>(gConsoleUIController.getScreenWidth());
+            movieY = m_stageHeight / 2;
+            break;
+        case C4JRender::eViewportType_TopLeftQuarter:
+        case C4JRender::eViewportType_TopRightQuarter:
+        case C4JRender::eViewportType_BottomLeftQuarter:
+        case C4JRender::eViewportType_BottomRightQuarter:
+            movieY = m_stageHeight / 2;
+            break;
+        default:
+            break;
+        }
+        gFui->render(m_movie, 0.0f, movieY, movieWidth, movieHeight);
+    }
+    else
     {
         UIScene::render(width, height, viewport);
-        return;
-    }
-
-    switch (viewport)
-    {
-    case C4JRender::eViewportType_BottomHalf:
-    case C4JRender::eViewportType_BottomLeftQuarter:
-        gConsoleUIController.setupRenderPosition(0, static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f));
-        break;
-    case C4JRender::eViewportType_RightHalf:
-    case C4JRender::eViewportType_TopRightQuarter:
-        gConsoleUIController.setupRenderPosition(static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f), 0);
-        break;
-    case C4JRender::eViewportType_BottomRightQuarter:
-        gConsoleUIController.setupRenderPosition(static_cast<int>(gConsoleUIController.getScreenWidth() * 0.5f),
-                                                 static_cast<int>(gConsoleUIController.getScreenHeight() * 0.5f));
-        break;
-    default:
-        gConsoleUIController.setupRenderPosition(0, 0);
-        break;
-    }
-
-    switch (viewport)
-    {
-    case C4JRender::eViewportType_TopHalf:
-    case C4JRender::eViewportType_BottomHalf:
-        gFui->render(m_movie, 0.0f, m_stageHeight / 2, static_cast<int>(gConsoleUIController.getScreenWidth()), height);
-        break;
-    case C4JRender::eViewportType_LeftHalf:
-    case C4JRender::eViewportType_RightHalf:
-        gFui->render(m_movie, 0.0f, 0, width, static_cast<int>(gConsoleUIController.getScreenHeight()));
-        break;
-    case C4JRender::eViewportType_TopLeftQuarter:
-    case C4JRender::eViewportType_TopRightQuarter:
-    case C4JRender::eViewportType_BottomLeftQuarter:
-    case C4JRender::eViewportType_BottomRightQuarter:
-        gFui->render(m_movie, 0.0f, m_stageHeight / 2, width, height);
-        break;
-    default:
-        gFui->render(m_movie, 0.0f, 0, width, height);
-        break;
     }
 }
 

@@ -54,11 +54,10 @@ void DeathScreen::render(int x, int y, float partialTick)
     fillGradient(0, 0, mWidth, mHeight, 0x60500000, 0xa0803030);
     GlStateManager::pushMatrix();
     GlStateManager::scalef(2.0f, 2.0f, 2.0f);
-    drawCenteredString(mFont, std::wstring(L"Game over!"), mWidth / 2 / 2, 30, 0xffffff);
+    drawCenteredString(mFont, L"Game over!", mWidth / 2 / 2, 30, 0xffffff);
     GlStateManager::popMatrix();
 
-    std::wstring score = std::wstring(L"Score: &e") + _toString<int>(mMinecraft->mPlayer->getScore());
-    drawCenteredString(mFont, score, mWidth / 2, 100, 0xffffff);
+    drawCenteredString(mFont, L"Score: &e" + _toString<int>(mMinecraft->mPlayer->getScore()), mWidth / 2, 100, 0xffffff);
 
     Screen::render(x, y, partialTick);
 

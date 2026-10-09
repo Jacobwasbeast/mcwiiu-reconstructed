@@ -14,11 +14,10 @@ void UIControl_TexturePackList::init(const std::wstring& label, int id)
     m_label = UIString(label);
     m_controlId = id;
     static_cast<FJ_TexturePackList*>(m_fuiRenderNode->getFuiNode())->Init(label, id);
-    unsigned int layerId = m_scene->m_layer->m_layerId;
-    switch (layerId) {
-    case 4:
-    case 6:
-    case 7:
+    switch (m_scene->m_layer->m_layerId) {
+    case EUILayer_Fullscreen:
+    case EUILayer_Scene:
+    case EUILayer_HUD:
         gConsoleUIController.TouchBoxAdd(this, m_scene);
         break;
     }
@@ -32,10 +31,10 @@ void UIControl_TexturePackList::setEnabled(bool enabled)
     static_cast<FJ_TexturePackList*>(m_fuiRenderNode->getFuiNode())->EnableSelector(enabled);
 }
 
-void UIControl_TexturePackList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_TexturePackList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_TexturePackList;
-    UIControl_Base::setupControl(scene, node, name);
+    return UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_TexturePackList::addPack(int id, const std::wstring& name, bool alreadyAdded)
@@ -43,15 +42,11 @@ void UIControl_TexturePackList::addPack(int id, const std::wstring& name, bool a
     if (m_fuiRenderNode == NULL) {
         return;
     }
-    FJ_TexturePackList* list = static_cast<FJ_TexturePackList*>(m_fuiRenderNode->getFuiNode());
-    list->addPack(id, name);
-    if (alreadyAdded) {
-        return;
+    static_cast<FJ_TexturePackList*>(m_fuiRenderNode->getFuiNode())->addPack(id, name);
+    if (!alreadyAdded) {
+        PackDetails details = { id, name };
+        m_packDetails.push_back(details);
     }
-    PackDetails details;
-    details.id = id;
-    details.name = name;
-    m_packDetails.push_back(details);
 }
 
 void UIControl_TexturePackList::ReInit()

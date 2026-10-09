@@ -42,10 +42,15 @@ UIScene_MapSelectMenu::UIScene_MapSelectMenu(int sceneType, void* data, UILayer*
               LevelRules::LevelRulesetGroup::SortMapRules);
     m_miniGameType = m_initData->mMiniGameId;
     m_mapSelection = 0;
-    if (m_miniGameType == eMiniGameId_Battle)
+    switch (m_miniGameType)
+    {
+    case eMiniGameId_Battle:
         m_mapSelection = GameSettings::GetBattleMiniGameMapSelection(m_playerId);
-    else if (m_miniGameType == eMiniGameId_Glide)
+        break;
+    case eMiniGameId_Glide:
         m_mapSelection = GameSettings::GetGlideMiniGameMapSelection(m_playerId);
+        break;
+    }
     _init();
 }
 
@@ -56,17 +61,27 @@ UIScene_MapSelectMenu::~UIScene_MapSelectMenu()
 unsigned int UIScene_MapSelectMenu::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_mapList.setupControl(this, root, std::string("MapList"));
-    m_controls.push_back(&m_mapList);
-    m_mapListTitle.setupControl(this, root, std::string("MapListTitle"));
-    m_controls.push_back(&m_mapListTitle);
-    m_mapTitle.setupControl(this, root, std::string("MapTitle"));
-    m_controls.push_back(&m_mapTitle);
-    m_mapDescription.setupControl(this, root, std::string("HTMLMapText"));
-    m_controls.push_back(&m_mapDescription);
-    m_mapIcon.setupControl(this, root, std::string("MapPic"));
-    m_controls.push_back(&m_mapIcon);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_mapList.setupControl(this, currentNode, std::string("MapList"));
+        m_controls.push_back(&m_mapList);
+    }
+    {
+        m_mapListTitle.setupControl(this, currentNode, std::string("MapListTitle"));
+        m_controls.push_back(&m_mapListTitle);
+    }
+    {
+        m_mapTitle.setupControl(this, currentNode, std::string("MapTitle"));
+        m_controls.push_back(&m_mapTitle);
+    }
+    {
+        m_mapDescription.setupControl(this, currentNode, std::string("HTMLMapText"));
+        m_controls.push_back(&m_mapDescription);
+    }
+    {
+        m_mapIcon.setupControl(this, currentNode, std::string("MapPic"));
+        m_controls.push_back(&m_mapIcon);
+    }
     return 1;
 }
 
@@ -74,12 +89,12 @@ void UIScene_MapSelectMenu::_init()
 {
     m_mapList.init(0);
     m_mapListTitle.init(UIString(IDS_MG_SELECT_MAPS));
-    m_mapTitle.init(UIString(L" "));
-    m_mapDescription.init(UIString(L" "));
+    m_mapTitle.init(UIString(L""));
+    m_mapDescription.init(UIString(L""));
     bool anySelected = false;
     int index = 0;
     for (std::vector<LevelRules::LevelRulesetGroup*>::iterator it = m_levelRuleGroups.begin();
-         it != m_levelRuleGroups.end(); ++it, ++index)
+         it != m_levelRuleGroups.end(); ++it)
     {
         LevelRules::LevelRulesetGroup* group = *it;
         wchar_t textureName[64] = L"default";
@@ -95,7 +110,7 @@ void UIScene_MapSelectMenu::_init()
         if (iconSize != 0 && iconData != NULL)
         {
             std::swprintf(textureName, 64, L"tpack%08x", texturePack->getId());
-            if (hasRegisteredSubstitutionTexture(textureName) != true)
+            if (!hasRegisteredSubstitutionTexture(textureName))
                 registerSubstitutionTexture(textureName,
                                             static_cast<unsigned char*>(const_cast<void*>(iconData)),
                                             iconSize, false);
@@ -126,6 +141,7 @@ void UIScene_MapSelectMenu::_init()
             m_mapList.EnableItem(index, false, true);
             m_mapList.SetCheckbox(index, selected);
         }
+        ++index;
     }
     if (!anySelected && m_mapList.getItemCount() >= 4)
     {
@@ -168,8 +184,9 @@ void UIScene_MapSelectMenu::UpdateMapInfo()
     m_mapTitle.setLabel(UIString(options->getWorldName()), false, false);
     m_mapDescription.setLabel(UIString(options->getWorldDescription()), false, false);
 
-    DLCFile* file = options->getPack()->getFile(DLCManager::eDLCType_Texture,
-                                                std::wstring(options->getWorldPreviewImage()), true, true);
+    DLCPack* pack = options->getPack();
+    DLCFile* file = pack->getFile(DLCManager::eDLCType_Texture, std::wstring(options->getWorldPreviewImage()), true,
+                                  true);
     if (file != NULL)
     {
         unsigned int imageSize = 0;
@@ -230,6 +247,60 @@ void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool press
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
+    case EControllerActions_MenuCancel:
+    {
+        if (!pressed)
+            return;
+        unsigned int selection = 0;
+        m_initData->mLevelRulesetGroups.clear();
+        for (int i = 0; i < m_mapList.getItemCount(); ++i)
+        {
+            if (m_mapList.GetCheckbox(i))
+            {
+                selection |= 1 << m_levelRuleGroups.at(i)->rulesets[0]->getGenerationOptions()->getThemeId();
+                m_initData->mLevelRulesetGroups.push_back(m_levelRuleGroups.at(i));
+            }
+        }
+        if (m_initData->mLevelRulesetGroups.size() != 0)
+        {
+            if (selection != m_mapSelection)
+            {
+                switch (m_miniGameType)
+                {
+                case eMiniGameId_Battle:
+                    GameSettings::SetBattleMiniGameMapSelection(m_playerId, selection);
+                    m_mapSelection = selection;
+                    break;
+                case eMiniGameId_Glide:
+                    GameSettings::SetGlideMiniGameMapSelection(m_playerId, selection);
+                    m_mapSelection = selection;
+                    break;
+                default:
+                    m_mapSelection = selection;
+                    break;
+                }
+            }
+            GameSettings::CheckGameSettingsChanged(true, m_playerId);
+            navigateBack();
+        }
+        else
+        {
+            int parameters[1] = { IDS_CONFIRM_OK };
+            m_mapSelection = 0;
+            gConsoleUIController.RequestAlertMessage(IDS_MG_NO_MAPS_SELECTED_TITLE, IDS_MG_NO_MAPS_SELECTED_TEXT,
+                                                     parameters, 1, m_playerId, NULL, NULL, NULL, true);
+        }
+        handled = true;
+        break;
+    }
+    case EControllerActions_MenuOk:
+        if (!pressed || repeat)
+            return;
+        if (checkHasPurchased((int)m_mapList.getCurrentSelection(), true) == 0)
+            return;
+        sendInputToMovie(action, false, pressed, released);
+        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
+        break;
     case EControllerActions_MenuX:
         if (m_initData->mMatchmaking && !m_initData->mTimeTrial)
             return;
@@ -250,60 +321,6 @@ void UIScene_MapSelectMenu::handleInput(int, int action, bool repeat, bool press
                 m_mapList.SetCheckbox(i, false);
         gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
         break;
-    case EControllerActions_MenuOk:
-        if (!pressed || repeat)
-            return;
-        if (checkHasPurchased((int)m_mapList.getCurrentSelection(), true) == 0)
-            return;
-        sendInputToMovie(action, false, pressed, released);
-        gConsoleUIController.PlayUISFX(SoundEvents::UI_PRESS);
-        break;
-    case EControllerActions_MenuCancel:
-    {
-        if (!pressed)
-            return;
-        unsigned int selection = 0;
-        m_initData->mLevelRulesetGroups.clear();
-        for (int i = 0; i < m_mapList.getItemCount(); ++i)
-        {
-            if (m_mapList.GetCheckbox(i))
-            {
-                selection |= 1 << m_levelRuleGroups.at(i)->rulesets[0]->getGenerationOptions()->getThemeId();
-                m_initData->mLevelRulesetGroups.push_back(m_levelRuleGroups.at(i));
-            }
-        }
-        if (!m_initData->mLevelRulesetGroups.empty())
-        {
-            if (selection != m_mapSelection)
-            {
-                if (m_miniGameType == eMiniGameId_Battle)
-                {
-                    GameSettings::SetBattleMiniGameMapSelection(m_playerId, selection);
-                    m_mapSelection = selection;
-                }
-                else if (m_miniGameType == eMiniGameId_Glide)
-                {
-                    GameSettings::SetGlideMiniGameMapSelection(m_playerId, selection);
-                    m_mapSelection = selection;
-                }
-                else
-                {
-                    m_mapSelection = selection;
-                }
-            }
-            GameSettings::CheckGameSettingsChanged(true, m_playerId);
-            navigateBack();
-            handled = true;
-            return;
-        }
-
-        int messageParameter = (int)IDS_CONFIRM_OK;
-        m_mapSelection = 0;
-        gConsoleUIController.RequestAlertMessage(IDS_MG_NO_MAPS_SELECTED_TITLE, IDS_MG_NO_MAPS_SELECTED_TEXT, &messageParameter, 1,
-                                                 m_playerId, NULL, NULL, NULL, true);
-        handled = true;
-        break;
-    }
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
     case EControllerActions_MenuOtherStickUp:
@@ -317,8 +334,8 @@ void UIScene_MapSelectMenu::handleFocusChange(int, int childFocus)
 {
     m_mapList.updateChildFocus(childFocus);
     m_mapInfoPending = 1;
-    unsigned int selection = m_mapList.getCurrentSelection();
-    m_generationOptions = m_levelRuleGroups.at(selection)->rulesets.at(0)->getGenerationOptions();
+    m_generationOptions =
+        m_levelRuleGroups.at(m_mapList.getCurrentSelection())->rulesets.at(0)->getGenerationOptions();
     m_pack = m_generationOptions->getPack();
 }
 

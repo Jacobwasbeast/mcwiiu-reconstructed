@@ -57,12 +57,12 @@ void FJ_TradingMenu::init(FJ_Event* event)
     fuiRect leftRect = m_scrollLeft->getRect(m_scrollLeft);
     if (m_scrollLeft->getX() + leftRect.xMin * m_scrollLeft->getScaleX() + m_scrollLeft->getWidth() > tradingBar->getX())
     {
-        fuiRect rect = m_scrollRight->getRect(m_scrollRight);
-        const float rightEdgeWorld = m_scrollRight->getX() + rect.xMin * m_scrollRight->getScaleX();
-        const float tradingBarRight = tradingBar->getX() + tradingBar->getWidth();
-        rect = m_scrollLeft->getRect(m_scrollLeft);
-        m_scrollLeft->setX((tradingBar->getX() - m_scrollLeft->getWidth()) - rect.xMin * m_scrollLeft->getScaleX() -
-                           static_cast<float>(static_cast<int>(rightEdgeWorld - tradingBarRight)));
+        fuiRect rightRect = m_scrollRight->getRect(m_scrollRight);
+        const int overlap = static_cast<int>((m_scrollRight->getX() + rightRect.xMin * m_scrollRight->getScaleX()) -
+                                             (tradingBar->getX() + tradingBar->getWidth()));
+        fuiRect currentLeftRect = m_scrollLeft->getRect(m_scrollLeft);
+        m_scrollLeft->setX(tradingBar->getX() - m_scrollLeft->getWidth() -
+                           currentLeftRect.xMin * m_scrollLeft->getScaleX() - static_cast<float>(overlap));
     }
 }
 
@@ -93,13 +93,12 @@ void FJ_TradingMenu::PositionOfferDescription()
     if (m_selectorSlot < m_visibleSlots / 2)
     {
         offer->setX(Math::round(selector->getX() + selector->getWidth() * 1.1f));
-        offer->setY(Math::round(selector->getY() + selector->getHeight() * 0.5f - offer->getHeight() * 0.5f));
     }
     else
     {
         offer->setX(Math::round(selector->getX() - offer->getWidth() - selector->getWidth() * 0.1f));
-        offer->setY(Math::round(selector->getY() + selector->getHeight() * 0.5f - offer->getHeight() * 0.5f));
     }
+    offer->setY(Math::round(selector->getY() + selector->getHeight() * 0.5f - offer->getHeight() * 0.5f));
 }
 
 void FJ_TradingMenu::MoveSelector(bool right)
@@ -108,26 +107,27 @@ void FJ_TradingMenu::MoveSelector(bool right)
     FJ_FuiNode* tradingBar = mainPanel->getChildByName("TradingBar");
     FJ_FuiNode* selector = mainPanel->getChildByName("TradingSelector");
 
-    if (!right)
+    if (right)
     {
-        if (m_selectorSlot < 1)
+        if (m_selectorSlot < m_visibleSlots - 1)
         {
-            if (m_scrollLeft->isVisible())
-                ScrollLeft();
+            ++m_selectorSlot;
         }
-        else
+        else if (m_scrollRight->isVisible())
         {
-            --m_selectorSlot;
+            ScrollRight();
         }
-    }
-    else if (m_selectorSlot < m_visibleSlots - 1)
-    {
-        ++m_selectorSlot;
     }
     else
     {
-        if (m_scrollRight->isVisible())
-            ScrollRight();
+        if (m_selectorSlot > 0)
+        {
+            --m_selectorSlot;
+        }
+        else if (m_scrollLeft->isVisible())
+        {
+            ScrollLeft();
+        }
     }
 
     selector->setX(tradingBar->getX() -
@@ -155,8 +155,7 @@ void FJ_TradingMenu::SetSelectorSlot(int slot)
 
 void FJ_TradingMenu::SetOfferDescription(const std::wstring& description)
 {
-    FJ_FuiNode* offer = getChildByName("MainPanel.OfferDescription");
-    offer->asFJ_HtmlTextPanel()->SetLabel(description);
+    getChildByName("MainPanel.OfferDescription")->asFJ_HtmlTextPanel()->SetLabel(description);
     PositionOfferDescription();
 }
 

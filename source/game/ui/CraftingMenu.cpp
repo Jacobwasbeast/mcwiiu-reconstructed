@@ -17,6 +17,10 @@
 #include "game/entity/mob/Entity.hpp"
 #include "game/world/generation/Player.hpp"
 
+const int CraftingMenu::RESULT_SLOT = 0;
+const int CraftingMenu::CRAFT_SLOT_START = 1;
+const int CraftingMenu::INV_SLOT_START = 10;
+
 CraftingMenu::CraftingMenu(boost::shared_ptr<Inventory> inventory, Level* level, const BlockPos& pos)
     : AbstractContainerMenu(),
       m_craftSlots(),
@@ -30,17 +34,15 @@ CraftingMenu::CraftingMenu(boost::shared_ptr<Inventory> inventory, Level* level,
 
     addSlot(new ResultSlot(inventory->m_player, m_craftSlots, m_resultSlots, 0, 124, 35));
 
-    int row;
-    int column;
-    for (row = 0; row < 3; ++row)
-        for (column = 0; column < 3; ++column)
-            addSlot(new Slot(m_craftSlots, row * 3 + column, 30 + column * 18, 17 + row * 18));
+    for (int row = 0; row < 3; ++row)
+        for (int column = 0; column < 3; ++column)
+            addSlot(new Slot(m_craftSlots, column + row * 3, 30 + column * 18, 17 + row * 18));
 
-    for (row = 0; row < 3; ++row)
-        for (column = 0; column < 9; ++column)
-            addSlot(new Slot(inventory, 9 + row * 9 + column, 8 + column * 18, 84 + row * 18));
+    for (int row = 0; row < 3; ++row)
+        for (int column = 0; column < 9; ++column)
+            addSlot(new Slot(inventory, column + row * 9 + 9, 8 + column * 18, 84 + row * 18));
 
-    for (column = 0; column < 9; ++column)
+    for (int column = 0; column < 9; ++column)
         addSlot(new Slot(inventory, column, 8 + column * 18, 142));
 
     slotsChanged();
@@ -56,20 +58,20 @@ void CraftingMenu::slotsChanged()
     for (unsigned int slot = 0; slot < m_craftSlots->getContainerSize(); ++slot)
     {
         not_null_ptr<ItemInstance> ingredient = m_craftSlots->getItem(slot);
-        if (ingredient->isEmpty())
-            continue;
-
-        if (ingredient->getItem() == result->getItem() && ingredientColor == -1)
+        if (!ingredient->isEmpty())
         {
-            Block* block = Block::byItem(ingredient->getItem());
-            const int blockId = Block::getId(block);
-            if (blockId >= BlockId::WHITE_SHULKER_BOX && blockId <= BlockId::BLACK_SHULKER_BOX)
-                ingredientColor = static_cast<ShulkerBoxBlock*>(block)->getDyeColor()->getBlockData();
-            else if (ingredient->getItem() == Items::bed)
-                ingredientColor = ingredient->getAuxValue();
+            if (ingredient->getItem() == result->getItem() && ingredientColor == -1)
+            {
+                Block* block = Block::byItem(ingredient->getItem());
+                const int blockId = Block::getId(block);
+                if (blockId >= BlockId::WHITE_SHULKER_BOX && blockId <= BlockId::BLACK_SHULKER_BOX)
+                    ingredientColor = static_cast<ShulkerBoxBlock*>(block)->getDyeColor()->getBlockData();
+                else if (ingredient->getItem() == Items::bed)
+                    ingredientColor = ingredient->getAuxValue();
+            }
+            if (ingredient->getItem() == Items::dye)
+                dyeColor = DyeColor::byItemData(ingredient->getAuxValue())->blockData;
         }
-        if (ingredient->getItem() == Items::dye)
-            dyeColor = DyeColor::byItemData(ingredient->getAuxValue())->blockData;
     }
 
     if (ingredientColor == dyeColor && ingredientColor != -1 && dyeColor != -1)
@@ -80,8 +82,9 @@ void CraftingMenu::slotsChanged()
 void CraftingMenu::removed(boost::shared_ptr<Player> player)
 {
     AbstractContainerMenu::removed(player);
-    if (!m_level->mIsClientSide)
-        clearContainer(player, m_level, m_craftSlots);
+    if (m_level->mIsClientSide)
+        return;
+    clearContainer(player, m_level, m_craftSlots);
 }
 
 bool CraftingMenu::stillValid(boost::shared_ptr<Player> player)
@@ -104,21 +107,21 @@ not_null_ptr<ItemInstance> CraftingMenu::quickMoveStack(boost::shared_ptr<Player
 
         if (index == 0)
         {
-            if (moveItemStackTo(stack, 10, 46, true, true, true) != 1)
+            if (!moveItemStackTo(stack, 10, 46, true, true, true))
                 return ItemInstance::EMPTY;
             slot->onQuickCraft(stack, clicked);
         }
         else if (index >= 10 && index < 37)
         {
-            if (moveItemStackTo(stack, 37, 46, false, true, true) != 1)
+            if (!moveItemStackTo(stack, 37, 46, false, true, true))
                 return ItemInstance::EMPTY;
         }
         else if (index >= 37 && index < 46)
         {
-            if (moveItemStackTo(stack, 10, 37, false, true, true) != 1)
+            if (!moveItemStackTo(stack, 10, 37, false, true, true))
                 return ItemInstance::EMPTY;
         }
-        else if (moveItemStackTo(stack, 10, 46, false, true, true) != 1)
+        else if (!moveItemStackTo(stack, 10, 46, false, true, true))
         {
             return ItemInstance::EMPTY;
         }
@@ -129,11 +132,15 @@ not_null_ptr<ItemInstance> CraftingMenu::quickMoveStack(boost::shared_ptr<Player
             slot->setChanged();
 
         if (stack->getCount() == clicked->getCount())
+        {
             return ItemInstance::EMPTY;
-
-        not_null_ptr<ItemInstance> taken = slot->onTake(player, stack);
-        if (index == 0)
-            player->drop(taken, false);
+        }
+        else
+        {
+            not_null_ptr<ItemInstance> taken = slot->onTake(player, stack);
+            if (index == 0)
+                player->drop(taken, false);
+        }
     }
     return clicked;
 }

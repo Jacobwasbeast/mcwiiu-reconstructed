@@ -19,6 +19,8 @@ public:
     virtual void handlePress(int controlId, int childId);
 
 private:
+    static unsigned int m_buttonLabels[33];
+
     UIControl_ButtonList m_buttonList;
     int m_selectedItem;
 };

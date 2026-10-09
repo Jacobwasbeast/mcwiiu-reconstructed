@@ -44,11 +44,11 @@ void UIControl_PlayerButtonList::addItem(const std::wstring& label, int playerIc
     m_pendingUpdates.push_back(new PendingAddItem(this, 0, label, playerIcon, voipIcon));
 }
 
-void UIControl_PlayerButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
+bool UIControl_PlayerButtonList::setupControl(UIScene* scene, fuiRenderNode* node,
                                               const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_PlayerButtonList;
-    UIControl_ButtonList::setupControl(scene, node, name);
+    return UIControl_ButtonList::setupControl(scene, node, name);
 }
 
 void UIControl_PlayerButtonList::setPlayerIcon(int item, int icon)

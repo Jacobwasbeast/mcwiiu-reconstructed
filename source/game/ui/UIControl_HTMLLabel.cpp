@@ -39,11 +39,11 @@ int UIControl_HTMLLabel::GetRealHeight()
     return size;
 }
 
-void UIControl_HTMLLabel::setupControl(UIScene* scene, fuiRenderNode* node,
+bool UIControl_HTMLLabel::setupControl(UIScene* scene, fuiRenderNode* node,
                                        const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_HTMLLabel;
-    UIControl_Base::setupControl(scene, node, name);
+    return UIControl_Base::setupControl(scene, node, name);
 }
 
 void UIControl_HTMLLabel::ReInit()

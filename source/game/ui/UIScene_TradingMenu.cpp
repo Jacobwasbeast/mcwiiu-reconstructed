@@ -88,7 +88,8 @@ UIScene_TradingMenu::UIScene_TradingMenu(int iPad, void* initData, UILayer* laye
     }
 
     m_merchantMenu = new MerchantMenu(sceneData->inventory, sceneData->merchant, sceneData->level);
-    Minecraft::GetInstance()->mLocalPlayers[iPad].get()->mContainerMenu = m_merchantMenu;
+    MultiplayerLocalPlayer* player = Minecraft::GetInstance()->mLocalPlayers[iPad].get();
+    player->mContainerMenu = m_merchantMenu;
 
     m_request1.addSlots(0x27, 1);
     m_request2.addSlots(0x28, 1);
@@ -123,30 +124,56 @@ UIScene_TradingMenu::~UIScene_TradingMenu()
 unsigned int UIScene_TradingMenu::mapElementsAndNames()
 {
     UIScene::mapElementsAndNames();
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_mainPanel.setupControl(this, root, std::string("MainPanel"));
-    m_controls.push_back(&m_mainPanel);
-    fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
-    m_tradingBar.setupControl(this, panel, std::string("TradingBar"));
-    m_controls.push_back(&m_tradingBar);
-    m_request1.setupControl(this, panel, std::string("Request1"));
-    m_controls.push_back(&m_request1);
-    m_request2.setupControl(this, panel, std::string("Request2"));
-    m_controls.push_back(&m_request2);
-    m_villagerText.setupControl(this, panel, std::string("VillagerText"));
-    m_controls.push_back(&m_villagerText);
-    m_requiredLabel.setupControl(this, panel, std::string("RequiredLabel"));
-    m_controls.push_back(&m_requiredLabel);
-    m_request1Label.setupControl(this, panel, std::string("Request1Label"));
-    m_controls.push_back(&m_request1Label);
-    m_request2Label.setupControl(this, panel, std::string("Request2Label"));
-    m_controls.push_back(&m_request2Label);
-    m_hotBar.setupControl(this, panel, std::string("HotBar"));
-    m_controls.push_back(&m_hotBar);
-    m_inventory.setupControl(this, panel, std::string("Inventory"));
-    m_controls.push_back(&m_inventory);
-    m_inventoryLabel.setupControl(this, panel, std::string("InventoryLabel"));
-    m_controls.push_back(&m_inventoryLabel);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_mainPanel.setupControl(this, currentNode, std::string("MainPanel"));
+        m_controls.push_back(&m_mainPanel);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_mainPanel.getFuiRenderNode();
+        {
+            m_tradingBar.setupControl(this, currentNode, std::string("TradingBar"));
+            m_controls.push_back(&m_tradingBar);
+        }
+        {
+            m_request1.setupControl(this, currentNode, std::string("Request1"));
+            m_controls.push_back(&m_request1);
+        }
+        {
+            m_request2.setupControl(this, currentNode, std::string("Request2"));
+            m_controls.push_back(&m_request2);
+        }
+        {
+            m_villagerText.setupControl(this, currentNode, std::string("VillagerText"));
+            m_controls.push_back(&m_villagerText);
+        }
+        {
+            m_requiredLabel.setupControl(this, currentNode, std::string("RequiredLabel"));
+            m_controls.push_back(&m_requiredLabel);
+        }
+        {
+            m_request1Label.setupControl(this, currentNode, std::string("Request1Label"));
+            m_controls.push_back(&m_request1Label);
+        }
+        {
+            m_request2Label.setupControl(this, currentNode, std::string("Request2Label"));
+            m_controls.push_back(&m_request2Label);
+        }
+        {
+            m_hotBar.setupControl(this, currentNode, std::string("HotBar"));
+            m_controls.push_back(&m_hotBar);
+        }
+        {
+            m_inventory.setupControl(this, currentNode, std::string("Inventory"));
+            m_controls.push_back(&m_inventory);
+        }
+        {
+            m_inventoryLabel.setupControl(this, currentNode, std::string("InventoryLabel"));
+            m_controls.push_back(&m_inventoryLabel);
+        }
+        currentNode = parentNode;
+    }
     return 1;
 }
 
@@ -193,7 +220,10 @@ std::vector<HtmlString>* UIScene_TradingMenu::GetItemDescription(not_null_ptr<It
 {
     std::vector<HtmlString>* lines = item.get()->getTooltipLines(boost::shared_ptr<Player>(), false);
     if (!lines->empty())
-        lines->at(0).mColour = item.get()->getRarity()->colour;
+    {
+        ItemInstance* instance = item.get();
+        lines->at(0).mColour = instance->getRarity()->colour;
+    }
     return lines;
 }
 
@@ -210,14 +240,15 @@ bool UIScene_TradingMenu::canMake(MerchantRecipe* recipe)
 
         boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
 
-        const int matchesA = player.get()->mInventory.get()->countMatches(buyA);
-        const bool haveEnoughA = (matchesA < 1) ? buyA.get()->isEmpty() : !(matchesA < buyA.get()->getCount());
+        Inventory* inventory = player.get()->mInventory.get();
+        const int matchesA = inventory->countMatches(buyA);
+        const bool haveEnoughA = (matchesA > 0) ? !(matchesA < buyA.get()->getCount()) : buyA.get()->isEmpty();
 
         const int matchesB = player.get()->mInventory.get()->countMatches(buyB);
-        if (matchesB < 1)
-            canMake = haveEnoughA && buyB.get()->isEmpty();
+        if (matchesB > 0)
+            canMake = haveEnoughA && matchesB >= buyB.get()->getCount();
         else
-            canMake = haveEnoughA && (buyB.get()->getCount() <= matchesB);
+            canMake = haveEnoughA && buyB.get()->isEmpty();
     }
     return canMake;
 }
@@ -412,7 +443,8 @@ void UIScene_TradingMenu::showScrollLeftArrow(bool show)
 
 void UIScene_TradingMenu::handleTick()
 {
-    MerchantRecipeList* offers = m_merchant.get()->getOffers(Minecraft::GetInstance()->mLocalPlayers[m_playerId]);
+    Merchant* merchant = m_merchant.get();
+    MerchantRecipeList* offers = merchant->getOffers(Minecraft::GetInstance()->mLocalPlayers[m_playerId]);
 
     if (offers != 0 && !m_tradeFocusSet)
         updateDisplay();

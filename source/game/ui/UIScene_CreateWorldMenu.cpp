@@ -67,24 +67,44 @@ UIScene_CreateWorldMenu::~UIScene_CreateWorldMenu()
 unsigned int UIScene_CreateWorldMenu::mapElementsAndNames()
 {
     IUIScene_StartGame::mapElementsAndNames();
-    m_movie->getRootNode();
-    fuiRenderNode* root = m_mainPanel.getFuiRenderNode();
-    m_worldNameLabel.setupControl(this, root, std::string("WorldName"));
-    m_controls.push_back(&m_worldNameLabel);
-    m_worldNameInput.setupControl(this, root, std::string("EditWorldName"));
-    m_controls.push_back(&m_worldNameInput);
-    m_texturePackList.setupControl(this, root, std::string("TexturePackSelector"));
-    m_controls.push_back(&m_texturePackList);
-    m_gameModeSlider.setupControl(this, root, std::string("GameModeToggle"));
-    m_controls.push_back(&m_gameModeSlider);
-    m_onlineGameCheckBox.setupControl(this, root, std::string("CheckboxOnline"));
-    m_controls.push_back(&m_onlineGameCheckBox);
-    m_moreOptionsButton.setupControl(this, root, std::string("MoreOptions"));
-    m_controls.push_back(&m_moreOptionsButton);
-    m_playButton.setupControl(this, root, std::string("NewWorld"));
-    m_controls.push_back(&m_playButton);
-    m_difficultySlider.setupControl(this, root, std::string("Difficulty"));
-    m_controls.push_back(&m_difficultySlider);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_mainPanel.getFuiRenderNode();
+        {
+            m_worldNameLabel.setupControl(this, currentNode, std::string("WorldName"));
+            m_controls.push_back(&m_worldNameLabel);
+        }
+        {
+            m_worldNameInput.setupControl(this, currentNode, std::string("EditWorldName"));
+            m_controls.push_back(&m_worldNameInput);
+        }
+        {
+            m_texturePackList.setupControl(this, currentNode, std::string("TexturePackSelector"));
+            m_controls.push_back(&m_texturePackList);
+        }
+        {
+            m_gameModeSlider.setupControl(this, currentNode, std::string("GameModeToggle"));
+            m_controls.push_back(&m_gameModeSlider);
+        }
+        {
+            m_onlineGameCheckBox.setupControl(this, currentNode, std::string("CheckboxOnline"));
+            m_controls.push_back(&m_onlineGameCheckBox);
+        }
+        {
+            m_moreOptionsButton.setupControl(this, currentNode, std::string("MoreOptions"));
+            m_controls.push_back(&m_moreOptionsButton);
+        }
+        {
+            m_playButton.setupControl(this, currentNode, std::string("NewWorld"));
+            m_controls.push_back(&m_playButton);
+        }
+        {
+            m_difficultySlider.setupControl(this, currentNode, std::string("Difficulty"));
+            m_controls.push_back(&m_difficultySlider);
+        }
+        currentNode = parentNode;
+    }
     return 1;
 }
 
@@ -134,6 +154,13 @@ void UIScene_CreateWorldMenu::handleInput(int playerId, int action, bool repeat,
     gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
+    case EControllerActions_MenuCancel:
+        if (pressed)
+        {
+            navigateBack();
+            handled = true;
+        }
+        break;
     case EControllerActions_MenuUp:
     case EControllerActions_MenuDown:
     case EControllerActions_MenuRight:
@@ -143,25 +170,18 @@ void UIScene_CreateWorldMenu::handleInput(int playerId, int action, bool repeat,
     case EControllerActions_MenuOk:
         sendInputToMovie(action, repeat, pressed, released);
         {
-            unsigned int checked = m_onlineGameCheckBox.IsChecked();
+            bool checked = m_onlineGameCheckBox.IsChecked();
             if (m_launchData.mOnlineGame != checked)
             {
                 m_launchData.mOnlineGame = checked;
                 if (!checked)
                 {
-                    m_launchData.mAllowFriendsOfFriends = false;
                     m_launchData.mInviteOnly = false;
+                    m_launchData.mAllowFriendsOfFriends = false;
                 }
             }
         }
         handled = true;
-        break;
-    case EControllerActions_MenuCancel:
-        if (pressed)
-        {
-            navigateBack();
-            handled = true;
-        }
         break;
     }
 }
@@ -178,7 +198,7 @@ int UIScene_CreateWorldMenu::KeyboardCompleteWorldNameCallback(void* data, bool 
         if (text[0] != L'\0')
         {
             scene->m_worldNameInput.setLabel(UIString(text), false, false);
-            scene->m_worldName.assign(text, std::wcslen(text));
+            scene->m_worldName = text;
         }
         scene->m_playButton.setEnable(scene->m_worldName.size() != 0, true);
     }

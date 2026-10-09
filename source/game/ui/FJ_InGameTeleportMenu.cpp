@@ -22,9 +22,6 @@ void FJ_InGameTeleportMenu::SetSafeZone(int top, int bottom, int left, int right
 {
     FJ_Document::SetSafeZone(top, bottom, left, right);
 
-    const float stageHeight = getStage()->getStageHeight();
-    if (stageHeight != 360.0f && stageHeight != 540.0f)
-        return;
-
-    setY(static_cast<float>(top));
+    if (getStage()->getStageHeight() == 360.0f || getStage()->getStageHeight() == 540.0f)
+        setY(static_cast<float>(top));
 }

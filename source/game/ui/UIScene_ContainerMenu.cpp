@@ -46,25 +46,22 @@ UIScene_ContainerMenu::UIScene_ContainerMenu(int playerId, void* data, UILayer* 
     const int typeId = interaction != NULL ? interaction->getTypeId(false) : -1;
     AbstractContainerMenu* menu = NULL;
 
-    if (args->second->getName().empty())
-    {
-        if (typeId == ClientboundContainerOpenPacket::BONUS_CHEST)
-            m_chestLabel.init(UIString(L10N::GetString(IDS_BONUS_CHEST)));
-        else if (typeId == ClientboundContainerOpenPacket::ENDER_CHEST)
-            m_chestLabel.init(UIString(L10N::GetString(IDS_TILE_ENDERCHEST)));
-        else if (typeId == ClientboundContainerOpenPacket::LARGE_CHEST)
-            m_chestLabel.init(UIString(L10N::GetString(IDS_CHEST_LARGE)));
-        else if (typeId == ClientboundContainerOpenPacket::MINECART_CHEST)
-            m_chestLabel.init(UIString(L10N::GetString(IDS_CONTAINER_MINECART)));
-        else if (typeId == ClientboundContainerOpenPacket::SHULKER_BOX)
-            m_chestLabel.init(UIString(L10N::GetString(IDS_CONTAINER_SHULKER_BOX)));
-        else
-            m_chestLabel.init(UIString(L10N::GetString(IDS_CHEST)));
-    }
-    else
+    if (!args->second->getName().empty())
     {
         m_chestLabel.init(UIString(args->second->getName()));
     }
+    else if (typeId == ClientboundContainerOpenPacket::BONUS_CHEST)
+        m_chestLabel.init(UIString(L10N::GetString(IDS_BONUS_CHEST)));
+    else if (typeId == ClientboundContainerOpenPacket::ENDER_CHEST)
+        m_chestLabel.init(UIString(L10N::GetString(IDS_TILE_ENDERCHEST)));
+    else if (typeId == ClientboundContainerOpenPacket::LARGE_CHEST)
+        m_chestLabel.init(UIString(L10N::GetString(IDS_CHEST_LARGE)));
+    else if (typeId == ClientboundContainerOpenPacket::MINECART_CHEST)
+        m_chestLabel.init(UIString(L10N::GetString(IDS_CONTAINER_MINECART)));
+    else if (typeId == ClientboundContainerOpenPacket::SHULKER_BOX)
+        m_chestLabel.init(UIString(L10N::GetString(IDS_CONTAINER_SHULKER_BOX)));
+    else
+        m_chestLabel.init(UIString(L10N::GetString(IDS_CHEST)));
 
     if (typeId == ClientboundContainerOpenPacket::SHULKER_BOX)
         menu = new ShulkerBoxMenu(args->first, args->second,
@@ -97,22 +94,32 @@ UIScene_ContainerMenu::~UIScene_ContainerMenu()
 {
 }
 
-unsigned int UIScene_ContainerMenu::getSectionColumns(
+int UIScene_ContainerMenu::getSectionColumns(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    return static_cast<unsigned int>(section) <= IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest ? 9U : 0U;
+    return static_cast<unsigned int>(section) <= IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest ? 9 : 0;
 }
 
-unsigned int UIScene_ContainerMenu::getSectionRows(
+int UIScene_ContainerMenu::getSectionRows(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    unsigned int rows = 0;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
-        rows = 1;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
+    int rows = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest:
+    {
+        AbstractContainerMenu* menu = m_menu;
+        int containerSlots = static_cast<int>(menu->m_slots.size()) - PLAYER_INVENTORY_SLOTS;
+        rows = containerSlots / 9U;
+        break;
+    }
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory:
         rows = GetInventoryRows();
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
-        rows = (static_cast<unsigned int>(m_menu->m_slots.size()) - PLAYER_INVENTORY_SLOTS) / 9;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar:
+        rows = 1;
+        break;
+    }
     return rows;
 }
 
@@ -120,77 +127,53 @@ unsigned int UIScene_ContainerMenu::GetSectionAndSlotInDirection(
     IUIScene_AbstractContainerMenu::ESceneSection section,
     IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y)
 {
-    IUIScene_AbstractContainerMenu::ESceneSection result = section;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
+    IUIScene_AbstractContainerMenu::ESceneSection newSection = section;
+    switch (section)
     {
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest:
         if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        {
-            updateSlotPosition(section, IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest,
-                               state, x, y, 0, 0);
-            return 2;
-        }
-        if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-        {
-            result = m_smallInventory ?
-                IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest :
-                IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory;
-            updateSlotPosition(section, result, state, x, y, 0, 0);
-            return result;
-        }
-    }
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
-    {
-        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        {
-            updateSlotPosition(section, IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar,
-                               state, x, y, 0, 0);
-            return 0;
-        }
-        if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-        {
-            updateSlotPosition(section, IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest,
-                               state, x, y, 0, 0);
-            return 2;
-        }
-    }
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
-    {
-        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        {
-            result = m_smallInventory ?
+            newSection = m_smallInventory ?
                 IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar :
                 IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory;
-            updateSlotPosition(section, result, state, x, y, 0, 0);
-            return result;
-        }
-        if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
-        {
-            updateSlotPosition(section, IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar,
-                               state, x, y, 0, 0);
-            return 0;
-        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar;
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest;
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+            newSection = m_smallInventory ?
+                IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest :
+                IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory;
+        break;
     }
-    updateSlotPosition(section, section, state, x, y, 0, 0);
-    return section;
+    updateSlotPosition(section, newSection, state, x, y, 0, 0);
+    return newSection;
 }
 
 void UIScene_ContainerMenu::GetPositionOfSection(
     IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
+    switch (section)
     {
-        position->x = static_cast<float>(m_hotbarList.getXPos());
-        position->y = static_cast<float>(m_hotbarList.getYPos());
-    }
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
-    {
-        position->x = static_cast<float>(m_inventoryList.getXPos());
-        position->y = static_cast<float>(m_inventoryList.getYPos());
-    }
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
-    {
-        position->x = static_cast<float>(m_containerList.getXPos());
-        position->y = static_cast<float>(m_containerList.getYPos());
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest:
+        position->x = m_containerList.getXPos();
+        position->y = m_containerList.getYPos();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory:
+        position->x = m_inventoryList.getXPos();
+        position->y = m_inventoryList.getYPos();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar:
+        position->x = m_hotbarList.getXPos();
+        position->y = m_hotbarList.getYPos();
+        break;
     }
 }
 
@@ -199,40 +182,48 @@ void UIScene_ContainerMenu::GetItemScreenData(
     _UIVec2D* position, _UIVec2D* size)
 {
     _UIVec2D controlSize;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
+    switch (section)
     {
-        controlSize.x = m_hotbarList.getWidth();
-        controlSize.y = m_hotbarList.getHeight();
-    }
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
-    {
-        controlSize.x = m_inventoryList.getWidth();
-        controlSize.y = m_inventoryList.getHeight();
-    }
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
-    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest:
         controlSize.x = m_containerList.getWidth();
         controlSize.y = m_containerList.getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory:
+        controlSize.x = m_inventoryList.getWidth();
+        controlSize.y = m_inventoryList.getHeight();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar:
+        controlSize.x = m_hotbarList.getWidth();
+        controlSize.y = m_hotbarList.getHeight();
+        break;
     }
     const int rows = getSectionRows(section);
     const int columns = getSectionColumns(section);
-    size->x = controlSize.x / static_cast<float>(columns);
-    size->y = controlSize.y / static_cast<float>(rows);
-    position->x = static_cast<float>(slot % columns) * size->x;
-    position->y = static_cast<float>(slot / columns) * size->y;
+    size->x = controlSize.x / columns;
+    size->y = controlSize.y / rows;
+    const int x = slot % columns;
+    const int y = slot / columns;
+    position->x = x * size->x;
+    position->y = y * size->y;
 }
 
 void UIScene_ContainerMenu::setSectionSelectedSlot(
     IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
 {
-    const int highlightSlot = slot + direction * getSectionColumns(section);
+    const int highlightSlot = direction * getSectionColumns(section) + slot;
     UIControl_SlotList* list = 0;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
-        list = &m_hotbarList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
-        list = &m_inventoryList;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest:
         list = &m_containerList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory:
+        list = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar:
+        list = &m_hotbarList;
+        break;
+    }
     if (wrap)
         list->setHighlightSlot(highlightSlot);
 }
@@ -240,11 +231,26 @@ void UIScene_ContainerMenu::setSectionSelectedSlot(
 int UIScene_ContainerMenu::getSectionStartOffset(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
-        return static_cast<int>(m_menu->m_slots.size()) - 9;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
-        return static_cast<int>(m_menu->m_slots.size()) - PLAYER_INVENTORY_SLOTS;
-    return 0;
+    int offset = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest:
+        offset = 0;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory:
+    {
+        AbstractContainerMenu* menu = m_menu;
+        offset = static_cast<int>(menu->m_slots.size()) - PLAYER_INVENTORY_SLOTS;
+        break;
+    }
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar:
+    {
+        AbstractContainerMenu* menu = m_menu;
+        offset = static_cast<int>(menu->m_slots.size()) - 9;
+        break;
+    }
+    }
+    return offset;
 }
 
 void UIScene_ContainerMenu::handleSectionClick(
@@ -255,19 +261,20 @@ void UIScene_ContainerMenu::handleSectionClick(
 unsigned int UIScene_ContainerMenu::mapElementsAndNames()
 {
     UIScene_AbstractContainerMenu::mapElementsAndNames();
-    fuiRenderNode* root = m_movie->getRootNode();
-    fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
+    fuiRenderNode* currentNode = m_movie->getRootNode();
     {
-        std::string name("containerList");
-        m_containerList.setupControl(this, panel, name);
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_mainPanel.getFuiRenderNode();
+        {
+            m_containerList.setupControl(this, currentNode, std::string("containerList"));
+            m_controls.push_back(&m_containerList);
+        }
+        {
+            m_chestLabel.setupControl(this, currentNode, std::string("chestLabel"));
+            m_controls.push_back(&m_chestLabel);
+        }
+        currentNode = parentNode;
     }
-    m_controls.push_back(&m_containerList);
-    {
-        std::string name("chestLabel");
-        m_chestLabel.setupControl(this, panel, name);
-    }
-    m_controls.push_back(&m_chestLabel);
-    (void)root;
     return 1;
 }
 
@@ -282,8 +289,9 @@ std::wstring UIScene_ContainerMenu::getMoviePath()
 
 void UIScene_ContainerMenu::handleReload()
 {
-    const int count = static_cast<int>(m_menu->m_slots.size()) - PLAYER_INVENTORY_SLOTS;
-    Initialize(true, m_playerId, m_menu, true, count,
+    AbstractContainerMenu* menu = m_menu;
+    const int count = static_cast<int>(menu->m_slots.size()) - PLAYER_INVENTORY_SLOTS;
+    Initialize(true, m_playerId, menu, true, count,
                                 IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar,
                                 IUIScene_AbstractContainerMenu::ESceneSection_ContainerMax, false);
     m_containerList.addSlots(0, count);

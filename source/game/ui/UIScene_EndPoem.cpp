@@ -1,6 +1,7 @@
 #include "game/ui/UIScene_EndPoem.hpp"
 #include "game/core/StringIds.hpp"
 
+#include <cstring>
 #include <cwchar>
 
 #include "game/core/CConsoleMinecraftApp.hpp"
@@ -24,13 +25,18 @@
 
 extern ConsoleUIController gConsoleUIController;
 
+namespace
+{
+const int cParagraphBreakLength = 12;
+}
+
 UIScene_EndPoem::UIScene_EndPoem(int type, void*, UILayer* layer)
     : UIScene(type, layer), m_poemText(), m_noisyText(), m_noiseLengths(), m_labels()
 {
     initialiseMovie();
     m_finished = false;
 
-    m_poemText += L10N::GetString(0x47630c46);
+    m_poemText += L10N::GetString(IDS_WIN_TEXT);
     m_poemText += L10N::GetString(0x69414293);
     m_poemText += L10N::GetString(0x433ec82a);
     m_poemText += L" ";
@@ -38,13 +44,13 @@ UIScene_EndPoem::UIScene_EndPoem(int type, void*, UILayer* layer)
 
     Minecraft* minecraft = Minecraft::GetInstance();
     std::wstring playerName = L"";
-    if (minecraft->mLocalPlayers[gConsoleUIController.GetWinUserIndex()] == NULL)
-        playerName = escapeXML(minecraft->mLocalPlayers[gProfile->GetPrimaryPad()]->getDisplayName());
-    else
+    if (minecraft->mLocalPlayers[gConsoleUIController.GetWinUserIndex()] != NULL)
         playerName = escapeXML(minecraft->mLocalPlayers[gConsoleUIController.GetWinUserIndex()]->getDisplayName());
+    else
+        playerName = escapeXML(minecraft->mLocalPlayers[gProfile->GetPrimaryPad()]->getDisplayName());
     m_poemText = replaceAll(m_poemText, L"{*PLAYER*}", playerName);
 
-    Random random(0x7bf7d3LL);
+    Random random(8124371LL);
     const wchar_t* noiseTag = L"{*NOISE*}";
     for (int position = m_poemText.find(noiseTag); position != -1;
          position = m_poemText.find(noiseTag, position + 1))
@@ -56,16 +62,14 @@ UIScene_EndPoem::UIScene_EndPoem(int type, void*, UILayer* layer)
 
     m_labels = std::vector<std::wstring>();
     int start = 0;
-    int end;
     int next = 0;
     do
     {
-        end = next;
-        m_labels.push_back(m_noisyText.substr(start, end - start));
-        next = m_noisyText.find(L"<br /><br />", end + 12);
-        start = end;
+        m_labels.push_back(m_noisyText.substr(start, next - start));
+        start = next;
+        next = m_noisyText.find(L"<br /><br />", next + cParagraphBreakLength, cParagraphBreakLength);
     } while (next != -1);
-    m_labels.push_back(m_noisyText.substr(end, m_noisyText.length() - end));
+    m_labels.push_back(m_noisyText.substr(start, m_noisyText.length() - start));
     m_currentLabel = 0;
 }
 
@@ -85,14 +89,14 @@ void UIScene_EndPoem::updateNoise()
         for (int i = 0; i < count; ++i)
         {
             wchar_t character;
-            if (!gConsoleUIController.UsingBitmapFont())
+            if (gConsoleUIController.UsingBitmapFont())
             {
-                static std::wstring noiseCharacters = L"!\"#$%&'()*+,-./0123456789:;<=>?@[\\]^_'|}~";
-                character = noiseCharacters[random->nextInt(noiseCharacters.length())];
+                character = ALLOWED_CHARACTERS[random->nextInt(ALLOWED_CHARACTERS.length())];
             }
             else
             {
-                character = ALLOWED_CHARACTERS[random->nextInt(ALLOWED_CHARACTERS.length())];
+                static std::wstring noiseCharacters = L"!\"#$%&'()*+,-./0123456789:;<=>?@[\\]^_'|}~";
+                character = noiseCharacters[random->nextInt(noiseCharacters.length())];
             }
             std::wstring characterText = L"";
             characterText.push_back(character);
@@ -110,14 +114,15 @@ void UIScene_EndPoem::updateNoise()
             else if (character == L'{')
                 characterText = L"}";
 
-            eMinecraftColour colour = eMinecraftColour_HTMLColor_8;
             int colourChoice = random->nextInt(2);
+            eMinecraftColour colour = eMinecraftColour_HTMLColor_8;
             if (colourChoice == 1)
                 colour = eMinecraftColour_HTMLColor_9;
             else if (colourChoice == 2)
                 colour = eMinecraftColour_HTMLColor_a;
 
-            wchar_t formatted[64] = {};
+            wchar_t formatted[64];
+            std::memset(formatted, 0, sizeof(formatted));
             swprintf(formatted, 64, L"<font color=\"#%08x\" shadowcolor=\"#80000000\">%ls</font>",
                      gApp.GetHTMLColour(colour), characterText.c_str());
             noise += formatted;
@@ -145,8 +150,9 @@ void UIScene_EndPoem::tick()
     if (m_currentLabel >= 0 && static_cast<unsigned int>(m_currentLabel) < m_labels.size())
     {
         std::wstring label = m_labels[m_currentLabel];
+        unsigned int labelCount = m_labels.size();
         FJ_EndPoem* poem = static_cast<FJ_EndPoem*>(m_movie->getRootNode()->getFuiNode());
-        poem->SetNextLabel(label, m_currentLabel, m_currentLabel == static_cast<int>(m_labels.size()) - 1);
+        poem->SetNextLabel(label, m_currentLabel, m_currentLabel == labelCount - 1);
         m_currentLabel = -1;
     }
 }
@@ -159,38 +165,35 @@ void UIScene_EndPoem::handleInput(int playerId, int action, bool repeat, bool pr
     if (pressed)
         gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
 
-    if (static_cast<unsigned int>(action) >= EControllerActions_MenuUp)
+    switch (action)
     {
-        if (static_cast<unsigned int>(action) > EControllerActions_MenuDown)
+    case EControllerActions_MenuCancel:
+        if (pressed)
         {
-            if (static_cast<unsigned int>(action) < EControllerActions_MenuOtherStickUp)
-                return;
-            if (static_cast<unsigned int>(action) > EControllerActions_MenuOtherStickDown)
+            m_finished = true;
+            Minecraft* minecraft = Minecraft::GetInstance();
+            for (int i = 0; i < 4; ++i)
             {
-                if (action != EControllerActions_MenuCancel)
-                    return;
-                if (!pressed)
-                    return;
-                m_finished = true;
-                Minecraft* minecraft = Minecraft::GetInstance();
-                for (int i = 0; i < 4; ++i)
-                {
-                    if (minecraft->mLocalPlayers[i] != NULL)
-                        gApp.SetAction(i, eXuiAction_Respawn, NULL);
-                }
-                if (minecraft->mGameModes[gProfile->GetPrimaryPad()] != NULL)
-                {
-                    Tutorial* tutorial = minecraft->mGameModes[gProfile->GetPrimaryPad()]->getTutorial();
-                    if (tutorial != NULL)
-                        tutorial->showTutorialPopup(true);
-                }
-                updateTooltips();
-                navigateBack();
-                handled = true;
-                return;
+                if (minecraft->mLocalPlayers[i] != NULL)
+                    gApp.SetAction(i, eXuiAction_Respawn, NULL);
             }
+            if (minecraft->mGameModes[gProfile->GetPrimaryPad()] != NULL)
+            {
+                Tutorial* tutorial = minecraft->mGameModes[gProfile->GetPrimaryPad()]->getTutorial();
+                if (tutorial != NULL)
+                    tutorial->showTutorialPopup(true);
+            }
+            updateTooltips();
+            navigateBack();
+            handled = true;
         }
+        break;
+    case EControllerActions_MenuUp:
+    case EControllerActions_MenuDown:
+    case EControllerActions_MenuOtherStickUp:
+    case EControllerActions_MenuOtherStickDown:
         sendInputToMovie(action, repeat, pressed, released);
+        break;
     }
 }
 

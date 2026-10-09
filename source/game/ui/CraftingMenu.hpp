@@ -16,6 +16,10 @@ class ResultContainer;
 class CraftingMenu : public AbstractContainerMenu
 {
 public:
+    static const int RESULT_SLOT;
+    static const int CRAFT_SLOT_START;
+    static const int INV_SLOT_START;
+
     CraftingMenu(boost::shared_ptr<Inventory> inventory, Level* level, const BlockPos& pos);
 
     virtual not_null_ptr<ItemInstance> quickMoveStack(boost::shared_ptr<Player> player, int index);

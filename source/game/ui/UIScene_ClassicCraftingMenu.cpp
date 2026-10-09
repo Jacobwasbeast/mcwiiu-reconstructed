@@ -26,19 +26,19 @@ UIScene_ClassicCraftingMenu::UIScene_ClassicCraftingMenu(int type, void* data, U
     m_fireworks = sceneData->fireworks;
     AbstractContainerMenu* menu;
     eTutorial_State tutorialState;
-    if (!m_fireworks)
-    {
-        m_titleLabel.init(UIString(L10N::GetString(IDS_CONTROLS_CRAFTING)));
-        menu = new CraftingMenu(sceneData->localPlayer->mInventory, sceneData->localPlayer->mLevel,
-                                BlockPos(sceneData->x, sceneData->y, sceneData->z));
-        tutorialState = eTutorial_State_SurvivalCrafting;
-    }
-    else
+    if (m_fireworks)
     {
         m_titleLabel.init(UIString(L10N::GetString(IDS_HOW_TO_PLAY_MENU_FIREWORKS)));
         menu = new FireworksMenu(sceneData->localPlayer->mInventory, sceneData->localPlayer->mLevel,
                                  BlockPos(sceneData->x, sceneData->y, sceneData->z));
         tutorialState = eTutorial_State_FireworksMenu;
+    }
+    else
+    {
+        m_titleLabel.init(UIString(L10N::GetString(IDS_CONTROLS_CRAFTING)));
+        menu = new CraftingMenu(sceneData->localPlayer->mInventory, sceneData->localPlayer->mLevel,
+                                BlockPos(sceneData->x, sceneData->y, sceneData->z));
+        tutorialState = eTutorial_State_SurvivalCrafting;
     }
 
     if (Minecraft::GetInstance()->mGameModes[sceneData->player] != 0)
@@ -51,11 +51,11 @@ UIScene_ClassicCraftingMenu::UIScene_ClassicCraftingMenu(int type, void* data, U
         }
     }
 
-    Initialize(false, sceneData->player, menu, true, 10,
+    Initialize(false, sceneData->player, menu, true, CraftingMenu::INV_SLOT_START,
                IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingHotbar,
                IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingMax, false);
-    m_resultSlot.addSlots(0, 1);
-    m_craftingSlots.addSlots(1, 9);
+    m_resultSlot.addSlots(CraftingMenu::RESULT_SLOT, 1);
+    m_craftingSlots.addSlots(CraftingMenu::CRAFT_SLOT_START, 9);
 
     delete sceneData;
     gApp.SetRichPresenceContext(m_playerId, 5);
@@ -65,9 +65,9 @@ UIScene_ClassicCraftingMenu::~UIScene_ClassicCraftingMenu()
 {
 }
 
-unsigned int UIScene_ClassicCraftingMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_ClassicCraftingMenu::getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    unsigned int columns = 0;
+    int columns = 0;
     switch (section)
     {
     case IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingHotbar:
@@ -88,22 +88,20 @@ unsigned int UIScene_ClassicCraftingMenu::getSectionColumns(IUIScene_AbstractCon
     return columns;
 }
 
-unsigned int UIScene_ClassicCraftingMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
+int UIScene_ClassicCraftingMenu::getSectionRows(IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    unsigned int rows = 0;
+    int rows = 0;
     switch (section)
     {
-    case IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingHotbar:
-        rows = 1;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingGrid:
+        rows = 3;
         break;
     case IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingInventory:
         rows = GetInventoryRows();
         break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingHotbar:
     case IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingResult:
         rows = 1;
-        break;
-    case IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingGrid:
-        rows = 3;
         break;
     default:
         break;
@@ -115,47 +113,92 @@ unsigned int UIScene_ClassicCraftingMenu::GetSectionAndSlotInDirection(
     IUIScene_AbstractContainerMenu::ESceneSection section,
     IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y)
 {
-    IUIScene_AbstractContainerMenu::ESceneSection result = section;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingHotbar &&
-        state == IUIScene_AbstractContainerMenu::ETapState_Up)
-        result = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingInventory;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingInventory &&
-             state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        result = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingHotbar;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingResult &&
-             state == IUIScene_AbstractContainerMenu::ETapState_Down)
+    IUIScene_AbstractContainerMenu::ESceneSection newSection = section;
+    int xOffset = 0;
+    int yOffset = 0;
+
+    switch (section)
     {
-        result = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingInventory;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingGrid:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingInventory;
+            xOffset = -1;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingHotbar;
+            xOffset = -1;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left || state == IUIScene_AbstractContainerMenu::ETapState_Right)
+        {
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingResult;
+        }
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingResult:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingInventory;
+            xOffset = -7;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingHotbar;
+            xOffset = -7;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Left)
+        {
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingGrid;
+            yOffset = -1;
+            *x = getSectionColumns(IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingGrid);
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Right)
+        {
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingGrid;
+            *x = 0;
+            yOffset = -1;
+        }
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingInventory:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingHotbar;
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            if (*x < 6)
+            {
+                newSection = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingGrid;
+                xOffset = 1;
+            }
+            else
+            {
+                newSection = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingResult;
+            }
+        }
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingHotbar:
+        if (state == IUIScene_AbstractContainerMenu::ETapState_Down)
+        {
+            if (*x < 6)
+            {
+                newSection = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingGrid;
+                xOffset = 1;
+            }
+            else
+            {
+                newSection = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingResult;
+            }
+        }
+        else if (state == IUIScene_AbstractContainerMenu::ETapState_Up)
+        {
+            newSection = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingInventory;
+        }
+        break;
     }
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingResult &&
-             state == IUIScene_AbstractContainerMenu::ETapState_Up)
-        result = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingHotbar;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingGrid &&
-             state == IUIScene_AbstractContainerMenu::ETapState_Down)
-        result = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingInventory;
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingGrid &&
-             state == IUIScene_AbstractContainerMenu::ETapState_Up)
-        result = IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingHotbar;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingResult &&
-        (state == IUIScene_AbstractContainerMenu::ETapState_Down ||
-         state == IUIScene_AbstractContainerMenu::ETapState_Up))
-        updateSlotPosition(section, result, state, x, y, -6, 0);
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingResult &&
-             state == IUIScene_AbstractContainerMenu::ETapState_Left)
-        updateSlotPosition(section, IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingGrid, state, x, y, 0, -1);
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingResult &&
-             state == IUIScene_AbstractContainerMenu::ETapState_Right)
-    {
-        if (x != 0) *x = 0;
-        updateSlotPosition(section, IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingGrid, state, x, y, 0, -1);
-    }
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingGrid &&
-             (state == IUIScene_AbstractContainerMenu::ETapState_Left ||
-              state == IUIScene_AbstractContainerMenu::ETapState_Right))
-        updateSlotPosition(section, IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingResult, state, x, y, 0, 0);
-    else
-        updateSlotPosition(section, result, state, x, y, 0, 0);
-    return static_cast<unsigned int>(result);
+
+    updateSlotPosition(section, newSection, state, x, y, xOffset, yOffset);
+    return newSection;
 }
 
 void UIScene_ClassicCraftingMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
@@ -207,14 +250,12 @@ void UIScene_ClassicCraftingMenu::GetItemScreenData(IUIScene_AbstractContainerMe
     }
     int rows = getSectionRows(section);
     int columns = getSectionColumns(section);
-    float itemWidth = sectionSize.x / static_cast<float>(columns);
-    float itemHeight = sectionSize.y / static_cast<float>(rows);
+    size->x = sectionSize.x / static_cast<float>(columns);
+    size->y = sectionSize.y / static_cast<float>(rows);
+    int column = slot % columns;
     int row = slot / columns;
-    int column = slot - row * columns;
-    size->x = itemWidth;
-    size->y = itemHeight;
-    position->x = static_cast<float>(column) * itemWidth;
-    position->y = static_cast<float>(row) * itemHeight;
+    position->x = static_cast<float>(column) * size->x;
+    position->y = static_cast<float>(row) * size->y;
 }
 
 void UIScene_ClassicCraftingMenu::handleSectionClick(IUIScene_AbstractContainerMenu::ESceneSection)
@@ -247,6 +288,7 @@ int UIScene_ClassicCraftingMenu::getSectionStartOffset(IUIScene_AbstractContaine
 void UIScene_ClassicCraftingMenu::setSectionSelectedSlot(IUIScene_AbstractContainerMenu::ESceneSection section, int slot, int direction, bool wrap)
 {
     int columns = getSectionColumns(section);
+    int index = direction * columns + slot;
     UIControl_SlotList* list = 0;
     switch (section)
     {
@@ -266,7 +308,7 @@ void UIScene_ClassicCraftingMenu::setSectionSelectedSlot(IUIScene_AbstractContai
         break;
     }
     if (wrap)
-        list->setHighlightSlot(direction * columns + slot);
+        list->setHighlightSlot(index);
 }
 
 std::wstring UIScene_ClassicCraftingMenu::getMoviePath()
@@ -279,24 +321,30 @@ std::wstring UIScene_ClassicCraftingMenu::getMoviePath()
 unsigned int UIScene_ClassicCraftingMenu::mapElementsAndNames()
 {
     UIScene_AbstractContainerMenu::mapElementsAndNames();
-    fuiRenderNode* rootNode = m_movie->getRootNode();
+    m_movie->getRootNode();
     fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
-    m_resultSlot.setupControl(this, panel, std::string("Result"));
-    m_controls.push_back(&m_resultSlot);
-    m_craftingSlots.setupControl(this, panel, std::string("CraftingList"));
-    m_controls.push_back(&m_craftingSlots);
-    m_titleLabel.setupControl(this, panel, std::string("TitleLabel"));
-    m_controls.push_back(&m_titleLabel);
+    {
+        m_resultSlot.setupControl(this, panel, std::string("Result"));
+        m_controls.push_back(&m_resultSlot);
+    }
+    {
+        m_craftingSlots.setupControl(this, panel, std::string("CraftingList"));
+        m_controls.push_back(&m_craftingSlots);
+    }
+    {
+        m_titleLabel.setupControl(this, panel, std::string("TitleLabel"));
+        m_controls.push_back(&m_titleLabel);
+    }
     return 1;
 }
 
 void UIScene_ClassicCraftingMenu::handleReload()
 {
-    Initialize(true, m_playerId, m_menu, true, 10,
+    Initialize(true, m_playerId, m_menu, true, CraftingMenu::INV_SLOT_START,
                IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingHotbar,
                IUIScene_AbstractContainerMenu::ESceneSection_ClassicCraftingMax, false);
-    m_resultSlot.addSlots(0, 1);
-    m_craftingSlots.addSlots(1, 9);
+    m_resultSlot.addSlots(CraftingMenu::RESULT_SLOT, 1);
+    m_craftingSlots.addSlots(CraftingMenu::CRAFT_SLOT_START, 9);
 }
 
 UIControl* UIScene_ClassicCraftingMenu::getSection(IUIScene_AbstractContainerMenu::ESceneSection section)

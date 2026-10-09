@@ -97,31 +97,23 @@ void UIScene_InGameSaveManagementMenu::Initialise()
 
 unsigned int UIScene_InGameSaveManagementMenu::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
+    fuiRenderNode* currentNode = m_movie->getRootNode();
     {
-        std::string name("SavesList");
-        m_saveList.setupControl(this, root, name);
+        m_saveList.setupControl(this, currentNode, std::string("SavesList"));
+        m_controls.push_back(&m_saveList);
     }
-    UIControl* saveList = &m_saveList;
-    m_controls.push_back(saveList);
     {
-        std::string name("SavesListTitle");
-        m_saveListTitle.setupControl(this, root, name);
+        m_saveListTitle.setupControl(this, currentNode, std::string("SavesListTitle"));
+        m_controls.push_back(&m_saveListTitle);
     }
-    UIControl* saveListTitle = &m_saveListTitle;
-    m_controls.push_back(saveListTitle);
     {
-        std::string name("SavesTimer");
-        m_saveTimer.setupControl(this, root, name);
+        m_saveTimer.setupControl(this, currentNode, std::string("SavesTimer"));
+        m_controls.push_back(&m_saveTimer);
     }
-    UIControl* saveTimer = &m_saveTimer;
-    m_controls.push_back(saveTimer);
     {
-        std::string name("SaveSizeBar");
-        m_saveSizeBar.setupControl(this, root, name);
+        m_saveSizeBar.setupControl(this, currentNode, std::string("SaveSizeBar"));
+        m_controls.push_back(&m_saveSizeBar);
     }
-    UIControl* saveSizeBar = &m_saveSizeBar;
-    m_controls.push_back(saveSizeBar);
     return 1;
 }
 
@@ -199,19 +191,16 @@ int UIScene_InGameSaveManagementMenu::LoadSaveDataThumbnailReturned(void* contex
     UIScene_InGameSaveManagementMenu* menu = static_cast<UIScene_InGameSaveManagementMenu*>(context);
     if (data != NULL && size != 0)
     {
-        unsigned char* thumbnail = new unsigned char[size];
-        menu->m_saveListDetails[menu->m_nextThumbnail].m_thumbnail = thumbnail;
-        std::memcpy(thumbnail, data, size);
-        menu->m_thumbnailReturned = true;
+        menu->m_saveListDetails[menu->m_nextThumbnail].m_thumbnail = new unsigned char[size];
+        std::memcpy(menu->m_saveListDetails[menu->m_nextThumbnail].m_thumbnail, data, size);
         menu->m_saveListDetails[menu->m_nextThumbnail].m_thumbnailSize = size;
     }
     else
     {
-        menu->m_thumbnailReturned = true;
-        _SaveListDetails& details = menu->m_saveListDetails[menu->m_nextThumbnail];
-        details.m_thumbnail = NULL;
-        details.m_thumbnailSize = 0;
+        menu->m_saveListDetails[menu->m_nextThumbnail].m_thumbnail = NULL;
+        menu->m_saveListDetails[menu->m_nextThumbnail].m_thumbnailSize = 0;
     }
+    menu->m_thumbnailReturned = true;
     return 0;
 }
 

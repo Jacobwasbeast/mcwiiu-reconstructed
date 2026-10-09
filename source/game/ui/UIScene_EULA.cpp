@@ -31,7 +31,7 @@ UIScene_EULA::UIScene_EULA(int sceneType, void* callback, UILayer* layer)
         start = separator + 2;
         separator = text.find(L"\r\n", start, 2);
     }
-    lines.push_back(text.substr(start));
+    lines.push_back(text.substr(start, text.length() - start));
 
     unsigned int i;
     for (i = 0; i < lines.size(); ++i)

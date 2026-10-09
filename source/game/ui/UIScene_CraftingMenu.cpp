@@ -83,8 +83,8 @@ UIScene_CraftingMenu::UIScene_CraftingMenu(int type, void* data, UILayer* layer)
     }
     else
     {
-        m_ingredientSlotCount = 4;
         m_groupMap = &m_groupMap2x2[0][0];
+        m_ingredientSlotCount = 4;
     }
     m_horizontalSlotCount = 12;
     gApp.SetRichPresenceContext(m_playerId, 5);
@@ -103,11 +103,8 @@ UIScene_CraftingMenu::UIScene_CraftingMenu(int type, void* data, UILayer* layer)
         }
     }
 
-    m_ingredientSlots[0].addSlot(36);
-    m_ingredientSlots[1].addSlot(37);
-    m_ingredientSlots[2].addSlot(38);
-    m_ingredientSlots[3].addSlot(39);
-    m_ingredientSlots[4].addSlot(40);
+    for (int ingredient = 0; ingredient < 5; ++ingredient)
+        m_ingredientSlots[ingredient].addSlot(36 + ingredient);
     m_craftingOutput.addSlot(41);
     m_ingredientsLayout.addSlots(42, m_ingredientSlotCount);
     m_crafting3VSlots[0].addSlot(52);
@@ -163,124 +160,243 @@ std::wstring UIScene_CraftingMenu::getMoviePath()
 
 unsigned int UIScene_CraftingMenu::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
-    m_mainPanel.setupControl(this, root, "MainPanel");
-    m_controls.push_back(&m_mainPanel);
-
-    fuiRenderNode* panel = m_mainPanel.getFuiRenderNode();
-    m_descriptionPanel.setupControl(this, panel, "DescriptionPanel");
-    m_controls.push_back(&m_descriptionPanel);
-    m_descriptionTextTop.setupControl(this, panel, "DescriptionTextTop");
-    m_controls.push_back(&m_descriptionTextTop);
-    m_craftingHSlots.setupControl(this, panel, "CraftingHSlots");
-    m_controls.push_back(&m_craftingHSlots);
-    m_spinnerTitle.setupControl(this, panel, "SpinnerTitle");
-    m_controls.push_back(&m_spinnerTitle);
-    m_doubleSpinnerSlots[0].setupControl(this, panel, "Slot2_1");
-    m_controls.push_back(&m_doubleSpinnerSlots[0]);
-    m_doubleSpinnerSlots[1].setupControl(this, panel, "Slot2_2");
-    m_controls.push_back(&m_doubleSpinnerSlots[1]);
-    m_tripleSpinnerSlots[0].setupControl(this, panel, "Slot3_1");
-    m_controls.push_back(&m_tripleSpinnerSlots[0]);
-    m_tripleSpinnerSlots[1].setupControl(this, panel, "Slot3_2");
-    m_controls.push_back(&m_tripleSpinnerSlots[1]);
-    m_tripleSpinnerSlots[2].setupControl(this, panel, "Slot3_3");
-    m_controls.push_back(&m_tripleSpinnerSlots[2]);
-
-    m_slotSelector3.setupControl(this, panel, "SlotSelector3");
-    m_controls.push_back(&m_slotSelector3);
-    fuiRenderNode* selector3 = m_slotSelector3.getFuiRenderNode();
-    m_crafting3VSlots[0].setupControl(this, selector3, "Crafting3VSlot1");
-    m_controls.push_back(&m_crafting3VSlots[0]);
-    m_crafting3VSlots[1].setupControl(this, selector3, "Crafting3VSlot2");
-    m_controls.push_back(&m_crafting3VSlots[1]);
-    m_crafting3VSlots[2].setupControl(this, selector3, "Crafting3VSlot3");
-    m_controls.push_back(&m_crafting3VSlots[2]);
-
-    m_slotSelector2.setupControl(this, panel, "SlotSelector2");
-    m_controls.push_back(&m_slotSelector2);
-    fuiRenderNode* selector2 = m_slotSelector2.getFuiRenderNode();
-    m_crafting2VSlots[0].setupControl(this, selector2, "Crafting2VSlot1");
-    m_controls.push_back(&m_crafting2VSlots[0]);
-    m_crafting2VSlots[1].setupControl(this, selector2, "Crafting2VSlot2");
-    m_controls.push_back(&m_crafting2VSlots[1]);
-
-    m_craftingSelector.setupControl(this, panel, "CraftingSelector");
-    m_controls.push_back(&m_craftingSelector);
-    fuiRenderNode* selector1 = m_craftingSelector.getFuiRenderNode();
-    m_crafting1VSlot.setupControl(this, selector1, "Crafting1VSlot1");
-    m_controls.push_back(&m_crafting1VSlot);
-
-    m_previewLabel.setupControl(this, panel, "PreviewLabel");
-    m_controls.push_back(&m_previewLabel);
-    m_ingredientsLayout.setupControl(this, panel, "IngredientsLayout");
-    m_controls.push_back(&m_ingredientsLayout);
-    m_ingredientsLayoutSmall.setupControl(this, panel, "IngredientsLayout_Small");
-    m_controls.push_back(&m_ingredientsLayoutSmall);
-    m_craftingOutput.setupControl(this, panel, "CraftingOutput");
-    m_controls.push_back(&m_craftingOutput);
-    m_ingredientSlots[0].setupControl(this, panel, "Ingredient1");
-    m_controls.push_back(&m_ingredientSlots[0]);
-    m_ingredientSlots[1].setupControl(this, panel, "Ingredient2");
-    m_controls.push_back(&m_ingredientSlots[1]);
-    m_ingredientSlots[2].setupControl(this, panel, "Ingredient3");
-    m_controls.push_back(&m_ingredientSlots[2]);
-    m_ingredientSlots[3].setupControl(this, panel, "Ingredient4");
-    m_controls.push_back(&m_ingredientSlots[3]);
-    m_ingredientSlots[4].setupControl(this, panel, "Ingredient5");
-    m_controls.push_back(&m_ingredientSlots[4]);
-    m_ingredientDescriptions[0].setupControl(this, panel, "Ingredient1Desc");
-    m_controls.push_back(&m_ingredientDescriptions[0]);
-    m_ingredientDescriptions[1].setupControl(this, panel, "Ingredient2Desc");
-    m_controls.push_back(&m_ingredientDescriptions[1]);
-    m_ingredientDescriptions[2].setupControl(this, panel, "Ingredient3Desc");
-    m_controls.push_back(&m_ingredientDescriptions[2]);
-    m_ingredientDescriptions[3].setupControl(this, panel, "Ingredient4Desc");
-    m_controls.push_back(&m_ingredientDescriptions[3]);
-    m_ingredientDescriptions[4].setupControl(this, panel, "Ingredient5Desc");
-    m_controls.push_back(&m_ingredientDescriptions[4]);
-    m_previewSlot.setupControl(this, panel, "PreviewSlot");
-    m_controls.push_back(&m_previewSlot);
-    m_ingredientsLabel.setupControl(this, panel, "IngredientsLabel");
-    m_controls.push_back(&m_ingredientsLabel);
-    m_descriptionText.setupControl(this, panel, "DescriptionText");
-    m_controls.push_back(&m_descriptionText);
-    m_inventory.setupControl(this, panel, "Inventory");
-    m_controls.push_back(&m_inventory);
-    m_hotBar.setupControl(this, panel, "HotBar");
-    m_controls.push_back(&m_hotBar);
-    m_groupName.setupControl(this, panel, "GroupName");
-    m_controls.push_back(&m_groupName);
-    m_itemName.setupControl(this, panel, "ItemName");
-    m_controls.push_back(&m_itemName);
-    m_inventoryLabel.setupControl(this, panel, "InventoryLabel");
-    m_controls.push_back(&m_inventoryLabel);
-    m_touchPanels[0].setupControl(this, panel, "TouchPanel_0");
-    m_controls.push_back(&m_touchPanels[0]);
-    m_touchPanels[1].setupControl(this, panel, "TouchPanel_1");
-    m_controls.push_back(&m_touchPanels[1]);
-    m_touchPanels[2].setupControl(this, panel, "TouchPanel_2");
-    m_controls.push_back(&m_touchPanels[2]);
-    m_touchPanels[3].setupControl(this, panel, "TouchPanel_3");
-    m_controls.push_back(&m_touchPanels[3]);
-    m_touchPanels[4].setupControl(this, panel, "TouchPanel_4");
-    m_controls.push_back(&m_touchPanels[4]);
-    m_touchPanels[5].setupControl(this, panel, "TouchPanel_5");
-    m_controls.push_back(&m_touchPanels[5]);
-    m_touchPanels[6].setupControl(this, panel, "TouchPanel_6");
-    m_controls.push_back(&m_touchPanels[6]);
-    m_touchPanels[7].setupControl(this, panel, "TouchPanel_V_0");
-    m_controls.push_back(&m_touchPanels[7]);
-    m_touchPanels[8].setupControl(this, panel, "TouchPanel_V_1");
-    m_controls.push_back(&m_touchPanels[8]);
-    m_touchPanels[9].setupControl(this, panel, "TouchPanel_V_2");
-    m_controls.push_back(&m_touchPanels[9]);
-    m_touchPanels[10].setupControl(this, panel, "TouchPanel_V_3");
-    m_controls.push_back(&m_touchPanels[10]);
-    m_touchPanels[11].setupControl(this, panel, "TouchPanel_V_4");
-    m_controls.push_back(&m_touchPanels[11]);
-    m_touchPanels[12].setupControl(this, panel, "TouchPanel_CraftingHSlots");
-    m_controls.push_back(&m_touchPanels[12]);
+    fuiRenderNode* currentNode = m_movie->getRootNode();
+    {
+        m_mainPanel.setupControl(this, currentNode, std::string("MainPanel"));
+        m_controls.push_back(&m_mainPanel);
+    }
+    {
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_mainPanel.getFuiRenderNode();
+        {
+            m_descriptionPanel.setupControl(this, currentNode, std::string("DescriptionPanel"));
+            m_controls.push_back(&m_descriptionPanel);
+        }
+        {
+            m_descriptionTextTop.setupControl(this, currentNode, std::string("DescriptionTextTop"));
+            m_controls.push_back(&m_descriptionTextTop);
+        }
+        {
+            m_craftingHSlots.setupControl(this, currentNode, std::string("CraftingHSlots"));
+            m_controls.push_back(&m_craftingHSlots);
+        }
+        {
+            m_spinnerTitle.setupControl(this, currentNode, std::string("SpinnerTitle"));
+            m_controls.push_back(&m_spinnerTitle);
+        }
+        {
+            m_doubleSpinnerSlots[0].setupControl(this, currentNode, std::string("Slot2_1"));
+            m_controls.push_back(&m_doubleSpinnerSlots[0]);
+        }
+        {
+            m_doubleSpinnerSlots[1].setupControl(this, currentNode, std::string("Slot2_2"));
+            m_controls.push_back(&m_doubleSpinnerSlots[1]);
+        }
+        {
+            m_tripleSpinnerSlots[0].setupControl(this, currentNode, std::string("Slot3_1"));
+            m_controls.push_back(&m_tripleSpinnerSlots[0]);
+        }
+        {
+            m_tripleSpinnerSlots[1].setupControl(this, currentNode, std::string("Slot3_2"));
+            m_controls.push_back(&m_tripleSpinnerSlots[1]);
+        }
+        {
+            m_tripleSpinnerSlots[2].setupControl(this, currentNode, std::string("Slot3_3"));
+            m_controls.push_back(&m_tripleSpinnerSlots[2]);
+        }
+        {
+            m_slotSelector3.setupControl(this, currentNode, std::string("SlotSelector3"));
+            m_controls.push_back(&m_slotSelector3);
+        }
+        {
+            fuiRenderNode* parentNode = currentNode;
+            currentNode = m_slotSelector3.getFuiRenderNode();
+            {
+                m_crafting3VSlots[0].setupControl(this, currentNode, std::string("Crafting3VSlot1"));
+                m_controls.push_back(&m_crafting3VSlots[0]);
+            }
+            {
+                m_crafting3VSlots[1].setupControl(this, currentNode, std::string("Crafting3VSlot2"));
+                m_controls.push_back(&m_crafting3VSlots[1]);
+            }
+            {
+                m_crafting3VSlots[2].setupControl(this, currentNode, std::string("Crafting3VSlot3"));
+                m_controls.push_back(&m_crafting3VSlots[2]);
+            }
+            currentNode = parentNode;
+        }
+        {
+            m_slotSelector2.setupControl(this, currentNode, std::string("SlotSelector2"));
+            m_controls.push_back(&m_slotSelector2);
+        }
+        {
+            fuiRenderNode* parentNode = currentNode;
+            currentNode = m_slotSelector2.getFuiRenderNode();
+            {
+                m_crafting2VSlots[0].setupControl(this, currentNode, std::string("Crafting2VSlot1"));
+                m_controls.push_back(&m_crafting2VSlots[0]);
+            }
+            {
+                m_crafting2VSlots[1].setupControl(this, currentNode, std::string("Crafting2VSlot2"));
+                m_controls.push_back(&m_crafting2VSlots[1]);
+            }
+            currentNode = parentNode;
+        }
+        {
+            m_craftingSelector.setupControl(this, currentNode, std::string("CraftingSelector"));
+            m_controls.push_back(&m_craftingSelector);
+        }
+        {
+            fuiRenderNode* parentNode = currentNode;
+            currentNode = m_craftingSelector.getFuiRenderNode();
+            {
+                m_crafting1VSlot.setupControl(this, currentNode, std::string("Crafting1VSlot1"));
+                m_controls.push_back(&m_crafting1VSlot);
+            }
+            currentNode = parentNode;
+        }
+        {
+            m_previewLabel.setupControl(this, currentNode, std::string("PreviewLabel"));
+            m_controls.push_back(&m_previewLabel);
+        }
+        {
+            m_ingredientsLayout.setupControl(this, currentNode, std::string("IngredientsLayout"));
+            m_controls.push_back(&m_ingredientsLayout);
+        }
+        {
+            m_ingredientsLayoutSmall.setupControl(this, currentNode, std::string("IngredientsLayout_Small"));
+            m_controls.push_back(&m_ingredientsLayoutSmall);
+        }
+        {
+            m_craftingOutput.setupControl(this, currentNode, std::string("CraftingOutput"));
+            m_controls.push_back(&m_craftingOutput);
+        }
+        {
+            m_ingredientSlots[0].setupControl(this, currentNode, std::string("Ingredient1"));
+            m_controls.push_back(&m_ingredientSlots[0]);
+        }
+        {
+            m_ingredientSlots[1].setupControl(this, currentNode, std::string("Ingredient2"));
+            m_controls.push_back(&m_ingredientSlots[1]);
+        }
+        {
+            m_ingredientSlots[2].setupControl(this, currentNode, std::string("Ingredient3"));
+            m_controls.push_back(&m_ingredientSlots[2]);
+        }
+        {
+            m_ingredientSlots[3].setupControl(this, currentNode, std::string("Ingredient4"));
+            m_controls.push_back(&m_ingredientSlots[3]);
+        }
+        {
+            m_ingredientSlots[4].setupControl(this, currentNode, std::string("Ingredient5"));
+            m_controls.push_back(&m_ingredientSlots[4]);
+        }
+        {
+            m_ingredientDescriptions[0].setupControl(this, currentNode, std::string("Ingredient1Desc"));
+            m_controls.push_back(&m_ingredientDescriptions[0]);
+        }
+        {
+            m_ingredientDescriptions[1].setupControl(this, currentNode, std::string("Ingredient2Desc"));
+            m_controls.push_back(&m_ingredientDescriptions[1]);
+        }
+        {
+            m_ingredientDescriptions[2].setupControl(this, currentNode, std::string("Ingredient3Desc"));
+            m_controls.push_back(&m_ingredientDescriptions[2]);
+        }
+        {
+            m_ingredientDescriptions[3].setupControl(this, currentNode, std::string("Ingredient4Desc"));
+            m_controls.push_back(&m_ingredientDescriptions[3]);
+        }
+        {
+            m_ingredientDescriptions[4].setupControl(this, currentNode, std::string("Ingredient5Desc"));
+            m_controls.push_back(&m_ingredientDescriptions[4]);
+        }
+        {
+            m_previewSlot.setupControl(this, currentNode, std::string("PreviewSlot"));
+            m_controls.push_back(&m_previewSlot);
+        }
+        {
+            m_ingredientsLabel.setupControl(this, currentNode, std::string("IngredientsLabel"));
+            m_controls.push_back(&m_ingredientsLabel);
+        }
+        {
+            m_descriptionText.setupControl(this, currentNode, std::string("DescriptionText"));
+            m_controls.push_back(&m_descriptionText);
+        }
+        {
+            m_inventory.setupControl(this, currentNode, std::string("Inventory"));
+            m_controls.push_back(&m_inventory);
+        }
+        {
+            m_hotBar.setupControl(this, currentNode, std::string("HotBar"));
+            m_controls.push_back(&m_hotBar);
+        }
+        {
+            m_groupName.setupControl(this, currentNode, std::string("GroupName"));
+            m_controls.push_back(&m_groupName);
+        }
+        {
+            m_itemName.setupControl(this, currentNode, std::string("ItemName"));
+            m_controls.push_back(&m_itemName);
+        }
+        {
+            m_inventoryLabel.setupControl(this, currentNode, std::string("InventoryLabel"));
+            m_controls.push_back(&m_inventoryLabel);
+        }
+        {
+            m_touchPanels[0].setupControl(this, currentNode, std::string("TouchPanel_0"));
+            m_controls.push_back(&m_touchPanels[0]);
+        }
+        {
+            m_touchPanels[1].setupControl(this, currentNode, std::string("TouchPanel_1"));
+            m_controls.push_back(&m_touchPanels[1]);
+        }
+        {
+            m_touchPanels[2].setupControl(this, currentNode, std::string("TouchPanel_2"));
+            m_controls.push_back(&m_touchPanels[2]);
+        }
+        {
+            m_touchPanels[3].setupControl(this, currentNode, std::string("TouchPanel_3"));
+            m_controls.push_back(&m_touchPanels[3]);
+        }
+        {
+            m_touchPanels[4].setupControl(this, currentNode, std::string("TouchPanel_4"));
+            m_controls.push_back(&m_touchPanels[4]);
+        }
+        {
+            m_touchPanels[5].setupControl(this, currentNode, std::string("TouchPanel_5"));
+            m_controls.push_back(&m_touchPanels[5]);
+        }
+        {
+            m_touchPanels[6].setupControl(this, currentNode, std::string("TouchPanel_6"));
+            m_controls.push_back(&m_touchPanels[6]);
+        }
+        {
+            m_touchPanels[7].setupControl(this, currentNode, std::string("TouchPanel_V_0"));
+            m_controls.push_back(&m_touchPanels[7]);
+        }
+        {
+            m_touchPanels[8].setupControl(this, currentNode, std::string("TouchPanel_V_1"));
+            m_controls.push_back(&m_touchPanels[8]);
+        }
+        {
+            m_touchPanels[9].setupControl(this, currentNode, std::string("TouchPanel_V_2"));
+            m_controls.push_back(&m_touchPanels[9]);
+        }
+        {
+            m_touchPanels[10].setupControl(this, currentNode, std::string("TouchPanel_V_3"));
+            m_controls.push_back(&m_touchPanels[10]);
+        }
+        {
+            m_touchPanels[11].setupControl(this, currentNode, std::string("TouchPanel_V_4"));
+            m_controls.push_back(&m_touchPanels[11]);
+        }
+        {
+            m_touchPanels[12].setupControl(this, currentNode, std::string("TouchPanel_CraftingHSlots"));
+            m_controls.push_back(&m_touchPanels[12]);
+        }
+        currentNode = parentNode;
+    }
     return 1;
 }
 
@@ -384,16 +500,18 @@ void UIScene_CraftingMenu::setIngredientSlotHighlighted(int index)
 
 void UIScene_CraftingMenu::setInventorySlotHighlighted(int index)
 {
+    int hotBarSlot = -1;
     if (index >= 9 && index < 37)
     {
         m_inventory.setHighlightSlot(index - 9);
-        m_hotBar.setHighlightSlot(-1);
     }
     else
     {
         m_inventory.setHighlightSlot(-1);
-        m_hotBar.setHighlightSlot(index >= 0 && index < 10 ? index : -1);
+        if (index >= 0 && index < 10)
+            hotBarSlot = index;
     }
+    m_hotBar.setHighlightSlot(hotBarSlot);
 }
 
 void UIScene_CraftingMenu::setIngredientDescriptionItem(int, int index, not_null_ptr<ItemInstance> item)
@@ -486,14 +604,16 @@ void UIScene_CraftingMenu::updateHighlightAndScrollPositions()
             m_horizontalSlot, 1);
         static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SelectVerticalItem(
             m_verticalColumn);
-        return;
     }
-    if (IUIScene_CraftingMenu::getCurrentVSlotCount() > 2)
-        vertical = 2;
-    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->MoveSelector(
-        m_horizontalSlot, vertical);
-    static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SelectVerticalItem(
-        m_verticalColumn);
+    else
+    {
+        if (IUIScene_CraftingMenu::getCurrentVSlotCount() > 2)
+            vertical = 2;
+        static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->MoveSelector(
+            m_horizontalSlot, vertical);
+        static_cast<FJ_CraftingMenu*>(m_movie->getRootNode()->getFuiNode())->SelectVerticalItem(
+            m_verticalColumn);
+    }
 }
 
 void UIScene_CraftingMenu::updateVSlotPositions(int, int)
@@ -572,11 +692,8 @@ void UIScene_CraftingMenu::handleReload()
     m_tripleSpinnerSlots[0].addSlots(56, 1);
     m_tripleSpinnerSlots[1].addSlots(57, 1);
     m_tripleSpinnerSlots[2].addSlots(58, 1);
-    m_ingredientSlots[0].addSlot(36);
-    m_ingredientSlots[1].addSlot(37);
-    m_ingredientSlots[2].addSlot(38);
-    m_ingredientSlots[3].addSlot(39);
-    m_ingredientSlots[4].addSlot(40);
+    for (int ingredient = 0; ingredient < 5; ++ingredient)
+        m_ingredientSlots[ingredient].addSlot(36 + ingredient);
     m_craftingOutput.addSlot(41);
     m_ingredientsLayout.addSlots(42, m_ingredientSlotCount);
     m_crafting3VSlots[0].addSlot(52);
@@ -591,14 +708,7 @@ void UIScene_CraftingMenu::handleReload()
     showTabHighlight(m_currentGroup, true);
 
     bool spinner = IUIScene_CraftingMenu::isSpinnerGroup();
-    int superSlots = 0;
-    if (spinner)
-    {
-        superSlots = 2;
-        if (m_craftingMode == 1)
-            superSlots = 3;
-    }
-    ShowSuperCraftingSlots(superSlots);
+    ShowSuperCraftingSlots(spinner ? (m_craftingMode == 1 ? 3 : 2) : 0);
     ShowDescriptionPanel(spinner);
     IUIScene_CraftingMenu::UpdateTabs(false);
 
@@ -689,37 +799,41 @@ void UIScene_CraftingMenu::customDraw(const char* name, fuiRect* rect)
     }
     else if (index >= 52 && index < 55)
     {
+        int slot = index - 52;
         drawDecorations = false;
-        if (m_verticalSlotItems[index - 52].visible)
+        if (m_verticalSlotItems[slot].visible)
         {
-            item = m_verticalSlotItems[index - 52].item;
-            partialTick = static_cast<float>(m_verticalSlotItems[index - 52].displayValue) / 31.0f;
+            item = m_verticalSlotItems[slot].item;
+            partialTick = static_cast<float>(m_verticalSlotItems[slot].displayValue) / 31.0f;
         }
     }
     else if (index >= 59 && index < 71)
     {
+        int slot = index - 59;
         drawDecorations = false;
-        if (m_horizontalSlotItems[index - 59].visible)
+        if (m_horizontalSlotItems[slot].visible)
         {
-            item = m_horizontalSlotItems[index - 59].item;
-            partialTick = static_cast<float>(m_horizontalSlotItems[index - 59].displayValue) / 31.0f;
+            item = m_horizontalSlotItems[slot].item;
+            partialTick = static_cast<float>(m_horizontalSlotItems[slot].displayValue) / 31.0f;
         }
     }
     else if (index >= 42 && index < m_ingredientSlotCount + 42)
     {
-        if (m_ingredientSlotItems[index - 42].visible)
+        int slot = index - 42;
+        if (m_ingredientSlotItems[slot].visible)
         {
-            item = m_ingredientSlotItems[index - 42].item;
-            partialTick = static_cast<float>(m_ingredientSlotItems[index - 42].displayValue) / 31.0f;
+            item = m_ingredientSlotItems[slot].item;
+            partialTick = static_cast<float>(m_ingredientSlotItems[slot].displayValue) / 31.0f;
         }
     }
     else if (index >= 36 && index < 41)
     {
-        if (m_ingredientDescriptionItems[index - 36].visible)
+        int slot = index - 36;
+        if (m_ingredientDescriptionItems[slot].visible)
         {
-            item = m_ingredientDescriptionItems[index - 36].item;
+            item = m_ingredientDescriptionItems[slot].item;
             partialTick =
-                static_cast<float>(m_ingredientDescriptionItems[index - 36].displayValue) / 31.0f;
+                static_cast<float>(m_ingredientDescriptionItems[slot].displayValue) / 31.0f;
         }
     }
     else if (index == 51)
@@ -746,28 +860,31 @@ void UIScene_CraftingMenu::customDraw(const char* name, fuiRect* rect)
     else if (index == 56)
     {
         drawDecorations = false;
-        if (m_horizontalSlotItems[0].visible)
+        _SlotInfo& slot = m_horizontalSlotItems[0];
+        if (slot.visible)
         {
-            item = m_horizontalSlotItems[0].item;
-            partialTick = static_cast<float>(m_horizontalSlotItems[0].displayValue) / 31.0f;
+            item = slot.item;
+            partialTick = static_cast<float>(slot.displayValue) / 31.0f;
         }
     }
     else if (index == 57)
     {
         drawDecorations = false;
-        if (m_horizontalSlotItems[1].visible)
+        _SlotInfo& slot = m_horizontalSlotItems[1];
+        if (slot.visible)
         {
-            item = m_horizontalSlotItems[1].item;
-            partialTick = static_cast<float>(m_horizontalSlotItems[1].displayValue) / 31.0f;
+            item = slot.item;
+            partialTick = static_cast<float>(slot.displayValue) / 31.0f;
         }
     }
     else if (index == 58)
     {
         drawDecorations = false;
-        if (m_horizontalSlotItems[2].visible)
+        _SlotInfo& slot = m_horizontalSlotItems[2];
+        if (slot.visible)
         {
-            item = m_horizontalSlotItems[2].item;
-            partialTick = static_cast<float>(m_horizontalSlotItems[2].displayValue) / 31.0f;
+            item = slot.item;
+            partialTick = static_cast<float>(slot.displayValue) / 31.0f;
         }
     }
 

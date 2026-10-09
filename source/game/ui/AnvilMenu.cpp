@@ -1,6 +1,8 @@
 #include "game/ui/AnvilMenu.hpp"
 #include "game/core/StringIds.hpp"
 
+#include <algorithm>
+
 #include "game/core/RepairResultSlot.hpp"
 #include "game/data/ListTag.hpp"
 #include "game/item/EnchantedBookItem.hpp"
@@ -40,27 +42,25 @@ void AnvilMenu::_init(boost::shared_ptr<Inventory> inventory, Level* level,
 {
     mResultSlots = boost::shared_ptr<ResultContainer>(new ResultContainer());
     mInputSlots = boost::shared_ptr<RepairContainer>(new RepairContainer(this, IDS_REPAIR_AND_NAME, true, 2));
-    mLevel = level;
-    mPosition = position;
     mRepairCost = 0;
     mMaterialCost = 0;
+    mLevel = level;
+    mPosition = position;
     mPlayer = player;
 
     addSlot(new Slot(mInputSlots, 0, 27, 47));
     addSlot(new Slot(mInputSlots, 1, 76, 47));
     addSlot(new RepairResultSlot(this, position, mResultSlots, 2, 134, 47));
 
-    int row;
-    int column;
-    for (row = 0; row < 3; ++row)
+    for (int row = 0; row < 3; ++row)
     {
-        for (column = 0; column < 9; ++column)
+        for (int column = 0; column < 9; ++column)
         {
             addSlot(new Slot(inventory, column + row * 9 + 9,
                              8 + column * 18, 84 + row * 18));
         }
     }
-    for (column = 0; column < 9; ++column)
+    for (int column = 0; column < 9; ++column)
     {
         addSlot(new Slot(inventory, column, 8 + column * 18, 142));
     }
@@ -79,175 +79,171 @@ void AnvilMenu::createResult()
         mRepairCost = 0;
         return;
     }
-
-    not_null_ptr<ItemInstance> result = first->copy();
-    not_null_ptr<ItemInstance> second = mInputSlots->getItem(1);
-    boost::unordered_map<Enchantment*, int>* enchantments =
-        EnchantmentHelper::getEnchantments(result);
-    int baseCost = first->getBaseRepairCost() + (second->isEmpty() ? 0 : second->getBaseRepairCost());
-    mMaterialCost = 0;
-
-    if (!second->isEmpty())
+    else
     {
-        bool enchantedBook = second->getItem() == Items::enchantedBook &&
-                             EnchantedBookItem::getEnchantments(second)->size() > 0;
-        if (result->isDamageableItem() &&
-            result->getItem()->isValidRepairItem(first, second))
-        {
-            int repairAmount = result->getDamageValue();
-            int quarterDurability = result->getMaxDamage() / 4;
-            if (quarterDurability < repairAmount) repairAmount = quarterDurability;
-            if (repairAmount < 1)
-            {
-                mResultSlots->setItem(0, ItemInstance::EMPTY);
-                mRepairCost = 0;
-                return;
-            }
+        not_null_ptr<ItemInstance> result = first->copy();
+        not_null_ptr<ItemInstance> second = mInputSlots->getItem(1);
+        boost::unordered_map<Enchantment*, int>* enchantments =
+            EnchantmentHelper::getEnchantments(result);
+        int baseCost = first->getBaseRepairCost() + (second->isEmpty() ? 0 : second->getBaseRepairCost());
+        mMaterialCost = 0;
 
-            int used = 0;
-            while (repairAmount > 0 && used < second->getCount())
-            {
-                result->setAuxValue(result->getDamageValue() - repairAmount);
-                ++operationCost;
-                ++used;
-                repairAmount = result->getDamageValue();
-                quarterDurability = result->getMaxDamage() / 4;
-                if (quarterDurability < repairAmount) repairAmount = quarterDurability;
-            }
-            mMaterialCost = used;
-        }
-        else
+        if (!second->isEmpty())
         {
-            if (!enchantedBook &&
-                (result->getItem() != second->getItem() || !result->isDamageableItem()))
+            bool enchantedBook = second->getItem() == Items::enchantedBook &&
+                                 EnchantedBookItem::getEnchantments(second)->size() > 0;
+            if (result->isDamageableItem() &&
+                result->getItem()->isValidRepairItem(first, second))
             {
-                mResultSlots->setItem(0, ItemInstance::EMPTY);
-                mRepairCost = 0;
-                return;
-            }
-
-            if (result->isDamageableItem() && !enchantedBook)
-            {
-                int remainingFirst = first->getMaxDamage() - first->getDamageValue();
-                int remainingSecond = second->getMaxDamage() - second->getDamageValue();
-                int damage = result->getMaxDamage() -
-                             (remainingFirst + remainingSecond + result->getMaxDamage() * 12 / 100);
-                if (damage < 0) damage = 0;
-                if (damage < result->getAuxValue())
+                int repairAmount = std::min(result->getDamageValue(), result->getMaxDamage() / 4);
+                if (repairAmount < 1)
                 {
+                    mResultSlots->setItem(0, ItemInstance::EMPTY);
+                    mRepairCost = 0;
+                    return;
+                }
+
+                int used;
+                for (used = 0; repairAmount > 0 && used < second->getCount(); ++used)
+                {
+                    int damage = result->getDamageValue() - repairAmount;
                     result->setAuxValue(damage);
-                    operationCost = 2;
+                    ++operationCost;
+                    repairAmount = std::min(result->getDamageValue(), result->getMaxDamage() / 4);
                 }
+                mMaterialCost = used;
             }
-
-            boost::unordered_map<Enchantment*, int>* addedEnchantments =
-                EnchantmentHelper::getEnchantments(second);
-            bool appliedEnchantment = false;
-            bool hadEnchantment = false;
-            boost::unordered_map<Enchantment*, int>::iterator added;
-            for (added = addedEnchantments->begin(); added != addedEnchantments->end(); ++added)
+            else
             {
-                Enchantment* enchantment = added->first;
-                int oldLevel = 0;
-                boost::unordered_map<Enchantment*, int>::iterator current =
-                    enchantments->find(enchantment);
-                if (current != enchantments->end()) oldLevel = current->second;
-                int level = oldLevel == added->second ? added->second + 1 : added->second;
-                if (level < oldLevel) level = oldLevel;
-
-                bool canApply = enchantment->canEnchant(result);
-                if (mPlayer->mAbilities.mInstabuild || first->getItem() == Items::enchantedBook)
-                    canApply = true;
-
-                boost::unordered_map<Enchantment*, int>::iterator existing;
-                for (existing = enchantments->begin(); existing != enchantments->end(); ++existing)
+                if (!enchantedBook &&
+                    (result->getItem() != second->getItem() || !result->isDamageableItem()))
                 {
-                    if (existing->first != enchantment &&
-                        !enchantment->isCompatibleWith(existing->first))
+                    mResultSlots->setItem(0, ItemInstance::EMPTY);
+                    mRepairCost = 0;
+                    return;
+                }
+
+                if (result->isDamageableItem() && !enchantedBook)
+                {
+                    int remainingFirst = first->getMaxDamage() - first->getDamageValue();
+                    int remainingSecond = second->getMaxDamage() - second->getDamageValue();
+                    int bonus = remainingSecond + result->getMaxDamage() * 12 / 100;
+                    int combined = remainingFirst + bonus;
+                    int damage = result->getMaxDamage() - combined;
+                    if (damage < 0) damage = 0;
+                    if (damage < result->getAuxValue())
                     {
-                        ++operationCost;
-                        canApply = false;
+                        result->setAuxValue(damage);
+                        operationCost += 2;
                     }
                 }
 
-                if (canApply)
+                boost::unordered_map<Enchantment*, int>* addedEnchantments =
+                    EnchantmentHelper::getEnchantments(second);
+                bool hadEnchantment = false;
+                bool appliedEnchantment = false;
+                boost::unordered_map<Enchantment*, int>::iterator added;
+                for (added = addedEnchantments->begin(); added != addedEnchantments->end(); ++added)
                 {
-                    appliedEnchantment = true;
-                    if (enchantment->getMaxLevel() < level) level = enchantment->getMaxLevel();
-                    (*enchantments)[enchantment] = level;
+                    Enchantment* enchantment = added->first;
+                    if (enchantment == NULL) continue;
+                    boost::unordered_map<Enchantment*, int>::iterator current =
+                        enchantments->find(enchantment);
+                    int oldLevel = current != enchantments->end() ? current->second : 0;
+                    int level = added->second;
+                    level = oldLevel == level ? level + 1 : std::max(level, oldLevel);
 
-                    int rarityCost = 0;
-                    if (enchantment->getRarity()->getWeight() == Rarity::COMMON->getWeight())
-                        rarityCost = 1;
-                    else if (enchantment->getRarity()->getWeight() == Rarity::UNCOMMON->getWeight())
-                        rarityCost = 2;
-                    else if (enchantment->getRarity()->getWeight() == Rarity::RARE->getWeight())
-                        rarityCost = 4;
-                    else if (enchantment->getRarity()->getWeight() == Rarity::EPIC->getWeight())
-                        rarityCost = 8;
-                    if (enchantedBook)
+                    bool canApply = enchantment->canEnchant(first);
+                    if (mPlayer->mAbilities.mInstabuild || first->getItem() == Items::enchantedBook)
+                        canApply = true;
+
+                    for (boost::unordered_map<Enchantment*, int>::iterator existing = enchantments->begin();
+                         existing != enchantments->end(); ++existing)
                     {
-                        rarityCost >>= 1;
-                        if (rarityCost == 0) rarityCost = 1;
+                        Enchantment* other = existing->first;
+                        if (other != enchantment && !enchantment->isCompatibleWith(other))
+                        {
+                            canApply = false;
+                            ++operationCost;
+                        }
                     }
-                    operationCost += rarityCost * level;
-                    if (first->getCount() > 1) operationCost = 40;
-                }
-                else
-                {
-                    hadEnchantment = true;
-                }
-            }
-            delete addedEnchantments;
 
-            if (hadEnchantment && !appliedEnchantment)
-            {
-                mResultSlots->setItem(0, ItemInstance::EMPTY);
-                mRepairCost = 0;
-                return;
+                    if (!canApply)
+                    {
+                        hadEnchantment = true;
+                    }
+                    else
+                    {
+                        appliedEnchantment = true;
+                        if (level > enchantment->getMaxLevel()) level = enchantment->getMaxLevel();
+                        (*enchantments)[enchantment] = level;
+
+                        int rarityCost = 0;
+                        if (enchantment->getRarity()->getWeight() == Rarity::COMMON->getWeight())
+                            rarityCost = 1;
+                        else if (enchantment->getRarity()->getWeight() == Rarity::UNCOMMON->getWeight())
+                            rarityCost = 2;
+                        else if (enchantment->getRarity()->getWeight() == Rarity::RARE->getWeight())
+                            rarityCost = 4;
+                        else if (enchantment->getRarity()->getWeight() == Rarity::EPIC->getWeight())
+                            rarityCost = 8;
+                        if (enchantedBook) rarityCost = std::max(1, rarityCost / 2);
+                        operationCost += rarityCost * level;
+                        if (first->getCount() > 1) operationCost = 40;
+                    }
+                }
+                if (hadEnchantment && !appliedEnchantment)
+                {
+                    mResultSlots->setItem(0, ItemInstance::EMPTY);
+                    mRepairCost = 0;
+                    return;
+                }
+                delete addedEnchantments;
             }
         }
-    }
 
-    if (mItemName.empty())
-    {
-        if (first->hasCustomHoverName())
+        if (mItemName.empty())
+        {
+            if (first->hasCustomHoverName())
+            {
+                renameCost = 1;
+                ++operationCost;
+                result->resetHoverName();
+            }
+        }
+        else if (!mItemName.empty() &&
+                 !equalsIgnoreCase(mItemName, first->getHoverNameUnfiltered()) &&
+                 !mItemName.empty())
         {
             renameCost = 1;
             ++operationCost;
-            result->resetHoverName();
+            result->setHoverName(mItemName);
+            result->setCensorshipInfo(mPlayer->getUUID(), mItemNameCensored);
         }
-    }
-    else if (!equalsIgnoreCase(mItemName, first->getHoverNameUnfiltered()))
-    {
-        renameCost = 1;
-        ++operationCost;
-        result->setHoverName(mItemName);
-        result->setCensorshipInfo(mPlayer->getUUID(), mItemNameCensored);
-    }
 
-    mRepairCost = baseCost + operationCost;
-    if (operationCost < 1) result = ItemInstance::EMPTY;
-    if (mRepairCost > 39)
-    {
-        if (renameCost == operationCost && renameCost != 0)
-            mRepairCost = 39;
-        else if (!mPlayer->mAbilities.mInstabuild)
-            result = ItemInstance::EMPTY;
-    }
+        mRepairCost = baseCost + operationCost;
+        if (operationCost < 1) result = ItemInstance::EMPTY;
+        if (mRepairCost >= 40)
+        {
+            if (renameCost == operationCost && renameCost > 0)
+                mRepairCost = 39;
+            else if (!mPlayer->mAbilities.mInstabuild)
+                result = ItemInstance::EMPTY;
+        }
 
-    if (!result->isEmpty())
-    {
-        int repairCost = result->getBaseRepairCost();
-        if (!second->isEmpty() && repairCost < second->getBaseRepairCost())
-            repairCost = second->getBaseRepairCost();
-        if (renameCost != operationCost || renameCost == 0)
-            repairCost = repairCost * 2 + 1;
-        result->setRepairCost(repairCost);
-        EnchantmentHelper::setEnchantments(enchantments, result);
-    }
+        if (!result->isEmpty())
+        {
+            int repairCost = result->getBaseRepairCost();
+            if (!second->isEmpty() && repairCost < second->getBaseRepairCost())
+                repairCost = second->getBaseRepairCost();
+            if (renameCost != operationCost || renameCost == 0)
+                repairCost = repairCost * 2 + 1;
+            result->setRepairCost(repairCost);
+            EnchantmentHelper::setEnchantments(enchantments, result);
+        }
 
-    mResultSlots->setItem(0, result);
+        mResultSlots->setItem(0, result);
+    }
     broadcastChanges();
 }
 
@@ -271,10 +267,9 @@ void AnvilMenu::setData(int id, int value)
 void AnvilMenu::removed(boost::shared_ptr<Player> player)
 {
     AbstractContainerMenu::removed(player);
-    if (!mLevel->mIsClientSide)
-    {
-        clearContainer(player, mLevel, mInputSlots);
-    }
+    if (mLevel->mIsClientSide)
+        return;
+    clearContainer(player, mLevel, mInputSlots);
 }
 
 bool AnvilMenu::stillValid(boost::shared_ptr<Player> player)
@@ -297,22 +292,31 @@ not_null_ptr<ItemInstance> AnvilMenu::quickMoveStack(boost::shared_ptr<Player> p
         clicked = stack->copy();
         if (index == 2)
         {
-            if (moveItemStackTo(stack, 3, 39, true, true, true) != true) return ItemInstance::EMPTY;
-            player->OnTakeFromAnvil(clicked);
+            if (!moveItemStackTo(stack, 3, 39, true, true, true))
+                return ItemInstance::EMPTY;
+            else
+                player->OnTakeFromAnvil(clicked);
             slot->onQuickCraft(stack, clicked);
         }
         else if (index == 0 || index == 1)
         {
-            if (moveItemStackTo(stack, 3, 39, false, true, true) != true) return ItemInstance::EMPTY;
+            if (!moveItemStackTo(stack, 3, 39, false, true, true))
+                return ItemInstance::EMPTY;
         }
-        else if ((unsigned int)(index - 3) < 36u)
+        else if (index >= 3 && index < 39)
         {
-            if (moveItemStackTo(stack, 0, 2, false, true, true) != true) return ItemInstance::EMPTY;
+            if (!moveItemStackTo(stack, 0, 2, false, true, true))
+                return ItemInstance::EMPTY;
         }
-        if (stack->isEmpty()) slot->set(ItemInstance::EMPTY);
-        else slot->setChanged();
-        if (stack->getCount() == clicked->getCount()) return ItemInstance::EMPTY;
-        slot->onTake(player, stack);
+
+        if (stack->isEmpty())
+            slot->set(ItemInstance::EMPTY);
+        else
+            slot->setChanged();
+        if (stack->getCount() == clicked->getCount())
+            return ItemInstance::EMPTY;
+        else
+            slot->onTake(player, stack);
     }
     return clicked;
 }

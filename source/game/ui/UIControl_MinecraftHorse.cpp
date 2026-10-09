@@ -20,8 +20,8 @@ UIControl_MinecraftHorse::UIControl_MinecraftHorse()
     Minecraft* minecraft = Minecraft::GetInstance();
     ScreenSizeCalculator sizeCalculator(minecraft->mOptions, minecraft->mFullWidth, minecraft->mFullHeight, -1);
     mScreenWidth = (float)minecraft->mFullWidth;
-    mScreenHeight = (float)minecraft->mFullHeight;
     mScaledWidth = (float)sizeCalculator.mWidthScale;
+    mScreenHeight = (float)minecraft->mFullHeight;
     mScaledHeight = (float)sizeCalculator.mHeightScale;
 }
 
@@ -37,25 +37,28 @@ void UIControl_MinecraftHorse::render(fuiRect* rect)
 
     UIScene_HorseInventoryMenu* scene = static_cast<UIScene_HorseInventoryMenu*>(m_scene);
     boost::shared_ptr<AbstractHorse> horse = scene->m_horse;
-    float scale = width / (mScreenWidth / mScreenHeight) * 0.71f;
+    float aspect = mScreenWidth / mScreenHeight;
+    float scale = width / aspect * 0.71f;
     GlStateManager::scalef(-scale, scale, scale);
     GlStateManager::rotatef(180.0f, 0.0f, 0.0f, 1.0f);
 
     float oldYBodyRot = horse->mYBodyRot;
     float oldYRot = horse->mYRot;
     float oldXRot = horse->mXRot;
-    float lookX = (m_x + m_width * 0.5f - scene->m_pointerPos.x) / 40.0f;
-    float lookY = (m_y + m_height * 0.5f - 40.0f - scene->m_pointerPos.y) / 40.0f;
     float oldYHeadRot = horse->mYHeadRot;
+    float centreY = m_y + m_height * 0.5f;
+    float centreX = m_x + m_width * 0.5f;
+    float xd = centreX - scene->m_pointerPos.x;
+    float yd = centreY - 40.0f - scene->m_pointerPos.y;
 
     GlStateManager::rotatef(135.0f, 0.0f, 1.0f, 0.0f);
     Lighting::turnOn();
     GlStateManager::rotatef(-135.0f, 0.0f, 1.0f, 0.0f);
-    GlStateManager::rotatef(-std::atan(lookY) * 20.0f, 1.0f, 0.0f, 0.0f);
+    GlStateManager::rotatef(-(std::atan(yd / 40.0f) * 20.0f), 1.0f, 0.0f, 0.0f);
 
-    horse->mYBodyRot = std::atan(lookX) * 20.0f;
-    horse->mYRot = std::atan(lookX) * 40.0f;
-    horse->mXRot = -std::atan(lookY) * 20.0f;
+    horse->mYBodyRot = std::atan(xd / 40.0f) * 20.0f;
+    horse->mYRot = std::atan(xd / 40.0f) * 40.0f;
+    horse->mXRot = -(std::atan(yd / 40.0f) * 20.0f);
     horse->mYHeadRot = horse->mYRot;
     GlStateManager::translatef(0.0f, 0.0f, 0.0f);
 

@@ -88,10 +88,10 @@ uint32_t UIControl_MultiList::GetSliderValue(int id)
     return static_cast<FJ_List_MultiList*>(m_fuiRenderNode->getFuiNode())->GetSliderValue(index);
 }
 
-void UIControl_MultiList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
+bool UIControl_MultiList::setupControl(UIScene* scene, fuiRenderNode* node, const std::string& name)
 {
     m_controlType = UIControl::eUIControlType_MultiList;
-    UIControl_List::setupControl(scene, node, name);
+    return UIControl_List::setupControl(scene, node, name);
 }
 
 void UIControl_MultiList::setAllPossibleLabels(int firstLabel, unsigned int labelCount,

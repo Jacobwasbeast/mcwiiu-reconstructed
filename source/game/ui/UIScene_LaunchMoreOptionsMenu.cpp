@@ -30,14 +30,14 @@
 extern ConsoleUIController gConsoleUIController;
 
 static int descriptionIds[] = {
-    0x1a93e279, 0x0f7151d3, 0x7b994768, 0x2df040b0, 0x2bdbddba, 0xf2e6dbcb,
-    0xc85a085b, 0x8f41adb5, 0xa112a17c, 0xcb6d8de1, 0x30f1cb60, 0xc61e984d,
-    0xe0163d88, 0xcf045afa, 0x03d32989, 0x544ad58e, 0xaf1fca77, 0x33b6226b,
-    0x80e6ea53, 0x2bd798a9, 0xc36b9de0, 0x6d6eba08, 0xa6874a79, 0x8f88ae9a,
-    IDS_DESC_BIOME_SCALE, 0x814065bc, 0x4f8bedac, 0x75cf2428, 0x4c17ef92, IDS_MASHUP_CHOOSE_BETWEEN_SEVERAL_VARIANTS_SAME_CORE_GAME_TEXT,
-    0xfe516d5e, 0xbe68971f, 0, 0, IDS_MG_LIVES_PER_ROUND_DESC, 0x5e1bb988, 0x2a5c55c8,
-    0xb66f0561, 0xf7c16b2c, 0xe7ba74fc, 0xe8f6de23, 0xbfd9bf09, 0xa541f7ca,
-    0x0d7dae19, 0x35ef3122
+    IDS_GAMEOPTION_ONLINE, IDS_GAMEOPTION_INVITEONLY, IDS_GAMEOPTION_ALLOWFOF, IDS_GAMEOPTION_PVP, IDS_GAMEOPTION_TRUST, IDS_GAMEOPTION_FIRE_SPREADS,
+    IDS_GAMEOPTION_TNT_EXPLODES, IDS_GAMEOPTION_HOST_PRIVILEGES, IDS_GAMEOPTION_RESET_NETHER, 0xcb6d8de1, IDS_GAMEOPTION_STRUCTURES, IDS_GAMEOPTION_BONUS_CHEST,
+    IDS_GAMEOPTION_KEEP_INVENTORY, IDS_GAMEOPTION_MOB_SPAWNING, IDS_GAMEOPTION_MOB_LOOT, IDS_GAMEOPTION_MOB_GRIEFING, IDS_GAMEOPTION_TILE_DROPS, IDS_GAMEOPTION_NATURAL_REGEN,
+    IDS_GAMEOPTION_DAYLIGHT_CYCLE, IDS_GAMEOPTION_WEATHER_CYCLE, IDS_GAMEOPTION_SUPERFLAT, IDS_SUPERFLAT_CUSTOMISE_DESCRIPTION, IDS_GAMEOPTION_SEED, 0x8f88ae9a,
+    IDS_DESC_BIOME_SCALE, 0x814065bc, IDS_MG_OPTION_DESC_CENTRE_SPAWN, IDS_MG_OPTION_DESC_MAP_SELECT, IDS_MG_OPTION_DESC_ROUND_LENGTH, IDS_MASHUP_CHOOSE_BETWEEN_SEVERAL_VARIANTS_SAME_CORE_GAME_TEXT,
+    IDS_MG_OPTION_DESC_SPECTATE_MODE, 0xbe68971f, 0, 0, IDS_MG_LIVES_PER_ROUND_DESC, IDS_MG01_ROUND_COUNT_DESC, IDS_MG01_MAP_SIZE_DESC,
+    IDS_MG01_NATURAL_REGENERATION_DESC, 0xf7c16b2c, IDS_MG01_SMALL_INVENTORY_DESC, IDS_MG01_TAKE_EVERYTHING_DESC, IDS_MG01_CHEST_REFILL_SETTING_DESC, IDS_MG02_SPECTATOR_PARTICIPATION_DESC,
+    IDS_MG02_LAYER_SCALE_DESC, IDS_MG02_LAYER_COUNT_DESC
 };
 
 static float arenaSizeTable[] = { 0.5f, 0.625f, 0.75f, 0.875f, 1.0f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f };
@@ -151,7 +151,7 @@ void UIScene_LaunchMoreOptionsMenu::UpdateDescriptionText()
     else
     {
         description = gApp.FormatHTMLString(m_playerId, std::wstring(L10N::GetString(descriptionId)), -1);
-        if (descriptionId == static_cast<int>(0xc36b9de0u))
+        if (descriptionId == static_cast<int>(IDS_GAMEOPTION_SUPERFLAT))
             description = replaceAll(description, std::wstring(L"{*DISABLES_ACHIEVEMENTS*}"),
                                      std::wstring(L10N::GetString(IDS_HOST_OPTION_DISABLES_ACHIEVEMENTS)));
         hiDef = gRenderer->IsHiDef();
@@ -249,9 +249,9 @@ void UIScene_LaunchMoreOptionsMenu::_init()
             {
                 wchar_t text[256];
                 m_gameOptionsList.AddNewCheckbox(
-                    std::wstring(L10N::GetString(0xa329d6e9)), 0x1f,
+                    std::wstring(L10N::GetString(IDS_MG_OPTION_ALLOW_ALL_SKINS)), 0x1f,
                     m_initData->mPlayerSettings.mHostOptions.Get(eCustomGameModeHostOption_NoSmallSkins) == 0);
-                std::wstring label = std::wstring(L10N::GetString(0x5ccdb447)) + L": " +
+                std::wstring label = std::wstring(L10N::GetString(IDS_MG01_ITEMSET)) + L": " +
                     MiniGameDef::GetCustomGameModeById(m_initData->mMiniGameId, true)
                         ->GetLootSetText(m_initData->mPlayerSettings.mLootSetId);
                 m_gameOptionsList.AddNewSlider(label, 0x20, 0, 5, m_initData->mPlayerSettings.mLootSetId, false, 7, 3);
@@ -259,32 +259,32 @@ void UIScene_LaunchMoreOptionsMenu::_init()
                     MiniGameDef::GetCustomGameModeById(m_initData->mMiniGameId, true)
                         ->GetFoodBalanceIndexText(m_initData->mPlayerSettings.mFoodBalance);
                 m_gameOptionsList.AddNewSlider(label, 0x21, 0, 7, m_initData->mPlayerSettings.mFoodBalance, false, 7, 3);
-                swprintf(text, 256, L"%ls: %d", L10N::GetString(0x9ad3440e), m_initData->mPlayerSettings.mRoundCount);
+                swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_MG01_ROUND_COUNT), m_initData->mPlayerSettings.mRoundCount);
                 m_gameOptionsList.AddNewSlider(std::wstring(text), 0x23, 1, 10,
                                                m_initData->mPlayerSettings.mRoundCount, false, 7, 3);
                 int mapSizeText = 0;
                 if (m_initData->mPlayerSettings.mMapSizeOverride.isSet())
                     mapSizeText = m_initData->mPlayerSettings.mMapSizeOverride.get();
-                label = std::wstring(L10N::GetString(0xf8df77ce)) + L": " +
+                label = std::wstring(L10N::GetString(IDS_MG01_MAP_SIZE)) + L": " +
                     MiniGameDef::GetCustomGameModeById(m_initData->mMiniGameId, true)
                         ->GetMapSizeOverrideText(mapSizeText);
                 int mapSizeValue = 0;
                 if (m_initData->mPlayerSettings.mMapSizeOverride.isSet())
                     mapSizeValue = m_initData->mPlayerSettings.mMapSizeOverride.get();
                 m_gameOptionsList.AddNewSlider(label, 0x24, 0, 2, mapSizeValue, false, 7, 3);
-                m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0x1d7e9b6f)), 0x25,
+                m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG01_NATURAL_REGENERATION)), 0x25,
                                                  m_initData->mPlayerSettings.mNaturalRegeneration);
-                m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0xddc824da)), 0x27,
+                m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG01_SMALL_INVENTORY)), 0x27,
                                                  m_initData->mPlayerSettings.mSmallInventoryEnabled);
-                m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0x7356945d)), 0x28,
+                m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG01_TAKE_EVERYTHING)), 0x28,
                                                  m_initData->mPlayerSettings.mTakeEverythingEnabled);
-                m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0xaa27b127)), 0x29,
+                m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MG01_CHEST_REFILL_SETTING)), 0x29,
                                                  m_initData->mPlayerSettings.mChestRefillEnabled);
             }
             else if (m_initData->mMiniGameId == eMiniGameId_Tumble)
             {
                 wchar_t text[256];
-                std::wstring label = std::wstring(L10N::GetString(0x5ccdb447)) + L": " +
+                std::wstring label = std::wstring(L10N::GetString(IDS_MG01_ITEMSET)) + L": " +
                     MiniGameDef::GetCustomGameModeById(m_initData->mMiniGameId, true)
                         ->GetLootSetText(m_initData->mPlayerSettings.mLootSetId);
                 m_gameOptionsList.AddNewSlider(label, 0x20, 0, 3, m_initData->mPlayerSettings.mLootSetId, false, 7, 3);
@@ -353,7 +353,7 @@ void UIScene_LaunchMoreOptionsMenu::_init()
                 m_worldOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_SUPERFLAT_WORLD)), 0x14,
                                                   m_initData->mFlatWorld);
                 m_worldOptionsList.EnableItem(0x14, !m_initData->mWorldTypeLocked, true);
-                m_worldOptionsList.AddNewButton(std::wstring(L10N::GetString(0x9cfef661)), 0x15, true);
+                m_worldOptionsList.AddNewButton(std::wstring(L10N::GetString(IDS_SUPERFLAT_CUSTOMISE)), 0x15, true);
                 m_worldOptionsList.EnableItem(0x15, m_initData->mFlatWorld && !m_initData->mWorldTypeLocked, true);
                 m_worldOptionsList.AddNewLabel(std::wstring(L" "), 0x34);
             }
@@ -382,7 +382,7 @@ void UIScene_LaunchMoreOptionsMenu::_init()
             m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_MOB_LOOT)), 0xe, m_initData->mDoMobLoot);
             m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_TILE_DROPS)), 0x10,
                                              m_initData->mDoTileDrops);
-            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(0x6f7d8591)), 0x11,
+            m_gameOptionsList.AddNewCheckbox(std::wstring(L10N::GetString(IDS_NATURAL_REGEN)), 0x11,
                                              m_initData->mNaturalRegeneration);
         }
     }
@@ -445,56 +445,64 @@ void UIScene_LaunchMoreOptionsMenu::_init()
 
 unsigned int UIScene_LaunchMoreOptionsMenu::mapElementsAndNames()
 {
-    fuiRenderNode* root = m_movie->getRootNode();
+    fuiRenderNode* currentNode = m_movie->getRootNode();
     {
-        m_gameLabel.setupControl(this, root, std::string("LabelGame"));
+        m_gameLabel.setupControl(this, currentNode, std::string("LabelGame"));
         m_controls.push_back(&m_gameLabel);
     }
     {
-        m_worldLabel.setupControl(this, root, std::string("LabelWorld"));
+        m_worldLabel.setupControl(this, currentNode, std::string("LabelWorld"));
         m_controls.push_back(&m_worldLabel);
     }
     {
-        m_worldOptions.setupControl(this, root, std::string("WorldOptions"));
+        m_worldOptions.setupControl(this, currentNode, std::string("WorldOptions"));
         m_controls.push_back(&m_worldOptions);
     }
-    fuiRenderNode* worldPanel = m_worldOptions.getFuiRenderNode();
     {
-        m_worldOptionsList.setupControl(this, worldPanel, std::string("WorldOptionsList"));
-        m_controls.push_back(&m_worldOptionsList);
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_worldOptions.getFuiRenderNode();
+        {
+            m_worldOptionsList.setupControl(this, currentNode, std::string("WorldOptionsList"));
+            m_controls.push_back(&m_worldOptionsList);
+        }
+        {
+            m_worldTab.setupControl(this, currentNode, std::string("TouchTabWorld"));
+            m_controls.push_back(&m_worldTab);
+        }
+        {
+            m_worldDescription.setupControl(this, currentNode, std::string("Description_WorldOptions"));
+            m_controls.push_back(&m_worldDescription);
+        }
+        {
+            m_worldSizeLabel.setupControl(this, currentNode, std::string("WorldSize"));
+            m_controls.push_back(&m_worldSizeLabel);
+        }
+        {
+            m_resizeLabel.setupControl(this, currentNode, std::string("ResizeLabel"));
+            m_controls.push_back(&m_resizeLabel);
+        }
+        currentNode = parentNode;
     }
     {
-        m_worldTab.setupControl(this, worldPanel, std::string("TouchTabWorld"));
-        m_controls.push_back(&m_worldTab);
-    }
-    {
-        m_worldDescription.setupControl(this, worldPanel, std::string("Description_WorldOptions"));
-        m_controls.push_back(&m_worldDescription);
-    }
-    {
-        m_worldSizeLabel.setupControl(this, worldPanel, std::string("WorldSize"));
-        m_controls.push_back(&m_worldSizeLabel);
-    }
-    {
-        m_resizeLabel.setupControl(this, worldPanel, std::string("ResizeLabel"));
-        m_controls.push_back(&m_resizeLabel);
-    }
-    {
-        m_gameOptions.setupControl(this, root, std::string("GameOptions"));
+        m_gameOptions.setupControl(this, currentNode, std::string("GameOptions"));
         m_controls.push_back(&m_gameOptions);
     }
-    fuiRenderNode* gamePanel = m_gameOptions.getFuiRenderNode();
     {
-        m_gameOptionsList.setupControl(this, gamePanel, std::string("GameOptionsList"));
-        m_controls.push_back(&m_gameOptionsList);
-    }
-    {
-        m_gameTab.setupControl(this, gamePanel, std::string("TouchTabGame"));
-        m_controls.push_back(&m_gameTab);
-    }
-    {
-        m_gameDescription.setupControl(this, gamePanel, std::string("Description_GameOptions"));
-        m_controls.push_back(&m_gameDescription);
+        fuiRenderNode* parentNode = currentNode;
+        currentNode = m_gameOptions.getFuiRenderNode();
+        {
+            m_gameOptionsList.setupControl(this, currentNode, std::string("GameOptionsList"));
+            m_controls.push_back(&m_gameOptionsList);
+        }
+        {
+            m_gameTab.setupControl(this, currentNode, std::string("TouchTabGame"));
+            m_controls.push_back(&m_gameTab);
+        }
+        {
+            m_gameDescription.setupControl(this, currentNode, std::string("Description_GameOptions"));
+            m_controls.push_back(&m_gameDescription);
+        }
+        currentNode = parentNode;
     }
     return 1;
 }
@@ -775,7 +783,7 @@ void UIScene_LaunchMoreOptionsMenu::handleSliderElementMove(int, int second, int
         const MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(
             m_initData->mMiniGameId, true);
         m_gameOptionsList.SetItemLabel(
-            0x20, UIString(std::wstring(L10N::GetString(0x5ccdb447)) + L": " +
+            0x20, UIString(std::wstring(L10N::GetString(IDS_MG01_ITEMSET)) + L": " +
                            miniGame->GetLootSetText(m_initData->mPlayerSettings.mLootSetId)), false);
         UpdateDescriptionText();
         break;
@@ -806,7 +814,7 @@ void UIScene_LaunchMoreOptionsMenu::handleSliderElementMove(int, int second, int
     }
     case 0x23:
         m_initData->mPlayerSettings.mRoundCount = m_gameOptionsList.GetSliderValue(0x23);
-        swprintf(text, 256, L"%ls: %d", L10N::GetString(0x9ad3440e), m_initData->mPlayerSettings.mRoundCount);
+        swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_MG01_ROUND_COUNT), m_initData->mPlayerSettings.mRoundCount);
         m_gameOptionsList.SetItemLabel(0x23, UIString(text), false);
         UpdateDescriptionText();
         m_initData->mSettingsChanged = true;
@@ -823,7 +831,7 @@ void UIScene_LaunchMoreOptionsMenu::handleSliderElementMove(int, int second, int
         const MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(
             m_initData->mMiniGameId, true);
         m_gameOptionsList.SetItemLabel(
-            0x24, UIString(std::wstring(L10N::GetString(0xf8df77ce)) + L": " +
+            0x24, UIString(std::wstring(L10N::GetString(IDS_MG01_MAP_SIZE)) + L": " +
                            miniGame->GetMapSizeOverrideText(overrideValue)), false);
         UpdateDescriptionText();
         break;

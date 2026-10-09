@@ -75,36 +75,36 @@ not_null_ptr<ItemInstance> ChestMenu::quickMoveStack(boost::shared_ptr<Player> p
                 int hotbarStart = containerEnd + 27;
                 int slotCount = (int)m_slots.size();
                 bool moved;
-                if (!small)
+                if (small)
+                {
+                    moved = moveItemStackTo(item, hotbarStart, slotCount, false, true, true);
+                }
+                else
                 {
                     moved = moveItemStackTo(item, containerEnd, slotCount, true, true, false);
                     if (!moved)
                     {
-                        if (!item->getItem()->PreferInventory())
-                        {
-                            moved = moveItemStackTo(item, hotbarStart, slotCount, false, false, true);
-                            if (!moved)
-                                moved = moveItemStackTo(item, containerEnd, hotbarStart, true, false, true);
-                        }
-                        else
+                        if (item->getItem()->PreferInventory())
                         {
                             moved = moveItemStackTo(item, containerEnd, hotbarStart, true, false, true);
                             if (!moved)
                                 moved = moveItemStackTo(item, hotbarStart, slotCount, false, false, true);
                         }
+                        else
+                        {
+                            moved = moveItemStackTo(item, hotbarStart, slotCount, false, false, true);
+                            if (!moved)
+                                moved = moveItemStackTo(item, containerEnd, hotbarStart, true, false, true);
+                        }
                     }
-                }
-                else
-                {
-                    moved = moveItemStackTo(item, hotbarStart, slotCount, false, true, true);
                 }
 
                 if (replacedExisting)
                 {
-                    if (!moved)
-                        slot->set(item);
-                    else
+                    if (moved)
                         slot->set(ItemInstance::EMPTY);
+                    else
+                        slot->set(item);
                 }
                 else if (slot->getItem()->getCount() == 0)
                 {
@@ -112,20 +112,15 @@ not_null_ptr<ItemInstance> ChestMenu::quickMoveStack(boost::shared_ptr<Player> p
                 }
                 return ItemInstance::EMPTY;
             }
-
-            if (moveItemStackTo(item, m_numRows * 9, (int)m_slots.size(), true, true, false) == true)
+            else if (!moveItemStackTo(item, m_numRows * 9, (int)m_slots.size(), true, true, true))
             {
-                if (item->getCount() == 0)
-                    slot->set(ItemInstance::EMPTY);
-                else
-                    slot->setChanged();
-                return result;
+                return ItemInstance::EMPTY;
             }
+        }
+        else if (!moveItemStackTo(item, 0, m_numRows * 9, false, true, true))
+        {
             return ItemInstance::EMPTY;
         }
-
-        if (!moveItemStackTo(item, 0, m_numRows * 9, false, true, true))
-            return ItemInstance::EMPTY;
 
         if (item->getCount() == 0)
             slot->set(ItemInstance::EMPTY);
