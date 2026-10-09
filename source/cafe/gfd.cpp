@@ -70,36 +70,25 @@ GX2Boolean _GFDCheckBlockHeaderMagicVersions(const GFDBlockHeader* blockHeader)
     return GX2_TRUE;
 }
 
-static const GFDBlockHeader* GetFirstBlock(const void* data)
-{
-    return reinterpret_cast<const GFDBlockHeader*>(static_cast<const u8*>(data) +
-                                                   static_cast<const GFDHeader*>(data)->size);
-}
-
-static const GFDBlockHeader* GetNextBlock(const GFDBlockHeader* blockHeader)
-{
-    return reinterpret_cast<const GFDBlockHeader*>(reinterpret_cast<const u8*>(blockHeader) +
-                                                   blockHeader->size + blockHeader->dataSize);
-}
-
 u32 _GFDGetBlockCount(GFDBlockType blockType, const void* data)
 {
-    if (data == NULL)
-        return 0;
-
+    const u8* blockData;
+    const GFDBlockHeader* blockHeader;
     u32 count = 0;
-    if (!_GFDCheckHeaderVersions(data))
+
+    if (data == NULL || !_GFDCheckHeaderVersions(data))
         return 0;
 
-    const GFDBlockHeader* blockHeader = GetFirstBlock(data);
+    blockData = static_cast<const u8*>(data) + static_cast<const GFDHeader*>(data)->size;
+    blockHeader = reinterpret_cast<const GFDBlockHeader*>(blockData);
     while (_GFDCheckBlockHeaderMagicVersions(blockHeader))
     {
-        GFDBlockType type = blockHeader->type;
-        if (type == blockType)
+        blockHeader = reinterpret_cast<const GFDBlockHeader*>(blockData);
+        if (blockType == blockHeader->type)
             count++;
 
-        blockHeader = GetNextBlock(blockHeader);
-        if (type == GFD_BLOCK_TYPE_END)
+        blockData = blockData + blockHeader->size + blockHeader->dataSize;
+        if (blockHeader->type == GFD_BLOCK_TYPE_END)
             break;
     }
 
@@ -118,25 +107,28 @@ u32 GFDGetPixelShaderCount(const void* data)
 
 u32 _GFDGetBlockDataSize(GFDBlockType blockType, u32 index, const void* data)
 {
+    const u8* blockData;
+    const GFDBlockHeader* blockHeader;
     u32 count = 0;
 
     if (data == NULL || !_GFDCheckHeaderVersions(data))
         return 0;
 
-    const GFDBlockHeader* blockHeader = GetFirstBlock(data);
+    blockData = static_cast<const u8*>(data) + static_cast<const GFDHeader*>(data)->size;
+    blockHeader = reinterpret_cast<const GFDBlockHeader*>(blockData);
     while (_GFDCheckBlockHeaderMagicVersions(blockHeader))
     {
-        GFDBlockType type = blockHeader->type;
-        if (type == blockType)
+        blockHeader = reinterpret_cast<const GFDBlockHeader*>(blockData);
+        if (blockType == blockHeader->type)
         {
             if (index == count)
                 return blockHeader->dataSize;
             count++;
         }
 
-        blockHeader = GetNextBlock(blockHeader);
-        if (type == GFD_BLOCK_TYPE_END)
-            return 0;
+        blockData = blockData + blockHeader->size + blockHeader->dataSize;
+        if (blockHeader->type == GFD_BLOCK_TYPE_END)
+            break;
     }
 
     return 0;
@@ -205,6 +197,9 @@ GX2Boolean _GFDRelocateBlock(u32 blockDataSize, u8* blockData)
 
 GX2Boolean GFDGetVertexShader(GX2VertexShader* header, void* program, u32 index, const void* data)
 {
+    const u8* blockData;
+    const GFDBlockHeader* blockHeader;
+    GX2Boolean valid;
     u32 headerCount = 0;
     u32 programCount = 0;
 
@@ -220,14 +215,16 @@ GX2Boolean GFDGetVertexShader(GX2VertexShader* header, void* program, u32 index,
         return GX2_FALSE;
     }
 
-    const GFDBlockHeader* blockHeader = GetFirstBlock(data);
-    GX2Boolean valid = _GFDCheckBlockHeaderMagicVersions(blockHeader);
-    while (valid)
+    blockData = static_cast<const u8*>(data) + static_cast<const GFDHeader*>(data)->size;
+    blockHeader = reinterpret_cast<const GFDBlockHeader*>(blockData);
+    while ((valid = _GFDCheckBlockHeaderMagicVersions(blockHeader)) != GX2_FALSE)
     {
-        const u8* blockData = reinterpret_cast<const u8*>(blockHeader) + blockHeader->size;
+        blockHeader = reinterpret_cast<const GFDBlockHeader*>(blockData);
+        blockData += blockHeader->size;
 
-        if (blockHeader->type == GFD_BLOCK_TYPE_GX2_VSH_HEADER)
+        switch (blockHeader->type)
         {
+        case GFD_BLOCK_TYPE_GX2_VSH_HEADER:
             if (index == headerCount)
             {
                 memcpy(header, blockData, blockHeader->dataSize);
@@ -235,32 +232,32 @@ GX2Boolean GFDGetVertexShader(GX2VertexShader* header, void* program, u32 index,
                     return GX2_FALSE;
             }
             headerCount++;
-        }
-        else if (blockHeader->type == GFD_BLOCK_TYPE_GX2_VSH_PROGRAM)
-        {
+            break;
+        case GFD_BLOCK_TYPE_GX2_VSH_PROGRAM:
             if (index == programCount)
             {
                 header->shaderPtr = program;
                 memcpy(program, blockData, blockHeader->dataSize);
             }
             programCount++;
+            break;
+        default:
+            break;
         }
 
-        if ((index < headerCount && index < programCount) || blockHeader->type == GFD_BLOCK_TYPE_END)
+        blockData += blockHeader->dataSize;
+        if ((headerCount > index && programCount > index) || blockHeader->type == GFD_BLOCK_TYPE_END)
             break;
-
-        blockHeader = reinterpret_cast<const GFDBlockHeader*>(blockData + blockHeader->dataSize);
-        valid = _GFDCheckBlockHeaderMagicVersions(blockHeader);
     }
 
-    if (valid && index <= headerCount && index <= programCount)
-        return GX2_TRUE;
-
-    return GX2_FALSE;
+    return (valid && headerCount >= index && programCount >= index) ? GX2_TRUE : GX2_FALSE;
 }
 
 GX2Boolean GFDGetPixelShader(GX2PixelShader* header, void* program, u32 index, const void* data)
 {
+    const u8* blockData;
+    const GFDBlockHeader* blockHeader;
+    GX2Boolean valid;
     u32 headerCount = 0;
     u32 programCount = 0;
 
@@ -276,14 +273,16 @@ GX2Boolean GFDGetPixelShader(GX2PixelShader* header, void* program, u32 index, c
         return GX2_FALSE;
     }
 
-    const GFDBlockHeader* blockHeader = GetFirstBlock(data);
-    GX2Boolean valid = _GFDCheckBlockHeaderMagicVersions(blockHeader);
-    while (valid)
+    blockData = static_cast<const u8*>(data) + static_cast<const GFDHeader*>(data)->size;
+    blockHeader = reinterpret_cast<const GFDBlockHeader*>(blockData);
+    while ((valid = _GFDCheckBlockHeaderMagicVersions(blockHeader)) != GX2_FALSE)
     {
-        const u8* blockData = reinterpret_cast<const u8*>(blockHeader) + blockHeader->size;
+        blockHeader = reinterpret_cast<const GFDBlockHeader*>(blockData);
+        blockData += blockHeader->size;
 
-        if (blockHeader->type == GFD_BLOCK_TYPE_GX2_PSH_HEADER)
+        switch (blockHeader->type)
         {
+        case GFD_BLOCK_TYPE_GX2_PSH_HEADER:
             if (index == headerCount)
             {
                 memcpy(header, blockData, blockHeader->dataSize);
@@ -291,27 +290,24 @@ GX2Boolean GFDGetPixelShader(GX2PixelShader* header, void* program, u32 index, c
                     return GX2_FALSE;
             }
             headerCount++;
-        }
-        else if (blockHeader->type == GFD_BLOCK_TYPE_GX2_PSH_PROGRAM)
-        {
+            break;
+        case GFD_BLOCK_TYPE_GX2_PSH_PROGRAM:
             if (index == programCount)
             {
                 header->shaderPtr = program;
                 memcpy(program, blockData, blockHeader->dataSize);
             }
             programCount++;
+            break;
+        default:
+            break;
         }
 
-        if ((index < headerCount && index < programCount) || blockHeader->type == GFD_BLOCK_TYPE_END)
+        blockData += blockHeader->dataSize;
+        if ((headerCount > index && programCount > index) || blockHeader->type == GFD_BLOCK_TYPE_END)
             break;
-
-        blockHeader = reinterpret_cast<const GFDBlockHeader*>(blockData + blockHeader->dataSize);
-        valid = _GFDCheckBlockHeaderMagicVersions(blockHeader);
     }
 
-    if (valid && index <= headerCount && index <= programCount)
-        return GX2_TRUE;
-
-    return GX2_FALSE;
+    return (valid && headerCount >= index && programCount >= index) ? GX2_TRUE : GX2_FALSE;
 }
 }

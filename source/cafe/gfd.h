@@ -36,14 +36,27 @@ typedef enum _GFDBlockType
     GFD_BLOCK_TYPE_GX2_CSH_PROGRAM = 15
 } GFDBlockType;
 
+typedef enum _GFDGPUVersion
+{
+    GFD_GPU_VERSION_0 = 0,
+    GFD_GPU_VERSION_1 = 1,
+    GFD_GPU_VERSION_GPU7 = 2
+} GFDGPUVersion;
+
+typedef enum _GFDAlignMode
+{
+    GFD_ALIGN_MODE_DISABLE = 0,
+    GFD_ALIGN_MODE_ENABLE = 1
+} GFDAlignMode;
+
 typedef struct _GFDHeader
 {
     u32 magic;
     u32 size;
     u32 majorVersion;
     u32 minorVersion;
-    u32 gpuVersion;
-    u32 alignMode;
+    GFDGPUVersion gpuVersion;
+    GFDAlignMode alignMode;
     u32 reserved1;
     u32 reserved2;
 } GFDHeader;

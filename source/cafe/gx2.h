@@ -119,28 +119,21 @@ inline GX2InvalidateType operator|(GX2InvalidateType a, GX2InvalidateType b)
 }
 #endif
 
-static const u32 GX2_SURFACE_FORMAT_COMP_SEL[54] = {
-    GX2_COMP_SEL_NONE, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE,
-    GX2_COMP_SEL_X001, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZ1,
-    GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_WZYX, GX2_COMP_SEL_X001, GX2_COMP_SEL_X001,
-    GX2_COMP_SEL_XY01, GX2_COMP_SEL_XY01, GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE,
-    GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE,
-    GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_WZYX, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XY01,
-    GX2_COMP_SEL_XY01, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_NONE, GX2_COMP_SEL_XYZW,
-    GX2_COMP_SEL_XYZW, GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE, GX2_COMP_SEL_XYZ1,
-    GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_NONE,
-    GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZW,
-    GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01};
-
-static const u32 GX2_ATTRIB_FORMAT_DEST_SEL[20] = {
-    GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_X001, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01,
-    GX2_COMP_SEL_X001, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XYZ1,
-    GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XYZW,
-    GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW};
-
 inline void GX2InitTexture(GX2Texture* texture, u32 width, u32 height, u32 depth, u32 numMips,
                            GX2SurfaceFormat format, GX2SurfaceDim dim)
 {
+    const u32 compSel[54] = {
+        GX2_COMP_SEL_NONE, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE,
+        GX2_COMP_SEL_X001, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZ1,
+        GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_WZYX, GX2_COMP_SEL_X001, GX2_COMP_SEL_X001,
+        GX2_COMP_SEL_XY01, GX2_COMP_SEL_XY01, GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE,
+        GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE,
+        GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_WZYX, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XY01,
+        GX2_COMP_SEL_XY01, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_NONE, GX2_COMP_SEL_XYZW,
+        GX2_COMP_SEL_XYZW, GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE, GX2_COMP_SEL_XYZ1,
+        GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_NONE,
+        GX2_COMP_SEL_NONE, GX2_COMP_SEL_NONE, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZW,
+        GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01};
     texture->surface.dim = dim;
     texture->surface.width = width;
     texture->surface.height = height;
@@ -155,7 +148,7 @@ inline void GX2InitTexture(GX2Texture* texture, u32 width, u32 height, u32 depth
     texture->viewNumMips = numMips;
     texture->viewFirstSlice = 0;
     texture->viewNumSlices = depth;
-    texture->compSel = GX2_SURFACE_FORMAT_COMP_SEL[format & 0x3f];
+    texture->compSel = compSel[format & 0x3f];
     GX2CalcSurfaceSizeAndAlignment(&texture->surface);
     GX2InitTextureRegs(texture);
 }
@@ -163,24 +156,25 @@ inline void GX2InitTexture(GX2Texture* texture, u32 width, u32 height, u32 depth
 inline void GX2InitTexturePtrs(GX2Texture* texture, void* imagePtr, void* mipPtr)
 {
     texture->surface.imagePtr = imagePtr;
-    texture->surface.mipPtr = mipPtr;
     if (texture->surface.numMips > 1 && mipPtr == NULL)
         texture->surface.mipPtr = static_cast<u8*>(imagePtr) + texture->surface.mipOffset[0];
+    else
+        texture->surface.mipPtr = mipPtr;
 }
 
 inline void _GX2InitColorBuffer(GX2ColorBuffer* colorBuffer, u32 width, u32 height, GX2SurfaceFormat format,
                                 GX2AAMode aa)
 {
     colorBuffer->surface.dim = GX2_SURFACE_DIM_2D;
+    colorBuffer->surface.numMips = 1;
     colorBuffer->surface.width = width;
     colorBuffer->surface.height = height;
     colorBuffer->surface.depth = 1;
-    colorBuffer->surface.numMips = 1;
     colorBuffer->surface.format = format;
-    colorBuffer->surface.aa = aa;
+    colorBuffer->surface.mipPtr = NULL;
     colorBuffer->surface.tileMode = GX2_TILE_MODE_DEFAULT;
     colorBuffer->surface.swizzle = 0;
-    colorBuffer->surface.mipPtr = NULL;
+    colorBuffer->surface.aa = aa;
     colorBuffer->viewMip = 0;
     colorBuffer->viewFirstSlice = 0;
     colorBuffer->viewNumSlices = 1;
@@ -225,30 +219,45 @@ inline void GX2InitDepthBuffer(GX2DepthBuffer* depthBuffer, u32 width, u32 heigh
         depthBuffer->surface.use = GX2_SURFACE_USE_DEPTH_BUFFER;
     else
         depthBuffer->surface.use = GX2_SURFACE_USE_DEPTH_BUFFER_TEXTURE;
+    depthBuffer->clearDepth = 1.0f;
+    depthBuffer->viewMip = 0;
+    depthBuffer->viewNumSlices = 1;
+    depthBuffer->viewFirstSlice = 0;
+    depthBuffer->hiZSize = 0;
+    depthBuffer->clearStencil = 0;
+    depthBuffer->hiZPtr = NULL;
     depthBuffer->surface.tileMode = GX2_TILE_MODE_DEFAULT;
     depthBuffer->surface.swizzle = 0;
-    depthBuffer->viewMip = 0;
-    depthBuffer->viewFirstSlice = 0;
-    depthBuffer->viewNumSlices = 1;
-    depthBuffer->hiZPtr = NULL;
-    depthBuffer->hiZSize = 0;
-    depthBuffer->clearDepth = 1.0f;
-    depthBuffer->clearStencil = 0;
     GX2CalcSurfaceSizeAndAlignment(&depthBuffer->surface);
     GX2InitDepthBufferRegs(depthBuffer);
+}
+
+inline void GX2InitColorBufferPtr(GX2ColorBuffer* colorBuffer, void* ptr)
+{
+    colorBuffer->surface.imagePtr = ptr;
+}
+
+inline void GX2InitDepthBufferPtr(GX2DepthBuffer* depthBuffer, void* ptr)
+{
+    depthBuffer->surface.imagePtr = ptr;
 }
 
 inline void GX2InitAttribStream(GX2AttribStream* attribStream, u32 location, u32 buffer, u32 offset,
                                 GX2AttribFormat format)
 {
+    const u32 destSel[20] = {
+        GX2_COMP_SEL_XY01, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_X001, GX2_COMP_SEL_X001,
+        GX2_COMP_SEL_XY01, GX2_COMP_SEL_X001, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XY01,
+        GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XY01,
+        GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZW};
     attribStream->location = location;
     attribStream->buffer = buffer;
     attribStream->offset = offset;
-    attribStream->format = format;
     attribStream->indexType = GX2_ATTRIB_INDEX_VERTEX_ID;
-    attribStream->aluDivisor = 0;
-    attribStream->destSel = GX2_ATTRIB_FORMAT_DEST_SEL[format & 0xff];
+    attribStream->format = format;
     attribStream->endianSwap = GX2_ENDIANSWAP_DEFAULT;
+    attribStream->destSel = destSel[format & 0xff];
+    attribStream->aluDivisor = 0;
 }
 
 inline u32 GX2CalcFetchShaderSize(u32 numAttribs)
@@ -358,7 +367,7 @@ inline GX2AttribVar* GX2GetVertexAttribVar(const GX2VertexShader* shader, const 
 inline s32 GX2GetVertexAttribVarLocation(const GX2VertexShader* shader, const char* name)
 {
     GX2AttribVar* attribVar = GX2GetVertexAttribVar(shader, name);
-    return attribVar != NULL ? static_cast<s32>(attribVar->location) : -1;
+    return attribVar == NULL ? -1 : static_cast<s32>(attribVar->location);
 }
 
 inline GX2SamplerVar* GX2GetPixelSamplerVar(const GX2PixelShader* shader, const char* name)
