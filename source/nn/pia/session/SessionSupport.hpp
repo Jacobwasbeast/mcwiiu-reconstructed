@@ -9,6 +9,7 @@ unsigned char IsInitialized();
 unsigned char IsDuringSetup();
 void EmbedModuleInfo();
 Result Initialize();
+void Finalize();
 Result BeginSetup();
 Result EndSetup();
 

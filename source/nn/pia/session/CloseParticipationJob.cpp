@@ -1,5 +1,6 @@
 #include "nn/pia/session/CloseParticipationJob.hpp"
 
+#include "nn/pia/Transport.hpp"
 #include "nn/pia/common/TimeSpan.hpp"
 #include "nn/pia/session/IMatchmakeSession.hpp"
 #include "nn/pia/session/Mesh.hpp"
@@ -11,11 +12,21 @@ namespace
 {
 unsigned int SessionFailureResult(unsigned int status)
 {
-    if (status == 5) return 0xc406;
-    if (status == 6) return 0xa471;
-    if (status == 7) return 0xc420;
-    if (status == 8) return 0xc421;
-    return status == 4 ? 0x8c56 : 0;
+    switch (status)
+    {
+    case Session::cStatusDisconnectedNetwork:
+        return Session::cResultStatusDisconnectedNetwork;
+    case Session::cStatusUnknown6:
+        return Session::cResultStatusUnknown6;
+    case Session::cStatusUnknown7:
+        return Session::cResultStatusUnknown7;
+    case Session::cStatusUnknown8:
+        return Session::cResultStatusUnknown8;
+    case Session::cStatusDisconnectedSession:
+        return Session::cResultStatusDisconnectedSession;
+    default:
+        return 0;
+    }
 }
 
 bool IsP2pStable(unsigned int sessionId)
@@ -48,9 +59,9 @@ Result CloseParticipationJob::Startup(common::CallContext* callerContext,
                                       IMatchmakeSession* matchmakeSession)
 {
     if (callerContext == 0 || matchmakeSession == 0)
-        return static_cast<Result>(0x10c07);
+        return static_cast<Result>(transport::cResultInvalidArgument);
     if (!matchmakeSession->IsMatchmakeOwner())
-        return static_cast<Result>(0x10c08);
+        return static_cast<Result>(transport::cResultInvalidState);
 
     m_callerContext = callerContext;
     callerContext->InitiateCall();
@@ -85,7 +96,7 @@ CloseParticipationJob::ExecuteResult CloseParticipationJob::CloseParticipation()
         m_currentStep.m_name = "CloseParticipationJob::WaitCloseParticipation";
         return MakeExecuteResult(cExecuteKindNextStep);
     }
-    if (result == static_cast<Result>(0x4c11))
+    if (result == static_cast<Result>(transport::cResultTransportUnavailable))
         return MakeExecuteResult(cExecuteKindNextStep);
     m_callerContext->SignalFailure(result);
     m_callerContext = 0;
@@ -106,10 +117,10 @@ CloseParticipationJob::ExecuteResult CloseParticipationJob::WaitCloseParticipati
 
     if (m_callContext.m_state == common::CallContext::cStateFailure)
     {
-        if (m_callContext.m_result == static_cast<Result>(0x10c08))
+        if (m_callContext.m_result == static_cast<Result>(transport::cResultInvalidState))
         {
             g_piaSession->ChangeStatusToDisconnectedNetwork();
-            m_callerContext->SignalFailure(static_cast<Result>(0x8c56));
+            m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusDisconnectedSession));
         }
         else
         {
@@ -142,10 +153,10 @@ CloseParticipationJob::ExecuteResult CloseParticipationJob::WaitP2pStable()
     {
         if (g_piaSession->m_sessionId[g_piaSession->m_currentSessionIndex] == m_sessionId)
             g_piaSession->SetCurrentSessionOpenStatus(
-                static_cast<Session::SessionOpenStatus>(2));
+                Session::cSessionOpenStatusParticipationClosed);
         else
             g_piaSession->SetBufferSessionOpenStatus(
-                static_cast<Session::SessionOpenStatus>(2));
+                Session::cSessionOpenStatusParticipationClosed);
         m_callerContext->SignalSuccess(0);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);

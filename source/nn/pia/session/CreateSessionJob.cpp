@@ -1,25 +1,20 @@
 #include "nn/pia/session/CreateSessionJob.hpp"
+#include "nn/pia/common/SessionBeginMonitoringContent.hpp"
+#include "nn/pia/common/SessionStateMonitoringContent.hpp"
+#include "nn/pia/session/IMatchmakeSession.hpp"
 #include "nn/pia/session/Mesh.hpp"
+#include "nn/pia/session/MeshLayerController.hpp"
 #include "nn/pia/session/Session.hpp"
+#include "nn/pia/session/StationIdStatusTable.hpp"
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/StationIdTable.hpp"
 
 namespace nn { namespace pia { namespace session {
 namespace {
-unsigned int FailureForStatus(unsigned int status)
+inline void SelectStep(common::StepSequenceJob::Step& slot, CreateSessionJob::ExecuteResult (CreateSessionJob::*function)(), const char* name)
 {
-    if (status == 5) return 0xc406;
-    if (status < 7) return 0xa471;
-    if (status == 7) return 0xc420;
-    if (status == 8) return 0xc421;
-    return 0;
-}
-typedef common::Job::ExecuteResult (CreateSessionJob::*Step)();
-void SelectStep(common::StepSequenceJob::Step& slot, Step step)
-{
-    union { Step derived; common::Job::ExecuteResult (common::StepSequenceJob::*base)(); } value;
-    value.derived = step;
-    slot.m_function = value.base;
+    const common::StepSequenceJob::Step step(static_cast<CreateSessionJob::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+    slot = step;
 }
 }
 
@@ -29,128 +24,152 @@ CreateSessionJob::CreateSessionJob() : common::StepSequenceJob(), m_callerContex
 
 CreateSessionJob::~CreateSessionJob()
 {
-    Cleanup();
 }
 
 Result CreateSessionJob::Startup(common::CallContext* callerContext, const CreateSessionSetting* setting)
 {
     if (callerContext == 0 || setting == 0)
-        return static_cast<Result>(0x10c07);
+        return static_cast<Result>(transport::cResultInvalidArgument);
+    const Result result = StartupImpl(setting);
+    if (result != 0)
+        return result;
     m_callerContext = callerContext;
-    const bool initiated = callerContext->InitiateCall();
-    if (!initiated)
-        return callerContext->m_result;
+    callerContext->InitiateCall();
     Reset(true);
-    SelectStep(m_currentStep, &CreateSessionJob::MeshStartup);
-    m_currentStep.m_name = "CreateSessionJob::MeshStartup";
     return 0;
 }
 
 CreateSessionJob::ExecuteResult CreateSessionJob::MeshStartup()
 {
-    if (g_piaSession == 0)
-        return CompleteFailure();
-    const unsigned int status = g_piaSession->GetStatus();
-    const unsigned int failure = FailureForStatus(status);
-    if (failure != 0)
+    unsigned int status = g_piaSession->GetStatus();
+    switch (status)
     {
-        m_result = failure;
-        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure);
-        m_currentStep.m_name = "CreateSessionJob__CompleteFailure";
-        return MakeExecuteResult(cExecuteKindNextStep);
+    case Session::cStatusDisconnectedNetwork:
+        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure, "nn::pia::session::CreateSessionJob::CompleteFailure");
+        m_result = Session::cResultStatusDisconnectedNetwork;
+        return MakeExecuteResult(cExecuteKindContinue);
+    case Session::cStatusUnknown6:
+        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure, "nn::pia::session::CreateSessionJob::CompleteFailure");
+        m_result = Session::cResultStatusUnknown6;
+        return MakeExecuteResult(cExecuteKindContinue);
+    case Session::cStatusUnknown7:
+        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure, "nn::pia::session::CreateSessionJob::CompleteFailure");
+        m_result = Session::cResultStatusUnknown7;
+        return MakeExecuteResult(cExecuteKindContinue);
+    case Session::cStatusUnknown8:
+        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure, "nn::pia::session::CreateSessionJob::CompleteFailure");
+        m_result = Session::cResultStatusUnknown8;
+        return MakeExecuteResult(cExecuteKindContinue);
+    default:
+        break;
     }
-    if (status < 5)
-    {
-        SelectStep(m_currentStep, &CreateSessionJob::CreateMesh);
-        m_currentStep.m_name = "CreateSessionJob::CreateMesh";
-        return MakeExecuteResult(cExecuteKindNextStep);
-    }
-    SelectStep(m_currentStep, &CreateSessionJob::CreateMesh);
-    m_currentStep.m_name = "CreateSessionJob::CreateMesh";
-    return MakeExecuteResult(cExecuteKindNextStep);
+    Session* session = g_piaSession;
+    const Result result = session->m_meshLayerController->MeshStartup(
+        session->m_matchmakeSession[session->m_currentSessionIndex], false);
+    if (result != 0)
+        return SetNextStepAtFailedCreateMesh(result);
+    session->m_postponeNotice = true;
+    transport::g_piaTransport->m_stationIdTable->SetAvailableEntryNum(
+        session->m_fieldc2[session->m_currentSessionIndex]);
+    SelectStep(m_currentStep, &CreateSessionJob::CreateMesh, "CreateSessionJob::CreateMesh");
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 CreateSessionJob::ExecuteResult CreateSessionJob::CreateMesh()
 {
-    if (g_piaMesh == 0)
-        return CompleteFailure();
     const Result result = g_piaMesh->CreateMesh(&m_callContext);
     if (result != 0)
     {
-        m_result = result;
-        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure);
-        return MakeExecuteResult(cExecuteKindNextStep);
+        g_piaSession->m_meshLayerController->MeshCleanup();
+        return SetNextStepAtFailedCreateMesh(result);
     }
     g_piaMesh->SetSkipReport(true);
-    SelectStep(m_currentStep, &CreateSessionJob::WaitCreateMesh);
-    m_currentStep.m_name = "CreateSessionJob::WaitCreateMesh";
+    SelectStep(m_currentStep, &CreateSessionJob::WaitCreateMesh, "CreateSessionJob::WaitCreateMesh");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 CreateSessionJob::ExecuteResult CreateSessionJob::WaitCreateMesh()
 {
-    if (g_piaSession == 0)
-        return CompleteFailure();
-    const unsigned int status = g_piaSession->GetStatus();
-    const unsigned int failure = FailureForStatus(status);
-    if (failure != 0)
+    unsigned int status = g_piaSession->GetStatus();
+    switch (status)
     {
-        m_result = failure;
-        return CompleteFailure();
+    case Session::cStatusDisconnectedNetwork:
+        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure, "nn::pia::session::CreateSessionJob::CompleteFailure");
+        m_result = Session::cResultStatusDisconnectedNetwork;
+        return MakeExecuteResult(cExecuteKindContinue);
+    case Session::cStatusUnknown6:
+        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure, "nn::pia::session::CreateSessionJob::CompleteFailure");
+        m_result = Session::cResultStatusUnknown6;
+        return MakeExecuteResult(cExecuteKindContinue);
+    case Session::cStatusUnknown7:
+        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure, "nn::pia::session::CreateSessionJob::CompleteFailure");
+        m_result = Session::cResultStatusUnknown7;
+        return MakeExecuteResult(cExecuteKindContinue);
+    case Session::cStatusUnknown8:
+        SelectStep(m_currentStep, &CreateSessionJob::CompleteFailure, "nn::pia::session::CreateSessionJob::CompleteFailure");
+        m_result = Session::cResultStatusUnknown8;
+        return MakeExecuteResult(cExecuteKindContinue);
+    default:
+        break;
     }
-    if (m_callContext.m_state == common::CallContext::cStateInProgress)
-        return MakeExecuteResult(cExecuteKindWait);
-    if (m_callContext.m_state == common::CallContext::cStateFailure)
+    if (m_callContext.m_state != common::CallContext::cStateFailure)
     {
-        m_result = m_callContext.m_result;
-        return CompleteFailure();
-    }
-    if (m_callContext.m_state != common::CallContext::cStateSuccess &&
-        m_callContext.m_state != common::CallContext::cStateCancelled)
-        return MakeExecuteResult(cExecuteKindWait);
-    if (m_callContext.m_state == common::CallContext::cStateCancelled)
-    {
-        m_result = 0x10c08;
-        return CompleteFailure();
-    }
-    if (transport::g_piaTransport != 0 && transport::g_piaTransport->m_stationIdTable != 0)
-    {
-        if (g_piaSession->UpdateStationIdToBecomeHost() != 0)
+        if (m_callContext.m_state == common::CallContext::cStateSuccess ||
+            m_callContext.m_state == common::CallContext::cStateCancelled)
         {
-            g_piaSession->m_currentSessionIndex = g_piaSession->m_currentSessionIndex;
-            transport::g_piaTransport->m_stationIdTable->SetAvailableEntryNum(0);
-            return CompleteProcess();
+            const Result result = m_callContext.m_result;
+            Session* session = g_piaSession;
+            if (result != 0)
+            {
+                session->m_meshLayerController->MeshCleanup();
+                return SetNextStepAtFailedCreateMesh(result);
+            }
+            session->m_matchmakeStatus = Session::cMatchmakeStatusMatched;
+            g_piaSession->m_disconnectStatus = Session::cConnectionStatusConnected;
+            if (!session->UpdateStationIdToBecomeHost())
+            {
+                session->m_meshLayerController->MeshCleanup();
+                return SetNextStepAtFailedCreateMesh(transport::cResultInvalidState);
+            }
+            session->m_postponeNotice = false;
+            session->m_stationIdStatusTable->CallJoinEventNotYetNotified();
+            SetNextStepAtWaitCreateMesh();
+            return MakeExecuteResult(cExecuteKindContinue);
         }
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
-    m_result = 0x10c08;
-    return CompleteFailure();
+    g_piaSession->m_meshLayerController->MeshCleanup();
+    return SetNextStepAtFailedCreateMesh(m_callContext.m_result);
 }
 
 CreateSessionJob::ExecuteResult CreateSessionJob::CompleteFailure()
 {
-    if (m_result == 0x10c08 || m_result == 0xc406)
-        if (g_piaSession != 0) g_piaSession->ChangeStatusToDisconnectedNetwork();
-    if (m_callerContext != 0)
+    g_piaSession->m_meshLayerController->MeshCleanup();
+    if (m_result == transport::cResultInvalidState ||
+        m_result == Session::cResultStatusDisconnectedNetwork)
     {
-        m_callerContext->SignalFailure(static_cast<Result>(m_result));
-        m_callerContext = 0;
+        g_piaSession->ChangeStatusToDisconnectedNetwork();
+        m_callerContext->SignalFailure(Session::cResultStatusDisconnectedNetwork);
     }
+    else
+    {
+        m_callerContext->SignalFailure(m_result);
+    }
+    m_callerContext = 0;
+    g_piaMesh->SetSkipReport(false);
+    g_piaMesh->SendReport(0);
+    common::g_sessionBeginMonitoringContent.Cleanup();
+    common::g_sessionStateMonitoringContent.Cleanup();
     Cleanup();
     return MakeExecuteResult(cExecuteKindFinished);
 }
 
 CreateSessionJob::ExecuteResult CreateSessionJob::CompleteProcess()
 {
-    if (m_callerContext != 0)
-    {
-        m_callerContext->SignalSuccess(0);
-        m_callerContext = 0;
-    }
-    if (g_piaMesh != 0)
-    {
-        g_piaMesh->SetSkipReport(m_result != 0);
-        g_piaMesh->SendReport(0);
-    }
+    m_callerContext->SignalSuccess(0);
+    m_callerContext = 0;
+    g_piaMesh->SetSkipReport(false);
+    g_piaMesh->SendReport(0);
     return MakeExecuteResult(cExecuteKindFinished);
 }
 
@@ -174,12 +193,12 @@ void CreateSessionJob::Trace(unsigned long long) const
 
 void CreateSessionJob::SetMatchmakeStatus(Session::MatchmakeStatus status)
 {
-    if (g_piaSession != 0) g_piaSession->m_matchmakeStatus = status;
+    g_piaSession->m_matchmakeStatus = status;
 }
 
 void CreateSessionJob::SetConnectionStatus(Session::ConnectionStatus status)
 {
-    if (g_piaSession != 0) g_piaSession->m_disconnectStatus = status;
+    g_piaSession->m_disconnectStatus = status;
 }
 
 }}}

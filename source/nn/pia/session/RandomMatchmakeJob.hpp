@@ -49,31 +49,27 @@ public:
     void SetMatchmakeStatus(Session::MatchmakeStatus status);
     void SetConnectionStatus(Session::ConnectionStatus status);
 
-    void setStep(ExecuteResult (RandomMatchmakeJob::*function)(), const char* name)
+    template <class T>
+    void setStep(ExecuteResult (T::*function)(), const char* name)
     {
-        union
-        {
-            ExecuteResult (RandomMatchmakeJob::*derived)();
-            ExecuteResult (common::StepSequenceJob::*base)();
-        } step;
-        step.derived = function;
-        m_currentStep.m_function = step.base;
-        m_currentStep.m_name = name;
+        Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+        m_currentStep.m_function = step.m_function;
+        m_currentStep.m_name = step.m_name;
     }
 
     common::CallContext* m_callerContext;
     unsigned int m_joinState;
-    unsigned int m_unknown48;
-    bool m_unknown4c;
-    bool m_unknown4d;
+    unsigned int m_sessionId;
+    bool m_isNewSession;
+    bool m_joined;
     Result m_result;
-    bool m_unknown54;
-    bool m_unknown55;
-    bool m_unknown56;
-    bool m_unknown57;
-    bool m_unknown58;
-    bool m_unknown59;
-    bool m_unknown5a;
+    bool m_connectionInfoRetry;
+    bool m_sessionInfoRetry;
+    bool m_retryReasonB;
+    bool m_sessionInvalidated;
+    bool m_ownerChanged;
+    bool m_retryReasonA;
+    unsigned char m_retryCount;
     unsigned long long m_principalId;
     transport::StationConnectionInfo m_stationConnectionInfo;
     common::CallContext m_callContext;

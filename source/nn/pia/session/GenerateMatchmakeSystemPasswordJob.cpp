@@ -32,7 +32,7 @@ Result GenerateMatchmakeSystemPasswordJob::Startup(common::CallContext* callerCo
     if (!isOwner)
         return cResultInvalidState;
 
-    const Result operationResult = GenerateMatchmakeSystemPassword();
+    const Result operationResult = StartupImpl();
     if (operationResult != 0)
         return operationResult;
 
@@ -45,7 +45,8 @@ Result GenerateMatchmakeSystemPasswordJob::Startup(common::CallContext* callerCo
 
 GenerateMatchmakeSystemPasswordJob::ExecuteResult GenerateMatchmakeSystemPasswordJob::CompleteProcess()
 {
-    m_callerContext->SignalSuccess(0);
+    Result result = 0;
+    m_callerContext->SignalSuccess(result);
     m_callerContext = 0;
     return MakeExecuteResult(cExecuteKindFinished);
 }

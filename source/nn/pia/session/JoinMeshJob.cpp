@@ -234,7 +234,7 @@ JoinMeshJob::ExecuteResult JoinMeshJob::SetupLocalStation()
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    transport::Station* station = transport::g_piaStationManager->CreateLocalStation();
+    transport::Station* station = transport::StationManager::s_pInstance->CreateLocalStation();
     if (!station->Startup())
     {
         if (m_callerContext->m_state - common::CallContext::cStateSuccess > 2u)
@@ -246,10 +246,9 @@ JoinMeshJob::ExecuteResult JoinMeshJob::SetupLocalStation()
         return MakeExecuteResult(cExecuteKindFinished);
     }
     g_piaMesh->ResetStationIndexUsage();
-    station->m_stationAddress =
-        transport::g_stationConnectionInfoTable->m_localStationConnectionInfo.m_stationLocation.m_stationAddress;
-    result = transport::g_stationConnectionInfoTable->AddToTable(
-        station, transport::g_stationConnectionInfoTable->m_localStationConnectionInfo);
+    transport::StationConnectionInfoTable* table = transport::g_stationConnectionInfoTable;
+    station->m_stationAddress = table->m_localStationConnectionInfo.m_stationLocation.m_stationAddress;
+    result = table->AddToTable(station, table->m_localStationConnectionInfo);
     if (result != 0)
     {
         if (m_callerContext->m_state - common::CallContext::cStateSuccess > 2u)
@@ -273,9 +272,10 @@ JoinMeshJob::ExecuteResult JoinMeshJob::SetupLocalStation()
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    info.m_field10c = 0;
     if (g_piaMesh->m_getSessionIdCallback != 0)
         info.m_field10c = g_piaMesh->m_getSessionIdCallback();
+    else
+        info.m_field10c = 0;
     info.m_playerCount = static_cast<unsigned char>(g_piaMesh->GetLocalPlayerCount());
     info.m_participantCount = g_piaMesh->IsPlayersCountedAsParticipants() ? info.m_playerCount : 1;
     transport::IdentificationInfoTable::GetInstance()->SetLocalIdentificationInfo(&info);
@@ -297,11 +297,11 @@ JoinMeshJob::ExecuteResult JoinMeshJob::SetupLocalStation()
 
 void JoinMeshJob::CleanupStations()
 {
-    transport::Station* localStation = transport::g_piaStationManager->m_localStation;
+    transport::Station* localStation = transport::StationManager::s_pInstance->m_localStation;
     if (localStation != 0)
     {
-        transport::Station** station = transport::g_piaStationManager->m_stations.data;
-        if (station != station + transport::g_piaStationManager->m_stations.size)
+        transport::Station** station = transport::StationManager::s_pInstance->m_stations.data;
+        if (station != station + transport::StationManager::s_pInstance->m_stations.size)
         {
             do
             {
@@ -313,7 +313,7 @@ void JoinMeshJob::CleanupStations()
                     (*station)->m_processConnectionRequestJob->Cleanup();
                 }
                 ++station;
-            } while (station != transport::g_piaStationManager->m_stations.data + transport::g_piaStationManager->m_stations.size);
+            } while (station != transport::StationManager::s_pInstance->m_stations.data + transport::StationManager::s_pInstance->m_stations.size);
         }
     }
 }
@@ -334,7 +334,7 @@ void JoinMeshJob::CheckRelayConnectionForMonitoring() const
     const transport::RelayRouteManager* relayRouteManager = transport::g_piaTransport->m_relayRouteManager;
     if (relayRouteManager == 0)
         return;
-    const transport::StationManager* stationManager = transport::g_piaStationManager;
+    const transport::StationManager* stationManager = transport::StationManager::s_pInstance;
     if (stationManager == 0)
         return;
     const transport::StationConnectionInfoTable* connectionInfoTable = transport::g_stationConnectionInfoTable;
@@ -444,7 +444,7 @@ JoinMeshJob::ExecuteResult JoinMeshJob::StartConnectingToHost()
     if (CheckContextCallCancelled() != 0)
         return MakeExecuteResult(cExecuteKindFinished);
     m_joinState = 1;
-    transport::Station* station = transport::g_piaStationManager->CreateStation();
+    transport::Station* station = transport::StationManager::s_pInstance->CreateStation();
     if (station->Startup())
     {
         station->SetStationIdAndIndex(
@@ -477,7 +477,7 @@ JoinMeshJob::ExecuteResult JoinMeshJob::StartConnectingToHost()
         transport::g_stationConnectionInfoTable->EraseFromTable(station);
         station->Cleanup();
         station->CleanupJobs();
-        transport::g_piaStationManager->DestroyStation(station);
+        transport::StationManager::s_pInstance->DestroyStation(station);
         CleanupInternalContexts();
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -579,7 +579,7 @@ JoinMeshJob::ExecuteResult JoinMeshJob::WaitUntilConnectToHost()
         CleanupInternalContexts();
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    transport::Station* station = transport::g_piaStationManager->GetStation(g_piaMesh->GetHostStationIndex());
+    transport::Station* station = transport::StationManager::s_pInstance->GetStation(g_piaMesh->GetHostStationIndex());
     if (station == 0)
     {
         CalcProcessingTimeOfJoin();
@@ -612,7 +612,7 @@ JoinMeshJob::ExecuteResult JoinMeshJob::SendJoinRequest()
 {
     if (CheckContextCallCancelled() != 0)
         return MakeExecuteResult(cExecuteKindFinished);
-    if (transport::g_piaStationManager->m_localStation == 0)
+    if (transport::StationManager::s_pInstance->m_localStation == 0)
     {
         CalcProcessingTimeOfJoin();
         if (m_callerContext != 0)
@@ -630,12 +630,12 @@ JoinMeshJob::ExecuteResult JoinMeshJob::SendJoinRequest()
     unsigned char data[common::Packet::cPayloadSizeMax] = {0};
     g_piaMesh->GetMeshProtocol()->MakeJoinRequestData(data);
     common::StationAddress hostAddress;
-    Result result = transport::g_piaStationManager->GetStationAddress(&hostAddress, g_piaMesh->GetHostStationIndex());
+    Result result = transport::StationManager::s_pInstance->GetStationAddress(&hostAddress, g_piaMesh->GetHostStationIndex());
     if (result == 0)
         result = transport::g_piaResendingMessageManager->SetSendMessageByStationAddress(
             &m_requestAckId, data, g_piaMesh->GetMeshProtocol()->GetJoinRequestDataSize(), hostAddress,
             g_piaMesh->GetMeshProtocol()->GetProtocolId(),
-            common::g_piaJobScheduler->m_dispatchTime.m_tick + common::TimeSpan::GetTicksPerMSec().m_tick * cJoinRequestTimeoutMsec);
+            (common::g_piaJobScheduler->m_dispatchTime + common::TimeSpan::FromMSec(cJoinRequestTimeoutMsec)).m_tick);
     if (result != 0)
     {
         CalcProcessingTimeOfJoin();
@@ -661,7 +661,7 @@ JoinMeshJob::ExecuteResult JoinMeshJob::SendJoinRequest()
 
 unsigned int JoinMeshJob::CheckConnectionStateWithHostStation()
 {
-    transport::Station* station = transport::g_piaStationManager->GetStation(g_piaMesh->GetHostStationIndex());
+    transport::Station* station = transport::StationManager::s_pInstance->GetStation(g_piaMesh->GetHostStationIndex());
     if (station != 0 && station->m_field20 == cConnectedStationState)
         return 0;
     CalcProcessingTimeOfJoin();
@@ -737,8 +737,8 @@ JoinMeshJob::ExecuteResult JoinMeshJob::WaitJoinResponse()
 
 unsigned int JoinMeshJob::UpdateLocalAndHostInformation(StationIndex localIndex, StationIndex hostIndex)
 {
-    transport::Station* hostStation = transport::g_piaStationManager->GetStation(g_piaMesh->GetHostStationIndex());
-    transport::Station* localStation = transport::g_piaStationManager->m_localStation;
+    transport::Station* hostStation = transport::StationManager::s_pInstance->GetStation(g_piaMesh->GetHostStationIndex());
+    transport::Station* localStation = transport::StationManager::s_pInstance->m_localStation;
     if (hostStation == 0 || localStation == 0)
         return 0;
     localStation->SetStationIdAndIndex(
@@ -753,7 +753,7 @@ unsigned int JoinMeshJob::UpdateLocalAndHostInformation(StationIndex localIndex,
     g_piaMesh->m_unknown58 = hostIndex;
     g_piaMesh->NoticeMeshEvent(Mesh::cEventTypeJoin, localIndex);
     g_piaMesh->FixConnectedId(hostIndex);
-    transport::g_piaStationManager->m_invalidStationIndex = hostIndex;
+    transport::StationManager::s_pInstance->m_invalidStationIndex = hostIndex;
     if (transport::g_piaTransport->m_relayRouteManager != 0)
         transport::g_piaTransport->m_relayRouteManager->SetRelayRoute(localIndex, hostIndex, hostIndex);
     return 1;
@@ -1058,7 +1058,7 @@ JoinMeshJob::ExecuteResult JoinMeshJob::WaitAllConnection()
         }
         return MakeExecuteResult(cExecuteKindNextStep);
     }
-    if (static_cast<long long>(g_piaMesh->GetTime().m_tick) < 0)
+    if (g_piaMesh->GetTime() < 0)
         return MakeExecuteResult(cExecuteKindNextStep);
     g_piaMesh->SetMeshState(Mesh::cStateCreated);
     g_piaMesh->m_disconnectReason = 0;
@@ -1096,11 +1096,11 @@ JoinMeshJob::ExecuteResult JoinMeshJob::SetupLocalPlayerInfoFailure()
 
 JoinMeshJob::ExecuteResult JoinMeshJob::StartDisconnectStations()
 {
-    transport::Station* localStation = transport::g_piaStationManager->m_localStation;
+    transport::Station* localStation = transport::StationManager::s_pInstance->m_localStation;
     if (localStation == 0)
         return MakeExecuteResult(cExecuteKindFinished);
-    transport::Station** station = transport::g_piaStationManager->m_stations.data;
-    if (station != station + transport::g_piaStationManager->m_stations.size)
+    transport::Station** station = transport::StationManager::s_pInstance->m_stations.data;
+    if (station != station + transport::StationManager::s_pInstance->m_stations.size)
     {
         do
         {
@@ -1117,10 +1117,10 @@ JoinMeshJob::ExecuteResult JoinMeshJob::StartDisconnectStations()
                     (*station)->Trace(cTraceStationLevel);
             }
             ++station;
-        } while (station != transport::g_piaStationManager->m_stations.data + transport::g_piaStationManager->m_stations.size);
+        } while (station != transport::StationManager::s_pInstance->m_stations.data + transport::StationManager::s_pInstance->m_stations.size);
     }
-    const long long timeout = common::TimeSpan::GetTicksPerMSec().m_tick * cDisconnectTimeoutMsec;
-    m_disconnectDeadline.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick + timeout;
+    const common::TimeSpan timeout = common::TimeSpan::FromMSec(cDisconnectTimeoutMsec);
+    m_disconnectDeadline = common::g_piaJobScheduler->m_dispatchTime + timeout;
     SelectStep(m_currentStep, &JoinMeshJob::WaitDisconnectStations, "JoinMeshJob::WaitDisconnectStations");
     return MakeExecuteResult(cExecuteKindContinue);
 }
@@ -1128,18 +1128,18 @@ JoinMeshJob::ExecuteResult JoinMeshJob::StartDisconnectStations()
 JoinMeshJob::ExecuteResult JoinMeshJob::WaitDisconnectStations()
 {
     bool connected = false;
-    transport::Station** station = transport::g_piaStationManager->m_stations.data;
-    if (station != station + transport::g_piaStationManager->m_stations.size)
+    transport::Station** station = transport::StationManager::s_pInstance->m_stations.data;
+    if (station != station + transport::StationManager::s_pInstance->m_stations.size)
     {
         do
         {
-            if ((*station)->m_field20 == cConnectedStationState && *station != transport::g_piaStationManager->m_localStation)
+            if ((*station)->m_field20 == cConnectedStationState && *station != transport::StationManager::s_pInstance->m_localStation)
             {
                 connected = true;
                 break;
             }
             ++station;
-        } while (station != transport::g_piaStationManager->m_stations.data + transport::g_piaStationManager->m_stations.size);
+        } while (station != transport::StationManager::s_pInstance->m_stations.data + transport::StationManager::s_pInstance->m_stations.size);
     }
     if (connected && !(m_disconnectDeadline <= common::g_piaJobScheduler->m_dispatchTime))
         return MakeExecuteResult(cExecuteKindNextStep);
@@ -1247,7 +1247,7 @@ void JoinMeshJob::Cleanup(Result result)
     m_joinState = 0;
 }
 
-unsigned int JoinMeshJob::GetJoinMeshState() const
+int JoinMeshJob::GetJoinMeshState() const
 {
     return m_joinState;
 }

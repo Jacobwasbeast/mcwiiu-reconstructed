@@ -85,15 +85,16 @@ LeaveMeshJob::ExecuteResult LeaveMeshJob::WaitLeaveResponse()
         {
             const int timeoutMsec = m_timeoutMsec;
             const common::TimeSpan& ticksPerMSec = common::TimeSpan::GetTicksPerMSec();
-            m_disconnectStarted = false;
             m_deadline.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick + ticksPerMSec.m_tick * timeoutMsec;
-        }
-        else
-        {
-            if (transport::g_piaStationManager->m_localStation != 0)
-                return MakeExecuteResult(cExecuteKindNextStep);
             m_disconnectStarted = false;
+            SelectStep(m_currentStep, &LeaveMeshJob::StartDisconnectStations, "LeaveMeshJob::StartDisconnectStations");
+            return MakeExecuteResult(cExecuteKindContinue);
         }
+        if (transport::StationManager::s_pInstance->m_localStation != 0)
+            return MakeExecuteResult(cExecuteKindNextStep);
+        m_disconnectStarted = false;
+        SelectStep(m_currentStep, &LeaveMeshJob::StartDisconnectStations, "LeaveMeshJob::StartDisconnectStations");
+        return MakeExecuteResult(cExecuteKindContinue);
     }
     SelectStep(m_currentStep, &LeaveMeshJob::StartDisconnectStations, "LeaveMeshJob::StartDisconnectStations");
     return MakeExecuteResult(cExecuteKindContinue);
@@ -101,14 +102,14 @@ LeaveMeshJob::ExecuteResult LeaveMeshJob::WaitLeaveResponse()
 
 LeaveMeshJob::ExecuteResult LeaveMeshJob::StartDisconnectStations()
 {
-    transport::Station* localStation = transport::g_piaStationManager->m_localStation;
+    transport::Station* localStation = transport::StationManager::s_pInstance->m_localStation;
     if (localStation == 0)
     {
         SelectStep(m_currentStep, &LeaveMeshJob::LeaveSuccess, "LeaveMeshJob::LeaveSuccess");
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    transport::Station** station = transport::g_piaStationManager->m_stations.data;
-    if (station != station + transport::g_piaStationManager->m_stations.size)
+    transport::Station** station = transport::StationManager::s_pInstance->m_stations.data;
+    if (station != station + transport::StationManager::s_pInstance->m_stations.size)
     {
         do
         {
@@ -123,7 +124,7 @@ LeaveMeshJob::ExecuteResult LeaveMeshJob::StartDisconnectStations()
                     (*station)->Trace(cTraceStationLevel);
             }
             ++station;
-        } while (station != transport::g_piaStationManager->m_stations.data + transport::g_piaStationManager->m_stations.size);
+        } while (station != transport::StationManager::s_pInstance->m_stations.data + transport::StationManager::s_pInstance->m_stations.size);
     }
     SelectStep(m_currentStep, &LeaveMeshJob::WaitLeavingProcess, "LeaveMeshJob::WaitLeavingProcess");
     return MakeExecuteResult(cExecuteKindContinue);
@@ -132,10 +133,10 @@ LeaveMeshJob::ExecuteResult LeaveMeshJob::StartDisconnectStations()
 LeaveMeshJob::ExecuteResult LeaveMeshJob::WaitLeavingProcess()
 {
     bool connected = false;
-    for (transport::Station** station = transport::g_piaStationManager->m_stations.data;
-         station != transport::g_piaStationManager->m_stations.data + transport::g_piaStationManager->m_stations.size; ++station)
+    for (transport::Station** station = transport::StationManager::s_pInstance->m_stations.data;
+         station != transport::StationManager::s_pInstance->m_stations.data + transport::StationManager::s_pInstance->m_stations.size; ++station)
     {
-        if ((*station)->m_field20 == cConnectedStationState && *station != transport::g_piaStationManager->m_localStation)
+        if ((*station)->m_field20 == cConnectedStationState && *station != transport::StationManager::s_pInstance->m_localStation)
         {
             connected = true;
             break;
@@ -149,8 +150,8 @@ LeaveMeshJob::ExecuteResult LeaveMeshJob::WaitLeavingProcess()
 
 LeaveMeshJob::ExecuteResult LeaveMeshJob::LeaveSuccess()
 {
-    for (transport::Station** station = transport::g_piaStationManager->m_stations.data;
-         station != transport::g_piaStationManager->m_stations.data + transport::g_piaStationManager->m_stations.size; ++station)
+    for (transport::Station** station = transport::StationManager::s_pInstance->m_stations.data;
+         station != transport::StationManager::s_pInstance->m_stations.data + transport::StationManager::s_pInstance->m_stations.size; ++station)
         (*station)->m_disconnectStationJob->ProcessDisconnection(*station);
     g_piaMesh->CleanupStationsJobs();
     g_piaMesh->m_disconnectReason = cDisconnectReasonLeave;
@@ -172,9 +173,9 @@ LeaveMeshJob::ExecuteResult LeaveMeshJob::LeaveSuccess()
 
 void LeaveMeshJob::Cleanup()
 {
-    common::CallContext* callerContext = m_callerContext;
     m_disconnectStarted = false;
     m_deadline = common::Time();
+    common::CallContext* callerContext = m_callerContext;
     if (callerContext != 0)
     {
         if (callerContext->m_state == common::CallContext::cStateInProgress)

@@ -126,7 +126,7 @@ inline void destroyStation(transport::Station* station)
     transport::IdentificationInfoTable::GetInstance()->EraseFromTable(station);
     station->Cleanup();
     station->CleanupJobs();
-    transport::g_piaStationManager->DestroyStation(station);
+    transport::StationManager::s_pInstance->DestroyStation(station);
 }
 
 inline bool isFinished(const common::CallContext& context)
@@ -376,7 +376,7 @@ bool ProcessUpdateMeshJob::UpdateMesh()
     const int localIndex = g_piaMesh->GetLocalStationIndex();
     const int hostIndex = g_piaMesh->GetHostStationIndex();
     if (localIndex > cStationIndexMax || hostIndex > cStationIndexMax ||
-        transport::g_piaStationManager->m_localStation == 0)
+        transport::StationManager::s_pInstance->m_localStation == 0)
         return false;
 
     const bool connectDirect = !m_relayRequested;
@@ -391,7 +391,7 @@ bool ProcessUpdateMeshJob::UpdateMesh()
         knownBitmap |= 1 << m_stationIndices[entry];
         transport::Station* station = 0;
         if (mesh->IsValidStationIndex(m_stationIndices[entry]))
-            station = transport::g_piaStationManager->GetStation(m_stationIndices[entry]);
+            station = transport::StationManager::s_pInstance->GetStation(m_stationIndices[entry]);
 
         if (station != 0)
         {
@@ -422,10 +422,10 @@ bool ProcessUpdateMeshJob::UpdateMesh()
         {
             if (m_stationConnectionInfos[entry].m_stationLocation.m_stationAddress.IsValid())
             {
-                station = transport::g_piaStationManager->GetStation(
+                station = transport::StationManager::s_pInstance->GetStation(
                     m_stationConnectionInfos[entry].m_stationLocation.m_stationAddress);
                 if (station == 0 ||
-                    (station == transport::g_piaStationManager->m_localStation &&
+                    (station == transport::StationManager::s_pInstance->m_localStation &&
                      m_stationIndices[entry] != g_piaMesh->GetLocalStationIndex()) ||
                     table->GetStationConnectionInfo(station, &info) == 0)
                 {
@@ -486,10 +486,10 @@ bool ProcessUpdateMeshJob::UpdateMesh()
         }
         if (!connectDirect)
             continue;
-        if (transport::g_piaStationManager->GetValidStationNum() >= transport::g_piaTransport->m_stationNum)
+        if (transport::StationManager::s_pInstance->GetValidStationNum() >= transport::g_piaTransport->m_stationNum)
             return false;
 
-        transport::Station* newStation = transport::g_piaStationManager->CreateStation();
+        transport::Station* newStation = transport::StationManager::s_pInstance->CreateStation();
         newStation->Startup(m_stationConnectionInfos[entry].m_stationLocation.m_principalId,
                             m_stationIndices[entry],
                             m_stationConnectionInfos[entry].m_stationLocation.m_stationAddress);
@@ -522,7 +522,7 @@ bool ProcessUpdateMeshJob::UpdateMesh()
             {
                 mesh->UnfixDisconnectedId(static_cast<StationIndex>(index));
                 transport::Station* station =
-                    transport::g_piaStationManager->GetStation(static_cast<StationIndex>(index));
+                    transport::StationManager::s_pInstance->GetStation(static_cast<StationIndex>(index));
                 if (station != 0)
                     destroyStation(station);
                 transport::RelayRouteManager* relayRouteManager = transport::g_piaTransport->m_relayRouteManager;
@@ -534,7 +534,7 @@ bool ProcessUpdateMeshJob::UpdateMesh()
     }
 
     transport::Station* extraStations[cStationNumMax] = {};
-    transport::StationManager* stationManager = transport::g_piaStationManager;
+    transport::StationManager* stationManager = transport::StationManager::s_pInstance;
     unsigned short extraCount = 0;
     for (transport::Station** it = stationManager->m_stations.data;
          it != stationManager->m_stations.data + stationManager->m_stations.size; ++it)
@@ -698,7 +698,7 @@ void ProcessUpdateMeshJob::UpdateJoinMeshFailureResult(StationIndex stationIndex
         break;
     }
 
-    transport::Station* station = transport::g_piaStationManager->GetStation(stationIndex);
+    transport::Station* station = transport::StationManager::s_pInstance->GetStation(stationIndex);
     if (station == 0)
         g_piaMesh->m_joinMeshJob->m_principalId = cPrincipalIdInvalid;
     else
@@ -738,7 +738,7 @@ ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::WaitDirectConnection()
             continue;
         }
 
-        transport::Station* station = transport::g_piaStationManager->GetStation(index);
+        transport::Station* station = transport::StationManager::s_pInstance->GetStation(index);
         if (station == 0)
         {
             station = transport::g_stationConnectionInfoTable->GetStation(m_stationConnectionInfos[entry]);
@@ -895,7 +895,7 @@ ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::StartRelayConnection()
     }
 
     transport::RelayRouteManager* relayRouteManager = transport::g_piaTransport->m_relayRouteManager;
-    transport::StationManager* stationManager = transport::g_piaStationManager;
+    transport::StationManager* stationManager = transport::StationManager::s_pInstance;
     transport::StationConnectionInfoTable* table = transport::g_stationConnectionInfoTable;
     if (relayRouteManager->m_unknown20 != m_updateVersion ||
         relayRouteManager->m_unknown1c <= m_relayRouteVersion)
@@ -1102,7 +1102,7 @@ ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::CheckConnectionAll()
             continue;
         }
 
-        transport::Station* station = transport::g_piaStationManager->GetStation(index);
+        transport::Station* station = transport::StationManager::s_pInstance->GetStation(index);
         if (station == 0)
         {
             station = transport::g_stationConnectionInfoTable->GetStation(m_stationConnectionInfos[entry]);
@@ -1267,7 +1267,7 @@ ProcessUpdateMeshJob::ExecuteResult ProcessUpdateMeshJob::CleanupByProcessFailur
 
 void ProcessUpdateMeshJob::UpdateDataTakeover(unsigned short stationCount)
 {
-    transport::StationManager* stationManager = transport::g_piaStationManager;
+    transport::StationManager* stationManager = transport::StationManager::s_pInstance;
     transport::StationConnectionInfoTable* table = transport::g_stationConnectionInfoTable;
     const unsigned int previousCount = m_stationCount;
     m_stationCount = stationCount;

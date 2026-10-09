@@ -65,8 +65,10 @@ public:
 
     struct DebugSetting
     {
-        unsigned int m_field00;
-        unsigned int m_field04;
+        DebugSetting() : m_relayEmulationEnabled(0), m_checkStartupSettingRange(1) {}
+
+        unsigned char m_relayEmulationEnabled;
+        unsigned char m_checkStartupSettingRange;
     };
 
     enum State
@@ -131,7 +133,7 @@ public:
     Result DestroyMeshAsync();
     bool IsDestroyMeshCompleted();
     Result GetDestroyMeshResult();
-    unsigned int GetJoinMeshState() const;
+    int GetJoinMeshState() const;
     void SetSkipReport(bool skip);
     void SendReport(unsigned char reason);
     unsigned int GetMeshState() const;
@@ -190,12 +192,12 @@ public:
     Result JoinMeshCore(const transport::StationConnectionInfo& info,
                         common::CallContext* callerContext);
     Result LeaveMesh(common::CallContext* callerContext);
-    common::Time GetTime() const;
+    long long GetTime() const;
     ProcessHostMigrationJob* GetProcessHostMigrationJobPtr();
     ProcessDestroyMeshJob* GetProcessDestroyMeshJobPtr();
     ProcessUpdateMeshJob* GetProcessUpdateMeshJobPtr();
     static Result setDebugSettingImpl(const DebugSetting& setting);
-    static void SetDebugSettingForInternal(const DebugSetting& setting);
+    static Result SetDebugSettingForInternal(const DebugSetting& setting);
     void TraceStationConnectionInfoList(unsigned long long value);
     void Trace(unsigned long long value) const;
 
@@ -225,7 +227,7 @@ public:
 
     Mesh(const Setting& setting);
     ~Mesh();
-    Result Initialize(const Setting& setting, bool isHost);
+    Result Initialize(const Setting& setting, bool relayEmulationEnabled);
     static Result CreateInstance(const Setting& setting);
     static void DestroyInstance();
     void CleanupStationsJobs();
@@ -288,7 +290,7 @@ public:
     unsigned int m_unknown80;
     unsigned int m_unknown84;
     unsigned long long m_unknown88;
-    transport::ProtocolId m_syncClockProtocolId;
+    unsigned short m_syncClockProtocolId;
     unsigned int m_unknown94;
     unsigned long long m_meshStartTime;
     bool m_meshStartTimeValid;

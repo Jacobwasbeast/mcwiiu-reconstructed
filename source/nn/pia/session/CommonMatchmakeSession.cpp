@@ -51,11 +51,7 @@ unsigned int CommonMatchmakeSession::ConvertPersistentGatheringCodeToGatheringId
     return 0;
 }
 
-CommonMatchmakeSession::~CommonMatchmakeSession()
-{
-}
-
-unsigned int CommonMatchmakeSession::GetBrowsedCommunityResult()
+ICommunityInfoList* CommonMatchmakeSession::GetBrowsedCommunityResult()
 {
     return 0;
 }

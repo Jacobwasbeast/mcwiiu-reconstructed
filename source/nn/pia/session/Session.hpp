@@ -4,8 +4,8 @@
 #include <cstddef>
 
 #include "nn/pia/Common.hpp"
-#include "nn/pia/ListBase.hpp"
 #include "nn/pia/common/CallContext.hpp"
+#include "nn/pia/common/PooledList.hpp"
 #include "nn/pia/transport/Station.hpp"
 
 namespace nn { namespace pia { namespace common { class Job; class StepSequenceJob; class String; }}}
@@ -13,12 +13,19 @@ namespace nn { namespace pia { namespace common { class Job; class StepSequenceJ
 namespace nn { namespace pia { namespace session {
 
 class BrowseMatchmakeJob;
+class ClearMatchmakeSystemPasswordJob;
 class CloseParticipationJob;
+class CommunityManagementJob;
+class CommunitySearchCriteria;
 class CreateSessionJob;
+class CreateSessionSetting;
 class DestroySessionJob;
+class GenerateMatchmakeSystemPasswordJob;
 class ICommunityInfoList;
 class IMatchmakeSession;
+class ISessionInfo;
 class ISessionInfoList;
+class JoinRandomSessionSetting;
 class JoinSessionJob;
 class JoinSessionSetting;
 class JointSessionJob;
@@ -27,7 +34,9 @@ class MeshEventListener;
 class MeshLayerController;
 class OpenParticipationJob;
 class RandomMatchmakeJob;
+class SessionNetworkFactory;
 class SessionProtocol;
+class SessionSearchCriteria;
 class SessionStatusCheckJob;
 class StationIdStatusTable;
 class UpdateSessionSetting;
@@ -36,6 +45,28 @@ class UpdateSessionSettingJob;
 class Session
 {
 public:
+    enum Status
+    {
+        cStatusNone = 0,
+        cStatusMatched = 1,
+        cStatusUnknown2 = 2,
+        cStatusBufferMatched = 3,
+        cStatusDisconnectedSession = 4,
+        cStatusDisconnectedNetwork = 5,
+        cStatusUnknown6 = 6,
+        cStatusUnknown7 = 7,
+        cStatusUnknown8 = 8
+    };
+
+    enum StatusResult
+    {
+        cResultStatusDisconnectedSession = 0x8c56,
+        cResultStatusDisconnectedNetwork = 0xc406,
+        cResultStatusUnknown6 = 0xa471,
+        cResultStatusUnknown7 = 0xc420,
+        cResultStatusUnknown8 = 0xc421
+    };
+
     enum MatchmakeStatus
     {
         cMatchmakeStatusNone = 0,
@@ -71,13 +102,16 @@ public:
         cEventTypeUnknown02 = 2,
         cEventTypeUnknown03 = 3,
         cEventTypeUnknown04 = 4,
-        cEventTypeUnknown15 = 0x15
+        cEventTypeUnknown15 = 0x15,
+        cEventTypeSessionSystemPasswordSet = 0x16,
+        cEventTypeSessionSystemPasswordClear = 0x17
     };
 
     enum SessionOpenStatus
     {
         cSessionOpenStatusClosed = 0,
-        cSessionOpenStatusOpen = 1
+        cSessionOpenStatusOpen = 1,
+        cSessionOpenStatusParticipationClosed = 2
     };
 
     enum AsyncProcessingName
@@ -88,18 +122,17 @@ public:
         cAsyncProcessingNameCreateSession = 3,
         cAsyncProcessingNameJoinSession = 4,
         cAsyncProcessingNameLeaveSession = 5,
-        cAsyncProcessingNameUpdateSessionSetting = 0x11
+        cAsyncProcessingNameUpdateSessionSetting = 0x11,
+        cAsyncProcessingNameBrowseCommunity = 0x15,
+        cAsyncProcessingNameUnknown18 = 0x18,
+        cAsyncProcessingNameUnknown19 = 0x19
     };
 
     typedef void (*SessionEventCallback)(EventType eventType,
                                          unsigned long long stationId,
                                          void* param);
 
-    struct StationIdEntry
-    {
-        common::ListNode m_node;
-        unsigned long long m_stationId;
-    };
+    typedef common::PooledList<unsigned long long> StationIdList;
 
     class StartupSetting
     {
@@ -117,17 +150,86 @@ public:
     class Setting
     {
     public:
-        unsigned int m_field00;
-        unsigned int m_field04;
-        unsigned short m_field08;
-        unsigned short m_field0a;
-        unsigned int m_field0c;
-        unsigned int m_field10;
+        SessionNetworkFactory* m_networkFactory;
+        unsigned int m_networkTopologyType;
+        unsigned short m_browseSessionInfoListSize;
+        unsigned char m_browseCommunityInfoListSize;
+        unsigned int m_bitRateCheckMode;
     };
 
-    static Result CreateInstance(const Setting& setting);
+    struct DebugSetting
+    {
+        DebugSetting()
+            : m_relayEmulationEnabled(0), m_matchmakeAnalysisEnabled(0),
+              m_checkStartupSettingRange(1)
+        {
+        }
 
-    typedef bool (*DisconnectionEventListener)(void* event);
+        unsigned char m_relayEmulationEnabled;
+        unsigned char m_matchmakeAnalysisEnabled;
+        unsigned char m_checkStartupSettingRange;
+    };
+
+    static DebugSetting s_debugSetting;
+
+    explicit Session(const Setting& setting);
+    ~Session();
+
+    static Result CreateInstance(const Setting& setting);
+    static void DestroyInstance();
+    void Cleanup();
+    void CleanupStatus(bool keepStationIds);
+    void ResetSessionSystemPassword();
+    Result SetSessionSystemPassword(const common::String& password);
+    void ClearWaitingStationIndex();
+    bool LeaveNoticeToWaitingStationIndex(StationIndex stationIndex);
+    bool IsAsyncProcessCompleted(AsyncProcessingName name) const;
+    Result GetAsyncProcessResult(AsyncProcessingName name) const;
+    Result JoinRandomSessionAsync(const JoinRandomSessionSetting* setting);
+    bool IsJoinRandomSessionCompleted() const;
+    Result GetJoinRandomSessionResult() const;
+    Result BrowseSessionAsync(const SessionSearchCriteria* criteria);
+    bool IsBrowseSessionCompleted() const;
+    Result GetBrowseSessionResult() const;
+    Result BrowseCommunityAsync(const CommunitySearchCriteria* criteria);
+    ISessionInfoList* GetBrowsedSessionInfoList();
+    ICommunityInfoList* GetBrowsedCommunityInfoList();
+    Result CreateSessionAsync(const CreateSessionSetting* setting);
+    bool IsCreateSessionCompleted() const;
+    Result GetCreateSessionResult() const;
+    bool IsJoinSessionCompleted() const;
+    Result GetJoinSessionResult() const;
+    Result LeaveSessionAsync();
+    bool IsLeaveSessionCompleted() const;
+    Result GetLeaveSessionResult() const;
+    bool IsUpdateSessionSettingCompleted() const;
+    Result GetUpdateSessionSettingResult() const;
+    Result UpdateSelectionPriority(unsigned char selectionPriority) const;
+    bool IsUpdatableSelectionPriority(unsigned char selectionPriority) const;
+    unsigned long long ConvertCommunityIdToCommunityCode(unsigned int communityId);
+    unsigned int ConvertCommunityCodeToCommunityId(unsigned long long communityCode);
+    bool IsOwner() const;
+    unsigned int GetMatchmakeSessionParticipantNum() const;
+    Result CheckConnectionError() const;
+    const ISessionInfo* GetSessionInfo() const;
+    unsigned int GetJointSessionId() const;
+    unsigned int GetJointSessionOpenStatus() const;
+    const ISessionInfo* GetJointSessionInfo() const;
+    Result RegisterSessionEventCallback(SessionEventCallback callback, void* param);
+    void UnregisterSessionEventCallback();
+    static void NoticeEventCallback(EventType eventType, StationIndex stationIndex);
+    unsigned int GetSessionDisconnectReason() const;
+    ProcessType GetJointSessionProcessType() const;
+    void SetHostMigrationOccurred(bool occurred);
+    void NotifyLeave(unsigned int sessionId, unsigned long long stationId);
+    void NotifyUnregister(unsigned int sessionId);
+    bool IsPlayersCountedAsParticipants() const;
+    unsigned char GetLocalPlayerCount() const;
+    unsigned int IsPreparedForCleanup() const;
+    bool AddNewStationId(unsigned long long stationId, StationIndex stationIndex,
+                         unsigned long long uniqueId, unsigned int sessionId);
+
+    typedef int (*DisconnectionEventListener)(void* event);
 
     typedef bool (*JoiningApprovalCallback)(
         const transport::Station::IdentificationToken* identificationToken);
@@ -138,7 +240,7 @@ public:
     bool IsValidStationId(unsigned long long stationId) const;
     bool IsJointSessionHost() const;
     unsigned int GetStatus() const;
-    unsigned int GetJoinMeshState() const;
+    int GetJoinMeshState() const;
     unsigned int GetJoinSessionStateForDebug() const;
     unsigned int GetSessionOpenStatus() const;
     void SetCurrentSessionOpenStatus(SessionOpenStatus status);
@@ -195,13 +297,13 @@ public:
     DestroySessionJob* m_destroySessionJob;
     OpenParticipationJob* m_openParticipationJob;
     CloseParticipationJob* m_closeParticipationJob;
-    common::StepSequenceJob* m_generateMatchmakeSystemPasswordJob;
-    common::StepSequenceJob* m_clearMatchmakeSystemPasswordJob;
+    GenerateMatchmakeSystemPasswordJob* m_generateMatchmakeSystemPasswordJob;
+    ClearMatchmakeSystemPasswordJob* m_clearMatchmakeSystemPasswordJob;
     common::String* m_matchmakeSystemPassword;
     JointSessionJob* m_jointSessionJob;
     UpdateSessionSettingJob* m_updateSessionSettingJob;
     unsigned int m_field40;
-    common::StepSequenceJob* m_communityManagementJob;
+    CommunityManagementJob* m_communityManagementJob;
     unsigned int m_field48;
     unsigned int m_field4c;
     SessionEventCallback m_sessionEventCallback;
@@ -233,12 +335,8 @@ public:
     unsigned int m_sessionId[2];
     ICommunityInfoList* m_communityInfoList;
     unsigned int m_sessionOpenStatus[2];
-    common::ListBase m_validStationIdList;
-    common::ListBase m_validStationIdFreeList;
-    int m_stationIdNodeOffset;
-    StationIdEntry* m_stationIdEntries;
-    unsigned int m_stationIdEntryNum;
-    StationIdEntry* m_stationIdEntryBuffer;
+    StationIdList m_validStationIdList;
+    unsigned long long* m_validStationIdBuffer;
     unsigned int m_field110;
     bool m_hostMigrationOccurred;
     transport::Station::IdentificationToken m_matchmakeAnalysisToken;
@@ -251,10 +349,9 @@ public:
 };
 
 
-bool DisconnectionEventListenerForSession(void* event);
+int DisconnectionEventListenerForSession(void* event);
 
 extern Session* g_piaSession;
-extern unsigned char g_piaMatchmakeAnalysisEnabled;
 
 }}}
 

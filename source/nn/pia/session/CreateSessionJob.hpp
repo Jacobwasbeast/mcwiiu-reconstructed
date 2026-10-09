@@ -18,14 +18,19 @@ public:
     ExecuteResult WaitCreateMesh();
     ExecuteResult CompleteFailure();
     ExecuteResult CompleteProcess();
-    void Cleanup();
+    virtual void Cleanup();
     virtual void Trace(unsigned long long value) const;
     void SetMatchmakeStatus(Session::MatchmakeStatus status);
     void SetConnectionStatus(Session::ConnectionStatus status);
-private:
+
+protected:
+    virtual Result StartupImpl(const CreateSessionSetting* setting) = 0;
+    virtual void SetNextStepAtWaitCreateMesh() = 0;
+    virtual ExecuteResult SetNextStepAtFailedCreateMesh(Result result) = 0;
+
     common::CallContext* m_callerContext;
     common::CallContext m_callContext;
-    unsigned int m_result;
+    Result m_result;
 };
 }}}
 

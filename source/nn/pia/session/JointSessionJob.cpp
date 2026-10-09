@@ -1,8 +1,8 @@
 #include "nn/pia/session/JointSessionJob.hpp"
 
-#include "nn/pia/HeapManager.hpp"
 #include "nn/pia/StationIdTable.hpp"
 #include "nn/pia/Transport.hpp"
+#include "nn/pia/common/Memory.hpp"
 #include "nn/pia/common/Scheduler.hpp"
 #include "nn/pia/common/SessionBeginMonitoringContent.hpp"
 #include "nn/pia/common/TimeSpan.hpp"
@@ -15,9 +15,6 @@
 #include "nn/pia/transport/BandwidthCheckProtocol.hpp"
 #include "nn/pia/transport/Station.hpp"
 #include "nn/pia/transport/StationManager.hpp"
-#include "platform/wiiu/pead.hpp"
-
-#include <string.h>
 
 namespace nn { namespace pia { namespace session {
 
@@ -49,7 +46,6 @@ enum
 
 enum
 {
-    cProcessTypeFirstJointSession = 6,
     cProcessTypeNum = 11,
     cStationNumMax = 16,
     cMonitoringByteUnset = 0xff,
@@ -72,29 +68,17 @@ enum
 
 const unsigned long long cTraceJointSessionLevel = 0x0000000100000000ULL;
 
-const unsigned char s_startEventTypeByProcessType[5] = {
-    cEventTypeStartCreateJointSession, cEventTypeStartJoinJointSession,
-    cEventTypeStartJoinRandomJointSession, cEventTypeStartDestroyJointSession,
-    cEventTypeStartLeaveJointSession
-};
-
-const unsigned char s_endEventTypeByProcessType[5] = {
-    cEventTypeEndCreateJointSession, cEventTypeEndJoinJointSession,
-    cEventTypeEndJoinRandomJointSession, cEventTypeEndDestroyJointSession,
-    cEventTypeEndLeaveJointSession
-};
-
 inline unsigned int getBufferSessionIndex()
 {
     return g_piaSession->m_currentSessionIndex == 0 ? 1 : 0;
 }
 
-inline bool containsStationId(const common::ListBase& list, unsigned long long stationId)
+inline bool containsStationId(const JointSessionJob::StationIdList& list, const unsigned long long& stationId)
 {
     const common::ListNode* sentinel = list.Sentinel();
     for (const common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
-        if (static_cast<const JointSessionJob::StationIdNode*>(node)->m_stationId == stationId)
+        if (stationId == *JointSessionJob::StationIdList::ValueOf(node))
             return true;
     }
     return false;
@@ -102,12 +86,12 @@ inline bool containsStationId(const common::ListBase& list, unsigned long long s
 
 inline const transport::StationIdTable::Entry* entryOf(const common::ListNode* node)
 {
-    return &reinterpret_cast<const transport::StationIdTable::Element*>(node)->entry;
+    return transport::StationIdTable::EntryList::ValueOf(node);
 }
 
-inline const Session::StationIdEntry* validStationIdOf(const common::ListNode* node)
+inline const unsigned long long* validStationIdOf(const common::ListNode* node)
 {
-    return reinterpret_cast<const Session::StationIdEntry*>(node);
+    return Session::StationIdList::ValueOf(node);
 }
 
 inline int calcElapsedMsec(const common::Time& startTime)
@@ -120,76 +104,33 @@ inline int calcElapsedMsec(const common::Time& startTime)
 
 JointSessionJob::JointSessionJob()
     : common::StepSequenceJob(), m_callerContext(0), m_callContext(),
-      m_processType(Session::cProcessTypeNone), m_field5c(0), m_companionStationIdList(),
-      m_companionStationIdFreeList(), m_stationIdNodeOffset(0),
-      m_stationIdNodes(0), m_stationIdNodeNum(0), m_field98(0), m_field9c(0),
-      m_field9d(0), m_leaveStationIdAccepted(false), m_fielda0(0),
-      m_fielda2(0), m_fielda3(0), m_fielda4(0), m_fieldb0(0), m_fieldb4(0),
-      m_startTime(), m_fieldc0(0), m_fieldc4(0)
+      m_processType(Session::cProcessTypeNone), m_field5c(0), m_companionStationIdList(), m_stationIdNodeStorage(0),
+      m_field98(0), m_field9c(0),
+      m_field9d(false), m_leaveStationIdAccepted(false), m_fielda0(0),
+      m_failurePending(0), m_fielda3(0), m_pendingFailureResult(0), m_completionDeadline(),
+      m_startTime(), m_fieldc0(0)
 {
     JointSessionJob::InitializeImpl();
 }
 
 void JointSessionJob::InitializeImpl()
 {
-    const unsigned int stationIdNodeNum = transport::g_piaTransport->m_stationNum;
-    const unsigned int storageSize = stationIdNodeNum * sizeof(StationIdNode);
-    pead::Heap* heap = common::HeapManager::GetHeap();
-    StationIdNode* storage =
-        static_cast<StationIdNode*>(pead::allocateFromSeadHeap(storageSize, heap));
-    if (storage == 0)
-    {
-        m_stationIdNodeStorage = 0;
-    }
-    else
-    {
-        memset(storage, 0, storageSize);
-        m_stationIdNodeStorage = storage;
-    }
-
-    if (stationIdNodeNum == 0 || storage == 0)
-        return;
-
-    m_stationIdNodes = storage;
-    m_stationIdNodeNum = stationIdNodeNum;
-    for (unsigned int index = 0; index < m_stationIdNodeNum; ++index)
-    {
-        StationIdNode* node = m_stationIdNodes + index;
-        node->prev = 0;
-        node->next = 0;
-        m_companionStationIdFreeList.InsertBeforeNode(
-            m_companionStationIdFreeList.Sentinel(),
-            reinterpret_cast<common::ListNode*>(
-                reinterpret_cast<char*>(node) + m_stationIdNodeOffset));
-    }
+    const unsigned int stationIdNum = transport::g_piaTransport->m_stationNum;
+    m_stationIdNodeStorage = common::NewArray<unsigned long long>(
+        (sizeof(StationIdList::Node) * stationIdNum + sizeof(unsigned long long) - 1) /
+        sizeof(unsigned long long));
+    m_companionStationIdList.Initialize(m_stationIdNodeStorage, stationIdNum);
 }
 
 void JointSessionJob::FinalizeImpl()
 {
-    if (m_stationIdNodeStorage == 0)
-        return;
-
-    if (m_stationIdNodes != 0)
-    {
-        common::ListNode* sentinel = m_companionStationIdList.Sentinel();
-        common::ListNode* node = sentinel->next;
-        while (node != sentinel)
-        {
-            common::ListNode* next = node->next;
-            node->prev = 0;
-            node->next = 0;
-            m_companionStationIdFreeList.InsertAfterNode(
-                m_companionStationIdFreeList.Sentinel(),
-                reinterpret_cast<common::ListNode*>(
-                    reinterpret_cast<char*>(node) + m_stationIdNodeOffset));
-            node = next;
-        }
-        m_companionStationIdList.Init();
-    }
-
     if (m_stationIdNodeStorage != 0)
-        pead::DeleteArray(m_stationIdNodeStorage);
-    m_stationIdNodeStorage = 0;
+    {
+        if (m_companionStationIdList.IsInitialized())
+            m_companionStationIdList.Clear();
+        common::DeleteArray(m_stationIdNodeStorage);
+        m_stationIdNodeStorage = 0;
+    }
 }
 
 JointSessionJob::~JointSessionJob()
@@ -215,8 +156,8 @@ Result JointSessionJob::StartupJoinRandomJointSession(common::CallContext* calle
     m_leaveStationIdAccepted = false;
     m_processType = Session::cProcessTypeJoinRandomJointSession;
     m_sessionDisconnectDetected = false;
-    m_fielda2 = 0;
-    m_fielda4 = 0;
+    m_failurePending = 0;
+    m_pendingFailureResult = 0;
     m_callerContext = callerContext;
     callerContext->InitiateCall();
     m_startTime = common::g_piaJobScheduler->m_dispatchTime;
@@ -242,10 +183,10 @@ Result JointSessionJob::StartupCreateJointSession(common::CallContext* callerCon
 
     m_field9c = 1;
     m_leaveStationId = g_piaSession->m_localStationId;
-    m_fielda4 = 0;
+    m_pendingFailureResult = 0;
     m_processType = Session::cProcessTypeCreateJointSession;
     m_leaveStationIdAccepted = false;
-    m_fielda2 = 0;
+    m_failurePending = 0;
     m_callerContext = callerContext;
     m_sessionDisconnectDetected = false;
     callerContext->InitiateCall();
@@ -283,8 +224,8 @@ Result JointSessionJob::StartupJoinJointSession(common::CallContext* callerConte
     m_leaveStationIdAccepted = false;
     m_processType = Session::cProcessTypeJoinJointSession;
     m_sessionDisconnectDetected = false;
-    m_fielda2 = 0;
-    m_fielda4 = 0;
+    m_failurePending = 0;
+    m_pendingFailureResult = 0;
     m_callerContext = callerContext;
     callerContext->InitiateCall();
     m_startTime = common::g_piaJobScheduler->m_dispatchTime;
@@ -311,8 +252,8 @@ Result JointSessionJob::StartupLeaveJointSession(common::CallContext* callerCont
     m_sessionDisconnectDetected = false;
     m_processType = Session::cProcessTypeLeaveJointSession;
     m_callerContext = callerContext;
-    m_fielda4 = 0;
-    m_fielda2 = 0;
+    m_pendingFailureResult = 0;
+    m_failurePending = 0;
     callerContext->InitiateCall();
     m_startTime = common::g_piaJobScheduler->m_dispatchTime;
     m_fieldc8 = 0;
@@ -338,8 +279,8 @@ Result JointSessionJob::StartupDestroyJointSession(common::CallContext* callerCo
     m_sessionDisconnectDetected = false;
     m_processType = Session::cProcessTypeDestroyJointSession;
     m_callerContext = callerContext;
-    m_fielda4 = 0;
-    m_fielda2 = 0;
+    m_pendingFailureResult = 0;
+    m_failurePending = 0;
     callerContext->InitiateCall();
     m_startTime = common::g_piaJobScheduler->m_dispatchTime;
     m_fieldc8 = 0;
@@ -356,7 +297,7 @@ Result JointSessionJob::StartupPassiveProcess(Session::ProcessType processType,
 {
     if (processType == Session::cProcessTypeNone || processType >= cProcessTypeNum)
         return cResultInvalidArgument;
-    if (stationIds == 0 || stationIdNum == 0 || stationIdNum > m_stationIdNodeNum)
+    if (stationIds == 0 || stationIdNum == 0 || stationIdNum > m_companionStationIdList.GetCapacity())
         return cResultInvalidArgument;
     if (senderStationId == 0)
         return cResultInvalidArgument;
@@ -376,10 +317,9 @@ Result JointSessionJob::StartupPassiveProcess(Session::ProcessType processType,
     {
         if (g_piaSession->m_matchmakeStatus != cMatchmakeStatusMatched)
             return cResultInvalidState;
-        const unsigned int bufferIndex = getBufferSessionIndex();
-        if (g_piaSession->m_sessionId[bufferIndex] != 0)
+        if (g_piaSession->m_sessionId[getBufferSessionIndex()] != 0)
             return cResultInvalidState;
-        g_piaSession->m_matchmakeSession[bufferIndex]->Cleanup();
+        g_piaSession->m_matchmakeSession[getBufferSessionIndex()]->Cleanup();
         m_fielda3 = 0;
     }
 
@@ -399,8 +339,8 @@ Result JointSessionJob::StartupPassiveProcess(Session::ProcessType processType,
         m_processType = processType;
         m_leaveStationId = 0;
         m_sessionDisconnectDetected = false;
-        m_fielda2 = 0;
-        m_fielda4 = 0;
+        m_failurePending = 0;
+        m_pendingFailureResult = 0;
         m_startTime = common::g_piaJobScheduler->m_dispatchTime;
         m_fieldc8 = 0;
         Reset(true);
@@ -409,10 +349,10 @@ Result JointSessionJob::StartupPassiveProcess(Session::ProcessType processType,
     {
         m_leaveStationId = senderStationId;
         m_processType = processType;
-        m_fielda4 = 0;
+        m_pendingFailureResult = 0;
         m_sessionDisconnectDetected = false;
         m_leaveStationIdAccepted = false;
-        m_fielda2 = 0;
+        m_failurePending = 0;
         m_startTime = common::g_piaJobScheduler->m_dispatchTime;
         m_fieldc8 = 0;
         Reset(true);
@@ -457,7 +397,7 @@ Result JointSessionJob::ReceiveLeaveInvitation(Session::ProcessType processType,
 {
     if (processType != Session::cProcessTypeDestroyJointSession)
         return cResultInvalidArgument;
-    if (stationIds == 0 || stationIdNum == 0 || stationIdNum > m_stationIdNodeNum)
+    if (stationIds == 0 || stationIdNum == 0 || stationIdNum > m_companionStationIdList.GetCapacity())
         return cResultInvalidArgument;
     if (senderStationId == 0)
         return cResultInvalidArgument;
@@ -521,48 +461,39 @@ void JointSessionJob::Cleanup()
     m_callContext.Reset();
 
     m_field5c = 0;
-    m_fielda4 = 0;
+    m_pendingFailureResult = 0;
     m_processType = Session::cProcessTypeNone;
-    m_field9d = 0;
+    m_field9d = false;
     m_field60 = 0;
     m_sessionDisconnectDetected = false;
     m_field9f = 0;
     m_leaveStationId = 0;
-    m_fielda2 = 0;
+    m_failurePending = 0;
     m_fielda3 = 0;
     m_field98 = 0;
     m_field9c = 0;
     m_fielda0 = 0;
     m_leaveStationIdAccepted = false;
 
-    common::ListNode* sentinel = m_companionStationIdList.Sentinel();
-    common::ListNode* node = sentinel->next;
-    while (node != sentinel)
-    {
-        common::ListNode* next = node->next;
-        node->prev = 0;
-        node->next = 0;
-        m_companionStationIdFreeList.InsertAfterNode(
-            m_companionStationIdFreeList.Sentinel(),
-            reinterpret_cast<common::ListNode*>(
-                reinterpret_cast<char*>(node) + m_stationIdNodeOffset));
-        node = next;
-    }
-    m_companionStationIdList.Init();
+    if (m_companionStationIdList.GetNodeNum() != 0)
+        m_companionStationIdList.Clear();
 }
 
 bool JointSessionJob::AcceptLeaveStationId(unsigned long long stationId)
 {
-    if (m_leaveStationId != stationId)
-        return false;
-    m_leaveStationIdAccepted = true;
-    return true;
+    if (m_leaveStationId == stationId)
+    {
+        m_leaveStationIdAccepted = true;
+        return true;
+    }
+    return false;
 }
 
 bool JointSessionJob::IsMigrateSessionToJointSession() const
 {
-    return m_processType >= Session::cProcessTypeCreateJointSession &&
-           m_processType <= Session::cProcessTypeJoinRandomJointSession;
+    return m_processType == Session::cProcessTypeCreateJointSession ||
+           m_processType == Session::cProcessTypeJoinJointSession ||
+           m_processType == Session::cProcessTypeJoinRandomJointSession;
 }
 
 bool JointSessionJob::IsMigrateJointSessionToSession() const
@@ -577,65 +508,92 @@ void JointSessionJob::Trace(unsigned long long value) const
 
 void JointSessionJob::NoticeStartingEventByProcessType()
 {
-    Session* session = g_piaSession;
-    transport::StationIdTable* stationIdTable = transport::g_piaTransport->m_stationIdTable;
-    const common::ListNode* sentinel = stationIdTable->m_entries.Sentinel();
     unsigned long long leaveStationIds[cStationNumMax];
+    unsigned short companionStationNum = 0;
     unsigned short leaveStationNum = 0;
-    unsigned char companionStationNum = 0;
+    transport::StationIdTable* stationIdTable = transport::g_piaTransport->m_stationIdTable;
+    Session* session = g_piaSession;
+    const common::ListNode* sentinel = stationIdTable->m_entries.Sentinel();
 
     if (IsMigrateJointSessionToSession() && m_field9c != 0)
     {
+        StationIdStatusTable* stationIdStatusTable = session->m_stationIdStatusTable;
         for (const common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
         {
             const transport::StationIdTable::Entry* entry = entryOf(node);
             unsigned int sessionId;
-            if (session->m_stationIdStatusTable->GetSessionId(entry->stationId, &sessionId) &&
-                sessionId == session->m_sessionId[session->m_currentSessionIndex])
+            if (!stationIdStatusTable->GetSessionId(entry->stationId, &sessionId) ||
+                sessionId != session->m_sessionId[session->m_currentSessionIndex])
             {
-                ++companionStationNum;
+                leaveStationIds[leaveStationNum++] = entry->stationId;
             }
             else
             {
-                leaveStationIds[leaveStationNum++] = entry->stationId;
+                ++companionStationNum;
             }
         }
     }
     else
     {
+        const common::ListNode* companionSentinel = m_companionStationIdList.Sentinel();
+        const common::ListNode* companionBegin = companionSentinel->next;
         for (const common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
         {
             const transport::StationIdTable::Entry* entry = entryOf(node);
-            if (containsStationId(m_companionStationIdList, entry->stationId))
-                ++companionStationNum;
-            else
+            const common::ListNode* companion = companionBegin;
+            for (; companion != companionSentinel; companion = companion->next)
+            {
+                if (entry->stationId == *StationIdList::ValueOf(companion))
+                    break;
+            }
+            if (companion == companionSentinel)
                 leaveStationIds[leaveStationNum++] = entry->stationId;
+            else
+                ++companionStationNum;
         }
-    }
-
-    for (unsigned short index = 0; index < leaveStationNum; ++index)
-    {
-        const unsigned long long stationId = leaveStationIds[index];
-        if (session->m_stationIdStatusTable->CheckEventNotifiedStatus(stationId))
-        {
-            session->CallSessionEventCallback(Session::cEventTypeLeave, stationId);
-            session->m_stationIdStatusTable->SetEventNotifiedStatus(stationId, false);
-            session->m_stationIdStatusTable->SetConnect(stationId, false);
-            session->m_stationIdStatusTable->SetPrepareStatus(stationId, false);
-            session->invalidateStationId(stationId);
-        }
-    }
-
-    for (const common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
-    {
-        const transport::StationIdTable::Entry* entry = entryOf(node);
-        session->m_stationIdStatusTable->SetStationIndex(
-            entry->stationId, static_cast<StationIndex>(entry->stationIndex));
     }
 
     unsigned int eventType = Session::cEventTypeLeave;
-    if (m_processType > cProcessTypeFirstJointSession - 1 && m_processType < cProcessTypeNum)
-        eventType = s_startEventTypeByProcessType[m_processType - cProcessTypeFirstJointSession];
+    for (unsigned short index = 0; index < leaveStationNum; ++index)
+    {
+        if (session->m_stationIdStatusTable->CheckEventNotifiedStatus(leaveStationIds[index]))
+        {
+            session->CallSessionEventCallback(Session::cEventTypeLeave, leaveStationIds[index]);
+            session->m_stationIdStatusTable->SetEventNotifiedStatus(leaveStationIds[index], false);
+            session->m_stationIdStatusTable->SetConnect(leaveStationIds[index], false);
+            session->m_stationIdStatusTable->SetPrepareStatus(leaveStationIds[index], false);
+            session->invalidateStationId(leaveStationIds[index]);
+        }
+    }
+
+    StationIdStatusTable* stationIdStatusTable = g_piaSession->m_stationIdStatusTable;
+    for (const common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
+    {
+        const transport::StationIdTable::Entry* entry = entryOf(node);
+        stationIdStatusTable->SetStationIndex(entry->stationId,
+                                              static_cast<StationIndex>(entry->stationIndex));
+    }
+
+    switch (m_processType)
+    {
+    case Session::cProcessTypeCreateJointSession:
+        eventType = cEventTypeStartCreateJointSession;
+        break;
+    case Session::cProcessTypeJoinJointSession:
+        eventType = cEventTypeStartJoinJointSession;
+        break;
+    case Session::cProcessTypeJoinRandomJointSession:
+        eventType = cEventTypeStartJoinRandomJointSession;
+        break;
+    case Session::cProcessTypeDestroyJointSession:
+        eventType = cEventTypeStartDestroyJointSession;
+        break;
+    case Session::cProcessTypeLeaveJointSession:
+        eventType = cEventTypeStartLeaveJointSession;
+        break;
+    default:
+        break;
+    }
     session->CallSessionEventCallback(static_cast<Session::EventType>(eventType), 0);
     transport::g_piaTransport->m_stationIdTable->Trace(cTraceJointSessionLevel);
     session->m_stationIdStatusTable->Trace(cTraceJointSessionLevel);
@@ -646,72 +604,90 @@ void JointSessionJob::NoticeStartingEventByProcessType()
     if (monitoring.m_metric74 == cMonitoringByteUnset)
     {
         monitoring.m_metric74 = 1;
-        monitoring.m_metric76 = session->m_sessionId[session->m_currentSessionIndex];
+        monitoring.m_metric76 = g_piaSession->m_sessionId[g_piaSession->m_currentSessionIndex];
+        monitoring.m_metric78 = static_cast<unsigned char>(companionStationNum);
         monitoring.m_metric127 = static_cast<unsigned char>(m_processType);
     }
     else
     {
         if (monitoring.m_metric74 < cMonitoringByteLimit)
             ++monitoring.m_metric74;
-        monitoring.m_metric76 = session->m_sessionId[session->m_currentSessionIndex];
+        monitoring.m_metric76 = g_piaSession->m_sessionId[g_piaSession->m_currentSessionIndex];
+        monitoring.m_metric78 = static_cast<unsigned char>(companionStationNum);
         monitoring.m_metric127 = static_cast<unsigned char>(m_processType);
     }
-    monitoring.m_metric78 = companionStationNum;
 }
 
 bool JointSessionJob::ClearProcessTypeAndNoticeEndingEvent()
 {
     Session* session = g_piaSession;
-    if (m_processType < cProcessTypeFirstJointSession || m_processType >= cProcessTypeNum)
+    Session::EventType eventType;
+    switch (m_processType)
+    {
+    case Session::cProcessTypeCreateJointSession:
+        eventType = static_cast<Session::EventType>(cEventTypeEndCreateJointSession);
+        break;
+    case Session::cProcessTypeJoinJointSession:
+        eventType = static_cast<Session::EventType>(cEventTypeEndJoinJointSession);
+        break;
+    case Session::cProcessTypeJoinRandomJointSession:
+        eventType = static_cast<Session::EventType>(cEventTypeEndJoinRandomJointSession);
+        break;
+    case Session::cProcessTypeDestroyJointSession:
+        eventType = static_cast<Session::EventType>(cEventTypeEndDestroyJointSession);
+        break;
+    case Session::cProcessTypeLeaveJointSession:
+        eventType = static_cast<Session::EventType>(cEventTypeEndLeaveJointSession);
+        break;
+    default:
         return false;
+    }
 
-    const unsigned char eventType =
-        s_endEventTypeByProcessType[m_processType - cProcessTypeFirstJointSession];
     transport::Station* hostStation =
-        transport::g_piaStationManager->GetStation(g_piaMesh->GetHostStationIndex());
+        transport::StationManager::s_pInstance->GetStation(g_piaMesh->GetHostStationIndex());
     if (hostStation == 0)
         return false;
 
     unsigned long long principalId;
-    if (hostStation->GetPrincipalId(&principalId) != 0)
+    Result result = hostStation->GetPrincipalId(&principalId);
+    if (result != 0)
         return false;
 
-    transport::StationIdTable* stationIdTable = transport::g_piaTransport->m_stationIdTable;
     transport::StationIdTable::Entry hostEntry;
-    if (stationIdTable->FindByUniqueId(&hostEntry, principalId) != 0)
+    result = transport::g_piaTransport->m_stationIdTable->FindByUniqueId(&hostEntry, principalId);
+    if (result != 0)
     {
-        stationIdTable->Trace(cTraceJointSessionLevel);
+        transport::g_piaTransport->m_stationIdTable->Trace(cTraceJointSessionLevel);
         return false;
     }
 
     unsigned long long matchmakeOwnerUniqueId;
-    if (!IsMigrateJointSessionToSession())
-    {
-        session->m_jointSessionHostStationId = hostEntry.stationId;
-        unsigned int sessionId = 0;
-        if (!session->m_stationIdStatusTable->GetSessionId(hostEntry.stationId, &sessionId))
-            return false;
-        if (sessionId == 0)
-            return false;
-        session->m_field110 = sessionId;
-        if (session->m_matchmakeSession[getBufferSessionIndex()]->GetMatchmakeOwnerUniqueId() !=
-            session->m_jointSessionHostStationId)
-            return false;
-        IMatchmakeSession* currentSession =
-            session->m_matchmakeSession[session->m_currentSessionIndex];
-        matchmakeOwnerUniqueId = currentSession->GetMatchmakeOwnerUniqueId();
-        if (stationIdTable->FindByUniqueId(&hostEntry, matchmakeOwnerUniqueId) != 0)
-            return false;
-    }
-    else
+    if (IsMigrateJointSessionToSession())
     {
         session->m_jointSessionHostStationId = 0;
         session->m_field110 = 0;
         matchmakeOwnerUniqueId =
             session->m_matchmakeSession[session->m_currentSessionIndex]->GetMatchmakeOwnerUniqueId();
-        if (stationIdTable->FindByUniqueId(&hostEntry, matchmakeOwnerUniqueId) != 0)
-            return false;
     }
+    else
+    {
+        session->m_jointSessionHostStationId = hostEntry.stationId;
+        unsigned int sessionId = 0;
+        if (!g_piaSession->m_stationIdStatusTable->GetSessionId(hostEntry.stationId, &sessionId))
+            return false;
+        if (sessionId == 0)
+            return false;
+        session->m_field110 = sessionId;
+        if (session->m_matchmakeSession[session->m_currentSessionIndex == 0 ? 1 : 0]
+                ->GetMatchmakeOwnerUniqueId() != session->m_jointSessionHostStationId)
+            return false;
+        matchmakeOwnerUniqueId =
+            session->m_matchmakeSession[session->m_currentSessionIndex]->GetMatchmakeOwnerUniqueId();
+    }
+    result = transport::g_piaTransport->m_stationIdTable->FindByUniqueId(&hostEntry,
+                                                                        matchmakeOwnerUniqueId);
+    if (result != 0)
+        return false;
 
     if (session->m_field110 == session->m_sessionId[session->m_currentSessionIndex] &&
         matchmakeOwnerUniqueId != session->m_jointSessionHostStationId)
@@ -721,15 +697,16 @@ bool JointSessionJob::ClearProcessTypeAndNoticeEndingEvent()
     for (const common::ListNode* node = validSentinel->next; node != validSentinel;
          node = node->next)
     {
-        const unsigned long long stationId = validStationIdOf(node)->m_stationId;
-        if (session->m_stationIdStatusTable->CheckConnectStatus(stationId) &&
-            session->m_stationIdStatusTable->CheckEventNotifiedStatus(stationId))
+        const unsigned long long* stationId = validStationIdOf(node);
+        if (session->m_stationIdStatusTable->CheckConnectStatus(*stationId) &&
+            session->m_stationIdStatusTable->CheckEventNotifiedStatus(*stationId))
         {
             const transport::StationIdTable::Entry* entry =
-                stationIdTable->FindByStationIdCore(stationId);
+                transport::g_piaTransport->m_stationIdTable->FindByStationIdCore(*stationId);
             if (entry == 0)
                 return false;
-            stationIdTable->SetJoinEventNotifiedByStationId(stationId, true);
+            transport::g_piaTransport->m_stationIdTable->SetJoinEventNotifiedByStationId(*stationId,
+                                                                                        true);
             if (g_piaMesh->GetBitRateCheckMode())
             {
                 g_piaMesh->GetBandwidthCheckProtocol()->SetBandwidthChecked(
@@ -739,13 +716,14 @@ bool JointSessionJob::ClearProcessTypeAndNoticeEndingEvent()
     }
 
     session->ChangeStationIdConvertEnableFlag(true);
-    if (m_processType >= Session::cProcessTypeCreateJointSession &&
-        m_processType <= Session::cProcessTypeJoinRandomJointSession)
+    if (m_processType == Session::cProcessTypeCreateJointSession ||
+        m_processType == Session::cProcessTypeJoinJointSession ||
+        m_processType == Session::cProcessTypeJoinRandomJointSession)
     {
         session->m_matchmakeStatus = cMatchmakeStatusJointSessionProcessed;
         session->m_stationIdStatusTable->ClearDisconnectedStationId();
         session->m_stationIdStatusTable->CallJoinEventNotYetNotified();
-        stationIdTable->Trace(cTraceJointSessionLevel);
+        transport::g_piaTransport->m_stationIdTable->Trace(cTraceJointSessionLevel);
         session->m_stationIdStatusTable->Trace(cTraceJointSessionLevel);
     }
     else
@@ -753,25 +731,28 @@ bool JointSessionJob::ClearProcessTypeAndNoticeEndingEvent()
         session->m_matchmakeStatus = cMatchmakeStatusMatched;
         session->m_stationIdStatusTable->ClearDisconnectedStationId();
         session->m_stationIdStatusTable->CallJoinEventNotYetNotified();
-        stationIdTable->Trace(cTraceJointSessionLevel);
+        transport::g_piaTransport->m_stationIdTable->Trace(cTraceJointSessionLevel);
         session->m_stationIdStatusTable->Trace(cTraceJointSessionLevel);
     }
-    if (hostEntry.stationId != session->m_hostStationId)
+    const unsigned long long hostStationId = hostEntry.stationId;
+    if (hostStationId != session->m_hostStationId)
     {
-        session->m_hostStationId = hostEntry.stationId;
-        session->CallSessionEventCallback(Session::cEventTypeUnknown02, hostEntry.stationId);
+        session->m_hostStationId = hostStationId;
+        session->CallSessionEventCallback(Session::cEventTypeUnknown02, hostStationId);
     }
-    session->CallSessionEventCallback(static_cast<Session::EventType>(eventType), 0);
+    session->CallSessionEventCallback(eventType, 0);
 
     common::SessionBeginMonitoringContent& monitoring = common::g_sessionBeginMonitoringContent;
     monitoring.m_metric77 = calcElapsedMsec(m_startTime);
     monitoring.m_metric79 = m_fieldc8;
     unsigned char companionStationNum = 0;
+    transport::StationIdTable* stationIdTable = transport::g_piaTransport->m_stationIdTable;
+    StationIdStatusTable* stationIdStatusTable = session->m_stationIdStatusTable;
     const common::ListNode* sentinel = stationIdTable->m_entries.Sentinel();
     for (const common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
         unsigned int sessionId;
-        if (session->m_stationIdStatusTable->GetSessionId(entryOf(node)->stationId, &sessionId) &&
+        if (stationIdStatusTable->GetSessionId(entryOf(node)->stationId, &sessionId) &&
             sessionId == session->m_sessionId[session->m_currentSessionIndex])
         {
             ++companionStationNum;
@@ -785,16 +766,16 @@ bool JointSessionJob::ClearProcessTypeAndNoticeEndingEvent()
 void JointSessionJob::ClearProcessTypeAndNoticeFailureEvent()
 {
     const unsigned int disconnectStatus = g_piaSession->m_disconnectStatus;
-    if (disconnectStatus == cDisconnectStatusDisconnectedNetwork ||
-        disconnectStatus == cDisconnectStatus4 || disconnectStatus == cDisconnectStatus5 ||
-        disconnectStatus == cDisconnectStatus6)
-    {
-        g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
-    }
-    else
+    if (disconnectStatus != cDisconnectStatusDisconnectedNetwork &&
+        disconnectStatus != cDisconnectStatus4 && disconnectStatus != cDisconnectStatus5 &&
+        disconnectStatus != cDisconnectStatus6)
     {
         g_piaSession->m_disconnectStatus = cDisconnectStatusDisconnectedSession;
         g_piaSession->m_sessionDisconnectReason = cDisconnectReasonSession;
+    }
+    else
+    {
+        g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
     }
     g_piaSession->m_stationIdStatusTable->ClearDisconnectedStationId();
     g_piaSession->CallSessionEventCallback(Session::cEventTypeUnknown15, 0);
@@ -805,26 +786,27 @@ void JointSessionJob::ClearProcessTypeAndNoticeFailureEvent()
 
 void JointSessionJob::RemoveNotCompanionStationId()
 {
-    transport::StationIdTable* stationIdTable = transport::g_piaTransport->m_stationIdTable;
-    StationIdStatusTable* stationIdStatusTable = g_piaSession->m_stationIdStatusTable;
-    const common::ListNode* sentinel = stationIdTable->m_entries.Sentinel();
     unsigned long long removeStationIds[cStationNumMax];
     unsigned short removeStationNum = 0;
+    StationIdStatusTable* stationIdStatusTable = g_piaSession->m_stationIdStatusTable;
+    transport::StationIdTable* stationIdTable = transport::g_piaTransport->m_stationIdTable;
+    const common::ListNode* sentinel = stationIdTable->m_entries.Sentinel();
+    const common::ListNode* node = sentinel->next;
 
-    for (const common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
+    for (; node != sentinel; node = node->next)
     {
-        const unsigned long long stationId = entryOf(node)->stationId;
-        if (!containsStationId(m_companionStationIdList, stationId) &&
-            !stationIdStatusTable->CheckEventNotifiedStatus(stationId))
+        const transport::StationIdTable::Entry* entry = entryOf(node);
+        if (!containsStationId(m_companionStationIdList, entry->stationId) &&
+            !stationIdStatusTable->CheckEventNotifiedStatus(entry->stationId))
         {
-            removeStationIds[removeStationNum++] = stationId;
+            removeStationIds[removeStationNum++] = entry->stationId;
         }
     }
 
     for (unsigned short index = 0; index < removeStationNum; ++index)
     {
-        stationIdTable->RemoveByStationId(removeStationIds[index]);
-        stationIdStatusTable->RemoveElement(removeStationIds[index]);
+        Result result = stationIdTable->RemoveByStationId(removeStationIds[index]);
+        result = stationIdStatusTable->RemoveElement(removeStationIds[index]);
     }
 }
 

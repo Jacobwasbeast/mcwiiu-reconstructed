@@ -3,9 +3,11 @@
 namespace nn { namespace pia { namespace session {
 
 CreateSessionSetting::CreateSessionSetting()
-    : mMinParticipantNum(0), mMinParticipantNumSet(0), mReserved(0),
-      mMaxParticipantNum(0), mMaxParticipantNumSet(0)
 {
+    mMinParticipantNum = 0;
+    mMinParticipantNumSet = 0;
+    mMaxParticipantNum = 0;
+    mMaxParticipantNumSet = 0;
 }
 
 CreateSessionSetting::~CreateSessionSetting()

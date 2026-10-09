@@ -8,10 +8,10 @@ class ISessionInfo;
 class ISessionInfoList
 {
 public:
-    virtual ~ISessionInfoList();
-    virtual ISessionInfo* const* Begin() const = 0;
+    virtual ~ISessionInfoList() {}
+    virtual const ISessionInfo** Begin() const = 0;
     virtual ISessionInfo** Begin() = 0;
-    virtual ISessionInfo* const* End() const = 0;
+    virtual const ISessionInfo** End() const = 0;
     virtual ISessionInfo** End() = 0;
     virtual unsigned short GetSize() const = 0;
     virtual unsigned short GetMaxSize() const = 0;

@@ -10,6 +10,8 @@ namespace nn { namespace pia { namespace transport { class StationConnectionInfo
 
 namespace nn { namespace pia { namespace session {
 
+class ICommunityInfoList;
+
 class IMatchmakeSession
 {
 public:
@@ -46,7 +48,7 @@ public:
         unsigned int gatheringId) = 0;
     virtual unsigned int ConvertPersistentGatheringCodeToGatheringId(
         unsigned long long persistentGatheringCode) = 0;
-    virtual unsigned int GetBrowsedCommunityResult() = 0;
+    virtual ICommunityInfoList* GetBrowsedCommunityResult() = 0;
     virtual Result UpdateMatchmakeSessionHost(unsigned int sessionId) = 0;
     virtual bool IsMatchmakeOwner() const = 0;
     virtual void SetMatchmakeOwner(bool isOwner) = 0;

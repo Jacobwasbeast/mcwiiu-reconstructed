@@ -14,7 +14,9 @@ class MeshLayerController
 {
 public:
     MeshLayerController();
-    virtual ~MeshLayerController();
+    virtual ~MeshLayerController()
+    {
+    }
     virtual Result Startup(const Session::StartupSetting& setting);
     virtual void Cleanup();
     virtual Result MeshStartup(IMatchmakeSession* matchmakeSession, bool skipBandwidthCheck);

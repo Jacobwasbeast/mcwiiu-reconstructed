@@ -1,10 +1,8 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_STATION_ID_STATUS_TABLE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_STATION_ID_STATUS_TABLE_HPP
 
-#include <cstddef>
-
 #include "nn/pia.h"
-#include "nn/pia/ListBase.hpp"
+#include "nn/pia/common/PooledList.hpp"
 
 namespace nn { namespace pia { namespace session {
 
@@ -48,10 +46,8 @@ private:
         bool migration;
     };
 
-    struct Entry {
-        common::ListNode node;
-        Element element;
-    };
+    typedef common::PooledList<Element> ElementList;
+    typedef ElementList::Node Entry;
 
 public:
     StationIdStatusTable();
@@ -98,17 +94,16 @@ public:
     bool CheckSessionHost(unsigned int sessionId) const;
 
 private:
-    static Entry* entryOf(common::ListNode* node) { return reinterpret_cast<Entry*>(node); }
-    static const Entry* entryOf(const common::ListNode* node) { return reinterpret_cast<const Entry*>(node); }
-    static Entry* entryOf(Element* element) { return reinterpret_cast<Entry*>(reinterpret_cast<char*>(element) - offsetof(Entry, element)); }
+    static Entry* entryOf(common::ListNode* node) { return static_cast<Entry*>(node); }
+    static const Entry* entryOf(const common::ListNode* node) { return static_cast<const Entry*>(node); }
 
     Entry* findMutable(unsigned long long stationId)
     {
-        common::ListNode* head = m_usedList.Sentinel();
+        common::ListNode* head = m_elements.Sentinel();
         for (common::ListNode* node = head->next; node != head; node = node->next)
         {
             Entry* entry = entryOf(node);
-            if (entry->element.stationId == stationId)
+            if (entry->value.stationId == stationId)
                 return entry;
         }
         return 0;
@@ -116,21 +111,17 @@ private:
 
     const Entry* find(unsigned long long stationId) const
     {
-        const common::ListNode* head = m_usedList.Sentinel();
+        const common::ListNode* head = m_elements.Sentinel();
         for (const common::ListNode* node = head->next; node != head; node = node->next)
         {
             const Entry* entry = entryOf(node);
-            if (entry->element.stationId == stationId)
+            if (entry->value.stationId == stationId)
                 return entry;
         }
         return 0;
     }
 
-    common::ListBase m_usedList;
-    common::ListBase m_freeList;
-    unsigned int m_freeNodeOffset;
-    Entry* m_entries;
-    unsigned int m_entryNum;
+    ElementList m_elements;
     unsigned long long* m_storage;
 };
 

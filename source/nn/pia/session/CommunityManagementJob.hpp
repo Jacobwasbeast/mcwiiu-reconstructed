@@ -17,22 +17,22 @@ public:
     CommunityManagementJob();
     virtual ~CommunityManagementJob();
 
-    Result BrowseCommunityStartup(common::CallContext*, const CommunitySearchCriteria*);
-    Result CreateCommunityStartup(common::CallContext*, const CreateCommunitySetting*);
-    Result JoinCommunityStartup(common::CallContext*, const JoinCommunitySetting*);
-    Result UpdateCommunityStartup(common::CallContext*, const UpdateCommunitySetting*);
-    Result DestroyCommunityStartup(common::CallContext*, unsigned int communityId);
-    Result LeaveCommunityStartup(common::CallContext*, unsigned int communityId);
-    void Cleanup();
+    Result BrowseCommunityStartup(common::CallContext* callerContext, const CommunitySearchCriteria* criteria);
+    Result CreateCommunityStartup(common::CallContext* callerContext, const CreateCommunitySetting* setting);
+    Result JoinCommunityStartup(common::CallContext* callerContext, const JoinCommunitySetting* setting);
+    Result UpdateCommunityStartup(common::CallContext* callerContext, const UpdateCommunitySetting* setting);
+    Result DestroyCommunityStartup(common::CallContext* callerContext, unsigned int communityId);
+    Result LeaveCommunityStartup(common::CallContext* callerContext, unsigned int communityId);
+    virtual void Cleanup();
     virtual void Trace(unsigned long long value) const;
 
 protected:
-    virtual void BrowseCommunityStartupImpl(Result* result) = 0;
-    virtual void CreateCommunityStartupImpl(Result* result) = 0;
-    virtual void JoinCommunityStartupImpl(Result* result, const JoinCommunitySetting* setting) = 0;
-    virtual void UpdateCommunityStartupImpl(Result* result, const UpdateCommunitySetting* setting) = 0;
-    virtual void DestroyCommunityStartupImpl(Result* result, unsigned int communityId) = 0;
-    virtual void LeaveCommunityStartupImpl(Result* result, unsigned int communityId) = 0;
+    virtual Result BrowseCommunityStartupImpl(const CommunitySearchCriteria* criteria) = 0;
+    virtual Result CreateCommunityStartupImpl(const CreateCommunitySetting* setting) = 0;
+    virtual Result JoinCommunityStartupImpl(const JoinCommunitySetting* setting) = 0;
+    virtual Result UpdateCommunityStartupImpl(const UpdateCommunitySetting* setting) = 0;
+    virtual Result DestroyCommunityStartupImpl(unsigned int communityId) = 0;
+    virtual Result LeaveCommunityStartupImpl(unsigned int communityId) = 0;
 
     common::CallContext* m_callerContext;
     common::CallContext m_callContext;

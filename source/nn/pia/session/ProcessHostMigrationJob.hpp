@@ -26,15 +26,25 @@ public:
     virtual void Trace(unsigned long long value) const;
     virtual unsigned int CleanupOldHostInfoCommonProc();
     virtual unsigned int PreprocessForSendingMigrationFinish() = 0;
-    virtual unsigned int IsFatalErrorOccur();
-    virtual void CheckWhetherNewHostIsUnknown(unsigned long long value);
+    virtual unsigned int IsFatalErrorOccur()
+    {
+        return 0;
+    }
+    virtual void CheckWhetherNewHostIsUnknown(unsigned long long)
+    {
+    }
     virtual unsigned int IsValidHostMigrationSetting() = 0;
     virtual unsigned int StartupImpl(bool multi, StationIndex station) = 0;
-    virtual void CleanupImpl();
+    virtual void CleanupImpl()
+    {
+    }
     virtual void CleanupStatus();
     virtual void DisconnectStation(StationIndex station);
     virtual unsigned int StartupMultiImpl(bool multi, unsigned short count);
-    virtual unsigned int CheckWhetherReselectNewHost();
+    virtual unsigned int CheckWhetherReselectNewHost()
+    {
+        return 0;
+    }
 
     void ProcessingAtEndHM(bool stationCountValid);
     void SearchRefugeRelayRoute();
@@ -77,18 +87,6 @@ public:
         OSBlockMove(m_candidateRanking, ranking, count, FALSE);
         m_unknownE0 = valueE0;
         m_unknownE4 = valueE4;
-    }
-
-    void setStep(ExecuteResult (ProcessHostMigrationJob::*function)(), const char* name)
-    {
-        union
-        {
-            ExecuteResult (ProcessHostMigrationJob::*derived)();
-            ExecuteResult (common::StepSequenceJob::*base)();
-        } step;
-        step.derived = function;
-        m_currentStep.m_function = step.base;
-        m_currentStep.m_name = name;
     }
 
     common::Time m_waitDeadline;

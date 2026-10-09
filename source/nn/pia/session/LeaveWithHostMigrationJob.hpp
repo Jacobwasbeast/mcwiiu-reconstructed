@@ -34,18 +34,6 @@ public:
     virtual int DecideNextHost() = 0;
     virtual void CleanupStatus();
 
-    void setStep(ExecuteResult (LeaveWithHostMigrationJob::*function)(), const char* name)
-    {
-        union
-        {
-            ExecuteResult (LeaveWithHostMigrationJob::*derived)();
-            ExecuteResult (common::StepSequenceJob::*base)();
-        } step;
-        step.derived = function;
-        m_currentStep.m_function = step.base;
-        m_currentStep.m_name = name;
-    }
-
     common::CallContext* m_callerContext;
     common::Time m_deadline;
     int m_timeoutMsec;

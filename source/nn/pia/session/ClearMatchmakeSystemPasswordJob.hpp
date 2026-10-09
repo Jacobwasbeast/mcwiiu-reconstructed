@@ -19,9 +19,9 @@ public:
     ExecuteResult FailureProcess();
     virtual void Cleanup();
     virtual void Trace(unsigned long long value) const;
-    virtual Result ClearMatchmakeSystemPassword() = 0;
+    virtual Result StartupImpl() = 0;
 
-private:
+protected:
     unsigned int m_sessionId;
     common::CallContext* m_callerContext;
     common::CallContext m_callContext;

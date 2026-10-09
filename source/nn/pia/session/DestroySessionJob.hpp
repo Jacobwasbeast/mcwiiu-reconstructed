@@ -3,6 +3,7 @@
 
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
+#include "nn/pia/common/Time.hpp"
 
 namespace nn { namespace pia { namespace session {
 
@@ -23,20 +24,23 @@ public:
     virtual void Trace(unsigned long long value) const;
 
 protected:
-    common::CallContext* m_callerContext;
-    common::CallContext m_callContext;
-    int m_startTick;
-    int m_endTick;
-    bool m_isSingleStation;
-    unsigned char m_padding[7];
+    virtual Result StartupImpl() = 0;
     virtual void SetNextStepAtWaitDestroyMesh() = 0;
     virtual void SetNextStepAtMeshCleanup() = 0;
-    void setStep(ExecuteResult (DestroySessionJob::*function)(), const char* name);
+
+    void setStep(ExecuteResult (DestroySessionJob::*function)(), const char* name)
+    {
+        Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+        m_currentStep.m_function = step.m_function;
+        m_currentStep.m_name = step.m_name;
+    }
+
+    common::CallContext* m_callerContext;
+    common::CallContext m_callContext;
+    common::Time m_startTime;
+    bool m_hasWaitedJointSessionJob;
 };
 
-}}} 
-
-#if !defined(RECON_NATIVE)
-#endif
+}}}
 
 #endif

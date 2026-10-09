@@ -44,7 +44,7 @@ Mesh* g_piaMesh = 0;
 namespace
 {
 
-unsigned int sDebugSetting = 0;
+Mesh::DebugSetting sDebugSetting;
 unsigned char* sMeshStorage = 0;
 
 
@@ -70,7 +70,6 @@ enum
     cMonitoringSessionBeginReport = 1,
     cMonitoringBeginDataType = 0,
     cMiiNameBufferSize = 11,
-    cBandwidthCheckProtocolType = 0x54,
     cBandwidthCheckProtocolPort = 2,
     cNetworkTopologyRelay = 1,
     cRelayRttMax = 500,
@@ -273,65 +272,28 @@ Mesh::~Mesh()
     m_unknown75 = 0;
 }
 
-Result Mesh::Initialize(const Setting& setting, bool isHost)
+Result Mesh::Initialize(const Setting& setting, bool relayEmulationEnabled)
 {
     transport::Transport* transport = transport::g_piaTransport;
     SessionNetworkFactory* factory = setting.m_networkFactory;
-    if (!transport->m_protocolManager.m_started)
-    {
-        void* storage = transport->m_protocolManager.AllocProtocol(sizeof(MeshProtocol));
-        transport::Protocol* protocol = 0;
-        if (storage != 0)
-            protocol = new (storage) MeshProtocol();
-        m_meshProtocolId = transport->m_protocolManager.CreateProtocolImpl(
-            protocol, transport::ProtocolId(MeshProtocol::cProtocolType, 0));
-    }
-    else
-    {
-        m_meshProtocolId = 0;
-    }
+    m_meshProtocolId = transport->m_protocolManager.CreateProtocol<MeshProtocol>(0);
     m_stationProtocol = transport::g_piaStationProtocolManager->GetStationProtocol();
-    m_meshProtocol = static_cast<MeshProtocol*>(transport->m_protocolManager.SearchProtocol(
-        m_meshProtocolId, MeshProtocol::cProtocolType));
+    m_meshProtocol = transport->m_protocolManager.GetProtocol<MeshProtocol>(m_meshProtocolId);
     m_meshProtocol->Initialize();
 
-    if (!transport->m_protocolManager.m_started)
-    {
-        void* storage = transport->m_protocolManager.AllocProtocol(sizeof(SyncClockProtocol));
-        transport::Protocol* protocol = 0;
-        if (storage != 0)
-            protocol = new (storage) SyncClockProtocol();
-        m_syncClockProtocolId = transport->m_protocolManager.CreateProtocolImpl(
-            protocol, transport::ProtocolId(SyncClockProtocol::cProtocolType, 0));
-    }
-    else
-    {
-        m_syncClockProtocolId = 0;
-    }
+    m_syncClockProtocolId = transport->m_protocolManager.CreateProtocol<SyncClockProtocol>(0);
     m_bitRateCheckMode = setting.m_bitRateCheckMode;
     common::g_sessionBeginMonitoringContent.m_metric132 =
         static_cast<unsigned char>(m_bitRateCheckMode);
 
     if (m_bitRateCheckMode != 0)
     {
-        if (!transport->m_protocolManager.m_started)
-        {
-            void* storage =
-                transport->m_protocolManager.AllocProtocol(sizeof(transport::BandwidthCheckProtocol));
-            transport::Protocol* protocol = 0;
-            if (storage != 0)
-                protocol = new (storage) transport::BandwidthCheckProtocol();
-            m_bandwidthCheckProtocolId = transport->m_protocolManager.CreateProtocolImpl(
-                protocol,
-                transport::ProtocolId(cBandwidthCheckProtocolType, cBandwidthCheckProtocolPort));
-        }
-        else
-        {
-            m_bandwidthCheckProtocolId = 0;
-        }
+        m_bandwidthCheckProtocolId =
+            transport->m_protocolManager.CreateProtocol<transport::BandwidthCheckProtocol>(
+                cBandwidthCheckProtocolPort);
         m_bandwidthCheckProtocol =
-            static_cast<transport::BandwidthCheckProtocol*>(transport->m_protocolManager.SearchProtocol(
-                m_bandwidthCheckProtocolId, cBandwidthCheckProtocolType));
+            transport->m_protocolManager.GetProtocol<transport::BandwidthCheckProtocol>(
+                m_bandwidthCheckProtocolId);
         m_bandwidthCheckProtocol->Initialize();
     }
 
@@ -364,7 +326,7 @@ Result Mesh::Initialize(const Setting& setting, bool isHost)
         {
             relayRouteManager = allocateHeapObject<transport::RelayRouteManager>();
             if (relayRouteManager != 0)
-                relayRouteManager->Initialize(m_unknown54, isHost);
+                relayRouteManager->Initialize(m_unknown54, relayEmulationEnabled);
             transport->m_relayRouteManager = relayRouteManager;
         }
         relayRouteManager->SetRelayNumMax(m_unknown54 * m_unknown54);
@@ -418,7 +380,7 @@ Result Mesh::CreateInstance(const Setting& setting)
         return static_cast<Result>(cResultInvalidArgument);
 
     bool topologyAllowed = true;
-    if (setting.m_networkTopologyType != cNetworkTopologyRelay && (sDebugSetting >> 24) != 0)
+    if (setting.m_networkTopologyType != cNetworkTopologyRelay && sDebugSetting.m_relayEmulationEnabled != 0)
         topologyAllowed = false;
     const bool relayPermitted = setting.m_networkFactory->IsClientRelayConnectionPermitted();
     if ((!relayPermitted && setting.m_networkTopologyType != 0) || !topologyAllowed)
@@ -439,7 +401,7 @@ Result Mesh::CreateInstance(const Setting& setting)
         return static_cast<Result>(cResultOutOfMemory);
     }
 
-    const Result result = g_piaMesh->Initialize(setting, (sDebugSetting >> 24) != 0);
+    const Result result = g_piaMesh->Initialize(setting, sDebugSetting.m_relayEmulationEnabled != 0);
     if (result == 0)
     {
         common::g_sessionBeginMonitoringContent.m_metric45 =
@@ -471,8 +433,8 @@ void Mesh::DestroyInstance()
 
 void Mesh::CleanupStationsJobs()
 {
-    transport::Station** station = transport::g_piaStationManager->m_stations.data;
-    transport::Station** const end = station + transport::g_piaStationManager->m_stations.size;
+    transport::Station** station = transport::StationManager::s_pInstance->m_stations.data;
+    transport::Station** const end = station + transport::StationManager::s_pInstance->m_stations.size;
     for (; station != end; ++station)
         (*station)->CleanupJobs();
 }
@@ -575,7 +537,7 @@ void Mesh::CleanupStatus()
     m_localPlayerCount = 1;
     m_playersCountedAsParticipants = true;
 
-    transport::StationManager* stationManager = transport::g_piaStationManager;
+    transport::StationManager* stationManager = transport::StationManager::s_pInstance;
     while (stationManager->m_stations.size != 0)
     {
         transport::Station* station = stationManager->m_stations.data[0];
@@ -679,7 +641,7 @@ Result Mesh::Startup(StartupSetting& setting)
         return static_cast<Result>(cResultInvalidState);
     if (transport::IdentificationInfoTable::GetInstance() == 0)
         return static_cast<Result>(cResultInvalidState);
-    if (((sDebugSetting >> 16) & 0xff) != 0 &&
+    if (sDebugSetting.m_checkStartupSettingRange != 0 &&
         setting.m_field00 - cStationTimeoutMsecMin > cStationTimeoutMsecMax - cStationTimeoutMsecMin)
         return static_cast<Result>(cResultInvalidArgument);
 
@@ -764,7 +726,7 @@ Result Mesh::Startup(StartupSetting& setting)
     m_processUpdateMeshJob->m_updateExtraTimeMsec = setting.m_field00 + cUpdateMeshExtraTimeMsec;
 
     unsigned int stationTimeout = setting.m_field00;
-    if (((sDebugSetting >> 16) & 0xff) != 0)
+    if (sDebugSetting.m_checkStartupSettingRange != 0)
     {
         if (stationTimeout < cStationTimeoutMsecMin)
             stationTimeout = cStationTimeoutMsecMin;
@@ -996,7 +958,7 @@ Result Mesh::GetDestroyMeshResult()
     return GetAsyncProcessResult(cAsyncDestroyMesh);
 }
 
-unsigned int Mesh::GetJoinMeshState() const
+int Mesh::GetJoinMeshState() const
 {
     if (m_joinMeshJob == 0)
         return 0;
@@ -1203,7 +1165,7 @@ void Mesh::NoticeMeshEvent(EventType type, StationIndex index)
 {
     if (type == cEventTypeJoin)
     {
-        transport::Station* station = transport::g_piaStationManager->GetStation(index);
+        transport::Station* station = transport::StationManager::s_pInstance->GetStation(index);
         if (station != 0 && m_recentPlayRecordRequested != 0 && m_recentPlayRecordEnabled != 0)
             AddPlayHistory(station, m_playerInfo, 1);
     }
@@ -1407,13 +1369,13 @@ Result Mesh::setDebugSettingImpl(const DebugSetting& setting)
 {
     if (g_piaMesh != 0)
         return static_cast<Result>(0x10c08);
-    sDebugSetting = setting.m_field00 & 0xffff0000u;
+    sDebugSetting = setting;
     return 0;
 }
 
-void Mesh::SetDebugSettingForInternal(const DebugSetting& setting)
+Result Mesh::SetDebugSettingForInternal(const DebugSetting& setting)
 {
-    setDebugSettingImpl(setting);
+    return setDebugSettingImpl(setting);
 }
 
 void Mesh::TraceStationConnectionInfoList(unsigned long long)
@@ -1422,7 +1384,7 @@ void Mesh::TraceStationConnectionInfoList(unsigned long long)
 
 void Mesh::NotifyLeaveStationAddress(const common::StationAddress& address)
 {
-    transport::Station* station = transport::g_piaStationManager->GetStation(address);
+    transport::Station* station = transport::StationManager::s_pInstance->GetStation(address);
     address.Trace(0);
     if (station != 0)
         station->m_field20 = 6;
@@ -1528,17 +1490,17 @@ void Mesh::CleanupMonitoringBeginData()
     content.m_metric126 = cMonitoringUnset32;
 }
 
-common::Time Mesh::GetTime() const
+long long Mesh::GetTime() const
 {
     if (transport::g_piaTransport == 0)
-        return common::Time::Create(static_cast<unsigned long long>(cTimeTransportUnavailable));
+        return cTimeTransportUnavailable;
 
     transport::Protocol* protocol =
         transport::g_piaTransport->m_protocolManager.SearchProtocol(
             m_syncClockProtocolId, SyncClockProtocol::cProtocolType);
     if (protocol == 0)
-        return common::Time::Create(static_cast<unsigned long long>(cTimeSyncClockUnavailable));
-    return common::Time::Create(static_cast<SyncClockProtocol*>(protocol)->m_syncClock.GetTime());
+        return cTimeSyncClockUnavailable;
+    return static_cast<SyncClockProtocol*>(protocol)->m_syncClock.GetTime();
 }
 
 void Mesh::MonitoringProcess(DisconnectReason reason, unsigned char dataType)

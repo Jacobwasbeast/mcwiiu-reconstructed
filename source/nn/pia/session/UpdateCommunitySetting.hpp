@@ -6,7 +6,7 @@ namespace nn { namespace pia { namespace session {
 class UpdateCommunitySetting
 {
 public:
-    virtual ~UpdateCommunitySetting();
+    virtual ~UpdateCommunitySetting() {}
 };
 
 }}}

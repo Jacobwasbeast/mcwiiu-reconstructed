@@ -21,30 +21,26 @@ enum
 }
 
 MeshLayerController::MeshLayerController()
-    : m_cryptoSetting()
+    : m_playerInfoSize(0)
+    , m_registeredPlayerInfo(false)
+    , m_playersCountedAsParticipants(false)
+    , m_field84(0)
+    , m_field88(0)
+    , m_hostMigrationEnabled(false)
+    , m_bandwidthCheckMeasurementTime(0)
+    , m_bandwidthCheckIpPacketSize(0)
+    , m_skipBandwidthCheck(true)
+    , m_bandwidthCheckMeasurementCount(0)
+    , m_cryptoSetting()
+    , m_payloadSize(0)
+    , m_recentPlayRecordEnabled(false)
+    , m_startedUp(false)
 {
-    m_bandwidthCheckMeasurementTime = 0;
-    m_skipBandwidthCheck = true;
-    m_bandwidthCheckMeasurementCount = 0;
-    m_playersCountedAsParticipants = false;
-    m_hostMigrationEnabled = false;
-    m_playerInfoSize = 0;
-    m_registeredPlayerInfo = false;
-    m_field88 = 0;
-    m_bandwidthCheckIpPacketSize = 0;
-    m_field84 = 0;
-    m_recentPlayRecordEnabled = false;
-    m_startedUp = false;
-    m_payloadSize = 0;
     ResetPlayerInfo();
     m_fielde0 = 0;
     OSBlockSet(&m_identificationToken, 0, cIdentificationTokenSize);
     m_cryptoSetting.m_mode = 0;
     OSBlockSet(m_cryptoSetting.m_key, 0, cCryptoKeySize);
-}
-
-MeshLayerController::~MeshLayerController()
-{
 }
 
 Result MeshLayerController::Startup(const Session::StartupSetting& setting)
@@ -78,21 +74,21 @@ Result MeshLayerController::Startup(const Session::StartupSetting& setting)
 void MeshLayerController::Cleanup()
 {
     transport::g_piaTransport->m_disconnectionEventListener = 0;
-    m_hostMigrationEnabled = false;
-    m_field84 = 0;
+    m_playerInfoSize = 0;
+    m_registeredPlayerInfo = false;
     m_playersCountedAsParticipants = false;
+    m_field84 = 0;
+    m_field88 = 0;
+    m_hostMigrationEnabled = false;
+    m_bandwidthCheckMeasurementTime = 0;
+    m_bandwidthCheckIpPacketSize = 0;
+    m_skipBandwidthCheck = true;
     m_bandwidthCheckMeasurementCount = 0;
     m_cryptoSetting.m_mode = 0;
-    m_bandwidthCheckIpPacketSize = 0;
-    m_registeredPlayerInfo = false;
-    m_field88 = 0;
-    m_skipBandwidthCheck = true;
-    m_bandwidthCheckMeasurementTime = 0;
-    m_playerInfoSize = 0;
     OSBlockSet(m_cryptoSetting.m_key, 0, cCryptoKeySize);
-    m_startedUp = false;
     m_payloadSize = 0;
     m_recentPlayRecordEnabled = false;
+    m_startedUp = false;
     ResetPlayerInfo();
     m_fielde0 = 0;
     OSBlockSet(&m_identificationToken, 0, cIdentificationTokenSize);
@@ -110,20 +106,20 @@ Result MeshLayerController::MeshStartup(IMatchmakeSession* matchmakeSession,
 
     Mesh::StartupSetting setting;
     setting.m_hostMigrationEnabled = m_hostMigrationEnabled;
-    setting.m_field04 = m_field88;
-    setting.m_field00 = m_field84;
     setting.m_playersCountedAsParticipants = m_playersCountedAsParticipants;
     setting.m_playerInfoSize = m_playerInfoSize;
     setting.m_playerInfo = m_registeredPlayerInfo ? m_playerInfo : 0;
+    setting.m_field00 = m_field84;
+    setting.m_field04 = m_field88;
     setting.m_field14 = m_registeredPlayerInfo ? &m_fielde0 : 0;
     setting.m_bandwidthCheckIpPacketSize = m_bandwidthCheckIpPacketSize;
     setting.m_bandwidthCheckMeasurementTime = m_bandwidthCheckMeasurementTime;
     setting.m_bandwidthCheckMeasurementCount = m_bandwidthCheckMeasurementCount;
     setting.m_cryptoSetting = &m_cryptoSetting;
     setting.m_recentPlayRecordEnabled = m_recentPlayRecordEnabled;
+    if (!skipBandwidthCheck)
+        skipBandwidthCheck = m_skipBandwidthCheck;
     setting.m_skipBandwidthCheck = skipBandwidthCheck;
-    if (!setting.m_skipBandwidthCheck)
-        setting.m_skipBandwidthCheck = m_skipBandwidthCheck;
     setting.m_identificationToken = &m_identificationToken;
     const Result result = g_piaMesh->Startup(setting);
     if (result != 0)

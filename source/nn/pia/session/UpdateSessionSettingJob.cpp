@@ -1,5 +1,6 @@
 #include "nn/pia/session/UpdateSessionSettingJob.hpp"
 
+#include "nn/pia/Transport.hpp"
 #include "nn/pia/session/IMatchmakeSession.hpp"
 #include "nn/pia/session/Session.hpp"
 
@@ -23,10 +24,10 @@ Result UpdateSessionSettingJob::Startup(common::CallContext* callerContext,
                                         bool isJointSession)
 {
     if (callerContext == 0)
-        return 0x10c07;
+        return Result(transport::cResultInvalidArgument);
 
     if (!matchmakeSession->IsMatchmakeOwner())
-        return 0x10c08;
+        return Result(transport::cResultInvalidState);
 
     const Result result = StartupImpl(sessionId, matchmakeSession, setting, isJointSession);
     if (result != 0)

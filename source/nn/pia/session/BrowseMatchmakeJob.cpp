@@ -5,8 +5,17 @@
 
 namespace nn { namespace pia { namespace session {
 
+namespace
+{
+enum
+{
+    cResultInvalidArgument = 0x10c07,
+    cResultInvalidState = 0x10c08
+};
+}
+
 BrowseMatchmakeJob::BrowseMatchmakeJob()
-    : common::StepSequenceJob(), m_callContext(0)
+    : common::StepSequenceJob(), m_callerContext(0)
 {
 }
 
@@ -19,17 +28,17 @@ Result BrowseMatchmakeJob::Startup(common::CallContext* callerContext,
                                    const SessionSearchCriteria* criteria)
 {
     if (callerContext == 0 || criteria == 0)
-        return static_cast<Result>(0x10c07);
+        return cResultInvalidArgument;
     if (matchmakeSession == 0)
-        return static_cast<Result>(0x10c08);
-    if (m_callContext != 0)
-        return static_cast<Result>(0x10c07);
+        return cResultInvalidState;
+    if (m_callerContext != 0)
+        return cResultInvalidArgument;
 
     const Result result = StartupImpl(matchmakeSession, criteria);
     if (result != 0)
         return result;
 
-    m_callContext = callerContext;
+    m_callerContext = callerContext;
     callerContext->InitiateCall();
     Reset(true);
     return 0;
@@ -40,17 +49,17 @@ Result BrowseMatchmakeJob::Startup(common::CallContext* callerContext,
                                    unsigned int sessionId)
 {
     if (callerContext == 0)
-        return static_cast<Result>(0x10c07);
+        return cResultInvalidArgument;
     if (matchmakeSession == 0)
-        return static_cast<Result>(0x10c07);
-    if (m_callContext != 0)
-        return static_cast<Result>(0x10c07);
+        return cResultInvalidArgument;
+    if (m_callerContext != 0)
+        return cResultInvalidArgument;
 
     const Result result = StartupImpl(matchmakeSession, sessionId);
     if (result != 0)
         return result;
 
-    m_callContext = callerContext;
+    m_callerContext = callerContext;
     callerContext->InitiateCall();
     Reset(true);
     return 0;
@@ -58,19 +67,20 @@ Result BrowseMatchmakeJob::Startup(common::CallContext* callerContext,
 
 BrowseMatchmakeJob::ExecuteResult BrowseMatchmakeJob::CompleteProcess()
 {
+    common::CallContext* callerContext = m_callerContext;
     Result result = 0;
-    m_callContext->SignalSuccess(result);
-    m_callContext = 0;
+    callerContext->SignalSuccess(result);
+    m_callerContext = 0;
     return MakeExecuteResult(cExecuteKindFinished);
 }
 
 void BrowseMatchmakeJob::Cleanup()
 {
-    if (m_callContext != 0)
+    if (m_callerContext != 0)
     {
-        if (m_callContext->m_state == common::CallContext::cStateInProgress)
-            m_callContext->SignalCancel();
-        m_callContext = 0;
+        if (m_callerContext->m_state == common::CallContext::cStateInProgress)
+            m_callerContext->SignalCancel();
+        m_callerContext = 0;
     }
 }
 

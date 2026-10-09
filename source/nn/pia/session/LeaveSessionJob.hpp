@@ -3,6 +3,8 @@
 
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
+#include "nn/pia/common/Time.hpp"
+#include "nn/pia/session/Session.hpp"
 
 namespace nn { namespace pia { namespace session {
 
@@ -33,28 +35,27 @@ public:
     virtual bool IsNeedSkipLeaveCurrentMatchmakeSession() = 0;
     virtual void SetNextStepAtWaitHostMigratedTimeout();
     virtual void SetNextStepAtWaitLeaveBufferMatchmakeSession();
-    virtual void Cleanup();
+    void Cleanup();
     virtual void Trace(unsigned long long value) const;
-    virtual unsigned int GetWaitHostMigrationTimeout() const;
-    virtual void ChangeStatusToDisconnectedNetwork();
-    virtual void CleanupImpl();
+    virtual unsigned int GetWaitHostMigrationTimeout() const { return 0; }
+    virtual void ChangeStatusToDisconnectedNetwork() { g_piaSession->ChangeStatusToDisconnectedNetwork(); }
+    virtual void CleanupImpl() {}
 
 protected:
     common::CallContext* m_callerContext;
     common::CallContext m_callContext;
-    int m_startTick;
-    int m_endTick;
+    common::Time m_hostMigrationTimeoutTime;
     bool m_isSingleStation;
-    unsigned char m_padding[3];
-    unsigned int m_field64;
-    int m_migrationStartTick;
-    int m_migrationEndTick;
-    void setStep(ExecuteResult (LeaveSessionJob::*function)(), const char* name);
+    common::Time m_startTime;
+
+    void setStep(ExecuteResult (LeaveSessionJob::*function)(), const char* name)
+    {
+        Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+        m_currentStep.m_function = step.m_function;
+        m_currentStep.m_name = step.m_name;
+    }
 };
 
-}}} 
-
-#if !defined(RECON_NATIVE)
-#endif
+}}}
 
 #endif

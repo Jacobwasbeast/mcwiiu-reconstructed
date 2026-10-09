@@ -22,18 +22,6 @@ public:
     void Cleanup();
     void PrepareForBecomingNewHost();
 
-    void setStep(ExecuteResult (RelayRouteManageJob::*function)(), const char* name)
-    {
-        union
-        {
-            ExecuteResult (RelayRouteManageJob::*derived)();
-            ExecuteResult (common::StepSequenceJob::*base)();
-        } step;
-        step.derived = function;
-        m_currentStep.m_function = step.base;
-        m_currentStep.m_name = name;
-    }
-
     unsigned short m_stationNum;
     unsigned int m_generation;
     unsigned int m_sequenceNumber;

@@ -4,6 +4,16 @@
 
 namespace nn { namespace pia { namespace session {
 
+namespace
+{
+enum
+{
+    cResultDisconnectedSession = 0x8c56,
+    cResultInvalidArgument = 0x10c07,
+    cResultInvalidState = 0x10c08
+};
+}
+
 ClearMatchmakeSystemPasswordJob::ClearMatchmakeSystemPasswordJob()
     : common::StepSequenceJob(), m_sessionId(0), m_callerContext(0), m_callContext()
 {
@@ -14,15 +24,16 @@ ClearMatchmakeSystemPasswordJob::~ClearMatchmakeSystemPasswordJob()
 }
 
 Result ClearMatchmakeSystemPasswordJob::Startup(common::CallContext* callerContext,
-                                                unsigned int sessionId,
-                                                IMatchmakeSession* matchmakeSession)
+                                                 unsigned int sessionId,
+                                                 IMatchmakeSession* session)
 {
-    if (callerContext == 0 || matchmakeSession == 0)
-        return static_cast<Result>(0x10c07);
-    if (!matchmakeSession->IsMatchmakeOwner())
-        return static_cast<Result>(0x10c08);
+    if (callerContext == 0 || session == 0)
+        return cResultInvalidArgument;
+    const bool isOwner = session->IsMatchmakeOwner();
+    if (!isOwner)
+        return cResultInvalidState;
 
-    const Result operationResult = ClearMatchmakeSystemPassword();
+    const Result operationResult = StartupImpl();
     if (operationResult != 0)
         return operationResult;
 
@@ -43,7 +54,7 @@ ClearMatchmakeSystemPasswordJob::ExecuteResult ClearMatchmakeSystemPasswordJob::
 
 ClearMatchmakeSystemPasswordJob::ExecuteResult ClearMatchmakeSystemPasswordJob::FailureProcess()
 {
-    if (m_callerContext->m_result == static_cast<Result>(0x8c56))
+    if (m_callerContext->m_result == static_cast<Result>(cResultDisconnectedSession))
         g_piaSession->ChangeStatusToDisconnectedSession();
     m_callerContext = 0;
     return MakeExecuteResult(cExecuteKindFinished);

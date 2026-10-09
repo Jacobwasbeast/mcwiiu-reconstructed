@@ -2,6 +2,12 @@
 
 namespace nn { namespace pia { namespace session {
 
+CreateCommunitySetting::CreateCommunitySetting()
+    : m_minParticipantNum(0),
+      m_maxParticipantNum(0)
+{
+}
+
 CreateCommunitySetting::~CreateCommunitySetting()
 {
 }

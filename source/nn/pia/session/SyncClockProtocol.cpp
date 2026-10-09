@@ -60,7 +60,7 @@ unsigned short SyncClockProtocol::GetProtocolType() const
 
 Result SyncClockProtocol::StartupWithStationAddress(const common::StationAddress& address)
 {
-    transport::Station* station = transport::g_piaStationManager->GetStation(address);
+    transport::Station* station = transport::StationManager::s_pInstance->GetStation(address);
     if (station == 0)
         return 0x10c07;
     if (station->m_field10 < 0x20)
@@ -91,8 +91,7 @@ Result SyncClockProtocol::Request()
     if (mesh->IsHost())
         return 0x10c08;
     transport::StationPacketHandler* handler =
-        reinterpret_cast<transport::StationPacketHandler*>(
-            static_cast<uintptr_t>(mStationPacketHandler));
+        static_cast<transport::StationPacketHandler*>(mStationPacketHandler);
     if (handler == 0)
         return 0x10c08;
 
@@ -125,8 +124,7 @@ Result SyncClockProtocol::Response(unsigned long long stationId, unsigned long l
     if (stationId == 0)
         return 0x10c07;
     transport::StationPacketHandler* handler =
-        reinterpret_cast<transport::StationPacketHandler*>(
-            static_cast<uintptr_t>(mStationPacketHandler));
+        static_cast<transport::StationPacketHandler*>(mStationPacketHandler);
     if (handler == 0)
         return 0x10c08;
     if (m_syncClock.GetTime() == static_cast<unsigned long long>(-1))
@@ -206,8 +204,7 @@ Result SyncClockProtocol::Dispatch()
     }
 
     transport::StationPacketHandler* handler =
-        reinterpret_cast<transport::StationPacketHandler*>(
-            static_cast<uintptr_t>(mStationPacketHandler));
+        static_cast<transport::StationPacketHandler*>(mStationPacketHandler);
     if (handler == 0)
         return 0x10c08;
 
@@ -226,7 +223,7 @@ Result SyncClockProtocol::Dispatch()
 
 Result SyncClockProtocol::UpdateProtocolEvent(const transport::ProtocolEvent& event)
 {
-    transport::Station* station = transport::g_piaStationManager->GetStation(event.m_stationAddress);
+    transport::Station* station = transport::StationManager::s_pInstance->GetStation(event.m_stationAddress);
     Mesh* mesh = g_piaMesh;
     const unsigned int stationIndex = station->m_field10;
     if (m_hostStationIndex == 0xfd)

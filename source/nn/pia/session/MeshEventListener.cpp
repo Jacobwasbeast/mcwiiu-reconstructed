@@ -15,17 +15,17 @@ MeshEventListener::~MeshEventListener()
 
 unsigned long long MeshEventListener::RemoveStationId(unsigned long long stationId)
 {
-    if (stationId == 0 || transport::g_piaStationManager == 0)
+    if (stationId == 0 || transport::StationManager::s_pInstance == 0)
         return 0;
 
     transport::Station* station =
-        transport::g_piaStationManager->GetStationByStationIdWithoutConvert(stationId);
+        transport::StationManager::s_pInstance->GetStationByStationIdWithoutConvert(stationId);
     if (station == 0)
         return 0;
 
     station->CleanupJobs();
     station->Cleanup();
-    transport::g_piaStationManager->DestroyStation(station);
+    transport::StationManager::s_pInstance->DestroyStation(station);
     return stationId;
 }
 
@@ -33,15 +33,15 @@ unsigned long long MeshEventListener::RemoveStationIndex(StationIndex stationInd
 {
     if (g_piaMesh != 0)
         g_piaMesh->UnfixDisconnectedId(stationIndex);
-    if (transport::g_piaStationManager == 0)
+    if (transport::StationManager::s_pInstance == 0)
         return 0;
 
-    transport::Station* station = transport::g_piaStationManager->GetStation(stationIndex);
+    transport::Station* station = transport::StationManager::s_pInstance->GetStation(stationIndex);
     if (station == 0)
         return 0;
     station->CleanupJobs();
     station->Cleanup();
-    transport::g_piaStationManager->DestroyStation(station);
+    transport::StationManager::s_pInstance->DestroyStation(station);
     return static_cast<unsigned long long>(stationIndex);
 }
 

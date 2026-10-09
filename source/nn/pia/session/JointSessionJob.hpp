@@ -2,8 +2,8 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_JOINT_SESSION_JOB_HPP
 
 #include "nn/pia/Common.hpp"
-#include "nn/pia/ListBase.hpp"
 #include "nn/pia/common/CallContext.hpp"
+#include "nn/pia/common/PooledList.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/session/Session.hpp"
 #include "nn/pia/session/SessionProtocol.hpp"
@@ -17,11 +17,7 @@ class JoinSessionSetting;
 class JointSessionJob : public common::StepSequenceJob
 {
 public:
-    class StationIdNode : public common::ListNode
-    {
-    public:
-        unsigned long long m_stationId;
-    };
+    typedef common::PooledList<unsigned long long> StationIdList;
 
     JointSessionJob();
     virtual ~JointSessionJob();
@@ -104,28 +100,22 @@ public:
     unsigned int m_field5c;
     unsigned int m_field60;
     unsigned long long m_leaveStationId;
-    common::ListBase m_companionStationIdList;
-    common::ListBase m_companionStationIdFreeList;
-    int m_stationIdNodeOffset;
-    StationIdNode* m_stationIdNodes;
-    unsigned int m_stationIdNodeNum;
-    StationIdNode* m_stationIdNodeStorage;
+    StationIdList m_companionStationIdList;
+    unsigned long long* m_stationIdNodeStorage;
     unsigned int m_field98;
     unsigned char m_field9c;
-    unsigned char m_field9d;
+    bool m_field9d;
     bool m_leaveStationIdAccepted;
     unsigned char m_field9f;
     unsigned char m_fielda0;
     bool m_sessionDisconnectDetected;
-    unsigned char m_fielda2;
+    unsigned char m_failurePending;
     unsigned char m_fielda3;
-    unsigned int m_fielda4;
+    unsigned int m_pendingFailureResult;
     unsigned char m_reserveda8[8];
-    unsigned int m_fieldb0;
-    unsigned int m_fieldb4;
+    common::Time m_completionDeadline;
     common::Time m_startTime;
-    unsigned int m_fieldc0;
-    unsigned int m_fieldc4;
+    unsigned long long m_fieldc0;
     unsigned char m_fieldc8;
 };
 

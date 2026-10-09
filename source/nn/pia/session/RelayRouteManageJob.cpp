@@ -34,35 +34,12 @@ enum
     cRttValueMinimum = 1
 };
 
+typedef common::Job::ExecuteResult (common::StepSequenceJob::*StepFunction)();
+
 const char* const cStepNameWaitAllDirectConnectionReport =
     "RelayRouteManageJob::WaitAllDirectConnectionReport";
 const char* const cStepNameSendRelayRouteDirections =
     "RelayRouteManageJob::SendRelayRouteDirections";
-
-template <typename T>
-inline T* allocateHeapArray(unsigned int count)
-{
-    T* array = static_cast<T*>(
-        pead::allocateFromSeadHeap(sizeof(T) * count, common::HeapManager::GetHeap()));
-    if (array == 0)
-        return 0;
-    T* element = array;
-    for (unsigned int remaining = count; remaining != 0; --remaining, ++element)
-        new (element) T();
-    return array;
-}
-
-inline unsigned char encodeRtt(unsigned int rtt)
-{
-    if (rtt == 0)
-        return 0;
-    const unsigned int value = rtt >> cRttShift;
-    if (value == 0)
-        return cRttValueMinimum;
-    if (value < cRttValueMax)
-        return static_cast<unsigned char>(value);
-    return cRttValueMax;
-}
 }
 
 RelayRouteManageJob::RelayRouteManageJob()
@@ -70,7 +47,7 @@ RelayRouteManageJob::RelayRouteManageJob()
 {
     m_stationNum = transport::g_piaTransport->m_stationNum;
     m_connectionReports = common::NewArray<unsigned char>(m_stationNum * m_stationNum);
-    m_reportSerials = allocateHeapArray<unsigned int>(m_stationNum);
+    m_reportSerials = common::NewArray<unsigned int>(m_stationNum);
     OSBlockSet(m_connectionReports, 0, m_stationNum * m_stationNum);
     OSBlockSet(m_reportSerials, 0, m_stationNum << 2);
     m_stationBitmap = 0;
@@ -82,12 +59,7 @@ RelayRouteManageJob::RelayRouteManageJob()
 RelayRouteManageJob::~RelayRouteManageJob()
 {
     common::DeleteArray<unsigned char>(m_connectionReports);
-    unsigned int* reportSerials = m_reportSerials;
-    if (reportSerials != 0)
-    {
-        pead::getArraySize(reportSerials);
-        pead::freeToSeadHeap(reportSerials);
-    }
+    common::DeleteArray<unsigned int>(m_reportSerials);
     common::DeleteArray<unsigned char>(m_failureReasons);
 }
 
@@ -105,8 +77,8 @@ bool RelayRouteManageJob::Startup(StationIndex stationIndex, unsigned int genera
 
     m_resendTime = common::g_piaJobScheduler->m_dispatchTime;
     Reset(true);
-    setStep(&RelayRouteManageJob::WaitAllDirectConnectionReport,
-            cStepNameWaitAllDirectConnectionReport);
+    m_currentStep = Step(static_cast<StepFunction>(&RelayRouteManageJob::WaitAllDirectConnectionReport),
+                         cStepNameWaitAllDirectConnectionReport);
     return true;
 }
 
@@ -122,16 +94,17 @@ void RelayRouteManageJob::UpdateConnectionReport(StationIndex stationIndex,
     if (generation == 0 || generation < m_generation)
         return;
 
-    if (m_generation < generation)
+    if (generation == m_generation)
+    {
+        if (m_reportSerials[stationIndex] >= reportSerial)
+            return;
+    }
+    else
     {
         m_generation = generation;
         OSBlockSet(m_connectionReports, 0, m_stationNum * m_stationNum);
         OSBlockSet(m_reportSerials, 0, m_stationNum << 2);
         m_sequenceNumber = 1;
-    }
-    else if (reportSerial <= m_reportSerials[stationIndex])
-    {
-        return;
     }
 
     OSBlockMove(m_connectionReports + stationIndex * m_stationNum, report + cReportHeaderSize,
@@ -145,83 +118,70 @@ RelayRouteManageJob::ExecuteResult RelayRouteManageJob::WaitAllDirectConnectionR
     if (localStation > cStationIndexMax)
         return MakeExecuteResult(cExecuteKindFinished);
 
-    bool allReported = true;
+    unsigned short index;
     const unsigned short localIndex = localStation;
-    if (m_stationNum != 0)
+    bool allReported = true;
+    for (index = 0; index < m_stationNum; ++index)
     {
-        for (unsigned short index = 0; index < m_stationNum; ++index)
+        if (index != localIndex)
         {
-            if (index == localIndex)
-                continue;
-
-            const bool valid = g_piaMesh->IsValidStationIndex(static_cast<StationIndex>(index));
-            const unsigned int reportSerial = m_reportSerials[index];
-            if (!valid)
+            if (g_piaMesh->IsValidStationIndex(static_cast<StationIndex>(index)))
             {
-                if (reportSerial != 0)
+                if (m_reportSerials[index] == 0)
                     allReported = false;
             }
-            else if (reportSerial == 0)
+            else if (m_reportSerials[index] != 0)
             {
                 allReported = false;
             }
         }
-        if (!allReported)
-            return MakeExecuteResult(cExecuteKindNextStep);
     }
-
-    const common::Time now = common::g_piaJobScheduler->m_dispatchTime;
-    unsigned short reportIndex = localIndex * m_stationNum;
-    if (m_stationNum != 0)
+    if (allReported)
     {
-        for (unsigned short index = 0; index < m_stationNum; ++index, ++reportIndex)
+        const common::Time now = common::g_piaJobScheduler->m_dispatchTime;
+        const bool isResendTime = m_resendTime <= now;
+        unsigned short reportIndex = localIndex * m_stationNum;
+        for (index = 0; index < m_stationNum; ++index, ++reportIndex)
         {
-            unsigned int rtt = 0;
+            unsigned short rtt = 0;
             transport::Station* station =
-                transport::g_piaStationManager->GetStation(static_cast<StationIndex>(index));
+                transport::StationManager::s_pInstance->GetStation(static_cast<StationIndex>(index));
             if (station != 0 && station->m_field20 == cStationStateConnected)
-            {
                 rtt = transport::NetworkRttManager::sInstance->GetAverage(station->m_stationAddress);
-                rtt = static_cast<unsigned short>(rtt);
-            }
 
-            unsigned char value;
             if (index != localIndex && g_piaMesh->IsValidStationIndex(static_cast<StationIndex>(index)))
             {
                 if (rtt == 0)
                 {
                     if (!station->IsConnectionRouteRelay())
                     {
-                        if (m_resendTime <= now)
+                        if (isResendTime)
                         {
                             g_piaMesh->GetMeshProtocol()->SendDummyMessage(static_cast<StationIndex>(index));
-                            m_resendTime.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick +
-                                common::TimeSpan::GetTicksPerMSec().m_tick * cDummyMessageIntervalMsec;
+                            const common::TimeSpan interval =
+                                common::TimeSpan::FromMSec(cDummyMessageIntervalMsec);
+                            m_resendTime = common::g_piaJobScheduler->m_dispatchTime + interval;
                         }
                         allReported = false;
                     }
-                    value = 0;
                 }
                 else if (station->IsConnectionRouteRelay())
                 {
-                    value = 0;
-                }
-                else
-                {
-                    value = encodeRtt(rtt);
+                    rtt = 0;
                 }
             }
+            if (rtt != 0 && (rtt >> cRttShift) == 0)
+                rtt = cRttValueMinimum;
             else
-            {
-                value = encodeRtt(rtt);
-            }
-            m_connectionReports[reportIndex] = value;
+                rtt >>= cRttShift;
+            m_connectionReports[reportIndex] = rtt < cRttValueMax ? rtt : cRttValueMax;
         }
-        if (!allReported)
-            return MakeExecuteResult(cExecuteKindNextStep);
     }
+    if (!allReported)
+        return MakeExecuteResult(cExecuteKindNextStep);
 
-    setStep(&RelayRouteManageJob::SendRelayRouteDirections, cStepNameSendRelayRouteDirections);
+    m_currentStep = Step(static_cast<StepFunction>(&RelayRouteManageJob::SendRelayRouteDirections),
+                         cStepNameSendRelayRouteDirections);
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -234,10 +194,9 @@ RelayRouteManageJob::ExecuteResult RelayRouteManageJob::SendRelayRouteDirections
     Trace(cTraceRelayRouteLevel);
     transport::RelayRouteManager* manager = transport::g_piaTransport->m_relayRouteManager;
     manager->Trace(cTraceRelayRouteLevel);
-    const Result result = manager->UpdateDirectConnectionData(
-        m_connectionReports, m_stationNum * m_stationNum, m_stationBitmap, &m_refusedStationBitmap,
-        localStation, m_failureReasons);
-    if (result == 0)
+    if (manager->UpdateDirectConnectionData(
+            m_connectionReports, m_stationNum * m_stationNum, m_stationBitmap,
+            &m_refusedStationBitmap, localStation, m_failureReasons) == 0)
     {
         manager->m_unknown20 = m_generation;
         manager->m_unknown1c = m_sequenceNumber;
@@ -245,8 +204,9 @@ RelayRouteManageJob::ExecuteResult RelayRouteManageJob::SendRelayRouteDirections
         manager->Trace(cTraceRelayRouteLevel);
         if (!g_piaMesh->GetMeshProtocol()->SendRelayRouteDirections())
         {
-            setStep(&RelayRouteManageJob::WaitAllDirectConnectionReport,
-                    cStepNameWaitAllDirectConnectionReport);
+            m_currentStep =
+                Step(static_cast<StepFunction>(&RelayRouteManageJob::WaitAllDirectConnectionReport),
+                     cStepNameWaitAllDirectConnectionReport);
             return MakeExecuteResult(cExecuteKindNextStep);
         }
         ++m_sequenceNumber;
@@ -258,9 +218,9 @@ void RelayRouteManageJob::Cleanup()
 {
     m_generation = 0;
     OSBlockSet(m_connectionReports, 0, m_stationNum * m_stationNum);
-    OSBlockSet(m_reportSerials, 0, m_stationNum << 2);
-    m_refusedStationBitmap = 0;
+    OSBlockSet(m_reportSerials, 0, sizeof(unsigned int) * m_stationNum);
     m_stationBitmap = 0;
+    m_refusedStationBitmap = 0;
 }
 
 void RelayRouteManageJob::PrepareForBecomingNewHost()

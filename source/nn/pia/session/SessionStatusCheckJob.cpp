@@ -112,7 +112,7 @@ SessionStatusCheckJob::ExecuteResult SessionStatusCheckJob::CheckSessionStatus()
         return MakeExecuteResult(cExecuteKindFinished);
     }
 
-    if (g_piaMatchmakeAnalysisEnabled != 0 && g_piaSession->IsHost())
+    if (Session::s_debugSetting.m_matchmakeAnalysisEnabled != 0 && g_piaSession->IsHost())
     {
         IMatchmakeSession* matchmakeSession =
             g_piaSession->m_matchmakeSession[g_piaSession->m_currentSessionIndex];
@@ -206,7 +206,7 @@ SessionStatusCheckJob::ExecuteResult SessionStatusCheckJob::CheckSessionStatus4J
                 if (g_piaSession->m_sessionDisconnectReason != 2)
                     g_piaSession->m_sessionDisconnectReason = 8;
             }
-            if (g_piaMatchmakeAnalysisEnabled == 0)
+            if (Session::s_debugSetting.m_matchmakeAnalysisEnabled == 0)
                 return MakeExecuteResult(cExecuteKindNextStep);
             if (!g_piaSession->IsHost())
                 return MakeExecuteResult(cExecuteKindNextStep);
@@ -227,7 +227,7 @@ SessionStatusCheckJob::ExecuteResult SessionStatusCheckJob::CheckSessionStatus4J
             if (g_piaSession->m_sessionDisconnectReason != 2)
                 g_piaSession->m_sessionDisconnectReason = 8;
         }
-        if (g_piaMatchmakeAnalysisEnabled == 0)
+        if (Session::s_debugSetting.m_matchmakeAnalysisEnabled == 0)
             return MakeExecuteResult(cExecuteKindNextStep);
         if (!g_piaSession->IsJointSessionHost())
             return MakeExecuteResult(cExecuteKindNextStep);

@@ -3,6 +3,7 @@
 #include <new>
 
 #include "nn/pia/HeapManager.hpp"
+#include "nn/pia/common/Memory.hpp"
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/common/TimeSpan.hpp"
 #include "nn/pia/session/Mesh.hpp"
@@ -50,23 +51,10 @@ ProcessJoinRequestJob::ProcessJoinRequestJob()
         (static_cast<int>(g_piaMesh->m_unknown54) + static_cast<int>(perPart) - 1) / static_cast<int>(perPart));
     for (unsigned int part = 0; part < cResponsePartMax; ++part)
     {
-        if (part >= partCount)
-        {
-            m_responseBuffers[part] = 0;
-            continue;
-        }
-        unsigned char* buffer = static_cast<unsigned char*>(pead::allocateFromSeadHeap(
-            cResponseBufferSize, common::HeapManager::GetHeap(), cResponseBufferAlignment));
-        if (buffer == 0)
-        {
-            m_responseBuffers[part] = 0;
-        }
+        if (part < partCount)
+            m_responseBuffers[part] = common::NewArray<unsigned char>(cResponseBufferSize, cResponseBufferAlignment);
         else
-        {
-            for (unsigned int offset = 0; offset < cResponseBufferSize; ++offset)
-                new (buffer + offset) unsigned char();
-            m_responseBuffers[part] = buffer;
-        }
+            m_responseBuffers[part] = 0;
     }
     for (unsigned int part = 0; part < cResponsePartMax; ++part)
         m_responseAckIds[part] = 0;
@@ -74,15 +62,8 @@ ProcessJoinRequestJob::ProcessJoinRequestJob()
 
 ProcessJoinRequestJob::~ProcessJoinRequestJob()
 {
-    for (int part = 0; part < cResponsePartMax; ++part)
-    {
-        unsigned char* buffer = m_responseBuffers[part];
-        if (buffer != 0)
-        {
-            pead::getArraySize(buffer);
-            pead::freeToSeadHeap(buffer);
-        }
-    }
+    for (unsigned int part = 0; part < cResponsePartMax; ++part)
+        common::DeleteArray(m_responseBuffers[part]);
 }
 
 void ProcessJoinRequestJob::Trace(unsigned long long) const
@@ -95,8 +76,8 @@ bool ProcessJoinRequestJob::Startup()
     m_unknown4c = 0;
     for (unsigned int part = 0; part < cResponsePartMax; ++part)
         m_responseAckIds[part] = 0;
-    m_joinCancelRequested = false;
     m_stationIndex = static_cast<StationIndex>(cStationIndexInvalid);
+    m_joinCancelRequested = false;
     Reset(true);
     setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
     return true;
@@ -105,13 +86,13 @@ bool ProcessJoinRequestJob::Startup()
 ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::InitialStep()
 {
     m_unknown4c = 0;
-    for (unsigned int part = 0; part < cResponsePartMax; ++part)
+    for (int part = 0; part < cResponsePartMax; ++part)
         m_responseAckIds[part] = 0;
-    m_joinCancelRequested = false;
     m_unknown78 = false;
-    setStep(&ProcessJoinRequestJob::CheckApprovalJoin, "ProcessJoinRequestJob::CheckApprovalJoin");
-    m_stationIndex = static_cast<StationIndex>(cStationIndexInvalid);
     m_denyReason = cDenyReasonNone;
+    m_stationIndex = static_cast<StationIndex>(cStationIndexInvalid);
+    m_joinCancelRequested = false;
+    setStep(&ProcessJoinRequestJob::CheckApprovalJoin, "ProcessJoinRequestJob::CheckApprovalJoin");
     return MakeExecuteResult(cExecuteKindSuspend);
 }
 
@@ -119,7 +100,7 @@ ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::CheckApprovalJoin()
 {
     m_joiningStationAddress.Trace(cTraceStationLevel);
     m_unknown78 = true;
-    transport::Station* station = transport::g_piaStationManager->GetStation(m_joiningStationAddress);
+    transport::Station* station = transport::StationManager::s_pInstance->GetStation(m_joiningStationAddress);
     if (station == 0)
     {
         setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
@@ -166,13 +147,13 @@ ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::CheckApprovalJoin()
 
 ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::SendDenyingJoinResponse()
 {
-    if (transport::g_piaStationManager->m_localStation == 0)
+    if (transport::StationManager::s_pInstance->m_localStation == 0)
     {
         setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     g_piaMesh->GetMeshProtocol()->SendDenyingJoinResponse(m_joiningStationAddress, m_denyReason);
-    transport::Station* station = transport::g_piaStationManager->GetStation(m_joiningStationAddress);
+    transport::Station* station = transport::StationManager::s_pInstance->GetStation(m_joiningStationAddress);
     if (station != 0)
         station->m_field20 = cStationState6;
     setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
@@ -181,12 +162,12 @@ ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::SendDenyingJoinRespo
 
 ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::SendJoinResponse()
 {
-    if (transport::g_piaStationManager->m_localStation == 0)
+    if (transport::StationManager::s_pInstance->m_localStation == 0)
     {
         setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    transport::Station* station = transport::g_piaStationManager->GetStation(m_joiningStationAddress);
+    transport::Station* station = transport::StationManager::s_pInstance->GetStation(m_joiningStationAddress);
     if (station == 0)
     {
         setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
@@ -208,9 +189,9 @@ ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::SendJoinResponse()
         if (result == 0)
         {
             stationId = joiningInfo.m_stationLocation.m_principalId;
-            transport::Station** current = transport::g_piaStationManager->m_stations.data;
+            transport::Station** current = transport::StationManager::s_pInstance->m_stations.data;
             if (joiningInfo.m_stationLocation.m_stationAddress.IsValid() != 0 &&
-                current != current + transport::g_piaStationManager->m_stations.size)
+                current != current + transport::StationManager::s_pInstance->m_stations.size)
             {
                 do
                 {
@@ -225,8 +206,8 @@ ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::SendJoinResponse()
                         }
                     }
                     ++current;
-                } while (current != transport::g_piaStationManager->m_stations.data +
-                                        transport::g_piaStationManager->m_stations.size);
+                } while (current != transport::StationManager::s_pInstance->m_stations.data +
+                                        transport::StationManager::s_pInstance->m_stations.size);
                 if (staleCount != 0)
                 {
                     bool meshChanged = false;
@@ -245,7 +226,7 @@ ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::SendJoinResponse()
                         transport::IdentificationInfoTable::GetInstance()->EraseFromTable(stale);
                         stale->Cleanup();
                         stale->CleanupJobs();
-                        transport::g_piaStationManager->DestroyStation(stale);
+                        transport::StationManager::s_pInstance->DestroyStation(stale);
                     }
                     transport::g_piaTransport->OutputStreamUpdateEvent();
                     if (meshChanged)
@@ -294,23 +275,25 @@ ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::SendJoinResponse()
 
 ProcessJoinRequestJob::ExecuteResult ProcessJoinRequestJob::WaitResponseAck()
 {
-    unsigned int resending = 0;
+    bool resending = false;
     for (unsigned int part = 0; part < cResponsePartMax; ++part)
         resending |= transport::g_piaResendingMessageManager->CheckNowResending(m_responseAckIds[part]);
-    if (resending != 0)
+    if (resending)
     {
         common::Time now;
         now.SetNow();
-        if (!(m_deadline <= now) && !m_joinCancelRequested)
-            return MakeExecuteResult(cExecuteKindNextStep);
-        for (unsigned int part = 0; part < cResponsePartMax; ++part)
+        if (m_deadline <= now || m_joinCancelRequested)
         {
-            transport::g_piaResendingMessageManager->StopResending(m_responseAckIds[part]);
-            m_responseAckIds[part] = 0;
+            for (unsigned int part = 0; part < cResponsePartMax; ++part)
+            {
+                transport::g_piaResendingMessageManager->StopResending(m_responseAckIds[part]);
+                m_responseAckIds[part] = 0;
+            }
+            m_deadline.m_tick = 0;
+            setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
+            return MakeExecuteResult(cExecuteKindContinue);
         }
-        m_deadline.m_tick = 0;
-        setStep(&ProcessJoinRequestJob::InitialStep, "ProcessJoinRequestJob::InitialStep");
-        return MakeExecuteResult(cExecuteKindContinue);
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     setStep(&ProcessJoinRequestJob::JoinSucceeded, "ProcessJoinRequestJob::JoinSucceeded");
     return MakeExecuteResult(cExecuteKindContinue);
@@ -352,8 +335,8 @@ void ProcessJoinRequestJob::Cleanup()
         m_responseAckIds[part] = 0;
     m_unknown78 = false;
     m_joinCancelRequested = false;
-    m_denyReason = cDenyReasonNone;
     m_stationIndex = static_cast<StationIndex>(cStationIndexInvalid);
+    m_denyReason = cDenyReasonNone;
     m_deadline.m_tick = 0;
 }
 

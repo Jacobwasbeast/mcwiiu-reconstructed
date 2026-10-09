@@ -14,35 +14,24 @@ namespace nn { namespace pia { namespace session {
 
 namespace
 {
+typedef common::Job::ExecuteResult (common::StepSequenceJob::*StepFunction)();
+
 enum
 {
     cDefaultTimeoutMsec = 5000,
     cDisconnectReason2 = 2,
+    cHostMigrationModeMulti = 2,
     cStationState5 = 5,
     cTraceMask1 = 0x10000000
 };
-
-const char* const cStepNameCheckHostMigrationProcess =
-    "LeaveWithHostMigrationJob::CheckHostMigrationProcess";
-const char* const cStepNameSendStartMigrationMessage =
-    "LeaveWithHostMigrationJob::SendStartMigrationMessage";
-const char* const cStepNameSendStartMultiMigrationMessage =
-    "LeaveWithHostMigrationJob::SendStartMultiMigrationMessage";
-const char* const cStepNameWaitMigrationResponse =
-    "LeaveWithHostMigrationJob::WaitMigrationResponse";
-const char* const cStepNameWaitHostMigrationProcess =
-    "LeaveWithHostMigrationJob::WaitHostMigrationProcess";
-const char* const cStepNameStartDisconnectStations =
-    "LeaveWithHostMigrationJob::StartDisconnectStations";
-const char* const cStepNameWaitDisconnectStations =
-    "LeaveWithHostMigrationJob::WaitDisconnectStations";
-const char* const cStepNameCleanupMesh = "LeaveWithHostMigrationJob::CleanupMesh";
 }
 
 LeaveWithHostMigrationJob::LeaveWithHostMigrationJob()
-    : common::StepSequenceJob(), m_callerContext(0), m_deadline(), m_timeoutMsec(cDefaultTimeoutMsec),
-      m_started(false), m_newHost(static_cast<StationIndex>(ProcessHostMigrationJob::cStationIndexInvalid))
 {
+    m_timeoutMsec = cDefaultTimeoutMsec;
+    m_callerContext = 0;
+    m_started = false;
+    m_newHost = static_cast<StationIndex>(ProcessHostMigrationJob::cStationIndexInvalid);
     OSBlockSet(m_stationResponses, 0, sizeof(m_stationResponses));
     m_migrationStarted = false;
 }
@@ -55,9 +44,8 @@ bool LeaveWithHostMigrationJob::Startup(common::CallContext* context)
 {
     if (m_started)
         return false;
-    const common::TimeSpan& ticksPerMSec = common::TimeSpan::GetTicksPerMSec();
-    m_deadline.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick +
-        ticksPerMSec.m_tick * m_timeoutMsec;
+    const common::TimeSpan timeout = common::TimeSpan::FromMSec(m_timeoutMsec);
+    m_deadline = common::g_piaJobScheduler->m_dispatchTime + timeout;
     if (context != 0)
     {
         m_callerContext = context;
@@ -66,7 +54,7 @@ bool LeaveWithHostMigrationJob::Startup(common::CallContext* context)
     m_started = true;
     g_piaMesh->ProcessingAtMeshEnd(static_cast<Mesh::DisconnectReason>(cDisconnectReason2));
     Reset(true);
-    setStep(&LeaveWithHostMigrationJob::CheckHostMigrationProcess, cStepNameCheckHostMigrationProcess);
+    m_currentStep = Step(static_cast<StepFunction>(&LeaveWithHostMigrationJob::CheckHostMigrationProcess), "LeaveWithHostMigrationJob::CheckHostMigrationProcess");
     return true;
 }
 
@@ -76,29 +64,30 @@ LeaveWithHostMigrationJob::ExecuteResult LeaveWithHostMigrationJob::SendStartMig
     const StationIndex localIndex = g_piaMesh->GetLocalStationIndex();
     if (m_newHost > ProcessHostMigrationJob::cStationIndexMax || m_newHost == localIndex)
     {
-        setStep(&LeaveWithHostMigrationJob::CleanupMesh, cStepNameCleanupMesh);
+        m_currentStep = Step(static_cast<StepFunction>(&LeaveWithHostMigrationJob::CleanupMesh), "LeaveWithHostMigrationJob::CleanupMesh");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     for (int index = 0; index < cStationNumMax; ++index)
     {
-        if (index == localIndex || !g_piaMesh->IsValidStationIndex(static_cast<StationIndex>(index)))
-        {
-            m_stationResponses[index] = false;
-        }
-        else
+        if (index != localIndex && g_piaMesh->IsValidStationIndex(static_cast<StationIndex>(index)))
         {
             g_piaMesh->GetMeshProtocol()->SendMigrationStart(static_cast<StationIndex>(index), m_newHost);
             m_stationResponses[index] = true;
         }
+        else
+        {
+            m_stationResponses[index] = false;
+        }
     }
     m_migrationStarted = true;
-    setStep(&LeaveWithHostMigrationJob::WaitMigrationResponse, cStepNameWaitMigrationResponse);
+    m_currentStep = Step(static_cast<StepFunction>(&LeaveWithHostMigrationJob::WaitMigrationResponse), "LeaveWithHostMigrationJob::WaitMigrationResponse");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 LeaveWithHostMigrationJob::ExecuteResult LeaveWithHostMigrationJob::WaitMigrationResponse()
 {
-    for (int index = 0; index < cStationNumMax; ++index)
+    int index;
+    for (index = 0; index < cStationNumMax; ++index)
     {
         if (!g_piaMesh->IsValidStationIndex(static_cast<StationIndex>(index)))
         {
@@ -106,24 +95,23 @@ LeaveWithHostMigrationJob::ExecuteResult LeaveWithHostMigrationJob::WaitMigratio
         }
         else if (m_stationResponses[index])
         {
-            if (common::g_piaJobScheduler->m_dispatchTime < m_deadline)
-                return MakeExecuteResult(cExecuteKindNextStep);
             break;
         }
     }
+    if (index < cStationNumMax && !(m_deadline <= common::g_piaJobScheduler->m_dispatchTime))
+        return MakeExecuteResult(cExecuteKindNextStep);
     m_migrationStarted = false;
-    setStep(&LeaveWithHostMigrationJob::CleanupMesh, cStepNameCleanupMesh);
+    m_currentStep = Step(static_cast<StepFunction>(&LeaveWithHostMigrationJob::CleanupMesh), "LeaveWithHostMigrationJob::CleanupMesh");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
 LeaveWithHostMigrationJob::ExecuteResult LeaveWithHostMigrationJob::CleanupMesh()
 {
-    transport::StationManager* manager = transport::g_piaStationManager;
-    for (transport::Station** it = manager->m_stations.data;
-         it != manager->m_stations.data + manager->m_stations.size; ++it)
+    transport::Station** station = transport::StationManager::s_pInstance->m_stations.begin();
+    while (station != transport::StationManager::s_pInstance->m_stations.end())
     {
-        transport::Station* station = *it;
-        station->m_disconnectStationJob->ProcessDisconnection(station);
+        (*station)->m_disconnectStationJob->ProcessDisconnection(*station);
+        ++station;
     }
     g_piaMesh->CleanupStationsJobs();
     g_piaMesh->m_disconnectReason = cDisconnectReason2;
@@ -142,110 +130,108 @@ LeaveWithHostMigrationJob::ExecuteResult LeaveWithHostMigrationJob::SendStartMul
 {
     if (!g_piaMesh->GetMeshProtocol()->SendMultiMigrationStart(m_stationResponses))
     {
-        setStep(&LeaveWithHostMigrationJob::CleanupMesh, cStepNameCleanupMesh);
+        m_currentStep = Step(static_cast<StepFunction>(&LeaveWithHostMigrationJob::CleanupMesh), "LeaveWithHostMigrationJob::CleanupMesh");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     m_migrationStarted = true;
-    setStep(&LeaveWithHostMigrationJob::WaitMigrationResponse, cStepNameWaitMigrationResponse);
+    m_currentStep = Step(static_cast<StepFunction>(&LeaveWithHostMigrationJob::WaitMigrationResponse), "LeaveWithHostMigrationJob::WaitMigrationResponse");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 LeaveWithHostMigrationJob::ExecuteResult LeaveWithHostMigrationJob::CheckHostMigrationProcess()
 {
     ProcessHostMigrationJob* migrationJob = g_piaMesh->m_processHostMigrationJob;
-    const bool isMultiMigration = g_piaMesh->m_hostMigrationMode == 2;
-    if (!migrationJob->m_started)
+    const bool isMultiMigration = g_piaMesh->m_hostMigrationMode == cHostMigrationModeMulti;
+    ExecuteResult result;
+    if (migrationJob->m_started)
     {
-        if (!isMultiMigration)
+        if (isMultiMigration)
         {
-            setStep(&LeaveWithHostMigrationJob::SendStartMigrationMessage,
-                    cStepNameSendStartMigrationMessage);
-            return MakeExecuteResult(cExecuteKindContinue);
+            migrationJob->Cleanup();
+            migrationJob->m_cancelRequested = true;
+            m_currentStep = Step(static_cast<StepFunction>(&LeaveWithHostMigrationJob::StartDisconnectStations), "LeaveWithHostMigrationJob::StartDisconnectStations");
+            result = MakeExecuteResult(cExecuteKindContinue);
         }
-        setStep(&LeaveWithHostMigrationJob::SendStartMultiMigrationMessage,
-                cStepNameSendStartMultiMigrationMessage);
-        return MakeExecuteResult(cExecuteKindContinue);
+        else
+        {
+            m_currentStep = Step(static_cast<StepFunction>(&LeaveWithHostMigrationJob::WaitHostMigrationProcess), "LeaveWithHostMigrationJob::WaitHostMigrationProcess");
+            result = MakeExecuteResult(cExecuteKindContinue);
+        }
     }
-    if (!isMultiMigration)
+    else if (isMultiMigration)
     {
-        setStep(&LeaveWithHostMigrationJob::WaitHostMigrationProcess,
-                cStepNameWaitHostMigrationProcess);
-        return MakeExecuteResult(cExecuteKindNextStep);
+        m_currentStep = Step(static_cast<StepFunction>(&LeaveWithHostMigrationJob::SendStartMultiMigrationMessage), "LeaveWithHostMigrationJob::SendStartMultiMigrationMessage");
+        result = MakeExecuteResult(cExecuteKindContinue);
     }
-    migrationJob->Cleanup();
-    migrationJob->m_cancelRequested = true;
-    setStep(&LeaveWithHostMigrationJob::StartDisconnectStations, cStepNameStartDisconnectStations);
-    return MakeExecuteResult(cExecuteKindContinue);
+    else
+    {
+        m_currentStep = Step(static_cast<StepFunction>(&LeaveWithHostMigrationJob::SendStartMigrationMessage), "LeaveWithHostMigrationJob::SendStartMigrationMessage");
+        result = MakeExecuteResult(cExecuteKindContinue);
+    }
+    return result;
 }
 
 LeaveWithHostMigrationJob::ExecuteResult LeaveWithHostMigrationJob::WaitHostMigrationProcess()
 {
-    if (!g_piaMesh->m_processHostMigrationJob->m_started)
+    if (g_piaMesh->m_processHostMigrationJob->m_started)
     {
-        setStep(&LeaveWithHostMigrationJob::SendStartMigrationMessage,
-                cStepNameSendStartMigrationMessage);
-        return MakeExecuteResult(cExecuteKindContinue);
+        if (m_deadline <= common::g_piaJobScheduler->m_dispatchTime)
+        {
+            m_currentStep = Step(static_cast<StepFunction>(&LeaveWithHostMigrationJob::CleanupMesh), "LeaveWithHostMigrationJob::CleanupMesh");
+            return MakeExecuteResult(cExecuteKindContinue);
+        }
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
-    if (m_deadline <= common::g_piaJobScheduler->m_dispatchTime)
-    {
-        setStep(&LeaveWithHostMigrationJob::CleanupMesh, cStepNameCleanupMesh);
-        return MakeExecuteResult(cExecuteKindContinue);
-    }
-    return MakeExecuteResult(cExecuteKindNextStep);
+    m_currentStep = Step(static_cast<StepFunction>(&LeaveWithHostMigrationJob::SendStartMigrationMessage), "LeaveWithHostMigrationJob::SendStartMigrationMessage");
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 LeaveWithHostMigrationJob::ExecuteResult LeaveWithHostMigrationJob::StartDisconnectStations()
 {
-    transport::StationManager* manager = transport::g_piaStationManager;
-    transport::Station* localStation = manager->m_localStation;
+    transport::Station* localStation = transport::StationManager::s_pInstance->m_localStation;
     if (localStation == 0)
     {
-        setStep(&LeaveWithHostMigrationJob::CleanupMesh, cStepNameCleanupMesh);
+        m_currentStep = Step(static_cast<StepFunction>(&LeaveWithHostMigrationJob::CleanupMesh), "LeaveWithHostMigrationJob::CleanupMesh");
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    for (transport::Station** it = manager->m_stations.data;
-         it != manager->m_stations.data + manager->m_stations.size; ++it)
+    for (transport::Station** station = transport::StationManager::s_pInstance->m_stations.begin();
+         station != transport::StationManager::s_pInstance->m_stations.end(); ++station)
     {
-        transport::Station* station = *it;
-        if (station != localStation)
+        if (*station != localStation)
         {
-            const StationIndex stationIndex = static_cast<StationIndex>(station->m_field10);
-            if (g_piaMesh->IsValidStationIndex(stationIndex))
-                g_piaMesh->UnfixDisconnectedId(stationIndex);
-            transport::DisconnectStationJob* disconnectJob = station->m_disconnectStationJob;
-            if (disconnectJob == 0)
+            if (g_piaMesh->IsValidStationIndex(static_cast<StationIndex>((*station)->m_field10)))
+                g_piaMesh->UnfixDisconnectedId(static_cast<StationIndex>((*station)->m_field10));
+            transport::DisconnectStationJob* disconnectJob = (*station)->m_disconnectStationJob;
+            if (disconnectJob != 0)
             {
-                station->Trace(cTraceMask1);
+                if (disconnectJob->Startup(*station) != 0)
+                    (*station)->Trace(cTraceMask1);
+                else
+                    disconnectJob->Ready(false);
             }
             else
             {
-                const Result result = disconnectJob->Startup(station);
-                if (result.m_code == 0)
-                    disconnectJob->Ready(false);
-                else
-                    station->Trace(cTraceMask1);
+                (*station)->Trace(cTraceMask1);
             }
         }
     }
-    setStep(&LeaveWithHostMigrationJob::WaitDisconnectStations, cStepNameWaitDisconnectStations);
+    m_currentStep = Step(static_cast<StepFunction>(&LeaveWithHostMigrationJob::WaitDisconnectStations), "LeaveWithHostMigrationJob::WaitDisconnectStations");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
 LeaveWithHostMigrationJob::ExecuteResult LeaveWithHostMigrationJob::WaitDisconnectStations()
 {
-    transport::StationManager* manager = transport::g_piaStationManager;
-    for (transport::Station** it = manager->m_stations.data;
-         it != manager->m_stations.data + manager->m_stations.size; ++it)
+    transport::Station** station;
+    for (station = transport::StationManager::s_pInstance->m_stations.begin();
+         station != transport::StationManager::s_pInstance->m_stations.end(); ++station)
     {
-        transport::Station* station = *it;
-        if (station->m_field20 == cStationState5 && station != manager->m_localStation)
-        {
-            if (common::g_piaJobScheduler->m_dispatchTime < m_deadline)
-                return MakeExecuteResult(cExecuteKindNextStep);
+        if ((*station)->m_field20 == cStationState5 && *station != transport::StationManager::s_pInstance->m_localStation)
             break;
-        }
     }
-    setStep(&LeaveWithHostMigrationJob::CleanupMesh, cStepNameCleanupMesh);
+    if (station != transport::StationManager::s_pInstance->m_stations.end() &&
+        !(m_deadline <= common::g_piaJobScheduler->m_dispatchTime))
+        return MakeExecuteResult(cExecuteKindNextStep);
+    m_currentStep = Step(static_cast<StepFunction>(&LeaveWithHostMigrationJob::CleanupMesh), "LeaveWithHostMigrationJob::CleanupMesh");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -275,8 +261,8 @@ void LeaveWithHostMigrationJob::Trace(unsigned long long) const
 void LeaveWithHostMigrationJob::CleanupStatus()
 {
     m_callerContext = 0;
-    m_newHost = static_cast<StationIndex>(ProcessHostMigrationJob::cStationIndexInvalid);
     m_started = false;
+    m_newHost = static_cast<StationIndex>(ProcessHostMigrationJob::cStationIndexInvalid);
     OSBlockSet(m_stationResponses, 0, sizeof(m_stationResponses));
     m_migrationStarted = false;
 }

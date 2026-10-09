@@ -2,8 +2,4 @@
 
 namespace nn { namespace pia { namespace session {
 
-ISessionInfoList::~ISessionInfoList()
-{
-}
-
 }}}

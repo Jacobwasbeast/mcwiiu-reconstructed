@@ -10,7 +10,7 @@ namespace nn { namespace pia { namespace session {
 class JoinRandomSessionSetting
 {
 public:
-    virtual ~JoinRandomSessionSetting();
+    virtual ~JoinRandomSessionSetting() {}
     virtual Result SetCreateSessionSetting(const CreateSessionSetting* setting) = 0;
     virtual Result SetSessionSearchCriteria(const SessionSearchCriteria* criteria,
                                             unsigned int count) = 0;

@@ -16,10 +16,10 @@ public:
     };
 
     MeshEventListener();
-    virtual ~MeshEventListener();
+    ~MeshEventListener();
     unsigned long long RemoveStationId(unsigned long long stationId);
     unsigned long long RemoveStationIndex(StationIndex stationIndex);
-    virtual void NoticeEvent(const MeshEvent& event);
+    void NoticeEvent(const MeshEvent& event);
     void Trace(unsigned long long value) const;
 };
 

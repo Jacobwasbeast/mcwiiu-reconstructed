@@ -10,11 +10,11 @@ class CommonMatchmakeSession : public IMatchmakeSession
 {
 public:
     CommonMatchmakeSession();
-    virtual ~CommonMatchmakeSession();
+    virtual ~CommonMatchmakeSession() {}
     virtual void Cleanup();
     virtual unsigned long long ConvertGatheringIdToPersistentGatheringCode(unsigned int gatheringId);
     virtual unsigned int ConvertPersistentGatheringCodeToGatheringId(unsigned long long code);
-    virtual unsigned int GetBrowsedCommunityResult();
+    virtual ICommunityInfoList* GetBrowsedCommunityResult();
     virtual bool IsMatchmakeOwner() const;
     virtual void SetMatchmakeOwner(bool owner);
     virtual unsigned long long GetMatchmakeOwnerUniqueId() const;

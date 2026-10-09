@@ -134,7 +134,7 @@ private:
     common::StepSequenceJob* m_waitingLeaveResponseJob;
     unsigned int m_unknown24;
     unsigned int m_unknown28;
-    unsigned long long m_unknown30;
+    common::Time m_unknown30;
     unsigned char m_unknown38;
     unsigned short m_windowNum;
     transport::ReliableSlidingWindow* m_windows;

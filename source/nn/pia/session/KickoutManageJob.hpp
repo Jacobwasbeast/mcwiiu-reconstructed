@@ -43,14 +43,9 @@ public:
 
     void setStep(ExecuteResult (KickoutManageJob::*function)(), const char* name)
     {
-        union
-        {
-            ExecuteResult (KickoutManageJob::*derived)();
-            ExecuteResult (common::StepSequenceJob::*base)();
-        } step;
-        step.derived = function;
-        m_currentStep.m_function = step.base;
-        m_currentStep.m_name = name;
+        Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+        m_currentStep.m_function = step.m_function;
+        m_currentStep.m_name = step.m_name;
     }
 
     KickoutStation m_kickoutStations[cKickoutStationNumMax];

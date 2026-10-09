@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_BROWSE_MATCHMAKE_JOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_BROWSE_MATCHMAKE_JOB_HPP
 
-#include "nn/pia.h"
+#include "nn/pia/Common.hpp"
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 
@@ -32,7 +32,14 @@ protected:
     virtual Result StartupImpl(IMatchmakeSession* matchmakeSession,
                                unsigned int sessionId) = 0;
 
-    common::CallContext* m_callContext;
+    template <class T>
+    void SetStep(ExecuteResult (T::*function)(), const char* name)
+    {
+        const Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+        m_currentStep = step;
+    }
+
+    common::CallContext* m_callerContext;
 };
 
 }}}

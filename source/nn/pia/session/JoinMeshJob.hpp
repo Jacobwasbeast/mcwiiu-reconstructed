@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_JOIN_MESH_JOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_JOIN_MESH_JOB_HPP
 
-#include "nn/pia.h"
+#include "nn/pia/Common.hpp"
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 #include "nn/pia/common/Time.hpp"
@@ -46,7 +46,7 @@ public:
     ExecuteResult WaitLeaveMesh();
     ExecuteResult CompleteCancelWithLeaveMesh();
     void Cleanup(Result);
-    unsigned int GetJoinMeshState() const;
+    int GetJoinMeshState() const;
     virtual void Trace(unsigned long long) const;
     virtual unsigned int StartupImpl();
     virtual void CleanupImpl();

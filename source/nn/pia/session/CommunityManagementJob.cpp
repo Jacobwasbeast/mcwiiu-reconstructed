@@ -1,10 +1,7 @@
 #include "nn/pia/session/CommunityManagementJob.hpp"
+#include "nn/pia/Transport.hpp"
 
 namespace nn { namespace pia { namespace session {
-
-namespace {
-const int kInvalidArgument = 0x10c07;
-}
 
 CommunityManagementJob::CommunityManagementJob()
     : common::StepSequenceJob(), m_callerContext(0), m_callContext()
@@ -15,124 +12,88 @@ CommunityManagementJob::~CommunityManagementJob()
 {
 }
 
-Result CommunityManagementJob::BrowseCommunityStartup(common::CallContext* context,
+Result CommunityManagementJob::BrowseCommunityStartup(common::CallContext* callerContext,
                                                        const CommunitySearchCriteria* criteria)
 {
-    Result result = 0;
-    if (context == 0 || criteria == 0)
-        result = static_cast<Result>(kInvalidArgument);
-    else
-    {
-        BrowseCommunityStartupImpl(&result);
-        if (result == 0)
-        {
-            m_callerContext = context;
-            context->InitiateCall();
-            Reset(true);
-            return 0;
-        }
-    }
-    return result;
+    if (callerContext == 0 || criteria == 0)
+        return static_cast<Result>(transport::cResultInvalidArgument);
+    const Result result = BrowseCommunityStartupImpl(criteria);
+    if (result != 0)
+        return result;
+    m_callerContext = callerContext;
+    callerContext->InitiateCall();
+    Reset(true);
+    return 0;
 }
 
-Result CommunityManagementJob::CreateCommunityStartup(common::CallContext* context,
+Result CommunityManagementJob::CreateCommunityStartup(common::CallContext* callerContext,
                                                        const CreateCommunitySetting* setting)
 {
-    Result result = 0;
-    if (context == 0 || setting == 0)
-        result = static_cast<Result>(kInvalidArgument);
-    else
-    {
-        CreateCommunityStartupImpl(&result);
-        if (result == 0)
-        {
-            m_callerContext = context;
-            context->InitiateCall();
-            Reset(true);
-            return 0;
-        }
-    }
-    return result;
+    if (callerContext == 0 || setting == 0)
+        return static_cast<Result>(transport::cResultInvalidArgument);
+    const Result result = CreateCommunityStartupImpl(setting);
+    if (result != 0)
+        return result;
+    m_callerContext = callerContext;
+    callerContext->InitiateCall();
+    Reset(true);
+    return 0;
 }
 
-Result CommunityManagementJob::JoinCommunityStartup(common::CallContext* context,
+Result CommunityManagementJob::JoinCommunityStartup(common::CallContext* callerContext,
                                                      const JoinCommunitySetting* setting)
 {
-    Result result = 0;
-    if (context == 0)
-        result = static_cast<Result>(kInvalidArgument);
-    else
-    {
-        JoinCommunityStartupImpl(&result, setting);
-        if (result == 0)
-        {
-            m_callerContext = context;
-            context->InitiateCall();
-            Reset(true);
-            return 0;
-        }
-    }
-    return result;
+    if (callerContext == 0)
+        return static_cast<Result>(transport::cResultInvalidArgument);
+    const Result result = JoinCommunityStartupImpl(setting);
+    if (result != 0)
+        return result;
+    m_callerContext = callerContext;
+    callerContext->InitiateCall();
+    Reset(true);
+    return 0;
 }
 
-Result CommunityManagementJob::UpdateCommunityStartup(common::CallContext* context,
+Result CommunityManagementJob::UpdateCommunityStartup(common::CallContext* callerContext,
                                                        const UpdateCommunitySetting* setting)
 {
-    Result result = 0;
-    if (context == 0)
-        result = static_cast<Result>(kInvalidArgument);
-    else
-    {
-        UpdateCommunityStartupImpl(&result, setting);
-        if (result == 0)
-        {
-            m_callerContext = context;
-            context->InitiateCall();
-            Reset(true);
-            return 0;
-        }
-    }
-    return result;
+    if (callerContext == 0)
+        return static_cast<Result>(transport::cResultInvalidArgument);
+    const Result result = UpdateCommunityStartupImpl(setting);
+    if (result != 0)
+        return result;
+    m_callerContext = callerContext;
+    callerContext->InitiateCall();
+    Reset(true);
+    return 0;
 }
 
-Result CommunityManagementJob::DestroyCommunityStartup(common::CallContext* context,
+Result CommunityManagementJob::DestroyCommunityStartup(common::CallContext* callerContext,
                                                         unsigned int communityId)
 {
-    Result result = 0;
-    if (context == 0)
-        result = static_cast<Result>(kInvalidArgument);
-    else
-    {
-        DestroyCommunityStartupImpl(&result, communityId);
-        if (result == 0)
-        {
-            m_callerContext = context;
-            context->InitiateCall();
-            Reset(true);
-            return 0;
-        }
-    }
-    return result;
+    if (callerContext == 0)
+        return static_cast<Result>(transport::cResultInvalidArgument);
+    const Result result = DestroyCommunityStartupImpl(communityId);
+    if (result != 0)
+        return result;
+    m_callerContext = callerContext;
+    callerContext->InitiateCall();
+    Reset(true);
+    return 0;
 }
 
-Result CommunityManagementJob::LeaveCommunityStartup(common::CallContext* context,
+Result CommunityManagementJob::LeaveCommunityStartup(common::CallContext* callerContext,
                                                       unsigned int communityId)
 {
-    Result result = 0;
-    if (context == 0)
-        result = static_cast<Result>(kInvalidArgument);
-    else
-    {
-        LeaveCommunityStartupImpl(&result, communityId);
-        if (result == 0)
-        {
-            m_callerContext = context;
-            context->InitiateCall();
-            Reset(true);
-            return 0;
-        }
-    }
-    return result;
+    if (callerContext == 0)
+        return static_cast<Result>(transport::cResultInvalidArgument);
+    const Result result = LeaveCommunityStartupImpl(communityId);
+    if (result != 0)
+        return result;
+    m_callerContext = callerContext;
+    callerContext->InitiateCall();
+    Reset(true);
+    return 0;
 }
 
 void CommunityManagementJob::Cleanup()

@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_CREATE_MESH_JOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_CREATE_MESH_JOB_HPP
 
-#include "nn/pia.h"
+#include "nn/pia/Common.hpp"
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/common/StepSequenceJob.hpp"
 
@@ -22,9 +22,9 @@ public:
 
     virtual void Trace(unsigned long long value) const;
     virtual Result StartupImpl();
-    virtual void SetNextStepAtSetupLocalPlayerInfoImpl();
     virtual void CleanupImpl();
     virtual void SetHostInfoToMonitoringDataImpl();
+    virtual void SetNextStepAtSetupLocalPlayerInfoImpl();
 
     common::CallContext* m_callerContext;
 };

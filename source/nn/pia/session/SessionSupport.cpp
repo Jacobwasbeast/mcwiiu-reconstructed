@@ -4,6 +4,7 @@
 
 #include "nn/pia/HeapManager.hpp"
 #include "nn/pia/ModuleStackChecker.hpp"
+#include "nn/pia/session/Mesh.hpp"
 #include "platform/wiiu/pead.hpp"
 
 namespace nn { namespace pia { namespace session {
@@ -34,22 +35,23 @@ Result Initialize()
     EmbedModuleInfo();
 
     if (s_initialized != 0)
-        return 0x10c02;
+        return ResultAlreadyInitialized();
 
     pead::SafeStringBase<char> heapName("pia session heap");
-    common::HeapManager::Setup(static_cast<ModuleType>(7), 0, heapName);
+    common::HeapManager::Setup(cModuleType_Session, 0, heapName);
     s_initialized = 1;
-    return ModuleStackChecker::Register(static_cast<ModuleType>(7));
+    ModuleStackChecker::Register(cModuleType_Session);
+    return 0;
 }
 
 Result BeginSetup()
 {
     if (s_initialized == 0)
-        return 0x10c0c;
+        return ResultNotInitialized();
     if (s_duringSetup != 0)
-        return 0x10c08;
+        return ResultInvalidState();
 
-    common::HeapManager::SetCurrentHeap(static_cast<ModuleType>(7));
+    common::HeapManager::SetCurrentHeap(cModuleType_Session);
     s_duringSetup = 1;
     return 0;
 }
@@ -61,14 +63,29 @@ Result EndSetup()
     if (s_duringSetup == 0)
         return 0x10c08;
 
-    pead::Heap* heap = common::HeapManager::GetHeap(static_cast<ModuleType>(7));
-    if (heap == 0)
-        return 0x10c08;
-
-    heap->freeAll();
-    s_duringSetup = 0;
+    common::HeapManager::GetHeap()->adjust();
     common::HeapManager::ClearCurrentHeap();
+    s_duringSetup = 0;
     return 0;
+}
+
+void Finalize()
+{
+    if (s_initialized == 0)
+        return;
+
+    if (s_duringSetup != 0)
+        EndSetup();
+
+    if (g_piaMesh != 0)
+    {
+        g_piaMesh->Cleanup();
+        Mesh::DestroyInstance();
+    }
+
+    common::HeapManager::Cleanup(cModuleType_Session);
+    s_initialized = 0;
+    ModuleStackChecker::Unregister(cModuleType_Session);
 }
 
 }}}

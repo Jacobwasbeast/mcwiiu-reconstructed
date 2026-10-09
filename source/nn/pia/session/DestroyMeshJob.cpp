@@ -13,11 +13,12 @@
 namespace nn { namespace pia { namespace session {
 
 DestroyMeshJob::DestroyMeshJob()
-    : common::StepSequenceJob(), m_callerContext(0), m_deadline(),
-      m_timeoutMsec(cResponseTimeoutMsec), m_waitingResponses(false), m_started(false),
-      m_systemDestroy(false)
+    : common::StepSequenceJob(), m_callerContext(0), m_deadline(), m_timeoutMsec(cResponseTimeoutMsec)
 {
     OSBlockSet(m_stationResponses, 0, sizeof(m_stationResponses));
+    m_waitingResponses = false;
+    m_started = false;
+    m_systemDestroy = false;
 }
 
 DestroyMeshJob::~DestroyMeshJob()
@@ -35,10 +36,9 @@ bool DestroyMeshJob::Startup(common::CallContext* callContext, bool systemDestro
         callContext->InitiateCall();
     }
 
-    const int timeoutMsec = m_timeoutMsec;
+    const common::TimeSpan timeout = common::TimeSpan::FromMSec(m_timeoutMsec);
+    m_deadline = common::g_piaJobScheduler->m_dispatchTime + timeout;
     m_systemDestroy = systemDestroy;
-    m_deadline = common::Time::Create(common::g_piaJobScheduler->m_dispatchTime.m_tick +
-                                      common::TimeSpan::GetTicksPerMSec().m_tick * timeoutMsec);
     m_started = true;
 
     unsigned int reason = 2;
@@ -53,22 +53,23 @@ bool DestroyMeshJob::Startup(common::CallContext* callContext, bool systemDestro
 
 bool DestroyMeshJob::AssociateSystemWith(common::CallContext* callContext)
 {
-    if (!m_started || !m_systemDestroy)
-        return false;
-
-    if (callContext != 0)
+    if (m_started && m_systemDestroy)
     {
-        m_callerContext = callContext;
-        callContext->InitiateCall();
+        if (callContext != 0)
+        {
+            m_callerContext = callContext;
+            callContext->InitiateCall();
+        }
+        m_systemDestroy = false;
+        return true;
     }
-    m_systemDestroy = false;
-    return true;
+    return false;
 }
 
 DestroyMeshJob::ExecuteResult DestroyMeshJob::SendDestroyMesh()
 {
     const int localStationIndex = g_piaMesh->GetLocalStationIndex();
-    if (localStationIndex >= cStationNumMax)
+    if (localStationIndex > cStationIndexMax)
     {
         setStep(&DestroyMeshJob::CleanupMesh, "DestroyMeshJob::CleanupMesh");
         return MakeExecuteResult(cExecuteKindContinue);
@@ -76,14 +77,14 @@ DestroyMeshJob::ExecuteResult DestroyMeshJob::SendDestroyMesh()
 
     for (int i = 0; i < cStationNumMax; ++i)
     {
-        if (i == localStationIndex || !g_piaMesh->IsValidStationIndex(static_cast<StationIndex>(i)))
-        {
-            m_stationResponses[i] = 0;
-        }
-        else
+        if (i != localStationIndex && g_piaMesh->IsValidStationIndex(static_cast<StationIndex>(i)))
         {
             g_piaMesh->GetMeshProtocol()->SendDestroyMesh(static_cast<StationIndex>(i));
             m_stationResponses[i] = 1;
+        }
+        else
+        {
+            m_stationResponses[i] = 0;
         }
     }
 
@@ -104,7 +105,7 @@ DestroyMeshJob::ExecuteResult DestroyMeshJob::WaitDestroyResponse()
         }
     }
 
-    if (pending && common::g_piaJobScheduler->m_dispatchTime < m_deadline)
+    if (pending && !(m_deadline <= common::g_piaJobScheduler->m_dispatchTime))
         return MakeExecuteResult(cExecuteKindNextStep);
 
     setStep(&DestroyMeshJob::CleanupMesh, "DestroyMeshJob::CleanupMesh");
@@ -123,10 +124,12 @@ void DestroyMeshJob::CleanupStatus()
 
 DestroyMeshJob::ExecuteResult DestroyMeshJob::CleanupMesh()
 {
-    transport::Station** station = transport::g_piaStationManager->m_stations.data;
-    transport::Station** const end = station + transport::g_piaStationManager->m_stations.size;
-    for (; station != end; ++station)
+    for (transport::Station** station = transport::StationManager::s_pInstance->m_stations.data;
+         station != transport::StationManager::s_pInstance->m_stations.data + transport::StationManager::s_pInstance->m_stations.size;
+         ++station)
+    {
         (*station)->m_disconnectStationJob->ProcessDisconnection(*station);
+    }
 
     g_piaMesh->CleanupStationsJobs();
     if (!m_systemDestroy)
@@ -144,7 +147,7 @@ DestroyMeshJob::ExecuteResult DestroyMeshJob::CleanupMesh()
 
 void DestroyMeshJob::ReceiveDestroyResponse(StationIndex stationIndex)
 {
-    if (static_cast<int>(stationIndex) >= cStationNumMax)
+    if (static_cast<int>(stationIndex) > cStationIndexMax)
         return;
     m_stationResponses[stationIndex] = 0;
 }

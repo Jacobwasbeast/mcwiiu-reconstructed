@@ -23,15 +23,14 @@ enum
     cResultJoinCancelledUnknown = 0x6838,
     cKickoutReasonRelayFailureLast = 23,
     cDisconnectReasonKickedOut = 3,
-    cStationUnused = 0xfd,
-    cLocalStationIndexMax = 32,
+    cStationIndexMax = 31,
     cResultKickoutNoSlot = 0x4c0d,
     cResultInvalidStationIndex = 0x10c07,
     cCallStateMin = 2,
     cCallStateMax = 4
 };
 
-unsigned int joinCancelResult(unsigned int kickoutReason)
+inline unsigned int joinCancelResult(unsigned int kickoutReason)
 {
     if (kickoutReason < KickoutManageJob::cKickoutReasonRelayFailureBase ||
         kickoutReason > cKickoutReasonRelayFailureLast)
@@ -52,9 +51,11 @@ unsigned int joinCancelResult(unsigned int kickoutReason)
 }
 
 KickoutManageJob::KickoutManageJob()
-    : common::StepSequenceJob(), m_kickoutReason(cKickoutReasonNone), m_callContext(),
-      m_kickoutCallContext(0), m_joinCancelRequested(false), m_joinCancelResult(0)
+    : m_joinCancelResult(0)
 {
+    m_kickoutReason = cKickoutReasonNone;
+    m_kickoutCallContext = 0;
+    m_joinCancelRequested = false;
 }
 
 KickoutManageJob::~KickoutManageJob()
@@ -76,7 +77,7 @@ void KickoutManageJob::KickoutFromNetwork(const common::StationAddress& stationA
 bool KickoutManageJob::Startup()
 {
     for (int i = 0; i < cKickoutStationNumMax; ++i)
-        m_kickoutStations[i].m_stationIndex = static_cast<StationIndex>(cStationUnused);
+        m_kickoutStations[i].m_stationIndex = cStationIndexInvalid;
     m_kickoutReason = cKickoutReasonNone;
     m_joinCancelRequested = false;
     return true;
@@ -85,7 +86,7 @@ bool KickoutManageJob::Startup()
 void KickoutManageJob::Cleanup()
 {
     for (int i = 0; i < cKickoutStationNumMax; ++i)
-        m_kickoutStations[i].m_stationIndex = static_cast<StationIndex>(cStationUnused);
+        m_kickoutStations[i].m_stationIndex = cStationIndexInvalid;
 
     if (m_callContext.m_state != common::CallContext::cStateInProgress)
         m_callContext.SignalCancel();
@@ -133,27 +134,23 @@ bool KickoutManageJob::StartupClient(KickoutReason kickoutReason)
 KickoutManageJob::ExecuteResult KickoutManageJob::ClientStartLeaveMesh()
 {
     Mesh* mesh = g_piaMesh;
-    if (mesh->GetLocalStationIndex() < cLocalStationIndexMax)
+    if (mesh->GetLocalStationIndex() > cStationIndexMax ||
+        (mesh->CheckConnectionError() == Result(cResultLeaveMeshNotNeeded) && !m_joinCancelRequested))
     {
-        const Result connectionError = mesh->CheckConnectionError();
-        if (connectionError != cResultLeaveMeshNotNeeded || m_joinCancelRequested)
-        {
-            if (mesh->m_leaveMeshJob->Startup(&m_callContext) == 0)
-            {
-                if (mesh->m_leaveMeshJob->RegisterExtraCallback(&m_callContext) == 0)
-                    return MakeExecuteResult(cExecuteKindNextStep);
-            }
-            else
-            {
-                mesh->m_leaveMeshJob->Ready(false);
-            }
-            setStep(&KickoutManageJob::ClientWaitLeaveMesh, "KickoutManageJob::ClientWaitLeaveMesh");
-            return MakeExecuteResult(cExecuteKindNextStep);
-        }
+        setStep(&KickoutManageJob::ClientFinalize, "KickoutManageJob::ClientFinalize");
+        return MakeExecuteResult(cExecuteKindContinue);
     }
-
-    setStep(&KickoutManageJob::ClientFinalize, "KickoutManageJob::ClientFinalize");
-    return MakeExecuteResult(cExecuteKindContinue);
+    if (mesh->m_leaveMeshJob->Startup(&m_callContext) == 0)
+    {
+        if (mesh->m_leaveMeshJob->RegisterExtraCallback(&m_callContext) == 0)
+            return MakeExecuteResult(cExecuteKindNextStep);
+    }
+    else
+    {
+        mesh->m_leaveMeshJob->Ready(false);
+    }
+    setStep(&KickoutManageJob::ClientWaitLeaveMesh, "KickoutManageJob::ClientWaitLeaveMesh");
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 KickoutManageJob::ExecuteResult KickoutManageJob::ClientWaitLeaveMesh()
@@ -181,15 +178,15 @@ KickoutManageJob::ExecuteResult KickoutManageJob::ClientFinalize()
 
 Result KickoutManageJob::StartKickout(StationIndex stationIndex, KickoutReason kickoutReason)
 {
-    if (static_cast<int>(stationIndex) >= cKickoutStationNumMax)
+    if (static_cast<int>(stationIndex) > cStationIndexMax)
         return Result(cResultInvalidStationIndex);
 
-    int freeSlot = cKickoutStationNumMax;
+    unsigned int freeSlot = cKickoutStationNumMax;
     for (int i = 0; i < cKickoutStationNumMax; ++i)
     {
         if (m_kickoutStations[i].m_stationIndex == stationIndex)
             return Result(0);
-        if (static_cast<int>(m_kickoutStations[i].m_stationIndex) >= cKickoutStationNumMax &&
+        if (static_cast<int>(m_kickoutStations[i].m_stationIndex) > cStationIndexMax &&
             freeSlot == cKickoutStationNumMax)
             freeSlot = i;
     }
@@ -212,9 +209,10 @@ void KickoutManageJob::SetLeaveEventStationIndex(StationIndex stationIndex)
     {
         if (m_kickoutStations[i].m_stationIndex == stationIndex)
         {
-            m_kickoutStations[i].m_stationIndex = static_cast<StationIndex>(cStationUnused);
+            m_kickoutStations[i].m_stationIndex = cStationIndexInvalid;
             common::StationAddress stationAddress;
-            if (transport::g_piaStationManager->GetStationAddress(&stationAddress, stationIndex) == 0)
+            Result result = transport::StationManager::s_pInstance->GetStationAddress(&stationAddress, stationIndex);
+            if (result == 0)
                 KickoutFromNetwork(stationAddress);
             return;
         }

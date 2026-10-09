@@ -23,7 +23,7 @@ unsigned int UpdateSessionSetting::GetModificationFlag() const
 
 bool UpdateSessionSetting::IsModificationFlagSet(ModificationFlag flag) const
 {
-    return ((m_modificationFlag >> (static_cast<unsigned int>(flag) & 0x3f)) & 1) != 0;
+    return ((m_modificationFlag >> flag) & 1) != 0;
 }
 
 bool UpdateSessionSetting::IsSetApplicationData() const
