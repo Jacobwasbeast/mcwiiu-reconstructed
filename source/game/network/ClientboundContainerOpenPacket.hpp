@@ -32,7 +32,7 @@ public:
 
     int getContainerId();
     int getType();
-    uint32_t hasCustomName();
+    bool hasCustomName();
     std::wstring getTitle();
     int getSize();
     int getEntityId();

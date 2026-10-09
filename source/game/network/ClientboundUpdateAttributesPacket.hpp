@@ -39,7 +39,7 @@ public:
     virtual int getEstimatedSize();
     int getEntityId();
     int getEntityType();
-    boost::unordered_set<AttributeSnapshot*>* getValues();
+    boost::unordered_set<AttributeSnapshot*> getValues();
     virtual int getPacketId();
     static boost::shared_ptr<Packet> create();
 private:

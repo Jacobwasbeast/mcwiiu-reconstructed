@@ -15,29 +15,13 @@ ClientboundSetEntityLinkPacket::ClientboundSetEntityLinkPacket()
 ClientboundSetEntityLinkPacket::ClientboundSetEntityLinkPacket(boost::shared_ptr<Entity> source, boost::shared_ptr<Entity> dest)
 {
     sourceId = source->getId();
-
-    if (dest)
-    {
-        destId = dest->getId();
-    }
-    else
-    {
-        destId = -1;
-    }
+    destId = dest != NULL ? dest->getId() : -1;
 }
 
 ClientboundSetEntityLinkPacket::ClientboundSetEntityLinkPacket(int type, boost::shared_ptr<Entity> source, boost::shared_ptr<Entity> dest)
 {
     sourceId = source->getId();
-
-    if (dest)
-    {
-        destId = dest->getId();
-    }
-    else
-    {
-        destId = -1;
-    }
+    destId = dest != NULL ? dest->getId() : -1;
 }
 
 int ClientboundSetEntityLinkPacket::getPacketId()

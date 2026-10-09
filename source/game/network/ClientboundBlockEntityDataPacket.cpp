@@ -19,8 +19,8 @@ ClientboundBlockEntityDataPacket::ClientboundBlockEntityDataPacket(const BlockPo
     shouldDelay = true;
     this->pos = pos;
     this->type = type;
-    this->dimension = dimension;
     this->tag = tag;
+    this->dimension = dimension;
 }
 
 ClientboundBlockEntityDataPacket::~ClientboundBlockEntityDataPacket()

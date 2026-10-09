@@ -67,29 +67,21 @@ void PathNavigationListener::blockChanged(Level* level, const BlockPos& pos, con
 
 void PathNavigationListener::entityAdded(boost::shared_ptr<Entity> entity)
 {
-    if (entity && (entity->GetType() & EntityType::MOB) == EntityType::MOB)
+    if (entity && eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()))
     {
         EnterCriticalSection(&mMutex);
-        {
-            boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
-            PathNavigation* navigation = mob->getNavigation();
-            mPathNavigations.push_back(navigation);
-        }
+        mPathNavigations.push_back(boost::static_pointer_cast<Mob>(entity)->getNavigation());
         LeaveCriticalSection(&mMutex);
     }
 }
 
 void PathNavigationListener::entityRemoved(boost::shared_ptr<Entity> entity)
 {
-    if (entity && (entity->GetType() & EntityType::MOB) == EntityType::MOB)
+    if (entity && eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()))
     {
         EnterCriticalSection(&mMutex);
-        std::vector<PathNavigation*>::iterator last = mPathNavigations.end();
-        std::vector<PathNavigation*>::iterator it = mPathNavigations.begin();
-        {
-            boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(entity);
-            it = std::find(it, last, mob->getNavigation());
-        }
+        std::vector<PathNavigation*>::iterator it = std::find(mPathNavigations.begin(), mPathNavigations.end(),
+                                                              boost::static_pointer_cast<Mob>(entity)->getNavigation());
         if (it != mPathNavigations.end())
             mPathNavigations.erase(it);
         LeaveCriticalSection(&mMutex);

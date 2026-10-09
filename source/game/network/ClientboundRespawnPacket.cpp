@@ -8,11 +8,29 @@
 #include "game/world/LevelType.hpp"
 
 ClientboundRespawnPacket::ClientboundRespawnPacket()
-    : m_mapSeed(0), m_newSeaLevel(false), m_seaLevel(-1), m_newEntityId(0), m_xzSize(54), m_hellScale(3),
-      m_cloudHeight(128), m_modernEnd(true), m_biomeScale(0), m_biomeCentreXChunk(0), m_biomeCentreZChunk(0),
-      m_x(0.0), m_y(0.0), m_z(0.0), m_yRot(0.0f), m_xRot(0.0f), m_keepOldEntityData(true), m_dimension(0),
-      m_difficulty(NULL), m_playerGameType(NULL), m_levelType(NULL), m_hasPositionAndRotation(false)
 {
+    m_dimension = 0;
+    m_mapSeed = 0;
+    m_y = 0.0;
+    m_biomeCentreXChunk = 0;
+    m_z = 0.0;
+    m_modernEnd = true;
+    m_x = 0.0;
+    m_newSeaLevel = false;
+    m_hellScale = 3;
+    m_xzSize = 54;
+    m_yRot = 0.0f;
+    m_cloudHeight = 128;
+    m_biomeScale = 0;
+    m_difficulty = NULL;
+    m_playerGameType = NULL;
+    m_hasPositionAndRotation = false;
+    m_keepOldEntityData = true;
+    m_seaLevel = -1;
+    m_xRot = 0.0f;
+    m_newEntityId = 0;
+    m_biomeCentreZChunk = 0;
+    m_levelType = NULL;
 }
 
 ClientboundRespawnPacket::ClientboundRespawnPacket(char dimension, long long mapSeed, const GameType* playerGameType,
@@ -21,13 +39,29 @@ ClientboundRespawnPacket::ClientboundRespawnPacket(char dimension, long long map
                                                    int cloudHeight, bool modernEnd, unsigned char biomeScale,
                                                    int biomeCentreXChunk, int biomeCentreZChunk,
                                                    bool keepOldEntityData, int seaLevel)
-    : m_mapSeed(mapSeed), m_newSeaLevel(newSeaLevel), m_seaLevel(seaLevel), m_newEntityId(newEntityId),
-      m_xzSize(xzSize), m_hellScale(hellScale), m_cloudHeight(cloudHeight), m_modernEnd(modernEnd),
-      m_biomeScale(biomeScale), m_biomeCentreXChunk(biomeCentreXChunk), m_biomeCentreZChunk(biomeCentreZChunk),
-      m_x(0.0), m_y(0.0), m_z(0.0), m_yRot(0.0f), m_xRot(0.0f), m_keepOldEntityData(keepOldEntityData),
-      m_dimension(dimension), m_difficulty(difficulty), m_playerGameType(playerGameType), m_levelType(levelType),
-      m_hasPositionAndRotation(false)
 {
+    m_dimension = dimension;
+    m_mapSeed = mapSeed;
+    m_x = 0.0;
+    m_xRot = 0.0f;
+    m_yRot = 0.0f;
+    m_keepOldEntityData = keepOldEntityData;
+    m_difficulty = difficulty;
+    m_newSeaLevel = newSeaLevel;
+    m_biomeCentreXChunk = biomeCentreXChunk;
+    m_hasPositionAndRotation = false;
+    m_biomeCentreZChunk = biomeCentreZChunk;
+    m_cloudHeight = cloudHeight;
+    m_modernEnd = modernEnd;
+    m_newEntityId = newEntityId;
+    m_xzSize = xzSize;
+    m_z = 0.0;
+    m_playerGameType = playerGameType;
+    m_hellScale = hellScale;
+    m_y = 0.0;
+    m_seaLevel = seaLevel;
+    m_biomeScale = biomeScale;
+    m_levelType = levelType;
 }
 
 ClientboundRespawnPacket::ClientboundRespawnPacket(double x, double y, double z, float yRot, float xRot,
@@ -37,13 +71,29 @@ ClientboundRespawnPacket::ClientboundRespawnPacket(double x, double y, double z,
                                                    int xzSize, int hellScale, int cloudHeight, bool modernEnd,
                                                    unsigned char biomeScale, int biomeCentreXChunk,
                                                    int biomeCentreZChunk, bool keepOldEntityData, int seaLevel)
-    : m_mapSeed(mapSeed), m_newSeaLevel(newSeaLevel), m_seaLevel(seaLevel), m_newEntityId(newEntityId),
-      m_xzSize(xzSize), m_hellScale(hellScale), m_cloudHeight(cloudHeight), m_modernEnd(modernEnd),
-      m_biomeScale(biomeScale), m_biomeCentreXChunk(biomeCentreXChunk), m_biomeCentreZChunk(biomeCentreZChunk),
-      m_x(x), m_y(y), m_z(z), m_yRot(yRot), m_xRot(xRot), m_keepOldEntityData(keepOldEntityData),
-      m_dimension(dimension), m_difficulty(difficulty), m_playerGameType(playerGameType), m_levelType(levelType),
-      m_hasPositionAndRotation(true)
 {
+    m_keepOldEntityData = keepOldEntityData;
+    m_mapSeed = mapSeed;
+    m_z = z;
+    m_yRot = yRot;
+    m_hasPositionAndRotation = true;
+    m_cloudHeight = cloudHeight;
+    m_biomeScale = biomeScale;
+    m_x = x;
+    m_newEntityId = newEntityId;
+    m_xzSize = xzSize;
+    m_newSeaLevel = newSeaLevel;
+    m_difficulty = difficulty;
+    m_seaLevel = seaLevel;
+    m_biomeCentreXChunk = biomeCentreXChunk;
+    m_modernEnd = modernEnd;
+    m_dimension = dimension;
+    m_xRot = xRot;
+    m_y = y;
+    m_playerGameType = playerGameType;
+    m_biomeCentreZChunk = biomeCentreZChunk;
+    m_levelType = levelType;
+    m_hellScale = hellScale;
 }
 
 void ClientboundRespawnPacket::handle(PacketListener* listener)
@@ -56,10 +106,9 @@ void ClientboundRespawnPacket::read(DataInputStream* input)
     m_dimension = input->readByte();
     m_playerGameType = GameType::byId(input->readUnsignedByte());
     std::wstring levelTypeName = Packet::readUtf(input, 16);
-    LevelType* levelType = LevelType::getLevelType(levelTypeName);
-    if (levelType == NULL)
-        levelType = LevelType::DEFAULT;
-    m_levelType = levelType;
+    m_levelType = LevelType::getLevelType(levelTypeName);
+    if (m_levelType == NULL)
+        m_levelType = LevelType::DEFAULT;
     m_mapSeed = input->readLong();
     m_difficulty = Difficulty::byId(input->readUnsignedByte());
     m_newSeaLevel = input->readBoolean();

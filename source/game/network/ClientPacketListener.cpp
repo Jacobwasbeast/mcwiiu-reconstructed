@@ -337,7 +337,7 @@ void ClientPacketListener::handleBlockEntityDataInternal(
 
     if (type == 0xc)
     {
-        if (blockEntity->GetType() == BlockEntityType::CAULDRON)
+        if (eTYPE_DERIVED_FROM(BlockEntityType::CAULDRON, blockEntity->GetType()))
         {
             boost::shared_ptr<CauldronBlockEntity> cauldron =
                 boost::static_pointer_cast<CauldronBlockEntity>(blockEntity);
@@ -348,7 +348,7 @@ void ClientPacketListener::handleBlockEntityDataInternal(
 
     if (type == 0xd)
     {
-        if (blockEntity->GetType() == BlockEntityType::CONDUIT)
+        if (eTYPE_DERIVED_FROM(BlockEntityType::CONDUIT, blockEntity->GetType()))
         {
             boost::shared_ptr<ConduitBlockEntity> conduit =
                 boost::static_pointer_cast<ConduitBlockEntity>(blockEntity);
@@ -363,34 +363,34 @@ void ClientPacketListener::handleBlockEntityDataInternal(
     case 0:
         break;
     case 1:
-        loadTag = blockEntity->GetType() == BlockEntityType::MOB_SPAWNER;
+        loadTag = eTYPE_DERIVED_FROM(BlockEntityType::MOB_SPAWNER, blockEntity->GetType());
         break;
     case 2:
-        loadTag = blockEntity->GetType() == BlockEntityType::COMMAND;
+        loadTag = eTYPE_DERIVED_FROM(BlockEntityType::COMMAND, blockEntity->GetType());
         break;
     case 3:
-        loadTag = blockEntity->GetType() == BlockEntityType::BEACON;
+        loadTag = eTYPE_DERIVED_FROM(BlockEntityType::BEACON, blockEntity->GetType());
         break;
     case 4:
-        loadTag = blockEntity->GetType() == BlockEntityType::SKULL;
+        loadTag = eTYPE_DERIVED_FROM(BlockEntityType::SKULL, blockEntity->GetType());
         break;
     case 5:
-        loadTag = blockEntity->GetType() == BlockEntityType::FLOWER_POT;
+        loadTag = eTYPE_DERIVED_FROM(BlockEntityType::FLOWER_POT, blockEntity->GetType());
         break;
     case 6:
-        loadTag = blockEntity->GetType() == BlockEntityType::BANNER;
+        loadTag = eTYPE_DERIVED_FROM(BlockEntityType::BANNER, blockEntity->GetType());
         break;
     case 8:
-        loadTag = blockEntity->GetType() == BlockEntityType::THE_END_GATEWAY_ENTITY;
+        loadTag = eTYPE_DERIVED_FROM(BlockEntityType::THE_END_GATEWAY_ENTITY, blockEntity->GetType());
         break;
     case 9:
-        loadTag = blockEntity->GetType() == BlockEntityType::SIGN;
+        loadTag = eTYPE_DERIVED_FROM(BlockEntityType::SIGN, blockEntity->GetType());
         break;
     case 10:
-        loadTag = blockEntity->GetType() == BlockEntityType::SHULKER_BOX;
+        loadTag = eTYPE_DERIVED_FROM(BlockEntityType::SHULKER_BOX, blockEntity->GetType());
         break;
     case 11:
-        loadTag = blockEntity->GetType() == BlockEntityType::BED;
+        loadTag = eTYPE_DERIVED_FROM(BlockEntityType::BED, blockEntity->GetType());
         break;
     default:
         break;
@@ -456,30 +456,30 @@ void ClientPacketListener::displayPrivilegeChanges(boost::shared_ptr<Multiplayer
         {
             switch (bit)
             {
-            case 0: message = L10N::GetString(granted ? 0xBB86B9EC : 0x80CBA202); break;
-            case 1: message = L10N::GetString(granted ? 0xF9B83295 : 0x590C0C53); break;
-            case 2: message = L10N::GetString(granted ? 0x8425EE2C : 0x7A302BC2); break;
-            case 3: message = L10N::GetString(granted ? 0xCFCD48CF : 0xD83F3EE9); break;
-            case 10: message = L10N::GetString(granted ? 0x3565EA42 : 0x332C0EFC); break;
-            case 11: message = L10N::GetString(granted ? 0x0FEF7A7A : 0x5CC73FE4); break;
-            case 12: message = L10N::GetString(granted ? 0x0359DA13 : 0xFEEB1CA5); break;
+            case 0: message = L10N::GetString(granted ? IDS_PRIV_MINE_TOGGLE_OFF : IDS_PRIV_MINE_TOGGLE_ON); break;
+            case 1: message = L10N::GetString(granted ? IDS_PRIV_BUILD_TOGGLE_OFF : IDS_PRIV_BUILD_TOGGLE_ON); break;
+            case 2: message = L10N::GetString(granted ? IDS_PRIV_ATTACK_MOB_TOGGLE_OFF : IDS_PRIV_ATTACK_MOB_TOGGLE_ON); break;
+            case 3: message = L10N::GetString(granted ? IDS_PRIV_ATTACK_PLAYER_TOGGLE_OFF : IDS_PRIV_ATTACK_PLAYER_TOGGLE_ON); break;
+            case 10: message = L10N::GetString(granted ? IDS_PRIV_ATTACK_ANIMAL_TOGGLE_OFF : IDS_PRIV_ATTACK_ANIMAL_TOGGLE_ON); break;
+            case 11: message = L10N::GetString(granted ? IDS_PRIV_USE_DOORS_TOGGLE_OFF : IDS_PRIV_USE_DOORS_TOGGLE_ON); break;
+            case 12: message = L10N::GetString(granted ? IDS_PRIV_USE_CONTAINERS_TOGGLE_OFF : IDS_PRIV_USE_CONTAINERS_TOGGLE_ON); break;
             default: break;
             }
         }
         if (bit == 4)
-            message = L10N::GetString(granted ? 0x453A2722 : 0xA5DE08DC);
+            message = L10N::GetString(granted ? IDS_PRIV_MODERATOR_TOGGLE_OFF : IDS_PRIV_MODERATOR_TOGGLE_ON);
         if (gApp.GetGameHostOption(eGameHostOption_CheatsEnabled) != 0)
         {
             switch (bit)
             {
-            case 5: message = L10N::GetString(granted ? 0x0914B658 : 0xD4D6F596); break;
-            case 6: message = L10N::GetString(granted ? 0x0E58AD5D : 0x118BE14B); break;
-            case 7: message = L10N::GetString(granted ? 0x67448842 : 0x8A95FCFC); break;
-            case 8: message = L10N::GetString(granted ? 0x43E9FBD8 : 0x14C25F16); break;
-            case 13: message = L10N::GetString(granted ? 0xC94448B1 : 0xE2849697); break;
-            case 14: message = L10N::GetString(granted ? 0x02CA1EEB : 0xE40A892D); break;
-            case 15: message = L10N::GetString(granted ? 0xB2427456 : 0x25853DE8); break;
-            case 16: message = L10N::GetString(granted ? 0x986DB991 : 0xCA33A3F7); break;
+            case 5: message = L10N::GetString(granted ? IDS_PRIV_FLY_TOGGLE_OFF : IDS_PRIV_FLY_TOGGLE_ON); break;
+            case 6: message = L10N::GetString(granted ? IDS_PRIV_EXHAUSTION_TOGGLE_OFF : IDS_PRIV_EXHAUSTION_TOGGLE_ON); break;
+            case 7: message = L10N::GetString(granted ? IDS_PRIV_INVISIBLE_TOGGLE_OFF : IDS_PRIV_INVISIBLE_TOGGLE_ON); break;
+            case 8: message = L10N::GetString(granted ? IDS_PRIV_INVULNERABLE_TOGGLE_OFF : IDS_PRIV_INVULNERABLE_TOGGLE_ON); break;
+            case 13: message = L10N::GetString(granted ? IDS_PRIV_CAN_INVISIBLE_TOGGLE_OFF : IDS_PRIV_CAN_INVISIBLE_TOGGLE_ON); break;
+            case 14: message = L10N::GetString(granted ? IDS_PRIV_CAN_FLY_TOGGLE_OFF : IDS_PRIV_CAN_FLY_TOGGLE_ON); break;
+            case 15: message = L10N::GetString(granted ? IDS_PRIV_CAN_EXHAUSTION_TOGGLE_OFF : IDS_PRIV_CAN_EXHAUSTION_TOGGLE_ON); break;
+            case 16: message = L10N::GetString(granted ? IDS_PRIV_CAN_TELEPORT_TOGGLE_OFF : IDS_PRIV_CAN_TELEPORT_TOGGLE_ON); break;
             default: break;
             }
         }
@@ -962,10 +962,10 @@ void ClientPacketListener::handleAddEntity(boost::shared_ptr<ClientboundAddEntit
             {
                 if (Entity::instanceof(entity, EntityType::ARROW))
                     boost::static_pointer_cast<Arrow>(entity)->mOwner = boost::static_pointer_cast<LivingEntity>(owner);
-                else if (entity->GetType() == EntityType::THROWN_TRIDENT)
+                else if (eTYPE_DERIVED_FROM(EntityType::THROWN_TRIDENT, entity->GetType()))
                     boost::static_pointer_cast<ThrownTrident>(entity)->mOwner
                         = boost::static_pointer_cast<LivingEntity>(owner);
-                else if (entity->GetType() == EntityType::AREA_EFFECT_CLOUD)
+                else if (eTYPE_DERIVED_FROM(EntityType::AREA_EFFECT_CLOUD, entity->GetType()))
                     boost::static_pointer_cast<AreaEffectCloud>(entity)->setOwner(
                         boost::static_pointer_cast<LivingEntity>(owner));
             }
@@ -1029,7 +1029,7 @@ void ClientPacketListener::handleSetEntityMotion(boost::shared_ptr<ClientboundSe
     boost::shared_ptr<Entity> entity = getEntity(packet->getId());
     if (entity == 0)
         return;
-    if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
         && boost::static_pointer_cast<Player>(entity)->isFallFlying())
         return;
     entity->lerpMotion(static_cast<double>(packet->getXa()) / 8000.0,
@@ -1040,14 +1040,14 @@ void ClientPacketListener::handleSetEntityMotion(boost::shared_ptr<ClientboundSe
 void ClientPacketListener::handleSetEntityData(boost::shared_ptr<ClientboundSetEntityDataPacket> packet)
 {
     boost::shared_ptr<Entity> entity = getEntity(packet->getId());
-    if (entity == 0)
-        return;
-    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER &&
-        static_cast<int>(entity->GetType()) != packet->getEntityType())
-        return;
-    std::vector<DataItem*>* unpacked = packet->getUnpackedData();
-    if (unpacked != 0)
-        entity->getEntityData()->assignValues(unpacked);
+    if (entity != NULL)
+    {
+        if (!eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) &&
+            static_cast<int>(entity->GetType()) != packet->getEntityType())
+            return;
+    }
+    if (entity != NULL && packet->getUnpackedData() != NULL)
+        entity->getEntityData()->assignValues(packet->getUnpackedData());
 }
 
 void ClientPacketListener::send(boost::shared_ptr<Packet> packet)
@@ -1182,7 +1182,7 @@ void ClientPacketListener::handleMoveEntity(boost::shared_ptr<ClientboundMoveEnt
 
     float yRot = entity->mYRot;
     float xRot = entity->mXRot;
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
         if (living->isInterpolating())
@@ -1191,7 +1191,7 @@ void ClientPacketListener::handleMoveEntity(boost::shared_ptr<ClientboundMoveEnt
             xRot = static_cast<float>(living->getLerpToXRot());
         }
     }
-    if ((entity->GetType() & EntityType::MINECART) == EntityType::MINECART)
+    if (eTYPE_DERIVED_FROM(EntityType::MINECART, entity->GetType()))
     {
         boost::shared_ptr<Minecart> minecart = boost::static_pointer_cast<Minecart>(entity);
         if (minecart->isInterpolating())
@@ -1231,7 +1231,7 @@ void ClientPacketListener::handleMoveEntitySmall(boost::shared_ptr<MoveEntityPac
 
     float yRot = entity->mYRot;
     float xRot = entity->mXRot;
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
     {
         boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
         if (living->isInterpolating())
@@ -1240,7 +1240,7 @@ void ClientPacketListener::handleMoveEntitySmall(boost::shared_ptr<MoveEntityPac
             xRot = static_cast<float>(living->getLerpToXRot());
         }
     }
-    if ((entity->GetType() & EntityType::MINECART) == EntityType::MINECART)
+    if (eTYPE_DERIVED_FROM(EntityType::MINECART, entity->GetType()))
     {
         boost::shared_ptr<Minecart> minecart = boost::static_pointer_cast<Minecart>(entity);
         if (minecart->isInterpolating())
@@ -1648,7 +1648,7 @@ void ClientPacketListener::handleTakeItemEntity(boost::shared_ptr<ClientboundTak
             return;
         }
 
-        if (from->GetType() == EntityType::EXPERIENCE_ORB)
+        if (eTYPE_DERIVED_FROM(EntityType::EXPERIENCE_ORB, from->GetType()))
         {
             level->playLocalSound(from->mX, from->mY, from->mZ, SoundEvents::EXPERIENCE_ORB_PICKUP,
                                   SoundSource::eSoundSource_Players, 0.1f,
@@ -1663,7 +1663,7 @@ void ClientPacketListener::handleTakeItemEntity(boost::shared_ptr<ClientboundTak
                                   16.0f);
         }
 
-        if (from->GetType() == EntityType::ITEM_ENTITY)
+        if (eTYPE_DERIVED_FROM(EntityType::ITEM_ENTITY, from->GetType()))
             boost::static_pointer_cast<ItemEntity>(from)->getItem()->setCount(packet->getAmount());
     }
     else
@@ -1793,7 +1793,7 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathOutOfWorld:
-        text = L10N::GetString(0x6f2c7352);
+        text = L10N::GetString(IDS_DEATH_OUTOFWORLD);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathCustom:
@@ -1887,54 +1887,54 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replaceSource = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathFellLadder:
-        text = L10N::GetString(0x62f8280d);
+        text = L10N::GetString(IDS_DEATH_FELL_ACCIDENT_LADDER);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathFellVines:
-        text = L10N::GetString(0x461ba4e8);
+        text = L10N::GetString(IDS_DEATH_FELL_ACCIDENT_VINES);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathFellWater:
-        text = L10N::GetString(0xc130636a);
+        text = L10N::GetString(IDS_DEATH_FELL_ACCIDENT_WATER);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathFellHigh:
-        text = L10N::GetString(0x44e2dd06);
+        text = L10N::GetString(IDS_DEATH_FELL_ACCIDENT_GENERIC);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathFellDoomed:
-        text = L10N::GetString(0x8bc1a50e);
+        text = L10N::GetString(IDS_DEATH_FELL_KILLER);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathFellDoomedBy:
-        text = L10N::GetString(0x1ece8cfc);
+        text = L10N::GetString(IDS_DEATH_FELL_ASSIST);
         replacePlayer = true;
         replaceSource = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathFellDoomedByItem:
-        text = L10N::GetString(0xd871bb46);
+        text = L10N::GetString(IDS_DEATH_FELL_ASSIST_ITEM);
         replacePlayer = true;
         replaceSource = true;
         replaceItem = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathFellFinished:
-        text = L10N::GetString(0x7ba47e90);
+        text = L10N::GetString(IDS_DEATH_FELL_FINISH);
         replacePlayer = true;
         replaceSource = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathFellFinishedItem:
-        text = L10N::GetString(0x3ec0c74a);
+        text = L10N::GetString(IDS_DEATH_FELL_FINISH_ITEM);
         replacePlayer = true;
         replaceSource = true;
         replaceItem = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathInFireFighting:
-        text = L10N::GetString(0xc30a962c);
+        text = L10N::GetString(IDS_DEATH_INFIRE_PLAYER);
         replacePlayer = true;
         replaceSource = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_DeathOnFireFighting:
-        text = L10N::GetString(0x48ffbd9a);
+        text = L10N::GetString(IDS_DEATH_ONFIRE_PLAYER);
         replacePlayer = true;
         replaceSource = true;
         break;
@@ -2007,37 +2007,37 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         text.replace(text.find(L"%s"), 2, playerName);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxEnemies:
-        text = L10N::GetString(0xa82b5a66);
+        text = L10N::GetString(IDS_MAX_ENEMIES_SPAWNED);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxVillagers:
-        text = L10N::GetString(0x16972fbf);
+        text = L10N::GetString(IDS_MAX_VILLAGERS_SPAWNED);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxAnimals:
-        text = L10N::GetString(0x9f8bffae);
+        text = L10N::GetString(IDS_MAX_PIGS_SHEEP_COWS_CATS_SPAWNED);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxChickens:
-        text = L10N::GetString(0x82460728);
+        text = L10N::GetString(IDS_MAX_CHICKENS_SPAWNED);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxSquid:
-        text = L10N::GetString(0x1e0d17d0);
+        text = L10N::GetString(IDS_MAX_SQUID_SPAWNED);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxMooshrooms:
-        text = L10N::GetString(0x3e35b6e8);
+        text = L10N::GetString(IDS_MAX_MOOSHROOMS_SPAWNED);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxWolves:
-        text = L10N::GetString(0x70edc806);
+        text = L10N::GetString(IDS_MAX_WOLVES_SPAWNED);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxBats:
-        text = L10N::GetString(0xfab1deb6);
+        text = L10N::GetString(IDS_MAX_BATS_SPAWNED);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxBredAnimals:
-        text = L10N::GetString(0xb399bd15);
+        text = L10N::GetString(IDS_MAX_PIGS_SHEEP_COWS_CATS_BRED);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxBredChickens:
         text = L10N::GetString(IDS_MAX_CHICKENS_BRED);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxBredMooshrooms:
-        text = L10N::GetString(0x00fe5875);
+        text = L10N::GetString(IDS_MAX_MUSHROOMCOWS_BRED);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxBredWolves:
         text = L10N::GetString(IDS_MAX_WOLVES_BRED);
@@ -2046,10 +2046,10 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         text = L10N::GetString(IDS_CANT_SHEAR_MOOSHROOM);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxHangingEntities:
-        text = L10N::GetString(0x1ee681ba);
+        text = L10N::GetString(IDS_MAX_HANGINGENTITIES);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxArmorStands:
-        text = L10N::GetString(0x8ecd701e);
+        text = L10N::GetString(IDS_MAX_ARMOURSTANDS);
         break;
     case ClientboundChatPacket::eChatPacketMessage_CantSpawnInPeaceful:
         text = L10N::GetString(IDS_CANT_SPAWN_IN_PEACEFUL);
@@ -2070,16 +2070,16 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         text = L10N::GetString(IDS_MAX_BEACONS);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxDolphins:
-        text = L10N::GetString(0xb714e0e2);
+        text = L10N::GetString(IDS_MAX_DOLPHIN_SPAWNED);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxPhantoms:
-        text = L10N::GetString(0x3dcd926b);
+        text = L10N::GetString(IDS_MAX_PHANTOM_SPAWNED);
         break;
     case ClientboundChatPacket::eChatPacketMessage_MaxFishAndSquid:
-        text = L10N::GetString(0x60a3835d);
+        text = L10N::GetString(IDS_MAX_WATER_ANIMALS_SPAWNED);
         break;
     case ClientboundChatPacket::eChatPacketMessage_TeleportSuccess:
-        text = L10N::GetString(0xce88d7b9);
+        text = L10N::GetString(IDS_COMMAND_TELEPORT_SUCCESS);
         replacePlayer = true;
         if (packet->ints[0] == (int)EntityType::SERVER_PLAYER)
         {
@@ -2095,11 +2095,11 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         }
         break;
     case ClientboundChatPacket::eChatPacketMessage_TeleportedYouToPosition:
-        text = L10N::GetString(0x5c19fa7a);
+        text = L10N::GetString(IDS_COMMAND_TELEPORT_ME);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_TeleportedToYou:
-        text = L10N::GetString(0x186485a6);
+        text = L10N::GetString(IDS_COMMAND_TELEPORT_TO_ME);
         replacePlayer = true;
         break;
     case ClientboundChatPacket::eChatPacketMessage_TimeSuccess:
@@ -2107,67 +2107,67 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         const int time = packet->ints[0];
         if (time == 1000)
         {
-            text = L10N::GetString(0xd982f837);
+            text = L10N::GetString(IDS_COMMAND_TIME_SET_DAY);
         }
         else if (time == 14000)
         {
-            text = L10N::GetString(0x0087fb07);
+            text = L10N::GetString(IDS_COMMAND_TIME_SET_NIGHT);
         }
         else
         {
-            text = L10N::GetString(0x24a5eddc);
+            text = L10N::GetString(IDS_COMMAND_TIME_SET);
             text.replace(text.find(L"%d"), 2, _toString<int>(time));
         }
         break;
     }
     case 100:
-        text = L10N::GetString(0xe34b099b);
+        text = L10N::GetString(IDS_COMMAND_DIFFICULTY_SUCCESS);
         replacements[L"{*DIFFICULTY*}"] = L10N::GetString(Difficulty::byId(packet->ints[0])->getKey());
         break;
     case 101:
-        text = L10N::GetString(0xa816ec2e);
+        text = L10N::GetString(IDS_COMMAND_DEFAULTGAMEMODE_SUCCESS);
         replacements[L"{*MODE*}"] = L10N::GetString(GameType::byId(packet->ints[0])->getLabel());
         break;
     case 102:
-        text = L10N::GetString(0x590236fb);
+        text = L10N::GetString(IDS_COMMAND_SETWORLDSPAWN_SUCCESS);
         text.replace(text.find(L"%d"), 2, _toString<int>(packet->ints[0]));
         text.replace(text.find(L"%d"), 2, _toString<int>(packet->ints[1]));
         text.replace(text.find(L"%d"), 2, _toString<int>(packet->ints[2]));
         break;
     case 103:
-        text = L10N::GetString(0x334e4f83);
+        text = L10N::GetString(IDS_COMMAND_SETWORLDSPAWN_FAILED);
         break;
     case 104:
-        text = L10N::GetString(0xc5814157);
+        text = L10N::GetString(IDS_COMMAND_SPAWNPOINT_SUCCESS);
         text.replace(text.find(L"%d"), 2, _toString<int>(packet->ints[0]));
         text.replace(text.find(L"%d"), 2, _toString<int>(packet->ints[1]));
         text.replace(text.find(L"%d"), 2, _toString<int>(packet->ints[2]));
         replacePlayer = true;
         break;
     case 105:
-        text = L10N::GetString(0xa7d52e1f);
+        text = L10N::GetString(IDS_COMMAND_SPAWNPOINT_FAILED);
         replacePlayer = true;
         break;
     case 106:
-        text = L10N::GetString(0xb5f2b622);
+        text = L10N::GetString(IDS_COMMAND_WEATHER_CLEAR);
         break;
     case 107:
-        text = L10N::GetString(0x3ced883f);
+        text = L10N::GetString(IDS_COMMAND_WEATHER_RAIN);
         break;
     case 108:
-        text = L10N::GetString(0x0a09d437);
+        text = L10N::GetString(IDS_COMMAND_WEATHER_THUNDER);
         break;
     case 109:
-        text = L10N::GetString(0xda993cc6);
+        text = L10N::GetString(IDS_COMMAND_GAMEMODE_SELF_SUCCESS);
         replacements[L"{*MODE*}"] = L10N::GetString(GameType::byId(packet->ints[0])->getLabel());
         break;
     case 110:
-        text = L10N::GetString(0x5eeb14ce);
+        text = L10N::GetString(IDS_COMMAND_GAMEMODE_OTHER_SUCCESS);
         replacements[L"{*MODE*}"] = L10N::GetString(GameType::byId(packet->ints[0])->getLabel());
         replacePlayer = true;
         break;
     case 111:
-        text = L10N::GetString(0xdd05c6b4);
+        text = L10N::GetString(IDS_COMMAND_GAMEMODE_CHANGED);
         break;
     case 112:
         text = L10N::GetString(0xd2bd3683);
@@ -2233,18 +2233,18 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         break;
     case 125:
         singleMessage = true;
-        text = L10N::GetString(0x0e73497d);
+        text = L10N::GetString(IDS_MG_TIMER_INITIALISING);
         text.replace(text.find(L"%d"), 2, _toString<int>(packet->ints[0]));
         break;
     case 126:
         singleMessage = true;
-        text = L10N::GetString(0xd5566021);
+        text = L10N::GetString(IDS_MG_TIMER_WAITING_TO_START);
         text.replace(text.find(L"%d"), 2, _toString<int>(packet->ints[0]));
         break;
     case 127:
     {
         const int value = packet->ints[0];
-        text = L10N::GetString(0xc1a090d6);
+        text = L10N::GetString(IDS_MG_TIMER_WAITING_TO_END);
         text.replace(text.find(L"%d"), 2, _toString<int>(value));
         singleMessage = true;
         break;
@@ -2255,7 +2255,7 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         singleMessage = true;
         break;
     case 129:
-        text = L10N::GetString(0xe028e842);
+        text = L10N::GetString(IDS_MG_TIMER_INVULNERABILITY);
         text.replace(text.find(L"%d"), 2, _toString<int>(packet->ints[0]));
         singleMessage = true;
         break;
@@ -2296,7 +2296,7 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         break;
     case 135:
         singleMessage = true;
-        text = L10N::GetString(0xaae0d4ff);
+        text = L10N::GetString(IDS_MG_REQUIRED_FOR_PLAY);
         replacements[L"{*QUANTITY*}"] = _toString<int>(packet->ints[0]);
         break;
     case 136:
@@ -2333,12 +2333,12 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         replacements[L"{*PLAYER*}"] = packet->strings[0];
         break;
     case 145:
-        text = L10N::GetString(0xadc5f08e);
+        text = L10N::GetString(IDS_MG_TEAM_JOINED_1);
         replacements[L"{*PLAYER*}"] = packet->strings[0];
         replacements[L"{*TEAM*}"] = packet->strings[1];
         break;
     case 146:
-        text = L10N::GetString(0x87c37625);
+        text = L10N::GetString(IDS_MG_TEAM_JOINED_2);
         replacements[L"{*TEAM*}"] = packet->strings[0];
         break;
     case 147:
@@ -2368,7 +2368,7 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         break;
     case 154:
         singleMessage = true;
-        text = L10N::GetString(0xdb4972f1);
+        text = L10N::GetString(IDS_SPECTATE_PLAYER);
         replacePlayer = true;
         text.replace(text.find(L"%d"), 2, _toString<int>(packet->ints[0]));
         text.replace(text.find(L"%d"), 2, _toString<int>(packet->ints[1]));
@@ -2388,7 +2388,7 @@ void ClientPacketListener::handleChat(boost::shared_ptr<ClientboundChatPacket> p
         {
         case 49:
         case 51:
-            text = L10N::GetString(0x7ba47e90);
+            text = L10N::GetString(IDS_DEATH_FELL_FINISH);
             break;
         case 60:
             text = L10N::GetString(IDS_DEATH_PLAYER);
@@ -2457,12 +2457,12 @@ void ClientPacketListener::handleAnimate(boost::shared_ptr<ClientboundAnimatePac
     const bool local = isLocalPlayer(packet->getId()) != 0;
     if (packet->getAction() == 0 && !local)
     {
-        if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
             boost::static_pointer_cast<LivingEntity>(entity)->swing(InteractionHand::eInteractionHand_MainHand);
     }
     else if (packet->getAction() == 3 && !local)
     {
-        if ((entity->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
             boost::static_pointer_cast<LivingEntity>(entity)->swing(InteractionHand::eInteractionHand_OffHand);
     }
     else if (packet->getAction() == 1 && !local)
@@ -2471,7 +2471,7 @@ void ClientPacketListener::handleAnimate(boost::shared_ptr<ClientboundAnimatePac
     }
     else if (packet->getAction() == 2)
     {
-        if ((entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
             boost::static_pointer_cast<Player>(entity)->stopSleepInBed(false, false, false);
     }
     else if (packet->getAction() == 4)
@@ -2625,7 +2625,7 @@ void ClientPacketListener::handleAddMob(boost::shared_ptr<ClientboundAddMobPacke
         std::vector<DataItem*>* unpacked = packet->getUnpackedData();
         if (unpacked != 0)
             living->getEntityData()->assignValues(unpacked);
-        if ((living->GetType() & EntityType::SLIME) == EntityType::SLIME)
+        if (eTYPE_DERIVED_FROM(EntityType::SLIME, living->GetType()))
         {
             boost::shared_ptr<Slime> slime = boost::static_pointer_cast<Slime>(living);
             slime->setSize(slime->getSize(), true);
@@ -2687,7 +2687,7 @@ void ClientPacketListener::handleEntityLinkPacket(boost::shared_ptr<ClientboundS
     }
     if (source == 0)
         return;
-    if ((source->GetType() & EntityType::MOB) == EntityType::MOB)
+    if (eTYPE_DERIVED_FROM(EntityType::MOB, source->GetType()))
     {
         boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(source);
         if (dest != 0)
@@ -2695,7 +2695,7 @@ void ClientPacketListener::handleEntityLinkPacket(boost::shared_ptr<ClientboundS
         else
             mob->dropLeash(false, false);
     }
-    else if (source->GetType() == EntityType::BOAT)
+    else if (eTYPE_DERIVED_FROM(EntityType::BOAT, source->GetType()))
     {
         boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(source);
         if (dest != 0)
@@ -2996,7 +2996,7 @@ void ClientPacketListener::handleContainerOpen(boost::shared_ptr<ClientboundCont
     else if (packet->getType() == ClientboundContainerOpenPacket::HORSE)
     {
         boost::shared_ptr<Entity> entity = getEntity(packet->getEntityId());
-        if ((entity->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE)
+        if (eTYPE_DERIVED_FROM(EntityType::ABSTRACT_HORSE, entity->GetType()))
         {
             boost::shared_ptr<AbstractHorse> horse = boost::static_pointer_cast<AbstractHorse>(entity);
             boost::shared_ptr<Container> chest(new HorseChest(0, packet->getTitle(), false, packet->getSize()));
@@ -3402,7 +3402,7 @@ void ClientPacketListener::handleLevelEvent(boost::shared_ptr<ClientboundLevelEv
             if (m_minecraft->mLocalPlayers[i] != 0 && m_minecraft->mLocalPlayers[i]->mLevel != 0 &&
                 m_minecraft->mLocalPlayers[i]->mLevel->mDimension->getType() == DimensionType::THE_END)
             {
-                m_minecraft->mLocalPlayers[i]->awardStat(gStats->get_completeTheEnd(),
+                m_minecraft->mLocalPlayers[i]->awardStat(GenericStats::completeTheEnd(),
                                                          GenericStats::param_noArgs());
             }
         }
@@ -3497,7 +3497,7 @@ void ClientPacketListener::handlePlayerInfo(boost::shared_ptr<PlayerInfoPacket> 
                              packet->mPrivileges, packet->mGameType);
 
     boost::shared_ptr<Entity> entity = getEntity(packet->mEntityId);
-    if (entity != 0 && (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+    if (entity != 0 && eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
         boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
         player->setPlayerGamePrivilege(Player::ePlayerGamePrivilege_All, packet->mPrivileges);
@@ -3525,16 +3525,19 @@ void ClientPacketListener::handleKeepAlive(boost::shared_ptr<ClientboundKeepAliv
 void ClientPacketListener::handlePlayerAbilities(boost::shared_ptr<ClientboundPlayerAbilitiesPacket> packet)
 {
     boost::shared_ptr<Entity> entity = getEntity(packet->getPlayerId());
-    if (entity == 0 || (entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
-        return;
-    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-    player->mAbilities.mFlying = packet->isFlying();
-    player->mAbilities.mInstabuild = packet->canInstabuild();
-    player->mAbilities.mInvulnerable = packet->isInvulnerable();
-    player->mAbilities.mMayfly = packet->canFly();
-    player->mAbilities.setFlyingSpeed(packet->getFlyingSpeed());
-    player->mAbilities.setWalkingSpeed(packet->getWalkingSpeed());
-    player->mAbilities.mMayBuild = packet->canBuild();
+    boost::shared_ptr<Player> player;
+    if (entity != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
+        player = boost::static_pointer_cast<Player>(entity);
+    if (player != NULL)
+    {
+        player->mAbilities.mFlying = packet->isFlying();
+        player->mAbilities.mInstabuild = packet->canInstabuild();
+        player->mAbilities.mInvulnerable = packet->isInvulnerable();
+        player->mAbilities.mMayfly = packet->canFly();
+        player->mAbilities.setFlyingSpeed(packet->getFlyingSpeed());
+        player->mAbilities.setWalkingSpeed(packet->getWalkingSpeed());
+        player->mAbilities.mMayBuild = packet->canBuild();
+    }
 }
 
 void ClientPacketListener::handleSoundEvent(boost::shared_ptr<ClientboundSoundPacket> packet)
@@ -3564,7 +3567,7 @@ void ClientPacketListener::handleSoundEvent(boost::shared_ptr<ClientboundSoundPa
     else if (soundInstance == ClientboundSoundPacket::eSoundInstances_FollowEntity)
     {
         boost::shared_ptr<Entity> entity = getEntity(packet->getEntityId());
-        if (entity != NULL && (entity->GetType() & EntityType::PLAYER) == EntityType::PLAYER)
+        if (entity != NULL && eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         {
             m_minecraft->mSoundEngine->ConsoleSoundEngine::play(new FollowPlayerSoundInstance(
                 boost::static_pointer_cast<Player>(entity), packet->getSound(),
@@ -3630,6 +3633,7 @@ void ClientPacketListener::handleCustomPayload(boost::shared_ptr<ClientboundCust
                                                     : m_minecraft->mLocalPlayers[m_playerId]->getMainHandItem();
         book->getItem();
     }
+    byteStream.reset();
 }
 
 Connection* ClientPacketListener::getConnection() { return m_connection; }
@@ -3698,14 +3702,20 @@ void ClientPacketListener::handleUpdateProgress(boost::shared_ptr<UpdateProgress
 void ClientPacketListener::handleTextureChange(boost::shared_ptr<TextureChangePacket> packet)
 {
     boost::shared_ptr<Entity> entity = getEntity(packet->mEntityId);
-    if (entity == NULL || !Entity::instanceof(entity, EntityType::PLAYER))
+    if (entity == NULL || !eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
         return;
     boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
+    bool isLocalPlayer = false;
     for (int i = 0; i < 4; ++i)
     {
         if (m_minecraft->mLocalPlayers[i] != NULL && m_minecraft->mLocalPlayers[i]->getId() == packet->mEntityId)
-            return;
+        {
+            isLocalPlayer = true;
+            break;
+        }
     }
+    if (isLocalPlayer)
+        return;
 
     switch (packet->mChangeType)
     {
@@ -3735,11 +3745,19 @@ void ClientPacketListener::handleTextureAndGeometryChange(boost::shared_ptr<Text
     if (entity == NULL)
         return;
     boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
+    if (entity == NULL)
+        return;
+    bool isLocalPlayer = false;
     for (int i = 0; i < 4; ++i)
     {
         if (m_minecraft->mLocalPlayers[i] != NULL && m_minecraft->mLocalPlayers[i]->getId() == packet->entityId)
-            return;
+        {
+            isLocalPlayer = true;
+            break;
+        }
     }
+    if (isLocalPlayer)
+        return;
 
     player->setCustomSkin(CMinecraftApp::getSkinIdFromPath(packet->geometryName));
 
@@ -3931,16 +3949,14 @@ void ClientPacketListener::handleUpdateAttributes(boost::shared_ptr<ClientboundU
     boost::shared_ptr<Entity> entity = getEntity(packet->getEntityId());
     if (entity == 0)
         return;
-    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER &&
+    if (!eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) &&
         static_cast<int>(entity->GetType()) != packet->getEntityType())
         return;
-    boost::shared_ptr<LivingEntity> living = boost::dynamic_pointer_cast<LivingEntity>(entity);
-    BaseAttributeMap* attributes = living->getAttributes();
-    boost::unordered_set<ClientboundUpdateAttributesPacket::AttributeSnapshot*>* snapshots =
-        packet->getValues();
+    BaseAttributeMap* attributes = boost::dynamic_pointer_cast<LivingEntity>(entity)->getAttributes();
+    boost::unordered_set<ClientboundUpdateAttributesPacket::AttributeSnapshot*> snapshots = packet->getValues();
     for (boost::unordered_set<ClientboundUpdateAttributesPacket::AttributeSnapshot*>::iterator it =
-             snapshots->begin();
-         it != snapshots->end();
+             snapshots.begin();
+         it != snapshots.end();
          ++it)
     {
         ClientboundUpdateAttributesPacket::AttributeSnapshot* snapshot = *it;
@@ -3951,12 +3967,11 @@ void ClientPacketListener::handleUpdateAttributes(boost::shared_ptr<ClientboundU
         instance->setBaseValue(snapshot->getBase());
         instance->removeModifiers();
         boost::unordered_set<AttributeModifier*>* modifiers = snapshot->getModifiers();
-        for (boost::unordered_set<AttributeModifier*>::iterator modifier = modifiers->begin();
-             modifier != modifiers->end();
-             ++modifier)
+        for (boost::unordered_set<AttributeModifier*>::iterator it2 = modifiers->begin(); it2 != modifiers->end(); ++it2)
         {
-            instance->addModifier(new AttributeModifier((*modifier)->getId(), (*modifier)->getAmount(),
-                                                        (*modifier)->getOperation()));
+            AttributeModifier* modifier = *it2;
+            instance->addModifier(
+                new AttributeModifier(modifier->getId(), modifier->getAmount(), modifier->getOperation()));
         }
     }
 }
@@ -4295,7 +4310,7 @@ void ClientPacketListener::handleMapSelectInfo(boost::shared_ptr<MapSelectInfoPa
     std::wstring name(L"");
     ClientMasterGameMode* gameMode = Minecraft::GetInstance()->GetClientMasterGameMode();
     gameMode->ClearPlaylist();
-    if (packet->mSize != 0 && packet->mData != 0)
+    if (packet->mSize != 0 && packet->mData.data != NULL)
     {
         const int count = input.readInt();
         const int miniGameType = gApp.GetFirstMiniGameType();

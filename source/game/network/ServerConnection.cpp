@@ -22,14 +22,11 @@ ServerConnection::~ServerConnection()
 
 int ServerConnection::addPendingTextureRequest(const std::wstring& request)
 {
-    std::vector<std::wstring>::const_iterator requestIterator;
-    for (requestIterator = mPendingTextureRequests.begin();
-         requestIterator != mPendingTextureRequests.end(); ++requestIterator) {
-        if (*requestIterator == request) {
-            return 1;
-        }
+    std::vector<std::wstring>::iterator it = std::find(mPendingTextureRequests.begin(), mPendingTextureRequests.end(), request);
+    if (it == mPendingTextureRequests.end())
+    {
+        mPendingTextureRequests.push_back(request);
     }
-    mPendingTextureRequests.push_back(request);
     return 1;
 }
 
@@ -77,9 +74,8 @@ void ServerConnection::handleConnection(boost::shared_ptr<ServerConnectionListen
 
 void ServerConnection::NewIncomingSocket(Socket* socket)
 {
-    ++mConnectionCount;
     boost::shared_ptr<ServerConnectionListener> listener(
-        new ServerConnectionListener(mServer, socket, L"Connection #" + _toString<int>(mConnectionCount)));
+        new ServerConnectionListener(mServer, socket, L"Connection #" + _toString<int>(mConnectionCount++)));
     handleConnection(listener);
 }
 

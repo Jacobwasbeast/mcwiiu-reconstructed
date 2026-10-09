@@ -13,12 +13,12 @@ ClientboundAddGlobalEntityPacket::ClientboundAddGlobalEntityPacket()
 }
 
 ClientboundAddGlobalEntityPacket::ClientboundAddGlobalEntityPacket(boost::shared_ptr<Entity> entity)
-    : mId(entity->getId()),
-      mX(Mth::floor(entity->mX * 32.0)),
-      mY(Mth::floor(entity->mY * 32.0)),
-      mZ(Mth::floor(entity->mZ * 32.0)),
-      mType(entity->GetType() == EntityType::LIGHTNING_BOLT ? 1 : 0)
 {
+    mId = entity->getId();
+    mX = Mth::floor(entity->mX * 32.0);
+    mY = Mth::floor(entity->mY * 32.0);
+    mZ = Mth::floor(entity->mZ * 32.0);
+    mType = entity->instanceof(EntityType::LIGHTNING_BOLT) ? 1 : 0;
 }
 
 int ClientboundAddGlobalEntityPacket::getPacketId()

@@ -9,17 +9,15 @@ ClientboundSetBorderPacket::ClientboundSetBorderPacket() {
 }
 
 ClientboundSetBorderPacket::ClientboundSetBorderPacket(WorldBorder* border, Type packetType)
-    : type(packetType), absoluteMaxSize(0), centerX(0.0), centerZ(0.0),
-      newSize(0.0), oldSize(0.0), lerpTime(0), warningTime(0), warningBlocks(0) {
-    if (border == 0) return;
-    absoluteMaxSize = border->getAbsoluteMaxSize();
+    : type(packetType) {
     centerX = border->getCenterX();
     centerZ = border->getCenterZ();
     oldSize = border->getSize();
     newSize = border->getLerpTarget();
     lerpTime = border->getLerpRemainingTime();
-    warningTime = border->getWarningTime();
+    absoluteMaxSize = border->getAbsoluteMaxSize();
     warningBlocks = border->getWarningBlocks();
+    warningTime = border->getWarningTime();
 }
 
 ClientboundSetBorderPacket::~ClientboundSetBorderPacket() {
@@ -44,6 +42,12 @@ void ClientboundSetBorderPacket::read(DataInputStream* input) {
         centerX = input->readDouble();
         centerZ = input->readDouble();
         break;
+    case SET_WARNING_BLOCKS:
+        warningBlocks = input->readVarInt();
+        break;
+    case SET_WARNING_TIME:
+        warningTime = input->readVarInt();
+        break;
     case INITIALIZE:
         centerX = input->readDouble();
         centerZ = input->readDouble();
@@ -53,12 +57,6 @@ void ClientboundSetBorderPacket::read(DataInputStream* input) {
         absoluteMaxSize = input->readVarInt();
         warningBlocks = input->readVarInt();
         warningTime = input->readVarInt();
-        break;
-    case SET_WARNING_TIME:
-        warningTime = input->readVarInt();
-        break;
-    case SET_WARNING_BLOCKS:
-        warningBlocks = input->readVarInt();
         break;
     }
 }
@@ -78,6 +76,12 @@ void ClientboundSetBorderPacket::write(DataOutputStream* output) {
         output->writeDouble(centerX);
         output->writeDouble(centerZ);
         break;
+    case SET_WARNING_TIME:
+        output->writeVarInt(warningTime);
+        break;
+    case SET_WARNING_BLOCKS:
+        output->writeVarInt(warningBlocks);
+        break;
     case INITIALIZE:
         output->writeDouble(centerX);
         output->writeDouble(centerZ);
@@ -87,12 +91,6 @@ void ClientboundSetBorderPacket::write(DataOutputStream* output) {
         output->writeVarInt(absoluteMaxSize);
         output->writeVarInt(warningBlocks);
         output->writeVarInt(warningTime);
-        break;
-    case SET_WARNING_TIME:
-        output->writeVarInt(warningTime);
-        break;
-    case SET_WARNING_BLOCKS:
-        output->writeVarInt(warningBlocks);
         break;
     }
 }

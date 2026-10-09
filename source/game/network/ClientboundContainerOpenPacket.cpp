@@ -10,11 +10,11 @@
 ClientboundContainerOpenPacket::ClientboundContainerOpenPacket()
     : mNameData(L"", L"", true, false)
 {
-    mHasCustomName = false;
     mContainerId = 0;
+    mType = 0;
     mSize = 0;
     mEntityId = 0;
-    mType = 0;
+    mHasCustomName = false;
 }
 
 ClientboundContainerOpenPacket::ClientboundContainerOpenPacket(int containerId, int type, InteractionObject::NameData data)
@@ -43,12 +43,9 @@ void ClientboundContainerOpenPacket::_init(int containerId, int type, Interactio
 {
     mContainerId = containerId;
     mType = type;
-    mNameData.name = data.name;
-    mNameData.ownerUuid = data.ownerUuid;
+    mNameData = data;
     mSize = size;
-    mNameData.createdOnHost = data.createdOnHost;
     mEntityId = entityId;
-    mNameData.createdByRestrictedPlayer = data.createdByRestrictedPlayer;
     mHasCustomName = data.name.length() > 0;
 }
 
@@ -59,11 +56,11 @@ void ClientboundContainerOpenPacket::handle(PacketListener* listener)
 
 void ClientboundContainerOpenPacket::read(DataInputStream* input)
 {
-    mContainerId = input->readByte();
-    mType = input->readByte();
-    mSize = input->readByte();
+    mContainerId = input->readByte() & 0xff;
+    mType = input->readByte() & 0xff;
+    mSize = input->readByte() & 0xff;
     mHasCustomName = input->readBoolean();
-    if (mType == 11 || mType == 6)
+    if (mType == HORSE || mType == TRADER_NPC)
     {
         mEntityId = input->readInt();
     }
@@ -78,11 +75,11 @@ void ClientboundContainerOpenPacket::read(DataInputStream* input)
 
 void ClientboundContainerOpenPacket::write(DataOutputStream* output)
 {
-    output->writeByte((unsigned char)mContainerId);
-    output->writeByte((unsigned char)mType);
-    output->writeByte((unsigned char)mSize);
+    output->writeByte(mContainerId & 0xff);
+    output->writeByte(mType & 0xff);
+    output->writeByte(mSize & 0xff);
     output->writeBoolean(mHasCustomName);
-    if (mType == 11 || mType == 6)
+    if (mType == HORSE || mType == TRADER_NPC)
     {
         output->writeInt(mEntityId);
     }
@@ -114,32 +111,32 @@ int ClientboundContainerOpenPacket::getType()
     return mType;
 }
 
-uint32_t ClientboundContainerOpenPacket::hasCustomName()
+bool ClientboundContainerOpenPacket::hasCustomName()
 {
-    if (!mHasCustomName)
+    if (mHasCustomName)
     {
-        return 0;
+        bool censored = gApp.IsConsoleChatCensored() || mNameData.createdByRestrictedPlayer;
+        if (!censored || gApp.IsUUIDLocal(mNameData.ownerUuid) ||
+            (CGameNetworkManager::sInstance.IsHost() && mNameData.createdOnHost))
+        {
+            return true;
+        }
     }
-    if ((!gApp.IsConsoleChatCensored() && !mNameData.createdByRestrictedPlayer) ||
-        gApp.IsUUIDLocal(mNameData.ownerUuid) ||
-        (CGameNetworkManager::sInstance.IsHost() && mNameData.createdOnHost))
-    {
-        return 1;
-    }
-    return 0;
+    return false;
 }
 
 std::wstring ClientboundContainerOpenPacket::getTitle()
 {
     if (hasCustomName())
     {
-        if ((!gApp.IsConsoleChatCensored() && !mNameData.createdByRestrictedPlayer) ||
-            gApp.IsUUIDLocal(mNameData.ownerUuid) ||
-            (CGameNetworkManager::sInstance.IsHost() && mNameData.createdOnHost))
+        bool canShow = (!gApp.IsConsoleChatCensored() && !mNameData.createdByRestrictedPlayer) ||
+                       gApp.IsUUIDLocal(mNameData.ownerUuid) ||
+                       (CGameNetworkManager::sInstance.IsHost() && mNameData.createdOnHost);
+        if (!canShow)
         {
-            return mNameData.name;
+            return L"";
         }
-        return L"";
+        return mNameData.name;
     }
     return L"";
 }

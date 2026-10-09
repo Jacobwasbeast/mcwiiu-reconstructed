@@ -13,8 +13,8 @@
 ClientboundChunkBlocksUpdatePacket::ClientboundChunkBlocksUpdatePacket()
 {
     shouldDelay = true;
-    x = 0;
     z = 0;
+    x = 0;
     count = 0;
 }
 
@@ -110,15 +110,17 @@ void ClientboundChunkBlocksUpdatePacket::read(DataInputStream* input)
         }
         else
         {
-            previousElement = (value & 15) | (((value >> 5) & 1) != 0 ? 0 : (previousElement & 0xfffffff0));
+            if ((value >> 5) & 1)
+                previousElement = 0;
+            previousElement = (previousElement & 0xfffffff0) | (value & 15);
         }
 
         elements.data[i] = previousElement;
 
         if (newY)
         {
-            unsigned int xz = input->readByte();
-            previousPosition = static_cast<unsigned short>((xz << 8) | input->readByte());
+            previousPosition = input->readByte() << 8;
+            previousPosition |= input->readByte();
         }
         else
         {
@@ -150,7 +152,8 @@ void ClientboundChunkBlocksUpdatePacket::write(DataOutputStream* output)
             value = 128;
         }
 
-        if (element == 0 || ((element ^ previousElement) & 0xfffffff0) == 0)
+        bool sameHighBits = ((element ^ previousElement) & 0xfffffff0) == 0;
+        if (element == 0 || sameHighBits)
         {
             if (element == 0)
             {

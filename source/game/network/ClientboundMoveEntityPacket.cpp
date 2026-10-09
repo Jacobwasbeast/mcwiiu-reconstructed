@@ -7,13 +7,25 @@
 void __debugbreak();
 
 ClientboundMoveEntityPacket::ClientboundMoveEntityPacket()
-    : mEntityId(-1), mXa(0), mYa(0), mZa(0), mYRot(0), mXRot(0), mHasRotation(false)
 {
+    mEntityId = -1;
+    mHasRotation = false;
+    mXa = 0;
+    mYa = 0;
+    mZa = 0;
+    mYRot = 0;
+    mXRot = 0;
 }
 
 ClientboundMoveEntityPacket::ClientboundMoveEntityPacket(int entityId)
-    : mEntityId(entityId), mXa(0), mYa(0), mZa(0), mYRot(0), mXRot(0), mHasRotation(false)
 {
+    mEntityId = entityId;
+    mHasRotation = false;
+    mXa = 0;
+    mYa = 0;
+    mZa = 0;
+    mYRot = 0;
+    mXRot = 0;
 }
 
 int ClientboundMoveEntityPacket::getPacketId()
@@ -97,11 +109,11 @@ void ClientboundMoveEntityPacket::Pos::read(DataInputStream* input)
 void ClientboundMoveEntityPacket::Pos::write(DataOutputStream* output)
 {
     ClientboundMoveEntityPacket::write(output);
-    unsigned int xaBits = packInt(mXa, 22, 10);
-    unsigned int yaBits = packInt(mYa, 12, 10);
-    unsigned int zaBits = packInt(mZa, 2, 10);
-    unsigned int groundBits = packInt(mOnGround, 0, 1);
-    output->writeInt(xaBits | yaBits | zaBits | groundBits);
+    unsigned int packed = packInt(mXa, 22, 10);
+    packed |= packInt(mYa, 12, 10);
+    packed |= packInt(mZa, 2, 10);
+    packed |= packInt(mOnGround, 0, 1);
+    output->writeInt(packed);
 }
 int ClientboundMoveEntityPacket::Pos::getEstimatedSize()
 {
@@ -123,8 +135,8 @@ ClientboundMoveEntityPacket::Rot::Rot(int entityId, unsigned char yRot, unsigned
 {
     mYRot = yRot;
     mXRot = xRot;
-    mOnGround = onGround;
     mHasRotation = true;
+    mOnGround = onGround;
 }
 
 int ClientboundMoveEntityPacket::Rot::getPacketId()
@@ -192,11 +204,11 @@ void ClientboundMoveEntityPacket::PosRot::read(DataInputStream* input)
 void ClientboundMoveEntityPacket::PosRot::write(DataOutputStream* output)
 {
     ClientboundMoveEntityPacket::write(output);
-    unsigned int xaBits = packInt(mXa, 22, 10);
-    unsigned int yaBits = packInt(mYa, 12, 10);
-    unsigned int zaBits = packInt(mZa, 2, 10);
-    unsigned int groundBits = packInt(mOnGround, 0, 1);
-    output->writeInt(xaBits | yaBits | zaBits | groundBits);
+    unsigned int packed = packInt(mXa, 22, 10);
+    packed |= packInt(mYa, 12, 10);
+    packed |= packInt(mZa, 2, 10);
+    packed |= packInt(mOnGround, 0, 1);
+    output->writeInt(packed);
     output->writeByte(mYRot);
     output->writeByte(mXRot);
 }

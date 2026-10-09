@@ -12,14 +12,14 @@ ClientboundTeleportEntityPacket::ClientboundTeleportEntityPacket()
 }
 
 ClientboundTeleportEntityPacket::ClientboundTeleportEntityPacket(boost::shared_ptr<Entity> entity)
-    : mId(entity->getId()),
-      mX(Mth::floor(entity->mX * 32.0)),
-      mY(Mth::floor(entity->mY * 32.0)),
-      mZ(Mth::floor(entity->mZ * 32.0)),
-      myRot((unsigned char)Mth::floor(entity->mYRot * 256.0f / 360.0f)),
-      mxRot((unsigned char)Mth::floor(entity->mXRot * 256.0f / 360.0f)),
-      mOnGround(entity->mOnGround)
 {
+    mId = entity->getId();
+    mX = Mth::floor(entity->mX * 32.0);
+    mY = Mth::floor(entity->mY * 32.0);
+    mZ = Mth::floor(entity->mZ * 32.0);
+    myRot = (unsigned char)Mth::floor(entity->mYRot * 256.0f / 360.0f);
+    mxRot = (unsigned char)Mth::floor(entity->mXRot * 256.0f / 360.0f);
+    mOnGround = entity->mOnGround;
 }
 
 int ClientboundTeleportEntityPacket::getPacketId()

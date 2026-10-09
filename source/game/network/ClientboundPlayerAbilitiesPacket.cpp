@@ -32,7 +32,7 @@ void ClientboundPlayerAbilitiesPacket::setCanBuild(bool value) { mCanBuild = val
 
 void ClientboundPlayerAbilitiesPacket::read(DataInputStream* input)
 {
-    int flags = input->readByte();
+    unsigned char flags = input->readByte();
     setInvulnerable((flags & 1) > 0);
     setFlying((flags & 2) > 0);
     setCanFly((flags & 4) > 0);

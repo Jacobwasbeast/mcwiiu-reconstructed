@@ -21,7 +21,8 @@ ClientboundSetEquippedItemPacket::ClientboundSetEquippedItemPacket(int entity, c
 void ClientboundSetEquippedItemPacket::read(DataInputStream* input)
 {
     m_entity = input->readVarInt();
-    m_slot = EquipmentSlot::SLOTS[input->readShort()];
+    short slot = input->readShort();
+    m_slot = EquipmentSlot::SLOTS[slot];
     m_item = input->readItem();
 }
 

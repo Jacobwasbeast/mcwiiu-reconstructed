@@ -24,10 +24,6 @@ GameModePacket::IntData::IntData(int value)
 {
 }
 
-GameModePacket::IntData::~IntData()
-{
-}
-
 void GameModePacket::IntData::ReadPacket(boost::shared_ptr<GameModePacket> packet)
 {
     value = packet->ints[0];
@@ -219,8 +215,8 @@ GameModePacket::PlayerData::PlayerData()
 }
 
 GameModePacket::PlayerData::PlayerData(std::wstring playerName)
-    : playerName(playerName)
 {
+    this->playerName = playerName;
 }
 
 void GameModePacket::PlayerData::ReadPacket(boost::shared_ptr<GameModePacket> packet)
@@ -247,10 +243,6 @@ void GameModePacket::SetCameraData::WritePacket(boost::shared_ptr<GameModePacket
 
 GameModePacket::SyncTeamInviteData::SyncTeamInviteData()
     : invite(0)
-{
-}
-
-GameModePacket::SyncTeamInviteData::~SyncTeamInviteData()
 {
 }
 
@@ -281,10 +273,6 @@ GameModePacket::TeamIDData::TeamIDData(int teamId)
 {
 }
 
-GameModePacket::TeamIDData::~TeamIDData()
-{
-}
-
 void GameModePacket::TeamIDData::ReadPacket(boost::shared_ptr<GameModePacket> packet)
 {
     teamId = packet->ints[0];
@@ -304,8 +292,8 @@ GameModePacket::RemoveTeamInviteData::~RemoveTeamInviteData()
 }
 
 GameModePacket::AddAreaBoundsData::AddAreaBoundsData()
-    : minX(0), minY(0), minZ(0), maxX(0), maxY(0), maxZ(0)
 {
+    minX = minY = minZ = maxX = maxY = maxZ = 0;
 }
 
 GameModePacket::AddAreaBoundsData::AddAreaBoundsData(
@@ -346,10 +334,6 @@ GameModePacket::StateChangeData::StateChangeData()
 
 GameModePacket::StateChangeData::StateChangeData(EGameModeState state)
     : state(state)
-{
-}
-
-GameModePacket::StateChangeData::~StateChangeData()
 {
 }
 
@@ -437,16 +421,12 @@ unsigned int GameModePacket::UpdateThemeGameModeData::getThemeData() const
 }
 
 GameModePacket::SoundPositionData::SoundPositionData()
-    : x(0.0f), y(0.0f), z(0.0f)
 {
+    x = y = z = 0.0f;
 }
 
 GameModePacket::SoundPositionData::SoundPositionData(float x, float y, float z)
     : x(x), y(y), z(z)
-{
-}
-
-GameModePacket::SoundPositionData::~SoundPositionData()
 {
 }
 
@@ -472,10 +452,6 @@ GameModePacket::UpdateThemeIdData::UpdateThemeIdData()
 GameModePacket::UpdateThemeIdData::UpdateThemeIdData(int themeId,
                                                       int previousThemeId)
     : themeId(themeId), previousThemeId(previousThemeId)
-{
-}
-
-GameModePacket::UpdateThemeIdData::~UpdateThemeIdData()
 {
 }
 

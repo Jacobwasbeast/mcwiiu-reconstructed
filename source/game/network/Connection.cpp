@@ -122,18 +122,18 @@ void Connection::_init()
     InitializeCriticalSection(&m_incomingLock);
     m_running = true;
     InitializeCriticalSection(&m_runningLock);
-    m_readError = false;
-    m_slowWriteDelay = SLOW_WRITE_DELAY;
-    m_disconnected = false;
-    m_packetsWritten = 0;
-    m_fakeLag = 0;
-    m_packetsRead = 0;
-    m_disconnectReason = DisconnectPacket::eDisconnectReason_None;
     m_estimatedRemaining = 0;
+    m_slowWriteDelay = SLOW_WRITE_DELAY;
+    m_noInputTicks = 0;
+    m_disconnectReason = DisconnectPacket::eDisconnectReason_None;
+    m_disconnected = false;
+    m_quitting = false;
+    m_fakeLag = 0;
     m_closeThread = NULL;
     m_sendAndQuitThread = NULL;
-    m_quitting = false;
-    m_noInputTicks = 0;
+    m_packetsRead = 0;
+    m_packetsWritten = 0;
+    m_readError = false;
 }
 
 bool Connection::getAndSetRunning(bool running)
@@ -176,9 +176,10 @@ int Connection::runRead(void* argument)
     if (connection != NULL)
     {
         Compression::CreateNewThreadStorage();
-        EnterCriticalSection(&connection->m_threadCountLock);
+        OSFastMutex* threadCountLock = &connection->m_threadCountLock;
+        EnterCriticalSection(threadCountLock);
         ++sReadThreadCount;
-        LeaveCriticalSection(&connection->m_threadCountLock);
+        LeaveCriticalSection(threadCountLock);
         MemSect(19);
         while (connection->m_running && !connection->m_quitting &&
                ShutdownManager::ShouldRun(ShutdownManager::eThreadId_ConnectionRead))
@@ -204,7 +205,7 @@ bool Connection::writeTick()
 
     if (!m_outgoing.empty() &&
         (m_fakeLag == 0 ||
-         static_cast<long long>(System::processTimeInMilliSecs()) - m_outgoing.front()->creationTime >= m_fakeLag))
+         System::processTimeInMilliSecs() - m_outgoing.front()->creationTime >= m_fakeLag))
     {
         boost::shared_ptr<Packet> packet;
         EnterCriticalSection(&m_writeLock);
@@ -220,7 +221,7 @@ bool Connection::writeTick()
 
     if (m_slowWriteDelay-- <= 0 && !m_outgoingSlow.empty() &&
         (m_fakeLag == 0 ||
-         static_cast<long long>(System::processTimeInMilliSecs()) - m_outgoingSlow.front()->creationTime >= m_fakeLag))
+         System::processTimeInMilliSecs() - m_outgoingSlow.front()->creationTime >= m_fakeLag))
     {
         boost::shared_ptr<Packet> packet;
         EnterCriticalSection(&m_writeLock);
@@ -229,17 +230,17 @@ bool Connection::writeTick()
         m_estimatedRemaining -= packet->getEstimatedSize() + 1;
         LeaveCriticalSection(&m_writeLock);
 
-        if (!packet->shouldDelay)
-        {
-            Packet::writePacket(packet, m_bufferedOutput, m_listener->isServerPacketListener(), m_packetsWritten);
-        }
-        else
+        if (packet->shouldDelay)
         {
             Packet::writePacket(packet, m_byteArrayOutput, m_listener->isServerPacketListener(), m_packetsWritten);
             if (m_bufferedOutput != NULL)
                 m_bufferedOutput->flush();
             m_socketOutput->writeWithFlags(m_byteArrayStream->mBuffer, 0, m_byteArrayStream->mCount, 1);
             m_byteArrayStream->mCount = 0;
+        }
+        else
+        {
+            Packet::writePacket(packet, m_bufferedOutput, m_listener->isServerPacketListener(), m_packetsWritten);
         }
         sWriteSizes[packet->getPacketId()] += packet->getEstimatedSize() + 1;
         m_slowWriteDelay = 0;
@@ -256,9 +257,10 @@ int Connection::runWrite(void* argument)
     if (connection != NULL)
     {
         Compression::CreateNewThreadStorage();
-        EnterCriticalSection(&connection->m_threadCountLock);
+        OSFastMutex* threadCountLock = &connection->m_threadCountLock;
+        EnterCriticalSection(threadCountLock);
         ++sWriteThreadCount;
-        LeaveCriticalSection(&connection->m_threadCountLock);
+        LeaveCriticalSection(threadCountLock);
 
         unsigned int waitResult = WAIT_TIMED_OUT;
         while ((connection->m_running || waitResult == WAIT_SIGNALLED) &&
@@ -279,9 +281,9 @@ int Connection::runWrite(void* argument)
                 connection->m_bufferedOutput->flush();
         }
 
-        EnterCriticalSection(&connection->m_threadCountLock);
+        EnterCriticalSection(threadCountLock);
         --sWriteThreadCount;
-        LeaveCriticalSection(&connection->m_threadCountLock);
+        LeaveCriticalSection(threadCountLock);
         Compression::ReleaseThreadStorage();
     }
     ShutdownManager::HasFinished(ShutdownManager::eThreadId_ConnectionWrite);
@@ -295,25 +297,25 @@ void Connection::setListener(PacketListener* listener)
 
 void Connection::send(boost::shared_ptr<Packet> packet)
 {
-    if (m_quitting)
-        return;
-
-    m_lastSendTime = System::processTimeInMilliSecs();
-    MemSect(15);
-    EnterCriticalSection(&m_writeLock);
-    m_estimatedRemaining += packet->getEstimatedSize() + 1;
-    if (packet->shouldDelay)
+    if (!m_quitting)
     {
-        packet->shouldDelay = false;
-        m_outgoingSlow.push_back(packet);
+        m_lastSendTime = System::processTimeInMilliSecs();
+        MemSect(15);
+        EnterCriticalSection(&m_writeLock);
+        m_estimatedRemaining += packet->getEstimatedSize() + 1;
+        if (packet->shouldDelay)
+        {
+            packet->shouldDelay = false;
+            m_outgoingSlow.push_back(packet);
+        }
+        else if (packet->getPacketId() != MAP_ITEM_DATA_PACKET_ID ||
+                 !packet->tryReplaceDuplicatePacket(&m_outgoing))
+        {
+            m_outgoing.push_back(packet);
+        }
+        LeaveCriticalSection(&m_writeLock);
+        MemSect(0);
     }
-    else if (packet->getPacketId() != MAP_ITEM_DATA_PACKET_ID ||
-             !packet->tryReplaceDuplicatePacket(&m_outgoing))
-    {
-        m_outgoing.push_back(packet);
-    }
-    LeaveCriticalSection(&m_writeLock);
-    MemSect(0);
 }
 
 void Connection::queueSend(boost::shared_ptr<Packet> packet)
@@ -338,9 +340,9 @@ void Connection::close(DisconnectPacket::eDisconnectReason reason)
     if (!getAndSetRunning(false))
         return;
 
+    m_disconnected = true;
     m_disconnectReason = reason;
     m_disconnectData = NULL;
-    m_disconnected = true;
     if (m_input != NULL)
         m_input->close();
     if (m_readThread != NULL)
@@ -391,17 +393,18 @@ void Connection::tick()
     if (s_altMainStopRequested)
         m_noInputTicks = 0;
 
-    if (static_cast<int>(System::processTimeInMilliSecs()) - static_cast<int>(m_lastSendTime) > KEEP_ALIVE_INTERVAL_MS)
+    int now = static_cast<int>(System::processTimeInMilliSecs());
+    if (now - static_cast<int>(m_lastSendTime) > KEEP_ALIVE_INTERVAL_MS)
     {
-        if (!m_listener->isServerPacketListener())
-            send(boost::shared_ptr<Packet>(new ServerboundKeepAlivePacket()));
-        else
+        if (m_listener->isServerPacketListener())
             send(boost::shared_ptr<Packet>(new ClientboundKeepAlivePacket()));
+        else
+            send(boost::shared_ptr<Packet>(new ServerboundKeepAlivePacket()));
     }
 
+    int remaining = MAX_PACKETS_PER_TICK;
     EnterCriticalSection(&m_incomingLock);
     std::deque<boost::shared_ptr<Packet> > packets;
-    int remaining = MAX_PACKETS_PER_TICK;
     while (!CGameNetworkManager::sInstance.IsLeavingGame() && CGameNetworkManager::sInstance.IsInSession() &&
            !m_incoming.empty() && remaining-- >= 0)
     {
@@ -437,7 +440,7 @@ void Connection::tick()
     }
     LeaveCriticalSection(&m_incomingLock);
 
-    for (unsigned int i = 0; i < packets.size(); ++i)
+    for (int i = 0; i < packets.size(); ++i)
     {
         PIXBeginNamedEvent(0.0f, "Handling packet %d\n", packets[i]->getPacketId());
         packets[i]->handle(m_listener);
@@ -452,9 +455,9 @@ void Connection::tick()
     if (m_disconnected)
     {
         EnterCriticalSection(&m_incomingLock);
-        incomingEmpty = m_incoming.empty();
+        bool stillEmpty = m_incoming.empty();
         LeaveCriticalSection(&m_incomingLock);
-        if (incomingEmpty)
+        if (stillEmpty)
         {
             m_listener->onDisconnect(m_disconnectReason, m_disconnectData);
             m_disconnected = false;

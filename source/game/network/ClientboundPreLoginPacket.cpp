@@ -13,16 +13,16 @@ ClientboundPreLoginPacket::ClientboundPreLoginPacket()
 {
     mName = L"";
     mPlayers = 0;
+    mPlayerCount = 0;
     mGameMode = 0;
     mSeed = 0;
-    mPlayerCount = 0;
     memset(mUniqueMapName, 0, 14);
-    mHostPlayer = 0;
-    mHardcore = false;
-    mMiniGameId = eMiniGameId_Any;
-    mDifficulty = 0;
     mProtocolVersion = 0;
     mGameType = 0;
+    mMiniGameId = eMiniGameId_Any;
+    mDifficulty = 0;
+    mHostPlayer = 0;
+    mHardcore = false;
 }
 
 ClientboundPreLoginPacket::ClientboundPreLoginPacket(std::wstring name, PlayerUID* players,
@@ -32,16 +32,16 @@ ClientboundPreLoginPacket::ClientboundPreLoginPacket(std::wstring name, PlayerUI
 {
     mName = name;
     mPlayers = players;
-    mGameMode = gameMode;
     mPlayerCount = playerCount;
+    mGameMode = gameMode;
     mSeed = seed;
     memcpy(mUniqueMapName, uniqueMapName, 14);
-    mProtocolVersion = 0;
+    mHostPlayer = hostPlayer;
     mDifficulty = difficulty;
+    mGameType = gameType;
+    mProtocolVersion = 0;
     mHardcore = hardcore;
     mMiniGameId = miniGameId;
-    mHostPlayer = hostPlayer;
-    mGameType = gameType;
 }
 
 ClientboundPreLoginPacket::~ClientboundPreLoginPacket()
@@ -52,20 +52,20 @@ ClientboundPreLoginPacket::~ClientboundPreLoginPacket()
 
 void ClientboundPreLoginPacket::read(DataInputStream* input)
 {
-    unsigned int index;
     mProtocolVersion = input->readShort();
     mName = Packet::readUtf(input, 32);
     mGameMode = input->readByte();
     mSeed = input->readInt();
-    mPlayerCount = static_cast<unsigned int>(input->readByte());
-    if (mPlayerCount != 0)
+    int playerCount = input->readByte();
+    mPlayerCount = playerCount;
+    if (playerCount != 0)
     {
-        mPlayers = new PlayerUID[mPlayerCount];
-        for (index = 0; index < mPlayerCount; ++index)
-            mPlayers[index] = input->readPlayerUID();
+        mPlayers = new PlayerUID[playerCount];
+        for (unsigned int i = 0; i < mPlayerCount; ++i)
+            mPlayers[i] = input->readPlayerUID();
     }
-    for (index = 0; index < 14; ++index)
-        mUniqueMapName[index] = static_cast<char>(input->readByte());
+    for (int i = 0; i < 14; ++i)
+        mUniqueMapName[i] = input->readByte();
     mHostPlayer = input->readInt();
     mDifficulty = input->readByte();
     mGameType = input->readInt();
@@ -76,16 +76,15 @@ void ClientboundPreLoginPacket::read(DataInputStream* input)
 
 void ClientboundPreLoginPacket::write(DataOutputStream* output)
 {
-    unsigned int index;
     output->writeShort(2177);
     Packet::writeUtf(mName, output);
     output->writeByte(mGameMode);
     output->writeInt(mSeed);
     output->writeByte(static_cast<unsigned char>(mPlayerCount));
-    for (index = 0; index < mPlayerCount; ++index)
-        output->writePlayerUID(mPlayers[index]);
-    for (index = 0; index < 14; ++index)
-        output->writeByte(static_cast<unsigned char>(mUniqueMapName[index]));
+    for (unsigned int i = 0; i < mPlayerCount; ++i)
+        output->writePlayerUID(mPlayers[i]);
+    for (int i = 0; i < 14; ++i)
+        output->writeByte(static_cast<unsigned char>(mUniqueMapName[i]));
     output->writeInt(mHostPlayer);
     output->writeByte(mDifficulty);
     output->writeInt(mGameType);

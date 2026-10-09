@@ -8,8 +8,8 @@ TexturePacket::TexturePacket()
 {
     shouldDelay = true;
     textureName = L"";
-    data = NULL;
     length = 0;
+    data = NULL;
 }
 
 TexturePacket::TexturePacket(const std::wstring& textureName, unsigned char* data, unsigned int length)

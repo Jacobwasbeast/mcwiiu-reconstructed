@@ -7,8 +7,8 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundBossEventPacket::ClientboundBossEventPacket()
-    : operation(ADD)
 {
+    operation = ADD;
     id = L"";
     name = L"";
     nameId = -1;

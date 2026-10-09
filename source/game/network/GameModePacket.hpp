@@ -88,7 +88,7 @@ public:
     public:
         IntData();
         IntData(int value);
-        virtual ~IntData();
+        virtual ~IntData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 
@@ -221,7 +221,7 @@ public:
     public:
         SyncTeamInviteData();
         SyncTeamInviteData(TeamInvite* invite);
-        virtual ~SyncTeamInviteData();
+        virtual ~SyncTeamInviteData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 
@@ -233,7 +233,7 @@ public:
     public:
         TeamIDData();
         TeamIDData(int teamId);
-        virtual ~TeamIDData();
+        virtual ~TeamIDData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 
@@ -275,7 +275,7 @@ public:
     public:
         StateChangeData();
         StateChangeData(EGameModeState state);
-        virtual ~StateChangeData();
+        virtual ~StateChangeData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 
@@ -327,7 +327,7 @@ public:
     public:
         SoundPositionData();
         SoundPositionData(float x, float y, float z);
-        virtual ~SoundPositionData();
+        virtual ~SoundPositionData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 
@@ -341,7 +341,7 @@ public:
     public:
         UpdateThemeIdData();
         UpdateThemeIdData(int themeId, int previousThemeId);
-        virtual ~UpdateThemeIdData();
+        virtual ~UpdateThemeIdData() {}
         virtual void ReadPacket(boost::shared_ptr<GameModePacket> packet);
         virtual void WritePacket(boost::shared_ptr<GameModePacket> packet) const;
 

@@ -27,7 +27,7 @@ ClientboundContainerSetContentPacket::ClientboundContainerSetContentPacket(
 
 ClientboundContainerSetContentPacket::~ClientboundContainerSetContentPacket()
 {
-    delete[] items.items;
+    delete[] items.items.data;
 }
 
 void ClientboundContainerSetContentPacket::read(DataInputStream* input)
@@ -35,7 +35,7 @@ void ClientboundContainerSetContentPacket::read(DataInputStream* input)
     containerId = input->readByte();
 
     int count = input->readShort();
-    delete[] items.items;
+    delete[] items.items.data;
     items = NonNullList<not_null_ptr<ItemInstance> >::withSize(count, ItemInstance::EMPTY);
 
     for (int i = 0; i < count; ++i)

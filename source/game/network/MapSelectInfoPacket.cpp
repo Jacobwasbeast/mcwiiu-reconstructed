@@ -5,21 +5,19 @@
 #include "game/network/PacketListener.hpp"
 
 MapSelectInfoPacket::MapSelectInfoPacket()
-    : mOwnsData(false), mSize(0), mData(NULL), mLength(0)
+    : mData()
 {
+    mOwnsData = false;
+    mSize = 0;
 }
 
 MapSelectInfoPacket::MapSelectInfoPacket(arrayWithLength<unsigned char> data, bool ownsData)
-    : mData(NULL), mLength(0)
+    : mData()
 {
     mOwnsData = ownsData;
-    mData = data.data;
-    mLength = data.length;
-    if (mData == NULL)
-    {
-        mSize = 0;
-    }
-    else
+    mData = data;
+    mSize = 0;
+    if (data.data != NULL)
     {
         mSize = data.length;
     }
@@ -28,7 +26,7 @@ MapSelectInfoPacket::MapSelectInfoPacket(arrayWithLength<unsigned char> data, bo
 MapSelectInfoPacket::~MapSelectInfoPacket()
 {
     if (mOwnsData)
-        delete[] mData;
+        delete[] mData.data;
 }
 
 void MapSelectInfoPacket::read(DataInputStream* input)
@@ -36,24 +34,19 @@ void MapSelectInfoPacket::read(DataInputStream* input)
     mSize = static_cast<unsigned int>(input->readShort());
     if (mSize - 1 < 0x7ffe)
     {
-        if (mData != NULL)
-            delete[] mData;
-        arrayWithLength<unsigned char> data(mSize, true);
-        mData = data.data;
-        mLength = data.length;
-        input->readBytes(data);
+        if (mData.data != NULL)
+            delete[] mData.data;
+        mData = arrayWithLength<unsigned char>(mSize, true);
+        input->readBytes(mData);
     }
 }
 
 void MapSelectInfoPacket::write(DataOutputStream* output)
 {
     output->writeShort(static_cast<short>(mSize));
-    if (mData != NULL)
+    if (mData.data != NULL)
     {
-        arrayWithLength<unsigned char> data;
-        data.data = mData;
-        data.length = mLength;
-        output->writeBytes(data);
+        output->writeBytes(mData);
     }
 }
 

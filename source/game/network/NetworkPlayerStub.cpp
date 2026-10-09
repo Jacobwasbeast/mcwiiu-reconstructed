@@ -147,7 +147,8 @@ int NetworkPlayerStub::GetTimeSinceLastChunkPacket_ms()
     {
         return INT_MAX;
     }
-    return static_cast<int>(System::processTimeInMilliSecs() - m_lastChunkPacketTime);
+    long long now = System::processTimeInMilliSecs();
+    return static_cast<int>(now - m_lastChunkPacketTime);
 }
 
 bool NetworkPlayerStub::isFake()

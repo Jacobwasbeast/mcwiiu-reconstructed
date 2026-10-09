@@ -7,16 +7,16 @@
 
 ClientboundTakeItemEntityPacket::ClientboundTakeItemEntityPacket()
 {
-    amount = -1;
     itemId = -1;
     playerId = -1;
+    amount = -1;
 }
 
 ClientboundTakeItemEntityPacket::ClientboundTakeItemEntityPacket(int itemId, int playerId, int amount)
 {
     this->itemId = itemId;
-    this->amount = amount;
     this->playerId = playerId;
+    this->amount = amount;
 }
 
 int ClientboundTakeItemEntityPacket::getPacketId()

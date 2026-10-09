@@ -68,7 +68,7 @@ void ServerLevelListener::entityAdded(boost::shared_ptr<Entity> entity)
     mLevel->getTracker()->addEntity(entity);
     MemSect(0);
 
-    const bool isServerPlayer = entity->GetType() == EntityType::SERVER_PLAYER;
+    const bool isServerPlayer = eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, entity->GetType());
     if (isServerPlayer)
         mLevel->mDimension->onPlayerJoin(boost::static_pointer_cast<ServerPlayer>(entity));
 }
@@ -77,7 +77,7 @@ void ServerLevelListener::entityRemoved(boost::shared_ptr<Entity> entity)
 {
     mLevel->getTracker()->removeEntity(entity);
 
-    const bool isServerPlayer = entity->GetType() == EntityType::SERVER_PLAYER;
+    const bool isServerPlayer = eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, entity->GetType());
     if (isServerPlayer)
         mLevel->mDimension->onPlayerLeave(boost::static_pointer_cast<ServerPlayer>(entity));
 }

@@ -10,10 +10,10 @@ ClientboundLoginPacket::ClientboundLoginPacket()
     mLevelName = L"";
     mEntityId = 0;
     mSeed = 0;
+    mGameMode = 0;
     mGameType = 0;
     mDimension = -1;
     mDifficulty = -1;
-    mGameMode = 0;
     mDifficultyValue = 0;
     mMaxPlayers = 0;
     mPlayerFlag = 1;
@@ -33,11 +33,11 @@ ClientboundLoginPacket::ClientboundLoginPacket()
     mHellScale = 3;
     mMaxTick = 0x80;
     mIsFlatWorld = true;
+    mHasAchievements = false;
+    mUnknownValue3 = -1;
     mPlayerFlags = 0;
     mSpawnProtection = 0;
     mSimulationDistance = 0;
-    mHasAchievements = false;
-    mUnknownValue3 = -1;
 }
 
 ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, int entityId, LevelType* levelType,
@@ -51,9 +51,14 @@ ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, in
     mEntityId = entityId;
     mSeed = seed;
     mGameMode = gameMode;
+    mGameType = gameType;
+    mDimension = dimension;
+    mDifficulty = difficulty;
+    mDifficultyValue = difficultyValue;
+    mMaxPlayers = maxPlayers;
+    mPlayerFlag = playerFlag;
     mPlayerUID = PlayerUID(0);
     mPlayerUID2 = PlayerUID(0);
-    mPlayerFlag = playerFlag;
     mHardcore = false;
     mViewDistance = 0;
     mChunkDistance = chunkDistance;
@@ -68,16 +73,11 @@ ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, in
     mHellScale = hellScale;
     mMaxTick = maxTick;
     mIsFlatWorld = isFlatWorld;
+    mHasAchievements = false;
     mPlayerFlags = playerFlags;
     mSpawnProtection = spawnProtection;
     mSimulationDistance = simulationDistance;
-    mHasAchievements = false;
     mUnknownValue3 = unknownValue3;
-    mGameType = gameType;
-    mDifficultyValue = difficultyValue;
-    mMaxPlayers = maxPlayers;
-    mDimension = dimension;
-    mDifficulty = difficulty;
 }
 
 ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, int entityId, PlayerUID playerUID,
@@ -89,15 +89,20 @@ ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, in
     mEntityId = entityId;
     mSeed = 0;
     mGameMode = 0;
+    mGameType = 0;
+    mDimension = -1;
+    mDifficulty = -1;
+    mDifficultyValue = 0;
+    mMaxPlayers = 0;
+    mPlayerFlag = 1;
     mPlayerUID = playerUID;
     mPlayerUID2 = playerUID2;
-    mPlayerFlag = 1;
     mHardcore = hardcore;
     mViewDistance = static_cast<int>(viewDistance);
     mChunkDistance = 0;
     mReducedDebugInfo = 0;
-    mWorldHeight = static_cast<int>(worldHeight);
-    mSeaLevel = static_cast<int>(seaLevel);
+    mWorldHeight = worldHeight;
+    mSeaLevel = seaLevel;
     mAllowCommands = allowCommands;
     mIsFlat = false;
     mLevelType = NULL;
@@ -106,16 +111,11 @@ ClientboundLoginPacket::ClientboundLoginPacket(const std::wstring& levelName, in
     mHellScale = 3;
     mMaxTick = 0x80;
     mIsFlatWorld = true;
+    mHasAchievements = hasAchievements;
+    mUnknownValue3 = -1;
     mPlayerFlags = 0;
     mSpawnProtection = 0;
     mSimulationDistance = 0;
-    mHasAchievements = hasAchievements;
-    mUnknownValue3 = -1;
-    mGameType = 0;
-    mDifficultyValue = 0;
-    mMaxPlayers = 0;
-    mDimension = -1;
-    mDifficulty = -1;
 }
 
 int ClientboundLoginPacket::getPacketId()
@@ -128,12 +128,11 @@ void ClientboundLoginPacket::read(DataInputStream* input)
     mEntityId = input->readInt();
     mLevelName = Packet::readUtf(input, 20);
     std::wstring generatorName = Packet::readUtf(input, 16);
-    LevelType* levelType = LevelType::getLevelType(generatorName);
-    if (levelType == NULL)
+    mLevelType = LevelType::getLevelType(generatorName);
+    if (mLevelType == NULL)
     {
-        levelType = LevelType::DEFAULT;
+        mLevelType = LevelType::DEFAULT;
     }
-    mLevelType = levelType;
     mSeed = input->readLong();
     mGameType = input->readInt();
     mDimension = input->readInt();
@@ -148,8 +147,10 @@ void ClientboundLoginPacket::read(DataInputStream* input)
     mPlayerFlag = input->readByte();
     mChunkDistance = input->readInt();
     mReducedDebugInfo = input->readByte();
-    mWorldHeight = input->readInt();
-    mSeaLevel = input->readInt();
+    int skinId = input->readInt();
+    mWorldHeight = *(unsigned int*)&skinId;
+    int capeId = input->readInt();
+    mSeaLevel = *(unsigned int*)&capeId;
     mAllowCommands = input->readBoolean();
     mIsFlat = input->readBoolean();
     mCurrentTick = input->readInt();

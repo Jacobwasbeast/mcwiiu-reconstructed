@@ -32,11 +32,11 @@ void FlexiblePacket::read(DataInputStream* input)
 
     if (boolCount > 0)
     {
-        unsigned int bits = input->readByte();
+        unsigned char bits = input->readByte();
 
         for (int i = 0; i < boolCount; ++i)
         {
-            bools.push_back(((bits >> i) & 1) != 0);
+            bools.push_back(((static_cast<unsigned int>(bits) >> i) & 1) != 0);
         }
     }
 
@@ -48,19 +48,18 @@ void FlexiblePacket::read(DataInputStream* input)
 
 void FlexiblePacket::write(DataOutputStream* output)
 {
-    unsigned int header = strings.size() & 0xFF;
+    int header = strings.size() & 0xFF;
     header |= (ints.size() & 0xFFF) << 8;
-    int floatCount = floats.size();
-    header |= static_cast<unsigned char>(bools.size()) << 20;
-    header |= floatCount << 28;
+    header |= (bools.size() & 0xFF) << 20;
+    header |= (floats.size() & 0xF) << 28;
     output->writeInt(header);
 
-    for (unsigned int i = 0; i < strings.size(); ++i)
+    for (int i = 0; i < strings.size(); ++i)
     {
         Packet::writeUtf(strings[i], output);
     }
 
-    for (unsigned int i = 0; i < ints.size(); ++i)
+    for (int i = 0; i < ints.size(); ++i)
     {
         output->writeVarInt(ints[i]);
     }
@@ -69,12 +68,9 @@ void FlexiblePacket::write(DataOutputStream* output)
     {
         unsigned char bits = 0;
 
-        for (unsigned int i = 0; i < bools.size(); ++i)
+        for (int i = 0; i < bools.size(); ++i)
         {
-            std::vector<bool>::const_iterator bit = bools.begin();
-            bit += i;
-
-            if (*bit)
+            if (bools[i])
             {
                 bits |= (1 << i);
             }
@@ -83,7 +79,7 @@ void FlexiblePacket::write(DataOutputStream* output)
         output->writeByte(bits);
     }
 
-    for (unsigned int i = 0; i < floats.size(); ++i)
+    for (int i = 0; i < floats.size(); ++i)
     {
         output->writeFloat(floats[i]);
     }
@@ -93,14 +89,13 @@ int FlexiblePacket::getEstimatedSize()
 {
     int size = 0;
 
-    for (unsigned int i = 0; i < strings.size(); ++i)
+    for (int i = 0; i < strings.size(); ++i)
     {
         size += strings[i].size();
     }
 
-    size += ints.size() * 4;
-    size += !bools.empty();
-    size += floats.size() * 4;
-
-    return size + 4;
+    int intSize = ints.size() * 4;
+    int boolSize = bools.empty() ? 0 : 1;
+    int floatSize = floats.size() * 4;
+    return size + intSize + boolSize + floatSize + 4;
 }

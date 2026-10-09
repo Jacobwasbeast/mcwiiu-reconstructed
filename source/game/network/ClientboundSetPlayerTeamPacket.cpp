@@ -10,8 +10,8 @@ ClientboundSetPlayerTeamPacket::ClientboundSetPlayerTeamPacket()
 {
     mName = L"";
     mMethod = 0;
-    mNameTagVisibility = 0;
     mOptions = 0;
+    mNameTagVisibility = 0;
 }
 
 ClientboundSetPlayerTeamPacket::ClientboundSetPlayerTeamPacket(PlayerTeam* team, int method)

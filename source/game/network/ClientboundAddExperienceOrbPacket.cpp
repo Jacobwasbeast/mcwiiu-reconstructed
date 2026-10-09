@@ -8,9 +8,9 @@
 ClientboundAddExperienceOrbPacket::ClientboundAddExperienceOrbPacket()
 {
     mId = 0;
-    mX = 0;
-    mY = 0;
     mZ = 0;
+    mY = 0;
+    mX = 0;
     mValue = 0;
 }
 

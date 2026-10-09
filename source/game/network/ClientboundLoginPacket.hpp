@@ -45,8 +45,8 @@ private:
     int mViewDistance;
     int mChunkDistance;
     unsigned char mReducedDebugInfo;
-    int mWorldHeight;
-    int mSeaLevel;
+    unsigned int mWorldHeight;
+    unsigned int mSeaLevel;
     bool mAllowCommands;
     bool mIsFlat;
     LevelType* mLevelType;

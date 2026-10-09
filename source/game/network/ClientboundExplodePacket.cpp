@@ -72,14 +72,14 @@ void ClientboundExplodePacket::write(DataOutputStream* output)
         output->writeFloat((float)z);
         output->writeFloat(power);
         output->writeInt((int)toBlow.size());
-        double baseX = x;
-        double baseY = y;
-        double baseZ = z;
+        int baseX = (int)x;
+        int baseY = (int)y;
+        int baseZ = (int)z;
         for (std::vector<BlockPos, std::allocator<BlockPos> >::const_iterator it = toBlow.begin(); it != toBlow.end(); ++it)
         {
-            int offsetX = it->x - (int)baseX;
-            int offsetY = it->y - (int)baseY;
-            int offsetZ = it->z - (int)baseZ;
+            int offsetX = it->x - baseX;
+            int offsetY = it->y - baseY;
+            int offsetZ = it->z - baseZ;
             output->writeByte((unsigned char)offsetX);
             output->writeByte((unsigned char)offsetY);
             output->writeByte((unsigned char)offsetZ);

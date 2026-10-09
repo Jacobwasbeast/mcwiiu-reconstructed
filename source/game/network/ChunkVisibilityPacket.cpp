@@ -6,20 +6,20 @@
 
 ChunkVisibilityPacket::ChunkVisibilityPacket()
 {
-    visible = false;
-    x = 0;
-    loaded = false;
-    z = 0;
     shouldDelay = false;
+    x = 0;
+    z = 0;
+    visible = false;
+    loaded = false;
 }
 
 ChunkVisibilityPacket::ChunkVisibilityPacket(int x, int z, bool visible, bool loaded)
 {
-    this->visible = visible;
-    this->x = x;
-    this->loaded = loaded;
-    this->z = z;
     shouldDelay = false;
+    this->x = x;
+    this->z = z;
+    this->visible = visible;
+    this->loaded = loaded;
 }
 
 void ChunkVisibilityPacket::read(DataInputStream* input)

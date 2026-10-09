@@ -24,10 +24,7 @@ public:
     virtual int getPacketId();
     arrayWithLength<unsigned char> getData() const
     {
-        arrayWithLength<unsigned char> view;
-        view.data = mData;
-        view.length = mLength;
-        return view;
+        return mData;
     }
     static boost::shared_ptr<Packet> create();
 
@@ -35,8 +32,7 @@ private:
     friend class ClientPacketListener;
     bool mOwnsData;
     unsigned int mSize;
-    unsigned char* mData;
-    unsigned int mLength;
+    arrayWithLength<unsigned char> mData;
 };
 
 #endif

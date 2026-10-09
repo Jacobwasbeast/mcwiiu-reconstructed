@@ -11,7 +11,7 @@ maybe<float> readMaybeFloat(DataInputStream* input)
 }
 
 ClientboundMGPlayerSettingsUpdatePacket::ClientboundMGPlayerSettingsUpdatePacket() : mSettings() {}
-ClientboundMGPlayerSettingsUpdatePacket::ClientboundMGPlayerSettingsUpdatePacket(const MiniGamePlayerSettings& settings) : mSettings(settings) {}
+ClientboundMGPlayerSettingsUpdatePacket::ClientboundMGPlayerSettingsUpdatePacket(const MiniGamePlayerSettings& settings) { mSettings = settings; }
 ClientboundMGPlayerSettingsUpdatePacket::~ClientboundMGPlayerSettingsUpdatePacket() {}
 void ClientboundMGPlayerSettingsUpdatePacket::read(DataInputStream* input)
 {
@@ -29,11 +29,15 @@ void ClientboundMGPlayerSettingsUpdatePacket::read(DataInputStream* input)
     mSettings.mChestRefillEnabled = input->readBoolean();
 
     unsigned char tntFlags = input->readByte();
-    mSettings.mCanTntDestroyBlocks = (tntFlags & 1)
-        ? maybe<bool>((tntFlags & 2) != 0) : maybe<bool>();
+    if (tntFlags & 1)
+        mSettings.mCanTntDestroyBlocks = maybe<bool>(tntFlags >> 1);
+    else
+        mSettings.mCanTntDestroyBlocks = maybe<bool>();
 
-    bool hasMap = input->readBoolean();
-    mSettings.mMapSizeOverride = hasMap ? maybe<int>(input->readVarInt()) : maybe<int>();
+    if (input->readBoolean())
+        mSettings.mMapSizeOverride = maybe<int>(input->readVarInt());
+    else
+        mSettings.mMapSizeOverride = maybe<int>();
     mSettings.mRandomMapSize = input->readBoolean();
     mSettings.mArenaSizeMultiplier = readMaybeFloat(input);
 
@@ -66,11 +70,8 @@ void ClientboundMGPlayerSettingsUpdatePacket::write(DataOutputStream* output)
     output->writeBoolean(mSettings.mTakeEverythingEnabled);
     output->writeBoolean(mSettings.mChestRefillEnabled);
 
-    int tntFlags = mSettings.mCanTntDestroyBlocks.isSet();
-    if (tntFlags && mSettings.mCanTntDestroyBlocks.get())
-        output->writeByte(tntFlags | 2);
-    else
-        output->writeByte(tntFlags);
+    int destroyFlag = (mSettings.mCanTntDestroyBlocks.isSet() && mSettings.mCanTntDestroyBlocks.get()) ? 2 : 0;
+    output->writeByte(mSettings.mCanTntDestroyBlocks.isSet() | destroyFlag);
 
     output->writeBoolean(mSettings.mMapSizeOverride.isSet());
     if (mSettings.mMapSizeOverride.isSet())

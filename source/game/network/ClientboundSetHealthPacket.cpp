@@ -7,11 +7,11 @@
 
 ClientboundSetHealthPacket::ClientboundSetHealthPacket()
 {
-    damageSource.challenges = eTelemetryChallenges_None;
-    damageSource.causeOfDeathId = -1;
     health = 0.0f;
     food = 0;
     saturation = 0.0f;
+    damageSource.causeOfDeathId = -1;
+    damageSource.challenges = eTelemetryChallenges_None;
 }
 
 ClientboundSetHealthPacket::ClientboundSetHealthPacket(float health, int food, float saturation, TelemetryDamageSource damageSource)

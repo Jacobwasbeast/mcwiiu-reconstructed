@@ -6,10 +6,10 @@
 #include "game/network/PacketListener.hpp"
 
 TextureChangePacket::TextureChangePacket()
-    : mEntityId(-1),
-      mChangeType(eTextureChangeType_Skin),
-      mTextureName(L"")
 {
+    mEntityId = -1;
+    mChangeType = eTextureChangeType_Skin;
+    mTextureName = L"";
 }
 
 TextureChangePacket::TextureChangePacket(boost::shared_ptr<Entity> entity, ETextureChangeType type,

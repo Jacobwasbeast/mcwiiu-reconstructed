@@ -62,13 +62,13 @@ void ClientboundSetEntityMotionPacket::_init(int id, double xa, double ya, doubl
     this->ya = scaledY;
     this->za = scaledZ;
 
-    if (scaledX < -2048 || scaledY < -2048 || scaledZ < -2048 || scaledX >= 2048 || scaledY >= 2048 || scaledZ >= 2048)
+    if (scaledX >= -2048 && scaledY >= -2048 && scaledZ >= -2048 && scaledX < 2048 && scaledY < 2048 && scaledZ < 2048)
     {
-        compact = false;
+        compact = true;
     }
     else
     {
-        compact = true;
+        compact = false;
     }
 }
 
@@ -79,7 +79,7 @@ int ClientboundSetEntityMotionPacket::getPacketId()
 
 void ClientboundSetEntityMotionPacket::read(DataInputStream* input)
 {
-    int header = input->readShort();
+    short header = input->readShort();
 
     id = header & 0x7FF;
 

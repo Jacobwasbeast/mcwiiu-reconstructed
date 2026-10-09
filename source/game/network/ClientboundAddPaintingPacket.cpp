@@ -32,7 +32,7 @@ int ClientboundAddPaintingPacket::getPacketId()
 void ClientboundAddPaintingPacket::read(DataInputStream* input)
 {
     id = input->readUnsignedShort();
-    motive = readUtf(input, 13);
+    motive = readUtf(input, Painting::Motive::MAX_MOTIVE_NAME_LENGTH);
     pos = input->readBlockPos();
     direction = Direction::from2DDataValue(input->readUnsignedByte());
 }

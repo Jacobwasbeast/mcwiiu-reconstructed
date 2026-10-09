@@ -91,6 +91,6 @@ void ClientboundUpdateAttributesPacket::handle(PacketListener* listener) { liste
 int ClientboundUpdateAttributesPacket::getEstimatedSize() { return values.size() * 24 + 8; }
 int ClientboundUpdateAttributesPacket::getEntityId() { return entityId; }
 int ClientboundUpdateAttributesPacket::getEntityType() { return entityType; }
-boost::unordered_set<ClientboundUpdateAttributesPacket::AttributeSnapshot*>* ClientboundUpdateAttributesPacket::getValues() { return &values; }
+boost::unordered_set<ClientboundUpdateAttributesPacket::AttributeSnapshot*> ClientboundUpdateAttributesPacket::getValues() { return values; }
 int ClientboundUpdateAttributesPacket::getPacketId() { return 44; }
 boost::shared_ptr<Packet> ClientboundUpdateAttributesPacket::create() { return boost::shared_ptr<Packet>(new ClientboundUpdateAttributesPacket()); }

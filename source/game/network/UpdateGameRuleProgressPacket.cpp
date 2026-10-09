@@ -9,15 +9,19 @@
 UpdateGameRuleProgressPacket::UpdateGameRuleProgressPacket()
 {
     mDescription = L"";
+    mItemId = -1;
+    mRuleType = ConsoleGameRules::eGameRuleType_LevelRules;
     mAuxValue = 0;
     mDataTag = 0;
-    mRuleType = ConsoleGameRules::eGameRuleType_LevelRules;
-    mItemId = -1;
 }
 
 UpdateGameRuleProgressPacket::UpdateGameRuleProgressPacket(ConsoleGameRules::EGameRuleType ruleType, const std::wstring& description, int itemId, int auxValue, int dataTag, void* payload, int payloadLength)
-    : mRuleType(ruleType), mDescription(description), mItemId(itemId), mAuxValue(auxValue), mDataTag(dataTag)
 {
+    mRuleType = ruleType;
+    mDescription = description;
+    mItemId = itemId;
+    mAuxValue = auxValue;
+    mDataTag = dataTag;
     if (payloadLength > 0)
     {
         mPayload = arrayWithLength<unsigned char>(static_cast<unsigned int>(payloadLength), true);
@@ -25,8 +29,7 @@ UpdateGameRuleProgressPacket::UpdateGameRuleProgressPacket(ConsoleGameRules::EGa
     }
     else
     {
-        mPayload.data = NULL;
-        mPayload.length = 0;
+        mPayload = arrayWithLength<unsigned char>();
     }
 }
 
@@ -55,8 +58,7 @@ void UpdateGameRuleProgressPacket::read(DataInputStream* input)
     }
     else
     {
-        mPayload.data = NULL;
-        mPayload.length = 0;
+        mPayload = arrayWithLength<unsigned char>();
     }
 }
 
@@ -78,5 +80,5 @@ void UpdateGameRuleProgressPacket::handle(PacketListener* listener)
 
 int UpdateGameRuleProgressPacket::getEstimatedSize()
 {
-    return static_cast<int>(mDescription.size() + 4 + mPayload.length);
+    return (int)mDescription.length() + 4 + mPayload.length;
 }

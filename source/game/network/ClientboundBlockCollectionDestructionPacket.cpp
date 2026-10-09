@@ -5,8 +5,9 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundBlockCollectionDestructionPacket::ClientboundBlockCollectionDestructionPacket()
-    : sourceId(0), progress(0), positions()
 {
+    progress = 0;
+    sourceId = 0;
 }
 
 ClientboundBlockCollectionDestructionPacket::~ClientboundBlockCollectionDestructionPacket()
@@ -18,27 +19,28 @@ void ClientboundBlockCollectionDestructionPacket::read(DataInputStream* input)
 {
     sourceId = input->readInt();
     progress = input->readUnsignedByte();
-    const unsigned int count = input->readUnsignedShort();
-    if (count == 0)
-        return;
-    positions = arrayWithLength<BlockPos>(count, true);
-    for (unsigned short i = 0; i < count; ++i)
-        positions.data[i] = input->readBlockPos();
+    unsigned short count = input->readUnsignedShort();
+    if (count > 0)
+    {
+        positions = arrayWithLength<BlockPos>(count, true);
+        for (unsigned short i = 0; i < count; i++)
+        {
+            positions[i] = input->readBlockPos();
+        }
+    }
 }
 
 void ClientboundBlockCollectionDestructionPacket::write(DataOutputStream* output)
 {
     output->writeInt(sourceId);
     output->writeByte(static_cast<unsigned char>(progress));
-    output->writeShort(static_cast<short>(positions.length));
-    if (positions.length != 0)
+    output->writeShort(static_cast<unsigned short>(positions.length));
+    if (positions.length > 0)
     {
-        unsigned short i = 0;
-        do
+        for (unsigned short i = 0; i < positions.length; i++)
         {
-            output->writeBlockPos(positions.data[i]);
-            ++i;
-        } while (i < positions.length);
+            output->writeBlockPos(positions[i]);
+        }
     }
 }
 

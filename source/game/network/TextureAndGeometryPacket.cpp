@@ -12,9 +12,9 @@ TextureAndGeometryPacket::TextureAndGeometryPacket()
     shouldDelay = true;
     textureName = L"";
     length = 0;
+    data = NULL;
     additionalBoxCount = 0;
     additionalBoxes = NULL;
-    data = NULL;
 }
 
 TextureAndGeometryPacket::TextureAndGeometryPacket(const std::wstring& textureName, unsigned char* data,
@@ -23,18 +23,17 @@ TextureAndGeometryPacket::TextureAndGeometryPacket(const std::wstring& textureNa
     shouldDelay = true;
     this->textureName = textureName;
 
-    std::wstring identifier(textureName, 7, textureName.length());
+    std::wstring identifier = textureName.substr(7, textureName.length());
     identifier = identifier.substr(0, identifier.find(L'.'));
 
     std::wstringstream stream;
-    stream.setf(std::ios_base::dec, std::ios_base::basefield);
-    stream << identifier.c_str();
+    stream << std::dec << identifier.c_str();
     stream >> geometryId;
-    additionalBoxes = NULL;
     this->data = data;
     geometryId |= 0x80000000u;
     this->length = length;
     additionalBoxCount = 0;
+    additionalBoxes = NULL;
 }
 
 TextureAndGeometryPacket::TextureAndGeometryPacket(const std::wstring& textureName, unsigned char* data,
@@ -43,12 +42,11 @@ TextureAndGeometryPacket::TextureAndGeometryPacket(const std::wstring& textureNa
     shouldDelay = true;
     this->textureName = textureName;
 
-    std::wstring identifier(textureName, 7, textureName.length());
+    std::wstring identifier = textureName.substr(7, textureName.length());
     identifier = identifier.substr(0, identifier.find(L'.'));
 
     std::wstringstream stream;
-    stream.setf(std::ios_base::dec, std::ios_base::basefield);
-    stream << identifier.c_str();
+    stream << std::dec << identifier.c_str();
     stream >> geometryId;
     this->data = data;
     geometryId |= 0x80000000u;
@@ -60,11 +58,11 @@ TextureAndGeometryPacket::TextureAndGeometryPacket(const std::wstring& textureNa
     {
         additionalBoxes = new SKIN_BOX[additionalBoxCount];
         std::vector<SKIN_BOX*>* boxes = skinFile->getAdditionalBoxes();
-        SKIN_BOX* destination = additionalBoxes;
+        int index = 0;
         for (std::vector<SKIN_BOX*>::iterator it = boxes->begin(); it != boxes->end(); ++it)
         {
-            *destination = **it;
-            ++destination;
+            additionalBoxes[index] = **it;
+            ++index;
         }
     }
     else
@@ -80,12 +78,11 @@ TextureAndGeometryPacket::TextureAndGeometryPacket(const std::wstring& textureNa
     shouldDelay = true;
     this->textureName = textureName;
 
-    std::wstring identifier(textureName, 7, textureName.length());
+    std::wstring identifier = textureName.substr(7, textureName.length());
     identifier = identifier.substr(0, identifier.find(L'.'));
 
     std::wstringstream stream;
-    stream.setf(std::ios_base::dec, std::ios_base::basefield);
-    stream << identifier.c_str();
+    stream << std::dec << identifier.c_str();
     stream >> geometryId;
     this->data = data;
     geometryId |= 0x80000000u;
@@ -101,11 +98,11 @@ TextureAndGeometryPacket::TextureAndGeometryPacket(const std::wstring& textureNa
     {
         additionalBoxCount = static_cast<unsigned int>(additionalBoxes->size());
         this->additionalBoxes = new SKIN_BOX[additionalBoxCount];
-        SKIN_BOX* destination = this->additionalBoxes;
+        int index = 0;
         for (std::vector<SKIN_BOX*>::iterator it = additionalBoxes->begin(); it != additionalBoxes->end(); ++it)
         {
-            *destination = **it;
-            ++destination;
+            this->additionalBoxes[index] = **it;
+            ++index;
         }
     }
 }
@@ -132,11 +129,9 @@ void TextureAndGeometryPacket::read(DataInputStream* input)
     if (length != 0)
     {
         data = new unsigned char[length];
-        unsigned int index = 0;
-        while (index < length)
+        for (unsigned int i = 0; i < length; i++)
         {
-            data[index] = input->readByte();
-            ++index;
+            data[i] = input->readByte();
         }
     }
 
@@ -158,21 +153,19 @@ void TextureAndGeometryPacket::read(DataInputStream* input)
         additionalBoxes = new SKIN_BOX[additionalBoxCount];
     }
 
-    unsigned int index = 0;
-    while (index < additionalBoxCount)
+    for (unsigned int i = 0; i < additionalBoxCount; i++)
     {
-        additionalBoxes[index].id = input->readShort();
-        additionalBoxes[index].x = input->readFloat();
-        additionalBoxes[index].y = input->readFloat();
-        additionalBoxes[index].z = input->readFloat();
-        additionalBoxes[index].height = input->readFloat();
-        additionalBoxes[index].width = input->readFloat();
-        additionalBoxes[index].depth = input->readFloat();
-        additionalBoxes[index].xTexOffs = input->readFloat();
-        additionalBoxes[index].yTexOffs = input->readFloat();
-        additionalBoxes[index].armourFlags = input->readInt();
-        additionalBoxes[index].mirror = input->readShort();
-        ++index;
+        additionalBoxes[i].id = input->readShort();
+        additionalBoxes[i].x = input->readFloat();
+        additionalBoxes[i].y = input->readFloat();
+        additionalBoxes[i].z = input->readFloat();
+        additionalBoxes[i].height = input->readFloat();
+        additionalBoxes[i].width = input->readFloat();
+        additionalBoxes[i].depth = input->readFloat();
+        additionalBoxes[i].xTexOffs = input->readFloat();
+        additionalBoxes[i].yTexOffs = input->readFloat();
+        additionalBoxes[i].armourFlags = input->readInt();
+        additionalBoxes[i].mirror = input->readShort();
     }
 }
 
@@ -181,11 +174,9 @@ void TextureAndGeometryPacket::write(DataOutputStream* output)
     Packet::writeUtf(textureName, output);
     output->writeInt(geometryId);
     output->writeShort(static_cast<short>(length));
-    unsigned int index = 0;
-    while (index < length)
+    for (unsigned int i = 0; i < length; i++)
     {
-        output->writeByte(data[index]);
-        ++index;
+        output->writeByte(data[i]);
     }
 
     output->writeInt(skinAdjustments.mXMLVersion);
@@ -201,21 +192,19 @@ void TextureAndGeometryPacket::write(DataOutputStream* output)
     output->writeFloat(skinAdjustments.mTool0Y);
     output->writeShort(static_cast<short>(additionalBoxCount));
 
-    index = 0;
-    while (index < additionalBoxCount)
+    for (unsigned int i = 0; i < additionalBoxCount; i++)
     {
-        output->writeShort(static_cast<short>(additionalBoxes[index].id));
-        output->writeFloat(additionalBoxes[index].x);
-        output->writeFloat(additionalBoxes[index].y);
-        output->writeFloat(additionalBoxes[index].z);
-        output->writeFloat(additionalBoxes[index].height);
-        output->writeFloat(additionalBoxes[index].width);
-        output->writeFloat(additionalBoxes[index].depth);
-        output->writeFloat(additionalBoxes[index].xTexOffs);
-        output->writeFloat(additionalBoxes[index].yTexOffs);
-        output->writeInt(additionalBoxes[index].armourFlags);
-        output->writeShort(static_cast<short>(additionalBoxes[index].mirror));
-        ++index;
+        output->writeShort(static_cast<short>(additionalBoxes[i].id));
+        output->writeFloat(additionalBoxes[i].x);
+        output->writeFloat(additionalBoxes[i].y);
+        output->writeFloat(additionalBoxes[i].z);
+        output->writeFloat(additionalBoxes[i].height);
+        output->writeFloat(additionalBoxes[i].width);
+        output->writeFloat(additionalBoxes[i].depth);
+        output->writeFloat(additionalBoxes[i].xTexOffs);
+        output->writeFloat(additionalBoxes[i].yTexOffs);
+        output->writeInt(additionalBoxes[i].armourFlags);
+        output->writeShort(static_cast<short>(additionalBoxes[i].mirror));
     }
 }
 

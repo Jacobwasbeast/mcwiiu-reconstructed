@@ -8,8 +8,10 @@
 #include "game/network/PacketListener.hpp"
 
 TextureAndGeometryChangePacket::TextureAndGeometryChangePacket()
-    : entityId(-1), geometryName(L""), geometryId(0)
 {
+    entityId = -1;
+    geometryName = L"";
+    geometryId = 0;
 }
 
 TextureAndGeometryChangePacket::TextureAndGeometryChangePacket(boost::shared_ptr<Entity> entity,
@@ -22,8 +24,7 @@ TextureAndGeometryChangePacket::TextureAndGeometryChangePacket(boost::shared_ptr
     identifier = identifier.substr(0, identifier.find(L'.'));
 
     std::wstringstream stream;
-    stream.setf(std::ios_base::dec, std::ios_base::basefield);
-    stream << identifier.c_str();
+    stream << std::dec << identifier.c_str();
     stream >> geometryId;
     geometryId |= 0x80000000u;
 }

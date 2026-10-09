@@ -106,7 +106,12 @@ void ScoreboardPacket::AddPlayerStatsData::write(DataOutputStream* output) const
 }
 
 ScoreboardPacket::UpdatePlayerStatsData::UpdatePlayerStatsData()
-    : mStats(0), mRound(-1), mLife(-1), mChanged(0) {}
+{
+    mStats = 0;
+    mRound = -1;
+    mChanged = 0;
+    mLife = -1;
+}
 
 ScoreboardPacket::UpdatePlayerStatsData::UpdatePlayerStatsData(Scoreboard::PlayerStats* stats, Scoreboard::PlayerStats* other, int round, int life)
     : mStats(stats), mRound(round), mLife(life), mChanged(stats->getChangedBitfield(other, round, life) | 1ULL) {}

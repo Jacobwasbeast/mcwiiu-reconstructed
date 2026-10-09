@@ -55,17 +55,15 @@ void ClientboundMapItemDataPacket::read(DataInputStream* input)
     mDecorations = std::vector<MapDecoration>(decorationCount);
     for (int i = 0; i < decorationCount; i++)
     {
-        char icon = input->readByte();
-        char x = (char)input->readByte();
-        char y = (char)input->readByte();
-        unsigned int packed = (unsigned int)input->readByte();
-        packed |= (unsigned int)input->readByte() << 8;
-        packed |= (unsigned int)input->readByte() << 16;
-        unsigned char rotationAndVisibility = input->readByte();
-        int id = (int)(packed | (unsigned int)(rotationAndVisibility & 7) << 24);
-        bool visible = (rotationAndVisibility & 0x80) != 0;
-        int rotation = input->readByte();
-        mDecorations[i] = MapDecoration(MapDecoration::Type::byIcon(icon), x, y, (char)rotation, id, visible);
+        int icon = input->readByte();
+        char x = input->readByte();
+        char y = input->readByte();
+        int idLow = input->readByte();
+        int idMid = input->readByte() << 8;
+        int idHigh = input->readByte() << 16;
+        unsigned char flags = input->readByte();
+        char rot = input->readByte();
+        mDecorations[i] = MapDecoration(MapDecoration::Type::byIcon(icon), x, y, rot, idLow | idMid | idHigh | ((flags & 7) << 24), (flags >> 7) & 1);
     }
 
     mWidth = input->readByte();
@@ -91,15 +89,16 @@ void ClientboundMapItemDataPacket::write(DataOutputStream* output)
     output->writeVarInt((int)mDecorations.size());
     for (std::vector<MapDecoration>::const_iterator it = mDecorations.begin(); it != mDecorations.end(); ++it)
     {
-        int id = it->id;
-        output->writeByte(it->getImg());
-        output->writeByte((unsigned char)it->getX());
-        output->writeByte((unsigned char)it->getY());
+        const MapDecoration& decoration = *it;
+        int id = decoration.id;
+        output->writeByte(decoration.getImg());
+        output->writeByte((unsigned char)decoration.getX());
+        output->writeByte((unsigned char)decoration.getY());
         output->writeByte((unsigned char)id);
         output->writeByte((unsigned char)(id >> 8));
         output->writeByte((unsigned char)(id >> 16));
-        output->writeByte((unsigned char)((id >> 24) & 0x7f) | (it->visible ? 0x80 : 0));
-        output->writeByte((unsigned char)it->getRot());
+        output->writeByte((unsigned char)(((id >> 24) & 0x7f) | (decoration.visible ? 0x80 : 0)));
+        output->writeByte((unsigned char)decoration.getRot());
     }
     output->writeByte((unsigned char)mWidth);
     if (mWidth > 0)
@@ -126,14 +125,11 @@ void ClientboundMapItemDataPacket::applyToMap(MapItemSavedData* mapData)
     {
         mapData->mDecorations[i] = mDecorations[i];
     }
-    if (mWidth > 0)
+    for (int x = 0; x < mWidth; x++)
     {
-        for (int x = 0; x < mWidth; x++)
+        for (int y = 0; y < mHeight; y++)
         {
-            for (int y = 0; y < mHeight; y++)
-            {
-                mapData->mColors.data[(mStartX + x) + (mStartY + y) * 128] = mColors.data[y * mWidth + x];
-            }
+            mapData->mColors.data[(mStartX + x) + (mStartY + y) * 128] = mColors.data[x + y * mWidth];
         }
     }
 }

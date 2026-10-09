@@ -20,6 +20,7 @@ ClientboundLevelParticlesPacket::ClientboundLevelParticlesPacket()
     maxSpeed = 0.0f;
     count = 0;
     overrideLimiter = false;
+    params = arrayWithLength<int>();
     hasAux = false;
     xAux = 0.0f;
     yAux = 0.0f;
@@ -47,6 +48,7 @@ ClientboundLevelParticlesPacket::~ClientboundLevelParticlesPacket()
 void ClientboundLevelParticlesPacket::Init(const ParticleType* type, bool overrideLimiter, float x, float y, float z, float xDist, float yDist, float zDist, float maxSpeed, int count, arrayWithLength<int> params, bool hasAux, float xAux, float yAux, float zAux)
 {
     this->type = type;
+    this->overrideLimiter = overrideLimiter;
     this->x = x;
     this->y = y;
     this->z = z;
@@ -55,18 +57,17 @@ void ClientboundLevelParticlesPacket::Init(const ParticleType* type, bool overri
     this->zDist = zDist;
     this->maxSpeed = maxSpeed;
     this->count = count;
-    this->overrideLimiter = overrideLimiter;
 
     this->params.length = params.length;
 
-    if (params.length == 0)
-    {
-        this->params.data = NULL;
-    }
-    else
+    if (params.length > 0)
     {
         this->params.data = new int[params.length];
         memcpy(this->params.data, params.data, params.length * sizeof(int));
+    }
+    else
+    {
+        this->params.data = NULL;
     }
 
     this->hasAux = hasAux;
@@ -82,14 +83,12 @@ int ClientboundLevelParticlesPacket::getPacketId()
 
 void ClientboundLevelParticlesPacket::read(DataInputStream* input)
 {
-    const ParticleType* particleType = ParticleType::byId((ePARTICLE_TYPE)input->readInt());
+    type = ParticleType::byId((ePARTICLE_TYPE)input->readInt());
 
-    if (particleType == NULL)
+    if (type == NULL)
     {
-        particleType = PARTICLE_BARRIER;
+        type = PARTICLE_BARRIER;
     }
-
-    type = particleType;
 
     overrideLimiter = input->readBoolean();
     x = input->readFloat();
@@ -140,7 +139,8 @@ void ClientboundLevelParticlesPacket::write(DataOutputStream* output)
 
     for (unsigned int i = 0; i < paramCount; i++)
     {
-        output->writeInt(i < params.length ? params.data[i] : 0);
+        int param = i < params.length ? params.data[i] : 0;
+        output->writeInt(param);
     }
 
     output->writeBoolean(hasAux);
@@ -215,10 +215,7 @@ bool ClientboundLevelParticlesPacket::isOverrideLimiter()
 
 arrayWithLength<int> ClientboundLevelParticlesPacket::getParams()
 {
-    arrayWithLength<int> result;
-    result.data = params.data;
-    result.length = params.length;
-    return result;
+    return params;
 }
 
 float ClientboundLevelParticlesPacket::getXAux()

@@ -26,18 +26,19 @@ ClientboundPlayerCombatPacket::~ClientboundPlayerCombatPacket()
 
 void ClientboundPlayerCombatPacket::_init(CombatTracker* combatTracker, Event event, bool includeKiller)
 {
-    boost::shared_ptr<LivingEntity> killer = combatTracker->getKiller();
     mEvent = event;
-    if (event == END_COMBAT)
+    boost::shared_ptr<LivingEntity> killer = combatTracker->getKiller();
+    switch (event)
     {
+    case END_COMBAT:
         mDuration = combatTracker->getCombatDuration();
-        mKillerId = killer ? killer->getId() : -1;
-    }
-    else if (event == ENTITY_DIED)
-    {
+        mKillerId = !killer ? -1 : killer->getId();
+        break;
+    case ENTITY_DIED:
         mEntityId = combatTracker->getMob()->getId();
-        mKillerId = killer ? killer->getId() : -1;
+        mKillerId = !killer ? -1 : killer->getId();
         mMessage = L"";
+        break;
     }
 }
 

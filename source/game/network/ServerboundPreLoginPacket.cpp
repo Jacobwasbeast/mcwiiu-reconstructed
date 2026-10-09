@@ -5,8 +5,8 @@
 #include "game/network/PacketListener.hpp"
 
 ServerboundPreLoginPacket::ServerboundPreLoginPacket()
-    : name(L"")
 {
+    name = L"";
     protocolVersion = 0;
 }
 

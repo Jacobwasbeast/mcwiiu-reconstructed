@@ -98,6 +98,7 @@
 #include "game/ui/AbstractContainerMenu.hpp"
 #include "game/ui/AnvilMenu.hpp"
 #include "game/ui/BeaconMenu.hpp"
+#include "game/ui/InventoryMenu.hpp"
 #include "game/ui/MerchantMenu.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/LevelData.hpp"
@@ -719,7 +720,7 @@ void ServerGamePacketListenerImpl::handleTeleportToEntityPacket(
 void ServerGamePacketListenerImpl::handlePaddleBoat(boost::shared_ptr<ServerboundPaddleBoatPacket> packet)
 {
     boost::shared_ptr<Entity> vehicle = mPlayer->getVehicle();
-    if (vehicle && vehicle->GetType() == EntityType::BOAT)
+    if (vehicle && eTYPE_DERIVED_FROM(EntityType::BOAT, vehicle->GetType()))
         boost::static_pointer_cast<Boat>(vehicle)->setPaddleState(packet->getLeft(), packet->getRight());
 }
 
@@ -766,7 +767,7 @@ void ServerGamePacketListenerImpl::handlePlayerCommand(boost::shared_ptr<Serverb
     case ServerboundPlayerCommandPacket::RIDING_JUMP:
     {
         boost::shared_ptr<Entity> vehicle = mPlayer->getVehicle();
-        if (vehicle && vehicle->GetType() == EntityType::HORSE)
+        if (vehicle && eTYPE_DERIVED_FROM(EntityType::HORSE, vehicle->GetType()))
         {
             boost::shared_ptr<Horse> horse = boost::static_pointer_cast<Horse>(vehicle);
             int jumpPower = packet->getData();
@@ -780,7 +781,7 @@ void ServerGamePacketListenerImpl::handlePlayerCommand(boost::shared_ptr<Serverb
     case ServerboundPlayerCommandPacket::STOP_RIDING_JUMP:
     {
         boost::shared_ptr<Entity> vehicle = mPlayer->getVehicle();
-        if (vehicle && (vehicle->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE)
+        if (vehicle && eTYPE_DERIVED_FROM(EntityType::ABSTRACT_HORSE, vehicle->GetType()))
         {
             boost::shared_ptr<Horse> horse = boost::static_pointer_cast<Horse>(vehicle);
             horse->onPlayerJump(packet->getData());
@@ -791,7 +792,7 @@ void ServerGamePacketListenerImpl::handlePlayerCommand(boost::shared_ptr<Serverb
     case ServerboundPlayerCommandPacket::OPEN_INVENTORY:
     {
         boost::shared_ptr<Entity> vehicle = mPlayer->getVehicle();
-        if (vehicle && (vehicle->GetType() & EntityType::ABSTRACT_HORSE) == EntityType::ABSTRACT_HORSE)
+        if (vehicle && eTYPE_DERIVED_FROM(EntityType::ABSTRACT_HORSE, vehicle->GetType()))
             boost::static_pointer_cast<AbstractHorse>(vehicle)->openInventory(mPlayer);
         break;
     }
@@ -822,21 +823,24 @@ void ServerGamePacketListenerImpl::handlePlayerCommand(boost::shared_ptr<Serverb
 }
 void ServerGamePacketListenerImpl::handleInteract(boost::shared_ptr<ServerboundInteractPacket> packet)
 {
-    boost::shared_ptr<Entity> target = packet->getTarget(mServer->getLevel(mPlayer->mDimension));
+    ServerLevel* level = mServer->getLevel(mPlayer->mDimension);
+    boost::shared_ptr<Entity> target = packet->getTarget(level);
     mPlayer->resetLastActionTime();
     if (target && target->isAlive())
     {
-        unsigned long long type = target->GetType();
-        if ((type & EntityType::PLAYER) != EntityType::PLAYER || mPlayer->distanceToSqr(target) < 36.0)
+        if (!eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType()) || mPlayer->distanceToSqr(target) < 36.0)
         {
             if (packet->getAction() == ServerboundInteractPacket::INTERACT)
                 mPlayer->interactOn(target, packet->getHand());
             else if (packet->getAction() == ServerboundInteractPacket::INTERACT_AT)
                 target->interactAt(mPlayer, packet->getLocation(), packet->getHand());
-            else if (packet->getAction() == ServerboundInteractPacket::ATTACK &&
-                     type != EntityType::ITEM_ENTITY && type != EntityType::EXPERIENCE_ORB &&
-                     type != EntityType::ARROW && type != EntityType::TIPPABLE_ARROW && target != mPlayer)
-                mPlayer->attack(target);
+            else if (packet->getAction() == ServerboundInteractPacket::ATTACK)
+            {
+                if (target->GetType() != EntityType::ITEM_ENTITY && target->GetType() != EntityType::EXPERIENCE_ORB &&
+                    target->GetType() != EntityType::ARROW && target->GetType() != EntityType::TIPPABLE_ARROW &&
+                    target != mPlayer)
+                    mPlayer->attack(target);
+            }
         }
     }
 }
@@ -979,7 +983,7 @@ void ServerGamePacketListenerImpl::handleSetCreativeModeSlot(boost::shared_ptr<S
         }
     }
 
-    bool validSlot = packet->getSlotNum() >= INVENTORY_MENU_FIRST_SLOT && packet->getSlotNum() <= INVENTORY_MENU_LAST_SLOT;
+    bool validSlot = packet->getSlotNum() >= InventoryMenu::CRAFT_SLOT_START && packet->getSlotNum() <= InventoryMenu::USE_ROW_SLOT_END;
     bool validItem = item->isEmpty()
                   || (item->getAuxValue() >= 0 && item->getCount() <= 64 && item->getCount() > 0);
     if (validSlot && validItem)
@@ -1023,13 +1027,15 @@ void ServerGamePacketListenerImpl::handleSignUpdate(boost::shared_ptr<Serverboun
     if (level->hasChunkAt(pos))
     {
         const BlockState* state = level->getBlockState(pos);
-        boost::shared_ptr<SignBlockEntity> sign =
-            boost::dynamic_pointer_cast<SignBlockEntity>(level->getBlockEntity(pos));
-        if (sign)
+        boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
+        if (boost::dynamic_pointer_cast<SignBlockEntity>(blockEntity) != NULL)
         {
-            std::wstring* lines = packet->getLines();
-            for (int line = 0; line < 4; ++line)
-                sign->SetMessage(line, lines[line]);
+            boost::shared_ptr<SignBlockEntity> sign = boost::dynamic_pointer_cast<SignBlockEntity>(blockEntity);
+            for (int i = 0; i < 4; ++i)
+            {
+                std::wstring line = packet->getLines()[i].substr(0, 15);
+                sign->SetMessage(i, line);
+            }
             sign->SetVerified(false);
             sign->setCreatedByRestrictedPlayer(packet->isCreatedByRestrictedPlayer());
             sign->setChanged();
@@ -1373,7 +1379,7 @@ void ServerGamePacketListenerImpl::handleTradeItem(boost::shared_ptr<TradeItemPa
     mPlayer->mInventory->removeResources(buyB);
 
     not_null_ptr<ItemInstance> sell = recipe->getSellItem()->copy();
-    mPlayer->awardStat(gStats->get_itemsBought(Item::VALIDgetId(sell->getItem())),
+    mPlayer->awardStat(GenericStats::itemsBought(sell->getItem()),
                        GenericStats::param_itemsBought(sell));
     if (!mPlayer->mInventory->add(sell))
         mPlayer->drop(sell, false);

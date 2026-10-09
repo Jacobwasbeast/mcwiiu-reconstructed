@@ -29,7 +29,7 @@ int ServerboundCustomPayloadPacket::getPacketId()
 void ServerboundCustomPayloadPacket::read(DataInputStream* input)
 {
     identifier = Packet::readUtf(input, 20);
-    const short length = input->readShort();
+    int length = input->readShort();
 
     if (length > 0 && length < 32767)
     {

@@ -9,23 +9,50 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundSoundPacket::ClientboundSoundPacket()
-    : sound(NULL), source(SoundSource::eSoundSource_Neutral), x(0), y(INT_MAX), z(0), volume(0.0f), pitch(0.0f), playUI(false), looping(false), soundInstance(eSoundInstances_None), entityId(-1)
 {
+    sound = NULL;
+    source = SoundSource::eSoundSource_Neutral;
+    x = 0;
+    y = INT_MAX;
+    z = 0;
+    volume = 0.0f;
+    pitch = 0.0f;
+    soundInstance = eSoundInstances_None;
+    entityId = -1;
+    playUI = false;
+    looping = false;
 }
 
 ClientboundSoundPacket::ClientboundSoundPacket(const SoundEvent* sound, SoundSource::ESoundSource source, double x, double y, double z, float volume, float pitch)
-    : sound(sound), source(source), x((int)(x * 8.0)), y((int)(y * 8.0)), z((int)(z * 8.0)), volume(volume), pitch(pitch), playUI(false), looping(false), soundInstance(eSoundInstances_None), entityId(-1)
 {
+    this->sound = sound;
+    this->source = source;
+    this->x = (int)(x * 8.0);
+    this->y = (int)(y * 8.0);
+    this->z = (int)(z * 8.0);
+    this->volume = volume;
+    this->pitch = pitch;
+    soundInstance = eSoundInstances_None;
+    entityId = -1;
+    playUI = false;
+    looping = false;
 }
 
 ClientboundSoundPacket::ClientboundSoundPacket(const SoundEvent* sound, float volume, float pitch)
-    : sound(sound), volume(volume), pitch(pitch), playUI(true), looping(false), soundInstance(eSoundInstances_None), entityId(-1)
 {
+    playUI = true;
+    looping = false;
+    this->volume = volume;
+    this->sound = sound;
+    this->pitch = pitch;
+    entityId = -1;
+    soundInstance = eSoundInstances_None;
 }
 
 ClientboundSoundPacket::ClientboundSoundPacket(ESoundInstances soundInstance, const SoundEvent* sound, float volume, float pitch, bool looping, int entityId)
-    : sound(sound), source(SoundSource::eSoundSource_Master), x(0), y(0), z(0), volume(volume), pitch(pitch), playUI(false), looping(looping), soundInstance((int)soundInstance), entityId(entityId)
+    : sound(sound), volume(volume), pitch(pitch), playUI(false), soundInstance((int)soundInstance), entityId(entityId)
 {
+    this->looping = looping;
 }
 
 void ClientboundSoundPacket::read(DataInputStream* input)

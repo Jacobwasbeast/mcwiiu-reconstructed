@@ -7,14 +7,14 @@
 
 ClientboundPowerupPacket::ClientboundPowerupPacket()
 {
-    powerupTime = -1;
     powerupID = -1;
+    powerupTime = -1;
 }
 
 ClientboundPowerupPacket::ClientboundPowerupPacket(int powerupID, int powerupTime)
 {
-    this->powerupTime = powerupTime;
     this->powerupID = powerupID;
+    this->powerupTime = powerupTime;
 }
 
 int ClientboundPowerupPacket::getPacketId()

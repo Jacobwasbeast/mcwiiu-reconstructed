@@ -13,8 +13,8 @@ CraftItemPacket::CraftItemPacket(int recipe, int craftType, short containerId)
     : mStackedItems(), mItemIds()
 {
     mStackedItems.push_back(std::make_pair(recipe, -1));
-    mCraftType = static_cast<unsigned char>(craftType);
     mContainerId = containerId;
+    mCraftType = static_cast<unsigned char>(craftType);
 }
 
 CraftItemPacket::CraftItemPacket(std::vector<std::pair<int, int> >& stackedItems, int craftType, short containerId)
@@ -25,7 +25,7 @@ CraftItemPacket::CraftItemPacket(std::vector<std::pair<int, int> >& stackedItems
 CraftItemPacket::CraftItemPacket(std::vector<int>& itemIds, short containerId)
     : mStackedItems(), mItemIds()
 {
-    for (std::vector<int>::const_iterator it = itemIds.begin(); it != itemIds.end(); ++it)
+    for (std::vector<int>::iterator it = itemIds.begin(); it != itemIds.end(); ++it)
     {
         mItemIds.push_back(*it);
     }
@@ -66,13 +66,12 @@ void CraftItemPacket::write(DataOutputStream* output)
 {
     output->writeShort(mContainerId);
     output->write(mCraftType);
-    int count;
-    if (!mStackedItems.empty())
+    unsigned int count = mStackedItems.size();
+    if (count > 0)
     {
-        count = static_cast<int>(mStackedItems.size());
         output->writeBoolean(true);
         output->writeInt(count);
-        for (std::vector<std::pair<int, int> >::const_iterator it = mStackedItems.begin(); it != mStackedItems.end(); ++it)
+        for (std::vector<std::pair<int, int> >::iterator it = mStackedItems.begin(); it != mStackedItems.end(); ++it)
         {
             output->writeInt(it->first);
             output->writeInt(it->second);
@@ -80,10 +79,10 @@ void CraftItemPacket::write(DataOutputStream* output)
     }
     else
     {
-        count = static_cast<int>(mItemIds.size());
+        count = mItemIds.size();
         output->writeBoolean(false);
         output->writeInt(count);
-        for (std::vector<int>::const_iterator it = mItemIds.begin(); it != mItemIds.end(); ++it)
+        for (std::vector<int>::iterator it = mItemIds.begin(); it != mItemIds.end(); ++it)
         {
             output->writeInt(*it);
         }

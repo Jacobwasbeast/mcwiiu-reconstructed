@@ -27,25 +27,25 @@ void FakeNetworkPlayer::UpdateBRUPQueue()
     if (!mBRUPQueue.empty())
     {
         unsigned int size = mBRUPQueue.front();
-        uint64_t now = System::processTimeInMilliSecs();
-        uint64_t elapsed = now - mLastBRUPTime;
-        int elapsedHigh = static_cast<int>(elapsed >> 32);
-        if (elapsedHigh < 0)
+        int64_t elapsed = System::processTimeInMilliSecs() - mLastBRUPTime;
+        int64_t delay = size / 9;
+        if (elapsed >= delay)
         {
-            return;
-        }
-        if (elapsedHigh < 1 && static_cast<unsigned int>(elapsed) < size / 9)
-        {
-            return;
-        }
-        mBRUPQueue.pop_front();
-        if (!mBRUPQueue.empty())
-        {
-            mLastBRUPTime = System::processTimeInMilliSecs();
-            return;
+            mBRUPQueue.pop_front();
+            if (!mBRUPQueue.empty())
+            {
+                mLastBRUPTime = System::processTimeInMilliSecs();
+            }
+            else
+            {
+                mLastBRUPTime = 0;
+            }
         }
     }
-    mLastBRUPTime = 0;
+    else
+    {
+        mLastBRUPTime = 0;
+    }
 }
 
 int FakeNetworkPlayer::GetOutstandingAckCount()
@@ -160,11 +160,12 @@ void FakeNetworkPlayer::SentChunkPacket()
 
 int FakeNetworkPlayer::GetTimeSinceLastChunkPacket_ms()
 {
-    if (mLastChunkPacketTime != 0)
+    if (mLastChunkPacketTime == 0)
     {
-        return static_cast<int>(System::processTimeInMilliSecs() - mLastChunkPacketTime);
+        return INT_MAX;
     }
-    return INT_MAX;
+    int64_t now = System::processTimeInMilliSecs();
+    return static_cast<int>(now - mLastChunkPacketTime);
 }
 
 bool FakeNetworkPlayer::isFake()

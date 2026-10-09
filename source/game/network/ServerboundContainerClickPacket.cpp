@@ -20,8 +20,8 @@ ServerboundContainerClickPacket::ServerboundContainerClickPacket(int containerId
     this->containerId = containerId;
     this->slotNum = slotNum;
     this->buttonNum = buttonNum;
-    this->clickType = clickType;
     this->uid = uid;
+    this->clickType = clickType;
     items.push_back(item);
     numSlots = 1;
 }
@@ -73,7 +73,7 @@ void ServerboundContainerClickPacket::write(DataOutputStream* output)
     output->writeByte(clickType);
     output->writeByte(numSlots);
 
-    for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items.begin(); it != items.end(); ++it)
+    for (std::vector<not_null_ptr<ItemInstance> >::iterator it = items.begin(); it != items.end(); it++)
     {
         output->writeItem(*it);
     }
@@ -111,7 +111,7 @@ int ServerboundContainerClickPacket::getUid()
 
 not_null_ptr<ItemInstance> ServerboundContainerClickPacket::getItem()
 {
-    return items[0];
+    return items.front();
 }
 
 not_null_ptr<ItemInstance> ServerboundContainerClickPacket::getItemAt(unsigned int index)

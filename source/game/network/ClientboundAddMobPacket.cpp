@@ -22,8 +22,8 @@ ClientboundAddMobPacket::ClientboundAddMobPacket()
     yRot = 0;
     xRot = 0;
     entityData = boost::shared_ptr<SynchedEntityData>();
-    additionalContructionDataTag = NULL;
     unpackedData = NULL;
+    additionalContructionDataTag = NULL;
 }
 
 ClientboundAddMobPacket::ClientboundAddMobPacket(boost::shared_ptr<LivingEntity> entity, int yRot, int xRot, int x, int y, int z, int yHeadRot)
@@ -178,7 +178,7 @@ void ClientboundAddMobPacket::write(DataOutputStream* output)
     output->writeShort(zd);
     output->writeByte(subIds.size());
 
-    for (std::vector<int>::iterator it = subIds.begin(); it != subIds.end(); ++it)
+    for (std::vector<int>::iterator it = subIds.begin(); it != subIds.end(); it++)
     {
         output->writeInt(*it);
     }

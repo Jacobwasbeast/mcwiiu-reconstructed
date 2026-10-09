@@ -5,8 +5,11 @@
 #include "game/network/PacketListener.hpp"
 
 VotePacket::VotePacket()
-    : voteableId(-1), vote(0xff), playerId(-1), voteId(-1)
 {
+    voteableId = -1;
+    vote = -1;
+    voteId = -1;
+    playerId = -1;
 }
 
 VotePacket::VotePacket(int voteableId, char vote, int playerId, int voteId)
