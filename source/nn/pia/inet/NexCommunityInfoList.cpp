@@ -1,8 +1,5 @@
 #include "nn/pia/inet/NexCommunityInfoList.hpp"
 
-#include "nn/pia/NetworkFactory.hpp"
-#include "nn/pia/common/Memory.hpp"
-
 namespace nn { namespace pia { namespace inet {
 
 NexCommunityInfoList::~NexCommunityInfoList()
@@ -12,10 +9,10 @@ NexCommunityInfoList::~NexCommunityInfoList()
     common::DeleteArray(m_entries);
 }
 
-NexCommunityInfoList::const_iterator NexCommunityInfoList::Begin() const { return m_entries; }
-NexCommunityInfoList::iterator NexCommunityInfoList::Begin() { return m_entries; }
-NexCommunityInfoList::const_iterator NexCommunityInfoList::End() const { return m_entries + m_size; }
-NexCommunityInfoList::iterator NexCommunityInfoList::End() { return m_entries + m_size; }
+session::ICommunityInfo* const* NexCommunityInfoList::Begin() const { return m_entries; }
+session::ICommunityInfo** NexCommunityInfoList::Begin() { return m_entries; }
+session::ICommunityInfo* const* NexCommunityInfoList::End() const { return m_entries + m_size; }
+session::ICommunityInfo** NexCommunityInfoList::End() { return m_entries + m_size; }
 unsigned int NexCommunityInfoList::GetSize() const { return m_size; }
 unsigned int NexCommunityInfoList::GetMaxSize() const { return m_maxSize; }
 

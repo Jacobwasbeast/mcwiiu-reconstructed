@@ -1,13 +1,16 @@
 #include "nn/pia/inet/NexCommunityInfo.hpp"
-#include <cstring>
+#include <coreinit/memory.h>
 
 namespace nn { namespace pia { namespace inet {
 
+namespace {
+enum
+{
+    cResultInvalidArgument = 0x10c07
+};
+}
+
 NexCommunityInfo::NexCommunityInfo()
-    : m_communityId(0), m_official(false), m_restricted(false), m_attributes(), m_relatedSessionCount(0),
-      m_currentParticipantNum(0), m_ownerPrincipalId(0), m_maxParticipantNum(0), m_minParticipantNum(0),
-      m_description(), m_applicationData(), m_applicationDataSize(0), m_participationStartDate(),
-      m_participationEndDate()
 {
     Clear();
 }
@@ -22,15 +25,16 @@ void NexCommunityInfo::Clear()
     m_official = false;
     m_restricted = false;
     m_relatedSessionCount = 0;
-    m_ownerPrincipalId = 0;
     m_currentParticipantNum = 0;
+    m_ownerPrincipalId = 0;
     m_maxParticipantNum = 0;
     m_minParticipantNum = 0;
     m_applicationDataSize = 0;
-    for (unsigned int index = 0; index < 6; ++index)
-        m_attributes[index] = 0;
-    std::memset(m_applicationData, 0, sizeof(m_applicationData));
+    m_participationStartDate.Clear();
+    m_participationEndDate.Clear();
     m_description.Clear();
+    OSBlockSet(m_attributes, 0, sizeof(m_attributes));
+    OSBlockSet(m_applicationData, 0, sizeof(m_applicationData));
 }
 
 unsigned int NexCommunityInfo::GetCommunityId() const { return m_communityId; }
@@ -40,12 +44,22 @@ const common::DateTime& NexCommunityInfo::GetParticipationStartDate() { return m
 const common::DateTime& NexCommunityInfo::GetParticipationEndDate() { return m_participationEndDate; }
 unsigned int NexCommunityInfo::GetRelatedSessionCount() const { return m_relatedSessionCount; }
 
-bool NexCommunityInfo::GetAttribute(unsigned char index, unsigned int* value) const
+Result NexCommunityInfo::GetAttribute(unsigned char index, unsigned int* value) const
 {
-    if (index >= 6 || value == 0)
-        return false;
-    *value = m_attributes[index];
-    return true;
+    if (value == 0)
+    {
+        return Result(cResultInvalidArgument);
+    }
+    else if (index >= 6)
+    {
+        Result result(cResultInvalidArgument);
+        return result;
+    }
+    else
+    {
+        *value = m_attributes[index];
+        return Result(0);
+    }
 }
 
 unsigned long long NexCommunityInfo::GetOwnerPrincipalId() const { return m_ownerPrincipalId; }
@@ -54,20 +68,24 @@ unsigned short NexCommunityInfo::GetMaxParticipantNum() const { return m_maxPart
 unsigned short NexCommunityInfo::GetMinParticipantNum() const { return m_minParticipantNum; }
 const common::String& NexCommunityInfo::GetDescription() const { return m_description; }
 
-bool NexCommunityInfo::GetApplicationData(void* buffer, unsigned int size)
+Result NexCommunityInfo::GetApplicationData(void* buffer, unsigned int size)
 {
     if (buffer == 0 || size < m_applicationDataSize)
-        return false;
-    std::memcpy(buffer, m_applicationData, m_applicationDataSize);
-    return true;
+    {
+        return Result(cResultInvalidArgument);
+    }
+    OSBlockMove(buffer, m_applicationData, size, false);
+    return Result(0);
 }
 
-bool NexCommunityInfo::GetApplicationDataSize(unsigned int* size)
+Result NexCommunityInfo::GetApplicationDataSize(unsigned int* size)
 {
     if (size == 0)
-        return false;
+    {
+        return Result(cResultInvalidArgument);
+    }
     *size = m_applicationDataSize;
-    return true;
+    return Result(0);
 }
 
 void NexCommunityInfo::SetCommunityId(unsigned int communityId) { m_communityId = communityId; }
@@ -86,13 +104,12 @@ void NexCommunityInfo::SetOwnerPrincipalId(unsigned long long principalId) { m_o
 void NexCommunityInfo::SetCurrentParticipantNum(unsigned short count) { m_currentParticipantNum = count; }
 void NexCommunityInfo::SetMinParticipantNum(unsigned short count) { m_minParticipantNum = count; }
 void NexCommunityInfo::SetMaxParticipantNum(unsigned short count) { m_maxParticipantNum = count; }
-bool NexCommunityInfo::SetDescription(const common::String& description) { return m_description.Copy(description) == 0; }
+void NexCommunityInfo::SetDescription(const common::String& description) { m_description.Copy(description); }
 
-bool NexCommunityInfo::SetApplicationData(const void* data, unsigned int size)
+void NexCommunityInfo::SetApplicationData(const void* data, unsigned int size)
 {
-    std::memcpy(m_applicationData, data, size);
+    OSBlockMove(m_applicationData, data, size, false);
     m_applicationDataSize = size;
-    return true;
 }
 
 }}}

@@ -3,14 +3,15 @@
 
 #include "nn/pia/String.hpp"
 #include "nn/pia/common/DateTime.hpp"
+#include "nn/pia/session/UpdateCommunitySetting.hpp"
 
 namespace nn { namespace pia { namespace inet {
 
-class NexUpdateCommunitySetting
+class NexUpdateCommunitySetting : public session::UpdateCommunitySetting
 {
 public:
     NexUpdateCommunitySetting();
-    ~NexUpdateCommunitySetting();
+    virtual ~NexUpdateCommunitySetting();
     void Reset();
     void Trace(unsigned long long value) const;
     unsigned int GetCommunityId() const;
@@ -47,7 +48,6 @@ public:
     bool IsSetParticipationEndDate() const;
 
 private:
-    unsigned int unknown0;
     unsigned int communityId;
     unsigned short minParticipantNum;
     unsigned short maxParticipantNum;

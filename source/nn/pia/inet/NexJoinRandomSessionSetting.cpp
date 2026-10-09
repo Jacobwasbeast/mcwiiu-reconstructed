@@ -10,7 +10,8 @@ NexJoinRandomSessionSetting::NexJoinRandomSessionSetting()
     : m_sessionSearchCriteriaSize(0), m_myBlockListUsed(true), m_othersBlockListUsed(true),
       m_matchmakeUniqueKeyword(false)
 {
-    Reset();
+    m_createSessionSetting.Reset();
+    for (unsigned int i = 0; i < 2; ++i) m_sessionSearchCriteria[i].Reset();
 }
 
 NexJoinRandomSessionSetting::~NexJoinRandomSessionSetting()
@@ -32,10 +33,6 @@ const NexSessionSearchCriteria* NexJoinRandomSessionSetting::GetSessionSearchCri
 {
     return index < 2 ? &m_sessionSearchCriteria[index] : 0;
 }
-unsigned int NexJoinRandomSessionSetting::GetSessionSearchCriteriaSize()
-{
-    return m_sessionSearchCriteriaSize;
-}
 unsigned int NexJoinRandomSessionSetting::GetSessionSearchCriteriaSize() const
 {
     return m_sessionSearchCriteriaSize;
@@ -51,22 +48,23 @@ void NexJoinRandomSessionSetting::Reset()
 }
 Result NexJoinRandomSessionSetting::SetCreateSessionSetting(const session::CreateSessionSetting* setting)
 {
-    if (setting == 0) return Result(kInvalidParameterResult);
+    if (setting == 0) return kInvalidParameterResult;
     m_createSessionSetting.Copy(static_cast<const NexCreateSessionSetting&>(*setting));
-    return Result(0);
+    return 0;
 }
 Result NexJoinRandomSessionSetting::SetSessionSearchCriteria(const session::SessionSearchCriteria* criteria, unsigned int count)
 {
-    if (count > 2 || criteria == 0) return Result(kInvalidParameterResult);
+    if (count > 2) return kInvalidParameterResult;
+    if (criteria == 0) return kInvalidParameterResult;
     const NexSessionSearchCriteria* nexCriteria = static_cast<const NexSessionSearchCriteria*>(criteria);
     for (unsigned int i = 0; i < count; ++i) {
-        if (nexCriteria[i].GetKeyType() != 0) return Result(kInvalidParameterResult);
+        if (nexCriteria[i].GetKeyType() != 0) return kInvalidParameterResult;
     }
     for (unsigned int i = 0; i < count; ++i) {
         m_sessionSearchCriteria[i].Copy(nexCriteria[i]);
     }
     m_sessionSearchCriteriaSize = count;
-    return Result(0);
+    return 0;
 }
 void NexJoinRandomSessionSetting::Trace(unsigned long long p0) const
 {

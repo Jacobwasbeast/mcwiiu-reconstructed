@@ -19,14 +19,14 @@ public:
     virtual const common::DateTime& GetParticipationStartDate();
     virtual const common::DateTime& GetParticipationEndDate();
     virtual unsigned int GetRelatedSessionCount() const;
-    virtual bool GetAttribute(unsigned char index, unsigned int* value) const;
+    virtual Result GetAttribute(unsigned char index, unsigned int* value) const;
     virtual unsigned long long GetOwnerPrincipalId() const;
     virtual unsigned short GetCurrentParticipantNum() const;
     virtual unsigned short GetMaxParticipantNum() const;
     virtual unsigned short GetMinParticipantNum() const;
     virtual const common::String& GetDescription() const;
-    virtual bool GetApplicationData(void* buffer, unsigned int size);
-    virtual bool GetApplicationDataSize(unsigned int* size);
+    virtual Result GetApplicationData(void* buffer, unsigned int size);
+    virtual Result GetApplicationDataSize(unsigned int* size);
     virtual void Clear();
     virtual void SetCommunityId(unsigned int communityId);
     virtual void SetOfficialCommunity(bool official);
@@ -39,8 +39,8 @@ public:
     virtual void SetCurrentParticipantNum(unsigned short count);
     virtual void SetMinParticipantNum(unsigned short count);
     virtual void SetMaxParticipantNum(unsigned short count);
-    virtual bool SetDescription(const common::String& description);
-    virtual bool SetApplicationData(const void* data, unsigned int size);
+    virtual void SetDescription(const common::String& description);
+    virtual void SetApplicationData(const void* data, unsigned int size);
 
 private:
     unsigned int m_communityId;

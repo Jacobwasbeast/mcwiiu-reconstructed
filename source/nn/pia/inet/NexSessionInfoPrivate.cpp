@@ -2,8 +2,4 @@
 
 namespace nn { namespace pia { namespace inet {
 
-NexSessionInfoPrivate::~NexSessionInfoPrivate()
-{
-}
-
 }}}

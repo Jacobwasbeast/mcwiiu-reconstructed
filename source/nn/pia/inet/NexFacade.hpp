@@ -8,15 +8,18 @@
 #include "nn/pia/inet/IFacade.hpp"
 
 namespace nn { namespace nex {
+class CallContext;
 class InetAddress;
 class MatchmakeExtensionClient;
 class MatchmakeSession;
 class NATTraversalRelayClient;
+class NgsFacade;
 class NgsBridgeInterface;
 class NotificationEvent;
 class NotificationEventHandler;
 class ProtocolCallContext;
 class StationURL;
+class UserContext;
 template <typename T> class qList;
 }}
 
@@ -32,10 +35,18 @@ class NexNatRelay;
 class NexNotificationDataJob;
 class NexNatServerAddressResolveJob;
 
+void ReplaceURLCompletionCallback(nex::CallContext* callContext, const nex::UserContext* userContext);
+
 class NexFacade : public IFacade
 {
 public:
-    struct LoginInfo;
+    struct LoginInfo
+    {
+        nex::NgsFacade* ngsFacade;
+        unsigned int gameServerId;
+        const common::String* accessKey;
+    };
+
     NexFacade();
     virtual unsigned int GetRandomPortRangeMin() const;
     virtual unsigned int GetRandomPortRangeMax() const;
@@ -46,8 +57,12 @@ public:
     virtual const common::InetAddress& GetRelayServerAddress() const;
     virtual unsigned int GetLocalServiceConnectionId() const;
     virtual bool IsBeginMonitoringDataAvailable() const;
-    static NexFacade* CreateInstance();
+    static Result CreateInstance();
     static void DestroyInstance();
+    static NexFacade* GetInstance()
+    {
+        return s_instance;
+    }
     Result Initialize();
     void Finalize();
     Result CreateProtocols();
@@ -98,13 +113,20 @@ public:
                                                               transport::StationConnectionInfo* info);
 
 private:
+    friend class InetConnectStationJob;
+    friend class InetCreateMeshJob;
+    friend class InetInputStream;
+    friend class InetJoinMeshJob;
+    friend class InetOutputStream;
     friend class InetProcessHostMigrationJob;
+    friend class MonitoringDataSender;
+    friend class NexNatRelay;
     friend class NexNatServerAddressResolveJob;
     friend class NexNotificationDataJob;
     static NexFacade* s_instance;
     static unsigned char* s_instanceMemory;
-    unsigned int m_loginValue;
-    common::FixedString<8> m_gatheringCodeKey;
+    unsigned int m_gameServerId;
+    common::FixedString<8> m_accessKey;
     nex::NgsBridgeInterface* m_ngsBridge;
     unsigned int m_gatheringId;
     unsigned char* m_matchmakeExtensionMemory;

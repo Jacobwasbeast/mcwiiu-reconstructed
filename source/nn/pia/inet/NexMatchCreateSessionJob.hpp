@@ -2,33 +2,47 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHCREATESESSIONJOB_HPP
 
 #include "nn/pia/Common.hpp"
-
-namespace nn { namespace pia { namespace session { class CreateSessionSetting; }}}
+#include "nn/pia/common/Time.hpp"
+#include "nn/pia/session/CreateSessionJob.hpp"
 
 namespace nn { namespace pia { namespace inet {
 
-class NexMatchCreateSessionJob
+class NexMatchmakeSession;
+
+class NexMatchCreateSessionJob : public session::CreateSessionJob
 {
 public:
     NexMatchCreateSessionJob();
     virtual ~NexMatchCreateSessionJob();
-    void Cleanup();
-    unsigned int CreateMatchmakeSession();
-    unsigned int LeaveJoinedMatchmakeSession();
-    unsigned int SetNextStepAtFailedCreateMesh(Result result);
-    void SetNextStepAtWaitCreateMesh();
-    unsigned int StartNatSession();
-    Result StartupImpl(const session::CreateSessionSetting* setting);
-    void Trace(unsigned long long p0) const;
-    unsigned int UnregisterGathering();
-    unsigned int WaitCreateMatchmake();
-    unsigned int WaitLeaveJoinedMatchmakeSession();
-    unsigned int WaitNotification();
-    unsigned int WaitStartNatSession();
-    unsigned int WaitUnregisterGathering();
+    virtual void Cleanup();
+    virtual void Trace(unsigned long long value) const;
+    ExecuteResult LeaveJoinedMatchmakeSession();
+    ExecuteResult WaitLeaveJoinedMatchmakeSession();
+    ExecuteResult CreateMatchmakeSession();
+    ExecuteResult WaitCreateMatchmake();
+    ExecuteResult WaitNotification();
+    ExecuteResult StartNatSession();
+    ExecuteResult WaitStartNatSession();
+    ExecuteResult UnregisterGathering();
+    ExecuteResult WaitUnregisterGathering();
+
+protected:
+    virtual Result StartupImpl(const session::CreateSessionSetting* setting);
+    virtual void SetNextStepAtWaitCreateMesh();
+    virtual ExecuteResult SetNextStepAtFailedCreateMesh(Result result);
 
 private:
-    unsigned int m_state;
+    enum
+    {
+        cJoinedSessionIdMax = 4
+    };
+
+    NexMatchmakeSession* m_matchmakeSession;
+    unsigned int m_joinedSessionIds[cJoinedSessionIdMax];
+    unsigned int m_joinedSessionIdNum;
+    common::Time m_notificationDeadline;
+    bool m_isOpenSession;
+    common::Time m_createMatchmakeStartTime;
 };
 
 }}}

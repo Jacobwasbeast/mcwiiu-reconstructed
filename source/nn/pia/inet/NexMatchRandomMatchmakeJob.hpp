@@ -1,46 +1,61 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHRANDOMMATCHMAKEJOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHRANDOMMATCHMAKEJOB_HPP
 
-#include <stdint.h>
-
-#include "nn/pia/Common.hpp"
-
-namespace nn { namespace pia { namespace session { class JoinRandomSessionSetting; }}}
+#include "nn/pia/common/Time.hpp"
+#include "nn/pia/session/RandomMatchmakeJob.hpp"
 
 namespace nn { namespace pia { namespace inet {
 
-class NexMatchRandomMatchmakeJob
+class NexMatchmakeSession;
+
+class NexMatchRandomMatchmakeJob : public session::RandomMatchmakeJob
 {
 public:
     NexMatchRandomMatchmakeJob();
-    ~NexMatchRandomMatchmakeJob();
-    uint32_t LeaveJoinedMatchmakeSession();
-    uint32_t WaitLeaveJoinedMatchmakeSession();
-    uint32_t RandomMatchmake();
-    uint32_t WaitRandomMatchmake();
-    uint32_t WaitNotification();
-    uint32_t StartNatSession();
-    uint32_t WaitStartNatSession();
-    uint32_t LeaveMatchmakeSession();
-    uint32_t WaitLeaveCurrentMatchmakeSession();
-    uint32_t WaitLeaveBufferMatchmakeSession();
-    uint32_t ChangeParticipation();
-    uint32_t WaitChangeParticipation();
-    uint32_t CleanupForRetryJoinMesh();
-    uint32_t WaitForRetryJoinMesh();
-    uint64_t NoticeOwnerChangeEvent(uint32_t a1, uint64_t a2);
-    void NoticeUnregisterEvent(uint32_t a1);
-    void Trace(uint64_t a1) const;
-    uint64_t StartupImpl(const session::JoinRandomSessionSetting* a1);
-    void CleanupImpl();
-    void SetNextStepAtWaitCreateMesh();
-    void SetNextStepAtWaitJoinMesh();
-    uint32_t SetNextStepAtFailedCreateMesh(Result a1);
-    uint32_t SetNextStepAtFailedJoinMesh(Result a1);
-    uint32_t SetNextStepAtWaitLeaveMesh();
+    virtual ~NexMatchRandomMatchmakeJob();
+    virtual void Trace(unsigned long long value) const;
+    virtual void NoticeOwnerChangeEvent(unsigned int sessionId, unsigned long long ownerId);
+    virtual void NoticeUnregisterEvent(unsigned int sessionId);
+    virtual Result StartupImpl(const session::JoinRandomSessionSetting* setting);
+    virtual void CleanupImpl();
+    virtual void SetNextStepAtWaitCreateMesh();
+    virtual void SetNextStepAtWaitJoinMesh();
+    virtual ExecuteResult SetNextStepAtFailedCreateMesh(Result result);
+    virtual ExecuteResult SetNextStepAtFailedJoinMesh(Result result);
+    virtual ExecuteResult SetNextStepAtWaitLeaveMesh();
+
+    ExecuteResult LeaveJoinedMatchmakeSession();
+    ExecuteResult WaitLeaveJoinedMatchmakeSession();
+    ExecuteResult RandomMatchmake();
+    ExecuteResult WaitRandomMatchmake();
+    ExecuteResult WaitNotification();
+    ExecuteResult StartNatSession();
+    ExecuteResult WaitStartNatSession();
+    ExecuteResult LeaveMatchmakeSession();
+    ExecuteResult WaitLeaveCurrentMatchmakeSession();
+    ExecuteResult WaitLeaveBufferMatchmakeSession();
+    ExecuteResult ChangeParticipation();
+    ExecuteResult WaitChangeParticipation();
+    ExecuteResult CleanupForRetryJoinMesh();
+    ExecuteResult WaitForRetryJoinMesh();
 
 private:
-    uint64_t state_;
+    enum
+    {
+        cJoinedSessionIdNumMax = 4
+    };
+
+    NexMatchmakeSession* m_matchmakeSession;
+    unsigned long long m_ownerPrincipalId;
+    common::Time m_retryTimeoutTime;
+    common::Time m_retryTime;
+    common::Time m_notificationTimeoutTime;
+    unsigned int m_joinedSessionId[cJoinedSessionIdNumMax];
+    unsigned int m_joinedSessionIdNum;
+    bool m_waitingForRetryJoinMesh;
+    bool m_isOpenSession;
+    common::Time m_natStartTime;
+    bool m_ngsInterfaceAvailable;
 };
 
 }}}

@@ -9,9 +9,7 @@ namespace nn { namespace pia { namespace inet {
 class NexSessionInfoPrivate : public NexSessionInfo
 {
 public:
-    NexSessionInfoPrivate() : NexSessionInfo() {}
-    virtual ~NexSessionInfoPrivate();
-
+    virtual ~NexSessionInfoPrivate() {}
 };
 
 }}}

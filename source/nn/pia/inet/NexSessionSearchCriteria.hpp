@@ -18,6 +18,16 @@ class ResultRange;
 
 namespace nn { namespace pia { namespace inet {
 
+extern const wchar_t* s_scoreSettingIndexKey;
+extern const wchar_t* s_countryCodeKey;
+extern const wchar_t* s_overrideIpAddressKey;
+extern const wchar_t* s_useGeoIpKey;
+extern const wchar_t* s_ratingValueKey;
+extern const wchar_t* s_disconnectionRateKey;
+extern const wchar_t* s_violationRateKey;
+extern const wchar_t* s_totalScoreKey;
+extern const wchar_t* s_updateGeoIpKey;
+
 enum SelectionMethod
 {
     cSelectionMethod_0 = 0,
@@ -28,7 +38,7 @@ enum SelectionMethod
 class NexSessionSearchCriteria : public session::SessionSearchCriteria
 {
 public:
-    enum { cAttributeNum = 6, cAttributeListSize = 100 };
+    enum { cAttributeNum = 6, cAttributeListSize = 100, cParticipantNumUnset = 0xffff };
 
     NexSessionSearchCriteria();
     virtual ~NexSessionSearchCriteria();
@@ -41,8 +51,30 @@ public:
     nn::pia::common::Result SetAttribute(unsigned int index, unsigned int value);
     nn::pia::common::Result SetAttributeRange(unsigned int index, unsigned int minimum, unsigned int maximum);
     void SetRandomSessionSelectionMethod(SelectionMethod method);
+    const common::String* GetAdditionalScoreBasedParameterValueKey(unsigned int index) const
+    {
+        if (index >= cAttributeNum / 2)
+            return 0;
+        return &m_additionalScoreBasedParameterValueKey[index];
+    }
+    const ParamVariant& GetAdditionalScoreBasedParameterValue(unsigned int index) const
+    {
+        return m_additionalScoreBasedParameterValues[index];
+    }
+    const common::String* GetAdditionalScoreBasedParameterStringKey(unsigned int index) const
+    {
+        if (index != 0)
+            return 0;
+        return &m_additionalScoreBasedParameterStringKey;
+    }
+    const common::String* GetAdditionalScoreBasedParameterString(unsigned int index) const
+    {
+        if (index != 0)
+            return 0;
+        return &m_additionalScoreBasedParameterString;
+    }
     void Copy(const NexSessionSearchCriteria& other);
-    void ConvertToNexMatchmakeSessionSearchCriteria(
+    nn::pia::common::Result ConvertToNexMatchmakeSessionSearchCriteria(
         nn::nex::MatchmakeSessionSearchCriteria* criteria,
         nn::nex::InetAddress* address,
         nn::nex::MatchmakeParam* param,
@@ -71,10 +103,10 @@ private:
     bool m_scoreBasedGeoIpUsed;
     common::InetAddress m_overrideIpAddress;
     unsigned int m_communityId;
-    unsigned short m_minParticipantRangeMin;
     unsigned short m_minParticipantRangeMax;
-    unsigned short m_maxParticipantRangeMin;
+    unsigned short m_minParticipantRangeMin;
     unsigned short m_maxParticipantRangeMax;
+    unsigned short m_maxParticipantRangeMin;
     bool m_openedOnly;
     bool m_vacantOnly;
     common::FixedString<8> m_additionalScoreBasedParameterValueKey[cAttributeNum / 2];

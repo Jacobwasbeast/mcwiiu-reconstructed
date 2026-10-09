@@ -1,58 +1,472 @@
 #include "nn/pia/inet/NexMatchUpdateSessionSettingJob.hpp"
 
+#include <cstring>
+
+#include "nn/pia/Transport.hpp"
+#include "nn/pia/common/CallContext.hpp"
+#include "nn/pia/inet/NexMatchmakeSession.hpp"
+#include "nn/pia/inet/NexUpdateSessionSetting.hpp"
+#include "nn/pia/session/Session.hpp"
+
 namespace nn { namespace pia { namespace inet {
 
-uint64_t NexMatchUpdateSessionSettingJob::StartupImpl(uint32_t a1, session::IMatchmakeSession* a2, const session::UpdateSessionSetting* a3, bool a4)
+namespace
 {
-    return static_cast<uint64_t>(state_);
+typedef common::Job::ExecuteResult ExecuteResult;
+
+enum
+{
+    cResultCancelled = 0x6c05
+};
+
+inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (NexMatchUpdateSessionSettingJob::*function)(), const char* name)
+{
+    const common::StepSequenceJob::Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+    slot = step;
+}
 }
 
-uint32_t NexMatchUpdateSessionSettingJob::UpdateSessionSetting()
+NexMatchUpdateSessionSettingJob::NexMatchUpdateSessionSettingJob()
+    : session::UpdateSessionSettingJob(), m_matchmakeSession(0)
 {
-    return static_cast<uint32_t>(state_);
 }
 
-uint32_t NexMatchUpdateSessionSettingJob::WaitUpdateSessionSetting()
+NexMatchUpdateSessionSettingJob::~NexMatchUpdateSessionSettingJob()
 {
-    return static_cast<uint32_t>(state_);
 }
 
-uint32_t NexMatchUpdateSessionSettingJob::ModifyAttribute()
+Result NexMatchUpdateSessionSettingJob::StartupImpl(unsigned int sessionId, session::IMatchmakeSession* matchmakeSession,
+                                                    const session::UpdateSessionSetting* setting, bool isJointSession)
 {
-    return static_cast<uint32_t>(state_);
+    if (sessionId == 0)
+        return transport::cResultInvalidArgument;
+    if (matchmakeSession == 0)
+        return transport::cResultInvalidArgument;
+    if (setting == 0)
+        return transport::cResultInvalidArgument;
+    m_matchmakeSession = static_cast<NexMatchmakeSession*>(matchmakeSession);
+    m_isJointSession = isJointSession;
+    const NexUpdateSessionSetting* nexSetting = static_cast<const NexUpdateSessionSetting*>(setting);
+    if (!nexSetting->IsValid() && !m_isJointSession)
+        return transport::cResultInvalidArgument;
+    if (nexSetting->IsOnlyApplicationDataUpdated() && !m_isJointSession)
+    {
+        std::memset(m_applicationData, 0, sizeof(m_applicationData));
+        nexSetting->GetApplicationData(m_applicationData, sizeof(m_applicationData));
+        m_applicationDataSize = nexSetting->GetApplicationDataSize();
+        SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::UpdateApplicationData, "NexMatchUpdateSessionSettingJob::UpdateApplicationData");
+        return 0;
+    }
+    if (nexSetting->IsOnlyAllAttributesUpdated() && !m_isJointSession)
+    {
+        for (unsigned int index = 0; index < cAttributeNum; ++index)
+            m_attributes[index] = nexSetting->GetAttribute(index);
+        SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::UpdateAttributes, "NexMatchUpdateSessionSettingJob::UpdateAttributes");
+        return 0;
+    }
+    if (nexSetting->IsOnlyAttributeUpdated() && !m_isJointSession)
+    {
+        for (unsigned int index = 0; index < cAttributeNum; ++index)
+        {
+            m_attributes[index] = nexSetting->GetAttribute(index);
+            m_isAttributeUpdated[index] = nexSetting->IsAttributeUpdated(index);
+        }
+        SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::ModifyAttribute, "NexMatchUpdateSessionSettingJob::ModifyAttribute");
+        return 0;
+    }
+    if (m_isJointSession)
+    {
+        session::Session* piaSession = session::g_piaSession;
+        if (sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex] &&
+            piaSession->GetStatus() != session::Session::cStatusMatched)
+            return transport::cResultInvalidState;
+        if (sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex == 0] &&
+            piaSession->GetStatus() != session::Session::cStatusBufferMatched)
+            return transport::cResultInvalidState;
+    }
+    m_matchmakeSession->ReflectUpdateSetting(setting, m_isJointSession);
+    SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::UpdateSessionSetting, "NexMatchUpdateSessionSettingJob::UpdateSessionSetting");
+    return 0;
 }
 
-uint32_t NexMatchUpdateSessionSettingJob::WaitModifyAttribute()
+NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::UpdateSessionSetting()
 {
-    return static_cast<uint32_t>(state_);
+    unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown6:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown7:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown8:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    default:
+        break;
+    }
+    if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
+    {
+        m_callerContext->SignalFailure(cResultCancelled);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    const Result result = m_matchmakeSession->UpdateSessionSetting(&m_callContext, m_sessionId);
+    if (result != 0)
+    {
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::WaitUpdateSessionSetting, "NexMatchUpdateSessionSettingJob::WaitUpdateSessionSetting");
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-uint32_t NexMatchUpdateSessionSettingJob::UpdateAttributes()
+NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::WaitUpdateSessionSetting()
 {
-    return static_cast<uint32_t>(state_);
+    unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown6:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown7:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown8:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    default:
+        break;
+    }
+    if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
+    {
+        m_callerContext->SignalFailure(cResultCancelled);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    if (m_matchmakeSession->WaitUpdateSessionSetting())
+    {
+        if (m_callContext.m_state == common::CallContext::cStateFailure)
+        {
+            m_callerContext->SignalFailure(m_callContext.m_result);
+            m_callerContext = 0;
+            return MakeExecuteResult(cExecuteKindFinished);
+        }
+        if (m_callContext.m_state == common::CallContext::cStateSuccess)
+        {
+            if (m_isJointSession)
+            {
+                if (m_sessionId == session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex])
+                    SetCurrentSessionOpenStatus(session::Session::cSessionOpenStatusOpen);
+                else if (m_sessionId == session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex == 0])
+                    SetBufferSessionOpenStatus(session::Session::cSessionOpenStatusOpen);
+            }
+            SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess, "UpdateSessionSettingJob::CompleteProcess");
+            return MakeExecuteResult(cExecuteKindContinue);
+        }
+    }
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-uint32_t NexMatchUpdateSessionSettingJob::WaitUpdateAttributes()
+NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::ModifyAttribute()
 {
-    return static_cast<uint32_t>(state_);
+    unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown6:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown7:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown8:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    default:
+        break;
+    }
+    if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
+    {
+        m_callerContext->SignalFailure(cResultCancelled);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    for (unsigned int index = 0; index < cAttributeNum; ++index)
+    {
+        if (m_isAttributeUpdated[index])
+        {
+            m_isAttributeUpdated[index] = false;
+            const Result result = m_matchmakeSession->ModifyAttribute(&m_callContext, m_sessionId, index, m_attributes[index]);
+            if (result != 0)
+            {
+                m_callerContext->SignalFailure(result);
+                m_callerContext = 0;
+                return MakeExecuteResult(cExecuteKindFinished);
+            }
+            SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::WaitModifyAttribute, "NexMatchUpdateSessionSettingJob::WaitModifyAttribute");
+            return MakeExecuteResult(cExecuteKindNextStep);
+        }
+    }
+    SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess, "UpdateSessionSettingJob::CompleteProcess");
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-uint32_t NexMatchUpdateSessionSettingJob::UpdateApplicationData()
+NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::WaitModifyAttribute()
 {
-    return static_cast<uint32_t>(state_);
+    unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown6:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown7:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown8:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    default:
+        break;
+    }
+    if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
+    {
+        m_callerContext->SignalFailure(cResultCancelled);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    if (m_matchmakeSession->WaitModifyAttribute())
+    {
+        if (m_callContext.m_state == common::CallContext::cStateFailure)
+        {
+            m_callerContext->SignalFailure(m_callContext.m_result);
+            m_callerContext = 0;
+            return MakeExecuteResult(cExecuteKindFinished);
+        }
+        if (m_callContext.m_state == common::CallContext::cStateSuccess)
+        {
+            SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess, "UpdateSessionSettingJob::CompleteProcess");
+            return MakeExecuteResult(cExecuteKindContinue);
+        }
+    }
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-uint32_t NexMatchUpdateSessionSettingJob::WaitUpdateApplicationData()
+NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::UpdateAttributes()
 {
-    return static_cast<uint32_t>(state_);
+    unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown6:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown7:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown8:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    default:
+        break;
+    }
+    if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
+    {
+        m_callerContext->SignalFailure(cResultCancelled);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    const Result result = m_matchmakeSession->UpdateAttributes(&m_callContext, m_sessionId, m_attributes);
+    if (result != 0)
+    {
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::WaitUpdateAttributes, "NexMatchUpdateSessionSettingJob::WaitUpdateAttributes");
+    return MakeExecuteResult(cExecuteKindNextStep);
+}
+
+NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::WaitUpdateAttributes()
+{
+    unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown6:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown7:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown8:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    default:
+        break;
+    }
+    if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
+    {
+        m_callerContext->SignalFailure(cResultCancelled);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    if (m_matchmakeSession->WaitUpdateAttributes())
+    {
+        if (m_callContext.m_state == common::CallContext::cStateFailure)
+        {
+            m_callerContext->SignalFailure(m_callContext.m_result);
+            m_callerContext = 0;
+            return MakeExecuteResult(cExecuteKindFinished);
+        }
+        if (m_callContext.m_state == common::CallContext::cStateSuccess)
+        {
+            SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess, "UpdateSessionSettingJob::CompleteProcess");
+            return MakeExecuteResult(cExecuteKindContinue);
+        }
+    }
+    return MakeExecuteResult(cExecuteKindNextStep);
+}
+
+NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::UpdateApplicationData()
+{
+    unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown6:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown7:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown8:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    default:
+        break;
+    }
+    if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
+    {
+        m_callerContext->SignalFailure(cResultCancelled);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    const Result result = m_matchmakeSession->UpdateApplicationBuffer(&m_callContext, m_sessionId, m_applicationData, m_applicationDataSize);
+    if (result != 0)
+    {
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::WaitUpdateApplicationData, "NexMatchUpdateSessionSettingJob::WaitUpdateApplicationData");
+    return MakeExecuteResult(cExecuteKindNextStep);
+}
+
+NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::WaitUpdateApplicationData()
+{
+    unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown6:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown7:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    case session::Session::cStatusUnknown8:
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    default:
+        break;
+    }
+    if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
+    {
+        m_callerContext->SignalFailure(cResultCancelled);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    if (m_matchmakeSession->WaitUpdateApplicationBuffer())
+    {
+        if (m_callContext.m_state == common::CallContext::cStateFailure)
+        {
+            m_callerContext->SignalFailure(m_callContext.m_result);
+            m_callerContext = 0;
+            return MakeExecuteResult(cExecuteKindFinished);
+        }
+        if (m_callContext.m_state == common::CallContext::cStateSuccess)
+        {
+            SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess, "UpdateSessionSettingJob::CompleteProcess");
+            return MakeExecuteResult(cExecuteKindContinue);
+        }
+    }
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 void NexMatchUpdateSessionSettingJob::Cleanup()
 {
-    state_ += 1;
+    session::UpdateSessionSettingJob::Cleanup();
+    m_matchmakeSession = 0;
+    std::memset(m_attributes, 0, sizeof(m_attributes));
+    std::memset(m_applicationData, 0, sizeof(m_applicationData));
+    m_applicationDataSize = 0;
 }
 
-void NexMatchUpdateSessionSettingJob::Trace(uint64_t a1) const
+void NexMatchUpdateSessionSettingJob::Trace(unsigned long long) const
 {
 }
 

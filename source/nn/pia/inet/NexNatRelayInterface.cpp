@@ -1,70 +1,99 @@
 #include "nn/pia/inet/NexNatRelayInterface.hpp"
 
+#include "nn/nex/NATTraversalRelayClient.hpp"
+#include "nn/nex/ProtocolCallContext.hpp"
+#include "nn/nex/RelaySignatureKey.hpp"
+#include "nn/pia/inet/NatRelayInterface.hpp"
+#include "nn/pia/inet/NexFacade.hpp"
+#include "nn/pia/transport/StationLocation.hpp"
+
 namespace nn { namespace pia { namespace inet {
 
-void NexNatRelayInterface::RegisterRelayClient(nn::nex::NATTraversalRelayClient* a1)
+namespace {
+
+enum
 {
-    state_ += 1;
+    cTraceNatRelay = 0x800
+};
+
+}
+
+void NexNatRelayInterface::RegisterRelayClient(nex::NATTraversalRelayClient* relayClient)
+{
+    if (relayClient != 0)
+        m_relayClient = relayClient;
 }
 
 void NexNatRelayInterface::UnregisterRelayClient()
 {
-    state_ += 1;
+    m_relayClient = 0;
 }
 
-void NexNatRelayInterface::RelayProbeRequest(const nn::nex::qList<nn::nex::StationURL>& a1, const nn::nex::StationURL& a2)
+void NexNatRelayInterface::RelayProbeRequest(const nex::qList<nex::StationURL>& targetUrls,
+                                             const nex::StationURL& sourceUrl)
 {
-    state_ += 1;
+    if (m_callContext->GetState() == nex::CallContext::CallInProgress)
+        m_callContext->Cancel(nex::CallContext::CallCanceled);
+    m_callContext->Reset();
+    m_relayClient->CallRequestProbeInitiationExt(m_callContext, targetUrls, sourceUrl);
 }
 
-uint64_t NexNatRelayInterface::RequestProbe(const nn::nex::StationURL& a1)
+void NexNatRelayInterface::RequestProbe(const nex::StationURL& targetUrl)
 {
-    return static_cast<uint64_t>(state_);
+    if (m_natRelay != 0)
+    {
+        transport::StationLocation location;
+        NexFacade::ConvertNexStationUrlToStationLocation(targetUrl, &location);
+        location.Trace(cTraceNatRelay);
+        m_natRelay->RequestProbe(location);
+    }
 }
 
-void NexNatRelayInterface::ReportNATTraversalResult(const uint32_t& a1, const bool& a2, const uint32_t& a3)
+void NexNatRelayInterface::ReportNATTraversalResult(const unsigned int& connectionId, const bool& succeeded,
+                                                    const unsigned int& rtt)
 {
-    state_ += 1;
+    if (m_callContext->GetState() == nex::CallContext::CallInProgress)
+        m_callContext->Cancel(nex::CallContext::CallCanceled);
+    m_callContext->Reset();
+    m_relayClient->CallReportNATTraversalResult(m_callContext, connectionId, succeeded, rtt);
 }
 
-void NexNatRelayInterface::ReportNATProperties(uint32_t a1, uint32_t a2, uint32_t a3)
+void NexNatRelayInterface::ReportNATProperties(unsigned int mapping, unsigned int filtering,
+                                               unsigned int portIncrement)
 {
-    state_ += 1;
+    if (m_callContext->GetState() == nex::CallContext::CallInProgress)
+        m_callContext->Cancel(nex::CallContext::CallCanceled);
+    m_callContext->Reset();
+    m_relayClient->CallReportNATProperties(m_callContext, mapping, filtering, portIncrement);
 }
 
-void NexNatRelayInterface::UpdateConnectionState(uint32_t a1, const nn::nex::StationURL& a2)
+void NexNatRelayInterface::UpdateConnectionState(unsigned int connectionId, const nex::StationURL&)
 {
-    state_ += 1;
+    if (m_natRelay != 0)
+        m_natRelay->SetLocalCID(connectionId);
 }
 
-uint32_t NexNatRelayInterface::GetRelaySignatureKey(nn::nex::CallContext* a1, nn::nex::RelaySignatureKey* a2)
+bool NexNatRelayInterface::GetRelaySignatureKey(nex::CallContext* callContext, nex::RelaySignatureKey* key)
 {
-    return static_cast<uint32_t>(state_);
-}
-
-void NexNatRelayInterface::AssociateRelay(NatRelayInterface* a1, nn::nex::ProtocolCallContext* a2)
-{
-    state_ += 1;
-}
-
-void NexNatRelayInterface::RelayProbeRequest(const nn::nex::qList<nn::nex::StationURL>& a1)
-{
-    state_ += 1;
-}
-
-void NexNatRelayInterface::CheckCurrentPublicPort(nn::nex::CallContext* a1, const nn::nex::InetAddress& a2, bool a3)
-{
-    state_ += 1;
-}
-
-void NexNatRelayInterface::DetectSimplifiedNATProperties(nn::nex::CallContext* a1, const nn::nex::InetAddress& a2)
-{
-    state_ += 1;
-}
-
-void NexNatRelayInterface::ReportNATTraversalResultDetail(const uint32_t& a1, const bool& a2, const nn::nex::NATTraversalResult& a3, uint32_t& a4)
-{
-    state_ += 1;
+    if (NexFacade::GetInstance()->IsRelayServiceEnabled())
+    {
+        bool result = false;
+        if (key != 0 && callContext != 0)
+        {
+            if (callContext->GetState() == nex::CallContext::CallInProgress)
+                callContext->Cancel(nex::CallContext::CallCanceled);
+            callContext->Reset();
+            result = m_relayClient->CallGetRelaySignatureKey(static_cast<nex::ProtocolCallContext*>(callContext),
+                                                             &key->m_relayMode, &key->m_currentUTCTime,
+                                                             &key->m_relayAddress, &key->m_relayPort,
+                                                             &key->m_relayAddressType, &key->m_gameServerID);
+        }
+        return result;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 }}}

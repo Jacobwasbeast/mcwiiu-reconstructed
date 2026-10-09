@@ -17,7 +17,6 @@ public:
     const NexCreateSessionSetting* GetCreateSessionSetting() const;
     NexSessionSearchCriteria* GetSessionSearchCriteria(unsigned char index);
     const NexSessionSearchCriteria* GetSessionSearchCriteria(unsigned char index) const;
-    unsigned int GetSessionSearchCriteriaSize();
     unsigned int GetSessionSearchCriteriaSize() const;
     void Reset();
     Result SetCreateSessionSetting(const session::CreateSessionSetting* setting);

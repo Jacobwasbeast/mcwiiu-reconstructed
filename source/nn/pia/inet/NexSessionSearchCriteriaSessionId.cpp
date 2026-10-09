@@ -1,6 +1,17 @@
 #include "nn/pia/inet/NexSessionSearchCriteriaSessionId.hpp"
 
+#include "nn/pia/Transport.hpp"
+
 namespace nn { namespace pia { namespace inet {
+
+namespace
+{
+enum
+{
+    cResultRangeOffsetUnset = 0xffffffff,
+    cResultRangeSizeMax = 100
+};
+}
 
 NexSessionSearchCriteriaSessionId::~NexSessionSearchCriteriaSessionId() {}
 
@@ -12,14 +23,15 @@ unsigned int NexSessionSearchCriteriaSessionId::GetSessionId() const
 void NexSessionSearchCriteriaSessionId::Reset()
 {
     session::SessionSearchCriteria::Reset();
-    SetResultRange(static_cast<unsigned int>(-1), 100);
-    SetKeyType(session::SessionSearchCriteria::cKeyTypeSessionId);
+    m_resultRangeOffset = cResultRangeOffsetUnset;
+    m_resultRangeSize = cResultRangeSizeMax;
+    m_keyType = session::SessionSearchCriteria::cKeyTypeSessionId;
     m_sessionId = 0;
 }
 
-nn::pia::common::Result NexSessionSearchCriteriaSessionId::SetResultRange(unsigned int offset, unsigned int size)
+nn::pia::common::Result NexSessionSearchCriteriaSessionId::SetResultRange(unsigned int, unsigned int)
 {
-    return session::SessionSearchCriteria::SetResultRange(offset, size);
+    return transport::cResultInvalidState;
 }
 
 }}}

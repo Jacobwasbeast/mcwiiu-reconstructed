@@ -1,28 +1,53 @@
 #include "nn/pia/inet/SessionParticipantInfo.hpp"
-#include <cstring>
 
 namespace nn { namespace pia { namespace inet {
 
-SessionParticipantInfo::SessionParticipantInfo()
-    : participantState(0), participantEntries(0), participantCapacity(0), obsoleteEntryCount(0)
+namespace
 {
-    std::memset(participantStorage, 0, sizeof(participantStorage));
+
+enum
+{
+    cParticipationEventDisconnect = 7,
+    cParticipationEventEndParticipation = 8
+};
+
 }
 
-SessionParticipantInfo::~SessionParticipantInfo() {}
+SessionParticipantInfo::SessionParticipantInfo()
+    : m_sessionId(0)
+{
+    m_participantList.Clear();
+}
+
+SessionParticipantInfo::~SessionParticipantInfo()
+{
+    Cleanup();
+}
 
 void SessionParticipantInfo::Cleanup()
 {
-    participantState = 0;
-    participantEntries = 0;
-    obsoleteEntryCount = 0;
+    m_sessionId = 0;
+    m_participantList.Clear();
 }
 
 void SessionParticipantInfo::RemoveObsoleteEntry()
 {
-    if (obsoleteEntryCount != 0) --obsoleteEntryCount;
-    if (participantEntries != 0) --participantEntries;
-    if (participantEntries == 0) participantState = 0;
+    ParticipantList& list = m_participantList;
+    common::ListNode* end = list.Sentinel();
+    common::ListNode* node = end->next;
+    common::ListNode* next = node->next;
+    while (node != end)
+    {
+        ParticipantList::Node* participant = static_cast<ParticipantList::Node*>(node);
+        if (participant->value.m_participationCount < 0 &&
+            (participant->value.m_participationEvent == cParticipationEventDisconnect ||
+             participant->value.m_participationEvent == cParticipationEventEndParticipation))
+            list.Free(participant);
+        node = next;
+        next = node->next;
+    }
+    if (list.GetNodeNum() == 0)
+        m_sessionId = 0;
 }
 
 }}}

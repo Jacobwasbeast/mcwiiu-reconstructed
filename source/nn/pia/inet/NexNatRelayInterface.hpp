@@ -1,43 +1,52 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXNATRELAYINTERFACE_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXNATRELAYINTERFACE_HPP
 
-#include <stdint.h>
+#include "nn/nex/NATRelayInterface.hpp"
 
 namespace nn { namespace nex {
 class CallContext;
 class InetAddress;
 class NATTraversalRelayClient;
-class NATTraversalResult;
 class ProtocolCallContext;
 class RelaySignatureKey;
 class StationURL;
-template <typename T> class qList;
 }}
 
 namespace nn { namespace pia { namespace inet {
+
 class NatRelayInterface;
 
-class NexNatRelayInterface
+class NexNatRelayInterface : public nex::NATRelayInterface
 {
 public:
-    NexNatRelayInterface();
-    ~NexNatRelayInterface();
-    void RegisterRelayClient(nn::nex::NATTraversalRelayClient* a1);
-    void UnregisterRelayClient();
-    void RelayProbeRequest(const nn::nex::qList<nn::nex::StationURL>& a1, const nn::nex::StationURL& a2);
-    uint64_t RequestProbe(const nn::nex::StationURL& a1);
-    void ReportNATTraversalResult(const uint32_t& a1, const bool& a2, const uint32_t& a3);
-    void ReportNATProperties(uint32_t a1, uint32_t a2, uint32_t a3);
-    void UpdateConnectionState(uint32_t a1, const nn::nex::StationURL& a2);
-    uint32_t GetRelaySignatureKey(nn::nex::CallContext* a1, nn::nex::RelaySignatureKey* a2);
-    void AssociateRelay(NatRelayInterface* a1, nn::nex::ProtocolCallContext* a2);
-    void RelayProbeRequest(const nn::nex::qList<nn::nex::StationURL>& a1);
-    void CheckCurrentPublicPort(nn::nex::CallContext* a1, const nn::nex::InetAddress& a2, bool a3);
-    void DetectSimplifiedNATProperties(nn::nex::CallContext* a1, const nn::nex::InetAddress& a2);
-    void ReportNATTraversalResultDetail(const uint32_t& a1, const bool& a2, const nn::nex::NATTraversalResult& a3, uint32_t& a4);
+    NexNatRelayInterface() : m_relayClient(0), m_natRelay(0), m_callContext(0) {}
+    virtual ~NexNatRelayInterface() {}
+    virtual void RegisterRelayClient(nex::NATTraversalRelayClient* relayClient);
+    virtual void UnregisterRelayClient();
+    virtual void RelayProbeRequest(const nex::qList<nex::StationURL>&) {}
+    virtual void RelayProbeRequest(const nex::qList<nex::StationURL>& targetUrls, const nex::StationURL& sourceUrl);
+    virtual void CheckCurrentPublicPort(nex::CallContext*, const nex::InetAddress&, bool) {}
+    virtual void DetectSimplifiedNATProperties(nex::CallContext*, const nex::InetAddress&) {}
+    virtual void RequestProbe(const nex::StationURL& targetUrl);
+    virtual void ReportNATTraversalResult(const unsigned int& connectionId, const bool& succeeded,
+                                          const unsigned int& rtt);
+    virtual void ReportNATProperties(unsigned int mapping, unsigned int filtering, unsigned int portIncrement);
+    virtual bool GetRelaySignatureKey(nex::CallContext* callContext, nex::RelaySignatureKey* key);
+    virtual void ReportNATTraversalResultDetail(const unsigned int&, const bool&, const nex::NATTraversalResult&,
+                                                unsigned int&)
+    {
+    }
+    virtual void UpdateConnectionState(unsigned int connectionId, const nex::StationURL& stationUrl);
+    virtual void AssociateRelay(NatRelayInterface* natRelay, nex::ProtocolCallContext* callContext)
+    {
+        m_natRelay = natRelay;
+        m_callContext = callContext;
+    }
 
 private:
-    uint64_t state_;
+    nex::NATTraversalRelayClient* m_relayClient;
+    NatRelayInterface* m_natRelay;
+    nex::ProtocolCallContext* m_callContext;
 };
 
 }}}

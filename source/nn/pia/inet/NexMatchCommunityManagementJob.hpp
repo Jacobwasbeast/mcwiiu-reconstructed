@@ -2,45 +2,53 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHCOMMUNITYMANAGEMENTJOB_HPP
 
 #include "nn/pia/Common.hpp"
-
-namespace nn { namespace pia { namespace session { class CommunitySearchCriteria; class CreateCommunitySetting; class JoinCommunitySetting; class UpdateCommunitySetting; }}}
+#include "nn/pia/session/CommunityManagementJob.hpp"
 
 namespace nn { namespace pia { namespace inet {
 
-class NexMatchCommunityManagementJob
+class NexMatchmakeSession;
+
+class NexMatchCommunityManagementJob : public session::CommunityManagementJob
 {
 public:
     NexMatchCommunityManagementJob();
     virtual ~NexMatchCommunityManagementJob();
-    Result BrowseCommunityStartupImpl(const session::CommunitySearchCriteria* searchCriteria);
-    void Cleanup();
-    unsigned int CreateCommunity();
-    Result CreateCommunityStartupImpl(const session::CreateCommunitySetting* setting);
-    unsigned int DestroyCommunity();
-    Result DestroyCommunityStartupImpl(unsigned int communityId);
-    unsigned int FindCommunityByCommunityId();
-    unsigned int FindCommunityByOwner();
-    unsigned int FindCommunityByParticipant();
-    unsigned int FindOfficialCommunity();
-    unsigned int JoinCommunity();
-    Result JoinCommunityStartupImpl(const session::JoinCommunitySetting* setting);
-    unsigned int LeaveCommunity();
-    Result LeaveCommunityStartupImpl(unsigned int communityId);
-    void Trace(unsigned long long p0) const;
-    unsigned int UpdateCommunity();
-    Result UpdateCommunityStartupImpl(const session::UpdateCommunitySetting* setting);
-    unsigned int WaitCreateCommunity();
-    unsigned int WaitDestroyCommunity();
-    unsigned int WaitFindCommunityByCommunityId();
-    unsigned int WaitFindCommunityByOwner();
-    unsigned int WaitFindCommunityByParticipant();
-    unsigned int WaitFindOfficialCommunity();
-    unsigned int WaitJoinCommunity();
-    unsigned int WaitLeaveCommunity();
-    unsigned int WaitUpdateCommunity();
+    virtual void Cleanup();
+    virtual void Trace(unsigned long long value) const;
+    ExecuteResult FindCommunityByCommunityId();
+    ExecuteResult WaitFindCommunityByCommunityId();
+    ExecuteResult FindCommunityByParticipant();
+    ExecuteResult WaitFindCommunityByParticipant();
+    ExecuteResult FindOfficialCommunity();
+    ExecuteResult WaitFindOfficialCommunity();
+    ExecuteResult FindCommunityByOwner();
+    ExecuteResult WaitFindCommunityByOwner();
+    ExecuteResult CreateCommunity();
+    ExecuteResult WaitCreateCommunity();
+    ExecuteResult JoinCommunity();
+    ExecuteResult WaitJoinCommunity();
+    ExecuteResult DestroyCommunity();
+    ExecuteResult WaitDestroyCommunity();
+    ExecuteResult LeaveCommunity();
+    ExecuteResult WaitLeaveCommunity();
+    ExecuteResult UpdateCommunity();
+    ExecuteResult WaitUpdateCommunity();
+
+protected:
+    virtual Result BrowseCommunityStartupImpl(const session::CommunitySearchCriteria* criteria);
+    virtual Result CreateCommunityStartupImpl(const session::CreateCommunitySetting* setting);
+    virtual Result JoinCommunityStartupImpl(const session::JoinCommunitySetting* setting);
+    virtual Result UpdateCommunityStartupImpl(const session::UpdateCommunitySetting* setting);
+    virtual Result DestroyCommunityStartupImpl(unsigned int communityId);
+    virtual Result LeaveCommunityStartupImpl(unsigned int communityId);
 
 private:
-    unsigned int m_state;
+    NexMatchmakeSession* m_matchmakeSession;
+    unsigned int m_communityId;
+    unsigned long long m_principalId;
+    unsigned int m_resultRangeOffset;
+    unsigned int m_resultRangeSize;
+    bool m_isAvailableCommunityOnly;
 };
 
 }}}

@@ -1,25 +1,27 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHDESTROYSESSIONJOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHDESTROYSESSIONJOB_HPP
 
+#include "nn/pia/Common.hpp"
+#include "nn/pia/session/DestroySessionJob.hpp"
+
 namespace nn { namespace pia { namespace inet {
 
-class NexMatchDestroySessionJob
+class NexMatchDestroySessionJob : public session::DestroySessionJob
 {
 public:
     NexMatchDestroySessionJob();
     virtual ~NexMatchDestroySessionJob();
-    void Cleanup();
-    void SetNextStepAtMeshCleanup();
-    void SetNextStepAtWaitDestroyMesh();
-    unsigned int StartupImpl();
-    void Trace(unsigned long long p0);
-    unsigned int UnregisterBufferMatchmakeSession();
-    unsigned int UnregisterCurrentMatchmakeSession();
-    unsigned int WaitUnregisterBufferMatchmakeSession();
-    unsigned int WaitUnregisterCurrentMatchmakeSession();
+    virtual void Cleanup();
+    virtual void Trace(unsigned long long value) const;
+    ExecuteResult UnregisterCurrentMatchmakeSession();
+    ExecuteResult WaitUnregisterCurrentMatchmakeSession();
+    ExecuteResult UnregisterBufferMatchmakeSession();
+    ExecuteResult WaitUnregisterBufferMatchmakeSession();
 
-private:
-    unsigned int m_state;
+protected:
+    virtual Result StartupImpl();
+    virtual void SetNextStepAtWaitDestroyMesh();
+    virtual void SetNextStepAtMeshCleanup();
 };
 
 }}}

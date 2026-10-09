@@ -1,6 +1,17 @@
 #include "nn/pia/inet/NexSessionSearchCriteriaOwner.hpp"
 
+#include "nn/pia/Transport.hpp"
+
 namespace nn { namespace pia { namespace inet {
+
+namespace
+{
+enum
+{
+    cResultRangeOffsetUnset = 0xffffffff,
+    cResultRangeSizeMax = 100
+};
+}
 
 NexSessionSearchCriteriaOwner::~NexSessionSearchCriteriaOwner()
 {
@@ -8,10 +19,13 @@ NexSessionSearchCriteriaOwner::~NexSessionSearchCriteriaOwner()
 
 nn::pia::common::Result NexSessionSearchCriteriaOwner::SetResultRange(uint32_t offset, uint32_t size)
 {
-    if (size < 0x65) {
-        return nn::pia::session::SessionSearchCriteria::SetResultRange(offset, size);
+    if (size > cResultRangeSizeMax)
+    {
+        return transport::cResultInvalidArgument;
     }
-    return 0x10c07;
+    m_resultRangeOffset = offset;
+    m_resultRangeSize = size;
+    return 0;
 }
 
 uint64_t NexSessionSearchCriteriaOwner::GetOwnerPrincipalId() const
@@ -22,8 +36,9 @@ uint64_t NexSessionSearchCriteriaOwner::GetOwnerPrincipalId() const
 void NexSessionSearchCriteriaOwner::Reset()
 {
     nn::pia::session::SessionSearchCriteria::Reset();
-    nn::pia::session::SessionSearchCriteria::SetResultRange(0xffffffffu, 100u);
-    nn::pia::session::SessionSearchCriteria::SetKeyType(nn::pia::session::SessionSearchCriteria::cKeyTypeOwner);
+    m_resultRangeOffset = cResultRangeOffsetUnset;
+    m_resultRangeSize = cResultRangeSizeMax;
+    m_keyType = nn::pia::session::SessionSearchCriteria::cKeyTypeOwner;
     owner_principal_id_ = 0;
 }
 

@@ -3,25 +3,25 @@
 namespace nn { namespace pia { namespace inet {
 
 NexJoinSessionSetting::NexJoinSessionSetting()
-    : session::JoinSessionSetting(),
-      m_sessionUserPassword(),
-      m_sessionSystemPassword(),
-      m_extraParticipantNum(0),
-      m_matchmakeSessionOption(0),
-      m_isSetMatchmakeSessionOption(false),
-      m_isMyBlockListUsed(true),
-      m_isOthersBlockListUsed(true)
+    : session::JoinSessionSetting()
 {
+    m_extraParticipantNum = 0;
+    m_matchmakeSessionOption = 0;
+    m_isSetMatchmakeSessionOption = false;
+    m_isMyBlockListUsed = true;
+    m_isOthersBlockListUsed = true;
+    m_sessionUserPassword.Clear();
+    m_sessionSystemPassword.Clear();
 }
 
 void NexJoinSessionSetting::Reset()
 {
     session::JoinSessionSetting::Reset();
+    m_extraParticipantNum = 0;
+    m_matchmakeSessionOption = 0;
     m_isSetMatchmakeSessionOption = false;
     m_isMyBlockListUsed = true;
     m_isOthersBlockListUsed = true;
-    m_extraParticipantNum = 0;
-    m_matchmakeSessionOption = 0;
     m_sessionUserPassword.Clear();
     m_sessionSystemPassword.Clear();
 }

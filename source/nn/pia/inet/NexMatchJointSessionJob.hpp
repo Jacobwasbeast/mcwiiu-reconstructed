@@ -11,6 +11,11 @@ namespace nn { namespace pia { namespace inet {
 class NexMatchJointSessionJob : public session::JointSessionJob
 {
 public:
+    enum
+    {
+        cStationNumMax = 32
+    };
+
     NexMatchJointSessionJob();
     virtual ~NexMatchJointSessionJob();
     virtual void Trace(unsigned long long p0) const;
@@ -115,6 +120,13 @@ public:
     ExecuteResult WaitUntilLeaderLeavesMesh();
     ExecuteResult WaitUpdateJointSessionOpenStatus();
 
+    void setStep(ExecuteResult (NexMatchJointSessionJob::*function)(), const char* name)
+    {
+        Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+        m_currentStep.m_function = step.m_function;
+        m_currentStep.m_name = step.m_name;
+    }
+
     transport::StationConnectionInfo m_stationConnectionInfo;
     common::Time m_time148;
     common::Time m_time150;
@@ -144,8 +156,9 @@ public:
     unsigned char m_field1ec;
     unsigned char m_field1ed;
     unsigned char m_field1ee;
-    unsigned char m_field1f0[128];
-    unsigned char m_field270;
+    unsigned int m_sessionIds[cStationNumMax];
+    unsigned char m_sessionIdNum;
+    bool m_sessionInfoRequested[cStationNumMax];
 };
 
 }}}

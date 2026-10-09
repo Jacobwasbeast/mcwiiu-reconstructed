@@ -1,73 +1,118 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHMESHLAYERCONTROLLER_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHMESHLAYERCONTROLLER_HPP
 
+#include "nn/nex/NotificationEventHandler.hpp"
 #include "nn/pia/Common.hpp"
+#include "nn/pia/common/Job.hpp"
+#include "nn/pia/inet/SessionParticipantInfo.hpp"
+#include "nn/pia/session/MeshLayerController.hpp"
 #include "nn/pia/session/Session.hpp"
 
+namespace nn { namespace nex { class NgsBridgeInterface; class NotificationEvent; }}
 namespace nn { namespace pia { namespace session { class IMatchmakeSession; }}}
-namespace nn { namespace nex { class NgsBridgeInterface; }}
 
 namespace nn { namespace pia { namespace inet {
 
-class NexMatchMeshLayerController
+class NexMatchMeshLayerController : public session::MeshLayerController
 {
 public:
+    enum
+    {
+        cSessionIdArraySize = 4
+    };
+
+    class NexNotificationEventHandler : public nex::NotificationEventHandler
+    {
+    public:
+        NexNotificationEventHandler();
+        virtual ~NexNotificationEventHandler();
+        virtual void ProcessNotificationEvent(const nex::NotificationEvent& event);
+
+        void Cleanup();
+        void AllClearSessionId();
+        void AllClearIgnoredSessionId();
+        bool IsUnregisterGathering() const;
+        Result SaveSessionId(unsigned int sessionId);
+        bool CheckSessionId(unsigned int sessionId) const;
+        bool IsIgnoredSessionId(unsigned int sessionId) const;
+        void AddIgnoredSessionId(unsigned int sessionId);
+        void RemoveIgnoredSessionId(unsigned int sessionId);
+        void ClearSessionId(unsigned int sessionId);
+        unsigned int GetSessionId(unsigned int index) const;
+        unsigned int GetSessionIdArraySize() const;
+        SessionParticipantInfo* GetSessionParticipantInfo(unsigned int sessionId);
+        const SessionParticipantInfo* GetSessionParticipantInfo(unsigned int sessionId) const;
+        unsigned short GetMatchmakeSessionTotalStations(unsigned int sessionId) const;
+        unsigned short GetMatchmakeSessionTotalParticipants(unsigned int sessionId) const;
+        bool IsParticipated(unsigned int sessionId, unsigned long long principalId) const;
+        void AddParticipantPrincipalId(unsigned int sessionId, unsigned long long principalId,
+                                       unsigned long long stationId, unsigned char participantType);
+        void RemoveParticipantPrincipalId(unsigned int sessionId, unsigned long long principalId,
+                                          short participationEvent);
+        void SetLeaving(unsigned int sessionId, unsigned long long principalId);
+        bool IsLeaving(unsigned int sessionId, unsigned long long principalId) const;
+
+    private:
+        enum
+        {
+            cIgnoredSessionIdNum = 8
+        };
+
+        class IgnoredSessionIdBuffer
+        {
+        public:
+            IgnoredSessionIdBuffer() : m_num(0), m_head(0)
+            {
+            }
+
+            unsigned int m_num;
+            unsigned int m_head;
+            unsigned int m_sessionId[cIgnoredSessionIdNum];
+        };
+
+        bool m_unregisterGathering;
+        SessionParticipantInfo m_sessionParticipantInfo[cSessionIdArraySize];
+        IgnoredSessionIdBuffer m_ignoredSessionId;
+    };
+
     NexMatchMeshLayerController();
     virtual ~NexMatchMeshLayerController();
-    void CancelStartNatSession();
-    unsigned long long CheckConnectedStatus();
-    unsigned long long CheckConnectedStatusCore(nn::nex::NgsBridgeInterface* ngsInterface);
-    unsigned int CheckSessionId(unsigned int p0);
-    void Cleanup();
-    void CleanupEventHandler();
-    void ClearSessionId(unsigned int p0);
-    unsigned int GetMatchmakeSessionTotalParticipants() const;
-    unsigned int GetMatchmakeSessionTotalStations() const;
-    unsigned int GetMatchmakeSessionTotalStations(unsigned int p0) const;
-    unsigned int GetNgsInterface(unsigned char p0);
-    unsigned char GetNgsInterfaceIndexBoundNexFacade() const;
-    unsigned long long GetSessionId(unsigned int p0) const;
+    virtual Result Startup(const session::Session::StartupSetting& setting);
+    virtual void Cleanup();
+    virtual Result MeshStartup(session::IMatchmakeSession* matchmakeSession, bool skipBandwidthCheck);
+    virtual void MeshCleanup();
+    virtual Result CheckConnectedStatus();
+    virtual void Trace(unsigned long long value) const;
+    virtual unsigned int GetMatchmakeSessionTotalStations() const;
+    virtual unsigned int GetMatchmakeSessionTotalParticipants() const;
+    virtual bool IsParticipated(unsigned int sessionId, unsigned long long stationId) const;
+    virtual bool IsJoinedUnknownSession(unsigned int sessionId, unsigned int bufferSessionId);
+    virtual void SetLeaveFlag();
+    virtual bool IsAllStationJoined(unsigned int sessionId);
+
+    Result StartNatSession();
+    common::Job::ExecuteKind WaitStartNatSession(Result* result);
+    Result CancelStartNatSession();
+    Result CheckConnectedStatusCore(nex::NgsBridgeInterface* ngsInterface);
+    bool CheckSessionId(unsigned int sessionId);
+    Result SaveSessionId(unsigned int sessionId);
+    void ClearSessionId(unsigned int sessionId);
+    unsigned int GetSessionId(unsigned int index) const;
     unsigned int GetSessionIdArraySize() const;
-    unsigned long long GetSessionParticipantInfo(unsigned int p0) const;
-    bool IsAllStationJoined(unsigned int p0);
-    unsigned int IsJoinedUnknownSession(unsigned int p0, unsigned int p1);
-    unsigned int IsParticipated(unsigned int p0, unsigned long long p1) const;
-    void MeshCleanup();
-    unsigned long long MeshStartup(session::IMatchmakeSession* matchmakeSession, bool p1);
-    void SetLeaveFlag();
-    unsigned long long StartNatSession();
-    unsigned long long Startup(const session::Session::StartupSetting& setting);
-    void Trace(unsigned long long p0) const;
-    unsigned int WaitStartNatSession(Result* result);
+    const SessionParticipantInfo* GetSessionParticipantInfo(unsigned int sessionId) const;
+    unsigned int GetMatchmakeSessionTotalStations(unsigned int sessionId) const;
+    unsigned int GetMatchmakeSessionTotalParticipants(unsigned int sessionId) const;
+    void SetLeaving(unsigned int sessionId, unsigned long long principalId);
+    bool IsLeaving(unsigned int sessionId, unsigned long long principalId) const;
+    void CleanupEventHandler();
+    nex::NgsBridgeInterface* GetNgsInterface(unsigned char index);
+    unsigned char GetNgsInterfaceIndexBoundNexFacade() const;
 
 private:
-    unsigned int m_state;
-};
-
-class NexNotificationEventHandler
-{
-public:
-    NexNotificationEventHandler();
-    void AllClearSessionId();
-    void AllClearIgnoredSessionId();
-    void Cleanup();
-    unsigned char IsUnregisterGathering();
-    unsigned long long SaveSessionId(unsigned long long p0, unsigned long long p1);
-    unsigned int CheckSessionId(unsigned long long p0);
-    unsigned int IsIgnoredSessionId(unsigned long long p0);
-    void AddIgnoredSessionId(unsigned long long p0);
-    void ClearSessionId(unsigned long long p0);
-    unsigned int GetSessionId(unsigned long long p0);
-    int GetSessionParticipantInfo(unsigned long long p0);
-    unsigned int GetMatchmakeSessionTotalStations(unsigned long long p0);
-    unsigned int GetMatchmakeSessionTotalParticipants(unsigned long long p0);
-    unsigned int IsParticipated(unsigned long long p0, unsigned long long p1, unsigned long long p2);
-    unsigned long long RemoveIgnoredSessionId(unsigned long long p0);
-    void AddParticipantPrincipalId(unsigned long long p0, unsigned long long p1, unsigned long long p2, unsigned long long p3, unsigned long long p4, unsigned long long p5);
-    void RemoveParticipantPrincipalId(unsigned long long p0, unsigned long long p1, unsigned long long p2, unsigned long long p3);
-    unsigned long long ProcessNotificationEvent(const void* p0);
-private:
-    unsigned int m_state;
+    nex::NgsBridgeInterface* m_nexFacadeNgsInterface;
+    nex::NgsBridgeInterface* m_ngsInterface;
+    unsigned char m_ngsInterfaceIndexBoundNexFacade;
+    NexNotificationEventHandler* m_notificationEventHandler;
 };
 
 }}}

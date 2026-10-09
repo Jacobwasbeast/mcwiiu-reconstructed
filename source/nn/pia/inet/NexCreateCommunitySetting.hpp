@@ -11,9 +11,14 @@ namespace nn { namespace pia { namespace inet {
 class NexCreateCommunitySetting : public session::CreateCommunitySetting
 {
 public:
+    enum
+    {
+        cAttributeNum = 6,
+        cApplicationDataSizeMax = 512
+    };
+
     NexCreateCommunitySetting();
     NexCreateCommunitySetting(const NexCreateCommunitySetting& other);
-    ~NexCreateCommunitySetting();
     NexCreateCommunitySetting& operator=(const NexCreateCommunitySetting& other);
     void Copy(const NexCreateCommunitySetting& other);
     const common::DateTime* GetParticipaitonStartDate() const;
@@ -21,7 +26,7 @@ public:
     const common::String* GetDescription() const;
     unsigned int GetAttribute(unsigned int index) const;
     bool IsSetAttribute(unsigned int index) const;
-    bool CopyApplicationDataToVector(void* output) const;
+    void CopyApplicationDataToVector(void* vector) const;
     const common::String* GetCommunityUserPassword() const;
     void SetParticipationStartDate(const common::DateTime& value);
     bool IsSetParticipationStartDate() const;
@@ -39,14 +44,14 @@ public:
     void Reset();
 
 private:
-    unsigned char m_startDate[12];
-    unsigned char m_endDate[12];
-    unsigned int m_attributes[6];
-    common::String m_description;
-    common::String m_password;
-    unsigned char m_applicationData[512];
+    common::DateTime m_participationStartDate;
+    common::DateTime m_participationEndDate;
+    common::FixedString<256> m_description;
+    unsigned int m_attributes[cAttributeNum];
+    unsigned char m_applicationData[cApplicationDataSizeMax];
     unsigned int m_applicationDataSize;
-    unsigned int m_attributeFlags;
+    common::FixedString<32> m_communityUserPassword;
+    unsigned int m_stateFlags;
 };
 
 }}}

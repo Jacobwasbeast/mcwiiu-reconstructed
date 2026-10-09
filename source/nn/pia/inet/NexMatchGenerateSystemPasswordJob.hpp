@@ -1,22 +1,26 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHGENERATESYSTEMPASSWORDJOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_INET_NEXMATCHGENERATESYSTEMPASSWORDJOB_HPP
 
+#include "nn/pia/Common.hpp"
+#include "nn/pia/session/GenerateMatchmakeSystemPasswordJob.hpp"
+
 namespace nn { namespace pia { namespace inet {
 
-class NexMatchGenerateSystemPasswordJob
+class NexMatchmakeSession;
+
+class NexMatchGenerateSystemPasswordJob : public session::GenerateMatchmakeSystemPasswordJob
 {
 public:
     NexMatchGenerateSystemPasswordJob();
     virtual ~NexMatchGenerateSystemPasswordJob();
-    void Cleanup();
-    unsigned int GenerateMatchmakeSystemPassword();
-    unsigned int StartupImpl();
-    void Trace(unsigned long long p0);
-    unsigned int WaitGenerateMatchmakeSystemPassword();
+    virtual Result StartupImpl();
+    ExecuteResult GenerateMatchmakeSystemPassword();
+    ExecuteResult WaitGenerateMatchmakeSystemPassword();
+    virtual void Cleanup();
+    virtual void Trace(unsigned long long value) const;
 
 private:
-    unsigned int m_result;
-    bool m_started;
+    NexMatchmakeSession* m_matchmakeSession;
 };
 
 }}}

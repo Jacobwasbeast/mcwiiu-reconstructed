@@ -1,5 +1,7 @@
 #include "nn/pia/inet/NexCommunitySearchCriteriaCommunityId.hpp"
 
+#include "nn/pia/Transport.hpp"
+
 namespace nn { namespace pia { namespace inet {
 
 NexCommunitySearchCriteriaCommunityId::~NexCommunitySearchCriteriaCommunityId()
@@ -8,7 +10,11 @@ NexCommunitySearchCriteriaCommunityId::~NexCommunitySearchCriteriaCommunityId()
 
 Result NexCommunitySearchCriteriaCommunityId::SetResultRange(unsigned int offset, unsigned int size)
 {
-    return size <= 100 ? session::CommunitySearchCriteria::SetResultRange(offset, size) : Result(0x10c07);
+    if (size > 100)
+        return transport::cResultInvalidArgument;
+    m_resultRangeOffset = offset;
+    m_resultRangeSize = size;
+    return 0;
 }
 
 const unsigned int* NexCommunitySearchCriteriaCommunityId::GetCommunityIdList() const
@@ -24,9 +30,12 @@ unsigned int NexCommunitySearchCriteriaCommunityId::GetCommunityIdListSize() con
 void NexCommunitySearchCriteriaCommunityId::Reset()
 {
     session::CommunitySearchCriteria::Reset();
-    m_communityIdCount = 0;
+    m_resultRangeOffset = 0xffffffff;
+    m_resultRangeSize = 100;
+    m_keyType = cKeyTypeCommunityId;
     for (unsigned int index = 0; index < 100; ++index)
         m_communityIds[index] = 0;
+    m_communityIdCount = 0;
 }
 
 }}}

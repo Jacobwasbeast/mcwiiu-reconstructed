@@ -1,7 +1,7 @@
 #include "nn/pia/inet/NexCreateSessionSetting.hpp"
 #include "nn/nex/MemAllocator.hpp"
+#include <coreinit/memory.h>
 
-#include <cstring>
 #include <vector>
 
 namespace nn { namespace pia { namespace inet {
@@ -48,10 +48,23 @@ enum
 NexCreateSessionSetting::NexCreateSessionSetting()
     : m_gameMode(0), m_sessionType(cSessionType_Normal), m_autoCloseSession(false),
       m_applicationDataSize(0), m_openSession(false), m_selectionPriority(0), m_ratingValue(0),
-      m_violationRate(0), m_disconnectionRate(0), m_useGeoIp(false), m_countryCode(0),
-      m_extraParticipantNum(0), m_communityId(0), m_matchmakeSessionOption(0), m_stateFlags(0)
+      m_violationRate(0), m_disconnectionRate(0), m_useGeoIp(false), m_extraParticipantNum(0),
+      m_communityId(0), m_matchmakeSessionOption(0), m_stateFlags(0)
 {
-    Reset();
+    m_overrideIpAddress.m_address = 0;
+    m_overrideIpAddress.m_port = 0;
+    m_sessionUserPassword.Clear();
+    m_sessionMatchmakeKeyword.Clear();
+    OSBlockSet(m_attributes, 0, sizeof(m_attributes));
+    OSBlockSet(m_applicationData, 0, sizeof(m_applicationData));
+    for (unsigned int index = 0; index < cAdditionalScoreBasedParameterValueNum; ++index)
+    {
+        m_additionalScoreBasedParameterValueKey[index].Clear();
+        m_additionalScoreBasedParameterValue[index] = ParamVariant();
+    }
+    m_additionalScoreBasedParameterStringKey[0].Clear();
+    m_additionalScoreBasedParameterString[0].Clear();
+    m_countryCode = 0;
 }
 
 NexCreateSessionSetting::NexCreateSessionSetting(const NexCreateSessionSetting& other)
@@ -75,8 +88,8 @@ void NexCreateSessionSetting::Copy(const NexCreateSessionSetting& other)
     m_gameMode = other.m_gameMode;
     m_sessionType = other.m_sessionType;
     m_autoCloseSession = other.m_autoCloseSession;
-    std::memcpy(m_attributes, other.m_attributes, sizeof(m_attributes));
-    std::memcpy(m_applicationData, other.m_applicationData, sizeof(m_applicationData));
+    OSBlockMove(m_attributes, other.m_attributes, sizeof(m_attributes), FALSE);
+    OSBlockMove(m_applicationData, other.m_applicationData, sizeof(m_applicationData), FALSE);
     m_applicationDataSize = other.m_applicationDataSize;
     m_openSession = other.m_openSession;
     m_selectionPriority = other.m_selectionPriority;
@@ -97,8 +110,12 @@ void NexCreateSessionSetting::Copy(const NexCreateSessionSetting& other)
             other.m_additionalScoreBasedParameterValueKey[index]);
         m_additionalScoreBasedParameterValue[index] = other.m_additionalScoreBasedParameterValue[index];
     }
-    m_additionalScoreBasedParameterStringKey[0].Copy(other.m_additionalScoreBasedParameterStringKey[0]);
-    m_additionalScoreBasedParameterString[0].Copy(other.m_additionalScoreBasedParameterString[0]);
+    for (unsigned int index = 0; index < cAdditionalScoreBasedParameterStringNum; ++index)
+    {
+        m_additionalScoreBasedParameterStringKey[index].Copy(
+            other.m_additionalScoreBasedParameterStringKey[index]);
+        m_additionalScoreBasedParameterString[index].Copy(other.m_additionalScoreBasedParameterString[index]);
+    }
     m_countryCode = other.m_countryCode;
 }
 
@@ -108,23 +125,23 @@ void NexCreateSessionSetting::Reset()
     m_sessionType = cSessionType_Normal;
     m_gameMode = 0;
     m_autoCloseSession = false;
-    std::memset(m_applicationData, 0, sizeof(m_applicationData));
+    OSBlockSet(m_applicationData, 0, sizeof(m_applicationData));
     m_violationRate = 0;
-    m_openSession = false;
+    m_selectionPriority = 0;
     m_matchmakeSessionOption = 0;
     m_overrideIpAddress.m_address = 0;
-    m_overrideIpAddress.m_port = 0;
     m_communityId = 0;
-    m_extraParticipantNum = 0;
-    m_countryCode = 0;
-    m_applicationDataSize = 0;
+    m_overrideIpAddress.m_port = 0;
     m_disconnectionRate = 0;
+    m_applicationDataSize = 0;
     m_ratingValue = 0;
     m_stateFlags = 0;
     m_useGeoIp = false;
+    m_extraParticipantNum = 0;
+    m_openSession = false;
     m_sessionUserPassword.Clear();
     m_sessionMatchmakeKeyword.Clear();
-    std::memset(m_attributes, 0, sizeof(m_attributes));
+    OSBlockSet(m_attributes, 0, sizeof(m_attributes));
     for (unsigned int index = 0; index < cAdditionalScoreBasedParameterValueNum; ++index)
     {
         m_additionalScoreBasedParameterValueKey[index].Clear();
@@ -132,6 +149,7 @@ void NexCreateSessionSetting::Reset()
     }
     m_additionalScoreBasedParameterStringKey[0].Clear();
     m_additionalScoreBasedParameterString[0].Clear();
+    m_countryCode = 0;
 }
 
 void NexCreateSessionSetting::SetGameMode(unsigned int value)
@@ -213,7 +231,7 @@ Result NexCreateSessionSetting::SetApplicationData(const void* data, unsigned in
         return cResultInvalidArgument;
     if (size > cApplicationDataSizeMax)
         return cResultInvalidArgument;
-    std::memcpy(m_applicationData, data, size);
+    OSBlockMove(m_applicationData, data, size, false);
     m_applicationDataSize = size;
     m_stateFlags |= 1u << cFlagApplicationData;
     return 0;
@@ -227,7 +245,7 @@ Result NexCreateSessionSetting::GetApplicationData(void* data, unsigned int size
         return cResultInvalidState;
     if (size < m_applicationDataSize)
         return cResultBufferTooSmall;
-    std::memcpy(data, m_applicationData, m_applicationDataSize);
+    OSBlockMove(data, m_applicationData, m_applicationDataSize, false);
     return 0;
 }
 
@@ -388,10 +406,10 @@ bool NexCreateSessionSetting::IsSetScoreBasedParameter() const
     unsigned int mask = cScoreBasedParameterBaseMask;
     for (unsigned int index = 0; index < cAdditionalScoreBasedParameterValueNum; ++index)
     {
-        if (m_additionalScoreBasedParameterValueKey[index].GetStringLength() != 0)
+        if (m_additionalScoreBasedParameterValueKey[index].GetStringLength() > 0)
             mask |= 1u << (index + cFlagScoreBasedParameterValueKeyFirst);
     }
-    if (m_additionalScoreBasedParameterStringKey[0].GetStringLength() != 0)
+    if (m_additionalScoreBasedParameterStringKey[0].GetStringLength() > 0)
         mask |= 1u << cFlagScoreBasedParameterStringKey;
     return (m_stateFlags & mask) != 0;
 }
