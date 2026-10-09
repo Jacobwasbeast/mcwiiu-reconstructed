@@ -305,7 +305,7 @@ void LanMatchJoinSessionJob::NoticeOwnerChangeEvent(unsigned int sessionId, unsi
             m_retryTime = makeRetryTime();
             return;
         }
-        if (static_cast<int>(session::g_piaMesh->GetJoinMeshState()) > 0)
+        if (session::g_piaMesh->GetJoinMeshState() > 0)
         {
             m_ownerChanged = true;
             return;

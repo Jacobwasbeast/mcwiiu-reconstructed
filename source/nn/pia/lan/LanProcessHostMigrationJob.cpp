@@ -1,172 +1,692 @@
 #include "nn/pia/lan/LanProcessHostMigrationJob.hpp"
 
-#include <algorithm>
+#include <coreinit/memory.h>
+
+#include "nn/pia/Assert.hpp"
+#include "nn/pia/Transport.hpp"
+#include "nn/pia/common/Scheduler.hpp"
+#include "nn/pia/common/TimeSpan.hpp"
+#include "nn/pia/lan/LanFacade.hpp"
+#include "nn/pia/lan/LanMatchmakeSession.hpp"
+#include "nn/pia/lan/LanProtocol.hpp"
+#include "nn/pia/lan/LanSessionInfo.hpp"
+#include "nn/pia/session/Mesh.hpp"
+#include "nn/pia/session/MeshProtocol.hpp"
+#include "nn/pia/session/Session.hpp"
+#include "nn/pia/transport/RelayRouteManager.hpp"
+#include "nn/pia/transport/ResendingMessageManager.hpp"
+#include "nn/pia/transport/StationConnectionInfoTable.hpp"
 
 namespace nn { namespace pia { namespace lan {
 
-LanProcessHostMigrationJob::LanProcessHostMigrationJob()
-    : m_callContext(), m_state(0), m_mode(0), m_host(static_cast<StationIndex>(-1)), m_candidate(static_cast<StationIndex>(-1)), m_rank(0),
-      m_candidateCount(0), m_waitCount(0), m_waitLimit(0), m_multiCandidate(false),
-      m_hostChanged(false), m_fatalError(false), m_finishDeadline(0), m_reselectDeadline(0)
+namespace
 {
+enum
+{
+    cResultConnectionError = 0x6c50
+};
+
+enum
+{
+    cRankDecisionWaitingGreeting = 1,
+    cRankDecisionBecomingHost = 2
+};
+
+enum
+{
+    cDecideNextHostBecomeHost = 1,
+    cDecideNextHostWaitGreeting = 2
+};
+
+enum
+{
+    cSequenceCleanupOldHostInfo = 1,
+    cSequenceDecideNextHost = 2,
+    cSequenceSendRankDecision = 3,
+    cSequenceGetMatchMakingClientHost = 4,
+    cSequencePrepareForBecomingHost = 5,
+    cSequenceLastConfirmation = 9
+};
+
+const int cRelayWaitMarginMsec = 2000;
+const int cOldHostDisconnectionCheckDelayMsec = 2000;
+const int cLastConfirmationDelayMsec = 2000;
+const int cBecomingHostMultiMarginMsec = 1000;
+const int cRankWaitStepMsec = 3000;
+const int cRankWaitBaseMsec = 1000;
+const int cMultiWaitStepMsec = 3000;
+const int cMultiWaitBaseMsec = 2500;
+const unsigned short cPollIntervalMsec = 100;
+const unsigned long long cInvalidPrincipalId = ~0ULL;
+
+template <class T>
+inline void setStep(common::StepSequenceJob::Step& slot,
+                    common::Job::ExecuteResult (T::*function)(),
+                    const char* name)
+{
+    const common::StepSequenceJob::Step step(
+        static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+    slot = step;
+}
+
+inline LanMatchmakeSession* GetCurrentMatchmakeSession()
+{
+    return static_cast<LanMatchmakeSession*>(
+        session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]);
+}
+
+inline long long GetTicksFromMSec(int msec)
+{
+    return common::TimeSpan::GetTicksPerMSec().m_tick * msec;
+}
+
+inline const common::Time& GetDispatchTime()
+{
+    return common::g_piaJobScheduler->m_dispatchTime;
+}
+}
+
+LanProcessHostMigrationJob::LanProcessHostMigrationJob()
+    : session::ProcessHostMigrationJob(), m_callContext(), m_rankDecisionWaitTime(), m_reselectNewHostTime(),
+      m_oldHostDisconnectionCheckTime(), m_lastConfirmationTime()
+{
+    if (m_unknownBC)
+        OSBlockSet(m_rankDecisionMessageId, 0, sizeof(m_rankDecisionMessageId));
+    m_isFatalError = false;
 }
 
 LanProcessHostMigrationJob::~LanProcessHostMigrationJob()
 {
-    CleanupImpl();
+    PIA_ASSERT(m_callContext.m_state != common::CallContext::cStateInProgress);
 }
 
-unsigned int LanProcessHostMigrationJob::LanCleanupOldHostInfo()
+LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanCleanupOldHostInfo()
 {
-    m_state = 1;
-    m_candidate = static_cast<StationIndex>(-1);
-    m_waitCount = 0;
-    return m_host < 0 ? 0u : 1u;
-}
-
-unsigned int LanProcessHostMigrationJob::LanDecideNextHost()
-{
-    m_state = 2;
-    if (m_candidateCount == 0)
-        return 0;
-    if (m_candidate < 0)
-        m_candidate = static_cast<StationIndex>(0);
-    if (m_candidate == m_host)
-        m_candidate = static_cast<StationIndex>(m_candidate + 1);
-    if (m_candidate >= static_cast<StationIndex>(m_candidateCount))
+    m_hostMigrationSequence = cSequenceCleanupOldHostInfo;
+    if (!CleanupOldHostInfoCommonProc())
     {
-        m_fatalError = true;
-        return 0;
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindContinue);
     }
-    m_rank = static_cast<unsigned int>(m_candidate);
-    m_reselectDeadline = m_waitLimit * 2;
-    return 1;
+    switch (DecideNextHostCommonProc())
+    {
+    case cDecideNextHostBecomeHost:
+        setStep(m_currentStep, &LanProcessHostMigrationJob::LanPrepareForBecomingHost,
+                "LanProcessHostMigrationJob::LanPrepareForBecomingHost");
+        break;
+    case cDecideNextHostWaitGreeting:
+        setStep(m_currentStep, &ProcessHostMigrationJob::WaitNewHostGreeting,
+                "LanProcessHostMigrationJob::WaitNewHostGreeting");
+        break;
+    default:
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+        break;
+    }
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanProcessHostMigrationJob::LanPrepareForBecomingHost()
+LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanDecideNextHost()
 {
-    m_state = 5;
-    if (m_fatalError)
-        return 0;
+    m_hostMigrationSequence = cSequenceDecideNextHost;
+    m_newHostIndex = static_cast<StationIndex>(cStationIndexInvalid);
+    for (int i = 0; i < cStationNumMax; ++i)
+    {
+        if (session::g_piaMesh->GetHostStationIndex() != i &&
+            session::g_piaMesh->IsValidStationIndex(static_cast<StationIndex>(i)))
+        {
+            m_newHostIndex = static_cast<StationIndex>(i);
+            break;
+        }
+    }
+    const unsigned int decision = DecideNextHostCommonProc();
+    bool isRelayed = false;
+    transport::RelayRouteManager* relayRouteManager = transport::g_piaTransport->m_relayRouteManager;
+    if (relayRouteManager != 0)
+    {
+        StationIndex relayStation;
+        if (relayRouteManager->GetRelayRoute(m_oldHostIndex, m_newHostIndex, &relayStation) != 0)
+        {
+            setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                    "LanProcessHostMigrationJob::HostMigrationFailure");
+            return MakeExecuteResult(cExecuteKindContinue);
+        }
+        if (relayStation != m_newHostIndex)
+        {
+            m_waitDeadline.m_tick += GetTicksFromMSec(cRelayWaitMarginMsec);
+            isRelayed = true;
+        }
+    }
+    if (decision == cDecideNextHostBecomeHost)
+    {
+        if (isRelayed)
+        {
+            m_oldHostDisconnectionCheckTime.m_tick =
+                GetDispatchTime().m_tick + GetTicksFromMSec(cOldHostDisconnectionCheckDelayMsec);
+            setStep(m_currentStep, &LanProcessHostMigrationJob::LanGetMatchMakingClientHost,
+                    "LanProcessHostMigrationJob::LanGetMatchMakingClientHost");
+        }
+        else
+        {
+            setStep(m_currentStep, &LanProcessHostMigrationJob::LanPrepareForBecomingHost,
+                    "LanProcessHostMigrationJob::LanPrepareForBecomingHost");
+        }
+    }
+    else if (decision == cDecideNextHostWaitGreeting)
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::WaitNewHostGreeting,
+                "LanProcessHostMigrationJob::WaitNewHostGreeting");
+    }
+    else
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+    }
+    return MakeExecuteResult(cExecuteKindContinue);
+}
+
+LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanPrepareForBecomingHost()
+{
+    m_hostMigrationSequence = cSequencePrepareForBecomingHost;
+    if (!PreprocessForBecomingHostCommon())
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    PostprocessForBecomingHostCommon();
     m_callContext.Reset();
-    m_callContext.InitiateCall();
-    m_host = m_candidate;
-    return 1;
+    LanFacade::GetInstance()->GetLanProtocol()->RequestUpdateHostMessage();
+    setStep(m_currentStep, &ProcessHostMigrationJob::SendGreetingMessage,
+            "LanProcessHostMigrationJob::SendGreetingMessage");
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanProcessHostMigrationJob::LanCleanupOldHostInfoOnMultiCandidate()
+LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanCleanupOldHostInfoOnMultiCandidate()
 {
-    m_state = 3;
-    m_waitCount = 0;
-    m_candidate = static_cast<StationIndex>(-1);
-    return m_multiCandidate ? 1u : 0u;
-}
-
-unsigned int LanProcessHostMigrationJob::LanMakeHostCandidateRanking()
-{
-    m_state = 4;
-    if (!m_multiCandidate || m_candidateCount == 0)
-        return 0;
-    m_rank = static_cast<unsigned int>(m_candidateCount - 1);
-    m_candidate = static_cast<StationIndex>(m_rank);
-    return 1;
-}
-
-int LanProcessHostMigrationJob::CalcTimeToWaitOtherClients(unsigned int rank, unsigned int count)
-{
-    if (count == 0 || rank >= count)
-        return 0;
-    return static_cast<int>((rank * 3000u) + 1000u);
-}
-
-unsigned int LanProcessHostMigrationJob::LanSendRankDecision()
-{
-    m_state = 6;
-    m_waitCount = 0;
-    m_waitLimit = CalcTimeToWaitOtherClients(m_rank, std::max(1u, m_candidateCount));
-    return 1;
-}
-
-unsigned int LanProcessHostMigrationJob::LanWaitRankDecision()
-{
-    if (m_waitCount < m_waitLimit)
+    if (!CleanupOldHostInfoCommonProc())
     {
-        ++m_waitCount;
-        return 0;
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindContinue);
     }
-    return 1;
+    setStep(m_currentStep, &LanProcessHostMigrationJob::LanSendRankDecision,
+            "LanProcessHostMigrationJob::LanSendRankDecision");
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanProcessHostMigrationJob::LanGetMatchMakingClientHost()
+LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanMakeHostCandidateRanking()
 {
-    m_state = 7;
-    return m_candidate >= 0 ? 1u : 0u;
+    if (MakeHostCandidateRanking(m_oldHostIndex, m_candidateRanking, &m_unknownE0, &m_unknownE4, false) != 0)
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    setStep(m_currentStep, &LanProcessHostMigrationJob::LanSendRankDecision,
+            "LanProcessHostMigrationJob::LanSendRankDecision");
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanProcessHostMigrationJob::LanWaitMatchMakingClientHost()
+int LanProcessHostMigrationJob::CalcTimeToWaitOtherClients(unsigned int rank, unsigned int)
 {
-    if (m_fatalError)
-        return 0;
-    return m_candidate >= 0 ? 1u : 0u;
+    return rank * cRankWaitStepMsec + cRankWaitBaseMsec;
 }
 
-unsigned int LanProcessHostMigrationJob::LanCheckOldHostDisconnection()
+LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanSendRankDecision()
 {
-    m_state = 8;
-    return m_hostChanged ? 0u : 1u;
+    m_hostMigrationSequence = cSequenceSendRankDecision;
+    session::Mesh* mesh = session::g_piaMesh;
+    if (mesh->CheckConnectionError() == cResultConnectionError)
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "ProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    const StationIndex localStation = mesh->GetLocalStationIndex();
+    if (localStation > cStationIndexMax)
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    if (m_unknownE0 == 0)
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    unsigned int rank = cStationNumMax;
+    unsigned int candidateNum = 0;
+    for (unsigned int i = 0; i < cStationNumMax; ++i)
+    {
+        if (m_candidateRanking[i] == static_cast<unsigned char>(localStation))
+            rank = i;
+        if (m_candidateRanking[i] != cStationIndexInvalid)
+            ++candidateNum;
+    }
+    const int waitTimeMsec = CalcTimeToWaitOtherClients(rank, candidateNum);
+    m_rankDecisionWaitTime.m_tick = GetDispatchTime().m_tick + GetTicksFromMSec(waitTimeMsec);
+    const int timeoutMsec = m_waitTimeMsec;
+    m_waitDeadline.m_tick = GetDispatchTime().m_tick + GetTicksFromMSec(timeoutMsec);
+    for (int i = 0; i < cStationNumMax; ++i)
+    {
+        if (i != localStation && mesh->IsValidStationIndex(static_cast<StationIndex>(i)))
+        {
+            unsigned int ackId = 0;
+            if (mesh->GetMeshProtocol()->SendMultiMigrationRankDecision(static_cast<StationIndex>(i),
+                                                                       m_waitDeadline.m_tick, &ackId))
+                m_rankDecisionMessageId[i] = ackId;
+        }
+    }
+    m_unknownA5 = true;
+    m_greetingSenderIndex = static_cast<StationIndex>(cStationIndexInvalid);
+    setStep(m_currentStep, &LanProcessHostMigrationJob::LanWaitRankDecision,
+            "LanProcessHostMigrationJob::LanWaitRankDecision");
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int LanProcessHostMigrationJob::LanWaitCheckOldHostDisconnection()
+LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanWaitRankDecision()
 {
-    return m_hostChanged ? 0u : 1u;
+    if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError)
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    if (m_waitDeadline <= GetDispatchTime())
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    if (m_greetingSenderIndex != cStationIndexInvalid)
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::WaitNewHostGreeting,
+                "LanProcessHostMigrationJob::WaitNewHostGreeting");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    for (int i = 0; i < cStationNumMax; ++i)
+    {
+        if (m_rankDecision[i] == cRankDecisionWaitingGreeting)
+        {
+            setStep(m_currentStep, &ProcessHostMigrationJob::WaitNewHostGreeting,
+                    "LanProcessHostMigrationJob::WaitNewHostGreeting");
+            return MakeExecuteResult(cExecuteKindContinue);
+        }
+    }
+    if (m_rankDecisionWaitTime <= GetDispatchTime())
+    {
+        setStep(m_currentStep, &LanProcessHostMigrationJob::LanGetMatchMakingClientHost,
+                "LanProcessHostMigrationJob::LanGetMatchMakingClientHost");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    return MakeExecuteResult(cExecuteKindNextStep);
+}
+
+LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanGetMatchMakingClientHost()
+{
+    m_hostMigrationSequence = cSequenceGetMatchMakingClientHost;
+    if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError)
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "ProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    if (m_waitDeadline <= GetDispatchTime())
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
+    m_callContext.Reset();
+    if (matchmakeSession->InquiryOwnerPrincipalId(&m_callContext, matchmakeSession->GetGatheringId()) == 0)
+    {
+        if (!m_unknownBC)
+        {
+            setStep(m_currentStep, &LanProcessHostMigrationJob::LanCheckMatchMakingClientHost,
+                    "LanProcessHostMigrationJob::LanCheckMatchMakingClientHost");
+        }
+        else
+        {
+            setStep(m_currentStep, &LanProcessHostMigrationJob::LanWaitMatchMakingClientHost,
+                    "LanProcessHostMigrationJob::LanWaitMatchMakingClientHost");
+        }
+    }
+    else
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+    }
+    return MakeExecuteResult(cExecuteKindNextStep);
+}
+
+LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanWaitMatchMakingClientHost()
+{
+    LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
+    if (!matchmakeSession->WaitInquiryOwnerPrincipalId() ||
+        m_callContext.m_state == common::CallContext::cStateInProgress)
+    {
+        if (session::g_piaMesh->CheckConnectionError() != cResultConnectionError &&
+            GetDispatchTime() < m_waitDeadline)
+            return MakeExecuteResult(cExecuteKindNextStep);
+        matchmakeSession->CancelInquiryOwnerPrincipalId();
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindNextStep);
+    }
+    if (m_greetingSenderIndex != cStationIndexInvalid)
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::WaitNewHostGreeting,
+                "LanProcessHostMigrationJob::WaitNewHostGreeting");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    bool isBecomingHostDecided = false;
+    for (int i = 0; i < cStationNumMax; ++i)
+    {
+        if (m_rankDecision[i] == cRankDecisionWaitingGreeting)
+        {
+            setStep(m_currentStep, &ProcessHostMigrationJob::WaitNewHostGreeting,
+                    "LanProcessHostMigrationJob::WaitNewHostGreeting");
+            return MakeExecuteResult(cExecuteKindContinue);
+        }
+        if (m_rankDecision[i] == cRankDecisionBecomingHost)
+            isBecomingHostDecided = true;
+    }
+    bool isOwnerAbsent = false;
+    if (matchmakeSession->GetMatchmakeOwnerUniqueId() == cInvalidPrincipalId)
+    {
+        isOwnerAbsent = true;
+    }
+    else
+    {
+        const StationIndex ownerStation = GetStationIndexByPrincipalID(matchmakeSession->GetMatchmakeOwnerUniqueId());
+        if (ownerStation <= cStationIndexMax && ownerStation == m_oldHostIndex)
+        {
+            if (!m_isRankingReceived && !isBecomingHostDecided)
+            {
+                m_oldHostDisconnectionCheckTime.m_tick =
+                    GetDispatchTime().m_tick + GetTicksFromMSec(cOldHostDisconnectionCheckDelayMsec);
+                setStep(m_currentStep, &LanProcessHostMigrationJob::LanCheckOldHostDisconnection,
+                        "LanProcessHostMigrationJob::LanCheckOldHostDisconnection");
+                return MakeExecuteResult(cExecuteKindNextStep);
+            }
+            isOwnerAbsent = true;
+        }
+    }
+    transport::RelayRouteManager* relayRouteManager = transport::g_piaTransport->m_relayRouteManager;
+    bool canBecomeHost = isOwnerAbsent;
+    if (canBecomeHost && !isBecomingHostDecided && relayRouteManager != 0)
+    {
+        StationIndex relayStation;
+        if (relayRouteManager->GetRelayRoute(session::g_piaMesh->GetLocalStationIndex(), m_oldHostIndex,
+                                             &relayStation) != 0 ||
+            relayStation != m_oldHostIndex)
+            canBecomeHost = false;
+    }
+    if (canBecomeHost)
+    {
+        setStep(m_currentStep, &LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti,
+                "LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti");
+    }
+    else
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+    }
+    return MakeExecuteResult(cExecuteKindContinue);
+}
+
+LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanCheckOldHostDisconnection()
+{
+    if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError)
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    if (GetDispatchTime() < m_oldHostDisconnectionCheckTime)
+    {
+        if (m_unknownBC)
+        {
+            if (m_greetingSenderIndex != cStationIndexInvalid)
+            {
+                setStep(m_currentStep, &ProcessHostMigrationJob::WaitNewHostGreeting,
+                        "LanProcessHostMigrationJob::WaitNewHostGreeting");
+                return MakeExecuteResult(cExecuteKindContinue);
+            }
+            bool isBecomingHostDecided = false;
+            for (int i = 0; i < cStationNumMax; ++i)
+            {
+                if (m_rankDecision[i] == cRankDecisionWaitingGreeting)
+                {
+                    setStep(m_currentStep, &ProcessHostMigrationJob::WaitNewHostGreeting,
+                            "LanProcessHostMigrationJob::WaitNewHostGreeting");
+                    return MakeExecuteResult(cExecuteKindContinue);
+                }
+                if (m_rankDecision[i] == cRankDecisionBecomingHost)
+                    isBecomingHostDecided = true;
+            }
+            if (isBecomingHostDecided)
+            {
+                setStep(m_currentStep, &LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti,
+                        "LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti");
+                return MakeExecuteResult(cExecuteKindContinue);
+            }
+        }
+        return MakeExecuteResult(cExecuteKindWait, cPollIntervalMsec);
+    }
+    LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
+    m_callContext.Reset();
+    if (matchmakeSession->InquiryOwnerPrincipalId(&m_callContext, matchmakeSession->GetGatheringId()) != 0)
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+    }
+    else
+    {
+        if (m_unknownBC)
+            m_waitDeadline.m_tick += GetTicksFromMSec(cOldHostDisconnectionCheckDelayMsec);
+        setStep(m_currentStep, &LanProcessHostMigrationJob::LanWaitCheckOldHostDisconnection,
+                "LanProcessHostMigrationJob::LanWaitCheckOldHostDisconnection");
+    }
+    return MakeExecuteResult(cExecuteKindNextStep);
+}
+
+LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanWaitCheckOldHostDisconnection()
+{
+    if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError ||
+        m_waitDeadline <= GetDispatchTime())
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
+    if (!matchmakeSession->WaitInquiryOwnerPrincipalId() ||
+        m_callContext.m_state == common::CallContext::cStateInProgress)
+        return MakeExecuteResult(cExecuteKindWait, cPollIntervalMsec);
+    if (matchmakeSession->GetMatchmakeOwnerUniqueId() == cInvalidPrincipalId)
+    {
+        if (!m_unknownBC)
+        {
+            setStep(m_currentStep, &LanProcessHostMigrationJob::LanPrepareForBecomingHost,
+                    "LanProcessHostMigrationJob::LanPrepareForBecomingHost");
+        }
+        else
+        {
+            setStep(m_currentStep, &LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti,
+                    "LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti");
+        }
+    }
+    else
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+    }
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 void LanProcessHostMigrationJob::StopRankDecisionResending()
 {
-    m_waitCount = 0;
+    for (int i = 0; i < cStationNumMax; ++i)
+    {
+        if (m_rankDecisionMessageId[i] != 0)
+        {
+            transport::g_piaResendingMessageManager->StopResending(m_rankDecisionMessageId[i]);
+            m_rankDecisionMessageId[i] = 0;
+        }
+    }
 }
 
-unsigned int LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti()
+LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti()
 {
-    m_state = 9;
-    if (!m_multiCandidate)
-        return 0;
+    m_newHostIndex = session::g_piaMesh->GetLocalStationIndex();
+    m_unknownA5 = false;
+    StopRankDecisionResending();
+    DisconnectStation(m_oldHostIndex);
+    m_waitDeadline.m_tick -= GetTicksFromMSec(cBecomingHostMultiMarginMsec);
+    setStep(m_currentStep, &LanProcessHostMigrationJob::LanPrepareForBecomingHost,
+            "LanProcessHostMigrationJob::LanPrepareForBecomingHost");
+    return MakeExecuteResult(cExecuteKindContinue);
+}
+
+LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanGetMatchMakingClientHostLastConfirmation()
+{
+    m_hostMigrationSequence = cSequenceLastConfirmation;
+    if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError)
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "ProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    if (GetDispatchTime() < m_lastConfirmationTime)
+        return MakeExecuteResult(cExecuteKindNextStep);
+    LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
     m_callContext.Reset();
-    m_callContext.InitiateCall();
-    m_host = m_candidate;
-    return 1;
+    if (matchmakeSession->InquiryOwnerPrincipalId(&m_callContext, matchmakeSession->GetGatheringId()) == 0)
+    {
+        setStep(m_currentStep, &LanProcessHostMigrationJob::LanWaitMatchMakingClientHostLastConfirmation,
+                "LanProcessHostMigrationJob::LanWaitMatchMakingClientHostLastConfirmation");
+    }
+    else
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+    }
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int LanProcessHostMigrationJob::LanGetMatchMakingClientHostLastConfirmation()
+LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanWaitMatchMakingClientHostLastConfirmation()
 {
-    m_state = 10;
-    return m_candidate >= 0 ? 1u : 0u;
+    LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
+    if (!matchmakeSession->WaitInquiryOwnerPrincipalId() ||
+        m_callContext.m_state == common::CallContext::cStateInProgress)
+    {
+        if (session::g_piaMesh->CheckConnectionError() != cResultConnectionError &&
+            GetDispatchTime() < m_waitDeadline)
+            return MakeExecuteResult(cExecuteKindNextStep);
+        matchmakeSession->CancelInquiryOwnerPrincipalId();
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindNextStep);
+    }
+    if (matchmakeSession->GetMatchmakeOwnerUniqueId() != cInvalidPrincipalId &&
+        matchmakeSession->GetMatchmakeOwnerUniqueId() != LanFacade::GetInstance()->GetLocalPrincipalId())
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    matchmakeSession->SetMatchmakeOwnerUniqueId(LanFacade::GetInstance()->GetLocalPrincipalId());
+    matchmakeSession->SetMatchmakeOwner(true);
+    matchmakeSession->UpdateStationInfoList();
+    if (m_waitDeadline <= GetDispatchTime())
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    const StationIndex ownerStation = static_cast<StationIndex>(
+        transport::g_stationConnectionInfoTable->GetStationIndexByPrincipalID(
+            matchmakeSession->GetMatchmakeOwnerUniqueId()));
+    if (ownerStation <= cStationIndexMax && ownerStation == session::g_piaMesh->GetLocalStationIndex())
+    {
+        m_callContext.Reset();
+        LanFacade::GetInstance()->GetLanProtocol()->RequestUpdateSessionMessage();
+        setStep(m_currentStep, &LanProcessHostMigrationJob::LanWaitSendUpdateSessionMessage,
+                "LanProcessHostMigrationJob::LanWaitSendUpdateSessionMessage");
+        return MakeExecuteResult(cExecuteKindNextStep);
+    }
+    setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+            "LanProcessHostMigrationJob::HostMigrationFailure");
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanProcessHostMigrationJob::LanWaitMatchMakingClientHostLastConfirmation()
+LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanWaitSendUpdateSessionMessage()
 {
-    return m_callContext.m_state == common::CallContext::cStateInProgress ? 0u : 1u;
+    if (LanFacade::GetInstance()->GetLanProtocol()->IsUpdateSessionMessageCompleted())
+    {
+        session::Session::SessionOpenStatus openStatus = session::Session::cSessionOpenStatusParticipationClosed;
+        if (GetCurrentMatchmakeSession()->GetSessionInfoPtr()->IsOpened())
+            openStatus = session::Session::cSessionOpenStatusOpen;
+        if (session::g_piaSession != 0)
+            session::g_piaSession->SetCurrentSessionOpenStatus(openStatus);
+        setStep(m_currentStep, &ProcessHostMigrationJob::SendMigrationFinish,
+                "ProcessHostMigrationJob::SendMigrationFinish");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError ||
+        m_waitDeadline <= GetDispatchTime())
+    {
+        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                "LanProcessHostMigrationJob::HostMigrationFailure");
+    }
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-unsigned int LanProcessHostMigrationJob::LanWaitSendUpdateSessionMessage()
+LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanCheckMatchMakingClientHost()
 {
-    return m_callContext.m_state == common::CallContext::cStateInProgress ? 0u : 1u;
+    LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
+    if (!matchmakeSession->WaitInquiryOwnerPrincipalId() ||
+        m_callContext.m_state == common::CallContext::cStateInProgress)
+    {
+        if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError ||
+            m_waitDeadline <= GetDispatchTime())
+        {
+            matchmakeSession->CancelInquiryOwnerPrincipalId();
+            setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
+                    "LanProcessHostMigrationJob::HostMigrationFailure");
+            return MakeExecuteResult(cExecuteKindNextStep);
+        }
+        return MakeExecuteResult(cExecuteKindWait, cPollIntervalMsec);
+    }
+    if (matchmakeSession->GetMatchmakeOwnerUniqueId() == cInvalidPrincipalId)
+    {
+        setStep(m_currentStep, &LanProcessHostMigrationJob::LanPrepareForBecomingHost,
+                "LanProcessHostMigrationJob::LanPrepareForBecomingHost");
+    }
+    else
+    {
+        setStep(m_currentStep, &LanProcessHostMigrationJob::LanCheckOldHostDisconnection,
+                "LanProcessHostMigrationJob::LanCheckOldHostDisconnection");
+    }
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
-unsigned int LanProcessHostMigrationJob::LanCheckMatchMakingClientHost()
+unsigned int LanProcessHostMigrationJob::IsFatalErrorOccur()
 {
-    m_state = 11;
-    return m_candidate >= 0 ? 1u : 0u;
-}
-
-unsigned char LanProcessHostMigrationJob::IsFatalErrorOccur()
-{
-    return static_cast<unsigned char>(m_fatalError || (m_hostChanged && m_candidate < 0));
+    return m_isFatalError;
 }
 
 unsigned int LanProcessHostMigrationJob::PreprocessForSendingMigrationFinish()
 {
-    m_finishDeadline += 2000;
+    const common::TimeSpan confirmationDelay = common::TimeSpan::FromMSec(cLastConfirmationDelayMsec);
+    m_lastConfirmationTime = GetDispatchTime() + confirmationDelay;
+    setStep(m_currentStep, &LanProcessHostMigrationJob::LanGetMatchMakingClientHostLastConfirmation,
+            "LanProcessHostMigrationJob::LanGetMatchMakingClientHostLastConfirmation");
     return 1;
 }
 
@@ -174,33 +694,48 @@ void LanProcessHostMigrationJob::Trace(unsigned long long) const
 {
 }
 
-unsigned int LanProcessHostMigrationJob::StartupImpl(bool multi, StationIndex station)
+unsigned int LanProcessHostMigrationJob::StartupImpl(bool multi, StationIndex newHost)
 {
-    m_mode = multi ? 2u : 1u;
-    m_multiCandidate = multi;
-    m_host = station;
-    m_candidate = station;
-    m_hostChanged = false;
-    m_fatalError = false;
-    m_callContext.Reset();
-    m_state = 1;
+    if (!multi)
+    {
+        setStep(m_currentStep, &LanProcessHostMigrationJob::LanDecideNextHost,
+                "LanProcessHostMigrationJob::LanDecideNextHost");
+    }
+    else
+    {
+        m_oldHostIndex = session::g_piaMesh->GetHostStationIndex();
+        m_newHostIndex = newHost;
+        setStep(m_currentStep, &LanProcessHostMigrationJob::LanCleanupOldHostInfo,
+                "LanProcessHostMigrationJob::LanCleanupOldHostInfo");
+    }
     return 1;
 }
 
 void LanProcessHostMigrationJob::CleanupImpl()
 {
-    m_hostChanged = false;
-    m_callContext.Reset();
+    if (m_unknownBC)
+        m_isFatalError = false;
 }
 
-unsigned int LanProcessHostMigrationJob::StartupMultiImpl(bool multi, unsigned short candidates)
+unsigned int LanProcessHostMigrationJob::StartupMultiImpl(bool rankingReceived, unsigned short stationNum)
 {
-    m_multiCandidate = multi;
-    m_candidateCount = candidates;
-    m_waitLimit = candidates * 3000u + 1000u;
-    m_candidate = static_cast<StationIndex>(-1);
-    m_hostChanged = false;
-    m_state = 1;
+    m_waitTimeMsec = stationNum * cMultiWaitStepMsec + cMultiWaitBaseMsec;
+    const int reselectTimeMsec = m_waitTimeMsec * 2;
+    const common::TimeSpan reselectTime = common::TimeSpan::FromMSec(reselectTimeMsec);
+    m_reselectNewHostTime = GetDispatchTime() + reselectTime;
+    m_oldHostIndex = session::g_piaMesh->GetHostStationIndex();
+    if (!rankingReceived)
+    {
+        m_isRankingReceived = false;
+        setStep(m_currentStep, &LanProcessHostMigrationJob::LanMakeHostCandidateRanking,
+                "LanProcessHostMigrationJob::LanMakeHostCandidateRanking");
+    }
+    else
+    {
+        m_isRankingReceived = rankingReceived;
+        setStep(m_currentStep, &LanProcessHostMigrationJob::LanCleanupOldHostInfoOnMultiCandidate,
+                "LanProcessHostMigrationJob::LanCleanupOldHostInfoOnMultiCandidate");
+    }
     return 1;
 }
 
@@ -208,29 +743,35 @@ void LanProcessHostMigrationJob::CleanupStatus()
 {
     StopRankDecisionResending();
     if (m_callContext.m_state == common::CallContext::cStateInProgress)
-        m_callContext.SignalCancel();
-    m_callContext.Reset();
-    m_candidate = static_cast<StationIndex>(-1);
+    {
+        LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
+        if (matchmakeSession != 0 && !matchmakeSession->WaitInquiryOwnerPrincipalId())
+            matchmakeSession->CancelInquiryOwnerPrincipalId();
+        else
+            m_callContext.SignalCancel();
+    }
+    ProcessHostMigrationJob::CleanupStatus();
 }
 
 unsigned int LanProcessHostMigrationJob::CheckWhetherReselectNewHost()
 {
-    if (!m_multiCandidate || m_reselectDeadline == 0)
-        return 0;
-    if (m_waitCount >= m_reselectDeadline)
+    if (m_unknownBC && GetDispatchTime() < m_reselectNewHostTime)
     {
-        m_candidate = static_cast<StationIndex>(-1);
-        m_hostChanged = false;
+        if (m_greetingSenderIndex != cStationIndexInvalid)
+            m_oldHostIndex = m_greetingSenderIndex;
+        setStep(m_currentStep, &LanProcessHostMigrationJob::LanSendRankDecision,
+                "LanProcessHostMigrationJob::LanSendRankDecision");
         StopRankDecisionResending();
+        OSBlockSet(m_rankDecision, 0, sizeof(m_rankDecision));
+        m_isRankingReceived = false;
         return 1;
     }
-    ++m_waitCount;
     return 0;
 }
 
 unsigned int LanProcessHostMigrationJob::IsValidHostMigrationSetting()
 {
-    return m_mode != 0 ? 1u : 0u;
+    return 1;
 }
 
 }}}

@@ -3,6 +3,7 @@
 
 #include "nn/pia/common/CallContext.hpp"
 #include "nn/pia/lan/LanSessionInfo.hpp"
+#include "nn/pia/lan/LanSessionInfoPrivate.hpp"
 #include "nn/pia/lan/LanSessionSearchCriteria.hpp"
 #include "nn/pia/session/CommonMatchmakeSession.hpp"
 #include "nn/pia/session/ISessionInfoList.hpp"
@@ -85,8 +86,8 @@ public:
     void Trace(unsigned long long value) const;
 
 private:
-    LanSessionInfo m_sessionInfo;
-    LanSessionInfo m_sessionInfoBuffer;
+    LanSessionInfoPrivate m_sessionInfo;
+    LanSessionInfoPrivate m_sessionInfoBuffer;
     LanSessionSearchCriteria m_searchCriteria[2];
     unsigned char m_searchCriteriaCount;
     session::ISessionInfoList* m_sessionInfoList;

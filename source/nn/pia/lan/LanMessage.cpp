@@ -26,9 +26,12 @@ Result LanMessage::Serialize(unsigned char* buffer, unsigned int* size) const
     if (size == 0)
         return cResultInvalidArgument;
 
-    buffer[0] = static_cast<unsigned char>(m_messageType);
-    OSBlockMove(buffer + 1, m_payload, sizeof(m_payload), FALSE);
-    *size = cSerializedSize;
+    unsigned char* p = buffer;
+    *p = static_cast<unsigned char>(m_messageType);
+    p += 1;
+    OSBlockMove(p, m_payload, sizeof(m_payload), FALSE);
+    p += sizeof(m_payload);
+    *size = p - buffer;
     return 0;
 }
 
@@ -37,8 +40,10 @@ Result LanMessage::Deserialize(const unsigned char* buffer)
     if (buffer == 0)
         return cResultInvalidArgument;
 
-    m_messageType = buffer[0];
-    OSBlockMove(m_payload, buffer + 1, sizeof(m_payload), FALSE);
+    const unsigned char* p = buffer;
+    m_messageType = *p;
+    p += 1;
+    OSBlockMove(m_payload, p, sizeof(m_payload), FALSE);
     return 0;
 }
 

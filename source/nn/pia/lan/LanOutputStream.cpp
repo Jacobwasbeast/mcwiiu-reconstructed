@@ -2,6 +2,8 @@
 
 #include <cstring>
 
+#include <coreinit/memory.h>
+
 #include "nn/pia/common/common.hpp"
 #include "nn/pia/common/InetAddress.hpp"
 #include "nn/pia/common/Packet.hpp"
@@ -10,6 +12,14 @@
 #include "nn/pia/transport/StationManager.hpp"
 
 namespace nn { namespace pia { namespace lan {
+
+namespace
+{
+enum
+{
+    cConnectedStationState = 5
+};
+}
 
 LanOutputStream::LanOutputStream()
     : common::SocketStreamBase(), common::IPacketOutput(), m_protocol(0)
@@ -20,21 +30,25 @@ LanOutputStream::~LanOutputStream()
 {
 }
 
-void LanOutputStream::OnStationConnectionEvent()
+Result LanOutputStream::OnStationConnectionEvent()
 {
-    std::memset(m_stationAddresses, 0, sizeof(m_stationAddresses));
-    for (unsigned int i = 0; i < transport::g_piaStationManager->m_stations.size; ++i)
+    if (!m_started)
+        return 0;
+
+    OSBlockSet(m_stationAddresses, 0, sizeof(m_stationAddresses));
+    for (transport::Station** station = transport::StationManager::s_pInstance->m_stations.begin();
+         station != transport::StationManager::s_pInstance->m_stations.end(); ++station)
     {
-        transport::Station* station = transport::g_piaStationManager->m_stations.data[i];
-        if (station->m_field20 != 5 || station->m_field10 >= 32)
+        if ((*station)->m_field20 != cConnectedStationState)
+            continue;
+        const int index = (*station)->m_field10;
+        if (index >= transport::cStationNumMax)
             continue;
         common::SocketAddress address;
-        address.Init();
-        address.SetInetAddress(station->m_stationAddress.m_inetAddress);
-        address.GetSockAddrIn();
-        std::memcpy(m_stationAddresses + station->m_field10 * sizeof(common::SockAddrIn),
-                    address.GetSockAddrInPointer(), sizeof(common::SockAddrIn));
+        address.SetInetAddress((*station)->m_stationAddress.m_inetAddress);
+        m_stationAddresses[index] = address.GetSockAddrIn();
     }
+    return 0;
 }
 
 Result LanOutputStream::CalculateCryptoParameter(unsigned char* output, unsigned int size,
@@ -51,18 +65,21 @@ Result LanOutputStream::CalculateCryptoParameter(unsigned char* output, unsigned
 
 int LanOutputStream::CreateMulticastAddressArray(common::SockAddrIn* output, unsigned int mask)
 {
-    const unsigned int excluded = transport::g_piaStationManager->m_localStation->m_field10;
     int count = 0;
-    for (unsigned int index = 0; index != 32; ++index)
+    const transport::Station* localStation = transport::StationManager::s_pInstance->m_localStation;
+    if (localStation != 0)
     {
-        if (index == excluded || (mask & (1u << index)) == 0)
-            continue;
-        const unsigned char* entry = m_stationAddresses + index * sizeof(common::SockAddrIn);
-        if (*reinterpret_cast<const unsigned int*>(entry + 4) == 0 ||
-            *reinterpret_cast<const unsigned short*>(entry + 2) == 0)
-            continue;
-        std::memcpy(output + count, entry, sizeof(common::SockAddrIn));
-        ++count;
+        const unsigned int localIndex = localStation->m_field10;
+        for (unsigned int index = 0; index < transport::cStationNumMax; ++index)
+        {
+            if (index == localIndex || ((mask >> index) & 1) == 0)
+                continue;
+            const common::SockAddrIn& address = m_stationAddresses[index];
+            if (address.address == 0 || address.port == 0)
+                continue;
+            output[count] = address;
+            ++count;
+        }
     }
     return count;
 }
@@ -93,16 +110,13 @@ Result LanOutputStream::SendTo(const void* data, unsigned int size,
 
 bool LanOutputStream::IsDestinationAddressIndividual(common::SockAddrIn* addresses, unsigned int count) const
 {
-    if (addresses == 0 || m_protocol == 0)
-        return count <= 1;
     const unsigned int localAddress = m_protocol->m_address;
-    for (unsigned int i = 0; i != count; ++i)
-        if (*reinterpret_cast<const unsigned int*>(addresses[i].bytes + 4) == localAddress)
+    for (unsigned int i = 0; i < count; ++i)
+        if (localAddress == addresses[i].address)
             return false;
-    for (unsigned int i = 0; i != count; ++i)
-        for (unsigned int j = i + 1; j != count; ++j)
-            if (*reinterpret_cast<const unsigned int*>(addresses[i].bytes + 4) ==
-                *reinterpret_cast<const unsigned int*>(addresses[j].bytes + 4))
+    for (unsigned int i = 0; i < count - 1; ++i)
+        for (unsigned int j = i + 1; j <= count - 1; ++j)
+            if (addresses[i].address == addresses[j].address)
                 return false;
     return true;
 }

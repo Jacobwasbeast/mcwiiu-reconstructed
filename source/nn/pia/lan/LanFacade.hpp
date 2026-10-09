@@ -17,9 +17,11 @@ public:
     {
     public:
         LanNetworkSetting()
-            : m_field00(0), m_field04(0), m_field08(0)
+            : m_field00(0), m_field04(cDefaultSubnetMask), m_field08(0)
         {
         }
+
+        static const unsigned int cDefaultSubnetMask = 0xffffff00;
 
         unsigned int m_field00;
         unsigned int m_field04;
@@ -37,7 +39,7 @@ public:
     void Cleanup();
     void RegisterLanProtocol(LanProtocol* protocol);
     void UnregisterLanProtocol();
-    LanProtocol* GetLanProtocol() { return m_lanProtocol; }
+    LanProtocol* GetLanProtocol();
     const LanProtocol* GetLanProtocol() const { return m_lanProtocol; }
     Result StartLanSession();
     void StopLanSession();

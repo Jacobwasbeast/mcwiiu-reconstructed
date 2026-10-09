@@ -3,9 +3,8 @@
 namespace nn { namespace pia { namespace lan {
 
 LanStationInfo::LanStationInfo()
-    : session::SessionStationInfo(),
-      m_userName()
 {
+    m_userName.Clear();
 }
 
 void LanStationInfo::Clear()

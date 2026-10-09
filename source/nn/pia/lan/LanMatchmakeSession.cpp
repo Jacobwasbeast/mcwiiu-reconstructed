@@ -3,13 +3,15 @@
 
 namespace nn { namespace pia { namespace lan {
 
+namespace
+{
+enum
+{
+    cResultNotSupported = 0xc0b
+};
+}
+
 LanMatchmakeSession::LanMatchmakeSession()
-    : session::CommonMatchmakeSession(),
-      m_sessionInfo(),
-      m_sessionInfoBuffer(),
-      m_searchCriteria(),
-      m_ownedCallContext(),
-      m_publishedSessionInfo()
 {
     m_sessionInfoList = session::g_piaSession->m_sessionInfoList;
     Clear();
@@ -22,15 +24,18 @@ LanMatchmakeSession::~LanMatchmakeSession()
 
 void LanMatchmakeSession::Clear()
 {
+    m_sessionInfo.Clear();
+    m_sessionInfoBuffer.Clear();
     for (unsigned int i = 0; i < 2; ++i)
         m_searchCriteria[i].Reset();
+    m_sessionInfoList->Clear();
     session::CommonMatchmakeSession::Cleanup();
     m_inquiryCallContext = 0;
     m_ignoredSessionId = 0;
     m_preferredSessionId = 0;
-    session::CommonMatchmakeSession::SetMatchmakeOwnerUniqueId(0);
+    m_matchmakeOwnerUniqueId = 0;
     m_sessionParamRegistered = false;
-    session::CommonMatchmakeSession::SetMatchmakeOwner(false);
+    m_matchmakeOwner = false;
     m_gatheringId = 0;
     m_callContext = 0;
 }
@@ -93,13 +98,13 @@ bool LanMatchmakeSession::WaitJoinMatchmakeSession()
 Result LanMatchmakeSession::LeaveMatchmakeSession(common::CallContext* callContext, unsigned int gatheringId)
 {
     if (callContext == 0)
-        return static_cast<Result>(0x10c07);
+        return ResultInvalidArgument();
     if (callContext->m_state == common::CallContext::cStateInProgress)
-        return static_cast<Result>(0x10c07);
+        return ResultInvalidArgument();
     if (m_callContext != 0)
-        return static_cast<Result>(0x10c08);
+        return ResultInvalidState();
     if (m_gatheringId != gatheringId)
-        return static_cast<Result>(0x10c07);
+        return ResultInvalidArgument();
     m_callContext = callContext;
     m_callContext->InitiateCall();
     return 0;
@@ -112,6 +117,17 @@ bool LanMatchmakeSession::WaitLeaveMatchmakeSession()
 
 Result LanMatchmakeSession::UnregisterMatchmakeSession(common::CallContext* callContext, unsigned int gatheringId)
 {
+    if (callContext == 0)
+        return ResultInvalidArgument();
+    if (callContext->m_state == common::CallContext::cStateInProgress)
+        return ResultInvalidArgument();
+    if (m_callContext != 0)
+        return ResultInvalidState();
+    if (m_gatheringId != gatheringId)
+        return ResultInvalidArgument();
+    m_callContext = callContext;
+    m_sessionInfo.Clear();
+    m_callContext->InitiateCall();
     return 0;
 }
 
@@ -162,7 +178,7 @@ bool LanMatchmakeSession::WaitRequestSessionInfo()
 
 Result LanMatchmakeSession::UpdateMatchmakeSessionHost(unsigned int stationId)
 {
-    return static_cast<Result>(0xc0b);
+    return cResultNotSupported;
 }
 
 void LanMatchmakeSession::UpdateStationInfoList()
@@ -255,12 +271,10 @@ void LanMatchmakeSession::ReflectSettingToMatchmakeSession(const session::Update
 
 unsigned int LanMatchmakeSession::RegisterSearchCriteria(const session::SessionSearchCriteria* criteria, unsigned char count)
 {
-    if (count > 2)
-        count = 2;
-    m_searchCriteriaCount = count;
+    m_searchCriteriaCount = count > 2 ? 2 : count;
     const LanSessionSearchCriteria* source = static_cast<const LanSessionSearchCriteria*>(criteria);
     for (unsigned char i = 0; i < m_searchCriteriaCount; ++i)
-        m_searchCriteria[i] = source[i];
+        m_searchCriteria[i] = *source++;
     return 1;
 }
 

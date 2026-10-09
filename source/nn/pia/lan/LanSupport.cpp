@@ -10,6 +10,12 @@ namespace
 {
 unsigned char g_lanInitialized = 0;
 unsigned char g_lanInSetup = 0;
+
+enum
+{
+    cResultInvalidState = 0x10c08,
+    cResultNotInitialized = 0x10c0c
+};
 }
 
 namespace nn { namespace pia { namespace lan {
@@ -19,22 +25,25 @@ Result Initialize()
     EmbedModuleInfo();
 
     if (g_lanInitialized != 0)
-        return 0x10c02;
+        return ResultAlreadyInitialized();
 
     pead::SafeStringBase<char> heapName("pia lan heap");
-    common::HeapManager::Setup(static_cast<ModuleType>(0x10), 0, heapName);
+    common::HeapManager::Setup(cModuleType_Lan, 0, heapName);
     g_lanInitialized = 1;
-    return ModuleStackChecker::Register(static_cast<ModuleType>(0x10));
+    Result result = ModuleStackChecker::Register(cModuleType_Lan);
+    if (result != 0)
+        return result;
+    return 0;
 }
 
 Result BeginSetup()
 {
     if (g_lanInitialized == 0)
-        return 0x10c0c;
+        return ResultNotInitialized();
     if (g_lanInSetup != 0)
-        return 0x10c08;
+        return ResultInvalidState();
 
-    common::HeapManager::SetCurrentHeap(static_cast<ModuleType>(0x10));
+    common::HeapManager::SetCurrentHeap(cModuleType_Lan);
     g_lanInSetup = 1;
     return 0;
 }
@@ -42,15 +51,15 @@ Result BeginSetup()
 Result EndSetup()
 {
     if (g_lanInitialized == 0)
-        return 0x10c0c;
+        return cResultNotInitialized;
     if (g_lanInSetup == 0)
-        return 0x10c08;
+        return cResultInvalidState;
 
-    pead::Heap* heap = common::HeapManager::GetHeap(static_cast<ModuleType>(0x10));
+    pead::Heap* heap = common::HeapManager::GetHeap(cModuleType_Lan);
     if (heap == 0)
-        return 0x10c08;
+        return cResultInvalidState;
 
-    heap->freeAll();
+    heap->adjust();
     g_lanInSetup = 0;
     common::HeapManager::ClearCurrentHeap();
     return 0;
@@ -61,9 +70,9 @@ void Finalize()
     if (g_lanInitialized == 0)
         return;
 
-    common::HeapManager::Cleanup(static_cast<ModuleType>(0x10));
+    common::HeapManager::Cleanup(cModuleType_Lan);
     g_lanInitialized = 0;
-    ModuleStackChecker::Unregister(static_cast<ModuleType>(0x10));
+    ModuleStackChecker::Unregister(cModuleType_Lan);
 }
 
 unsigned char IsInitialized()

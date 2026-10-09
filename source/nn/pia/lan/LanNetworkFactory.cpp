@@ -6,22 +6,33 @@
 #include "nn/pia/lan/LanConnectStationJob.hpp"
 #include "nn/pia/lan/LanInputStream.hpp"
 #include "nn/pia/lan/LanLeaveWithHostMigrationJob.hpp"
+#include "nn/pia/lan/LanMatchBrowseMatchmakeJob.hpp"
+#include "nn/pia/lan/LanMatchCreateSessionJob.hpp"
 #include "nn/pia/lan/LanMatchDestroySessionJob.hpp"
+#include "nn/pia/lan/LanMatchJoinSessionJob.hpp"
 #include "nn/pia/lan/LanMatchJointSessionJob.hpp"
 #include "nn/pia/lan/LanMatchLeaveSessionJob.hpp"
 #include "nn/pia/lan/LanMatchMeshLayerController.hpp"
+#include "nn/pia/lan/LanMatchRandomMatchmakeJob.hpp"
+#include "nn/pia/lan/LanMatchUpdateSessionSettingJob.hpp"
 #include "nn/pia/lan/LanMatchmakeSession.hpp"
 #include "nn/pia/lan/LanOutputStream.hpp"
+#include "nn/pia/lan/LanProcessHostMigrationJob.hpp"
 #include "nn/pia/lan/LanProtocol.hpp"
 #include "nn/pia/lan/LanSessionInfoPrivate.hpp"
 #include "nn/pia/session/CreateMeshJob.hpp"
 #include "nn/pia/session/JoinMeshJob.hpp"
 #include "nn/pia/session/KickoutManageJob.hpp"
 #include "nn/pia/session/LeaveMeshJob.hpp"
-#include "nn/pia/session/lan.hpp"
-#include <string.h>
+#include "nn/pia/session/SessionInfoList.hpp"
 
 namespace nn { namespace pia { namespace lan {
+
+namespace {
+
+enum { cMaxStationNum = 16, cHeaderSize = 28, cMtuSize = 1364 };
+
+}
 
 LanNetworkFactory::LanNetworkFactory()
 {
@@ -33,27 +44,32 @@ LanNetworkFactory::~LanNetworkFactory()
 
 unsigned int LanNetworkFactory::GetMaxStationNum() const
 {
-    return 0x10;
+    return cMaxStationNum;
 }
 
 unsigned int LanNetworkFactory::GetHeaderSize() const
 {
-    return 0x1c;
+    return cHeaderSize;
 }
 
 unsigned int LanNetworkFactory::GetMtuSizeMax() const
 {
-    return 0x554;
+    return cMtuSize;
 }
 
 unsigned int LanNetworkFactory::GetMtuSizeMin() const
 {
-    return 0x554;
+    return cMtuSize;
 }
 
 int LanNetworkFactory::GetDefaultRttInitialPulseInterval() const
 {
     return 600;
+}
+
+transport::NetworkFactory* LanNetworkFactory::CreateSelf()
+{
+    return transport::CreateObject<LanNetworkFactory>();
 }
 
 void LanNetworkFactory::DeleteSelf(transport::NetworkFactory* factory)
@@ -65,16 +81,8 @@ Result LanNetworkFactory::CreateProtocols()
 {
     transport::Transport* transport = transport::g_piaTransport;
     if (transport == 0)
-        return static_cast<Result>(0x10c08);
-    if (!transport->m_protocolManager.m_started)
-    {
-        transport::UnreliableProtocol* storage =
-            transport->m_protocolManager.AllocProtocol(sizeof(LanProtocol));
-        LanProtocol* protocol = storage != 0
-            ? new (static_cast<void*>(storage)) LanProtocol() : 0;
-        transport->m_protocolManager.CreateProtocolImpl(
-            protocol, transport::ProtocolId(LanProtocol::cProtocolType, 0));
-    }
+        return transport::cResultInvalidState;
+    transport->m_protocolManager.CreateProtocol<LanProtocol>(0);
     return 0;
 }
 
@@ -157,6 +165,11 @@ common::StepSequenceJob* LanNetworkFactory::CreateLeaveMeshJob()
     return transport::CreateObject<session::LeaveMeshJob>();
 }
 
+common::StepSequenceJob* LanNetworkFactory::CreateProcessHostMigrationJob()
+{
+    return transport::CreateObject<LanProcessHostMigrationJob>();
+}
+
 common::StepSequenceJob* LanNetworkFactory::CreateLeaveWithHostMigrationJob()
 {
     return transport::CreateObject<LanLeaveWithHostMigrationJob>();
@@ -197,19 +210,44 @@ void LanNetworkFactory::DeleteKickoutManageJob(common::StepSequenceJob* job)
     transport::DestroyObject(job);
 }
 
-common::StepSequenceJob* LanNetworkFactory::CreateMatchDestroySessionJob()
+common::StepSequenceJob* LanNetworkFactory::CreateMatchCreateSessionJob()
 {
-    return transport::CreateObject<LanMatchDestroySessionJob>();
+    return transport::CreateObject<LanMatchCreateSessionJob>();
 }
 
-common::StepSequenceJob* LanNetworkFactory::CreateMatchJointSessionJob()
+common::StepSequenceJob* LanNetworkFactory::CreateMatchRandomMatchmakeJob()
 {
-    return transport::CreateObject<LanMatchJointSessionJob>();
+    return transport::CreateObject<LanMatchRandomMatchmakeJob>();
+}
+
+common::StepSequenceJob* LanNetworkFactory::CreateMatchBrowseMatchmakeJob()
+{
+    return transport::CreateObject<LanMatchBrowseMatchmakeJob>();
+}
+
+common::StepSequenceJob* LanNetworkFactory::CreateMatchJoinSessionJob()
+{
+    return transport::CreateObject<LanMatchJoinSessionJob>();
 }
 
 common::StepSequenceJob* LanNetworkFactory::CreateMatchLeaveSessionJob()
 {
     return transport::CreateObject<LanMatchLeaveSessionJob>();
+}
+
+common::StepSequenceJob* LanNetworkFactory::CreateMatchDestroySessionJob()
+{
+    return transport::CreateObject<LanMatchDestroySessionJob>();
+}
+
+common::StepSequenceJob* LanNetworkFactory::CreateMatchUpdateSessionSettingJob()
+{
+    return transport::CreateObject<LanMatchUpdateSessionSettingJob>();
+}
+
+common::StepSequenceJob* LanNetworkFactory::CreateMatchJointSessionJob()
+{
+    return transport::CreateObject<LanMatchJointSessionJob>();
 }
 
 void LanNetworkFactory::DeleteMatchCreateSessionJob(common::StepSequenceJob* job)
@@ -255,35 +293,15 @@ void LanNetworkFactory::DeleteMatchUpdateSessionSettingJob(common::StepSequenceJ
 session::ISessionInfoList* LanNetworkFactory::CreateSessionInfoList(unsigned short size)
 {
     typedef session::SessionInfoList<LanSessionInfoPrivate> List;
-    unsigned int count = 1;
+    unsigned char listSize = 1;
     if (size != 0)
-        count = size & 0xff;
-    List* list = transport::CreateObject<List>();
-    if (list == 0)
-        return 0;
-    list->m_maxSize = static_cast<unsigned short>(count);
-    list->m_size = 0;
-    session::ISessionInfo** items = static_cast<session::ISessionInfo**>(
-        pead::allocateFromSeadHeap(count * sizeof(session::ISessionInfo*),
-                                   common::HeapManager::GetHeap()));
-    if (items != 0)
-    {
-        for (unsigned int index = 0; index < count; ++index)
-            items[index] = 0;
-    }
-    list->m_items = items;
-    for (unsigned int index = 0; index < list->m_maxSize; ++index)
-    {
-        void* storage = pead::allocateFromSeadHeap(sizeof(LanSessionInfoPrivate),
-                                                   common::HeapManager::GetHeap());
-        LanSessionInfoPrivate* info = 0;
-        if (storage != 0)
-        {
-            memset(storage, 0, sizeof(LanSessionInfoPrivate));
-            info = new (storage) LanSessionInfoPrivate();
-        }
-        list->m_items[index] = info;
-    }
+        listSize = static_cast<unsigned char>(size);
+    void* storage = pead::allocateFromSeadHeap(sizeof(List), common::HeapManager::GetHeap());
+    List* list;
+    if (storage == 0)
+        list = 0;
+    else
+        list = new (storage) List(listSize);
     return list;
 }
 

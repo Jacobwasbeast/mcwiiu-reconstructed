@@ -3,6 +3,7 @@
 #include "nn/pia/lan/LanProtocol.hpp"
 #include "nn/pia/lan/LanSupport.hpp"
 #include "nn/pia/HeapManager.hpp"
+#include "nn/pia/common/Memory.hpp"
 #include "platform/wiiu/pead.hpp"
 
 #include <new>
@@ -17,20 +18,18 @@ enum
     cResultInvalidState = 0x10c08,
     cResultNotInitialized = 0x10c0c,
     cResultAlreadyCreated = 0x10c0f,
-    cResultOutOfMemory = 0x10c01,
-    cNetworkSettingMask = 0xffffff00
+    cResultOutOfMemory = 0x10c01
 };
 }
 
 LanFacade* g_lanFacade = 0;
 
-void* g_lanFacadeStorage = 0;
+unsigned char* g_lanFacadeStorage = 0;
 
 LanFacade::LanFacade()
     : m_lanProtocol(0),
       m_networkSetting()
 {
-    m_networkSetting.m_field04 = cNetworkSettingMask;
 }
 
 LanFacade::~LanFacade()
@@ -79,8 +78,8 @@ void LanFacade::Cleanup()
 void LanFacade::RegisterLanProtocol(LanProtocol* protocol)
 {
     m_lanProtocol = protocol;
-    Result initializeResult = m_lanProtocol->Initialize();
-    Result bindResult = m_lanProtocol->Bind(m_networkSetting);
+    Result result = m_lanProtocol->Initialize();
+    result = m_lanProtocol->Bind(m_networkSetting);
 }
 
 void LanFacade::UnregisterLanProtocol()
@@ -88,6 +87,11 @@ void LanFacade::UnregisterLanProtocol()
     if (m_lanProtocol != 0)
         m_lanProtocol->Finalize();
     m_lanProtocol = 0;
+}
+
+LanProtocol* LanFacade::GetLanProtocol()
+{
+    return m_lanProtocol;
 }
 
 Result LanFacade::StartLanSession()
@@ -134,8 +138,7 @@ Result LanFacade::CreateInstance()
     if (g_lanFacade != 0)
         return cResultAlreadyCreated;
 
-    pead::Heap* heap = common::HeapManager::GetHeap();
-    g_lanFacadeStorage = pead::allocateFromSeadHeap(sizeof(LanFacade), heap, 8);
+    g_lanFacadeStorage = common::NewArray<unsigned char>(sizeof(LanFacade), 8);
     if (g_lanFacadeStorage == 0)
         return cResultOutOfMemory;
 
@@ -153,8 +156,7 @@ void LanFacade::DestroyInstance()
     }
     if (g_lanFacadeStorage != 0)
     {
-        pead::getArraySize(g_lanFacadeStorage);
-        pead::freeToSeadHeap(g_lanFacadeStorage);
+        common::DeleteArray(g_lanFacadeStorage);
         g_lanFacadeStorage = 0;
     }
 }

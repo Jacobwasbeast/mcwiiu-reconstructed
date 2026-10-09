@@ -28,12 +28,14 @@ Result LanGetHostMessage::Serialize(unsigned char* buffer, unsigned int* size) c
     if (result != 0)
         return result;
 
+    unsigned int sessionId = m_sessionId;
     unsigned char* out = buffer + *size;
-    out[0] = (m_sessionId >> 24) & 0xff;
-    out[1] = (m_sessionId >> 16) & 0xff;
-    out[2] = (m_sessionId >> 8) & 0xff;
-    out[3] = m_sessionId & 0xff;
-    *size = out + 4 - buffer;
+    out[0] = (sessionId >> 24) & 0xff;
+    out[1] = (sessionId >> 16) & 0xff;
+    out[2] = (sessionId >> 8) & 0xff;
+    out[3] = sessionId & 0xff;
+    out += 4;
+    *size = out - buffer;
     return 0;
 }
 

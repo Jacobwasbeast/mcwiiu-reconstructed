@@ -1,26 +1,28 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANMATCHUPDATESESSIONSETTINGJOB_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_LAN_LANMATCHUPDATESESSIONSETTINGJOB_HPP
 
-#include <stdint.h>
 #include "nn/pia/Common.hpp"
-
-namespace nn { namespace pia { namespace session { class IMatchmakeSession; class UpdateSessionSetting; }}}
+#include "nn/pia/session/UpdateSessionSettingJob.hpp"
 
 namespace nn { namespace pia { namespace lan {
 
-class LanMatchUpdateSessionSettingJob
+class LanMatchmakeSession;
+
+class LanMatchUpdateSessionSettingJob : public session::UpdateSessionSettingJob
 {
 public:
     LanMatchUpdateSessionSettingJob();
-    ~LanMatchUpdateSessionSettingJob();
-    Result StartupImpl(uint32_t gatheringId, session::IMatchmakeSession* matchmakeSession, const session::UpdateSessionSetting* setting, bool notify);
-    uint32_t UpdateSessionSetting();
-    uint32_t WaitUpdateSessionSetting();
-    void Cleanup();
-    void Trace(uint64_t value) const;
+    virtual ~LanMatchUpdateSessionSettingJob();
+    virtual Result StartupImpl(unsigned int sessionId, session::IMatchmakeSession* matchmakeSession,
+                               const session::UpdateSessionSetting* setting, bool isJointSession);
+    ExecuteResult UpdateSessionSetting();
+    ExecuteResult WaitUpdateSessionSetting();
+    virtual void Cleanup();
+    virtual void Trace(unsigned long long value) const;
 
 private:
-    unsigned char m_storage[1];
+    LanMatchmakeSession* m_matchmakeSession;
+    bool m_isJointSession;
 };
 
 }}}

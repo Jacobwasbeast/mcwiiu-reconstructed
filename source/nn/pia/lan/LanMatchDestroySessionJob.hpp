@@ -9,15 +9,16 @@ class LanMatchDestroySessionJob : public session::DestroySessionJob
 {
 public:
     LanMatchDestroySessionJob();
-    ~LanMatchDestroySessionJob();
+    virtual ~LanMatchDestroySessionJob();
     ExecuteResult UnregisterCurrentMatchmakeSession();
     ExecuteResult WaitUnregisterCurrentMatchmakeSession();
-    void Cleanup();
-    void Trace(unsigned long long value) const;
-    Result StartupImpl();
-    void SetNextStepAtWaitDestroyMesh();
-    void SetNextStepAtMeshCleanup();
+    virtual void Cleanup();
+    virtual void Trace(unsigned long long value) const;
 
+protected:
+    virtual Result StartupImpl();
+    virtual void SetNextStepAtWaitDestroyMesh();
+    virtual void SetNextStepAtMeshCleanup();
 };
 
 }}}

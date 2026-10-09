@@ -145,8 +145,8 @@ unsigned int LanMatchMeshLayerController::GetMatchmakeSessionTotalParticipants()
     common::ListNode* sentinel = session::g_piaSession->m_validStationIdList.Sentinel();
     for (common::ListNode* node = sentinel->next; node != sentinel; node = node->next)
     {
-        transport::Station* station = transport::g_piaStationManager->GetStation(
-            reinterpret_cast<session::Session::StationIdEntry*>(node)->m_stationId);
+        transport::Station* station = transport::StationManager::s_pInstance->GetStation(
+            *session::Session::StationIdList::ValueOf(node));
         unsigned char count;
         if (station != 0 && station->GetParticipantCount(&count) == 0)
             total += count;
@@ -156,7 +156,7 @@ unsigned int LanMatchMeshLayerController::GetMatchmakeSessionTotalParticipants()
 
 bool LanMatchMeshLayerController::IsParticipated(unsigned int, unsigned long long principalId) const
 {
-    const transport::StationManager* manager = transport::g_piaStationManager;
+    const transport::StationManager* manager = transport::StationManager::s_pInstance;
     transport::Station* const* begin = manager->m_stations.data;
     for (transport::Station* const* it = begin; it != begin + manager->m_stations.size; ++it)
     {

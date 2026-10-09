@@ -1,14 +1,28 @@
 #include "nn/pia/lan/LanMatchBrowseMatchmakeJob.hpp"
+
 #include "nn/pia/lan/LanMatchmakeSession.hpp"
-#include "nn/pia/session/IMatchmakeSession.hpp"
 #include "nn/pia/session/SessionSearchCriteria.hpp"
-#include <cstring>
 
 namespace nn { namespace pia { namespace lan {
 
-LanMatchBrowseMatchmakeJob::LanMatchBrowseMatchmakeJob()
+namespace
 {
-    std::memset(m_storage, 0, sizeof(m_storage));
+enum
+{
+    cResultCancelled = 0x6c05,
+    cResultInvalidArgument = 0x10c07
+};
+
+enum
+{
+    cBrowseSearchCriteriaNum = 1,
+    cWaitIntervalMsec = 500
+};
+}
+
+LanMatchBrowseMatchmakeJob::LanMatchBrowseMatchmakeJob()
+    : session::BrowseMatchmakeJob(), m_callContext(), m_matchmakeSession(0)
+{
 }
 
 LanMatchBrowseMatchmakeJob::~LanMatchBrowseMatchmakeJob()
@@ -17,100 +31,113 @@ LanMatchBrowseMatchmakeJob::~LanMatchBrowseMatchmakeJob()
 
 void LanMatchBrowseMatchmakeJob::Cleanup()
 {
-    std::memset(m_storage + 0x5c, 0, sizeof(uint32_t));
+    if (m_matchmakeSession != 0)
+        m_matchmakeSession->UnregisterSearchCriteria();
+    session::BrowseMatchmakeJob::Cleanup();
 }
 
-uint32_t LanMatchBrowseMatchmakeJob::BrowseMatchmake()
+LanMatchBrowseMatchmakeJob::ExecuteResult LanMatchBrowseMatchmakeJob::BrowseMatchmake()
 {
-    const uint32_t session = *reinterpret_cast<const uint32_t*>(m_storage + 0x5c);
-    if (session == 0)
-        return 0x01000000u;
-    session::IMatchmakeSession* matchmake = reinterpret_cast<session::IMatchmakeSession*>(static_cast<uintptr_t>(session));
-    const Result result = matchmake->BrowseMatchmakeSession(
-        reinterpret_cast<common::CallContext*>(m_storage + 0x48));
+    if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
+    {
+        m_callerContext->SignalFailure(cResultCancelled);
+        m_callerContext = 0;
+        Cleanup();
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    const Result result = m_matchmakeSession->BrowseMatchmakeSession(&m_callContext);
     if (result != 0)
-        return 0x01000000u;
-    const uint32_t next = 0x036154F0u;
-    std::memcpy(m_storage + 0x24, &next, sizeof(next));
-    const uint32_t state = 0xffffu;
-    std::memcpy(m_storage + 0x20, &state, sizeof(state));
-    return 0x040001F4u;
+    {
+        if (m_callerContext != 0)
+        {
+            m_callerContext->SignalFailure(result);
+            m_callerContext = 0;
+        }
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    SetStep(&LanMatchBrowseMatchmakeJob::WaitBrowseMatchmake,
+            "LanMatchBrowseMatchmakeJob::WaitBrowseMatchmake");
+    return MakeExecuteResult(cExecuteKindWait, cWaitIntervalMsec);
 }
 
-uint32_t LanMatchBrowseMatchmakeJob::WaitBrowseMatchmake()
+LanMatchBrowseMatchmakeJob::ExecuteResult LanMatchBrowseMatchmakeJob::WaitBrowseMatchmake()
 {
-    uint32_t process = 0;
-    std::memcpy(&process, m_storage + 0x48, sizeof(process));
-    const uint32_t session = *reinterpret_cast<const uint32_t*>(m_storage + 0x5c);
-    if (session != 0)
+    if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        session::IMatchmakeSession* matchmake = reinterpret_cast<session::IMatchmakeSession*>(static_cast<uintptr_t>(session));
-        if (matchmake->WaitBrowseMatchmakeSession())
-            return 0x01000000u;
+        m_callerContext->SignalFailure(cResultCancelled);
+        m_callerContext = 0;
+        Cleanup();
+        return MakeExecuteResult(cExecuteKindFinished);
     }
-    if (process == 3)
-        return 0x01000000u;
-    if (process == 2)
+    if (m_matchmakeSession->WaitBrowseMatchmakeSession())
     {
-        const uint32_t state = 0xffffu;
-        std::memcpy(m_storage + 0x20, &state, sizeof(state));
-        return 0;
+        m_matchmakeSession->UnregisterSearchCriteria();
+        if (m_callContext.m_state == common::CallContext::cStateFailure)
+        {
+            m_callerContext->SignalFailure(m_callContext.m_result);
+            m_callerContext = 0;
+            return MakeExecuteResult(cExecuteKindFinished);
+        }
+        if (m_callContext.m_state == common::CallContext::cStateSuccess)
+        {
+            SetStep(&session::BrowseMatchmakeJob::CompleteProcess,
+                    "session::BrowseMatchmakeJob::CompleteProcess");
+            return MakeExecuteResult(cExecuteKindContinue);
+        }
     }
-    return 0x05000000u;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-uint32_t LanMatchBrowseMatchmakeJob::WaitRequestSessionInfo()
+LanMatchBrowseMatchmakeJob::ExecuteResult LanMatchBrowseMatchmakeJob::WaitRequestSessionInfo()
 {
-    uint32_t process = 0;
-    std::memcpy(&process, m_storage + 0x48, sizeof(process));
-    const uint32_t session = *reinterpret_cast<const uint32_t*>(m_storage + 0x5c);
-    if (session != 0)
+    if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        session::IMatchmakeSession* matchmake = reinterpret_cast<session::IMatchmakeSession*>(static_cast<uintptr_t>(session));
-        if (matchmake->WaitRequestSessionInfo())
-            return 0x01000000u;
+        m_callerContext->SignalFailure(cResultCancelled);
+        m_callerContext = 0;
+        Cleanup();
+        return MakeExecuteResult(cExecuteKindFinished);
     }
-    if (process == 3)
-        return 0x01000000u;
-    if (process == 2)
+    if (m_matchmakeSession->WaitRequestSessionInfo())
     {
-        const uint32_t state = 0xffffu;
-        std::memcpy(m_storage + 0x20, &state, sizeof(state));
-        return 0;
+        if (m_callContext.m_state == common::CallContext::cStateFailure)
+        {
+            m_callerContext->SignalFailure(m_callContext.m_result);
+            m_callerContext = 0;
+            return MakeExecuteResult(cExecuteKindFinished);
+        }
+        if (m_callContext.m_state == common::CallContext::cStateSuccess)
+        {
+            SetStep(&session::BrowseMatchmakeJob::CompleteProcess,
+                    "session::BrowseMatchmakeJob::CompleteProcess");
+            return MakeExecuteResult(cExecuteKindContinue);
+        }
     }
-    return 0x05000000u;
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
-void LanMatchBrowseMatchmakeJob::Trace(uint64_t a1) const
+void LanMatchBrowseMatchmakeJob::Trace(unsigned long long) const
 {
 }
 
-Result LanMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* matchmake, const session::SessionSearchCriteria* criteria)
+Result LanMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* matchmakeSession,
+                                               const session::SessionSearchCriteria* criteria)
 {
-    const uint32_t sessionAddress = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(matchmake));
-    std::memcpy(m_storage + 0x5c, &sessionAddress, sizeof(sessionAddress));
-    LanMatchmakeSession* session = reinterpret_cast<LanMatchmakeSession*>(matchmake);
-    if (session->RegisterSearchCriteria(criteria, 1) == 0)
-        return 0x10c07;
-    const uint32_t next = 0x036153A4u;
-    std::memcpy(m_storage + 0x24, &next, sizeof(next));
-    const uint32_t state = 0xffffu;
-    std::memcpy(m_storage + 0x20, &state, sizeof(state));
+    m_matchmakeSession = static_cast<LanMatchmakeSession*>(matchmakeSession);
+    if (m_matchmakeSession->RegisterSearchCriteria(criteria, cBrowseSearchCriteriaNum) == 0)
+        return cResultInvalidArgument;
+    SetStep(&LanMatchBrowseMatchmakeJob::BrowseMatchmake, "LanMatchBrowseMatchmakeJob::BrowseMatchmake");
     return 0;
 }
 
-Result LanMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* matchmake, unsigned int a2)
+Result LanMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* matchmakeSession,
+                                               unsigned int sessionId)
 {
-    const uint32_t sessionAddress = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(matchmake));
-    std::memcpy(m_storage + 0x5c, &sessionAddress, sizeof(sessionAddress));
-    const Result result = matchmake->RequestSessionInfo(
-        reinterpret_cast<common::CallContext*>(m_storage + 0x48), a2);
+    m_matchmakeSession = static_cast<LanMatchmakeSession*>(matchmakeSession);
+    const Result result = m_matchmakeSession->RequestSessionInfo(&m_callContext, sessionId);
     if (result != 0)
         return result;
-    const uint32_t next = 0x03615670u;
-    std::memcpy(m_storage + 0x24, &next, sizeof(next));
-    const uint32_t state = 0xffffu;
-    std::memcpy(m_storage + 0x20, &state, sizeof(state));
+    SetStep(&LanMatchBrowseMatchmakeJob::WaitRequestSessionInfo,
+            "LanMatchBrowseMatchmakeJob::WaitRequestSessionInfo");
     return 0;
 }
 

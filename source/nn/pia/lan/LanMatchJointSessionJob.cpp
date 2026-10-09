@@ -1,6 +1,5 @@
 #include "nn/pia/lan/LanMatchJointSessionJob.hpp"
 
-#include <new>
 
 namespace nn { namespace pia { namespace lan {
 namespace {
@@ -470,23 +469,8 @@ Result LanMatchJointSessionJob::StartupPassiveProcessImpl(
     unsigned short stationIdNum,
     unsigned long long senderStationId)
 {
-    common::ListNode* sentinel = m_companionStationIdList.Sentinel();
     if (m_companionStationIdList.GetNodeNum() != 0)
-    {
-        common::ListNode* node = sentinel->next;
-        while (node != sentinel)
-        {
-            common::ListNode* next = node->next;
-            node->prev = 0;
-            node->next = 0;
-            m_companionStationIdFreeList.InsertAfterNode(
-                m_companionStationIdFreeList.Sentinel(),
-                reinterpret_cast<common::ListNode*>(
-                    reinterpret_cast<char*>(node) + m_stationIdNodeOffset));
-            node = next;
-        }
-        m_companionStationIdList.Init();
-    }
+        m_companionStationIdList.Clear();
 
     const unsigned long long localStationId = session::g_piaSession->m_localStationId;
     bool senderFound = false;
@@ -495,24 +479,15 @@ Result LanMatchJointSessionJob::StartupPassiveProcessImpl(
     {
         do
         {
-            if (m_companionStationIdFreeList.GetNodeNum() != 0)
+            unsigned long long* companionStationId = m_companionStationIdList.Alloc();
+            if (companionStationId != 0)
             {
-                common::ListNode* freeNode = m_companionStationIdFreeList.PopBackNode();
-                if (freeNode != 0)
-                    freeNode = reinterpret_cast<common::ListNode*>(
-                        reinterpret_cast<char*>(freeNode) - m_stationIdNodeOffset);
-                StationIdNode* stationIdNode = static_cast<StationIdNode*>(freeNode);
-                new (&stationIdNode->m_stationId) unsigned long long(0);
-                m_companionStationIdList.InsertBeforeNode(sentinel, stationIdNode);
-                if (&stationIdNode->m_stationId != 0)
-                {
-                    const unsigned long long stationId = *stationIds;
-                    stationIdNode->m_stationId = stationId;
-                    if (stationId == senderStationId)
-                        senderFound = true;
-                    if (stationId == localStationId)
-                        localFound = true;
-                }
+                const unsigned long long stationId = *stationIds;
+                *companionStationId = stationId;
+                if (stationId == senderStationId)
+                    senderFound = true;
+                if (stationId == localStationId)
+                    localFound = true;
             }
             --stationIdNum;
             ++stationIds;

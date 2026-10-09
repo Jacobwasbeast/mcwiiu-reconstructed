@@ -208,11 +208,10 @@ unsigned int LanProtocol::IsProtocolFilteringEnabled() const
 
 void LanProtocol::ResetSelfKeepAliveTime()
 {
-    const unsigned long long interval =
-        common::TimeSpan::GetTicksPerMSec().m_tick * cSelfKeepAliveIntervalMsec;
+    const common::TimeSpan interval = common::TimeSpan::FromMSec(cSelfKeepAliveIntervalMsec);
     common::Time now;
     now.SetNow();
-    m_selfKeepAliveTime.m_tick = now.m_tick + interval;
+    m_selfKeepAliveTime.m_tick = now.m_tick + interval.m_tick;
 }
 
 Result LanProtocol::Startup()
@@ -248,15 +247,12 @@ void LanProtocol::SendMessage(LanPayload* payload, const common::StationAddress&
     if (!IsCryptoEnabled() || m_sessionKeyRegistered != 0 ||
         payload->m_type == cSelfKeepAliveMessageType)
     {
-        transport::ProtocolMessageWriter* writer =
-            reinterpret_cast<transport::PacketHandler*>(static_cast<uintptr_t>(mStationPacketHandler))
-                ->AssignByStationAddress(transport::ProtocolId(cProtocolType, 0), address,
-                                         payload->m_size, isPriority, field602);
+        transport::ProtocolMessageWriter* writer = mStationPacketHandler->AssignByStationAddress(
+            transport::ProtocolId(cProtocolType, 0), address, payload->m_size, isPriority, field602);
         if (writer != 0)
         {
             writer->SetPayload(payload->m_data);
-            reinterpret_cast<transport::PacketHandler*>(static_cast<uintptr_t>(mStationPacketHandler))
-                ->Commit();
+            mStationPacketHandler->Commit();
         }
     }
 }
@@ -335,20 +331,19 @@ bool LanProtocol::IsBrowseMessageCompleted() const
 
 bool LanProtocol::RequestGetHostMessage()
 {
-    if (m_getHostContext.m_state == common::CallContext::cStateInProgress)
-        return false;
-
-    m_getHostContext.Reset();
-    m_getHostContext.InitiateCall();
-    if (!session::g_piaMesh->IsProcessingLeaveMesh())
-        SendGetHostMessage();
-
-    const unsigned long long interval =
-        common::TimeSpan::GetTicksPerMSec().m_tick * cRequestTimeoutMsec;
-    common::Time now;
-    now.SetNow();
-    m_getHostDeadline.m_tick = now.m_tick + interval;
-    return true;
+    if (m_getHostContext.m_state != common::CallContext::cStateInProgress)
+    {
+        m_getHostContext.Reset();
+        m_getHostContext.InitiateCall();
+        if (!session::g_piaMesh->IsProcessingLeaveMesh())
+            SendGetHostMessage();
+        const common::TimeSpan interval = common::TimeSpan::FromMSec(cRequestTimeoutMsec);
+        common::Time now;
+        now.SetNow();
+        m_getHostDeadline.m_tick = now.m_tick + interval.m_tick;
+        return true;
+    }
+    return false;
 }
 
 bool LanProtocol::IsGetHostMessageCompleted() const
@@ -378,19 +373,18 @@ bool LanProtocol::IsUpdateSessionMessageCompleted() const
 
 bool LanProtocol::RequestGetSessionMessage()
 {
-    if (m_getSessionContext.m_state == common::CallContext::cStateInProgress)
-        return false;
-
-    m_getSessionContext.Reset();
-    m_getSessionContext.InitiateCall();
-    SendGetSessionMessage();
-
-    const unsigned long long interval =
-        common::TimeSpan::GetTicksPerMSec().m_tick * cRequestTimeoutMsec;
-    common::Time now;
-    now.SetNow();
-    m_getSessionDeadline.m_tick = now.m_tick + interval;
-    return true;
+    if (m_getSessionContext.m_state != common::CallContext::cStateInProgress)
+    {
+        m_getSessionContext.Reset();
+        m_getSessionContext.InitiateCall();
+        SendGetSessionMessage();
+        const common::TimeSpan interval = common::TimeSpan::FromMSec(cRequestTimeoutMsec);
+        common::Time now;
+        now.SetNow();
+        m_getSessionDeadline.m_tick = now.m_tick + interval.m_tick;
+        return true;
+    }
+    return false;
 }
 
 bool LanProtocol::IsGetSessionMessageCompleted() const
@@ -704,7 +698,7 @@ Result LanProtocol::CalculateTokenHash(const unsigned char* input, unsigned int 
 {
     if (input == 0 || inputSize != LanMatchmakeUpdateJob::cBrowseTokenSize || output == 0 ||
         outputSize != cKeySize)
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     if (m_cryptoSetting.m_mode == 0)
         return 0;
 
@@ -796,8 +790,7 @@ Result LanProtocol::Dispatch()
 
 void LanProtocol::ReceiveMessages()
 {
-    transport::PacketHandler* handler = reinterpret_cast<transport::PacketHandler*>(
-        static_cast<uintptr_t>(mStationPacketHandler));
+    transport::PacketHandler* handler = mStationPacketHandler;
     transport::PacketHandler::Iterator& iterator = handler->GetIterator(cProtocolType);
     while (!handler->IsEndIteration())
     {
