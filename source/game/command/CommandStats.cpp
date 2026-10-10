@@ -2,7 +2,7 @@
 #include "game/command/CommandSender.hpp"
 #include "game/data/CompoundTag.hpp"
 
-static std::wstring sStatPrefixes[5] = { L"SuccessCount", L"AffectedBlocks", L"AffectedEntities", L"AffectedItems", L"QueryResult" };
+std::wstring sStatPrefixes[5] = { L"SuccessCount", L"AffectedBlocks", L"AffectedEntities", L"AffectedItems", L"QueryResult" };
 static std::wstring sStatNames[5];
 
 CommandStats::CommandStats() : m_entityNames(0), m_objectiveNames(0)
@@ -57,10 +57,9 @@ void CommandStats::write(CompoundTag* tag)
     for (i = 0; i < 5; ++i) {
         std::wstring name = m_entityNames[i];
         std::wstring objective = m_objectiveNames[i];
-        if (name.compare(sStatPrefixes[i] + L"Name") != 0 && objective.compare(sStatPrefixes[i] + L"Objective") != 0) {
-            result->putString(sStatPrefixes[i] + L"Name", name);
-            result->putString(sStatPrefixes[i] + L"Objective", objective);
-        }
+        if (name == sStatPrefixes[i] + L"Name" || objective == sStatPrefixes[i] + L"Objective") continue;
+        result->putString(sStatPrefixes[i] + L"Name", name);
+        result->putString(sStatPrefixes[i] + L"Objective", objective);
     }
     if (!result->isEmpty()) tag->put(L"CommandStats", result);
 }

@@ -29,6 +29,7 @@ void GameModeCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
 
     PlayerUID uid = stream.readPlayerUID();
     unsigned char gameMode = stream.readByte();
+    byteStream.reset();
 
     boost::shared_ptr<ServerPlayer> player = getPlayer(uid);
 
@@ -47,13 +48,13 @@ void GameModeCommand::execute(boost::shared_ptr<CommandSender> sender, arrayWith
 
         stringParams[0] = player->getName();
 
-        if (player == sender)
+        if (player != sender)
         {
-            logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_GameModeSuccessSelf, intParams, 1, stringParams, 1);
+            logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_GameModeSuccessOther, intParams, 1, stringParams, 1);
         }
         else
         {
-            logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_GameModeSuccessOther, intParams, 1, stringParams, 1);
+            logAdminAction(sender, ClientboundChatPacket::eChatPacketMessage_GameModeSuccessSelf, intParams, 1, stringParams, 1);
         }
     }
 }
