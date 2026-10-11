@@ -1,42 +1,59 @@
 #include "game/client/audio/SoundBank.hpp"
 
-#include "game/util/LegacyUtilityFunctions.hpp"
-
 #include <stdint.h>
+
+static char ourtoupper(char value)
+{
+    if (value >= 'a' && value <= 'z')
+    {
+        return value - ('a' - 'A');
+    }
+    return value;
+}
 
 int32_t FindAsset(
     SoundBank* soundBank, const char* name, SoundBank::AssetEntry* entries, int32_t count)
 {
-    while (count != 0)
+    for (;;)
     {
+        if (count == 0)
+        {
+            return 0;
+        }
+
         const int32_t midpoint = count / 2;
         SoundBank::AssetEntry* entry = entries + midpoint;
+        int32_t comparison;
         const char* entryName = reinterpret_cast<const char*>(soundBank) + entry->nameOffset;
         const char* searchName = name;
-        int32_t comparison = 0;
-
-        while (true)
+        for (;;)
         {
-            const int32_t entryCharacter = ourtoupper(*entryName);
-            const int32_t searchCharacter = ourtoupper(*searchName);
-
-            if (searchCharacter < entryCharacter)
-            {
-                comparison = 1;
-                break;
-            }
+            int32_t entryCharacter = *entryName;
+            entryCharacter = ourtoupper(entryCharacter);
+            int32_t searchCharacter = *searchName;
+            searchCharacter = ourtoupper(searchCharacter);
             if (entryCharacter < searchCharacter)
             {
                 comparison = -1;
                 break;
             }
+            if (entryCharacter > searchCharacter)
+            {
+                comparison = 1;
+                break;
+            }
             if (entryCharacter == 0)
             {
-                return static_cast<int32_t>(reinterpret_cast<uintptr_t>(entry));
+                comparison = 0;
+                break;
             }
-
             ++entryName;
             ++searchName;
+        }
+
+        if (comparison == 0)
+        {
+            return static_cast<int32_t>(reinterpret_cast<uintptr_t>(entry));
         }
 
         if (count == 1)
@@ -44,16 +61,14 @@ int32_t FindAsset(
             return 0;
         }
 
-        if (comparison < 1)
+        if (comparison > 0)
+        {
+            count = midpoint;
+        }
+        else
         {
             entries = entry + 1;
             count = count - midpoint - 1;
         }
-        else
-        {
-            count = midpoint;
-        }
     }
-
-    return 0;
 }

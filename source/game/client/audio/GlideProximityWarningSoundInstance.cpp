@@ -15,7 +15,8 @@ GlideProximityWarningSoundInstance::GlideProximityWarningSoundInstance(boost::sh
 
 GlideProximityWarningSoundInstance::GlideProximityWarningSoundInstance(
     const GlideProximityWarningSoundInstance& other)
-    : AbstractTickableSoundInstance(other)
+    : SoundInstance(other)
+    , AbstractTickableSoundInstance(other)
     , player(other.player)
     , ticks(other.ticks)
 {
@@ -29,7 +30,8 @@ SoundInstance* GlideProximityWarningSoundInstance::getDRCClone() const
 {
     GlideProximityWarningSoundInstance* clone = new GlideProximityWarningSoundInstance(*this);
     clone->drcClone = true;
-    return clone;
+    AbstractTickableSoundInstance* result = clone;
+    return result;
 }
 
 void GlideProximityWarningSoundInstance::tick()

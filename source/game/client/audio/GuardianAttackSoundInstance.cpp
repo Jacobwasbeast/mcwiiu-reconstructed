@@ -16,7 +16,8 @@ GuardianAttackSoundInstance::GuardianAttackSoundInstance(boost::shared_ptr<Guard
 }
 
 GuardianAttackSoundInstance::GuardianAttackSoundInstance(const GuardianAttackSoundInstance& other)
-    : AbstractTickableSoundInstance(other)
+    : SoundInstance(other)
+    , AbstractTickableSoundInstance(other)
     , guardian(other.guardian)
 {
 }
@@ -29,7 +30,8 @@ SoundInstance* GuardianAttackSoundInstance::getDRCClone() const
 {
     GuardianAttackSoundInstance* clone = new GuardianAttackSoundInstance(*this);
     clone->drcClone = true;
-    return clone;
+    AbstractTickableSoundInstance* result = clone;
+    return result;
 }
 
 void GuardianAttackSoundInstance::tick()

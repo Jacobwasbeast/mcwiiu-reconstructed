@@ -14,8 +14,8 @@ public:
     ElytraOnPlayerSoundInstance(const ElytraOnPlayerSoundInstance& other);
     virtual ~ElytraOnPlayerSoundInstance();
 
-    virtual SoundInstance* getDRCClone() const;
     virtual void tick();
+    virtual SoundInstance* getDRCClone() const;
 
 private:
     int ticks;

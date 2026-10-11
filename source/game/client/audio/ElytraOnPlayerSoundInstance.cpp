@@ -23,7 +23,8 @@ ElytraOnPlayerSoundInstance::ElytraOnPlayerSoundInstance(boost::shared_ptr<Playe
 }
 
 ElytraOnPlayerSoundInstance::ElytraOnPlayerSoundInstance(const ElytraOnPlayerSoundInstance& other)
-    : AbstractTickableSoundInstance(other)
+    : SoundInstance(other)
+    , AbstractTickableSoundInstance(other)
     , ticks(other.ticks)
     , player(other.player)
     , warningSoundDelay(other.warningSoundDelay)
@@ -39,7 +40,8 @@ SoundInstance* ElytraOnPlayerSoundInstance::getDRCClone() const
 {
     ElytraOnPlayerSoundInstance* clone = new ElytraOnPlayerSoundInstance(*this);
     clone->drcClone = true;
-    return clone;
+    AbstractTickableSoundInstance* result = clone;
+    return result;
 }
 
 void ElytraOnPlayerSoundInstance::tick()

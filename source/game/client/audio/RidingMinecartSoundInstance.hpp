@@ -15,8 +15,8 @@ public:
     RidingMinecartSoundInstance(const RidingMinecartSoundInstance& other);
     virtual ~RidingMinecartSoundInstance();
 
-    virtual SoundInstance* getDRCClone() const;
     virtual void tick();
+    virtual SoundInstance* getDRCClone() const;
 
 private:
     boost::shared_ptr<Player> player;

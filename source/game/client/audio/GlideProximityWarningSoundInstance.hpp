@@ -14,8 +14,8 @@ public:
     GlideProximityWarningSoundInstance(const GlideProximityWarningSoundInstance& other);
     virtual ~GlideProximityWarningSoundInstance();
 
-    virtual SoundInstance* getDRCClone() const;
     virtual void tick();
+    virtual SoundInstance* getDRCClone() const;
 
 private:
     boost::shared_ptr<LocalPlayer> player;

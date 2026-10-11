@@ -18,7 +18,8 @@ RidingMinecartSoundInstance::RidingMinecartSoundInstance(boost::shared_ptr<Playe
 }
 
 RidingMinecartSoundInstance::RidingMinecartSoundInstance(const RidingMinecartSoundInstance& other)
-    : AbstractTickableSoundInstance(other)
+    : SoundInstance(other)
+    , AbstractTickableSoundInstance(other)
     , player(other.player)
     , minecart(other.minecart)
 {
@@ -32,7 +33,8 @@ SoundInstance* RidingMinecartSoundInstance::getDRCClone() const
 {
     RidingMinecartSoundInstance* clone = new RidingMinecartSoundInstance(*this);
     clone->drcClone = true;
-    return clone;
+    AbstractTickableSoundInstance* result = clone;
+    return result;
 }
 
 void RidingMinecartSoundInstance::tick()

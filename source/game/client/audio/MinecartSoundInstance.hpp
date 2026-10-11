@@ -14,8 +14,8 @@ public:
     MinecartSoundInstance(const MinecartSoundInstance& other);
     virtual ~MinecartSoundInstance();
 
-    virtual SoundInstance* getDRCClone() const;
     virtual void tick();
+    virtual SoundInstance* getDRCClone() const;
 
 private:
     boost::shared_ptr<Minecart> minecart;

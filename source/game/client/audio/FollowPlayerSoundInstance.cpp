@@ -14,7 +14,8 @@ FollowPlayerSoundInstance::FollowPlayerSoundInstance(boost::shared_ptr<Player> p
 }
 
 FollowPlayerSoundInstance::FollowPlayerSoundInstance(const FollowPlayerSoundInstance& other)
-    : AbstractTickableSoundInstance(other)
+    : SoundInstance(other)
+    , AbstractTickableSoundInstance(other)
     , player(other.player)
 {
 }
@@ -27,7 +28,8 @@ SoundInstance* FollowPlayerSoundInstance::getDRCClone() const
 {
     FollowPlayerSoundInstance* clone = new FollowPlayerSoundInstance(*this);
     clone->drcClone = true;
-    return clone;
+    AbstractTickableSoundInstance* result = clone;
+    return result;
 }
 
 void FollowPlayerSoundInstance::tick()

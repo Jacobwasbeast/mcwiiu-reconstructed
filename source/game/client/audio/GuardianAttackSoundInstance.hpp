@@ -14,8 +14,8 @@ public:
     GuardianAttackSoundInstance(const GuardianAttackSoundInstance& other);
     virtual ~GuardianAttackSoundInstance();
 
-    virtual SoundInstance* getDRCClone() const;
     virtual void tick();
+    virtual SoundInstance* getDRCClone() const;
 
 private:
     boost::shared_ptr<Guardian> guardian;

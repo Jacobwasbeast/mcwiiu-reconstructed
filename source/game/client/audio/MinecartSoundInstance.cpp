@@ -33,7 +33,8 @@ SoundInstance* MinecartSoundInstance::getDRCClone() const
 {
     MinecartSoundInstance* clone = new MinecartSoundInstance(*this);
     clone->drcClone = true;
-    return clone;
+    AbstractTickableSoundInstance* result = clone;
+    return result;
 }
 
 void MinecartSoundInstance::tick()

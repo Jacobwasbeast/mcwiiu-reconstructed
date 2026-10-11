@@ -324,5 +324,6 @@ SoundInstance* ConsoleSoundEngine::ScheduledSound::getDRCClone() const
 {
     ScheduledSound* clone = new ScheduledSound(*this);
     clone->drcClone = true;
-    return clone;
+    AbstractSoundInstance* result = clone;
+    return result;
 }
