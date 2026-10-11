@@ -4,7 +4,11 @@ namespace nn { namespace pia { namespace lan {
 
 namespace
 {
-enum { cMessageType = 7 };
+enum
+{
+    cMessageType = 7,
+    cSerializedSize = 12
+};
 }
 
 LanSelfKeepAliveMessage::LanSelfKeepAliveMessage()
@@ -28,6 +32,11 @@ Result LanSelfKeepAliveMessage::Deserialize(const unsigned char* buffer)
         return result;
 
     return 0;
+}
+
+unsigned int LanSelfKeepAliveMessage::GetSerializedSize() const
+{
+    return cSerializedSize;
 }
 
 }}}

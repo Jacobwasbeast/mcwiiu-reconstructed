@@ -1,5 +1,7 @@
 #include "nn/pia/lan/LanMatchMeshLayerController.hpp"
 
+#include <cstring>
+
 #include <coreinit/memory.h>
 
 #include "nn/pia/lan/LanFacade.hpp"
@@ -13,12 +15,20 @@ namespace nn { namespace pia { namespace lan {
 
 namespace
 {
+class ResultDisconnectedNetwork : public Result
+{
+public:
+    ResultDisconnectedNetwork() : Result(session::Session::cResultStatusDisconnectedNetwork) {}
+};
+
+class ResultDisconnectedSession : public Result
+{
+public:
+    ResultDisconnectedSession() : Result(session::Session::cResultStatusDisconnectedSession) {}
+};
+
 enum
 {
-    cResultDisconnectedNetwork = 0xc406,
-    cResultDisconnectedSession = 0x8c56,
-    cResultInvalidArgument = 0x10c07,
-    cResultInvalidState = 0x10c08,
     cPayloadSize = 0x554,
     cCryptoKeySize = 0x10
 };
@@ -38,18 +48,20 @@ Result LanMatchMeshLayerController::Startup(const session::Session::StartupSetti
 {
     const LanSessionStartupSetting& setting = static_cast<const LanSessionStartupSetting&>(baseSetting);
     const Result playerInfoResult = session::g_piaMesh->CheckPlayerInfo(setting.m_playerInfo[0]);
+    const bool playerInfoValid = playerInfoResult == 0;
     m_payloadSize = cPayloadSize;
     m_registeredPlayerInfo = false;
     m_playerInfoSize = 0;
     ResetPlayerInfo();
-    if (playerInfoResult == 0)
+    if (playerInfoValid)
     {
         transport::Station::PlayerInfo& playerInfo = m_playerInfo[m_playerInfoSize];
+        const transport::Station::PlayerInfo& sourceInfo = setting.m_playerInfo[m_playerInfoSize];
         m_registeredPlayerInfo = true;
-        playerInfo.m_name.Copy(setting.m_playerInfo[0].m_name);
-        playerInfo.m_language = setting.m_playerInfo[0].m_language;
-        playerInfo.m_field70 = setting.m_playerInfo[0].m_field70;
-        playerInfo.m_field78 = setting.m_playerInfo[0].m_field78;
+        playerInfo.m_name.Copy(sourceInfo.m_name);
+        playerInfo.m_language = sourceInfo.m_language;
+        playerInfo.m_field70 = sourceInfo.m_field70;
+        playerInfo.m_field78 = sourceInfo.m_field78;
         m_playerInfo[m_playerInfoSize].m_name.Trace(0x4000000ULL);
         ++m_playerInfoSize;
     }
@@ -69,23 +81,14 @@ Result LanMatchMeshLayerController::Startup(const session::Session::StartupSetti
 
     LanFacade* facade = LanFacade::GetInstance();
     if (facade == 0)
-        return cResultInvalidState;
+        return ResultInvalidState();
     if (setting.m_cryptoSetting.m_mode == 0)
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
 
     unsigned char zeroKey[cCryptoKeySize];
     OSBlockSet(zeroKey, 0, sizeof(zeroKey));
-    bool keyIsZero = true;
-    for (unsigned int index = 0; index < cCryptoKeySize; ++index)
-    {
-        if (setting.m_cryptoSetting.m_key[index] != zeroKey[index])
-        {
-            keyIsZero = false;
-            break;
-        }
-    }
-    if (keyIsZero)
-        return cResultInvalidArgument;
+    if (::memcmp(setting.m_cryptoSetting.m_key, zeroKey, sizeof(zeroKey)) == 0)
+        return ResultInvalidArgument();
 
     Result result = facade->Startup(setting.m_cryptoSetting);
     if (result != 0)
@@ -118,15 +121,16 @@ Result LanMatchMeshLayerController::MeshStartup(session::IMatchmakeSession* matc
                                                 bool skipBandwidthCheck)
 {
     m_matchmakeSession = matchmakeSession;
-    return session::MeshLayerController::MeshStartup(matchmakeSession, skipBandwidthCheck);
+    return session::MeshLayerController::MeshStartup(matchmakeSession, false);
 }
 
 Result LanMatchMeshLayerController::CheckConnectedStatus()
 {
-    if (m_connectionStatus == session::Session::cConnectionStatusDisconnectedNetwork)
-        return cResultDisconnectedNetwork;
-    if (m_connectionStatus == session::Session::cConnectionStatusDisconnectedSession)
-        return cResultDisconnectedSession;
+    const session::Session::ConnectionStatus status = m_connectionStatus;
+    if (status == session::Session::cConnectionStatusDisconnectedNetwork)
+        return ResultDisconnectedNetwork();
+    if (status == session::Session::cConnectionStatusDisconnectedSession)
+        return ResultDisconnectedSession();
     return 0;
 }
 
@@ -139,7 +143,7 @@ unsigned int LanMatchMeshLayerController::GetMatchmakeSessionTotalStations() con
     return session::g_piaSession->GetStationNum();
 }
 
-unsigned int LanMatchMeshLayerController::GetMatchmakeSessionTotalParticipants() const
+unsigned short LanMatchMeshLayerController::GetMatchmakeSessionTotalParticipants() const
 {
     unsigned short total = 0;
     common::ListNode* sentinel = session::g_piaSession->m_validStationIdList.Sentinel();

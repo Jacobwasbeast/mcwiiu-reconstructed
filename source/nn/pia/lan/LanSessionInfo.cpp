@@ -84,7 +84,7 @@ bool LanSessionInfo::IsOpened() const
     return m_open;
 }
 
-common::Result LanSessionInfo::GetApplicationData(void* buffer, unsigned int bufferSize) const
+Result LanSessionInfo::GetApplicationData(void* buffer, unsigned int bufferSize) const
 {
     if (buffer == 0)
     {
@@ -134,7 +134,7 @@ void LanSessionInfo::Trace(unsigned long long) const
 {
 }
 
-common::Result LanSessionInfo::GetAttribute(unsigned char index, unsigned int* value) const
+Result LanSessionInfo::GetAttribute(unsigned char index, unsigned int* value) const
 {
     if (value == 0)
     {
@@ -162,7 +162,7 @@ unsigned long long LanSessionInfo::GetHostPrincipalId() const
     return m_stationConnectionInfo.m_stationLocation.m_principalId;
 }
 
-common::Result LanSessionInfo::GetSessionStationInfo(LanStationInfo* stationInfo, unsigned int count)
+Result LanSessionInfo::GetSessionStationInfo(LanStationInfo* stationInfo, unsigned int count)
 {
     if (stationInfo == 0)
         return cResultInvalidArgument;
@@ -336,7 +336,7 @@ unsigned int LanSessionInfo::GetSerializedSize() const
            LanStationInfo::GetSerializedSize() * cMaxStationInfo;
 }
 
-common::Result LanSessionInfo::Serialize(unsigned char* buffer, unsigned int* size,
+Result LanSessionInfo::Serialize(unsigned char* buffer, unsigned int* size,
                                          unsigned int bufferSize) const
 {
     if (buffer == 0)
@@ -455,7 +455,7 @@ common::Result LanSessionInfo::Serialize(unsigned char* buffer, unsigned int* si
     return 0;
 }
 
-common::Result LanSessionInfo::Deserialize(const unsigned char* buffer, unsigned int bufferSize)
+Result LanSessionInfo::Deserialize(const unsigned char* buffer, unsigned int bufferSize)
 {
     if (buffer == 0)
         return cResultInvalidArgument;

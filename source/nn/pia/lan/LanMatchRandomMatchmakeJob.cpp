@@ -44,16 +44,17 @@ inline common::Time makeRetryTime()
 {
     const int waitMsec = session::g_piaMesh->GetMeshProtocol()->GetUnknown24() + cRetryMarginMsec;
     common::Time time;
-    time.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick +
-                  common::TimeSpan::GetTicksPerMSec().m_tick * waitMsec;
+    time.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * waitMsec +
+                  common::g_piaJobScheduler->m_dispatchTime.m_tick;
     return time;
 }
 
 inline void cleanupForRetry()
 {
-    session::g_piaSession->m_postponeNotice = false;
-    session::g_piaSession->m_stationIdStatusTable->ClearDisconnectedStationId();
-    session::g_piaSession->m_meshLayerController->MeshCleanup();
+    session::Session* session = session::g_piaSession;
+    session->m_postponeNotice = false;
+    session->m_stationIdStatusTable->ClearDisconnectedStationId();
+    session->m_meshLayerController->MeshCleanup();
 }
 }
 
@@ -74,12 +75,12 @@ LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::RandomMatc
 {
     if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
     {
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
         setStep(&session::RandomMatchmakeJob::CompleteFailure,
                 "nn::pia::lan::LanMatchRandomMatchmakeJob::CompleteFailure");
-        m_result = session::Session::cResultStatusDisconnectedNetwork;
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    if (CheckContextCallCancelled())
+    if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
         m_callerContext->SignalFailure(cResultCancelled);
         m_callerContext = 0;
@@ -105,7 +106,7 @@ LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::RandomMatc
 
 LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::WaitRandomMatchmake()
 {
-    if (CheckContextCallCancelled())
+    if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
         m_callerContext->SignalFailure(cResultCancelled);
         m_callerContext = 0;
@@ -142,9 +143,9 @@ LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::Unregister
 {
     if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
     {
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
         setStep(&session::RandomMatchmakeJob::CompleteFailure,
                 "nn::pia::lan::LanMatchRandomMatchmakeJob::CompleteFailure");
-        m_result = session::Session::cResultStatusDisconnectedNetwork;
         return MakeExecuteResult(cExecuteKindContinue);
     }
     session::Session* session = session::g_piaSession;
@@ -167,24 +168,26 @@ LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::Unregister
 LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::WaitUnregisterGathering()
 {
     session::Session* session = session::g_piaSession;
-    if (!session->m_matchmakeSession[session->m_currentSessionIndex]->WaitUnregisterMatchmakeSession())
-        return MakeExecuteResult(cExecuteKindNextStep);
-    session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex] = 0;
-    if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
-        m_result = session::Session::cResultStatusDisconnectedNetwork;
-    m_callerContext->SignalFailure(m_result);
-    m_callerContext = 0;
-    Cleanup();
-    return MakeExecuteResult(cExecuteKindFinished);
+    if (session->m_matchmakeSession[session->m_currentSessionIndex]->WaitUnregisterMatchmakeSession())
+    {
+        session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex] = 0;
+        if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
+            m_result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(m_result);
+        m_callerContext = 0;
+        Cleanup();
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::LeaveMatchmakeSession()
 {
     if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
     {
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
         setStep(&session::RandomMatchmakeJob::CompleteFailure,
                 "nn::pia::lan::LanMatchRandomMatchmakeJob::CompleteFailure");
-        m_result = session::Session::cResultStatusDisconnectedNetwork;
         return MakeExecuteResult(cExecuteKindContinue);
     }
     session::Session* session = session::g_piaSession;
@@ -207,28 +210,30 @@ LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::LeaveMatch
 LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::WaitLeaveMatchmakeSession()
 {
     session::Session* session = session::g_piaSession;
-    if (!session->m_matchmakeSession[session->m_currentSessionIndex]->WaitLeaveMatchmakeSession())
-        return MakeExecuteResult(cExecuteKindNextStep);
-    session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex] = 0;
-    if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
-        m_result = session::Session::cResultStatusDisconnectedNetwork;
-    m_callerContext->SignalFailure(m_result);
-    m_callerContext = 0;
-    Cleanup();
-    return MakeExecuteResult(cExecuteKindFinished);
+    if (session->m_matchmakeSession[session->m_currentSessionIndex]->WaitLeaveMatchmakeSession())
+    {
+        session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex] = 0;
+        if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
+            m_result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(m_result);
+        m_callerContext = 0;
+        Cleanup();
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::WaitForRetryRandomMatchmake()
 {
     if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
     {
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
         setStep(&session::RandomMatchmakeJob::CompleteFailure,
                 "nn::pia::lan::LanMatchRandomMatchmakeJob::CompleteFailure");
-        m_result = session::Session::cResultStatusDisconnectedNetwork;
         return MakeExecuteResult(cExecuteKindContinue);
     }
     m_joinState = cJoinStateRetryWait;
-    if (CheckContextCallCancelled())
+    if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
         m_result = cResultCancelled;
         m_matchmakeSession->UnregisterSearchCriteria();
@@ -248,28 +253,22 @@ LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::WaitReques
 {
     if (!m_matchmakeSession->WaitRequestSessionInfo())
         return MakeExecuteResult(cExecuteKindNextStep);
-    if (m_callContext.m_state != common::CallContext::cStateFailure)
+    if (m_callContext.m_state == common::CallContext::cStateFailure)
     {
-        setStep(&session::RandomMatchmakeJob::CompleteProcess,
-                "LanMatchRandomMatchmakeJob::CompleteProcess");
-        return MakeExecuteResult(cExecuteKindContinue);
-    }
-    if (session::g_piaMesh->GetStationNum() > cStationNumRetryThreshold)
-    {
-        m_sessionInfoRetry = true;
+        if (session::g_piaMesh->GetStationNum() > cStationNumRetryThreshold)
+            m_sessionInfoRetry = true;
+        else if (session::g_piaMesh->GetStationNum() > 0)
+        {
+            cleanupForRetry();
+            m_matchmakeSession->SetIgnoredSessionId(m_sessionId);
+            setStep(&LanMatchRandomMatchmakeJob::RandomMatchmake, "LanMatchRandomMatchmakeJob::RandomMatchmake");
+            return MakeExecuteResult(cExecuteKindContinue);
+        }
         setStep(&session::RandomMatchmakeJob::LeaveMesh, "LanMatchRandomMatchmakeJob::LeaveMesh");
         m_result = cResultJoinFailed;
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    if (session::g_piaMesh->GetStationNum() != 0)
-    {
-        cleanupForRetry();
-        m_matchmakeSession->SetIgnoredSessionId(m_sessionId);
-        setStep(&LanMatchRandomMatchmakeJob::RandomMatchmake, "LanMatchRandomMatchmakeJob::RandomMatchmake");
-        return MakeExecuteResult(cExecuteKindContinue);
-    }
-    setStep(&session::RandomMatchmakeJob::LeaveMesh, "LanMatchRandomMatchmakeJob::LeaveMesh");
-    m_result = cResultJoinFailed;
+    setStep(&session::RandomMatchmakeJob::CompleteProcess, "LanMatchRandomMatchmakeJob::CompleteProcess");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -284,7 +283,11 @@ void LanMatchRandomMatchmakeJob::NoticeOwnerChangeEvent(unsigned int sessionId, 
         }
         if (m_joinState == cJoinStateRetryWait)
         {
-            m_retryTime = makeRetryTime();
+            const int waitMsec = session::g_piaMesh->GetMeshProtocol()->GetUnknown24() + cRetryMarginMsec;
+            const common::TimeSpan span = common::TimeSpan::FromMSec(waitMsec);
+            common::Time retryTime;
+            retryTime.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick + span.m_tick;
+            m_retryTime = retryTime;
             return;
         }
         if (session::g_piaMesh->GetJoinMeshState() > 0)
@@ -292,8 +295,8 @@ void LanMatchRandomMatchmakeJob::NoticeOwnerChangeEvent(unsigned int sessionId, 
             m_ownerChanged = true;
             return;
         }
-        m_ownerChanged = true;
         m_sessionInvalidated = true;
+        m_ownerChanged = true;
     }
 }
 
@@ -439,9 +442,9 @@ LanMatchRandomMatchmakeJob::ExecuteResult LanMatchRandomMatchmakeJob::SetNextSte
 {
     if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
     {
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
         setStep(&session::RandomMatchmakeJob::CompleteFailure,
                 "nn::pia::lan::LanMatchRandomMatchmakeJob::CompleteFailure");
-        m_result = session::Session::cResultStatusDisconnectedNetwork;
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (m_result != cResultCancelled && (m_sessionInfoRetry || m_retryReasonB || m_ownerChanged))

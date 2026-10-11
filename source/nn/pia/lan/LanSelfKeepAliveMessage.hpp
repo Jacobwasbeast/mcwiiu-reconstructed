@@ -12,6 +12,7 @@ public:
     virtual ~LanSelfKeepAliveMessage() {}
     virtual Result Serialize(unsigned char* buffer, unsigned int* size) const;
     virtual Result Deserialize(const unsigned char* buffer);
+    virtual unsigned int GetSerializedSize() const;
 };
 
 }}}

@@ -408,7 +408,7 @@ Result LanProtocol::CalculateCryptionKeyForBrowse(const unsigned char* input,
     if (m_cryptoSetting.m_mode == 0)
         return 0x10c08;
 
-    common::AesImpl<common::XCUiL_2_16> aes;
+    common::AesImpl<16> aes;
     aes.Initialize(m_cryptoSetting.m_key, cKeySize, true);
     aes.EncryptBlock(output, cKeySize, input, cKeySize);
     return 0;

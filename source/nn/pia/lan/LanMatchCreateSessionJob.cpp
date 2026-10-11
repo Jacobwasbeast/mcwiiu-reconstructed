@@ -163,15 +163,16 @@ LanMatchCreateSessionJob::ExecuteResult LanMatchCreateSessionJob::UnregisterGath
 
 LanMatchCreateSessionJob::ExecuteResult LanMatchCreateSessionJob::WaitUnregisterGathering()
 {
-    session::Session* piaSession = session::g_piaSession;
-    if (!piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->WaitUnregisterMatchmakeSession())
-        return MakeExecuteResult(cExecuteKindNextStep);
-    piaSession->m_sessionId[piaSession->m_currentSessionIndex] = 0;
-    if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
-        m_result = session::Session::cResultStatusDisconnectedNetwork;
-    m_callerContext->SignalFailure(m_result);
-    m_callerContext = 0;
-    return MakeExecuteResult(cExecuteKindFinished);
+    if (session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]->WaitUnregisterMatchmakeSession())
+    {
+        session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex] = 0;
+        if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
+            m_result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(m_result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 void LanMatchCreateSessionJob::Cleanup()

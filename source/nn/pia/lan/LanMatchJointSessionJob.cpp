@@ -37,30 +37,30 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::CallSessionEvent
 {
     NoticeStartingEventByProcessType();
     session::g_piaSession->m_postponeNotice = true;
-    SelectStep(m_currentStep, &LanMatchJointSessionJob::WaitNextSessionId, "LanMatchJointSessionJob::WaitNextSessionId");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LanMatchJointSessionJob::WaitNextSessionId), "LanMatchJointSessionJob::WaitNextSessionId"));
     switch (m_processType)
     {
     case session::Session::cProcessTypeJoinJointSession:
         if (m_field9c != 0)
         {
-            SelectStep(m_currentStep, &LanMatchJointSessionJob::StartJoinMatchmakeSession, "LanMatchJointSessionJob::StartJoinMatchmakeSession");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LanMatchJointSessionJob::StartJoinMatchmakeSession), "LanMatchJointSessionJob::StartJoinMatchmakeSession"));
         }
         break;
     case session::Session::cProcessTypeJoinRandomJointSession:
         if (m_field9c != 0)
         {
-            SelectStep(m_currentStep, &LanMatchJointSessionJob::StartRandomMatchmake, "LanMatchJointSessionJob::StartRandomMatchmake");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LanMatchJointSessionJob::StartRandomMatchmake), "LanMatchJointSessionJob::StartRandomMatchmake"));
         }
         break;
     case session::Session::cProcessTypeDestroyJointSession:
     case session::Session::cProcessTypeLeaveJointSession:
         if (m_field9c == 0)
         {
-            SelectStep(m_currentStep, &LanMatchJointSessionJob::SendAnswerToInvitation, "LanMatchJointSessionJob::SendAnswerToInvitation");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LanMatchJointSessionJob::SendAnswerToInvitation), "LanMatchJointSessionJob::SendAnswerToInvitation"));
         }
         else
         {
-            SelectStep(m_currentStep, &LanMatchJointSessionJob::SendInvitationAsCompanion, "LanMatchJointSessionJob::SendInvitationAsCompanion");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LanMatchJointSessionJob::SendInvitationAsCompanion), "LanMatchJointSessionJob::SendInvitationAsCompanion"));
         }
         break;
     default:
@@ -310,11 +310,11 @@ LanMatchJointSessionJob::ExecuteResult LanMatchJointSessionJob::MeshRestart()
 {
     if (m_field9d != 0)
     {
-        SelectStep(m_currentStep, &LanMatchJointSessionJob::StartCreateNextMesh, "LanMatchJointSessionJob::StartCreateNextMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LanMatchJointSessionJob::StartCreateNextMesh), "LanMatchJointSessionJob::StartCreateNextMesh"));
     }
     else
     {
-        SelectStep(m_currentStep, &LanMatchJointSessionJob::StartGetNextMeshHostStationConnectionInfo, "LanMatchJointSessionJob::StartGetNextMeshHostStationConnectionInfo");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LanMatchJointSessionJob::StartGetNextMeshHostStationConnectionInfo), "LanMatchJointSessionJob::StartGetNextMeshHostStationConnectionInfo"));
     }
     return MakeExecuteResult(cExecuteKindContinue);
 }

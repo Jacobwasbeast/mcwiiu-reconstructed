@@ -59,13 +59,8 @@ const int cMultiWaitBaseMsec = 2500;
 const unsigned short cPollIntervalMsec = 100;
 const unsigned long long cInvalidPrincipalId = ~0ULL;
 
-template <class T>
-inline void setStep(common::StepSequenceJob::Step& slot,
-                    common::Job::ExecuteResult (T::*function)(),
-                    const char* name)
+inline void setStep(common::StepSequenceJob::Step& slot, const common::StepSequenceJob::Step& step)
 {
-    const common::StepSequenceJob::Step step(
-        static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
     slot = step;
 }
 
@@ -105,23 +100,23 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanCleanup
     m_hostMigrationSequence = cSequenceCleanupOldHostInfo;
     if (!CleanupOldHostInfoCommonProc())
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                             "LanProcessHostMigrationJob::HostMigrationFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     switch (DecideNextHostCommonProc())
     {
     case cDecideNextHostBecomeHost:
-        setStep(m_currentStep, &LanProcessHostMigrationJob::LanPrepareForBecomingHost,
-                "LanProcessHostMigrationJob::LanPrepareForBecomingHost");
+        m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanPrepareForBecomingHost),
+                             "LanProcessHostMigrationJob::LanPrepareForBecomingHost");
         break;
     case cDecideNextHostWaitGreeting:
-        setStep(m_currentStep, &ProcessHostMigrationJob::WaitNewHostGreeting,
-                "LanProcessHostMigrationJob::WaitNewHostGreeting");
+        m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::WaitNewHostGreeting),
+                             "LanProcessHostMigrationJob::WaitNewHostGreeting");
         break;
     default:
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                             "LanProcessHostMigrationJob::HostMigrationFailure");
         break;
     }
     return MakeExecuteResult(cExecuteKindContinue);
@@ -148,40 +143,44 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanDecideN
         StationIndex relayStation;
         if (relayRouteManager->GetRelayRoute(m_oldHostIndex, m_newHostIndex, &relayStation) != 0)
         {
-            setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                    "LanProcessHostMigrationJob::HostMigrationFailure");
+            setStep(m_currentStep,
+                    Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                         "LanProcessHostMigrationJob::HostMigrationFailure"));
             return MakeExecuteResult(cExecuteKindContinue);
         }
         if (relayStation != m_newHostIndex)
         {
-            m_waitDeadline.m_tick += GetTicksFromMSec(cRelayWaitMarginMsec);
+            m_waitDeadline = m_waitDeadline + common::TimeSpan(GetTicksFromMSec(cRelayWaitMarginMsec));
             isRelayed = true;
         }
     }
-    if (decision == cDecideNextHostBecomeHost)
+    switch (decision)
     {
+    case cDecideNextHostBecomeHost:
         if (isRelayed)
         {
-            m_oldHostDisconnectionCheckTime.m_tick =
-                GetDispatchTime().m_tick + GetTicksFromMSec(cOldHostDisconnectionCheckDelayMsec);
-            setStep(m_currentStep, &LanProcessHostMigrationJob::LanGetMatchMakingClientHost,
-                    "LanProcessHostMigrationJob::LanGetMatchMakingClientHost");
+            m_oldHostDisconnectionCheckTime.m_tick = GetDispatchTime().m_tick + GetTicksFromMSec(cOldHostDisconnectionCheckDelayMsec);
+            setStep(m_currentStep,
+                    Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanGetMatchMakingClientHost),
+                         "LanProcessHostMigrationJob::LanGetMatchMakingClientHost"));
         }
         else
         {
-            setStep(m_currentStep, &LanProcessHostMigrationJob::LanPrepareForBecomingHost,
-                    "LanProcessHostMigrationJob::LanPrepareForBecomingHost");
+            setStep(m_currentStep,
+                    Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanPrepareForBecomingHost),
+                         "LanProcessHostMigrationJob::LanPrepareForBecomingHost"));
         }
-    }
-    else if (decision == cDecideNextHostWaitGreeting)
-    {
-        setStep(m_currentStep, &ProcessHostMigrationJob::WaitNewHostGreeting,
-                "LanProcessHostMigrationJob::WaitNewHostGreeting");
-    }
-    else
-    {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        break;
+    case cDecideNextHostWaitGreeting:
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::WaitNewHostGreeting),
+                     "LanProcessHostMigrationJob::WaitNewHostGreeting"));
+        break;
+    default:
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                     "LanProcessHostMigrationJob::HostMigrationFailure"));
+        break;
     }
     return MakeExecuteResult(cExecuteKindContinue);
 }
@@ -191,15 +190,17 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanPrepare
     m_hostMigrationSequence = cSequencePrepareForBecomingHost;
     if (!PreprocessForBecomingHostCommon())
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                     "LanProcessHostMigrationJob::HostMigrationFailure"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     PostprocessForBecomingHostCommon();
     m_callContext.Reset();
     LanFacade::GetInstance()->GetLanProtocol()->RequestUpdateHostMessage();
-    setStep(m_currentStep, &ProcessHostMigrationJob::SendGreetingMessage,
-            "LanProcessHostMigrationJob::SendGreetingMessage");
+    setStep(m_currentStep,
+            Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::SendGreetingMessage),
+                 "LanProcessHostMigrationJob::SendGreetingMessage"));
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -207,12 +208,14 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanCleanup
 {
     if (!CleanupOldHostInfoCommonProc())
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                     "LanProcessHostMigrationJob::HostMigrationFailure"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    setStep(m_currentStep, &LanProcessHostMigrationJob::LanSendRankDecision,
-            "LanProcessHostMigrationJob::LanSendRankDecision");
+    setStep(m_currentStep,
+            Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanSendRankDecision),
+                 "LanProcessHostMigrationJob::LanSendRankDecision"));
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -220,12 +223,14 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanMakeHos
 {
     if (MakeHostCandidateRanking(m_oldHostIndex, m_candidateRanking, &m_unknownE0, &m_unknownE4, false) != 0)
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                     "LanProcessHostMigrationJob::HostMigrationFailure"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    setStep(m_currentStep, &LanProcessHostMigrationJob::LanSendRankDecision,
-            "LanProcessHostMigrationJob::LanSendRankDecision");
+    setStep(m_currentStep,
+            Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanSendRankDecision),
+                 "LanProcessHostMigrationJob::LanSendRankDecision"));
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -240,21 +245,21 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanSendRan
     session::Mesh* mesh = session::g_piaMesh;
     if (mesh->CheckConnectionError() == cResultConnectionError)
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "ProcessHostMigrationJob::HostMigrationFailure");
+        m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                             "ProcessHostMigrationJob::HostMigrationFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     const StationIndex localStation = mesh->GetLocalStationIndex();
     if (localStation > cStationIndexMax)
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                             "LanProcessHostMigrationJob::HostMigrationFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (m_unknownE0 == 0)
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                             "LanProcessHostMigrationJob::HostMigrationFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     unsigned int rank = cStationNumMax;
@@ -282,8 +287,8 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanSendRan
     }
     m_unknownA5 = true;
     m_greetingSenderIndex = static_cast<StationIndex>(cStationIndexInvalid);
-    setStep(m_currentStep, &LanProcessHostMigrationJob::LanWaitRankDecision,
-            "LanProcessHostMigrationJob::LanWaitRankDecision");
+    m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanWaitRankDecision),
+                         "LanProcessHostMigrationJob::LanWaitRankDecision");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -291,35 +296,35 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanWaitRan
 {
     if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError)
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                             "LanProcessHostMigrationJob::HostMigrationFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (m_waitDeadline <= GetDispatchTime())
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                             "LanProcessHostMigrationJob::HostMigrationFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (m_greetingSenderIndex != cStationIndexInvalid)
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::WaitNewHostGreeting,
-                "LanProcessHostMigrationJob::WaitNewHostGreeting");
+        m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::WaitNewHostGreeting),
+                             "LanProcessHostMigrationJob::WaitNewHostGreeting");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     for (int i = 0; i < cStationNumMax; ++i)
     {
         if (m_rankDecision[i] == cRankDecisionWaitingGreeting)
         {
-            setStep(m_currentStep, &ProcessHostMigrationJob::WaitNewHostGreeting,
-                    "LanProcessHostMigrationJob::WaitNewHostGreeting");
+            m_currentStep.m_name = "LanProcessHostMigrationJob::WaitNewHostGreeting";
+            m_currentStep.m_function = static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::WaitNewHostGreeting);
             return MakeExecuteResult(cExecuteKindContinue);
         }
     }
     if (m_rankDecisionWaitTime <= GetDispatchTime())
     {
-        setStep(m_currentStep, &LanProcessHostMigrationJob::LanGetMatchMakingClientHost,
-                "LanProcessHostMigrationJob::LanGetMatchMakingClientHost");
+        m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanGetMatchMakingClientHost),
+                             "LanProcessHostMigrationJob::LanGetMatchMakingClientHost");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     return MakeExecuteResult(cExecuteKindNextStep);
@@ -330,35 +335,38 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanGetMatc
     m_hostMigrationSequence = cSequenceGetMatchMakingClientHost;
     if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError)
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "ProcessHostMigrationJob::HostMigrationFailure");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                     "ProcessHostMigrationJob::HostMigrationFailure"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (m_waitDeadline <= GetDispatchTime())
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                     "LanProcessHostMigrationJob::HostMigrationFailure"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
     m_callContext.Reset();
-    if (matchmakeSession->InquiryOwnerPrincipalId(&m_callContext, matchmakeSession->GetGatheringId()) == 0)
+    Result inquiryResult = matchmakeSession->InquiryOwnerPrincipalId(&m_callContext, matchmakeSession->GetGatheringId());
+    if (inquiryResult != 0)
     {
-        if (!m_unknownBC)
-        {
-            setStep(m_currentStep, &LanProcessHostMigrationJob::LanCheckMatchMakingClientHost,
-                    "LanProcessHostMigrationJob::LanCheckMatchMakingClientHost");
-        }
-        else
-        {
-            setStep(m_currentStep, &LanProcessHostMigrationJob::LanWaitMatchMakingClientHost,
-                    "LanProcessHostMigrationJob::LanWaitMatchMakingClientHost");
-        }
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                     "LanProcessHostMigrationJob::HostMigrationFailure"));
+    }
+    else if (m_unknownBC)
+    {
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanWaitMatchMakingClientHost),
+                     "LanProcessHostMigrationJob::LanWaitMatchMakingClientHost"));
     }
     else
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanCheckMatchMakingClientHost),
+                     "LanProcessHostMigrationJob::LanCheckMatchMakingClientHost"));
     }
     return MakeExecuteResult(cExecuteKindNextStep);
 }
@@ -373,14 +381,16 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanWaitMat
             GetDispatchTime() < m_waitDeadline)
             return MakeExecuteResult(cExecuteKindNextStep);
         matchmakeSession->CancelInquiryOwnerPrincipalId();
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                     "LanProcessHostMigrationJob::HostMigrationFailure"));
         return MakeExecuteResult(cExecuteKindNextStep);
     }
     if (m_greetingSenderIndex != cStationIndexInvalid)
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::WaitNewHostGreeting,
-                "LanProcessHostMigrationJob::WaitNewHostGreeting");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::WaitNewHostGreeting),
+                     "LanProcessHostMigrationJob::WaitNewHostGreeting"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     bool isBecomingHostDecided = false;
@@ -388,8 +398,9 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanWaitMat
     {
         if (m_rankDecision[i] == cRankDecisionWaitingGreeting)
         {
-            setStep(m_currentStep, &ProcessHostMigrationJob::WaitNewHostGreeting,
-                    "LanProcessHostMigrationJob::WaitNewHostGreeting");
+            setStep(m_currentStep,
+                    Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::WaitNewHostGreeting),
+                         "LanProcessHostMigrationJob::WaitNewHostGreeting"));
             return MakeExecuteResult(cExecuteKindContinue);
         }
         if (m_rankDecision[i] == cRankDecisionBecomingHost)
@@ -409,8 +420,9 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanWaitMat
             {
                 m_oldHostDisconnectionCheckTime.m_tick =
                     GetDispatchTime().m_tick + GetTicksFromMSec(cOldHostDisconnectionCheckDelayMsec);
-                setStep(m_currentStep, &LanProcessHostMigrationJob::LanCheckOldHostDisconnection,
-                        "LanProcessHostMigrationJob::LanCheckOldHostDisconnection");
+                setStep(m_currentStep,
+                        Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanCheckOldHostDisconnection),
+                             "LanProcessHostMigrationJob::LanCheckOldHostDisconnection"));
                 return MakeExecuteResult(cExecuteKindNextStep);
             }
             isOwnerAbsent = true;
@@ -428,13 +440,15 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanWaitMat
     }
     if (canBecomeHost)
     {
-        setStep(m_currentStep, &LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti,
-                "LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti),
+                     "LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti"));
     }
     else
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                     "LanProcessHostMigrationJob::HostMigrationFailure"));
     }
     return MakeExecuteResult(cExecuteKindContinue);
 }
@@ -443,18 +457,20 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanCheckOl
 {
     if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError)
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                     "LanProcessHostMigrationJob::HostMigrationFailure"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    if (GetDispatchTime() < m_oldHostDisconnectionCheckTime)
+    if (!(m_oldHostDisconnectionCheckTime <= GetDispatchTime()))
     {
         if (m_unknownBC)
         {
             if (m_greetingSenderIndex != cStationIndexInvalid)
             {
-                setStep(m_currentStep, &ProcessHostMigrationJob::WaitNewHostGreeting,
-                        "LanProcessHostMigrationJob::WaitNewHostGreeting");
+                setStep(m_currentStep,
+                        Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::WaitNewHostGreeting),
+                             "LanProcessHostMigrationJob::WaitNewHostGreeting"));
                 return MakeExecuteResult(cExecuteKindContinue);
             }
             bool isBecomingHostDecided = false;
@@ -462,8 +478,9 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanCheckOl
             {
                 if (m_rankDecision[i] == cRankDecisionWaitingGreeting)
                 {
-                    setStep(m_currentStep, &ProcessHostMigrationJob::WaitNewHostGreeting,
-                            "LanProcessHostMigrationJob::WaitNewHostGreeting");
+                    setStep(m_currentStep,
+                            Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::WaitNewHostGreeting),
+                                 "LanProcessHostMigrationJob::WaitNewHostGreeting"));
                     return MakeExecuteResult(cExecuteKindContinue);
                 }
                 if (m_rankDecision[i] == cRankDecisionBecomingHost)
@@ -471,8 +488,9 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanCheckOl
             }
             if (isBecomingHostDecided)
             {
-                setStep(m_currentStep, &LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti,
-                        "LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti");
+                setStep(m_currentStep,
+                        Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti),
+                             "LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti"));
                 return MakeExecuteResult(cExecuteKindContinue);
             }
         }
@@ -480,17 +498,20 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanCheckOl
     }
     LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
     m_callContext.Reset();
-    if (matchmakeSession->InquiryOwnerPrincipalId(&m_callContext, matchmakeSession->GetGatheringId()) != 0)
+    Result inquiryResult = matchmakeSession->InquiryOwnerPrincipalId(&m_callContext, matchmakeSession->GetGatheringId());
+    if (inquiryResult != 0)
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                     "LanProcessHostMigrationJob::HostMigrationFailure"));
     }
     else
     {
         if (m_unknownBC)
             m_waitDeadline.m_tick += GetTicksFromMSec(cOldHostDisconnectionCheckDelayMsec);
-        setStep(m_currentStep, &LanProcessHostMigrationJob::LanWaitCheckOldHostDisconnection,
-                "LanProcessHostMigrationJob::LanWaitCheckOldHostDisconnection");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanWaitCheckOldHostDisconnection),
+                     "LanProcessHostMigrationJob::LanWaitCheckOldHostDisconnection"));
     }
     return MakeExecuteResult(cExecuteKindNextStep);
 }
@@ -500,8 +521,8 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanWaitChe
     if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError ||
         m_waitDeadline <= GetDispatchTime())
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                             "LanProcessHostMigrationJob::HostMigrationFailure");
         return MakeExecuteResult(cExecuteKindContinue);
     }
     LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
@@ -510,21 +531,21 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanWaitChe
         return MakeExecuteResult(cExecuteKindWait, cPollIntervalMsec);
     if (matchmakeSession->GetMatchmakeOwnerUniqueId() == cInvalidPrincipalId)
     {
-        if (!m_unknownBC)
+        if (m_unknownBC)
         {
-            setStep(m_currentStep, &LanProcessHostMigrationJob::LanPrepareForBecomingHost,
-                    "LanProcessHostMigrationJob::LanPrepareForBecomingHost");
+            m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti),
+                                 "LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti");
         }
         else
         {
-            setStep(m_currentStep, &LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti,
-                    "LanProcessHostMigrationJob::LanPrepareForBecomingHostMulti");
+            m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanPrepareForBecomingHost),
+                                 "LanProcessHostMigrationJob::LanPrepareForBecomingHost");
         }
     }
     else
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                             "LanProcessHostMigrationJob::HostMigrationFailure");
     }
     return MakeExecuteResult(cExecuteKindContinue);
 }
@@ -548,33 +569,38 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanPrepare
     StopRankDecisionResending();
     DisconnectStation(m_oldHostIndex);
     m_waitDeadline.m_tick -= GetTicksFromMSec(cBecomingHostMultiMarginMsec);
-    setStep(m_currentStep, &LanProcessHostMigrationJob::LanPrepareForBecomingHost,
-            "LanProcessHostMigrationJob::LanPrepareForBecomingHost");
+    m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanPrepareForBecomingHost),
+                         "LanProcessHostMigrationJob::LanPrepareForBecomingHost");
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
 LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanGetMatchMakingClientHostLastConfirmation()
 {
     m_hostMigrationSequence = cSequenceLastConfirmation;
-    if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError)
+    Result connectionError = session::g_piaMesh->CheckConnectionError();
+    if (connectionError == cResultConnectionError)
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "ProcessHostMigrationJob::HostMigrationFailure");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                     "ProcessHostMigrationJob::HostMigrationFailure"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (GetDispatchTime() < m_lastConfirmationTime)
         return MakeExecuteResult(cExecuteKindNextStep);
     LanMatchmakeSession* matchmakeSession = GetCurrentMatchmakeSession();
     m_callContext.Reset();
-    if (matchmakeSession->InquiryOwnerPrincipalId(&m_callContext, matchmakeSession->GetGatheringId()) == 0)
+    Result inquiryResult = matchmakeSession->InquiryOwnerPrincipalId(&m_callContext, matchmakeSession->GetGatheringId());
+    if (inquiryResult != 0)
     {
-        setStep(m_currentStep, &LanProcessHostMigrationJob::LanWaitMatchMakingClientHostLastConfirmation,
-                "LanProcessHostMigrationJob::LanWaitMatchMakingClientHostLastConfirmation");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                     "LanProcessHostMigrationJob::HostMigrationFailure"));
     }
     else
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanWaitMatchMakingClientHostLastConfirmation),
+                     "LanProcessHostMigrationJob::LanWaitMatchMakingClientHostLastConfirmation"));
     }
     return MakeExecuteResult(cExecuteKindNextStep);
 }
@@ -585,19 +611,23 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanWaitMat
     if (!matchmakeSession->WaitInquiryOwnerPrincipalId() ||
         m_callContext.m_state == common::CallContext::cStateInProgress)
     {
-        if (session::g_piaMesh->CheckConnectionError() != cResultConnectionError &&
-            GetDispatchTime() < m_waitDeadline)
+        if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError ||
+            m_waitDeadline <= GetDispatchTime())
+        {
+            matchmakeSession->CancelInquiryOwnerPrincipalId();
+            setStep(m_currentStep,
+                    Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                         "LanProcessHostMigrationJob::HostMigrationFailure"));
             return MakeExecuteResult(cExecuteKindNextStep);
-        matchmakeSession->CancelInquiryOwnerPrincipalId();
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        }
         return MakeExecuteResult(cExecuteKindNextStep);
     }
     if (matchmakeSession->GetMatchmakeOwnerUniqueId() != cInvalidPrincipalId &&
         matchmakeSession->GetMatchmakeOwnerUniqueId() != LanFacade::GetInstance()->GetLocalPrincipalId())
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                     "LanProcessHostMigrationJob::HostMigrationFailure"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     matchmakeSession->SetMatchmakeOwnerUniqueId(LanFacade::GetInstance()->GetLocalPrincipalId());
@@ -605,8 +635,9 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanWaitMat
     matchmakeSession->UpdateStationInfoList();
     if (m_waitDeadline <= GetDispatchTime())
     {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                     "LanProcessHostMigrationJob::HostMigrationFailure"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     const StationIndex ownerStation = static_cast<StationIndex>(
@@ -616,35 +647,37 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanWaitMat
     {
         m_callContext.Reset();
         LanFacade::GetInstance()->GetLanProtocol()->RequestUpdateSessionMessage();
-        setStep(m_currentStep, &LanProcessHostMigrationJob::LanWaitSendUpdateSessionMessage,
-                "LanProcessHostMigrationJob::LanWaitSendUpdateSessionMessage");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanWaitSendUpdateSessionMessage),
+                     "LanProcessHostMigrationJob::LanWaitSendUpdateSessionMessage"));
         return MakeExecuteResult(cExecuteKindNextStep);
     }
-    setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-            "LanProcessHostMigrationJob::HostMigrationFailure");
+    setStep(m_currentStep,
+            Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                 "LanProcessHostMigrationJob::HostMigrationFailure"));
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
 LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanWaitSendUpdateSessionMessage()
 {
-    if (LanFacade::GetInstance()->GetLanProtocol()->IsUpdateSessionMessageCompleted())
+    if (!LanFacade::GetInstance()->GetLanProtocol()->IsUpdateSessionMessageCompleted())
     {
-        session::Session::SessionOpenStatus openStatus = session::Session::cSessionOpenStatusParticipationClosed;
-        if (GetCurrentMatchmakeSession()->GetSessionInfoPtr()->IsOpened())
-            openStatus = session::Session::cSessionOpenStatusOpen;
-        if (session::g_piaSession != 0)
-            session::g_piaSession->SetCurrentSessionOpenStatus(openStatus);
-        setStep(m_currentStep, &ProcessHostMigrationJob::SendMigrationFinish,
-                "ProcessHostMigrationJob::SendMigrationFinish");
-        return MakeExecuteResult(cExecuteKindContinue);
+        if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError ||
+            m_waitDeadline <= GetDispatchTime())
+        {
+            m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                                 "LanProcessHostMigrationJob::HostMigrationFailure");
+        }
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
-    if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError ||
-        m_waitDeadline <= GetDispatchTime())
-    {
-        setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                "LanProcessHostMigrationJob::HostMigrationFailure");
-    }
-    return MakeExecuteResult(cExecuteKindNextStep);
+    session::Session::SessionOpenStatus openStatus = session::Session::cSessionOpenStatusParticipationClosed;
+    if (GetCurrentMatchmakeSession()->GetSessionInfoPtr()->IsOpened())
+        openStatus = session::Session::cSessionOpenStatusOpen;
+    if (session::g_piaSession != 0)
+        session::g_piaSession->SetCurrentSessionOpenStatus(openStatus);
+    m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::SendMigrationFinish),
+                         "ProcessHostMigrationJob::SendMigrationFinish");
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanCheckMatchMakingClientHost()
@@ -657,21 +690,24 @@ LanProcessHostMigrationJob::ExecuteResult LanProcessHostMigrationJob::LanCheckMa
             m_waitDeadline <= GetDispatchTime())
         {
             matchmakeSession->CancelInquiryOwnerPrincipalId();
-            setStep(m_currentStep, &ProcessHostMigrationJob::HostMigrationFailure,
-                    "LanProcessHostMigrationJob::HostMigrationFailure");
+            setStep(m_currentStep,
+                    Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&ProcessHostMigrationJob::HostMigrationFailure),
+                         "LanProcessHostMigrationJob::HostMigrationFailure"));
             return MakeExecuteResult(cExecuteKindNextStep);
         }
         return MakeExecuteResult(cExecuteKindWait, cPollIntervalMsec);
     }
     if (matchmakeSession->GetMatchmakeOwnerUniqueId() == cInvalidPrincipalId)
     {
-        setStep(m_currentStep, &LanProcessHostMigrationJob::LanPrepareForBecomingHost,
-                "LanProcessHostMigrationJob::LanPrepareForBecomingHost");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanPrepareForBecomingHost),
+                     "LanProcessHostMigrationJob::LanPrepareForBecomingHost"));
     }
     else
     {
-        setStep(m_currentStep, &LanProcessHostMigrationJob::LanCheckOldHostDisconnection,
-                "LanProcessHostMigrationJob::LanCheckOldHostDisconnection");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanCheckOldHostDisconnection),
+                     "LanProcessHostMigrationJob::LanCheckOldHostDisconnection"));
     }
     return MakeExecuteResult(cExecuteKindContinue);
 }
@@ -685,8 +721,9 @@ unsigned int LanProcessHostMigrationJob::PreprocessForSendingMigrationFinish()
 {
     const common::TimeSpan confirmationDelay = common::TimeSpan::FromMSec(cLastConfirmationDelayMsec);
     m_lastConfirmationTime = GetDispatchTime() + confirmationDelay;
-    setStep(m_currentStep, &LanProcessHostMigrationJob::LanGetMatchMakingClientHostLastConfirmation,
-            "LanProcessHostMigrationJob::LanGetMatchMakingClientHostLastConfirmation");
+    setStep(m_currentStep,
+            Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanGetMatchMakingClientHostLastConfirmation),
+                 "LanProcessHostMigrationJob::LanGetMatchMakingClientHostLastConfirmation"));
     return 1;
 }
 
@@ -696,17 +733,19 @@ void LanProcessHostMigrationJob::Trace(unsigned long long) const
 
 unsigned int LanProcessHostMigrationJob::StartupImpl(bool multi, StationIndex newHost)
 {
-    if (!multi)
-    {
-        setStep(m_currentStep, &LanProcessHostMigrationJob::LanDecideNextHost,
-                "LanProcessHostMigrationJob::LanDecideNextHost");
-    }
-    else
+    if (multi)
     {
         m_oldHostIndex = session::g_piaMesh->GetHostStationIndex();
         m_newHostIndex = newHost;
-        setStep(m_currentStep, &LanProcessHostMigrationJob::LanCleanupOldHostInfo,
-                "LanProcessHostMigrationJob::LanCleanupOldHostInfo");
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanCleanupOldHostInfo),
+                     "LanProcessHostMigrationJob::LanCleanupOldHostInfo"));
+    }
+    else
+    {
+        setStep(m_currentStep,
+                Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanDecideNextHost),
+                     "LanProcessHostMigrationJob::LanDecideNextHost"));
     }
     return 1;
 }
@@ -724,17 +763,17 @@ unsigned int LanProcessHostMigrationJob::StartupMultiImpl(bool rankingReceived, 
     const common::TimeSpan reselectTime = common::TimeSpan::FromMSec(reselectTimeMsec);
     m_reselectNewHostTime = GetDispatchTime() + reselectTime;
     m_oldHostIndex = session::g_piaMesh->GetHostStationIndex();
-    if (!rankingReceived)
+    if (rankingReceived)
     {
-        m_isRankingReceived = false;
-        setStep(m_currentStep, &LanProcessHostMigrationJob::LanMakeHostCandidateRanking,
-                "LanProcessHostMigrationJob::LanMakeHostCandidateRanking");
+        m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanCleanupOldHostInfoOnMultiCandidate),
+                             "LanProcessHostMigrationJob::LanCleanupOldHostInfoOnMultiCandidate");
+        m_isRankingReceived = rankingReceived;
     }
     else
     {
+        m_currentStep = Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanMakeHostCandidateRanking),
+                             "LanProcessHostMigrationJob::LanMakeHostCandidateRanking");
         m_isRankingReceived = rankingReceived;
-        setStep(m_currentStep, &LanProcessHostMigrationJob::LanCleanupOldHostInfoOnMultiCandidate,
-                "LanProcessHostMigrationJob::LanCleanupOldHostInfoOnMultiCandidate");
     }
     return 1;
 }
@@ -755,18 +794,17 @@ void LanProcessHostMigrationJob::CleanupStatus()
 
 unsigned int LanProcessHostMigrationJob::CheckWhetherReselectNewHost()
 {
-    if (m_unknownBC && GetDispatchTime() < m_reselectNewHostTime)
-    {
-        if (m_greetingSenderIndex != cStationIndexInvalid)
-            m_oldHostIndex = m_greetingSenderIndex;
-        setStep(m_currentStep, &LanProcessHostMigrationJob::LanSendRankDecision,
-                "LanProcessHostMigrationJob::LanSendRankDecision");
-        StopRankDecisionResending();
-        OSBlockSet(m_rankDecision, 0, sizeof(m_rankDecision));
-        m_isRankingReceived = false;
-        return 1;
-    }
-    return 0;
+    if (!m_unknownBC || m_reselectNewHostTime <= GetDispatchTime())
+        return 0;
+    if (m_greetingSenderIndex != cStationIndexInvalid)
+        m_oldHostIndex = m_greetingSenderIndex;
+    setStep(m_currentStep,
+            Step(static_cast<ExecuteResult (StepSequenceJob::*)()>(&LanProcessHostMigrationJob::LanSendRankDecision),
+                 "LanProcessHostMigrationJob::LanSendRankDecision"));
+    StopRankDecisionResending();
+    OSBlockSet(m_rankDecision, 0, sizeof(m_rankDecision));
+    m_isRankingReceived = false;
+    return 1;
 }
 
 unsigned int LanProcessHostMigrationJob::IsValidHostMigrationSetting()

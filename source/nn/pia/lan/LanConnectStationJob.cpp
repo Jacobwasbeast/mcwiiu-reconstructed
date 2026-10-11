@@ -32,7 +32,7 @@ Result LanConnectStationJob::StartupImpl(common::CallContext* context,
     station->GetStationAddress().Trace(cTraceStation);
     session::g_piaMesh->TraceStationConnectionInfoList(cTraceStationLocation);
     m_currentLocation.SetStationLocation(m_connectionInfo.m_localStationLocation);
-    if (station->m_field10 == 0xfe)
+    if (station->GetStationIndex() == cStationIndexSentinelFE)
     {
         transport::g_stationConnectionInfoTable->m_hostStationConnectionInfo = m_connectionInfo;
         transport::g_stationConnectionInfoTable->GetHostStationConnectionInfo().Trace(cTraceStation);

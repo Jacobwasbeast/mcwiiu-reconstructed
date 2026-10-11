@@ -59,8 +59,8 @@ public:
     virtual bool WaitRequestSessionInfo();
     virtual Result UpdateMatchmakeSessionHost(unsigned int stationId);
     virtual void UpdateStationInfoList();
-    virtual const LanSessionInfo* GetSessionInfo() const;
-    virtual LanSessionInfo* GetSessionInfo();
+    virtual const session::ISessionInfo* GetSessionInfo() const;
+    virtual session::ISessionInfo* GetSessionInfo();
     virtual Result UpdateSessionSetting(common::CallContext* callContext, unsigned int gatheringId);
     virtual bool WaitUpdateSessionSetting();
     virtual Result InquiryOwnerPrincipalId(common::CallContext* callContext, unsigned int gatheringId);

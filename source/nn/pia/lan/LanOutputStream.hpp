@@ -19,7 +19,7 @@ public:
     virtual Result OnStationConnectionEvent();
     virtual Result CalculateCryptoParameter(unsigned char* output, unsigned int size, common::Packet* packet);
     int CreateMulticastAddressArray(common::SockAddrIn* output, unsigned int mask);
-    Result SendTo(const void* data, unsigned int size, const common::InetAddress& address, unsigned char flags);
+    Result SendTo(const void* data, unsigned int size, const common::InetAddress& address, unsigned char ttl);
     bool IsDestinationAddressIndividual(common::SockAddrIn* addresses, unsigned int count) const;
     Result SendToMulti(const void* data, unsigned int size, const common::SockAddrIn* addresses, int count);
     virtual Result Write(const common::Packet& packet);

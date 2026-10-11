@@ -31,14 +31,14 @@ public:
     virtual unsigned short GetMinParticipantNum() const;
     virtual unsigned short GetMaxParticipantNum() const;
     virtual bool IsOpened() const;
-    virtual common::Result GetApplicationData(void* buffer, unsigned int bufferSize) const;
+    virtual Result GetApplicationData(void* buffer, unsigned int bufferSize) const;
     virtual unsigned int GetApplicationDataSize() const;
     virtual void Clear();
     virtual void Trace(unsigned long long value) const;
-    virtual common::Result GetAttribute(unsigned char index, unsigned int* value) const;
+    virtual Result GetAttribute(unsigned char index, unsigned int* value) const;
     virtual unsigned short GetSessionType() const;
     virtual unsigned long long GetHostPrincipalId() const;
-    virtual common::Result GetSessionStationInfo(LanStationInfo* stationInfo, unsigned int count);
+    virtual Result GetSessionStationInfo(LanStationInfo* stationInfo, unsigned int count);
     virtual unsigned int GetSessionStationInfoSize() const;
     virtual unsigned char GetApplicationCommunicationVersion() const;
     virtual unsigned char GetSystemCommunicationVersion() const;
@@ -60,8 +60,8 @@ public:
     virtual void SetApplicationCommunicationVersion(unsigned char version);
     virtual const unsigned char* GetSessionParam() const;
     unsigned int GetSerializedSize() const;
-    common::Result Serialize(unsigned char* buffer, unsigned int* size, unsigned int bufferSize) const;
-    common::Result Deserialize(const unsigned char* buffer, unsigned int bufferSize);
+    Result Serialize(unsigned char* buffer, unsigned int* size, unsigned int bufferSize) const;
+    Result Deserialize(const unsigned char* buffer, unsigned int bufferSize);
 
     unsigned int m_gameMode;
     unsigned int m_sessionId;

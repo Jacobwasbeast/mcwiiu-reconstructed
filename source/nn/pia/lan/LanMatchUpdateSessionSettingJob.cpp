@@ -47,7 +47,8 @@ Result LanMatchUpdateSessionSettingJob::StartupImpl(unsigned int sessionId, sess
 
 LanMatchUpdateSessionSettingJob::ExecuteResult LanMatchUpdateSessionSettingJob::UpdateSessionSetting()
 {
-    if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
+    const int status = session::g_piaSession->GetStatus();
+    if (status == session::Session::cStatusDisconnectedNetwork)
     {
         m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
         m_callerContext = 0;
@@ -73,7 +74,8 @@ LanMatchUpdateSessionSettingJob::ExecuteResult LanMatchUpdateSessionSettingJob::
 
 LanMatchUpdateSessionSettingJob::ExecuteResult LanMatchUpdateSessionSettingJob::WaitUpdateSessionSetting()
 {
-    if (session::g_piaSession->GetStatus() == session::Session::cStatusDisconnectedNetwork)
+    const int status = session::g_piaSession->GetStatus();
+    if (status == session::Session::cStatusDisconnectedNetwork)
     {
         m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
         m_callerContext = 0;

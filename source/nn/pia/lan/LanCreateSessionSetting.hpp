@@ -33,15 +33,15 @@ public:
     Result SetAttribute(unsigned int index, unsigned int value);
     unsigned int GetAttribute(unsigned int index) const;
     bool IsSetAttribute(unsigned int index) const;
-    Result SetApplicationData(const void* data, unsigned int size);
-    Result GetApplicationData(void* output, unsigned int size) const;
-    unsigned int GetApplicationDataSize() const;
-    bool IsSetApplicationData() const;
+    virtual Result SetApplicationData(const void* data, unsigned int size);
+    virtual Result GetApplicationData(void* output, unsigned int size) const;
+    virtual unsigned int GetApplicationDataSize() const;
+    virtual bool IsSetApplicationData() const;
     void SetOpenSession(bool open);
     bool IsOpenSession() const;
     bool IsSetOpenSession() const;
-    void Reset();
-    void Trace(unsigned long long value) const;
+    virtual void Reset();
+    virtual void Trace(unsigned long long value) const;
     void Copy(const LanCreateSessionSetting& other);
     LanCreateSessionSetting& operator=(const LanCreateSessionSetting& other);
 

@@ -1,7 +1,5 @@
 #include "nn/pia/lan/LanOutputStream.hpp"
 
-#include <cstring>
-
 #include <coreinit/memory.h>
 
 #include "nn/pia/common/common.hpp"
@@ -17,8 +15,12 @@ namespace
 {
 enum
 {
-    cConnectedStationState = 5
+    cConnectedStationState = 5,
+    cBroadcastPort = 40000
 };
+
+const unsigned long long cTraceInvalidArgument = 0x1ULL;
+const unsigned long long cTraceSendFailure = 0x0200000000000000ULL;
 }
 
 LanOutputStream::LanOutputStream()
@@ -36,17 +38,21 @@ Result LanOutputStream::OnStationConnectionEvent()
         return 0;
 
     OSBlockSet(m_stationAddresses, 0, sizeof(m_stationAddresses));
-    for (transport::Station** station = transport::StationManager::s_pInstance->m_stations.begin();
-         station != transport::StationManager::s_pInstance->m_stations.end(); ++station)
+    for (transport::Station** it = transport::StationManager::s_pInstance->m_stations.begin();
+         it != transport::StationManager::s_pInstance->m_stations.end(); ++it)
     {
-        if ((*station)->m_field20 != cConnectedStationState)
-            continue;
-        const int index = (*station)->m_field10;
-        if (index >= transport::cStationNumMax)
-            continue;
-        common::SocketAddress address;
-        address.SetInetAddress((*station)->m_stationAddress.m_inetAddress);
-        m_stationAddresses[index] = address.GetSockAddrIn();
+        transport::Station* station = *it;
+        if (station->m_field20 == cConnectedStationState)
+        {
+            const int index = station->GetStationIndex();
+            if (index <= transport::cStationNumMax - 1)
+            {
+                const common::InetAddress& inetAddress = station->m_stationAddress.m_inetAddress;
+                common::SocketAddress address;
+                address.SetInetAddress(inetAddress);
+                m_stationAddresses[index] = address.GetSockAddrIn();
+            }
+        }
     }
     return 0;
 }
@@ -55,10 +61,12 @@ Result LanOutputStream::CalculateCryptoParameter(unsigned char* output, unsigned
                                                   common::Packet* packet)
 {
     if (size < 12)
-        return 0x10c07;
-    const unsigned int protocolId = m_protocol == 0 ? 0 : m_protocol->GetProtocolIdentifier();
+        return transport::cResultInvalidArgument;
+    unsigned int protocolId = 0;
+    if (m_protocol != 0)
+        protocolId = m_protocol->GetProtocolIdentifier();
     common::serializeU32(output, protocolId);
-    std::memcpy(output + 4, packet->m_packetData.m_header.m_cryptoNonce, 8);
+    OSBlockMove(output + 4, packet->m_packetData.m_header.m_cryptoNonce, 8, FALSE);
     output[4] = packet->m_packetData.m_header.m_passId;
     return 0;
 }
@@ -69,7 +77,7 @@ int LanOutputStream::CreateMulticastAddressArray(common::SockAddrIn* output, uns
     const transport::Station* localStation = transport::StationManager::s_pInstance->m_localStation;
     if (localStation != 0)
     {
-        const unsigned int localIndex = localStation->m_field10;
+        const unsigned int localIndex = localStation->GetStationIndex();
         for (unsigned int index = 0; index < transport::cStationNumMax; ++index)
         {
             if (index == localIndex || ((mask >> index) & 1) == 0)
@@ -85,32 +93,47 @@ int LanOutputStream::CreateMulticastAddressArray(common::SockAddrIn* output, uns
 }
 
 Result LanOutputStream::SendTo(const void* data, unsigned int size,
-                               const common::InetAddress& address, unsigned char flags)
+                               const common::InetAddress& address, unsigned char ttl)
 {
-    const bool started = m_started;
-    common::Socket* socket = m_socket;
-    if (socket == 0)
-        return started ? 0x10c08 : 0;
     int sent = 0;
-    Result ttlResult = flags == 0 ? Result(0) : socket->SetTtl(flags);
-    if (ttlResult != 0)
-        return started ? ttlResult : Result(0);
-    Result result = socket->SendTo(data, static_cast<int>(size), address, &sent);
-    Result resetResult = flags == 0 ? Result(0) : socket->SetTtl(0);
-    if (resetResult != 0)
-        return started ? resetResult : Result(0);
+    Result result;
+    Result ttlResult;
+    if (ttl != 0)
+    {
+        ttlResult = m_socket->SetTtl(ttl);
+        if (ttlResult != 0)
+        {
+            if (!m_started)
+                return 0;
+            return ttlResult;
+        }
+    }
+    result = m_socket->SendTo(data, static_cast<int>(size), address, &sent);
+    if (ttl != 0)
+    {
+        ttlResult = m_socket->SetTtl(0);
+        if (ttlResult != 0)
+        {
+            if (!m_started)
+                return 0;
+            return ttlResult;
+        }
+    }
     if (result != 0)
-        return started ? result : Result(0);
-    if (sent != static_cast<int>(size))
-        return 0x10c08;
-    if (m_protocol != 0)
-        m_protocol->m_unknown618 = 1;
+    {
+        if (!m_started)
+            return 0;
+        return result;
+    }
+    if (sent == 0 || static_cast<unsigned int>(sent) != size)
+        return transport::cResultInvalidState;
+    m_protocol->m_unknown618 = 1;
     return 0;
 }
 
 bool LanOutputStream::IsDestinationAddressIndividual(common::SockAddrIn* addresses, unsigned int count) const
 {
-    const unsigned int localAddress = m_protocol->m_address;
+    const unsigned int localAddress = m_protocol->GetProtocolIdentifier();
     for (unsigned int i = 0; i < count; ++i)
         if (localAddress == addresses[i].address)
             return false;
@@ -124,56 +147,85 @@ bool LanOutputStream::IsDestinationAddressIndividual(common::SockAddrIn* address
 Result LanOutputStream::SendToMulti(const void* data, unsigned int size,
                                     const common::SockAddrIn* addresses, int count)
 {
-    const bool started = m_started;
-    common::Socket* socket = m_socket;
-    if (socket == 0)
-        return started ? 0x10c08 : 0;
     int sent = 0;
-    Result result = socket->SendToMulti(data, static_cast<int>(size), addresses, count, &sent);
-    if (result == 0)
-        return 0x10c08;
-    return started ? result : Result(0);
-}
-
-namespace
-{
-Result TraceSendResult(const common::Packet& packet, Result result)
-{
+    Result result = m_socket->SendToMulti(data, static_cast<int>(size), addresses, count, &sent);
     if (result != 0)
-        packet.Trace(result == 0x10c07 ? 0 : 0x02000000, result == 0x10c07);
-    return result;
-}
+    {
+        if (!m_started)
+            return 0;
+        return result;
+    }
+    if (sent == 0 || static_cast<unsigned int>(sent) != size)
+        return transport::cResultInvalidState;
+    m_protocol->m_unknown618 = 1;
+    return 0;
 }
 
 Result LanOutputStream::Write(const common::Packet& packet)
 {
     if (!m_started)
         return 0;
+
     common::InetAddress address;
-    if (packet.m_stationIndex != 0xff)
+    if (packet.m_stationIndex != cStationIndexSentinelFF)
         address = packet.m_field5f4.m_inetAddress;
     if (address.IsValid())
     {
-        return TraceSendResult(packet, SendTo(packet.m_packetData.m_data, packet.m_size, address, packet.m_field600));
+        Result result;
+        result = SendTo(packet.m_packetData.m_data, packet.m_size, address, packet.m_field600);
+        if (result != 0)
+        {
+            packet.Trace(result == transport::cResultInvalidArgument ? cTraceInvalidArgument : cTraceSendFailure, false);
+            return result;
+        }
+        return 0;
     }
-    common::SockAddrIn addresses[32];
+
+    common::SockAddrIn addresses[transport::cStationNumMax - 1];
     const int count = CreateMulticastAddressArray(addresses, packet.m_stationBitmap);
     if (count == 0)
         return 0;
+
     if (count == 1)
     {
         common::SocketAddress socketAddress;
         socketAddress.SetSockAddrIn(addresses[0]);
-        common::InetAddress address;
         socketAddress.GetInetAddress(&address);
-        return TraceSendResult(packet, SendTo(packet.m_packetData.m_data, packet.m_size, address, packet.m_field600));
+        Result result;
+        result = SendTo(packet.m_packetData.m_data, packet.m_size, address, packet.m_field600);
+        if (result != 0)
+        {
+            packet.Trace(result == transport::cResultInvalidArgument ? cTraceInvalidArgument : cTraceSendFailure, false);
+            return result;
+        }
+        return 0;
     }
-    if (IsDestinationAddressIndividual(addresses, count) == false || m_protocol == 0 ||
-        !m_protocol->IsRelayEnabled())
-        return TraceSendResult(packet, SendToMulti(packet.m_packetData.m_data, packet.m_size, addresses, count));
-    common::InetAddress relay(m_protocol->m_broadcastAddress, m_protocol->m_port);
-    relay.m_port = 40000;
-    return TraceSendResult(packet, SendTo(packet.m_packetData.m_data, packet.m_size, relay, packet.m_field600));
+
+    if (IsDestinationAddressIndividual(addresses, count) && m_protocol->m_broadcastSocketBound)
+    {
+        address.m_address = m_protocol->m_broadcastAddress;
+        address.m_port = cBroadcastPort;
+        Result result;
+        result = SendTo(packet.m_packetData.m_data, packet.m_size, address, packet.m_field600);
+        if (result != 0)
+        {
+            packet.Trace(result == transport::cResultInvalidArgument ? cTraceInvalidArgument : cTraceSendFailure, false);
+            return result;
+        }
+        return 0;
+    }
+
+    else
+    {
+        Result result;
+        result = SendToMulti(packet.m_packetData.m_data, packet.m_size, addresses, count);
+        if (result != 0)
+        {
+            packet.Trace(result == transport::cResultInvalidArgument ? cTraceInvalidArgument : cTraceSendFailure, false);
+            return result;
+        }
+        return 0;
+    }
 }
 
 void LanOutputStream::RegisterLanProtocol(LanProtocol* protocol)

@@ -16,10 +16,9 @@ LanMatchDestroySessionJob::~LanMatchDestroySessionJob()
 
 LanMatchDestroySessionJob::ExecuteResult LanMatchDestroySessionJob::UnregisterCurrentMatchmakeSession()
 {
-    const unsigned int index = session::g_piaSession->m_currentSessionIndex;
-    session::IMatchmakeSession* matchmakeSession = session::g_piaSession->m_matchmakeSession[index];
-    const Result result = matchmakeSession->UnregisterMatchmakeSession(&m_callContext,
-                                                                       session::g_piaSession->m_sessionId[index]);
+    const Result result =
+        session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]->UnregisterMatchmakeSession(
+            &m_callContext, session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex]);
     if (result != 0)
     {
         setStep(&session::DestroySessionJob::SendMonitoringData, "DestroySessionJob::SendMonitoringData");
@@ -33,11 +32,14 @@ LanMatchDestroySessionJob::ExecuteResult LanMatchDestroySessionJob::UnregisterCu
 
 LanMatchDestroySessionJob::ExecuteResult LanMatchDestroySessionJob::WaitUnregisterCurrentMatchmakeSession()
 {
-    if (!session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]->WaitUnregisterMatchmakeSession())
-        return MakeExecuteResult(cExecuteKindNextStep);
-    session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex] = 0;
-    setStep(&session::DestroySessionJob::SendMonitoringData, "DestroySessionJob::SendMonitoringData");
-    return MakeExecuteResult(cExecuteKindContinue);
+    const bool isCompleted = session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]->WaitUnregisterMatchmakeSession();
+    if (isCompleted)
+    {
+        session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex] = 0;
+        setStep(&session::DestroySessionJob::SendMonitoringData, "DestroySessionJob::SendMonitoringData");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 void LanMatchDestroySessionJob::Cleanup()

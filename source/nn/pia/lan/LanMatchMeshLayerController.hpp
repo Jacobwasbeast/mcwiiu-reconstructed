@@ -21,14 +21,14 @@ public:
     virtual Result CheckConnectedStatus();
     virtual void Trace(unsigned long long value) const;
     virtual unsigned int GetMatchmakeSessionTotalStations() const;
-    virtual unsigned int GetMatchmakeSessionTotalParticipants() const;
+    virtual unsigned short GetMatchmakeSessionTotalParticipants() const;
     virtual bool IsParticipated(unsigned int sessionId, unsigned long long principalId) const;
 
     void SetConnectionStatusDisconnected();
 
 private:
     session::IMatchmakeSession* m_matchmakeSession;
-    unsigned int m_connectionStatus;
+    session::Session::ConnectionStatus m_connectionStatus;
 };
 
 }}}

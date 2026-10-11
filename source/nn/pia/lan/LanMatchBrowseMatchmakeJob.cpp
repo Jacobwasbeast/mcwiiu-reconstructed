@@ -18,6 +18,16 @@ enum
     cBrowseSearchCriteriaNum = 1,
     cWaitIntervalMsec = 500
 };
+
+template <class T>
+inline void setStep(common::StepSequenceJob::Step& slot,
+                    common::Job::ExecuteResult (T::*function)(),
+                    const char* name)
+{
+    const common::StepSequenceJob::Step step(
+        static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+    slot = step;
+}
 }
 
 LanMatchBrowseMatchmakeJob::LanMatchBrowseMatchmakeJob()
@@ -55,7 +65,7 @@ LanMatchBrowseMatchmakeJob::ExecuteResult LanMatchBrowseMatchmakeJob::BrowseMatc
         }
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    SetStep(&LanMatchBrowseMatchmakeJob::WaitBrowseMatchmake,
+    setStep(m_currentStep, &LanMatchBrowseMatchmakeJob::WaitBrowseMatchmake,
             "LanMatchBrowseMatchmakeJob::WaitBrowseMatchmake");
     return MakeExecuteResult(cExecuteKindWait, cWaitIntervalMsec);
 }
@@ -80,7 +90,7 @@ LanMatchBrowseMatchmakeJob::ExecuteResult LanMatchBrowseMatchmakeJob::WaitBrowse
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            SetStep(&session::BrowseMatchmakeJob::CompleteProcess,
+            setStep(m_currentStep, &session::BrowseMatchmakeJob::CompleteProcess,
                     "session::BrowseMatchmakeJob::CompleteProcess");
             return MakeExecuteResult(cExecuteKindContinue);
         }
@@ -107,7 +117,7 @@ LanMatchBrowseMatchmakeJob::ExecuteResult LanMatchBrowseMatchmakeJob::WaitReques
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            SetStep(&session::BrowseMatchmakeJob::CompleteProcess,
+            setStep(m_currentStep, &session::BrowseMatchmakeJob::CompleteProcess,
                     "session::BrowseMatchmakeJob::CompleteProcess");
             return MakeExecuteResult(cExecuteKindContinue);
         }
@@ -125,7 +135,8 @@ Result LanMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* match
     m_matchmakeSession = static_cast<LanMatchmakeSession*>(matchmakeSession);
     if (m_matchmakeSession->RegisterSearchCriteria(criteria, cBrowseSearchCriteriaNum) == 0)
         return cResultInvalidArgument;
-    SetStep(&LanMatchBrowseMatchmakeJob::BrowseMatchmake, "LanMatchBrowseMatchmakeJob::BrowseMatchmake");
+    setStep(m_currentStep, &LanMatchBrowseMatchmakeJob::BrowseMatchmake,
+            "LanMatchBrowseMatchmakeJob::BrowseMatchmake");
     return 0;
 }
 
@@ -136,7 +147,7 @@ Result LanMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* match
     const Result result = m_matchmakeSession->RequestSessionInfo(&m_callContext, sessionId);
     if (result != 0)
         return result;
-    SetStep(&LanMatchBrowseMatchmakeJob::WaitRequestSessionInfo,
+    setStep(m_currentStep, &LanMatchBrowseMatchmakeJob::WaitRequestSessionInfo,
             "LanMatchBrowseMatchmakeJob::WaitRequestSessionInfo");
     return 0;
 }
