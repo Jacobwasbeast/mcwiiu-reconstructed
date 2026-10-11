@@ -51,8 +51,8 @@ public:
     virtual EBlockOffsetType getOffsetType();
     virtual const AABB* getShape(const BlockState*, LevelSource*, const BlockPos&);
     virtual void neighborChanged(const BlockState*, Level*, const BlockPos&, Block*, const BlockPos&);
-    virtual bool mayPlace(Level*, const BlockPos&, bool);
-    virtual bool canSurvive(Level*, const BlockPos&, const BlockState*, bool);
+    bool mayPlace(Level*, const BlockPos&, bool);
+    bool canSurvive(Level*, const BlockPos&, const BlockState*, bool);
     virtual bool canSurvive(Level*, const BlockPos&, const BlockState*);
     virtual bool mayPlace(Level*, const BlockPos&);
     virtual void onPlace(Level*, const BlockPos&, const BlockState*);

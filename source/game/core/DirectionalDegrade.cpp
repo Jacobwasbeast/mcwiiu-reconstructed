@@ -9,13 +9,11 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/Iterator.hpp"
 
-struct DirectionName
+static struct
 {
     std::wstring name;
     DirectionalDegrade::EDirection direction;
-};
-
-static DirectionName sDirectionNames[7] =
+} sDirectionNames[7] =
 {
     { L"North", DirectionalDegrade::eDirection_North },
     { L"South", DirectionalDegrade::eDirection_South },

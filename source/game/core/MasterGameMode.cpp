@@ -7,6 +7,7 @@
 #include "game/core/Voteable.hpp"
 #include "game/core/Voteables.hpp"
 #include "game/core/Settings.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/world/LevelRuleset.hpp"
 #include "game/ui/LaunchMoreOptionsMenuInitData.hpp"
@@ -2265,8 +2266,8 @@ void MasterGameMode::PlaceSpectators(std::vector<boost::shared_ptr<ServerPlayer>
             continue;
 
         player->mSpectatorSkullEquipped = true;
-        const bool wearPumpkin = gHalloweenEvent
-            || (gFestiveEvent && ruleset->getGenerationOptions()->getTexturePackId() == PUMPKIN_SPECTATOR_TEXTURE_PACK_ID);
+        const bool wearPumpkin = SharedConstants::IS_HALLOWEEN_SEASON
+            || (SharedConstants::IS_CHRISTMAS && ruleset->getGenerationOptions()->getTexturePackId() == PUMPKIN_SPECTATOR_TEXTURE_PACK_ID);
         if (wearPumpkin)
             player->setItemSlot(EquipmentSlot::HEAD, not_null_ptr<ItemInstance>(new ItemInstance(Blocks::carved_pumpkin)));
         else

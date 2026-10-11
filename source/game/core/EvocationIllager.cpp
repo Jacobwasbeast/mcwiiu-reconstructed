@@ -121,6 +121,7 @@ void EvocationIllager::EvokerAttackSpellGoal::createSpellEntity(double x, double
     BlockPos pos(x, maxY, z);
     double yOffset = 0.0;
     Level* level = mSpellcaster->mLevel;
+    bool found = false;
     do
     {
         if (!level->isSolidBlockingBlockInLoadedChunk(pos, true)
@@ -134,14 +135,18 @@ void EvocationIllager::EvokerAttackSpellGoal::createSpellEntity(double x, double
                     yOffset = shape->mMaxY;
                 }
             }
-            boost::shared_ptr<LivingEntity> owner =
-                boost::static_pointer_cast<LivingEntity>(mSpellcaster->shared_from_this());
-            level->addEntity(boost::shared_ptr<Entity>(new EvocationFangs(
-                level, x, static_cast<double>(pos.y) + yOffset, z, yRot, warmupDelay, owner)));
-            return;
+            found = true;
+            break;
         }
         pos = pos.below();
     } while (static_cast<double>(pos.y) >= std::floor(minY) - 1.0);
+    if (found)
+    {
+        boost::shared_ptr<EvocationFangs> fangs(new EvocationFangs(
+            level, x, static_cast<double>(pos.y) + yOffset, z, yRot, warmupDelay,
+            boost::static_pointer_cast<LivingEntity>(mSpellcaster->shared_from_this())));
+        level->addEntity(fangs);
+    }
 }
 void EvocationIllager::EvokerAttackSpellGoal::performSpellCasting()
 {
@@ -150,8 +155,25 @@ void EvocationIllager::EvokerAttackSpellGoal::performSpellCasting()
     double maxY = std::max(target->mY, mSpellcaster->mY);
     maxY += 1.0;
     float angle = static_cast<float>(std::atan2(target->mZ - mSpellcaster->mZ, target->mX - mSpellcaster->mX));
-    bool isFar = mSpellcaster->distanceToSqr(target) >= 9.0;
-    if (isFar)
+    bool isNear = mSpellcaster->distanceToSqr(target) < 9.0;
+    if (isNear)
+    {
+        for (int i = 0; i < 5; ++i)
+        {
+            float angle1 = angle + static_cast<float>(i) * 3.1415927f * 0.4f;
+            float cosAngle = cosf(angle1);
+            float sinAngle = sinf(angle1);
+            createSpellEntity(cosAngle * 1.5 + mSpellcaster->mX, sinAngle * 1.5 + mSpellcaster->mZ, minY, maxY, angle1, 0);
+        }
+        for (int i = 0; i < 8; ++i)
+        {
+            float angle2 = angle + static_cast<float>(i) * 3.1415927f * 2.0f / 8.0f + 1.2566371f;
+            float cosAngle = cosf(angle2);
+            float sinAngle = sinf(angle2);
+            createSpellEntity(cosAngle * 2.5 + mSpellcaster->mX, sinAngle * 2.5 + mSpellcaster->mZ, minY, maxY, angle2, 3);
+        }
+    }
+    else
     {
         for (int i = 0; i < 16; ++i)
         {
@@ -159,42 +181,6 @@ void EvocationIllager::EvokerAttackSpellGoal::performSpellCasting()
             float cosAngle = cosf(angle);
             float sinAngle = sinf(angle);
             createSpellEntity(cosAngle * radius + mSpellcaster->mX, sinAngle * radius + mSpellcaster->mZ, minY, maxY, angle, i);
-        }
-    }
-    else
-    {
-        float cosAngle = cosf(angle);
-        float sinAngle = sinf(angle);
-        createSpellEntity(cosAngle * 1.5 + mSpellcaster->mX, sinAngle * 1.5 + mSpellcaster->mZ, minY, maxY, angle, 0);
-
-        float angle1 = static_cast<float>(angle + 1.2566370964050293);
-        cosAngle = cosf(angle1);
-        sinAngle = sinf(angle1);
-        createSpellEntity(cosAngle * 1.5 + mSpellcaster->mX, sinAngle * 1.5 + mSpellcaster->mZ, minY, maxY, angle1, 0);
-
-        float angle2 = static_cast<float>(angle + 2.5132741928100586);
-        cosAngle = cosf(angle2);
-        sinAngle = sinf(angle2);
-        createSpellEntity(cosAngle * 1.5 + mSpellcaster->mX, sinAngle * 1.5 + mSpellcaster->mZ, minY, maxY, angle2, 0);
-
-        float angle3 = static_cast<float>(angle + 3.769911289215088);
-        cosAngle = cosf(angle3);
-        sinAngle = sinf(angle3);
-        createSpellEntity(cosAngle * 1.5 + mSpellcaster->mX, sinAngle * 1.5 + mSpellcaster->mZ, minY, maxY, angle3, 0);
-
-        float angle4 = static_cast<float>(angle + 5.026548385620117);
-        cosAngle = cosf(angle4);
-        sinAngle = sinf(angle4);
-        createSpellEntity(cosAngle * 1.5 + mSpellcaster->mX, sinAngle * 1.5 + mSpellcaster->mZ, minY, maxY, angle4, 0);
-
-        for (int i = 0; i < 8; ++i)
-        {
-            float t1 = static_cast<float>(static_cast<double>(i) * 3.1415927f);
-            float t2 = static_cast<float>(static_cast<double>(t1 + t1) * 0.125 + angle);
-            float ringAngle = static_cast<float>(static_cast<double>(t2) + 1.2566370964050293);
-            cosAngle = cosf(ringAngle);
-            sinAngle = sinf(ringAngle);
-            createSpellEntity(cosAngle * 2.5 + mSpellcaster->mX, sinAngle * 2.5 + mSpellcaster->mZ, minY, maxY, ringAngle, 3);
         }
     }
 }

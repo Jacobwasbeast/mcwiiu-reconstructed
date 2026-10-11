@@ -1,5 +1,6 @@
 #include "game/core/FurnaceResultSlot.hpp"
 
+#include <algorithm>
 #include <math.h>
 
 #include "game/core/ExperienceOrb.hpp"
@@ -29,13 +30,7 @@ not_null_ptr<ItemInstance> FurnaceResultSlot::remove(int count)
 {
     if (hasItem())
     {
-        not_null_ptr<ItemInstance> item = getItem();
-        int removed = item->getCount();
-        if (count < removed)
-        {
-            removed = count;
-        }
-        mRemoveCount += removed;
+        mRemoveCount += std::min(count, getItem()->getCount());
     }
     return Slot::remove(count);
 }
@@ -73,7 +68,8 @@ void FurnaceResultSlot::checkTakeAchievements(not_null_ptr<ItemInstance> item)
             {
                 float experience = count * value;
                 count = static_cast<int>(floorf(experience));
-                if (count < ceilf(experience) && Math::random() < experience - count)
+                float ceiling = ceilf(experience);
+                if (count < ceiling && Math::random() < experience - count)
                 {
                     ++count;
                 }
@@ -83,7 +79,7 @@ void FurnaceResultSlot::checkTakeAchievements(not_null_ptr<ItemInstance> item)
             {
                 int orbValue = ExperienceOrb::getExperienceValue(count);
                 count -= orbValue;
-                mPlayer->mLevel->addEntity(boost::shared_ptr<Entity>(
+                mPlayer->mLevel->addEntity(boost::shared_ptr<ExperienceOrb>(
                     new ExperienceOrb(mPlayer->mLevel, mPlayer->mX, mPlayer->mY + 0.5,
                                       mPlayer->mZ + 0.5, orbValue)));
             }

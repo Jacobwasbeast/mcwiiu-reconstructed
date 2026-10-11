@@ -37,6 +37,7 @@ class LevelChunk;
 class Level;
 class CConsoleMinecraftApp;
 class CStorage;
+class C4JStorage;
 class LevelGenerators;
 class LevelRules;
 class LevelRuleset;
@@ -243,7 +244,6 @@ public:
     virtual uint32_t GetTMSDLCInfoRead();
     virtual uint32_t GetTMSXUIDsFileRead();
     virtual void GetFileFromTPD(eTPDFileType type, unsigned char* source, unsigned int sourceSize, unsigned char** data, unsigned int* size);
-    virtual void TemporaryCreateGameStart() = 0;
     void SetGameHostOption(unsigned int& options, eGameHostOption option, unsigned int value);
     void SetGameHostOption(eGameHostOption option, unsigned int value);
     void SetXuiServerAction(int player, eXuiServerAction action, void* param);
@@ -634,7 +634,7 @@ private:
     static unsigned int sPreviousSignInUsersMask;
 };
 extern CConsoleMinecraftApp gApp;
-extern CStorage* gStorage;
+extern C4JStorage* gStorage;
 
 uint32_t DeviceFullErrorReturn(void* context);
 #endif

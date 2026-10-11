@@ -39,7 +39,7 @@ bool ThrownExpBottle::onHit(const HitResult* result)
     if (!mLevel->mIsClientSide)
     {
         mLevel->levelEvent(LevelEvent::PARTICLES_SPELL_POTION_SPLASH, BlockPos(shared_from_this()), PotionUtils::getColor(Potions::WATER));
-        int experience = mLevel->mRandom->nextInt(5) + mLevel->mRandom->nextInt(5) + 3;
+        int experience = 3 + mLevel->mRandom->nextInt(5) + mLevel->mRandom->nextInt(5);
         while (experience > 0)
         {
             int value = ExperienceOrb::getExperienceValue(experience);

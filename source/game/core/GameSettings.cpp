@@ -6,6 +6,7 @@
 #include "game/core/ConsoleUIController.hpp"
 #include "game/core/Minecraft.hpp"
 #include "game/core/Options.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/core/StatsCounter.hpp"
 #include "game/core/GameModeOptions.hpp"
 #include "game/core/UnityClient6.hpp"
@@ -21,14 +22,11 @@
 #include "platform/wiiu/CInput.hpp"
 #include "platform/wiiu/CStorage.hpp"
 #include "platform/wiiu/CProfile.hpp"
-extern CStorage* gStorage;
+extern C4JStorage* gStorage;
 
 GameSettings* gGameSettings[4] = { NULL, NULL, NULL, NULL };
 unsigned char gDefaultActionMappings[3][25];
 unsigned char gSecondaryActionMappings[3][25];
-bool gHalloweenEvent;
-bool gFestiveEvent;
-bool gSeasonalEvent;
 extern CInput* g_pInput;
 
 void DefineActions()
@@ -1134,11 +1132,11 @@ void GameSettings::SetGlideMiniGameMapSelection(int profile, unsigned int value)
 uint32_t GameSettings::GetGlideMiniGameMapSelection(int profile) { return gGameSettings[profile]->mGlideMiniGameMap; }
 uint32_t GameSettings::GetTumbleMiniGameMapSelection()
 {
-    if (gHalloweenEvent)
+    if (SharedConstants::IS_HALLOWEEN_SEASON)
         return 2;
-    if (gFestiveEvent)
+    if (SharedConstants::IS_CHRISTMAS)
         return 4;
-    return gSeasonalEvent ? 8 : 1;
+    return SharedConstants::IS_CHRISTMAS_SEASON ? 8 : 1;
 }
 void GameSettings::SetMinecraftLanguage(int profile, unsigned char value) { GameSettings* current = gGameSettings[profile]; current->mChanged = 1; current->mMinecraftLanguage = value; }
 void GameSettings::SetMinecraftLocale(int profile, unsigned char value) { GameSettings* current = gGameSettings[profile]; current->mChanged = 1; current->mMinecraftLocale = value; }

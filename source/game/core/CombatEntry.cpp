@@ -63,7 +63,7 @@ float CombatEntry::getFallDistance()
 
 std::wstring CombatEntry::getAttackerName()
 {
-    return getSource()->getEntity() ? getSource()->getEntity()->getNetworkName() : L"";
+    return !getSource()->getEntity() ? L"" : getSource()->getEntity()->getNetworkName();
 }
 
 boost::shared_ptr<Entity> CombatEntry::getAttacker()

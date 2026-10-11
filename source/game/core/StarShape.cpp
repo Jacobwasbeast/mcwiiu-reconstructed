@@ -25,9 +25,10 @@ void StarShape::GenerateShape(Random& random, Shape& shape) const
             Vec3i offset = pos.subtract(centre);
 
             float angle = Mth::atan2(offset.z, offset.x);
-            float arm = Mth::cos(angle * (float)this->points);
+            float scale = (radius - innerRadius) * Mth::cos(angle * (float)this->points) + innerRadius;
+            float distance = (float)pos.dist(centre);
 
-            shape.at(x, z) = (float)pos.dist(centre) / ((radius - innerRadius) * arm + innerRadius);
+            shape.at(x, z) = distance / scale;
         }
     }
 }

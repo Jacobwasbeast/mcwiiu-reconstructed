@@ -18,15 +18,9 @@ UniqueTypeWalker::UniqueTypeWalker(const ResourceLocation& key)
 
 CompoundTag* UniqueTypeWalker::walk(DataFixer* fixer, CompoundTag* tag, int version)
 {
-    if (mKey.toString() != tag->getString(L"id"))
+    if (mKey.toString() == tag->getString(L"id"))
     {
-        return tag;
-    }
-
-    ResourceLocation villagerKey = EntityIO::getKey(EntityType::VILLAGER);
-    if (mKey.toString() == villagerKey.toString())
-    {
-        if (tag->contains(L"Offers", Tag::TAG_COMPOUND))
+        if (mKey.toString() == EntityIO::getKey(EntityType::VILLAGER).toString() && tag->contains(L"Offers", Tag::TAG_COMPOUND))
         {
             CompoundTag* offers = tag->getCompound(L"Offers");
             if (offers->contains(L"Recipes", Tag::TAG_LIST))
@@ -42,25 +36,25 @@ CompoundTag* UniqueTypeWalker::walk(DataFixer* fixer, CompoundTag* tag, int vers
                 }
             }
         }
-    }
 
-    if (mKey.toString() == L"minecraft:mob_spawner")
-    {
-        if (tag->contains(L"SpawnPotentials", Tag::TAG_LIST))
+        if (mKey.toString() == L"minecraft:mob_spawner")
         {
-            ListTag* potentials = tag->getList(L"SpawnPotentials", Tag::TAG_COMPOUND);
-            for (int i = 0; i < potentials->size(); ++i)
+            if (tag->contains(L"SpawnPotentials", Tag::TAG_LIST))
             {
-                CompoundTag* potential = potentials->getCompound(i);
-                potential->put(L"Entity",
-                    fixer->update(DataFixTypes::eDataFixTypes_Entity,
-                        potential->getCompound(L"Entity"), version));
+                ListTag* potentials = tag->getList(L"SpawnPotentials", Tag::TAG_COMPOUND);
+                for (int i = 0; i < potentials->size(); ++i)
+                {
+                    CompoundTag* potential = potentials->getCompound(i);
+                    potential->put(L"Entity",
+                        fixer->update(DataFixTypes::eDataFixTypes_Entity,
+                            potential->getCompound(L"Entity"), version));
+                }
             }
-        }
 
-        tag->put(L"SpawnData",
-            fixer->update(DataFixTypes::eDataFixTypes_Entity,
-                tag->getCompound(L"SpawnData"), version));
+            tag->put(L"SpawnData",
+                fixer->update(DataFixTypes::eDataFixTypes_Entity,
+                    tag->getCompound(L"SpawnData"), version));
+        }
     }
 
     return tag;

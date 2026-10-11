@@ -175,12 +175,12 @@ void ThrownTrident::onHitEntity(const HitResult* result)
         }
     }
     DamageSource* source;
-    if (mOwner)
-        source = DamageSource::CreateTrident(
-            boost::static_pointer_cast<ThrownTrident>(shared_from_this()), mOwner);
-    else
+    if (!mOwner)
         source = DamageSource::CreateTrident(
             boost::static_pointer_cast<ThrownTrident>(shared_from_this()), shared_from_this());
+    else
+        source = DamageSource::CreateTrident(
+            boost::static_pointer_cast<ThrownTrident>(shared_from_this()), mOwner);
     mDealtDamage = true;
     if (entity->hurt(source, damage))
     {
@@ -210,13 +210,12 @@ void ThrownTrident::onHitEntity(const HitResult* result)
         && mLevel->isThundering() && !mTridentItem->isEmpty()
         && EnchantmentHelper::hasChanneling(mTridentItem))
     {
-        BlockPos pos = entity->getCommandSenderBlockPosition();
+        BlockPos pos(entity->getCommandSenderBlockPosition());
         if (mLevel->canSeeSky(pos))
         {
             playSound(SoundEvents::TRIDENT_THUNDER, 1.0f, 1.0f);
-            boost::shared_ptr<LightningBolt> lightning(
-                new LightningBolt(mLevel, pos.x, pos.y, pos.z, false));
-            mLevel->addGlobalEntity(lightning);
+            mLevel->addGlobalEntity(boost::shared_ptr<LightningBolt>(
+                new LightningBolt(mLevel, pos.x, pos.y, pos.z, false)));
         }
     }
 }

@@ -3,17 +3,6 @@
 
 #include <stddef.h>
 
-struct _OVERLAPPED
-{
-    unsigned int Internal;
-    unsigned int InternalHigh;
-    unsigned int Offset;
-    unsigned int OffsetHigh;
-    int hEvent;
-};
-
-int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, _OVERLAPPED* overlapped);
-
 static const unsigned int FILE_CURRENT = 1;
 
 int StbiFile::read(void* user, char* data, int size)

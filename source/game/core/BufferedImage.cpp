@@ -176,8 +176,7 @@ unsigned int BufferedImage::getHeight() { return m_height; }
 
 void BufferedImage::getRGB(int x, int y, int width, int height, arrayWithLength<int> rgbArray, int offset, int scansize, int mipLevel)
 {
-    int sourceWidth = (int)(m_width >> mipLevel);
-    int* source = m_data[mipLevel];
+    int sourceWidth = (int)m_width >> mipLevel;
     int* destination = rgbArray.data;
     int row;
     for (row = 0; row < height; ++row)
@@ -185,7 +184,7 @@ void BufferedImage::getRGB(int x, int y, int width, int height, arrayWithLength<
         int column;
         for (column = 0; column < width; ++column)
         {
-            destination[offset + column] = source[x + column + (y + row) * sourceWidth];
+            destination[offset + column] = m_data[mipLevel][x + column + (y + row) * sourceWidth];
         }
         offset += scansize;
     }
@@ -226,10 +225,13 @@ void BufferedImage::preMultiplyAlpha()
     for (i = 0; i < count; ++i)
     {
         unsigned int p = (unsigned int)data[i];
-        float a = (float)(int)(p >> 24);
-        float r = (float)(int)((p >> 16) & 255u);
-        float g = (float)(int)((p >> 8) & 255u);
-        float b = (float)(int)(p & 255u);
-        data[i] = ((int)((r * a) / 255.0f) << 16) | ((int)((g * a) / 255.0f) << 8) | (int)((b * a) / 255.0f) | (p & 0xff000000u);
+        int a = (int)(p >> 24);
+        int r = (int)((p >> 16) & 255u);
+        int g = (int)((p >> 8) & 255u);
+        int b = (int)(p & 255u);
+        r = (int)(((float)r * (float)a) / 255.0f);
+        g = (int)(((float)g * (float)a) / 255.0f);
+        b = (int)(((float)b * (float)a) / 255.0f);
+        data[i] = (r << 16) | (g << 8) | b | (p & 0xff000000u);
     }
 }

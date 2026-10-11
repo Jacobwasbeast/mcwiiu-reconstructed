@@ -504,8 +504,8 @@ void Gui::tick()
             --mSingleMessageTime[i];
         }
         if (!gConsoleUIController.GetMenuDisplayed(i)) {
-            std::vector<GuiMessage>::iterator it;
-            for (it = mMessages[i].begin(); it != mMessages[i].end(); ++it) {
+            std::vector<GuiMessage>::iterator end = mMessages[i].end();
+            for (std::vector<GuiMessage>::iterator it = mMessages[i].begin(); it != end; ++it) {
                 ++it->age;
             }
         }
@@ -517,9 +517,11 @@ void Gui::clearMessages(int playerIndex)
     if (playerIndex == -1) {
         int i;
         for (i = 0; i < 4; ++i) {
-            mMessages[i].clear();
+            if (mMinecraft->mLocalPlayers[i] != NULL) {
+                mMessages[i].clear();
+            }
         }
-    } else if (playerIndex >= 0 && playerIndex < 4) {
+    } else {
         mMessages[playerIndex].clear();
     }
 }
@@ -625,35 +627,32 @@ void Gui::addMessage(const std::wstring& message, int playerIndex, bool overlay,
 
 void Gui::clearSingleMessages()
 {
-    int i;
-    for (i = 0; i < 4; ++i) {
-        clearSingleMessages(i);
+    for (int i = 0; i < 4; i++) {
+        mSingleMessageTime[i] = 0;
+        mSingleMessages[i] = L"";
     }
     mSingleMessageVisible = false;
 }
 
 void Gui::clearSingleMessages(int playerIndex)
 {
-    if (playerIndex >= 0 && playerIndex < 4) {
-        mSingleMessages[playerIndex].clear();
-        mSingleMessageTime[playerIndex] = 0;
-    }
+    mSingleMessageTime[playerIndex] = 0;
+    mSingleMessages[playerIndex] = L"";
     mSingleMessageVisible = false;
 }
 
 void Gui::setSingleMessage(const std::wstring& message, int playerIndex, int duration)
 {
-    if (playerIndex >= 0 && playerIndex < 4) {
-        mSingleMessages[playerIndex] = message;
-        mSingleMessageTime[playerIndex] = duration < 1 ? 0xb4 : duration;
-        mSingleMessageVisible = true;
+    mSingleMessages[playerIndex] = message;
+    if (duration < 1) {
+        duration = 0xb4;
     }
+    mSingleMessageTime[playerIndex] = duration;
 }
 
 void Gui::setNowPlaying(const std::wstring& message)
 {
-    for (int i = 0; i < 4; ++i)
-    {
+    for (unsigned int i = 0; i < 4; i++) {
         mSingleMessages[i] = L10N::GetString(IDS_NOWPLAYING) + message;
         mSingleMessageTime[i] = 60;
     }
@@ -662,48 +661,47 @@ void Gui::setNowPlaying(const std::wstring& message)
 
 void Gui::displayClientMessage(int stringId, int playerIndex)
 {
-    const wchar_t* text = L10N::GetString(stringId);
-    addMessage(text == 0 ? std::wstring() : std::wstring(text), playerIndex, false, false, false, false);
+    addMessage(std::wstring(L10N::GetString(stringId)), playerIndex, false, false, false, false);
 }
 
 void Gui::onDisconnected()
 {
-    int i;
-    for (i = 0; i < 4; ++i) {
+    for (int i = 0; i < 4; i++) {
         mBossOverlays[i]->reset();
     }
 }
 
 float Gui::getOpacity(int playerIndex, unsigned int messageIndex)
 {
-    const float minimum = 0.5f;
-    if (playerIndex >= 0 && playerIndex < 4 && messageIndex < mMessages[playerIndex].size() &&
-        mMessages[playerIndex][messageIndex].age < 200) {
-        float value = (1.0f - static_cast<float>(mMessages[playerIndex][messageIndex].age) / 200.0f) * 10.0f;
-        float opacity = value < minimum ? minimum : (value > 1.0f ? 1.0f : value);
-        return opacity * opacity;
+    float opacity = 0.0f;
+    if (mMessages[playerIndex].size() > messageIndex && mMessages[playerIndex][messageIndex].age < 200) {
+        float value = static_cast<float>(mMessages[playerIndex][messageIndex].age) / 200.0f;
+        value = (1.0f - value) * 10.0f;
+        if (value < 0.0f) {
+            value = 0.0f;
+        } else if (value > 1.0f) {
+            value = 1.0f;
+        }
+        opacity = value * value;
     }
-    return 0.0f;
+    return opacity;
 }
 
 float Gui::getJukeboxOpacity(int playerIndex)
 {
-    float value = 0.0f;
-    if (playerIndex >= 0 && playerIndex < 4) {
-        value = (static_cast<float>(mSingleMessageTime[playerIndex]) - mJukeboxTime) * 256.0f / 20.0f;
-    }
+    float elapsed = static_cast<float>(mSingleMessageTime[playerIndex]) - mJukeboxTime;
+    float value = elapsed * 256.0f / 20.0f;
     if (value > 255.0f) {
         value = 255.0f;
     }
+    value = value / 255.0f;
     if (value < 0.0f) {
         value = 0.0f;
     }
-    return value / 255.0f;
+    return value;
 }
 
 void Gui::ShowCharacterDisplay(int playerIndex)
 {
-    if (playerIndex >= 0 && playerIndex < 4) {
-        mCharacterDisplayTime[playerIndex] = 90;
-    }
+    mCharacterDisplayTime[playerIndex] = 90;
 }

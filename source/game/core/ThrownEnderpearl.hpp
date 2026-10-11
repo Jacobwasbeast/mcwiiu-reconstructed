@@ -25,7 +25,7 @@ public:
     void _init();
 
 private:
-    boost::shared_ptr<Entity> mThrower;
+    boost::shared_ptr<LivingEntity> mThrower;
 };
 
 #endif

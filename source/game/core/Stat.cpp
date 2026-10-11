@@ -8,12 +8,12 @@
 template <class T>
 std::wstring _toString(T value);
 
-std::vector<Stat*>* Stat::stats = new std::vector<Stat*>();
+StatFormatter* Stat::defaultFormatter = new DefaultFormat();
+StatFormatter* Stat::timeFormatter = new TimeFormatter();
+Stat::DistanceFormatter* Stat::distanceFormatter = new DistanceFormatter();
+DecimalFormat* Stat::decimalFormat = new DecimalFormat(L"%0(3).2f");
 boost::unordered_map<int, Stat*>* Stat::statsById = new boost::unordered_map<int, Stat*>();
-StatFormatter* Stat::defaultFormatter = NULL;
-StatFormatter* Stat::timeFormatter = NULL;
-StatFormatter* Stat::distanceFormatter = NULL;
-DecimalFormat* Stat::decimalFormat = NULL;
+std::vector<Stat*>* Stat::stats = new std::vector<Stat*>();
 
 Stat::Stat(int id, const std::wstring& name, StatFormatter* formatter)
     : id(id),
@@ -119,10 +119,6 @@ std::wstring Stat::format(int value)
     return formatter->format(value);
 }
 
-Stat::DefaultFormat::~DefaultFormat()
-{
-}
-
 std::wstring Stat::DefaultFormat::format(int value)
 {
     wchar_t buffer[256];
@@ -132,10 +128,6 @@ std::wstring Stat::DefaultFormat::format(int value)
     std::wstring text(buffer);
 
     return text;
-}
-
-Stat::TimeFormatter::~TimeFormatter()
-{
 }
 
 std::wstring Stat::TimeFormatter::format(int value)
@@ -166,10 +158,6 @@ std::wstring Stat::TimeFormatter::format(int value)
     {
         return _toString(seconds) + L" s";
     }
-}
-
-Stat::DistanceFormatter::~DistanceFormatter()
-{
 }
 
 std::wstring Stat::DistanceFormatter::format(int value)

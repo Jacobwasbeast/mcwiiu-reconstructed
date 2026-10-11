@@ -14,26 +14,25 @@ Spiral::Spiral(int size, int originX, int originY)
 
 bool Spiral::Step(int& x, int& y)
 {
-    if (mCount >= mSize * mSize)
+    bool done = mCount >= mSize * mSize;
+    if (!done)
     {
-        return false;
+        x = mX + mOriginX;
+        y = mY + mOriginY;
+
+        if (mX == mY || (mX < 0 && mX == -mY) || (mX > 0 && mX == 1 - mY))
+        {
+            int stepX = mStepX;
+            mStepX = -mStepY;
+            mStepY = stepX;
+        }
+
+        mX += mStepX;
+        mY += mStepY;
+        ++mCount;
     }
 
-    x = mX + mOriginX;
-    y = mY + mOriginY;
-
-    if (mX == mY || (mX > 0 && mX == 1 - mY) || (mX < 0 && mX == -mY))
-    {
-        int stepX = mStepX;
-        mStepX = -mStepY;
-        mStepY = stepX;
-    }
-
-    mX += mStepX;
-    mY += mStepY;
-    ++mCount;
-
-    return true;
+    return !done;
 }
 
 bool Spiral::GetNext(int& x, int& y)

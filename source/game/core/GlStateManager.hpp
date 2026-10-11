@@ -6,6 +6,15 @@ class FloatBuffer;
 class IntBuffer;
 class Matrix4f;
 
+extern const int GL_OBJECT_PLANE;
+extern const int GL_EYE_PLANE;
+extern const int GL_EYE_LINEAR;
+extern const int GL_TEXTURE;
+extern const int GL_GREATER;
+extern const int GL_MODELVIEW;
+extern const int GL_MODELVIEW_MATRIX;
+extern const int GL_PROJECTION_MATRIX;
+
 class GlStateManager
 {
 public:

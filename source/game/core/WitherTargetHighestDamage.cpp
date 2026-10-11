@@ -18,10 +18,10 @@ boost::shared_ptr<LivingEntity> WitherTargetHighestDamage::getHighestDamageTarge
     boost::shared_ptr<LivingEntity> target;
 
     std::map<boost::shared_ptr<ServerPlayer>, int>& party = static_cast<WitherBoss*>(mMob)->getPlayerParty();
-    for (std::map<boost::shared_ptr<ServerPlayer>, int>::const_iterator it = party.begin(); it != party.end(); ++it)
+    for (std::map<boost::shared_ptr<ServerPlayer>, int>::iterator it = party.begin(); it != party.end(); ++it)
     {
         int damage = it->second;
-        boost::shared_ptr<ServerPlayer> player = it->first;
+        boost::shared_ptr<LivingEntity> player = it->first;
         if (damage > highestDamage && canAttack(player, false))
         {
             highestDamage = damage;

@@ -6,6 +6,7 @@
 #include <typeinfo>
 #include "game/client/audio/SoundEvents.hpp"
 #include "game/core/AbstractIllager.hpp"
+#include "game/core/BuiltInLootTables.hpp"
 #include "game/core/Difficulty.hpp"
 #include "game/core/EquipmentSlot.hpp"
 #include "game/entity/ai/FloatGoal.hpp"
@@ -32,8 +33,6 @@
 
 extern SpellcasterIllager::IllagerSpell* gSpell4;
 extern SpellcasterIllager::IllagerSpell* gSpell5;
-
-static ResourceLocation* sNoLootTable = NULL;
 
 IllusionIllager::IllusionIllager(Level* level)
     : SpellcasterIllager(level), RangedAttackMob()
@@ -94,7 +93,7 @@ MobGroupData* IllusionIllager::finalizeMobSpawn(const DifficultyInstance& diffic
     return Mob::finalizeMobSpawn(difficulty, data, std::wstring(L""));
 }
 void IllusionIllager::defineSynchedData() { SpellcasterIllager::defineSynchedData(); }
-ResourceLocation* IllusionIllager::getDefaultLootTable() { return sNoLootTable; }
+ResourceLocation* IllusionIllager::getDefaultLootTable() { return BuiltInLootTables::EMPTY; }
 AABB* IllusionIllager::getBoundingBoxForCulling() { return mBoundingBox->grow(3.0, 0.0, 3.0); }
 
 void IllusionIllager::aiStep()

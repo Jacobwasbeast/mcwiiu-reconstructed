@@ -51,22 +51,28 @@ void CombatTracker::prepareForDamage()
 
 void CombatTracker::recheckStatus()
 {
-    if (!mInCombat)
-        return;
-    const int timeout = mTakingDamage ? 300 : 100;
-    if (mMob == 0 || !mMob->isAlive() || mMob->mTickCount - mLastDamageTime > timeout)
+    int timeout = 100;
+    if (mInCombat)
+        timeout = 300;
+    if (mTakingDamage)
     {
-        if (mTakingDamage && mMob != 0)
-            mMob->onLeaveCombat();
-        mCombatEndTime = mMob != 0 ? mMob->mTickCount : mCombatEndTime;
-        mTakingDamage = false;
-        mInCombat = false;
-        if (mMob != 0 && mMob->isAlive())
+        if (!mMob->isAlive() || mMob->mTickCount - mLastDamageTime > timeout)
         {
-            std::vector<CombatEntry*>::iterator it;
-            for (it = mEntries.begin(); it != mEntries.end(); ++it)
-                delete *it;
-            mEntries.clear();
+            bool wasInCombat = mInCombat;
+            mCombatEndTime = mMob->mTickCount;
+            mTakingDamage = false;
+            mInCombat = false;
+            if (wasInCombat)
+                mMob->onLeaveCombat();
+            if (mMob->isAlive())
+            {
+                std::vector<CombatEntry*>::iterator it = mEntries.begin();
+                while (it != mEntries.end())
+                {
+                    delete *it;
+                    it = mEntries.erase(it);
+                }
+            }
         }
     }
 }

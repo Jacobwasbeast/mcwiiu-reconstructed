@@ -37,8 +37,6 @@
 
 const EntityDataAccessor<int>* Slime::DATA_ID_SIZE = NULL;
 
-static ResourceLocation* sNoLootTable = NULL;
-
 Slime::Slime(Level* level)
     : Mob(level)
 {
@@ -307,7 +305,7 @@ const SoundEvent* Slime::getSquishSound()
 
 ResourceLocation* Slime::getDefaultLootTable()
 {
-    return getSize() == 1 ? &BuiltInLootTables::SLIME : sNoLootTable;
+    return getSize() == 1 ? &BuiltInLootTables::SLIME : BuiltInLootTables::EMPTY;
 }
 
 bool Slime::checkSpawnRules()

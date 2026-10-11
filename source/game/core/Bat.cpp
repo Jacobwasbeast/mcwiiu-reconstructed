@@ -20,9 +20,7 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/core/PIXNamedEvents.hpp"
-
-extern bool gHalloweenEvent;
-
+#include "game/core/SharedConstants.hpp"
 
 const EntityDataAccessor<unsigned char>* Bat::DATA_ID_FLAGS = NULL;
 
@@ -245,7 +243,7 @@ bool Bat::checkSpawnRules()
         return false;
     int brightness = mLevel->getRawBrightness(pos);
     int maxLight = 4;
-    if (gHalloweenEvent)
+    if (SharedConstants::IS_HALLOWEEN_SEASON)
         maxLight = 7;
     else if (mRandom->nextBoolean())
         return false;

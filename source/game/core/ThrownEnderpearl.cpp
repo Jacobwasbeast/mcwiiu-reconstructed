@@ -77,11 +77,9 @@ bool ThrownEnderpearl::onHit(const HitResult* result)
             {
                 gateway->teleportEntity(owner);
                 remove();
+                return true;
             }
-            else
-            {
-                gateway->teleportEntity(shared_from_this());
-            }
+            gateway->teleportEntity(shared_from_this());
             return true;
         }
     }
@@ -103,46 +101,43 @@ bool ThrownEnderpearl::onHit(const HitResult* result)
             return true;
         }
 
-        if (owner)
+        if (owner && owner->instanceof(EntityType::SERVER_PLAYER))
         {
-            if (owner->GetType() != EntityType::SERVER_PLAYER)
+            boost::shared_ptr<ServerPlayer> player =
+                boost::static_pointer_cast<ServerPlayer>(getOwner());
+            if (!player->mRemoved && !player->mConnection->isDisconnected()
+                && player->mLevel == mLevel && !player->isSleeping())
             {
+                double distance = player->distanceTo(mX, mY, mZ);
+                if (distance > 100.0)
+                {
+                    player->awardStat(GenericStats::beamMeUp(),
+                        GenericStats::param_beamMeUp((int)distance));
+                }
+
+                if (mRandom->nextFloat() < 0.05f
+                    && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBSPAWNING))
+                {
+                    boost::shared_ptr<Endermite> endermite(new Endermite(mLevel));
+                    endermite->setPlayerSpawned(true);
+                    endermite->moveTo(player->mX, player->mY, player->mZ,
+                        player->mYRot, player->mXRot);
+                    mLevel->addEntity(endermite);
+                }
+
+                if (owner->isPassenger())
+                    owner->stopRidingBeforeTeleport();
                 owner->teleportTo(mX, mY, mZ);
                 PlayTeleportSound();
                 owner->mFallDistance = 0.0f;
+                owner->hurt(DamageSource::FALL, 5.0f);
             }
-            else
-            {
-                boost::shared_ptr<ServerPlayer> player =
-                    boost::static_pointer_cast<ServerPlayer>(getOwner());
-                if (!player->mRemoved && !player->mConnection->isDisconnected()
-                    && player->mLevel == mLevel && !player->isSleeping())
-                {
-                    double distance = player->distanceTo(mX, mY, mZ);
-                    if (distance > 100.0)
-                    {
-                        player->awardStat(GenericStats::beamMeUp(),
-                            GenericStats::param_beamMeUp((int)distance));
-                    }
-
-                    if (mRandom->nextFloat() < 0.05f
-                        && mLevel->getGameRules()->getBoolean(GameRules::RULE_DOMOBSPAWNING))
-                    {
-                        boost::shared_ptr<Endermite> endermite(new Endermite(mLevel));
-                        endermite->setPlayerSpawned(true);
-                        endermite->moveTo(player->mX, player->mY, player->mZ,
-                            player->mYRot, player->mXRot);
-                        mLevel->addEntity(endermite);
-                    }
-
-                    if (owner->isPassenger())
-                        owner->stopRidingBeforeTeleport();
-                    owner->teleportTo(mX, mY, mZ);
-                    PlayTeleportSound();
-                    owner->mFallDistance = 0.0f;
-                    owner->hurt(DamageSource::FALL, 5.0f);
-                }
-            }
+        }
+        else if (owner)
+        {
+            owner->teleportTo(mX, mY, mZ);
+            PlayTeleportSound();
+            owner->mFallDistance = 0.0f;
         }
         remove();
     }
@@ -156,7 +151,7 @@ void ThrownEnderpearl::addDataWalkers(DataFixerUpper*)
 void ThrownEnderpearl::_init()
 {
     fjDerivedCtorCalls();
-    mThrower.reset();
+    mThrower = boost::shared_ptr<LivingEntity>();
 }
 
 void ThrownEnderpearl::tick()

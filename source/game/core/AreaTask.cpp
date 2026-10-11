@@ -23,24 +23,26 @@ bool AreaTask::isCompleted()
     }
 
     bool result = false;
-    if (completionState == CompletionStateOnStateChange)
+    switch (completionState)
     {
-        result = activated;
-    }
-    else if (completionState == CompletionStateOnConstraints)
+    case CompletionStateOnConstraints:
     {
-        std::vector<TutorialConstraint*>::iterator constraint = constraints.begin();
-        while (constraint != constraints.end())
+        result = true;
+        std::vector<TutorialConstraint*>::iterator it = constraints.begin();
+        while (it != constraints.end())
         {
-            if (!(*constraint)->isConstraintSatisfied(tutorial->playerId))
+            if (!(*it)->isConstraintSatisfied(tutorial->playerId))
             {
-                completed = false;
-                return false;
+                result = false;
+                break;
             }
-            ++constraint;
+            it++;
         }
-        completed = true;
-        return true;
+        break;
+    }
+    case CompletionStateOnStateChange:
+        result = activated;
+        break;
     }
 
     completed = result;

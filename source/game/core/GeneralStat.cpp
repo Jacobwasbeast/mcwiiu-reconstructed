@@ -10,7 +10,7 @@ GeneralStat::GeneralStat(int id, const std::wstring& name)
 {
 }
 
-GeneralStat* GeneralStat::postConstruct(bool addToList)
+Stat* GeneralStat::postConstruct(bool addToList)
 {
     Stat::postConstruct(addToList);
     return this;

@@ -6,12 +6,12 @@
 
 boost::unordered_map<const BlockState*, ModelResourceLocation*>* AbstractStateMapper::mapStates(Block* block)
 {
-    const arrayWithLength<BlockStateDefinition::BlockStateImpl*>* states =
-        block->getBlockStateDefinition()->getPossibleBlockStates();
+    arrayWithLength<BlockStateDefinition::BlockStateImpl*> states =
+        *block->getBlockStateDefinition()->getPossibleBlockStates();
 
-    for (unsigned int i = 0; i < states->length; i++)
+    for (unsigned int i = 0; i < states.length; i++)
     {
-        mStateLocations[states->data[i]] = getLocation(states->data[i]);
+        mStateLocations[states.data[i]] = getLocation(states.data[i]);
     }
 
     return &mStateLocations;

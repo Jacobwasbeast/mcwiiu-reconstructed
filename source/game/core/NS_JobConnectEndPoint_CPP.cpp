@@ -5,8 +5,7 @@ namespace NS_JobConnectEndPoint_CPP
 
 void ConnectCallback(nn::nex::EndPoint* pEndPoint, nn::nex::qResult resultConnect, const nn::nex::UserContext* pUserContext)
 {
-    nn::nex::Scheduler* pScheduler = nn::nex::Core::GetInstance()->GetScheduler();
-    nn::nex::CriticalSection& csScheduler = pScheduler->GetCriticalSection();
+    nn::nex::CriticalSection& csScheduler = nn::nex::Scheduler::GetInstance()->GetCriticalSection();
 
     csScheduler.Enter();
 
@@ -21,8 +20,7 @@ void ConnectCallback(nn::nex::EndPoint* pEndPoint, nn::nex::qResult resultConnec
 
 void DisconnectCallback(nn::nex::EndPoint* pEndPoint, nn::nex::qResult resultDisconnect, const nn::nex::UserContext* pUserContext)
 {
-    nn::nex::Scheduler* pScheduler = nn::nex::Core::GetInstance()->GetScheduler();
-    nn::nex::CriticalSection& csScheduler = pScheduler->GetCriticalSection();
+    nn::nex::CriticalSection& csScheduler = nn::nex::Scheduler::GetInstance()->GetCriticalSection();
 
     csScheduler.Enter();
 

@@ -21,6 +21,7 @@ public:
 
     Voteables();
     virtual ~Voteables();
+    virtual bool isServer() = 0;
     Voteable* getVoteable(unsigned int voteableId);
     void init();
     void addVoteable(Voteable* voteable);

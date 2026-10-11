@@ -3,15 +3,12 @@
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/File.hpp"
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
+#include "platform/wiiu/WiiU_FileCache.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
 
 class CConsoleMinecraftApp;
 
 char* wstringtofilename(const std::wstring& path, char (&filename)[256]);
-
-int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode, void* securityAttributes, unsigned int creationDisposition, unsigned int flagsAndAttributes, int templateFile);
-unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, _OVERLAPPED* overlapped);
-unsigned int GetFileSize(int file, unsigned int* fileSizeHigh);
 
 FileInputStream::FileInputStream(const File& file)
 {

@@ -330,19 +330,19 @@ void DispenserBootstrap::StaticCtor()
             Level* level = source->getWorld();
             const Direction* direction = source->getBlockState()->getValue(DispenserBlock::FACING);
             BlockPos position = source->getPos().relative(direction);
+            bool extraLayer = false;
             const BlockState* state = level->getBlockState(position);
             Block* block = state->getBlock();
-            bool extraLayer = false;
             if (!block->isLiquidBlock())
             {
-                extraLayer = true;
                 state = level->getExtraBlockState(position);
                 block = state->getBlock();
+                extraLayer = true;
             }
             Material* material = block->mMaterial;
             Item* filled;
-            if (material == Material::WATER && block->isLiquidBlock() && state->getValue(LiquidBlock::LEVEL) == 0) filled = Items::waterBucket;
-            else if (material == Material::LAVA && block->isLiquidBlock() && state->getValue(LiquidBlock::LEVEL) == 0) filled = Items::lavaBucket;
+            if (Material::WATER == material && block->isLiquidBlock() && state->getValue(LiquidBlock::LEVEL) == 0) filled = Items::waterBucket;
+            else if (Material::LAVA == material && block->isLiquidBlock() && state->getValue(LiquidBlock::LEVEL) == 0) filled = Items::lavaBucket;
             else return DefaultDispenseItemBehavior::execute(source, item, outcome);
             if (extraLayer) level->setExtraBlock(position, Blocks::air->defaultBlockState(), Block::UPDATE_ALL, false);
             else level->removeBlock(position);
@@ -354,8 +354,8 @@ void DispenserBootstrap::StaticCtor()
                 boost::shared_ptr<DispenserBlockEntity> dispenser = boost::static_pointer_cast<DispenserBlockEntity>(blockEntity);
                 full = dispenser->addItem(not_null_ptr<ItemInstance>(new ItemInstance(filled))) < 0;
             }
-            if (!full) outcome = eOUTCOME_Success;
-            else mDefaultDispenseItemBehavior.dispense(source, not_null_ptr<ItemInstance>(new ItemInstance(filled)));
+            if (full) mDefaultDispenseItemBehavior.dispense(source, not_null_ptr<ItemInstance>(new ItemInstance(filled)));
+            outcome = eOUTCOME_Success;
             return item;
         }
 

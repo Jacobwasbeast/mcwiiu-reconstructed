@@ -44,11 +44,13 @@ XmlObject* XmlChild::xml() const
 
 std::wstring XmlChild::asString() const
 {
-    if (m_type == 0)
+    switch (m_type)
+    {
+    case 0:
         return *static_cast<const std::wstring*>(m_value);
-
-    if (m_type == 1)
+    case 1:
         return static_cast<const XmlObject*>(m_value)->asString();
-
-    return L"";
+    default:
+        return L"";
+    }
 }

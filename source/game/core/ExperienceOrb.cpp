@@ -1,6 +1,7 @@
 #include "game/core/ExperienceOrb.hpp"
 #include "game/core/EntityType.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <string>
 
@@ -88,12 +89,12 @@ int ExperienceOrb::getExperienceValue(int value)
 void ExperienceOrb::_init()
 {
     fjDerivedCtorCalls();
-    mCount = 0;
+    mTickCount = 0;
     mAge = 0;
     mPickupDelay = 0;
     mHealth = 5;
     mValue = 0;
-    mFollowingPlayer.reset();
+    mFollowingPlayer = boost::shared_ptr<Player>();
     mFollowingTime = 0;
 }
 
@@ -148,18 +149,18 @@ void ExperienceOrb::tick()
     checkInBlock(mX, (mBoundingBox->mMinY + mBoundingBox->mMaxY) * 0.5, mZ);
 
     double maxDist = 8.0;
-    if (mFollowingTime < mCount - 20 + getId() % 100)
+    if (mFollowingTime < mTickCount - 20 + getId() % 100)
     {
         if (!mFollowingPlayer || mFollowingPlayer->distanceToSqr(shared_from_this()) > maxDist * maxDist)
         {
             mFollowingPlayer = mLevel->getNearestPlayer(shared_from_this(), maxDist, -1.0);
         }
-        mFollowingTime = mCount;
+        mFollowingTime = mTickCount;
     }
 
     if (mFollowingPlayer && mFollowingPlayer->isSpectator())
     {
-        mFollowingPlayer.reset();
+        mFollowingPlayer = boost::shared_ptr<Player>();
     }
 
     if (mFollowingPlayer)
@@ -196,9 +197,8 @@ void ExperienceOrb::tick()
         mYd *= -0.8999999761581421;
     }
 
-    ++mCount;
-    ++mAge;
-    if (mAge >= 6000)
+    ++mTickCount;
+    if (++mAge >= 6000)
     {
         remove();
     }
@@ -267,12 +267,7 @@ void ExperienceOrb::playerTouch(boost::shared_ptr<Player> player)
             Enchantments::MENDING, player);
         if (!item->isEmpty() && item->isDamaged())
         {
-            int repaired = xpToDurability(mValue);
-            int damage = item->getDamageValue();
-            if (damage < repaired)
-            {
-                repaired = damage;
-            }
+            int repaired = std::min(xpToDurability(mValue), item->getDamageValue());
             mValue -= durabilityToXp(repaired);
             item->setAuxValue(item->getDamageValue() - repaired);
         }

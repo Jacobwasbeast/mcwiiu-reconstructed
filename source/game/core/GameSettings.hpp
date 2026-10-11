@@ -252,8 +252,4 @@ public:
     static void ResetAllTutorialCompletionFlags(int);
 };
 
-extern bool gHalloweenEvent;
-extern bool gFestiveEvent;
-extern bool gSeasonalEvent;
-
 #endif

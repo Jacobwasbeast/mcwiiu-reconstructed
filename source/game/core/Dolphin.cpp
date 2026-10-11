@@ -84,18 +84,16 @@ void Dolphin::aiStep()
 {
     if (isMoving() && isInWater())
     {
-        mLevel->addParticle(PARTICLE_BUBBLE, mX + (mRandom->nextFloat() - 0.5f) * mBbWidth,
-                            mY + mRandom->nextFloat() * mBbHeight,
-                            mZ + (mRandom->nextFloat() - 0.5f) * mBbWidth,
-                            0.0, 0.0, 0.0, arrayWithLength<int>());
+        double x = mX + (mRandom->nextFloat() - 0.5f) * mBbWidth;
+        double y = mY + mRandom->nextFloat() * mBbHeight;
+        double z = mZ + (mRandom->nextFloat() - 0.5f) * mBbWidth;
+        mLevel->addParticle(PARTICLE_BUBBLE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
     }
     if (mBlowholeCooldown > 0)
     {
         --mBlowholeCooldown;
-        Mob::aiStep();
-        return;
     }
-    if (!isInWater() && mOnGround && mRandom->nextInt(40) == 0)
+    else if (!isInWater() && mOnGround && mRandom->nextInt(40) == 0)
     {
         playSound(SoundEvents::DOLPHIN_BLOWHOLE, 1.0f, mRandom->nextFloat(0.8f, 1.2f));
         mBlowholeCooldown = 40;
@@ -178,14 +176,16 @@ void Dolphin::positionRider(const boost::shared_ptr<Entity>& passenger)
 boost::shared_ptr<ItemEntity> Dolphin::drop(const not_null_ptr<ItemInstance>& item)
 {
     if (item->isEmpty()) return boost::shared_ptr<ItemEntity>();
-    boost::shared_ptr<ItemEntity> itemEntity(new ItemEntity(mLevel, mX, mY - 0.3 + getEyeHeight(), mZ, item));
+    double itemY = mY - 0.3 + getEyeHeight();
+    boost::shared_ptr<ItemEntity> itemEntity(new ItemEntity(mLevel, mX, itemY, mZ, item));
     itemEntity->setPickUpDelay(40);
     itemEntity->setThrower(getUUID());
     itemEntity->mXd = -std::sin((double)mYRot * Mth::DEG_TO_RAD) * std::cos((double)mXRot * Mth::DEG_TO_RAD) * 0.3f;
     itemEntity->mYd = std::sin((double)mXRot * Mth::DEG_TO_RAD) * 0.3f * 1.5;
     itemEntity->mZd = std::cos((double)mYRot * Mth::DEG_TO_RAD) * std::cos((double)mXRot * Mth::DEG_TO_RAD) * 0.3f;
-    const double angle = mRandom->nextDouble() * 6.2831854820251465;
-    const double speed = 0.02 * mRandom->nextDouble();
+    double speed, angle;
+    angle = mRandom->nextDouble() * 6.2831854820251465;
+    speed = 0.02 * mRandom->nextDouble();
     itemEntity->mXd += std::cos(angle) * speed;
     itemEntity->mZd += std::sin(angle) * speed;
     mLevel->addEntity(itemEntity);
@@ -234,10 +234,9 @@ void Dolphin::registerGoals()
     mGoalSelector.addGoal(0, new MoveToWaterGoal(this, 1.0, 15, 5, 0.5), true);
     mTreasureGoal = new FindUnderwaterTreasureGoal(this, 2.0f, 30, 50);
     mGoalSelector.addGoal(2, mTreasureGoal, true);
-    unsigned long long* swimWithMobTypes = new unsigned long long[1];
+    arrayWithLength<unsigned long long> swimWithMobTypes(1, true);
     swimWithMobTypes[0] = EntityType::PLAYER;
-    mGoalSelector.addGoal(2, new SwimWithMobGoal(this, 1.2f, 16.0f, 20,
-        arrayWithLength<unsigned long long>(swimWithMobTypes, 1)), true);
+    mGoalSelector.addGoal(2, new SwimWithMobGoal(this, 1.2f, 16.0f, 20, swimWithMobTypes), true);
     mGoalSelector.addGoal(3, new FollowFlockLeaderGoal(this, true), true);
     mGoalSelector.addGoal(4, new RandomSwimmingGoal(this, 1.0, 10, 10, 7), true);
     mGoalSelector.addGoal(4, new RandomLookAroundGoal(this), true);
@@ -246,11 +245,10 @@ void Dolphin::registerGoals()
     mGoalSelector.addGoal(6, new MeleeAttackGoal(this, 1.2f, true), true);
     mGoalSelector.addGoal(8, new FollowBoatGoal(this), true);
     mGoalSelector.addGoal(9, new AvoidEntityGoal(this, typeid(Guardian), 8.0f, 1.0, 1.0), true);
-    unsigned long long* hurtByTargetTypes = new unsigned long long[2];
+    arrayWithLength<unsigned long long> hurtByTargetTypes(2, true);
     hurtByTargetTypes[0] = EntityType::GUARDIAN;
     hurtByTargetTypes[1] = EntityType::ELDER_GUARDIAN;
-    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true,
-        arrayWithLength<unsigned long long>(hurtByTargetTypes, 2)), true);
+    mTargetSelector.addGoal(1, new HurtByTargetGoal(this, true, hurtByTargetTypes), true);
 }
 
 void Dolphin::registerAttributes()
@@ -270,32 +268,33 @@ PathNavigation* Dolphin::createNavigation(Level* level)
 bool Dolphin::mobInteract(const boost::shared_ptr<Player>& player, InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> item = player->getItemInHand(hand);
-    if (!(!item->isEmpty() && isItemABribingFish(item)))
-        return AgableMob::mobInteract(player, hand);
-
-    if (!mLevel->mIsClientSide)
+    if (!item->isEmpty() && isItemABribingFish(item))
     {
-        mTreasureGoal->setBribed();
-        playSound(SoundEvents::DOLPHIN_EAT, 1.0f, 1.0f);
-        player->awardStat(GenericStats::echolocation(), GenericStats::param_echolocation());
-    }
+        if (!mLevel->mIsClientSide)
+        {
+            mTreasureGoal->setBribed();
+            playSound(SoundEvents::DOLPHIN_EAT, 1.0f, 1.0f);
+            player->awardStat(GenericStats::echolocation(), GenericStats::param_echolocation());
+        }
 
-    int fishId = Item::getId(Items::fish);
-    for (int i = 0; i < 7; ++i)
-    {
-        const double xa = mRandom->nextGaussian() * 0.02;
-        const double ya = mRandom->nextGaussian() * 0.02;
-        const double za = mRandom->nextGaussian() * 0.02;
-        const float xRand = mRandom->nextFloat();
-        const float yRand = mRandom->nextFloat();
-        const float zRand = mRandom->nextFloat();
-        mLevel->addParticle(PARTICLE_ICON_CRACK, mX + xRand * mBbWidth * 2.0f - mBbWidth, mY + 0.5 + yRand * mBbHeight,
-                            mZ + zRand * mBbWidth * 2.0f - mBbWidth, xa, ya, za, arrayWithLength<int>(&fishId, 1));
-    }
+        int fishId = Item::getId(Items::fish);
+        for (int i = 0; i < 7; ++i)
+        {
+            const double xa = mRandom->nextGaussian() * 0.02;
+            const double ya = mRandom->nextGaussian() * 0.02;
+            const double za = mRandom->nextGaussian() * 0.02;
+            mLevel->addParticle(PARTICLE_ICON_CRACK,
+                                mX + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
+                                mY + 0.5 + mRandom->nextFloat() * mBbHeight,
+                                mZ + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
+                                xa, ya, za, arrayWithLength<int>(&fishId, 1));
+        }
 
-    if (!player->mAbilities.mInstabuild)
-        item->shrink(1);
-    return true;
+        if (!player->mAbilities.mInstabuild)
+            item->shrink(1);
+        return true;
+    }
+    return AgableMob::mobInteract(player, hand);
 }
 
 bool Dolphin::canHoldItem(not_null_ptr<ItemInstance> item)

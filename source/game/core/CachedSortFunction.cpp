@@ -2,13 +2,22 @@
 
 #include "game/util/AABB.hpp"
 
+static inline BlockPos getMinBlockPos(const AABB* bounds)
+{
+    return BlockPos(bounds->mMinX, bounds->mMinY, bounds->mMinZ);
+}
+
+static inline BlockPos getBlockSize(const AABB* bounds)
+{
+    return BlockPos(bounds->mMaxX - bounds->mMinX,
+                    bounds->mMaxY - bounds->mMinY,
+                    bounds->mMaxZ - bounds->mMinZ);
+}
+
 CachedSortFunction::CachedSortFunction(arrayWithLength<double> values, const AABB* bounds)
     : mValues(values),
-      mMin(bounds->mMinX, bounds->mMinY, bounds->mMinZ),
-      mSize(BlockPos(bounds->mMaxX - bounds->mMinX,
-                     bounds->mMaxY - bounds->mMinY,
-                     bounds->mMaxZ - bounds->mMinZ)
-                .offset(BlockPos(1, 1, 1)))
+      mMin(getMinBlockPos(bounds)),
+      mSize(getBlockSize(bounds).offset(BlockPos(1, 1, 1)))
 {
 }
 

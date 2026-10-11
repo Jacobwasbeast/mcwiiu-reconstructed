@@ -108,7 +108,7 @@ public:
     void SetBRUPSToWaitOn(int count);
     bool IsValidStateForItemUse() const;
     EGameModeState GetGameModeState() const;
-    MultiPlayerLevel* GeneratorTargetLevel() const;
+    Level* GeneratorTargetLevel() const;
     class Scoreboard* getScoreboard();
     double GetPlayerMapProgress(PlayerUID uid) const;
     virtual void OnProgressMade(const boost::shared_ptr<Player>& player, double progress);

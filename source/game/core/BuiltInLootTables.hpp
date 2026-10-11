@@ -13,6 +13,7 @@ class LootTable;
 class BuiltInLootTables
 {
 public:
+    static ResourceLocation* EMPTY;
     static ResourceLocation ABANDONED_MINESHAFT;
     static ResourceLocation BURIEDTREASURE;
     static ResourceLocation DESERT_PYRAMID;

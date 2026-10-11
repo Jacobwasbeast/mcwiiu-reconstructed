@@ -31,13 +31,14 @@ void RiderPositionOverrides::ReadOverrides(DataInputStream* stream)
 
     for (int i = 0; i < count; ++i)
     {
-        PositionOverrideStruct overridePosition;
-        overridePosition.isTamed = stream->readBoolean();
-        overridePosition.isSaddled = stream->readBoolean();
-        overridePosition.x = stream->readFloat();
-        overridePosition.y = stream->readFloat();
-        overridePosition.z = stream->readFloat();
-        gRiderPositionOverrides[EntityIO::byString(entityName)].push_back(overridePosition);
+        bool isTamed = stream->readBoolean();
+        bool isSaddled = stream->readBoolean();
+        double x = stream->readFloat();
+        double y = stream->readFloat();
+        double z = stream->readFloat();
+        unsigned long long type = EntityIO::byString(entityName);
+        PositionOverrideStruct overridePosition = { isTamed, isSaddled, x, y, z };
+        gRiderPositionOverrides[type].push_back(overridePosition);
     }
 }
 
@@ -91,8 +92,8 @@ bool RiderPositionOverrides::OverridePosition(
         float sine;
         if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, vehicle->GetType()))
         {
-            float bodyRotation =
-                boost::static_pointer_cast<LivingEntity>(vehicle)->mYBodyRot * Mth::DEG_TO_RAD;
+            float yBodyRot = boost::static_pointer_cast<LivingEntity>(vehicle)->mYBodyRot;
+            float bodyRotation = yBodyRot * Mth::DEG_TO_RAD;
             cosine = Mth::cos(bodyRotation);
             sine = Mth::sin(bodyRotation);
         }

@@ -52,7 +52,7 @@
 #include "vendor/_LoadingInputParams.hpp"
 #include "vendor/_NetworkGameInitData.hpp"
 
-extern CProfile* gProfile;
+extern C_4JProfile* gProfile;
 extern MiniGameOptionCache gMiniGameOptionCache;
 
 namespace

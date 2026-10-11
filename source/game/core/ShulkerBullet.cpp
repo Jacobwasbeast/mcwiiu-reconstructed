@@ -69,8 +69,8 @@ void ShulkerBullet::init()
 {
     fjDerivedCtorCalls();
     mTargetUniqueId = L"";
-    mOwner.reset();
-    mTarget.reset();
+    mOwner = boost::shared_ptr<LivingEntity>();
+    mTarget = boost::shared_ptr<Entity>();
     mMoveDirection = Direction::UP;
     mSteps = 0;
     mPowerX = 0.0;
@@ -242,13 +242,13 @@ void ShulkerBullet::tick()
             delete entities;
         }
 
-        bool tracking = false;
+        bool tracking;
         if (mTarget != NULL && mTarget->isAlive()
             && !(eTYPE_DERIVED_FROM(EntityType::PLAYER, mTarget->GetType())
                  && boost::static_pointer_cast<Player>(mTarget)->isSpectator()))
-        {
             tracking = true;
-        }
+        else
+            tracking = false;
 
         if (tracking)
         {
@@ -286,8 +286,8 @@ void ShulkerBullet::tick()
 
     if (mLevel->mIsClientSide)
     {
-        mLevel->addParticle(PARTICLE_END_ROD, mX - mXd, mY - mYd + 0.15, mZ - mZd, 0.0, 0.0, 0.0,
-                            arrayWithLength<int>());
+        arrayWithLength<int> parameters;
+        mLevel->addParticle(PARTICLE_END_ROD, mX - mXd, mY - mYd + 0.15, mZ - mZd, 0.0, 0.0, 0.0, parameters);
     }
     else if (mTarget != NULL && !mTarget->mRemoved)
     {

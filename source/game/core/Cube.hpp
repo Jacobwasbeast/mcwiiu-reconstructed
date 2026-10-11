@@ -13,6 +13,14 @@ class _Polygon;
 class Cube
 {
 public:
+    static const int FACE_RIGHT;
+    static const int FACE_LEFT;
+    static const int FACE_TOP;
+    static const int FACE_BOTTOM;
+    static const int FACE_FRONT;
+    static const int FACE_BACK;
+    static const int FACE_ALL;
+
     Cube(ModelPart* parent, int texU, int texV, float x, float y, float z,
          int width, int height, int depth, float inflate, bool mirror,
          int faceMask, bool flip, float xRot, float yRot, float zRot);

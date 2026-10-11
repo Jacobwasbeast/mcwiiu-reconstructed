@@ -10,8 +10,6 @@
 #include "game/entity/mob/SharedMonsterAttributes.hpp"
 #include "game/world/Level.hpp"
 
-static ResourceLocation* sNoLootTable = NULL;
-
 MagmaCube::MagmaCube(Level* level)
     : Slime(level)
 {
@@ -81,7 +79,7 @@ boost::shared_ptr<Slime> MagmaCube::createChild()
 
 ResourceLocation* MagmaCube::getDefaultLootTable()
 {
-    return isTiny() ? sNoLootTable : &BuiltInLootTables::MAGMA_CUBE;
+    return isTiny() ? BuiltInLootTables::EMPTY : &BuiltInLootTables::MAGMA_CUBE;
 }
 
 bool MagmaCube::isOnFire()

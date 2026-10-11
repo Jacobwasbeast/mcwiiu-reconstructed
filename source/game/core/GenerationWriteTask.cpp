@@ -1,9 +1,11 @@
 #include "game/core/GenerationWriteTask.hpp"
 
+#include <algorithm>
 #include <deque>
 
 #include "game/core/System.hpp"
 #include "game/server/ServerLevel.hpp"
+#include "game/world/block/BlockId.hpp"
 #include "game/world/chunk/ChunkPos.hpp"
 #include "game/world/chunk/ChunkSource.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
@@ -28,7 +30,8 @@ void GenerationWriteTask::doWork(long long endTime)
     {
         while (!mChunks->empty() && System::processTimeInMilliSecs() < endTime)
         {
-            ChunkPos chunk = mChunks->front();
+            const ChunkPos& front = mChunks->front();
+            ChunkPos chunk = front;
             mChunks->pop_front();
 
             if (mLevel->getChunk(chunk.x, chunk.z) == NULL)
@@ -58,30 +61,28 @@ void GenerationWriteTask::doWork(long long endTime)
                 }
             }
 
-            Vec3i min = mOrigin.offset(mTransaction->getMin());
-            Vec3i max = mOrigin.offset(mTransaction->getMax());
-            BlockPos from(chunk.x << 4 < min.x ? min.x : chunk.x << 4,
-                          min.y,
-                          chunk.z << 4 < min.z ? min.z : chunk.z << 4);
-            BlockPos to(chunk.x * 16 + 16 < max.x ? chunk.x * 16 + 16 : max.x,
-                        max.y,
-                        chunk.z * 16 + 16 < max.z ? chunk.z * 16 + 16 : max.z);
+            BlockPos min = mOrigin.offset(mTransaction->getMin());
+            BlockPos max = mOrigin.offset(mTransaction->getMax());
+            BlockPos from(std::max(chunk.x << 4, min.x), min.y, std::max(chunk.z << 4, min.z));
+            BlockPos to(std::min(chunk.x * 16 + 16, max.x), max.y, std::min(chunk.z * 16 + 16, max.z));
 
             for (int x = from.x; x < to.x; ++x)
             {
-                for (int y = from.y; y < to.y; ++y)
+                for (int z = from.z; z < to.z; ++z)
                 {
-                    for (int z = from.z; z < to.z; ++z)
+                    for (int y = from.y; y < to.y; ++y)
                     {
                         Vec3i position = Vec3i(x, y, z).subtract(mOrigin);
                         if (mTransaction->inBounds(position) && mTransaction->shouldWrite(position))
                         {
                             int block = mTransaction->getBlock(position);
                             unsigned short data = mTransaction->getData(position);
-                            if (block == 217) block = 0;
+                            if (block == BlockId::STRUCTURE_VOID) block = BlockId::AIR;
 
-                            bool countsAsChanged = block != 0 && block != 106 && block != 46 &&
-                                                   block != 70 && block != 51 && block != 31;
+                            bool countsAsChanged = block != BlockId::AIR && block != BlockId::VINE &&
+                                                   block != BlockId::TNT &&
+                                                   block != BlockId::STONE_PRESSURE_PLATE &&
+                                                   block != BlockId::FIRE && block != BlockId::TALLGRASS;
                             if (mChangedBlocks != NULL && countsAsChanged) ++*mChangedBlocks;
                             mLevel->setBlockAndData(x, y, z, block, data, Block::UPDATE_CLIENTS);
                         }

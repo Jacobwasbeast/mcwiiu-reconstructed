@@ -1,5 +1,7 @@
 #include "game/core/MerchantResultSlot.hpp"
 
+#include <algorithm>
+
 #include "game/item/ItemInstance.hpp"
 #include "game/item/MerchantRecipe.hpp"
 #include "game/world/generation/Player.hpp"
@@ -24,13 +26,7 @@ not_null_ptr<ItemInstance> MerchantResultSlot::remove(int count)
 {
     if (hasItem())
     {
-        not_null_ptr<ItemInstance> item = getItem();
-        int removed = item->getCount();
-        if (count < removed)
-        {
-            removed = count;
-        }
-        mRemoveCount += removed;
+        mRemoveCount += std::min(count, getItem()->getCount());
     }
     return Slot::remove(count);
 }
@@ -63,8 +59,7 @@ bool MerchantResultSlot::removePaymentItemsIfMatching(MerchantRecipe* recipe,
             second->shrink(buyB->getCount());
             return true;
         }
-
-        if (buyB->isEmpty() && second->isEmpty())
+        else if (buyB->isEmpty() && second->isEmpty())
         {
             first->shrink(buyA->getCount());
             return true;
@@ -84,9 +79,8 @@ not_null_ptr<ItemInstance> MerchantResultSlot::onTake(boost::shared_ptr<Player> 
     {
         not_null_ptr<ItemInstance> first = mMerchantContainer->getItem(0);
         not_null_ptr<ItemInstance> second = mMerchantContainer->getItem(1);
-        bool traded = removePaymentItemsIfMatching(recipe, first, second) ||
-                      removePaymentItemsIfMatching(recipe, second, first);
-        if (traded)
+        if (removePaymentItemsIfMatching(recipe, first, second) ||
+            removePaymentItemsIfMatching(recipe, second, first))
         {
             mMerchant->notifyTrade(recipe);
             mMerchantContainer->setItem(0, first);

@@ -42,6 +42,8 @@
 #include "game/core/LootItemCondition.hpp"
 
 
+ResourceLocation* BuiltInLootTables::EMPTY = NULL;
+
 ResourceLocation BuiltInLootTables::ABANDONED_MINESHAFT(L"minecraft", L"chests/abandoned_mineshaft");
 ResourceLocation BuiltInLootTables::BURIEDTREASURE(L"minecraft", L"chests/buriedtreasure");
 ResourceLocation BuiltInLootTables::DESERT_PYRAMID(L"minecraft", L"chests/desert_pyramid");

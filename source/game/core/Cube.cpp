@@ -7,6 +7,14 @@
 #include "game/world/biome/arrayWithLength.hpp"
 #include "game/util/Vec3.hpp"
 
+const int Cube::FACE_RIGHT = 1;
+const int Cube::FACE_LEFT = 2;
+const int Cube::FACE_TOP = 4;
+const int Cube::FACE_BOTTOM = 8;
+const int Cube::FACE_FRONT = 16;
+const int Cube::FACE_BACK = 32;
+const int Cube::FACE_ALL = 63;
+
 Cube::Cube(ModelPart* parent, int texU, int texV, float x, float y, float z,
            int width, int height, int depth, float inflate, bool mirror,
            int faceMask, bool flip, float xRot, float yRot, float zRot)

@@ -2,12 +2,10 @@
 
 #include "game/core/File.hpp"
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
+#include "platform/wiiu/WiiU_FileCache.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
 
 char* wstringtofilename(const std::wstring& path, char (&filename)[256]);
-
-int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode, void* securityAttributes, unsigned int creationDisposition, unsigned int flagsAndAttributes, int templateFile);
-int WriteFile(int file, const void* buffer, unsigned int bytesToWrite, unsigned int* bytesWritten, _OVERLAPPED* overlapped);
 
 FileOutputStream::FileOutputStream(const File& file)
 {

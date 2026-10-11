@@ -27,7 +27,7 @@ void Giant::addDataWalkers(DataFixerUpper* fixer)
 
 float Giant::getEyeHeight()
 {
-    return (double)(1.62f * 6.0f);
+    return 1.62f * 6.0f;
 }
 
 void Giant::registerAttributes()

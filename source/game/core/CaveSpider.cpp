@@ -77,39 +77,37 @@ bool CaveSpider::doHurtTarget(boost::shared_ptr<Entity> target)
 MobGroupData* CaveSpider::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data,
                                            const std::wstring& name)
 {
-    if (mLevel->mRandom->nextInt(100) != 0)
+    if (mLevel->mRandom->nextInt(100) == 0)
     {
-        return data;
-    }
+        boost::shared_ptr<AbstractSkeleton> rider;
 
-    boost::shared_ptr<AbstractSkeleton> rider;
+        if (mLevel->canSeeSky(BlockPos(mX, mY, mZ)) && !mLevel->isDay()
+            && mLevel->mRandom->rollPercentageChance(80)
+            && (mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::ICE_PLAINS
+                || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::ICE_MOUNTAINS
+                || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::ICE_PLAINS_SPIKES
+                || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::FROZEN_RIVER
+                || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::COLD_BEACH
+                || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::FROZEN_OCEAN
+                || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::DEEP_FROZEN_OCEAN))
+        {
+            rider = boost::shared_ptr<Stray>(new Stray(mLevel));
+        }
+        else if (mLevel->mRandom->rollPercentageChance(80)
+                 && mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::HELL)
+        {
+            rider = boost::shared_ptr<WitherSkeleton>(new WitherSkeleton(mLevel));
+        }
+        else
+        {
+            rider = boost::shared_ptr<Skeleton>(new Skeleton(mLevel));
+        }
 
-    if (mLevel->canSeeSky(BlockPos(mX, mY, mZ)) && !mLevel->isDay()
-        && mLevel->mRandom->rollPercentageChance(80)
-        && (mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::ICE_PLAINS
-            || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::ICE_MOUNTAINS
-            || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::ICE_PLAINS_SPIKES
-            || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::FROZEN_RIVER
-            || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::COLD_BEACH
-            || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::FROZEN_OCEAN
-            || mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::DEEP_FROZEN_OCEAN))
-    {
-        rider.reset(new Stray(mLevel));
+        rider->moveTo(mX, mY, mZ, mYRot, 0.0f);
+        rider->finalizeMobSpawn(difficulty, NULL, L"");
+        mLevel->addEntity(rider);
+        rider->startRiding(shared_from_this());
     }
-    else if (mLevel->mRandom->rollPercentageChance(80)
-             && mLevel->getBiome(BlockPos(mX, mY, mZ)) == Biome::HELL)
-    {
-        rider.reset(new WitherSkeleton(mLevel));
-    }
-    else
-    {
-        rider.reset(new Skeleton(mLevel));
-    }
-
-    rider->moveTo(mX, mY, mZ, mYRot, 0.0f);
-    rider->finalizeMobSpawn(difficulty, NULL, L"");
-    mLevel->addEntity(rider);
-    rider->startRiding(shared_from_this());
 
     return data;
 }

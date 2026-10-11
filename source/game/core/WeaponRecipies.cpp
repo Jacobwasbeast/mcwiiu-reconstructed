@@ -8,7 +8,7 @@
 #include "game/item/Recipes.hpp"
 #include "game/world/block/Blocks.hpp"
 
-static const std::wstring SWORD_PATTERN[4] = { L"X", L"X", L"#", L"" };
+std::wstring SWORD_PATTERN[4] = { L"X", L"X", L"#", L"" };
 
 void WeaponRecipies::_init()
 {

@@ -71,12 +71,12 @@ Boat::Boat(Level* level, double x, double y, double z) : Entity(level, true)
     const double clampedX = Mth::clamp(x, bounds->mMinX, bounds->mMaxX);
     const double clampedZ = Mth::clamp(z, bounds->mMinZ, bounds->mMaxZ);
     setPos(clampedX, y, clampedZ);
-    mXo = clampedX;
-    mZo = clampedZ;
-    mYo = y;
+    mXd = 0.0;
     mYd = 0.0;
     mZd = 0.0;
-    mXd = 0.0;
+    mXo = clampedX;
+    mYo = y;
+    mZo = clampedZ;
 }
 
 void Boat::staticCtor()
@@ -358,38 +358,38 @@ float Boat::getGroundFriction()
     const AABB* box = AABB::newTemp(mBoundingBox->mMinX, mBoundingBox->mMinY - 0.001, mBoundingBox->mMinZ,
                                     mBoundingBox->mMaxX, mBoundingBox->mMinY, mBoundingBox->mMaxZ);
     const int minX = Mth::floor(box->mMinX) - 1;
-    const int maxX = Mth::ceil(static_cast<float>(box->mMaxX));
+    const int maxX = Mth::ceil(static_cast<float>(box->mMaxX)) + 1;
     const int minY = Mth::floor(box->mMinY) - 1;
-    const int maxY = Mth::ceil(static_cast<float>(box->mMaxY));
+    const int maxY = Mth::ceil(static_cast<float>(box->mMaxY)) + 1;
     const int minZ = Mth::floor(box->mMinZ) - 1;
-    const int maxZ = Mth::ceil(static_cast<float>(box->mMaxZ));
+    const int maxZ = Mth::ceil(static_cast<float>(box->mMaxZ)) + 1;
     std::vector<AABB*> collisions;
     float friction = 0.0f;
     int count = 0;
     BlockPos pos(0, 0, 0);
 
-    for (int x = minX; x <= maxX; ++x)
+    for (int x = minX; x < maxX; ++x)
     {
-        for (int z = minZ; z <= maxZ; ++z)
+        for (int z = minZ; z < maxZ; ++z)
         {
-            const int edges = (x == minX || x == maxX ? 1 : 0) + (z == minZ || z == maxZ ? 1 : 0);
-            if (edges == 2)
-                continue;
-
-            for (int y = minY; y <= maxY; ++y)
+            const int edges = (x != minX && x != maxX - 1 ? 0 : 1) + (z != minZ && z != maxZ - 1 ? 0 : 1);
+            if (edges != 2)
             {
-                if (edges > 0 && (y == minY || y == maxY))
-                    continue;
-
-                pos = BlockPos(x, y, z);
-                const BlockState* state = mLevel->getBlockState(mTickCache, pos);
-                state->addCollissionAABBs(mLevel, pos, box, &collisions, shared_from_this(), false);
-                if (!collisions.empty())
+                for (int y = minY; y < maxY; ++y)
                 {
-                    friction += state->getBlock()->mFriction;
-                    ++count;
+                    if (edges <= 0 || (y != minY && y != maxY - 1))
+                    {
+                        pos = BlockPos(x, y, z);
+                        const BlockState* state = mLevel->getBlockState(mTickCache, pos);
+                        state->addCollissionAABBs(mLevel, pos, box, &collisions, shared_from_this(), false);
+                        if (!collisions.empty())
+                        {
+                            friction += state->getBlock()->mFriction;
+                            ++count;
+                        }
+                        collisions.clear();
+                    }
                 }
-                collisions.clear();
             }
         }
     }
@@ -425,7 +425,7 @@ bool Boat::checkInWater()
                 if (state->getMaterial() == Material::WATER)
                 {
                     const double height = LiquidBlock::getLiquidHeight(state, mLevel, pos);
-                    mWaterLevel = height > mWaterLevel ? height : mWaterLevel;
+                    mWaterLevel = std::max(height, mWaterLevel);
                     inWater |= box->mMinY < height;
                 }
             }
@@ -484,11 +484,10 @@ void Boat::tickLerp()
         const double x = mX + (mLerpX - mX) / mLerpSteps;
         const double y = mY + (mLerpY - mY) / mLerpSteps;
         const double z = mZ + (mLerpZ - mZ) / mLerpSteps;
-        const double yRotDelta = Mth::wrapDegrees(mLerpYRot - mYRot);
-        const float steps = static_cast<float>(mLerpSteps);
+        const float yRotDelta = static_cast<float>(Mth::wrapDegrees(mLerpYRot - mYRot));
+        mYRot += yRotDelta / static_cast<float>(mLerpSteps);
+        mXRot += static_cast<float>(mLerpXRot - mXRot) / static_cast<float>(mLerpSteps);
         --mLerpSteps;
-        mYRot += static_cast<float>(yRotDelta) / steps;
-        mXRot += static_cast<float>(mLerpXRot - mXRot) / steps;
         setPos(x, y, z);
         setRot(mYRot, mXRot);
     }
@@ -551,14 +550,16 @@ void Boat::floatBoat()
         momentum *= 10.0;
     mRockPhase += 0.05 * momentum;
 
+    double buoyancy = 0.0;
+    double rock = 0.0;
+
     const BlockPos pos(mX, mY, mZ);
     const Material* material = mLevel->getBlockState(mTickCache, pos)->getMaterial();
     const Material* extraMaterial = mLevel->getExtraBlockState(pos)->getMaterial();
     const Material* materialAbove = mLevel->getBlockState(mTickCache, pos.above())->getMaterial();
     const Material* extraMaterialAbove = mLevel->getExtraBlockState(pos.above())->getMaterial();
     const double buoyancyOffset = 0.1;
-    double buoyancy = 1.0;
-    double rock = 0.0;
+    bool floating = false;
 
     if ((material == Material::WATER || extraMaterial == Material::WATER) && materialAbove == Material::AIR
         && !getIsSinking())
@@ -567,66 +568,48 @@ void Boat::floatBoat()
         rock = (std::sin(mRockPhase) + 1.0) * 0.035;
         mOutOfControlTicks = 0;
         mInvFriction = 0.9f;
-        mXd *= mInvFriction;
-        mZd *= mInvFriction;
-        mDeltaRotation *= mInvFriction;
-        if (!getIsSinking())
-        {
-            const float surface = static_cast<float>(getWaterLevelAbove() - mBbHeight);
-            setPos(mX, surface + 0.2 + std::sin(mRockPhase) * 0.035, mZ);
-            mYd = 0.0;
-            return;
-        }
+        floating = true;
     }
     else if ((material == Material::WATER || extraMaterial == Material::WATER)
              && (materialAbove == Material::WATER || extraMaterialAbove == Material::WATER))
     {
+        buoyancy = 1.0;
         mInvFriction = 0.9f;
         ++mOutOfControlTicks;
-        mXd *= mInvFriction;
-        mZd *= mInvFriction;
-        mDeltaRotation *= mInvFriction;
     }
     else if (material == Material::BUBBLE_COLUMN && materialAbove == Material::BUBBLE_COLUMN)
     {
+        buoyancy = 1.0;
         mInvFriction = 0.9f;
         mOutOfControlTicks = 60;
-        mXd *= mInvFriction;
-        mZd *= mInvFriction;
-        mDeltaRotation *= mInvFriction;
     }
-    else
+    else if (material == Material::AIR || material == Material::TOP_SNOW)
     {
-        buoyancy = 0.0;
-        if (material == Material::AIR || material == Material::TOP_SNOW)
-        {
-            const Material* materialBelow = mLevel->getBlockState(mTickCache, pos.below())->getMaterial();
-            if (materialBelow != Material::WATER)
-                materialBelow = mLevel->getExtraBlockState(pos.below())->getMaterial();
+        const Material* materialBelow = mLevel->getBlockState(mTickCache, pos.below())->getMaterial();
+        if (materialBelow != Material::WATER)
+            materialBelow = mLevel->getExtraBlockState(pos.below())->getMaterial();
 
-            mInvFriction = 1.0f;
-            if (!mOnGround)
-            {
-                if (materialBelow == Material::WATER)
-                    mInvFriction = 0.9f;
-            }
-            else
-            {
-                mInvFriction = mLevel->getBlock(pos.below())->mFriction;
-            }
-        }
-        mXd *= mInvFriction;
-        mZd *= mInvFriction;
-        mDeltaRotation *= mInvFriction;
+        mInvFriction = 1.0f;
+        if (mOnGround)
+            mInvFriction = mLevel->getBlock(pos.below())->mFriction;
+        else if (materialBelow == Material::WATER)
+            mInvFriction = 0.9f;
+    }
+
+    mXd *= mInvFriction;
+    mZd *= mInvFriction;
+    mDeltaRotation *= mInvFriction;
+
+    if (floating && !getIsSinking())
+    {
+        setPos(mX, getWaterLevelAbove() - mBbHeight + 0.2 + std::sin(mRockPhase) * 0.035, mZ);
+        mYd = 0.0;
+        return;
     }
 
     mYd = (mYd - 0.04) * 0.98;
     if (buoyancy > 0.0)
-    {
-        const double rising = mYd * 0.7 + 0.05;
-        const double limit = (buoyancy - rock - buoyancyOffset) * 0.15;
-        mYd = rising < limit ? rising : limit;
-    }
+        mYd = std::min(mYd * 0.7 + 0.05, (buoyancy - rock - buoyancyOffset) * 0.15);
 }
 
 void Boat::controlBoat()
@@ -841,10 +824,10 @@ void Boat::positionRider(const boost::shared_ptr<Entity>& passenger)
     const float height = static_cast<float>((mRemoved ? 0.01f : getRideHeight()) + passenger->getRidingHeight());
     if (getPassengers()->size() > 1)
     {
-        if (indexOf(*getPassengers(), passenger) != 0)
-            offset = -0.6f;
-        else
+        if (indexOf(*getPassengers(), passenger) == 0)
             offset = 0.2f;
+        else
+            offset = -0.6f;
         const bool isAnimal = eTYPE_DERIVED_FROM(EntityType::ANIMAL, passenger->GetType());
         if (isAnimal)
             offset += 0.2f;
@@ -1078,29 +1061,29 @@ void Boat::tickLeash()
         return;
 
     Entity::tickLeash();
-    if (!isLeashed() || getLeashHolder() == NULL || getLeashHolder()->mLevel != mLevel)
-        return;
-
-    boost::shared_ptr<Entity> holder = getLeashHolder();
-    const double distance = distanceTo(holder);
-    if (distance > 10.0f)
+    if (isLeashed() && getLeashHolder() != NULL && getLeashHolder()->mLevel == mLevel)
     {
-        dropLeash(true, true);
-        return;
-    }
-
-    if (!hasPlayerPassenger())
-    {
-        const Vec3* pos = getPos(0.0f);
-        if (distance > 6.0f)
+        boost::shared_ptr<Entity> holder = getLeashHolder();
+        const float distance = distanceTo(holder);
+        if (distance > 10.0f)
         {
-            const double scale = static_cast<float>(1.0f / distance);
-            const double dx = (holder->getPos(0.0f)->x - pos->x) * scale;
-            const double dy = (holder->getPos(0.0f)->y - pos->y) * scale;
-            const double dz = (holder->getPos(0.0f)->z - pos->z) * scale;
-            mXd += dx * std::fabs(dx) * 0.2f;
-            mYd += dy * std::fabs(dy) * 0.2f;
-            mZd += dz * std::fabs(dz) * 0.2f;
+            dropLeash(true, true);
+            return;
+        }
+
+        if (!hasPlayerPassenger())
+        {
+            const Vec3* pos = getPos(0.0f);
+            if (distance > 6.0f)
+            {
+                const double scale = 1.0f / distance;
+                const double dx = (holder->getPos(0.0f)->x - pos->x) * scale;
+                const double dy = (holder->getPos(0.0f)->y - pos->y) * scale;
+                const double dz = (holder->getPos(0.0f)->z - pos->z) * scale;
+                mXd += dx * std::fabs(dx) * 0.2f;
+                mYd += dy * std::fabs(dy) * 0.2f;
+                mZd += dz * std::fabs(dz) * 0.2f;
+            }
         }
     }
 }

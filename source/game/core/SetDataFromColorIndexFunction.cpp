@@ -23,7 +23,8 @@ not_null_ptr<ItemInstance> SetDataFromColorIndexFunction::apply(const not_null_p
         {
             boost::shared_ptr<Sheep> sheep = boost::static_pointer_cast<Sheep>(context.mThisEntity.lock());
 
-            itemInstance->setAuxValue(sheep->getColor()->getBlockData());
+            int data = sheep->getColor()->getBlockData();
+            itemInstance->setAuxValue(data);
 
             if (sheep->isSheared())
             {

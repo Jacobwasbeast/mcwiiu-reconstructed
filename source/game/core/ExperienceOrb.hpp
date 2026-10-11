@@ -36,8 +36,9 @@ public:
     unsigned char getIcon();
     static Entity* create(Level* level);
 
+    int mTickCount;
+
 private:
-    int mCount;
     int mAge;
     int mPickupDelay;
     int mHealth;

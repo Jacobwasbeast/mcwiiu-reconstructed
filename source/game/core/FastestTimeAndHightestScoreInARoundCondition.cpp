@@ -28,53 +28,33 @@ bool FastestTimeAndHightestScoreInARoundCondition::canAward(const GameMedal* med
         return false;
     }
 
-    typedef boost::unordered_map<StatsUID, PlayerStats*, boost::hash<StatsUID> > PlayerStatsMap;
-    PlayerStatsMap* allPlayerStats = gameStats->GetPlayerStats();
+    GameStats::StatsMap* allPlayerStats = gameStats->GetPlayerStats();
     const unsigned int roundCount = gMinecraftServer->mMasterGameMode->mGameStats.mCurrentRound;
 
-    for (unsigned int round = 0; round < roundCount; ++round)
+    for (unsigned int round = 0; round <= roundCount; ++round)
     {
-        if (playerStats->getReachedEnd(round) == 0)
-        {
-            continue;
-        }
-
-        if (allPlayerStats->empty())
-        {
-            const unsigned int fastestTime = static_cast<unsigned int>(playerStats->getLifeSpan(round));
-            playerStats->getPoints(round);
-            if (fastestTime < 0x80000000U)
-            {
-                return true;
-            }
-        }
-        else
+        if (playerStats->getReachedEnd(round))
         {
             unsigned int fastestTime = 0x7fffffffU;
             unsigned int highestScore = 0;
-            PlayerStatsMap::iterator it = allPlayerStats->begin();
-            for (; it != allPlayerStats->end(); ++it)
+            for (GameStats::StatsMap::iterator it = allPlayerStats->begin(); it != allPlayerStats->end(); ++it)
             {
                 PlayerStats* otherStats = it->second;
-                if (otherStats->getReachedEnd(round) != 0)
+                const unsigned int time = otherStats->getLifeSpan(round);
+                const unsigned int score = otherStats->getPoints(round);
+                if (otherStats->getReachedEnd(round) && time < fastestTime)
                 {
-                    const unsigned int time = static_cast<unsigned int>(otherStats->getLifeSpan(round));
-                    if (time < fastestTime)
-                    {
-                        fastestTime = time;
-                    }
+                    fastestTime = time;
                 }
-
-                const unsigned int score = static_cast<unsigned int>(otherStats->getPoints(round));
                 if (score > highestScore)
                 {
                     highestScore = score;
                 }
             }
 
-            const unsigned int ownTime = static_cast<unsigned int>(playerStats->getLifeSpan(round));
-            const unsigned int ownScore = static_cast<unsigned int>(playerStats->getPoints(round));
-            if (ownTime <= fastestTime && ownScore >= highestScore)
+            bool fastest = playerStats->getLifeSpan(round) <= fastestTime;
+            bool highest = playerStats->getPoints(round) >= highestScore;
+            if (fastest && highest)
             {
                 return true;
             }

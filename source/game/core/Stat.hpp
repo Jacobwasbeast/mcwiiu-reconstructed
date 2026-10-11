@@ -19,7 +19,7 @@ public:
     class DefaultFormat : public StatFormatter
     {
     public:
-        virtual ~DefaultFormat();
+        virtual ~DefaultFormat() {}
 
         virtual std::wstring format(int value);
     };
@@ -27,7 +27,7 @@ public:
     class TimeFormatter : public StatFormatter
     {
     public:
-        virtual ~TimeFormatter();
+        virtual ~TimeFormatter() {}
 
         virtual std::wstring format(int value);
     };
@@ -35,7 +35,7 @@ public:
     class DistanceFormatter : public StatFormatter
     {
     public:
-        virtual ~DistanceFormatter();
+        virtual ~DistanceFormatter() {}
 
         virtual std::wstring format(int value);
     };
@@ -44,7 +44,7 @@ public:
     static boost::unordered_map<int, Stat*>* statsById;
     static StatFormatter* defaultFormatter;
     static StatFormatter* timeFormatter;
-    static StatFormatter* distanceFormatter;
+    static DistanceFormatter* distanceFormatter;
     static DecimalFormat* decimalFormat;
 
     Stat(int id, const std::wstring& name, StatFormatter* formatter);

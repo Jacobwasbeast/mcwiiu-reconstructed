@@ -6,6 +6,10 @@
 class DifficultyInstance
 {
 public:
+    static const float LEVEL_TIME_OFFSET;
+    static const float LEVEL_TIME_RANGE;
+    static const float INHABITED_TIME_RANGE;
+
     DifficultyInstance(const Difficulty* difficulty, long long levelTime, long long inhabitedTime, float moonPhase);
     ~DifficultyInstance();
 

@@ -2,12 +2,17 @@
 
 #include "game/core/Calendar.hpp"
 
-std::wstring ALLOWED_CHARACTERS;
+const std::wstring SharedConstants::VERSION_STRING = L"1.12";
+const std::wstring SharedConstants::DATA_VERSION_TAG = L"DataVersion";
 
-bool IS_HALLOWEEN = false;
-bool IS_HALLOWEEN_SEASON = false;
-bool IS_CHRISTMAS = false;
-bool IS_CHRISTMAS_SEASON = false;
+std::wstring SharedConstants::ALLOWED_CHARACTERS = L"";
+
+const float SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR = 30.25f;
+
+bool SharedConstants::IS_HALLOWEEN = false;
+bool SharedConstants::IS_HALLOWEEN_SEASON = false;
+bool SharedConstants::IS_CHRISTMAS = false;
+bool SharedConstants::IS_CHRISTMAS_SEASON = false;
 
 void SharedConstants::staticCtor()
 {

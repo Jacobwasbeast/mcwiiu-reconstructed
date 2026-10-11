@@ -50,21 +50,16 @@ ChunkPos CustomSet::get(int index)
 
 CustomSet::Node* CustomSet::find(const ChunkPos& pos)
 {
-    unsigned int hash = ((pos.z & COORD_MASK) << 5) | (pos.x & COORD_MASK);
+    unsigned int hash = (pos.x & COORD_MASK) | ((pos.z & COORD_MASK) << 5);
 
     Node* node = mBuckets[hash & (mBucketCount - 1)];
 
-    while (node != NULL)
+    while (node != NULL && node->mHash != hash)
     {
-        if (node->mHash == hash)
-        {
-            return node;
-        }
-
         node = node->mNext;
     }
 
-    return NULL;
+    return node;
 }
 
 void CustomSet::resize()
@@ -104,11 +99,9 @@ void CustomSet::insert(const ChunkPos& pos)
         resize();
     }
 
-    Node* node = mEntries[mCount];
+    Node* node = mEntries[mCount++];
 
-    mCount++;
-
-    unsigned int hash = ((pos.z & COORD_MASK) << 5) | (pos.x & COORD_MASK);
+    unsigned int hash = (pos.x & COORD_MASK) | ((pos.z & COORD_MASK) << 5);
     unsigned int index = hash & (mBucketCount - 1);
 
     node->mHash = hash;

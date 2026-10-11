@@ -91,9 +91,8 @@ void WitherSkull::onHit(const HitResult* result)
                 duration = 40;
             if (duration != 0)
             {
-                boost::shared_ptr<LivingEntity> target = boost::dynamic_pointer_cast<LivingEntity>(result->mEntity);
-                target->addEffect(new MobEffectInstance(MobEffects::WITHER, duration * 20, 1),
-                                  boost::shared_ptr<Entity>());
+                boost::dynamic_pointer_cast<LivingEntity>(result->mEntity)
+                    ->addEffect(new MobEffectInstance(MobEffects::WITHER, duration * 20, 1), boost::shared_ptr<Entity>());
             }
         }
     }

@@ -27,7 +27,7 @@ bool ShulkerBoxColoring::matches(boost::shared_ptr<CraftingContainer> craftingCo
             continue;
         }
 
-        if (dynamic_cast<ShulkerBoxBlock*>(Block::byItem(item->getItem())) != NULL)
+        if (dynamic_cast<ShulkerBoxBlock*>(Block::byItem(item->getItem())))
         {
             ++shulkerBoxCount;
         }
@@ -40,7 +40,7 @@ bool ShulkerBoxColoring::matches(boost::shared_ptr<CraftingContainer> craftingCo
             return false;
         }
 
-        if (shulkerBoxCount > 1 || dyeCount > 1)
+        if (dyeCount > 1 || shulkerBoxCount > 1)
         {
             return false;
         }
@@ -62,7 +62,7 @@ not_null_ptr<ItemInstance> ShulkerBoxColoring::assemble(boost::shared_ptr<Crafti
         {
             continue;
         }
-        if (dynamic_cast<ShulkerBoxBlock*>(Block::byItem(item->getItem())) != NULL)
+        if (dynamic_cast<ShulkerBoxBlock*>(Block::byItem(item->getItem())))
         {
             shulkerBox = item;
         }
@@ -106,7 +106,7 @@ NonNullList<not_null_ptr<ItemInstance> > ShulkerBoxColoring::getRemainingItems(b
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(slot);
         if (item->getItem()->hasCraftingRemainingItem())
         {
-            result[slot] = not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem()));
+            result.set(slot, new ItemInstance(item->getItem()->getCraftingRemainingItem()));
         }
     }
     return result;

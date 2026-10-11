@@ -5,6 +5,7 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixer.hpp"
 #include "game/data/ListTag.hpp"
+#include "game/entity/mob/Entity.hpp"
 
 ENTITIESONLY_DataWalker::~ENTITIESONLY_DataWalker()
 {
@@ -12,39 +13,38 @@ ENTITIESONLY_DataWalker::~ENTITIESONLY_DataWalker()
 
 CompoundTag* ENTITIESONLY_DataWalker::walk(DataFixer* fixer, CompoundTag* tag, int version)
 {
-    if (tag->contains(std::wstring(L"Entities"), 9))
+    if (tag->contains(L"Entities", Tag::TAG_LIST))
     {
-        ListTag* entities = tag->getList(std::wstring(L"Entities"), 10);
+        ListTag* entities = tag->getList(L"Entities", Tag::TAG_COMPOUND);
 
-        for (int entityIndex = 0; entityIndex < entities->size(); entityIndex++)
+        for (int i = 0; i < entities->size(); i++)
         {
-            CompoundTag* entity = (CompoundTag*)entities->get(entityIndex);
-            if (entity->contains(std::wstring(L"Riding"), 9))
+            if (((CompoundTag*)entities->get(i))->contains(Entity::RIDING_TAG, Tag::TAG_LIST))
             {
-                ListTag* passengers = entity->getList(std::wstring(L"Riding"), 10);
+                ListTag* passengers = ((CompoundTag*)entities->get(i))->getList(Entity::RIDING_TAG, Tag::TAG_COMPOUND);
 
-                for (int passengerIndex = 0; passengerIndex < passengers->size(); passengerIndex++)
+                for (int j = 0; j < passengers->size(); j++)
                 {
-                    passengers->set(passengerIndex,
+                    passengers->set(j,
                         fixer->update(DataFixTypes::eDataFixTypes_Entity,
-                            passengers->getCompound(passengerIndex), version));
+                            passengers->getCompound(j), version));
                 }
             }
 
-            entities->set(entityIndex,
-                fixer->update(DataFixTypes::eDataFixTypes_Entity, entity, version));
+            entities->set(i,
+                fixer->update(DataFixTypes::eDataFixTypes_Entity, (CompoundTag*)entities->get(i), version));
         }
     }
 
-    if (tag->contains(std::wstring(L"TileEntities"), 9))
+    if (tag->contains(L"TileEntities", Tag::TAG_LIST))
     {
-        ListTag* tileEntities = tag->getList(std::wstring(L"TileEntities"), 10);
+        ListTag* tileEntities = tag->getList(L"TileEntities", Tag::TAG_COMPOUND);
 
-        for (int tileEntityIndex = 0; tileEntityIndex < tileEntities->size(); tileEntityIndex++)
+        for (int i = 0; i < tileEntities->size(); i++)
         {
-            tileEntities->set(tileEntityIndex,
+            tileEntities->set(i,
                 fixer->update(DataFixTypes::eDataFixTypes_BlockEntity,
-                    (CompoundTag*)tileEntities->get(tileEntityIndex), version));
+                    (CompoundTag*)tileEntities->get(i), version));
         }
     }
 

@@ -12,7 +12,7 @@ public:
     GeneralStat(int id, const std::wstring& name, StatFormatter* formatter);
     GeneralStat(int id, const std::wstring& name);
 
-    virtual GeneralStat* postConstruct(bool addToList);
+    virtual Stat* postConstruct(bool addToList);
 };
 
 #endif

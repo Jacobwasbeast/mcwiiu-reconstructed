@@ -26,10 +26,10 @@ PrimedTnt::PrimedTnt(Level* level, double x, double y, double z, boost::shared_p
 {
     _init();
     setPos(x, y, z);
-    const double angle = Math::random() * 6.2831854820251465;
-    mXd = -(std::sin((float)angle) * 0.02f);
+    const float angle = (float)(Math::random() * 6.2831854820251465);
+    mXd = -(std::sin(angle) * 0.02f);
     mYd = 0.2f;
-    mZd = -(std::cos((float)angle) * 0.02f);
+    mZd = -(std::cos(angle) * 0.02f);
     setFuse(80);
     mXo = x;
     mYo = y;
@@ -55,8 +55,8 @@ void PrimedTnt::_init()
 {
     fjDerivedCtorCalls();
     mLife = 80;
-    mFireImmune = true;
     mBlocksBuilding = true;
+    mFireImmune = true;
     setSize(0.98f, 0.98f);
     mOwner = boost::weak_ptr<LivingEntity>();
 }
@@ -84,16 +84,18 @@ bool PrimedTnt::isPickable()
 
 void PrimedTnt::explode()
 {
+    const float radius = 4.0f;
     if (Minecraft::InMiniGame(eMiniGameId_Any, true)
         && !Minecraft::GetInstance()->GetMiniGame()->canTntDestroyBlocks())
     {
         mLevel->explode(shared_from_this(), mX, mY + static_cast<double>(mBbHeight * 0.0625f), mZ,
-                        4.0f, false, false, true, false, false, -1.0f);
-        return;
+                        radius, false, false, true, false, false, -1.0f);
     }
-
-    mLevel->explode(shared_from_this(), mX, mY + static_cast<double>(mBbHeight * 0.0625f), mZ,
-                    4.0f, false, true, false, false, false, -1.0f);
+    else
+    {
+        mLevel->explode(shared_from_this(), mX, mY + static_cast<double>(mBbHeight * 0.0625f), mZ,
+                        radius, false, true, false, false, false, -1.0f);
+    }
 }
 
 void PrimedTnt::tick()
@@ -113,8 +115,8 @@ void PrimedTnt::tick()
     if (mOnGround)
     {
         mXd *= 0.7f;
-        mYd *= -0.5;
         mZd *= 0.7f;
+        mYd *= -0.5;
     }
     --mLife;
     if (mLife <= 0)

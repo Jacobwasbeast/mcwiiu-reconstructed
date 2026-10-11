@@ -90,6 +90,7 @@ void ElderGuardian::customServerAiStep()
 
     if ((mTickCount + getId()) % 1200 == 0)
     {
+        MobEffect* effect = MobEffects::DIG_SLOWDOWN;
         PlayerSelector selector(this);
         std::vector<boost::shared_ptr<Player> >* players =
             mLevel->getPlayers(EntityType::SERVER_PLAYER, &selector);
@@ -98,7 +99,6 @@ void ElderGuardian::customServerAiStep()
         {
             boost::shared_ptr<ServerPlayer> player =
                 boost::static_pointer_cast<ServerPlayer>(*playerIt);
-            MobEffect* effect = MobEffects::DIG_SLOWDOWN;
             if (!player->hasEffect(effect) ||
                 player->getEffect(effect)->getAmplifier() < 2 ||
                 player->getEffect(effect)->getDuration() < 1200)

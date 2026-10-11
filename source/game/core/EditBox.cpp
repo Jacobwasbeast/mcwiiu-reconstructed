@@ -57,7 +57,7 @@ void EditBox::keyPressed(wchar_t key, int action)
     }
 
     wchar_t character = key;
-    if (ALLOWED_CHARACTERS.find(&character, 0, 1) != std::wstring::npos
+    if (SharedConstants::ALLOWED_CHARACTERS.find(&character, 0, 1) != std::wstring::npos
         && (mValue.size() < static_cast<std::wstring::size_type>(mMaxLength) || mMaxLength == 0))
     {
         mValue += key;

@@ -15,17 +15,15 @@ void Sensing::tick()
 
 bool Sensing::canSee(boost::shared_ptr<Entity> entity)
 {
-    std::vector<boost::weak_ptr<Entity> >::iterator seen = mSeen.begin();
-    for (; seen != mSeen.end(); ++seen)
+    for (std::vector<boost::weak_ptr<Entity> >::iterator it = mSeen.begin(); it != mSeen.end(); ++it)
     {
-        if (seen->lock() == entity)
+        if (entity == it->lock())
             return true;
     }
 
-    std::vector<boost::weak_ptr<Entity> >::iterator unseen = mUnseen.begin();
-    for (; unseen != mUnseen.end(); ++unseen)
+    for (std::vector<boost::weak_ptr<Entity> >::iterator it = mUnseen.begin(); it != mUnseen.end(); ++it)
     {
-        if (unseen->lock() == entity)
+        if (entity == it->lock())
             return false;
     }
 

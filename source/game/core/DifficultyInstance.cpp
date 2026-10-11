@@ -2,6 +2,10 @@
 
 #include "game/core/Mth.hpp"
 
+const float DifficultyInstance::LEVEL_TIME_OFFSET = -72000.0f;
+const float DifficultyInstance::LEVEL_TIME_RANGE = 1440000.0f;
+const float DifficultyInstance::INHABITED_TIME_RANGE = 3600000.0f;
+
 DifficultyInstance::DifficultyInstance(const Difficulty* difficulty, long long levelTime, long long inhabitedTime, float moonPhase)
     : difficulty(difficulty),
       effectiveDifficulty(calculateDifficulty(difficulty, levelTime, inhabitedTime, moonPhase))

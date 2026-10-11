@@ -11,6 +11,7 @@
 #include "platform/wiiu/cNintendoDLCInfo.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
+#include "platform/wiiu/WiiU_FileCache.hpp"
 #include "platform/wiiu/WiiU_Platform.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
 #include <stdlib.h>
@@ -25,12 +26,8 @@ extern "C" void OSReport(const char*, ...);
 extern "C" void ProcUIShutdown();
 
 extern void altMain();
-struct _OVERLAPPED;
-extern int CreateFileA(const char*, unsigned int, unsigned int, void*, unsigned int, unsigned int, int);
-extern unsigned int ReadFile(int, void*, unsigned int, unsigned int*, _OVERLAPPED*);
-extern unsigned int GetFileSize(int, unsigned int*);
 extern ConsoleUIController gConsoleUIController;
-extern CStorage* gStorage;
+extern C4JStorage* gStorage;
 
 static unsigned char s_requestBackground = 0;
 static unsigned char s_signInRequested = 0;

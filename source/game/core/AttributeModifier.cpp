@@ -87,13 +87,12 @@ HtmlString AttributeModifier::getHoverText(eATTRIBUTE_ID attributeId, not_null_p
     double amount = getAmount();
     bool baseValue = false;
 
-    eMODIFIER_ID modifierId = getId();
-
-    if (modifierId == eMODIFIER_ID_BaseAttackDamage)
+    if (getId() == eMODIFIER_ID_BaseAttackDamage)
     {
         amount += EnchantmentHelper::getDamageBonus(item, boost::shared_ptr<LivingEntity>());
+        baseValue = false;
     }
-    else if (modifierId == eMODIFIER_ID_BaseAttackSpeed)
+    else if (getId() == eMODIFIER_ID_BaseAttackSpeed)
     {
         if (player.get() != NULL)
         {
@@ -103,23 +102,26 @@ HtmlString AttributeModifier::getHoverText(eATTRIBUTE_ID attributeId, not_null_p
         baseValue = true;
     }
 
-    int operation = getOperation();
-
-    double value = amount;
+    double value;
     bool percentage = false;
+    int operation = getOperation();
 
     if (operation == 1 || operation == 2)
     {
         percentage = true;
         value = amount * 100.0;
     }
+    else
+    {
+        value = amount;
+    }
 
     eMinecraftColour colour = eMinecraftColour_NOTSET;
-    std::wstring sign;
+    bool showSign = true;
 
     if (baseValue)
     {
-        sign = L"";
+        showSign = false;
     }
     else
     {
@@ -132,8 +134,17 @@ HtmlString AttributeModifier::getHoverText(eATTRIBUTE_ID attributeId, not_null_p
             value = -value;
             colour = eMinecraftColour_HTMLColor_c;
         }
+    }
 
-        sign.assign(amount >= 0.0 ? L"+" : L"-");
+    std::wstring sign;
+
+    if (showSign)
+    {
+        sign = amount >= 0.0 ? L"+" : L"-";
+    }
+    else
+    {
+        sign = L"";
     }
 
     wchar_t text[256];

@@ -69,7 +69,8 @@ void Phantom::tick()
 
 bool Phantom::checkSpawnRules()
 {
-    bool hasSkyLight = mLevel->mDimension->isHasSkyLight() != 0;
+    unsigned char hasSkyLight = mLevel->mDimension->isHasSkyLight();
+    Random* random = mLevel->mRandom;
     PlayerSelector selector(this);
     std::vector<boost::shared_ptr<Player> >* players =
         mLevel->getPlayers(EntityType::PLAYER, &selector);
@@ -78,22 +79,21 @@ bool Phantom::checkSpawnRules()
         boost::shared_ptr<Player> player = *it;
         BlockPos playerPos(player);
         InsomniaComponent* insomnia = player->getInsomniaComponent();
-        if (insomnia != NULL && hasSkyLight && mLevel->canSeeSky(playerPos))
+        if (insomnia != NULL && hasSkyLight != 0 && mLevel->canSeeSky(playerPos))
         {
             int timer = insomnia->getInsomniaTimerTicks();
             int until = insomnia->getTicksUntilInsomnia();
             if (timer < 1)
                 timer = 1;
-            if (until <= mLevel->mRandom->nextInt(timer))
+            int roll = random->nextInt(timer);
+            if (roll >= until)
             {
-                BlockPos offset(mLevel->mRandom->nextInt(21) - 10,
-                                mLevel->mRandom->nextInt(15) + 20,
-                                mLevel->mRandom->nextInt(21) - 10);
-                BlockPos spawnPos(playerPos + offset);
+                int x = random->nextInt(21);
+                int y = random->nextInt(15);
+                int z = random->nextInt(21);
+                BlockPos spawnPos = playerPos + BlockPos(x - 10, y + 20, z - 10);
                 setPos((double)spawnPos.x, (double)spawnPos.y, (double)spawnPos.z);
-                bool result = Monster::checkSpawnRules();
-                delete players;
-                return result;
+                return Monster::checkSpawnRules();
             }
         }
     }
@@ -120,13 +120,9 @@ bool Phantom::canFly() { return true; }
 
 void Phantom::registerGoals()
 {
-    Goal::FloatRange attackDistance = { 10.0f, 20.0f };
-    mGoalSelector.addGoal(1, new SwoopAttackGoal(this, 1.0f, attackDistance), true);
-    Goal::FloatRange distanceRange = { 12.0f, 18.0f };
-    Goal::FloatRange heightRange = { 20.0f, 40.0f };
-    Goal::FloatRange verticalRange = { -4.0f, 5.0f };
-    mGoalSelector.addGoal(2, new CircleAroundAnchorGoal(this, 1.0f, distanceRange, 250,
-                                                         heightRange, verticalRange, 350, 1.0f), true);
+    mGoalSelector.addGoal(1, new SwoopAttackGoal(this, 1.0f, Goal::FloatRange(10.0f, 20.0f)), true);
+    mGoalSelector.addGoal(2, new CircleAroundAnchorGoal(this, 1.0f, Goal::FloatRange(12.0f, 18.0f), 250,
+                                                         Goal::FloatRange(20.0f, 40.0f), Goal::FloatRange(-4.0f, 5.0f), 350, 1.0f), true);
     mTargetSelector.addGoal(1, new NearestAttackableTargetGoal(this, typeid(Player), false,
                                                                 false, false), true);
 }

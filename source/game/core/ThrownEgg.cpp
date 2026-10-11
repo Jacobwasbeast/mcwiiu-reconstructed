@@ -96,10 +96,8 @@ void ThrownEgg::handleEntityEvent(unsigned char event, int data)
         Vec3* position = fjGetParticleSpawnPos();
         for (int i = 0; i < 8; ++i)
         {
-            int itemId = Item::getId(Items::egg);
-            arrayWithLength<int> particleData;
-            particleData.data = &itemId;
-            particleData.length = 1;
+            int itemId[] = { Item::getId(Items::egg) };
+            arrayWithLength<int> particleData(itemId, 1);
             mLevel->addParticle(PARTICLE_ICON_CRACK,
                 position->x, position->y, position->z,
                 (mRandom->nextFloat() - 0.5f) * 0.08,

@@ -9,6 +9,15 @@
 #include "game/core/IntBuffer.hpp"
 #include "game/core/Matrix4f.hpp"
 
+const int GL_OBJECT_PLANE = 0;
+const int GL_EYE_PLANE = 1;
+const int GL_EYE_LINEAR = 1;
+const int GL_TEXTURE = 2;
+const int GL_GREATER = 4;
+const int GL_MODELVIEW = 0;
+const int GL_MODELVIEW_MATRIX = 0;
+const int GL_PROJECTION_MATRIX = 1;
+
 enum GlStateCapability
 {
     STATE_NONE = 0,

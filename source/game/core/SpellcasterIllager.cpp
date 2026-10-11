@@ -67,7 +67,7 @@ int SpellcasterIllager::getArmPose()
 void SpellcasterIllager::setIsCastingSpell(const IllagerSpell* spell)
 {
     mCurrentSpell = spell;
-    getEntityData()->set(DATA_ID, (unsigned char)spell->mId, true);
+    mEntityData->set(DATA_ID, (unsigned char)spell->mId, true);
 }
 
 const SpellcasterIllager::IllagerSpell* SpellcasterIllager::getCurrentSpell()

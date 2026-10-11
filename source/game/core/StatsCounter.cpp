@@ -14,16 +14,16 @@
 #include <climits>
 #include <cstring>
 
-extern CProfile* gProfile;
-extern CStorage* gStorage;
+extern C_4JProfile* gProfile;
+extern C4JStorage* gStorage;
 
 boost::unordered_map<Stat*, boost::unordered_map<unsigned int, StatsCounter::LEADERBOARD_FLAG> > StatsCounter::statBoards;
 
 StatsCounter::StatsCounter()
 {
     mSavePending = 0;
-    mLeaderboardDelay = 0;
     mSaveDelay = 0;
+    mLeaderboardDelay = 0;
 }
 
 void StatsCounter::setupStatBoards()
@@ -571,13 +571,14 @@ void StatsCounter::clear()
 
 void StatsCounter::saveLeaderboards()
 {
-    if (gProfile->IsFullVersion())
+    if (!gProfile->IsFullVersion())
     {
-        if (g_pLeaderboardManager->OpenSession())
-        {
-            writeStats();
-            g_pLeaderboardManager->CloseSession();
-        }
-        mLeaderboardPending.clear();
+        return;
     }
+    if (g_pLeaderboardManager->OpenSession())
+    {
+        writeStats();
+        g_pLeaderboardManager->CloseSession();
+    }
+    mLeaderboardPending.clear();
 }

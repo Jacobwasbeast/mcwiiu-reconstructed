@@ -18,15 +18,13 @@
 #include "platform/wiiu/CProfile.hpp"
 #include "game/core/StringConversion.hpp"
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
+#include "platform/wiiu/WiiU_FileCache.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
 
 extern ConsoleUIController gConsoleUIController;
 std::vector<std::wstring> g_dlcSkinNames;
 
 char* wstringtofilename(const std::wstring& text, char (&fileName)[256]);
-unsigned int GetFileSize(int file, unsigned int* highSize);
-unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead,
-                      unsigned int* bytesRead, _OVERLAPPED* overlapped);
 
 const wchar_t* s_parameterNames[] =
 {

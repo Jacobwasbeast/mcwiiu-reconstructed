@@ -93,24 +93,17 @@ bool Pufferfish::validatePuffedTypes(boost::shared_ptr<Entity> entity)
 {
     if (entity == NULL)
         return false;
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
+    if (!eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
         return false;
-    bool isFish = eTYPE_DERIVED_FROM(EntityType::FISH, entity->GetType());
-    if (!isFish)
-    {
-        bool isSalmon = eTYPE_DERIVED_FROM(EntityType::SALMON, entity->GetType());
-        if (!isSalmon)
-        {
-            bool isPufferfish = eTYPE_DERIVED_FROM(EntityType::PUFFERFISH, entity->GetType());
-            if (!isPufferfish)
-            {
-                bool isTropicalFish = eTYPE_DERIVED_FROM(EntityType::TROPICAL_FISH, entity->GetType());
-                if (!isTropicalFish)
-                    return true;
-            }
-        }
-    }
-    return false;
+    if (eTYPE_DERIVED_FROM(EntityType::FISH, entity->GetType()))
+        return false;
+    if (eTYPE_DERIVED_FROM(EntityType::SALMON, entity->GetType()))
+        return false;
+    if (eTYPE_DERIVED_FROM(EntityType::PUFFERFISH, entity->GetType()))
+        return false;
+    if (eTYPE_DERIVED_FROM(EntityType::TROPICAL_FISH, entity->GetType()))
+        return false;
+    return true;
 }
 
 void Pufferfish::checkForDangerousMobs()
@@ -126,8 +119,8 @@ void Pufferfish::checkForDangerousMobs()
             continue;
 
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-        bool isCreativePlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) &&
-                                boost::static_pointer_cast<Player>(entity)->mAbilities.mInstabuild;
+        int isCreativePlayer = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()) &&
+                               boost::static_pointer_cast<Player>(entity)->mAbilities.mInstabuild;
         if (isCreativePlayer)
             continue;
 

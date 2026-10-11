@@ -1054,7 +1054,7 @@ bool ClientMasterGameMode::IsValidStateForItemUse() const
     return !IsWaitingToStart() && !IsRoundStarting() && !IsRoundRestarting() && mGameModeState != eGameModeState_LoadingRound;
 }
 EGameModeState ClientMasterGameMode::GetGameModeState() const { return mGameModeState; }
-MultiPlayerLevel* ClientMasterGameMode::GeneratorTargetLevel() const { return Minecraft::GetInstance()->mLevels[0]; }
+Level* ClientMasterGameMode::GeneratorTargetLevel() const { return Minecraft::GetInstance()->mLevels[0]; }
 Scoreboard* ClientMasterGameMode::getScoreboard() { return Minecraft::GetInstance()->mLevel->GetClientScoreboard(); }
 
 double ClientMasterGameMode::GetPlayerMapProgress(PlayerUID uid) const

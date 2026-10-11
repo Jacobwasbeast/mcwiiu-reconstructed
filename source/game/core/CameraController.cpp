@@ -90,15 +90,15 @@ Vec3* CameraController::CalculateBezierPoint(float t, Vec3* p0, Vec3* p1, Vec3* 
 
 void CameraController::CalculateCurveLengths()
 {
+    double total = 0.0;
+    Vec3* previous = NULL;
     mCurveLengths.clear();
     int segment;
-    Vec3* previous = NULL;
-    for (segment = 0; segment + 3 < (int)mNodes.size(); segment += 3)
+    for (segment = 0; segment < (int)mNodes.size() - 3; segment += 3)
     {
-        double total = 0.0;
+        total = 0.0;
         mCurveLengths.push_back(std::vector<double>());
-        std::vector<double>& lengths = mCurveLengths.back();
-        lengths.push_back(0.0);
+        mCurveLengths.back().push_back(0.0);
         Vec3* p0 = mNodes[segment].position;
         Vec3* p1 = mNodes[segment + 1].position;
         Vec3* p2 = mNodes[segment + 2].position;
@@ -111,10 +111,10 @@ void CameraController::CalculateCurveLengths()
         for (sample = 1; sample < 101; ++sample)
         {
             float t = (float)sample / 100.0f;
-            Vec3* point = CalculateBezierPoint(t, p0, p1, p2, p3);
-            total += previous->vectorTo(point)->length();
-            lengths.push_back(total);
-            previous = point;
+            Vec3* last = previous;
+            previous = CalculateBezierPoint(t, p0, p1, p2, p3);
+            total += last->vectorTo(previous)->length();
+            mCurveLengths.back().push_back(total);
         }
     }
 }
@@ -133,12 +133,13 @@ double CameraController::MapTimeToCurveDistance(std::vector<double>& curveLength
         else
             high = mid;
     }
-    if (target < curveLengths[mid])
+    if (curveLengths[mid] > target)
         --mid;
-    if (curveLengths[mid] == target)
+    double lower = curveLengths[mid];
+    if (lower == target)
         return (double)mid / 100.0;
-    return ((double)mid + (target - curveLengths[mid]) /
-            (curveLengths[mid + 1] - curveLengths[mid])) / 100.0;
+    double fraction = (target - lower) / (curveLengths[mid + 1] - lower);
+    return ((double)mid + fraction) / 100.0;
 }
 
 void CameraController::insertNode(int index, double x, double y, double z, double xRot, double yRot, double zRot, float time)

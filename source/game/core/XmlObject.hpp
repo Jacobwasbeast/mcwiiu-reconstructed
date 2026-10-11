@@ -23,6 +23,7 @@ public:
     int size() const;
     const XmlChild& operator[](int index) const;
     XmlValue operator[](const std::wstring& name) const;
+    using XmlConstruct::asString;
     virtual std::wstring asString() const;
     virtual bool isString() const;
     std::wstring toString(int indent, bool formatted) const;

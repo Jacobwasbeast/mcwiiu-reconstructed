@@ -11,7 +11,7 @@ CanAttackPredicate::CanAttackPredicate(MobNearestMobTargetGoal* goal) : mGoal(go
 
 bool CanAttackPredicate::apply(boost::shared_ptr<Entity> entity) const
 {
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
+    if (!entity->instanceof(EntityType::LIVING_ENTITY))
     {
         return false;
     }

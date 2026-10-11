@@ -51,7 +51,7 @@ public:
     uint32_t LoadLocalTMSFile(wchar_t*, eFileExtensionType);
     void FreeLocalTMSFiles(eTMSFileType);
     uint32_t GetLocalTMSFileIndex(wchar_t*, bool, eFileExtensionType);
-    void TemporaryCreateGameStart();
+    virtual void TemporaryCreateGameStart();
     uint32_t UpgradeTrial();
     void RequestSignInUIWiiUReturnedSelected(MiiDataEntry*, int, int);
     uint8_t IsDrcPreventingSplitscreen();

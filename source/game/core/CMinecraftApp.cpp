@@ -48,6 +48,7 @@
 #include "game/client/render/Renderer.hpp"
 #include "game/client/render/ProgressRenderer.hpp"
 #include "game/data/ElementStorage.hpp"
+#include "game/item/CMinecraftApp.hpp"
 #include "game/item/FireworksRecipe.hpp"
 #include "game/util/AABB.hpp"
 #include "game/util/Vec3.hpp"
@@ -266,17 +267,20 @@ static TIPSTRUCT sMiniGameTipsOther[] = {
 uint32_t DeviceFullErrorReturn(void* context)
 {
     (void)context;
-    uint32_t optionsCallbackStatus = gApp.GetOptionsCallbackStatus(0);
-    if ((optionsCallbackStatus == 4 || optionsCallbackStatus == 6) &&
-        GameSettings::GetGameSettings(0, eGameSetting_EULAAccepted) != 0)
+    switch (gApp.GetOptionsCallbackStatus(0))
     {
-        gConsoleUIController.NavigateToScene(0, EUIScene_SaveMessage, NULL,
-                                              EUILayer_Scene, EUIGroup_PlayerDefault);
-    }
-    else
-    {
+    case C4JStorage::eOptions_Callback_Read:
+    case C4JStorage::eOptions_Callback_Read_FileNotFound:
+        if (GameSettings::GetGameSettings(0, eGameSetting_EULAAccepted) != 0)
+        {
+            gConsoleUIController.NavigateToScene(0, EUIScene_SaveMessage, NULL,
+                                                  EUILayer_Scene, EUIGroup_PlayerDefault);
+            break;
+        }
+    default:
         gConsoleUIController.NavigateToScene(0, EUIScene_EULA, NULL,
                                               EUILayer_Scene, EUIGroup_PlayerDefault);
+        break;
     }
     return 0;
 }
@@ -554,8 +558,8 @@ void CMinecraftApp::InitTime()
     mPerformanceCounterScale = 1.0f / frequency.QuadPart;
     QueryPerformanceCounter(&mLastPerformanceCounter);
     mAccumulatedPerformanceCounter = 0;
-    mFrameTime = 0.0f;
     mAppTime = 0.0f;
+    mFrameTime = 0.0f;
 }
 uint32_t CMinecraftApp::IsActionPending(int player, eXuiAction action)
 {
@@ -801,15 +805,11 @@ int CMinecraftApp::SignInChangeCallback(void* context, bool signedIn, unsigned i
 }
 void CMinecraftApp::ProfileReadErrorCallback(void* context)
 {
-    CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
-    if (app != NULL)
-        app->SetAction(gProfile->GetPrimaryPad(), eXuiAction_ProfileReadError, NULL);
+    static_cast<CMinecraftApp*>(context)->SetAction(gProfile->GetPrimaryPad(), eXuiAction_ProfileReadError, NULL);
 }
 int CMinecraftApp::DefaultOptionsCallback(void* context, C4JStorage::PROFILESETTINGS* settings, int profile)
 {
-    CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
-    if (app != NULL)
-        app->SetAction(profile, eXuiAction_SetDefaultGameOptions, settings);
+    static_cast<CMinecraftApp*>(context)->SetAction(profile, eXuiAction_SetDefaultGameOptions, settings);
     return 0;
 }
 int CMinecraftApp::OptionsDataCallback(void* context, int profile, unsigned short size, C4JStorage::eOptionsCallback status)
@@ -831,8 +831,8 @@ void CMinecraftApp::EnterSaveNotificationSection()
         if (CGameNetworkManager::sInstance.IsLocalGame() &&
             CGameNetworkManager::sInstance.GetPlayerCount() == 1)
         {
-            SetXuiServerAction(gProfile->GetPrimaryPad(), eXuiServerAction_PauseServer,
-                               reinterpret_cast<void*>(1));
+            gApp.SetXuiServerAction(gProfile->GetPrimaryPad(), eXuiServerAction_PauseServer,
+                                    reinterpret_cast<void*>(1));
         }
     }
     LeaveCriticalSection(&mSaveNotificationMutex);
@@ -850,8 +850,8 @@ void CMinecraftApp::LeaveSaveNotificationSection()
         if (CGameNetworkManager::sInstance.IsLocalGame() &&
             CGameNetworkManager::sInstance.GetPlayerCount() == 1)
         {
-            SetXuiServerAction(gProfile->GetPrimaryPad(), eXuiServerAction_PauseServer,
-                               reinterpret_cast<void*>(0));
+            gApp.SetXuiServerAction(gProfile->GetPrimaryPad(), eXuiServerAction_PauseServer,
+                                    reinterpret_cast<void*>(0));
         }
     }
     LeaveCriticalSection(&mSaveNotificationMutex);
@@ -948,16 +948,13 @@ int CMinecraftApp::EthernetDisconnectReturned(void* context, int pad, C4JStorage
 }
 int CMinecraftApp::BannedLevelDialogReturned(void* context, int pad, C4JStorage::EMessageResult result)
 {
+    CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
     if (result != C4JStorage::EMessageResult_Accept)
     {
-        CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
-        if (app != NULL)
-        {
-            eXuiAction action = eXuiAction_RemoveLocalPlayer;
-            if (pad == gProfile->GetPrimaryPad())
-                action = eXuiAction_ExitWorld;
-            app->SetAction(pad, action, NULL);
-        }
+        eXuiAction action = eXuiAction_RemoveLocalPlayer;
+        if (pad == gProfile->GetPrimaryPad())
+            action = eXuiAction_ExitWorld;
+        app->SetAction(pad, action, NULL);
     }
     return 0;
 }
@@ -987,7 +984,7 @@ int CMinecraftApp::UnlockFullSaveReturned(void* context, int pad, C4JStorage::EM
 void CMinecraftApp::SetAutosaveTimerTime()
 {
     mAutosaveTime = GetTickCount() +
-        GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_Autosave) * 900000;
+        GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_Autosave) * 1000 * 60 * 15;
 }
 void CMinecraftApp::SetGameStarted(bool started)
 {
@@ -1141,11 +1138,7 @@ int CMinecraftApp::UnlockFullInviteReturned(void* context, int pad, C4JStorage::
 int CMinecraftApp::ExitAndJoinFromInvite(void* context, int pad, C4JStorage::EMessageResult result)
 {
     if (result == C4JStorage::EMessageResult_Decline)
-    {
-        CMinecraftApp* app = static_cast<CMinecraftApp*>(context);
-        if (app != NULL)
-            app->SetAction(pad, eXuiAction_ExitAndJoinFromInvite, NULL);
-    }
+        static_cast<CMinecraftApp*>(context)->SetAction(pad, eXuiAction_ExitAndJoinFromInvite, NULL);
     return 0;
 }
 int CMinecraftApp::ExitAndJoinFromInviteAndSaveReturned(void* context, int pad, C4JStorage::EMessageResult result)
@@ -1176,8 +1169,8 @@ int CMinecraftApp::ExitAndJoinFromInviteDeclineSaveReturned(void* context, int p
 {
     if (result == C4JStorage::EMessageResult_Decline)
     {
-        if (gMinecraftServer != NULL)
-            gMinecraftServer->saveOnExit = false;
+        gMinecraftServer->saveOnExit = false;
+        MinecraftServer::s_saveOnExitAnswered = true;
         gApp.SetAction(pad, eXuiAction_ExitAndJoinFromInvite, NULL);
     }
     return 0;
@@ -2428,9 +2421,12 @@ uint32_t CMinecraftApp::IsUUIDLocal(const std::wstring& uuid)
 }
 uint8_t CMinecraftApp::GetTutorialMode(PlayerUID uid)
 {
+    uint8_t tutorial;
     if (mTutorialModes.find(uid) != mTutorialModes.end())
-        return mTutorialModes[uid];
-    return mTutorialModes[PlayerUID(0)];
+        tutorial = mTutorialModes[uid];
+    else
+        tutorial = mTutorialModes[PlayerUID(0)];
+    return tutorial;
 }
 uint8_t CMinecraftApp::GetTutorialMode(const boost::shared_ptr<Player>& player)
 {
@@ -2548,7 +2544,7 @@ void CMinecraftApp::SetLiveLinkRequired(bool required)
 }
 std::wstring CMinecraftApp::GetDebugRootPath()
 {
-    return L"Special";
+    return L"";
 }
 uint32_t CMinecraftApp::DebugSettingsOn()
 {
@@ -2579,8 +2575,7 @@ uint32_t CMinecraftApp::DebugInputCallback(void* context)
 }
 void CMinecraftApp::SetDebugSequence(const char* sequence)
 {
-    if (g_pInput != NULL)
-        g_pInput->SetDebugSequence(sequence, reinterpret_cast<CInput::InputCallback>(DebugInputCallback), this);
+    g_pInput->SetDebugSequence(sequence, reinterpret_cast<CInput::InputCallback>(DebugInputCallback), this);
 }
 uint8_t CMinecraftApp::DLCInstallPending()
 {
@@ -3213,7 +3208,7 @@ void CMinecraftApp::SetBaseSaveName(const std::wstring& name)
     }
     mCurrentImageTextData.flags |= PngTagData::eFlag_BaseSaveName;
     std::memset(mCurrentImageTextData.baseSaveName, 0, sizeof(mCurrentImageTextData.baseSaveName));
-    std::strncpy(mCurrentImageTextData.baseSaveName, CStorage::wstringtochararray(name),
+    std::strncpy(mCurrentImageTextData.baseSaveName, wstringtochararray(name),
                  sizeof(mCurrentImageTextData.baseSaveName));
 }
 void CMinecraftApp::SetCurrentImageTextData(const PngTagData* data)

@@ -148,17 +148,18 @@ boost::shared_ptr<Entity> LlamaSpit::getHitEntity(Vec3* from, Vec3* to)
     {
         boost::shared_ptr<Entity> entity = *it;
         bool isOwner = entity.get() == mLlamaOwner.lock().get();
-        if (!isOwner)
+        if (isOwner)
         {
-            HitResult* clip = entity->mBoundingBox->grow(0.3f)->clip(from, to);
-            if (clip != NULL)
+            continue;
+        }
+        HitResult* clip = entity->mBoundingBox->grow(0.3f)->clip(from, to);
+        if (clip != NULL)
+        {
+            double distance = from->distanceToSqr(clip->mLocation);
+            if (distance < bestDistance || bestDistance == 0.0)
             {
-                double distance = from->distanceToSqr(clip->mLocation);
-                if (distance < bestDistance || bestDistance == 0.0)
-                {
-                    hit = entity;
-                    bestDistance = distance;
-                }
+                hit = entity;
+                bestDistance = distance;
             }
         }
     }
