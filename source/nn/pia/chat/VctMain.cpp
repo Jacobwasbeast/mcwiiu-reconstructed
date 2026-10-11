@@ -1,4 +1,5 @@
 #include "vendor/VCTAudio.hpp"
+#include "vendor/VCTQueue.hpp"
 
 #include <coreinit/time.h>
 
@@ -12,27 +13,26 @@ struct VCTResult
 namespace
 {
 
+const unsigned int VCT_AUDIO_SIGNATURE = 0x5f564354;
+const unsigned int VCT_PACKET_TYPE_MASK = 0xf0;
+const unsigned int VCT_AUDIO_PACKET_TYPE = 0x40;
+
 unsigned int g_vctAudioPacketCount = 0;
 
 int VCTi_HandleData(unsigned short connectionId, unsigned char* data, unsigned int dataSize, VCTResult* result)
 {
     if (data != 0)
     {
-        unsigned int signature = 0;
-        signature = (static_cast<unsigned int>(data[0]) << 24) |
-                    (static_cast<unsigned int>(data[1]) << 16) |
-                    (static_cast<unsigned int>(data[2]) << 8) |
-                    static_cast<unsigned int>(data[3]);
-        if (signature != 0x5f564354U)
+        if (reinterpret_cast<const VCTAudioPacket*>(data)->m_Signature != VCT_AUDIO_SIGNATURE)
         {
             return 2;
         }
-        if ((g_vctMode != 0) && (g_vctInitialized != 0))
+        if ((g_vctState.m_Mode != 0) && (g_vctInitialized != 0))
         {
             result->status = 0;
             result->payload = 0;
             const long long receiveTick = OSGetTime();
-            if ((data[4] & 0xf0) == 0x40)
+            if ((reinterpret_cast<const VCTAudioPacket*>(data)->m_Type & VCT_PACKET_TYPE_MASK) == VCT_AUDIO_PACKET_TYPE)
             {
                 ++g_vctAudioPacketCount;
                 vct_handle_audio(connectionId, data, dataSize, receiveTick);

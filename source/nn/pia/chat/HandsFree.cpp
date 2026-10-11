@@ -1,17 +1,13 @@
 #include "nn/pia/chat/HandsFree.hpp"
+#include <string.h>
 #include "nn/pia/HeapManager.hpp"
 #include "nn/pia/common/Memory.hpp"
+#include "nn/pia/common/SessionStateMonitoringContent.hpp"
 #include "platform/wiiu/pead.hpp"
 #include "vendor/VCTAudio.hpp"
 
 namespace
 {
-
-unsigned int functionalBits = 0;
-unsigned char currentEchoCancellerMode = 0;
-unsigned char currentNoiseSuppressorLevel = 0;
-unsigned char currentAgcParameterA = 0;
-unsigned char currentAgcParameterB = 0;
 
 bool isValidEcMode(TMC_HF_EC_MODE mode)
 {
@@ -32,11 +28,11 @@ void updateFunctionalBits(unsigned int bits, bool enabled)
 {
     if (enabled)
     {
-        functionalBits &= ~bits;
+        nn::pia::common::g_sessionStateMonitoringContent.m_metric215 &= ~bits;
     }
     else
     {
-        functionalBits |= bits;
+        nn::pia::common::g_sessionStateMonitoringContent.m_metric215 |= bits;
     }
 }
 
@@ -52,13 +48,17 @@ namespace
     const int kNotInitializedResult = 0x10c0c;
     const int kProcessingFailureResult = 0xc0b;
     const unsigned int kWorkspaceSize = 0x251c0;
+    const int16_t noiseLevels[3] = { 6, 10, 14 };
+    const int16_t agcParameters[5][2] =
+        { { 0, 0 }, { 10, -14 }, { 14, -18 }, { 17, -21 }, { 19, -23 } };
 
 }
 
 HandsFree::HandsFree()
     : m_handle(0), m_ecMode(1), m_noiseSuppressorLevel(1),
-      m_agcLevel(1), m_workspace(0), m_config()
+      m_agcLevel(1), m_workspace(0)
 {
+    memset(&m_config, 0, sizeof(m_config));
 }
 
 HandsFree::~HandsFree()
@@ -98,10 +98,7 @@ Result HandsFree::Initialize(TMC_HF_EC_MODE ecMode,
     m_config.workspace = m_workspace;
     m_config.flags = 7;
     m_config.echoCancellerMode = static_cast<int32_t>(ecMode);
-    static const int16_t noiseLevels[3] = { 6, 10, 14 };
     m_config.noiseSuppressorLevel = noiseLevels[noiseSuppressorLevel];
-    static const int16_t agcParameters[5][2] =
-        { { 0, 0 }, { 10, -14 }, { 14, -18 }, { 17, -21 }, { 19, -23 } };
     m_config.agcParameterA = agcParameters[agcLevel][0];
     m_config.agcParameterB = agcParameters[agcLevel][1];
     m_config.inputMode = 0;
@@ -110,11 +107,11 @@ Result HandsFree::Initialize(TMC_HF_EC_MODE ecMode,
     if (m_config.error != 0)
         return kProcessingFailureResult;
 
-    currentEchoCancellerMode = static_cast<unsigned char>(m_config.echoCancellerMode);
-    currentNoiseSuppressorLevel = static_cast<unsigned char>(m_config.noiseSuppressorLevel);
-    currentAgcParameterA = static_cast<unsigned char>(m_config.agcParameterA);
-    currentAgcParameterB = static_cast<unsigned char>(-m_config.agcParameterB);
-    functionalBits = 0xffffffff;
+    common::g_sessionStateMonitoringContent.m_metric221[0] = static_cast<unsigned char>(m_config.echoCancellerMode);
+    common::g_sessionStateMonitoringContent.m_metric221[1] = static_cast<unsigned char>(m_config.noiseSuppressorLevel);
+    common::g_sessionStateMonitoringContent.m_metric221[2] = static_cast<unsigned char>(m_config.agcParameterA);
+    common::g_sessionStateMonitoringContent.m_metric221[3] = static_cast<unsigned char>(-m_config.agcParameterB);
+    common::g_sessionStateMonitoringContent.m_metric215 = 0xffffffff;
     updateFunctionalBits(2, true);
     updateFunctionalBits(4, true);
     updateFunctionalBits(8, true);
@@ -140,8 +137,8 @@ Result HandsFree::Process(short* output, const short* inputLeft,
             inputReference + inputOffset, output + outputOffset);
         if (result != 0)
             return kProcessingFailureResult;
-        outputOffset += 64;
         inputOffset += 256;
+        outputOffset += 64;
     }
     return 0;
 }

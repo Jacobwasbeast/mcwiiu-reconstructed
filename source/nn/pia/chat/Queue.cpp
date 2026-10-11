@@ -1,3 +1,4 @@
+#include "vendor/VCTAudio.hpp"
 #include "vendor/VCTQueue.hpp"
 
 #include <coreinit/fastmutex.h>
@@ -10,21 +11,24 @@ namespace
     _udp_packet* audioQueueHeads[AUDIO_QUEUE_MAX] = { 0 };
     _udp_packet* audioQueueTails[AUDIO_QUEUE_MAX] = { 0 };
 
-    OSFastMutex audioQueueMutex;
-
     void flushQueue(unsigned int streamIndex)
     {
-        _udp_packet* packet = audioQueueHeads[streamIndex];
-        while (packet != 0)
+        if (audioQueueHeads[streamIndex] != 0)
         {
-            _udp_packet* nextPacket = packet->m_pNext;
-            audioQueueHeads[streamIndex] = nextPacket;
-            if (nextPacket != 0)
+            _udp_packet** ppHead = &audioQueueHeads[streamIndex];
+            _udp_packet* packet = *ppHead;
+            do
             {
-                nextPacket->m_pPrevious = 0;
-            }
-            vct_free_packet_buffer(packet);
-            packet = audioQueueHeads[streamIndex];
+                _udp_packet* freed = packet;
+                packet = packet->m_pNext;
+                *ppHead = packet;
+                if (packet != 0)
+                {
+                    packet->m_pPrevious = 0;
+                }
+                vct_free_packet_buffer(freed);
+                packet = *ppHead;
+            } while (packet != 0);
         }
         audioQueueTails[streamIndex] = 0;
         audioQueueCounts[streamIndex] = 0;
@@ -33,11 +37,10 @@ namespace
 
 void vct_init_audio_queue(unsigned int uiStreamIndex)
 {
-    OSFastMutex_Lock(&audioQueueMutex);
-    audioQueueHeads[uiStreamIndex] = 0;
-    audioQueueTails[uiStreamIndex] = 0;
+    OSFastMutex_Lock(&g_vctAudioQueueMutex);
+    audioQueueHeads[uiStreamIndex] = audioQueueTails[uiStreamIndex] = 0;
     audioQueueCounts[uiStreamIndex] = 0;
-    OSFastMutex_Unlock(&audioQueueMutex);
+    OSFastMutex_Unlock(&g_vctAudioQueueMutex);
 }
 
 int vct_insert_audio_queue(_udp_packet* pPacket, unsigned int uiStreamIndex)
@@ -47,7 +50,7 @@ int vct_insert_audio_queue(_udp_packet* pPacket, unsigned int uiStreamIndex)
         return -1;
     }
 
-    OSFastMutex_Lock(&audioQueueMutex);
+    OSFastMutex_Lock(&g_vctAudioQueueMutex);
 
     if (audioQueueHeads[uiStreamIndex] == 0)
     {
@@ -57,7 +60,7 @@ int vct_insert_audio_queue(_udp_packet* pPacket, unsigned int uiStreamIndex)
         const unsigned int uiCount = audioQueueCounts[uiStreamIndex] + 1;
         audioQueueTails[uiStreamIndex] = audioQueueHeads[uiStreamIndex];
         audioQueueCounts[uiStreamIndex] = uiCount;
-        OSFastMutex_Unlock(&audioQueueMutex);
+        OSFastMutex_Unlock(&g_vctAudioQueueMutex);
         return static_cast<int>(uiCount);
     }
 
@@ -85,7 +88,7 @@ int vct_insert_audio_queue(_udp_packet* pPacket, unsigned int uiStreamIndex)
             }
             const unsigned int uiCount = audioQueueCounts[uiStreamIndex] + 1;
             audioQueueCounts[uiStreamIndex] = uiCount;
-            OSFastMutex_Unlock(&audioQueueMutex);
+            OSFastMutex_Unlock(&g_vctAudioQueueMutex);
             return static_cast<int>(uiCount);
         }
         pCursor = pCursor->m_pPrevious;
@@ -97,21 +100,21 @@ int vct_insert_audio_queue(_udp_packet* pPacket, unsigned int uiStreamIndex)
     audioQueueHeads[uiStreamIndex] = pPacket;
     const unsigned int uiCount = audioQueueCounts[uiStreamIndex] + 1;
     audioQueueCounts[uiStreamIndex] = uiCount;
-    OSFastMutex_Unlock(&audioQueueMutex);
+    OSFastMutex_Unlock(&g_vctAudioQueueMutex);
     return static_cast<int>(uiCount);
 }
 
 _udp_packet* vct_top_audio_queue(unsigned int uiStreamIndex)
 {
-    OSFastMutex_Lock(&audioQueueMutex);
+    OSFastMutex_Lock(&g_vctAudioQueueMutex);
     _udp_packet* pPacket = audioQueueHeads[uiStreamIndex];
-    OSFastMutex_Unlock(&audioQueueMutex);
+    OSFastMutex_Unlock(&g_vctAudioQueueMutex);
     return pPacket;
 }
 
 int vct_pop_audio_queue(unsigned int uiStreamIndex)
 {
-    OSFastMutex_Lock(&audioQueueMutex);
+    OSFastMutex_Lock(&g_vctAudioQueueMutex);
 
     unsigned int uiCount = audioQueueCounts[uiStreamIndex];
     _udp_packet* pHead = audioQueueHeads[uiStreamIndex];
@@ -125,17 +128,17 @@ int vct_pop_audio_queue(unsigned int uiStreamIndex)
         {
             pNext->m_pPrevious = 0;
             uiCount = audioQueueCounts[uiStreamIndex];
-            OSFastMutex_Unlock(&audioQueueMutex);
+            OSFastMutex_Unlock(&g_vctAudioQueueMutex);
         }
         else
         {
             audioQueueTails[uiStreamIndex] = 0;
-            OSFastMutex_Unlock(&audioQueueMutex);
+            OSFastMutex_Unlock(&g_vctAudioQueueMutex);
         }
     }
     else
     {
-        OSFastMutex_Unlock(&audioQueueMutex);
+        OSFastMutex_Unlock(&g_vctAudioQueueMutex);
     }
 
     return static_cast<int>(uiCount);
@@ -143,25 +146,26 @@ int vct_pop_audio_queue(unsigned int uiStreamIndex)
 
 int vct_count_audio_queue(unsigned int uiStreamIndex)
 {
-    OSFastMutex_Lock(&audioQueueMutex);
+    OSFastMutex_Lock(&g_vctAudioQueueMutex);
     const unsigned int uiCount = audioQueueCounts[uiStreamIndex];
-    OSFastMutex_Unlock(&audioQueueMutex);
+    OSFastMutex_Unlock(&g_vctAudioQueueMutex);
     return static_cast<int>(uiCount);
 }
 
 void vct_flush_audio_queue(unsigned int uiStreamIndex)
 {
-    OSFastMutex_Lock(&audioQueueMutex);
+    OSFastMutex* pMutex = &g_vctAudioQueueMutex;
+    OSFastMutex_Lock(pMutex);
     flushQueue(uiStreamIndex);
-    OSFastMutex_Unlock(&audioQueueMutex);
+    OSFastMutex_Unlock(pMutex);
 }
 
 void vct_flush_all_audio_queue()
 {
-    OSFastMutex_Lock(&audioQueueMutex);
+    OSFastMutex_Lock(&g_vctAudioQueueMutex);
     for (unsigned int uiStream = 0; uiStream < AUDIO_QUEUE_MAX; ++uiStream)
     {
         flushQueue(uiStream);
     }
-    OSFastMutex_Unlock(&audioQueueMutex);
+    OSFastMutex_Unlock(&g_vctAudioQueueMutex);
 }

@@ -1,3 +1,4 @@
+#include "vendor/VCTAudio.hpp"
 #include "vendor/VCTQueue.hpp"
 
 #include <coreinit/fastmutex.h>
@@ -14,8 +15,6 @@ namespace
     _udp_packet* freePacketBuffer = 0;
     unsigned int packetCount = 0;
     unsigned int packetBufferSize = 0;
-
-    OSFastMutex packetBufferMutex;
 
     void initImpl()
     {
@@ -36,13 +35,13 @@ namespace
 int vct_init_packet_buffer(void* pBuffer, unsigned int uiSize)
 {
     unsigned int uiCount;
-    OSFastMutex_Lock(&packetBufferMutex);
+    OSFastMutex_Lock(&g_vctPacketBufferMutex);
 
     if (pBuffer == 0 ||
         (reinterpret_cast<unsigned long>(pBuffer) & PACKET_BUFFER_ALIGNMENT_MASK) != 0 ||
         (uiCount = uiSize / sizeof(_udp_packet)) - PACKET_BUFFER_COUNT_MIN >= PACKET_BUFFER_COUNT_RANGE)
     {
-        OSFastMutex_Unlock(&packetBufferMutex);
+        OSFastMutex_Unlock(&g_vctPacketBufferMutex);
         return 0;
     }
 
@@ -50,28 +49,28 @@ int vct_init_packet_buffer(void* pBuffer, unsigned int uiSize)
     packetCount = uiCount;
     packetBufferSize = uiSize;
     initImpl();
-    OSFastMutex_Unlock(&packetBufferMutex);
+    OSFastMutex_Unlock(&g_vctPacketBufferMutex);
     return 1;
 }
 
 void vct_init_packet_buffer_ex()
 {
-    OSFastMutex_Lock(&packetBufferMutex);
+    OSFastMutex_Lock(&g_vctPacketBufferMutex);
     initImpl();
-    OSFastMutex_Unlock(&packetBufferMutex);
+    OSFastMutex_Unlock(&g_vctPacketBufferMutex);
 }
 
 void vct_cleanup_packet_buffer()
 {
-    OSFastMutex_Lock(&packetBufferMutex);
+    OSFastMutex_Lock(&g_vctPacketBufferMutex);
     packetBuffer = freePacketBuffer = 0;
-    OSFastMutex_Unlock(&packetBufferMutex);
+    OSFastMutex_Unlock(&g_vctPacketBufferMutex);
 }
 
 _udp_packet* vct_alloc_packet_buffer()
 {
     _udp_packet* pPacket = 0;
-    OSFastMutex_Lock(&packetBufferMutex);
+    OSFastMutex_Lock(&g_vctPacketBufferMutex);
 
     _udp_packet* pFree = freePacketBuffer;
     if (pFree != 0)
@@ -80,7 +79,7 @@ _udp_packet* vct_alloc_packet_buffer()
         freePacketBuffer = pFree->m_pNextFree;
     }
 
-    OSFastMutex_Unlock(&packetBufferMutex);
+    OSFastMutex_Unlock(&g_vctPacketBufferMutex);
     return pPacket;
 }
 
@@ -91,20 +90,20 @@ void vct_free_packet_buffer(_udp_packet* pPacket)
         return;
     }
 
-    OSFastMutex_Lock(&packetBufferMutex);
+    OSFastMutex_Lock(&g_vctPacketBufferMutex);
     pPacket->m_pNextFree = freePacketBuffer;
     freePacketBuffer = pPacket;
     pPacket->m_pPrevious = 0;
     pPacket->m_pNext = 0;
-    OSFastMutex_Unlock(&packetBufferMutex);
+    OSFastMutex_Unlock(&g_vctPacketBufferMutex);
 }
 
 void vct_trace_packet_buffer(unsigned long long ullTag)
 {
-    OSFastMutex_Lock(&packetBufferMutex);
+    OSFastMutex_Lock(&g_vctPacketBufferMutex);
     for (unsigned int index = 0; index < packetCount; ++index)
     {
         trace_udp_packet(ullTag, packetBuffer[index]);
     }
-    OSFastMutex_Unlock(&packetBufferMutex);
+    OSFastMutex_Unlock(&g_vctPacketBufferMutex);
 }
