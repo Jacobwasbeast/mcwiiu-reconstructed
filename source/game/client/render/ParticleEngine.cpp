@@ -283,13 +283,14 @@ void ParticleEngine::tickParticleList(ParticleList* list)
     translucent = true;
     if (!list->empty())
     {
-        unsigned int remaining = list->size();
-        for (unsigned int i = 0; i < list->size() && remaining > 0; ++i, --remaining)
+        int remaining = list->size();
+        for (int i = 0; i < list->size() && remaining-- > 0; ++i)
         {
             Particle* particle = list->at(i);
             tickParticle(particle);
             if (!particle->isAlive())
             {
+                particle = list->at(i);
                 if (particle->GetType() == ParticleKind::FIREWORKS_SPARK)
                 {
                     --particleCount;
@@ -305,22 +306,28 @@ void ParticleEngine::tickParticleList(ParticleList* list)
 void ParticleEngine::moveParticlesBetweenLists(ParticleList* first, ParticleList* second)
 {
     translucent = true;
-    for (unsigned int i = 0; i < first->size(); ++i)
+    if (!first->empty())
     {
-        Particle* particle = first->at(i);
-        if (particle->getAlpha() == 1.0)
+        for (int i = 0; i < first->size(); ++i)
         {
-            first->RemoveParticle(i);
-            second->push_back(particle);
+            Particle* particle = first->at(i);
+            if (particle->getAlpha() == 1.0)
+            {
+                first->RemoveParticle(i);
+                second->push_back(particle);
+            }
         }
     }
-    for (unsigned int i = 0; i < second->size(); ++i)
+    if (!second->empty())
     {
-        Particle* particle = second->at(i);
-        if (particle->getAlpha() < 1.0)
+        for (int i = 0; i < second->size(); ++i)
         {
-            second->RemoveParticle(i);
-            first->push_back(particle);
+            Particle* particle = second->at(i);
+            if (particle->getAlpha() < 1.0)
+            {
+                second->RemoveParticle(i);
+                first->push_back(particle);
+            }
         }
     }
     translucent = false;

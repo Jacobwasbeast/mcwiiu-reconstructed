@@ -28,7 +28,16 @@ void VexModel::_init(float scale, const ModelDefinition& modelDefinition)
 {
     bool overridesModel = modelDefinition.DoesOverrideModel();
     mLeftLeg->mShow = false;
-    if (!overridesModel)
+    if (overridesModel)
+    {
+        mHat->mShow = modelDefinition.hasModelPart(L"hat");
+        delete mRightLeg;
+        mRightLeg = new ModelPartSkin(this, L"leg0", modelDefinition, NULL, 0.0f, NULL);
+        mRightWing = new ModelPartSkin(this, L"rightwing", modelDefinition, NULL, 0.0f, NULL);
+        mLeftWing = new ModelPartSkin(this, L"leftwing", modelDefinition, NULL, 0.0f, NULL);
+        compileSkinnedDrawlist();
+    }
+    else
     {
         mHat->mShow = false;
         delete mRightLeg;
@@ -44,15 +53,7 @@ void VexModel::_init(float scale, const ModelDefinition& modelDefinition)
         mLeftWing->addBox(0.0f, 0.0f, 0.0f, 20, 12, 1);
 
         compileSkinnedDrawlist();
-        return;
     }
-
-    mHat->mShow = modelDefinition.hasModelPart(L"hat");
-    delete mRightLeg;
-    mRightLeg = new ModelPartSkin(this, L"leg0", modelDefinition, NULL, 0.0f, NULL);
-    mRightWing = new ModelPartSkin(this, L"rightwing", modelDefinition, NULL, 0.0f, NULL);
-    mLeftWing = new ModelPartSkin(this, L"leftwing", modelDefinition, NULL, 0.0f, NULL);
-    compileSkinnedDrawlist();
 }
 
 void VexModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, float scale, bool useDisplayList)

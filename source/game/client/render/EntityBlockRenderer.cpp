@@ -24,7 +24,7 @@ EntityBlockRenderer* EntityBlockRenderer::instance = NULL;
 EntityBlockRenderer::EntityBlockRenderer()
 {
     mChestBlockEntity = boost::shared_ptr<ChestBlockEntity>(new ChestBlockEntity());
-    mTrappedChestBlockEntity = boost::shared_ptr<ChestBlockEntity>(new ChestBlockEntity(ChestBlock::TYPE_SINGLE, false));
+    mTrappedChestBlockEntity = boost::shared_ptr<ChestBlockEntity>(new ChestBlockEntity(ChestBlock::TYPE_LEFT, false));
     mEnderChestBlockEntity = boost::shared_ptr<EnderChestBlockEntity>(new EnderChestBlockEntity());
     mBannerBlockEntity = boost::shared_ptr<BannerBlockEntity>(new BannerBlockEntity());
     mSkullBlockEntity = boost::shared_ptr<SkullBlockEntity>(new SkullBlockEntity());
@@ -42,13 +42,13 @@ void EntityBlockRenderer::renderByItem(not_null_ptr<ItemInstance> item, float pa
     {
         mBannerBlockEntity->setItemValues(item, false);
         BlockEntityRenderDispatcher::instance->render(mBannerBlockEntity, 0.0, 0.0, 0.0,
-                                             partialTicks, true, 1.0F, true);
+                                             0.0F, true, partialTicks, true);
     }
     else if (itemType == Items::bed)
     {
         mBedBlockEntity->setItemValues(item);
         BlockEntityRenderDispatcher::instance->render(mBedBlockEntity, 0.0, 0.0, 0.0,
-                                             partialTicks, true, 1.0F, true);
+                                             0.0F, true, partialTicks, true);
     }
     else if (itemType == Items::skull)
     {
@@ -65,35 +65,35 @@ void EntityBlockRenderer::renderByItem(not_null_ptr<ItemInstance> item, float pa
     else if (itemType == Item::byBlock(Blocks::ender_chest))
     {
         BlockEntityRenderDispatcher::instance->render(mEnderChestBlockEntity, 0.0, 0.0, 0.0,
-                                             partialTicks, bTranslucent, 1.0F,
+                                             0.0F, bTranslucent, partialTicks,
                                              bUseDisplayList);
     }
     else if (itemType == Item::byBlock(Blocks::trapped_chest))
     {
         BlockEntityRenderDispatcher::instance->render(mTrappedChestBlockEntity, 0.0, 0.0, 0.0,
-                                             partialTicks, bTranslucent, 1.0F,
+                                             0.0F, bTranslucent, partialTicks,
                                              bUseDisplayList);
     }
     else if (itemType == Item::byBlock(Blocks::conduit))
     {
         BlockEntityRenderDispatcher::instance->render(mConduitBlockEntity, 0.0, 0.0, 0.0,
-                                             partialTicks, bTranslucent, 1.0F,
+                                             0.0F, bTranslucent, partialTicks,
                                              bUseDisplayList);
     }
     else
     {
-        if (dynamic_cast<ShulkerBoxBlock*>(Block::byItem(itemType)) == NULL)
-        {
-            BlockEntityRenderDispatcher::instance->render(mChestBlockEntity, 0.0, 0.0, 0.0,
-                                                 partialTicks, bTranslucent, 1.0F,
-                                                 bUseDisplayList);
-        }
-        else
+        if (dynamic_cast<ShulkerBoxBlock*>(Block::byItem(itemType)) != NULL)
         {
             *mShulkerBoxBlockEntity = ShulkerBoxBlockEntity(
                 static_cast<ShulkerBoxBlock*>(Block::byItem(itemType))->getDyeColor());
             BlockEntityRenderDispatcher::instance->render(mShulkerBoxBlockEntity, 0.0, 0.0, 0.0,
-                                                 partialTicks, bTranslucent, 1.0F,
+                                                 0.0F, bTranslucent, partialTicks,
+                                                 bUseDisplayList);
+        }
+        else
+        {
+            BlockEntityRenderDispatcher::instance->render(mChestBlockEntity, 0.0, 0.0, 0.0,
+                                                 0.0F, bTranslucent, partialTicks,
                                                  bUseDisplayList);
         }
     }

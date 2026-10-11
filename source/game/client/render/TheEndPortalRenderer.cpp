@@ -47,11 +47,11 @@ void TheEndPortalRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
 
     RANDOM.setSeed(RANDOM_SEED);
 
-    GlStateManager::getMatrix(0, MODELVIEW);
-    GlStateManager::getMatrix(1, PROJECTION);
+    GlStateManager::getMatrix(GL_MODELVIEW_MATRIX, MODELVIEW);
+    GlStateManager::getMatrix(GL_PROJECTION_MATRIX, PROJECTION);
 
     int passes = getPasses(x * x + y * y + z * z);
-    double top = y + getOffset();
+    double offset = getOffset();
 
     bool fogColorReset = false;
 
@@ -82,14 +82,14 @@ void TheEndPortalRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
             }
         }
 
-        GlStateManager::texGenMode(GlStateManager::S, 1);
-        GlStateManager::texGenMode(GlStateManager::T, 1);
-        GlStateManager::texGenMode(GlStateManager::R, 1);
+        GlStateManager::texGenMode(GlStateManager::S, GL_EYE_LINEAR);
+        GlStateManager::texGenMode(GlStateManager::T, GL_EYE_LINEAR);
+        GlStateManager::texGenMode(GlStateManager::R, GL_EYE_LINEAR);
 
-        GlStateManager::texGenParam(GlStateManager::S, 1, getBuffer(1.0F, 0.0F, 0.0F, 0.0F));
-        GlStateManager::texGenParam(GlStateManager::T, 1, getBuffer(0.0F, 1.0F, 0.0F, 0.0F));
-        GlStateManager::texGenParam(GlStateManager::R, 1, getBuffer(0.0F, 0.0F, 1.0F, 0.0F));
-        GlStateManager::texGenParam(GlStateManager::Q, 0, getBuffer(0.0F, 0.0F, 0.0F, 1.0F));
+        GlStateManager::texGenParam(GlStateManager::S, GL_EYE_PLANE, getBuffer(1.0F, 0.0F, 0.0F, 0.0F));
+        GlStateManager::texGenParam(GlStateManager::T, GL_EYE_PLANE, getBuffer(0.0F, 1.0F, 0.0F, 0.0F));
+        GlStateManager::texGenParam(GlStateManager::R, GL_EYE_PLANE, getBuffer(0.0F, 0.0F, 1.0F, 0.0F));
+        GlStateManager::texGenParam(GlStateManager::Q, GL_OBJECT_PLANE, getBuffer(0.0F, 0.0F, 0.0F, 1.0F));
 
         GlStateManager::enableTexGen(GlStateManager::S);
         GlStateManager::enableTexGen(GlStateManager::T);
@@ -97,7 +97,7 @@ void TheEndPortalRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
 
         GlStateManager::popMatrix();
 
-        GlStateManager::matrixMode(2);
+        GlStateManager::matrixMode(GL_TEXTURE);
         GlStateManager::pushMatrix();
         GlStateManager::loadIdentity();
         GlStateManager::translatef(0.5F, 0.5F, 0.0F);
@@ -107,12 +107,10 @@ void TheEndPortalRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
 
         double timeFraction = (float)(System::processTimeInMilliSecs() % 800000LL) / 800000.0F;
 
-        GlStateManager::translatef(17.0F / layer, (layer / 1.5F + 2.0F) * timeFraction, 0.0F);
+        GlStateManager::translatef(17.0F / layer, (2.0F + layer / 1.5F) * timeFraction, 0.0F);
         GlStateManager::rotatef((layer * layer * 4321.0F + layer * 9.0F) * 2.0F, 0.0F, 0.0F, 1.0F);
 
-        float scale = 4.5F - layer / 4.0F;
-
-        GlStateManager::scalef(scale, scale, 1.0F);
+        GlStateManager::scalef(4.5F - layer / 4.0F, 4.5F - layer / 4.0F, 1.0F);
         GlStateManager::multMatrix(PROJECTION);
         GlStateManager::multMatrix(MODELVIEW);
 
@@ -176,17 +174,17 @@ void TheEndPortalRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
 
         if (portal->shouldRenderFace(Direction::UP))
         {
-            builder->vertexDouble(x, top, z + 1.0);
-            builder->vertexDouble(x + 1.0, top, z + 1.0);
-            builder->vertexDouble(x + 1.0, top, z);
-            builder->vertexDouble(x, top, z);
+            builder->vertexDouble(x, y + offset, z + 1.0);
+            builder->vertexDouble(x + 1.0, y + offset, z + 1.0);
+            builder->vertexDouble(x + 1.0, y + offset, z);
+            builder->vertexDouble(x, y + offset, z);
         }
 
         builder->end();
         builder->useProjectedTexture(false);
 
         GlStateManager::popMatrix();
-        GlStateManager::matrixMode(0);
+        GlStateManager::matrixMode(GL_MODELVIEW);
     }
 
     GlStateManager::disableBlend();

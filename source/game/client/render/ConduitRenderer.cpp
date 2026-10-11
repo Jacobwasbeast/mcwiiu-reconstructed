@@ -36,19 +36,23 @@ void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double 
                              float partialTicks, int breakProgress, bool bTranslucent, float alpha,
                              bool bUseDisplayList)
 {
-    if (blockEntity->GetType() != BlockEntityType::CONDUIT)
+    if (!eTYPE_DERIVED_FROM(BlockEntityType::CONDUIT, blockEntity->GetType()))
     {
         return;
     }
 
     boost::shared_ptr<ConduitBlockEntity> conduit = boost::static_pointer_cast<ConduitBlockEntity>(blockEntity);
 
+    float fx = (float)x;
+    float fy = (float)y;
+    float fz = (float)z;
+
     float rotation = conduit->mActiveRotation;
 
     if (!conduit->mActive)
     {
         GlStateManager::pushMatrix();
-        GlStateManager::translatef((float)x + 0.5F, (float)y + 0.188125F, (float)z + 0.5F);
+        GlStateManager::translatef(fx + 0.5F, fy + 0.188125F, fz + 0.5F);
         GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
         GlStateManager::rotatef(rotation, 0.0F, 1.0F, 0.0F);
 
@@ -86,12 +90,11 @@ void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double 
     ++conduit->mRotationTick;
 
     float bob = Mth::sin(((float)conduit->mTickCount + partialTicks) * 0.1F) * 0.5F + 0.5F;
+    bob = bob * bob + bob;
 
     GlStateManager::pushMatrix();
 
-    float bobOffset = (bob * bob + bob) * 0.2F;
-
-    GlStateManager::translatef((float)x + 0.5F, (float)y + 0.250625F + bobOffset, (float)z + 0.5F);
+    GlStateManager::translatef(fx + 0.5F, fy + 0.250625F + bob * 0.2F, fz + 0.5F);
     GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
     GlStateManager::rotatef(rotation, 0.5F, 1.0F, 0.5F);
 
@@ -132,7 +135,7 @@ void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double 
         bindTexture(&CLOSED_EYE_TEXTURE);
     }
 
-    GlStateManager::translatef((float)x + 0.5F, (float)y + 0.1875F + bobOffset, (float)z + 0.5F);
+    GlStateManager::translatef(fx + 0.5F, fy + 0.1875F + bob * 0.2F, fz + 0.5F);
     GlStateManager::enableRescaleNormal();
     GlStateManager::scalef(0.33333334F, 0.33333334F, 0.33333334F);
 
@@ -155,31 +158,13 @@ void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double 
     }
 
     GlStateManager::pushMatrix();
-    GlStateManager::translatef((float)x + 0.5F, (float)y + 0.5F, (float)z + 0.5F);
+    GlStateManager::translatef(fx + 0.5F, fy + 0.5F, fz + 0.5F);
     GlStateManager::scalef(-1.0F, -1.0F, 1.0F);
 
-    if (windLevel == 0)
+    switch (windLevel)
     {
-        bindTexture(&WIND_TEXTURE);
-
-        GlStateManager::matrixMode(2);
-        GlStateManager::loadIdentity();
-        GlStateManager::translatef(0.0F, windOffset, 0.0F);
-        GlStateManager::matrixMode(0);
-    }
-    else if (windLevel == 1)
-    {
-        bindTexture(&VERTICAL_WIND_TEXTURE);
-
-        GlStateManager::matrixMode(2);
-        GlStateManager::loadIdentity();
-        GlStateManager::translatef(0.0F, windOffset, 0.0F);
-        GlStateManager::matrixMode(0);
-        GlStateManager::scalef(1.0F, 1.0F, 1.0F);
-        GlStateManager::rotatef(90.0F, 1.0F, 0.0F, 0.0F);
-    }
-    else
-    {
+    case 2:
+    default:
         bindTexture(&WIND_TEXTURE);
 
         GlStateManager::matrixMode(2);
@@ -188,6 +173,25 @@ void ConduitRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double 
         GlStateManager::matrixMode(0);
         GlStateManager::scalef(1.0F, 1.0F, 1.0F);
         GlStateManager::rotatef(90.0F, 0.0F, 0.0F, 1.0F);
+        break;
+    case 0:
+        bindTexture(&WIND_TEXTURE);
+
+        GlStateManager::matrixMode(2);
+        GlStateManager::loadIdentity();
+        GlStateManager::translatef(0.0F, windOffset, 0.0F);
+        GlStateManager::matrixMode(0);
+        break;
+    case 1:
+        bindTexture(&VERTICAL_WIND_TEXTURE);
+
+        GlStateManager::matrixMode(2);
+        GlStateManager::loadIdentity();
+        GlStateManager::translatef(0.0F, windOffset, 0.0F);
+        GlStateManager::matrixMode(0);
+        GlStateManager::scalef(1.0F, 1.0F, 1.0F);
+        GlStateManager::rotatef(90.0F, 1.0F, 0.0F, 0.0F);
+        break;
     }
 
     mWindModel->renderWind(bUseDisplayList);

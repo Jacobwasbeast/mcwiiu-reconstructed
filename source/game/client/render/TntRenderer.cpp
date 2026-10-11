@@ -46,7 +46,16 @@ void TntRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, 
     GlStateManager::rotatef(-90.0f, 0.0f, 1.0f, 0.0f);
     blockRenderer->renderSingleBlock(Blocks::tnt->defaultBlockState(), 1.0f, 1.0f, true);
 
-    if (!mSolidRender)
+    if (mSolidRender)
+    {
+        GlStateManager::enableColorMaterial();
+        unsigned int teamColor = getTeamColor(entity);
+        GlStateManager::setupSolidRenderingTextureCombine((int)teamColor);
+        blockRenderer->renderSingleBlock(Blocks::tnt->defaultBlockState(), 1.0f, 1.0f, true);
+        GlStateManager::tearDownSolidRenderingTextureCombine();
+        GlStateManager::disableColorMaterial();
+    }
+    else
     {
         if ((tnt->getLife() / 5 & 1) == 0)
         {
@@ -67,15 +76,6 @@ void TntRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, 
             GlStateManager::enableLighting();
             GlStateManager::enableTexture();
         }
-    }
-    else
-    {
-        GlStateManager::enableColorMaterial();
-        unsigned int teamColor = getTeamColor(entity);
-        GlStateManager::setupSolidRenderingTextureCombine((int)teamColor);
-        blockRenderer->renderSingleBlock(Blocks::tnt->defaultBlockState(), 1.0f, 1.0f, true);
-        GlStateManager::tearDownSolidRenderingTextureCombine();
-        GlStateManager::disableColorMaterial();
     }
 
     GlStateManager::popMatrix();

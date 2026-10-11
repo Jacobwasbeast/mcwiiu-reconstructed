@@ -40,52 +40,47 @@ void FallingBlockRenderer::render(boost::shared_ptr<Entity>& entity, double x, d
     Block* block = blockState->getBlock();
     BlockPos blockPos(fallingBlock);
     Level* level = fallingBlock->getLevel();
-    const BlockState* levelState = level->getBlockState(blockPos);
-    if (blockState != levelState)
+    if (blockState == level->getBlockState(blockPos) || block->defaultBlockState()->getRenderShape() == BLOCK_RENDER_INVISIBLE)
+        return;
+
+    GlStateManager::pushMatrix();
+    GlStateManager::translatef((float)x, (float)y, (float)z);
+    GlStateManager::disableLighting();
+    GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
+
+    BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
+    BlockRenderer* blockRenderer = Minecraft::GetInstance()->getBlockRenderer()->getBlockRenderer();
+
+    float offset = 0.5F;
+    if (block == Blocks::anvil && block->defaultBlockState()->getRenderShape() == BLOCK_RENDER_ANVIL)
     {
-        const BlockState* defaultState = block->defaultBlockState();
-        if (defaultState->getRenderShape() != BLOCK_RENDER_INVISIBLE)
-        {
-            GlStateManager::pushMatrix();
-            GlStateManager::translatef((float)x, (float)y, (float)z);
-            GlStateManager::disableLighting();
-            GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
-
-            BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
-            BlockRenderer* blockRenderer = Minecraft::GetInstance()->getBlockRenderer()->getBlockRenderer();
-
-            float offset = 0.5F;
-            if (block == Blocks::anvil && defaultState->getRenderShape() == BLOCK_RENDER_ANVIL)
-            {
-                blockRenderer->mLevelSource = level;
-                builder->begin();
-                builder->offset((float)-(int)fallingBlock->mX - offset,
-                                (float)-(int)fallingBlock->mY,
-                                (float)-(int)fallingBlock->mZ - offset);
-                BlockPos renderPos((int)fallingBlock->mX, (int)fallingBlock->mY, (int)fallingBlock->mZ);
-                blockRenderer->tesselateAnvilInWorld(blockState, renderPos);
-                builder->offset(0.0F, 0.0F, 0.0F);
-                builder->end();
-            }
-            else if (block != NULL)
-            {
-                blockRenderer->mLevelSource = level;
-                builder->begin();
-                builder->offset((float)-(int)fallingBlock->mX - offset,
-                                (float)-(int)fallingBlock->mY,
-                                (float)-(int)fallingBlock->mZ - offset);
-                BlockPos renderPos((int)fallingBlock->mX, (int)fallingBlock->mY, (int)fallingBlock->mZ);
-                boost::shared_ptr<BlockEntity> blockEntity;
-                blockRenderer->tesselateInWorldNoCulling(blockState, renderPos, NULL, blockEntity);
-                builder->offset(0.0F, 0.0F, 0.0F);
-                builder->end();
-            }
-
-            GlStateManager::enableLighting();
-            GlStateManager::popMatrix();
-            EntityRenderer::render(entity, x, y, z, yaw, partialTick);
-        }
+        blockRenderer->mLevelSource = level;
+        builder->begin();
+        builder->offset((float)-(int)fallingBlock->mX - offset,
+                        (float)-(int)fallingBlock->mY,
+                        (float)-(int)fallingBlock->mZ - offset);
+        blockRenderer->tesselateAnvilInWorld(blockState,
+                                             BlockPos((int)fallingBlock->mX, (int)fallingBlock->mY, (int)fallingBlock->mZ));
+        builder->offset(0.0F, 0.0F, 0.0F);
+        builder->end();
     }
+    else if (block != NULL)
+    {
+        blockRenderer->mLevelSource = level;
+        builder->begin();
+        builder->offset((float)-(int)fallingBlock->mX - offset,
+                        (float)-(int)fallingBlock->mY,
+                        (float)-(int)fallingBlock->mZ - offset);
+        blockRenderer->tesselateInWorldNoCulling(blockState,
+                                                 BlockPos((int)fallingBlock->mX, (int)fallingBlock->mY, (int)fallingBlock->mZ),
+                                                 NULL, boost::shared_ptr<BlockEntity>());
+        builder->offset(0.0F, 0.0F, 0.0F);
+        builder->end();
+    }
+
+    GlStateManager::enableLighting();
+    GlStateManager::popMatrix();
+    EntityRenderer::render(entity, x, y, z, yaw, partialTick);
 }
 
 const ResourceLocation* FallingBlockRenderer::getTextureLocation(boost::shared_ptr<Entity>&)

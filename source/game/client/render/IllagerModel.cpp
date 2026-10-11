@@ -108,7 +108,8 @@ void IllagerModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, fl
     mLeg0->render(scale, useDisplayList, false);
     mLeg1->render(scale, useDisplayList, false);
 
-    if (boost::static_pointer_cast<AbstractIllager>(entity)->getArmPose() == ILLAGER_ARM_POSE_CROSSED)
+    boost::shared_ptr<AbstractIllager> illager = boost::static_pointer_cast<AbstractIllager>(entity);
+    if (illager->getArmPose() == ILLAGER_ARM_POSE_CROSSED)
     {
         mArms->mShow = true;
         mRightArm->mShow = false;
@@ -147,7 +148,7 @@ void IllagerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
     if (armPose == ILLAGER_ARM_POSE_ATTACKING)
     {
         float swing = Mth::sin(mAttackTime * 3.1415927f);
-        float recover = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927f) * 0.4f;
+        float recover = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927f);
 
         mRightArm->mZRot = 0.0f;
         mLeftArm->mZRot = 0.0f;
@@ -158,15 +159,15 @@ void IllagerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
         {
             mRightArm->mXRot = -1.8849558f + Mth::cos(ageInTicks * 0.09f) * 0.15f;
             mLeftArm->mXRot = Mth::cos(ageInTicks * 0.19f) * 0.5f;
-            mRightArm->mXRot += swing * 2.2f - recover;
-            mLeftArm->mXRot += swing * 1.2f - recover;
+            mRightArm->mXRot += swing * 2.2f - recover * 0.4f;
+            mLeftArm->mXRot += swing * 1.2f - recover * 0.4f;
         }
         else
         {
             mRightArm->mXRot = Mth::cos(ageInTicks * 0.19f) * 0.5f;
             mLeftArm->mXRot = -1.8849558f + Mth::cos(ageInTicks * 0.09f) * 0.15f;
-            mRightArm->mXRot += swing * 1.2f - recover;
-            mLeftArm->mXRot += swing * 2.2f - recover;
+            mRightArm->mXRot += swing * 1.2f - recover * 0.4f;
+            mLeftArm->mXRot += swing * 2.2f - recover * 0.4f;
         }
 
         mRightArm->mZRot += Mth::cos(ageInTicks * 0.09f) * 0.05f + 0.05f;
@@ -190,9 +191,9 @@ void IllagerModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
     }
     else if (armPose == ILLAGER_ARM_POSE_BOW_AND_ARROW)
     {
-        mRightArm->mYRot = mHead->mYRot - 0.1f;
-        mRightArm->mXRot = mHead->mXRot - 1.5707964f;
-        mLeftArm->mXRot = mHead->mXRot - 0.9424779f;
+        mRightArm->mYRot = -0.1f + mHead->mYRot;
+        mRightArm->mXRot = -1.5707964f + mHead->mXRot;
+        mLeftArm->mXRot = -0.9424779f + mHead->mXRot;
         mLeftArm->mZRot = 1.5707964f;
         mLeftArm->mYRot = mHead->mYRot - 0.4f;
     }

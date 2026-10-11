@@ -17,5 +17,5 @@ void DLCModelsFile::addData(unsigned char* pData, unsigned int size)
 
 arrayWithLength<unsigned char> DLCModelsFile::getData()
 {
-    return m_data;
+    return arrayWithLength<unsigned char>(m_data.data, m_data.length);
 }

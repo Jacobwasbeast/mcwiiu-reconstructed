@@ -26,6 +26,7 @@
 #include "game/core/FrustumCuller.hpp"
 #include "game/core/FrustumData.hpp"
 #include "game/core/GlStateManager.hpp"
+#include "game/client/render/GameRenderer.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/core/GameSettings.hpp"
 #include "game/core/InfoBarManager.hpp"
@@ -39,10 +40,12 @@
 #include "game/item/ItemInstance.hpp"
 #include "game/item/Items.hpp"
 #include "game/item/DyeItem.hpp"
+#include "game/item/ThrownPotion.hpp"
 #include "game/core/StringConversion.hpp"
 #include "game/core/System.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/entity/mob/LivingEntity.hpp"
+#include "game/entity/projectile/DragonFireball.hpp"
 #include "game/entity/mob/Mob.hpp"
 #include "game/util/Random.hpp"
 #include "game/util/Vec3.hpp"
@@ -2683,16 +2686,19 @@ void LevelRenderer::renderColoredBox(const AABB* box, int color, int alpha)
 
 void LevelRenderer::renderStringInWorld(boost::shared_ptr<Entity> entity, const std::wstring& text, Vec3* position)
 {
+    float x = (float)position->x;
+    float y = (float)position->y;
+    float z = (float)position->z;
     float xRot = entity->mXRot;
     float yRot = entity->mYRot;
     Font* font = BlockEntityRenderDispatcher::instance->getFont();
 
     GlStateManager::pushMatrix();
-    GlStateManager::translatef((float)position->x, (float)position->y, (float)position->z);
+    GlStateManager::translatef(x, y, z);
     GlStateManager::normal3f(0.0f, 1.0f, 0.0f);
     GlStateManager::rotatef(-yRot, 0.0f, 1.0f, 0.0f);
     GlStateManager::rotatef(xRot, 1.0f, 0.0f, 0.0f);
-    GlStateManager::scalef(-0.025f, -0.025f, 0.025f);
+    GlStateManager::scalef(-GameRenderer::NAME_TAG_SCALE, -GameRenderer::NAME_TAG_SCALE, GameRenderer::NAME_TAG_SCALE);
     GlStateManager::depthMask(false);
 
     int halfWidth = font->width(text) / 2;
@@ -3518,7 +3524,7 @@ void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const
                 type == LevelEvent::PARTICLES_INSTANT_POTION_SPLASH ? ePARTICLE_INSTANT_SPELL : ePARTICLE_SPELL;
             for (int i = 0; i < particleCount; ++i)
             {
-                const double power = random->nextDouble() * 4.0;
+                const double power = random->nextDouble() * ThrownPotion::SPLASH_RANGE;
                 const double angle = random->nextDouble() * 3.1415927f * 2.0;
                 const double xa = std::cos(angle) * power;
                 const double ya = random->nextDouble() * 0.5 + 0.01;
@@ -3570,7 +3576,7 @@ void LevelRenderer::levelEvent(boost::shared_ptr<Player> player, int type, const
     {
         for (int i = 0; i < 100; ++i)
         {
-            const double power = random->nextDouble() * 4.0;
+            const double power = random->nextDouble() * DragonFireball::SPLASH_RANGE;
             const double angle = random->nextDouble() * 3.141592653589793 * 2.0;
             const double xa = std::cos(angle) * power;
             const double ya = random->nextDouble() * 0.5 + 0.01;

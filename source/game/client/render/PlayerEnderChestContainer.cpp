@@ -42,7 +42,7 @@ void PlayerEnderChestContainer::stopOpen(boost::shared_ptr<Player> player)
         m_activeChest->stopOpen();
     }
     SimpleContainer::stopOpen(player);
-    m_activeChest.reset();
+    m_activeChest = boost::shared_ptr<EnderChestBlockEntity>();
 }
 
 unsigned int PlayerEnderChestContainer::getContainerType()

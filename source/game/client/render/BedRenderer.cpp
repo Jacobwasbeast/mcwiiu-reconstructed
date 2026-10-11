@@ -28,7 +28,7 @@ void BedRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, d
                          float partialTicks, int breakProgress, bool bTranslucent, float alpha,
                          bool bUseDisplayList)
 {
-    if (mModel->modelVersion() != mModelVersion)
+    if (mModelVersion != mModel->modelVersion())
     {
         delete mModel;
         mModel = new BedModel();
@@ -36,21 +36,13 @@ void BedRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, d
     }
 
     boost::shared_ptr<BedBlockEntity> bed = boost::static_pointer_cast<BedBlockEntity>(blockEntity);
-    unsigned int direction = 0;
-    bool isHeadPiece = true;
     bool hasLevel = bed->getLevel() != NULL;
+    bool isHeadPiece = hasLevel ? bed->isHeadPiece() : true;
+    const DyeColor* colour = bed != NULL ? bed->getColor() : DyeColor::RED;
+    unsigned int direction = 0;
     if (hasLevel)
     {
-        isHeadPiece = bed->isHeadPiece();
-    }
-    const DyeColor* colour = DyeColor::RED;
-    if (bed != NULL)
-    {
-        colour = bed->getColor();
-    }
-    if (hasLevel)
-    {
-        direction = (unsigned int)(bed->getData() & 3);
+        direction = bed->getData() & 3;
         if (!isHeadPiece)
             return;
     }
@@ -68,7 +60,6 @@ void BedRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, d
     {
         if (direction == Direction::NORTH->get2DDataValue())
         {
-            xOffset = 0.0F;
             zOffset = 0.5F;
             rotation = 0.0F;
         }
@@ -87,7 +78,6 @@ void BedRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, d
         else if (direction == Direction::EAST->get2DDataValue())
         {
             xOffset = 0.5F;
-            zOffset = 0.0F;
             rotation = 90.0F;
         }
     }
@@ -95,8 +85,6 @@ void BedRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, d
     {
         if (direction == Direction::NORTH->get2DDataValue())
         {
-            xOffset = 0.0F;
-            zOffset = 0.0F;
             rotation = 0.0F;
         }
         else if (direction == Direction::SOUTH->get2DDataValue())
@@ -107,14 +95,12 @@ void BedRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, d
         }
         else if (direction == Direction::WEST->get2DDataValue())
         {
-            xOffset = 0.0F;
             zOffset = 1.0F;
             rotation = -90.0F;
         }
         else if (direction == Direction::EAST->get2DDataValue())
         {
             xOffset = 1.0F;
-            zOffset = 0.0F;
             rotation = 90.0F;
         }
     }
@@ -126,7 +112,8 @@ void BedRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x, d
     GlStateManager::enableRescaleNormal();
     GlStateManager::pushMatrix();
 
-    int colourValue = Minecraft::GetInstance()->getColourTable()->getColour(colour->getBedColor());
+    ColourTable* colourTable = Minecraft::GetInstance()->getColourTable();
+    int colourValue = colourTable->getColour(colour->getBedColor());
     GlStateManager::color4f((float)((colourValue >> 16) & 0xff) / 255.0F,
                             (float)((colourValue >> 8) & 0xff) / 255.0F,
                             (float)(colourValue & 0xff) / 255.0F, alpha);

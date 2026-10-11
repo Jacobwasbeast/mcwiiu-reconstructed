@@ -197,8 +197,18 @@ void PlayerRenderer::updatePartVisibility(ModelPart* part, boost::shared_ptr<Pla
         return;
     }
 
-    bool coveredHead = false;
-    if (visible && part->mArmourFlags != 0)
+    if (!(visible && part->mArmourFlags != 0))
+    {
+        if (visible && (part->mSkinBoxType == 1 || part->mSkinBoxType == 7)
+            && !player->getItemSlot(EquipmentSlot::HEAD)->isEmpty()
+            && (player->getItemSlot(EquipmentSlot::HEAD)->getItem() == Items::skull
+                || player->getItemSlot(EquipmentSlot::HEAD)->getItem()
+                       == Item::byBlock(Blocks::carved_pumpkin)))
+        {
+            visible = false;
+        }
+    }
+    else
     {
         if ((part->mArmourFlags & 1) != 0 && !player->getItemSlot(EquipmentSlot::HEAD)->isEmpty())
         {
@@ -220,17 +230,7 @@ void PlayerRenderer::updatePartVisibility(ModelPart* part, boost::shared_ptr<Pla
             visible = false;
         }
     }
-    else if (visible && (part->mSkinBoxType == 1 || part->mSkinBoxType == 7))
-    {
-        if (!player->getItemSlot(EquipmentSlot::HEAD)->isEmpty()
-            && (player->getItemSlot(EquipmentSlot::HEAD)->getItem() == Items::skull
-                || player->getItemSlot(EquipmentSlot::HEAD)->getItem()
-                       == Item::byBlock(Blocks::carved_pumpkin)))
-        {
-            coveredHead = true;
-        }
-    }
-    part->mShow = coveredHead ? false : visible;
+    part->mShow = visible;
 }
 
 void PlayerRenderer::showAdditionalModelParts(boost::shared_ptr<Player> player)

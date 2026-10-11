@@ -229,11 +229,11 @@ unsigned int Font::draw(const std::wstring& text, bool darken, bool useBuilder)
         {
             if (noise)
             {
-                const int letterCount = static_cast<int>(ALLOWED_CHARACTERS.length());
+                const int letterCount = static_cast<int>(SharedConstants::ALLOWED_CHARACTERS.length());
                 int found = -1;
                 for (int k = 0; k < letterCount; ++k)
                 {
-                    if (ALLOWED_CHARACTERS[k] == character)
+                    if (SharedConstants::ALLOWED_CHARACTERS[k] == character)
                     {
                         found = k;
                         break;
@@ -252,9 +252,9 @@ unsigned int Font::draw(const std::wstring& text, bool darken, bool useBuilder)
                             matched = false;
                             break;
                         }
-                    } while (mCharWidths[character] != mCharWidths[ALLOWED_CHARACTERS[replacement]]);
+                    } while (mCharWidths[character] != mCharWidths[SharedConstants::ALLOWED_CHARACTERS[replacement]]);
                     if (matched)
-                        character = ALLOWED_CHARACTERS[replacement];
+                        character = SharedConstants::ALLOWED_CHARACTERS[replacement];
                 }
             }
 

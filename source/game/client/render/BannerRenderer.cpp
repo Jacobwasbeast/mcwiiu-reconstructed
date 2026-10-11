@@ -45,16 +45,28 @@ bool BannerRenderer::hasTexture(boost::shared_ptr<BlockEntity> blockEntity)
 
 void BannerRenderer::getUV(int atlasIndex, bool layered, float& u, float& v)
 {
-    if (!layered)
+    int columns;
+    float cellWidth;
+    float cellHeight;
+    float textureHeight;
+    if (layered)
     {
-        u = (float)(atlasIndex % 6) * 42.0F;
-        v = (float)(atlasIndex / 6) * 41.0F / 288.0F;
+        columns = 9;
+        cellWidth = 13.0F;
+        cellHeight = 23.0F;
+        textureHeight = 128.0F;
     }
     else
     {
-        u = (float)(atlasIndex % 9) * 13.0F;
-        v = (float)(atlasIndex / 9) * 23.0F / 128.0F;
+        columns = 6;
+        cellWidth = 42.0F;
+        cellHeight = 41.0F;
+        textureHeight = 288.0F;
     }
+    float column = (float)(atlasIndex % columns);
+    float row = (float)(atlasIndex / columns);
+    u = column * cellWidth;
+    v = row * cellHeight / textureHeight;
 }
 
 void BannerRenderer::setupLayeredParams(const std::vector<const BannerPattern*>* patterns,
@@ -109,6 +121,7 @@ void BannerRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x
     long long gameTime = hasLevel ? blockEntity->getLevel()->getGameTime() : 0;
 
     GlStateManager::pushMatrix();
+    float scale = 0.6666667F;
     if (standing)
     {
         GlStateManager::translatef((float)x + 0.5F, (float)y + 0.5F, (float)z + 0.5F);
@@ -120,9 +133,9 @@ void BannerRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x
         float rotation = 0.0F;
         if (direction == 2)
             rotation = 180.0F;
-        else if (direction == 4)
+        if (direction == 4)
             rotation = 90.0F;
-        else if (direction == 5)
+        if (direction == 5)
             rotation = -90.0F;
         GlStateManager::translatef((float)x + 0.5F, (float)y - 0.16666667F, (float)z + 0.5F);
         GlStateManager::rotatef(-rotation, 0.0F, 1.0F, 0.0F);
@@ -137,14 +150,14 @@ void BannerRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x
 
     BlockPos position = blockEntity->getBlockPos();
     float phase = (float)(position.x * 7 + position.y * 9 + position.z * 13) + (float)gameTime + partialTicks;
-    mModel->mFlag->mXRot = (0.01F * cosf(phase * 3.1415927F * 0.02F) - 0.0125F) * 3.1415927F;
+    mModel->mFlag->mXRot = (-0.0125F + 0.01F * cosf(phase * 3.1415927F * 0.02F)) * 3.1415927F;
     GlStateManager::enableRescaleNormal();
 
     if (hasTexture(blockEntity))
     {
         bindTexture(BANNER_LOCATION);
         GlStateManager::pushMatrix();
-        GlStateManager::scalef(0.6666667F, -0.6666667F, -0.6666667F);
+        GlStateManager::scalef(scale, -scale, -scale);
         mModel->mFlag->mShow = false;
         mModel->render();
         mModel->mFlag->mShow = true;

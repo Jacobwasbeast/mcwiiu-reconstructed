@@ -1,10 +1,5 @@
 #include "game/client/render/FileTexturePack.hpp"
 
-FileTexturePack::~FileTexturePack()
-{
-    return;
-}
-
 void FileTexturePack::unload(Textures* textures)
 {
 }

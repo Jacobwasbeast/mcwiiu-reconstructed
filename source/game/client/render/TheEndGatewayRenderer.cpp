@@ -26,7 +26,7 @@ void TheEndGatewayRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, d
 
     if (gateway->isSpawning() || gateway->isCoolingDown())
     {
-        GlStateManager::alphaFunc(4, 0.01F);
+        GlStateManager::alphaFunc(GL_GREATER, 0.01F);
 
         bindTexture(&END_GATEWAY_BEAM_LOCATION);
 

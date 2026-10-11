@@ -145,7 +145,11 @@ void GuardianModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
         target = guardian->getActiveAttackTarget();
     }
 
-    if (target)
+    if (!target)
+    {
+        mEye->mShow = true;
+    }
+    else
     {
         Vec3* targetEyePosition = target->getEyePosition(0.0f);
         Vec3* eyePosition = entity->getEyePosition(0.0f);
@@ -168,10 +172,6 @@ void GuardianModel::setupAnim(float limbSwing, float limbSwingAmount, float ageI
 
         mEye->mShow = true;
         mEye->mX = (eyeRotation + eyeRotation) * (float)((alignment > 0.0) - (alignment < 0.0));
-    }
-    else
-    {
-        mEye->mShow = true;
     }
 
     float tailAnimation = guardian->getTailAnimation(partialTicks);

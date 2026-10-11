@@ -58,103 +58,110 @@ void ItemEntityRenderer::renderItemBillboard(boost::shared_ptr<ItemEntity> entit
     float u1 = sprite->getU1(false);
     float v0 = sprite->getV0(false);
     float v1 = sprite->getV1(false);
+    float size = 1.0F;
+    float xOffset = 0.5F;
+    float yOffset = 0.25F;
 
-    if (!mDispatcher->mOptions->mFancyGraphics)
+    if (mDispatcher->mOptions->mFancyGraphics)
+    {
+        int width = (int)sprite->getWidth();
+        int lod = -1;
+        if (width == 32)
+            lod = 1;
+        else if (width == 64)
+            lod = 2;
+        gRenderer->StateSetForceLOD(lod);
+
+        GlStateManager::pushMatrix();
+        if (mItemFrame)
+        {
+            GlStateManager::rotatef(180.0F, 0.0F, 1.0F, 0.0F);
+        }
+        else
+        {
+            GlStateManager::rotatef(
+                (((float)entity->getAge() + partialTick) / 20.0F + entity->mBobOffs) * Mth::RAD_TO_DEG,
+                0.0F, 1.0F, 0.0F);
+        }
+
+        float thickness = 0.0625F;
+        float gap = 0.021875F;
+        not_null_ptr<ItemInstance> item = entity->getItem();
+        int stackCount = item->getCount();
+        int layers;
+        if (stackCount < 2)
+            layers = 1;
+        else if (stackCount < 16)
+            layers = 2;
+        else if (stackCount < 32)
+            layers = 3;
+        else
+            layers = 4;
+        GlStateManager::translatef(-xOffset, -yOffset, -((thickness + gap) * (float)layers / 2.0F));
+
+        for (int layer = 0; layer < layers; ++layer)
+        {
+            GlStateManager::translatef(0.0F, 0.0F, thickness + gap);
+            Block* block = Block::byItem(item->getItem());
+            if (dynamic_cast<StainedGlassPaneBlock*>(block) != NULL)
+            {
+                bindTexture(&BLOCKS_LOCATION);
+                GlStateManager::color4f(red, green, blue, 1.0F);
+                Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
+                    tesselator, u0, v0, u1, v1,
+                    sprite->getSourceWidth(), sprite->getSourceHeight(), thickness,
+                    ItemInHandRenderer::ITEM_RENDER_MODE_GUI);
+            }
+            else if (item->getItem()->getIconType() == 0 && block != NULL)
+            {
+                bindTexture(&BLOCKS_LOCATION);
+                GlStateManager::color4f(red, green, blue, 1.0F);
+                Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
+                    tesselator, u0, v0, u1, v1,
+                    sprite->getSourceWidth(), sprite->getSourceHeight(), thickness,
+                    ItemInHandRenderer::ITEM_RENDER_MODE_NONE);
+            }
+            else
+            {
+                bindTexture(&ITEM_LOCATION);
+                GlStateManager::color4f(red, green, blue, 1.0F);
+                Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
+                    tesselator, u0, v0, u1, v1,
+                    sprite->getSourceWidth(), sprite->getSourceHeight(), thickness,
+                    ItemInHandRenderer::ITEM_RENDER_MODE_3D);
+            }
+            if (item->getItem()->isFoil(item))
+                mItemRenderer->renderFoilLayer(tesselator);
+        }
+
+        GlStateManager::popMatrix();
+        gRenderer->StateSetForceLOD(-1);
+    }
+    else
     {
         for (int i = 0; i < count; ++i)
         {
             GlStateManager::pushMatrix();
             if (i > 0)
             {
-                GlStateManager::translatef((mRandom.nextFloat() * 2.0F - 1.0F) * 0.3F,
-                                           (mRandom.nextFloat() * 2.0F - 1.0F) * 0.3F,
-                                           (mRandom.nextFloat() * 2.0F - 1.0F) * 0.3F);
+                float offsetX = (mRandom.nextFloat() * 2.0F - 1.0F) * 0.3F;
+                float offsetY = (mRandom.nextFloat() * 2.0F - 1.0F) * 0.3F;
+                float offsetZ = (mRandom.nextFloat() * 2.0F - 1.0F) * 0.3F;
+                GlStateManager::translatef(offsetX, offsetY, offsetZ);
             }
             if (!mItemFrame)
                 GlStateManager::rotatef(180.0F - mDispatcher->mCameraYRot, 0.0F, 1.0F, 0.0F);
             GlStateManager::color4f(red, green, blue, 1.0F);
             builder->begin();
             builder->normal(0.0F, 1.0F, 0.0F);
-            builder->vertexUV(-0.5F, -0.25F, 0.0F, u0, v1);
-            builder->vertexUV(0.5F, -0.25F, 0.0F, u1, v1);
-            builder->vertexUV(0.5F, 0.75F, 0.0F, u1, v0);
-            builder->vertexUV(-0.5F, 0.75F, 0.0F, u0, v0);
+            builder->vertexUV(0.0F - xOffset, 0.0F - yOffset, 0.0F, u0, v1);
+            builder->vertexUV(size - xOffset, 0.0F - yOffset, 0.0F, u1, v1);
+            builder->vertexUV(size - xOffset, 1.0F - yOffset, 0.0F, u1, v0);
+            builder->vertexUV(0.0F - xOffset, 1.0F - yOffset, 0.0F, u0, v0);
             builder->end();
             GlStateManager::popMatrix();
         }
-        return;
     }
-
-    int width = (int)sprite->getWidth();
-    int lod = -1;
-    if (width == 32)
-        lod = 1;
-    else if (width == 64)
-        lod = 2;
-    gRenderer->StateSetForceLOD(lod);
-
-    GlStateManager::pushMatrix();
-    if (mItemFrame)
-    {
-        GlStateManager::rotatef(180.0F, 0.0F, 1.0F, 0.0F);
-    }
-    else
-    {
-        GlStateManager::rotatef((((float)entity->getAge() + partialTick) / 20.0F + entity->mBobOffs) * 57.295776F,
-                                0.0F, 1.0F, 0.0F);
-    }
-
-    float thickness = 0.0625F;
-    not_null_ptr<ItemInstance> item = entity->getItem();
-    int stackCount = item->getCount();
-    int layers;
-    if (stackCount < 2)
-        layers = 1;
-    else if (stackCount < 16)
-        layers = 2;
-    else if (stackCount < 32)
-        layers = 3;
-    else
-        layers = 4;
-    GlStateManager::translatef(-0.5F, -0.25F, -(0.084375F * (float)layers * 0.5F));
-
-    for (int layer = 0; layer < layers; ++layer)
-    {
-        GlStateManager::translatef(0.0F, 0.0F, thickness + 0.021875F);
-        Block* block = Block::byItem(item->getItem());
-        if (dynamic_cast<StainedGlassPaneBlock*>(block) != NULL)
-        {
-            bindTexture(&BLOCKS_LOCATION);
-            GlStateManager::color4f(red, green, blue, 1.0F);
-            Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
-                tesselator, u0, v0, u1, v1,
-                sprite->getSourceWidth(), sprite->getSourceHeight(), thickness,
-                ItemInHandRenderer::ITEM_RENDER_MODE_GUI);
-        }
-        else if (item->getItem()->getIconType() == 0 && block != NULL)
-        {
-            bindTexture(&BLOCKS_LOCATION);
-            GlStateManager::color4f(red, green, blue, 1.0F);
-            Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
-                tesselator, u0, v0, u1, v1,
-                sprite->getSourceWidth(), sprite->getSourceHeight(), thickness,
-                ItemInHandRenderer::ITEM_RENDER_MODE_NONE);
-        }
-        else
-        {
-            bindTexture(&ITEM_LOCATION);
-            GlStateManager::color4f(red, green, blue, 1.0F);
-            Minecraft::GetInstance()->getItemInHandRenderer()->renderItem3D(
-                tesselator, u0, v0, u1, v1,
-                sprite->getSourceWidth(), sprite->getSourceHeight(), thickness,
-                ItemInHandRenderer::ITEM_RENDER_MODE_3D);
-        }
-        if (item->getItem()->isFoil(item))
-            mItemRenderer->renderFoilLayer(tesselator);
-    }
-
-    GlStateManager::popMatrix();
-    gRenderer->StateSetForceLOD(-1);
 }
 
 void ItemEntityRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,

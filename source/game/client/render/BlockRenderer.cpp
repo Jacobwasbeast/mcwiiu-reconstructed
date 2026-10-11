@@ -88,12 +88,6 @@
 #include "game/world/block/WallBlock.hpp"
 #include "game/util/Random.hpp"
 
-static float WALL_ARM_HALF_WIDTH = 0.1875f;
-static float WALL_ARM_HEIGHT = 0.875f;
-static float WALL_POST_HALF_WIDTH = 0.25f;
-static double WALL_POST_HEIGHT = 1.0;
-static float PISTON_PLATFORM_THICKNESS = 0.25f;
-
 BlockRenderer::BlockRenderer(BlockColors* blockColors)
     : mBrightnessCache()
 {
@@ -5466,43 +5460,48 @@ bool BlockRenderer::tesselateWallInWorld(const BlockState* state, const BlockPos
     bool eastWestThrough = !south && !north && east && west;
     bool aboveEmpty = mLevelSource->isEmptyBlock(pos.offset(0, 1, 0));
 
-    float center = 0.5f;
-    float armHalfWidth = WALL_ARM_HALF_WIDTH;
-    float armHeight = WALL_ARM_HEIGHT;
-    float postHalfWidth = WALL_POST_HALF_WIDTH;
-
-    if ((northSouthThrough || eastWestThrough) && aboveEmpty)
+    if (!(northSouthThrough || eastWestThrough) || !aboveEmpty)
     {
-        if (northSouthThrough)
-            setShape(center - armHalfWidth, 0.0f, 0.0f, armHalfWidth + center, armHeight, 1.0f);
-        else
-            setShape(0.0f, 0.0f, center - armHalfWidth, 1.0f, armHeight, armHalfWidth + center);
-        tesselateBlockInWorld(state, pos);
-    }
-    else
-    {
-        float postMin = center - postHalfWidth;
-        float postMax = postHalfWidth + center;
-        setShape(postMin, 0.0f, postMin, postMax, WALL_POST_HEIGHT, postMax);
+        float postMin = 0.5f - WallBlock::POST_HALF_WIDTH;
+        float postMax = WallBlock::POST_HALF_WIDTH + 0.5f;
+        setShape(postMin, 0.0f, postMin, postMax, WallBlock::POST_HEIGHT, postMax);
         tesselateBlockInWorld(state, pos);
         if (east)
         {
-            setShape(0.0f, 0.0f, center - armHalfWidth, postMin, armHeight, armHalfWidth + center);
+            setShape(0.0f, 0.0f, 0.5f - WallBlock::ARM_HALF_WIDTH, postMin, WallBlock::ARM_HEIGHT,
+                     WallBlock::ARM_HALF_WIDTH + 0.5f);
             tesselateBlockInWorld(state, pos);
         }
         if (west)
         {
-            setShape(postMax, 0.0f, center - armHalfWidth, 1.0f, armHeight, armHalfWidth + center);
+            setShape(postMax, 0.0f, 0.5f - WallBlock::ARM_HALF_WIDTH, 1.0f, WallBlock::ARM_HEIGHT,
+                     WallBlock::ARM_HALF_WIDTH + 0.5f);
             tesselateBlockInWorld(state, pos);
         }
         if (south)
         {
-            setShape(center - armHalfWidth, 0.0f, 0.0f, armHalfWidth + center, armHeight, postMin);
+            setShape(0.5f - WallBlock::ARM_HALF_WIDTH, 0.0f, 0.0f, WallBlock::ARM_HALF_WIDTH + 0.5f,
+                     WallBlock::ARM_HEIGHT, postMin);
             tesselateBlockInWorld(state, pos);
         }
         if (north)
         {
-            setShape(center - armHalfWidth, 0.0f, postMax, armHalfWidth + center, armHeight, 1.0f);
+            setShape(0.5f - WallBlock::ARM_HALF_WIDTH, 0.0f, postMax, WallBlock::ARM_HALF_WIDTH + 0.5f,
+                     WallBlock::ARM_HEIGHT, 1.0f);
+            tesselateBlockInWorld(state, pos);
+        }
+    }
+    else
+    {
+        float armMin = 0.5f - WallBlock::ARM_HALF_WIDTH;
+        if (northSouthThrough)
+        {
+            setShape(armMin, 0.0f, 0.0f, WallBlock::ARM_HALF_WIDTH + 0.5f, WallBlock::ARM_HEIGHT, 1.0f);
+            tesselateBlockInWorld(state, pos);
+        }
+        else
+        {
+            setShape(0.0f, 0.0f, armMin, 1.0f, WallBlock::ARM_HEIGHT, WallBlock::ARM_HALF_WIDTH + 0.5f);
             tesselateBlockInWorld(state, pos);
         }
     }
@@ -6483,7 +6482,7 @@ bool BlockRenderer::tesselatePistonBaseInWorld(const BlockState* state, const Bl
     const BlockState* renderState = actualState == NULL ? state : actualState;
     bool extended = forceExtended || renderState->getValue(PistonBaseBlock::EXTENDED);
     const Direction* facing = renderState->getValue(PistonBaseBlock::FACING);
-    float headThickness = PISTON_PLATFORM_THICKNESS;
+    float headThickness = PistonBaseBlock::PLATFORM_THICKNESS;
 
     if (extended)
     {
@@ -6595,7 +6594,7 @@ void BlockRenderer::renderPistonArmUpDown(float x0, float x1, float y0, float y1
     float u0 = (float)texture->getU0(false);
     float v0 = (float)texture->getV0(false);
     float u1 = (float)texture->getU(length);
-    float v1 = (float)texture->getV(0.25f);
+    float v1 = (float)texture->getV(PistonBaseBlock::PLATFORM_THICKNESS);
     texture->adjustUVs(u0, u1, v0, v1);
     builder->color(shade, shade, shade);
     builder->vertexUV(x0, y1, z0, u1, v0);
@@ -6613,7 +6612,7 @@ void BlockRenderer::renderPistonArmNorthSouth(float x0, float x1, float y0, floa
     float u0 = (float)texture->getU0(false);
     float v0 = (float)texture->getV0(false);
     float u1 = (float)texture->getU(length);
-    float v1 = (float)texture->getV(0.25f);
+    float v1 = (float)texture->getV(PistonBaseBlock::PLATFORM_THICKNESS);
     texture->adjustUVs(u0, u1, v0, v1);
     builder->color(shade, shade, shade);
     builder->vertexUV(x0, y0, z1, u1, v0);
@@ -6631,7 +6630,7 @@ void BlockRenderer::renderPistonArmEastWest(float x0, float x1, float y0, float 
     float u0 = (float)texture->getU0(false);
     float v0 = (float)texture->getV0(false);
     float u1 = (float)texture->getU(length);
-    float v1 = (float)texture->getV(0.25f);
+    float v1 = (float)texture->getV(PistonBaseBlock::PLATFORM_THICKNESS);
     texture->adjustUVs(u0, u1, v0, v1);
     builder->color(shade, shade, shade);
     builder->vertexUV(x1, y0, z0, u1, v0);
@@ -6647,7 +6646,7 @@ bool BlockRenderer::tesselatePistonExtensionInWorld(const BlockState* state, con
     const BlockState* renderState = actualState == NULL ? state : actualState;
     const Direction* facing = renderState->getValue(PistonHeadBlock::FACING);
 
-    float headThickness = 0.25f;
+    float headThickness = PistonBaseBlock::PLATFORM_THICKNESS;
     float rodNear = 0.5f - headThickness * 0.5f;
     float rodFar = headThickness * 0.5f + 0.5f;
     float armLength;
@@ -7394,7 +7393,7 @@ bool BlockRenderer::tesselateFlowerPotInWorld(const BlockState* state, const Blo
     }
     builder->color(red, green, blue);
 
-    double inset = 0.375 * 0.5;
+    double inset = FlowerPotBlock::POT_WIDTH * 0.5;
     renderEast(state, (double)pos.x - 0.5 + inset, (double)pos.y, (double)pos.z, texture);
     renderWest(state, (double)pos.x + 0.5 - inset, (double)pos.y + 0.003125, (double)pos.z, texture);
     renderSouth(state, (double)pos.x, (double)pos.y, (double)pos.z - 0.5 + inset, texture);

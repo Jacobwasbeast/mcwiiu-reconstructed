@@ -36,27 +36,22 @@ void BarrierParticle::render(BufferBuilder* buffer,
                              float xa2,
                              float za2)
 {
-    float u0 = (float)sprite->getU0(false);
-    float u1 = (float)sprite->getU1(false);
-    float v0 = (float)sprite->getV0(false);
-    float v1 = (float)sprite->getV1(false);
+    float u0 = sprite->getU0(false);
+    float u1 = sprite->getU1(false);
+    float v0 = sprite->getV0(false);
+    float v1 = sprite->getV1(false);
     float scale = 0.5f;
     float px = (float)(xo + (x - xo) * partialTicks - Particle::xOff);
     float py = (float)(yo + (y - yo) * partialTicks - Particle::yOff);
     float pz = (float)(zo + (z - zo) * partialTicks - Particle::zOff);
-    float x1 = xa * scale;
-    float y1 = ya * scale;
-    float z1 = za * scale;
-    float x2 = xa2 * scale;
-    float z2 = za2 * scale;
     int light = getLightColor(partialTicks);
 
     buffer->color(rCol, gCol, bCol);
     buffer->tex2(light);
-    buffer->vertexUV(px - x1 - x2, py - y1, pz - z1 - z2, u1, v1);
-    buffer->vertexUV(px - x1 + x2, py + y1, pz - z1 + z2, u1, v0);
-    buffer->vertexUV(px + x1 + x2, py + y1, pz + z1 + z2, u0, v0);
-    buffer->vertexUV(px + x1 - x2, py - y1, pz + z1 - z2, u0, v1);
+    buffer->vertexUV(px - xa * scale - xa2 * scale, py - ya * scale, pz - za * scale - za2 * scale, u1, v1);
+    buffer->vertexUV(px - xa * scale + xa2 * scale, py + ya * scale, pz - za * scale + za2 * scale, u1, v0);
+    buffer->vertexUV(px + xa * scale + xa2 * scale, py + ya * scale, pz + za * scale + za2 * scale, u0, v0);
+    buffer->vertexUV(px + xa * scale - xa2 * scale, py - ya * scale, pz + za * scale - za2 * scale, u0, v1);
 }
 
 uint64_t BarrierParticle::GetType()

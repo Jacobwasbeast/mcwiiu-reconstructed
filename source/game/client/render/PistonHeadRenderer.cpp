@@ -67,7 +67,7 @@ void PistonHeadRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, doub
     builder->color(1.0F, 1.0F, 1.0F);
     onNewLevel(getLevel());
 
-    if (movedBlock == Blocks::piston_head && movingBlock->getProgress(partialTick) <= 0.25F)
+    if (movedBlock == Blocks::piston_head && movingBlock->getProgress(partialTick) <= PistonBaseBlock::PLATFORM_THICKNESS)
     {
         const BlockState* headState = movedState->setValue(PistonHeadBlock::SHORT, true);
         mBlockRenderer->tesselatePistonArmNoCulling(headState, position, false, headState);

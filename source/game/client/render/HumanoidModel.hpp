@@ -57,6 +57,9 @@ public:
         eAnimBit_ArmourLeftLeg = 30
     };
 
+    static const float HAT_INFLATE;
+    static const float OVERLAY_INFLATE;
+
     HumanoidModel(const ModelDefinition& definition, bool armourModel);
     HumanoidModel(const ModelDefinition& definition, float scale, bool armourModel);
     HumanoidModel(const ModelDefinition& definition, float scale, float yOffset, int texWidth, int texHeight, bool armourModel, bool createParts, bool skinned);

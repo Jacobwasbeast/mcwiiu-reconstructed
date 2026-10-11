@@ -20,6 +20,8 @@
 #include "game/world/generation/Player.hpp"
 #include "vendor/SKIN_BOX.hpp"
 
+const float HumanoidModel::HAT_INFLATE = 0.5f;
+const float HumanoidModel::OVERLAY_INFLATE = 0.25f;
 
 HumanoidModel::HumanoidModel(const ModelDefinition& definition, float scale, bool armourModel)
 {

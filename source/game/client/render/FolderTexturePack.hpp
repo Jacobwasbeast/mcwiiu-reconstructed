@@ -16,7 +16,7 @@ public:
                       const std::wstring& name,
                       File* folder,
                       TexturePack* parentPack);
-    virtual ~FolderTexturePack();
+    virtual ~FolderTexturePack() {}
 
     virtual InputStream* getResourceImplementation(const std::wstring& fileName);
     virtual bool hasFile(const std::wstring& fileName);

@@ -51,9 +51,12 @@ void ExperienceOrbRenderer::render(boost::shared_ptr<Entity>& entity, double x, 
     GlStateManager::multiTexCoord2f((float)(brightness % 65536), (float)(brightness / 65536));
     GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
 
-    float angle = ((float)orb->mTickCount + partialTick) * 0.5F;
-    int red = (int)((Mth::sin(angle) + 1.0F) * 0.5F * 255.0F);
-    int blue = (int)((Mth::sin(angle + 4.1887903F) + 1.0F) * 0.1F * 255.0F);
+    float br = 255.0F;
+    float angle = ((float)orb->mTickCount + partialTick) / 2.0F;
+    int red = (int)((Mth::sin(angle + 0.0F) + 1.0F) * 0.5F * br);
+    int green = 255;
+    int blue = (int)((Mth::sin(angle + 4.1887903F) + 1.0F) * 0.1F * br);
+    int color = red << 16 | green << 8 | blue;
     float scale = 0.3F;
     GlStateManager::translatef(0.0F, 0.1F, 0.0F);
     GlStateManager::rotatef(180.0F - mDispatcher->mCameraYRot, 0.0F, 1.0F, 0.0F);
@@ -63,7 +66,7 @@ void ExperienceOrbRenderer::render(boost::shared_ptr<Entity>& entity, double x, 
 
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     builder->begin();
-    builder->color(red << 16 | 0xFF00 | blue, 128);
+    builder->color(color, 128);
     builder->normal(0.0F, 1.0F, 0.0F);
     builder->vertexUV(-0.5F, -0.25F, 0.0F, u0, v1);
     builder->vertexUV(0.5F, -0.25F, 0.0F, u1, v1);

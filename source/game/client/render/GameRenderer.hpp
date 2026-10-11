@@ -38,6 +38,7 @@ class GameRenderer
 {
 public:
     static const int EFFECT_NONE = 24;
+    static const float NAME_TAG_SCALE;
 
     struct PositionStruct
     {
@@ -72,7 +73,7 @@ public:
     void tickRain();
     void tick(bool);
     void pick(float);
-    double getFov(float, bool);
+    float getFov(float, bool);
     void bobHurt(float);
     void bobView(float);
     unsigned int getCameraThirdPerson();

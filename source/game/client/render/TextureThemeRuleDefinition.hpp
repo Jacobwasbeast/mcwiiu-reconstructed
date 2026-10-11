@@ -59,7 +59,7 @@ public:
     TextureThemeRuleDefinition();
     virtual ~TextureThemeRuleDefinition();
     virtual ConsoleGameRules::EGameRuleType getActionType();
-    virtual TextureTheme* Generate() const;
+    virtual LayerTheme* Generate() const;
     virtual GameRuleDefinition* addChild(ConsoleGameRules::EGameRuleType type);
 
 private:

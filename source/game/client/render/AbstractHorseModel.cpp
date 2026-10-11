@@ -368,8 +368,8 @@ void AbstractHorseModel::render(boost::shared_ptr<Entity>& entity, float limbSwi
     bool chestedHorse = type == EntityType::DONKEY || type == EntityType::MULE;
     bool hasChest = !baby && chestedHorse && boost::static_pointer_cast<AbstractChestedHorse>(horse).get()->hasChest();
 
-    bool ridden = horse.get()->isVehicle();
     float foalScale = horse.get()->getFoalScale();
+    bool ridden = horse.get()->isVehicle();
 
     mSaddle->mShow = saddled;
     mSaddleMouthLine->mShow = saddled && ridden;

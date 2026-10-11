@@ -5,11 +5,6 @@
 #include "game/core/File.hpp"
 #include "game/core/InputStream.hpp"
 
-FolderTexturePack::~FolderTexturePack()
-{
-    return;
-}
-
 InputStream* FolderTexturePack::getResourceImplementation(const std::wstring& fileName)
 {
     std::wstring strPath = L"";

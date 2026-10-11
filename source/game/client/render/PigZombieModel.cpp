@@ -54,7 +54,7 @@ void PigZombieModel::init(const ModelDefinition& definition, float scale, bool a
         mHead->setPos(0.0f, 0.0f, 0.0f);
 
         mHat = createModelPart(true, 32, 0);
-        mHat->addHumanoidBox(-4.0f, -8.0f, -4.0f, 8, 8, 8, scale + 0.5f);
+        mHat->addHumanoidBox(-4.0f, -8.0f, -4.0f, 8, 8, 8, scale + HAT_INFLATE);
         mHat->setPos(0.0f, 0.0f, 0.0f);
 
         mBody = createModelPart(true, 16, 16);
@@ -104,17 +104,7 @@ void PigZombieModel::setupAnim(float limbSwing, float limbSwingAmount, float age
 {
     HumanoidModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
 
-    bool angry = false;
-
-    if (eTYPE_DERIVED_FROM(EntityType::PIG_ZOMBIE, entity->GetType()))
-    {
-        boost::shared_ptr<PigZombie> pigZombie = boost::static_pointer_cast<PigZombie>(entity);
-
-        if (pigZombie->isAggressive())
-        {
-            angry = true;
-        }
-    }
+    bool angry = eTYPE_DERIVED_FROM(EntityType::PIG_ZOMBIE, entity->GetType()) && boost::static_pointer_cast<PigZombie>(entity)->isAggressive();
 
     float attackSwing = Mth::sin(mAttackTime * 3.1415927f);
     float attackEase = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927f);

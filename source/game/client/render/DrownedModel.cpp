@@ -153,8 +153,7 @@ void DrownedModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
 {
     ZombieModel::setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, skinAdjustments);
 
-    bool isDrowned = eTYPE_DERIVED_FROM(EntityType::DROWNED, entity->GetType());
-    float swimAmount = (float)(isDrowned && boost::static_pointer_cast<Drowned>(entity)->getSwimAmount(limbSwingAmount) != 0.0f);
+    float swimAmount = eTYPE_DERIVED_FROM(EntityType::DROWNED, entity->GetType()) && boost::static_pointer_cast<Drowned>(entity)->getSwimAmount(limbSwingAmount) != 0.0f;
 
     float swing = Mth::sin(mAttackTime * 3.1415927f);
     float swingBack = Mth::sin((1.0f - (1.0f - mAttackTime) * (1.0f - mAttackTime)) * 3.1415927f);
@@ -172,12 +171,12 @@ void DrownedModel::setupAnim(float limbSwing, float limbSwingAmount, float ageIn
         mRightArm->mXRot -= armSwing;
         mLeftArm->mXRot -= armSwing;
 
-        float zBob = swimAmount * (swimAmount * (Mth::cos(ageInTicks * 0.09f) * 0.05f + 0.05f));
-        float xBob = swimAmount * (swimAmount * (Mth::sin(ageInTicks * 0.067f) * 0.05f));
-        mRightArm->mZRot += zBob;
-        mLeftArm->mZRot -= zBob;
-        mRightArm->mXRot += xBob;
-        mLeftArm->mXRot -= xBob;
+        float zBob = swimAmount * (Mth::cos(ageInTicks * 0.09f) * 0.05f + 0.05f);
+        float xBob = swimAmount * (Mth::sin(ageInTicks * 0.067f) * 0.05f);
+        mRightArm->mZRot += swimAmount * zBob;
+        mLeftArm->mZRot -= swimAmount * zBob;
+        mRightArm->mXRot += swimAmount * xBob;
+        mLeftArm->mXRot -= swimAmount * xBob;
     }
 }
 
@@ -188,19 +187,7 @@ void DrownedModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, floa
 
     not_null_ptr<ItemInstance> itemInHand = entity->getItemInHand(InteractionHand::eInteractionHand_MainHand);
 
-    bool throwingSpear = false;
-
-    if (itemInHand->getItem() == Items::trident)
-    {
-        boost::shared_ptr<Drowned> drowned = boost::static_pointer_cast<Drowned>(entity);
-
-        if (drowned->isAggressive())
-        {
-            throwingSpear = true;
-        }
-    }
-
-    if (throwingSpear)
+    if (itemInHand->getItem() == Items::trident && boost::static_pointer_cast<Drowned>(entity)->isAggressive())
     {
         if (entity->getMainArm() == HumanoidArm::RIGHT)
         {

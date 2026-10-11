@@ -39,7 +39,7 @@ ConsoleGameRules::EGameRuleType TextureThemeRuleDefinition::getActionType()
     return ConsoleGameRules::eGameRuleType_TextureTheme;
 }
 
-TextureTheme* TextureThemeRuleDefinition::Generate() const
+LayerTheme* TextureThemeRuleDefinition::Generate() const
 {
     TextureTheme* theme = new TextureTheme();
     for (std::vector<LayerTexture*>::const_iterator it = mLayerTextures.begin(); it != mLayerTextures.end(); ++it)

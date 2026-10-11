@@ -74,7 +74,25 @@ void WolfModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float
                        float netHeadYaw, float headPitch, float scale, bool useDisplayList)
 {
     setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity, _SkinAdjustments());
-    if (!mYoung)
+    if (mYoung)
+    {
+        GlStateManager::pushMatrix();
+        GlStateManager::translatef(0.0f, 5.0f * scale, scale + scale);
+        mHead->renderRollable(scale, useDisplayList);
+        GlStateManager::popMatrix();
+        GlStateManager::pushMatrix();
+        GlStateManager::scalef(0.5f, 0.5f, 0.5f);
+        GlStateManager::translatef(0.0f, 24.0f * scale, 0.0f);
+        mBody->render(scale, useDisplayList, false);
+        mLeg1->render(scale, useDisplayList, false);
+        mLeg2->render(scale, useDisplayList, false);
+        mLeg3->render(scale, useDisplayList, false);
+        mLeg4->render(scale, useDisplayList, false);
+        mTail->renderRollable(scale, useDisplayList);
+        mUpperBody->render(scale, useDisplayList, false);
+        GlStateManager::popMatrix();
+    }
+    else
     {
         mHead->renderRollable(scale, useDisplayList);
         mBody->render(scale, useDisplayList, false);
@@ -84,60 +102,24 @@ void WolfModel::render(boost::shared_ptr<Entity>& entity, float limbSwing, float
         mLeg4->render(scale, useDisplayList, false);
         mTail->renderRollable(scale, useDisplayList);
         mUpperBody->render(scale, useDisplayList, false);
-        callSkinnedDrawlist();
-        return;
     }
-    GlStateManager::pushMatrix();
-    GlStateManager::translatef(0.0f, 5.0f * scale, scale + scale);
-    mHead->renderRollable(scale, useDisplayList);
-    GlStateManager::popMatrix();
-    GlStateManager::pushMatrix();
-    GlStateManager::scalef(0.5f, 0.5f, 0.5f);
-    GlStateManager::translatef(0.0f, 24.0f * scale, 0.0f);
-    mBody->render(scale, useDisplayList, false);
-    mLeg1->render(scale, useDisplayList, false);
-    mLeg2->render(scale, useDisplayList, false);
-    mLeg3->render(scale, useDisplayList, false);
-    mLeg4->render(scale, useDisplayList, false);
-    mTail->renderRollable(scale, useDisplayList);
-    mUpperBody->render(scale, useDisplayList, false);
-    GlStateManager::popMatrix();
     callSkinnedDrawlist();
 }
 void WolfModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float limbSwing,
                                 float limbSwingAmount, float partialTicks)
 {
     boost::shared_ptr<Wolf> wolf = boost::dynamic_pointer_cast<Wolf>(entity);
-    ModelPart* upperBody = mUpperBody;
 
     if (wolf->isAngry())
         mTail->mYRot = 0.0f;
     else
         mTail->mYRot = Mth::cos(limbSwing * 0.6662f) * 1.4f * limbSwingAmount;
 
-    if (!wolf->isSitting())
+    if (wolf->isSitting())
     {
-        mBody->setPos(0.0f, 14.0f, 2.0f);
-        mBody->mXRot = 90.0f * Mth::DEG_TO_RAD;
-        upperBody->setPos(-1.0f, 14.0f, -3.0f);
-        upperBody->mXRot = mBody->mXRot;
-        mTail->setPos(-1.0f, 12.0f, 8.0f);
-        mLeg1->setPos(-2.5f, 16.0f, 7.0f);
-        mLeg2->setPos(0.5f, 16.0f, 7.0f);
-        mLeg3->setPos(-2.5f, 16.0f, -4.0f);
-        mLeg4->setPos(0.5f, 16.0f, -4.0f);
-
-        float f = limbSwing * 0.6662f;
-        mLeg1->mXRot = Mth::cos(f) * 1.4f * limbSwingAmount;
-        mLeg2->mXRot = Mth::cos(f + 3.1415927f) * 1.4f * limbSwingAmount;
-        mLeg3->mXRot = Mth::cos(f + 3.1415927f) * 1.4f * limbSwingAmount;
-        mLeg4->mXRot = Mth::cos(f) * 1.4f * limbSwingAmount;
-    }
-    else
-    {
-        upperBody->setPos(-1.0f, 16.0f, -3.0f);
-        upperBody->mXRot = 1.2566371f;
-        upperBody->mYRot = 0.0f;
+        mUpperBody->setPos(-1.0f, 16.0f, -3.0f);
+        mUpperBody->mXRot = 1.2566371f;
+        mUpperBody->mYRot = 0.0f;
         mBody->setPos(0.0f, 18.0f, 0.0f);
         mBody->mXRot = 0.7853982f;
         mTail->setPos(-1.0f, 21.0f, 6.0f);
@@ -145,15 +127,32 @@ void WolfModel::prepareMobModel(boost::shared_ptr<LivingEntity>& entity, float l
         mLeg1->mXRot = 4.712389f;
         mLeg2->setPos(0.5f, 22.0f, 2.0f);
         mLeg2->mXRot = 4.712389f;
-        mLeg3->setPos(-2.49f, 17.0f, -4.0f);
         mLeg3->mXRot = 5.811947f;
-        mLeg4->setPos(0.51f, 17.0f, -4.0f);
+        mLeg3->setPos(-2.49f, 17.0f, -4.0f);
         mLeg4->mXRot = 5.811947f;
+        mLeg4->setPos(0.51f, 17.0f, -4.0f);
+    }
+    else
+    {
+        mBody->setPos(0.0f, 14.0f, 2.0f);
+        mBody->mXRot = 90.0f * Mth::DEG_TO_RAD;
+        mUpperBody->setPos(-1.0f, 14.0f, -3.0f);
+        mUpperBody->mXRot = mBody->mXRot;
+        mTail->setPos(-1.0f, 12.0f, 8.0f);
+        mLeg1->setPos(-2.5f, 16.0f, 7.0f);
+        mLeg2->setPos(0.5f, 16.0f, 7.0f);
+        mLeg3->setPos(-2.5f, 16.0f, -4.0f);
+        mLeg4->setPos(0.5f, 16.0f, -4.0f);
+
+        mLeg1->mXRot = Mth::cos(limbSwing * 0.6662f) * 1.4f * limbSwingAmount;
+        mLeg2->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * 1.4f * limbSwingAmount;
+        mLeg3->mXRot = Mth::cos(limbSwing * 0.6662f + 3.1415927f) * 1.4f * limbSwingAmount;
+        mLeg4->mXRot = Mth::cos(limbSwing * 0.6662f) * 1.4f * limbSwingAmount;
     }
 
-    mHead->mZRot = (float)(wolf->getHeadRollAngle(partialTicks)
-                         + wolf->getBodyRollAngle(partialTicks, 0.0f));
-    upperBody->mZRot = (float)wolf->getBodyRollAngle(partialTicks, -0.08f);
+    float headRoll = wolf->getHeadRollAngle(partialTicks) + wolf->getBodyRollAngle(partialTicks, 0.0f);
+    mHead->mZRot = headRoll;
+    mUpperBody->mZRot = (float)wolf->getBodyRollAngle(partialTicks, -0.08f);
     mBody->mZRot = (float)wolf->getBodyRollAngle(partialTicks, -0.16f);
     mTail->mZRot = (float)wolf->getBodyRollAngle(partialTicks, -0.2f);
 }

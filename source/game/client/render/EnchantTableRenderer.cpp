@@ -1,6 +1,6 @@
 #include "game/client/render/EnchantTableRenderer.hpp"
 
-#include <math.h>
+#include <cmath>
 
 #include "game/client/render/BookModel.hpp"
 #include "game/client/render/ModelDefinition.hpp"
@@ -29,7 +29,7 @@ void EnchantTableRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
     GlStateManager::translatef((float)x + 0.5F, (float)y + 0.75F, (float)z + 0.5F);
 
     float time = (float)enchantmentTable->mTime + a;
-    GlStateManager::translatef(0.0F, sinf(time * 0.1F) * 0.01F + 0.1F, 0.0F);
+    GlStateManager::translatef(0.0F, 0.1F + sin(time * 0.1F) * 0.01F, 0.0F);
 
     float rotation = enchantmentTable->mRot - enchantmentTable->mRotOld;
     while (rotation >= 3.1415927F)
@@ -41,7 +41,8 @@ void EnchantTableRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
         rotation += 6.2831855F;
     }
 
-    GlStateManager::rotatef(-(enchantmentTable->mRotOld + rotation * a) * 57.295776F, 0.0F, 1.0F, 0.0F);
+    float bookRotation = enchantmentTable->mRotOld + rotation * a;
+    GlStateManager::rotatef(-bookRotation * Mth::RAD_TO_DEG, 0.0F, 1.0F, 0.0F);
     GlStateManager::rotatef(80.0F, 0.0F, 0.0F, 1.0F);
     bindTexture(&BOOK_TEXTURE);
 
@@ -67,8 +68,8 @@ void EnchantTableRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, do
     }
 
     float open = enchantmentTable->mOpenOld + (enchantmentTable->mOpen - enchantmentTable->mOpenOld) * a;
-    boost::shared_ptr<Entity> entity;
     GlStateManager::enableCull();
+    boost::shared_ptr<Entity> entity;
     mBookModel->render(entity, time, page1, page2, open, 0.0F, 0.0625F, true);
 
     GlStateManager::popMatrix();

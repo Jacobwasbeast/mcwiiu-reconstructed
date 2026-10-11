@@ -10,7 +10,7 @@
 
 class Entity;
 class LivingEntity;
-class ModelPart;
+class ModelPartSkin;
 
 class AbstractHorseModel : public Model
 {
@@ -25,28 +25,28 @@ public:
 
     float rotlerp(float from, float to, float delta);
 
-    ModelPart* mBody;
-    ModelPart* mHead;
-    ModelPart* mUMouth;
-    ModelPart* mNeck;
-    ModelPart* mMane;
-    ModelPart* mEar1;
-    ModelPart* mEar2;
-    ModelPart* mMuleEarL;
-    ModelPart* mMuleEarR;
-    ModelPart* mBag1;
-    ModelPart* mBag2;
-    ModelPart* mSaddle;
-    ModelPart* mSaddleMouthL;
-    ModelPart* mSaddleMouthR;
-    ModelPart* mSaddleMouthLine;
-    ModelPart* mSaddleMouthLineR;
-    ModelPart* mHeadSaddle;
-    ModelPart* mLeg1A;
-    ModelPart* mLeg2A;
-    ModelPart* mLeg3A;
-    ModelPart* mLeg4A;
-    ModelPart* mTailA;
+    ModelPartSkin* mBody;
+    ModelPartSkin* mHead;
+    ModelPartSkin* mUMouth;
+    ModelPartSkin* mNeck;
+    ModelPartSkin* mMane;
+    ModelPartSkin* mEar1;
+    ModelPartSkin* mEar2;
+    ModelPartSkin* mMuleEarL;
+    ModelPartSkin* mMuleEarR;
+    ModelPartSkin* mBag1;
+    ModelPartSkin* mBag2;
+    ModelPartSkin* mSaddle;
+    ModelPartSkin* mSaddleMouthL;
+    ModelPartSkin* mSaddleMouthR;
+    ModelPartSkin* mSaddleMouthLine;
+    ModelPartSkin* mSaddleMouthLineR;
+    ModelPartSkin* mHeadSaddle;
+    ModelPartSkin* mLeg1A;
+    ModelPartSkin* mLeg2A;
+    ModelPartSkin* mLeg3A;
+    ModelPartSkin* mLeg4A;
+    ModelPartSkin* mTailA;
     float mLeg3ADefaultY;
     float mLeg3ADefaultZ;
     float mBag2DefaultY;

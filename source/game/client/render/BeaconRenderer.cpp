@@ -32,6 +32,7 @@ void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double parti
                                       arrayWithLength<const float> colors, double innerRadius,
                                       double outerRadius)
 {
+    int topY = startY + endY;
     GlStateManager::disableLighting();
     GlStateManager::colorMask(true, true, true, false);
     GlStateManager::disableCull();
@@ -42,74 +43,68 @@ void BeaconRenderer::renderBeaconBeam(double x, double y, double z, double parti
     BufferBuilder* builder = Tesselator::getInstance()->getBuilder();
     double time = gameTime + partialTicks;
     double signedTime = endY < 0 ? time : -time;
-    double v0 = Mth::frac(signedTime * 0.2 - (double)Mth::floor(signedTime * 0.1)) + -1.0;
-    double angle = time * 0.025 * -1.5;
-    double corner0 = angle + 2.35619455575943;
-    double corner1 = angle + 0.7853981852531433;
-    double corner2 = angle + 3.9269909262657166;
-    double corner3 = angle + 5.497787296772003;
-    double v1 = (double)endY * beamHeight * 2.5 + v0;
+    double offset = Mth::frac(signedTime * 0.2 - (double)Mth::floor(signedTime * 0.1));
     float red = colors.data[0];
     float green = colors.data[1];
     float blue = colors.data[2];
-
-    double x0 = x + (std::cos(corner0) * 0.2 + 0.5);
-    double z0 = z + (std::sin(corner0) * 0.2 + 0.5);
-    double x1 = x + (std::cos(corner1) * 0.2 + 0.5);
-    double z1 = z + (std::sin(corner1) * 0.2 + 0.5);
-    double x2 = x + (std::cos(corner2) * 0.2 + 0.5);
-    double z2 = z + (std::sin(corner2) * 0.2 + 0.5);
-    double x3 = x + (std::cos(corner3) * 0.2 + 0.5);
-    double z3 = z + (std::sin(corner3) * 0.2 + 0.5);
-    double y0 = y + (double)startY;
-    double y1 = y + (double)(startY + endY);
+    double angle = time * 0.025 * -1.5;
+    double x0 = 0.5 + std::cos(angle + 2.35619455575943) * 0.2;
+    double z0 = 0.5 + std::sin(angle + 2.35619455575943) * 0.2;
+    double x1 = 0.5 + std::cos(angle + 0.7853981852531433) * 0.2;
+    double z1 = 0.5 + std::sin(angle + 0.7853981852531433) * 0.2;
+    double x2 = 0.5 + std::cos(angle + 3.9269909262657166) * 0.2;
+    double z2 = 0.5 + std::sin(angle + 3.9269909262657166) * 0.2;
+    double x3 = 0.5 + std::cos(angle + 5.497787296772003) * 0.2;
+    double z3 = 0.5 + std::sin(angle + 5.497787296772003) * 0.2;
+    double v0 = -1.0 + offset;
+    double v1 = (double)endY * beamHeight * 2.5 + v0;
 
     builder->begin();
     builder->color(red, green, blue, 0.125F);
-    builder->vertexUV((float)x0, (float)y1, (float)z0, 1.0F, (float)v1);
-    builder->vertexUV((float)x0, (float)y0, (float)z0, 1.0F, (float)v0);
-    builder->vertexUV((float)x1, (float)y0, (float)z1, 0.0F, (float)v0);
-    builder->vertexUV((float)x1, (float)y1, (float)z1, 0.0F, (float)v1);
-    builder->vertexUV((float)x3, (float)y1, (float)z3, 1.0F, (float)v1);
-    builder->vertexUV((float)x3, (float)y0, (float)z3, 1.0F, (float)v0);
-    builder->vertexUV((float)x2, (float)y0, (float)z2, 0.0F, (float)v0);
-    builder->vertexUV((float)x2, (float)y1, (float)z2, 0.0F, (float)v1);
-    builder->vertexUV((float)x1, (float)y1, (float)z1, 1.0F, (float)v1);
-    builder->vertexUV((float)x1, (float)y0, (float)z1, 1.0F, (float)v0);
-    builder->vertexUV((float)x3, (float)y0, (float)z3, 0.0F, (float)v0);
-    builder->vertexUV((float)x3, (float)y1, (float)z3, 0.0F, (float)v1);
-    builder->vertexUV((float)x2, (float)y1, (float)z2, 1.0F, (float)v1);
-    builder->vertexUV((float)x2, (float)y0, (float)z2, 1.0F, (float)v0);
-    builder->vertexUV((float)x0, (float)y0, (float)z0, 0.0F, (float)v0);
-    builder->vertexUV((float)x0, (float)y1, (float)z0, 0.0F, (float)v1);
+    builder->vertexUV((float)(x + x0), (float)(y + (double)topY), (float)(z + z0), 1.0F, (float)v1);
+    builder->vertexUV((float)(x + x0), (float)(y + (double)startY), (float)(z + z0), 1.0F, (float)v0);
+    builder->vertexUV((float)(x + x1), (float)(y + (double)startY), (float)(z + z1), 0.0F, (float)v0);
+    builder->vertexUV((float)(x + x1), (float)(y + (double)topY), (float)(z + z1), 0.0F, (float)v1);
+    builder->vertexUV((float)(x + x3), (float)(y + (double)topY), (float)(z + z3), 1.0F, (float)v1);
+    builder->vertexUV((float)(x + x3), (float)(y + (double)startY), (float)(z + z3), 1.0F, (float)v0);
+    builder->vertexUV((float)(x + x2), (float)(y + (double)startY), (float)(z + z2), 0.0F, (float)v0);
+    builder->vertexUV((float)(x + x2), (float)(y + (double)topY), (float)(z + z2), 0.0F, (float)v1);
+    builder->vertexUV((float)(x + x1), (float)(y + (double)topY), (float)(z + z1), 1.0F, (float)v1);
+    builder->vertexUV((float)(x + x1), (float)(y + (double)startY), (float)(z + z1), 1.0F, (float)v0);
+    builder->vertexUV((float)(x + x3), (float)(y + (double)startY), (float)(z + z3), 0.0F, (float)v0);
+    builder->vertexUV((float)(x + x3), (float)(y + (double)topY), (float)(z + z3), 0.0F, (float)v1);
+    builder->vertexUV((float)(x + x2), (float)(y + (double)topY), (float)(z + z2), 1.0F, (float)v1);
+    builder->vertexUV((float)(x + x2), (float)(y + (double)startY), (float)(z + z2), 1.0F, (float)v0);
+    builder->vertexUV((float)(x + x0), (float)(y + (double)startY), (float)(z + z0), 0.0F, (float)v0);
+    builder->vertexUV((float)(x + x0), (float)(y + (double)topY), (float)(z + z0), 0.0F, (float)v1);
     builder->end();
 
     GlStateManager::enableBlend();
     GlStateManager::blendFunc(4, 5);
     GlStateManager::depthMask(false);
+    double glowMin = 0.2;
+    double glowMax = 0.8;
+    double glowV0 = -1.0 + offset;
+    double glowV1 = (double)endY * beamHeight + glowV0;
+
     builder->begin();
     builder->color(red, green, blue, 0.125F);
-    double glowX0 = x + 0.2;
-    double glowX1 = x + 0.8;
-    double glowZ0 = z + 0.2;
-    double glowZ1 = z + 0.8;
-    double glowV1 = (double)endY * beamHeight + v0;
-    builder->vertexUV((float)glowX0, (float)y1, (float)glowZ0, 1.0F, (float)glowV1);
-    builder->vertexUV((float)glowX0, (float)y0, (float)glowZ0, 1.0F, (float)v0);
-    builder->vertexUV((float)glowX1, (float)y0, (float)glowZ0, 0.0F, (float)v0);
-    builder->vertexUV((float)glowX1, (float)y1, (float)glowZ0, 0.0F, (float)glowV1);
-    builder->vertexUV((float)glowX1, (float)y1, (float)glowZ1, 1.0F, (float)glowV1);
-    builder->vertexUV((float)glowX1, (float)y0, (float)glowZ1, 1.0F, (float)v0);
-    builder->vertexUV((float)glowX0, (float)y0, (float)glowZ1, 0.0F, (float)v0);
-    builder->vertexUV((float)glowX0, (float)y1, (float)glowZ1, 0.0F, (float)glowV1);
-    builder->vertexUV((float)glowX1, (float)y1, (float)glowZ0, 1.0F, (float)glowV1);
-    builder->vertexUV((float)glowX1, (float)y0, (float)glowZ0, 1.0F, (float)v0);
-    builder->vertexUV((float)glowX1, (float)y0, (float)glowZ1, 0.0F, (float)v0);
-    builder->vertexUV((float)glowX1, (float)y1, (float)glowZ1, 0.0F, (float)glowV1);
-    builder->vertexUV((float)glowX0, (float)y1, (float)glowZ1, 1.0F, (float)glowV1);
-    builder->vertexUV((float)glowX0, (float)y0, (float)glowZ1, 1.0F, (float)v0);
-    builder->vertexUV((float)glowX0, (float)y0, (float)glowZ0, 0.0F, (float)v0);
-    builder->vertexUV((float)glowX0, (float)y1, (float)glowZ0, 0.0F, (float)glowV1);
+    builder->vertexUV((float)(x + glowMin), (float)(y + (double)topY), (float)(z + glowMin), 1.0F, (float)glowV1);
+    builder->vertexUV((float)(x + glowMin), (float)(y + (double)startY), (float)(z + glowMin), 1.0F, (float)glowV0);
+    builder->vertexUV((float)(x + glowMax), (float)(y + (double)startY), (float)(z + glowMin), 0.0F, (float)glowV0);
+    builder->vertexUV((float)(x + glowMax), (float)(y + (double)topY), (float)(z + glowMin), 0.0F, (float)glowV1);
+    builder->vertexUV((float)(x + glowMax), (float)(y + (double)topY), (float)(z + glowMax), 1.0F, (float)glowV1);
+    builder->vertexUV((float)(x + glowMax), (float)(y + (double)startY), (float)(z + glowMax), 1.0F, (float)glowV0);
+    builder->vertexUV((float)(x + glowMin), (float)(y + (double)startY), (float)(z + glowMax), 0.0F, (float)glowV0);
+    builder->vertexUV((float)(x + glowMin), (float)(y + (double)topY), (float)(z + glowMax), 0.0F, (float)glowV1);
+    builder->vertexUV((float)(x + glowMax), (float)(y + (double)topY), (float)(z + glowMin), 1.0F, (float)glowV1);
+    builder->vertexUV((float)(x + glowMax), (float)(y + (double)startY), (float)(z + glowMin), 1.0F, (float)glowV0);
+    builder->vertexUV((float)(x + glowMax), (float)(y + (double)startY), (float)(z + glowMax), 0.0F, (float)glowV0);
+    builder->vertexUV((float)(x + glowMax), (float)(y + (double)topY), (float)(z + glowMax), 0.0F, (float)glowV1);
+    builder->vertexUV((float)(x + glowMin), (float)(y + (double)topY), (float)(z + glowMax), 1.0F, (float)glowV1);
+    builder->vertexUV((float)(x + glowMin), (float)(y + (double)startY), (float)(z + glowMax), 1.0F, (float)glowV0);
+    builder->vertexUV((float)(x + glowMin), (float)(y + (double)startY), (float)(z + glowMin), 0.0F, (float)glowV0);
+    builder->vertexUV((float)(x + glowMin), (float)(y + (double)topY), (float)(z + glowMin), 0.0F, (float)glowV1);
     builder->end();
     GlStateManager::enableLighting();
     GlStateManager::enableTexture();
@@ -160,45 +155,62 @@ void BeaconRenderer::renderSpecialBeamDirection(boost::shared_ptr<BlockEntity> b
 {
     boost::shared_ptr<BeaconBlockEntity> beacon = boost::static_pointer_cast<BeaconBlockEntity>(blockEntity);
     BlockPos position = beacon->getBlockPos();
-    int direction = beacon->getBeamDirection();
-    switch (direction)
+    float angle;
+    float axisX = 0.0F;
+    float axisY = 0.0F;
+    float axisZ = 0.0F;
+    float offsetX;
+    float offsetY;
+    float offsetZ;
+    bool rotated = true;
+    switch (beacon->getBeamDirection())
     {
     case 3:
-        GlStateManager::pushMatrix();
-        GlStateManager::translatef((float)x + ((float)(yOffset - position.y) + 0.5F),
-                                    (float)y + ((float)(position.x - xOffset) + 1.0F),
-                                    (float)z + (float)(zOffset - position.z));
-        GlStateManager::rotatef(-90.0F, 0.0F, 0.0F, 1.0F);
+        offsetX = (float)(yOffset - position.y) + 0.5F;
+        offsetY = (float)(position.x - xOffset) + 1.0F;
+        offsetZ = (float)(zOffset - position.z);
+        angle = -90.0F;
+        axisZ = 1.0F;
         break;
     case 4:
-        GlStateManager::pushMatrix();
-        GlStateManager::translatef((float)x + ((float)(position.y - yOffset) + 0.5F),
-                                    (float)y + (float)(xOffset - position.x),
-                                    (float)z + (float)(zOffset - position.z));
-        GlStateManager::rotatef(90.0F, 0.0F, 0.0F, 1.0F);
+        offsetX = (float)(position.y - yOffset) + 0.5F;
+        offsetY = (float)(xOffset - position.x);
+        offsetZ = (float)(zOffset - position.z);
+        angle = 90.0F;
+        axisZ = 1.0F;
         break;
     case 5:
-        GlStateManager::pushMatrix();
-        GlStateManager::translatef((float)x + (float)(xOffset - position.x),
-                                    (float)y + ((float)(position.z - zOffset) + 1.0F),
-                                    (float)z + ((float)(yOffset - position.y) + 0.5F));
-        GlStateManager::rotatef(90.0F, 1.0F, 0.0F, 0.0F);
+        offsetX = (float)(xOffset - position.x);
+        offsetY = (float)(position.z - zOffset) + 1.0F;
+        offsetZ = (float)(yOffset - position.y) + 0.5F;
+        angle = 90.0F;
+        axisX = 1.0F;
         break;
     case 6:
-        GlStateManager::pushMatrix();
-        GlStateManager::translatef((float)x + (float)(xOffset - position.x),
-                                    (float)y + (float)(zOffset - position.z),
-                                    (float)z + ((float)(position.y - yOffset) + 0.5F));
-        GlStateManager::rotatef(-90.0F, 1.0F, 0.0F, 0.0F);
+        offsetX = (float)(xOffset - position.x);
+        offsetY = (float)(zOffset - position.z);
+        offsetZ = (float)(position.y - yOffset) + 0.5F;
+        angle = -90.0F;
+        axisX = 1.0F;
         break;
     default:
+        rotated = false;
+        break;
+    }
+    if (rotated)
+    {
+        GlStateManager::pushMatrix();
+        GlStateManager::translatef((float)x + offsetX, (float)y + offsetY, (float)z + offsetZ);
+        GlStateManager::rotatef(angle, axisX, axisY, axisZ);
         renderBeaconBeam(x, y, z, a, beacon->getAndUpdateClientSideScale(), beacon->getBeamSections(),
                          (double)beacon->getLevel()->getGameTime());
-        return;
+        GlStateManager::popMatrix();
     }
-    renderBeaconBeam(x, y, z, a, beacon->getAndUpdateClientSideScale(), beacon->getBeamSections(),
-                     (double)beacon->getLevel()->getGameTime());
-    GlStateManager::popMatrix();
+    else
+    {
+        renderBeaconBeam(x, y, z, a, beacon->getAndUpdateClientSideScale(), beacon->getBeamSections(),
+                         (double)beacon->getLevel()->getGameTime());
+    }
 }
 
 bool BeaconRenderer::shouldRenderOffScreen(boost::shared_ptr<BlockEntity> blockEntity)

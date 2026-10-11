@@ -39,7 +39,7 @@ PlayerModel::PlayerModel(float scale, bool slimArms, bool is64x64)
         mHead->setPos(0.0f, 0.0f, 0.0f);
 
         mHat = new ModelPart(this, 32, 0);
-        mHat->addBox(-4.0f, -8.0f, -4.0f, 8, 8, 8, scale + 0.5f);
+        mHat->addBox(-4.0f, -8.0f, -4.0f, 8, 8, 8, scale + HAT_INFLATE);
         mHat->setPos(0.0f, 0.0f, 0.0f);
 
         mBody = new ModelPart(this, 16, 16);
@@ -58,11 +58,11 @@ PlayerModel::PlayerModel(float scale, bool slimArms, bool is64x64)
             mRightArm->setPos(-5.0f, 2.0f, 0.0f);
 
             mLeftSleeve = new ModelPart(this, 48, 48);
-            mLeftSleeve->addBox(-1.0f, -2.0f, -2.0f, 3, 12, 4, scale + 0.25f);
+            mLeftSleeve->addBox(-1.0f, -2.0f, -2.0f, 3, 12, 4, scale + OVERLAY_INFLATE);
             mLeftSleeve->setPos(5.0f, 2.0f, 0.0f);
 
             mRightSleeve = new ModelPart(this, 40, 32);
-            mRightSleeve->addBox(-2.0f, -2.0f, -2.0f, 3, 12, 4, scale + 0.25f);
+            mRightSleeve->addBox(-2.0f, -2.0f, -2.0f, 3, 12, 4, scale + OVERLAY_INFLATE);
             mRightSleeve->setPos(-5.0f, 2.0f, 10.0f);
         }
         else
@@ -75,11 +75,11 @@ PlayerModel::PlayerModel(float scale, bool slimArms, bool is64x64)
             mRightArm->setPos(-5.0f, 2.0f, 0.0f);
 
             mLeftSleeve = new ModelPart(this, 48, 48);
-            mLeftSleeve->addBox(-1.0f, -2.0f, -2.0f, 4, 12, 4, scale + 0.25f);
+            mLeftSleeve->addBox(-1.0f, -2.0f, -2.0f, 4, 12, 4, scale + OVERLAY_INFLATE);
             mLeftSleeve->setPos(5.0f, 2.0f, 0.0f);
 
             mRightSleeve = new ModelPart(this, 40, 32);
-            mRightSleeve->addBox(-3.0f, -2.0f, -2.0f, 4, 12, 4, scale + 0.25f);
+            mRightSleeve->addBox(-3.0f, -2.0f, -2.0f, 4, 12, 4, scale + OVERLAY_INFLATE);
             mRightSleeve->setPos(-5.0f, 2.0f, 10.0f);
         }
 
@@ -92,15 +92,15 @@ PlayerModel::PlayerModel(float scale, bool slimArms, bool is64x64)
         mRightLeg->setPos(-1.9f, 12.0f, 0.0f);
 
         mLeftPants = new ModelPart(this, 0, 48);
-        mLeftPants->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale + 0.25f);
+        mLeftPants->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale + OVERLAY_INFLATE);
         mLeftPants->setPos(1.9f, 12.0f, 0.0f);
 
         mRightPants = new ModelPart(this, 0, 32);
-        mRightPants->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale + 0.25f);
+        mRightPants->addBox(-2.0f, 0.0f, -2.0f, 4, 12, 4, scale + OVERLAY_INFLATE);
         mRightPants->setPos(-1.9f, 12.0f, 0.0f);
 
         mJacket = new ModelPart(this, 16, 32);
-        mJacket->addBox(-4.0f, 0.0f, -2.0f, 8, 12, 4, scale + 0.25f);
+        mJacket->addBox(-4.0f, 0.0f, -2.0f, 8, 12, 4, scale + OVERLAY_INFLATE);
         mJacket->setPos(0.0f, 0.0f, 0.0f);
 
         mLeftShoulder = new ModelPart(this, 0, 0);
@@ -377,6 +377,7 @@ void PlayerModel::SetSkinAdjustments(_SkinAdjustments skinAdjustments)
 ModelPart* PlayerModel::AddOrRetrievePart(SKIN_BOX* skinBox, unsigned int skinId)
 {
     ModelPart* parent = NULL;
+    float delta = 0.0f;
 
     switch (skinBox->id)
     {
@@ -406,30 +407,37 @@ ModelPart* PlayerModel::AddOrRetrievePart(SKIN_BOX* skinBox, unsigned int skinId
 
     case 7:
         parent = mHat;
+        delta = HAT_INFLATE;
         break;
 
     case 8:
         parent = mJacket;
+        delta = OVERLAY_INFLATE;
         break;
 
     case 9:
         parent = mRightSleeve;
+        delta = OVERLAY_INFLATE;
         break;
 
     case 10:
         parent = mLeftSleeve;
+        delta = OVERLAY_INFLATE;
         break;
 
     case 11:
         parent = mRightPants;
+        delta = OVERLAY_INFLATE;
         break;
 
     case 12:
         parent = mLeftPants;
+        delta = OVERLAY_INFLATE;
         break;
 
     case 13:
         parent = mBody;
+        delta = OVERLAY_INFLATE;
         break;
 
     case 14:
@@ -493,13 +501,13 @@ ModelPart* PlayerModel::AddOrRetrievePart(SKIN_BOX* skinBox, unsigned int skinId
     {
         part->addBox(skinBox->x, skinBox->y, skinBox->z, (int)skinBox->width, (int)skinBox->height, (int)skinBox->depth, skinBox->delta);
     }
-    else if (mSkinAdjustments.mXMLVersion == 0)
+    else if (mSkinAdjustments.mXMLVersion != 0)
     {
-        part->addHumanoidBox(skinBox->x, skinBox->y, skinBox->z, (int)skinBox->width, (int)skinBox->height, (int)skinBox->depth, 0.0f);
+        part->addBox(skinBox->x, skinBox->y, skinBox->z, (int)skinBox->width, (int)skinBox->height, (int)skinBox->depth, delta);
     }
     else
     {
-        part->addBox(skinBox->x, skinBox->y, skinBox->z, (int)skinBox->width, (int)skinBox->height, (int)skinBox->depth, 0.0f);
+        part->addHumanoidBox(skinBox->x, skinBox->y, skinBox->z, (int)skinBox->width, (int)skinBox->height, (int)skinBox->depth, 0.0f);
     }
 
     return part;

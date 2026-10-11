@@ -114,13 +114,12 @@
 #include "platform/wiiu/C4JEventArrayImpl.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 #include "game/core/MemSect.hpp"
+#include "game/core/SharedConstants.hpp"
 
 #include <cfloat>
 #include <cmath>
 #include <cstring>
 #include <vector>
-
-extern bool gFestiveEvent;
 
 namespace
 {
@@ -318,6 +317,7 @@ GameRenderer::~GameRenderer()
     DeleteCriticalSection(&mUpdateThreadMutex);
 }
 
+const float GameRenderer::NAME_TAG_SCALE = 0.025f;
 bool GameRenderer::anaglyph3d = false;
 
 void GameRenderer::renderNameTagInWorld(Font* font, const std::wstring& text, float x, float y, float z,
@@ -987,45 +987,34 @@ void GameRenderer::pick(float partialTick)
     }
 }
 
-double GameRenderer::getFov(float amount, bool useSmoothing)
+float GameRenderer::getFov(float amount, bool useSmoothing)
 {
-    static const float kZero = 0.0f;
-    static const float kOne = 1.0f;
-    static const float kPanoramicFov = 90.0f;
-    static const float kNauseaMax = 20.0f;
-    static const float kNauseaDenom = 500.0f;
-    static const float kNauseaAdd = 500.0f;
-    static const float kUnderwaterScale = 60.0f;
-    static const float kUnderwaterDivisor = 70.0f;
-
     if (mPanoramicMode)
-        return static_cast<double>(kPanoramicFov);
+        return 90.0f;
 
     boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mPlayer;
-    const int playerIndex = player != NULL ? player.get()->mUserIndex : 0;
+    const int playerIndex = player != NULL ? player->mUserIndex : 0;
 
     float fov = mFovSetting;
     if (useSmoothing)
     {
-        const float previous = mFovO[playerIndex];
-        const float blended = (mFov[playerIndex] - previous) * amount + previous;
-        fov = (fov + mMinecraft->mOptions->mFov) * blended;
+        fov = (fov + mMinecraft->mOptions->mFov) * ((mFov[playerIndex] - mFovO[playerIndex]) * amount + mFovO[playerIndex]);
     }
 
-    if (player->getHealth() <= kZero)
+    if (player->getHealth() <= 0.0f)
     {
         float deathTime = static_cast<float>(player->mDeathTime) + amount;
-        if (deathTime > kNauseaMax)
-            deathTime = kNauseaMax;
-        const float divisor = kOne - kNauseaDenom / (deathTime + kNauseaAdd);
-        fov = fov / (divisor + divisor + kOne);
+        if (deathTime > 20.0f)
+            deathTime = 20.0f;
+        const float divisor = 1.0f - 500.0f / (deathTime + 500.0f);
+        fov = fov / (divisor + divisor + 1.0f);
     }
 
     const BlockState* cameraBlock = Camera::getBlockAt(mMinecraft->mLevel, player, amount);
     if (cameraBlock->getMaterial()->isUnderWater())
-        fov = fov * kUnderwaterScale / kUnderwaterDivisor;
+        fov = fov * 60.0f / 70.0f;
 
-    return static_cast<double>(fov);
+    return fov;
 }
 
 void GameRenderer::bobHurt(float partialTick)
@@ -1131,11 +1120,7 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
     {
         CameraController* controller =
             boost::static_pointer_cast<Player>(mMinecraft->mPlayer)->GetCameraController();
-        if (controller == NULL)
-        {
-            mMinecraft->mPlayer->SetThirdPersonView(1);
-        }
-        else
+        if (controller != NULL)
         {
             GlStateManager::translatef(static_cast<float>(controller->getCurrentPos()->x),
                                      static_cast<float>(controller->getCurrentPos()->y),
@@ -1144,106 +1129,14 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
             GlStateManager::rotatef(static_cast<float>(controller->getCurrentRot()->y), kZero, kOne, kZero);
             GlStateManager::rotatef(static_cast<float>(controller->getCurrentRot()->z), kZero, kZero, kOne);
         }
+        else
+        {
+            mMinecraft->mPlayer->SetThirdPersonView(1);
+        }
     }
     else
     {
-        if (!living->isSleeping())
-        {
-            if (thirdPerson == 0)
-            {
-                GlStateManager::translatef(kZero, kZero, kFirstPersonNudge);
-            }
-            else
-            {
-                double distance = static_cast<double>(
-                    (mThirdPersonDistance - mThirdPersonDistanceO) * partialTick + mThirdPersonDistanceO);
-
-                if (mMinecraft->mOptions->mUnknownFlag5 == 0)
-                {
-                    const float cameraYaw = static_cast<float>(getCameraYRot(partialTick));
-                    const float cameraPitch = static_cast<float>(getCameraXRot(partialTick));
-                    float yaw = cameraYaw;
-                    float pitch = cameraPitch;
-                    if (thirdPerson == 2)
-                        pitch = pitch + k180;
-
-                    const float yawRad = Mth::DEG_TO_RAD * yaw;
-                    const float pitchRad = Mth::DEG_TO_RAD * pitch;
-
-                    double offsetX = static_cast<float>(-Mth::sin(yawRad) * Mth::cos(pitchRad)) * distance;
-                    double offsetZ = static_cast<float>(Mth::cos(yawRad) * Mth::cos(pitchRad)) * distance;
-                    double offsetY = -Mth::sin(pitchRad) * distance;
-
-                    for (int corner = 0; corner < 8; ++corner)
-                    {
-                        const float probeY = static_cast<float>((corner & 2) - 1) * kCollisionProbe;
-                        const float probeZ = static_cast<float>((corner >> 1 & 2) - 1) * kCollisionProbe;
-                        const float probeX = static_cast<float>((corner & 1) * 2 - 1) * kCollisionProbe;
-
-                        Vec3* from = Vec3::newTemp(x + probeX, yEye + probeY, z + probeZ);
-                        Vec3* to = Vec3::newTemp(x - offsetX + probeX,
-                                                 yEye - offsetY + probeY,
-                                                 z - offsetZ + probeZ);
-
-                        HitResult* hitForward = mMinecraft->mLevel->clip(from, to, false, true, false, false, NULL, false);
-                        HitResult* hitReverse = mMinecraft->mLevel->clip(to, from, false, true, false, false, NULL, false);
-
-                        if (hitForward == NULL)
-                        {
-                            if (hitReverse != NULL)
-                                delete hitReverse;
-                        }
-                        else if (hitReverse == NULL)
-                        {
-                            Block* block = mMinecraft->mLevel->getBlock(hitForward->getBlockPos());
-                            if (block->mMaterial->blocksMotion())
-                            {
-                                if (!Minecraft::InMiniGame(eMiniGameId_Any, true)
-                                    || gApp.ShouldCollideWith(block))
-                                {
-                                    const double hitDistance = hitForward->mLocation->distanceTo(Vec3::newTemp(x, yEye, z));
-                                    if (hitDistance < distance)
-                                        distance = hitDistance;
-                                }
-                            }
-                            delete hitForward;
-                        }
-                        else
-                        {
-                            Block* forwardBlock = mMinecraft->mLevel->getBlock(hitForward->getBlockPos());
-                            Block* reverseBlock = mMinecraft->mLevel->getBlock(hitReverse->getBlockPos());
-                            if ((forwardBlock->mMaterial->blocksMotion()
-                                 && (!Minecraft::InMiniGame(eMiniGameId_Any, true)
-                                     || gApp.ShouldCollideWith(forwardBlock)))
-                                || (reverseBlock->mMaterial->blocksMotion()
-                                    && (!Minecraft::InMiniGame(eMiniGameId_Any, true)
-                                        || gApp.ShouldCollideWith(reverseBlock))))
-                            {
-                                const double hitDistance = hitForward->mLocation->distanceTo(Vec3::newTemp(x, yEye, z));
-                                if (hitDistance < distance)
-                                    distance = hitDistance;
-                            }
-                            delete hitForward;
-                            delete hitReverse;
-                        }
-                    }
-
-                    if (thirdPerson == 2)
-                        GlStateManager::rotatef(k180, kZero, kOne, kZero);
-
-                    GlStateManager::rotatef(cameraPitch - pitch, kOne, kZero, kZero);
-                    GlStateManager::rotatef(cameraYaw - yaw, kZero, kOne, kZero);
-                    GlStateManager::translatef(kZero, kZero, -static_cast<float>(distance));
-                    GlStateManager::rotatef(yaw - cameraYaw, kZero, kOne, kZero);
-                    GlStateManager::rotatef(pitch - cameraPitch, kOne, kZero, kZero);
-                }
-                else
-                {
-                    GlStateManager::translatef(kZero, kZero, -static_cast<float>(distance));
-                }
-            }
-        }
-        else
+        if (living->isSleeping())
         {
             eyeHeight = eyeHeight + kSleepingHeightAdd;
             GlStateManager::translatef(kZero, kSleepingYOffset, kZero);
@@ -1262,6 +1155,101 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
                                       kZero, kNegOne, kZero);
                 GlStateManager::rotatef(static_cast<float>(getCameraXRot(partialTick)),
                                       kNegOne, kZero, kZero);
+            }
+        }
+        else
+        {
+            if (thirdPerson != 0)
+            {
+                double distance = static_cast<double>(
+                    (mThirdPersonDistance - mThirdPersonDistanceO) * partialTick + mThirdPersonDistanceO);
+
+                if (mMinecraft->mOptions->mUnknownFlag5 != 0)
+                {
+                    GlStateManager::translatef(kZero, kZero, -static_cast<float>(distance));
+                }
+                else
+                {
+                    const float cameraYaw = static_cast<float>(getCameraYRot(partialTick));
+                    const float cameraPitch = static_cast<float>(getCameraXRot(partialTick));
+                    float yaw = cameraYaw;
+                    float pitch = cameraPitch;
+                    if (thirdPerson == 2)
+                        pitch = pitch + k180;
+
+                    double offsetX = static_cast<float>(-Mth::sin(yaw * Mth::DEG_TO_RAD) * Mth::cos(pitch * Mth::DEG_TO_RAD)) * distance;
+                    double offsetZ = static_cast<float>(Mth::cos(yaw * Mth::DEG_TO_RAD) * Mth::cos(pitch * Mth::DEG_TO_RAD)) * distance;
+                    double offsetY = -Mth::sin(pitch * Mth::DEG_TO_RAD) * distance;
+
+                    for (int corner = 0; corner < 8; ++corner)
+                    {
+                        const float probeY = static_cast<float>((corner & 2) - 1) * kCollisionProbe;
+                        const float probeZ = static_cast<float>((corner >> 1 & 2) - 1) * kCollisionProbe;
+                        const float probeX = static_cast<float>((corner & 1) * 2 - 1) * kCollisionProbe;
+
+                        Vec3* from = Vec3::newTemp(x + probeX, yEye + probeY, z + probeZ);
+                        Vec3* to = Vec3::newTemp(x - offsetX + probeX,
+                                                 yEye - offsetY + probeY,
+                                                 z - offsetZ + probeZ);
+
+                        HitResult* hitForward = mMinecraft->mLevel->clip(from, to, false, true, false, false, NULL, false);
+                        HitResult* hitReverse = mMinecraft->mLevel->clip(to, from, false, true, false, false, NULL, false);
+
+                        if (hitForward != NULL)
+                        {
+                            if (hitReverse != NULL)
+                            {
+                                Block* forwardBlock = mMinecraft->mLevel->getBlock(hitForward->getBlockPos());
+                                Block* reverseBlock = mMinecraft->mLevel->getBlock(hitReverse->getBlockPos());
+                                if ((forwardBlock->mMaterial->blocksMotion()
+                                     && (!Minecraft::InMiniGame(eMiniGameId_Any, true)
+                                         || gApp.ShouldCollideWith(forwardBlock)))
+                                    || (reverseBlock->mMaterial->blocksMotion()
+                                        && (!Minecraft::InMiniGame(eMiniGameId_Any, true)
+                                            || gApp.ShouldCollideWith(reverseBlock))))
+                                {
+                                    const double hitDistance = hitForward->mLocation->distanceTo(Vec3::newTemp(x, yEye, z));
+                                    if (hitDistance < distance)
+                                        distance = hitDistance;
+                                }
+                                delete hitForward;
+                                delete hitReverse;
+                            }
+                            else
+                            {
+                                Block* block = mMinecraft->mLevel->getBlock(hitForward->getBlockPos());
+                                if (block->mMaterial->blocksMotion())
+                                {
+                                    if (!Minecraft::InMiniGame(eMiniGameId_Any, true)
+                                        || gApp.ShouldCollideWith(block))
+                                    {
+                                        const double hitDistance = hitForward->mLocation->distanceTo(Vec3::newTemp(x, yEye, z));
+                                        if (hitDistance < distance)
+                                            distance = hitDistance;
+                                    }
+                                }
+                                delete hitForward;
+                            }
+                        }
+                        else if (hitReverse != NULL)
+                        {
+                            delete hitReverse;
+                        }
+                    }
+
+                    if (thirdPerson == 2)
+                        GlStateManager::rotatef(k180, kZero, kOne, kZero);
+
+                    GlStateManager::rotatef(cameraPitch - pitch, kOne, kZero, kZero);
+                    GlStateManager::rotatef(cameraYaw - yaw, kZero, kOne, kZero);
+                    GlStateManager::translatef(kZero, kZero, -static_cast<float>(distance));
+                    GlStateManager::rotatef(yaw - cameraYaw, kZero, kOne, kZero);
+                    GlStateManager::rotatef(pitch - cameraPitch, kOne, kZero, kZero);
+                }
+            }
+            else
+            {
+                GlStateManager::translatef(kZero, kZero, kFirstPersonNudge);
             }
         }
 
@@ -1312,26 +1300,19 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
 
 void GameRenderer::getFovAndAspect(float& fov, float& aspect, float partialTick, bool useSmoothing)
 {
-    static const float kSplitFovScale = 0.7f;
-    static const float kQuadAspectScale = 0.5f;
-    static const float kQuadFovScale = 1.1f;
-
     aspect = static_cast<float>(mMinecraft->mWidth)
              / static_cast<float>(mMinecraft->mHeight);
-    fov = static_cast<float>(getFov(partialTick, useSmoothing));
+    fov = getFov(partialTick, useSmoothing);
 
-    boost::shared_ptr<MultiplayerLocalPlayer> localPlayer = mMinecraft->mPlayer;
-    const int splitMode = localPlayer->mViewport;
-    if (splitMode == 1 || splitMode == 2)
+    if (mMinecraft->mPlayer->mViewport == 1 || mMinecraft->mPlayer->mViewport == 2)
     {
         aspect = aspect + aspect;
-        fov = fov * kSplitFovScale;
-        return;
+        fov = fov * 0.7f;
     }
-    if (splitMode == 3 || splitMode == 4)
+    else if (mMinecraft->mPlayer->mViewport == 3 || mMinecraft->mPlayer->mViewport == 4)
     {
-        aspect = aspect * kQuadAspectScale;
-        fov = fov * kQuadFovScale;
+        aspect = aspect * 0.5f;
+        fov = fov * 1.1f;
     }
 }
 
@@ -1809,15 +1790,14 @@ const BlockPos* GameRenderer::getFogOffsets()
 
 float GameRenderer::getTargetFogDistance(const BlockPos& pos)
 {
-    const BlockPos* table = getFogOffsets();
-
     float distanceSum = 0.0f;
     float weightSum = 0.0f;
+    const BlockPos* table = getFogOffsets();
+
     for (int i = 0; i < 27; ++i)
     {
         BlockPos samplePos = pos.offset(table[i].x, table[i].y, table[i].z);
-        Biome* biome = mMinecraft->mLevel->getBiome(samplePos);
-        distanceSum += biome->getFogDistance();
+        distanceSum += mMinecraft->mLevel->getBiome(samplePos)->getFogDistance();
         weightSum += 1.0f;
     }
 
@@ -1826,22 +1806,19 @@ float GameRenderer::getTargetFogDistance(const BlockPos& pos)
 
 void GameRenderer::getTargetFogColor(const BlockPos& pos, float& red, float& green, float& blue)
 {
-    static const float kByteScale = 0.00390625f;
-    const BlockPos* table = getFogOffsets();
-
     float redSum = 0.0f;
     float greenSum = 0.0f;
     float blueSum = 0.0f;
     float weight = 0.0f;
+    const BlockPos* table = getFogOffsets();
 
-    const BlockPos* delta = table;
-    for (int i = 0; i < 27; ++i, ++delta)
+    for (int i = 0; i < 27; ++i)
     {
-        Biome* biome = mMinecraft->mLevel->getBiome(pos.offset(delta->x, delta->y, delta->z));
-        const unsigned int colour = biome->getUnderWaterFogColor();
-        redSum = static_cast<float>((colour >> 16) & 255u) * kByteScale + redSum;
-        greenSum = static_cast<float>((colour >> 8) & 255u) * kByteScale + greenSum;
-        blueSum = static_cast<float>(colour & 255u) * kByteScale + blueSum;
+        BlockPos samplePos = pos.offset(table[i].x, table[i].y, table[i].z);
+        const unsigned int colour = mMinecraft->mLevel->getBiome(samplePos)->getUnderWaterFogColor();
+        redSum = static_cast<float>((colour >> 16) & 255u) * 0.00390625f + redSum;
+        greenSum = static_cast<float>((colour >> 8) & 255u) * 0.00390625f + greenSum;
+        blueSum = static_cast<float>(colour & 255u) * 0.00390625f + blueSum;
         weight += 1.0f;
     }
 
@@ -2807,7 +2784,7 @@ void GameRenderer::renderSnowAndRain(float partialTick)
 
     bool tumbleWeather = false;
     int columnStep = 1;
-    if (Minecraft::InMiniGame(eMiniGameId_Tumble, false) && gFestiveEvent)
+    if (Minecraft::InMiniGame(eMiniGameId_Tumble, false) && SharedConstants::IS_CHRISTMAS)
     {
         tumbleWeather = true;
         columnStep = 2;
@@ -3231,28 +3208,29 @@ void GameRenderer::renderLevel(float partialTick, long long targetNanoTime)
 {
     static const float kAlphaRef = 0.5f;
 
+    Minecraft* minecraft = mMinecraft;
     const int playerIndex = gProfile->GetPrimaryPad();
     const bool sortTransparent =
-        mMinecraft->mPlayer.get() == mMinecraft->mLocalPlayers[playerIndex].get();
+        minecraft->mPlayer.get() == minecraft->mLocalPlayers[playerIndex].get();
 
     pick(partialTick);
     GlStateManager::enableDepthTest();
     GlStateManager::enableAlphaTest();
     GlStateManager::alphaFunc(4, kAlphaRef);
 
-    if (mMinecraft->mOptions == NULL || !mMinecraft->mOptions->mAnaglyph3d)
-    {
-        GlStateManager::colorMask(true, true, true, false);
-        renderEyePass(2, partialTick, targetNanoTime, sortTransparent);
-    }
-    else
+    if (mMinecraft->mOptions->mAnaglyph3d)
     {
         sAnaglyphEyeIndex = 0;
         GlStateManager::colorMask(false, true, true, false);
         renderEyePass(0, partialTick, targetNanoTime, sortTransparent);
         sAnaglyphEyeIndex = 1;
-        GlStateManager::colorMask(true, true, true, true);
+        GlStateManager::colorMask(true, false, false, false);
         renderEyePass(1, partialTick, targetNanoTime, sortTransparent);
+    }
+    else
+    {
+        GlStateManager::colorMask(true, true, true, false);
+        renderEyePass(2, partialTick, targetNanoTime, sortTransparent);
     }
 }
 
@@ -3317,10 +3295,6 @@ void GameRenderer::renderItemActivationAnimation(int width, int height, float pa
 
 void GameRenderer::render(float partialTick, long long frameNanoTime, bool refreshLightTexture)
 {
-    static const float kAlphaRef = 0.01f;
-    static const int kMinFps = 60;
-    static const int kNanoPerSecond = 1000000000;
-
     if (mLightTextureDirty && refreshLightTexture)
         this->updateLightTexture(partialTick);
 
@@ -3337,25 +3311,16 @@ void GameRenderer::render(float partialTick, long long frameNanoTime, bool refre
 
     int fpsCap = fjGetFpsCap(mMinecraft->mOptions->mFpsLimit);
 
-    if (mMinecraft->mLevel == NULL)
-    {
-        GlStateManager::matrixMode(1);
-        GlStateManager::loadIdentity();
-        GlStateManager::matrixMode(0);
-        GlStateManager::loadIdentity();
-        setupGuiScreen(-1);
-        mLastNanos = System::processTimeInNanoSecs();
-    }
-    else
+    if (mMinecraft->mLevel != NULL)
     {
         const int averageFps = Minecraft::getAverageFps();
         if (averageFps < fpsCap)
             fpsCap = averageFps;
-        if (fpsCap < kMinFps)
-            fpsCap = kMinFps;
+        if (fpsCap < 60)
+            fpsCap = 60;
 
         const long long startNano = System::processTimeInNanoSecs();
-        int remainingNanos = kNanoPerSecond / fpsCap / 4 - static_cast<int>(startNano - frameNanoTime);
+        int remainingNanos = 1000000000 / fpsCap / 4 - static_cast<int>(startNano - frameNanoTime);
         if (remainingNanos < 0)
             remainingNanos = 0;
         renderLevel(partialTick, System::processTimeInNanoSecs() + remainingNanos);
@@ -3364,11 +3329,20 @@ void GameRenderer::render(float partialTick, long long frameNanoTime, bool refre
 
         if (!mMinecraft->mOptions->mHideGui || mMinecraft->mScreen != NULL)
         {
-            GlStateManager::alphaFunc(4, kAlphaRef);
+            GlStateManager::alphaFunc(4, 0.01f);
             mMinecraft->mGui->render(partialTick, mMinecraft->mScreen != NULL, 0, screenHeight - 1);
         }
     }
+    else
+    {
 
+        GlStateManager::matrixMode(1);
+        GlStateManager::loadIdentity();
+        GlStateManager::matrixMode(0);
+        GlStateManager::loadIdentity();
+        setupGuiScreen(-1);
+        mLastNanos = System::processTimeInNanoSecs();
+    }
     if (mMinecraft->mScreen != NULL)
     {
         GlStateManager::clear(1);

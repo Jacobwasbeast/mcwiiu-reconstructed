@@ -2,7 +2,7 @@
 
 #include <utility>
 
-static unsigned short g_glyphUnicodes[460] =
+unsigned short g_glyphUnicodes[460] =
 {
     0x0001, 0x017C, 0x017B, 0x017A, 0x0179, 0x0107, 0x0106, 0x0144,
     0x0143, 0x000A, 0x000B, 0x000C, 0x000D, 0x000E, 0x000F, 0x0010,
@@ -98,7 +98,8 @@ CFontData::CFontData(SFontData& fontData, int* imageData)
 
     for (unsigned int glyph = 0; glyph < fontData.numGlyphs; ++glyph)
     {
-        m_glyphIds.insert(std::pair<const unsigned int, unsigned short>(g_glyphUnicodes[glyph], (unsigned short)glyph));
+        std::pair<const unsigned int, unsigned short> entry(g_glyphUnicodes[glyph], (unsigned short)glyph);
+        m_glyphIds.insert(entry);
     }
 
     m_glyphWidths = new unsigned short[fontData.numGlyphs];
@@ -110,9 +111,8 @@ CFontData::CFontData(SFontData& fontData, int* imageData)
         getPos(glyphId, row, column);
 
         unsigned char* topLeft = m_glyphPixels;
-        moveCursor(topLeft, column * fontData.glyphWidth, row * fontData.glyphHeight);
-
         short maxWidth = 0;
+        moveCursor(topLeft, column * fontData.glyphWidth, row * fontData.glyphHeight);
 
         for (unsigned short y = 0; y < fontData.glyphHeight; ++y)
         {
@@ -138,13 +138,11 @@ CFontData::CFontData(SFontData& fontData, int* imageData)
         }
     }
 
-    float* advances = new float[fontData.numGlyphs];
-    m_glyphAdvances = advances;
-    unsigned int glyphCount = fontData.numGlyphs;
+    m_glyphAdvances = new float[fontData.numGlyphs];
 
-    for (unsigned short glyphId = 0; glyphId < glyphCount; ++glyphId)
+    for (unsigned short glyphId = 0; glyphId < fontData.numGlyphs; ++glyphId)
     {
-        advances[glyphId] = m_glyphWidths[glyphId] * m_fontData->glyphWidthScale;
+        m_glyphAdvances[glyphId] = m_glyphWidths[glyphId] * m_fontData->glyphWidthScale;
     }
 }
 

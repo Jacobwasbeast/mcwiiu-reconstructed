@@ -19,10 +19,10 @@ ArrowRenderer::ArrowRenderer(EntityRenderDispatcher* dispatcher)
 void ArrowRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y, double z,
                            float yaw, float partialTick)
 {
-    float xRotO = entity.get()->mXRotO;
+    float yRot = entity.get()->mYRot;
     float xRot = entity.get()->mXRot;
     float yRotO = entity.get()->mYRotO;
-    float yRot = entity.get()->mYRot;
+    float xRotO = entity.get()->mXRotO;
     float shake = 0.0F;
 
     if (eTYPE_DERIVED_FROM(EntityType::ARROW, entity.get()->GetType()))
@@ -35,26 +35,43 @@ void ArrowRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y
     GlStateManager::color4f(1.0F, 1.0F, 1.0F, 1.0F);
     GlStateManager::pushMatrix();
 
-    float yRotDelta = yRot - yRotO;
-    if (yRotDelta > 180.0F)
-        yRotDelta = (yRot - 360.0F) - yRotO;
-    else if (yRotDelta < -180.0F)
-        yRotDelta = (yRot + 360.0F) - yRotO;
+    if (yRot - yRotO > 180.0F)
+    {
+        yRot -= 360.0F;
+    }
+    else if (yRot - yRotO < -180.0F)
+    {
+        yRot += 360.0F;
+    }
 
-    float xRotDelta = xRot - xRotO;
-    if (xRotDelta > 180.0F)
-        xRotDelta = (xRot - 360.0F) - xRotO;
-    else if (xRotDelta < -180.0F)
-        xRotDelta = (xRot + 360.0F) - xRotO;
+    if (xRot - xRotO > 180.0F)
+    {
+        xRot -= 360.0F;
+    }
+    else if (xRot - xRotO < -180.0F)
+    {
+        xRot += 360.0F;
+    }
 
     GlStateManager::translatef((float)x, (float)y, (float)z);
-    GlStateManager::rotatef(yRotO + yRotDelta * partialTick - 90.0F,
-                            0.0F, 1.0F, 0.0F);
-    GlStateManager::rotatef(xRotO + xRotDelta * partialTick,
-                            0.0F, 0.0F, 1.0F);
+    GlStateManager::rotatef(yRotO + (yRot - yRotO) * partialTick - 90.0F, 0.0F, 1.0F, 0.0F);
+    GlStateManager::rotatef(xRotO + (xRot - xRotO) * partialTick, 0.0F, 0.0F, 1.0F);
 
     Tesselator* tesselator = Tesselator::getInstance();
     BufferBuilder* builder = tesselator->getBuilder();
+
+    int type = 0;
+    float u0 = 0 / 32.0F;
+    float u1 = 16 / 32.0F;
+    float v0 = (0 + type * 10) / 32.0F;
+    float v1 = (5 + type * 10) / 32.0F;
+
+    float sideU0 = 0 / 32.0F;
+    float sideU1 = 5 / 32.0F;
+    float sideV0 = (5 + type * 10) / 32.0F;
+    float sideV1 = (10 + type * 10) / 32.0F;
+    float scale = 0.9F / 16.0F;
+
     GlStateManager::enableRescaleNormal();
 
     if (shake > 0.0F)
@@ -63,7 +80,7 @@ void ArrowRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y
     }
 
     GlStateManager::rotatef(45.0F, 1.0F, 0.0F, 0.0F);
-    GlStateManager::scalef(0.05625F, 0.05625F, 0.05625F);
+    GlStateManager::scalef(scale, scale, scale);
     GlStateManager::translatef(-4.0F, 0.0F, 0.0F);
 
     if (mSolidRender)
@@ -74,18 +91,18 @@ void ArrowRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y
 
     builder->begin();
     builder->normal(1.0F, 0.0F, 0.0F);
-    builder->vertexUV(-7.0F, -2.0F, -2.0F, 0.0F, 0.15625F);
-    builder->vertexUV(-7.0F, -2.0F, 2.0F, 0.15625F, 0.15625F);
-    builder->vertexUV(-7.0F, 2.0F, 2.0F, 0.15625F, 0.3125F);
-    builder->vertexUV(-7.0F, 2.0F, -2.0F, 0.0F, 0.3125F);
+    builder->vertexUV(-7.0F, -2.0F, -2.0F, sideU0, sideV0);
+    builder->vertexUV(-7.0F, -2.0F, 2.0F, sideU1, sideV0);
+    builder->vertexUV(-7.0F, 2.0F, 2.0F, sideU1, sideV1);
+    builder->vertexUV(-7.0F, 2.0F, -2.0F, sideU0, sideV1);
     builder->end();
 
     builder->begin();
     builder->normal(-1.0F, 0.0F, 0.0F);
-    builder->vertexUV(-7.0F, 2.0F, -2.0F, 0.0F, 0.15625F);
-    builder->vertexUV(-7.0F, 2.0F, 2.0F, 0.15625F, 0.15625F);
-    builder->vertexUV(-7.0F, -2.0F, 2.0F, 0.15625F, 0.3125F);
-    builder->vertexUV(-7.0F, -2.0F, -2.0F, 0.0F, 0.3125F);
+    builder->vertexUV(-7.0F, 2.0F, -2.0F, sideU0, sideV0);
+    builder->vertexUV(-7.0F, 2.0F, 2.0F, sideU1, sideV0);
+    builder->vertexUV(-7.0F, -2.0F, 2.0F, sideU1, sideV1);
+    builder->vertexUV(-7.0F, -2.0F, -2.0F, sideU0, sideV1);
     builder->end();
 
     for (int side = 0; side < 4; ++side)
@@ -93,10 +110,10 @@ void ArrowRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y
         GlStateManager::rotatef(90.0F, 1.0F, 0.0F, 0.0F);
         builder->begin();
         builder->normal(0.0F, 0.0F, 1.0F);
-        builder->vertexUV(-8.0F, -2.0F, 0.0F, 0.0F, 0.0F);
-        builder->vertexUV(8.0F, -2.0F, 0.0F, 0.5F, 0.0F);
-        builder->vertexUV(8.0F, 2.0F, 0.0F, 0.5F, 0.15625F);
-        builder->vertexUV(-8.0F, 2.0F, 0.0F, 0.0F, 0.15625F);
+        builder->vertexUV(-8.0F, -2.0F, 0.0F, u0, v0);
+        builder->vertexUV(8.0F, -2.0F, 0.0F, u1, v0);
+        builder->vertexUV(8.0F, 2.0F, 0.0F, u1, v1);
+        builder->vertexUV(-8.0F, 2.0F, 0.0F, u0, v1);
         builder->end();
     }
 

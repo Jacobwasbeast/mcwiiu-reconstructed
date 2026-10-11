@@ -77,7 +77,14 @@ void FishingHookRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
     double handY;
     double handZ;
     double eyeOffset;
-    if (owner->GetThirdPersonView(false) <= 0 && owner == Minecraft::GetInstance()->mPlayer)
+    if (owner->GetThirdPersonView(false) > 0 || owner != Minecraft::GetInstance()->mPlayer)
+    {
+        handX = owner->mXo + (owner->mX - owner->mXo) * (double)partialTick - cosRot * 0.35 - sinRot * 0.8;
+        handY = owner->mYo + (owner->mY - owner->mYo) * (double)partialTick + owner->getEyeHeight() - 0.45;
+        handZ = owner->mZo + (owner->mZ - owner->mZo) * (double)partialTick - sinRot * 0.35 + cosRot * 0.8;
+        eyeOffset = owner->isSneaking() ? -0.1875 : 0.0;
+    }
+    else
     {
         float fov = (float)Minecraft::GetInstance()->mGameRenderer->GetFovVal() / 100.0f;
         float sideOffset = -0.37f;
@@ -93,13 +100,6 @@ void FishingHookRenderer::render(boost::shared_ptr<Entity>& entity, double x, do
         handY = owner->mYo + (owner->mY - owner->mYo) * (double)partialTick + offset->y;
         handZ = owner->mZo + (owner->mZ - owner->mZo) * (double)partialTick + offset->z;
         eyeOffset = owner->getEyeHeight();
-    }
-    else
-    {
-        handX = owner->mXo + (owner->mX - owner->mXo) * (double)partialTick - cosRot * 0.35 - sinRot * 0.8;
-        handY = owner->mYo + (owner->mY - owner->mYo) * (double)partialTick + owner->getEyeHeight() - 0.45;
-        handZ = owner->mZo + (owner->mZ - owner->mZo) * (double)partialTick - sinRot * 0.35 + cosRot * 0.8;
-        eyeOffset = owner->isSneaking() ? -0.1875 : 0.0;
     }
 
     double hookX = hook->mXo + (hook->mX - hook->mXo) * (double)partialTick;

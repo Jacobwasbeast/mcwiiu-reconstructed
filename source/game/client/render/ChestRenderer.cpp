@@ -34,11 +34,15 @@ void ChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
     GlStateManager::depthFunc(3);
     GlStateManager::depthMask(true);
 
-    int data = 0;
+    int data;
     if (chest->hasLevel())
     {
         data = chest->getData();
         chest->checkNeighbors();
+    }
+    else
+    {
+        data = 0;
     }
 
     if (chest->mNorthNeighbour.lock() || chest->mWestNeighbour.lock())
@@ -46,17 +50,23 @@ void ChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
         return;
     }
 
-    bool large = false;
+    ChestModel* model;
     if (chest->mEastNeighbour.lock() || chest->mSouthNeighbour.lock())
     {
-        large = true;
-    }
-
-    ChestModel* model;
-    if (large)
-    {
         model = mLargeChestModel;
-        if (breakProgress < 0)
+        if (breakProgress >= 0)
+        {
+            bindTexture(&BREAKING_LOCATIONS[breakProgress]);
+
+            GlStateManager::matrixMode(2);
+            GlStateManager::pushMatrix();
+            GlStateManager::scalef(8.0F, 4.0F, 1.0F);
+            GlStateManager::translatef(0.0625F, 0.0625F, 0.0625F);
+            GlStateManager::matrixMode(0);
+            GlStateManager::pushMatrix();
+            GlStateManager::enableRescaleNormal();
+        }
+        else
         {
             if (chest->getType() == 1)
             {
@@ -70,23 +80,23 @@ void ChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
             GlStateManager::pushMatrix();
             GlStateManager::enableRescaleNormal();
         }
-        else
+    }
+    else
+    {
+        model = mChestModel;
+        if (breakProgress >= 0)
         {
             bindTexture(&BREAKING_LOCATIONS[breakProgress]);
 
             GlStateManager::matrixMode(2);
             GlStateManager::pushMatrix();
-            GlStateManager::scalef(8.0F, 4.0F, 1.0F);
+            GlStateManager::scalef(4.0F, 4.0F, 1.0F);
             GlStateManager::translatef(0.0625F, 0.0625F, 0.0625F);
             GlStateManager::matrixMode(0);
             GlStateManager::pushMatrix();
             GlStateManager::enableRescaleNormal();
         }
-    }
-    else
-    {
-        model = mChestModel;
-        if (breakProgress < 0)
+        else
         {
             if (chest->getType() == 1)
             {
@@ -97,18 +107,6 @@ void ChestRenderer::render(boost::shared_ptr<BlockEntity> blockEntity, double x,
                 bindTexture(&CHEST_LOCATION);
             }
 
-            GlStateManager::pushMatrix();
-            GlStateManager::enableRescaleNormal();
-        }
-        else
-        {
-            bindTexture(&BREAKING_LOCATIONS[breakProgress]);
-
-            GlStateManager::matrixMode(2);
-            GlStateManager::pushMatrix();
-            GlStateManager::scalef(4.0F, 4.0F, 1.0F);
-            GlStateManager::translatef(0.0625F, 0.0625F, 0.0625F);
-            GlStateManager::matrixMode(0);
             GlStateManager::pushMatrix();
             GlStateManager::enableRescaleNormal();
         }

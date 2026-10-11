@@ -167,32 +167,50 @@ void BoatRenderer::renderLeash(boost::shared_ptr<Boat>& boat, double x, double y
     const float darkRed = (float)((darkColour >> 16) & 255) / 255.0F;
     const float darkGreen = (float)((darkColour >> 8) & 255) / 255.0F;
     const float darkBlue = (float)(darkColour & 255) / 255.0F;
-    for (int strip = 0; strip < 2; ++strip)
+    builder->begin(1);
+    for (int i = 0; i < 25; ++i)
     {
-        builder->begin(1);
-        for (int i = 0; i < 25; ++i)
+        double red = lightRed;
+        double green = lightGreen;
+        double blue = lightBlue;
+        if ((i & 1) == 0)
         {
-            const bool light = (i & 1) != 0;
-            builder->color(light ? lightRed : darkRed, light ? lightGreen : darkGreen,
-                           light ? lightBlue : darkBlue, 1.0F);
-            double t = (float)i / 24.0F;
-            double px = x + dx * t;
-            double py = dy * (float)(t * t + t) * 0.5 + y +
-                        (double)((24.0F - (float)i) / 18.0F + 0.125F);
-            double pz = z + dz * t;
-            if (strip == 0)
-            {
-                builder->vertex((float)px, (float)py, (float)pz);
-                builder->vertex((float)(px + 0.025), (float)(py + 0.025), (float)pz);
-            }
-            else
-            {
-                builder->vertex((float)px, (float)(py + 0.025), (float)pz);
-                builder->vertex((float)(px + 0.025), (float)py, (float)(pz + 0.025));
-            }
+            red = darkRed;
+            green = darkGreen;
+            blue = darkBlue;
         }
-        builder->end();
+        builder->color(red, green, blue, 1.0F);
+        double t = (float)i / 24.0F;
+        double px = x + dx * t;
+        double py = dy * (float)(t * t + t) * 0.5 + y +
+                    (double)((24.0F - (float)i) / 18.0F + 0.125F);
+        double pz = z + dz * t;
+        builder->vertex((float)px, (float)py, (float)pz);
+        builder->vertex((float)(px + 0.025), (float)(py + 0.025), (float)pz);
     }
+    builder->end();
+    builder->begin(1);
+    for (int i = 0; i < 25; ++i)
+    {
+        double red = lightRed;
+        double green = lightGreen;
+        double blue = lightBlue;
+        if ((i & 1) == 0)
+        {
+            red = darkRed;
+            green = darkGreen;
+            blue = darkBlue;
+        }
+        builder->color(red, green, blue, 1.0F);
+        double t = (float)i / 24.0F;
+        double px = x + dx * t;
+        double py = dy * (float)(t * t + t) * 0.5 + y +
+                    (double)((24.0F - (float)i) / 18.0F + 0.125F);
+        double pz = z + dz * t;
+        builder->vertex((float)px, (float)(py + 0.025), (float)pz);
+        builder->vertex((float)(px + 0.025), (float)py, (float)(pz + 0.025));
+    }
+    builder->end();
     GlStateManager::enableLighting();
     GlStateManager::enableTexture();
     GlStateManager::enableCull();

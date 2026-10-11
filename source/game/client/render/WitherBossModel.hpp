@@ -7,11 +7,12 @@
 
 #include "game/client/render/Model.hpp"
 #include "game/client/render/ModelDefinition.hpp"
+#include "game/client/render/ModelPartSkin.hpp"
+#include "game/world/biome/arrayWithLength.hpp"
 #include "vendor/_SkinAdjustments.hpp"
 
 class Entity;
 class LivingEntity;
-class ModelPartSkin;
 
 class WitherBossModel : public Model
 {
@@ -28,10 +29,8 @@ public:
                                  float partialTicks);
     virtual std::wstring getName() { return L"witherBoss"; }
 
-    ModelPartSkin** mUpperBodyParts;
-    unsigned int mNumUpperBodyParts;
-    ModelPartSkin** mHeads;
-    unsigned int mNumHeads;
+    arrayWithLength<ModelPartSkin*> mUpperBodyParts;
+    arrayWithLength<ModelPartSkin*> mHeads;
 };
 
 #endif

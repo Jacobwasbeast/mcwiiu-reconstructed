@@ -116,10 +116,9 @@ void BatModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTick
 
         mRightWing->mXRot = -0.15707964f;
         mRightWing->mYRot = -1.2566371f;
+        mRightWingTip->mYRot = -1.7278761f;
         mLeftWing->mXRot = mRightWing->mXRot;
         mLeftWing->mYRot = -mRightWing->mYRot;
-
-        mRightWingTip->mYRot = -1.7278761f;
         mLeftWingTip->mYRot = -mRightWingTip->mYRot;
     }
     else
@@ -132,16 +131,14 @@ void BatModel::setupAnim(float limbSwing, float limbSwingAmount, float ageInTick
         mRightWing->setPos(0.0f, 0.0f, 0.0f);
         mLeftWing->setPos(0.0f, 0.0f, 0.0f);
 
-        float bob = cosf(ageInTicks * 0.1f);
-        mBody->mXRot = 0.7853982f + 0.15f * bob;
+        mBody->mXRot = cosf(ageInTicks * 0.1f) * 0.15f + 0.7853982f;
         mBody->mYRot = 0.0f;
 
-        float flap = cosf(ageInTicks * 1.3f) * 3.1415927f * 0.25f;
-        mRightWing->mYRot = flap;
-        mLeftWing->mYRot = -flap;
+        mRightWing->mYRot = cosf(ageInTicks * 1.3f) * 3.1415927f * 0.25f;
+        mLeftWing->mYRot = -mRightWing->mYRot;
 
         mRightWingTip->mYRot = mRightWing->mYRot * 0.5f;
-        mLeftWingTip->mYRot = -(mRightWing->mYRot * 0.5f);
+        mLeftWingTip->mYRot = -mRightWing->mYRot * 0.5f;
     }
 }
 

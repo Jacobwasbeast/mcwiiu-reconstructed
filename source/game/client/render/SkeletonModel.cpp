@@ -61,19 +61,17 @@ void SkeletonModel::_init(float scale, bool armourModel, SkeletonType skeletonTy
                 mLeftItem = createModelPart(true, L"leftItem", definition, mLeftArm, 0.0f);
             }
 
-            switch (skeletonType)
+            if (skeletonType == eSkeletonType_Stray)
             {
-            case eSkeletonType_Skeleton:
-                builder->setVertexAndPixelShader(eMinecraftEntityMaterial_Skeleton);
-                break;
-
-            case eSkeletonType_Stray:
                 builder->setVertexAndPixelShader(eMinecraftEntityMaterial_Stray);
-                break;
-
-            case eSkeletonType_WitherSkeleton:
+            }
+            else if (skeletonType == eSkeletonType_WitherSkeleton)
+            {
                 builder->setVertexAndPixelShader(eMinecraftEntityMaterial_WitherSkeleton);
-                break;
+            }
+            else if (skeletonType == eSkeletonType_Skeleton)
+            {
+                builder->setVertexAndPixelShader(eMinecraftEntityMaterial_Skeleton);
             }
         }
         else
@@ -83,7 +81,7 @@ void SkeletonModel::_init(float scale, bool armourModel, SkeletonType skeletonTy
             mHead->setPos(0.0f, 0.0f, 0.0f);
 
             mHat = new ModelPartSkin(this, 32, 0, NULL);
-            mHat->addBox(-4.0f, -8.0f, -4.0f, 8, 8, 8, scale + 0.5f);
+            mHat->addBox(-4.0f, -8.0f, -4.0f, 8, 8, 8, scale + HAT_INFLATE);
             mHat->setPos(0.0f, 0.0f, 0.0f);
 
             mBody = new ModelPartSkin(this, 16, 16, NULL);
@@ -112,7 +110,7 @@ void SkeletonModel::_init(float scale, bool armourModel, SkeletonType skeletonTy
         if (mRightItem == NULL)
         {
             mRightItem = createModelPart(true, 0, 0);
-            mRightItem->setPos(-6.0f - mRightArm->mX, 3.0f - mRightArm->mY, 1.0f - mRightArm->mZ);
+            mRightItem->setPos(-6.0f - mRightArm->mX, 9.0f - mRightArm->mY, 1.0f - mRightArm->mZ);
         }
 
         if (mLeftItem == NULL)

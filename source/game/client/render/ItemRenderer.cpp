@@ -208,7 +208,7 @@ void ItemRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y,
         float scale = 0.25F;
         if (!entityBlock)
         {
-            int shape = block->defaultBlockState()->getRenderShape();
+            unsigned int shape = block->defaultBlockState()->getRenderShape();
             if (shape != BLOCK_RENDER_MODEL
                 && (shape <= BLOCK_RENDER_TORCH || shape == BLOCK_RENDER_LEVER || shape == BLOCK_RENDER_STEM
                     || shape == BLOCK_RENDER_DOUBLE_PLANT))
@@ -216,7 +216,6 @@ void ItemRenderer::render(boost::shared_ptr<Entity>& entity, double x, double y,
         }
         GlStateManager::scalef(scale, scale, scale);
 
-        Minecraft::GetInstance();
         BlockRenderDispatcher* dispatcher = Minecraft::GetInstance()->getBlockRenderer();
         for (int layer = 0; layer < count; ++layer)
         {

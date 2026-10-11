@@ -45,9 +45,7 @@ BlockEntityRenderDispatcher::BlockEntityRenderDispatcher()
     mCamera = boost::shared_ptr<Entity>();
     mCameraYRot = 0.0f;
     mCameraXRot = 0.0f;
-    mX = 0.0;
-    mY = 0.0;
-    mZ = 0.0;
+    mX = mY = mZ = 0.0;
     GlStateManager::enableLighting();
 
     (*this)[BlockEntityType::SIGN] = new SignRenderer();
@@ -178,8 +176,9 @@ void BlockEntityRenderDispatcher::render(boost::shared_ptr<BlockEntity> blockEnt
     {
         Lighting::turnOn();
         int lightColor = mLevel->getLightColor(blockEntity->getBlockPos(), 0, -1);
-        GlStateManager::multiTexCoord2f((float)(lightColor % 65536),
-                                        (float)(lightColor / 65536));
+        int u = lightColor % 65536;
+        int v = lightColor / 65536;
+        GlStateManager::multiTexCoord2f(u / 1.0f, v / 1.0f);
         if (bTranslucent)
         {
             GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);

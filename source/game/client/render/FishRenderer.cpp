@@ -7,9 +7,11 @@
 #include "game/entity/mob/LivingEntity.hpp"
 #include "game/util/ResourceLocation.hpp"
 
-static ResourceLocation FISH_TEXTURE(TN_MOB_FISH_COD);
-static ResourceLocation PUFFERFISH_TEXTURE(TN_MOB_FISH_PUFFERFISH);
-static ResourceLocation SALMON_TEXTURE(TN_MOB_FISH_SALMON);
+static ResourceLocation FISH_TEXTURES[3] = {
+    ResourceLocation(TN_MOB_FISH_COD),
+    ResourceLocation(TN_MOB_FISH_PUFFERFISH),
+    ResourceLocation(TN_MOB_FISH_SALMON)
+};
 
 FishRenderer::FishRenderer(EntityRenderDispatcher* dispatcher, FishType fishType, float shadowRadius)
     : MobRenderer(dispatcher, new FishModel(ModelDefinition(), fishType, 0), shadowRadius), mFishType(fishType)
@@ -26,17 +28,14 @@ Model* FishRenderer::getModel(boost::shared_ptr<LivingEntity>& entity)
 
 const ResourceLocation* FishRenderer::getTextureLocation(boost::shared_ptr<Entity>& entity)
 {
-    const bool isFish = eTYPE_DERIVED_FROM(EntityType::FISH, entity->GetType());
-    if (!isFish)
-    {
-        const bool isPufferfish = eTYPE_DERIVED_FROM(EntityType::PUFFERFISH, entity->GetType());
-        if (isPufferfish)
-            return &PUFFERFISH_TEXTURE;
-        const bool isSalmon = eTYPE_DERIVED_FROM(EntityType::SALMON, entity->GetType());
-        if (isSalmon)
-            return &SALMON_TEXTURE;
-    }
-    return &FISH_TEXTURE;
+    if (eTYPE_DERIVED_FROM(EntityType::FISH, entity->GetType()))
+        return &FISH_TEXTURES[FISH_TYPE_COD];
+    else if (eTYPE_DERIVED_FROM(EntityType::PUFFERFISH, entity->GetType()))
+        return &FISH_TEXTURES[FISH_TYPE_PUFFERFISH];
+    else if (eTYPE_DERIVED_FROM(EntityType::SALMON, entity->GetType()))
+        return &FISH_TEXTURES[FISH_TYPE_SALMON];
+    else
+        return &FISH_TEXTURES[FISH_TYPE_COD];
 }
 
 Model* FishRenderer::createModel(const ModelDefinition& definition)

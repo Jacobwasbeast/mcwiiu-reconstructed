@@ -45,8 +45,8 @@ void MinecartRenderer::render(boost::shared_ptr<Entity>& entity, double x, doubl
     float pitch = minecart->mXRotO + (minecart->mXRot - minecart->mXRotO) * partialTick;
     if (trackPosition != NULL)
     {
-        Vec3* frontPosition = minecart->getPosOffs(renderX, renderY, renderZ, 0.3);
-        Vec3* backPosition = minecart->getPosOffs(renderX, renderY, renderZ, -0.3);
+        Vec3* frontPosition = minecart->getPosOffs(renderX, renderY, renderZ, 0.3f);
+        Vec3* backPosition = minecart->getPosOffs(renderX, renderY, renderZ, -0.3f);
         if (frontPosition == NULL)
             frontPosition = trackPosition;
         if (backPosition == NULL)

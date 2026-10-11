@@ -31,7 +31,7 @@
 #include "platform/wiiu/CStorage.hpp"
 #include "platform/wiiu/C4JThreadImpl.hpp"
 
-extern CStorage* gStorage;
+extern C4JStorage* gStorage;
 
 void DLCTexturePack::loadIcon()
 {

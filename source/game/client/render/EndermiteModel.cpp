@@ -5,22 +5,20 @@
 #include "game/client/render/ModelPartSkin.hpp"
 #include "game/core/Mth.hpp"
 
-static const int BODY_PART_COUNT = 4;
-
-static const int BODY_PART_TEX_OFFS[BODY_PART_COUNT][2] =
-{
-    { 0, 0 },
-    { 0, 5 },
-    { 0, 14 },
-    { 0, 18 }
-};
-
-static const int BODY_PART_SIZES[BODY_PART_COUNT][3] =
+const int EndermiteModel::BODY_PART_SIZES[BODY_PART_COUNT][3] =
 {
     { 4, 3, 2 },
     { 6, 4, 5 },
     { 3, 3, 1 },
     { 1, 2, 1 }
+};
+
+const int EndermiteModel::BODY_PART_TEX_OFFS[BODY_PART_COUNT][2] =
+{
+    { 0, 0 },
+    { 0, 5 },
+    { 0, 14 },
+    { 0, 18 }
 };
 
 EndermiteModel::EndermiteModel(const ModelDefinition& modelDefinition)
@@ -75,12 +73,7 @@ void EndermiteModel::setupAnim(float limbSwing, float limbSwingAmount, float age
 {
     for (int i = 0; i < BODY_PART_COUNT; ++i)
     {
-        float angle = ageInTicks * 0.9f + (float)i * 0.15f * 3.1415927f;
-
-        float yRot = Mth::cos(angle) * 3.1415927f * 0.01f * (float)(Mth::abs(i - 2) + 1);
-        ModelPart* part = mBodyParts[i];
-        part->mYRot = yRot;
-        part->mX = Mth::sin(angle) * 3.1415927f * 0.1f * (float)Mth::abs(i - 2);
+        mBodyParts[i]->mYRot = Mth::cos(ageInTicks * 0.9f + (float)i * 0.15f * 3.1415927f) * 3.1415927f * 0.01f * (float)(1 + Mth::abs(i - 2));
+        mBodyParts[i]->mX = Mth::sin(ageInTicks * 0.9f + (float)i * 0.15f * 3.1415927f) * 3.1415927f * 0.1f * (float)Mth::abs(i - 2);
     }
 }
-
