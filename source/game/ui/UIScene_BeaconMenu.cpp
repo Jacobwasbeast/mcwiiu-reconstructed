@@ -705,7 +705,7 @@ void UIScene_BeaconMenu::handleOtherClicked(int,
         output.writeInt(primaryId);
         output.writeInt(secondaryId);
         Minecraft::GetInstance()->getConnection(getPad())->send(
-            boost::shared_ptr<Packet>(new ServerboundCustomPayloadPacket(std::wstring(L"MC|Beacon"),
+            boost::shared_ptr<Packet>(new ServerboundCustomPayloadPacket(ServerboundCustomPayloadPacket::SET_BEACON_PACKET,
                                                                          bytes.toByteArray())));
         m_primaryEffect = primaryId;
         m_secondaryEffect = secondaryId;

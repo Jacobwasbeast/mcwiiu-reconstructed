@@ -38,86 +38,118 @@ void fuiRenderNodeShape::preRender()
 
 void fuiRenderNodeShape::render(fuiRect* bounds, fuiMatrix* matrix)
 {
-    if (!isVisible())
+    if (isVisible())
     {
-        return;
-    }
+        pushMatrix();
+        pushColor();
+        pushFilterFlags();
 
-    pushMatrix();
-    pushColor();
-    pushFilterFlags();
-
-    const fui::ColorState& colour = gFui->m_colorStack[gFui->m_colorDepth];
-
-    fuiShape* shape = static_cast<fuiShape*>(m_object);
-    fuiShapeComponent* component = m_file->shapeComponentData + shape->shapeComponentIndex;
-    unsigned int i;
-    for (i = 0; i < shape->shapeComponentCount; ++i, ++component)
-    {
-        unsigned int vertexOffset = component->vertexOffset;
-        unsigned int vertexCount = component->vertexCount;
-        if (vertexCount != 0)
+        fuiShape* shape = static_cast<fuiShape*>(m_object);
+        fuiShapeComponent* component = m_file->shapeComponentData + shape->shapeComponentIndex;
+        for (unsigned int i = 0; i < shape->shapeComponentCount; ++i)
         {
-            C4JRender::eVertexType vertexType = C4JRender::eVertexType_UI;
-            C4JRender::ePixelShaderType pixelShaderType = C4JRender::ePixelShaderType_UIColourAdd;
-            if (component->fillType == (eFuiFillType)1)
+            unsigned int vertexCount = component->vertexCount;
+            fuiVert* vertices = m_file->vertexData + component->vertexOffset;
+            if (vertexCount != 0)
             {
-                unsigned int rgba = component->color.rgba;
-                gRenderer->TextureBind(-1);
-                gRenderer->StateSetColour(((rgba >> 24) & 0xff) / 255.0f * colour.redMultiply,
-                                          ((rgba >> 16) & 0xff) / 255.0f * colour.greenMultiply,
-                                          ((rgba >> 8) & 0xff) / 255.0f * colour.blueMultiply,
-                                          (rgba & 0xff) / 255.0f * colour.alphaMultiply);
-                gRenderer->StateSetColourAdd(colour.redAdd, colour.greenAdd, colour.blueAdd, colour.alphaAdd);
-            }
-            else
-            {
-                fuiBitmap* bitmap = m_file->bitmaps + component->bitmapId;
-                m_file->initialiseRenderTexture(bitmap, true);
-                gRenderer->TextureBind(bitmap->textureId);
-                if (component->fillType == (eFuiFillType)3)
+                C4JRender::eVertexType vertexType = C4JRender::eVertexType_ScalingGridUI;
+                C4JRender::ePixelShaderType pixelShaderType = C4JRender::ePixelShaderType_UIColourAdd;
+                float red = 1.0f;
+                float green = 1.0f;
+                float blue = 1.0f;
+                float alpha = 1.0f;
+                if (component->fillType == (eFuiFillType)1)
                 {
-                    fuiMatrix scaleToPixels = {32768.0f, 0.0f, 0.0f, 32768.0f, -16384.0f, -16384.0f};
-                    fuiMatrix scaleToTwips = {0.05f, 0.0f, 0.0f, 0.05f, 0.0f, 0.0f};
-                    fuiMatrix bitmapScale;
-                    fuiMatrix textureMatrix;
-                    fuiMatrix::mul(scaleToPixels, scaleToTwips, bitmapScale);
-                    fuiMatrix::mul(bitmapScale, component->bitmapMatrix, textureMatrix);
-                    gRenderer->StateSetTextureScaleUI(1.0f / textureMatrix.scaleX,
-                                                      1.0f / textureMatrix.scaleY,
-                                                      -textureMatrix.translateX / textureMatrix.scaleX,
-                                                      -textureMatrix.translateY / textureMatrix.scaleY);
-                    pixelShaderType = C4JRender::ePixelShaderType_UIAlphaTest;
+                    unsigned int rgba = component->color.rgba;
+                    red = ((rgba >> 24) & 0xff) / 255.0f;
+                    green = ((rgba >> 16) & 0xff) / 255.0f;
+                    blue = ((rgba >> 8) & 0xff) / 255.0f;
+                    alpha = (rgba & 0xff) / 255.0f;
+                    gRenderer->TextureBind(-1);
                 }
                 else
                 {
-                    float width = (float)bitmap->width;
-                    float height = (float)bitmap->height;
-                    gRenderer->StateSetTextureScaleUI(1.0f / width, 1.0f / height,
-                                                      -component->bitmapMatrix.translateX / width,
-                                                      -component->bitmapMatrix.translateY / height);
+                    fuiBitmap* bitmap = m_file->bitmaps + component->bitmapId;
+                    if (bitmap == NULL)
+                    {
+                        continue;
+                    }
+                    m_file->initialiseRenderTexture(bitmap, true);
+                    gRenderer->TextureBind(bitmap->textureId);
+                    if (component->fillType == (eFuiFillType)3)
+                    {
+                        fuiMatrix scaleToPixels;
+                        scaleToPixels.scaleX = 32768.0f;
+                        scaleToPixels.rotateSkew0 = 0.0f;
+                        scaleToPixels.rotateSkew1 = 0.0f;
+                        scaleToPixels.scaleY = 32768.0f;
+                        scaleToPixels.translateX = -16384.0f;
+                        scaleToPixels.translateY = -16384.0f;
+                        fuiMatrix scaleToTwips;
+                        scaleToTwips.scaleX = 0.05f;
+                        scaleToTwips.rotateSkew0 = 0.0f;
+                        scaleToTwips.rotateSkew1 = 0.0f;
+                        scaleToTwips.scaleY = 0.05f;
+                        scaleToTwips.translateX = 0.0f;
+                        scaleToTwips.translateY = 0.0f;
+                        fuiMatrix bitmapScale;
+                        fuiMatrix textureMatrix;
+                        fuiMatrix::mul(scaleToPixels, scaleToTwips, bitmapScale);
+                        fuiMatrix::mul(bitmapScale, component->bitmapMatrix, textureMatrix);
+                        vertexType = C4JRender::eVertexType_TiledUI;
+                        pixelShaderType = C4JRender::ePixelShaderType_UIAlphaTest;
+                        gRenderer->StateSetTextureScaleUI(1.0f / textureMatrix.scaleX,
+                                                          1.0f / textureMatrix.scaleY,
+                                                          -(textureMatrix.translateX / textureMatrix.scaleX),
+                                                          -(textureMatrix.translateY / textureMatrix.scaleY));
+                    }
+                    else
+                    {
+                        float width = (float)bitmap->width;
+                        float height = (float)bitmap->height;
+                        gRenderer->StateSetTextureScaleUI(1.0f / width, 1.0f / height,
+                                                          -(component->bitmapMatrix.translateX / width),
+                                                          -(component->bitmapMatrix.translateY / height));
+                    }
+                    if (gFui->m_filterStack[gFui->m_filterDepth] & 1)
+                    {
+                        gRenderer->TextureSetParam(2, 1);
+                    }
+                    else
+                    {
+                        gRenderer->TextureSetParam(2, 0);
+                    }
                 }
-                gRenderer->TextureSetParam(2, gFui->m_filterStack[gFui->m_filterDepth] & 1);
-                gRenderer->StateSetColour(gFui->m_colorStack[gFui->m_colorDepth].redMultiply, gFui->m_colorStack[gFui->m_colorDepth].greenMultiply, gFui->m_colorStack[gFui->m_colorDepth].blueMultiply, gFui->m_colorStack[gFui->m_colorDepth].alphaMultiply);
-                gRenderer->StateSetColourAdd(gFui->m_colorStack[gFui->m_colorDepth].redAdd, gFui->m_colorStack[gFui->m_colorDepth].greenAdd, gFui->m_colorStack[gFui->m_colorDepth].blueAdd, gFui->m_colorStack[gFui->m_colorDepth].alphaAdd);
-            }
-            if (bounds != NULL)
-            {
-                gRenderer->StateSetScalingGridUI(shape->bounds.xMin, bounds->xMin, bounds->xMax,
-                                                 shape->bounds.xMax, shape->bounds.yMin, bounds->yMin,
-                                                 bounds->yMax, shape->bounds.yMax,
-                                                 matrix->scaleX, matrix->scaleY);
-                vertexType = component->fillType == (eFuiFillType)3
-                    ? C4JRender::eVertexType_TiledUI
-                    : C4JRender::eVertexType_ScalingGridUI;
-            }
-            gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, vertexCount,
-                                    m_file->vertexData + vertexOffset, vertexType,
-                                    pixelShaderType, NULL);
-        }
-    }
 
-    popFilterFlags();
-    popColor();
-    popMatrix();
+                const fui::ColorState& colour = gFui->m_colorStack[gFui->m_colorDepth];
+                const float redAdd = colour.redAdd;
+                const float greenAdd = colour.greenAdd;
+                const float blueAdd = colour.blueAdd;
+                const float alphaAdd = colour.alphaAdd;
+                gRenderer->StateSetColour(red * colour.redMultiply, green * colour.greenMultiply,
+                                          blue * colour.blueMultiply, alpha * colour.alphaMultiply);
+                gRenderer->StateSetColourAdd(redAdd, greenAdd, blueAdd, alphaAdd);
+
+                if (bounds == NULL)
+                {
+                    gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, vertexCount, vertices,
+                                            C4JRender::eVertexType_UI, pixelShaderType, NULL);
+                }
+                else
+                {
+                    gRenderer->StateSetScalingGridUI(shape->bounds.xMin, bounds->xMin, bounds->xMax,
+                                                     shape->bounds.xMax, shape->bounds.yMin, bounds->yMin,
+                                                     bounds->yMax, shape->bounds.yMax,
+                                                     matrix->scaleX, matrix->scaleY);
+                    gRenderer->DrawVertices(C4JRender::ePrimitiveType_Triangles, vertexCount, vertices,
+                                            vertexType, pixelShaderType, NULL);
+                }
+            }
+            ++component;
+        }
+
+        popFilterFlags();
+        popColor();
+        popMatrix();
+    }
 }

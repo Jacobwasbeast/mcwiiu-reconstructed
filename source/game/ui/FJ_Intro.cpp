@@ -85,13 +85,13 @@ unsigned int FJ_Intro::getType()
 void FJ_Intro::handleAnimationStep(FJ_Event*)
 {
     ++m_animationStep;
-    if (static_cast<unsigned int>(m_animationStep) < g_0x104F357C[m_platform].size())
+    if (static_cast<unsigned int>(m_animationStep) >= g_0x104F357C[m_platform].size())
     {
-        gotoAndPlay(g_0x104F357C[m_platform][m_animationStep]);
+        m_pCallbackScene->handleAnimationEnd();
     }
     else
     {
-        m_pCallbackScene->handleAnimationEnd();
+        gotoAndPlay(g_0x104F357C[m_platform][m_animationStep]);
     }
 }
 
@@ -109,21 +109,21 @@ void FJ_Intro::init(FJ_Event* event)
 void FJ_Intro::SetIntroPlatform(int platform, bool alternate, bool mappedPlatform)
 {
     m_animationStep = alternate;
+    m_platform = platform;
     if (mappedPlatform)
     {
-        if (platform == 2)
+        if (m_platform == 2)
         {
-            platform = 8;
+            m_platform = 8;
         }
-        else if (platform == 4)
+        else if (m_platform == 4)
         {
-            platform = 9;
+            m_platform = 9;
         }
-        else if (platform == 5)
+        else if (m_platform == 5)
         {
-            platform = 10;
+            m_platform = 10;
         }
     }
-    m_platform = platform;
-    gotoAndPlay(g_0x104F357C[platform][static_cast<int>(alternate)]);
+    gotoAndPlay(g_0x104F357C[m_platform][m_animationStep]);
 }

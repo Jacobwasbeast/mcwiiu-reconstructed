@@ -113,7 +113,7 @@ unsigned int UIScene_ClassicCraftingMenu::GetSectionAndSlotInDirection(
     IUIScene_AbstractContainerMenu::ESceneSection section,
     IUIScene_AbstractContainerMenu::ETapState state, int* x, int* y)
 {
-    IUIScene_AbstractContainerMenu::ESceneSection newSection = section;
+    unsigned int newSection = section;
     int xOffset = 0;
     int yOffset = 0;
 
@@ -197,7 +197,7 @@ unsigned int UIScene_ClassicCraftingMenu::GetSectionAndSlotInDirection(
         break;
     }
 
-    updateSlotPosition(section, newSection, state, x, y, xOffset, yOffset);
+    updateSlotPosition(section, static_cast<IUIScene_AbstractContainerMenu::ESceneSection>(newSection), state, x, y, xOffset, yOffset);
     return newSection;
 }
 

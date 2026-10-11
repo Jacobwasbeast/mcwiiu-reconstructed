@@ -1,5 +1,7 @@
 #include "game/ui/ItemTooltipDataHolder.hpp"
 
+#include "game/item/ItemInstance.hpp"
+
 ItemTooltipDataHolder::ItemTooltipDataHolder(boost::shared_ptr<MultiplayerLocalPlayer> pPlayer,
                                              not_null_ptr<ItemInstance> pItemInstance,
                                              MultiPlayerLevel* pLevel,

@@ -32,8 +32,6 @@
 
 static const std::wstring TAG_TITLE = L"title";
 static const std::wstring TAG_AUTHOR = L"author";
-static const std::wstring CHANNEL_EDIT = L"MC|BEdit";
-static const std::wstring CHANNEL_SIGN = L"MC|BSign";
 static const std::wstring TAG_PAGES = L"pages";
 static const std::wstring TAG_OWNER_UUID = L"ownerUUID";
 static const std::wstring TAG_CREATED_BY_RESTRICTED_PLAYER = L"createdByRestrictedPlayer";
@@ -41,7 +39,7 @@ static const std::wstring TAG_CREATED_BY_HOST = L"createdByHost";
 
 template <typename T> std::wstring _toString(T value);
 extern ConsoleUIController gConsoleUIController;
-extern CProfile* gProfile;
+extern C_4JProfile* gProfile;
 
 struct UIScene_WritableBookMenuData
 {
@@ -507,10 +505,10 @@ void UIScene_WritableBookMenu::SaveChanges(bool signing)
     else
         m_book.get()->getTag()->put(TAG_PAGES, m_pages);
 
-    std::wstring channel = CHANNEL_EDIT;
+    std::wstring channel = ServerboundCustomPayloadPacket::CUSTOM_BOOK_PACKET;
     if (signing)
     {
-        channel = CHANNEL_SIGN;
+        channel = ServerboundCustomPayloadPacket::CUSTOM_BOOK_SIGN_PACKET;
         m_book.get()->addTagElement(TAG_AUTHOR,
                                     new StringTag(Minecraft::GetInstance()->mLocalPlayers[m_playerId].get()->getName()));
         m_book.get()->addTagElement(TAG_TITLE, new StringTag(m_titleText));

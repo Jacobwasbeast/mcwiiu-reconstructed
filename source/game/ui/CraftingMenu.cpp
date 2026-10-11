@@ -2,6 +2,7 @@
 
 #include "game/core/ResultSlot.hpp"
 #include "game/core/DyeColor.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/item/CraftingContainer.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/item/ItemInstance.hpp"
@@ -91,7 +92,7 @@ bool CraftingMenu::stillValid(boost::shared_ptr<Player> player)
 {
     if (m_level->getBlockState(m_playerPos)->getBlock() != Blocks::crafting_table)
         return false;
-    if (player->distanceAsIfHitscanned(m_playerPos, *player->mBoundingBox) > 30.25f)
+    if (player->distanceAsIfHitscanned(m_playerPos, *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
         return false;
     return true;
 }

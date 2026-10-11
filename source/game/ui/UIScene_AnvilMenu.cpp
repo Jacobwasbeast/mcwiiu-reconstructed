@@ -655,7 +655,7 @@ void UIScene_AnvilMenu::updateItemName()
         ByteArrayOutputStream bytes;
         DataOutputStream output(&bytes);
         output.writeUTF(m_itemName->raw());
-        std::wstring channel = censored ? L"MC|RIName" : L"MC|ItemName";
+        std::wstring channel = censored ? ServerboundCustomPayloadPacket::SET_RENAME_ITEM_PACKET : ServerboundCustomPayloadPacket::SET_ITEM_NAME_PACKET;
         Minecraft::GetInstance()->getConnection(getPad())->send(
             boost::shared_ptr<ServerboundCustomPayloadPacket>(
                 new ServerboundCustomPayloadPacket(channel, bytes.toByteArray())));

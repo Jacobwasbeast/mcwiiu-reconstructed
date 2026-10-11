@@ -33,12 +33,12 @@ public:
     virtual void tick();
     virtual void updateTooltips();
 
+    virtual void UpdatePlayer(int index, PlayerInfo* oldInfo, PlayerInfo* newInfo);
     virtual int GetPlayerCount();
     virtual PlayerInfo* GetPlayer(int index);
     virtual bool RemovePlayer(unsigned char smallId);
     virtual void AddPlayer(unsigned char smallId);
     virtual UIControl_ButtonList* GetPlayerList();
-    virtual void UpdatePlayer(int index, PlayerInfo* oldInfo, PlayerInfo* newInfo);
     virtual int GetPad();
     virtual int getSceneType();
 

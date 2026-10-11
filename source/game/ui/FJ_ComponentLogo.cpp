@@ -19,9 +19,7 @@ void FJ_ComponentLogo::SetLogoLanguage(int language)
 {
     if (m_logoLanguage != language)
     {
-        FJ_FuiNode* logoObject = getChildByName(std::string("LogoObject"));
-        FJ_FuiNode* logo = logoObject->getChildAt(0);
-        logo->gotoAndStop(gLogoLanguageLabels[language]);
+        getChildByName(std::string("LogoObject"))->getChildAt(0)->gotoAndStop(gLogoLanguageLabels[language]);
         m_logoLanguage = language;
     }
 }

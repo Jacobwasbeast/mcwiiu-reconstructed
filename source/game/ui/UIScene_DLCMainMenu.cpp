@@ -21,7 +21,7 @@
 
 extern ConsoleUIController gConsoleUIController;
 extern CConsoleMinecraftApp gApp;
-extern CProfile* gProfile;
+extern C_4JProfile* gProfile;
 
 UIScene_DLCMainMenu::UIScene_DLCMainMenu(int type, void* data, UILayer* layer)
     : UIScene(type, layer), m_titleLabel(), m_timer()

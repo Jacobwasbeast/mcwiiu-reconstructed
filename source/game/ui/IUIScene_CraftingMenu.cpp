@@ -114,41 +114,57 @@ int IUIScene_CraftingMenu::GetRecipeId(int group, int recipe)
 {
     if (m_currentTab == 2)
         return m_recipeTable[m_currentGroup][2];
-    if (m_currentTab != 3)
-        return m_recipeTable[group][recipe + 2];
-
-    not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
-    if (!m_recipeIngredients.empty())
+    if (m_currentTab == 3)
     {
-        item = m_recipeIngredients[m_customRecipeSlots[0]];
-        item->setCount(1);
-    }
+        if (m_currentGroup == 0)
+        {
+            not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+            if (!m_recipeIngredients.empty())
+            {
+                item = m_recipeIngredients[m_customRecipeSlots[0]];
+                item->setCount(1);
+            }
 
-    if (m_currentGroup != 0)
-    {
-        if (item->getItem() == Items::bed)
-            return m_recipeTable[m_currentGroup][m_customRecipeSlots[1] + 2];
+            int index = 0;
+            int recipeId;
+            if (item->getItem() == Items::leatherHelmet)
+                recipeId = m_recipeTable[m_currentGroup][2];
+            else if (item->getItem() == Items::leatherChestplate)
+                recipeId = m_recipeTable[m_currentGroup][3];
+            else if (item->getItem() == Items::leatherLeggings)
+                recipeId = m_recipeTable[m_currentGroup][4];
+            else if (item->getItem() == Items::leatherBoots)
+                recipeId = m_recipeTable[m_currentGroup][5];
+            else
+            {
+                if (item->getItem() == Items::leatherHorseArmor)
+                    index = 4;
+                recipeId = m_recipeTable[m_currentGroup][index + 2];
+            }
+            return recipeId;
+        }
+
+        not_null_ptr<ItemInstance> item = ItemInstance::EMPTY;
+        if (!m_recipeIngredients.empty())
+        {
+            item = m_recipeIngredients[m_customRecipeSlots[0]];
+            item->setCount(1);
+        }
 
         int index = 0;
-        Block* block = Block::byItem(item->getItem());
-        if (block != NULL && dynamic_cast<ShulkerBoxBlock*>(block) != NULL)
-            index = m_customRecipeSlots[1] + 16;
-        return m_recipeTable[m_currentGroup][index + 2];
+        int recipeId;
+        if (item->getItem() == Items::bed)
+            recipeId = m_recipeTable[m_currentGroup][m_customRecipeSlots[1] + 2];
+        else
+        {
+            Block* block = Block::byItem(item->getItem());
+            if (block != NULL && dynamic_cast<ShulkerBoxBlock*>(block) != NULL)
+                index = m_customRecipeSlots[1] + 16;
+            recipeId = m_recipeTable[m_currentGroup][index + 2];
+        }
+        return recipeId;
     }
-
-    if (item->getItem() == Items::leatherHelmet)
-        return m_recipeTable[m_currentGroup][2];
-    if (item->getItem() == Items::leatherChestplate)
-        return m_recipeTable[m_currentGroup][3];
-    if (item->getItem() == Items::leatherLeggings)
-        return m_recipeTable[m_currentGroup][4];
-    if (item->getItem() == Items::leatherBoots)
-        return m_recipeTable[m_currentGroup][5];
-
-    int index = 0;
-    if (item->getItem() == Items::leatherHorseArmor)
-        index = 4;
-    return m_recipeTable[m_currentGroup][index + 2];
+    return m_recipeTable[group][recipe + 2];
 }
 
 bool IUIScene_CraftingMenu::isSpinnerGroup()
@@ -326,15 +342,13 @@ int IUIScene_CraftingMenu::GetCustomIngredientCount(not_null_ptr<ItemInstance> i
 
     for (unsigned int slot = 0; slot < m_maintainedInventory->m_items.size(); ++slot)
     {
-        if (m_maintainedInventory->m_items[slot]->isEmpty())
-            continue;
-        if (m_maintainedInventory->m_items[slot]->getItem() != item->getItem())
-            continue;
-        if (m_maintainedInventory->m_items[slot]->getAuxValue() != item->getAuxValue())
-            continue;
-        if (m_maintainedInventory->m_items[slot]->getTag() != NULL && item->getTag() != NULL && !ItemInstance::tagMatches(m_maintainedInventory->m_items[slot], item))
-            continue;
-        count += m_maintainedInventory->m_items[slot]->getCount();
+        if (!m_maintainedInventory->m_items[slot]->isEmpty()
+            && m_maintainedInventory->m_items[slot]->getItem() == item->getItem()
+            && m_maintainedInventory->m_items[slot]->getAuxValue() == item->getAuxValue()
+            && (m_maintainedInventory->m_items[slot]->getTag() == NULL || item->getTag() == NULL || ItemInstance::tagMatches(m_maintainedInventory->m_items[slot], item)))
+        {
+            count += m_maintainedInventory->m_items[slot]->getCount();
+        }
     }
     return count;
 }
@@ -1752,7 +1766,7 @@ void IUIScene_CraftingMenu::RemoveLastCustomRecipeIngredient()
     }
     DisplayCustomRecipeIngredients(GetRecipeId(-1, -1));
 
-    not_null_ptr<ItemInstance> result = ItemInstance::EMPTY;
+    not_null_ptr<ItemInstance> result;
     if (m_currentTab == 2)
         result = Recipes::getInstance()->getItemFor(m_craftingContainer, m_player->mLevel, Recipes::mFireworksRecipe,
                                                     Recipes::eRecipeCategory_Crafting);

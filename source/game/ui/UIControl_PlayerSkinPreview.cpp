@@ -330,20 +330,20 @@ void UIControl_PlayerSkinPreview::SetTexture(const std::wstring& texture, _TEXTU
 
 void UIControl_PlayerSkinPreview::SetFacing(ESkinPreviewFacing facing, bool animate)
 {
-    if (facing == eFacingFront)
+    switch (facing)
     {
+    case eFacingFront:
         mFacingRotation = 0;
         mFacingLeft = true;
-    }
-    else if (facing == eFacingRight)
-    {
+        break;
+    case eFacingRight:
         mFacingRotation = 45;
         mFacingLeft = false;
-    }
-    else if (facing == eFacingLeft)
-    {
+        break;
+    case eFacingLeft:
         mFacingRotation = -45;
         mFacingLeft = true;
+        break;
     }
     if (!animate)
     {
@@ -351,9 +351,9 @@ void UIControl_PlayerSkinPreview::SetFacing(ESkinPreviewFacing facing, bool anim
         mRotation = mFacingRotation;
         return;
     }
-    mAnimating = true;
     mAnimationTicks = 0;
     mInitialRotation = mRotation;
+    mAnimating = true;
 }
 
 void UIControl_PlayerSkinPreview::CycleNextAnimation()

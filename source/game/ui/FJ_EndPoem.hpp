@@ -37,7 +37,7 @@ public:
     void UpdateTileBackground();
     void UpdateScrolling(FJ_Event* event);
     static void _UpdateScrolling(FJ_FuiNode* node, FJ_Event* event);
-    virtual void keyUpHandler(FJ_Event* event);
+    void keyUpHandler(FJ_Event* event);
     static void _keyUpHandler(FJ_FuiNode* node, FJ_Event* event);
     virtual void init(FJ_Event* event);
     unsigned int SetNextLabel(const std::wstring& label, int index, bool lastLabel);

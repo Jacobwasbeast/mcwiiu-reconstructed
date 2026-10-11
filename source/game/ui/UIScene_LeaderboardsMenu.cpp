@@ -67,8 +67,7 @@ bool UIScene_LeaderboardsMenu::OnStatsReadComplete(LeaderboardManager::eStatsRet
                                                    LeaderboardManager::ReadView readView)
 {
     m_totalRows = userIndex;
-    m_numScores = readView.m_uiNumScores;
-    m_pReadScores = readView.m_pScores;
+    m_readView = readView;
     m_result = result;
     RetrieveStats();
     return true;
@@ -115,7 +114,7 @@ void UIScene_LeaderboardsMenu::CopyLeaderboardEntry(LeaderboardManager::ReadScor
     if (m_readType != LeaderboardManager::eReadType_Friends)
     {
         entry.rank = entry.score - 1;
-        if (index >= 1 && m_entries[index - 1].rank >= entry.rank)
+        if (index >= 1 && entry.rank <= m_entries[index - 1].rank)
             entry.rank = m_entries[index - 1].rank + 1;
     }
     else
@@ -240,7 +239,7 @@ bool UIScene_LeaderboardsMenu::RetrieveStats()
         return true;
     }
 
-    unsigned int numScores = m_numScores;
+    unsigned int numScores = m_readView.m_uiNumScores;
     m_loadedRowCount = numScores;
     if (m_visibleRowCount == 0)
     {
@@ -251,13 +250,13 @@ bool UIScene_LeaderboardsMenu::RetrieveStats()
             m_visibleRowCount = static_cast<unsigned int>(m_totalRows);
         if (m_visibleRowCount == 0 || numScores == 0)
             return false;
-        m_numStats = m_pReadScores[0].m_usNumStats;
+        m_numStats = m_readView.m_pScores[0].m_usNumStats;
         unsigned int i = 0;
         do
         {
             LeaderboardEntry entry = LeaderboardEntry();
             m_entries.push_back(entry);
-            CopyLeaderboardEntry(&m_pReadScores[i], static_cast<int>(i),
+            CopyLeaderboardEntry(&m_readView.m_pScores[i], static_cast<int>(i),
                                   static_cast<LeaderboardManager::EStatsType>(m_statsType));
             ++i;
         } while (i < m_loadedRowCount);
@@ -329,7 +328,7 @@ bool UIScene_LeaderboardsMenu::RetrieveStats()
     {
         LeaderboardEntry entry = LeaderboardEntry();
         m_entries.insert(m_entries.begin() + insertRank + i, entry);
-        CopyLeaderboardEntry(&m_pReadScores[i], static_cast<int>(insertRank + i),
+        CopyLeaderboardEntry(&m_readView.m_pScores[i], static_cast<int>(insertRank + i),
                               static_cast<LeaderboardManager::EStatsType>(m_statsType));
     }
 
@@ -604,11 +603,11 @@ void UIScene_LeaderboardsMenu::PopulateLeaderboard(LeaderboardManager::eStatsRet
     if (result == LeaderboardManager::eStatsReturn_Success && m_visibleRowCount != 0)
     {
         m_leaderboardList.setupTitles(L10N::GetString(IDS_LEADERBOARD_RANK), L10N::GetString(IDS_LEADERBOARD_GAMERTAG));
-        if (!gApp.DebugSettingsOn() ||
-            (GameSettings::GetGameSettingsDebugMask(-1, false) & DEBUG_MASK_FAKE_LEADERBOARD) == 0)
+        if (gApp.DebugSettingsOn() &&
+            (GameSettings::GetGameSettingsDebugMask(-1, false) & DEBUG_MASK_FAKE_LEADERBOARD) != 0)
         {
             wchar_t buf[40];
-            swprintf(buf, 40, L"%ls%i", L10N::GetString(IDS_LEADERBOARD_ENTRIES), m_visibleRowCount);
+            swprintf(buf, 40, L"%ls12345678", L10N::GetString(IDS_LEADERBOARD_ENTRIES));
             m_entriesLabel.setLabel(UIString(buf), false, false);
             m_infoLabel.setLabel(UIString(L""), false, false);
             m_infoLabel.setVisible(false);
@@ -616,7 +615,7 @@ void UIScene_LeaderboardsMenu::PopulateLeaderboard(LeaderboardManager::eStatsRet
         else
         {
             wchar_t buf[40];
-            swprintf(buf, 40, L"%ls12345678", L10N::GetString(IDS_LEADERBOARD_ENTRIES));
+            swprintf(buf, 40, L"%ls%i", L10N::GetString(IDS_LEADERBOARD_ENTRIES), m_visibleRowCount);
             m_entriesLabel.setLabel(UIString(buf), false, false);
             m_infoLabel.setLabel(UIString(L""), false, false);
             m_infoLabel.setVisible(false);

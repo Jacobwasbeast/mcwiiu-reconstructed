@@ -9,8 +9,7 @@
 FJ_JoinMenu::FJ_JoinMenu(fuiRenderNode* renderNode)
     : FJ_Document(renderNode)
 {
-    FJ_FuiNode* joinGame = getChildByName(std::string("JoinGame"));
-    joinGame->asFJ_Button()->HideUntilInit();
+    getChildByName(std::string("JoinGame"))->asFJ_Button()->HideUntilInit();
 }
 
 FJ_Document* FJ_JoinMenu::Create(fuiRenderNode* renderNode)

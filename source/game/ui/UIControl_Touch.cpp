@@ -20,10 +20,17 @@ bool UIControl_Touch::setupControl(UIScene* scene, fuiRenderNode* node, const st
 
 void UIControl_Touch::init(int controlId)
 {
-    m_controlId = controlId;
     int layerId = m_scene->m_layer->m_layerId;
-    if (layerId == 2 || layerId == 4 || (layerId >= 6 && layerId <= 7))
+    m_controlId = controlId;
+    switch (layerId)
+    {
+    case EUILayer_Alert:
+    case EUILayer_Fullscreen:
+    case EUILayer_Scene:
+    case EUILayer_HUD:
         gConsoleUIController.TouchBoxAdd(this, m_scene);
+        break;
+    }
 }
 
 void UIControl_Touch::ReInit()

@@ -88,8 +88,7 @@ UIScene_TradingMenu::UIScene_TradingMenu(int iPad, void* initData, UILayer* laye
     }
 
     m_merchantMenu = new MerchantMenu(sceneData->inventory, sceneData->merchant, sceneData->level);
-    MultiplayerLocalPlayer* player = Minecraft::GetInstance()->mLocalPlayers[iPad].get();
-    player->mContainerMenu = m_merchantMenu;
+    Minecraft::GetInstance()->mLocalPlayers[m_playerId].get()->mContainerMenu = m_merchantMenu;
 
     m_request1.addSlots(0x27, 1);
     m_request2.addSlots(0x28, 1);
@@ -238,10 +237,9 @@ bool UIScene_TradingMenu::canMake(MerchantRecipe* recipe)
         not_null_ptr<ItemInstance> buyA = recipe->getBuyAItem();
         not_null_ptr<ItemInstance> buyB = recipe->getBuyBItem();
 
-        boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
+        boost::shared_ptr<Player> player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
 
-        Inventory* inventory = player.get()->mInventory.get();
-        const int matchesA = inventory->countMatches(buyA);
+        const int matchesA = player.get()->mInventory.get()->countMatches(buyA);
         const bool haveEnoughA = (matchesA > 0) ? !(matchesA < buyA.get()->getCount()) : buyA.get()->isEmpty();
 
         const int matchesB = player.get()->mInventory.get()->countMatches(buyB);
@@ -323,7 +321,7 @@ void UIScene_TradingMenu::updateDisplay()
 
             ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
             connection->send(boost::shared_ptr<Packet>(new ServerboundCustomPayloadPacket(
-                std::wstring(L"MC|TrSel"), byteStream.toByteArray())));
+                ServerboundCustomPayloadPacket::TRADER_SELECTION_PACKET, byteStream.toByteArray())));
         }
 
         if (m_trades.size() < static_cast<unsigned int>(m_tradeOffset + 7))
@@ -375,7 +373,7 @@ void UIScene_TradingMenu::updateDisplay()
                 setRequest2Name(buyB.get()->isEmpty() ? std::wstring(L"") : buyB.get()->getHoverName());
             }
 
-            boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
+            boost::shared_ptr<Player> player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
             const int matchesA = player.get()->mInventory.get()->countMatches(buyA);
             bool haveEnoughA;
             if (matchesA < 1)
@@ -484,7 +482,7 @@ bool UIScene_TradingMenu::handleKeyDown(int iPad, int action, bool)
         if (tutorial != 0)
         {
             tutorial->handleUIInput(action);
-            if (gConsoleUIController.IsTutorialVisible(m_playerId) && !tutorial->completed)
+            if (gConsoleUIController.IsTutorialVisible(m_playerId) && !tutorial->popupPending)
             {
                 GameModeConstraints* constraints = minecraft->mGameModes[m_playerId]->getGameModeConstraints();
                 if (!constraints->isInputAllowed(action))
@@ -493,12 +491,23 @@ bool UIScene_TradingMenu::handleKeyDown(int iPad, int action, bool)
         }
     }
 
-    if (action == EControllerActions_MenuA)
+    int selectedIndex;
+    switch (action)
+    {
+    case EControllerActions_MenuB:
+        gConsoleUIController.ShowTooltip(iPad, 2, false);
+        gConsoleUIController.ShowTooltip(iPad, 1, false);
+        gConsoleUIController.ShowTooltip(iPad, 0, false);
+        gConsoleUIController.ShowTooltip(iPad, 7, false);
+        gConsoleUIController.CloseUIScenes(iPad, false);
+        return true;
+
+    case EControllerActions_MenuA:
     {
         if (m_trades.empty())
             return true;
 
-        const int selectedIndex = m_tradeRow + m_tradeOffset;
+        selectedIndex = m_tradeRow + m_tradeOffset;
         if (static_cast<unsigned int>(selectedIndex) >= m_trades.size())
             return true;
 
@@ -508,7 +517,7 @@ bool UIScene_TradingMenu::handleKeyDown(int iPad, int action, bool)
 
         not_null_ptr<ItemInstance> buyA = recipe->getBuyAItem();
         not_null_ptr<ItemInstance> buyB = recipe->getBuyBItem();
-        boost::shared_ptr<Player> player = minecraft->mLocalPlayers[m_playerId];
+        boost::shared_ptr<MultiplayerLocalPlayer> player = Minecraft::GetInstance()->mLocalPlayers[m_playerId];
 
         const int matchesA = player.get()->mInventory.get()->countMatches(buyA);
         const int matchesB = player.get()->mInventory.get()->countMatches(buyB);
@@ -525,29 +534,31 @@ bool UIScene_TradingMenu::handleKeyDown(int iPad, int action, bool)
 
         not_null_ptr<ItemInstance> sellItemCopy = recipe->getSellItem().get()->copy();
         if (!player.get()->mInventory.get()->add(sellItemCopy))
-            player.get()->drop(sellItemCopy, false);
+            player.get()->Player::drop(sellItemCopy, false);
 
-        ClientPacketListener* connection = minecraft->getConnection(m_playerId);
-        connection->send(boost::shared_ptr<Packet>(
+        player.get()->mPacketListener->send(boost::shared_ptr<Packet>(
             new TradeItemPacket(m_merchantMenu->m_containerId, originalIndex)));
 
         updateDisplay();
         return true;
     }
 
-    if (action == EControllerActions_MenuB)
-    {
-        gConsoleUIController.ShowTooltip(iPad, 2, false);
-        gConsoleUIController.ShowTooltip(iPad, 1, false);
-        gConsoleUIController.ShowTooltip(iPad, 0, false);
-        gConsoleUIController.ShowTooltip(iPad, 7, false);
-        gConsoleUIController.CloseUIScenes(iPad, false);
-        return true;
-    }
+    case EControllerActions_MenuLeft:
+        if (m_tradeRow == 0)
+        {
+            if (m_tradeOffset < 1)
+                return true;
+            --m_tradeOffset;
+        }
+        else
+        {
+            --m_tradeRow;
+            moveSelector(false);
+        }
+        updateDisplay();
+        break;
 
-    int selectedIndex;
-    if (action == EControllerActions_MenuRight)
-    {
+    case EControllerActions_MenuRight:
         if (m_tradeRow == 6)
         {
             if (m_trades.empty())
@@ -562,29 +573,13 @@ bool UIScene_TradingMenu::handleKeyDown(int iPad, int action, bool)
             moveSelector(true);
         }
         updateDisplay();
-        selectedIndex = m_tradeRow + m_tradeOffset;
-    }
-    else if (action == EControllerActions_MenuLeft)
-    {
-        if (m_tradeRow == 0)
-        {
-            if (m_tradeOffset < 1)
-                return true;
-            --m_tradeOffset;
-        }
-        else
-        {
-            --m_tradeRow;
-            moveSelector(false);
-        }
-        updateDisplay();
-        selectedIndex = m_tradeRow + m_tradeOffset;
-    }
-    else
-    {
+        break;
+
+    default:
         return false;
     }
 
+    selectedIndex = m_tradeRow + m_tradeOffset;
     if (m_trades.empty() || static_cast<unsigned int>(selectedIndex) >= m_trades.size())
         return true;
 
@@ -595,9 +590,9 @@ bool UIScene_TradingMenu::handleKeyDown(int iPad, int action, bool)
     DataOutputStream dataStream(&byteStream);
     dataStream.writeInt(originalIndex);
 
-    ClientPacketListener* connection = Minecraft::GetInstance()->getConnection(m_playerId);
-    connection->send(boost::shared_ptr<Packet>(new ServerboundCustomPayloadPacket(
-        std::wstring(L"MC|TrSel"), byteStream.toByteArray())));
+    Minecraft::GetInstance()->getConnection(m_playerId)->send(
+        boost::shared_ptr<Packet>(new ServerboundCustomPayloadPacket(
+            ServerboundCustomPayloadPacket::TRADER_SELECTION_PACKET, byteStream.toByteArray())));
 
     return true;
 }

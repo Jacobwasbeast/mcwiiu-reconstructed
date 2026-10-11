@@ -41,8 +41,8 @@ void FJ_EnchantingButton::SetupIggySlot()
     FJ_FuiNode* icon = getChildByName(std::string("IconPlaceholder"))->asMovieClip();
     fuiRect rect;
     rect.xMin = 0.0f;
-    rect.xMax = icon->getWidth() / icon->getScaleX();
     rect.yMin = 0.0f;
+    rect.xMax = icon->getWidth() / icon->getScaleX();
     rect.yMax = icon->getHeight() / icon->getScaleY();
     char name[64];
     std::sprintf(name, "iggy_slot_%s", getName());

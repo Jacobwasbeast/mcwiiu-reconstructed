@@ -119,8 +119,7 @@ private:
     UIControl_Label m_infoLabel;
     UIControl m_tabNavigation;
     int m_totalRows;
-    unsigned int m_numScores;
-    LeaderboardManager::ReadScore* m_pReadScores;
+    LeaderboardManager::ReadView m_readView;
     bool m_loading;
     std::vector<LevelRules::LevelRulesetGroup*> m_levelRuleGroups;
     unsigned int m_result;

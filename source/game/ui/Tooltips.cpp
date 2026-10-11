@@ -41,7 +41,7 @@ const int kTooltipsPerPlayer = 25;
 const unsigned int kTooltipMapVote = 0x1a66548e;
 const unsigned int kTooltipVote = 0x44c3150d;
 const unsigned int kTooltipLaunch = 0x568a07be;
-int gTooltips[4 * kTooltipsPerPlayer + EControllerActions_LookBehind + 1];
+int gTooltips[4 * kTooltipsPerPlayer];
 unsigned char gTooltipsDirty[4];
 }
 
@@ -59,12 +59,11 @@ void Tooltips::staticCtor()
 
 void Tooltips::OverwriteTooltip(int playerId, EControllerActions action, int tooltip)
 {
-    int index = playerId * kTooltipsPerPlayer + action;
-    if (gTooltips[index] == tooltip)
+    if (gTooltips[playerId * kTooltipsPerPlayer + action - EControllerActions_Jump] == tooltip)
         return;
 
-    gTooltips[index] = tooltip;
     gTooltipsDirty[playerId] = 1;
+    gTooltips[playerId * kTooltipsPerPlayer + action - EControllerActions_Jump] = tooltip;
 }
 
 void Tooltips::ResetTooltip(int playerId, EControllerActions action)

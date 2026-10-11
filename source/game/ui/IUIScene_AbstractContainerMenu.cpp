@@ -78,15 +78,20 @@ bool IUIScene_AbstractContainerMenu::canQuickCraft() const
 
 int IUIScene_AbstractContainerMenu::GetSectionDimensions(ESceneSection section, int* columns, int* rows)
 {
-    if (!IsSectionSlotList(section))
+    int count;
+    if (IsSectionSlotList(section))
     {
+        *rows = getSectionRows(section);
+        *columns = getSectionColumns(section);
+        count = *rows * *columns;
+    }
+    else
+    {
+        count = 0;
         *rows = 0;
         *columns = 0;
-        return 0;
     }
-    *rows = getSectionRows(section);
-    *columns = getSectionColumns(section);
-    return *rows * *columns;
+    return count;
 }
 
 void IUIScene_AbstractContainerMenu::updateSlotPosition(ESceneSection section, ESceneSection newSection,
@@ -99,29 +104,44 @@ void IUIScene_AbstractContainerMenu::updateSlotPosition(ESceneSection section, E
 
     if (newSection != section)
     {
-        int newY;
+        int baseY;
         if (tapState == ETapState_Up)
-            newY = rows - 1 - yOffset;
+            baseY = rows - 1;
         else if (tapState == ETapState_Down)
-            newY = -yOffset;
+            baseY = 0;
         else
-            newY = *slotY - yOffset;
+            baseY = *slotY;
+        int newY = baseY - yOffset;
 
         if (newY < 0)
             *slotY = 0;
-        else if (newY < rows)
-            *slotY = newY;
-        else
+        else if (newY >= rows)
             *slotY = rows - 1;
-    }
+        else
+            *slotY = newY;
 
-    int newX = *slotX - xOffset;
-    if (newX < 0)
-        *slotX = 0;
-    else if (newX < columns)
-        *slotX = newX;
+        int newX = *slotX - xOffset;
+        if (newX < 0)
+        {
+            *slotX = 0;
+        }
+        else
+        {
+            if (newX >= columns)
+                newX = columns - 1;
+            *slotX = newX;
+        }
+    }
     else
-        *slotX = columns - 1;
+    {
+        int newX = *slotX - xOffset;
+        if (newX < 0)
+            *slotX = columns - 1;
+        else if (newX < columns)
+            *slotX = newX;
+        else
+            *slotX = 0;
+    }
 }
 
 IUIScene_AbstractContainerMenu::ETapState IUIScene_AbstractContainerMenu::GetTapInputType(float inputX,
@@ -171,8 +191,8 @@ void IUIScene_AbstractContainerMenu::Initialize(bool navigateBack, int pad, Abst
                                                  ESceneSection firstSection, ESceneSection maxSection,
                                                  bool navigateBackOnClose)
 {
-    m_autoDeleteMenu = autoDeleteMenu;
     m_menu = menu;
+    m_autoDeleteMenu = autoDeleteMenu;
 
     bool smallInventory = false;
     if (Minecraft::InMiniGame(eMiniGameId_Any, true) &&
@@ -201,8 +221,8 @@ void IUIScene_AbstractContainerMenu::Initialize(bool navigateBack, int pad, Abst
     m_pointerOutsideMenu = false;
     m_currentSlotY = 0;
     m_tapState = ETapState_None;
-    m_maxSection = maxSection;
     m_currentSlotX = 0;
+    m_maxSection = maxSection;
 
     PlatformInitialize(navigateBack, pad, startIndex);
 }
@@ -1229,7 +1249,9 @@ void IUIScene_AbstractContainerMenu::handleAdditionalKeyPress(int action)
 void IUIScene_AbstractContainerMenu::handleSlotListClicked(ESceneSection section, int buttonNum,
                                                            int quickKeyHeld)
 {
-    slotClicked(getCurrentIndex(section), buttonNum, (ClickType::eClickType)(quickKeyHeld != 0));
+    int index = getCurrentIndex(section);
+    bool quick = quickKeyHeld != 0;
+    slotClicked(index, buttonNum, (ClickType::eClickType)quick);
     handleSectionClick(section);
 }
 

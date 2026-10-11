@@ -84,9 +84,16 @@ void UIScene_Keyboard::updateTooltips()
 
 bool UIScene_Keyboard::allowRepeat(int action)
 {
-    if (static_cast<unsigned int>(action) > EControllerActions_MenuB && action != EControllerActions_MenuStart && (action < EControllerActions_MenuOk || action > EControllerActions_MenuCancel))
-        return true;
-    return false;
+    switch (action)
+    {
+    case EControllerActions_MenuOk:
+    case EControllerActions_MenuCancel:
+    case EControllerActions_MenuA:
+    case EControllerActions_MenuB:
+    case EControllerActions_MenuStart:
+        return false;
+    }
+    return true;
 }
 
 void UIScene_Keyboard::handleInput(int, int, bool, bool, bool, bool&)

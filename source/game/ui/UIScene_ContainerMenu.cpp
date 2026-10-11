@@ -300,13 +300,20 @@ void UIScene_ContainerMenu::handleReload()
 UIControl* UIScene_ContainerMenu::getSection(
     IUIScene_AbstractContainerMenu::ESceneSection section)
 {
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar)
-        return &m_hotbarList;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory)
-        return &m_inventoryList;
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest)
-        return &m_containerList;
-    return 0;
+    UIControl* control = 0;
+    switch (section)
+    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerChest:
+        control = &m_containerList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerInventory:
+        control = &m_inventoryList;
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_ContainerHotbar:
+        control = &m_hotbarList;
+        break;
+    }
+    return control;
 }
 
 int UIScene_ContainerMenu::getSceneType()

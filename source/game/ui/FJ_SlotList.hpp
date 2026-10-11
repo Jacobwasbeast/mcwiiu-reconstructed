@@ -27,8 +27,8 @@ public:
 
     static FJ_FuiNode* Create(fuiRenderNode* pRenderNode);
     virtual unsigned int getType();
-    virtual float getWidth();
-    virtual float getHeight();
+    float getWidth();
+    float getHeight();
     void Init();
     void Clear();
     void addSlot(int slot, bool highlighted, bool visible);

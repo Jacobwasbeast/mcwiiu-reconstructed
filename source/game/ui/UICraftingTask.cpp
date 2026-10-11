@@ -29,23 +29,18 @@ UICraftingTask::UICraftingTask(Tutorial* tutorial, int descriptionId, Item* item
 
 bool UICraftingTask::isCompleted()
 {
-    UIScene* scene = tutorial->currentScene;
-    if (taskType == 0)
+    bool completed = false;
+    UIScene_CraftingMenu* craftingMenu = static_cast<UIScene_CraftingMenu*>(tutorial->currentScene);
+    switch (taskType)
     {
-        if (scene == NULL)
-        {
-            return false;
-        }
-
-        IUIScene_CraftingMenu* craftingMenu = static_cast<UIScene_CraftingMenu*>(scene);
-        return craftingMenu->getCurrentGroup() == group;
+    case 0:
+        if (craftingMenu != NULL && craftingMenu->getCurrentGroup() == group)
+            completed = true;
+        break;
+    case 1:
+        if (craftingMenu != NULL && craftingMenu->isItemSelected(Item::getId(item)))
+            completed = true;
+        break;
     }
-
-    if (taskType != 1 || scene == NULL)
-    {
-        return false;
-    }
-
-    IUIScene_CraftingMenu* craftingMenu = static_cast<UIScene_CraftingMenu*>(scene);
-    return craftingMenu->isItemSelected(Item::getId(item));
+    return completed;
 }

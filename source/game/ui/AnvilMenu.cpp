@@ -1,4 +1,5 @@
 #include "game/ui/AnvilMenu.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/core/StringIds.hpp"
 
 #include <algorithm>
@@ -274,12 +275,11 @@ void AnvilMenu::removed(boost::shared_ptr<Player> player)
 
 bool AnvilMenu::stillValid(boost::shared_ptr<Player> player)
 {
-    if (mLevel->getBlockState(mPosition)->getBlock() == Blocks::anvil)
-    {
-        if (player->distanceAsIfHitscanned(mPosition, *player->mBoundingBox) <= 30.25f)
-            return true;
-    }
-    return false;
+    if (mLevel->getBlockState(mPosition)->getBlock() != Blocks::anvil)
+        return false;
+    if (player->distanceAsIfHitscanned(mPosition, *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
+        return false;
+    return true;
 }
 
 not_null_ptr<ItemInstance> AnvilMenu::quickMoveStack(boost::shared_ptr<Player> player, int index)

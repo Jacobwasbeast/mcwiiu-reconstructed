@@ -17,7 +17,7 @@
 extern CInput* g_pInput;
 
 extern ConsoleUIController gConsoleUIController;
-extern CProfile* gProfile;
+extern C_4JProfile* gProfile;
 
 UIScene_AvatarSelectMenu::TabControls::TabControls()
     : m_tab(), m_title(), m_timer(), m_miis()

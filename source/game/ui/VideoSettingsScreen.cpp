@@ -22,9 +22,9 @@ void VideoSettingsScreen::init()
     mTitle = language->getElement(L"options.videoTitle");
 
     const Options::Option* videoOptions[8] = {
-        Options::Option::anaglyph, Options::Option::music, Options::Option::advancedOpengl,
-        Options::Option::renderDistance, Options::Option::invertMouse, Options::Option::sound,
-        Options::Option::framerateLimit, Options::Option::sensitivity
+        Options::Option::graphics, Options::Option::renderDistance, Options::Option::ambientOcclusion,
+        Options::Option::framerateLimit, Options::Option::anaglyph, Options::Option::viewBobbing,
+        Options::Option::guiScale, Options::Option::advancedOpengl
     };
     for (int i = 0; i < 8; ++i)
     {

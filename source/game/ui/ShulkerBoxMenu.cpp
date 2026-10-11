@@ -4,38 +4,40 @@
 #include "game/item/Container.hpp"
 #include "game/item/Inventory.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/world/block/ShulkerBoxBlockEntity.hpp"
 #include "game/core/Slot.hpp"
+#include "game/world/generation/Player.hpp"
 
 ShulkerBoxMenu::ShulkerBoxMenu(boost::shared_ptr<Container> inventory,
                                boost::shared_ptr<Container> container,
                                boost::shared_ptr<Player> player)
     : AbstractContainerMenu()
 {
-    int row;
-    int column;
-
     mContainer = container;
     container->startOpen(player);
 
-    for (row = 0; row < 3; ++row)
+    int rows = ShulkerBoxBlockEntity::ROWS;
+    int columns = ShulkerBoxBlockEntity::COLUMNS;
+
+    for (int row = 0; row < rows; ++row)
     {
-        for (column = 0; column < 9; ++column)
+        for (int column = 0; column < columns; ++column)
         {
-            addSlot(new ShulkerBoxSlot(container, column + row * 9,
+            addSlot(new ShulkerBoxSlot(container, column + row * columns,
                                        8 + column * 18, 18 + row * 18));
         }
     }
 
-    for (row = 0; row < 3; ++row)
+    for (int row = 0; row < 3; ++row)
     {
-        for (column = 0; column < 9; ++column)
+        for (int column = 0; column < 9; ++column)
         {
             addSlot(new Slot(inventory, column + row * 9 + 9,
                              8 + column * 18, 84 + row * 18));
         }
     }
 
-    for (column = 0; column < 9; ++column)
+    for (int column = 0; column < 9; ++column)
     {
         addSlot(new Slot(inventory, column, 8 + column * 18, 142));
     }

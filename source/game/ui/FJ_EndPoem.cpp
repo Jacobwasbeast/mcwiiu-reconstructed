@@ -161,7 +161,7 @@ void FJ_EndPoem::keyUpHandler(FJ_Event* event)
 
 void FJ_EndPoem::_keyUpHandler(FJ_FuiNode* node, FJ_Event* event)
 {
-    static_cast<FJ_EndPoem*>(node)->FJ_EndPoem::keyUpHandler(event);
+    static_cast<FJ_EndPoem*>(node)->keyUpHandler(event);
 }
 
 void FJ_EndPoem::init(FJ_Event* event)

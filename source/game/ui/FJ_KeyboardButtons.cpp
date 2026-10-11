@@ -17,19 +17,22 @@ void FJ_KeyboardButtons::Init(const std::wstring& label, int id)
 
     std::wstring wrappedLabel = label;
     int pass = 0;
-    while (m_labelTooWide && pass < 5)
+    if (m_labelTooWide)
     {
-        for (std::wstring::size_type i = 0; i < wrappedLabel.size(); ++i)
+        while (m_labelTooWide && pass < 5)
         {
-            if (wrappedLabel[i] == L' ')
+            for (std::wstring::size_type i = 0; i < wrappedLabel.size(); ++i)
             {
-                wrappedLabel[i] = L'\n';
-                break;
+                if (wrappedLabel[i] == L' ')
+                {
+                    wrappedLabel[i] = L'\n';
+                    break;
+                }
             }
+            m_labelTooWide = false;
+            FJ_Button::SetLabel(wrappedLabel);
+            ++pass;
         }
-        m_labelTooWide = false;
-        FJ_Button::SetLabel(wrappedLabel);
-        ++pass;
     }
 }
 
@@ -39,19 +42,22 @@ void FJ_KeyboardButtons::SetLabel(const std::wstring& label)
 
     std::wstring wrappedLabel = label;
     int pass = 0;
-    while (m_labelTooWide && pass < 5)
+    if (m_labelTooWide)
     {
-        for (std::wstring::size_type i = 0; i < wrappedLabel.size(); ++i)
+        while (m_labelTooWide && pass < 5)
         {
-            if (wrappedLabel[i] == L' ')
+            for (std::wstring::size_type i = 0; i < wrappedLabel.size(); ++i)
             {
-                wrappedLabel[i] = L'\n';
-                break;
+                if (wrappedLabel[i] == L' ')
+                {
+                    wrappedLabel[i] = L'\n';
+                    break;
+                }
             }
+            m_labelTooWide = false;
+            FJ_Button::SetLabel(wrappedLabel);
+            ++pass;
         }
-        m_labelTooWide = false;
-        FJ_Button::SetLabel(wrappedLabel);
-        ++pass;
     }
 }
 

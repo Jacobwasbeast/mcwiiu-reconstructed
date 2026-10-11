@@ -25,49 +25,56 @@ UIControl_EnchantmentBook::UIControl_EnchantmentBook()
     m_controlType = UIControl::eUIControlType_EnchantmentBook;
     mItemInstance = ItemInstance::EMPTY;
     mBookTick = 0;
-    mBookOpen = 0.0F;
-    mBookOpenPrev = 0.0F;
-    mBookOpenTarget = 0.0F;
-    mBookOpenSpeed = 0.0F;
-    mBookRotation = 0.0F;
-    mBookRotationPrev = 0.0F;
+    mBookRotation = mBookRotationPrev = mBookOpen = mBookOpenPrev = mBookOpenTarget = mBookOpenSpeed = 0.0F;
 }
 
 void UIControl_EnchantmentBook::tickBook()
 {
     UIScene_EnchantingMenu* enchantingMenu = dynamic_cast<UIScene_EnchantingMenu*>(m_scene);
-    not_null_ptr<ItemInstance> itemInstance;
+    EnchantmentMenu* menu = NULL;
+    not_null_ptr<ItemInstance> current;
 
-    if (enchantingMenu == NULL)
+    if (enchantingMenu != NULL)
     {
-        itemInstance = not_null_ptr<ItemInstance>(new ItemInstance(Items::bow, 1, 0));
+        menu = enchantingMenu->getMenu();
+        current = menu->getSlot(0)->getItem();
     }
     else
     {
-        itemInstance = enchantingMenu->getMenu()->getSlot(0)->getItem();
+        current = not_null_ptr<ItemInstance>(new ItemInstance(Items::bow, 1, 0));
     }
 
-    if (!ItemInstance::matches(itemInstance, mItemInstance, true))
+    if (!ItemInstance::matches(current, mItemInstance, true))
     {
-        mItemInstance = itemInstance;
-        float target = mBookOpenTarget;
+        mItemInstance = current;
+
         do
         {
-            int r1 = mRandom.nextInt(4);
-            int r2 = mRandom.nextInt(4);
-            target = target + static_cast<float>(r1 - r2);
-            mBookOpenTarget = target;
-            if (target + 1.0F < mBookOpen)
-            {
-                break;
-            }
-        } while (target - 1.0F <= mBookOpen);
+            mBookOpenTarget += mRandom.nextInt(4) - mRandom.nextInt(4);
+        } while (mBookOpen <= mBookOpenTarget + 1.0F && mBookOpen >= mBookOpenTarget - 1.0F);
     }
+
+    ++mBookTick;
     mBookOpenPrev = mBookOpen;
     mBookRotationPrev = mBookRotation;
-    ++mBookTick;
 
-    mBookRotation += 0.2F;
+    bool shouldBeOpen = false;
+    for (int i = 0; i < 3; ++i)
+    {
+        if (menu == NULL || menu->mCosts[i] != 0)
+        {
+            shouldBeOpen = true;
+        }
+    }
+
+    if (shouldBeOpen)
+    {
+        mBookRotation += 0.2F;
+    }
+    else
+    {
+        mBookRotation -= 0.2F;
+    }
 
     if (mBookRotation < 0.0F)
     {
@@ -79,15 +86,16 @@ void UIControl_EnchantmentBook::tickBook()
     }
 
     float openSpeed = (mBookOpenTarget - mBookOpen) * 0.4F;
-    if (openSpeed < -0.2F)
+    const float maxSpeed = 0.2F;
+    if (openSpeed < -maxSpeed)
     {
-        openSpeed = -0.2F;
+        openSpeed = -maxSpeed;
     }
-    if (openSpeed > 0.2F)
+    if (openSpeed > maxSpeed)
     {
-        openSpeed = 0.2F;
+        openSpeed = maxSpeed;
     }
-    mBookOpenSpeed = (openSpeed - mBookOpenSpeed) * 0.9F + mBookOpenSpeed;
+    mBookOpenSpeed += (openSpeed - mBookOpenSpeed) * 0.9F;
     mBookOpen = mBookOpen + mBookOpenSpeed;
 }
 
@@ -96,8 +104,10 @@ void UIControl_EnchantmentBook::render(fuiRect* rect)
     const float partialTicks = 1.0F;
 
     GlStateManager::pushMatrix();
-    const float widthScale = (rect->xMax - rect->xMin) / m_width;
-    const float heightScale = (rect->yMax - rect->yMin) / m_height;
+    float width = rect->xMax - rect->xMin;
+    float height = rect->yMax - rect->yMin;
+    float widthScale = width / m_width;
+    float heightScale = height / m_height;
     GlStateManager::scalef(widthScale, heightScale, 1.0F);
     GlStateManager::translatef(m_width * 0.5F, m_height * 0.5F, 50.0F);
     GlStateManager::scalef(-57.0F / widthScale, 57.0F / widthScale, 360.0F);
@@ -111,9 +121,8 @@ void UIControl_EnchantmentBook::render(fuiRect* rect)
     GlStateManager::rotatef(20.0F, 1.0F, 0.0F, 0.0F);
 
     const float rotation = mBookRotationPrev + (mBookRotation - mBookRotationPrev) * partialTicks;
-    const float rotationDelta = 1.0F - rotation;
-    GlStateManager::translatef(rotationDelta * 0.2F, rotationDelta * 0.1F, rotationDelta * 0.25F);
-    GlStateManager::rotatef(-rotationDelta * 90.0F - 90.0F, 0.0F, 1.0F, 0.0F);
+    GlStateManager::translatef((1.0F - rotation) * 0.2F, (1.0F - rotation) * 0.1F, (1.0F - rotation) * 0.25F);
+    GlStateManager::rotatef(-(1.0F - rotation) * 90.0F - 90.0F, 0.0F, 1.0F, 0.0F);
     GlStateManager::rotatef(180.0F, 1.0F, 0.0F, 0.0F);
 
     float spread = mBookOpenPrev + (mBookOpen - mBookOpenPrev) * partialTicks + 0.25F;

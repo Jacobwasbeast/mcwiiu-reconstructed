@@ -3,31 +3,29 @@
 #include "game/core/Slot.hpp"
 #include "game/item/Container.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/world/generation/Player.hpp"
 
 TrapMenu::TrapMenu(boost::shared_ptr<Container> playerInventory, boost::shared_ptr<Container> container)
 {
-    int row;
-    int column;
-
     m_container = container;
 
-    for (row = 0; row < 3; ++row)
+    for (int row = 0; row < 3; ++row)
     {
-        for (column = 0; column < 3; ++column)
+        for (int column = 0; column < 3; ++column)
         {
-            addSlot(new Slot(container, row * 3 + column, 62 + column * 18, 17 + row * 18));
+            addSlot(new Slot(container, column + row * 3, 62 + column * 18, 17 + row * 18));
         }
     }
 
-    for (row = 0; row < 3; ++row)
+    for (int row = 0; row < 3; ++row)
     {
-        for (column = 0; column < 9; ++column)
+        for (int column = 0; column < 9; ++column)
         {
             addSlot(new Slot(playerInventory, column + row * 9 + 9, 8 + column * 18, 84 + row * 18));
         }
     }
 
-    for (column = 0; column < 9; ++column)
+    for (int column = 0; column < 9; ++column)
     {
         addSlot(new Slot(playerInventory, column, 8 + column * 18, 142));
     }
@@ -53,9 +51,12 @@ not_null_ptr<ItemInstance> TrapMenu::quickMoveStack(boost::shared_ptr<Player> pl
                 return ItemInstance::EMPTY;
             }
         }
-        else if (!moveItemStackTo(item, 0, 9, false, true, true))
+        else
         {
-            return ItemInstance::EMPTY;
+            if (!moveItemStackTo(item, 0, 9, false, true, true))
+            {
+                return ItemInstance::EMPTY;
+            }
         }
 
         if (item->getCount() == 0)
@@ -71,8 +72,10 @@ not_null_ptr<ItemInstance> TrapMenu::quickMoveStack(boost::shared_ptr<Player> pl
         {
             return ItemInstance::EMPTY;
         }
-
-        slot->onTake(player, item);
+        else
+        {
+            slot->onTake(player, item);
+        }
     }
 
     return result;

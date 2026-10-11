@@ -1,6 +1,7 @@
 #include "game/ui/EnchantmentMenu.hpp"
 
 #include "game/core/DyeColor.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/core/Slot.hpp"
 #include "game/item/Enchantment.hpp"
 #include "game/item/EnchantmentCostSlot.hpp"
@@ -167,10 +168,12 @@ void EnchantmentMenu::slotsChanged()
         mRandom.setSeed(mEnchantmentSeed);
         for (int slot = 0; slot < 3; ++slot)
         {
-            const int cost = EnchantmentHelper::getEnchantmentCost(&mRandom, slot, bookshelves, item);
+            int cost = EnchantmentHelper::getEnchantmentCost(&mRandom, slot, bookshelves, item);
             mEnchantmentIds[slot] = -1;
             mEnchantmentLevels[slot] = -1;
-            mCosts[slot] = cost < slot + 1 ? 0 : cost;
+            if (cost < slot + 1)
+                cost = 0;
+            mCosts[slot] = cost;
         }
 
         for (int slot = 0; slot < 3; ++slot)
@@ -216,21 +219,23 @@ bool EnchantmentMenu::clickMenuButton(boost::shared_ptr<Player> player, int id)
         if (!mLevel->mIsClientSide)
         {
             std::vector<EnchantmentInstance*>* results = getEnchantmentList(item, id, mCosts[id]);
-            if (results->empty())
-            {
-                delete results;
-            }
-            else
+            if (!results->empty())
             {
                 player->onEnchantmentPerformed(lapisRequired);
 
-                if (item->getItem() == Items::book)
+                bool isBook = item->getItem() == Items::book;
+                if (isBook)
                 {
                     item = not_null_ptr<ItemInstance>(new ItemInstance(Items::enchantedBook));
                     mEnchantmentContainer->setItem(0, item);
-                    for (unsigned int i = 0; i < results->size(); ++i)
+                }
+                EnchantmentInstance* instance;
+                unsigned int i = 0;
+                if (isBook)
+                {
+                    for (; i < results->size(); ++i)
                     {
-                        EnchantmentInstance* instance = results->at(i);
+                        instance = results->at(i);
                         EnchantedBookItem::addEnchantment(item, instance);
                         if (instance != 0)
                             delete instance;
@@ -238,9 +243,9 @@ bool EnchantmentMenu::clickMenuButton(boost::shared_ptr<Player> player, int id)
                 }
                 else
                 {
-                    for (unsigned int i = 0; i < results->size(); ++i)
+                    for (; i < results->size(); ++i)
                     {
-                        EnchantmentInstance* instance = results->at(i);
+                        instance = results->at(i);
                         item->enchant(instance->enchantment, instance->level);
                         delete instance;
                     }
@@ -260,6 +265,10 @@ bool EnchantmentMenu::clickMenuButton(boost::shared_ptr<Player> player, int id)
                 mLevel->playSound(boost::shared_ptr<Player>(), mPosition, SoundEvents::ENCHANTMENT_TABLE_USE,
                                   SoundSource::eSoundSource_Blocks, 1.0f, mLevel->mRandom->nextFloat() * 0.1f + 0.9f,
                                   16.0f);
+            }
+            else
+            {
+                delete results;
             }
         }
         return true;
@@ -287,7 +296,7 @@ bool EnchantmentMenu::stillValid(boost::shared_ptr<Player> player)
 {
     if (mLevel->getBlockState(mPosition)->getBlock() != Blocks::enchanting_table)
         return false;
-    if (player->distanceAsIfHitscanned(mPosition, *player->mBoundingBox) > 30.25f)
+    if (player->distanceAsIfHitscanned(mPosition, *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
         return false;
     return true;
 }

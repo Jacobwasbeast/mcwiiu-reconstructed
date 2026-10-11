@@ -21,8 +21,8 @@
 
 extern CConsoleMinecraftApp gApp;
 extern ConsoleUIController gConsoleUIController;
-extern CProfile* gProfile;
-extern CStorage* gStorage;
+extern C_4JProfile* gProfile;
+extern C4JStorage* gStorage;
 
 UIScene_InGameSaveManagementMenu::UIScene_InGameSaveManagementMenu(int playerId, void*, UILayer* layer)
     : UIScene(playerId, layer)

@@ -35,8 +35,8 @@
 extern CConsoleMinecraftApp gApp;
 extern ConsoleUIController gConsoleUIController;
 extern CInput* g_pInput;
-extern CProfile* gProfile;
-extern CStorage* gStorage;
+extern C_4JProfile* gProfile;
+extern C4JStorage* gStorage;
 
 namespace
 {

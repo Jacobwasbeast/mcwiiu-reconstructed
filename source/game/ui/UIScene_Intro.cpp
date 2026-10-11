@@ -48,8 +48,8 @@ void UIScene_Intro::handleInput(int playerId, int action, bool repeat, bool pres
         uint32_t optionsStatus = gApp.GetOptionsCallbackStatus(gProfile->GetPrimaryPad());
         switch (optionsStatus)
         {
-        case 4:
-        case 6:
+        case C4JStorage::eOptions_Callback_Read:
+        case C4JStorage::eOptions_Callback_Read_FileNotFound:
             if (GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_EULAAccepted) == 0)
             {
                 gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_EULA, NULL,
@@ -61,7 +61,7 @@ void UIScene_Intro::handleInput(int playerId, int action, bool repeat, bool pres
                                                   EUILayer_Scene, EUIGroup_PlayerDefault);
             g_introRunning = 1;
             return;
-        case 0:
+        case C4JStorage::eOptions_Callback_Idle:
             m_inputHandled = false;
             g_introRunning = 1;
             return;
@@ -87,8 +87,8 @@ void UIScene_Intro::handleAnimationEnd()
     uint32_t optionsStatus = gApp.GetOptionsCallbackStatus(gProfile->GetPrimaryPad());
     switch (optionsStatus)
     {
-    case 4:
-    case 6:
+    case C4JStorage::eOptions_Callback_Read:
+    case C4JStorage::eOptions_Callback_Read_FileNotFound:
     {
         int eulaAccepted = GameSettings::GetGameSettings(gProfile->GetPrimaryPad(), eGameSetting_EULAAccepted);
         int primaryPlayer = gProfile->GetPrimaryPad();
@@ -102,7 +102,7 @@ void UIScene_Intro::handleAnimationEnd()
                                               EUILayer_Scene, EUIGroup_PlayerDefault);
         return;
     }
-    case 0:
+    case C4JStorage::eOptions_Callback_Idle:
         gConsoleUIController.NavigateToScene(gProfile->GetPrimaryPad(), EUIScene_SaveMessage, NULL,
                                               EUILayer_Scene, EUIGroup_PlayerDefault);
         return;

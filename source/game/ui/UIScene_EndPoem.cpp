@@ -91,7 +91,7 @@ void UIScene_EndPoem::updateNoise()
             wchar_t character;
             if (gConsoleUIController.UsingBitmapFont())
             {
-                character = ALLOWED_CHARACTERS[random->nextInt(ALLOWED_CHARACTERS.length())];
+                character = SharedConstants::ALLOWED_CHARACTERS[random->nextInt(SharedConstants::ALLOWED_CHARACTERS.length())];
             }
             else
             {

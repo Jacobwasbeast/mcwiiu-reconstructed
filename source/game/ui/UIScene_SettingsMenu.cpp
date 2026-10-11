@@ -15,7 +15,7 @@
 #include "game/ui/UIString.hpp"
 #include "platform/wiiu/CProfile.hpp"
 
-extern CStorage* gStorage;
+extern C4JStorage* gStorage;
 
 UIScene_SettingsMenu::UIScene_SettingsMenu(int type, void*, UILayer* layer)
     : UIScene(type, layer)

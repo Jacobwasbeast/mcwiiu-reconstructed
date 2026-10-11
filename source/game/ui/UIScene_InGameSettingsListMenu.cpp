@@ -37,6 +37,12 @@ extern ConsoleUIController gConsoleUIController;
 
 template <typename T> std::wstring _toString(T value);
 
+namespace
+{
+float arenaSizes[] = { 0.5f, 0.625f, 0.75f, 0.875f, 1.0f };
+float arenaSizeLabels[] = { 1.0f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f };
+}
+
 UIScene_InGameSettingsListMenu::UIScene_InGameSettingsListMenu(int sceneType, void*, UILayer* layer)
     : UIScene(sceneType, layer)
 {
@@ -205,15 +211,8 @@ void UIScene_InGameSettingsListMenu::Init()
             MiniGameDef::GetCustomGameModeById(m_miniGameId, true)->GetLootSetText(m_playerSettings.mLootSetId);
         m_multiList.AddNewSlider(lootLabel, 6, 0, 3, m_playerSettings.mLootSetId, false, 7, 3);
 
-        static float arenaSizes[] = { 0.5f, 0.625f, 0.75f, 0.875f, 1.0f };
-        static float arenaSizeLabels[] = { 1.0f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f };
         int arenaSize = 0;
-        if (!m_playerSettings.mArenaSizeMultiplier.isSet())
-        {
-            std::swprintf(text, 256, L"%ls: %ls", L10N::GetString(IDS_MG02_LAYER_SCALE),
-                          L10N::GetString(IDS_MG_AUTO));
-        }
-        else
+        if (m_playerSettings.mArenaSizeMultiplier.isSet())
         {
             float multiplier = m_playerSettings.mArenaSizeMultiplier.get();
             if (multiplier == arenaSizes[0])
@@ -229,11 +228,18 @@ void UIScene_InGameSettingsListMenu::Init()
             std::swprintf(text, 256, L"%ls: x%ls", L10N::GetString(IDS_MG02_LAYER_SCALE),
                           _toString<float>(arenaSizeLabels[arenaSize]).c_str());
         }
+        else
+        {
+            std::swprintf(text, 256, L"%ls: %ls", L10N::GetString(IDS_MG02_LAYER_SCALE),
+                          L10N::GetString(IDS_MG_AUTO));
+        }
         m_multiList.AddNewSlider(std::wstring(text), 16, 0, 5, arenaSize, true, 7, 3);
 
-        int layerCount = 0;
+        int layerCount;
         if (m_playerSettings.mLayerCount.isSet())
             layerCount = m_playerSettings.mLayerCount.get();
+        else
+            layerCount = 0;
         if (layerCount > 0)
             std::swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_MG02_LAYER_COUNT), layerCount);
         else
@@ -488,17 +494,12 @@ void UIScene_InGameSettingsListMenu::handleSliderElementMove(int, int element, i
 {
     gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
     wchar_t text[256];
-    const MiniGameDef* miniGame = MiniGameDef::GetCustomGameModeById(m_miniGameId, true);
     switch (element)
     {
     case 2:
         m_playerSettings.mHostOptions.Set(eCustomGameModeHostOption_RoundLength, value);
         m_roundLengthSlider.Update(m_multiList, value);
         return;
-    case 3:
-        m_playerSettings.mHostOptions.Set(eCustomGameModeHostOption_GameVariant, value);
-        m_maxPlayersSlider.Update(m_multiList, value);
-        break;
     case 4:
         m_playerSettings.mHostOptions.Set(eCustomGameModeHostOption_SpectateMode, value);
         m_gameVariantSlider.Update(m_multiList, value);
@@ -510,7 +511,7 @@ void UIScene_InGameSettingsListMenu::handleSliderElementMove(int, int element, i
         if (m_miniGameId == eMiniGameId_Battle)
             m_playerSettings.mRandomLootSet = m_playerSettings.mLootSetId == 5;
         std::wstring label = std::wstring(L10N::GetString(IDS_MG01_ITEMSET)) + L": " +
-                             miniGame->GetLootSetText(m_playerSettings.mLootSetId);
+                             MiniGameDef::GetCustomGameModeById(m_miniGameId, true)->GetLootSetText(m_playerSettings.mLootSetId);
         m_multiList.SetItemLabel(6, UIString(label), false);
         UpdateDescriptionText();
         break;
@@ -519,7 +520,7 @@ void UIScene_InGameSettingsListMenu::handleSliderElementMove(int, int element, i
     {
         m_playerSettings.mFoodBalance = static_cast<int>(m_multiList.GetSliderValue(7));
         std::wstring label = std::wstring(L10N::GetString(0x1cbfab4a)) + L": " +
-                             miniGame->GetFoodBalanceIndexText(m_playerSettings.mFoodBalance);
+                             MiniGameDef::GetCustomGameModeById(m_miniGameId, true)->GetFoodBalanceIndexText(m_playerSettings.mFoodBalance);
         m_multiList.SetItemLabel(7, UIString(label), false);
         UpdateDescriptionText();
         break;
@@ -532,56 +533,65 @@ void UIScene_InGameSettingsListMenu::handleSliderElementMove(int, int element, i
         else
             std::swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_MG_LIVES_PER_ROUND),
                           m_playerSettings.mLivesPerRound);
-        m_multiList.SetItemLabel(8, UIString(std::wstring(text)), false);
+        m_multiList.SetItemLabel(8, UIString(text), false);
         UpdateDescriptionText();
         return;
     case 9:
         m_playerSettings.mRoundCount = static_cast<int>(m_multiList.GetSliderValue(9));
         std::swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_MG01_ROUND_COUNT), m_playerSettings.mRoundCount);
-        m_multiList.SetItemLabel(9, UIString(std::wstring(text)), false);
+        m_multiList.SetItemLabel(9, UIString(text), false);
         UpdateDescriptionText();
         return;
     case 10:
     {
         int mapSize = static_cast<int>(m_multiList.GetSliderValue(10));
-        m_playerSettings.mMapSizeOverride = mapSize == 0 ? maybe<int>() : maybe<int>(mapSize);
+        if (mapSize == 0)
+            m_playerSettings.mMapSizeOverride = maybe<int>();
+        else
+            m_playerSettings.mMapSizeOverride = maybe<int>(mapSize);
         std::wstring label = std::wstring(L10N::GetString(IDS_MG01_MAP_SIZE)) + L": " +
-                             miniGame->GetMapSizeOverrideText(mapSize);
+                             MiniGameDef::GetCustomGameModeById(m_miniGameId, true)->GetMapSizeOverrideText(m_playerSettings.mMapSizeOverride.otherwise(0));
         m_multiList.SetItemLabel(10, UIString(label), false);
         UpdateDescriptionText();
         break;
     }
     case 16:
     {
-        static const float arenaSizes[] = { 0.0f, 0.5f, 0.625f, 0.75f, 0.875f, 1.0f };
-        static const float arenaSizeLabels[] = { 1.0f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f };
         int sizeIndex = static_cast<int>(m_multiList.GetSliderValue(16));
-        m_playerSettings.mArenaSizeMultiplier = sizeIndex == 0
-            ? maybe<float>() : maybe<float>(arenaSizes[sizeIndex]);
         if (sizeIndex == 0)
-            std::swprintf(text, 256, L"%ls: %ls", L10N::GetString(IDS_MG02_LAYER_SCALE),
-                          L10N::GetString(IDS_MG_AUTO));
+            m_playerSettings.mArenaSizeMultiplier = maybe<float>();
         else
+            m_playerSettings.mArenaSizeMultiplier = maybe<float>(arenaSizes[sizeIndex - 1]);
+        if (sizeIndex > 0)
             std::swprintf(text, 256, L"%ls: x%ls", L10N::GetString(IDS_MG02_LAYER_SCALE),
                           _toString<float>(arenaSizeLabels[sizeIndex]).c_str());
-        m_multiList.SetItemLabel(16, UIString(std::wstring(text)), false);
+        else
+            std::swprintf(text, 256, L"%ls: %ls", L10N::GetString(IDS_MG02_LAYER_SCALE),
+                          L10N::GetString(IDS_MG_AUTO));
+        m_multiList.SetItemLabel(16, UIString(text), false);
         UpdateDescriptionText();
         return;
     }
     case 17:
     {
         int layerCount = static_cast<int>(m_multiList.GetSliderValue(17));
-        m_playerSettings.mLayerCount = layerCount == 0
-            ? maybe<unsigned int>() : maybe<unsigned int>(layerCount);
         if (layerCount == 0)
+            m_playerSettings.mLayerCount = maybe<unsigned int>();
+        else
+            m_playerSettings.mLayerCount = maybe<unsigned int>(layerCount);
+        if (layerCount > 0)
+            std::swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_MG02_LAYER_COUNT), layerCount);
+        else
             std::swprintf(text, 256, L"%ls: %ls", L10N::GetString(IDS_MG02_LAYER_COUNT),
                           L10N::GetString(IDS_MG_AUTO));
-        else
-            std::swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_MG02_LAYER_COUNT), layerCount);
-        m_multiList.SetItemLabel(17, UIString(std::wstring(text)), false);
+        m_multiList.SetItemLabel(17, UIString(text), false);
         UpdateDescriptionText();
         return;
     }
+    case 3:
+        m_playerSettings.mHostOptions.Set(eCustomGameModeHostOption_GameVariant, value);
+        m_maxPlayersSlider.Update(m_multiList, value);
+        break;
     default:
         break;
     }

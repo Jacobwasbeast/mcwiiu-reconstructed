@@ -19,7 +19,7 @@
 #include "platform/wiiu/CInput.hpp"
 #include "platform/wiiu/CProfile.hpp"
 
-extern CProfile* gProfile;
+extern C_4JProfile* gProfile;
 
 UIComponent_Tooltips::_TooltipValues::_TooltipValues()
 {

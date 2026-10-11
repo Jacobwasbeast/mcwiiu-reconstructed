@@ -12,8 +12,9 @@ bool UIControl_SaveList::setupControl(UIScene* scene, fuiRenderNode* node, const
 
 void UIControl_SaveList::addItem(const std::wstring& label, const std::wstring& textureName, int index)
 {
+    std::wstring textureName1 = L"";
     FJ_List_ListButtonIconLeft* list = static_cast<FJ_List_ListButtonIconLeft*>(m_fuiRenderNode->getFuiNode());
-    list->addNewItem(label, m_itemIndex, textureName, L"");
+    list->addNewItem(label, m_itemIndex, textureName, textureName1);
 }
 
 void UIControl_SaveList::addItem(const std::wstring& label, const std::wstring& textureName)

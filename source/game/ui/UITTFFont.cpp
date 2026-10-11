@@ -3,12 +3,7 @@
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/ui/fui.hpp"
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
-
-struct _OVERLAPPED;
-
-extern int CreateFileA(const char*, unsigned int, unsigned int, void*, unsigned int, unsigned int, int);
-extern unsigned int GetFileSize(int, unsigned int*);
-extern unsigned int ReadFile(int, void*, unsigned int, unsigned int*, _OVERLAPPED*);
+#include "platform/wiiu/WiiU_FileCache.hpp"
 
 UITTFFont::UITTFFont(const std::string& fontName, const std::string& fontFile, int missingGlyph)
 {

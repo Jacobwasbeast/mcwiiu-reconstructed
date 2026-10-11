@@ -16,8 +16,8 @@ public:
     uint32_t getHeight() const;
 
 private:
-    uint32_t mWidth;
-    uint32_t mHeight;
+    int mWidth;
+    int mHeight;
 
 public:
     double mWidthScale;

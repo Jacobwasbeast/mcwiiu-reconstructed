@@ -15,9 +15,8 @@ FJ_TouchControlFrontend* FJ_TouchControlFrontend::Create(fuiRenderNode* pRenderN
 
 void FJ_TouchControlFrontend::Init()
 {
-    std::string name("placeholder");
-    FJ_FuiNode* pNode = getChildByName(name);
-    pNode->asMovieClip()->setVisible(false);
+    FJ_FuiNode* placeholder = getChildByName(std::string("placeholder"))->asMovieClip();
+    placeholder->setVisible(false);
 }
 
 unsigned int FJ_TouchControlFrontend::getType()

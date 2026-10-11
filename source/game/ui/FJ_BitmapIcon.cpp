@@ -41,8 +41,7 @@ void FJ_BitmapIcon::SetTextureName(const std::wstring& textureName)
     if (m_pBitmapNode == NULL)
     {
         fuiRect rect;
-        rect.xMin = 0.0f;
-        rect.yMin = 0.0f;
+        rect.yMin = rect.xMin = 0.0f;
         rect.xMax = getWidth() / getScaleX();
         rect.yMax = getHeight() / getScaleY();
         unsigned int width;

@@ -2,28 +2,34 @@
 
 #include "game/core/Slot.hpp"
 #include "game/item/ItemInstance.hpp"
+#include "game/world/generation/Player.hpp"
 
 HopperMenu::HopperMenu(boost::shared_ptr<Container> playerContainer,
                        boost::shared_ptr<Container> container,
                        boost::shared_ptr<Player> player)
+    : AbstractContainerMenu()
 {
     m_container = container;
     container->startOpen(player);
 
-    unsigned int i;
-    for (i = 0; i < container->getContainerSize(); ++i) {
-        addSlot(new Slot(container, (int)i, 44 + (int)i * 18, 20));
-    }
-
     int row;
     int column;
-    for (row = 0; row < 3; ++row) {
-        for (column = 0; column < 9; ++column) {
-            addSlot(new Slot(playerContainer, 9 + row * 9 + column,
+    for (unsigned int i = 0; i < container->getContainerSize(); ++i)
+    {
+        addSlot(new Slot(container, i, 44 + i * 18, 20));
+    }
+
+    for (row = 0; row < 3; ++row)
+    {
+        for (column = 0; column < 9; ++column)
+        {
+            addSlot(new Slot(playerContainer, column + row * 9 + 9,
                              8 + column * 18, 51 + row * 18));
         }
     }
-    for (column = 0; column < 9; ++column) {
+
+    for (column = 0; column < 9; ++column)
+    {
         addSlot(new Slot(playerContainer, column, 8 + column * 18, 109));
     }
 }
@@ -41,14 +47,14 @@ not_null_ptr<ItemInstance> HopperMenu::quickMoveStack(boost::shared_ptr<Player> 
         not_null_ptr<ItemInstance> item = slot->getItem();
         result = item->copy();
         if ((unsigned int)index < m_container->getContainerSize()) {
-            if (!moveItemStackTo(item, (int)m_container->getContainerSize() + 27,
-                                (int)m_slots.size(), false, true, true)) {
-                if (!moveItemStackTo(item, (int)m_container->getContainerSize(),
-                                    (int)m_slots.size(), true, true, true)) {
+            if (!moveItemStackTo(item, m_container->getContainerSize() + 27,
+                                m_slots.size(), false, true, true)) {
+                if (!moveItemStackTo(item, m_container->getContainerSize(),
+                                    m_slots.size(), true, true, true)) {
                     return ItemInstance::EMPTY;
                 }
             }
-        } else if (!moveItemStackTo(item, 0, (int)m_container->getContainerSize(),
+        } else if (!moveItemStackTo(item, 0, m_container->getContainerSize(),
                                    false, true, true)) {
             return ItemInstance::EMPTY;
         }
