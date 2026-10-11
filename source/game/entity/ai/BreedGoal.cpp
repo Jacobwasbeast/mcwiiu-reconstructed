@@ -130,8 +130,7 @@ void BreedGoal::breed()
         player = partner->getLoveCause();
     if (player)
     {
-        Stat* stat = gStats->get_breedEntity(child->GetType());
-        player->awardStat(stat, GenericStats::param_breedEntity(child->GetType()));
+        player->awardStat(GenericStats::breedEntity(child->GetType()), GenericStats::param_breedEntity(child->GetType()));
     }
 
     mAnimal->setAge(6000);

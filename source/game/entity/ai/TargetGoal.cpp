@@ -37,11 +37,11 @@ TargetGoal::TargetGoal(PathfinderMob* mob, bool mustSee, bool mustReach)
 
 void TargetGoal::_init(PathfinderMob* mob, bool mustSee, bool mustReach)
 {
-    mMob = mob;
     mMustSee = mustSee;
+    mMob = mob;
     mMustReach = mustReach;
-    mCanReach = 0;
     mTargetSearchDelay = 0;
+    mCanReach = 0;
     mUnseenTicks = 0;
     mTarget.reset();
     mUnseenMemoryTicks = 60;
@@ -53,19 +53,23 @@ bool TargetGoal::canContinueToUse()
     if (!target)
         target = mTarget.lock();
 
-    if (!target || !target->isAlive())
+    if (!target)
+        return false;
+
+    if (!target->isAlive())
         return false;
 
     if (eTYPE_DERIVED_FROM(EntityType::WITHER_SKELETON, mMob->GetType()))
     {
         boost::shared_ptr<WitherBoss> parent =
             static_cast<WitherSkeleton*>(mMob)->getWitherParent();
-        if (parent && parent->getId() == target->getId())
+        if (parent && target->getId() == parent->getId())
             return false;
     }
 
     Team* team = mMob->getTeam();
-    if (team != NULL && target->getTeam() == team)
+    Team* targetTeam = target->getTeam();
+    if (team != NULL && targetTeam == team)
         return false;
 
     double followDistance = getFollowDistance();
@@ -88,7 +92,8 @@ bool TargetGoal::canContinueToUse()
             return false;
         }
 
-        if (boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)
+        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(target);
+        if (player->mAbilities.mInvulnerable)
             return false;
     }
 
@@ -146,8 +151,7 @@ bool TargetGoal::canAttack(Mob* mob, boost::shared_ptr<LivingEntity> target,
         if (target == mobOwnable->getOwner())
             return false;
     }
-
-    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType()))
+    else if (eTYPE_DERIVED_FROM(EntityType::PLAYER, target->GetType()))
     {
         if ((!allowInvulnerablePlayers
              && boost::static_pointer_cast<Player>(target)->mAbilities.mInvulnerable)
@@ -175,11 +179,10 @@ bool TargetGoal::canReach(boost::shared_ptr<LivingEntity> target)
         return false;
     }
 
-    int x = Mth::floor(target->mX);
-    int z = Mth::floor(target->mZ);
-    bool result = (double)((last->x - x) * (last->x - x) + (last->z - z) * (last->z - z)) <= 2.25;
+    int dx = last->x - Mth::floor(target->mX);
+    int dz = last->z - Mth::floor(target->mZ);
     delete path;
-    return result;
+    return (double)(dx * dx + dz * dz) <= 2.25;
 }
 
 bool TargetGoal::canAttack(boost::shared_ptr<LivingEntity> target, bool allowInvulnerablePlayers)

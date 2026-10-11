@@ -16,49 +16,47 @@ FlyingMoveControl::~FlyingMoveControl()
 
 void FlyingMoveControl::tick()
 {
-    if (mOperation != MOVE_TO)
+    if (mOperation == MOVE_TO)
+    {
+        mOperation = WAIT;
+        mMob->setNoGravity(true);
+
+        double xDistance = mWantedX - mMob->mX;
+        double zDistance = mWantedZ - mMob->mZ;
+        double yDistance = mWantedY - mMob->mY;
+
+        if (yDistance * yDistance + xDistance * xDistance + zDistance * zDistance < MIN_SPEED_SQR)
+        {
+            mMob->setYya(0.0f);
+            mMob->setZza(0.0f);
+            return;
+        }
+
+        float yRot = (float)(Mth::atan2((int)zDistance, (int)xDistance) * 57.2957763671875f) - 90.0f;
+        float newYRot = rotlerp(mMob->mYRot, yRot, 10.0f);
+        mMob->mYRot = newYRot;
+
+        float speed;
+        if (mMob->mOnGround)
+        {
+            speed = (float)(mSpeedModifier * mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue());
+        }
+        else
+        {
+            speed = (float)(mSpeedModifier * mMob->getAttribute(SharedMonsterAttributes::FLYING_SPEED)->getValue());
+        }
+        mMob->setSpeed(speed);
+
+        float horizontalDistance = Mth::sqrt(xDistance * xDistance + zDistance * zDistance);
+        float xRot = -(Mth::atan2((int)yDistance, (int)horizontalDistance) * 57.2957763671875f);
+        float newXRot = rotlerp(mMob->mXRot, xRot, 10.0f);
+        mMob->mXRot = newXRot;
+        mMob->setYya(yDistance > 0.0 ? speed : -speed);
+    }
+    else
     {
         mMob->setNoGravity(false);
         mMob->setYya(0.0f);
         mMob->setZza(0.0f);
-        return;
-    }
-
-    mOperation = WAIT;
-    mMob->setNoGravity(true);
-
-    double xDistance = mWantedX - mMob->mX;
-    double zDistance = mWantedZ - mMob->mZ;
-    double yDistance = mWantedY - mMob->mY;
-    double horizontalDistanceSquared = xDistance * xDistance + zDistance * zDistance;
-
-    if (yDistance * yDistance + xDistance * xDistance + zDistance * zDistance < MIN_SPEED_SQR)
-    {
-        mMob->setYya(0.0f);
-        mMob->setZza(0.0f);
-        return;
-    }
-
-    float yRot = (float)(Mth::atan2((int)zDistance, (int)xDistance) * 57.2957763671875f - 90.0f);
-    float newYRot = rotlerp(mMob->mYRot, yRot, 10.0f);
-    mMob->mYRot = newYRot;
-
-    Attribute* movementAttribute = mMob->mOnGround
-        ? SharedMonsterAttributes::MOVEMENT_SPEED
-        : SharedMonsterAttributes::FLYING_SPEED;
-    float speed = (float)(mSpeedModifier * mMob->getAttribute(movementAttribute)->getValue());
-    mMob->setSpeed(speed);
-
-    double horizontalDistance = (double)Mth::sqrt(horizontalDistanceSquared);
-    float xRot = -(Mth::atan2((int)yDistance, (int)horizontalDistance) * 57.2957763671875f);
-    float newXRot = rotlerp(mMob->mXRot, xRot, 10.0f);
-    mMob->mXRot = newXRot;
-    if (yDistance <= 0.0)
-    {
-        mMob->setYya(-speed);
-    }
-    else
-    {
-        mMob->setYya(speed);
     }
 }

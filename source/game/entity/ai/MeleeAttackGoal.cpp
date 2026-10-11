@@ -116,11 +116,8 @@ void MeleeAttackGoal::tick()
     boost::shared_ptr<LivingEntity> target = mMob->getTarget();
     mMob->getLookControl()->setLookAt(target, 30.0f, 30.0f);
     double distance = mMob->distanceToSqr(target->mX, target->mBoundingBox->mMinY, target->mZ);
-    bool canSeeTarget = true;
     --mTicksUntilNextPathRecalculation;
-
-    if (!mFollowingTargetEvenIfNotSeen && !mMob->getSensing()->canSee(target))
-        canSeeTarget = false;
+    int canSeeTarget = mFollowingTargetEvenIfNotSeen || mMob->getSensing()->canSee(target);
 
     if (canSeeTarget && mTicksUntilNextPathRecalculation <= 0
         && ((mTargetX == 0.0 && mTargetY == 0.0 && mTargetZ != 0.0)
@@ -138,13 +135,11 @@ void MeleeAttackGoal::tick()
         else if (distance > 256.0)
             mTicksUntilNextPathRecalculation += 5;
 
-        if (mMob->getNavigation()->moveTo(target, mSpeedModifier) != true)
+        if (!mMob->getNavigation()->moveTo(target, mSpeedModifier))
             mTicksUntilNextPathRecalculation += 15;
     }
 
-    mTicksUntilNextAttack = mTicksUntilNextAttack - 1;
-    if (mTicksUntilNextAttack < 0)
-        mTicksUntilNextAttack = 0;
+    mTicksUntilNextAttack = std::max(mTicksUntilNextAttack - 1, 0);
     checkAndPerformAttack(target, distance);
 }
 

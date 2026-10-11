@@ -37,7 +37,7 @@ bool MakeLoveGoal::villageNeedsMoreVillagers()
     if (!village->isBreedTimerOk())
         return false;
 
-    int maxPopulation = (int)(village->getDoorCount() * 0.35);
+    int maxPopulation = (int)((float)village->getDoorCount() * 0.35);
     return village->getPopulationSize() < maxPopulation;
 }
 

@@ -8,14 +8,12 @@
 
 bool BabyOnLandSelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
     {
-        return false;
+        return boost::static_pointer_cast<LivingEntity>(entity)->isBaby() && !entity->isInWater();
     }
 
-    boost::shared_ptr<LivingEntity> livingEntity = boost::static_pointer_cast<LivingEntity>(entity);
-
-    return livingEntity->isBaby() && !entity->isInWater();
+    return false;
 }
 
 BabyOnLandSelector::~BabyOnLandSelector()

@@ -49,99 +49,102 @@ void FlyingPathNavigation::tick()
     if (mHasDelayedRecomputation)
         recomputePath();
 
-    if (!isDone())
-    {
-        if (canUpdatePath())
-        {
-            updatePath();
-        }
-        else
-        {
-            if (mPath != NULL && mPath->getIndex() < mPath->getSize())
-            {
-                Vec3* next = mPath->getPos(mMob->shared_from_this(), mPath->getIndex());
-                if (Mth::floor(mMob->mX) == Mth::floor(next->x) &&
-                    Mth::floor(mMob->mY) == Mth::floor(next->y) &&
-                    Mth::floor(mMob->mZ) == Mth::floor(next->z))
-                    mPath->setIndex(mPath->getIndex() + 1);
-            }
-        }
-        debugPathfinding();
+    if (isDone())
+        return;
 
-        if (!isDone())
-        {
-            Vec3* current = mPath->currentPos(mMob->shared_from_this());
-            mMob->getMoveControl()->setWantedPosition(current->x, current->y, current->z,
-                                                      mSpeedModifier);
-        }
+    if (canUpdatePath())
+    {
+        updatePath();
     }
+    else if (mPath != NULL && mPath->getIndex() < mPath->getSize())
+    {
+        Vec3* next = mPath->getPos(mMob->shared_from_this(), mPath->getIndex());
+        if (Mth::floor(mMob->mX) == Mth::floor(next->x) &&
+            Mth::floor(mMob->mY) == Mth::floor(next->y) &&
+            Mth::floor(mMob->mZ) == Mth::floor(next->z))
+            mPath->setIndex(mPath->getIndex() + 1);
+    }
+    debugPathfinding();
+
+    if (isDone())
+        return;
+
+    Vec3* current = mPath->currentPos(mMob->shared_from_this());
+    mMob->getMoveControl()->setWantedPosition(current->x, current->y, current->z,
+                                              mSpeedModifier);
 }
 
-bool FlyingPathNavigation::canMoveDirectly(Vec3* start, Vec3* end, int, int, int)
+bool FlyingPathNavigation::canMoveDirectly(Vec3* start, Vec3* end, int width, int height, int depth)
 {
-    const int x = Mth::floor(start->x);
-    const int y = Mth::floor(start->y);
-    const int z = Mth::floor(start->z);
-    const double xDelta = end->x - start->x;
-    const double yDelta = end->y - start->y;
-    const double zDelta = end->z - start->z;
-    const double lengthSquared = xDelta * xDelta + yDelta * yDelta + zDelta * zDelta;
-    if (lengthSquared < 1.0e-8)
+    int x = Mth::floor(start->x);
+    int y = Mth::floor(start->y);
+    int z = Mth::floor(start->z);
+    double xDelta = end->x - start->x;
+    double yDelta = end->y - start->y;
+    double zDelta = end->z - start->z;
+    double lengthSquared = xDelta * xDelta + yDelta * yDelta + zDelta * zDelta;
+    if (lengthSquared < 1.0E-8)
     {
         return false;
     }
-    const double scale = 1.0 / std::sqrt(lengthSquared);
-    const double xStep = xDelta * scale;
-    const double yStep = yDelta * scale;
-    const double zStep = zDelta * scale;
-    double xDistance = (x - start->x);
-    double yDistance = (y - start->y);
-    double zDistance = (z - start->z);
-    if (xStep >= 0.0)
-        xDistance += 1.0;
-    if (yStep >= 0.0)
-        yDistance += 1.0;
-    if (zStep >= 0.0)
-        zDistance += 1.0;
-    xDistance /= xStep;
-    yDistance /= yStep;
-    zDistance /= zStep;
-    const int xDirection = xStep < 0.0 ? -1 : 1;
-    const int yDirection = yStep < 0.0 ? -1 : 1;
-    const int zDirection = zStep < 0.0 ? -1 : 1;
-    int xRemaining = Mth::floor(end->x) - x;
-    int yRemaining = Mth::floor(end->y) - y;
-    int zRemaining = Mth::floor(end->z) - z;
-    while (true)
+    else
     {
-        if (xRemaining * xDirection < 1 && yRemaining * yDirection < 1 &&
-            zRemaining * zDirection < 1)
+        double inverseLength = 1.0 / std::sqrt(lengthSquared);
+        xDelta *= inverseLength;
+        yDelta *= inverseLength;
+        zDelta *= inverseLength;
+        double xStepDistance = 1.0 / std::fabs(xDelta);
+        double yStepDistance = 1.0 / std::fabs(yDelta);
+        double zStepDistance = 1.0 / std::fabs(zDelta);
+        double xDistance = x - start->x;
+        double yDistance = y - start->y;
+        double zDistance = z - start->z;
+        if (xDelta >= 0.0)
         {
-            return true;
+            xDistance += 1.0;
         }
-        if (yDistance < xDistance)
+        if (yDelta >= 0.0)
         {
-            if (zDistance < yDistance)
+            yDistance += 1.0;
+        }
+        if (zDelta >= 0.0)
+        {
+            zDistance += 1.0;
+        }
+        xDistance /= xDelta;
+        yDistance /= yDelta;
+        zDistance /= zDelta;
+        int xDirection = xDelta < 0.0 ? -1 : 1;
+        int yDirection = yDelta < 0.0 ? -1 : 1;
+        int zDirection = zDelta < 0.0 ? -1 : 1;
+        int endX = Mth::floor(end->x);
+        int endY = Mth::floor(end->y);
+        int endZ = Mth::floor(end->z);
+        int xRemaining = endX - x;
+        int yRemaining = endY - y;
+        int zRemaining = endZ - z;
+        while (xRemaining * xDirection > 0 || yRemaining * yDirection > 0 || zRemaining * zDirection > 0)
+        {
+            if (xDistance < zDistance && xDistance <= yDistance)
             {
-                zDistance += 1.0 / std::fabs(zStep);
-                zRemaining -= zDirection;
+                xDistance += xStepDistance;
+                x += xDirection;
+                xRemaining = endX - x;
+            }
+            else if (yDistance < xDistance && yDistance <= zDistance)
+            {
+                yDistance += yStepDistance;
+                y += yDirection;
+                yRemaining = endY - y;
             }
             else
             {
-                yDistance += 1.0 / std::fabs(yStep);
-                yRemaining -= yDirection;
+                zDistance += zStepDistance;
+                z += zDirection;
+                zRemaining = endZ - z;
             }
         }
-        else if (zDistance <= xDistance)
-        {
-            zDistance += 1.0 / std::fabs(zStep);
-            zRemaining -= zDirection;
-        }
-        else
-        {
-            xDistance += 1.0 / std::fabs(xStep);
-            xRemaining -= xDirection;
-        }
+        return true;
     }
 }
 

@@ -1,5 +1,6 @@
 #include "game/entity/ai/DolphinPathNavigation.hpp"
 
+#include <algorithm>
 #include <cmath>
 
 #include "game/core/Dolphin.hpp"
@@ -36,44 +37,29 @@ void DolphinPathNavigation::updatePath()
     }
 
     Vec3* mobPos = getTempMobPos();
-    int index = mPath->getIndex();
-    int size = mPath->getSize();
-    const double waypointDistance = 0.36;
     const double waypointHeight = 0.6;
+    const double waypointDistance = 0.36;
 
-    while (index < size)
+    for (int index = mPath->getIndex(); index < mPath->getSize(); ++index)
     {
         Vec3* pathPos = mPath->getPos(mMob->shared_from_this(), index);
         Vec3* horizontalPos = Vec3::newTemp(mobPos->x, pathPos->y, mobPos->z);
         if (horizontalPos->distanceToSqr(pathPos) < waypointDistance &&
-            std::fabs(mobPos->y - pathPos->y) < waypointHeight)
+            std::abs(mobPos->y - pathPos->y) < waypointHeight)
             mPath->setIndex(index + 1);
-        ++index;
-        size = mPath->getSize();
     }
 
-    int width = static_cast<int>(ceilf(mMob->mBbWidth));
+    int width = static_cast<int>(std::ceil(mMob->mBbWidth));
     int height = static_cast<int>(mMob->mBbHeight) + 1;
-    index = mPath->getIndex();
-    size = mPath->getSize();
-    int best = index + 6;
-    if (size - 1 < best)
-        best = size - 1;
-
-    index = mPath->getIndex();
-    const double maxDistance = 36.0;
-    while (index < best)
+    for (int best = std::min(mPath->getIndex() + 6, mPath->getSize() - 1); best > mPath->getIndex(); --best)
     {
         Vec3* pathPos = mPath->getPos(mMob->shared_from_this(), best);
-        if (pathPos->distanceToSqr(mobPos) <= maxDistance &&
+        if (pathPos->distanceToSqr(mobPos) <= 36.0 &&
             canMoveDirectly(mobPos, pathPos, width, height, width))
         {
             mPath->setIndex(best);
-            doStuckDetection(mobPos);
-            return;
+            break;
         }
-        --best;
-        index = mPath->getIndex();
     }
 
     doStuckDetection(mobPos);

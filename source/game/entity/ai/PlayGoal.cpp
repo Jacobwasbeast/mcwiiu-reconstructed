@@ -1,5 +1,6 @@
 #include "game/entity/ai/PlayGoal.hpp"
 
+#include <cfloat>
 #include <typeinfo>
 #include <vector>
 
@@ -13,14 +14,11 @@
 #include "game/world/generation/Villager.hpp"
 
 PlayGoal::PlayGoal(Villager* villager, double speedModifier)
-    : mTarget()
 {
     mTarget = boost::weak_ptr<Villager>();
-    mVillager = villager;
-    mPlayPosition.x = 0.0;
-    mPlayPosition.y = 0.0;
-    mPlayPosition.z = 0.0;
+    mPlayPosition.x = mPlayPosition.y = mPlayPosition.z = 0.0;
     mPlayTime = 0;
+    mVillager = villager;
     mSpeedModifier = speedModifier;
     setRequiredControlFlags(1);
 }
@@ -35,7 +33,7 @@ bool PlayGoal::canUse()
 
     std::vector<boost::shared_ptr<Entity> >* entities =
         mVillager->mLevel->getEntitiesOfClass(typeid(Villager), mVillager->mBoundingBox->grow(6.0, 3.0, 6.0));
-    double closestDistance = 1.7976931348623157e+308;
+    double closestDistance = DBL_MAX;
     std::vector<boost::shared_ptr<Entity> >::iterator it;
     for (it = entities->begin(); it != entities->end(); ++it)
     {
@@ -51,19 +49,20 @@ bool PlayGoal::canUse()
             continue;
 
         double distance = candidate->distanceToSqr(mVillager->shared_from_this());
-        if (distance <= closestDistance)
-        {
-            closestDistance = distance;
-            mTarget = candidate;
-        }
+        if (distance > closestDistance)
+            continue;
+
+        closestDistance = distance;
+        mTarget = boost::weak_ptr<Villager>(candidate);
     }
 
     delete entities;
 
     if (!mTarget.lock())
     {
-        if (RandomPos::getPos(
-                boost::dynamic_pointer_cast<PathfinderMob>(mVillager->shared_from_this()), 16, 3, -1) == 0)
+        Vec3* position = RandomPos::getPos(
+            boost::dynamic_pointer_cast<PathfinderMob>(mVillager->shared_from_this()), 16, 3, -1);
+        if (position == 0)
             return false;
     }
     return true;
@@ -95,18 +94,14 @@ void PlayGoal::tick()
     {
         if (mVillager->distanceToSqr(mTarget.lock()) > 4.0)
             mVillager->getNavigation()->moveTo(mTarget.lock(), mSpeedModifier);
-        return;
     }
-
-    if (mVillager->getNavigation()->isDone())
+    else if (mVillager->getNavigation()->isDone())
     {
         Vec3* position = RandomPos::getPos(
             boost::dynamic_pointer_cast<PathfinderMob>(mVillager->shared_from_this()), 16, 3, -1);
-        if (position != 0)
-        {
-            mVillager->getNavigation()->moveTo(position->x, position->y, position->z,
-                                               mSpeedModifier);
-        }
+        if (position == 0)
+            return;
+
+        mVillager->getNavigation()->moveTo(position->x, position->y, position->z, mSpeedModifier);
     }
 }
-

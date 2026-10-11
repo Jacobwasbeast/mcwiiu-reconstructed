@@ -8,13 +8,12 @@
 
 bool LivingEntitySelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    if ((entity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
     {
-        return false;
+        return boost::static_pointer_cast<LivingEntity>(entity)->getMobType() != MOB_TYPE_UNDEAD
+            && boost::static_pointer_cast<LivingEntity>(entity)->attackable();
     }
-
-    return boost::static_pointer_cast<LivingEntity>(entity)->getMobType() != MOB_TYPE_UNDEAD
-        && boost::static_pointer_cast<LivingEntity>(entity)->attackable();
+    return false;
 }
 
 LivingEntitySelector::~LivingEntitySelector()

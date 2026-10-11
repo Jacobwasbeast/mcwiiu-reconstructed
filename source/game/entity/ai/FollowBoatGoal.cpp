@@ -106,7 +106,9 @@ void FollowBoatGoal::tick()
     }
     mCooldown = 10;
 
-    if (mState == 0)
+    switch (mState)
+    {
+    case 0:
     {
         BlockPos behind = BlockPos(target).relative(target->getDirection()->getOpposite());
         behind = behind.offset(0, -1, 0);
@@ -116,8 +118,9 @@ void FollowBoatGoal::tick()
             mCooldown = 0;
             mState = 1;
         }
+        break;
     }
-    else if (mState == 1)
+    case 1:
     {
         const Direction* motion = target->getMotionDirection();
         BlockPos ahead = BlockPos(target).relative(motion, 10);
@@ -127,6 +130,8 @@ void FollowBoatGoal::tick()
             mCooldown = 0;
             mState = 0;
         }
+        break;
+    }
     }
 }
 

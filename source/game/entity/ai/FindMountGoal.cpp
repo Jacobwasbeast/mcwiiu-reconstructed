@@ -96,23 +96,24 @@ bool FindMountGoal::canUse()
 
     delete entities;
     boost::shared_ptr<Entity> target = mTarget.lock();
-    if (!target)
-        return false;
-
-    mTimeToRecalcPath = mMob->mLevel->mRandom->nextInt(7) + 4;
-    return mMob->getNavigation()->moveTo(target, 1.0);
+    if (target)
+    {
+        mTimeToRecalcPath = mMob->mLevel->mRandom->nextInt(7) + 4;
+        return mMob->getNavigation()->moveTo(target, 1.0);
+    }
+    return false;
 }
 
 bool FindMountGoal::canContinueToUse()
 {
     boost::shared_ptr<Entity> target = mTarget.lock();
-    if (!(target && target->isAlive() && !mMob->isPassenger() &&
-          target->canAddPassenger(mMob->shared_from_this())))
+    if (target && target->isAlive() && !mMob->isPassenger() &&
+        target->canAddPassenger(mMob->shared_from_this()))
     {
-        mMob->setTarget(boost::shared_ptr<LivingEntity>());
-        return false;
+        return true;
     }
-    return true;
+    mMob->setTarget(boost::shared_ptr<LivingEntity>());
+    return false;
 }
 
 void FindMountGoal::start()
@@ -126,11 +127,10 @@ void FindMountGoal::stop()
     mStartCounter = 0;
 }
 
-double FindMountGoal::getAttackReachSqr()
+float FindMountGoal::getAttackReachSqr()
 {
-    boost::shared_ptr<Entity> target = mTarget.lock();
-    float reach = mMob->mBbWidth + mMob->mBbWidth + target->mBbWidth + 2.0f;
-    return (double)(reach * reach);
+    float reach = mMob->mBbWidth + mMob->mBbWidth + mTarget.lock()->mBbWidth + 2.0f;
+    return reach * reach;
 }
 
 void FindMountGoal::tick()

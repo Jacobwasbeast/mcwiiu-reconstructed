@@ -6,12 +6,13 @@
 
 bool NoSpectatorsSelector::apply(boost::shared_ptr<Entity> entity) const
 {
-    if ((entity->GetType() & EntityType::PLAYER) != EntityType::PLAYER)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
-        return true;
+        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+        return !player->isSpectator();
     }
 
-    return !boost::static_pointer_cast<Player>(entity)->isSpectator();
+    return true;
 }
 
 NoSpectatorsSelector::~NoSpectatorsSelector()

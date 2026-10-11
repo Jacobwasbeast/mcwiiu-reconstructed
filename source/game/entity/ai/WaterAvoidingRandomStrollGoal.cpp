@@ -30,10 +30,10 @@ Vec3* WaterAvoidingRandomStrollGoal::getPosition()
         return position == NULL ? RandomStrollGoal::getPosition() : position;
     }
 
-    if (mMob->getRandom()->nextFloat() < mProbability)
+    if (mMob->getRandom()->nextFloat() >= mProbability)
     {
-        return RandomStrollGoal::getPosition();
+        return RandomPos::getLandPos(mob, 10, 7, -1);
     }
 
-    return RandomPos::getLandPos(mob, 10, 7, -1);
+    return RandomStrollGoal::getPosition();
 }

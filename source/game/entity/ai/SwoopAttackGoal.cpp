@@ -42,16 +42,15 @@ bool SwoopAttackGoal::canUse()
         return false;
     }
 
-    if (mAttackInterval < 1)
+    if (mAttackInterval > 0)
     {
-        int distance = (int)(mMob->getRandom()->nextFloat()
-            * (mAttackDistance.max - mAttackDistance.min) + mAttackDistance.min);
-        mAttackInterval = distance * 20;
-        return true;
+        --mAttackInterval;
+        return false;
     }
 
-    --mAttackInterval;
-    return false;
+    mAttackInterval = (int)(mAttackDistance.min + mMob->getRandom()->nextFloat()
+        * (mAttackDistance.max - mAttackDistance.min)) * 20;
+    return true;
 }
 
 void SwoopAttackGoal::start()
@@ -76,8 +75,11 @@ void SwoopAttackGoal::stop()
 
 bool SwoopAttackGoal::canContinueToUse()
 {
-    boost::shared_ptr<LivingEntity> target = mMob->getTarget();
-    return !(!target || mSwooping || mMob->mHorizontalCollision || mMob->mHurtTime >= 1);
+    if (mMob->getTarget() == NULL || mSwooping || mMob->mHorizontalCollision || mMob->mHurtTime > 0)
+    {
+        return false;
+    }
+    return true;
 }
 
 void SwoopAttackGoal::tick()
@@ -91,40 +93,34 @@ void SwoopAttackGoal::tick()
                                              targetPosition->y + (double)target->mBbHeight,
                                              targetPosition->z);
         PathNavigation* navigation = mMob->getNavigation();
-        if (navigation == NULL)
+        if (navigation != NULL)
+        {
+            navigation->moveTo(wantedPosition->x, wantedPosition->y, wantedPosition->z,
+                               (double)mSpeedModifier);
+        }
+        else
         {
             mMob->getMoveControl()->setWantedPosition(wantedPosition->x, wantedPosition->y,
                                                       wantedPosition->z,
                                                       (double)mSpeedModifier);
         }
-        else
-        {
-            navigation->moveTo(wantedPosition->x, wantedPosition->y, wantedPosition->z,
-                               (double)mSpeedModifier);
-        }
 
-        AABB* targetBox = target->mBoundingBox;
-        if (mMob->mBoundingBox->grow(0.2)->intersects(
-                targetBox->mMinX, targetBox->mMinY, targetBox->mMinZ,
-                targetBox->mMaxX, targetBox->mMaxY, targetBox->mMaxZ))
+        if (mMob->getBoundingBox()->grow(0.2)->intersects(target->getBoundingBox()))
         {
             mMob->doHurtTarget(target);
             mSwooping = true;
             mMob->playSound(SoundEvents::PHANTOM_BITE, 1.0f, 1.0f);
         }
 
-        double distance = mMob->distanceToSqr(target->mX, target->mBoundingBox->mMinY,
+        double distance = mMob->distanceToSqr(target->mX, target->getBoundingBox()->mMinY,
                                               target->mZ);
-        if (distance <= 1024.0)
-        {
-            if (distance > 256.0)
-            {
-                mSwoopTicks = 2;
-            }
-        }
-        else
+        if (distance > 1024.0)
         {
             mSwoopTicks = 5;
+        }
+        else if (distance > 256.0)
+        {
+            mSwoopTicks = 2;
         }
     }
 }

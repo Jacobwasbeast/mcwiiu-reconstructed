@@ -75,8 +75,7 @@ void RangedAttackGoal::tick()
 
     static_cast<LookControl*>(mMob->getLookControl())->setLookAt(mTarget.lock(), 30.0f, 30.0f);
 
-    --mAttackTime;
-    if (mAttackTime == 0)
+    if (--mAttackTime == 0)
     {
         if (!canSee)
             return;

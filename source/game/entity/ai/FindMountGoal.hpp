@@ -24,7 +24,7 @@ public:
     virtual std::wstring getName();
 
 private:
-    double getAttackReachSqr();
+    float getAttackReachSqr();
 
     boost::weak_ptr<Entity> mTarget;
     float mTargetDistance;

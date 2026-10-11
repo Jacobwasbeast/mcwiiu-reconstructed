@@ -55,14 +55,14 @@ void GlideMoveControl::tick()
     mMob->mYBodyRot = yRot;
     mMob->mYRot = yRot;
 
-    if (Mth::degreesDifferenceAbs(oldYRot, mMob->mYRot) >= 3.0f)
-    {
-        mSpeed = Mth::approach(mSpeed, (float)(mSpeedWhenTurning * mSpeedModifier), 0.025f);
-    }
-    else
+    if (Mth::degreesDifferenceAbs(oldYRot, mMob->mYRot) < 3.0f)
     {
         float movementSpeed = (float)mMob->getAttribute(SharedMonsterAttributes::MOVEMENT_SPEED)->getValue();
         mSpeed = Mth::approach(mSpeed, (float)(movementSpeed * mSpeedModifier), 0.005f * (1.8f / mSpeed));
+    }
+    else
+    {
+        mSpeed = Mth::approach(mSpeed, (float)(mSpeedWhenTurning * mSpeedModifier), 0.025f);
     }
 
     float wantedXRot = -((float)atan2(-dy, horizontalLength) * 57.295776f);
@@ -70,11 +70,11 @@ void GlideMoveControl::tick()
 
     float yawRadians = (90.0f + mMob->mYRot) * Mth::DEG_TO_RAD;
     float pitchRadians = wantedXRot * Mth::DEG_TO_RAD;
-    float xSpeed = mSpeed * cosf(yawRadians);
-    float zSpeed = mSpeed * sinf(yawRadians);
-    float ySpeed = mSpeed * sinf(pitchRadians);
-    mMob->mXd += ((double)(xSpeed * fabsf((float)(dx / distance))) - mMob->mXd) * 0.2;
-    mMob->mZd += ((double)(zSpeed * fabsf((float)(dz / distance))) - mMob->mZd) * 0.2;
-    mMob->mYd += ((double)(ySpeed * fabsf((float)(dy / distance))) - mMob->mYd) * 0.2;
+    float xSpeed = mSpeed * cosf(yawRadians) * fabsf((float)(dx / distance));
+    float zSpeed = mSpeed * sinf(yawRadians) * fabsf((float)(dz / distance));
+    float ySpeed = mSpeed * sinf(pitchRadians) * fabsf((float)(dy / distance));
+    mMob->mXd += ((double)xSpeed - mMob->mXd) * 0.2;
+    mMob->mZd += ((double)zSpeed - mMob->mZd) * 0.2;
+    mMob->mYd += ((double)ySpeed - mMob->mYd) * 0.2;
     mMob->mFallDistance = 0.0f;
 }

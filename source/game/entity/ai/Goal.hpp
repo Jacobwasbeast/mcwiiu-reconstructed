@@ -12,6 +12,8 @@ public:
     {
         float min;
         float max;
+
+        FloatRange(float minValue, float maxValue) : min(minValue), max(maxValue) {}
     };
 
     Goal();

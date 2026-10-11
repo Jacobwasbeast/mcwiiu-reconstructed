@@ -132,8 +132,8 @@ void FindUnderwaterTreasureGoal::tick()
     if (mMob->distanceToSqr(*mTreasurePos) < 225.0 || mDirectionChanges > 3)
     {
         delete mTreasurePos;
-        mTreasurePos = NULL;
         mBribed = false;
+        mTreasurePos = NULL;
         return;
     }
 
@@ -169,15 +169,11 @@ void FindUnderwaterTreasureGoal::tick()
         PARTICLE_FIREWORKS_SPARK, particleX, particleY, particleZ, 7, 0.0, 0.0, 0.0, 1.0, arrayWithLength<int>(), 0.0,
         0.0, 0.0);
 
-    BlockPos topSolid = mMob->mLevel->getTopSolidBlockPos(*mTreasurePos);
+    BlockPos target = mMob->mLevel->getTopSolidBlockPos(*mTreasurePos);
     Vec3* current = mMob->getPos(0.0f);
-    Vec3* direction = Vec3::newTemp((double)topSolid.x - current->x,
-                                     (double)topSolid.y - current->y,
-                                     (double)topSolid.z - current->z);
-
-    double targetX = topSolid.x;
-    double targetY = topSolid.y;
-    double targetZ = topSolid.z;
+    Vec3* direction = Vec3::newTemp((double)target.x - current->x,
+                                     (double)target.y - current->y,
+                                     (double)target.z - current->z);
 
     AttributeInstance* followRange = mMob->getAttribute(SharedMonsterAttributes::FOLLOW_RANGE);
     double range = 16.0;
@@ -204,24 +200,20 @@ void FindUnderwaterTreasureGoal::tick()
             {
                 facing = facing->getCounterClockWise();
             }
-            BlockPos destination(current->x + facing->getStepX() * 10,
-                                 current->y + facing->getStepY() * 10,
-                                 current->z + facing->getStepZ() * 10);
-            mMob->getNavigation()->moveTo(destination.x, destination.y, destination.z,
-                                                              (double)(mSpeedModifier + 1.0f));
-            return;
+            target = BlockPos(current->x + facing->getStepX() * 10,
+                              current->y + facing->getStepY() * 10,
+                              current->z + facing->getStepZ() * 10);
         }
-
-        direction->normalize();
-        direction->multiply(range * 0.5);
-        current->add(direction);
-        BlockPos partial(current);
-        targetX = partial.x;
-        targetY = partial.y;
-        targetZ = partial.z;
+        else
+        {
+            direction->normalize();
+            direction->multiply(range * 0.5);
+            current->add(direction);
+            target = BlockPos(current);
+        }
     }
 
-    mMob->getNavigation()->moveTo(targetX, targetY, targetZ, (double)(mSpeedModifier + 1.0f));
+    mMob->getNavigation()->moveTo(target.x, target.y, target.z, (double)(mSpeedModifier + 1.0f));
 }
 
 void FindUnderwaterTreasureGoal::stop()

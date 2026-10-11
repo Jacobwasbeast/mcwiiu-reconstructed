@@ -15,8 +15,8 @@
 LeapAtTargetGoal::LeapAtTargetGoal(Mob* mob, float yd)
 {
     mTarget = boost::weak_ptr<LivingEntity>();
-    mYd = yd;
     mMob = mob;
+    mYd = yd;
     setRequiredControlFlags(5);
 }
 
@@ -28,12 +28,11 @@ bool LeapAtTargetGoal::canUse()
         return false;
     }
     double distance = mMob->distanceToSqr(mTarget.lock());
-    if (distance >= 4.0 && distance <= 16.0 && mMob->mOnGround
-        && mMob->getRandom()->nextInt(5) == 0)
+    if (distance < 4.0 || distance > 16.0 || !mMob->mOnGround || mMob->getRandom()->nextInt(5) != 0)
     {
-        return true;
+        return false;
     }
-    return false;
+    return true;
 }
 
 bool LeapAtTargetGoal::canContinueToUse()
@@ -54,11 +53,12 @@ void LeapAtTargetGoal::start()
 {
     double dx = mTarget.lock()->mX - mMob->mX;
     double dz = mTarget.lock()->mZ - mMob->mZ;
-    double distance = std::sqrt(dx * dx + dz * dz);
+    double distanceSqr = dx * dx + dz * dz;
+    double distance = std::sqrt(distanceSqr);
     if (distance >= 0.0001)
     {
-        mMob->mXd += dx / distance * 0.5 * 0.800000011920929 + mMob->mXd * 0.2;
-        mMob->mZd += dz / distance * 0.5 * 0.800000011920929 + mMob->mZd * 0.2;
+        mMob->mXd += dx / distance * 0.5 * 0.800000011920929 + mMob->mXd * 0.2f;
+        mMob->mZd += dz / distance * 0.5 * 0.800000011920929 + mMob->mZd * 0.2f;
     }
     mMob->mYd = static_cast<double>(mYd);
 }
