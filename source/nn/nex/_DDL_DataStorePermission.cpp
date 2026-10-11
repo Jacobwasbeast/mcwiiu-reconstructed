@@ -18,12 +18,6 @@ const unsigned int SIZE_FIELD_LENGTH = 4;
 
 }
 
-_DDL_DataStorePermission::_DDL_DataStorePermission()
-    : m_RecipientIds()
-{
-    m_uiStructureVersion = 0;
-}
-
 _DDL_DataStorePermission& _DDL_DataStorePermission::operator=(
     const _DDL_DataStorePermission& rSource)
 {

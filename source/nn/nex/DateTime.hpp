@@ -37,7 +37,7 @@ public:
     bool operator>(const DateTime& other) const;
     bool operator<=(const DateTime& other) const;
     bool operator>=(const DateTime& other) const;
-    uint64_t operator-(const DateTime& other) const;
+    int64_t operator-(const DateTime& other) const;
 
     uint16_t GetYear() const;
     uint8_t GetMonth() const;

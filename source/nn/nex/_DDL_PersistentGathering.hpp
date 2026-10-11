@@ -19,7 +19,7 @@ class _DDL_PersistentGathering : public Gathering
 {
 public:
     _DDL_PersistentGathering()
-        : Gathering(), m_uiStructureVersion(0), m_strPassword(), m_Attributes(), m_ApplicationBuffer(),
+        : Gathering(), m_uiStructureVersion(0), m_strPassword(), m_Attributes(0), m_ApplicationBuffer(0),
           m_ParticipationStartDate(), m_ParticipationEndDate()
     {
     }

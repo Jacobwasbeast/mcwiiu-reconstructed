@@ -10,6 +10,7 @@ namespace nn
 namespace nex
 {
 
+class AccountManagementClient;
 class Credentials;
 
 class ProtocolCallContext : public CallContext
@@ -29,6 +30,8 @@ public:
     }
 
 protected:
+    friend class AccountManagementClient;
+
     virtual void BeginTransition(State state, qResult result, bool publishResult);
 
     std::vector<void*> m_returnValues;

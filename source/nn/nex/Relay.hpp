@@ -46,6 +46,11 @@ public:
         return m_bEnabled;
     }
 
+    const InetAddress& GetSrcPublicAddress() const
+    {
+        return m_address;
+    }
+
 private:
     RelayStream* m_pStream;
     bool m_bEnabled;

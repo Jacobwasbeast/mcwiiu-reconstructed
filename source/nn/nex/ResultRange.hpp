@@ -19,10 +19,19 @@ public:
         m_uiSize = uiSize;
     }
 
-    virtual ~ResultRange();
+    virtual ~ResultRange()
+    {
+    }
 
-    virtual uint32_t GetOffset() const;
-    virtual uint32_t GetSize() const;
+    virtual uint32_t GetOffset() const
+    {
+        return m_uiOffset;
+    }
+
+    virtual uint32_t GetSize() const
+    {
+        return m_uiSize;
+    }
 };
 
 }

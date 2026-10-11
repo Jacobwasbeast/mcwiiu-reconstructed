@@ -25,7 +25,6 @@ const unsigned int GATHERING_ID_MASK = 0xFFFFFFFFu;
 const unsigned long long PERSISTENT_GATHERING_CODE_MAX =
     (static_cast<unsigned long long>(1u << PERSISTENT_GATHERING_CODE_CHECK_BITS) << GATHERING_ID_BITS) - 1;
 
-const unsigned int CALL_CONTEXT_FLAG_SELF_RELEASE = 2;
 enum
 {
     RESULT_INVALID_ARGUMENT = static_cast<int>(0x8001000Au),
@@ -195,11 +194,31 @@ bool MatchmakeExtensionClient::UpdateMatchmakeSession(ProtocolCallContext* pCall
     return m_matchmakeExtensionProtocolClient.CallUpdateMatchmakeSessionPart(pCallContext, rParam);
 }
 
+bool MatchmakeExtensionClient::UpdateNotificationData(ProtocolCallContext* pCallContext, unsigned int uiType,
+                                                      unsigned int uiParam1, unsigned int uiParam2, String strText)
+{
+    return m_matchmakeExtensionProtocolClient.CallUpdateNotificationData(pCallContext, uiType, uiParam1, uiParam2,
+                                                                       strText);
+}
+
+bool MatchmakeExtensionClient::GetFriendNotificationData(ProtocolCallContext* pCallContext,
+                                                         qList<NotificationEvent>* pEvents,
+                                                         const qList<unsigned int>& rTypes)
+{
+    return m_matchmakeExtensionProtocolClient.CallGetlstFriendNotificationData(pCallContext, pEvents, rTypes);
+}
+
 bool MatchmakeExtensionClient::GetPlayingSession(ProtocolCallContext* pCallContext,
                                                  const qList<unsigned int>& rPrincipalIDs,
                                                  qList<PlayingSession>* pPlayingSessions)
 {
     return m_matchmakeExtensionProtocolClient.CallGetPlayingSession(pCallContext, rPrincipalIDs, pPlayingSessions);
+}
+
+bool MatchmakeExtensionClient::RequestMatchmaking(ProtocolCallContext* pCallContext, const AutoMatchmakeParam& rParam,
+                                                  unsigned long long* pRequestID)
+{
+    return m_matchmakeExtensionProtocolClient.CallRequestMatchmaking(pCallContext, rParam, pRequestID);
 }
 
 bool MatchMakingClient::FindByOwner(ProtocolCallContext* pCallContext, unsigned int uiOwnerID,

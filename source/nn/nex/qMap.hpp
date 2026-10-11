@@ -20,12 +20,6 @@ class qMap : public std::map<K, V, std::less<K>, MemAllocator<std::pair<const K,
 public:
     typedef std::map<K, V, std::less<K>, MemAllocator<std::pair<const K, V> > > _Base;
 
-    qMap() : _Base() {}
-
-    qMap(const qMap<K, V>& other) : _Base(other) {}
-
-    qMap(const _Base& other) : _Base(other) {}
-
     ~qMap() {}
 
     qMap<K, V>& operator=(const qMap<K, V>& other)

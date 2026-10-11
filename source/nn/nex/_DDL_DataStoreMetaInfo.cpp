@@ -19,25 +19,6 @@ const unsigned int SIZE_FIELD_LENGTH = 4;
 
 }
 
-_DDL_DataStoreMetaInfo::_DDL_DataStoreMetaInfo()
-    : m_Name(),
-      m_MetaBinary(0, 0),
-      m_Permission(),
-      m_DelPermission(),
-      m_CreatedTime(),
-      m_UpdatedTime(),
-      m_ReferredTime(),
-      m_ExpireTime(),
-      m_Tags(),
-      m_Ratings()
-{
-    m_uiStructureVersion = 0;
-}
-
-_DDL_DataStoreMetaInfo::~_DDL_DataStoreMetaInfo()
-{
-}
-
 _DDL_DataStoreMetaInfo& _DDL_DataStoreMetaInfo::operator=(const _DDL_DataStoreMetaInfo& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;

@@ -2,6 +2,10 @@
 
 namespace nn { namespace nex {
 
+StateMachine::~StateMachine()
+{
+}
+
 StateMachine::QSimpleEvent::~QSimpleEvent()
 {
 }

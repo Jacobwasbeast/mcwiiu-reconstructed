@@ -13,6 +13,8 @@
 #include "nn/nex/ServerProtocol.hpp"
 #include "nn/nex/CallContextRegister.hpp"
 #include "nn/nex/Core.hpp"
+#include "nn/nex/LogToClientController.hpp"
+#include "nn/nex/StringStream.hpp"
 
 namespace nn { namespace nex {
 
@@ -56,37 +58,56 @@ void ClientProtocolRequestBroker::ProcessMessage(CallProtocolMethodOperation* op
 void ClientProtocolRequestBroker::ProcessMessageCore(CallProtocolMethodOperation* operation,
                                                      EndPoint* endPoint, Buffer* buffer)
 {
-    if (operation != 0)
-        m_operationManager.OperationBegins(operation);
-    if (buffer == 0)
-    {
-        if (operation != 0)
-            m_operationManager.OperationEnds(operation);
-        return;
-    }
-    if (endPoint != 0)
-        m_bandwidthCounters[endPoint->GetConnectionID()]->m_incoming += buffer->GetLength();
     Message message(buffer);
-    Protocol::_Command command = Protocol::COMMAND_REQUEST;
-    unsigned short protocolId = 0;
+    Protocol::_Command command;
+    unsigned short protocolId;
     Protocol::ExtractProtocolKey(&message, command, protocolId);
-    if (command == Protocol::COMMAND_RESPONSE)
+    m_bandwidthCounters[protocolId]->m_incoming += buffer->GetLength();
+    if (command == Protocol::COMMAND_REQUEST)
     {
-        ProcessCallResponse(protocolId, &message, endPoint);
-        return;
-    }
-    Message response;
-    bool responseRequired = true;
-    ProcessCallRequest(protocolId, &message, &response, &responseRequired, endPoint);
-    (void)operation;
-    if (endPoint != 0 && responseRequired)
-    {
-        Buffer* out = response.GetBuffer();
-        m_bandwidthCounters[endPoint->GetConnectionID()]->m_outgoing += out->GetLength();
-        endPoint->_Send(out, out->GetLength(), true, 0, 0);
-    }
-    if (operation != 0)
+        operation->InitializeForNewCallAttempt();
+        m_operationManager.OperationBegins(operation);
+        Message response;
+        bool responseRequired = false;
+        LogToClientController::Accumulate();
+        ProcessCallRequest(protocolId, &message, &response, &responseRequired, endPoint);
+        LogToClientController::Flush(endPoint);
+        if (!operation->m_postponed && responseRequired)
+        {
+            Buffer* out = response.GetBuffer();
+            {
+                ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+                endPoint->_Send(out, 1, false, 0, 0);
+            }
+            m_bandwidthCounters[protocolId]->m_outgoing += out->GetLength();
+        }
         m_operationManager.OperationEnds(operation);
+    }
+    else
+    {
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+        ProcessCallResponse(protocolId, &message, endPoint);
+    }
+
+    if (message.HasError())
+    {
+        StringStream stream;
+        stream << L"ClientProtocolRequestBroker: Error processing message. pBuffer=" << buffer
+               << L" Protocol ID=";
+        stream.StreamNumber(protocolId) << L" CntSize=";
+        stream.StreamNumber(buffer->GetLength()) << L" Size=";
+        stream.StreamNumber(buffer->GetRealSize() - buffer->GetHeadShiftSize());
+        if (endPoint != 0)
+        {
+            stream << L"  EndPoint: CID=";
+            stream.StreamNumber(endPoint->m_uiConnectionID) << L" PID=";
+            stream.StreamNumber(endPoint->m_uiPrincipalID) << L" URL=" << endPoint->m_stationURL;
+        }
+        else
+        {
+            stream << L"  <EndPoint is NULL>";
+        }
+    }
 }
 
 void ClientProtocolRequestBroker::ProcessCallRequest(unsigned short protocolId, Message* request,

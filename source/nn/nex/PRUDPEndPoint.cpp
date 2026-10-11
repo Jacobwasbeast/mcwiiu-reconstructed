@@ -839,20 +839,29 @@ void PRUDPEndPoint::ProcessFaultEvent(unsigned int uiError)
         Network::GetInstance()->m_unknown42c.push_back(
             std::pair<void*, unsigned int>(this, m_uiConnectionID));
     }
-    if (!IsConnected() && !PeerIsConnected())
+    if (IsConnected() || PeerIsConnected())
     {
-        if (m_connectionState == Connecting || m_connectionState == Disconnecting)
-            SetConnectionState(NotConnected);
-        return;
+        if (uiError != NET_FAULT_KEEP_ALIVE_TIMEOUT && uiError != NET_FAULT_DISCONNECT)
+            SendResetDisconnectPacket();
+        SetConnectionState(Faulty);
+        StopPing();
+        if (m_pEventHandler != 0)
+            m_pEventHandler->FaultDetection(this, uiError);
+        SetPeerDisconnected();
+        static_cast<PRUDPStream*>(m_pStream)->ReleaseEndPoint(this);
     }
-    if (uiError != NET_FAULT_KEEP_ALIVE_TIMEOUT && uiError != NET_FAULT_DISCONNECT)
-        SendResetDisconnectPacket();
-    SetConnectionState(Faulty);
-    StopPing();
-    if (m_pEventHandler != 0)
-        m_pEventHandler->FaultDetection(this, uiError);
-    SetPeerDisconnected();
-    static_cast<PRUDPStream*>(m_pStream)->ReleaseEndPoint(this);
+    else
+    {
+        switch (m_connectionState)
+        {
+        case Connecting:
+        case Disconnecting:
+            SetConnectionState(NotConnected);
+            break;
+        default:
+            break;
+        }
+    }
 }
 
 void PRUDPEndPoint::ServiceTimeout(PacketOut* pPacket)

@@ -16,7 +16,10 @@ namespace nex
 namespace
 {
 
-const int CALL_CONTEXT_RESULT_CONNECTION_LOST = static_cast<int>(0x80010004u);
+enum CallContextResult
+{
+    CALL_CONTEXT_RESULT_CONNECTION_LOST = static_cast<int>(0x80010004u)
+};
 
 }
 
@@ -58,24 +61,25 @@ void JobCallContextCallback::CompleteJob(const qResult& rResult)
 {
     CallContext* pCallContext =
         Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
-    if (pCallContext == 0)
+    if (pCallContext != 0)
+    {
+        if (rResult)
+        {
+            pCallContext->SignalSuccess(rResult);
+            ProccessSuccess(pCallContext);
+        }
+        else
+        {
+            pCallContext->SignalFailure(rResult);
+            ProccessFailure(pCallContext);
+        }
+    }
+    else
     {
         m_pJobCallContext->Cancel(CallContext::CallCanceled);
         ProccessCancel();
-        SetToComplete();
-        return;
     }
 
-    if (rResult)
-    {
-        pCallContext->SignalSuccess(rResult);
-        ProccessSuccess(pCallContext);
-        SetToComplete();
-        return;
-    }
-
-    pCallContext->SignalFailure(rResult);
-    ProccessFailure(pCallContext);
     SetToComplete();
 }
 

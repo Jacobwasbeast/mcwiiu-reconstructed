@@ -20,7 +20,9 @@ public:
         m_uiStructureVersion = 0;
     }
 
-    virtual ~_DDL_ResultRange();
+    virtual ~_DDL_ResultRange()
+    {
+    }
 
     _DDL_ResultRange& operator=(const _DDL_ResultRange& rSource);
     bool operator==(const _DDL_ResultRange& rSource) const;

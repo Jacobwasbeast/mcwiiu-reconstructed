@@ -26,17 +26,7 @@ public:
 
     qVector(size_type count, const value_type& value) : _Base(count, value) {}
 
-    qVector(const qVector<T>& other) : _Base(other) {}
-
     qVector(const _Base& other) : _Base(other) {}
-
-    ~qVector() {}
-
-    qVector<T>& operator=(const qVector<T>& other)
-    {
-        _Base::operator=(other);
-        return *this;
-    }
 
     qVector<T>& operator=(const _Base& other)
     {

@@ -19,7 +19,7 @@ class _DDL_MatchmakeParam : public RootObject
 {
 public:
     _DDL_MatchmakeParam()
-        : m_uiStructureVersion(0), m_Parameters()
+        : m_uiStructureVersion(0)
     {
     }
 

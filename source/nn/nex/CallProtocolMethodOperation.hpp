@@ -29,6 +29,7 @@ public:
 
 private:
     friend class ClientProtocolRequestBroker;
+    friend class ProtocolRequestBroker;
     friend class ServerProtocol;
     friend class JobProcessProtocolMessage;
     friend class Protocol;

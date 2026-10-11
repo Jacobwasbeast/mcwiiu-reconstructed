@@ -11,7 +11,9 @@ namespace nex
 class GatheringStats : public _DDL_GatheringStats
 {
 public:
-    virtual ~GatheringStats();
+    virtual ~GatheringStats()
+    {
+    }
 };
 
 }

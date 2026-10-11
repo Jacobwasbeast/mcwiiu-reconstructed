@@ -27,26 +27,8 @@ public:
     virtual void ProcessNotificationEvent(unsigned int uiPrincipalID, unsigned int uiConnectionID,
                                           const NotificationEvent& rEvent);
 
-    uint32_t RegisterGlobalNotificationEventManager(NotificationEventManager* pManager)
-    {
-        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-        if (m_managers.find(pManager) != m_managers.end())
-            return 0;
-
-        m_managers.insert(pManager);
-        return 1;
-    }
-
-    uint32_t UnregisterGlobalNotificationEventManager(NotificationEventManager* pManager)
-    {
-        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-        ManagerSet::iterator it = m_managers.find(pManager);
-        if (it == m_managers.end())
-            return 0;
-
-        m_managers.erase(it);
-        return 1;
-    }
+    uint32_t RegisterGlobalNotificationEventManager(NotificationEventManager* pManager);
+    uint32_t UnregisterGlobalNotificationEventManager(NotificationEventManager* pManager);
 
 private:
     typedef std::set<NotificationEventManager*, std::less<NotificationEventManager*>,

@@ -1,5 +1,8 @@
 #include "nn/nex/GlobalVariables.hpp"
 
+#include <nn/middleware.h>
+
+#include "nn/nex/Core.hpp"
 #include "nn/nex/CriticalSection.hpp"
 #include "nn/nex/ThreadVariableList.hpp"
 
@@ -43,6 +46,7 @@ GlobalVariables::~GlobalVariables()
 void GlobalVariables::AcquireInstance()
 {
     ScopedCS lock(&g_globalVariablesCriticalSection);
+    SetModuleId("[SDK+Nintendo:NEX_3_10_0]");
 
     if (g_globalVariables == 0)
     {
@@ -53,7 +57,6 @@ void GlobalVariables::AcquireInstance()
     {
         g_globalVariables->AddRef();
     }
-
 }
 
 void GlobalVariables::ReleaseInstance()
@@ -65,16 +68,37 @@ void GlobalVariables::ReleaseInstance()
         return;
     }
 
-    const uint32_t refCount = g_globalVariables->GetRefCount();
+    bool lastReference = false;
+    if (g_globalVariables->GetRefCount() == 1)
+    {
+        lastReference = true;
+    }
     g_globalVariables->ReleaseRef();
 
-    if (refCount == 1)
+    if (lastReference)
     {
         g_globalVariables = 0;
         delete g_threadVariableList;
         g_threadVariableList = 0;
     }
+}
 
+int32_t GlobalVariables::GetCount()
+{
+    ScopedCS lock(&g_globalVariablesCriticalSection);
+
+    if (g_globalVariables == 0)
+    {
+        return 0;
+    }
+
+    int32_t count = g_globalVariables->GetRefCount();
+    if (Core::GetInstance() != 0 && count > 0)
+    {
+        --count;
+    }
+
+    return count;
 }
 
 void GlobalVariables::ClearCache()

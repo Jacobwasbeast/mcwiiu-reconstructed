@@ -18,6 +18,8 @@ namespace nn
 namespace nex
 {
 
+class StringStream;
+
 class StationURL : public RootObject
 {
 public:
@@ -159,6 +161,8 @@ private:
     bool m_bStrValid;
     bool m_bValid;
 };
+
+StringStream& operator<<(StringStream& rStream, const StationURL& rURL);
 
 }
 }

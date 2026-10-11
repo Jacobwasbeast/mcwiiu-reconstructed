@@ -15,7 +15,7 @@ public:
     virtual ~RTT();
 
     void Adjust(unsigned int uiRTT);
-    virtual void Trace(unsigned long long uiFilter);
+    void Trace(unsigned long long uiFilter);
 
     unsigned int GetAverage() const
     {

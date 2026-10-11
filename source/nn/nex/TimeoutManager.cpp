@@ -17,6 +17,7 @@ namespace
 {
 
 const unsigned int QUICK_TIMEOUT_RTO = 1;
+const unsigned long long IMMEDIATE_EXPIRATION_TIME = 1;
 
 }
 
@@ -34,12 +35,10 @@ void TimeoutManager::ServicePacketTimeouts()
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     std::vector<PacketOut*, MemAllocator<PacketOut*> > expiredPackets;
     TimeoutMap::iterator timeout = m_timeouts.begin();
-    while (timeout != m_timeouts.end())
+    while (timeout != m_timeouts.end() &&
+           (timeout->second->m_pTimeout->IsAwaited() || timeout->second->m_pTimeout->IsExpired()))
     {
         PacketOut* pPacket = timeout->second;
-        if (!pPacket->m_pTimeout->IsAwaited() && !pPacket->m_pTimeout->IsExpired())
-            break;
-
         m_timeouts.erase(timeout++);
         m_packets.erase(pPacket);
         expiredPackets.push_back(pPacket);
@@ -49,8 +48,9 @@ void TimeoutManager::ServicePacketTimeouts()
              expiredPackets.begin();
          packet != expiredPackets.end(); ++packet)
     {
-        (*packet)->m_pEndPoint->ServiceTimeout(*packet);
-        (*packet)->ReleaseRef();
+        PacketOut* pPacket = *packet;
+        pPacket->m_pEndPoint->ServiceTimeout(pPacket);
+        pPacket->ReleaseRef();
     }
 }
 
@@ -78,7 +78,7 @@ void TimeoutManager::SetPacketQuickTimeout(PacketType type)
     {
         PacketOut* pPacket = *packet;
         pPacket->m_pTimeout->SetRTO(QUICK_TIMEOUT_RTO);
-        pPacket->m_pTimeout->SetExpirationTime(Time());
+        pPacket->m_pTimeout->SetExpirationTime(Time(IMMEDIATE_EXPIRATION_TIME));
         SchedulePacketTimeout(pPacket);
     }
 }
@@ -89,9 +89,10 @@ void TimeoutManager::ForceSetPacketTimeouts(Time time)
     for (TimeoutMap::iterator timeout = m_timeouts.begin(); timeout != m_timeouts.end();
          ++timeout)
     {
-        Timeout* pTimeout = timeout->second->m_pTimeout;
-        if (pTimeout->GetExpirationTime() != 0 && time < pTimeout->GetExpirationTime())
-            pTimeout->SetExpirationTime(time);
+        PacketOut* pPacket = timeout->second;
+        if (pPacket->m_pTimeout->GetExpirationTime() != 0 &&
+            pPacket->m_pTimeout->GetExpirationTime() > time)
+            pPacket->m_pTimeout->SetExpirationTime(time);
     }
 }
 
@@ -105,7 +106,7 @@ void TimeoutManager::SchedulePacketTimeout(PacketOut* pPacket)
             uiType == PACKET_TYPE_DISCONNECT)
         {
             pPacket->m_pTimeout->SetRTO(QUICK_TIMEOUT_RTO);
-            pPacket->m_pTimeout->SetExpirationTime(Time());
+            pPacket->m_pTimeout->SetExpirationTime(Time(IMMEDIATE_EXPIRATION_TIME));
         }
     }
 

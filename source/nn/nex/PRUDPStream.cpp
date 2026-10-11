@@ -650,7 +650,7 @@ void PRUDPStream::VersionNegotiation(Packet* pRequest, Packet* pResponse)
     if (uiVersion != 0)
     {
         unsigned char uiRequestedVersion = static_cast<unsigned char>(pRequest->m_unknown90);
-        unsigned char uiNegotiatedVersion =
+        const unsigned char& uiNegotiatedVersion =
             std::min(uiRequestedVersion, g_negotiationVersion.Get());
         unsigned int uiRequestedFlags = (pRequest->m_unknown90 >> FLAGS_SHIFT) &
             g_negotiationFlagsMask;
@@ -658,7 +658,7 @@ void PRUDPStream::VersionNegotiation(Packet* pRequest, Packet* pResponse)
         if ((m_Type != Stream::RendezVousSecure && m_Type != Stream::RendezVous) ||
             g_streamSettings[m_Type].Get().GetSecureMode() != 1)
         {
-            uiNegotiatedFlags = ((uiRequestedFlags & FLAGS_WITHOUT_SECURE_MODE) << FLAGS_SHIFT) |
+            uiNegotiatedFlags = (((uiNegotiatedFlags >> FLAGS_SHIFT) & FLAGS_WITHOUT_SECURE_MODE) << FLAGS_SHIFT) |
                 uiNegotiatedVersion;
         }
     }
@@ -678,7 +678,9 @@ bool PRUDPStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiS
     unsigned short uiTypeAndFlags = pPacket->m_uiTypeAndFlags;
     InetAddress* pAddress = &pPacket->m_address;
     PRUDPEndPoint* pEndPoint;
-    if ((uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_SYN)
+    switch (uiTypeAndFlags & PACKET_TYPE_MASK)
+    {
+    case PACKET_TYPE_SYN:
     {
         if ((uiTypeAndFlags & PACKET_FLAG_ACK) == 0)
         {
@@ -707,16 +709,84 @@ bool PRUDPStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiS
             pEndPoint = endPoint->second;
 
         UnlockEndPointMap();
+        break;
     }
-    else if ((uiTypeAndFlags & PACKET_TYPE_MASK) != PACKET_TYPE_CONNECT)
+    case PACKET_TYPE_CONNECT:
     {
-        if ((uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_USER)
+        if ((uiTypeAndFlags & PACKET_FLAG_ACK) != 0)
         {
-            ServiceUserMsg(pAddress, pPacket->m_pPayload);
-            pPacket->ReleaseRef();
-            return true;
+            int iResult = CheckSignature(pAddress, uiPort, uiStreamID, pPacket);
+            if (iResult == CHECK_DROPPED)
+            {
+                pPacket->ReleaseRef();
+                return true;
+            }
+
+            if (iResult == CHECK_REJECTED)
+                return false;
+
+            LockEndPointMap();
+            EndPointMap::iterator endPoint =
+                m_endPoints.find(EndPointUniqueID(*pAddress, uiStreamID));
+            pEndPoint = 0;
+            if (endPoint != m_endPoints.end())
+                pEndPoint = endPoint->second;
+
+            UnlockEndPointMap();
+        }
+        else
+        {
+            SignatureBytes signature;
+            signature.m_uiLength = 0;
+            m_pMessageSelector->CalcSignature(pPacket, PRUDPMessageInterface::SIGNATURE_METHOD_1,
+                0, VirtualPort(pPacket->m_uiSource).GetType(),
+                &m_signatureGenerator, 0, signature);
+            PRUDPMessageInterface::SignatureMethod method =
+                DecideSignatureMethod(pPacket, m_Type, false);
+            int iResult =
+                CheckSignature(pAddress, uiPort, uiStreamID, pPacket, 0, &signature, method);
+            if (iResult == CHECK_DROPPED)
+            {
+                pPacket->ReleaseRef();
+                return true;
+            }
+
+            if (iResult == CHECK_REJECTED)
+                return false;
+
+            pEndPoint = ServiceConnectionRequest(pAddress, pPacket->m_pPayload, uiPort, uiStreamID);
+            if (pEndPoint == 0)
+            {
+                pPacket->ReleaseRef();
+                return true;
+            }
+
+            if (pPacket->m_bSkipEncryption)
+                pEndPoint->m_bUnknown148 = true;
+
+            if (!PRUDPEndPoint::IsNegotiationConnectionSignatureVersion(pPacket))
+            {
+                memcpy(pEndPoint->m_negotiationSignature.m_bytes, signature.m_bytes,
+                    signature.m_uiLength);
+                pEndPoint->m_negotiationSignature.m_uiLength = signature.m_uiLength;
+            }
+            else
+            {
+                memcpy(pEndPoint->m_signature.m_bytes, signature.m_bytes, signature.m_uiLength);
+                pEndPoint->m_signature.m_uiLength = signature.m_uiLength;
+            }
         }
 
+        break;
+    }
+    case PACKET_TYPE_USER:
+    {
+        ServiceUserMsg(pAddress, pPacket->m_pPayload);
+        pPacket->ReleaseRef();
+        return true;
+    }
+    default:
+    {
         LockEndPointMap();
         EndPointMap::iterator endPoint = m_endPoints.find(EndPointUniqueID(*pAddress, uiStreamID));
         pEndPoint = 0;
@@ -736,67 +806,9 @@ bool PRUDPStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiS
 
         if (iResult == CHECK_REJECTED)
             return false;
+
+        break;
     }
-    else if ((uiTypeAndFlags & PACKET_FLAG_ACK) != 0)
-    {
-        int iResult = CheckSignature(pAddress, uiPort, uiStreamID, pPacket);
-        if (iResult == CHECK_DROPPED)
-        {
-            pPacket->ReleaseRef();
-            return true;
-        }
-
-        if (iResult == CHECK_REJECTED)
-            return false;
-
-        LockEndPointMap();
-        EndPointMap::iterator endPoint = m_endPoints.find(EndPointUniqueID(*pAddress, uiStreamID));
-        pEndPoint = 0;
-        if (endPoint != m_endPoints.end())
-            pEndPoint = endPoint->second;
-
-        UnlockEndPointMap();
-    }
-    else
-    {
-        SignatureBytes signature;
-        signature.m_uiLength = 0;
-        m_pMessageSelector->CalcSignature(pPacket, PRUDPMessageInterface::SIGNATURE_METHOD_1, 0,
-            VirtualPort(pPacket->m_uiSource).GetType(),
-            &m_signatureGenerator, 0, signature);
-        PRUDPMessageInterface::SignatureMethod method =
-            DecideSignatureMethod(pPacket, m_Type, false);
-        int iResult = CheckSignature(pAddress, uiPort, uiStreamID, pPacket, 0, &signature, method);
-        if (iResult == CHECK_DROPPED)
-        {
-            pPacket->ReleaseRef();
-            return true;
-        }
-
-        if (iResult == CHECK_REJECTED)
-            return false;
-
-        pEndPoint = ServiceConnectionRequest(pAddress, pPacket->m_pPayload, uiPort, uiStreamID);
-        if (pEndPoint == 0)
-        {
-            pPacket->ReleaseRef();
-            return true;
-        }
-
-        if (pPacket->m_bSkipEncryption)
-            pEndPoint->m_bUnknown148 = true;
-
-        if (!PRUDPEndPoint::IsNegotiationConnectionSignatureVersion(pPacket))
-        {
-            memcpy(pEndPoint->m_negotiationSignature.m_bytes, signature.m_bytes,
-                signature.m_uiLength);
-            pEndPoint->m_negotiationSignature.m_uiLength = signature.m_uiLength;
-        }
-        else
-        {
-            memcpy(pEndPoint->m_signature.m_bytes, signature.m_bytes, signature.m_uiLength);
-            pEndPoint->m_signature.m_uiLength = signature.m_uiLength;
-        }
     }
 
     if (pEndPoint != 0 && !pEndPoint->IsFaulty())

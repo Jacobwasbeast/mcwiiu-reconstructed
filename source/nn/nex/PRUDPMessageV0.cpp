@@ -34,7 +34,10 @@ const unsigned int SIGNATURE_LENGTH = 4;
 const unsigned int PORT_FIELD_LENGTH = 2;
 const unsigned int COMPRESSION_HEADROOM = 0x40;
 const int MAX_STREAM_TYPE = 0xB;
-const int RESULT_DECOMPRESSION_FAILED = static_cast<int>(0x8005000Cu);
+enum
+{
+    RESULT_DECOMPRESSION_FAILED = static_cast<int>(0x8005000Cu)
+};
 
 inline void StoreSignature(SignatureBytes& rResult, unsigned int uiSignature)
 {
@@ -144,17 +147,18 @@ PRUDPMessageInterface::SignatureMethod PRUDPMessageV0::DecideSignatureMethod(
             if (type == Stream::RendezVousSecure || type == Stream::RendezVous)
             {
                 unsigned short uiPacketType = pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK;
-                if (!bFlag)
+                if (bFlag)
+                {
+                    if (uiPacketType == PACKET_TYPE_DATA || uiPacketType == PACKET_TYPE_DISCONNECT)
+                        return SIGNATURE_METHOD_3;
+                }
+                else
                 {
                     if (uiPacketType == PACKET_TYPE_DISCONNECT &&
                         (pPacket->m_uiTypeAndFlags & PACKET_FLAG_ACK) != 0)
                     {
                         return SIGNATURE_METHOD_9;
                     }
-                }
-                else if (uiPacketType == PACKET_TYPE_DATA || uiPacketType == PACKET_TYPE_DISCONNECT)
-                {
-                    return SIGNATURE_METHOD_3;
                 }
             }
             else
@@ -226,11 +230,7 @@ bool PRUDPMessageV0::Unpack(ByteStream* pStream, PacketIn* pPacket, unsigned int
     Buffer* pBuffer = pStream->GetBuffer();
     unsigned int uiBufferLength = pBuffer->GetLength();
     unsigned int uiPacketLength;
-    if ((pPacket->m_uiTypeAndFlags & PACKET_FLAG_HAS_SIZE) == 0)
-    {
-        uiPacketLength = pStream->GetBuffer()->GetLength();
-    }
-    else
+    if ((pPacket->m_uiTypeAndFlags & PACKET_FLAG_HAS_SIZE) != 0)
     {
         unsigned short uiSize = 0;
         if (!pStream->ExtractPrimitive(&uiSize))
@@ -239,6 +239,10 @@ bool PRUDPMessageV0::Unpack(ByteStream* pStream, PacketIn* pPacket, unsigned int
         uiPacketLength = uiSize + pStream->GetPosition() + 1;
         if (uiBufferLength < uiPacketLength)
             return false;
+    }
+    else
+    {
+        uiPacketLength = pStream->GetBuffer()->GetLength();
     }
 
     int iStreamType = VirtualPort(pPacket->m_uiSource).GetType();
@@ -384,56 +388,52 @@ bool PRUDPMessageV0::Pack(PacketOut* pPacket, ByteStream* pStream)
         pPacket->m_uiTypeAndFlags |= PACKET_FLAG_HAS_SIZE;
     }
 
-    unsigned char uiSource = pPacket->m_uiSource;
-    pStream->GetBuffer()->AppendData(&uiSource, sizeof(uiSource), APPEND_AT_END);
-    unsigned char uiDestination = pPacket->m_uiDestination;
-    pStream->GetBuffer()->AppendData(&uiDestination, sizeof(uiDestination), APPEND_AT_END);
+    pStream->AppendPrimitive(pPacket->m_uiSource);
+    pStream->AppendPrimitive(pPacket->m_uiDestination);
     if (!pStream->Append(reinterpret_cast<const unsigned char*>(&pPacket->m_uiTypeAndFlags), 2, 1) ||
         !pStream->Append(&pPacket->m_uiSessionID, 1, 1))
     {
         return false;
     }
 
-    if (pPacket->m_uiSignatureSize == 0)
+    if (pPacket->m_uiSignatureSize != 0)
+    {
+        if (!pStream->Append(pPacket->m_aSignature, 1, pPacket->m_uiSignatureSize))
+            return false;
+    }
+    else
     {
         for (unsigned int i = 0; i < SIGNATURE_LENGTH; ++i)
         {
             unsigned char uiZero = 0;
-            pStream->GetBuffer()->AppendData(&uiZero, sizeof(uiZero), APPEND_AT_END);
+            pStream->AppendPrimitive(uiZero);
         }
     }
-    else if (!pStream->Append(pPacket->m_aSignature, 1, SIGNATURE_LENGTH))
-    {
-        return false;
-    }
 
-    unsigned short uiSequenceID = pPacket->m_sequenceID.GetValue();
-    unsigned char aSequenceID[2];
-    aSequenceID[0] = static_cast<unsigned char>(uiSequenceID);
-    aSequenceID[1] = static_cast<unsigned char>(uiSequenceID >> 8);
-    pStream->GetBuffer()->AppendData(aSequenceID, sizeof(aSequenceID), APPEND_AT_END);
+    pStream->AppendPrimitive(pPacket->m_sequenceID.GetValue());
     unsigned short uiPacketType = pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK;
     if (uiPacketType == PACKET_TYPE_SYN || uiPacketType == PACKET_TYPE_CONNECT)
     {
-        if (pPacket->m_uiConnectionSignatureSize == 0)
+        if (pPacket->m_uiConnectionSignatureSize != 0)
+        {
+            if (!pStream->Append(pPacket->m_aConnectionSignature, 1,
+                    pPacket->m_uiConnectionSignatureSize))
+            {
+                return false;
+            }
+        }
+        else
         {
             for (unsigned int i = 0; i < SIGNATURE_LENGTH; ++i)
             {
                 unsigned char uiZero = 0;
-                pStream->GetBuffer()->AppendData(&uiZero, sizeof(uiZero), APPEND_AT_END);
+                pStream->AppendPrimitive(uiZero);
             }
-        }
-        else if (!pStream->Append(pPacket->m_aConnectionSignature, 1, SIGNATURE_LENGTH))
-        {
-            return false;
         }
     }
 
     if ((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_DATA)
-    {
-        unsigned char uiFragmentID = pPacket->m_uiFragmentID;
-        pStream->GetBuffer()->AppendData(&uiFragmentID, sizeof(uiFragmentID), APPEND_AT_END);
-    }
+        pStream->AppendPrimitive(pPacket->m_uiFragmentID);
 
     Buffer* pBuffer = pStream->GetBuffer();
     int iStreamType = VirtualPort(pPacket->m_uiSource).GetType();
@@ -459,22 +459,13 @@ bool PRUDPMessageV0::Pack(PacketOut* pPacket, ByteStream* pStream)
         }
 
         if ((pPacket->m_uiTypeAndFlags & PACKET_FLAG_HAS_SIZE) != 0)
-        {
-            unsigned short uiLength = static_cast<unsigned short>(pCurrent->GetLength());
-            unsigned char aLength[2];
-            aLength[0] = static_cast<unsigned char>(uiLength);
-            aLength[1] = static_cast<unsigned char>(uiLength >> 8);
-            pStream->GetBuffer()->AppendData(aLength, sizeof(aLength), APPEND_AT_END);
-        }
+            pStream->AppendPrimitive(static_cast<unsigned short>(pCurrent->GetLength()));
 
         *pStream << *pCurrent;
     }
     else if ((pPacket->m_uiTypeAndFlags & PACKET_FLAG_HAS_SIZE) != 0)
     {
-        unsigned char aLength[PORT_FIELD_LENGTH];
-        aLength[0] = 0;
-        aLength[1] = 0;
-        pBuffer->AppendData(aLength, sizeof(aLength), APPEND_AT_END);
+        pStream->AppendPrimitive(static_cast<unsigned short>(0));
     }
 
     pBuffer->AppendCheckSum(g_streamSettings[iStreamType].Get().GetKeyByteSum());
@@ -506,33 +497,30 @@ unsigned int CalcDataPacketSignature(const nn::nex::Packet* pPacket, nn::nex::St
         return SIGNATURE_UNAVAILABLE;
 
     nn::nex::Buffer* pPayload = pPacket->m_pPayload;
-    bool bCombine = false;
-    if (!bIgnorePayload)
-    {
-        if (pPayload != 0 && pPayload->GetLength() != 0)
-            bCombine = true;
-    }
-    else
+    if (bIgnorePayload)
     {
         pPayload = 0;
+        if (iLength == 0)
+            return SIGNATURE_EMPTY;
     }
-
-    if (!bCombine)
+    else if (pPayload == 0 || pPayload->GetLength() == 0)
     {
         if (iLength == 0)
             return SIGNATURE_EMPTY;
-
-        if (pPayload == 0)
-            return pChecksum->ComputeChecksumForTransport(pData, iLength);
     }
 
-    const unsigned char* aData[SIGNATURE_PART_COUNT];
-    unsigned int aLength[SIGNATURE_PART_COUNT];
-    aData[0] = pData;
-    aData[1] = pPayload->GetData();
-    aLength[0] = iLength;
-    aLength[1] = pPayload->GetLength();
-    return pChecksum->ComputeChecksumForTransportArray(aData, aLength, SIGNATURE_PART_COUNT);
+    if (pPayload != 0)
+    {
+        const unsigned char* aData[SIGNATURE_PART_COUNT];
+        unsigned int aLength[SIGNATURE_PART_COUNT];
+        aData[0] = pData;
+        aData[1] = pPayload->GetData();
+        aLength[0] = iLength;
+        aLength[1] = pPayload->GetLength();
+        return pChecksum->ComputeChecksumForTransportArray(aData, aLength, SIGNATURE_PART_COUNT);
+    }
+
+    return pChecksum->ComputeChecksumForTransport(pData, iLength);
 }
 
 }

@@ -19,16 +19,6 @@ const unsigned int SIZE_FIELD_LENGTH = 4;
 
 }
 
-_DDL_DataStoreSearchResult::_DDL_DataStoreSearchResult()
-    : m_Result()
-{
-    m_uiStructureVersion = 0;
-}
-
-_DDL_DataStoreSearchResult::~_DDL_DataStoreSearchResult()
-{
-}
-
 void _DDL_DataStoreSearchResult::Add(Message* pMessage, const _DDL_DataStoreSearchResult& rSource)
 {
     unsigned int uiSizePosition = 0;

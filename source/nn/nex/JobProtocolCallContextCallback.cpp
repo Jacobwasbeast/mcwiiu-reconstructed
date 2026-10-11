@@ -5,10 +5,6 @@ namespace nn
 namespace nex
 {
 
-JobProtocolCallContextCallback::~JobProtocolCallContextCallback()
-{
-}
-
 ProtocolCallContext* JobProtocolCallContextCallback::GetProtocolCallContext()
 {
     if (m_pJobCallContext == 0)
@@ -19,8 +15,7 @@ ProtocolCallContext* JobProtocolCallContextCallback::GetProtocolCallContext()
 
 CallContext* JobProtocolCallContextCallback::CreateCallContext()
 {
-    CallContext* pCallContext = new ProtocolCallContext(0);
-    return pCallContext;
+    return new ProtocolCallContext();
 }
 
 }

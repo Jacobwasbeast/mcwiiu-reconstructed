@@ -26,12 +26,12 @@ SlidingWindow::SlidingWindow(unsigned short uiWindowSize, unsigned int uiMaxBuff
     , m_oldestUnacknowledged()
     , m_criticalSection(WINDOW_TRACE_MASK)
 {
-    m_uiDataPending = 0;
     m_uiWindowSize = uiWindowSize;
-    m_oldestUnacknowledged = 1;
-    m_nextSequence = 1;
-    m_nextToSend = 1;
     m_uiMaxBufferedPackets = uiMaxBufferedPackets;
+    m_uiDataPending = 0;
+    m_nextSequence = 1;
+    m_nextToSend = m_nextSequence;
+    m_oldestUnacknowledged = m_nextSequence;
 }
 
 SlidingWindow::~SlidingWindow()
@@ -94,40 +94,39 @@ void SlidingWindow::Acknowledged(Clock clock, qMap<unsigned int, unsigned int>& 
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     PacketMap::iterator found = m_packets.find(clock);
-    if (found == m_packets.end())
-        return;
-    PacketOut* pPacket = found->second;
-    unsigned int uiKey = pPacket->m_unknown140;
-    if (uiKey != 0)
+    if (found != m_packets.end())
     {
-        qMap<unsigned int, unsigned int>::iterator pending = rPendingCounts.find(uiKey);
-        if (pending != rPendingCounts.end())
+        PacketOut* pPacket = found->second;
+        unsigned int uiKey = pPacket->m_unknown140;
+        if (uiKey != 0)
         {
-            --pending->second;
-            if (pending->second == 0)
+            qMap<unsigned int, unsigned int>::iterator pending = rPendingCounts.find(uiKey);
+            if (pending != rPendingCounts.end())
             {
-                ScopedCS networkLock(&Network::GetInstance()->m_unknown3e0);
-                Network::GetInstance()->m_unknown3d0.push_back(uiKey);
-                std::pair<qMap<unsigned int, unsigned int>::iterator,
-                          qMap<unsigned int, unsigned int>::iterator> range = rPendingCounts.equal_range(uiKey);
-                rPendingCounts.erase(range.first, range.second);
+                --pending->second;
+                if (pending->second == 0)
+                {
+                    ScopedCS networkLock(&Network::GetInstance()->m_unknown3e0);
+                    Network::GetInstance()->m_unknown3d0.push_back(uiKey);
+                    rPendingCounts.erase(uiKey);
+                }
             }
         }
+        pPacket->m_unknown129 = true;
+        PacketMap::iterator next = found;
+        ++next;
+        m_packets.erase(found);
+        if (clock == m_oldestUnacknowledged)
+        {
+            if (next != m_packets.end())
+                m_oldestUnacknowledged = next->first;
+            else
+                m_oldestUnacknowledged = m_nextSequence;
+        }
+        if ((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_DATA)
+            --m_uiDataPending;
+        pPacket->ReleaseRef();
     }
-    pPacket->m_unknown129 = true;
-    PacketMap::iterator next = found;
-    ++next;
-    m_packets.erase(found);
-    if (clock == m_oldestUnacknowledged)
-    {
-        if (next != m_packets.end())
-            m_oldestUnacknowledged = next->first;
-        else
-            m_oldestUnacknowledged = m_nextSequence;
-    }
-    if ((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_DATA)
-        --m_uiDataPending;
-    pPacket->ReleaseRef();
 }
 
 void SlidingWindow::Purge()
@@ -137,8 +136,7 @@ void SlidingWindow::Purge()
     while (it != m_packets.end())
     {
         it->second->ReleaseRef();
-        PacketMap::iterator current = it;
-        ++it;
+        PacketMap::iterator current = it++;
         m_packets.erase(current);
     }
     m_nextToSend = m_nextSequence;
@@ -155,9 +153,7 @@ bool SlidingWindow::Empty()
 bool SlidingWindow::ReadyToSend()
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-    if (m_nextToSend - m_oldestUnacknowledged < m_uiWindowSize)
-        return m_nextSequence != m_nextToSend;
-    return false;
+    return m_nextToSend - m_oldestUnacknowledged < m_uiWindowSize && m_nextSequence != m_nextToSend;
 }
 
 bool SlidingWindow::DataPending()

@@ -86,34 +86,37 @@ unsigned int CreateBunldingStreamFromHistoryPacketQueue(PacketHistoryChain* pCha
         PacketOut* pHistoryPacket = static_cast<PacketOut*>(*position);
         if (bundle.size() >= g_bundlePacketLimit)
             break;
-        if (pHistoryPacket->m_unknown11a >= g_bundleSendLimit || pHistoryPacket->m_unknown129)
+        if (pHistoryPacket->m_unknown11a >= g_bundleSendLimit)
+        {
+            position = PacketHistoryChainDequeue(pChain, position);
+            continue;
+        }
+        if (pHistoryPacket->m_unknown129)
         {
             position = PacketHistoryChainDequeue(pChain, position);
             continue;
         }
         if (pHistoryPacket->m_historyTime < rLimit)
             break;
-        if (g_historyBundlingEnabled && pPacket->CanHistoryBundle() && !pPacket->m_unknown129 &&
-            pHistoryPacket->IsBundlableWithPortTypeCheck(pPacket))
+        if (!g_historyBundlingEnabled || !pPacket->CanHistoryBundle() || pPacket->m_unknown129 ||
+            !pHistoryPacket->IsBundlableWithPortTypeCheck(pPacket))
         {
-            if (uiMaxSize < pHistoryPacket->m_unknown12c + uiSize)
-                break;
-            bundle.push_front(pHistoryPacket);
-            ++pHistoryPacket->m_unknown11a;
-            uiSize += pHistoryPacket->m_unknown12c;
-            if (pHistoryPacket->m_unknown11a < g_bundleSendLimit)
-            {
-                ++position;
-            }
-            else
-            {
-                pHistoryPacket->AddRef();
-                position = PacketHistoryChainDequeue(pChain, position);
-            }
+            ++position;
+            continue;
+        }
+        if (uiMaxSize < pHistoryPacket->m_unknown12c + uiSize)
+            break;
+        bundle.push_front(pHistoryPacket);
+        ++pHistoryPacket->m_unknown11a;
+        uiSize += pHistoryPacket->m_unknown12c;
+        if (pHistoryPacket->m_unknown11a < g_bundleSendLimit)
+        {
+            ++position;
         }
         else
         {
-            ++position;
+            pHistoryPacket->AddRef();
+            position = PacketHistoryChainDequeue(pChain, position);
         }
     }
     while (position != pChain->end())
@@ -125,6 +128,7 @@ unsigned int CreateBunldingStreamFromHistoryPacketQueue(PacketHistoryChain* pCha
     }
     if (uiSize == uiStartSize)
         return 0;
+    const unsigned int uiBundled = bundle.size();
     ByteStream* pPacked = new ByteStream();
     PRUDPMessageSelector& rSelector = Network::GetInstance()->GetMessageSelector();
     PacketBundleChain::iterator bundled = bundle.begin();
@@ -147,7 +151,7 @@ unsigned int CreateBunldingStreamFromHistoryPacketQueue(PacketHistoryChain* pCha
         *pStream << *pPacked->GetBuffer();
     }
     delete pPacked;
-    return bundle.size();
+    return uiBundled;
 }
 
 }

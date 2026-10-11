@@ -38,7 +38,18 @@ public:
         unsigned int m_uiCount;
     };
 
-    typedef std::pair<InetAddress, NATCheckMessage> QueuedMessage;
+    struct QueuedMessage
+    {
+        QueuedMessage(const InetAddress& rAddress, unsigned int uiType)
+            : first(rAddress)
+        {
+            second.m_uiType = uiType;
+            second.ToNetworkByteOrder();
+        }
+
+        InetAddress first;
+        NATCheckMessage second;
+    };
     typedef std::list<QueuedMessage, MemAllocator<QueuedMessage> > MessageQueue;
 
     enum
@@ -67,10 +78,7 @@ public:
 protected:
     void QueueMessage(InetAddress address, unsigned int uiType)
     {
-        NATCheckMessage message;
-        message.m_uiType = uiType;
-        message.ToNetworkByteOrder();
-        m_queue.push_back(QueuedMessage(address, message));
+        m_queue.push_back(QueuedMessage(address, uiType));
     }
 
     InetAddress m_localAddress;

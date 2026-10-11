@@ -237,6 +237,33 @@ public:
     void CreateExtraData(qVector<String>& rExtraData) const;
 
 protected:
+    enum ExtraDataIndex
+    {
+        EXTRA_DATA_PLATFORM = 0,
+        EXTRA_DATA_REGION_ID = 1,
+        EXTRA_DATA_REGION_NAME = 2,
+        EXTRA_DATA_COUNTRY_ID = 3,
+        EXTRA_DATA_COUNTRY_CODE = 4,
+        EXTRA_DATA_COUNT = 6
+    };
+
+    enum PlatformRegion
+    {
+        PLATFORM_REGION_INVALID = 0,
+        PLATFORM_REGION_JPN = 1,
+        PLATFORM_REGION_USA = 2,
+        PLATFORM_REGION_EUR = 4,
+        PLATFORM_REGION_AUS = 8,
+        PLATFORM_REGION_CHN = 16,
+        PLATFORM_REGION_KOR = 32,
+        PLATFORM_REGION_TWN = 64
+    };
+
+    enum
+    {
+        SCI_STATUS_SUCCESS = 1
+    };
+
     bool m_bBound;
     DataStoreProtocolClient m_protocolClient;
 };

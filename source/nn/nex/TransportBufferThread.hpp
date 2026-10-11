@@ -3,6 +3,9 @@
 
 #include "nn/nex/CriticalSection.hpp"
 #include "nn/nex/ObjectThread.hpp"
+#include "nn/nex/PseudoSingleton.hpp"
+#include "nn/nex/String.hpp"
+#include "nn/nex/TransportBuffer.hpp"
 #include "nn/nex/TransportBufferThreadInterface.hpp"
 #include "nn/nex/qSortedVector.hpp"
 
@@ -13,10 +16,21 @@ namespace nex
 
 class QueuingSocket;
 
+const unsigned int TRANSPORT_BUFFER_THREAD_TRACE_MASK = 0x8000;
+
 class TransportBufferThread : public TransportBufferThreadInterface
 {
 public:
-    TransportBufferThread();
+    TransportBufferThread()
+        : m_bStopped(false),
+          m_uiContextID(g_usingInstantiationContext ? g_instantiationContextVariable->GetRef() : 0),
+          m_criticalSection(TRANSPORT_BUFFER_THREAD_TRACE_MASK),
+          m_thread(String(L"Transport Buffer Thread"), g_transportBufferThreadPriority)
+    {
+        if (g_transportBufferThreadAffinity != INHERIT_THREAD_AFFINITY)
+            m_thread.SetAffinity(g_transportBufferThreadAffinity);
+    }
+
     virtual ~TransportBufferThread();
 
     virtual void Start();

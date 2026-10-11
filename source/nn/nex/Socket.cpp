@@ -16,6 +16,8 @@ const unsigned char DEFAULT_TTL = 0x40;
 
 }
 
+const unsigned int SOCKET_SUCCESS = 0;
+
 Socket::Socket(unsigned int uiTrafficType, unsigned int uiMTU)
     : m_uiState(STATE_CLOSED)
 {

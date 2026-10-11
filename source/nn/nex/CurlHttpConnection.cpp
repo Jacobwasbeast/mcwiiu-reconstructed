@@ -107,7 +107,7 @@ char* CurlHttpConnection::FixedBufferPool::Add(const void* pData, unsigned int u
 {
     if (uiSize == 0)
         uiSize = 1;
-    if (uiSize > m_buffer.capacity() - m_buffer.size())
+    if (m_buffer.capacity() - m_buffer.size() < uiSize)
         return 0;
     m_buffer.push(static_cast<const unsigned char*>(pData), uiSize);
     return reinterpret_cast<char*>(&m_buffer[m_buffer.size() - uiSize]);
@@ -279,14 +279,12 @@ size_t CurlHttpConnection::ReadCallback(void* pBuffer, unsigned int uiSize, unsi
         ++uiAttempt;
     } while (uiAttempt < TRANSFER_RETRY_COUNT);
     ScopedCS lock(&m_criticalSection);
-    unsigned int uiAvailable = std::min(uiRequested, static_cast<unsigned int>(m_pTransferQueue->size()));
-    if (uiAvailable != 0)
-    {
-        m_pTransferQueue->front(static_cast<unsigned char*>(pBuffer), uiAvailable);
-        m_pTransferQueue->pop(uiAvailable);
-        return uiAvailable;
-    }
-    return CURL_READFUNC_PAUSE;
+    unsigned int uiAvailable = std::min(static_cast<unsigned int>(m_pTransferQueue->size()), uiRequested);
+    if (uiAvailable == 0)
+        return CURL_READFUNC_PAUSE;
+    m_pTransferQueue->front(static_cast<unsigned char*>(pBuffer), uiAvailable);
+    m_pTransferQueue->pop(uiAvailable);
+    return uiAvailable;
 }
 
 size_t CurlHttpConnection::StaticReadCallback(void* pBuffer, unsigned int uiSize,
@@ -301,28 +299,31 @@ int CurlHttpConnection::HeaderCallback(void* pBuffer, unsigned int uiSize, unsig
     unsigned int uiTotal = uiSize * uiCount;
     if (m_bCancelled)
         return uiTotal;
-    const char* pLine = static_cast<const char*>(pBuffer);
+    char* pLine = static_cast<char*>(pBuffer);
     if (strncmp(pLine, "HTTP/", 5) == 0)
     {
-        const char* pSpace = strchr(pLine, ' ');
+        char* pSpace = strchr(pLine, ' ');
         if (pSpace)
             m_iStatusCode = atoi(pSpace + 1);
     }
-    const char* pColon = strstr(pLine, ":");
+    char* pColon = strstr(pLine, ":");
     if (!pColon)
         return uiTotal;
     char* pName = m_headerPool.Add(pLine, pColon - pLine);
     if (!pName || !m_headerPool.Add("", 1))
         return uiTotal;
     ToLower(pName);
-    const char* pValue = pColon + strcspn(pColon, ": ") + 2;
+    char* pValue = pColon + strcspn(pColon, ": ") + 2;
     if (!pValue)
         return uiTotal;
-    for (unsigned int i = 0; i < strlen(pValue); ++i)
+    size_t uiLength = strlen(pValue);
+    const char* pTerminators = "\r\n";
+    size_t uiTerminators = strlen(pTerminators);
+    for (unsigned int i = 0; i < uiLength; ++i)
     {
-        for (unsigned int j = 0; j < strlen("\r\n"); ++j)
+        for (unsigned int j = 0; j < uiTerminators; ++j)
         {
-            if (pValue[i] == "\r\n"[j])
+            if (pValue[i] == pTerminators[j])
             {
                 char* pText = m_headerPool.Add(pValue, i);
                 if (!pText || !m_headerPool.Add("", 1))
@@ -354,16 +355,18 @@ size_t CurlHttpConnection::WriteCallback(void* pBuffer, unsigned int uiSize, uns
             return CURL_WRITEFUNC_PAUSE;
         m_bResponseStarted = true;
     }
-    for (unsigned int uiAttempt = 0;; ++uiAttempt)
+    unsigned int uiAttempt = 0;
+    while (true)
     {
         {
             ScopedCS lock(&m_criticalSection);
-            if (uiTotal <= m_pTransferQueue->capacity() - m_pTransferQueue->size())
+            if (m_pTransferQueue->capacity() - m_pTransferQueue->size() >= uiTotal)
                 break;
             if (uiAttempt >= TRANSFER_RETRY_COUNT)
                 return CURL_WRITEFUNC_PAUSE;
         }
         Platform::Sleep(TRANSFER_RETRY_MILLISECONDS);
+        ++uiAttempt;
     }
     ScopedCS lock(&m_criticalSection);
     m_pTransferQueue->push(static_cast<const unsigned char*>(pBuffer), uiTotal);
@@ -441,9 +444,10 @@ void CurlHttpConnection::SetupCurlParameter()
 qResult CurlHttpConnection::ConnectAsync()
 {
     ScopedCS lock(&m_criticalSection);
-    if (m_uiTransferBufferSize < MINIMUM_TRANSFER_BUFFER_SIZE)
+    unsigned int uiBufferSize = m_uiTransferBufferSize;
+    if (uiBufferSize < MINIMUM_TRANSFER_BUFFER_SIZE)
         return qResult(RESULT_INVALID_BUFFER_SIZE);
-    m_pTransferQueue = new qReservedQueue<unsigned char>(m_uiTransferBufferSize);
+    m_pTransferQueue = new qReservedQueue<unsigned char>(uiBufferSize);
     SetupCurlParameter();
     m_pThread = new ObjectThread<CurlHttpConnection, void*>(String(L"CurlHttpConnection Thread"),
         m_uiThreadPriority);
@@ -456,12 +460,10 @@ bool CurlHttpConnection::GetStatusCode(int* pStatusCode) const
 {
     ScopedCS lock(&m_criticalSection);
     qResult result = IsReceivingHeaderCompleted();
-    if (result)
-    {
-        *pStatusCode = m_iStatusCode;
-        return true;
-    }
-    return false;
+    if (!result)
+        return false;
+    *pStatusCode = m_iStatusCode;
+    return true;
 }
 
 qResult CurlHttpConnection::Read(unsigned char* pBuffer, unsigned int* pReadSize,
@@ -470,32 +472,32 @@ qResult CurlHttpConnection::Read(unsigned char* pBuffer, unsigned int* pReadSize
     ScopedCS lock(&m_criticalSection);
     qReservedQueue<unsigned char>* pQueue = m_pTransferQueue;
     unsigned int uiAvailable = std::min(uiCapacity, static_cast<unsigned int>(pQueue->size()));
-    if (m_result)
+    if (!m_result)
     {
-        if (uiAvailable != 0)
-        {
-            pQueue->front(pBuffer, uiAvailable);
-            m_pTransferQueue->pop(uiAvailable);
-        }
-        *pReadSize = uiAvailable;
-        return qResult(RESULT_SUCCESS);
+        return m_result;
     }
-    return m_result;
+    if (uiAvailable != 0)
+    {
+        pQueue->front(pBuffer, uiAvailable);
+        m_pTransferQueue->pop(uiAvailable);
+    }
+    *pReadSize = uiAvailable;
+    return qResult(RESULT_SUCCESS);
 }
 
 qResult CurlHttpConnection::WritePostChunk(unsigned char* pData, unsigned int uiSize)
 {
     ScopedCS lock(&m_criticalSection);
-    if (m_result)
+    if (!m_result)
     {
-        if (uiSize == 0)
-            return qResult(RESULT_SUCCESS);
-        if (GetWritableSize() < uiSize)
-            return qResult(RESULT_HTTP_FAILURE);
-        m_pTransferQueue->push(pData, uiSize);
-        return qResult(RESULT_SUCCESS);
+        return m_result;
     }
-    return m_result;
+    if (uiSize == 0)
+        return qResult(RESULT_SUCCESS);
+    if (GetWritableSize() < uiSize)
+        return qResult(RESULT_HTTP_FAILURE);
+    m_pTransferQueue->push(pData, uiSize);
+    return qResult(RESULT_SUCCESS);
 }
 
 unsigned int CurlHttpConnection::GetWritableSize() const
@@ -515,9 +517,11 @@ qResult CurlHttpConnection::GetError() const
 qResult CurlHttpConnection::IsReceivingHeaderCompleted() const
 {
     ScopedCS lock(&m_criticalSection);
-    if (m_result)
-        return !m_bResponseStarted && !m_bFinished ? qResult(RESULT_FAILURE) : qResult(RESULT_SUCCESS);
-    return m_result;
+    if (!m_result)
+    {
+        return m_result;
+    }
+    return m_bResponseStarted || m_bFinished ? qResult(RESULT_SUCCESS) : qResult(RESULT_FAILURE);
 }
 
 bool CurlHttpConnection::IsFinished() const

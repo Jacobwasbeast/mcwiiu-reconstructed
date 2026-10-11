@@ -19,7 +19,7 @@ class _DDL_MatchmakeSessionSearchCriteria : public RootObject
 {
 public:
     _DDL_MatchmakeSessionSearchCriteria()
-        : m_uiStructureVersion(3), m_Attributes(), m_strGameMode(), m_strMinParticipants(),
+        : m_uiStructureVersion(3), m_Attributes(0), m_strGameMode(), m_strMinParticipants(),
           m_strMaxParticipants(), m_strMatchmakeSystemType(), m_MatchmakeParam()
     {
     }

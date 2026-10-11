@@ -10,7 +10,7 @@ namespace nex
 Stream::Stream(Type type)
     : m_Type(type)
 {
-    g_streamSettings[m_Type].Get().SetStreamType(m_Type);
+    g_streamSettings[type].Get().SetStreamType(m_Type);
 }
 
 Stream::~Stream()

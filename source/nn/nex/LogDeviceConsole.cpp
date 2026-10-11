@@ -1,6 +1,5 @@
 #include "nn/nex/LogDeviceConsole.hpp"
 
-#include <stdint.h>
 #include <cstdio>
 
 namespace nn
@@ -9,9 +8,12 @@ namespace nex
 {
 
 LogDeviceConsole::LogDeviceConsole(void* pHandle)
-    : m_pHandle(pHandle != 0 ? pHandle : reinterpret_cast<void*>(
-        static_cast<uintptr_t>(0xC07EEC58u)))
+    : m_pHandle(pHandle)
 {
+    if (pHandle == 0)
+    {
+        m_pHandle = stdout;
+    }
 }
 
 LogDeviceConsole::~LogDeviceConsole()

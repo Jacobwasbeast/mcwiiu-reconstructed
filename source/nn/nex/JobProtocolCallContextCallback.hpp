@@ -18,7 +18,9 @@ public:
     {
     }
 
-    virtual ~JobProtocolCallContextCallback();
+    virtual ~JobProtocolCallContextCallback()
+    {
+    }
 
     ProtocolCallContext* GetProtocolCallContext();
     virtual CallContext* CreateCallContext();

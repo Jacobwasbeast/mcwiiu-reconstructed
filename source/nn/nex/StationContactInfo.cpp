@@ -14,7 +14,7 @@ namespace
 const unsigned int STATION_URL_PUBLIC_TYPE_BIT = 1;
 const unsigned int TRACE_INDENT = 2;
 
-bool IsPublicURL(const StationURL& rStationURL)
+inline bool IsPublicURL(const StationURL& rStationURL)
 {
     return ((rStationURL.GetType() >> STATION_URL_PUBLIC_TYPE_BIT) & 1) != 0;
 }
@@ -77,12 +77,13 @@ void StationContactInfo::SortAndFilterTarget(StationContactInfo& rTarget) const
     for (qList<StationURL>::iterator target = rTarget.m_urls.begin();
          target != rTarget.m_urls.end() && !bMatch; ++target)
     {
-        if (IsPublicURL(*target))
+        const StationURL& rTargetURL = *target;
+        if (IsPublicURL(rTargetURL))
         {
             for (qList<StationURL>::const_iterator url = m_urls.begin();
                  url != m_urls.end() && !bMatch; ++url)
             {
-                if (String::IsEqual(url->GetAddress(), target->GetAddress()))
+                if (String::IsEqual(url->GetAddress(), rTargetURL.GetAddress()))
                     bMatch = true;
             }
             ++nbPublic;
@@ -96,15 +97,17 @@ void StationContactInfo::SortAndFilterTarget(StationContactInfo& rTarget) const
         for (qList<StationURL>::iterator target = rTarget.m_urls.begin();
              target != rTarget.m_urls.end(); ++target)
         {
-            if (!IsPublicURL(*target))
-                sorted.push_back(*target);
+            const StationURL& rTargetURL = *target;
+            if (!IsPublicURL(rTargetURL))
+                sorted.push_back(rTargetURL);
         }
     }
     for (qList<StationURL>::iterator target = rTarget.m_urls.begin();
          target != rTarget.m_urls.end(); ++target)
     {
-        if (IsPublicURL(*target))
-            sorted.push_back(*target);
+        const StationURL& rTargetURL = *target;
+        if (IsPublicURL(rTargetURL))
+            sorted.push_back(rTargetURL);
     }
     rTarget.m_urls = sorted;
 }

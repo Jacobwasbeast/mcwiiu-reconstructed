@@ -122,7 +122,7 @@ void _DDL_UpdateMatchmakeSessionParam::Extract(Message* pMessage, _DDL_UpdateMat
     _DDL_MatchmakeParam::Extract(pMessage, &pDestination->m_MatchmakeParam);
     if (pMessage->HasError())
         return;
-    unsigned long long uiStartedTime = 0;
+    unsigned long long uiStartedTime;
     _Type_uint64::Extract(pMessage, &uiStartedTime);
     pDestination->m_StartedTime = DateTime(uiStartedTime);
     if (pMessage->HasError())

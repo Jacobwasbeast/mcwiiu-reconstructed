@@ -25,9 +25,9 @@ ProtocolRequestBrokerInterface::ProtocolRequestBrokerInterface()
 {
     if (!g_protocolIdentityCallbacksInitialized)
     {
-        g_protocolIdentityCallbacksInitialized = true;
-        g_protocolCurrentPID = SecurityContextManager::StaticGetCurrentPID;
         g_protocolCurrentCID = SecurityContextManager::StaticGetCurrentCID;
+        g_protocolCurrentPID = SecurityContextManager::StaticGetCurrentPID;
+        g_protocolIdentityCallbacksInitialized = true;
     }
 }
 

@@ -61,6 +61,7 @@ public:
     void ConnectionSucceeded();
 
 private:
+    static bool s_bNATTraversalEnabled;
     friend class JobConnectSecureEndPoint;
     SystemComponent::Use m_componentUse;
     EndPoint* m_pEndPoint;

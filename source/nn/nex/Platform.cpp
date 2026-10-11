@@ -6,6 +6,7 @@
 #include <coreinit/time.h>
 #include <nn/act/client_cpp.h>
 
+#include "nn/nex/BadEvents.hpp"
 #include "nn/nex/MD5.hpp"
 #include "nn/nex/RandomNumberGenerator.hpp"
 
@@ -116,6 +117,11 @@ float Platform::GetRealRandomNumber(float limit)
         SetRandomNumberSeed(GetRandomSeed());
 
     return s_platformRandomNumberGenerator.GetRealRandomNumber(limit);
+}
+
+void Platform::WarnObsoleteMethod(const wchar_t*, const wchar_t*)
+{
+    BadEvents::Signal(BadEvents::BAD_EVENT_3);
 }
 
 }

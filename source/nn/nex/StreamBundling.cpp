@@ -11,11 +11,11 @@ namespace nex
 StreamBundling::StreamBundling()
     : m_lastFlushTime()
 {
-    m_lastFlushTime = Time();
     m_bEnabled = false;
+    m_iMaxFlushDelay = 0;
+    m_lastFlushTime = 0;
     m_unknown10 = 0xffff;
     m_unknown12 = 0xffff;
-    m_iMaxFlushDelay = 0;
 }
 
 StreamBundling::~StreamBundling()
@@ -45,7 +45,8 @@ void StreamBundling::UpdateFlushTime()
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     Time currentTime(Time::GetTime());
-    if (static_cast<long long>(currentTime - m_lastFlushTime) > m_iMaxFlushDelay)
+    Time elapsed = currentTime - m_lastFlushTime;
+    if (static_cast<long long>(elapsed) > m_iMaxFlushDelay)
         m_lastFlushTime = currentTime;
 }
 

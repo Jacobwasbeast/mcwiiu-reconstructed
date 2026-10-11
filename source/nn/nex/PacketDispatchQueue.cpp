@@ -21,13 +21,13 @@ PacketDispatchQueue::~PacketDispatchQueue()
 
 void PacketDispatchQueue::Queue(PacketIn* pPacket)
 {
-    Clock sequence = pPacket->m_sequenceID;
-    if (sequence == m_nextToDispatch || sequence - m_nextToDispatch > 0)
+    if (pPacket->m_sequenceID >= m_nextToDispatch)
     {
-        if (m_packets.find(sequence) == m_packets.end())
+        PacketMap::iterator found = m_packets.find(pPacket->m_sequenceID.GetValue());
+        if (found == m_packets.end())
         {
             pPacket->AddRef();
-            m_packets[sequence] = pPacket;
+            m_packets[pPacket->m_sequenceID.GetValue()] = pPacket;
         }
     }
 }

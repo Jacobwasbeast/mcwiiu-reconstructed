@@ -97,7 +97,7 @@ void RelayMessage::CalcSignature(SignatureBytes* pSignature, RelayType type,
 
 int RelayMessage::GetCurrentTimeStamp()
 {
-    return m_timeStampOrigin.m_uiBaseTimeStamp
+    return static_cast<int>(m_timeStampOrigin.m_uiBaseTime)
         + static_cast<int>(static_cast<long long>(g_lastTime - m_timeStampOrigin.m_uiStartTime)
             / RELAY_TIME_STAMP_UNIT);
 }

@@ -15,8 +15,7 @@ namespace nex
 {
 
 TicketManager::TicketManager(AuthenticationClient* pAuthenticationClient)
-    : m_tickets()
-    , m_pAuthenticationClient(pAuthenticationClient)
+    : m_pAuthenticationClient(pAuthenticationClient)
 {
 }
 
@@ -98,7 +97,8 @@ void TicketManager::ReleaseTicket(Ticket* pTicket)
     pTicket->ReleaseRef();
     if (pTicket->GetRefCount() == 1)
     {
-        m_tickets.erase(pTicket->m_uiTargetPrincipalID);
+        unsigned int uiTargetPrincipalID = pTicket->m_uiTargetPrincipalID;
+        m_tickets.erase(uiTargetPrincipalID);
         pTicket->ReleaseRef();
     }
 }

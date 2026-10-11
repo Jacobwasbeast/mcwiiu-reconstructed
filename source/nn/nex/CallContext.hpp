@@ -20,6 +20,11 @@ class CallContextRegister;
 class ClientProtocol;
 class ConnectionManager;
 class JobConnectEndPoint;
+
+const unsigned int CALL_CONTEXT_FLAG_SELF_RELEASE = 2;
+const unsigned int CALL_CONTEXT_FLAG_CALLBACK_EXPECTED = 4;
+const unsigned int CALL_CONTEXT_FLAG_CALLBACK_REQUIRED = 8;
+
 class CallContext : public RefCountedObject
 {
 public:
@@ -40,6 +45,8 @@ public:
     bool Wait(unsigned int uiTimeout);
 
     State GetState() const { return m_state; }
+
+    unsigned int GetCallID() const { return m_uiCallId; }
 
     qResult GetResult() const { return m_result; }
 
@@ -94,12 +101,15 @@ private:
     friend class CallContextRegister;
     friend class ClientProtocol;
     friend class JobCallContextCallback;
+    friend class JobCheckAndRelay;
     friend class JobConnectEndPoint;
     friend class JobPerformNATCheck;
     friend class JobNATCheckBase;
     friend class JobCheckCurrentPort;
     friend class JobCheckNATProperties;
     friend class ConnectionManager;
+    friend class ConnectivityManager;
+    friend class HTTPEngineCurlBase;
     friend class Protocol;
     friend class BackEndServices;
     friend class JobBackEndServicesTerminate;
@@ -115,6 +125,7 @@ private:
     friend class JobTicketManagerLoginWithData;
     friend class JobTicketManagerAcquireTicket;
     friend class JobWaitForNotification;
+    friend class JobWaitForProbes;
     class InternalData
     {
     public:

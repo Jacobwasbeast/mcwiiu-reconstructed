@@ -21,7 +21,7 @@ public:
     InetAddress(unsigned int uiAddress, unsigned short uiPortNumber);
     InetAddress(const wchar_t* pAddress, unsigned short uiPortNumber);
     InetAddress(void* pSocketAddress, unsigned int uiSize);
-    virtual ~InetAddress() {}
+    virtual ~InetAddress();
 
     InetAddress& operator=(const InetAddress& rAddress);
 
@@ -33,9 +33,13 @@ public:
 
     bool operator<(const InetAddress& rAddress) const
     {
-        return m_address.sin_addr.s_addr < rAddress.m_address.sin_addr.s_addr ||
-               (m_address.sin_addr.s_addr == rAddress.m_address.sin_addr.s_addr &&
-                m_address.sin_port < rAddress.m_address.sin_port);
+        int iAddress = m_address.sin_addr.s_addr;
+        int iOtherAddress = rAddress.m_address.sin_addr.s_addr;
+        unsigned short uiPortNumber = m_address.sin_port;
+        unsigned short uiOtherPortNumber = rAddress.m_address.sin_port;
+
+        return iAddress <= iOtherAddress &&
+               (iAddress < iOtherAddress || uiPortNumber < uiOtherPortNumber);
     }
 
     void Init();

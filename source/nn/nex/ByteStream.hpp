@@ -29,6 +29,53 @@ inline void SetUnalignedNexNetworkOrder32(uint32_t uiValue, unsigned char* pDest
 
 void SetUnalignedNexNetworkOrder64(uint64_t uiValue, unsigned char* pDestination);
 
+template <unsigned int uiSize>
+struct PrimitiveReader;
+
+template <>
+struct PrimitiveReader<sizeof(uint8_t)>
+{
+    template <typename T>
+    static void Read(const unsigned char* pSource, T* pValue)
+    {
+        *reinterpret_cast<uint8_t*>(pValue) = pSource[0];
+    }
+};
+
+template <>
+struct PrimitiveReader<sizeof(uint16_t)>
+{
+    template <typename T>
+    static void Read(const unsigned char* pSource, T* pValue)
+    {
+        *reinterpret_cast<uint16_t*>(pValue) = static_cast<uint16_t>(pSource[0] | (pSource[1] << 8));
+    }
+};
+
+template <>
+struct PrimitiveReader<sizeof(uint32_t)>
+{
+    template <typename T>
+    static void Read(const unsigned char* pSource, T* pValue)
+    {
+        *reinterpret_cast<uint32_t*>(pValue) = static_cast<uint32_t>(pSource[0]) | (static_cast<uint32_t>(pSource[1]) << 8)
+            | (static_cast<uint32_t>(pSource[2]) << 16) | (static_cast<uint32_t>(pSource[3]) << 24);
+    }
+};
+
+template <>
+struct PrimitiveReader<sizeof(uint64_t)>
+{
+    template <typename T>
+    static void Read(const unsigned char* pSource, T* pValue)
+    {
+        *reinterpret_cast<uint64_t*>(pValue) = static_cast<uint64_t>(pSource[0]) | (static_cast<uint64_t>(pSource[1]) << 8)
+            | (static_cast<uint64_t>(pSource[2]) << 16) | (static_cast<uint64_t>(pSource[3]) << 24)
+            | (static_cast<uint64_t>(pSource[4]) << 32) | (static_cast<uint64_t>(pSource[5]) << 40)
+            | (static_cast<uint64_t>(pSource[6]) << 48) | (static_cast<uint64_t>(pSource[7]) << 56);
+    }
+};
+
 class ByteStream : public RootObject
 {
 public:
@@ -103,34 +150,7 @@ public:
 
         const unsigned char* pSource = m_pBuffer->GetData() + m_uiPosition;
 
-        switch (sizeof(T))
-        {
-        case sizeof(uint8_t):
-            *pValue = *reinterpret_cast<const T*>(pSource);
-            break;
-        case sizeof(uint16_t):
-        {
-            uint16_t uiValue = static_cast<uint16_t>(pSource[0] | (pSource[1] << 8));
-            *pValue = *reinterpret_cast<T*>(&uiValue);
-            break;
-        }
-        case sizeof(uint32_t):
-        {
-            uint32_t uiValue = static_cast<uint32_t>(pSource[0]) | (static_cast<uint32_t>(pSource[1]) << 8)
-                | (static_cast<uint32_t>(pSource[2]) << 16) | (static_cast<uint32_t>(pSource[3]) << 24);
-            *pValue = *reinterpret_cast<T*>(&uiValue);
-            break;
-        }
-        case sizeof(uint64_t):
-        {
-            uint64_t uiValue = static_cast<uint64_t>(pSource[0]) | (static_cast<uint64_t>(pSource[1]) << 8)
-                | (static_cast<uint64_t>(pSource[2]) << 16) | (static_cast<uint64_t>(pSource[3]) << 24)
-                | (static_cast<uint64_t>(pSource[4]) << 32) | (static_cast<uint64_t>(pSource[5]) << 40)
-                | (static_cast<uint64_t>(pSource[6]) << 48) | (static_cast<uint64_t>(pSource[7]) << 56);
-            *pValue = *reinterpret_cast<T*>(&uiValue);
-            break;
-        }
-        }
+        PrimitiveReader<sizeof(T)>::Read(pSource, pValue);
 
         m_uiPosition += sizeof(T);
         return true;

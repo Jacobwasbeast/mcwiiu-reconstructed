@@ -49,6 +49,7 @@ namespace nn
 namespace nex
 {
 
+int ConnectionManager::s_iNATTraversalTimeout = 60000;
 unsigned int ConnectionManager::s_uiDisconnectTimeout = 15000;
 
 ConnectionManager::ConnectionManager(EndPointEventHandler* pEndPointEventHandler,

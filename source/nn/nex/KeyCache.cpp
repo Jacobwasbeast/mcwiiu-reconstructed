@@ -29,14 +29,14 @@ void KeyCache::AddKey(unsigned int uiPrincipalID, const Buffer& rBuffer, const K
 
 bool KeyCache::RetrieveKey(unsigned int uiPrincipalID, const char* pPassword, Key* pKey)
 {
-    Buffer buffer(Buffer::s_uiDefaultBufferSize, 0);
+    Buffer buffer;
     buffer.AppendData(pPassword, strlen(pPassword), 0xFFFFFFFF);
     return RetrieveKey(uiPrincipalID, buffer, pKey);
 }
 
 void KeyCache::AddKey(unsigned int uiPrincipalID, const char* pPassword, const Key& rKey)
 {
-    Buffer buffer(Buffer::s_uiDefaultBufferSize, 0);
+    Buffer buffer;
     buffer.AppendData(pPassword, strlen(pPassword), 0xFFFFFFFF);
     AddKey(uiPrincipalID, buffer, rKey);
 }

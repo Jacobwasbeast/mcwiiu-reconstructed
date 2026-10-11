@@ -27,7 +27,7 @@ public:
         Buffer* pPayload);
 
     RelayStream();
-    virtual ~RelayStream();
+    virtual ~RelayStream() {}
 
     virtual bool ReceiveIncomingPacket(unsigned short uiPort, unsigned char uiStreamID,
         Packet* pPacket);

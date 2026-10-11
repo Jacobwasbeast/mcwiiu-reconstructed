@@ -18,10 +18,6 @@ const unsigned int SIZE_FIELD_LENGTH = 4;
 
 }
 
-_DDL_ResultRange::~_DDL_ResultRange()
-{
-}
-
 _DDL_ResultRange& _DDL_ResultRange::operator=(const _DDL_ResultRange& rSource)
 {
     m_uiStructureVersion = rSource.m_uiStructureVersion;

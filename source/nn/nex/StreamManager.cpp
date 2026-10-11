@@ -47,10 +47,10 @@ void StreamManager::SetStreamKey()
 }
 
 StreamManager::StreamManager(Stream::Type type, RootTransport* pTransport)
-    : m_pProtocolRequestBroker(0)
-    , m_pTransport(pTransport)
-    , m_type(type)
 {
+    m_type = type;
+    m_pProtocolRequestBroker = 0;
+    m_pTransport = pTransport;
     Network::AcquireInstance();
     SetStreamKey();
     m_pStream = new PRUDPStream(m_type, m_pTransport);
@@ -58,8 +58,8 @@ StreamManager::StreamManager(Stream::Type type, RootTransport* pTransport)
     g_streamSettings[m_type].Get().SetKeepAliveTimeout(KEEP_ALIVE_TIMEOUT);
     if (s_fPacketDropProbability > 0.0f)
     {
-        m_pTransport->GetOutputEmulationDevice()->Enable();
-        m_pTransport->GetOutputEmulationDevice()->SetPacketDropProbability(
+        m_pTransport->GetInputEmulationDevice()->Enable();
+        m_pTransport->GetInputEmulationDevice()->SetPacketDropProbability(
             s_fPacketDropProbability);
     }
 
@@ -107,34 +107,19 @@ bool StreamManager::Initialize(unsigned short uiPort, unsigned char uiStreamID,
     if (m_pStream->Initialize() == false)
         return false;
 
-    bool bListening;
-    if (s_iUnknownListenFlag == 0)
+    if (s_iUnknownListenFlag != 0)
     {
-        if ((uiFlags & INITIALIZE_FLAG_2) == 0)
+        bool bListening;
+        if ((uiFlags & INITIALIZE_FLAG_2) != 0)
         {
-            bListening = m_pTransport->StartListen(uiPort, &m_uiPort, true, 0, false)
-                || m_pTransport->StartListen(0, &m_uiPort, true, 0, false);
+            bListening = m_pTransport->StartListen(uiPort, &m_uiPort, false,
+                UNKNOWN_LISTEN_OPTION, false);
         }
         else
-        {
-            bListening = m_pTransport->StartListen(uiPort, &m_uiPort, true, 0, false);
-        }
-
-        if (!bListening)
-            return false;
-    }
-    else
-    {
-        if ((uiFlags & INITIALIZE_FLAG_2) == 0)
         {
             bListening = m_pTransport->StartListen(uiPort, &m_uiPort, false,
                     UNKNOWN_LISTEN_OPTION, false)
                 || m_pTransport->StartListen(0, &m_uiPort, false, UNKNOWN_LISTEN_OPTION, false);
-        }
-        else
-        {
-            bListening = m_pTransport->StartListen(uiPort, &m_uiPort, false,
-                UNKNOWN_LISTEN_OPTION, false);
         }
 
         if (!bListening)
@@ -142,13 +127,35 @@ bool StreamManager::Initialize(unsigned short uiPort, unsigned char uiStreamID,
 
         m_pStream->m_uiPreferredPort = m_uiPort;
     }
-
-    if ((uiFlags & INITIALIZE_FLAG_2) == 0)
-        bListening = m_pStream->StartListen(uiStreamID, 0) || m_pStream->StartListen(0, 0);
     else
-        bListening = m_pStream->StartListen(uiStreamID, 0);
+    {
+        bool bListening;
+        if ((uiFlags & INITIALIZE_FLAG_2) != 0)
+        {
+            bListening = m_pTransport->StartListen(uiPort, &m_uiPort, true, 0, false);
+        }
+        else
+        {
+            bListening = m_pTransport->StartListen(uiPort, &m_uiPort, true, 0, false)
+                || m_pTransport->StartListen(0, &m_uiPort, true, 0, false);
+        }
 
-    if (!bListening)
+        if (!bListening)
+            return false;
+    }
+
+    bool bStreamListening;
+    if ((uiFlags & INITIALIZE_FLAG_2) != 0)
+    {
+        bStreamListening = m_pStream->StartListen(uiStreamID, 0);
+    }
+    else
+    {
+        bStreamListening = m_pStream->StartListen(uiStreamID, 0)
+            || m_pStream->StartListen(0, 0);
+    }
+
+    if (!bStreamListening)
         return false;
 
     m_bInitialized = true;
@@ -169,7 +176,7 @@ void StreamManager::AssociateSecureStream(ConnectionOrientedStream* pSecureStrea
     ConnectionManager::ConnectionFilter pFilter)
 {
     m_pSecureStream = pSecureStream;
-    m_pConnectionManager->AttachStream(pSecureStream, false);
+    m_pConnectionManager->AttachStream(m_pSecureStream, false);
     m_pConnectionManager->RegisterConnectionFilter(pFilter, UserContext(pSecureStream));
 }
 
@@ -190,13 +197,9 @@ void StreamManager::SetKeepAliveTimeout(unsigned int uiTimeout)
 
 bool StreamManager::SimulateFault(unsigned int uiPrincipalID)
 {
-    ConnectionOrientedStream* pStream = m_pSecureStream;
+    ConnectionOrientedStream* pStream = m_pSecureStream != 0 ? m_pSecureStream : m_pStream;
     if (pStream == 0)
-    {
-        pStream = m_pStream;
-        if (pStream == 0)
-            return false;
-    }
+        return false;
 
     EndPoint* pEndPoint = pStream->FindEndPointByPID(uiPrincipalID);
     if (pEndPoint == 0)

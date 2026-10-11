@@ -15,6 +15,7 @@ namespace nex
 
 class CallContextRegister;
 class JobConnectEndPoint;
+class LogToClientController;
 class Scheduler;
 class SecurityContextManager;
 class SystemComponents;
@@ -57,10 +58,11 @@ public:
             uiContextId = g_instantiationContextVariable->GetRef();
 
         InstanceControl* pInstanceControl = g_instanceTable.FindInstance(ClassID, uiContextId);
-        if (pInstanceControl != 0)
-            return static_cast<Core*>(pInstanceControl->GetDelegatorInstance());
+        Core* pCore = reinterpret_cast<Core*>(pInstanceControl);
+        if (pCore != 0)
+            pCore = static_cast<Core*>(pInstanceControl->GetDelegatorInstance());
 
-        return 0;
+        return pCore;
     }
 
     static void AcquireInstance();
@@ -113,6 +115,7 @@ public:
 
 private:
     friend class JobConnectEndPoint;
+    friend class LogToClientController;
     friend class Timeout;
 
     Scheduler* m_pScheduler;

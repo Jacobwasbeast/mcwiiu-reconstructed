@@ -75,8 +75,9 @@ bool ByteStream::ValidateBufferLimit(unsigned int uiSize)
         return true;
     }
 
+    bool bValid = false;
     SetError();
-    return false;
+    return bValid;
 }
 
 bool ByteStream::AppendRaw(const unsigned char* pData, unsigned int uiSize)

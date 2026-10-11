@@ -427,7 +427,7 @@ void JobPerformNATCheck::StepRecv()
 {
     unsigned int uiReceived = 0;
     if (m_socket.RecvNonBlock(reinterpret_cast<unsigned char*>(&m_recvMessage),
-            sizeof(NATCheckMessage), &uiReceived, &m_receivedFrom) == 0)
+            sizeof(NATCheckMessage), &uiReceived, &m_receivedFrom) == SOCKET_SUCCESS)
     {
         m_uiTimeoutCount = 0;
         m_recvMessage.FromNetworkByteOrder();
@@ -592,9 +592,10 @@ bool JobPerformNATCheck::SendNextQueuedMessage()
 {
     if (m_queue.empty())
         return false;
-    QueuedMessage& rMessage = m_queue.front();
-    bool bSent = m_socket.Send(reinterpret_cast<const unsigned char*>(&rMessage.second),
-                     sizeof(NATCheckMessage), rMessage.first) == 0;
+    bool bSent = true;
+    if (m_socket.Send(reinterpret_cast<const unsigned char*>(&m_queue.begin()->second),
+            sizeof(NATCheckMessage), m_queue.begin()->first) != SOCKET_SUCCESS)
+        bSent = false;
     m_queue.pop_front();
     return bSent;
 }
@@ -611,7 +612,7 @@ void JobPerformNATCheck::StepRun()
         } while (bSent);
         unsigned int uiReceived = 0;
         if (m_socket.RecvNonBlock(reinterpret_cast<unsigned char*>(&m_recvMessage),
-                sizeof(NATCheckMessage), &uiReceived, &m_receivedFrom) == 0 &&
+                sizeof(NATCheckMessage), &uiReceived, &m_receivedFrom) == SOCKET_SUCCESS &&
             uiReceived == sizeof(NATCheckMessage))
         {
             m_recvMessage.FromNetworkByteOrder();
@@ -752,16 +753,6 @@ void JobPerformNATCheck::StepEnd()
         pCallContext->SetStateImpl(CallContext::CallFailed, qResult(NAT_CHECK_FAILED_RESULT),
             false);
     SetToComplete();
-}
-
-NATCheckClient::NATCheckClient(const InetAddress& rAddress)
-    : m_address()
-{
-    m_address = rAddress;
-}
-
-NATCheckClient::~NATCheckClient()
-{
 }
 
 }

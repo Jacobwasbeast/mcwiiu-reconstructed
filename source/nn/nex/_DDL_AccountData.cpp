@@ -88,6 +88,8 @@ void _DDL_AccountData::Extract(Message* pMessage, _DDL_AccountData* pDestination
         if (pMessage->HasError())
             return;
         pMessage->ExtractPrimitive(&uiSize);
+        if (pMessage->HasError())
+            return;
     }
     const unsigned int uiStartPosition = pMessage->GetPosition();
     if (pMessage->HasError())
@@ -104,12 +106,12 @@ void _DDL_AccountData::Extract(Message* pMessage, _DDL_AccountData* pDestination
     _Type_string::Extract(pMessage, &pDestination->m_Email);
     if (pMessage->HasError())
         return;
-    uint64_t uiDate = 0;
+    uint64_t uiDate;
     pMessage->ExtractPrimitive(&uiDate);
     pDestination->m_Date = DateTime(uiDate);
     if (pMessage->HasError())
         return;
-    uint64_t uiEffectiveDate = 0;
+    uint64_t uiEffectiveDate;
     pMessage->ExtractPrimitive(&uiEffectiveDate);
     pDestination->m_EffectiveDate = DateTime(uiEffectiveDate);
     if (pMessage->HasError())
@@ -117,7 +119,7 @@ void _DDL_AccountData::Extract(Message* pMessage, _DDL_AccountData* pDestination
     _Type_string::Extract(pMessage, &pDestination->m_NotEffectiveMessage);
     if (pMessage->HasError())
         return;
-    uint64_t uiExpiryDate = 0;
+    uint64_t uiExpiryDate;
     pMessage->ExtractPrimitive(&uiExpiryDate);
     pDestination->m_ExpiryDate = DateTime(uiExpiryDate);
     if (pMessage->HasError())

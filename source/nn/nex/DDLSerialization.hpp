@@ -196,26 +196,26 @@ template <typename Type>
 class _Type_qvector
 {
 public:
-    typedef typename Type::CPPType CPPType;
+    typedef qVector<typename Type::CPPType> CPPType;
 
-    static void Add(Message* pMessage, const qVector<CPPType>& rSource)
+    static void Add(Message* pMessage, const CPPType& rSource)
     {
         const uint32_t uiCount = static_cast<uint32_t>(rSource.size());
 
         pMessage->Append(reinterpret_cast<const unsigned char*>(&uiCount), sizeof(uiCount), 1);
 
-        const typename qVector<CPPType>::const_iterator itEnd = rSource.end();
-        for (typename qVector<CPPType>::const_iterator it = rSource.begin(); it != itEnd; ++it)
+        const typename CPPType::const_iterator itEnd = rSource.end();
+        for (typename CPPType::const_iterator it = rSource.begin(); it != itEnd; ++it)
         {
             Type::Add(pMessage, *it);
         }
     }
 
-    static void Extract(Message* pMessage, qVector<CPPType>* pDestination)
+    static void Extract(Message* pMessage, CPPType* pDestination)
     {
         pDestination->clear();
 
-        uint32_t uiCount = 0;
+        uint32_t uiCount;
 
         if (!pMessage->ExtractPrimitive(&uiCount))
         {
@@ -226,7 +226,7 @@ public:
 
         for (uint32_t uiIndex = 0; uiIndex < uiCount && !pMessage->HasError(); ++uiIndex)
         {
-            CPPType element;
+            typename Type::CPPType element;
 
             Type::Extract(pMessage, &element);
 

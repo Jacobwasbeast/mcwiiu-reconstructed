@@ -17,7 +17,11 @@ namespace nex
 namespace
 {
 
-const int KEY_DERIVED_RESULT = 0x10001;
+enum DeriveKeyResult
+{
+    KEY_DERIVED_RESULT = 0x10001
+};
+
 const unsigned int TIME_CHECK_INTERVAL_MASK = 0x3F;
 
 }
@@ -69,15 +73,17 @@ void JobDeriveKey::Execute()
         }
     }
 
-    Buffer derived(m_pChecksumAlgorithm->GetChecksumLength(), 0);
+    unsigned char uiChecksumLength = m_pChecksumAlgorithm->GetChecksumLength();
+    Buffer derived(uiChecksumLength, 0);
+    bool bTimedOut;
     while (m_uiIterations > m_uiCompletedIterations)
     {
         derived.Clear();
         m_pChecksumAlgorithm->ComputeChecksum(m_current, &derived);
         m_current = derived;
         ++m_uiCompletedIterations;
-        if (Time::ConvertDeadlineToTimeout(m_executionTime) == 0 ||
-            (m_uiCompletedIterations & TIME_CHECK_INTERVAL_MASK) == 0)
+        bTimedOut = Time::ConvertDeadlineToTimeout(m_executionTime) == 0;
+        if (bTimedOut || (m_uiCompletedIterations & TIME_CHECK_INTERVAL_MASK) == 0)
             break;
     }
 

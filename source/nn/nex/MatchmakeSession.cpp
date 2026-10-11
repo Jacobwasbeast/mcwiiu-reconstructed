@@ -31,12 +31,12 @@ void MatchmakeSession::SetMatchmakeSystemType(MatchmakeSystemType type, unsigned
     m_uiMatchmakeSystemType = type;
     switch (type)
     {
-    case cMatchmakeSystemType_1:
-        SetParticipationPolicy(PARTICIPATION_POLICY_95, uiPolicyArgument);
-        break;
     case cMatchmakeSystemType_2:
     case cMatchmakeSystemType_3:
         SetParticipationPolicy(PARTICIPATION_POLICY_98, uiPolicyArgument);
+        break;
+    case cMatchmakeSystemType_1:
+        SetParticipationPolicy(PARTICIPATION_POLICY_95, uiPolicyArgument);
         break;
     default:
         SetParticipationPolicy(PARTICIPATION_POLICY_96, 0);
@@ -51,11 +51,11 @@ void MatchmakeSession::Reset()
     m_uiMatchmakeSystemType = 0;
     m_Attributes.assign(ATTRIBUTE_COUNT, 0);
     m_bOpenParticipation = true;
-    m_uiOption = 0;
     m_ApplicationBuffer.clear();
     m_uiProgressScore = MAX_PROGRESS_SCORE;
     m_uiParticipationCount = 0;
-    m_StartedTime = DateTime();
+    m_uiOption = 0;
+    m_StartedTime = DateTime::s_never;
     m_MatchmakeParam = MatchmakeParam();
     SetMatchmakeSystemType(cMatchmakeSystemType_0, 0);
     m_uiReferGatheringID = 0;

@@ -25,7 +25,7 @@ NintendoNotificationEventManager::~NintendoNotificationEventManager()
     m_handlers.clear();
 }
 
-NintendoNotificationEventManager* NintendoNotificationEventManager::Clone() const
+Protocol* NintendoNotificationEventManager::Clone() const
 {
     return new NintendoNotificationEventManager(const_cast<NintendoNotificationEventManager*>(this));
 }
@@ -34,11 +34,12 @@ uint32_t NintendoNotificationEventManager::RegisterNintendoNotificationEventHand
     NintendoNotificationEventHandler* pHandler)
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
-    if (m_handlers.find(pHandler) != m_handlers.end())
-        return 0;
-
-    m_handlers.insert(pHandler);
-    return 1;
+    if (m_handlers.find(pHandler) == m_handlers.end())
+    {
+        m_handlers.insert(pHandler);
+        return 1;
+    }
+    return 0;
 }
 
 uint32_t NintendoNotificationEventManager::UnregisterNintendoNotificationEventHandler(
@@ -46,11 +47,12 @@ uint32_t NintendoNotificationEventManager::UnregisterNintendoNotificationEventHa
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     HandlerSet::iterator it = m_handlers.find(pHandler);
-    if (it == m_handlers.end())
-        return 0;
-
-    m_handlers.erase(it);
-    return 1;
+    if (it != m_handlers.end())
+    {
+        m_handlers.erase(it);
+        return 1;
+    }
+    return 0;
 }
 
 void NintendoNotificationEventManager::ProcessNintendoNotificationEvent(

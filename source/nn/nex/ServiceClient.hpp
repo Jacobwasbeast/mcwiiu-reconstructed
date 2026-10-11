@@ -18,6 +18,11 @@ class StreamManager;
 class ServiceClient : public RootObject
 {
 public:
+    enum
+    {
+        SECURE_CONNECTION_TYPE = 11
+    };
+
     explicit ServiceClient(unsigned int uiServiceID);
     virtual ~ServiceClient();
 
@@ -35,9 +40,9 @@ public:
     bool PrepareForConnection(Credentials* pCredentials);
     bool BindLocal(Credentials* pCredentials);
     ProtocolRegistry* GetProtocolRegistry() const;
-    void RegisterProtocol(Protocol* pProtocol);
-    void RegisterExtraProtocol(Protocol* pProtocol);
-    void RegisterExtraProtocol(Protocol* pProtocol, unsigned short uiProtocolID);
+    bool RegisterProtocol(Protocol* pProtocol);
+    bool RegisterExtraProtocol(Protocol* pProtocol);
+    bool RegisterExtraProtocol(Protocol* pProtocol, unsigned short uiProtocolID);
     bool UnregisterProtocol(Protocol* pProtocol);
     bool UnregisterExtraProtocol(Protocol* pProtocol);
     EndPoint* GetConnection(unsigned short uiConnectionType) const;

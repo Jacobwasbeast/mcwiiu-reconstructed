@@ -4,6 +4,7 @@
 #include "nn/nex/CallContextRegister.hpp"
 #include "nn/nex/ConnectionManager.hpp"
 #include "nn/nex/Core.hpp"
+#include "nn/nex/DebugString.hpp"
 #include "nn/nex/EndPoint.hpp"
 #include "nn/nex/NATTraversalEngine.hpp"
 #include "nn/nex/Network.hpp"
@@ -24,6 +25,8 @@ namespace
 
 const uint64_t TRACE_CONNECTION = 0x4000;
 const int WAIT_CONTEXT_URL_RESOLUTION = 100;
+const unsigned int ENDPOINT_FAULT_CONNECT_REQUEST = 8;
+const unsigned int STATION_URL_SECURE_BIT = 1;
 
 enum ConnectResult
 {
@@ -33,6 +36,58 @@ enum ConnectResult
     CONNECT_SUCCEEDED_RESULT = 0x10001
 };
 
+}
+
+bool JobConnectEndPoint::s_bNATTraversalEnabled = true;
+
+JobConnectEndPoint::JobConnectEndPoint(Job::JobType jobType,
+    ConnectionManager* pConnectionManager, unsigned int uiContextId, Buffer* pRequestBuffer,
+    Buffer* pResponseBuffer, const qList<StationURL>& rURLs, EndPoint** ppEndPoint,
+    unsigned int uiTimeout, bool bFlag)
+    : StepSequenceJob(jobType, DebugString(L""))
+    , m_componentUse(&pConnectionManager->m_component, L"JobConnectEndPoint")
+    , m_pEndPoint(0)
+    , m_pConnectionManager(pConnectionManager)
+    , m_unresolved98(0)
+    , m_timeout(uiTimeout)
+    , m_unresolvedB0(0)
+    , m_uiCallContextId(uiContextId)
+    , m_pRequestBuffer(pRequestBuffer)
+    , m_pResponseBuffer(pResponseBuffer)
+    , m_ppEndPointOutput(ppEndPoint)
+    , m_natTraversalDeadline(0)
+    , m_urls(rURLs)
+    , m_isRouting(false)
+    , m_originalPort(0)
+    , m_currentURL(m_urls.begin())
+    , m_flag194(bFlag)
+    , m_cancelRequested(false)
+    , m_pCancelTarget(0)
+    , m_uiPingTime(0)
+    , m_flag1A0(false)
+{
+    m_traceData = TRACE_CONNECTION;
+    if (m_pRequestBuffer != 0)
+        m_pRequestBuffer->AddRef();
+
+    if (m_pResponseBuffer != 0)
+        m_pResponseBuffer->AddRef();
+
+    m_result = qResult(CONNECT_SUCCEEDED_RESULT);
+    if (m_pConnectionManager->m_flag64)
+        m_steps.push_back(
+            Step(static_cast<Step::Function>(&JobConnectEndPoint::TryDirectConnect), L""));
+
+    if (m_pConnectionManager->m_bRoutingEnabled
+        && (m_pConnectionManager->m_routerAddress.GetAddress() != 0
+            || !m_pConnectionManager->m_flag64))
+        m_steps.push_back(
+            Step(static_cast<Step::Function>(&JobConnectEndPoint::TryConnectViaRouting), L""));
+
+    if (m_urls.size() == 0)
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::ConnectionFailed), L""));
+    else
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::SortURLs), L""));
 }
 
 JobConnectEndPoint::~JobConnectEndPoint()
@@ -145,6 +200,82 @@ bool JobConnectEndPoint::IsRoutedURL(StationURL& rURL)
 StringStream& operator<<(StringStream& rStream, const StationURL& rURL)
 {
     return rStream << rURL.GetURL();
+}
+
+void JobConnectEndPoint::TestCurrentURL()
+{
+    if (Network::GetInstance() == 0)
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::ConnectionFailed), L""));
+        return;
+    }
+
+    if (m_currentURL == m_urls.end())
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::SelectConnectionTechnique), L""));
+        return;
+    }
+
+    if (Network::GetInstance()->GetNATTraversalEngine() == 0 || IsRoutedURL(*m_currentURL)
+        || (m_isRouting && m_pConnectionManager->m_routerAddress.GetAddress() != 0))
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::ResolveCurrentURL), L""));
+        return;
+    }
+
+    if (s_bNATTraversalEnabled && m_currentURL->GetRVConnectionID() != 0)
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::PrepareNATTraversal), L""));
+        return;
+    }
+
+    if ((m_currentURL->GetType() & StationURL::Prudp) == 0)
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::ResolveCurrentURL), L""));
+        return;
+    }
+
+    if (((m_currentURL->GetType() >> STATION_URL_SECURE_BIT) & 1) != 0)
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::PrepareNATTraversal), L""));
+        return;
+    }
+
+    SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::ResolveCurrentURL), L""));
+}
+
+void JobConnectEndPoint::PrepareNATTraversal()
+{
+    if (Network::GetInstance() == 0 || Network::GetInstance()->GetNATTraversalEngine() == 0)
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::ConnectionFailed), L""));
+        return;
+    }
+
+    if (m_flag194)
+    {
+        if (Network::GetInstance()->GetNATTraversalEngine()->GetURLPingTime(*m_currentURL) != -1)
+        {
+            SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::ResolveCurrentURL), L""));
+            return;
+        }
+
+        m_natTraversalDeadline =
+            Time::ConvertTimeoutToDeadline(ConnectionManager::s_iNATTraversalTimeout);
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::WaitForNATTraversal), L""));
+        return;
+    }
+
+    if (Network::GetInstance()->GetNATTraversalEngine()->PrepareNATTraversal(*m_currentURL))
+    {
+        m_natTraversalDeadline =
+            Time::ConvertTimeoutToDeadline(ConnectionManager::s_iNATTraversalTimeout);
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::WaitForNATTraversal), L""));
+    }
+    else
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::ResolveCurrentURL), L""));
+    }
 }
 
 void JobConnectEndPoint::RestoreOriginalPort()
@@ -269,6 +400,59 @@ void JobConnectEndPoint::ProcessConnectionResult()
 
         SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::ProcessConnectionFailure), L""));
     }
+}
+
+void JobConnectEndPoint::ProcessConnectionFailure()
+{
+    if (m_pEndPoint->GetSignaledFaultError() == ENDPOINT_FAULT_CONNECT_REQUEST)
+        m_flag1A0 = true;
+
+    m_pEndPoint->Close();
+    m_pEndPoint = 0;
+
+    if (Network::GetInstance() == 0)
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::ConnectionFailed), L""));
+    }
+    else if (Network::GetInstance()->GetNATTraversalEngine() != 0)
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::CheckForUpdatedURL), L""));
+    }
+    else
+    {
+        RestoreOriginalPort();
+        ++m_currentURL;
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::TestCurrentURL), L""));
+    }
+}
+
+void JobConnectEndPoint::WaitForNATTraversal()
+{
+    if (Network::GetInstance() == 0 || Network::GetInstance()->GetNATTraversalEngine() == 0)
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::ConnectionFailed), L""));
+        return;
+    }
+
+    NATTraversalEngine* pEngine = Network::GetInstance()->GetNATTraversalEngine();
+    int iPingTime = pEngine->GetURLPingTime(*m_currentURL);
+    if (iPingTime != -1)
+    {
+        m_uiPingTime = iPingTime;
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::ResolveCurrentURL), L""));
+        return;
+    }
+
+    if (m_natTraversalDeadline < Time::GetTime()
+        || (!m_flag194 && pEngine->GetProbeFailed(*m_currentURL)))
+    {
+        RestoreOriginalPort();
+        ++m_currentURL;
+        SetStep(Step(static_cast<Step::Function>(&JobConnectEndPoint::TestCurrentURL), L""));
+        return;
+    }
+
+    SetToWaiting(WAIT_CONTEXT_URL_RESOLUTION);
 }
 
 void JobConnectEndPoint::CheckForUpdatedURL()

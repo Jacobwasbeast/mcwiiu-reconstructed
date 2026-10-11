@@ -13,7 +13,6 @@
 #include "nn/nex/Socket.hpp"
 #include "nn/nex/StationURL.hpp"
 #include "nn/nex/StepSequenceJob.hpp"
-#include "nn/nex/RootObject.hpp"
 
 namespace nn
 {
@@ -44,7 +43,18 @@ public:
     };
 
     typedef std::list<InetAddress, MemAllocator<InetAddress> > ServerList;
-    typedef std::pair<InetAddress, NATCheckMessage> QueuedMessage;
+    struct QueuedMessage
+    {
+        QueuedMessage(InetAddress address, unsigned int uiType)
+            : first(address)
+        {
+            second.m_uiType = uiType;
+            second.ToNetworkByteOrder();
+        }
+
+        InetAddress first;
+        NATCheckMessage second;
+    };
     typedef std::list<QueuedMessage, MemAllocator<QueuedMessage> > MessageQueue;
 
     enum
@@ -83,10 +93,7 @@ public:
 private:
     void QueueMessage(InetAddress address, unsigned int uiType)
     {
-        NATCheckMessage message;
-        message.m_uiType = uiType;
-        message.ToNetworkByteOrder();
-        m_queue.push_back(QueuedMessage(address, message));
+        m_queue.push_back(QueuedMessage(address, uiType));
     }
 
     IOCompletionNotifier m_ioNotifierFirst;
@@ -127,21 +134,6 @@ private:
     NATProperties m_natProperties;
     RecvNATCheckMessage m_aReceived[RECEIVED_MESSAGE_COUNT];
     bool m_bRelayProbe;
-};
-
-class NATCheckClient : public RootObject
-{
-public:
-    explicit NATCheckClient(const InetAddress& rAddress);
-    ~NATCheckClient();
-
-    bool DetectFullNATProperties(CallContext* pCallContext);
-    bool DetectSimplifiedNATProperties(CallContext* pCallContext);
-    bool DetectNATCurrentPortMapping(CallContext* pCallContext, bool bRelayProbe);
-
-private:
-    uint32_t m_unknown0;
-    InetAddress m_address;
 };
 
 }

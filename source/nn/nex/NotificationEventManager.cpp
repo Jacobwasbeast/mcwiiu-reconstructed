@@ -1,5 +1,6 @@
 #include "nn/nex/NotificationEventManager.hpp"
 
+#include "nn/nex/Scheduler.hpp"
 #include "nn/nex/String.hpp"
 
 namespace nn { namespace nex {
@@ -19,33 +20,57 @@ NotificationEventManager::NotificationEventManager(NotificationEventManager* pPa
 NotificationEventManager::~NotificationEventManager()
 {
     m_handlers.clear();
-    m_events.clear();
 }
 
-NotificationEventManager* NotificationEventManager::Clone() const
+Protocol* NotificationEventManager::Clone() const
 {
     return new NotificationEventManager(const_cast<NotificationEventManager*>(this));
 }
 
-uint32_t NotificationEventManager::RegisterNotificationEventHandler(NotificationEventHandler* pHandler)
+bool NotificationEventManager::RegisterNotificationEventHandler(NotificationEventHandler* pHandler)
 {
-    if (pHandler == 0)
-        return 0;
-    return m_handlers.insert(pHandler).second ? 1u : 0u;
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+    if (m_handlers.find(pHandler) != m_handlers.end())
+        return false;
+    m_handlers.insert(pHandler);
+    return true;
 }
 
-uint32_t NotificationEventManager::UnregisterNotificationEventHandler(NotificationEventHandler* pHandler)
+bool NotificationEventManager::UnregisterNotificationEventHandler(NotificationEventHandler* pHandler)
 {
-    if (pHandler == 0)
-        return 0;
-    return m_handlers.erase(pHandler) == 1 ? 1u : 0u;
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+    HandlerSet::iterator it = m_handlers.find(pHandler);
+    if (it == m_handlers.end())
+        return false;
+    m_handlers.erase(it);
+    return true;
 }
 
 uint32_t NotificationEventManager::IsEventValid(const NotificationEvent& rEvent)
 {
-    if (rEvent.GetType() / 1000 != 4)
-        return 1;
-    return rEvent.GetParam1() != 0 ? 1u : 0u;
+    if (rEvent.GetType() / 1000 == 4 && !String::IsEqual(rEvent.m_StringParam, L""))
+    {
+        unsigned long long uiEventID = rEvent.m_StringParam.ToUInt64();
+        if (uiEventID != 0)
+        {
+            for (EventList::iterator it = m_events.begin();
+                 it != m_events.end(); ++it)
+            {
+                const NotificationEvent& rExisting = *it;
+                if (rEvent.GetParam1() == rExisting.GetParam1())
+                {
+                    if (uiEventID <= rExisting.m_StringParam.ToUInt64())
+                        return 0;
+                    m_events.erase(it);
+                    break;
+                }
+            }
+            m_events.push_front(rEvent);
+            if (m_events.size() > 5)
+                m_events.pop_back();
+        }
+    }
+    return 1;
 }
 
 void NotificationEventManager::ProcessNotificationEvent(const NotificationEvent&)
@@ -61,7 +86,7 @@ void NotificationEventManager::ProcessNotificationEvent(unsigned int uiPrincipal
     if (IsEventValid(rEvent) == 0)
         return;
 
-    for (std::set<NotificationEventHandler*>::iterator it = m_handlers.begin();
+    for (HandlerSet::iterator it = m_handlers.begin();
          it != m_handlers.end(); ++it)
     {
         if (rEvent.GetType() / 1000 != 115 || m_bDispatchServiceEvents)

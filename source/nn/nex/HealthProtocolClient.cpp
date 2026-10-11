@@ -41,7 +41,7 @@ HealthProtocolClient::HealthProtocolClient(unsigned short uiProtocolID)
     if (uiProtocolID == 0)
         return;
     SetProtocolID(uiProtocolID);
-    RVClientCore::AcquireInstance()->GetProtocolRegistry()->RegisterProtocol(
+    RVClientCore::GetInstance()->GetProtocolRegistry()->RegisterProtocol(
         uiProtocolID, new HealthProtocolClient());
 }
 
@@ -56,11 +56,6 @@ void HealthProtocolClient::ExtractCallSpecificResults(Message* pMessage,
     }
     if (s_ProtoReturn[uiMethodID] != 0)
         s_ProtoReturn[uiMethodID](pMessage, pCallContext);
-}
-
-Protocol* HealthProtocolClient::CreateResponder() const
-{
-    return new HealthProtocolClient();
 }
 
 bool HealthProtocolClient::CallPingDaemon(ProtocolCallContext* pCallContext, bool* pReturnValue)

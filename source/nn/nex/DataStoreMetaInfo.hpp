@@ -11,8 +11,14 @@ namespace nex
 class DataStoreMetaInfo : public _DDL_DataStoreMetaInfo
 {
 public:
-    DataStoreMetaInfo();
-    virtual ~DataStoreMetaInfo();
+    DataStoreMetaInfo()
+    {
+        m_uiDataId = 0;
+    }
+
+    virtual ~DataStoreMetaInfo()
+    {
+    }
 };
 
 }

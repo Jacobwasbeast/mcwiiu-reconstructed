@@ -14,6 +14,7 @@ const unsigned int FIRST_DYNAMIC_DO_CLASS_ID = 100;
 
 PseudoGlobalVariable<DDLDeclarations*> DDLDeclarations::s_pFirstDeclarations(0);
 PseudoGlobalVariable<unsigned int> DDLDeclarations::s_uiNextDOClassID(FIRST_DYNAMIC_DO_CLASS_ID);
+PseudoGlobalVariable<DynamicRunTimeInterface*> DynamicRunTimeInterface::s_pInstance;
 
 DDLDeclarations::DDLDeclarations(bool bConstructionFlag)
     : m_bConstructionFlag(bConstructionFlag)
@@ -95,6 +96,27 @@ void DDLDeclarations::RegisterIfRequired()
     }
 
     m_bRegistered = true;
+}
+
+DynamicRunTimeInterface::DynamicRunTimeInterface()
+{
+    s_pInstance.Get() = this;
+}
+
+DynamicRunTimeInterface::~DynamicRunTimeInterface()
+{
+    s_pInstance.Get() = 0;
+}
+
+DynamicRunTimeInterface* DynamicRunTimeInterface::GetInstance()
+{
+    return s_pInstance.Get();
+}
+
+void DynamicRunTimeInterface::RegisterParseTree(unsigned char* pData, unsigned int uiSize)
+{
+    if (GetInstance() != 0)
+        GetInstance()->DoRegisterParseTree(pData, uiSize);
 }
 
 }

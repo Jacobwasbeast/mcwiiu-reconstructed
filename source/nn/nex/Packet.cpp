@@ -77,29 +77,24 @@ bool Packet::SetPayload(Buffer* pPayload)
 
 bool Packet::CanHistoryBundle() const
 {
-    const unsigned short flags = m_uiTypeAndFlags;
-    if ((flags & PACKET_TYPE_MASK) != PACKET_TYPE_DATA ||
-        VirtualPort(m_uiSource).GetType() != HISTORY_BUNDLE_PORT)
+    bool canBundle = false;
+    if ((m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_DATA &&
+        VirtualPort(m_uiSource).GetType() == HISTORY_BUNDLE_PORT)
     {
-        return false;
-    }
-    if (!s_historyBundlePlainEnabled && !(flags & PACKET_FLAG_RELIABLE) &&
-        !(flags & PACKET_FLAG_ACK))
-    {
-        return false;
-    }
-    if (!s_historyBundleReliableEnabled || (flags & PACKET_FLAG_ACK))
-    {
-        if (flags & PACKET_FLAG_RELIABLE)
+        if (s_historyBundlePlainEnabled || (m_uiTypeAndFlags & PACKET_FLAG_RELIABLE) ||
+            (m_uiTypeAndFlags & PACKET_FLAG_ACK))
         {
-            return false;
-        }
-        if (flags & PACKET_FLAG_ACK)
-        {
-            return false;
+            if (s_historyBundleReliableEnabled && !(m_uiTypeAndFlags & PACKET_FLAG_ACK))
+            {
+                canBundle = true;
+            }
+            else if (!(m_uiTypeAndFlags & PACKET_FLAG_RELIABLE) && !(m_uiTypeAndFlags & PACKET_FLAG_ACK))
+            {
+                canBundle = true;
+            }
         }
     }
-    return true;
+    return canBundle;
 }
 
 unsigned int Packet::GetOverhead()

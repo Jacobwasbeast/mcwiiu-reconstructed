@@ -9,16 +9,16 @@ namespace nex
 {
 
 SpinTest::SpinTest(uint32_t sleepInterval, uint32_t timeout)
-    : m_state(1)
-    , m_timeout(timeout)
-    , m_started(Time::GetTime())
-    , m_elapsed(0)
-    , m_sleepInterval(sleepInterval)
-    , m_limit(1000)
-    , m_trace(8)
-    , m_traceCount(0)
-    , m_timedOut(false)
+    : m_sleepInterval(sleepInterval)
 {
+    m_timeout = timeout;
+    m_started = Time::GetTime();
+    m_timedOut = false;
+    m_traceCount = 0;
+    m_limit = 1000;
+    m_elapsed = 0;
+    m_trace = 8;
+    m_state = 1;
 }
 
 void SpinTest::LeaveOnTimeout()
@@ -28,22 +28,22 @@ void SpinTest::LeaveOnTimeout()
 
 int32_t SpinTest::GetRemainingTime()
 {
-    if (m_timeout == 0xffffffffu)
-        return static_cast<int32_t>(m_timeout);
+    int32_t remaining = m_timeout;
 
-    m_elapsed = static_cast<uint32_t>(Time::GetTime() - m_started);
+    if (remaining != -1)
+    {
+        m_elapsed = Time::GetTime() - m_started;
+        remaining = m_timeout > m_elapsed ? m_timeout - m_elapsed : 0;
+    }
 
-    if (m_timeout > m_elapsed)
-        return static_cast<int32_t>(m_timeout - m_elapsed);
-
-    return 0;
+    return remaining;
 }
 
 uint32_t SpinTest::SpinOnce(wchar_t*, uint32_t, wchar_t*)
 {
     Platform::Sleep(m_sleepInterval);
 
-    m_elapsed = static_cast<uint32_t>(Time::GetTime() - m_started);
+    m_elapsed = Time::GetTime() - m_started;
 
     if (m_elapsed > m_timeout && m_timeout != 0xffffffffu)
     {

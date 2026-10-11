@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "nn/nex/RootObject.hpp"
+#include "nn/nex/Time.hpp"
 
 namespace nn
 {
@@ -30,7 +31,7 @@ public:
 private:
     uint16_t m_state;
     uint32_t m_timeout;
-    uint64_t m_started;
+    Time m_started;
     uint32_t m_elapsed;
     uint32_t m_sleepInterval;
     uint32_t m_limit;

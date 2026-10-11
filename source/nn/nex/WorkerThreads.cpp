@@ -8,8 +8,8 @@ namespace nex
 {
 
 WorkerThreads::WorkerThreads()
-    : m_state(STATE_STOPPED)
 {
+    m_state = STATE_STOPPED;
 }
 
 WorkerThreads::~WorkerThreads()
@@ -46,16 +46,16 @@ bool WorkerThreads::Start(unsigned int nbWorkers)
 
 bool WorkerThreads::Stop()
 {
-    m_criticalSection.Enter();
-
-    if (m_state != STATE_RUNNING)
     {
-        m_criticalSection.Leave();
-        return false;
-    }
+        ScopedCS lock(&m_criticalSection);
 
-    m_state = STATE_STOPPING;
-    m_criticalSection.Leave();
+        if (m_state != STATE_RUNNING)
+        {
+            return false;
+        }
+
+        m_state = STATE_STOPPING;
+    }
 
     for (unsigned int index = 0; index < m_workers.size(); ++index)
     {
@@ -63,10 +63,10 @@ bool WorkerThreads::Stop()
         delete m_workers[index];
     }
 
-    m_criticalSection.Enter();
     m_workers.clear();
+
+    ScopedCS lock(&m_criticalSection);
     m_state = STATE_STOPPED;
-    m_criticalSection.Leave();
     return true;
 }
 

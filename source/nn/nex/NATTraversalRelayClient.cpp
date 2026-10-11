@@ -147,17 +147,15 @@ void NATTraversalRelayClient::ConnectionStateHasChanged()
 {
     EndPoint* pConnection = GetConnection(NAT_TRAVERSAL_CONNECTION_TYPE);
     m_pRelayProtocol->SetClientConnection(pConnection);
-    NATRelayInterface* pRelayInterface = m_pRelayInterface;
-    if (pRelayInterface != 0)
+    if (m_pRelayInterface != 0)
     {
         if (pConnection != 0)
         {
-            pRelayInterface->UpdateConnectionState(m_pCredentials->m_value, pConnection->m_stationURL);
+            m_pRelayInterface->UpdateConnectionState(m_pCredentials->m_state, pConnection->m_stationURL);
         }
         else
         {
-            StationURL emptyURL;
-            pRelayInterface->UpdateConnectionState(0, emptyURL);
+            m_pRelayInterface->UpdateConnectionState(0, StationURL());
         }
     }
 }

@@ -16,8 +16,8 @@ class _DDL_DataStoreRatingInfo : public RootObject
 {
 public:
     _DDL_DataStoreRatingInfo()
+        : m_uiStructureVersion(0)
     {
-        m_uiStructureVersion = 0;
     }
 
     virtual ~_DDL_DataStoreRatingInfo()

@@ -17,16 +17,16 @@ public:
 
     explicit ObjectThread(const String& name)
         : ObjectThreadRoot(name)
-        , m_method(0)
-        , m_pObject(0)
     {
+        m_pObject = 0;
+        m_method = 0;
     }
 
     ObjectThread(const String& name, uint32_t priority)
         : ObjectThreadRoot(name, priority)
-        , m_method(0)
-        , m_pObject(0)
     {
+        m_pObject = 0;
+        m_method = 0;
     }
 
     virtual ~ObjectThread()
@@ -35,9 +35,9 @@ public:
 
     void SetObjectMethod(Method method, TObject* pObject, TParam param)
     {
-        m_param = param;
         m_pObject = pObject;
         m_method = method;
+        m_param = param;
     }
 
 protected:

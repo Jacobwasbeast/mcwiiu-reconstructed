@@ -1,12 +1,10 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_WORKERTHREADS_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_WORKERTHREADS_HPP
 
-#include <vector>
-
 #include "nn/nex/CriticalSection.hpp"
-#include "nn/nex/MemAllocator.hpp"
 #include "nn/nex/ObjectThread.hpp"
 #include "nn/nex/RootObject.hpp"
+#include "nn/nex/qVector.hpp"
 
 namespace nn
 {
@@ -47,7 +45,7 @@ private:
 
     CriticalSection m_criticalSection;
     State m_state;
-    std::vector<Worker*, MemAllocator<Worker*> > m_workers;
+    qVector<Worker*> m_workers;
 };
 
 }

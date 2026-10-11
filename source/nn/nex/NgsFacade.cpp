@@ -6,6 +6,7 @@
 #include "nn/nex/CallContext.hpp"
 #include "nn/nex/Core.hpp"
 #include "nn/nex/CriticalSection.hpp"
+#include "nn/nex/ErrorCodeConverter.hpp"
 #include "nn/nex/Job.hpp"
 #include "nn/nex/JobCafeLogin.hpp"
 #include "nn/nex/JobNNIDLogin.hpp"

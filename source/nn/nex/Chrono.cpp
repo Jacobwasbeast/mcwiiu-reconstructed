@@ -53,7 +53,10 @@ void Chrono::UpdateAccumulatedTime()
 int Chrono::Elapsed() const
 {
     if (m_state == Running)
-        return m_accumulatedTime + static_cast<int>(m_clock.GetTime() - m_startTime);
+    {
+        Time now = m_clock.GetTime();
+        return m_accumulatedTime + static_cast<int>(now - m_startTime);
+    }
 
     return m_accumulatedTime;
 }

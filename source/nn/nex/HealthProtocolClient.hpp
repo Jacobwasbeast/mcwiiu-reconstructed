@@ -14,7 +14,11 @@ public:
     explicit HealthProtocolClient(unsigned short uiProtocolID = 0);
 
     virtual void ExtractCallSpecificResults(Message* pMessage, ProtocolCallContext* pCallContext);
-    virtual Protocol* CreateResponder() const;
+
+    virtual Protocol* CreateResponder() const
+    {
+        return new HealthProtocolClient();
+    }
 
     static void ProtoReturn_PingDaemon(Message* pMessage, ProtocolCallContext* pCallContext);
     bool CallPingDaemon(ProtocolCallContext* pCallContext, bool* pReturnValue);

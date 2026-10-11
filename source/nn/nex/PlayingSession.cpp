@@ -7,10 +7,6 @@ namespace nn
 namespace nex
 {
 
-PlayingSession::~PlayingSession()
-{
-}
-
 MatchmakeSession* PlayingSession::GetMatchmakeSession() const
 {
     if (m_Gathering.GetObject() != 0 && m_Gathering.GetObject()->IsAKindOf(String(L"MatchmakeSession")))

@@ -107,6 +107,11 @@ StationURL& StationURL::operator=(const String& rURL)
     return *this;
 }
 
+bool StationURL::operator==(const StationURL& rStationURL) const
+{
+    return std::wcscmp(GetURL(), rStationURL.GetURL()) == 0;
+}
+
 bool StationURL::operator!=(const StationURL& rStationURL) const
 {
     return std::wcscmp(GetURL(), rStationURL.GetURL()) != 0;

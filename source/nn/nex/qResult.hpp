@@ -24,7 +24,7 @@ public:
     }
     bool IsError() const
     {
-        return (m_code >> 31) != 0;
+        return (m_code & ERROR_BIT) != 0;
     }
     bool operator==(const qResult& rOther) const
     {
@@ -35,6 +35,8 @@ public:
     int GetFacility() const;
 
 private:
+    static const uint32_t ERROR_BIT = 0x80000000u;
+
     int32_t m_code;
     const wchar_t* m_file;
     int32_t m_line;
@@ -46,6 +48,12 @@ template<class T>
 bool operator==(const nn::nex::qResult& rResult, const T& rValue)
 {
     return rResult.Equals(rValue);
+}
+
+template<class T>
+bool operator!=(const nn::nex::qResult& rResult, const T& rValue)
+{
+    return !rResult.Equals(rValue);
 }
 
 #endif

@@ -43,6 +43,7 @@ public:
 protected:
     friend class ClientProtocol;
     friend class AnyDataAdapter;
+    friend class ServerProtocol;
 
     qResult m_Result;
     unsigned long long m_uiBufferState;

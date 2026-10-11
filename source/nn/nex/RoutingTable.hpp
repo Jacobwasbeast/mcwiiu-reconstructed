@@ -8,6 +8,7 @@
 #include "nn/nex/InetAddress.hpp"
 #include "nn/nex/MemAllocator.hpp"
 #include "nn/nex/RootObject.hpp"
+#include "nn/nex/Time.hpp"
 
 namespace nn
 {
@@ -37,7 +38,7 @@ public:
 
     explicit RoutingTable(unsigned int uiTimeout);
 
-    bool Add(const InetAddress& rAddress, const InetAddress& rKey, bool bReplace);
+    bool Add(const InetAddress& rKey, const InetAddress& rAddress, bool bReplace);
     bool Remove(const InetAddress& rKey);
     bool Find(const InetAddress& rKey, InetAddress& rAddress) const;
     void Clean();
@@ -53,7 +54,7 @@ private:
     unsigned int m_unknown0;
     EntryMap m_entries;
     unsigned int m_timeout;
-    unsigned long long m_lastCleaning;
+    Time m_lastCleaning;
 };
 
 }

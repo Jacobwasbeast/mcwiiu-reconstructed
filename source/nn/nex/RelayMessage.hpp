@@ -73,21 +73,21 @@ public:
         const unsigned char* pPayload, unsigned int uiPayloadLength);
 
 private:
+    friend class JobResolveRelayInfo;
+
     class TimeStampOrigin : public RootObject
     {
     public:
         TimeStampOrigin()
         {
-            m_uiBaseTimeStamp = 0;
+            m_uiBaseTime = 0;
             m_uiStartTime = 0;
-            m_unknown10 = 0;
         }
 
         unsigned int m_unknown0;
         unsigned int m_unknown4;
         uint64_t m_uiStartTime;
-        unsigned int m_unknown10;
-        int m_uiBaseTimeStamp;
+        uint64_t m_uiBaseTime;
     };
 
     LiteBuffer<16> m_signatureKey;

@@ -147,9 +147,8 @@ void InstanceTable::AllocateExtraContexts(unsigned int contextCount)
 
 void InstanceTable::FreeExtraContexts()
 {
-    ContextVector* contexts = m_extraContexts;
     m_extraContexts->clear();
-    delete contexts;
+    delete m_extraContexts;
     m_extraContexts = 0;
 }
 

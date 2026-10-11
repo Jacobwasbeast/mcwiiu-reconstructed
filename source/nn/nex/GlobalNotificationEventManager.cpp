@@ -11,6 +11,29 @@ namespace nn
 namespace nex
 {
 
+uint32_t GlobalNotificationEventManager::RegisterGlobalNotificationEventManager(
+    NotificationEventManager* pManager)
+{
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+    if (m_managers.find(pManager) != m_managers.end())
+        return 0;
+
+    m_managers.insert(pManager);
+    return 1;
+}
+
+uint32_t GlobalNotificationEventManager::UnregisterGlobalNotificationEventManager(
+    NotificationEventManager* pManager)
+{
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+    ManagerSet::iterator it = m_managers.find(pManager);
+    if (it == m_managers.end())
+        return 0;
+
+    m_managers.erase(it);
+    return 1;
+}
+
 void GlobalNotificationEventManager::ProcessNotificationEvent(unsigned int uiPrincipalID,
     unsigned int uiConnectionID, const NotificationEvent& rEvent)
 {

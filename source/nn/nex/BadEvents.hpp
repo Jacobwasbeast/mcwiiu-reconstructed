@@ -11,7 +11,8 @@ class BadEvents
 public:
     enum _ID
     {
-        SYSTEM_CHECK_FAILURE = 0
+        SYSTEM_CHECK_FAILURE = 0,
+        BAD_EVENT_3 = 3
     };
 
     static void Signal(_ID id);
@@ -20,7 +21,7 @@ public:
     static BadEvents* s_pInstance;
 
 private:
-    int m_eventCounts[SYSTEM_CHECK_FAILURE + 1];
+    int m_eventCounts[BAD_EVENT_3 + 1];
 };
 
 }

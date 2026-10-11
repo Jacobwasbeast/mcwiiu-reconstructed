@@ -40,8 +40,8 @@ QueuingSocket::QueuingSocket(unsigned int uiTrafficType, RootTransport* pTranspo
     , m_unknownD0(1)
     , m_sendingQueue(L"Sending Packet Queue")
 {
-    m_unknownF8 = false;
     m_pTransportBuffer = pTransportBuffer;
+    m_unknownF8 = false;
     m_pMessageSelector = &Network::GetInstance()->GetMessageSelector();
 }
 
@@ -92,13 +92,12 @@ int QueuingSocket::RecvNonBlock(Buffer* pBuffer, InetAddress* pAddress)
 
 int QueuingSocket::SendBuffer(const Buffer& rBuffer, const InetAddress& rAddress)
 {
-    int iResult = 0;
-    if (rBuffer.GetLength() != 0)
-    {
-        iResult = Socket::Send(rBuffer, rAddress);
-        if (!m_bConnected)
-            m_uiState = STATE_CLOSED;
-    }
+    if (rBuffer.GetLength() == 0)
+        return 0;
+
+    int iResult = Socket::Send(rBuffer, rAddress);
+    if (!m_bConnected)
+        m_uiState = STATE_CLOSED;
 
     return iResult;
 }

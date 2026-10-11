@@ -19,16 +19,6 @@ const unsigned int IDLE_SLEEP_MILLISECONDS = 100;
 
 }
 
-TransportBufferThread::TransportBufferThread()
-    : m_bStopped(false),
-      m_uiContextID(g_usingInstantiationContext ? g_instantiationContextVariable->GetRef() : 0),
-      m_criticalSection(CRITICAL_SECTION_TRACE_MASK),
-      m_thread(String(L"Transport Buffer Thread"), g_transportBufferThreadPriority)
-{
-    if (g_transportBufferThreadAffinity != INHERIT_THREAD_AFFINITY)
-        m_thread.SetAffinity(g_transportBufferThreadAffinity);
-}
-
 TransportBufferThread::~TransportBufferThread()
 {
     Stop();
@@ -36,8 +26,8 @@ TransportBufferThread::~TransportBufferThread()
 
 void TransportBufferThread::Start()
 {
-    m_thread.SetObjectMethod(&TransportBufferThread::TransportLoop, this, 0);
     m_bStopped = false;
+    m_thread.SetObjectMethod(&TransportBufferThread::TransportLoop, this, 0);
     m_thread.Launch(0);
 }
 
@@ -82,11 +72,10 @@ void TransportBufferThread::TransportLoop(void* pParameter)
     PseudoSingleton::SetContextIfRequired(m_uiContextID);
     while (!m_bStopped)
     {
-        while (m_sockets.empty())
+        if (m_sockets.empty())
         {
             Platform::Sleep(IDLE_SLEEP_MILLISECONDS);
-            if (m_bStopped)
-                return;
+            continue;
         }
         Platform::Sleep(g_transportBufferThreadSleep);
         CriticalSection* pLock = &m_criticalSection;

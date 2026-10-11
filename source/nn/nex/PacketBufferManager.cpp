@@ -6,6 +6,7 @@
 #include "nn/nex/GlobalVariables.hpp"
 #include "nn/nex/MemoryManager.hpp"
 #include "nn/nex/PacketBufferMultiUnitHeap.hpp"
+#include "nn/nex/RootTransport.hpp"
 
 namespace nn
 {
@@ -25,6 +26,34 @@ const unsigned int PACKET_MANAGEMENT_OBJECT_MARGIN = 4;
 
 const unsigned int PACKET_BUFFER_HEADER_MARGIN = 0x50;
 
+const unsigned int PACKET_BUFFER_UNIT_HEADER_SIZE = 8;
+
+const unsigned int PACKET_BUFFER_UNIT_ALIGNMENT = 4;
+
+const unsigned long long TRACE_FILTER_PACKET_BUFFER_POOL = 0x0000008000801000ULL;
+
+}
+
+PacketBufferManager::PacketBufferManager()
+    : PseudoSingleton(ClassID)
+    , m_pfnAllocate(0)
+    , m_pfnAllocateManagementObject(0)
+    , m_pMemory(0)
+    , m_uiMemorySize(0)
+    , m_iInitializeCount(0)
+    , m_uiUnitHeaderSize(PACKET_BUFFER_UNIT_HEADER_SIZE)
+    , m_uiUnitAlignment(PACKET_BUFFER_UNIT_ALIGNMENT)
+    , m_fMemoryUsageRate(0.0f)
+    , m_bActive(false)
+    , m_pPacketBufferHeap(0)
+    , m_pManagementObjectHeap(0)
+{
+}
+
+PacketBufferManager::~PacketBufferManager()
+{
+    m_iInitializeCount = 0;
+    Destroy();
 }
 
 bool PacketBufferManager::IsEnablePacketBufferPool()
@@ -32,6 +61,17 @@ bool PacketBufferManager::IsEnablePacketBufferPool()
     ScopedCS lock(&s_criticalSection);
     const bool enabled = g_globalVariables->m_packetBufferPoolEnabled;
     return enabled;
+}
+
+bool PacketBufferManager::EnablePacketBufferPool(bool bEnable)
+{
+    ScopedCS lock(&s_criticalSection);
+
+    if (IsActive())
+        return false;
+
+    g_globalVariables->m_packetBufferPoolEnabled = bEnable;
+    return true;
 }
 
 void PacketBufferManager::GetUnitHeapParam(qVector<UnitHeapParam>& rParams)
@@ -58,13 +98,8 @@ bool PacketBufferManager::IsActive()
 {
     ScopedCS lock(&s_criticalSection);
 
-    bool bActive = false;
     PacketBufferManager* pInstance = GetInstance();
-
-    if (pInstance != 0 && pInstance->IsActiveNonStatic())
-        bActive = true;
-
-    return bActive;
+    return pInstance != 0 && pInstance->IsActiveNonStatic();
 }
 
 unsigned int PacketBufferManager::GetRequiredMemorySizeImpl(const qVector<UnitHeapParam>& rParams)
@@ -242,7 +277,7 @@ unsigned int PacketBufferManager::GetProperUnitSize(unsigned int uiSize)
 {
     PacketBufferMultiUnitHeap* pHeap = m_pPacketBufferHeap;
 
-    if (pHeap != 0 && uiSize <= pHeap->m_uiMaxUnitSize)
+    if (pHeap != 0 && pHeap->m_uiMaxUnitSize >= uiSize)
     {
         for (unsigned int i = 0; i < pHeap->m_uiUnitHeapNum; ++i)
         {
@@ -277,37 +312,47 @@ bool PacketBufferManager::IsAllocatable(unsigned int uiSize, unsigned int uiUnit
     if (pHeap == 0)
         return true;
 
+    bool bAllocatable;
+
     if (uiSize > pHeap->m_uiMaxUnitSize)
-        return true;
-
-    bool bAllocatable = false;
-    unsigned int uiFreeUnitNum = 0;
-
-    pHeap->Lock();
-
-    for (unsigned int i = 0; i < pHeap->m_uiUnitHeapNum; ++i)
     {
-        PacketBufferUnitHeap& rUnitHeap = pHeap->m_pUnitHeaps[i];
+        bAllocatable = true;
+    }
+    else
+    {
+        bAllocatable = false;
 
-        if (uiSize > rUnitHeap.m_uiUnitSize)
-            continue;
+        pHeap->Lock();
 
-        uiFreeUnitNum += rUnitHeap.m_uiTotalSize / ((rUnitHeap.m_uiUnitSize + 11) & ~3u)
-            - rUnitHeap.m_uiUsedUnitNum;
+        unsigned int uiFreeUnitNum = 0;
 
-        if (uiUnitNum <= uiFreeUnitNum)
+        for (unsigned int i = 0; i < pHeap->m_uiUnitHeapNum; ++i)
         {
-            bAllocatable = true;
-            pHeap->m_bUnitExhausted = false;
-            pHeap->Unlock();
-            return bAllocatable;
+            PacketBufferUnitHeap& rUnitHeap = pHeap->m_pUnitHeaps[i];
+
+            if (uiSize > rUnitHeap.m_uiUnitSize)
+                continue;
+
+            uiFreeUnitNum += rUnitHeap.m_uiTotalSize / ((rUnitHeap.m_uiUnitSize + 11) & ~3u)
+                - rUnitHeap.m_uiUsedUnitNum;
+
+            if (uiUnitNum <= uiFreeUnitNum)
+            {
+                bAllocatable = true;
+                pHeap->m_bUnitExhausted = false;
+                break;
+            }
         }
+
+        if (!bAllocatable)
+        {
+            pHeap->m_bUnitExhausted = true;
+            ++pHeap->m_pUnitHeaps[pHeap->m_uiUnitHeapNum - 1].m_debugInfo.m_uiAllocFailedNum;
+        }
+
+        pHeap->Unlock();
     }
 
-    pHeap->m_bUnitExhausted = true;
-    ++pHeap->m_pUnitHeaps[pHeap->m_uiUnitHeapNum - 1].m_debugInfo.m_uiAllocFailedNum;
-
-    pHeap->Unlock();
     return bAllocatable;
 }
 
@@ -355,6 +400,10 @@ void PacketBufferManager::Dump(unsigned long long)
         qVector<UnitHeapDebugInfo> aDebugInfo;
 
         m_pPacketBufferHeap->GetDebugInfo(aDebugInfo);
+
+        for (qVector<UnitHeapDebugInfo>::iterator it = aDebugInfo.begin(); it != aDebugInfo.end(); ++it)
+        {
+        }
     }
 
     if (m_pManagementObjectHeap != 0)
@@ -362,6 +411,10 @@ void PacketBufferManager::Dump(unsigned long long)
         qVector<UnitHeapDebugInfo> aDebugInfo;
 
         m_pManagementObjectHeap->GetDebugInfo(aDebugInfo);
+
+        for (qVector<UnitHeapDebugInfo>::iterator it = aDebugInfo.begin(); it != aDebugInfo.end(); ++it)
+        {
+        }
     }
 }
 
@@ -377,17 +430,18 @@ void PacketBufferManager::Initialize()
         m_uiMemorySize = uiMemorySize;
 
         PacketBufferMultiUnitHeap* pPacketHeap = new PacketBufferMultiUnitHeap();
+        void* pPacketMemory = m_pMemory;
         const unsigned int uiPacketMemorySize = GetRequiredMemorySizeImpl(aParams);
-        pPacketHeap->Initialize(m_pMemory, uiPacketMemorySize, aParams);
+        pPacketHeap->Initialize(pPacketMemory, uiPacketMemorySize, aParams);
         m_pPacketBufferHeap = pPacketHeap;
 
         {
             qVector<UnitHeapParam> aManagementParams;
             GetPacketManagementUnitHeapParam(aManagementParams, aParams);
             PacketBufferMultiUnitHeap* pManagementHeap = new PacketBufferMultiUnitHeap();
+            unsigned char* pManagementMemory = static_cast<unsigned char*>(m_pMemory) + uiPacketMemorySize;
             const unsigned int uiManagementMemorySize = GetRequiredMemorySizeImpl(aManagementParams);
-            pManagementHeap->Initialize(static_cast<unsigned char*>(m_pMemory) + uiPacketMemorySize,
-                                       uiManagementMemorySize, aManagementParams);
+            pManagementHeap->Initialize(pManagementMemory, uiManagementMemorySize, aManagementParams);
             m_pManagementObjectHeap = pManagementHeap;
         }
         m_bActive = true;
@@ -395,6 +449,45 @@ void PacketBufferManager::Initialize()
         m_pfnAllocateManagementObject = PacketManagementObjectAllocate;
     }
     m_iInitializeCount = static_cast<int>(static_cast<unsigned int>(m_iInitializeCount) + 1u);
+}
+
+void PacketBufferManager::Destroy()
+{
+    ScopedCS lock(&s_criticalSection);
+
+    if (m_iInitializeCount != 0 || !IsEnablePacketBufferPool() || !IsActive())
+        return;
+
+    RootTransport* pTransport = RootTransport::GetInstance();
+
+    if (pTransport != 0)
+        pTransport->ClearPacketInPacketBufferPool();
+
+    Dump(TRACE_FILTER_PACKET_BUFFER_POOL);
+
+    if (m_pManagementObjectHeap != 0)
+    {
+        m_pManagementObjectHeap->~PacketBufferMultiUnitHeap();
+        if (m_pManagementObjectHeap != 0)
+            RootObject::operator delete(m_pManagementObjectHeap);
+        m_pManagementObjectHeap = 0;
+    }
+
+    if (m_pPacketBufferHeap != 0)
+    {
+        m_pPacketBufferHeap->~PacketBufferMultiUnitHeap();
+        if (m_pPacketBufferHeap != 0)
+            RootObject::operator delete(m_pPacketBufferHeap);
+        m_pPacketBufferHeap = 0;
+    }
+
+    if (m_pMemory != 0)
+        MemoryManager::Free(m_pMemory);
+
+    m_pfnAllocate = 0;
+    m_pfnAllocateManagementObject = 0;
+    m_pMemory = 0;
+    m_bActive = false;
 }
 
 void PacketBufferManager::Finalize()

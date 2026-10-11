@@ -56,9 +56,11 @@ public:
         return m_streamTable;
     }
 
+    static int s_iNATTraversalTimeout;
     static unsigned int s_uiDisconnectTimeout;
 
 private:
+    friend class JobConnectEndPoint;
     friend class StreamManager;
     unsigned int m_uiContextId;
     ComponentState m_component;

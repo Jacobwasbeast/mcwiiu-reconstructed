@@ -8,7 +8,7 @@ namespace nex
 namespace
 {
 
-const unsigned int ATTRIBUTE_COUNT = 6;
+const int GATHERING_ATTRIBUTE_COUNT = 6;
 const unsigned int GATHERING_FLAG_PERSISTENT = 1;
 const unsigned int PARTICIPATION_POLICY_97 = 97;
 
@@ -24,20 +24,16 @@ Gathering* _DDL_PersistentGathering::Clone() const
     return new PersistentGathering;
 }
 
-PersistentGathering::~PersistentGathering()
-{
-}
-
 void PersistentGathering::Reset()
 {
     m_uiPersistentGatheringType = 0;
     m_strPassword = L"";
-    m_Attributes.assign(ATTRIBUTE_COUNT, 0);
+    m_Attributes.assign(GATHERING_ATTRIBUTE_COUNT, 0);
     m_ApplicationBuffer.clear();
-    m_uiParticipationCount = 0;
     m_uiMatchmakeSessionCount = 0;
-    m_ParticipationStartDate = DateTime();
-    m_ParticipationEndDate = DateTime();
+    m_uiParticipationCount = 0;
+    m_ParticipationStartDate = DateTime::s_never;
+    m_ParticipationEndDate = DateTime::s_never;
     Gathering::Reset();
     m_uiValue4 |= GATHERING_FLAG_PERSISTENT;
     SetParticipationPolicy(PARTICIPATION_POLICY_97, 0);
@@ -61,9 +57,9 @@ void PersistentGathering::SetAttribute(unsigned int uiIndex, unsigned int uiValu
 
 unsigned int PersistentGathering::GetAttribute(unsigned int uiIndex) const
 {
-    if (uiIndex < m_Attributes.size())
-        return m_Attributes[uiIndex];
-    return 0;
+    if (uiIndex >= m_Attributes.size())
+        return 0;
+    return m_Attributes[uiIndex];
 }
 
 }

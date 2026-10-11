@@ -124,14 +124,18 @@ void _DDL_PersistentGathering::Extract(Message* pMessage, _DDL_PersistentGatheri
     _Type_qvector<_Type_byte>::Extract(pMessage, &pDestination->m_ApplicationBuffer);
     if (pMessage->HasError())
         return;
-    unsigned long long uiParticipationStartDate = 0;
-    _Type_uint64::Extract(pMessage, &uiParticipationStartDate);
-    pDestination->m_ParticipationStartDate = DateTime(uiParticipationStartDate);
+    {
+        unsigned long long uiParticipationStartDate;
+        _Type_uint64::Extract(pMessage, &uiParticipationStartDate);
+        pDestination->m_ParticipationStartDate = DateTime(uiParticipationStartDate);
+    }
     if (pMessage->HasError())
         return;
-    unsigned long long uiParticipationEndDate = 0;
-    _Type_uint64::Extract(pMessage, &uiParticipationEndDate);
-    pDestination->m_ParticipationEndDate = DateTime(uiParticipationEndDate);
+    {
+        unsigned long long uiParticipationEndDate;
+        _Type_uint64::Extract(pMessage, &uiParticipationEndDate);
+        pDestination->m_ParticipationEndDate = DateTime(uiParticipationEndDate);
+    }
     if (pMessage->HasError())
         return;
     _Type_uint32::Extract(pMessage, &pDestination->m_uiMatchmakeSessionCount);

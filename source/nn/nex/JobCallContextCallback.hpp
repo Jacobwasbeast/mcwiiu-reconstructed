@@ -23,6 +23,14 @@ public:
     virtual void ProccessFailure(CallContext* pCallContext);
     virtual void ProccessCancel();
 
+    CallContext* GetCallContext()
+    {
+        if (m_pJobCallContext == 0)
+            m_pJobCallContext = CreateCallContext();
+
+        return m_pJobCallContext;
+    }
+
     bool StartJob();
     void CompleteJob(const qResult& rResult);
     void StepCallStart();

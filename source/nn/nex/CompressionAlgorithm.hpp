@@ -1,8 +1,9 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_COMPRESSIONALGORITHM_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_COMPRESSIONALGORITHM_HPP
 
+#include "nn/nex/CompressionPlugin.hpp"
 #include "nn/nex/CriticalSection.hpp"
-#include "nn/nex/PolymorphicRootObject.hpp"
+#include "nn/nex/PluginObject.hpp"
 #include "nn/nex/ProfilingUnit.hpp"
 
 namespace nn
@@ -12,7 +13,7 @@ namespace nex
 
 class Buffer;
 
-class CompressionAlgorithm : public PolymorphicRootObject
+class CompressionAlgorithm : public PluginObject
 {
 public:
     CompressionAlgorithm();

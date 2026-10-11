@@ -147,11 +147,9 @@ void _DDL_AuthenticationInfo::Extract(Message* pMessage, _DDL_AuthenticationInfo
     if (pMessage->HasError() || bCompactFormat)
         return;
 
-    const unsigned int uiEndPosition = uiStartPosition + uiSize;
-
-    if (pMessage->GetPosition() <= uiEndPosition && uiEndPosition <= pMessage->GetLength())
+    if (pMessage->GetPosition() <= uiStartPosition + uiSize && uiStartPosition + uiSize <= pMessage->GetLength())
     {
-        pMessage->SetPosition(uiEndPosition);
+        pMessage->SetPosition(uiStartPosition + uiSize);
         return;
     }
 

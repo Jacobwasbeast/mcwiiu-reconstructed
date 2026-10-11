@@ -10,10 +10,6 @@ DataStoreSearchParam::DataStoreSearchParam()
     Reset();
 }
 
-DataStoreSearchParam::~DataStoreSearchParam()
-{
-}
-
 void DataStoreSearchParam::Reset()
 {
     m_uiSearchTarget = 1;
@@ -22,10 +18,10 @@ void DataStoreSearchParam::Reset()
     m_DestinationIds = qVector<uint32_t>();
     m_uiDataType = 0xFFFF;
     m_DataTypes = qVector<uint16_t>();
-    m_CreatedAfter = DateTime();
-    m_CreatedBefore = DateTime();
-    m_UpdatedAfter = DateTime();
-    m_UpdatedBefore = DateTime();
+    m_CreatedAfter = DateTime::s_never;
+    m_CreatedBefore = DateTime::s_never;
+    m_UpdatedAfter = DateTime::s_never;
+    m_UpdatedBefore = DateTime::s_never;
     m_uiResultOrderColumn = 0;
     m_uiReferDataId = 0;
     m_uiResultOrder = 0;

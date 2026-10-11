@@ -9,6 +9,8 @@ namespace nn { namespace nex {
 class StateMachine : public VirtualRootObject
 {
 public:
+    virtual ~StateMachine();
+
     class QEvent : public RootObject
     {
     public:

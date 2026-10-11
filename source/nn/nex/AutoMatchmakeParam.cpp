@@ -5,10 +5,6 @@ namespace nn
 namespace nex
 {
 
-AutoMatchmakeParam::~AutoMatchmakeParam()
-{
-}
-
 void AutoMatchmakeParam::Reset()
 {
     m_MatchmakeSession = MatchmakeSession();

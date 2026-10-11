@@ -9,6 +9,7 @@
 #include "nn/nex/PseudoSingleton.hpp"
 #include "nn/nex/RefCountedObject.hpp"
 #include "nn/nex/ThreadVariable.hpp"
+#include "nn/nex/Time.hpp"
 
 namespace nn
 {
@@ -38,10 +39,11 @@ public:
             uiContextId = g_instantiationContextVariable->GetRef();
 
         InstanceControl* pInstanceControl = g_instanceTable.FindInstance(ClassID, uiContextId);
-        if (pInstanceControl == 0)
-            return 0;
+        void* pInstance = pInstanceControl;
+        if (pInstance != 0)
+            pInstance = pInstanceControl->GetDelegatorInstance();
 
-        return static_cast<RVClientCore*>(pInstanceControl->GetDelegatorInstance());
+        return static_cast<RVClientCore*>(pInstance);
     }
 
     static RVClientCore* AcquireInstance();
@@ -73,14 +75,20 @@ private:
         NOTIFICATION_PROTOCOL_FLAG = 8
     };
 
+    class GameServerClock : public RootObject
+    {
+    public:
+        Time m_timeBase;
+        Time m_epochTime;
+    };
+
     static RVClientCore* s_pInstance;
 
     ProtocolRegistry* m_pProtocolRegistry;
     PseudoSingleton m_instanceControl;
     GlobalNotificationEventManager* m_pGlobalNotificationEventManager;
     ServerProtocolMap m_serverProtocols;
-    unsigned long long m_uiGameServerTimeBase;
-    long long m_iGameServerEpochTime;
+    GameServerClock m_gameServerClock;
 };
 
 }

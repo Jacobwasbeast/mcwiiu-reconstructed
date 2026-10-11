@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "nn/nex/Buffer.hpp"
+#include "nn/nex/PacketBufferPacketOut.hpp"
 #include "nn/nex/PacketOut.hpp"
 #include "nn/nex/RootTransport.hpp"
 #include "nn/nex/StreamSettings.hpp"
@@ -34,12 +35,9 @@ RelayStream::RelayStream()
 {
 }
 
-RelayStream::~RelayStream()
-{
-}
-
 bool RelayStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char, Packet* pPacket)
 {
+    bool bResult = false;
     Buffer* pPayload = pPacket->m_pPayload;
     InetAddress source(pPacket->GetRelayHeader().m_uiSourceAddress,
         pPacket->GetRelayHeader().m_uiSourcePort);
@@ -53,30 +51,27 @@ bool RelayStream::ReceiveIncomingPacket(unsigned short uiPort, unsigned char, Pa
         if (!m_pTransport->Receive(uiPort, pPayload, &source))
         {
             m_routingTable.Remove(source);
-            return false;
+        }
+        else
+        {
+            bResult = true;
+            pPacket->ReleaseRef();
         }
     }
-    else
+    else if ((pPacket->GetRelayHeader().m_uiType & RELAY_TYPE_MASK) == RELAY_TYPE_PING &&
+        pPacket->GetRelayPingHeader().m_unknown0 == 0)
     {
-        if ((pPacket->GetRelayHeader().m_uiType & RELAY_TYPE_MASK) != RELAY_TYPE_PING)
-        {
-            return false;
-        }
-
-        if (pPacket->GetRelayPingHeader().m_unknown0 != 0)
-        {
-            return false;
-        }
-
         if (m_pPingCallback != 0)
         {
             m_pPingCallback(&m_unknown3C, &pPacket->m_address, uiPort,
                 pPacket->GetRelayHeader().m_uiTimeStamp, &pPacket->GetRelayPingHeader(), pPayload);
         }
+
+        bResult = true;
+        pPacket->ReleaseRef();
     }
 
-    pPacket->ReleaseRef();
-    return true;
+    return bResult;
 }
 
 void RelayStream::DoWork()
@@ -88,13 +83,10 @@ PacketOut* RelayStream::BuildRelayPacket(Buffer* pPayload, RelayType type)
 {
     PacketOut* pPacket;
 
-    if (pPayload == 0 || !pPayload->IsPooled())
+    if (pPayload != 0 && pPayload->IsPooled())
     {
-        pPacket = new PacketOut(0, RELAY_PACKET_TYPE, 0, pPayload, 0);
-    }
-    else
-    {
-        pPacket = new (RootObject::TARGET_POOL_PACKET_MANAGEMENT) PacketOut(0, RELAY_PACKET_TYPE, 0, pPayload, 0);
+        pPacket = new (RootObject::TARGET_POOL_PACKET_MANAGEMENT)
+            PacketBufferPacketOut(0, RELAY_PACKET_TYPE, 0, pPayload, 0);
 
         if (pPacket == 0)
         {
@@ -107,9 +99,13 @@ PacketOut* RelayStream::BuildRelayPacket(Buffer* pPayload, RelayType type)
             return 0;
         }
     }
+    else
+    {
+        pPacket = new PacketOut(0, RELAY_PACKET_TYPE, 0, pPayload, 0);
+    }
 
-    memset(&pPacket->GetRelayHeader(), 0, sizeof(RelayProtocolHeader));
     pPacket->m_uiVersion = RELAY_OUTGOING_BYTE;
+    memset(&pPacket->GetRelayHeader(), 0, sizeof(RelayProtocolHeader));
     pPacket->GetRelayHeader().m_uiType = type & RELAY_TYPE_MASK;
     return pPacket;
 }

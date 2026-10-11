@@ -1,5 +1,8 @@
 #include "nn/nex/_DDL_Data.hpp"
 
+#include <algorithm>
+
+#include "nn/nex/DDLSerialization.hpp"
 #include "nn/nex/Data.hpp"
 #include "nn/nex/Message.hpp"
 
@@ -12,7 +15,6 @@ namespace
 {
 
 const uint8_t DATA_MAX_STRUCTURE_VERSION = 0;
-const unsigned int SIZE_FIELD_LENGTH = 4;
 
 }
 
@@ -55,11 +57,11 @@ void _DDL_Data::Add(Message* pMessage, const _DDL_Data& rSource)
 {
     if (!pMessage->IsCompactFormat())
     {
-        const uint8_t uiVersion = rSource.m_uiStructureVersion;
-        const uint8_t uiMaxVersion = DATA_MAX_STRUCTURE_VERSION;
-        pMessage->Append(uiMaxVersion < uiVersion ? &uiMaxVersion : &uiVersion, 1, 1);
+        uint8_t uiVersion = rSource.m_uiStructureVersion;
+        uint8_t uiMaxVersion = DATA_MAX_STRUCTURE_VERSION;
+        _Type_byte::Add(pMessage, std::min(uiVersion, uiMaxVersion));
         const uint32_t uiSize = 0;
-        pMessage->Append(reinterpret_cast<const unsigned char*>(&uiSize), SIZE_FIELD_LENGTH, 1);
+        _Type_uint32::Add(pMessage, uiSize);
     }
 }
 
@@ -70,8 +72,9 @@ void _DDL_Data::Extract(Message* pMessage, _DDL_Data* pDestination)
     if (!pMessage->IsCompactFormat())
     {
         pMessage->ExtractPrimitive(&pDestination->m_uiStructureVersion);
-        if (!pMessage->HasError())
-            pMessage->ExtractPrimitive(&uiSize);
+        if (pMessage->HasError())
+            return;
+        pMessage->ExtractPrimitive(&uiSize);
     }
 }
 

@@ -23,11 +23,13 @@ namespace nex
 {
 
 class ConnectivityTester;
+class InetAddress;
 class Job;
 class NATEchoInterface;
 class NATRelayInterface;
 class NATTransportAdapter;
 class NATTraversalStream;
+class RootTransport;
 
 class NATTraversalEngine : public RootObject
 {
@@ -55,6 +57,7 @@ public:
     void ReportNATProperties(NATProperties::MappingProperties mapping,
         NATProperties::FilteringProperties filtering, unsigned int uiPortIncrease);
     void TimeoutProbeRequest(const Time& rTime);
+    void ProcessRequestProbe(const StationURL& rStationURL);
     void StopProbes();
     void StartSendDummyPacket();
     void StopSendDummyPacket();
@@ -65,13 +68,37 @@ public:
     bool GetUpdatedURL(const StationURL& rStationURL, StationURL* pUpdatedURL);
     bool GetProbeFailed(const StationURL& rStationURL);
     NATTraversalResult GetNATTraversalResult(unsigned int uiConnectionID);
+    void Execute();
+    void ReceiveMessage(const StationURL& rStationURL, const unsigned char* pData,
+        unsigned int uiSize);
 
 private:
+    friend class ConnectivityManager;
+    friend class JobCheckAndRelay;
+    friend class JobResolveRelayInfo;
     friend class Relay;
+    friend class RVNATRelay;
 
     typedef std::map<unsigned int, std::pair<Time, StationURL>, std::less<unsigned int>,
         MemAllocator<std::pair<const unsigned int, std::pair<Time, StationURL> > > >
         ProbeRequestMap;
+
+    enum Msg
+    {
+        MSG_PROBE = 0,
+        MSG_PROBE_REPLY = 1
+    };
+
+    bool StartNATStream(RootTransport* pTransport);
+    bool StopNATStream();
+    void StartSendProbe(const StationURL& rStationURL);
+    void SendProbeRequests();
+    void SendProbes();
+    void SendProbe(Msg msg, const StationURL& rStationURL, Time time, unsigned char uiFlags);
+    void SendDummyPacket(unsigned char uiFlags);
+    void SendDummyPacket(const StationURL& rStationURL, unsigned char uiFlags);
+    void SendDummyPacket(const InetAddress& rAddress);
+    void CheckPortAndRelay(const qList<StationURL>& rLocalURLs, const StationURL& rStationURL);
 
     UnsupportedNATReferee m_unsupportedNATReferee;
     NATRelayInterface* m_pRelay;

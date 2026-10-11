@@ -1,6 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_NEX_PACKETBUFFERMULTIUNITHEAP_HPP
 #define LEGACY_CONSOLE_WIIU_NN_NEX_PACKETBUFFERMULTIUNITHEAP_HPP
 
+#include "nn/nex/CriticalSection.hpp"
 #include "nn/nex/MemoryManager.hpp"
 #include "nn/nex/MutexPrimitive.hpp"
 #include "nn/nex/PacketBufferHeap.hpp"
@@ -28,6 +29,12 @@ public:
     {
     }
 
+    ~PacketBufferMultiUnitHeap()
+    {
+        if (m_bInitialized)
+            Finalize();
+    }
+
     void Initialize(void* pMemory, unsigned int uiMemorySize,
         qVector<PacketBufferManager::UnitHeapParam> aParams);
     void Finalize();
@@ -40,8 +47,17 @@ public:
 private:
     friend class PacketBufferManager;
 
-    void Lock() const;
-    void Unlock() const;
+    void Lock() const
+    {
+        if (m_pMutex != 0 && !g_criticalSectionDisabled)
+            m_pMutex->Lock();
+    }
+
+    void Unlock() const
+    {
+        if (m_pMutex != 0 && !g_criticalSectionDisabled)
+            m_pMutex->Unlock();
+    }
 
     PacketBufferUnitHeap* m_pUnitHeaps;
     unsigned int m_uiUnitHeapNum;

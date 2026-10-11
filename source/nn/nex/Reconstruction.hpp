@@ -79,6 +79,10 @@ public:
     virtual bool Unbind();
     bool AutoMatchmake(ProtocolCallContext* pCallContext, const AutoMatchmakeParam& rParam,
                        MatchmakeSession* pJoinedSession);
+    bool RequestMatchmaking(ProtocolCallContext* pCallContext, const AutoMatchmakeParam& rParam,
+                            unsigned long long* pRequestID);
+    bool DoMatchmaking(ProtocolCallContext* pCallContext, const AutoMatchmakeParam& rParam,
+                       MatchmakeSession* pJoinedSession);
     bool BrowseMatchmakeSession(ProtocolCallContext* pCallContext, const MatchmakeSessionSearchCriteria& rSearchCriteria,
                                 const ResultRange& rRange, qList<AnyObjectHolder<Gathering, String> >* pGatherings);
     bool CreateMatchmakeSession(ProtocolCallContext* pCallContext, const CreateMatchmakeSessionParam& rParam,
@@ -130,12 +134,6 @@ private:
     bool m_protocolRegistered;
     MatchmakeExtensionProtocolClient m_matchmakeExtensionProtocolClient;
     unsigned long long m_uiLastProgressScoreTime;
-};
-
-class ErrorCodeConverter
-{
-public:
-    static unsigned int ConvertToNetworkErrorCode(const qResult& rResult);
 };
 
 }

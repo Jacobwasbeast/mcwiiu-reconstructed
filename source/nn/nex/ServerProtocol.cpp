@@ -1,11 +1,12 @@
 #include "nn/nex/ServerProtocol.hpp"
 
 #include "nn/nex/CallProtocolMethodOperation.hpp"
+#include "nn/nex/EndPoint.hpp"
+#include "nn/nex/InetAddress.hpp"
+#include "nn/nex/Message.hpp"
+#include "nn/nex/Scheduler.hpp"
 #include "nn/nex/SecurityContextManager.hpp"
 #include "nn/nex/StationURL.hpp"
-#include "nn/nex/InetAddress.hpp"
-
-#include <stdint.h>
 
 #include <cwchar>
 
@@ -25,60 +26,42 @@ ServerProtocol::~ServerProtocol()
 
 void ServerProtocol::SetCallError(qResult result)
 {
-    static_cast<CallProtocolMethodOperation*>(GetCurrentOperation())->m_result = result;
+    CallProtocolMethodOperation* pOperation =
+        static_cast<CallProtocolMethodOperation*>(GetCurrentOperation());
+    pOperation->m_result = qResult(result);
 }
 
 void ServerProtocol::DispatchCallRequest(unsigned int uiAttemptCount, Message* pRequest,
                                          Message* pResponse, bool* pResponseRequired,
                                          int* pAttempt, EndPoint* pEndPoint)
 {
-    SecurityContextManager* pSecurity = SecurityContextManager::GetInstance();
-    if (reinterpret_cast<intptr_t>(pEndPoint) == -8)
+    if (pEndPoint == 0)
     {
-        pSecurity->Push(GetCallerPID(), GetCallerCID(), pSecurity->GetCurrentAddress());
-    }
-    else if (pEndPoint == 0)
-    {
-        pSecurity->Push(GetCallerPID(), GetCallerCID(), pSecurity->GetCurrentAddress());
+        unsigned int uiPID = GetCallerPID();
+        unsigned int uiCID = GetCallerCID();
+        unsigned int uiAddress = SecurityContextManager::GetInstance()->GetCurrentAddress();
+        SecurityContextManager::GetInstance()->Push(uiPID, uiCID, uiAddress);
     }
     else
     {
-        const unsigned char* pBytes = reinterpret_cast<const unsigned char*>(pEndPoint);
-        StationURL* pStationURL = reinterpret_cast<StationURL*>(
-            const_cast<unsigned char*>(pBytes) + 16);
-        const InetAddress* pInetAddress = pStationURL->GetInetAddress();
-        unsigned int uiAddress = pInetAddress == 0 ? 0 : pInetAddress->GetAddress();
+        unsigned int uiAddress = 0;
+        const StationURL* pStationURL = &pEndPoint->m_stationURL;
+        if (pStationURL != 0)
+            uiAddress = pStationURL->GetInetAddress()->GetAddress();
         if (uiAddress == 0)
-            uiAddress = pSecurity->GetCurrentAddress();
-        pSecurity->Push(*reinterpret_cast<const unsigned int*>(pBytes + 0x4C),
-                        *reinterpret_cast<const unsigned int*>(pBytes + 0x48), uiAddress);
+            uiAddress = SecurityContextManager::GetInstance()->GetCurrentAddress();
+        SecurityContextManager::GetInstance()->Push(pEndPoint->m_uiPrincipalID,
+                                                    pEndPoint->GetConnectionID(), uiAddress);
         SetIncomingConnection(pEndPoint);
     }
 
-    const bool bOldRVDDL = reinterpret_cast<intptr_t>(pEndPoint) != -8
-        && IsOldRVDDLVersion(pEndPoint);
-    if (bOldRVDDL)
+    if (IsOldRVDDLVersion(pEndPoint))
     {
-        *reinterpret_cast<unsigned char*>(reinterpret_cast<unsigned char*>(pRequest) + 0x41) = 1;
-        *reinterpret_cast<unsigned char*>(reinterpret_cast<unsigned char*>(pResponse) + 0x41) = 1;
+        pRequest->m_bCompactFormat = true;
+        pResponse->m_bCompactFormat = true;
     }
 
     if (FlagIsSet(2))
-    {
-        typedef bool (*AttemptMethod)(ServerProtocol*);
-        typedef void (*DispatchMethod)(ServerProtocol*, Message*, Message*, bool*, EndPoint*);
-        typedef void (*DispatchAttemptMethod)(ServerProtocol*, unsigned int, Message*, Message*,
-                                              bool*, int*, EndPoint*);
-        void** pVTable = *reinterpret_cast<void***>(this);
-        const bool bUseAttemptCount = reinterpret_cast<AttemptMethod>(pVTable[45])(this);
-        if (bUseAttemptCount)
-            reinterpret_cast<DispatchAttemptMethod>(pVTable[43])(
-                this, uiAttemptCount, pRequest, pResponse, pResponseRequired, pAttempt, pEndPoint);
-        else
-            reinterpret_cast<DispatchMethod>(pVTable[41])(
-                this, pRequest, pResponse, pResponseRequired, pEndPoint);
-    }
-    else
     {
         if (UseAttemptCountMethod())
             DispatchProtocolMessageWithAttemptCount(uiAttemptCount, pRequest, pResponse,
@@ -86,12 +69,20 @@ void ServerProtocol::DispatchCallRequest(unsigned int uiAttemptCount, Message* p
         else
             DispatchProtocolMessage(pRequest, pResponse, pResponseRequired, pEndPoint);
     }
+    else
+    {
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+        if (UseAttemptCountMethod())
+            DispatchProtocolMessageWithAttemptCount(uiAttemptCount, pRequest, pResponse,
+                                                     pResponseRequired, pAttempt, pEndPoint);
+        else
+            DispatchProtocolMessage(pRequest, pResponse, pResponseRequired, pEndPoint);
+    }
 
-    if (pEndPoint != 0 && reinterpret_cast<intptr_t>(pEndPoint) != -8)
-        SetIncomingConnection(0);
-    pSecurity->Pop();
+    SetIncomingConnection(0);
+    SecurityContextManager::GetInstance()->Pop();
 
-    if (FlagIsSet(8) && pResponseRequired != 0)
+    if (FlagIsSet(8))
         *pResponseRequired = false;
 }
 

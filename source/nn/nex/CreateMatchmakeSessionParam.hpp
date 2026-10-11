@@ -16,17 +16,16 @@ public:
         DEFAULT_PARTICIPATION_COUNT = 1
     };
 
-    virtual ~CreateMatchmakeSessionParam();
-
-    void Reset()
+    CreateMatchmakeSessionParam()
     {
-        m_MatchmakeSession = MatchmakeSession();
-        m_AdditionalParticipants = qList<unsigned int>();
-        m_uiGatheringIDForParticipationCheck = 0;
-        m_uiCreateMatchmakeSessionOption = 0;
-        m_strJoinMessage = String();
-        m_uiParticipationCount = DEFAULT_PARTICIPATION_COUNT;
+        Reset();
     }
+
+    virtual ~CreateMatchmakeSessionParam()
+    {
+    }
+
+    void Reset();
 };
 
 }

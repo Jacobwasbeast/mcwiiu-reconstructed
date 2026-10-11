@@ -48,6 +48,8 @@ public:
         InetAddress* pRoutingAddress);
 
 private:
+    friend class RoutingStream;
+
     bool m_bEnabled;
     bool m_bStreamRegistered;
     RoutingAddressResolver* m_pResolver;

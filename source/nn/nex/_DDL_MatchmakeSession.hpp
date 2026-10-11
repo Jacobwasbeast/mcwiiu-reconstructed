@@ -20,7 +20,7 @@ class _DDL_MatchmakeSession : public Gathering
 {
 public:
     _DDL_MatchmakeSession()
-        : Gathering(), m_uiStructureVersion(3), m_Attributes(), m_ApplicationBuffer(), m_SessionKey(),
+        : Gathering(), m_uiStructureVersion(3), m_Attributes(0), m_ApplicationBuffer(0), m_SessionKey(0),
           m_MatchmakeParam(), m_StartedTime(), m_strUserPassword()
     {
     }

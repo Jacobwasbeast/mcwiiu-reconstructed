@@ -1,5 +1,7 @@
 #include "nn/nex/TransportBufferMultiThread.hpp"
 
+#include <coreinit/thread.h>
+
 #include "nn/nex/Platform.hpp"
 #include "nn/nex/PseudoSingleton.hpp"
 #include "nn/nex/QueuingSocketTransportBuffer.hpp"
@@ -61,8 +63,9 @@ TransportBufferMultiThread::~TransportBufferMultiThread()
 
 void TransportBufferMultiThread::Start()
 {
-    m_pSendThread->SetObjectMethod(&TransportBufferMultiThread::TransportSendLoop, this, 0);
-    m_pSendThread->Launch(0);
+    Thread* pThread = m_pSendThread;
+    pThread->SetObjectMethod(&TransportBufferMultiThread::TransportSendLoop, this, 0);
+    pThread->Launch(0);
 }
 
 void TransportBufferMultiThread::Stop()
@@ -117,13 +120,12 @@ bool TransportBufferMultiThread::InsertSocketPort(unsigned short uiPort, Queuing
     portThread.m_iThread = iSlot;
     portThread.m_pSocket = pSocket;
     m_portThreads.push_back(portThread);
-    CriticalSection* pSlotLock = m_pSlotLocks[iSlot];
     m_bSlotUsed[iSlot] = true;
     m_bBusy = true;
-    pSlotLock->Enter();
+    m_pSlotLocks[iSlot]->Enter();
     m_slots[iSlot].second = pSocket;
     m_slots[iSlot].first = uiPort;
-    pSlotLock->Leave();
+    m_pSlotLocks[iSlot]->Leave();
     m_sendCriticalSection.Enter();
     m_sendSockets.push_back(PortSocket(uiPort, pSocket));
     m_sendCriticalSection.Leave();
@@ -136,11 +138,14 @@ void TransportBufferMultiThread::EraseSocketPort(unsigned short uiPort)
 {
     CriticalSection* pLock = &m_criticalSection;
     pLock->Enter();
-    std::vector<PortThreadSocket, MemAllocator<PortThreadSocket> >::iterator portThread =
-        m_portThreads.begin();
-    while (portThread != m_portThreads.end() && portThread->m_uiPort != uiPort)
-        ++portThread;
-    if (portThread == m_portThreads.end())
+    qVector<PortThreadSocket>::iterator end = m_portThreads.end();
+    qVector<PortThreadSocket>::iterator portThread;
+    for (portThread = m_portThreads.begin(); portThread != end; ++portThread)
+    {
+        if (portThread->m_uiPort == uiPort)
+            break;
+    }
+    if (portThread == end)
     {
         pLock->Leave();
         return;
@@ -151,18 +156,17 @@ void TransportBufferMultiThread::EraseSocketPort(unsigned short uiPort)
     m_iErasingPort = uiPort;
     pSocket->Shutdown();
     m_portThreads.erase(portThread);
-    CriticalSection* pSlotLock = m_pSlotLocks[iSlot];
     m_bSlotUsed[iSlot] = false;
     m_bBusy = true;
-    pSlotLock->Enter();
+    m_pSlotLocks[iSlot]->Enter();
     m_slots[iSlot].first = 0;
     m_slots[iSlot].second = 0;
     m_bSlotErasing[iSlot] = false;
-    pSlotLock->Leave();
+    m_pSlotLocks[iSlot]->Leave();
     m_sendCriticalSection.Enter();
-    std::vector<PortSocket, MemAllocator<PortSocket> >::iterator sendSocket =
-        m_sendSockets.begin();
-    while (sendSocket != m_sendSockets.end() && sendSocket->first != uiPort)
+    qVector<PortSocket>::iterator sendSocket = m_sendSockets.begin();
+    qVector<PortSocket>::iterator sendEnd = m_sendSockets.end();
+    while (sendSocket != sendEnd && sendSocket->first != uiPort)
         ++sendSocket;
     m_sendSockets.erase(sendSocket);
     m_iErasingPort = -1;
@@ -189,17 +193,17 @@ unsigned int TransportBufferMultiThread::GetPriority() const
 void TransportBufferMultiThread::TransportSendLoop(int iThread)
 {
     PseudoSingleton::SetContextIfRequired(m_uiContextID);
-    ObjectThreadRoot::GetCurrentThreadID();
+    OSGetCurrentThread();
     while (!m_bStopped)
     {
-        m_sendCriticalSection.Enter();
         bool bSent = false;
-        for (std::vector<PortSocket, MemAllocator<PortSocket> >::iterator socket =
-                m_sendSockets.begin();
+        m_sendCriticalSection.Enter();
+        for (qVector<PortSocket>::iterator socket = m_sendSockets.begin();
             socket != m_sendSockets.end(); ++socket)
         {
-            if (socket->second != 0 && m_iErasingPort != socket->first &&
-                static_cast<QueuingSocketTransportBuffer*>(socket->second)->SendBufferCore())
+            QueuingSocketTransportBuffer* pSocket =
+                static_cast<QueuingSocketTransportBuffer*>(socket->second);
+            if (pSocket != 0 && socket->first != m_iErasingPort && pSocket->SendBufferCore())
                 bSent = true;
         }
         m_sendCriticalSection.Leave();
@@ -217,26 +221,21 @@ void TransportBufferMultiThread::TransportSendLoop(int iThread)
 void TransportBufferMultiThread::TransportRecvLoop(int iThread)
 {
     PseudoSingleton::SetContextIfRequired(m_uiContextID);
-    ObjectThreadRoot::GetCurrentThreadID();
+    OSGetCurrentThread();
     while (!m_bStopped)
     {
+        bool bReceived = false;
         if (!m_bSlotErasing[iThread])
         {
-            CriticalSection* pSlotLock = m_pSlotLocks[iThread];
-            pSlotLock->Enter();
+            m_pSlotLocks[iThread]->Enter();
             QueuingSocketTransportBuffer* pSocket =
                 static_cast<QueuingSocketTransportBuffer*>(m_slots[iThread].second);
-            bool bReceived = false;
             if (pSocket != 0)
                 bReceived = pSocket->RecvCore(false);
-            pSlotLock->Leave();
-            if (!bReceived || m_bBusy)
-                Platform::Sleep(POLL_SLEEP_MILLISECONDS);
+            m_pSlotLocks[iThread]->Leave();
         }
-        else
-        {
+        if (!bReceived || m_bBusy)
             Platform::Sleep(POLL_SLEEP_MILLISECONDS);
-        }
     }
 }
 

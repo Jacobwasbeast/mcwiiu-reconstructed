@@ -22,6 +22,11 @@ const unsigned int APPEND_AT_END = 0xFFFFFFFFu;
 
 unsigned int Buffer::s_uiDefaultBufferSize = 1364;
 
+unsigned int Buffer::GetDefaultBufferSize()
+{
+    return s_uiDefaultBufferSize;
+}
+
 Buffer::Buffer(const Buffer& rBuffer)
 {
     m_uiFlags = 0;
@@ -329,6 +334,13 @@ String Buffer::ToString() const
     result.Reserve(static_cast<int>(m_uiLength) * 2 + 1);
     StringConversion::HexToString(GetData(), result, m_uiLength);
     return result;
+}
+
+void Buffer::Trace(uint64_t) const
+{
+    for (unsigned int uiIndex = 0; uiIndex < m_uiLength; ++uiIndex)
+    {
+    }
 }
 
 unsigned int Buffer::GetAllocateSize(unsigned int uiCurrentSize, unsigned int uiRequiredSize)

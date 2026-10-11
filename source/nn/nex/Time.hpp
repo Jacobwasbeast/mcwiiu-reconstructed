@@ -20,7 +20,11 @@ public:
     Time() : m_value(0) {}
     explicit Time(uint64_t value) : m_value(value) {}
 
-    Time& operator=(const Time& other) { return operator=(other.m_value); }
+    Time& operator=(const Time& other)
+    {
+        m_value = other;
+        return *this;
+    }
 
     Time& operator=(uint64_t value)
     {
@@ -37,6 +41,8 @@ public:
 
         return Time(m_value + static_cast<int64_t>(milliseconds));
     }
+
+    Time operator-(const Time& other) const { return Time(m_value - other.m_value); }
 
     Time Multiply(float factor) const;
     Time Divide(float divisor) const;

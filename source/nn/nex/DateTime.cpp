@@ -98,7 +98,37 @@ DateTime::operator unsigned long long() const
     return m_value;
 }
 
-uint64_t DateTime::operator-(const DateTime& other) const
+bool DateTime::operator==(const DateTime& other) const
+{
+    return m_value == other.m_value;
+}
+
+bool DateTime::operator!=(const DateTime& other) const
+{
+    return m_value != other.m_value;
+}
+
+bool DateTime::operator<(const DateTime& other) const
+{
+    return m_value < other.m_value;
+}
+
+bool DateTime::operator>(const DateTime& other) const
+{
+    return m_value > other.m_value;
+}
+
+bool DateTime::operator<=(const DateTime& other) const
+{
+    return m_value <= other.m_value;
+}
+
+bool DateTime::operator>=(const DateTime& other) const
+{
+    return m_value >= other.m_value;
+}
+
+int64_t DateTime::operator-(const DateTime& other) const
 {
     int64_t difference = ToEpochTime() - other.ToEpochTime();
 

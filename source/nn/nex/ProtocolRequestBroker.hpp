@@ -44,8 +44,8 @@ protected:
     uint32_t m_field50;
     uint32_t m_field54;
     uint32_t m_field58;
-    uint32_t m_field5c;
-    uint32_t m_field60;
+    EndPoint* m_pCurrentEndPoint;
+    ProtocolRequestBroker* m_pParentBroker;
     uint32_t m_field64;
     unsigned char m_padding68[84];
     uint32_t m_fieldbc;

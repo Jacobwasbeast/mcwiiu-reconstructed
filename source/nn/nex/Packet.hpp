@@ -119,7 +119,7 @@ public:
     LiteByteStream<52> m_stream;
     Buffer* m_pPayload;
     InetAddress m_address;
-    unsigned long long m_unknownF8;
+    Time m_unknownF8;
     Time m_queueTime;
     unsigned long long m_historyTime;
 };

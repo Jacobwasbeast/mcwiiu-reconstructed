@@ -16,6 +16,16 @@ CriticalSection g_bandwidthCounterLock;
 
 }
 
+BandwidthCounter::CounterList* BandwidthCounter::GetList()
+{
+    return &g_bandwidthCounters;
+}
+
+CriticalSection* BandwidthCounter::GetCriticalSection()
+{
+    return &g_bandwidthCounterLock;
+}
+
 BandwidthCounter::BandwidthCounter(const String& name)
     : m_link(), m_name(name), m_minimum(0xffffffff),
       m_maximum(0), m_total(0), m_count(0)

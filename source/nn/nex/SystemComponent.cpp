@@ -7,11 +7,19 @@
 
 bool WaitForTerminatedStatePreventBlockCallCallback(
     nn::nex::RootObject* pObject, unsigned int uiTimeout);
+bool WaitForReadyStatePreventBlockCallCallback(
+    nn::nex::RootObject* pObject, unsigned int uiTimeout);
 
 namespace nn
 {
 namespace nex
 {
+
+enum
+{
+    SYSTEM_COMPONENT_RESULT_SUCCESS = 0x10001,
+    SYSTEM_COMPONENT_RESULT_TIMEOUT = 0x8001000B
+};
 
 SystemComponent::SystemComponent(const String& rName)
     : m_Name(rName)
@@ -56,10 +64,10 @@ bool SystemComponent::ValidTransition(_State state)
         return state == STATE_IN_USE || state == STATE_TERMINATING;
     case STATE_IN_USE:
         return state == STATE_READY || state == STATE_TERMINATION_PENDING;
-    case STATE_TERMINATING:
-        return state == STATE_TERMINATED;
     case STATE_TERMINATION_PENDING:
         return m_iInUseCount == 0 && state == STATE_TERMINATING;
+    case STATE_TERMINATING:
+        return state == STATE_TERMINATED;
     case STATE_TERMINATED:
         return state == STATE_CREATED || state == STATE_INITIALIZING;
     case STATE_INITIALIZATION_FAILED:
@@ -128,6 +136,9 @@ SystemComponent::_State SystemComponent::Terminate()
     bool bTerminated;
     switch (m_uiState)
     {
+    case STATE_IN_USE:
+        SetState(STATE_TERMINATION_PENDING, false);
+        return static_cast<_State>(m_uiState);
     case STATE_CREATED:
     case STATE_INITIALIZING:
     case STATE_READY:
@@ -136,9 +147,6 @@ SystemComponent::_State SystemComponent::Terminate()
         SetState(STATE_TERMINATING, true);
         bTerminated = BeginTermination();
         break;
-    case STATE_IN_USE:
-        SetState(STATE_TERMINATION_PENDING, false);
-        return static_cast<_State>(m_uiState);
     case STATE_TERMINATION_PENDING:
         if (m_iInUseCount != 0)
             return static_cast<_State>(m_uiState);
@@ -165,14 +173,16 @@ void SystemComponent::SetName(const String& rName)
 
 bool SystemComponent::IncrementInUseCount(const wchar_t*)
 {
-    if (!UseIsAllowed())
-        return false;
+    if (UseIsAllowed())
+    {
+        if (m_uiState == STATE_READY)
+            SetState(STATE_IN_USE, false);
 
-    if (m_uiState == STATE_READY)
-        SetState(STATE_IN_USE, false);
+        ++m_iInUseCount;
+        return true;
+    }
 
-    ++m_iInUseCount;
-    return true;
+    return false;
 }
 
 void SystemComponent::DecrementInUseCount(const wchar_t*)
@@ -207,9 +217,37 @@ qResult SystemComponent::WaitForTerminatedState(unsigned int uiTimeout)
     }
 
     if (TestState() == STATE_TERMINATED)
-        return qResult(0x10001);
+        return qResult(static_cast<int>(SYSTEM_COMPONENT_RESULT_SUCCESS));
+    else
+        return qResult(static_cast<int>(SYSTEM_COMPONENT_RESULT_TIMEOUT));
+}
 
-    return qResult(static_cast<int>(0x8001000B));
+qResult SystemComponent::WaitForReadyState(unsigned int uiTimeout)
+{
+    DoWork();
+
+    qResult result;
+
+    if (Scheduler::PreventRegularBlockCall(uiTimeout != 0, uiTimeout,
+            &WaitForReadyStatePreventBlockCallCallback, this, &result))
+        return result;
+
+    SpinTest spinTest(10, uiTimeout);
+
+    spinTest.LeaveOnTimeout();
+
+    while (TestState() != STATE_READY
+        && spinTest.SpinOnce(
+               L"D:/home/jenkins/workspace/Master/Pack/d4f027b8/OnlineCore/src/Core/SystemComponent.cpp",
+               368, L"TestState()!=Ready")
+            != 0)
+    {
+    }
+
+    if (TestState() == STATE_READY)
+        return qResult(static_cast<int>(SYSTEM_COMPONENT_RESULT_SUCCESS));
+    else
+        return qResult(static_cast<int>(SYSTEM_COMPONENT_RESULT_TIMEOUT));
 }
 
 SystemComponent::Use::Use(SystemComponent* pComponent, const wchar_t* pReason)
@@ -233,4 +271,11 @@ bool WaitForTerminatedStatePreventBlockCallCallback(
 {
     return static_cast<bool>(
         static_cast<nn::nex::SystemComponent*>(pObject)->WaitForTerminatedState(uiTimeout));
+}
+
+bool WaitForReadyStatePreventBlockCallCallback(
+    nn::nex::RootObject* pObject, unsigned int uiTimeout)
+{
+    return static_cast<bool>(
+        static_cast<nn::nex::SystemComponent*>(pObject)->WaitForReadyState(uiTimeout));
 }

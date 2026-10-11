@@ -3,14 +3,14 @@
 
 #include "nn/nex/Buffer.hpp"
 #include "nn/nex/Key.hpp"
-#include "nn/nex/PolymorphicRootObject.hpp"
+#include "nn/nex/PluginObject.hpp"
 
 namespace nn
 {
 namespace nex
 {
 
-class EncryptionAlgorithm : public PolymorphicRootObject
+class EncryptionAlgorithm : public PluginObject
 {
 public:
     EncryptionAlgorithm(unsigned int uiMinKeyLength, unsigned int uiMaxKeyLength);

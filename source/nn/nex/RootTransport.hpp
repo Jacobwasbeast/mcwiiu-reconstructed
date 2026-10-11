@@ -48,7 +48,7 @@ public:
     virtual bool StartListenReuse(unsigned short uiPort, unsigned short* pPortOut, bool bFlag,
         unsigned int uiFirst, bool bSecond) = 0;
     virtual bool StopListen(unsigned short uiPort) = 0;
-    virtual void StopListen() = 0;
+    virtual bool StopListen() = 0;
     virtual unsigned int GetNbListeningPorts() = 0;
     virtual bool Send(unsigned short uiPort, Stream::Type type, unsigned char uiSource,
         unsigned char uiDestination, PacketOut* pPacket, bool bFlag) = 0;
@@ -91,6 +91,11 @@ public:
     InputEmulationDevice* GetInputEmulationDevice()
     {
         return &m_inputEmulation;
+    }
+
+    TransportStreamManager* GetStreamManager()
+    {
+        return &m_streamManager;
     }
 
     void AttachVNATDevice(VirtualNATDevice* pDevice);
@@ -138,9 +143,12 @@ private:
     friend class JobCheckNATProperties;
     friend class JobNATCheckBase;
     friend class JobPerformNATCheck;
+    friend class JobResolveRelayInfo;
+    friend class JobStartNATSession;
     friend class Relay;
     friend class Router;
     friend class SocketTransport;
+    friend class TransportStreamManager;
 
     CriticalSection m_criticalSection;
     CriticalSection m_recognizerCriticalSection;

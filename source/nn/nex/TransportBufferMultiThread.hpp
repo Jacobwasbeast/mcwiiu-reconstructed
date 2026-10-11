@@ -9,6 +9,7 @@
 #include "nn/nex/MemAllocator.hpp"
 #include "nn/nex/ObjectThread.hpp"
 #include "nn/nex/TransportBufferThreadInterface.hpp"
+#include "nn/nex/qVector.hpp"
 
 namespace nn
 {
@@ -59,12 +60,12 @@ private:
     unsigned int m_uiContextID;
     ForcedCriticalSection m_criticalSection;
     bool m_bSlotUsed[RECV_THREAD_COUNT];
-    bool m_bSlotErasing[RECV_THREAD_COUNT];
+    volatile bool m_bSlotErasing[RECV_THREAD_COUNT];
     int m_iErasingPort;
-    std::vector<PortThreadSocket, MemAllocator<PortThreadSocket> > m_portThreads;
+    qVector<PortThreadSocket> m_portThreads;
     ForcedCriticalSection* m_pSlotLocks[RECV_THREAD_COUNT];
     PortSocket m_slots[RECV_THREAD_COUNT];
-    std::vector<PortSocket, MemAllocator<PortSocket> > m_sendSockets;
+    qVector<PortSocket> m_sendSockets;
     ForcedCriticalSection m_sendCriticalSection;
     Thread* m_pRecvThreads[RECV_THREAD_COUNT];
     Condition m_condition;

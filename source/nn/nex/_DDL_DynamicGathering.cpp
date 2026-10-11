@@ -48,11 +48,18 @@ void _DDL_DynamicGathering::Add(Message* pMessage, const _DDL_DynamicGathering& 
 void _DDL_DynamicGathering::Extract(Message* pMessage, _DDL_DynamicGathering* pDestination)
 {
     _DDL_Gathering::Extract(pMessage, pDestination);
-    if (!pMessage->HasError())
+    if (pMessage->HasError())
     {
-        pDestination->m_uiDynamicStructureVersion = 0;
-        _Type_buffertail::Extract(pMessage, &pDestination->m_Buffer);
+        return;
     }
+
+    pDestination->m_uiDynamicStructureVersion = 0;
+    if (pMessage->HasError())
+    {
+        return;
+    }
+
+    _Type_buffertail::Extract(pMessage, &pDestination->m_Buffer);
 }
 
 }

@@ -20,7 +20,7 @@ public:
     explicit NintendoNotificationEventManager(NintendoNotificationEventManager* pParent);
     virtual ~NintendoNotificationEventManager();
 
-    virtual NintendoNotificationEventManager* Clone() const;
+    virtual Protocol* Clone() const;
     virtual void ProcessNintendoNotificationEvent(const NintendoNotificationEvent& rEvent);
 
     uint32_t RegisterNintendoNotificationEventHandler(NintendoNotificationEventHandler* pHandler);

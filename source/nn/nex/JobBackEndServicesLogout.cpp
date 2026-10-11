@@ -61,8 +61,12 @@ JobBackEndServicesLogout::~JobBackEndServicesLogout()
 
 void JobBackEndServicesLogout::DisconnectFromAuthenticationService()
 {
-    if (m_pBackEndServices->GetAuthenticationClient() != 0 &&
-        m_pBackEndServices->GetAuthenticationClient()->IsConnected())
+    if (m_pBackEndServices->GetAuthenticationClient() == 0 ||
+        !m_pBackEndServices->GetAuthenticationClient()->IsConnected())
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobBackEndServicesLogout::DisconnectFromSecureConnectionService), L""));
+    }
+    else
     {
         BackEndServices* pBackEndServices = m_pBackEndServices;
         ConnectionManager* pConnectionManager =
@@ -71,16 +75,14 @@ void JobBackEndServicesLogout::DisconnectFromAuthenticationService()
                 pBackEndServices->m_pCredentials->m_authenticationConnection))
         {
             SetStep(Step(static_cast<Step::Function>(&JobBackEndServicesLogout::CompleteLogoutFailure), L""));
-            return;
         }
-
-        SetToSuspended();
-        ResumeOnCallCompletion(&m_callContext,
-            new Step(static_cast<Step::Function>(&JobBackEndServicesLogout::ProcessAuthDisconnectionResult), L""));
-        return;
+        else
+        {
+            SetToSuspended();
+            ResumeOnCallCompletion(&m_callContext,
+                new Step(static_cast<Step::Function>(&JobBackEndServicesLogout::ProcessAuthDisconnectionResult), L""));
+        }
     }
-
-    SetStep(Step(static_cast<Step::Function>(&JobBackEndServicesLogout::DisconnectFromSecureConnectionService), L""));
 }
 
 void JobBackEndServicesLogout::ProcessAuthDisconnectionResult()

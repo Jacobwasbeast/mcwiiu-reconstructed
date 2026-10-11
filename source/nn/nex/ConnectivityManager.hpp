@@ -18,6 +18,11 @@ class StationProbeList;
 class ConnectivityManager : public PseudoSingleton
 {
 public:
+    enum
+    {
+        ClassID = 11
+    };
+
     ConnectivityManager();
     virtual ~ConnectivityManager();
 
@@ -48,6 +53,8 @@ public:
     static void SetSuspendBossDaemonOnNATSession(bool suspend);
     static bool GetSuspendBossDaemonOnNATSession();
 
+    friend class JobResolveRelayInfo;
+
 protected:
     bool m_natSessionStarted;
     bool m_natTraversalEnabled;
@@ -58,6 +65,9 @@ protected:
     uint32_t m_probeLifetime;
     int32_t m_bossDaemonSuspendCount;
     bool m_packetBufferManagerInitialized;
+
+    static bool s_suspendBossDaemonOnNATSession;
+    static bool s_enableRelayOnNATSession;
 };
 
 }

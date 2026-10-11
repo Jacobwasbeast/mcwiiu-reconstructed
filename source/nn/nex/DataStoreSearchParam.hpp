@@ -12,7 +12,9 @@ class DataStoreSearchParam : public _DDL_DataStoreSearchParam
 {
 public:
     DataStoreSearchParam();
-    virtual ~DataStoreSearchParam();
+    virtual ~DataStoreSearchParam()
+    {
+    }
 
     void Reset();
 };

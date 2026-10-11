@@ -54,21 +54,23 @@ bool SecureStream::FilterIncomingConnection(Buffer* pRequest, Buffer* pResponse,
 
     BitStream requestStream(pRequest);
     BitStream responseStream(pResponse);
-    Ticket* pTicket = 0;
     unsigned int uiConnectionID = 0;
-    if (!KerberosAuthentication::ValidateConnectionRequest(&requestStream, &responseStream,
+    Ticket* pTicket = 0;
+    if (KerberosAuthentication::ValidateConnectionRequest(&requestStream, &responseStream,
             m_pAuthenticationClient, &uiConnectionID, &pTicket))
-        return false;
-
-    if (!pEndPoint->PeerIsConnected() && !pEndPoint->IsAnyPacketProcessed())
     {
-        pEndPoint->SetPrincipalID(pTicket->GetPrincipalID());
-        pEndPoint->SetConnectionID(uiConnectionID);
-        pEndPoint->SetEncryptionKey(pTicket->GetKey());
+        if (!pEndPoint->PeerIsConnected() && !pEndPoint->IsAnyPacketProcessed())
+        {
+            pEndPoint->SetPrincipalID(pTicket->GetPrincipalID());
+            pEndPoint->SetConnectionID(uiConnectionID);
+            pEndPoint->SetEncryptionKey(pTicket->GetKey());
+        }
+
+        pTicket->ReleaseRef();
+        return true;
     }
 
-    pTicket->ReleaseRef();
-    return true;
+    return false;
 }
 
 bool SecureStream::ResponsibleForURL(const StationURL* pStationURL)

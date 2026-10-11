@@ -4,7 +4,7 @@
 #include "nn/nex/Buffer.hpp"
 #include "nn/nex/Job.hpp"
 #include "nn/nex/Key.hpp"
-#include "nn/nex/PolymorphicRootObject.hpp"
+#include "nn/nex/PluginObject.hpp"
 #include "nn/nex/SignatureBytes.hpp"
 
 namespace nn
@@ -15,7 +15,7 @@ namespace nex
 class CallContext;
 class KeyCache;
 
-class ChecksumAlgorithm : public PolymorphicRootObject
+class ChecksumAlgorithm : public PluginObject
 {
 public:
     ChecksumAlgorithm();

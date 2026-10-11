@@ -44,11 +44,6 @@ const unsigned int ROUTING_PACKET_OVERHEAD = 24;
 
 }
 
-SocketTransport::TransportJob::TransportJob(SocketTransport* pTransport)
-    : Job(JOB_TYPE_0, String(L"SocketTransport::TransportJob")), m_pTransport(pTransport)
-{
-}
-
 void SocketTransport::TransportJob::Execute()
 {
     m_pTransport->TransportJobMethod();
@@ -58,23 +53,23 @@ SocketTransport::SocketTransport()
     : m_sockets(SOCKET_TABLE_RESERVE), m_incomingQueue(L"UDP Incoming Queue Size"),
       m_profilingUnit(L"Transport Job", PROFILING_TRACE_MASK, L"")
 {
-    m_router.SetTransport(this);
-    m_relay.SetTransport(this);
     Core::AcquireInstance();
-    if (!g_threadSafetyEnabled)
+    if (g_threadSafetyEnabled)
     {
-        m_pOutgoingQueue = new PacketQueue(L"UDP Outgoing Queue Size");
+        CriticalSection* pCriticalSection = &Scheduler::GetInstance()->GetCriticalSection();
+        m_pOutgoingQueue = new ProtectedPacketQueue(L"UDP Outgoing Queue Size", pCriticalSection);
     }
     else
     {
-        m_pOutgoingQueue = new ProtectedPacketQueue(L"UDP Outgoing Queue Size",
-            &Scheduler::GetInstance()->GetCriticalSection());
+        m_pOutgoingQueue = new PacketQueue(L"UDP Outgoing Queue Size");
     }
     m_pJob = 0;
     m_pBufferThread = 0;
     m_bStopRequested = false;
     m_uiContextID = g_usingInstantiationContext ? g_instantiationContextVariable->GetRef() : 0;
     m_pTransportBuffer = 0;
+    m_router.SetTransport(this);
+    m_relay.SetTransport(this);
     ResetAnalyzeInfo();
 }
 
@@ -298,14 +293,15 @@ bool SocketTransport::StopListen(unsigned short uiPort)
     return true;
 }
 
-void SocketTransport::StopListen()
+bool SocketTransport::StopListen()
 {
     ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     while (!m_sockets.empty())
     {
         if (!StopListen(m_sockets.front().first))
-            return;
+            return false;
     }
+    return true;
 }
 
 unsigned int SocketTransport::GetNbListeningPorts()
@@ -316,14 +312,14 @@ unsigned int SocketTransport::GetNbListeningPorts()
 
 QueuingSocket* SocketTransport::GetSocket(unsigned short uiPort)
 {
-    if (!g_threadSafetyEnabled)
+    if (g_threadSafetyEnabled)
     {
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
         SocketTable::iterator socket = m_sockets.find(uiPort);
-        if (socket != m_sockets.end())
-            return socket->second;
-        return 0;
+        if (socket == m_sockets.end())
+            return 0;
+        return socket->second;
     }
-    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
     SocketTable::iterator socket = m_sockets.find(uiPort);
     if (socket == m_sockets.end())
         return 0;
@@ -492,13 +488,15 @@ bool SocketTransport::RouteRelaySendMultiMessage(Buffer* pBuffer, unsigned short
     InetAddress address;
     for (unsigned int i = 0; i < uiCount; ++i)
     {
-        bool bShouldRoute = m_router.ShouldRoute(&aPeers[i]);
-        if (m_relay.ShouldRelay(&aPeers[i]))
-            m_relay.RelayMessage(pBuffer, &aPeers[i], uiPort);
-        else if (bShouldRoute)
-            m_router.RouteMessage(pBuffer, &aPeers[i], uiPort);
-        else
+        InetAddress* pPeer = &aPeers[i];
+        bool bShouldRoute = m_router.ShouldRoute(pPeer);
+        bool bShouldRelay = m_relay.ShouldRelay(pPeer);
+        if (!bShouldRelay && !bShouldRoute)
             bResult = false;
+        else if (bShouldRelay)
+            m_relay.RelayMessage(pBuffer, pPeer, uiPort);
+        else
+            m_router.RouteMessage(pBuffer, pPeer, uiPort);
     }
     return bResult;
 }
@@ -606,18 +604,20 @@ void SocketTransport::TransportJobMethod()
 
 void SocketTransport::ClearPacketInPacketBufferPool()
 {
-    PacketQueue::Chain::iterator outgoing = m_pOutgoingQueue->begin();
-    while (outgoing != m_pOutgoingQueue->end())
+    PacketQueue::Chain::iterator outgoing;
+    for (outgoing = m_pOutgoingQueue->begin(); outgoing != m_pOutgoingQueue->end();)
     {
-        if ((*outgoing)->m_pPayload != 0 && (*outgoing)->m_pPayload->IsPooled())
+        Buffer* pPayload = (*outgoing)->m_pPayload;
+        if (pPayload != 0 && pPayload->IsPooled())
             outgoing = m_pOutgoingQueue->Dequeue(outgoing);
         else
             ++outgoing;
     }
-    HistoryChain::iterator history = m_history.begin();
-    while (history != m_history.end())
+    HistoryChain::iterator history;
+    for (history = m_history.begin(); history != m_history.end();)
     {
-        if ((*history)->m_pPayload != 0 && (*history)->m_pPayload->IsPooled())
+        Buffer* pPayload = (*history)->m_pPayload;
+        if (pPayload != 0 && pPayload->IsPooled())
         {
             (*history)->ReleaseRef();
             history = m_history.erase(history);
@@ -627,10 +627,11 @@ void SocketTransport::ClearPacketInPacketBufferPool()
             ++history;
         }
     }
-    PacketQueue::Chain::iterator incoming = m_incomingQueue.begin();
-    while (incoming != m_incomingQueue.end())
+    PacketQueue::Chain::iterator incoming;
+    for (incoming = m_incomingQueue.begin(); incoming != m_incomingQueue.end();)
     {
-        if ((*incoming)->m_pPayload != 0 && (*incoming)->m_pPayload->IsPooled())
+        Buffer* pPayload = (*incoming)->m_pPayload;
+        if (pPayload != 0 && pPayload->IsPooled())
         {
             (*incoming)->ReleaseRef();
             incoming = m_incomingQueue.Dequeue(incoming);

@@ -105,6 +105,8 @@ public:
     static bool IsOldRVDDLVersion(EndPoint* pEndPoint);
 
 protected:
+    friend class ClientProtocol;
+
     unsigned short m_uiProtocolID;
     EndPoint* m_pOutgoingConnection;
     ProtocolRequestBrokerInterface* m_pProtocolRequestBroker;

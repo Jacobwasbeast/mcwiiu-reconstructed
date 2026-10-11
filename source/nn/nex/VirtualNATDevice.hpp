@@ -18,6 +18,7 @@ public:
     }
 
     virtual bool ProcessOutgoingAddress(StationURL* pURL, unsigned short uiPort) = 0;
+    virtual bool ProcessIncomingAddress(StationURL* pURL, unsigned short uiPort) = 0;
 };
 
 }

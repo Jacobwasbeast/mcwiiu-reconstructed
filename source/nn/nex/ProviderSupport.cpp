@@ -1,7 +1,14 @@
 #include "nn/nex/ProviderSupport.hpp"
 #include "nn/nex/Reconstruction.hpp"
 
+#include <nn/middleware.h>
+
 #include "nn/nex/AnyGatheringAdapter.hpp"
+#include "nn/nex/CriticalSection.hpp"
+#include "nn/nex/DynamicGathering.hpp"
+#include "nn/nex/GameSession.hpp"
+#include "nn/nex/ProtocolRegistry.hpp"
+#include "nn/nex/Scheduler.hpp"
 
 #include "nn/nex/Message.hpp"
 #include "nn/nex/ProtocolCallContext.hpp"
@@ -16,12 +23,31 @@ MatchMakingClient::MatchMakingClient()
     , m_matchMakingProtocolClient(0)
     , m_matchMakingProtocolExtClient(0)
 {
+    SetModuleId("[SDK+Nintendo:NEX_MM_3_10_0]");
     m_matchMakingProtocolClient.SetProtocolID(0x15);
     m_matchMakingProtocolExtClient.SetProtocolID(0x32);
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+    if (AnyGatheringAdapter::RegisterUse() == 1)
+    {
+        Gathering* pGathering = new Gathering;
+        if (!RegisterPrototype(pGathering))
+            delete pGathering;
+        DynamicGathering* pDynamicGathering = new DynamicGathering;
+        if (!RegisterPrototype(pDynamicGathering))
+            delete pDynamicGathering;
+        GameSession* pGameSession = new GameSession;
+        if (!RegisterPrototype(pGameSession))
+            delete pGameSession;
+    }
+    MatchMakingProtocolClient* pProtocolClient = new MatchMakingProtocolClient();
+    GetProtocolRegistry()->RegisterProtocol(0x15, pProtocolClient);
+    MatchMakingProtocolExtClient* pExtProtocolClient = new MatchMakingProtocolExtClient();
+    GetProtocolRegistry()->RegisterProtocol(0x32, pExtProtocolClient);
 }
 
 MatchMakingClient::~MatchMakingClient()
 {
+    AnyGatheringAdapter::UnregisterUse();
 }
 
 void MatchMakingClient::UpdateProtocolsDefaultCredentials(Credentials* pCredentials)

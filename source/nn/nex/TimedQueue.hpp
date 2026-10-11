@@ -23,10 +23,7 @@ public:
     {
     }
 
-    virtual ~TimedQueue()
-    {
-        m_entries.clear();
-    }
+    virtual ~TimedQueue();
 
     virtual void Queue(const T& rItem, Time time)
     {
@@ -76,6 +73,12 @@ public:
 private:
     EntryList m_entries;
 };
+
+template <typename T>
+TimedQueue<T>::~TimedQueue()
+{
+    m_entries.clear();
+}
 
 }
 }

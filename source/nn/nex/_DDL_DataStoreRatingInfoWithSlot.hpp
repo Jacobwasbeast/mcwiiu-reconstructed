@@ -17,9 +17,8 @@ class _DDL_DataStoreRatingInfoWithSlot : public RootObject
 {
 public:
     _DDL_DataStoreRatingInfoWithSlot()
-        : m_Rating()
+        : m_uiStructureVersion(0), m_Rating()
     {
-        m_uiStructureVersion = 0;
     }
 
     virtual ~_DDL_DataStoreRatingInfoWithSlot()

@@ -19,15 +19,15 @@ const uint8_t GATHERING_MAX_STRUCTURE_VERSION = 0;
 
 _DDL_Gathering& _DDL_Gathering::operator=(const _DDL_Gathering& rSource)
 {
-    m_uiValue1 = rSource.m_uiValue1;
     m_uiStructureVersion = rSource.m_uiStructureVersion;
+    m_uiValue1 = rSource.m_uiValue1;
     m_uiValue2 = rSource.m_uiValue2;
     m_uiValue3 = rSource.m_uiValue3;
     m_uiShortValue1 = rSource.m_uiShortValue1;
+    m_uiShortValue2 = rSource.m_uiShortValue2;
     m_uiParticipationPolicy = rSource.m_uiParticipationPolicy;
     m_uiPolicyArgument = rSource.m_uiPolicyArgument;
     m_uiValue4 = rSource.m_uiValue4;
-    m_uiShortValue2 = rSource.m_uiShortValue2;
     m_uiValue5 = rSource.m_uiValue5;
     m_Description = rSource.m_Description;
     return *this;

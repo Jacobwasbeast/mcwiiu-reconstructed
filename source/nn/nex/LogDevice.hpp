@@ -11,7 +11,7 @@ namespace nex
 class LogDevice : public RootObject
 {
 public:
-    virtual ~LogDevice();
+    virtual ~LogDevice() {}
     virtual void Output(const wchar_t* pText) = 0;
 };
 

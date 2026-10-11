@@ -16,7 +16,11 @@ class Message;
 class _DDL_DataStorePermission : public RootObject
 {
 public:
-    _DDL_DataStorePermission();
+    _DDL_DataStorePermission()
+        : m_uiStructureVersion(0), m_RecipientIds(0)
+    {
+    }
+
     virtual ~_DDL_DataStorePermission()
     {
     }

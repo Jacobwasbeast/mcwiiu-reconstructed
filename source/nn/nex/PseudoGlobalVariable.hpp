@@ -48,7 +48,18 @@ public:
 
     virtual void AllocateExtraContexts();
 
-    virtual void FreeExtraContexts();
+    virtual void FreeExtraContexts()
+    {
+        if (m_pExtraContexts != 0)
+        {
+            for (unsigned int i = 0; i < GetNbOfExtraContexts(); ++i)
+                m_pExtraContexts[i].~T();
+
+            void* pContexts = m_pExtraContexts;
+            MemoryManager::Free(pContexts);
+            m_pExtraContexts = 0;
+        }
+    }
 
     virtual void ResetContext(unsigned int uiContextId)
     {
@@ -67,9 +78,7 @@ public:
 
     T& Get()
     {
-        unsigned int uiContextId = 0;
-        if (g_usingInstantiationContext)
-            uiContextId = g_instantiationContextVariable->GetRef();
+        unsigned int uiContextId = g_usingInstantiationContext ? g_instantiationContextVariable->GetRef() : 0;
 
         if (uiContextId == 0)
             return m_value;
@@ -86,22 +95,12 @@ private:
 template <typename T>
 void PseudoGlobalVariable<T>::AllocateExtraContexts()
 {
+    if (GetNbOfExtraContexts() == static_cast<unsigned int>(-1))
+        new T[GetNbOfExtraContexts()];
+
     m_pExtraContexts = static_cast<T*>(MemoryManager::Allocate(GetNbOfExtraContexts() * sizeof(T)));
     for (unsigned int i = 0; i < GetNbOfExtraContexts(); ++i)
         ::new (static_cast<void*>(&m_pExtraContexts[i])) T(m_initialValue);
-}
-
-template <typename T>
-void PseudoGlobalVariable<T>::FreeExtraContexts()
-{
-    if (m_pExtraContexts != 0)
-    {
-        for (unsigned int i = 0; i < GetNbOfExtraContexts(); ++i)
-            m_pExtraContexts[i].~T();
-
-        MemoryManager::Free(m_pExtraContexts);
-        m_pExtraContexts = 0;
-    }
 }
 
 }

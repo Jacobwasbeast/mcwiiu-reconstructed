@@ -32,8 +32,7 @@ public:
     unsigned short m_unknown118;
     unsigned short m_unknown11a;
     unsigned int m_unknown11c;
-    unsigned int m_unknown120;
-    unsigned int m_unknown124;
+    unsigned long long m_unknown120;
     bool m_unknown128;
     bool m_unknown129;
     unsigned int m_unknown12c;
@@ -42,6 +41,14 @@ public:
     unsigned long long m_unknown138;
     unsigned int m_unknown140;
     unsigned int m_unknown144;
+
+protected:
+    PacketOut()
+        : Packet()
+        , m_unknown120(0)
+        , m_unknown138(0)
+    {
+    }
 };
 
 }

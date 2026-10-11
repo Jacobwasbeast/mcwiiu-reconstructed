@@ -44,7 +44,7 @@ PacketEncDec::PacketEncDec()
 
 PacketEncDec::~PacketEncDec()
 {
-    for (unsigned int i = 0; i < m_encryptors.size(); ++i)
+    for (int i = 0; i < m_encryptors.size(); ++i)
     {
         delete m_encryptors[i];
         delete m_decryptors[i];
@@ -59,8 +59,8 @@ void PacketEncDec::Decode(Packet* pPacket)
     if (g_streamSettings[streamType].Get().IsEncryptionRequired() && !pPacket->m_bSkipEncryption
         && pPacket->m_pPayload != 0)
     {
-        unsigned short uiType = pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK;
-        if (uiType == PACKET_TYPE_DATA || uiType == PACKET_TYPE_USER)
+        if ((pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_DATA
+            || (pPacket->m_uiTypeAndFlags & PACKET_TYPE_MASK) == PACKET_TYPE_USER)
         {
             if ((pPacket->m_uiTypeAndFlags & PACKET_FLAG_RELIABLE) != 0)
             {
@@ -75,8 +75,10 @@ void PacketEncDec::Decode(Packet* pPacket)
             else
                 memcpy(packetKey.GetContentPtr(), m_unreliableKey.GetContentPtr(), 32);
             unsigned short uiSequenceID = pPacket->m_sequenceID.GetValue();
-            packetKey.GetContentPtr()[0] += static_cast<unsigned char>(uiSequenceID);
-            packetKey.GetContentPtr()[1] += static_cast<unsigned char>(uiSequenceID >> 8);
+            unsigned char uiSequenceLow = static_cast<unsigned char>(uiSequenceID);
+            unsigned char uiSequenceHigh = static_cast<unsigned char>(uiSequenceID >> 8);
+            packetKey.GetContentPtr()[0] += uiSequenceLow;
+            packetKey.GetContentPtr()[1] += uiSequenceHigh;
             packetKey.GetContentPtr()[packetKey.GetLength() - 1] += pPacket->m_uiSessionID;
             m_pUnreliableEncryptor->SetKey(packetKey);
             m_pUnreliableEncryptor->Decrypt(pPacket->m_pPayload);
@@ -98,24 +100,26 @@ void PacketEncDec::Encode(Packet* pPacket, Stream::Type streamType, bool bSwapPa
             pPayload->Swap(*pPacket->m_pPayload);
         }
 
-        if ((pPacket->m_uiTypeAndFlags & PACKET_FLAG_RELIABLE) == 0)
+        if ((pPacket->m_uiTypeAndFlags & PACKET_FLAG_RELIABLE) != 0)
         {
-            Key packetKey(32);
-            Key& rBaseKey = (pPacket->m_uiTypeAndFlags & PACKET_FLAG_ALTERNATE_KEY_A) == 0
-                    && (pPacket->m_uiTypeAndFlags & PACKET_FLAG_ALTERNATE_KEY_B) == 0
-                ? m_unreliableKey
-                : m_unreliableAlternateKey;
-            memcpy(packetKey.GetContentPtr(), rBaseKey.GetContentPtr(), 32);
-            unsigned short uiSequenceID = pPacket->m_sequenceID.GetValue();
-            packetKey.GetContentPtr()[0] += static_cast<unsigned char>(uiSequenceID);
-            packetKey.GetContentPtr()[1] += static_cast<unsigned char>(uiSequenceID >> 8);
-            packetKey.GetContentPtr()[packetKey.GetLength() - 1] += pPacket->m_uiSessionID;
-            m_pUnreliableEncryptor->SetKey(packetKey);
-            m_pUnreliableEncryptor->Encrypt(pPayload);
+            m_encryptors[pPacket->m_uiSubStreamID]->Encrypt(pPayload);
         }
         else
         {
-            m_encryptors[pPacket->m_uiSubStreamID]->Encrypt(pPayload);
+            Key packetKey(32);
+            if ((pPacket->m_uiTypeAndFlags & PACKET_FLAG_ALTERNATE_KEY_A) != 0
+                || (pPacket->m_uiTypeAndFlags & PACKET_FLAG_ALTERNATE_KEY_B) != 0)
+                memcpy(packetKey.GetContentPtr(), m_unreliableAlternateKey.GetContentPtr(), 32);
+            else
+                memcpy(packetKey.GetContentPtr(), m_unreliableKey.GetContentPtr(), 32);
+            unsigned short uiSequenceID = pPacket->m_sequenceID.GetValue();
+            unsigned char uiSequenceLow = static_cast<unsigned char>(uiSequenceID);
+            unsigned char uiSequenceHigh = static_cast<unsigned char>(uiSequenceID >> 8);
+            packetKey.GetContentPtr()[0] += uiSequenceLow;
+            packetKey.GetContentPtr()[1] += uiSequenceHigh;
+            packetKey.GetContentPtr()[packetKey.GetLength() - 1] += pPacket->m_uiSessionID;
+            m_pUnreliableEncryptor->SetKey(packetKey);
+            m_pUnreliableEncryptor->Encrypt(pPayload);
         }
 
         if (bSwapPayload)

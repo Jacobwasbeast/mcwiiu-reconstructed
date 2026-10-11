@@ -10,6 +10,9 @@
 #include "nn/nex/Core.hpp"
 #include "nn/nex/SingleThreadCallPolicy.hpp"
 #include "nn/nex/SecurityContextManager.hpp"
+#include "nn/nex/LogToClientController.hpp"
+#include "nn/nex/Scheduler.hpp"
+#include "nn/nex/StringStream.hpp"
 #include <map>
 #include <vector>
 
@@ -25,6 +28,10 @@ struct BrokerState
     std::vector<Protocol*> protocols;
 };
 typedef std::map<const ProtocolRequestBroker*, BrokerState*> BrokerStateMap;
+enum
+{
+    PROTOCOL_FLAG_THREAD_SAFE_RMC = 2
+};
 BrokerStateMap g_brokerStates;
 BrokerState* StateFor(const ProtocolRequestBroker* broker)
 {
@@ -59,43 +66,71 @@ Operation* ProtocolRequestBroker::GetCurrentOperation()
 void ProtocolRequestBroker::ProcessMessage(CallProtocolMethodOperation* operation,
                                             EndPoint* endPoint, Buffer* buffer)
 {
+    m_pCurrentEndPoint = endPoint;
     ProcessMessageCore(operation, endPoint, buffer);
+    m_pCurrentEndPoint = 0;
 }
 
 void ProtocolRequestBroker::ProcessMessageCore(CallProtocolMethodOperation* operation,
                                                EndPoint* endPoint, Buffer* buffer)
 {
-    if (operation != 0)
-        m_operationManager.OperationBegins(operation);
-    if (buffer == 0)
-    {
-        if (operation != 0)
-            m_operationManager.OperationEnds(operation);
-        return;
-    }
-    if (endPoint != 0)
-        m_bandwidthCounters[endPoint->GetConnectionID()]->m_incoming += buffer->GetLength();
     Message message(buffer);
-    Protocol::_Command command = Protocol::COMMAND_REQUEST;
-    unsigned short protocolId = 0;
+    Protocol::_Command command;
+    unsigned short protocolId;
     Protocol::ExtractProtocolKey(&message, command, protocolId);
-    if (command == Protocol::COMMAND_RESPONSE)
+    m_bandwidthCounters[protocolId]->m_incoming += buffer->GetLength();
+    if (command == Protocol::COMMAND_REQUEST)
     {
-        ProcessCallResponse(protocolId, &message, endPoint);
-        return;
-    }
-    Message response;
-    bool responseRequired = true;
-    ProcessCallRequest(protocolId, &message, &response, &responseRequired, endPoint);
-    if (endPoint != 0 && responseRequired)
-    {
-        Buffer* out = response.GetBuffer();
-        m_bandwidthCounters[endPoint->GetConnectionID()]->m_outgoing += out->GetLength();
-        endPoint->_Send(out, out->GetLength(), true, 0, 0);
-    }
-    (void)operation;
-    if (operation != 0)
+        operation->InitializeForNewCallAttempt();
+        m_operationManager.OperationBegins(operation);
+        Message response;
+        bool responseRequired = false;
+        LogToClientController::Accumulate();
+        ProcessCallRequest(protocolId, &message, &response, &responseRequired, endPoint);
+        LogToClientController::Flush(endPoint);
+        if (!operation->m_postponed && responseRequired)
+        {
+            Buffer* out = response.GetBuffer();
+            {
+                ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+                endPoint->_Send(out, 1, false, 0, 0);
+            }
+            m_bandwidthCounters[protocolId]->m_outgoing += out->GetLength();
+        }
         m_operationManager.OperationEnds(operation);
+    }
+    else
+    {
+        ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+        if (m_pParentBroker == 0)
+        {
+            ProcessCallResponse(protocolId, &message, endPoint);
+        }
+        else
+        {
+            m_pParentBroker->ProcessCallResponse(protocolId, &message, endPoint);
+        }
+    }
+
+    if (message.HasError())
+    {
+        StringStream stream;
+        stream << L"ProtocolRequestBroker: Error processing message. pBuffer=" << buffer
+               << L" ProtocolID=";
+        stream.StreamNumber(protocolId) << L" CntSize=";
+        stream.StreamNumber(buffer->GetLength()) << L" Size=";
+        stream.StreamNumber(buffer->GetRealSize() - buffer->GetHeadShiftSize());
+        if (endPoint != 0)
+        {
+            stream << L"  EndPoint: CID=";
+            stream.StreamNumber(endPoint->m_uiConnectionID) << L" PID=";
+            stream.StreamNumber(endPoint->m_uiPrincipalID) << L" URL=" << endPoint->m_stationURL;
+        }
+        else
+        {
+            stream << L"  <EndPoint is NULL>";
+        }
+    }
 }
 
 void ProtocolRequestBroker::ProcessCallRequest(unsigned short protocolId, Message* request,
@@ -214,11 +249,9 @@ bool ProtocolRequestBroker::CloneProtocols()
 bool ProtocolRequestBroker::RegisterServerProtocol(unsigned short protocolId,
                                                     ServerProtocol* protocol)
 {
-    BrokerState* state = StateFor(this);
-    state->registry.RegisterProtocol(protocolId, protocol);
-    if (protocol != 0)
-        state->protocols.push_back(protocol);
-    return protocol != 0;
+    protocol->SetProtocolID(protocolId);
+    RegisterProtocol(protocol);
+    return true;
 }
 
 bool ProtocolRequestBroker::UnregisterServerProtocol(unsigned short protocolId)
@@ -242,17 +275,16 @@ bool ProtocolRequestBroker::UnregisterServerProtocol(unsigned short protocolId)
 
 ServerProtocol* ProtocolRequestBroker::GetServerProtocol(unsigned short protocolId)
 {
-    return static_cast<ServerProtocol*>(StateFor(this)->registry.GetServerProtocol(protocolId));
+    return static_cast<ServerProtocol*>(GetProtocol(protocolId, Protocol::TYPE_SERVER));
 }
 
 qResult ProtocolRequestBroker::DispatchLocalRMC(Message* message, ClientProtocol* client,
                                                 ServerProtocol* server, EndPoint* endPoint)
 {
-    if (server == 0 || client == 0)
-        return qResult(false);
-    if (server->FlagIsSet(2))
-        return DispatchThreadSafeLocalRMC(message, client, server, endPoint);
-    return DispatchBlockingLocalRMC(message, client, server, endPoint);
+    qResult result = server->FlagIsSet(PROTOCOL_FLAG_THREAD_SAFE_RMC)
+                         ? DispatchThreadSafeLocalRMC(message, client, server, endPoint)
+                         : DispatchBlockingLocalRMC(message, client, server, endPoint);
+    return result;
 }
 
 qResult ProtocolRequestBroker::DispatchBlockingLocalRMC(Message* message, ClientProtocol* client,

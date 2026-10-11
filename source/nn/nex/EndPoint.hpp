@@ -16,6 +16,7 @@ namespace nex
 {
 
 class Buffer;
+class ClientProtocolRequestBroker;
 class ConnectionManager;
 class ConnectionOrientedStream;
 class EndPointEventHandler;
@@ -24,6 +25,7 @@ class FirstErrorHolder;
 class Key;
 class UserContext;
 class Protocol;
+class ProtocolRequestBroker;
 class SecureEndPoint;
 
 class EndPointInfoInterface
@@ -120,8 +122,11 @@ public:
 
 protected:
     friend class Protocol;
+    friend class ClientProtocolRequestBroker;
+    friend class ProtocolRequestBroker;
     friend class NATTraversalRelayClient;
     friend class SecureEndPoint;
+    friend class ServerProtocol;
     friend class ConnectionManager;
     friend class GlobalNotificationEventManager;
 

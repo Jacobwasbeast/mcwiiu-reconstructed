@@ -19,9 +19,6 @@ public:
         AuthenticationClient* pAuthenticationClient, unsigned int* pConnectionID,
         Ticket** ppTicket);
     static bool ValidateConnectionResponse(BitStream* pResponse, unsigned int uiNonce);
-
-private:
-    static void WriteRejectedResponse(BitStream* pResponse);
 };
 
 }

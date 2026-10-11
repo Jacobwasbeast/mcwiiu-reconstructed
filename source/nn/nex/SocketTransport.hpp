@@ -2,6 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_NEX_SOCKETTRANSPORT_HPP
 
 #include "nn/nex/ChainPolicyHistoryPacket.hpp"
+#include "nn/nex/DebugString.hpp"
 #include "nn/nex/InterfaceTable.hpp"
 #include "nn/nex/Job.hpp"
 #include "nn/nex/PacketQueue.hpp"
@@ -36,7 +37,7 @@ public:
     virtual bool StartListenReuse(unsigned short uiPort, unsigned short* pPortOut, bool bPublish,
         unsigned int uiTrafficType, bool bFlag);
     virtual bool StopListen(unsigned short uiPort);
-    virtual void StopListen();
+    virtual bool StopListen();
     virtual unsigned int GetNbListeningPorts();
     virtual bool Send(unsigned short uiPort, Stream::Type type, unsigned char uiSourceStreamID,
         unsigned char uiDestinationStreamID, PacketOut* pPacket, bool bFlag);
@@ -60,7 +61,10 @@ private:
     class TransportJob : public Job
     {
     public:
-        explicit TransportJob(SocketTransport* pTransport);
+        explicit TransportJob(SocketTransport* pTransport)
+            : Job(JOB_TYPE_0, DebugString(String(L"SocketTransport::TransportJob"))), m_pTransport(pTransport)
+        {
+        }
 
         virtual void Execute();
 

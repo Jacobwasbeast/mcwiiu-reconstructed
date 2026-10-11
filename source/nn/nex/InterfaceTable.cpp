@@ -7,8 +7,10 @@ namespace nn
 namespace ac
 {
 
-nn::Result GetAssignedAddress(unsigned long* pAddress);
-nn::Result GetAssignedSubnet(unsigned long* pSubnet);
+nn::Result GetAssignedAddress(unsigned long* pAddress)
+    asm("GetAssignedAddress__Q2_2nn2acFPUl");
+nn::Result GetAssignedSubnet(unsigned long* pSubnet)
+    asm("GetAssignedSubnet__Q2_2nn2acFPUl");
 
 }
 }

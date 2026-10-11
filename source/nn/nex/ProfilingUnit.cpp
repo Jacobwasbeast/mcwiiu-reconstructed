@@ -1,6 +1,8 @@
 #include "nn/nex/ProfilingUnit.hpp"
 
+#include <algorithm>
 #include <cwchar>
+#include <functional>
 
 #include "nn/nex/CriticalSection.hpp"
 
@@ -89,25 +91,21 @@ void ProfilingUnit::ResetAll()
 
     CS().Enter();
 
-    List::iterator unit = GetList().begin();
-    List::iterator last = GetList().end();
-
-    while (unit != last)
-    {
-        (*unit)->Reset(time);
-        ++unit;
-    }
+    std::for_each(GetList().begin(), GetList().end(), std::bind2nd(std::mem_fun(&ProfilingUnit::Reset), time));
 
     CS().Leave();
 }
 
 qList<unsigned int> ProfilingUnit::GetAllIDs()
 {
-    qList<unsigned int> ids;
-
     CS().Enter();
 
-    for (List::iterator unit = GetList().begin(); unit != GetList().end(); ++unit)
+    qList<unsigned int> ids;
+
+    List::iterator unit = GetList().begin();
+    List::iterator last = GetList().end();
+
+    for (; unit != last; ++unit)
         ids.push_back((*unit)->GetID());
 
     CS().Leave();
@@ -134,11 +132,14 @@ ProfilingUnit* ProfilingUnit::FindByID(unsigned int uiID)
 
 qList<ProfilingUnit*> ProfilingUnit::FindByName(const String& rName)
 {
-    qList<ProfilingUnit*> units;
-
     CS().Enter();
 
-    for (List::iterator unit = GetList().begin(); unit != GetList().end(); ++unit)
+    qList<ProfilingUnit*> units;
+
+    List::iterator unit = GetList().begin();
+    List::iterator last = GetList().end();
+
+    for (; unit != last; ++unit)
     {
         if (String::IsEqual(rName, (*unit)->GetName()))
             units.push_back(*unit);

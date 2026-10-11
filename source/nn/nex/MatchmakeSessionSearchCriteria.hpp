@@ -14,8 +14,16 @@ class MatchmakeSessionSearchCriteria : public _DDL_MatchmakeSessionSearchCriteri
 {
 public:
     MatchmakeSessionSearchCriteria();
-    MatchmakeSessionSearchCriteria(unsigned int uiGameMode, MatchmakeSystemType type);
-    virtual ~MatchmakeSessionSearchCriteria();
+    MatchmakeSessionSearchCriteria(unsigned int uiGameMode, MatchmakeSystemType type)
+    {
+        Reset();
+        SetGameMode(uiGameMode);
+        SetMatchmakeSystemType(type);
+    }
+
+    virtual ~MatchmakeSessionSearchCriteria()
+    {
+    }
 
     void Reset();
     void SetGameMode(unsigned int uiGameMode);
@@ -29,7 +37,11 @@ public:
     void SetAttributeWithRange(unsigned int uiIndex, unsigned int uiMinimum, unsigned int uiMaximum);
     void SetExcludeLocked(bool bExcludeLocked);
     void SetVacantOnly(bool bVacantOnly);
-    void SetVacantOnly(bool bVacantOnly, unsigned short uiVacantParticipants);
+    void SetVacantOnly(bool bVacantOnly, unsigned short uiVacantParticipants)
+    {
+        m_bVacantOnly = bVacantOnly;
+        m_uiVacantParticipants = uiVacantParticipants;
+    }
     void SetExcludeNonHostPid(bool bExcludeNonHostPid);
     void SetExcludeUserPasswordSet(bool bExcludeUserPasswordSet);
     void SetSelectionMethod(MatchmakeSelectionMethod method);

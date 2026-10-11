@@ -70,14 +70,13 @@ void StepSequenceJob::Execute()
         if (GetState() != Running)
             return;
 
-        uint32_t contextId = 0;
+        unsigned int contextId = g_usingInstantiationContext;
         if (g_usingInstantiationContext)
             contextId = g_instantiationContextVariable->GetRef();
 
         if (contextId != 0)
         {
-            const InstanceTable::ContextVector* contexts = g_instanceTable.m_extraContexts;
-            if (contexts->size() <= contextId)
+            if (contextId >= g_instanceTable.m_extraContexts->size())
             {
                 SystemError::SignalError(
                     L"D:\\home\\jenkins\\workspace\\Master\\Pack\\d4f027b8\\.\\OnlineCore/src/Core/InstanceTable.h",

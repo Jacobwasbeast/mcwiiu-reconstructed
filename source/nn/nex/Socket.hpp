@@ -70,6 +70,8 @@ protected:
     friend StringStream& operator<<(StringStream& rStream, Socket& rSocket);
 };
 
+extern const unsigned int SOCKET_SUCCESS;
+
 StringStream& operator<<(StringStream& rStream, Socket& rSocket);
 
 }

@@ -13,15 +13,18 @@ namespace nex
 class URLProbe : public RootObject
 {
 public:
-    URLProbe(const StationURL& rStationURL, int iTimeout, int iInterval, unsigned int uiMaxProbes);
-    virtual ~URLProbe();
+    static const unsigned int UNREACHED_PING_TIME = static_cast<unsigned int>(-1);
 
+    URLProbe(const StationURL& rStationURL, int iTimeout, int iInterval, unsigned int uiMaxProbes);
+    virtual ~URLProbe() {}
+
+    bool Update(const StationURL& rStationURL, Time pingSendTime);
     bool UpdateIsNeeded(Time currentTime) const;
     void Trace(unsigned long long uiFilter);
 
     StationURL m_stationURL;
     Time m_expirationTime;
-    int m_iPingTime;
+    unsigned int m_uiPingTime;
     Time m_lastUpdateTime;
     int m_iInterval;
     unsigned int m_uiProbeCount;

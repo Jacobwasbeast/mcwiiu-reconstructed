@@ -10,9 +10,21 @@ namespace nex
 {
 
 OutputFormat::OutputFormat()
-    : m_indent(0), m_field4(0), m_flags(), m_field14(0),
-      m_startTime(static_cast<uint32_t>(Time::GetTime()))
 {
+    m_indent = 0;
+    m_field4 = 0;
+    m_flags[0] = false;
+    m_flags[1] = false;
+    m_flags[2] = false;
+    m_flags[3] = false;
+    m_flags[4] = false;
+    m_flags[5] = false;
+    m_flags[6] = false;
+    m_flags[7] = false;
+    m_flags[8] = false;
+    m_flags[9] = false;
+    m_startTime = static_cast<uint32_t>(Time::GetTime());
+    m_field14 = 0;
 }
 
 OutputFormat::~OutputFormat()
@@ -67,7 +79,10 @@ void OutputFormat::IncreaseIndent(unsigned int amount)
 
 void OutputFormat::DecreaseIndent(unsigned int amount)
 {
-    m_indent = amount < m_indent ? m_indent - amount : 0;
+    if (m_indent > amount)
+        m_indent -= amount;
+    else
+        m_indent = 0;
 }
 
 void OutputFormat::EndString(wchar_t*, unsigned int)

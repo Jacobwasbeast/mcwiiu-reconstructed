@@ -9,12 +9,14 @@ namespace nex
 
 bool RoutingTable::RTEntry::IsExpired(unsigned int uiElapsed) const
 {
-    unsigned int remaining = m_timeRemaining;
-    bool bExpired = true;
-    if (remaining > uiElapsed)
+    bool bExpired = false;
+    if (m_timeRemaining > uiElapsed)
     {
-        m_timeRemaining = remaining - uiElapsed;
-        bExpired = false;
+        m_timeRemaining -= uiElapsed;
+    }
+    else
+    {
+        bExpired = true;
     }
     return bExpired;
 }
@@ -24,19 +26,19 @@ RoutingTable::RoutingTable(unsigned int uiTimeout)
 {
 }
 
-bool RoutingTable::Add(const InetAddress& rAddress, const InetAddress& rKey, bool bReplace)
+bool RoutingTable::Add(const InetAddress& rKey, const InetAddress& rAddress, bool bReplace)
 {
     bool bAdded = false;
-    if (rKey.GetAddress() != 0)
+    if (rAddress.GetAddress() != 0)
     {
-        if (!(rKey == rAddress))
+        if (!(rAddress == rKey))
         {
             std::pair<EntryMap::iterator, bool> result =
-                m_entries.insert(EntryMap::value_type(rKey, RTEntry(rAddress, m_timeout)));
+                m_entries.insert(std::make_pair(rKey, RTEntry(rAddress, m_timeout)));
             bAdded = result.second;
             if (!bAdded && bReplace)
             {
-                result.first->second.m_address = rKey;
+                result.first->second.m_address = rAddress;
                 result.first->second.m_timeRemaining = m_timeout;
                 bAdded = true;
             }
@@ -75,18 +77,18 @@ void RoutingTable::Clean()
 
 void RoutingTable::PeriodicHouseCleaning()
 {
-    unsigned long long now = Time::GetTime();
-    unsigned int elapsed = static_cast<unsigned int>(now) - static_cast<unsigned int>(m_lastCleaning);
+    Time now = Time::GetTime();
+    unsigned int elapsed = static_cast<unsigned int>(now - m_lastCleaning);
     if (elapsed >= 1000)
     {
         m_lastCleaning = now;
         EntryMap::iterator it = m_entries.begin();
         while (it != m_entries.end())
         {
-            if (it->second.IsExpired(elapsed))
-                m_entries.erase(it++);
-            else
+            if (!it->second.IsExpired(elapsed))
                 ++it;
+            else
+                m_entries.erase(it++);
         }
     }
 }

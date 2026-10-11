@@ -3,7 +3,10 @@
 #include "nn/nex/CallContextRegister.hpp"
 #include "nn/nex/Core.hpp"
 #include "nn/nex/DebugString.hpp"
+#include "nn/nex/JobNameResolve.hpp"
+#include "nn/nex/Network.hpp"
 #include "nn/nex/RootTransport.hpp"
+#include "nn/nex/Scheduler.hpp"
 #include "nn/nex/Time.hpp"
 
 namespace nn
@@ -49,6 +52,45 @@ JobNATCheckBase::JobNATCheckBase(CallContext* pCallContext, const InetAddress& r
 
 JobNATCheckBase::~JobNATCheckBase()
 {
+}
+
+void JobNATCheckBase::StepInitialize()
+{
+    if (Network::GetInstance() == 0 || RootTransport::GetInstance() == 0)
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobNATCheckBase::StepFinish), L""));
+        return;
+    }
+    CallContext* pCallContext =
+        Core::GetInstance()->GetCallContextRegister()->GetCallContext(m_uiCallId);
+    if (pCallContext == 0)
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobNATCheckBase::StepFinish), L""));
+        return;
+    }
+    for (int i = 0; i < RECEIVED_MESSAGE_COUNT; ++i)
+        m_aReceived[i] = RecvNATCheckMessage();
+    if (RootTransport::GetInstance() != 0 &&
+        RootTransport::GetInstance()->m_bNATCheckServerAddressesSet)
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobNATCheckBase::StepInitializeImpl), L""));
+        return;
+    }
+    m_callContext.Reset();
+    if (!m_callContext.InitiateCall())
+    {
+        SetStep(Step(static_cast<Step::Function>(&JobNATCheckBase::StepFinish), L""));
+        return;
+    }
+    JobNameResolve* pNameResolve = new JobNameResolve(g_nameResolveThreadPriority,
+        g_nameResolveThreadAffinity, &RootTransport::SetUpDefaultNATCheckServerInternal);
+    pNameResolve->Initialize(m_callContext.GetCallID());
+    Scheduler::GetInstance()->Queue(pNameResolve, true);
+    Core::GetInstance()->GetCallContextRegister()->AssociateCallContext(m_uiCallId,
+        m_callContext.GetCallID());
+    SetToSuspended();
+    ResumeOnCallCompletion(&m_callContext,
+        new Step(static_cast<Step::Function>(&JobNATCheckBase::StepDNSResolve), L""));
 }
 
 void JobNATCheckBase::StepDNSResolve()
@@ -161,9 +203,10 @@ bool JobNATCheckBase::SendNextQueuedMessage()
 {
     if (m_queue.empty())
         return false;
-    QueuedMessage& rMessage = m_queue.front();
-    bool bSent = m_socket.Send(reinterpret_cast<const unsigned char*>(&rMessage.second),
-                     sizeof(NATCheckMessage), rMessage.first) == SocketDriver::RESULT_SUCCESS;
+    bool bSent = true;
+    if (m_socket.Send(reinterpret_cast<const unsigned char*>(&m_queue.begin()->second),
+            sizeof(NATCheckMessage), m_queue.begin()->first) != SOCKET_SUCCESS)
+        bSent = false;
     m_queue.pop_front();
     return bSent;
 }
@@ -190,7 +233,7 @@ void JobNATCheckBase::StepExecute()
     } while (bSent);
     unsigned int uiReceived = 0;
     if (m_socket.RecvNonBlock(reinterpret_cast<unsigned char*>(&m_recvMessage),
-            sizeof(NATCheckMessage), &uiReceived, &m_receivedFrom) == SocketDriver::RESULT_SUCCESS &&
+            sizeof(NATCheckMessage), &uiReceived, &m_receivedFrom) == SOCKET_SUCCESS &&
         uiReceived == sizeof(NATCheckMessage))
     {
         m_recvMessage.FromNetworkByteOrder();
@@ -201,12 +244,12 @@ void JobNATCheckBase::StepExecute()
             ++m_aReceived[uiIndex].m_uiCount;
         }
     }
-    if (!Finished())
+    if (Finished())
     {
-        SetToWaiting(EXECUTE_WAIT);
+        SetStep(Step(static_cast<Step::Function>(&JobNATCheckBase::StepFinish), L""));
         return;
     }
-    SetStep(Step(static_cast<Step::Function>(&JobNATCheckBase::StepFinish), L""));
+    SetToWaiting(EXECUTE_WAIT);
 }
 
 }

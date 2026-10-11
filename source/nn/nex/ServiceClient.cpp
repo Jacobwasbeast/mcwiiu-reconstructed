@@ -21,11 +21,16 @@ ServiceClient::ServiceClient(unsigned int uiServiceID)
     , m_pCredentials(0)
     , m_bLocalLoopback(false)
 {
-    RVClientCore::AcquireInstance();
+    if (RVClientCore::GetInstance() != 0)
+        RVClientCore::GetInstance()->AddRef();
+    else
+        RVClientCore::AcquireInstance();
 }
 
 ServiceClient::~ServiceClient()
 {
+    SetCredentials(0);
+    RVClientCore::GetInstance()->ReleaseRef();
 }
 
 void ServiceClient::UseLocalLoopback(unsigned int, unsigned int)
@@ -34,13 +39,30 @@ void ServiceClient::UseLocalLoopback(unsigned int, unsigned int)
 
 bool ServiceClient::Bind(Credentials* pCredentials)
 {
-    return PrepareForConnection(pCredentials);
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+
+    if (!PrepareForConnection(pCredentials))
+        return false;
+
+    ConnectionStateHasChanged();
+    return true;
 }
 
 bool ServiceClient::Unbind()
 {
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
+
+    ConnectionStateHasChanged();
     SetDefaultCredentials(0);
     return true;
+}
+
+bool ServiceClient::BindLocal(Credentials* pCredentials)
+{
+    m_bLocalLoopback = true;
+    bool bResult = Bind(pCredentials);
+    UseLocalLoopback(pCredentials->GetPrincipalID(), pCredentials->m_state);
+    return bResult;
 }
 
 void ServiceClient::ConnectionStateHasChanged()
@@ -49,39 +71,29 @@ void ServiceClient::ConnectionStateHasChanged()
 
 bool ServiceClient::IsConnected() const
 {
-    Scheduler* pScheduler = Scheduler::GetInstance();
-    pScheduler->GetCriticalSection().Enter();
+    ScopedCS lock(&Scheduler::GetInstance()->GetCriticalSection());
 
     if (m_pCredentials == 0)
-    {
-        pScheduler->GetCriticalSection().Leave();
         return false;
-    }
 
-    EndPoint* pConnection = GetConnection(11);
-    const bool bConnected = pConnection != 0 && pConnection->IsConnected();
-
-    pScheduler->GetCriticalSection().Leave();
-    return bConnected;
+    EndPoint* pConnection = GetConnection(SECURE_CONNECTION_TYPE);
+    return pConnection != 0 && pConnection->IsConnected();
 }
 
 bool ServiceClient::SetDependentRvConnection(ProtocolCallContext* pCallContext) const
 {
-    Credentials* pCredentials = pCallContext->GetCredentials();
+    Credentials* pCredentials =
+        pCallContext->GetCredentials() != 0 ? pCallContext->GetCredentials() : m_pCredentials;
+
     if (pCredentials == 0)
-        pCredentials = m_pCredentials;
+        return false;
 
-    if (pCredentials != 0)
-    {
-        EndPoint* pConnection = pCredentials->GetConnection(11);
-        if (pConnection != 0)
-        {
-            pCallContext->SetDependentConnection(pConnection, pConnection->GetConnectionID());
-            return true;
-        }
-    }
+    EndPoint* pConnection = pCredentials->GetConnection(SECURE_CONNECTION_TYPE);
+    if (pConnection == 0)
+        return false;
 
-    return false;
+    pCallContext->SetDependentConnection(pConnection, pConnection->GetConnectionID());
+    return true;
 }
 
 bool ServiceClient::IsFaulty() const
@@ -89,8 +101,16 @@ bool ServiceClient::IsFaulty() const
     if (m_pCredentials == 0)
         return false;
 
-    EndPoint* pConnection = GetConnection(11);
+    EndPoint* pConnection = GetConnection(SECURE_CONNECTION_TYPE);
     return pConnection != 0 && pConnection->IsFaulty();
+}
+
+StreamManager* ServiceClient::GetStreamManager() const
+{
+    if (m_pCredentials == 0)
+        return 0;
+
+    return m_pCredentials->m_streamManager;
 }
 
 void ServiceClient::SetCredentials(Credentials* pCredentials)
@@ -123,28 +143,28 @@ bool ServiceClient::PrepareForConnection(Credentials* pCredentials)
     return true;
 }
 
-void ServiceClient::RegisterProtocol(Protocol* pProtocol)
+bool ServiceClient::RegisterProtocol(Protocol* pProtocol)
 {
-    RegisterExtraProtocol(pProtocol, pProtocol->GetProtocolID());
+    return RegisterExtraProtocol(pProtocol);
 }
 
-void ServiceClient::RegisterExtraProtocol(Protocol* pProtocol)
+bool ServiceClient::RegisterExtraProtocol(Protocol* pProtocol)
 {
-    RegisterExtraProtocol(pProtocol, pProtocol->GetProtocolID());
+    return RegisterExtraProtocol(pProtocol, pProtocol->GetProtocolID());
 }
 
-void ServiceClient::RegisterExtraProtocol(Protocol* pProtocol, unsigned short uiProtocolID)
+bool ServiceClient::RegisterExtraProtocol(Protocol* pProtocol, unsigned short uiProtocolID)
 {
     ClientProtocol* pClientProtocol = static_cast<ClientProtocol*>(pProtocol);
 
     pClientProtocol->SetDefaultCredentials(m_pCredentials);
     pClientProtocol->SetProtocolID(uiProtocolID);
-    GetProtocolRegistry()->RegisterProtocol(uiProtocolID, pClientProtocol->CreateResponder());
+    return GetProtocolRegistry()->RegisterProtocol(uiProtocolID, pClientProtocol->CreateResponder());
 }
 
 ProtocolRegistry* ServiceClient::GetProtocolRegistry() const
 {
-    return RVClientCore::AcquireInstance()->GetProtocolRegistry();
+    return RVClientCore::GetInstance()->GetProtocolRegistry();
 }
 
 bool ServiceClient::UnregisterProtocol(Protocol*)
@@ -154,10 +174,10 @@ bool ServiceClient::UnregisterProtocol(Protocol*)
 
 EndPoint* ServiceClient::GetConnection(unsigned short uiConnectionType) const
 {
-    if (!m_bLocalLoopback && m_pCredentials != 0)
-        return m_pCredentials->GetConnection(uiConnectionType);
+    if (m_bLocalLoopback || m_pCredentials == 0)
+        return 0;
 
-    return 0;
+    return m_pCredentials->GetConnection(uiConnectionType);
 }
 
 }

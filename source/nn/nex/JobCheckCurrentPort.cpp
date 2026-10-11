@@ -116,17 +116,20 @@ qResult JobCheckCurrentPort::HandleResult()
 {
     if (RootTransport::GetInstance() == 0)
         return qResult(NAT_CHECK_ABORTED_RESULT);
-    unsigned int uiPortWord = m_aReceived[0].m_message.m_uiPortWord;
+    NATCheckMessage& rMessage = m_aReceived[0].m_message;
+    unsigned int uiPortWord = rMessage.m_uiPortWord;
     if (uiPortWord == 0)
         return qResult(NAT_CHECK_ERROR_RESULT);
     if (m_bRelayProbe && uiPortWord < s_uiPreviousPortWord && CanRetry())
         return qResult(NAT_CHECK_ERROR_RESULT);
     s_uiPreviousPortWord = uiPortWord;
-    NATProperties properties = RootTransport::GetInstance()->GetNATProperties();
-    properties.SetPublicPort(m_aReceived[0].m_message.GetPortNumber());
-    properties.SetInterfacePort(m_localAddress.GetPortNumber());
-    RootTransport::GetInstance()->SetNATProperties(properties);
-    return qResult(NAT_CHECK_SUCCEEDED_RESULT);
+    {
+        NATProperties properties = RootTransport::GetInstance()->GetNATProperties();
+        properties.SetPublicPort(rMessage.GetPortNumber());
+        properties.SetInterfacePort(m_localAddress.GetPortNumber());
+        RootTransport::GetInstance()->SetNATProperties(properties);
+        return qResult(NAT_CHECK_SUCCEEDED_RESULT);
+    }
 }
 
 bool JobCheckCurrentPort::Finished()

@@ -5,13 +5,5 @@ namespace nn
 namespace nex
 {
 
-AccountData::AccountData()
-{
-}
-
-AccountData::~AccountData()
-{
-}
-
 }
 }

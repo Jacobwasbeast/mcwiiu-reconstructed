@@ -42,6 +42,7 @@ private:
     friend class NATTraversalRelayClient;
     friend class SecureConnectionClient;
     friend class SecureStream;
+    friend class ServiceClient;
     friend class KerberosAuthentication;
     friend class GlobalNotificationEventManager;
     friend class JobWaitForNotification;

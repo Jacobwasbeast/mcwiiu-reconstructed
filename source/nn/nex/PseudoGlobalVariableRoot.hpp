@@ -12,9 +12,7 @@ class PseudoGlobalVariableRoot : public RootObject
 {
 public:
     PseudoGlobalVariableRoot();
-    virtual ~PseudoGlobalVariableRoot()
-    {
-    }
+    virtual ~PseudoGlobalVariableRoot();
 
     virtual void AllocateExtraContexts() = 0;
     virtual void FreeExtraContexts() = 0;

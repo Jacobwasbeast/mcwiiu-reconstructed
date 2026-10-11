@@ -18,24 +18,6 @@ const unsigned int SIZE_FIELD_LENGTH = 4;
 
 }
 
-_DDL_DataStoreSearchParam::_DDL_DataStoreSearchParam()
-    : m_OwnerIds(),
-      m_DestinationIds(),
-      m_CreatedAfter(),
-      m_CreatedBefore(),
-      m_UpdatedAfter(),
-      m_UpdatedBefore(),
-      m_Tags(),
-      m_ResultRange(),
-      m_DataTypes()
-{
-    m_uiStructureVersion = 3;
-}
-
-_DDL_DataStoreSearchParam::~_DDL_DataStoreSearchParam()
-{
-}
-
 void _DDL_DataStoreSearchParam::Add(Message* pMessage, const _DDL_DataStoreSearchParam& rSource)
 {
     unsigned int uiSizePosition = 0;

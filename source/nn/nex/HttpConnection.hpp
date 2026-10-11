@@ -63,6 +63,21 @@ public:
 
     const char* GetBoundaryString() const;
 
+    void SetThreadPriority(unsigned int uiPriority)
+    {
+        m_uiThreadPriority = uiPriority;
+    }
+
+    void SetUnknown9(bool bValue)
+    {
+        m_bUnknown9 = bValue;
+    }
+
+    void SetUnknown10(bool bValue)
+    {
+        m_bUnknown10 = bValue;
+    }
+
     static HttpConnection* GetHttpConnection();
     static void ReleaseHttpConnection(HttpConnection* pConnection);
     static int GetConnectionCount();

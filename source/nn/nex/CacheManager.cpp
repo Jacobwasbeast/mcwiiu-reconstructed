@@ -22,8 +22,8 @@ CacheManager* CacheManager::GetInstance()
 
 bool CacheManager::UnregisterCache(const String& name)
 {
-    CacheMap::iterator found = m_caches.find(name);
     bool erased = false;
+    CacheMap::iterator found = m_caches.find(name);
     if (found != m_caches.end())
     {
         m_caches.erase(found);

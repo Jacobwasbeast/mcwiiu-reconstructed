@@ -18,7 +18,13 @@ EndPointInfo::EndPointInfo()
 void EndPointInfo::Reset()
 {
     m_resetTime = Time(Time::GetTime());
-    m_uiMaxRTO = 0;
+    m_uiConnectionID = 0;
+    m_uiStreamID = 0;
+    m_uiLocalSessionID = 0;
+    m_uiRemoteSessionID = 0;
+    m_uiFaultReason = 0;
+    m_uiRTT = 0;
+    m_uiRTTAverage = 0;
     m_uiPacketsSent = 0;
     m_uiUnreliablePacketsSent = 0;
     m_uiUnreliableDataPacketsSent = 0;
@@ -58,16 +64,10 @@ void EndPointInfo::Reset()
     m_uiSlidingWindowPushFailures = 0;
     m_uiReliablePacketsReceived = 0;
     m_uiReliableBytesReceived = 0;
+    m_uiMaxRTO = 0;
+    m_uiMinRTO = 0xFFFFFFFF;
     m_uiLastPingSent = 0;
     m_uiLastPingReceived = 0;
-    m_uiConnectionID = 0;
-    m_uiStreamID = 0;
-    m_uiLocalSessionID = 0;
-    m_uiRemoteSessionID = 0;
-    m_uiFaultReason = 0;
-    m_uiRTT = 0;
-    m_uiRTTAverage = 0;
-    m_uiMinRTO = 0xFFFFFFFF;
 }
 
 void EndPointInfo::Trace(EventLog::LogLevel) const

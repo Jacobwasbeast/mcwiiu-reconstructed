@@ -57,10 +57,11 @@ public:
             uiContextId = g_instantiationContextVariable->GetRef();
 
         InstanceControl* pInstanceControl = g_instanceTable.FindInstance(ClassID, uiContextId);
-        if (pInstanceControl != 0)
-            return static_cast<Network*>(pInstanceControl->GetDelegatorInstance());
+        void* pInstance = pInstanceControl;
+        if (pInstance != 0)
+            pInstance = pInstanceControl->GetDelegatorInstance();
 
-        return 0;
+        return static_cast<Network*>(pInstance);
     }
 
     static void AcquireInstance();
@@ -81,6 +82,11 @@ public:
     PRUDPMessageSelector& GetMessageSelector()
     {
         return m_messageSelector;
+    }
+
+    ConnectivityManager& GetConnectivityManager()
+    {
+        return m_connectivityManager;
     }
 
     NATTraversalEngine* GetNATTraversalEngine();

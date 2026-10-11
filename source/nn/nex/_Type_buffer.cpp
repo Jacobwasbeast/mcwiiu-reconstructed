@@ -13,8 +13,8 @@ bool _Type_buffer::Extract(Message* pMessage, Buffer* pDestination)
     unsigned int uiSize = 0;
     if (!pMessage->ExtractPrimitive(&uiSize) || !pMessage->ValidateBufferLimit(uiSize))
         return false;
-    pDestination->AppendData(pMessage->GetBuffer()->GetData() + pMessage->GetPosition(), uiSize,
-                             0xFFFFFFFF);
+    const Buffer* pBuffer = pMessage->GetBuffer();
+    pDestination->AppendData(pBuffer->GetData() + pMessage->GetPosition(), uiSize, 0xFFFFFFFF);
     const unsigned int uiPosition = pMessage->GetPosition() + uiSize;
     if (uiPosition <= pMessage->GetLength())
         pMessage->SetPosition(uiPosition);

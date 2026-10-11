@@ -25,10 +25,6 @@ void _Proto_NATTraversalProtocolServer::DispatchProtocolMessage(
     const uint16_t uiMethodID = static_cast<uint16_t>(ExtractMethodID(pRequest));
     switch (uiMethodID)
     {
-    case 0:
-    default:
-        SetCallError(qResult(static_cast<int>(CALL_ERROR_UNKNOWN_METHOD)));
-        return;
     case METHOD_REQUEST_PROBE_INITIATION:
     {
         qList<StationURL> targetList;
@@ -38,9 +34,9 @@ void _Proto_NATTraversalProtocolServer::DispatchProtocolMessage(
             RequestProbeInitiation(targetList);
             AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_REQUEST_PROBE_INITIATION);
         }
-        *pResponseRequired = true;
-        return;
     }
+    *pResponseRequired = true;
+    return;
     case METHOD_INITIATE_PROBE:
     {
         StationURL stationToProbe;
@@ -50,9 +46,9 @@ void _Proto_NATTraversalProtocolServer::DispatchProtocolMessage(
             InitiateProbe(stationToProbe);
             AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_INITIATE_PROBE);
         }
-        *pResponseRequired = true;
-        return;
     }
+    *pResponseRequired = true;
+    return;
     case METHOD_REQUEST_PROBE_INITIATION_EXT:
     {
         qList<StationURL> targetList;
@@ -67,9 +63,9 @@ void _Proto_NATTraversalProtocolServer::DispatchProtocolMessage(
                 AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_REQUEST_PROBE_INITIATION_EXT);
             }
         }
-        *pResponseRequired = true;
-        return;
     }
+    *pResponseRequired = true;
+    return;
     case METHOD_REPORT_NAT_TRAVERSAL_RESULT:
     {
         unsigned int uiCID;
@@ -89,7 +85,8 @@ void _Proto_NATTraversalProtocolServer::DispatchProtocolMessage(
                 }
             }
         }
-        break;
+        *pResponseRequired = true;
+        return;
     }
     case METHOD_REPORT_NAT_PROPERTIES:
     {
@@ -110,7 +107,8 @@ void _Proto_NATTraversalProtocolServer::DispatchProtocolMessage(
                 }
             }
         }
-        break;
+        *pResponseRequired = true;
+        return;
     }
     case METHOD_GET_RELAY_SIGNATURE_KEY:
     {
@@ -124,13 +122,14 @@ void _Proto_NATTraversalProtocolServer::DispatchProtocolMessage(
                              &iRelayAddressType, &uiGameServerID);
         AddMethodID(pResponse, RESPONSE_METHOD_FLAG | METHOD_GET_RELAY_SIGNATURE_KEY);
         pResponse->Append(reinterpret_cast<const unsigned char*>(&iRelayMode), sizeof(iRelayMode), 1);
-        const uint64_t uiCurrentUTCTime = currentUTCTime;
+        const uint64_t uiCurrentUTCTime = static_cast<const DateTime&>(currentUTCTime);
         pResponse->Append(reinterpret_cast<const unsigned char*>(&uiCurrentUTCTime), sizeof(uiCurrentUTCTime), 1);
         _Type_string::Add(pResponse, relayAddress);
         pResponse->Append(reinterpret_cast<const unsigned char*>(&uiRelayPort), sizeof(uiRelayPort), 1);
         pResponse->Append(reinterpret_cast<const unsigned char*>(&iRelayAddressType), sizeof(iRelayAddressType), 1);
         pResponse->Append(reinterpret_cast<const unsigned char*>(&uiGameServerID), sizeof(uiGameServerID), 1);
-        break;
+        *pResponseRequired = true;
+        return;
     }
     case METHOD_REPORT_NAT_TRAVERSAL_RESULT_DETAIL:
     {
@@ -156,10 +155,14 @@ void _Proto_NATTraversalProtocolServer::DispatchProtocolMessage(
                 }
             }
         }
+        *pResponseRequired = true;
+        return;
+    }
+    case 0:
+    default:
+        SetCallError(qResult(static_cast<int>(CALL_ERROR_UNKNOWN_METHOD)));
         break;
     }
-    }
-    *pResponseRequired = true;
 }
 
 }

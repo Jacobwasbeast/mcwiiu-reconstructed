@@ -31,7 +31,7 @@ public:
     static void Extract(Message* pMessage, qList<CPPType>* pDestination)
     {
         pDestination->clear();
-        uint32_t uiCount = 0;
+        uint32_t uiCount;
         if (!pMessage->ExtractPrimitive(&uiCount))
         {
             return;

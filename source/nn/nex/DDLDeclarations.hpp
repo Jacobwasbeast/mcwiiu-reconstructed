@@ -37,6 +37,25 @@ private:
     static PseudoGlobalVariable<unsigned int> s_uiNextDOClassID;
 };
 
+class DynamicRunTimeInterface : public RootObject
+{
+public:
+    DynamicRunTimeInterface();
+    virtual ~DynamicRunTimeInterface();
+
+    virtual void UnknownVirtual2() = 0;
+    virtual void UnknownVirtual3() = 0;
+    virtual void UnknownVirtual4() = 0;
+    virtual void UnknownVirtual5() = 0;
+    virtual void DoRegisterParseTree(unsigned char* pData, unsigned int uiSize) = 0;
+
+    static DynamicRunTimeInterface* GetInstance();
+    static void RegisterParseTree(unsigned char* pData, unsigned int uiSize);
+
+private:
+    static PseudoGlobalVariable<DynamicRunTimeInterface*> s_pInstance;
+};
+
 }
 }
 

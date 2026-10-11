@@ -14,9 +14,6 @@ namespace nex
 {
 
 const int CALL_CONTEXT_RESULT_PENDING = static_cast<int>(0x80010001u);
-const unsigned int CALL_CONTEXT_FLAG_SELF_RELEASE = 2;
-const unsigned int CALL_CONTEXT_FLAG_CALLBACK_EXPECTED = 4;
-const unsigned int CALL_CONTEXT_FLAG_CALLBACK_REQUIRED = 8;
 
 CallbackRoot::~CallbackRoot()
 {
