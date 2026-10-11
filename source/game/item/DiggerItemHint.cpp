@@ -29,17 +29,23 @@ DiggerItemHint::~DiggerItemHint()
 
 int DiggerItemHint::startDestroyBlock(not_null_ptr<ItemInstance> item, const BlockState* state)
 {
-    if (!item->isEmpty() && mItemCount != 0)
+    if (!item->isEmpty())
     {
+        bool itemFound = false;
         for (unsigned int i = 0; i < mItemCount; ++i)
         {
             if (item->getItem() == mItems[i])
             {
-                float speed = item->getDestroySpeed(state);
-                if (speed != 1.0f)
-                {
-                    return -1;
-                }
+                itemFound = true;
+                break;
+            }
+        }
+
+        if (itemFound)
+        {
+            float speed = item->getDestroySpeed(state);
+            if (speed == 1.0f)
+            {
                 return descriptionId;
             }
         }

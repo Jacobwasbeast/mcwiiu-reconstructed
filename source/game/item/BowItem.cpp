@@ -134,8 +134,7 @@ void BowItem::fjReleaseUsingWithProjectile(not_null_ptr<ItemInstance> itemInstan
         projectile = not_null_ptr<ItemInstance>(new ItemInstance(Items::arrow));
     }
 
-    int useDuration = getUseDuration(itemInstance);
-    float power = getPowerForTime(useDuration - timeLeft);
+    float power = getPowerForTime(getUseDuration(itemInstance) - timeLeft);
 
     if ((double)power < 0.1)
     {

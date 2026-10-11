@@ -19,6 +19,8 @@ public:
     void setDirty(bool dirty);
 
 private:
+    friend class SynchedEntityData;
+
     bool mDirty;
 };
 

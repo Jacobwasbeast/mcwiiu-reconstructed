@@ -46,9 +46,7 @@ InteractionResultHolder EnderpearlItem::use(Level* level,
         player->getCooldowns()->addCooldown(this, 20);
     }
 
-    Player* awardee = player.operator->();
-    Stat* stat = gStats->get_itemsUsed(VALIDgetId(this));
-    awardee->awardStat(stat, GenericStats::param_itemsUsed(player, itemInstance));
+    player->awardStat(GenericStats::itemsUsed(this), GenericStats::param_itemsUsed(player, itemInstance));
 
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }

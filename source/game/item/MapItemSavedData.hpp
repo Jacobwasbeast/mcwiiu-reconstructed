@@ -28,7 +28,7 @@ public:
     public:
         HoldingPlayer(boost::shared_ptr<Player> player, MapItemSavedData* data);
         ~HoldingPlayer();
-        boost::shared_ptr<ClientboundMapItemDataPacket> nextUpdatePacket(not_null_ptr<ItemInstance> item);
+        boost::shared_ptr<Packet> nextUpdatePacket(not_null_ptr<ItemInstance> item);
         void markDirty(int x, int y);
 
     private:
@@ -64,7 +64,7 @@ public:
     void tickCarriedBy(boost::shared_ptr<Player> player, not_null_ptr<ItemInstance> item);
     void mergeInMapData(boost::shared_ptr<MapItemSavedData> data);
     std::vector<MapDecoration> fjGetAllDecorations();
-    boost::shared_ptr<ClientboundMapItemDataPacket> getUpdatePacket(not_null_ptr<ItemInstance> item, Level* level, boost::shared_ptr<Player> player);
+    boost::shared_ptr<Packet> getUpdatePacket(not_null_ptr<ItemInstance> item, Level* level, boost::shared_ptr<Player> player);
     virtual void load(CompoundTag* tag);
     virtual CompoundTag* save(CompoundTag* tag);
     static void addTargetDecoration(const not_null_ptr<ItemInstance>& item, const BlockPos& pos, const std::wstring& id, const MapDecoration::Type* type);

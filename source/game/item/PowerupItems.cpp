@@ -118,9 +118,9 @@ void PowerupItems::UsePowerupItem(boost::shared_ptr<Player> player, int itemId)
 {
     switch (itemId)
     {
-    case BlockId::TNT:
+    case ItemId::BLAZE_POWDER:
         {
-            DoDropTNT(player);
+            DoLargeBoost(player);
         }
         break;
     case BlockId::REDSTONE_TORCH:
@@ -128,14 +128,19 @@ void PowerupItems::UsePowerupItem(boost::shared_ptr<Player> player, int itemId)
             DoSmallBoost(player);
         }
         break;
+    case BlockId::TNT:
+        {
+            DoDropTNT(player);
+        }
+        break;
+    case ItemId::EMERALD:
+        {
+            DoGainPoint(player);
+        }
+        break;
     case ItemId::FEATHER:
         {
             DoTimedPowerup(player, eGlide_Timed_Powerup_ID_SlowFall, 0x3c);
-        }
-        break;
-    case ItemId::GOLDEN_APPLE:
-        {
-            DoSetInvulnerable(player, 100);
         }
         break;
     case ItemId::COMPASS:
@@ -143,14 +148,9 @@ void PowerupItems::UsePowerupItem(boost::shared_ptr<Player> player, int itemId)
             DoTimedPowerup(player, eGlide_Timed_Powerup_ID_InvertControls, 0x3c);
         }
         break;
-    case ItemId::BLAZE_POWDER:
+    case ItemId::GOLDEN_APPLE:
         {
-            DoLargeBoost(player);
-        }
-        break;
-    case ItemId::EMERALD:
-        {
-            DoGainPoint(player);
+            DoSetInvulnerable(player, 100);
         }
         break;
     }

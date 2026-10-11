@@ -36,8 +36,8 @@ InteractionResultHolder LingeringPotionItem::use(Level* level,
                                                   InteractionHand::EInteractionHand hand)
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    not_null_ptr<ItemInstance> thrownItem = !player->mAbilities.mInstabuild
-        ? itemInstance->split(1) : itemInstance->copy();
+    not_null_ptr<ItemInstance> thrownItem = player->mAbilities.mInstabuild
+        ? itemInstance->copy() : itemInstance->split(1);
 
     level->playSound(boost::shared_ptr<Player>(),
                      player->mX,

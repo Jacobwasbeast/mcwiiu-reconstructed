@@ -19,6 +19,5 @@ not_null_ptr<ItemInstance> EnchantWithLevelsFunction::apply(const not_null_ptr<I
                                                             Random* random,
                                                             LootTableContext& context)
 {
-    int level = Mth::nextInt(random, Mth::floor(levels.min), Mth::floor(levels.max));
-    return EnchantmentHelper::enchantItem(random, itemInstance, level, allowTreasure);
+    return EnchantmentHelper::enchantItem(random, itemInstance, levels.getInt(random), allowTreasure);
 }

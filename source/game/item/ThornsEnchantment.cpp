@@ -35,14 +35,15 @@ int ThornsEnchantment::getMaxLevel()
     return 3;
 }
 
-bool ThornsEnchantment::canEnchant(not_null_ptr<ItemInstance> item)
+bool ThornsEnchantment::canEnchant(not_null_ptr<ItemInstance> itemInstance)
 {
-    if (dynamic_cast<ArmorItem*>(item->getItem()) != NULL)
+    Item* item = itemInstance->getItem();
+    if (dynamic_cast<ArmorItem*>(item) != NULL)
     {
         return true;
     }
 
-    return Enchantment::canEnchant(item);
+    return Enchantment::canEnchant(itemInstance);
 }
 
 bool ThornsEnchantment::shouldHit(int level, Random* random)
@@ -75,11 +76,7 @@ void ThornsEnchantment::doPostHurt(boost::shared_ptr<LivingEntity> target,
 
     if (!item->isEmpty())
     {
-        if (!shouldHit(level, random))
-        {
-            item->hurtAndBreak(1, target);
-        }
-        else
+        if (shouldHit(level, random))
         {
             if (attacker)
             {
@@ -89,6 +86,10 @@ void ThornsEnchantment::doPostHurt(boost::shared_ptr<LivingEntity> target,
                 attacker->playSound(SoundEvents::ENCHANT_THORNS_HIT, 0.5f, 1.0f);
             }
             item->hurtAndBreak(3, target);
+        }
+        else
+        {
+            item->hurtAndBreak(1, target);
         }
     }
 }

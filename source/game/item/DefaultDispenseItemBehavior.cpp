@@ -78,13 +78,13 @@ void DefaultDispenseItemBehavior::spawnItem(Level* level, not_null_ptr<ItemInsta
 
 void DefaultDispenseItemBehavior::playSound(BlockSource* blockSource, eOUTCOME outcome)
 {
-    if (outcome == eOUTCOME_Failure)
+    if (outcome != eOUTCOME_Failure)
     {
-        blockSource->getWorld()->levelEvent(LevelEvent::SOUND_DISPENSER_FAIL, blockSource->getPos(), 0);
+        blockSource->getWorld()->levelEvent(LevelEvent::SOUND_DISPENSER_DISPENSE, blockSource->getPos(), 0);
     }
     else
     {
-        blockSource->getWorld()->levelEvent(LevelEvent::SOUND_DISPENSER_DISPENSE, blockSource->getPos(), 0);
+        blockSource->getWorld()->levelEvent(LevelEvent::SOUND_DISPENSER_FAIL, blockSource->getPos(), 0);
     }
 }
 

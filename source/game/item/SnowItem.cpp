@@ -41,7 +41,6 @@ InteractionResult::EInteractionResult SnowItem::useOn(boost::shared_ptr<Player> 
     const BlockState* state = level->getBlockState(pos);
     Block* block = state->getBlock();
     BlockPos placePos = pos;
-    bool placeable = true;
     if (direction != Direction::UP || block != mBlock)
     {
         if (!block->mayReplaceWithPlace(level, pos))
@@ -50,10 +49,9 @@ InteractionResult::EInteractionResult SnowItem::useOn(boost::shared_ptr<Player> 
             state = level->getBlockState(placePos);
             block = state->getBlock();
         }
-        placeable = block == mBlock;
     }
 
-    if (placeable)
+    if (block == mBlock)
     {
         if (state->getValue(SnowLayerBlock::LAYERS) < 8)
         {
@@ -61,7 +59,7 @@ InteractionResult::EInteractionResult SnowItem::useOn(boost::shared_ptr<Player> 
             {
                 const BlockState* snowState = SnowLayerBlock::buildSnowBlock(level, placePos, 1, 1);
                 const AABB* shape = snowState->getClipAABB(level, placePos);
-                if (shape != NULL && level->isUnobstructed(shape->move(placePos))
+                if (shape != Block::NULL_AABB && level->isUnobstructed(shape->move(placePos))
                     && level->setBlock(placePos, snowState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false))
                 {
                     const SoundType* soundType = mBlock->getSoundType();
@@ -76,7 +74,7 @@ InteractionResult::EInteractionResult SnowItem::useOn(boost::shared_ptr<Player> 
         }
         else if (player->mayUseItemAt(pos.above(), direction, itemInstance))
         {
-            placePos = pos.above();
+            placePos = placePos.above();
         }
     }
 

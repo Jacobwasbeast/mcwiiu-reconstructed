@@ -19,11 +19,10 @@ BookCloningRecipe::~BookCloningRecipe()
 
 bool BookCloningRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level)
 {
-    unsigned int i;
     int writableBooks = 0;
     not_null_ptr<ItemInstance> writtenBook = ItemInstance::EMPTY;
 
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    for (unsigned int i = 0; i < craftingContainer->getContainerSize(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (item->isEmpty())
@@ -53,11 +52,10 @@ bool BookCloningRecipe::matches(boost::shared_ptr<CraftingContainer> craftingCon
 
 not_null_ptr<ItemInstance> BookCloningRecipe::assemble(boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    unsigned int i;
     int writableBooks = 0;
     not_null_ptr<ItemInstance> writtenBook = ItemInstance::EMPTY;
 
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    for (unsigned int i = 0; i < craftingContainer->getContainerSize(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (item->isEmpty())
@@ -116,10 +114,9 @@ ItemInstance* BookCloningRecipe::getIngredientItem(int column, int row)
 
 NonNullList<not_null_ptr<ItemInstance> > BookCloningRecipe::getRemainingItems(boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    unsigned int i;
     NonNullList<not_null_ptr<ItemInstance> > result =
         NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
-    for (i = 0; i < result.size(); ++i)
+    for (unsigned int i = 0; i < result.size(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (!item->isEmpty() && dynamic_cast<WrittenBookItem*>(item->getItem()) != NULL)

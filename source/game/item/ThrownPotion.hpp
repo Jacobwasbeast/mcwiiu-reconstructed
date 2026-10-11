@@ -21,6 +21,7 @@ class MobEffectInstance;
 class ThrownPotion : public ThrowableProjectile
 {
 public:
+    static const double SPLASH_RANGE;
     static const EntityDataAccessor<not_null_ptr<ItemInstance> >* DATA_ITEM;
     class WATER_SENSITIVE : public Predicate<boost::shared_ptr<Entity> >
     {

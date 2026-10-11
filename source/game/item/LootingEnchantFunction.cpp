@@ -22,29 +22,24 @@ LootingEnchantFunction::LootingEnchantFunction(std::vector<LootItemCondition*>* 
 
 not_null_ptr<ItemInstance> LootingEnchantFunction::apply(const not_null_ptr<ItemInstance>& itemInstance, Random* random, LootTableContext& context)
 {
-    const DamageSource* damageSource = context.mDamageSource;
+    boost::shared_ptr<Entity> killer = context.mDamageSource != NULL ? context.mDamageSource->getEntity() : boost::shared_ptr<Entity>();
 
-    if (damageSource != NULL)
+    if (killer != NULL && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, killer->GetType()))
     {
-        boost::shared_ptr<Entity> killer = damageSource->getEntity();
+        int lootingLevel = EnchantmentHelper::getMobLooting(boost::static_pointer_cast<LivingEntity>(killer));
 
-        if (killer && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, killer->GetType()))
+        if (lootingLevel == 0)
         {
-            int lootingLevel = EnchantmentHelper::getMobLooting(boost::static_pointer_cast<LivingEntity>(killer));
+            return itemInstance;
+        }
 
-            if (lootingLevel == 0)
-            {
-                return itemInstance;
-            }
+        float extraCount = (float)lootingLevel * count.getFloat(random);
 
-            float extraCount = (float)lootingLevel * Mth::nextFloat(random, count.min, count.max);
+        itemInstance->grow(Math::round(extraCount));
 
-            itemInstance->grow(Math::round(extraCount));
-
-            if (limit != 0 && limit < itemInstance->getCount())
-            {
-                itemInstance->setCount(limit);
-            }
+        if (limit != 0 && itemInstance->getCount() > limit)
+        {
+            itemInstance->setCount(limit);
         }
     }
 

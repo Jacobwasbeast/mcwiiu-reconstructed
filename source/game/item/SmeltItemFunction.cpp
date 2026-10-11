@@ -15,15 +15,18 @@ not_null_ptr<ItemInstance> SmeltItemFunction::apply(const not_null_ptr<ItemInsta
                                                     Random* random,
                                                     LootTableContext& context)
 {
-    if (!itemInstance->isEmpty())
+    if (itemInstance->isEmpty())
     {
-        ItemInstance* result = FurnaceRecipes::getInstance()->getResult(itemInstance);
-        if (!result->isEmpty())
-        {
-            not_null_ptr<ItemInstance> smelted = result->copy();
-            smelted->setCount(itemInstance->getCount());
-            return smelted;
-        }
+        return itemInstance;
     }
-    return itemInstance;
+
+    ItemInstance* result = FurnaceRecipes::getInstance()->getResult(itemInstance);
+    if (result->isEmpty())
+    {
+        return itemInstance;
+    }
+
+    not_null_ptr<ItemInstance> smelted = result->copy();
+    smelted->setCount(itemInstance->getCount());
+    return smelted;
 }

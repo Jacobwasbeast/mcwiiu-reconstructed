@@ -11,12 +11,7 @@ not_null_ptr<ItemInstance> ArmorDispenseItemBehavior::execute(BlockSource* block
                                                                not_null_ptr<ItemInstance> itemInstance,
                                                                eOUTCOME& outcome)
 {
-    not_null_ptr<ItemInstance> result = ArmorItem::dispenseArmor(blockSource, itemInstance, outcome);
+    const not_null_ptr<ItemInstance> result = ArmorItem::dispenseArmor(blockSource, itemInstance, outcome);
 
-    if (!result->isEmpty())
-    {
-        return result;
-    }
-
-    return DefaultDispenseItemBehavior::execute(blockSource, itemInstance, outcome);
+    return result->isEmpty() ? DefaultDispenseItemBehavior::execute(blockSource, itemInstance, outcome) : result;
 }

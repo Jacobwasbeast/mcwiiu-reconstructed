@@ -68,22 +68,19 @@ not_null_ptr<ItemInstance> EnchantRandomlyFunction::apply(const not_null_ptr<Ite
         enchantment = enchantments.at(random->nextInt((int)enchantments.size()));
     }
 
-    if (enchantment == NULL)
+    if (enchantment != NULL)
     {
-        return result;
-    }
+        int level = Mth::nextInt(random, enchantment->getMinLevel(), enchantment->getMaxLevel());
 
-    int level = Mth::nextInt(random, enchantment->getMinLevel(), enchantment->getMaxLevel());
-
-    if (result->getItem() == Items::book)
-    {
-        EnchantmentInstance* instance = new EnchantmentInstance(enchantment, level);
-        result = not_null_ptr<ItemInstance>(new ItemInstance(Items::enchantedBook));
-        EnchantedBookItem::addEnchantment(result, instance);
-    }
-    else
-    {
-        result->enchant(enchantment, level);
+        if (result->getItem() == Items::book)
+        {
+            result = not_null_ptr<ItemInstance>(new ItemInstance(Items::enchantedBook));
+            EnchantedBookItem::addEnchantment(result, new EnchantmentInstance(enchantment, level));
+        }
+        else
+        {
+            result->enchant(enchantment, level);
+        }
     }
 
     return result;

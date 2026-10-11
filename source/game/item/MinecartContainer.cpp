@@ -1,4 +1,5 @@
 #include "game/item/MinecartContainer.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/core/StringIds.hpp"
 
 #include <boost/pointer_cast.hpp>
@@ -16,6 +17,7 @@
 #include "game/ui/AbstractContainerMenu.hpp"
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
+#include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/util/Vec3.hpp"
 #include "game/world/generation/Player.hpp"
@@ -128,7 +130,7 @@ not_null_ptr<ItemInstance> MinecartContainer::removeItemNoUpdate(int slot)
     {
         return ItemInstance::EMPTY;
     }
-    mItems[slot] = ItemInstance::EMPTY;
+    mItems.set(slot, ItemInstance::EMPTY);
     return item;
 }
 
@@ -158,11 +160,11 @@ bool MinecartContainer::stillValid(boost::shared_ptr<Player> player)
     {
         return false;
     }
-    if (player->distanceAsIfHitscanned(BlockPos(Vec3::newTemp(mX, mY, mZ)), *player->mBoundingBox) <= 30.25f)
+    if (player->distanceAsIfHitscanned(BlockPos(Vec3::newTemp(mX, mY, mZ)), *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
     {
-        return true;
+        return false;
     }
-    return false;
+    return true;
 }
 
 bool MinecartContainer::canPlaceItem(int slot, not_null_ptr<ItemInstance> item)
@@ -305,8 +307,8 @@ void MinecartContainer::applyNaturalSlowdown()
     if (mLootTable == NULL)
     {
         boost::shared_ptr<Container> container = boost::static_pointer_cast<MinecartContainer>(shared_from_this());
-        int signal = AbstractContainerMenu::getRedstoneSignalFromContainer(container);
-        slowdown += (15 - signal) * 0.001f;
+        int signal = Block::SIGNAL_MAX - AbstractContainerMenu::getRedstoneSignalFromContainer(container);
+        slowdown += signal * 0.001f;
     }
     mXd *= slowdown;
     mYd *= 0.0;

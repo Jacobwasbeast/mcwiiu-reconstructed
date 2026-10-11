@@ -39,16 +39,14 @@ not_null_ptr<ItemInstance> BottleItem::turnBottleIntoItem(not_null_ptr<ItemInsta
     player->awardStat(GenericStats::itemsUsed(this),
                       GenericStats::param_itemsUsed(player, itemInstance));
 
-    if (!itemInstance->isEmpty())
-    {
-        if (!player->mInventory->add(result))
-        {
-            player->drop(result, false);
-        }
-        return itemInstance;
-    }
+    if (itemInstance->isEmpty())
+        return result;
 
-    return result;
+    if (!player->mInventory->add(result))
+    {
+        player->drop(result, false);
+    }
+    return itemInstance;
 }
 
 InteractionResultHolder BottleItem::use(Level* level,
@@ -126,36 +124,31 @@ bool BottleItem::TestUse(Level* level,
     not_null_ptr<ItemInstance> itemInHand = player->getItemInHand(hand);
 
     HitResult* hit = getPlayerPOVHitResult(level, player, true);
-    if (hit == NULL)
-    {
+    if (hit == NULL || !level->mDimension->inPlayerConstraints(BlockPos(hit->mLocation)))
         return false;
+
+    if (hit->mType == HitResult::BLOCK)
+    {
+        BlockPos pos = hit->getBlockPos();
+        if (!level->mayInteract(player, pos, NULL))
+        {
+            delete hit;
+            return false;
+        }
+        if (!player->mayUseItemAt(pos, hit->mDirection, itemInHand))
+        {
+            delete hit;
+            return false;
+        }
+        if (level->getBlockState(pos)->getBlock()->mMaterial == Material::WATER)
+        {
+            delete hit;
+            return true;
+        }
     }
 
-    BlockPos constraintPos(hit->mLocation);
-    if (!level->mDimension->inPlayerConstraints(constraintPos))
-    {
-        return false;
-    }
-    if (hit->mType != HitResult::BLOCK)
-    {
-        delete hit;
-        return false;
-    }
-    BlockPos pos = hit->getBlockPos();
-    if (!level->mayInteract(player, pos, NULL))
-    {
-        delete hit;
-        return false;
-    }
-    if (!player->mayUseItemAt(pos, hit->mDirection, itemInHand))
-    {
-        delete hit;
-        return false;
-    }
-
-    bool isWater = level->getBlockState(pos)->getBlock()->mMaterial == Material::WATER;
     delete hit;
-    return isWater;
+    return false;
 }
 
 unsigned int BottleItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)

@@ -68,22 +68,27 @@ InteractionResult::EInteractionResult SkullItem::useOn(boost::shared_ptr<Player>
         return InteractionResult::eInteractionResult_Fail;
     }
 
-    if (!level->mIsClientSide && !simulate)
+    if (level->mIsClientSide)
     {
-        TypedBoxed<const Direction*> facing(direction);
+        return InteractionResult::eInteractionResult_Success;
+    }
+
+    if (!simulate)
+    {
         level->setBlock(placePos,
-                        Blocks::skull->defaultBlockState()->setBoxedValue(SkullBlock::FACING, &facing),
+                        Blocks::skull->defaultBlockState()->setValue(SkullBlock::FACING, direction),
                         Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE,
                         false);
 
         int rotation = 0;
         if (direction == Direction::UP)
         {
-            rotation = Mth::absFloor((double)(player->mYRot * 16.0f / 360.0f) + 0.5) & 15;
+            double rotationSteps = player->mYRot * 16.0f / 360.0f;
+            rotation = Mth::floor(rotationSteps + 0.5) & 15;
         }
 
         boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(placePos);
-        if (blockEntity && eTYPE_DERIVED_FROM(BlockEntityType::SKULL, blockEntity->GetType()))
+        if (eTYPE_DERIVED_FROM(BlockEntityType::SKULL, blockEntity->GetType()))
         {
             boost::shared_ptr<SkullBlockEntity> skull =
                 boost::static_pointer_cast<SkullBlockEntity>(blockEntity);
@@ -130,7 +135,7 @@ std::wstring SkullItem::getName(not_null_ptr<ItemInstance> itemInstance)
         {
             return itemInstance->getTag()->getString(L"SkullOwner");
         }
-        if (itemInstance->getTag()->contains(L"SkullOwner", Tag::TAG_COMPOUND))
+        else if (itemInstance->getTag()->contains(L"SkullOwner", Tag::TAG_COMPOUND))
         {
             CompoundTag* owner = itemInstance->getTag()->getCompound(L"SkullOwner");
             if (owner->contains(L"Name", Tag::TAG_STRING))

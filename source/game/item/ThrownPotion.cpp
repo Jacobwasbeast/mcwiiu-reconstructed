@@ -43,6 +43,7 @@ namespace
 double SPLASH_RANGE_SQUARED = 16.0;
 }
 
+const double ThrownPotion::SPLASH_RANGE = 4.0;
 const EntityDataAccessor<not_null_ptr<ItemInstance> >* ThrownPotion::DATA_ITEM = NULL;
 
 ThrownPotion::ThrownPotion(Level* level)
@@ -154,8 +155,7 @@ void ThrownPotion::makeAreaOfEffectCloud(const not_null_ptr<ItemInstance>& item,
     cloud->setPotion(potion);
 
     std::vector<MobEffectInstance*>* effects = PotionUtils::getCustomEffects(item);
-    std::vector<MobEffectInstance*>::iterator it;
-    for (it = effects->begin(); it != effects->end(); ++it)
+    for (std::vector<MobEffectInstance*>::iterator it = effects->begin(); it != effects->end(); ++it)
     {
         MobEffectInstance* orig = *it;
         cloud->addEffect(new MobEffectInstance(orig->getEffect(), orig->getDuration(), orig->getAmplifier()));
@@ -236,9 +236,7 @@ bool ThrownPotion::onHit(const HitResult* result)
     not_null_ptr<ItemInstance> item = getItem();
     Potion* potion = PotionUtils::getPotion(item);
     std::vector<MobEffectInstance*>* effects = PotionUtils::getMobEffects(item);
-    bool isWaterSplash = false;
-    if (potion == Potions::WATER && effects->empty())
-        isWaterSplash = true;
+    bool isWaterSplash = potion == Potions::WATER && effects->empty();
 
     if (isWaterSplash)
     {

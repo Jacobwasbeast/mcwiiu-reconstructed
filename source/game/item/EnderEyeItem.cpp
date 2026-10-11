@@ -48,38 +48,38 @@ InteractionResult::EInteractionResult EnderEyeItem::useOn(boost::shared_ptr<Play
         return InteractionResult::eInteractionResult_Fail;
     }
 
-    if (!simulate)
+    if (simulate)
     {
-        level->setBlock(pos, state->setValue(EndPortalFrameBlock::EYE, true), Block::UPDATE_CLIENTS, false);
-        level->updateNeighbourForOutputSignal(pos, Blocks::end_portal_frame);
-        itemInstance->shrink(1);
+        return InteractionResult::eInteractionResult_Success;
+    }
 
-        arrayWithLength<int> particleParameters;
-        for (int i = 0; i < 16; ++i)
-        {
-            level->addParticle(PARTICLE_SMOKE,
-                               (float)pos.x + (random->nextFloat() * 6.0f + 5.0f) * 0.0625f,
-                               (float)pos.y + 0.8125f,
-                               (float)pos.z + (random->nextFloat() * 6.0f + 5.0f) * 0.0625f,
-                               0.0, 0.0, 0.0, particleParameters);
-        }
-        level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::END_PORTAL_FRAME_FILL,
-                         SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, 16.0f);
+    level->setBlock(pos, state->setValue(EndPortalFrameBlock::EYE, true), Block::UPDATE_CLIENTS, false);
+    level->updateNeighbourForOutputSignal(pos, Blocks::end_portal_frame);
+    itemInstance->shrink(1);
 
-        BlockPattern* pattern = EndPortalFrameBlock::getOrCreatePortalShape();
-        BlockPattern::BlockPatternMatch* match = pattern->find(level, pos);
-        if (match != NULL)
+    for (int i = 0; i < 16; ++i)
+    {
+        double px = (float)pos.x + (random->nextFloat() * 6.0f + 5.0f) * 0.0625f;
+        double py = (float)pos.y + 0.8125f;
+        double pz = (float)pos.z + (random->nextFloat() * 6.0f + 5.0f) * 0.0625f;
+        level->addParticle(PARTICLE_SMOKE, px, py, pz, 0.0, 0.0, 0.0, arrayWithLength<int>());
+    }
+    level->playSound(boost::shared_ptr<Player>(), pos, SoundEvents::END_PORTAL_FRAME_FILL,
+                     SoundSource::eSoundSource_Blocks, 1.0f, 1.0f, 16.0f);
+
+    BlockPattern* pattern = EndPortalFrameBlock::getOrCreatePortalShape();
+    BlockPattern::BlockPatternMatch* match = pattern->find(level, pos);
+    if (match != NULL)
+    {
+        const BlockPos origin = match->getFrontTopLeft().offset(-3, 0, -3);
+        for (int x = 0; x < 3; ++x)
         {
-            const BlockPos origin = match->getFrontTopLeft().offset(-3, 0, -3);
-            for (int x = 0; x < 3; ++x)
+            for (int z = 0; z < 3; ++z)
             {
-                for (int z = 0; z < 3; ++z)
-                {
-                    level->setBlock(origin.offset(x, 0, z), Blocks::end_portal->defaultBlockState(), Block::UPDATE_CLIENTS, false);
-                }
+                level->setBlock(origin.offset(x, 0, z), Blocks::end_portal->defaultBlockState(), Block::UPDATE_CLIENTS, false);
             }
-            level->globalLevelEvent(1038, origin.offset(1, 0, 1), 0);
         }
+        level->globalLevelEvent(1038, origin.offset(1, 0, 1), 0);
     }
     return InteractionResult::eInteractionResult_Success;
 }
@@ -112,13 +112,16 @@ InteractionResultHolder EnderEyeItem::use(Level* level, boost::shared_ptr<Player
 {
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     HitResult* hit = getPlayerPOVHitResult(level, player, false);
-    if (hit != NULL && hit->mType == HitResult::BLOCK
-        && level->getBlockState(hit->getBlockPos())->getBlock() == Blocks::end_portal_frame)
+    if (hit != NULL)
     {
+        if (hit->mType == HitResult::BLOCK
+            && level->getBlockState(hit->getBlockPos())->getBlock() == Blocks::end_portal_frame)
+        {
+            delete hit;
+            return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
+        }
         delete hit;
-        return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
     }
-    delete hit;
 
     player->startUsingItem(hand);
     if (!level->mIsClientSide)
@@ -138,8 +141,10 @@ InteractionResultHolder EnderEyeItem::use(Level* level, boost::shared_ptr<Player
             {
                 itemInstance->shrink(1);
             }
-            player->awardStat(gStats->get_itemsUsed(VALIDgetId(this)),
+            player->awardStat(GenericStats::itemsUsed(this),
                               GenericStats::param_itemsUsed(player, itemInstance));
+            delete target;
+            return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
         }
         delete target;
     }

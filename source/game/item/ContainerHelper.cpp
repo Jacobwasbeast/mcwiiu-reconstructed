@@ -11,7 +11,7 @@ not_null_ptr<ItemInstance> ContainerHelper::takeItem(NonNullList<not_null_ptr<It
         return ItemInstance::EMPTY;
     }
     not_null_ptr<ItemInstance> item = items[slot];
-    items[slot] = ItemInstance::EMPTY;
+    items.set(slot, ItemInstance::EMPTY);
     return item;
 }
 
@@ -60,8 +60,8 @@ void ContainerHelper::loadAllItems(CompoundTag* tag, NonNullList<not_null_ptr<It
         unsigned int slot = (unsigned int)itemTag->getByte(L"Slot");
         if (slot < items.size())
         {
-            not_null_ptr<ItemInstance> loaded(new ItemInstance(itemTag));
-            items[slot] = loaded;
+            ItemInstance* item = new ItemInstance(itemTag);
+            items.set(slot, not_null_ptr<ItemInstance>(item));
         }
     }
 }

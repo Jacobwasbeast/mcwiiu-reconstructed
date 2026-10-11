@@ -21,7 +21,7 @@ public:
     virtual int getMinCost(int level);
     virtual int getMaxCost(int level);
     virtual int getMaxLevel();
-    virtual bool canEnchant(not_null_ptr<ItemInstance> item);
+    virtual bool canEnchant(not_null_ptr<ItemInstance> itemInstance);
     static bool shouldHit(int level, Random* random);
     static int getDamage(int level, Random* random);
     virtual void doPostHurt(boost::shared_ptr<LivingEntity> target,

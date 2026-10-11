@@ -78,16 +78,16 @@ InteractionResult::EInteractionResult HoeItem::useOn(boost::shared_ptr<Player> p
         }
         else if (block == Blocks::dirt)
         {
-            int data = state->getValue(DirtBlock::VARIANT)->getData();
-            if (data == 0)
+            switch (state->getValue(DirtBlock::VARIANT)->getData())
             {
+            case 0:
                 replacement = Blocks::farmland;
                 result = InteractionResult::eInteractionResult_Success;
-            }
-            else if (data == 1)
-            {
+                break;
+            case 1:
                 replacement = Blocks::dirt;
                 result = InteractionResult::eInteractionResult_Success;
+                break;
             }
         }
     }

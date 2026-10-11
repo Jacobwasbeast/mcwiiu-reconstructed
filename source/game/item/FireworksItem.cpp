@@ -49,7 +49,14 @@ InteractionResult::EInteractionResult FireworksItem::useOn(boost::shared_ptr<Pla
     {
         not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
 
-        if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
+        if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
+        {
+            boost::shared_ptr<FireworksRocketEntity> rocket(
+                new FireworksRocketEntity(level, player, itemInstance));
+            level->addEntity(rocket);
+            player->getCooldowns()->addCooldown(this, 10);
+        }
+        else
         {
             boost::shared_ptr<FireworksRocketEntity> rocket(
                 new FireworksRocketEntity(level,
@@ -63,13 +70,6 @@ InteractionResult::EInteractionResult FireworksItem::useOn(boost::shared_ptr<Pla
             {
                 itemInstance->shrink(1);
             }
-        }
-        else
-        {
-            boost::shared_ptr<FireworksRocketEntity> rocket(
-                new FireworksRocketEntity(level, player, itemInstance));
-            level->addEntity(rocket);
-            player->getCooldowns()->addCooldown(this, 10);
         }
     }
 
@@ -94,14 +94,11 @@ InteractionResultHolder FireworksItem::use(Level* level,
         {
             player->swing(InteractionHand::eInteractionHand_MainHand);
         }
-    }
-    else
-    {
-        if (!player->isFallFlying())
-        {
-            return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
-        }
 
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
+    }
+    else if (player->isFallFlying())
+    {
         if (!level->mIsClientSide)
         {
             boost::shared_ptr<FireworksRocketEntity> rocket(
@@ -112,9 +109,12 @@ InteractionResultHolder FireworksItem::use(Level* level,
                 itemInstance->shrink(1);
             }
         }
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
     }
-
-    return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
+    else
+    {
+        return InteractionResultHolder(InteractionResult::eInteractionResult_Pass, itemInstance);
+    }
 }
 
 void FireworksItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
@@ -151,11 +151,14 @@ void FireworksItem::appendHoverText(not_null_ptr<ItemInstance> itemInstance,
         CompoundTag* explosion = explosions->getCompound(i);
         std::vector<HtmlString> chargeLines;
         FireworkChargeItem::appendHoverText(explosion, &chargeLines);
-        for (std::vector<HtmlString>::size_type j = 1; j < chargeLines.size(); ++j)
+        if (!chargeLines.empty())
         {
-            chargeLines[j].mIndent = true;
+            for (int j = 1; j < chargeLines.size(); ++j)
+            {
+                chargeLines[j].mIndent = true;
+            }
+            lines->insert(lines->end(), chargeLines.begin(), chargeLines.end());
         }
-        lines->insert(lines->end(), chargeLines.begin(), chargeLines.end());
     }
 }
 

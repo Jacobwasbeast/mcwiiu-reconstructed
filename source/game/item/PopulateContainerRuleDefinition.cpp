@@ -76,15 +76,11 @@ bool PopulateContainerRuleDefinition::evaluateRule(Level* level, LevelRuleset* r
         {
             (*it)->populateContainer(container, ruleset);
         }
-        unsigned int slot = 0;
-        for (std::vector<AddItemRuleDefinition*>::iterator it = mAddItems.begin(); it != mAddItems.end(); ++it)
+        int slot = 0;
+        for (std::vector<AddItemRuleDefinition*>::iterator it = mAddItems.begin(); it != mAddItems.end() && slot < container->getContainerSize(); ++it, ++slot)
         {
-            if (slot >= container->getContainerSize())
-            {
-                break;
-            }
-            (*it)->addItemToContainer(container, static_cast<int>(slot));
-            ++slot;
+            AddItemRuleDefinition* addItem = *it;
+            addItem->addItemToContainer(container, slot);
         }
     }
     return true;

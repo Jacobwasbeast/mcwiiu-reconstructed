@@ -432,11 +432,7 @@ void MapItem::inventoryTick(not_null_ptr<ItemInstance> itemInstance, Level* leve
         boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
         int newMapId = level->getAuxValueForMap(player->mXuid, data->mDimension, data->mXCenter,
                                                 data->mZCenter, data->mScale);
-        if (newMapId == itemInstance->getAuxValue())
-        {
-            data->tickCarriedBy(player, itemInstance);
-        }
-        else
+        if (newMapId != itemInstance->getAuxValue())
         {
             boost::shared_ptr<MapItemSavedData> newData = getSavedData(newMapId, level);
             newData->mXCenter = data->mXCenter;
@@ -450,24 +446,15 @@ void MapItem::inventoryTick(not_null_ptr<ItemInstance> itemInstance, Level* leve
             player->mInventoryMenu->broadcastChanges();
             data = newData;
         }
+        else
+        {
+            data->tickCarriedBy(player, itemInstance);
+        }
     }
 
-    bool shouldUpdate;
-    if (selected)
-    {
-        shouldUpdate = true;
-    }
-    else if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
-    {
-        boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
-        shouldUpdate = (player->getOffhandItem() == itemInstance);
-    }
-    else
-    {
-        shouldUpdate = false;
-    }
-
-    if (shouldUpdate)
+    if (selected
+        || (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
+            && boost::static_pointer_cast<Player>(entity)->getOffhandItem() == itemInstance))
     {
         update(level, entity, data);
     }
@@ -476,8 +463,7 @@ void MapItem::inventoryTick(not_null_ptr<ItemInstance> itemInstance, Level* leve
 boost::shared_ptr<Packet> MapItem::getUpdatePacket(not_null_ptr<ItemInstance> itemInstance,
                                                    Level* level, boost::shared_ptr<Player> player)
 {
-    boost::shared_ptr<MapItemSavedData> data = getSavedData(itemInstance, level);
-    return data->getUpdatePacket(itemInstance, level, player);
+    return getSavedData(itemInstance, level)->getUpdatePacket(itemInstance, level, player);
 }
 
 void MapItem::scaleMap(not_null_ptr<ItemInstance> itemInstance, Level* level, int scale)
@@ -540,12 +526,13 @@ void MapItem::onCraftedBy(not_null_ptr<ItemInstance> itemInstance, Level* level,
 
 int MapItem::getColor(const not_null_ptr<ItemInstance>& itemInstance)
 {
-    CompoundTag* display = static_cast<CompoundTag*>(itemInstance->getTagElement(L"display"));
-    if (!display || !display->contains(L"MapColor", Tag::TAG_ANY_NUMERIC))
+    CompoundTag* display = static_cast<CompoundTag*>(itemInstance->getTagElement(ItemInstance::TAG_DISPLAY));
+    if (display && display->contains(L"MapColor", Tag::TAG_ANY_NUMERIC))
     {
-        return 0xff46402e;
+        int color = display->getInt(L"MapColor");
+        return color & 0x00ffffff | 0xff000000;
     }
-    return display->getInt(L"MapColor") & 0x00ffffff | 0xff000000;
+    return 0xff46402e;
 }
 
 bool MapItem::hasMultipleSpriteLayers()

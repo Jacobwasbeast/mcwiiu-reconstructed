@@ -46,59 +46,74 @@ Tag* FireworkChargeItem::getExplosionTagField(not_null_ptr<ItemInstance> item, c
 void FireworkChargeItem::appendHoverText(CompoundTag* tag, std::vector<HtmlString>* lines)
 {
     unsigned char shape = tag->getByte(FireworksItem::TAG_E_TYPE);
-    if (shape > 4)
+    if (shape <= 4)
     {
-        lines->push_back(HtmlString(std::wstring(L10N::GetString(IDS_FIREWORKS_CHARGE_TYPE)), eMinecraftColour_NOTSET, false, false, 0));
+        int nameId = SHAPE_NAME_IDS[shape];
+        lines->push_back(HtmlString(std::wstring(L10N::GetString(nameId)), eMinecraftColour_NOTSET, false, false, 0));
     }
     else
     {
-        lines->push_back(HtmlString(std::wstring(L10N::GetString(SHAPE_NAME_IDS[shape])), eMinecraftColour_NOTSET, false, false, 0));
+        lines->push_back(HtmlString(std::wstring(L10N::GetString(IDS_FIREWORKS_CHARGE_TYPE)), eMinecraftColour_NOTSET, false, false, 0));
     }
 
     arrayWithLength<int> colours = tag->getIntArray(FireworksItem::TAG_E_COLORS);
-    if (colours.length != 0)
+    if (colours.length > 0)
     {
-        std::wstring text;
+        bool first = true;
+        std::wstring text = L"";
         for (unsigned int i = 0; i < colours.length; ++i)
         {
-            if (i != 0)
+            int colour = colours[i];
+            if (!first)
             {
                 text += L",\n";
             }
-            int nameId = IDS_FIREWORKS_CHARGE_CUSTOM;
+            first = false;
+            bool found = false;
             for (int dye = 0; dye < 16; ++dye)
             {
-                if (colours.data[i] == DyeItem::DYE_COLORS[dye])
+                if (colour == DyeItem::DYE_COLORS[dye])
                 {
-                    nameId = COLOUR_NAME_IDS[dye];
+                    found = true;
+                    text += L10N::GetString(COLOUR_NAME_IDS[dye]);
                     break;
                 }
             }
-            text += L10N::GetString(nameId);
+            if (!found)
+            {
+                text += L10N::GetString(IDS_FIREWORKS_CHARGE_CUSTOM);
+            }
         }
         lines->push_back(HtmlString(text, eMinecraftColour_NOTSET, false, false, 0));
     }
 
     arrayWithLength<int> fadeColours = tag->getIntArray(FireworksItem::TAG_E_FADECOLORS);
-    if (fadeColours.length != 0)
+    if (fadeColours.length > 0)
     {
+        bool first = true;
         std::wstring text = std::wstring(L10N::GetString(IDS_FIREWORKS_CHARGE_FADE_TO)) + L" ";
         for (unsigned int i = 0; i < fadeColours.length; ++i)
         {
-            if (i != 0)
+            int colour = fadeColours[i];
+            if (!first)
             {
                 text += L",\n";
             }
-            int nameId = IDS_FIREWORKS_CHARGE_CUSTOM;
+            first = false;
+            bool found = false;
             for (int dye = 0; dye < 16; ++dye)
             {
-                if (fadeColours.data[i] == DyeItem::DYE_COLORS[dye])
+                if (colour == DyeItem::DYE_COLORS[dye])
                 {
-                    nameId = COLOUR_NAME_IDS[dye];
+                    found = true;
+                    text += L10N::GetString(COLOUR_NAME_IDS[dye]);
                     break;
                 }
             }
-            text += L10N::GetString(nameId);
+            if (!found)
+            {
+                text += L10N::GetString(IDS_FIREWORKS_CHARGE_CUSTOM);
+            }
         }
         lines->push_back(HtmlString(text, eMinecraftColour_NOTSET, false, false, 0));
     }
@@ -128,11 +143,11 @@ void FireworkChargeItem::appendHoverText(not_null_ptr<ItemInstance> item, boost:
 
 TextureAtlasSprite* FireworkChargeItem::getLayerIcon(int auxValue, int layer, not_null_ptr<ItemInstance> item)
 {
-    if (layer < 1)
+    if (layer > 0)
     {
-        return Item::getLayerIcon(auxValue, layer, item);
+        return mOverlayIcon;
     }
-    return mOverlayIcon;
+    return Item::getLayerIcon(auxValue, layer, item);
 }
 
 bool FireworkChargeItem::hasMultipleSpriteLayers()

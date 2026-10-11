@@ -58,14 +58,14 @@ InteractionResult::EInteractionResult FlintAndSteelItem::useOn(boost::shared_ptr
             level->setBlock(firePos, Blocks::fire->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
         }
         itemInstance->hurtAndBreak(1, player);
-        return InteractionResult::eInteractionResult_Success;
     }
-
-    if (level->getBlockState(firePos)->getBlock()->mMaterial == Material::AIR
-        && Blocks::fire->mayPlace(level, firePos))
+    else
     {
-        return InteractionResult::eInteractionResult_Success;
+        return (level->getBlockState(firePos)->getBlock()->mMaterial == Material::AIR
+                && Blocks::fire->mayPlace(level, firePos))
+                   ? InteractionResult::eInteractionResult_Success
+                   : InteractionResult::eInteractionResult_Fail;
     }
 
-    return InteractionResult::eInteractionResult_Fail;
+    return InteractionResult::eInteractionResult_Success;
 }

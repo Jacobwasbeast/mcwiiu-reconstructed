@@ -22,14 +22,14 @@ public:
     class EnchantmentIterationMethod
     {
     public:
-        virtual ~EnchantmentIterationMethod();
+        virtual ~EnchantmentIterationMethod() {}
         virtual void doEnchantment(Enchantment* enchantment, int level) = 0;
     };
 
     class GetDamageProtectionIteration : public EnchantmentIterationMethod
     {
     public:
-        virtual ~GetDamageProtectionIteration();
+        virtual ~GetDamageProtectionIteration() {}
         virtual void doEnchantment(Enchantment* enchantment, int level);
 
         int mProtection;
@@ -39,7 +39,7 @@ public:
     class GetDamageBonusIteration : public EnchantmentIterationMethod
     {
     public:
-        virtual ~GetDamageBonusIteration();
+        virtual ~GetDamageBonusIteration() {}
         virtual void doEnchantment(Enchantment* enchantment, int level);
 
         float mBonus;
@@ -49,7 +49,7 @@ public:
     class DoPostHurtIteration : public EnchantmentIterationMethod
     {
     public:
-        virtual ~DoPostHurtIteration();
+        virtual ~DoPostHurtIteration() {}
         virtual void doEnchantment(Enchantment* enchantment, int level);
 
         boost::shared_ptr<LivingEntity> mTarget;
@@ -59,7 +59,7 @@ public:
     class DoPostDamageIteration : public EnchantmentIterationMethod
     {
     public:
-        virtual ~DoPostDamageIteration();
+        virtual ~DoPostDamageIteration() {}
         virtual void doEnchantment(Enchantment* enchantment, int level);
 
         boost::shared_ptr<LivingEntity> mAttacker;

@@ -66,7 +66,12 @@ InteractionResult::EInteractionResult SignItem::useOn(boost::shared_ptr<Player> 
         return InteractionResult::eInteractionResult_Fail;
     }
 
-    if (!level->mIsClientSide && !simulate)
+    if (level->mIsClientSide)
+    {
+        return InteractionResult::eInteractionResult_Success;
+    }
+
+    if (!simulate)
     {
         if (replaceable)
         {

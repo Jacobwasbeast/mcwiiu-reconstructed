@@ -50,8 +50,8 @@ void DoorItem::place(Level* level, const BlockPos& pos, const Direction* directi
     const BlockState* state = block->defaultBlockState()
                                   ->setValue(DoorBlock::FACING, direction)
                                   ->setValue(DoorBlock::HINGE, hingeRight ? DoorBlock::RIGHT : DoorBlock::LEFT)
-                                  ->setValue(DoorBlock::OPEN, powered)
-                                  ->setValue(DoorBlock::POWERED, powered);
+                                  ->setValue(DoorBlock::POWERED, powered)
+                                  ->setValue(DoorBlock::OPEN, powered);
     level->setBlock(pos, state->setValue(DoorBlock::HALF, DoorBlock::LOWER), Block::UPDATE_ALL, false);
     level->setBlock(above, state->setValue(DoorBlock::HALF, DoorBlock::UPPER), Block::UPDATE_ALL, false);
     level->updateNeighborsAt(pos, block, false);

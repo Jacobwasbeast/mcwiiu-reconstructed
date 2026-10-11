@@ -312,10 +312,10 @@ std::vector<MapDecoration> MapItemSavedData::fjGetAllDecorations()
     return result;
 }
 
-boost::shared_ptr<ClientboundMapItemDataPacket> MapItemSavedData::getUpdatePacket(not_null_ptr<ItemInstance> item, Level*, boost::shared_ptr<Player> player)
+boost::shared_ptr<Packet> MapItemSavedData::getUpdatePacket(not_null_ptr<ItemInstance> item, Level*, boost::shared_ptr<Player> player)
 {
     boost::unordered_map<boost::shared_ptr<Player>, boost::shared_ptr<HoldingPlayer>, _PlayerKeyHash, _PlayerKeyEq>::iterator it = mCarriedBy.find(player);
-    if (it == mCarriedBy.end()) return boost::shared_ptr<ClientboundMapItemDataPacket>();
+    if (it == mCarriedBy.end()) return boost::shared_ptr<Packet>();
     boost::shared_ptr<HoldingPlayer> holding = it->second;
     return holding->nextUpdatePacket(item);
 }
@@ -450,22 +450,22 @@ void MapItemSavedData::HoldingPlayer::markDirty(int x, int y)
     }
 }
 
-boost::shared_ptr<ClientboundMapItemDataPacket> MapItemSavedData::HoldingPlayer::nextUpdatePacket(not_null_ptr<ItemInstance> item)
+boost::shared_ptr<Packet> MapItemSavedData::HoldingPlayer::nextUpdatePacket(not_null_ptr<ItemInstance> item)
 {
     std::vector<MapDecoration> decorations = mMapData->fjGetAllDecorations();
     if (mDirty)
     {
         mDirty = false;
-        return boost::shared_ptr<ClientboundMapItemDataPacket>(new ClientboundMapItemDataPacket(
+        return boost::shared_ptr<Packet>(new ClientboundMapItemDataPacket(
             item->getAuxValue(), mMapData->mScale, mMapData->mTrackingPosition, decorations, mMapData->mColors, mMinX,
             mMinY, mMaxX + 1 - mMinX, mMaxY + 1 - mMinY));
     }
     if (mTick++ % 5 == 0)
     {
-        boost::shared_ptr<ClientboundMapItemDataPacket> packet(new ClientboundMapItemDataPacket(
+        boost::shared_ptr<Packet> packet(new ClientboundMapItemDataPacket(
             item->getAuxValue(), mMapData->mScale, mMapData->mTrackingPosition, decorations, mMapData->mColors, 0, 0,
             0, 0));
         return packet;
     }
-    return boost::shared_ptr<ClientboundMapItemDataPacket>();
+    return boost::shared_ptr<Packet>();
 }

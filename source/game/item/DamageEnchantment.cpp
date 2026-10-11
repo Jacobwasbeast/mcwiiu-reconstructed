@@ -2,6 +2,7 @@
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
 
+#include <algorithm>
 #include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
@@ -52,12 +53,7 @@ float DamageEnchantment::getDamageBonus(
 
     if (mType == 0)
     {
-        float bonus = (float)level - 1.0f;
-        if (bonus < 0.0f)
-        {
-            bonus = 0.0f;
-        }
-        return bonus * 0.5f + 1.0f;
+        return 1.0f + std::max(0.0f, level - 1.0f) * 0.5f;
     }
 
     if ((mType == 1 && mobType == MOB_TYPE_UNDEAD) ||
@@ -81,7 +77,8 @@ int DamageEnchantment::getDescriptionId()
 
 bool DamageEnchantment::canEnchant(not_null_ptr<ItemInstance> itemInstance)
 {
-    if (dynamic_cast<AxeItem*>(itemInstance->getItem()) != NULL)
+    Item* item = itemInstance->getItem();
+    if (dynamic_cast<AxeItem*>(item) != NULL)
     {
         return true;
     }

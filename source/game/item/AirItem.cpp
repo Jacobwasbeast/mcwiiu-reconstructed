@@ -1,6 +1,7 @@
 #include "game/item/AirItem.hpp"
 
 #include "game/item/Item.hpp"
+#include "game/item/ItemInstance.hpp"
 #include "game/item/not_null_ptr.hpp"
 #include "game/world/block/Block.hpp"
 

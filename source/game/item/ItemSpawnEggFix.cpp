@@ -87,35 +87,33 @@ int ItemSpawnEggFix::getVersion()
 
 CompoundTag* ItemSpawnEggFix::fix(CompoundTag* item)
 {
-    if (!CheckID(item, L"minecraft:spawn_egg"))
+    if (CheckID(item, L"minecraft:spawn_egg"))
     {
-        return item;
-    }
+        CompoundTag* itemTag = item->getCompound(L"tag");
+        CompoundTag* entityTag = itemTag->getCompound(L"EntityTag");
+        short damage = item->getShort(L"Damage");
 
-    CompoundTag* itemTag = item->getCompound(L"tag");
-    CompoundTag* entityTag = itemTag->getCompound(L"EntityTag");
-    short damage = item->getShort(L"Damage");
-
-    if (!entityTag->contains(L"id", Tag::TAG_STRING))
-    {
-        boost::unordered_map<int, std::wstring>::iterator entity = mEntityNames.find(damage);
-
-        if (entity == mEntityNames.end())
+        if (!entityTag->contains(L"id", Tag::TAG_STRING))
         {
-            entity = mEntityNames.find(damage & 0xFF);
+            boost::unordered_map<int, std::wstring>::iterator entity = mEntityNames.find(damage);
+
+            if (entity == mEntityNames.end())
+            {
+                entity = mEntityNames.find(damage & 0xFF);
+            }
+
+            if (entity != mEntityNames.end())
+            {
+                entityTag->putString(L"id", entity->second);
+                itemTag->put(L"EntityTag", entityTag);
+                item->put(L"tag", itemTag);
+            }
         }
 
-        if (entity != mEntityNames.end())
+        if (damage != 0)
         {
-            entityTag->putString(L"id", entity->second);
-            itemTag->put(L"EntityTag", entityTag);
-            item->put(L"tag", itemTag);
+            item->putShort(L"Damage", 0);
         }
-    }
-
-    if (damage != 0)
-    {
-        item->putShort(L"Damage", 0);
     }
 
     return item;

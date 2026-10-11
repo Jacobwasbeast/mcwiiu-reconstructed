@@ -37,10 +37,10 @@ bool BoatItem::TestUse(Level* level, boost::shared_ptr<Player> player, Interacti
     double fromY = player->mYo + (player->mY - player->mYo) + player->getEyeHeight();
     double fromZ = player->mZo + (player->mZ - player->mZo);
     Vec3* from = Vec3::newTemp(fromX, fromY, fromZ);
-    float yaw = -yRot * Mth::DEG_TO_RAD - 3.1415927f;
-    float pitch = -xRot * Mth::DEG_TO_RAD;
+    float yaw = -yRot * 0.017453292f - 3.1415927f;
     float yawCos = Mth::cos(yaw);
     float yawSin = Mth::sin(yaw);
+    float pitch = -xRot * 0.017453292f;
     float pitchCos = -Mth::cos(pitch);
     float pitchSin = Mth::sin(pitch);
     Vec3* to = from->add((double)(yawSin * pitchCos) * 5.0,
@@ -51,26 +51,25 @@ bool BoatItem::TestUse(Level* level, boost::shared_ptr<Player> player, Interacti
     {
         return false;
     }
-    if (hit->mType != HitResult::BLOCK)
+    if (hit->mType == HitResult::BLOCK)
     {
+        Block* block = level->getBlockState(hit->getBlockPos())->getBlock();
+        bool onWater = block == Blocks::water || block == Blocks::flowing_water;
+        boost::shared_ptr<Boat> boat(new Boat(level,
+                                              hit->mLocation->x,
+                                              onWater ? hit->mLocation->y - 0.12 : hit->mLocation->y,
+                                              hit->mLocation->z));
         delete hit;
-        return false;
-    }
-
-    Block* block = level->getBlockState(hit->getBlockPos())->getBlock();
-    bool onWater = block == Blocks::water || block == Blocks::flowing_water;
-    boost::shared_ptr<Boat> boat(new Boat(level,
-                                          hit->mLocation->x,
-                                          onWater ? hit->mLocation->y - 0.12 : hit->mLocation->y,
-                                          hit->mLocation->z));
-    delete hit;
-    boat->setType(mType);
-    boat->mYRot = player->mYRot;
-    bool blocked = level->getCollisionAABBs(boat, boat->Entity::mBoundingBox->grow(-0.1), false, false, false)->size() != 0;
-    if (!blocked)
-    {
+        boat->setType(mType);
+        boat->mYRot = player->mYRot;
+        bool blocked = level->getCollisionAABBs(boat, boat->Entity::mBoundingBox->grow(-0.1), false, false, false)->size() != 0;
+        if (blocked)
+        {
+            return false;
+        }
         return true;
     }
+    delete hit;
     return false;
 }
 
@@ -85,8 +84,8 @@ InteractionResultHolder BoatItem::use(Level* level,
     double fromY = player->mYo + (player->mY - player->mYo) + player->getEyeHeight();
     double fromZ = player->mZo + (player->mZ - player->mZo);
     Vec3* from = Vec3::newTemp(fromX, fromY, fromZ);
-    float yaw = -yRot * Mth::DEG_TO_RAD - 3.1415927f;
-    float pitch = -xRot * Mth::DEG_TO_RAD;
+    float yaw = -yRot * 0.017453292f - 3.1415927f;
+    float pitch = -xRot * 0.017453292f;
     float yawCos = Mth::cos(yaw);
     float yawSin = Mth::sin(yaw);
     float pitchCos = -Mth::cos(pitch);
@@ -168,6 +167,6 @@ InteractionResultHolder BoatItem::use(Level* level,
 
 unsigned int BoatItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    return TestUse(tooltipData.m_pLevel, tooltipData.m_pPlayer, InteractionHand::eInteractionHand_MainHand)
-        ? IDS_TOOLTIPS_PLACE : IDS_NONE;
+    bool canPlace = TestUse(tooltipData.m_pLevel, tooltipData.m_pPlayer, InteractionHand::eInteractionHand_MainHand);
+    return canPlace ? IDS_TOOLTIPS_PLACE : IDS_NONE;
 }

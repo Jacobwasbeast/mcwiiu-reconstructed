@@ -30,18 +30,18 @@ bool ShearsItem::mineBlock(not_null_ptr<ItemInstance> itemInstance, Level* level
 
     Block* block = state->getBlock();
 
-    if (state->getMaterial() != Material::LEAVES
-        && block != Blocks::web
-        && block != Blocks::tallgrass
-        && block != Blocks::vine
-        && block != Blocks::tripwire
-        && block != Blocks::wool
-        && block != Blocks::sea_grass)
+    if (state->getMaterial() == Material::LEAVES
+        || block == Blocks::web
+        || block == Blocks::tallgrass
+        || block == Blocks::vine
+        || block == Blocks::tripwire
+        || block == Blocks::wool
+        || block == Blocks::sea_grass)
     {
-        return Item::mineBlock(itemInstance, level, state, pos, entity);
+        return true;
     }
 
-    return true;
+    return Item::mineBlock(itemInstance, level, state, pos, entity);
 }
 
 bool ShearsItem::canDestroySpecial(const BlockState* state)
@@ -77,35 +77,35 @@ InteractionResult::EInteractionResult ShearsItem::useOn(boost::shared_ptr<Player
     }
 
     Block* block = level->getBlockState(pos)->getBlock();
-    Block* carvedPumpkin = Blocks::carved_pumpkin;
 
-    if (block != Blocks::pumpkin)
+    if (block == Blocks::pumpkin)
     {
-        return InteractionResult::eInteractionResult_Pass;
+        if (direction == Direction::UP || direction == Direction::DOWN)
+        {
+            return InteractionResult::eInteractionResult_Fail;
+        }
+
+        if (!simulate)
+        {
+            Block* carvedPumpkin = Blocks::carved_pumpkin;
+            int data = getLevelDataForAuxValue(itemInstance->getAuxValue());
+            const BlockState* carvedState = carvedPumpkin->getStateForPlacement(
+                level, pos, direction, hitX, hitY, hitZ, data, player);
+            level->playSound(player,
+                             pos,
+                             SoundEvents::PUMPKIN_CARVE,
+                             SoundSource::eSoundSource_Players,
+                             1.0f,
+                             1.0f,
+                             16.0f);
+            level->setBlock(pos, carvedState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
+            Block::popResource(level, pos,
+                               not_null_ptr<ItemInstance>(new ItemInstance(Items::pumpkinSeeds, 1, 0)));
+            itemInstance->hurtAndBreak(1, player);
+        }
+
+        return InteractionResult::eInteractionResult_Success;
     }
 
-    if (direction == Direction::UP || direction == Direction::DOWN)
-    {
-        return InteractionResult::eInteractionResult_Fail;
-    }
-
-    if (!simulate)
-    {
-        int data = getLevelDataForAuxValue(itemInstance->getAuxValue());
-        const BlockState* carvedState = carvedPumpkin->getStateForPlacement(
-            level, pos, direction, hitX, hitY, hitZ, data, player);
-        level->playSound(player,
-                         pos,
-                         SoundEvents::PUMPKIN_CARVE,
-                         SoundSource::eSoundSource_Players,
-                         1.0f,
-                         1.0f,
-                         16.0f);
-        level->setBlock(pos, carvedState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
-        Block::popResource(level, pos,
-                           not_null_ptr<ItemInstance>(new ItemInstance(Items::pumpkinSeeds, 1, 0)));
-        itemInstance->hurtAndBreak(1, player);
-    }
-
-    return InteractionResult::eInteractionResult_Success;
+    return InteractionResult::eInteractionResult_Pass;
 }

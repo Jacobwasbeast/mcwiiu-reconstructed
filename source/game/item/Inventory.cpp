@@ -1,4 +1,5 @@
 #include "game/item/Inventory.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -780,14 +781,15 @@ not_null_ptr<ItemInstance> Inventory::getCarried()
 
 bool Inventory::stillValid(boost::shared_ptr<Player> player)
 {
-    if (!m_player->mRemoved)
+    if (m_player->mRemoved)
     {
-        if (player->distanceAsIfHitscanned(BlockPos(m_player->getPos(1.0f)), *player->mBoundingBox) <= 30.25f)
-        {
-            return true;
-        }
+        return false;
     }
-    return false;
+    if (player->distanceAsIfHitscanned(BlockPos(m_player->getPos(1.0f)), *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
+    {
+        return false;
+    }
+    return true;
 }
 
 void Inventory::startOpen(boost::shared_ptr<Player> player)

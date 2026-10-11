@@ -9,6 +9,7 @@ class BlockPos;
 class Container;
 class Entity;
 class Level;
+class Random;
 
 class Containers
 {
@@ -20,6 +21,9 @@ public:
     static void dropContents(Level* level, double x, double y, double z, boost::shared_ptr<Container> container);
     static void dropContents(Level* level, const BlockPos& pos, boost::shared_ptr<Container> container);
     static void dropContents(Level* level, boost::shared_ptr<Entity> entity, boost::shared_ptr<Container> container);
+
+private:
+    static Random RANDOM;
 };
 
 #endif

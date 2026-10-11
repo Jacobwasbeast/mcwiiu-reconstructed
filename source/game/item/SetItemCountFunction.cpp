@@ -15,6 +15,6 @@ not_null_ptr<ItemInstance> SetItemCountFunction::apply(const not_null_ptr<ItemIn
                                                        Random* random,
                                                        LootTableContext& context)
 {
-    itemInstance->setCount(Mth::nextInt(random, Mth::floor(count.min), Mth::floor(count.max)));
+    itemInstance->setCount(count.getInt(random));
     return itemInstance;
 }

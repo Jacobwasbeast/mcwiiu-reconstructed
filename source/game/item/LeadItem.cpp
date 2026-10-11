@@ -21,20 +21,16 @@ LeadItem::LeadItem()
 
 bool LeadItem::bindPlayerMobsTest(boost::shared_ptr<Player> player, Level* level, const BlockPos& pos)
 {
+    double range = 7.0;
+    int x = pos.x;
+    int y = pos.y;
+    int z = pos.z;
     std::vector<boost::shared_ptr<Entity> >* entities =
-        level->getEntitiesOfClass(typeid(Mob), AABB::newTemp(static_cast<double>(pos.x) - 7.0,
-                                                              static_cast<double>(pos.y) - 7.0,
-                                                              static_cast<double>(pos.z) - 7.0,
-                                                              static_cast<double>(pos.x) + 7.0,
-                                                              static_cast<double>(pos.y) + 7.0,
-                                                              static_cast<double>(pos.z) + 7.0));
+        level->getEntitiesOfClass(typeid(Mob), AABB::newTemp(x - range, y - range, z - range,
+                                                              x + range, y + range, z + range));
     std::vector<boost::shared_ptr<Entity> >* boats =
-        level->getEntitiesOfClass(typeid(Boat), AABB::newTemp(static_cast<double>(pos.x) - 7.0,
-                                                               static_cast<double>(pos.y) - 7.0,
-                                                               static_cast<double>(pos.z) - 7.0,
-                                                               static_cast<double>(pos.x) + 7.0,
-                                                               static_cast<double>(pos.y) + 7.0,
-                                                               static_cast<double>(pos.z) + 7.0));
+        level->getEntitiesOfClass(typeid(Boat), AABB::newTemp(x - range, y - range, z - range,
+                                                              x + range, y + range, z + range));
     entities->insert(entities->end(), boats->begin(), boats->end());
 
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
@@ -58,23 +54,19 @@ bool LeadItem::bindPlayerMobs(boost::shared_ptr<Player> player, Level* level, co
 {
     boost::shared_ptr<LeashFenceKnotEntity> knot =
         LeashFenceKnotEntity::findKnotAt(level, pos);
+    bool bound = false;
+    double range = 7.0;
+    int x = pos.x;
+    int y = pos.y;
+    int z = pos.z;
     std::vector<boost::shared_ptr<Entity> >* entities =
-        level->getEntitiesOfClass(typeid(Mob), AABB::newTemp(static_cast<double>(pos.x) - 7.0,
-                                                              static_cast<double>(pos.y) - 7.0,
-                                                              static_cast<double>(pos.z) - 7.0,
-                                                              static_cast<double>(pos.x) + 7.0,
-                                                              static_cast<double>(pos.y) + 7.0,
-                                                              static_cast<double>(pos.z) + 7.0));
+        level->getEntitiesOfClass(typeid(Mob), AABB::newTemp(x - range, y - range, z - range,
+                                                              x + range, y + range, z + range));
     std::vector<boost::shared_ptr<Entity> >* boats =
-        level->getEntitiesOfClass(typeid(Boat), AABB::newTemp(static_cast<double>(pos.x) - 7.0,
-                                                               static_cast<double>(pos.y) - 7.0,
-                                                               static_cast<double>(pos.z) - 7.0,
-                                                               static_cast<double>(pos.x) + 7.0,
-                                                               static_cast<double>(pos.y) + 7.0,
-                                                               static_cast<double>(pos.z) + 7.0));
+        level->getEntitiesOfClass(typeid(Boat), AABB::newTemp(x - range, y - range, z - range,
+                                                              x + range, y + range, z + range));
     entities->insert(entities->end(), boats->begin(), boats->end());
 
-    bool bound = false;
     for (std::vector<boost::shared_ptr<Entity> >::iterator it = entities->begin();
          it != entities->end(); ++it)
     {
@@ -105,7 +97,8 @@ InteractionResult::EInteractionResult LeadItem::useOn(boost::shared_ptr<Player> 
                                                         float hitZ,
                                                         bool simulate)
 {
-    if (!level->getBlockState(pos)->getBlock()->instanceof(EBLOCK_TYPE_FENCE))
+    Block* block = level->getBlockState(pos)->getBlock();
+    if (!block->instanceof(EBLOCK_TYPE_FENCE))
     {
         return InteractionResult::eInteractionResult_Pass;
     }

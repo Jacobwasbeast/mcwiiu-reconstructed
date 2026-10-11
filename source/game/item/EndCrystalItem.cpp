@@ -33,8 +33,7 @@ InteractionResult::EInteractionResult EndCrystalItem::useOn(boost::shared_ptr<Pl
                                                              bool simulate)
 {
     const BlockState* state = level->getBlockState(pos);
-    Block* block = state->getBlock();
-    if (block != Blocks::obsidian && block != Blocks::bedrock)
+    if (state->getBlock() != Blocks::obsidian && state->getBlock() != Blocks::bedrock)
     {
         return InteractionResult::eInteractionResult_Fail;
     }
@@ -49,48 +48,48 @@ InteractionResult::EInteractionResult EndCrystalItem::useOn(boost::shared_ptr<Pl
     BlockPos aboveAbovePos = abovePos.above();
     bool blocked = !level->isEmptyBlock(abovePos)
         && !level->getBlockState(abovePos)->getBlock()->mayReplaceWithPlace(level, abovePos);
-    bool blockedAbove = !level->isEmptyBlock(aboveAbovePos)
-        && !level->getBlockState(aboveAbovePos)->getBlock()->mayReplaceWithPlace(level, aboveAbovePos);
-    if (blocked || blockedAbove)
+    blocked = blocked | (!level->isEmptyBlock(aboveAbovePos)
+        && !level->getBlockState(aboveAbovePos)->getBlock()->mayReplaceWithPlace(level, aboveAbovePos));
+    if (blocked)
     {
         return InteractionResult::eInteractionResult_Fail;
     }
 
+    double x = abovePos.x;
+    double y = abovePos.y;
+    double z = abovePos.z;
     std::vector<boost::shared_ptr<Entity> >* entities = level->getEntities(
-        boost::shared_ptr<Entity>(),
-        AABB::newTemp(abovePos.x, abovePos.y, abovePos.z,
-                      abovePos.x + 1.0, abovePos.y + 2.0, abovePos.z + 1.0),
-        NULL);
-    if (entities->size() != 0)
+        boost::shared_ptr<Entity>(), AABB::newTemp(x, y, z, x + 1.0, y + 2.0, z + 1.0), NULL);
+    if (!entities->empty())
     {
         return InteractionResult::eInteractionResult_Fail;
     }
 
-    if (simulate)
+    if (!simulate)
     {
-        return InteractionResult::eInteractionResult_Success;
-    }
-
-    if (!level->mIsClientSide)
-    {
-        if (!level->canCreateMore(EntityType::ENDER_CRYSTAL, Level::eSpawnType_Egg))
+        if (!level->mIsClientSide)
         {
-            player->displayClientMessage(IDS_MAX_ENDER_CRYSTALS, true);
-            return InteractionResult::eInteractionResult_Fail;
+            if (level->canCreateMore(EntityType::ENDER_CRYSTAL, Level::eSpawnType_Egg))
+            {
+                boost::shared_ptr<EnderCrystal> crystal(
+                    new EnderCrystal(level, pos.x + 0.5f, pos.y + 1, pos.z + 0.5f));
+                crystal->setShowBottom(false);
+                level->addEntity(crystal);
+
+                if (dynamic_cast<TheEndDimension*>(level->mDimension) != NULL)
+                {
+                    static_cast<TheEndDimension*>(level->mDimension)->getDragonFight()->tryRespawn();
+                }
+            }
+            else
+            {
+                player->displayClientMessage(IDS_MAX_ENDER_CRYSTALS, true);
+                return InteractionResult::eInteractionResult_Fail;
+            }
         }
 
-        boost::shared_ptr<EnderCrystal> crystal(
-            new EnderCrystal(level, pos.x + 0.5f, pos.y + 1, pos.z + 0.5f));
-        crystal->setShowBottom(false);
-        level->addEntity(crystal);
-
-        if (dynamic_cast<TheEndDimension*>(level->mDimension) != NULL)
-        {
-            static_cast<TheEndDimension*>(level->mDimension)->getDragonFight()->tryRespawn();
-        }
+        itemInstance->shrink(1);
     }
-
-    itemInstance->shrink(1);
     return InteractionResult::eInteractionResult_Success;
 }
 

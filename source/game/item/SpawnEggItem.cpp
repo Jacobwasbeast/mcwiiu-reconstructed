@@ -361,11 +361,7 @@ InteractionResult::EInteractionResult SpawnEggItem::useOn(boost::shared_ptr<Play
     if (simulate)
         return entity ? InteractionResult::eInteractionResult_Success : InteractionResult::eInteractionResult_Fail;
 
-    if (!entity)
-    {
-        DisplaySpawnError(player, error);
-    }
-    else
+    if (entity)
     {
         if (eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()) && itemInstance->hasCustomHoverName())
         {
@@ -376,6 +372,10 @@ InteractionResult::EInteractionResult SpawnEggItem::useOn(boost::shared_ptr<Play
         updateCustomEntityTag(level, player, itemInstance, entity);
         if (!player->mAbilities.mInstabuild)
             itemInstance->shrink(1);
+    }
+    else
+    {
+        DisplaySpawnError(player, error);
     }
     return InteractionResult::eInteractionResult_Success;
 }

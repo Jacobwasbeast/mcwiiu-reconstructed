@@ -15,7 +15,7 @@ not_null_ptr<ItemInstance> SetItemDamageFunction::apply(const not_null_ptr<ItemI
 {
     if (itemInstance->isDamageableItem())
     {
-        float damageFraction = 1.0f - Mth::nextFloat(random, damage.min, damage.max);
+        float damageFraction = 1.0f - damage.getFloat(random);
         itemInstance->setAuxValue(Mth::floor(damageFraction * itemInstance->getMaxDamage()));
     }
 

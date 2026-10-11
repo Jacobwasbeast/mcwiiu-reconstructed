@@ -58,11 +58,10 @@ void ItemFrame::addDataWalkers(DataFixerUpper* fixer)
     fixer->addWalker(DataFixTypes::eDataFixTypes_Entity, new ItemDataWalker(EntityType::ITEM_FRAME, L"Item"));
 }
 
-unsigned long long ItemFrame::staticCtor()
+void ItemFrame::staticCtor()
 {
     DATA_ITEM = SynchedEntityData::defineId(EntityType::ITEM_FRAME, EntityType::HANGING_ENTITY, EntityDataSerializers::ITEM_INSTANCE);
     DATA_ROTATION = SynchedEntityData::defineId(EntityType::ITEM_FRAME, EntityType::HANGING_ENTITY, EntityDataSerializers::INT);
-    return 0;
 }
 
 void ItemFrame::_init()
@@ -159,10 +158,10 @@ void ItemFrame::removeFramedMap(not_null_ptr<ItemInstance> item)
 {
     if (!item->isEmpty())
     {
-        if (item->getItem() == Items::filledMap)
+        Item* type = item->getItem();
+        if (type == Items::filledMap)
         {
-            MapItem* map = static_cast<MapItem*>(Items::filledMap);
-            boost::shared_ptr<MapItemSavedData> data = map->getSavedData(item, mLevel);
+            boost::shared_ptr<MapItemSavedData> data = static_cast<MapItem*>(Items::filledMap)->getSavedData(item, mLevel);
             boost::shared_ptr<ItemFrame> frame = item->getFrame();
             if (frame)
             {

@@ -43,28 +43,25 @@ InteractionResult::EInteractionResult MinecartItem::useOn(boost::shared_ptr<Play
         return InteractionResult::eInteractionResult_Fail;
     }
 
-    if (!simulate)
+    if (simulate)
     {
-        not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-        if ((unsigned int)level->countInstanceOf(EntityType::MINECART, false, NULL, NULL) >= 250)
-        {
-            if (!level->mIsClientSide)
-            {
-                player->displayClientMessage(IDS_MAX_MINECARTS, true);
-            }
-            return InteractionResult::eInteractionResult_Fail;
-        }
+        return InteractionResult::eInteractionResult_Success;
+    }
 
+    not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
+    if ((unsigned int)level->countInstanceOf(EntityType::MINECART, false, NULL, NULL) < 250)
+    {
         if (!level->mIsClientSide)
         {
-            Block* block = state->getBlock();
-            BaseRailBlock::RailShape* shape = BaseRailBlock::RailShape::NORTH_SOUTH;
-            if (block->instanceof(EBLOCK_TYPE_RAIL))
+            BaseRailBlock::RailShape* shape = state->getBlock()->instanceof(EBLOCK_TYPE_RAIL)
+                ? state->getValue(static_cast<BaseRailBlock*>(state->getBlock())->getShapeProperty())
+                : BaseRailBlock::RailShape::NORTH_SOUTH;
+            double yOffset = 0.0;
+            if (shape->isAscending())
             {
-                shape = state->getValue(static_cast<BaseRailBlock*>(block)->getShapeProperty());
+                yOffset = 0.5;
             }
 
-            double yOffset = shape->isAscending() ? 0.5 : 0.0;
             boost::shared_ptr<Minecart> minecart = Minecart::createMinecart(
                 level, (double)pos.x + 0.5, (double)pos.y + 0.0625 + yOffset,
                 (double)pos.z + 0.5, mMinecartType);
@@ -80,9 +77,14 @@ InteractionResult::EInteractionResult MinecartItem::useOn(boost::shared_ptr<Play
         }
 
         itemInstance->shrink(1);
+        return InteractionResult::eInteractionResult_Success;
     }
 
-    return InteractionResult::eInteractionResult_Success;
+    if (!level->mIsClientSide)
+    {
+        player->displayClientMessage(IDS_MAX_MINECARTS, true);
+    }
+    return InteractionResult::eInteractionResult_Fail;
 }
 
 MinecartItem::MinecartDispenseBehavior::~MinecartDispenseBehavior()
@@ -100,13 +102,11 @@ not_null_ptr<ItemInstance> MinecartItem::MinecartDispenseBehavior::execute(
     BlockPos position = blockSource->getPos().relative(direction);
     const BlockState* state = level->getBlockState(position);
 
-    BaseRailBlock::RailShape* shape = BaseRailBlock::RailShape::NORTH_SOUTH;
-    if (state->getBlock()->instanceof(EBLOCK_TYPE_RAIL))
-    {
-        shape = state->getValue(static_cast<BaseRailBlock*>(state->getBlock())->getShapeProperty());
-    }
+    BaseRailBlock::RailShape* shape = state->getBlock()->instanceof(EBLOCK_TYPE_RAIL)
+        ? state->getValue(static_cast<BaseRailBlock*>(state->getBlock())->getShapeProperty())
+        : BaseRailBlock::RailShape::NORTH_SOUTH;
 
-    if (level->countInstanceOf(EntityType::MINECART, false, NULL, NULL) >= 250)
+    if ((unsigned int)level->countInstanceOf(EntityType::MINECART, false, NULL, NULL) >= 250)
     {
         outcome = eOUTCOME_Default;
         return mDefaultDispenseItemBehavior.dispense(blockSource, itemInstance);
@@ -117,21 +117,18 @@ not_null_ptr<ItemInstance> MinecartItem::MinecartDispenseBehavior::execute(
     {
         railOffset = shape->isAscending() ? 0.6 : 0.1;
     }
+    else if (state->getMaterial() == Material::AIR && BaseRailBlock::isRail(level->getBlockState(position.below())))
+    {
+        const BlockState* belowState = level->getBlockState(position.below());
+        BaseRailBlock::RailShape* belowShape = belowState->getBlock()->instanceof(EBLOCK_TYPE_RAIL)
+            ? belowState->getValue(static_cast<BaseRailBlock*>(belowState->getBlock())->getShapeProperty())
+            : BaseRailBlock::RailShape::NORTH_SOUTH;
+        railOffset = direction == Direction::DOWN || !belowShape->isAscending() ? -0.9 : -0.4;
+    }
     else
     {
-        if (state->getMaterial() != Material::AIR || !BaseRailBlock::isRail(level->getBlockState(position.below())))
-        {
-            outcome = eOUTCOME_Default;
-            return mDefaultDispenseItemBehavior.dispense(blockSource, itemInstance);
-        }
-
-        const BlockState* belowState = level->getBlockState(position.below());
-        BaseRailBlock::RailShape* belowShape = BaseRailBlock::RailShape::NORTH_SOUTH;
-        if (belowState->getBlock()->instanceof(EBLOCK_TYPE_RAIL))
-        {
-            belowShape = belowState->getValue(static_cast<BaseRailBlock*>(belowState->getBlock())->getShapeProperty());
-        }
-        railOffset = direction != Direction::DOWN && belowShape->isAscending() ? -0.4 : -0.9;
+        outcome = eOUTCOME_Default;
+        return mDefaultDispenseItemBehavior.dispense(blockSource, itemInstance);
     }
 
     outcome = eOUTCOME_Success;

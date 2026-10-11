@@ -8,19 +8,17 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/BlockPos.hpp"
 
-static Random randomGenerator;
+Random Containers::RANDOM;
 
 void Containers::dropItemStack(Level* level, double x, double y, double z, not_null_ptr<ItemInstance> itemInstance)
 {
-    float spread = 0.8f;
-    float offset = 0.1f;
-    float xOffset = randomGenerator.nextFloat() * spread + offset;
-    float yOffset = randomGenerator.nextFloat() * spread + offset;
-    float zOffset = randomGenerator.nextFloat() * spread + offset;
+    float xOffset = RANDOM.nextFloat() * 0.8f + 0.1f;
+    float yOffset = RANDOM.nextFloat() * 0.8f + 0.1f;
+    float zOffset = RANDOM.nextFloat() * 0.8f + 0.1f;
 
     while (!itemInstance->isEmpty())
     {
-        not_null_ptr<ItemInstance> split = itemInstance->split(randomGenerator.nextInt(21) + 10);
+        not_null_ptr<ItemInstance> split = itemInstance->split(RANDOM.nextInt(21) + 10);
         split->set4JData(itemInstance->get4JData());
 
         boost::shared_ptr<ItemEntity> itemEntity(new ItemEntity(level,
@@ -28,9 +26,9 @@ void Containers::dropItemStack(Level* level, double x, double y, double z, not_n
             y + (double)yOffset,
             z + (double)zOffset, split));
         const float speed = 0.05f;
-        itemEntity->mXd = (float)randomGenerator.nextGaussian() * speed;
-        itemEntity->mYd = (float)randomGenerator.nextGaussian() * speed + 0.2f;
-        itemEntity->mZd = (float)randomGenerator.nextGaussian() * speed;
+        itemEntity->mXd = (float)RANDOM.nextGaussian() * speed;
+        itemEntity->mYd = (float)RANDOM.nextGaussian() * speed + 0.2f;
+        itemEntity->mZd = (float)RANDOM.nextGaussian() * speed;
         level->addEntity(itemEntity);
     }
 }

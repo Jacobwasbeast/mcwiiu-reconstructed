@@ -35,8 +35,8 @@ InteractionResultHolder SplashPotionItem::use(Level* level, boost::shared_ptr<Pl
 {
     bool instabuild = player->mAbilities.mInstabuild;
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
-    not_null_ptr<ItemInstance> thrownItem = !instabuild
-        ? itemInstance->split(1) : itemInstance->copy();
+    not_null_ptr<ItemInstance> thrownItem = instabuild
+        ? itemInstance->copy() : itemInstance->split(1);
     if (!instabuild)
     {
         itemInstance->shrink(1);
@@ -53,7 +53,7 @@ InteractionResultHolder SplashPotionItem::use(Level* level, boost::shared_ptr<Pl
         player->swing(InteractionHand::eInteractionHand_MainHand);
     }
 
-    player->awardStat(gStats->get_itemsUsed(Item::VALIDgetId(this)), GenericStats::param_itemsUsed(player, itemInstance));
+    player->awardStat(GenericStats::itemsUsed(this), GenericStats::param_itemsUsed(player, itemInstance));
     return InteractionResultHolder(InteractionResult::eInteractionResult_Success, itemInstance);
 }
 

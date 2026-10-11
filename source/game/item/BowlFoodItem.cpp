@@ -15,9 +15,12 @@ not_null_ptr<ItemInstance> BowlFoodItem::finishUsingItem(not_null_ptr<ItemInstan
                                                          boost::shared_ptr<LivingEntity> entity)
 {
     FoodItem::finishUsingItem(itemInstance, level, entity);
-    if (!Minecraft::InMiniGame(eMiniGameId_Battle, false))
+    if (Minecraft::InMiniGame(eMiniGameId_Battle, false))
+    {
+        return ItemInstance::EMPTY;
+    }
+    else
     {
         return not_null_ptr<ItemInstance>(new ItemInstance(Items::bowl));
     }
-    return ItemInstance::EMPTY;
 }

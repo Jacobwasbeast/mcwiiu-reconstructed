@@ -12,10 +12,9 @@ MapCloningRecipe::~MapCloningRecipe()
 
 bool MapCloningRecipe::matches(boost::shared_ptr<CraftingContainer> craftingContainer, Level* level)
 {
-    not_null_ptr<ItemInstance> filledMap = ItemInstance::EMPTY;
     int emptyMaps = 0;
-    unsigned int i;
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    not_null_ptr<ItemInstance> filledMap = ItemInstance::EMPTY;
+    for (unsigned int i = 0; i < craftingContainer->getContainerSize(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (item->isEmpty())
@@ -44,10 +43,9 @@ bool MapCloningRecipe::matches(boost::shared_ptr<CraftingContainer> craftingCont
 
 not_null_ptr<ItemInstance> MapCloningRecipe::assemble(boost::shared_ptr<CraftingContainer> craftingContainer)
 {
-    not_null_ptr<ItemInstance> filledMap = ItemInstance::EMPTY;
     int emptyMaps = 0;
-    unsigned int i;
-    for (i = 0; i < craftingContainer->getContainerSize(); ++i)
+    not_null_ptr<ItemInstance> filledMap = ItemInstance::EMPTY;
+    for (unsigned int i = 0; i < craftingContainer->getContainerSize(); ++i)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (item->isEmpty())
@@ -112,7 +110,7 @@ NonNullList<not_null_ptr<ItemInstance> > MapCloningRecipe::getRemainingItems(
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (!item->isEmpty() && item->getItem()->hasCraftingRemainingItem())
         {
-            result[i] = not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem()));
+            result.set(i, not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem())));
         }
     }
     return result;

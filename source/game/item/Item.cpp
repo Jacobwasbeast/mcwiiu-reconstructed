@@ -9,6 +9,7 @@
 #include "game/core/AttributeModifier.hpp"
 #include "game/core/Boat.hpp"
 #include "game/core/DyeColor.hpp"
+#include "game/core/FoodConstants.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/core/IconRegister.hpp"
 #include "game/core/Integer.hpp"
@@ -1558,7 +1559,7 @@ void Item::staticCtor()
         (new FlintAndSteelItem())->setIconName(L"flintAndSteel")->setBaseItemTypeAndMaterial(28, 26)->setDescriptionId(IDS_ITEM_FLINT_AND_STEEL, IDS_DESC_FLINTANDSTEEL));
 
     registerItem(260, L"apple",
-        (new FoodItem(4, 0.3f, false))->setIconName(L"apple")->setDescriptionId(IDS_ITEM_APPLE, IDS_DESC_APPLE));
+        (new FoodItem(4, FoodConstants::FOOD_SATURATION_LOW, false))->setIconName(L"apple")->setDescriptionId(IDS_ITEM_APPLE, IDS_DESC_APPLE));
 
     registerItem(261, L"bow",
         (new BowItem())->setIconName(L"bow")->setBaseItemTypeAndMaterial(24, 17)->setDescriptionId(IDS_ITEM_BOW, IDS_DESC_BOW));
@@ -1669,7 +1670,7 @@ void Item::staticCtor()
         (new Item())->setIconName(L"wheat")->setBaseItemTypeAndMaterial(31, 53)->setDescriptionId(IDS_ITEM_WHEAT, IDS_DESC_WHEAT));
 
     registerItem(297, L"bread",
-        (new FoodItem(5, 0.6f, false))->setIconName(L"bread")->setDescriptionId(IDS_ITEM_BREAD, IDS_DESC_BREAD));
+        (new FoodItem(5, FoodConstants::FOOD_SATURATION_NORMAL, false))->setIconName(L"bread")->setDescriptionId(IDS_ITEM_BREAD, IDS_DESC_BREAD));
 
     registerItem(298, L"leather_helmet",
         (new ArmorItem(ArmorItem::ArmorMaterial::LEATHER, 0, EquipmentSlot::HEAD))->setIconName(L"helmetCloth")->setBaseItemTypeAndMaterial(7, 6)->setDescriptionId(IDS_ITEM_HELMET_CLOTH, IDS_DESC_HELMET_LEATHER));
@@ -1735,16 +1736,16 @@ void Item::staticCtor()
         (new Item())->setIconName(L"flint")->setDescriptionId(IDS_ITEM_FLINT, IDS_DESC_FLINT));
 
     registerItem(319, L"porkchop",
-        (new FoodItem(3, 0.3f, true))->setIconName(L"porkchopRaw")->setDescriptionId(IDS_ITEM_PORKCHOP_RAW, IDS_DESC_PORKCHOP_RAW));
+        (new FoodItem(3, FoodConstants::FOOD_SATURATION_LOW, true))->setIconName(L"porkchopRaw")->setDescriptionId(IDS_ITEM_PORKCHOP_RAW, IDS_DESC_PORKCHOP_RAW));
 
     registerItem(320, L"cooked_porkchop",
-        (new FoodItem(8, 0.8f, true))->setIconName(L"porkchopCooked")->setDescriptionId(IDS_ITEM_PORKCHOP_COOKED, IDS_DESC_PORKCHOP_COOKED));
+        (new FoodItem(8, FoodConstants::FOOD_SATURATION_GOOD, true))->setIconName(L"porkchopCooked")->setDescriptionId(IDS_ITEM_PORKCHOP_COOKED, IDS_DESC_PORKCHOP_COOKED));
 
     registerItem(321, L"painting",
         (new HangingEntityItem(EntityType::PAINTING))->setIconName(L"painting")->setBaseItemTypeAndMaterial(34, 6)->setDescriptionId(IDS_ITEM_PAINTING, IDS_DESC_PICTURE));
 
     registerItem(322, L"golden_apple",
-        (new GoldenAppleItem(4, 1.2f, false))->setCanAlwaysEat()->setIconName(L"appleGold")->setBaseItemTypeAndMaterial(38, 46)->setDescriptionId(IDS_ITEM_APPLE_GOLD));
+        (new GoldenAppleItem(4, FoodConstants::FOOD_SATURATION_SUPERNATURAL, false))->setCanAlwaysEat()->setIconName(L"appleGold")->setBaseItemTypeAndMaterial(38, 46)->setDescriptionId(IDS_ITEM_APPLE_GOLD));
 
     registerItem(323, L"sign",
         (new SignItem())->setIconName(L"sign")->setBaseItemTypeAndMaterial(34, 1)->setDescriptionId(IDS_ITEM_SIGN, IDS_DESC_SIGN));
@@ -1850,7 +1851,7 @@ void Item::staticCtor()
         (new BlockPlanterItem(Blocks::unpowered_repeater))->setIconName(L"diode")->setDescriptionId(IDS_ITEM_DIODE, IDS_DESC_REDSTONEREPEATER)->setBaseItemTypeAndMaterial(59, 0));
 
     registerItem(357, L"cookie",
-        (new FoodItem(2, 0.1f, false))->setIconName(L"cookie")->setDescriptionId(IDS_ITEM_COOKIE, IDS_DESC_COOKIE));
+        (new FoodItem(2, FoodConstants::FOOD_SATURATION_POOR, false))->setIconName(L"cookie")->setDescriptionId(IDS_ITEM_COOKIE, IDS_DESC_COOKIE));
 
     registerItem(358, L"filled_map",
         (new MapItem())->setIconName(L"map")->setBaseItemTypeAndMaterial(25, 21)->setDescriptionId(IDS_ITEM_MAP, IDS_DESC_MAP)->setAllowOffhand(true));
@@ -1859,7 +1860,7 @@ void Item::staticCtor()
         (new ShearsItem())->setIconName(L"shears")->setBaseItemTypeAndMaterial(28, 27)->setDescriptionId(IDS_ITEM_SHEARS, IDS_DESC_SHEEP_HARVEST_COBWEB_LEAVE_SEAGRAS_BLOCK_DESCRIPTION));
 
     registerItem(360, L"melon",
-        (new FoodItem(2, 0.3f, false))->setIconName(L"melon")->setDescriptionId(IDS_ITEM_MELON_SLICE, IDS_DESC_MELON_SLICE));
+        (new FoodItem(2, FoodConstants::FOOD_SATURATION_LOW, false))->setIconName(L"melon")->setDescriptionId(IDS_ITEM_MELON_SLICE, IDS_DESC_MELON_SLICE));
 
     registerItem(361, L"pumpkin_seeds",
         (new SeedItem(Blocks::pumpkin_stem, Blocks::farmland))->setIconName(L"seeds_pumpkin")->setBaseItemTypeAndMaterial(33, 22)->setDescriptionId(IDS_ITEM_PUMPKIN_SEEDS, IDS_DESC_PUMPKIN_SEEDS));
@@ -1868,19 +1869,19 @@ void Item::staticCtor()
         (new SeedItem(Blocks::melon_stem, Blocks::farmland))->setIconName(L"seeds_melon")->setBaseItemTypeAndMaterial(33, 37)->setDescriptionId(IDS_ITEM_MELON_SEEDS, IDS_DESC_MELON_SEEDS));
 
     registerItem(363, L"beef",
-        (new FoodItem(3, 0.3f, true))->setIconName(L"beefRaw")->setDescriptionId(IDS_ITEM_BEEF_RAW, IDS_DESC_BEEF_RAW));
+        (new FoodItem(3, FoodConstants::FOOD_SATURATION_LOW, true))->setIconName(L"beefRaw")->setDescriptionId(IDS_ITEM_BEEF_RAW, IDS_DESC_BEEF_RAW));
 
     registerItem(364, L"cooked_beef",
-        (new FoodItem(8, 0.8f, true))->setIconName(L"beefCooked")->setDescriptionId(IDS_ITEM_BEEF_COOKED, IDS_DESC_BEEF_COOKED));
+        (new FoodItem(8, FoodConstants::FOOD_SATURATION_GOOD, true))->setIconName(L"beefCooked")->setDescriptionId(IDS_ITEM_BEEF_COOKED, IDS_DESC_BEEF_COOKED));
 
     registerItem(365, L"chicken",
-        (new FoodItem(2, 0.3f, true))->setEatEffect(new MobEffectInstance(MobEffects::HUNGER, 600, 0), 0.3f)->setIconName(L"chickenRaw")->setDescriptionId(IDS_ITEM_CHICKEN_RAW, IDS_DESC_CHICKEN_RAW));
+        (new FoodItem(2, FoodConstants::FOOD_SATURATION_LOW, true))->setEatEffect(new MobEffectInstance(MobEffects::HUNGER, 600, 0), 0.3f)->setIconName(L"chickenRaw")->setDescriptionId(IDS_ITEM_CHICKEN_RAW, IDS_DESC_CHICKEN_RAW));
 
     registerItem(366, L"cooked_chicken",
-        (new FoodItem(6, 0.6f, true))->setIconName(L"chickenCooked")->setDescriptionId(IDS_ITEM_CHICKEN_COOKED, IDS_DESC_CHICKEN_COOKED));
+        (new FoodItem(6, FoodConstants::FOOD_SATURATION_NORMAL, true))->setIconName(L"chickenCooked")->setDescriptionId(IDS_ITEM_CHICKEN_COOKED, IDS_DESC_CHICKEN_COOKED));
 
     registerItem(367, L"rotten_flesh",
-        (new FoodItem(4, 0.1f, true))->setEatEffect(new MobEffectInstance(MobEffects::HUNGER, 600, 0), 0.8f)->setIconName(L"rottenFlesh")->setDescriptionId(IDS_ITEM_ROTTEN_FLESH, IDS_DESC_ROTTEN_FLESH));
+        (new FoodItem(4, FoodConstants::FOOD_SATURATION_POOR, true))->setEatEffect(new MobEffectInstance(MobEffects::HUNGER, 600, 0), 0.8f)->setIconName(L"rottenFlesh")->setDescriptionId(IDS_ITEM_ROTTEN_FLESH, IDS_DESC_ROTTEN_FLESH));
 
     registerItem(368, L"ender_pearl",
         (new EnderpearlItem())->setIconName(L"enderPearl")->setDescriptionId(IDS_ITEM_ENDER_PEARL, IDS_DESC_ENDER_PEARL));
@@ -1905,7 +1906,7 @@ void Item::staticCtor()
         glassBottle);
 
     registerItem(375, L"spider_eye",
-        (new FoodItem(2, 0.8f, false))->setEatEffect(new MobEffectInstance(MobEffects::POISON, 100, 0), 1.0f)->setIconName(L"spiderEye")->setDescriptionId(IDS_ITEM_SPIDER_EYE, IDS_DESC_SPIDER_EYE));
+        (new FoodItem(2, FoodConstants::FOOD_SATURATION_GOOD, false))->setEatEffect(new MobEffectInstance(MobEffects::POISON, 100, 0), 1.0f)->setIconName(L"spiderEye")->setDescriptionId(IDS_ITEM_SPIDER_EYE, IDS_DESC_SPIDER_EYE));
 
     registerItem(376, L"fermented_spider_eye",
         (new Item())->setIconName(L"fermentedSpiderEye")->setDescriptionId(IDS_ITEM_FERMENTED_SPIDER_EYE, IDS_DESC_FERMENTED_SPIDER_EYE));
@@ -1953,22 +1954,22 @@ void Item::staticCtor()
         (new BlockPlanterItem(Blocks::flower_pot))->setIconName(L"flowerPot")->setDescriptionId(IDS_FLOWERPOT, IDS_DESC_FLOWERPOT)->setBaseItemTypeAndMaterial(53, 0));
 
     registerItem(391, L"carrot",
-        (new SeedFoodItem(3, 0.6f, Blocks::carrots, Blocks::farmland))->setIconName(L"carrots")->setDescriptionId(IDS_CARROTS, IDS_DESC_CARROTS));
+        (new SeedFoodItem(3, FoodConstants::FOOD_SATURATION_NORMAL, Blocks::carrots, Blocks::farmland))->setIconName(L"carrots")->setDescriptionId(IDS_CARROTS, IDS_DESC_CARROTS));
 
     registerItem(392, L"potato",
-        (new SeedFoodItem(1, 0.3f, Blocks::potatoes, Blocks::farmland))->setIconName(L"potato")->setDescriptionId(IDS_POTATO, IDS_DESC_POTATO));
+        (new SeedFoodItem(1, FoodConstants::FOOD_SATURATION_LOW, Blocks::potatoes, Blocks::farmland))->setIconName(L"potato")->setDescriptionId(IDS_POTATO, IDS_DESC_POTATO));
 
     registerItem(393, L"baked_potato",
-        (new FoodItem(5, 0.6f, false))->setIconName(L"potatoBaked")->setDescriptionId(IDS_ITEM_POTATO_BAKED, IDS_DESC_POTATO_BAKED));
+        (new FoodItem(5, FoodConstants::FOOD_SATURATION_NORMAL, false))->setIconName(L"potatoBaked")->setDescriptionId(IDS_ITEM_POTATO_BAKED, IDS_DESC_POTATO_BAKED));
 
     registerItem(394, L"poisonous_potato",
-        (new FoodItem(2, 0.3f, false))->setEatEffect(new MobEffectInstance(MobEffects::POISON, 100, 0), 0.6f)->setIconName(L"potatoPoisonous")->setDescriptionId(IDS_ITEM_POTATO_POISONOUS, IDS_DESC_POTATO_POISONOUS));
+        (new FoodItem(2, FoodConstants::FOOD_SATURATION_LOW, false))->setEatEffect(new MobEffectInstance(MobEffects::POISON, 100, 0), 0.6f)->setIconName(L"potatoPoisonous")->setDescriptionId(IDS_ITEM_POTATO_POISONOUS, IDS_DESC_POTATO_POISONOUS));
 
     registerItem(395, L"map",
         (new EmptyMapItem())->setIconName(L"map_empty")->setBaseItemTypeAndMaterial(25, 21)->setDescriptionId(IDS_ITEM_MAP_EMPTY, IDS_DESC_MAP_EMPTY));
 
     registerItem(396, L"golden_carrot",
-        (new FoodItem(6, 1.2f, false))->setIconName(L"carrotGolden")->setBaseItemTypeAndMaterial(38, 47)->setDescriptionId(IDS_ITEM_CARROT_GOLDEN, IDS_DESC_CARROT_GOLDEN));
+        (new FoodItem(6, FoodConstants::FOOD_SATURATION_SUPERNATURAL, false))->setIconName(L"carrotGolden")->setBaseItemTypeAndMaterial(38, 47)->setDescriptionId(IDS_ITEM_CARROT_GOLDEN, IDS_DESC_CARROT_GOLDEN));
 
     registerItem(397, L"skull",
         (new SkullItem())->setIconName(L"")->setDescriptionId(IDS_ITEM_SKULL, IDS_DESC_SKULL));
@@ -1980,7 +1981,7 @@ void Item::staticCtor()
         (new SimpleFoiledItem())->setIconName(L"nether_star")->setDescriptionId(IDS_NETHER_STAR, IDS_DESC_NETHER_STAR));
 
     registerItem(400, L"pumpkin_pie",
-        (new FoodItem(8, 0.3f, false))->setIconName(L"pumpkinPie")->setDescriptionId(IDS_ITEM_PUMPKIN_PIE, IDS_DESC_PUMPKIN_PIE));
+        (new FoodItem(8, FoodConstants::FOOD_SATURATION_LOW, false))->setIconName(L"pumpkinPie")->setDescriptionId(IDS_ITEM_PUMPKIN_PIE, IDS_DESC_PUMPKIN_PIE));
 
     registerItem(401, L"fireworks",
         (new FireworksItem())->setIconName(L"fireworks")->setBaseItemTypeAndMaterial(44, 0)->setDescriptionId(IDS_FIREWORKS, IDS_DESC_FIREWORKS));
@@ -2013,10 +2014,10 @@ void Item::staticCtor()
         (new Item())->setIconName(L"prismarine_crystals")->setDescriptionId(IDS_ITEM_PRISMARINE_CRYSTALS, IDS_DESC_PRISMARINE_CRYSTALS)->setBaseItemTypeAndMaterial(13, 0));
 
     registerItem(411, L"rabbit",
-        (new FoodItem(3, 0.3f, true))->setIconName(L"rabbit_raw")->setDescriptionId(IDS_ITEM_RABBIT_RAW, IDS_DESC_RABBIT_RAW)->setBaseItemTypeAndMaterial(53, 0));
+        (new FoodItem(3, FoodConstants::FOOD_SATURATION_LOW, true))->setIconName(L"rabbit_raw")->setDescriptionId(IDS_ITEM_RABBIT_RAW, IDS_DESC_RABBIT_RAW)->setBaseItemTypeAndMaterial(53, 0));
 
     registerItem(412, L"cooked_rabbit",
-        (new FoodItem(5, 0.6f, true))->setIconName(L"rabbit_cooked")->setDescriptionId(IDS_ITEM_RABBIT_COOKED, IDS_DESC_RABBIT_COOKED));
+        (new FoodItem(5, FoodConstants::FOOD_SATURATION_NORMAL, true))->setIconName(L"rabbit_cooked")->setDescriptionId(IDS_ITEM_RABBIT_COOKED, IDS_DESC_RABBIT_COOKED));
 
     registerItem(413, L"rabbit_stew",
         (new BowlFoodItem(10))->setBaseItemTypeAndMaterial(39, 0)->setIconName(L"rabbit_stew")->setDescriptionId(IDS_ITEM_RABBIT_STEW, IDS_DESC_RABBIT_STEW));
@@ -2049,10 +2050,10 @@ void Item::staticCtor()
         (new MinecartItem(Minecart::Type::COMMAND_BLOCK))->setIconName(L"minecart_command_block")->setDescriptionId(IDS_ITEM_MINECART_COMMAND));
 
     registerItem(423, L"mutton",
-        (new FoodItem(2, 0.3f, true))->setIconName(L"mutton_raw")->setDescriptionId(IDS_ITEM_MUTTON_RAW, IDS_DESC_MUTTON_RAW));
+        (new FoodItem(2, FoodConstants::FOOD_SATURATION_LOW, true))->setIconName(L"mutton_raw")->setDescriptionId(IDS_ITEM_MUTTON_RAW, IDS_DESC_MUTTON_RAW));
 
     registerItem(424, L"cooked_mutton",
-        (new FoodItem(6, 0.8f, true))->setIconName(L"mutton_cooked")->setDescriptionId(IDS_ITEM_MUTTON_COOKED, IDS_DESC_MUTTON_COOKED));
+        (new FoodItem(6, FoodConstants::FOOD_SATURATION_GOOD, true))->setIconName(L"mutton_cooked")->setDescriptionId(IDS_ITEM_MUTTON_COOKED, IDS_DESC_MUTTON_COOKED));
 
     registerItem(425, L"banner",
         (new BannerItem())->setIconName(L"cookie")->setBaseItemTypeAndMaterial(54, 0)->setDescriptionId(IDS_ITEM_BANNER));
@@ -2076,13 +2077,13 @@ void Item::staticCtor()
         (new DoorItem(Blocks::dark_oak_door))->setIconName(L"door_dark_oak")->setBaseItemTypeAndMaterial(6, 43)->setDescriptionId(IDS_ITEM_DOOR_DARKOAKWOOD, IDS_DESC_DOOR_WOOD));
 
     registerItem(432, L"chorus_fruit",
-        (new ChorusFruitItem(4, 0.3f))->setCanAlwaysEat()->setIconName(L"chorus_fruit")->setDescriptionId(IDS_ITEM_CHORUS_FRUIT, IDS_DESC_ITEM_CHORUS_FRUIT));
+        (new ChorusFruitItem(4, FoodConstants::FOOD_SATURATION_LOW))->setCanAlwaysEat()->setIconName(L"chorus_fruit")->setDescriptionId(IDS_ITEM_CHORUS_FRUIT, IDS_DESC_ITEM_CHORUS_FRUIT));
 
     registerItem(433, L"chorus_fruit_popped",
         (new Item())->setIconName(L"chorus_fruit_popped")->setDescriptionId(IDS_ITEM_CHORUS_FRUIT_POPPED, IDS_DESC_ITEM_CHORUS_FRUIT_POPPED));
 
     registerItem(434, L"beetroot",
-        (new FoodItem(1, 0.6f, false))->setIconName(L"beetroot")->setDescriptionId(IDS_ITEM_BEETROOT, IDS_DESC_ITEM_BEETROOT));
+        (new FoodItem(1, FoodConstants::FOOD_SATURATION_NORMAL, false))->setIconName(L"beetroot")->setDescriptionId(IDS_ITEM_BEETROOT, IDS_DESC_ITEM_BEETROOT));
 
     registerItem(435, L"beetroot_seeds",
         (new SeedItem(Blocks::beetroots, Blocks::farmland))->setIconName(L"beetroot_seeds")->setBaseItemTypeAndMaterial(33, 0)->setDescriptionId(IDS_ITEM_BEETROOT_SEEDS, IDS_DESC_ITEM_BEETROOT_SEEDS));
@@ -2151,7 +2152,7 @@ void Item::staticCtor()
     registerItem(457, L"kelp",
         (new BlockPlanterItem(Blocks::kelp))->setIconName(L"kelp")->setDescriptionId(IDS_ITEM_KELP, IDS_DESC_ITEM_KELP));
 
-    FoodItem* driedKelp = new FoodItem(1, 0.1f, false);
+    FoodItem* driedKelp = new FoodItem(1, FoodConstants::FOOD_SATURATION_POOR, false);
     driedKelp->setIsFastFood();
     registerItem(458, L"dried_kelp",
         driedKelp->setIconName(L"dried_kelp")->setBaseItemTypeAndMaterial(31, 73)->setDescriptionId(IDS_ITEM_DRIED_KELP, IDS_DESC_ITEM_DRIED_KELP));

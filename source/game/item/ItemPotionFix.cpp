@@ -29,17 +29,17 @@ CompoundTag* ItemPotionFix::fix(CompoundTag* tag)
 }
 void ItemPotionFix::fix(not_null_ptr<ItemInstance> item)
 {
-    Item* itemType = item->getItem();
-    if (itemType != Items::potion && itemType != Items::splashPotion && itemType != Items::lingeringPotion
-        && itemType != Items::tippedArrow)
-        return;
-    short auxValue = item->getAuxValue();
-    std::wstring name = potionNames[auxValue & 0x7f];
-    if (name.empty())
-        name = missingPotionName;
-    PotionUtils::setPotion(item, Potion::byName(name));
-    if (auxValue != 0)
-        item->setAuxValue(0);
+    if (item->getItem() == Items::potion || item->getItem() == Items::splashPotion
+        || item->getItem() == Items::lingeringPotion || item->getItem() == Items::tippedArrow)
+    {
+        short auxValue = item->getAuxValue();
+        std::wstring name = potionNames[auxValue & 0x7f];
+        if (name.empty())
+            name = missingPotionName;
+        PotionUtils::setPotion(item, Potion::byName(name));
+        if (auxValue != 0)
+            item->setAuxValue(0);
+    }
 }
 void ItemPotionFix::staticCtor()
 {

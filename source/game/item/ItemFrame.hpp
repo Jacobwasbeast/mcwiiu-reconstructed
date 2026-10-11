@@ -26,7 +26,7 @@ public:
 
     static Entity* create(Level* level);
     static void addDataWalkers(DataFixerUpper* fixer);
-    static unsigned long long staticCtor();
+    static void staticCtor();
     void _init();
     virtual void defineSynchedData();
     virtual float getPickRadius();

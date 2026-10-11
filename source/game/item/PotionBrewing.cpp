@@ -34,10 +34,11 @@ PotionBrewing::ItemInstancePredicate::~ItemInstancePredicate()
 
 bool PotionBrewing::PredicateItemInstance::apply(not_null_ptr<ItemInstance> itemInstance) const
 {
-    for (std::vector<PotionBrewing::ItemInstancePredicate*>::iterator predicate = containerPredicates.begin();
-         predicate != containerPredicates.end(); ++predicate)
+    for (std::vector<PotionBrewing::ItemInstancePredicate*>::iterator it = containerPredicates.begin();
+         it != containerPredicates.end(); ++it)
     {
-        if ((*predicate)->apply(itemInstance))
+        ItemInstancePredicate* predicate = *it;
+        if (predicate->apply(itemInstance))
         {
             return true;
         }

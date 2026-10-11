@@ -20,7 +20,7 @@ bool LootItemRandomChanceWithLootingCondition::applies(Random* random, LootTable
     int lootingLevel = 0;
 
     if ((context.mDamageSource == NULL ? boost::shared_ptr<Entity>() : context.mDamageSource->getEntity())
-        && (((context.mDamageSource == NULL ? boost::shared_ptr<Entity>() : context.mDamageSource->getEntity()))->GetType() & EntityType::LIVING_ENTITY) == EntityType::LIVING_ENTITY)
+        && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, (context.mDamageSource == NULL ? boost::shared_ptr<Entity>() : context.mDamageSource->getEntity())->GetType()))
     {
         lootingLevel = EnchantmentHelper::getMobLooting(boost::dynamic_pointer_cast<LivingEntity>(
             context.mDamageSource == NULL ? boost::shared_ptr<Entity>() : context.mDamageSource->getEntity()));

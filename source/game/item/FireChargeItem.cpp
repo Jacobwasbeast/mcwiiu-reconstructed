@@ -61,16 +61,15 @@ InteractionResult::EInteractionResult FireChargeItem::useOn(boost::shared_ptr<Pl
         {
             itemInstance->shrink(1);
         }
-        return InteractionResult::eInteractionResult_Success;
     }
-
-    if (level->getBlockState(target)->getBlock()->mMaterial == Material::AIR &&
-        Blocks::fire->mayPlace(level, target))
+    else
     {
-        return InteractionResult::eInteractionResult_Success;
+        return level->getBlockState(target)->getBlock()->mMaterial == Material::AIR &&
+                       Blocks::fire->mayPlace(level, target)
+                   ? InteractionResult::eInteractionResult_Pass
+                   : InteractionResult::eInteractionResult_Fail;
     }
-
-    return InteractionResult::eInteractionResult_Fail;
+    return InteractionResult::eInteractionResult_Success;
 }
 
 TextureAtlasSprite* FireChargeItem::getIcon(int auxValue)

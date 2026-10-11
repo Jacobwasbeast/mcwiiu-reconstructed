@@ -105,13 +105,12 @@ NonNullList<not_null_ptr<ItemInstance> > RepairItemRecipe::getRemainingItems(boo
 {
     NonNullList<not_null_ptr<ItemInstance> > result =
         NonNullList<not_null_ptr<ItemInstance> >::withSize(craftingContainer->getContainerSize(), ItemInstance::EMPTY);
-    unsigned int i;
-    for (i = 0; i < result.size(); ++i)
+    for (unsigned int i = 0; i < result.size(); i++)
     {
         not_null_ptr<ItemInstance> item = craftingContainer->getItem(i);
         if (item->getItem()->hasCraftingRemainingItem())
         {
-            result[i] = not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem()));
+            result.set(i, not_null_ptr<ItemInstance>(new ItemInstance(item->getItem()->getCraftingRemainingItem())));
         }
     }
     return result;

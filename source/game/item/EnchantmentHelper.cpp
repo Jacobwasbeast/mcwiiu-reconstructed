@@ -29,21 +29,9 @@ static EnchantmentHelper::GetDamageBonusIteration sDamageBonusIteration;
 static EnchantmentHelper::DoPostHurtIteration sPostHurtIteration;
 static EnchantmentHelper::DoPostDamageIteration sPostDamageIteration;
 
-EnchantmentHelper::EnchantmentIterationMethod::~EnchantmentIterationMethod()
-{
-}
-
-EnchantmentHelper::GetDamageProtectionIteration::~GetDamageProtectionIteration()
-{
-}
-
 void EnchantmentHelper::GetDamageProtectionIteration::doEnchantment(Enchantment* enchantment, int level)
 {
     mProtection += enchantment->getDamageProtection(level, mSource);
-}
-
-EnchantmentHelper::GetDamageBonusIteration::~GetDamageBonusIteration()
-{
 }
 
 void EnchantmentHelper::GetDamageBonusIteration::doEnchantment(Enchantment* enchantment, int level)
@@ -51,17 +39,9 @@ void EnchantmentHelper::GetDamageBonusIteration::doEnchantment(Enchantment* ench
     mBonus += enchantment->getDamageBonus(level, mTarget);
 }
 
-EnchantmentHelper::DoPostHurtIteration::~DoPostHurtIteration()
-{
-}
-
 void EnchantmentHelper::DoPostHurtIteration::doEnchantment(Enchantment* enchantment, int level)
 {
     enchantment->doPostHurt(mTarget, mAttacker, level);
-}
-
-EnchantmentHelper::DoPostDamageIteration::~DoPostDamageIteration()
-{
 }
 
 void EnchantmentHelper::DoPostDamageIteration::doEnchantment(Enchantment* enchantment, int level)
