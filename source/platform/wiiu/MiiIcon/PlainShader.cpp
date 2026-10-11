@@ -30,7 +30,9 @@ s32 GetPixelUniformLocation(const GX2PixelShader* shader, const char* name)
 
 s32 GetPixelSamplerLocation(const GX2PixelShader* shader, const char* name)
 {
-    return GX2GetPixelSamplerVarLocation(shader, name);
+    GX2SamplerVar* var = GX2GetPixelSamplerVar(shader, name);
+    s32 location = var == NULL ? -1 : static_cast<s32>(var->location);
+    return location;
 }
 
 void InitVertexShader(GX2VertexShader** shader, const void* shaderData)
@@ -268,17 +270,18 @@ void InitPlainShader(PlainShader* shader, const void* shaderData)
     MII_ICON_ASSERT_POINTER(shader);
     MII_ICON_ASSERT_POINTER(shaderData);
 
-    shader->callback.pObj = shader;
+    FFLShaderCallback& callback = shader->callback;
+    callback.pObj = shader;
 
     GX2ContextState* contextState = static_cast<GX2ContextState*>(
         gRendererInstance->MemoryAllocMEM2(sizeof(GX2ContextState), GX2_CONTEXT_STATE_ALIGNMENT));
 
-    shader->callback.pContextState = contextState;
-    shader->callback.pDrawFunc = Draw;
-    shader->callback.pSetMatrixFunc = SetMatrix;
+    callback.pContextState = contextState;
+    callback.pDrawFunc = Draw;
+    callback.pSetMatrixFunc = SetMatrix;
 
     GX2SetupContextState(contextState);
-    GX2SetContextState(shader->callback.pContextState);
+    GX2SetContextState(callback.pContextState);
 
     InitShader(shader, shaderData);
 
