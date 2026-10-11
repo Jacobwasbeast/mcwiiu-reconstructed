@@ -3,6 +3,7 @@
 #include "nn/pia/HeapManager.hpp"
 #include "nn/pia/NetworkFactory.hpp"
 #include "nn/pia/Transport.hpp"
+#include "nn/pia/common/Memory.hpp"
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/transport/ConnectStationJob.hpp"
 #include "nn/pia/transport/DisconnectStationJob.hpp"
@@ -34,23 +35,25 @@ Station::Station()
     void* memory = pead::allocateFromSeadHeap(sizeof(ReliableSlidingWindow), common::HeapManager::GetHeap());
     if (memory != 0)
         m_reliableSlidingWindow = new (memory) ReliableSlidingWindow();
+    else
+        m_reliableSlidingWindow = 0;
     memory = pead::allocateFromSeadHeap(sizeof(ProcessConnectionRequestJob), common::HeapManager::GetHeap());
     if (memory != 0)
         m_processConnectionRequestJob = new (memory) ProcessConnectionRequestJob();
+    else
+        m_processConnectionRequestJob = 0;
 }
 
 Station::~Station()
 {
     if (m_processConnectionRequestJob != 0)
     {
-        m_processConnectionRequestJob->~ProcessConnectionRequestJob();
-        pead::freeToSeadHeap(m_processConnectionRequestJob);
+        common::DeleteObj(m_processConnectionRequestJob);
         m_processConnectionRequestJob = 0;
     }
     if (m_reliableSlidingWindow != 0)
     {
-        m_reliableSlidingWindow->~ReliableSlidingWindow();
-        pead::freeToSeadHeap(m_reliableSlidingWindow);
+        common::DeleteObj(m_reliableSlidingWindow);
         m_reliableSlidingWindow = 0;
     }
 }
@@ -58,9 +61,9 @@ Station::~Station()
 Result Station::GetPrincipalId(unsigned long long* principalId)
 {
     if (!g_stationConnectionInfoTable)
-        return 0x10c08;
+        return cResultInvalidState;
     if (!principalId)
-        return 0x10c07;
+        return ResultInvalidArgument();
     StationConnectionInfo info;
     Result result = g_stationConnectionInfoTable->GetStationConnectionInfo(this, &info);
     if (result != 0)
@@ -75,8 +78,12 @@ Result Station::GetPrincipalId(unsigned long long* principalId)
 
 Result Station::Initialize(NetworkFactory* factory, StationProtocol* protocol, RttProtocol* rtt)
 {
-    if (factory == 0 || protocol == 0 || rtt == 0)
-        return 0x10c07;
+    if (factory == 0)
+        return cResultInvalidArgument;
+    if (protocol == 0)
+        return cResultInvalidArgument;
+    if (rtt == 0)
+        return cResultInvalidArgument;
     m_rttProtocol = rtt;
     m_field28 = protocol;
     m_field0 = 0;
@@ -93,16 +100,16 @@ void Station::Finalize()
         m_reliableSlidingWindow->Finalize();
     if (m_disconnectStationJob != 0)
     {
-        g_piaTransport->m_networkFactory->DeleteDisconnectStationJob(m_disconnectStationJob);
+        g_piaTransport->GetNetworkFactory()->DeleteDisconnectStationJob(m_disconnectStationJob);
         m_disconnectStationJob = 0;
     }
     if (m_connectStationJob != 0)
     {
-        g_piaTransport->m_networkFactory->DeleteConnectStationJob(m_connectStationJob);
+        g_piaTransport->GetNetworkFactory()->DeleteConnectStationJob(m_connectStationJob);
         m_connectStationJob = 0;
     }
-    m_field28 = 0;
     m_rttProtocol = 0;
+    m_field28 = 0;
 }
 
 void Station::SetStationIdAndIndex(unsigned long long id, StationIndex index)
@@ -120,14 +127,16 @@ void Station::helperStartupCleanup(bool startup, unsigned long long id, StationI
         m_sequenceIdController.Startup();
         common::Time time;
         time.SetNow();
-        m_lastSendTime = m_lastReceiveTime = time;
+        m_lastSendTime = time;
+        m_lastReceiveTime = time;
     }
     else
     {
         m_sequenceIdController.Cleanup();
         m_reliableSlidingWindow->Cleanup();
     }
-    SetStationIdAndIndex(id, index);
+    m_stationId = id;
+    m_field10 = index;
     m_stationAddress = address;
     m_field20 = state;
     m_field54 = 0;
@@ -137,7 +146,7 @@ void Station::helperStartupCleanup(bool startup, unsigned long long id, StationI
 
 bool Station::Startup(unsigned long long id, StationIndex index, const common::StationAddress& address)
 {
-    if (static_cast<unsigned int>(index) > 0x1f && index != 0xfd)
+    if (!common::isValidSourceStationIndex(index))
         return false;
     helperStartupCleanup(true, id, index, address, static_cast<StationState>(1));
     return true;
@@ -247,11 +256,6 @@ bool Station::IsConnectionRouteDirect() const
 }
 
 void Station::Trace(unsigned long long) const
-{
-}
-
-Station::PlayerInfo::PlayerInfo()
-    : m_language(0xff), m_field70(0), m_field78(0)
 {
 }
 

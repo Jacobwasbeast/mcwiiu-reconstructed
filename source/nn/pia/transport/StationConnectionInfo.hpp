@@ -8,8 +8,6 @@ namespace nn { namespace pia { namespace common { class String; }}}
 
 namespace nn { namespace pia { namespace transport {
 
-using common::Result;
-
 class StationConnectionInfo
 {
 public:

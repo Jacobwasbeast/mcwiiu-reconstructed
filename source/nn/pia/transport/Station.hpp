@@ -59,6 +59,7 @@ public:
     bool IsConnectionRouteRelay() const;
     bool IsConnectionRouteDirect() const;
     common::StationAddress& GetStationAddress() { return m_stationAddress; }
+    StationIndex GetStationIndex() const { return static_cast<StationIndex>(m_field10); }
     unsigned char m_field0;
     common::StationAddress m_stationAddress;
     unsigned int m_field10;
@@ -88,7 +89,18 @@ struct Station::IdentificationToken
 
 struct Station::PlayerInfo
 {
-    PlayerInfo();
+    enum
+    {
+        cLanguageUnset = 0xff
+    };
+
+    PlayerInfo()
+    {
+        m_name.Clear();
+        m_language = cLanguageUnset;
+        m_field70 = 0;
+        m_field78 = 0;
+    }
     ~PlayerInfo();
 
     common::FixedString<20> m_name;

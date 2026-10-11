@@ -15,7 +15,7 @@ Result Initialize()
     EmbedModuleInfo();
 
     if (g_piaTransportInitialized != 0)
-        return cResultAlreadyInitialized;
+        return ResultAlreadyInitialized();
 
     pead::SafeStringBase<char> heapName("pia transport heap");
     common::HeapManager::Setup(cModuleType_Transport, 0, heapName);
@@ -54,9 +54,9 @@ void Finalize()
 Result BeginSetup()
 {
     if (g_piaTransportInitialized == 0)
-        return cResultNotInitialized;
+        return ResultNotInitialized();
     if (g_piaTransportInSetupMode != 0)
-        return cResultInvalidState;
+        return ResultInvalidState();
 
     common::HeapManager::SetCurrentHeap(cModuleType_Transport);
     g_piaTransportInSetupMode = 1;

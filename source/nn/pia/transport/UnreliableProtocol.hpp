@@ -59,7 +59,7 @@ public:
 private:
     Result sendImpl(StationIndex stationIndex, const void* data, unsigned int size);
 
-    unsigned char* m_receivedData;
+    void* m_receivedData;
     ReceivedDataContainer* m_receivedDataContainer;
     unsigned int m_stationIndex;
 };

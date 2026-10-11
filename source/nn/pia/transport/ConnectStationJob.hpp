@@ -37,6 +37,7 @@ public:
     ExecuteResult SendRelayConnectionRequest();
 
     friend class StationProtocol;
+    friend class ProcessConnectionRequestJob;
 
 protected:
     common::Time m_connectionDeadline;

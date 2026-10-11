@@ -170,4 +170,12 @@ Result LatencyEmulator::readDispatch()
     return result;
 }
 
+void LatencyEmulator::SetLatency(int minimumLatency, int maximumLatency)
+{
+    m_criticalSection.Lock();
+    m_minimumLatency = minimumLatency;
+    m_maximumLatency = maximumLatency;
+    m_criticalSection.Unlock();
+}
+
 }}}

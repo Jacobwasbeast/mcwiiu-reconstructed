@@ -46,7 +46,7 @@ Result ConnectStationJob::StartupRelayConnection(common::CallContext* context, S
     if (result != 0)
         return result;
     m_station->m_field56 = 0;
-    SelectStep(m_currentStep, &ConnectStationJob::SendRelayConnectionRequest, "ConnectStationJob::SendRelayConnectionRequest");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&ConnectStationJob::SendRelayConnectionRequest), "ConnectStationJob::SendRelayConnectionRequest"));
     return 0;
 }
 
@@ -54,17 +54,17 @@ Result ConnectStationJob::StartupImpl(common::CallContext* context, Station* sta
     const StationConnectionInfo& info, bool secure)
 {
     if (!station)
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     station->Trace(0x08000000);
     if (m_station)
         m_station->Trace(0x08000000);
     if (GetState() != cStateNotEntried && GetState() != cStateCompleted)
     {
         Trace(0x8000);
-        return cResultInvalidState;
+        return ResultInvalidState();
     }
     if (!context)
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     m_context = context;
     context->InitiateCall();
     m_station = station;
@@ -72,7 +72,7 @@ Result ConnectStationJob::StartupImpl(common::CallContext* context, Station* sta
     m_secure = secure;
     Reset(true);
     m_station->m_field56 = 1;
-    SelectStep(m_currentStep, &ConnectStationJob::SendConnectionRequest, "ConnectStationJob::SendConnectionRequest");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&ConnectStationJob::SendConnectionRequest), "ConnectStationJob::SendConnectionRequest"));
     return 0;
 }
 
@@ -159,7 +159,7 @@ ConnectStationJob::ExecuteResult ConnectStationJob::SendConnectionRequest()
     }
     if (!CheckErrorOccurred() && SendConnectionRequestMessage())
     {
-        if (static_cast<int>(m_station->m_field10) > 31)
+        if (m_station->GetStationIndex() > 31)
         {
             m_station->m_lastSendTime = g_piaTransport->m_time;
         }
@@ -273,7 +273,7 @@ ConnectStationJob::ExecuteResult ConnectStationJob::ConnectionSucceeded()
         SelectStep(m_currentStep, &ConnectStationJob::ConnectionFailed, "ConnectStationJob::ConnectionFailed");
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    if (static_cast<int>(m_station->m_field10) <= 31)
+    if (m_station->GetStationIndex() <= 31)
         g_piaTransport->OutputStreamUpdateEvent();
     if (m_context && static_cast<unsigned int>(m_context->m_state) - 2 > 2)
         m_context->SignalSuccess(0);
@@ -322,11 +322,11 @@ bool ConnectStationJob::SendConnectionRequestMessage()
                                          m_station->m_field55, false, m_secure);
 
     common::StationAddress stationAddress;
-    if (g_piaTransport->m_relayRouteManager == 0 && static_cast<int>(m_station->m_field10) != cStationIndexReserved)
+    if (g_piaTransport->m_relayRouteManager == 0 && m_station->GetStationIndex() != cStationIndexReserved)
     {
-        if (static_cast<int>(m_station->m_field10) <= 31)
+        if (m_station->GetStationIndex() <= 31)
         {
-            const StationIndex stationIndex = static_cast<StationIndex>(m_station->m_field10);
+            const StationIndex stationIndex = m_station->GetStationIndex();
             if (stationIndex != pia::cStationIndexInvalid)
             {
                 return g_piaResendingMessageManager->SetSendMessageByStationIndex(
@@ -350,7 +350,7 @@ bool ConnectStationJob::SendConnectionRequestMessage()
 
 bool ConnectStationJob::SendRelayConnectionRequestMessage()
 {
-    if (!m_station->m_field0 || static_cast<int>(m_station->m_field10) > 31)
+    if (!m_station->m_field0 || m_station->GetStationIndex() > 31)
         return false;
     StationProtocol* protocol = m_station->m_field28;
 
@@ -370,7 +370,7 @@ bool ConnectStationJob::SendRelayConnectionRequestMessage()
                                          m_station->m_field55, true, m_secure);
     result = g_piaResendingMessageManager->SetSendMessageByStationIndex(
         &m_requestAckId, buffer, protocol->GetConnectionRequestDataSize(),
-        static_cast<StationIndex>(m_station->m_field10), protocol->mProtocolId, false, 0);
+        m_station->GetStationIndex(), protocol->mProtocolId, false, 0);
     return result == 0;
 }
 

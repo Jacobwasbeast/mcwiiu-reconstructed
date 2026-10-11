@@ -77,7 +77,7 @@ unsigned int StationLocation::GetSerializedSize() const
     return m_stationAddress.GetSerializedSize() + 0x1d;
 }
 
-common::Result StationLocation::Serialize(unsigned char* buffer, unsigned int* size,
+Result StationLocation::Serialize(unsigned char* buffer, unsigned int* size,
                                            unsigned int maxSize) const
 {
     if (buffer == 0 || size == 0)
@@ -86,7 +86,7 @@ common::Result StationLocation::Serialize(unsigned char* buffer, unsigned int* s
         return 0x4c0d;
 
     unsigned int addressSize = 0;
-    common::Result result = m_stationAddress.Serialize(buffer, &addressSize, maxSize);
+    Result result = m_stationAddress.Serialize(buffer, &addressSize, maxSize);
     if (result != 0)
         return result;
     unsigned char* cursor = buffer + addressSize;
@@ -108,11 +108,11 @@ common::Result StationLocation::Serialize(unsigned char* buffer, unsigned int* s
     return 0;
 }
 
-common::Result StationLocation::Deserialize(const unsigned char* buffer)
+Result StationLocation::Deserialize(const unsigned char* buffer)
 {
     if (buffer == 0)
         return 0x10c07;
-    common::Result result = m_stationAddress.Deserialize(buffer);
+    Result result = m_stationAddress.Deserialize(buffer);
     if (result != 0)
         return result;
     const unsigned char* cursor = buffer + m_stationAddress.GetSerializedSize();

@@ -483,7 +483,7 @@ void StationProtocol::ParseConnectionResponseCommon(const ReceivedMessageAccesso
     OSBlockSet(info.m_field00.m_token, 0, sizeof(info.m_field00.m_token));
     info.m_fieldC8[0].Clear();
     info.m_field60[0].Clear();
-    info.m_field108 = 0xff;
+    info.m_field108 = Station::PlayerInfo::cLanguageUnset;
     OSBlockSet(info.m_field20.m_bytes, 0, sizeof(info.m_field20.m_bytes));
     OSBlockMove(info.m_field00.m_token, data + cResponseTokenOffset, sizeof(info.m_field00.m_token), FALSE);
     info.m_field109 = data[3];

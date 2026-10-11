@@ -13,12 +13,6 @@
 #include <new>
 #include <string.h>
 
-namespace nn { namespace pia { namespace common {
-
-bool isValidDestinationStationIndex(StationIndex stationIndex);
-
-}}}
-
 namespace nn { namespace pia { namespace transport {
 
 unsigned int g_receivedDataCount = 0;
@@ -82,7 +76,7 @@ void UnreliableProtocol::Finalize()
     }
     if (m_receivedData != 0)
     {
-        common::DeleteArray(m_receivedData);
+        common::DeleteArray(static_cast<unsigned char*>(m_receivedData));
         m_receivedData = 0;
     }
 }
@@ -142,16 +136,15 @@ Result UnreliableProtocol::UpdateProtocolEvent(const ProtocolEvent& event)
         Payload* payload = m_receivedDataContainer->Front();
         while (payload != 0)
         {
-            ReceivedDataContainer* container = m_receivedDataContainer;
             if (payload->stationId == stationId)
             {
                 Payload* current = payload;
-                payload = container->Next(payload);
-                container->Destroy(current);
+                payload = m_receivedDataContainer->Next(payload);
+                m_receivedDataContainer->Destroy(current);
             }
             else
             {
-                payload = container->Next(payload);
+                payload = m_receivedDataContainer->Next(payload);
             }
         }
     }
@@ -170,28 +163,26 @@ Result UnreliableProtocol::Receive(unsigned long long* stationId, void* buffer,
     if (size == 0)
         return ResultInvalidArgument();
 
-    ReceivedDataContainer* container = m_receivedDataContainer;
-    if (container == 0)
-        return cResultInvalidState;
+    if (m_receivedDataContainer == 0)
+        return ResultInvalidState();
     if (!IsInCommunication())
         return 0x2c26;
-    if (container->GetNodeNum() == 0)
+    if (m_receivedDataContainer->GetNodeNum() == 0)
         return cResultDataNotReady;
-    if (container->Front()->size > bufferSize)
+    if (m_receivedDataContainer->Front()->size > bufferSize)
         return 0x10c04;
 
-    Payload* payload = container->Front();
+    Payload* payload = m_receivedDataContainer->Front();
+    while (payload != 0)
+    {
+        if (g_piaTransport->m_stationIdTable->IsJoinEventNotifiedByStationId(payload->stationId))
+            break;
+        Payload* current = payload;
+        payload = m_receivedDataContainer->Next(payload);
+        m_receivedDataContainer->Destroy(current);
+    }
     if (payload == 0)
         return cResultDataNotReady;
-    while (!g_piaTransport->m_stationIdTable->IsJoinEventNotifiedByStationId(payload->stationId))
-    {
-        container = m_receivedDataContainer;
-        Payload* next = container->Next(payload);
-        container->Destroy(payload);
-        if (next == 0)
-            return cResultDataNotReady;
-        payload = next;
-    }
 
     if (payload->size < bufferSize)
         bufferSize = payload->size;
@@ -227,19 +218,18 @@ Result UnreliableProtocol::sendImpl(StationIndex stationIndex, const void* data,
     if (stationIndex == static_cast<StationIndex>(cInvalidStationIndex))
         return ResultInvalidArgument();
 
-    StationPacketHandler* handler = reinterpret_cast<StationPacketHandler*>(GetStationPacketHandler());
+    StationPacketHandler* handler = static_cast<StationPacketHandler*>(GetStationPacketHandler());
     if (handler == 0)
         return ResultInvalidState();
     if (size > static_cast<unsigned int>(handler->GetPayloadSizeLimit()))
         return ResultInvalidArgument();
     if (!IsInCommunication())
         return 0x2c26;
-    if (g_piaTransport->m_transportStatus == static_cast<Result>(0x4c11))
-        return 0x4c11;
+    if (g_piaTransport->m_transportStatus == static_cast<Result>(cResultTransportUnavailable))
+        return static_cast<Result>(cResultTransportUnavailable);
 
-    ProtocolId protocolId = mProtocolId;
     ProtocolMessageWriter* writer =
-        handler->AssignByStationIndex(protocolId, stationIndex, size, false, false, true);
+        handler->AssignByStationIndex(GetProtocolId(), stationIndex, size, false, false, true);
     if (writer == 0)
         return 0;
     writer->SetPayload(data);
@@ -269,21 +259,20 @@ Result UnreliableProtocol::SendToMulti(unsigned int stationBitmap, const void* d
                                        unsigned int size)
 {
     if (stationBitmap == 0 || (data == 0 && size != 0))
-        return 0x10c07;
+        return cResultInvalidArgument;
     if (m_receivedDataContainer == 0)
-        return 0x10c08;
+        return cResultInvalidState;
 
-    StationPacketHandler* handler = reinterpret_cast<StationPacketHandler*>(GetStationPacketHandler());
+    StationPacketHandler* handler = static_cast<StationPacketHandler*>(GetStationPacketHandler());
     if (handler == 0)
-        return 0x10c08;
+        return cResultInvalidState;
     if (size > static_cast<unsigned int>(handler->GetPayloadSizeLimit()))
-        return 0x10c07;
+        return ResultInvalidArgument();
     if (!IsInCommunication())
         return 0x2c26;
 
-    ProtocolId protocolId = mProtocolId;
     ProtocolMessageWriter* writer =
-        handler->AssignByStationBitmap(protocolId, stationBitmap, size, false, false, true);
+        handler->AssignByStationBitmap(GetProtocolId(), stationBitmap, size, false, false, true);
     if (writer == 0)
         return 0;
     writer->SetPayload(data);

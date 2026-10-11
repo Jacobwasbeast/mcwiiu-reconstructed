@@ -19,9 +19,9 @@ public:
     bool operator==(const StationLocation& other) const;
     void GetLocationString(common::String* string) const;
     virtual unsigned int GetSerializedSize() const;
-    virtual common::Result Serialize(unsigned char* buffer, unsigned int* size,
+    virtual Result Serialize(unsigned char* buffer, unsigned int* size,
                                      unsigned int maxSize) const;
-    virtual common::Result Deserialize(const unsigned char* buffer);
+    virtual Result Deserialize(const unsigned char* buffer);
     virtual void Trace(unsigned long long value) const;
 
     common::StationAddress m_stationAddress;

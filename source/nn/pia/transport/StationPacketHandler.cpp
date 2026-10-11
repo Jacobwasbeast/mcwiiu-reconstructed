@@ -87,7 +87,7 @@ Station* StationPacketHandler::GetStation(StationManager* manager,
 
 ::nn::pia::StationIndex StationPacketHandler::GetStationIndex(const Station* station)
 {
-    return static_cast< ::nn::pia::StationIndex>(station->m_field10);
+    return station->GetStationIndex();
 }
 
 Station* StationPacketHandler::GetLocalStation(StationManager* manager)
@@ -148,7 +148,7 @@ void StationPacketHandler::BeginDispatch(const common::Time& time)
                 {
                     const Station* station = manager->GetStation(m_protocolMessageReader.m_header.m_source);
                     if (station != 0)
-                        stationBitmap |= 1u << station->m_field10;
+                        stationBitmap |= 1u << station->GetStationIndex();
                 }
                 offset += ((m_protocolMessageReader.m_messageSize + 23u) & ~3u) + 4u;
             }
@@ -214,9 +214,9 @@ ProtocolMessageWriter* StationPacketHandler::AssignByStationId(
     unsigned int size, bool isReliable, bool isPriority, bool isBroadcast)
 {
     Station* station = StationManager::s_pInstance->GetStationByStationIdWithoutConvert(stationId);
-    if (station == 0 || station->m_field10 == ::nn::pia::cStationIndexInvalid)
+    if (station == 0 || station->GetStationIndex() == ::nn::pia::cStationIndexInvalid)
         return 0;
-    return AssignByStationIndex(protocolId, static_cast<StationIndex>(station->m_field10),
+    return AssignByStationIndex(protocolId, station->GetStationIndex(),
                                 size, isReliable, isPriority, isBroadcast);
 }
 
@@ -529,7 +529,7 @@ unsigned int StationPacketHandler::CheckPacket(const common::Packet& packet)
         !CheckReceivedSequenceId(station, packet.m_packetData.m_header.m_sequenceId))
         return 0;
     if (m_localStationIndex != static_cast<unsigned int>(manager->m_invalidStationIndex) &&
-        station->m_field20 == 5 && station->m_field10 == ::nn::pia::cStationIndexInvalid)
+        station->m_field20 == 5 && station->GetStationIndex() == ::nn::pia::cStationIndexInvalid)
         return 0;
     return packet.m_size;
 }

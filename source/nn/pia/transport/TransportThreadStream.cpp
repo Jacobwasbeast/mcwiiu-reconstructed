@@ -84,8 +84,7 @@ void TransportThreadStream::ChangeState(ThreadState threadState)
     if (m_threadState == threadState)
         return;
 
-    pead::TickSpan interval;
-    interval.setNanoSeconds(100000);
+    pead::TickSpan interval = pead::TickSpan::makeFromMicroSeconds(100);
 
     do
     {
@@ -139,6 +138,17 @@ Result TransportThreadStream::GetLastResult() const
     default:
         return 0;
     }
+}
+
+void TransportThreadStream::SetLatency(int minimumLatency, int maximumLatency)
+{
+    if (m_latencyEmulator != 0)
+        m_latencyEmulator->SetLatency(minimumLatency, maximumLatency);
+}
+
+void TransportThreadStream::SetPacketLossRatio(int packetLossRatio)
+{
+    m_packetLossRatio = packetLossRatio;
 }
 
 void TransportThreadStream::ThreadFunc(pead::Thread* thread, int)

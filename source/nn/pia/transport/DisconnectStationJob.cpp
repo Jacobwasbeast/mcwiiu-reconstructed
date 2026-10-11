@@ -14,6 +14,14 @@
 #include "nn/pia/transport/StationProtocol.hpp"
 
 namespace nn { namespace pia { namespace transport {
+namespace {
+typedef common::Job::ExecuteResult (DisconnectStationJob::*Step)();
+
+inline void SelectStep(common::StepSequenceJob::Step& slot, Step function, const char* name)
+{
+    slot = common::StepSequenceJob::Step(static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+}
+}
 
 DisconnectStationJob::DisconnectStationJob()
     : common::StepSequenceJob(), m_deadline(), m_timeoutMsec(4000), m_station(0),
@@ -32,66 +40,60 @@ Result DisconnectStationJob::Startup(Station* station)
 
 DisconnectStationJob::ExecuteResult DisconnectStationJob::SendDisconnectionRequest()
 {
-    if (static_cast<int>(m_station->m_field10) <= StationManager::cStationNumMax - 1)
+    if (m_station->GetStationIndex() <= StationManager::cStationNumMax - 1)
     {
-        m_station->m_field28->SendDisconnectionRequest(
-            static_cast<StationIndex>(m_station->m_field10), false);
+        m_station->m_field28->SendDisconnectionRequest(m_station->GetStationIndex(), false);
     }
     else
     {
-        if (!m_station->m_stationAddress.IsValid())
+        if (m_station->GetStationAddress().IsValid())
         {
-            m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-                &DisconnectStationJob::DisconnectionSucceeded);
-            m_currentStep.m_name = "DisconnectStationJob::DisconnectionSucceeded";
+            m_station->m_field28->SendDisconnectionRequest(m_station->GetStationAddress());
+        }
+        else
+        {
+            SelectStep(m_currentStep, &DisconnectStationJob::DisconnectionSucceeded, "DisconnectStationJob::DisconnectionSucceeded");
             return MakeExecuteResult(cExecuteKindContinue);
         }
-        m_station->m_field28->SendDisconnectionRequest(m_station->m_stationAddress);
     }
     const common::TimeSpan retryInterval = common::TimeSpan::FromMSec(m_retryIntervalMsec);
-    m_waiting = true;
     m_retryDeadline = common::g_piaJobScheduler->m_dispatchTime + retryInterval;
-    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-        &DisconnectStationJob::WaitForDisconnection);
-    m_currentStep.m_name = "DisconnectStationJob::WaitForDisconnection";
+    m_waiting = true;
+    SelectStep(m_currentStep, &DisconnectStationJob::WaitForDisconnection, "DisconnectStationJob::WaitForDisconnection");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 DisconnectStationJob::ExecuteResult DisconnectStationJob::WaitForDisconnection()
 {
-    if (!m_waiting)
+    if (m_waiting)
     {
-        m_station->m_field20 = 6;
-        m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-            &DisconnectStationJob::DisconnectionSucceeded);
-        m_currentStep.m_name = "DisconnectStationJob::DisconnectionSucceeded";
-        return MakeExecuteResult(cExecuteKindContinue);
+        if (m_deadline <= common::g_piaJobScheduler->m_dispatchTime ||
+            (m_station->GetStationIndex() > StationManager::cStationNumMax - 1 &&
+             !m_station->GetStationAddress().IsValid()))
+        {
+            m_waiting = false;
+        }
+        else
+        {
+            if (m_retryDeadline <= common::g_piaJobScheduler->m_dispatchTime)
+            {
+                if (m_station->GetStationIndex() <= StationManager::cStationNumMax - 1)
+                {
+                    m_station->m_field28->SendDisconnectionRequest(m_station->GetStationIndex(), false);
+                }
+                else
+                {
+                    m_station->m_field28->SendDisconnectionRequest(m_station->GetStationAddress());
+                }
+                const common::TimeSpan retryInterval = common::TimeSpan::FromMSec(m_retryIntervalMsec);
+                m_retryDeadline = common::g_piaJobScheduler->m_dispatchTime + retryInterval;
+            }
+            return MakeExecuteResult(cExecuteKindNextStep);
+        }
     }
-    if (m_deadline <= common::g_piaJobScheduler->m_dispatchTime ||
-        (static_cast<int>(m_station->m_field10) > StationManager::cStationNumMax - 1 &&
-         !m_station->m_stationAddress.IsValid()))
-    {
-        m_waiting = false;
-        m_station->m_field20 = 6;
-        m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-            &DisconnectStationJob::DisconnectionSucceeded);
-        m_currentStep.m_name = "DisconnectStationJob::DisconnectionSucceeded";
-        return MakeExecuteResult(cExecuteKindContinue);
-    }
-    if (common::g_piaJobScheduler->m_dispatchTime < m_retryDeadline)
-        return MakeExecuteResult(cExecuteKindNextStep);
-    if (static_cast<int>(m_station->m_field10) <= StationManager::cStationNumMax - 1)
-    {
-        m_station->m_field28->SendDisconnectionRequest(
-            static_cast<StationIndex>(m_station->m_field10), false);
-    }
-    else
-    {
-        m_station->m_field28->SendDisconnectionRequest(m_station->m_stationAddress);
-    }
-    const common::TimeSpan retryInterval = common::TimeSpan::FromMSec(m_retryIntervalMsec);
-    m_retryDeadline = common::g_piaJobScheduler->m_dispatchTime + retryInterval;
-    return MakeExecuteResult(cExecuteKindNextStep);
+    m_station->m_field20 = 6;
+    SelectStep(m_currentStep, &DisconnectStationJob::DisconnectionSucceeded, "DisconnectStationJob::DisconnectionSucceeded");
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 DisconnectStationJob::ExecuteResult DisconnectStationJob::DisconnectionSucceeded()
@@ -118,25 +120,21 @@ DisconnectStationJob::ExecuteResult DisconnectStationJob::DisconnectionSucceeded
 
 DisconnectStationJob::ExecuteResult DisconnectStationJob::CutRouteOfRelayConnection()
 {
-    if (static_cast<int>(m_station->m_field10) <= StationManager::cStationNumMax - 1)
+    if (m_station->GetStationIndex() <= StationManager::cStationNumMax - 1)
     {
-        m_station->m_field28->SendDisconnectionRequest(
-            static_cast<StationIndex>(m_station->m_field10), true);
-        m_station->m_field28->SendDisconnectionRequest(
-            static_cast<StationIndex>(m_station->m_field10), true);
+        m_station->m_field28->SendDisconnectionRequest(m_station->GetStationIndex(), true);
+        m_station->m_field28->SendDisconnectionRequest(m_station->GetStationIndex(), true);
     }
     m_station->m_field20 = 6;
-    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-        &DisconnectStationJob::DisconnectionSucceeded);
-    m_currentStep.m_name = "DisconnectStationJob::DisconnectionSucceeded";
-    return MakeExecuteResult(cExecuteKindContinue);
+    SelectStep(m_currentStep, &DisconnectStationJob::DisconnectionSucceeded, "DisconnectStationJob::DisconnectionSucceeded");
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 void DisconnectStationJob::Cleanup()
 {
-    m_waiting = false;
-    m_deadline.m_tick = 0;
     m_station = 0;
+    m_waiting = false;
+    m_deadline = common::Time();
 }
 
 void DisconnectStationJob::Trace(unsigned long long) const
@@ -150,30 +148,25 @@ void DisconnectStationJob::ProcessDisconnection(Station*)
 Result DisconnectStationJob::StartupImpl(Station* station)
 {
     if (!station)
-        return 0x10c07;
+        return ResultInvalidArgument();
     if (station->m_field20 != 5)
-        return 0x10c08;
+        return ResultInvalidState();
+    common::Time now;
     m_station = station;
     m_waiting = false;
-    common::Time now;
     now.SetNow();
-    const common::TimeSpan timeout = common::TimeSpan::FromMSec(m_timeoutMsec);
-    m_deadline = now + timeout;
+    m_deadline = now + common::TimeSpan::FromMSec(m_timeoutMsec);
     Reset(true);
-    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-        &DisconnectStationJob::SendDisconnectionRequest);
-    m_currentStep.m_name = "DisconnectStationJob::SendDisconnectionRequest";
+    SelectStep(m_currentStep, &DisconnectStationJob::SendDisconnectionRequest, "DisconnectStationJob::SendDisconnectionRequest");
     if (g_piaTransport->m_relayRouteManager && StationManager::s_pInstance->m_localStation)
     {
         StationIndex relay;
         Result result = g_piaTransport->m_relayRouteManager->GetRelayRoute(
-            static_cast<StationIndex>(StationManager::s_pInstance->m_localStation->m_field10),
-            static_cast<StationIndex>(m_station->m_field10), &relay);
-        if (result == 0 && static_cast<unsigned int>(relay) != m_station->m_field10)
+            StationManager::s_pInstance->m_localStation->GetStationIndex(),
+            m_station->GetStationIndex(), &relay);
+        if (result == 0 && relay != m_station->GetStationIndex())
         {
-            m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-                &DisconnectStationJob::CutRouteOfRelayConnection);
-            m_currentStep.m_name = "DisconnectStationJob::CutRouteOfRelayConnection";
+            SelectStep(m_currentStep, &DisconnectStationJob::CutRouteOfRelayConnection, "DisconnectStationJob::CutRouteOfRelayConnection");
         }
     }
     return 0;

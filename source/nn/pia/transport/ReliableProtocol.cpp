@@ -137,7 +137,7 @@ Result ReliableProtocol::StartupWithStationAddress(const common::StationAddress&
     if (station == 0)
         return 0x10c07;
 
-    int stationIndex = static_cast<int>(station->m_field10);
+    int stationIndex = station->GetStationIndex();
     if (stationIndex < 0 || stationIndex >= static_cast<int>(m_field20))
         return 0x10c07;
 
@@ -171,7 +171,7 @@ Result ReliableProtocol::UpdateProtocolEvent(const ProtocolEvent& event)
         return ResultInvalidState();
 
     Station* station = StationManager::s_pInstance->GetStation(event.m_stationAddress);
-    int stationIndex = static_cast<int>(station->m_field10);
+    int stationIndex = station->GetStationIndex();
 
     if (stationIndex < 0 || stationIndex >= static_cast<int>(m_field20))
         return 0x10c07;

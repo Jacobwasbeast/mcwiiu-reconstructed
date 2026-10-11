@@ -213,9 +213,9 @@ unsigned int BandwidthCheckProtocol::IsSetupParamValid(int measurementTime,
         return false;
     if (ipPacketSize < static_cast<unsigned int>(GetMinIpPacketSize()))
         return false;
-    if (measurementCount > 0)
-        return true;
-    return false;
+    if (measurementCount <= 0)
+        return false;
+    return true;
 }
 
 Result BandwidthCheckProtocol::Activate(int measurementTime, unsigned int ipPacketSize,
@@ -698,7 +698,7 @@ Result BandwidthCheckProtocol::Dispatch()
 Result BandwidthCheckProtocol::UpdateProtocolEvent(const ProtocolEvent& event)
 {
     const Station* station = StationManager::s_pInstance->GetStation(event.m_stationAddress);
-    const StationIndex stationIndex = static_cast<StationIndex>(station->m_field10);
+    const StationIndex stationIndex = station->GetStationIndex();
     if (stationIndex < 0 || stationIndex >= m_stationNum)
         return cResultInvalidArgument;
     switch (event.m_type)
