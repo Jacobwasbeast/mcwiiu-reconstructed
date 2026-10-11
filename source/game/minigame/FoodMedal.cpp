@@ -1,11 +1,14 @@
 #include "game/minigame/FoodMedal.hpp"
 
+#include <algorithm>
+
 #include "game/world/generation/PlayerStats.hpp"
 
 FoodMedal::FoodMedal(int name, float target, unsigned int weight, Item* item)
     : GameMedal(name, target, weight, OPERATOR_AT_LEAST, true, false)
-    , mItems(new std::vector<Item*>(&item, &item + 1))
 {
+    Item* items[] = { item };
+    mItems = new std::vector<Item*>(items, items + 1);
 }
 
 FoodMedal::FoodMedal(int name, float target, unsigned int weight, std::vector<Item*>* items)
@@ -22,10 +25,10 @@ FoodMedal::~FoodMedal()
 float FoodMedal::GetScore(PlayerStats* playerStats) const
 {
     const bool allFood = mItems->size() == 1 && mItems->at(0) == NULL;
+    float score = 0.0f;
     std::vector<Item*> itemsUsed;
     playerStats->getAllItemsUsed(itemsUsed);
 
-    float score = 0.0f;
     if (allFood)
     {
         for (std::vector<Item*>::const_iterator it = itemsUsed.begin(); it != itemsUsed.end(); ++it)
@@ -45,20 +48,12 @@ float FoodMedal::GetScore(PlayerStats* playerStats) const
             {
                 foodItem = dynamic_cast<FoodItem*>(*it);
             }
-            if (foodItem != NULL)
+            if (foodItem != NULL && std::find(mItems->begin(), mItems->end(), foodItem) != mItems->end())
             {
-                std::vector<Item*>::const_iterator selected = mItems->begin();
-                while (selected != mItems->end() && *selected != foodItem)
-                {
-                    ++selected;
-                }
-                if (selected != mItems->end())
-                {
-                    score += 1.0f;
-                }
+                score += 1.0f;
             }
         }
     }
 
-    return static_cast<double>(score);
+    return score;
 }

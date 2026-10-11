@@ -22,9 +22,7 @@ public:
     virtual bool CanAward(const StatsUID& uid, GameStats* gameStats) const;
 
 private:
-    eRingMedalAmount mFirstAmount;
-    eRingMedalAmount mSecondAmount;
-    eRingMedalAmount mThirdAmount;
+    eRingMedalAmount mAmounts[3];
 };
 
 #endif

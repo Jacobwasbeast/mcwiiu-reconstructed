@@ -15,6 +15,13 @@ public:
         int mDescriptionAlt;
 
         Variant();
+        Variant(int playLabel, int description, int playLabelAlt, int descriptionAlt)
+            : mPlayLabel(playLabel)
+            , mDescription(description)
+            , mPlayLabelAlt(playLabelAlt)
+            , mDescriptionAlt(descriptionAlt)
+        {
+        }
     };
 
     IUIScene_MiniGames();

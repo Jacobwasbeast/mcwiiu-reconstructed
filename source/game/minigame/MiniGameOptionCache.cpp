@@ -5,7 +5,7 @@
 #include "game/world/generation/PlayerUID.hpp"
 #include "platform/wiiu/CProfile.hpp"
 
-extern CProfile* gProfile;
+extern C_4JProfile* gProfile;
 
 MiniGameOptionCache gMiniGameOptionCache;
 

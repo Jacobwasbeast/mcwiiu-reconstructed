@@ -82,29 +82,29 @@ void ScoreRingRuleDefinition::onAttributesAdded()
 
     switch (mOrientation)
     {
-    case GlideRingGenerator::eGlideRingOrientation_XY:
-        mArea->mMinX = mX - radius;
-        mArea->mMinY = mY - radius;
-        mArea->mMinZ = mZ;
-        mArea->mMaxX = mX + radius + 1;
-        mArea->mMaxY = mY + radius + 1;
-        mArea->mMaxZ = mZ + 1;
-        break;
     case GlideRingGenerator::eGlideRingOrientation_XZ:
-        mArea->mMinX = mX - radius;
         mArea->mMinY = mY;
-        mArea->mMinZ = mZ - radius;
-        mArea->mMaxX = mX + radius + 1;
         mArea->mMaxY = mY + 1;
+        mArea->mMinX = mX - radius;
+        mArea->mMaxX = mX + radius + 1;
+        mArea->mMinZ = mZ - radius;
         mArea->mMaxZ = mZ + radius + 1;
+        break;
+    case GlideRingGenerator::eGlideRingOrientation_XY:
+        mArea->mMinZ = mZ;
+        mArea->mMaxZ = mZ + 1;
+        mArea->mMinX = mX - radius;
+        mArea->mMaxX = mX + radius + 1;
+        mArea->mMinY = mY - radius;
+        mArea->mMaxY = mY + radius + 1;
         break;
     default:
         mArea->mMinX = mX;
-        mArea->mMinY = mY - radius;
-        mArea->mMinZ = mZ - radius;
         mArea->mMaxX = mX + 1;
-        mArea->mMaxY = mY + radius + 1;
+        mArea->mMinZ = mZ - radius;
         mArea->mMaxZ = mZ + radius + 1;
+        mArea->mMinY = mY - radius;
+        mArea->mMaxY = mY + radius + 1;
         break;
     }
 }

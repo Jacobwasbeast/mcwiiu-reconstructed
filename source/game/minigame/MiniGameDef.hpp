@@ -264,7 +264,7 @@ public:
     bool IsCRCValid() const;
     bool HasPermission(EBuildMode mode, const std::vector<int>& permissions, int value) const;
     bool MayPlace(int id) const;
-    unsigned int MayDestroy(int id) const;
+    bool MayDestroy(int id) const;
     bool MayUse(int id) const;
     unsigned int MayUseBlock(int id) const;
     bool CanAutoStart() const;

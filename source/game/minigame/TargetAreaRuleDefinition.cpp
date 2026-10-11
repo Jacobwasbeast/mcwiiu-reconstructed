@@ -49,7 +49,50 @@ int TargetAreaRuleDefinition::getSize()
 
 void TargetAreaRuleDefinition::WriteAttributesAsXML(std::string& xml)
 {
-    if (mPrimary)
+    if (!mPrimary)
+    {
+        if (!mName.empty())
+        {
+            WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_name, xml);
+        }
+
+        BlockPos centre(mArea->getCenter()->x, mArea->getCenter()->y, mArea->getCenter()->z);
+
+        xml.append(formatstr(" x=\"%d\"", centre.x));
+        xml.append(formatstr(" y=\"%d\"", centre.y));
+        xml.append(formatstr(" z=\"%d\"", centre.z));
+
+        double sizeX = mArea->mMaxX - mArea->mMinX;
+        double sizeY = mArea->mMaxY - mArea->mMinY;
+        double sizeZ = mArea->mMaxZ - mArea->mMinZ;
+
+        if (sizeX < sizeY && sizeX < sizeZ)
+        {
+            xml.append(" orientation=\"x\"");
+        }
+        else if (sizeY < sizeX && sizeY < sizeZ)
+        {
+            xml.append(" orientation=\"y\"");
+        }
+        else if (sizeZ < sizeX && sizeZ < sizeY)
+        {
+            xml.append(" orientation=\"z\"");
+        }
+
+        if (getPointValue() == 7)
+        {
+            xml.append(" size=\"small\"");
+        }
+        else if (getPointValue() == 5)
+        {
+            xml.append(" size=\"medium\"");
+        }
+        else
+        {
+            xml.append(" size=\"large\"");
+        }
+    }
+    else
     {
         NamedAreaRuleDefinition::WriteAttributesAsXML(xml);
 
@@ -62,49 +105,5 @@ void TargetAreaRuleDefinition::WriteAttributesAsXML(std::string& xml)
         {
             WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_laps, xml);
         }
-
-        return;
     }
-
-    if (!mName.empty())
-    {
-        WriteAttributeAsXML(ConsoleGameRules::eGameRuleAttr_name, xml);
-    }
-
-    BlockPos centre(mArea->getCenter()->x, mArea->getCenter()->y, mArea->getCenter()->z);
-
-    xml.append(formatstr(" x=\"%d\"", centre.x));
-    xml.append(formatstr(" y=\"%d\"", centre.y));
-    xml.append(formatstr(" z=\"%d\"", centre.z));
-
-    double sizeX = mArea->mMaxX - mArea->mMinX;
-    double sizeY = mArea->mMaxY - mArea->mMinY;
-    double sizeZ = mArea->mMaxZ - mArea->mMinZ;
-
-    if (sizeX < sizeY && sizeX < sizeZ)
-    {
-        xml.append(" orientation=\"x\"");
-    }
-    else if (sizeY < sizeX && sizeY < sizeZ)
-    {
-        xml.append(" orientation=\"y\"");
-    }
-    else if (sizeZ < sizeX && sizeZ < sizeY)
-    {
-        xml.append(" orientation=\"z\"");
-    }
-
-    if (getPointValue() == 7)
-    {
-        xml.append(" size=\"small\"");
-        return;
-    }
-
-    if (getPointValue() == 5)
-    {
-        xml.append(" size=\"medium\"");
-        return;
-    }
-
-    xml.append(" size=\"large\"");
 }

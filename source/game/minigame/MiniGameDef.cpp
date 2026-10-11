@@ -495,7 +495,7 @@ MiniGameDef::MiniGameDef(const XmlObject& object)
     boost::unordered_map<std::wstring, unsigned long long> spectateEntities;
     spectateEntities[L""] = 0;
     spectateEntities[L"Bat"] = EntityType::BAT;
-    mSpectateEntity = spectateEntities[object.child(L"SpectateEntity")->asString()];
+    mSpectateEntity = spectateEntities[object.child(L"SpectateEntity")->asString(L"")];
 
     mShowInvulnerableEffect = object.child(L"ShowInvulnerableEffect")->asBool(false);
     mLockedInventory = object.child(L"LockedInventory")->asBool(false);
@@ -1373,7 +1373,7 @@ bool MiniGameDef::HasPermission(EBuildMode mode, const std::vector<int>& permiss
 }
 
 bool MiniGameDef::MayPlace(int id) const { return !mEditActionsDisabled && HasPermission(mPlaceMode, mPlacePermissions, id); }
-unsigned int MiniGameDef::MayDestroy(int id) const { return !mEditActionsDisabled && HasPermission(mDestroyMode, mDestroyPermissions, id); }
+bool MiniGameDef::MayDestroy(int id) const { return !mEditActionsDisabled && HasPermission(mDestroyMode, mDestroyPermissions, id); }
 bool MiniGameDef::MayUse(int id) const { return !mEditActionsDisabled && HasPermission(mUseMode, mUsePermissions, id); }
 unsigned int MiniGameDef::MayUseBlock(int id) const { return !mEditActionsDisabled && HasPermission(mUseBlockMode, mBlockUsePermissions, id); }
 

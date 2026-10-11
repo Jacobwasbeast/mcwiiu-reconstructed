@@ -25,7 +25,7 @@ AnyCombinationOfRuleDefinition::AnyCombinationOfRuleDefinition(
     LayerGenerationRuleDefinition* parent, AnyCombinationOfRuleDefinition* definition)
     : mParent(parent)
     , mDefinition(definition)
-    , mName(L"AnyLayer")
+    , mName()
     , mFilter(L"AnyLayer")
     , mCombinationVariations(NULL)
     , mSizes(new LayerSizeRuleDefinition())
