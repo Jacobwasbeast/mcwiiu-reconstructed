@@ -24,7 +24,10 @@ public:
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);
     virtual int getEstimatedSize();
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundBlockCollectionDestructionPacket());
+    }
 
 private:
     friend class ClientPacketListener;

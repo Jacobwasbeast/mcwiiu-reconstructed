@@ -278,8 +278,3 @@ CompoundTag* ClientboundAddMobPacket::getAdditionalContructionDataTag()
 {
     return additionalContructionDataTag;
 }
-
-boost::shared_ptr<Packet> ClientboundAddMobPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundAddMobPacket());
-}

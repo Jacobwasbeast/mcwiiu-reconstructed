@@ -35,7 +35,10 @@ public:
     float getWalkingSpeed();
     void setWalkingSpeed(float walkingSpeed);
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ServerboundPlayerAbilitiesPacket());
+    }
 
 private:
     bool invulnerable;

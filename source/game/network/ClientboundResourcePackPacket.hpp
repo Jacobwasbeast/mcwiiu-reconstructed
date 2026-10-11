@@ -27,7 +27,10 @@ public:
     std::wstring getUrl();
     std::wstring getHash();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundResourcePackPacket());
+    }
 
 private:
     std::wstring url;

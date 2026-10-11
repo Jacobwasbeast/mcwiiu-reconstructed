@@ -39,7 +39,10 @@ public:
     ClickType::eClickType getClickType();
     int getNumSlots();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ServerboundContainerClickPacket());
+    }
 
 private:
     int containerId;

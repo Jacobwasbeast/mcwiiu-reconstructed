@@ -44,8 +44,3 @@ int PlayerReadyPacket::getEstimatedSize()
 {
     return 5;
 }
-
-boost::shared_ptr<Packet> PlayerReadyPacket::create()
-{
-    return boost::shared_ptr<Packet>(new PlayerReadyPacket());
-}

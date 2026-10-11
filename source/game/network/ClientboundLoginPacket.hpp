@@ -31,7 +31,10 @@ public:
     virtual void write(DataOutputStream*);
     virtual void handle(PacketListener*);
     virtual int getEstimatedSize();
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundLoginPacket());
+    }
 
 private:
     int mEntityId;

@@ -23,7 +23,10 @@ public:
     double getX();
     double getZ();
     unsigned char isAllDirections();
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundDamageIndicatorPacket());
+    }
 private:
     float x;
     float z;

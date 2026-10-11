@@ -34,7 +34,10 @@ public:
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundPlayerCombatPacket());
+    }
 
 private:
     void _init(CombatTracker* combatTracker, Event event, bool includeKiller);

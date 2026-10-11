@@ -74,8 +74,3 @@ int ClientboundSetEquippedItemPacket::getPacketId()
 {
     return 5;
 }
-
-boost::shared_ptr<Packet> ClientboundSetEquippedItemPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundSetEquippedItemPacket());
-}

@@ -39,7 +39,7 @@ void ClientboundContainerSetContentPacket::read(DataInputStream* input)
     items = NonNullList<not_null_ptr<ItemInstance> >::withSize(count, ItemInstance::EMPTY);
 
     for (int i = 0; i < count; ++i)
-        items[i] = input->readItem();
+        items.set(i, input->readItem());
 }
 
 void ClientboundContainerSetContentPacket::write(DataOutputStream* output)
@@ -74,9 +74,4 @@ NonNullList<not_null_ptr<ItemInstance> > ClientboundContainerSetContentPacket::g
 int ClientboundContainerSetContentPacket::getPacketId()
 {
     return 104;
-}
-
-boost::shared_ptr<Packet> ClientboundContainerSetContentPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundContainerSetContentPacket());
 }

@@ -61,7 +61,10 @@ public:
     virtual bool canBeInvalidated();
     virtual bool isInvalidatedBy(boost::shared_ptr<Packet> packet);
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new DisconnectPacket());
+    }
 
     eDisconnectReason reason;
 };

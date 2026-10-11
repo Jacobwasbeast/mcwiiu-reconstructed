@@ -176,8 +176,3 @@ LevelType* ClientboundRespawnPacket::getLevelType() { return m_levelType; }
 bool ClientboundRespawnPacket::shouldKeepOldEntityData() const { return m_keepOldEntityData == 1; }
 bool ClientboundRespawnPacket::hasPositionAndRotation() const { return m_hasPositionAndRotation; }
 int ClientboundRespawnPacket::getPacketId() { return 9; }
-
-boost::shared_ptr<Packet> ClientboundRespawnPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundRespawnPacket());
-}

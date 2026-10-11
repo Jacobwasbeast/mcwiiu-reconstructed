@@ -27,11 +27,6 @@ ServerboundChatAutoCompletePacket::~ServerboundChatAutoCompletePacket()
     delete lookAtPos;
 }
 
-boost::shared_ptr<Packet> ServerboundChatAutoCompletePacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundChatAutoCompletePacket());
-}
-
 void ServerboundChatAutoCompletePacket::read(DataInputStream* input)
 {
     message = Packet::readUtf(input, 32767);

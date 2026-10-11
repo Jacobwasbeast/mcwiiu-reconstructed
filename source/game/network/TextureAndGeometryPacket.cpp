@@ -212,8 +212,3 @@ int TextureAndGeometryPacket::getEstimatedSize()
 {
     return 4228;
 }
-
-boost::shared_ptr<Packet> TextureAndGeometryPacket::create()
-{
-    return boost::shared_ptr<Packet>(new TextureAndGeometryPacket());
-}

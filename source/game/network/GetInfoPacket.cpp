@@ -26,8 +26,3 @@ int GetInfoPacket::getEstimatedSize()
 {
     return 0;
 }
-
-boost::shared_ptr<Packet> GetInfoPacket::create()
-{
-    return boost::shared_ptr<Packet>(new GetInfoPacket());
-}

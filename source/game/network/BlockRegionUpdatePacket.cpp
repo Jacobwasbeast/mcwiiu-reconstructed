@@ -213,8 +213,3 @@ int BlockRegionUpdatePacket::getPacketId()
 {
     return 0x33;
 }
-
-boost::shared_ptr<Packet> BlockRegionUpdatePacket::create()
-{
-    return boost::shared_ptr<Packet>(new BlockRegionUpdatePacket());
-}

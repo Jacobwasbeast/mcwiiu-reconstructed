@@ -83,8 +83,3 @@ bool ServerboundPlayerInputPacket::isSneaking()
 {
     return sneaking;
 }
-
-boost::shared_ptr<Packet> ServerboundPlayerInputPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundPlayerInputPacket());
-}

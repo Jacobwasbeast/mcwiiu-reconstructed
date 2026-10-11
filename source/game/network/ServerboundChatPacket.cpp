@@ -24,11 +24,6 @@ ServerboundChatPacket::~ServerboundChatPacket()
 {
 }
 
-boost::shared_ptr<Packet> ServerboundChatPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundChatPacket());
-}
-
 void ServerboundChatPacket::read(DataInputStream* input)
 {
     message = Packet::readUtf(input, 256);

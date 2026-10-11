@@ -40,7 +40,10 @@ public:
     bool shouldKeepOldEntityData() const;
     bool hasPositionAndRotation() const;
     virtual int getPacketId();
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundRespawnPacket());
+    }
 
 private:
     long long m_mapSeed;

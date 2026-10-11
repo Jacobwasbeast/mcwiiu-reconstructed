@@ -3,7 +3,7 @@
 
 CPlatformNetworkManager* CPlatformNetworkManager::Create()
 {
-    return new CPlatformNetworkManagerNintendo();
+    return new CPlatformNetworkManagerNintendo;
 }
 
 void CPlatformNetworkManager::CancelJoinGame()

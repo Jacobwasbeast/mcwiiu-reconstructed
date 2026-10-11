@@ -18,7 +18,10 @@ public:
     ServerboundContainerClosePacket(int containerId);
     virtual ~ServerboundContainerClosePacket();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ServerboundContainerClosePacket());
+    }
 
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

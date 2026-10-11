@@ -72,8 +72,3 @@ int ClientboundSetEntityLinkPacket::getDestId()
 {
     return destId;
 }
-
-boost::shared_ptr<Packet> ClientboundSetEntityLinkPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundSetEntityLinkPacket());
-}

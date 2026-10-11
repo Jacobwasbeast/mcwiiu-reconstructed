@@ -26,7 +26,10 @@ public:
     int getId();
     int getAction();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundAnimatePacket());
+    }
 
 private:
     int id;

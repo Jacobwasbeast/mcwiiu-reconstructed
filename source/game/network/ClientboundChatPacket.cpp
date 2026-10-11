@@ -123,7 +123,8 @@ int ClientboundChatPacket::getEstimatedSize()
 
 std::wstring ClientboundChatPacket::getMobCustomName(Level* level)
 {
-    boost::shared_ptr<Entity> mob = level->getEntity(ints.back());
+    int entityId = ints.back();
+    boost::shared_ptr<Entity> mob = level->getEntity(entityId);
 
     if (mob && mob->hasCustomName())
     {
@@ -138,9 +139,4 @@ std::wstring ClientboundChatPacket::getMobCustomName(Level* level)
     }
 
     return gApp.getEntityName(static_cast<unsigned long long>(static_cast<long long>(ints[0])), entityData);
-}
-
-boost::shared_ptr<Packet> ClientboundChatPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundChatPacket());
 }

@@ -49,8 +49,3 @@ bool DisconnectPacket::isInvalidatedBy(boost::shared_ptr<Packet> packet)
 {
     return true;
 }
-
-boost::shared_ptr<Packet> DisconnectPacket::create()
-{
-    return boost::shared_ptr<Packet>(new DisconnectPacket());
-}

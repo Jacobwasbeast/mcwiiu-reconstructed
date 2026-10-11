@@ -26,7 +26,10 @@ public:
 
     int getSlot();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundSetCarriedItemPacket());
+    }
 
 private:
     int slot;

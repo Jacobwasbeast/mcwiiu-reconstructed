@@ -56,8 +56,3 @@ int ClientboundDamageIndicatorPacket::getPacketId()
 {
     return 234;
 }
-
-boost::shared_ptr<Packet> ClientboundDamageIndicatorPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundDamageIndicatorPacket());
-}

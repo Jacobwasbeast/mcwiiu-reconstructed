@@ -115,9 +115,12 @@ void ClientboundAddPlayerPacket::read(DataInputStream* input)
     mPlayerId = input->readPlayerUID();
     mProfileId = input->readPlayerUID();
     mPlayerIndex = input->readByte();
-    mSkinId = input->readInt();
-    mCapeId = input->readInt();
-    mPlayerPrivilege = input->readInt();
+    int skinId = input->readInt();
+    mSkinId = *(unsigned int*)&skinId;
+    int capeId = input->readInt();
+    mCapeId = *(unsigned int*)&capeId;
+    int privileges = input->readInt();
+    mPlayerPrivilege = *(unsigned int*)&privileges;
     mGameType = GameType::byId(input->readInt());
     MemSect(1);
     mUnpackedData = SynchedEntityData::unpack(input);
@@ -173,9 +176,4 @@ std::vector<DataItem*>* ClientboundAddPlayerPacket::getUnpackedData()
 int ClientboundAddPlayerPacket::getPacketId()
 {
     return 20;
-}
-
-boost::shared_ptr<Packet> ClientboundAddPlayerPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundAddPlayerPacket());
 }

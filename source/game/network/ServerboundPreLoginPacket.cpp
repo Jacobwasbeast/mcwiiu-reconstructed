@@ -42,8 +42,3 @@ int ServerboundPreLoginPacket::getEstimatedSize()
 {
     return name.length() * 2 + 2;
 }
-
-boost::shared_ptr<Packet> ServerboundPreLoginPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundPreLoginPacket());
-}

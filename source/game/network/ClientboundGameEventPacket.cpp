@@ -62,8 +62,3 @@ int ClientboundGameEventPacket::getPlayerIndex()
 {
     return mPlayerIndex;
 }
-
-boost::shared_ptr<Packet> ClientboundGameEventPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundGameEventPacket());
-}

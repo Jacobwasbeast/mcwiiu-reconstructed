@@ -47,8 +47,3 @@ bool ServerboundPaddleBoatPacket::getRight()
 {
     return right;
 }
-
-boost::shared_ptr<Packet> ServerboundPaddleBoatPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundPaddleBoatPacket());
-}

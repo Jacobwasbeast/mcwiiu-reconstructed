@@ -33,11 +33,6 @@ UpdateGameRuleProgressPacket::UpdateGameRuleProgressPacket(ConsoleGameRules::EGa
     }
 }
 
-boost::shared_ptr<Packet> UpdateGameRuleProgressPacket::create()
-{
-    return boost::shared_ptr<Packet>(new UpdateGameRuleProgressPacket());
-}
-
 int UpdateGameRuleProgressPacket::getPacketId()
 {
     return 158;

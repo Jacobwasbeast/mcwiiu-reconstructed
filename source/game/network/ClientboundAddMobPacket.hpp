@@ -46,7 +46,10 @@ public:
     std::vector<int> getSubIds();
     CompoundTag* getAdditionalContructionDataTag();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundAddMobPacket());
+    }
 
 private:
     void init(boost::shared_ptr<LivingEntity> entity, int yRot, int xRot, int x, int y, int z, int yHeadRot, CompoundTag* additionalContructionDataTag);

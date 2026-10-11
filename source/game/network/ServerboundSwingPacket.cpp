@@ -40,8 +40,3 @@ int ServerboundSwingPacket::getPacketId()
 {
     return 233;
 }
-
-boost::shared_ptr<Packet> ServerboundSwingPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundSwingPacket());
-}

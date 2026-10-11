@@ -20,7 +20,10 @@ public:
     virtual void write(DataOutputStream* output);
     virtual int getEstimatedSize();
     virtual int getPacketId();
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new TradeItemPacket());
+    }
 
 public:
     int containerId;

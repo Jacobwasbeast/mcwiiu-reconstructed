@@ -35,7 +35,10 @@ public:
     double getKnockbackY();
     double getKnockbackZ();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundExplodePacket());
+    }
 
 private:
     double x;

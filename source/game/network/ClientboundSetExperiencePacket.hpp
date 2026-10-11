@@ -28,7 +28,10 @@ public:
     int getTotalExperience();
     int getExperienceLevel();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundSetExperiencePacket());
+    }
 
 private:
     float experienceProgress;

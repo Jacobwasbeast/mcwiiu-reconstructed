@@ -83,8 +83,3 @@ int ClientboundPlayerCombatPacket::getPacketId()
 {
     return 213;
 }
-
-boost::shared_ptr<Packet> ClientboundPlayerCombatPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundPlayerCombatPacket());
-}

@@ -64,8 +64,3 @@ int MapSelectInfoPacket::getPacketId()
 {
     return 0xa8;
 }
-
-boost::shared_ptr<Packet> MapSelectInfoPacket::create()
-{
-    return boost::shared_ptr<Packet>(new MapSelectInfoPacket());
-}

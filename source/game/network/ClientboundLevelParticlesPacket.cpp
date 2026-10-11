@@ -237,8 +237,3 @@ bool ClientboundLevelParticlesPacket::getHasAux()
 {
     return hasAux;
 }
-
-boost::shared_ptr<Packet> ClientboundLevelParticlesPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundLevelParticlesPacket());
-}

@@ -43,8 +43,3 @@ ServerboundClientCommandPacket::Action ServerboundClientCommandPacket::getAction
 {
     return action;
 }
-
-boost::shared_ptr<Packet> ServerboundClientCommandPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundClientCommandPacket());
-}

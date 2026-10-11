@@ -27,7 +27,10 @@ public:
     BlockPos getPos();
     int getProgress();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundBlockDestructionPacket());
+    }
 
 private:
     int id;

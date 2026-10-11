@@ -34,7 +34,10 @@ public:
     double getClickY();
     double getClickZ();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ServerboundUseItemOnPacket());
+    }
 
 private:
     BlockPos pos;

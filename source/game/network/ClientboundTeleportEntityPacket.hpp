@@ -28,7 +28,10 @@ public:
     unsigned char getxRot();
     unsigned char isOnGround();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundTeleportEntityPacket());
+    }
 
 private:
     int mId;

@@ -43,7 +43,10 @@ public:
     std::wstring getName();
     std::vector<DataItem*>* getUnpackedData();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundAddPlayerPacket());
+    }
 
 private:
     unsigned int mEntityId;

@@ -52,8 +52,3 @@ int ServerboundContainerButtonClickPacket::getButtonId()
 {
     return buttonId;
 }
-
-boost::shared_ptr<Packet> ServerboundContainerButtonClickPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundContainerButtonClickPacket());
-}

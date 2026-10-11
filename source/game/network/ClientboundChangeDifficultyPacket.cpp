@@ -49,8 +49,3 @@ const Difficulty* ClientboundChangeDifficultyPacket::getDifficulty()
 {
     return difficulty;
 }
-
-boost::shared_ptr<Packet> ClientboundChangeDifficultyPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundChangeDifficultyPacket());
-}

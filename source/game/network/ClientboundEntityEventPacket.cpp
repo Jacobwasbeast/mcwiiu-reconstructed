@@ -63,8 +63,3 @@ int ClientboundEntityEventPacket::getData() const
 {
     return data;
 }
-
-boost::shared_ptr<Packet> ClientboundEntityEventPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundEntityEventPacket());
-}

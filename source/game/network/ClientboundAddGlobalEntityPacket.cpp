@@ -78,8 +78,3 @@ int ClientboundAddGlobalEntityPacket::getType()
 {
     return mType;
 }
-
-boost::shared_ptr<Packet> ClientboundAddGlobalEntityPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundAddGlobalEntityPacket());
-}

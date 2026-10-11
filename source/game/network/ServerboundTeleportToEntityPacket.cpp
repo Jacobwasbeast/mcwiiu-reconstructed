@@ -40,8 +40,3 @@ int ServerboundTeleportToEntityPacket::getPacketId()
 {
     return 231;
 }
-
-boost::shared_ptr<Packet> ServerboundTeleportToEntityPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundTeleportToEntityPacket());
-}

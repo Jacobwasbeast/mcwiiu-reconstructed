@@ -50,8 +50,3 @@ int ChunkVisibilityAreaPacket::getPacketId()
 {
     return 155;
 }
-
-boost::shared_ptr<Packet> ChunkVisibilityAreaPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ChunkVisibilityAreaPacket());
-}

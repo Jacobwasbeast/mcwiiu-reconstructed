@@ -39,7 +39,10 @@ public:
     uint32_t isContainer();
     virtual int getPacketId();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket());
+    }
 
     static const int CONTAINER = 0;
     static const int WORKBENCH = 1;

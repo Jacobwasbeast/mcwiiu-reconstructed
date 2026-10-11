@@ -26,7 +26,10 @@ public:
     {
         return mData;
     }
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new MapSelectInfoPacket());
+    }
 
 private:
     friend class ClientPacketListener;

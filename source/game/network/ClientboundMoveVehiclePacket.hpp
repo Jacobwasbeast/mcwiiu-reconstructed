@@ -29,7 +29,10 @@ public:
     double getYRot();
     double getXRot();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundMoveVehiclePacket());
+    }
 
 private:
     double x;

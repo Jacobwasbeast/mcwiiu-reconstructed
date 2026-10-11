@@ -33,8 +33,3 @@ void TradeItemPacket::write(DataOutputStream* output)
 
 int TradeItemPacket::getEstimatedSize() { return 8; }
 int TradeItemPacket::getPacketId() { return 151; }
-
-boost::shared_ptr<Packet> TradeItemPacket::create()
-{
-    return boost::shared_ptr<Packet>(new TradeItemPacket());
-}

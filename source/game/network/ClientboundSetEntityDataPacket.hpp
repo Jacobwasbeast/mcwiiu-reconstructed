@@ -31,7 +31,10 @@ public:
     int getEntityType();
     std::vector<DataItem*>* getUnpackedData();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundSetEntityDataPacket());
+    }
 
 private:
     boost::shared_ptr<SynchedEntityData> entityData;

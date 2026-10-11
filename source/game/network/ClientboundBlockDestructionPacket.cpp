@@ -63,8 +63,3 @@ int ClientboundBlockDestructionPacket::getProgress()
 {
     return progress;
 }
-
-boost::shared_ptr<Packet> ClientboundBlockDestructionPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundBlockDestructionPacket());
-}

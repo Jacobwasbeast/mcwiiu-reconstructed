@@ -71,8 +71,3 @@ float ServerboundMoveVehiclePacket::getXRot()
 {
     return xRot;
 }
-
-boost::shared_ptr<Packet> ServerboundMoveVehiclePacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundMoveVehiclePacket());
-}

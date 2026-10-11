@@ -32,7 +32,10 @@ public:
     int getMapId();
     void applyToMap(MapItemSavedData* mapData);
     bool isDuplicatePacket(boost::shared_ptr<ClientboundMapItemDataPacket> packet);
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundMapItemDataPacket());
+    }
     unsigned char getScale();
     int getWidth();
     int getHeight();

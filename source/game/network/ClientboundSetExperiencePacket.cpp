@@ -72,8 +72,3 @@ int ClientboundSetExperiencePacket::getExperienceLevel()
 {
     return experienceLevel;
 }
-
-boost::shared_ptr<Packet> ClientboundSetExperiencePacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundSetExperiencePacket());
-}

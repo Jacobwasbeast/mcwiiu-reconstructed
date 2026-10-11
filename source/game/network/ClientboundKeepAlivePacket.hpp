@@ -25,7 +25,10 @@ public:
     virtual bool isInvalidatedBy(boost::shared_ptr<Packet> packet);
     virtual bool isAync();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundKeepAlivePacket());
+    }
 
 private:
     int mId;

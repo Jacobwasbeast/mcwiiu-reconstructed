@@ -25,7 +25,10 @@ public:
     int getContainerId();
     int getButtonId();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ServerboundContainerButtonClickPacket());
+    }
 
 private:
     int containerId;

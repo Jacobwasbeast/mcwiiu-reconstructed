@@ -17,11 +17,6 @@ ServerboundContainerClosePacket::~ServerboundContainerClosePacket()
 {
 }
 
-boost::shared_ptr<Packet> ServerboundContainerClosePacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundContainerClosePacket());
-}
-
 void ServerboundContainerClosePacket::read(DataInputStream* input)
 {
     mContainerId = input->readByte();

@@ -28,7 +28,10 @@ public:
     boost::shared_ptr<Entity> getEntity(Level* level);
     MobEffect* getEffect();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundRemoveMobEffectPacket());
+    }
 
 private:
     int entityId;

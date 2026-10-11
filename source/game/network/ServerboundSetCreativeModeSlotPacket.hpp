@@ -23,7 +23,10 @@ public:
     int getSlotNum();
     not_null_ptr<ItemInstance> getItem();
     virtual int getPacketId();
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ServerboundSetCreativeModeSlotPacket());
+    }
 
 private:
     int slot;

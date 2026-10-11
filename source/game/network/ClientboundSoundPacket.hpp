@@ -42,7 +42,10 @@ public:
     int getEntityId();
     bool getLooping() const;
     int getSoundInstance();
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundSoundPacket());
+    }
 private:
     const SoundEvent* sound;
     SoundSource::ESoundSource source;

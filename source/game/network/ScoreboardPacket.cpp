@@ -13,11 +13,6 @@ ScoreboardPacket::~ScoreboardPacket()
     delete mData;
 }
 
-boost::shared_ptr<Packet> ScoreboardPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ScoreboardPacket());
-}
-
 ScoreboardPacket::EMessage ScoreboardPacket::GetMessage()
 {
     return mMessage;

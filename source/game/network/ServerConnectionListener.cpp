@@ -44,10 +44,7 @@ ServerConnectionListener::~ServerConnectionListener()
 
 void ServerConnectionListener::disconnect(DisconnectPacket::eDisconnectReason reason)
 {
-    {
-        boost::shared_ptr<Packet> packet(new DisconnectPacket(reason));
-        m_connection->send(packet);
-    }
+    m_connection->send(boost::shared_ptr<DisconnectPacket>(new DisconnectPacket(reason)));
     m_connection->sendAndQuit();
     m_disconnected = true;
 }
@@ -57,18 +54,17 @@ void ServerConnectionListener::tick()
     if (m_acceptedLogin != NULL)
     {
         handleAcceptedLogin(m_acceptedLogin);
-        boost::shared_ptr<ClientboundLoginPacket> none;
-        m_acceptedLogin = none;
+        m_acceptedLogin = boost::shared_ptr<ClientboundLoginPacket>();
     }
 
-    int previousTickCount = m_tickCount;
-    ++m_tickCount;
-    if (previousTickCount != 600)
+    if (m_tickCount++ == 600)
+    {
+        disconnect(DisconnectPacket::eDisconnectReason_LoginTimeout);
+    }
+    else
     {
         m_connection->tick();
-        return;
     }
-    disconnect(DisconnectPacket::eDisconnectReason(3));
 }
 
 void ServerConnectionListener::sendPreLoginResponse()
@@ -86,23 +82,19 @@ void ServerConnectionListener::sendPreLoginResponse()
          it != players->end(); ++it)
     {
         boost::shared_ptr<ServerPlayer> serverPlayer = *it;
-        if (serverPlayer != NULL)
+        if (serverPlayer != NULL
+            && serverPlayer->mConnection->mPlayerUID != PlayerUID(0)
+            && serverPlayer->mConnection->mOldPlayerUID != PlayerUID(0))
         {
-            if (serverPlayer->mConnection->mPlayerUID != PlayerUID(0))
+            if (serverPlayer->mConnection->mFriendsOnly)
+                guestFlags = guestFlags | ((1 << playerCount) & 0xFF);
+            playerUids[playerCount] = serverPlayer->mConnection->mOldPlayerUID;
+            if (serverPlayer->mConnection->getNetworkPlayer() != NULL)
             {
-                if (serverPlayer->mConnection->mOldPlayerUID != PlayerUID(0))
-                {
-                    if (serverPlayer->mConnection->mFriendsOnly)
-                        guestFlags = guestFlags | ((1 << playerCount) & 0xFF);
-                    playerUids[playerCount] = serverPlayer->mConnection->mOldPlayerUID;
-                    if (serverPlayer->mConnection->getNetworkPlayer() != NULL)
-                    {
-                        if (serverPlayer->mConnection->getNetworkPlayer()->IsHost())
-                            hostPlayerIndex = playerCount;
-                    }
-                    ++playerCount;
-                }
+                if (serverPlayer->mConnection->getNetworkPlayer()->IsHost())
+                    hostPlayerIndex = playerCount;
             }
+            ++playerCount;
         }
     }
 
@@ -130,10 +122,10 @@ void ServerConnectionListener::handlePreLogin(boost::shared_ptr<ServerboundPreLo
     {
         if (packet->protocolVersion > 0x881)
         {
-            disconnect(static_cast<DisconnectPacket::eDisconnectReason>(0x0E));
+            disconnect(DisconnectPacket::eDisconnectReason_HostOutOfDate);
             return;
         }
-        disconnect(static_cast<DisconnectPacket::eDisconnectReason>(0x0F));
+        disconnect(DisconnectPacket::eDisconnectReason_ClientOutOfDate);
         return;
     }
 
@@ -143,14 +135,14 @@ void ServerConnectionListener::handlePreLogin(boost::shared_ptr<ServerboundPreLo
 
 void ServerConnectionListener::handleLogin(boost::shared_ptr<ClientboundLoginPacket> packet)
 {
-    if (packet->mEntityId != 0x13C)
+    if (packet->mEntityId != 316)
     {
-        if (packet->mEntityId > 0x13C)
+        if (packet->mEntityId > 316)
         {
-            disconnect(static_cast<DisconnectPacket::eDisconnectReason>(0x0E));
+            disconnect(DisconnectPacket::eDisconnectReason_HostOutOfDate);
             return;
         }
-        disconnect(static_cast<DisconnectPacket::eDisconnectReason>(0x0F));
+        disconnect(DisconnectPacket::eDisconnectReason_ClientOutOfDate);
         return;
     }
 
@@ -195,11 +187,7 @@ void ServerConnectionListener::onDisconnect(DisconnectPacket::eDisconnectReason,
 
 void ServerConnectionListener::handleGetInfo(boost::shared_ptr<GetInfoPacket>)
 {
-    {
-        boost::shared_ptr<Packet> packet(new DisconnectPacket(
-            DisconnectPacket::eDisconnectReason_GameFull));
-        m_connection->send(packet);
-    }
+    m_connection->send(boost::shared_ptr<DisconnectPacket>(new DisconnectPacket(DisconnectPacket::eDisconnectReason_GameFull)));
     m_connection->sendAndQuit();
     m_disconnected = true;
 }
@@ -210,7 +198,7 @@ void ServerConnectionListener::handleKeepAlive(boost::shared_ptr<ServerboundKeep
 
 void ServerConnectionListener::onUnhandledPacket(boost::shared_ptr<Packet>)
 {
-    disconnect(DisconnectPacket::eDisconnectReason(0x10));
+    disconnect(DisconnectPacket::eDisconnectReason_UnexpectedPacket);
 }
 
 void ServerConnectionListener::send(boost::shared_ptr<Packet> packet)

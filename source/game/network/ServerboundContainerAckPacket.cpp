@@ -59,8 +59,3 @@ bool ServerboundContainerAckPacket::isAccepted()
 {
     return accepted;
 }
-
-boost::shared_ptr<Packet> ServerboundContainerAckPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundContainerAckPacket());
-}

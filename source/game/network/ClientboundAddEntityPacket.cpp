@@ -227,8 +227,3 @@ void ClientboundAddEntityPacket::setData(int data)
 {
     mData = data;
 }
-
-boost::shared_ptr<Packet> ClientboundAddEntityPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket());
-}

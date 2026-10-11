@@ -74,8 +74,3 @@ std::wstring ClientboundAddPaintingPacket::getMotive()
 {
     return motive;
 }
-
-boost::shared_ptr<Packet> ClientboundAddPaintingPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundAddPaintingPacket());
-}

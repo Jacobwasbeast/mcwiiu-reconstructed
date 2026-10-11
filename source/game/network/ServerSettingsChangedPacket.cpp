@@ -44,8 +44,3 @@ int ServerSettingsChangedPacket::getEstimatedSize()
 {
     return 2;
 }
-
-boost::shared_ptr<Packet> ServerSettingsChangedPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerSettingsChangedPacket());
-}

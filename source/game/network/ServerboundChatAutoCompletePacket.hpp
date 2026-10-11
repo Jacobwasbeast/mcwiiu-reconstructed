@@ -31,7 +31,10 @@ public:
     BlockPos* getLookAtPos();
     bool assumeCommand();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ServerboundChatAutoCompletePacket());
+    }
 
 private:
     std::wstring message;

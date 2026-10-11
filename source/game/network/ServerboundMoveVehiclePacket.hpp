@@ -28,7 +28,10 @@ public:
     float getYRot();
     float getXRot();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ServerboundMoveVehiclePacket());
+    }
 
 private:
     double x;

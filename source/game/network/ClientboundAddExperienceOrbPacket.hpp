@@ -30,7 +30,10 @@ public:
     int getZ();
     int getValue();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundAddExperienceOrbPacket());
+    }
 
 private:
     int mId;

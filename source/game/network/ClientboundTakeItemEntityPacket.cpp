@@ -62,8 +62,3 @@ int ClientboundTakeItemEntityPacket::getAmount()
 {
     return amount;
 }
-
-boost::shared_ptr<Packet> ClientboundTakeItemEntityPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundTakeItemEntityPacket());
-}

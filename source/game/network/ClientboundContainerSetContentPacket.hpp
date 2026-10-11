@@ -31,7 +31,10 @@ public:
     int getContainerId();
     NonNullList<not_null_ptr<ItemInstance> > getItems();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundContainerSetContentPacket());
+    }
 
 private:
     int containerId;

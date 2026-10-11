@@ -1235,15 +1235,13 @@ void CGameNetworkManager::WiiU_AcquiredForeground()
 void CGameNetworkManager::WiiU_ReleaseCallback() { NintendoVoiceChat_WiiU::ReleaseCallback(); }
 void CGameNetworkManager::WiiU_SetBootFromFriendList()
 {
-    SYSArgDataBlock args[2] = {};
-    args[0].id = SYS_ARG_ID_JOIN_PID;
-    args[1].id = SYS_ARG_ID_END;
-
-    SYSCallerInfo callerInfo = {};
+    SYSArgDataBlock args[2] = { { SYS_ARG_ID_JOIN_PID }, { SYS_ARG_ID_END } };
+    SYSCallerInfo callerInfo;
     if (SYSGetArguments(args, &callerInfo) == 0 && args[0].type == SYS_ARG_TYPE_UINT32)
     {
-        g_bSafeToRespondToGameBootInvite = true;
-        g_iGameBootInviteUserIndex = static_cast<int>(args[0].uint32);
+        g_bGameBootInvitePending = true;
+        g_uiGameBootInvitePrincipalId = args[0].uint32;
+        g_bHandlingGameBootInvite = true;
         gApp.setIgnoreMainMenuInputDuringInvite(true);
     }
 }

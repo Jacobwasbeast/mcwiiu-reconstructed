@@ -1161,19 +1161,10 @@ void ServerGamePacketListenerImpl::handlePlayerAbilities(boost::shared_ptr<Serve
         (mPlayer->mAbilities.mMayfly || mPlayer->isAllowedToFly());
 }
 
-static const std::wstring CHANNEL_BOOK_EDIT = L"MC|BEdit";
-static const std::wstring CHANNEL_BOOK_SIGN = L"MC|BSign";
-static const std::wstring CHANNEL_TRADE_SELECT = L"MC|TrSel";
-static const std::wstring CHANNEL_ADVANCED_COMMAND = L"MC|AdvCmd";
-static const std::wstring CHANNEL_BEACON = L"MC|Beacon";
-static const std::wstring CHANNEL_ITEM_NAME = L"MC|ItemName";
-static const std::wstring CHANNEL_RENAME_ITEM = L"MC|RIName";
-static const std::wstring CHANNEL_PICK_ITEM = L"MC|PickItem";
-
 void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<ServerboundCustomPayloadPacket> packet)
 {
     std::wstring identifier = packet->getIdentifier();
-    if (CHANNEL_BOOK_EDIT == identifier)
+    if (ServerboundCustomPayloadPacket::CUSTOM_BOOK_PACKET == identifier)
     {
         ByteArrayInputStream bytes(packet->getData());
         DataInputStream input(&bytes);
@@ -1208,7 +1199,7 @@ void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<Serverb
         bytes.reset();
         input.close();
     }
-    else if (CHANNEL_BOOK_SIGN == identifier)
+    else if (ServerboundCustomPayloadPacket::CUSTOM_BOOK_SIGN_PACKET == identifier)
     {
         ByteArrayInputStream bytes(packet->getData());
         DataInputStream input(&bytes);
@@ -1250,7 +1241,7 @@ void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<Serverb
         bytes.reset();
         input.close();
     }
-    else if (CHANNEL_TRADE_SELECT == identifier)
+    else if (ServerboundCustomPayloadPacket::TRADER_SELECTION_PACKET == identifier)
     {
         ByteArrayInputStream bytes(packet->getData());
         DataInputStream input(&bytes);
@@ -1261,12 +1252,12 @@ void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<Serverb
         if (menu != NULL && dynamic_cast<MerchantMenu*>(menu) != NULL)
             static_cast<MerchantMenu*>(menu)->setSelectionHint(selection);
     }
-    else if (CHANNEL_ADVANCED_COMMAND == identifier)
+    else if (ServerboundCustomPayloadPacket::SET_ADVENTURE_COMMAND_PACKET == identifier)
     {
         if (mServer->isCommandBlockEnabled() && mPlayer->hasPermission(eGameCommand_Effect))
             mPlayer.operator->();
     }
-    else if (CHANNEL_BEACON == identifier)
+    else if (ServerboundCustomPayloadPacket::SET_BEACON_PACKET == identifier)
     {
         AbstractContainerMenu* menu = mPlayer->mContainerMenu;
         if (menu != NULL)
@@ -1292,15 +1283,15 @@ void ServerGamePacketListenerImpl::handleCustomPayload(boost::shared_ptr<Serverb
             }
         }
     }
-    else if (CHANNEL_ITEM_NAME == identifier)
+    else if (ServerboundCustomPayloadPacket::SET_ITEM_NAME_PACKET == identifier)
     {
         NameItemOnAnvil(packet, false);
     }
-    else if (CHANNEL_RENAME_ITEM == identifier)
+    else if (ServerboundCustomPayloadPacket::SET_RENAME_ITEM_PACKET == identifier)
     {
         NameItemOnAnvil(packet, true);
     }
-    else if (CHANNEL_PICK_ITEM == identifier)
+    else if (ServerboundCustomPayloadPacket::PICK_ITEM_PACKET == identifier)
     {
         ByteArrayInputStream bytes(packet->getData());
         DataInputStream input(&bytes);

@@ -28,7 +28,10 @@ public:
 
     boost::shared_ptr<Entity> getEntity(ServerLevel* level);
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ServerboundTeleportToEntityPacket());
+    }
 
 private:
     PlayerUID mPlayerUID;

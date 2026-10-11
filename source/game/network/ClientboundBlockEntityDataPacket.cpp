@@ -87,8 +87,3 @@ int ClientboundBlockEntityDataPacket::getDimension() const
 {
     return dimension;
 }
-
-boost::shared_ptr<Packet> ClientboundBlockEntityDataPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket());
-}

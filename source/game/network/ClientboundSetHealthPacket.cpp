@@ -81,8 +81,3 @@ float ClientboundSetHealthPacket::getSaturation()
 {
     return saturation;
 }
-
-boost::shared_ptr<Packet> ClientboundSetHealthPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundSetHealthPacket());
-}

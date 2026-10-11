@@ -41,8 +41,3 @@ int ServerboundSetCarriedItemPacket::getSlot()
 {
     return slot;
 }
-
-boost::shared_ptr<Packet> ServerboundSetCarriedItemPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundSetCarriedItemPacket());
-}

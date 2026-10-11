@@ -44,8 +44,3 @@ InteractionHand::EInteractionHand ServerboundUseItemPacket::getHand()
 {
     return hand;
 }
-
-boost::shared_ptr<Packet> ServerboundUseItemPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundUseItemPacket());
-}

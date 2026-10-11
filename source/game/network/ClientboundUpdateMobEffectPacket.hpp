@@ -33,7 +33,10 @@ public:
     unsigned char isEffectVisible();
     unsigned char isEffectAmbient();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundUpdateMobEffectPacket());
+    }
 
 private:
     int entityId;

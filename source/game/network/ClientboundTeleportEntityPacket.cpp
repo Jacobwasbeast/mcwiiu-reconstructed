@@ -103,8 +103,3 @@ unsigned char ClientboundTeleportEntityPacket::isOnGround()
 {
     return mOnGround;
 }
-
-boost::shared_ptr<Packet> ClientboundTeleportEntityPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundTeleportEntityPacket());
-}

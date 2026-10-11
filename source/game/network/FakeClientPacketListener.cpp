@@ -70,8 +70,7 @@ void FakeClientPacketListener::handleRemoveEntity(boost::shared_ptr<ClientboundR
 
 void FakeClientPacketListener::handleMovePlayer(boost::shared_ptr<ClientboundPlayerPositionPacket> packet)
 {
-    boost::shared_ptr<Packet> accept(new ServerboundAcceptTeleportationPacket(packet->getId()));
-    ClientPacketListener::getConnection()->send(accept);
+    ClientPacketListener::getConnection()->send(boost::shared_ptr<ServerboundAcceptTeleportationPacket>(new ServerboundAcceptTeleportationPacket(packet->getId())));
     m_hasPosition = true;
     m_x = packet->getX();
     m_y = packet->getY();
@@ -127,10 +126,8 @@ void FakeClientPacketListener::handlePreLogin(boost::shared_ptr<ClientboundPreLo
     PlayerUID playerUid(0);
     std::wstring name;
     name.assign(L"FakeName");
-    ClientboundLoginPacket* login = new ClientboundLoginPacket(name, 316, playerUid, playerUid, false,
-        packet->mSeed, GameSettings::GetPlayerSkinId(0), GameSettings::GetPlayerCapeId(0), false, false);
-    boost::shared_ptr<Packet> loginPacket(login);
-    ClientPacketListener::send(loginPacket);
+    send(boost::shared_ptr<ClientboundLoginPacket>(new ClientboundLoginPacket(name, 316, playerUid, playerUid, false,
+        packet->mSeed, GameSettings::GetPlayerSkinId(0), GameSettings::GetPlayerCapeId(0), false, false)));
 }
 
 void FakeClientPacketListener::handleAddMob(boost::shared_ptr<ClientboundAddMobPacket> packet)

@@ -81,8 +81,3 @@ int ClientboundAddExperienceOrbPacket::getPacketId()
 {
     return 26;
 }
-
-boost::shared_ptr<Packet> ClientboundAddExperienceOrbPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundAddExperienceOrbPacket());
-}

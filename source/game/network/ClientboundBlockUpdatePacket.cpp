@@ -92,8 +92,3 @@ int ClientboundBlockUpdatePacket::getPacketId()
 {
     return 53;
 }
-
-boost::shared_ptr<Packet> ClientboundBlockUpdatePacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket());
-}

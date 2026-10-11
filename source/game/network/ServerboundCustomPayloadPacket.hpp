@@ -28,7 +28,22 @@ public:
     std::wstring getIdentifier();
     arrayWithLength<unsigned char> getData();
 
-    static boost::shared_ptr<Packet> create();
+    static const std::wstring CUSTOM_BOOK_PACKET;
+    static const std::wstring CUSTOM_BOOK_SIGN_PACKET;
+    static const std::wstring TRADER_SELECTION_PACKET;
+    static const std::wstring SET_ADVENTURE_COMMAND_PACKET;
+    static const std::wstring SET_AUTO_COMMAND_PACKET;
+    static const std::wstring SET_STRUCTURE_PACKET;
+    static const std::wstring SET_BEACON_PACKET;
+    static const std::wstring SET_ITEM_NAME_PACKET;
+    static const std::wstring SET_RENAME_ITEM_PACKET;
+    static const std::wstring PICK_ITEM_PACKET;
+    static const std::wstring CLIENT_BRAND_PACKET;
+
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ServerboundCustomPayloadPacket());
+    }
 
 private:
     std::wstring identifier;

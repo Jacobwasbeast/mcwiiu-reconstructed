@@ -101,25 +101,25 @@ void ServerLevelListener::playSoundToAllPlayers(const SoundEvent* sound,
     for (unsigned int i = 0; i < players->size(); ++i)
     {
         boost::shared_ptr<ServerPlayer> player = (*players)[i];
+        bool alreadySent = false;
 
         if (!sentPlayers.empty())
         {
             INetworkPlayer* networkPlayer = player->mConnection->getNetworkPlayer();
-            if (networkPlayer == NULL)
-                continue;
-
-            bool alreadySent = false;
-            for (unsigned int j = 0; j < sentPlayers.size(); ++j)
+            if (networkPlayer != NULL)
             {
-                boost::shared_ptr<ServerPlayer> sentPlayer = sentPlayers[j];
-                INetworkPlayer* other = sentPlayer->mConnection->getNetworkPlayer();
-                if (other != NULL && networkPlayer->IsSameSystem(other))
-                    alreadySent = true;
+                for (unsigned int j = 0; j < sentPlayers.size(); ++j)
+                {
+                    boost::shared_ptr<ServerPlayer> sentPlayer = sentPlayers[j];
+                    INetworkPlayer* other = sentPlayer->mConnection->getNetworkPlayer();
+                    if (other != NULL && networkPlayer->IsSameSystem(other))
+                        alreadySent = true;
+                }
             }
-
-            if (alreadySent)
-                continue;
         }
+
+        if (alreadySent)
+            continue;
 
         player->mConnection->send(packet);
         sentPlayers.push_back(player);
@@ -156,9 +156,10 @@ void ServerLevelListener::destroyBlockProgress(int breakerId, const BlockPos& po
 {
     std::vector<boost::shared_ptr<ServerPlayer> >* players =
         (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayers();
+    unsigned int playerCount = players->size();
 
     INetworkPlayer* breakerNetworkPlayer = NULL;
-    for (unsigned int i = 0; i < players->size(); ++i)
+    for (unsigned int i = 0; i < playerCount; ++i)
     {
         if ((*players)[i]->getId() == breakerId)
         {
@@ -167,29 +168,26 @@ void ServerLevelListener::destroyBlockProgress(int breakerId, const BlockPos& po
         }
     }
 
-    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players->begin();
-         it != players->end(); ++it)
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it =
+             (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayers()->begin();
+         it != (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->getPlayers()->end(); ++it)
     {
         boost::shared_ptr<ServerPlayer> player = *it;
-        ServerPlayer* target = player.get();
 
-        if (target == NULL || target->mLevel != mLevel || target->getId() == breakerId)
+        if (player == NULL || player->mLevel != mLevel || player->getId() == breakerId
+            || player->mConnection->getNetworkPlayer() == NULL
+            || (breakerNetworkPlayer != NULL
+                && breakerNetworkPlayer->IsSameSystem(player->mConnection->getNetworkPlayer())))
             continue;
 
-        if (target->mConnection->getNetworkPlayer() == NULL)
-            continue;
+        double dx = pos.x - player->mX;
+        double dy = pos.y - player->mY;
+        double dz = pos.z - player->mZ;
 
-        if (breakerNetworkPlayer != NULL
-            && breakerNetworkPlayer->IsSameSystem(target->mConnection->getNetworkPlayer()))
-            continue;
-
-        double dx = pos.x - target->mX;
-        double dy = pos.y - target->mY;
-        double dz = pos.z - target->mZ;
-
-        if (dx * dx + dy * dy + dz * dz < 1024.0)
+        double distSq = dx * dx + dy * dy + dz * dz;
+        if (distSq < 1024.0)
         {
-            target->mConnection->send(boost::shared_ptr<ClientboundBlockDestructionPacket>(
+            player->mConnection->send(boost::shared_ptr<ClientboundBlockDestructionPacket>(
                 new ClientboundBlockDestructionPacket(breakerId, pos, progress)));
         }
     }

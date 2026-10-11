@@ -75,8 +75,3 @@ bool ClientboundPlayerAbilitiesPacket::canBeInvalidated() { return true; }
 bool ClientboundPlayerAbilitiesPacket::isInvalidatedBy(boost::shared_ptr<Packet>) { return true; }
 int ClientboundPlayerAbilitiesPacket::getPlayerId() { return mPlayerId; }
 int ClientboundPlayerAbilitiesPacket::getPacketId() { return 202; }
-
-boost::shared_ptr<Packet> ClientboundPlayerAbilitiesPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundPlayerAbilitiesPacket());
-}

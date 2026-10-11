@@ -25,9 +25,10 @@ ClientboundSetPassengersPacket::ClientboundSetPassengersPacket(boost::shared_ptr
         }
     }
 
-    if (!riderList.empty())
+    unsigned int riderCount = riderList.size();
+    if (riderCount > 0)
     {
-        mPassengers = arrayWithLength<int>(riderList.size(), true);
+        mPassengers = arrayWithLength<int>(riderCount, true);
     }
 
     for (unsigned int i = 0; i < riderList.size(); i++)
@@ -71,9 +72,4 @@ arrayWithLength<int> ClientboundSetPassengersPacket::getPassengers()
 int ClientboundSetPassengersPacket::getVehicle()
 {
     return mVehicle;
-}
-
-boost::shared_ptr<Packet> ClientboundSetPassengersPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundSetPassengersPacket());
 }

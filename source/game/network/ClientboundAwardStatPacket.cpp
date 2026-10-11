@@ -81,8 +81,3 @@ arrayWithLength<unsigned char> ClientboundAwardStatPacket::getParamData()
 {
     return paramData;
 }
-
-boost::shared_ptr<Packet> ClientboundAwardStatPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundAwardStatPacket());
-}

@@ -37,8 +37,3 @@ int ClientboundSetCameraPacket::getCameraId()
 {
     return cameraId;
 }
-
-boost::shared_ptr<Packet> ClientboundSetCameraPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundSetCameraPacket());
-}

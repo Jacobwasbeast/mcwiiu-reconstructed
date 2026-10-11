@@ -21,7 +21,10 @@ public:
     virtual void handle(PacketListener* listener);
     virtual int getEstimatedSize();
     virtual int getPacketId();
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ChunkVisibilityPacket());
+    }
 
 private:
     friend class ClientPacketListener;

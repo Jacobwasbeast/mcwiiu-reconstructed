@@ -17,8 +17,8 @@ ClientboundRemoveEntitiesPacket::ClientboundRemoveEntitiesPacket(int entityId)
 }
 
 ClientboundRemoveEntitiesPacket::ClientboundRemoveEntitiesPacket(arrayWithLength<int> entityIds)
-    : entityIds(entityIds)
 {
+    this->entityIds = entityIds;
 }
 
 ClientboundRemoveEntitiesPacket::~ClientboundRemoveEntitiesPacket()
@@ -55,9 +55,4 @@ int ClientboundRemoveEntitiesPacket::getEstimatedSize()
 int ClientboundRemoveEntitiesPacket::getPacketId()
 {
     return 29;
-}
-
-boost::shared_ptr<Packet> ClientboundRemoveEntitiesPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundRemoveEntitiesPacket());
 }

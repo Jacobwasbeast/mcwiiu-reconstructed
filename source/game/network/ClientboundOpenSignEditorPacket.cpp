@@ -41,8 +41,3 @@ BlockPos ClientboundOpenSignEditorPacket::getPos()
 {
     return pos;
 }
-
-boost::shared_ptr<Packet> ClientboundOpenSignEditorPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundOpenSignEditorPacket());
-}

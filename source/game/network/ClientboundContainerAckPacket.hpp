@@ -26,7 +26,10 @@ public:
     int getUid();
     bool isAccepted();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundContainerAckPacket());
+    }
 
 private:
     int containerId;

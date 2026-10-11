@@ -42,7 +42,10 @@ public:
     float getZAux();
     bool getHasAux();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundLevelParticlesPacket());
+    }
 
 private:
     void Init(const ParticleType* type, bool overrideLimiter, float x, float y, float z, float xDist, float yDist, float zDist, float maxSpeed, int count, arrayWithLength<int> params, bool hasAux, float xAux, float yAux, float zAux);

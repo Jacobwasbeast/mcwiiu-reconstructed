@@ -33,8 +33,3 @@ void ClientboundTabListPacket::write(DataOutputStream* output)
 void ClientboundTabListPacket::handle(PacketListener* listener)
 {
 }
-
-boost::shared_ptr<Packet> ClientboundTabListPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundTabListPacket());
-}

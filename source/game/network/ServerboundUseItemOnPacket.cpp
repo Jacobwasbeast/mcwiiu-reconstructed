@@ -80,8 +80,3 @@ double ServerboundUseItemOnPacket::getClickZ()
 {
     return clickZ;
 }
-
-boost::shared_ptr<Packet> ServerboundUseItemOnPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundUseItemOnPacket());
-}

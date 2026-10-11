@@ -28,7 +28,10 @@ public:
     long long getGameTime();
     long long getDayTime();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundSetTimePacket());
+    }
 
 private:
     long long gameTime;

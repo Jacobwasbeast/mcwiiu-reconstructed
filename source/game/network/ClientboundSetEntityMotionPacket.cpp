@@ -166,8 +166,3 @@ int ClientboundSetEntityMotionPacket::getZa()
 {
     return za;
 }
-
-boost::shared_ptr<Packet> ClientboundSetEntityMotionPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundSetEntityMotionPacket());
-}

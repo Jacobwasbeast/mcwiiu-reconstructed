@@ -58,11 +58,6 @@ int PlayerInfoPacket::getEstimatedSize()
     return 13;
 }
 
-boost::shared_ptr<Packet> PlayerInfoPacket::create()
-{
-    return boost::shared_ptr<Packet>(new PlayerInfoPacket());
-}
-
 int PlayerInfoPacket::getPacketId()
 {
     return 201;

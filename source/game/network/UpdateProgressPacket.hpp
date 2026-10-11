@@ -18,7 +18,10 @@ public:
     UpdateProgressPacket();
     UpdateProgressPacket(int progress);
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new UpdateProgressPacket());
+    }
 
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

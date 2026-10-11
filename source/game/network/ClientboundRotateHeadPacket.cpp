@@ -67,8 +67,3 @@ unsigned char ClientboundRotateHeadPacket::getYHeadRot()
 {
     return yHeadRot;
 }
-
-boost::shared_ptr<Packet> ClientboundRotateHeadPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundRotateHeadPacket());
-}

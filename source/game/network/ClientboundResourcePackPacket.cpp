@@ -52,8 +52,3 @@ std::wstring ClientboundResourcePackPacket::getHash()
 {
     return hash;
 }
-
-boost::shared_ptr<Packet> ClientboundResourcePackPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundResourcePackPacket());
-}

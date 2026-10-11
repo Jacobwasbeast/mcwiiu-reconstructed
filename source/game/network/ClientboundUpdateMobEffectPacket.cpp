@@ -114,8 +114,3 @@ bool ClientboundUpdateMobEffectPacket::isSuperLongDuration()
 {
     return effectDurationTicks == 32767;
 }
-
-boost::shared_ptr<Packet> ClientboundUpdateMobEffectPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundUpdateMobEffectPacket());
-}

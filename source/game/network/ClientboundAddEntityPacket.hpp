@@ -83,7 +83,10 @@ public:
     void setZa(int za);
     void setData(int data);
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundAddEntityPacket());
+    }
 
 private:
     int mId;

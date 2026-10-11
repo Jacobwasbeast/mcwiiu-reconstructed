@@ -48,8 +48,3 @@ bool ClientboundKeepAlivePacket::isAync()
 {
     return true;
 }
-
-boost::shared_ptr<Packet> ClientboundKeepAlivePacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundKeepAlivePacket());
-}

@@ -17,7 +17,10 @@ public:
     XZPacket(char mode, int x, int z);
     virtual ~XZPacket();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new XZPacket());
+    }
 
     virtual void handle(PacketListener* listener);
     virtual void read(DataInputStream* input);

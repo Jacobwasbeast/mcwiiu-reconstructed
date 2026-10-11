@@ -67,7 +67,10 @@ public:
     ScoreboardPacket();
     ScoreboardPacket(EMessage message, Data* data);
     virtual ~ScoreboardPacket();
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ScoreboardPacket());
+    }
     EMessage GetMessage();
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

@@ -29,7 +29,10 @@ public:
     int getSlot();
     not_null_ptr<ItemInstance> getItem();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket());
+    }
 
 private:
     int containerId;

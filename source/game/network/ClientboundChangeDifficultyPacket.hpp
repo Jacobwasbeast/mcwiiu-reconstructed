@@ -26,7 +26,10 @@ public:
     bool isLocked();
     const Difficulty* getDifficulty();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundChangeDifficultyPacket());
+    }
 
 private:
     const Difficulty* difficulty;

@@ -217,8 +217,3 @@ int ClientboundLoginPacket::getEstimatedSize()
     }
     return static_cast<int>(mLevelName.length()) + generatorSize + 0x56;
 }
-
-boost::shared_ptr<Packet> ClientboundLoginPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundLoginPacket());
-}

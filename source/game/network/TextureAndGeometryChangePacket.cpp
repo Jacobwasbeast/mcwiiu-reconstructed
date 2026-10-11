@@ -57,8 +57,3 @@ int TextureAndGeometryChangePacket::getEstimatedSize()
 {
     return geometryName.length() + 8;
 }
-
-boost::shared_ptr<Packet> TextureAndGeometryChangePacket::create()
-{
-    return boost::shared_ptr<Packet>(new TextureAndGeometryChangePacket());
-}

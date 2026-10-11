@@ -133,8 +133,3 @@ int ServerboundContainerClickPacket::getNumSlots()
 {
     return numSlots;
 }
-
-boost::shared_ptr<Packet> ServerboundContainerClickPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundContainerClickPacket());
-}

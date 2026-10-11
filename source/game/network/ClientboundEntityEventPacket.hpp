@@ -27,7 +27,10 @@ public:
     unsigned char getEventId() const;
     int getData() const;
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundEntityEventPacket());
+    }
 
 private:
     int entityId;

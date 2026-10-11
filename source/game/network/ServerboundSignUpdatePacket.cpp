@@ -76,8 +76,3 @@ bool ServerboundSignUpdatePacket::isCreatedByRestrictedPlayer()
 {
     return createdByRestrictedPlayer;
 }
-
-boost::shared_ptr<Packet> ServerboundSignUpdatePacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundSignUpdatePacket());
-}

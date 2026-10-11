@@ -37,9 +37,9 @@ ClientboundSetEntityDataPacket::~ClientboundSetEntityDataPacket()
         {
             delete unpackedData->at(i);
         }
-
-        delete unpackedData;
     }
+
+    delete unpackedData;
 }
 
 int ClientboundSetEntityDataPacket::getPacketId()
@@ -84,9 +84,4 @@ int ClientboundSetEntityDataPacket::getEntityType()
 std::vector<DataItem*>* ClientboundSetEntityDataPacket::getUnpackedData()
 {
     return unpackedData;
-}
-
-boost::shared_ptr<Packet> ClientboundSetEntityDataPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundSetEntityDataPacket());
 }

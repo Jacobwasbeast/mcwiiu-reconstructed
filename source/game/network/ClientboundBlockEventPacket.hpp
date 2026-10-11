@@ -29,7 +29,10 @@ public:
     int getB1();
     Block* getBlock();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundBlockEventPacket());
+    }
 
 private:
     BlockPos pos;

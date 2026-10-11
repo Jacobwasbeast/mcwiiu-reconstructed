@@ -378,7 +378,10 @@ public:
                                                     const Data& data);
     void ReadPacket(Data& data);
     unsigned int GetMessage();
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new GameModePacket());
+    }
 
 private:
     EMessage message;

@@ -5,17 +5,17 @@
 #include "game/network/PacketListener.hpp"
 
 ClientboundContainerSetSlotPacket::ClientboundContainerSetSlotPacket()
-    : containerId(0)
-    , slot(0)
 {
+    containerId = 0;
+    slot = 0;
     item = ItemInstance::EMPTY;
 }
 
 ClientboundContainerSetSlotPacket::ClientboundContainerSetSlotPacket(int containerId, int slot,
                                                                        not_null_ptr<ItemInstance> item)
-    : containerId(containerId)
-    , slot(slot)
 {
+    this->containerId = containerId;
+    this->slot = slot;
     this->item = item->isEmpty() ? ItemInstance::EMPTY : item->copy();
 }
 
@@ -31,7 +31,8 @@ void ClientboundContainerSetSlotPacket::handle(PacketListener* listener)
 
 void ClientboundContainerSetSlotPacket::read(DataInputStream* input)
 {
-    containerId = static_cast<signed char>(input->readByte());
+    unsigned char containerIdByte = input->readByte();
+    containerId = reinterpret_cast<signed char&>(containerIdByte);
     slot = input->readShort();
     item = input->readItem();
 }
@@ -61,9 +62,4 @@ int ClientboundContainerSetSlotPacket::getSlot()
 not_null_ptr<ItemInstance> ClientboundContainerSetSlotPacket::getItem()
 {
     return item;
-}
-
-boost::shared_ptr<Packet> ClientboundContainerSetSlotPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundContainerSetSlotPacket());
 }

@@ -73,8 +73,3 @@ Block* ClientboundBlockEventPacket::getBlock()
 {
     return block;
 }
-
-boost::shared_ptr<Packet> ClientboundBlockEventPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundBlockEventPacket());
-}

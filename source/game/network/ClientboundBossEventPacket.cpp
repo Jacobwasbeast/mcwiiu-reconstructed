@@ -222,8 +222,3 @@ int ClientboundBossEventPacket::getEstimatedSize()
         return id.size() * 3 + 12;
     }
 }
-
-boost::shared_ptr<Packet> ClientboundBossEventPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundBossEventPacket());
-}

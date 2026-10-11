@@ -38,8 +38,3 @@ int KickPlayerPacket::getPacketId()
 {
     return 159;
 }
-
-boost::shared_ptr<Packet> KickPlayerPacket::create()
-{
-    return boost::shared_ptr<Packet>(new KickPlayerPacket());
-}

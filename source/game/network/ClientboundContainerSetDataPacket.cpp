@@ -62,8 +62,3 @@ int ClientboundContainerSetDataPacket::getValue()
 {
     return value;
 }
-
-boost::shared_ptr<Packet> ClientboundContainerSetDataPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundContainerSetDataPacket());
-}

@@ -71,8 +71,3 @@ BlockPos ClientboundLevelEventPacket::getPos()
 {
     return pos;
 }
-
-boost::shared_ptr<Packet> ClientboundLevelEventPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundLevelEventPacket());
-}

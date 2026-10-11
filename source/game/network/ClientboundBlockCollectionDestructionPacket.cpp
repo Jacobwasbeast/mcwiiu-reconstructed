@@ -58,8 +58,3 @@ int ClientboundBlockCollectionDestructionPacket::getPacketId()
 {
     return 235;
 }
-
-boost::shared_ptr<Packet> ClientboundBlockCollectionDestructionPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundBlockCollectionDestructionPacket());
-}

@@ -40,8 +40,3 @@ int DebugOptionsPacket::getEstimatedSize()
 {
     return 4;
 }
-
-boost::shared_ptr<Packet> DebugOptionsPacket::create()
-{
-    return boost::shared_ptr<Packet>(new DebugOptionsPacket());
-}

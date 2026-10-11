@@ -21,11 +21,6 @@ TextureChangePacket::TextureChangePacket(boost::shared_ptr<Entity> entity, EText
     mEntityId = entity->getId();
 }
 
-boost::shared_ptr<Packet> TextureChangePacket::create()
-{
-    return boost::shared_ptr<Packet>(new TextureChangePacket());
-}
-
 void TextureChangePacket::read(DataInputStream* input)
 {
     mEntityId = input->readInt();

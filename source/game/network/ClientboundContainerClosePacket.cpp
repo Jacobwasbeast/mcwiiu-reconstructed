@@ -38,8 +38,3 @@ int ClientboundContainerClosePacket::getEstimatedSize()
 {
     return 1;
 }
-
-boost::shared_ptr<Packet> ClientboundContainerClosePacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundContainerClosePacket());
-}

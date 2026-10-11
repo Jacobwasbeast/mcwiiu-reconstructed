@@ -25,7 +25,10 @@ public:
     Item* getItem();
     int getDuration();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundCooldownPacket());
+    }
 
 private:
     Item* item;

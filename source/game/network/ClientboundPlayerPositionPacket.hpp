@@ -54,7 +54,10 @@ public:
     bool hasRot();
     const boost::unordered_set<const RelativeArgument*>& getRelativeArguments();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundPlayerPositionPacket());
+    }
 
 private:
     double x;

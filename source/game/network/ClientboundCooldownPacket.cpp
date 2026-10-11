@@ -46,8 +46,3 @@ int ClientboundCooldownPacket::getDuration()
 {
     return duration;
 }
-
-boost::shared_ptr<Packet> ClientboundCooldownPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundCooldownPacket());
-}

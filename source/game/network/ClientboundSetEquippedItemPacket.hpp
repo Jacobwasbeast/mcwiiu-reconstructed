@@ -27,7 +27,10 @@ public:
     not_null_ptr<ItemInstance> getItem();
     int getEntity();
     const EquipmentSlot* getSlot();
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundSetEquippedItemPacket());
+    }
 
 private:
     not_null_ptr<ItemInstance> m_item;

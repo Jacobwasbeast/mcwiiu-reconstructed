@@ -71,8 +71,3 @@ arrayWithLength<unsigned char> ClientboundCustomPayloadPacket::getData()
 {
     return data;
 }
-
-boost::shared_ptr<Packet> ClientboundCustomPayloadPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundCustomPayloadPacket());
-}

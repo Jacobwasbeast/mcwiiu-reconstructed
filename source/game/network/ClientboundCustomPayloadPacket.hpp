@@ -29,7 +29,10 @@ public:
     std::wstring getIdentifier();
     arrayWithLength<unsigned char> getData();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundCustomPayloadPacket());
+    }
 
 private:
     std::wstring identifier;

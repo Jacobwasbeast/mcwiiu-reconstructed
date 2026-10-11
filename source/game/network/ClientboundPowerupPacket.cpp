@@ -53,8 +53,3 @@ int ClientboundPowerupPacket::getPowerupTime()
 {
     return powerupTime;
 }
-
-boost::shared_ptr<Packet> ClientboundPowerupPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundPowerupPacket());
-}

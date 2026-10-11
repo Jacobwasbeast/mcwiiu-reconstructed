@@ -205,8 +205,3 @@ int ClientboundChunkBlocksUpdatePacket::getPacketId()
 {
     return 52;
 }
-
-boost::shared_ptr<Packet> ClientboundChunkBlocksUpdatePacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundChunkBlocksUpdatePacket());
-}

@@ -14,11 +14,6 @@ UpdateProgressPacket::UpdateProgressPacket(int progress)
 {
 }
 
-boost::shared_ptr<Packet> UpdateProgressPacket::create()
-{
-    return boost::shared_ptr<Packet>(new UpdateProgressPacket());
-}
-
 void UpdateProgressPacket::read(DataInputStream* input)
 {
     mProgress = input->readByte();

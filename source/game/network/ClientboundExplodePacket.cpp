@@ -144,8 +144,3 @@ int ClientboundExplodePacket::getPacketId()
 {
     return 60;
 }
-
-boost::shared_ptr<Packet> ClientboundExplodePacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundExplodePacket());
-}

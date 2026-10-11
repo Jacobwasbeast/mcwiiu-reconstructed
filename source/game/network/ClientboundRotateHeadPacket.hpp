@@ -29,7 +29,10 @@ public:
     int getEntityId();
     unsigned char getYHeadRot();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundRotateHeadPacket());
+    }
 
 private:
     int entityId;

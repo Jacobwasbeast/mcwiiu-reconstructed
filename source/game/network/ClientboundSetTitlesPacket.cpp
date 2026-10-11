@@ -62,8 +62,3 @@ void ClientboundSetTitlesPacket::handle(PacketListener* listener)
 {
     listener->handleSetTitles(shared_from_this());
 }
-
-boost::shared_ptr<Packet> ClientboundSetTitlesPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundSetTitlesPacket());
-}

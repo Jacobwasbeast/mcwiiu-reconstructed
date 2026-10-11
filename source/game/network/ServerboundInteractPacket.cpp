@@ -120,8 +120,3 @@ Vec3* ServerboundInteractPacket::getLocation()
 {
     return Vec3::newTemp(location);
 }
-
-boost::shared_ptr<Packet> ServerboundInteractPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundInteractPacket());
-}

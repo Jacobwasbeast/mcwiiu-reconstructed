@@ -40,8 +40,3 @@ void VotePacket::handle(PacketListener* listener)
 
 int VotePacket::getEstimatedSize() { return 6; }
 int VotePacket::getPacketId() { return 169; }
-
-boost::shared_ptr<Packet> VotePacket::create()
-{
-    return boost::shared_ptr<Packet>(new VotePacket());
-}

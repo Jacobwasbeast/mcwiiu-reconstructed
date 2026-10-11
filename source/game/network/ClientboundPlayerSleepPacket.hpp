@@ -29,7 +29,10 @@ public:
     int getPlayerId();
     BlockPos getPos();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundPlayerSleepPacket());
+    }
 
 private:
     int playerId;

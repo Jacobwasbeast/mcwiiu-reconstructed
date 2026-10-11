@@ -160,8 +160,3 @@ int ClientboundContainerOpenPacket::getPacketId()
 {
     return 100;
 }
-
-boost::shared_ptr<Packet> ClientboundContainerOpenPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundContainerOpenPacket());
-}

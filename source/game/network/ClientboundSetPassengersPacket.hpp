@@ -22,7 +22,10 @@ public:
     virtual void handle(PacketListener* listener);
     arrayWithLength<int> getPassengers();
     int getVehicle();
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundSetPassengersPacket());
+    }
 
 private:
     int mVehicle;

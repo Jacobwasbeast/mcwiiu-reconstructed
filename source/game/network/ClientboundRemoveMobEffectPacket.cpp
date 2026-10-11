@@ -51,8 +51,3 @@ int ClientboundRemoveMobEffectPacket::getPacketId()
 {
     return 42;
 }
-
-boost::shared_ptr<Packet> ClientboundRemoveMobEffectPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundRemoveMobEffectPacket());
-}

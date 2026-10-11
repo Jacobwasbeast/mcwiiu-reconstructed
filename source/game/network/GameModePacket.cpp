@@ -558,8 +558,3 @@ unsigned int GameModePacket::GetMessage()
 {
     return message;
 }
-
-boost::shared_ptr<Packet> GameModePacket::create()
-{
-    return boost::shared_ptr<Packet>(new GameModePacket());
-}

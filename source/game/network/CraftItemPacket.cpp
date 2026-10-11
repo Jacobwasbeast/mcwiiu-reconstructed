@@ -98,8 +98,3 @@ int CraftItemPacket::getEstimatedSize()
 {
     return 7;
 }
-
-boost::shared_ptr<Packet> CraftItemPacket::create()
-{
-    return boost::shared_ptr<Packet>(new CraftItemPacket());
-}

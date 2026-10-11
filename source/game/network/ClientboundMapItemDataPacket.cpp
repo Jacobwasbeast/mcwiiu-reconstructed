@@ -161,8 +161,3 @@ int ClientboundMapItemDataPacket::getPacketId()
 {
     return 211;
 }
-
-boost::shared_ptr<Packet> ClientboundMapItemDataPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundMapItemDataPacket());
-}

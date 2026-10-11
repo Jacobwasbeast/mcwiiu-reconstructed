@@ -30,7 +30,10 @@ public:
     CompoundTag* getTag();
     int getDimension() const;
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundBlockEntityDataPacket());
+    }
 
 private:
     void _init();

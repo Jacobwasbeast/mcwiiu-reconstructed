@@ -130,8 +130,3 @@ void ServerboundPlayerAbilitiesPacket::setWalkingSpeed(float walkingSpeed)
 {
     this->walkingSpeed = walkingSpeed;
 }
-
-boost::shared_ptr<Packet> ServerboundPlayerAbilitiesPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundPlayerAbilitiesPacket());
-}

@@ -72,8 +72,3 @@ int GameCommandPacket::getEstimatedSize()
 {
     return this->dataLength + 4;
 }
-
-boost::shared_ptr<Packet> GameCommandPacket::create()
-{
-    return boost::shared_ptr<Packet>(new GameCommandPacket());
-}

@@ -32,7 +32,10 @@ public:
     void SetChanges(std::vector<LevelChunk::BlockChange>* changes);
     std::vector<LevelChunk::BlockChange>* GetChanges() const;
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new BlockRegionUpdatePacket());
+    }
 
 private:
     friend class ClientPacketListener;

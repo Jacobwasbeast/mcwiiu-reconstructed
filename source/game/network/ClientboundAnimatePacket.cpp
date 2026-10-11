@@ -54,8 +54,3 @@ int ClientboundAnimatePacket::getAction()
 {
     return action;
 }
-
-boost::shared_ptr<Packet> ClientboundAnimatePacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundAnimatePacket());
-}

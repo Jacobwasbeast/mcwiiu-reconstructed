@@ -166,8 +166,3 @@ const boost::unordered_set<const ClientboundPlayerPositionPacket::RelativeArgume
 {
     return relativeArguments;
 }
-
-boost::shared_ptr<Packet> ClientboundPlayerPositionPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundPlayerPositionPacket());
-}

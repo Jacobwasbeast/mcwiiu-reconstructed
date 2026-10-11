@@ -23,7 +23,10 @@ public:
     virtual void handle(PacketListener* listener);
     virtual int getEstimatedSize();
     virtual int getPacketId();
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundRemoveEntitiesPacket());
+    }
 
 private:
     friend class ClientPacketListener;

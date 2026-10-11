@@ -37,8 +37,3 @@ int ServerboundAcceptTeleportationPacket::getId()
 {
     return id;
 }
-
-boost::shared_ptr<Packet> ServerboundAcceptTeleportationPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundAcceptTeleportationPacket());
-}

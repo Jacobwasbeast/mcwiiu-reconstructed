@@ -110,8 +110,3 @@ int ClientboundSetPlayerTeamPacket::getEstimatedSize()
 {
     return (int)mName.size() + 3;
 }
-
-boost::shared_ptr<Packet> ClientboundSetPlayerTeamPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundSetPlayerTeamPacket());
-}

@@ -70,8 +70,3 @@ double ClientboundMoveVehiclePacket::getXRot()
 {
     return xRot;
 }
-
-boost::shared_ptr<Packet> ClientboundMoveVehiclePacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundMoveVehiclePacket());
-}

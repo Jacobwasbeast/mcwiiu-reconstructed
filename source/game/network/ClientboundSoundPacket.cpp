@@ -105,8 +105,3 @@ void ClientboundSoundPacket::handle(PacketListener* listener)
 
 int ClientboundSoundPacket::getEstimatedSize() { return 24; }
 int ClientboundSoundPacket::getPacketId() { return 62; }
-
-boost::shared_ptr<Packet> ClientboundSoundPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundSoundPacket());
-}

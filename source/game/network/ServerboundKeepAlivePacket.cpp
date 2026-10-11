@@ -13,11 +13,6 @@ ServerboundKeepAlivePacket::~ServerboundKeepAlivePacket()
 {
 }
 
-boost::shared_ptr<Packet> ServerboundKeepAlivePacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundKeepAlivePacket());
-}
-
 void ServerboundKeepAlivePacket::read(DataInputStream* input)
 {
     id = input->readVarInt();

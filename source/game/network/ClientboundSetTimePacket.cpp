@@ -68,8 +68,3 @@ long long ClientboundSetTimePacket::getDayTime()
 {
     return dayTime;
 }
-
-boost::shared_ptr<Packet> ClientboundSetTimePacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundSetTimePacket());
-}

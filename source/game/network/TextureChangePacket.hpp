@@ -31,7 +31,10 @@ public:
     TextureChangePacket(boost::shared_ptr<Entity> entity, ETextureChangeType type,
                         const std::wstring& textureName);
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new TextureChangePacket());
+    }
 
     virtual void read(DataInputStream* input);
     virtual void write(DataOutputStream* output);

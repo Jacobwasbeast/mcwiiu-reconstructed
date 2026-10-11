@@ -22,7 +22,10 @@ public:
     virtual void write(DataOutputStream* output);
     virtual void handle(PacketListener* listener);
     BlockPos getPos();
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundOpenSignEditorPacket());
+    }
 private:
     BlockPos pos;
 };

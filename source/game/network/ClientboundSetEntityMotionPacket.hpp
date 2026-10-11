@@ -31,7 +31,10 @@ public:
     int getYa();
     int getZa();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundSetEntityMotionPacket());
+    }
 
 private:
     void _init(int id, double xa, double ya, double za);

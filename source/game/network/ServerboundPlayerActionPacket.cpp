@@ -12,13 +12,11 @@ ServerboundPlayerActionPacket::ServerboundPlayerActionPacket()
 
 ServerboundPlayerActionPacket::ServerboundPlayerActionPacket(Action action, const BlockPos& pos,
                                                              const Direction* direction, int useTime)
-    : mPos(pos), mDirection(direction), mAction(action), mUseTime(useTime)
 {
-}
-
-boost::shared_ptr<Packet> ServerboundPlayerActionPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundPlayerActionPacket());
+    mAction = action;
+    mPos = pos;
+    mDirection = direction;
+    mUseTime = useTime;
 }
 
 void ServerboundPlayerActionPacket::read(DataInputStream* input)

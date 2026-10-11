@@ -60,8 +60,3 @@ BlockPos ClientboundPlayerSleepPacket::getPos()
 {
     return pos;
 }
-
-boost::shared_ptr<Packet> ClientboundPlayerSleepPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundPlayerSleepPacket());
-}

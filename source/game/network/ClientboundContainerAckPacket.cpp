@@ -62,8 +62,3 @@ bool ClientboundContainerAckPacket::isAccepted()
 {
     return accepted;
 }
-
-boost::shared_ptr<Packet> ClientboundContainerAckPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ClientboundContainerAckPacket());
-}

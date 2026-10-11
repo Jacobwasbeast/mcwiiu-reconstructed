@@ -38,7 +38,10 @@ public:
     float getFlyingSpeed();
     float getWalkingSpeed();
     int getPlayerId();
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ClientboundPlayerAbilitiesPacket());
+    }
 private:
     bool mInvulnerable;
     bool mFlying;

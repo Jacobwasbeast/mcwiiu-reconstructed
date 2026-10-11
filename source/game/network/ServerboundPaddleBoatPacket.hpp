@@ -25,7 +25,10 @@ public:
     bool getLeft();
     bool getRight();
 
-    static boost::shared_ptr<Packet> create();
+    static boost::shared_ptr<Packet> create()
+    {
+        return boost::shared_ptr<Packet>(new ServerboundPaddleBoatPacket());
+    }
 
 private:
     bool left;

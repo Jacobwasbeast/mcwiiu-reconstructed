@@ -17,11 +17,6 @@ ServerboundResourcePackPacket::~ServerboundResourcePackPacket()
 {
 }
 
-boost::shared_ptr<Packet> ServerboundResourcePackPacket::create()
-{
-    return boost::shared_ptr<Packet>(new ServerboundResourcePackPacket());
-}
-
 void ServerboundResourcePackPacket::read(DataInputStream* input)
 {
     mAction = static_cast<Action>(input->readInt());

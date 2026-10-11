@@ -66,8 +66,3 @@ int TexturePacket::getEstimatedSize()
 {
     return 4096;
 }
-
-boost::shared_ptr<Packet> TexturePacket::create()
-{
-    return boost::shared_ptr<Packet>(new TexturePacket());
-}
