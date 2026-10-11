@@ -16,7 +16,7 @@ public:
     NatDetectionJob();
     virtual ~NatDetectionJob();
 
-    common::Result Startup(common::CallContext* context, NatDetecter* detecter,
+    Result Startup(common::CallContext* context, NatDetecter* detecter,
                            NatTraverser* traverser);
     void Cleanup();
     virtual void CancelCleanup();

@@ -14,8 +14,8 @@ public:
     NatProbeData();
     virtual ~NatProbeData() {}
 
-    common::Result Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const;
-    common::Result Deserialize(const unsigned char* buffer, unsigned int size);
+    Result Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const;
+    Result Deserialize(const unsigned char* buffer, unsigned int size);
     void Trace(uint64_t value) const;
 
     unsigned int m_connectionId;

@@ -10,7 +10,7 @@ NatProbeData::NatProbeData()
 {
 }
 
-common::Result NatProbeData::Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const
+Result NatProbeData::Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const
 {
     if (buffer == 0)
         return cResultInvalidArgument;
@@ -33,7 +33,7 @@ common::Result NatProbeData::Serialize(unsigned char* buffer, unsigned int* size
     return 0;
 }
 
-common::Result NatProbeData::Deserialize(const unsigned char* buffer, unsigned int size)
+Result NatProbeData::Deserialize(const unsigned char* buffer, unsigned int size)
 {
     if (buffer == 0)
         return cResultInvalidArgument;
@@ -50,7 +50,7 @@ common::Result NatProbeData::Deserialize(const unsigned char* buffer, unsigned i
         ++p;
     }
     m_time.m_tick = common::deserializeU64(p);
-    const common::Result success = 0;
+    const Result success = 0;
     return success;
 }
 

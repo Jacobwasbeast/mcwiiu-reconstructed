@@ -19,10 +19,10 @@ NatProbeRequest::NatProbeRequest(const transport::StationLocation& location)
     : m_stationLocation(location),
       m_stationConnectionInfo(),
       m_probeRequested(false),
-      m_addressValid(location.m_inetAddress.IsValid() != 0),
       m_deadline(),
       m_callContext(0)
 {
+    m_addressValid = location.m_inetAddress.IsValid();
 }
 
 void NatProbeRequest::Trace(unsigned long long) const

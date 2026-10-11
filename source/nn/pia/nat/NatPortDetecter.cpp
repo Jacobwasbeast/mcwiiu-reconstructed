@@ -1,6 +1,7 @@
 #include "nn/pia/nat/NatPortDetecter.hpp"
 
 #include "nn/pia/nat/Api.hpp"
+#include "nn/pia/common/SessionBeginMonitoringContent.hpp"
 
 namespace nn { namespace pia { namespace nat {
 
@@ -9,12 +10,13 @@ namespace
 enum
 {
     cProbeRepeatCount = 5,
+    cMaxRetryCount = 3,
     cMappingTypeDifferent = 2
 };
 }
 
 NatPortDetecter::NatPortDetecter()
-    : NatDetecter(), m_primaryStation(), m_secondaryStation(), m_relay(false), m_startTime()
+    : NatDetecter(), m_primaryStation(), m_secondaryStation(), m_startTime()
 {
 }
 
@@ -34,13 +36,18 @@ Result NatPortDetecter::Startup(NatTraverser* traverser, common::CallContext* co
                                 const transport::StationLocation& primary,
                                 const transport::StationLocation& secondary, bool relay)
 {
+    if (m_detectionJob.IsRunning())
+        return ResultInvalidState();
+
     m_primaryStation = primary;
     m_secondaryStation = secondary;
     m_relay = relay;
-    Result result = NatDetecter::Startup(traverser, context, address);
+    Result result = Startup(traverser, context, address);
     if (result != 0)
         return result;
-    StartDetectionJob();
+    result = m_detectionJob.Startup(context, this, traverser);
+    if (result != 0)
+        return result;
     return 0;
 }
 
@@ -67,46 +74,49 @@ void NatPortDetecter::StartSendingNatCheckProbe()
 
 bool NatPortDetecter::IsReceivedAllMessage()
 {
-    return GetNatCheckReply(0)->body.portWord != 0;
+    return m_replies[0].count != 0;
 }
 
 unsigned int NatPortDetecter::HandleResult()
 {
     TraceNatCheckReplyArray(cTraceDetail);
-    PredictPort(&m_secondaryStation.m_inetAddress);
-    if (m_secondaryStation.m_inetAddress.IsValid() == 0)
+    PredictPort(&m_secondaryStation.m_stationAddress.m_inetAddress);
+    if (!m_secondaryStation.m_stationAddress.m_inetAddress.IsValid())
         return 0;
 
-    m_startTime.SetNow();
-    if (m_traverser == 0)
-        return 0;
-
-    if (!m_relay)
+    common::Time now;
+    now.SetNow();
+    const unsigned short elapsedMsec = static_cast<unsigned short>(
+        static_cast<long long>(now.m_tick - m_startTime.m_tick) / common::TimeSpan::GetTicksPerMSec().m_tick);
+    NatTraverser* traverser = m_traverser;
+    if (m_relay)
     {
-        m_traverser->SetLocalPublicLocation(m_secondaryStation);
+        traverser->RelayProbeRequest(m_primaryStation, m_secondaryStation, m_relay, elapsedMsec);
     }
     else
     {
-        m_traverser->RelayProbeRequest(m_primaryStation, m_secondaryStation,
-                                           m_relay, GetPerceivedPort());
+        traverser->m_natProperty.m_privatePort = m_primaryAddress.m_port;
+        traverser->m_natProperty.m_publicPort = GetPerceivedPort();
+        common::g_sessionBeginMonitoringContent.m_metric154 = elapsedMsec;
     }
     return 1;
 }
 
 unsigned int NatPortDetecter::CheckRetry()
 {
-    const unsigned int perceivedPort = GetPerceivedPort();
-    if (perceivedPort != 0 || m_relay)
+    const unsigned short perceivedPort = GetPerceivedPort();
+    if (perceivedPort == 0 && m_retryCount < cMaxRetryCount)
+        return 1;
+
+    if (perceivedPort < NatDetecter::GetCurrentPort() && m_relay && m_retryCount < cMaxRetryCount)
     {
-        if (NatDetecter::GetCurrentPort() <= perceivedPort || m_relay)
-        {
-            NatDetecter::SetCurrentPort(static_cast<unsigned short>(perceivedPort));
+        if (RetryBind() != 0)
             return 0;
-        }
-        if (NatDetecter::RetryBind() != 0)
-            return 0;
+        return 1;
     }
-    return 1;
+
+    NatDetecter::SetCurrentPort(perceivedPort);
+    return 0;
 }
 
 unsigned int NatPortDetecter::GetDetectionTimeout() const

@@ -40,7 +40,7 @@ inline common::Time getDeadline(int msec)
 
 }
 
-static void NatPortDetectionCompletionCallback(common::Result result, void* param);
+static void NatPortDetectionCompletionCallback(Result result, void* param);
 
 NatTraversalProtocol::NatTraversalProtocol()
     : m_localServiceConnectionId(0), m_localLocation(), m_serverLocation(), m_callContext(),
@@ -64,7 +64,7 @@ NatTraversalProtocol::~NatTraversalProtocol()
     m_traversalTimes.ReleaseAll();
 }
 
-common::Result NatTraversalProtocol::StartupNatTraversal(NatTraverser* traverser)
+Result NatTraversalProtocol::StartupNatTraversal(NatTraverser* traverser)
 {
     if (traverser == 0)
         return cResultInvalidArgument;
@@ -372,7 +372,7 @@ void NatTraversalProtocol::ProcessProbeRequest(const transport::StationLocation&
     m_probeList.AddProbe(probe);
 }
 
-common::Result NatTraversalProtocol::SendMessage(transport::ProtocolId protocolId,
+Result NatTraversalProtocol::SendMessage(transport::ProtocolId protocolId,
                                                  const common::StationAddress& address,
                                                  const void* payload, unsigned int payloadSize,
                                                  bool relay, unsigned char type)
@@ -402,7 +402,7 @@ void NatTraversalProtocol::SendProbe(ProbeType type, const transport::StationLoc
         port = 2;
     unsigned int size;
     unsigned char buffer[16];
-    common::Result result = data.Serialize(buffer, &size, sizeof(buffer));
+    Result result = data.Serialize(buffer, &size, sizeof(buffer));
     if (result == 0)
     {
         port |= cProtocolType << 8;
@@ -418,7 +418,7 @@ void NatTraversalProtocol::ReceiveMessage(const transport::ProtocolMessageReader
         return;
 
     NatProbeData data;
-    common::Result result = data.Deserialize(
+    Result result = data.Deserialize(
         reader.m_message + transport::ProtocolMessageReader::cMessageHeaderSize, cProbeMessageSize);
     if (result != 0)
         return;
@@ -551,7 +551,7 @@ unsigned short NatTraversalProtocol::GetPeer2PeerPort(const transport::StationLo
     return 0;
 }
 
-void NatTraversalProtocol::CompletedNatPortDetection(common::Result)
+void NatTraversalProtocol::CompletedNatPortDetection(Result)
 {
     m_fieldC5B = true;
     m_nextDispatchTime.m_tick = 0;
@@ -568,7 +568,7 @@ void NatTraversalProtocol::DetectNatPort(const transport::StationLocation& local
         ++common::g_sessionBeginMonitoringContent.m_metric138;
 
     m_callContext.RegisterCompletionCallback(NatPortDetectionCompletionCallback, this);
-    common::Result result = m_ownerNatTraverser->GetNatPortDetecter()->Startup(
+    Result result = m_ownerNatTraverser->GetNatPortDetecter()->Startup(
         m_ownerNatTraverser, &m_callContext, common::InetAddress(), local, remote, true);
     if (result != 0)
         m_callContext.SignalFailure(result);
@@ -842,7 +842,7 @@ void NatTraversalProtocol::SendProbes()
     }
 }
 
-common::Result NatTraversalProtocol::dispatchProbe(common::Time& now)
+Result NatTraversalProtocol::dispatchProbe(common::Time& now)
 {
     if (m_fieldC58 || m_fieldC59 || m_fieldC5A)
     {
@@ -873,7 +873,7 @@ common::Result NatTraversalProtocol::dispatchProbe(common::Time& now)
                 request->Trace(cTraceBrief);
                 if (request->m_callContext != 0)
                 {
-                    common::Result failure = cResultProbeRequestTimedOut;
+                    Result failure = cResultProbeRequestTimedOut;
                     request->m_callContext->SignalFailure(failure);
                 }
                 m_probeRequests.Release(request);
@@ -920,7 +920,7 @@ common::Result NatTraversalProtocol::dispatchProbe(common::Time& now)
             {
                 if (request->m_callContext != 0)
                 {
-                    common::Result failure = cResultPortDetectionFailed;
+                    Result failure = cResultPortDetectionFailed;
                     request->m_callContext->SignalFailure(failure);
                 }
                 EraseProbeRequestByConnectionId(m_portDetectionLocation.m_field1c);
@@ -947,7 +947,7 @@ common::Result NatTraversalProtocol::dispatchProbe(common::Time& now)
     return 0;
 }
 
-common::Result NatTraversalProtocol::Dispatch()
+Result NatTraversalProtocol::Dispatch()
 {
     if (m_ownerNatTraverser == 0 || !m_ownerNatTraverser->IsNatDetectionCompleted())
         return 0;
@@ -968,7 +968,7 @@ common::Result NatTraversalProtocol::Dispatch()
             SendDummyPacket(m_serverLocation, 0, 3);
             m_serverKeepAliveTime = now + common::TimeSpan::FromMSec(15000);
         }
-        common::Result result = dispatchProbe(now);
+        Result result = dispatchProbe(now);
         return result;
     }
     return 0;
@@ -1071,7 +1071,7 @@ unsigned int NatTraversalProtocol::IsProtocolFilteringEnabled() const
     return 0;
 }
 
-static void NatPortDetectionCompletionCallback(common::Result result, void* param)
+static void NatPortDetectionCompletionCallback(Result result, void* param)
 {
     static_cast<NatTraversalProtocol*>(param)->CompletedNatPortDetection(result);
 }

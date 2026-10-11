@@ -32,7 +32,7 @@ public:
     NatTraversalProtocol();
     virtual ~NatTraversalProtocol();
 
-    common::Result StartupNatTraversal(NatTraverser* traverser);
+    Result StartupNatTraversal(NatTraverser* traverser);
     void CancelPortDetection();
     void CleanupNatTraversal();
     void AddProbeRequest(const NatProbeRequest& request);
@@ -43,7 +43,7 @@ public:
     bool EraseProbeRequestByConnectionId(unsigned int connectionId);
     void ClearNatTraversal(const transport::StationLocation& location, bool relay);
     void ProcessProbeRequest(const transport::StationLocation& location);
-    common::Result SendMessage(transport::ProtocolId protocolId,
+    Result SendMessage(transport::ProtocolId protocolId,
                                const common::StationAddress& address,
                                const void* payload, unsigned int payloadSize,
                                bool relay, unsigned char type);
@@ -54,7 +54,7 @@ public:
                          unsigned char type, unsigned char count);
     NatProbeRequest* FindProbeRequestByConnectionId(unsigned int connectionId);
     unsigned short GetPeer2PeerPort(const transport::StationLocation& location);
-    void CompletedNatPortDetection(common::Result result);
+    void CompletedNatPortDetection(Result result);
     void DetectNatPort(const transport::StationLocation& local,
                        const transport::StationLocation& remote);
     void RelayProbeRequest(const transport::StationLocation& source,
@@ -64,8 +64,8 @@ public:
     void ScheduleProbeRequest(const NatProbeRequest& request);
     bool SendProbeRequests();
     void SendProbes();
-    common::Result dispatchProbe(common::Time& now);
-    virtual common::Result Dispatch();
+    Result dispatchProbe(common::Time& now);
+    virtual Result Dispatch();
     bool GetLatestStationLocation(const transport::StationLocation& location,
                                   transport::StationLocation* latest);
     void StartServerKeepAlive();

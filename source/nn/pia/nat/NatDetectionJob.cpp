@@ -46,7 +46,7 @@ NatDetectionJob::~NatDetectionJob()
 {
 }
 
-common::Result NatDetectionJob::Startup(common::CallContext* context, NatDetecter* detecter,
+Result NatDetectionJob::Startup(common::CallContext* context, NatDetecter* detecter,
                                         NatTraverser* traverser)
 {
     m_endTime.m_tick = 0;

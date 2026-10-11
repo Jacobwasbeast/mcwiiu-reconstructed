@@ -27,8 +27,8 @@ int g_natProbeDurationMsec = 90000;
 unsigned char g_natProbeSprayCount = 50;
 int g_natDispatchIntervalMsec = 300;
 
-static void NatPropertyDetectionCompletionCallback(common::Result result, void* param);
-static void NatPortDetectionCompletionCallback(common::Result result, void* param);
+static void NatPropertyDetectionCompletionCallback(Result result, void* param);
+static void NatPortDetectionCompletionCallback(Result result, void* param);
 
 NatTraverser::NatTraverser()
     : m_callContext(0), m_natProperty(), m_servers(), m_state(0), m_publicPort(0),
@@ -63,7 +63,7 @@ NatTraverser::~NatTraverser()
     m_protocol = 0;
 }
 
-common::Result NatTraverser::Startup(inet::IFacade* facade, common::CallContext* context)
+Result NatTraverser::Startup(inet::IFacade* facade, common::CallContext* context)
 {
     if (facade == 0)
         return cResultInvalidArgument;
@@ -82,7 +82,7 @@ common::Result NatTraverser::Startup(inet::IFacade* facade, common::CallContext*
 
     m_facade = facade;
     m_callContext = context;
-    common::Result result = m_protocol->StartupNatTraversal(this);
+    Result result = m_protocol->StartupNatTraversal(this);
     if (result != 0)
         return result;
     if (m_natProperty.m_mappingType == 0)
@@ -133,14 +133,14 @@ void NatTraverser::CompleteNatDetectionCommon()
             m_publicPort = m_natProperty.m_privatePort;
         if (m_protocol == 0)
         {
-            common::Result failure = cResultInvalidState;
+            Result failure = cResultInvalidState;
             m_callContext->SignalFailure(failure);
             m_callContext = 0;
         }
         else
         {
             m_protocol->StartServerKeepAlive();
-            common::Result success = 0;
+            Result success = 0;
             m_state = 3;
             m_callContext->SignalSuccess(success);
             m_callContext = 0;
@@ -173,7 +173,7 @@ void NatTraverser::CompletedNatPropertyDetection(bool success)
     CompleteNatDetectionCommon();
 }
 
-common::Result NatTraverser::StartNatPropertyDetection()
+Result NatTraverser::StartNatPropertyDetection()
 {
     if (m_facade->IsBeginMonitoringDataAvailable())
     {
@@ -191,7 +191,7 @@ common::Result NatTraverser::StartNatPropertyDetection()
     address.m_port = NatDetecter::GetRandomPortNumber();
     m_publicPort = address.m_port;
     m_propertyContext.RegisterCompletionCallback(NatPropertyDetectionCompletionCallback, this);
-    common::Result result = m_natPropertyDetecter->Startup(this, &m_propertyContext, address);
+    Result result = m_natPropertyDetecter->Startup(this, &m_propertyContext, address);
     if (result != 0)
         return result;
     m_state = 1;
@@ -224,7 +224,7 @@ void NatTraverser::CompletedNatPortDetection(bool success)
     CompleteNatDetectionCommon();
 }
 
-common::Result NatTraverser::StartNatPortDetection()
+Result NatTraverser::StartNatPortDetection()
 {
     if (m_facade->IsBeginMonitoringDataAvailable())
     {
@@ -252,7 +252,7 @@ common::Result NatTraverser::StartNatPortDetection()
     transport::StationLocation location;
     location.m_stationAddress.Clear();
     common::InetAddress address(0, m_publicPort);
-    common::Result result =
+    Result result =
         m_natPortDetecter->Startup(this, &m_portContext, address, location, location, false);
     if (result != 0)
         return result;
@@ -315,7 +315,7 @@ void NatTraverser::IncrementNatTraversalFailureCount(unsigned int)
 }
 
 void NatTraverser::ReportNatTraversalResult(const transport::StationLocation& location,
-                                            common::Result result, bool relay)
+                                            Result result, bool relay)
 {
     if (location.m_field1c == 0)
     {
@@ -474,7 +474,7 @@ bool NatTraverser::CheckLatestStationLocation(transport::StationLocation& locati
     return false;
 }
 
-common::Result NatTraverser::CreateProtocols()
+Result NatTraverser::CreateProtocols()
 {
     transport::Transport* transport = transport::g_piaTransport;
     if (transport == 0)
@@ -612,12 +612,12 @@ const common::InetAddress& NatTraverser::GetRelayServerAddress() const
     return m_facade->GetRelayServerAddress();
 }
 
-static void NatPropertyDetectionCompletionCallback(common::Result, void* param)
+static void NatPropertyDetectionCompletionCallback(Result, void* param)
 {
     static_cast<NatTraverser*>(param)->CompletedNatPropertyDetection(true);
 }
 
-static void NatPortDetectionCompletionCallback(common::Result, void* param)
+static void NatPortDetectionCompletionCallback(Result, void* param)
 {
     static_cast<NatTraverser*>(param)->CompletedNatPortDetection(true);
 }
