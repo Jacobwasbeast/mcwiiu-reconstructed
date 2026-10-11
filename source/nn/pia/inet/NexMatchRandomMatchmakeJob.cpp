@@ -86,40 +86,6 @@ inline void countRetry(unsigned char& count)
         ++count;
 }
 
-inline bool failForSessionStatus(session::RandomMatchmakeJob& job)
-{
-    switch (session::g_piaSession->GetStatus())
-    {
-    case session::Session::cStatusDisconnectedNetwork:
-        job.setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
-        job.m_result = session::Session::cResultStatusDisconnectedNetwork;
-        return true;
-    case session::Session::cStatusUnknown6:
-        job.setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
-        job.m_result = session::Session::cResultStatusUnknown6;
-        return true;
-    case session::Session::cStatusUnknown7:
-        job.setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
-        job.m_result = session::Session::cResultStatusUnknown7;
-        return true;
-    case session::Session::cStatusUnknown8:
-        job.setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
-        job.m_result = session::Session::cResultStatusUnknown8;
-        return true;
-    default:
-        return false;
-    }
-}
-
-inline void keepLeaveResult(session::RandomMatchmakeJob& job)
-{
-    if (job.m_callContext.m_state == common::CallContext::cStateFailure)
-    {
-        const Result result = job.m_callContext.m_result;
-        if (result == session::Session::cResultStatusDisconnectedNetwork || result == cResultNexError)
-            job.m_result = result;
-    }
-}
 }
 
 NexMatchRandomMatchmakeJob::NexMatchRandomMatchmakeJob()
@@ -139,8 +105,28 @@ NexMatchRandomMatchmakeJob::~NexMatchRandomMatchmakeJob()
 
 NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::LeaveJoinedMatchmakeSession()
 {
-    if (failForSessionStatus(*this))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
         return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown6:
+        m_result = session::Session::cResultStatusUnknown6;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown7:
+        m_result = session::Session::cResultStatusUnknown7;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown8:
+        m_result = session::Session::cResultStatusUnknown8;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    default:
+        break;
+    }
     m_joinState = cJoinStateLeaveJoinedSession;
     if (m_joinedSessionIdNum == 0)
     {
@@ -156,7 +142,7 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::LeaveJoine
     {
         if (result == cResultRequestFailed)
         {
-            m_result = cResultRequestFailed;
+            m_result = result;
             setStep(&session::RandomMatchmakeJob::CompleteFailure,
                     "NexMatchRandomMatchmakeJob::CompleteFailure");
             return MakeExecuteResult(cExecuteKindNextStep);
@@ -172,23 +158,69 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::LeaveJoine
 
 NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::WaitLeaveJoinedMatchmakeSession()
 {
-    if (failForSessionStatus(*this))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
         return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown6:
+        m_result = session::Session::cResultStatusUnknown6;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown7:
+        m_result = session::Session::cResultStatusUnknown7;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown8:
+        m_result = session::Session::cResultStatusUnknown8;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    default:
+        break;
+    }
     session::Session* session = session::g_piaSession;
-    if (!session->m_matchmakeSession[session->m_currentSessionIndex]->WaitLeaveMatchmakeSession())
-        return MakeExecuteResult(cExecuteKindNextStep);
-    keepLeaveResult(*this);
-    if (m_joinedSessionIdNum != 0)
-        --m_joinedSessionIdNum;
-    setStep(&NexMatchRandomMatchmakeJob::LeaveJoinedMatchmakeSession,
-            "NexMatchRandomMatchmakeJob::LeaveJoinedMatchmakeSession");
+    if (session->m_matchmakeSession[session->m_currentSessionIndex]->WaitLeaveMatchmakeSession())
+    {
+        if (m_callContext.m_state == common::CallContext::cStateFailure)
+        {
+            const Result result = m_callContext.m_result;
+            if (result == session::Session::cResultStatusDisconnectedNetwork || result == cResultNexError)
+                m_result = result;
+        }
+        if (m_joinedSessionIdNum != 0)
+            --m_joinedSessionIdNum;
+        setStep(&NexMatchRandomMatchmakeJob::LeaveJoinedMatchmakeSession,
+                "NexMatchRandomMatchmakeJob::LeaveJoinedMatchmakeSession");
+    }
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::RandomMatchmake()
 {
-    if (failForSessionStatus(*this))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
         return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown6:
+        m_result = session::Session::cResultStatusUnknown6;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown7:
+        m_result = session::Session::cResultStatusUnknown7;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown8:
+        m_result = session::Session::cResultStatusUnknown8;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    default:
+        break;
+    }
     if (CheckContextCallCancelled())
     {
         setStep(&session::RandomMatchmakeJob::CompleteFailure, "NexMatchRandomMatchmakeJob::CompleteFailure");
@@ -217,8 +249,28 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::RandomMatc
 
 NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::WaitRandomMatchmake()
 {
-    if (failForSessionStatus(*this))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
         return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown6:
+        m_result = session::Session::cResultStatusUnknown6;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown7:
+        m_result = session::Session::cResultStatusUnknown7;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown8:
+        m_result = session::Session::cResultStatusUnknown8;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    default:
+        break;
+    }
     if (m_matchmakeSession->WaitRandomMatchmakeSession(&m_sessionId, &m_isNewSession))
     {
         m_matchmakeSession->UnregisterSearchCriteria();
@@ -261,8 +313,28 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::WaitRandom
 
 NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::WaitNotification()
 {
-    if (failForSessionStatus(*this))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
         return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown6:
+        m_result = session::Session::cResultStatusUnknown6;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown7:
+        m_result = session::Session::cResultStatusUnknown7;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown8:
+        m_result = session::Session::cResultStatusUnknown8;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    default:
+        break;
+    }
     if (CheckContextCallCancelled())
     {
         setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession,
@@ -300,7 +372,8 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::StartNatSe
         m_result = cResultCancelled;
         return MakeExecuteResult(cExecuteKindNextStep);
     }
-    const Result result = meshLayerController()->StartNatSession();
+    NexMatchMeshLayerController* controller = meshLayerController();
+    const Result result = controller->StartNatSession();
     if (result != 0)
     {
         m_result = result;
@@ -315,8 +388,28 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::StartNatSe
 
 NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::WaitStartNatSession()
 {
-    if (failForSessionStatus(*this))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
         return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown6:
+        m_result = session::Session::cResultStatusUnknown6;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown7:
+        m_result = session::Session::cResultStatusUnknown7;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown8:
+        m_result = session::Session::cResultStatusUnknown8;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    default:
+        break;
+    }
     NexMatchMeshLayerController* controller = meshLayerController();
     Result result = 0;
     const ExecuteKind kind = controller->WaitStartNatSession(&result);
@@ -374,8 +467,28 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::WaitStartN
 
 NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::LeaveMatchmakeSession()
 {
-    if (failForSessionStatus(*this))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
         return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown6:
+        m_result = session::Session::cResultStatusUnknown6;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown7:
+        m_result = session::Session::cResultStatusUnknown7;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown8:
+        m_result = session::Session::cResultStatusUnknown8;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    default:
+        break;
+    }
     session::Session* session = session::g_piaSession;
     NexMatchMeshLayerController* controller = meshLayerController();
     const unsigned int bufferSessionId = session->m_sessionId[bufferSessionIndex()];
@@ -391,7 +504,7 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::LeaveMatch
             return MakeExecuteResult(cExecuteKindNextStep);
         }
         if (result == cResultRequestFailed)
-            m_result = cResultRequestFailed;
+            m_result = result;
         session::g_piaSession->m_sessionId[bufferSessionIndex()] = 0;
     }
     if (controller != 0)
@@ -419,7 +532,7 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::LeaveMatch
                     return MakeExecuteResult(cExecuteKindNextStep);
                 }
                 if (result == cResultRequestFailed)
-                    m_result = cResultRequestFailed;
+                    m_result = result;
                 session::g_piaSession->m_sessionId[bufferSessionIndex()] = 0;
             }
         }
@@ -439,7 +552,7 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::LeaveMatch
             return MakeExecuteResult(cExecuteKindNextStep);
         }
         if (result == cResultRequestFailed)
-            m_result = cResultRequestFailed;
+            m_result = result;
         session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex] = 0;
     }
     setStep(&session::RandomMatchmakeJob::CompleteFailure, "NexMatchRandomMatchmakeJob::CompleteFailure");
@@ -448,15 +561,42 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::LeaveMatch
 
 NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::WaitLeaveCurrentMatchmakeSession()
 {
-    if (failForSessionStatus(*this))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
         return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown6:
+        m_result = session::Session::cResultStatusUnknown6;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown7:
+        m_result = session::Session::cResultStatusUnknown7;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown8:
+        m_result = session::Session::cResultStatusUnknown8;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    default:
+        break;
+    }
     session::Session* session = session::g_piaSession;
     session::IMatchmakeSession* matchmakeSession = session->m_matchmakeSession[session->m_currentSessionIndex];
     const bool completed = m_isNewSession ? matchmakeSession->WaitUnregisterMatchmakeSession()
                                           : matchmakeSession->WaitLeaveMatchmakeSession();
     if (!completed)
         return MakeExecuteResult(cExecuteKindNextStep);
-    keepLeaveResult(*this);
+    if (m_callContext.m_state == common::CallContext::cStateFailure)
+    {
+        const Result result = m_callContext.m_result;
+        if (result == session::Session::cResultStatusDisconnectedNetwork)
+            m_result = result;
+        else if (result == cResultNexError)
+            m_result = cResultNexError;
+    }
     session->m_sessionId[session->m_currentSessionIndex] = 0;
     setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession,
             "NexMatchRandomMatchmakeJob::LeaveMatchmakeSession");
@@ -465,11 +605,38 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::WaitLeaveC
 
 NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::WaitLeaveBufferMatchmakeSession()
 {
-    if (failForSessionStatus(*this))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
         return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown6:
+        m_result = session::Session::cResultStatusUnknown6;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown7:
+        m_result = session::Session::cResultStatusUnknown7;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown8:
+        m_result = session::Session::cResultStatusUnknown8;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    default:
+        break;
+    }
     if (!session::g_piaSession->m_matchmakeSession[bufferSessionIndex()]->WaitLeaveMatchmakeSession())
         return MakeExecuteResult(cExecuteKindNextStep);
-    keepLeaveResult(*this);
+    if (m_callContext.m_state == common::CallContext::cStateFailure)
+    {
+        const Result result = m_callContext.m_result;
+        if (result == session::Session::cResultStatusDisconnectedNetwork)
+            m_result = result;
+        else if (result == cResultNexError)
+            m_result = cResultNexError;
+    }
     session::g_piaSession->m_sessionId[bufferSessionIndex()] = 0;
     setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession,
             "NexMatchRandomMatchmakeJob::LeaveMatchmakeSession");
@@ -478,8 +645,28 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::WaitLeaveB
 
 NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::ChangeParticipation()
 {
-    if (failForSessionStatus(*this))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
         return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown6:
+        m_result = session::Session::cResultStatusUnknown6;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown7:
+        m_result = session::Session::cResultStatusUnknown7;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown8:
+        m_result = session::Session::cResultStatusUnknown8;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    default:
+        break;
+    }
     if (CheckContextCallCancelled())
     {
         setStep(&NexMatchRandomMatchmakeJob::LeaveMatchmakeSession,
@@ -505,8 +692,28 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::ChangePart
 
 NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::WaitChangeParticipation()
 {
-    if (failForSessionStatus(*this))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
         return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown6:
+        m_result = session::Session::cResultStatusUnknown6;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown7:
+        m_result = session::Session::cResultStatusUnknown7;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown8:
+        m_result = session::Session::cResultStatusUnknown8;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    default:
+        break;
+    }
     session::IMatchmakeSession* matchmakeSession =
         session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex];
     const bool completed = m_isOpenSession ? matchmakeSession->WaitOpenParticipate()
@@ -568,8 +775,27 @@ NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::CleanupFor
 
 NexMatchRandomMatchmakeJob::ExecuteResult NexMatchRandomMatchmakeJob::WaitForRetryJoinMesh()
 {
-    if (failForSessionStatus(*this))
+    switch (session::g_piaSession->GetStatus())
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+        m_result = session::Session::cResultStatusDisconnectedNetwork;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
         return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown6:
+        m_result = session::Session::cResultStatusUnknown6;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown7:
+        m_result = session::Session::cResultStatusUnknown7;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    case session::Session::cStatusUnknown8:
+        m_result = session::Session::cResultStatusUnknown8;
+        setStep(&session::RandomMatchmakeJob::CompleteFailure, cCompleteFailureStepName);
+        return MakeExecuteResult(cExecuteKindContinue);
+    default:
+        break;
+    }
     m_joinState = cJoinStateRetryWait;
     if (CheckContextCallCancelled())
     {
@@ -723,8 +949,7 @@ void NexMatchRandomMatchmakeJob::SetNextStepAtWaitJoinMesh()
         session->m_matchmakeSession[session->m_currentSessionIndex]->GetSessionInfo());
     sessionInfo->SetHostPrincipalId(
         session->m_matchmakeSession[session->m_currentSessionIndex]->GetMatchmakeOwnerUniqueId());
-    sessionInfo->SetCurrentParticipantNum(
-        static_cast<unsigned short>(session->GetMatchmakeSessionParticipantNum()));
+    sessionInfo->SetCurrentParticipantNum(session->GetMatchmakeSessionParticipantNum());
     setStep(&session::RandomMatchmakeJob::CompleteProcess, "RandomMatchmakeJob::CompleteProcess");
 }
 

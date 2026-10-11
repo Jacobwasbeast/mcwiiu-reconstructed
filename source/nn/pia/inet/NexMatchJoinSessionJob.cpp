@@ -183,7 +183,7 @@ NexMatchJoinSessionJob::ExecuteResult NexMatchJoinSessionJob::WaitLeaveJoinedMat
         if (m_callContext.m_state == common::CallContext::cStateFailure)
         {
             if (m_callContext.m_result == session::Session::cResultStatusDisconnectedNetwork)
-                m_result = session::Session::cResultStatusDisconnectedNetwork;
+                m_result = m_callContext.m_result;
             else if (m_callContext.m_result == cResultNexError)
                 m_result = cResultNexError;
         }
@@ -338,9 +338,8 @@ NexMatchJoinSessionJob::ExecuteResult NexMatchJoinSessionJob::WaitNotification()
         return MakeExecuteResult(cExecuteKindNextStep);
     }
     SelectStep(m_currentStep, static_cast<JoinStep>(&NexMatchJoinSessionJob::GetStationConnectionInfo), "NexMatchJoinSessionJob::GetStationConnectionInfo");
-    common::g_sessionBeginMonitoringContent.m_metric80 = static_cast<unsigned int>(
-        static_cast<long long>(common::g_piaJobScheduler->m_dispatchTime.m_tick - m_joinMatchmakeStartTime.m_tick) /
-        common::TimeSpan::GetTicksPerMSec().m_tick);
+    const common::TimeSpan elapsed(common::g_piaJobScheduler->m_dispatchTime.m_tick - m_joinMatchmakeStartTime.m_tick);
+    common::g_sessionBeginMonitoringContent.m_metric80 = elapsed.m_tick / common::TimeSpan::GetTicksPerMSec().m_tick;
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -355,20 +354,21 @@ NexMatchJoinSessionJob::ExecuteResult NexMatchJoinSessionJob::GetStationConnecti
     const unsigned int sessionId = session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex];
     session::IMatchmakeSession* matchmakeSession =
         session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex];
-    m_stationConnectionInfo.SetStationConnectionInfo(transport::StationConnectionInfo());
+    transport::StationConnectionInfo stationConnectionInfo;
+    m_stationConnectionInfo.SetStationConnectionInfo(stationConnectionInfo);
     const Result result = matchmakeSession->GetStationConnectionInfo(&m_callContext, sessionId);
     if (result != 0)
     {
-        if (result != session::Session::cResultStatusDisconnectedNetwork && result != session::Session::cResultStatusUnknown6 &&
-            result != cResultRequestFailed)
+        if (result == session::Session::cResultStatusDisconnectedNetwork || result == session::Session::cResultStatusUnknown6 ||
+            result == cResultRequestFailed)
         {
-            m_result = m_callContext.m_result;
-            SelectStep(m_currentStep, static_cast<JoinStep>(&NexMatchJoinSessionJob::LeaveMatchmakeSession), "NexMatchJoinSessionJob::LeaveMatchmakeSession");
-            return MakeExecuteResult(cExecuteKindNextStep);
+            m_result = session::Session::cResultStatusUnknown6;
+            SelectStep(m_currentStep, &NexMatchJoinSessionJob::CompleteFailure, "nn::pia::inet::NexMatchJoinSessionJob::CompleteFailure");
+            return MakeExecuteResult(cExecuteKindContinue);
         }
-        m_result = session::Session::cResultStatusUnknown6;
-        SelectStep(m_currentStep, &NexMatchJoinSessionJob::CompleteFailure, "nn::pia::inet::NexMatchJoinSessionJob::CompleteFailure");
-        return MakeExecuteResult(cExecuteKindContinue);
+        m_result = m_callContext.m_result;
+        SelectStep(m_currentStep, static_cast<JoinStep>(&NexMatchJoinSessionJob::LeaveMatchmakeSession), "NexMatchJoinSessionJob::LeaveMatchmakeSession");
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     SelectStep(m_currentStep, static_cast<JoinStep>(&NexMatchJoinSessionJob::WaitGetStationConnectionInfo), "NexMatchJoinSessionJob::WaitGetStationConnectionInfo");
     return MakeExecuteResult(cExecuteKindNextStep);
@@ -635,17 +635,18 @@ NexMatchJoinSessionJob::ExecuteResult NexMatchJoinSessionJob::WaitLeaveCurrentMa
     default:
         break;
     }
-    if (!session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]->WaitLeaveMatchmakeSession())
-        return MakeExecuteResult(cExecuteKindNextStep);
-    session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex] = 0;
-    if (m_callContext.m_state == common::CallContext::cStateFailure)
+    if (session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex]->WaitLeaveMatchmakeSession())
     {
-        if (m_callContext.m_result == session::Session::cResultStatusDisconnectedNetwork)
-            m_result = session::Session::cResultStatusDisconnectedNetwork;
-        else if (m_callContext.m_result == cResultNexError)
-            m_result = cResultNexError;
+        session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex] = 0;
+        if (m_callContext.m_state == common::CallContext::cStateFailure)
+        {
+            if (m_callContext.m_result == session::Session::cResultStatusDisconnectedNetwork)
+                m_result = m_callContext.m_result;
+            else if (m_callContext.m_result == cResultNexError)
+                m_result = cResultNexError;
+        }
+        SelectStep(m_currentStep, static_cast<JoinStep>(&NexMatchJoinSessionJob::LeaveMatchmakeSession), "NexMatchJoinSessionJob::LeaveMatchmakeSession");
     }
-    SelectStep(m_currentStep, static_cast<JoinStep>(&NexMatchJoinSessionJob::LeaveMatchmakeSession), "NexMatchJoinSessionJob::LeaveMatchmakeSession");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -673,17 +674,18 @@ NexMatchJoinSessionJob::ExecuteResult NexMatchJoinSessionJob::WaitLeaveBufferMat
     default:
         break;
     }
-    if (!session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex == 0]->WaitLeaveMatchmakeSession())
-        return MakeExecuteResult(cExecuteKindNextStep);
-    session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex == 0] = 0;
-    if (m_callContext.m_state == common::CallContext::cStateFailure)
+    if (session::g_piaSession->m_matchmakeSession[session::g_piaSession->m_currentSessionIndex == 0]->WaitLeaveMatchmakeSession())
     {
-        if (m_callContext.m_result == session::Session::cResultStatusDisconnectedNetwork)
-            m_result = session::Session::cResultStatusDisconnectedNetwork;
-        else if (m_callContext.m_result == cResultNexError)
-            m_result = cResultNexError;
+        session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex == 0] = 0;
+        if (m_callContext.m_state == common::CallContext::cStateFailure)
+        {
+            if (m_callContext.m_result == session::Session::cResultStatusDisconnectedNetwork)
+                m_result = m_callContext.m_result;
+            else if (m_callContext.m_result == cResultNexError)
+                m_result = cResultNexError;
+        }
+        SelectStep(m_currentStep, static_cast<JoinStep>(&NexMatchJoinSessionJob::LeaveMatchmakeSession), "NexMatchJoinSessionJob::LeaveMatchmakeSession");
     }
-    SelectStep(m_currentStep, static_cast<JoinStep>(&NexMatchJoinSessionJob::LeaveMatchmakeSession), "NexMatchJoinSessionJob::LeaveMatchmakeSession");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -890,7 +892,8 @@ Result NexMatchJoinSessionJob::StartupImpl(const session::JoinSessionSetting* se
     session::Session* piaSession = session::g_piaSession;
     if (setting->GetSessionId() == 0)
         return transport::cResultInvalidArgument;
-    static_cast<NexMatchmakeSession*>(piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex])->ReflectJoinSetting(setting);
+    NexMatchmakeSession* matchmakeSession = static_cast<NexMatchmakeSession*>(piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]);
+    matchmakeSession->ReflectJoinSetting(setting);
     m_isWaitingForRetry = false;
     NexMatchMeshLayerController* meshLayerController = static_cast<NexMatchMeshLayerController*>(piaSession->m_meshLayerController);
     m_joinedSessionIdNum = 0;

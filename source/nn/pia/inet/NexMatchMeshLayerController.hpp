@@ -84,7 +84,7 @@ public:
     virtual Result CheckConnectedStatus();
     virtual void Trace(unsigned long long value) const;
     virtual unsigned int GetMatchmakeSessionTotalStations() const;
-    virtual unsigned int GetMatchmakeSessionTotalParticipants() const;
+    virtual unsigned short GetMatchmakeSessionTotalParticipants() const;
     virtual bool IsParticipated(unsigned int sessionId, unsigned long long stationId) const;
     virtual bool IsJoinedUnknownSession(unsigned int sessionId, unsigned int bufferSessionId);
     virtual void SetLeaveFlag();

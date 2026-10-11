@@ -30,7 +30,7 @@ void NexSessionSearchCriteriaParticipant::Reset()
     application_data_enabled_ = true;
 }
 
-nn::pia::common::Result NexSessionSearchCriteriaParticipant::SetResultRange(uint32_t, uint32_t)
+nn::pia::Result NexSessionSearchCriteriaParticipant::SetResultRange(uint32_t, uint32_t)
 {
     return 0x10c08;
 }

@@ -266,9 +266,32 @@ inline void countRetry(unsigned char& counter)
 }
 }
 
-#define NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(result)                                                  m_sessionDisconnectDetected = true;                                                                 m_fieldc8 = cFailurePointSessionStatus;                                                             m_failureResult = result;                                                                           RecordMonitoringDataWhenProcessFailure();                                                           session::g_piaSession->m_meshLayerController->MeshCleanup();                                        setStep(&NexMatchJointSessionJob::ProcessFailure, "NexMatchJointSessionJob::ProcessFailure");       return MakeExecuteResult(cExecuteKindContinue)
+#define NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(result)                                                  \
+    m_sessionDisconnectDetected = true;                                                                 \
+    m_fieldc8 = cFailurePointSessionStatus;                                                             \
+    m_failureResult = result;                                                                           \
+    RecordMonitoringDataWhenProcessFailure();                                                           \
+    session::g_piaSession->m_meshLayerController->MeshCleanup();                                        \
+    setStep(&NexMatchJointSessionJob::ProcessFailure, "NexMatchJointSessionJob::ProcessFailure");       \
+    return MakeExecuteResult(cExecuteKindContinue)
 
-#define NEX_MATCH_JOINT_SESSION_CHECK_STATUS()                                                          switch (session::g_piaSession->GetStatus())                                                         {                                                                                                   case session::Session::cStatusDisconnectedNetwork:                                                      NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(session::Session::cResultStatusDisconnectedNetwork);     case session::Session::cStatusUnknown6:                                                                 NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(session::Session::cResultStatusUnknown6);                case session::Session::cStatusUnknown7:                                                                 NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(session::Session::cResultStatusUnknown7);                case session::Session::cStatusUnknown8:                                                                 NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(session::Session::cResultStatusUnknown8);                default:                                                                                                break;                                                                                          }
+#define NEX_MATCH_JOINT_SESSION_CHECK_STATUS()                                                          \
+    {                                                                                                   \
+        const unsigned int status = session::g_piaSession->GetStatus();                                 \
+        switch (status)                                                                                 \
+        {                                                                                               \
+        case session::Session::cStatusDisconnectedNetwork:                                              \
+            NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(session::Session::cResultStatusDisconnectedNetwork); \
+        case session::Session::cStatusUnknown6:                                                         \
+            NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(session::Session::cResultStatusUnknown6);            \
+        case session::Session::cStatusUnknown7:                                                         \
+            NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(session::Session::cResultStatusUnknown7);            \
+        case session::Session::cStatusUnknown8:                                                         \
+            NEX_MATCH_JOINT_SESSION_FAIL_BY_STATUS(session::Session::cResultStatusUnknown8);            \
+        default:                                                                                        \
+            break;                                                                                      \
+        }                                                                                               \
+    }
 
 NexMatchJointSessionJob::NexMatchJointSessionJob()
     : session::JointSessionJob(), m_stationConnectionInfo(), m_failureResult(0),
@@ -357,7 +380,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::CallSessionEvent
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -366,7 +389,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::CallSessionEvent
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -376,27 +399,24 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::CallSessionEvent
         m_failureResult = cResultInvalidState;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     if (m_processType == session::Session::cProcessTypeDestroyJointSession)
     {
         m_field60 = cProcessStepAnswerToInvitation;
-        setStep(&NexMatchJointSessionJob::SendAnswerToDestroyInvitation,
-                "NexMatchJointSessionJob::SendAnswerToDestroyInvitation");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendAnswerToDestroyInvitation), "NexMatchJointSessionJob::SendAnswerToDestroyInvitation"));
     }
     else if (m_field9c == 0)
     {
         m_field60 = cProcessStepAnswerToInvitation;
         m_jointSessionState = cJointSessionStateAnswerToInvitation;
-        setStep(&NexMatchJointSessionJob::SendAnswerToInvitation,
-                "NexMatchJointSessionJob::SendAnswerToInvitation");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendAnswerToInvitation), "NexMatchJointSessionJob::SendAnswerToInvitation"));
     }
     else
     {
-        setStep(&NexMatchJointSessionJob::CloseMatchmakeSession,
-                "NexMatchJointSessionJob::CloseMatchmakeSession");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::CloseMatchmakeSession), "NexMatchJointSessionJob::CloseMatchmakeSession"));
     }
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
@@ -508,7 +528,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::CloseJointSessio
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -517,7 +537,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::CloseJointSessio
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -533,34 +553,30 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::CloseJointSessio
             m_fieldc8 = cFailurePointCloseJointSessionParticipation;
             unregisterBufferSearchCriteria();
             RecordMonitoringDataWhenProcessFailure();
-            setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
-        setStep(&NexMatchJointSessionJob::WaitCloseJointSessionParticipation,
-                "NexMatchJointSessionJob::WaitCloseJointSessionParticipation");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCloseJointSessionParticipation), "NexMatchJointSessionJob::WaitCloseJointSessionParticipation"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     if (m_processType == session::Session::cProcessTypeDestroyJointSession)
     {
         setDeadline(m_time188, cDestroyInvitationTimeoutMsec);
-        setStep(&NexMatchJointSessionJob::SendDestroyInvitation,
-                "NexMatchJointSessionJob::SendDestroyInvitation");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendDestroyInvitation), "NexMatchJointSessionJob::SendDestroyInvitation"));
     }
     else if (session::g_piaSession->IsHostMigrationEnabled())
     {
         m_sessionIdNum = session::g_piaSession->m_stationIdStatusTable->GetSessionIdArray(m_sessionIds);
         for (unsigned char i = 0; i < m_sessionIdNum; ++i)
             m_sessionInfoRequested[i] = false;
-        setStep(&NexMatchJointSessionJob::GetMatchmakeSessionOwners,
-                "NexMatchJointSessionJob::GetMatchmakeSessionOwners");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::GetMatchmakeSessionOwners), "NexMatchJointSessionJob::GetMatchmakeSessionOwners"));
     }
     else
     {
         m_jointSessionState = cJointSessionStateCallSessionEvent;
         setDeadline(m_time188, cInvitationAsCompanionTimeoutMsec);
-        setStep(&NexMatchJointSessionJob::SendInvitationAsCompanion,
-                "NexMatchJointSessionJob::SendInvitationAsCompanion");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendInvitationAsCompanion), "NexMatchJointSessionJob::SendInvitationAsCompanion"));
     }
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
@@ -581,7 +597,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCloseJointSe
             m_failureResult = m_callContext.m_result;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -589,23 +605,20 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCloseJointSe
     if (m_processType == session::Session::cProcessTypeDestroyJointSession)
     {
         setDeadline(m_time188, cDestroyInvitationTimeoutMsec);
-        setStep(&NexMatchJointSessionJob::SendDestroyInvitation,
-                "NexMatchJointSessionJob::SendDestroyInvitation");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendDestroyInvitation), "NexMatchJointSessionJob::SendDestroyInvitation"));
     }
     else if (session::g_piaSession->IsHostMigrationEnabled())
     {
         m_sessionIdNum = session::g_piaSession->m_stationIdStatusTable->GetSessionIdArray(m_sessionIds);
         for (unsigned char i = 0; i < m_sessionIdNum; ++i)
             m_sessionInfoRequested[i] = false;
-        setStep(&NexMatchJointSessionJob::GetMatchmakeSessionOwners,
-                "NexMatchJointSessionJob::GetMatchmakeSessionOwners");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::GetMatchmakeSessionOwners), "NexMatchJointSessionJob::GetMatchmakeSessionOwners"));
     }
     else
     {
         m_jointSessionState = cJointSessionStateCallSessionEvent;
         setDeadline(m_time188, cInvitationAsCompanionTimeoutMsec);
-        setStep(&NexMatchJointSessionJob::SendInvitationAsCompanion,
-                "NexMatchJointSessionJob::SendInvitationAsCompanion");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendInvitationAsCompanion), "NexMatchJointSessionJob::SendInvitationAsCompanion"));
     }
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
@@ -735,7 +748,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendInvitation
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -744,7 +757,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendInvitation
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -803,14 +816,13 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendInvitation
             }
             unregisterBufferSearchCriteria();
             RecordMonitoringDataWhenProcessFailure();
-            setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
     }
 
     m_time148 = common::g_piaJobScheduler->m_dispatchTime;
-    setStep(&NexMatchJointSessionJob::WaitForAnswerToInvitation,
-            "NexMatchJointSessionJob::WaitForAnswerToInvitation");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitForAnswerToInvitation), "NexMatchJointSessionJob::WaitForAnswerToInvitation"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -824,7 +836,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToI
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -833,7 +845,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToI
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -871,7 +883,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToI
             m_failureResult = cResultOwnerChanged;
             unregisterBufferSearchCriteria();
             RecordMonitoringDataWhenProcessFailure();
-            setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
     }
@@ -880,8 +892,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToI
     {
         if (isElapsed(m_time148, cResendInvitationIntervalMsec))
         {
-            setStep(&NexMatchJointSessionJob::ResendInvitationAsCompanion,
-                    "NexMatchJointSessionJob::ResendInvitationAsCompanion");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::ResendInvitationAsCompanion), "NexMatchJointSessionJob::ResendInvitationAsCompanion"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
         }
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
@@ -893,32 +904,28 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitForAnswerToI
     {
     case session::Session::cProcessTypeCreateJointSession:
         m_jointSessionState = cJointSessionStateStartMatchmake;
-        setStep(&NexMatchJointSessionJob::StartCreateMatchmakeSession,
-                "NexMatchJointSessionJob::StartCreateMatchmakeSession");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartCreateMatchmakeSession), "NexMatchJointSessionJob::StartCreateMatchmakeSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     case session::Session::cProcessTypeJoinJointSession:
         m_jointSessionState = cJointSessionStateStartMatchmake;
-        setStep(&NexMatchJointSessionJob::StartJoinMatchmakeSession,
-                "NexMatchJointSessionJob::StartJoinMatchmakeSession");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartJoinMatchmakeSession), "NexMatchJointSessionJob::StartJoinMatchmakeSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     case session::Session::cProcessTypeJoinRandomJointSession:
         m_jointSessionState = cJointSessionStateStartMatchmake;
-        setStep(&NexMatchJointSessionJob::StartRandomMatchmake,
-                "NexMatchJointSessionJob::StartRandomMatchmake");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartRandomMatchmake), "NexMatchJointSessionJob::StartRandomMatchmake"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     case session::Session::cProcessTypeDestroyJointSession:
     case session::Session::cProcessTypeLeaveJointSession:
         m_jointSessionState = cJointSessionStateSendLeaveMeshCompanion;
         setDeadline(m_time170, cLeaveMeshCompanionTimeoutMsec);
-        setStep(&NexMatchJointSessionJob::SendLeaveMeshCompanion,
-                "NexMatchJointSessionJob::SendLeaveMeshCompanion");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendLeaveMeshCompanion), "NexMatchJointSessionJob::SendLeaveMeshCompanion"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     default:
         m_fieldc8 = cFailurePointInvalidProcessType;
         m_failureResult = cResultInvalidState;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 }
@@ -934,7 +941,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartRandomMatch
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -943,7 +950,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartRandomMatch
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -989,12 +996,11 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartRandomMatch
         m_fieldc8 = cFailurePointRandomMatchmake;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    setStep(&NexMatchJointSessionJob::WaitRandomMatchmake,
-            "NexMatchJointSessionJob::WaitRandomMatchmake");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitRandomMatchmake), "NexMatchJointSessionJob::WaitRandomMatchmake"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -1132,7 +1138,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCreateMatchm
         m_failureResult = m_callContext.m_result;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -1144,7 +1150,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCreateMatchm
     common::g_sessionBeginMonitoringContent.m_metric75 = m_field98;
 
     m_time1a0 = deadlineAfter(cNotificationTimeoutMsec);
-    setStep(&NexMatchJointSessionJob::WaitNotification, "NexMatchJointSessionJob::WaitNotification");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitNotification), "NexMatchJointSessionJob::WaitNotification"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -1291,7 +1297,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendNextSessionI
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -1300,7 +1306,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendNextSessionI
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -1322,8 +1328,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendNextSessionI
     {
         m_leaveStationId = m_field1c0;
         m_field9c = 0;
-        setStep(&NexMatchJointSessionJob::SendPreparedForMigrateSession,
-                "NexMatchJointSessionJob::SendPreparedForMigrateSession");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendPreparedForMigrateSession), "NexMatchJointSessionJob::SendPreparedForMigrateSession"));
         m_field1b8 = 0;
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
@@ -1374,8 +1379,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendNextSessionI
                     m_failureResult = cResultCommunicationFailed;
                     unregisterBufferSearchCriteria();
                     RecordMonitoringDataWhenProcessFailure();
-                    setStep(&NexMatchJointSessionJob::StartLeaveMesh,
-                            "NexMatchJointSessionJob::StartLeaveMesh");
+                    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
                     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
                 }
             }
@@ -1385,8 +1389,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendNextSessionI
                 m_fieldc8 = cFailurePointSendError;
                 unregisterBufferSearchCriteria();
                 RecordMonitoringDataWhenProcessFailure();
-                setStep(&NexMatchJointSessionJob::StartLeaveMesh,
-                        "NexMatchJointSessionJob::StartLeaveMesh");
+                SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
                 return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
             }
         }
@@ -1398,8 +1401,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendNextSessionI
     piaSession->m_stationIdStatusTable->SetSendInvitationStatus(piaSession->m_localStationId, true);
     m_time150 = common::g_piaJobScheduler->m_dispatchTime;
     m_time180 = deadlineAfter(cCompanionPrepareTimeoutMsec);
-    setStep(&NexMatchJointSessionJob::WaitCompanionStationPrepared,
-            "NexMatchJointSessionJob::WaitCompanionStationPrepared");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStationPrepared), "NexMatchJointSessionJob::WaitCompanionStationPrepared"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -1413,7 +1415,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendNextSessio
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -1422,7 +1424,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendNextSessio
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -1444,8 +1446,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendNextSessio
         m_leaveStationId = m_field1c0;
         m_field9c = 0;
         m_field1b8 = 0;
-        setStep(&NexMatchJointSessionJob::SendPreparedForMigrateSession,
-                "NexMatchJointSessionJob::SendPreparedForMigrateSession");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendPreparedForMigrateSession), "NexMatchJointSessionJob::SendPreparedForMigrateSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
@@ -1483,22 +1484,20 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::ResendNextSessio
                 m_failureResult = cResultCommunicationFailed;
                 unregisterBufferSearchCriteria();
                 RecordMonitoringDataWhenProcessFailure();
-                setStep(&NexMatchJointSessionJob::StartLeaveMesh,
-                        "NexMatchJointSessionJob::StartLeaveMesh");
+                SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
                 return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
             }
             m_failureResult = sendResult;
             m_fieldc8 = cFailurePointSendError;
             unregisterBufferSearchCriteria();
             RecordMonitoringDataWhenProcessFailure();
-            setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
     }
 
     m_time150 = common::g_piaJobScheduler->m_dispatchTime;
-    setStep(&NexMatchJointSessionJob::WaitCompanionStationPrepared,
-            "NexMatchJointSessionJob::WaitCompanionStationPrepared");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStationPrepared), "NexMatchJointSessionJob::WaitCompanionStationPrepared"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -1512,7 +1511,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompanionSta
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -1521,7 +1520,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompanionSta
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -1543,8 +1542,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompanionSta
         m_leaveStationId = m_field1c0;
         m_field9c = 0;
         m_field1b8 = 0;
-        setStep(&NexMatchJointSessionJob::SendPreparedForMigrateSession,
-                "NexMatchJointSessionJob::SendPreparedForMigrateSession");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendPreparedForMigrateSession), "NexMatchJointSessionJob::SendPreparedForMigrateSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
@@ -1574,15 +1572,13 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCompanionSta
     {
         if (isElapsed(m_time150, cNextSessionIdResendIntervalMsec))
         {
-            setStep(&NexMatchJointSessionJob::ResendNextSessionId,
-                    "NexMatchJointSessionJob::ResendNextSessionId");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::ResendNextSessionId), "NexMatchJointSessionJob::ResendNextSessionId"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
         }
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    setStep(&NexMatchJointSessionJob::SendLeaveMeshCompanion,
-            "NexMatchJointSessionJob::SendLeaveMeshCompanion");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendLeaveMeshCompanion), "NexMatchJointSessionJob::SendLeaveMeshCompanion"));
     m_jointSessionState = cJointSessionStateSendLeaveMeshCompanion;
     m_time170 = deadlineAfter(cLeaveMeshCompanionTimeoutMsec);
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
@@ -2017,7 +2013,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendPreparedForM
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -2026,7 +2022,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendPreparedForM
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -2043,7 +2039,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendPreparedForM
             m_failureResult = cResultCommunicationFailed;
             unregisterBufferSearchCriteria();
             RecordMonitoringDataWhenProcessFailure();
-            setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
         piaSession->m_stationIdStatusTable->SetPrepareStatus(piaSession->m_localStationId, true);
@@ -2052,8 +2048,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendPreparedForM
         m_jointSessionState = cJointSessionStateWaitLeaderLeavesMesh;
         m_field9f = 0;
         m_field60 = cProcessStepWaitLeaderLeavesMesh;
-        setStep(&NexMatchJointSessionJob::WaitUntilLeaderLeavesMesh,
-                "NexMatchJointSessionJob::WaitUntilLeaderLeavesMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitUntilLeaderLeavesMesh), "NexMatchJointSessionJob::WaitUntilLeaderLeavesMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
@@ -2063,7 +2058,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendPreparedForM
         m_failureResult = cResultOwnerChanged;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -2073,7 +2068,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendPreparedForM
         m_failureResult = cResultOwnerChanged;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -2085,7 +2080,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendPreparedForM
     {
         PrepareBecomingToLeader();
         m_field98 = piaSession->m_sessionId[bufferSessionIndex()];
-        setStep(&NexMatchJointSessionJob::SendNextSessionId, "NexMatchJointSessionJob::SendNextSessionId");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::SendNextSessionId), "NexMatchJointSessionJob::SendNextSessionId"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -2093,7 +2088,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendPreparedForM
     m_field98 = 0;
     session::g_piaSession->m_sessionId[bufferSessionIndex()] = 0;
     m_field60 = cProcessStepWaitNextSessionId;
-    setStep(&NexMatchJointSessionJob::WaitNextSessionId, "NexMatchJointSessionJob::WaitNextSessionId");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitNextSessionId), "NexMatchJointSessionJob::WaitNextSessionId"));
     m_jointSessionState = cJointSessionStateWaitNextSessionId;
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
@@ -2625,7 +2620,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendAnswerToDest
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -2634,7 +2629,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendAnswerToDest
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -2650,22 +2645,20 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendAnswerToDest
         m_failureResult = cResultCommunicationFailed;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     if (piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner())
     {
         PrepareBecomingToLeader();
-        setStep(&NexMatchJointSessionJob::CloseMatchmakeSession,
-                "NexMatchJointSessionJob::CloseMatchmakeSession");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::CloseMatchmakeSession), "NexMatchJointSessionJob::CloseMatchmakeSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
     m_time160 = common::g_piaJobScheduler->m_dispatchTime;
     m_field60 = cProcessStepAnswerToInvitation;
-    setStep(&NexMatchJointSessionJob::WaitForInvitationAsCompanion,
-            "NexMatchJointSessionJob::WaitForInvitationAsCompanion");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitForInvitationAsCompanion), "NexMatchJointSessionJob::WaitForInvitationAsCompanion"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -2763,7 +2756,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeavePrevio
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -2784,8 +2777,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeavePrevio
 
     if (leaveResult == 0)
     {
-        setStep(&NexMatchJointSessionJob::WaitLeavePreviousMatchmakeSession,
-                "NexMatchJointSessionJob::WaitLeavePreviousMatchmakeSession");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitLeavePreviousMatchmakeSession), "NexMatchJointSessionJob::WaitLeavePreviousMatchmakeSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
@@ -2793,7 +2785,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeavePrevio
     m_fieldc8 = cFailurePointLeavePreviousMatchmakeSession;
     unregisterBufferSearchCriteria();
     RecordMonitoringDataWhenProcessFailure();
-    setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -2840,14 +2832,14 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitMeshRestart(
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     if (m_time198 < common::g_piaJobScheduler->m_dispatchTime)
-        setStep(&NexMatchJointSessionJob::MeshRestart, "NexMatchJointSessionJob::MeshRestart");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::MeshRestart), "NexMatchJointSessionJob::MeshRestart"));
     if (m_field9c != 0)
-        setStep(&NexMatchJointSessionJob::MeshRestart, "NexMatchJointSessionJob::MeshRestart");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::MeshRestart), "NexMatchJointSessionJob::MeshRestart"));
     session::g_piaMesh->GetMonitoringDataSender()->SetSendSessionBeginReportRequested(false);
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
@@ -3078,8 +3070,8 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::MeshRestart()
     }
 
     m_field1ea = 0;
-    m_reserveda8[1] = 0;
-    m_reserveda8[0] = 0;
+    m_retryReasonB = 0;
+    m_sessionInfoRetry = 0;
     if (m_field9d == 0)
     {
         setStep(&NexMatchJointSessionJob::StartGetNextMeshHostStationConnectionInfo,
@@ -3103,7 +3095,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartCreateNextM
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3115,12 +3107,12 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartCreateNextM
         m_fieldc8 = cFailurePointCreateNextMesh;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     session::g_piaMesh->SetSkipReport(true);
-    setStep(&NexMatchJointSessionJob::WaitCreateNextMesh, "NexMatchJointSessionJob::WaitCreateNextMesh");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCreateNextMesh), "NexMatchJointSessionJob::WaitCreateNextMesh"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -3148,7 +3140,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCreateNextMe
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3159,7 +3151,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCreateNextMe
         m_fieldc8 = cFailurePointCreateNextMesh;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3177,8 +3169,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitCreateNextMe
     session::g_piaSession->m_stationIdStatusTable->SetMigrationCompleteStatus(
         session::g_piaSession->m_localStationId, true);
     session::g_piaSession->m_disconnectStatus = 1;
-    setStep(&NexMatchJointSessionJob::WaitCompanionStation,
-            "NexMatchJointSessionJob::WaitCompanionStation");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStation), "NexMatchJointSessionJob::WaitCompanionStation"));
     m_jointSessionState = cJointSessionStateWaitCompanionStation;
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
@@ -3253,7 +3244,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3270,8 +3261,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
                 m_failureResult = cResultOwnerChanged;
                 unregisterBufferSearchCriteria();
                 RecordMonitoringDataWhenProcessFailure();
-                setStep(&NexMatchJointSessionJob::StartLeaveMesh,
-                        "NexMatchJointSessionJob::StartLeaveMesh");
+                SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
                 return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
             }
         }
@@ -3283,7 +3273,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
             else
                 matchmakeSession->SetMatchmakeOwnerUniqueId(hostPrincipalId);
         }
-        setStep(&NexMatchJointSessionJob::StartJoinNextMesh, "NexMatchJointSessionJob::StartJoinNextMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartJoinNextMesh), "NexMatchJointSessionJob::StartJoinNextMesh"));
         m_jointSessionState = cJointSessionStateJoinNextMesh;
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
@@ -3294,7 +3284,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
         m_failureResult = m_callContext.m_result;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3305,7 +3295,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
         m_failureResult = cResultOwnerChanged;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3317,7 +3307,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
             m_failureResult = cResultOwnerChanged;
             unregisterBufferSearchCriteria();
             RecordMonitoringDataWhenProcessFailure();
-            setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
         if (m_field1d8 == 0)
@@ -3326,7 +3316,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
         }
         else if (piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner())
         {
-            setStep(&NexMatchJointSessionJob::MeshRestart, "NexMatchJointSessionJob::MeshRestart");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::MeshRestart), "NexMatchJointSessionJob::MeshRestart"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
         else
@@ -3342,7 +3332,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
             m_failureResult = cResultOwnerChanged;
             unregisterBufferSearchCriteria();
             RecordMonitoringDataWhenProcessFailure();
-            setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
         if (m_field1c8 != 0)
@@ -3350,8 +3340,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetNextMeshH
         else
             m_time178 = deadlineAfter(cRetryJoinIntervalHostMsec);
     }
-    setStep(&NexMatchJointSessionJob::WaitStartRetryJoinMesh,
-            "NexMatchJointSessionJob::WaitStartRetryJoinMesh");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitStartRetryJoinMesh), "NexMatchJointSessionJob::WaitStartRetryJoinMesh"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -3364,7 +3353,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartJoinNextMes
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3376,12 +3365,12 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartJoinNextMes
         m_fieldc8 = cFailurePointJoinMeshOther;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
     session::g_piaMesh->SetSkipReport(true);
-    setStep(&NexMatchJointSessionJob::WaitJoinNextMesh, "NexMatchJointSessionJob::WaitJoinNextMesh");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitJoinNextMesh), "NexMatchJointSessionJob::WaitJoinNextMesh"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -3408,11 +3397,11 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitJoinNextMesh
         {
             session::g_piaMesh->CancelJoinMeshAsync();
         }
-        else if (m_reserveda8[0] != 0)
+        else if (m_sessionInfoRetry != 0)
         {
             session::g_piaMesh->CancelJoinMeshAsync();
         }
-        else if (m_reserveda8[1] != 0)
+        else if (m_retryReasonB != 0)
         {
             session::g_piaMesh->CancelJoinMeshAsync();
         }
@@ -3452,7 +3441,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitJoinNextMesh
                             "NexMatchJointSessionJob::MeshRestart");
                     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
                 }
-                if (m_reserveda8[0] == 0)
+                if (m_sessionInfoRetry == 0)
                 {
                     m_time178 = deadlineAfter(cRetryJoinIntervalMsec);
                     if (joinResult == cResultJoinMesh6439 || joinResult == cResultJoinMesh643F ||
@@ -3464,7 +3453,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitJoinNextMesh
                     {
                         countRetry(common::g_sessionBeginMonitoringContent.m_retryReasonACount);
                     }
-                    else if (m_reserveda8[1] != 0)
+                    else if (m_retryReasonB != 0)
                     {
                         countRetry(common::g_sessionBeginMonitoringContent.m_retryReasonBCount);
                     }
@@ -3784,7 +3773,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
         m_failureResult = cResultOwnerChanged;
         m_fieldc8 = cFailurePointConnectionError;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3793,7 +3782,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
         m_fieldc8 = cFailurePointDisconnectDetected;
         m_failureResult = m_pendingFailureResult;
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3804,7 +3793,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
         m_failureResult = cResultOwnerChanged;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3816,15 +3805,13 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
             if (session::g_piaMesh->GetProcessHostMigrationJobPtr()->m_started)
             {
                 m_time158 = common::g_piaJobScheduler->m_dispatchTime;
-                setStep(&NexMatchJointSessionJob::WaitCompanionStation,
-                        "NexMatchJointSessionJob::WaitCompanionStation");
+                SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStation), "NexMatchJointSessionJob::WaitCompanionStation"));
                 m_jointSessionState = cJointSessionStateWaitCompanionStation;
                 return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
             }
             m_time158 = timeBefore(cCompanionRewaitElapsedMsec);
             m_jointSessionState = cJointSessionStateWaitCompanionStation;
-            setStep(&NexMatchJointSessionJob::WaitCompanionStation,
-                    "NexMatchJointSessionJob::WaitCompanionStation");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStation), "NexMatchJointSessionJob::WaitCompanionStation"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
         }
 
@@ -3839,7 +3826,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
             m_failureResult = cResultCommunicationFailed;
             unregisterBufferSearchCriteria();
             RecordMonitoringDataWhenProcessFailure();
-            setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
 
@@ -3847,8 +3834,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
         m_field60 = cProcessStepWaitCompletionInvitation;
         m_completionDeadline = deadlineAfter(cCompletionTimeoutMsec);
         m_jointSessionState = cJointSessionStateWaitCompletionInvitation;
-        setStep(&NexMatchJointSessionJob::WaitCompletionInvitation,
-                "NexMatchJointSessionJob::WaitCompletionInvitation");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompletionInvitation), "NexMatchJointSessionJob::WaitCompletionInvitation"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
@@ -3858,7 +3844,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
         m_failureResult = cResultOwnerChanged;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3868,7 +3854,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
         m_failureResult = cResultOwnerChanged;
         unregisterBufferSearchCriteria();
         RecordMonitoringDataWhenProcessFailure();
-        setStep(&NexMatchJointSessionJob::StartLeaveMesh, "NexMatchJointSessionJob::StartLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveMesh), "NexMatchJointSessionJob::StartLeaveMesh"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
@@ -3879,15 +3865,13 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::SendCompletionFo
     if (session::g_piaMesh->GetProcessHostMigrationJobPtr()->m_started)
     {
         m_time158 = common::g_piaJobScheduler->m_dispatchTime;
-        setStep(&NexMatchJointSessionJob::WaitCompanionStation,
-                "NexMatchJointSessionJob::WaitCompanionStation");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStation), "NexMatchJointSessionJob::WaitCompanionStation"));
         m_jointSessionState = cJointSessionStateWaitCompanionStation;
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
     m_time158 = timeBefore(cCompanionRewaitElapsedMsec);
     m_jointSessionState = cJointSessionStateWaitCompanionStation;
-    setStep(&NexMatchJointSessionJob::WaitCompanionStation,
-            "NexMatchJointSessionJob::WaitCompanionStation");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitCompanionStation), "NexMatchJointSessionJob::WaitCompanionStation"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -4465,12 +4449,10 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitGetMatchmake
 
     if (m_callContext.m_result != 0)
     {
-        setStep(&NexMatchJointSessionJob::GetMatchmakeSessionOwners,
-                "NexMatchJointSessionJob::GetMatchmakeSessionOwners");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::GetMatchmakeSessionOwners), "NexMatchJointSessionJob::GetMatchmakeSessionOwners"));
     }
     piaSession->m_stationIdStatusTable->SetSessionHost(matchmakeSession->GetMatchmakeOwnerUniqueId(), true);
-    setStep(&NexMatchJointSessionJob::GetMatchmakeSessionOwners,
-            "NexMatchJointSessionJob::GetMatchmakeSessionOwners");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::GetMatchmakeSessionOwners), "NexMatchJointSessionJob::GetMatchmakeSessionOwners"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -4485,8 +4467,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeaveMesh()
     if (mesh->CheckConnectionError() == cResultConnectionError)
     {
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession,
-                "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession), "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
@@ -4510,12 +4491,11 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeaveMesh()
     if (leaveResult != 0)
     {
         session::g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession,
-                "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession), "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
-    setStep(&NexMatchJointSessionJob::WaitLeaveMesh, "NexMatchJointSessionJob::WaitLeaveMesh");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitLeaveMesh), "NexMatchJointSessionJob::WaitLeaveMesh"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
 }
 
@@ -4572,16 +4552,14 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitHostMigrated
     session::Session* piaSession = session::g_piaSession;
     if (m_time1a8 <= common::g_piaJobScheduler->m_dispatchTime)
     {
-        setStep(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession,
-                "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession), "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
     if (m_jointSessionState >= cJointSessionStateLeavePreviousMesh &&
         m_jointSessionState <= cJointSessionStateJoinNextMesh)
     {
-        setStep(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession,
-                "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession), "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
     }
 
@@ -4592,15 +4570,13 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::WaitHostMigrated
     {
         if (!piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex]->IsMatchmakeOwner())
         {
-            setStep(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession,
-                    "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession), "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
         }
         return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
     }
 
-    setStep(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession,
-            "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession), "NexMatchJointSessionJob::StartLeaveCurrentMatchmakeSession"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -4694,8 +4670,7 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeaveBuffer
         }
         if (leaveResult == 0)
         {
-            setStep(&NexMatchJointSessionJob::WaitLeaveBufferMatchmakeSession,
-                    "NexMatchJointSessionJob::WaitLeaveBufferMatchmakeSession");
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitLeaveBufferMatchmakeSession), "NexMatchJointSessionJob::WaitLeaveBufferMatchmakeSession"));
             return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
         }
         if (leaveResult == cResultRequestFailed)
@@ -4735,15 +4710,14 @@ NexMatchJointSessionJob::ExecuteResult NexMatchJointSessionJob::StartLeaveBuffer
                 }
                 if (leaveResult == 0)
                 {
-                    setStep(&NexMatchJointSessionJob::WaitLeaveBufferMatchmakeSession,
-                            "NexMatchJointSessionJob::WaitLeaveBufferMatchmakeSession");
+                    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::WaitLeaveBufferMatchmakeSession), "NexMatchJointSessionJob::WaitLeaveBufferMatchmakeSession"));
                     return common::Job::MakeExecuteResult(common::Job::cExecuteKindNextStep);
                 }
             }
         }
     }
 
-    setStep(&NexMatchJointSessionJob::ProcessFailure, "NexMatchJointSessionJob::ProcessFailure");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&NexMatchJointSessionJob::ProcessFailure), "NexMatchJointSessionJob::ProcessFailure"));
     return common::Job::MakeExecuteResult(common::Job::cExecuteKindContinue);
 }
 
@@ -4935,7 +4909,7 @@ Result NexMatchJointSessionJob::StartupJoinRandomJointSessionImpl(const session:
         return cResultInvalidArgument;
     const unsigned short maxParticipantNum = createSetting->GetMaxParticipantNum();
     const unsigned short extraParticipantNum = createSetting->GetExtraParticipantNum();
-    if (static_cast<unsigned short>(maxParticipantNum + extraParticipantNum) > transport::g_piaTransport->m_stationNum)
+    if (transport::g_piaTransport->m_stationNum < static_cast<unsigned short>(maxParticipantNum + extraParticipantNum))
         return cResultInvalidArgument;
 
     m_field1ee = createSetting->IsOpenSession();
@@ -4998,7 +4972,7 @@ Result NexMatchJointSessionJob::StartupCreateJointSessionImpl(const session::Cre
         return cResultInvalidArgument;
     const unsigned short maxParticipantNum = createSetting->GetMaxParticipantNum();
     const unsigned short extraParticipantNum = createSetting->GetExtraParticipantNum();
-    if (static_cast<unsigned short>(maxParticipantNum + extraParticipantNum) > transport::g_piaTransport->m_stationNum)
+    if (transport::g_piaTransport->m_stationNum < static_cast<unsigned short>(maxParticipantNum + extraParticipantNum))
         return cResultInvalidArgument;
 
     m_field1ee = createSetting->IsOpenSession();
@@ -5333,11 +5307,11 @@ Result NexMatchJointSessionJob::StartupPassiveProcessImpl(session::Session::Proc
 
 Result NexMatchJointSessionJob::ReceiveNextSessionIdImpl(session::Session::ProcessType processType, unsigned int sessionId, const unsigned char* applicationData, unsigned char applicationDataSize, unsigned long long senderStationId)
 {
-    NexMatchmakeSession* matchmakeSession = static_cast<NexMatchmakeSession*>(
-        session::g_piaSession->m_matchmakeSession[bufferSessionIndex()]);
+    session::IMatchmakeSession* matchmakeSession =
+        session::g_piaSession->m_matchmakeSession[bufferSessionIndex()];
     if (matchmakeSession != 0)
     {
-        matchmakeSession->SetMatchmakeSessionKey(applicationData, applicationDataSize);
+        static_cast<NexMatchmakeSession*>(matchmakeSession)->SetMatchmakeSessionKey(applicationData, applicationDataSize);
     }
     return 0;
 }

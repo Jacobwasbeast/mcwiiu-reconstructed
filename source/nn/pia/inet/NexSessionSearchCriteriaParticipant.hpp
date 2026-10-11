@@ -19,7 +19,7 @@ public:
     const unsigned long long* GetParticipantPrincipalId() const;
     uint32_t GetParticipantPrincipalIdSize() const;
     void Reset();
-    nn::pia::common::Result SetResultRange(uint32_t offset, uint32_t size);
+    nn::pia::Result SetResultRange(uint32_t offset, uint32_t size);
     void SetParticipantPrincipalId(const unsigned long long* principalIds, unsigned int count);
     void SetBlockListOption(bool useMyBlockList, bool useOthersBlockList);
     void SetApplicationDataEnabled(bool enabled);

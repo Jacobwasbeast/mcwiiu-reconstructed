@@ -14,7 +14,7 @@ public:
 
     unsigned int GetSessionId() const;
     void Reset();
-    nn::pia::common::Result SetResultRange(unsigned int offset, unsigned int size);
+    nn::pia::Result SetResultRange(unsigned int offset, unsigned int size);
     void SetSessionId(unsigned int sessionId);
     void Copy(const NexSessionSearchCriteriaSessionId& other);
     NexSessionSearchCriteriaSessionId& operator=(const NexSessionSearchCriteriaSessionId& other);

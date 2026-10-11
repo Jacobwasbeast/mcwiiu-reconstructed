@@ -13,10 +13,10 @@ class NexJoinRandomSessionSetting : public session::JoinRandomSessionSetting
 public:
     NexJoinRandomSessionSetting();
     virtual ~NexJoinRandomSessionSetting();
-    NexCreateSessionSetting* GetCreateSessionSetting();
-    const NexCreateSessionSetting* GetCreateSessionSetting() const;
-    NexSessionSearchCriteria* GetSessionSearchCriteria(unsigned char index);
-    const NexSessionSearchCriteria* GetSessionSearchCriteria(unsigned char index) const;
+    session::CreateSessionSetting* GetCreateSessionSetting();
+    const session::CreateSessionSetting* GetCreateSessionSetting() const;
+    session::SessionSearchCriteria* GetSessionSearchCriteria(unsigned char index);
+    const session::SessionSearchCriteria* GetSessionSearchCriteria(unsigned char index) const;
     unsigned int GetSessionSearchCriteriaSize() const;
     void Reset();
     Result SetCreateSessionSetting(const session::CreateSessionSetting* setting);

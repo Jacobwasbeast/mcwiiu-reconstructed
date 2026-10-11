@@ -21,31 +21,6 @@ enum
 {
     cBrowseSearchCriteriaNum = 1
 };
-
-inline bool signalSessionStatusFailure(common::CallContext*& callerContext)
-{
-    switch (session::g_piaSession->GetStatus())
-    {
-    case session::Session::cStatusDisconnectedNetwork:
-        callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
-        callerContext = 0;
-        return true;
-    case session::Session::cStatusUnknown6:
-        callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
-        callerContext = 0;
-        return true;
-    case session::Session::cStatusUnknown7:
-        callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
-        callerContext = 0;
-        return true;
-    case session::Session::cStatusUnknown8:
-        callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
-        callerContext = 0;
-        return true;
-    default:
-        return false;
-    }
-}
 }
 
 NexMatchBrowseMatchmakeJob::NexMatchBrowseMatchmakeJob()
@@ -72,8 +47,40 @@ void NexMatchBrowseMatchmakeJob::Cleanup()
 
 NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::BrowseMatchmake()
 {
-    if (signalSessionStatusFailure(m_callerContext))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+    {
+        const Result result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown6:
+    {
+        const Result result = session::Session::cResultStatusUnknown6;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown7:
+    {
+        const Result result = session::Session::cResultStatusUnknown7;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown8:
+    {
+        const Result result = session::Session::cResultStatusUnknown8;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    default:
+        break;
+    }
     const Result result = m_matchmakeSession->BrowseMatchmakeSession(&m_callContext);
     if (result != 0)
     {
@@ -91,8 +98,40 @@ NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::BrowseMatc
 
 NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::WaitBrowseMatchmake()
 {
-    if (signalSessionStatusFailure(m_callerContext))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+    {
+        const Result result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown6:
+    {
+        const Result result = session::Session::cResultStatusUnknown6;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown7:
+    {
+        const Result result = session::Session::cResultStatusUnknown7;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown8:
+    {
+        const Result result = session::Session::cResultStatusUnknown8;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    default:
+        break;
+    }
     if (m_matchmakeSession->WaitBrowseMatchmakeSession())
     {
         m_matchmakeSession->UnregisterSearchCriteria();
@@ -114,8 +153,40 @@ NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::WaitBrowse
 
 NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::WaitFindSessionByOwner()
 {
-    if (signalSessionStatusFailure(m_callerContext))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+    {
+        const Result result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown6:
+    {
+        const Result result = session::Session::cResultStatusUnknown6;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown7:
+    {
+        const Result result = session::Session::cResultStatusUnknown7;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown8:
+    {
+        const Result result = session::Session::cResultStatusUnknown8;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    default:
+        break;
+    }
     if (m_startupResult != 0)
     {
         m_callerContext->SignalFailure(m_startupResult);
@@ -142,8 +213,40 @@ NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::WaitFindSe
 
 NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::WaitFindSessionByParticipant()
 {
-    if (signalSessionStatusFailure(m_callerContext))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+    {
+        const Result result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown6:
+    {
+        const Result result = session::Session::cResultStatusUnknown6;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown7:
+    {
+        const Result result = session::Session::cResultStatusUnknown7;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown8:
+    {
+        const Result result = session::Session::cResultStatusUnknown8;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    default:
+        break;
+    }
     if (m_startupResult != 0)
     {
         m_callerContext->SignalFailure(m_startupResult);
@@ -170,8 +273,40 @@ NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::WaitFindSe
 
 NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::WaitFindSessionBySessionId()
 {
-    if (signalSessionStatusFailure(m_callerContext))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+    {
+        const Result result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown6:
+    {
+        const Result result = session::Session::cResultStatusUnknown6;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown7:
+    {
+        const Result result = session::Session::cResultStatusUnknown7;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown8:
+    {
+        const Result result = session::Session::cResultStatusUnknown8;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    default:
+        break;
+    }
     if (m_startupResult != 0)
     {
         m_callerContext->SignalFailure(m_startupResult);
@@ -198,8 +333,40 @@ NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::WaitFindSe
 
 NexMatchBrowseMatchmakeJob::ExecuteResult NexMatchBrowseMatchmakeJob::WaitRequestSessionInfo()
 {
-    if (signalSessionStatusFailure(m_callerContext))
+    const unsigned int status = session::g_piaSession->GetStatus();
+    switch (status)
+    {
+    case session::Session::cStatusDisconnectedNetwork:
+    {
+        const Result result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown6:
+    {
+        const Result result = session::Session::cResultStatusUnknown6;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown7:
+    {
+        const Result result = session::Session::cResultStatusUnknown7;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case session::Session::cStatusUnknown8:
+    {
+        const Result result = session::Session::cResultStatusUnknown8;
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    default:
+        break;
+    }
     if (m_startupResult != 0)
     {
         m_callerContext->SignalFailure(m_startupResult);
@@ -262,7 +429,7 @@ Result NexMatchBrowseMatchmakeJob::StartupImpl(session::IMatchmakeSession* match
     else
     {
         if (m_matchmakeSession->RegisterSearchCriteria(criteria, cBrowseSearchCriteriaNum) != 0)
-            return cResultInvalidArgument;
+            return ResultInvalidArgument();
         SetStep(&NexMatchBrowseMatchmakeJob::BrowseMatchmake, "NexMatchBrowseMatchmakeJob::BrowseMatchmake");
     }
     return 0;

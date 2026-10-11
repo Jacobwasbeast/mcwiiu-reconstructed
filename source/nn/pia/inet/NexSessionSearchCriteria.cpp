@@ -12,6 +12,8 @@
 #include "nn/pia/inet/NexFacade.hpp"
 #include "nn/pia/inet/NexMatchmakeSession.hpp"
 
+#include <cstring>
+
 namespace nn { namespace pia { namespace inet {
 
 const wchar_t* s_scoreSettingIndexKey = L"@SI";
@@ -76,11 +78,6 @@ NexSessionSearchCriteria::NexSessionSearchCriteria()
     : session::SessionSearchCriteria(),
       m_gameMode(0),
       m_sessionType(cSessionType_Normal),
-      m_attributeList(),
-      m_attributeListSize(),
-      m_attributeRangeMin(),
-      m_attributeRangeMax(),
-      m_attributeRangeUsed(),
       m_excludeNonHostPrincipalId(true),
       m_excludeUserPasswordSet(true),
       m_randomSessionSelectionMethod(cSelectionMethod_0),
@@ -88,7 +85,6 @@ NexSessionSearchCriteria::NexSessionSearchCriteria()
       m_scoreBasedRatingValue(0),
       m_scoreBasedDisconnectionRate(0),
       m_scoreBasedViolationRate(0),
-      m_countryCode(0),
       m_scoreBasedGeoIpUsed(false),
       m_overrideIpAddress(),
       m_communityId(0),
@@ -105,20 +101,34 @@ NexSessionSearchCriteria::NexSessionSearchCriteria()
       m_sessionMatchmakeKeyword(),
       m_conditionMask(0)
 {
-    m_resultRangeOffset = cResultRangeOffsetUnset;
-    m_resultRangeSize = cResultRangeSizeMax;
+    m_overrideIpAddress.m_address = 0;
+    m_overrideIpAddress.m_port = 0;
+    m_sessionMatchmakeKeyword.Clear();
     for (unsigned int i = 0; i < cAttributeNum / 2; ++i)
     {
-        m_additionalScoreBasedParameterValues[i].m_uint64Value = 0;
-        m_additionalScoreBasedParameterValues[i].m_type = 0;
+        m_additionalScoreBasedParameterValueKey[i].Clear();
+        m_additionalScoreBasedParameterValues[i] = ParamVariant();
     }
+    m_additionalScoreBasedParameterStringKey[0].Clear();
+    m_additionalScoreBasedParameterString[0].Clear();
+    for (unsigned int i = 0; i < cAttributeNum; ++i)
+    {
+        std::memset(m_attributeList[i], 0, sizeof(m_attributeList[i]));
+        m_attributeListSize[i] = 0;
+        m_attributeRangeMin[i] = 0;
+        m_attributeRangeMax[i] = 0;
+        m_attributeRangeUsed[i] = false;
+    }
+    m_countryCode = 0;
+    m_resultRangeSize = cResultRangeSizeMax;
+    m_resultRangeOffset = cResultRangeOffsetUnset;
 }
 
 NexSessionSearchCriteria::~NexSessionSearchCriteria()
 {
 }
 
-nn::pia::common::Result NexSessionSearchCriteria::SetResultRange(unsigned int offset, unsigned int size)
+nn::pia::Result NexSessionSearchCriteria::SetResultRange(unsigned int offset, unsigned int size)
 {
     if (size > cResultRangeSizeMax)
         return transport::cResultInvalidArgument;
@@ -152,12 +162,12 @@ unsigned int NexSessionSearchCriteria::IsSetSessionMatchmakeKeyword() const
     return (m_conditionMask >> 23) & 1;
 }
 
-nn::pia::common::Result NexSessionSearchCriteria::SetAttribute(unsigned int index, unsigned int value)
+nn::pia::Result NexSessionSearchCriteria::SetAttribute(unsigned int index, unsigned int value)
 {
     if (index >= cAttributeNum)
-        return 0x10c07;
+        return transport::cResultInvalidArgument;
     if (IsSetSessionMatchmakeKeyword() != 0)
-        return 0x10c08;
+        return transport::cResultInvalidState;
 
     m_attributeList[index][0] = value;
     m_attributeListSize[index] = 1;
@@ -166,13 +176,15 @@ nn::pia::common::Result NexSessionSearchCriteria::SetAttribute(unsigned int inde
     return 0;
 }
 
-nn::pia::common::Result NexSessionSearchCriteria::SetAttributeRange(
+nn::pia::Result NexSessionSearchCriteria::SetAttributeRange(
     unsigned int index, unsigned int minimum, unsigned int maximum)
 {
-    if (index >= cAttributeNum || maximum < minimum)
-        return 0x10c07;
+    if (index >= cAttributeNum)
+        return transport::cResultInvalidArgument;
+    if (minimum > maximum)
+        return transport::cResultInvalidArgument;
     if (IsSetSessionMatchmakeKeyword() != 0)
-        return 0x10c08;
+        return transport::cResultInvalidState;
 
     m_attributeRangeMin[index] = minimum;
     m_attributeRangeMax[index] = maximum;
@@ -208,9 +220,9 @@ void NexSessionSearchCriteria::Copy(const NexSessionSearchCriteria& other)
     m_scoreBasedRatingValue = other.m_scoreBasedRatingValue;
     m_scoreBasedDisconnectionRate = other.m_scoreBasedDisconnectionRate;
     m_scoreBasedViolationRate = other.m_scoreBasedViolationRate;
-    m_countryCode = other.m_countryCode;
     m_scoreBasedGeoIpUsed = other.m_scoreBasedGeoIpUsed;
     m_overrideIpAddress = other.m_overrideIpAddress;
+    m_sessionMatchmakeKeyword = other.m_sessionMatchmakeKeyword;
     m_communityId = other.m_communityId;
     m_minParticipantRangeMax = other.m_minParticipantRangeMax;
     m_minParticipantRangeMin = other.m_minParticipantRangeMin;
@@ -218,15 +230,15 @@ void NexSessionSearchCriteria::Copy(const NexSessionSearchCriteria& other)
     m_maxParticipantRangeMin = other.m_maxParticipantRangeMin;
     m_openedOnly = other.m_openedOnly;
     m_vacantOnly = other.m_vacantOnly;
+    m_conditionMask = other.m_conditionMask;
     for (unsigned int i = 0; i < cAttributeNum / 2; ++i)
     {
-        m_additionalScoreBasedParameterValueKey[i].Copy(other.m_additionalScoreBasedParameterValueKey[i]);
+        m_additionalScoreBasedParameterValueKey[i] = other.m_additionalScoreBasedParameterValueKey[i];
         m_additionalScoreBasedParameterValues[i] = other.m_additionalScoreBasedParameterValues[i];
     }
-    m_additionalScoreBasedParameterStringKey.Copy(other.m_additionalScoreBasedParameterStringKey);
-    m_additionalScoreBasedParameterString.Copy(other.m_additionalScoreBasedParameterString);
-    m_sessionMatchmakeKeyword.Copy(other.m_sessionMatchmakeKeyword);
-    m_conditionMask = other.m_conditionMask;
+    m_additionalScoreBasedParameterStringKey[0].Copy(other.m_additionalScoreBasedParameterStringKey[0]);
+    m_additionalScoreBasedParameterString[0].Copy(other.m_additionalScoreBasedParameterString[0]);
+    m_countryCode = other.m_countryCode;
 }
 
 void NexSessionSearchCriteria::Trace(unsigned long long) const
@@ -236,8 +248,6 @@ void NexSessionSearchCriteria::Trace(unsigned long long) const
 void NexSessionSearchCriteria::Reset()
 {
     session::SessionSearchCriteria::Reset();
-    m_resultRangeOffset = cResultRangeOffsetUnset;
-    m_resultRangeSize = cResultRangeSizeMax;
     m_gameMode = 0;
     m_sessionType = cSessionType_Normal;
     m_excludeNonHostPrincipalId = true;
@@ -247,10 +257,7 @@ void NexSessionSearchCriteria::Reset()
     m_scoreBasedRatingValue = 0;
     m_scoreBasedDisconnectionRate = 0;
     m_scoreBasedViolationRate = 0;
-    m_countryCode = 0;
     m_scoreBasedGeoIpUsed = false;
-    m_overrideIpAddress.m_address = 0;
-    m_overrideIpAddress.m_port = 0;
     m_communityId = 0;
     m_minParticipantRangeMax = cParticipantNumUnset;
     m_minParticipantRangeMin = cParticipantNumUnset;
@@ -258,28 +265,31 @@ void NexSessionSearchCriteria::Reset()
     m_maxParticipantRangeMin = cParticipantNumUnset;
     m_openedOnly = true;
     m_vacantOnly = true;
+    m_overrideIpAddress.m_address = 0;
+    m_overrideIpAddress.m_port = 0;
+    m_sessionMatchmakeKeyword.Clear();
     m_conditionMask = 0;
+    for (unsigned int i = 0; i < cAttributeNum / 2; ++i)
+    {
+        m_additionalScoreBasedParameterValueKey[i].Clear();
+        m_additionalScoreBasedParameterValues[i] = ParamVariant();
+    }
+    m_additionalScoreBasedParameterStringKey[0].Clear();
+    m_additionalScoreBasedParameterString[0].Clear();
     for (unsigned int i = 0; i < cAttributeNum; ++i)
     {
+        std::memset(m_attributeList[i], 0, sizeof(m_attributeList[i]));
         m_attributeListSize[i] = 0;
         m_attributeRangeMin[i] = 0;
         m_attributeRangeMax[i] = 0;
         m_attributeRangeUsed[i] = false;
-        for (unsigned int j = 0; j < cAttributeListSize; ++j)
-            m_attributeList[i][j] = 0;
     }
-    for (unsigned int i = 0; i < cAttributeNum / 2; ++i)
-    {
-        m_additionalScoreBasedParameterValueKey[i].Clear();
-        m_additionalScoreBasedParameterValues[i].m_uint64Value = 0;
-        m_additionalScoreBasedParameterValues[i].m_type = 0;
-    }
-    m_additionalScoreBasedParameterStringKey.Clear();
-    m_additionalScoreBasedParameterString.Clear();
-    m_sessionMatchmakeKeyword.Clear();
+    m_countryCode = 0;
+    m_resultRangeSize = cResultRangeSizeMax;
+    m_resultRangeOffset = cResultRangeOffsetUnset;
 }
 
-nn::pia::common::Result NexSessionSearchCriteria::ConvertToNexMatchmakeSessionSearchCriteria(
+nn::pia::Result NexSessionSearchCriteria::ConvertToNexMatchmakeSessionSearchCriteria(
     nn::nex::MatchmakeSessionSearchCriteria* criteria,
     nn::nex::InetAddress* address,
     nn::nex::MatchmakeParam* param,

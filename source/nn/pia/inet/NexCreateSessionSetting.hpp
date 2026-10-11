@@ -31,7 +31,7 @@ public:
     virtual ~NexCreateSessionSetting();
     NexCreateSessionSetting& operator=(const NexCreateSessionSetting& other);
     void Copy(const NexCreateSessionSetting& other);
-    void Reset();
+    virtual void Reset();
     void SetGameMode(unsigned int value);
     unsigned int GetGameMode() const;
     bool IsSetGameMode() const;
@@ -43,10 +43,10 @@ public:
     Result SetAttribute(unsigned int index, unsigned int value);
     unsigned int GetAttribute(unsigned int index) const;
     bool IsSetAttribute(unsigned int index) const;
-    Result SetApplicationData(const void* data, unsigned int size);
-    Result GetApplicationData(void* data, unsigned int size) const;
-    unsigned int GetApplicationDataSize() const;
-    bool IsSetApplicationData() const;
+    virtual Result SetApplicationData(const void* data, unsigned int size);
+    virtual Result GetApplicationData(void* data, unsigned int size) const;
+    virtual unsigned int GetApplicationDataSize() const;
+    virtual bool IsSetApplicationData() const;
     void SetOpenSession(bool value);
     bool IsOpenSession() const;
     bool IsSetOpenSession() const;
@@ -80,7 +80,7 @@ public:
     const common::String* GetAdditionalScoreBasedParameterStringKey(unsigned int index) const;
     const common::String* GetAdditionalScoreBasedParameterString(unsigned int index) const;
     void CopyApplicationDataToVector(void* vector) const;
-    void Trace(unsigned long long value) const;
+    virtual void Trace(unsigned long long value) const;
     unsigned short GetExtraParticipantNum() const;
     void SetCommunityId(unsigned int value);
     unsigned int GetCommunityId() const;

@@ -267,7 +267,7 @@ InetProcessHostMigrationJob::ExecuteResult InetProcessHostMigrationJob::InetPrep
                 piaSession->m_sessionId[piaSession->m_currentSessionIndex]);
         }
         const common::TimeSpan timeout = common::TimeSpan::FromMSec(cUpdateSessionHostTimeoutMsec);
-        m_updateSessionHostTimeout = common::g_piaJobScheduler->m_dispatchTime + timeout;
+        m_updateSessionHostTimeout.m_tick = timeout.m_tick + common::g_piaJobScheduler->m_dispatchTime.m_tick;
         setStep(m_currentStep, Step(stepFunction(&InetProcessHostMigrationJob::WaitAfterPrepareForBecomingHost),
                                     "InetProcessHostMigrationJob::WaitAfterPrepareForBecomingHost"));
     }
@@ -853,33 +853,33 @@ InetProcessHostMigrationJob::ExecuteResult InetProcessHostMigrationJob::WaitUpda
 InetProcessHostMigrationJob::ExecuteResult InetProcessHostMigrationJob::InetCheckMatchMakingClientHost()
 {
     nex::ProtocolCallContext* protocolCallContext = m_protocolCallContext;
-    if (protocolCallContext->GetState() != nex::CallContext::CallInProgress)
+    if (protocolCallContext->GetState() == nex::CallContext::CallInProgress)
     {
-        const nex::qResult result = protocolCallContext->GetResult();
-        if (!result)
+        if (session::g_piaMesh->CheckConnectionError() == cResultConnectionError ||
+            m_waitDeadline <= common::g_piaJobScheduler->m_dispatchTime)
         {
-            setStep(m_currentStep, Step(stepFunction(&InetProcessHostMigrationJob::InetPrepareForBecomingHost),
-                                        "InetProcessHostMigrationJob::InetPrepareForBecomingHost"));
+            m_protocolCallContext->Cancel(nex::CallContext::CallCanceled);
+            setStep(m_currentStep, Step(stepFunction(&ProcessHostMigrationJob::HostMigrationFailure),
+                                        "InetProcessHostMigrationJob::HostMigrationFailure"));
+            return MakeExecuteResult(cExecuteKindContinue);
         }
-        else
-        {
-            setStep(m_currentStep, Step(stepFunction(&InetProcessHostMigrationJob::InetCheckOldHostDisconnection),
-                                        "InetProcessHostMigrationJob::InetCheckOldHostDisconnection"));
-            const common::TimeSpan checkInterval = common::TimeSpan::FromMSec(cOldHostDisconnectionCheckIntervalMsec);
-            m_oldHostDisconnectionCheckTime = common::g_piaJobScheduler->m_dispatchTime + checkInterval;
-            const common::TimeSpan timeout = common::TimeSpan::FromMSec(cOldHostDisconnectionTimeoutMsec);
-            m_oldHostDisconnectionTimeout = common::g_piaJobScheduler->m_dispatchTime + timeout;
-        }
-        return MakeExecuteResult(cExecuteKindContinue);
-    }
-    if (session::g_piaMesh->CheckConnectionError() != cResultConnectionError &&
-        common::g_piaJobScheduler->m_dispatchTime < m_waitDeadline)
-    {
         return MakeExecuteResult(cExecuteKindWait, cCheckMatchMakingClientHostIntervalMsec);
     }
-    m_protocolCallContext->Cancel(nex::CallContext::CallCanceled);
-    setStep(m_currentStep, Step(stepFunction(&ProcessHostMigrationJob::HostMigrationFailure),
-                                "InetProcessHostMigrationJob::HostMigrationFailure"));
+    const nex::qResult result = protocolCallContext->GetResult();
+    if (!result)
+    {
+        setStep(m_currentStep, Step(stepFunction(&InetProcessHostMigrationJob::InetPrepareForBecomingHost),
+                                    "InetProcessHostMigrationJob::InetPrepareForBecomingHost"));
+    }
+    else
+    {
+        setStep(m_currentStep, Step(stepFunction(&InetProcessHostMigrationJob::InetCheckOldHostDisconnection),
+                                    "InetProcessHostMigrationJob::InetCheckOldHostDisconnection"));
+        const common::TimeSpan checkInterval = common::TimeSpan::FromMSec(cOldHostDisconnectionCheckIntervalMsec);
+        m_oldHostDisconnectionCheckTime = common::g_piaJobScheduler->m_dispatchTime + checkInterval;
+        const common::TimeSpan timeout = common::TimeSpan::FromMSec(cOldHostDisconnectionTimeoutMsec);
+        m_oldHostDisconnectionTimeout = common::g_piaJobScheduler->m_dispatchTime + timeout;
+    }
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -1026,16 +1026,17 @@ void InetProcessHostMigrationJob::CleanupImpl()
 
 unsigned int InetProcessHostMigrationJob::UpdateSessionHostAsync(unsigned int gatheringId)
 {
+    unsigned int id = gatheringId;
     if (gatheringId == 0)
     {
-        gatheringId = NexFacade::GetInstance()->m_gatheringId;
-        if (gatheringId == 0)
+        id = NexFacade::GetInstance()->m_gatheringId;
+        if (id == 0)
             return 0;
     }
     if (m_protocolCallContext->GetState() == nex::CallContext::CallInProgress)
         m_protocolCallContext->Cancel(nex::CallContext::CallCanceled);
     m_protocolCallContext->Reset();
-    if (!NexFacade::GetInstance()->m_matchmakeExtensionClient->UpdateSessionHost(m_protocolCallContext, gatheringId,
+    if (!NexFacade::GetInstance()->m_matchmakeExtensionClient->UpdateSessionHost(m_protocolCallContext, id,
                                                                                  true))
     {
         return 0;
@@ -1070,11 +1071,12 @@ unsigned int InetProcessHostMigrationJob::StartupMultiImpl(bool rankingReceived,
     if (rankingReceived)
     {
         CleanupOldHostInfoCommonProc();
+        m_isRankingReceived = rankingReceived;
+        setStep(m_currentStep, Step(stepFunction(&InetProcessHostMigrationJob::InetSendRankDecision),
+                                    "InetProcessHostMigrationJob::InetSendRankDecision"));
+        return 1;
     }
-    else
-    {
-        MakeHostCandidateRanking(m_oldHostIndex, m_candidateRanking, &m_unknownE0, &m_unknownE4, false);
-    }
+    MakeHostCandidateRanking(m_oldHostIndex, m_candidateRanking, &m_unknownE0, &m_unknownE4, false);
     m_isRankingReceived = rankingReceived;
     setStep(m_currentStep, Step(stepFunction(&InetProcessHostMigrationJob::InetSendRankDecision),
                                 "InetProcessHostMigrationJob::InetSendRankDecision"));

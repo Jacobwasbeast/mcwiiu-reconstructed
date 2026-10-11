@@ -51,16 +51,17 @@ Result InetOutputStream::OnStationConnectionEvent()
     {
         if ((*station)->m_field20 != cConnectedStationState)
             continue;
-        const int index = (*station)->m_field10;
-        if (index >= transport::cStationNumMax)
+        const int index = (*station)->GetStationIndex();
+        if (index > transport::cStationNumMax - 1)
             continue;
         if (NexFacade::GetInstance() != 0 && NexFacade::GetInstance()->IsRelayServiceEnabled() &&
             NexFacade::GetInstance()->m_natRelay != 0 &&
             NexFacade::GetInstance()->m_natRelay->GetRelayServerAddress((*station)->m_stationAddress.m_inetAddress)
                 .IsValid())
             continue;
+        const common::InetAddress& inetAddress = (*station)->m_stationAddress.m_inetAddress;
         common::SocketAddress address;
-        address.SetInetAddress((*station)->m_stationAddress.m_inetAddress);
+        address.SetInetAddress(inetAddress);
         m_stationAddresses[index] = address.GetSockAddrIn();
     }
     return 0;
@@ -94,7 +95,7 @@ int InetOutputStream::CreateMulticastAddressArray(common::SockAddrIn* addresses,
     const transport::Station* localStation = transport::StationManager::s_pInstance->m_localStation;
     if (localStation != 0)
     {
-        const unsigned int localIndex = localStation->m_field10;
+        const unsigned int localIndex = localStation->GetStationIndex();
         for (unsigned int index = 0; index < transport::cStationNumMax; ++index)
         {
             if (index == localIndex || ((stationBitmap >> index) & 1) == 0)
@@ -220,7 +221,7 @@ Result InetOutputStream::Write(const common::Packet& packet)
         NexFacade::GetInstance()->m_natRelay != 0)
     {
         const transport::Station* localStation = transport::StationManager::s_pInstance->m_localStation;
-        const unsigned int localIndex = localStation != 0 ? localStation->m_field10 : cStationIndexInvalid;
+        const unsigned int localIndex = localStation != 0 ? localStation->GetStationIndex() : cStationIndexInvalid;
         Result lastResult = 0;
         for (unsigned int index = 0; index < transport::cStationNumMax; ++index)
         {

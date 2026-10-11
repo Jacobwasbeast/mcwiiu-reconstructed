@@ -18,8 +18,7 @@ enum
 
 inline void SelectStep(common::StepSequenceJob::Step& slot, ExecuteResult (NexMatchClearSystemPasswordJob::*function)(), const char* name)
 {
-    const common::StepSequenceJob::Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
-    slot = step;
+    slot = common::StepSequenceJob::Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
 }
 }
 

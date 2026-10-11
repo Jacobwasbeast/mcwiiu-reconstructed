@@ -73,39 +73,10 @@ inline void CountRetry(unsigned char& counter)
 
 inline void SetDeadline(common::Time& deadline, int timeoutMsec)
 {
-    const common::TimeSpan span = common::TimeSpan::FromMSec(timeoutMsec);
+    const common::TimeSpan span(common::TimeSpan::GetTicksPerMSec().m_tick * timeoutMsec);
     common::Time now;
     now.SetNow();
     deadline.m_tick = now.m_tick + span.m_tick;
-}
-
-Result EmulatedNatTraversalResult()
-{
-    switch (common::g_piaJobScheduler->m_dispatchTime.m_tick % cEmulatedResultKinds)
-    {
-    case 9:
-        return cResultNatTraversalTimeout;
-    case 8:
-        return cResultNatTraversalFailedSameNatEdmToEdm;
-    case 7:
-        return cResultNatTraversalFailedEdmToEdm;
-    case 6:
-        return cResultNatTraversalFailedSameNatEdmToEim;
-    case 5:
-        return cResultNatTraversalFailedEdmToEim;
-    case 4:
-        return cResultNatTraversalFailedSameNatEimToEdm;
-    case 3:
-        return cResultNatTraversalFailedEimToEdm;
-    case 2:
-        return cResultNatTraversalFailedSameNatEimToEim;
-    case 1:
-        return cResultNatTraversalFailedEimToEim;
-    case 0:
-        return cResultNatTraversalFailed;
-    default:
-        return cResultNatTraversalFailed;
-    }
 }
 }
 
@@ -148,7 +119,7 @@ Result InetConnectStationJob::StartupImpl(common::CallContext* context, transpor
     m_stationConnectionInfo.m_localStationLocation.m_field1c = m_stationConnectionInfo.m_stationLocation.m_field1c;
 
     if (!NexFacade::GetInstance()->m_natSessionActive)
-        return cResultInvalidState;
+        return ResultInvalidState();
 
     transport::StationConnectionInfoTable* table = transport::g_stationConnectionInfoTable;
     table->GetLocalStationConnectionInfo().Trace(cTraceStation);
@@ -156,7 +127,7 @@ Result InetConnectStationJob::StartupImpl(common::CallContext* context, transpor
         table->GetLocalStationConnectionInfo().m_stationLocation.m_stationAddress.m_inetAddress.m_address)
     {
         if (IsGlobal(table->GetLocalStationConnectionInfo().m_stationLocation))
-            return cResultInvalidState;
+            return ResultInvalidState();
         m_stationLocation = m_stationConnectionInfo.m_localStationLocation;
     }
     else
@@ -189,21 +160,24 @@ Result InetConnectStationJob::StartupImpl(common::CallContext* context, transpor
 
     transport::StationConnectionInfo connectionInfo;
     connectionInfo.m_stationLocation.SetStationLocation(m_stationLocation);
-    const Result result = ConnectStationJob::StartupImpl(context, m_station, connectionInfo, secure);
-    if (result != 0)
-        return result;
-    SelectStep(m_currentStep, &InetConnectStationJob::TestCurrentAddress, "InetConnectStationJob::TestCurrentAddress");
-    return 0;
+    const int result = ConnectStationJob::StartupImpl(context, m_station, connectionInfo, secure);
+    if (result == 0)
+    {
+        SelectStep(m_currentStep, &InetConnectStationJob::TestCurrentAddress, "InetConnectStationJob::TestCurrentAddress");
+        return 0;
+    }
+    return result;
 }
 
 void InetConnectStationJob::CleanupImpl()
 {
     m_natTraversalContext.SignalCancel();
     m_natTraversalContext.Reset();
-    if (m_stationLocation.m_field1c)
+    int connected = m_stationLocation.m_field1c;
+    if (connected)
     {
-        session::Session::DisconnectionEventListener listener = transport::g_piaTransport->m_disconnectionEventListener;
         bool clearMonitoringData = true;
+        session::Session::DisconnectionEventListener listener = transport::g_piaTransport->m_disconnectionEventListener;
         if (listener && m_stationLocation.m_principalId)
         {
             transport::StationIdTable::Entry entry;
@@ -211,32 +185,34 @@ void InetConnectStationJob::CleanupImpl()
                 listener(&entry) == 1)
                 clearMonitoringData = false;
         }
-        NexFacade::GetInstance()->NotifyLeave(m_stationLocation, clearMonitoringData, false);
+        NexFacade* facade = NexFacade::GetInstance();
+        facade->NotifyLeave(m_stationLocation, clearMonitoringData, false);
     }
 }
 
 bool InetConnectStationJob::CheckErrorOccurredImpl()
 {
+    bool errorOccurred = false;
     session::Session* session = session::g_piaSession;
-    if (session == 0)
-        return false;
-    session::MeshLayerController* meshLayerController = session->m_meshLayerController;
-    if (meshLayerController == 0)
-        return false;
-    unsigned int sessionId = session->m_sessionId[session->m_currentSessionIndex == 0 ? 1 : 0];
-    if (sessionId == 0)
-        sessionId = session->m_sessionId[session->m_currentSessionIndex];
-    unsigned long long principalId = m_stationConnectionInfo.m_stationLocation.m_principalId;
-    if (principalId == 0)
+    if (session != 0)
     {
-        principalId = m_stationConnectionInfo.m_localStationLocation.m_principalId;
-        if (principalId == 0)
-            return false;
+        session::MeshLayerController* meshLayerController = session->m_meshLayerController;
+        if (meshLayerController != 0)
+        {
+            unsigned int sessionId = session->m_sessionId[session->m_currentSessionIndex == 0 ? 1 : 0];
+            if (sessionId == 0)
+                sessionId = session->m_sessionId[session->m_currentSessionIndex];
+            unsigned long long principalId = m_stationConnectionInfo.m_stationLocation.m_principalId;
+            if (principalId == 0)
+                principalId = m_stationConnectionInfo.m_localStationLocation.m_principalId;
+            if (principalId != 0 && !meshLayerController->IsParticipated(sessionId, principalId))
+            {
+                errorOccurred = true;
+                meshLayerController->Trace(cTraceSession);
+            }
+        }
     }
-    if (meshLayerController->IsParticipated(sessionId, principalId))
-        return false;
-    meshLayerController->Trace(cTraceSession);
-    return true;
+    return errorOccurred;
 }
 
 void InetConnectStationJob::Trace(unsigned long long) const
@@ -245,27 +221,27 @@ void InetConnectStationJob::Trace(unsigned long long) const
 
 InetConnectStationJob::ExecuteResult InetConnectStationJob::TestCurrentAddress()
 {
-    if (m_station->m_field10 == cHostStationIndex)
+    if (m_station->GetStationIndex() == cHostStationIndex)
     {
         m_stationLocation.Trace(cTraceStationLocation);
-        SelectStep(m_currentStep, &InetConnectStationJob::PrepareNatTraversal, "InetConnectStationJob::PrepareNatTraversal");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&InetConnectStationJob::PrepareNatTraversal), "InetConnectStationJob::PrepareNatTraversal"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    if (IsBehindNat(m_stationLocation) && m_secure)
-    {
-        m_stationLocation.Trace(cTraceStationLocation);
-        NexFacade::GetInstance()->ResetProbeStatus(m_stationLocation, m_secure);
-        SelectStep(m_currentStep, &InetConnectStationJob::ResolveCurrentAddress, "InetConnectStationJob::ResolveCurrentAddress");
-        return MakeExecuteResult(cExecuteKindContinue);
-    }
-    if (IsPublic(m_stationLocation) && m_secure)
+    if (!IsBehindNat(m_stationLocation) && m_secure)
     {
         m_stationLocation.Trace(cTraceStationLocation);
         NexFacade::GetInstance()->ResetProbeStatus(m_stationLocation, m_secure);
-        SelectStep(m_currentStep, &InetConnectStationJob::ResolveCurrentAddress, "InetConnectStationJob::ResolveCurrentAddress");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&InetConnectStationJob::ResolveCurrentAddress), "InetConnectStationJob::ResolveCurrentAddress"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    SelectStep(m_currentStep, &InetConnectStationJob::PrepareNatTraversal, "InetConnectStationJob::PrepareNatTraversal");
+    if (!IsPublic(m_stationLocation) && m_secure)
+    {
+        m_stationLocation.Trace(cTraceStationLocation);
+        NexFacade::GetInstance()->ResetProbeStatus(m_stationLocation, m_secure);
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&InetConnectStationJob::ResolveCurrentAddress), "InetConnectStationJob::ResolveCurrentAddress"));
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&InetConnectStationJob::PrepareNatTraversal), "InetConnectStationJob::PrepareNatTraversal"));
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -279,20 +255,23 @@ InetConnectStationJob::ExecuteResult InetConnectStationJob::PrepareNatTraversal(
         if (IsEdmMapping(m_stationConnectionInfo.m_stationLocation))
             timeoutMsec += NexFacade::GetInstance()->m_natTraversalTimeoutEdmExtension;
     }
-    if (!NexFacade::GetInstance()->PrepareNatTraversal(m_stationLocation, m_stationConnectionInfo, &m_natTraversalContext, m_secure,
-                                     false, static_cast<StationIndex>(m_station->m_field10)))
+    if (NexFacade::GetInstance()->PrepareNatTraversal(m_stationLocation, m_stationConnectionInfo, &m_natTraversalContext, m_secure,
+                                    false, m_station->GetStationIndex()))
     {
-        SelectStep(m_currentStep, &InetConnectStationJob::ResolveCurrentAddress, "InetConnectStationJob::ResolveCurrentAddress");
-    }
-    else if (!m_secure)
-    {
-        SetDeadline(m_natTraversalDeadline, cNatTraversalStartTimeoutMsec);
-        SelectStep(m_currentStep, &InetConnectStationJob::WaitForNatTraversalStarted, "InetConnectStationJob::WaitForNatTraversalStarted");
+        if (m_secure)
+        {
+            SetDeadline(m_natTraversalDeadline, timeoutMsec);
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&InetConnectStationJob::WaitForNatTraversalCompleted), "InetConnectStationJob::WaitForNatTraversalCompleted"));
+        }
+        else
+        {
+            SetDeadline(m_natTraversalDeadline, cNatTraversalStartTimeoutMsec);
+            SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&InetConnectStationJob::WaitForNatTraversalStarted), "InetConnectStationJob::WaitForNatTraversalStarted"));
+        }
     }
     else
     {
-        SetDeadline(m_natTraversalDeadline, timeoutMsec);
-        SelectStep(m_currentStep, &InetConnectStationJob::WaitForNatTraversalCompleted, "InetConnectStationJob::WaitForNatTraversalCompleted");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&InetConnectStationJob::ResolveCurrentAddress), "InetConnectStationJob::ResolveCurrentAddress"));
     }
     return MakeExecuteResult(cExecuteKindContinue);
 }
@@ -306,7 +285,7 @@ InetConnectStationJob::ExecuteResult InetConnectStationJob::WaitForNatTraversalS
             int timeoutMsec = NexFacade::GetInstance()->m_natTraversalTimeout;
         if (IsEdmMapping(transport::g_stationConnectionInfoTable->GetLocalStationConnectionInfo().m_stationLocation))
             timeoutMsec += NexFacade::GetInstance()->m_natTraversalTimeoutEdmExtension;
-        if (m_station->m_field10 == cHostStationIndex || IsEdmMapping(m_stationConnectionInfo.m_stationLocation))
+        if (m_station->GetStationIndex() == cHostStationIndex || IsEdmMapping(m_stationConnectionInfo.m_stationLocation))
             timeoutMsec += NexFacade::GetInstance()->m_natTraversalTimeoutEdmExtension;
         SetDeadline(m_natTraversalDeadline, timeoutMsec);
         SelectStep(m_currentStep, &InetConnectStationJob::WaitForNatTraversalCompleted, "InetConnectStationJob::WaitForNatTraversalCompleted");
@@ -320,7 +299,7 @@ InetConnectStationJob::ExecuteResult InetConnectStationJob::WaitForNatTraversalS
     default:
         break;
     }
-    if (m_station->m_field10 == cHostStationIndex)
+    if (m_station->GetStationIndex() == cHostStationIndex)
     {
         common::Time now;
         now.SetNow();
@@ -354,90 +333,133 @@ InetConnectStationJob::ExecuteResult InetConnectStationJob::WaitForNatTraversalC
     }
     common::Time now;
     now.SetNow();
-    if (m_natTraversalDeadline < now || m_natTraversalContext.m_state != common::CallContext::cStateInProgress)
+    if (now <= m_natTraversalDeadline && m_natTraversalContext.m_state == common::CallContext::cStateInProgress)
+        return MakeExecuteResult(cExecuteKindWait, cWaitIntervalMsec);
+
+    bool sameNat = false;
+    if (m_stationConnectionInfo.m_stationLocation.m_stationAddress.m_inetAddress.m_address ==
+        transport::g_stationConnectionInfoTable->GetLocalStationConnectionInfo().m_stationLocation.m_stationAddress.m_inetAddress.m_address)
+        sameNat = true;
+    Result result = m_natTraversalContext.m_result;
+    if (m_natTraversalContext.m_state == common::CallContext::cStateFailure && result == cResultNatTraversalTimeout)
     {
-        bool sameNat = false;
-        if (m_stationConnectionInfo.m_stationLocation.m_stationAddress.m_inetAddress.m_address ==
-            transport::g_stationConnectionInfoTable->GetLocalStationConnectionInfo().m_stationLocation.m_stationAddress.m_inetAddress.m_address)
-            sameNat = true;
-        Result result = m_natTraversalContext.m_result;
-        if (m_natTraversalContext.m_state == common::CallContext::cStateFailure && result == cResultNatTraversalTimeout)
+        NexFacade::GetInstance()->ReportNatTraversalResult(m_stationLocation, cResultNatTraversalTimeout, false);
+    }
+    else if (m_natTraversalContext.m_state != common::CallContext::cStateFailure || result != cResultPortDetectionFailed)
+    {
+        if (NexFacade::GetInstance()->GetNatPropertyMapping() == cNatMappingEndpointDependent && IsEdmMapping(m_stationConnectionInfo.m_stationLocation))
         {
-            NexFacade::GetInstance()->ReportNatTraversalResult(m_stationLocation, cResultNatTraversalTimeout, false);
+            if (sameNat)
+                result = cResultNatTraversalFailedSameNatEdmToEdm;
+            else
+                result = cResultNatTraversalFailedEdmToEdm;
         }
-        else if (m_natTraversalContext.m_state != common::CallContext::cStateFailure || result != cResultPortDetectionFailed)
+        else if (NexFacade::GetInstance()->GetNatPropertyMapping() == cNatMappingEndpointDependent && IsEimMapping(m_stationConnectionInfo.m_stationLocation))
         {
-            if (NexFacade::GetInstance()->GetNatPropertyMapping() == cNatMappingEndpointDependent && IsEdmMapping(m_stationConnectionInfo.m_stationLocation))
-                result = sameNat ? cResultNatTraversalFailedSameNatEdmToEdm : cResultNatTraversalFailedEdmToEdm;
-            else if (NexFacade::GetInstance()->GetNatPropertyMapping() == cNatMappingEndpointDependent && IsEimMapping(m_stationConnectionInfo.m_stationLocation))
-                result = sameNat ? cResultNatTraversalFailedSameNatEdmToEim : cResultNatTraversalFailedEdmToEim;
-            else if (NexFacade::GetInstance()->GetNatPropertyMapping() == cNatMappingEndpointIndependent && IsEdmMapping(m_stationConnectionInfo.m_stationLocation))
-                result = sameNat ? cResultNatTraversalFailedSameNatEimToEdm : cResultNatTraversalFailedEimToEdm;
-            else if (NexFacade::GetInstance()->GetNatPropertyMapping() == cNatMappingEndpointIndependent && IsEimMapping(m_stationConnectionInfo.m_stationLocation))
-                result = sameNat ? cResultNatTraversalFailedSameNatEimToEim : cResultNatTraversalFailedEimToEim;
+            if (sameNat)
+                result = cResultNatTraversalFailedSameNatEdmToEim;
+            else
+                result = cResultNatTraversalFailedEdmToEim;
+        }
+        else if (NexFacade::GetInstance()->GetNatPropertyMapping() == cNatMappingEndpointIndependent && IsEdmMapping(m_stationConnectionInfo.m_stationLocation))
+        {
+            if (sameNat)
+                result = cResultNatTraversalFailedSameNatEimToEdm;
+            else
+                result = cResultNatTraversalFailedEimToEdm;
+        }
+        else if (NexFacade::GetInstance()->GetNatPropertyMapping() == cNatMappingEndpointIndependent && IsEimMapping(m_stationConnectionInfo.m_stationLocation))
+        {
+            if (sameNat)
+                result = cResultNatTraversalFailedSameNatEimToEim;
+            else
+                result = cResultNatTraversalFailedEimToEim;
+        }
+        else
+            result = cResultNatTraversalFailed;
+    }
+    NexFacade::GetInstance()->NotifyLeave(m_stationLocation, true, true);
+    if (result == cResultNatTraversalFailedSameNatEimToEim)
+    {
+        common::StationAddress address;
+        address.SetInetAddress(common::InetAddress(m_stationConnectionInfo.m_stationLocation.m_stationAddress.m_inetAddress.m_address,
+                                                   m_stationLocation.m_stationAddress.m_inetAddress.m_port));
+        transport::StationLocation location(m_stationConnectionInfo.m_stationLocation);
+        location.SetStationAddress(address);
+        NexFacade::GetInstance()->NotifyLeave(location, true, true);
+    }
+
+    if (m_natTraversalRetryCount > 0)
+    {
+        --m_natTraversalRetryCount;
+        if (NexFacade::GetInstance()->IsBeginMonitoringDataAvailable())
+        {
+            common::g_sessionBeginMonitoringContent.m_metric149 = static_cast<unsigned char>(1 - m_natTraversalRetryCount);
+            CountRetry(common::g_sessionBeginMonitoringContent.m_metric119);
+        }
+        m_natTraversalContext.SignalCancel();
+        m_natTraversalContext.Reset();
+        SelectStep(m_currentStep, &InetConnectStationJob::PrepareNatTraversal, "InetConnectStationJob::PrepareNatTraversal");
+        return MakeExecuteResult(cExecuteKindWait, cWaitIntervalMsec);
+    }
+    if (!m_secure && NexFacade::GetInstance()->IsRelayServiceEnabled() && NexFacade::GetInstance()->m_natRelay->IsRelayServerAvailable())
+    {
+        m_natTraversalContext.SignalCancel();
+        m_natTraversalContext.Reset();
+        SelectStep(m_currentStep, &InetConnectStationJob::PrepareNatTraversalByRelay, "InetConnectStationJob::PrepareNatTraversalByRelay");
+        return MakeExecuteResult(cExecuteKindContinue);
+    }
+
+    if (GetDebugSetting()->natTraversalResult != DebugSetting::cNatTraversalResultNotEmulated)
+    {
+        if (GetDebugSetting()->natTraversalResult == 0)
+        {
+            const unsigned long long kind = common::g_piaJobScheduler->m_dispatchTime.m_tick % cEmulatedResultKinds;
+            if (kind == 9)
+                result = cResultNatTraversalTimeout;
+            else if (kind == 8)
+                result = cResultNatTraversalFailedSameNatEdmToEdm;
+            else if (kind == 7)
+                result = cResultNatTraversalFailedEdmToEdm;
+            else if (kind == 6)
+                result = cResultNatTraversalFailedSameNatEdmToEim;
+            else if (kind == 5)
+                result = cResultNatTraversalFailedEdmToEim;
+            else if (kind == 4)
+                result = cResultNatTraversalFailedSameNatEimToEdm;
+            else if (kind == 3)
+                result = cResultNatTraversalFailedEimToEdm;
+            else if (kind == 2)
+                result = cResultNatTraversalFailedSameNatEimToEim;
+            else if (kind == 1)
+                result = cResultNatTraversalFailedEimToEim;
+            else if (kind == 0)
+                result = cResultNatTraversalFailed;
             else
                 result = cResultNatTraversalFailed;
         }
-        NexFacade::GetInstance()->NotifyLeave(m_stationLocation, true, true);
-        if (result == cResultNatTraversalFailedSameNatEimToEim)
-        {
-            common::StationAddress address;
-            address.SetInetAddress(common::InetAddress(m_stationConnectionInfo.m_stationLocation.m_stationAddress.m_inetAddress.m_address,
-                                                       m_stationLocation.m_stationAddress.m_inetAddress.m_port));
-            transport::StationLocation location(m_stationConnectionInfo.m_stationLocation);
-            location.SetStationAddress(address);
-            NexFacade::GetInstance()->NotifyLeave(location, true, true);
-        }
-
-        if (m_natTraversalRetryCount > 0)
-        {
-            --m_natTraversalRetryCount;
-            if (NexFacade::GetInstance()->IsBeginMonitoringDataAvailable())
-            {
-                common::g_sessionBeginMonitoringContent.m_metric149 = static_cast<unsigned char>(1 - m_natTraversalRetryCount);
-                CountRetry(common::g_sessionBeginMonitoringContent.m_metric119);
-            }
-            m_natTraversalContext.SignalCancel();
-            m_natTraversalContext.Reset();
-            SelectStep(m_currentStep, &InetConnectStationJob::PrepareNatTraversal, "InetConnectStationJob::PrepareNatTraversal");
-            return MakeExecuteResult(cExecuteKindWait, cWaitIntervalMsec);
-        }
-        if (!m_secure && NexFacade::GetInstance()->IsRelayServiceEnabled() && NexFacade::GetInstance()->m_natRelay->IsRelayServerAvailable())
-        {
-            m_natTraversalContext.SignalCancel();
-            m_natTraversalContext.Reset();
-            SelectStep(m_currentStep, &InetConnectStationJob::PrepareNatTraversalByRelay, "InetConnectStationJob::PrepareNatTraversalByRelay");
-            return MakeExecuteResult(cExecuteKindContinue);
-        }
-
-        if (GetDebugSetting()->natTraversalResult != DebugSetting::cNatTraversalResultNotEmulated)
-        {
-            if (GetDebugSetting()->natTraversalResult != 0)
-                result = GetDebugSetting()->natTraversalResult;
-            else
-                result = EmulatedNatTraversalResult();
-        }
-        if (result != 0 && m_context)
-            m_context->SignalFailure(result);
-        NexFacade::GetInstance()->ReportNatTraversalResult(m_stationLocation, result, !m_secure);
-        SelectStep(m_currentStep, &ConnectStationJob::ConnectionFailed, "ConnectStationJob::ConnectionFailed");
-        return MakeExecuteResult(cExecuteKindContinue);
+        else
+            result = GetDebugSetting()->natTraversalResult;
     }
-    return MakeExecuteResult(cExecuteKindWait, cWaitIntervalMsec);
+    if (result != 0 && m_context)
+        m_context->SignalFailure(result);
+    NexFacade::GetInstance()->ReportNatTraversalResult(m_stationLocation, result, !m_secure);
+    SelectStep(m_currentStep, &ConnectStationJob::ConnectionFailed, "ConnectStationJob::ConnectionFailed");
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 InetConnectStationJob::ExecuteResult InetConnectStationJob::PrepareNatTraversalByRelay()
 {
     m_stationLocation = m_stationConnectionInfo.m_stationLocation;
-    if (!NexFacade::GetInstance()->PrepareNatTraversal(m_stationLocation, m_stationConnectionInfo, &m_natTraversalContext,
-                                                      m_secure, true, static_cast<StationIndex>(m_station->m_field10)))
-    {
-        SelectStep(m_currentStep, &InetConnectStationJob::ResolveCurrentAddress, "InetConnectStationJob::ResolveCurrentAddress");
-    }
-    else
+    if (NexFacade::GetInstance()->PrepareNatTraversal(m_stationLocation, m_stationConnectionInfo, &m_natTraversalContext,
+                                                     m_secure, true, m_station->GetStationIndex()))
     {
         SetDeadline(m_natTraversalDeadline, cNatTraversalStartTimeoutMsec);
         SelectStep(m_currentStep, &InetConnectStationJob::WaitForNatTraversalStartedByRelay, "InetConnectStationJob::WaitForNatTraversalStartedByRelay");
+    }
+    else
+    {
+        SelectStep(m_currentStep, &InetConnectStationJob::ResolveCurrentAddress, "InetConnectStationJob::ResolveCurrentAddress");
     }
     return MakeExecuteResult(cExecuteKindContinue);
 }
@@ -458,7 +480,7 @@ InetConnectStationJob::ExecuteResult InetConnectStationJob::WaitForNatTraversalS
     default:
         break;
     }
-    if (m_station->m_field10 == cHostStationIndex)
+    if (m_station->GetStationIndex() == cHostStationIndex)
     {
         common::Time now;
         now.SetNow();
@@ -499,23 +521,67 @@ InetConnectStationJob::ExecuteResult InetConnectStationJob::WaitForNatTraversalC
     else if (m_natTraversalContext.m_state != common::CallContext::cStateFailure || result != cResultPortDetectionFailed)
     {
         if (NexFacade::GetInstance()->GetNatPropertyMapping() == cNatMappingEndpointDependent && IsEdmMapping(m_stationConnectionInfo.m_stationLocation))
-            result = sameNat ? cResultNatTraversalFailedSameNatEdmToEdm : cResultNatTraversalFailedEdmToEdm;
+        {
+            if (sameNat)
+                result = cResultNatTraversalFailedSameNatEdmToEdm;
+            else
+                result = cResultNatTraversalFailedEdmToEdm;
+        }
         else if (NexFacade::GetInstance()->GetNatPropertyMapping() == cNatMappingEndpointDependent && IsEimMapping(m_stationConnectionInfo.m_stationLocation))
-            result = sameNat ? cResultNatTraversalFailedSameNatEdmToEim : cResultNatTraversalFailedEdmToEim;
+        {
+            if (sameNat)
+                result = cResultNatTraversalFailedSameNatEdmToEim;
+            else
+                result = cResultNatTraversalFailedEdmToEim;
+        }
         else if (NexFacade::GetInstance()->GetNatPropertyMapping() == cNatMappingEndpointIndependent && IsEdmMapping(m_stationConnectionInfo.m_stationLocation))
-            result = sameNat ? cResultNatTraversalFailedSameNatEimToEdm : cResultNatTraversalFailedEimToEdm;
+        {
+            if (sameNat)
+                result = cResultNatTraversalFailedSameNatEimToEdm;
+            else
+                result = cResultNatTraversalFailedEimToEdm;
+        }
         else if (NexFacade::GetInstance()->GetNatPropertyMapping() == cNatMappingEndpointIndependent && IsEimMapping(m_stationConnectionInfo.m_stationLocation))
-            result = sameNat ? cResultNatTraversalFailedSameNatEimToEim : cResultNatTraversalFailedEimToEim;
+        {
+            if (sameNat)
+                result = cResultNatTraversalFailedSameNatEimToEim;
+            else
+                result = cResultNatTraversalFailedEimToEim;
+        }
         else
             result = cResultNatTraversalFailed;
     }
 
     if (GetDebugSetting()->natTraversalResult != DebugSetting::cNatTraversalResultNotEmulated)
     {
-        if (GetDebugSetting()->natTraversalResult != 0)
-            result = GetDebugSetting()->natTraversalResult;
+        if (GetDebugSetting()->natTraversalResult == 0)
+        {
+            const unsigned long long kind = common::g_piaJobScheduler->m_dispatchTime.m_tick % cEmulatedResultKinds;
+            if (kind == 9)
+                result = cResultNatTraversalTimeout;
+            else if (kind == 8)
+                result = cResultNatTraversalFailedSameNatEdmToEdm;
+            else if (kind == 7)
+                result = cResultNatTraversalFailedEdmToEdm;
+            else if (kind == 6)
+                result = cResultNatTraversalFailedSameNatEdmToEim;
+            else if (kind == 5)
+                result = cResultNatTraversalFailedEdmToEim;
+            else if (kind == 4)
+                result = cResultNatTraversalFailedSameNatEimToEdm;
+            else if (kind == 3)
+                result = cResultNatTraversalFailedEimToEdm;
+            else if (kind == 2)
+                result = cResultNatTraversalFailedSameNatEimToEim;
+            else if (kind == 1)
+                result = cResultNatTraversalFailedEimToEim;
+            else if (kind == 0)
+                result = cResultNatTraversalFailed;
+            else
+                result = cResultNatTraversalFailed;
+        }
         else
-            result = EmulatedNatTraversalResult();
+            result = GetDebugSetting()->natTraversalResult;
     }
     if (result != 0 && m_context)
         m_context->SignalFailure(result);
@@ -527,7 +593,7 @@ InetConnectStationJob::ExecuteResult InetConnectStationJob::WaitForNatTraversalC
 
 InetConnectStationJob::ExecuteResult InetConnectStationJob::ResolveCurrentAddress()
 {
-    if (NexFacade::GetInstance()->CheckLatestStationLocation(m_stationLocation) && m_station->m_field10 == cHostStationIndex)
+    if (NexFacade::GetInstance()->CheckLatestStationLocation(m_stationLocation) && m_station->GetStationIndex() == cHostStationIndex)
     {
         transport::g_stationConnectionInfoTable->m_hostStationAddress = m_stationLocation.m_stationAddress;
         transport::g_stationConnectionInfoTable->GetHostStationAddress().Trace(cTraceStation);

@@ -178,29 +178,25 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
     case session::Session::cStatusDisconnectedNetwork:
     {
-        const Result result = session::Session::cResultStatusDisconnectedNetwork;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown6:
     {
-        const Result result = session::Session::cResultStatusUnknown6;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown7:
     {
-        const Result result = session::Session::cResultStatusUnknown7;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown8:
     {
-        const Result result = session::Session::cResultStatusUnknown8;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -211,15 +207,13 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
         if (m_callContext.m_state == common::CallContext::cStateFailure)
         {
-            const Result result = m_callContext.m_result;
-            m_callerContext->SignalFailure(result);
+            m_callerContext->SignalFailure(m_callContext.m_result);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            const Result result = 0;
-            m_callerContext->SignalSuccess(result);
+            m_callerContext->SignalSuccess(0);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
@@ -247,29 +241,25 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
     case session::Session::cStatusDisconnectedNetwork:
     {
-        const Result result = session::Session::cResultStatusDisconnectedNetwork;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown6:
     {
-        const Result result = session::Session::cResultStatusUnknown6;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown7:
     {
-        const Result result = session::Session::cResultStatusUnknown7;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown8:
     {
-        const Result result = session::Session::cResultStatusUnknown8;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -280,15 +270,13 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
         if (m_callContext.m_state == common::CallContext::cStateFailure)
         {
-            const Result result = m_callContext.m_result;
-            m_callerContext->SignalFailure(result);
+            m_callerContext->SignalFailure(m_callContext.m_result);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            const Result result = 0;
-            m_callerContext->SignalSuccess(result);
+            m_callerContext->SignalSuccess(0);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
@@ -316,29 +304,25 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
     case session::Session::cStatusDisconnectedNetwork:
     {
-        const Result result = session::Session::cResultStatusDisconnectedNetwork;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown6:
     {
-        const Result result = session::Session::cResultStatusUnknown6;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown7:
     {
-        const Result result = session::Session::cResultStatusUnknown7;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown8:
     {
-        const Result result = session::Session::cResultStatusUnknown8;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -349,15 +333,13 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
         if (m_callContext.m_state == common::CallContext::cStateFailure)
         {
-            const Result result = m_callContext.m_result;
-            m_callerContext->SignalFailure(result);
+            m_callerContext->SignalFailure(m_callContext.m_result);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            const Result result = 0;
-            m_callerContext->SignalSuccess(result);
+            m_callerContext->SignalSuccess(0);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
@@ -385,29 +367,25 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
     case session::Session::cStatusDisconnectedNetwork:
     {
-        const Result result = session::Session::cResultStatusDisconnectedNetwork;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown6:
     {
-        const Result result = session::Session::cResultStatusUnknown6;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown7:
     {
-        const Result result = session::Session::cResultStatusUnknown7;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown8:
     {
-        const Result result = session::Session::cResultStatusUnknown8;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -418,15 +396,13 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
         if (m_callContext.m_state == common::CallContext::cStateFailure)
         {
-            const Result result = m_callContext.m_result;
-            m_callerContext->SignalFailure(result);
+            m_callerContext->SignalFailure(m_callContext.m_result);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            const Result result = 0;
-            m_callerContext->SignalSuccess(result);
+            m_callerContext->SignalSuccess(0);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
@@ -441,29 +417,25 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Cr
     {
     case session::Session::cStatusDisconnectedNetwork:
     {
-        const Result result = session::Session::cResultStatusDisconnectedNetwork;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown6:
     {
-        const Result result = session::Session::cResultStatusUnknown6;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown7:
     {
-        const Result result = session::Session::cResultStatusUnknown7;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown8:
     {
-        const Result result = session::Session::cResultStatusUnknown8;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -488,29 +460,25 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
     case session::Session::cStatusDisconnectedNetwork:
     {
-        const Result result = session::Session::cResultStatusDisconnectedNetwork;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown6:
     {
-        const Result result = session::Session::cResultStatusUnknown6;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown7:
     {
-        const Result result = session::Session::cResultStatusUnknown7;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown8:
     {
-        const Result result = session::Session::cResultStatusUnknown8;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -521,15 +489,13 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
         if (m_callContext.m_state == common::CallContext::cStateFailure)
         {
-            const Result result = m_callContext.m_result;
-            m_callerContext->SignalFailure(result);
+            m_callerContext->SignalFailure(m_callContext.m_result);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            const Result result = 0;
-            m_callerContext->SignalSuccess(result);
+            m_callerContext->SignalSuccess(0);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
@@ -544,29 +510,25 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Jo
     {
     case session::Session::cStatusDisconnectedNetwork:
     {
-        const Result result = session::Session::cResultStatusDisconnectedNetwork;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown6:
     {
-        const Result result = session::Session::cResultStatusUnknown6;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown7:
     {
-        const Result result = session::Session::cResultStatusUnknown7;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown8:
     {
-        const Result result = session::Session::cResultStatusUnknown8;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -591,29 +553,25 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
     case session::Session::cStatusDisconnectedNetwork:
     {
-        const Result result = session::Session::cResultStatusDisconnectedNetwork;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown6:
     {
-        const Result result = session::Session::cResultStatusUnknown6;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown7:
     {
-        const Result result = session::Session::cResultStatusUnknown7;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown8:
     {
-        const Result result = session::Session::cResultStatusUnknown8;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -624,15 +582,13 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
         if (m_callContext.m_state == common::CallContext::cStateFailure)
         {
-            const Result result = m_callContext.m_result;
-            m_callerContext->SignalFailure(result);
+            m_callerContext->SignalFailure(m_callContext.m_result);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            const Result result = 0;
-            m_callerContext->SignalSuccess(result);
+            m_callerContext->SignalSuccess(0);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
@@ -647,29 +603,25 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::De
     {
     case session::Session::cStatusDisconnectedNetwork:
     {
-        const Result result = session::Session::cResultStatusDisconnectedNetwork;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown6:
     {
-        const Result result = session::Session::cResultStatusUnknown6;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown7:
     {
-        const Result result = session::Session::cResultStatusUnknown7;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown8:
     {
-        const Result result = session::Session::cResultStatusUnknown8;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -694,29 +646,25 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
     case session::Session::cStatusDisconnectedNetwork:
     {
-        const Result result = session::Session::cResultStatusDisconnectedNetwork;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown6:
     {
-        const Result result = session::Session::cResultStatusUnknown6;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown7:
     {
-        const Result result = session::Session::cResultStatusUnknown7;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown8:
     {
-        const Result result = session::Session::cResultStatusUnknown8;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -727,15 +675,13 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
         if (m_callContext.m_state == common::CallContext::cStateFailure)
         {
-            const Result result = m_callContext.m_result;
-            m_callerContext->SignalFailure(result);
+            m_callerContext->SignalFailure(m_callContext.m_result);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            const Result result = 0;
-            m_callerContext->SignalSuccess(result);
+            m_callerContext->SignalSuccess(0);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
@@ -750,29 +696,25 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Le
     {
     case session::Session::cStatusDisconnectedNetwork:
     {
-        const Result result = session::Session::cResultStatusDisconnectedNetwork;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown6:
     {
-        const Result result = session::Session::cResultStatusUnknown6;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown7:
     {
-        const Result result = session::Session::cResultStatusUnknown7;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown8:
     {
-        const Result result = session::Session::cResultStatusUnknown8;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -797,29 +739,25 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
     case session::Session::cStatusDisconnectedNetwork:
     {
-        const Result result = session::Session::cResultStatusDisconnectedNetwork;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown6:
     {
-        const Result result = session::Session::cResultStatusUnknown6;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown7:
     {
-        const Result result = session::Session::cResultStatusUnknown7;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown8:
     {
-        const Result result = session::Session::cResultStatusUnknown8;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -830,15 +768,13 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
         if (m_callContext.m_state == common::CallContext::cStateFailure)
         {
-            const Result result = m_callContext.m_result;
-            m_callerContext->SignalFailure(result);
+            m_callerContext->SignalFailure(m_callContext.m_result);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            const Result result = 0;
-            m_callerContext->SignalSuccess(result);
+            m_callerContext->SignalSuccess(0);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
@@ -853,29 +789,25 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Up
     {
     case session::Session::cStatusDisconnectedNetwork:
     {
-        const Result result = session::Session::cResultStatusDisconnectedNetwork;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown6:
     {
-        const Result result = session::Session::cResultStatusUnknown6;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown7:
     {
-        const Result result = session::Session::cResultStatusUnknown7;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown8:
     {
-        const Result result = session::Session::cResultStatusUnknown8;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -900,29 +832,25 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
     case session::Session::cStatusDisconnectedNetwork:
     {
-        const Result result = session::Session::cResultStatusDisconnectedNetwork;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown6:
     {
-        const Result result = session::Session::cResultStatusUnknown6;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown7:
     {
-        const Result result = session::Session::cResultStatusUnknown7;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
     case session::Session::cStatusUnknown8:
     {
-        const Result result = session::Session::cResultStatusUnknown8;
-        m_callerContext->SignalFailure(result);
+        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -933,15 +861,13 @@ NexMatchCommunityManagementJob::ExecuteResult NexMatchCommunityManagementJob::Wa
     {
         if (m_callContext.m_state == common::CallContext::cStateFailure)
         {
-            const Result result = m_callContext.m_result;
-            m_callerContext->SignalFailure(result);
+            m_callerContext->SignalFailure(m_callContext.m_result);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }
         if (m_callContext.m_state == common::CallContext::cStateSuccess)
         {
-            const Result result = 0;
-            m_callerContext->SignalSuccess(result);
+            m_callerContext->SignalSuccess(0);
             m_callerContext = 0;
             return MakeExecuteResult(cExecuteKindFinished);
         }

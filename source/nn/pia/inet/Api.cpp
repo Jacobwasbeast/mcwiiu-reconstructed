@@ -4,6 +4,7 @@
 
 #include "nn/pia/HeapManager.hpp"
 #include "nn/pia/ModuleStackChecker.hpp"
+#include "nn/pia/Transport.hpp"
 #include "platform/wiiu/pead.hpp"
 
 namespace nn { namespace pia { namespace inet {
@@ -53,9 +54,9 @@ Result BeginSetup()
 Result EndSetup()
 {
     if (g_inetInitialized == 0)
-        return ResultNotInitialized();
+        return transport::cResultNotInitialized;
     if (g_inetInSetup == 0)
-        return ResultInvalidState();
+        return transport::cResultInvalidState;
 
     common::HeapManager::GetHeap(cModuleType_Inet)->adjust();
     g_inetInSetup = 0;

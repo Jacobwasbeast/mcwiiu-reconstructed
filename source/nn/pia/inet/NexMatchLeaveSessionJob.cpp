@@ -33,7 +33,7 @@ inline void SelectStep(common::StepSequenceJob::Step& slot, LeaveStep function, 
 NexMatchLeaveSessionJob::NexMatchLeaveSessionJob() : session::LeaveSessionJob()
 {
     m_sessionIdNum = 0;
-    for (int i = 0; i < cSessionIdMax; ++i)
+    for (unsigned char i = 0; i < cSessionIdMax; ++i)
     {
         m_sessionIds[i] = 0;
         m_isSessionInfoRequested[i] = false;
@@ -170,8 +170,9 @@ NexMatchLeaveSessionJob::ExecuteResult NexMatchLeaveSessionJob::WaitLeaveMatchma
     default:
         break;
     }
-    if (matchmakeSession->WaitLeaveMatchmakeSessionCompanion())
-        SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::LeaveMatchmakeSessionCompanions), "NexMatchLeaveSessionJob::LeaveMatchmakeSessionCompanions");
+    if (!matchmakeSession->WaitLeaveMatchmakeSessionCompanion())
+        return MakeExecuteResult(cExecuteKindNextStep);
+    SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::LeaveMatchmakeSessionCompanions), "NexMatchLeaveSessionJob::LeaveMatchmakeSessionCompanions");
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -276,15 +277,14 @@ NexMatchLeaveSessionJob::ExecuteResult NexMatchLeaveSessionJob::MigrateMatchmake
             sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex])
             candidateIds[candidateNum++] = entry->stationId;
     }
-    const unsigned int bufferIndex = piaSession->m_currentSessionIndex == 0;
-    NexMatchmakeSession* matchmakeSession = static_cast<NexMatchmakeSession*>(piaSession->m_matchmakeSession[bufferIndex]);
-    if (matchmakeSession->MigrateMatchmakeSessionOwner(&m_callContext, piaSession->m_sessionId[bufferIndex], candidateIds, candidateNum) != 0)
+    NexMatchmakeSession* matchmakeSession = static_cast<NexMatchmakeSession*>(piaSession->m_matchmakeSession[piaSession->m_currentSessionIndex == 0]);
+    if (matchmakeSession->MigrateMatchmakeSessionOwner(&m_callContext, piaSession->m_sessionId[piaSession->m_currentSessionIndex == 0], candidateIds, candidateNum) == 0)
     {
-        SetNextStepAtWaitLeaveMesh();
-        return MakeExecuteResult(cExecuteKindContinue);
+        SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::WaitMigrateMatchmakeSessionOwner), "NexMatchLeaveSessionJob::WaitMigrateMatchmakeSessionOwner");
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
-    SelectStep(m_currentStep, static_cast<LeaveStep>(&NexMatchLeaveSessionJob::WaitMigrateMatchmakeSessionOwner), "NexMatchLeaveSessionJob::WaitMigrateMatchmakeSessionOwner");
-    return MakeExecuteResult(cExecuteKindNextStep);
+    SetNextStepAtWaitLeaveMesh();
+    return MakeExecuteResult(cExecuteKindContinue);
 }
 
 NexMatchLeaveSessionJob::ExecuteResult NexMatchLeaveSessionJob::WaitMigrateMatchmakeSessionOwner()
@@ -327,7 +327,7 @@ void NexMatchLeaveSessionJob::Trace(unsigned long long) const
 void NexMatchLeaveSessionJob::CleanupImpl()
 {
     m_sessionIdNum = 0;
-    for (int i = 0; i < cSessionIdMax; ++i)
+    for (unsigned char i = 0; i < cSessionIdMax; ++i)
     {
         m_sessionIds[i] = 0;
         m_isSessionInfoRequested[i] = false;

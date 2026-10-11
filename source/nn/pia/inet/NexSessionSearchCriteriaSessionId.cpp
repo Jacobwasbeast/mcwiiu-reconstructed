@@ -29,7 +29,7 @@ void NexSessionSearchCriteriaSessionId::Reset()
     m_sessionId = 0;
 }
 
-nn::pia::common::Result NexSessionSearchCriteriaSessionId::SetResultRange(unsigned int, unsigned int)
+nn::pia::Result NexSessionSearchCriteriaSessionId::SetResultRange(unsigned int, unsigned int)
 {
     return transport::cResultInvalidState;
 }

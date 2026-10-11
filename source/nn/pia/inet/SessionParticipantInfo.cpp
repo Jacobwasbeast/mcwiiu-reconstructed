@@ -32,21 +32,19 @@ void SessionParticipantInfo::Cleanup()
 
 void SessionParticipantInfo::RemoveObsoleteEntry()
 {
-    ParticipantList& list = m_participantList;
-    common::ListNode* end = list.Sentinel();
-    common::ListNode* node = end->next;
+    common::ListNode* node = m_participantList.Sentinel()->next;
     common::ListNode* next = node->next;
-    while (node != end)
+    while (node != m_participantList.Sentinel())
     {
         ParticipantList::Node* participant = static_cast<ParticipantList::Node*>(node);
         if (participant->value.m_participationCount < 0 &&
             (participant->value.m_participationEvent == cParticipationEventDisconnect ||
              participant->value.m_participationEvent == cParticipationEventEndParticipation))
-            list.Free(participant);
+            m_participantList.Free(participant);
         node = next;
         next = node->next;
     }
-    if (list.GetNodeNum() == 0)
+    if (m_participantList.GetNodeNum() == 0)
         m_sessionId = 0;
 }
 

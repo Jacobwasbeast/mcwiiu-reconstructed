@@ -100,13 +100,13 @@ InetJoinMeshJob::ExecuteResult InetJoinMeshJob::StartBandwidthCheck()
     for (unsigned short index = 2; index <= m_stationCount; ++index)
     {
         station = transport::g_stationConnectionInfoTable->GetStation(m_stationInfos[m_stationCount - index]);
-        if (station && station->m_field10 != cStationIndexInvalid &&
-            station->m_field10 != static_cast<unsigned int>(session::g_piaMesh->GetLocalStationIndex()))
+        if (station && station->GetStationIndex() != cStationIndexInvalid &&
+            station->GetStationIndex() != static_cast<unsigned int>(session::g_piaMesh->GetLocalStationIndex()))
             break;
     }
     if (station)
     {
-        protocol->StartSend(static_cast<StationIndex>(station->m_field10));
+        protocol->StartSend(station->GetStationIndex());
         SelectStep(m_currentStep, &InetJoinMeshJob::WaitBandwidthCheck, "InetJoinMeshJob::WaitBandwidthCheck");
         return MakeExecuteResult(cExecuteKindNextStep);
     }

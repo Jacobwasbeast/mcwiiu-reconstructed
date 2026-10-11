@@ -23,6 +23,7 @@
 #include "nn/pia/inet/NexSessionSearchCriteriaParticipant.hpp"
 #include "nn/pia/inet/NexSessionSearchCriteriaSessionId.hpp"
 #include "nn/nex/PlayingSession.hpp"
+#include "nn/nex/ErrorCodeConverter.hpp"
 #include "nn/nex/NgsBridgeInterface.hpp"
 #include "nn/nex/Reconstruction.hpp"
 #include <coreinit/memory.h>
@@ -289,10 +290,10 @@ Result NexMatchmakeSession::BrowseMatchmakeSession(nn::pia::common::CallContext*
         return transport::cResultInvalidState;
     }
     if (callContext->m_state == common::CallContext::cStateInProgress) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (m_callContext != 0) {
-        return transport::cResultInvalidState;
+        return ResultInvalidState();
     }
     if (m_protocolCallContext.GetState() == nn::nex::CallContext::CallInProgress) {
         return transport::cResultInvalidState;
@@ -300,7 +301,7 @@ Result NexMatchmakeSession::BrowseMatchmakeSession(nn::pia::common::CallContext*
     m_callContext = callContext;
     if (!m_matchmakeExtensionClient->BrowseMatchmakeSession(&m_protocolCallContext, m_searchCriteriaList->front(), m_resultRangeList->front(), m_gatheringList)) {
         m_callContext = 0;
-        return transport::cResultInvalidState;
+        return ResultInvalidState();
     }
     m_callContext->InitiateCall();
     m_browseMatchmakeSessionResult->Clear();
@@ -411,16 +412,16 @@ Result NexMatchmakeSession::ClearSystemPassword(nn::pia::common::CallContext* ca
 Result NexMatchmakeSession::CloseParticipate(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
     if (callContext == 0) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (callContext->m_state == common::CallContext::cStateInProgress) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (m_callContext != 0) {
         return transport::cResultInvalidState;
     }
     if (m_protocolCallContext.GetState() == nn::nex::CallContext::CallInProgress) {
-        return transport::cResultInvalidState;
+        return ResultInvalidState();
     }
     m_callContext = callContext;
     if (!m_matchmakeExtensionClient->CloseParticipation(&m_protocolCallContext, gatheringId)) {
@@ -441,6 +442,9 @@ unsigned long long NexMatchmakeSession::ConvertGatheringIdToPersistentGatheringC
 
 SessionType NexMatchmakeSession::ConvertMatchmakeSystemTypeToSessionType(nn::nex::MatchmakeSystemType systemType)
 {
+    if (systemType == nn::nex::cMatchmakeSystemType_1) {
+        return cSessionType_Normal;
+    }
     if (systemType == nn::nex::cMatchmakeSystemType_2) {
         return cSessionType_Ranked;
     }
@@ -457,13 +461,14 @@ unsigned int NexMatchmakeSession::ConvertPersistentGatheringCodeToGatheringId(un
 
 nn::nex::MatchmakeSelectionMethod NexMatchmakeSession::ConvertSelectionMethodToMatchmakeSelectionMethod(SelectionMethod method)
 {
-    if (method == cSelectionMethod_1) {
+    switch (method) {
+    case cSelectionMethod_1:
         return nn::nex::cMatchmakeSelectionMethod_4;
-    }
-    if (method == cSelectionMethod_2) {
+    case cSelectionMethod_2:
         return nn::nex::cMatchmakeSelectionMethod_5;
+    default:
+        return nn::nex::cMatchmakeSelectionMethod_0;
     }
-    return nn::nex::cMatchmakeSelectionMethod_0;
 }
 
 nn::nex::MatchmakeSystemType NexMatchmakeSession::ConvertSessionTypeToMatchmakeSystemType(SessionType sessionType)
@@ -563,7 +568,7 @@ void NexMatchmakeSession::CopyMatchmakeSessionToSessionInfo(const nn::nex::Match
 Result NexMatchmakeSession::CreateCommunity(nn::pia::common::CallContext* callContext)
 {
     if (callContext == 0) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (callContext->m_state == common::CallContext::cStateInProgress) {
         return cResultInvalidArgument;
@@ -572,7 +577,7 @@ Result NexMatchmakeSession::CreateCommunity(nn::pia::common::CallContext* callCo
         return transport::cResultInvalidState;
     }
     if (m_protocolCallContext.GetState() == nn::nex::CallContext::CallInProgress) {
-        return transport::cResultInvalidState;
+        return ResultInvalidState();
     }
     m_callContext = callContext;
     if (!m_matchmakeExtensionClient->CreatePersistentGathering(&m_protocolCallContext, *m_persistentGathering, &m_gatheringId)) {
@@ -761,10 +766,10 @@ Result NexMatchmakeSession::FindCommunityByParticipant(nn::pia::common::CallCont
 Result NexMatchmakeSession::FindOfficialCommunity(nn::pia::common::CallContext* callContext, bool isAvailableOnly, unsigned int offset, unsigned int size)
 {
     if (callContext == 0) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (callContext->m_state == common::CallContext::cStateInProgress) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (m_callContext != 0) {
         return transport::cResultInvalidState;
@@ -842,16 +847,16 @@ Result NexMatchmakeSession::FindSessionByParticipant(nn::pia::common::CallContex
 Result NexMatchmakeSession::FindSessionBySessionId(nn::pia::common::CallContext* callContext, const NexSessionSearchCriteriaSessionId& criteria)
 {
     if (callContext == 0) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (callContext->m_state == common::CallContext::cStateInProgress) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (m_callContext != 0) {
-        return transport::cResultInvalidState;
+        return ResultInvalidState();
     }
     if (m_protocolCallContext.GetState() == nn::nex::CallContext::CallInProgress) {
-        return transport::cResultInvalidState;
+        return ResultInvalidState();
     }
     m_callContext = callContext;
     if (!m_matchmakeExtensionClient->FindByID(&m_protocolCallContext, criteria.GetSessionId(), &m_gatheringHolder)) {
@@ -913,10 +918,10 @@ unsigned int NexMatchmakeSession::GetRandomMatchmakeScore() const
 Result NexMatchmakeSession::GetStationConnectionInfo(nn::pia::common::CallContext* callContext, unsigned int stationId)
 {
     if (callContext == 0) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (callContext->m_state == common::CallContext::cStateInProgress) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (m_callContext != 0) {
         return transport::cResultInvalidState;
@@ -977,19 +982,19 @@ unsigned char NexMatchmakeSession::IsRandomMatchmakeScoreAvailable() const
 
 unsigned int NexMatchmakeSession::IsUpdatableSelectionPriority(unsigned char priority)
 {
-    if (priority != 0 && priority != cSelectionPriorityMax && m_selectionPriorityUpdateTime.m_tick != 0)
+    if (priority == 0 || priority == cSelectionPriorityMax || m_selectionPriorityUpdateTime.m_tick == 0)
     {
-        common::Time now;
-        now.SetNow();
-        unsigned int elapsedSec = static_cast<unsigned int>(
-            static_cast<long long>(now.m_tick - m_selectionPriorityUpdateTime.m_tick) /
-            common::TimeSpan::GetTicksPerSec().m_tick);
-        if (elapsedSec <= cSelectionPriorityUpdateIntervalSec)
-        {
-            return 0;
-        }
+        return 1;
     }
-    return 1;
+    common::Time now;
+    now.SetNow();
+    common::TimeSpan elapsed = now - m_selectionPriorityUpdateTime;
+    unsigned int elapsedSec = static_cast<unsigned int>(elapsed.m_tick / common::TimeSpan::GetTicksPerSec().m_tick);
+    if (elapsedSec > cSelectionPriorityUpdateIntervalSec)
+    {
+        return 1;
+    }
+    return 0;
 }
 
 Result NexMatchmakeSession::JoinCommunity(nn::pia::common::CallContext* callContext)
@@ -1001,7 +1006,7 @@ Result NexMatchmakeSession::JoinCommunity(nn::pia::common::CallContext* callCont
         return cResultInvalidArgument;
     }
     if (m_callContext != 0) {
-        return transport::cResultInvalidState;
+        return ResultInvalidState();
     }
     if (m_protocolCallContext.GetState() == nn::nex::CallContext::CallInProgress) {
         return transport::cResultInvalidState;
@@ -1171,10 +1176,10 @@ Result NexMatchmakeSession::MigrateMatchmakeSessionOwner(nn::pia::common::CallCo
 Result NexMatchmakeSession::ModifyAttribute(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned int index, unsigned int value)
 {
     if (callContext == 0) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (callContext->m_state == common::CallContext::cStateInProgress) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (m_callContext != 0) {
         return transport::cResultInvalidState;
@@ -1194,16 +1199,16 @@ Result NexMatchmakeSession::ModifyAttribute(nn::pia::common::CallContext* callCo
 Result NexMatchmakeSession::OpenParticipate(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
     if (callContext == 0) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (callContext->m_state == common::CallContext::cStateInProgress) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (m_callContext != 0) {
         return transport::cResultInvalidState;
     }
     if (m_protocolCallContext.GetState() == nn::nex::CallContext::CallInProgress) {
-        return transport::cResultInvalidState;
+        return ResultInvalidState();
     }
     m_callContext = callContext;
     if (!m_matchmakeExtensionClient->OpenParticipation(&m_protocolCallContext, gatheringId)) {
@@ -1387,11 +1392,12 @@ Result NexMatchmakeSession::ReflectJoinCommunitySetting(const NexJoinCommunitySe
 {
     m_persistentGathering->Reset();
     m_persistentGathering->m_uiValue1 = setting->GetCommunityId();
-    if (setting->GetCommunityUserPassword().GetStringLength() != 0) {
-        nn::nex::PersistentGathering* community = m_persistentGathering;
+    if (setting->GetCommunityUserPassword().GetStringLength() > 0) {
         if (setting->GetCommunityUserPassword().GetEncodingType() == common::String::EncodingType_Utf16) {
+            nn::nex::PersistentGathering* community = m_persistentGathering;
             community->m_strPassword = nn::nex::String(static_cast<const wchar_t*>(setting->GetCommunityUserPassword().GetBuffer()));
         } else {
+            nn::nex::PersistentGathering* community = m_persistentGathering;
             community->m_strPassword = nn::nex::String(static_cast<const char*>(setting->GetCommunityUserPassword().GetBuffer()));
         }
     }
@@ -1806,14 +1812,15 @@ Result NexMatchmakeSession::RequestSessionInfo(nn::pia::common::CallContext* cal
         return transport::cResultInvalidState;
     }
     if (m_protocolCallContext.GetState() == nn::nex::CallContext::CallInProgress) {
-        return transport::cResultInvalidState;
+        return ResultInvalidState();
     }
     m_callContext = callContext;
     if (!m_matchmakeExtensionClient->FindMatchmakeSessionByGatheringIdDetail(&m_protocolCallContext, gatheringId, m_foundSession)) {
         m_callContext = 0;
-        return cResultRequestFailed;
+        return Result(cResultRequestFailed);
     }
-    m_requestDeadline = common::g_piaJobScheduler->m_dispatchTime + common::TimeSpan(common::TimeSpan::GetTicksPerMSec().m_tick * cRequestTimeoutMsec);
+    common::TimeSpan timeout = common::TimeSpan::FromMSec(cRequestTimeoutMsec);
+    m_requestDeadline = common::g_piaJobScheduler->m_dispatchTime + timeout;
     m_callContext->InitiateCall();
     return 0;
 }
@@ -1830,14 +1837,15 @@ Result NexMatchmakeSession::RequestSessionInfoWithoutPermission(nn::pia::common:
         return transport::cResultInvalidState;
     }
     if (m_protocolCallContext.GetState() == nn::nex::CallContext::CallInProgress) {
-        return transport::cResultInvalidState;
+        return ResultInvalidState();
     }
     m_callContext = callContext;
     if (!m_matchmakeExtensionClient->FindByID(&m_protocolCallContext, gatheringId, &m_gatheringHolder)) {
         m_callContext = 0;
-        return cResultRequestFailed;
+        return Result(cResultRequestFailed);
     }
-    m_requestDeadline = common::g_piaJobScheduler->m_dispatchTime + common::TimeSpan(common::TimeSpan::GetTicksPerMSec().m_tick * cRequestTimeoutMsec);
+    common::TimeSpan timeout = common::TimeSpan::FromMSec(cRequestTimeoutMsec);
+    m_requestDeadline = common::g_piaJobScheduler->m_dispatchTime + timeout;
     m_callContext->InitiateCall();
     return 0;
 }
@@ -1865,8 +1873,9 @@ Result NexMatchmakeSession::SetMatchmakeSessionKey(const nn::nex::qVector<unsign
 {
     OSBlockSet(m_matchmakeSessionKey, 0, sizeof(m_matchmakeSessionKey));
     unsigned int index = 0;
-    for (nn::nex::qVector<unsigned char>::const_iterator it = key.begin(); it != key.end() && index < sizeof(m_matchmakeSessionKey); ++it, ++index) {
-        m_matchmakeSessionKey[index] = *it;
+    nn::nex::qVector<unsigned char>::const_iterator it = key.begin();
+    while (it != key.end() && index < sizeof(m_matchmakeSessionKey)) {
+        m_matchmakeSessionKey[index++] = *it++;
     }
     return 0;
 }
@@ -1946,7 +1955,7 @@ Result NexMatchmakeSession::UpdateApplicationBuffer(nn::pia::common::CallContext
 Result NexMatchmakeSession::UpdateAttributes(nn::pia::common::CallContext* callContext, unsigned int gatheringId, unsigned int* attributes)
 {
     if (callContext == 0) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (callContext->m_state == common::CallContext::cStateInProgress) {
         return cResultInvalidArgument;
@@ -1992,7 +2001,7 @@ Result NexMatchmakeSession::UpdateCommunity(nn::pia::common::CallContext* callCo
 Result NexMatchmakeSession::UpdateMatchmakeSessionHost(unsigned int stationId)
 {
     if (stationId == 0) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (m_protocolCallContextB.GetState() == nn::nex::CallContext::CallInProgress) {
         m_protocolCallContextB.Cancel(nn::nex::CallContext::CallCanceled);
@@ -2001,7 +2010,7 @@ Result NexMatchmakeSession::UpdateMatchmakeSessionHost(unsigned int stationId)
         m_protocolCallContextB.Reset();
     }
     if (!m_matchmakeExtensionClient->UpdateSessionHost(&m_protocolCallContextB, stationId, true)) {
-        return transport::cResultInvalidState;
+        return ResultInvalidState();
     }
     m_matchmakeHost = true;
     return 0;
@@ -2023,21 +2032,21 @@ Result NexMatchmakeSession::UpdateSelectionPriority(unsigned int gatheringId, un
         return cResultSelectionPriorityUpdateTooFrequent;
     }
     m_selectionPriorityUpdateTime.SetNow();
-    if (!m_matchmakeExtensionClient->UpdateProgressScore(gatheringId, priority)) {
-        return cResultRequestFailed;
+    if (m_matchmakeExtensionClient->UpdateProgressScore(gatheringId, priority)) {
+        common::SessionStateMonitoringContent* content = &common::g_sessionStateMonitoringContent;
+        content->m_metric223[2] = content->m_metric223[2] != cMonitoringMetricUnset ? content->m_metric223[2] + 1 : 1;
+        return 0;
     }
-    unsigned char& updateCount = common::g_sessionStateMonitoringContent.m_metric223[2];
-    updateCount = updateCount != cMonitoringMetricUnset ? updateCount + 1 : 1;
-    return 0;
+    return cResultRequestFailed;
 }
 
 Result NexMatchmakeSession::UpdateSessionSetting(nn::pia::common::CallContext* callContext, unsigned int gatheringId)
 {
     if (callContext == 0) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (callContext->m_state == common::CallContext::cStateInProgress) {
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     }
     if (m_callContext != 0) {
         return transport::cResultInvalidState;

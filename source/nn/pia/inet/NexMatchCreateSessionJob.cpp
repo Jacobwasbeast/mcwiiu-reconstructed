@@ -135,7 +135,7 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::WaitLeaveJoine
         if (m_callContext.m_state == common::CallContext::cStateFailure &&
             m_callContext.m_result != cResultRequestTimeout &&
             m_callContext.m_result == session::Session::cResultStatusDisconnectedNetwork)
-            m_result = session::Session::cResultStatusDisconnectedNetwork;
+            m_result = m_callContext.m_result;
         if (m_joinedSessionIdNum != 0)
             --m_joinedSessionIdNum;
         SelectStep(m_currentStep, &NexMatchCreateSessionJob::LeaveJoinedMatchmakeSession, "NexMatchCreateSessionJob::LeaveJoinedMatchmakeSession");
@@ -225,9 +225,9 @@ NexMatchCreateSessionJob::ExecuteResult NexMatchCreateSessionJob::WaitCreateMatc
             SetMatchmakeStatus(session::Session::cMatchmakeStatusSearching);
             session::g_piaSession->SetCurrentSessionOpenStatus(
                 m_isOpenSession ? session::Session::cSessionOpenStatusOpen : session::Session::cSessionOpenStatusParticipationClosed);
-            const common::TimeSpan& ticksPerMSec = common::TimeSpan::GetTicksPerMSec();
-            m_notificationDeadline.m_tick =
-                common::g_piaJobScheduler->m_dispatchTime.m_tick + ticksPerMSec.m_tick * cNotificationTimeoutMsec;
+            common::Time deadline;
+            deadline.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * cNotificationTimeoutMsec + common::g_piaJobScheduler->m_dispatchTime.m_tick;
+            m_notificationDeadline = deadline;
             SelectStep(m_currentStep, &NexMatchCreateSessionJob::WaitNotification, "NexMatchCreateSessionJob::WaitNotification");
             return MakeExecuteResult(cExecuteKindContinue);
         }

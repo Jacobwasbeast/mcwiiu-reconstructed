@@ -34,8 +34,9 @@ Result InetInputStream::readFromSocket(common::Packet* packet)
 {
     common::InetAddress source;
     unsigned char ttl = 0;
-    Result result = m_socket->RecvFrom(packet->m_packetData.m_data, common::Packet::cDataSizeMax, &source, &ttl,
-                                       reinterpret_cast<int*>(&packet->m_size));
+    unsigned char* data = packet->m_packetData.m_data;
+    int* size = reinterpret_cast<int*>(&packet->m_size);
+    Result result = m_socket->RecvFrom(data, common::Packet::cDataSizeMax, &source, &ttl, size);
     if (result != 0)
     {
         if (!m_started)
@@ -45,8 +46,7 @@ Result InetInputStream::readFromSocket(common::Packet* packet)
 
     if (NexFacade::GetInstance() != 0 && NexFacade::GetInstance()->IsRelayServiceEnabled())
     {
-        Result unpackResult = NexFacade::GetInstance()->m_natRelay->Unpack(packet->m_packetData.m_data,
-                                                         reinterpret_cast<int*>(&packet->m_size), &source);
+        Result unpackResult = NexFacade::GetInstance()->m_natRelay->Unpack(data, size, &source);
         if (unpackResult != 0)
             return unpackResult;
     }
@@ -58,14 +58,20 @@ Result InetInputStream::readFromSocket(common::Packet* packet)
         return transport::cResultDataNotReady;
     }
 
+    bool ignored = false;
     for (unsigned int index = 0; index < cIgnoreAddressNum; ++index)
     {
         if (s_ignoreAddresses[index].m_address == source.m_address)
-            return transport::cResultDataNotReady;
+        {
+            ignored = true;
+            break;
+        }
     }
+    if (ignored)
+        return transport::cResultDataNotReady;
 
     common::StationAddress stationAddress;
-    stationAddress.SetInetAddress(source);
+    result = stationAddress.SetInetAddress(source);
     packet->m_field608 = stationAddress;
     packet->m_field600 = ttl;
     return 0;
@@ -82,7 +88,7 @@ Result InetInputStream::CalculateCryptoParameter(unsigned char* parameter, unsig
                                                  common::Packet* packet)
 {
     if (size < 12)
-        return transport::cResultInvalidArgument;
+        return ResultInvalidArgument();
     unsigned int gatheringId = 0;
     if (NexFacade::GetInstance() != 0)
         gatheringId = NexFacade::GetInstance()->m_gatheringId;

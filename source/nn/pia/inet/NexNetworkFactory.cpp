@@ -405,22 +405,13 @@ session::ISessionInfoList* NexNetworkFactory::CreateSessionInfoList(unsigned sho
 {
     typedef session::SessionInfoList<NexSessionInfoPrivate> List;
     void* storage = pead::allocateFromSeadHeap(sizeof(List), common::HeapManager::GetHeap());
-    List* list;
-    if (storage == 0)
-        list = 0;
-    else
-        list = new (storage) List(size);
-    return list;
+    return storage != 0 ? new (storage) List(size) : 0;
 }
 
 session::ICommunityInfoList* NexNetworkFactory::CreateCommunityInfoList(unsigned char size)
 {
     void* storage = pead::allocateFromSeadHeap(sizeof(NexCommunityInfoList), common::HeapManager::GetHeap());
-    NexCommunityInfoList* list;
-    if (storage == 0)
-        list = 0;
-    else
-        list = new (storage) NexCommunityInfoList(size);
+    session::ICommunityInfoList* list = storage != 0 ? new (storage) NexCommunityInfoList(size) : 0;
     return list;
 }
 

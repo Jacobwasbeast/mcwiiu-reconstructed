@@ -16,7 +16,7 @@ class NexSessionSearchCriteriaOwner : public nn::pia::session::SessionSearchCrit
 public:
     NexSessionSearchCriteriaOwner();
     ~NexSessionSearchCriteriaOwner();
-    nn::pia::common::Result SetResultRange(uint32_t offset, uint32_t size);
+    nn::pia::Result SetResultRange(uint32_t offset, uint32_t size);
     uint64_t GetOwnerPrincipalId() const;
     void Reset();
     void SetOwnerPrincipalId(unsigned long long principalId);

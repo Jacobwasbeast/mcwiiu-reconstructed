@@ -218,7 +218,8 @@ void NexNatRelay::RelayProbeRequest(const transport::StationLocation& source,
              node = node->next)
         {
             RelayEntry* entry = RelayTable::ValueOf(node);
-            if (source.m_stationAddress.m_inetAddress == entry->m_stationAddress ||
+            const common::InetAddress& entryAddress = entry->m_stationAddress;
+            if (entryAddress == source.m_stationAddress.m_inetAddress ||
                 entry->m_connectionId == static_cast<unsigned int>(source.m_field1c))
             {
                 found = true;
@@ -231,8 +232,8 @@ void NexNatRelay::RelayProbeRequest(const transport::StationLocation& source,
                 }
                 entry->m_stationAddress = source.m_stationAddress.m_inetAddress;
                 entry->m_connectionId = source.m_field1c;
-                entry->m_expireTime.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick +
-                                             common::TimeSpan::GetTicksPerMSec().m_tick * cRelayEntryLifetimeMsec;
+                entry->m_expireTime.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * cRelayEntryLifetimeMsec +
+                                             common::g_piaJobScheduler->m_dispatchTime.m_tick;
             }
         }
         if (!found)
@@ -243,8 +244,8 @@ void NexNatRelay::RelayProbeRequest(const transport::StationLocation& source,
                 entry->m_stationAddress = source.m_stationAddress.m_inetAddress;
                 entry->m_relayAddress = destination.m_inetAddress;
                 entry->m_connectionId = source.m_field1c;
-                entry->m_expireTime.m_tick = common::g_piaJobScheduler->m_dispatchTime.m_tick +
-                                             common::TimeSpan::GetTicksPerMSec().m_tick * cRelayEntryLifetimeMsec;
+                entry->m_expireTime.m_tick = common::TimeSpan::GetTicksPerMSec().m_tick * cRelayEntryLifetimeMsec +
+                                             common::g_piaJobScheduler->m_dispatchTime.m_tick;
             }
         }
     }
@@ -334,11 +335,12 @@ void NexNatRelay::ResolveRelayServerSetting()
     char* destination = hostName;
     while (length < key->m_relayAddress.GetLength() && length < cRelayHostNameLengthMax)
     {
-        if (*source >= L' ' && *source <= L'~')
+        unsigned short character = *source;
+        if (character >= L' ' && character <= L'~')
         {
-            *destination = static_cast<char>(*source);
-            ++length;
+            *destination = static_cast<char>(character);
             ++destination;
+            ++length;
         }
         ++source;
     }
@@ -356,11 +358,12 @@ void NexNatRelay::ResolveRelayServerSetting()
         {
             Result result = common::Socket::InetAtoH(hostName, &address);
             if (result != cResultSuccess)
+            {
                 address.m_address = 0;
+                address.m_port = 0;
+            }
         }
-        address.m_port = cDefaultRelayServerPort;
-        if (key->m_relayPort != 0)
-            address.m_port = key->m_relayPort;
+        address.m_port = key->m_relayPort != 0 ? key->m_relayPort : cDefaultRelayServerPort;
     }
     SetRelayServerAddress(address);
 }
@@ -465,7 +468,8 @@ bool NexNatRelay::RemoveRelayEntry(const transport::StationLocation& location)
     while (node != m_relayTable.Sentinel())
     {
         RelayEntry* entry = RelayTable::ValueOf(node);
-        if (location.m_stationAddress.m_inetAddress == entry->m_stationAddress ||
+        const common::InetAddress& stationAddress = entry->m_stationAddress;
+        if (stationAddress == location.m_stationAddress.m_inetAddress ||
             entry->m_connectionId == static_cast<unsigned int>(location.m_field1c))
         {
             m_relayTable.Destroy(entry);
@@ -509,11 +513,10 @@ void NexNatRelay::Trace(unsigned long long)
     for (common::ListNode* node = m_relayTable.Sentinel()->next; node != m_relayTable.Sentinel();
          node = node->next)
     {
-        const RelayEntry* entry = RelayTable::ValueOf(node);
         relayAddress.Clear();
         stationAddress.Clear();
-        entry->m_relayAddress.GetAddressString(&relayAddress);
-        entry->m_stationAddress.GetAddressString(&stationAddress);
+        RelayTable::ValueOf(node)->m_relayAddress.GetAddressString(&relayAddress);
+        RelayTable::ValueOf(node)->m_stationAddress.GetAddressString(&stationAddress);
     }
 }
 

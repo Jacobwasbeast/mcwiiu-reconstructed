@@ -43,13 +43,13 @@ public:
     NexSessionSearchCriteria();
     virtual ~NexSessionSearchCriteria();
 
-    virtual nn::pia::common::Result SetResultRange(unsigned int offset, unsigned int size);
+    virtual nn::pia::Result SetResultRange(unsigned int offset, unsigned int size);
     void SetMinParticipantNum(unsigned short value);
     void SetMaxParticipantNum(unsigned short value);
     void SetGameMode(unsigned int value);
     unsigned int IsSetSessionMatchmakeKeyword() const;
-    nn::pia::common::Result SetAttribute(unsigned int index, unsigned int value);
-    nn::pia::common::Result SetAttributeRange(unsigned int index, unsigned int minimum, unsigned int maximum);
+    nn::pia::Result SetAttribute(unsigned int index, unsigned int value);
+    nn::pia::Result SetAttributeRange(unsigned int index, unsigned int minimum, unsigned int maximum);
     void SetRandomSessionSelectionMethod(SelectionMethod method);
     const common::String* GetAdditionalScoreBasedParameterValueKey(unsigned int index) const
     {
@@ -65,16 +65,16 @@ public:
     {
         if (index != 0)
             return 0;
-        return &m_additionalScoreBasedParameterStringKey;
+        return &m_additionalScoreBasedParameterStringKey[0];
     }
     const common::String* GetAdditionalScoreBasedParameterString(unsigned int index) const
     {
         if (index != 0)
             return 0;
-        return &m_additionalScoreBasedParameterString;
+        return &m_additionalScoreBasedParameterString[0];
     }
     void Copy(const NexSessionSearchCriteria& other);
-    nn::pia::common::Result ConvertToNexMatchmakeSessionSearchCriteria(
+    nn::pia::Result ConvertToNexMatchmakeSessionSearchCriteria(
         nn::nex::MatchmakeSessionSearchCriteria* criteria,
         nn::nex::InetAddress* address,
         nn::nex::MatchmakeParam* param,
@@ -111,8 +111,8 @@ private:
     bool m_vacantOnly;
     common::FixedString<8> m_additionalScoreBasedParameterValueKey[cAttributeNum / 2];
     ParamVariant m_additionalScoreBasedParameterValues[cAttributeNum / 2];
-    common::FixedString<8> m_additionalScoreBasedParameterStringKey;
-    common::FixedString<64> m_additionalScoreBasedParameterString;
+    common::FixedString<8> m_additionalScoreBasedParameterStringKey[1];
+    common::FixedString<64> m_additionalScoreBasedParameterString[1];
     common::FixedString<32> m_sessionMatchmakeKeyword;
     unsigned int m_conditionMask;
 };

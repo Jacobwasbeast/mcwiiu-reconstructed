@@ -10,7 +10,23 @@ namespace nn { namespace pia { namespace inet {
 class NexSessionStartupSetting : public session::Session::StartupSetting
 {
 public:
-    NexSessionStartupSetting();
+    NexSessionStartupSetting()
+        : m_payloadSize(1240),
+          m_playersCountedAsParticipants(true),
+          m_hostMigrationEnabled(true),
+          m_field99(false),
+          m_bandwidthCheckMeasurementTime(-1),
+          m_bandwidthCheckMeasurementCount(1000),
+          m_bandwidthCheckIpPacketSize(0),
+          m_recentPlayRecordEnabled(true)
+    {
+        transport::Station::PlayerInfo& playerInfo = m_playerInfo[0];
+        playerInfo.m_name.Clear();
+        playerInfo.m_language = transport::Station::PlayerInfo::cLanguageUnset;
+        playerInfo.m_field70 = 0;
+        playerInfo.m_field78 = 0;
+        m_field94 = 0;
+    }
 
     unsigned int m_payloadSize;
     transport::Station::PlayerInfo m_playerInfo[1];

@@ -55,16 +55,14 @@ Result NexMatchUpdateSessionSettingJob::StartupImpl(unsigned int sessionId, sess
         nexSetting->GetApplicationData(m_applicationData, sizeof(m_applicationData));
         m_applicationDataSize = nexSetting->GetApplicationDataSize();
         SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::UpdateApplicationData, "NexMatchUpdateSessionSettingJob::UpdateApplicationData");
-        return 0;
     }
-    if (nexSetting->IsOnlyAllAttributesUpdated() && !m_isJointSession)
+    else if (nexSetting->IsOnlyAllAttributesUpdated() && !m_isJointSession)
     {
         for (unsigned int index = 0; index < cAttributeNum; ++index)
             m_attributes[index] = nexSetting->GetAttribute(index);
         SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::UpdateAttributes, "NexMatchUpdateSessionSettingJob::UpdateAttributes");
-        return 0;
     }
-    if (nexSetting->IsOnlyAttributeUpdated() && !m_isJointSession)
+    else if (nexSetting->IsOnlyAttributeUpdated() && !m_isJointSession)
     {
         for (unsigned int index = 0; index < cAttributeNum; ++index)
         {
@@ -72,20 +70,25 @@ Result NexMatchUpdateSessionSettingJob::StartupImpl(unsigned int sessionId, sess
             m_isAttributeUpdated[index] = nexSetting->IsAttributeUpdated(index);
         }
         SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::ModifyAttribute, "NexMatchUpdateSessionSettingJob::ModifyAttribute");
-        return 0;
     }
-    if (m_isJointSession)
+    else
     {
-        session::Session* piaSession = session::g_piaSession;
-        if (sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex] &&
-            piaSession->GetStatus() != session::Session::cStatusMatched)
-            return transport::cResultInvalidState;
-        if (sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex == 0] &&
-            piaSession->GetStatus() != session::Session::cStatusBufferMatched)
-            return transport::cResultInvalidState;
+        if (m_isJointSession)
+        {
+            if (sessionId == session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex])
+            {
+                if (session::g_piaSession->GetStatus() != session::Session::cStatusMatched)
+                    return transport::cResultInvalidState;
+            }
+            if (sessionId == session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex == 0])
+            {
+                if (session::g_piaSession->GetStatus() != session::Session::cStatusBufferMatched)
+                    return transport::cResultInvalidState;
+            }
+        }
+        m_matchmakeSession->ReflectUpdateSetting(setting, m_isJointSession);
+        SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::UpdateSessionSetting, "NexMatchUpdateSessionSettingJob::UpdateSessionSetting");
     }
-    m_matchmakeSession->ReflectUpdateSetting(setting, m_isJointSession);
-    SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::UpdateSessionSetting, "NexMatchUpdateSessionSettingJob::UpdateSessionSetting");
     return 0;
 }
 
@@ -95,27 +98,40 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
     switch (status)
     {
     case session::Session::cStatusDisconnectedNetwork:
-        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
+    {
+        const Result result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown6:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
+    {
+        const Result result = session::Session::cResultStatusUnknown6;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown7:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
+    {
+        const Result result = session::Session::cResultStatusUnknown7;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown8:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
+    {
+        const Result result = session::Session::cResultStatusUnknown8;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     default:
         break;
     }
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        m_callerContext->SignalFailure(cResultCancelled);
+        const Result result = cResultCancelled;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -136,27 +152,40 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
     switch (status)
     {
     case session::Session::cStatusDisconnectedNetwork:
-        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
+    {
+        const Result result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown6:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
+    {
+        const Result result = session::Session::cResultStatusUnknown6;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown7:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
+    {
+        const Result result = session::Session::cResultStatusUnknown7;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown8:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
+    {
+        const Result result = session::Session::cResultStatusUnknown8;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     default:
         break;
     }
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        m_callerContext->SignalFailure(cResultCancelled);
+        const Result result = cResultCancelled;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -172,9 +201,10 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
         {
             if (m_isJointSession)
             {
-                if (m_sessionId == session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex])
+                session::Session* piaSession = session::g_piaSession;
+                if (m_sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex])
                     SetCurrentSessionOpenStatus(session::Session::cSessionOpenStatusOpen);
-                else if (m_sessionId == session::g_piaSession->m_sessionId[session::g_piaSession->m_currentSessionIndex == 0])
+                else if (m_sessionId == piaSession->m_sessionId[piaSession->m_currentSessionIndex == 0])
                     SetBufferSessionOpenStatus(session::Session::cSessionOpenStatusOpen);
             }
             SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess, "UpdateSessionSettingJob::CompleteProcess");
@@ -190,45 +220,61 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
     switch (status)
     {
     case session::Session::cStatusDisconnectedNetwork:
-        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
+    {
+        const Result result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown6:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
+    {
+        const Result result = session::Session::cResultStatusUnknown6;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown7:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
+    {
+        const Result result = session::Session::cResultStatusUnknown7;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown8:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
+    {
+        const Result result = session::Session::cResultStatusUnknown8;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     default:
         break;
     }
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        m_callerContext->SignalFailure(cResultCancelled);
+        const Result result = cResultCancelled;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    for (unsigned int index = 0; index < cAttributeNum; ++index)
+    unsigned int index;
+    for (index = 0; index < cAttributeNum; ++index)
     {
         if (m_isAttributeUpdated[index])
+            break;
+    }
+    if (index < cAttributeNum)
+    {
+        m_isAttributeUpdated[index] = false;
+        const Result result = m_matchmakeSession->ModifyAttribute(&m_callContext, m_sessionId, index, m_attributes[index]);
+        if (result != 0)
         {
-            m_isAttributeUpdated[index] = false;
-            const Result result = m_matchmakeSession->ModifyAttribute(&m_callContext, m_sessionId, index, m_attributes[index]);
-            if (result != 0)
-            {
-                m_callerContext->SignalFailure(result);
-                m_callerContext = 0;
-                return MakeExecuteResult(cExecuteKindFinished);
-            }
-            SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::WaitModifyAttribute, "NexMatchUpdateSessionSettingJob::WaitModifyAttribute");
-            return MakeExecuteResult(cExecuteKindNextStep);
+            m_callerContext->SignalFailure(result);
+            m_callerContext = 0;
+            return MakeExecuteResult(cExecuteKindFinished);
         }
+        SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::WaitModifyAttribute, "NexMatchUpdateSessionSettingJob::WaitModifyAttribute");
+        return MakeExecuteResult(cExecuteKindNextStep);
     }
     SelectStep(m_currentStep, &NexMatchUpdateSessionSettingJob::CompleteProcess, "UpdateSessionSettingJob::CompleteProcess");
     return MakeExecuteResult(cExecuteKindContinue);
@@ -240,27 +286,40 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
     switch (status)
     {
     case session::Session::cStatusDisconnectedNetwork:
-        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
+    {
+        const Result result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown6:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
+    {
+        const Result result = session::Session::cResultStatusUnknown6;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown7:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
+    {
+        const Result result = session::Session::cResultStatusUnknown7;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown8:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
+    {
+        const Result result = session::Session::cResultStatusUnknown8;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     default:
         break;
     }
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        m_callerContext->SignalFailure(cResultCancelled);
+        const Result result = cResultCancelled;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -287,27 +346,40 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
     switch (status)
     {
     case session::Session::cStatusDisconnectedNetwork:
-        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
+    {
+        const Result result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown6:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
+    {
+        const Result result = session::Session::cResultStatusUnknown6;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown7:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
+    {
+        const Result result = session::Session::cResultStatusUnknown7;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown8:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
+    {
+        const Result result = session::Session::cResultStatusUnknown8;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     default:
         break;
     }
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        m_callerContext->SignalFailure(cResultCancelled);
+        const Result result = cResultCancelled;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -328,27 +400,40 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
     switch (status)
     {
     case session::Session::cStatusDisconnectedNetwork:
-        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
+    {
+        const Result result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown6:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
+    {
+        const Result result = session::Session::cResultStatusUnknown6;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown7:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
+    {
+        const Result result = session::Session::cResultStatusUnknown7;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown8:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
+    {
+        const Result result = session::Session::cResultStatusUnknown8;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     default:
         break;
     }
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        m_callerContext->SignalFailure(cResultCancelled);
+        const Result result = cResultCancelled;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -375,27 +460,40 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
     switch (status)
     {
     case session::Session::cStatusDisconnectedNetwork:
-        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
+    {
+        const Result result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown6:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
+    {
+        const Result result = session::Session::cResultStatusUnknown6;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown7:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
+    {
+        const Result result = session::Session::cResultStatusUnknown7;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown8:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
+    {
+        const Result result = session::Session::cResultStatusUnknown8;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     default:
         break;
     }
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        m_callerContext->SignalFailure(cResultCancelled);
+        const Result result = cResultCancelled;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -416,27 +514,40 @@ NexMatchUpdateSessionSettingJob::ExecuteResult NexMatchUpdateSessionSettingJob::
     switch (status)
     {
     case session::Session::cStatusDisconnectedNetwork:
-        m_callerContext->SignalFailure(session::Session::cResultStatusDisconnectedNetwork);
+    {
+        const Result result = session::Session::cResultStatusDisconnectedNetwork;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown6:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown6);
+    {
+        const Result result = session::Session::cResultStatusUnknown6;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown7:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown7);
+    {
+        const Result result = session::Session::cResultStatusUnknown7;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case session::Session::cStatusUnknown8:
-        m_callerContext->SignalFailure(session::Session::cResultStatusUnknown8);
+    {
+        const Result result = session::Session::cResultStatusUnknown8;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     default:
         break;
     }
     if (m_callerContext != 0 && m_callerContext->m_cancelRequested)
     {
-        m_callerContext->SignalFailure(cResultCancelled);
+        const Result result = cResultCancelled;
+        m_callerContext->SignalFailure(result);
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }

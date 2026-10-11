@@ -17,21 +17,25 @@ NexJoinRandomSessionSetting::NexJoinRandomSessionSetting()
 NexJoinRandomSessionSetting::~NexJoinRandomSessionSetting()
 {}
 
-NexCreateSessionSetting* NexJoinRandomSessionSetting::GetCreateSessionSetting()
+session::CreateSessionSetting* NexJoinRandomSessionSetting::GetCreateSessionSetting()
 {
     return &m_createSessionSetting;
 }
-const NexCreateSessionSetting* NexJoinRandomSessionSetting::GetCreateSessionSetting() const
+const session::CreateSessionSetting* NexJoinRandomSessionSetting::GetCreateSessionSetting() const
 {
     return &m_createSessionSetting;
 }
-NexSessionSearchCriteria* NexJoinRandomSessionSetting::GetSessionSearchCriteria(unsigned char index)
+session::SessionSearchCriteria* NexJoinRandomSessionSetting::GetSessionSearchCriteria(unsigned char index)
 {
-    return index < 2 ? &m_sessionSearchCriteria[index] : 0;
+    if (index < 2)
+        return &m_sessionSearchCriteria[index];
+    return 0;
 }
-const NexSessionSearchCriteria* NexJoinRandomSessionSetting::GetSessionSearchCriteria(unsigned char index) const
+const session::SessionSearchCriteria* NexJoinRandomSessionSetting::GetSessionSearchCriteria(unsigned char index) const
 {
-    return index < 2 ? &m_sessionSearchCriteria[index] : 0;
+    if (index < 2)
+        return &m_sessionSearchCriteria[index];
+    return 0;
 }
 unsigned int NexJoinRandomSessionSetting::GetSessionSearchCriteriaSize() const
 {
