@@ -103,7 +103,9 @@ void GameModeUtilities::Position::set(double xValue, double zValue)
 
 double GameModeUtilities::Position::dist(Position* other)
 {
-    return std::sqrt((x - other->x) * (x - other->x) + (z - other->z) * (z - other->z));
+    double dx = x - other->x;
+    double dz = z - other->z;
+    return std::sqrt(dx * dx + dz * dz);
 }
 
 int GameModeUtilities::Position::getSpawnY(Level* level)

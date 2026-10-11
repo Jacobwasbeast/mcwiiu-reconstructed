@@ -41,9 +41,9 @@ public:
     bool equals(Vec2* other);
     Vec2* normalized();
     double length();
-    double lengthSquared();
+    float lengthSquared();
     Vec2* negated();
-    double distanceToSqr(Vec2* other);
+    float distanceToSqr(Vec2* other);
 
 private:
     static const int TEMP_POOL_SIZE = 1024;

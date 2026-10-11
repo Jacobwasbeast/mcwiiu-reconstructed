@@ -1,10 +1,10 @@
 #include "game/util/StringUtils.hpp"
 
-static const int POWER_TABLE_SIZE = 79;
-static const int POWER_TABLE_UNIT_INDEX = 40;
+static const int POWER_TABLE_SIZE = 78;
+static const int POWER_TABLE_UNIT_INDEX = 39;
 
 static const double POWERS_OF_TEN[POWER_TABLE_SIZE] = {
-    0.0, 1e-39, 1e-38, 1e-37, 1e-36, 1e-35,
+    1e-39, 1e-38, 1e-37, 1e-36, 1e-35,
     1e-34, 1e-33, 1e-32, 1e-31, 1e-30, 1e-29,
     1e-28, 1e-27, 1e-26, 1e-25, 1e-24, 1e-23,
     1e-22, 1e-21, 1e-20, 1e-19, 1e-18, 1e-17,
@@ -22,14 +22,14 @@ static const double POWERS_OF_TEN[POWER_TABLE_SIZE] = {
 
 static const double DIGIT_VALUES[10] = {0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0};
 
-static const double MAX_PARSED_VALUE = 3.40282e+38;
+static const double MAX_PARSED_VALUE = 3.40282e+38f;
 
 int atoi_with_len(const char* text, int base, int* length)
 {
     const char* current = text;
-    const bool negative = *text == '-';
     int character;
-    if (negative || (character = *text) == '+')
+    const bool negative = *text == '-';
+    if (*text == '-' || (character = *current) == '+')
     {
         current = text + 1;
         character = *current;
@@ -38,40 +38,35 @@ int atoi_with_len(const char* text, int base, int* length)
     int value = 0;
     if (base != 0)
     {
-        while (true)
+        for (;;)
         {
-            while (true)
+            int digit;
+            if (character >= '0' && character <= '9')
             {
-                while (static_cast<unsigned int>(character - '0') < 10)
-                {
-                    ++current;
-                    value = value * 16 + static_cast<unsigned int>(character - '0');
-                    character = *current;
-                }
-                if (static_cast<unsigned int>(character - 'A') >= 6)
-                {
-                    break;
-                }
-                ++current;
-                value = value * 16 + (character - 'A' + 10);
-                character = *current;
+                digit = character - '0';
             }
-            if (static_cast<unsigned int>(character - 'a') >= 6)
+            else if (character >= 'A' && character <= 'F')
+            {
+                digit = character - 'A' + 10;
+            }
+            else if (character >= 'a' && character <= 'f')
+            {
+                digit = character - 'a' + 10;
+            }
+            else
             {
                 break;
             }
-            ++current;
-            value = value * 16 + (character - 'a' + 10);
-            character = *current;
+            character = *++current;
+            value = value * 16 + digit;
         }
     }
     else
     {
         while (character >= '0' && character <= '9')
         {
-            ++current;
-            value = value * 10 + (character - '0');
-            character = *current;
+            value = value * 10 + character - '0';
+            character = *++current;
         }
     }
 
@@ -88,94 +83,77 @@ int atoi_with_len(const char* text, int base, int* length)
 
 float atof_with_len(const char* text, int* length)
 {
-    const char* integerBegin = text;
-    const bool negative = *text == '-';
+    const char* start = text;
     int character;
-    if (negative || (character = *text) == '+')
+    const bool negative = *start == '-';
+    if (*start == '-' || (character = *start) == '+')
     {
-        ++integerBegin;
-        character = *integerBegin;
+        character = *++text;
     }
     while (character == '0')
     {
-        ++integerBegin;
-        character = *integerBegin;
+        character = *++text;
     }
 
-    const char* integerEnd = integerBegin;
-    const char* lastIntegerDigit = integerBegin;
-    if (static_cast<unsigned int>(character - '0') < 10)
+    const char* integerBegin = text;
+    const char* lastIntegerDigit = text;
+    const char* integerEnd = text;
+    if (character >= '0' && character <= '9')
     {
-        while (true)
+        do
         {
-            lastIntegerDigit = integerEnd;
-            ++integerEnd;
-            character = *integerEnd;
-            while (character == '0')
+            if (character != '0')
             {
-                ++integerEnd;
-                character = *integerEnd;
+                lastIntegerDigit = text;
             }
-            if (static_cast<unsigned int>(character - '0') >= 10)
-            {
-                break;
-            }
+            character = *++text;
         }
+        while (character >= '0' && character <= '9');
+        integerEnd = text;
     }
 
-    const char* fractionBegin = integerEnd;
-    const char* firstFractionDigit = integerEnd;
-    const char* fractionEnd = integerEnd;
-    const char* lastFractionDigit = integerEnd;
+    const char* fractionBegin = text;
+    const char* firstFractionDigit = text;
+    const char* lastFractionDigit = text;
+    const char* fractionEnd = text;
     if (character == '.')
     {
-        fractionBegin = integerEnd + 1;
-        character = *fractionBegin;
-        firstFractionDigit = fractionBegin;
+        character = *++text;
+        fractionBegin = text;
         while (character == '0')
         {
-            ++firstFractionDigit;
-            character = *firstFractionDigit;
+            character = *++text;
         }
-        fractionEnd = firstFractionDigit;
-        lastFractionDigit = firstFractionDigit;
-        if (static_cast<unsigned int>(character - '0') < 10)
+        firstFractionDigit = text;
+        lastFractionDigit = text;
+        if (character >= '0' && character <= '9')
         {
-            while (true)
+            do
             {
-                lastFractionDigit = fractionEnd;
-                ++fractionEnd;
-                character = *fractionEnd;
-                while (character == '0')
+                if (character != '0')
                 {
-                    ++fractionEnd;
-                    character = *fractionEnd;
+                    lastFractionDigit = text;
                 }
-                if (static_cast<unsigned int>(character - '0') >= 10)
-                {
-                    break;
-                }
+                character = *++text;
             }
+            while (character >= '0' && character <= '9');
         }
+        fractionEnd = text;
     }
 
     int exponent = 0;
-    const char* end = fractionEnd;
     if (character == 'e' || character == 'E')
     {
-        end = fractionEnd + 1;
-        character = *end;
+        character = *++text;
         const bool negativeExponent = character == '-';
         if (character == '-' || character == '+')
         {
-            ++end;
-            character = *end;
+            character = *++text;
         }
-        while (static_cast<unsigned int>(character - '0') < 10)
+        while (character >= '0' && character <= '9')
         {
             exponent = exponent * 10 + character - '0';
-            ++end;
-            character = *end;
+            character = *++text;
         }
         if (negativeExponent)
         {
@@ -183,44 +161,54 @@ float atof_with_len(const char* text, int* length)
         }
     }
 
-    double integerValue = 0.0;
+    double value = 0.0;
     if (integerBegin != integerEnd)
     {
-        integerValue = MAX_PARSED_VALUE;
-        const int topIndex = static_cast<int>(integerEnd - integerBegin) + exponent + POWER_TABLE_UNIT_INDEX - 1;
-        if (topIndex < POWER_TABLE_SIZE)
+        const double* power = &POWERS_OF_TEN[integerEnd + POWER_TABLE_UNIT_INDEX - integerBegin + exponent - 1];
+        if (power >= POWERS_OF_TEN + POWER_TABLE_SIZE)
         {
-            integerValue = 0.0;
-            int index = topIndex + static_cast<int>(integerBegin - lastIntegerDigit);
-            for (const char* digit = lastIntegerDigit; digit >= integerBegin; --digit)
+            value = MAX_PARSED_VALUE;
+        }
+        else
+        {
+            power += integerBegin - lastIntegerDigit;
+            const char* digit = lastIntegerDigit;
+            do
             {
-                if (index > 0)
+                if (power >= POWERS_OF_TEN)
                 {
-                    integerValue += POWERS_OF_TEN[index] * DIGIT_VALUES[*digit - '0'];
+                    value += *power * DIGIT_VALUES[*digit - '0'];
                 }
-                ++index;
+                ++power;
+                --digit;
             }
+            while (digit >= integerBegin);
         }
     }
 
-    double value = integerValue;
     if (firstFractionDigit != fractionEnd)
     {
-        value = MAX_PARSED_VALUE;
-        const int firstIndex = POWER_TABLE_UNIT_INDEX - 1 + static_cast<int>(fractionBegin - firstFractionDigit) + exponent;
-        if (firstIndex < POWER_TABLE_SIZE)
+        const double* power = &POWERS_OF_TEN[fractionBegin - firstFractionDigit + exponent + POWER_TABLE_UNIT_INDEX - 1];
+        if (power >= POWERS_OF_TEN + POWER_TABLE_SIZE)
         {
-            double fractionValue = 0.0;
-            int index = firstIndex + static_cast<int>(firstFractionDigit - lastFractionDigit);
-            for (const char* digit = lastFractionDigit; digit >= firstFractionDigit; --digit)
+            value = MAX_PARSED_VALUE;
+        }
+        else
+        {
+            double fraction = 0.0;
+            power += firstFractionDigit - lastFractionDigit;
+            const char* digit = lastFractionDigit;
+            do
             {
-                if (index > 0)
+                if (power >= POWERS_OF_TEN)
                 {
-                    fractionValue += POWERS_OF_TEN[index] * DIGIT_VALUES[*digit - '0'];
+                    fraction += *power * DIGIT_VALUES[*digit - '0'];
                 }
-                ++index;
+                ++power;
+                --digit;
             }
-            value = integerValue + fractionValue;
+            while (digit >= firstFractionDigit);
+            value += fraction;
         }
     }
 
@@ -230,7 +218,7 @@ float atof_with_len(const char* text, int* length)
     }
     if (length != 0)
     {
-        *length = static_cast<int>(end - text);
+        *length = static_cast<int>(text - start);
     }
     return static_cast<float>(value);
 }

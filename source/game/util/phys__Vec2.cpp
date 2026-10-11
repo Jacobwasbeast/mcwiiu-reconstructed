@@ -119,9 +119,9 @@ double phys::Vec2::length()
     return sqrt((double)(x * x + y * y));
 }
 
-double phys::Vec2::lengthSquared()
+float phys::Vec2::lengthSquared()
 {
-    return (double)(x * x + y * y);
+    return x * x + y * y;
 }
 
 phys::Vec2* phys::Vec2::negated()
@@ -129,8 +129,9 @@ phys::Vec2* phys::Vec2::negated()
     return newTemp(-x, -y);
 }
 
-double phys::Vec2::distanceToSqr(Vec2* other)
+float phys::Vec2::distanceToSqr(Vec2* other)
 {
-    return (double)((other->x - x) * (other->x - x) +
-                    (other->y - y) * (other->y - y));
+    float dx = other->x - x;
+    float dy = other->y - y;
+    return dx * dx + dy * dy;
 }
