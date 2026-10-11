@@ -79,7 +79,7 @@
 #include "vendor/_NetworkGameInitData.hpp"
 
 extern CConsoleMinecraftApp gApp;
-extern CStorage* gStorage;
+extern C4JStorage* gStorage;
 
 
 MinecraftServer* gMinecraftServer = 0;

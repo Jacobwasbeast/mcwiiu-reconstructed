@@ -61,7 +61,7 @@ void ServerCommandDispatcher::logAdminCommand(boost::shared_ptr<CommandSender> s
     {
         boost::shared_ptr<ServerPlayer> player = *it;
         if (message == ClientboundChatPacket::eChatPacketMessage_GameModeSuccessSelf &&
-            player != NULL && static_cast<CommandSender*>(player.get()) != sender.get())
+            player != sender)
         {
             player->sendMessage(ClientboundChatPacket::eChatPacketMessage_GameModeSuccessOther,
                                 intParams, numIntParams, stringParams, numStringParams);

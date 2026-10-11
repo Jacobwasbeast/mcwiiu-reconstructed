@@ -48,7 +48,7 @@ Level* DerivedServerLevel::postConstruct()
     else
     {
         mVillages = villages;
-        villages->setLevel(this);
+        mVillages->setLevel(this);
     }
     return this;
 }

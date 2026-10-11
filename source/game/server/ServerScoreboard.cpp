@@ -102,17 +102,20 @@ void ServerScoreboard::OnPlayerStatsChanged(const StatsUID& suid, int life)
 {
     Scoreboard::PlayerStats* stats = GetPlayerStats(suid, -1);
     Scoreboard::PlayerStats* previous = mPlayerStats[suid];
-    int round = mServer->mMasterGameMode->mGameStats.mCurrentRound;
-    if (previous == NULL)
+    GameStats& gameStats = mServer->mMasterGameMode->mGameStats;
+    int round = gameStats.mCurrentRound;
+    if (previous != NULL)
     {
-        boost::shared_ptr<Packet> packet(new ScoreboardPacket(ScoreboardPacket::ADD_PLAYER_STATS,
-            new ScoreboardPacket::AddPlayerStatsData(new Scoreboard::PlayerStats(*stats), round, life)));
+        ScoreboardPacket::Data* data =
+            new ScoreboardPacket::UpdatePlayerStatsData(new Scoreboard::PlayerStats(*stats), previous, round, life);
+        boost::shared_ptr<Packet> packet(new ScoreboardPacket(ScoreboardPacket::UPDATE_PLAYER_STATS, data));
         gMinecraftServer->getPlayers()->broadcastAll(packet);
     }
     else
     {
-        boost::shared_ptr<Packet> packet(new ScoreboardPacket(ScoreboardPacket::UPDATE_PLAYER_STATS,
-            new ScoreboardPacket::UpdatePlayerStatsData(new Scoreboard::PlayerStats(*stats), previous, round, life)));
+        ScoreboardPacket::Data* data =
+            new ScoreboardPacket::AddPlayerStatsData(new Scoreboard::PlayerStats(*stats), round, life);
+        boost::shared_ptr<Packet> packet(new ScoreboardPacket(ScoreboardPacket::ADD_PLAYER_STATS, data));
         gMinecraftServer->getPlayers()->broadcastAll(packet);
     }
     mPlayerStats[suid] = stats;

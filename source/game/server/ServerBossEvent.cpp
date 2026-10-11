@@ -143,16 +143,14 @@ void ServerBossEvent::setVisible(bool visible)
     if (visible != this->visible)
     {
         this->visible = visible;
-        ClientboundBossEventPacket::Operation operation =
-            visible ? ClientboundBossEventPacket::ADD : ClientboundBossEventPacket::REMOVE;
         for (std::map<boost::shared_ptr<ServerPlayer>, int>::iterator it = players.begin(); it != players.end(); ++it)
         {
             boost::shared_ptr<ServerPlayer> player = it->first;
             if (player->mConnection != 0)
             {
                 ServerGamePacketListenerImpl* connection = player->mConnection.operator->();
-                boost::shared_ptr<Packet> packet(
-                    new ClientboundBossEventPacket(operation, this));
+                boost::shared_ptr<ClientboundBossEventPacket> packet(
+                    new ClientboundBossEventPacket(visible ? ClientboundBossEventPacket::ADD : ClientboundBossEventPacket::REMOVE, this));
                 connection->send(packet);
             }
         }
