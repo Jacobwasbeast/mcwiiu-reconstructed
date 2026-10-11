@@ -31,7 +31,7 @@ void SavedDataStorage::loadAuxValues()
     if (mLevelStorage != NULL)
     {
         ConsoleSavePath dataFile = mLevelStorage->getDataFile(L"idcounts");
-        if (dataFile.getPath().length() != 0 && mLevelStorage->getSaveFile()->doesFileExist(dataFile))
+        if (!dataFile.getPath().empty() && mLevelStorage->getSaveFile()->doesFileExist(dataFile))
         {
             ConsoleSaveFileInputStream saveFileStream(mLevelStorage->getSaveFile(), dataFile);
             DataInputStream stream(&saveFileStream);
@@ -40,10 +40,13 @@ void SavedDataStorage::loadAuxValues()
             boost::unordered_map<std::wstring, Tag*>* tags = tag->getAllTagsMap();
             for (boost::unordered_map<std::wstring, Tag*>::iterator it = tags->begin(); it != tags->end(); ++it)
             {
-                ShortTag* shortTag = dynamic_cast<ShortTag*>(it->second);
-                if (shortTag != NULL)
+                Tag* entry = it->second;
+                if (dynamic_cast<ShortTag*>(entry) != NULL)
                 {
-                    mAuxValues.insert(std::make_pair(it->first, shortTag->mValue));
+                    ShortTag* shortTag = (ShortTag*)entry;
+                    std::wstring key = it->first;
+                    short value = shortTag->mValue;
+                    mAuxValues.insert(boost::unordered_map<std::wstring, short>::value_type(key, value));
                 }
             }
         }
@@ -122,7 +125,7 @@ void SavedDataStorage::save(boost::shared_ptr<SavedData> data)
     if (mLevelStorage != NULL)
     {
         ConsoleSavePath dataFile = mLevelStorage->getDataFile(data->id);
-        if (dataFile.getPath().length() != 0)
+        if (!dataFile.getPath().empty())
         {
             CompoundTag* tag = new CompoundTag();
             tag->put(L"data", data->save(new CompoundTag()));
@@ -136,7 +139,8 @@ void SavedDataStorage::save(boost::shared_ptr<SavedData> data)
 
 void SavedDataStorage::save()
 {
-    for (std::vector<boost::shared_ptr<SavedData> >::iterator it = mAllSavedData.begin(); it != mAllSavedData.end(); ++it)
+    std::vector<boost::shared_ptr<SavedData> >::iterator end = mAllSavedData.end();
+    for (std::vector<boost::shared_ptr<SavedData> >::iterator it = mAllSavedData.begin(); it != end; ++it)
     {
         boost::shared_ptr<SavedData> data = *it;
         if (data->isDirty())
@@ -149,47 +153,50 @@ void SavedDataStorage::save()
 
 int SavedDataStorage::getFreeAuxValueFor(const std::wstring& id)
 {
-    short auxValue = 0;
     boost::unordered_map<std::wstring, short>::iterator it = mAuxValues.find(id);
+    short auxValue = 0;
     if (it != mAuxValues.end())
     {
-        auxValue = (short)(it->second + 1);
+        auxValue = it->second;
+        auxValue++;
     }
     mAuxValues[id] = auxValue;
-    if (mLevelStorage != NULL)
+    if (mLevelStorage == NULL)
     {
-        ConsoleSavePath dataFile = mLevelStorage->getDataFile(L"idcounts");
-        bool hasDataFile = dataFile.getPath().length() != 0;
-        if (hasDataFile)
+        return auxValue;
+    }
+    ConsoleSavePath dataFile = mLevelStorage->getDataFile(L"idcounts");
+    if (!dataFile.getPath().empty())
+    {
+        CompoundTag* tag = new CompoundTag();
+        boost::unordered_map<std::wstring, short>::iterator end = mAuxValues.end();
+        for (boost::unordered_map<std::wstring, short>::iterator counts = mAuxValues.begin(); counts != end; counts++)
         {
-            CompoundTag* tag = new CompoundTag();
-            for (boost::unordered_map<std::wstring, short>::iterator counts = mAuxValues.begin(); counts != mAuxValues.end(); ++counts)
-            {
-                short count = counts->second;
-                tag->putShort(counts->first.c_str(), count);
-            }
-            ConsoleSaveFileOutputStream saveFileStream(mLevelStorage->getSaveFile(), dataFile);
-            DataOutputStream stream(&saveFileStream);
-            NbtIo::write(tag, &stream);
-            stream.close();
+            short count = counts->second;
+            tag->putShort(counts->first.c_str(), count);
         }
+        ConsoleSaveFileOutputStream saveFileStream(mLevelStorage->getSaveFile(), dataFile);
+        DataOutputStream stream(&saveFileStream);
+        NbtIo::write(tag, &stream);
+        stream.close();
     }
     return auxValue;
 }
 
 int SavedDataStorage::getAuxValueForMap(PlayerUID uid, int dimension, int x, int z, int scale)
 {
-    if (mLevelStorage != NULL)
+    if (mLevelStorage == NULL)
     {
-        return mLevelStorage->getAuxValueForMap(uid, dimension, x, z, scale);
+        switch (dimension)
+        {
+        case -1:
+            return 254;
+        case 1:
+            return 253;
+        case 0:
+        default:
+            return 255;
+        }
     }
-    if (dimension == 1)
-    {
-        return 253;
-    }
-    if (dimension == -1)
-    {
-        return 254;
-    }
-    return 255;
+    return mLevelStorage->getAuxValueForMap(uid, dimension, x, z, scale);
 }

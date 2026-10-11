@@ -3,9 +3,8 @@
 #include <string>
 
 #include "game/core/DataWalker.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/data/DataFix.hpp"
-
-static const std::wstring DATA_VERSION_TAG = L"DataVersion";
 
 DataFixerUpper::DataFixerUpper(int version)
     : mWalkers(11)
@@ -48,9 +47,9 @@ DataFixerUpper::~DataFixerUpper()
 CompoundTag* DataFixerUpper::updateData(DataFixTypes::EDataFixTypes type, CompoundTag* tag)
 {
     int version = -1;
-    if (tag->contains(DATA_VERSION_TAG, Tag::TAG_ANY_NUMERIC))
+    if (tag->contains(SharedConstants::DATA_VERSION_TAG, Tag::TAG_ANY_NUMERIC))
     {
-        version = tag->getInt(DATA_VERSION_TAG);
+        version = tag->getInt(SharedConstants::DATA_VERSION_TAG);
         if (version >= 922)
         {
             return tag;

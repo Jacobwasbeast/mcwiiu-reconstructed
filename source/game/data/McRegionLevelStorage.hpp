@@ -22,7 +22,7 @@ public:
     McRegionLevelStorage(ConsoleSaveFile* saveFile, File folder, const std::wstring& levelId,
                          bool createIfMissing, DataFixerUpper* fixer);
     virtual ~McRegionLevelStorage();
-    virtual McRegionChunkStorage* createChunkStorage(Dimension* dimension);
+    virtual ChunkStorage* createChunkStorage(Dimension* dimension);
     virtual void saveLevelData(LevelData* levelData, std::vector<boost::shared_ptr<Player> >* players);
     virtual void closeAll();
 };

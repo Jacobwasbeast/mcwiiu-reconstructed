@@ -11,8 +11,7 @@
 #ifdef RECON_NATIVE
 #include "win32_memory.hpp"
 #else
-void* VirtualAlloc(void* address, unsigned long size, unsigned int allocationType, unsigned int protect);
-int VirtualFree(void* address, unsigned long size, unsigned int freeType);
+#include "platform/wiiu/WiiU_FileCache.hpp"
 #endif
 void __debugbreak();
 

@@ -107,19 +107,20 @@ std::wstring StringTable::ReadLanguageFromStream(DataInputStream* stream)
             }
         }
     }
-    else if (format < 1)
+    else if (format >= 1)
+    {
+        if (!m_ids.empty())
+        {
+            for (int i = 0; i < count; ++i)
+            {
+                data.stringsById.insert(std::make_pair(m_ids[i], stream->readUTF()));
+            }
+        }
+    }
+    else
     {
         for (int i = 0; i < count; ++i)
             data.orderedStrings.push_back(stream->readUTF());
-    }
-    else if (!m_ids.empty())
-    {
-        for (int i = 0; i < count; ++i)
-        {
-            int id = m_ids[i];
-            std::wstring value = stream->readUTF();
-            data.stringsById.insert(std::make_pair(id, value));
-        }
     }
     return language;
 }

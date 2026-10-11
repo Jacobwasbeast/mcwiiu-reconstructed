@@ -105,7 +105,7 @@ void ConsoleSaveFileConverter::ConvertSave(ConsoleSaveFile* saveFileIn, ConsoleS
         delete pPlayerFiles;
     }
 
-    std::vector<FileEntry*>* pAllFiles = saveFileIn->getFilesWithPrefix(L"");
+    std::vector<FileEntry*>* pAllFiles = saveFileIn->getFilesWithPrefix(std::wstring(L""));
 
     for (std::vector<FileEntry*>::iterator it = pAllFiles->begin(); it < pAllFiles->end(); ++it)
     {

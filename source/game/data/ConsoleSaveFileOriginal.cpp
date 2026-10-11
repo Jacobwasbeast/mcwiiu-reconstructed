@@ -15,15 +15,14 @@
 #ifdef RECON_NATIVE
 #include "win32_memory.hpp"
 #else
-void* VirtualAlloc(void* address, unsigned long size, unsigned int allocationType, unsigned int protect);
-int VirtualFree(void* address, unsigned long size, unsigned int freeType);
+#include "platform/wiiu/WiiU_FileCache.hpp"
 #endif
 void __debugbreak();
 
 static void* s_saveData = NULL;
 static unsigned int s_saveDataSize = 0;
 
-extern CStorage* gStorage;
+extern C4JStorage* gStorage;
 
 ConsoleSaveFileOriginal::ConsoleSaveFileOriginal(const std::wstring& filename, void* data, unsigned int dataSize,
     bool resetData, ESavePlatform platform)

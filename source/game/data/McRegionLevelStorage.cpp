@@ -25,7 +25,7 @@ McRegionLevelStorage::~McRegionLevelStorage()
     gRegionFileCache._clear();
 }
 
-McRegionChunkStorage* McRegionLevelStorage::createChunkStorage(Dimension* dimension)
+ChunkStorage* McRegionLevelStorage::createChunkStorage(Dimension* dimension)
 {
     if (dimension != NULL && dynamic_cast<NetherDimension*>(dimension) != NULL)
     {
