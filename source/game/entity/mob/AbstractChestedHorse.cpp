@@ -182,7 +182,7 @@ bool AbstractChestedHorse::mobInteract(const boost::shared_ptr<Player>& player, 
     {
         if (handleEating(player, item))
         {
-            if (!player->isCreative())
+            if (!player->mAbilities.mInstabuild)
                 item->shrink(1);
             return true;
         }
@@ -208,7 +208,7 @@ bool AbstractChestedHorse::mobInteract(const boost::shared_ptr<Player>& player, 
             {
                 playChestEquipsSound();
             }
-            if (!player->isCreative())
+            if (!player->mAbilities.mInstabuild)
                 item->shrink(1);
             return true;
         }

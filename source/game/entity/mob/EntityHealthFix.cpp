@@ -53,8 +53,7 @@ int EntityHealthFix::getVersion()
 
 CompoundTag* EntityHealthFix::fix(CompoundTag* tag)
 {
-    const unsigned int entityCount = sizeof(sEntityIDs) / sizeof(sEntityIDs[0]);
-    for (unsigned int i = 0; i < entityCount; ++i)
+    for (unsigned int i = 0; i < sEntityIDs->length(); ++i)
     {
         if (CheckID(tag, sEntityIDs[i]))
         {
@@ -67,12 +66,14 @@ CompoundTag* EntityHealthFix::fix(CompoundTag* tag)
             }
             else
             {
-                if (!tag->contains(L"Health", Tag::TAG_ANY_NUMERIC))
+                if (tag->contains(L"Health", Tag::TAG_ANY_NUMERIC))
+                {
+                    health = tag->getFloat(L"Health");
+                }
+                else
                 {
                     break;
                 }
-
-                health = tag->getFloat(L"Health");
             }
 
             tag->putFloat(L"Health", health);

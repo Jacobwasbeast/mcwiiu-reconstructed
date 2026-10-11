@@ -11,48 +11,44 @@ ItemInstanceEntityTagWalker::~ItemInstanceEntityTagWalker()
 
 CompoundTag* ItemInstanceEntityTagWalker::walk(DataFixer* fixer, CompoundTag* tag, int version)
 {
-    if (!tag->contains(L"tag"))
+    if (tag->contains(L"tag"))
     {
-        return tag;
-    }
-
-    CompoundTag* itemTag = tag->getCompound(L"tag");
-    if (!itemTag->contains(L"EntityTag", Tag::TAG_COMPOUND))
-    {
-        return tag;
-    }
-
-    CompoundTag* entityTag = itemTag->getCompound(L"EntityTag");
-    std::wstring entityId;
-
-    if (CheckID(tag, L"minecraft:armor_stand"))
-    {
-        entityId = (version < 515) ? L"ArmorStand" : L"minecraft:armor_stand";
-    }
-    else
-    {
-        if (!CheckID(tag, L"minecraft:spawn_egg"))
+        CompoundTag* itemTag = tag->getCompound(L"tag");
+        if (itemTag->contains(L"EntityTag", Tag::TAG_COMPOUND))
         {
-            return tag;
-        }
+            CompoundTag* entityTag = itemTag->getCompound(L"EntityTag");
+            std::wstring entityId;
 
-        entityId = entityTag->getString(L"id");
-    }
+            if (CheckID(tag, L"minecraft:armor_stand"))
+            {
+                entityId = (version < 515) ? L"ArmorStand" : L"minecraft:armor_stand";
+            }
+            else if (CheckID(tag, L"minecraft:spawn_egg"))
+            {
+                entityId = entityTag->getString(L"id");
+            }
+            else
+            {
+                return tag;
+            }
 
-    if (entityId.empty())
-    {
-        fixer->update(DataFixTypes::eDataFixTypes_Entity, entityTag, version);
-    }
-    else
-    {
-        bool hadId = entityTag->contains(L"id", Tag::TAG_STRING);
+            bool removeId;
+            if (entityId.empty())
+            {
+                removeId = false;
+            }
+            else
+            {
+                removeId = !entityTag->contains(L"id", Tag::TAG_STRING);
+                entityTag->putString(L"id", entityId);
+            }
 
-        entityTag->putString(L"id", entityId);
-        fixer->update(DataFixTypes::eDataFixTypes_Entity, entityTag, version);
+            fixer->update(DataFixTypes::eDataFixTypes_Entity, entityTag, version);
 
-        if (!hadId)
-        {
-            entityTag->remove(L"id");
+            if (removeId)
+            {
+                entityTag->remove(L"id");
+            }
         }
     }
 

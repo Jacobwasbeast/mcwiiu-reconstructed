@@ -405,7 +405,7 @@ public:
     void absMoveTo(double x, double y, double z, float yRot, float xRot);
     void absMoveTo(double x, double y, double z);
     void moveTo(const BlockPos& pos, float yRot, float xRot);
-    double distanceTo(boost::shared_ptr<Entity> entity) const;
+    float distanceTo(boost::shared_ptr<Entity> entity) const;
     double distanceTo(double x, double y, double z) const;
     double distanceToSqr(boost::shared_ptr<Entity> entity) const;
     double distanceToSqr(double x, double y, double z) const;
@@ -450,6 +450,8 @@ public:
     CommandStats* getCommandStats();
     void cloneStatsFrom(boost::shared_ptr<Entity> entity);
     void handleEntityTag(CompoundTag* tag);
+
+    static const std::wstring RIDING_TAG;
 
     static const EntityDataAccessor<int>* DATA_SHARED_FLAGS_ID;
     static const EntityDataAccessor<int>* DATA_AIR_SUPPLY_ID;

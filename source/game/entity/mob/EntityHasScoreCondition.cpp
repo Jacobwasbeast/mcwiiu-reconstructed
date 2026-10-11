@@ -23,14 +23,12 @@ bool EntityHasScoreCondition::applies(Random* random, LootTableContext& context)
     }
 
     Scoreboard* scoreboard = entity->mLevel->GetScoreboard();
-    boost::unordered_map<std::wstring, RandomValueBounds>::const_iterator it = scores.begin();
-    while (it != scores.end())
+    for (boost::unordered_map<std::wstring, RandomValueBounds>::iterator it = scores.begin(); it != scores.end(); ++it)
     {
         if (!hasScore(entity, scoreboard, it->first, it->second))
         {
             return false;
         }
-        ++it;
     }
 
     return true;

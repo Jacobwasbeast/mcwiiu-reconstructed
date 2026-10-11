@@ -55,8 +55,7 @@ void HangingEntity::defineSynchedData()
 void HangingEntity::setDirection(const Direction* direction)
 {
     mDirection = direction;
-    mYRot = (float)direction->get2DDataValue() * 90.0f;
-    mYRotO = mYRot;
+    mYRotO = mYRot = (float)mDirection->get2DDataValue() * 90.0f;
     recalculateBoundingBox();
 }
 
@@ -128,7 +127,7 @@ bool HangingEntity::survives()
     height = height < 1 ? 1 : height;
     BlockPos anchor = mPos.relative(mDirection->getOpposite());
     const Direction* horizontal = mDirection->getCounterClockWise();
-    MutableBlockPos check(0, 0, 0);
+    MutableBlockPos check;
     int xStart = -((width - 1) / 2);
     int yStart = -((height - 1) / 2);
     for (int x = 0; x < width; ++x)
@@ -235,10 +234,10 @@ bool HangingEntity::repositionEntityAfterLoad()
 
 void HangingEntity::setPos(double x, double y, double z)
 {
-    BlockPos old = mPos;
     mX = x;
     mY = y;
     mZ = z;
+    BlockPos old = mPos;
     mPos = BlockPos(x, y, z);
     if (!mPos.equals(old))
     {

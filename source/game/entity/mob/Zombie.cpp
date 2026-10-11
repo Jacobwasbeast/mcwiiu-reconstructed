@@ -315,17 +315,20 @@ bool Zombie::hurt(const DamageSource* source, float damage)
 
 bool Zombie::doHurtTarget(boost::shared_ptr<Entity> target)
 {
-    bool hurt = Monster::doHurtTarget(target);
-    if (hurt)
+    bool result = Monster::doHurtTarget(target);
+    if (result)
     {
         float difficulty = mLevel->getCurrentDifficultyAt(BlockPos(this)).getEffectiveDifficulty();
         bool emptyHand = getMainHandItem()->isEmpty();
-        if (emptyHand && isOnFire() && mRandom->nextFloat() < difficulty * 0.3f)
+        if (emptyHand)
         {
-            target->setSecondsOnFire((int)difficulty << 1);
+            if (isOnFire() && mRandom->nextFloat() < difficulty * 0.3f)
+            {
+                target->setSecondsOnFire((int)difficulty << 1);
+            }
         }
     }
-    return hurt;
+    return result;
 }
 
 bool Zombie::isSunSensitive() const
@@ -488,7 +491,8 @@ MobGroupData* Zombie::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
         Random* random = mLevel->mRandom;
         const bool isBaby = random->rollPercentageChance(5);
         const bool isJockey = isBaby && random->rollPercentageChance(15);
-        data = new ZombieGroupData(isBaby, isJockey, random->rollPercentageChance(5));
+        const bool isAdult = random->rollPercentageChance(5);
+        data = new ZombieGroupData(isBaby, isJockey, isAdult);
     }
 
     if (dynamic_cast<ZombieGroupData*>(data) != NULL)
@@ -505,10 +509,10 @@ MobGroupData* Zombie::finalizeMobSpawn(const DifficultyInstance& difficulty, Mob
     populateDefaultEquipmentEnchantments(difficulty);
 
     bool emptyHead = getItemSlot(EquipmentSlot::HEAD)->isEmpty();
-    if (emptyHead && IS_HALLOWEEN && mRandom->nextFloat() < 0.25f)
+    if (emptyHead && SharedConstants::IS_HALLOWEEN && mRandom->nextFloat() < 0.25f)
     {
         setItemSlot(EquipmentSlot::HEAD, not_null_ptr<ItemInstance>(new ItemInstance(
-                                             mRandom->nextFloat() >= 0.1f ? Blocks::carved_pumpkin : Blocks::lit_pumpkin)));
+                                             mRandom->nextFloat() < 0.1f ? Blocks::lit_pumpkin : Blocks::carved_pumpkin)));
         mArmorDropChances[EquipmentSlot::HEAD->getIndex()] = 0.0f;
     }
 
@@ -612,13 +616,10 @@ void Zombie::die(const DamageSource* source)
 
 bool Zombie::startRiding(boost::shared_ptr<Entity> vehicle, bool force)
 {
-    bool riding = Mob::startRiding(vehicle, force);
-    bool chicken = false;
-    if (isBaby() && force)
-        chicken = eTYPE_DERIVED_FROM(EntityType::CHICKEN, vehicle->GetType());
-    if (chicken)
+    bool result = Mob::startRiding(vehicle, force);
+    if (isBaby() && force && eTYPE_DERIVED_FROM(EntityType::CHICKEN, vehicle->GetType()))
         mIsJockey = true;
-    return riding;
+    return result;
 }
 
 void Zombie::finishConversion()

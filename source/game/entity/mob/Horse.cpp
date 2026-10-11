@@ -179,8 +179,7 @@ bool Horse::isWearingDyedArmor()
 
 int Horse::getDyedArmorColor()
 {
-    not_null_ptr<ItemInstance> item = mEntityData->get(DATA_ARMOR);
-    return getArmorType()->getDyedColor(item);
+    return getArmorType()->getDyedColor(mEntityData->get(DATA_ARMOR));
 }
 
 int Horse::getDyedArmorLayer()
@@ -391,16 +390,11 @@ bool Horse::canMate(const boost::shared_ptr<Animal>& other)
     {
         return false;
     }
-    bool isDonkey = eTYPE_DERIVED_FROM(EntityType::DONKEY, other->GetType());
-    if (!isDonkey)
+    if (eTYPE_DERIVED_FROM(EntityType::DONKEY, other->GetType()) || eTYPE_DERIVED_FROM(EntityType::HORSE, other->GetType()))
     {
-        bool isHorse = eTYPE_DERIVED_FROM(EntityType::HORSE, other->GetType());
-        if (!isHorse)
-        {
-            return false;
-        }
+        return canParent() && boost::static_pointer_cast<AbstractHorse>(other)->canParent();
     }
-    return canParent() && boost::static_pointer_cast<AbstractHorse>(other)->canParent();
+    return false;
 }
 
 boost::shared_ptr<AgableMob> Horse::getBreedOffspring(boost::shared_ptr<AgableMob> partner)
@@ -409,12 +403,14 @@ boost::shared_ptr<AgableMob> Horse::getBreedOffspring(boost::shared_ptr<AgableMo
     bool partnerIsDonkey = eTYPE_DERIVED_FROM(EntityType::DONKEY, partner->GetType());
     if (partnerIsDonkey)
     {
-        child = boost::shared_ptr<Mule>(new Mule(mLevel));
+        boost::shared_ptr<Mule> mule(new Mule(mLevel));
+        child = mule;
     }
     else
     {
         boost::shared_ptr<Horse> partnerHorse = boost::static_pointer_cast<Horse>(partner);
-        child = boost::shared_ptr<Horse>(new Horse(mLevel));
+        boost::shared_ptr<Horse> horse(new Horse(mLevel));
+        child = horse;
         int colour;
         int roll = mRandom->nextInt(9);
         if (roll < 4)
@@ -458,16 +454,13 @@ bool Horse::isArmor(const not_null_ptr<ItemInstance>& item)
 MobGroupData* Horse::finalizeMobSpawn(const DifficultyInstance& difficulty, MobGroupData* data, const std::wstring& name)
 {
     MobGroupData* result = AbstractHorse::finalizeMobSpawn(difficulty, data, name);
-    int variant;
     if (result != NULL && dynamic_cast<HorseGroupData*>(result) != NULL)
     {
-        variant = static_cast<HorseGroupData*>(result)->mVariant;
+        setVariant(static_cast<HorseGroupData*>(result)->mVariant | (mRandom->nextInt(5) << 8));
+        return result;
     }
-    else
-    {
-        variant = mRandom->nextInt(7);
-        result = new HorseGroupData(variant);
-    }
+    int variant = mRandom->nextInt(7);
+    result = new HorseGroupData(variant);
     setVariant(variant | (mRandom->nextInt(5) << 8));
     return result;
 }

@@ -15,13 +15,13 @@ bool ShoulderRidingEntity::setEntityOnShoulder(boost::shared_ptr<Player> player)
     tag->putString(L"id", getEncodeId());
     saveWithoutId(tag);
 
-    if (player->setEntityOnShoulder(tag) == 0)
+    if (player->setEntityOnShoulder(tag))
     {
-        return false;
+        mLevel->removeEntity(shared_from_this());
+        return true;
     }
 
-    mLevel->removeEntity(shared_from_this());
-    return true;
+    return false;
 }
 
 void ShoulderRidingEntity::tick()

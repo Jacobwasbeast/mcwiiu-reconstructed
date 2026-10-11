@@ -96,19 +96,17 @@ BlockPos* TheEndGatewayEntity::findValidSpawnInChunk(LevelChunk* chunk)
     while (positions->hasNext())
     {
         BlockPos pos = *positions->next();
-        if (chunk->getBlockState(pos)->getBlock() != Blocks::end_stone)
-            continue;
-        if (chunk->getBlockState(pos.above(1))->isSolidBlockingCube())
-            continue;
-        if (chunk->getBlockState(pos.above(2))->isSolidBlockingCube())
-            continue;
-
-        double distance = pos.distSqrToCenter(0.0, 0.0, 0.0);
-        if (spawn == NULL || distance < spawnDistance)
+        if (chunk->getBlockState(pos)->getBlock() == Blocks::end_stone
+            && !chunk->getBlockState(pos.above(1))->isSolidBlockingCube()
+            && !chunk->getBlockState(pos.above(2))->isSolidBlockingCube())
         {
-            delete spawn;
-            spawn = new BlockPos(pos);
-            spawnDistance = distance;
+            double distance = pos.distSqrToCenter(0.0, 0.0, 0.0);
+            if (spawn == NULL || distance < spawnDistance)
+            {
+                delete spawn;
+                spawn = new BlockPos(pos);
+                spawnDistance = distance;
+            }
         }
     }
     return spawn;
@@ -138,19 +136,8 @@ void TheEndGatewayEntity::findExitPortal()
     int portalNumber = mLevel->getBlockState(getBlockPos())->getValue(EndGatewayBlock::PORTAL_NUMBER);
     Random random(mLevel->getSeed() + portalNumber);
     ChunkPos chunkPos(0, 0);
-    for (unsigned int attempt = 0;; ++attempt)
+    for (unsigned int attempt = 0; mExitPortal == NULL && attempt < 1000; ++attempt)
     {
-        if (mExitPortal != NULL)
-            break;
-
-        if (attempt >= 1000)
-        {
-            SetExitPortal(new BlockPos(chunkPos.getMiddleBlockPosition(75)));
-            Random islandRandom(mExitPortal->compressBlockPos());
-            EndIslandFeature().place(mLevel, islandRandom, *mExitPortal);
-            break;
-        }
-
         chunkPos = TheEndDimension::AREAS[portalNumber];
         int xOffset = random.nextInt(2) + 3;
         if (!random.nextBoolean())
@@ -170,7 +157,7 @@ void TheEndGatewayEntity::findExitPortal()
         {
             for (LevelChunk::BlockEntityMap::iterator it = blockEntities->begin(); it != blockEntities->end(); ++it)
             {
-                if (eTYPE_DERIVED_FROM(BlockEntityType::THE_END_GATEWAY_ENTITY, it->second->GetType()))
+                if (it->second->GetType() == BlockEntityType::THE_END_GATEWAY_ENTITY)
                 {
                     boost::shared_ptr<TheEndGatewayEntity> gateway = boost::static_pointer_cast<TheEndGatewayEntity>(it->second);
                     SetExitPortal(new BlockPos(gateway->getBlockPos()));
@@ -180,6 +167,13 @@ void TheEndGatewayEntity::findExitPortal()
             }
         }
         SetExitPortal(findValidSpawnInChunk(chunk));
+    }
+
+    if (mExitPortal == NULL)
+    {
+        SetExitPortal(new BlockPos(chunkPos.getMiddleBlockPosition(75)));
+        Random islandRandom(mExitPortal->compressBlockPos());
+        EndIslandFeature().place(mLevel, islandRandom, *mExitPortal);
     }
 
     BlockPos tallest = findTallestBlock(mLevel, chunkPos.getMiddleBlockPosition(0), 7, true);

@@ -96,26 +96,26 @@ bool ZombieHorse::mobInteract(const boost::shared_ptr<Player>& player,
         return false;
     if (isBaby())
         return AbstractHorse::mobInteract(player, hand);
-    if (!player->isSneaking())
+    if (player->isSneaking())
     {
-        if (isVehicle())
-            return AbstractHorse::mobInteract(player, hand);
-        if (notEmpty)
-        {
-            if (!isSaddled() && item->getItem() == Items::saddle)
-            {
-                openInventory(player);
-                return true;
-            }
-            if (item->interactEnemy(player,
-                                    boost::static_pointer_cast<LivingEntity>(shared_from_this()),
-                                    hand))
-                return true;
-        }
-        doPlayerRide(player);
+        openInventory(player);
         return true;
     }
-    openInventory(player);
+    if (isVehicle())
+        return AbstractHorse::mobInteract(player, hand);
+    if (notEmpty)
+    {
+        if (!isSaddled() && item->getItem() == Items::saddle)
+        {
+            openInventory(player);
+            return true;
+        }
+        if (item->interactEnemy(player,
+                                boost::static_pointer_cast<LivingEntity>(shared_from_this()),
+                                hand))
+            return true;
+    }
+    doPlayerRide(player);
     return true;
 }
 
@@ -124,8 +124,8 @@ unsigned int ZombieHorse::GetInteractTooltip(const EntityTooltipDataHolder& tool
     if (tooltipData.m_bAllowedToInteract)
     {
         unsigned int itemId = Item::getId(tooltipData.m_pItemInstance->getItem());
-        bool horseArmor = itemId >= ItemId::IRON_HORSE_ARMOR
-                          && (itemId <= ItemId::DIAMOND_HORSE_ARMOR || itemId == ItemId::LEATHER_HORSE_ARMOR);
+        bool horseArmor = itemId == ItemId::IRON_HORSE_ARMOR || itemId == ItemId::GOLDEN_HORSE_ARMOR
+                          || itemId == ItemId::DIAMOND_HORSE_ARMOR || itemId == ItemId::LEATHER_HORSE_ARMOR;
 
         if (itemId == ItemId::SPAWN_EGG)
         {
@@ -150,13 +150,10 @@ unsigned int ZombieHorse::GetInteractTooltip(const EntityTooltipDataHolder& tool
                 {
                     if (!tooltipData.m_pItemInstance->hasCustomHoverName())
                         return IDS_NONE;
-                    bool differs = true;
-                    if (hasCustomName()
-                        && tooltipData.m_pItemInstance->getHoverName().compare(getCustomName()) == 0)
-                        differs = false;
-                    if (!differs)
-                        return IDS_NONE;
-                    return IDS_TOOLTIPS_NAME;
+                    if (!hasCustomName()
+                        || tooltipData.m_pItemInstance->getHoverName().compare(getCustomName()) != 0)
+                        return IDS_TOOLTIPS_NAME;
+                    return IDS_NONE;
                 }
 
                 if (isTamed())

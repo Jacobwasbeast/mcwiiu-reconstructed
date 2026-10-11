@@ -16,27 +16,29 @@ int EntityZombieSplitFix::getVersion()
 
 CompoundTag* EntityZombieSplitFix::fix(CompoundTag* tag)
 {
-    if (!CheckID(tag, L"Zombie"))
+    if (CheckID(tag, L"Zombie"))
     {
-        return tag;
+        int zombieType = tag->getInt(L"ZombieType");
+
+        switch (zombieType)
+        {
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+            tag->putString(L"id", L"ZombieVillager");
+            tag->putInt(L"Profession", zombieType - 1);
+            break;
+        case 6:
+            tag->putString(L"id", L"Husk");
+            break;
+        }
+
+        delete tag->get(L"ZombieType");
+
+        tag->remove(L"ZombieType");
     }
-
-    unsigned int zombieType = (unsigned int)tag->getInt(L"ZombieType");
-
-    if (zombieType >= 1 && zombieType <= 5)
-    {
-        tag->putString(L"id", L"ZombieVillager");
-        tag->putInt(L"Profession", zombieType - 1);
-    }
-    else if (zombieType == 6)
-    {
-        tag->putString(L"id", L"Husk");
-    }
-
-    Tag* zombieTypeTag = tag->get(L"ZombieType");
-    delete zombieTypeTag;
-
-    tag->remove(L"ZombieType");
 
     return tag;
 }

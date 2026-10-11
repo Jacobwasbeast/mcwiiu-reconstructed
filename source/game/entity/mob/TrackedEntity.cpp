@@ -130,7 +130,7 @@ int TrackedEntity::isVisibleTo(EntityTracker* tracker, const boost::shared_ptr<S
         range -= player->getPlayerViewDistanceModifier();
 
     bool inRange = false;
-    if (!skipRangeCheck && -range <= xd && xd <= range && -range <= zd && zd <= range)
+    if (!skipRangeCheck && xd >= -range && xd <= range && zd >= -range && zd <= range)
         inRange = true;
 
     if (!inRange && mEntity->hasPassenger(EntityType::PLAYER))
@@ -139,14 +139,15 @@ int TrackedEntity::isVisibleTo(EntityTracker* tracker, const boost::shared_ptr<S
         for (std::vector<boost::weak_ptr<Entity> >::iterator it = passengers.begin(); it != passengers.end(); ++it)
         {
             boost::shared_ptr<Entity> passenger = it->lock();
-            if (passenger == NULL)
-                continue;
-            boost::shared_ptr<TrackedEntity> passengerTracker = tracker->getTracker(passenger);
-            if (passengerTracker != NULL)
+            if (passenger != NULL)
             {
-                int visible = passengerTracker->isVisibleTo(tracker, player, force, skipRangeCheck);
-                if (visible != 0)
-                    return visible;
+                boost::shared_ptr<TrackedEntity> passengerTracker = tracker->getTracker(passenger);
+                if (passengerTracker != NULL)
+                {
+                    int visible = passengerTracker->isVisibleTo(tracker, player, force, skipRangeCheck);
+                    if (visible != 0)
+                        return visible;
+                }
             }
         }
     }
@@ -167,8 +168,7 @@ int TrackedEntity::isVisibleTo(EntityTracker* tracker, const boost::shared_ptr<S
                     continue;
                 double otherXd = other->mX - mXpu;
                 double otherZd = other->mZ - mZpu;
-                bool otherInRange = -range <= otherXd && otherXd <= range && -range <= otherZd && otherZd <= range;
-                inRange = inRange | otherInRange;
+                inRange = inRange | (otherXd >= -range && otherXd <= range && otherZd >= -range && otherZd <= range);
                 canSee = canSee | canBySeenBy(other);
             }
         }
@@ -596,11 +596,10 @@ void TrackedEntity::broadcast(boost::shared_ptr<Packet> packet)
                     }
                 }
             }
-            if (!dontSend)
-            {
-                (*it)->mConnection->send(packet);
-                sentTo.push_back(player);
-            }
+            if (dontSend)
+                continue;
+            (*it)->mConnection->send(packet);
+            sentTo.push_back(player);
         }
     }
     else

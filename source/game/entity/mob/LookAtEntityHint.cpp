@@ -20,55 +20,32 @@ LookAtEntityHint::~LookAtEntityHint()
 {
 }
 
-boost::shared_ptr<ItemInstance> LookAtEntityHint::GetEntityAsItem(boost::shared_ptr<Entity> entity)
+not_null_ptr<ItemInstance> LookAtEntityHint::GetEntityAsItem(boost::shared_ptr<Entity> entity)
 {
-    unsigned long long type = entity->GetType();
-
-    if (type == EntityType::ENDER_CRYSTAL)
+    switch (entity->GetType())
     {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::endCrystal));
-    }
-    if (type == EntityType::ARMOR_STAND)
-    {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::armorStand));
-    }
-    if (type == EntityType::BOAT)
-    {
-        boost::shared_ptr<Boat> boat = boost::static_pointer_cast<Boat>(entity);
-        Item* dropItem = boat->getDropItem();
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(dropItem));
-    }
-    if (type == EntityType::MINECART_TNT)
-    {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::tntMinecart));
-    }
-    if (type == EntityType::MINECART_HOPPER)
-    {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::hopperMinecart));
-    }
-    if (type == EntityType::MINECART_FURNACE)
-    {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::furnaceMinecart));
-    }
-    if (type == EntityType::MINECART_CHEST)
-    {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::chestMinecart));
-    }
-    if (type == EntityType::MINECART_RIDEABLE)
-    {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::minecart));
-    }
-    if (type == EntityType::LEASH_FENCE_KNOT_ENTITY)
-    {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::lead));
-    }
-    if (type == EntityType::ITEM_FRAME)
-    {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::itemFrame));
-    }
-    if (type == EntityType::PAINTING)
-    {
-        return boost::shared_ptr<ItemInstance>(new ItemInstance(Items::painting));
+    case EntityType::PAINTING:
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::painting));
+    case EntityType::ITEM_FRAME:
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::itemFrame));
+    case EntityType::LEASH_FENCE_KNOT_ENTITY:
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::lead));
+    case EntityType::MINECART_RIDEABLE:
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::minecart));
+    case EntityType::MINECART_CHEST:
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::chestMinecart));
+    case EntityType::MINECART_FURNACE:
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::furnaceMinecart));
+    case EntityType::MINECART_HOPPER:
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::hopperMinecart));
+    case EntityType::MINECART_TNT:
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::tntMinecart));
+    case EntityType::BOAT:
+        return not_null_ptr<ItemInstance>(new ItemInstance(boost::static_pointer_cast<Boat>(entity)->getDropItem()));
+    case EntityType::ARMOR_STAND:
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::armorStand));
+    case EntityType::ENDER_CRYSTAL:
+        return not_null_ptr<ItemInstance>(new ItemInstance(Items::endCrystal));
     }
 
     return ItemInstance::EMPTY;
@@ -85,7 +62,7 @@ unsigned int LookAtEntityHint::onLookAtEntity(boost::shared_ptr<Entity> entity)
             || eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, entity->GetType())
             || eTYPE_DERIVED_FROM(EntityType::ENDER_CRYSTAL, entity->GetType()))
         {
-            boost::shared_ptr<ItemInstance> item = GetEntityAsItem(entity);
+            not_null_ptr<ItemInstance> item = GetEntityAsItem(entity);
             if (item->isEmpty())
             {
                 return 0;

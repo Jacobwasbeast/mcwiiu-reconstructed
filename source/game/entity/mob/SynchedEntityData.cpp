@@ -16,9 +16,9 @@ class CompoundTag;
 
 static const int END_OF_DATA_MARKER = 255;
 
-static bool sSerializerLockCreated = false;
-static OSFastMutex sSerializerLock;
+static bool sDataItemLockCreated = false;
 
+OSFastMutex SynchedEntityData::sDataItemLock;
 boost::unordered_map<unsigned long long, int> SynchedEntityData::sIdsByEntityType;
 
 SynchedEntityData::SynchedEntityData(Entity* entity)
@@ -27,10 +27,10 @@ SynchedEntityData::SynchedEntityData(Entity* entity)
     mIsEmpty = true;
     mIsDirty = false;
 
-    if (!sSerializerLockCreated)
+    if (!sDataItemLockCreated)
     {
-        InitializeCriticalSection(&sSerializerLock);
-        sSerializerLockCreated = true;
+        InitializeCriticalSection(&sDataItemLock);
+        sDataItemLockCreated = true;
     }
 
     for (int i = 0; i < MAX_ID; ++i)
@@ -108,9 +108,9 @@ void SynchedEntityData::writeDataItem(DataOutputStream* output, DataItem_Impl<T>
     output->writeByte(accessor->getId());
     output->writeByte(serializerId);
 
-    EnterCriticalSection(&sSerializerLock);
+    EnterCriticalSection(&sDataItemLock);
     accessor->getSerializer()->write(output, item->getValue());
-    LeaveCriticalSection(&sSerializerLock);
+    LeaveCriticalSection(&sDataItemLock);
 }
 
 void SynchedEntityData::writeDataItem(DataOutputStream* output, DataItem* item)

@@ -114,9 +114,9 @@ void TamableAnimal::spawnTamingParticles(bool success)
         double ya = mRandom->nextGaussian() * 0.02;
         double za = mRandom->nextGaussian() * 0.02;
         mLevel->addParticle(particle,
-                            mX + mRandom->nextFloat() * mBbWidth * 2.0 - mBbWidth,
+                            mX + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
                             mY + 0.5 + mRandom->nextFloat() * mBbHeight,
-                            mZ + mRandom->nextFloat() * mBbWidth * 2.0 - mBbWidth,
+                            mZ + mRandom->nextFloat() * mBbWidth * 2.0f - mBbWidth,
                             xa,
                             ya,
                             za,
@@ -126,17 +126,17 @@ void TamableAnimal::spawnTamingParticles(bool success)
 
 void TamableAnimal::handleEntityEvent(unsigned char event, int data)
 {
-    if (event == EntityEvent::TAMING_FAILED)
+    switch (event)
     {
-        spawnTamingParticles(false);
-    }
-    else if (event == EntityEvent::TAMING_SUCCEEDED)
-    {
+    case EntityEvent::TAMING_SUCCEEDED:
         spawnTamingParticles(true);
-    }
-    else
-    {
+        break;
+    case EntityEvent::TAMING_FAILED:
+        spawnTamingParticles(false);
+        break;
+    default:
         Animal::handleEntityEvent(event, data);
+        break;
     }
 }
 
@@ -236,11 +236,13 @@ bool TamableAnimal::isAlliedTo(boost::shared_ptr<Entity> entity)
 
 void TamableAnimal::die(const DamageSource* source)
 {
-    if (!mLevel->mIsClientSide && mLevel->getGameRules()->getBoolean(GameRules::RULE_SHOWDEATHMESSAGES) && hasCustomName() &&
-        getOwner() != NULL && eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, getOwner()->GetType()))
+    if (!mLevel->mIsClientSide && mLevel->getGameRules()->getBoolean(GameRules::RULE_SHOWDEATHMESSAGES) && hasCustomName())
     {
-        boost::dynamic_pointer_cast<ServerPlayer>(getOwner())->mConnection->send(
-            getCombatTracker()->getDeathMessagePacket());
+        if (getOwner() != NULL && eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, getOwner()->GetType()))
+        {
+            boost::dynamic_pointer_cast<ServerPlayer>(getOwner())->mConnection->send(
+                getCombatTracker()->getDeathMessagePacket());
+        }
     }
 
     LivingEntity::die(source);

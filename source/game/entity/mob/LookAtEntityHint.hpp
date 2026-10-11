@@ -3,6 +3,8 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "game/item/not_null_ptr.hpp"
+
 #include "game/minigame/TutorialHint.hpp"
 
 class Entity;
@@ -18,7 +20,7 @@ public:
                      bool (*entityPredicate)(boost::shared_ptr<Entity>));
     virtual ~LookAtEntityHint();
 
-    boost::shared_ptr<ItemInstance> GetEntityAsItem(boost::shared_ptr<Entity> entity);
+    not_null_ptr<ItemInstance> GetEntityAsItem(boost::shared_ptr<Entity> entity);
     virtual unsigned int onLookAtEntity(boost::shared_ptr<Entity> entity);
 
 private:

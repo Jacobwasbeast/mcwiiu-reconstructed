@@ -76,9 +76,9 @@ void BaseMobSpawner::tick()
     BlockPos origin = getPos();
     if (getLevel()->mIsClientSide)
     {
-        float x = static_cast<float>(origin.x) + getLevel()->mRandom->nextFloat();
-        float y = static_cast<float>(origin.y) + getLevel()->mRandom->nextFloat();
-        float z = static_cast<float>(origin.z) + getLevel()->mRandom->nextFloat();
+        double x = (float)origin.x + getLevel()->mRandom->nextFloat();
+        double y = (float)origin.y + getLevel()->mRandom->nextFloat();
+        double z = (float)origin.z + getLevel()->mRandom->nextFloat();
         getLevel()->addParticle(PARTICLE_SMOKE, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
         getLevel()->addParticle(PARTICLE_FLAME, x, y, z, 0.0, 0.0, 0.0, arrayWithLength<int>());
         if (mDelay > 0)
@@ -110,9 +110,9 @@ void BaseMobSpawner::tick()
         if (entity == NULL)
             return;
 
-        AABB* box = AABB::newTemp(origin.x, origin.y, origin.z, origin.x + 1, origin.y + 1, origin.z + 1)
-                        ->grow(mSpawnRange, mSpawnRange, mSpawnRange);
-        std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(*entity.get()), box);
+        std::vector<boost::shared_ptr<Entity> >* entities = level->getEntitiesOfClass(typeid(*entity.get()),
+            AABB::newTemp(origin.x, origin.y, origin.z, origin.x + 1, origin.y + 1, origin.z + 1)
+                ->grow(mSpawnRange, mSpawnRange, mSpawnRange));
         int nearby = static_cast<int>(entities->size());
         delete entities;
         if (nearby >= mMaxNearbyEntities || !getLevel()->canCreateMore(entity->GetType(), Level::eSpawnType_Egg))
@@ -131,7 +131,7 @@ void BaseMobSpawner::tick()
                 && eTYPE_DERIVED_FROM(EntityType::MOB, entity->GetType()))
             {
                 boost::shared_ptr<Mob> spawnedMob = boost::static_pointer_cast<Mob>(entity);
-                spawnedMob->finalizeMobSpawn(level->getCurrentDifficultyAt(BlockPos(entity)), NULL, std::wstring());
+                spawnedMob->finalizeMobSpawn(level->getCurrentDifficultyAt(BlockPos(entity)), NULL, std::wstring(L""));
             }
             OldChunkStorage::addEntityToWorld(entity, level);
             level->levelEvent(LevelEvent::PARTICLES_MOBBLOCK_SPAWN, origin, 0);

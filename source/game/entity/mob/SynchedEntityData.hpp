@@ -13,6 +13,7 @@
 
 class DataInputStream;
 class DataOutputStream;
+struct OSFastMutex;
 
 void MemSect(int section);
 
@@ -60,7 +61,8 @@ public:
     template <class T>
     void markDirty(const EntityDataAccessor<T>* accessor)
     {
-        mItemsById[accessor->getId()]->setDirty(true);
+        DataItem* item = mItemsById[accessor->getId()];
+        item->mDirty = true;
         mIsDirty = true;
     }
 
@@ -91,6 +93,8 @@ public:
     static std::vector<DataItem*>* unpack(DataInputStream* input);
     static void pack(std::vector<DataItem*>* items, DataOutputStream* output);
     static void writeDataItem(DataOutputStream* output, DataItem* item);
+
+    static OSFastMutex sDataItemLock;
 
 private:
     static int defineIdInternal(unsigned long long entityType, unsigned long long parentEntityType);

@@ -92,6 +92,8 @@
 
 class ServerPlayer;
 
+const std::wstring Entity::RIDING_TAG = L"Riding";
+
 static unsigned int gSmallIdTlsIndex = TlsAlloc();
 
 const EntityDataAccessor<int>* Entity::DATA_SHARED_FLAGS_ID;
@@ -2274,13 +2276,13 @@ void Entity::moveTo(double x, double y, double z, float yRot, float xRot)
     setPos(mX, mY, mZ);
 }
 
-double Entity::distanceTo(boost::shared_ptr<Entity> entity) const
+float Entity::distanceTo(boost::shared_ptr<Entity> entity) const
 {
     float dx = (float)(mX - entity->mX);
     float dy = (float)(mY - entity->mY);
     float dz = (float)(mZ - entity->mZ);
 
-    return (double)sqrtf(dx * dx + dy * dy + dz * dz);
+    return sqrtf(dx * dx + dy * dy + dz * dz);
 }
 
 double Entity::distanceToSqr(const BlockPos& pos) const
@@ -2664,13 +2666,13 @@ CompoundTag* Entity::saveWithoutId(CompoundTag* tag)
             }
         }
 
-        if (passengers->isEmpty())
+        if (!passengers->isEmpty())
         {
-            delete passengers;
+            tag->put(RIDING_TAG, passengers);
         }
         else
         {
-            tag->put(std::wstring(L"Riding"), passengers);
+            delete passengers;
         }
     }
 

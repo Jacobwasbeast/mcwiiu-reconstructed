@@ -14,28 +14,22 @@ int EntitySkeletonSplitFix::getVersion()
 
 CompoundTag* EntitySkeletonSplitFix::fix(CompoundTag* tag)
 {
-    if (!CheckID(tag, L"Skeleton"))
+    if (CheckID(tag, L"Skeleton"))
     {
-        return tag;
+        int skeletonType = tag->getInt(L"SkeletonType");
+
+        if (skeletonType == 1)
+        {
+            tag->putString(L"id", L"WitherSkeleton");
+        }
+        else if (skeletonType == 2)
+        {
+            tag->putString(L"id", L"Stray");
+        }
+
+        delete tag->get(L"SkeletonType");
+        tag->remove(L"SkeletonType");
     }
-
-    int skeletonType = tag->getInt(L"SkeletonType");
-
-    switch (skeletonType)
-    {
-    case 1:
-        tag->putString(L"id", L"WitherSkeleton");
-        break;
-
-    case 2:
-        tag->putString(L"id", L"Stray");
-        break;
-    }
-
-    Tag* skeletonTypeTag = tag->get(L"SkeletonType");
-    delete skeletonTypeTag;
-
-    tag->remove(L"SkeletonType");
 
     return tag;
 }

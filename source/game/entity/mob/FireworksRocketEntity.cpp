@@ -272,25 +272,7 @@ void FireworksRocketEntity::tick()
     mZOld = mZ;
     Entity::tick();
 
-    if (!isAttachedToEntity())
-    {
-        if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
-        {
-            if (mDirectionalX != 0 || mDirectionalY != 0 || mDirectionalZ != 0)
-            {
-                mXd = HandleDirectionalAcceleration(mDirectionalX, mXd);
-                mYd = HandleDirectionalAcceleration(mDirectionalY, mYd);
-                mZd = HandleDirectionalAcceleration(mDirectionalZ, mZd);
-            }
-            else
-            {
-                mYd += 0.04;
-            }
-        }
-
-        move(eMoverType_Self, mXd, mYd, mZd, false);
-    }
-    else
+    if (isAttachedToEntity())
     {
         boost::shared_ptr<LivingEntity> attached = mAttachedToEntity.lock();
 
@@ -320,28 +302,43 @@ void FireworksRocketEntity::tick()
             mZd = attached->mZd;
         }
     }
-
-    double facingX;
-    double facingY;
-    double facingZ;
-
-    if (Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
-    {
-        facingX = mXd;
-        facingY = mYd;
-        facingZ = mZd;
-    }
-    else if (mDirectionalX != 0 || mDirectionalY != 0 || mDirectionalZ != 0)
-    {
-        facingX = mDirectionalX;
-        facingY = mDirectionalY;
-        facingZ = mDirectionalZ;
-    }
     else
     {
-        facingX = 0.0;
-        facingY = 1.0;
-        facingZ = 0.0;
+        if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
+        {
+            if (mDirectionalX == 0 && mDirectionalY == 0 && mDirectionalZ == 0)
+            {
+                mYd += 0.04;
+            }
+            else
+            {
+                mXd = HandleDirectionalAcceleration(mDirectionalX, mXd);
+                mYd = HandleDirectionalAcceleration(mDirectionalY, mYd);
+                mZd = HandleDirectionalAcceleration(mDirectionalZ, mZd);
+            }
+        }
+
+        move(eMoverType_Self, mXd, mYd, mZd, false);
+    }
+
+    double facingX = mXd;
+    double facingY = mYd;
+    double facingZ = mZd;
+
+    if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
+    {
+        if (mDirectionalX == 0 && mDirectionalY == 0 && mDirectionalZ == 0)
+        {
+            facingX = 0.0;
+            facingY = 1.0;
+            facingZ = 0.0;
+        }
+        else
+        {
+            facingX = mDirectionalX;
+            facingY = mDirectionalY;
+            facingZ = mDirectionalZ;
+        }
     }
 
     double horizontal = Mth::sqrt(facingX * facingX + facingZ * facingZ);
@@ -394,15 +391,8 @@ void FireworksRocketEntity::tick()
             double vy;
             double vz;
 
-            if (mDirectionalX == 0 && mDirectionalY == 0 && mDirectionalZ == 0
-                && !Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
-            {
-                py = mY - 0.3;
-                vy = -(mYd * 0.5);
-                vz = mRandom->nextGaussian() * 0.05;
-                vx = mRandom->nextGaussian() * 0.05;
-            }
-            else
+            if (mDirectionalX != 0 || mDirectionalY != 0 || mDirectionalZ != 0
+                || Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
             {
                 py = mY;
                 double drag = Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks() ? 0.1 : 0.5;
@@ -410,10 +400,18 @@ void FireworksRocketEntity::tick()
                 vz = mRandom->nextGaussian() * 0.05 - mZd * drag;
                 vx = mRandom->nextGaussian() * 0.05 - mXd * drag;
             }
+            else
+            {
+                py = mY - 0.3;
+                vy = -(mYd * 0.5);
+                vz = mRandom->nextGaussian() * 0.05;
+                vx = mRandom->nextGaussian() * 0.05;
+            }
 
             if (!Minecraft::GetInstance()->GetMiniGame()->HasFeatureDirectionalFireworks())
             {
-                mLevel->addParticle(PARTICLE_FIREWORKS_SPARK, mX, py, mZ, vx, vy, vz, arrayWithLength<int>());
+                arrayWithLength<int> noColour;
+                mLevel->addParticle(PARTICLE_FIREWORKS_SPARK, mX, py, mZ, vx, vy, vz, noColour);
             }
             else
             {
@@ -439,18 +437,20 @@ void FireworksRocketEntity::tick()
         {
             if (mOwner != NULL)
             {
-                bool mayDestroy = boost::static_pointer_cast<Player>(mOwner)->GetGameMode()->MayDestroy(BlockPos(mX, mY, mZ));
+                GameMode* gameMode = boost::static_pointer_cast<Player>(mOwner)->GetGameMode();
+                BlockPos pos(mX, mY, mZ);
+                bool mayDestroy = gameMode->MayDestroy(pos);
                 mLevel->explode(shared_from_this(), mX, mY, mZ, 2.0f, false, mayDestroy, false, false, false, -1.0f);
             }
 
             remove();
         }
+    }
 
-        if (!mLevel->mIsClientSide && mLife > mLifetime)
-        {
-            dealExplosionDamage();
-            remove();
-        }
+    if (!mLevel->mIsClientSide && mLife > mLifetime)
+    {
+        dealExplosionDamage();
+        remove();
     }
 
     if (mRemoved && !mLevel->mIsClientSide)

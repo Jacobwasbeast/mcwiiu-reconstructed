@@ -67,7 +67,7 @@ void AbstractSkeleton::performRangedAttack(boost::shared_ptr<LivingEntity> targe
     const double horizontalDistance = std::sqrt(dx * dx + dz * dz);
 
     arrow->shoot(dx, targetY + horizontalDistance * 0.2f, dz, 1.6f,
-                 -(static_cast<float>(mLevel->getDifficulty()->getId()) * 4.0f - 14.0f));
+                 14.0f - static_cast<float>(mLevel->getDifficulty()->getId()) * 4.0f);
     playSound(SoundEvents::SKELETON_SHOOT, 1.0f, 1.0f / (getRandom()->nextFloat() * 0.4f + 0.8f));
     mLevel->addEntity(arrow);
 }
@@ -253,7 +253,7 @@ MobGroupData* AbstractSkeleton::finalizeMobSpawn(const DifficultyInstance& diffi
     setCanPickUpLoot(mRandom->nextFloat() < 0.55f * difficulty.getSpecialMultiplier());
 
     bool hasNoHelmet = getItemSlot(EquipmentSlot::HEAD) == ItemInstance::EMPTY;
-    if (hasNoHelmet && IS_HALLOWEEN && mRandom->nextFloat() < 0.25f)
+    if (hasNoHelmet && SharedConstants::IS_HALLOWEEN && mRandom->nextFloat() < 0.25f)
     {
         setItemSlot(EquipmentSlot::HEAD, not_null_ptr<ItemInstance>(new ItemInstance(
                                              mRandom->nextFloat() < 0.1f ? Blocks::lit_pumpkin : Blocks::carved_pumpkin)));
@@ -304,7 +304,7 @@ unsigned long long AbstractSkeleton::GetType()
 }
 
 AbstractSkeleton::SkeleteMeleeAttackGoal::SkeleteMeleeAttackGoal(AbstractSkeleton* skeleton)
-    : MeleeAttackGoal(skeleton, 1.2, true)
+    : MeleeAttackGoal(skeleton, 1.2, false)
 {
 }
 

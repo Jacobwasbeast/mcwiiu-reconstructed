@@ -14,15 +14,16 @@ boost::shared_ptr<Mob> MobCache::getTestMob(ServerLevel* level, unsigned long lo
 
     if (found == end())
     {
-        boost::shared_ptr<Mob> mob = boost::static_pointer_cast<Mob>(EntityIO::newEntity(entityType, level));
-        (*this)[entityType] = mob;
+        boost::shared_ptr<Entity> entity = EntityIO::newEntity(entityType, level);
+        (*this)[entityType] = boost::static_pointer_cast<Mob>(entity);
+        found = find(entityType);
     }
     else
     {
         found->second->setLevel(level);
     }
 
-    return find(entityType)->second;
+    return found->second;
 }
 
 void MobCache::removeFromCache(boost::shared_ptr<Mob> mob)
