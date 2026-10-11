@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "game/core/HitResult.hpp"
+#include "game/core/Mth.hpp"
 #include "game/core/DamageSource.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
@@ -92,8 +93,8 @@ void Fireball::addDataWalkers(DataFixerUpper*, unsigned long long)
 
 void Fireball::_init()
 {
-    mLife = 0;
     mUnknown = 0;
+    mLife = 0;
     mOwner = boost::shared_ptr<LivingEntity>();
     mPowerX = 0.0;
     mPowerY = 0.0;
@@ -106,8 +107,10 @@ void Fireball::defineSynchedData()
 
 bool Fireball::shouldRenderAtSqrDistance(double distanceSqr)
 {
-    const double size = mBoundingBox->getSize();
-    const double distance = size * 4.0 * 64.0;
+    double distance = mBoundingBox->getSize() * 4.0;
+    if (Mth::isNaN(distance))
+        distance = 4.0;
+    distance *= 64.0;
     return distanceSqr < distance * distance;
 }
 
@@ -117,7 +120,13 @@ void Fireball::tick()
 
     if (!mLevel->mIsClientSide)
     {
-        if ((mOwner == NULL || !mOwner->mRemoved) && mLevel->hasChunkAt(BlockPos(this)))
+        if ((mOwner != NULL && mOwner->mRemoved) || !mLevel->hasChunkAt(BlockPos(this)))
+        {
+            remove();
+            PIXEndNamedEvent();
+            return;
+        }
+        else
         {
             ChunkPos chunkPos(BlockPos(this));
             if (!mLevel->mDimension->containsChunk(chunkPos.x, chunkPos.z))
@@ -126,12 +135,6 @@ void Fireball::tick()
                 PIXEndNamedEvent();
                 return;
             }
-        }
-        else
-        {
-            remove();
-            PIXEndNamedEvent();
-            return;
         }
     }
 
@@ -165,7 +168,7 @@ void Fireball::tick()
     mZ += mZd;
     ProjectileUtil::rotateTowardsMovement(shared_from_this(), 0.2f);
 
-    double inertia = getInertia();
+    float inertia = getInertia();
 
     if (isInWater())
     {
@@ -175,21 +178,17 @@ void Fireball::tick()
                                 arrayWithLength<int>());
         }
 
-        float waterInertia = 0.8f;
-        inertia = waterInertia;
+        inertia = 0.8f;
     }
 
-    double xd = (mXd + mPowerX) * inertia;
-    double yd = (mYd + mPowerY) * inertia;
-    double zd = (mZd + mPowerZ) * inertia;
+    mXd += mPowerX;
+    mYd += mPowerY;
+    mZd += mPowerZ;
+    mXd *= inertia;
+    mYd *= inertia;
+    mZd *= inertia;
 
-    if (mLevel->mIsClientSide || fabs(xd) >= 0.002 || fabs(yd) >= 0.002 || fabs(zd) >= 0.002)
-    {
-        mXd = xd;
-        mYd = yd;
-        mZd = zd;
-    }
-    else
+    if (!mLevel->mIsClientSide && fabs(mXd) < 0.002 && fabs(mYd) < 0.002 && fabs(mZd) < 0.002)
     {
         mXd = 0.0;
         mYd = 0.0;

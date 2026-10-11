@@ -45,51 +45,43 @@ void SmallFireball::addDataWalkers(DataFixerUpper* fixer)
 
 void SmallFireball::onHit(const HitResult* result)
 {
-    if (mLevel->mIsClientSide)
+    if (!mLevel->mIsClientSide)
     {
-        return;
+        if (result->mEntity != NULL)
+        {
+            if (!result->mEntity->isFireImmune())
+            {
+                DamageSource* damageSource = DamageSource::CreateFireball(
+                    boost::static_pointer_cast<Fireball>(shared_from_this()), mOwner);
+                bool hurt = result->mEntity->hurt(damageSource, 5.0f);
+                delete damageSource;
+                if (hurt)
+                {
+                    doEnchantDamageEffects(mOwner, result->mEntity);
+                    result->mEntity->setSecondsOnFire(5);
+                }
+            }
+        }
+        else
+        {
+            bool mobGriefing = true;
+            if (mOwner != NULL && eTYPE_DERIVED_FROM(EntityType::MOB, mOwner->GetType()))
+            {
+                mobGriefing = mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING);
+            }
+
+            if (mobGriefing)
+            {
+                BlockPos pos = result->getBlockPos().relative(result->mDirection);
+                if (mLevel->isEmptyBlock(pos))
+                {
+                    mLevel->setBlockAndUpdate(pos, Blocks::fire->defaultBlockState());
+                }
+            }
+        }
+
+        remove();
     }
-
-    if (result->mEntity == NULL)
-    {
-        if (mOwner && eTYPE_DERIVED_FROM(EntityType::MOB, mOwner->GetType())
-            && !mLevel->getGameRules()->getBoolean(GameRules::RULE_MOBGRIEFING))
-        {
-            remove();
-            return;
-        }
-
-        const BlockPos pos = result->getBlockPos().relative(result->mDirection);
-        if (mLevel->isEmptyBlock(pos))
-        {
-            mLevel->setBlockAndUpdate(pos, Blocks::fire->defaultBlockState());
-        }
-    }
-    else
-    {
-        if (result->mEntity->isFireImmune())
-        {
-            remove();
-            return;
-        }
-
-        boost::shared_ptr<Fireball> fireball =
-            boost::static_pointer_cast<Fireball>(shared_from_this());
-        boost::shared_ptr<Entity> owner = mOwner;
-        DamageSource* damageSource =
-            DamageSource::CreateFireball(fireball, owner);
-        if (result->mEntity->hurt(damageSource, 5.0f))
-        {
-            doEnchantDamageEffects(mOwner, result->mEntity);
-            result->mEntity->setSecondsOnFire(5);
-            delete damageSource;
-            remove();
-            return;
-        }
-        delete damageSource;
-    }
-
-    remove();
 }
 
 bool SmallFireball::isPickable()

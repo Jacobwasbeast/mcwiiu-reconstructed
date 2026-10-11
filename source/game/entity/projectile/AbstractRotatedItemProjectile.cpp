@@ -325,11 +325,10 @@ void AbstractRotatedItemProjectile::tick()
 
     mInGroundTime = 0;
     ++mFlightTime;
+    HitResult* hitResult = mLevel->clip(Vec3::newTemp(mX, mY, mZ), Vec3::newTemp(mX + mXd, mY + mYd, mZ + mZd),
+                                        false, true, false, false, NULL, false);
     Vec3* from = Vec3::newTemp(mX, mY, mZ);
-    Vec3* to = Vec3::newTemp(mX + mXd, mY + mYd, mZ + mZd);
-    HitResult* hitResult = mLevel->clip(from, to, false, true, false, false, NULL, false);
-    from = Vec3::newTemp(mX, mY, mZ);
-    to = hitResult == NULL ? Vec3::newTemp(mX + mXd, mY + mYd, mZ + mZd)
+    Vec3* to = hitResult == NULL ? Vec3::newTemp(mX + mXd, mY + mYd, mZ + mZd)
                            : Vec3::newTemp(hitResult->mLocation->x, hitResult->mLocation->y,
                                                  hitResult->mLocation->z);
 
@@ -391,12 +390,12 @@ void AbstractRotatedItemProjectile::tick()
 
     mXRot = mXRotO + (xRot - mXRotO) * 0.2f;
     mYRot = mYRotO + (mYRot - mYRotO) * 0.2f;
-    double inertia = 0.9900000095367432;
+    float inertia = 0.99f;
     if (isInWater())
     {
         for (int i = 0; i < 4; ++i)
             mLevel->addParticle(PARTICLE_BUBBLE, mX - mXd * 0.25, mY - mYd * 0.25,
-                mZ - mZd * 0.25, 0.0, 0.0, 0.0, arrayWithLength<int>());
+                mZ - mZd * 0.25, mXd, mYd, mZd, arrayWithLength<int>());
         inertia = getWaterInertia();
     }
     if (isInWaterOrRain())

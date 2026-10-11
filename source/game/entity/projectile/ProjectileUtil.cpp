@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "game/core/Mth.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/core/HitResult.hpp"
 #include "game/world/Level.hpp"
@@ -135,8 +136,8 @@ void ProjectileUtil::rotateTowardsMovement(const boost::shared_ptr<Entity>& enti
 
     double horizontalDistance = ::sqrt(xd * xd + zd * zd);
 
-    entity->mYRot = (float)(::atan2(zd, xd) * 57.295776f) + 90.0f;
-    entity->mXRot = (float)(::atan2(horizontalDistance, yd) * 57.295776f) - 90.0f;
+    entity->mYRot = (float)(::atan2(zd, xd) * Mth::RAD_TO_DEG) + 90.0f;
+    entity->mXRot = (float)(::atan2(horizontalDistance, yd) * Mth::RAD_TO_DEG) - 90.0f;
 
     while (entity->mXRot - entity->mXRotO < -180.0f)
     {
@@ -158,6 +159,6 @@ void ProjectileUtil::rotateTowardsMovement(const boost::shared_ptr<Entity>& enti
         entity->mYRotO += 360.0f;
     }
 
-    entity->mXRot = (entity->mXRot - entity->mXRotO) * rotationSpeed + entity->mXRotO;
-    entity->mYRot = (entity->mYRot - entity->mYRotO) * rotationSpeed + entity->mYRotO;
+    entity->mXRot = entity->mXRotO + (entity->mXRot - entity->mXRotO) * rotationSpeed;
+    entity->mYRot = entity->mYRotO + (entity->mYRot - entity->mYRotO) * rotationSpeed;
 }

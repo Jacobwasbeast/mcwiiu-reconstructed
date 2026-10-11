@@ -59,12 +59,13 @@ void TippedArrowRecipe::addRecipes(Recipes* recipes)
     mPotions->push_back(Potions::STRONG_REGENERATION);
     mPotions->push_back(Potions::STRONG_STRENGTH);
     mPotions->push_back(Potions::STRONG_TURTLE_MASTER);
-    for (std::vector<Potion*>::iterator potion = mPotions->begin(); potion != mPotions->end(); ++potion)
+    for (std::vector<Potion*>::iterator it = mPotions->begin(); it != mPotions->end(); ++it)
     {
+        Potion* potion = *it;
         not_null_ptr<ItemInstance> result = PotionUtils::setPotion(
-            not_null_ptr<ItemInstance>(new ItemInstance(Items::tippedArrow, 8)), *potion);
+            not_null_ptr<ItemInstance>(new ItemInstance(Items::tippedArrow, 8)), potion);
         not_null_ptr<ItemInstance> ingredient = PotionUtils::setPotion(
-            not_null_ptr<ItemInstance>(new ItemInstance(Items::lingeringPotion)), *potion);
+            not_null_ptr<ItemInstance>(new ItemInstance(Items::lingeringPotion)), potion);
 
         recipes->addShapedRecipe(result->copy_not_shared(), L"sssciczg", L"|||", L"|o|", L"|||",
             L'|', Items::arrow, L'o', ingredient->copy_not_shared(), L'T');

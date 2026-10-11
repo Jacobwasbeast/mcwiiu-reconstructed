@@ -250,15 +250,8 @@ bool FishingHook::shouldStopFishing()
     not_null_ptr<ItemInstance> offhandItem = mOwner->getOffhandItem();
     bool mainHandIsRod = mainHandItem->getItem() == Items::fishingRod;
     bool offhandIsRod = offhandItem->getItem() == Items::fishingRod;
-    bool stop = true;
-
-    if (!mOwner->mRemoved && mOwner->isAlive() && (mainHandIsRod || offhandIsRod) &&
-        distanceToSqr(mOwner) <= 1024.0)
-    {
-        stop = false;
-    }
-
-    if (stop)
+    if (mOwner->mRemoved || !mOwner->isAlive() || !(mainHandIsRod || offhandIsRod) ||
+        distanceToSqr(mOwner) > 1024.0)
     {
         remove();
         return true;

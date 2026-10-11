@@ -20,6 +20,8 @@
 #include "game/world/block/BlockPos.hpp"
 #include "game/data/DataFixerUpper.hpp"
 
+const double DragonFireball::SPLASH_RANGE = 4.0;
+
 DragonFireball::DragonFireball(Level* level)
     : Fireball(level)
 {

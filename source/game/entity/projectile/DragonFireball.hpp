@@ -15,6 +15,8 @@ class ParticleType;
 class DragonFireball : public Fireball
 {
 public:
+    static const double SPLASH_RANGE;
+
     DragonFireball(Level* level);
     DragonFireball(Level* level, boost::shared_ptr<LivingEntity> owner,
                    double xd, double yd, double zd);

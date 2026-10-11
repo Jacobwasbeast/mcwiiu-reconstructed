@@ -22,25 +22,20 @@ not_null_ptr<ItemInstance> AbstractProjectileDispenseBehavior::execute(
 {
     Level* level = blockSource->getWorld();
 
-    if (level->countInstanceOf(EntityType::PROJECTILE, false, NULL, NULL) < MAX_PROJECTILES)
-    {
-        Position* position = DispenserBlock::getDispensePosition(blockSource);
-        const Direction* direction = blockSource->getBlockState()->getValue(DispenserBlock::FACING);
-        boost::shared_ptr<Projectile> projectile = getProjectile(level, position, itemInstance);
-
-        projectile->shoot((double)direction->getStepX(), (double)((float)direction->getStepY() + 0.1f), (double)direction->getStepZ(),
-                          getPower(), getUncertainty());
-        boost::shared_ptr<Entity> entity = boost::dynamic_pointer_cast<Entity>(projectile);
-        level->addEntity(entity);
-
-        delete position;
-        itemInstance->split(1);
-    }
-    else
+    if (level->countInstanceOf(EntityType::PROJECTILE, false, NULL, NULL) >= MAX_PROJECTILES)
     {
         return DefaultDispenseItemBehavior::execute(blockSource, itemInstance, outcome);
     }
 
+    Position* position = DispenserBlock::getDispensePosition(blockSource);
+    const Direction* direction = blockSource->getBlockState()->getValue(DispenserBlock::FACING);
+    boost::shared_ptr<Projectile> projectile = getProjectile(level, position, itemInstance);
+    delete position;
+
+    projectile->shoot(direction->getStepX(), direction->getStepY() + 0.1f, direction->getStepZ(), getPower(),
+                      getUncertainty());
+    level->addEntity(boost::dynamic_pointer_cast<Entity>(projectile));
+    itemInstance->split(1);
     return itemInstance;
 }
 
