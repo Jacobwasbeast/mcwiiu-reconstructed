@@ -33,30 +33,29 @@ arrayWithLength<int> ZoomLayer::getArea(int x, int z, int width, int height)
 
     PIXBeginNamedEvent(0.0f, "ZoomLayer::getArea");
 
-    int zoomedWidth = (parentWidth - 1) * 2;
+    int zoomedWidth = (parentWidth - 1) << 1;
+    int zoomedHeight = (parentHeight - 1) << 1;
 
-    arrayWithLength<int> zoomedArea = IntCache::allocate(zoomedWidth * ((parentHeight - 1) * 2));
+    arrayWithLength<int> zoomedArea = IntCache::allocate(zoomedWidth * zoomedHeight);
 
-    for (int i = 0; i < parentHeight - 1; i++)
+    for (int row = 0; row < parentHeight - 1; row++)
     {
-        int destIndex = i * zoomedWidth * 2;
+        int destIndex = (row << 1) * zoomedWidth;
 
-        int upperLeft = parentArea.data[i * parentWidth];
-        int lowerLeft = parentArea.data[(i + 1) * parentWidth];
+        int upperLeft = parentArea[(row + 0) * parentWidth];
+        int lowerLeft = parentArea[(row + 1) * parentWidth];
 
-        for (int j = 0; j < parentWidth - 1; j++)
+        for (int column = 0; column < parentWidth - 1; column++)
         {
-            initRandom((long long)((j + parentX) * 2), (long long)((i + parentZ) * 2));
+            initRandom((column + parentX) << 1, (row + parentZ) << 1);
 
-            int upperRight = parentArea.data[i * parentWidth + j + 1];
-            int lowerRight = parentArea.data[(i + 1) * parentWidth + j + 1];
+            int upperRight = parentArea[(column + 1) + (row + 0) * parentWidth];
+            int lowerRight = parentArea[(column + 1) + (row + 1) * parentWidth];
 
-            zoomedArea.data[destIndex] = upperLeft;
-            zoomedArea.data[destIndex + zoomedWidth] = random(upperLeft, lowerLeft);
-            zoomedArea.data[destIndex + 1] = random(upperLeft, upperRight);
-            zoomedArea.data[destIndex + 1 + zoomedWidth] = modeOrRandom(upperLeft, upperRight, lowerLeft, lowerRight);
-
-            destIndex += 2;
+            zoomedArea[destIndex] = upperLeft;
+            zoomedArea[destIndex++ + zoomedWidth] = random(upperLeft, lowerLeft);
+            zoomedArea[destIndex] = random(upperLeft, upperRight);
+            zoomedArea[destIndex++ + zoomedWidth] = modeOrRandom(upperLeft, upperRight, lowerLeft, lowerRight);
 
             upperLeft = upperRight;
             lowerLeft = lowerRight;
@@ -65,9 +64,9 @@ arrayWithLength<int> ZoomLayer::getArea(int x, int z, int width, int height)
 
     arrayWithLength<int> area = IntCache::allocate(width * height);
 
-    for (int i = 0; i < height; i++)
+    for (int row = 0; row < height; row++)
     {
-        System::arraycopy(zoomedArea, (i + (z & 1)) * zoomedWidth + (x & 1), &area, i * width, width);
+        System::arraycopy(zoomedArea, (row + (z & 1)) * zoomedWidth + (x & 1), &area, row * width, width);
     }
 
     PIXEndNamedEvent();

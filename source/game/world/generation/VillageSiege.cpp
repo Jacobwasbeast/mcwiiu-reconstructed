@@ -24,9 +24,7 @@ VillageSiege::VillageSiege(Level* level)
     mSiegeCount = 0;
     mNextSpawnTime = 0;
     mVillage = boost::weak_ptr<Village>();
-    mSpawnX = 0;
-    mSpawnY = 0;
-    mSpawnZ = 0;
+    mSpawnX = mSpawnY = mSpawnZ = 0;
     mLevel = level;
 }
 
@@ -149,9 +147,11 @@ bool VillageSiege::trySpawn()
     }
 
     boost::shared_ptr<Zombie> zombie;
-    zombie = boost::shared_ptr<Zombie>(new Zombie(mLevel));
-    zombie->finalizeMobSpawn(mLevel->getCurrentDifficultyAt(BlockPos(zombie)), NULL,
-                             std::wstring(L""));
+    {
+        zombie = boost::shared_ptr<Zombie>(new Zombie(mLevel));
+        zombie->finalizeMobSpawn(mLevel->getCurrentDifficultyAt(BlockPos(zombie)), NULL,
+                                 std::wstring(L""));
+    }
     zombie->moveTo(spawnPos->x, spawnPos->y, spawnPos->z,
                    mLevel->mRandom->nextFloat() * 360.0f, 0.0f);
     mLevel->addEntity(zombie);

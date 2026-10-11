@@ -66,13 +66,17 @@ void UnderwaterLargeCaveFeature::addTunnel(Level* level, long long seed, int chu
     if (length < 1)
         length = 0x70 - tunnelRandom.nextInt(0x1c);
     int start = originChunkX;
-    const bool room = start == -1;
-    if (room) start = length / 2;
+    bool room = false;
+    if (start == -1)
+    {
+        start = length / 2;
+        room = true;
+    }
     const int branchPoint = tunnelRandom.nextInt(length / 2) + length / 4;
 
     const float pi = 3.1415927F;
     const float halfPi = 1.5707964F;
-    const int steeringMode = tunnelRandom.nextInt(6);
+    const bool narrowing = tunnelRandom.nextInt(6) == 0;
     for (int step = start; step < length; ++step)
     {
         const float radius = std::sin(static_cast<float>(step) * pi / static_cast<float>(length)) * width + 1.5F;
@@ -82,7 +86,7 @@ void UnderwaterLargeCaveFeature::addTunnel(Level* level, long long seed, int chu
         x += std::cos(yaw) * cosPitch;
         y += sinPitch;
         z += std::sin(yaw) * cosPitch;
-        pitch *= steeringMode == 0 ? 0.92F : 0.7F;
+        pitch *= narrowing ? 0.92F : 0.7F;
         pitch += pitchVariance * 0.1F;
         yaw += yawVariance * 0.1F;
         float change = tunnelRandom.nextGaussianFloat();
@@ -221,8 +225,4 @@ void UnderwaterLargeCaveFeature::addFeature(Level* level, int chunkX, int chunkZ
             addTunnel(level, random.nextLong(), originChunkX, originChunkZ, primer, x, y, z, tunnelWidth, yaw, pitch, 0, 0, 1.0);
         }
     }
-}
-
-UnderwaterLargeCaveFeature::~UnderwaterLargeCaveFeature()
-{
 }

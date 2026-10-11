@@ -41,21 +41,23 @@ void WitchItemLayer::render(boost::shared_ptr<LivingEntity>& entity, float, floa
     {
         GlStateManager::translatef(0.0f, 0.625f, 0.0f);
         GlStateManager::rotatef(-20.0f, -1.0f, 0.0f, 0.0f);
-        GlStateManager::scalef(0.5f, 0.5f, 0.5f);
+        float scale = 0.5f;
+        GlStateManager::scalef(scale, scale, scale);
     }
 
     static_cast<WitchModel*>(mWitchRenderer->getModel())->mNose->translateTo(0.0625f);
     GlStateManager::translatef(-0.0625f, 0.53125f, 0.21875f);
 
     Item* item = itemInstance->getItem();
-    int itemId = Item::getId(item);
+    Minecraft* minecraft = Minecraft::GetInstance();
 
-    if (itemId < 256 && Minecraft::GetInstance()->getBlockRenderer()->canRenderGeneric(Block::byItem(item)))
+    if (Item::getId(item) < 256 && minecraft->getBlockRenderer()->canRenderGeneric(Block::byItem(item)))
     {
         GlStateManager::translatef(0.0f, 0.0625f, -0.25f);
         GlStateManager::rotatef(30.0f, 1.0f, 0.0f, 0.0f);
         GlStateManager::rotatef(-5.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager::scalef(0.375f, -0.375f, 0.375f);
+        float scale = 0.375f;
+        GlStateManager::scalef(scale, -scale, scale);
         GlStateManager::rotatef(-15.0f, 1.0f, 0.0f, 0.0f);
         GlStateManager::rotatef(40.0f, 0.0f, 0.0f, 1.0f);
     }
@@ -63,23 +65,14 @@ void WitchItemLayer::render(boost::shared_ptr<LivingEntity>& entity, float, floa
     {
         GlStateManager::translatef(0.0f, 0.125f, -0.125f);
         GlStateManager::rotatef(-45.0f, 0.0f, 1.0f, 0.0f);
-        GlStateManager::scalef(0.625f, -0.625f, 0.625f);
+        float scale = 0.625f;
+        GlStateManager::scalef(scale, -scale, scale);
         GlStateManager::rotatef(-100.0f, 1.0f, 0.0f, 0.0f);
         GlStateManager::rotatef(-20.0f, 0.0f, 1.0f, 0.0f);
         GlStateManager::rotatef(-15.0f, 1.0f, 0.0f, 0.0f);
         GlStateManager::rotatef(40.0f, 0.0f, 0.0f, 1.0f);
     }
-    else if (!item->isHandEquipped())
-    {
-        GlStateManager::translatef(0.1875f, 0.1875f, 0.0f);
-        GlStateManager::scalef(0.875f, 0.875f, 0.875f);
-        GlStateManager::rotatef(-20.0f, 0.0f, 0.0f, 1.0f);
-        GlStateManager::rotatef(-60.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager::rotatef(-30.0f, 0.0f, 0.0f, 1.0f);
-        GlStateManager::rotatef(-15.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager::rotatef(40.0f, 0.0f, 0.0f, 1.0f);
-    }
-    else
+    else if (item->isHandEquipped())
     {
         if (item->isMirroredArt())
         {
@@ -89,9 +82,21 @@ void WitchItemLayer::render(boost::shared_ptr<LivingEntity>& entity, float, floa
 
         mWitchRenderer->translateWeaponItem();
         GlStateManager::translatef(0.0625f, -0.125f, 0.0f);
-        GlStateManager::scalef(0.625f, -0.625f, 0.625f);
+        float scale = 0.625f;
+        GlStateManager::scalef(scale, -scale, scale);
         GlStateManager::rotatef(0.0f, 1.0f, 0.0f, 0.0f);
         GlStateManager::rotatef(0.0f, 0.0f, 1.0f, 0.0f);
+        GlStateManager::rotatef(-15.0f, 1.0f, 0.0f, 0.0f);
+        GlStateManager::rotatef(40.0f, 0.0f, 0.0f, 1.0f);
+    }
+    else
+    {
+        GlStateManager::translatef(0.1875f, 0.1875f, 0.0f);
+        float scale = 0.875f;
+        GlStateManager::scalef(scale, scale, scale);
+        GlStateManager::rotatef(-20.0f, 0.0f, 0.0f, 1.0f);
+        GlStateManager::rotatef(-60.0f, 1.0f, 0.0f, 0.0f);
+        GlStateManager::rotatef(-30.0f, 0.0f, 0.0f, 1.0f);
         GlStateManager::rotatef(-15.0f, 1.0f, 0.0f, 0.0f);
         GlStateManager::rotatef(40.0f, 0.0f, 0.0f, 1.0f);
     }

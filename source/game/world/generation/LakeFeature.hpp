@@ -12,7 +12,7 @@ class LakeFeature : public Feature
 {
 public:
     LakeFeature(Block* block);
-    virtual ~LakeFeature();
+    virtual ~LakeFeature() {}
     virtual bool place(Level* level, Random& random, const BlockPos& origin);
 
 private:

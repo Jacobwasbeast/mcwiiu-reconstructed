@@ -2197,11 +2197,9 @@ unsigned long long LocalPlayer::sendPosition()
     return 0;
 }
 
-unsigned long long LocalPlayer::chat(const std::wstring& message)
+void LocalPlayer::chat(const std::wstring& message)
 {
-    boost::shared_ptr<Packet> packet(new ServerboundChatPacket(message));
-    mPacketListener->send(packet);
-    return 0;
+    mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundChatPacket(message)));
 }
 
 bool LocalPlayer::swing(InteractionHand::EInteractionHand hand)
@@ -2213,9 +2211,8 @@ bool LocalPlayer::swing(InteractionHand::EInteractionHand hand)
 
 void LocalPlayer::respawn()
 {
-    boost::shared_ptr<Packet> packet(new ServerboundClientCommandPacket(
-        ServerboundClientCommandPacket::PERFORM_RESPAWN));
-    mPacketListener->send(packet);
+    mPacketListener->send(boost::shared_ptr<Packet>(
+        new ServerboundClientCommandPacket(ServerboundClientCommandPacket::PERFORM_RESPAWN)));
 }
 
 void LocalPlayer::actuallyHurt(const DamageSource* source, float amount)
@@ -2279,8 +2276,7 @@ void LocalPlayer::hurtTo(float amount, TelemetryDamageSource source)
 
 void LocalPlayer::onUpdateAbilities()
 {
-    boost::shared_ptr<Packet> packet(new ServerboundPlayerAbilitiesPacket(&mAbilities));
-    mPacketListener->send(packet);
+    mPacketListener->send(boost::shared_ptr<Packet>(new ServerboundPlayerAbilitiesPacket(&mAbilities)));
 }
 
 bool LocalPlayer::isLocalPlayer()

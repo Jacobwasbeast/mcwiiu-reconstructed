@@ -20,6 +20,10 @@ LargeFeature::LargeFeature()
     random = Random();
 }
 
+LargeFeature::~LargeFeature()
+{
+}
+
 void LargeFeature::apply(Level* level, int chunkX, int chunkZ, ChunkPrimer* primer)
 {
     this->level = level;
@@ -35,7 +39,9 @@ void LargeFeature::apply(Level* level, int chunkX, int chunkZ, ChunkPrimer* prim
     {
         for (int z = chunkZ - featureRange; z <= chunkZ + featureRange; ++z)
         {
-            random.setSeed(xSeedFactor * x ^ zSeedFactor * z ^ level->getSeed());
+            long long xPart = xSeedFactor * x;
+            long long zPart = zSeedFactor * z;
+            random.setSeed(xPart ^ zPart ^ level->getSeed());
             addFeature(level, x, z, chunkX, chunkZ, primer);
         }
     }

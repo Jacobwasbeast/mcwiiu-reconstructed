@@ -186,13 +186,13 @@ void CanyonFeature::addFeature(Level* level, int chunkX, int chunkZ, int originC
     double x = chunkX * 16 + random.nextInt(16);
     double y = random.nextInt(random.nextInt(40) + 8) + 20;
     double z = chunkZ * 16 + random.nextInt(16);
-    float yaw = random.nextFloat() * 3.1415927F * 2.0F;
-    float pitch = (random.nextFloat() - 0.5F) * 2.0F * 0.125F;
-    float thickness = (random.nextFloat() * 2.0F + random.nextFloat()) * 2.0F;
-    addTunnel(level, random.nextLong(), originChunkX, originChunkZ, primer, x, y, z, thickness, yaw, pitch, 0, 0, 3.0);
-    gApp.AddTerrainFeaturePosition((_eTerrainFeatureType)4, (int)(x * 0.0625), (int)(y * 0.0625));
-}
-
-CanyonFeature::~CanyonFeature()
-{
+    int tunnels = 1;
+    for (int i = 0; i < tunnels; ++i)
+    {
+        float yaw = random.nextFloat() * 3.1415927F * 2.0F;
+        float pitch = (random.nextFloat() - 0.5F) * 2.0F / 8.0F;
+        float thickness = (random.nextFloat() * 2.0F + random.nextFloat()) * 2.0F;
+        addTunnel(level, random.nextLong(), originChunkX, originChunkZ, primer, x, y, z, thickness, yaw, pitch, 0, 0, 3.0);
+    }
+    gApp.AddTerrainFeaturePosition((_eTerrainFeatureType)4, x / 16, y / 16);
 }

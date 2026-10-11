@@ -12,8 +12,11 @@ AddMushroomIslandLayer::AddMushroomIslandLayer(long long seed, boost::shared_ptr
 
 arrayWithLength<int> AddMushroomIslandLayer::getArea(int x, int z, int width, int height)
 {
+    int px = x - 1;
+    int pz = z - 1;
     int parentWidth = width + 2;
-    arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, height + 2);
+    int parentHeight = height + 2;
+    arrayWithLength<int> parentArea = parent->getArea(px, pz, parentWidth, parentHeight);
 
     PIXBeginNamedEvent(0.0f, "AddMushroomIslandLayer::getArea");
 
@@ -23,23 +26,23 @@ arrayWithLength<int> AddMushroomIslandLayer::getArea(int x, int z, int width, in
     {
         for (int j = 0; j < width; j++)
         {
-            int northWest = parentArea.data[j + i * parentWidth];
-            int northEast = parentArea.data[j + 2 + i * parentWidth];
-            int southWest = parentArea.data[j + (i + 2) * parentWidth];
-            int southEast = parentArea.data[j + 2 + (i + 2) * parentWidth];
-            int centre = parentArea.data[j + 1 + (i + 1) * parentWidth];
+            int northWest = parentArea[j + i * parentWidth];
+            int northEast = parentArea[j + 2 + i * parentWidth];
+            int southWest = parentArea[j + (i + 2) * parentWidth];
+            int southEast = parentArea[j + 2 + (i + 2) * parentWidth];
+            int centre = parentArea[j + 1 + (i + 1) * parentWidth];
 
-            initRandom((long long)(x + j), (long long)(z + i));
+            initRandom((long long)(j + x), (long long)(i + z));
 
             if (isShallowOcean(centre) && isShallowOcean(northWest)
                 && isShallowOcean(northEast) && isShallowOcean(southWest)
                 && isShallowOcean(southEast) && nextRandom(100) == 0)
             {
-                area.data[j + i * width] = Biome::MUSHROOM_ISLAND->id;
+                area[j + i * width] = Biome::MUSHROOM_ISLAND->id;
             }
             else
             {
-                area.data[j + i * width] = centre;
+                area[j + i * width] = centre;
             }
         }
     }

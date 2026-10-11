@@ -37,16 +37,16 @@ void VillagerGolemFlowerLayer::render(boost::shared_ptr<LivingEntity>& entity, f
     GlStateManager::enableRescaleNormal();
     GlStateManager::pushMatrix();
 
-    VillagerGolemModel* model = static_cast<VillagerGolemModel*>(mRenderer->getModel());
-    GlStateManager::rotatef(180.0f * model->mArm1->mXRot / 3.1415927f + 5.0f,
+    GlStateManager::rotatef(180.0f * static_cast<VillagerGolemModel*>(mRenderer->getModel())->mArm1->mXRot / 3.1415927f + 5.0f,
                             1.0f, 0.0f, 0.0f);
     GlStateManager::translatef(-0.6875f, 1.25f, -0.9375f);
     GlStateManager::rotatef(90.0f, 1.0f, 0.0f, 0.0f);
     GlStateManager::scalef(0.8f, -0.8f, 0.8f);
 
     int lightColor = golem->getLightColor();
-    GlStateManager::multiTexCoord2f(static_cast<float>(lightColor % 65536),
-                                    static_cast<float>(lightColor / 65536));
+    int u = lightColor % 65536;
+    int v = lightColor / 65536;
+    GlStateManager::multiTexCoord2f(static_cast<float>(u), static_cast<float>(v));
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
     mRenderer->bindTexture(&BLOCKS_LOCATION);
 

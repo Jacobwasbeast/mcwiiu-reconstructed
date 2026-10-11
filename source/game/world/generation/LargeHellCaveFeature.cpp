@@ -43,9 +43,9 @@ void LargeHellCaveFeature::addFeature(Level*, int chunkX, int chunkZ,
         {
             const float yaw = random.nextFloat() * 3.1415927f * 2.0f;
             const float pitch = (random.nextFloat() - 0.5f) * 2.0f / 8.0f;
-            const float width = (random.nextFloat() * 2.0f + random.nextFloat()) * 2.0f;
+            float width = random.nextFloat() * 2.0f + random.nextFloat();
             addTunnel(random.nextLong(), originChunkX, originChunkZ, primer, x, y, z,
-                      width, yaw, pitch, 0, 0, 0.5);
+                      width * 2.0f, yaw, pitch, 0, 0, 0.5);
         }
     }
 }
@@ -55,11 +55,11 @@ void LargeHellCaveFeature::addTunnel(long long seed, int chunkX, int chunkZ, Chu
                                      float width, float yaw, float pitch,
                                      int start, int end, double verticalScale)
 {
-    Random tunnelRandom(seed);
     const double centerX = (double)(chunkX * 16 + 8);
     const double centerZ = (double)(chunkZ * 16 + 8);
     float yawDelta = 0.0f;
     float pitchDelta = 0.0f;
+    Random tunnelRandom(seed);
 
     if (end <= 0)
     {
@@ -83,8 +83,9 @@ void LargeHellCaveFeature::addTunnel(long long seed, int chunkX, int chunkZ, Chu
         const double heightRadius = radius * verticalScale;
         const float cosPitch = Mth::cos(pitch);
         const float sinPitch = Mth::sin(pitch);
-        x += (double)(Mth::cos(yaw) * cosPitch);
+        const float cosYaw = Mth::cos(yaw);
         y += (double)sinPitch;
+        x += (double)(cosYaw * cosPitch);
         z += (double)(Mth::sin(yaw) * cosPitch);
 
         if (shallow)

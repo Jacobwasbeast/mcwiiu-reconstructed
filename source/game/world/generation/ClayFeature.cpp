@@ -25,21 +25,19 @@ bool ClayFeature::place(Level* level, Random& random, const BlockPos& origin)
     }
 
     const int radius = random.nextInt(mNumberOfBlocks - 2) + 2;
-    const int minX = origin.x - radius;
-    const int maxX = origin.x + radius;
-    const int minZ = origin.z - radius;
-    const int maxZ = origin.z + radius;
+    const int yRadius = 1;
 
-    for (int x = minX; x <= maxX; ++x)
+    for (int x = origin.x - radius; x <= origin.x + radius; ++x)
     {
-        for (int z = minZ; z <= maxZ; ++z)
+        for (int z = origin.z - radius; z <= origin.z + radius; ++z)
         {
-            if ((x - origin.x) * (x - origin.x) + (z - origin.z) * (z - origin.z)
-                <= radius * radius)
+            const int xd = x - origin.x;
+            const int zd = z - origin.z;
+            if (xd * xd + zd * zd <= radius * radius)
             {
-                for (int y = origin.y - 1; y <= origin.y + 1; ++y)
+                for (int y = origin.y - yRadius; y <= origin.y + yRadius; ++y)
                 {
-                    const BlockPos pos(x, y, z);
+                    const BlockPos& pos = BlockPos(x, y, z);
                     Block* block = level->getBlockState(pos)->getBlock();
                     if (block == Blocks::dirt || block == Blocks::clay)
                     {

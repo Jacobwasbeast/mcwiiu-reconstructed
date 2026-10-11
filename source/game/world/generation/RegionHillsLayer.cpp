@@ -13,11 +13,8 @@ RegionHillsLayer::RegionHillsLayer(long long seed, boost::shared_ptr<Layer> pare
 
 arrayWithLength<int> RegionHillsLayer::getArea(int x, int z, int width, int height)
 {
-    int parentWidth = width + 2;
-    int parentHeight = height + 2;
-
-    arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, parentHeight);
-    arrayWithLength<int> riverArea = riverLayer->getArea(x - 1, z - 1, parentWidth, parentHeight);
+    arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, width + 2, height + 2);
+    arrayWithLength<int> riverArea = riverLayer->getArea(x - 1, z - 1, width + 2, height + 2);
 
     PIXBeginNamedEvent(0.0f, "RegionHillsLayer::getArea");
 
@@ -27,10 +24,10 @@ arrayWithLength<int> RegionHillsLayer::getArea(int x, int z, int width, int heig
     {
         for (int j = 0; j < width; j++)
         {
-            initRandom((long long)(x + j), (long long)(z + i));
+            initRandom(j + x, i + z);
 
-            int river = riverArea.data[j + 1 + (i + 1) * parentWidth];
-            int centre = parentArea.data[j + 1 + (i + 1) * parentWidth];
+            int river = riverArea[j + 1 + (i + 1) * (width + 2)];
+            int centre = parentArea[j + 1 + (i + 1) * (width + 2)];
             bool mutate = (river - 2) % 29 == 0;
 
             if (!isShallowOcean(centre) && river >= 2 && (river - 2) % 29 == 1 && centre < 128)
@@ -39,16 +36,16 @@ arrayWithLength<int> RegionHillsLayer::getArea(int x, int z, int width, int heig
 
                 if (mutatedBiome != NULL)
                 {
-                    area.data[j + i * width] = centre + 128;
+                    area[j + i * width] = centre + 128;
                 }
                 else
                 {
-                    area.data[j + i * width] = centre;
+                    area[j + i * width] = centre;
                 }
             }
             else if (nextRandom(3) != 0 && !mutate)
             {
-                area.data[j + i * width] = centre;
+                area[j + i * width] = centre;
             }
             else
             {
@@ -157,39 +154,43 @@ arrayWithLength<int> RegionHillsLayer::getArea(int x, int z, int width, int heig
 
                 if (hills == centre)
                 {
-                    area.data[j + i * width] = centre;
+                    area[j + i * width] = centre;
                 }
                 else
                 {
+                    int up = parentArea[j + 1 + i * (width + 2)];
+                    int right = parentArea[j + 2 + (i + 1) * (width + 2)];
+                    int left = parentArea[j + (i + 1) * (width + 2)];
+                    int down = parentArea[j + 1 + (i + 2) * (width + 2)];
                     int matchingNeighbours = 0;
 
-                    if (isSame(parentArea.data[j + 1 + i * parentWidth], centre))
+                    if (isSame(up, centre))
                     {
                         matchingNeighbours++;
                     }
 
-                    if (isSame(parentArea.data[j + 2 + (i + 1) * parentWidth], centre))
+                    if (isSame(right, centre))
                     {
                         matchingNeighbours++;
                     }
 
-                    if (isSame(parentArea.data[j + (i + 1) * parentWidth], centre))
+                    if (isSame(left, centre))
                     {
                         matchingNeighbours++;
                     }
 
-                    if (isSame(parentArea.data[j + 1 + (i + 2) * parentWidth], centre))
+                    if (isSame(down, centre))
                     {
                         matchingNeighbours++;
                     }
 
                     if (matchingNeighbours >= 3)
                     {
-                        area.data[j + i * width] = hills;
+                        area[j + i * width] = hills;
                     }
                     else
                     {
-                        area.data[j + i * width] = centre;
+                        area[j + i * width] = centre;
                     }
                 }
             }

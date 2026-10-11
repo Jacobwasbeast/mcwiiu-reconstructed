@@ -28,17 +28,17 @@ void SheepFurLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSw
 {
     boost::shared_ptr<Sheep> sheep = boost::dynamic_pointer_cast<Sheep>(entity);
 
-    if (!sheep->isSheared() && !sheep->isInvisible())
-    {
-        mRenderer->bindTexture(&SHEEP_FUR_LOCATION);
-        mRenderer->setColourState(sheep, partialTicks);
-        mRenderer->mFurModel->copyPropertiesFrom(static_cast<LivingEntityRenderer*>(mRenderer)->getModel());
-        mRenderer->mFurModel->prepareMobModel(entity, limbSwing, limbSwingAmount, partialTicks);
+    if (sheep->isSheared() || sheep->isInvisible())
+        return;
 
-        boost::shared_ptr<Entity> renderEntity = sheep;
-        mRenderer->mFurModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks,
-                                     netHeadYaw, headPitch, scale, bUseDisplayList);
-    }
+    mRenderer->bindTexture(&SHEEP_FUR_LOCATION);
+    mRenderer->setColourState(sheep, partialTicks);
+    mRenderer->mFurModel->copyPropertiesFrom(static_cast<LivingEntityRenderer*>(mRenderer)->getModel());
+    mRenderer->mFurModel->prepareMobModel(entity, limbSwing, limbSwingAmount, partialTicks);
+
+    boost::shared_ptr<Entity> renderEntity = sheep;
+    mRenderer->mFurModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks,
+                                 netHeadYaw, headPitch, scale, bUseDisplayList);
 }
 
 bool SheepFurLayer::colorsOnDamage()

@@ -75,33 +75,12 @@ LayerMetadata::FilterFunc LayerMetadata::getFilter(const std::wstring& sFilterNa
 
 LayerMetadata::eFilter LayerMetadata::fromStringFilter(const std::wstring& sFilterName)
 {
-    if (sFilterName == FILTER_NAMES[eFilter_AnyLayer])
+    for (int i = 0; i < eFilter_Count; ++i)
     {
-        return eFilter_AnyLayer;
-    }
-    else if (sFilterName == FILTER_NAMES[eFilter_OnlyBottomLayer])
-    {
-        return eFilter_OnlyBottomLayer;
-    }
-    else if (sFilterName == FILTER_NAMES[eFilter_OnlyMiddleLayers])
-    {
-        return eFilter_OnlyMiddleLayers;
-    }
-    else if (sFilterName == FILTER_NAMES[eFilter_OnlyTopLayer])
-    {
-        return eFilter_OnlyTopLayer;
-    }
-    else if (sFilterName == FILTER_NAMES[eFilter_NotBottomLayer])
-    {
-        return eFilter_NotBottomLayer;
-    }
-    else if (sFilterName == FILTER_NAMES[eFilter_NotMiddleLayers])
-    {
-        return eFilter_NotMiddleLayers;
-    }
-    else if (sFilterName == FILTER_NAMES[eFilter_NotTopLayer])
-    {
-        return eFilter_NotTopLayer;
+        if (sFilterName.compare(FILTER_NAMES[i]) == 0)
+        {
+            return (eFilter)i;
+        }
     }
 
     return eFilter_AnyLayer;

@@ -279,7 +279,8 @@ bool StructureFeature::canPlaceFeatureInChunk(bool defaultValue, EFeatureTypes t
     LevelGenerationOptions* options = gApp.getLevelGenerationOptions();
     if (options != NULL && options->hasFeature(type) && chunkX > -27 && chunkZ < 27)
     {
-        return options->isFeatureChunk(chunkX, chunkZ, type, NULL);
+        bool result = options->isFeatureChunk(chunkX, chunkZ, type, NULL);
+        return result;
     }
     return defaultValue;
 }

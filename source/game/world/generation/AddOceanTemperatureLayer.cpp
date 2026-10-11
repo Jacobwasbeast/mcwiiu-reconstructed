@@ -22,7 +22,8 @@ arrayWithLength<int> AddOceanTemperatureLayer::getArea(int x, int z, int width, 
         {
             initRandom((long long)(j + x), (long long)(i + z));
 
-            float temperature = (float)nextRandom(100) / 100.0f;
+            int random = nextRandom(100);
+            float temperature = (float)random / 100.0f;
             if (temperature < 0.075f)
             {
                 area.data[j + i * width] = Biome::eBiomeIDs_WarmOcean;

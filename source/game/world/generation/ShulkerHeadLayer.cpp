@@ -29,12 +29,22 @@ void ShulkerHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float lim
     boost::shared_ptr<Shulker> shulker = boost::static_pointer_cast<Shulker>(entity);
     GlStateManager::pushMatrix();
     const Direction* direction = shulker->getAttachFace();
-
-    switch (direction->get3DDataValue())
+    int facing = direction->get3DDataValue();
+    switch (facing)
     {
-    case 1:
-        GlStateManager::rotatef(180.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager::translatef(0.0f, -2.0f, 0.0f);
+    default:
+        break;
+    case 5:
+        GlStateManager::rotatef(90.0f, 0.0f, 0.0f, 1.0f);
+        GlStateManager::rotatef(90.0f, 1.0f, 0.0f, 0.0f);
+        GlStateManager::translatef(1.0f, -1.0f, 0.0f);
+        GlStateManager::rotatef(180.0f, 0.0f, 1.0f, 0.0f);
+        break;
+    case 4:
+        GlStateManager::rotatef(-90.0f, 0.0f, 0.0f, 1.0f);
+        GlStateManager::rotatef(90.0f, 1.0f, 0.0f, 0.0f);
+        GlStateManager::translatef(-1.0f, -1.0f, 0.0f);
+        GlStateManager::rotatef(180.0f, 0.0f, 1.0f, 0.0f);
         break;
     case 2:
         GlStateManager::rotatef(90.0f, 1.0f, 0.0f, 0.0f);
@@ -45,27 +55,18 @@ void ShulkerHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float lim
         GlStateManager::rotatef(90.0f, 1.0f, 0.0f, 0.0f);
         GlStateManager::translatef(0.0f, -1.0f, 1.0f);
         break;
-    case 4:
-        GlStateManager::rotatef(-90.0f, 0.0f, 0.0f, 1.0f);
-        GlStateManager::rotatef(90.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager::translatef(-1.0f, -1.0f, 0.0f);
-        GlStateManager::rotatef(180.0f, 0.0f, 1.0f, 0.0f);
-        break;
-    case 5:
-        GlStateManager::rotatef(90.0f, 0.0f, 0.0f, 1.0f);
-        GlStateManager::rotatef(90.0f, 1.0f, 0.0f, 0.0f);
-        GlStateManager::translatef(1.0f, -1.0f, 0.0f);
-        GlStateManager::rotatef(180.0f, 0.0f, 1.0f, 0.0f);
-        break;
-    default:
+    case 1:
+        GlStateManager::rotatef(180.0f, 1.0f, 0.0f, 0.0f);
+        GlStateManager::translatef(0.0f, -2.0f, 0.0f);
         break;
     }
 
     ShulkerModel* model = static_cast<ShulkerModel*>(mRenderer->getModel());
-    model->mHead->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
-    model->mHead->mXRot = headPitch * Mth::DEG_TO_RAD;
+    ModelPart* head = model->mHead;
+    head->mYRot = netHeadYaw * Mth::DEG_TO_RAD;
+    head->mXRot = headPitch * Mth::DEG_TO_RAD;
     mRenderer->bindTexture(&SHULKER_LOCATION);
-    model->mHead->render(scale, bUseDisplayList, false);
+    head->render(scale, bUseDisplayList, false);
 
     GlStateManager::popMatrix();
 }

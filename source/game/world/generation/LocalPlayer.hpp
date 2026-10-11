@@ -113,7 +113,7 @@ public:
     void updateProximityIndicator();
     bool isControlledCamera();
     virtual unsigned int getPermissionLevel();
-    unsigned long long chat(const std::wstring&);
+    void chat(const std::wstring&);
     bool swing(InteractionHand::EInteractionHand);
     void respawn();
     void actuallyHurt(const DamageSource*, float);
@@ -180,6 +180,7 @@ private:
     friend class UIScene_InGamePlayerOptionsMenu;
     friend class UIScene_InGameSettingsListMenu;
     friend class UIScene_SignEntryMenu;
+    friend class UIScene_TradingMenu;
     friend class Voteable;
     friend class Tooltips;
     friend class MultiplayerLocalPlayer;

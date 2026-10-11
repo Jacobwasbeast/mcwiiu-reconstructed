@@ -11,10 +11,11 @@ AddSnowLayer::AddSnowLayer(long long seed, boost::shared_ptr<Layer> parent)
 
 arrayWithLength<int> AddSnowLayer::getArea(int x, int z, int width, int height)
 {
+    int parentX = x - 1;
+    int parentZ = z - 1;
     int parentWidth = width + 2;
     int parentHeight = height + 2;
-
-    arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, parentHeight);
+    arrayWithLength<int> parentArea = parent->getArea(parentX, parentZ, parentWidth, parentHeight);
 
     PIXBeginNamedEvent(0.0f, "AddSnowLayer::getArea");
 
@@ -24,9 +25,8 @@ arrayWithLength<int> AddSnowLayer::getArea(int x, int z, int width, int height)
     {
         for (int j = 0; j < width; j++)
         {
-            int index = j + 1 + (i + 1) * parentWidth;
-            int centre = parentArea[index];
-            initRandom((long long)(x + j), (long long)(z + i));
+            int centre = parentArea[j + 1 + (i + 1) * parentWidth];
+            initRandom((long long)(j + x), (long long)(i + z));
 
             if (isShallowOcean(centre))
             {

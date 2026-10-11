@@ -29,29 +29,33 @@ arrayWithLength<int> RiverMixerLayer::getArea(int x, int z, int width, int heigh
 
     arrayWithLength<int> result = IntCache::allocate(width * height);
 
-    for (int index = 0; index < width * height; ++index)
+    for (int i = 0; i < width * height; i++)
     {
-        int biome = biomes.data[index];
-        int river = rivers.data[index];
-
-        if (!Layer::isOcean(biome) && river == Biome::RIVER->id)
+        if (!isOcean(biomes.data[i]))
         {
-            if (biome == Biome::ICE_PLAINS->id)
+            if (rivers.data[i] == Biome::RIVER->id)
             {
-                result.data[index] = Biome::FROZEN_RIVER->id;
-            }
-            else if (biome != Biome::MUSHROOM_ISLAND->id && biome != Biome::MUSHROOM_ISLAND_SHORE->id)
-            {
-                result.data[index] = river & 255;
+                if (biomes.data[i] == Biome::ICE_PLAINS->id)
+                {
+                    result.data[i] = Biome::FROZEN_RIVER->id;
+                }
+                else if (biomes.data[i] == Biome::MUSHROOM_ISLAND->id || biomes.data[i] == Biome::MUSHROOM_ISLAND_SHORE->id)
+                {
+                    result.data[i] = Biome::MUSHROOM_ISLAND->id;
+                }
+                else
+                {
+                    result.data[i] = rivers.data[i] & 255;
+                }
             }
             else
             {
-                result.data[index] = biome;
+                result.data[i] = biomes.data[i];
             }
         }
         else
         {
-            result.data[index] = biome;
+            result.data[i] = biomes.data[i];
         }
     }
 

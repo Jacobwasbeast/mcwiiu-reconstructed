@@ -59,34 +59,36 @@ void VillagerInteractGoal::tick()
             else if (itemType == Items::wheat && item->getCount() > 5)
             {
                 int amount = (item->getCount() / 2) / 3 * 3;
+                int loaves = amount / 3;
                 item->shrink(amount);
                 itemToThrow = not_null_ptr<ItemInstance>(
-                    new ItemInstance(Items::bread, amount / 3, 0));
+                    new ItemInstance(Items::bread, loaves, 0));
             }
         }
 
         if (item->isEmpty())
             inventory->setItem(slot, ItemInstance::EMPTY);
 
-        if (itemToThrow->isEmpty())
-            continue;
+        if (!itemToThrow->isEmpty())
+        {
+            const double throwY = mVillager->mY - 0.3f + mVillager->getEyeHeight();
+            boost::shared_ptr<ItemEntity> entity(new ItemEntity(
+                mVillager->mLevel,
+                mVillager->mX,
+                throwY,
+                mVillager->mZ,
+                itemToThrow));
 
-        const double throwY = mVillager->mY - 0.3f + mVillager->getEyeHeight();
-        boost::shared_ptr<ItemEntity> entity(new ItemEntity(
-            mVillager->mLevel,
-            mVillager->mX,
-            throwY,
-            mVillager->mZ,
-            itemToThrow));
-
-        const float pitch = mVillager->mXRot * Mth::DEG_TO_RAD;
-        const float yaw = mVillager->mYHeadRot * Mth::DEG_TO_RAD;
-        entity->mXd = -Mth::sin(yaw) * Mth::cos(pitch) * 0.3f;
-        entity->mZd = Mth::cos(yaw) * Mth::cos(pitch) * 0.3f;
-        entity->mYd = -Mth::sin(pitch) * 0.3f + 0.1f;
-        entity->setDefaultPickUpDelay();
-        mVillager->mLevel->addEntity(entity);
-        break;
+            float speed = 0.3f;
+            float yaw = mVillager->mYHeadRot;
+            float pitch = mVillager->mXRot;
+            entity->mXd = -Mth::sin(yaw * Mth::DEG_TO_RAD) * Mth::cos(pitch * Mth::DEG_TO_RAD) * speed;
+            entity->mZd = Mth::cos(yaw * Mth::DEG_TO_RAD) * Mth::cos(pitch * Mth::DEG_TO_RAD) * speed;
+            entity->mYd = -Mth::sin(pitch * Mth::DEG_TO_RAD) * speed + 0.1f;
+            entity->setDefaultPickUpDelay();
+            mVillager->mLevel->addEntity(entity);
+            break;
+        }
     }
 }
 

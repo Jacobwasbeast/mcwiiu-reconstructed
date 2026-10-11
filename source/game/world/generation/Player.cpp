@@ -21,6 +21,7 @@
 #include "game/core/DLCSkinFile.hpp"
 #include "game/world/generation/MultiPlayerLevel.hpp"
 #include "game/core/PIXNamedEvents.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/core/GameType.hpp"
 #include "game/minigame/CheckpointRuleDefinition.hpp"
 #include "game/client/render/ParticleType.hpp"
@@ -2424,7 +2425,7 @@ void Player::readAdditionalSaveData(CompoundTag* tag)
 void Player::addAdditonalSaveData(CompoundTag* tag)
 {
     LivingEntity::addAdditonalSaveData(tag);
-    tag->putInt(L"DataVersion", 0x39a);
+    tag->putInt(SharedConstants::DATA_VERSION_TAG, 922);
 
     tag->put(L"Inventory", mInventory->save(new ListTag()));
     tag->putInt(L"SelectedItemSlot", mInventory->m_selected);

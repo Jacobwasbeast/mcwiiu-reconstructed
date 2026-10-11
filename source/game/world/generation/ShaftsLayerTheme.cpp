@@ -1,5 +1,7 @@
 #include "game/world/generation/ShaftsLayerTheme.hpp"
 
+#include <algorithm>
+
 #include "game/util/Random.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/BlockTransaction.hpp"
@@ -22,38 +24,26 @@ void ShaftsLayerTheme::Apply(Random&, BlockTransaction* transaction, int& width,
         return;
     }
 
-    const int top = transaction->mSize.y;
+    const int halfWidth = transaction->mSize.x / 2;
+    const int halfDepth = transaction->mSize.z / 2;
+    const int maxIndex = static_cast<int>(mStates.size()) - 1;
     for (int x = 0; x < transaction->mSize.x; ++x)
     {
         for (int z = 0; z < transaction->mSize.z; ++z)
         {
-            if (!hasShaft(x + transaction->mSize.x / 2, z + transaction->mSize.z / 2))
+            if (hasShaft(x + halfWidth, z + halfDepth))
             {
-                continue;
-            }
-
-            const int surface = RandomPatchesLayerTheme::HighestSolidBlock(transaction, x, z);
-            if (surface < 0)
-            {
-                continue;
-            }
-
-            int height = mHeightOffset + surface;
-            if (height > top - 1)
-            {
-                height = top - 1;
-            }
-            for (int y = height; y > 0; --y)
-            {
-                int stateIndex = surface + mHeightOffset - y;
-                if (stateIndex >= static_cast<int>(mStates.size()))
+                const int surface = RandomPatchesLayerTheme::HighestSolidBlock(transaction, x, z);
+                if (surface != -1)
                 {
-                    stateIndex = static_cast<int>(mStates.size()) - 1;
-                }
-                const BlockState* state = mStates.at(stateIndex);
-                if (state != NULL)
-                {
-                    transaction->setBlock(BlockPos(x, y, z), state);
+                    for (int y = std::min(mHeightOffset + surface, transaction->mSize.y - 1); y > 0; --y)
+                    {
+                        const BlockState* state = mStates.at(std::min(maxIndex, mHeightOffset + surface - y));
+                        if (state != NULL)
+                        {
+                            transaction->setBlock(BlockPos(x, y, z), state);
+                        }
+                    }
                 }
             }
         }

@@ -32,9 +32,8 @@ void Deadmau5EarsLayer::render(boost::shared_ptr<LivingEntity>& entity, float li
 
     for (int i = 0; i < 2; i++)
     {
-        float yRot = player->mYRotO + (player->mYRot - player->mYRotO) * partialTicks;
-        float yBodyRot = player->mYBodyRotO + (player->mYBodyRot - player->mYBodyRotO) * partialTicks;
-        float yaw = yRot - yBodyRot;
+        float yaw = player->mYRotO + (player->mYRot - player->mYRotO) * partialTicks
+                    - (player->mYBodyRotO + (player->mYBodyRot - player->mYBodyRotO) * partialTicks);
         float xRot = player->mXRotO + (player->mXRot - player->mXRotO) * partialTicks;
 
         GlStateManager::pushMatrix();
@@ -44,7 +43,8 @@ void Deadmau5EarsLayer::render(boost::shared_ptr<LivingEntity>& entity, float li
         GlStateManager::translatef(0.0f, -0.375f, 0.0f);
         GlStateManager::rotatef(-xRot, 1.0f, 0.0f, 0.0f);
         GlStateManager::rotatef(-yaw, 0.0f, 1.0f, 0.0f);
-        GlStateManager::scalef(1.3333334f, 1.3333334f, 1.3333334f);
+        float earScale = 1.3333334f;
+        GlStateManager::scalef(earScale, earScale, earScale);
         static_cast<PlayerModel*>(mRenderer->getModel())->renderEars(0.0625f);
         GlStateManager::popMatrix();
     }

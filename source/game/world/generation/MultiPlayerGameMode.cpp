@@ -310,7 +310,7 @@ void MultiPlayerGameMode::handlePickItem(const boost::shared_ptr<ItemInstance>& 
     DataOutputStream output(&bytes);
     output.writeItem(not_null_ptr<ItemInstance>(item));
     mConnection->send(boost::shared_ptr<Packet>(new ServerboundCustomPayloadPacket(
-        std::wstring(L"MC|PickItem"), bytes.toByteArray())));
+        ServerboundCustomPayloadPacket::PICK_ITEM_PACKET, bytes.toByteArray())));
 }
 bool MultiPlayerGameMode::isInputAllowed(int mapping)
 {

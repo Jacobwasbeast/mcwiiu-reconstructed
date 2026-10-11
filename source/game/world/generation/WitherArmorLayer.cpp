@@ -45,8 +45,10 @@ void WitherArmorLayer::render(boost::shared_ptr<LivingEntity>& entity, float lim
     GlStateManager::loadIdentity();
 
     float textureOffset = (float)wither->mTickCount + partialTicks;
-    GlStateManager::translatef(Mth::cos(textureOffset * 0.02f) * 3.0f,
-                               textureOffset * 0.01f, 0.0f);
+    float xOffset = Mth::cos(textureOffset * 0.02f) * 3.0f;
+    float yOffset = textureOffset * 0.01f;
+    float zOffset = 0.0f;
+    GlStateManager::translatef(xOffset, yOffset, zOffset);
 
     GlStateManager::matrixMode(0);
     GlStateManager::enableBlend();

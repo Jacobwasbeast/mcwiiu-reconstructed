@@ -30,18 +30,17 @@ void WolfCollarLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
 {
     boost::shared_ptr<Wolf> wolf = boost::dynamic_pointer_cast<Wolf>(entity);
 
-    if (wolf->isTame() && !wolf->isInvisible())
-    {
-        mRenderer->bindTexture(&WOLF_COLLAR_LOCATION);
+    if (!wolf->isTame() || wolf->isInvisible())
+        return;
 
-        const DyeColor* collarColor = wolf->getCollarColor();
-        arrayWithLength<const float> colours = collarColor->getTextureDiffuseColors();
-        GlStateManager::color3f(colours.data[0], colours.data[1], colours.data[2]);
+    mRenderer->bindTexture(&WOLF_COLLAR_LOCATION);
 
-        boost::shared_ptr<Entity> renderEntity = wolf;
-        mRenderer->getModel()->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks,
-                                       netHeadYaw, headPitch, scale, bUseDisplayList);
-    }
+    arrayWithLength<const float> colours = wolf->getCollarColor()->getTextureDiffuseColors();
+    GlStateManager::color3f(colours.data[0], colours.data[1], colours.data[2]);
+
+    boost::shared_ptr<Entity> renderEntity = wolf;
+    mRenderer->getModel()->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks,
+                                   netHeadYaw, headPitch, scale, bUseDisplayList);
 }
 
 bool WolfCollarLayer::colorsOnDamage()

@@ -9,8 +9,6 @@ class Level;
 class LargeCaveFeature : public LargeFeature
 {
 public:
-
-    virtual ~LargeCaveFeature();
     static unsigned int canReplaceBlock(int blockId, int data);
     void setCaveBlocks(Level* level, int minX, int maxX, int minY, int maxY, int minZ, int maxZ, int chunkX, int chunkZ, double centerX, double centerY, double centerZ, bool hasWater, double radiusX, double radiusZ, ChunkPrimer* primer);
     void addTunnel(Level* level, long long seed, int chunkX, int chunkZ, ChunkPrimer* primer, double x, double y, double z, float width, float yaw, float pitch, int start, int length, double scale);

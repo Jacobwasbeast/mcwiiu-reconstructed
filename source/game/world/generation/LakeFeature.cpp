@@ -20,26 +20,26 @@ LakeFeature::LakeFeature(Block* block)
 {
 }
 
-LakeFeature::~LakeFeature()
-{
-}
-
 bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
 {
-    BlockPos pos = origin.offset(-8, 0, -8);
+    BlockPos pos = origin;
+    pos = pos.offset(-8, 0, -8);
     while (pos.y > 5 && level->isEmptyBlock(pos))
         pos = pos.below();
-    if (pos.y < 5)
+    if (pos.y <= 4)
         return false;
 
     pos = pos.below(4);
     bool fill[2048];
     memset(fill, 0, sizeof(fill));
 
-    if (gApp.getLevelGenerationOptions() != NULL
-        && gApp.getLevelGenerationOptions()->checkIntersects(BlockPos(pos.x, pos.y, pos.z),
-                                                                BlockPos(pos.x + 16, pos.y + 8, pos.z + 16)))
-        return false;
+    if (gApp.getLevelGenerationOptions() != NULL)
+    {
+        LevelGenerationOptions* levelGenerationOptions = gApp.getLevelGenerationOptions();
+        if (levelGenerationOptions->checkIntersects(BlockPos(pos.x, pos.y, pos.z),
+                                                    BlockPos(pos.x + 16, pos.y + 8, pos.z + 16)))
+            return false;
+    }
 
     int count = random.nextInt(4) + 4;
     for (int i = 0; i < count; ++i)
@@ -60,7 +60,8 @@ bool LakeFeature::place(Level* level, Random& random, const BlockPos& origin)
                     double dx = ((double)x - xCenter) / (xSize * 0.5);
                     double dy = ((double)y - yCenter) / (ySize * 0.5);
                     double dz = ((double)z - zCenter) / (zSize * 0.5);
-                    if (dz * dz + dx * dx + dy * dy < 1.0)
+                    double distSq = dx * dx + dy * dy + dz * dz;
+                    if (distSq < 1.0)
                         fill[(x * 16 + z) * 8 + y] = true;
                 }
             }

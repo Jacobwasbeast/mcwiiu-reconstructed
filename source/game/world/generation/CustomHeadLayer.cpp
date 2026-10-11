@@ -43,11 +43,19 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
     bool bSpectating = eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
         && boost::static_pointer_cast<Player>(entity)->isSpectator();
 
-    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType())
-        && !(bSpectating && boost::static_pointer_cast<Player>(entity)->SpectateAsSkull())
-        && (boost::static_pointer_cast<Player>(entity)->getSkinAdjustments().mAnimFlags & 0x100) != 0)
+    if (eTYPE_DERIVED_FROM(EntityType::PLAYER, entity->GetType()))
     {
-        return;
+        if (bSpectating && boost::static_pointer_cast<Player>(entity)->SpectateAsSkull())
+        {
+        }
+        else
+        {
+            boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+            if ((player->getSkinAdjustments().mAnimFlags & 0x100) != 0)
+            {
+                return;
+            }
+        }
     }
 
     Item* item = headItem->getItem();
@@ -60,9 +68,9 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
         GlStateManager::translatef(0.0f, 1.5f, 0.0f);
     }
 
-    int fallFlyingTicks = entity->getFallFlyingTicks();
+    bool bFallFlying = entity->getFallFlyingTicks() > 4;
 
-    if (entity->isSneaking() && fallFlyingTicks < 5)
+    if (entity->isSneaking() && !bFallFlying)
     {
         GlStateManager::translatef(0.0f, 0.2f, 0.0f);
     }
@@ -70,7 +78,7 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
     bool bVillagerHead = eTYPE_DERIVED_FROM(EntityType::VILLAGER, entity->GetType())
         || eTYPE_DERIVED_FROM(EntityType::ZOMBIE_VILLAGER, entity->GetType());
 
-    if (entity->isBaby() && entity->GetType() != EntityType::VILLAGER)
+    if (entity->isBaby() && !eTYPE_DERIVED_FROM(EntityType::VILLAGER, entity->GetType()))
     {
         GlStateManager::translatef(0.0f, 0.5f * scale, 0.0f);
         GlStateManager::scalef(0.7f, 0.7f, 0.7f);
@@ -88,7 +96,7 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
     {
         float headScale = 1.0f;
 
-        if (entity->GetType() != EntityType::ARMOR_STAND)
+        if (!eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, entity->GetType()))
         {
             headScale = 1.1875f;
         }
@@ -105,13 +113,7 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
             GlStateManager::translatef(0.0f, 0.0625f, 0.0f);
         }
 
-        if (eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, entity->GetType()))
-        {
-            SkullBlockRenderer::instance->renderSkull(-0.5f, 0.0f, -0.5f, Direction::UP, 180.0f, headPitch, headItem->getAuxValue(), -1, limbSwing, true);
-
-            GlStateManager::popMatrix();
-        }
-        else
+        if (!eTYPE_DERIVED_FROM(EntityType::ARMOR_STAND, entity->GetType()))
         {
             GlStateManager::translatef(0.0f, (-0.5f - entity->getSkinAdjustments().mHeadY) * 0.0625f, 0.0f);
 
@@ -119,12 +121,16 @@ void CustomHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float limb
 
             GlStateManager::popMatrix();
         }
+        else
+        {
+            SkullBlockRenderer::instance->renderSkull(-0.5f, 0.0f, -0.5f, Direction::UP, 180.0f, headPitch, headItem->getAuxValue(), -1, limbSwing, true);
+
+            GlStateManager::popMatrix();
+        }
     }
     else
     {
-        ArmorItem* armorItem = dynamic_cast<ArmorItem*>(item);
-
-        if (armorItem == NULL || armorItem->getSlot() != EquipmentSlot::HEAD)
+        if (dynamic_cast<ArmorItem*>(item) == NULL || static_cast<ArmorItem*>(item)->getSlot() != EquipmentSlot::HEAD)
         {
             GlStateManager::translatef(0.0f, -0.25f, 0.0f);
             GlStateManager::rotatef(180.0f, 0.0f, 1.0f, 0.0f);

@@ -41,7 +41,9 @@ bool HugeMushroomFeature::place(Level* level, Random& random, const BlockPos& or
     bool free = true;
     for (int y = origin.y; y <= origin.y + height + 1; ++y)
     {
-        int radius = y <= origin.y + 3 ? 0 : 3;
+        int radius = 3;
+        if (y <= origin.y + 3)
+            radius = 0;
         BlockPos checkPos;
         for (int x = origin.x - radius; x <= origin.x + radius && free; ++x)
         {
@@ -68,16 +70,15 @@ bool HugeMushroomFeature::place(Level* level, Random& random, const BlockPos& or
     if (ground != Blocks::dirt && ground != Blocks::grass && ground != Blocks::mycelium)
         return false;
 
-    int top = origin.y + height;
-    int capBottom = top;
+    int startY = origin.y + height;
     if (block == Blocks::red_mushroom_block)
-        capBottom = top - 3;
+        startY = origin.y + height - 3;
 
-    for (int y = capBottom; y <= top; ++y)
+    for (int y = startY; y <= origin.y + height; ++y)
     {
         int radius = 1;
-        if (y < top)
-            radius = 2;
+        if (y < origin.y + height)
+            ++radius;
         if (block == Blocks::brown_mushroom_block)
             radius = 3;
 
@@ -92,20 +93,20 @@ bool HugeMushroomFeature::place(Level* level, Random& random, const BlockPos& or
                 int data = 5;
                 if (x == minX)
                     --data;
-                else if (x == maxX)
+                if (x == maxX)
                     ++data;
                 if (z == minZ)
                     data -= 3;
-                else if (z == maxZ)
+                if (z == maxZ)
                     data += 3;
                 HugeMushroomBlock::Variant* variant = HugeMushroomBlock::Variant::byData(data);
 
-                if (block == Blocks::brown_mushroom_block || y < top)
+                if (block == Blocks::brown_mushroom_block || y < origin.y + height)
                 {
                     if ((x == minX || x == maxX) && (z == minZ || z == maxZ))
                         continue;
 
-                    if (x == origin.x - (radius - 1) && z == minZ)
+                    if (x == origin.x - (radius - 1) && z == origin.z - radius)
                         variant = HugeMushroomBlock::Variant::NORTH_WEST;
                     if (x == minX && z == origin.z - (radius - 1))
                         variant = HugeMushroomBlock::Variant::NORTH_WEST;
@@ -123,17 +124,14 @@ bool HugeMushroomFeature::place(Level* level, Random& random, const BlockPos& or
                         variant = HugeMushroomBlock::Variant::SOUTH_EAST;
                 }
 
-                if (variant == HugeMushroomBlock::Variant::CENTER && y < top)
+                if (variant == HugeMushroomBlock::Variant::CENTER && y < origin.y + height)
                     variant = HugeMushroomBlock::Variant::ALL_INSIDE;
 
-                if (origin.y >= top - 1 || variant != HugeMushroomBlock::Variant::ALL_INSIDE)
+                if (variant != HugeMushroomBlock::Variant::ALL_INSIDE || origin.y >= origin.y + height - 1)
                 {
-                    BlockPos capPos(x, y, z);
+                    const BlockPos& capPos = BlockPos(x, y, z);
                     if (!level->getBlockState(capPos)->isSolid())
-                    {
-                        TypedBoxed<HugeMushroomBlock::Variant*> value(variant);
-                        setBlock(level, capPos, block->defaultBlockState()->setBoxedValue(HugeMushroomBlock::VARIANT, &value), Block::UPDATE_NONE);
-                    }
+                        setBlock(level, capPos, block->defaultBlockState()->setValue(HugeMushroomBlock::VARIANT, variant), Block::UPDATE_NONE);
                 }
             }
         }
@@ -142,10 +140,7 @@ bool HugeMushroomFeature::place(Level* level, Random& random, const BlockPos& or
     for (int y = 0; y < height; ++y)
     {
         if (!level->getBlockState(origin.above(y))->isSolid())
-        {
-            TypedBoxed<HugeMushroomBlock::Variant*> value(HugeMushroomBlock::Variant::STEM);
-            setBlock(level, origin.above(y), block->defaultBlockState()->setBoxedValue(HugeMushroomBlock::VARIANT, &value), Block::UPDATE_NONE);
-        }
+            setBlock(level, origin.above(y), block->defaultBlockState()->setValue(HugeMushroomBlock::VARIANT, HugeMushroomBlock::Variant::STEM), Block::UPDATE_NONE);
     }
     return true;
 }

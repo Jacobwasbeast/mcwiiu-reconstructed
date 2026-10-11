@@ -1,5 +1,7 @@
 #include "game/world/generation/EndGatewayFeature.hpp"
 
+#include <cstdlib>
+
 #include "game/util/Random.hpp"
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
@@ -25,42 +27,32 @@ bool EndGatewayFeature::place(Level* level, Random& random, const BlockPos& orig
         {
             for (int y = origin.y - 2; y <= origin.y + 2; ++y)
             {
-                const bool centerZ = z == origin.z;
-                const bool innerY = y - origin.y != 2 && origin.y - y != 2;
                 position.set(x, y, z);
-
-                if (y == origin.y)
+                const bool atX = x == origin.x;
+                const bool atY = y == origin.y;
+                const bool atZ = z == origin.z;
+                const bool edgeY = std::abs(y - origin.y) == 2;
+                if (atX && atY && atZ)
                 {
-                    if (x != origin.x || !centerZ)
-                    {
-                        setBlock(level, position, Blocks::air->defaultBlockState(), Block::UPDATE_NONE);
-                    }
-                    else
-                    {
-                        TypedBoxed<int> portalNumber(mPortalNumber);
-                        const BlockState* state = Blocks::end_gateway->defaultBlockState()->setBoxedValue(
-                            EndGatewayBlock::PORTAL_NUMBER, &portalNumber);
-                        setBlock(level, position, state, Block::UPDATE_NONE);
-                    }
+                    const BlockState* state = Blocks::end_gateway->defaultBlockState()->setValue(
+                        EndGatewayBlock::PORTAL_NUMBER, mPortalNumber);
+                    setBlock(level, BlockPos(position), state, Block::UPDATE_NONE);
                 }
-                else if (x != origin.x)
+                else if (atY)
                 {
-                    if (centerZ && innerY)
-                    {
-                        setBlock(level, position, Blocks::bedrock->defaultBlockState(), Block::UPDATE_NONE);
-                    }
-                    else
-                    {
-                        setBlock(level, position, Blocks::air->defaultBlockState(), Block::UPDATE_NONE);
-                    }
+                    setBlock(level, position, Blocks::air->defaultBlockState(), Block::UPDATE_NONE);
                 }
-                else if (innerY || centerZ)
+                else if (edgeY && atX && atZ)
                 {
                     setBlock(level, position, Blocks::bedrock->defaultBlockState(), Block::UPDATE_NONE);
                 }
-                else
+                else if ((!atX && !atZ) || edgeY)
                 {
                     setBlock(level, position, Blocks::air->defaultBlockState(), Block::UPDATE_NONE);
+                }
+                else
+                {
+                    setBlock(level, position, Blocks::bedrock->defaultBlockState(), Block::UPDATE_NONE);
                 }
             }
         }

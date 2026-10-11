@@ -102,8 +102,12 @@ void LargeCaveFeature::addTunnel(Level* level, long long seed, int chunkX, int c
         const int maxLength = range * 16 - 16;
         length = maxLength - tunnelRandom.nextInt(maxLength / 4);
     }
-    const bool room = start == -1;
-    if (room) start = length / 2;
+    bool room = false;
+    if (start == -1)
+    {
+        room = true;
+        start = length / 2;
+    }
     const int branchPoint = tunnelRandom.nextInt(length / 2) + length / 4;
     const bool gentlePitch = tunnelRandom.nextInt(6) == 0;
     float yawVariance = 0.0f;
@@ -113,8 +117,9 @@ void LargeCaveFeature::addTunnel(Level* level, long long seed, int chunkX, int c
         const double radius = 1.5 + Mth::sin(step * 3.1415927f / length) * width * 1.0f;
         const double verticalRadius = radius * scale;
         const float horizontal = Mth::cos(pitch);
+        const float vertical = Mth::sin(pitch);
         x += Mth::cos(yaw) * horizontal;
-        y += Mth::sin(pitch);
+        y += vertical;
         z += Mth::sin(yaw) * horizontal;
         pitch *= gentlePitch ? 0.92f : 0.7f;
         pitch += pitchVariance * 0.1f;
@@ -220,8 +225,4 @@ void LargeCaveFeature::addFeature(Level* level, int chunkX, int chunkZ, int orig
             addTunnel(level, random.nextLong(), originChunkX, originChunkZ, primer, x, y, z, tunnelWidth, yaw, pitch, 0, 0, 1.0);
         }
     }
-}
-
-LargeCaveFeature::~LargeCaveFeature()
-{
 }

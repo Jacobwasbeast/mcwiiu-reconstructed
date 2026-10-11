@@ -22,22 +22,23 @@ bool MapGenerator::FinishedGeneration() const
     return mGenerationWriteTasks.empty();
 }
 
-uint64_t MapGenerator::ContinueGeneration()
+bool MapGenerator::ContinueGeneration()
 {
-    const uint64_t endTime = System::processTimeInMilliSecs() + 15;
-    std::vector<GenerationWriteTask*>::iterator task = mGenerationWriteTasks.begin();
+    const long long endTime = System::processTimeInMilliSecs() + 15;
+    std::vector<GenerationWriteTask*>::iterator it = mGenerationWriteTasks.begin();
 
-    while (task != mGenerationWriteTasks.end())
+    while (it != mGenerationWriteTasks.end())
     {
-        (*task)->doWork(static_cast<long long>(endTime));
-        if ((*task)->hasFinished())
+        GenerationWriteTask* task = *it;
+        task->doWork(endTime);
+        if (task->hasFinished())
         {
-            delete *task;
-            task = mGenerationWriteTasks.erase(task);
+            delete task;
+            it = mGenerationWriteTasks.erase(it);
         }
         else
         {
-            ++task;
+            ++it;
         }
 
         if (System::processTimeInMilliSecs() >= endTime)

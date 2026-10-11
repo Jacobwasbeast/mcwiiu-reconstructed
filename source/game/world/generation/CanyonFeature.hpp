@@ -9,8 +9,6 @@ class Level;
 class CanyonFeature : public LargeFeature
 {
 public:
-    virtual ~CanyonFeature();
-
     void addTunnel(Level* level, long long seed, int chunkX, int chunkZ, ChunkPrimer* primer,
                    double x, double y, double z, float thickness, float yaw, float pitch,
                    int startIndex, int endIndex, double yScale);

@@ -35,11 +35,11 @@ void DolphinCarryingItemLayer::renderItemOnNose(const boost::shared_ptr<LivingEn
     if (depthMask)
         GlStateManager::depthMask(false);
 
-    float rotation = static_cast<float>(std::fabs(entity->mXRot)) / 60.0f;
-    if (entity->mXRot >= 0.0f)
-        GlStateManager::translatef(0.0f, rotation * 0.8f + 1.0f, rotation * 0.2f - 1.0f);
+    float rotation = fabsf(entity->mXRot) / 60.0f;
+    if (entity->mXRot < 0.0f)
+        GlStateManager::translatef(0.0f, 1.0f - rotation * 0.5f, -1.0f + rotation * 0.5f);
     else
-        GlStateManager::translatef(0.0f, 1.0f - rotation * 0.5f, rotation * 0.5f - 1.0f);
+        GlStateManager::translatef(0.0f, 1.0f + rotation * 0.8f, -1.0f + rotation * 0.2f);
 
     mItemRenderer->renderStatic(item, entity, ItemTransforms::GROUND, 0.0f, false, NULL);
 

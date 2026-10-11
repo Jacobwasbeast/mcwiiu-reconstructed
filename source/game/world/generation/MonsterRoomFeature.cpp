@@ -99,7 +99,7 @@ bool MonsterRoomFeature::place(Level* level, Random& random, const BlockPos& ori
             int chestX = origin.x + random.nextInt(xExtent * 2 + 1) - xExtent;
             int chestY = origin.y;
             int chestZ = origin.z + random.nextInt(zExtent * 2 + 1) - zExtent;
-            BlockPos pos(chestX, chestY, chestZ);
+            const BlockPos& pos = BlockPos(chestX, chestY, chestZ);
             if (!level->isEmptyBlock(pos))
                 continue;
 
@@ -130,8 +130,7 @@ bool MonsterRoomFeature::place(Level* level, Random& random, const BlockPos& ori
     {
         boost::shared_ptr<MobSpawnerBlockEntity> spawnerBlockEntity =
             boost::static_pointer_cast<MobSpawnerBlockEntity>(blockEntity);
-        ResourceLocation entityId(randomEntityId(random));
-        spawnerBlockEntity->getSpawner()->setEntityId(entityId);
+        spawnerBlockEntity->getSpawner()->setEntityId(ResourceLocation(randomEntityId(random)));
     }
     return true;
 }

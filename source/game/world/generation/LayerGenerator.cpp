@@ -42,11 +42,9 @@ int LayerGenerator::getCoreWorldMinY() const
 BlockTransaction* LayerGenerator::Generate(Random& random, Level*)
 {
     PIXBeginNamedEvent(0.0f, "LayerGenerator::Setup");
-    BlockPos min(static_cast<double>(mArea->mMinX), static_cast<double>(mArea->mMinY),
-                 static_cast<double>(mArea->mMinZ));
-    BlockPos max(static_cast<double>(mArea->mMaxX), static_cast<double>(mArea->mMaxY),
-                 static_cast<double>(mArea->mMaxZ));
-    BlockTransaction* transaction = BlockTransaction::CreateTransaction(min, max);
+    BlockTransaction* transaction = BlockTransaction::CreateTransaction(
+        BlockPos(mArea->mMinX, mArea->mMinY, mArea->mMinZ),
+        BlockPos(mArea->mMaxX, mArea->mMaxY, mArea->mMaxZ));
     Shape shape(transaction->mSize.x, transaction->mSize.z);
     PIXEndNamedEvent();
 
@@ -60,8 +58,8 @@ BlockTransaction* LayerGenerator::Generate(Random& random, Level*)
     PIXEndNamedEvent();
 
     PIXBeginNamedEvent(0.0f, "LayerGenerator::ApplyThemes");
-    std::vector<const LayerTheme*>::const_iterator it;
-    for (it = mThemes.begin(); it != mThemes.end(); ++it)
+    std::vector<const LayerTheme*>::const_iterator end = mThemes.end();
+    for (std::vector<const LayerTheme*>::const_iterator it = mThemes.begin(); it != end; ++it)
     {
         (*it)->Apply(random, transaction, mCoreWorldMinY, mCoreWorldMaxY);
     }

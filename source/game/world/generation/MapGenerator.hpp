@@ -25,7 +25,7 @@ public:
     virtual unsigned int GetBlockCountOnLayer(unsigned int layer);
 
     bool FinishedGeneration() const;
-    uint64_t ContinueGeneration();
+    bool ContinueGeneration();
 
 protected:
     Random mRandom;

@@ -11,9 +11,11 @@ AddIslandLayer::AddIslandLayer(long long seed, boost::shared_ptr<Layer> parentLa
 
 arrayWithLength<int> AddIslandLayer::getArea(int x, int z, int width, int height)
 {
+    int parentX = x - 1;
+    int parentZ = z - 1;
     int parentWidth = width + 2;
     int parentHeight = height + 2;
-    arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, parentHeight);
+    arrayWithLength<int> parentArea = parent->getArea(parentX, parentZ, parentWidth, parentHeight);
 
     PIXBeginNamedEvent(0.0f, "AddIslandLayer::getArea");
     arrayWithLength<int> area = IntCache::allocate(width * height);
@@ -22,115 +24,110 @@ arrayWithLength<int> AddIslandLayer::getArea(int x, int z, int width, int height
     {
         for (int j = 0; j < width; j++)
         {
-            int northWest = parentArea.data[j + i * parentWidth];
-            int northEast = parentArea.data[j + 2 + i * parentWidth];
-            int southWest = parentArea.data[j + (i + 2) * parentWidth];
-            int southEast = parentArea.data[j + 2 + (i + 2) * parentWidth];
-            int centre = parentArea.data[j + 1 + (i + 1) * parentWidth];
+            int northWest = parentArea[j + 0 + (i + 0) * parentWidth];
+            int northEast = parentArea[j + 2 + (i + 0) * parentWidth];
+            int southWest = parentArea[j + 0 + (i + 2) * parentWidth];
+            int southEast = parentArea[j + 2 + (i + 2) * parentWidth];
+            int centre = parentArea[j + 1 + (i + 1) * parentWidth];
 
-            initRandom((long long)(x + j), (long long)(z + i));
+            initRandom((long long)(j + x), (long long)(i + z));
 
-            if (!isShallowOcean(centre)
-                || (isShallowOcean(northWest) && isShallowOcean(northEast)
-                    && isShallowOcean(southWest) && isShallowOcean(southEast)))
+            if (isShallowOcean(centre)
+                && (!isShallowOcean(northWest) || !isShallowOcean(northEast)
+                    || !isShallowOcean(southWest) || !isShallowOcean(southEast)))
             {
-                if (isShallowOcean(centre)
-                    || (!isShallowOcean(northWest) && !isShallowOcean(northEast)
-                        && !isShallowOcean(southWest) && !isShallowOcean(southEast))
-                    || nextRandom(5) != 0)
-                {
-                    area.data[j + i * width] = centre;
-                }
-                else if (isShallowOcean(northWest))
-                {
-                    if (centre == 4)
-                    {
-                        area.data[j + i * width] = centre;
-                    }
-                    else
-                    {
-                        area.data[j + i * width] = northWest;
-                    }
-                }
-                else if (isShallowOcean(northEast))
-                {
-                    if (centre == 4)
-                    {
-                        area.data[j + i * width] = centre;
-                    }
-                    else
-                    {
-                        area.data[j + i * width] = northEast;
-                    }
-                }
-                else if (isShallowOcean(southWest))
-                {
-                    if (centre == 4)
-                    {
-                        area.data[j + i * width] = centre;
-                    }
-                    else
-                    {
-                        area.data[j + i * width] = southWest;
-                    }
-                }
-                else if (isShallowOcean(southEast))
-                {
-                    if (centre == 4)
-                    {
-                        area.data[j + i * width] = centre;
-                    }
-                    else
-                    {
-                        area.data[j + i * width] = southEast;
-                    }
-                }
-            }
-            else
-            {
-                int selected = 1;
                 int nonOceanCount = 1;
+                int selected = 1;
 
-                if (!isShallowOcean(northWest))
+                if (!isShallowOcean(northWest) && nextRandom(nonOceanCount++) == 0)
                 {
-                    nonOceanCount = 2;
-                    if (nextRandom(1) == 0)
-                    {
-                        selected = northWest;
-                    }
+                    selected = northWest;
                 }
-
-                if (!isShallowOcean(northEast))
+                if (!isShallowOcean(northEast) && nextRandom(nonOceanCount++) == 0)
                 {
-                    if (nextRandom(nonOceanCount) == 0)
-                    {
-                        selected = northEast;
-                    }
-                    nonOceanCount++;
+                    selected = northEast;
                 }
-
-                if (!isShallowOcean(southWest))
+                if (!isShallowOcean(southWest) && nextRandom(nonOceanCount++) == 0)
                 {
-                    if (nextRandom(nonOceanCount) == 0)
-                    {
-                        selected = southWest;
-                    }
-                    nonOceanCount++;
+                    selected = southWest;
                 }
-
-                if (!isShallowOcean(southEast) && nextRandom(nonOceanCount) == 0)
+                if (!isShallowOcean(southEast) && nextRandom(nonOceanCount++) == 0)
                 {
                     selected = southEast;
                 }
 
-                if (nextRandom(3) == 0 || selected == 4)
+                if (nextRandom(3) == 0)
                 {
-                    area.data[j + i * width] = selected;
+                    area[j + i * width] = selected;
+                }
+                else if (selected == 4)
+                {
+                    area[j + i * width] = 4;
                 }
                 else
                 {
-                    area.data[j + i * width] = 0;
+                    area[j + i * width] = 0;
                 }
+            }
+            else if (!isShallowOcean(centre)
+                     && (isShallowOcean(northWest) || isShallowOcean(northEast)
+                         || isShallowOcean(southWest) || isShallowOcean(southEast)))
+            {
+                if (nextRandom(5) == 0)
+                {
+                    if (isShallowOcean(northWest))
+                    {
+                        if (centre == 4)
+                        {
+                            area[j + i * width] = centre;
+                        }
+                        else
+                        {
+                            area[j + i * width] = northWest;
+                        }
+                    }
+                    else if (isShallowOcean(northEast))
+                    {
+                        if (centre == 4)
+                        {
+                            area[j + i * width] = centre;
+                        }
+                        else
+                        {
+                            area[j + i * width] = northEast;
+                        }
+                    }
+                    else if (isShallowOcean(southWest))
+                    {
+                        if (centre == 4)
+                        {
+                            area[j + i * width] = centre;
+                        }
+                        else
+                        {
+                            area[j + i * width] = southWest;
+                        }
+                    }
+                    else if (isShallowOcean(southEast))
+                    {
+                        if (centre == 4)
+                        {
+                            area[j + i * width] = centre;
+                        }
+                        else
+                        {
+                            area[j + i * width] = southEast;
+                        }
+                    }
+                }
+                else
+                {
+                    area[j + i * width] = centre;
+                }
+            }
+            else
+            {
+                area[j + i * width] = centre;
             }
         }
     }

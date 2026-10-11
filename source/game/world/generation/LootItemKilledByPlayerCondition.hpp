@@ -9,12 +9,12 @@ class Random;
 class LootItemKilledByPlayerCondition : public LootItemCondition
 {
 public:
-    LootItemKilledByPlayerCondition(bool playerKilled);
+    LootItemKilledByPlayerCondition(bool inverse);
 
     virtual bool applies(Random* random, LootTableContext& context);
 
 private:
-    bool playerKilled;
+    bool inverse;
 };
 
 #endif

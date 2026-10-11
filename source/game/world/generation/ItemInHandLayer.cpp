@@ -48,14 +48,13 @@ void ItemInHandLayer::renderArmWithItem(boost::shared_ptr<LivingEntity> entity, 
     GlStateManager::pushMatrix();
     translateToHand(arm);
 
-    bool leftHand = arm == HumanoidArm::LEFT;
-    bool suppressSneakingTransform = false;
-    if (entity && eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType()))
+    bool fallFlying = false;
+    if (entity != NULL)
     {
-        boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(entity);
-        suppressSneakingTransform = living->getFallFlyingTicks() > 4;
+        fallFlying = eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, entity->GetType())
+                     && boost::static_pointer_cast<LivingEntity>(entity)->getFallFlyingTicks() > 4;
     }
-    if (entity->isSneaking() && !suppressSneakingTransform)
+    if (entity->isSneaking() && !fallFlying)
     {
         GlStateManager::translatef(0.0f, 0.175f, 0.0f);
         GlStateManager::rotatef(6.0f, 1.0f, 0.0f, 0.0f);
@@ -63,6 +62,7 @@ void ItemInHandLayer::renderArmWithItem(boost::shared_ptr<LivingEntity> entity, 
 
     GlStateManager::rotatef(-90.0f, 1.0f, 0.0f, 0.0f);
     GlStateManager::rotatef(180.0f, 0.0f, 1.0f, 0.0f);
+    bool leftHand = arm == HumanoidArm::LEFT;
     GlStateManager::translatef((leftHand ? -1.0f : 1.0f) * 0.0625f, 0.125f, -0.625f);
 
     Minecraft::GetInstance()->getItemInHandRenderer()->renderItem(entity, item, transformType, leftHand, 0, true);

@@ -30,37 +30,36 @@ arrayWithLength<int> SmoothZoomLayer::getArea(int x, int z, int width, int heigh
 
     PIXBeginNamedEvent(0.0f, "SmoothZoomLayer::getArea");
 
-    int zoomedWidth = parentWidth * 2;
-    arrayWithLength<int> zoomedArea = IntCache::allocate(parentWidth * parentHeight * 4);
-    for (int i = 0; i < parentHeight - 1; ++i)
+    arrayWithLength<int> zoomedArea = IntCache::allocate((parentWidth * 2) * (parentHeight * 2));
+    int zoomedWidth = parentWidth << 1;
+    for (int row = 0; row < parentHeight - 1; row++)
     {
-        int dest = i * zoomedWidth * 2;
-        int upperLeft = parentArea.data[i * parentWidth];
-        int lowerLeft = parentArea.data[(i + 1) * parentWidth];
-        for (int j = 0; j < parentWidth - 1; ++j)
+        int zoomedRow = row << 1;
+        int destIndex = zoomedRow * zoomedWidth;
+        int upperLeft = parentArea[(row + 0) * parentWidth];
+        int lowerLeft = parentArea[(row + 1) * parentWidth];
+        for (int column = 0; column < parentWidth - 1; column++)
         {
-            initRandom((long long)((j + parentX) * 2), (long long)((i + parentZ) * 2));
-            int upperRight = parentArea.data[i * parentWidth + j + 1];
-            int lowerRight = parentArea.data[(i + 1) * parentWidth + j + 1];
+            initRandom((column + parentX) << 1, (row + parentZ) << 1);
+            int upperRight = parentArea[(column + 1) + (row + 0) * parentWidth];
+            int lowerRight = parentArea[(column + 1) + (row + 1) * parentWidth];
 
-            zoomedArea.data[dest] = upperLeft;
-            zoomedArea.data[dest + zoomedWidth] = upperLeft + (lowerLeft - upperLeft) * nextRandom(256) / 256;
-            zoomedArea.data[dest + 1] = upperLeft + (upperRight - upperLeft) * nextRandom(256) / 256;
+            zoomedArea[destIndex] = upperLeft;
+            zoomedArea[destIndex++ + zoomedWidth] = upperLeft + (lowerLeft - upperLeft) * nextRandom(256) / 256;
+            zoomedArea[destIndex] = upperLeft + (upperRight - upperLeft) * nextRandom(256) / 256;
             int upper = upperLeft + (upperRight - upperLeft) * nextRandom(256) / 256;
             int lower = lowerLeft + (lowerRight - lowerLeft) * nextRandom(256) / 256;
-            zoomedArea.data[dest + 1 + zoomedWidth] = upper + (lower - upper) * nextRandom(256) / 256;
+            zoomedArea[destIndex++ + zoomedWidth] = upper + (lower - upper) * nextRandom(256) / 256;
 
-            dest += 2;
             upperLeft = upperRight;
             lowerLeft = lowerRight;
         }
     }
 
     arrayWithLength<int> area = IntCache::allocate(width * height);
-    for (int i = 0; i < height; ++i)
+    for (int row = 0; row < height; row++)
     {
-        int source = (i + (z & 1)) * zoomedWidth + (x & 1);
-        System::arraycopy(zoomedArea, source, &area, i * width, width);
+        System::arraycopy(zoomedArea, (row + (z & 1)) * (parentWidth << 1) + (x & 1), &area, row * width, width);
     }
 
     PIXEndNamedEvent();

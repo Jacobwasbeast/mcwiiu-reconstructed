@@ -27,16 +27,18 @@ void SnowManHeadLayer::render(boost::shared_ptr<LivingEntity>& entity, float lim
 {
     boost::shared_ptr<SnowMan> snowMan = boost::dynamic_pointer_cast<SnowMan>(entity);
 
-    if (snowMan->isInvisible() || !snowMan->hasPumpkin())
+    bool invisible = snowMan->isInvisible();
+    if (invisible || !snowMan->hasPumpkin())
     {
         return;
     }
 
     GlStateManager::pushMatrix();
     static_cast<SnowManModel*>(mRenderer->getModel())->mHead->translateTo(0.0625f);
+    float headScale = 0.625f;
     GlStateManager::translatef(0.0f, -0.34375f, 0.0f);
     GlStateManager::rotatef(180.0f, 0.0f, 1.0f, 0.0f);
-    GlStateManager::scalef(0.625f, -0.625f, -0.625f);
+    GlStateManager::scalef(headScale, -headScale, -headScale);
 
     Minecraft::GetInstance()->getItemInHandRenderer()->renderItem(
         snowMan,

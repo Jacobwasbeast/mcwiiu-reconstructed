@@ -31,10 +31,11 @@ ImposeContinentsLayer::~ImposeContinentsLayer()
 
 arrayWithLength<int> ImposeContinentsLayer::getArea(int x, int z, int width, int height)
 {
+    int parentX = x - 1;
+    int parentZ = z - 1;
     int parentWidth = width + 2;
     int parentHeight = height + 2;
-
-    arrayWithLength<int> parentArea = parent->getArea(x - 1, z - 1, parentWidth, parentHeight);
+    arrayWithLength<int> parentArea = parent->getArea(parentX, parentZ, parentWidth, parentHeight);
 
     PIXBeginNamedEvent(0.0f, "ImposeContinentsLayer::getArea");
 
@@ -44,15 +45,12 @@ arrayWithLength<int> ImposeContinentsLayer::getArea(int x, int z, int width, int
     {
         for (int j = 0; j < width; j++)
         {
-            int biomeId = parentArea.data[j + 1 + (i + 1) * parentWidth];
+            int biomeId = parentArea[j + 1 + (i + 1) * parentWidth];
 
-            int worldX = j + x;
-            int worldZ = i + z;
-
-            if (worldX != 0 || worldZ != 0)
+            if (j + x != 0 || i + z != 0)
             {
-                int mapX = (worldX + (int)baseSeed) % CONTINENT_MAP_SIZE;
-                int mapZ = (worldZ + (int)baseSeed) % CONTINENT_MAP_SIZE;
+                int mapX = (j + x + (int)(baseSeed & 0xFFFFFFFF)) % CONTINENT_MAP_SIZE;
+                int mapZ = (i + z + (int)(baseSeed & 0xFFFFFFFF)) % CONTINENT_MAP_SIZE;
 
                 if (mapX < 0)
                 {
@@ -70,7 +68,7 @@ arrayWithLength<int> ImposeContinentsLayer::getArea(int x, int z, int width, int
                 }
             }
 
-            area.data[j + i * width] = biomeId;
+            area[j + i * width] = biomeId;
         }
     }
 

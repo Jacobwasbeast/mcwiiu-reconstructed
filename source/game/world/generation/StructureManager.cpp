@@ -4,12 +4,11 @@
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
 #include "game/core/NbtIo.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/core/StringUtils.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/data/DataFixerUpper.hpp"
 #include "game/world/generation/StructureTemplate.hpp"
-
-static const std::wstring DATA_VERSION_TAG = L"DataVersion";
 
 static const wchar_t* STRUCTURE_TEMPLATE_NAMES[eMinecraftStructureTemplate_Count] =
 {
@@ -227,9 +226,9 @@ std::wstring StructureManager::fjGetStructureTemplatePath(eMinecraftStructureTem
 void StructureManager::readStructure(eMinecraftStructureTemplate type, ByteArrayInputStream* input)
 {
     CompoundTag* tag = NbtIo::readCompressed(input);
-    bool hasDataVersion = tag->contains(DATA_VERSION_TAG, Tag::TAG_ANY_NUMERIC);
+    bool hasDataVersion = tag->contains(SharedConstants::DATA_VERSION_TAG, Tag::TAG_ANY_NUMERIC);
     if (!hasDataVersion)
-        tag->putInt(DATA_VERSION_TAG, 500);
+        tag->putInt(SharedConstants::DATA_VERSION_TAG, 500);
 
     StructureTemplate* structureTemplate = new StructureTemplate();
     CompoundTag* fixedTag = fixerUpper->updateData(DataFixTypes::eDataFixTypes_Structure, tag);

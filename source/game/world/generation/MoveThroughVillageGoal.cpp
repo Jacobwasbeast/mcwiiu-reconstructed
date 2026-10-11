@@ -65,12 +65,13 @@ boost::shared_ptr<DoorInfo> MoveThroughVillageGoal::getNextDoorInfo(boost::share
     int closestDistance = INT_MAX;
     std::vector<boost::shared_ptr<DoorInfo> >* doors = village->getDoorInfos();
     for (std::vector<boost::shared_ptr<DoorInfo> >::iterator it = doors->begin();
-         it != doors->end(); ++it)
+         it != doors->end(); it++)
     {
         boost::shared_ptr<DoorInfo> door = *it;
         int distance = door->distanceToSqr(Mth::floor(mMob->mX), Mth::floor(mMob->mY), Mth::floor(mMob->mZ));
-        if (distance < closestDistance && !hasVisited(door))
+        if (distance < closestDistance)
         {
+            if (hasVisited(door)) continue;
             closestDistance = distance;
             result = door;
         }

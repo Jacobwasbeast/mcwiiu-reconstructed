@@ -35,7 +35,8 @@ void ElytraLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwin
                          float partialTicks, float ageInTicks, float netHeadYaw, float headPitch,
                          float scale, bool bUseDisplayList)
 {
-    boost::shared_ptr<Player> player = boost::static_pointer_cast<Player>(entity);
+    boost::shared_ptr<LivingEntity> player = boost::static_pointer_cast<Player>(entity);
+    boost::shared_ptr<Entity> renderEntity = player;
     not_null_ptr<ItemInstance> item = player->getItemSlot(EquipmentSlot::CHEST);
 
     if (item->getItem() != Items::elytra)
@@ -59,11 +60,10 @@ void ElytraLayer::render(boost::shared_ptr<LivingEntity>& entity, float limbSwin
 
     GlStateManager::translatef(0.0f, 0.0f, 0.125f);
 
-    boost::shared_ptr<Entity> renderEntity = entity;
-    mElytraModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale,
-                            renderEntity, _SkinAdjustments());
-    mElytraModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw,
-                         headPitch, scale, bUseDisplayList);
+    mElytraModel->setupAnim(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, player,
+                            _SkinAdjustments());
+    mElytraModel->render(renderEntity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch,
+                         scale, bUseDisplayList);
 
     if (item->isEnchanted())
     {
