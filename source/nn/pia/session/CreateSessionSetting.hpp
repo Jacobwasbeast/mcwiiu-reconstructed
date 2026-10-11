@@ -1,7 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_CREATESESSIONSETTING_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_CREATESESSIONSETTING_HPP
 
-#include <stdint.h>
+#include "nn/pia/Common.hpp"
 
 namespace nn { namespace pia { namespace session {
 
@@ -10,14 +10,18 @@ class CreateSessionSetting
 public:
     CreateSessionSetting();
     virtual ~CreateSessionSetting();
+    virtual void SetMaxParticipantNum(uint16_t value);
+    virtual Result SetApplicationData(const void* data, unsigned int size) = 0;
+    virtual Result GetApplicationData(void* data, unsigned int size) const = 0;
+    virtual unsigned int GetApplicationDataSize() const = 0;
+    virtual bool IsSetApplicationData() const = 0;
+    virtual void Reset();
+    virtual void Trace(uint64_t value) const;
 
     uint16_t GetMinParticipantNum() const;
     uint8_t IsSetMinParticipantNum() const;
-    void SetMaxParticipantNum(uint16_t value);
     uint16_t GetMaxParticipantNum() const;
     uint8_t IsSetMaxParticipantNum() const;
-    void Reset();
-    void Trace(uint64_t value) const;
     void Copy(const CreateSessionSetting& other);
 
     void SetMinParticipantNum(uint16_t value);

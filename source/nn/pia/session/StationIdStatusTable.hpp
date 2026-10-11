@@ -8,6 +8,8 @@ namespace nn { namespace pia { namespace session {
 
 class StationIdStatusTable
 {
+    friend class MeshEventListener;
+
 public:
     enum PrepareStatus
     {

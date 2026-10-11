@@ -18,7 +18,7 @@ public:
 
     SessionSearchCriteria();
     virtual ~SessionSearchCriteria();
-    virtual nn::pia::common::Result SetResultRange(unsigned int offset, unsigned int size);
+    virtual nn::pia::Result SetResultRange(unsigned int offset, unsigned int size);
     virtual void Reset();
     unsigned int GetResultRangeOffset() const;
     unsigned int GetResultRangeSize() const;

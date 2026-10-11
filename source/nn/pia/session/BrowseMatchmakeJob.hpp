@@ -35,8 +35,9 @@ protected:
     template <class T>
     void SetStep(ExecuteResult (T::*function)(), const char* name)
     {
-        const Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
-        m_currentStep = step;
+        Step step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+        m_currentStep.m_function = step.m_function;
+        m_currentStep.m_name = step.m_name;
     }
 
     common::CallContext* m_callerContext;

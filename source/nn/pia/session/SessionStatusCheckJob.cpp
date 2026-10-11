@@ -10,6 +10,32 @@
 
 namespace nn { namespace pia { namespace session {
 
+namespace
+{
+enum
+{
+    cResultConnectionError = 0x6c50,
+    cDisconnectReasonLeave = 2,
+    cDisconnectReasonNetwork = 8,
+    cMatchmakeStatusJointSessionProcessing = 3,
+    cMatchmakeStatusJointSessionProcessed = 4
+};
+
+enum MeshDisconnectReason
+{
+    cMeshDisconnectReasonNone = 0,
+    cMeshDisconnectReasonNormal = 1,
+    cMeshDisconnectReasonLeave = 2,
+    cMeshDisconnectReasonKickedOut = 3,
+    cMeshDisconnectReason4 = 4,
+    cMeshDisconnectReason5 = 5,
+    cMeshDisconnectReasonUpdateFailed = 6,
+    cMeshDisconnectReason7 = 7,
+    cMeshDisconnectReason8 = 8,
+    cMeshDisconnectReason9 = 9
+};
+}
+
 SessionStatusCheckJob::SessionStatusCheckJob()
     : common::StepSequenceJob(), m_callContext(), m_field54(false), m_field55(false)
 {
@@ -30,19 +56,17 @@ Result SessionStatusCheckJob::Startup()
         return result;
 
     Reset(true);
-    if (g_piaSession->m_jointSessionJob == 0)
+    if (g_piaSession->m_jointSessionJob != 0)
     {
-        m_currentStep.m_function =
-            static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-                &SessionStatusCheckJob::CheckSessionStatus);
-        m_currentStep.m_name = "SessionStatusCheckJob::CheckSessionStatus";
+        m_currentStep = Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                 &SessionStatusCheckJob::CheckSessionStatus4JointSession),
+                             "SessionStatusCheckJob::CheckSessionStatus4JointSession");
     }
     else
     {
-        m_currentStep.m_function =
-            static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(
-                &SessionStatusCheckJob::CheckSessionStatus4JointSession);
-        m_currentStep.m_name = "SessionStatusCheckJob::CheckSessionStatus4JointSession";
+        m_currentStep = Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(
+                                 &SessionStatusCheckJob::CheckSessionStatus),
+                             "SessionStatusCheckJob::CheckSessionStatus");
     }
     return 0;
 }
@@ -51,42 +75,56 @@ SessionStatusCheckJob::ExecuteResult SessionStatusCheckJob::CheckSessionStatus()
 {
     const Result connectedStatus =
         g_piaSession->m_meshLayerController->CheckConnectedStatus();
-    if (connectedStatus == static_cast<Result>(0xc406))
+    if (connectedStatus == Session::cResultStatusDisconnectedNetwork)
     {
-        g_piaSession->m_disconnectStatus = 3;
-        if (g_piaSession->m_sessionDisconnectReason != 2)
-            g_piaSession->m_sessionDisconnectReason = 8;
+        g_piaSession->m_disconnectStatus = Session::cConnectionStatusDisconnectedNetwork;
+        if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
+            g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    if (connectedStatus == static_cast<Result>(0xa471))
+    if (connectedStatus == Session::cResultStatusUnknown6)
     {
-        g_piaSession->m_disconnectStatus = 4;
-        if (g_piaSession->m_sessionDisconnectReason != 2)
-            g_piaSession->m_sessionDisconnectReason = 8;
+        g_piaSession->m_disconnectStatus = Session::cConnectionStatusUnknown4;
+        if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
+            g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    if (connectedStatus == static_cast<Result>(0xc420))
+    if (connectedStatus == Session::cResultStatusUnknown7)
     {
-        g_piaSession->m_disconnectStatus = 5;
-        if (g_piaSession->m_sessionDisconnectReason != 2)
-            g_piaSession->m_sessionDisconnectReason = 8;
+        g_piaSession->m_disconnectStatus = Session::cConnectionStatusUnknown5;
+        if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
+            g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    if (connectedStatus == static_cast<Result>(0xc421))
+    if (connectedStatus == Session::cResultStatusUnknown8)
     {
-        g_piaSession->m_disconnectStatus = 6;
-        if (g_piaSession->m_sessionDisconnectReason != 2)
-            g_piaSession->m_sessionDisconnectReason = 8;
+        g_piaSession->m_disconnectStatus = Session::cConnectionStatusUnknown6;
+        if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
+            g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    if (connectedStatus == static_cast<Result>(0x8c56))
+    if (connectedStatus == Session::cResultStatusDisconnectedSession)
     {
-        g_piaSession->m_disconnectStatus = 2;
-        if (g_piaMesh->CheckConnectionError() == static_cast<Result>(0x6c50))
+        g_piaSession->m_disconnectStatus = Session::cConnectionStatusDisconnectedSession;
+        if (g_piaMesh->CheckConnectionError() == cResultConnectionError)
         {
             const unsigned int disconnectReason = g_piaMesh->GetDisconnectReason();
-            if (disconnectReason < 2 || (disconnectReason > 2 && disconnectReason < 10))
-                g_piaSession->m_disconnectStatus = 2;
+            switch (disconnectReason)
+            {
+            case cMeshDisconnectReasonNone:
+            case cMeshDisconnectReasonNormal:
+            case cMeshDisconnectReasonKickedOut:
+            case cMeshDisconnectReason4:
+            case cMeshDisconnectReason5:
+            case cMeshDisconnectReasonUpdateFailed:
+            case cMeshDisconnectReason7:
+            case cMeshDisconnectReason8:
+            case cMeshDisconnectReason9:
+                g_piaSession->m_disconnectStatus = Session::cConnectionStatusDisconnectedSession;
+                break;
+            default:
+                break;
+            }
             if (g_piaSession->m_sessionDisconnectReason == 0)
                 g_piaSession->m_sessionDisconnectReason = disconnectReason;
         }
@@ -95,18 +133,32 @@ SessionStatusCheckJob::ExecuteResult SessionStatusCheckJob::CheckSessionStatus()
 
     if (transport::g_piaTransport->m_connectionError != 0)
     {
-        g_piaSession->m_disconnectStatus = 3;
-        if (g_piaSession->m_sessionDisconnectReason != 2)
-            g_piaSession->m_sessionDisconnectReason = 8;
+        g_piaSession->m_disconnectStatus = Session::cConnectionStatusDisconnectedNetwork;
+        if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
+            g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
         return MakeExecuteResult(cExecuteKindFinished);
     }
 
-    if (g_piaSession->m_matchmakeStatus == 2 &&
-        g_piaMesh->CheckConnectionError() == static_cast<Result>(0x6c50))
+    if (g_piaSession->m_matchmakeStatus == Session::cMatchmakeStatusMatched &&
+        g_piaMesh->CheckConnectionError() == cResultConnectionError)
     {
         const unsigned int disconnectReason = g_piaMesh->GetDisconnectReason();
-        if (disconnectReason < 2 || (disconnectReason > 2 && disconnectReason < 10))
-            g_piaSession->m_disconnectStatus = 2;
+        switch (disconnectReason)
+        {
+        case cMeshDisconnectReasonNone:
+        case cMeshDisconnectReasonNormal:
+        case cMeshDisconnectReasonKickedOut:
+        case cMeshDisconnectReason4:
+        case cMeshDisconnectReason5:
+        case cMeshDisconnectReasonUpdateFailed:
+        case cMeshDisconnectReason7:
+        case cMeshDisconnectReason8:
+        case cMeshDisconnectReason9:
+            g_piaSession->m_disconnectStatus = Session::cConnectionStatusDisconnectedSession;
+            break;
+        default:
+            break;
+        }
         if (g_piaSession->m_sessionDisconnectReason == 0)
             g_piaSession->m_sessionDisconnectReason = disconnectReason;
         return MakeExecuteResult(cExecuteKindFinished);
@@ -124,133 +176,132 @@ SessionStatusCheckJob::ExecuteResult SessionStatusCheckJob::CheckSessionStatus()
 
 SessionStatusCheckJob::ExecuteResult SessionStatusCheckJob::CheckSessionStatus4JointSession()
 {
-    const unsigned int matchmakeStatus = g_piaSession->m_matchmakeStatus;
-    const Result connectedStatus =
-        g_piaSession->m_meshLayerController->CheckConnectedStatus();
-    if (connectedStatus == static_cast<Result>(0xc406))
+    Session* session = g_piaSession;
+    const unsigned int matchmakeStatus = session->m_matchmakeStatus;
+    const Result connectedStatus = session->m_meshLayerController->CheckConnectedStatus();
+    if (connectedStatus == Session::cResultStatusDisconnectedNetwork)
     {
-        g_piaSession->m_disconnectStatus = 3;
-        if (g_piaSession->m_sessionDisconnectReason != 2)
-            g_piaSession->m_sessionDisconnectReason = 8;
+        session->m_disconnectStatus = Session::cConnectionStatusDisconnectedNetwork;
+        if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
+            g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
         return MakeExecuteResult(cExecuteKindSuspend);
     }
-    if (connectedStatus == static_cast<Result>(0xa471))
+    if (connectedStatus == Session::cResultStatusUnknown6)
     {
-        g_piaSession->m_disconnectStatus = 4;
-        if (g_piaSession->m_sessionDisconnectReason != 2)
-            g_piaSession->m_sessionDisconnectReason = 8;
+        g_piaSession->m_disconnectStatus = Session::cConnectionStatusUnknown4;
+        if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
+            g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
         return MakeExecuteResult(cExecuteKindSuspend);
     }
-    if (connectedStatus == static_cast<Result>(0xc420))
+    if (connectedStatus == Session::cResultStatusUnknown7)
     {
-        g_piaSession->m_disconnectStatus = 5;
-        if (g_piaSession->m_sessionDisconnectReason != 2)
-            g_piaSession->m_sessionDisconnectReason = 8;
+        g_piaSession->m_disconnectStatus = Session::cConnectionStatusUnknown5;
+        if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
+            g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
         return MakeExecuteResult(cExecuteKindSuspend);
     }
-    if (connectedStatus == static_cast<Result>(0xc421))
+    if (connectedStatus == Session::cResultStatusUnknown8)
     {
-        g_piaSession->m_disconnectStatus = 6;
-        if (g_piaSession->m_sessionDisconnectReason != 2)
-            g_piaSession->m_sessionDisconnectReason = 8;
+        g_piaSession->m_disconnectStatus = Session::cConnectionStatusUnknown6;
+        if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
+            g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
         return MakeExecuteResult(cExecuteKindSuspend);
     }
 
     if (transport::g_piaTransport->m_connectionError != 0)
     {
-        g_piaSession->m_disconnectStatus = 3;
-        if (g_piaSession->m_sessionDisconnectReason != 2)
-            g_piaSession->m_sessionDisconnectReason = 8;
+        session->m_disconnectStatus = Session::cConnectionStatusDisconnectedNetwork;
+        if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
+            g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
         return MakeExecuteResult(cExecuteKindSuspend);
     }
 
-    if (g_piaSession->m_disconnectStatus != 1)
+    if (session->m_disconnectStatus != Session::cConnectionStatusConnected)
         return MakeExecuteResult(cExecuteKindNextStep);
 
-    const unsigned char sessionIndex = g_piaSession->m_currentSessionIndex;
-    const unsigned char bufferSessionIndex = sessionIndex == 0 ? 1 : 0;
-    const unsigned int currentSessionId = g_piaSession->m_sessionId[sessionIndex];
-    const unsigned int bufferSessionId = g_piaSession->m_sessionId[bufferSessionIndex];
+    ExecuteResult executeResult = MakeExecuteResult(cExecuteKindNextStep);
+    const unsigned char sessionIndex = session->m_currentSessionIndex;
+    const unsigned int currentSessionId = session->m_sessionId[sessionIndex];
+    const unsigned int bufferSessionId = session->m_sessionId[sessionIndex == 0 ? 1 : 0];
 
-    if (matchmakeStatus != 2 && matchmakeStatus != 4)
+    if (matchmakeStatus == Session::cMatchmakeStatusMatched ||
+        matchmakeStatus == cMatchmakeStatusJointSessionProcessed)
     {
-        if (matchmakeStatus == 3)
+        if (g_piaMesh->CheckConnectionError() == cResultConnectionError)
         {
-            if (g_piaSession->m_jointSessionJob != 0 &&
-                g_piaSession->m_jointSessionJob->m_sessionDisconnectDetected)
-                return MakeExecuteResult(cExecuteKindNextStep);
-            if (currentSessionId != 0 || bufferSessionId != 0)
-                return MakeExecuteResult(cExecuteKindNextStep);
-            g_piaSession->m_disconnectStatus = 3;
-            if (g_piaSession->m_sessionDisconnectReason != 2)
-                g_piaSession->m_sessionDisconnectReason = 8;
-            return MakeExecuteResult(cExecuteKindSuspend);
+            const unsigned int disconnectReason = g_piaMesh->GetDisconnectReason();
+            switch (disconnectReason)
+            {
+            case cMeshDisconnectReasonNone:
+            case cMeshDisconnectReasonNormal:
+            case cMeshDisconnectReasonKickedOut:
+            case cMeshDisconnectReason4:
+            case cMeshDisconnectReason5:
+            case cMeshDisconnectReasonUpdateFailed:
+            case cMeshDisconnectReason7:
+            case cMeshDisconnectReason8:
+            case cMeshDisconnectReason9:
+                session->m_disconnectStatus = Session::cConnectionStatusDisconnectedSession;
+                break;
+            case cMeshDisconnectReasonLeave:
+                break;
+            default:
+                session->m_disconnectStatus = Session::cConnectionStatusDisconnectedNetwork;
+                executeResult = MakeExecuteResult(cExecuteKindSuspend);
+                break;
+            }
+            if (g_piaSession->m_sessionDisconnectReason == 0)
+                g_piaSession->m_sessionDisconnectReason = disconnectReason;
         }
-        if (connectedStatus != static_cast<Result>(0x8c56))
-            return MakeExecuteResult(cExecuteKindNextStep);
-        g_piaSession->m_disconnectStatus = 2;
-        if (g_piaSession->m_sessionDisconnectReason != 2)
-            g_piaSession->m_sessionDisconnectReason = 8;
-        return MakeExecuteResult(cExecuteKindNextStep);
-    }
-
-    if (g_piaMesh->CheckConnectionError() != static_cast<Result>(0x6c50))
-    {
-        if (matchmakeStatus == 2)
+        else if (matchmakeStatus == Session::cMatchmakeStatusMatched)
         {
             if (currentSessionId == 0 ||
-                g_piaSession->m_meshLayerController->IsJoinedUnknownSession(
-                    currentSessionId, 0))
+                session->m_meshLayerController->IsJoinedUnknownSession(currentSessionId, 0))
             {
-                g_piaSession->m_disconnectStatus = 2;
-                if (g_piaSession->m_sessionDisconnectReason != 2)
-                    g_piaSession->m_sessionDisconnectReason = 8;
+                session->m_disconnectStatus = Session::cConnectionStatusDisconnectedSession;
+                if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
+                    g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
             }
-            if (Session::s_debugSetting.m_matchmakeAnalysisEnabled == 0)
-                return MakeExecuteResult(cExecuteKindNextStep);
-            if (!g_piaSession->IsHost())
-                return MakeExecuteResult(cExecuteKindNextStep);
-            if (Session::SessionJoiningApprovalCallback(
-                    g_piaSession->GetMatchmakeAnalysisToken()))
-                return MakeExecuteResult(cExecuteKindNextStep);
-            g_piaSession->m_matchmakeSession[sessionIndex]->GetSessionInfo()->IsOpened();
-            return MakeExecuteResult(cExecuteKindNextStep);
+            if (Session::s_debugSetting.m_matchmakeAnalysisEnabled != 0 && g_piaSession->IsHost() &&
+                !Session::SessionJoiningApprovalCallback(g_piaSession->GetMatchmakeAnalysisToken()))
+                session->m_matchmakeSession[session->m_currentSessionIndex]->GetSessionInfo()->IsOpened();
         }
-
-        if (matchmakeStatus != 4)
-            return MakeExecuteResult(cExecuteKindNextStep);
-        if (currentSessionId == 0 || bufferSessionId == 0 ||
-            g_piaSession->m_meshLayerController->IsJoinedUnknownSession(
-                currentSessionId, bufferSessionId))
+        else if (matchmakeStatus == cMatchmakeStatusJointSessionProcessed)
         {
-            g_piaSession->m_disconnectStatus = 2;
-            if (g_piaSession->m_sessionDisconnectReason != 2)
-                g_piaSession->m_sessionDisconnectReason = 8;
+            if (currentSessionId == 0 || bufferSessionId == 0 ||
+                session->m_meshLayerController->IsJoinedUnknownSession(currentSessionId,
+                                                                      bufferSessionId))
+            {
+                session->m_disconnectStatus = Session::cConnectionStatusDisconnectedSession;
+                if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
+                    g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
+            }
+            if (Session::s_debugSetting.m_matchmakeAnalysisEnabled != 0 &&
+                g_piaSession->IsJointSessionHost() &&
+                !Session::SessionJoiningApprovalCallback(g_piaSession->GetMatchmakeAnalysisToken()))
+                session->m_matchmakeSession[session->m_currentSessionIndex == 0 ? 1 : 0]
+                    ->GetSessionInfo()
+                    ->IsOpened();
         }
-        if (Session::s_debugSetting.m_matchmakeAnalysisEnabled == 0)
-            return MakeExecuteResult(cExecuteKindNextStep);
-        if (!g_piaSession->IsJointSessionHost())
-            return MakeExecuteResult(cExecuteKindNextStep);
-        if (Session::SessionJoiningApprovalCallback(
-                g_piaSession->GetMatchmakeAnalysisToken()))
-            return MakeExecuteResult(cExecuteKindNextStep);
-        g_piaSession->m_matchmakeSession[bufferSessionIndex]->GetSessionInfo()->IsOpened();
-        return MakeExecuteResult(cExecuteKindNextStep);
     }
-
-    const unsigned int disconnectReason = g_piaMesh->GetDisconnectReason();
-    ExecuteResult executeResult = MakeExecuteResult(cExecuteKindNextStep);
-    if (disconnectReason < 2 || (disconnectReason > 2 && disconnectReason < 10))
+    else if (matchmakeStatus == cMatchmakeStatusJointSessionProcessing)
     {
-        g_piaSession->m_disconnectStatus = 2;
+        if ((session->m_jointSessionJob == 0 ||
+             !session->m_jointSessionJob->m_sessionDisconnectDetected) &&
+            currentSessionId == 0 && bufferSessionId == 0)
+        {
+            g_piaSession->m_disconnectStatus = Session::cConnectionStatusDisconnectedNetwork;
+            if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
+                g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
+            executeResult = MakeExecuteResult(cExecuteKindSuspend);
+        }
     }
-    else if (disconnectReason != 2)
+    else if (connectedStatus == Session::cResultStatusDisconnectedSession)
     {
-        g_piaSession->m_disconnectStatus = 3;
-        executeResult = MakeExecuteResult(cExecuteKindSuspend);
+        session->m_disconnectStatus = Session::cConnectionStatusDisconnectedSession;
+        if (g_piaSession->m_sessionDisconnectReason != cDisconnectReasonLeave)
+            g_piaSession->m_sessionDisconnectReason = cDisconnectReasonNetwork;
     }
-    if (g_piaSession->m_sessionDisconnectReason == 0)
-        g_piaSession->m_sessionDisconnectReason = disconnectReason;
     return executeResult;
 }
 

@@ -2,6 +2,7 @@
 #define NN_PIA_SESSION_PROCESSDESTROYMESHJOB_HPP
 
 #include "nn/pia/common/StepSequenceJob.hpp"
+#include "nn/pia/common/Time.hpp"
 
 namespace nn { namespace pia { namespace session {
 
@@ -17,10 +18,9 @@ public:
     void Cleanup();
     virtual void Trace(unsigned long long value) const;
 
-    unsigned int m_endTick;
-    unsigned int m_endTickHigh;
-    unsigned int m_timeout;
-    unsigned char m_started;
+    common::Time m_endTime;
+    int m_timeoutMsec;
+    bool m_started;
 };
 
 }}}

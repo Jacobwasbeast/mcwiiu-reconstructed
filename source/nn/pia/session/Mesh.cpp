@@ -92,7 +92,6 @@ enum
     cIdentificationInfoPlayersCounted = 3,
     cSyncClockProtocolType = 0x1c,
     cDisconnectReasonDestroyed = 0x10c08,
-    cLocalPlayerNameUnset = 0xff,
     cStationUnused = 0xfd
 };
 
@@ -580,7 +579,7 @@ void Mesh::CleanupStatus()
 void Mesh::Cleanup()
 {
     m_playerInfo[0].m_name.Clear();
-    m_playerInfo[0].m_language = cLocalPlayerNameUnset;
+    m_playerInfo[0].m_language = transport::Station::PlayerInfo::cLanguageUnset;
     m_playerInfo[0].m_field70 = 0;
     m_playerInfo[0].m_field78 = 0;
     if (m_startedUp)
@@ -597,7 +596,7 @@ void Mesh::Cleanup()
 Result Mesh::CheckPlayerInfo(const transport::Station::PlayerInfo& info) const
 {
     if (info.m_name.GetStringLength() == 0 && info.m_name.GetEncodingType() == 0 &&
-        info.m_language == 0xff)
+        info.m_language == transport::Station::PlayerInfo::cLanguageUnset)
         return static_cast<Result>(0x10c07);
     if (info.m_name.GetStringLength() >= 21)
         return static_cast<Result>(0x10c07);
@@ -688,12 +687,12 @@ Result Mesh::Startup(StartupSetting& setting)
 
     info.m_field60[0].Clear();
     info.m_fieldC8[0].Clear();
-    info.m_field108 = cLocalPlayerNameUnset;
+    info.m_field108 = transport::Station::PlayerInfo::cLanguageUnset;
     OSBlockSet(&info.m_field20, 0, sizeof(info.m_field20));
     info.m_principalId[0] = 0;
 
     m_playerInfo[0].m_name.Clear();
-    m_playerInfo[0].m_language = cLocalPlayerNameUnset;
+    m_playerInfo[0].m_language = transport::Station::PlayerInfo::cLanguageUnset;
     m_playerInfo[0].m_field70 = 0;
     m_playerInfo[0].m_field78 = 0;
     m_playerInfoCount = 0;

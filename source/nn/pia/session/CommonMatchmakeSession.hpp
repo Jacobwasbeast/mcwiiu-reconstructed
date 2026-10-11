@@ -19,7 +19,7 @@ public:
     virtual void SetMatchmakeOwner(bool owner);
     virtual unsigned long long GetMatchmakeOwnerUniqueId() const;
     virtual void SetMatchmakeOwnerUniqueId(unsigned long long id);
-    virtual nn::pia::common::Result UpdateSelectionPriority(unsigned int sessionId, unsigned char selectionPriority);
+    virtual nn::pia::Result UpdateSelectionPriority(unsigned int sessionId, unsigned char selectionPriority);
     virtual unsigned int IsUpdatableSelectionPriority(unsigned char selectionPriority);
     virtual void UpdateStationInfoList();
     void Trace(unsigned long long value) const;

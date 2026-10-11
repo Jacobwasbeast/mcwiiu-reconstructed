@@ -15,7 +15,7 @@ public:
     virtual unsigned short GetMinParticipantNum() const = 0;
     virtual unsigned short GetMaxParticipantNum() const = 0;
     virtual bool IsOpened() const = 0;
-    virtual common::Result GetApplicationData(void* buffer, unsigned int bufferSize) const = 0;
+    virtual Result GetApplicationData(void* buffer, unsigned int bufferSize) const = 0;
     virtual unsigned int GetApplicationDataSize() const = 0;
     virtual void Clear() = 0;
     virtual void Trace(unsigned long long value) const = 0;

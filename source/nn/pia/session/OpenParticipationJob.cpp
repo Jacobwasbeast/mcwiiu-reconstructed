@@ -24,11 +24,10 @@ Result OpenParticipationJob::Startup(common::CallContext* callerContext, unsigne
 
     m_callerContext = callerContext;
     callerContext->InitiateCall();
-    m_matchmakeSession = matchmakeSession;
     m_sessionId = sessionId;
+    m_matchmakeSession = matchmakeSession;
     Reset(true);
-    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(&OpenParticipationJob::OpenParticipation);
-    m_currentStep.m_name = "OpenParticipationJob::OpenParticipation";
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&OpenParticipationJob::OpenParticipation), "OpenParticipationJob::OpenParticipation"));
     return 0;
 }
 
@@ -38,21 +37,29 @@ OpenParticipationJob::ExecuteResult OpenParticipationJob::OpenParticipation()
     switch (status)
     {
     case Session::cStatusDisconnectedNetwork:
+    {
         m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusDisconnectedNetwork));
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case Session::cStatusUnknown6:
+    {
         m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusUnknown6));
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case Session::cStatusUnknown7:
+    {
         m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusUnknown7));
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case Session::cStatusUnknown8:
+    {
         m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusUnknown8));
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     default:
         break;
     }
@@ -70,17 +77,16 @@ OpenParticipationJob::ExecuteResult OpenParticipationJob::OpenParticipation()
     }
 
     const Result result = m_matchmakeSession->OpenParticipate(&m_callContext, m_sessionId);
-    if (result == 0)
+    if (result != 0)
     {
-        m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(&OpenParticipationJob::WaitOpenParticipation);
-        m_currentStep.m_name = "OpenParticipationJob::WaitOpenParticipation";
-        return MakeExecuteResult(cExecuteKindNextStep);
+        if (result == static_cast<Result>(transport::cResultTransportUnavailable))
+            return MakeExecuteResult(cExecuteKindNextStep);
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
-    if (result == static_cast<Result>(transport::cResultTransportUnavailable))
-        return MakeExecuteResult(cExecuteKindNextStep);
-    m_callerContext->SignalFailure(result);
-    m_callerContext = 0;
-    return MakeExecuteResult(cExecuteKindFinished);
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&OpenParticipationJob::WaitOpenParticipation), "OpenParticipationJob::WaitOpenParticipation"));
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 OpenParticipationJob::ExecuteResult OpenParticipationJob::WaitOpenParticipation()
@@ -89,21 +95,29 @@ OpenParticipationJob::ExecuteResult OpenParticipationJob::WaitOpenParticipation(
     switch (status)
     {
     case Session::cStatusDisconnectedNetwork:
+    {
         m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusDisconnectedNetwork));
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case Session::cStatusUnknown6:
+    {
         m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusUnknown6));
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case Session::cStatusUnknown7:
+    {
         m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusUnknown7));
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     case Session::cStatusUnknown8:
+    {
         m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusUnknown8));
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
+    }
     default:
         break;
     }

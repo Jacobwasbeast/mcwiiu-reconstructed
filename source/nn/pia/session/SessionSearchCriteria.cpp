@@ -13,7 +13,7 @@ SessionSearchCriteria::~SessionSearchCriteria()
 {
 }
 
-nn::pia::common::Result SessionSearchCriteria::SetResultRange(unsigned int offset, unsigned int size)
+nn::pia::Result SessionSearchCriteria::SetResultRange(unsigned int offset, unsigned int size)
 {
     m_resultRangeOffset = offset;
     m_resultRangeSize = size;
@@ -29,9 +29,9 @@ void SessionSearchCriteria::Reset()
 
 void SessionSearchCriteria::Copy(const SessionSearchCriteria& other)
 {
+    m_keyType = other.m_keyType;
     m_resultRangeOffset = other.m_resultRangeOffset;
     m_resultRangeSize = other.m_resultRangeSize;
-    m_keyType = other.m_keyType;
 }
 
 void SessionSearchCriteria::Trace(unsigned long long) const

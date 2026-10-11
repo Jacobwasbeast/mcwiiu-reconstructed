@@ -31,9 +31,9 @@ void CommonMatchmakeSession::SetMatchmakeOwner(bool owner)
     m_matchmakeOwner = owner;
 }
 
-nn::pia::common::Result CommonMatchmakeSession::UpdateSelectionPriority(unsigned int, unsigned char)
+nn::pia::Result CommonMatchmakeSession::UpdateSelectionPriority(unsigned int, unsigned char)
 {
-    return nn::pia::common::Result(0xC0B);
+    return nn::pia::Result(0xC0B);
 }
 
 unsigned int CommonMatchmakeSession::IsUpdatableSelectionPriority(unsigned char)

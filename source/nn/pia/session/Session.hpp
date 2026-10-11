@@ -209,7 +209,7 @@ public:
     unsigned long long ConvertCommunityIdToCommunityCode(unsigned int communityId);
     unsigned int ConvertCommunityCodeToCommunityId(unsigned long long communityCode);
     bool IsOwner() const;
-    unsigned int GetMatchmakeSessionParticipantNum() const;
+    unsigned short GetMatchmakeSessionParticipantNum() const;
     Result CheckConnectionError() const;
     const ISessionInfo* GetSessionInfo() const;
     unsigned int GetJointSessionId() const;

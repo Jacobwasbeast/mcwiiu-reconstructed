@@ -26,7 +26,7 @@ public:
     virtual void SetBufferSessionId(unsigned int sessionId);
     virtual void SetCurrentSessionId(unsigned int sessionId);
     virtual unsigned int GetMatchmakeSessionTotalStations() const;
-    virtual unsigned int GetMatchmakeSessionTotalParticipants() const;
+    virtual unsigned short GetMatchmakeSessionTotalParticipants() const;
     virtual bool IsParticipated(unsigned int sessionId, unsigned long long stationId) const;
     virtual common::Job* GetJointSessionJobPtr();
     virtual bool IsJoinedUnknownSession(unsigned int sessionId, unsigned int bufferSessionId);

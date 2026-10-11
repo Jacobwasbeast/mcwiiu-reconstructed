@@ -45,6 +45,31 @@ inline void writeU64(unsigned char* buffer, unsigned long long value)
 }
 }
 
+SyncClockProtocol::Data::~Data()
+{
+}
+
+Result SyncClockProtocol::Data::Serialize(unsigned char* buffer, unsigned int* size) const
+{
+    if (buffer == 0)
+        return cResultInvalidArgument;
+    if (size == 0)
+        return cResultInvalidArgument;
+    writeU64(buffer, m_requestTime);
+    writeU64(buffer + 8, m_syncTime);
+    *size = cSerializedSize;
+    return 0;
+}
+
+Result SyncClockProtocol::Data::Deserialize(const unsigned char* buffer)
+{
+    if (buffer == 0)
+        return cResultInvalidArgument;
+    m_requestTime = readU64(buffer);
+    m_syncTime = readU64(buffer + 8);
+    return 0;
+}
+
 SyncClockProtocol::SyncClockProtocol()
     : transport::Protocol(),
       m_syncClock(), m_hostStationIndex(static_cast<StationIndex>(0xfd)),

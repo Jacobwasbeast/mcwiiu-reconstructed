@@ -2,6 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_SESSION_SYNC_CLOCK_PROTOCOL_HPP
 
 #include "nn/pia.h"
+#include "nn/pia/common/ISerializable.hpp"
 #include "nn/pia/common/LatestMedian.hpp"
 #include "nn/pia/common/Time.hpp"
 #include "nn/pia/session/SyncClock.hpp"
@@ -16,6 +17,23 @@ class SyncClockProtocol : public transport::Protocol
 {
 public:
     enum { cProtocolType = 0x1c };
+
+    class Data : public common::ISerializable
+    {
+    public:
+        enum
+        {
+            cSerializedSize = 16,
+            cResultInvalidArgument = 0x10c07
+        };
+        virtual ~Data();
+        virtual Result Serialize(unsigned char* buffer, unsigned int* size) const;
+        virtual Result Deserialize(const unsigned char* buffer);
+        virtual unsigned int GetSerializedSize() const { return cSerializedSize; }
+
+        unsigned long long m_requestTime;
+        unsigned long long m_syncTime;
+    };
 
     SyncClockProtocol();
     virtual unsigned short GetProtocolType() const;

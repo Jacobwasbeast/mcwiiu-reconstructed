@@ -206,7 +206,7 @@ void MeshProtocol::MakeJoinRequestData(unsigned char* buffer)
 {
     transport::Station* localStation = transport::StationManager::s_pInstance->m_localStation;
     buffer[0] = cMessageTypeJoinRequest;
-    buffer[1] = static_cast<unsigned char>(localStation->m_field10);
+    buffer[1] = static_cast<unsigned char>(localStation->GetStationIndex());
     buffer[3] = 0;
     buffer[2] = 0;
     unsigned int size = 0;
@@ -329,7 +329,7 @@ Result MeshProtocol::UpdateProtocolEvent(const transport::ProtocolEvent& event)
 {
     transport::Station* eventStation =
         transport::StationManager::s_pInstance->GetStation(event.m_stationAddress);
-    int eventIndex = static_cast<int>(eventStation->m_field10);
+    int eventIndex = eventStation->GetStationIndex();
     StationIndex localIndex = g_piaMesh->GetLocalStationIndex();
     transport::Station* localStation = transport::StationManager::s_pInstance->GetStation(localIndex);
     unsigned long long localStationId = localStation->m_stationId;
@@ -396,8 +396,8 @@ void MeshProtocol::SendLeaveRequest()
     if (localStation == 0)
         return;
 
-    int hostIndex = static_cast<int>(hostStation->m_field10);
-    int localIndex = static_cast<int>(localStation->m_field10);
+    int hostIndex = hostStation->GetStationIndex();
+    int localIndex = localStation->GetStationIndex();
     if (hostIndex <= cStationIndexMax && localIndex <= cStationIndexMax)
     {
         transport::ReliableSlidingWindow* window;
@@ -450,7 +450,7 @@ void MeshProtocol::SendLeaveResponse(transport::Station* station)
     }
 
     m_buffer[0] = cMessageTypeLeaveResponse;
-    m_buffer[1] = static_cast<unsigned char>(localStation->m_field10);
+    m_buffer[1] = static_cast<unsigned char>(localStation->GetStationIndex());
     m_buffer[3] = 0;
     m_buffer[2] = 0;
     unsigned int size;
@@ -514,7 +514,7 @@ bool MeshProtocol::SendDestroyMesh(StationIndex stationIndex)
     int localIndex = static_cast<int>(g_piaMesh->GetLocalStationIndex());
     if (localIndex > cStationIndexMax)
         return false;
-    if (localIndex != static_cast<int>(localStation->m_field10))
+    if (localIndex != localStation->GetStationIndex())
         return false;
     if (transport::StationManager::s_pInstance->GetStation(stationIndex) == 0)
         return false;
@@ -546,7 +546,7 @@ bool MeshProtocol::SendDestroyResponse(StationIndex stationIndex)
     int localIndex = static_cast<int>(g_piaMesh->GetLocalStationIndex());
     if (localIndex > cStationIndexMax)
         return false;
-    if (localIndex != static_cast<int>(localStation->m_field10))
+    if (localIndex != localStation->GetStationIndex())
         return false;
     transport::Station* station = transport::StationManager::s_pInstance->GetStation(stationIndex);
     if (station == 0)
@@ -587,7 +587,7 @@ bool MeshProtocol::SendGreeting(StationIndex stationIndex)
     unsigned int localIndex = g_piaMesh->GetLocalStationIndex();
     if (static_cast<int>(localIndex) > cStationIndexMax)
         return false;
-    if (localIndex != localStation->m_field10)
+    if (localIndex != localStation->GetStationIndex())
         return false;
     if (transport::StationManager::s_pInstance->GetStation(stationIndex) == 0)
     {
@@ -614,7 +614,7 @@ bool MeshProtocol::SendMigrationFinish(bool succeeded)
     int localIndex = static_cast<int>(g_piaMesh->GetLocalStationIndex());
     if (localIndex > cStationIndexMax)
         return false;
-    if (localIndex != static_cast<int>(localStation->m_field10))
+    if (localIndex != localStation->GetStationIndex())
         return false;
     m_buffer[0] = cMessageTypeMigrationFinish;
     m_buffer[1] = static_cast<unsigned char>(localIndex);
@@ -646,7 +646,7 @@ bool MeshProtocol::SendGreetingResponse(StationIndex stationIndex)
     int localIndex = static_cast<int>(g_piaMesh->GetLocalStationIndex());
     if (localIndex > cStationIndexMax)
         return false;
-    if (localIndex != static_cast<int>(localStation->m_field10))
+    if (localIndex != localStation->GetStationIndex())
         return false;
     if (transport::StationManager::s_pInstance->GetStation(stationIndex) == 0)
         return false;
@@ -672,7 +672,7 @@ bool MeshProtocol::SendMigrationStart(StationIndex stationIndex, StationIndex ne
     int localIndex = static_cast<int>(g_piaMesh->GetLocalStationIndex());
     if (localIndex > cStationIndexMax)
         return false;
-    if (localIndex != static_cast<int>(localStation->m_field10))
+    if (localIndex != localStation->GetStationIndex())
         return false;
     if (transport::StationManager::s_pInstance->GetStation(stationIndex) == 0)
         return false;
@@ -699,7 +699,7 @@ bool MeshProtocol::SendMigrationResponse(StationIndex stationIndex)
     int localIndex = static_cast<int>(g_piaMesh->GetLocalStationIndex());
     if (localIndex > cStationIndexMax)
         return false;
-    if (localIndex != static_cast<int>(localStation->m_field10))
+    if (localIndex != localStation->GetStationIndex())
         return false;
     transport::Station* station = transport::StationManager::s_pInstance->GetStation(stationIndex);
     if (station == 0)
@@ -740,7 +740,7 @@ bool MeshProtocol::SendRelayRouteDirections()
     int localIndex = static_cast<int>(g_piaMesh->GetLocalStationIndex());
     if (localIndex > cStationIndexMax)
         return false;
-    if (localIndex != static_cast<int>(localStation->m_field10))
+    if (localIndex != localStation->GetStationIndex())
         return false;
     transport::RelayRouteManager* relayRouteManager = transport::g_piaTransport->m_relayRouteManager;
     if (relayRouteManager == 0)
@@ -889,7 +889,7 @@ void MeshProtocol::SendUpdateMesh(bool update, unsigned int versionIncrement)
              ++it)
         {
             transport::Station* station = *it;
-            unsigned char stationIndex = station->m_field10;
+            unsigned char stationIndex = station->GetStationIndex();
             if (stationIndex >= cStationNumMax)
             {
                 station->Trace(cTraceStationLevel);
@@ -941,7 +941,7 @@ void MeshProtocol::SendUpdateMesh(bool update, unsigned int versionIncrement)
                                 m_windows[index].m_remoteStationId);
                         if (station != 0 &&
                             g_piaMesh->IsValidStationIndex(
-                                static_cast<StationIndex>(station->m_field10)))
+                                station->GetStationIndex()))
                         {
                             int delay = (m_unknown28 / transport::g_piaTransport->m_stationNum) *
                                         sentCount;
@@ -971,7 +971,7 @@ void MeshProtocol::SendUpdateMesh(bool update, unsigned int versionIncrement)
                                 m_windows[index].m_remoteStationId);
                         if (station != 0 &&
                             g_piaMesh->IsValidStationIndex(
-                                static_cast<StationIndex>(station->m_field10)))
+                                station->GetStationIndex()))
                         {
                             int delay = (m_unknown28 / transport::g_piaTransport->m_stationNum) *
                                         sentCount;
@@ -1073,7 +1073,7 @@ void MeshProtocol::ParseLeaveResponse(const transport::ReceivedMessageAccessor& 
         unsigned char stationIndex = data[1];
         transport::Station* hostStation =
             transport::StationManager::s_pInstance->GetStation(g_piaMesh->GetHostStationIndex());
-        if (hostStation != 0 && hostStation->m_field10 == stationIndex)
+        if (hostStation != 0 && hostStation->GetStationIndex() == stationIndex)
             job->m_disconnectStarted = false;
     }
 }
@@ -1161,7 +1161,7 @@ void MeshProtocol::ParseJoinRequest(const transport::ReceivedMessageAccessor& me
         {
             common::StationAddress address(message.m_stationAddress);
             transport::Station* station = transport::StationManager::s_pInstance->GetStation(address);
-            if (station != 0 && station->m_field10 == cStationIndexNone &&
+            if (station != 0 && station->GetStationIndex() == cStationIndexNone &&
                 data[1] == cStationIndexNone)
             {
                 station->m_lastReceiveTime = transport::g_piaTransport->m_time;
@@ -1210,7 +1210,7 @@ void MeshProtocol::ParseDestroyMesh(const transport::ReceivedMessageAccessor& me
                 job->Ready(false);
         }
     }
-    else if (hostStation->m_field10 == senderIndex)
+    else if (hostStation->GetStationIndex() == senderIndex)
     {
         ProcessDestroyMeshJob* job = g_piaMesh->m_processDestroyMeshJob;
         if (job->Startup())
@@ -1355,7 +1355,7 @@ bool MeshProtocol::SendMultiMigrationStart(bool* sent)
     {
         int localIndex = static_cast<int>(g_piaMesh->GetLocalStationIndex());
         if (localIndex <= cStationIndexMax &&
-            localIndex == static_cast<int>(localStation->m_field10))
+            localIndex == localStation->GetStationIndex())
         {
             unsigned char message[cMultiMigrationMessageSize] = {0};
             unsigned short stationNum = g_piaMesh->m_unknown54;
@@ -1409,7 +1409,7 @@ bool MeshProtocol::SendMultiMigrationRankDecision(StationIndex stationIndex, lon
     int localIndex = static_cast<int>(g_piaMesh->GetLocalStationIndex());
     if (localIndex > cStationIndexMax)
         return false;
-    if (localIndex != static_cast<int>(localStation->m_field10))
+    if (localIndex != localStation->GetStationIndex())
         return false;
     if (transport::StationManager::s_pInstance->GetStation(stationIndex) == 0)
         return false;
@@ -1465,7 +1465,7 @@ unsigned char MeshProtocol::MakeJoinResponseData(StationIndex stationIndex, unsi
          ++it)
     {
         transport::Station* station = *it;
-        unsigned char index = station->m_field10;
+        unsigned char index = station->GetStationIndex();
         if (index >= cStationNumMax)
         {
             station->Trace(cTraceStationUpdateLevel);
@@ -1645,7 +1645,7 @@ Result MeshProtocol::Dispatch()
             transport::StationManager::s_pInstance->GetStationByStationIdWithoutConvert(reader->m_header.m_source);
         if (station != 0)
         {
-            int windowIndex = static_cast<int>(station->m_field10);
+            int windowIndex = station->GetStationIndex();
             if (localIndex < cStationNumMax && windowIndex < cStationNumMax)
             {
                 if (localIndex <= windowIndex)
@@ -1748,14 +1748,14 @@ Result MeshProtocol::Dispatch()
         {
             int timeoutMsec = m_unknown24;
             transport::RelayRouteManager* relayRouteManager = transport::g_piaTransport->m_relayRouteManager;
-            if (relayRouteManager != 0 && station->m_field10 < cStationNumMax &&
-                localStation->m_field10 < cStationNumMax)
+            if (relayRouteManager != 0 && station->GetStationIndex() < cStationNumMax &&
+                localStation->GetStationIndex() < cStationNumMax)
             {
                 StationIndex relay;
                 Result result = relayRouteManager->GetRelayRoute(
-                    static_cast<StationIndex>(localStation->m_field10),
-                    static_cast<StationIndex>(station->m_field10), &relay);
-                if (result == 0 && relay != static_cast<StationIndex>(station->m_field10))
+                    localStation->GetStationIndex(),
+                    station->GetStationIndex(), &relay);
+                if (result == 0 && relay != station->GetStationIndex())
                     timeoutMsec += transport::g_piaTransport->GetKeepAliveInterval() * 2;
             }
             const unsigned long long lastReceivedTime = station->m_lastReceiveTime.m_tick;
@@ -1773,7 +1773,7 @@ Result MeshProtocol::Dispatch()
             timedOut = true;
         }
 
-        const StationIndex stationIndex = static_cast<StationIndex>(station->m_field10);
+        const StationIndex stationIndex = station->GetStationIndex();
         if (g_piaMesh->IsValidStationIndex(stationIndex))
         {
             g_piaMesh->IsHost();
@@ -1896,8 +1896,8 @@ Result MeshProtocol::Dispatch()
                     stationManager->GetStation(g_piaMesh->GetHostStationIndex());
                 if (hostStation != 0)
                 {
-                    if (g_piaMesh->IsValidStationIndex(static_cast<StationIndex>(hostStation->m_field10)))
-                        g_piaMesh->UnfixDisconnectedId(static_cast<StationIndex>(hostStation->m_field10));
+                    if (g_piaMesh->IsValidStationIndex(hostStation->GetStationIndex()))
+                        g_piaMesh->UnfixDisconnectedId(hostStation->GetStationIndex());
                     hostStation->m_disconnectStationJob->ProcessDisconnection(hostStation);
                     transport::g_stationConnectionInfoTable->EraseFromTable(hostStation);
                     transport::IdentificationInfoTable::GetInstance()->EraseFromTable(hostStation);
@@ -2013,7 +2013,7 @@ void MeshProtocol::ParseUpdateMesh(const transport::ReceivedMessageAccessor& mes
                 for (unsigned int index = 0; index < stationManager->m_stations.size; ++index)
                 {
                     transport::Station* station = stationManager->m_stations.data[index];
-                    if (station->m_field10 == cStationIndexNone)
+                    if (station->GetStationIndex() == cStationIndexNone)
                     {
                         station->Trace(cTraceStationLevel);
                         found = true;
@@ -2141,7 +2141,7 @@ bool MeshProtocol::SendConnectionReport(StationIndex stationIndex, unsigned int 
     if (localStation == 0)
         return false;
     const int localIndex = static_cast<int>(g_piaMesh->GetLocalStationIndex());
-    if (localIndex > cStationIndexMax || localIndex != static_cast<int>(localStation->m_field10))
+    if (localIndex > cStationIndexMax || localIndex != localStation->GetStationIndex())
         return false;
     if (stationManager->GetStation(stationIndex) == 0)
         return false;

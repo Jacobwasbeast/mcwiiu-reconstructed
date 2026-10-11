@@ -112,7 +112,9 @@ public:
     unsigned char m_failurePending;
     unsigned char m_fielda3;
     unsigned int m_pendingFailureResult;
-    unsigned char m_reserveda8[8];
+    unsigned char m_sessionInfoRetry;
+    unsigned char m_retryReasonB;
+    unsigned char m_reservedaa[6];
     common::Time m_completionDeadline;
     common::Time m_startTime;
     unsigned long long m_fieldc0;

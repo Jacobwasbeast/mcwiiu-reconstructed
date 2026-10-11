@@ -77,19 +77,19 @@ LeaveSessionJob::ExecuteResult LeaveSessionJob::WaitForcedTerminatingOfJointSess
     if (status == Session::cStatusDisconnectedNetwork)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     else if (status == Session::cStatusUnknown7)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     else if (status == Session::cStatusUnknown8)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (g_piaSession->m_jointSessionJob != 0 && g_piaSession->m_jointSessionJob->IsRunning())
@@ -98,7 +98,7 @@ LeaveSessionJob::ExecuteResult LeaveSessionJob::WaitForcedTerminatingOfJointSess
         g_piaSession->m_matchmakeStatus == cMatchmakeStatusJointSessionProcessed)
         SetNextStepAtWaitForcedTerminatingOfJointSessionJob();
     else
-        setStep(&LeaveSessionJob::LeaveMesh, "LeaveSessionJob::LeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::LeaveMesh), "LeaveSessionJob::LeaveMesh"));
     return MakeExecuteResult(cExecuteKindContinue);
 }
 
@@ -108,19 +108,19 @@ LeaveSessionJob::ExecuteResult LeaveSessionJob::LeaveMesh()
     if (status == Session::cStatusDisconnectedNetwork)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     else if (status == Session::cStatusUnknown7)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     else if (status == Session::cStatusUnknown8)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     g_piaMesh->SetSkipReport(true);
@@ -134,8 +134,7 @@ LeaveSessionJob::ExecuteResult LeaveSessionJob::LeaveMesh()
             SetNextStepAtWaitLeaveMesh();
             return MakeExecuteResult(cExecuteKindContinue);
         }
-        setStep(&LeaveSessionJob::WaitLeaveMeshWithHostMigration,
-                "LeaveSessionJob::WaitLeaveMeshWithHostMigration");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::WaitLeaveMeshWithHostMigration), "LeaveSessionJob::WaitLeaveMeshWithHostMigration"));
     }
     else
     {
@@ -147,7 +146,7 @@ LeaveSessionJob::ExecuteResult LeaveSessionJob::LeaveMesh()
             SetNextStepAtWaitLeaveMesh();
             return MakeExecuteResult(cExecuteKindContinue);
         }
-        setStep(&LeaveSessionJob::WaitLeaveMesh, "LeaveSessionJob::WaitLeaveMesh");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::WaitLeaveMesh), "LeaveSessionJob::WaitLeaveMesh"));
     }
     return MakeExecuteResult(cExecuteKindNextStep);
 }
@@ -158,25 +157,25 @@ LeaveSessionJob::ExecuteResult LeaveSessionJob::WaitLeaveMesh()
     if (status == Session::cStatusDisconnectedNetwork)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     else if (status == Session::cStatusUnknown7)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     else if (status == Session::cStatusUnknown8)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (g_piaSession->GetStatus() == Session::cStatusUnknown6)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (m_callContext.m_state == common::CallContext::cStateSuccess ||
@@ -234,25 +233,25 @@ LeaveSessionJob::ExecuteResult LeaveSessionJob::WaitHostMigrated()
     if (status == Session::cStatusDisconnectedNetwork)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     else if (status == Session::cStatusUnknown7)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     else if (status == Session::cStatusUnknown8)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (g_piaSession->GetStatus() == Session::cStatusUnknown6)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (m_hostMigrationTimeoutTime <= common::g_piaJobScheduler->m_dispatchTime)
@@ -308,25 +307,25 @@ LeaveSessionJob::ExecuteResult LeaveSessionJob::LeaveCurrentMatchmakeSession()
     if (status == Session::cStatusDisconnectedNetwork)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     else if (status == Session::cStatusUnknown7)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     else if (status == Session::cStatusUnknown8)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (g_piaSession->GetStatus() == Session::cStatusUnknown6)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     IMatchmakeSession* matchmakeSession = g_piaSession->m_matchmakeSession[g_piaSession->m_currentSessionIndex];
@@ -342,8 +341,7 @@ LeaveSessionJob::ExecuteResult LeaveSessionJob::LeaveCurrentMatchmakeSession()
         SetNextStepAtLeaveCurrentMatchmakeSessionFailure();
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    setStep(&LeaveSessionJob::WaitLeaveCurrentMatchmakeSession,
-            "LeaveSessionJob::WaitLeaveCurrentMatchmakeSession");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::WaitLeaveCurrentMatchmakeSession), "LeaveSessionJob::WaitLeaveCurrentMatchmakeSession"));
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -353,25 +351,25 @@ LeaveSessionJob::ExecuteResult LeaveSessionJob::WaitLeaveCurrentMatchmakeSession
     if (status == Session::cStatusDisconnectedNetwork)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     else if (status == Session::cStatusUnknown7)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     else if (status == Session::cStatusUnknown8)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (g_piaSession->GetStatus() == Session::cStatusUnknown6)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (g_piaSession->m_matchmakeSession[g_piaSession->m_currentSessionIndex]->WaitLeaveMatchmakeSession())
@@ -425,25 +423,25 @@ LeaveSessionJob::ExecuteResult LeaveSessionJob::LeaveBufferMatchmakeSession()
     if (status == Session::cStatusDisconnectedNetwork)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     else if (status == Session::cStatusUnknown7)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     else if (status == Session::cStatusUnknown8)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (g_piaSession->GetStatus() == Session::cStatusUnknown6)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     IMatchmakeSession* matchmakeSession = g_piaSession->m_matchmakeSession[g_piaSession->m_currentSessionIndex == 0];
@@ -460,8 +458,7 @@ LeaveSessionJob::ExecuteResult LeaveSessionJob::LeaveBufferMatchmakeSession()
         SetNextStepAtWaitLeaveBufferMatchmakeSession();
         return MakeExecuteResult(cExecuteKindContinue);
     }
-    setStep(&LeaveSessionJob::WaitLeaveBufferMatchmakeSession,
-            "LeaveSessionJob::WaitLeaveBufferMatchmakeSession");
+    SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::WaitLeaveBufferMatchmakeSession), "LeaveSessionJob::WaitLeaveBufferMatchmakeSession"));
     return MakeExecuteResult(cExecuteKindNextStep);
 }
 
@@ -471,25 +468,25 @@ LeaveSessionJob::ExecuteResult LeaveSessionJob::WaitLeaveBufferMatchmakeSession(
     if (status == Session::cStatusDisconnectedNetwork)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     else if (status == Session::cStatusUnknown7)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     else if (status == Session::cStatusUnknown8)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (g_piaSession->GetStatus() == Session::cStatusUnknown6)
     {
         g_piaSession->m_meshLayerController->MeshCleanup();
-        setStep(&LeaveSessionJob::SendMonitoringData, "nn::pia::session::LeaveSessionJob::SendMonitoringData");
+        SetCurrentStep(Step(static_cast<ExecuteResult (common::StepSequenceJob::*)()>(&LeaveSessionJob::SendMonitoringData), "nn::pia::session::LeaveSessionJob::SendMonitoringData"));
         return MakeExecuteResult(cExecuteKindContinue);
     }
     if (g_piaSession->m_matchmakeSession[g_piaSession->m_currentSessionIndex == 0]->WaitLeaveMatchmakeSession())

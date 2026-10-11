@@ -307,8 +307,8 @@ void JoinMeshJob::CleanupStations()
             {
                 if (*station != localStation)
                 {
-                    if (g_piaMesh->IsValidStationIndex(static_cast<StationIndex>((*station)->m_field10)))
-                        g_piaMesh->UnfixDisconnectedId(static_cast<StationIndex>((*station)->m_field10));
+                    if (g_piaMesh->IsValidStationIndex((*station)->GetStationIndex()))
+                        g_piaMesh->UnfixDisconnectedId((*station)->GetStationIndex());
                     (*station)->m_connectStationJob->Cleanup();
                     (*station)->m_processConnectionRequestJob->Cleanup();
                 }
@@ -356,12 +356,12 @@ void JoinMeshJob::CheckRelayConnectionForMonitoring() const
             if ((*station)->m_field20 == cConnectedStationState)
             {
                 StationIndex relay;
-                if (mesh->IsValidStationIndex(static_cast<StationIndex>((*station)->m_field10)))
+                if (mesh->IsValidStationIndex((*station)->GetStationIndex()))
                 {
                     const Result result = relayRouteManager->GetRelayRoute(
-                        localStationIndex, static_cast<StationIndex>((*station)->m_field10), &relay);
+                        localStationIndex, (*station)->GetStationIndex(), &relay);
                     if (result == 0 && relay != cStationIndexInvalid &&
-                        static_cast<unsigned int>(relay) != (*station)->m_field10)
+                        static_cast<unsigned int>(relay) != (*station)->GetStationIndex())
                     {
                         if (targetCount >= cMonitoredTargetMax)
                             return;

@@ -17,8 +17,8 @@ public:
 
     MeshEventListener();
     ~MeshEventListener();
-    unsigned long long RemoveStationId(unsigned long long stationId);
-    unsigned long long RemoveStationIndex(StationIndex stationIndex);
+    Result RemoveStationId(unsigned long long stationId);
+    void RemoveStationIndex(StationIndex stationIndex);
     void NoticeEvent(const MeshEvent& event);
     void Trace(unsigned long long value) const;
 };

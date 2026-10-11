@@ -38,7 +38,8 @@ SessionInfoList<T>::~SessionInfoList()
 {
     for (unsigned short index = 0; index < m_maxSize; ++index)
         transport::DestroyObject(m_items[index]);
-    common::DeleteArray(m_items);
+    if (m_items != 0)
+        common::DeleteArray(m_items);
 }
 
 template <typename T>

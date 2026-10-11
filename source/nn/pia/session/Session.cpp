@@ -883,7 +883,7 @@ bool Session::IsOwner() const
     return false;
 }
 
-unsigned int Session::GetMatchmakeSessionParticipantNum() const
+unsigned short Session::GetMatchmakeSessionParticipantNum() const
 {
     if (m_meshLayerController != 0)
         return m_meshLayerController->GetMatchmakeSessionTotalParticipants();

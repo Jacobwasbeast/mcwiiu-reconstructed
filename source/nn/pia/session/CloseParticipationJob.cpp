@@ -3,44 +3,32 @@
 #include "nn/pia/Transport.hpp"
 #include "nn/pia/common/TimeSpan.hpp"
 #include "nn/pia/session/IMatchmakeSession.hpp"
-#include "nn/pia/session/Mesh.hpp"
+#include "nn/pia/session/MeshLayerController.hpp"
 #include "nn/pia/session/Session.hpp"
 
 namespace nn { namespace pia { namespace session {
 
 namespace
 {
-unsigned int SessionFailureResult(unsigned int status)
+enum
 {
-    switch (status)
-    {
-    case Session::cStatusDisconnectedNetwork:
-        return Session::cResultStatusDisconnectedNetwork;
-    case Session::cStatusUnknown6:
-        return Session::cResultStatusUnknown6;
-    case Session::cStatusUnknown7:
-        return Session::cResultStatusUnknown7;
-    case Session::cStatusUnknown8:
-        return Session::cResultStatusUnknown8;
-    case Session::cStatusDisconnectedSession:
-        return Session::cResultStatusDisconnectedSession;
-    default:
-        return 0;
-    }
+    cResultWaitP2pStableTimeout = 0x2c18
+};
+
+const int cWaitP2pStableMinMsec = 1000;
+const int cWaitP2pStableTimeoutMsec = 15000;
+
+inline void SelectStep(common::StepSequenceJob::Step& slot, common::Job::ExecuteResult (CloseParticipationJob::*function)(), const char* name)
+{
+    const common::StepSequenceJob::Step step(static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(function), name);
+    slot = step;
 }
 
-bool IsP2pStable(unsigned int sessionId)
-{
-    (void)sessionId;
-    return g_piaMesh != 0 && g_piaMesh->GetMeshState() == Mesh::cStateStarted;
-}
-
-unsigned int ElapsedMilliseconds(const common::Time& start)
+inline int GetElapsedMsec(const common::Time& startTime)
 {
     common::Time now;
     now.SetNow();
-    return static_cast<unsigned int>(
-        (now.m_tick - start.m_tick) / common::TimeSpan::GetTicksPerMSec().m_tick);
+    return static_cast<int>((now - startTime).m_tick / common::TimeSpan::GetTicksPerMSec().m_tick);
 }
 }
 
@@ -65,20 +53,48 @@ Result CloseParticipationJob::Startup(common::CallContext* callerContext,
 
     m_callerContext = callerContext;
     callerContext->InitiateCall();
-    m_matchmakeSession = matchmakeSession;
     m_sessionId = sessionId;
+    m_matchmakeSession = matchmakeSession;
     Reset(true);
-    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(&CloseParticipationJob::CloseParticipation);
-    m_currentStep.m_name = "CloseParticipationJob::CloseParticipation";
+    SelectStep(m_currentStep, &CloseParticipationJob::CloseParticipation, "CloseParticipationJob::CloseParticipation");
     return 0;
 }
 
 CloseParticipationJob::ExecuteResult CloseParticipationJob::CloseParticipation()
 {
-    const unsigned int failure = SessionFailureResult(g_piaSession->GetStatus());
-    if (failure != 0)
+    unsigned int status = g_piaSession->GetStatus();
+    switch (status)
     {
-        m_callerContext->SignalFailure(static_cast<Result>(failure));
+    case Session::cStatusDisconnectedNetwork:
+    {
+        m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusDisconnectedNetwork));
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case Session::cStatusUnknown6:
+    {
+        m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusUnknown6));
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case Session::cStatusUnknown7:
+    {
+        m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusUnknown7));
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case Session::cStatusUnknown8:
+    {
+        m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusUnknown8));
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    default:
+        break;
+    }
+    if (g_piaSession->GetStatus() == Session::cStatusDisconnectedSession)
+    {
+        m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusDisconnectedSession));
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
@@ -90,81 +106,136 @@ CloseParticipationJob::ExecuteResult CloseParticipationJob::CloseParticipation()
     }
 
     const Result result = m_matchmakeSession->CloseParticipate(&m_callContext, m_sessionId);
-    if (result == 0)
+    if (result != 0)
     {
-        m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(&CloseParticipationJob::WaitCloseParticipation);
-        m_currentStep.m_name = "CloseParticipationJob::WaitCloseParticipation";
-        return MakeExecuteResult(cExecuteKindNextStep);
+        if (result == static_cast<Result>(transport::cResultTransportUnavailable))
+            return MakeExecuteResult(cExecuteKindNextStep);
+        m_callerContext->SignalFailure(result);
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
     }
-    if (result == static_cast<Result>(transport::cResultTransportUnavailable))
-        return MakeExecuteResult(cExecuteKindNextStep);
-    m_callerContext->SignalFailure(result);
-    m_callerContext = 0;
-    return MakeExecuteResult(cExecuteKindFinished);
+    SelectStep(m_currentStep, &CloseParticipationJob::WaitCloseParticipation, "CloseParticipationJob::WaitCloseParticipation");
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 CloseParticipationJob::ExecuteResult CloseParticipationJob::WaitCloseParticipation()
 {
-    const unsigned int failure = SessionFailureResult(g_piaSession->GetStatus());
-    if (failure != 0)
+    unsigned int status = g_piaSession->GetStatus();
+    switch (status)
     {
-        m_callerContext->SignalFailure(static_cast<Result>(failure));
+    case Session::cStatusDisconnectedNetwork:
+    {
+        m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusDisconnectedNetwork));
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    if (!m_matchmakeSession->WaitCloseParticipate())
-        return MakeExecuteResult(cExecuteKindNextStep);
-
-    if (m_callContext.m_state == common::CallContext::cStateFailure)
+    case Session::cStatusUnknown6:
     {
-        if (m_callContext.m_result == static_cast<Result>(transport::cResultInvalidState))
-        {
-            g_piaSession->ChangeStatusToDisconnectedNetwork();
-            m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusDisconnectedSession));
-        }
-        else
-        {
-            m_callerContext->SignalFailure(m_callContext.m_result);
-        }
-    }
-    if (m_callContext.m_state != common::CallContext::cStateSuccess)
-    {
+        m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusUnknown6));
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    m_currentStep.m_function = static_cast<common::Job::ExecuteResult (common::StepSequenceJob::*)()>(&CloseParticipationJob::WaitP2pStable);
-    m_currentStep.m_name = "CloseParticipationJob::WaitP2pStable";
-    m_startTime.SetNow();
-    return MakeExecuteResult(cExecuteKindContinue);
+    case Session::cStatusUnknown7:
+    {
+        m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusUnknown7));
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case Session::cStatusUnknown8:
+    {
+        m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusUnknown8));
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    default:
+        break;
+    }
+    if (m_matchmakeSession->WaitCloseParticipate())
+    {
+        const common::CallContext::State state = m_callContext.m_state;
+        if (state == common::CallContext::cStateFailure)
+        {
+            if (m_callContext.m_result == static_cast<Result>(transport::cResultInvalidState))
+            {
+                g_piaSession->ChangeStatusToDisconnectedSession();
+                m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusDisconnectedSession));
+            }
+            else
+            {
+                m_callerContext->SignalFailure(m_callContext.m_result);
+            }
+        }
+        if (state == common::CallContext::cStateSuccess)
+        {
+            SelectStep(m_currentStep, &CloseParticipationJob::WaitP2pStable, "CloseParticipationJob::WaitP2pStable");
+            m_startTime.SetNow();
+            return MakeExecuteResult(cExecuteKindContinue);
+        }
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    return MakeExecuteResult(cExecuteKindNextStep);
 }
 
 CloseParticipationJob::ExecuteResult CloseParticipationJob::WaitP2pStable()
 {
-    const unsigned int failure = SessionFailureResult(g_piaSession->GetStatus());
-    if (failure != 0)
+    unsigned int status = g_piaSession->GetStatus();
+    switch (status)
     {
-        m_callerContext->SignalFailure(static_cast<Result>(failure));
+    case Session::cStatusDisconnectedNetwork:
+    {
+        m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusDisconnectedNetwork));
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case Session::cStatusUnknown6:
+    {
+        m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusUnknown6));
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case Session::cStatusUnknown7:
+    {
+        m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusUnknown7));
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    case Session::cStatusUnknown8:
+    {
+        m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusUnknown8));
+        m_callerContext = 0;
+        return MakeExecuteResult(cExecuteKindFinished);
+    }
+    default:
+        break;
+    }
+    if (g_piaSession->GetStatus() == Session::cStatusDisconnectedSession)
+    {
+        m_callerContext->SignalFailure(static_cast<Result>(Session::cResultStatusDisconnectedSession));
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
 
-    const unsigned int elapsed = ElapsedMilliseconds(m_startTime);
-    if (elapsed > 1000 && IsP2pStable(m_sessionId))
+    if (GetElapsedMsec(m_startTime) > cWaitP2pStableMinMsec
+        && g_piaSession->m_meshLayerController->IsAllStationJoined(m_sessionId))
     {
         if (g_piaSession->m_sessionId[g_piaSession->m_currentSessionIndex] == m_sessionId)
-            g_piaSession->SetCurrentSessionOpenStatus(
-                Session::cSessionOpenStatusParticipationClosed);
+        {
+            g_piaSession->SetCurrentSessionOpenStatus(Session::cSessionOpenStatusParticipationClosed);
+            m_callerContext->SignalSuccess(0);
+        }
         else
-            g_piaSession->SetBufferSessionOpenStatus(
-                Session::cSessionOpenStatusParticipationClosed);
-        m_callerContext->SignalSuccess(0);
+        {
+            if (g_piaSession->m_sessionId[g_piaSession->m_currentSessionIndex == 0 ? 1 : 0] == m_sessionId)
+                g_piaSession->SetBufferSessionOpenStatus(Session::cSessionOpenStatusParticipationClosed);
+            m_callerContext->SignalSuccess(0);
+        }
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }
-    const unsigned int finalElapsed = ElapsedMilliseconds(m_startTime);
-    if (finalElapsed > 15000)
+    if (GetElapsedMsec(m_startTime) > cWaitP2pStableTimeoutMsec)
     {
-        m_callerContext->SignalFailure(static_cast<Result>(0x2c18));
+        m_callerContext->SignalFailure(static_cast<Result>(cResultWaitP2pStableTimeout));
         m_callerContext = 0;
         return MakeExecuteResult(cExecuteKindFinished);
     }

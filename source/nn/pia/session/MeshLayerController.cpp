@@ -183,7 +183,7 @@ unsigned int MeshLayerController::GetMatchmakeSessionTotalStations() const
     return 0;
 }
 
-unsigned int MeshLayerController::GetMatchmakeSessionTotalParticipants() const
+unsigned short MeshLayerController::GetMatchmakeSessionTotalParticipants() const
 {
     return 0;
 }
