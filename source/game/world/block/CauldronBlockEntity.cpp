@@ -1,4 +1,5 @@
 #include "game/world/block/CauldronBlockEntity.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/core/StringIds.hpp"
 #include "game/world/block/BlockId.hpp"
 #include "game/core/EntityType.hpp"
@@ -127,11 +128,11 @@ bool CauldronBlockEntity::stillValid(boost::shared_ptr<Player> player)
     {
         return false;
     }
-    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25f)
+    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
     {
-        return true;
+        return false;
     }
-    return false;
+    return true;
 }
 
 void CauldronBlockEntity::startOpen(boost::shared_ptr<Player>)
@@ -176,8 +177,8 @@ void CauldronBlockEntity::setPotionId(const std::wstring& potionId)
 
 void CauldronBlockEntity::setCustomColor(const int& color)
 {
-    mCustomColor = color;
     mHasCustomColor = color != 0;
+    mCustomColor = color;
     BlockEntity::setChanged();
 }
 
@@ -206,14 +207,14 @@ void CauldronBlockEntity::setPotionType(Potion::EType type) { mPotionType = type
 
 int CauldronBlockEntity::getMixDyeColor()
 {
-    unsigned int rgb[3] = {0, 0, 0};
-    unsigned int count = 0;
+    int rgb[3] = {0, 0, 0};
+    int count = 0;
     if (mHasCustomColor)
     {
-        rgb[2] = mCustomColor;
-        rgb[0] = (rgb[2] >> 16) & 255;
-        rgb[1] = (rgb[2] >> 8) & 255;
-        rgb[2] &= 255;
+        int color = mCustomColor;
+        rgb[0] = (color >> 16) & 255;
+        rgb[1] = (color >> 8) & 255;
+        rgb[2] = color & 255;
         count = 1;
     }
     for (int slot = 2; slot < 10; ++slot)
@@ -222,19 +223,21 @@ int CauldronBlockEntity::getMixDyeColor()
         if (!item->isEmpty() && item->getItem() == Items::dye)
         {
             arrayWithLength<const float> colors = DyeColor::byItemData(item->getAuxValue())->getTextureDiffuseColors();
+            int red = static_cast<int>(colors[0] * 255.0f);
+            int green = static_cast<int>(colors[1] * 255.0f);
+            int blue = static_cast<int>(colors[2] * 255.0f);
             int amount = item->getCount();
-            rgb[0] += amount * static_cast<int>(colors.data[0] * 255.0f);
-            rgb[1] += amount * static_cast<int>(colors.data[1] * 255.0f);
-            rgb[2] += amount * static_cast<int>(colors.data[2] * 255.0f);
+            rgb[0] += amount * red;
+            rgb[1] += amount * green;
+            rgb[2] += amount * blue;
             count += amount;
         }
     }
-    if (static_cast<int>(count) <= 0)
+    if (count > 0)
     {
-        return Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Cauldron_Water);
+        return (((rgb[0] / count) << 8) + rgb[1] / count << 8) + rgb[2] / count;
     }
-    return (((static_cast<int>(rgb[0]) / static_cast<int>(count)) << 8) + static_cast<int>(rgb[1]) / static_cast<int>(count) << 8)
-        + static_cast<int>(rgb[2]) / static_cast<int>(count);
+    return Minecraft::GetInstance()->getColourTable()->getColour(eMinecraftColour_Cauldron_Water);
 }
 
 void CauldronBlockEntity::mixDyes()
@@ -255,13 +258,13 @@ void CauldronBlockEntity::load(CompoundTag* tag)
     ContainerHelper::loadAllItems(tag, mItems);
     mPotionId = tag->getString(L"PotionId");
     bool splash = tag->getByte(L"IsSplash") != 0;
-    if (!splash)
+    if (splash)
     {
-        mPotionType = static_cast<Potion::EType>(tag->getShort(L"PotionType"));
+        mPotionType = Potion::SPLASH;
     }
     else
     {
-        mPotionType = Potion::SPLASH;
+        mPotionType = static_cast<Potion::EType>(tag->getShort(L"PotionType"));
     }
     mHasCustomColor = tag->contains(L"CustomColor");
     if (mHasCustomColor)
@@ -316,7 +319,7 @@ boost::shared_ptr<BlockEntity> CauldronBlockEntity::clone()
     result->mCustomName->set(mCustomName->raw(), mCustomName->getUUID(), mCustomName->isChatCensored(), mCustomName->isUUIDLocal());
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        result->mItems[i] = mItems[i]->copy();
+        result->mItems.set(i, mItems[i]->copy());
     }
     return result;
 }

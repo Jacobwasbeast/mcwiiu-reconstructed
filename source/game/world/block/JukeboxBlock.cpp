@@ -58,14 +58,7 @@ void JukeboxBlock::dropRecording(Level* level, const BlockPos& pos, const BlockS
 
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
 
-    if (blockEntity.get() == NULL)
-    {
-        return;
-    }
-
-    bool isJukebox = eTYPE_DERIVED_FROM(BlockEntityType::JUKEBOX, blockEntity->GetType());
-
-    if (!isJukebox)
+    if (blockEntity.get() == NULL || !eTYPE_DERIVED_FROM(BlockEntityType::JUKEBOX, blockEntity->GetType()))
     {
         return;
     }

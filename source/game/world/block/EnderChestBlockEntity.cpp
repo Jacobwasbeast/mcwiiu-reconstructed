@@ -1,6 +1,7 @@
 #include "game/world/block/EnderChestBlockEntity.hpp"
 #include "game/client/audio/SoundSource.hpp"
 #include "game/client/audio/SoundEvents.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -100,11 +101,11 @@ bool EnderChestBlockEntity::stillValid(boost::shared_ptr<Player> player)
     {
         return false;
     }
-    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25f)
+    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
     {
-        return true;
+        return false;
     }
-    return false;
+    return true;
 }
 
 InteractionObject::NameData EnderChestBlockEntity::GetNetworkNameData()

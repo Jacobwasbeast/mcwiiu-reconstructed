@@ -25,22 +25,17 @@ ConsoleGameRules::EGameRuleType UseBlockRuleDefinition::getActionType()
 
 bool UseBlockRuleDefinition::onUseBlock(GameRule* gameRule, int blockId, int x, int y, int z)
 {
-    if (mBlockId != blockId)
+    bool statusChanged = false;
+    if (mBlockId == blockId)
     {
-        return false;
+        if (!mUsePosition || (mX == x && mY == y && mZ == z))
+        {
+            if (!getComplete(gameRule))
+            {
+                statusChanged = true;
+                setComplete(gameRule, true);
+            }
+        }
     }
-
-    if (mUsePosition && (mX != x || mY != y || mZ != z))
-    {
-        return false;
-    }
-
-    if (getComplete(gameRule))
-    {
-        return false;
-    }
-
-    setComplete(gameRule, true);
-
-    return true;
+    return statusChanged;
 }

@@ -42,16 +42,19 @@ void CompressedBlockStorage::staticCtor()
 
 void CompressedBlockStorage::tick()
 {
-    int list = (sPendingDeleteList + 1) % 3;
+    XLockFreeStack<unsigned char>* queue = &sPendingDeletes[(sPendingDeleteList + 1) % 3];
 
-    unsigned char* data = sPendingDeletes[list].Pop();
+    unsigned char* toFree = NULL;
 
-    while (data != NULL)
+    do
     {
-        XPhysicalFree(data);
+        toFree = queue->Pop();
 
-        data = sPendingDeletes[list].Pop();
-    }
+        if (toFree != NULL)
+        {
+            XPhysicalFree(toFree);
+        }
+    } while (toFree != NULL);
 
     sPendingDeleteList = (sPendingDeleteList + 1) % 3;
 }
@@ -82,228 +85,230 @@ void CompressedBlockStorage::reverseIndices(unsigned char* data)
 
 void CompressedBlockStorage::getDataSection(unsigned char* blocks, int x, int y, int z)
 {
-    const unsigned short* headers = (const unsigned short*)mData;
-    const unsigned char* sections = mData + 1024;
+    unsigned short* headers = (unsigned short*)mData;
+    unsigned char* data = mData + 1024;
 
-    const unsigned short* headerPtr = &headers[(x << 7) | (z << 5) | y];
-    unsigned short header = *headerPtr;
-    unsigned int format = header & 3;
+    int index = (x << 7) | (z << 5) | y;
+    int format = headers[index] & 3;
 
-    if (format != 3)
+    if (format == 3)
     {
+        if ((headers[index] & 4) != 0)
+        {
+            for (int i = 0; i < 64; i++)
+            {
+                blocks[i] = (headers[index] >> 8) & 0xFF;
+            }
+        }
+        else
+        {
+            unsigned char* section = data + ((headers[index] >> 1) & 0x7FFE);
+
+            for (int i = 0; i < 64; i++)
+            {
+                blocks[i] = section[i];
+            }
+        }
+    }
+    else
+    {
+        int bitsPerBlock = 1 << format;
         int shift = 3 - format;
-        unsigned int bitsPerBlock = 1 << format;
-        unsigned int paletteSize = 1 << bitsPerBlock;
-        unsigned int slotMask = 7 >> format;
-        unsigned int indexMask = 0x3E >> shift;
-        unsigned int valueMask = paletteSize - 1;
-        const unsigned char* palette = sections + ((header >> 1) & 0x7FFE);
-        const unsigned char* indices = palette + paletteSize;
+        int paletteSize = 1 << bitsPerBlock;
+        int valueMask = paletteSize - 1;
+        int slotMask = 7 >> format;
+        int indexMask = 0x3E >> shift;
+        unsigned char* palette = data + ((headers[index] >> 1) & 0x7FFE);
+        unsigned char* indices = palette + paletteSize;
 
         for (int i = 0; i < 64; i++)
         {
-            blocks[i] = palette[(indices[(i >> shift) & indexMask] >> ((i & slotMask) * bitsPerBlock)) & valueMask];
+            int indexByte = (i >> shift) & indexMask;
+            int bit = (i & slotMask) * bitsPerBlock;
+
+            blocks[i] = palette[(indices[indexByte] >> bit) & valueMask];
         }
-
-        return;
-    }
-
-    if ((header & 4) != 0)
-    {
-        for (int i = 0; i < 64; i++)
-        {
-            blocks[i] = (*headerPtr >> 8) & 0xFF;
-        }
-
-        return;
-    }
-
-    const unsigned char* section = sections + ((header >> 1) & 0x7FFE);
-
-    for (int i = 0; i < 64; i++)
-    {
-        blocks[i] = section[i];
     }
 }
 
-void CompressedBlockStorage::compress(int sectionIndex)
+void CompressedBlockStorage::compress(int upgradeBlock)
 {
     if (mData == NULL)
     {
         return;
     }
 
-    if (mSize == 1024 && sectionIndex == -1)
+    if (mSize == 1024 && upgradeBlock == -1)
     {
         return;
     }
 
-    unsigned short newHeaders[512];
-    unsigned char paletteIndices[256];
-    unsigned char blocks[64];
+    unsigned char tempData[64];
+    unsigned short newIndices[512];
 
-    bool rebuild = sectionIndex >= 0;
+    bool needsCompressing = upgradeBlock > -1;
 
     EnterCriticalSection(&sCompressLock);
 
-    const unsigned short* oldHeaders = (const unsigned short*)mData;
-    const unsigned char* oldSections = mData + 1024;
+    unsigned short* blockIndices = (unsigned short*)mData;
+    unsigned char* data = mData + 1024;
 
-    int newSize = 0;
-    int i;
-    int j;
+    int memToAlloc = 0;
 
-    if (sectionIndex == -1)
+    for (int i = 0; i < 512; i++)
     {
-        for (i = 0; i < 512; i++)
+        unsigned short indexType = blockIndices[i] & 3;
+
+        unsigned char* unpacked = NULL;
+
+        if (upgradeBlock == -1)
         {
-            unsigned short header = oldHeaders[i];
-            unsigned int format = header & 3;
-            const unsigned char* section;
-
-            if (format == 3)
+            if (indexType == 3)
             {
-                section = oldSections + ((header >> 1) & 0x7FFE);
-
-                if ((header & 4) != 0 || section == NULL)
+                if ((blockIndices[i] & 4) == 0)
                 {
-                    newHeaders[i] = header;
-                    continue;
+                    unpacked = data + ((blockIndices[i] >> 1) & 0x7FFE);
                 }
             }
             else
             {
-                int shift = 3 - format;
-                unsigned int bitsPerBlock = 1 << format;
-                unsigned int paletteSize = 1 << bitsPerBlock;
-                unsigned int slotMask = 7 >> format;
-                unsigned int indexMask = 0x3E >> shift;
-                unsigned int valueMask = paletteSize - 1;
-                const unsigned char* palette = oldSections + ((header >> 1) & 0x7FFE);
-                const unsigned char* indices = palette + paletteSize;
+                int bitsPerBlock = 1 << indexType;
+                int shift = 3 - indexType;
+                int paletteSize = 1 << bitsPerBlock;
+                int valueMask = paletteSize - 1;
+                int slotMask = 7 >> indexType;
+                int indexMask = 0x3E >> shift;
+                unsigned char* palette = data + ((blockIndices[i] >> 1) & 0x7FFE);
+                unsigned char* indices = palette + paletteSize;
 
-                for (j = 0; j < 64; j++)
+                for (int j = 0; j < 64; j++)
                 {
-                    blocks[j] = palette[(indices[(j >> shift) & indexMask] >> ((j & slotMask) * bitsPerBlock)) & valueMask];
+                    int indexByte = (j >> shift) & indexMask;
+                    int bit = (j & slotMask) * bitsPerBlock;
+
+                    tempData[j] = palette[(indices[indexByte] >> bit) & valueMask];
                 }
 
-                section = blocks;
+                unpacked = tempData;
             }
 
-            unsigned long long usedBlocks[4] = { 0, 0, 0, 0 };
-
-            for (j = 0; j < 64; j++)
+            if (unpacked != NULL)
             {
-                usedBlocks[section[j] & 3] |= 1ULL << (section[j] >> 2);
-            }
+                unsigned long long usedTypes[4] = { 0, 0, 0, 0 };
 
-            int usedCount = 0;
-
-            for (j = 0; j < 256; j++)
-            {
-                if ((usedBlocks[j & 3] & (1ULL << (j >> 2))) != 0)
+                for (int j = 0; j < 64; j++)
                 {
-                    usedCount++;
-                }
-            }
+                    int blockId = unpacked[j];
 
-            if (usedCount == 1)
-            {
-                newHeaders[i] = 7;
-                rebuild = true;
-            }
-            else if (usedCount == 2)
-            {
-                newHeaders[i] = 0;
-
-                if (format != 0)
-                {
-                    rebuild = true;
+                    usedTypes[blockId & 3] |= 1ULL << (blockId >> 2);
                 }
 
-                newSize += 10;
-            }
-            else if (usedCount < 5)
-            {
-                newHeaders[i] = 1;
+                int typeCount = 0;
 
-                if (format != 1)
+                for (int j = 0; j < 256; j++)
                 {
-                    rebuild = true;
+                    if ((usedTypes[j & 3] & (1ULL << (j >> 2))) != 0)
+                    {
+                        typeCount++;
+                    }
                 }
 
-                newSize += 20;
-            }
-            else if (usedCount < 17)
-            {
-                newHeaders[i] = 2;
-
-                if (format != 2)
+                if (typeCount == 1)
                 {
-                    rebuild = true;
+                    newIndices[i] = 7;
+                    needsCompressing = true;
                 }
+                else if (typeCount == 2)
+                {
+                    newIndices[i] = 0;
 
-                newSize += 48;
+                    if (indexType != 0)
+                    {
+                        needsCompressing = true;
+                    }
+
+                    memToAlloc += 10;
+                }
+                else if (typeCount <= 4)
+                {
+                    newIndices[i] = 1;
+
+                    if (indexType != 1)
+                    {
+                        needsCompressing = true;
+                    }
+
+                    memToAlloc += 20;
+                }
+                else if (typeCount <= 16)
+                {
+                    newIndices[i] = 2;
+
+                    if (indexType != 2)
+                    {
+                        needsCompressing = true;
+                    }
+
+                    memToAlloc += 48;
+                }
+                else
+                {
+                    newIndices[i] = 3;
+                    memToAlloc = (memToAlloc + 3) & 0xFFFC;
+                    memToAlloc += 64;
+                }
             }
             else
             {
-                newHeaders[i] = 3;
-                newSize = ((newSize + 3) & 0xFFFC) + 64;
+                newIndices[i] = blockIndices[i];
+            }
+        }
+        else
+        {
+            if (i == upgradeBlock)
+            {
+                indexType = (indexType + 1) & 3;
+                newIndices[i] = indexType;
+            }
+            else
+            {
+                newIndices[i] = indexType;
+
+                if (indexType == 3)
+                {
+                    indexType = (blockIndices[i] & 4) | indexType;
+                    newIndices[i] = indexType;
+                }
+            }
+
+            switch (indexType)
+            {
+            case 0:
+                memToAlloc += 10;
+                break;
+            case 1:
+                memToAlloc += 20;
+                break;
+            case 2:
+                memToAlloc += 48;
+                break;
+            case 3:
+                memToAlloc = (memToAlloc + 3) & 0xFFFC;
+                memToAlloc += 64;
+                break;
             }
         }
     }
-    else
+
+    if (needsCompressing)
     {
-        for (i = 0; i < 512; i++)
-        {
-            unsigned int format = oldHeaders[i] & 3;
+        memToAlloc += 1024;
 
-            if (i == sectionIndex)
-            {
-                format = (format + 1) & 3;
+        unsigned char* newIndicesAndData = (unsigned char*)XPhysicalAlloc(memToAlloc, 0xFFFFFFFF, 0x1000, 4);
 
-                newHeaders[i] = (unsigned short)format;
-            }
-            else
-            {
-                newHeaders[i] = (unsigned short)format;
+        sAllocatedBytes += memToAlloc;
 
-                if (format == 3)
-                {
-                    format = (oldHeaders[i] & 4) | 3;
-
-                    newHeaders[i] = (unsigned short)format;
-                }
-            }
-
-            if (format == 0)
-            {
-                newSize += 10;
-            }
-            else if (format == 1)
-            {
-                newSize += 20;
-            }
-            else if (format == 2)
-            {
-                newSize += 48;
-            }
-            else if (format == 3)
-            {
-                newSize = ((newSize + 3) & 0xFFFC) + 64;
-            }
-        }
-    }
-
-    if (rebuild)
-    {
-        newSize += 1024;
-
-        unsigned char* newData = (unsigned char*)XPhysicalAlloc(newSize, 0xFFFFFFFF, 0x1000, 4);
-
-        sAllocatedBytes += newSize;
-
-        if (newData == NULL)
+        if (newIndicesAndData == NULL)
         {
             _MEMORYSTATUS memoryStatus;
 
@@ -311,145 +316,172 @@ void CompressedBlockStorage::compress(int sectionIndex)
             __debugbreak();
         }
 
-        unsigned short* headers = (unsigned short*)newData;
-        unsigned char* newSections = newData + 1024;
-        unsigned short writeOffset = 0;
+        unsigned char* newData = newIndicesAndData + 1024;
+        unsigned short dataOffset = 0;
+        unsigned short* newBlockIndices = (unsigned short*)newIndicesAndData;
 
-        for (i = 0; i < 512; i++)
+        for (int i = 0; i < 512; i++)
         {
-            unsigned int newFormat = newHeaders[i] & 3;
-            unsigned int oldFormat = oldHeaders[i] & 3;
-            unsigned short header = oldHeaders[i];
+            unsigned short newIndexType = newIndices[i] & 3;
+            unsigned short oldIndexType = blockIndices[i] & 3;
 
-            headers[i] = (unsigned short)newFormat;
+            newBlockIndices[i] = newIndexType;
 
-            if (oldFormat == newFormat && (oldFormat != 3 || ((header ^ newHeaders[i]) & 4) == 0))
+            bool done = false;
+
+            if (oldIndexType == newIndexType)
             {
-                if (oldFormat == 3)
+                unsigned char* packed;
+
+                if (oldIndexType == 3)
                 {
-                    if ((header & 4) == 0)
+                    if ((blockIndices[i] & 4) == (newIndices[i] & 4))
                     {
-                        writeOffset = (unsigned short)((writeOffset + 3) & 0xFFFC);
+                        if ((blockIndices[i] & 4) != 0)
+                        {
+                            newBlockIndices[i] = blockIndices[i];
+                        }
+                        else
+                        {
+                            packed = data + ((blockIndices[i] >> 1) & 0x7FFE);
+                            dataOffset = (dataOffset + 3) & 0xFFFC;
 
-                        XMemCpy(newSections + writeOffset, oldSections + ((header >> 1) & 0x7FFE), 64);
+                            XMemCpy(newData + dataOffset, packed, 64);
 
-                        headers[i] |= (unsigned short)((writeOffset << 1) & 0xFFFC);
+                            newBlockIndices[i] |= (dataOffset & 0x7FFE) << 1;
+                            dataOffset += 64;
+                        }
 
-                        writeOffset = (unsigned short)(writeOffset + 64);
+                        done = true;
+                    }
+                }
+                else
+                {
+                    packed = data + ((blockIndices[i] >> 1) & 0x7FFE);
+
+                    int dataSize = 8 << oldIndexType;
+                    dataSize += 1 << (1 << oldIndexType);
+
+                    newBlockIndices[i] |= (dataOffset & 0x7FFE) << 1;
+
+                    XMemCpy(newData + dataOffset, packed, dataSize);
+
+                    dataOffset += dataSize;
+                    done = true;
+                }
+            }
+
+            if (!done)
+            {
+                unsigned char* unpacked = NULL;
+                unsigned char* tileTypes = NULL;
+                unsigned char* packed = NULL;
+
+                if (oldIndexType == 3)
+                {
+                    if ((blockIndices[i] & 4) != 0)
+                    {
+                        unpacked = tempData;
+
+                        int value = (blockIndices[i] >> 8) & 0xFF;
+
+                        XMemSet(tempData, value, 64);
                     }
                     else
                     {
-                        headers[i] = header;
+                        unpacked = data + ((blockIndices[i] >> 1) & 0x7FFE);
                     }
                 }
                 else
                 {
-                    unsigned int length = (8 << oldFormat) + (1 << (1 << oldFormat));
+                    int bitsPerBlock = 1 << oldIndexType;
+                    int shift = 3 - oldIndexType;
+                    int paletteSize = 1 << bitsPerBlock;
+                    int valueMask = paletteSize - 1;
+                    int slotMask = 7 >> oldIndexType;
+                    int indexMask = 0x3E >> shift;
+                    unsigned char* palette = data + ((blockIndices[i] >> 1) & 0x7FFE);
+                    unsigned char* indices = palette + paletteSize;
 
-                    headers[i] = (unsigned short)(newFormat | ((writeOffset << 1) & 0xFFFC));
-
-                    XMemCpy(newSections + writeOffset, oldSections + ((header >> 1) & 0x7FFE), length);
-
-                    writeOffset = (unsigned short)(writeOffset + length);
-                }
-
-                continue;
-            }
-
-            const unsigned char* section;
-
-            if (oldFormat == 3)
-            {
-                if ((header & 4) == 0)
-                {
-                    section = oldSections + ((header >> 1) & 0x7FFE);
-                }
-                else
-                {
-                    XMemSet(blocks, (header >> 8) & 0xFF, 64);
-
-                    section = blocks;
-                }
-            }
-            else
-            {
-                int shift = 3 - oldFormat;
-                unsigned int bitsPerBlock = 1 << oldFormat;
-                unsigned int paletteSize = 1 << bitsPerBlock;
-                unsigned int slotMask = 7 >> oldFormat;
-                unsigned int indexMask = 0x3E >> shift;
-                unsigned int valueMask = paletteSize - 1;
-                const unsigned char* palette = oldSections + ((header >> 1) & 0x7FFE);
-                const unsigned char* indices = palette + paletteSize;
-
-                for (j = 0; j < 64; j++)
-                {
-                    blocks[j] = palette[(indices[(j >> shift) & indexMask] >> ((j & slotMask) * bitsPerBlock)) & valueMask];
-                }
-
-                section = blocks;
-            }
-
-            XMemSet(paletteIndices, 0xFF, 256);
-
-            if (newFormat == 3)
-            {
-                if ((newHeaders[i] & 4) == 0)
-                {
-                    writeOffset = (unsigned short)((writeOffset + 3) & 0xFFFC);
-
-                    XMemCpy(newSections + writeOffset, section, 64);
-
-                    headers[i] |= (unsigned short)((writeOffset << 1) & 0xFFFC);
-
-                    writeOffset = (unsigned short)(writeOffset + 64);
-                }
-                else
-                {
-                    headers[i] = (unsigned short)((section[0] << 8) | 7);
-                }
-            }
-            else
-            {
-                int shift = 3 - newFormat;
-                unsigned int bitsPerBlock = 1 << newFormat;
-                unsigned int paletteSize = 1 << bitsPerBlock;
-                unsigned int indexBytes = 8 << newFormat;
-                unsigned int slotMask = 7 >> newFormat;
-                unsigned int indexMask = 0x3E >> shift;
-                unsigned char* palette = newSections + writeOffset;
-                unsigned char* indices = palette + paletteSize;
-
-                XMemSet(palette, 0xFF, paletteSize);
-                XMemSet(indices, 0, indexBytes);
-
-                headers[i] |= (unsigned short)((writeOffset << 1) & 0xFFFC);
-
-                writeOffset = (unsigned short)(writeOffset + paletteSize + indexBytes);
-
-                int paletteCount = 0;
-
-                for (j = 0; j < 64; j++)
-                {
-                    unsigned char block = section[j];
-
-                    if (paletteIndices[block] == 0xFF)
+                    for (int j = 0; j < 64; j++)
                     {
-                        paletteIndices[block] = (unsigned char)paletteCount;
-                        palette[paletteCount] = block;
+                        int indexByte = (j >> shift) & indexMask;
+                        int bit = (j & slotMask) * bitsPerBlock;
 
-                        paletteCount++;
+                        tempData[j] = palette[(indices[indexByte] >> bit) & valueMask];
                     }
 
-                    indices[(j >> shift) & indexMask] |= (unsigned char)(paletteIndices[block] << ((j & slotMask) * bitsPerBlock));
+                    unpacked = tempData;
+                }
+
+                unsigned int typeMapWords[64];
+                unsigned char* typeMap = (unsigned char*)typeMapWords;
+
+                for (int j = 0; j < 64; j++)
+                {
+                    typeMapWords[j] = 0xFFFFFFFF;
+                }
+
+                if (newIndexType == 3)
+                {
+                    if ((newIndices[i] & 4) != 0)
+                    {
+                        newBlockIndices[i] = 3 | 4 | (((unsigned short)unpacked[0]) << 8);
+                    }
+                    else
+                    {
+                        dataOffset = (dataOffset + 3) & 0xFFFC;
+
+                        XMemCpy(newData + dataOffset, unpacked, 64);
+
+                        newBlockIndices[i] |= (dataOffset & 0x7FFE) << 1;
+                        dataOffset += 64;
+                    }
+                }
+                else
+                {
+                    int bitsPerBlock = 1 << newIndexType;
+                    int paletteSize = 1 << bitsPerBlock;
+                    int shift = 3 - newIndexType;
+                    int slotMask = 7 >> newIndexType;
+                    int indexMask = 0x3E >> shift;
+
+                    tileTypes = newData + dataOffset;
+                    packed = tileTypes + paletteSize;
+
+                    int packedSize = 8 << newIndexType;
+
+                    XMemSet(tileTypes, 255, paletteSize);
+                    XMemSet(packed, 0, packedSize);
+
+                    newBlockIndices[i] |= (dataOffset & 0x7FFE) << 1;
+                    dataOffset += paletteSize + packedSize;
+
+                    int typeCount = 0;
+
+                    for (int j = 0; j < 64; j++)
+                    {
+                        int blockId = unpacked[j];
+
+                        if (typeMap[blockId] == 255)
+                        {
+                            typeMap[blockId] = typeCount;
+                            tileTypes[typeCount++] = blockId;
+                        }
+
+                        int indexByte = (j >> shift) & indexMask;
+                        int bit = (j & slotMask) * bitsPerBlock;
+
+                        packed[indexByte] |= typeMap[blockId] << bit;
+                    }
                 }
             }
         }
 
         queueForDelete(mData, mSize);
 
-        mData = newData;
-        mSize = newSize;
+        mData = newIndicesAndData;
+        mSize = memToAlloc;
     }
 
     LeaveCriticalSection(&sCompressLock);
@@ -461,34 +493,19 @@ void CompressedBlockStorage::write(DataOutputStream* out)
 
     if (mData != NULL)
     {
-        unsigned char* headers = new unsigned char[1024];
+        arrayWithLength<unsigned char> indices(1024, true);
 
-        for (int i = 0; i < 1024; i++)
-        {
-            headers[i] = 0;
-        }
+        memcpy(indices.data, mData, 1024);
 
-        memcpy(headers, mData, 1024);
+        reverseIndices(indices.data);
 
-        reverseIndices(headers);
+        out->write(indices);
 
-        arrayWithLength<unsigned char> headerData;
-
-        headerData.data = headers;
-        headerData.length = 1024;
-
-        out->write(headerData);
-
-        delete[] headers;
+        delete[] indices.data;
 
         if (mSize > 1024)
         {
-            arrayWithLength<unsigned char> sectionData;
-
-            sectionData.data = mData + 1024;
-            sectionData.length = mSize - 1024;
-
-            out->write(sectionData);
+            out->write(arrayWithLength<unsigned char>(mData + 1024, mSize - 1024));
         }
     }
 }
@@ -508,18 +525,12 @@ void CompressedBlockStorage::read(DataInputStream* in)
             sAllocatedBytes -= oldSize;
         }
 
-        arrayWithLength<unsigned char> data;
-
-        data.data = (unsigned char*)XPhysicalAlloc(size, 0xFFFFFFFF, 0x1000, 4);
-
-        sAllocatedBytes += size;
-
-        mData = data.data;
+        mData = (unsigned char*)XPhysicalAlloc(size, 0xFFFFFFFF, 0x1000, 4);
         mSize = size;
+        sAllocatedBytes += size;
+        arrayWithLength<unsigned char> wrapper(mData, size);
 
-        data.length = size;
-
-        in->readFully(data);
+        in->readFully(wrapper);
 
         reverseIndices(mData);
 

@@ -9,84 +9,59 @@
 
 PodiumPlaceMostBlocksDestroyedMedal::PodiumPlaceMostBlocksDestroyedMedal(EPodium podium,
     int name, float target, unsigned int weight, GameMedal::EOperator op)
-    : GameMedal(name, target, weight, op, false, false), mPodium(podium)
+    : GameMedal(name, target, weight, op, true, false), mPodium(podium)
 {
 }
 
 float PodiumPlaceMostBlocksDestroyedMedal::GetScore(PlayerStats* playerStats) const
 {
     GameStats* gameStats = getGameStats();
-    PlayerList* playerList = (gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers);
-    boost::shared_ptr<ServerPlayer> player =
-        playerList->getPlayerFromStatsUID(*(StatsUID*)playerStats);
+    int score = 0;
+    PlayerList* playerList = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
+    boost::shared_ptr<ServerPlayer> player = playerList->getPlayerFromStatsUID(playerStats->mStatsUID);
     boost::shared_ptr<ServerPlayer> firstPlace = gameStats->GetFirstPlace();
     boost::shared_ptr<ServerPlayer> secondPlace = gameStats->GetSecondPlace();
     boost::shared_ptr<ServerPlayer> thirdPlace = gameStats->GetThirdPlace();
-    int mostBlocksDestroyed = gameStats->GetMostBlocksDestroyed();
+    unsigned int mostBlocksDestroyed = gameStats->GetMostBlocksDestroyed();
     unsigned int secondMostBlocksDestroyed = gameStats->GetSecondMostBlocksDestroyed();
     unsigned int thirdMostBlocksDestroyed = gameStats->GetThirdMostBlocksDestroyed();
-    unsigned int score = 0;
 
     if (player)
     {
-        if (mPodium == PODIUM_FIRST)
+        switch (mPodium)
         {
-            if (player.get() == firstPlace.get())
+        case PODIUM_FIRST:
+            if (player == firstPlace)
             {
                 score = playerStats->getTotalBlocksDestroyed();
             }
-        }
-        else if (mPodium == PODIUM_SECOND)
-        {
-            if ((player.get() != firstPlace.get() ||
-                 playerStats->getTotalBlocksDestroyed() != mostBlocksDestroyed) &&
-                (player.get() == secondPlace.get() || player.get() == firstPlace.get()))
+            break;
+        case PODIUM_SECOND:
+            if ((player != firstPlace || playerStats->getTotalBlocksDestroyed() != mostBlocksDestroyed) &&
+                (player == secondPlace || player == firstPlace))
             {
                 unsigned int blocksDestroyed = playerStats->getTotalBlocksDestroyed();
 
-                if (secondMostBlocksDestroyed <= blocksDestroyed)
+                if (blocksDestroyed >= secondMostBlocksDestroyed)
                 {
                     score = blocksDestroyed - secondMostBlocksDestroyed;
                 }
             }
-        }
-        else if (mPodium == PODIUM_THIRD)
-        {
-            bool eligible = true;
-
-            if (player.get() == firstPlace.get() || player.get() == secondPlace.get())
+            break;
+        case PODIUM_THIRD:
+            if (((player != firstPlace && player != secondPlace) || playerStats->getTotalBlocksDestroyed() < secondMostBlocksDestroyed) &&
+                (player == secondPlace || player == firstPlace || player == thirdPlace))
             {
                 unsigned int blocksDestroyed = playerStats->getTotalBlocksDestroyed();
 
-                if (secondMostBlocksDestroyed <= blocksDestroyed)
-                {
-                    eligible = false;
-                }
-                else if (player.get() != secondPlace.get() && player.get() != firstPlace.get())
-                {
-                    eligible = player.get() == thirdPlace.get();
-                }
-            }
-            else
-            {
-                eligible = player.get() == thirdPlace.get();
-            }
-
-            if (eligible)
-            {
-                unsigned int blocksDestroyed = playerStats->getTotalBlocksDestroyed();
-
-                if (thirdMostBlocksDestroyed <= blocksDestroyed)
+                if (blocksDestroyed >= thirdMostBlocksDestroyed)
                 {
                     score = blocksDestroyed - thirdMostBlocksDestroyed;
                 }
             }
-        }
-        else
-        {
-            score = 0;
+            break;
         }
     }
 
-    return static_cast<double>(static_cast<float>(static_cast<int>(score)));
+    return score;
 }

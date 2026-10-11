@@ -55,25 +55,17 @@ InteractionResult::EInteractionResult SeaPickleBlockItem::useOn(boost::shared_pt
     }
 
     const BlockState* targetState = level->getBlockState(targetPos);
-    const BlockState* newState = Blocks::sea_pickle->defaultBlockState();
+    const BlockState* defaultState = Blocks::sea_pickle->defaultBlockState();
+    const BlockState* newState = defaultState;
     if (targetState->getBlock() == Blocks::sea_pickle)
     {
         int count = targetState->getValue(SeaPickle::COUNT) + 1;
         if (count > 3)
             return InteractionResult::eInteractionResult_Fail;
-        const BlockState* stacked = NULL;
-        {
-            TypedBoxed<int> countValue(count);
-            stacked = newState->setBoxedValue(SeaPickle::COUNT, &countValue);
-        }
+        newState = newState->setValue(SeaPickle::COUNT, count);
         placePos = targetPos;
-        bool underWater = level->isUnderWater(targetPos, newState);
-        newState = stacked;
-        if (!underWater)
-        {
-            TypedBoxed<int> flange(1);
-            newState = newState->setBoxedValue(SeaPickle::FLANGE, &flange);
-        }
+        if (!level->isUnderWater(targetPos, defaultState))
+            newState = newState->setValue(SeaPickle::FLANGE, 1);
     }
     else
     {
@@ -82,33 +74,24 @@ InteractionResult::EInteractionResult SeaPickleBlockItem::useOn(boost::shared_pt
         {
             return InteractionResult::eInteractionResult_Fail;
         }
-        if (!level->isConsideredSolidBlock(placePos.below()) && targetState->getBlock() != Blocks::glass
-            && targetState->getBlock() != Blocks::stained_glass)
+        if ((!level->isConsideredSolidBlock(placePos.below()) && targetState->getBlock() != Blocks::glass
+             && targetState->getBlock() != Blocks::stained_glass)
+            || !level->canProvideSupport(placePos.below(), Direction::UP, BLOCK_SUPPORT_CENTER)
+            || (!level->isEmptyBlock(placePos) && !level->isEmptyWaterBlock(placePos)
+                && targetState->getBlock() != Blocks::sea_grass))
         {
             return InteractionResult::eInteractionResult_Fail;
         }
-        if (!level->canProvideSupport(placePos.below(), Direction::UP, BLOCK_SUPPORT_CENTER))
-            return InteractionResult::eInteractionResult_Fail;
-        if (!level->isEmptyBlock(placePos) && !level->isEmptyWaterBlock(placePos)
-            && targetState->getBlock() != Blocks::sea_grass)
-        {
-            return InteractionResult::eInteractionResult_Fail;
-        }
-        if (!level->isUnderWater(placePos, newState))
-        {
-            TypedBoxed<int> flange(1);
-            newState = newState->setBoxedValue(SeaPickle::FLANGE, &flange);
-        }
+        if (!level->isUnderWater(placePos, defaultState))
+            newState = newState->setValue(SeaPickle::FLANGE, 1);
     }
 
-    if (!simulate)
-    {
-        if (!level->isUnobstructed(Blocks::sea_pickle->getShape(targetState, level, placePos))
-            || !level->setBlock(placePos, newState, Block::UPDATE_ALL, false))
-        {
-            return InteractionResult::eInteractionResult_Fail;
-        }
+    if (simulate)
+        return InteractionResult::eInteractionResult_Success;
 
+    if (level->isUnobstructed(Blocks::sea_pickle->getShape(targetState, level, placePos))
+        && level->setBlock(placePos, newState, Block::UPDATE_ALL, false))
+    {
         const SoundType* soundType = Blocks::sea_pickle->getSoundType();
         level->playSound(boost::shared_ptr<Player>(), placePos, soundType->getPlaceSound(),
                          SoundSource::eSoundSource_Blocks, (soundType->getVolume() + 1.0f) * 0.5f,
@@ -116,6 +99,7 @@ InteractionResult::EInteractionResult SeaPickleBlockItem::useOn(boost::shared_pt
         itemInstance->shrink(1);
         if (newState->getValue(SeaPickle::COUNT) == 3)
             player->awardStat(GenericStats::_1234Pickle(), GenericStats::param_1234Pickle());
+        return InteractionResult::eInteractionResult_Success;
     }
-    return InteractionResult::eInteractionResult_Success;
+    return InteractionResult::eInteractionResult_Fail;
 }

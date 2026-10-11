@@ -3,6 +3,7 @@
 #include "game/core/LootTable.hpp"
 #include "game/core/LootTableContext.hpp"
 #include "game/core/LootTables.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/data/CompoundTag.hpp"
 #include "game/entity/mob/Entity.hpp"
 #include "game/item/Container.hpp"
@@ -15,10 +16,10 @@
 
 RandomizableLockableContainerBlockEntity::RandomizableLockableContainerBlockEntity()
     : LockableContainerBlockEntity()
-    , mLootTable(NULL)
-    , mLootTableSeed(0)
-    , mCustomName(new CensoredString())
 {
+    mLootTable = NULL;
+    mLootTableSeed = 0;
+    mCustomName = boost::shared_ptr<CensoredString>(new CensoredString());
 }
 
 RandomizableLockableContainerBlockEntity::~RandomizableLockableContainerBlockEntity()
@@ -81,7 +82,7 @@ bool RandomizableLockableContainerBlockEntity::stillValid(boost::shared_ptr<Play
     {
         return false;
     }
-    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) > 30.25f)
+    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
     {
         return false;
     }
@@ -196,13 +197,4 @@ void RandomizableLockableContainerBlockEntity::setCustomName(const std::wstring&
                                                              bool uuidLocal)
 {
     mCustomName->set(name, uuid, chatCensored, uuidLocal);
-}
-
-void RandomizableLockableContainerBlockEntity::operator=(const RandomizableLockableContainerBlockEntity& other)
-{
-    BlockEntity::operator=(other);
-    mLockKeyCode = other.mLockKeyCode;
-    mLootTable = other.mLootTable;
-    mLootTableSeed = other.mLootTableSeed;
-    mCustomName = other.mCustomName;
 }

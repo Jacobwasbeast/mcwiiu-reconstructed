@@ -52,7 +52,6 @@ public:
     bool trySaveLootTable(CompoundTag* tag);
     void setCustomName(const std::wstring& name, const std::wstring& uuid,
                        bool chatCensored, bool uuidLocal);
-    void operator=(const RandomizableLockableContainerBlockEntity& other);
 
 protected:
     ResourceLocation* mLootTable;

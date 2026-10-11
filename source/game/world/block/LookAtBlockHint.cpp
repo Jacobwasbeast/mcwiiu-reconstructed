@@ -18,23 +18,21 @@ LookAtBlockHint::LookAtBlockHint(eTutorial_Hint hint, Tutorial* tutorial,
                                  const BlockState** states, unsigned int stateCount,
                                  const Property* const* properties, unsigned int propertyCount,
                                  int descriptionId, int auxValue, bool useState)
-    : TutorialHint(hint, tutorial, -1, TutorialHint::HINT_LOOK_AT_BLOCK, true, true, -1),
-      mStateCount(stateCount), mStates(new const BlockState*[stateCount]),
-      mStateIds(new Block*[mStateCount])
+    : TutorialHint(hint, tutorial, -1, TutorialHint::HINT_LOOK_AT_BLOCK, true, true, -1)
 {
-    unsigned int i;
-    for (i = 0; i < mStateCount; ++i)
+    mStateCount = stateCount;
+    mStates = new const BlockState*[mStateCount];
+    mStateIds = new Block*[mStateCount];
+    for (unsigned int i = 0; i < mStateCount; ++i)
     {
         mStates[i] = states[i];
         mStateIds[i] = states[i]->getBlock();
     }
     mPropertyCount = propertyCount;
-    const Property** values = new const Property*[propertyCount];
-    mPropertyValues = values;
-    const unsigned int count = mPropertyCount;
-    for (unsigned int j = 0; j < count; ++j)
+    mPropertyValues = new const Property*[mPropertyCount];
+    for (unsigned int i = 0; i < mPropertyCount; ++i)
     {
-        values[j] = properties[j];
+        mPropertyValues[i] = properties[i];
     }
     mDescriptionId = descriptionId;
     mAuxValue = auxValue;
@@ -50,115 +48,99 @@ LookAtBlockHint::~LookAtBlockHint()
 
 unsigned int LookAtBlockHint::onLookAt(const BlockState* state)
 {
-    const BlockState* matchingState = NULL;
-    Block* block;
-    Block* matchedBlock = NULL;
-    Item* item;
-    Tutorial::PopupMessageDetails* details;
-    int auxValue;
-    unsigned int i;
-    unsigned int j;
+    Block* block = state->getBlock();
+    if (block != NULL)
+    {
+        const BlockState* matchingState = NULL;
+        Block* matchedBlock = NULL;
+        for (unsigned int i = 0; i < mStateCount; ++i)
+        {
+            if (block == mStateIds[i])
+            {
+                matchedBlock = mStateIds[i];
+                if (mPropertyCount > 0)
+                {
+                    for (unsigned int j = 0; j < mPropertyCount; ++j)
+                    {
+                        const Property* property = mPropertyValues[j];
+                        if (std::find(mStates[i]->getProperties().begin(), mStates[i]->getProperties().end(),
+                                      property) != mStates[i]->getProperties().end()
+                            && std::find(state->getProperties().begin(), state->getProperties().end(), property)
+                                   != state->getProperties().end()
+                            && mStates[i]->getBoxedValue(property) == state->getBoxedValue(property))
+                        {
+                            matchingState = mStates[i];
+                            break;
+                        }
+                    }
+                    if (matchingState != NULL)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    matchingState = mStates[i];
+                    break;
+                }
+            }
+        }
+        if (matchedBlock != NULL && matchingState != NULL)
+        {
+            if (!mUseState)
+            {
+                matchingState = state;
+            }
 
-    block = state->getBlock();
-    if (block == NULL)
-    {
-        return 0;
-    }
-    for (i = 0; i < mStateCount; ++i)
-    {
-        if (mStateIds[i] != block)
-        {
-            continue;
-        }
-        matchedBlock = mStateIds[i];
-        if (mPropertyCount == 0)
-        {
-            matchingState = mStates[i];
-            break;
-        }
-        for (j = 0; j < mPropertyCount; ++j)
-        {
-            const Property* property = mPropertyValues[j];
-            const BlockState* candidate = mStates[i];
-            if (std::find(candidate->getProperties().begin(), candidate->getProperties().end(), property)
-                    == candidate->getProperties().end())
+            Item* item = Item::byBlock(matchedBlock) != NULL ? Item::byBlock(matchedBlock)
+                                                             : matchedBlock->getResource(matchingState, NULL, 0);
+            Tutorial::PopupMessageDetails* details = new Tutorial::PopupMessageDetails();
+            details->isItem = true;
+            if (mDescriptionId >= 0)
             {
-                continue;
+                details->itemId = mDescriptionId;
             }
-            if (std::find(state->getProperties().begin(), state->getProperties().end(), property)
-                    == state->getProperties().end())
+            else if (mDescriptionId == -2)
             {
-                continue;
+                details->itemId = -1;
             }
-            if (candidate->getBoxedValue(property) == state->getBoxedValue(property))
+            else if (item != NULL)
             {
-                matchingState = candidate;
-                break;
+                details->itemId = Item::getId(item);
             }
-        }
-        if (matchingState != NULL)
-        {
-            break;
-        }
-    }
-    if (matchedBlock == NULL || matchingState == NULL)
-    {
-        return 0;
-    }
-    if (!mUseState)
-    {
-        matchingState = state;
-    }
-
-    item = Item::byBlock(matchedBlock) != NULL ? Item::byBlock(matchedBlock)
-                                                : matchedBlock->getResource(matchingState, NULL, 0);
-    details = new Tutorial::PopupMessageDetails();
-    details->isItem = true;
-    if (mDescriptionId < 0)
-    {
-        if (mDescriptionId == -2)
-        {
-            details->itemId = -1;
-        }
-        else if (item == NULL)
-        {
-            details->itemId = Block::getId(matchedBlock);
-        }
-        else
-        {
-            details->itemId = Item::getId(item);
+            else
+            {
+                details->itemId = Block::getId(matchedBlock);
+            }
+            int auxValue = mAuxValue;
+            if (auxValue < 0)
+            {
+                auxValue = matchedBlock->convertBlockStateToLegacyData(matchingState);
+            }
+            details->itemAuxValue = auxValue;
+            if (item != NULL)
+            {
+                not_null_ptr<ItemInstance> itemInstance(new ItemInstance(item, 1, auxValue));
+                if (item == Items::banner)
+                {
+                    BannerBlockEntity::addTags(itemInstance, 0xf, NULL);
+                }
+                if (mDescriptionId < 0)
+                {
+                    details->itemInstance = itemInstance;
+                }
+                details->titleId = itemInstance->getUseDescriptionId();
+                details->itemDescriptionId = itemInstance->getDescriptionId(-1);
+            }
+            else
+            {
+                details->titleId = matchedBlock->getUseDescriptionId(-1);
+                details->itemDescriptionId = matchedBlock->getDescriptionId(auxValue);
+            }
+            return tutorial->setMessage(this, details);
         }
     }
-    else
-    {
-        details->itemId = mDescriptionId;
-    }
-    auxValue = mAuxValue;
-    if (auxValue < 0)
-    {
-        auxValue = matchedBlock->convertBlockStateToLegacyData(matchingState);
-    }
-    details->itemAuxValue = auxValue;
-    if (item == NULL)
-    {
-        details->titleId = matchedBlock->getUseDescriptionId(-1);
-        details->itemDescriptionId = matchedBlock->getDescriptionId(auxValue);
-    }
-    else
-    {
-        not_null_ptr<ItemInstance> itemInstance(new ItemInstance(item, 1, auxValue));
-        if (item == Items::banner)
-        {
-            BannerBlockEntity::addTags(itemInstance, 0xf, NULL);
-        }
-        if (mDescriptionId < 0)
-        {
-            details->itemInstance = itemInstance;
-        }
-        details->titleId = itemInstance->getUseDescriptionId();
-        details->itemDescriptionId = itemInstance->getDescriptionId(-1);
-    }
-    return tutorial->setMessage(this, details);
+    return 0;
 }
 
 unsigned int LookAtBlockHint::onLookAtSkull(Level* level, const BlockPos& pos,

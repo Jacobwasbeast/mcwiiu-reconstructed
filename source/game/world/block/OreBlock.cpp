@@ -65,7 +65,7 @@ int OreBlock::getResourceCountForLootBonus(int lootBonus, Random* random)
     {
         const arrayWithLength<BlockStateDefinition::BlockStateImpl*>* states =
             getBlockStateDefinition()->getPossibleBlockStates();
-        if (getResource(states->data[0], random, lootBonus) != Item::byBlock(this))
+        if (Item::byBlock(this) != getResource(states->data[0], random, lootBonus))
         {
             int multiplier = random->nextInt(lootBonus + 2) - 1;
             if (multiplier < 0)
@@ -82,25 +82,23 @@ void OreBlock::spawnResources(Level* level, const BlockPos& pos, const BlockStat
 {
     Block::spawnResources(level, pos, state, chance, lootBonus);
 
-    if (getResource(state, level->mRandom, lootBonus) == Item::byBlock(this))
+    if (getResource(state, level->mRandom, lootBonus) != Item::byBlock(this))
     {
-        return;
+        int experience = 0;
+        if (this == Blocks::coal_ore)
+        {
+            experience = Mth::nextInt(level->mRandom, 0, 2);
+        }
+        else if (this == Blocks::diamond_ore || this == Blocks::emerald_ore)
+        {
+            experience = Mth::nextInt(level->mRandom, 3, 7);
+        }
+        else if (this == Blocks::lapis_ore || this == Blocks::quartz_ore)
+        {
+            experience = Mth::nextInt(level->mRandom, 2, 5);
+        }
+        popExperience(level, pos, experience);
     }
-
-    int experience = 0;
-    if (this == Blocks::coal_ore)
-    {
-        experience = Mth::nextInt(level->mRandom, 0, 2);
-    }
-    else if (this == Blocks::diamond_ore || this == Blocks::emerald_ore)
-    {
-        experience = Mth::nextInt(level->mRandom, 3, 7);
-    }
-    else if (this == Blocks::lapis_ore || this == Blocks::quartz_ore)
-    {
-        experience = Mth::nextInt(level->mRandom, 2, 5);
-    }
-    popExperience(level, pos, experience);
 }
 
 not_null_ptr<ItemInstance> OreBlock::getCloneItemInstance(Level*, const BlockPos&, const BlockState*)

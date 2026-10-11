@@ -335,7 +335,7 @@ bool BaseRailBlock::Rail::hasConnection(const BlockPos& pos)
 
 bool BaseRailBlock::Rail::connectsTo(Rail* rail)
 {
-    return rail != NULL && hasConnection(rail->mPos);
+    return hasConnection(rail->mPos);
 }
 
 bool BaseRailBlock::Rail::canConnectTo(Rail* rail)

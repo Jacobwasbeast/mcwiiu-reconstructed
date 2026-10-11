@@ -43,6 +43,7 @@ const std::wstring PistonBaseBlock::TEXTURE_TOP = L"piston_top";
 const std::wstring PistonBaseBlock::TEXTURE_TOP_STICKY = L"piston_top_sticky";
 const std::wstring PistonBaseBlock::TEXTURE_BOTTOM = L"piston_bottom";
 const std::wstring PistonBaseBlock::TEXTURE_INNER_TOP = L"piston_inner_top";
+const float PistonBaseBlock::PLATFORM_THICKNESS = 0.25f;
 static const AABB* PISTON_EXTENDED_DOWN = AABB::newPermanent(0.0, 0.25, 0.0, 1.0, 1.0, 1.0);
 static const AABB* PISTON_EXTENDED_UP = AABB::newPermanent(0.0, 0.0, 0.0, 1.0, 0.75, 1.0);
 static const AABB* PISTON_EXTENDED_NORTH = AABB::newPermanent(0.0, 0.0, 0.25, 1.0, 1.0, 1.0);

@@ -60,15 +60,15 @@ InteractionResult::EInteractionResult BlockPlanterItem::useOn(boost::shared_ptr<
             return InteractionResult::eInteractionResult_Fail;
         }
 
-        player->awardStat(gStats->get_blocksPlaced(Block::getId(mBlock)),
+        player->awardStat(GenericStats::blocksPlaced(mBlock),
                           GenericStats::param_blocksPlaced(placedState, 1));
 
-        const BlockState* placedBlockState = level->getBlockState(placePos);
+        placedState = level->getBlockState(placePos);
 
-        if (placedBlockState->getBlock() == mBlock)
+        if (placedState->getBlock() == mBlock)
         {
             BlockItem::updateCustomBlockEntityTag(level, player, placePos, itemInstance);
-            placedBlockState->getBlock()->setPlacedBy(level, placePos, placedBlockState, player, itemInstance);
+            placedState->getBlock()->setPlacedBy(level, placePos, placedState, player, itemInstance);
         }
 
         const SoundType* soundType = mBlock->getSoundType();

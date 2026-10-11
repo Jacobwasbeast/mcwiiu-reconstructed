@@ -40,6 +40,10 @@ public:
     };
 
     static EnumProperty<Variant*>* VARIANT;
+    static const double POST_HEIGHT;
+    static const float ARM_HALF_WIDTH;
+    static const float ARM_HEIGHT;
+    static const float POST_HALF_WIDTH;
 
     WallBlock(Block* block);
     static void blockStaticCtor();

@@ -26,7 +26,7 @@ BannerBlock::BannerBlock()
 
 boost::shared_ptr<BlockEntity> BannerBlock::newBlockEntity(Level* level, int)
 {
-    boost::shared_ptr<BannerBlockEntity> entity(new BannerBlockEntity());
+    boost::shared_ptr<BlockEntity> entity = boost::shared_ptr<BannerBlockEntity>(new BannerBlockEntity());
     entity->setLevel(level);
     return entity;
 }
@@ -78,18 +78,18 @@ not_null_ptr<ItemInstance> BannerBlock::getItemInstanceFromBlockEntity(Level* le
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
     boost::shared_ptr<BannerBlockEntity> bannerEntity =
         boost::dynamic_pointer_cast<BannerBlockEntity>(blockEntity);
-    if (bannerEntity.get() == NULL)
-        return ItemInstance::EMPTY;
-    return bannerEntity->getItem();
+    if (bannerEntity != NULL)
+        return bannerEntity->getItem();
+    return ItemInstance::EMPTY;
 }
 
 not_null_ptr<ItemInstance> BannerBlock::getCloneItemInstance(Level* level, const BlockPos& pos,
                                                                const BlockState* state)
 {
     not_null_ptr<ItemInstance> item = getItemInstanceFromBlockEntity(level, pos, state);
-    if (!item->isEmpty())
-        return item;
-    return not_null_ptr<ItemInstance>(new ItemInstance(Items::banner));
+    return item->isEmpty()
+        ? not_null_ptr<ItemInstance>(boost::shared_ptr<ItemInstance>(new ItemInstance(Items::banner)))
+        : item;
 }
 
 void BannerBlock::spawnResources(Level* level, const BlockPos& pos, const BlockState* state,
@@ -118,12 +118,15 @@ void BannerBlock::playerDestroy(Level* level, boost::shared_ptr<Player> player, 
 {
     boost::shared_ptr<BannerBlockEntity> bannerEntity =
         boost::dynamic_pointer_cast<BannerBlockEntity>(blockEntity);
-    if (bannerEntity.get() == NULL)
+    if (bannerEntity != NULL)
+    {
+        not_null_ptr<ItemInstance> item = bannerEntity->getItem();
+        Block::popResource(level, pos, item);
+    }
+    else
     {
         BaseEntityBlock::playerDestroy(level, player, pos, state, boost::shared_ptr<BlockEntity>(), tool);
-        return;
     }
-    Block::popResource(level, pos, bannerEntity->getItem());
 }
 
 EBlockFaceShape BannerBlock::getBlockFaceShape(LevelSource*, const BlockState*, const BlockPos&,

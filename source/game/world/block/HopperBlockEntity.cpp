@@ -138,7 +138,7 @@ boost::shared_ptr<BlockEntity> HopperBlockEntity::clone()
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
         if (!mItems[i]->isEmpty())
-            result->mItems[i] = mItems[i]->copy();
+            result->mItems.set(i, mItems[i]->copy());
     }
     return result;
 }
@@ -230,21 +230,21 @@ boost::shared_ptr<Container> HopperBlockEntity::getSourceContainer(Hopper* hoppe
 bool HopperBlockEntity::isEmptyContainer(boost::shared_ptr<Container> container, const Direction* direction)
 {
     boost::shared_ptr<WorldlyContainer> worldly = boost::dynamic_pointer_cast<WorldlyContainer>(container);
-    if (!worldly)
-    {
-        unsigned int size = container->getContainerSize();
-        for (unsigned int i = 0; i < size; ++i)
-        {
-            if (!container->getItem(i)->isEmpty())
-                return false;
-        }
-    }
-    else
+    if (worldly)
     {
         arrayWithLength<int> slots = worldly->getSlotsForFace(direction);
         for (unsigned int i = 0; i < slots.length; ++i)
         {
             if (!worldly->getItem(slots.data[i])->isEmpty())
+                return false;
+        }
+    }
+    else
+    {
+        int size = container->getContainerSize();
+        for (int i = 0; i < size; ++i)
+        {
+            if (!container->getItem(i)->isEmpty())
                 return false;
         }
     }
@@ -325,25 +325,21 @@ not_null_ptr<ItemInstance> HopperBlockEntity::tryMoveInItem(Container* source, C
 not_null_ptr<ItemInstance> HopperBlockEntity::addItem(Container* source, Container* destination,
                                                        not_null_ptr<ItemInstance> item, const Direction* direction)
 {
-    if (destination == NULL || dynamic_cast<WorldlyContainer*>(destination) == NULL || direction == NULL)
+    if (destination != NULL && dynamic_cast<WorldlyContainer*>(destination) != NULL && direction != NULL)
     {
-        int size = destination->getContainerSize();
-        for (int i = 0; i < size; ++i)
+        WorldlyContainer* worldly = dynamic_cast<WorldlyContainer*>(destination);
+        arrayWithLength<int> slots = worldly->getSlotsForFace(direction);
+        for (unsigned int i = 0; i < slots.length && !item->isEmpty(); ++i)
         {
-            if (item->isEmpty())
-                break;
-            item = tryMoveInItem(source, destination, item, i, direction);
+            item = tryMoveInItem(source, destination, item, slots.data[i], direction);
         }
     }
     else
     {
-        WorldlyContainer* worldly = dynamic_cast<WorldlyContainer*>(destination);
-        arrayWithLength<int> slots = worldly->getSlotsForFace(direction);
-        for (unsigned int i = 0; i < slots.length; ++i)
+        int size = destination->getContainerSize();
+        for (int i = 0; i < size && !item->isEmpty(); ++i)
         {
-            if (item->isEmpty())
-                break;
-            item = tryMoveInItem(source, destination, item, slots.data[i], direction);
+            item = tryMoveInItem(source, destination, item, i, direction);
         }
     }
     return item;
@@ -449,22 +445,22 @@ bool HopperBlockEntity::tryMoveItems()
 bool HopperBlockEntity::isFullContainer(boost::shared_ptr<Container> container, const Direction* direction)
 {
     boost::shared_ptr<WorldlyContainer> worldly = boost::dynamic_pointer_cast<WorldlyContainer>(container);
-    if (!worldly)
+    if (worldly)
     {
-        unsigned int size = container->getContainerSize();
-        for (unsigned int i = 0; i < size; ++i)
+        arrayWithLength<int> slots = worldly->getSlotsForFace(direction);
+        for (unsigned int i = 0; i < slots.length; ++i)
         {
-            not_null_ptr<ItemInstance> item = container->getItem(i);
+            not_null_ptr<ItemInstance> item = worldly->getItem(slots.data[i]);
             if (item->isEmpty() || item->getCount() != item->getMaxStackSize())
                 return false;
         }
     }
     else
     {
-        arrayWithLength<int> slots = worldly->getSlotsForFace(direction);
-        for (unsigned int i = 0; i < slots.length; ++i)
+        int size = container->getContainerSize();
+        for (int i = 0; i < size; ++i)
         {
-            not_null_ptr<ItemInstance> item = worldly->getItem(slots.data[i]);
+            not_null_ptr<ItemInstance> item = container->getItem(i);
             if (item->isEmpty() || item->getCount() != item->getMaxStackSize())
                 return false;
         }

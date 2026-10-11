@@ -12,6 +12,7 @@
 #include "game/world/Level.hpp"
 #include "game/world/block/Block.hpp"
 #include "game/world/block/BlockPos.hpp"
+#include "game/world/block/BlockId.hpp"
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/Blocks.hpp"
 #include "game/world/block/LiquidBlock.hpp"
@@ -52,6 +53,7 @@ InteractionResult::EInteractionResult CoralFanBlockItem::useOn(boost::shared_ptr
                                                                 bool simulate)
 {
     BlockPos placePos = pos.relative(direction);
+    bool isUp = true;
     not_null_ptr<ItemInstance> itemInstance = player->getItemInHand(hand);
     int variant = itemInstance->getAuxValue() & 7;
 
@@ -63,43 +65,53 @@ InteractionResult::EInteractionResult CoralFanBlockItem::useOn(boost::shared_ptr
         return InteractionResult::eInteractionResult_Fail;
     }
 
-    bool isUp = direction == Direction::UP;
-    bool underWater = level->isUnderWater(placePos, 0x108, 0);
+    if (direction != Direction::UP)
+        isUp = false;
+    bool underWater = level->isUnderWater(placePos, BlockId::CORAL_FAN, 0);
     const BlockState* state;
+    int fanDirection;
     if (isUp)
     {
         state = Blocks::coral_fan->defaultBlockState();
-        if (direction != Direction::UP || !state->getBlock()->mayPlaceOn(level, pos, state))
-            return InteractionResult::eInteractionResult_Fail;
+        if (direction == Direction::UP)
+        {
+            if (!state->getBlock()->mayPlaceOn(level, pos, state))
+                return InteractionResult::eInteractionResult_Fail;
 
-        Vec3* facing = (pos - player->getPos(0.0f))->normalize();
-        float angle = static_cast<float>(atan2(facing->z, facing->x));
-        int fanDirection = ((angle > 0.7853982f && angle < 2.3561945f) || (angle > 3.926991f && angle < 5.4977875f))
-                               ? 0
-                               : 1;
-        if (!underWater || itemInstance->getItem() == Item::byBlock(Blocks::coral_fan_dead))
-            state = Blocks::coral_fan_dead->defaultBlockState();
-        TypedBoxed<int> directionValue(fanDirection);
-        TypedBoxed<int> variantValue(variant);
-        state = state->setBoxedValue(CoralFan::DIRECTION, &directionValue)->setBoxedValue(CoralFan::VARIANT, &variantValue);
+            Vec3* facing = (pos - player->getPos(0.0f))->normalize();
+            float angle = static_cast<float>(atan2(facing->z, facing->x));
+            if ((angle > 0.7853982f && angle < 2.3561945f) || (angle > 3.926991f && angle < 5.4977875f))
+                fanDirection = 0;
+            else
+                fanDirection = 1;
+            if (!underWater || itemInstance->getItem() == Item::byBlock(Blocks::coral_fan_dead))
+                state = Blocks::coral_fan_dead->defaultBlockState();
+            state = state->setValue(CoralFan::DIRECTION, fanDirection)->setValue(CoralFan::VARIANT, variant);
+        }
+        else
+            return InteractionResult::eInteractionResult_Fail;
     }
     else
     {
         state = Blocks::coral_fan_hang->defaultBlockState();
-        if (variant < 2)
+        switch (variant)
         {
-            TypedBoxed<int> hangVariant(variant);
-            state = Blocks::coral_fan_hang->defaultBlockState()->setBoxedValue(CoralFanHang::VARIANT, &hangVariant);
-        }
-        else if (variant < 4)
-        {
-            TypedBoxed<int> hangVariant(variant - 2);
-            state = Blocks::coral_fan_hang2->defaultBlockState()->setBoxedValue(CoralFanHang::VARIANT, &hangVariant);
-        }
-        else if (variant < 6)
-        {
-            TypedBoxed<int> hangVariant(0);
-            state = Blocks::coral_fan_hang3->defaultBlockState()->setBoxedValue(CoralFanHang::VARIANT, &hangVariant);
+        case 0:
+            state = Blocks::coral_fan_hang->defaultBlockState()->setValue(CoralFanHang::VARIANT, 0);
+            break;
+        case 1:
+            state = Blocks::coral_fan_hang->defaultBlockState()->setValue(CoralFanHang::VARIANT, 1);
+            break;
+        case 2:
+            state = Blocks::coral_fan_hang2->defaultBlockState()->setValue(CoralFanHang::VARIANT, 0);
+            break;
+        case 3:
+            state = Blocks::coral_fan_hang2->defaultBlockState()->setValue(CoralFanHang::VARIANT, 1);
+            break;
+        case 4:
+        case 5:
+            state = Blocks::coral_fan_hang3->defaultBlockState()->setValue(CoralFanHang::VARIANT, 0);
+            break;
         }
 
         const BlockState* support = level->getBlockState(pos);
@@ -110,34 +122,28 @@ InteractionResult::EInteractionResult CoralFanBlockItem::useOn(boost::shared_ptr
         if (!state->getBlock()->mayPlaceOn(level, pos, state))
             return InteractionResult::eInteractionResult_Fail;
 
-        int hangDirection;
         if (direction == Direction::NORTH)
-            hangDirection = 2;
+            state = state->setValue(CoralFanHang::DIRECTION, 2);
         else if (direction == Direction::EAST)
-            hangDirection = 1;
+            state = state->setValue(CoralFanHang::DIRECTION, 1);
         else if (direction == Direction::SOUTH)
-            hangDirection = 3;
+            state = state->setValue(CoralFanHang::DIRECTION, 3);
         else
-            hangDirection = 0;
-        TypedBoxed<int> directionValue(hangDirection);
-        state = state->setBoxedValue(CoralFanHang::DIRECTION, &directionValue);
+            state = state->setValue(CoralFanHang::DIRECTION, 0);
         if (!underWater || itemInstance->getItem() == Item::byBlock(Blocks::coral_fan_dead))
-        {
-            TypedBoxed<bool> dead(true);
-            state = state->setBoxedValue(CoralFanHang::DEAD, &dead);
-        }
+            state = state->setValue(CoralFanHang::DEAD, true);
     }
 
-    if (!simulate)
-    {
-        level->setBlock(placePos, state, Block::UPDATE_ALL, false);
-        itemInstance->shrink(1);
-        level->getBlockState(pos);
-        player->swing(InteractionHand::eInteractionHand_MainHand);
-        const SoundType* soundType = mBlock->getSoundType();
-        level->playSound(player, pos, soundType->getPlaceSound(), SoundSource::eSoundSource_Blocks,
-                         (soundType->getVolume() + 1.0f) * 0.5f, soundType->getPitch() * 0.8f, 16.0f);
-    }
+    if (simulate)
+        return InteractionResult::eInteractionResult_Success;
+
+    level->setBlock(placePos, state, Block::UPDATE_ALL, false);
+    itemInstance->shrink(1);
+    level->getBlockState(pos);
+    player->swing(InteractionHand::eInteractionHand_MainHand);
+    const SoundType* soundType = mBlock->getSoundType();
+    level->playSound(player, pos, soundType->getPlaceSound(), SoundSource::eSoundSource_Blocks,
+                     (soundType->getVolume() + 1.0f) * 0.5f, soundType->getPitch() * 0.8f, 16.0f);
     return InteractionResult::eInteractionResult_Success;
 }
 

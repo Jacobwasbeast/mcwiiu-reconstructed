@@ -36,6 +36,7 @@ public:
     static const std::wstring TEXTURE_TOP_STICKY;
     static const std::wstring TEXTURE_BOTTOM;
     static const std::wstring TEXTURE_INNER_TOP;
+    static const float PLATFORM_THICKNESS;
 
     PistonBaseBlock(bool sticky);
 

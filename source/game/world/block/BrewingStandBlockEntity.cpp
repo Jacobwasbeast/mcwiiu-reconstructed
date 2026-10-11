@@ -1,4 +1,5 @@
 #include "game/world/block/BrewingStandBlockEntity.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/network/ClientboundContainerOpenPacket.hpp"
 #include "game/world/LevelEvent.hpp"
 #include "game/core/EntityType.hpp"
@@ -132,11 +133,11 @@ bool BrewingStandBlockEntity::stillValid(boost::shared_ptr<Player> player)
     {
         return false;
     }
-    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25f)
+    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
     {
-        return true;
+        return false;
     }
-    return false;
+    return true;
 }
 
 void BrewingStandBlockEntity::startOpen(boost::shared_ptr<Player> player)
@@ -265,11 +266,12 @@ bool BrewingStandBlockEntity::isBrewable()
     }
     for (unsigned int i = 0; i < 3; ++i)
     {
-        if (mItems[i]->isEmpty())
+        not_null_ptr<ItemInstance> potion = mItems[i];
+        if (potion->isEmpty())
         {
             continue;
         }
-        if (PotionBrewing::hasMix(mItems[i], ingredient))
+        if (PotionBrewing::hasMix(potion, ingredient))
         {
             return true;
         }
@@ -290,9 +292,9 @@ arrayWithLength<unsigned char> BrewingStandBlockEntity::getPotionBits()
 void BrewingStandBlockEntity::doBrew()
 {
     not_null_ptr<ItemInstance> ingredient = mItems[3];
-    for (unsigned int i = 0; i < 3; ++i)
+    for (int i = 0; i < 3; ++i)
     {
-        mItems[i] = PotionBrewing::mix(ingredient, mItems[i]);
+        mItems.set(i, PotionBrewing::mix(ingredient, mItems[i]));
     }
     ingredient->shrink(1);
     BlockPos pos = getBlockPos();
@@ -338,8 +340,7 @@ void BrewingStandBlockEntity::tick()
         }
         else
         {
-            --mBrewTime;
-            if (mBrewTime == 0)
+            if (--mBrewTime == 0)
             {
                 doBrew();
                 setChanged();

@@ -40,7 +40,7 @@ const AABB* SignBlock::getShape(const BlockState*, LevelSource*, const BlockPos&
 
 const AABB* SignBlock::getClipAABB(const BlockState*, LevelSource*, const BlockPos&)
 {
-    return NULL;
+    return NULL_AABB;
 }
 
 bool SignBlock::isCubeShaped(const BlockState*)
@@ -85,12 +85,9 @@ bool SignBlock::use(Level* level, const BlockPos& pos, const BlockState*, boost:
         return true;
 
     boost::shared_ptr<BlockEntity> blockEntity = level->getBlockEntity(pos);
-    bool isSign = eTYPE_DERIVED_FROM(BlockEntityType::SIGN, blockEntity->GetType());
-    if (!isSign)
-        return false;
-
-    boost::shared_ptr<SignBlockEntity> sign = boost::static_pointer_cast<SignBlockEntity>(blockEntity);
-    return sign->executeClickCommands(player);
+    if (eTYPE_DERIVED_FROM(BlockEntityType::SIGN, blockEntity->GetType()))
+        return boost::static_pointer_cast<SignBlockEntity>(blockEntity)->executeClickCommands(player);
+    return false;
 }
 
 bool SignBlock::mayPlace(Level* level, const BlockPos& pos)

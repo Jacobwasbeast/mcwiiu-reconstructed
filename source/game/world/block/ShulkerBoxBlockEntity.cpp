@@ -35,6 +35,11 @@ int shulkerBoxSlots[27] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
 
 arrayWithLength<int> ShulkerBoxBlockEntity::SLOTS(shulkerBoxSlots, 27);
 
+const int ShulkerBoxBlockEntity::COLUMNS = 9;
+const int ShulkerBoxBlockEntity::ROWS = 3;
+const float ShulkerBoxBlockEntity::LID_HEIGHT_FACTOR = 0.5F;
+const float ShulkerBoxBlockEntity::LID_ROTATION_DEGREES = 270.0F;
+
 ShulkerBoxBlockEntity::ShulkerBoxBlockEntity(const DyeColor* color)
     : RandomizableLockableContainerBlockEntity()
     , WorldlyContainer()

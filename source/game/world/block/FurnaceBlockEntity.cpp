@@ -1,4 +1,5 @@
 #include "game/world/block/FurnaceBlockEntity.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/network/ClientboundContainerOpenPacket.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -136,11 +137,11 @@ bool FurnaceBlockEntity::stillValid(boost::shared_ptr<Player> player)
     {
         return false;
     }
-    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) <= 30.25f)
+    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
     {
-        return true;
+        return false;
     }
-    return false;
+    return true;
 }
 
 void FurnaceBlockEntity::startOpen(boost::shared_ptr<Player> player)
@@ -182,19 +183,22 @@ int FurnaceBlockEntity::getBurnDuration(not_null_ptr<ItemInstance> item)
             HoeItem* hoe = dynamic_cast<HoeItem*>(itemType);
             if (hoe != NULL && hoe->getTier() == Item::Tier::WOOD) return 200;
             if (itemType == Items::stick) return 100;
-            if (itemType == Items::bow) return 300;
-            if (itemType == Items::fishingRod) return 300;
-            if (itemType == Items::sign) return 200;
-            if (itemType == Items::coal) return 1600;
-            if (itemType == Items::lavaBucket) return 20000;
-            if (itemType == Item::byBlock(Blocks::sapling)) return 100;
-            if (itemType == Items::bowl) return 100;
-            if (itemType == Items::blazeRod) return 2400;
-            if (itemType == Item::byBlock(Blocks::dried_kelp_block)) return 4000;
-            if (itemType == NULL) return 0;
-            if (dynamic_cast<DoorItem*>(itemType) != NULL && itemType != Items::ironDoor) return 200;
-            if (dynamic_cast<BoatItem*>(itemType) != NULL) return 400;
-            return 0;
+            if (itemType != Items::bow && itemType != Items::fishingRod)
+            {
+                if (itemType == Items::sign) return 200;
+                if (itemType == Items::coal) return 1600;
+                if (itemType == Items::lavaBucket) return 20000;
+                if (itemType != Item::byBlock(Blocks::sapling) && itemType != Items::bowl)
+                {
+                    if (itemType == Items::blazeRod) return 2400;
+                    if (itemType == Item::byBlock(Blocks::dried_kelp_block)) return 4000;
+                    if (itemType == NULL) return 0;
+                    if (dynamic_cast<DoorItem*>(itemType) != NULL && itemType != Items::ironDoor) return 200;
+                    return dynamic_cast<BoatItem*>(itemType) != NULL ? 400 : 0;
+                }
+                return 100;
+            }
+            return 300;
         }
     }
     return 300;
@@ -358,10 +362,12 @@ bool FurnaceBlockEntity::canBurn()
     if (mItems[0]->isEmpty()) return false;
     ItemInstance* result = FurnaceRecipes::getInstance()->getResult(mItems[0]);
     if (result->isEmpty()) return false;
-    if (mItems[2]->isEmpty()) return true;
-    if (!mItems[2]->sameItem_not_shared(result)) return false;
-    if (mItems[2]->getCount() < getMaxStackSize() && mItems[2]->getCount() < mItems[2]->getMaxStackSize()) return true;
-    return mItems[2]->getCount() < result->getMaxStackSize();
+    not_null_ptr<ItemInstance> output = mItems[2];
+    if (output->isEmpty()) return true;
+    if (!output->sameItem_not_shared(result)) return false;
+    if (output->getCount() < getMaxStackSize() && output->getCount() < output->getMaxStackSize()) return true;
+    if (output->getCount() < result->getMaxStackSize()) return true;
+    return false;
 }
 
 void FurnaceBlockEntity::burn()
@@ -388,7 +394,7 @@ void FurnaceBlockEntity::tick()
 {
     bool wasLit = isLit();
     bool changed = false;
-    if (wasLit) --mLitTime;
+    if (isLit()) --mLitTime;
     if (mLevel == NULL) return;
     if (mLevel->mIsClientSide) return;
 
@@ -430,7 +436,7 @@ void FurnaceBlockEntity::tick()
                         if (fuel->isEmpty())
                         {
                             Item* remainder = fuelItem->getCraftingRemainingItem();
-                            mItems[1] = (remainder != NULL) ? not_null_ptr<ItemInstance>(new ItemInstance(remainder)) : ItemInstance::EMPTY;
+                            mItems[1] = (remainder == NULL) ? ItemInstance::EMPTY : not_null_ptr<ItemInstance>(new ItemInstance(remainder));
                         }
                     }
                 }
@@ -439,16 +445,13 @@ void FurnaceBlockEntity::tick()
 
             if (isLit() && canBurn())
             {
-                if (mCookingProgress + 1 == mCookingTotalTime)
+                ++mCookingProgress;
+                if (mCookingProgress == mCookingTotalTime)
                 {
                     mCookingProgress = 0;
                     mCookingTotalTime = getTotalCookTime(mItems[0]);
                     burn();
                     changed = true;
-                }
-                else
-                {
-                    ++mCookingProgress;
                 }
             }
             else
@@ -474,13 +477,13 @@ boost::shared_ptr<BlockEntity> FurnaceBlockEntity::clone()
 {
     boost::shared_ptr<FurnaceBlockEntity> result(new FurnaceBlockEntity());
     BlockEntity::clone(result);
-    result->mLitTime = mLitTime;
-    result->mLitDuration = mLitDuration;
     result->mCookingProgress = mCookingProgress;
     result->mCookingTotalTime = mCookingTotalTime;
+    result->mLitTime = mLitTime;
+    result->mLitDuration = mLitDuration;
     for (unsigned int i = 0; i < mItems.size(); ++i)
     {
-        result->mItems[i] = mItems[i]->copy();
+        result->mItems.set(i, mItems[i]->copy());
     }
     result->mName->set(mName->raw(), mName->getUUID(), mName->isChatCensored(), mName->isUUIDLocal());
     return result;

@@ -128,6 +128,7 @@ public:
     static EnumProperty<const Contents*>* CONTENTS;
     static AbstractProperty<int>* LEGACY_DATA;
     static AABB* SHAPE;
+    static const double POT_WIDTH;
 };
 
 #endif

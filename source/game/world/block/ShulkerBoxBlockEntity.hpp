@@ -36,6 +36,11 @@ public:
         ANIMATION_CLOSING
     };
 
+    static const int COLUMNS;
+    static const int ROWS;
+    static const float LID_HEIGHT_FACTOR;
+    static const float LID_ROTATION_DEGREES;
+
     ShulkerBoxBlockEntity(const DyeColor* color);
     ShulkerBoxBlockEntity();
     virtual ~ShulkerBoxBlockEntity();

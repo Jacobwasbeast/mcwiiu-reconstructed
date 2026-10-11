@@ -1,5 +1,7 @@
 #include "game/world/block/BlockStackLayerTheme.hpp"
 
+#include <algorithm>
+
 #include "game/util/Random.hpp"
 #include "game/util/Vec3i.hpp"
 #include "game/world/block/BlockTransaction.hpp"
@@ -21,11 +23,7 @@ void BlockStackLayerTheme::Apply(Random&, BlockTransaction* transaction, int&, i
                 Vec3i position(x, y, z);
                 if (transaction->getBlock(position) != 0)
                 {
-                    int lastState = (int)mStates.size() - 1;
-                    int index = stateIndex;
-                    if (lastState < index)
-                        index = lastState;
-                    transaction->setBlock(position, mStates[index]);
+                    transaction->setBlock(position, mStates[std::min(stateIndex, (int)mStates.size() - 1)]);
                     ++stateIndex;
                 }
             }

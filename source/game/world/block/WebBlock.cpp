@@ -34,7 +34,7 @@ bool WebBlock::isSolidRender(const BlockState* state) const
 
 const AABB* WebBlock::getClipAABB(const BlockState* state, LevelSource* levelSource, const BlockPos& pos)
 {
-    return NULL;
+    return NULL_AABB;
 }
 
 bool WebBlock::isCubeShaped(const BlockState* state)

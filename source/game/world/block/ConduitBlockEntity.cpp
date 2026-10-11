@@ -119,8 +119,8 @@ void ConduitBlockEntity::_checkShape()
             {
                 if (x == 0 && y == 0 && z == 0)
                     continue;
-                if (mLevel->getLiquidBlock(BlockPos(center.x + x, center.y + y, center.z + z))->mMaterial
-                    != Material::WATER)
+                BlockPos waterPos(center.x + x, center.y + y, center.z + z);
+                if (mLevel->getLiquidBlock(waterPos)->mMaterial != Material::WATER)
                 {
                     dry = true;
                 }
@@ -183,7 +183,7 @@ void ConduitBlockEntity::_checkShape()
     {
         unsigned int count = mBlocks.size();
         setEffectRange((static_cast<int>(count) / 7) * 16);
-        if (count > 15)
+        if (count >= 16)
         {
             mActive = true;
             if (!wasActive)
@@ -209,7 +209,7 @@ void ConduitBlockEntity::_checkShape()
                     }
                 }
             }
-            if (count > 41)
+            if (count >= 42)
                 mHunting = true;
         }
     }

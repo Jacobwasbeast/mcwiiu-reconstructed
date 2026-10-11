@@ -13,6 +13,8 @@
 #include "game/world/block/BlockState.hpp"
 #include "game/world/block/LiquidBlock.hpp"
 #include "game/world/block/Material.hpp"
+#include "game/world/generation/MultiPlayerLevel.hpp"
+#include "game/world/generation/MultiplayerLocalPlayer.hpp"
 #include "game/world/generation/Player.hpp"
 
 WaterLilyBlockItem::WaterLilyBlockItem(Block* block)
@@ -30,25 +32,37 @@ bool WaterLilyBlockItem::TestUse(Level* level, boost::shared_ptr<Player> player,
         return false;
     }
 
-    if (hitResult->mType != HitResult::BLOCK)
+    if (hitResult->mType == HitResult::BLOCK)
+    {
+        BlockPos pos = hitResult->getBlockPos();
+        if (!level->mayInteract(player, pos, mBlock))
+        {
+            delete hitResult;
+            return false;
+        }
+        if (!player->mayUseItemAt(pos.relative(hitResult->mDirection), hitResult->mDirection, itemInstance))
+        {
+            delete hitResult;
+            return false;
+        }
+        delete hitResult;
+
+        BlockPos above = pos.above();
+        const BlockState* state = level->getBlockState(pos);
+        Block* block = state->getBlock();
+        if (block->mMaterial == Material::WATER)
+        {
+            if (state->getValue(LiquidBlock::LEVEL) == 0 && level->isEmptyBlock(above))
+            {
+                return true;
+            }
+        }
+    }
+    else
     {
         delete hitResult;
-        return false;
     }
-
-    BlockPos pos = hitResult->getBlockPos();
-    if (level->mayInteract(player, pos, mBlock) != 1
-        || !player->mayUseItemAt(pos.relative(hitResult->mDirection), hitResult->mDirection, itemInstance))
-    {
-        delete hitResult;
-        return false;
-    }
-    delete hitResult;
-
-    BlockPos above = pos.above();
-    const BlockState* state = level->getBlockState(pos);
-    return state->getBlock()->mMaterial == Material::WATER && state->getValue(LiquidBlock::LEVEL) == 0
-        && level->isEmptyBlock(above);
+    return false;
 }
 
 InteractionResultHolder WaterLilyBlockItem::use(Level* level, boost::shared_ptr<Player> player,
@@ -74,7 +88,8 @@ InteractionResultHolder WaterLilyBlockItem::use(Level* level, boost::shared_ptr<
 
         BlockPos above = pos.above();
         const BlockState* state = level->getBlockState(pos);
-        if (state->getBlock()->mMaterial == Material::WATER && state->getValue(LiquidBlock::LEVEL) == 0
+        Block* block = state->getBlock();
+        if (block->mMaterial == Material::WATER && state->getValue(LiquidBlock::LEVEL) == 0
             && level->isEmptyBlock(above))
         {
             level->setBlock(above, Blocks::waterlily->defaultBlockState(), Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false);
@@ -97,8 +112,9 @@ InteractionResultHolder WaterLilyBlockItem::use(Level* level, boost::shared_ptr<
 
 unsigned int WaterLilyBlockItem::GetUseTooltip(const ItemTooltipDataHolder& tooltipData)
 {
-    return TestUse((Level*)tooltipData.m_pLevel,
-                   (boost::shared_ptr<Player>&)tooltipData.m_pPlayer,
-                   InteractionHand::eInteractionHand_MainHand)
-        ? IDS_TOOLTIPS_PLACE : IDS_NONE;
+    if (TestUse(tooltipData.m_pLevel, tooltipData.m_pPlayer, InteractionHand::eInteractionHand_MainHand))
+    {
+        return IDS_TOOLTIPS_PLACE;
+    }
+    return IDS_NONE;
 }

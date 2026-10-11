@@ -135,33 +135,35 @@ std::wstring ItemInstanceBlockEntityTagWalker::getBlockEntityId(int version, con
 
 CompoundTag* ItemInstanceBlockEntityTagWalker::walk(DataFixer* fixer, CompoundTag* tag, int version)
 {
-    if (tag->contains(L"tag", Tag::TAG_COMPOUND) == 1)
+    if (!tag->contains(L"tag", Tag::TAG_COMPOUND))
     {
-        CompoundTag* itemTag = tag->getCompound(L"tag");
+        return tag;
+    }
 
-        if (itemTag->contains(L"BlockEntityTag", Tag::TAG_COMPOUND))
+    CompoundTag* itemTag = tag->getCompound(L"tag");
+
+    if (itemTag->contains(L"BlockEntityTag", Tag::TAG_COMPOUND))
+    {
+        CompoundTag* blockEntityTag = itemTag->getCompound(L"BlockEntityTag");
+        std::wstring itemId = tag->getString(L"id");
+        std::wstring blockEntityId = getBlockEntityId(version, itemId);
+        bool removeId;
+
+        if (blockEntityId.empty())
         {
-            CompoundTag* blockEntityTag = itemTag->getCompound(L"BlockEntityTag");
+            removeId = false;
+        }
+        else
+        {
+            removeId = !blockEntityTag->contains(L"id");
+            blockEntityTag->putString(L"id", blockEntityId);
+        }
 
-            std::wstring itemId = tag->getString(L"id");
-            std::wstring blockEntityId = getBlockEntityId(version, itemId);
+        fixer->update(DataFixTypes::eDataFixTypes_BlockEntity, blockEntityTag, version);
 
-            if (blockEntityId.empty())
-            {
-                fixer->update(DataFixTypes::eDataFixTypes_BlockEntity, blockEntityTag, version);
-            }
-            else
-            {
-                bool hadId = blockEntityTag->contains(L"id");
-
-                blockEntityTag->putString(L"id", blockEntityId);
-                fixer->update(DataFixTypes::eDataFixTypes_BlockEntity, blockEntityTag, version);
-
-                if (!hadId)
-                {
-                    blockEntityTag->remove(L"id");
-                }
-            }
+        if (removeId)
+        {
+            blockEntityTag->remove(L"id");
         }
     }
 

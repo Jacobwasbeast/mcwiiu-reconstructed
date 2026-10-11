@@ -3,10 +3,9 @@
 #include "game/core/CriticalSection.hpp"
 #include "game/core/Rotations.hpp"
 #include "game/data/CompoundTag.hpp"
+#include "game/entity/mob/SynchedEntityData.hpp"
 #include "game/world/block/BlockPos.hpp"
 #include "game/world/block/EntityDataAccessor.hpp"
-
-static OSFastMutex sDataItemLock;
 
 DataItem_Impl<BlockPos*>::~DataItem_Impl()
 {
@@ -69,12 +68,12 @@ int DataItem_Impl<CompoundTag*>::getAccessorId()
 
 void DataItem_Impl<CompoundTag*>::setValue(CompoundTag* value)
 {
-    EnterCriticalSection(&sDataItemLock);
+    EnterCriticalSection(&SynchedEntityData::sDataItemLock);
 
     delete mValue;
     mValue = value;
 
-    LeaveCriticalSection(&sDataItemLock);
+    LeaveCriticalSection(&SynchedEntityData::sDataItemLock);
 }
 
 DataItem_Impl<const Rotations*>::DataItem_Impl(const EntityDataAccessor<const Rotations*>* accessor, const Rotations* value)
@@ -90,19 +89,19 @@ DataItem_Impl<const Rotations*>::~DataItem_Impl()
 
 void DataItem_Impl<const Rotations*>::setValue(const Rotations* value)
 {
-    EnterCriticalSection(&sDataItemLock);
+    EnterCriticalSection(&SynchedEntityData::sDataItemLock);
 
     delete mValue;
 
     if (value != NULL)
     {
         mValue = new Rotations(*value);
-        LeaveCriticalSection(&sDataItemLock);
+        LeaveCriticalSection(&SynchedEntityData::sDataItemLock);
     }
     else
     {
         mValue = NULL;
-        LeaveCriticalSection(&sDataItemLock);
+        LeaveCriticalSection(&SynchedEntityData::sDataItemLock);
     }
 }
 

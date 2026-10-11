@@ -45,33 +45,30 @@ bool SlabBlockItem::tryConvertTargetBlock(boost::shared_ptr<Player> player,
 {
     const BlockState* state = level->getBlockState(pos);
     Property* property = mHalfSlab->getTypeProperty();
-    if (state->getBlock() != mHalfSlab)
+    if (state->getBlock() == mHalfSlab)
     {
-        return false;
-    }
-
-    Boxed* currentType = state->getBoxedValue(property);
-    if (!(*currentType == type))
-    {
-        return false;
-    }
-
-    if (!simulate)
-    {
-        const BlockState* fullState = mFullSlab->defaultBlockState()->setBoxedValue(property, currentType);
-        const AABB* box = mFullSlab->getClipAABB(fullState, level, pos);
-        if (level->isUnobstructed(box) && level->setBlock(pos, fullState, Block::UPDATE_ALL, false))
+        Boxed* currentType = state->getBoxedValue(property);
+        if (*currentType == type)
         {
-            const SoundType* soundType = mFullSlab->mSoundType;
-            level->playSound(player, pos, soundType->getPlaceSound(),
-                             SoundSource::eSoundSource_Blocks,
-                             (soundType->getVolume() + 1.0f) * 0.5f,
-                             soundType->getPitch() * 0.8f, 16.0f);
-            itemInstance->shrink(1);
+            if (!simulate)
+            {
+                const BlockState* fullState = mFullSlab->defaultBlockState()->setBoxedValue(property, currentType);
+                const AABB* box = mFullSlab->getClipAABB(fullState, level, pos);
+                if (level->isUnobstructed(box) && level->setBlock(pos, fullState, Block::UPDATE_ALL, false))
+                {
+                    const SoundType* soundType = mFullSlab->mSoundType;
+                    level->playSound(player, pos, soundType->getPlaceSound(),
+                                     SoundSource::eSoundSource_Blocks,
+                                     (soundType->getVolume() + 1.0f) * 0.5f,
+                                     soundType->getPitch() * 0.8f, 16.0f);
+                    itemInstance->shrink(1);
+                }
+            }
+            return true;
         }
     }
 
-    return true;
+    return false;
 }
 
 InteractionResult::EInteractionResult SlabBlockItem::useOn(boost::shared_ptr<Player> player,
@@ -104,17 +101,19 @@ InteractionResult::EInteractionResult SlabBlockItem::useOn(boost::shared_ptr<Pla
         {
             const BlockState* fullState = makeState(property, currentType);
             delete type;
-            if (!simulate)
+            if (simulate)
             {
-                const AABB* shape = fullState->getClipAABB(level, pos);
-                if (shape != NULL && level->isUnobstructed(shape->move(pos))
-                    && level->setBlock(pos, fullState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false))
-                {
-                    const SoundType* soundType = mFullSlab->getSoundType();
-                    level->playSound(player, pos, soundType->getPlaceSound(), SoundSource::eSoundSource_Blocks,
-                                     (soundType->getVolume() + 1.0f) * 0.5f, soundType->getPitch() * 0.8f, 16.0f);
-                    itemInstance->shrink(1);
-                }
+                return InteractionResult::eInteractionResult_Success;
+            }
+
+            const AABB* shape = fullState->getClipAABB(level, pos);
+            if (shape != Block::NULL_AABB && level->isUnobstructed(shape->move(pos))
+                && level->setBlock(pos, fullState, Block::UPDATE_ALL | Block::UPDATE_IMMEDIATE, false))
+            {
+                const SoundType* soundType = mFullSlab->getSoundType();
+                level->playSound(player, pos, soundType->getPlaceSound(), SoundSource::eSoundSource_Blocks,
+                                 (soundType->getVolume() + 1.0f) * 0.5f, soundType->getPitch() * 0.8f, 16.0f);
+                itemInstance->shrink(1);
             }
             return InteractionResult::eInteractionResult_Success;
         }

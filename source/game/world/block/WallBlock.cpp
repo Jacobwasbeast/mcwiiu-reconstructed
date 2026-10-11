@@ -76,6 +76,10 @@ WallBlock::Variant* WallBlock::Variant::COBBLESTONE = new WallBlock::Variant(0, 
 WallBlock::Variant* WallBlock::Variant::MOSSY = new WallBlock::Variant(1, L"mossy_cobblestone", IDS_TILE_COBBLESTONE_WALL_MOSSY);
 WallBlock::Variant* WallBlock::Variant::VALUES[2] = { WallBlock::Variant::COBBLESTONE, WallBlock::Variant::MOSSY };
 EnumProperty<WallBlock::Variant*>* WallBlock::VARIANT = NULL;
+const double WallBlock::POST_HEIGHT = 1.0;
+const float WallBlock::ARM_HALF_WIDTH = 0.1875f;
+const float WallBlock::ARM_HEIGHT = 0.875f;
+const float WallBlock::POST_HALF_WIDTH = 0.25f;
 
 WallBlock::Variant::Variant(int data, const std::wstring& name, int translationKey)
     : mData(data), mName(name), mTranslationKey(translationKey)

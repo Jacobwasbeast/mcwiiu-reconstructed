@@ -41,8 +41,16 @@ void MushroomBlockLayerTheme::Apply(Random&, BlockTransaction* transaction, int&
                 if (transaction->getBlock(position) <= 0)
                     continue;
 
-                int exposed = (neighbourSurfaces[0] < surfaceY ? 1 : 0) | (neighbourSurfaces[1] < surfaceY ? 2 : 0) |
-                              (neighbourSurfaces[2] < surfaceY ? 4 : 0) | (neighbourSurfaces[3] < surfaceY ? 8 : 0);
+                const BlockState* state = mBlock->defaultBlockState();
+                int exposed = 0;
+                if (neighbourSurfaces[0] < surfaceY)
+                    exposed |= 1;
+                if (neighbourSurfaces[1] < surfaceY)
+                    exposed |= 2;
+                if (neighbourSurfaces[2] < surfaceY)
+                    exposed |= 4;
+                if (neighbourSurfaces[3] < surfaceY)
+                    exposed |= 8;
                 HugeMushroomBlock::Variant* variant;
                 switch (exposed)
                 {
@@ -50,18 +58,16 @@ void MushroomBlockLayerTheme::Apply(Random&, BlockTransaction* transaction, int&
                     variant = y < surfaceY ? HugeMushroomBlock::Variant::ALL_INSIDE : HugeMushroomBlock::Variant::CENTER;
                     break;
                 case 1: variant = HugeMushroomBlock::Variant::NORTH; break;
-                case 2: variant = HugeMushroomBlock::Variant::EAST; break;
                 case 3: variant = HugeMushroomBlock::Variant::NORTH_EAST; break;
-                case 4: variant = HugeMushroomBlock::Variant::SOUTH; break;
+                case 2: variant = HugeMushroomBlock::Variant::EAST; break;
                 case 6: variant = HugeMushroomBlock::Variant::SOUTH_EAST; break;
+                case 4: variant = HugeMushroomBlock::Variant::SOUTH; break;
+                case 12: variant = HugeMushroomBlock::Variant::SOUTH_WEST; break;
                 case 8: variant = HugeMushroomBlock::Variant::WEST; break;
                 case 9: variant = HugeMushroomBlock::Variant::NORTH_WEST; break;
-                case 12: variant = HugeMushroomBlock::Variant::SOUTH_WEST; break;
                 default: variant = HugeMushroomBlock::Variant::ALL_OUTSIDE; break;
                 }
-
-                TypedBoxed<HugeMushroomBlock::Variant*> boxed(variant);
-                transaction->setBlock(position, mBlock->defaultBlockState()->setBoxedValue(HugeMushroomBlock::VARIANT, &boxed));
+                transaction->setBlock(position, state->setValue(HugeMushroomBlock::VARIANT, variant));
             }
         }
     }

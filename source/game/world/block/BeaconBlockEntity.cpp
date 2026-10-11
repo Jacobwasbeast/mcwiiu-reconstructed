@@ -1,4 +1,5 @@
 #include "game/world/block/BeaconBlockEntity.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/network/ClientboundContainerOpenPacket.hpp"
 #include "game/core/EntityType.hpp"
 
@@ -190,7 +191,7 @@ bool BeaconBlockEntity::stillValid(boost::shared_ptr<Player> player)
     {
         return false;
     }
-    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) > 30.25f)
+    if (player->distanceAsIfHitscanned(mPos, *player->mBoundingBox) > SharedConstants::CONTAINER_INTERACT_DISTANCE_SQR)
     {
         return false;
     }
