@@ -1,43 +1,8 @@
 #include "vendor/__N_22_chat_VoiceProtocol_cpp_bf22a0fe.hpp"
 #include <new>
-#include "game/core/CriticalSection.hpp"
 #include "nn/pia/transport/UnreliableProtocol.hpp"
 #include "nn/pia/ProtocolManager.hpp"
 #include "nn/pia/Transport.hpp"
-
-extern OSFastMutex g_voiceProtocolMutex;
-void __N_22_chat_VoiceProtocol_cpp_bf22a0fe::lock_()
-{
-    EnterCriticalSection(&g_voiceProtocolMutex);
-}
-
-void __N_22_chat_VoiceProtocol_cpp_bf22a0fe::unlock_()
-{
-    LeaveCriticalSection(&g_voiceProtocolMutex);
-}
-
-bool __N_22_chat_VoiceProtocol_cpp_bf22a0fe::isOpus(nn::pia::chat::Codec codec)
-{
-    return codec == nn::pia::chat::CODEC_5 || codec == nn::pia::chat::CODEC_6;
-}
-
-TMC_HF_EC_MODE __N_22_chat_VoiceProtocol_cpp_bf22a0fe::convertEcMode(nn::pia::chat::EcMode mode)
-{
-    static const unsigned int conversion[4] = { 0, 1, 2, 0 };
-    return (TMC_HF_EC_MODE)conversion[(unsigned int)mode];
-}
-
-int __N_22_chat_VoiceProtocol_cpp_bf22a0fe::convertCid(unsigned short cid)
-{
-    if (cid == 0)
-        return 0xfd;
-    return (int)cid - 1;
-}
-
-nn::pia::StationIndex __N_22_chat_VoiceProtocol_cpp_bf22a0fe::convertStationIndex(nn::pia::StationIndex index)
-{
-    return static_cast<nn::pia::StationIndex>(static_cast<unsigned short>(index + 1));
-}
 
 template <typename T>
 nn::pia::Result __N_22_chat_VoiceProtocol_cpp_bf22a0fe::createProtocol(T** protocol, unsigned short* protocolId,

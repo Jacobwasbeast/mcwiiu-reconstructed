@@ -3,6 +3,8 @@
 
 #include "nn/pia/Common.hpp"
 
+#include <coreinit/fastmutex.h>
+
 enum VCTCodec
 {
     VCT_CODEC_0 = 0,
@@ -15,6 +17,7 @@ enum VCTCodec
 };
 
 struct _udp_packet;
+struct VCTAudioPacket;
 
 namespace nn
 {
@@ -66,8 +69,55 @@ struct VCTAudioInfo
     unsigned int m_Unknown5C;
 };
 
+typedef int (*VCTSendCallback)(unsigned short cid, const void* pData, unsigned int uiSize);
+typedef int (*VCTSendMultiCallback)(unsigned int uiCidMask, const void* pData, unsigned int uiSize);
+
+enum
+{
+    VCT_CONFIG_FLAG_VAD = 0x01,
+    VCT_CONFIG_FLAG_HPF = 0x04,
+    VCT_CONFIG_FLAG_SPARE_PACKET = 0x08,
+    VCT_CONFIG_FLAG_QUALITY_ALERT = 0x10,
+    VCT_CONFIG_FLAG_DROP_RECOVER = 0x20
+};
+
+struct VCTConfig
+{
+    VCTSession* m_pSessions;
+    unsigned int m_SessionCount;
+    unsigned int m_Mode;
+    unsigned int m_Unknown0C;
+    unsigned short m_Cid;
+    unsigned char m_Codec;
+    unsigned char m_BufferSize;
+    unsigned char m_Flags;
+    unsigned char* m_pAudioBuffer;
+    unsigned int m_AudioBufferSize;
+    unsigned int m_Unknown20;
+    VCTSendCallback m_SendCallback;
+    unsigned int m_Unknown28;
+    VCTSendMultiCallback m_SendMultiCallback;
+};
+
+struct VCTState
+{
+    unsigned short m_Cid;
+    unsigned int m_Unknown04;
+    VCTSendCallback m_SendCallback;
+    unsigned int m_Unknown0C;
+    unsigned int m_Unknown10;
+    unsigned int m_Unknown14;
+    unsigned int m_Mode;
+    unsigned int m_Unknown1C;
+    unsigned int m_Unknown20;
+    VCTSendMultiCallback m_SendMultiCallback;
+};
+
 extern unsigned char g_vctInitialized;
-extern unsigned int g_vctMode;
+extern VCTState g_vctState;
+extern OSFastMutex g_vctDecoderMutex;
+extern OSFastMutex g_vctAudioQueueMutex;
+extern OSFastMutex g_vctPacketBufferMutex;
 
 unsigned char VCT_IsInitialized();
 bool VCT_HandleData(unsigned short connectionId, unsigned char* data, unsigned int dataSize);
@@ -77,6 +127,9 @@ unsigned int VCTi_GetAudioDataSize();
 long long VCTi_GetAudioFrameTicks();
 unsigned int VCT_GetAudioFrameLength();
 unsigned int VCT_GetAudioDataSize();
+unsigned int VCT_GetNoiseSkipTime();
+unsigned int VCT_GetTotalPlayTime();
+unsigned int VCT_GetTotalSpeechTime();
 
 void VCT_ResetVAD();
 void VCT_EnableVAD(bool bEnabled);
@@ -94,12 +147,26 @@ bool vct_is_opus(VCTCodec codec);
 void init_adpcm_state();
 int vct_get_packet_size(unsigned char ucCodec);
 
+unsigned int HPFFilter(void* pAudio, unsigned int uiSize);
 unsigned int HPFFilter2(const void* pAudio, unsigned int uiSize);
 unsigned int VCT_GetAudioScale(const void* pAudio, unsigned int uiSize);
 
+bool VCT_IsValidCodec(VCTCodec codec);
+bool VCT_IsValidSpareCodec(VCTCodec codec);
+bool VCT_GetQualityAlert(unsigned short usCid);
+void vct_check_quality_alert_time();
+
+void VCT_EnableSparePacket(bool bEnabled);
+void VCT_EnableHPF(bool bEnabled);
+void VCT_EnableDropRecover(bool bEnabled);
+
 nn::pia::Result VCT_SendAudioEx(const void* pAudio, unsigned int uiAudioScale);
+int VCTi_SendMulti(unsigned int uiCidMask, const void* pData, unsigned int uiSize);
+VCTAudioPacket* vct_prepare_send_buffer();
+int vct_flush_send_buffer();
 unsigned int vct_handle_audio(unsigned short usCid, unsigned char* pData,
                               unsigned int uiDataSize, long long llReceiveTick);
+int vct_decode_audio_buffer();
 nn::pia::Result VCT_ReceiveAudio(void* pData, unsigned int uiSize, unsigned short* pCids);
 int VCTi_ReceiveAudioData(void* pData, unsigned int uiSize, unsigned int uiStreamIndex,
                           unsigned short* pCid);
@@ -121,7 +188,15 @@ void VCT_StopStreaming(const VCTSession* pSession);
 
 int VCT_AddConferenceClient(unsigned short usCid);
 int VCT_RemoveConferenceClient(unsigned short usCid);
-int VCT_OnConferenceClient(unsigned short usCid);
+bool VCT_OnConferenceClient(unsigned short usCid);
+void vct_finish_audio();
+void vct_finish_ssp();
+void VCT_Cleanup();
+unsigned char VCT_Init(const VCTConfig* pConfig);
+int vct_init_ssp(const VCTConfig* pConfig);
+int vct_init_audio_ex(VCTCodec codec, unsigned int uiFrameMilliseconds);
+void VCTi_MakeAudioParams(unsigned int uiFrameMilliseconds);
+void VCT_ResetDropFrequencyAll();
 
 void VCT_ResetVAD();
 

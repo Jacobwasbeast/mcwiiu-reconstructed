@@ -26,7 +26,6 @@ namespace __N_19_OnlineCore_Blob_cpp_9428d484
     int UnicodeToUtf8(const wchar_t*, char*, unsigned int);
     int Utf8ToUnicode(const char*, wchar_t*, unsigned int);
     int GetNeededUtf8BufferSize(const wchar_t*);
-    uint64_t IsRendezVousRunning();
     int PRUDPVersionCheck(const nn::nex::ByteStream*);
     bool PRUDPUnpackCheck(const nn::nex::ByteStream*, unsigned int*);
     uint32_t RelayProtocolCheck(const nn::nex::ByteStream*);

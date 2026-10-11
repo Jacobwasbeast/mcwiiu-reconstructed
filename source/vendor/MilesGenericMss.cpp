@@ -204,35 +204,35 @@ extern "C" void AIL_API_startup()
     MSS_PROVIDER_STARTUP_CALLBACK pFilterStartup;
     int iResult;
 
-    AIL_preference[0] = 1;
-    AIL_preference[1] = 0x10;
     AIL_preference[2] = 1;
     AIL_preference[3] = 0x40;
-    AIL_preference[4] = 1;
     AIL_preference[5] = 0x83;
-    AIL_preference[6] = 4;
-    AIL_preference[7] = 0x40;
-    AIL_preference[8] = 0xC;
-    AIL_preference[9] = 0x20;
-    AIL_preference[10] = 500;
     AIL_preference[11] = 1;
-    AIL_preference[12] = 0;
-    AIL_preference[13] = 0;
     AIL_preference[14] = 0;
-    AIL_preference[15] = DIG_MAX_CHAIN_ELEMENT_SIZE_DEFAULT;
-    AIL_preference[16] = 100;
-    AIL_preference[17] = 0;
-    AIL_preference[18] = DIG_OUTPUT_BUFFER_SIZE_DEFAULT;
-    AIL_preference[19] = -1;
-    AIL_preference[20] = 0;
-    AIL_preference[21] = 8;
-    AIL_preference[22] = 0x78;
-    AIL_preference[23] = 0x7F;
+    AIL_preference[6] = 4;
+    AIL_preference[10] = 500;
     AIL_preference[24] = 1;
+    AIL_preference[15] = DIG_MAX_CHAIN_ELEMENT_SIZE_DEFAULT;
+    AIL_preference[17] = 0;
+    AIL_preference[20] = 0;
     AIL_preference[25] = 0;
-    AIL_preference[26] = 2;
-    AIL_preference[27] = 0;
+    AIL_preference[22] = 0x78;
+    AIL_preference[12] = 0;
     AIL_preference[28] = MDI_SYSEX_BUFFER_SIZE_DEFAULT;
+    AIL_preference[21] = 8;
+    AIL_preference[26] = 2;
+    AIL_preference[1] = 0x10;
+    AIL_preference[4] = 1;
+    AIL_preference[18] = DIG_OUTPUT_BUFFER_SIZE_DEFAULT;
+    AIL_preference[23] = 0x7F;
+    AIL_preference[7] = 0x40;
+    AIL_preference[19] = -1;
+    AIL_preference[8] = 0xC;
+    AIL_preference[13] = 0;
+    AIL_preference[0] = 1;
+    AIL_preference[16] = 100;
+    AIL_preference[9] = 0x20;
+    AIL_preference[27] = 0;
     AIL_preference[29] = 0x40;
     AIL_preference[30] = 0x78;
     AIL_preference[31] = 0;
@@ -304,8 +304,6 @@ static int ThreadProc(void*)
 {
     unsigned long long uNow;
     unsigned long long uElapsed;
-    unsigned long long uLastTime;
-    unsigned long long uStamp;
     int iTimer;
 
     if (MSS_profile != NULL)
@@ -330,7 +328,7 @@ static int ThreadProc(void*)
                 MSS_profile->pZoneLeave(MSS_profile, 0, 0, MILES_GENERIC_FILE, 469);
             }
 
-            return 0;
+            break;
         }
 
         if (MSS_profile != NULL)
@@ -347,7 +345,14 @@ static int ThreadProc(void*)
                                         MILES_MUTEX_BLOCK_NAME);
             }
 
-            if (rrMutexLockTimeout(&MSS_api_mutex, MILES_TIMER_LOCK_WAIT_MILLISECONDS) == 0)
+            if (rrMutexLockTimeout(&MSS_api_mutex, MILES_TIMER_LOCK_WAIT_MILLISECONDS) != 0)
+            {
+                if (MSS_profile != NULL)
+                {
+                    MSS_profile->pZoneLeave(MSS_profile, 0, 0, MILES_GENERIC_FILE, 479);
+                }
+            }
+            else
             {
                 if (MSS_profile != NULL)
                 {
@@ -355,11 +360,6 @@ static int ThreadProc(void*)
                 }
 
                 continue;
-            }
-
-            if (MSS_profile != NULL)
-            {
-                MSS_profile->pZoneLeave(MSS_profile, 0, 0, MILES_GENERIC_FILE, 479);
             }
         }
 
@@ -392,34 +392,28 @@ static int ThreadProc(void*)
                 }
             }
 
-            uLastTime = uNow;
+            TimerLastTime = uNow;
 
             for (iTimer = 0; iTimer < TimerCount; iTimer++)
             {
                 if (TimerTable[iTimer].iStatus == MILES_TIMER_RUNNING &&
-                    TimerTable[iTimer].uNextTime <= uNow)
+                    uNow >= TimerTable[iTimer].uNextTime)
                 {
-                    uStamp = uLastTime;
-
                     do
                     {
-                        TimerLastTime = uStamp;
-                        TimerTable[iTimer].uNextTime =
-                            TimerTable[iTimer].uNextTime + TimerTable[iTimer].uPeriod;
+                        TimerTable[iTimer].uNextTime += TimerTable[iTimer].uPeriod;
                         TimerTable[iTimer].pCallback(TimerTable[iTimer].uUser);
-                        uStamp = TimerLastTime;
-                        uLastTime = TimerLastTime;
 
                         if (TimerTable[iTimer].iStatus != MILES_TIMER_RUNNING)
                         {
                             break;
                         }
-                    } while (TimerTable[iTimer].uNextTime <= uNow);
+                    } while (uNow >= TimerTable[iTimer].uNextTime);
                 }
             }
 
-            TimerLastTime = uLastTime;
-            TimerTotalTime = TimerTotalTime + (rrGetTime() - uNow);
+            uElapsed = rrGetTime() - uNow;
+            TimerTotalTime += uElapsed;
         }
 
         rrAtomicAddExchange32(&TimerBusy, -1);
@@ -438,13 +432,17 @@ static int ThreadProc(void*)
 
         rrMutexUnlock(&MSS_api_mutex);
     }
+
+    return 0;
 }
 
 extern "C" void AIL_API_shutdown()
 {
     _DIG_DRIVER* pDriver;
     _DIG_DRIVER* pNext;
-    int (*pShutdown)();
+    int (*pFilterShutdown)();
+    int (*pCodecShutdown)();
+    int (*pMixerShutdown)();
     unsigned int uIndex;
     unsigned int uProvider;
     int iTimer;
@@ -468,9 +466,9 @@ extern "C" void AIL_API_shutdown()
     while (RIB_enumerate_providers(MILES_FILTER_INTERFACE, &uIndex, &uProvider) != 0)
     {
         if (RIB_request_interface_entry(uProvider, MILES_FILTER_INTERFACE, 0,
-                                        MILES_FILTER_SHUTDOWN, &pShutdown) == 0)
+                                        MILES_FILTER_SHUTDOWN, &pFilterShutdown) == 0)
         {
-            pShutdown();
+            pFilterShutdown();
         }
     }
 
@@ -479,9 +477,9 @@ extern "C" void AIL_API_shutdown()
     while (RIB_enumerate_providers(MILES_CODEC_INTERFACE, &uIndex, &uProvider) != 0)
     {
         if (RIB_request_interface_entry(uProvider, MILES_CODEC_INTERFACE, 0, MILES_CODEC_SHUTDOWN,
-                                        &pShutdown) == 0)
+                                        &pCodecShutdown) == 0)
         {
-            pShutdown();
+            pCodecShutdown();
         }
     }
 
@@ -490,9 +488,9 @@ extern "C" void AIL_API_shutdown()
     while (RIB_enumerate_providers(MILES_MIXER_INTERFACE, &uIndex, &uProvider) != 0)
     {
         if (RIB_request_interface_entry(uProvider, MILES_MIXER_INTERFACE, 0, MILES_MIXER_SHUTDOWN,
-                                        &pShutdown) == 0)
+                                        &pMixerShutdown) == 0)
         {
-            pShutdown();
+            pMixerShutdown();
         }
     }
 
@@ -711,7 +709,10 @@ extern "C" void* AIL_API_mem_alloc_lock(unsigned int uSize)
 
 extern "C" void AIL_API_mem_free_lock(void* pBlock)
 {
-    AIL_mem_free_handler(pBlock);
+    if (pBlock != NULL)
+    {
+        AIL_mem_free_handler(pBlock);
+    }
 }
 
 extern "C" void* MSS_alloc_info(unsigned int uSize, unsigned int, const char* pOwnerName,
@@ -758,13 +759,10 @@ extern "C" void SS_start_DIG_driver_playback(_SAMPLE* pSample)
 void SS_serve(unsigned int uDriver)
 {
     _DIG_DRIVER* pDriver;
+    int iBufferCount;
+    int iThreshold;
     _RadSoundSystem* pOutput;
     void* pBuffer;
-    int iBufferCount;
-    int iServiceTime;
-    int iReserveTime;
-    int iChannels;
-    int iRate;
     int iReady;
     int iPass;
 
@@ -774,24 +772,26 @@ void SS_serve(unsigned int uDriver)
     {
         rrAtomicAddExchange32(&SS_serve_nesting, 1);
 
-        iBufferCount = AIL_preference[MILES_PREFERENCE_BUFFER_COUNT];
-
         if (SS_serve_nesting == 1)
         {
-            iServiceTime = AIL_preference[MILES_PREFERENCE_BUFFER_COUNT] *
-                           AIL_preference[MILES_PREFERENCE_SERVICE_MILLISECONDS];
-            iReserveTime = AIL_preference[MILES_PREFERENCE_BUFFER_RESERVE] *
-                           AIL_preference[MILES_PREFERENCE_SERVICE_MILLISECONDS];
-            iChannels = pDriver->hardwareChannels;
-            iRate = pDriver->outputRate;
+            iBufferCount = AIL_preference[MILES_PREFERENCE_BUFFER_COUNT];
+            iThreshold = ((iBufferCount * AIL_preference[MILES_PREFERENCE_SERVICE_MILLISECONDS] -
+                           AIL_preference[MILES_PREFERENCE_BUFFER_RESERVE] *
+                               AIL_preference[MILES_PREFERENCE_SERVICE_MILLISECONDS]) *
+                          (pDriver->hardwareChannels * pDriver->outputRate) * 2) /
+                         1000;
             pOutput = pDriver->output;
-            iReady = pOutput->pGetReadyBytes(pOutput);
 
-            for (iPass = 0;
-                 ((iServiceTime - iReserveTime) * iChannels * iRate * 2) / 1000 <= iReady &&
-                 iPass < iBufferCount;
-                 iPass++)
+            iReady = pOutput->pGetReadyBytes(pOutput);
+            iPass = 0;
+            while (iReady >= iThreshold)
             {
+                if (iPass >= iBufferCount)
+                {
+                    break;
+                }
+
+                iPass++;
                 pOutput->pLock(pOutput, &pBuffer, pDriver->fillBytes);
                 SS_fill(pDriver, static_cast<short*>(pBuffer));
                 pOutput->pUnlock(pOutput);

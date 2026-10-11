@@ -701,76 +701,75 @@ void TMC_HF_FUNC_033(float* data)
 
 void TMC_HF_FUNC_034(float* data)
 {
-    for (int i = 0; i < 0x20; i += 2)
+    int j;
+    int step;
+    int twiddle;
+    int stride;
+    int count;
+    int span;
+    int remaining;
+    int i;
+    for (i = 0; i < 0x20; i += 2)
     {
-        float* pair = data + i;
-        const float sumImagLow = pair[1] + pair[0x41];
-        const float sumRealHigh = pair[0x20] + pair[0x60];
-        const float sumRealLow = pair[0] + pair[0x40];
-        const float diffRealHigh = pair[0x20] - pair[0x60];
-        const float diffRealLow = pair[0] - pair[0x40];
-        const float sumImagHigh = pair[0x21] + pair[0x61];
-        const float diffImagHigh = pair[0x21] - pair[0x61];
-        const float diffImagLow = pair[1] - pair[0x41];
-        pair[0] = sumRealLow + sumRealHigh;
-        pair[0x20] = sumRealLow - sumRealHigh;
-        pair[1] = sumImagLow + sumImagHigh;
-        pair[0x21] = sumImagLow - sumImagHigh;
-        pair[0x40] = diffRealLow - diffImagHigh;
-        pair[0x41] = diffImagLow + diffRealHigh;
-        pair[0x60] = diffRealLow + diffImagHigh;
-        pair[0x61] = diffImagLow - diffRealHigh;
+        const float x0i = data[i + 1] + data[i + 0x41];
+        const float x2r = data[i + 0x20] + data[i + 0x60];
+        const float x0r = data[i] + data[i + 0x40];
+        const float x3r = data[i + 0x20] - data[i + 0x60];
+        const float x1r = data[i] - data[i + 0x40];
+        const float x2i = data[i + 0x21] + data[i + 0x61];
+        const float x3i = data[i + 0x21] - data[i + 0x61];
+        const float x1i = data[i + 1] - data[i + 0x41];
+        data[i] = x0r + x2r;
+        data[i + 0x20] = x0r - x2r;
+        data[i + 1] = x0i + x2i;
+        data[i + 0x21] = x0i - x2i;
+        data[i + 0x40] = x1r - x3i;
+        data[i + 0x41] = x1i + x3r;
+        data[i + 0x60] = x1r + x3i;
+        data[i + 0x61] = x1i - x3r;
     }
-    int stride = 0x40;
-    int count = 2;
-    int span = 0x20;
-    int quarter;
+    stride = 0x40;
+    count = 2;
+    span = 0x20;
     do
     {
-        const int half = span >> 1;
-        quarter = span >> 2;
-        span = 0;
+        span = span >> 1;
+        remaining = span / 2 - 1;
         count = count << 1;
         stride = stride >> 1;
-        if (half != 0)
+        for (j = 0; j < span; j += 2)
         {
-            do
+            const int mate = span + j;
+            float lowReal = data[j];
+            float highReal = data[mate];
+            float highImag = data[mate + 1];
+            float lowImag = data[j + 1];
+            data[j] = lowReal + highReal;
+            data[j + 1] = lowImag + highImag;
+            data[mate + 1] = lowImag - highImag;
+            data[mate] = lowReal - highReal;
+            twiddle = 2;
+            for (step = 1; step < count; ++step)
             {
-                const int mate = half + span;
-                float lowReal = data[span];
-                float highReal = data[mate];
-                float highImag = data[mate + 1];
-                float lowImag = data[span + 1];
-                data[span] = lowReal + highReal;
-                data[span + 1] = lowImag + highImag;
-                data[mate + 1] = lowImag - highImag;
-                data[mate] = lowReal - highReal;
-                int twiddle = 2;
-                for (int step = 1; step < count; ++step)
-                {
-                    const int high = mate + stride * step;
-                    const int low = span + stride * step;
-                    const float rotatedReal =
-                        data[high] * kTmcTwiddle[twiddle]
-                        - data[high + 1] * kTmcTwiddle[twiddle + 1];
-                    const float rotatedImag =
-                        data[high + 1] * kTmcTwiddle[twiddle]
-                        + data[high] * kTmcTwiddle[twiddle + 1];
-                    lowReal = data[low];
-                    lowImag = data[low + 1];
-                    data[low] = lowReal + rotatedReal;
-                    data[low + 1] = lowImag + rotatedImag;
-                    data[high + 1] = lowImag - rotatedImag;
-                    data[high] = lowReal - rotatedReal;
-                    twiddle += 2;
-                }
-                span += 2;
+                const int high = mate + stride * step;
+                const int low = j + stride * step;
+                const float rotatedReal =
+                    data[high] * kTmcTwiddle[twiddle]
+                    - data[high + 1] * kTmcTwiddle[twiddle + 1];
+                const float rotatedImag =
+                    data[high + 1] * kTmcTwiddle[twiddle]
+                    + data[high] * kTmcTwiddle[twiddle + 1];
+                lowReal = data[low];
+                lowImag = data[low + 1];
+                data[low] = lowReal + rotatedReal;
+                data[low + 1] = lowImag + rotatedImag;
+                data[high + 1] = lowImag - rotatedImag;
+                data[high] = lowReal - rotatedReal;
+                twiddle += 2;
             }
-            while (span < half);
         }
-        span = half;
     }
-    while (quarter != 1);
+    while (remaining != 0);
 }
 
 void TMC_HF_FUNC_035(float* data, const int* order)
@@ -969,76 +968,75 @@ void TMC_HF_FUNC_040(float* data)
 
 void TMC_HF_FUNC_041(float* data)
 {
-    for (int i = 0; i < 0x40; i += 2)
+    int j;
+    int step;
+    int twiddle;
+    int stride;
+    int count;
+    int span;
+    int remaining;
+    int i;
+    for (i = 0; i < 0x40; i += 2)
     {
-        float* pair = data + i;
-        const float sumImagLow = pair[1] + pair[0x81];
-        const float sumRealHigh = pair[0x40] + pair[0xc0];
-        const float sumRealLow = pair[0] + pair[0x80];
-        const float diffRealHigh = pair[0x40] - pair[0xc0];
-        const float diffRealLow = pair[0] - pair[0x80];
-        const float sumImagHigh = pair[0x41] + pair[0xc1];
-        const float diffImagHigh = pair[0x41] - pair[0xc1];
-        const float diffImagLow = pair[1] - pair[0x81];
-        pair[0] = sumRealLow + sumRealHigh;
-        pair[0x40] = sumRealLow - sumRealHigh;
-        pair[1] = sumImagLow + sumImagHigh;
-        pair[0x41] = sumImagLow - sumImagHigh;
-        pair[0x80] = diffRealLow - diffImagHigh;
-        pair[0x81] = diffImagLow + diffRealHigh;
-        pair[0xc0] = diffRealLow + diffImagHigh;
-        pair[0xc1] = diffImagLow - diffRealHigh;
+        const float x0i = data[i + 1] + data[i + 0x81];
+        const float x2r = data[i + 0x40] + data[i + 0xc0];
+        const float x0r = data[i] + data[i + 0x80];
+        const float x3r = data[i + 0x40] - data[i + 0xc0];
+        const float x1r = data[i] - data[i + 0x80];
+        const float x2i = data[i + 0x41] + data[i + 0xc1];
+        const float x3i = data[i + 0x41] - data[i + 0xc1];
+        const float x1i = data[i + 1] - data[i + 0x81];
+        data[i] = x0r + x2r;
+        data[i + 0x40] = x0r - x2r;
+        data[i + 1] = x0i + x2i;
+        data[i + 0x41] = x0i - x2i;
+        data[i + 0x80] = x1r - x3i;
+        data[i + 0x81] = x1i + x3r;
+        data[i + 0xc0] = x1r + x3i;
+        data[i + 0xc1] = x1i - x3r;
     }
-    int stride = 0x80;
-    int count = 2;
-    int span = 0x40;
-    int quarter;
+    stride = 0x80;
+    count = 2;
+    span = 0x40;
     do
     {
-        const int half = span >> 1;
-        quarter = span >> 2;
-        span = 0;
+        span = span >> 1;
+        remaining = span / 2 - 1;
         count = count << 1;
         stride = stride >> 1;
-        if (half != 0)
+        for (j = 0; j < span; j += 2)
         {
-            do
+            const int mate = span + j;
+            float lowReal = data[j];
+            float highReal = data[mate];
+            float highImag = data[mate + 1];
+            float lowImag = data[j + 1];
+            data[j] = lowReal + highReal;
+            data[j + 1] = lowImag + highImag;
+            data[mate + 1] = lowImag - highImag;
+            data[mate] = lowReal - highReal;
+            twiddle = 2;
+            for (step = 1; step < count; ++step)
             {
-                const int mate = half + span;
-                float lowReal = data[span];
-                float highReal = data[mate];
-                float highImag = data[mate + 1];
-                float lowImag = data[span + 1];
-                data[span] = lowReal + highReal;
-                data[span + 1] = lowImag + highImag;
-                data[mate + 1] = lowImag - highImag;
-                data[mate] = lowReal - highReal;
-                int twiddle = 2;
-                for (int step = 1; step < count; ++step)
-                {
-                    const int high = mate + stride * step;
-                    const int low = span + stride * step;
-                    const float rotatedReal =
-                        data[high] * kTmcTwiddle[twiddle]
-                        - data[high + 1] * kTmcTwiddle[twiddle + 1];
-                    const float rotatedImag =
-                        data[high + 1] * kTmcTwiddle[twiddle]
-                        + data[high] * kTmcTwiddle[twiddle + 1];
-                    lowReal = data[low];
-                    lowImag = data[low + 1];
-                    data[low] = lowReal + rotatedReal;
-                    data[low + 1] = lowImag + rotatedImag;
-                    data[high + 1] = lowImag - rotatedImag;
-                    data[high] = lowReal - rotatedReal;
-                    twiddle += 2;
-                }
-                span += 2;
+                const int high = mate + stride * step;
+                const int low = j + stride * step;
+                const float rotatedReal =
+                    data[high] * kTmcTwiddle[twiddle]
+                    - data[high + 1] * kTmcTwiddle[twiddle + 1];
+                const float rotatedImag =
+                    data[high + 1] * kTmcTwiddle[twiddle]
+                    + data[high] * kTmcTwiddle[twiddle + 1];
+                lowReal = data[low];
+                lowImag = data[low + 1];
+                data[low] = lowReal + rotatedReal;
+                data[low + 1] = lowImag + rotatedImag;
+                data[high + 1] = lowImag - rotatedImag;
+                data[high] = lowReal - rotatedReal;
+                twiddle += 2;
             }
-            while (span < half);
         }
-        span = half;
     }
-    while (quarter != 1);
+    while (remaining != 0);
 }
 
 void TMC_HF_FUNC_042(float* data, const int* order)
@@ -1077,11 +1075,11 @@ void TMC_HF_FUNC_043(float* data)
 
 int TMC_HF_FUNC_044(int value)
 {
-    if (0x7fff < value)
-        return 0x7fff;
-    if (-0x8001 < value)
-        return value;
-    return -0x8000;
+    if (value > 32767)
+        value = 32767;
+    else if (value < -32768)
+        value = -32768;
+    return value;
 }
 
 void TMC_HF_FUNC_004(short* state, const short* source, short* destination,
@@ -2614,7 +2612,7 @@ void TMC_HF_FUNC_045(TmcHfDispatch* table)
 {
     if (table == 0)
         return;
-    const int slot = table->index + 1;
+    const int slot = ++table->index;
     table->entry[slot & 7] = reinterpret_cast<TmcHfEntry>(&TMC_HF_FUNC_003);
     table->entry[(slot + 1) & 7] =
         reinterpret_cast<TmcHfEntry>(&TMC_HF_FUNC_011);
@@ -2622,7 +2620,6 @@ void TMC_HF_FUNC_045(TmcHfDispatch* table)
         reinterpret_cast<TmcHfEntry>(&TMC_HF_FUNC_014);
     table->entry[(slot + 3) & 7] =
         reinterpret_cast<TmcHfEntry>(&TMC_HF_FUNC_002);
-    table->index = slot;
     table->entry[(slot + 4) & 7] =
         reinterpret_cast<TmcHfEntry>(&TMC_HF_FUNC_012);
     table->entry[(slot + 5) & 7] =

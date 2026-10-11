@@ -95,7 +95,7 @@ static const unsigned int RIB_INVALID_PROVIDER = 0xFFFFFFFF;
 static const unsigned int RIB_ENUMERATE_FIRST = 0xFFFFFFFF;
 
 static const int RIB_MINIMUM_MAJOR_VERSION = 1;
-static const int RIB_MINIMUM_MINOR_VERSION = 2;
+static const int RIB_MINIMUM_MINOR_VERSION = 3;
 
 static const char MILES_RIB_FILE[] = "C:\\devel\\projects\\mss\\src\\sdk\\shared\\rib.cpp";
 
@@ -116,8 +116,8 @@ static char RIB_error_text[256];
 
 static unsigned int ILE_set(INTERFACE_DESCRIPTOR* pDescriptor)
 {
-    const unsigned char* pName;
     unsigned int uHash;
+    const unsigned char* pName;
 
     pName = (const unsigned char*)pDescriptor->pEntryName;
     uHash = 0;
@@ -129,16 +129,6 @@ static unsigned int ILE_set(INTERFACE_DESCRIPTOR* pDescriptor)
     }
 
     return uHash & (RIB_INTERFACE_SET_COUNT - 1);
-}
-
-static ILIST_ENTRY* IL_relocate(ILIST_ENTRY* pEntry, int iDelta)
-{
-    if (pEntry == NULL)
-    {
-        return NULL;
-    }
-
-    return (ILIST_ENTRY*)((char*)pEntry + iDelta);
 }
 
 static ILIST_ENTRY* IL_alloc(InterfaceList* pList)
@@ -172,15 +162,30 @@ static ILIST_ENTRY* IL_alloc(InterfaceList* pList)
         {
             memcpy(&pNewBase[i], &pOldBase[i], sizeof(ILIST_ENTRY));
 
-            pNewBase[i].pSetNext = IL_relocate(pNewBase[i].pSetNext, iDelta);
-            pNewBase[i].pSetPrevious = IL_relocate(pNewBase[i].pSetPrevious, iDelta);
-            pNewBase[i].pNext = IL_relocate(pNewBase[i].pNext, iDelta);
-            pNewBase[i].pPrevious = IL_relocate(pNewBase[i].pPrevious, iDelta);
+            if (pNewBase[i].pSetNext != NULL)
+            {
+                pNewBase[i].pSetNext = (ILIST_ENTRY*)((char*)pNewBase[i].pSetNext + iDelta);
+            }
+            if (pNewBase[i].pSetPrevious != NULL)
+            {
+                pNewBase[i].pSetPrevious = (ILIST_ENTRY*)((char*)pNewBase[i].pSetPrevious + iDelta);
+            }
+            if (pNewBase[i].pNext != NULL)
+            {
+                pNewBase[i].pNext = (ILIST_ENTRY*)((char*)pNewBase[i].pNext + iDelta);
+            }
+            if (pNewBase[i].pPrevious != NULL)
+            {
+                pNewBase[i].pPrevious = (ILIST_ENTRY*)((char*)pNewBase[i].pPrevious + iDelta);
+            }
         }
 
         for (i = 0; i < RIB_INTERFACE_SET_COUNT; i++)
         {
-            pList->pSet[i] = IL_relocate(pList->pSet[i], iDelta);
+            if (pList->pSet[i] != NULL)
+            {
+                pList->pSet[i] = (ILIST_ENTRY*)((char*)pList->pSet[i] + iDelta);
+            }
         }
 
         for (i = iOldCount; i < iNewCount; i++)
@@ -255,7 +260,8 @@ static void IL_dealloc(InterfaceList* pList, ILIST_ENTRY* pEntry)
         pList->pSet[pEntry->uSet] = pEntry->pSetNext;
     }
 
-    pEntry->pNext = pList->pFree;
+    ILIST_ENTRY* pFree = pList->pFree;
+    pEntry->pNext = pFree;
     pEntry->pPrevious = NULL;
 
     if (pList->pFree != NULL)
@@ -330,17 +336,6 @@ static void PL_dealloc(ProviderList* pList, PVLIST_ENTRY* pEntry)
     pList->pFree = pEntry;
 }
 
-static PVLIST_ENTRY* PL_relocate(PVLIST_ENTRY* pEntry, PVLIST_ENTRY* pOldBase,
-                                 PVLIST_ENTRY* pNewBase)
-{
-    if (pEntry == NULL)
-    {
-        return NULL;
-    }
-
-    return (PVLIST_ENTRY*)((char*)pNewBase + ((char*)pEntry - (char*)pOldBase));
-}
-
 static PVLIST_ENTRY* PL_alloc(ProviderList* pList)
 {
     PVLIST_ENTRY* pEntry;
@@ -348,6 +343,7 @@ static PVLIST_ENTRY* PL_alloc(ProviderList* pList)
     PVLIST_ENTRY* pNewBase;
     int iOldCount;
     int iNewCount;
+    int iDelta;
     int i;
 
     pEntry = pList->pFree;
@@ -365,12 +361,21 @@ static PVLIST_ENTRY* PL_alloc(ProviderList* pList)
             return NULL;
         }
 
+        iDelta = (int)((char*)pNewBase - (char*)pOldBase);
+
         for (i = 0; i < iOldCount; i++)
         {
             memcpy(&pNewBase[i], &pOldBase[i], sizeof(PVLIST_ENTRY));
 
-            pNewBase[i].pNext = PL_relocate(pNewBase[i].pNext, pOldBase, pNewBase);
-            pNewBase[i].pPrevious = PL_relocate(pNewBase[i].pPrevious, pOldBase, pNewBase);
+            if (pNewBase[i].pNext != NULL)
+            {
+                pNewBase[i].pNext = (PVLIST_ENTRY*)((char*)pNewBase[i].pNext + iDelta);
+            }
+
+            if (pNewBase[i].pPrevious != NULL)
+            {
+                pNewBase[i].pPrevious = (PVLIST_ENTRY*)((char*)pNewBase[i].pPrevious + iDelta);
+            }
         }
 
         for (i = iOldCount; i < iNewCount; i++)
@@ -385,7 +390,7 @@ static PVLIST_ENTRY* PL_alloc(ProviderList* pList)
 
         pList->pFree = &pNewBase[iOldCount];
         pList->iCount = iNewCount;
-        pList->pUsed = (PVLIST_ENTRY*)((char*)pNewBase + ((char*)pList->pUsed - (char*)pOldBase));
+        pList->pUsed = (PVLIST_ENTRY*)((char*)pList->pUsed + iDelta);
 
         if (pList->pBase != pList->entries)
         {
@@ -515,6 +520,22 @@ extern "C" void RIB_free_provider_handle(unsigned int uProvider)
     }
 }
 
+static ILIST_ENTRY* IL_find_provider(unsigned int uProvider)
+{
+    int i;
+
+    for (i = 0; i < RIB_interfaces.iCount; i++)
+    {
+        if (RIB_interfaces.pBase[i].iIndex != -1 &&
+            uProvider == RIB_interfaces.pBase[i].descriptor.uProvider)
+        {
+            return &RIB_interfaces.pBase[i];
+        }
+    }
+
+    return NULL;
+}
+
 extern "C" int RIB_register_interface(unsigned int uProvider, const char* pInterfaceName,
                                       int iEntryCount, const RIB_INTERFACE_ENTRY* pEntries)
 {
@@ -523,20 +544,12 @@ extern "C" int RIB_register_interface(unsigned int uProvider, const char* pInter
     ILIST_ENTRY* pEntry;
     RIB_PROVIDER_PROPERTY_CALLBACK pProperty;
     unsigned int uVersion;
+    int iMajor;
+    int iMinor;
     unsigned int uSet;
     int i;
 
-    pRegistered = NULL;
-
-    for (i = 0; i < RIB_interfaces.iCount; i++)
-    {
-        if (RIB_interfaces.pBase[i].iIndex != -1 &&
-            RIB_interfaces.pBase[i].descriptor.uProvider == uProvider)
-        {
-            pRegistered = &RIB_interfaces.pBase[i];
-            break;
-        }
-    }
+    pRegistered = IL_find_provider(uProvider);
 
     if (pRegistered == NULL)
     {
@@ -551,10 +564,16 @@ extern "C" int RIB_register_interface(unsigned int uProvider, const char* pInter
 
         pProperty = (RIB_PROVIDER_PROPERTY_CALLBACK)pEntries->pToken;
 
-        if (pProperty(RIB_PROVIDER_VERSION, &uVersion, NULL, NULL) == 0 ||
-            ((uVersion >> 8) & 0xFF) == 0 ||
-            (((uVersion >> 8) & 0xFF) == (unsigned int)RIB_MINIMUM_MAJOR_VERSION &&
-             ((uVersion >> 4) & 0xF) <= (unsigned int)RIB_MINIMUM_MINOR_VERSION))
+        if (pProperty(RIB_PROVIDER_VERSION, &uVersion, NULL, NULL) == 0)
+        {
+            AIL_set_error(RIB_OBSOLETE_MESSAGE);
+            return RIB_NOT_FOUND;
+        }
+
+        iMajor = (uVersion >> 8) & 0xFF;
+        iMinor = (uVersion >> 4) & 0xF;
+
+        if (iMajor <= 0 || (iMajor == RIB_MINIMUM_MAJOR_VERSION && iMinor < RIB_MINIMUM_MINOR_VERSION))
         {
             AIL_set_error(RIB_OBSOLETE_MESSAGE);
             return RIB_NOT_FOUND;
@@ -607,7 +626,35 @@ extern "C" int RIB_unregister_interface(unsigned int uProvider, const char* pInt
 
     iMissing = 0;
 
-    if (pEntries == NULL || pInterfaceName == NULL)
+    if (pEntries != NULL && pInterfaceName != NULL)
+    {
+        descriptor.uProvider = uProvider;
+        descriptor.pInterfaceName = pInterfaceName;
+
+        for (i = 0; i < iEntryCount; i++)
+        {
+            descriptor.pEntryName = pEntries[i].pEntryName;
+            descriptor.uType = pEntries[i].uType;
+
+            pEntry = IL_lookup(&RIB_interfaces, &descriptor);
+
+            if (pEntry == NULL)
+            {
+                iMissing = iMissing + 1;
+            }
+            else
+            {
+                IL_dealloc(&RIB_interfaces, pEntry);
+            }
+        }
+
+        if (iMissing != 0)
+        {
+            strcpy(RIB_error_text, RIB_MISSING_ENTRIES_MESSAGE);
+            return RIB_ERROR;
+        }
+    }
+    else
     {
         for (iSet = 0; iSet < RIB_INTERFACE_SET_COUNT; iSet++)
         {
@@ -627,37 +674,9 @@ extern "C" int RIB_unregister_interface(unsigned int uProvider, const char* pInt
                 pEntry = pNextEntry;
             }
         }
-
-        return RIB_NOERR;
     }
 
-    descriptor.uProvider = uProvider;
-    descriptor.pInterfaceName = pInterfaceName;
-
-    for (i = 0; i < iEntryCount; i++)
-    {
-        descriptor.pEntryName = pEntries[i].pEntryName;
-        descriptor.uType = pEntries[i].uType;
-
-        pEntry = IL_lookup(&RIB_interfaces, &descriptor);
-
-        if (pEntry == NULL)
-        {
-            iMissing = iMissing + 1;
-        }
-        else
-        {
-            IL_dealloc(&RIB_interfaces, pEntry);
-        }
-    }
-
-    if (iMissing == 0)
-    {
-        return RIB_NOERR;
-    }
-
-    strcpy(RIB_error_text, RIB_MISSING_ENTRIES_MESSAGE);
-    return RIB_ERROR;
+    return RIB_NOERR;
 }
 
 extern "C" int RIB_request_interface(unsigned int uProvider, const char* pInterfaceName,

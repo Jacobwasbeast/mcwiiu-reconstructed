@@ -10,22 +10,10 @@ unsigned char g_qualityAlertStatus = 0;
 unsigned char g_qualityAlertThresholdRate = 20;
 }
 
-bool VCT_IsValidCodec(VCTCodec codec)
-{
-    const unsigned int value = static_cast<unsigned int>(codec);
-    return value == 2U || (value >= 4U && value <= 6U);
-}
-
-bool VCT_IsValidSpareCodec(VCTCodec codec)
-{
-    const unsigned int value = static_cast<unsigned int>(codec);
-    return value == 2U || value == 5U;
-}
-
 void VCTi_InitQualityAlertParam()
 {
-    g_qualityAlertStatus = 0;
     g_qualityAlertDuration = 1800;
+    g_qualityAlertStatus = 0;
     g_qualityAlertSamplingPacketNum = 40;
     g_qualityAlertThresholdRate = 20;
 }

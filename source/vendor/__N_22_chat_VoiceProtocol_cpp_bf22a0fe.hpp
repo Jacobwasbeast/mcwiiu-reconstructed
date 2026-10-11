@@ -52,7 +52,13 @@ public:
     };
 
     VoiceProtocol();
-    ~VoiceProtocol();
+    virtual ~VoiceProtocol();
+    virtual void Trace(unsigned long long value) const;
+    virtual unsigned short GetProtocolType() const;
+    virtual Result StartupWithStationAddress(const nn::pia::common::StationAddress& address);
+    virtual void CleanupWithStationAddress();
+    virtual Result Dispatch();
+    virtual Result UpdateProtocolEvent(const nn::pia::transport::ProtocolEvent& event);
     Result Initialize(const Setting& setting);
     void ClearStreaming();
     Result AddConferenceClient(StationIndex stationIndex);
@@ -71,6 +77,8 @@ public:
     unsigned int GetAudioFrameLength() const;
     bool IsClientInConference(StationIndex stationIndex) const;
     bool IsClientInConference(unsigned long long stationId) const;
+    static int SendDataCallback(unsigned short cid, const void* pData, unsigned int uiSize);
+    static int SendMultiDataCallback(unsigned int bitmap, const void* pData, unsigned int uiSize);
 
 private:
     enum { cSendBufferSampleCount = 1536 };
@@ -80,6 +88,12 @@ private:
     Result setupProtocols(unsigned char maxPlayers, unsigned int dataSize);
     void freeProc();
     void destroyProtocols();
+    void initializeVct();
+    void finalizeVct();
+    int SendDataCallbackImpl(unsigned int stationIndex, const void* pData, unsigned int uiSize);
+    int SendMultiDataCallbackImpl(unsigned int bitmap, const void* pData, unsigned int uiSize);
+    unsigned int getPassedTime() const;
+    void updateSessionEndMonitoringData();
     Result receiveCore(void* pData, unsigned int uiSize, unsigned short* pCids);
 
     unsigned short m_unreliableProtocolId;
@@ -99,6 +113,7 @@ private:
 
 unsigned char IsInitialized();
 unsigned int ConvertID_Pia2VCT(unsigned int stationIndex);
+unsigned int ConvertID_VCT2Pia(unsigned int connectionId);
 }
 }}
 
@@ -106,12 +121,6 @@ extern nn::pia::chat::VoiceProtocol* g_voiceProtocolInstance;
 
 namespace __N_22_chat_VoiceProtocol_cpp_bf22a0fe
 {
-void lock_();
-void unlock_();
-bool isOpus(nn::pia::chat::Codec codec);
-TMC_HF_EC_MODE convertEcMode(nn::pia::chat::EcMode mode);
-int convertCid(unsigned short cid);
-nn::pia::StationIndex convertStationIndex(nn::pia::StationIndex index);
 template <typename T>
 nn::pia::Result createProtocol(T** protocol, unsigned short* protocolId, unsigned char port);
 template <typename T>

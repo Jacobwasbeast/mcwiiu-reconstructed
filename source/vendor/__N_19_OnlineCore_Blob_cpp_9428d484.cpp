@@ -8,6 +8,15 @@ int shutdown(int handle, int how);
 int socketclose(int handle);
 }
 
+namespace
+{
+
+const int UTF8_ONE_BYTE_LIMIT = 128;
+const int UTF8_TWO_BYTE_LIMIT = 2048;
+const int UTF8_THREE_BYTE_LIMIT = 65536;
+
+}
+
 void closesocket(int handle)
 {
     shutdown(handle, 2);
@@ -114,11 +123,18 @@ int __N_19_OnlineCore_Blob_cpp_9428d484::GetNeededUtf8BufferSize(const wchar_t* 
     int size = 1;
     while (*input != 0)
     {
-        const unsigned int value = static_cast<unsigned int>(*input++);
-        size += value < 0x80 ? 1 : value < 0x800 ? 2 : 3;
+        const wchar_t value = *input;
+        if (value < UTF8_ONE_BYTE_LIMIT)
+            size += 1;
+        else if (value < UTF8_TWO_BYTE_LIMIT)
+            size += 2;
+        else if (value < UTF8_THREE_BYTE_LIMIT)
+            size += 3;
+        ++input;
     }
     return size;
 }
+
 void __N_19_OnlineCore_Blob_cpp_9428d484::DefaultRecvFromCallback(nn::nex::SocketDriver::_Result, const unsigned char*, unsigned int, const nn::nex::SocketDriver::InetAddress*, const unsigned int*) {}
 void __N_19_OnlineCore_Blob_cpp_9428d484::DefaultSendToCallback(nn::nex::SocketDriver::_Result, const unsigned char*, unsigned int, const nn::nex::SocketDriver::InetAddress&, const unsigned int*) {}
 void __N_19_OnlineCore_Blob_cpp_9428d484::DefaultRecvCallback(nn::nex::SocketDriver::_Result, const unsigned char*, unsigned int, const unsigned int*) {}

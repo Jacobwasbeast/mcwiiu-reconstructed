@@ -25,7 +25,7 @@ public:
     float mTool0Y;
     unsigned int mAnimFlags;
     unsigned int mGameFlags;
-    int mXMLVersion;
+    unsigned int mXMLVersion;
 };
 
 #endif

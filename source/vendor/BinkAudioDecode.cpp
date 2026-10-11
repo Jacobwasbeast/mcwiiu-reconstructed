@@ -1832,12 +1832,16 @@ void scalar_2radix2(rfft_complex* pOutput, const rfft_complex* pFirst,
 
 void scalar_dct_merge(float* pOutput, const float* pInput, unsigned int uCount)
 {
+    unsigned int uHalf = uCount >> 1;
     unsigned int uIndex;
+    const float* pEnd = pInput + uCount;
 
-    for (uIndex = 0; uIndex < (uCount >> 1); ++uIndex)
+    for (uIndex = 0; uIndex < uHalf; ++uIndex)
     {
-        pOutput[2 * uIndex] = pInput[uIndex];
-        pOutput[2 * uIndex + 1] = pInput[uCount - 1 - uIndex];
+        float fFirst = *pInput++;
+        float fSecond = *--pEnd;
+        *pOutput++ = fFirst;
+        *pOutput++ = fSecond;
     }
 }
 
@@ -1866,8 +1870,8 @@ void scalar_dct3_modulate(float* pOutput, const float* pInput, unsigned int uCou
 
 void fft_driver(rfft_complex* pData, unsigned int uCount, RFFT_PASS_CALLBACK pPass)
 {
-    const PlanElement* pPlan = RFFT_PLAN;
     unsigned int uQuarter = uCount >> 2;
+    const PlanElement* pPlan = RFFT_PLAN;
     PlanElement plan;
 
     if (uCount > RFFT_PLAN_THRESHOLD)

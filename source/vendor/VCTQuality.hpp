@@ -3,9 +3,6 @@
 
 #include "vendor/VCTAudio.hpp"
 
-bool VCT_IsValidCodec(VCTCodec codec);
-bool VCT_IsValidSpareCodec(VCTCodec codec);
-
 void VCTi_InitQualityAlertParam();
 void VCTi_SetQualityAlertStatus(unsigned char status);
 void VCTi_SetQualityAlertClearStartTick(long long tick);
