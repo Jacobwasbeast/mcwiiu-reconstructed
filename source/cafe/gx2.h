@@ -246,10 +246,10 @@ inline void GX2InitAttribStream(GX2AttribStream* attribStream, u32 location, u32
                                 GX2AttribFormat format)
 {
     const u32 destSel[20] = {
-        GX2_COMP_SEL_XY01, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_X001, GX2_COMP_SEL_X001,
-        GX2_COMP_SEL_XY01, GX2_COMP_SEL_X001, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XY01,
-        GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XY01,
-        GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZW};
+        GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_X001, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01,
+        GX2_COMP_SEL_X001, GX2_COMP_SEL_X001, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XYZ1,
+        GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XY01, GX2_COMP_SEL_XYZW,
+        GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZ1, GX2_COMP_SEL_XYZW, GX2_COMP_SEL_XYZW};
     attribStream->location = location;
     attribStream->buffer = buffer;
     attribStream->offset = offset;
@@ -324,20 +324,24 @@ inline GX2UniformBlock* GX2GetPixelUniformBlock(const GX2PixelShader* shader, co
 
 inline GX2UniformVar* GX2GetVertexUniformVar(const GX2VertexShader* shader, const char* name)
 {
-    for (u32 i = 0; i < shader->numUniforms; ++i)
+    u32 i = 0;
+    while (i < shader->numUniforms)
     {
         if (strcmp(shader->uniformVars[i].name, name) == 0)
             return &shader->uniformVars[i];
+        ++i;
     }
     return NULL;
 }
 
 inline GX2UniformVar* GX2GetPixelUniformVar(const GX2PixelShader* shader, const char* name)
 {
-    for (u32 i = 0; i < shader->numUniforms; ++i)
+    u32 i = 0;
+    while (i < shader->numUniforms)
     {
         if (strcmp(shader->uniformVars[i].name, name) == 0)
             return &shader->uniformVars[i];
+        ++i;
     }
     return NULL;
 }
@@ -345,21 +349,23 @@ inline GX2UniformVar* GX2GetPixelUniformVar(const GX2PixelShader* shader, const 
 inline s32 GX2GetVertexUniformVarOffset(const GX2VertexShader* shader, const char* name)
 {
     GX2UniformVar* uniformVar = GX2GetVertexUniformVar(shader, name);
-    return uniformVar != NULL ? static_cast<s32>(uniformVar->offset) : GX2_UNIFORM_VAR_INVALID_OFFSET;
+    return uniformVar == NULL ? GX2_UNIFORM_VAR_INVALID_OFFSET : static_cast<s32>(uniformVar->offset);
 }
 
 inline s32 GX2GetPixelUniformVarOffset(const GX2PixelShader* shader, const char* name)
 {
     GX2UniformVar* uniformVar = GX2GetPixelUniformVar(shader, name);
-    return uniformVar != NULL ? static_cast<s32>(uniformVar->offset) : GX2_UNIFORM_VAR_INVALID_OFFSET;
+    return uniformVar == NULL ? GX2_UNIFORM_VAR_INVALID_OFFSET : static_cast<s32>(uniformVar->offset);
 }
 
 inline GX2AttribVar* GX2GetVertexAttribVar(const GX2VertexShader* shader, const char* name)
 {
-    for (u32 i = 0; i < shader->numAttribs; ++i)
+    u32 i = 0;
+    while (i < shader->numAttribs)
     {
         if (strcmp(shader->attribVars[i].name, name) == 0)
             return &shader->attribVars[i];
+        ++i;
     }
     return NULL;
 }
@@ -367,15 +373,19 @@ inline GX2AttribVar* GX2GetVertexAttribVar(const GX2VertexShader* shader, const 
 inline s32 GX2GetVertexAttribVarLocation(const GX2VertexShader* shader, const char* name)
 {
     GX2AttribVar* attribVar = GX2GetVertexAttribVar(shader, name);
-    return attribVar == NULL ? -1 : static_cast<s32>(attribVar->location);
+    if (attribVar == NULL)
+        return -1;
+    return static_cast<s32>(attribVar->location);
 }
 
 inline GX2SamplerVar* GX2GetPixelSamplerVar(const GX2PixelShader* shader, const char* name)
 {
-    for (u32 i = 0; i < shader->numSamplers; ++i)
+    u32 i = 0;
+    while (i < shader->numSamplers)
     {
         if (strcmp(shader->samplerVars[i].name, name) == 0)
             return &shader->samplerVars[i];
+        ++i;
     }
     return NULL;
 }
