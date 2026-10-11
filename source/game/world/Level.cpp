@@ -2884,8 +2884,7 @@ int Level::getMoonPhase()
 
 float Level::getMoonBrightness()
 {
-    static const float brightness[8] = {1.0f, 0.75f, 0.5f, 0.25f, 0.0f, 0.25f, 0.5f, 0.75f};
-    return brightness[mDimension->getMoonPhase(mLevelData->getDayTime())];
+    return Dimension::MOON_BRIGHTNESS_PER_PHASE[mDimension->getMoonPhase(mLevelData->getDayTime())];
 }
 
 float Level::getSunAngle(float partialTick)
@@ -5668,34 +5667,46 @@ bool Level::canCreateMore(unsigned long long type, ESPAWN_TYPE spawnType)
     return limit == 0 || count < limit;
 }
 
-double Level::getSpecialMultiplier(int)
+float Level::getSpecialMultiplier(int)
 {
     const Difficulty* difficulty = mLevelData->getDifficulty();
-    long long time = mLevelData->getGameTime();
-    float moon = getMoonBrightness();
-    if (difficulty == Difficulty::PEACEFUL)
+    long long levelTime = mLevelData->getGameTime();
+    float inhabitedTime = DifficultyInstance::INHABITED_TIME_RANGE * 0.5f;
+    float multiplier = 0.0f;
+    float moonBrightness = getMoonBrightness();
+    if (difficulty != Difficulty::PEACEFUL)
     {
-        return 0.0;
+        bool hard = difficulty == Difficulty::HARD;
+
+        multiplier = 0.75f;
+        float timeFactor = Mth::clamp(static_cast<float>(levelTime) + DifficultyInstance::LEVEL_TIME_OFFSET / DifficultyInstance::LEVEL_TIME_RANGE, 0.0f, 1.0f) * 0.25f;
+        multiplier += timeFactor;
+
+        float bonus = 0.0f;
+        bonus += Mth::clamp(inhabitedTime / DifficultyInstance::INHABITED_TIME_RANGE, 0.0f, 1.0f) * (hard ? 1.0f : 0.75f);
+        bonus += Mth::clamp(moonBrightness * 0.25f, 0.0f, timeFactor);
+
+        if (difficulty == Difficulty::EASY)
+        {
+            bonus *= 0.5f;
+        }
+
+        multiplier += bonus;
+        multiplier = multiplier * difficulty->getId();
+        if (multiplier < 2.0f)
+        {
+            multiplier = 0.0f;
+        }
+        else if (multiplier > 4.0f)
+        {
+            multiplier = 1.0f;
+        }
+        else
+        {
+            multiplier = (multiplier - 2.0f) * 0.5f;
+        }
     }
-    float timeFactor = Mth::clamp(static_cast<float>(time) + (-72000.0f / 1440000.0f),
-                                 0.0f, 1.0f) * 0.25f;
-    float localFactor = Mth::clamp((3600000.0f * 0.5f) / 3600000.0f, 0.0f, 1.0f)
-        * (difficulty == Difficulty::HARD ? 1.0f : 0.75f);
-    localFactor += Mth::clamp(moon * 0.25f, 0.0f, timeFactor);
-    if (difficulty == Difficulty::EASY)
-    {
-        localFactor *= 0.5f;
-    }
-    float effective = (0.75f + timeFactor + localFactor) * difficulty->getId();
-    if (effective < 2.0f)
-    {
-        return 0.0;
-    }
-    if (effective > 4.0f)
-    {
-        return 1.0;
-    }
-    return (effective - 2.0f) * 0.5f;
+    return multiplier;
 }
 
 void Level::removeAllEntities(bool players, bool mobs, bool items, bool vehicles,

@@ -4,8 +4,7 @@
 #include "game/data/DataFixTypes.hpp"
 #include "game/data/DataFixer.hpp"
 #include "game/data/ListTag.hpp"
-
-std::wstring RIDING_TAG(L"Riding");
+#include "game/entity/mob/Entity.hpp"
 
 LEVELDATA_DataWalker::~LEVELDATA_DataWalker()
 {
@@ -23,9 +22,9 @@ CompoundTag* LEVELDATA_DataWalker::walk(DataFixer* fixer, CompoundTag* tag, int 
 
             for (int i = 0; i < entities->size(); i++)
             {
-                if (((CompoundTag*)entities->get(i))->contains(RIDING_TAG, Tag::TAG_LIST))
+                if (((CompoundTag*)entities->get(i))->contains(Entity::RIDING_TAG, Tag::TAG_LIST))
                 {
-                    ListTag* passengers = ((CompoundTag*)entities->get(i))->getList(RIDING_TAG, Tag::TAG_COMPOUND);
+                    ListTag* passengers = ((CompoundTag*)entities->get(i))->getList(Entity::RIDING_TAG, Tag::TAG_COMPOUND);
 
                     for (int j = 0; j < passengers->size(); j++)
                     {

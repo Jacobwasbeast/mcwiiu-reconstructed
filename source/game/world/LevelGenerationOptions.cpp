@@ -27,8 +27,7 @@
 #include "platform/wiiu/CStorage.hpp"
 #include "game/core/PIXNamedEvents.hpp"
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
-
-struct _OVERLAPPED;
+#include "platform/wiiu/WiiU_FileCache.hpp"
 
 template<typename T>
 std::wstring _toString(T value);
@@ -37,11 +36,6 @@ template<typename T>
 T _fromString(const std::wstring& value);
 
 char* wstringtofilename(const std::wstring& path, char (&filename)[256]);
-int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
-                void* securityAttributes, unsigned int creationDisposition,
-                unsigned int flagsAndAttributes, int templateFile);
-unsigned int GetFileSize(int file, unsigned int* highSize);
-unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, _OVERLAPPED* overlapped);
 
 LevelGenerationOptions::LevelGenerationOptions(DLCPack* pack)
 {

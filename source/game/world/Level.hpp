@@ -392,7 +392,7 @@ public:
     virtual Scoreboard* GetScoreboard() = 0;
     virtual void updateNeighbourForOutputSignal(const BlockPos& pos, Block* block);
     boost::shared_ptr<Villages> getVillages();
-    double getSpecialMultiplier(int type);
+    float getSpecialMultiplier(int type);
     virtual void sendPacketToServer(boost::shared_ptr<Packet> packet);
     LootTables* getLootTables();
     virtual BlockPos* findNearestMapFeature(const std::wstring& feature, const BlockPos& pos, bool findUnexplored);

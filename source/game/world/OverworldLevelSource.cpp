@@ -231,13 +231,20 @@ void OverworldLevelSource::getHeights(int x, int y, int z, arrayWithLength<Biome
             if (depthValue < 0.0)
             {
                 depthValue /= 2.0;
-                depthValue = std::max(depthValue, -1.0);
+                if (depthValue < -1.0)
+                {
+                    depthValue = -1.0;
+                }
                 depthValue /= 1.4;
                 depthValue /= 2.0;
             }
             else
             {
-                depthValue = std::min(depthValue, 1.0) / 8.0;
+                if (depthValue > 1.0)
+                {
+                    depthValue = 1.0;
+                }
+                depthValue /= 8.0;
             }
 
             double centerHeight = (depthValue * 0.2 + biomeDepth) * mSettings->baseSize
@@ -274,7 +281,7 @@ void OverworldLevelSource::getHeights(int x, int y, int z, arrayWithLength<Biome
 
 void OverworldLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* primer)
 {
-    int seaLevel = mLevel->getSeaLevel();
+    int seaLevel = mLevel->mSeaLevel;
     arrayWithLength<Biome*> biomes;
     PIXBeginNamedEvent(0.0f, "Getting raw biome block");
     mLevel->getBiomeSource()->getRawBiomeBlock(biomes, chunkX * 4 - 2, chunkZ * 4 - 2, 10, 10);
@@ -297,14 +304,14 @@ void OverworldLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* p
             int offset11 = (offset1 + cellZ + 1) * 17;
             for (int cellY = 0; cellY < 16; ++cellY)
             {
-                double a = heights.data[offset00 + cellY];
-                double b = heights.data[offset01 + cellY];
-                double c = heights.data[offset10 + cellY];
-                double d = heights.data[offset11 + cellY];
-                double da = (heights.data[offset00 + cellY + 1] - a) * 0.125;
-                double db = (heights.data[offset01 + cellY + 1] - b) * 0.125;
-                double dc = (heights.data[offset10 + cellY + 1] - c) * 0.125;
-                double dd = (heights.data[offset11 + cellY + 1] - d) * 0.125;
+                double a = heights[offset00 + cellY];
+                double b = heights[offset01 + cellY];
+                double c = heights[offset10 + cellY];
+                double d = heights[offset11 + cellY];
+                double da = heights[offset00 + cellY + 1] - a;
+                double db = heights[offset01 + cellY + 1] - b;
+                double dc = heights[offset10 + cellY + 1] - c;
+                double dd = heights[offset11 + cellY + 1] - d;
 
                 for (int subY = 0; subY < 8; ++subY)
                 {
@@ -318,12 +325,14 @@ void OverworldLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* p
                     {
                         double densityStep = (right - left) * 0.25;
                         double density = left - densityStep;
-                        int blockX = cellX * 4 + subX;
+                        int index = ((subX + (cellX << 2)) << 11) | ((cellZ << 2) << 7) | blockY;
+                        int step = 1 << 7;
+                        index -= step;
                         for (int subZ = 0; subZ < 4; ++subZ)
                         {
                             int blockZ = cellZ * 4 + subZ;
                             int edgeDistance;
-                            double falloff = getHeightFalloff(chunkX * 16 + blockX, chunkZ * 16 + blockZ,
+                            double falloff = getHeightFalloff(chunkX * 16 + (subX + (cellX << 2)), chunkZ * 16 + blockZ,
                                                               &edgeDistance);
                             int blockId = 0;
                             density += densityStep;
@@ -346,15 +355,16 @@ void OverworldLevelSource::prepareHeights(int chunkX, int chunkZ, ChunkPrimer* p
                                     blockId = 9;
                                 }
                             }
-                            primer->setBlockAndData((blockX << 11) | (blockZ << 7) | blockY, blockId, 0);
+                            index += step;
+                            primer->setBlockAndData(index, blockId, 0);
                         }
                         left += leftStep;
                         right += rightStep;
                     }
-                    a += da;
-                    b += db;
-                    c += dc;
-                    d += dd;
+                    a += da * 0.125;
+                    b += db * 0.125;
+                    c += dc * 0.125;
+                    d += dd * 0.125;
                 }
             }
         }

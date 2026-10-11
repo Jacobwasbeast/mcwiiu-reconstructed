@@ -2,6 +2,7 @@
 
 #include "game/core/CConsoleMinecraftApp.hpp"
 #include "game/core/CMinecraftApp.hpp"
+#include "game/core/SharedConstants.hpp"
 #include "game/core/SuperflatConfig.hpp"
 #include "game/core/System.hpp"
 #include "game/data/ByteArrayTag.hpp"
@@ -394,7 +395,7 @@ void LevelData::addWalkers(DataFixerUpper* fixer)
 
 void LevelData::setTagData(CompoundTag* tag)
 {
-    tag->putInt(L"DataVersion", 0x39a);
+    tag->putInt(SharedConstants::DATA_VERSION_TAG, 922);
     tag->putLong(L"RandomSeed", mSeed);
     tag->putString(L"generatorName", mGeneratorType->getGeneratorName());
     tag->putInt(L"generatorVersion", mGeneratorType->getVersion());

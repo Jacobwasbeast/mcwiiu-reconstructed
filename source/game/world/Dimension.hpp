@@ -22,6 +22,8 @@ class WorldBorder;
 class Dimension
 {
 public:
+    static const float MOON_BRIGHTNESS_PER_PHASE[8];
+
     Dimension();
     virtual void init(Level* level);
     virtual void init();

@@ -162,11 +162,8 @@ bool FlatLevelSource::isFlat()
 LevelChunk* FlatLevelSource::createChunk(int chunkX, int chunkZ)
 {
     unsigned short* elementIds = static_cast<unsigned short*>(XPhysicalAlloc(mElementIds.length * sizeof(unsigned short), 0xFFFFFFFF, 0x1000, 4));
-    XMemCpy(elementIds, mElementIds.data, mElementIds.length * sizeof(unsigned short));
-
-    arrayWithLength<unsigned short> elements;
-    elements.data = elementIds;
-    elements.length = mElementIds.length;
+    arrayWithLength<unsigned short> elements(elementIds, mElementIds.length);
+    XMemCpy(elementIds, mElementIds.data, elements.length * sizeof(unsigned short));
     ChunkPrimer primer(false, elements);
 
     if (mCaves != NULL)
@@ -180,7 +177,7 @@ LevelChunk* FlatLevelSource::createChunk(int chunkX, int chunkZ)
 
     for (StructureMap::iterator feature = mStructureFeatures.begin(); feature != mStructureFeatures.end(); ++feature)
     {
-        if (feature->first != LargeFeature::SHIPWRECK)
+        if (feature->first.compare(LargeFeature::SHIPWRECK) != 0)
         {
             feature->second->apply(mLevel, chunkX, chunkZ, &primer);
         }
@@ -291,45 +288,76 @@ std::vector<Biome::MobSpawnerData*>* FlatLevelSource::getMobsAt(MobCategory* cat
 
 BlockPos* FlatLevelSource::findNearestMapFeature(Level* level, const std::wstring& featureName, const BlockPos& pos, bool findUnexplored)
 {
-    if (LargeFeature::STRONGHOLD == featureName && mStructureFeatures.find(LargeFeature::STRONGHOLD) != mStructureFeatures.end())
+    if (LargeFeature::STRONGHOLD == featureName)
     {
-        return mStructureFeatures.find(LargeFeature::STRONGHOLD)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        StructureMap::iterator feature = mStructureFeatures.find(featureName);
+        if (feature != mStructureFeatures.end())
+        {
+            return feature->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        }
     }
-    if (LargeFeature::STRONGHOLD == featureName && mStructureFeatures.find(LargeFeature::STRONGHOLD) != mStructureFeatures.end())
+    if (LargeFeature::STRONGHOLD == featureName)
     {
-        return mStructureFeatures.find(LargeFeature::STRONGHOLD)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        if (mStructureFeatures.find(LargeFeature::STRONGHOLD) != mStructureFeatures.end())
+        {
+            return mStructureFeatures.find(LargeFeature::STRONGHOLD)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        }
     }
-    if (LargeFeature::SHIPWRECK == featureName && mStructureFeatures.find(LargeFeature::SHIPWRECK) != mStructureFeatures.end())
+    if (LargeFeature::SHIPWRECK == featureName)
     {
-        return mStructureFeatures.find(LargeFeature::SHIPWRECK)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        if (mStructureFeatures.find(LargeFeature::SHIPWRECK) != mStructureFeatures.end())
+        {
+            return mStructureFeatures.find(LargeFeature::SHIPWRECK)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        }
     }
-    if (LargeFeature::MANSION == featureName && mStructureFeatures.find(LargeFeature::MANSION) != mStructureFeatures.end())
+    if (LargeFeature::MANSION == featureName)
     {
-        return mStructureFeatures.find(LargeFeature::MANSION)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        if (mStructureFeatures.find(LargeFeature::MANSION) != mStructureFeatures.end())
+        {
+            return mStructureFeatures.find(LargeFeature::MANSION)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        }
     }
-    if (LargeFeature::MONUMENT == featureName && mStructureFeatures.find(LargeFeature::MONUMENT) != mStructureFeatures.end())
+    if (LargeFeature::MONUMENT == featureName)
     {
-        return mStructureFeatures.find(LargeFeature::MONUMENT)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        if (mStructureFeatures.find(LargeFeature::MONUMENT) != mStructureFeatures.end())
+        {
+            return mStructureFeatures.find(LargeFeature::MONUMENT)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        }
     }
-    if (LargeFeature::VILLAGE == featureName && mStructureFeatures.find(LargeFeature::VILLAGE) != mStructureFeatures.end())
+    if (LargeFeature::VILLAGE == featureName)
     {
-        return mStructureFeatures.find(LargeFeature::VILLAGE)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        if (mStructureFeatures.find(LargeFeature::VILLAGE) != mStructureFeatures.end())
+        {
+            return mStructureFeatures.find(LargeFeature::VILLAGE)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        }
     }
-    if (LargeFeature::MINESHAFT == featureName && mStructureFeatures.find(LargeFeature::MINESHAFT) != mStructureFeatures.end())
+    if (LargeFeature::MINESHAFT == featureName)
     {
-        return mStructureFeatures.find(LargeFeature::MINESHAFT)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        if (mStructureFeatures.find(LargeFeature::MINESHAFT) != mStructureFeatures.end())
+        {
+            return mStructureFeatures.find(LargeFeature::MINESHAFT)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        }
     }
-    if (LargeFeature::TEMPLE == featureName && mStructureFeatures.find(LargeFeature::TEMPLE) != mStructureFeatures.end())
+    if (LargeFeature::TEMPLE == featureName)
     {
-        return mStructureFeatures.find(LargeFeature::TEMPLE)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        if (mStructureFeatures.find(LargeFeature::TEMPLE) != mStructureFeatures.end())
+        {
+            return mStructureFeatures.find(LargeFeature::TEMPLE)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        }
     }
-    if (LargeFeature::BURIED_TREASURE == featureName && mStructureFeatures.find(LargeFeature::BURIED_TREASURE) != mStructureFeatures.end())
+    if (LargeFeature::BURIED_TREASURE == featureName)
     {
-        return mStructureFeatures.find(LargeFeature::BURIED_TREASURE)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        if (mStructureFeatures.find(LargeFeature::BURIED_TREASURE) != mStructureFeatures.end())
+        {
+            return mStructureFeatures.find(LargeFeature::BURIED_TREASURE)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        }
     }
-    if (LargeFeature::RUIN == featureName && mStructureFeatures.find(LargeFeature::RUIN) != mStructureFeatures.end())
+    if (LargeFeature::RUIN == featureName)
     {
-        return mStructureFeatures.find(LargeFeature::RUIN)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        if (mStructureFeatures.find(LargeFeature::RUIN) != mStructureFeatures.end())
+        {
+            return mStructureFeatures.find(LargeFeature::RUIN)->second->getNearestGeneratedFeature(level, pos, findUnexplored);
+        }
     }
     return NULL;
 }

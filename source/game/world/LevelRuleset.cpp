@@ -29,29 +29,14 @@
 #include "game/world/LevelGenerationOptions.hpp"
 #include "game/util/AABB.hpp"
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
-
-struct _OVERLAPPED
-{
-    unsigned int Internal;
-    unsigned int InternalHigh;
-    unsigned int Offset;
-    unsigned int OffsetHigh;
-    int hEvent;
-};
+#include "platform/wiiu/WiiU_FileCache.hpp"
+#include "platform/wiiu/WiiU_Runtime.hpp"
 
 template<typename T> T _fromString(const std::wstring& value);
 std::string formatstr(const char* format, ...);
 char* wstringtofilename(const std::wstring& path, char (&filename)[256]);
-int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
-                void* securityAttributes, unsigned int creationDisposition,
-                unsigned int flagsAndAttributes, int templateFile);
-int WriteFile(int file, const void* buffer, unsigned int bytesToWrite,
-              unsigned int* bytesWritten, _OVERLAPPED* overlapped);
 void __debugbreak();
 
-static const int INVALID_HANDLE_VALUE = -1;
-static const unsigned int GENERIC_WRITE = 0x40000000;
-static const unsigned int CREATE_ALWAYS = 2;
 static const unsigned int FILE_FLAG_RANDOM_ACCESS = 0x10000000;
 
 static char s_levelRulesFileName[256];

@@ -43,14 +43,38 @@ std::vector<Biome::MobSpawnerData*>* CustomLevelSource::getMobsAt(MobCategory*, 
 bool CustomLevelSource::isPosInFeature(Level*, const std::wstring& feature, const BlockPos& pos)
 {
     if (!mGenerateStructures) return false;
-    if (LargeFeature::STRONGHOLD == feature && mStronghold != NULL) return mStronghold->isInsideFeature(pos);
-    if (LargeFeature::SHIPWRECK == feature && mShipwreck != NULL) return mShipwreck->isInsideFeature(pos);
-    if (LargeFeature::MANSION == feature && mMansion != NULL) return mMansion->isInsideFeature(pos);
-    if (LargeFeature::MONUMENT == feature && mMonument != NULL) return mMonument->isInsideFeature(pos);
-    if (LargeFeature::VILLAGE == feature && mVillage != NULL) return mVillage->isInsideFeature(pos);
-    if (LargeFeature::MINESHAFT == feature && mMineshaft != NULL) return mMineshaft->isInsideFeature(pos);
-    if (LargeFeature::TEMPLE == feature && mTemple != NULL) return mTemple->isInsideFeature(pos);
-    if (LargeFeature::RUIN == feature && mOceanRuin != NULL) return mOceanRuin->isInsideFeature(pos);
+    if (LargeFeature::STRONGHOLD == feature)
+    {
+        if (mStronghold != NULL) return mStronghold->isInsideFeature(pos);
+    }
+    if (LargeFeature::SHIPWRECK == feature)
+    {
+        if (mShipwreck != NULL) return mShipwreck->isInsideFeature(pos);
+    }
+    if (LargeFeature::MANSION == feature)
+    {
+        if (mMansion != NULL) return mMansion->isInsideFeature(pos);
+    }
+    if (LargeFeature::MONUMENT == feature)
+    {
+        if (mMonument != NULL) return mMonument->isInsideFeature(pos);
+    }
+    if (LargeFeature::VILLAGE == feature)
+    {
+        if (mVillage != NULL) return mVillage->isInsideFeature(pos);
+    }
+    if (LargeFeature::MINESHAFT == feature)
+    {
+        if (mMineshaft != NULL) return mMineshaft->isInsideFeature(pos);
+    }
+    if (LargeFeature::TEMPLE == feature)
+    {
+        if (mTemple != NULL) return mTemple->isInsideFeature(pos);
+    }
+    if (LargeFeature::RUIN == feature)
+    {
+        if (mOceanRuin != NULL) return mOceanRuin->isInsideFeature(pos);
+    }
     return false;
 }
 

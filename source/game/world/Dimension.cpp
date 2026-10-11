@@ -21,6 +21,8 @@
 #include "game/world/generation/FlatGeneratorInfo.hpp"
 #include "game/world/chunk/OldChunkStorage.hpp"
 
+const float Dimension::MOON_BRIGHTNESS_PER_PHASE[8] = {1.0f, 0.75f, 0.5f, 0.25f, 0.0f, 0.25f, 0.5f, 0.75f};
+
 Dimension::Dimension()
     : mUltraWarm(0), mHasCeiling(0), mBrightnessRamp(new float[16])
 {
