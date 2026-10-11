@@ -132,9 +132,9 @@ void Transport::SetMonitoringNetworkRtt(bool isSessionBegin)
 Transport::Transport()
     : m_networkFactory(0), m_packetHandler(0), m_stationNum(0),
       m_startedUp(false), m_connectionRouteRelay(false), m_connectionError(0), m_dispatchJob(0),
-      m_connectionState(0), m_relayRouteManager(0), m_analysisInterval(0), m_keepAliveEnabled(false), m_monitoringEnabled(false),
+      m_connectionState(0), m_relayRouteManager(0), m_analysisInterval(0),
       m_dispatchCount(0), m_disconnectionEventListener(0), m_stationIdTable(0),
-      m_transportStatus(static_cast<Result>(cResultInvalidState)), m_localStationId(0)
+      m_transportStatus(static_cast<Result>(cResultInvalidState))
 {
     m_time.SetNow();
     StationManager::CreateInstance();
@@ -146,15 +146,7 @@ Transport::Transport()
     ProtocolMessageFilteringManager::CreateInstance();
     TransportAnalyzer::CreateInstance();
     m_stationIdTable = CreateObject<StationIdTable>();
-    void* storage = pead::allocateFromSeadHeap(sizeof(DispatchJob), common::HeapManager::GetHeap());
-    if (storage != 0)
-    {
-        for (unsigned int index = 0; index < sizeof(DispatchJob); ++index)
-            static_cast<unsigned char*>(storage)[index] = 0;
-        m_dispatchJob = new (storage) DispatchJob();
-    }
-    else
-        m_dispatchJob = 0;
+    m_dispatchJob = CreateObject<DispatchJob>();
 }
 
 NetworkFactory* Transport::GetNetworkFactory()
@@ -175,16 +167,17 @@ Result Transport::UpdateSetting(const common::CryptoSetting* cryptoSetting)
 Result Transport::SetKeepAliveInterval(int interval)
 {
     if (m_networkFactory->IsStarConnection())
-        return static_cast<Result>(cResultInvalidState);
+        return ResultInvalidState();
     return static_cast<StationPacketHandler*>(m_packetHandler)
         ->m_keepAliveSender.SetInterval(interval);
 }
 
 int Transport::GetKeepAliveInterval() const
 {
-    if (!m_networkFactory->IsStarConnection())
-        return static_cast<StationPacketHandler*>(m_packetHandler)->m_keepAliveSender.m_interval;
-    return 0;
+    if (m_networkFactory->IsStarConnection())
+        return 0;
+    const StationPacketHandler* handler = static_cast<const StationPacketHandler*>(m_packetHandler);
+    return handler->m_keepAliveSender.m_interval;
 }
 
 bool Transport::IsKeepAliveEnabled() const
@@ -425,9 +418,9 @@ void Transport::Cleanup()
     if (!m_startedUp)
         return;
     m_protocolManager.CleanupProtocols();
-    m_connectionRouteRelay = false;
-    m_startedUp = false;
     m_connectionError = 0;
+    m_startedUp = false;
+    m_connectionRouteRelay = false;
     if (m_dispatchJob != 0)
         m_dispatchJob->Reset(false);
     if (g_piaTransportAnalyzer != 0)
@@ -444,11 +437,12 @@ void Transport::Cleanup()
 Result Transport::Restartup(const common::CryptoSetting* cryptoSetting)
 {
     if (!m_connectionRouteRelay)
-        return static_cast<Result>(cResultInvalidState);
+        return ResultInvalidState();
     const unsigned int payloadSize = common::g_payloadSizeManager->m_mtuSize +
         common::g_payloadSizeManager->m_payloadSizeLimit;
     Cleanup();
-    return Startup(payloadSize, cryptoSetting);
+    const Result result = Startup(payloadSize, cryptoSetting);
+    return result;
 }
 
 Result Transport::Startup(unsigned int payloadSize,
@@ -511,12 +505,15 @@ Result Transport::Startup(unsigned int payloadSize,
 
 Result Transport::dispatch()
 {
-    m_time.SetNow();
+    common::Time now;
+    now.SetNow();
+    m_time = now;
     ++m_dispatchCount;
     if (g_piaThreadStreamManager == 0)
-        return static_cast<Result>(cResultInvalidState);
+        return ResultInvalidState();
 
-    Result result = g_piaThreadStreamManager->m_sendThreadStream->GetLastResult();
+    Result result;
+    result = g_piaThreadStreamManager->m_sendThreadStream->GetLastResult();
     if (result != 0)
         m_connectionError = result;
     result = g_piaThreadStreamManager->m_receiveThreadStream->GetLastResult();
@@ -525,12 +522,17 @@ Result Transport::dispatch()
 
     m_packetHandler->BeginDispatch(m_time);
     result = m_protocolManager.Dispatch();
-    if (result == 0)
-        result = g_piaResendingMessageManager->Dispatch();
+    if (result != 0)
+    {
+        m_packetHandler->EndDispatch(m_time);
+        return result;
+    }
+    result = g_piaResendingMessageManager->Dispatch();
     m_packetHandler->EndDispatch(m_time);
-    if (result == 0)
-        updateTransportAnalyzer();
-    return result;
+    if (result != 0)
+        return result;
+    updateTransportAnalyzer();
+    return 0;
 }
 
 void Transport::updateTransportAnalyzer()
@@ -567,10 +569,12 @@ Result Transport::ConvertToStationIndex(StationIndex* index,
     }
     StationIdTable::Entry entry;
     const Result result = m_stationIdTable->FindByStationId(&entry, stationId);
-    if (result != 0)
-        return result;
-    *index = static_cast<StationIndex>(entry.stationIndex);
-    return 0;
+    if (result == 0)
+    {
+        *index = static_cast<StationIndex>(entry.stationIndex);
+        return 0;
+    }
+    return result;
 }
 Result Transport::ConvertToStationId(uint64_t* stationId, StationIndex stationIndex) const
 {
@@ -597,10 +601,12 @@ Result Transport::ConvertToStationId(uint64_t* stationId, StationIndex stationIn
     }
     StationIdTable::Entry entry;
     const Result result = m_stationIdTable->FindByStationIndex(&entry, stationIndex);
-    if (result != 0)
-        return result;
-    *stationId = entry.stationId;
-    return 0;
+    if (result == 0)
+    {
+        *stationId = entry.stationId;
+        return 0;
+    }
+    return result;
 }
 
 StationIndex Transport::ConvertToStationIndexUnsafe(uint64_t stationId) const
@@ -610,10 +616,12 @@ StationIndex Transport::ConvertToStationIndexUnsafe(uint64_t stationId) const
 
 StationIndex Conv2StationIndex(uint64_t stationId)
 {
+    if (g_piaTransport == 0)
+        return static_cast<StationIndex>(cStationIndexInvalid);
     StationIndex index;
-    if (g_piaTransport != 0 &&
-        g_piaTransport->ConvertToStationIndex(&index, stationId) == 0)
-        return index;
-    return static_cast<StationIndex>(cStationIndexInvalid);
+    const Result result = g_piaTransport->ConvertToStationIndex(&index, stationId);
+    if (result != 0)
+        return static_cast<StationIndex>(cStationIndexInvalid);
+    return index;
 }
 }}}

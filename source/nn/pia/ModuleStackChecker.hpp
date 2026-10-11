@@ -24,8 +24,8 @@ public:
     static bool isInclude(ModuleType moduleType);
     static int getOrder(ModuleType moduleType);
     static ModuleType getTop();
-    static common::Result Register(ModuleType moduleType);
-    static common::Result Unregister(ModuleType moduleType);
+    static Result Register(ModuleType moduleType);
+    static Result Unregister(ModuleType moduleType);
 };
 
 }}

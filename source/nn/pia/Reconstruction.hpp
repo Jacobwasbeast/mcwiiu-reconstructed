@@ -139,8 +139,8 @@ public:
     };
 
     SessionStationInfo();
-    virtual ~SessionStationInfo();
     virtual void Clear();
+    virtual ~SessionStationInfo();
     StationInfoRole GetRole() const;
     void SetRole(StationInfoRole role);
     static unsigned int GetSerializedSize();

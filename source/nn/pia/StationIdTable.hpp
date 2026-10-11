@@ -6,11 +6,19 @@
 #include "nn/pia/Common.hpp"
 #include "nn/pia/common/PooledList.hpp"
 
+namespace nn { namespace pia { namespace session {
+
+class MeshEventListener;
+
+}}}
+
 namespace nn { namespace pia { namespace transport {
 
 
 class StationIdTable
 {
+    friend class session::MeshEventListener;
+
 public:
     struct Entry
     {

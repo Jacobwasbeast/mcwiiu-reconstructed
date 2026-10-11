@@ -2,6 +2,7 @@
 #define LEGACY_CONSOLE_WIIU_NN_PIA_PROTOCOL_MESSAGE_FILTERING_MANAGER_HPP
 
 #include <stdint.h>
+#include "nn/pia/Common.hpp"
 
 namespace nn { namespace pia { namespace transport {
 
@@ -11,7 +12,7 @@ class ProtocolMessageFilteringManager
 public:
     ProtocolMessageFilteringManager();
     ~ProtocolMessageFilteringManager();
-    static unsigned int CreateInstance();
+    static Result CreateInstance();
     static void DestroyInstance();
     unsigned int IsFilteringEnabled(unsigned char protocolType) const;
     unsigned int AddNoFilteringProtocolType(unsigned char protocolType);
@@ -19,7 +20,12 @@ public:
     void Trace(unsigned long long value) const;
 
 private:
-    unsigned char m_types[32];
+    enum
+    {
+        cNoFilteringProtocolTypeMax = 32
+    };
+
+    unsigned char m_types[cNoFilteringProtocolTypeMax];
     int m_count;
 };
 

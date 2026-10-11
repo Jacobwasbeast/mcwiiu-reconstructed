@@ -1,6 +1,7 @@
 #ifndef LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_HPP
 #define LEGACY_CONSOLE_WIIU_NN_PIA_COMMON_HPP
 
+#include <cstdarg>
 #include <stdint.h>
 
 namespace nn
@@ -48,6 +49,7 @@ public:
 
 enum StationIndex
 {
+    cStationIndexNum = 32,
     cStationIndexInvalid = 0xfd,
     cStationIndexSentinelFE = 0xfe,
     cStationIndexSentinelFF = 0xff
@@ -56,12 +58,16 @@ enum StationIndex
 namespace common
 {
 
-typedef ::nn::pia::Result Result;
-
 Result Initialize(void* workMemory, unsigned int workMemorySize);
 Result BeginSetup();
 Result EndSetup();
 void Finalize();
+unsigned int GetMemoryUsage();
+void SetProgramInformation(unsigned int sdkVersion, unsigned char nexMajorVersion, unsigned char nexMinorVersion,
+                           unsigned char nexMicroVersion);
+void PrintDebugInfo();
+void VPrintf(const char* format, va_list args);
+void Printf(const char* format, ...);
 unsigned char IsInitialized();
 unsigned char IsInSetupMode();
 void EmbedModuleInfo();
@@ -77,6 +83,11 @@ void serializeU8(unsigned char* buffer, unsigned char value);
 unsigned long long deserializeU64(const unsigned char* buffer);
 unsigned char deserializeU8(const unsigned char* buffer);
 unsigned int deserializeU32(const unsigned char* buffer);
+
+bool isValidSourceStationIndex(StationIndex index);
+bool isValidDestinationStationIndex(StationIndex index);
+
+void dump(unsigned long long traceFlag, const void* data, unsigned int size);
 
 }
 }

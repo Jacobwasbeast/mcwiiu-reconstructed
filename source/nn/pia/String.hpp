@@ -59,11 +59,7 @@ public:
         : String()
     {
         m_bufferSize = LengthT * 4;
-        for (unsigned int index = 0; index < LengthT * 4 + 1; ++index)
-            m_buffer[index] = 0;
-        m_text = m_buffer;
-        m_bytes = 0;
-        m_encoding = EncodingType();
+        Clear();
     }
 
     virtual ~FixedString()
@@ -82,17 +78,17 @@ public:
     virtual Result SetString(const void* text, unsigned int length, EncodingType encoding)
     {
         if (text == 0)
-            return 0x10c07;
+            return ResultInvalidArgument();
 
         if (length > m_bufferSize)
-            return 0x10c07;
+            return ResultInvalidArgument();
 
         unsigned int index;
 
         if (encoding == EncodingType_Utf16)
         {
             if (length > ((m_bufferSize >> 1) & 0x7ffffffe))
-                return 0x10c07;
+                return ResultInvalidArgument();
         }
         else if (encoding == EncodingType_Ascii)
         {
@@ -139,11 +135,11 @@ public:
                 current = *value;
             }
             if (index > (m_bufferSize >> 2))
-                return 0x10c07;
+                return ResultInvalidArgument();
         }
         else
         {
-            return 0x10c07;
+            return ResultInvalidArgument();
         }
 
         index = 0;
@@ -165,18 +161,17 @@ public:
             }
             m_buffer[index] = '\0';
             m_text = m_buffer;
-            m_encoding = encoding;
             m_bytes = index;
+            m_encoding = encoding;
         }
         else
         {
             if (encoding == EncodingType_Utf16)
             {
                 const uint16_t* value = static_cast<const uint16_t*>(text);
-                uint16_t* buffer = reinterpret_cast<uint16_t*>(m_buffer);
                 while (*value != 0 && index < ((m_bufferSize >> 1) & 0x7ffffffe))
                 {
-                    buffer[index >> 1] = *value;
+                    *reinterpret_cast<uint16_t*>(&m_buffer[index]) = *value;
                     ++value;
                     index += 2;
                 }
@@ -197,7 +192,7 @@ public:
     }
     FixedString& operator=(const FixedString& other)
     {
-        Copy(other);
+        String::Copy(other);
         return *this;
     }
 

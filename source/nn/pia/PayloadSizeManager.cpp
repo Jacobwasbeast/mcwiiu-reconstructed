@@ -76,9 +76,9 @@ void PayloadSizeManager::DestroyInstance()
 Result PayloadSizeManager::SetMtuSize(unsigned int mtuSize)
 {
     if (mtuSize < m_minMtuSize)
-        return cResultInvalidArgument;
+        return Result(cResultInvalidArgument);
     if (mtuSize > m_maxMtuSize)
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
     m_mtuSize = mtuSize;
     return 0;
 }

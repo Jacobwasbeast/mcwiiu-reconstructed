@@ -58,7 +58,7 @@ ModuleType ModuleStackChecker::getTop()
     return g_stack[g_stackTop];
 }
 
-common::Result ModuleStackChecker::Register(ModuleType moduleType)
+Result ModuleStackChecker::Register(ModuleType moduleType)
 {
     if (isInvalid(moduleType))
         return 0x10c07;
@@ -78,7 +78,7 @@ common::Result ModuleStackChecker::Register(ModuleType moduleType)
     return 0;
 }
 
-common::Result ModuleStackChecker::Unregister(ModuleType moduleType)
+Result ModuleStackChecker::Unregister(ModuleType moduleType)
 {
     if (isInvalid(moduleType))
         return 0x10c07;
