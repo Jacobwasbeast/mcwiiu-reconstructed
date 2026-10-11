@@ -14,47 +14,49 @@ arrayWithLength<int> BiomeOverrideLayer::getArea(int x, int z, int width, int he
 {
     arrayWithLength<int> area = IntCache::allocate(width * height);
 
-    x += overrideWidth >> 1;
-    z += overrideHeight >> 1;
+    int originX = x + overrideWidth / 2;
+    int originZ = z + overrideHeight / 2;
 
-    if (x < 0)
+    if (originX < 0)
     {
-        x = 0;
+        originX = 0;
     }
 
-    if (x >= overrideWidth)
+    if (originX >= (int)overrideWidth)
     {
-        x = overrideWidth - 1;
+        originX = overrideWidth - 1;
     }
 
-    if (z < 0)
+    if (originZ < 0)
     {
-        z = 0;
+        originZ = 0;
     }
 
-    if (z >= overrideHeight)
+    if (originZ >= (int)overrideHeight)
     {
-        z = overrideHeight - 1;
+        originZ = overrideHeight - 1;
     }
 
     for (int i = 0; i < height; i++)
     {
         for (int j = 0; j < width; j++)
         {
-            int sampleX = x + j;
-            int sampleZ = z + i;
+            int sampleX = originX + j;
+            int sampleZ = originZ + i;
 
-            if (sampleX >= overrideWidth)
+            if (sampleX >= (int)overrideWidth)
             {
                 sampleX = overrideWidth - 1;
             }
 
-            if (sampleZ >= overrideHeight)
+            if (sampleZ >= (int)overrideHeight)
             {
                 sampleZ = overrideHeight - 1;
             }
 
-            area.data[i * width + j] = overrideBiomes[sampleX + sampleZ * overrideWidth];
+            int index = sampleX + sampleZ * overrideWidth;
+            unsigned char value = overrideBiomes[index];
+            area[j + i * width] = value;
         }
     }
 

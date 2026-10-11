@@ -23,8 +23,7 @@ private:
     int cacheX;
     int cacheZ;
     int cacheSize;
-    unsigned char* biomeCache;
-    unsigned int cacheLength;
+    arrayWithLength<unsigned char> biomeCache;
 };
 
 #endif

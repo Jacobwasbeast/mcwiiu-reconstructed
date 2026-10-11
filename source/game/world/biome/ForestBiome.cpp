@@ -19,22 +19,23 @@
 ForestBiome::ForestBiome(EBiomeIDs biomeId, EType type, BiomeProperties* properties)
     : Biome(biomeId, eBiomeType_Forest, properties), mType(type)
 {
-    if (mType == eType_Flower)
+    if (type != eType_Flower)
+    {
+        mDecorator->grassPerChunk = 2;
+        mDecorator->treesPerChunk = 10;
+    }
+    else
     {
         mDecorator->treesPerChunk = 6;
         mDecorator->grassPerChunk = 1;
         mDecorator->flowersPerChunk = 100;
         mCreatures.push_back(new MobSpawnerData(4, EntityType::RABBIT, 2, 3));
     }
-    else
-    {
-        mDecorator->grassPerChunk = 2;
-        mDecorator->treesPerChunk = 10;
-        if (mType == eType_Normal)
-            mWolves.push_back(new MobSpawnerData(5, EntityType::WOLF, 4, 4));
-    }
 
-    if (mType == eType_Roofed)
+    if (type == eType_Normal)
+        mWolves.push_back(new MobSpawnerData(5, EntityType::WOLF, 4, 4));
+
+    if (type == eType_Roofed)
         mDecorator->treesPerChunk = -999;
 }
 

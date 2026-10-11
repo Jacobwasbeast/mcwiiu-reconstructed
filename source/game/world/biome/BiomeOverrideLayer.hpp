@@ -12,8 +12,8 @@ public:
     virtual arrayWithLength<int> getArea(int x, int z, int width, int height);
 
 protected:
-    int overrideWidth;
-    int overrideHeight;
+    unsigned int overrideWidth;
+    unsigned int overrideHeight;
     unsigned char* overrideBiomes;
 };
 

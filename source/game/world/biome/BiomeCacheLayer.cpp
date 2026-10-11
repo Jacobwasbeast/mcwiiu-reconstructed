@@ -11,14 +11,11 @@ BiomeCacheLayer::BiomeCacheLayer(int seed,
                                  unsigned char biomeScale,
                                  int centreXChunk,
                                  int centreZChunk)
-    : Layer(seed),
-      biomeCache(NULL),
-      cacheLength(0)
+    : Layer(seed)
 {
     this->parent = parent;
 
-    biomeCache = NULL;
-    cacheLength = 0;
+    biomeCache = arrayWithLength<unsigned char>();
 
     cacheSize = (xzSize & 0x0fffffff) << 2;
 
@@ -30,30 +27,20 @@ BiomeCacheLayer::BiomeCacheLayer(int seed,
 
 BiomeCacheLayer::~BiomeCacheLayer()
 {
-    delete[] biomeCache;
+    delete[] biomeCache.data;
 }
 
 arrayWithLength<int> BiomeCacheLayer::getArea(int x, int z, int width, int height)
 {
-    if (biomeCache == NULL)
+    if (biomeCache.data == NULL)
     {
-        unsigned int count = cacheSize * cacheSize;
-
-        unsigned char* biomes = new unsigned char[count];
-
-        for (unsigned int i = 0; i < count; i++)
-        {
-            biomes[i] = 0;
-        }
-
-        biomeCache = biomes;
-        cacheLength = count;
+        biomeCache = arrayWithLength<unsigned char>(cacheSize * cacheSize, true);
 
         arrayWithLength<int> parentArea = parent->getArea(cacheX, cacheZ, cacheSize, cacheSize);
 
-        for (unsigned int i = 0; i < cacheLength; i++)
+        for (unsigned int i = 0; i < biomeCache.length; i++)
         {
-            biomeCache[i] = (unsigned char)parentArea.data[i];
+            biomeCache[i] = (unsigned char)parentArea[i];
         }
     }
 
@@ -66,18 +53,10 @@ arrayWithLength<int> BiomeCacheLayer::getArea(int x, int z, int width, int heigh
     {
         for (int j = 0; j < width; j++)
         {
-            int cacheColumn = std::min(cacheSize - 1, x + j);
-            if (cacheColumn < 0)
-            {
-                cacheColumn = 0;
-            }
-            int cacheRow = std::min(cacheSize - 1, z + i);
-            if (cacheRow < 0)
-            {
-                cacheRow = 0;
-            }
+            int cacheColumn = std::max(0, std::min(cacheSize - 1, x + j));
+            int cacheRow = std::max(0, std::min(cacheSize - 1, z + i));
 
-            area.data[j + i * width] = biomeCache[cacheColumn + cacheRow * cacheSize];
+            area[j + i * width] = biomeCache[cacheColumn + cacheRow * cacheSize];
         }
     }
 

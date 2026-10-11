@@ -370,12 +370,12 @@ void BiomeDecorator::decorate(Biome* biome, Level* level, Random* random)
         }
         if (random->nextInt(8) == 0)
         {
-            int x = random->nextInt(16);
-            int z = random->nextInt(16);
-            BlockPos top = level->getHeightmapPos(position.offset(x + 8, 0, z + 8));
+            int x = random->nextInt(16) + 8;
+            int z = random->nextInt(16) + 8;
+            BlockPos top = level->getHeightmapPos(position.offset(x, 0, z));
             if (top.y * 2 > 0)
             {
-                BlockPos pos = position.offset(x + 8, random->nextInt(top.y * 2), z + 8);
+                BlockPos pos = position.offset(x, random->nextInt(top.y * 2), z);
                 redMushroomGen->place(level, *random, pos);
             }
         }
@@ -481,11 +481,11 @@ void BiomeDecorator::decorate(Biome* biome, Level* level, Random* random)
         Feature* lavaSpring = new SpringFeature(Blocks::flowing_lava);
         for (int i = 0; i < 20; ++i)
         {
-            const int x = random->nextInt(16);
-            const int z = random->nextInt(16);
+            const int x = random->nextInt(16) + 8;
+            const int z = random->nextInt(16) + 8;
             const int range = random->nextInt(random->nextInt(112) + 8) + 8;
             const int y = random->nextInt(range);
-            BlockPos pos = position.offset(x + 8, y, z + 8);
+            BlockPos pos = position.offset(x, y, z);
             lavaSpring->place(level, *random, pos);
         }
         delete lavaSpring;
