@@ -30,7 +30,6 @@
 
 static unsigned int gOldChunkStorageTlsKey = 0;
 static OldChunkStorage::ThreadStorage* gOldChunkStorageDefault = NULL;
-static const std::wstring RIDING_KEY(L"Riding");
 
 static const unsigned int THREAD_BLOCK_DATA_SIZE = 16 * 16 * 256;
 static const unsigned int THREAD_NIBBLE_DATA_SIZE = THREAD_BLOCK_DATA_SIZE / 2;
@@ -39,24 +38,24 @@ OldChunkStorage::ThreadStorage::ThreadStorage()
     : blockData(NULL), blockDataSize(0), data(NULL), dataSize(0),
       skyLightData(NULL), skyLightDataSize(0), blockLightData(NULL), blockLightDataSize(0)
 {
-    unsigned int i;
-    unsigned char* buffer = new unsigned char[THREAD_BLOCK_DATA_SIZE];
-    for (i = 0; i < THREAD_BLOCK_DATA_SIZE; ++i)
+    unsigned char* buffer;
+    buffer = new unsigned char[THREAD_BLOCK_DATA_SIZE];
+    for (unsigned int i = 0; i < THREAD_BLOCK_DATA_SIZE; ++i)
         buffer[i] = 0;
-    blockDataSize = THREAD_BLOCK_DATA_SIZE;
     blockData = buffer;
+    blockDataSize = THREAD_BLOCK_DATA_SIZE;
     buffer = new unsigned char[THREAD_NIBBLE_DATA_SIZE];
-    for (i = 0; i < THREAD_NIBBLE_DATA_SIZE; ++i)
+    for (unsigned int i = 0; i < THREAD_NIBBLE_DATA_SIZE; ++i)
         buffer[i] = 0;
     data = buffer;
     dataSize = THREAD_NIBBLE_DATA_SIZE;
     buffer = new unsigned char[THREAD_NIBBLE_DATA_SIZE];
-    for (i = 0; i < THREAD_NIBBLE_DATA_SIZE; ++i)
+    for (unsigned int i = 0; i < THREAD_NIBBLE_DATA_SIZE; ++i)
         buffer[i] = 0;
     skyLightData = buffer;
     skyLightDataSize = THREAD_NIBBLE_DATA_SIZE;
     buffer = new unsigned char[THREAD_NIBBLE_DATA_SIZE];
-    for (i = 0; i < THREAD_NIBBLE_DATA_SIZE; ++i)
+    for (unsigned int i = 0; i < THREAD_NIBBLE_DATA_SIZE; ++i)
         buffer[i] = 0;
     blockLightData = buffer;
     blockLightDataSize = THREAD_NIBBLE_DATA_SIZE;
@@ -102,26 +101,28 @@ OldChunkStorage::OldChunkStorage(File file, bool createValue)
 
 File OldChunkStorage::getFile(int x, int z)
 {
+    wchar_t name[256];
     wchar_t xRadix36[256];
     wchar_t zRadix36[256];
-    wchar_t name[256];
     File file(directory, std::wstring(xRadix36));
     if (!file.exists())
     {
-        if (!create)
-            return File(L"Entities");
-        file.mkdir();
+        if (create)
+            file.mkdir();
+        else
+            return File(L"");
     }
     file = File(file, std::wstring(zRadix36));
     if (!file.exists())
     {
-        if (!create)
-            return File(L"Entities");
-        file.mkdir();
+        if (create)
+            file.mkdir();
+        else
+            return File(L"");
     }
     file = File(file, std::wstring(name));
     if (!file.exists() && !create)
-        return File(L"Entities");
+        return File(L"");
     return file;
 }
 
@@ -161,9 +162,9 @@ boost::shared_ptr<Entity> OldChunkStorage::loadAndAddEntity(CompoundTag* tag, Le
         return boost::shared_ptr<Entity>();
 
     chunk->addEntity(entity);
-    if (tag->contains(RIDING_KEY, Tag::TAG_LIST))
+    if (tag->contains(Entity::RIDING_TAG, Tag::TAG_LIST))
     {
-        ListTag* passengers = tag->getList(RIDING_KEY, Tag::TAG_COMPOUND);
+        ListTag* passengers = tag->getList(Entity::RIDING_TAG, Tag::TAG_COMPOUND);
         for (int i = 0; i < passengers->size(); ++i)
         {
             boost::shared_ptr<Entity> passenger = loadAndAddEntity(passengers->getCompound(i), level, chunk);
@@ -295,10 +296,12 @@ LevelChunk* OldChunkStorage::load(Level* level, int x, int z, LevelChunk* chunk)
                 return result;
             }
             sprintf(buffer, "Chunk file at %d, %d is missing block data, skipping\n", x, z);
+            return NULL;
         }
         else
         {
             sprintf(buffer, "Chunk file at %d, %d is missing level data, skipping\n", x, z);
+            return NULL;
         }
     }
     return NULL;
@@ -407,9 +410,9 @@ boost::shared_ptr<Entity> OldChunkStorage::loadEntity(CompoundTag* tag, Level* l
     if (addToWorld && !level->addEntity(entity))
         return boost::shared_ptr<Entity>();
 
-    if (tag->contains(RIDING_KEY, Tag::TAG_LIST))
+    if (tag->contains(Entity::RIDING_TAG, Tag::TAG_LIST))
     {
-        ListTag* passengers = tag->getList(RIDING_KEY, Tag::TAG_COMPOUND);
+        ListTag* passengers = tag->getList(Entity::RIDING_TAG, Tag::TAG_COMPOUND);
         for (int i = 0; i < passengers->size(); ++i)
         {
             boost::shared_ptr<Entity> passenger = loadEntity(passengers->getCompound(i), level, x, y, z, addToWorld);
@@ -447,9 +450,9 @@ boost::shared_ptr<Entity> OldChunkStorage::loadEntity(CompoundTag* tag, Level* l
     if (addToWorld && !level->addEntity(entity))
         return boost::shared_ptr<Entity>();
 
-    if (tag->contains(RIDING_KEY, Tag::TAG_LIST))
+    if (tag->contains(Entity::RIDING_TAG, Tag::TAG_LIST))
     {
-        ListTag* passengers = tag->getList(RIDING_KEY, Tag::TAG_COMPOUND);
+        ListTag* passengers = tag->getList(Entity::RIDING_TAG, Tag::TAG_COMPOUND);
         for (int i = 0; i < passengers->size(); ++i)
         {
             boost::shared_ptr<Entity> passenger = loadEntity(passengers->getCompound(i), level, addToWorld);

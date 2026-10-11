@@ -107,71 +107,69 @@ void PlayerChunkContainer::updateInhabitedTime()
 
 void PlayerChunkContainer::remove(boost::shared_ptr<ServerPlayer> player, bool send)
 {
-    std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = mPlayers.begin();
-    while (it != mPlayers.end() && it->get() != player.get())
-    {
-        ++it;
-    }
-    if (it == mPlayers.end())
-    {
-        return;
-    }
-
     PlayerChunkContainer* emptied = NULL;
-    mPlayers.erase(it);
-    if (mPlayers.empty())
+    std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = std::find(mPlayers.begin(), mPlayers.end(), player);
+    if (it != mPlayers.end())
     {
-        updateInhabitedTime();
-
-        PlayerChunkMap::ContainerVector::iterator all = std::find(mMap->mAllChunks.begin(), mMap->mAllChunks.end(), this);
-        if (all != mMap->mAllChunks.end())
+        mPlayers.erase(it);
+        if (mPlayers.empty())
         {
-            mMap->mAllChunks.erase(all);
-        }
+            updateInhabitedTime();
 
-        PlayerChunkMap::ContainerMap::iterator entry = mMap->mChunks.find(PlayerChunkMap::getKeyForChunk(mPos.x, mPos.z));
-        if (entry != mMap->mChunks.end())
-        {
-            emptied = entry->second;
-            mMap->mChunks.erase(entry);
-        }
-
-        if (mBlockChangesCount > 0)
-        {
-            PlayerChunkMap::ContainerVector::iterator changed = std::find(mMap->mChangedChunks.begin(), mMap->mChangedChunks.end(), this);
-            mMap->mChangedChunks.erase(changed);
-        }
-
-        ServerLevel* level = static_cast<ServerLevel*>(mMap->getLevel());
-        static_cast<ServerChunkCache*>(level->getChunkSource())->drop(mPos.x, mPos.z);
-    }
-
-    player->mLoadedChunks.remove(mPos);
-    if (send && player->mConnection != NULL && player->mTrackedChunks.find(mPos) != player->mTrackedChunks.end())
-    {
-        INetworkPlayer* networkPlayer = player->mConnection->getNetworkPlayer();
-        if (networkPlayer != NULL)
-        {
-            for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator other = mPlayers.begin(); other != mPlayers.end(); ++other)
+            PlayerChunkMap::ContainerVector::iterator all = std::find(mMap->mAllChunks.begin(), mMap->mAllChunks.end(), this);
+            if (all != mMap->mAllChunks.end())
             {
-                boost::shared_ptr<ServerPlayer> otherPlayer = *other;
-                if (otherPlayer->mConnection == NULL)
+                mMap->mAllChunks.erase(all);
+            }
+
+            long long id = (static_cast<long long>(mPos.x) + INT_MAX) | ((static_cast<long long>(mPos.z) + INT_MAX) << 32);
+            PlayerChunkMap::ContainerMap::iterator entry = mMap->mChunks.find(id);
+            if (entry != mMap->mChunks.end())
+            {
+                emptied = entry->second;
+                mMap->mChunks.erase(entry);
+            }
+
+            if (mBlockChangesCount > 0)
+            {
+                PlayerChunkMap::ContainerVector::iterator changed = std::find(mMap->mChangedChunks.begin(), mMap->mChangedChunks.end(), this);
+                mMap->mChangedChunks.erase(changed);
+            }
+
+            ServerLevel* level = static_cast<ServerLevel*>(mMap->getLevel());
+            static_cast<ServerChunkCache*>(level->getChunkSource())->drop(mPos.x, mPos.z);
+        }
+
+        player->mLoadedChunks.remove(mPos);
+        if (send && player->mConnection != NULL && player->mTrackedChunks.find(mPos) != player->mTrackedChunks.end())
+        {
+            INetworkPlayer* networkPlayer = player->mConnection->getNetworkPlayer();
+            if (networkPlayer != NULL)
+            {
+                bool sentToSameSystem = false;
+                for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator other = mPlayers.begin(); other < mPlayers.end(); ++other)
                 {
-                    continue;
+                    boost::shared_ptr<ServerPlayer> otherPlayer = *other;
+                    if (otherPlayer->mConnection != NULL)
+                    {
+                        INetworkPlayer* otherNetworkPlayer = otherPlayer->mConnection->getNetworkPlayer();
+                        if (otherNetworkPlayer != NULL && otherNetworkPlayer->IsSameSystem(networkPlayer)
+                            && otherPlayer->mTrackedChunks.find(mPos) != otherPlayer->mTrackedChunks.end())
+                        {
+                            sentToSameSystem = true;
+                            break;
+                        }
+                    }
                 }
-                INetworkPlayer* otherNetworkPlayer = otherPlayer->mConnection->getNetworkPlayer();
-                if (otherNetworkPlayer != NULL && otherNetworkPlayer->IsSameSystem(networkPlayer)
-                    && otherPlayer->mTrackedChunks.find(mPos) != otherPlayer->mTrackedChunks.end())
+                if (!sentToSameSystem)
                 {
-                    delete emptied;
-                    return;
+                    player->mConnection->send(boost::shared_ptr<ChunkVisibilityPacket>(
+                        new ChunkVisibilityPacket(mPos.x, mPos.z, false, mMap->shouldActuallyDropChunks())));
                 }
             }
-            player->mConnection->send(boost::shared_ptr<Packet>(
-                new ChunkVisibilityPacket(mPos.x, mPos.z, false, mMap->shouldActuallyDropChunks())));
         }
+        delete emptied;
     }
-    delete emptied;
 }
 
 namespace {
@@ -295,7 +293,10 @@ bool PlayerChunkContainer::broadcastChanges(bool allowRegionUpdate)
     if (mBlockChangesCount == 1)
     {
         BlockPos pos(mPos.x * 16 + mMinX, mMinY, mPos.z * 16 + mMinZ);
-        broadcast(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
+        {
+            boost::shared_ptr<Packet> packet(new ClientboundBlockUpdatePacket(level, pos));
+            broadcast(packet);
+        }
         if (level->getBlockState(pos)->getBlock()->mBlockEntity)
         {
             broadcast(level->getBlockEntity(pos));
@@ -320,7 +321,10 @@ bool PlayerChunkContainer::broadcastChanges(bool allowRegionUpdate)
             height = 256;
         }
 
-        broadcast(boost::shared_ptr<Packet>(new BlockRegionUpdatePacket(x, mMinY, z, width, height, depth, level, false, NULL)));
+        {
+            boost::shared_ptr<Packet> packet(new BlockRegionUpdatePacket(x, mMinY, z, width, height, depth, level, false, NULL));
+            broadcast(packet);
+        }
 
         std::vector<boost::shared_ptr<BlockEntity> >* blockEntities =
             static_cast<ServerLevel*>(level)->getBlockEntitiesInRegion(x, mMinY, z, x + width, mMinY + height, z + depth);
@@ -337,8 +341,11 @@ bool PlayerChunkContainer::broadcastChanges(bool allowRegionUpdate)
     }
     else
     {
-        broadcast(boost::shared_ptr<Packet>(new ClientboundChunkBlocksUpdatePacket(
-            mPos.x, mPos.z, mBlockChanges, static_cast<unsigned char>(mBlockChangesCount), level)));
+        {
+            boost::shared_ptr<Packet> packet(new ClientboundChunkBlocksUpdatePacket(
+                mPos.x, mPos.z, mBlockChanges, static_cast<unsigned char>(mBlockChangesCount), level));
+            broadcast(packet);
+        }
 
         for (int i = 0; i < mBlockChangesCount; ++i)
         {
@@ -425,10 +432,9 @@ bool PlayerChunkContainer::updatePlayerReference(boost::shared_ptr<ServerPlayer>
 void PlayerChunkContainer::removeAllPlayers(PlayerChunkContainer* container, bool send)
 {
     std::vector<boost::shared_ptr<ServerPlayer> > players(container->mPlayers);
-    std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players.begin();
-    while (it != players.end())
+    for (std::vector<boost::shared_ptr<ServerPlayer> >::iterator it = players.begin(); it != players.end(); ++it)
     {
-        container->remove(*it, send);
-        ++it;
+        boost::shared_ptr<ServerPlayer> player = *it;
+        container->remove(player, send);
     }
 }

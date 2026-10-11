@@ -140,11 +140,13 @@ bool WaterLevelChunk::shouldSave(bool)
 int WaterLevelChunk::setBlocksAndData(arrayWithLength<unsigned char>, int x, int y, int z,
                                       int width, int height, int depth, int, bool extra)
 {
-    int volume = (width - x) * (height - y) * (depth - z);
-    int half = volume / 2;
+    int sizeX = width - x;
+    int sizeY = height - y;
+    int sizeZ = depth - z;
+    int volume = sizeX * sizeY * sizeZ;
     if (extra)
-        return volume + half * 3;
-    return volume + half;
+        return volume + volume / 2 * 3;
+    return volume + volume / 2;
 }
 
 Random* WaterLevelChunk::getRandom(long long seed)

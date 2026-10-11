@@ -1795,9 +1795,9 @@ void LevelChunk::load(bool blockEntitiesOnly)
                 {
                     entity->onLoadedFromSave();
                     addEntity(entity);
-                    if (tag->contains(L"Riding", Tag::TAG_LIST))
+                    if (tag->contains(Entity::RIDING_TAG, Tag::TAG_LIST))
                     {
-                        ListTag* riders = tag->getList(L"Riding", Tag::TAG_COMPOUND);
+                        ListTag* riders = tag->getList(Entity::RIDING_TAG, Tag::TAG_COMPOUND);
                         for (int j = 0; j < riders->size(); ++j)
                         {
                             boost::shared_ptr<Entity> rider = EntityIO::newEntity(riders->getCompound(j), level);

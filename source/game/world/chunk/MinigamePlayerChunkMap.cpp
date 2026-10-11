@@ -35,7 +35,10 @@ void MinigamePlayerChunkMap::updatePlayerReferences(boost::shared_ptr<ServerPlay
     ContainerVector chunks;
     chunks.assign(mAllChunks.begin(), mAllChunks.end());
     for (ContainerVector::iterator it = chunks.begin(); it != chunks.end(); ++it)
-        (*it)->updatePlayerReference(player);
+    {
+        PlayerChunkContainer* chunk = *it;
+        chunk->updatePlayerReference(player);
+    }
 
     for (RequestVector::iterator it = mAddRequests.begin(); it != mAddRequests.end(); ++it)
     {
@@ -88,7 +91,7 @@ void MinigamePlayerChunkMap::loadPlayerInActiveArea(boost::shared_ptr<ServerPlay
 
     if ((gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->canReceiveAllPackets(player))
     {
-        player->mConnection->send(boost::shared_ptr<Packet>(new ChunkVisibilityAreaPacket(
+        player->mConnection->send(boost::shared_ptr<ChunkVisibilityAreaPacket>(new ChunkVisibilityAreaPacket(
             minX, maxX, minZ, maxZ, true, shouldActuallyDropChunks(), false)));
     }
 }
@@ -111,9 +114,8 @@ void MinigamePlayerChunkMap::reloadAllPlayers(int minX, int minZ, int maxX, int 
         boost::shared_ptr<ServerPlayer> player = mPlayers[i];
         if ((gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers)->canReceiveAllPackets(player))
         {
-            boost::shared_ptr<Packet> packet(new ChunkVisibilityAreaPacket(
-                minX, maxX, minZ, maxZ, false, shouldActuallyDropChunks(), true));
-            player->mConnection->send(packet);
+            player->mConnection->send(boost::shared_ptr<ChunkVisibilityAreaPacket>(new ChunkVisibilityAreaPacket(
+                minX, maxX, minZ, maxZ, false, shouldActuallyDropChunks(), true)));
         }
     }
     mShouldDropChunks = false;
@@ -149,12 +151,12 @@ void MinigamePlayerChunkMap::onPlayerLeave(boost::shared_ptr<ServerPlayer> playe
     chunks.assign(mAllChunks.begin(), mAllChunks.end());
     for (ContainerVector::iterator it = chunks.begin(); it != chunks.end(); ++it)
     {
-        (*it)->updatePlayerReference(player);
-        (*it)->remove(player, false);
+        PlayerChunkContainer* chunk = *it;
+        chunk->updatePlayerReference(player);
+        chunk->remove(player, false);
     }
 
-    RequestVector::iterator request = mAddRequests.begin();
-    while (request != mAddRequests.end())
+    for (RequestVector::iterator request = mAddRequests.begin(); request != mAddRequests.end();)
     {
         if (request->player->getXuid() == player->getXuid())
             request = mAddRequests.erase(request);

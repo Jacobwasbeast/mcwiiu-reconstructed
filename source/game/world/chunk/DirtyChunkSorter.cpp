@@ -11,14 +11,13 @@ DirtyChunkSorter::DirtyChunkSorter(boost::shared_ptr<LivingEntity> entity, int r
 
 bool DirtyChunkSorter::operator()(const Chunk* first, const Chunk* second) const
 {
-    if (second->mClipChunk->mVisible == false)
+    bool firstVisible = first->mClipChunk->mVisible;
+    bool secondVisible = second->mClipChunk->mVisible;
+    if (firstVisible && !secondVisible)
     {
-        if (first->mClipChunk->mVisible != false)
-        {
-            return false;
-        }
+        return false;
     }
-    else if (first->mClipChunk->mVisible == false)
+    if (secondVisible && !firstVisible)
     {
         return true;
     }
@@ -26,13 +25,13 @@ bool DirtyChunkSorter::operator()(const Chunk* first, const Chunk* second) const
     double firstDistance = first->distanceToSqr(mEntity);
     double secondDistance = second->distanceToSqr(mEntity);
 
-    if (secondDistance <= firstDistance)
+    if (firstDistance < secondDistance)
     {
-        if (firstDistance <= secondDistance)
-        {
-            return second->mUnknown <= first->mUnknown;
-        }
+        return false;
+    }
+    if (firstDistance > secondDistance)
+    {
         return true;
     }
-    return false;
+    return first->mUnknown >= second->mUnknown;
 }

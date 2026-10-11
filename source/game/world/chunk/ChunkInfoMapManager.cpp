@@ -40,26 +40,28 @@ void ChunkInfoMapManager::renderStatusMap(BufferBuilder* bufferBuilder, float wi
     int xzSize = sLevel->mDimension->getXZSize();
     int halfXZSize = xzSize / 2;
 
-    PlayerList* players = gMinecraftServer->mPlayers;
-    int playerCount = players->getPlayerCount();
+    PlayerList* players = gMinecraftServer == NULL ? NULL : gMinecraftServer->mPlayers;
     int size;
     int centreChunkX;
     int centreChunkZ;
-    if (playerCount < 2 && xzSize >= CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE)
-    {
-        Minecraft* minecraft = Minecraft::GetInstance();
-        boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mPlayer;
-        centreChunkX = Mth::clamp(player->mChunkX, CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE / 2 - halfXZSize,
-                                  halfXZSize - CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE / 2);
-        centreChunkZ = Mth::clamp(player->mChunkZ, CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE / 2 - halfXZSize,
-                                  halfXZSize - CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE / 2);
-        size = CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE;
-    }
-    else
+    int playerCount = players->getPlayerCount();
+    if (playerCount > 1 || xzSize < CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE)
     {
         centreChunkX = 0;
         centreChunkZ = 0;
         size = xzSize;
+    }
+    else
+    {
+        Minecraft* minecraft = Minecraft::GetInstance();
+        boost::shared_ptr<MultiplayerLocalPlayer> player = minecraft->mPlayer;
+        int playerChunkX = player->mChunkX;
+        int playerChunkZ = player->mChunkZ;
+        size = CHUNK_INFO_MAP_SPLIT_SCREEN_SIZE;
+        int minCentre = size / 2 - halfXZSize;
+        int maxCentre = halfXZSize - size / 2;
+        centreChunkX = Mth::clamp(playerChunkX, minCentre, maxCentre);
+        centreChunkZ = Mth::clamp(playerChunkZ, minCentre, maxCentre);
     }
 
     int originChunkX = size / 2 - centreChunkX;
@@ -69,10 +71,9 @@ void ChunkInfoMapManager::renderStatusMap(BufferBuilder* bufferBuilder, float wi
     {
         bufferBuilder->begin(3);
 
-        int chunkX = column - originChunkX;
-
         for (int row = 0; row < size; row++)
         {
+            int chunkX = column - originChunkX;
             int chunkZ = row - originChunkZ;
 
             LevelChunk* chunk = sClientChunkSource->getChunk(chunkX, chunkZ);
@@ -107,10 +108,10 @@ void ChunkInfoMapManager::renderHeatMap(BufferBuilder* bufferBuilder, float widt
     for (int column = 0; column < xzSize; column++)
     {
         int chunkX = column - halfXZSize;
+
         for (int row = 0; row < xzSize; row++)
         {
-            LevelChunk* chunk = sClientChunkSource->getChunk(chunkX, row - halfXZSize);
-            chunk->getSparseBlockAndDataMemoryAllocated();
+            sClientChunkSource->getChunk(chunkX, row - halfXZSize)->getSparseBlockAndDataMemoryAllocated();
         }
     }
 
