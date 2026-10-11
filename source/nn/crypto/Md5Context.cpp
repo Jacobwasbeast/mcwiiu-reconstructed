@@ -73,30 +73,42 @@ void Md5Context::Update(const void* pData, unsigned int uiSize)
     unsigned int uiRoom = BlockSize - uiOffset;
     m_length += uiSize;
 
-    if (uiSize < uiRoom)
+    if (uiRoom > uiSize)
     {
-        for (int i = 0; i < static_cast<int>(uiSize); ++i)
-            m_block.bytes[uiOffset + i] = pSource[i];
-        return;
+        if (uiSize != 0)
+        {
+            unsigned char* pDest = &m_block.bytes[uiOffset];
+            for (int i = 0; i < static_cast<int>(uiSize); ++i)
+                pDest[i] = pSource[i];
+        }
     }
-
-    for (int i = 0; i < static_cast<int>(uiRoom); ++i)
-        m_block.bytes[uiOffset + i] = pSource[i];
-    ProcessBlock();
-    pSource += uiRoom;
-
-    unsigned int uiBlocks = (uiSize - uiRoom) / BlockSize;
-    for (int block = 0; block < static_cast<int>(uiBlocks); ++block)
+    else
     {
-        for (int i = 0; i < BlockSize; ++i)
-            m_block.bytes[i] = pSource[i];
-        pSource += BlockSize;
+        unsigned char* pDest = &m_block.bytes[uiOffset];
+        for (int i = 0; i < static_cast<int>(uiRoom); ++i)
+            pDest[i] = pSource[i];
         ProcessBlock();
-    }
+        pSource += uiRoom;
 
-    unsigned int uiRemainder = (uiSize - uiRoom) & (BlockSize - 1);
-    for (int i = 0; i < static_cast<int>(uiRemainder); ++i)
-        m_block.bytes[i] = pSource[i];
+        uiSize -= uiRoom;
+        unsigned int uiBlocks = uiSize / BlockSize;
+        for (int block = 0; block < static_cast<int>(uiBlocks); ++block)
+        {
+            pDest = m_block.bytes;
+            for (int i = 0; i < BlockSize; ++i)
+                pDest[i] = pSource[i];
+            pSource += BlockSize;
+            ProcessBlock();
+        }
+
+        unsigned int uiRemainder = uiSize & (BlockSize - 1);
+        if (uiRemainder != 0)
+        {
+            pDest = m_block.bytes;
+            for (int i = 0; i < static_cast<int>(uiRemainder); ++i)
+                pDest[i] = pSource[i];
+        }
+    }
 }
 
 unsigned int Md5Context::GetHashSize()
@@ -106,38 +118,51 @@ unsigned int Md5Context::GetHashSize()
 
 void Md5Context::GetHash(void* pHash)
 {
-    unsigned int uiLength = m_length;
+    unsigned int uiBitLength = m_length << 3;
+    unsigned int uiBitLengthHigh = 0;
     Update(&PaddingByte, 1);
 
     unsigned int uiOffset = m_length & (BlockSize - 1);
     unsigned int uiRoom = BlockSize - uiOffset;
-    if (uiRoom <= 8)
+    if (uiRoom < 8)
     {
-        if (uiRoom < 8)
-        {
-            for (int i = 0; i < static_cast<int>(uiRoom); ++i)
-                m_block.bytes[uiOffset + i] = 0;
-            ProcessBlock();
-            uiOffset = 0;
-            uiRoom = BlockSize;
-        }
+        unsigned char* pDest = &m_block.bytes[uiOffset];
+        for (int i = 0; i < static_cast<int>(uiRoom); ++i)
+            pDest[i] = 0;
+        ProcessBlock();
+        uiOffset = 0;
+        uiRoom = BlockSize;
     }
-    for (int i = 0; i < static_cast<int>(uiRoom - 8); ++i)
-        m_block.bytes[uiOffset + i] = 0;
 
-    m_block.words[BlockWordCount - 2] = SwapBytes(uiLength << 3);
-    m_block.words[BlockWordCount - 1] = 0;
+    unsigned char* pDest = &m_block.bytes[uiOffset];
+    for (int i = 0; i < static_cast<int>(uiRoom - 8); ++i)
+        pDest[i] = 0;
+
+    m_block.words[BlockWordCount - 2] = SwapBytes(uiBitLength);
+    m_block.words[BlockWordCount - 1] = SwapBytes(uiBitLengthHigh);
     ProcessBlock();
 
     unsigned char* pOutput = static_cast<unsigned char*>(pHash);
-    for (unsigned int i = 0; i < StateWordCount; ++i)
-    {
-        unsigned int uiState = m_state[i];
-        pOutput[i * 4] = static_cast<unsigned char>(uiState);
-        pOutput[i * 4 + 1] = static_cast<unsigned char>(uiState >> 8);
-        pOutput[i * 4 + 2] = static_cast<unsigned char>(uiState >> 16);
-        pOutput[i * 4 + 3] = static_cast<unsigned char>(uiState >> 24);
-    }
+    unsigned int uiState = m_state[0];
+    pOutput[0] = static_cast<unsigned char>(uiState);
+    pOutput[1] = static_cast<unsigned char>(uiState >> 8);
+    pOutput[2] = static_cast<unsigned char>(uiState >> 16);
+    pOutput[3] = static_cast<unsigned char>(uiState >> 24);
+    uiState = m_state[1];
+    pOutput[4] = static_cast<unsigned char>(uiState);
+    pOutput[5] = static_cast<unsigned char>(uiState >> 8);
+    pOutput[6] = static_cast<unsigned char>(uiState >> 16);
+    pOutput[7] = static_cast<unsigned char>(uiState >> 24);
+    uiState = m_state[2];
+    pOutput[8] = static_cast<unsigned char>(uiState);
+    pOutput[9] = static_cast<unsigned char>(uiState >> 8);
+    pOutput[10] = static_cast<unsigned char>(uiState >> 16);
+    pOutput[11] = static_cast<unsigned char>(uiState >> 24);
+    uiState = m_state[3];
+    pOutput[12] = static_cast<unsigned char>(uiState);
+    pOutput[13] = static_cast<unsigned char>(uiState >> 8);
+    pOutput[14] = static_cast<unsigned char>(uiState >> 16);
+    pOutput[15] = static_cast<unsigned char>(uiState >> 24);
 }
 
 void Md5Context::ProcessBlock()
