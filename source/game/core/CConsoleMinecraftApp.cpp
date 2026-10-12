@@ -296,15 +296,15 @@ void CConsoleMinecraftApp::GetSaveThumbnail(unsigned char** data, unsigned int* 
         {
             *data = new unsigned char[m_saveThumbnail.mSize];
             *size = m_saveThumbnail.mSize;
-            memcpy(*data, m_saveThumbnail.mData, m_saveThumbnail.mSize);
+            memcpy(*data, m_saveThumbnail.mData, *size);
         }
         free(m_saveThumbnail.mData);
         m_saveThumbnail.mData = NULL;
     }
     else if (data != NULL)
     {
-        unsigned char* thumbnail = 0;
-        unsigned int thumbnailSize = 0;
+        unsigned char* thumbnail;
+        unsigned int thumbnailSize;
         gStorage->GetDefaultSaveThumbnail(&thumbnail, &thumbnailSize);
         *data = new unsigned char[thumbnailSize];
         *size = thumbnailSize;
