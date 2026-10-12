@@ -33,8 +33,6 @@ static int& currentCommandBlockId()
     return CafeThreadLocal::slot(s_commandBlockIds);
 }
 
-struct _OVERLAPPED;
-
 FSCmdBlock *GetCommandBlock()
 {
     EnterCriticalSection(&s_commandBlockMutex);
@@ -69,13 +67,13 @@ unsigned int GetFileSize(int file, unsigned int *fileSizeHigh)
     return stat.size;
 }
 
-unsigned int ReadFile(int file, void *buffer, unsigned int bytesToRead,
-                      unsigned int *bytesRead, _OVERLAPPED *overlapped)
+int ReadFile(int file, void *buffer, unsigned int bytesToRead,
+             unsigned int *bytesRead, _OVERLAPPED *overlapped)
 {
     (void)overlapped;
     setAltMainOKToRun();
     WiiU_FileCache *cache = WiiU_FileCache::GetFileCache(file);
-    unsigned int result = 0;
+    int result = 0;
     if (cache != 0)
     {
         result = cache->Read(buffer, bytesToRead);
@@ -85,7 +83,7 @@ unsigned int ReadFile(int file, void *buffer, unsigned int bytesToRead,
         }
     }
     waitForAltMainThreadToComplete();
-    return (result >> 31) ^ 1;
+    return result >= 0;
 }
 
 int WriteFile(int file, const void *buffer, unsigned int bytesToWrite,

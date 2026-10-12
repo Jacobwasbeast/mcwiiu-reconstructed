@@ -12,6 +12,6 @@ union _LARGE_INTEGER
 };
 
 unsigned int QueryPerformanceCounter(_LARGE_INTEGER* value);
-void QueryPerformanceFrequency(_LARGE_INTEGER* value);
+unsigned int QueryPerformanceFrequency(_LARGE_INTEGER* value);
 
 #endif

@@ -22,13 +22,14 @@
 
 extern cProductInfo* g_pDLCProductInfo;
 
-static const uint32_t s_resultAlreadyOwned = 0xA1607E80;
-static const uint32_t s_resultStillPurchasable = 0xA1607F00;
-static const uint32_t s_resultAlreadyDownloaded = 0xA1608200;
-static const unsigned int s_ignoredErrorDescriptionFirst = 27008;
-static const unsigned int s_ignoredErrorDescriptionEnd = 27136;
-static const unsigned int s_serverErrorDescriptionFirst = 256000;
-static const unsigned int s_serverErrorDescriptionEnd = 384000;
+static const NNResult s_unsetResult = {-1};
+static const unsigned int s_descriptionAlreadyOwned = 32384;
+static const unsigned int s_descriptionStillPurchasable = 32512;
+static const unsigned int s_descriptionAlreadyDownloaded = 33280;
+static const int s_ignoredErrorDescriptionFirst = 27008;
+static const int s_ignoredErrorDescriptionEnd = 27136;
+static const int s_serverErrorDescriptionFirst = 256000;
+static const int s_serverErrorDescriptionEnd = 384000;
 static const long long s_newDLCPeriodSeconds = 30 * 24 * 60 * 60;
 static const unsigned int s_catalogThreadStackSize = 0x10000;
 
@@ -86,18 +87,12 @@ static inline bool IsFailure(uint32_t result)
     return (result & 0x80000000U) != 0;
 }
 
-static inline bool IsEcErrorInRange(const nn::Result& result, unsigned int first, unsigned int end)
-{
-    return result.GetModule() == nn::Result::RESULT_MODULE_NN_EC && result.GetDescription() >= first &&
-           result.GetDescription() < end;
-}
-
 cCommerceNintendoWiiU::cCommerceNintendoWiiU()
-    : m_balance(NULL, NULL, NULL), m_lastResult(0xFFFFFFFF)
+    : m_balance(NULL, NULL, NULL), m_lastResult(s_unsetResult)
 {
     m_balance = nn::ec::Money(NULL, NULL, NULL);
-    m_catalogData = NULL;
     m_errorOccurred = false;
+    m_catalogData = NULL;
 }
 
 void cCommerceNintendoWiiU::GetBalance()
@@ -110,18 +105,19 @@ unsigned int cCommerceNintendoWiiU::LogIn()
     if (nn::act::IsNetworkAccount())
     {
         NNResult connectResult = nn::ac::Connect();
-        if (IsFailure(connectResult.value))
+        nn::Result result(connectResult);
+        if (NNResult_IsFailure(connectResult))
         {
-            m_lastResult = connectResult.value;
+            m_lastResult = result;
             m_errorOccurred = true;
             return 0;
         }
-        uint32_t result = nn::ec::Login();
-        if (!IsFailure(result))
+        result = nn::ec::Login();
+        if (!result.IsFailure())
         {
             result = nn::ec::SynchronizeAocRights();
             GetBalance();
-            if (!IsFailure(result))
+            if (!result.IsFailure())
             {
                 SetLoggedIn(true);
                 SetFirstLogIn(false);
@@ -178,31 +174,39 @@ unsigned int cCommerceNintendoWiiU::Purchase(unsigned int index)
         GetShoppingCatalog();
     }
     nn::ec::SynchronizeAocRights();
-    if (index < m_shoppingCatalog.GetNumItems() && m_shoppingCatalog.GetNumItems() != 0)
+    if (index < m_shoppingCatalog.GetNumItems() && m_shoppingCatalog.GetNumItems() > 0)
     {
         nn::ec::Item* item = m_shoppingCatalog.GetItem(index);
         item->GetSalesStatus();
         item->GetAttribute("DLCType");
-        uint32_t result = item->CheckPurchasable();
-        if (!IsFailure(result))
+        nn::Result result = item->CheckPurchasable();
+        if (!result.IsFailure())
         {
             nn::ec::applet::Purchase(m_shoppingCatalog.GetItem(index), NULL);
         }
-        else if (result == s_resultAlreadyOwned)
+        else if (result == nn::Result(nn::Result::LEVEL_STATUS, nn::Result::RESULT_MODULE_NN_EC,
+                                      s_descriptionAlreadyOwned))
         {
             result = m_shoppingCatalog.GetItem(index)->CheckDownloadable();
-            if (!IsFailure(result))
+            if (!result.IsFailure())
             {
                 result = nn::ec::applet::Download(m_shoppingCatalog.GetItem(index));
-                if (!IsFailure(result))
-                    return 1;
+                if (result.IsFailure())
+                {
+                    m_lastResult = result;
+                    m_errorOccurred = true;
+                }
             }
-            else if (result == s_resultAlreadyDownloaded)
+            else if (result == nn::Result(nn::Result::LEVEL_STATUS, nn::Result::RESULT_MODULE_NN_EC,
+                                          s_descriptionAlreadyDownloaded))
             {
                 return 0;
             }
-            m_lastResult = result;
-            m_errorOccurred = true;
+            else
+            {
+                m_lastResult = result;
+                m_errorOccurred = true;
+            }
         }
         else
         {
@@ -219,18 +223,23 @@ unsigned int cCommerceNintendoWiiU::ReDownload(unsigned int index)
     nn::ec::Query query;
     query.SetSalesStatusFilter(nn::ec::SalesStatusFilter_0);
     m_shoppingCatalog.RetrieveAocs(&query, 0, 100);
-    if (m_shoppingCatalog.GetNumItems() != 0)
+    if (m_shoppingCatalog.GetNumItems() > 0)
     {
-        uint32_t result = m_shoppingCatalog.GetItem(index)->CheckDownloadable();
-        if (!IsFailure(result))
+        nn::Result result = m_shoppingCatalog.GetItem(index)->CheckDownloadable();
+        if (!result.IsFailure())
         {
             nn::ec::applet::Download(m_shoppingCatalog.GetItem(index));
-            return 1;
         }
-        if (result == s_resultAlreadyDownloaded)
+        else if (result == nn::Result(nn::Result::LEVEL_STATUS, nn::Result::RESULT_MODULE_NN_EC,
+                                      s_descriptionAlreadyDownloaded))
+        {
             return 0;
-        m_lastResult = result;
-        m_errorOccurred = true;
+        }
+        else
+        {
+            m_lastResult = result;
+            m_errorOccurred = true;
+        }
     }
     return 1;
 }
@@ -258,9 +267,10 @@ int cCommerceNintendoWiiU::GetShoppingCatalog_threadEntry(int, void* argument)
 
 void cCommerceNintendoWiiU::LaunchThread_GetShoppingCatalog()
 {
-    char* stack = static_cast<char*>(MEMAllocFromDefaultHeap(s_catalogThreadStackSize));
+    unsigned char* stackTop =
+        static_cast<unsigned char*>(MEMAllocFromDefaultHeap(s_catalogThreadStackSize)) + s_catalogThreadStackSize;
     bool created = C4JThreadImpl::OSCreateThread4J(&m_catalogThread, GetShoppingCatalog_threadEntry, 0, this,
-                                                   stack + s_catalogThreadStackSize, s_catalogThreadStackSize, 0x10,
+                                                   stackTop, s_catalogThreadStackSize, 0x10,
                                                    OS_THREAD_ATTRIB_AFFINITY_CPU2 | OS_THREAD_ATTRIB_DETACHED);
     if (created)
         OSResumeThread(&m_catalogThread);
@@ -281,17 +291,7 @@ void cCommerceNintendoWiiU::ClearShoppingCatalogRetrieved()
 
 void cCommerceNintendoWiiU::tick()
 {
-    if (!NQRNetworkManager_WiiU::s_applicationConnected || CGameNetworkManager::sInstance.usingLanMode())
-    {
-        if (GetNetworkConnected())
-        {
-            SetNetworkConnected(false);
-            ClearShoppingCatalogRetrieved();
-            SetProcessState(eCommerce_Process_State_Unknown);
-            SetLoggedIn(false);
-        }
-    }
-    else
+    if (NQRNetworkManager_WiiU::s_applicationConnected && !CGameNetworkManager::sInstance.usingLanMode())
     {
         if (!GetNetworkConnected())
             SetFirstLogIn(true);
@@ -306,31 +306,46 @@ void cCommerceNintendoWiiU::tick()
             SetProcessState(eCommerce_Process_State_GettingCatalog);
             LaunchThread_GetShoppingCatalog();
             break;
+        case eCommerce_Process_State_ForegroundAcquired:
+        {
+            ClearShoppingCatalogRetrieved();
+            nn::ec::SynchronizeAocRights();
+            C_AOC* aoc = C_AOC::getInstance();
+            aoc->m_eState = C_AOC::eAOCState_Start;
+            aoc->Init();
+            LaunchThread_GetShoppingCatalog();
+            SetProcessState(eCommerce_Process_State_RefreshingCatalog);
+            break;
+        }
         case eCommerce_Process_State_CatalogRefreshed:
             gConsoleUIController.HandleDLCLicenseChange();
             SetProcessState(eCommerce_Process_State_CatalogReady);
             break;
-        case eCommerce_Process_State_ForegroundAcquired:
-            ClearShoppingCatalogRetrieved();
-            nn::ec::SynchronizeAocRights();
-            C_AOC::getInstance()->m_eState = C_AOC::eAOCState_Start;
-            C_AOC::getInstance()->Init();
-            LaunchThread_GetShoppingCatalog();
-            SetProcessState(eCommerce_Process_State_RefreshingCatalog);
-            break;
         default:
             break;
+        }
+    }
+    else
+    {
+        if (GetNetworkConnected())
+        {
+            SetNetworkConnected(false);
+            ClearShoppingCatalogRetrieved();
+            SetProcessState(eCommerce_Process_State_Unknown);
+            SetLoggedIn(false);
         }
     }
 
     if (m_errorOccurred)
     {
         m_errorOccurred = false;
-        NNResult rawResult = {static_cast<int32_t>(m_lastResult)};
-        nn::Result result(rawResult);
-        if (IsEcErrorInRange(result, s_ignoredErrorDescriptionFirst, s_ignoredErrorDescriptionEnd))
+        if (m_lastResult.GetModule() == nn::Result::RESULT_MODULE_NN_EC &&
+            m_lastResult.GetDescription() >= s_ignoredErrorDescriptionFirst &&
+            m_lastResult.GetDescription() < s_ignoredErrorDescriptionEnd)
             return;
-        if (IsEcErrorInRange(result, s_serverErrorDescriptionFirst, s_serverErrorDescriptionEnd))
+        if (m_lastResult.GetModule() == nn::Result::RESULT_MODULE_NN_EC &&
+            m_lastResult.GetDescription() >= s_serverErrorDescriptionFirst &&
+            m_lastResult.GetDescription() < s_serverErrorDescriptionEnd)
         {
             wchar_t errorCode[10];
             wchar_t errorMessage[512];
@@ -338,17 +353,22 @@ void cCommerceNintendoWiiU::tick()
             g_pInput->RequestErrorViewer(0, errorCode, errorMessage, NULL, NULL);
             return;
         }
-        g_pInput->RequestErrorViewer(0, nn::ec::GetErrorCode(result), NULL, NULL);
+        if (m_lastResult.GetModule() != nn::Result::RESULT_MODULE_NN_EC ||
+            m_lastResult.GetDescription() < s_ignoredErrorDescriptionFirst ||
+            m_lastResult.GetDescription() >= s_ignoredErrorDescriptionEnd)
+            g_pInput->RequestErrorViewer(0, nn::ec::GetErrorCode(m_lastResult), NULL, NULL);
     }
 }
 
 unsigned int cCommerceNintendoWiiU::PurchaseDLC(DLC_INFO* info)
 {
-    if (info == NULL)
-        return 0;
-    if (!info->Purchased)
+    if (info != NULL)
+    {
+        if (info->Purchased)
+            return ReDownload(info->CatalogIndex);
         return Purchase(info->CatalogIndex);
-    return ReDownload(info->CatalogIndex);
+    }
+    return 0;
 }
 
 unsigned int cCommerceNintendoWiiU::PurchaseDLCByIndex(unsigned int index, int controllerId)
@@ -357,9 +377,9 @@ unsigned int cCommerceNintendoWiiU::PurchaseDLCByIndex(unsigned int index, int c
                                           ->GetDLCInfoForPackID(g_pDLCProductInfo[index].GetPackID()));
     if (result == 0)
     {
-        int parameter = IDS_CONFIRM_OK;
+        int options[1] = { IDS_CONFIRM_OK };
         gConsoleUIController.RequestErrorMessage(IDS_DLC_ALREADY_INSTALLED_TITLE, IDS_DLC_ALREADY_INSTALLED_TEXT,
-                                                 &parameter, 1, controllerId, NULL, NULL, NULL, true);
+                                                 options, 1, controllerId, NULL, NULL, NULL, true);
     }
     return result;
 }
@@ -379,58 +399,58 @@ unsigned int cCommerceNintendoWiiU::GetDLCProductInfo(cProductInfo** productInfo
 {
     unsigned int productCount = 0;
     CatalogRecord* catalog = GetCommerceInfo();
-    if (catalog == NULL)
+    if (catalog != NULL)
     {
-        *count = 0;
-        *productInfo = NULL;
-        return 0;
+        ClearProductInfo();
+        unsigned int itemCount = GetItemCount();
+        if (itemCount > 0)
+        {
+            g_pDLCProductInfo = new cProductInfo[itemCount];
+            if (category == eDLCContentType_All)
+            {
+                for (unsigned int index = 0; index < itemCount; ++index)
+                {
+                    DLC_INFO* info = static_cast<cDLCInfo*>((void*)gApp.GetDLCInfoInstance())
+                                         ->GetDLCInfoByCatalogIndex(catalog[index].catalogIndex);
+                    if (info != NULL)
+                    {
+                        g_pDLCProductInfo[productCount].Init(catalog[index].canPurchase, catalog[index].canPurchase,
+                                                             0, catalog[index].name, catalog[index].description,
+                                                             catalog[index].price, "", "", info->BannerName,
+                                                             info->PackID, info->SortIndex);
+                        ++productCount;
+                    }
+                }
+                qsort(g_pDLCProductInfo, productCount, sizeof(cProductInfo), OrderSortFunction);
+            }
+            else
+            {
+                for (unsigned int index = 0; index < itemCount; ++index)
+                {
+                    DLC_INFO* info = static_cast<cDLCInfo*>((void*)gApp.GetDLCInfoInstance())
+                                         ->GetDLCInfoByCatalogIndex(catalog[index].catalogIndex);
+                    if (info != NULL && info->ContentType == static_cast<int>(category))
+                    {
+                        g_pDLCProductInfo[productCount].Init(catalog[index].canPurchase, catalog[index].canPurchase,
+                                                             0, catalog[index].name, catalog[index].description,
+                                                             catalog[index].price, "", "", info->BannerName,
+                                                             info->PackID, info->SortIndex);
+                        ++productCount;
+                    }
+                }
+                qsort(g_pDLCProductInfo, productCount, sizeof(cProductInfo), OrderSortFunction);
+            }
+        }
+
+        SetPurchasabilityUpdated(false);
+        *count = productCount;
+        *productInfo = g_pDLCProductInfo;
+        return 1;
     }
 
-    ClearProductInfo();
-    unsigned int itemCount = GetItemCount();
-    if (itemCount != 0)
-    {
-        g_pDLCProductInfo = new cProductInfo[itemCount];
-        if (category == eDLCContentType_All)
-        {
-            for (unsigned int index = 0; index < itemCount; ++index)
-            {
-                DLC_INFO* info = static_cast<cDLCInfo*>((void*)gApp.GetDLCInfoInstance())
-                                     ->GetDLCInfoByCatalogIndex(catalog[index].catalogIndex);
-                if (info != NULL)
-                {
-                    g_pDLCProductInfo[productCount].Init(catalog[index].canPurchase, catalog[index].canPurchase, 0,
-                                                         catalog[index].name, catalog[index].description,
-                                                         catalog[index].price, "", "", info->BannerName,
-                                                         info->PackID, info->SortIndex);
-                    ++productCount;
-                }
-            }
-            qsort(g_pDLCProductInfo, productCount, sizeof(cProductInfo), OrderSortFunction);
-        }
-        else
-        {
-            for (unsigned int index = 0; index < itemCount; ++index)
-            {
-                DLC_INFO* info = static_cast<cDLCInfo*>((void*)gApp.GetDLCInfoInstance())
-                                     ->GetDLCInfoByCatalogIndex(catalog[index].catalogIndex);
-                if (info != NULL && info->ContentType == static_cast<int>(category))
-                {
-                    g_pDLCProductInfo[productCount].Init(catalog[index].canPurchase, catalog[index].canPurchase, 0,
-                                                         catalog[index].name, catalog[index].description,
-                                                         catalog[index].price, "", "", info->BannerName,
-                                                         info->PackID, info->SortIndex);
-                    ++productCount;
-                }
-            }
-            qsort(g_pDLCProductInfo, productCount, sizeof(cProductInfo), OrderSortFunction);
-        }
-    }
-
-    SetPurchasabilityUpdated(false);
-    *count = productCount;
-    *productInfo = g_pDLCProductInfo;
-    return 1;
+    *count = 0;
+    *productInfo = NULL;
+    return 0;
 }
 
 void cCommerceNintendoWiiU::SetDLCCatalogState(cCommerce::eDLCCatalogState state)
@@ -449,8 +469,8 @@ void cCommerceNintendoWiiU::GetShoppingCatalog()
 {
     nn::ec::Query query;
     query.SetSalesStatusFilter(nn::ec::SalesStatusFilter_0);
-    uint32_t result = m_shoppingCatalog.RetrieveAocs(&query, 0, 100);
-    if (IsFailure(result))
+    nn::Result result = m_shoppingCatalog.RetrieveAocs(&query, 0, 100);
+    if (result.IsFailure())
     {
         m_lastResult = result;
         m_errorOccurred = true;
@@ -467,16 +487,18 @@ void cCommerceNintendoWiiU::GetShoppingCatalog()
         if (salesStatus != nn::ec::SalesStatus_2 && salesStatus != nn::ec::SalesStatus_3)
             continue;
 
-        uint32_t purchasable = item->CheckPurchasable();
-        if (!IsFailure(purchasable))
+        nn::Result purchasable = item->CheckPurchasable();
+        if (!purchasable.IsFailure())
         {
             m_catalogData[recordCount].canPurchase = true;
         }
-        else if (purchasable == s_resultAlreadyOwned)
+        else if (purchasable == nn::Result(nn::Result::LEVEL_STATUS, nn::Result::RESULT_MODULE_NN_EC,
+                                              s_descriptionAlreadyOwned))
         {
             m_catalogData[recordCount].canPurchase = false;
         }
-        else if (purchasable == s_resultStillPurchasable)
+        else if (purchasable == nn::Result(nn::Result::LEVEL_STATUS, nn::Result::RESULT_MODULE_NN_EC,
+                                              s_descriptionStillPurchasable))
         {
             m_catalogData[recordCount].canPurchase = true;
         }

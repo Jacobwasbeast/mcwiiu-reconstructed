@@ -10,18 +10,28 @@
 NQRNetworkPlayer::NQRNetworkPlayer(NQRNetworkManager* manager, eNQRNetworkPlayerType type, bool local,
     unsigned long long stationId, int localPlayerIndex, PlayerUID* uid,
     const char* networkName, const wchar_t* miiName)
-    : m_type(type), m_local(local), m_connectionFlags(0), m_localPlayerIndex(localPlayerIndex),
-      m_stationId(stationId), m_uid(0), m_manager(manager), m_customData(0),
-      m_totalSendQueueBytes(0), m_outstandingAckCount(0), m_sessionIndex(0), m_talkingTicks(0)
 {
+    m_type = type;
+    m_local = local;
+    m_connectionFlags = 0;
+    m_localPlayerIndex = localPlayerIndex;
+    m_stationId = stationId;
+    m_manager = manager;
+    m_customData = 0;
+    m_totalSendQueueBytes = 0;
+    m_outstandingAckCount = 0;
     std::memset(m_miiName, 0, sizeof(m_miiName));
     std::wcscpy(m_miiName, miiName);
     std::memset(m_networkName, 0, sizeof(m_networkName));
     std::strncpy(m_networkName, networkName, 21);
     std::memset(m_networkNameW, 0, sizeof(m_networkNameW));
     std::mbstowcs(m_networkNameW, networkName, 21);
+    m_sessionIndex = 0;
+    m_talkingTicks = 0;
     if (uid != NULL)
-        m_uid = *uid;
+        std::memcpy(&m_uid, uid, sizeof(PlayerUID));
+    else
+        std::memset(&m_uid, 0, sizeof(PlayerUID));
     InitializeCriticalSection(&m_voiceMutex);
     InitializeCriticalSection(&m_sendMutex);
 }
@@ -76,10 +86,11 @@ void NQRNetworkPlayer::SmallIdAllocated(unsigned char smallId) { m_smallId = sma
 
 void NQRNetworkPlayer::SendInternal(NQRNetworkPlayer* player, const void* data, unsigned int size, AckFlags flags)
 {
-    unsigned char* packet = new unsigned char[size + 1];
+    unsigned int packetSize = size + 1;
+    unsigned char* packet = new unsigned char[packetSize];
     packet[0] = (unsigned char)flags;
     std::memcpy(packet + 1, data, size);
-    m_manager->RemoteDataSend(this, player, packet, size + 1);
+    m_manager->RemoteDataSend(this, player, packet, packetSize);
     if (flags == Ack_Return)
     {
         EnterCriticalSection(&m_sendMutex);

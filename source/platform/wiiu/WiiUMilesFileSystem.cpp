@@ -6,9 +6,6 @@
 #include <cstdlib>
 #include <cstring>
 
-struct _OVERLAPPED;
-extern unsigned int ReadFile(int hFile, void* lpBuffer, unsigned int nNumberOfBytesToRead, unsigned int* lpNumberOfBytesRead, _OVERLAPPED* lpOverlapped);
-
 struct CFileHandle
 {
     CFileHandle(const char* filename, int fileHandle, unsigned int fileSize)

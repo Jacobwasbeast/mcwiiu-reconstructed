@@ -21,36 +21,6 @@ struct FriendPresence;
 class NQRNetworkManager
 {
 public:
-    template<typename T, unsigned int, std::size_t> class TargetDeque
-    {
-    public:
-        TargetDeque() {}
-        ~TargetDeque() {}
-
-    private:
-        TargetDeque(const TargetDeque&);
-        TargetDeque& operator=(const TargetDeque&);
-    public:
-
-        bool empty() const { return m_values.empty(); }
-        void push_back(const T& value) { m_values.push_back(value); }
-        void pop_front()
-        {
-            if (!m_values.empty())
-                m_values.pop_front();
-        }
-        void pop_back()
-        {
-            if (!m_values.empty())
-                m_values.pop_back();
-        }
-        void clear() { m_values.clear(); }
-        void _Tidy() { m_values.clear(); }
-
-    private:
-        std::deque<T> m_values;
-    };
-
     NQRNetworkManager();
     virtual ~NQRNetworkManager() {}
 
@@ -123,28 +93,28 @@ public:
     enum eNQRNetworkManagerInternalState
     {
         eNQRNetworkManagerInternalState_Uninitialised,
-        eNQRNetworkManagerInternalState_Initialising,
+        eNQRNetworkManagerInternalState_InitialiseFailed,
         eNQRNetworkManagerInternalState_Idle,
-        eNQRNetworkManagerInternalState_IdleOnline,
+        eNQRNetworkManagerInternalState_LoggingIn,
+        eNQRNetworkManagerInternalState_HostWaitingForLogin,
         eNQRNetworkManagerInternalState_HostCreatingSession,
         eNQRNetworkManagerInternalState_HostSessionCreated,
-        eNQRNetworkManagerInternalState_HostCreatingRoom,
-        eNQRNetworkManagerInternalState_HostRegisteringSession,
+        eNQRNetworkManagerInternalState_HostCreateSessionFailed,
         eNQRNetworkManagerInternalState_HostRoomReady,
-        eNQRNetworkManagerInternalState_JoinCreatingSession,
+        eNQRNetworkManagerInternalState_JoinWaitingForLogin,
         eNQRNetworkManagerInternalState_JoinRequested,
         eNQRNetworkManagerInternalState_JoinJoiningSession,
-        eNQRNetworkManagerInternalState_JoinSessionJoined,
+        eNQRNetworkManagerInternalState_JoinSessionFailed,
         eNQRNetworkManagerInternalState_JoinRoomReady,
         eNQRNetworkManagerInternalState_JoinSearchingMatchmakeSession,
-        eNQRNetworkManagerInternalState_JoinFoundMatchmakeSession,
+        eNQRNetworkManagerInternalState_JoinNoMatchmakeSessionFound,
         eNQRNetworkManagerInternalState_JoinJoiningMatchmakeSession,
-        eNQRNetworkManagerInternalState_JoinMatchmakeSessionJoined,
+        eNQRNetworkManagerInternalState_JoinMatchmakeSessionFailed,
         eNQRNetworkManagerInternalState_EndingSession,
         eNQRNetworkManagerInternalState_StartingGame,
         eNQRNetworkManagerInternalState_Playing,
         eNQRNetworkManagerInternalState_LeavingRoom,
-        eNQRNetworkManagerInternalState_LeavingSession,
+        eNQRNetworkManagerInternalState_LeaveRoomFailed,
         eNQRNetworkManagerInternalState_Ending
     };
 
@@ -168,6 +138,11 @@ public:
 
     struct StateChangeInfo
     {
+        StateChangeInfo(eNQRNetworkManagerState oldState, eNQRNetworkManagerState newState, bool error)
+            : eOldState(oldState), eNewState(newState), bError(error)
+        {
+        }
+
         eNQRNetworkManagerState eOldState;
         eNQRNetworkManagerState eNewState;
         bool bError;
@@ -262,11 +237,11 @@ public:
     static void SafeToRespondToGameBootInvite(int iUserIndex);
 
 protected:
-    TargetDeque<StateChangeInfo, 0x0c, 0x14> m_stateChanges;
+    std::deque<StateChangeInfo> m_stateChanges;
     OSFastMutex m_stateChangeLock;
     OSFastMutex m_playerLock;
     OSFastMutex m_localPlayerRequestLock;
-    TargetDeque<int, 0x10, 0x14> m_localPlayerRequests;
+    std::deque<int> m_localPlayerRequests;
 };
 
 extern int g_iGameBootInviteUserIndex;

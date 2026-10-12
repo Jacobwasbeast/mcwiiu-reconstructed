@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cwchar>
+#include <cafe/sci.h>
 #include <coreinit/fastmutex.h>
 #include <coreinit/memdefaultheap.h>
 #include <coreinit/thread.h>
@@ -41,9 +42,9 @@ int SCIGetISOResource(char*, unsigned int, const char*);
 void* allocAligned();
 void stateChangeCallback(FSClient*, FSVolumeState, void*);
 
-extern CStorage* gStorage;
+extern C4JStorage* gStorage;
 
-CProfile* gProfile;
+C_4JProfile* gProfile;
 CProfile* gProfileInstance = NULL;
 
 static char sCountryCodeData[0x300];

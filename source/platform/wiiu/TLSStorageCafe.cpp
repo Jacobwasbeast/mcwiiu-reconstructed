@@ -1,9 +1,32 @@
 #include "platform/wiiu/TLSStorageCafe.hpp"
 
+#include <coreinit/thread.h>
+
 static const unsigned int TLS_SLOT_COUNT = 64;
 
 static unsigned int s_tlsAllocated[TLS_SLOT_COUNT];
+#if defined(__ghs__) || defined(RECON_NATIVE)
 static __thread void* s_tlsValues[TLS_SLOT_COUNT];
+#else
+static const OSThreadSpecificID TLS_VALUES_SLOT = OS_THREAD_SPECIFIC_13;
+
+class ThreadTlsValues
+{
+public:
+    void*& operator[](unsigned int index)
+    {
+        void** values = static_cast<void**>(OSGetThreadSpecific(TLS_VALUES_SLOT));
+        if (values == 0)
+        {
+            values = new void*[TLS_SLOT_COUNT]();
+            OSSetThreadSpecific(TLS_VALUES_SLOT, values);
+        }
+        return values[index];
+    }
+};
+
+static ThreadTlsValues s_tlsValues;
+#endif
 
 TLSStorageCafe* TLSStorageCafe::m_instance = 0;
 

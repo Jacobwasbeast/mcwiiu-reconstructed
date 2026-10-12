@@ -59,8 +59,8 @@ extern unsigned int CallbackHomebuttonDenied(void*);
 extern int altMainThread(int, void*);
 
 extern CInput* g_pInput;
-extern CStorage* gStorage;
-extern CProfile* gProfile;
+extern C4JStorage* gStorage;
+extern C_4JProfile* gProfile;
 extern Renderer* gRenderer;
 extern CConsoleMinecraftApp gApp;
 extern unsigned char s_altMainPending;
@@ -149,22 +149,32 @@ int main()
     if (gApp.ReadProductCodes() == 0)
         gApp.FatalLoadError(L"ReadProductCodes");
 
-    int productSku = gApp.GetProductSKU();
-    if (productSku == 0)
+    switch (gApp.GetProductSKU())
+    {
+    case 0:
         gProfile->SetMinimumAge(7);
-    else if (productSku == 1)
+        break;
+    case 1:
         gProfile->SetMinimumAge(10);
-    else if (productSku == 2)
+        break;
+    case 2:
         gProfile->SetMinimumAge(0);
+        break;
+    }
     L10N::loadStringTable();
     g_pInput->SetCircleCrossSwapped(true);
 
-    int uiWidth = 640;
-    int uiHeight = 480;
+    int uiWidth;
+    int uiHeight;
     if (gRenderer->IsWidescreen())
     {
         uiWidth = 1280;
         uiHeight = 720;
+    }
+    else
+    {
+        uiWidth = 640;
+        uiHeight = 480;
     }
     gConsoleUIController.init(uiWidth, uiHeight);
     gApp.CommerceInit();
@@ -175,7 +185,7 @@ int main()
     gProfile->SetOnAwardHandler(PopupToast, 0);
     RegisterAwardsWithProfileManager();
 
-    bool noSpaceForSaveQuota = false;
+    bool noSpaceForSaveQuota;
     gStorage->Init(0, L10N::GetString(0xc0b26be6), "savegame.dat", 51000000,
                    CConsoleMinecraftApp::DisplaySavingMessageWiiU, &gApp, "", &noSpaceForSaveQuota);
     gApp.SetNoSpaceForSaveQuota(noSpaceForSaveQuota);
@@ -250,7 +260,10 @@ int main()
             return 0;
         int processResult = ProcUIProcessMessages(1);
         if (processResult == 3)
-            break;
+        {
+            ShutdownAndExit();
+            return 0;
+        }
         if (processResult == 2)
             ReleaseCallback();
 
@@ -275,35 +288,34 @@ int main()
         CGameNetworkManager::sInstance.DoWork();
         PIXEndNamedEvent();
 
-        if (gApp.GetDRCOutputEnabled() == 0 && gApp.GetDRCIconEnabled() == 0 &&
-            CGameNetworkManager::sInstance.IsInGameplay() &&
-            gApp.GetDRCCheckPlayerCountEnabled() != 0 && gApp.GetLocalPlayerCount() == 1)
-        {
-            if (s_drcIconDelay != 0)
-                --s_drcIconDelay;
-            if (s_drcIconDelay == 0)
-                gApp.SetDRCIconEnabled(true);
-        }
-        else
+        if (gApp.GetDRCOutputEnabled() != 0 || gApp.GetDRCIconEnabled() != 0 ||
+            !CGameNetworkManager::sInstance.IsInGameplay() ||
+            gApp.GetDRCCheckPlayerCountEnabled() == 0 || gApp.GetLocalPlayerCount() != 1)
         {
             s_drcIconDelay = 0x77;
         }
+        else if (s_drcIconDelay != 0)
+        {
+            --s_drcIconDelay;
+        }
+        if (s_drcIconDelay == 0)
+            gApp.SetDRCIconEnabled(true);
         g_pLeaderboardManager->Tick();
 
-        if (gApp.GetGameStarted() == 0)
+        if (gApp.GetGameStarted() != 0)
+        {
+            minecraft->run_middle();
+            gApp.SetAppPaused(CGameNetworkManager::sInstance.IsLocalGame() &&
+                              CGameNetworkManager::sInstance.GetPlayerCount() == 1 &&
+                              gConsoleUIController.IsPauseMenuDisplayed(gProfile->GetPrimaryPad()));
+        }
+        else
         {
             minecraft->mSoundEngine->tick(NULL, 0.0f);
             minecraft->mTextures->tick(true, false, false);
             IntCache::Reset();
             if (gApp.GetReallyChangingSessionType() != 0)
                 minecraft->tickAllConnections();
-        }
-        else
-        {
-            minecraft->run_middle();
-            gApp.SetAppPaused(CGameNetworkManager::sInstance.IsLocalGame() &&
-                              CGameNetworkManager::sInstance.GetPlayerCount() == 1 &&
-                              gConsoleUIController.IsPauseMenuDisplayed(gProfile->GetPrimaryPad()));
         }
 
         minecraft->mSoundEngine->playMusicTick();
@@ -358,7 +370,4 @@ int main()
         }
         Vec3::resetPool();
     }
-
-    ShutdownAndExit();
-    return 0;
 }

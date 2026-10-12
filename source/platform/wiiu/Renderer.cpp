@@ -4,6 +4,7 @@
 #include "platform/wiiu/CafeThreadLocal.hpp"
 #include "platform/wiiu/InputManager.hpp"
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
+#include "platform/wiiu/WiiU_FileCache.hpp"
 
 #include <cafe/gx2.h>
 #include <cafe/mat.h>
@@ -24,8 +25,6 @@
 #include <string.h>
 #include <math.h>
 
-struct _OVERLAPPED;
-
 struct D3DXIMAGE_INFO
 {
     unsigned int Width;
@@ -42,13 +41,6 @@ void user_write_data(png_struct_def* png, unsigned char* data, unsigned int size
 void user_flush_data(png_struct_def* png);
 
 int user_write_data_bytes_written();
-
-int CreateFileA(const char* fileName, unsigned int desiredAccess, unsigned int shareMode,
-                void* securityAttributes, unsigned int creationDisposition, unsigned int flagsAndAttributes,
-                int templateFile);
-unsigned int GetFileSize(int file, unsigned int* fileSizeHigh);
-unsigned int ReadFile(int file, void* buffer, unsigned int numberOfBytesToRead, unsigned int* numberOfBytesRead,
-             _OVERLAPPED* overlapped);
 
 namespace nn
 {
@@ -92,6 +84,7 @@ static const GX2PrimitiveType sPrimitiveModes[7] = {
     GX2_PRIMITIVE_LINES,     GX2_PRIMITIVE_LINE_STRIP,     GX2PrimitiveType(0)};
 
 static const unsigned int SURFACE_FORMAT_FLAG_SRGB = 0x400;
+static const unsigned int COMMAND_BUFFER_POOL_SIZE = 0x400000;
 
 Renderer* gRendererInstance = NULL;
 static OSFastMutex sTotalAllocMutex;
@@ -282,19 +275,12 @@ void Renderer::Initialise(bool bFirstTime)
 
         SetupShaders();
 
-        unsigned int initAttributes[5];
-        initAttributes[0] = 1;
-        initAttributes[1] = 2;
-        initAttributes[2] = 0x400000;
-        initAttributes[3] = (unsigned int)MemoryAllocMEM2(0x400000, 0x40);
-        initAttributes[4] = 0;
+        void* commandBufferPool = MemoryAllocMEM2(COMMAND_BUFFER_POOL_SIZE, 0x40);
+        u32 initAttributes[] = { GX2_INIT_ATTRIB_CB_BASE, (u32)commandBufferPool, GX2_INIT_ATTRIB_CB_SIZE,
+                                 COMMAND_BUFFER_POOL_SIZE, GX2_INIT_ATTRIB_NULL };
         GX2Init(initAttributes);
 
-        float black[4];
-        black[0] = 0.0f;
-        black[1] = 0.0f;
-        black[2] = 0.0f;
-        black[3] = 0.0f;
+        float black[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
         SetClearColour(black);
 
         mForegroundAcquired = true;
@@ -388,8 +374,7 @@ void Renderer::Initialise(bool bFirstTime)
                    GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM, GX2_SURFACE_DIM_2D);
     GX2InitTexturePtrs(&mTVTexture, alphaImage, NULL);
 
-    unsigned int thumbnailSize = 0x200;
-    for (int thumbnail = 0; thumbnail < 4; ++thumbnail)
+    for (int thumbnail = 0, thumbnailSize = 0x200; thumbnail < 4; ++thumbnail, thumbnailSize >>= 1)
     {
         GX2InitColorBuffer(&mThumbnailColourBuffer[thumbnail], thumbnailSize, thumbnailSize,
                             GX2_SURFACE_FORMAT_TCS_R8_G8_B8_A8_UNORM, GX2_AA_MODE_1X);
@@ -407,8 +392,6 @@ void Renderer::Initialise(bool bFirstTime)
         GX2CalcSurfaceSizeAndAlignment(&mThumbnailTexture[thumbnail].surface);
         GX2InitTextureRegs(&mThumbnailTexture[thumbnail]);
         GX2InitTexturePtrs(&mThumbnailTexture[thumbnail], thumbnailImage, NULL);
-
-        thumbnailSize >>= 1;
     }
 
     if (bFirstTime)
@@ -431,22 +414,21 @@ void Renderer::Initialise(bool bFirstTime)
         OSFastMutex_Init(&sTotalAllocMutex, "totalAllocCS");
         mNextCommandBufferId = 0;
         mAllowStaticCommandBufferIds = true;
+        GX2SetViewport(0.0f, 0.0f, (float)(unsigned int)mScreenWidth[0], (float)(unsigned int)mScreenHeight[0], 0.0f, 1.0f);
+        GX2SetScissor(0, 0, mScreenWidth[0], mScreenHeight[0]);
+        GX2SetSwapInterval(1);
     }
     else
     {
         GX2SetContextState(mContextState);
+        GX2SetViewport(0.0f, 0.0f, (float)(unsigned int)mScreenWidth[0], (float)(unsigned int)mScreenHeight[0], 0.0f, 1.0f);
+        GX2SetScissor(0, 0, mScreenWidth[0], mScreenHeight[0]);
+        GX2SetSwapInterval(1);
     }
 
-    GX2SetViewport(0.0f, 0.0f, (float)(unsigned int)mScreenWidth[0], (float)(unsigned int)mScreenHeight[0], 0.0f, 1.0f);
-    GX2SetScissor(0, 0, mScreenWidth[0], mScreenHeight[0]);
-    GX2SetSwapInterval(1);
     GX2SetShaderModeEx(GX2_SHADER_MODE_UNIFORM_REGISTER, 48, 64, 0, 0, 200, 192);
 
-    float one[4];
-    one[0] = 1.0f;
-    one[1] = 1.0f;
-    one[2] = 1.0f;
-    one[3] = 1.0f;
+    float one[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
     memcpy(mColour, one, sizeof(mColour));
     memset(mColourAdd, 0, sizeof(mColourAdd));
     memcpy(mTexColour[0], one, sizeof(mTexColour[0]));
@@ -2110,22 +2092,21 @@ void Renderer::TextureBind(int texture)
 void Renderer::UpdateTextureState(int stage)
 {
     Context& context = getContext();
-    Texture& texture = mTextures[context.mBoundTexture[stage]];
 
-    if (texture.mTexture.surface.imagePtr == NULL)
+    if (mTextures[context.mBoundTexture[stage]].mTexture.surface.imagePtr == NULL)
     {
         return;
     }
 
     if (context.mTextureIsVertex[stage])
     {
-        GX2SetVertexTexture(&texture.mTexture, stage);
-        GX2SetVertexSampler(&texture.mSampler, stage);
+        GX2SetVertexTexture(&mTextures[context.mBoundTexture[stage]].mTexture, stage);
+        GX2SetVertexSampler(&mTextures[context.mBoundTexture[stage]].mSampler, stage);
     }
     else
     {
-        GX2SetPixelTexture(&texture.mTexture, stage);
-        GX2SetPixelSampler(&texture.mSampler, stage);
+        GX2SetPixelTexture(&mTextures[context.mBoundTexture[stage]].mTexture, stage);
+        GX2SetPixelSampler(&mTextures[context.mBoundTexture[stage]].mSampler, stage);
     }
 }
 

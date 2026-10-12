@@ -129,7 +129,8 @@ unsigned int Nex_InitializeNex(unsigned int runtimeMemorySize, unsigned int rese
     Nex_InitializeErrorHandling();
     nn::nex::g_threadMode = threadMode;
     s_ngsFacade = new nn::nex::NgsFacade();
-    nn::nex::EventLog::GetInstance()->SetLogLevel(nn::nex::EventLog::Debug);
+    nn::nex::EventLog* eventLog = nn::nex::EventLog::GetInstance();
+    eventLog->SetLogLevel(nn::nex::EventLog::Debug);
     nn::nex::TraceLog::GetInstance()->SetFlag(nn::nex::TraceLog::TRACE_ALWAYS);
     s_nexInitialized = true;
     return 0;

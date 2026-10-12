@@ -42,7 +42,9 @@ extern void altMain();
 extern void altMainStop();
 
 static CStorage* s_storage;
-CStorage* gStorage = new CStorage();
+static const unsigned int STORAGE_THREAD_STACK_SIZE = 64 * 1024;
+static const int STORAGE_THREAD_PRIORITY = 16;
+C4JStorage* gStorage = new CStorage();
 static char s_wideStringBuffer[1024];
 static FSClient s_sciClient;
 static FSCmdBlock s_sciCommandBlock;
@@ -294,24 +296,30 @@ int CStorage::DoesSaveExist(bool* exists)
 int CStorage::EnoughSpaceForAMinSaveGame() { return 1; }
 void CStorage::MakeCRCTable()
 {
-    unsigned int i;
-    unsigned int bit;
-    for (i = 0; i < 256; ++i) {
-        unsigned int value = i;
-        for (bit = 0; bit < 8; ++bit)
-            value = (value & 1) ? (value >> 1) ^ 0xedb88320U : value >> 1;
-        m_crcTable[i] = value;
+    unsigned int value;
+    int n;
+    int k;
+    for (n = 0; n < 256; n++) {
+        value = (unsigned int)n;
+        for (k = 0; k < 8; k++) {
+            if (value & 1)
+                value = 0xedb88320U ^ (value >> 1);
+            else
+                value = value >> 1;
+        }
+        m_crcTable[n] = value;
     }
     m_crcReady = true;
 }
 unsigned int CStorage::UpdateCRC(unsigned int crc, unsigned char* data, int length)
 {
+    unsigned int value = crc;
     int offset;
     if (!m_crcReady)
         MakeCRCTable();
-    for (offset = 0; offset < length; ++offset)
-        crc = m_crcTable[(crc ^ data[offset]) & 0xffU] ^ (crc >> 8);
-    return crc;
+    for (offset = 0; offset < length; offset++)
+        value = m_crcTable[(value ^ data[offset]) & 0xff] ^ (value >> 8);
+    return value;
 }
 unsigned int CStorage::CRC(unsigned char* data, int length) { return ~UpdateCRC(FS_ERROR_FLAG_ALL, data, length); }
 void CStorage::DebugPrintf(const char* format, ...)
@@ -334,18 +342,16 @@ int CStorage::GetDLCOffers(int, DLCOffersCallback, void*, unsigned int)
 {
     return 1;
 }
-unsigned long long CStorage::InitialiseProfileData(unsigned short version, unsigned int profileCount,
-                                                   unsigned int optionCount, unsigned int* defaults, int gameDataSize,
-                                                   unsigned int* gameDataSizes)
+void CStorage::InitialiseProfileData(unsigned short version, unsigned int profileCount, unsigned int optionCount,
+                                     unsigned int* defaults, int gameDataSize, unsigned int* gameDataSizes)
 {
     m_profileVersion = version;
+    m_optionDefaults = new unsigned int[optionCount];
     m_profileCount = profileCount;
     m_optionCount = optionCount;
     m_optionsDataCallback = NULL;
     m_optionsDataContext = NULL;
     m_oldProfileVersionCallback = NULL;
-
-    m_optionDefaults = new unsigned int[optionCount];
     std::memcpy(m_optionDefaults, defaults, optionCount * sizeof(unsigned int));
 
     for (int profile = 0; profile < 4; ++profile) {
@@ -370,7 +376,6 @@ unsigned long long CStorage::InitialiseProfileData(unsigned short version, unsig
     m_optionsIconSize = 0;
     m_profileResult = 0;
     m_profileReserved = 0;
-    return 0;
 }
 int CStorage::SetDefaultOptionsCallback(DefaultOptionsCallback callback, void* context)
 {
@@ -432,7 +437,9 @@ void CStorage::ForceQueuedProfileWrites(int profile)
 }
 int CStorage::IsOptionsWriteInProgressOrPending(int profile)
 {
-    return m_profileWriteState[profile].state == 1 || m_profileWriteState[profile].state == 2;
+    if (m_profileWriteState[profile].state == 2 || m_profileWriteState[profile].state == 1)
+        return 1;
+    return 0;
 }
 void CStorage::SetOptionsIcon(unsigned char* data, unsigned int size)
 {
@@ -440,15 +447,16 @@ void CStorage::SetOptionsIcon(unsigned char* data, unsigned int size)
     m_optionsIcon = (unsigned char*)std::malloc(size);
     std::memcpy(m_optionsIcon, data, size);
 }
-unsigned long long CStorage::SetOptionDefaults(int profile)
+void CStorage::SetOptionDefaults(int profile)
 {
-    C4JStorage::PROFILESETTINGS* settings = GetDashboardProfileSettings(profile);
-    std::memset(settings, 0, sizeof(C4JStorage::PROFILESETTINGS));
-    if (m_gameProfileStride != 0)
+    m_dashboardProfileSettings[profile].values[0] = 0;
+    m_dashboardProfileSettings[profile].values[1] = 0;
+    m_dashboardProfileSettings[profile].values[2] = 0;
+    m_dashboardProfileSettings[profile].flags = 0;
+    if (m_gameProfileStride > 0)
         std::memset(GetGameDefinedProfileData(profile), 0, m_gameProfileStride);
     if (m_defaultOptionsCallback != NULL)
-        m_defaultOptionsCallback(m_defaultOptionsContext, settings, profile);
-    return 0;
+        m_defaultOptionsCallback(m_defaultOptionsContext, &m_dashboardProfileSettings[profile], profile);
 }
 std::string CStorage::GetOptionsFilename(int profile)
 {
@@ -490,7 +498,11 @@ unsigned int CStorage::SaveOptionsThreadProc(int profile)
     OSFastMutex_Unlock(&m_storageMutex);
     return 0;
 }
-int CStorage::_SaveOptionsThreadProc(int slot, void*) { return s_storage->SaveOptionsThreadProc(slot); }
+int CStorage::_SaveOptionsThreadProc(int slot, void*)
+{
+    s_storage->SaveOptionsThreadProc(slot);
+    return 0;
+}
 unsigned int CStorage::LoadOptionsThreadProc(int profile)
 {
     OSFastMutex_Lock(&m_storageMutex);
@@ -514,7 +526,7 @@ unsigned int CStorage::LoadOptionsThreadProc(int profile)
             unsigned short storedVersion = *(unsigned short*)buffer;
             if (storedVersion == m_profileVersion) {
                 if (FSReadFile(&m_profileClient, &m_profileCommandBlock, buffer, 1, m_gameProfileStride, handle, 0,
-                               FS_ERROR_FLAG_ALL) == (int)m_gameProfileStride) {
+                               FS_ERROR_FLAG_ALL) == m_gameProfileStride) {
                     m_profileReadState[profile].state = 7;
                     FSCloseFile(&m_profileClient, &m_profileCommandBlock, handle, FS_ERROR_FLAG_ALL);
                     gProfileInstance->LeaveInitSaveDirCS();
@@ -528,7 +540,7 @@ unsigned int CStorage::LoadOptionsThreadProc(int profile)
                 int bytesRead = FSReadFile(&m_profileClient, &m_profileCommandBlock, buffer, 1, m_gameProfileStride,
                                            handle, 0, FS_ERROR_FLAG_ALL);
                 FSCloseFile(&m_profileClient, &m_profileCommandBlock, handle, FS_ERROR_FLAG_ALL);
-                if (bytesRead <= (int)m_gameProfileStride) {
+                if (bytesRead <= m_gameProfileStride) {
                     m_oldProfileVersionCallback(m_oldProfileVersionContext, buffer, storedVersion, profile);
                     m_profileReadState[profile].state = 7;
                     gProfileInstance->LeaveInitSaveDirCS();
@@ -552,7 +564,11 @@ unsigned int CStorage::LoadOptionsThreadProc(int profile)
     OSFastMutex_Unlock(&m_storageMutex);
     return 0;
 }
-int CStorage::_LoadOptionsThreadProc(int slot, void*) { return s_storage->LoadOptionsThreadProc(slot); }
+int CStorage::_LoadOptionsThreadProc(int slot, void*)
+{
+    s_storage->LoadOptionsThreadProc(slot);
+    return 0;
+}
 void CStorage::CheckForProfileUpdatesRequired()
 {
     unsigned int now = GetTickCount();
@@ -560,32 +576,36 @@ void CStorage::CheckForProfileUpdatesRequired()
     for (profile = 0; profile < 4; ++profile) {
         if (m_profileWriteState[profile].timer != 0 && GetSaveDisabled())
             m_profileWriteState[profile].timer = GetTickCount() + 300000;
-        if (m_profileWriteState[profile].state == 1 && m_profileWriteState[profile].timer <= now) {
+        if (m_profileWriteState[profile].state == 1 && now >= m_profileWriteState[profile].timer) {
             unsigned int bytes = m_gameProfileStride + 2;
-            m_profileBuffers[profile] = (unsigned char*)MEMAllocFromDefaultHeapEx((bytes + 0x3fU) & ~0x3fU, 64);
-            std::memcpy(m_profileBuffers[profile], &m_profileVersion, 2);
-            if (m_gameProfileStride != 0)
-                std::memcpy(m_profileBuffers[profile] + 2, m_gameProfileData + m_gameProfileStride * profile,
-                            m_gameProfileStride);
+            unsigned char* buffer = (unsigned char*)MEMAllocFromDefaultHeapEx((bytes + 0x3fU) & ~0x3fU, 64);
+            m_profileBuffers[profile] = buffer;
+            std::memcpy(buffer, &m_profileVersion, 2);
+            if (m_gameProfileStride > 0)
+                std::memcpy(buffer + 2, m_gameProfileData + m_gameProfileStride * profile, m_gameProfileStride);
             m_profileWriteState[profile].state = 2;
             m_profileWriteState[profile].timer = GetTickCount() + 300000;
-            void* stack = MEMAllocFromDefaultHeap(0x10000);
-            if (!C4JThreadImpl::OSCreateThread4J(&m_profileSaveThreads[profile], _SaveOptionsThreadProc, profile, this,
-                                                 (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7))
-                m_profileWriteState[profile].state = 4;
-            else
+            unsigned char* stackTop =
+                static_cast<unsigned char*>(MEMAllocFromDefaultHeap(STORAGE_THREAD_STACK_SIZE)) + STORAGE_THREAD_STACK_SIZE;
+            bool created = C4JThreadImpl::OSCreateThread4J(&m_profileSaveThreads[profile], _SaveOptionsThreadProc,
+                                                           profile, this, stackTop, STORAGE_THREAD_STACK_SIZE,
+                                                           STORAGE_THREAD_PRIORITY, OS_THREAD_ATTRIB_AFFINITY_ANY);
+            if (created)
                 OSResumeThread(&m_profileSaveThreads[profile]);
+            else
+                m_profileWriteState[profile].state = 4;
         }
     }
     for (profile = 0; profile < 4; ++profile) {
         if (m_profileReadState[profile].state == 5) {
             m_profileReadState[profile].state = 6;
-            void* stack = MEMAllocFromDefaultHeap(0x10000);
-            if (!C4JThreadImpl::OSCreateThread4J(&m_profileLoadThreads[profile], _LoadOptionsThreadProc, profile, this,
-                                                 (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7))
-                m_profileWriteState[profile].state = 8;
-            else
+            unsigned char* stack = static_cast<unsigned char*>(MEMAllocFromDefaultHeap(STORAGE_THREAD_STACK_SIZE));
+            if (C4JThreadImpl::OSCreateThread4J(&m_profileLoadThreads[profile], _LoadOptionsThreadProc, profile, this,
+                                                stack + STORAGE_THREAD_STACK_SIZE, STORAGE_THREAD_STACK_SIZE,
+                                                STORAGE_THREAD_PRIORITY, OS_THREAD_ATTRIB_AFFINITY_ANY))
                 OSResumeThread(&m_profileLoadThreads[profile]);
+            else
+                m_profileWriteState[profile].state = 8;
         }
     }
 }
@@ -601,29 +621,37 @@ void CStorage::ProcessOptionsUpdate()
             m_profileReadBuffers[profile] = NULL;
             *m_gameProfileSizes |= 1U << profile;
             if (m_optionsDataCallback != NULL)
-                m_optionsDataCallback(m_optionsDataContext, profile, 0, C4JStorage::eOptionsCallback_4);
+                m_optionsDataCallback(m_optionsDataContext, profile, 0, C4JStorage::eOptions_Callback_Read);
         } else if (m_profileReadState[profile].state == 8) {
             OSJoinThread(&m_profileLoadThreads[profile], NULL);
             m_profileReadState[profile].state = 0;
             MEMFreeToDefaultHeap(m_profileReadBuffers[profile]);
             m_profileReadBuffers[profile] = NULL;
+            if (m_optionsDataCallback != NULL) {
+                if (m_profileUpdateRequired)
+                    m_optionsDataCallback(m_optionsDataContext, profile, 0, C4JStorage::eOptions_Callback_Read_Corrupt);
+                else
+                    m_optionsDataCallback(m_optionsDataContext, profile, 0, C4JStorage::eOptions_Callback_Read_Fail);
+            }
+        } else if (m_profileWriteState[profile].state == 3) {
+            OSJoinThread(&m_profileSaveThreads[profile], NULL);
+            m_profileWriteState[profile].state = 0;
+            MEMFreeToDefaultHeap(m_profileBuffers[profile]);
+            m_profileBuffers[profile] = NULL;
             if (m_optionsDataCallback != NULL)
-                m_optionsDataCallback(m_optionsDataContext, profile, 0,
-                                      (C4JStorage::eOptionsCallback)(m_profileUpdateRequired ? 7 : 5));
-        } else if (m_profileWriteState[profile].state == 3 || m_profileWriteState[profile].state == 4) {
-            int result = m_profileWriteState[profile].state;
+                m_optionsDataCallback(m_optionsDataContext, profile, 0, C4JStorage::eOptions_Callback_Write);
+        } else if (m_profileWriteState[profile].state == 4) {
             OSJoinThread(&m_profileSaveThreads[profile], NULL);
             m_profileWriteState[profile].state = 0;
             MEMFreeToDefaultHeap(m_profileBuffers[profile]);
             m_profileBuffers[profile] = NULL;
             if (m_optionsDataCallback != NULL) {
-                if (result == 3)
-                    m_optionsDataCallback(m_optionsDataContext, profile, 0, C4JStorage::eOptionsCallback_1);
-                else if (m_profileResult == 4) {
+                if (m_profileResult == 4) {
                     m_profileResult = 0;
-                    m_optionsDataCallback(m_optionsDataContext, profile, 0, C4JStorage::eOptionsCallback_2);
+                    m_optionsDataCallback(m_optionsDataContext, profile, 0,
+                                          C4JStorage::eOptions_Callback_Write_Fail_NoSpace);
                 } else
-                    m_optionsDataCallback(m_optionsDataContext, profile, 0, C4JStorage::eOptionsCallback_3);
+                    m_optionsDataCallback(m_optionsDataContext, profile, 0, C4JStorage::eOptions_Callback_Write_Fail);
             }
         }
     }
@@ -649,7 +677,7 @@ unsigned int CStorage::DeleteOptionsThreadProc(int profile)
         int result =
             SAVERemove(&m_profileClient, &m_profileCommandBlock, slot, GetOptionsFilename(profile).c_str(), FS_ERROR_FLAG_ALL);
         if (result == 0 && m_optionsDataCallback != NULL)
-            m_optionsDataCallback(m_optionsDataContext, profile, 0, C4JStorage::eOptionsCallback_9);
+            m_optionsDataCallback(m_optionsDataContext, profile, 0, C4JStorage::eOptions_Callback_Read_CorruptDeleted);
     }
     OSFastMutex_Unlock(&m_storageMutex);
     return 0;
@@ -667,12 +695,11 @@ void CStorage::SetIncompleteSaveCallback(IncompleteSaveCallback callback, void* 
 }
 void CStorage::SetSaveDisabled(bool disabled) { m_saveDisabled = disabled; }
 unsigned char CStorage::GetSaveDisabled() { return m_saveDisabled ? 1 : 0; }
-unsigned long long CStorage::ResetSaveData()
+void CStorage::ResetSaveData()
 {
     MEMFreeToDefaultHeap(m_saveData);
-    m_saveSize = 0;
     m_saveData = NULL;
-    return 0;
+    m_saveSize = 0;
 }
 C4JStorage::ESaveGameState CStorage::GetSaveState() { return m_saveState; }
 int CStorage::GetFileNANDSize(unsigned int size)
@@ -687,9 +714,9 @@ int CStorage::saveInfoSortfn(const void* left, const void* right)
 {
     const SAVE_INFO* first = (const SAVE_INFO*)left;
     const SAVE_INFO* second = (const SAVE_INFO*)right;
-    if (second->timeHigh < first->timeHigh || (second->timeHigh == first->timeHigh && second->timeLow < first->timeLow))
+    if (first->modifiedTime > second->modifiedTime)
         return -1;
-    return first->timeHigh != second->timeHigh || first->timeLow != second->timeLow;
+    return first->modifiedTime != second->modifiedTime;
 }
 unsigned int CStorage::GetSavesInfoThreadProc()
 {
@@ -732,8 +759,7 @@ unsigned int CStorage::GetSavesInfoThreadProc()
                         std::strncpy(info.filename, entry.name, sizeof(info.filename));
                         info.filename[length - 4] = 0;
                         std::memcpy(info.title, contents, 0x100);
-                        info.timeHigh = static_cast<unsigned int>(entry.info.modified >> 32);
-                        info.timeLow = static_cast<unsigned int>(entry.info.modified);
+                        info.modifiedTime = entry.info.modified;
                         info.thumbnailSize = bytes - 0x100;
                         info.thumbnail = new unsigned char[info.thumbnailSize];
                         std::memcpy(info.thumbnail, (unsigned char*)contents + 0x100, info.thumbnailSize);
@@ -773,9 +799,12 @@ int CStorage::GetSavesInfo(int, SavesInfoCallback callback, void* context, const
     m_savesInfoContext = context;
     if (m_savesInfoState == 0) {
         m_savesInfoState = 1;
-        void* stack = MEMAllocFromDefaultHeap(0x10000);
-        if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[2], _GetSavesInfoThreadProc, 0, this,
-                                            (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7))
+        unsigned char* stackTop =
+            static_cast<unsigned char*>(MEMAllocFromDefaultHeap(STORAGE_THREAD_STACK_SIZE)) + STORAGE_THREAD_STACK_SIZE;
+        bool created = C4JThreadImpl::OSCreateThread4J(&m_saveThreads[2], _GetSavesInfoThreadProc, 0, this, stackTop,
+                                                       STORAGE_THREAD_STACK_SIZE, STORAGE_THREAD_PRIORITY,
+                                                       OS_THREAD_ATTRIB_AFFINITY_ANY);
+        if (created)
             OSResumeThread(&m_saveThreads[2]);
         else
             m_savesInfoState = 0;
@@ -783,19 +812,18 @@ int CStorage::GetSavesInfo(int, SavesInfoCallback callback, void* context, const
     return 0;
 }
 SAVE_DETAILS* CStorage::ReturnSavesInfo() { return m_savesInfoAvailable ? m_savesInfo : NULL; }
-unsigned long long CStorage::ClearSavesInfo()
+void CStorage::ClearSavesInfo()
 {
     m_savesInfoAvailable = false;
     if (m_savesInfo != NULL) {
         if (m_savesInfo->saves != NULL) {
             delete[] m_savesInfo->saves;
-            m_savesInfo->count = 0;
             m_savesInfo->saves = NULL;
+            m_savesInfo->count = 0;
         }
         delete m_savesInfo;
         m_savesInfo = NULL;
     }
-    return 0;
 }
 C4JStorage::ESaveGameState CStorage::LoadSaveDataThumbnail(SAVE_INFO* info, int (*callback)(void*, unsigned char*, unsigned int),
                                     void* context)
@@ -835,9 +863,12 @@ C4JStorage::ESaveGameState CStorage::LoadSaveData(SAVE_INFO* info, LoadCallback 
     SetSaveUniqueFilename(info->filename);
     std::memcpy(m_saveTitle, info->title, 0x100);
     m_saveState = C4JStorage::ESaveGame_Load;
-    void* stack = MEMAllocFromDefaultHeap(0x10000);
-    if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[1], _LoadGameThreadProc, 0, this,
-                                        (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
+    unsigned char* stackTop =
+        static_cast<unsigned char*>(MEMAllocFromDefaultHeap(STORAGE_THREAD_STACK_SIZE)) + STORAGE_THREAD_STACK_SIZE;
+    bool created = C4JThreadImpl::OSCreateThread4J(&m_saveThreads[1], _LoadGameThreadProc, 0, this, stackTop,
+                                                   STORAGE_THREAD_STACK_SIZE, STORAGE_THREAD_PRIORITY,
+                                                   OS_THREAD_ATTRIB_AFFINITY_ANY);
+    if (created) {
         OSResumeThread(&m_saveThreads[1]);
         return C4JStorage::ESaveGame_Load;
     }
@@ -845,15 +876,13 @@ C4JStorage::ESaveGameState CStorage::LoadSaveData(SAVE_INFO* info, LoadCallback 
     return C4JStorage::ESaveGame_Idle;
 }
 int CStorage::GetSaveSize() { return (int)m_saveSize; }
-unsigned long long CStorage::GetSaveData(void* destination, unsigned int* size)
+void CStorage::GetSaveData(void* destination, unsigned int* size)
 {
-    if (destination == NULL)
-        *size = 0;
-    else {
+    if (destination != NULL) {
         std::memcpy(destination, m_saveData, m_saveSize);
         *size = m_saveSize;
-    }
-    return 0;
+    } else
+        *size = 0;
 }
 int CStorage::GetSaveUniqueNumber(int*) { return 1; }
 int CStorage::GetSaveUniqueFilename(char*) { return 0; }
@@ -873,7 +902,7 @@ void CStorage::CreateSaveUniqueName()
     std::strcpy(m_saveUniqueFilename, m_gameSaveFolderPrefix);
     std::strcat(m_saveUniqueFilename, suffix);
 }
-unsigned long long CStorage::SetSaveTitle(const wchar_t* title)
+void CStorage::SetSaveTitle(const wchar_t* title)
 {
     CreateSaveUniqueName();
 #if defined(RECON_NATIVE)
@@ -883,12 +912,12 @@ unsigned long long CStorage::SetSaveTitle(const wchar_t* title)
 #else
     std::memcpy(m_saveTitle, title, 0x100);
 #endif
-    return 0;
 }
 void* CStorage::AllocateSaveData(unsigned int size)
 {
+    unsigned int allocSize = (size + 0x3fU) & ~0x3fU;
     MEMFreeToDefaultHeap(m_saveData);
-    m_saveData = (unsigned char*)MEMAllocFromDefaultHeapEx((size + 0x3fU) & ~0x3fU, 64);
+    m_saveData = (unsigned char*)MEMAllocFromDefaultHeapEx(allocSize, 64);
     if (m_saveData != NULL)
         m_saveSize = size;
     return m_saveData;
@@ -904,39 +933,52 @@ void CStorage::GetDefaultSaveThumbnail(unsigned char** data, unsigned int* size)
     *data = m_defaultThumbnail;
     *size = m_defaultThumbnailSize;
 }
-unsigned long long CStorage::AddTextFieldToPNG(unsigned char* data, unsigned int imageSize, unsigned char* text,
-                                               unsigned int textSize, unsigned int)
+void CStorage::AddTextFieldToPNG(unsigned char* data, unsigned int imageSize, unsigned char* text, unsigned int textSize,
+                                 unsigned int)
 {
     if (imageSize == 0 || data[0] != 0x89 || data[1] != 'P' || data[2] != 'N' || data[3] != 'G' || data[4] != 13 ||
-        data[5] != 10 || data[6] != 26 || data[7] != 10 || imageSize <= 8)
-        return 0;
+        data[5] != 10 || data[6] != 26 || data[7] != 10)
+        return;
 
     unsigned int offset = 8;
-    do {
-        if (ReadPngChunkWord(data + offset + 4) == PNG_CHUNK_TYPE_IEND) {
+    while (offset < imageSize) {
+        unsigned int chunkStart = offset;
+        unsigned int length = ReadPngChunkWord(data + offset);
+        offset += 4;
+        unsigned int type = ReadPngChunkWord(data + offset);
+        offset += 4;
+        if (type == PNG_CHUNK_TYPE_IEND) {
+            offset = chunkStart;
             WritePngChunkWord(data + offset, textSize);
-            WritePngChunkWord(data + offset + 4, PNG_CHUNK_TYPE_TEXT);
-            std::memcpy(data + offset + 8, text, textSize);
-            unsigned int end = offset + 8 + textSize;
-            WritePngChunkWord(data + end, s_storage->CRC(data + offset + 4, textSize + 4));
-            WritePngChunkWord(data + end + 4, 0);
-            WritePngChunkWord(data + end + 8, PNG_CHUNK_TYPE_IEND);
-            WritePngChunkWord(data + end + 12, s_storage->CRC(data + end + 8, 4));
-            offset = end + 16;
+            offset += 4;
+            unsigned char* textChunk = data + offset;
+            WritePngChunkWord(data + offset, PNG_CHUNK_TYPE_TEXT);
+            offset += 4;
+            std::memcpy(data + offset, text, textSize);
+            offset += textSize;
+            WritePngChunkWord(data + offset, s_storage->CRC(textChunk, textSize + 4));
+            offset += 4;
+            WritePngChunkWord(data + offset, 0);
+            offset += 4;
+            unsigned char* endChunk = data + offset;
+            WritePngChunkWord(data + offset, PNG_CHUNK_TYPE_IEND);
+            offset += 4;
+            WritePngChunkWord(data + offset, s_storage->CRC(endChunk, 4));
+            offset += 4;
         } else {
-            offset += ReadPngChunkWord(data + offset) + 12;
+            offset += length;
+            offset += 4;
         }
-    } while (offset < imageSize);
-    return 0;
+    }
 }
-unsigned long long CStorage::SetSaveImages(unsigned char* image, unsigned int imageSize, unsigned char* thumbnail,
-                                           unsigned int thumbnailSize, unsigned char* text, unsigned int textSize)
+void CStorage::SetSaveImages(unsigned char* image, unsigned int imageSize, unsigned char* thumbnail,
+                             unsigned int thumbnailSize, unsigned char* text, unsigned int textSize)
 {
+    unsigned int size = imageSize;
     if (m_saveImage != NULL)
         std::free(m_saveImage);
     m_saveThumbnail = thumbnail;
     m_saveThumbnailSize = thumbnailSize;
-    unsigned int size = imageSize;
     if (textSize != 0)
         size += textSize + 12;
     m_saveImage = (unsigned char*)std::malloc(size);
@@ -945,7 +987,6 @@ unsigned long long CStorage::SetSaveImages(unsigned char* image, unsigned int im
     std::memcpy(m_saveImage, image, imageSize);
     if (textSize != 0)
         AddTextFieldToPNG(m_saveImage, imageSize, text, textSize, size);
-    return 0;
 }
 unsigned int CStorage::SaveGameThreadProc()
 {
@@ -1025,9 +1066,12 @@ C4JStorage::ESaveGameState CStorage::SaveSaveData(SaveCallback callback, void* c
     if (m_saveState != C4JStorage::ESaveGame_Idle && m_saveState != C4JStorage::ESaveGame_SaveIncompleteWaiting)
         return C4JStorage::ESaveGame_Idle;
     m_saveState = C4JStorage::ESaveGame_Save;
-    void* stack = MEMAllocFromDefaultHeap(0x10000);
-    if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[0], _SaveGameThreadProc, 0, this,
-                                        (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
+    unsigned char* stackTop =
+        static_cast<unsigned char*>(MEMAllocFromDefaultHeap(STORAGE_THREAD_STACK_SIZE)) + STORAGE_THREAD_STACK_SIZE;
+    bool created = C4JThreadImpl::OSCreateThread4J(&m_saveThreads[0], _SaveGameThreadProc, 0, this, stackTop,
+                                                   STORAGE_THREAD_STACK_SIZE, STORAGE_THREAD_PRIORITY,
+                                                   OS_THREAD_ATTRIB_AFFINITY_ANY);
+    if (created) {
         OSResumeThread(&m_saveThreads[0]);
         return C4JStorage::ESaveGame_Save;
     }
@@ -1071,16 +1115,19 @@ int CStorage::_DeleteGameThreadProc(int, void* storage) { return ((CStorage*)sto
 C4JStorage::ESaveGameState CStorage::DeleteSaveData(SAVE_INFO* info, SaveCallback callback, void* context)
 {
     C4JStorage::ESaveGameState oldState = m_saveState;
-    m_selectedSave = info;
     m_deleteCallback = callback;
     m_deleteCallbackContext = context;
-    if (oldState != 0 && oldState != 6)
+    m_selectedSave = info;
+    if (oldState != C4JStorage::ESaveGame_Idle && oldState != C4JStorage::ESaveGame_SaveIncompleteWaiting)
         return C4JStorage::ESaveGame_Idle;
     m_saveState = C4JStorage::ESaveGame_Delete;
     m_previousSaveState = oldState;
-    void* stack = MEMAllocFromDefaultHeap(0x10000);
-    if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[3], _DeleteGameThreadProc, 0, this,
-                                        (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
+    unsigned char* stackTop =
+        static_cast<unsigned char*>(MEMAllocFromDefaultHeap(STORAGE_THREAD_STACK_SIZE)) + STORAGE_THREAD_STACK_SIZE;
+    bool created = C4JThreadImpl::OSCreateThread4J(&m_saveThreads[3], _DeleteGameThreadProc, 0, this, stackTop,
+                                                   STORAGE_THREAD_STACK_SIZE, STORAGE_THREAD_PRIORITY,
+                                                   OS_THREAD_ATTRIB_AFFINITY_ANY);
+    if (created) {
         OSResumeThread(&m_saveThreads[3]);
         return C4JStorage::ESaveGame_Delete;
     }
@@ -1213,9 +1260,12 @@ C4JStorage::ESaveGameState CStorage::CopySaveData(SAVE_INFO* info, CopyCallback 
     SetSaveUniqueFilename(info->filename);
     std::memcpy(m_saveTitle, info->title, 0x100);
     m_saveState = C4JStorage::ESaveGame_Copy;
-    void* stack = MEMAllocFromDefaultHeap(0x10000);
-    if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[5], _CopyGameThreadProc, 0, this,
-                                        (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
+    unsigned char* stackTop =
+        static_cast<unsigned char*>(MEMAllocFromDefaultHeap(STORAGE_THREAD_STACK_SIZE)) + STORAGE_THREAD_STACK_SIZE;
+    bool created = C4JThreadImpl::OSCreateThread4J(&m_saveThreads[5], _CopyGameThreadProc, 0, this, stackTop,
+                                                   STORAGE_THREAD_STACK_SIZE, STORAGE_THREAD_PRIORITY,
+                                                   OS_THREAD_ATTRIB_AFFINITY_ANY);
+    if (created) {
         OSResumeThread(&m_saveThreads[5]);
         return C4JStorage::ESaveGame_Copy;
     }
@@ -1251,16 +1301,19 @@ unsigned int CStorage::RenameGameThreadProc()
 int CStorage::_RenameGameThreadProc(int, void* storage) { return ((CStorage*)storage)->RenameGameThreadProc(); }
 C4JStorage::ESaveGameState CStorage::RenameSaveData(int index, wchar_t* title, SaveCallback callback, void* context)
 {
-    m_renameSaveIndex = index;
-    m_renameCallback = callback;
     m_renameCallbackContext = context;
+    m_renameCallback = callback;
+    m_renameSaveIndex = index;
     std::memcpy(m_renameTitle, title, 0x100);
     if (m_saveState != C4JStorage::ESaveGame_Idle)
         return C4JStorage::ESaveGame_Idle;
     m_saveState = C4JStorage::ESaveGame_Rename;
-    void* stack = MEMAllocFromDefaultHeap(0x10000);
-    if (C4JThreadImpl::OSCreateThread4J(&m_saveThreads[4], _RenameGameThreadProc, 0, this,
-                                        (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
+    unsigned char* stackTop =
+        static_cast<unsigned char*>(MEMAllocFromDefaultHeap(STORAGE_THREAD_STACK_SIZE)) + STORAGE_THREAD_STACK_SIZE;
+    bool created = C4JThreadImpl::OSCreateThread4J(&m_saveThreads[4], _RenameGameThreadProc, 0, this, stackTop,
+                                                   STORAGE_THREAD_STACK_SIZE, STORAGE_THREAD_PRIORITY,
+                                                   OS_THREAD_ATTRIB_AFFINITY_ANY);
+    if (created) {
         OSResumeThread(&m_saveThreads[4]);
         return C4JStorage::ESaveGame_Rename;
     }
@@ -1500,8 +1553,8 @@ int CStorage::GetInstalledDLC(int, InstalledDLCCallback callback, void* context)
 {
     if (m_dlcState != 0)
         return 5;
-    m_installedContext = context;
     m_installedCallback = callback;
+    m_installedContext = context;
     if (EnumerateLocalDLCPackages() != 0) {
         m_dlcState = 1;
         return 5;
@@ -1519,7 +1572,8 @@ void CStorage::MountInstalledDLC_thread()
 }
 int CStorage::MountInstalledDLC_threadEntry(int, void* storage)
 {
-    ((CStorage*)storage)->MountInstalledDLC_thread();
+    CStorage* self = (CStorage*)storage;
+    self->MountInstalledDLC_thread();
     OSExitThread(0);
     return 0;
 }
@@ -1532,9 +1586,12 @@ int CStorage::MountInstalledDLC(int, unsigned int index, DLCMountCallback callba
     m_dlcMountContext = context;
     m_dlcMountName = mountName == NULL ? m_defaultDLCMountName : mountName;
     m_mountedDLCIndex = index;
-    void* stack = MEMAllocFromDefaultHeap(0x10000);
-    if (C4JThreadImpl::OSCreateThread4J(&m_dlcThread, MountInstalledDLC_threadEntry, 0, this,
-                                        (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
+    unsigned char* stackTop =
+        static_cast<unsigned char*>(MEMAllocFromDefaultHeap(STORAGE_THREAD_STACK_SIZE)) + STORAGE_THREAD_STACK_SIZE;
+    bool created = C4JThreadImpl::OSCreateThread4J(&m_dlcThread, MountInstalledDLC_threadEntry, 0, this, stackTop,
+                                                   STORAGE_THREAD_STACK_SIZE, STORAGE_THREAD_PRIORITY,
+                                                   OS_THREAD_ATTRIB_AFFINITY_ANY);
+    if (created) {
         OSResumeThread(&m_dlcThread);
         return 0x3e5;
     }
@@ -1596,8 +1653,8 @@ void CStorage::DLCOnCreate()
 {
     m_dlcState = 0;
     m_dlcResult = 0;
-    m_dlcMountNameData = 0;
     m_dlcMountState = 0;
+    m_dlcMountNameData = 0;
     std::memset(m_dlcProductCode, 0, sizeof(m_dlcProductCode));
     std::memset(m_productUpgradeKey, 0, sizeof(m_productUpgradeKey));
 }
@@ -1614,7 +1671,7 @@ void CStorage::TickDLC()
         m_dlcMountCallback(m_dlcMountContext, 0, 0, m_dlcMountResult);
     }
 }
-unsigned long long CStorage::InitialiseGenericData()
+void CStorage::InitialiseGenericData()
 {
     m_genericState = 0;
     m_genericLoadedData = NULL;
@@ -1624,46 +1681,48 @@ unsigned long long CStorage::InitialiseGenericData()
     m_genericDataSize = 0;
     FSInitCmdBlock(&m_genericCommandBlock);
     FSAddClient(&m_genericClient, FS_ERROR_FLAG_ALL);
-    return 0;
 }
 int CStorage::ReadFromGenericData(int slot, const std::wstring& name, void** data, unsigned int* size,
                                   GenericDataCallback callback, void* context)
 {
-    if (slot == -1 || data == NULL || size == NULL || m_genericState != 0)
-        return 0;
-    m_genericFilename.assign(name);
-    m_genericReadSize = size;
-    m_genericContext = context;
-    m_genericState = 7;
-    m_genericSlot = slot;
-    m_genericReadData = data;
-    m_genericCallback = callback;
-    return 1;
+    if (slot != -1 && data != NULL && size != NULL && m_genericState == 0) {
+        m_genericFilename.assign(name);
+        m_genericReadSize = size;
+        m_genericContext = context;
+        m_genericState = 7;
+        m_genericSlot = slot;
+        m_genericReadData = data;
+        m_genericCallback = callback;
+        return 1;
+    }
+    return 0;
 }
 int CStorage::WriteToGenericData(int slot, const std::wstring& name, void* data, unsigned int size,
                                  GenericDataCallback callback, void* context)
 {
-    if (slot == -1 || data == NULL || size == 0 || m_genericState != 0)
-        return 0;
-    m_genericFilename = name;
-    m_genericWriteData = data;
-    m_genericDataSize = size;
-    DebugPrintf("Writing data of size %d at 0x%016llx", size, data);
-    DebugPrintf("Writing data of size %d at 0x%016llx", size, data);
-    m_genericCallback = callback;
-    m_genericSlot = slot;
-    m_genericState = 1;
-    m_genericContext = context;
-    return 1;
+    if (slot != -1 && data != NULL && size != 0 && m_genericState == 0) {
+        m_genericFilename = name;
+        m_genericWriteData = data;
+        m_genericDataSize = size;
+        DebugPrintf("Writing data of size %d at 0x%016llx", size, data);
+        DebugPrintf("Writing data of size %d at 0x%016llx", size, data);
+        m_genericCallback = callback;
+        m_genericSlot = slot;
+        m_genericState = 1;
+        m_genericContext = context;
+        return 1;
+    }
+    return 0;
 }
 void CStorage::DeleteGenericData(int, const std::wstring&) {}
 char* CStorage::wstringtochararray(const std::wstring& value)
 {
-    std::wstring::size_type index;
-    for (index = 0; index < value.size(); ++index)
-        s_wideStringBuffer[index] = (char)value[index];
-    s_wideStringBuffer[value.size()] = 0;
-    return s_wideStringBuffer;
+    char* buffer = s_wideStringBuffer;
+    std::wstring::size_type length = value.size();
+    for (std::wstring::size_type index = 0; index < length; ++index)
+        buffer[index] = static_cast<char>(value[index]);
+    buffer[length] = 0;
+    return buffer;
 }
 unsigned int CStorage::LoadGenericDataThreadProc(int slot)
 {
@@ -1755,7 +1814,7 @@ int CStorage::_SaveGenericDataThreadProc(int slot, void*)
 }
 void CStorage::GenericDataTick()
 {
-    void* stack;
+    unsigned char* stack;
     switch (m_genericState) {
     case 0:
     case 2:
@@ -1763,9 +1822,10 @@ void CStorage::GenericDataTick()
         break;
     case 1:
         m_genericState = 2;
-        stack = MEMAllocFromDefaultHeap(0x10000);
+        stack = static_cast<unsigned char*>(MEMAllocFromDefaultHeap(STORAGE_THREAD_STACK_SIZE));
         if (!C4JThreadImpl::OSCreateThread4J(&m_genericThread, _SaveGenericDataThreadProc, m_genericSlot, this,
-                                             (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
+                                             stack + STORAGE_THREAD_STACK_SIZE, STORAGE_THREAD_STACK_SIZE,
+                                             STORAGE_THREAD_PRIORITY, OS_THREAD_ATTRIB_AFFINITY_ANY)) {
             m_genericState = 5;
             return;
         }
@@ -1795,9 +1855,10 @@ void CStorage::GenericDataTick()
         return;
     case 7:
         m_genericState = 8;
-        stack = MEMAllocFromDefaultHeap(0x10000);
+        stack = static_cast<unsigned char*>(MEMAllocFromDefaultHeap(STORAGE_THREAD_STACK_SIZE));
         if (!C4JThreadImpl::OSCreateThread4J(&m_genericThread, _LoadGenericDataThreadProc, m_genericSlot, this,
-                                             (unsigned char*)stack + 0x10000, 0x10000, 0x10, 7)) {
+                                             stack + STORAGE_THREAD_STACK_SIZE, STORAGE_THREAD_STACK_SIZE,
+                                             STORAGE_THREAD_PRIORITY, OS_THREAD_ATTRIB_AFFINITY_ANY)) {
             m_genericState = 11;
             return;
         }

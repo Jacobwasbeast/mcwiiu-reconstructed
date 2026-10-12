@@ -1,5 +1,4 @@
 #include "platform/wiiu/pead.hpp"
-#include "platform/wiiu/C4JThreadImpl.hpp"
 
 #include <algorithm>
 #include <ctype.h>
@@ -676,7 +675,7 @@ void TextStreamFormat::flush(StreamSrc* s) { s->flush(); }
 
 Stream::~Stream() {}
 void Stream::skip(unsigned int size) { mFormat->skip(mSrc, size); }
-void Stream::skip(unsigned int count, unsigned int size) { mFormat->skip(mSrc, count * size); }
+void Stream::skip(unsigned int size, unsigned int count) { for (unsigned int i = 0; i < count; ++i) mFormat->skip(mSrc, size); }
 void Stream::rewind() { mFormat->rewind(mSrc); }
 bool Stream::isEOF() { return mSrc->isEOF(); }
 ReadStream::~ReadStream() {}
@@ -708,7 +707,7 @@ void WriteStream::writeBit(const void* d, unsigned int n) { mFormat->writeBit(mS
 void WriteStream::writeString(const SafeStringBase<char>& s, unsigned int n) { mFormat->writeString(mSrc, s, n); }
 void WriteStream::writeMemBlock(const void* d, unsigned int n) { mFormat->writeMemBlock(mSrc, d, n); }
 void WriteStream::writeComment(const SafeStringBase<char>& s) { mFormat->writeDecorationText(mSrc, SafeStringBase<char>("/* ")); mFormat->writeDecorationText(mSrc, s); mFormat->writeDecorationText(mSrc, SafeStringBase<char>(" */")); }
-void WriteStream::writeLineComment(const SafeStringBase<char>& s) { mFormat->writeDecorationText(mSrc, SafeStringBase<char>("// ")); mFormat->writeDecorationText(mSrc, s); }
+void WriteStream::writeLineComment(const SafeStringBase<char>& s) { mFormat->writeDecorationText(mSrc, SafeStringBase<char>("// ")); mFormat->writeDecorationText(mSrc, s); mFormat->writeDecorationText(mSrc, SafeStringBase<char>("\n")); }
 void WriteStream::writeDecorationText(const SafeStringBase<char>& s) { mFormat->writeDecorationText(mSrc, s); }
 void WriteStream::writeNullChar() { mFormat->writeNullChar(mSrc); }
 
@@ -799,7 +798,7 @@ int BitFlagUtil::findOnBitFromRight(unsigned int value, int ordinal)
 }
 
 CoreId::CoreId() : mId(0) {}
-unsigned int CoreInfo::sCoreCount;
+unsigned int CoreInfo::sCoreCount = 1;
 unsigned int CoreInfo::sCoreIdMap[3];
 unsigned int CoreInfo::sCoreIndexTable[3];
 
@@ -809,9 +808,8 @@ void CoreInfo::configure()
     sCoreIdMap[0] = 1;
     sCoreIdMap[1] = 0;
     sCoreIdMap[2] = 2;
-    sCoreIndexTable[sCoreIdMap[0]] = 0;
-    sCoreIndexTable[sCoreIdMap[1]] = 1;
-    sCoreIndexTable[sCoreIdMap[2]] = 2;
+    for (unsigned int index = 0; index < sCoreCount; ++index)
+        sCoreIndexTable[sCoreIdMap[index]] = index;
 }
 
 int CoreInfo::getPlatformMask(CoreId id)
@@ -1983,13 +1981,43 @@ bool Event::wait(TickSpan timeout) { return OSWaitEventWithTimeout(reinterpret_c
 void Event::setSignal() { OSSignalEvent(reinterpret_cast<OSEvent*>(mStorage)); }
 void Event::resetSignal() { OSResetEvent(reinterpret_cast<OSEvent*>(mStorage)); }
 
-MessageQueue::MessageQueue() : mMessages(0), mCapacity(0), mCount(0), mRead(0), mWrite(0), mHeap(0) {}
+MessageQueue::MessageQueue() : mBuffer(0), mQueue() {}
 MessageQueue::~MessageQueue() { free(); }
-void MessageQueue::allocate(int capacity, Heap* heap) { free(); mMessages = static_cast<int*>(allocateFromSeadHeap(sizeof(int) * (capacity << 4), heap, 4)); mCapacity = mMessages ? capacity : 0; mHeap = heap; }
-void MessageQueue::free() { if (mMessages) freeToSeadHeap(mMessages); mMessages = 0; mCapacity = mCount = mRead = mWrite = 0; }
-bool MessageQueue::push(int value, BlockType block) { if (mCount >= mCapacity) return false; mMessages[mWrite] = value; mWrite = (mWrite + 1) % mCapacity; ++mCount; (void)block; return true; }
-int MessageQueue::pop(BlockType block) { if (!mCount) return 0; int value = mMessages[mRead]; mRead = (mRead + 1) % mCapacity; --mCount; (void)block; return value; }
-bool MessageQueue::jam(int value, BlockType block) { if (mCount >= mCapacity) return false; mRead = (mRead + mCapacity - 1) % mCapacity; mMessages[mRead] = value; ++mCount; (void)block; return true; }
+void MessageQueue::allocate(int size, Heap* heap)
+{
+    if (size > 0)
+    {
+        mBuffer = NewArray<OSMessage>(size, heap);
+        OSInitMessageQueue(&mQueue, mBuffer, size);
+    }
+}
+void MessageQueue::free()
+{
+    if (mBuffer)
+    {
+        DeleteArray(mBuffer);
+        mBuffer = 0;
+    }
+}
+bool MessageQueue::push(int message, BlockType block)
+{
+    OSMessage msg;
+    msg.message = reinterpret_cast<void*>(message);
+    return OSSendMessage(&mQueue, &msg, block == cBlock ? OS_MESSAGE_FLAGS_BLOCKING : OS_MESSAGE_FLAGS_NONE) != FALSE;
+}
+int MessageQueue::pop(BlockType block)
+{
+    OSMessage msg;
+    if (OSReceiveMessage(&mQueue, &msg, block == cBlock ? OS_MESSAGE_FLAGS_BLOCKING : OS_MESSAGE_FLAGS_NONE))
+        return reinterpret_cast<int>(msg.message);
+    return 0;
+}
+bool MessageQueue::jam(int message, BlockType block)
+{
+    OSMessage msg;
+    msg.message = reinterpret_cast<void*>(message);
+    return OSSendMessage(&mQueue, &msg, static_cast<OSMessageFlags>((block == cBlock ? OS_MESSAGE_FLAGS_BLOCKING : OS_MESSAGE_FLAGS_NONE) | OS_MESSAGE_FLAGS_HIGH_PRIORITY)) != FALSE;
+}
 
 Thread::Thread(Heap* heap, OSThread* thread)
     : IDisposer(), mName("pead::MainThread"), mMessageQueue(), mStackSize(0), mListNode(), mCurrentHeap(0),
@@ -2053,15 +2081,18 @@ int Thread::cafeThreadFunc_(int, void* context)
 }
 unsigned int Thread::start()
 {
-    if (mState != cState_Initialized || !mThread || !mStack || mStackSize <= 0) return 0;
-    if (!C4JThreadImpl::OSCreateThread4J(mThread, cafeThreadFunc_, 0, this,
-                                         mStack + mStackSize,
-                                         static_cast<unsigned int>(mStackSize),
-                                         static_cast<unsigned int>(mPriority), 0)) return 0;
+    if (mState != cState_Initialized)
+        return 0;
+    if (!OSCreateThread(mThread, reinterpret_cast<OSThreadEntryPointFn>(cafeThreadFunc_), 0, reinterpret_cast<char*>(this),
+                        mStack + mStackSize, mStackSize, mPriority, 0))
+        return 0;
     OSSetThreadName(mThread, mName.cstr());
     unsigned short platformMask = 0;
-    for (unsigned int id = 0; id < 3; ++id)
-        if (mAffinity.value() & (1u << id)) platformMask = static_cast<unsigned short>(platformMask | CoreInfo::getPlatformMask(CoreId(static_cast<int>(id))));
+    for (unsigned int id = 0; id < CoreInfo::sCoreCount; ++id)
+    {
+        if (mAffinity.isOn(CoreId(id)))
+            platformMask |= CoreInfo::getPlatformMask(CoreId(id));
+    }
     OSSetThreadAffinity(mThread, platformMask);
     mState = cState_Running;
     mId = reinterpret_cast<uintptr_t>(mThread);
@@ -2070,27 +2101,51 @@ unsigned int Thread::start()
 }
 void Thread::sleep(TickSpan span) { OSSleepTicks(span.getTicks()); }
 void Thread::yield() { OSYieldThread(); }
-void Thread::setPriority(int priority) { mPriority = priority; if (mThread) OSSetThreadPriority(mThread, priority); }
-int Thread::getPriority() const { return mThread ? OSGetThreadPriority(mThread) : mPriority; }
-void Thread::setAffinity(const CoreIdMask& mask)
+void Thread::setPriority(int priority)
 {
-    mAffinity = mask;
+    mPriority = priority;
+    if (mState == cState_Initialized || mState == cState_Released)
+        return;
+    OSSetThreadPriority(mThread, priority);
+}
+int Thread::getPriority() const { return mPriority; }
+void Thread::setAffinity(const CoreIdMask& affinity)
+{
+    mAffinity = affinity;
     unsigned short platformMask = 0;
-    for (unsigned int id = 0; id < 3; ++id)
-        if (mAffinity.value() & (1u << id)) platformMask = static_cast<unsigned short>(platformMask | CoreInfo::getPlatformMask(CoreId(static_cast<int>(id))));
-    if (mThread) OSSetThreadAffinity(mThread, platformMask);
+    for (unsigned int id = 0; id < CoreInfo::sCoreCount; ++id)
+    {
+        if (mAffinity.isOn(CoreId(id)))
+            platformMask |= CoreInfo::getPlatformMask(CoreId(id));
+    }
+    OSSetThreadAffinity(mThread, platformMask);
 }
 void* Thread::getStackCheckStartAddress_() const { return mStack ? mStack + 4 : 0; }
 void Thread::destroy() { waitDone(); }
 MessageQueue* Thread::getMessageQueue() const { return const_cast<MessageQueue*>(&mMessageQueue); }
 bool Thread::sendMessage(int message, MessageQueue::BlockType block) { if (!message || mState == cState_Terminated || mState == cState_Released || message == mQuitMsg) return false; return mMessageQueue.push(message, block); }
 int Thread::recvMessage(MessageQueue::BlockType block) { if (mState == cState_Quitting) return 0; return mMessageQueue.pop(block); }
-void Thread::quit(bool jam) { mState = cState_Quitting; if (jam) mMessageQueue.jam(0, mBlockType); else mMessageQueue.push(0, mBlockType); }
+void Thread::quit(bool isJam)
+{
+    if (isDone())
+        return;
+    if (mState == cState_Running)
+        mState = cState_Quitting;
+    if (isJam)
+        mMessageQueue.jam(mQuitMsg, MessageQueue::cBlock);
+    else
+        mMessageQueue.push(mQuitMsg, MessageQueue::cBlock);
+}
 void Thread::quitAndDestroySingleThread(bool jam) { quitAndWaitDoneSingleThread(jam); destroy(); }
 void Thread::quitAndWaitDoneSingleThread(bool jam) { quit(jam); waitDone(); }
 MessageQueue::BlockType Thread::getBlockType() const { return mBlockType; }
 int Thread::getStackSize() const { return mStackSize; }
-void Thread::run_() { int message; while ((message = recvMessage(mBlockType)) != mQuitMsg) calc_(message); }
+void Thread::run_()
+{
+    int message;
+    while ((message = mMessageQueue.pop(mBlockType)) != mQuitMsg)
+        calc_(message);
+}
 int Thread::calcStackUsedSizePeak() const { return 0; }
 
 MainThread::~MainThread() { mState = cState_Terminated; }
@@ -2104,7 +2159,7 @@ void MainThread::calc_(int) {}
 DelegateThread::DelegateThread(const SafeStringBase<char>& name, IDelegate2<Thread*, int>* delegate, Heap* heap, int priority, MessageQueue::BlockType block, int quitMsg, int stackSize, int messageQueueSize)
     : Thread(name, heap, priority, block, quitMsg, stackSize, messageQueueSize), mDelegate(delegate) {}
 DelegateThread::~DelegateThread() {}
-void DelegateThread::calc_(int message) { if (mDelegate) mDelegate->invoke(this, message); }
+void DelegateThread::calc_(int message) { mDelegate->invoke(this, message); }
 
 ThreadMgr* ThreadMgr::sInstance = 0;
 ThreadMgr::SingletonDisposer_* ThreadMgr::SingletonDisposer_::sStaticDisposer = 0;

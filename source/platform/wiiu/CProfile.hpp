@@ -523,7 +523,7 @@ private:
     OSFastMutex mAwardMutex;
 };
 
-extern CProfile* gProfile;
+extern C_4JProfile* gProfile;
 extern CProfile* gProfileInstance;
 
 #endif

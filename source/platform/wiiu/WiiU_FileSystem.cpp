@@ -5,15 +5,14 @@
 #include <cstdio>
 #include <string>
 
-extern CStorage* gStorage;
+extern C4JStorage* gStorage;
 
 void getFinalFilePath(char (&path)[256], const char* fileName)
 {
     std::string mountedPath = gStorage->GetMountedPath(std::string(fileName));
-    const std::string& filePath = mountedPath.empty() ? std::string(fileName) : mountedPath;
-    const char* format = !filePath.empty() && filePath[0] == '/' ? "%s" : "/vol/content/%s";
+    const char* filePath = mountedPath.empty() ? fileName : mountedPath.c_str();
 
-    std::sprintf(path, format, filePath.c_str());
+    std::sprintf(path, filePath[0] == '/' ? "%s" : "/vol/content/%s", filePath);
     for (char* character = path; *character != '\0'; ++character)
         if (*character == '\\')
             *character = '/';

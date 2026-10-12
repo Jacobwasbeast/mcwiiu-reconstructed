@@ -1,15 +1,12 @@
 #include "platform/wiiu/cNintendoDLCInfo.hpp"
 #include "platform/wiiu/NintendoFileSystem_WiiU.hpp"
+#include "platform/wiiu/WiiU_FileCache.hpp"
 #include "platform/wiiu/WiiU_Runtime.hpp"
 
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <cwchar>
-
-unsigned int GetFileSize(int file, unsigned int* fileSizeHigh);
-unsigned int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead,
-             _OVERLAPPED* overlapped);
 
 cNintendoDLCInfo::cNintendoDLCInfo()
 {

@@ -1,7 +1,7 @@
 #ifndef PLATFORM_WIIU_INPUTMANAGER_HPP
 #define PLATFORM_WIIU_INPUTMANAGER_HPP
 
-bool InputManager_IsShowingErrorViewer();
-bool InputManager_IsShowingOnscreenKeyboard();
+unsigned char InputManager_IsShowingErrorViewer();
+unsigned char InputManager_IsShowingOnscreenKeyboard();
 
 #endif

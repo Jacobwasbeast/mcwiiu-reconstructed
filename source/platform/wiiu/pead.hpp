@@ -1,13 +1,14 @@
 #ifndef PLATFORM_WIIU_PEAD_HPP
 #define PLATFORM_WIIU_PEAD_HPP
 
-#include <limits.h>
+#include <climits>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdarg.h>
 
 #include <coreinit/core.h>
 #include <coreinit/memory.h>
+#include <coreinit/messagequeue.h>
 
 #ifdef __ghs__
 #include <ppc_ghs.h>
@@ -818,7 +819,7 @@ public:
 class StreamFormat
 {
 public:
-    virtual ~StreamFormat() {}
+    ~StreamFormat() {}
     virtual unsigned char readU8(StreamSrc*, Endian::Types) = 0;
     virtual unsigned short readU16(StreamSrc*, Endian::Types) = 0;
     virtual unsigned int readU32(StreamSrc*, Endian::Types) = 0;
@@ -888,7 +889,7 @@ class TextStreamFormat : public BinaryStreamFormat
 {
 public:
     TextStreamFormat();
-    virtual ~TextStreamFormat();
+    ~TextStreamFormat();
     virtual unsigned char readU8(StreamSrc*, Endian::Types);
     virtual unsigned short readU16(StreamSrc*, Endian::Types);
     virtual unsigned int readU32(StreamSrc*, Endian::Types);
@@ -947,8 +948,8 @@ public:
     StreamFormat* getStreamFormat() const { return mFormat; }
 
 protected:
-    StreamSrc* mSrc;
     StreamFormat* mFormat;
+    StreamSrc* mSrc;
     Endian::Types mEndian;
     Modes mMode;
 };
@@ -1097,6 +1098,7 @@ class CoreIdMask
 public:
     CoreIdMask(unsigned int mask = 0) : mMask(mask) {}
     int countOnBits() const;
+    bool isOn(CoreId id) const { return (mMask & (1u << id.value())) != 0; }
     unsigned int value() const { return mMask; }
 
 private:
@@ -1230,7 +1232,6 @@ private:
 template<typename T> class IDelegate1
 {
 public:
-    virtual ~IDelegate1() {}
     virtual void invoke(T) = 0;
     virtual IDelegate1* clone(Heap*) const { return 0; }
 };
@@ -1760,13 +1761,8 @@ public:
     int peek(BlockType) const;
 
 private:
-    int* mMessages;
-    int mCapacity;
-    int mCount;
-    int mRead;
-    int mWrite;
-    Heap* mHeap;
-    unsigned int mStorage[10];
+    OSMessage* mBuffer;
+    OSMessageQueue mQueue;
 };
 
 class Thread : public IDisposer

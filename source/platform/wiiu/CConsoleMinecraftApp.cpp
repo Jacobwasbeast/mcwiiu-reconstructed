@@ -49,71 +49,67 @@ void waitForAltMainThreadToComplete()
 int altMainThread(int, void*)
 {
     OSMessage message;
-    if (s_altMainExit == 0)
+    while (!s_altMainExit)
     {
-        do
+        gRenderer->InitialiseContext();
+        OSReceiveMessage(&gMainMessageQueue, &message, OS_MESSAGE_FLAGS_BLOCKING);
+        while (s_altMainOKToRun == 0)
         {
-            gRenderer->InitialiseContext();
-            OSReceiveMessage(&gMainMessageQueue, &message, OS_MESSAGE_FLAGS_BLOCKING);
-            while (s_altMainOKToRun == 0)
-            {
-                Sleep(10);
-            }
-
-            EnterCriticalSection(&gMainMutex);
-            s_altMainStopRequested = 1;
-            Sleep(200);
-            s_altMainPending = 0;
-            s_altMainOKToRun = 0;
-
-            while (s_altMainStopRequested != 0)
-            {
-                int processResult = ProcUIProcessMessages(1);
-                if (processResult == 3)
-                {
-                    s_altMainExit = 1;
-                    LeaveCriticalSection(&gMainMutex);
-                    ShutdownAndExit();
-                    break;
-                }
-                if (processResult == 2)
-                {
-                    ReleaseCallback();
-                }
-
-                gRenderer->StartFrame();
-                gApp.UpdateTime();
-
-                PIXBeginNamedEvent(0.0f, "Input manager tick");
-                g_pInput->Tick();
-                PIXEndNamedEvent();
-
-                PIXBeginNamedEvent(0.0f, "Render manager tick");
-                gRenderer->Tick();
-                PIXEndNamedEvent();
-
-                PIXBeginNamedEvent(0.0f, "Network manager do work #1");
-                CGameNetworkManager::sInstance.DoWork();
-                PIXEndNamedEvent();
-
-                gRenderer->ResetRenderState();
-                const float clearColour[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
-                gRenderer->SetClearColour(clearColour);
-                gRenderer->Clear(3);
-                gRenderer->StartDRCFrame(false);
-                gRenderer->Clear(3);
-
-                PIXBeginNamedEvent(0.0f, "Frame present");
-                gRenderer->Present();
-                PIXEndNamedEvent();
-
-                gRenderer->Set_matrixDirty();
-                Vec3::resetPool();
-            }
-
-            LeaveCriticalSection(&gMainMutex);
+            Sleep(10);
         }
-        while (s_altMainExit == 0);
+
+        EnterCriticalSection(&gMainMutex);
+        s_altMainStopRequested = 1;
+        Sleep(200);
+        s_altMainPending = 0;
+        s_altMainOKToRun = 0;
+
+        while (s_altMainStopRequested != 0)
+        {
+            int processResult = ProcUIProcessMessages(1);
+            if (processResult == 3)
+            {
+                s_altMainExit = 1;
+                LeaveCriticalSection(&gMainMutex);
+                ShutdownAndExit();
+                break;
+            }
+            if (processResult == 2)
+            {
+                ReleaseCallback();
+            }
+
+            gRenderer->StartFrame();
+            gApp.UpdateTime();
+
+            PIXBeginNamedEvent(0.0f, "Input manager tick");
+            g_pInput->Tick();
+            PIXEndNamedEvent();
+
+            PIXBeginNamedEvent(0.0f, "Render manager tick");
+            gRenderer->Tick();
+            PIXEndNamedEvent();
+
+            PIXBeginNamedEvent(0.0f, "Network manager do work #1");
+            CGameNetworkManager::sInstance.DoWork();
+            PIXEndNamedEvent();
+
+            gRenderer->ResetRenderState();
+            const float clearColour[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+            gRenderer->SetClearColour(clearColour);
+            gRenderer->Clear(3);
+            gRenderer->StartDRCFrame(false);
+            gRenderer->Clear(3);
+
+            PIXBeginNamedEvent(0.0f, "Frame present");
+            gRenderer->Present();
+            PIXEndNamedEvent();
+
+            gRenderer->Set_matrixDirty();
+            Vec3::resetPool();
+        }
+
+        LeaveCriticalSection(&gMainMutex);
     }
 
     return 0;

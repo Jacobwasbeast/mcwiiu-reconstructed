@@ -20,7 +20,7 @@ namespace nn
             const char* GetAmount() const
                 asm("GetAmount__Q3_2nn2ec5MoneyCFv");
         private:
-            unsigned char m_data[64];
+            uint32_t m_data[16];
         };
 
         class Price
@@ -66,9 +66,9 @@ namespace nn
                 asm("GetSalesStatus__Q3_2nn2ec4ItemCFv");
             const char* GetAttribute(const char*) const
                 asm("GetAttribute__Q3_2nn2ec4ItemCFPCc");
-            uint32_t CheckPurchasable() const
+            nn::Result CheckPurchasable() const
                 asm("CheckPurchasable__Q3_2nn2ec4ItemCFv");
-            uint32_t CheckDownloadable() const
+            nn::Result CheckDownloadable() const
                 asm("CheckDownloadable__Q3_2nn2ec4ItemCFv");
             DateTime GetReleaseDate() const
                 asm("GetReleaseDate__Q3_2nn2ec4ItemCFv");
@@ -104,7 +104,7 @@ namespace nn
             ~ShoppingCatalog();
             uint32_t GetTotal() const
                 asm("GetTotal__Q3_2nn2ec15ShoppingCatalogCFv");
-            uint32_t RetrieveAocs(const Query*, uint32_t, uint32_t)
+            nn::Result RetrieveAocs(const Query*, uint32_t, uint32_t)
                 asm("RetrieveAocs__Q3_2nn2ec15ShoppingCatalogFPCQ3_2nn2ec5QueryUiT2");
         private:
             unsigned char m_data[8];
@@ -119,11 +119,11 @@ namespace nn
                 asm("SetSalesStatusFilter__Q3_2nn2ec5QueryFQ3_2nn2ec17SalesStatusFilter");
         };
 
-        uint32_t SynchronizeAocRights()
+        nn::Result SynchronizeAocRights()
             asm("SynchronizeAocRights__Q2_2nn2ecFv");
         uint32_t Initialize(uint32_t)
             asm("Initialize__Q2_2nn2ecFUi");
-        uint32_t Login()
+        nn::Result Login()
             asm("Login__Q2_2nn2ecFv");
         void GetBalance(Money*)
             asm("GetBalance__Q2_2nn2ecFPQ3_2nn2ec5Money");
@@ -135,9 +135,9 @@ namespace nn
             asm("GetLastServerErrorMessage__Q2_2nn2ecFPwT1");
         namespace applet
         {
-            uint32_t Purchase(const Item*, Money*)
+            nn::Result Purchase(const Item*, Money*)
                 asm("Purchase__Q3_2nn2ec6appletFPCQ3_2nn2ec4ItemPQ3_2nn2ec5Money");
-            uint32_t Download(const Item*)
+            nn::Result Download(const Item*)
                 asm("Download__Q3_2nn2ec6appletFPCQ3_2nn2ec4Item");
         }
     }
@@ -170,8 +170,14 @@ public:
     virtual unsigned int AttemptLogIn();
     virtual void GetShoppingCatalog();
     virtual CatalogRecord* GetCommerceInfo();
-    void SetErrorOccurred(bool errorOccurred);
-    bool GetErrorOccurred();
+    void SetErrorOccurred(bool errorOccurred)
+    {
+        m_errorOccurred = errorOccurred;
+    }
+    bool GetErrorOccurred()
+    {
+        return m_errorOccurred;
+    }
     void AsserteCommerceError(nn::Result& result);
     void Finalize();
     const wchar_t* GeteCommerceErrorString(nn::Result& result);
@@ -181,7 +187,7 @@ private:
     CatalogRecord* m_catalogData;
     nn::ec::Money m_balance;
     nn::ec::ShoppingCatalog m_shoppingCatalog;
-    uint32_t m_lastResult;
+    nn::Result m_lastResult;
     bool m_errorOccurred;
 };
 

@@ -17,6 +17,7 @@
 #include "platform/wiiu/NQRNetworkManager.hpp"
 
 class C4JEventImpl;
+class GameSessionData;
 class C4JThread;
 class C4JThreadImpl;
 
@@ -107,7 +108,7 @@ public:
         unsigned int sessionId;
         bool joinable;
         void* extData;
-        void* unknown40;
+        GameSessionData* gameSessionData;
         nn::pia::lan::LanSessionInfo sessionInfo;
     };
 
@@ -226,7 +227,7 @@ public:
     void Pia_FinalizeCommon();
     void Pia_Finalize();
     void Pia_Shutdown();
-    void SetLastNetworkError(int result);
+    void SetLastNetworkError(nn::pia::Result result);
     void Net_GetLocalAddress(unsigned int* address, unsigned int* subnetMask);
     nn::pia::Result Lan_StartupPiaLan();
     void UpdateApplicationConnected();
@@ -326,7 +327,7 @@ private:
     INQRNetworkManagerListener* m_listener;
     eNQRNetworkManagerInternalState m_internalState;
     eNQRNetworkManagerState m_state;
-    bool m_initialised;
+    bool m_nextIdleReasonIsFailure;
     bool m_host;
     bool m_hostStationIdCached;
     unsigned long long m_cachedJointSessionHostStationId;
@@ -335,9 +336,11 @@ private:
     int m_maxPlayers;
     unsigned char m_unknown100[0xdd4 - 0x100];
     bool m_saveTransferSession;
-    unsigned char m_unknownDD5[0xe84 - 0xdd5];
+    bool m_unknownDD5;
+    unsigned char m_unknownDD6[0xe84 - 0xdd6];
     bool m_receiving;
-    unsigned char m_unknownE85[8];
+    int m_signedInLive;
+    bool m_unknownE8C;
     bool m_matchmaking;
     OSFastMutex m_playerMutex;
     PlayerSyncData m_roomPlayers[8];
@@ -357,7 +360,10 @@ private:
     int m_friendSearchStatus;
     unsigned char m_unknown1264[0x1268 - 0x1264];
     OSFastMutex m_friendSearchMutex;
-    unsigned char m_unknown1294[0x12a4 - 0x1294];
+    unsigned char m_unknown1294[4];
+    void (*m_extDataCallback)(bool, void*);
+    void* m_extDataCallbackData;
+    void* m_extDataBuffer;
     std::vector<FriendSearchResult> m_friendSearchResults;
     OSFastMutex m_connectedPlayerMutex;
     std::vector<NQRNetworkPlayer*> m_players;

@@ -9,13 +9,9 @@ int OpenDir(const char* path, int* directory)
 {
     setAltMainOKToRun();
     FSCmdBlock* commandBlock = GetCommandBlock();
-    FSDirectoryHandle handle = directory != 0 ? static_cast<FSDirectoryHandle>(*directory) : 0;
-    FSStatus result = FSOpenDir(gFileSystemClient, commandBlock, path, &handle,
+    FSStatus result = FSOpenDir(gFileSystemClient, commandBlock, path,
+                                reinterpret_cast<FSDirectoryHandle*>(directory),
                                 FS_ERROR_FLAG_NONE);
-    if (directory != 0)
-    {
-        *directory = static_cast<int>(handle);
-    }
     waitForAltMainThreadToComplete();
     return result == 0;
 }

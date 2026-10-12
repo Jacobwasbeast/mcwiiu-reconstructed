@@ -4,8 +4,16 @@
 #include <stdint.h>
 #include <coreinit/filesystem.h>
 
+struct _OVERLAPPED;
+
+unsigned int GetFileSize(int file, unsigned int* fileSizeHigh);
+int ReadFile(int file, void* buffer, unsigned int bytesToRead, unsigned int* bytesRead, _OVERLAPPED* overlapped);
+int WriteFile(int file, const void* buffer, unsigned int bytesToWrite, unsigned int* bytesWritten, _OVERLAPPED* overlapped);
 int SetFilePointer(int file, long distanceToMove, int* distanceToMoveHigh, unsigned int moveMethod);
-int WriteFile(int file, const void* buffer, unsigned int bytesToWrite, unsigned int* bytesWritten, struct _OVERLAPPED* overlapped);
+unsigned int GetFileAttributesA(const char* fileName);
+void* VirtualAlloc(void* address, unsigned long size, unsigned int allocationType, unsigned int protect);
+int VirtualFree(void* address, unsigned long size, unsigned int freeType);
+
 static const unsigned int FILE_CACHE_BUFFER_SIZE = 0x10000;
 
 extern unsigned char *s_writeBuffer;

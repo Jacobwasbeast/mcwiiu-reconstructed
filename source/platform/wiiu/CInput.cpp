@@ -11,6 +11,7 @@
 #include <cwchar>
 #include <new>
 
+#include <cafe/sci.h>
 #include <coreinit/filesystem.h>
 #include <coreinit/messagequeue.h>
 #include <coreinit/systeminfo.h>
@@ -28,7 +29,6 @@ int XEnableGuestSignin(int enable)
     return 0;
 }
 
-extern "C" int SCIGetPlatformRegion(unsigned int* region);
 extern "C" int OSResumeThread(OSThread* thread);
 extern "C" void KPADReset(void);
 
@@ -141,17 +141,17 @@ extern "C" int SCIGetPlatformRegion(unsigned int* region)
 }
 
 static KPADError s_connectionResults[4];
-static VPADReadError s_vpadReadError;
-static VPADStatus s_vpadStatus[16];
 static KPADStatus s_kpadStatus[4][16];
+static VPADStatus s_vpadStatus[16];
+static VPADReadError s_vpadReadError;
+static unsigned char s_fontStack[0x20000];
+static OSThread s_fontThread;
+static unsigned char s_predictStack[0x20000];
+static OSThread s_predictThread;
 static OSMessage s_fontMessage;
 static OSMessage s_predictMessage;
 static OSMessageQueue s_fontQueue;
 static OSMessageQueue s_predictQueue;
-static OSThread s_fontThread;
-static OSThread s_predictThread;
-static unsigned char s_fontStack[0x20000];
-static unsigned char s_predictStack[0x20000];
 CInput* g_pInputInstance = 0;
 unsigned int g_inputPlatformFlag = 0;
 

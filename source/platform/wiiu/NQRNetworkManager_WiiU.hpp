@@ -67,6 +67,13 @@ public:
         eNEXLoginState_Failed = 3
     };
 
+    enum EInviteConnectPrompt
+    {
+        eInviteConnectPrompt_None,
+        eInviteConnectPrompt_Showing,
+        eInviteConnectPrompt_Answered
+    };
+
     enum EJoinFailedReason
     {
         eJoinFailedReason_None,
@@ -184,7 +191,7 @@ public:
     static int ConnectOnlineNintendoThreadProc(void* context);
     void CancelConnectCallbacks();
     static void CancelConnectOnlineNintendo(void* context);
-    static void ShowConnectOnlineNintendoProgress(int userIndex, int (*callback)(void*, bool, int, int), void* callbackData);
+    static int ShowConnectOnlineNintendoProgress(int userIndex, int (*callback)(void*, bool, int, int), void* callbackData);
     static int InvitationSignInReturned(void* context, bool signedIn, int error, int userIndex);
     static int InvitationMustConnectReturned(void* context, int pad, C4JStorage::EMessageResult result);
     void UpdateInvitationChecks();
@@ -211,7 +218,7 @@ public:
     void AddConnectedStation(unsigned long long stationId);
     void Pia_SignalLeaveSession();
     static void Pia_SessionCallback(nn::pia::session::Session::EventType eventType, unsigned long long stationId, void* context);
-    bool NexFacadeLogin(unsigned int principalId);
+    bool NexFacadeLogin(unsigned int timeout);
     void InitialiseAfterOnline();
     void OnlineCheck();
     void FriendSearchTick();
@@ -302,7 +309,7 @@ private:
     INQRNetworkManagerListener* m_listener;
     eNQRNetworkManagerInternalState m_internalState;
     eNQRNetworkManagerState m_state;
-    bool m_initialised;
+    bool m_nextIdleReasonIsFailure;
     bool m_host;
     bool m_unknownDA;
     unsigned long long m_localStationId;
@@ -321,7 +328,7 @@ private:
     unsigned char m_unknownDD8[0xa0];
     int m_unknownE78;
     bool m_receiving;
-    int m_unknownE80;
+    int m_signedInLive;
     bool m_unknownE84;
     bool m_matchmaking;
     OSFastMutex m_playerMutex;
@@ -343,7 +350,7 @@ private:
     unsigned char m_unknown11E9[0x1b];
     unsigned int m_pendingSessionId;
     int m_pendingUserMask;
-    PresenceSyncInfo m_presenceInfo;
+    unsigned char m_unknown120C[0x10];
     OSFastMutex m_playerConnectionMutex;
     int m_friendSearchBusy;
     unsigned char m_unknown124C[4];
@@ -378,12 +385,11 @@ private:
     bool m_leaveRequested;
     bool m_browseRequested;
     bool m_randomJoinRequested;
-    unsigned int m_unknown1390;
-    unsigned short m_unknown1394;
-    unsigned short m_unknown1396;
+    unsigned int m_unreliableProtocolHandle;
+    unsigned int m_reliableProtocolHandle;
     unsigned char m_unknown1398[8];
     bool m_unknown13A0;
-    int m_unknown13A4;
+    int m_inviteConnectPromptState;
     int m_pendingAttributeIndex;
     unsigned int m_pendingAttributeValue;
     unsigned long long m_lastRateControlledEvent;
@@ -398,5 +404,9 @@ private:
     unsigned int m_friendPresenceCount;
     void* m_nexContext;
 };
+
+extern bool g_bGameBootInvitePending;
+extern bool g_bHandlingGameBootInvite;
+extern unsigned int g_uiGameBootInvitePrincipalId;
 
 #endif

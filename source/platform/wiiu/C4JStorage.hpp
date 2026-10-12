@@ -14,8 +14,7 @@ struct SAVE_INFO
 {
     char filename[32];
     wchar_t title[128];
-    unsigned int timeHigh;
-    unsigned int timeLow;
+    FSTime modifiedTime;
     unsigned char* thumbnail;
     unsigned int thumbnailSize;
     unsigned int nandSize;
@@ -99,14 +98,16 @@ public:
     };
     enum eOptionsCallback
     {
-        eOptionsCallback_0 = 0,
-        eOptionsCallback_1 = 1,
-        eOptionsCallback_2 = 2,
-        eOptionsCallback_3 = 3,
-        eOptionsCallback_4 = 4,
-        eOptionsCallback_5 = 5,
-        eOptionsCallback_7 = 7,
-        eOptionsCallback_9 = 9
+        eOptions_Callback_Idle,
+        eOptions_Callback_Write,
+        eOptions_Callback_Write_Fail_NoSpace,
+        eOptions_Callback_Write_Fail,
+        eOptions_Callback_Read,
+        eOptions_Callback_Read_Fail,
+        eOptions_Callback_Read_FileNotFound,
+        eOptions_Callback_Read_Corrupt,
+        eOptions_Callback_Read_CorruptDeletePending,
+        eOptions_Callback_Read_CorruptDeleted
     };
     enum eGeneralData_Callback_Status { eGeneralData_Callback_StatusValue = 0 };
 
@@ -143,27 +144,27 @@ public:
     virtual void SetIncompleteSaveCallback(IncompleteSaveCallback, void*) = 0;
     virtual void SetSaveDisabled(bool) = 0;
     virtual unsigned char GetSaveDisabled() = 0;
-    virtual unsigned long long ResetSaveData() = 0;
+    virtual void ResetSaveData() = 0;
     virtual int DoesSaveExist(bool*) = 0;
     virtual int EnoughSpaceForAMinSaveGame() = 0;
     virtual ESaveGameState GetSaveState() = 0;
     virtual int GetSavesInfo(int, SavesInfoCallback, void*, const char*) = 0;
     virtual SAVE_DETAILS* ReturnSavesInfo() = 0;
-    virtual unsigned long long ClearSavesInfo() = 0;
+    virtual void ClearSavesInfo() = 0;
     virtual ESaveGameState LoadSaveDataThumbnail(SAVE_INFO*, int (*)(void*, unsigned char*, unsigned int), void*) = 0;
     virtual ESaveGameState LoadSaveData(SAVE_INFO*, LoadCallback, void*) = 0;
     virtual int GetSaveSize() = 0;
-    virtual unsigned long long GetSaveData(void*, unsigned int*) = 0;
+    virtual void GetSaveData(void*, unsigned int*) = 0;
     virtual int GetSaveUniqueNumber(int*) = 0;
     virtual int GetSaveUniqueFilename(char*) = 0;
     virtual void SetSaveUniqueFilename(char*) = 0;
     virtual int GetSaveUniqueFileDir(char*) = 0;
-    virtual unsigned long long SetSaveTitle(const wchar_t*) = 0;
+    virtual void SetSaveTitle(const wchar_t*) = 0;
     virtual void* AllocateSaveData(unsigned int) = 0;
     virtual void SetSaveDataSize(unsigned int) = 0;
     virtual void GetDefaultSaveImage(unsigned char**, unsigned int*) = 0;
     virtual void GetDefaultSaveThumbnail(unsigned char**, unsigned int*) = 0;
-    virtual unsigned long long SetSaveImages(unsigned char*, unsigned int, unsigned char*, unsigned int, unsigned char*, unsigned int) = 0;
+    virtual void SetSaveImages(unsigned char*, unsigned int, unsigned char*, unsigned int, unsigned char*, unsigned int) = 0;
     virtual ESaveGameState SaveSaveData(SaveCallback, void*) = 0;
     virtual void ContinueIncompleteOperation() = 0;
     virtual void CancelIncompleteOperation() = 0;
@@ -172,7 +173,7 @@ public:
     virtual ESaveGameState RenameSaveData(int, wchar_t*, SaveCallback, void*) = 0;
     virtual void GetSaveImage(unsigned char**, int*) = 0;
     virtual void GetSaveThumbnail(unsigned char**, int*) = 0;
-    virtual unsigned long long InitialiseProfileData(unsigned short, unsigned int, unsigned int, unsigned int*, int, unsigned int*) = 0;
+    virtual void InitialiseProfileData(unsigned short, unsigned int, unsigned int, unsigned int*, int, unsigned int*) = 0;
     virtual int SetDefaultOptionsCallback(DefaultOptionsCallback, void*) = 0;
     virtual void SetOptionsDataCallback(OptionsDataCallback, void*) = 0;
     virtual int SetOldProfileVersionCallback(OldProfileVersionCallback, void*) = 0;
@@ -183,7 +184,7 @@ public:
     virtual void DeleteOptionsData(int) = 0;
     virtual void ForceQueuedProfileWrites(int) = 0;
     virtual int IsOptionsWriteInProgressOrPending(int) = 0;
-    virtual unsigned long long InitialiseGenericData() = 0;
+    virtual void InitialiseGenericData() = 0;
     virtual int ReadFromGenericData(int, const std::wstring&, void**, unsigned int*, GenericDataCallback, void*) = 0;
     virtual int WriteToGenericData(int, const std::wstring&, void*, unsigned int, GenericDataCallback, void*) = 0;
     virtual void DeleteGenericData(int, const std::wstring&) = 0;

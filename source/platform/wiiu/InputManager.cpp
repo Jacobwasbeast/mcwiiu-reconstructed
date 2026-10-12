@@ -1,12 +1,12 @@
 #include "platform/wiiu/InputManager.hpp"
 #include "platform/wiiu/CInput.hpp"
 
-bool InputManager_IsShowingErrorViewer()
+unsigned char InputManager_IsShowingErrorViewer()
 {
-    return g_pInputInstance->IsShowingErrorViewer() != 0;
+    return g_pInputInstance->IsShowingErrorViewer();
 }
 
-bool InputManager_IsShowingOnscreenKeyboard()
+unsigned char InputManager_IsShowingOnscreenKeyboard()
 {
-    return g_pInputInstance->IsShowingOnscreenKeyboard() != 0;
+    return g_pInputInstance->IsShowingOnscreenKeyboard();
 }

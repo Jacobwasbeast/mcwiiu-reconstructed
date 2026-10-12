@@ -2,6 +2,8 @@
 #include "platform/wiiu/NQRNetworkPlayer.hpp"
 #include "game/core/System.hpp"
 
+#include <climits>
+
 INetworkPlayer* NetworkPlayerNintendo_Create(NQRNetworkPlayer* player)
 {
     return new NetworkPlayerNintendo(player);
@@ -85,17 +87,17 @@ int NetworkPlayerNintendo::GetSessionIndex()
 
 bool NetworkPlayerNintendo::IsTalking()
 {
-    return m_player->IsTalking() != 0;
+    return m_player->IsTalking();
 }
 
 bool NetworkPlayerNintendo::IsMutedByLocalUser(int userIndex)
 {
-    return m_player->IsMutedByLocalUser(userIndex) != 0;
+    return m_player->IsMutedByLocalUser(userIndex);
 }
 
 bool NetworkPlayerNintendo::HasVoice()
 {
-    return m_player->HasVoice() != 0;
+    return m_player->HasVoice();
 }
 
 bool NetworkPlayerNintendo::HasCamera()
@@ -153,8 +155,9 @@ void NetworkPlayerNintendo::SentChunkPacket()
 int NetworkPlayerNintendo::GetTimeSinceLastChunkPacket_ms()
 {
     if (m_lastChunkPacketTime == 0)
-        return 0x7fffffff;
-    return (int)(System::processTimeInMilliSecs() - m_lastChunkPacketTime);
+        return INT_MAX;
+    int64_t now = System::processTimeInMilliSecs();
+    return (int)(now - m_lastChunkPacketTime);
 }
 
 bool NetworkPlayerNintendo::isFake()
