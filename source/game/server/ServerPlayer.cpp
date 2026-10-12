@@ -2016,8 +2016,9 @@ uint32_t ServerPlayer::getPlayerViewDistanceModifier()
 
 void ServerPlayer::handleCollectItem(not_null_ptr<ItemInstance> item)
 {
-    if (mGameMode != NULL && mGameMode->mGameRules != NULL)
-        mGameMode->mGameRules->onCollectItem(item);
+    ServerPlayerGameMode* gameMode = mGameMode;
+    if (gameMode->mGameRules != NULL)
+        gameMode->mGameRules->onCollectItem(item);
 }
 
 void ServerPlayer::SetCamera(boost::shared_ptr<Entity> entity)
