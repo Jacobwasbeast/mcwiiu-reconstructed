@@ -14,13 +14,15 @@
 #include "game/core/Mth.hpp"
 #include "game/minigame/MiniGameDef.hpp"
 
+#include <algorithm>
+
 AbstractContainerMenu::AbstractContainerMenu()
 {
     m_containerId = 0;
     m_transactionId = 0;
     m_quickcraftType = -1;
     m_quickcraftStatus = 0;
-    m_quickcraftActive = false;
+    m_needsRendered = false;
     m_uiQuickCraftActive = false;
     m_uiQuickCraftRemaining = 0;
 }
@@ -53,25 +55,25 @@ void AbstractContainerMenu::addSlotListener(net_minecraft_world_inventory::Conta
 
 void AbstractContainerMenu::removeSlotListener(net_minecraft_world_inventory::ContainerListener* listener)
 {
-    std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it = m_listeners.begin();
-    while (it != m_listeners.end() && *it != listener) ++it;
-    if (it != m_listeners.end()) m_listeners.erase(it);
+    std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it =
+        std::find(m_listeners.begin(), m_listeners.end(), listener);
+    if (it != m_listeners.end())
+        m_listeners.erase(it);
 }
 
 AbstractContainerMenu::ItemList* AbstractContainerMenu::getItems()
 {
     ItemList* items = new ItemList();
-    std::vector<Slot*>::iterator it;
     std::vector<Slot*>::iterator end = m_slots.end();
-    for (it = m_slots.begin(); it != end; ++it) items->push_back((*it)->getItem());
+    for (std::vector<Slot*>::iterator it = m_slots.begin(); it != end; ++it) items->push_back((*it)->getItem());
     return items;
 }
 
 void AbstractContainerMenu::sendData(int id, int value)
 {
-    std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it;
     std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator end = m_listeners.end();
-    for (it = m_listeners.begin(); it != end; ++it) (*it)->setContainerData(this, id, value);
+    for (std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it = m_listeners.begin(); it != end; ++it)
+        (*it)->setContainerData(this, id, value);
 }
 
 void AbstractContainerMenu::broadcastChanges()
@@ -85,9 +87,10 @@ void AbstractContainerMenu::broadcastChanges()
         {
             stored = current->isEmpty() ? ItemInstance::EMPTY : current->copy();
             m_items[i] = stored;
-            m_quickcraftActive = true;
-            std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it;
-            for (it = m_listeners.begin(); it != m_listeners.end(); ++it)
+            m_needsRendered = true;
+            std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator end = m_listeners.end();
+            for (std::vector<net_minecraft_world_inventory::ContainerListener*>::iterator it = m_listeners.begin();
+                 it != end; ++it)
                 (*it)->slotChanged(this, (int)i, stored);
         }
     }
@@ -95,8 +98,8 @@ void AbstractContainerMenu::broadcastChanges()
 
 bool AbstractContainerMenu::needsRendered()
 {
-    bool changed = m_quickcraftActive;
-    m_quickcraftActive = false;
+    bool changed = m_needsRendered;
+    m_needsRendered = false;
     unsigned int i;
     for (i = 0; i < m_slots.size(); ++i)
     {
@@ -115,18 +118,16 @@ bool AbstractContainerMenu::clickMenuButton(boost::shared_ptr<Player>, int) { re
 
 Slot* AbstractContainerMenu::getSlotFor(boost::shared_ptr<Container> container, int index)
 {
-    Slot* found = NULL;
-    std::vector<Slot*>::iterator it;
     std::vector<Slot*>::iterator end = m_slots.end();
-    for (it = m_slots.begin(); it != end; ++it)
+    for (std::vector<Slot*>::iterator it = m_slots.begin(); it != end; ++it)
     {
-        if ((*it)->isAt(container, index))
+        Slot* slot = *it;
+        if (slot->isAt(container, index))
         {
-            found = *it;
-            break;
+            return slot;
         }
     }
-    return found;
+    return NULL;
 }
 
 Slot* AbstractContainerMenu::getSlot(int index)
@@ -588,13 +589,9 @@ void AbstractContainerMenu::setSynched(boost::shared_ptr<Player> player, bool va
 }
 bool AbstractContainerMenu::stackAsdAsd(not_null_ptr<ItemInstance> first, not_null_ptr<ItemInstance> second)
 {
-    bool result = false;
-    if (second->getItem() == first->getItem())
-    {
-        if (first->isStackedByData() && first->getAuxValue() != second->getAuxValue()) return false;
-        if (ItemInstance::tagMatches(first, second)) result = true;
-    }
-    return result;
+    return second->getItem() == first->getItem()
+        && (!first->isStackedByData() || first->getAuxValue() == second->getAuxValue())
+        && ItemInstance::tagMatches(first, second);
 }
 
 bool AbstractContainerMenu::moveItemStackTo(not_null_ptr<ItemInstance> item, int start, int end, bool reverse, bool mergeStacks, bool fillEmpty)
@@ -759,7 +756,12 @@ bool AbstractContainerMenu::matches(AbstractContainerMenu* first, AbstractContai
     if (first->m_slots.size() != second->m_slots.size()) return false;
     for (unsigned int index = 0; index < first->m_slots.size(); ++index)
     {
-        if (!ItemInstance::matches(first->m_slots.at(index)->getItem(), second->m_slots.at(index)->getItem(), true)) return false;
+        not_null_ptr<ItemInstance> firstItem = first->m_slots.at(index)->getItem();
+        not_null_ptr<ItemInstance> secondItem = second->m_slots.at(index)->getItem();
+        if (!ItemInstance::matches(firstItem, secondItem, true))
+        {
+            return false;
+        }
     }
     return true;
 }

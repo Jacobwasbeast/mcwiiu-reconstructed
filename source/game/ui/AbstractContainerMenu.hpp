@@ -111,7 +111,7 @@ protected:
     int m_quickcraftType;
     int m_quickcraftStatus;
     SlotSet m_quickcraftSlots;
-    bool m_quickcraftActive;
+    bool m_needsRendered;
     std::vector<net_minecraft_world_inventory::ContainerListener*> m_listeners;
     bool m_uiQuickCraftActive;
     int m_uiQuickCraftRemaining;
