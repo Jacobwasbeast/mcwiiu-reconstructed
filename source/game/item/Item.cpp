@@ -146,8 +146,6 @@ MappedRegistry<ResourceLocation,
 
 boost::unordered_map<Block*, Item*> Item::BLOCK_TO_ITEM;
 
-static const std::wstring LEATHER_HORSE_ARMOR_ICON_NAME = L"_brown";
-
 static const ItemPropertyFunction* DAMAGED_PROPERTY = new ItemPropertyFunction_Damaged();
 static const ItemPropertyFunction* DAMAGE_PROPERTY = new ItemPropertyFunction_Damage();
 static const ItemPropertyFunction* LEFT_HANDED_PROPERTY = new ItemPropertyFunction_LeftHanded();
@@ -2138,7 +2136,7 @@ void Item::staticCtor()
     leatherHorseArmorDefense[1] = 210;
 
     registerItem(453, L"leather_horse_armor",
-        (new HorseArmorItem(1, 3, leatherHorseArmorDefense, 2, L"lee"))->setIconName(LEATHER_HORSE_ARMOR_ICON_NAME)->setMaxStackSize(1)->setBaseItemTypeAndMaterial(60, 6)->setDescriptionId(IDS_ITEM_LEATHER_HORSE_ARMOR, IDS_DESC_LEATHER_HORSE_ARMOR));
+        (new HorseArmorItem(1, 3, leatherHorseArmorDefense, 2, L"lee"))->setIconName(HorseArmorItem::HORSE_ARMOR_DETAIL_ICON)->setMaxStackSize(1)->setBaseItemTypeAndMaterial(60, 6)->setDescriptionId(IDS_ITEM_LEATHER_HORSE_ARMOR, IDS_DESC_LEATHER_HORSE_ARMOR));
 
     registerItem(454, L"trident",
         (new TridentItem())->setIconName(L"trident")->setDescriptionId(IDS_ITEM_TRIDENT, IDS_DESC_ITEM_TRIDENT));

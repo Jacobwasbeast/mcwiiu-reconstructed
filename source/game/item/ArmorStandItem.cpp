@@ -56,10 +56,10 @@ InteractionResult::EInteractionResult ArmorStandItem::useOn(boost::shared_ptr<Pl
 
     bool blocked = !level->isEmptyBlock(placePos)
         && !level->getBlockState(placePos)->getBlock()->mayReplaceWithPlace(level, placePos);
-    bool blockedAbove = !level->isEmptyBlock(abovePos)
+    blocked |= !level->isEmptyBlock(abovePos)
         && !level->getBlockState(abovePos)->getBlock()->mayReplaceWithPlace(level, abovePos);
 
-    if (blocked || blockedAbove)
+    if (blocked)
     {
         return InteractionResult::eInteractionResult_Fail;
     }
@@ -83,28 +83,30 @@ InteractionResult::EInteractionResult ArmorStandItem::useOn(boost::shared_ptr<Pl
 
     if (!level->mIsClientSide)
     {
-        if (!level->canCreateMore(EntityType::ARMOR_STAND, Level::eSpawnType_Egg))
+        if (level->canCreateMore(EntityType::ARMOR_STAND, Level::eSpawnType_Egg))
+        {
+            boost::shared_ptr<ArmorStand> armorStand(new ArmorStand(level, x + 0.5, y, z + 0.5));
+            float yRot = (float)Mth::floor((Mth::wrapDegrees(player->mYRot - 180.0f) + 22.5f) / 45.0f) * 45.0f;
+
+            armorStand->moveTo(x + 0.5, y, z + 0.5, yRot, 0.0f);
+
+            SpawnEggItem::updateCustomEntityTag(level, player, itemInstance, armorStand);
+            level->addEntity(armorStand);
+            level->playSound(boost::shared_ptr<Player>(),
+                             armorStand->mX,
+                             armorStand->mY,
+                             armorStand->mZ,
+                             SoundEvents::ARMORSTAND_PLACE,
+                             SoundSource::eSoundSource_Blocks,
+                             0.75f,
+                             0.8f,
+                             16.0f);
+        }
+        else
         {
             player->displayClientMessage(0x8ECD701E, true);
             return InteractionResult::eInteractionResult_Fail;
         }
-
-        boost::shared_ptr<ArmorStand> armorStand(new ArmorStand(level, x + 0.5, y, z + 0.5));
-        float yRot = (float)Mth::floor((Mth::wrapDegrees(player->mYRot - 180.0f) + 22.5f) / 45.0f) * 45.0f;
-
-        armorStand->moveTo(x + 0.5, y, z + 0.5, yRot, 0.0f);
-
-        SpawnEggItem::updateCustomEntityTag(level, player, itemInstance, armorStand);
-        level->addEntity(armorStand);
-        level->playSound(boost::shared_ptr<Player>(),
-                         armorStand->mX,
-                         armorStand->mY,
-                         armorStand->mZ,
-                         SoundEvents::ARMORSTAND_PLACE,
-                         SoundSource::eSoundSource_Blocks,
-                         0.75f,
-                         0.8f,
-                         16.0f);
     }
 
     itemInstance->shrink(1);
