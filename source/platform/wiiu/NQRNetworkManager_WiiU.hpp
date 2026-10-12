@@ -76,25 +76,15 @@ public:
 
     enum EJoinFailedReason
     {
-        eJoinFailedReason_None,
-        eJoinFailedReason_Full,
-        eJoinFailedReason_Version,
-        eJoinFailedReason_Mii,
-        eJoinFailedReason_Network
+        eJoinFailedReason_GameFull,
+        eJoinFailedReason_MiiInUse
     };
 
     struct SendQueueItem
     {
         unsigned long long stationId;
-        unsigned char channel;
         unsigned char* data;
         unsigned int size;
-
-        SendQueueItem();
-        SendQueueItem(unsigned long long station, unsigned char sendChannel, const void* sendData, unsigned int sendSize);
-        SendQueueItem(const SendQueueItem& other);
-        SendQueueItem& operator=(const SendQueueItem& other);
-        ~SendQueueItem();
     };
 
     struct FriendSearchResult
@@ -116,9 +106,6 @@ public:
         unsigned long long stationId;
         int state;
         unsigned int playerMask;
-
-        ConnectedStation();
-        ConnectedStation(unsigned long long station);
     };
 
     class ClientJoinData
@@ -127,10 +114,7 @@ public:
         ClientJoinData();
 
         unsigned int playerMask;
-        PlayerUID playerUID0;
-        PlayerUID playerUID1;
-        PlayerUID playerUID2;
-        PlayerUID playerUID3;
+        PlayerUID playerUIDs[4];
         char onlineIds[4][21];
         wchar_t displayNames[4][11];
     };
@@ -161,7 +145,7 @@ public:
     virtual void GetExtDataForRoom(unsigned int sessionId, void* extData, void (*callback)(bool, void*), void* callbackData);
     virtual bool FindAndJoinRoom(int userIndexMask, unsigned int searchFlags, CMatchMakeSearchParam* searchParam, unsigned char gameMode);
     virtual void StartGame();
-    virtual void LeaveRoom(bool error);
+    virtual void LeaveRoom(bool actuallyLeaveRoom);
     virtual void EndGame();
     virtual bool SessionHasSpace(int extraPlayers);
     virtual bool SessionHasMii(int userIndex);
@@ -311,7 +295,7 @@ private:
     eNQRNetworkManagerState m_state;
     bool m_nextIdleReasonIsFailure;
     bool m_host;
-    bool m_unknownDA;
+    bool m_sessionJoined;
     unsigned long long m_localStationId;
     unsigned long long m_hostStationId;
     int m_localPlayerCount;

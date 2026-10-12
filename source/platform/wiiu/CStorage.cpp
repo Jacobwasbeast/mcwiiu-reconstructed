@@ -999,15 +999,18 @@ unsigned int CStorage::SaveGameThreadProc()
     unsigned char slot = nn::act::GetSlotNo();
     FSStat stat;
     unsigned int replacedSize = 0;
-    bool hadSave = SAVEGetStatEvidence(&m_saveClient, &m_saveCommandBlock, slot, m_saveUniqueFilename, &stat, FS_ERROR_FLAG_ALL) == 0;
-    if (hadSave)
+    bool hadSave = false;
+    bool hadMetadata = false;
+    if (SAVEGetStatEvidence(&m_saveClient, &m_saveCommandBlock, slot, m_saveUniqueFilename, &stat, FS_ERROR_FLAG_ALL) == 0) {
+        hadSave = true;
+        replacedSize = GetFileNANDSize(stat.size);
+    }
+    if (SAVEGetStatEvidence(&m_saveClient, &m_saveCommandBlock, slot, metadataName, &stat, FS_ERROR_FLAG_ALL) == 0) {
+        hadMetadata = true;
         replacedSize += GetFileNANDSize(stat.size);
-    bool hadMetadata = SAVEGetStatEvidence(&m_saveClient, &m_saveCommandBlock, slot, metadataName, &stat, FS_ERROR_FLAG_ALL) == 0;
-    if (hadMetadata)
-        replacedSize += GetFileNANDSize(stat.size);
-    unsigned int saveNandSize = GetFileNANDSize(m_saveSize);
-    unsigned int metadataNandSize = GetFileNANDSize(m_saveImageSize + 0x100);
-    if (m_savesInfo->nandSize + saveNandSize + metadataNandSize - replacedSize > SAVE_DATA_QUOTA) {
+    }
+    unsigned int requiredSize = GetFileNANDSize(m_saveSize) + GetFileNANDSize(m_saveImageSize + 0x100);
+    if (m_savesInfo->nandSize + requiredSize - replacedSize > SAVE_DATA_QUOTA) {
         m_saveState = C4JStorage::ESaveGame_SaveIncomplete;
         m_incompleteReason = 1;
         return 0;
@@ -1020,42 +1023,83 @@ unsigned int CStorage::SaveGameThreadProc()
         SAVERemove(&m_saveClient, &m_saveCommandBlock, slot, metadataName, FS_ERROR_FLAG_ALL);
     FSFileHandle file;
     int result = SAVEOpenFile(&m_saveClient, &m_saveCommandBlock, slot, m_saveUniqueFilename, "w", &file, FS_ERROR_FLAG_ALL);
-    if (result == 0) {
-        result = FSWriteFile(&m_saveClient, &m_saveCommandBlock, m_saveData, 1, m_saveSize, file, 0, FS_ERROR_FLAG_ALL);
-        if (result == (int)m_saveSize) {
-            FSCloseFile(&m_saveClient, &m_saveCommandBlock, file, FS_ERROR_FLAG_ALL);
-            unsigned int metadataSize = m_saveImageSize + 0x100;
-            unsigned char* metadata = (unsigned char*)MEMAllocFromDefaultHeapEx((metadataSize + 0x3fU) & ~0x3fU, 64);
-            std::memcpy(metadata, m_saveTitle, 0x100);
-            std::memcpy(metadata + 0x100, m_saveImage, m_saveImageSize);
-            result = SAVEOpenFile(&m_saveClient, &m_saveCommandBlock, slot, metadataName, "w", &file, FS_ERROR_FLAG_ALL);
-            if (result == 0) {
-                result =
-                    FSWriteFile(&m_saveClient, &m_saveCommandBlock, metadata, 1, metadataSize, file, 0, FS_ERROR_FLAG_ALL);
-                std::free(metadata);
-                FSCloseFile(&m_saveClient, &m_saveCommandBlock, file, FS_ERROR_FLAG_ALL);
-                if (result == (int)metadataSize &&
-                    SAVEFlushQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL) == 0) {
-                    gProfileInstance->LeaveInitSaveDirCS();
-                    OSFastMutex_Unlock(&m_storageMutex);
-                    if (m_savesInfo != NULL)
-                        m_savesInfo->nandSize += saveNandSize + metadataNandSize - replacedSize;
-                    m_saveState = C4JStorage::ESaveGame_SaveComplete;
-                    return 0;
-                }
-            } else
-                std::free(metadata);
-        } else
-            FSCloseFile(&m_saveClient, &m_saveCommandBlock, file, FS_ERROR_FLAG_ALL);
+    if (result == FS_STATUS_STORAGE_FULL) {
+        m_incompleteReason = 1;
+        m_saveState = C4JStorage::ESaveGame_SaveIncomplete;
+        SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
+        gProfileInstance->LeaveInitSaveDirCS();
+        OSFastMutex_Unlock(&m_storageMutex);
+        return 0;
     }
-    if (result == -12) {
+    if (result != 0) {
+        m_saveState = C4JStorage::ESaveGame_SaveFailed;
+        SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
+        gProfileInstance->LeaveInitSaveDirCS();
+        OSFastMutex_Unlock(&m_storageMutex);
+        return 0;
+    }
+    int written = FSWriteFile(&m_saveClient, &m_saveCommandBlock, m_saveData, 1, m_saveSize, file, 0, FS_ERROR_FLAG_ALL);
+    if (written == FS_STATUS_STORAGE_FULL) {
         m_saveState = C4JStorage::ESaveGame_SaveIncomplete;
         m_incompleteReason = 1;
-    } else
+        FSCloseFile(&m_saveClient, &m_saveCommandBlock, file, FS_ERROR_FLAG_ALL);
+        SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
+        gProfileInstance->LeaveInitSaveDirCS();
+        OSFastMutex_Unlock(&m_storageMutex);
+        return 0;
+    }
+    if (written != (int)m_saveSize) {
         m_saveState = C4JStorage::ESaveGame_SaveFailed;
-    SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
+        FSCloseFile(&m_saveClient, &m_saveCommandBlock, file, FS_ERROR_FLAG_ALL);
+        SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
+        gProfileInstance->LeaveInitSaveDirCS();
+        OSFastMutex_Unlock(&m_storageMutex);
+        return 0;
+    }
+    FSCloseFile(&m_saveClient, &m_saveCommandBlock, file, FS_ERROR_FLAG_ALL);
+    unsigned int metadataSize = m_saveImageSize + 0x100;
+    unsigned char* metadata = (unsigned char*)MEMAllocFromDefaultHeapEx((metadataSize + 0x3fU) & ~0x3fU, 64);
+    std::memcpy(metadata, m_saveTitle, 0x100);
+    std::memcpy(metadata + 0x100, m_saveImage, m_saveImageSize);
+    result = SAVEOpenFile(&m_saveClient, &m_saveCommandBlock, slot, metadataName, "w", &file, FS_ERROR_FLAG_ALL);
+    if (result == FS_STATUS_STORAGE_FULL) {
+        m_incompleteReason = 1;
+        m_saveState = C4JStorage::ESaveGame_SaveIncomplete;
+        SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
+        gProfileInstance->LeaveInitSaveDirCS();
+        OSFastMutex_Unlock(&m_storageMutex);
+        return 0;
+    }
+    if (result != 0) {
+        m_saveState = C4JStorage::ESaveGame_SaveFailed;
+        SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
+        gProfileInstance->LeaveInitSaveDirCS();
+        OSFastMutex_Unlock(&m_storageMutex);
+        return 0;
+    }
+    written = FSWriteFile(&m_saveClient, &m_saveCommandBlock, metadata, 1, metadataSize, file, 0, FS_ERROR_FLAG_ALL);
+    std::free(metadata);
+    FSCloseFile(&m_saveClient, &m_saveCommandBlock, file, FS_ERROR_FLAG_ALL);
+    if (written == FS_STATUS_STORAGE_FULL) {
+        m_incompleteReason = 1;
+        m_saveState = C4JStorage::ESaveGame_SaveIncomplete;
+        SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
+        gProfileInstance->LeaveInitSaveDirCS();
+        OSFastMutex_Unlock(&m_storageMutex);
+        return 0;
+    }
+    if (written != (int)metadataSize || SAVEFlushQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL) != 0) {
+        m_saveState = C4JStorage::ESaveGame_SaveFailed;
+        SAVERollbackQuota(&m_saveClient, &m_saveCommandBlock, slot, FS_ERROR_FLAG_ALL);
+        gProfileInstance->LeaveInitSaveDirCS();
+        OSFastMutex_Unlock(&m_storageMutex);
+        return 0;
+    }
     gProfileInstance->LeaveInitSaveDirCS();
     OSFastMutex_Unlock(&m_storageMutex);
+    if (m_savesInfo != NULL)
+        m_savesInfo->nandSize += requiredSize - replacedSize;
+    m_saveState = C4JStorage::ESaveGame_SaveComplete;
     return 0;
 }
 int CStorage::_SaveGameThreadProc(int, void* storage) { return ((CStorage*)storage)->SaveGameThreadProc(); }

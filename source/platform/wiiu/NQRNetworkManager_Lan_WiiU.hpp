@@ -28,6 +28,10 @@ namespace nn
     {
         struct FriendPresence;
     }
+    namespace nex
+    {
+        class ProtocolCallContext;
+    }
     namespace pia
     {
         namespace session
@@ -160,7 +164,7 @@ public:
     virtual void GetExtDataForRoom(unsigned int sessionId, void* extData, void (*callback)(bool, void*), void* callbackData);
     virtual bool FindAndJoinRoom(int userIndexMask, unsigned int searchFlags, CMatchMakeSearchParam* searchParam, unsigned char gameMode);
     virtual void StartGame();
-    virtual void LeaveRoom(bool error);
+    virtual void LeaveRoom(bool actuallyLeaveRoom);
     virtual void EndGame();
     virtual bool SessionHasSpace(int extraPlayers);
     virtual bool SessionHasMii(int userIndex);
@@ -330,14 +334,18 @@ private:
     bool m_nextIdleReasonIsFailure;
     bool m_host;
     bool m_hostStationIdCached;
-    unsigned long long m_cachedJointSessionHostStationId;
-    unsigned long long m_cachedHostStationId;
-    int m_pendingUserMask;
-    int m_maxPlayers;
-    unsigned char m_unknown100[0xdd4 - 0x100];
-    bool m_saveTransferSession;
+    unsigned long long m_localStationId;
+    unsigned long long m_hostStationId;
+    int m_localPlayerCount;
+    int m_localPlayersJoined;
+    unsigned char m_unknown100[3276];
+    unsigned char m_nextSmallId;
+    unsigned char m_unknownDCD[7];
+    bool m_localGame;
     bool m_unknownDD5;
-    unsigned char m_unknownDD6[0xe84 - 0xdd6];
+    unsigned char m_unknownDD6[2];
+    int m_roomDataUpdateCountdown;
+    unsigned char m_unknownDDC[168];
     bool m_receiving;
     int m_signedInLive;
     bool m_unknownE8C;
@@ -346,12 +354,20 @@ private:
     PlayerSyncData m_roomPlayers[8];
     void* m_externalData;
     unsigned int m_externalDataSize;
-    unsigned char m_unknown1148[0x116c - 0x1148];
+    unsigned char m_unknown1148[8];
+    int* m_roomAttributes;
+    int m_roomAttributeCount;
+    int m_matchmakeAttributes[5];
     std::vector<NQRNetworkPlayer*> m_unconnectedPlayers;
     std::deque<SendQueueItem> m_sendQueue;
     OSFastMutex m_sendQueueMutex;
     NQRNetworkPlayer* m_roomSlotPlayers[8];
-    unsigned char m_unknown11DC[0x1224 - 0x11dc];
+    unsigned char m_unknown11DC[20];
+    bool m_unknown11F0;
+    unsigned char m_unknown11F1[27];
+    unsigned int m_pendingSessionId;
+    unsigned int m_roomPlayerMask;
+    unsigned char m_unknown1214[16];
     OSFastMutex m_playerConnectionMutex;
     eNQRNetworkManagerFriendSearchState m_friendSearchState;
     unsigned char m_unknown1254[4];
@@ -372,14 +388,15 @@ private:
     unsigned char m_unknown132C[0x1330 - 0x132c];
     nn::fp::GameMode m_presenceGameMode;
     unsigned char m_unknown135C[0x1360 - 0x135c];
-    void* m_nexContext;
+    nn::nex::ProtocolCallContext* m_nexCallContext;
     ENEXAsyncProcess m_nexAsyncProcess;
-    unsigned char m_unknown1368[0x1381 - 0x1368];
+    unsigned char m_unknown1368[25];
     bool m_updateRequested;
-    unsigned char m_unknown1382[0x1390 - 0x1382];
+    unsigned char m_unknown1382[6];
+    long long m_lastRoomDataUpdateTime;
     bool m_createRequested;
     bool m_joinRequested;
-    unsigned char m_unknown1392[1];
+    bool m_joinMatchmakeRequested;
     bool m_leaveRequested;
     bool m_browseRequested;
     bool m_randomJoinRequested;
@@ -414,17 +431,16 @@ private:
     nn::pia::lan::LanSessionInfo m_saveTransferSessionInfo;
     unsigned int m_unreliableProtocolHandle;
     unsigned int m_reliableProtocolHandle;
-    unsigned char m_unknown1BB0[0x1bc8 - 0x1bb0];
+    unsigned char m_unknown1BB0[8];
+    bool m_inPiaSession;
+    unsigned char m_unknown1BB9[15];
     unsigned long long m_lastRateControlledEvent;
     unsigned char m_unknown1BD0[0x1bd4 - 0x1bd0];
     unsigned char m_gameMode;
     unsigned char m_unknown1BD5[0x1bd8 - 0x1bd5];
     void* m_searchCriteria;
     int m_sessionId;
-    unsigned int m_roomPlayerMask;
     unsigned int m_friendPresenceCount;
-    unsigned int m_nextSmallId;
-    unsigned int m_pendingSessionId;
     bool m_running;
 };
 
