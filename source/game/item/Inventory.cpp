@@ -339,15 +339,23 @@ int Inventory::addResource(int slot, not_null_ptr<ItemInstance> item)
         setItem(slot, current);
     }
 
-    int amount = std::min(remaining, current->getMaxStackSize() - current->getCount());
-    amount = std::min(amount, getMaxStackSize() - current->getCount());
+    int amount = remaining;
+    if (amount > current->getMaxStackSize() - current->getCount())
+    {
+        amount = current->getMaxStackSize() - current->getCount();
+    }
+    if (amount > getMaxStackSize() - current->getCount())
+    {
+        amount = getMaxStackSize() - current->getCount();
+    }
     if (amount == 0)
     {
         return remaining;
     }
+    remaining -= amount;
     current->grow(amount);
     current->setPopTime(5);
-    return remaining - amount;
+    return remaining;
 }
 
 int Inventory::addResource(not_null_ptr<ItemInstance> item)
@@ -389,61 +397,68 @@ bool Inventory::add(int slot, not_null_ptr<ItemInstance> item)
     }
 
     not_null_ptr<ItemInstance> original = item->copy();
-    if (item->isDamaged())
+    if (!item->isDamaged())
     {
+        int count;
         if (slot == -1)
         {
-            slot = getFreeSlot();
-        }
-        if (slot < 0)
-        {
-            if (m_player->mAbilities.mInstabuild)
+            do
             {
-                item->setCount(0);
-                return true;
+                count = item->getCount();
+                item->setCount(addResource(item));
             }
-            return false;
+            while (!item->isEmpty() && item->getCount() < count);
         }
-        not_null_ptr<ItemInstance> stored = item->copy();
-        stored->setPopTime(5);
-        m_items[slot] = stored;
-        m_player->handleCollectItem(stored);
-        m_player->awardStat(GenericStats::itemsCollected(original),
-                            GenericStats::param_itemsCollected(original));
+        else
+        {
+            do
+            {
+                count = item->getCount();
+                item->setCount(addResource(slot, item));
+            }
+            while (!item->isEmpty() && item->getCount() < count);
+        }
+        if (item->getCount() == count && m_player->mAbilities.mInstabuild)
+        {
+            item->setCount(0);
+            return true;
+        }
+        if (item->getCount() < count)
+        {
+            m_player->awardStat(GenericStats::itemsCollected(original),
+                                GenericStats::param_itemsCollected(original->getItem(), original->getAuxValue(),
+                                                                   original->getCount()));
+            if (original->getItem() == Items::leather)
+            {
+                m_player->awardStat(GenericStats::killCow(), GenericStats::param_noArgs());
+            }
+            return true;
+        }
+        return false;
+    }
+    if (slot == -1)
+    {
+        slot = getFreeSlot();
+    }
+    if (slot >= 0)
+    {
+        m_player->handleCollectItem(item);
+        m_player->awardStat(GenericStats::itemsCollected(item), GenericStats::param_itemsCollected(item));
         if (original->getItem() == Items::leather)
         {
             m_player->awardStat(GenericStats::killCow(), GenericStats::param_noArgs());
         }
+        m_items[slot] = item->copy();
+        m_items[slot]->setPopTime(5);
         item->setCount(0);
         return true;
     }
-
-    int originalCount = item->getCount();
-    int previousCount;
-    do
-    {
-        previousCount = item->getCount();
-        item->setCount(slot == -1 ? addResource(item) : addResource(slot, item));
-    }
-    while (!item->isEmpty() && item->getCount() < previousCount);
-
-    if (item->getCount() == originalCount && m_player->mAbilities.mInstabuild)
+    if (m_player->mAbilities.mInstabuild)
     {
         item->setCount(0);
         return true;
     }
-    int collected = originalCount - item->getCount();
-    if (collected > 0)
-    {
-        m_player->awardStat(GenericStats::itemsCollected(original),
-                            GenericStats::param_itemsCollected(
-                                original->getItem(), original->getAuxValue(), collected));
-        if (original->getItem() == Items::leather)
-        {
-            m_player->awardStat(GenericStats::killCow(), GenericStats::param_noArgs());
-        }
-    }
-    return collected > 0;
+    return false;
 }
 
 bool Inventory::add(not_null_ptr<ItemInstance> item)

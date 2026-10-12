@@ -457,53 +457,45 @@ ItemInstance* ItemInstance::copy_not_shared() const
 
 bool ItemInstance::tagMatches(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second)
 {
+    if (first->mEmptyCache && second->mEmptyCache)
+        return true;
+    if (first->mEmptyCache || second->mEmptyCache)
+        return false;
+    if (first->mTag == 0 && second->mTag != 0)
+        return false;
+    if (first->mTag != 0 && !first->mTag->equals(second->mTag))
+        return false;
+    return true;
+}
+
+bool ItemInstance::matches(const not_null_ptr<ItemInstance>& other, bool compareAuxValue)
+{
+    if (mCount != other->mCount)
+        return false;
+    if (getItem() != other->getItem())
+        return false;
+    if (compareAuxValue && mAuxValue != other->mAuxValue)
+        return false;
+    if (mTag == 0 && other->mTag != 0)
+        return false;
+    if (mTag != 0 && !mTag->equals(other->mTag))
+        return false;
+    return true;
+}
+
+bool ItemInstance::matches(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second,
+                           bool compareAuxValue)
+{
     if (first->isEmpty() && second->isEmpty())
         return true;
     if (first->isEmpty() || second->isEmpty())
         return false;
-    if (first->getTag() == 0)
-        return second->getTag() == 0;
-    if (second->getTag() == 0)
-        return false;
-    return first->getTag()->equals(second->getTag());
-}
-
-bool ItemInstance::matches(const not_null_ptr<ItemInstance>& other, bool compareTags)
-{
-    if (mAuxValue != other->mAuxValue)
-        return false;
-    if (getItem() != other->getItem())
-        return false;
-    if (!compareTags)
-        return true;
-    if (mTag == 0)
-        return other->mTag == 0;
-    if (other->mTag == 0)
-        return false;
-    return mTag->equals(other->mTag);
-}
-
-bool ItemInstance::matches(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second,
-                           bool compareTags)
-{
-    if (first->isEmpty())
-    {
-        return second->isEmpty();
-    }
-    if (second->isEmpty())
-    {
-        return false;
-    }
-    return first->matches(second, compareTags);
+    return first->matches(second, compareAuxValue);
 }
 
 bool ItemInstance::sameItem(const not_null_ptr<ItemInstance>& other)
 {
-    if (!other->isEmpty() && mItem == other->mItem && mAuxValue == other->mAuxValue)
-    {
-        return true;
-    }
-    return false;
+    return !other->isEmpty() && mItem == other->mItem && mAuxValue == other->mAuxValue;
 }
 
 bool ItemInstance::isSame(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second)
@@ -522,13 +514,7 @@ bool ItemInstance::isSame(const not_null_ptr<ItemInstance>& first, const not_nul
 bool ItemInstance::sameItemIgnoreDurability(const not_null_ptr<ItemInstance>& other)
 {
     if (isDamageableItem())
-    {
-        if (!other->isEmpty() && mItem == other->mItem)
-        {
-            return true;
-        }
-        return false;
-    }
+        return !other->isEmpty() && mItem == other->mItem;
     return sameItem(other);
 }
 
@@ -548,31 +534,15 @@ bool ItemInstance::isSameIgnoreDurability(const not_null_ptr<ItemInstance>& firs
 
 bool ItemInstance::sameItemWithTags(const not_null_ptr<ItemInstance>& other, std::vector<std::wstring>* tags)
 {
-    if (other.get() == 0)
-        return false;
     if (mItem != other->mItem)
-    {
         return false;
-    }
     if (mAuxValue != other->mAuxValue)
-    {
         return false;
-    }
-    if (mTag == 0)
-    {
-        if (other->mTag != 0)
-        {
-            return false;
-        }
-        return true;
-    }
-    if (other->mTag == 0)
+    if (mTag == 0 && other->mTag != 0)
         return false;
-    if (tags == 0)
-    {
-        return mTag->equals(other->mTag);
-    }
-    return mTag->equalsWithException(other->mTag, tags);
+    if (mTag != 0 && !(tags != 0 ? mTag->equalsWithException(other->mTag, tags) : mTag->equals(other->mTag)))
+        return false;
+    return true;
 }
 
 bool ItemInstance::sameItem_not_shared(ItemInstance* other)

@@ -89,8 +89,8 @@ public:
     bool interactEnemy(boost::shared_ptr<Player> player, boost::shared_ptr<LivingEntity> entity, InteractionHand::EInteractionHand hand);
     ItemInstance* copy_not_shared() const;
     static bool tagMatches(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second);
-    bool matches(const not_null_ptr<ItemInstance>& other, bool compareTags);
-    static bool matches(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second, bool compareTags);
+    bool matches(const not_null_ptr<ItemInstance>& other, bool compareAuxValue);
+    static bool matches(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second, bool compareAuxValue);
     bool sameItem(const not_null_ptr<ItemInstance>& other);
     static bool isSame(const not_null_ptr<ItemInstance>& first, const not_null_ptr<ItemInstance>& second);
     bool sameItemIgnoreDurability(const not_null_ptr<ItemInstance>& other);
