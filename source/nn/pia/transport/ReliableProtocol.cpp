@@ -298,9 +298,9 @@ Result ReliableProtocol::Send(unsigned long long stationId, const void* data, un
     return r;
 }
 
-void ReliableProtocol::SendToAll(const void* data, unsigned int size)
+Result ReliableProtocol::SendToAll(const void* data, unsigned int size)
 {
-    Send(static_cast<StationIndex>(0xff), data, size);
+    return Send(cStationIndexSentinelFF, data, size);
 }
 
 Result ReliableProtocol::Receive(unsigned long long* stationId, void* buffer, unsigned int* size,
