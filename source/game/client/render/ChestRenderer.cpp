@@ -6,10 +6,10 @@
 #include "game/util/ResourceLocation.hpp"
 #include "game/world/block/ChestBlockEntity.hpp"
 
-static ResourceLocation CHEST_LOCATION(TN_ITEM_CHEST);
+static ResourceLocation LARGE_TRAPPED_CHEST_LOCATION(TN_ITEM_TRAPPED_DOUBLE);
 static ResourceLocation LARGE_CHEST_LOCATION(TN_ITEM_LARGECHEST);
-static ResourceLocation TRAPPED_CHEST_LOCATION(TN_MOB_REDCOW);
-static ResourceLocation LARGE_TRAPPED_CHEST_LOCATION(TN_MOB_SNOWMAN);
+static ResourceLocation TRAPPED_CHEST_LOCATION(TN_ITEM_TRAPPED);
+static ResourceLocation CHEST_LOCATION(TN_ITEM_CHEST);
 
 ChestRenderer::ChestRenderer()
     : BlockEntityRenderer()

@@ -1028,33 +1028,28 @@ void GameRenderer::bobHurt(float partialTick)
     static const float kHurtBobScale = 14.0f;
     static const float kPi = 3.1415927f;
 
-    boost::shared_ptr<Entity> cameraEntity = getCamera();
-    if ((cameraEntity->GetType() & EntityType::LIVING_ENTITY) != EntityType::LIVING_ENTITY)
-        return;
-
-    boost::shared_ptr<LivingEntity> living =
-        boost::static_pointer_cast<LivingEntity>(cameraEntity);
-    LivingEntity* entity = living.get();
-
-    const float prevHurt = static_cast<float>(entity->mHurtTime) - partialTick;
-    if (entity->getHealth() <= kZero)
+    if (eTYPE_DERIVED_FROM(EntityType::LIVING_ENTITY, getCamera()->GetType()))
     {
-        float deathTime = static_cast<float>(entity->mDeathTime) + partialTick;
-        if (deathTime > kNauseaMax)
-            deathTime = kNauseaMax;
-        GlStateManager::rotatef(kNauseaBase - kNauseaDiv / (deathTime + kNauseaAdd), kZero, kZero,
-                                kOne);
-    }
+        boost::shared_ptr<LivingEntity> living = boost::static_pointer_cast<LivingEntity>(getCamera());
 
-    if (prevHurt >= kZero)
-    {
-        const float divisor = static_cast<float>(entity->mHurtDuration);
-        float ratio = prevHurt / divisor;
-        const float shake =
-            static_cast<float>(Mth::sin(ratio * ratio * ratio * ratio * kPi));
-        const float hurtDir = entity->mHurtDir;
+        float hurt = static_cast<float>(living->mHurtTime) - partialTick;
+        if (living->getHealth() <= kZero)
+        {
+            float deathTime = static_cast<float>(living->mDeathTime) + partialTick;
+            if (deathTime > kNauseaMax)
+                deathTime = kNauseaMax;
+            GlStateManager::rotatef(kNauseaBase - kNauseaDiv / (deathTime + kNauseaAdd), kZero, kZero,
+                                    kOne);
+        }
+
+        if (hurt < kZero)
+            return;
+
+        hurt = hurt / static_cast<float>(living->mHurtDuration);
+        hurt = Mth::sin(hurt * hurt * hurt * hurt * kPi);
+        const float hurtDir = living->mHurtDir;
         GlStateManager::rotatef(-hurtDir, kZero, kOne, kZero);
-        GlStateManager::rotatef(-shake * kHurtBobScale, kZero, kZero, kOne);
+        GlStateManager::rotatef(-hurt * kHurtBobScale, kZero, kZero, kOne);
         GlStateManager::rotatef(hurtDir, kZero, kOne, kZero);
     }
 }
@@ -1111,7 +1106,7 @@ void GameRenderer::moveCameraToPlayer(float partialTick)
         boost::static_pointer_cast<LivingEntity>(getCamera());
 
     const unsigned int thirdPerson = getCameraThirdPerson();
-    float eyeHeight = (living->mEyeHeightO - living->mEyeHeight) * partialTick + living->mEyeHeight;
+    float eyeHeight = (living->mEyeHeight - living->mEyeHeightO) * partialTick + living->mEyeHeightO;
     double x = (living->mX - living->mXo) * partialTick + living->mXo;
     double yEye = (living->mY - living->mYo) * partialTick + living->mYo + living->getEyeHeight();
     double z = (living->mZ - living->mZo) * partialTick + living->mZo;
@@ -1345,8 +1340,8 @@ void GameRenderer::setupCamera(float partialTick, int eyeIndex)
         GlStateManager::translatef(eyeOffset * kProjectionEyeOffset, kZero, kZero);
     }
 
-    float fov = partialTick;
-    float aspect = partialTick;
+    float aspect;
+    float fov;
     getFovAndAspect(fov, aspect, partialTick, true);
 
     if (mZoom != kOne)

@@ -679,7 +679,6 @@ int Textures::loadTexture(int textureName)
 
 void Textures::bindTexture(const ResourceLocation* location)
 {
-    if (location == NULL) return;
     if (location->isPreloaded()) bind(loadTexture(location->getTexture()));
     else bind(loadTexture(TN_UNINDEXED, location->getPath()));
 }
@@ -690,7 +689,7 @@ void Textures::bindTextureLayers(const ResourceLocation* location)
     int i;
     for (i = 0; i < count; ++i)
     {
-        loadTexture(location->getTexture(i));
+        gRenderer->TextureBind(i, loadTexture(location->getTexture(i)));
     }
 }
 
