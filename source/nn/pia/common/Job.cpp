@@ -67,33 +67,37 @@ Job::State Job::GetState() const
 {
     CriticalSection& criticalSection = g_piaJobScheduler->m_criticalSection;
     criticalSection.Lock();
-    State state;
     switch (m_innerState)
     {
     case cInnerStateForegroundWaiting:
-    case cInnerStateBackgroundWaiting:
-        state = cStateWaiting;
-        break;
+        criticalSection.Unlock();
+        return cStateWaiting;
     case cInnerStateForegroundReady:
-    case cInnerStateBackgroundReady:
-        state = cStateReady;
-        break;
+        criticalSection.Unlock();
+        return cStateReady;
     case cInnerStateForegroundRunning:
+        criticalSection.Unlock();
+        return cStateRunning;
+    case cInnerStateBackgroundWaiting:
+        criticalSection.Unlock();
+        return cStateWaiting;
+    case cInnerStateBackgroundReady:
+        criticalSection.Unlock();
+        return cStateReady;
     case cInnerStateBackgroundRunning:
-        state = cStateRunning;
-        break;
+        criticalSection.Unlock();
+        return cStateRunning;
     case cInnerStateSuspended:
-        state = cStateSuspended;
-        break;
+        criticalSection.Unlock();
+        return cStateSuspended;
     case cInnerStateCompleted:
-        state = cStateCompleted;
-        break;
+        criticalSection.Unlock();
+        return cStateCompleted;
     default:
-        state = cStateNotEntried;
         break;
     }
     criticalSection.Unlock();
-    return state;
+    return cStateNotEntried;
 }
 
 void Job::Execute(bool isBackground)

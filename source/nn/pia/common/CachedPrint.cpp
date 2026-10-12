@@ -12,9 +12,6 @@ namespace
 enum
 {
     cResultAllocationFailed = 0x10c01,
-    cResultInvalidArgument = 0x10c07,
-    cResultInvalidState = 0x10c08,
-    cResultNotInitialized = 0x10c0c,
     cResultAlreadyCreated = 0x10c0f
 };
 
@@ -39,13 +36,13 @@ CachedPrint::~CachedPrint()
 Result CachedPrint::CreateInstance(unsigned int capacity)
 {
     if (IsInitialized() == 0)
-        return cResultNotInitialized;
+        return ResultNotInitialized();
     if (IsInSetupMode() == 0)
-        return cResultInvalidState;
+        return ResultInvalidState();
     if (s_instance != 0)
         return cResultAlreadyCreated;
     if (capacity < cMinimumCapacity)
-        return cResultInvalidArgument;
+        return ResultInvalidArgument();
 
     s_storage = NewArray<unsigned char>(sizeof(CachedPrint), 8);
     if (s_storage == 0)
@@ -80,7 +77,7 @@ void CachedPrint::VPrintf(const char* format, va_list args)
         m_position = 0;
     }
     int written = std::vsnprintf(m_buffer + m_position, maxLength, format, args);
-    if (written < 0 || maxLength <= static_cast<unsigned int>(written))
+    if (written < 0 || static_cast<unsigned int>(written) >= maxLength)
     {
         written = static_cast<int>(maxLength - 1);
         m_buffer[m_capacity - 1] = 0;
@@ -116,9 +113,9 @@ void CachedPrint::Printf(const char* format, ...)
 void CachedPrint::Clear()
 {
     common::ScopedLock lock(m_criticalSection);
-    m_end = 0;
     m_start = 0;
     m_position = 0;
+    m_end = 0;
 }
 
 void CachedPrint::Flush()

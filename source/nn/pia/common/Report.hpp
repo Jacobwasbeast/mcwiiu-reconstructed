@@ -21,6 +21,8 @@ public:
     unsigned char m_enabled;
 };
 
+extern Report* g_currentReport;
+
 }}}
 
 #endif

@@ -55,7 +55,7 @@ Result StationAddress::Deserialize(const unsigned char* buffer)
     return 0;
 }
 
-unsigned int StationAddress::IsValid() const
+bool StationAddress::IsValid() const
 {
     return m_inetAddress.IsValid();
 }

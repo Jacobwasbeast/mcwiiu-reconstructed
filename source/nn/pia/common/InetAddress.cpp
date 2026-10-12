@@ -80,13 +80,13 @@ Result InetAddress::Deserialize(const unsigned char* buffer)
     return success;
 }
 
-unsigned int InetAddress::IsValid() const
+bool InetAddress::IsValid() const
 {
     if (m_address == 0)
-        return 0;
+        return false;
     if (m_port == 0)
-        return 0;
-    return 1;
+        return false;
+    return true;
 }
 
 bool InetAddress::IsValidAddress() const

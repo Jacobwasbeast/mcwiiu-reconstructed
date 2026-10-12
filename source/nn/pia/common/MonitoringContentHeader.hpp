@@ -13,12 +13,17 @@ public:
     Result Deserialize(const unsigned char* buffer, unsigned int size);
     void Trace(unsigned long long value) const;
 
+    enum
+    {
+        cMetadataSize = 10
+    };
+
     unsigned char m_contentType;
     unsigned char m_contentVersion;
     unsigned char m_attribute;
     unsigned char m_status;
     unsigned short m_contentSize;
-    unsigned char m_metadata[10];
+    unsigned char m_metadata[cMetadataSize];
 };
 
 }}}

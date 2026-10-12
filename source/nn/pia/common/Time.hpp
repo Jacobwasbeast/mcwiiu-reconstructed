@@ -24,6 +24,8 @@ public:
 
     void SetNow();
     static Time Create(unsigned long long tick);
+    static const Time c_Max;
+    static const Time c_Min;
     void Trace(unsigned long long value) const;
 
     unsigned long long m_tick;

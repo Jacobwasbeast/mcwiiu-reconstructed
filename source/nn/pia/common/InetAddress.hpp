@@ -26,7 +26,7 @@ public:
     void Trace(unsigned long long value) const;
     Result Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const;
     Result Deserialize(const unsigned char* buffer);
-    unsigned int IsValid() const;
+    bool IsValid() const;
     bool IsValidAddress() const;
     unsigned int IsPrivate() const;
     bool IsValidPort() const;

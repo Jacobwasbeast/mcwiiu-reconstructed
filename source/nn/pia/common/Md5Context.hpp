@@ -20,7 +20,6 @@ private:
     {
         cBlockSize = 64,
         cBlockWordNum = cBlockSize / 4,
-        cBlockDoubleWordNum = cBlockSize / 8,
         cStateWordNum = 4,
         cHashSize = cStateWordNum * 4,
         cLengthSize = 8
@@ -32,7 +31,6 @@ private:
     {
         unsigned char bytes[cBlockSize];
         unsigned int words[cBlockWordNum];
-        unsigned long long doubleWords[cBlockDoubleWordNum];
     } m_block;
 };
 

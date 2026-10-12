@@ -15,7 +15,7 @@ public:
     void Clear();
     Result Serialize(unsigned char* buffer, unsigned int* size, unsigned int maxSize) const;
     Result Deserialize(const unsigned char* buffer);
-    unsigned int IsValid() const;
+    bool IsValid() const;
     bool operator==(const StationAddress& other) const;
     bool operator!=(const StationAddress& other) const
     {

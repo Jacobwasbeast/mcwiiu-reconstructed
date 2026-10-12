@@ -1,5 +1,5 @@
 #include "nn/pia/common/StepSequenceJob.hpp"
-#include "platform/wiiu/C4JThreadImpl.hpp"
+#include "platform/wiiu/pead.hpp"
 
 namespace nn { namespace pia { namespace common {
 
@@ -40,8 +40,27 @@ Job::ExecuteResult StepSequenceJob::ExecuteCore()
 
 void StepSequenceJob::WaitForCompletion(unsigned int intervalMsec)
 {
-    while (IsRunning())
-        Sleep(intervalMsec);
+    const long long ticks = static_cast<long long>(intervalMsec) * pead::TickSpan::cFrequency / 1000;
+
+    for (;;)
+    {
+        if (IsForeground())
+        {
+            CancelCleanup();
+            m_cancelRequested = false;
+            Reset(false);
+            return;
+        }
+        if (!IsBackground())
+            break;
+        pead::Thread::sleep(pead::TickSpan(ticks));
+    }
+    if (GetState() == cStateSuspended)
+    {
+        CancelCleanup();
+        m_cancelRequested = false;
+        Reset(false);
+    }
 }
 
 void StepSequenceJob::CancelCleanup()

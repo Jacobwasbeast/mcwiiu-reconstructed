@@ -46,7 +46,8 @@ Result SessionEndMonitoringData::Serialize(unsigned char* buffer, unsigned int* 
     unsigned char* cursor = buffer;
     unsigned int remaining = maxSize;
     unsigned int written = 0;
-    Result result = MonitoringDataHeader::Serialize(cursor, &written, remaining);
+    Result result;
+    result = MonitoringDataHeader::Serialize(cursor, &written, remaining);
     if (result != 0)
         return result;
     cursor += written;

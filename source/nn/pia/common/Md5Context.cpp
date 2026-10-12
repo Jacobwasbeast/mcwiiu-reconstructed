@@ -158,7 +158,9 @@ void Md5Context::GetHash(void* hash)
     if (room > cLengthSize)
         OSBlockSet(m_block.bytes + offset, 0, room - cLengthSize);
 
-    m_block.doubleWords[cBlockDoubleWordNum - 1] = SwapBytes(bitLength);
+    unsigned long long swappedLength = SwapBytes(bitLength);
+    m_block.words[cBlockWordNum - 2] = static_cast<unsigned int>(swappedLength >> 32);
+    m_block.words[cBlockWordNum - 1] = static_cast<unsigned int>(swappedLength);
     ProcessBlock();
 
     unsigned int* output = static_cast<unsigned int*>(hash);

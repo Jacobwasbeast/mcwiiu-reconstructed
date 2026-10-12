@@ -4,6 +4,8 @@
 
 namespace nn { namespace pia { namespace common {
 
+Report* g_currentReport;
+
 Report::Report()
     : m_first(0xffffffffu), m_time(), m_enabled(1)
 {

@@ -8,9 +8,7 @@ namespace nn { namespace pia { namespace common {
 
 namespace
 {
-const int kThreadQueueCapacity = 0x7fffffff;
 const int kThreadStackSize = 0x5000;
-const int kThreadAffinity = 0x20;
 }
 
 BackgroundScheduler::BackgroundScheduler(int threadPriority,
@@ -18,13 +16,14 @@ BackgroundScheduler::BackgroundScheduler(int threadPriority,
     : m_delegate(this, &BackgroundScheduler::Dispatch),
       m_thread("Tc@Pia BackgroundScheduler", &m_delegate,
                common::HeapManager::GetHeap(), threadPriority,
-               pead::MessageQueue::cNoBlock, kThreadQueueCapacity,
-               kThreadStackSize, kThreadAffinity),
+               pead::MessageQueue::cNoBlock, pead::Thread::cDefaultQuitMsg,
+               kThreadStackSize, pead::Thread::cDefaultMessageQueueSize),
       m_criticalSection(criticalSection),
       m_event(false),
       m_finalize(false),
       m_jobList()
 {
+    m_thread.setAffinity(pead::CoreIdMask(1 << pead::CoreInfo::getCurrentCoreId().value()));
     m_thread.start();
     m_jobList.SetOffset(offsetof(Job, m_listNode));
 }
@@ -38,43 +37,60 @@ BackgroundScheduler::~BackgroundScheduler()
 
 void BackgroundScheduler::EntryJob(Job* job)
 {
-    ListNode* sentinel = m_jobList.Sentinel();
-    for (ListNode* node = sentinel->next; node != sentinel; node = node->next)
+    Time time = job->m_time;
+    for (OffsetList::iterator it = m_jobList.begin(), end = m_jobList.end(); it != end; ++it)
     {
-        if (static_cast<Job*>(m_jobList.FromListNode(node))->m_time <= job->m_time)
+        if (static_cast<Job*>(*it)->m_time <= time)
         {
-            m_jobList.InsertBeforeNode(node, m_jobList.ToListNode(job));
+            m_jobList.InsertBeforeNode(m_jobList.ToListNode(*it), m_jobList.ToListNode(job));
             return;
         }
     }
     m_event.setSignal();
-    m_jobList.InsertBeforeNode(sentinel, m_jobList.ToListNode(job));
+    m_jobList.InsertBeforeNode(m_jobList.Sentinel(), m_jobList.ToListNode(job));
 }
 
 void BackgroundScheduler::ResetJob(Job* job)
 {
-    if (m_jobList.IsIncludeNode(m_jobList.ToListNode(job)))
+    bool isIncluded = m_jobList.IsIncludeNode(m_jobList.ToListNode(job));
+    if (isIncluded)
         m_jobList.EraseNode(m_jobList.ToListNode(job));
 }
 
-void BackgroundScheduler::Dispatch(pead::Thread* thread, int message)
+void BackgroundScheduler::Dispatch(pead::Thread* thread, int)
 {
-    if (thread == 0)
-        return;
+    ScopedLock lock(*m_criticalSection);
     for (;;)
     {
         if (m_finalize)
-            return;
-
-        ListNode* node = m_jobList.PopFrontNode();
-        if (node == 0)
         {
+            thread->quit(false);
+            return;
+        }
+        if (m_jobList.GetNodeNum() == 0)
+        {
+            m_criticalSection->Unlock();
             m_event.wait();
+            m_criticalSection->Lock();
             continue;
         }
 
-        Job* job = static_cast<Job*>(m_jobList.FromListNode(node));
-        job->Execute(message != 0);
+        Job* job = static_cast<Job*>(m_jobList.FromListNode(m_jobList.Sentinel()->prev));
+        Time now;
+        now.SetNow();
+        TimeSpan span = job->m_time - now;
+        if (TimeSpan::FromMSec(0) < span)
+        {
+            m_criticalSection->Unlock();
+            m_event.wait(pead::TickSpan(span.m_tick));
+            m_criticalSection->Lock();
+        }
+        else
+        {
+            m_jobList.PopBackNode();
+            job->Execute(true);
+            m_event.resetSignal();
+        }
     }
 }
 

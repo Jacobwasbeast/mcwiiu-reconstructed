@@ -28,6 +28,7 @@ public:
     virtual void CancelCleanup();
     virtual void Trace(unsigned long long value) const;
     void WaitForCompletion(unsigned int intervalMsec);
+    void SetCurrentStep(const Step& step) { m_currentStep = step; }
 
     Step m_currentStep;
     bool m_cancelRequested;

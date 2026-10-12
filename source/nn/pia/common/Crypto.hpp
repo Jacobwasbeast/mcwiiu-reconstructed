@@ -31,6 +31,15 @@ public:
                           void* signature, unsigned int signatureSize,
                           const Setting& setting);
     static unsigned int GetBlockSize(Mode mode);
+
+private:
+    enum
+    {
+        cKeySize = 16,
+        cBlockSize = 16,
+        cResultInvalidArgument = 0x10c07,
+        cResultMacMismatch = 0x2c03
+    };
 };
 
 }}}
