@@ -1611,11 +1611,10 @@ void ClientPacketListener::sendAndDisconnect(boost::shared_ptr<Packet> packet)
 
 void ClientPacketListener::handleTakeItemEntity(boost::shared_ptr<ClientboundTakeItemEntityPacket> packet)
 {
-    if (m_level == 0)
+    if (m_level == NULL)
+    {
         return;
-    MultiPlayerLevel* level = dynamic_cast<MultiPlayerLevel*>(m_level);
-    if (level == 0)
-        return;
+    }
 
     boost::shared_ptr<Entity> from = getEntity(packet->getItemId());
     boost::shared_ptr<LivingEntity> to = boost::dynamic_pointer_cast<LivingEntity>(getEntity(packet->getPlayerId()));
@@ -1623,58 +1622,63 @@ void ClientPacketListener::handleTakeItemEntity(boost::shared_ptr<ClientboundTak
     bool isLocalPlayer = false;
     for (int i = 0; i < 4; ++i)
     {
-        if (m_minecraft->mLocalPlayers[i] != 0 && m_minecraft->mLocalPlayers[i]->getId() == packet->getPlayerId())
+        if (m_minecraft->mLocalPlayers[i] != NULL && m_minecraft->mLocalPlayers[i]->getId() == packet->getPlayerId())
         {
-            to = m_minecraft->mLocalPlayers[i];
             isLocalPlayer = true;
+            to = m_minecraft->mLocalPlayers[i];
             break;
         }
     }
 
-    if (to == 0)
+    if (to == NULL)
     {
-        level->removeEntity(packet->getItemId());
+        m_level->removeEntity(packet->getItemId());
         return;
     }
-    if (from == 0)
-        return;
 
-    if (isLocalPlayer)
+    if (from != NULL)
     {
-        boost::shared_ptr<LocalPlayer> player = boost::dynamic_pointer_cast<LocalPlayer>(to);
-        if (m_minecraft->mGameModes[player->mUserIndex] == 0)
+        if (isLocalPlayer)
         {
-            level->removeEntity(packet->getItemId());
-            return;
-        }
-
-        if (eTYPE_DERIVED_FROM(EntityType::EXPERIENCE_ORB, from->GetType()))
-        {
-            level->playLocalSound(from->mX, from->mY, from->mZ, SoundEvents::EXPERIENCE_ORB_PICKUP,
-                                  SoundSource::eSoundSource_Players, 0.1f,
-                                  ((m_random.nextFloat() - m_random.nextFloat()) * 0.7f + 1.0f) * 2.0f, false,
-                                  16.0f);
+            boost::shared_ptr<LocalPlayer> player = boost::dynamic_pointer_cast<LocalPlayer>(to);
+            if (m_minecraft->mGameModes[player->mUserIndex] != NULL)
+            {
+                if (eTYPE_DERIVED_FROM(EntityType::EXPERIENCE_ORB, from->GetType()))
+                {
+                    m_level->playLocalSound(from->mX, from->mY, from->mZ, SoundEvents::EXPERIENCE_ORB_PICKUP,
+                                            SoundSource::eSoundSource_Players, 0.1f,
+                                            ((m_random.nextFloat() - m_random.nextFloat()) * 0.7f + 1.0f) * 2.0f,
+                                            false, 16.0f);
+                }
+                else
+                {
+                    m_level->playLocalSound(from->mX, from->mY, from->mZ, SoundEvents::ITEM_PICKUP,
+                                            SoundSource::eSoundSource_Players, 0.2f,
+                                            ((m_random.nextFloat() - m_random.nextFloat()) * 0.7f + 1.0f) * 2.0f,
+                                            false, 16.0f);
+                }
+                if (eTYPE_DERIVED_FROM(EntityType::ITEM_ENTITY, from->GetType()))
+                {
+                    boost::static_pointer_cast<ItemEntity>(from)->getItem()->setCount(packet->getAmount());
+                }
+                m_minecraft->mParticleEngine->add(new ItemPickupParticle(m_level, from, to, -0.5f));
+                m_level->removeEntity(packet->getItemId());
+            }
+            else
+            {
+                m_level->removeEntity(packet->getItemId());
+            }
         }
         else
         {
-            level->playLocalSound(from->mX, from->mY, from->mZ, SoundEvents::ITEM_PICKUP,
-                                  SoundSource::eSoundSource_Players, 0.2f,
-                                  ((m_random.nextFloat() - m_random.nextFloat()) * 0.7f + 1.0f) * 2.0f, false,
-                                  16.0f);
+            m_level->playLocalSound(from->mX, from->mY, from->mZ, SoundEvents::ITEM_PICKUP,
+                                    SoundSource::eSoundSource_Players, 0.2f,
+                                    ((m_random.nextFloat() - m_random.nextFloat()) * 0.7f + 1.0f) * 2.0f, false,
+                                    16.0f);
+            m_minecraft->mParticleEngine->add(new ItemPickupParticle(m_level, from, to, -0.5f));
+            m_level->removeEntity(packet->getItemId());
         }
-
-        if (eTYPE_DERIVED_FROM(EntityType::ITEM_ENTITY, from->GetType()))
-            boost::static_pointer_cast<ItemEntity>(from)->getItem()->setCount(packet->getAmount());
     }
-    else
-    {
-        level->playLocalSound(from->mX, from->mY, from->mZ, SoundEvents::ITEM_PICKUP,
-                              SoundSource::eSoundSource_Players, 0.2f,
-                              ((m_random.nextFloat() - m_random.nextFloat()) * 0.7f + 1.0f) * 2.0f, false, 16.0f);
-    }
-
-    m_minecraft->mParticleEngine->add(new ItemPickupParticle(level, from, to, -0.5f));
-    level->removeEntity(packet->getItemId());
 }
 
 std::wstring ClientPacketListener::GetDisplayNameByGamertag(std::wstring gamertag)
@@ -3046,90 +3050,66 @@ void ClientPacketListener::handleContainerOpen(boost::shared_ptr<ClientboundCont
 
 void ClientPacketListener::handleContainerSetSlot(boost::shared_ptr<ClientboundContainerSetSlotPacket> packet)
 {
-    if (packet == 0 || m_minecraft == 0 || m_playerId < 0 || m_playerId >= 4)
-        return;
-    boost::shared_ptr<MultiplayerLocalPlayer>& player = m_minecraft->mLocalPlayers[m_playerId];
-    if (player == 0)
-        return;
-
+    boost::shared_ptr<MultiplayerLocalPlayer> player = m_minecraft->mLocalPlayers[m_playerId];
     not_null_ptr<ItemInstance> item = packet->getItem();
     int slot = packet->getSlot();
-    int containerId = packet->getContainerId();
-
-    if (containerId == -1)
+    if (packet->getContainerId() == -1)
     {
         player->mInventory->setCarried(item);
-        return;
     }
-
-    if (containerId == -2)
+    else if (packet->getContainerId() == -2)
     {
-        player->mInventory->setItem(static_cast<unsigned int>(slot), item);
-        return;
+        player->mInventory->setItem(slot, item);
     }
-
-    if (containerId == 0)
+    else if (packet->getContainerId() == 0 && packet->getSlot() >= 36 && packet->getSlot() < 45)
     {
-        if (slot > 0x23 && slot < 0x2d)
+        if (!item->isEmpty())
         {
-            if (!item->isEmpty())
+            not_null_ptr<ItemInstance> existing = player->mInventoryMenu->getSlot(slot)->getItem();
+            if (existing->isEmpty() || existing->getCount() < item->getCount())
             {
-                Slot* invSlot = player->mInventoryMenu->getSlot(slot);
-                not_null_ptr<ItemInstance> existing = invSlot->getItem();
-                if (existing->isEmpty() || existing->getCount() < item->getCount())
-                    item->setPopTime(5);
+                item->setPopTime(5);
             }
-            player->mInventoryMenu->setItem(static_cast<unsigned int>(slot), item);
-            return;
         }
+        player->mInventoryMenu->setItem(slot, item);
     }
-
-    if (containerId == player->mContainerMenu->m_containerId)
-        player->mContainerMenu->setItem(static_cast<unsigned int>(slot), item);
+    else if (packet->getContainerId() == player->mContainerMenu->m_containerId)
+    {
+        player->mContainerMenu->setItem(slot, item);
+    }
 }
 
 void ClientPacketListener::handleContainerAck(boost::shared_ptr<ClientboundContainerAckPacket> packet)
 {
-    if (packet == 0 || m_minecraft == 0 || m_playerId < 0 || m_playerId >= 4)
-        return;
-    boost::shared_ptr<MultiplayerLocalPlayer>& player = m_minecraft->mLocalPlayers[m_playerId];
-    if (player == 0)
-        return;
-    AbstractContainerMenu* menu;
+    boost::shared_ptr<MultiplayerLocalPlayer> player = m_minecraft->mLocalPlayers[m_playerId];
+    AbstractContainerMenu* menu = NULL;
     if (packet->getContainerId() == 0)
     {
         menu = player->mInventoryMenu;
     }
-    else
+    else if (packet->getContainerId() == player->mContainerMenu->m_containerId)
     {
-        if (packet->getContainerId() != player->mContainerMenu->m_containerId)
-            return;
         menu = player->mContainerMenu;
     }
-    if (menu != 0 && !packet->isAccepted())
+    if (menu != NULL && !packet->isAccepted())
     {
-        send(boost::shared_ptr<Packet>(new ServerboundContainerAckPacket(
-            packet->getContainerId(), static_cast<short>(packet->getUid()), true)));
+        send(boost::shared_ptr<ServerboundContainerAckPacket>(
+            new ServerboundContainerAckPacket(packet->getContainerId(), packet->getUid(), true)));
     }
 }
 
 
 void ClientPacketListener::handleContainerContent(boost::shared_ptr<ClientboundContainerSetContentPacket> packet)
 {
-    if (packet == 0 || m_minecraft == 0 || m_playerId < 0 || m_playerId >= 4)
-        return;
-    boost::shared_ptr<MultiplayerLocalPlayer>& player = m_minecraft->mLocalPlayers[m_playerId];
-    if (player == 0)
-        return;
+    boost::shared_ptr<MultiplayerLocalPlayer> player = m_minecraft->mLocalPlayers[m_playerId];
     if (packet->getContainerId() == 0)
     {
-        if (player->mContainerMenu != 0)
-            player->mContainerMenu->setAll(packet->getItems());
-        return;
+        player->mInventoryMenu->setAll(packet->getItems());
     }
-    if (player->mContainerMenu != 0 &&
-        player->mContainerMenu->m_containerId == packet->getContainerId())
+    else if (packet->getContainerId() == player->mContainerMenu->m_containerId)
+    {
         player->mContainerMenu->setAll(packet->getItems());
+    }
 }
 
 
@@ -3180,9 +3160,11 @@ void ClientPacketListener::handleBlockEntityData(boost::shared_ptr<ClientboundBl
 
 void ClientPacketListener::handleContainerSetData(boost::shared_ptr<ClientboundContainerSetDataPacket> packet)
 {
-    boost::shared_ptr<MultiplayerLocalPlayer>& player = m_minecraft->mLocalPlayers[m_playerId];
-    if (player->mContainerMenu != 0 && player->mContainerMenu->m_containerId == packet->getContainerId())
-        player->mContainerMenu->setData(packet->getId(), packet->getValue());
+    if (m_minecraft->mLocalPlayers[m_playerId]->mContainerMenu != NULL
+        && m_minecraft->mLocalPlayers[m_playerId]->mContainerMenu->m_containerId == packet->getContainerId())
+    {
+        m_minecraft->mLocalPlayers[m_playerId]->mContainerMenu->setData(packet->getId(), packet->getValue());
+    }
 }
 
 void ClientPacketListener::handleSetEquippedItem(boost::shared_ptr<ClientboundSetEquippedItemPacket> packet)
@@ -3196,9 +3178,7 @@ void ClientPacketListener::handleSetEquippedItem(boost::shared_ptr<ClientboundSe
 
 void ClientPacketListener::handleContainerClose(boost::shared_ptr<ClientboundContainerClosePacket> packet)
 {
-    if (packet && m_playerId >= 0 && m_playerId < 4 && m_minecraft != 0 &&
-        m_minecraft->mLocalPlayers[m_playerId] != 0)
-        m_minecraft->mLocalPlayers[m_playerId]->clientSideCloseContainer();
+    m_minecraft->mLocalPlayers[m_playerId]->clientSideCloseContainer();
 }
 
 void ClientPacketListener::handleBlockEvent(boost::shared_ptr<ClientboundBlockEventPacket> packet)

@@ -53,7 +53,7 @@ int ClientboundContainerAckPacket::getContainerId()
     return containerId;
 }
 
-int ClientboundContainerAckPacket::getUid()
+short ClientboundContainerAckPacket::getUid()
 {
     return uid;
 }

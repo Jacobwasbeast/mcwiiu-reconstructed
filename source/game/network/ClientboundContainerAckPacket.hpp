@@ -23,7 +23,7 @@ public:
     virtual int getEstimatedSize();
 
     int getContainerId();
-    int getUid();
+    short getUid();
     bool isAccepted();
 
     static boost::shared_ptr<Packet> create()
