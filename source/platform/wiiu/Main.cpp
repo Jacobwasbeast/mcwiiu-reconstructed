@@ -36,11 +36,18 @@
 #include "game/client/render/Renderer.hpp"
 #include "game/core/CriticalSection.hpp"
 
+#include <coreinit/debug.h>
+#include <coreinit/dynload.h>
+#include <coreinit/memdefaultheap.h>
+#include <coreinit/memexpheap.h>
 #include <coreinit/messagequeue.h>
 #include <coreinit/thread.h>
 #include <nn/ac/ac_cpp.h>
 #include <nn/erreula/erreula_cpp.h>
+#include <cstddef>
+#include <cstdlib>
 #include <cwchar>
+#include <stdint.h>
 
 extern "C" void OSBlockThreadsOnExit();
 extern "C" int OSResumeThread(OSThread* thread);
@@ -52,6 +59,7 @@ void DefineActions();
 void RegisterAwardsWithProfileManager();
 extern "C" void ProcUIDrawDoneRelease();
 extern "C" void OSSavesDone_ReadyToRelease();
+extern "C" void* memalign(std::size_t alignment, std::size_t size);
 void ShutdownAndExit();
 extern unsigned int CallbackAcquiredForeground(void*);
 extern unsigned int CallbackReleaseForeground(void*);
@@ -110,6 +118,9 @@ unsigned int CallbackHomebuttonDenied(void*)
 OSMessageQueue gMainMessageQueue;
 OSMessage gMainMessageBuffer;
 OSFastMutex gMainMutex;
+char* gHeapStart;
+char* gHeapEnd;
+char* gHeapTop;
 static int s_drcIconDelay = 0x78;
 static unsigned char s_trialTimerShown = 1;
 static const unsigned int kStorageFullErrorCode = 1550100;
@@ -370,4 +381,71 @@ int main()
         }
         Vec3::resetPool();
     }
+}
+
+static const int kHeapArenaAlignment = 4;
+static const uintptr_t kHeapPageSize = 4096;
+static const int kCacheLineAlignment = 64;
+
+OSDynLoad_Error CoreUser_DynLoad_DefaultAlloc(int size, int alignment, void** result)
+{
+    void* block;
+
+    if (result == 0)
+    {
+        return OS_DYNLOAD_INVALID_ALLOCATOR_PTR;
+    }
+
+    if (alignment < 0)
+    {
+        if (alignment > -4)
+        {
+            alignment = -4;
+        }
+    }
+    else if (alignment < 4)
+    {
+        alignment = 4;
+    }
+
+    block = MEMAllocFromDefaultHeapEx(static_cast<unsigned int>(size), alignment);
+    *result = block;
+    return block != 0 ? OS_DYNLOAD_OK : OS_DYNLOAD_OUT_OF_MEMORY;
+}
+
+void CoreUser_DynLoad_DefaultFree(void* block)
+{
+    MEMFreeToDefaultHeap(block);
+}
+
+void* sMEMAllocFromDefaultHeap(unsigned int size)
+{
+    return malloc(size);
+}
+
+void* sMEMAllocFromDefaultHeapEx(unsigned int size, int alignment)
+{
+    unsigned int allocSize = size;
+    if (alignment == kCacheLineAlignment)
+        allocSize = (size + (kCacheLineAlignment - 1)) & ~(kCacheLineAlignment - 1);
+    return memalign(alignment, allocSize);
+}
+
+void sMEMFreeToDefaultHeap(void* block)
+{
+    free(block);
+}
+
+extern "C" void __preinit_user(MEMHeapHandle* mem1, MEMHeapHandle* foreground, MEMHeapHandle* mem2)
+{
+    OSReport("Replace coreinit.rpl's default heap in the RPX.\n");
+    unsigned int size = MEMGetAllocatableSizeForExpHeapEx(*mem2, kHeapArenaAlignment);
+    char* arena = static_cast<char*>(MEMAllocFromDefaultHeapEx(size, kHeapArenaAlignment));
+    MEMAllocFromDefaultHeap = sMEMAllocFromDefaultHeap;
+    MEMAllocFromDefaultHeapEx = sMEMAllocFromDefaultHeapEx;
+    MEMFreeToDefaultHeap = sMEMFreeToDefaultHeap;
+    gHeapStart = arena;
+    gHeapEnd = arena + size;
+    gHeapTop = reinterpret_cast<char*>((reinterpret_cast<uintptr_t>(arena) + (kHeapPageSize - 1)) & ~(kHeapPageSize - 1));
+    OSDynLoad_SetAllocator(CoreUser_DynLoad_DefaultAlloc, CoreUser_DynLoad_DefaultFree);
 }

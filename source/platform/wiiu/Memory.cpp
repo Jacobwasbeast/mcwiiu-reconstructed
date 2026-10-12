@@ -1,10 +1,7 @@
 #include "game/core/XMem.hpp"
 
-#include <stdint.h>
 #include <cstdlib>
 #include <cstring>
-
-#include <coreinit/fastmutex.h>
 
 int XMemCreateCompressionContext(_XMEMCODEC_TYPE, const void*, unsigned int, void**)
 {
@@ -18,18 +15,6 @@ int XMemCreateDecompressionContext(_XMEMCODEC_TYPE, const void*, unsigned int, v
 
 void XMemDestroyCompressionContext(void*) {}
 void XMemDestroyDecompressionContext(void*) {}
-
-extern "C" uint32_t AllocMutexLock(OSFastMutex* mutex)
-{
-    OSFastMutex_Lock(mutex);
-    return 0;
-}
-
-extern "C" uint32_t AllocMutexUnlock(OSFastMutex* mutex)
-{
-    OSFastMutex_Unlock(mutex);
-    return 0;
-}
 
 void* XMemCpy(void* destination, const void* source, unsigned int count)
 {
