@@ -109,7 +109,7 @@ public:
     const ReliableSlidingWindow* GetSlidingWindow(StationIndex stationIndex) const;
     Result Send(StationIndex stationIndex, const void* data, unsigned int size);
     Result Send(unsigned long long stationId, const void* data, unsigned int size);
-    void SendToAll(const void* data, unsigned int size);
+    Result SendToAll(const void* data, unsigned int size);
     Result Receive(unsigned long long* stationId, void* buffer, unsigned int* size, unsigned int bufferSize);
     bool IsInCommunication(StationIndex stationIndex) const;
     bool IsInCommunication(unsigned long long stationId) const;
