@@ -1344,34 +1344,31 @@ void Tutorial::changeTutorialState(eTutorial_State state, UIScene* scene)
         return;
     }
 
-    if (enabled && GameSettings::GetGameSettings(playerId, eGameSetting_Hints) == 0)
+    if (!enabled && GameSettings::GetGameSettings(playerId, eGameSetting_Hints) == 0)
         return;
 
     if (state != eTutorial_State_Gameplay && stateTasks[state].empty() &&
         !gConsoleUIController.GetMenuDisplayed(playerId))
         return;
 
-    TutorialTask* task = currentTask[currentState];
-    if (task != NULL)
+    if (currentTask[currentState] != NULL)
     {
-        if (task->isCompleted())
+        if (currentTask[currentState]->isCompleted())
         {
             std::vector<TutorialTask*>& tasks = stateTasks[currentState];
-            tasks.erase(std::find(tasks.begin(), tasks.end(), task));
-            if (tasks.empty())
+            tasks.erase(std::find(tasks.begin(), tasks.end(), currentTask[currentState]));
+            if (stateTasks[currentState].empty())
             {
                 currentTask[currentState] = NULL;
-                task = NULL;
             }
             else
             {
-                task = tasks.front();
-                currentTask[currentState] = task;
-                task->setAsCurrentTask(true);
+                currentTask[currentState] = stateTasks[currentState].front();
+                currentTask[currentState]->setAsCurrentTask(true);
             }
         }
-        if (task != NULL)
-            task->onStateChange(state);
+        if (currentTask[currentState] != NULL)
+            currentTask[currentState]->onStateChange(state);
     }
     setMessage((PopupMessageDetails*)NULL);
 
@@ -1379,12 +1376,15 @@ void Tutorial::changeTutorialState(eTutorial_State state, UIScene* scene)
         gConsoleUIController.RemoveInteractSceneReference(playerId, currentScene);
     currentScene = scene;
 
-    for (std::vector<TutorialTask*>::iterator it = stateTasks[state].begin(); it < stateTasks[state].end(); ++it)
-        (*it)->onStateChange(state);
-    currentState = state;
-    gameModeConstraints->SetCurrentState(state);
-    popupPending = false;
-    stateChanged = true;
+    if (currentState != state)
+    {
+        for (std::vector<TutorialTask*>::iterator it = stateTasks[state].begin(); it < stateTasks[state].end(); ++it)
+            (*it)->onStateChange(state);
+        currentState = state;
+        gameModeConstraints->SetCurrentState(state);
+        popupPending = false;
+        stateChanged = true;
+    }
 }
 
 void Tutorial::setMessage(const std::wstring& messageValue, int displayTimeValue,
@@ -1473,7 +1473,7 @@ void Tutorial::startDestroyBlock(not_null_ptr<ItemInstance> item, const BlockSta
     }
 }
 
-unsigned int Tutorial::destroyBlock(Block* block)
+void Tutorial::destroyBlock(Block* block)
 {
     for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
          it < stateHints[currentState].end(); ++it)
@@ -1485,51 +1485,43 @@ unsigned int Tutorial::destroyBlock(Block* block)
             PopupMessageDetails* details = new PopupMessageDetails();
             details->titleId = result;
             setMessage(hint, details);
-            return 0;
+            return;
         }
     }
-    return 0xffffffffU;
 }
 
-unsigned int Tutorial::attack(boost::shared_ptr<Player> player, boost::shared_ptr<Entity> entity)
+void Tutorial::attack(boost::shared_ptr<Player> player, boost::shared_ptr<Entity> entity)
 {
     for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
-         it != stateHints[currentState].end(); ++it)
+         it < stateHints[currentState].end(); ++it)
     {
         TutorialHint* hint = *it;
-        if (hint == NULL)
-            continue;
-        not_null_ptr<ItemInstance> selected = player->mInventory->getSelected();
-        int result = hint->attack(selected, entity);
+        int result = hint->attack(player->mInventory->getSelected(), entity);
         if (result != -1)
         {
             PopupMessageDetails* details = new PopupMessageDetails();
             details->titleId = result;
             setMessage(hint, details);
-            return 0;
+            return;
         }
     }
-    return 0xffffffffU;
 }
 
-unsigned int Tutorial::itemDamaged(not_null_ptr<ItemInstance> item)
+void Tutorial::itemDamaged(not_null_ptr<ItemInstance> item)
 {
     for (std::vector<TutorialHint*>::iterator it = stateHints[currentState].begin();
-         it != stateHints[currentState].end(); ++it)
+         it < stateHints[currentState].end(); ++it)
     {
         TutorialHint* hint = *it;
-        if (hint == NULL)
-            continue;
         int result = hint->itemDamaged(item);
         if (result != -1)
         {
             PopupMessageDetails* details = new PopupMessageDetails();
             details->titleId = result;
             setMessage(hint, details);
-            return 0;
+            return;
         }
     }
-    return 0xffffffffU;
 }
 
 void Tutorial::handleUIInput(int input)
@@ -1706,7 +1698,7 @@ void Tutorial::onLookAtEntity(boost::shared_ptr<Entity> entity)
     }
 }
 
-unsigned int Tutorial::onRideEntity(boost::shared_ptr<Entity> entity)
+void Tutorial::onRideEntity(boost::shared_ptr<Entity> entity)
 {
     if (currentState == eTutorial_State_Gameplay)
     {
@@ -1723,10 +1715,8 @@ unsigned int Tutorial::onRideEntity(boost::shared_ptr<Entity> entity)
     for (std::vector<TutorialTask*>::iterator it = stateTasks[currentState].begin();
          it != stateTasks[currentState].end(); ++it)
     {
-        if (*it != NULL)
-            (*it)->onRideEntity(entity);
+        (*it)->onRideEntity(entity);
     }
-    return 0xffffffffU;
 }
 
 void Tutorial::onEffectChanged(MobEffect* effect, bool added)

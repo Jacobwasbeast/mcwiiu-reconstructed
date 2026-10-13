@@ -431,9 +431,9 @@ public:
     void useItemOn(not_null_ptr<class ItemInstance> item, bool cancelled);
     void completeUsingItem(not_null_ptr<class ItemInstance> item);
     void startDestroyBlock(not_null_ptr<class ItemInstance> item, const BlockState* state);
-    unsigned int destroyBlock(Block* block);
-    unsigned int attack(boost::shared_ptr<Player> player, boost::shared_ptr<Entity> entity);
-    unsigned int itemDamaged(not_null_ptr<class ItemInstance> item);
+    void destroyBlock(Block* block);
+    void attack(boost::shared_ptr<Player> player, boost::shared_ptr<Entity> entity);
+    void itemDamaged(not_null_ptr<class ItemInstance> item);
     void handleUIInput(int input);
     void createItemSelected(not_null_ptr<class ItemInstance> item, bool selected);
     void onCrafted(not_null_ptr<class ItemInstance> item);
@@ -445,7 +445,7 @@ public:
     void onLookAt(const BlockState* state);
     void onLookAtSkull(Level* level, const BlockPos& pos, const BlockState* state);
     void onLookAtEntity(boost::shared_ptr<Entity> entity);
-    unsigned int onRideEntity(boost::shared_ptr<Entity> entity);
+    void onRideEntity(boost::shared_ptr<Entity> entity);
     void onEffectChanged(MobEffect* effect, bool added);
     void onGameModeChange(eTutorial_GameMode gameMode);
     static void staticCtor();
