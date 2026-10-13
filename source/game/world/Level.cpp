@@ -553,7 +553,8 @@ bool Level::setExtraBlock(const BlockPos& pos, const BlockState* state, int flag
 
 void Level::setBlockBrightnessChanged(const BlockPos& pos)
 {
-    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    std::vector<LevelListener*>::iterator end = mListeners.end();
+    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != end; ++it)
     {
         (*it)->blockLightChanged(pos);
     }
@@ -999,7 +1000,8 @@ void Level::setBrightnessCached(unsigned int* cache, unsigned long long* dirty, 
 
 void Level::setBlocksDirty(const BlockPos& from, const BlockPos& to)
 {
-    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    std::vector<LevelListener*>::iterator end = mListeners.end();
+    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != end; ++it)
     {
         (*it)->setBlocksDirty(from.x, from.y, from.z, to.x, to.y, to.z, this);
     }
@@ -1322,9 +1324,10 @@ void Level::neighborChanged(const BlockPos& pos, Block* block, const BlockPos& f
         return;
     }
 
-    getBlockState(pos)->neighborChanged(this, pos, block, fromPos);
-    Block::getStateByElementId(getExtraElement(pos.x, pos.y, pos.z))
-        ->neighborChanged(this, pos, block, fromPos);
+    const BlockState* state = getBlockState(pos);
+    state->neighborChanged(this, pos, block, fromPos);
+    state = Block::getStateByElementId(getExtraElement(pos.x, pos.y, pos.z));
+    state->neighborChanged(this, pos, block, fromPos);
 }
 
 void Level::observedNeighborChanged(const BlockPos& pos, Block* block, const BlockPos& fromPos)
@@ -1606,7 +1609,8 @@ bool Level::removeBlock(const BlockPos& pos)
 
 void Level::levelEvent(boost::shared_ptr<Player> player, int type, const BlockPos& pos, int data)
 {
-    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    std::vector<LevelListener*>::iterator end = mListeners.end();
+    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != end; ++it)
     {
         (*it)->levelEvent(player, type, pos, data);
     }
@@ -1645,7 +1649,8 @@ bool Level::setBlockAndUpdate(const BlockPos& pos, const BlockState* state)
 void Level::sendBlockUpdated(const BlockPos& pos, const BlockState* oldState, const BlockState* newState,
                              int flags, bool immediate)
 {
-    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    std::vector<LevelListener*>::iterator end = mListeners.end();
+    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != end; ++it)
     {
         (*it)->blockChanged(this, pos, oldState, newState, flags, immediate);
     }
@@ -2536,7 +2541,8 @@ void Level::playSound(boost::shared_ptr<Player> player, double x, double y, doub
                       const SoundEvent* sound, SoundSource::ESoundSource source, float volume,
                       float pitch, float range)
 {
-    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    std::vector<LevelListener*>::iterator end = mListeners.end();
+    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != end; ++it)
     {
         (*it)->playSound(player, sound, source, x, y, z, volume, pitch, range);
     }
@@ -2550,7 +2556,8 @@ void Level::playLocalSound(double x, double y, double z, const SoundEvent* sound
 
 void Level::playStreamingMusic(const BlockPos& pos, const SoundEvent* sound, bool playing)
 {
-    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    std::vector<LevelListener*>::iterator end = mListeners.end();
+    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != end; ++it)
     {
         (*it)->playStreamingMusic(sound, pos, playing);
     }
@@ -2559,7 +2566,8 @@ void Level::playStreamingMusic(const BlockPos& pos, const SoundEvent* sound, boo
 void Level::addParticle(ePARTICLE_TYPE type, bool overrideLimiter, double x, double y, double z,
                         double xa, double ya, double za, arrayWithLength<int> params)
 {
-    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    std::vector<LevelListener*>::iterator end = mListeners.end();
+    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != end; ++it)
     {
         (*it)->addParticle(this, type, overrideLimiter, x, y, z, xa, ya, za, params);
     }
@@ -2644,7 +2652,8 @@ bool Level::addEntity(boost::shared_ptr<Entity> entity)
 
 void Level::entityAdded(boost::shared_ptr<Entity> entity)
 {
-    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    std::vector<LevelListener*>::iterator end = mListeners.end();
+    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != end; ++it)
     {
         (*it)->entityAdded(entity);
     }
@@ -2652,7 +2661,8 @@ void Level::entityAdded(boost::shared_ptr<Entity> entity)
 
 void Level::entityRemoved(boost::shared_ptr<Entity> entity)
 {
-    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    std::vector<LevelListener*>::iterator end = mListeners.end();
+    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != end; ++it)
     {
         (*it)->entityRemoved(entity);
     }
@@ -2660,7 +2670,8 @@ void Level::entityRemoved(boost::shared_ptr<Entity> entity)
 
 void Level::playerRemoved(boost::shared_ptr<Entity> player)
 {
-    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    std::vector<LevelListener*>::iterator end = mListeners.end();
+    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != end; ++it)
     {
         (*it)->playerRemoved(player);
     }
@@ -3139,7 +3150,8 @@ int Level::getAuxValueForMap(PlayerUID uid, int dimension, int x, int z, int sca
 
 void Level::globalLevelEvent(int type, const BlockPos& pos, int data)
 {
-    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    std::vector<LevelListener*>::iterator end = mListeners.end();
+    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != end; ++it)
     {
         (*it)->globalLevelEvent(type, pos, data);
     }
@@ -3170,7 +3182,8 @@ double Level::getHorizonHeight()
 
 void Level::destroyBlockProgress(int breakerId, const BlockPos& pos, int progress)
 {
-    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != mListeners.end(); ++it)
+    std::vector<LevelListener*>::iterator end = mListeners.end();
+    for (std::vector<LevelListener*>::iterator it = mListeners.begin(); it != end; ++it)
     {
         (*it)->destroyBlockProgress(breakerId, pos, progress);
     }
@@ -4156,8 +4169,7 @@ bool Level::mayInteract(boost::shared_ptr<Player>, const BlockPos&, Block*)
 
 void Level::blockEvent(const BlockPos& pos, Block* block, int event, int data)
 {
-    const BlockState* state = getBlockState(pos);
-    state->triggerEvent(this, pos, event, data);
+    getBlockState(pos)->triggerEvent(this, pos, event, data);
 }
 
 void Level::createFireworks(double, double, double, double, double, double, CompoundTag*)
@@ -5330,12 +5342,13 @@ bool Level::extinguishFire(boost::shared_ptr<Player> player, const BlockPos& pos
                            const Direction* direction)
 {
     BlockPos target = pos.relative(direction);
-    if (getBlock(target) != Blocks::fire)
+    if (getBlock(target) == Blocks::fire)
     {
-        return false;
+        levelEvent(player, LevelEvent::SOUND_EXTINGUISH_FIRE, target, 0);
+        removeBlock(target);
+        return true;
     }
-    levelEvent(player, LevelEvent::SOUND_EXTINGUISH_FIRE, target, 0);
-    return removeBlock(target);
+    return false;
 }
 
 Vec3* Level::getSkyColor(boost::shared_ptr<Entity> entity, float partialTick)
