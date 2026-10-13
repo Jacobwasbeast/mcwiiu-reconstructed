@@ -1526,11 +1526,6 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
     if (skipFirstPersonHand)
     {
         GlStateManager::popMatrix();
-        if (getCameraThirdPerson() == 0 && !cameraSleeping)
-        {
-            mItemInHandRenderer->renderScreenEffect(partialTick);
-            bobHurt(partialTick);
-        }
     }
     else
     {
@@ -1542,6 +1537,12 @@ void GameRenderer::renderItemInHand(float partialTick, int eyeIndex)
             turnOffLightLayer(static_cast<double>(partialTick));
         }
         GlStateManager::popMatrix();
+    }
+
+    if (getCameraThirdPerson() == 0 && !cameraSleeping)
+    {
+        mItemInHandRenderer->renderScreenEffect(partialTick);
+        bobHurt(partialTick);
     }
 
     if (GameSettings::GetGameSettings(localPlayer->mUserIndex,

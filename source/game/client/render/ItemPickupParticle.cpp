@@ -70,7 +70,9 @@ void ItemPickupParticle::render(BufferBuilder* buffer,
     double pz = fromZ + (toZ - fromZ) * t;
 
     int lightColor = getLightColor(partialTicks);
-    GlStateManager::multiTexCoord2f((float)(lightColor % 65536), (float)(lightColor / 65536));
+    int u = lightColor % 65536;
+    int v = lightColor / 65536;
+    GlStateManager::multiTexCoord2f((float)u, (float)v);
     GlStateManager::color4f(1.0f, 1.0f, 1.0f, 1.0f);
 
     px -= xOff;
@@ -83,7 +85,7 @@ void ItemPickupParticle::render(BufferBuilder* buffer,
                                    (float)px,
                                    (float)py,
                                    (float)pz,
-                                   itemEntity->mBbHeight,
+                                   itemEntity->mYRot,
                                    partialTicks,
                                    false,
                                    false,
