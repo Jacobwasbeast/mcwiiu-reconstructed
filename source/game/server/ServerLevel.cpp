@@ -1350,58 +1350,64 @@ void ServerLevel::entityAdded(boost::shared_ptr<Entity> entity)
 
 void ServerLevel::entityRemovedExtra(boost::shared_ptr<Entity> entity)
 {
-    std::list<boost::shared_ptr<Entity> >* entities = NULL;
     if (eTYPE_DERIVED_FROM(EntityType::ITEM_ENTITY, entity->GetType()))
     {
-        entities = &itemEntities;
+        EnterCriticalSection(&entityLimitMutex);
+        std::list<boost::shared_ptr<Entity> >::iterator it = std::find(itemEntities.begin(), itemEntities.end(), entity);
+        if (it != itemEntities.end())
+            itemEntities.erase(it);
+        LeaveCriticalSection(&entityLimitMutex);
     }
     else if (eTYPE_DERIVED_FROM(EntityType::HANGING_ENTITY, entity->GetType()))
     {
-        entities = &hangingEntities;
+        EnterCriticalSection(&entityLimitMutex);
+        std::list<boost::shared_ptr<Entity> >::iterator it = std::find(hangingEntities.begin(), hangingEntities.end(), entity);
+        if (it != hangingEntities.end())
+            hangingEntities.erase(it);
+        LeaveCriticalSection(&entityLimitMutex);
     }
     else if (eTYPE_DERIVED_FROM(EntityType::ARROW, entity->GetType()))
     {
-        entities = &arrowEntities;
+        EnterCriticalSection(&entityLimitMutex);
+        std::list<boost::shared_ptr<Entity> >::iterator it = std::find(arrowEntities.begin(), arrowEntities.end(), entity);
+        if (it != arrowEntities.end())
+            arrowEntities.erase(it);
+        LeaveCriticalSection(&entityLimitMutex);
     }
     else if (eTYPE_DERIVED_FROM(EntityType::EXPERIENCE_ORB, entity->GetType()))
     {
-        entities = &experienceOrbs;
+        EnterCriticalSection(&entityLimitMutex);
+        std::list<boost::shared_ptr<Entity> >::iterator it = std::find(experienceOrbs.begin(), experienceOrbs.end(), entity);
+        if (it != experienceOrbs.end())
+            experienceOrbs.erase(it);
+        LeaveCriticalSection(&entityLimitMutex);
     }
     else if (eTYPE_DERIVED_FROM(EntityType::PRIMED_TNT, entity->GetType()))
     {
         EnterCriticalSection(&entityLimitMutex);
         --primedTntCount;
         LeaveCriticalSection(&entityLimitMutex);
-        return;
     }
     else if (eTYPE_DERIVED_FROM(EntityType::FALLING_BLOCK_ENTITY, entity->GetType()))
     {
         EnterCriticalSection(&entityLimitMutex);
         --fallingBlockCount;
         LeaveCriticalSection(&entityLimitMutex);
-        return;
     }
     else if (eTYPE_DERIVED_FROM(EntityType::FIREWORKS_ROCKET_ENTITY, entity->GetType()))
     {
         EnterCriticalSection(&entityLimitMutex);
         --fireworksRocketCount;
         LeaveCriticalSection(&entityLimitMutex);
-        return;
     }
     else if (eTYPE_DERIVED_FROM(EntityType::AREA_EFFECT_CLOUD, entity->GetType()))
     {
-        entities = &areaEffectClouds;
+        EnterCriticalSection(&entityLimitMutex);
+        std::list<boost::shared_ptr<Entity> >::iterator it = std::find(areaEffectClouds.begin(), areaEffectClouds.end(), entity);
+        if (it != areaEffectClouds.end())
+            areaEffectClouds.erase(it);
+        LeaveCriticalSection(&entityLimitMutex);
     }
-    else
-    {
-        return;
-    }
-
-    EnterCriticalSection(&entityLimitMutex);
-    std::list<boost::shared_ptr<Entity> >::iterator it = std::find(entities->begin(), entities->end(), entity);
-    if (it != entities->end())
-        entities->erase(it);
-    LeaveCriticalSection(&entityLimitMutex);
 }
 
 void ServerLevel::entityRemoved(boost::shared_ptr<Entity> entity)
@@ -1672,48 +1678,49 @@ bool ServerLevel::setBlock(const BlockPos& pos, const BlockState* state, int fla
 
 bool ServerLevel::addEntity(boost::shared_ptr<Entity> entity)
 {
-    if (!removeDuplicateAndPendingEntity(entity))
-        return false;
-
-    if (eTYPE_DERIVED_FROM(EntityType::ITEM_ENTITY, entity->GetType()))
+    if (removeDuplicateAndPendingEntity(entity))
     {
-        EnterCriticalSection(&entityLimitMutex);
-        if (itemEntities.size() >= 200)
-            removeEntityImmediately(itemEntities.front());
-        LeaveCriticalSection(&entityLimitMutex);
-    }
-    else if (eTYPE_DERIVED_FROM(EntityType::HANGING_ENTITY, entity->GetType()))
-    {
-        EnterCriticalSection(&entityLimitMutex);
-        if (hangingEntities.size() >= 400)
+        if (eTYPE_DERIVED_FROM(EntityType::ITEM_ENTITY, entity->GetType()))
         {
+            EnterCriticalSection(&entityLimitMutex);
+            if (itemEntities.size() >= 200)
+                removeEntityImmediately(itemEntities.front());
             LeaveCriticalSection(&entityLimitMutex);
-            return false;
         }
-        LeaveCriticalSection(&entityLimitMutex);
+        else if (eTYPE_DERIVED_FROM(EntityType::HANGING_ENTITY, entity->GetType()))
+        {
+            EnterCriticalSection(&entityLimitMutex);
+            if (hangingEntities.size() >= 400)
+            {
+                LeaveCriticalSection(&entityLimitMutex);
+                return false;
+            }
+            LeaveCriticalSection(&entityLimitMutex);
+        }
+        else if (eTYPE_DERIVED_FROM(EntityType::ARROW, entity->GetType()))
+        {
+            EnterCriticalSection(&entityLimitMutex);
+            if (arrowEntities.size() >= 200)
+                removeEntityImmediately(arrowEntities.front());
+            LeaveCriticalSection(&entityLimitMutex);
+        }
+        else if (eTYPE_DERIVED_FROM(EntityType::EXPERIENCE_ORB, entity->GetType()))
+        {
+            EnterCriticalSection(&entityLimitMutex);
+            if (experienceOrbs.size() >= 50)
+                removeEntityImmediately(experienceOrbs.front());
+            LeaveCriticalSection(&entityLimitMutex);
+        }
+        else if (eTYPE_DERIVED_FROM(EntityType::AREA_EFFECT_CLOUD, entity->GetType()))
+        {
+            EnterCriticalSection(&entityLimitMutex);
+            if (areaEffectClouds.size() >= 20)
+                removeEntityImmediately(areaEffectClouds.front());
+            LeaveCriticalSection(&entityLimitMutex);
+        }
+        return Level::addEntity(entity);
     }
-    else if (eTYPE_DERIVED_FROM(EntityType::ARROW, entity->GetType()))
-    {
-        EnterCriticalSection(&entityLimitMutex);
-        if (arrowEntities.size() >= 200)
-            removeEntityImmediately(arrowEntities.front());
-        LeaveCriticalSection(&entityLimitMutex);
-    }
-    else if (eTYPE_DERIVED_FROM(EntityType::EXPERIENCE_ORB, entity->GetType()))
-    {
-        EnterCriticalSection(&entityLimitMutex);
-        if (experienceOrbs.size() >= 50)
-            removeEntityImmediately(experienceOrbs.front());
-        LeaveCriticalSection(&entityLimitMutex);
-    }
-    else if (eTYPE_DERIVED_FROM(EntityType::AREA_EFFECT_CLOUD, entity->GetType()))
-    {
-        EnterCriticalSection(&entityLimitMutex);
-        if (areaEffectClouds.size() >= 20)
-            removeEntityImmediately(areaEffectClouds.front());
-        LeaveCriticalSection(&entityLimitMutex);
-    }
-    return Level::addEntity(entity);
+    return false;
 }
 
 bool ServerLevel::atEntityLimit(boost::shared_ptr<Entity> entity)
