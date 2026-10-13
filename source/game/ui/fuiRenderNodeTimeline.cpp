@@ -534,29 +534,26 @@ void fuiRenderNodeTimeline::handleFrameTransition(int frame)
             switch (m_frameActions[i].type)
             {
             case eFrameActionType_GotoAndStop:
-                if (m_frameActions[i].value.compare("handleAnimationStep") == 0)
+                if (m_frameActions[i].value == "handleAnimationStep")
                     m_node->dispatchEvent(new FJ_Event(eFJEventType_AnimationStep, false, false));
-                else if (m_frameActions[i].value.compare("UpdateLabel") == 0)
+                else if (m_frameActions[i].value == "UpdateLabel")
                     m_node->dispatchEvent(new FJ_Event(eFJEventType_UpdateLabel, false, false));
-                else if (m_frameActions[i].value.compare("InitHud") == 0)
+                else if (m_frameActions[i].value == "InitHud")
                     m_node->dispatchEvent(new FJ_Event(eFJEventType_InitHud, false, false));
-                else if (m_frameActions[i].value.compare("AnimationEnd") == 0)
+                else if (m_frameActions[i].value == "AnimationEnd")
                     m_node->dispatchEvent(new FJ_Event(eFJEventType_AnimationEnd, false, false));
-                else if (m_frameActions[i].value.compare("ShowTimerAnimation") == 0)
+                else if (m_frameActions[i].value == "ShowTimerAnimation")
                     m_node->dispatchEvent(new FJ_Event(eFJEventType_ShowTimerAnimation, false, false));
-                else if (m_frameActions[i].value.compare("SlideComplete") == 0)
+                else if (m_frameActions[i].value == "SlideComplete")
                     m_node->dispatchEvent(new FJ_Event(eFJEventType_SlideComplete, false, false));
-                else if (m_frameActions[i].value.compare("ShowAnimatedLogoText") == 0)
+                else if (m_frameActions[i].value == "ShowAnimatedLogoText")
                     m_node->dispatchEvent(new FJ_Event(eFJEventType_ShowAnimatedLogoText, true, false));
                 break;
             case eFrameActionType_Stop:
                 setPlaying(false);
                 break;
             case eFrameActionType_GotoAndStopLabel:
-                {
-                    const std::string& label = m_frameActions[i].value;
-                    setFrame(label.c_str());
-                }
+                setFrame(m_frameActions[i].value.c_str());
                 setPlaying(false);
                 break;
             case eFrameActionType_GotoAndPlay:
@@ -611,7 +608,7 @@ void fuiRenderNodeTimeline::gather(bool force)
             for (unsigned int e = 0; e < timelineFrame->timelineEventCount; ++e, ++event)
             {
                 fuiRenderNode* node = 0;
-                unsigned int index = 0;
+                unsigned int index;
 
                 if ((event->flags & 1) != 0)
                 {
@@ -730,8 +727,9 @@ void fuiRenderNodeTimeline::gather(bool force)
 
                 if ((event->flags & 2) != 0)
                 {
-                    delete m_children[index];
-                    m_children.erase(m_children.begin() + index);
+                    std::vector<fuiRenderNode*>::iterator removedChild = m_children.begin() + index;
+                    delete *removedChild;
+                    m_children.erase(removedChild);
                     continue;
                 }
                 if ((event->flags & 4) != 0)
