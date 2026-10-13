@@ -1405,9 +1405,9 @@ void ClientPacketListener::handleChunkBlocksUpdate(boost::shared_ptr<Clientbound
     int maxLocalX = 0;
     int maxY = 0;
     int maxLocalZ = 0;
-    for (unsigned int i = 0; i < packet->count; ++i)
+    for (int i = 0; i < packet->count; ++i)
     {
-        const unsigned short packed = static_cast<unsigned short>(packet->positions[i]);
+        const int packed = packet->positions[i];
         const int localX = (packed >> 12) & 15;
         const int localZ = (packed >> 8) & 15;
         const int y = packed & 255;
@@ -1447,29 +1447,26 @@ void ClientPacketListener::handleChunkBlocksUpdate(boost::shared_ptr<Clientbound
 
 void ClientPacketListener::handleBlockRegionUpdate(boost::shared_ptr<BlockRegionUpdatePacket> packet)
 {
-    if (packet == 0)
-        return;
-
-    MultiPlayerLevel* level = m_minecraft->getLevel(packet->mDimension);
+    MultiPlayerLevel* level = m_minecraft->mLevels[packet->mDimension];
     if (level != 0)
     {
-        const int chunkX = packet->mX >> 4;
-        const int chunkZ = packet->mZ >> 4;
         if (packet->mHasBlockChanges)
         {
             std::vector<LevelChunk::BlockChange>* changes = packet->GetChanges();
             packet->SetChanges(NULL);
-            level->ReloadChunk(chunkX, chunkZ, changes, true);
+            level->ReloadChunk(packet->mX >> 4, packet->mZ >> 4, changes, true);
             return;
         }
 
         PIXBeginNamedEvent(0.0f, "Handle block region update");
-        level->StopReloadChunk(chunkX, chunkZ);
+        level->StopReloadChunk(packet->mX >> 4, packet->mZ >> 4);
 
         int maxY = packet->mY + packet->mHeight;
         if (packet->mFullChunk && m_level != NULL)
         {
             maxY = 256;
+            const int chunkX = packet->mX >> 4;
+            const int chunkZ = packet->mZ >> 4;
             if (m_level->getChunk(chunkX, chunkZ)->isEmpty())
                 m_level->setChunkVisible(chunkX, chunkZ, true, false);
         }
@@ -1498,7 +1495,7 @@ void ClientPacketListener::handleBlockRegionUpdate(boost::shared_ptr<BlockRegion
         if (packet->mFullChunk)
         {
             PIXBeginNamedEvent(0.0f, "dataReceivedForChunk");
-            level->dataReceivedForChunk(chunkX, chunkZ);
+            level->dataReceivedForChunk(packet->mX >> 4, packet->mZ >> 4);
             PIXEndNamedEvent();
         }
         PIXEndNamedEvent();
@@ -1508,7 +1505,7 @@ void ClientPacketListener::handleBlockRegionUpdate(boost::shared_ptr<BlockRegion
 
 void ClientPacketListener::handleBlockUpdate(boost::shared_ptr<ClientboundBlockUpdatePacket> packet)
 {
-    MultiPlayerLevel* level = m_minecraft->getLevel(packet->getLevelIdx());
+    MultiPlayerLevel* level = m_minecraft->mLevels[packet->getLevelIdx()];
     if (level != 0)
     {
         PIXBeginNamedEvent(0.0f, "Handle block update");

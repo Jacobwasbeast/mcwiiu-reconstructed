@@ -595,7 +595,7 @@ void ServerGamePacketListenerImpl::handlePlayerAction(boost::shared_ptr<Serverbo
         if (level->getWorldBorder()->isWithinBounds(pos))
             mPlayer->mGameMode->startDestroyBlock(pos, packet->getDirection());
         else
-            mPlayer->mConnection->send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
+            mPlayer->mConnection->send(boost::shared_ptr<ClientboundBlockUpdatePacket>(new ClientboundBlockUpdatePacket(level, pos)));
         return;
     }
 
@@ -609,7 +609,7 @@ void ServerGamePacketListenerImpl::handlePlayerAction(boost::shared_ptr<Serverbo
         mPlayer->mGameMode->abortDestroyBlock();
     }
     if (level->getBlockState(pos)->getBlock()->mMaterial != Material::AIR)
-        mPlayer->mConnection->send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
+        mPlayer->mConnection->send(boost::shared_ptr<ClientboundBlockUpdatePacket>(new ClientboundBlockUpdatePacket(level, pos)));
 }
 void ServerGamePacketListenerImpl::handleUseItemOn(boost::shared_ptr<ServerboundUseItemOnPacket> packet)
 {
@@ -623,21 +623,20 @@ void ServerGamePacketListenerImpl::handleUseItemOn(boost::shared_ptr<Serverbound
 
     mPlayer->resetLastActionTime();
 
-    bool belowBuildLimit = pos.y < mServer->getMaxBuildHeight() - 1
-                        || (face != Direction::UP && pos.y < mServer->getMaxBuildHeight());
-    if (belowBuildLimit && mPendingTeleportPosition == NULL
+    if ((pos.y < mServer->getMaxBuildHeight() - 1
+         || (face != Direction::UP && pos.y < mServer->getMaxBuildHeight()))
+        && mPendingTeleportPosition == NULL
         && mPlayer->distanceToSqr(pos.x + 0.5, pos.y + 0.5, pos.z + 0.5) < 64.0
         && level->getWorldBorder()->isWithinBounds(pos))
     {
-        bool result = false;
         mPlayer->mGameMode->useItemOn(mPlayer, level, item, hand, pos, face, packet->getClickX(),
-                                      packet->getClickY(), packet->getClickZ(), false, &result);
+                                      packet->getClickY(), packet->getClickZ(), false, NULL);
     }
 
-    mPlayer->mConnection->send(boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos)));
+    mPlayer->mConnection->send(boost::shared_ptr<ClientboundBlockUpdatePacket>(new ClientboundBlockUpdatePacket(level, pos)));
     if (level->getBlockState(pos)->getBlock() != Blocks::piston_head)
         mPlayer->mConnection->send(
-            boost::shared_ptr<Packet>(new ClientboundBlockUpdatePacket(level, pos.relative(face))));
+            boost::shared_ptr<ClientboundBlockUpdatePacket>(new ClientboundBlockUpdatePacket(level, pos.relative(face))));
 }
 void ServerGamePacketListenerImpl::handleUseItem(boost::shared_ptr<ServerboundUseItemPacket> packet)
 {
