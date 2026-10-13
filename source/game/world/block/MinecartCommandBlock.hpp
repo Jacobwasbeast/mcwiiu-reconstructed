@@ -42,7 +42,6 @@ public:
     BaseCommandBlock* getCommandBlock();
     virtual void readAdditionalSaveData(CompoundTag* tag);
     virtual void addAdditonalSaveData(CompoundTag* tag);
-    virtual unsigned long long GetType();
     virtual const Minecart::Type* getType();
     virtual const BlockState* getDefaultDisplayBlockState();
     virtual void activateMinecart(int x, int y, int z, bool powered);

@@ -43,7 +43,7 @@ LogBlock::LogAxis* LogBlock::Y = LogBlock::LogAxis::values[1];
 LogBlock::LogAxis* LogBlock::Z = LogBlock::LogAxis::values[2];
 LogBlock::LogAxis* LogBlock::NONE = LogBlock::LogAxis::values[3];
 EnumProperty<LogBlock::LogAxis*>* LogBlock::AXIS = NULL;
-static const int gLogDescriptionIds[4] = { IDS_TILE_LOG_OAK, (int)IDS_TILE_LOG_SPRUCE, (int)IDS_TILE_LOG_BIRCH, IDS_TILE_LOG_JUNGLE };
+static const int gLogDescriptionIds[6] = { IDS_TILE_LOG_OAK, IDS_TILE_LOG_SPRUCE, IDS_TILE_LOG_BIRCH, IDS_TILE_LOG_JUNGLE, IDS_TILE_LOG_ACACIA, IDS_TILE_LOG_DARK_OAK };
 
 LogBlock::LogAxis::LogAxis(const std::wstring& name)
     : mName(name)
@@ -167,7 +167,8 @@ const BlockState* LogBlock::rotate(const BlockState* state, Rotation* rotation)
 int LogBlock::getDescriptionId(int auxValue)
 {
     const BlockState* state = auxValue == -1 ? defaultBlockState() : getBlockState(auxValue);
-    return gLogDescriptionIds[getWoodType(state)];
+    int woodType = getWoodType(state);
+    return gLogDescriptionIds[woodType];
 }
 
 bool LogBlock::isStrippable()

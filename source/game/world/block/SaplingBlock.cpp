@@ -39,7 +39,7 @@
 EnumProperty<PlanksBlock::Variant*>* SaplingBlock::TYPE = NULL;
 static AbstractProperty<int>* gSaplingStage = static_cast<AbstractProperty<int>*>(IntegerProperty::create(L"stage", 0, 1));
 static const AABB* SAPLING_SHAPE = AABB::newPermanent(0.09999999403953552, 0.0, 0.09999999403953552, 0.8999999761581421, 0.800000011920929, 0.8999999761581421);
-static const unsigned int SAPLING_DESCRIPTION_IDS[4] = { IDS_TILE_SAPLING_OAK, IDS_TILE_SAPLING_SPRUCE, IDS_TILE_SAPLING_BIRCH, IDS_TILE_SAPLING_JUNGLE };
+static unsigned int SAPLING_DESCRIPTION_IDS[6] = { IDS_TILE_SAPLING_OAK, IDS_TILE_SAPLING_SPRUCE, IDS_TILE_SAPLING_BIRCH, IDS_TILE_SAPLING_JUNGLE, IDS_TILE_SAPLING_ACACIA, IDS_TILE_SAPLING_DARKOAK };
 
 static const std::wstring SAPLING_ICON_NAMES[6] = { L"sapling", L"sapling_spruce", L"sapling_birch", L"sapling_jungle", L"sapling_acacia", L"sapling_roofed_oak" };
 

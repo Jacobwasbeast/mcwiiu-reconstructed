@@ -279,7 +279,7 @@ int PortalBlock::getRenderLayer() { return 1; }
 
 void PortalBlock::entityInside(Level*, const BlockPos& pos, const BlockState*, const boost::shared_ptr<Entity>& entity)
 {
-    if (eTYPE_DERIVED_FROM(EntityType::EXPERIENCE_ORB, entity->GetType()))
+    if (entity->GetType() == EntityType::EXPERIENCE_ORB)
         return;
     if (entity->isPassenger() || entity->isVehicle() || !entity->canChangeDimensions())
         return;
