@@ -402,36 +402,173 @@ void CMinecraftApp::SetGameHostOption(unsigned int& options, eGameHostOption opt
 {
     switch (option)
     {
-    case eGameHostOption_Difficulty: options = (options & ~3U) | (value & 3U); break;
-    case eGameHostOption_FriendsOfFriends: options = value ? (options | 4U) : (options & ~4U); break;
-    case eGameHostOption_Gamertags: options = value ? (options | 8U) : (options & ~8U); break;
-    case eGameHostOption_GameType: options = (options & ~0x30U) | ((value & 3U) << 4); break;
-    case eGameHostOption_LevelType: options = value ? (options | 0x40U) : (options & ~0x40U); break;
-    case eGameHostOption_Structures: options = value ? (options | 0x80U) : (options & ~0x80U); break;
-    case eGameHostOption_BonusChest: options = value ? (options | 0x100U) : (options & ~0x100U); break;
-    case eGameHostOption_HasBeenInCreative: options = value ? (options | 0x200U) : (options & ~0x200U); break;
-    case eGameHostOption_PvP: options = value ? (options | 0x400U) : (options & ~0x400U); break;
-    case eGameHostOption_TrustPlayers: options = value ? (options | 0x800U) : (options & ~0x800U); break;
-    case eGameHostOption_TNT: options = value ? (options | 0x1000U) : (options & ~0x1000U); break;
-    case eGameHostOption_FireSpreads: options = value ? (options | 0x2000U) : (options & ~0x2000U); break;
-    case eGameHostOption_CheatsEnabled: options = value ? (options | 0x1c000U) : (options & ~0x1c000U); break;
-    case eGameHostOption_HostCanFly: options = value ? (options | 0x4000U) : (options & ~0x4000U); break;
-    case eGameHostOption_HostCanChangeHunger: options = value ? (options | 0x8000U) : (options & ~0x8000U); break;
-    case eGameHostOption_HostCanBeInvisible: options = value ? (options | 0x10000U) : (options & ~0x10000U); break;
-    case eGameHostOption_WorldSize: options = (options & ~0x700000U) | ((value & 7U) << 20); break;
-    case eGameHostOption_DoWeatherCycle: options = value ? (options & ~0x80000000U) : (options | 0x80000000U); break;
-    case eGameHostOption_DisableSaving: options = value ? (options | 0x40000U) : (options & ~0x40000U); break;
-    case eGameHostOption_WasntSaveOwner: options = value ? (options | 0x80000U) : (options & ~0x80000U); break;
-    case eGameHostOption_MobGriefing: options = value ? (options & ~0x800000U) : (options | 0x800000U); break;
-    case eGameHostOption_KeepInventory: options = value ? (options | 0x1000000U) : (options & ~0x1000000U); break;
-    case eGameHostOption_DoMobSpawning: options = value ? (options & ~0x2000000U) : (options | 0x2000000U); break;
-    case eGameHostOption_DoMobLoot: options = value ? (options & ~0x4000000U) : (options | 0x4000000U); break;
-    case eGameHostOption_DoTileDrops: options = value ? (options & ~0x8000000U) : (options | 0x8000000U); break;
-    case eGameHostOption_NaturalRegeneration: options = value ? (options & ~0x10000000U) : (options | 0x10000000U); break;
-    case eGameHostOption_DoDaylightCycle: options = value ? (options & ~0x20000000U) : (options | 0x20000000U); break;
-    case eGameHostOption_MiniGame: options = value ? (options | 0x40000000U) : (options & ~0x40000000U); break;
-    case eGameHostOption_All: options = value; break;
-    default: break;
+    case eGameHostOption_FriendsOfFriends:
+        if (value != 0)
+            options |= 4U;
+        else
+            options &= ~4U;
+        break;
+    case eGameHostOption_Difficulty:
+        options &= ~3U;
+        options |= 3U & value;
+        break;
+    case eGameHostOption_Gamertags:
+        if (value != 0)
+            options |= 8U;
+        else
+            options &= ~8U;
+        break;
+    case eGameHostOption_GameType:
+        options &= ~0x30U;
+        options |= 0x30U & (value << 4);
+        break;
+    case eGameHostOption_LevelType:
+        if (value != 0)
+            options |= 0x40U;
+        else
+            options &= ~0x40U;
+        break;
+    case eGameHostOption_Structures:
+        if (value != 0)
+            options |= 0x80U;
+        else
+            options &= ~0x80U;
+        break;
+    case eGameHostOption_BonusChest:
+        if (value != 0)
+            options |= 0x100U;
+        else
+            options &= ~0x100U;
+        break;
+    case eGameHostOption_HasBeenInCreative:
+        if (value != 0)
+            options |= 0x200U;
+        else
+            options &= ~0x200U;
+        break;
+    case eGameHostOption_PvP:
+        if (value != 0)
+            options |= 0x400U;
+        else
+            options &= ~0x400U;
+        break;
+    case eGameHostOption_TrustPlayers:
+        if (value != 0)
+            options |= 0x800U;
+        else
+            options &= ~0x800U;
+        break;
+    case eGameHostOption_TNT:
+        if (value != 0)
+            options |= 0x1000U;
+        else
+            options &= ~0x1000U;
+        break;
+    case eGameHostOption_FireSpreads:
+        if (value != 0)
+            options |= 0x2000U;
+        else
+            options &= ~0x2000U;
+        break;
+    case eGameHostOption_CheatsEnabled:
+        if (value != 0)
+            options |= 0x1c000U;
+        else
+            options &= ~0x1c000U;
+        break;
+    case eGameHostOption_HostCanFly:
+        if (value != 0)
+            options |= 0x4000U;
+        else
+            options &= ~0x4000U;
+        break;
+    case eGameHostOption_HostCanChangeHunger:
+        if (value != 0)
+            options |= 0x8000U;
+        else
+            options &= ~0x8000U;
+        break;
+    case eGameHostOption_HostCanBeInvisible:
+        if (value != 0)
+            options |= 0x10000U;
+        else
+            options &= ~0x10000U;
+        break;
+    case eGameHostOption_DisableSaving:
+        if (value != 0)
+            options |= 0x40000U;
+        else
+            options &= ~0x40000U;
+        break;
+    case eGameHostOption_WasntSaveOwner:
+        if (value != 0)
+            options |= 0x80000U;
+        else
+            options &= ~0x80000U;
+        break;
+    case eGameHostOption_MobGriefing:
+        if (value == 0)
+            options |= 0x800000U;
+        else
+            options &= ~0x800000U;
+        break;
+    case eGameHostOption_KeepInventory:
+        if (value != 0)
+            options |= 0x1000000U;
+        else
+            options &= ~0x1000000U;
+        break;
+    case eGameHostOption_DoMobSpawning:
+        if (value == 0)
+            options |= 0x2000000U;
+        else
+            options &= ~0x2000000U;
+        break;
+    case eGameHostOption_DoMobLoot:
+        if (value == 0)
+            options |= 0x4000000U;
+        else
+            options &= ~0x4000000U;
+        break;
+    case eGameHostOption_DoTileDrops:
+        if (value == 0)
+            options |= 0x8000000U;
+        else
+            options &= ~0x8000000U;
+        break;
+    case eGameHostOption_NaturalRegeneration:
+        if (value == 0)
+            options |= 0x10000000U;
+        else
+            options &= ~0x10000000U;
+        break;
+    case eGameHostOption_DoDaylightCycle:
+        if (value == 0)
+            options |= 0x20000000U;
+        else
+            options &= ~0x20000000U;
+        break;
+    case eGameHostOption_DoWeatherCycle:
+        if (value == 0)
+            options |= 0x80000000U;
+        else
+            options &= ~0x80000000U;
+        break;
+    case eGameHostOption_WorldSize:
+        options &= ~0x700000U;
+        options |= 0x700000U & (value << 20);
+        break;
+    case eGameHostOption_All:
+        options = value;
+        break;
+    case eGameHostOption_MiniGame:
+        if (value != 0)
+            options |= 0x40000000U;
+        else
+            options &= ~0x40000000U;
+        break;
+    default:
+        break;
     }
 }
 void CMinecraftApp::SetGameHostOption(eGameHostOption option, unsigned int value)
@@ -443,16 +580,23 @@ void CMinecraftApp::SetXuiServerAction(int player, eXuiServerAction action, void
     mXuiServerActions[player] = action;
     mXuiServerActionParams[player] = param;
 }
+namespace boost
+{
+void assertion_failed(const char* expr, const char* function, const char* file, long line)
+{
+}
+}
 uint32_t CMinecraftApp::GetGameHostOption(unsigned int options, eGameHostOption option)
 {
     switch (option)
     {
-    case eGameHostOption_Difficulty: return options & 3U;
     case eGameHostOption_FriendsOfFriends: return options & 4U;
+    case eGameHostOption_Difficulty: return options & 3U;
     case eGameHostOption_Gamertags: return options & 8U;
+    case eGameHostOption_GameType: return (options >> 4) & 3U;
+    case eGameHostOption_All: return options;
     case eGameHostOption_Tutorial: return (options & 8U) | 0x3c81U |
         ((static_cast<unsigned int>(GameType::SURVIVAL->getId()) & 3U) << 4);
-    case eGameHostOption_GameType: return (options >> 4) & 3U;
     case eGameHostOption_LevelType: return options & 0x40U;
     case eGameHostOption_Structures: return options & 0x80U;
     case eGameHostOption_BonusChest: return options & 0x100U;
@@ -465,10 +609,9 @@ uint32_t CMinecraftApp::GetGameHostOption(unsigned int options, eGameHostOption 
     case eGameHostOption_HostCanFly: return options & 0x4000U;
     case eGameHostOption_HostCanChangeHunger: return options & 0x8000U;
     case eGameHostOption_HostCanBeInvisible: return options & 0x10000U;
-    case eGameHostOption_WorldSize: return (options >> 20) & 7U;
-    case eGameHostOption_DoWeatherCycle: return (options >> 31) ^ 1U;
     case eGameHostOption_DisableSaving: return options & 0x40000U;
     case eGameHostOption_WasntSaveOwner: return options & 0x80000U;
+    case eGameHostOption_WorldSize: return (options >> 20) & 7U;
     case eGameHostOption_MobGriefing: return ((options >> 23) & 1U) ^ 1U;
     case eGameHostOption_KeepInventory: return options & 0x1000000U;
     case eGameHostOption_DoMobSpawning: return ((options >> 25) & 1U) ^ 1U;
@@ -477,7 +620,7 @@ uint32_t CMinecraftApp::GetGameHostOption(unsigned int options, eGameHostOption 
     case eGameHostOption_NaturalRegeneration: return ((options >> 28) & 1U) ^ 1U;
     case eGameHostOption_DoDaylightCycle: return ((options >> 29) & 1U) ^ 1U;
     case eGameHostOption_MiniGame: return options & 0x40000000U;
-    case eGameHostOption_All: return options;
+    case eGameHostOption_DoWeatherCycle: return (options >> 31) ^ 1U;
     default: return 0;
     }
 }
@@ -862,14 +1005,14 @@ bool CMinecraftApp::GetGameStarted()
 }
 void CMinecraftApp::SetDefaultHostOptions()
 {
-    SetGameHostOption(eGameHostOption_MobGriefing, 1);
-    SetGameHostOption(eGameHostOption_KeepInventory, 0);
-    SetGameHostOption(eGameHostOption_DoMobSpawning, 1);
-    SetGameHostOption(eGameHostOption_DoMobLoot, 1);
-    SetGameHostOption(eGameHostOption_DoTileDrops, 1);
-    SetGameHostOption(eGameHostOption_NaturalRegeneration, 1);
-    SetGameHostOption(eGameHostOption_DoDaylightCycle, 1);
-    SetGameHostOption(eGameHostOption_DoWeatherCycle, 1);
+    gApp.SetGameHostOption(eGameHostOption_MobGriefing, 1);
+    gApp.SetGameHostOption(eGameHostOption_KeepInventory, 0);
+    gApp.SetGameHostOption(eGameHostOption_DoMobSpawning, 1);
+    gApp.SetGameHostOption(eGameHostOption_DoMobLoot, 1);
+    gApp.SetGameHostOption(eGameHostOption_DoTileDrops, 1);
+    gApp.SetGameHostOption(eGameHostOption_NaturalRegeneration, 1);
+    gApp.SetGameHostOption(eGameHostOption_DoDaylightCycle, 1);
+    gApp.SetGameHostOption(eGameHostOption_DoWeatherCycle, 1);
 }
 void CMinecraftApp::InitGameSettings()
 {
@@ -3700,16 +3843,14 @@ void CMinecraftApp::SetAdditionalSkinBoxes(unsigned int skinId, SKIN_BOX* boxes,
 
     EnterCriticalSection(&mAdditionalModelPartsMutex);
     EnterCriticalSection(&mAdditionalSkinBoxesMutex);
-    if (count != 0)
+    for (unsigned int index = 0; index < count; ++index)
     {
-        for (unsigned int index = 0; index < count; ++index)
+        if (model != NULL)
         {
-            if (model != NULL)
-            {
-                model->SetSkinAdjustments(adjustments);
-                modelParts->push_back(model->AddOrRetrievePart(&boxes[index], skinId));
-                skinBoxes->push_back(&boxes[index]);
-            }
+            model->SetSkinAdjustments(adjustments);
+            ModelPart* part = model->AddOrRetrievePart(&boxes[index], skinId);
+            modelParts->push_back(part);
+            skinBoxes->push_back(&boxes[index]);
         }
     }
     mAdditionalModelParts.insert(std::make_pair(skinId, modelParts));
@@ -3721,14 +3862,15 @@ std::vector<ModelPart*>* CMinecraftApp::SetAdditionalSkinBoxes(unsigned int skin
 {
     const EPlayerModelType modelType = static_cast<EPlayerModelType>(
         Player::GetModelTypeFromAnimBitmask(adjustments.mAnimFlags));
-    PlayerModel* model = static_cast<PlayerModel*>(Minecraft::GetInstance()->getEntityRenderDispatcher()->getPlayerRenderer(modelType)->getModel());
+    PlayerRenderer* renderer = Minecraft::GetInstance()->getEntityRenderDispatcher()->getPlayerRenderer(modelType);
+    PlayerModel* model = static_cast<PlayerModel*>(renderer->getModel());
     std::vector<ModelPart*>* modelParts = new std::vector<ModelPart*>();
 
     EnterCriticalSection(&mAdditionalModelPartsMutex);
     EnterCriticalSection(&mAdditionalSkinBoxesMutex);
-    if (model != NULL)
+    for (std::vector<SKIN_BOX*>::iterator it = boxes->begin(); it != boxes->end(); ++it)
     {
-        for (std::vector<SKIN_BOX*>::iterator it = boxes->begin(); it != boxes->end(); ++it)
+        if (model != NULL)
         {
             model->SetSkinAdjustments(adjustments);
             modelParts->push_back(model->AddOrRetrievePart(*it, skinId));
@@ -4774,4 +4916,11 @@ _SkinAdjustments CMinecraftApp::GetSkinAdjustments(uint32_t id)
     }
     LeaveCriticalSection(&mSkinAdjustmentsMutex);
     return result;
+}
+
+namespace boost
+{
+void throw_exception(const std::exception& e)
+{
+}
 }

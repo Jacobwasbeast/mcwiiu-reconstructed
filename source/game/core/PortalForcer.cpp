@@ -214,26 +214,26 @@ bool PortalForcer::findPortal(boost::shared_ptr<Entity> entity, float rotation, 
             horizontal;
     }
 
-    double diagonal = 1.0;
-    double xFromZ = 0.0;
-    double zFromX = 0.0;
+    float diagonal = 1.0f;
+    float xFromZ = 0.0f;
+    float zFromX = 0.0f;
     if (portal->getForwards()->getOpposite() != entity->getPortalEntranceForwards())
     {
         if (portal->getForwards()->getOpposite() == entity->getPortalEntranceForwards()->getOpposite())
         {
-            diagonal = -1.0;
+            diagonal = -1.0f;
         }
         else if (portal->getForwards()->getOpposite() == entity->getPortalEntranceForwards()->getClockWise())
         {
-            diagonal = 0.0;
-            xFromZ = -1.0;
-            zFromX = 1.0;
+            diagonal = 0.0f;
+            xFromZ = -1.0f;
+            zFromX = 1.0f;
         }
         else
         {
-            diagonal = 0.0;
-            xFromZ = 1.0;
-            zFromX = -1.0;
+            diagonal = 0.0f;
+            xFromZ = 1.0f;
+            zFromX = -1.0f;
         }
     }
 
