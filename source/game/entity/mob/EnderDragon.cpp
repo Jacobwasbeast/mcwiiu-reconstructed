@@ -463,7 +463,7 @@ void EnderDragon::strafeAttackTarget()
     const double targetZ = mAttackTarget->mZ;
     const double dx = targetX - mX;
     const double dz = targetZ - mZ;
-    double height = std::sqrt(dx * dx + dz * dz) / 80.0 + -0.6f;
+    double height = 0.4f + std::sqrt(dx * dx + dz * dz) / 80.0 - 1.0;
     if (height > 10.0)
         height = 10.0;
 
@@ -1051,7 +1051,6 @@ void EnderDragon::aiStep()
             || (getSynchedAction() == ACTION_SITTING_FLAMING && (mTickCount & 1) == 0))
         {
             Vec3* look = getHeadLookVector(1.0f)->normalize()->yRot(-3.1415927f / 4.0f);
-            Random* random = mLevel->mRandom;
             for (int i = 0; i < 8; ++i)
             {
                 if (getSynchedAction() == ACTION_LANDING)
@@ -1059,9 +1058,9 @@ void EnderDragon::aiStep()
                     double x = mHead->mX;
                     double y = mHead->mBoundingBox->mMinY + mHead->mBbHeight * 0.5f;
                     double z = mHead->mZ;
-                    x += (random->nextBoolean() ? 1 : -1) * random->nextFloat() * 0.5f;
-                    y += (random->nextBoolean() ? 1 : -1) * random->nextFloat() * 0.5f;
-                    z += (random->nextBoolean() ? 1 : -1) * random->nextFloat() * 0.5f;
+                    x += (mLevel->mRandom->nextBoolean() ? 1 : -1) * mLevel->mRandom->nextFloat() * 0.5f;
+                    y += (mLevel->mRandom->nextBoolean() ? 1 : -1) * mLevel->mRandom->nextFloat() * 0.5f;
+                    z += (mLevel->mRandom->nextBoolean() ? 1 : -1) * mLevel->mRandom->nextFloat() * 0.5f;
                     mLevel->addParticle(PARTICLE_DRAGON_BREATH, x, y, z, mXd - look->x * 0.08, mYd - look->y * 0.3,
                                         mZd - look->z * 0.08, arrayWithLength<int>());
                 }
@@ -1072,9 +1071,9 @@ void EnderDragon::aiStep()
                         double x = mHead->mX;
                         double y = mHead->mBoundingBox->mMinY + mHead->mBbHeight * 0.5f;
                         double z = mHead->mZ;
-                        x += (random->nextBoolean() ? 1 : -1) * random->nextFloat() * 0.5f;
-                        y += (random->nextBoolean() ? 1 : -1) * random->nextFloat() * 0.5f;
-                        z += (random->nextBoolean() ? 1 : -1) * random->nextFloat() * 0.5f;
+                        x += (mLevel->mRandom->nextBoolean() ? 1 : -1) * mLevel->mRandom->nextFloat() * 0.5f;
+                        y += (mLevel->mRandom->nextBoolean() ? 1 : -1) * mLevel->mRandom->nextFloat() * 0.5f;
+                        z += (mLevel->mRandom->nextBoolean() ? 1 : -1) * mLevel->mRandom->nextFloat() * 0.5f;
                         mLevel->addParticle(PARTICLE_DRAGON_BREATH, x, y, z, -(look->x * 0.08 * j), -(look->y * 0.6),
                                             -(look->z * 0.08 * j), arrayWithLength<int>());
                     }
@@ -1230,7 +1229,7 @@ void EnderDragon::aiStep()
                     mZTarget = mAttackTarget->mZ;
                     const double targetDx = mXTarget - mX;
                     const double targetDz = mZTarget - mZ;
-                    double height = std::sqrt(targetDx * targetDx + targetDz * targetDz) / 80.0 - 0.6f;
+                    double height = 0.4f + std::sqrt(targetDx * targetDx + targetDz * targetDz) / 80.0 - 1.0;
                     if (height > 10.0)
                         height = 10.0;
                     mYTarget = mAttackTarget->mBoundingBox->mMinY + height;
@@ -1384,9 +1383,10 @@ void EnderDragon::aiStep()
 
     if (!mLevel->mIsClientSide)
     {
+        double fireballRange = 64.0;
         bool targetInRange = false;
         if (getSynchedAction() == ACTION_STRAFE_PLAYER && mAttackTarget != NULL
-            && mAttackTarget->distanceToSqr(shared_from_this()) < 64.0 * 64.0)
+            && mAttackTarget->distanceToSqr(shared_from_this()) < fireballRange * fireballRange)
             targetInRange = true;
 
         if (targetInRange && canSee(mAttackTarget))

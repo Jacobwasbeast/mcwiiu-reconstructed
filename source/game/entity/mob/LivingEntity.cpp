@@ -4264,8 +4264,9 @@ bool LivingEntity::randomTeleport(double x, double y, double z)
         while (!level->getBlockState(mTickCache, below)->getMaterial()->blocksMotion())
         {
             mY = mY - 1.0;
+            pos = below;
 
-            if (below.y < 1)
+            if (pos.y < 1)
             {
                 grounded = false;
                 break;

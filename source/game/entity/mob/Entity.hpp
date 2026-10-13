@@ -543,8 +543,8 @@ public:
     float mWalkDist;
     float mMoveDist;
     float mFallDistance;
-    short mFallTicks;
-    short mFallCount;
+    unsigned short mFallTicks;
+    unsigned short mFallCount;
     int mNextStep;
     float mNextFlap;
     double mXOld;

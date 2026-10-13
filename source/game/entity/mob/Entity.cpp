@@ -3,6 +3,7 @@
 #include "game/core/StringIds.hpp"
 #include "game/core/EntityType.hpp"
 
+#include <algorithm>
 #include <cfloat>
 #include <cmath>
 #include <cstdarg>
@@ -654,16 +655,20 @@ void Entity::setPos(double x, double y, double z)
     mY = y;
     mZ = z;
 
-    double halfWidth = (double)(mBbWidth * 0.5f);
+    float halfWidth = mBbWidth / 2.0f;
+    float height = mBbHeight;
 
     setBoundingBox(AABB::newTemp(x - halfWidth, y, z - halfWidth,
-                                 x + halfWidth, y + (double)mBbHeight, z + halfWidth));
+                                 x + halfWidth, y + height, z + halfWidth));
 }
 
 void Entity::setRot(float yRot, float xRot)
 {
-    mYRot = Mth::wrapDegrees(yRot);
-    mXRot = Mth::wrapDegrees(xRot);
+    yRot = Mth::wrapDegrees(yRot);
+    xRot = Mth::wrapDegrees(xRot);
+
+    mYRot = yRot;
+    mXRot = xRot;
 }
 
 void Entity::setPos(EntityPos* pos)
@@ -878,7 +883,6 @@ void Entity::baseTick()
                     }
 
                     mIsInsidePortal = false;
-                    clearFire();
                 }
             }
             else
@@ -886,19 +890,15 @@ void Entity::baseTick()
                 if (mPortalTime > 0)
                 {
                     mPortalTime -= 4;
-
-                    if (mPortalTime < 0)
-                    {
-                        mPortalTime = 0;
-                    }
                 }
-                else if (mPortalTime < 0)
+
+                if (mPortalTime < 0)
                 {
                     mPortalTime = 0;
                 }
-
-                processDimensionDelay();
             }
+
+            processDimensionDelay();
         }
     }
 
@@ -909,21 +909,11 @@ void Entity::baseTick()
 
     if (isSwimming())
     {
-        mSwimAmount += 0.1f;
-
-        if (mSwimAmount > 1.0f)
-        {
-            mSwimAmount = 1.0f;
-        }
+        mSwimAmount = std::min(1.0f, mSwimAmount + 0.1f);
     }
     else
     {
-        mSwimAmount -= 0.1f;
-
-        if (mSwimAmount < 0.0f)
-        {
-            mSwimAmount = 0.0f;
-        }
+        mSwimAmount = std::max(0.0f, mSwimAmount - 0.1f);
     }
 
     if (mFirstTick)
@@ -1197,6 +1187,8 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
             {
                 x += 0.05;
             }
+
+            wantedX = x;
         }
 
         while (z != 0.0
@@ -1216,6 +1208,8 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
             {
                 z += 0.05;
             }
+
+            wantedZ = z;
         }
 
         while (x != 0.0 && z != 0.0
@@ -1236,6 +1230,8 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
                 x += 0.05;
             }
 
+            wantedX = x;
+
             if (z < 0.05 && z >= -0.05)
             {
                 z = 0.0;
@@ -1248,6 +1244,8 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
             {
                 z += 0.05;
             }
+
+            wantedZ = z;
         }
     }
 
@@ -1260,10 +1258,11 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
 
     PIXEndNamedEvent();
 
-    AABB* startBox = AABB::newTemp(mBoundingBox);
+    AABB startBox;
+    startBox = *mBoundingBox;
 
-    int chunkX = Mth::absFloor(mX * 0.0625);
-    int chunkZ = Mth::absFloor(mZ * 0.0625);
+    int chunkX = Mth::floor(mX * 0.0625);
+    int chunkZ = Mth::floor(mZ * 0.0625);
 
     bool sleeping = false;
 
@@ -1278,9 +1277,10 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
         {
             PIXBeginNamedEvent(0.0f, "Clipy");
 
+            int i = 0;
             int count = (int)cubes->size();
 
-            for (int i = 0; y != 0.0; i++)
+            while (y != 0.0)
             {
                 if (i >= count)
                 {
@@ -1289,6 +1289,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
                 }
 
                 y = cubes->at(i)->clipYCollide(mBoundingBox, y);
+                i++;
             }
 
             PIXEndNamedEvent();
@@ -1298,9 +1299,10 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
 
         if (x != 0.0)
         {
+            int i = 0;
             int count = (int)cubes->size();
 
-            for (int i = 0; x != 0.0; i++)
+            while (x != 0.0)
             {
                 if (i >= count)
                 {
@@ -1309,6 +1311,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
                 }
 
                 x = cubes->at(i)->clipXCollide(mBoundingBox, x);
+                i++;
             }
         }
 
@@ -1317,9 +1320,10 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
 
         if (z != 0.0)
         {
+            int i = 0;
             int count = (int)cubes->size();
 
-            for (int i = 0; z != 0.0; i++)
+            while (z != 0.0)
             {
                 if (i >= count)
                 {
@@ -1328,13 +1332,14 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
                 }
 
                 z = cubes->at(i)->clipZCollide(mBoundingBox, z);
+                i++;
             }
         }
 
         PIXEndNamedEvent();
     }
 
-    bool steppedOnGround = mOnGround || (wantedY != y && wantedY <= 0.0);
+    bool steppedOnGround = mOnGround || (wantedY != y && wantedY < 0.0);
 
     PIXBeginNamedEvent(0.0f, "Step up");
 
@@ -1344,13 +1349,14 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
 
     if (mMaxUpStep > 0.0f && steppedOnGround && (wantedX != x || wantedZ != z))
     {
-        AABB* clippedBox = AABB::newTemp(mBoundingBox);
+        AABB clippedBox;
+        clippedBox = *mBoundingBox;
 
-        setBoundingBox(startBox);
+        setBoundingBox(&startBox);
 
-        x = wantedX;
-        z = wantedZ;
         y = (double)mMaxUpStep;
+        z = wantedZ;
+        x = wantedX;
 
         AABB* stepBox = mBoundingBox->expand(wantedX, 0.0, wantedZ);
 
@@ -1397,9 +1403,9 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
             steppedZ = (*it)->clipZCollide(stepped, steppedZ);
         }
 
-        AABB* raised = AABB::newTemp(mBoundingBox);
+        AABB* raised = mBoundingBox;
 
-        double raisedY = (double)mMaxUpStep;
+        double raisedY = y;
 
         if (!mLevel->mIsClientSide || mLevel->reallyHasChunk(chunkX, chunkZ))
         {
@@ -1474,7 +1480,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
             x = clippedX;
             y = clippedY;
             z = clippedZ;
-            setBoundingBox(clippedBox);
+            setBoundingBox(&clippedBox);
         }
     }
 
@@ -1499,7 +1505,7 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
         }
     }
 
-    BlockPos landingPos(Mth::absFloor(mX), Mth::absFloor(mY - 0.20000000298023224), Mth::absFloor(mZ));
+    BlockPos landingPos(Mth::floor(mX), Mth::floor(mY - 0.2f), Mth::floor(mZ));
     Block* landingBlock = mLevel->getBlock(landingPos);
 
     PIXBeginNamedEvent(0.0f, "Falling check");
@@ -1545,9 +1551,8 @@ void Entity::move(MoverType type, double x, double y, double z, bool pushedByPis
             landingBlock->stepOn(mLevel, landingPos, shared_from_this());
         }
 
-        mWalkDist += (float)(Mth::sqrt(walkedX * walkedX + walkedZ * walkedZ) * 0.6000000238418579);
-        mMoveDist += (float)(Mth::sqrt(walkedX * walkedX + walkedY * walkedY + walkedZ * walkedZ)
-                             * 0.6000000238418579);
+        mWalkDist += Mth::sqrt(walkedX * walkedX + walkedZ * walkedZ) * 0.6f;
+        mMoveDist += Mth::sqrt(walkedX * walkedX + walkedY * walkedY + walkedZ * walkedZ) * 0.6f;
 
         if (mMoveDist > (float)mNextStep && landingBlock->mMaterial != Material::AIR)
         {
@@ -1795,25 +1800,22 @@ bool Entity::makeStepSound()
 
 void Entity::checkFallDamage(double y, bool onGround, Block* block, const BlockPos& pos)
 {
-    if (!onGround)
+    if (onGround)
     {
-        if (y < 0.0)
+        if (mFallDistance > 0.0f)
         {
-            mFallTicks++;
-            mFallDistance -= (float)y;
+            block->fallOn(mLevel, pos, shared_from_this(), mFallDistance);
+            mFallCount++;
         }
 
-        return;
+        mFallDistance = 0.0f;
+        mFallTicks = 0;
     }
-
-    if (mFallDistance > 0.0f)
+    else if (y < 0.0)
     {
-        block->fallOn(mLevel, pos, shared_from_this(), mFallDistance);
-        mFallCount++;
+        mFallTicks++;
+        mFallDistance -= (float)y;
     }
-
-    mFallDistance = 0.0f;
-    mFallTicks = 0;
 }
 
 AABB* Entity::getCollideBox()
@@ -2144,28 +2146,32 @@ bool Entity::isInLiquid(Material* material, Vec3* pos)
 
 void Entity::moveRelative(float x, float y, float z, float speed)
 {
-    float lengthSqr = x * x + y * y + z * z;
+    float length = x * x + y * y + z * z;
 
-    if (lengthSqr < 9.999999747378752e-05f)
+    if (length < 1.0e-4f)
     {
         return;
     }
 
-    float length = sqrtf(lengthSqr);
+    length = sqrtf(length);
 
     if (length < 1.0f)
     {
         length = 1.0f;
     }
 
-    float scale = speed / length;
+    length = speed / length;
+
+    x *= length;
+    y *= length;
+    z *= length;
 
     float sin = Mth::sin(mYRot * Mth::DEG_TO_RAD);
     float cos = Mth::cos(mYRot * Mth::DEG_TO_RAD);
 
-    mXd += (double)(x * scale * cos - z * scale * sin);
-    mYd += (double)(y * scale);
-    mZd += (double)(z * scale * cos + x * scale * sin);
+    mXd += (double)(x * cos - z * sin);
+    mYd += (double)y;
+    mZd += (double)(z * cos + x * sin);
 }
 
 int Entity::GetLightColor(Entity* entity)
@@ -2210,21 +2216,16 @@ void Entity::absMoveTo(double x, double y, double z, float yRot, float xRot)
 {
     mLevel->clampWithinLevelBounds(x, z, 0.0);
 
-    mXo = x;
-    mX = x;
-    mYo = y;
-    mZo = z;
-    mY = y;
-    mZ = z;
+    mXo = mX = x;
+    mYo = mY = y;
+    mZo = mZ = z;
 
     float wrapped = Mth::wrapDegrees(xRot);
 
-    mYRot = yRot;
-    mXRot = wrapped;
-    mXRotO = wrapped;
-    mYRotO = yRot;
+    mYRotO = mYRot = yRot;
+    mXRotO = mXRot = wrapped;
 
-    double delta = (double)(mYRot - yRot);
+    double delta = (double)(mYRotO - yRot);
 
     if (delta < -180.0)
     {
@@ -2261,15 +2262,9 @@ void Entity::moveTo(const BlockPos& pos, float yRot, float xRot)
 
 void Entity::moveTo(double x, double y, double z, float yRot, float xRot)
 {
-    mXOld = x;
-    mYOld = y;
-    mZOld = z;
-    mXo = x;
-    mYo = y;
-    mZo = z;
-    mX = x;
-    mY = y;
-    mZ = z;
+    mXOld = mXo = mX = x;
+    mYOld = mYo = mY = y;
+    mZOld = mZo = mZ = z;
     mYRot = yRot;
     mXRot = xRot;
 
@@ -2357,18 +2352,23 @@ void Entity::push(boost::shared_ptr<Entity> entity)
         return;
     }
 
-    double length = sqrt(max);
-    double scale = 1.0 / length;
+    max = sqrt(max);
+    dx /= max;
+    dz /= max;
+
+    double scale = 1.0 / max;
 
     if (scale > 1.0)
     {
         scale = 1.0;
     }
 
-    double strength = (double)(1.0f - mPushthrough);
-
-    dx = (dx / length) * scale * 0.05000000074505806 * strength;
-    dz = (dz / length) * scale * 0.05000000074505806 * strength;
+    dx *= scale;
+    dz *= scale;
+    dx *= 0.05000000074505806;
+    dz *= 0.05000000074505806;
+    dx *= (double)(1.0f - mPushthrough);
+    dz *= (double)(1.0f - mPushthrough);
 
     if (!isVehicle())
     {
@@ -3267,6 +3267,7 @@ void Entity::handleInsidePortal(const BlockPos& pos)
     if (mPortalCooldown > 0)
     {
         mPortalCooldown = getDimensionChangingDelay();
+        return;
     }
 
     if (!mLevel->mIsClientSide && !(pos == mPortalEntrancePos))
@@ -3479,13 +3480,6 @@ bool Entity::isInvisibleTo(boost::shared_ptr<Player> player)
         return false;
     }
 
-    Team* team = getTeam();
-
-    if (team != NULL && player->getTeam() == team && team->canSeeFriendlyInvisibles())
-    {
-        return false;
-    }
-
     return isInvisible();
 }
 
@@ -3508,14 +3502,12 @@ bool Entity::isAlliedTo(boost::shared_ptr<Entity> entity)
 
 bool Entity::isAlliedTo(Team* team)
 {
-    Team* ownTeam = getTeam();
-
-    if (ownTeam == NULL)
+    if (getTeam() != NULL)
     {
-        return false;
+        return getTeam()->isAlliedTo(team);
     }
 
-    return ownTeam->isAlliedTo(team);
+    return false;
 }
 
 void Entity::setInvisible(bool invisible)
@@ -3540,9 +3532,11 @@ Vec3* Entity::getPos(float partialTicks)
         return Vec3::newTemp(mX, mY, mZ);
     }
 
-    return Vec3::newTemp((mX - mXo) * (double)partialTicks + mXo,
-                         (mY - mYo) * (double)partialTicks + mYo,
-                         (mZ - mZo) * (double)partialTicks + mZo);
+    double x = mXo + (mX - mXo) * partialTicks;
+    double y = mYo + (mY - mYo) * partialTicks;
+    double z = mZo + (mZ - mZo) * partialTicks;
+
+    return Vec3::newTemp(x, y, z);
 }
 
 Vec3* Entity::getAttachPos(EEntityLocation location, float partialTicks)
@@ -4449,14 +4443,14 @@ bool Entity::canCreateParticles()
 
 void Entity::stopCurrentLerp()
 {
-    mXo = mX;
-    mYo = mY;
-    mZo = mZ;
     mXOld = mX;
     mYOld = mY;
     mZOld = mZ;
-    mYRotO = mYRot;
+    mXo = mX;
+    mYo = mY;
+    mZo = mZ;
     mXRotO = mXRot;
+    mYRotO = mYRot;
 }
 
 bool Entity::controllingPassengerIsA(unsigned long long type)

@@ -6,8 +6,9 @@
 #include "game/data/CompoundTag.hpp"
 #include "game/item/ItemInstance.hpp"
 
-static const std::wstring HORSE_ARMOR_COLOR = L"customColor";
 static const std::wstring HORSE_ARMOR_BASE_ICON = L"leather_horse_armor_base";
+const std::wstring HorseArmorItem::HORSE_ARMOR_DETAIL_ICON = L"leather_horse_armor_detail";
+static const std::wstring HORSE_ARMOR_COLOR = L"customColor";
 
 HorseArmorItem::HorseArmorItem(int tier, int protection, int texture, const wchar_t* hash)
     : Item(), mTier(tier), mProtection(protection)
