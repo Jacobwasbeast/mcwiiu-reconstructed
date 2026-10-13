@@ -457,7 +457,7 @@ void PlayerChunkMap::removeOutsideArea(boost::shared_ptr<ServerPlayer> player,
         }
     }
 
-    player->mConnection->send(boost::shared_ptr<Packet>(new ChunkVisibilityAreaPacket(
+    player->mConnection->send(boost::shared_ptr<ChunkVisibilityAreaPacket>(new ChunkVisibilityAreaPacket(
         minX, maxX, minZ, maxZ, false, shouldActuallyDropChunks(), true)));
 
     PlayerVector::iterator it = std::find(mPlayers.begin(), mPlayers.end(), player);
@@ -539,7 +539,7 @@ void PlayerChunkMap::move(boost::shared_ptr<ServerPlayer> player)
                     else
                         ++it;
                 }
-                player->mConnection->send(boost::shared_ptr<Packet>(new ChunkVisibilityAreaPacket(
+                player->mConnection->send(boost::shared_ptr<ChunkVisibilityAreaPacket>(new ChunkVisibilityAreaPacket(
                     firstX, firstX + sameRow, firstZ, firstZ, true, shouldActuallyDropChunks(), false)));
             }
             else
@@ -552,7 +552,7 @@ void PlayerChunkMap::move(boost::shared_ptr<ServerPlayer> player)
                     else
                         ++it;
                 }
-                player->mConnection->send(boost::shared_ptr<Packet>(new ChunkVisibilityAreaPacket(
+                player->mConnection->send(boost::shared_ptr<ChunkVisibilityAreaPacket>(new ChunkVisibilityAreaPacket(
                     firstX, firstX, firstZ, firstZ + sameColumn, true, shouldActuallyDropChunks(), false)));
             }
         }

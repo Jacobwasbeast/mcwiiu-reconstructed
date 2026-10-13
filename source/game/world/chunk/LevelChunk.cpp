@@ -1638,17 +1638,11 @@ int LevelChunk::getRawBrightness(const BlockPos& pos, int skyDarken)
 void LevelChunk::addEntity(boost::shared_ptr<Entity> entity)
 {
     mLastSaveHadEntities = true;
-    int chunkX = (int)(entity->mX * 0.0625);
-    if (entity->mX * 0.0625 < chunkX)
-        --chunkX;
-    int chunkZ = (int)(entity->mZ * 0.0625);
-    if (entity->mZ * 0.0625 < chunkZ)
-        --chunkZ;
+    int chunkX = Mth::floor(entity->mX / 16.0);
+    int chunkZ = Mth::floor(entity->mZ / 16.0);
     if (chunkX != x || chunkZ != z)
         entity->remove();
-    int section = (int)(entity->mY * 0.0625);
-    if (entity->mY * 0.0625 < section)
-        --section;
+    int section = Mth::floor(entity->mY / 16.0);
     if (section < 0)
         section = 0;
     if (section >= mEntitySectionCount)
@@ -1944,7 +1938,7 @@ bool LevelChunk::containsPlayer()
         for (unsigned int index = 0; index < entities->size(); ++index)
         {
             boost::shared_ptr<Entity>& entity = entities->at(index);
-            if (eTYPE_DERIVED_FROM(EntityType::SERVER_PLAYER, entity->GetType()))
+            if (entity->GetType() == EntityType::SERVER_PLAYER)
             {
                 LeaveCriticalSection(&m_csEntities);
                 return true;
@@ -1966,42 +1960,35 @@ void LevelChunk::getEntities(boost::shared_ptr<Entity> except, const AABB* box,
                              std::vector<boost::shared_ptr<Entity> >& entities,
                              const Predicate<boost::shared_ptr<Entity> >* predicate)
 {
-    int first = (int)((box->mMinY - 2.0) * 0.0625);
-    if ((box->mMinY - 2.0) * 0.0625 < first)
-        --first;
-    int last = (int)((box->mMaxY + 2.0) * 0.0625);
-    if ((box->mMaxY + 2.0) * 0.0625 < last)
-        --last;
-    if (first < 0)
-        first = 0;
-    if (last >= mEntitySectionCount)
-        last = mEntitySectionCount - 1;
+    int first = Mth::floor((box->mMinY - 2.0) / 16.0);
+    int last = Mth::floor((box->mMaxY + 2.0) / 16.0);
+    first = Mth::clamp(first, 0, mEntitySectionCount - 1);
+    last = Mth::clamp(last, 0, mEntitySectionCount - 1);
     for (int section = first; section <= last; ++section)
     {
-        std::vector<boost::shared_ptr<Entity> >& sectionEntities = *mEntitySections[section];
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = sectionEntities.begin(); it != sectionEntities.end();
-             ++it)
+        std::vector<boost::shared_ptr<Entity> >* sectionEntities = mEntitySections[section];
+        if (sectionEntities->empty())
+            continue;
+        std::vector<boost::shared_ptr<Entity> >::iterator end = sectionEntities->end();
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = sectionEntities->begin(); it != end; it++)
         {
-            boost::shared_ptr<Entity> entity = *it;
-            if (entity != except &&
-                box->intersects(entity->mBoundingBox->mMinX, entity->mBoundingBox->mMinY, entity->mBoundingBox->mMinZ,
-                                entity->mBoundingBox->mMaxX, entity->mBoundingBox->mMaxY,
-                                entity->mBoundingBox->mMaxZ) &&
-                (predicate == NULL || predicate->apply(entity)))
-                entities.push_back(entity);
-            std::vector<boost::weak_ptr<Entity> >* passengers = entity->getPassengers();
-            if (passengers != NULL)
-                for (std::vector<boost::weak_ptr<Entity> >::iterator passenger = passengers->begin();
-                     passenger != passengers->end(); ++passenger)
+            boost::shared_ptr<Entity>& entity = *it;
+            if (entity->mBoundingBox->intersects(box) && entity != except)
+            {
+                if (predicate == NULL || predicate->apply(entity))
+                    entities.push_back(entity);
+                std::vector<boost::shared_ptr<Entity> >* subEntities = entity->getSubEntities();
+                if (subEntities != NULL)
                 {
-                    boost::shared_ptr<Entity> passengerEntity = passenger->lock();
-                    if (passengerEntity && passengerEntity != except &&
-                        box->intersects(passengerEntity->mBoundingBox->mMinX, passengerEntity->mBoundingBox->mMinY,
-                                        passengerEntity->mBoundingBox->mMinZ, passengerEntity->mBoundingBox->mMaxX,
-                                        passengerEntity->mBoundingBox->mMaxY, passengerEntity->mBoundingBox->mMaxZ) &&
-                        (predicate == NULL || predicate->apply(passengerEntity)))
-                        entities.push_back(passengerEntity);
+                    for (unsigned int i = 0; i < subEntities->size(); ++i)
+                    {
+                        boost::shared_ptr<Entity>& subEntity = subEntities->at(i);
+                        if (subEntity != except && subEntity->mBoundingBox->intersects(box) &&
+                            (predicate == NULL || predicate->apply(subEntity)))
+                            entities.push_back(subEntity);
+                    }
                 }
+            }
         }
     }
 }
@@ -2009,16 +1996,12 @@ void LevelChunk::getEntitiesOfClass(const std::type_info& type, const AABB* box,
                                     std::vector<boost::shared_ptr<Entity> >& entities,
                                     const Predicate<boost::shared_ptr<Entity> >* predicate, bool excludeInvisiblePlayers)
 {
-    int first = (int)((box->mMinY - 2.0) * 0.0625);
-    if ((box->mMinY - 2.0) * 0.0625 < first)
-        --first;
-    int last = (int)((box->mMaxY + 2.0) * 0.0625);
-    if ((box->mMaxY + 2.0) * 0.0625 < last)
-        --last;
+    int first = Mth::floor((box->mMinY - 2.0) / 16.0);
+    int last = Mth::floor((box->mMaxY + 2.0) / 16.0);
     first = Mth::clamp(first, 0, mEntitySectionCount - 1);
     last = Mth::clamp(last, 0, mEntitySectionCount - 1);
 
-    unsigned int typeMask = 0;
+    unsigned long long typeMask = 0;
     if (type == typeid(Player))
         typeMask = EntityType::PLAYER;
     else if (type == typeid(Entity))
@@ -2046,38 +2029,34 @@ void LevelChunk::getEntitiesOfClass(const std::type_info& type, const AABB* box,
 
     for (int section = first; section <= last; ++section)
     {
-        std::vector<boost::shared_ptr<Entity> >& sectionEntities = *mEntitySections[section];
-        for (std::vector<boost::shared_ptr<Entity> >::iterator it = sectionEntities.begin(); it != sectionEntities.end();
-             ++it)
+        std::vector<boost::shared_ptr<Entity> >* sectionEntities = mEntitySections[section];
+        std::vector<boost::shared_ptr<Entity> >::iterator end = sectionEntities->end();
+        for (std::vector<boost::shared_ptr<Entity> >::iterator it = sectionEntities->begin(); it != end; it++)
         {
             boost::shared_ptr<Entity> entity = *it;
-            bool matches;
-            if (typeMask == 0)
+            bool matches = false;
+            if (typeMask != 0)
             {
-                matches = entity != NULL && typeid(*entity) == type;
+                if (eTYPE_DERIVED_FROM(typeMask, entity->GetType()))
+                    matches = true;
             }
-            else
+            else if (entity != NULL && type == typeid(*entity.get()))
+                matches = true;
+            if (matches && entity->mBoundingBox->intersects(box))
             {
-                unsigned long long entityType = entity->GetType();
-                if ((typeMask & 0x3f) == 0)
-                    matches = (entityType & typeMask) == typeMask;
-                else
-                    matches = entityType == typeMask;
-            }
-            if (!matches || !entity->mBoundingBox->intersects(box->mMinX, box->mMinY, box->mMinZ, box->mMaxX,
-                                                             box->mMaxY, box->mMaxZ))
-                continue;
-            if (predicate != NULL && !predicate->apply(entity))
-                continue;
-            if (type != typeid(Player) || !excludeInvisiblePlayers)
-            {
-                entities.push_back(entity);
-            }
-            else
-            {
-                boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
-                if (!player->hasInvisiblePrivilege())
-                    entities.push_back(entity);
+                if (predicate == NULL || predicate->apply(entity))
+                {
+                    if (type == typeid(Player) && excludeInvisiblePlayers)
+                    {
+                        boost::shared_ptr<Player> player = boost::dynamic_pointer_cast<Player>(entity);
+                        if (!player->hasInvisiblePrivilege())
+                            entities.push_back(entity);
+                    }
+                    else
+                    {
+                        entities.push_back(entity);
+                    }
+                }
             }
         }
     }
@@ -2095,9 +2074,14 @@ bool LevelChunk::shouldSave(bool force)
 {
     if (mDontSave)
         return false;
-    if (!force)
-        return (mLastSaveHadEntities && level->getGameTime() >= mLastSaveTime + 600) || mUnsaved;
-    return (mLastSaveHadEntities && level->getGameTime() != mLastSaveTime) || mUnsaved;
+    if (force)
+    {
+        if ((mLastSaveHadEntities && level->getGameTime() != mLastSaveTime) || mUnsaved)
+            return true;
+    }
+    else if (mLastSaveHadEntities && level->getGameTime() >= mLastSaveTime + 600)
+        return true;
+    return mUnsaved;
 }
 int LevelChunk::getBlocksAndData(arrayWithLength<unsigned char>* output, int x, int y, int z, int width, int height,
                                  int depth, int offset, bool includeLight)

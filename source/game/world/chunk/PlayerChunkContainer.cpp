@@ -201,16 +201,23 @@ bool PlayerChunkContainer::broadcast(boost::shared_ptr<Packet> packet)
         if (!sentTo.empty())
         {
             if (thisPlayer == NULL)
-                continue;
-            for (unsigned int j = 0; j < sentTo.size(); ++j)
             {
-                INetworkPlayer* otherPlayer = sentTo[j]->mConnection->getNetworkPlayer();
-                if (otherPlayer != NULL && thisPlayer->IsSameSystem(otherPlayer))
-                    dontSend = true;
+                dontSend = true;
             }
-            if (dontSend)
-                continue;
+            else
+            {
+                for (unsigned int j = 0; j < sentTo.size(); ++j)
+                {
+                    boost::shared_ptr<ServerPlayer> player2 = sentTo[j];
+                    INetworkPlayer* otherPlayer = player2->mConnection->getNetworkPlayer();
+                    if (otherPlayer != NULL && thisPlayer->IsSameSystem(otherPlayer))
+                        dontSend = true;
+                }
+            }
         }
+
+        if (dontSend)
+            continue;
 
         const int flagIndex = ServerPlayer::getFlagIndexForChunk(mPos, mMap->mDimension);
         if (player->mTrackedChunks.find(mPos) != player->mTrackedChunks.end()
@@ -248,7 +255,8 @@ bool PlayerChunkContainer::broadcast(boost::shared_ptr<Packet> packet)
                 {
                     for (unsigned int j = 0; j < sentTo.size(); ++j)
                     {
-                        INetworkPlayer* otherPlayer = sentTo[j]->mConnection->getNetworkPlayer();
+                        boost::shared_ptr<ServerPlayer> player2 = sentTo[j];
+                        INetworkPlayer* otherPlayer = player2->mConnection->getNetworkPlayer();
                         if (otherPlayer != NULL && thisPlayer->IsSameSystem(otherPlayer))
                             dontSend = true;
                     }
