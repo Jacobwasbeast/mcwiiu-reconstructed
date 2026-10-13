@@ -1754,31 +1754,39 @@ unsigned int LocalPlayer::creativeModeHandleMouseClick(int button, bool pressed)
         return 0;
     }
 
-    if (mCreativeRepeatState == 4 || mCreativeRepeatState == 5)
+    if (mCreativeRepeatState == 4)
+    {
         return 0;
+    }
 
     if (mCreativeRepeatState == 0)
     {
-        mCreativeMouseStartX = static_cast<float>(mX);
-        mCreativeMouseStartY = static_cast<float>(mY);
-        mCreativeMouseStartZ = static_cast<float>(mZ);
+        mCreativeMouseStartX = (float)mX;
+        mCreativeMouseStartY = (float)mY;
+        mCreativeMouseStartZ = (float)mZ;
 
-        const unsigned char handled = handleMouseClick(button);
-        if (isSprinting() || isPassenger() || isSleeping())
+        unsigned char handled = handleMouseClick(button);
+
+        if (!isSprinting() && !isPassenger() && !isSleeping())
         {
-            mCreativeRepeatState = 5;
+            if (!handled)
+            {
+                mCreativeRepeatState = 4;
+                return 1;
+            }
+
+            mCreativeMouseRepeatDelay = 0.0f;
+            mCreativeRepeatState = 1;
             return 1;
         }
 
-        if (handled == 0)
-        {
-            mCreativeRepeatState = 4;
-            return 1;
-        }
-
-        mCreativeMouseRepeatDelay = 0.0f;
-        mCreativeRepeatState = 1;
+        mCreativeRepeatState = 5;
         return 1;
+    }
+
+    if (mCreativeRepeatState == 5)
+    {
+        return 0;
     }
 
     if (isSprinting())
@@ -1787,17 +1795,16 @@ unsigned int LocalPlayer::creativeModeHandleMouseClick(int button, bool pressed)
         return 0;
     }
 
-    const float deltaX = static_cast<float>(mX) - mCreativeMouseStartX;
-    const float deltaY = static_cast<float>(mY) - mCreativeMouseStartY;
-    const float deltaZ = static_cast<float>(mZ) - mCreativeMouseStartZ;
-    const float changeX = deltaX - mCreativeMouseDeltaX;
-    const float changeY = deltaY - mCreativeMouseDeltaY;
-    const float changeZ = deltaZ - mCreativeMouseDeltaZ;
-    const float changeLength = std::sqrt(changeX * changeX + changeY * changeY + changeZ * changeZ);
+    float deltaX = (float)mX - mCreativeMouseStartX;
+    float deltaY = (float)mY - mCreativeMouseStartY;
+    float deltaZ = (float)mZ - mCreativeMouseStartZ;
+    float changeX = deltaX - mCreativeMouseDeltaX;
+    float changeY = deltaY - mCreativeMouseDeltaY;
+    float changeZ = deltaZ - mCreativeMouseDeltaZ;
 
     if (mCreativeRepeatState == 2)
     {
-        if (changeLength < 0.01f)
+        if (sqrtf(changeX * changeX + changeY * changeY + changeZ * changeZ) < 0.01f)
         {
             mCreativeMouseRepeatDelay = 0.0f;
             mCreativeRepeatState = 3;
@@ -1805,7 +1812,7 @@ unsigned int LocalPlayer::creativeModeHandleMouseClick(int button, bool pressed)
     }
     else if (mCreativeRepeatState == 3)
     {
-        if (changeLength >= 0.01f)
+        if (sqrtf(changeX * changeX + changeY * changeY + changeZ * changeZ) >= 0.01f)
         {
             mCreativeMouseRepeatDelay = 0.0f;
             mCreativeRepeatState = 2;
@@ -1813,6 +1820,7 @@ unsigned int LocalPlayer::creativeModeHandleMouseClick(int button, bool pressed)
         else
         {
             mCreativeMouseRepeatDelay += 0.1f;
+
             if (mCreativeMouseRepeatDelay > 0.7f)
             {
                 mCreativeMouseRepeatDelay = 0.0f;
@@ -1825,73 +1833,62 @@ unsigned int LocalPlayer::creativeModeHandleMouseClick(int button, bool pressed)
     mCreativeMouseDeltaY = deltaY;
     mCreativeMouseDeltaZ = deltaZ;
 
-    const float movement[3] = {deltaX, deltaY, deltaZ};
-    int axis = -1;
-    bool delayedRepeat = false;
-
-    for (int candidate = 0; candidate < 3; ++candidate)
+    if (fabs(deltaX) >= 1.0f)
     {
-        if (std::fabs(movement[candidate]) >= 1.0f)
-        {
-            axis = candidate;
-            break;
-        }
+        mCreativeMouseStartX += deltaX < 0.0f ? ceilf(deltaX) : floorf(deltaX);
+        mCreativeMouseStartY += deltaY;
+        mCreativeMouseStartZ += deltaZ;
     }
-
-    if (axis < 0)
+    else if (fabs(deltaY) >= 1.0f)
+    {
+        mCreativeMouseStartX += deltaX;
+        mCreativeMouseStartY += deltaY < 0.0f ? ceilf(deltaY) : floorf(deltaY);
+        mCreativeMouseStartZ += deltaZ;
+    }
+    else if (fabs(deltaZ) >= 1.0f)
+    {
+        mCreativeMouseStartX += deltaX;
+        mCreativeMouseStartY += deltaY;
+        mCreativeMouseStartZ += deltaZ < 0.0f ? ceilf(deltaZ) : floorf(deltaZ);
+    }
+    else
     {
         if (mCreativeMouseRepeatDelay <= 0.0f)
-            return 0;
-
-        const float remaining = 1.0f - mCreativeMouseRepeatDelay;
-        if (std::fabs(deltaX) < remaining && std::fabs(deltaY) < remaining &&
-            std::fabs(deltaZ) < remaining)
-            return 0;
-        delayedRepeat = true;
-        for (int candidate = 0; candidate < 3; ++candidate)
         {
-            if (std::fabs(movement[candidate]) >= remaining)
-            {
-                axis = candidate;
-                break;
-            }
+            return 0;
         }
+
+        float remaining = 1.0f - mCreativeMouseRepeatDelay;
+
+        if (fabs(deltaY) < remaining && fabs(deltaZ) < remaining && fabs(deltaX) < remaining)
+        {
+            return 0;
+        }
+
+        mCreativeMouseStartX += deltaX;
+        mCreativeMouseStartY += deltaY;
+        mCreativeMouseStartZ += deltaZ;
     }
 
-    if (axis < 0)
-        return 0;
+    double savedX = mX;
+    double savedY = mY;
+    double savedZ = mZ;
 
-    const double savedX = mX;
-    const double savedY = mY;
-    const double savedZ = mZ;
-    float rayX = mCreativeMouseStartX + deltaX;
-    float rayY = mCreativeMouseStartY + deltaY;
-    float rayZ = mCreativeMouseStartZ + deltaZ;
-    if (!delayedRepeat)
-    {
-        const float snapped = movement[axis] < 0.0f ? std::ceil(movement[axis]) :
-                                                       std::floor(movement[axis]);
-        if (axis == 0)
-            rayX = mCreativeMouseStartX + snapped;
-        else if (axis == 1)
-            rayY = mCreativeMouseStartY + snapped;
-        else
-            rayZ = mCreativeMouseStartZ + snapped;
-    }
-    mCreativeMouseStartX = rayX;
-    mCreativeMouseStartY = rayY;
-    mCreativeMouseStartZ = rayZ;
-    mX = rayX;
-    mY = rayY;
-    mZ = rayZ;
+    mX = mCreativeMouseStartX;
+    mY = mCreativeMouseStartY;
+    mZ = mCreativeMouseStartZ;
+
     mMinecraft->mGameRenderer->pick(1.0f);
+
     mX = savedX;
     mY = savedY;
     mZ = savedZ;
-    handleMouseClick(button);
-    mCreativeMouseRepeatDelay = 0.0f;
 
+    handleMouseClick(button);
+
+    mCreativeMouseRepeatDelay = 0.0f;
     mCreativeRepeatState = mCreativeRepeatState == 3 ? 1 : 2;
+
     return 0;
 }
 

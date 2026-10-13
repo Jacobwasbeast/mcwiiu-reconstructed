@@ -346,11 +346,11 @@ void MultiPlayerLevel::clearResetRegion(int minX, int minY, int minZ,
 {
     for (unsigned int i = 0; i < mResetInfos.size(); ++i)
     {
-        std::vector<ResetInfo>::iterator it = mResetInfos.begin() + i;
-        if (minX <= it->pos.x && minY <= it->pos.y && minZ <= it->pos.z &&
-            it->pos.x <= maxX && it->pos.y <= maxY && it->pos.z <= maxZ)
+        ResetInfo& info = mResetInfos[i];
+        if (info.pos.x >= minX && info.pos.y >= minY && info.pos.z >= minZ &&
+            info.pos.x <= maxX && info.pos.y <= maxY && info.pos.z <= maxZ)
         {
-            mResetInfos.erase(it);
+            mResetInfos.erase(mResetInfos.begin() + i);
             --i;
         }
     }
@@ -562,17 +562,18 @@ bool MultiPlayerLevel::doSetBlockAndData(const BlockPos& pos, const BlockState* 
         liquidFlowChange = false;
     }
 
+    bool changed;
     if (extraState == NULL)
     {
-        if (!setBlockAndUpdate(pos, state) && !CGameNetworkManager::sInstance.IsHost())
-            return false;
+        changed = setBlockAndUpdate(pos, state);
     }
     else
     {
         bool extraChanged = setExtraBlock(pos, extraState, Block::UPDATE_ALL, false);
-        if (!(setBlockAndUpdate(pos, state) | extraChanged) && !CGameNetworkManager::sInstance.IsHost())
-            return false;
+        changed = setBlockAndUpdate(pos, state) || extraChanged;
     }
+    if (!changed && !CGameNetworkManager::sInstance.IsHost())
+        return false;
 
     if (CGameNetworkManager::sInstance.IsHost() && !liquidFlowChange)
     {

@@ -1553,7 +1553,7 @@ bool Player::isHurt()
 int32_t Player::getExperienceReward(boost::shared_ptr<Player>)
 {
     int32_t reward = 0;
-    if (mLevel != NULL && !mLevel->getGameRules()->getBoolean(GameRules::RULE_KEEPINVENTORY)) {
+    if (!mLevel->getGameRules()->getBoolean(GameRules::RULE_KEEPINVENTORY)) {
         reward = mExperienceLevel * 7;
         if (reward > 100) reward = 100;
     }
@@ -2355,9 +2355,7 @@ void Player::aiStep()
 
 void Player::touch(boost::shared_ptr<Entity> entity)
 {
-    if (!entity) return;
-    boost::shared_ptr<ItemEntity> item = boost::dynamic_pointer_cast<ItemEntity>(entity);
-    if (item) item->playerTouch(boost::static_pointer_cast<Player>(shared_from_this()));
+    entity->playerTouch(boost::static_pointer_cast<Player>(shared_from_this()));
 }
 
 void Player::destroyVanishingCursedItems()

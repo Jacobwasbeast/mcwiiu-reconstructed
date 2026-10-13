@@ -46,7 +46,7 @@ public:
     bool isOp(boost::shared_ptr<ServerPlayer> player);
     int getViewDistance();
     boost::shared_ptr<ServerPlayer> findAlivePlayerOnSystem(boost::shared_ptr<ServerPlayer> player);
-    int removePlayerFromReceiving(boost::shared_ptr<ServerPlayer> player, bool force, int mode);
+    int removePlayerFromReceiving(boost::shared_ptr<ServerPlayer> player, bool usePlayerDimension, int dimension);
     int addPlayerToReceiving(boost::shared_ptr<ServerPlayer> player, bool force);
     void broadcastAll(boost::shared_ptr<Packet> packet);
     void save(boost::shared_ptr<ServerPlayer> player);
@@ -81,7 +81,7 @@ public:
     void tick();
     bool isTrackingBlock(const BlockPos& pos, const Dimension* dimension);
     void prioritiseBlockChanges(const BlockPos& pos, int priority);
-    void broadcastAll(boost::shared_ptr<Packet> packet, int excluded);
+    void broadcastAll(boost::shared_ptr<Packet> packet, int dimension);
     boost::shared_ptr<ServerPlayer> getPlayer(PlayerUID uid);
     void broadcastToTeam(boost::shared_ptr<Player> source, boost::shared_ptr<Packet> packet);
     void broadcastToAllExceptTeam(boost::shared_ptr<Player> source,

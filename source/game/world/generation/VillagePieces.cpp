@@ -235,23 +235,23 @@ bool VillagePieces::PieceWeight::isValid()
 
 VillagePieces::VillagePiece::VillagePiece(StartPiece* startPiece, int depth)
     : StructurePiece(depth),
-      mAverageGroundHeight(-1),
-      mVillagerCount(0),
-      mType(0),
-      mIsZombieVillage(false),
-      mCobblestoneSelector(NULL),
       mFirstBools(),
       mSecondBools(),
       mFirstInts(),
-      mSecondInts(),
-      mStartPiece(startPiece)
+      mSecondInts()
 {
+    mStartPiece = startPiece;
+    mVillagerCount = 0;
+    mAverageGroundHeight = -1;
+    mIsZombieVillage = false;
+    mType = 0;
     if (startPiece != NULL)
     {
         mType = startPiece->mType;
         mIsZombieVillage = startPiece->mIsZombieVillage;
     }
     mCobblestoneSelector = new CobbleStoneSelector(mIsZombieVillage, mType);
+    mSecondInts.clear();
 }
 
 VillagePieces::VillagePiece::VillagePiece()
@@ -286,12 +286,24 @@ void VillagePieces::VillagePiece::setStructureType(int type)
 
 bool VillagePieces::VillagePiece::isOkBox(BoundingBox* box, StartPiece* startPiece)
 {
-    if (box == NULL)
-        return false;
-    int half = (startPiece->mLevel->getLevelData()->getXZSize() << 4) >> 1;
-    int lower = 1 - half;
-    int upper = half - 1;
-    return box->x1 < upper && lower < box->z0 && lower < box->x0 && box->y0 > 10 && box->z1 < upper;
+    bool ok = false;
+    if (box != NULL)
+    {
+        if (box->y0 > 10)
+            ok = true;
+        int xzSize = startPiece->mLevel->getLevelData()->getXZSize();
+        int lower = -((xzSize << 4) / 2) + 1;
+        int upper = ((xzSize << 4) / 2) - 1;
+        if (box->x0 <= lower)
+            ok = false;
+        if (box->z0 <= lower)
+            ok = false;
+        if (box->x1 >= upper)
+            ok = false;
+        if (box->z1 >= upper)
+            ok = false;
+    }
+    return ok;
 }
 
 void VillagePieces::VillagePiece::addAdditionalSaveData(DataOutputStream* output)
@@ -529,7 +541,10 @@ VillagePieces::Well::Well(StartPiece* startPiece, int depth, Random& random, int
     : VillagePiece(startPiece, depth)
 {
     setOrientation(Direction::Plane::HORIZONTAL->getRandomDirection(random));
-    setBoundingBox(new BoundingBox(x, 64, z, x + 5, 78, z + 5));
+    if (getOrientation()->getAxis() == Direction::Axis::Z)
+        mBoundingBox = new BoundingBox(x, 64, z, x + 5, 78, z + 5);
+    else
+        mBoundingBox = new BoundingBox(x, 64, z, x + 5, 78, z + 5);
 }
 
 VillagePieces::Well::Well()
