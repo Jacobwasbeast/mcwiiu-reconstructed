@@ -10,7 +10,7 @@
 
 void* CreateModel(FFLCharModel* model, FFLDataSource dataSource, FFLStoreData* storeData, int index);
 void* CreateIconTexture(GX2Texture* texture, const FFLCharModel* model);
-void* MakeIcon(GX2Texture* texture, IconShaderType shaderType, FFLDataSource dataSource,
-               FFLStoreData* storeData, int index);
+void* MakeIcon(GX2Texture* texture, IconShaderType shaderType, FFLDataSource dataSource, FFLStoreData* storeData,
+               int index);
 
 #endif
