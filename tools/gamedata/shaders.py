@@ -9,6 +9,10 @@ one lives; this module reads them and writes C++ the source includes:
   MiiIconDefaultShader.inc  the bytes of the Mii icon default shader file
   MiiIconExtShader.inc      the bytes of the Mii icon extension shader file
 
+and, the same way, the other data the source cannot carry: the byte tables in the
+recipe's shader_files and the wide string literals in its wide_strings (the online
+service access key).
+
     python tools/gamedata/shaders.py <Minecraft.Client.rpx> <output dir>
 """
 import hashlib
@@ -211,6 +215,18 @@ def render_bytes(image, address, size):
     return "\n".join(lines) + "\n"
 
 
+def render_wide_string(image, address, length):
+    """A C++ wide string literal of the length two-byte characters at address, which the executable stores
+    big-endian and NUL-terminated."""
+    data = image.read(address, 2 * (length + 1))
+    if data[-2:] != b"\0\0":
+        raise GenerationError("no wide string of %d characters at 0x%08X" % (length, address))
+    text = data[:-2].decode("utf-16-be")
+    if not all(" " <= char <= "~" and char not in "\"\\" for char in text):
+        raise GenerationError("unexpected characters in the wide string at 0x%08X" % address)
+    return 'L"%s"\n' % text
+
+
 def generate(executable, output_dir, recipe_path=RECIPE, gx2_types=GX2_TYPES):
     """Write every generated shader source into output_dir. Returns
     {file name: sha256 of its contents}."""
@@ -221,6 +237,8 @@ def generate(executable, output_dir, recipe_path=RECIPE, gx2_types=GX2_TYPES):
     outputs = {recipe["renderer_shaders"]["output"]: note + render_renderer_shaders(image, recipe, enums)}
     for item in recipe["shader_files"]:
         outputs[item["output"]] = note + render_bytes(image, int(item["address"], 16), item["size"])
+    for item in recipe.get("wide_strings", []):
+        outputs[item["output"]] = note + render_wide_string(image, int(item["address"], 16), item["length"])
     os.makedirs(output_dir, exist_ok=True)
     hashes = {}
     for name, text in sorted(outputs.items()):

@@ -50,5 +50,8 @@
     {"output": "PeadSjisCodeTable.inc", "address": "0x104821B8", "size": 22245},
     {"output": "PeadSjisIndexTable.inc", "address": "0x104878A0", "size": 514},
     {"output": "PeadFloatDigitTable.inc", "address": "0x10487DF0", "size": 50352}
+  ],
+  "wide_strings": [
+    {"output": "NexAccessKey.inc", "address": "0x10466700", "length": 8}
   ]
 }
