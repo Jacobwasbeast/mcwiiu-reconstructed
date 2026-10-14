@@ -469,7 +469,7 @@ void UIScene_PauseMenu::_ExitWorld(void* context)
                 case DisconnectPacket::eDisconnectReason_Quit:
                     errorMessage = IDS_DISCONNECTED_SERVER_QUIT;
                     break;
-                case DisconnectPacket::eDisconnectReason_KeepAliveTimeout:
+                case DisconnectPacket::eDisconnectReason_NoFlying:
                     errorMessage = static_cast<int>(IDS_DISCONNECTED_FLYING);
                     break;
                 case DisconnectPacket::eDisconnectReason_Kicked:
@@ -487,36 +487,36 @@ void UIScene_PauseMenu::_ExitWorld(void* context)
                     errorMessage = static_cast<int>(IDS_DISCONNECTED_CLIENT_OLD);
                     errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
                     break;
-                case DisconnectPacket::eDisconnectReason_NotFriendsWithHost:
-                    errorMessage = static_cast<int>(0xfb7f0496);
+                case DisconnectPacket::eDisconnectReason_ContentRestrictedSingleLocal:
+                    errorMessage = static_cast<int>(STRING_JOIN_LOCAL_PLAYER_CONTENT_RESTRICTED);
                     errorTitle = IDS_CONNECTION_FAILED;
                     break;
-                case DisconnectPacket::eDisconnectReason_NotFriendsWithPlayer:
-                    errorMessage = 0x4d669d55;
+                case DisconnectPacket::eDisconnectReason_ContentRestrictedAllLocal:
+                    errorMessage = STRING_JOIN_CONTENT_PRIVILEGE_TOO_RESTRICTIVE;
                     errorTitle = IDS_CONNECTION_FAILED;
                     break;
-                case DisconnectPacket::eDisconnectReason_NoMultiplayerPrivilege:
+                case DisconnectPacket::eDisconnectReason_NoFriendsInGame:
                     errorMessage = IDS_DISCONNECTED_NO_FRIENDS_IN_GAME;
                     errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
                     break;
-                case DisconnectPacket::eDisconnectReason_LoginRejected:
+                case DisconnectPacket::eDisconnectReason_BannedByHost:
                     errorMessage = IDS_DISCONNECTED_BANNED;
                     errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
                     break;
-                case DisconnectPacket::eDisconnectReason_NoOnlinePrivilege:
-                    errorMessage = static_cast<int>(0xf9885aff);
+                case DisconnectPacket::eDisconnectReason_FriendsOfHostOnly:
+                    errorMessage = static_cast<int>(STRING_JOIN_FRIENDS_OF_HOST_ONLY);
                     errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
                     break;
-                case DisconnectPacket::eDisconnectReason_AgeRestricted:
-                    errorMessage = 0x3103be06;
+                case DisconnectPacket::eDisconnectReason_MiiInUse:
+                    errorMessage = STRING_MII_ALREADY_IN_USE;
                     errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
                     break;
-                case DisconnectPacket::eDisconnectReason_StorageError:
-                    errorMessage = static_cast<int>(0x98521f17);
+                case DisconnectPacket::eDisconnectReason_CannotJoinGame:
+                    errorMessage = static_cast<int>(STRING_CANNOT_JOIN_GAME);
                     errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
                     break;
-                case DisconnectPacket::eDisconnectReason_ContentNotOwned:
-                    errorMessage = static_cast<int>(0xec3b3da6);
+                case DisconnectPacket::eDisconnectReason_NoSuitableGame:
+                    errorMessage = static_cast<int>(STRING_NO_SUITABLE_GAME_TO_JOIN);
                     errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
                     break;
                 default:
@@ -561,26 +561,26 @@ void UIScene_PauseMenu::_ExitWorld(void* context)
             errorMessage = static_cast<int>(IDS_DISCONNECTED_CLIENT_OLD);
             errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
             break;
-        case DisconnectPacket::eDisconnectReason_HostSignedOut:
+        case DisconnectPacket::eDisconnectReason_NoMultiplayerPrivilegeJoin:
             errorMessage = static_cast<int>(IDS_NO_MULTIPLAYER_PRIVILEGE_JOIN_TEXT);
             break;
-        case DisconnectPacket::eDisconnectReason_NotFriendsWithHost:
-            errorMessage = static_cast<int>(0xfb7f0496);
+        case DisconnectPacket::eDisconnectReason_ContentRestrictedSingleLocal:
+            errorMessage = static_cast<int>(STRING_JOIN_LOCAL_PLAYER_CONTENT_RESTRICTED);
             errorTitle = IDS_CONNECTION_FAILED;
             break;
-        case DisconnectPacket::eDisconnectReason_NotFriendsWithPlayer:
-            errorMessage = 0x4d669d55;
+        case DisconnectPacket::eDisconnectReason_ContentRestrictedAllLocal:
+            errorMessage = STRING_JOIN_CONTENT_PRIVILEGE_TOO_RESTRICTIVE;
             errorTitle = IDS_CONNECTION_FAILED;
             break;
-        case DisconnectPacket::eDisconnectReason_AgeRestricted:
-            errorMessage = 0x3103be06;
+        case DisconnectPacket::eDisconnectReason_MiiInUse:
+            errorMessage = STRING_MII_ALREADY_IN_USE;
             break;
-        case DisconnectPacket::eDisconnectReason_StorageError:
-            errorMessage = static_cast<int>(0x98521f17);
+        case DisconnectPacket::eDisconnectReason_CannotJoinGame:
+            errorMessage = static_cast<int>(STRING_CANNOT_JOIN_GAME);
             errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
             break;
-        case DisconnectPacket::eDisconnectReason_ContentNotOwned:
-            errorMessage = static_cast<int>(0xec3b3da6);
+        case DisconnectPacket::eDisconnectReason_NoSuitableGame:
+            errorMessage = static_cast<int>(STRING_NO_SUITABLE_GAME_TO_JOIN);
             errorTitle = static_cast<int>(IDS_CANTJOIN_TITLE);
             break;
         default:

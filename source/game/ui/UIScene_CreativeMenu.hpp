@@ -96,8 +96,6 @@ public:
     private:
         boost::shared_ptr<SimpleContainer> m_container;
         boost::shared_ptr<Inventory> m_inventory;
-        int m_selectedSlot;
-        int m_resultSlot;
     };
 
     UIScene_CreativeMenu(int type, void* data, UILayer* layer);

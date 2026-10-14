@@ -36,6 +36,7 @@ public:
     friend class FJ_LabelOutline;
     friend class FJ_LeaderboardEntry;
     friend class FJ_Label_Blink;
+    friend class FJ_List;
 
     struct HtmlImageDrawData
     {

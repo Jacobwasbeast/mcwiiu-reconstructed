@@ -57,6 +57,7 @@ void FJ_SuperFlatMenu::SetActiveTab(int tab)
 
     FJ_FuiNode* activeTab;
     int focus;
+    const char* label;
     switch (tab)
     {
     case 0:
@@ -65,7 +66,7 @@ void FJ_SuperFlatMenu::SetActiveTab(int tab)
         properties->setVisible(false);
         activeTab = layers;
         focus = m_layersFocus;
-        gotoAndStop("Layers");
+        label = "Layers";
         break;
     case 1:
         layers->setVisible(false);
@@ -73,7 +74,7 @@ void FJ_SuperFlatMenu::SetActiveTab(int tab)
         properties->setVisible(false);
         activeTab = biomes;
         focus = m_biomesFocus;
-        gotoAndStop("Biomes");
+        label = "Biomes";
         break;
     case 2:
         layers->setVisible(false);
@@ -81,7 +82,7 @@ void FJ_SuperFlatMenu::SetActiveTab(int tab)
         properties->setVisible(true);
         activeTab = properties;
         focus = m_propertiesFocus;
-        gotoAndStop("Properties");
+        label = "Properties";
         break;
     default:
         m_activeTab = tab;
@@ -94,6 +95,7 @@ void FJ_SuperFlatMenu::SetActiveTab(int tab)
     layersHelp->setVisible(layers->isVisible());
     biomesHelp->setVisible(biomes->isVisible());
     propertiesHelp->setVisible(properties->isVisible());
+    gotoAndStop(label);
 
     if (getStage()->getFocus()->isFJ_Base() && m_currentTab != tab)
     {

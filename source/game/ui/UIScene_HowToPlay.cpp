@@ -193,9 +193,9 @@ void UIScene_HowToPlay::StartPage(EHowToPlayPage page)
 
     if (!gConsoleUIController.UsingBitmapFont())
     {
-        text = replaceAll(text, L"(C)", L"©");
-        text = replaceAll(text, L"®", L"(R)");
-        text = replaceAll(text, L"–", L"-");
+        text = replaceAll(text, L"\x00A9", L"(C)");
+        text = replaceAll(text, L"\x00AE", L"(R)");
+        text = replaceAll(text, L"\x2013", L"-");
     }
 
     stripWhitespaceForHtml(text, true);

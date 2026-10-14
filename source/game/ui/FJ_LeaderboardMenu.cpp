@@ -27,7 +27,7 @@ unsigned int FJ_LeaderboardMenu::getType()
 void FJ_LeaderboardMenu::ASConstructor()
 {
     FJ_Label* infoLabel = getChildByName("Info")->asFJ_Label();
-    infoLabel->SetLabel(L"");
+    infoLabel->Init(L"");
 
     FJ_LeaderboardList* leaderboardList = static_cast<FJ_LeaderboardList*>(getChildByName("Gamers"));
     leaderboardList->SetupPleaseWait(infoLabel);

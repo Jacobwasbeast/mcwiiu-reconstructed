@@ -198,7 +198,7 @@ void SelectWorldScreen::render(int x, int y, float partialTick)
 
 SelectWorldScreen::WorldSelectionList::WorldSelectionList(SelectWorldScreen* screen)
     : ScrolledSelectionList(screen->mMinecraft, screen->mWidth, screen->mHeight,
-                            screen->mHeight - 64, 32, 36), mScreen(screen)
+                            32, screen->mHeight - 64, 36), mScreen(screen)
 {
 }
 

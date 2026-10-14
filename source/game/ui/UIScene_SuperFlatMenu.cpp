@@ -316,7 +316,7 @@ void UIScene_SuperFlatMenu::LoadPreset(SuperflatConfig* config)
 
 void UIScene_SuperFlatMenu::SetActiveTab(eTabs tab)
 {
-    FJ_SuperFlatMenu::Create(m_movie->getRootNode())->SetActiveTab(tab);
+    static_cast<FJ_SuperFlatMenu*>(m_movie->getRootNode()->getFuiNode())->SetActiveTab(tab);
     m_activeTab = tab;
     gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
     gConsoleUIController.TouchBoxRebuild(this);
@@ -594,7 +594,7 @@ void UIScene_SuperFlatMenu::handleInput(int playerId, int action, bool repeat, b
         return;
     if (!m_tickActions.empty())
         return;
-    gConsoleUIController.AnimateKeyPress(playerId, action, repeat, pressed, released);
+    gConsoleUIController.AnimateKeyPress(m_playerId, action, repeat, pressed, released);
     switch (action)
     {
     case EControllerActions_MenuY:
@@ -623,13 +623,12 @@ void UIScene_SuperFlatMenu::handleInput(int playerId, int action, bool repeat, b
     case EControllerActions_MenuPageDown:
         if (m_editingLayer && pressed)
         {
-            if (action == EControllerActions_MenuDown)
+            switch (action)
             {
+            case EControllerActions_MenuDown:
                 MoveCurrentLayer(-1);
                 return;
-            }
-            if (action == EControllerActions_MenuPageUp)
-            {
+            case EControllerActions_MenuPageUp:
                 MoveCurrentLayer(10);
                 return;
             }

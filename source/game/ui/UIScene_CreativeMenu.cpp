@@ -203,12 +203,19 @@ void UIScene_CreativeMenu::TabSpec::populateMenu(AbstractContainerMenu* menu, in
 
 UIScene_CreativeMenu::ItemPickerMenu::ItemPickerMenu(boost::shared_ptr<SimpleContainer> container,
                                                      boost::shared_ptr<Inventory> inventory)
-    : m_container(container), m_inventory(inventory), m_selectedSlot(0), m_resultSlot(0)
 {
+    m_inventory = inventory;
+    m_container = container;
     for (int i = 0; i < 50; ++i)
-        addSlot(new Slot(m_container, i, -1, -1));
+    {
+        Slot* slot = new Slot(m_container, i, -1, -1);
+        addSlot(slot);
+    }
     for (int i = 0; i < 9; ++i)
-        addSlot(new Slot(m_inventory, i, -1, -1));
+    {
+        Slot* slot = new Slot(m_inventory, i, -1, -1);
+        addSlot(slot);
+    }
     m_containerId = -2;
 }
 
@@ -228,12 +235,8 @@ bool UIScene_CreativeMenu::ItemPickerMenu::doQuickMoveLoop()
 }
 
 UIScene_CreativeMenu::UIScene_CreativeMenu(int type, void* data, UILayer* layer)
-    : UIScene_AbstractContainerMenu(type, layer), m_containerMenu(0), m_currentTab(8),
-      m_restoreSelectorPending(false), m_savedSlotX(0), m_savedSlotY(0), m_emptySlotX(0), m_emptySlotY(0),
-      m_unreferencedFlag(true)
+    : UIScene_AbstractContainerMenu(type, layer)
 {
-    std::fill(m_tabPages, m_tabPages + 8, 0);
-    std::fill(m_tabCurrentPages, m_tabCurrentPages + 8, 0);
     initialiseMovie();
 
     CreativeMenuSceneData* sceneData = static_cast<CreativeMenuSceneData*>(data);
@@ -246,9 +249,22 @@ UIScene_CreativeMenu::UIScene_CreativeMenu(int type, void* data, UILayer* layer)
                                  sceneData->creative);
     m_inventoryLabel.setLabel(UIString(L""), false, false);
 
-    for (int i = 0; i < 50; ++i)
+    m_restoreSelectorPending = false;
+    m_savedSlotX = 0;
+    m_savedSlotY = 0;
+    m_emptySlotX = 0;
+    m_emptySlotY = 0;
+    m_unreferencedFlag = true;
+    m_quickCraftDisabled = true;
+    for (int i = 0; i < 8; ++i)
+    {
+        m_tabPages[i] = 0;
+        m_tabCurrentPages[i] = 0;
+    }
+
+    for (unsigned int i = 0; i < 50; ++i)
         m_containerList.addSlot(i);
-    for (int i = 50; i < 59; ++i)
+    for (unsigned int i = 50; i < 59; ++i)
         m_hotbarList.addSlot(i);
 
     if (Minecraft::GetInstance()->mGameModes[sceneData->playerIndex] != 0)
@@ -349,24 +365,52 @@ unsigned int UIScene_CreativeMenu::GetSectionAndSlotInDirection(IUIScene_Abstrac
 
 void UIScene_CreativeMenu::GetPositionOfSection(IUIScene_AbstractContainerMenu::ESceneSection section, _UIVec2D* position)
 {
-    if (position == 0) return;
-
-    if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar)
+    switch (section)
     {
-        position->x = m_hotbarList.getXPos();
-        position->y = m_hotbarList.getYPos();
-    }
-    else if (section == IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector)
-    {
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeSelector:
         position->x = m_containerList.getXPos();
         position->y = m_containerList.getYPos();
-    }
-    else if (section >= IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab0 &&
-             section <= IUIScene_AbstractContainerMenu::ESceneSection_CreativeSlider)
-    {
-        UIControl_Touch& panel = m_touchPanels[section - IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab0];
-        position->x = panel.getXPos();
-        position->y = panel.getYPos();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeHotbar:
+        position->x = m_hotbarList.getXPos();
+        position->y = m_hotbarList.getYPos();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab0:
+        position->x = m_touchPanels[0].getXPos();
+        position->y = m_touchPanels[0].getYPos();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab1:
+        position->x = m_touchPanels[1].getXPos();
+        position->y = m_touchPanels[1].getYPos();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab2:
+        position->x = m_touchPanels[2].getXPos();
+        position->y = m_touchPanels[2].getYPos();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab3:
+        position->x = m_touchPanels[3].getXPos();
+        position->y = m_touchPanels[3].getYPos();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab4:
+        position->x = m_touchPanels[4].getXPos();
+        position->y = m_touchPanels[4].getYPos();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab5:
+        position->x = m_touchPanels[5].getXPos();
+        position->y = m_touchPanels[5].getYPos();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab6:
+        position->x = m_touchPanels[6].getXPos();
+        position->y = m_touchPanels[6].getYPos();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeTab7:
+        position->x = m_touchPanels[7].getXPos();
+        position->y = m_touchPanels[7].getYPos();
+        break;
+    case IUIScene_AbstractContainerMenu::ESceneSection_CreativeSlider:
+        position->x = m_touchPanels[8].getXPos();
+        position->y = m_touchPanels[8].getYPos();
+        break;
     }
 }
 
@@ -1537,31 +1581,37 @@ void UIScene_CreativeMenu::staticCtor()
     builder.POTION(Items::tippedArrow, Potions::LEAPING);
     builder.POTION(Items::tippedArrow, Potions::FIRE_RESISTANCE);
     builder.POTION(Items::tippedArrow, Potions::SWIFTNESS);
+    builder.POTION(Items::tippedArrow, Potions::SLOWNESS);
     builder.POTION(Items::tippedArrow, Potions::WATER_BREATHING);
     builder.POTION(Items::tippedArrow, Potions::HEALING);
     builder.POTION(Items::tippedArrow, Potions::HARMING);
     builder.POTION(Items::tippedArrow, Potions::POISON);
     builder.POTION(Items::tippedArrow, Potions::REGENERATION);
+    builder.POTION(Items::tippedArrow, Potions::STRENGTH);
     builder.POTION(Items::tippedArrow, Potions::WEAKNESS);
     builder.POTION(Items::tippedArrow, Potions::LUCK);
     builder.POTION(Items::tippedArrow, Potions::TURTLE_MASTER);
     builder.POTION(Items::tippedArrow, Potions::SLOW_FALLING);
     builder.POTION(Items::tippedArrow, Potions::LONG_NIGHT_VISION);
+    builder.POTION(Items::tippedArrow, Potions::LONG_INVISIBILITY);
     builder.POTION(Items::tippedArrow, Potions::LONG_LEAPING);
     builder.POTION(Items::tippedArrow, Potions::LONG_FIRE_RESISTANCE);
     builder.POTION(Items::tippedArrow, Potions::LONG_SWIFTNESS);
     builder.POTION(Items::tippedArrow, Potions::LONG_SLOWNESS);
     builder.POTION(Items::tippedArrow, Potions::LONG_WATER_BREATHING);
+    builder.POTION(Items::tippedArrow, Potions::LONG_POISON);
     builder.POTION(Items::tippedArrow, Potions::LONG_REGENERATION);
     builder.POTION(Items::tippedArrow, Potions::LONG_STRENGTH);
     builder.POTION(Items::tippedArrow, Potions::LONG_WEAKNESS);
     builder.POTION(Items::tippedArrow, Potions::WITHER);
     builder.POTION(Items::tippedArrow, Potions::LONG_TURTLE_MASTER);
+    builder.POTION(Items::tippedArrow, Potions::LONG_SLOW_FALLING);
     builder.POTION(Items::tippedArrow, Potions::STRONG_LEAPING);
     builder.POTION(Items::tippedArrow, Potions::STRONG_SWIFTNESS);
     builder.POTION(Items::tippedArrow, Potions::STRONG_HEALING);
     builder.POTION(Items::tippedArrow, Potions::STRONG_HARMING);
     builder.POTION(Items::tippedArrow, Potions::STRONG_POISON);
+    builder.POTION(Items::tippedArrow, Potions::STRONG_REGENERATION);
     builder.POTION(Items::tippedArrow, Potions::STRONG_STRENGTH);
     builder.POTION(Items::tippedArrow, Potions::STRONG_TURTLE_MASTER);
 
@@ -1658,101 +1708,124 @@ void UIScene_CreativeMenu::staticCtor()
     builder.mItems = &s_groupItems[ECreative_Inventory_Groups_Potions];
     builder.POTION(Items::potion, Potions::WATER);
     builder.POTION(Items::potion, Potions::AWKWARD);
+    builder.POTION(Items::potion, Potions::NIGHT_VISION);
     builder.POTION(Items::potion, Potions::INVISIBILITY);
     builder.POTION(Items::potion, Potions::LEAPING);
     builder.POTION(Items::potion, Potions::FIRE_RESISTANCE);
     builder.POTION(Items::potion, Potions::SWIFTNESS);
+    builder.POTION(Items::potion, Potions::SLOWNESS);
     builder.POTION(Items::potion, Potions::WATER_BREATHING);
     builder.POTION(Items::potion, Potions::HEALING);
     builder.POTION(Items::potion, Potions::HARMING);
     builder.POTION(Items::potion, Potions::POISON);
     builder.POTION(Items::potion, Potions::REGENERATION);
+    builder.POTION(Items::potion, Potions::STRENGTH);
     builder.POTION(Items::potion, Potions::WEAKNESS);
     builder.POTION(Items::potion, Potions::LUCK);
     builder.POTION(Items::potion, Potions::TURTLE_MASTER);
     builder.POTION(Items::potion, Potions::SLOW_FALLING);
+    builder.POTION(Items::splashPotion, Potions::WATER);
     builder.POTION(Items::splashPotion, Potions::NIGHT_VISION);
     builder.POTION(Items::splashPotion, Potions::INVISIBILITY);
     builder.POTION(Items::splashPotion, Potions::LEAPING);
     builder.POTION(Items::splashPotion, Potions::FIRE_RESISTANCE);
+    builder.POTION(Items::splashPotion, Potions::SWIFTNESS);
     builder.POTION(Items::splashPotion, Potions::SLOWNESS);
     builder.POTION(Items::splashPotion, Potions::WATER_BREATHING);
     builder.POTION(Items::splashPotion, Potions::HEALING);
     builder.POTION(Items::splashPotion, Potions::HARMING);
+    builder.POTION(Items::splashPotion, Potions::POISON);
     builder.POTION(Items::splashPotion, Potions::REGENERATION);
     builder.POTION(Items::splashPotion, Potions::STRENGTH);
     builder.POTION(Items::splashPotion, Potions::WEAKNESS);
     builder.POTION(Items::splashPotion, Potions::LUCK);
+    builder.POTION(Items::splashPotion, Potions::TURTLE_MASTER);
     builder.POTION(Items::splashPotion, Potions::SLOW_FALLING);
     builder.POTION(Items::lingeringPotion, Potions::WATER);
     builder.POTION(Items::lingeringPotion, Potions::NIGHT_VISION);
     builder.POTION(Items::lingeringPotion, Potions::INVISIBILITY);
     builder.POTION(Items::lingeringPotion, Potions::LEAPING);
+    builder.POTION(Items::lingeringPotion, Potions::FIRE_RESISTANCE);
     builder.POTION(Items::lingeringPotion, Potions::SWIFTNESS);
     builder.POTION(Items::lingeringPotion, Potions::SLOWNESS);
     builder.POTION(Items::lingeringPotion, Potions::WATER_BREATHING);
     builder.POTION(Items::lingeringPotion, Potions::HEALING);
+    builder.POTION(Items::lingeringPotion, Potions::HARMING);
     builder.POTION(Items::lingeringPotion, Potions::POISON);
     builder.POTION(Items::lingeringPotion, Potions::REGENERATION);
     builder.POTION(Items::lingeringPotion, Potions::STRENGTH);
     builder.POTION(Items::lingeringPotion, Potions::WEAKNESS);
+    builder.POTION(Items::lingeringPotion, Potions::LUCK);
     builder.POTION(Items::lingeringPotion, Potions::TURTLE_MASTER);
     builder.POTION(Items::lingeringPotion, Potions::SLOW_FALLING);
 
     builder.mItems = &s_groupItems[ECreative_Inventory_Groups_LongPotions];
     builder.POTION(Items::potion, Potions::LONG_NIGHT_VISION);
     builder.POTION(Items::potion, Potions::LONG_INVISIBILITY);
+    builder.POTION(Items::potion, Potions::LONG_LEAPING);
     builder.POTION(Items::potion, Potions::LONG_FIRE_RESISTANCE);
     builder.POTION(Items::potion, Potions::LONG_SWIFTNESS);
     builder.POTION(Items::potion, Potions::LONG_SLOWNESS);
     builder.POTION(Items::potion, Potions::LONG_WATER_BREATHING);
+    builder.POTION(Items::potion, Potions::LONG_POISON);
     builder.POTION(Items::potion, Potions::LONG_REGENERATION);
     builder.POTION(Items::potion, Potions::LONG_STRENGTH);
     builder.POTION(Items::potion, Potions::LONG_WEAKNESS);
     builder.POTION(Items::potion, Potions::WITHER);
+    builder.POTION(Items::potion, Potions::LONG_TURTLE_MASTER);
     builder.POTION(Items::potion, Potions::LONG_SLOW_FALLING);
     builder.POTION(Items::splashPotion, Potions::LONG_NIGHT_VISION);
     builder.POTION(Items::splashPotion, Potions::LONG_INVISIBILITY);
     builder.POTION(Items::splashPotion, Potions::LONG_LEAPING);
+    builder.POTION(Items::splashPotion, Potions::LONG_FIRE_RESISTANCE);
     builder.POTION(Items::splashPotion, Potions::LONG_SWIFTNESS);
     builder.POTION(Items::splashPotion, Potions::LONG_SLOWNESS);
     builder.POTION(Items::splashPotion, Potions::LONG_WATER_BREATHING);
     builder.POTION(Items::splashPotion, Potions::LONG_POISON);
+    builder.POTION(Items::splashPotion, Potions::LONG_REGENERATION);
     builder.POTION(Items::splashPotion, Potions::LONG_STRENGTH);
     builder.POTION(Items::splashPotion, Potions::LONG_WEAKNESS);
     builder.POTION(Items::splashPotion, Potions::WITHER);
     builder.POTION(Items::splashPotion, Potions::LONG_TURTLE_MASTER);
     builder.POTION(Items::splashPotion, Potions::LONG_SLOW_FALLING);
+    builder.POTION(Items::lingeringPotion, Potions::LONG_NIGHT_VISION);
     builder.POTION(Items::lingeringPotion, Potions::LONG_INVISIBILITY);
     builder.POTION(Items::lingeringPotion, Potions::LONG_LEAPING);
     builder.POTION(Items::lingeringPotion, Potions::LONG_FIRE_RESISTANCE);
     builder.POTION(Items::lingeringPotion, Potions::LONG_SWIFTNESS);
+    builder.POTION(Items::lingeringPotion, Potions::LONG_SLOWNESS);
     builder.POTION(Items::lingeringPotion, Potions::LONG_WATER_BREATHING);
     builder.POTION(Items::lingeringPotion, Potions::LONG_POISON);
     builder.POTION(Items::lingeringPotion, Potions::LONG_REGENERATION);
     builder.POTION(Items::lingeringPotion, Potions::LONG_STRENGTH);
+    builder.POTION(Items::lingeringPotion, Potions::LONG_WEAKNESS);
     builder.POTION(Items::lingeringPotion, Potions::WITHER);
     builder.POTION(Items::lingeringPotion, Potions::LONG_TURTLE_MASTER);
     builder.POTION(Items::lingeringPotion, Potions::LONG_SLOW_FALLING);
 
     builder.mItems = &s_groupItems[ECreative_Inventory_Groups_StrongPotions];
+    builder.POTION(Items::potion, Potions::STRONG_LEAPING);
     builder.POTION(Items::potion, Potions::STRONG_SWIFTNESS);
     builder.POTION(Items::potion, Potions::STRONG_HEALING);
     builder.POTION(Items::potion, Potions::STRONG_HARMING);
     builder.POTION(Items::potion, Potions::STRONG_POISON);
     builder.POTION(Items::potion, Potions::STRONG_REGENERATION);
+    builder.POTION(Items::potion, Potions::STRONG_STRENGTH);
     builder.POTION(Items::potion, Potions::STRONG_TURTLE_MASTER);
     builder.POTION(Items::splashPotion, Potions::STRONG_LEAPING);
     builder.POTION(Items::splashPotion, Potions::STRONG_SWIFTNESS);
     builder.POTION(Items::splashPotion, Potions::STRONG_HEALING);
+    builder.POTION(Items::splashPotion, Potions::STRONG_HARMING);
     builder.POTION(Items::splashPotion, Potions::STRONG_POISON);
     builder.POTION(Items::splashPotion, Potions::STRONG_REGENERATION);
     builder.POTION(Items::splashPotion, Potions::STRONG_STRENGTH);
     builder.POTION(Items::splashPotion, Potions::STRONG_TURTLE_MASTER);
+    builder.POTION(Items::lingeringPotion, Potions::STRONG_LEAPING);
     builder.POTION(Items::lingeringPotion, Potions::STRONG_SWIFTNESS);
     builder.POTION(Items::lingeringPotion, Potions::STRONG_HEALING);
     builder.POTION(Items::lingeringPotion, Potions::STRONG_HARMING);
     builder.POTION(Items::lingeringPotion, Potions::STRONG_POISON);
+    builder.POTION(Items::lingeringPotion, Potions::STRONG_REGENERATION);
     builder.POTION(Items::lingeringPotion, Potions::STRONG_STRENGTH);
     builder.POTION(Items::lingeringPotion, Potions::STRONG_TURTLE_MASTER);
 

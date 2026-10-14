@@ -673,7 +673,7 @@ void FJ_FuiNode::gotoAndStop(const std::string& sLabel)
 std::string FJ_FuiNode::currentLabel()
 {
     if (m_pRenderNode->m_type != eFuiObjectType_Timeline)
-        return "FadeOut";
+        return "";
 
     return static_cast<fuiRenderNodeTimeline*>(m_pRenderNode)->currentLabel();
 }

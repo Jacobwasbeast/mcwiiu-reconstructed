@@ -400,6 +400,7 @@ void UIScene_TradingMenu::updateDisplay()
                 if (haveEnoughA && buyB.get()->getCount() <= matchesB)
                     tooltipHint = IDS_TOOLTIPS_TRADE;
             }
+            m_tradeFocusSet = true;
         }
     }
 

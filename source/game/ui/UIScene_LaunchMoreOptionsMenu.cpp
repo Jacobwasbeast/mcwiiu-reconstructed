@@ -840,18 +840,19 @@ void UIScene_LaunchMoreOptionsMenu::handleSliderElementMove(int, int second, int
     {
         const int arenaSize = m_gameOptionsList.GetSliderValue(0x2b);
         if (arenaSize == 0)
-        {
             m_initData->mPlayerSettings.mArenaSizeMultiplier = maybe<float>();
-            swprintf(text, 256, L"%ls: %ls", L10N::GetString(IDS_MG02_LAYER_SCALE), L10N::GetString(IDS_MG_AUTO));
-            m_gameOptionsList.SetItemLabel(0x2b, UIString(text), false);
+        else
+            m_initData->mPlayerSettings.mArenaSizeMultiplier = maybe<float>(arenaSizeTable[arenaSize - 1]);
+        if (arenaSize > 0)
+        {
+            std::wstring display = _toString<float>(arenaSizeTable[arenaSize + 4]);
+            swprintf(text, 256, L"%ls: x%ls", L10N::GetString(IDS_MG02_LAYER_SCALE), display.c_str());
         }
         else
         {
-            m_initData->mPlayerSettings.mArenaSizeMultiplier = maybe<float>(arenaSizeTable[arenaSize - 1]);
-            std::wstring display = _toString<float>(arenaSizeTable[arenaSize + 4]);
-            swprintf(text, 256, L"%ls: x%ls", L10N::GetString(IDS_MG02_LAYER_SCALE), display.c_str());
-            m_gameOptionsList.SetItemLabel(0x2b, UIString(text), false);
+            swprintf(text, 256, L"%ls: %ls", L10N::GetString(IDS_MG02_LAYER_SCALE), L10N::GetString(IDS_MG_AUTO));
         }
+        m_gameOptionsList.SetItemLabel(0x2b, UIString(text), false);
         UpdateDescriptionText();
         m_initData->mSettingsChanged = true;
         return;
@@ -863,14 +864,16 @@ void UIScene_LaunchMoreOptionsMenu::handleSliderElementMove(int, int second, int
         {
             m_initData->mPlayerSettings.mLayerCount = maybe<unsigned int>();
             swprintf(text, 256, L"%ls: %ls", L10N::GetString(IDS_MG02_LAYER_COUNT), L10N::GetString(IDS_MG_AUTO));
-            m_gameOptionsList.SetItemLabel(0x2c, UIString(text), false);
         }
         else
         {
             m_initData->mPlayerSettings.mLayerCount = maybe<unsigned int>(static_cast<unsigned int>(layerCount));
-            swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_MG02_LAYER_COUNT), layerCount);
-            m_gameOptionsList.SetItemLabel(0x2c, UIString(text), false);
+            if (layerCount > 0)
+                swprintf(text, 256, L"%ls: %d", L10N::GetString(IDS_MG02_LAYER_COUNT), layerCount);
+            else
+                swprintf(text, 256, L"%ls: %ls", L10N::GetString(IDS_MG02_LAYER_COUNT), L10N::GetString(IDS_MG_AUTO));
         }
+        m_gameOptionsList.SetItemLabel(0x2c, UIString(text), false);
         UpdateDescriptionText();
         break;
     }

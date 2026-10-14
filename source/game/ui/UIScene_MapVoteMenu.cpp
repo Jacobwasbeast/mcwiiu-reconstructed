@@ -91,7 +91,7 @@ void UIScene_MapVoteMenu::InitForMap()
         const unsigned int debugArtTools = gApp.DebugArtToolsOn();
         do
         {
-            wchar_t textureName[64] = L"";
+            wchar_t textureName[64] = L"default";
             TexturePack* texturePack = Minecraft::GetInstance()->mTexturePackRepository->getTexturePackById(info->texturePackId);
             unsigned int iconSize;
             const void* icon = texturePack->getPackIcon(iconSize);

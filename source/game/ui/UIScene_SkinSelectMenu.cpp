@@ -35,6 +35,8 @@ static const int s_defaultSkinNameIds[19] = {
     IDS_DEFAULT_SKIN12, IDS_DEFAULT_SKIN13, IDS_DEFAULT_SKIN14, IDS_DEFAULT_SKIN15, IDS_DEFAULT_SKIN17, IDS_DEFAULT_SKIN16
 };
 
+static const unsigned int s_dlcSkinIdMask = 0x7fffffff;
+
 static int s_newestSkinPackIds[12] = {
     0x22c, 0x224, 0x233, 0x222, 0x216, 0x225, 0x234, 0x207, 0x227, 0x4f9, 0x23c, 0x40e
 };
@@ -688,7 +690,7 @@ void UIScene_SkinSelectMenu::SetSkinPackButtonList()
     m_packListDirty = false;
 
     DLCPack* texturePackSkinPack = NULL;
-    const unsigned int packIndex = m_packIndex;
+    unsigned int packIndex = m_packIndex;
     const bool usingDefaultPack =
         Minecraft::GetInstance()->mTexturePackRepository->getSelected() == TexturePackRepository::defaultTexturePack;
     if (!usingDefaultPack)
@@ -704,7 +706,7 @@ void UIScene_SkinSelectMenu::SetSkinPackButtonList()
     if (texturePackSkinPack != NULL && texturePackSkinPack->GetPackId() >= 0x400)
     {
         std::wstring texturePackName = texturePackSkinPack->getLocalisedDisplayName();
-        if (texturePackSkinPack->getSkinCount() > 0)
+        if (texturePackSkinPack->getSkinCount() != 0)
             m_hasTexturePackSkinPack = true;
     }
 
@@ -735,17 +737,22 @@ void UIScene_SkinSelectMenu::SetSkinPackButtonList()
             m_packIds.push_back(static_cast<int>(pack->GetPackId()));
         }
 
-        if (m_selectedPackId != 0 && m_selectedPackId == static_cast<int>(pack->GetPackId()) &&
-            (!m_hasTexturePackSkinPack || pack->GetPackId() != texturePackSkinPack->GetPackId()))
+        if (m_selectedPackId != 0 && m_selectedPackId == static_cast<int>(pack->GetPackId()))
         {
-            m_packList.AddNewButton(pack->getLocalisedDisplayName().c_str(), static_cast<int>(pack->GetPackId()), true);
-            m_addedPackIds.push_back(static_cast<int>(pack->GetPackId()));
+            packIndex = pack->GetPackId();
+            if (!m_hasTexturePackSkinPack || packIndex != texturePackSkinPack->GetPackId())
+            {
+                std::wstring packName = pack->getLocalisedDisplayName();
+                m_packList.AddNewButton(packName.c_str(), static_cast<int>(pack->GetPackId()), true);
+                m_addedPackIds.push_back(static_cast<int>(pack->GetPackId()));
+            }
         }
     }
 
     if (m_hasTexturePackSkinPack)
     {
-        m_packList.AddNewButton(texturePackSkinPack->getLocalisedDisplayName().c_str(),
+        std::wstring packName = texturePackSkinPack->getLocalisedDisplayName();
+        m_packList.AddNewButton(packName.c_str(),
                                 static_cast<int>(texturePackSkinPack->GetPackId()), true);
         m_addedPackIds.push_back(static_cast<int>(texturePackSkinPack->GetPackId()));
     }
@@ -890,7 +897,8 @@ void UIScene_SkinSelectMenu::handlePackIndexChanged()
                     wchar_t skinPath[256];
                     swprintf(skinPath, 256, L"dlcskin%08d.png",
                              GameSettings::GetPlayerFavoriteSkin(m_playerId,
-                                                                 GameSettings::GetPlayerFavoriteSkinsPos(m_playerId)));
+                                                                 GameSettings::GetPlayerFavoriteSkinsPos(m_playerId)) &
+                                 s_dlcSkinIdMask);
                     DLCPack* favouritePack = gApp.mDLCManager.getPackContainingSkin(skinPath);
                     bool found = false;
                     if (favouritePack == NULL)

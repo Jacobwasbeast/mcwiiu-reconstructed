@@ -141,10 +141,10 @@ void UIScene_LeaderboardsMenu::CopyLeaderboardEntry(LeaderboardManager::ReadScor
         }
         else if (statsType == LeaderboardManager::eStatsType_Score)
         {
-            unsigned int digits = 0;
+            int digits = 0;
             for (unsigned int remaining = entry.stats[i]; remaining != 0; remaining /= 10)
                 ++digits;
-            if (digits <= 3)
+            if (digits < 4)
             {
                 swprintf(entry.statText[i], STAT_TEXT_LENGTH, L"%um", entry.stats[i]);
             }
@@ -177,7 +177,10 @@ void UIScene_LeaderboardsMenu::CopyLeaderboardEntry(LeaderboardManager::ReadScor
         }
         else
         {
-            swprintf(entry.statText[i], STAT_TEXT_LENGTH, L"%u", entry.stats[i]);
+            unsigned int displayedStat = entry.stats[i];
+            if (displayedStat > MAX_DISPLAYED_STAT)
+                displayedStat = MAX_DISPLAYED_STAT;
+            swprintf(entry.statText[i], STAT_TEXT_LENGTH, L"%u", displayedStat);
         }
     }
 }

@@ -348,7 +348,7 @@ void UIScene_AvatarSelectMenu::tick()
 void UIScene_AvatarSelectMenu::SelectTab(int tab)
 {
     m_activeTab = tab;
-    gConsoleUIController.PlayUISFX(SoundEvents::UI_SCROLL);
+    gConsoleUIController.PlayUISFX(SoundEvents::UI_FOCUS);
     FJ_AvatarSelectMenu* menu = (FJ_AvatarSelectMenu*)m_movie->getRootNode()->getFuiNode();
     menu->SetActiveTab(tab);
     gConsoleUIController.TouchBoxRebuild(this);

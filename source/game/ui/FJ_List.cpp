@@ -417,22 +417,19 @@ int FJ_List::GetListWidth()
     int result = static_cast<int>(getWidth());
     for (unsigned int i = 0; i < m_items.size(); ++i)
     {
-        FJ_FuiNode* item = m_items[i];
         int itemWidth;
-        if (!item->isFJ_Slider())
+        if (m_items[i]->isFJ_Slider())
         {
-            itemWidth = Math::round(item->asFJ_Base()->getWidth());
-            int newWidth = item->asFJ_Base()->getNewWidth();
-            if (itemWidth < newWidth)
-                itemWidth = newWidth;
+            itemWidth = Math::round(m_items[i]->asFJ_Base()->GetTextField()->m_textWidth);
+            if (itemWidth < m_items[i]->asFJ_Base()->getOldWidth())
+                itemWidth = static_cast<int>(m_items[i]->asFJ_Base()->GetTextField()->m_textWidth * 1.1f);
         }
         else
         {
-            fuiRenderNodeEditText* textField = item->asFJ_Base()->GetTextField();
-            itemWidth = Math::round(textField->getWidth());
-            int oldWidth = item->asFJ_Base()->getOldWidth();
-            if (itemWidth < oldWidth)
-                itemWidth = static_cast<int>(item->asFJ_Base()->GetTextField()->getWidth() * 1.1f);
+            itemWidth = Math::round(m_items[i]->asFJ_Base()->getWidth());
+            int newWidth = m_items[i]->asFJ_Base()->getNewWidth();
+            if (itemWidth < newWidth)
+                itemWidth = newWidth;
         }
         if (result < itemWidth)
             result = itemWidth;
@@ -452,23 +449,20 @@ void FJ_List::addNewListItem(FJ_Base* item, const std::wstring& label, int id)
     item->setPreScaleWidth(static_cast<int>(item->getWidth()));
     if (!item->isFJ_CheckBox())
     {
-        const float x = getX() + static_cast<float>(Math::round(
-            (getWidth() - item->getWidth()) * 0.5f));
-        item->setX(x);
+        item->setX(getX() + static_cast<float>(Math::round((getWidth() - item->getWidth()) * 0.5f)));
     }
     else
         item->setX(getX());
     m_items.push_back(item);
-    if (index > 0)
-    {
-        FJ_Base* previous = m_items[static_cast<unsigned int>(index - 1)]->asFJ_Base();
-        previous->m_navDownName = item->getName();
-        item->m_navUpName = previous->getName();
-    }
-    item->m_navDownName = m_navDownName;
     item->m_navLeftName = m_navLeftName;
     item->m_navRightName = m_navRightName;
-    if (index == 0)
+    item->m_navDownName = m_navDownName;
+    if (index > 0)
+    {
+        item->m_navUpName = m_items[index - 1]->asFJ_Base()->getName();
+        m_items[index - 1]->asFJ_Base()->m_navDownName = item->getName();
+    }
+    else
         item->m_navUpName = m_navUpName;
     (void)label;
     item->addEventListener(eFJEventType_FocusIn, this, _ItemFocusInHandler, false);
@@ -481,12 +475,12 @@ void FJ_List::addNewListItem(FJ_Base* item, const std::wstring& label, int id)
             m_items[0]->asFJ_Base()->m_navUpName = item->getName();
         }
         else
-            getParent()->addEventListener(eFJEventType_KeyUp, this, _ListKeyDownHandler, false);
+            getParent()->addEventListener(eFJEventType_KeyDown, this, _ListKeyDownHandler, false);
     }
     if (index == m_activeItem)
         SetListFocus();
     ScrollList(false, true, false);
-    if (m_activeItem == 0 && !m_items.empty() && m_items[0]->isFJ_Label())
+    if (m_activeItem == 0 && m_items[0]->isFJ_Label())
     {
         for (unsigned int i = 0; i < m_items.size(); ++i)
         {

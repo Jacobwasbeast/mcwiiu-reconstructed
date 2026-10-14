@@ -29,20 +29,19 @@ void FJ_List_ListButtonCheckbox::addNewItem(const std::wstring& label, int id,
                                             bool checked,
                                             const std::wstring& textureName)
 {
-    const char* objectName = m_checkboxTick
-        ? "fourj.Buttons.FJ_ListButtonCheckbox_Small"
-        : "fourj.Buttons.FJ_ListButtonCheckbox_Normal";
-    FJ_ListButtonCheckbox* item = static_cast<FJ_ListButtonCheckbox*>(
-        FJ_Factory::createObject(objectName, m_pRenderNode, true, NULL));
+    FJ_ListButtonCheckbox* item;
+    if (m_checkboxTick)
+        item = static_cast<FJ_ListButtonCheckbox*>(FJ_Factory::createObject(
+            "fourj.Buttons.FJ_ListButtonCheckbox_Small", m_pRenderNode, true, NULL));
+    else
+        item = static_cast<FJ_ListButtonCheckbox*>(FJ_Factory::createObject(
+            "fourj.Buttons.FJ_ListButtonCheckbox_Normal", m_pRenderNode, true, NULL));
 
     addNewListItem(item, label, id);
     item->Init(label, id);
     item->SetSlotID(m_id, m_useIggyIcons);
 
-    if (m_useIggyIcons)
-        item->SetTextureName(L"fourj.Button");
-    else
-        item->SetTextureName(std::wstring(textureName));
+    item->SetTextureName(m_useIggyIcons ? L"" : textureName);
 
     item->SetCheckBox(checked);
 }

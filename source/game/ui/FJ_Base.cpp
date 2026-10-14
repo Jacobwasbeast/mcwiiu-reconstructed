@@ -348,11 +348,11 @@ void FJ_Base::SetLabel(const std::wstring& label)
     }
     else if (!m_multilineWrap)
     {
-        float heightBefore = field->getHeight();
+        int heightBefore = static_cast<int>(field->m_textHeight);
         DoManualWordWrapCheck(container, field);
-        float heightAfter = field->getHeight();
-        if (m_autoGrowHeight && static_cast<int>(heightBefore) < static_cast<int>(heightAfter))
-            SetNewObjectHeight(static_cast<int>(getHeight() + (heightAfter - heightBefore)));
+        int heightAfter = static_cast<int>(field->m_textHeight);
+        if (m_autoGrowHeight && heightBefore < heightAfter)
+            SetNewObjectHeight(static_cast<int>(getHeight() + static_cast<float>(heightAfter) - static_cast<float>(heightBefore)));
         if (!m_manualWrap && m_multilineWrap)
             DoMultilineWordWrap(container, field);
     }
@@ -370,7 +370,7 @@ void FJ_Base::SetLabel(const std::wstring& label)
     {
         field->setAutoSize(TextFieldAutoSizeCenter);
         field->setWidth(static_cast<float>(m_ellipsisWidth));
-        std::wstring text = std::wstring(L"\n").append(field->getText());
+        std::wstring text = L"[...] " + field->getText();
         field->setText(text);
     }
     else if (m_isLabel)
@@ -409,7 +409,10 @@ void FJ_Base::SetLabel(const std::wstring& label)
     else if (m_labelAlignment == 1)
     {
         if (container != 0)
+        {
+            container->setX(0.0f);
             container->setY(0.0f);
+        }
         field->setX(0.0f);
         float y = Math::round((m_objectHeight / getScaleY() - field->getHeight()) * 0.5f);
         field->setY(y);

@@ -1158,7 +1158,7 @@ FJ_FuiNode* FJ_Factory::createObject(const char* symbol, fuiRenderNode* renderNo
     nodeRender->m_flags &= ~0x40;
 
     if (className == NULL)
-        ::snprintf(nodeRender->m_name, 0x40, "Fac_%d", g_factoryNodeId++);
+        ::snprintf(nodeRender->m_name, 0x40, "Fac%d", g_factoryNodeId++);
     else
         std::strncpy(nodeRender->m_name, className, 0x40);
 

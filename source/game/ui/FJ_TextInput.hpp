@@ -50,6 +50,7 @@ public:
 
 private:
     friend class FJ_DebugCreateSchematic;
+    friend class FJ_DebugSetCamera;
     friend class FJ_DebugFillArea;
     friend class fuiRenderNodeTimeline;
 

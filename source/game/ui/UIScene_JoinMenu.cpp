@@ -334,7 +334,7 @@ void UIScene_JoinMenu::JoinGame(UIScene_JoinMenu* scene)
     {
         scene->setVisible(true);
         scene->m_joining = false;
-        gConsoleUIController.RequestUGCMessageBox(IDS_CONNECTION_FAILED, 0x4d669d55, -1, NULL, NULL);
+        gConsoleUIController.RequestUGCMessageBox(IDS_CONNECTION_FAILED, STRING_JOIN_CONTENT_PRIVILEGE_TOO_RESTRICTIVE, -1, NULL, NULL);
         return;
     }
     if (multiplayerRestricted)

@@ -457,8 +457,10 @@ void SuperflatMenu::MapWoodlandMansion::write(FlatGeneratorInfo& info)
 }
 void SuperflatMenu::MapWoodlandMansion::read(FlatGeneratorInfo& info)
 {
-    mSub.setPosition(info.getWoodlandMansionSpacing());
-    mSub2.setPosition(info.getWoodlandMansionSeparation());
+    int spacing = info.getWoodlandMansionSpacing();
+    int separation = info.getWoodlandMansionSeparation();
+    mSub.setPosition(spacing);
+    mSub2.setPosition(separation * 100 / (spacing * 5));
     setChecked(info.hasWoodlandMansion());
 }
 
@@ -494,11 +496,9 @@ SuperflatMenu::CustomSuperflatBlocks::~CustomSuperflatBlocks()
 
 bool SuperflatMenu::CustomSuperflatBlocks::inlist(Block** list, Block* block)
 {
-    if (list == NULL)
-        return false;
-    while (*list != NULL)
+    for (; *list != NULL; ++list)
     {
-        if (*list++ == block)
+        if (*list == block)
             return true;
     }
     return false;
@@ -540,7 +540,10 @@ int SuperflatMenu::CustomSuperflatBlocks::addItem(int id, ItemInstance* itemValu
 not_null_ptr<ItemInstance> SuperflatMenu::CustomSuperflatBlocks::item(int id) const
 {
     const_iterator it = find(id);
-    return it == end() ? not_null_ptr<ItemInstance>() : it->second;
+    if (it != end())
+        return it->second;
+    not_null_ptr<ItemInstance> empty = ItemInstance::EMPTY;
+    return empty;
 }
 
 bool SuperflatMenu::CustomSuperflatBlocks::hasRestrictedPlacement(Block* block)
@@ -750,17 +753,26 @@ uint32_t SuperflatMenu::CustomSuperflatBlocks::verify(LaunchMoreOptionsMenuInitD
     info.getLayers(layers);
     const int biome = info.getBiome();
 
-    if (info.hasVillage() && biome != 1 && biome != 2 && biome != 5 && biome != 0xc && biome != 0x1e && biome != 0x23)
-        return 0xa8872c87;
+    if (info.hasVillage())
+    {
+        switch (biome)
+        {
+        case 1:
+        case 2:
+        case 5:
+        case 0xc:
+        case 0x1e:
+        case 0x23:
+            break;
+        default:
+            return 0xa8872c87;
+        }
+    }
 
     if (info.hasLakes() || info.hasLavaLakes())
     {
-        int top = info.getLayer(info.findTopNonAirLayer()).getEnd();
-        if (top < 1)
-            top = 1;
-        int bottom = info.getLayer(info.findTopSolidLayer()).getEnd() - 4;
-        if (bottom < 1)
-            bottom = 1;
+        int top = std::max(info.getLayer(info.findTopNonAirLayer()).getEnd(), 1);
+        int bottom = std::max(info.getLayer(info.findTopSolidLayer()).getEnd() - 4, 1);
         for (int height = top; height >= bottom; --height)
         {
             int index = info.getLayerIndexAtHeight(height);
@@ -793,7 +805,7 @@ uint32_t SuperflatMenu::CustomSuperflatBlocks::verify(LaunchMoreOptionsMenuInitD
         }
         bool supportsLayers = block->defaultBlockState()->isSolidRender() && block->mMaterial->blocksMotion() &&
                               block != Blocks::packed_ice;
-        if (!supportsLayers && ((it->getHeight() > 1 && hasRestrictedPlacement(block)) ||
+        if (!supportsLayers && ((static_cast<int>(it->getHeight()) > 1 && hasRestrictedPlacement(block)) ||
                                 (aboveId != -1 && hasRestrictedPlacement(above))))
             return 0x16c16d5e;
         if (!block->mMaterial->blocksMotion() && above != NULL && dynamic_cast<FallingBlock*>(above) != NULL)
@@ -820,7 +832,7 @@ uint32_t SuperflatMenu::CustomSuperflatBlocks::verify(LaunchMoreOptionsMenuInitD
         (info.hasVillage() || info.hasMineshaft() || info.hasStronghold() || info.hasBiomeSpecific() ||
          info.hasOceanMonument() || info.hasDungeons() || info.hasDecorations()))
         return 0x258655f1;
-    if ((info.hasCaves() && info.getHeight() <= 1) || (info.hasCanyons() && info.getHeight() <= 3))
+    if ((info.hasCaves() && info.getHeight() < 2) || (info.hasCanyons() && info.getHeight() < 4))
         return 0x258655f1;
     return 0;
 }

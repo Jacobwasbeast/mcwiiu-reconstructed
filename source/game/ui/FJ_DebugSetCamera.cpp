@@ -6,6 +6,7 @@
 #include "game/ui/FJ_CheckBox.hpp"
 #include "game/ui/FJ_Event.hpp"
 #include "game/ui/FJ_FuiNode.hpp"
+#include "game/ui/FJ_TextInput.hpp"
 #include "game/ui/UIScene.hpp"
 #include "game/ui/fuiRenderNode.hpp"
 
@@ -14,16 +15,11 @@ FJ_DebugSetCamera::FJ_DebugSetCamera(fuiRenderNode* renderNode)
 {
     addEventListener(eFJEventType_CheckboxToggled, this, _handleCheckboxToggled, false);
 
-    FJ_FuiNode* node = getChildByName(std::string("CamX"));
-    node->setVisible(true);
-    node = getChildByName(std::string("CamY"));
-    node->setVisible(true);
-    node = getChildByName(std::string("CamZ"));
-    node->setVisible(true);
-    node = getChildByName(std::string("YRot"));
-    node->setVisible(true);
-    node = getChildByName(std::string("Elevation"));
-    node->setVisible(true);
+    static_cast<FJ_TextInput*>(getChildByName(std::string("CamX")))->m_bUseScale = true;
+    static_cast<FJ_TextInput*>(getChildByName(std::string("CamY")))->m_bUseScale = true;
+    static_cast<FJ_TextInput*>(getChildByName(std::string("CamZ")))->m_bUseScale = true;
+    static_cast<FJ_TextInput*>(getChildByName(std::string("YRot")))->m_bUseScale = true;
+    static_cast<FJ_TextInput*>(getChildByName(std::string("Elevation")))->m_bUseScale = true;
 }
 
 void FJ_DebugSetCamera::handleCheckboxToggled(FJ_Event* event)
