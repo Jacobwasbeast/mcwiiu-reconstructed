@@ -5,13 +5,16 @@ tree reads as one codebase rather than as thousands of independent efforts.
 
 ## Language level
 
-- C++03 as compiled by the Green Hills toolchain the original used. No
-  `auto`, lambdas, range-for, `nullptr`, `override`, `constexpr`, rvalue
-  references or `std::` types newer than C++03.
+- C++03, the language level the original was written in. No `auto`,
+  lambdas, range-for, `nullptr`, `override`, `constexpr`, rvalue references
+  or `std::` types newer than C++03.
 - boost 1.x for smart pointers, unordered containers and hashing
   (`boost::shared_ptr`, `boost::unordered_map`, `boost::hash`). The standard
   library covers everything else.
-- No compiler extensions and no `#pragma pack`.
+- No compiler extensions and no `#pragma pack`, except where the original
+  used a processor instruction directly (the time base, byte-reversed loads,
+  paired-single maths): that code sits behind a compiler check, with a
+  version for each compiler that does the same thing.
 
 ## One family, two files
 
@@ -51,5 +54,7 @@ tree reads as one codebase rather than as thousands of independent efforts.
   first, then project headers, then library and system headers.
 - Forward declarations are preferred in headers; implementation files
   include what they use.
-- Four-space indentation, braces on their own line for functions and
-  classes, LF line endings, UTF-8 without BOM.
+- The layout is the one `source/.clang-format` describes: four-space
+  indentation, braces on their own line, 120 columns, LF line endings,
+  UTF-8 without BOM. It was applied with clang-format 22; the few files
+  listed in `source/.clang-format-ignore` keep their layout.

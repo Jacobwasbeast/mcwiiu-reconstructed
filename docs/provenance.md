@@ -28,7 +28,8 @@ left a question open.
 
 The reconstruction workflow that produced this tree lived in a separate
 working repository alongside that evidence. Only the resulting source, and
-the small amount of tooling needed to check it, was carried across. Nothing
+the tooling needed to build it from your own copy of the game, was carried
+across. Nothing
 under `source/` is a transformation of a binary; every file is authored
 text.
 

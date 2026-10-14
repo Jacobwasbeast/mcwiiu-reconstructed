@@ -47,21 +47,25 @@ file under `game/` does.
 ## `source/vendor/` - third-party internals
 
 Internals of libraries the title links against and that the build exposes
-with full names: the NEX and Pia online transport (`transport`,
-`RendezVous`, `chat`, `crypto`), the Miles audio and voice-chat layers,
-and small SDK-facing structures. They are kept apart so that game code is never
+with full names: the Miles sound system (`Miles*`), the Bink audio decoder
+(`BinkA*`), the voice-chat codec (`VCT*`, `TmcHandsFree`), the game's
+dlmalloc heap, stb_truetype, the file-local helpers of the online libraries
+(the `__N_*` files, named after the unit they belonged to) and small
+SDK-facing structures. They are kept apart so that game code is never
 mistaken for library code.
 
-## `source/nn/` - NEX and Pia library internals
+## `source/nn/` - Nintendo library internals
 
-`nn/nex/` and `nn/pia/` (with `chat`, `common`, `inet`, `lan`, `session`
-and `transport` beneath it) hold the reconstructed internals of Nintendo's NEX
-and Pia online libraries, which the title links statically and calls from
-the platform backend and the vendor code. They are the same category as
-`source/vendor/`: reconstructed from the symbols and structure the build
-exposes, kept apart from the game so the boundary stays explicit, and to be
-replaced by a maintained upstream if one ever becomes available. Includes
-are spelled from the `source/` root, for example
+`nn/nex/` and `nn/pia/` (with `chat`, `common`, `inet`, `lan`, `nat`,
+`session` and `transport` beneath it) hold the reconstructed internals of
+Nintendo's NEX and Pia online libraries, which the title links statically
+and calls from the platform backend. Beside them are the smaller SDK
+libraries the title links: `crypto`, `dbg`, `erreula` (the error viewer),
+`save`, `swkbd` (the software keyboard) and `util`. They are the same
+category as `source/vendor/`: reconstructed from the symbols and structure
+the build exposes, kept apart from the game so the boundary stays explicit,
+and to be replaced by a maintained upstream if one ever becomes available.
+Includes are spelled from the `source/` root, for example
 `#include "nn/nex/Buffer.hpp"`.
 
 ## `source/nn/ffl/` - the Mii face library (submodule)
@@ -79,19 +83,22 @@ reconstruction's changes are committed on top. Includes keep the
 ## `source/cafe/` - Cafe SDK pieces
 
 Declarations of the GX2 graphics and GFD shader-file APIs the renderer
-uses, and the GFD reader and the matrix library (`mtx`, `mtx44`, `vec`,
-`quat`) rebuilt from the functions linked into the title. Includes use the
-SDK spelling, for example `#include <cafe/gx2.h>`.
+uses, and the SDK code the title links statically, rebuilt from the
+functions linked into it: the GFD reader, the matrix library (`mtx`,
+`mtx44`, `vec`), the C runtime's system layer (`libsys`: time, files,
+signals and thread hooks on top of the Cafe OS) and the C++ runtime support
+(`libsedg`: `operator new` and `delete`, array construction, run-time type
+information and pure-virtual handling). Includes use the SDK spelling, for
+example `#include <cafe/gx2.h>`.
 
-## `source/nex.h` and `source/nn/pia.h` - SDK interface headers
+## `source/nex.h` and `source/nn/pia.h` - SDK umbrella headers
 
-The platform backend and the vendor internals call into Nintendo's NEX and
-Pia online libraries through `#include <nex.h>` and `#include <nn/pia.h>`.
-Those SDK headers are not redistributable, so the tree carries its own
-declarations of the classes and functions the title actually uses, written
-from the symbols the build exposes. They live at the `source/` root so the
-original include spellings resolve unchanged. They declare interfaces only;
-no SDK implementation is reconstructed there.
+The platform backend calls into Nintendo's NEX and Pia online libraries
+through `#include <nex.h>` and `#include <nn/pia.h>`, the SDK's own
+include spellings. Those headers live at the `source/` root so the
+original includes resolve unchanged; they gather the reconstructed
+headers under `source/nn/` that the title uses and declare the few
+remaining classes the SDK headers provided.
 
 ## The seam rule
 

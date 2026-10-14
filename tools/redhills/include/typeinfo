@@ -1,0 +1,47 @@
+// <typeinfo> for the RedHills (Green Hills ABI) build.
+//
+// The compiler emits Green Hills (EDG) type descriptors: a std::type_info
+// whose only member is its virtual table pointer, followed by the type's name,
+// the address of its one-byte identity object and its base list. Everything
+// that reads those fields lives in the EDG runtime (source/cafe/libsedg), so
+// the class declares no data and no inline members that would assume a layout.
+// This header takes the place of the C++ library's own <typeinfo>.
+
+#ifndef REDHILLS_TYPEINFO
+#define REDHILLS_TYPEINFO
+
+#include <cstddef>
+#include <exception>
+
+namespace std {
+
+class type_info {
+public:
+    virtual ~type_info();
+
+    bool before(const type_info &other) const;
+    bool operator==(const type_info &other) const;
+    bool operator!=(const type_info &other) const;
+    const char *name() const;
+    size_t hash_code() const;
+
+private:
+    type_info(const type_info &other);
+    type_info &operator=(const type_info &other);
+};
+
+class bad_cast : public exception {
+public:
+    bad_cast() throw() {}
+    virtual const char *what() const throw() { return "bad cast"; }
+};
+
+class bad_typeid : public exception {
+public:
+    bad_typeid() throw() {}
+    virtual const char *what() const throw() { return "bad typeid"; }
+};
+
+}
+
+#endif

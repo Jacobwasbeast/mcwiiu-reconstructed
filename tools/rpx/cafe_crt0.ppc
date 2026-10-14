@@ -1,0 +1,151 @@
+/*
+ * Cafe RPX startup object (the Cafe SDK's crt0), transcribed from the retail Minecraft.Client.rpx
+ * _start at 0x0380ABC4 (404 bytes) and its data. Build tooling, not reconstructed game source: the
+ * original came from the SDK as an object, like the Green Hills crt0.o it replaces.
+ * 
+ * _start(argc, argv): note the current thread, report main/_main to an attached debugger with the
+ * Cafe debugger trap (r3=2, r4=main, r5=_main), hook the thread's Green Hills C++ exception area up
+ * through the weak __ghs_cpp_exception_init/cleanup pair and coreinit's __cpp_exception_*_ptr data
+ * imports, call the second weak start-up hook, run the static constructors (_main), register
+ * __call_dtors with atexit, and call main(argc, argv).
+ * 
+ * The block guarded by argc == 0xDEADF00D never runs: it references the runtime entry points the
+ * loader-facing startup must keep linked (__gh_memclr32, memcpy, memmove, the __ghs_mtx_* lock hooks,
+ * exit) and reads two weak tables. Retail relocates the second weak hook and both weak tables against
+ * $UNDEF, so their names are not recoverable; the names below are this file's own, and like the
+ * originals they stay undefined (0).
+ */
+
+	.file	"cafe_crt0.ppc"
+
+	.weak	__ghs_cpp_exception_init
+	.weak	__ghs_cpp_exception_cleanup
+	.weak	__cafe_crt0_weak_startup_hook
+	.weak	__cafe_crt0_weak_table_a
+	.weak	__cafe_crt0_weak_table_b
+
+	.text
+	.align	2
+	.global	_start
+_start:
+	mflr	r0
+	stwu	sp, -24(sp)
+	stw	r30, 16(sp)
+	stw	r31, 20(sp)
+	mr	r31, r4
+	mr	r30, r3
+	stw	r29, 12(sp)
+	stw	r0, 28(sp)
+	bl	OSGetCurrentThread
+	mr	r29, r3
+	bl	OSIsDebuggerInitialized
+	cmpwi	r3, 0
+	beq	.Lno_debugger
+	lis	r4, %hiadj(main)
+	lis	r5, %hiadj(_main)
+	addi	r4, r4, %lo(main)
+	li	r3, 2
+	addi	r5, r5, %lo(_main)
+	tw	31, r30, r0
+.Lno_debugger:
+	lis	r9, %hiadj(__ghs_cpp_exception_init)
+	addic.	r9, r9, %lo(__ghs_cpp_exception_init)
+	beq	.Lno_exceptions
+	lis	r0, %hiadj(__ghs_cpp_exception_init)
+	lis	r8, %hiadj(__cpp_exception_init_ptr)
+	lis	r11, %hiadj(__ghs_cpp_exception_cleanup)
+	addic	r0, r0, %lo(__ghs_cpp_exception_init)
+	lis	r6, %hiadj(__cpp_exception_cleanup_ptr)
+	addi	r11, r11, %lo(__ghs_cpp_exception_cleanup)
+	stw	r0, %lo(__cpp_exception_init_ptr)(r8)
+	addi	r3, r29, 0x408
+	stw	r11, %lo(__cpp_exception_cleanup_ptr)(r6)
+	bl	__ghs_cpp_exception_init
+.Lno_exceptions:
+	lis	r12, %hiadj(__cafe_crt0_weak_startup_hook)
+	addic.	r12, r12, %lo(__cafe_crt0_weak_startup_hook)
+	beq	.Lno_hook
+	bl	__cafe_crt0_weak_startup_hook
+.Lno_hook:
+	bl	_main
+	lis	r3, %hiadj(__call_dtors__Fv)
+	addi	r3, r3, %lo(__call_dtors__Fv)
+	bl	atexit
+	mr	r3, r30
+	mr	r4, r31
+	bl	main
+	lis	r0, 0xDEAD
+	ori	r0, r0, 0xF00D
+	cmplw	r30, r0
+	bne	.Lreturn
+	lis	r11, %hiadj(__cafe_crt0_weak_table_a)
+	lwzu	r0, %lo(__cafe_crt0_weak_table_a)(r11)
+	cmpwi	r0, 0
+	beq	.Ltable_b
+	lwz	r9, 0(r11)
+	lwz	r12, 0(r11)
+	slwi	r11, r30, 2
+	add	r10, r12, r11
+	lwz	r0, 4(r10)
+	stwx	r0, r9, r11
+.Ltable_b:
+	lis	r9, %hiadj(__cafe_crt0_weak_table_b)
+	lwzu	r0, %lo(__cafe_crt0_weak_table_b)(r9)
+	cmpwi	r0, 0
+	beq	.Lforce_link
+	lwz	r8, 0(r9)
+	lwz	r12, 0(r9)
+	slwi	r11, r30, 2
+	add	r10, r12, r11
+	lwz	r0, 4(r10)
+	stwx	r0, r8, r11
+.Lforce_link:
+	lis	r31, %hiadj(crt0_words)
+	addi	r31, r31, %lo(crt0_words)
+	li	r4, 1
+	mr	r3, r31
+	bl	__gh_memclr32
+	lis	r30, %hiadj(crt0_words+4)
+	mr	r4, r31
+	addi	r30, r30, %lo(crt0_words+4)
+	li	r5, 4
+	mr	r3, r30
+	bl	memcpy
+	lis	r3, %hiadj(crt0_words+8)
+	mr	r4, r30
+	li	r5, 4
+	addi	r3, r3, %lo(crt0_words+8)
+	bl	memmove
+	lis	r31, %hiadj(crt0_mutex)
+	lwz	r3, %lo(crt0_mutex)(r31)
+	bl	__ghs_mtx_init
+	lwz	r3, %lo(crt0_mutex)(r31)
+	bl	__ghs_mtx_dst
+	lwz	r3, %lo(crt0_mutex)(r31)
+	bl	__ghs_mtx_lock
+	lwz	r3, %lo(crt0_mutex)(r31)
+	bl	__ghs_mtx_unlock
+	li	r3, 0
+	bl	exit
+.Lreturn:
+	lwz	r29, 12(sp)
+	lwz	r0, 28(sp)
+	lwz	r30, 16(sp)
+	mtlr	r0
+	lwz	r31, 20(sp)
+	addi	sp, sp, 24
+	blr
+	.type	_start,@function
+	.size	_start,$-_start
+
+	.data
+	.align	2
+crt0_words:	.space	12
+	.type	crt0_words,@object
+	.size	crt0_words,12
+
+	.section ".bss","awb"
+	.align	2
+crt0_mutex:	.space	4
+	.type	crt0_mutex,@object
+	.size	crt0_mutex,4

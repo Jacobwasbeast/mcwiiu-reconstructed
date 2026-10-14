@@ -10,29 +10,40 @@ decompiler or copied from a game binary. See `provenance.md`.
 
 ## Who is writing it
 
-All of the code in this repository is AI-constructed. Two dispatcher AIs
-coordinate the work: Sol dispatches Luna worker agents and Fable dispatches
-Opus 5 worker agents. Each worker is handed one class family at a time with
-the evidence for that family, writes the header and implementation, and
-returns them to its dispatcher, which runs the mechanical checks, records
-the result and commits the accepted files. No human writes source here;
-people direct the campaign, set the rules in `conventions.md`, and review.
+All of the code in this repository is AI-constructed. No human writes
+source here; people direct the work, set the rules in `conventions.md`, and
+review.
+
+The work is coordinated by Claude, which hands Claude Opus 5.5 worker agents
+one task at a time with the evidence for it: a class family to rebuild, or a
+set of functions whose compiled code differs from the original. Each change
+is compiled and compared function by function with the original executable,
+and independently audited, before it is accepted. Earlier phases worked the
+same way with other agents: the dispatchers Sol and Fable handed class
+families to Luna and Opus 5 workers.
 
 ## What is here
 
 - `source/game/` - the platform-independent game: world, blocks, entities,
   items, networking, UI, rendering and audio.
 - `source/platform/wiiu/` - the Nintendo backend of 4J's platform layer
-  (threads, storage, profiles, input, online sessions).
+  (threads, storage, profiles, input, online sessions, the Mii icon module).
 - `source/vendor/` - reconstructed internals of third-party libraries the
-  title links against.
-- `source/nn/` - reconstructed internals of the NEX and Pia online libraries,
-  plus the Mii face library in the `source/nn/ffl` submodule.
-- `source/cafe/` - reconstructed Cafe SDK pieces: GX2 and GFD declarations
-  and the matrix library.
+  title links against (Miles audio, Bink audio, the voice-chat codec,
+  dlmalloc, stb_truetype).
+- `source/nn/` - reconstructed internals of Nintendo's NEX and Pia online
+  libraries and the small SDK libraries the title links (crypto, software
+  keyboard, error viewer), plus the Mii face library in the `source/nn/ffl`
+  submodule.
+- `source/cafe/` - reconstructed Cafe SDK pieces: GX2 and GFD declarations,
+  the matrix library, the C runtime system layer and the C++ runtime support
+  the title links.
 - `docs/` - these notes.
-- `tools/` - `prepare.py`, which sets up the game files from your own
-  dumps, and the shader generator it uses.
+- `tools/` - `prepare.py` sets up the game files from your own dumps,
+  `build.py` builds the RPX with RedHills, and `package.py` lays it out as a
+  title folder for Cemu. `tools/rpx/` and `tools/redhills/` link the image
+  the way the original was linked; `tools/build/` holds the pinned library
+  list, the toolchain image and the few altered library files.
 
 ## What is not here
 
@@ -42,5 +53,12 @@ committed to this repository, and none should ever be.
 
 ## Status
 
-The tree is reconstructed class by class. A class is present when both its
-header and implementation exist under `source/`.
+`tools/build.py` compiles the whole tree and links `Minecraft.Client.rpx`
+without any code from the original executable, and it runs on a stock
+Cemu 2.6: it
+boots to the menus, creates and loads worlds, and the server runs at the
+full 20 ticks per second. Online play needs a real Nintendo Network account
+and has not been tested.
+
+The reconstruction is still being refined toward the original function by
+function. A behaviour difference you find is a bug worth reporting.

@@ -1,0 +1,14 @@
+// <new> for the RedHills (Green Hills ABI) build.
+//
+// The Green Hills C++ library's <new> reaches <stddef.h> through its
+// <exception>, so code written against it uses the global size_t after
+// including only <new> (the EDG runtime's operator new units do). The C++
+// library's own <new> declares only std::size_t; this header adds the C one.
+
+#ifndef REDHILLS_NEW
+#define REDHILLS_NEW
+
+#include_next <new>
+#include <stddef.h>
+
+#endif
